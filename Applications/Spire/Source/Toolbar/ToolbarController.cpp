@@ -166,7 +166,14 @@ void ToolbarController::open() {
     windows = load_default_layout(*m_user_profile, *m_toolbar_window);
   }
   for(auto& window : windows) {
-    window->show();
+    if(auto book_view = dynamic_cast<BookViewWindow*>(window)) {
+      auto controller =
+        std::make_unique<BookViewController>(Ref(*m_user_profile), *book_view);
+      controller->open();
+      m_book_view_controllers.push_back(std::move(controller));
+    } else {
+      window->show();
+    }
   }
   m_toolbar_window->connect_open_signal(
     std::bind_front(&ToolbarController::on_open, this));
@@ -337,7 +344,14 @@ void ToolbarController::on_reopen(const WindowSettings& settings) {
       break;
     }
   }
-  window->show();
+  if(auto book_view = dynamic_cast<BookViewWindow*>(window)) {
+    auto controller =
+      std::make_unique<BookViewController>(Ref(*m_user_profile), *book_view);
+    controller->open();
+    m_book_view_controllers.push_back(std::move(controller));
+  } else {
+    window->show();
+  }
 }
 
 void ToolbarController::on_open_blotter(BlotterModel& blotter) {
@@ -361,7 +375,17 @@ void ToolbarController::on_restore_all() {
 
 void ToolbarController::on_import(
     UserSettings::Categories categories, const std::filesystem::path& path) {
-  import_settings(categories, path, Store(*m_user_profile));
+  auto windows = import_settings(categories, path, Store(*m_user_profile));
+  for(auto& window : windows) {
+    if(auto book_view = dynamic_cast<BookViewWindow*>(window)) {
+      auto controller =
+        std::make_unique<BookViewController>(Ref(*m_user_profile), *book_view);
+      controller->open();
+      m_book_view_controllers.push_back(std::move(controller));
+    } else {
+      window->show();
+    }
+  }
 }
 
 void ToolbarController::on_export(

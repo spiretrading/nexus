@@ -7,8 +7,10 @@ using namespace Nexus;
 using namespace Spire;
 
 BookViewWindowSettings::BookViewWindowSettings(const BookViewWindow& window)
-    : m_identifier(window.GetIdentifier()),
-      m_link_identifier(window.m_link_identifier) {
+    : m_security_view(window.m_security_view->save_state()),
+      m_identifier(window.GetIdentifier()),
+      m_link_identifier(window.m_link_identifier),
+      m_geometry(window.saveGeometry()) {
   auto& security = window.GetDisplayedSecurity();
   if(security == Security()) {
     m_name = "Book View";

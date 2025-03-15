@@ -44,9 +44,35 @@ namespace {
   }
 }
 
+struct BookViewController::EventFilter : QObject {
+  BookViewController* m_controller;
+
+  EventFilter(BookViewController& controller)
+    : m_controller(&controller) {}
+
+  bool eventFilter(QObject* watched, QEvent* event) override {
+    if(event->type() == QEvent::Close) {
+      m_controller->close();
+    }
+    return QObject::eventFilter(watched, event);
+  }
+};
+
 BookViewController::BookViewController(Ref<UserProfile> user_profile)
   : m_user_profile(user_profile.Get()),
     m_window(nullptr) {}
+
+BookViewController::BookViewController(
+    Ref<UserProfile> user_profile, BookViewWindow& window)
+    : m_user_profile(user_profile.Get()),
+      m_window(&window) {
+  m_event_filter = std::make_unique<EventFilter>(*this);
+  m_window->installEventFilter(m_event_filter.get());
+  m_submit_task_connection = m_window->connect_submit_task_signal(
+    std::bind_front(&BookViewController::on_submit_task, this));
+  m_cancel_operation_connection = m_window->connect_cancel_operation_signal(
+    std::bind_front(&BookViewController::on_cancel_operation, this));
+}
 
 BookViewController::~BookViewController() {
   close();
@@ -54,6 +80,7 @@ BookViewController::~BookViewController() {
 
 void BookViewController::open() {
   if(m_window) {
+    m_window->show();
     return;
   }
   m_window = new BookViewWindow(Ref(*m_user_profile),
@@ -61,6 +88,8 @@ void BookViewController::open() {
     m_user_profile->GetKeyBindings(), m_user_profile->GetMarketDatabase(),
     m_user_profile->GetBookViewPropertiesWindowFactory(),
     m_user_profile->GetBookViewModelBuilder());
+  m_event_filter = std::make_unique<EventFilter>(*this);
+  m_window->installEventFilter(m_event_filter.get());
   m_submit_task_connection = m_window->connect_submit_task_signal(
     std::bind_front(&BookViewController::on_submit_task, this));
   m_cancel_operation_connection = m_window->connect_cancel_operation_signal(

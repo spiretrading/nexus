@@ -94,8 +94,10 @@ namespace Details {
    * @param categories The categories to import.
    * @param path The file path to import from.
    * @param user_profile The user's profile.
+   * @return The list of top-level windows to open as part of the restored
+   *         layout.
    */
-  void import_settings(UserSettings::Categories categories,
+  std::vector<QWidget*> import_settings(UserSettings::Categories categories,
     const std::filesystem::path& path, Beam::Out<UserProfile> userProfile);
 }
 

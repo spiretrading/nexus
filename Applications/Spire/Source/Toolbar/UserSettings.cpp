@@ -71,8 +71,9 @@ void Spire::export_settings(UserSettings::Categories categories,
   }
 }
 
-void Spire::import_settings(UserSettings::Categories categories,
-    const std::filesystem::path& path, Out<UserProfile> user_profile) {
+std::vector<QWidget*> Spire::import_settings(
+    UserSettings::Categories categories, const std::filesystem::path& path,
+    Out<UserProfile> user_profile) {
   auto settings = UserSettings();
   if(categories.Test(UserSettings::Category::KEY_BINDINGS) &&
       settings.m_key_bindings) {
@@ -94,6 +95,7 @@ void Spire::import_settings(UserSettings::Categories categories,
     throw std::runtime_error(
       QObject::tr("Unable to read from the specified path.").toStdString());
   }
+  auto windows = std::vector<QWidget*>();
   if(categories.Test(UserSettings::Category::LAYOUT) && settings.m_layouts) {
     for(auto& widget : QApplication::topLevelWidgets()) {
       if(dynamic_cast<PersistentWindow*>(widget) &&
@@ -107,7 +109,7 @@ void Spire::import_settings(UserSettings::Categories categories,
           !user_profile->IsManager()) {
         continue;
       }
-      window->show();
+      windows.push_back(window);
     }
   }
   if(categories.Test(UserSettings::Category::WATCHLIST) &&
@@ -129,7 +131,14 @@ void Spire::import_settings(UserSettings::Categories categories,
     user_profile->GetTimeAndSalesPropertiesWindowFactory()->
       get_properties()->set(*settings.m_time_and_sales_properties);
   }
-  for(auto widget : QApplication::topLevelWidgets()) {
+  auto top_level_widgets = windows;
+  for(auto& widget : QApplication::topLevelWidgets()) {
+    if(std::find(top_level_widgets.begin(), top_level_widgets.end(), widget) ==
+        top_level_widgets.end()) {
+      top_level_widgets.push_back(widget);
+    }
+  }
+  for(auto widget : top_level_widgets) {
     if(auto order_imbalance_indicator =
         dynamic_cast<OrderImbalanceIndicatorWindow*>(widget)) {
       if(settings.m_order_imbalance_indicator_properties) {
@@ -143,6 +152,7 @@ void Spire::import_settings(UserSettings::Categories categories,
       }
     }
   }
+  return windows;
 }
 
 const QString& Spire::to_text(UserSettings::Category category) {

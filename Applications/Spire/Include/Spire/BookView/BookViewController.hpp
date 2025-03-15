@@ -1,5 +1,6 @@
 #ifndef SPIRE_BOOK_VIEW_CONTROLLER_HPP
 #define SPIRE_BOOK_VIEW_CONTROLLER_HPP
+#include <memory>
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/signals2/connection.hpp>
 #include "Spire/BookView/BookView.hpp"
@@ -21,6 +22,14 @@ namespace Spire {
        */
       explicit BookViewController(Beam::Ref<UserProfile> user_profile);
 
+      /**
+       * Constructs a BookViewController that already controls an existing
+       * BookViewWindow.
+       * @param user_profile The user's profile.
+       */
+      BookViewController(
+        Beam::Ref<UserProfile> user_profile, BookViewWindow& window);
+
       ~BookViewController();
 
       /** Displays the BookViewWindow. */
@@ -34,9 +43,11 @@ namespace Spire {
         const ClosedSignal::slot_type& slot) const;
 
     private:
+      struct EventFilter;
       mutable ClosedSignal m_closed_signal;
       UserProfile* m_user_profile;
       BookViewWindow* m_window;
+      std::unique_ptr<EventFilter> m_event_filter;
       boost::signals2::scoped_connection m_submit_task_connection;
       boost::signals2::scoped_connection m_cancel_operation_connection;
 
