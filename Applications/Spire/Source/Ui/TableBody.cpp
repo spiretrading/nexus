@@ -142,7 +142,9 @@ struct TableBody::RowCover : Cover {
   void mount(int index) {
     auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != layout()->count(); ++i) {
-      get_item(i)->mount(*body.m_item_builder.mount(body.m_table, index, i));
+      auto item = body.m_item_builder.mount(body.m_table, index, i);
+      item->setFocusPolicy(Qt::NoFocus);
+      get_item(i)->mount(*item);
     }
   }
 
@@ -691,14 +693,21 @@ bool TableBody::focusNextPrevChild(bool next) {
   while(next_widget && next_widget != this) {
     next_widget = next_widget->nextInFocusChain();
     if(!isAncestorOf(next_widget) && next_widget->isEnabled() &&
-        next_widget->focusPolicy() & Qt::TabFocus) {
+        next_widget->isVisible() && next_widget->focusPolicy() & Qt::TabFocus) {
       next_focus_widget = next_widget;
       if(next) {
         break;
       }
     }
   }
-  next_focus_widget->setFocus(Qt::TabFocusReason);
+  get_current()->set(none);
+  auto focus_reason = [&] {
+    if(next) {
+      return Qt::TabFocusReason;
+    }
+    return Qt::BacktabFocusReason;
+  }();
+  next_focus_widget->setFocus(focus_reason);
   return true;
 }
 
@@ -826,6 +835,16 @@ void TableBody::showEvent(QShowEvent* event) {
   update_parent();
   update_column_covers();
   update_column_widths();
+}
+
+void TableBody::focusInEvent(QFocusEvent* event) {
+  if(event->reason() == Qt::TabFocusReason) {
+    focusNextPrevChild(true);
+  } else if(event->reason() == Qt::BacktabFocusReason) {
+    focusNextPrevChild(false);
+  } else {
+    QWidget::focusInEvent(event);
+  }
 }
 
 const TableBody::Layout& TableBody::get_layout() const {
@@ -1227,20 +1246,34 @@ void TableBody::update_column_widths() {
 }
 
 bool TableBody::navigate_next() {
+  auto get_next_column =
+    [&] (const CurrentModel& current, int row, int column) {
+      ++column;
+      while(column < get_table()->get_column_size()) {
+        if(!current.test(Index(row, column))) {
+          ++column;
+        } else {
+          break;
+        }
+      }
+      return column;
+    };
   if(auto& current = get_current()->get()) {
-    auto column = current->m_column + 1;
-    if(column >= get_table()->get_column_size() - 1) {
+    auto column =
+      get_next_column(*get_current(), current->m_row, current->m_column);
+    if(column >= get_table()->get_column_size()) {
       auto row = current->m_row + 1;
       if(row >= get_table()->get_row_size()) {
         return false;
       } else {
-        get_current()->set(Index(row, 0));
+        get_current()->set(
+          Index(row, get_next_column(*get_current(), row, -1)));
       }
     } else {
       get_current()->set(Index(current->m_row, column));
     }
   } else if(get_table()->get_row_size() > 0) {
-    get_current()->set(Index(0, 0));
+    get_current()->set(Index(0, get_next_column(*get_current(), 0, -1)));
   } else {
     return false;
   }
@@ -1248,21 +1281,37 @@ bool TableBody::navigate_next() {
 }
 
 bool TableBody::navigate_previous() {
+  auto get_previous_column =
+    [] (const CurrentModel& current, int row, int column) {
+      --column;
+      while(column >= 0) {
+        if(!current.test(Index(row, column))) {
+          --column;
+        } else {
+          break;
+        }
+      }
+      return column;
+    };
   if(auto& current = get_current()->get()) {
-    auto column = current->m_column - 1;
+    auto column =
+      get_previous_column(*get_current(), current->m_row, current->m_column);
     if(column < 0) {
       auto row = current->m_row - 1;
       if(row < 0) {
         return false;
       } else {
-        get_current()->set(Index(row, get_table()->get_column_size() - 2));
+        get_current()->set(Index(row, get_previous_column(*get_current(),
+          row, get_table()->get_column_size())));
       }
     } else {
       get_current()->set(Index(current->m_row, column));
     }
   } else if(get_table()->get_row_size() > 0) {
-    get_current()->set(Index(
-      get_table()->get_row_size() - 1, get_table()->get_column_size() - 2));
+    auto row = get_table()->get_row_size() - 1;
+    auto column =
+      get_previous_column(*get_current(), row, get_table()->get_column_size());
+    get_current()->set(Index(row, column));
   } else {
     return false;
   }
@@ -1315,6 +1364,8 @@ void TableBody::on_current(
     if(previous_had_focus || QApplication::focusObject() == this) {
       current_item->setFocus(Qt::FocusReason::OtherFocusReason);
     }
+  } else if(previous) {
+    m_selection_controller.remove_row(previous->m_row);
   }
 }
 

@@ -128,6 +128,7 @@ TableView::TableView(
   m_header_scroll_box->set(ScrollBox::DisplayPolicy::NEVER);
   m_header_scroll_box->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_header_scroll_box->setFocusPolicy(Qt::NoFocus);
   m_filtered_table = std::make_shared<FilteredTableModel>(
     m_table, std::bind_front(&TableView::is_filtered, this));
   if(comparator) {
@@ -148,6 +149,7 @@ TableView::TableView(
   m_scroll_box = new ScrollBox(m_body);
   m_scroll_box->set(ScrollBox::DisplayPolicy::ON_ENGAGE);
   m_scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_scroll_box->setFocusPolicy(Qt::NoFocus);
   m_scroll_box->get_horizontal_scroll_bar().connect_position_signal(
     std::bind_front(&TableView::on_scroll_position, this));
   auto layout = make_vbox_layout(this);
@@ -164,6 +166,7 @@ TableView::TableView(
   m_body_style_connection = connect_style_signal(
     *m_body, std::bind_front(&TableView::on_body_style, this));
   setFocusProxy(m_body);
+  m_body->setFocusPolicy(Qt::StrongFocus);
   on_body_style();
 }
 
