@@ -1,6 +1,6 @@
 #include "Spire/BookView/BookViewHighlightPropertiesPage.hpp"
-#include "Spire/BookView/ArrayValueToListModel.hpp"
 #include "Spire/BookView/MarketHighlightsTableView.hpp"
+#include "Spire/Spire/ArrayValueToListModel.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Ui/Box.hpp"

@@ -3,7 +3,6 @@
 
 namespace Spire {
   class AggregateBookViewModel;
-  template<typename T> class ArrayValueToListModel;
   class BboBox;
   class BookViewController;
   class BookViewHighlightPropertiesPage;

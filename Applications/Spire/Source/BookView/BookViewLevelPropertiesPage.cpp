@@ -1,8 +1,8 @@
 #include "Spire/BookView/BookViewLevelPropertiesPage.hpp"
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <QEvent>
-#include "Spire/BookView/ArrayValueToListModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ArrayValueToListModel.hpp"
 #include "Spire/Spire/AssociativeValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
