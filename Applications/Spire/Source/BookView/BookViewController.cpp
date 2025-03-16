@@ -5,6 +5,7 @@
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/BookView/ServiceBookViewModel.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeValidator.hpp"
+#include "Spire/Canvas/Operations/FindCanvasNodeValue.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/Canvas/ValueNodes/DestinationNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
@@ -19,27 +20,17 @@ using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 namespace {
-  template<typename T>
-  optional<typename T::Type::Type> find(
-      const CanvasNode& node, const std::string& property) {
-    if(auto base_node = node.FindChild(property)) {
-      if(auto node = dynamic_cast<const T*>(&*base_node)) {
-        return node->GetValue();
-      }
-    }
-    return none;
-  }
-
   optional<Security> find_security(const CanvasNode& node) {
-    return find<SecurityNode>(node, SingleOrderTaskNode::SECURITY_PROPERTY);
+    return find_value<SecurityNode>(
+      node, SingleOrderTaskNode::SECURITY_PROPERTY);
   }
 
   optional<Money> find_price(const CanvasNode& node) {
-    return find<MoneyNode>(node, SingleOrderTaskNode::PRICE_PROPERTY);
+    return find_value<MoneyNode>(node, SingleOrderTaskNode::PRICE_PROPERTY);
   }
 
   optional<Destination> find_destination(const CanvasNode& node) {
-    return find<DestinationNode>(
+    return find_value<DestinationNode>(
       node, SingleOrderTaskNode::DESTINATION_PROPERTY);
   }
 }

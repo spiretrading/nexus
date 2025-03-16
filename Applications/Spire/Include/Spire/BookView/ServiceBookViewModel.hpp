@@ -5,6 +5,8 @@
 #include "Nexus/MarketDataService/MarketDataClientBox.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Async/QtPromise.hpp"
+#include "Spire/Blotter/Blotter.hpp"
+#include "Spire/Blotter/OrderLogModel.hpp"
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -21,10 +23,12 @@ namespace Spire {
        * Constructs a ServiceBookViewModel for a given security.
        * @param security The Security whose order book is to be modeled.
        * @param markets The database of market definitions.
+       * @param blotter The blotter used to keep track of tasks on the given
+       *        <i>security</i>.
        * @param client The client used to access market data.
        */
-      ServiceBookViewModel(
-        Nexus::Security security, Nexus::MarketDatabase markets,
+      ServiceBookViewModel(Nexus::Security security,
+        Nexus::MarketDatabase markets, BlotterSettings& blotter,
         Nexus::MarketDataService::MarketDataClientBox client);
 
       const std::shared_ptr<BookQuoteListModel>& get_bids() const override;
@@ -48,11 +52,15 @@ namespace Spire {
     private:
       Nexus::Security m_security;
       Nexus::MarketDatabase m_markets;
+      BlotterSettings* m_blotter;
       Nexus::MarketDataService::MarketDataClientBox m_client;
       std::shared_ptr<BookViewModel> m_model;
       std::unordered_map<Nexus::MarketCode, Nexus::MarketQuote> m_market_quotes;
       std::shared_ptr<QtPromise<void>> m_load_promise;
       EventHandler m_event_handler;
+      boost::signals2::scoped_connection m_order_added_connection;
+      boost::signals2::scoped_connection m_order_removed_connection;
+      boost::signals2::scoped_connection m_active_blotter_connection;
 
       void clear(const BookQuoteListModel& quotes);
       void on_bbo(const Nexus::BboQuote& quote);
@@ -61,6 +69,9 @@ namespace Spire {
       void on_market_quote(const Nexus::MarketQuote& quote);
       void on_market_quote_interruption(const std::exception_ptr& e);
       void on_time_and_sales(const Nexus::TimeAndSale& time_and_sale);
+      void on_order_added(const OrderLogModel::OrderEntry& order);
+      void on_order_removed(const OrderLogModel::OrderEntry& order);
+      void on_active_blotter(BlotterModel& blotter);
   };
 }
 

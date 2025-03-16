@@ -27,8 +27,9 @@ namespace {
 
   std::shared_ptr<BookViewModel> book_view_model_builder(
       const Security& security, const MarketDatabase& markets,
-      MarketDataClientBox client) {
-    return std::make_shared<ServiceBookViewModel>(security, markets, client);
+      BlotterSettings& blotter, MarketDataClientBox client) {
+    return std::make_shared<ServiceBookViewModel>(
+      security, markets, blotter, client);
   }
 }
 
@@ -67,8 +68,8 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
           std::make_shared<LocalBookViewPropertiesModel>(
             std::move(book_view_properties)))),
       m_book_view_model_builder([=] (const auto& security) {
-        return book_view_model_builder(security,
-          m_marketDatabase, m_serviceClients.GetMarketDataClient());
+        return book_view_model_builder(security, m_marketDatabase,
+          *m_blotterSettings, m_serviceClients.GetMarketDataClient());
       }),
       m_time_and_sales_properties_window_factory(
         std::make_shared<TimeAndSalesPropertiesWindowFactory>(

@@ -1,6 +1,8 @@
 #include "Spire/BookView/ServiceBookViewModel.hpp"
 #include <ranges>
 #include "Nexus/Definitions/QuoteConversions.hpp"
+#include "Spire/Blotter/BlotterModel.hpp"
+#include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/BookView/AggregateBookViewModel.hpp"
 
 using namespace Beam;
@@ -10,9 +12,11 @@ using namespace Nexus::MarketDataService;
 using namespace Spire;
 
 ServiceBookViewModel::ServiceBookViewModel(
-    Security security, MarketDatabase markets, MarketDataClientBox client)
+    Security security, MarketDatabase markets, BlotterSettings& blotter,
+    MarketDataClientBox client)
     : m_security(std::move(security)),
       m_markets(std::move(markets)),
+      m_blotter(&blotter),
       m_client(std::move(client)),
       m_model(make_local_aggregate_book_view_model()) {
   if(m_security == Security()) {
@@ -43,6 +47,9 @@ ServiceBookViewModel::ServiceBookViewModel(
   }, LaunchPolicy::ASYNC).then([model = m_model] (const auto& technicals) {
     model->get_technicals()->set(technicals);
   }));
+  on_active_blotter(m_blotter->GetActiveBlotter());
+  m_active_blotter_connection = m_blotter->ConnectActiveBlotterChangedSignal(
+    std::bind_front(&ServiceBookViewModel::on_active_blotter, this));
 }
 
 const std::shared_ptr<BookQuoteListModel>&
@@ -217,4 +224,43 @@ void ServiceBookViewModel::on_time_and_sales(const TimeAndSale& time_and_sale) {
     technicals.m_low = time_and_sale.m_price;
   }
   m_model->get_technicals()->set(technicals);
+}
+
+void ServiceBookViewModel::on_order_added(
+    const OrderLogModel::OrderEntry& order) {
+  if(order.m_order->GetInfo().m_fields.m_security != m_security) {
+    return;
+  }
+  auto& fields = order.m_order->GetInfo().m_fields;
+  auto& user_orders =
+    *Pick(fields.m_side, m_model->get_ask_orders(), m_model->get_bid_orders());
+  auto user_order = UserOrder(
+    fields.m_destination, fields.m_price, fields.m_quantity, order.m_status);
+  user_orders.push(user_order);
+}
+
+void ServiceBookViewModel::on_order_removed(
+    const OrderLogModel::OrderEntry& order) {
+}
+
+void ServiceBookViewModel::on_active_blotter(BlotterModel& blotter) {
+  auto& orders = blotter.GetOrderLogModel();
+  auto reinitialize = [&] (UserOrderListModel& user_orders, Side side) {
+    user_orders.transact([&] {
+      Spire::clear(user_orders);
+      for(auto i = 0; i != orders.rowCount(orders.index(0, 0)); ++i) {
+        auto& entry = orders.GetEntry(orders.index(i, 0));
+        auto& fields = entry.m_order->GetInfo().m_fields;
+        if(fields.m_side == Side::ASK && fields.m_security == m_security) {
+          on_order_added(entry);
+        }
+      }
+    });
+  };
+  reinitialize(*m_model->get_ask_orders(), Side::ASK);
+  reinitialize(*m_model->get_bid_orders(), Side::BID);
+  m_order_added_connection = orders.ConnectOrderAddedSignal(
+    std::bind_front(&ServiceBookViewModel::on_order_added, this));
+  m_order_removed_connection = orders.ConnectOrderRemovedSignal(
+    std::bind_front(&ServiceBookViewModel::on_order_removed, this));
 }
