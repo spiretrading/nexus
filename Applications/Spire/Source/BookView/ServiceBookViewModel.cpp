@@ -16,7 +16,7 @@ using namespace Spire;
 namespace {
   bool is_order_displayed(const Order& order, const Security& security) {
     return order.GetInfo().m_fields.m_security == security &&
-      order.GetInfo().m_fields.m_type != OrderType::LIMIT;
+      order.GetInfo().m_fields.m_type == OrderType::LIMIT;
   }
 
   optional<std::tuple<std::vector<const Order*>&, int,
