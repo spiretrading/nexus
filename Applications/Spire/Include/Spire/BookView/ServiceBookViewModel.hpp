@@ -56,8 +56,11 @@ namespace Spire {
       Nexus::MarketDataService::MarketDataClientBox m_client;
       std::shared_ptr<BookViewModel> m_model;
       std::unordered_map<Nexus::MarketCode, Nexus::MarketQuote> m_market_quotes;
+      std::vector<const Nexus::OrderExecutionService::Order*> m_ask_orders;
+      std::vector<const Nexus::OrderExecutionService::Order*> m_bid_orders;
       std::shared_ptr<QtPromise<void>> m_load_promise;
       EventHandler m_event_handler;
+      boost::optional<EventHandler> m_order_event_handler;
       boost::signals2::scoped_connection m_order_added_connection;
       boost::signals2::scoped_connection m_order_removed_connection;
       boost::signals2::scoped_connection m_active_blotter_connection;
@@ -69,6 +72,8 @@ namespace Spire {
       void on_market_quote(const Nexus::MarketQuote& quote);
       void on_market_quote_interruption(const std::exception_ptr& e);
       void on_time_and_sales(const Nexus::TimeAndSale& time_and_sale);
+      void on_execution_report(const Nexus::OrderExecutionService::Order& order,
+        const Nexus::OrderExecutionService::ExecutionReport& report);
       void on_order_added(const OrderLogModel::OrderEntry& order);
       void on_order_removed(const OrderLogModel::OrderEntry& order);
       void on_active_blotter(BlotterModel& blotter);

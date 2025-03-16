@@ -7,9 +7,38 @@
 
 using namespace Beam;
 using namespace Beam::Queries;
+using namespace boost;
 using namespace Nexus;
 using namespace Nexus::MarketDataService;
+using namespace Nexus::OrderExecutionService;
 using namespace Spire;
+
+namespace {
+  bool is_order_displayed(const Order& order, const Security& security) {
+    return order.GetInfo().m_fields.m_security == security &&
+      order.GetInfo().m_fields.m_type != OrderType::LIMIT;
+  }
+
+  optional<std::tuple<std::vector<const Order*>&, int,
+      BookViewModel::UserOrderListModel&>> pick(const Order& order,
+        std::vector<const Order*>& ask_orders,
+        std::vector<const Order*> bid_orders, BookViewModel& model) {
+    auto& fields = order.GetInfo().m_fields;
+    auto& orders = Pick(fields.m_side, ask_orders, bid_orders);
+    auto i = std::find_if(orders.begin(), orders.end(),
+      [&] (const auto& element) {
+        return &order == element;
+      });
+    if(i == orders.end()) {
+      return none;
+    }
+    auto index = std::distance(orders.begin(), i);
+    auto& user_orders = *Pick(
+      fields.m_side, model.get_ask_orders(), model.get_bid_orders());
+    return std::tuple<std::vector<const Order*>&, int,
+      BookViewModel::UserOrderListModel&>(orders, index, user_orders);
+  }
+}
 
 ServiceBookViewModel::ServiceBookViewModel(
     Security security, MarketDatabase markets, BlotterSettings& blotter,
@@ -226,24 +255,63 @@ void ServiceBookViewModel::on_time_and_sales(const TimeAndSale& time_and_sale) {
   m_model->get_technicals()->set(technicals);
 }
 
+void ServiceBookViewModel::on_execution_report(
+    const Order& order, const ExecutionReport& report) {
+  auto entry = pick(order, m_ask_orders, m_bid_orders, *m_model);
+  if(!entry) {
+    return;
+  }
+  auto [orders, index, user_orders] = *entry;
+  auto user_order = user_orders.get(index);
+  user_order.m_status = report.m_status;
+  user_order.m_size -= report.m_lastQuantity;
+  user_orders.set(index, user_order);
+}
+
 void ServiceBookViewModel::on_order_added(
     const OrderLogModel::OrderEntry& order) {
-  if(order.m_order->GetInfo().m_fields.m_security != m_security) {
+  if(!is_order_displayed(*order.m_order, m_security)) {
     return;
   }
   auto& fields = order.m_order->GetInfo().m_fields;
+  auto& orders = Pick(fields.m_side, m_ask_orders, m_bid_orders);
+  orders.push_back(order.m_order);
   auto& user_orders =
     *Pick(fields.m_side, m_model->get_ask_orders(), m_model->get_bid_orders());
-  auto user_order = UserOrder(
-    fields.m_destination, fields.m_price, fields.m_quantity, order.m_status);
-  user_orders.push(user_order);
+  auto execution_reports = optional<std::vector<ExecutionReport>>();
+  order.m_order->GetPublisher().Monitor(
+    m_order_event_handler->get_slot<ExecutionReport>(
+      std::bind_front(&ServiceBookViewModel::on_execution_report, this,
+        std::cref(*order.m_order))), Store(execution_reports));
+  auto remaining_quantity = fields.m_quantity;
+  auto status = OrderStatus::PENDING_NEW;
+  if(execution_reports) {
+    for(auto& report : *execution_reports) {
+      remaining_quantity -= report.m_lastQuantity;
+      status = report.m_status;
+    }
+  }
+  user_orders.push(UserOrder(
+    fields.m_destination, fields.m_price, remaining_quantity, status));
 }
 
 void ServiceBookViewModel::on_order_removed(
     const OrderLogModel::OrderEntry& order) {
+  if(!is_order_displayed(*order.m_order, m_security)) {
+    return;
+  }
+  auto entry = pick(*order.m_order, m_ask_orders, m_bid_orders, *m_model);
+  if(!entry) {
+    return;
+  }
+  auto [orders, index, user_orders] = *entry;
+  orders.erase(orders.begin() + index);
+  user_orders.remove(index);
 }
 
 void ServiceBookViewModel::on_active_blotter(BlotterModel& blotter) {
+  m_order_event_handler.reset();
+  m_order_event_handler.emplace();
   auto& orders = blotter.GetOrderLogModel();
   auto reinitialize = [&] (UserOrderListModel& user_orders, Side side) {
     user_orders.transact([&] {
@@ -251,7 +319,7 @@ void ServiceBookViewModel::on_active_blotter(BlotterModel& blotter) {
       for(auto i = 0; i != orders.rowCount(orders.index(0, 0)); ++i) {
         auto& entry = orders.GetEntry(orders.index(i, 0));
         auto& fields = entry.m_order->GetInfo().m_fields;
-        if(fields.m_side == Side::ASK && fields.m_security == m_security) {
+        if(fields.m_side == side) {
           on_order_added(entry);
         }
       }
