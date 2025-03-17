@@ -10,6 +10,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/FixedHorizontalLayout.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -565,7 +566,8 @@ TableBody::TableBody(
       m_item_builder(std::move(item_builder)),
       m_current_row(nullptr),
       m_is_transaction(false),
-      m_resize_guard(0) {
+      m_resize_guard(0),
+      m_key_observer(*this) {
   setLayout(new Layout(*this));
   setFocusPolicy(Qt::StrongFocus);
   m_style_connection =
@@ -602,6 +604,8 @@ TableBody::TableBody(
     std::bind_front(&TableBody::on_row_selection, this));
   m_widths_connection = m_widths->connect_operation_signal(
     std::bind_front(&TableBody::on_widths_update, this));
+  m_key_observer.connect_filtered_key_press_signal(
+    std::bind_front(&TableBody::on_key_press, this));
 }
 
 const std::shared_ptr<TableModel>& TableBody::get_table() const {
@@ -1479,4 +1483,17 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
         }
       }
     });
+}
+
+bool TableBody::on_key_press(QWidget& target, QKeyEvent& event) {
+  if(auto scroll_box = dynamic_cast<ScrollBox*>(&target)) {
+    auto key = event.key();
+    if(key == Qt::Key_Left || key == Qt::Key_Right || key == Qt::Key_Up ||
+        key == Qt::Key_Down || key == Qt::Key_Home || key == Qt::Key_End ||
+        key == Qt::Key_PageUp || key == Qt::Key_PageDown) {
+      event.ignore();
+      return true;
+    }
+  }
+  return false;
 }
