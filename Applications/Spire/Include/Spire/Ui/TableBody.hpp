@@ -122,6 +122,7 @@ namespace Styles {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
+      void focusInEvent(QFocusEvent* event) override;
       bool focusNextPrevChild(bool next) override;
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
@@ -129,7 +130,6 @@ namespace Styles {
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
-      void focusInEvent(QFocusEvent* event) override;
 
     private:
       struct Styles {

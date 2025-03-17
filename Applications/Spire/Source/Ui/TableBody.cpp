@@ -673,6 +673,16 @@ bool TableBody::event(QEvent* event) {
   return QWidget::event(event);
 }
 
+void TableBody::focusInEvent(QFocusEvent* event) {
+  if(event->reason() == Qt::TabFocusReason) {
+    focusNextPrevChild(true);
+  } else if(event->reason() == Qt::BacktabFocusReason) {
+    focusNextPrevChild(false);
+  } else {
+    QWidget::focusInEvent(event);
+  }
+}
+
 bool TableBody::focusNextPrevChild(bool next) {
   if(isEnabled()) {
     auto focus_widget = focusWidget();
@@ -835,16 +845,6 @@ void TableBody::showEvent(QShowEvent* event) {
   update_parent();
   update_column_covers();
   update_column_widths();
-}
-
-void TableBody::focusInEvent(QFocusEvent* event) {
-  if(event->reason() == Qt::TabFocusReason) {
-    focusNextPrevChild(true);
-  } else if(event->reason() == Qt::BacktabFocusReason) {
-    focusNextPrevChild(false);
-  } else {
-    QWidget::focusInEvent(event);
-  }
 }
 
 const TableBody::Layout& TableBody::get_layout() const {
