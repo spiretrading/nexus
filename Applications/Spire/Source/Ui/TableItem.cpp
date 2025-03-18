@@ -78,6 +78,7 @@ void TableItem::mount(QWidget& body) {
     delete item;
   }
   setFocusProxy(&body);
+  setFocusPolicy(focusPolicy());
   layout()->addWidget(&body);
   body.setAttribute(Qt::WA_DontShowOnScreen, false);
 }
