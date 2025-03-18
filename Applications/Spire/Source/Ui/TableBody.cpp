@@ -698,27 +698,9 @@ bool TableBody::focusNextPrevChild(bool next) {
       return true;
     }
   }
-  auto next_focus_widget = static_cast<QWidget*>(this);
-  auto next_widget = nextInFocusChain();
-  while(next_widget && next_widget != this) {
-    next_widget = next_widget->nextInFocusChain();
-    if(!isAncestorOf(next_widget) && next_widget->isEnabled() &&
-        next_widget->isVisible() && next_widget->focusPolicy() & Qt::TabFocus) {
-      next_focus_widget = next_widget;
-      if(next) {
-        break;
-      }
-    }
-  }
   get_current()->set(none);
-  auto focus_reason = [&] {
-    if(next) {
-      return Qt::TabFocusReason;
-    }
-    return Qt::BacktabFocusReason;
-  }();
-  next_focus_widget->setFocus(focus_reason);
-  return true;
+  setFocus();
+  return QWidget::focusNextPrevChild(next);
 }
 
 void TableBody::keyPressEvent(QKeyEvent* event) {
