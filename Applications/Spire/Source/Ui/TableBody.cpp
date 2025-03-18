@@ -1249,12 +1249,9 @@ bool TableBody::navigate_next() {
   auto get_next_column =
     [&] (const CurrentModel& current, int row, int column) {
       ++column;
-      while(column < get_table()->get_column_size()) {
-        if(!current.test(Index(row, column))) {
-          ++column;
-        } else {
-          break;
-        }
+      while(column < get_table()->get_column_size() &&
+          !current.test(Index(row, column))) {
+        ++column;
       }
       return column;
     };
@@ -1284,12 +1281,8 @@ bool TableBody::navigate_previous() {
   auto get_previous_column =
     [] (const CurrentModel& current, int row, int column) {
       --column;
-      while(column >= 0) {
-        if(!current.test(Index(row, column))) {
-          --column;
-        } else {
-          break;
-        }
+      while(column >= 0 && !current.test(Index(row, column))) {
+        --column;
       }
       return column;
     };
