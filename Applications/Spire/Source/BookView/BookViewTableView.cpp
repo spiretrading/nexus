@@ -736,16 +736,19 @@ namespace {
         },
         [&] (const ListModel<UserOrder>::UpdateOperation& operation) {
           auto& order = operation.get_value();
-          m_order_status[OrderKey(order.m_destination, order.m_price)] = order;
+          auto key = OrderKey(order.m_destination, order.m_price);
+          m_order_status[key] = order;
           if(m_visibility_property->get() != OrderVisibility::HIGHLIGHTED) {
             return;
           }
-          if(order.m_status == OrderStatus::NONE) {
+          update_order_status(order);
+          if(IsTerminal(order.m_status)) {
             QTimer::singleShot(ORDER_HIGHLIGHT_DELAY_MS, m_timer_owner, [=] {
-              update_order_status(order);
+              auto updated_order = order;
+              updated_order.m_status = OrderStatus::NONE;
+              m_order_status[key] = updated_order;
+              update_order_status(updated_order);
             });
-          } else {
-            update_order_status(order);
           }
         });
     }
@@ -1086,11 +1089,6 @@ namespace {
           m_transaction.push(
             UpdateOperation(m_book_quotes->get_size() + operation.m_index,
               previous_quote, m_order_quotes[operation.m_index]));
-          if(IsTerminal(operation.get_value().m_status)) {
-            auto updated_order = order;
-            updated_order.m_status = OrderStatus::NONE;
-            m_user_orders->set(operation.m_index, updated_order);
-          }
         });
     }
   };
