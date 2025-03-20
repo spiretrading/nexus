@@ -10,6 +10,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/FixedHorizontalLayout.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -567,7 +568,8 @@ TableBody::TableBody(
       m_item_builder(std::move(item_builder)),
       m_current_row(nullptr),
       m_is_transaction(false),
-      m_resize_guard(0) {
+      m_resize_guard(0),
+      m_key_observer(*this) {
   setLayout(new Layout(*this));
   setFocusPolicy(Qt::StrongFocus);
   m_style_connection =
@@ -604,6 +606,8 @@ TableBody::TableBody(
     std::bind_front(&TableBody::on_row_selection, this));
   m_widths_connection = m_widths->connect_operation_signal(
     std::bind_front(&TableBody::on_widths_update, this));
+  m_key_observer.connect_filtered_key_press_signal(
+    std::bind_front(&TableBody::on_key_press, this));
 }
 
 const std::shared_ptr<TableModel>& TableBody::get_table() const {
@@ -673,6 +677,16 @@ bool TableBody::event(QEvent* event) {
   return QWidget::event(event);
 }
 
+void TableBody::focusInEvent(QFocusEvent* event) {
+  if(event->reason() == Qt::TabFocusReason) {
+    focusNextPrevChild(true);
+  } else if(event->reason() == Qt::BacktabFocusReason) {
+    focusNextPrevChild(false);
+  } else {
+    QWidget::focusInEvent(event);
+  }
+}
+
 bool TableBody::focusNextPrevChild(bool next) {
   if(isEnabled()) {
     auto focus_widget = focusWidget();
@@ -688,20 +702,9 @@ bool TableBody::focusNextPrevChild(bool next) {
       return true;
     }
   }
-  auto next_focus_widget = static_cast<QWidget*>(this);
-  auto next_widget = nextInFocusChain();
-  while(next_widget && next_widget != this) {
-    next_widget = next_widget->nextInFocusChain();
-    if(!isAncestorOf(next_widget) && next_widget->isEnabled() &&
-        next_widget->focusPolicy() & Qt::TabFocus) {
-      next_focus_widget = next_widget;
-      if(next) {
-        break;
-      }
-    }
-  }
-  next_focus_widget->setFocus(Qt::TabFocusReason);
-  return true;
+  get_current()->set(none);
+  setFocus();
+  return QWidget::focusNextPrevChild(next);
 }
 
 void TableBody::keyPressEvent(QKeyEvent* event) {
@@ -1229,20 +1232,31 @@ void TableBody::update_column_widths() {
 }
 
 bool TableBody::navigate_next() {
+  auto get_next_column =
+    [&] (const CurrentModel& current, int row, int column) {
+      ++column;
+      while(column < get_table()->get_column_size() &&
+          !current.test(Index(row, column))) {
+        ++column;
+      }
+      return column;
+    };
   if(auto& current = get_current()->get()) {
-    auto column = current->m_column + 1;
-    if(column >= get_table()->get_column_size() - 1) {
+    auto column =
+      get_next_column(*get_current(), current->m_row, current->m_column);
+    if(column >= get_table()->get_column_size()) {
       auto row = current->m_row + 1;
       if(row >= get_table()->get_row_size()) {
         return false;
       } else {
-        get_current()->set(Index(row, 0));
+        get_current()->set(
+          Index(row, get_next_column(*get_current(), row, -1)));
       }
     } else {
       get_current()->set(Index(current->m_row, column));
     }
   } else if(get_table()->get_row_size() > 0) {
-    get_current()->set(Index(0, 0));
+    get_current()->set(Index(0, get_next_column(*get_current(), 0, -1)));
   } else {
     return false;
   }
@@ -1250,21 +1264,33 @@ bool TableBody::navigate_next() {
 }
 
 bool TableBody::navigate_previous() {
+  auto get_previous_column =
+    [] (const CurrentModel& current, int row, int column) {
+      --column;
+      while(column >= 0 && !current.test(Index(row, column))) {
+        --column;
+      }
+      return column;
+    };
   if(auto& current = get_current()->get()) {
-    auto column = current->m_column - 1;
+    auto column =
+      get_previous_column(*get_current(), current->m_row, current->m_column);
     if(column < 0) {
       auto row = current->m_row - 1;
       if(row < 0) {
         return false;
       } else {
-        get_current()->set(Index(row, get_table()->get_column_size() - 2));
+        get_current()->set(Index(row, get_previous_column(*get_current(),
+          row, get_table()->get_column_size())));
       }
     } else {
       get_current()->set(Index(current->m_row, column));
     }
   } else if(get_table()->get_row_size() > 0) {
-    get_current()->set(Index(
-      get_table()->get_row_size() - 1, get_table()->get_column_size() - 2));
+    auto row = get_table()->get_row_size() - 1;
+    auto column =
+      get_previous_column(*get_current(), row, get_table()->get_column_size());
+    get_current()->set(Index(row, column));
   } else {
     return false;
   }
@@ -1317,6 +1343,8 @@ void TableBody::on_current(
     if(previous_had_focus || QApplication::focusObject() == this) {
       current_item->setFocus(Qt::FocusReason::OtherFocusReason);
     }
+  } else if(previous) {
+    m_selection_controller.remove_row(previous->m_row);
   }
 }
 
@@ -1481,4 +1509,17 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
         }
       }
     });
+}
+
+bool TableBody::on_key_press(QWidget& target, QKeyEvent& event) {
+  if(auto scroll_box = dynamic_cast<ScrollBox*>(&target)) {
+    auto key = event.key();
+    if(key == Qt::Key_Left || key == Qt::Key_Right || key == Qt::Key_Up ||
+        key == Qt::Key_Down || key == Qt::Key_Home || key == Qt::Key_End ||
+        key == Qt::Key_PageUp || key == Qt::Key_PageDown) {
+      event.ignore();
+      return true;
+    }
+  }
+  return false;
 }
