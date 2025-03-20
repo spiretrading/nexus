@@ -73,6 +73,7 @@ namespace {
     auto button = make_icon_button(icon);
     button->setFocusPolicy(Qt::NoFocus);
     button->setFixedSize(scale(16, 16));
+    button->setFocusPolicy(Qt::NoFocus);
     update_style(*button, [] (auto& style) {
       style.get(Any() > Body()).set(BackgroundColor(Qt::transparent));
       style.get(Any() > is_a<Icon>()).set(Fill(QColor(0xC8C8C8)));
