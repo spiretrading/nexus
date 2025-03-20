@@ -107,7 +107,6 @@ struct TableBody::RowCover : Cover {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     for(auto column = 0; column != body.get_column_size(); ++column) {
       auto item = new TableItem();
-      item->setFocusPolicy(Qt::NoFocus);
       body.m_hover_observers.emplace(std::piecewise_construct,
         std::forward_as_tuple(item), std::forward_as_tuple(*item));
       body.m_hover_observers.at(item).connect_state_signal(

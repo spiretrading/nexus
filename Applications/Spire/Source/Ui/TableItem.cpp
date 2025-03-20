@@ -20,7 +20,7 @@ TableItem::TableItem(QWidget* parent)
       m_click_observer(*this),
       m_focus_observer(*this),
       m_mouse_observer(*this) {
-  setFocusPolicy(Qt::StrongFocus);
+  setFocusPolicy(Qt::NoFocus);
   auto layout = make_hbox_layout(this);
   m_click_observer.connect_click_signal(m_active_signal);
   m_focus_observer.connect_state_signal(
