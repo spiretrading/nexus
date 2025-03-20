@@ -163,7 +163,7 @@ TableView::TableView(
     std::bind_front(&TableView::on_current, this));
   m_body_style_connection = connect_style_signal(
     *m_body, std::bind_front(&TableView::on_body_style, this));
-  setFocusProxy(m_body);
+  setFocusProxy(m_scroll_box);
   on_body_style();
 }
 
