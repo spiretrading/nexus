@@ -34,20 +34,12 @@ namespace Spire {
       /** Submits an order. */
       void submit_order(const OrderInfo& order);
 
-      /** Cancel orders. */
-      void cancel_orders(CancelKeyBindingsModel::Operation operation,
-        const boost::optional<BookViewWindow::CancelCriteria>& criteria);
-
     private:
       std::shared_ptr<BookViewModel> m_model;
-      std::vector<OrderInfo> m_orders;
       Nexus::BboQuote m_bbo;
       boost::signals2::scoped_connection m_bid_operation_connection;
       boost::signals2::scoped_connection m_ask_operation_connection;
 
-      void execute_cancel(
-        const Nexus::OrderExecutionService::OrderFields& order_to_cancel);
-      void update_order(const OrderInfo& order_info);
       void on_bid_operation(
         const ListModel<Nexus::BookQuote>::Operation& operation);
       void on_ask_operation(
