@@ -28,9 +28,6 @@ namespace Spire {
       /** Returns the book view model. */
       const std::shared_ptr<BookViewModel>& get_model() const;
 
-      /** Updates an order status. */
-      void update_order_status(const OrderInfo& order);
-
       /** Submits an book quote. */
       void submit_book_quote(const Nexus::BookQuote& quote);
 
@@ -48,6 +45,9 @@ namespace Spire {
       boost::signals2::scoped_connection m_bid_operation_connection;
       boost::signals2::scoped_connection m_ask_operation_connection;
 
+      void execute_cancel(
+        const Nexus::OrderExecutionService::OrderFields& order_to_cancel);
+      void update_order(const OrderInfo& order_info);
       void on_bid_operation(
         const ListModel<Nexus::BookQuote>::Operation& operation);
       void on_ask_operation(

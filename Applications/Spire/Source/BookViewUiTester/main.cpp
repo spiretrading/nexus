@@ -421,7 +421,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       int update_count) {
     auto updated_order = order;
     updated_order.m_status = make_order_status(m_update_count);
-    m_model.update_order_status(updated_order);
+    m_model.submit_order(updated_order);
     ++m_update_count;
     if(m_update_count >= update_count) {
       quit_order_timer();
