@@ -201,7 +201,9 @@ struct TableBody::Layout : QLayout {
   }
 
   int get_row_height(int row) const {
-    if(row < static_cast<int>(m_top.size())) {
+    if(get_top_index() == -1) {
+      return 0;
+    } else if(row < static_cast<int>(m_top.size())) {
       return m_top[row];
     } else if(row < static_cast<int>(m_top.size()) + count()) {
       return m_items[row - static_cast<int>(m_top.size())]->sizeHint().height();
