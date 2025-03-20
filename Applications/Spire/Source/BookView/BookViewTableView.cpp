@@ -1062,9 +1062,8 @@ namespace {
             [=, order = m_user_orders->get(operation.m_index)] {
               auto i = std::find_if(m_order_quotes.begin(),
                 m_order_quotes.end(), [&] (const BookQuote& quote) {
-                  return quote.m_quote.m_price == order.m_price &&
-                    std::string_view(quote.m_mpid).substr(1) ==
-                      order.m_destination;
+                  return quote.m_mpid == '@' + order.m_destination &&
+                    quote.m_quote.m_price == order.m_price;
                 });
               if(i != m_order_quotes.end() && i->m_quote.m_size <= 0) {
                 m_transaction.transact([&] {

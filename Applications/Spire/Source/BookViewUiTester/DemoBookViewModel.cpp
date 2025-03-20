@@ -1,6 +1,4 @@
 #include "Spire/BookViewUiTester/DemoBookViewModel.hpp"
-#include <ranges>
-#include <QRandomGenerator>
 #include "Spire/Spire/ListModel.hpp"
 
 using namespace boost;
@@ -10,10 +8,6 @@ using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 namespace {
-  std::time_t to_time_t_milliseconds(ptime pt) {
-    return (pt - ptime(gregorian::date(1970, 1, 1))).total_milliseconds();
-  }
-
   auto get_quotes(const BookViewModel& model, Side side) {
     if(side == Side::BID) {
       return model.get_bids();
