@@ -96,6 +96,19 @@ namespace {
         milliseconds(ORDER_HIGHLIGHT_TRANSITION_MS))));
   }
 
+  int find_order_quote(const std::vector<BookQuote>& order_quotes,
+      const UserOrder& order) {
+    auto i = std::find_if(order_quotes.begin(), order_quotes.end(),
+      [&] (const BookQuote& quote) {
+        return quote.m_mpid == '@' + order.m_destination &&
+          quote.m_quote.m_price == order.m_price;
+      });
+    if(i == order_quotes.end()) {
+      return -1;
+    }
+    return std::distance(order_quotes.begin(), i);
+  }
+
   auto make_order_book_quote(const UserOrder& order, Side side) {
     return BookQuote("@" + order.m_destination, false, {},
       {order.m_price, order.m_size, side}, {});
@@ -1051,27 +1064,30 @@ namespace {
         const ListModel<UserOrder>::Operation& operation) {
       visit(operation,
         [&] (const ListModel<UserOrder>::AddOperation& operation) {
-          m_order_quotes.insert(m_order_quotes.begin() + operation.m_index,
-            make_order_book_quote(m_user_orders->get(operation.m_index),
-              m_side));
-          m_transaction.push(AddOperation(
-            m_book_quotes->get_size() + operation.m_index));
+          auto& order = m_user_orders->get(operation.m_index);
+          if(auto index = find_order_quote(m_order_quotes, order); index < 0) {
+            m_order_quotes.push_back(make_order_book_quote(order, m_side));
+            m_transaction.push(AddOperation(
+              m_book_quotes->get_size() + m_order_quotes.size() - 1));
+          } else {
+            auto previous_quote = m_order_quotes[index];
+            m_order_quotes[index].m_quote.m_size += order.m_size;
+            m_transaction.push(
+              UpdateOperation(m_book_quotes->get_size() + index,
+                previous_quote, m_order_quotes[index]));
+          }
         },
         [&] (const ListModel<UserOrder>::PreRemoveOperation& operation) {
           QTimer::singleShot(ORDER_HIGHLIGHT_DELAY_MS, m_timer_owner,
             [=, order = m_user_orders->get(operation.m_index)] {
-              auto i = std::find_if(m_order_quotes.begin(),
-                m_order_quotes.end(), [&] (const BookQuote& quote) {
-                  return quote.m_mpid == '@' + order.m_destination &&
-                    quote.m_quote.m_price == order.m_price;
-                });
-              if(i != m_order_quotes.end() && i->m_quote.m_size <= 0) {
+              if(auto index = find_order_quote(m_order_quotes, order);
+                  index >= 0 && m_order_quotes[index].m_quote.m_size <= 0) {
                 m_transaction.transact([&] {
-                  auto index = m_book_quotes->get_size() +
-                    std::distance(m_order_quotes.begin(), i);
-                  m_transaction.push(PreRemoveOperation(index));
-                  m_order_quotes.erase(i);
-                  m_transaction.push(RemoveOperation(index));
+                  m_transaction.push(
+                    PreRemoveOperation(m_book_quotes->get_size() + index));
+                  m_order_quotes.erase(m_order_quotes.begin() + index);
+                  m_transaction.push(
+                    RemoveOperation(m_book_quotes->get_size() + index));
                 });
               }
             });
@@ -1081,13 +1097,15 @@ namespace {
           if(order.m_status == OrderStatus::NONE) {
             return;
           }
-          auto previous_quote = m_order_quotes[operation.m_index];
-          m_order_quotes[operation.m_index].m_quote.m_size = order.m_size;
-          m_order_quotes[operation.m_index].m_quote.m_size =
-            std::max(Quantity(0), order.m_size);
-          m_transaction.push(
-            UpdateOperation(m_book_quotes->get_size() + operation.m_index,
-              previous_quote, m_order_quotes[operation.m_index]));
+          if(auto index = find_order_quote(m_order_quotes, order); index >= 0) {
+            auto previous_quote = m_order_quotes[index];
+            m_order_quotes[index].m_quote.m_size = order.m_size;
+            m_order_quotes[index].m_quote.m_size =
+              std::max(Quantity(0), order.m_size);
+            m_transaction.push(
+              UpdateOperation(m_book_quotes->get_size() + index,
+                previous_quote, m_order_quotes[index]));
+          }
         });
     }
   };
