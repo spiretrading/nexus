@@ -45,7 +45,7 @@ namespace {
       return m_value.connect_update_signal(slot);
     }
 
-    void on_update(AnyRef current) {
+    void on_update(const AnyRef& current) {
       auto text = to_text(current);
       if(m_value.get() != text) {
         m_value.set(text);

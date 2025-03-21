@@ -17,7 +17,7 @@ namespace Spire {
        * Signals a change to the value.
        * @param value The updated value.
        */
-      using UpdateSignal = Signal<void (AnyRef value)>;
+      using UpdateSignal = Signal<void (const AnyRef& value)>;
 
       virtual ~AnyValueModel() = default;
 
@@ -35,13 +35,13 @@ namespace Spire {
        * operation would return without actually modifying the model.
        * @param value The value to test.
        */
-      QValidator::State test(AnyRef value) const;
+      QValidator::State test(const AnyRef& value) const;
 
       /**
        * Sets the value. By default this operation is a no-op that always
        * returns <i>QValidator::State::Invalid</i>.
        */
-      QValidator::State set(AnyRef value);
+      QValidator::State set(const AnyRef& value);
 
       /** Connects a slot to the UpdateSignal. */
       boost::signals2::connection connect_update_signal(
@@ -56,10 +56,10 @@ namespace Spire {
       virtual AnyRef get_ref() const = 0;
 
       /** Performs a <i>test()</i> on a reference to a value. */
-      virtual QValidator::State test_ref(AnyRef value) const = 0;
+      virtual QValidator::State test_ref(const AnyRef& value) const = 0;
 
       /** Sets the value through a reference. */
-      virtual QValidator::State set_ref(AnyRef value) = 0;
+      virtual QValidator::State set_ref(const AnyRef& value) = 0;
 
       /** Connects a slot to the UpdateSignal. */
       virtual boost::signals2::connection connect_update_signal_ref(
@@ -116,8 +116,8 @@ namespace Spire {
       ValueModel(const ValueModel&) = delete;
       ValueModel& operator =(const ValueModel&) = delete;
       AnyRef get_ref() const override;
-      QValidator::State test_ref(AnyRef value) const override;
-      QValidator::State set_ref(AnyRef value) override;
+      QValidator::State test_ref(const AnyRef& value) const override;
+      QValidator::State set_ref(const AnyRef& value) override;
       boost::signals2::connection connect_update_signal_ref(
         const AnyValueModel::UpdateSignal::slot_type& slot) const override;
   };
@@ -138,7 +138,7 @@ namespace Spire {
   }
 
   template<typename T>
-  QValidator::State ValueModel<T>::test_ref(AnyRef value) const {
+  QValidator::State ValueModel<T>::test_ref(const AnyRef& value) const {
     if(value.get_type() != typeid(T)) {
       return QValidator::State::Invalid;
     }
@@ -146,7 +146,7 @@ namespace Spire {
   }
 
   template<typename T>
-  QValidator::State ValueModel<T>::set_ref(AnyRef value) {
+  QValidator::State ValueModel<T>::set_ref(const AnyRef& value) {
     if(value.get_type() != typeid(T)) {
       return QValidator::State::Invalid;
     }

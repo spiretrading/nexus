@@ -5,8 +5,7 @@
 #include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TableModel.hpp"
-#include "Spire/Spire/TableValueModel.hpp"
-#include "Spire/Spire/ToTextModel.hpp"
+#include "Spire/Spire/TableRowIndexTracker.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/FixedHorizontalLayout.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -15,6 +14,7 @@
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
+using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -56,6 +56,50 @@ namespace {
     item->setFocus(reason);
     return true;
   }
+
+  struct TableValueToTextModel : ValueModel<QString> {
+    std::shared_ptr<TableModel> m_table;
+    TableRowIndexTracker m_row;
+    int m_column;
+    LocalValueModel<QString> m_current;
+    scoped_connection m_connection;
+
+    TableValueToTextModel(
+        std::shared_ptr<TableModel> table, int row, int column)
+        : m_table(std::move(table)),
+          m_row(row),
+          m_column(column),
+          m_current(to_text(m_table->at(m_row.get_index(), column))) {
+      m_connection = m_table->connect_operation_signal(
+        std::bind_front(&TableValueToTextModel::on_operation, this));
+    }
+
+    const Type& get() const override {
+      return m_current.get();
+    }
+
+    connection connect_update_signal(
+        const UpdateSignal::slot_type& slot) const override {
+      return m_current.connect_update_signal(slot);
+    }
+
+    void on_operation(const TableModel::Operation& operation) {
+      visit(operation,
+        [&] (const TableModel::UpdateOperation& operation) {
+          if(m_row.get_index() == operation.m_row &&
+              m_column == operation.m_column) {
+            m_current.set(to_text(operation.m_value));
+          }
+        },
+        [&] (const auto& operation) {
+          m_row.update(operation);
+          if(m_row.get_index() == -1) {
+            m_table = nullptr;
+            m_connection.disconnect();
+          }
+        });
+    }
+  };
 }
 
 Spacing Spire::Styles::spacing(int spacing) {
@@ -68,11 +112,8 @@ GridColor Spire::Styles::grid_color(QColor color) {
 
 QWidget* TableBody::default_item_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
-  auto text = make_to_text_model(
-    make_table_value_model<AnyRef>(table, row, column),
-    [] (AnyRef value) { return to_text(value); },
-    [] (const QString&) { return none; });
-  return make_label(text);
+  return make_label(
+    std::make_shared<TableValueToTextModel>(table, row, column));
 }
 
 struct TableBody::Cover : QWidget {
