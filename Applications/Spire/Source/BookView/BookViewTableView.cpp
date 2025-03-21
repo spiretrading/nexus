@@ -621,14 +621,13 @@ namespace {
     }
   };
 
-  struct OrderHighlightModel {
+  struct OrderHighlightModel : QObject {
     std::shared_ptr<TableModel> m_quote_table;
     std::shared_ptr<ListModel<BookViewModel::UserOrder>> m_orders;
     std::shared_ptr<RowTracker> m_row_tracker;
     std::shared_ptr<ValueModel<OrderVisibility>> m_visibility_property;
     std::shared_ptr<ValueModel<OrderHighlightArray>> m_highlight_properties;
     bool m_is_ascending;
-    QObject* m_timer_owner;
     ColumnViewListModel<Money> m_prices;
     std::unordered_map<OrderKey, UserOrder, OrderKeyHash> m_order_status;
     OrderVisibility m_visibility;
@@ -642,14 +641,14 @@ namespace {
         std::shared_ptr<RowTracker> row_tracker,
         std::shared_ptr<ValueModel<OrderVisibility>> visibility_property,
         std::shared_ptr<ValueModel<OrderHighlightArray>> highlight_properties,
-        bool is_ascending, QObject& timer_owner)
-        : m_quote_table(std::move(quote_table)),
+        bool is_ascending, QObject* parent = nullptr)
+        : QObject(parent),
+          m_quote_table(std::move(quote_table)),
           m_orders(std::move(orders)),
           m_row_tracker(std::move(row_tracker)),
           m_visibility_property(std::move(visibility_property)),
           m_highlight_properties(std::move(highlight_properties)),
           m_is_ascending(is_ascending),
-          m_timer_owner(&timer_owner),
           m_prices(m_quote_table, static_cast<int>(BookViewColumns::PRICE)) {
       for(auto i = 0; i < m_orders->get_size(); ++i) {
         auto& order = m_orders->get(i);
@@ -756,7 +755,7 @@ namespace {
           }
           update_order_status(order);
           if(IsTerminal(order.m_status)) {
-            QTimer::singleShot(ORDER_HIGHLIGHT_DELAY_MS, m_timer_owner, [=] {
+            QTimer::singleShot(ORDER_HIGHLIGHT_DELAY_MS, this, [=] {
               auto updated_order = order;
               updated_order.m_status = OrderStatus::NONE;
               m_order_status[key] = updated_order;
@@ -999,11 +998,10 @@ namespace {
     }
   };
 
-  struct BookViewOrderQuoteListModel : ListModel<BookQuote> {
+  struct BookViewOrderQuoteListModel : ListModel<BookQuote>, QObject {
     std::shared_ptr<BookQuoteListModel> m_book_quotes;
     std::shared_ptr<UserOrderListModel> m_user_orders;
     Side m_side;
-    QObject* m_timer_owner;
     std::vector<BookQuote> m_order_quotes;
     ListModelTransactionLog<BookQuote> m_transaction;
     scoped_connection m_book_quote_connection;
@@ -1012,11 +1010,11 @@ namespace {
     BookViewOrderQuoteListModel(
       std::shared_ptr<ListModel<BookQuote>> book_quotes,
       std::shared_ptr<UserOrderListModel> user_orders, Side side,
-      QObject& timer_owner)
-      : m_book_quotes(std::move(book_quotes)),
+      QObject* parent = nullptr)
+      : QObject(parent),
+        m_book_quotes(std::move(book_quotes)),
         m_user_orders(std::move(user_orders)),
         m_side(side),
-        m_timer_owner(&timer_owner),
         m_book_quote_connection(m_book_quotes->connect_operation_signal(
           std::bind_front(
             &BookViewOrderQuoteListModel::on_book_quote_operation, this))),
@@ -1075,7 +1073,7 @@ namespace {
           }
         },
         [&] (const ListModel<UserOrder>::PreRemoveOperation& operation) {
-          QTimer::singleShot(ORDER_HIGHLIGHT_DELAY_MS, m_timer_owner,
+          QTimer::singleShot(ORDER_HIGHLIGHT_DELAY_MS, this,
             [=, order = m_user_orders->get(operation.m_index)] {
               if(auto index = find_order_quote(m_order_quotes, order);
                   index >= 0 && m_order_quotes[index].m_quote.m_size <= 0) {
@@ -1310,7 +1308,6 @@ TableView* Spire::make_book_view_table_view(
     return std::tuple(model->get_asks(), model->get_ask_orders(),
       SortedTableModel::Ordering::ASCENDING);
   }();
-  auto timer_owner = new QObject();
   auto is_ascending = ordering == SortedTableModel::Ordering::ASCENDING;
   auto highlight_property = make_field_value_model(properties,
     &BookViewProperties::m_highlight_properties);
@@ -1321,7 +1318,7 @@ TableView* Spire::make_book_view_table_view(
   auto order_filtered_list = std::make_shared<OrderFilteredListModel>(
     std::make_shared<BookViewPreviewQuoteListModel>(
       std::make_shared<BookViewOrderQuoteListModel>(
-        std::move(book_quotes), orders, side, *timer_owner),
+        std::move(book_quotes), orders, side, parent),
       model->get_preview_order(), side), highlight_property);
   auto table = std::make_shared<SortedTableModel>(
     make_book_view_table_model(order_filtered_list), column_orders);
@@ -1336,15 +1333,13 @@ TableView* Spire::make_book_view_table_view(
   auto order_highlight_model = std::make_shared<OrderHighlightModel>(table,
     orders, row_tracker, order_visibility,
     make_field_value_model(highlight_property,
-      &BookViewHighlightProperties::m_order_highlights),
-    is_ascending, *timer_owner);
+      &BookViewHighlightProperties::m_order_highlights), is_ascending, parent);
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
     set_item_builder(std::bind_front(item_builder, row_tracker,
       level_quote_model, market_highlight_model, order_highlight_model)).make();
   table_view->get_header().setVisible(false);
   table_view->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
-  timer_owner->setParent(table_view);
   auto observer = new BookViewTableViewObserver(*table_view, properties,
     table_view);
   order_filtered_list->connect_filter_signal([=] {
