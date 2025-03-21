@@ -1054,10 +1054,7 @@ namespace {
 
     void on_book_quote_operation(
         const ListModel<BookQuote>::Operation& operation) {
-      visit(operation,
-        [&] (const auto& operation) {
-          m_transaction.push(operation);
-        });
+      m_transaction.push(operation);
     }
 
     void on_user_order_operation(
@@ -1180,10 +1177,7 @@ namespace {
     }
 
     void on_operation(const ListModel<BookQuote>::Operation& operation) {
-      visit(operation,
-        [&] (const auto& operation) {
-          m_transaction.push(operation);
-        });
+      m_transaction.push(operation);
     }
 
     void on_update(const optional<OrderFields>& order) {
