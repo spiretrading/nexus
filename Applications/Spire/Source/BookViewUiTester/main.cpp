@@ -74,10 +74,10 @@ const QString& to_text(CancelKeyBindingsModel::Operation operation) {
     static const auto value = QObject::tr("All");
     return value;
   } else if(operation == CancelKeyBindingsModel::Operation::ALL_ASKS) {
-    static const auto value = QObject::tr("All Ask");
+    static const auto value = QObject::tr("All Asks");
     return value;
   } else if(operation == CancelKeyBindingsModel::Operation::ALL_BIDS) {
-    static const auto value = QObject::tr("All bid");
+    static const auto value = QObject::tr("All bids");
     return value;
   } else if(operation == CancelKeyBindingsModel::Operation::CLOSEST_ASK) {
     static const auto value = QObject::tr("Closest Ask");
@@ -421,7 +421,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       int update_count) {
     auto updated_order = order;
     updated_order.m_status = make_order_status(m_update_count);
-    m_model.update_order_status(updated_order);
+    m_model.submit_order(updated_order);
     ++m_update_count;
     if(m_update_count >= update_count) {
       quit_order_timer();
@@ -467,11 +467,9 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   void on_cancel_order(CancelKeyBindingsModel::Operation operation,
       const Security& security,
       const optional<BookViewWindow::CancelCriteria>& criteria) {
-    m_model.cancel_orders(operation, criteria);
-    auto log = QString("%1: Operation:[%2] Security:[%3]").
+    auto log = QString("%1: Operation:[%2]").
       arg(++m_line_number).
-      arg(to_text(operation)).
-      arg(to_text(security));
+      arg(to_text(operation));
     if(criteria) {
       log += QString(" Order Destination:[%1] Order Price:[%2]").
         arg(QString::fromStdString(criteria->m_destination)).

@@ -51,18 +51,6 @@ namespace {
     }
   }
 
-  int find_book_quote(const ListModel<BookQuote>& quotes,
-      const std::string& mpid, const Money& price) {
-    auto i = std::find_if(quotes.begin(), quotes.end(),
-      [&] (const BookQuote& quote) {
-        return mpid == quote.m_mpid && price == quote.m_quote.m_price;
-      });
-    if(i == quotes.end()) {
-      return -1;
-    }
-    return std::distance(quotes.begin(), i);
-  }
-
   auto make_panel(std::shared_ptr<BookViewModel> model,
       std::shared_ptr<QuoteModel> bbo,
       std::shared_ptr<BookViewPropertiesModel> properties,
@@ -176,37 +164,33 @@ void MarketDepth::focusInEvent(QFocusEvent* event) {
 void MarketDepth::on_side_current(const optional<TableView::Index>& current,
     Side side) {
   auto [last_side_current_row, last_side_opposite_row, table_view,
-      opposite_table_view, opposite_connection, quotes] = [&] {
+      opposite_table_view, opposite_connection] = [&] {
     if(side == Side::BID) {
       return std::tie(m_last_bid_current_row, m_last_ask_current_row,
-        m_bid_table_view, m_ask_table_view, m_ask_current_connection,
-        m_model->get_bids());
+        m_bid_table_view, m_ask_table_view, m_ask_current_connection);
     }
     return std::tie(m_last_ask_current_row, m_last_bid_current_row,
-      m_ask_table_view, m_bid_table_view, m_bid_current_connection,
-      m_model->get_asks());
+      m_ask_table_view, m_bid_table_view, m_bid_current_connection);
   }();
   if(current && last_side_current_row &&
       current->m_row == last_side_current_row) {
     return;
   }
   if(current) {
-    last_side_current_row = current->m_row;
     m_last_current_row = none;
     auto blocker = shared_connection_block(opposite_connection);
     opposite_table_view->get_current()->set(none);
     last_side_opposite_row = none;
     auto& mpid = get_mpid(*table_view->get_table(), current->m_row);
     if(is_order(mpid) && !is_preview_order(mpid)) {
-      auto& price = get_price(*table_view->get_table(), current->m_row);
-      if(auto i = find_book_quote(*quotes, mpid, price); i >= 0) {
-        m_selected_quote->set(quotes->get(i));
-        return;
-      }
+      last_side_current_row = current->m_row;
+      m_selected_quote->set(BookQuote(mpid, false, {},
+        {get_price(*table_view->get_table(), current->m_row),
+          get_size(*table_view->get_table(), current->m_row), side}, {}));
+      return;
     }
-  } else {
-    last_side_current_row = none;
   }
+  last_side_current_row = none;
   m_selected_quote->set(none);
   setFocus();
 }

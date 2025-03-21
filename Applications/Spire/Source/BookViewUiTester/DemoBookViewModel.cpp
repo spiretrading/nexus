@@ -1,5 +1,4 @@
 #include "Spire/BookViewUiTester/DemoBookViewModel.hpp"
-#include <QRandomGenerator>
 #include "Spire/Spire/ListModel.hpp"
 
 using namespace boost;
@@ -9,27 +8,6 @@ using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 namespace {
-  std::time_t to_time_t_milliseconds(ptime pt) {
-    return (pt - ptime(gregorian::date(1970, 1, 1))).total_milliseconds();
-  }
-
-  Side get_side(CancelKeyBindingsModel::Operation operation) {
-    if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT_ASK ||
-        operation == CancelKeyBindingsModel::Operation::OLDEST_ASK ||
-        operation == CancelKeyBindingsModel::Operation::ALL_ASKS ||
-        operation == CancelKeyBindingsModel::Operation::CLOSEST_ASK ||
-        operation == CancelKeyBindingsModel::Operation::FURTHEST_ASK) {
-      return Side::ASK;
-    } else if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT_BID ||
-        operation == CancelKeyBindingsModel::Operation::OLDEST_BID ||
-        operation == CancelKeyBindingsModel::Operation::ALL_BIDS ||
-        operation == CancelKeyBindingsModel::Operation::CLOSEST_BID ||
-        operation == CancelKeyBindingsModel::Operation::FURTHEST_BID) {
-      return Side::BID;
-    }
-    return Side::NONE;
-  }
-
   auto get_quotes(const BookViewModel& model, Side side) {
     if(side == Side::BID) {
       return model.get_bids();
@@ -69,82 +47,10 @@ namespace {
     return std::distance(orders.begin(), i);
   }
 
-  int find_order(const ListModel<BookViewModel::UserOrder>& orders,
-      const Destination& destination, const Money& price,
-      const Quantity& size) {
-    auto i = std::find_if(orders.begin(), orders.end(),
-      [&] (const BookViewModel::UserOrder& order) {
-        return order.m_destination == destination && order.m_price == price &&
-          order.m_size == size;
-      });
-    if(i == orders.end()) {
-      return -1;
-    }
-    return std::distance(orders.begin(), i);
-  }
-
   auto make_user_order(const DemoBookViewModel::OrderInfo& order) {
     return BookViewModel::UserOrder(order.m_order_fields.m_destination,
       order.m_order_fields.m_price, order.m_order_fields.m_quantity,
       order.m_status);
-  }
-
-  void update_order(const OrderFields& order_fields,
-      const optional<OrderFields>& preview_order, OrderStatus status,
-      ListModel<BookQuote>& quotes,
-      ListModel<BookViewModel::UserOrder>& orders) {
-    auto order_index = find_order(orders, order_fields.m_destination,
-      order_fields.m_price);
-    if(order_index < 0) {
-      return;
-    }
-    auto mpid = "@" + order_fields.m_destination;
-    auto quote_index =
-      find_book_quote(quotes, preview_order, mpid, order_fields.m_price);
-    if(quote_index < 0) {
-      return;
-    }
-    auto remaining_size = quotes.get(quote_index).m_quote.m_size;
-    remaining_size -= order_fields.m_quantity;
-    remaining_size = std::max(Quantity(0), remaining_size);
-    auto book_quote = quotes.get(quote_index);
-    book_quote.m_quote.m_size = remaining_size;
-    quotes.set(quote_index, book_quote);
-    auto order = orders.get(order_index);
-    order.m_size -= order_fields.m_quantity;
-    order.m_status = status;
-    orders.set(order_index, order);
-    order_index = find_order(orders, order_fields.m_destination,
-      order_fields.m_price);
-    if(order_index < 0) {
-      return;
-    }
-    order.m_status = OrderStatus::NONE;
-    orders.set(order_index, order);
-    if(order.m_size <= 0) {
-      orders.remove(order_index);
-    }
-  }
-
-  void execute_cancel(const OrderFields& order_to_cancel,
-      const optional<OrderFields>& preview_order, 
-      ListModel<BookQuote>& quotes, ListModel<BookViewModel::UserOrder>& orders) {
-    auto random_generator =
-      QRandomGenerator(to_time_t_milliseconds(microsec_clock::universal_time()));
-    QTimer::singleShot(random_generator.bounded(5000), [=, &quotes, &orders] {
-      update_order(order_to_cancel, preview_order, OrderStatus::CANCELED,
-        quotes, orders);
-    });
-  }
-
-  template<typename T>
-  auto to_base(const T& i) {
-    return i;
-  }
-
-  template<typename T>
-  auto to_base(const std::reverse_iterator<T>& i) {
-    return std::next(i).base();
   }
 }
 
@@ -164,24 +70,6 @@ const std::shared_ptr<BookViewModel>& DemoBookViewModel::get_model() const {
   return m_model;
 }
 
-void DemoBookViewModel::update_order_status(const OrderInfo& order) {
-  auto quotes = get_quotes(*m_model, order.m_order_fields.m_side);
-  auto orders = get_orders(*m_model, order.m_order_fields.m_side);
-  update_order(order.m_order_fields, m_model->get_preview_order()->get(),
-    order.m_status, *quotes, *orders);
-  if(order.m_status == OrderStatus::FILLED ||
-      order.m_status == OrderStatus::CANCELED ||
-      order.m_status == OrderStatus::REJECTED) {
-    for(auto i = m_orders.rbegin(); i != m_orders.rend(); ++i) {
-      if(i->m_order_fields.m_destination == order.m_order_fields.m_destination &&
-          i->m_order_fields.m_price == order.m_order_fields.m_price) {
-        m_orders.erase(std::next(i).base());
-        break;
-      }
-    }
-  }
-}
-
 void DemoBookViewModel::submit_book_quote(const BookQuote& quote) {
   auto quotes = get_quotes(*m_model, quote.m_quote.m_side);
   auto i = find_book_quote(*quotes, m_model->get_preview_order()->get(),
@@ -197,167 +85,27 @@ void DemoBookViewModel::submit_book_quote(const BookQuote& quote) {
   }
 }
 
-void DemoBookViewModel::submit_order(const OrderInfo& order) {
-  auto quotes = get_quotes(*m_model, order.m_order_fields.m_side);
-  auto orders = get_orders(*m_model, order.m_order_fields.m_side);
+void DemoBookViewModel::submit_order(const OrderInfo& order_info) {
+  auto orders = get_orders(*m_model, order_info.m_order_fields.m_side);
   auto order_index = find_order(*orders,
-    order.m_order_fields.m_destination, order.m_order_fields.m_price);
+    order_info.m_order_fields.m_destination, order_info.m_order_fields.m_price);
   if(order_index >= 0) {
-    auto quote_index = find_book_quote(*quotes,
-      m_model->get_preview_order()->get(),
-      "@" + order.m_order_fields.m_destination, order.m_order_fields.m_price);
-    if(quote_index < 0) {
-      return;
-    }
-    auto book_quote = quotes->get(quote_index);
-    auto quantity = book_quote.m_quote.m_size;
-    if(order.m_status == OrderStatus::NEW) {
-      book_quote.m_quote.m_size =
-        book_quote.m_quote.m_size + order.m_order_fields.m_quantity;
-      quotes->set(quote_index, book_quote);
-      orders->push(make_user_order(order));
-      m_orders.push_back(order);
+    if(order_info.m_status == OrderStatus::NEW) {
+      auto order = orders->get(order_index);
+      order.m_size += order_info.m_order_fields.m_quantity;
+      order.m_status = order_info.m_status;
+      orders->set(order_index, order);
     } else {
-      update_order(order.m_order_fields, m_model->get_preview_order()->get(),
-        order.m_status, *quotes, *orders);
-    }
-  } else if(order.m_status == OrderStatus::NEW) {
-    auto quote = BookQuote("@" + order.m_order_fields.m_destination, false, "",
-      Quote{order.m_order_fields.m_price, order.m_order_fields.m_quantity,
-        order.m_order_fields.m_side}, second_clock::local_time());
-    quotes->push(std::move(quote));
-    orders->push(make_user_order(order));
-    m_orders.push_back(order);
-  }
-}
-
-void DemoBookViewModel::cancel_orders(
-    CancelKeyBindingsModel::Operation operation,
-    const optional<BookViewWindow::CancelCriteria>& criteria) {
-  if(m_orders.empty()) {
-    return;
-  }
-  auto orders_to_cancel = std::vector<OrderFields>();
-  auto expected_side = get_side(operation);
-  if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT) {
-    orders_to_cancel.push_back(m_orders.back().m_order_fields);
-    m_orders.pop_back();
-  } else if(operation == CancelKeyBindingsModel::Operation::OLDEST) {
-    orders_to_cancel.push_back(m_orders.front().m_order_fields);
-    m_orders.erase(m_orders.begin());
-  } else if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT_ASK ||
-      operation == CancelKeyBindingsModel::Operation::MOST_RECENT_BID ||
-      operation == CancelKeyBindingsModel::Operation::OLDEST_ASK ||
-      operation == CancelKeyBindingsModel::Operation::OLDEST_BID) {
-    auto cancel = [&] (auto begin, auto end) {
-      for(auto i = begin; i != end; ++i) {
-        if(i->m_order_fields.m_side == expected_side) {
-          if(criteria) {
-            if(criteria->m_destination == i->m_order_fields.m_destination &&
-                criteria->m_price == i->m_order_fields.m_price) {
-              orders_to_cancel.push_back(i->m_order_fields);
-              m_orders.erase(to_base(i));
-              break;
-            }
-          } else {
-            orders_to_cancel.push_back(i->m_order_fields);
-            m_orders.erase(to_base(i));
-            break;
-          }
-        }
-      }
-    };
-    if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT_ASK ||
-        operation == CancelKeyBindingsModel::Operation::MOST_RECENT_BID) {
-      cancel(m_orders.rbegin(), m_orders.rend());
-    } else {
-      cancel(m_orders.begin(), m_orders.end());
-    }
-  } else if(operation == CancelKeyBindingsModel::Operation::ALL) {
-    for(auto& order : m_orders) {
-      orders_to_cancel.push_back(order.m_order_fields);
-    }
-    m_orders.clear();
-  } else if(operation == CancelKeyBindingsModel::Operation::ALL_ASKS ||
-      operation == CancelKeyBindingsModel::Operation::ALL_BIDS) {
-    std::erase_if(m_orders, [&] (const auto& order) {
-      if(order.m_order_fields.m_side != expected_side) {
-        return false;
-      }
-      if(criteria) {
-        if(criteria->m_destination == order.m_order_fields.m_destination &&
-            criteria->m_price == order.m_order_fields.m_price) {
-          orders_to_cancel.push_back(order.m_order_fields);
-          return true;
-        }
-      } else {
-        orders_to_cancel.push_back(order.m_order_fields);
-        return true;
-      }
-      return false;
-    });
-  } else if(operation == CancelKeyBindingsModel::Operation::CLOSEST_ASK ||
-      operation == CancelKeyBindingsModel::Operation::CLOSEST_BID ||
-      operation == CancelKeyBindingsModel::Operation::FURTHEST_ASK ||
-      operation == CancelKeyBindingsModel::Operation::FURTHEST_BID) {
-    auto cancel = [&] (auto begin, auto end, auto flip) {
-      auto closest_iterator = end;
-      auto closest_price = boost::optional<Money>();
-      for(auto i = begin; i != end; ++i) {
-        if(i->m_order_fields.m_side == expected_side) {
-          auto price = i->m_order_fields.m_price;
-          if(price != Money::ZERO) {
-            if(!closest_price) {
-              closest_price = price;
-              closest_iterator = i;
-            } else if(closest_price && (price < *closest_price) == flip) {
-              closest_price = price;
-              closest_iterator = i;
-            }
-          }
-        }
-      }
-      if(closest_iterator != end) {
-        orders_to_cancel.push_back(closest_iterator->m_order_fields);
-        m_orders.erase(to_base(closest_iterator));
-      }
-    };
-    if(operation == CancelKeyBindingsModel::Operation::CLOSEST_ASK ||
-        operation == CancelKeyBindingsModel::Operation::FURTHEST_BID) {
-      cancel(m_orders.begin(), m_orders.end(), true);
-    } else {
-      cancel(m_orders.begin(), m_orders.end(), false);
-    }
-  }
-  if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT ||
-      operation == CancelKeyBindingsModel::Operation::ALL ||
-      operation == CancelKeyBindingsModel::Operation::OLDEST) {
-    for(auto& order_to_cancel : orders_to_cancel) {
-      if(order_to_cancel.m_side == Side::BID) {
-        execute_cancel(order_to_cancel, m_model->get_preview_order()->get(),
-          *m_model->get_bids(), *m_model->get_bid_orders());
-      } else {
-        execute_cancel(order_to_cancel, m_model->get_preview_order()->get(),
-          *m_model->get_asks(), *m_model->get_ask_orders());
+      auto order = orders->get(order_index);
+      order.m_size -= order_info.m_order_fields.m_quantity;
+      order.m_status = order_info.m_status;
+      orders->set(order_index, order);
+      if(order.m_size <= 0) {
+        orders->remove(order_index);
       }
     }
-  } else {
-    auto [side, orders, quotes] = [&] {
-      if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT_BID ||
-        operation == CancelKeyBindingsModel::Operation::OLDEST_BID ||
-        operation == CancelKeyBindingsModel::Operation::CLOSEST_BID ||
-        operation == CancelKeyBindingsModel::Operation::FURTHEST_BID ||
-        operation == CancelKeyBindingsModel::Operation::ALL_BIDS) {
-        return std::tuple(Side::BID, m_model->get_bid_orders(),
-          m_model->get_bids());
-      }
-      return std::tuple(Side::ASK, m_model->get_ask_orders(),
-        m_model->get_asks());
-    }();
-    for(auto& order_to_cancel : orders_to_cancel) {
-      execute_cancel(order_to_cancel, m_model->get_preview_order()->get(),
-        *quotes, *orders);
-    }
+  } else if(order_info.m_status == OrderStatus::NEW) {
+    orders->push(make_user_order(order_info));
   }
 }
 
