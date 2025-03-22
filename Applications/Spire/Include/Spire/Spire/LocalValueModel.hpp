@@ -49,8 +49,7 @@ namespace Spire {
     : m_value(std::move(value)) {}
 
   template<typename T>
-  const typename LocalValueModel<T>::Type&
-      LocalValueModel<T>::get() const {
+  const typename LocalValueModel<T>::Type& LocalValueModel<T>::get() const {
     return m_value;
   }
 

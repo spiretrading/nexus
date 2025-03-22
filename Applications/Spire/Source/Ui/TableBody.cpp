@@ -5,15 +5,16 @@
 #include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TableModel.hpp"
-#include "Spire/Spire/TableValueModel.hpp"
-#include "Spire/Spire/ToTextModel.hpp"
+#include "Spire/Spire/TableRowIndexTracker.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/FixedHorizontalLayout.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
+using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -55,6 +56,50 @@ namespace {
     item->setFocus(reason);
     return true;
   }
+
+  struct TableValueToTextModel : ValueModel<QString> {
+    std::shared_ptr<TableModel> m_table;
+    TableRowIndexTracker m_row;
+    int m_column;
+    LocalValueModel<QString> m_current;
+    scoped_connection m_connection;
+
+    TableValueToTextModel(
+        std::shared_ptr<TableModel> table, int row, int column)
+        : m_table(std::move(table)),
+          m_row(row),
+          m_column(column),
+          m_current(to_text(m_table->at(m_row.get_index(), column))) {
+      m_connection = m_table->connect_operation_signal(
+        std::bind_front(&TableValueToTextModel::on_operation, this));
+    }
+
+    const Type& get() const override {
+      return m_current.get();
+    }
+
+    connection connect_update_signal(
+        const UpdateSignal::slot_type& slot) const override {
+      return m_current.connect_update_signal(slot);
+    }
+
+    void on_operation(const TableModel::Operation& operation) {
+      visit(operation,
+        [&] (const TableModel::UpdateOperation& operation) {
+          if(m_row.get_index() == operation.m_row &&
+              m_column == operation.m_column) {
+            m_current.set(to_text(operation.m_value));
+          }
+        },
+        [&] (const auto& operation) {
+          m_row.update(operation);
+          if(m_row.get_index() == -1) {
+            m_table = nullptr;
+            m_connection.disconnect();
+          }
+        });
+    }
+  };
 }
 
 Spacing Spire::Styles::spacing(int spacing) {
@@ -67,11 +112,8 @@ GridColor Spire::Styles::grid_color(QColor color) {
 
 QWidget* TableBody::default_item_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
-  auto text = make_to_text_model(
-    make_table_value_model<AnyRef>(table, row, column),
-    [] (AnyRef value) { return to_text(value); },
-    [] (const QString&) { return none; });
-  return make_label(text);
+  return make_label(
+    std::make_shared<TableValueToTextModel>(table, row, column));
 }
 
 struct TableBody::Cover : QWidget {
@@ -201,7 +243,9 @@ struct TableBody::Layout : QLayout {
   }
 
   int get_row_height(int row) const {
-    if(row < static_cast<int>(m_top.size())) {
+    if(get_top_index() == -1) {
+      return 0;
+    } else if(row < static_cast<int>(m_top.size())) {
       return m_top[row];
     } else if(row < static_cast<int>(m_top.size()) + count()) {
       return m_items[row - static_cast<int>(m_top.size())]->sizeHint().height();
@@ -565,7 +609,8 @@ TableBody::TableBody(
       m_item_builder(std::move(item_builder)),
       m_current_row(nullptr),
       m_is_transaction(false),
-      m_resize_guard(0) {
+      m_resize_guard(0),
+      m_key_observer(*this) {
   setLayout(new Layout(*this));
   setFocusPolicy(Qt::StrongFocus);
   m_style_connection =
@@ -602,6 +647,8 @@ TableBody::TableBody(
     std::bind_front(&TableBody::on_row_selection, this));
   m_widths_connection = m_widths->connect_operation_signal(
     std::bind_front(&TableBody::on_widths_update, this));
+  m_key_observer.connect_filtered_key_press_signal(
+    std::bind_front(&TableBody::on_key_press, this));
 }
 
 const std::shared_ptr<TableModel>& TableBody::get_table() const {
@@ -671,6 +718,16 @@ bool TableBody::event(QEvent* event) {
   return QWidget::event(event);
 }
 
+void TableBody::focusInEvent(QFocusEvent* event) {
+  if(event->reason() == Qt::TabFocusReason) {
+    focusNextPrevChild(true);
+  } else if(event->reason() == Qt::BacktabFocusReason) {
+    focusNextPrevChild(false);
+  } else {
+    QWidget::focusInEvent(event);
+  }
+}
+
 bool TableBody::focusNextPrevChild(bool next) {
   if(isEnabled()) {
     auto focus_widget = focusWidget();
@@ -686,20 +743,9 @@ bool TableBody::focusNextPrevChild(bool next) {
       return true;
     }
   }
-  auto next_focus_widget = static_cast<QWidget*>(this);
-  auto next_widget = nextInFocusChain();
-  while(next_widget && next_widget != this) {
-    next_widget = next_widget->nextInFocusChain();
-    if(!isAncestorOf(next_widget) && next_widget->isEnabled() &&
-        next_widget->focusPolicy() & Qt::TabFocus) {
-      next_focus_widget = next_widget;
-      if(next) {
-        break;
-      }
-    }
-  }
-  next_focus_widget->setFocus(Qt::TabFocusReason);
-  return true;
+  get_current()->set(none);
+  setFocus();
+  return QWidget::focusNextPrevChild(next);
 }
 
 void TableBody::keyPressEvent(QKeyEvent* event) {
@@ -1227,20 +1273,31 @@ void TableBody::update_column_widths() {
 }
 
 bool TableBody::navigate_next() {
+  auto get_next_column =
+    [&] (const CurrentModel& current, int row, int column) {
+      ++column;
+      while(column < get_table()->get_column_size() &&
+          !current.test(Index(row, column))) {
+        ++column;
+      }
+      return column;
+    };
   if(auto& current = get_current()->get()) {
-    auto column = current->m_column + 1;
-    if(column >= get_table()->get_column_size() - 1) {
+    auto column =
+      get_next_column(*get_current(), current->m_row, current->m_column);
+    if(column >= get_table()->get_column_size()) {
       auto row = current->m_row + 1;
       if(row >= get_table()->get_row_size()) {
         return false;
       } else {
-        get_current()->set(Index(row, 0));
+        get_current()->set(
+          Index(row, get_next_column(*get_current(), row, -1)));
       }
     } else {
       get_current()->set(Index(current->m_row, column));
     }
   } else if(get_table()->get_row_size() > 0) {
-    get_current()->set(Index(0, 0));
+    get_current()->set(Index(0, get_next_column(*get_current(), 0, -1)));
   } else {
     return false;
   }
@@ -1248,21 +1305,33 @@ bool TableBody::navigate_next() {
 }
 
 bool TableBody::navigate_previous() {
+  auto get_previous_column =
+    [] (const CurrentModel& current, int row, int column) {
+      --column;
+      while(column >= 0 && !current.test(Index(row, column))) {
+        --column;
+      }
+      return column;
+    };
   if(auto& current = get_current()->get()) {
-    auto column = current->m_column - 1;
+    auto column =
+      get_previous_column(*get_current(), current->m_row, current->m_column);
     if(column < 0) {
       auto row = current->m_row - 1;
       if(row < 0) {
         return false;
       } else {
-        get_current()->set(Index(row, get_table()->get_column_size() - 2));
+        get_current()->set(Index(row, get_previous_column(*get_current(),
+          row, get_table()->get_column_size())));
       }
     } else {
       get_current()->set(Index(current->m_row, column));
     }
   } else if(get_table()->get_row_size() > 0) {
-    get_current()->set(Index(
-      get_table()->get_row_size() - 1, get_table()->get_column_size() - 2));
+    auto row = get_table()->get_row_size() - 1;
+    auto column =
+      get_previous_column(*get_current(), row, get_table()->get_column_size());
+    get_current()->set(Index(row, column));
   } else {
     return false;
   }
@@ -1315,6 +1384,8 @@ void TableBody::on_current(
     if(previous_had_focus || QApplication::focusObject() == this) {
       current_item->setFocus(Qt::FocusReason::OtherFocusReason);
     }
+  } else if(previous) {
+    m_selection_controller.remove_row(previous->m_row);
   }
 }
 
@@ -1479,4 +1550,17 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
         }
       }
     });
+}
+
+bool TableBody::on_key_press(QWidget& target, QKeyEvent& event) {
+  if(auto scroll_box = dynamic_cast<ScrollBox*>(&target)) {
+    auto key = event.key();
+    if(key == Qt::Key_Left || key == Qt::Key_Right || key == Qt::Key_Up ||
+        key == Qt::Key_Down || key == Qt::Key_Home || key == Qt::Key_End ||
+        key == Qt::Key_PageUp || key == Qt::Key_PageDown) {
+      event.ignore();
+      return true;
+    }
+  }
+  return false;
 }

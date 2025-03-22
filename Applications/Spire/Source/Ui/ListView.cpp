@@ -5,6 +5,7 @@
 #include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListCurrentIndexModel.hpp"
+#include "Spire/Spire/ListIndexTracker.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -92,6 +93,46 @@ namespace {
       std::min(container.parentWidget()->width() + SCROLL_BUFFER,
         widget_geometry.right());
   }
+
+  struct ListValueToTextModel : ValueModel<QString> {
+    std::shared_ptr<AnyListModel> m_list;
+    ListIndexTracker m_index;
+    LocalValueModel<QString> m_current;
+    scoped_connection m_connection;
+
+    ListValueToTextModel(std::shared_ptr<AnyListModel> list, int index)
+        : m_list(std::move(list)),
+          m_index(index),
+          m_current(to_text(m_list->get(m_index.get_index()))) {
+      m_connection = m_list->connect_operation_signal(
+        std::bind_front(&ListValueToTextModel::on_operation, this));
+    }
+
+    const Type& get() const override {
+      return m_current.get();
+    }
+
+    connection connect_update_signal(
+        const UpdateSignal::slot_type& slot) const override {
+      return m_current.connect_update_signal(slot);
+    }
+
+    void on_operation(const AnyListModel::Operation& operation) {
+      visit(operation,
+        [&] (const AnyListModel::UpdateOperation& operation) {
+          if(m_index.get_index() == operation.m_index) {
+            m_current.set(to_text(operation.m_value));
+          }
+        },
+        [&] (const auto& operation) {
+          m_index.update(operation);
+          if(m_index.get_index() == -1) {
+            m_list = nullptr;
+            m_connection.disconnect();
+          }
+        });
+    }
+  };
 }
 
 ListView::ItemEntry::ItemEntry(int index)
@@ -100,7 +141,7 @@ ListView::ItemEntry::ItemEntry(int index)
 
 QWidget* ListView::default_item_builder(
     const std::shared_ptr<AnyListModel>& list, int index) {
-  return make_label(to_text(list->get(index)));
+  return make_label(std::make_shared<ListValueToTextModel>(list, index));
 }
 
 ListView::ListView(std::shared_ptr<AnyListModel> list, QWidget* parent)

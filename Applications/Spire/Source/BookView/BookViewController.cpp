@@ -92,6 +92,7 @@ void BookViewController::close() {
   if(!m_window) {
     return;
   }
+  m_window->removeEventFilter(m_event_filter.get());
   m_window->close();
   m_window->deleteLater();
   m_window = nullptr;
