@@ -168,8 +168,13 @@ void ServiceBookViewModel::on_book_quote(const BookQuote& quote) {
     if(insert_iterator == existing_iterator) {
       *insert_iterator = quote;
     } else {
-      quotes->remove(existing_iterator);
-      quotes->insert(quote, insert_iterator);
+      auto existing_index = std::distance(quotes->begin(), existing_iterator);
+      auto insert_index = std::distance(quotes->begin(), insert_iterator);
+      if(insert_index > existing_index) {
+        --insert_index;
+      }
+      quotes->remove(existing_index);
+      quotes->insert(quote, insert_index);
     }
   }
 }
