@@ -139,8 +139,11 @@ struct TableBody::ColumnCover : Cover {
 };
 
 struct TableBody::RowCover : Cover {
+  bool m_is_pending_layout;
+
   RowCover(TableBody& body)
-      : Cover(&body) {
+      : Cover(&body),
+        m_is_pending_layout(false) {
     auto layout = new FixedHorizontalLayout(this);
     match(*this, Row());
     layout->setSpacing(body.m_styles.m_horizontal_spacing);
@@ -189,12 +192,19 @@ struct TableBody::RowCover : Cover {
   }
 
   void unmount() {
+    move(-10000, -10000);
     auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != layout()->count(); ++i) {
       if(auto item = get_item(i)) {
         body.m_item_builder.unmount(item->unmount());
       }
     }
+    unmatch(*this, CurrentRow());
+    unmatch(*this, Selected());
+  }
+
+  QSize sizeHint() const override {
+    return layout()->sizeHint();
   }
 };
 
@@ -330,7 +340,9 @@ struct TableBody::Layout : QLayout {
     }
     m_items.insert(m_items.begin() + (index - m_top.size()),
       std::make_unique<QWidgetItem>(&row));
+    row.m_is_pending_layout = true;
     row.show();
+    row.m_is_pending_layout = true;
   }
 
   void move_row(int source, int destination) {
@@ -419,6 +431,7 @@ struct TableBody::Layout : QLayout {
         item->setGeometry(geometry);
       }
       y += row_height + styles.m_vertical_spacing;
+      static_cast<RowCover*>(item->widget())->m_is_pending_layout = false;
     }
   }
 
@@ -1104,10 +1117,7 @@ TableBody::RowCover* TableBody::make_row_cover() {
 }
 
 void TableBody::destroy(RowCover* row) {
-  row->move(-10000, -10000);
   row->unmount();
-  unmatch(*row, CurrentRow());
-  unmatch(*row, Selected());
   m_recycled_rows.push_back(row);
   QTimer::singleShot(0, this, [=] {
     if(std::find(m_recycled_rows.begin(), m_recycled_rows.end(), row) !=
@@ -1157,8 +1167,8 @@ void TableBody::unmount_hidden_rows() {
   auto i = 0;
   while(i != get_layout().count()) {
     auto item = get_layout().itemAt(i);
-    if(!test_visibility(*this, item->geometry())) {
-      auto row = static_cast<RowCover*>(item->widget());
+    auto row = static_cast<RowCover*>(item->widget());
+    if(!test_visibility(*this, item->geometry()) && !row->m_is_pending_layout) {
       get_layout().hide(*item);
       if(row != m_current_row) {
         destroy(row);
@@ -1211,6 +1221,7 @@ void TableBody::update_visible_region() {
     reset_visible_region();
   }
   mount_visible_rows();
+  get_layout().setGeometry(geometry());
   setUpdatesEnabled(are_updates_enabled);
   --m_resize_guard;
 }
