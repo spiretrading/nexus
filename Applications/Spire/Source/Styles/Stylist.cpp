@@ -254,11 +254,19 @@ void Stylist::match(const Selector& selector) {
 }
 
 void Stylist::unmatch(const Selector& selector) {
-  if(m_matches.erase(selector) != 0) {
+  auto i = m_matches.find(selector);
+  if(i != m_matches.end()) {
     auto signal = m_match_signals.find(selector);
+    m_matches.erase(i);
     if(signal != m_match_signals.end()) {
       signal->second(false);
     }
+  }
+}
+
+void Stylist::unmatch_all() {
+  while(!m_matches.empty()) {
+    unmatch(*m_matches.begin());
   }
 }
 
@@ -645,6 +653,10 @@ void Spire::Styles::match(QWidget& widget, const Selector& selector) {
 
 void Spire::Styles::unmatch(QWidget& widget, const Selector& selector) {
   find_stylist(widget).unmatch(selector);
+}
+
+void Spire::Styles::unmatch_all(QWidget& widget) {
+  find_stylist(widget).unmatch_all();
 }
 
 connection Spire::Styles::connect_style_signal(const QWidget& widget,

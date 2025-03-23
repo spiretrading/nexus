@@ -282,7 +282,7 @@ QWidget* AnyTagComboBox::find_drop_down_window() {
   return m_drop_down_window;
 }
 
-void AnyTagComboBox::on_combo_box_submit(AnyRef submission) {
+void AnyTagComboBox::on_combo_box_submit(const AnyRef& submission) {
   m_tag_box->get_current()->set("");
   get_current()->push(to_any(submission));
 }
