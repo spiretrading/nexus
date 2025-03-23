@@ -65,6 +65,14 @@ connection TableItem::connect_active_signal(
   return m_active_signal.connect(slot);
 }
 
+QSize TableItem::sizeHint() const {
+  auto& body = get_body();
+  if(&body == this) {
+    return layout()->sizeHint();
+  }
+  return body.sizeHint();
+}
+
 void TableItem::mount(QWidget& body) {
   if(auto item = layout()->itemAt(0)) {
     if(item->widget() == &body) {
@@ -80,6 +88,7 @@ void TableItem::mount(QWidget& body) {
   setFocusProxy(&body);
   setFocusPolicy(focusPolicy());
   layout()->addWidget(&body);
+  updateGeometry();
   body.setAttribute(Qt::WA_DontShowOnScreen, false);
 }
 
