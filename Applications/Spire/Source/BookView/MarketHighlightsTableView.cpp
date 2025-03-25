@@ -427,6 +427,7 @@ namespace {
         input_box->set_read_only(true);
         layout()->addWidget(input_box);
         setFocusProxy(input_box);
+        setFocusPolicy(Qt::NoFocus);
       }
     }
   };
@@ -495,8 +496,6 @@ TableView* Spire::make_market_highlights_table_view(
   table_view->get_header().get_widths()->set(2, scale_width(92));
   table_view->get_header().get_widths()->set(3, scale_width(138));
   update_style(*table_view, apply_table_view_style);
-  table_view->get_body().setFocusPolicy(Qt::NoFocus);
-  table_view->get_scroll_box().setFocusPolicy(Qt::NoFocus);
   auto filter = new ChildAddedObserver(table_view->get_body(), table_view);
   table_view->get_body().installEventFilter(filter);
   return table_view;
