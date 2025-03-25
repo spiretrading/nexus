@@ -35,6 +35,7 @@ namespace Spire {
       std::shared_ptr<RegionModel> m_current_region;
       InteractionsKeyBindingsForm* m_interactions_form;
       ScrollableListBox* m_list_box;
+      Button* m_add_region_button;
       AddRegionForm* m_add_region_form;
 
       QWidget* make_region_list_item(

@@ -145,13 +145,13 @@ InteractionsPage::InteractionsPage(
       set(BackgroundColor(QColor(0xFFFFFF))).
       set(border_size(0));
   });
-  auto button = make_label_button(tr("Add Region"));
-  button->setFixedWidth(scale_width(120));
-  button->connect_click_signal(
+  m_add_region_button = make_label_button(tr("Add Region"));
+  m_add_region_button->setFixedWidth(scale_width(120));
+  m_add_region_button->connect_click_signal(
     std::bind_front(&InteractionsPage::on_add_region_click, this));
   auto action_body = new QWidget();
   auto action_body_layout = make_vbox_layout(action_body);
-  action_body_layout->addWidget(button, 0, Qt::AlignLeft);
+  action_body_layout->addWidget(m_add_region_button, 0, Qt::AlignLeft);
   auto action_box = new Box(action_body);
   action_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   update_style(*action_box, apply_action_box_style);
@@ -244,6 +244,7 @@ void InteractionsPage::on_add_region(const Region& region) {
       m_available_regions->begin(), m_available_regions->end(), region);
     if(i != m_available_regions->end()) {
       m_available_regions->remove(i);
+      m_add_region_button->setDisabled(m_available_regions->get_size() == 0);
     }
     navigate_to_value(*m_list_box, region);
   }
@@ -262,6 +263,7 @@ void InteractionsPage::on_delete_region(const Region& region) {
         auto i = std::lower_bound(m_available_regions->begin(),
           m_available_regions->end(), region, &region_comparator);
         m_available_regions->insert(region, i);
+        m_add_region_button->setDisabled(m_available_regions->get_size() == 0);
       }
     }
   });
