@@ -1409,6 +1409,13 @@ void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
         match(*row, Selected());
       }
     },
+    [&] (const ListModel<int>::PreRemoveOperation& operation) {
+      auto& selection =
+        m_selection_controller.get_selection()->get_row_selection();
+      if(auto row = find_row(selection->get(operation.m_index))) {
+        unmatch(*row, Selected());
+      }
+    },
     [&] (const ListModel<int>::UpdateOperation& operation) {
       if(auto previous = find_row(operation.get_previous())) {
         unmatch(*previous, Selected());

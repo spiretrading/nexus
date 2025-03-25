@@ -229,8 +229,9 @@ bool TableView::is_filtered(const TableModel& model, int row) {
 }
 
 void TableView::update_scroll_sizes() {
-  m_scroll_box->get_vertical_scroll_bar().set_line_size(
-    m_body->estimate_scroll_line_height());
+  auto scroll_size = m_body->estimate_scroll_line_height();
+  m_scroll_box->get_vertical_scroll_bar().set_line_size(scroll_size);
+  m_scroll_box->get_horizontal_scroll_bar().set_line_size(scroll_size);
 }
 
 void TableView::on_order_update(int index, TableHeaderItem::Order order) {

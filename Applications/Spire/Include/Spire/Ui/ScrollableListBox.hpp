@@ -41,6 +41,33 @@ namespace Spire {
       void on_list_view_style();
       void on_current(const boost::optional<int>& current);
   };
+
+  /**
+   * Selects an index within a ScrollableListBox, sets that index to the current
+   * value and scrolls to it.
+   * @param list_box The ScrollableListBox to navigate.
+   * @param index The index within the <i>list_box</i> to navigate to.
+   */
+  void navigate_to_index(ScrollableListBox& list_box, int index);
+
+  /**
+   * Selects a value in a ScrollableListBox, sets it to the current value, and
+   * scrolls to it.
+   * @param list_box The ScrollableListBox to navigate.
+   * @param value The value within the <i>list_box</i> to navigate to.
+   */
+  template<typename T>
+  void navigate_to_value(ScrollableListBox& list_box, const T& value) {
+    auto& list_view = list_box.get_list_view();
+    navigate_to_value(list_view, value);
+    auto list = std::static_pointer_cast<ListModel<T>>(list_view.get_list());
+    auto i = std::find(list->begin(), list->end(), value);
+    if(i == list->end()) {
+      return;
+    }
+    auto index = static_cast<int>(std::distance(list->begin(), i));
+    list_box.get_scroll_box().scroll_to(*list_view.get_list_item(index));
+  }
 }
 
 #endif
