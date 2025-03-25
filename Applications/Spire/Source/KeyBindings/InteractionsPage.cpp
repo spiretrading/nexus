@@ -232,10 +232,11 @@ void InteractionsPage::on_current_index(const optional<int>& current) {
 }
 
 void InteractionsPage::on_add_region(const Region& region) {
-  if(m_add_region_form) {
-    m_add_region_form->close();
-    delete_later(m_add_region_form);
+  if(!m_add_region_form) {
+    return;
   }
+  m_add_region_form->close();
+  delete_later(m_add_region_form);
   auto i = std::lower_bound(
     m_regions->begin(), m_regions->end(), region, &region_comparator);
   if(m_regions->insert(region, i) == QValidator::Acceptable) {
