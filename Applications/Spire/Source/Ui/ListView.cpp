@@ -511,9 +511,7 @@ void ListView::pre_remove_item(int index) {
     --item->m_index;
   }
   item->m_click_observer = none;
-  QTimer::singleShot(0, [item = std::move(item)] () mutable {
-    item = nullptr;
-  });
+  m_pending_removals.push_back(std::move(item));
   if(m_focus_index) {
     if(*m_focus_index == index) {
       m_focus_index = none;
@@ -524,6 +522,7 @@ void ListView::pre_remove_item(int index) {
 }
 
 void ListView::remove_item(int index) {
+  m_pending_removals.pop_back();
   m_current_controller.remove(index);
   auto blocker = shared_connection_block(m_selection_connection);
   m_selection_controller.remove(index);
@@ -901,4 +900,9 @@ void ListView::on_style() {
 
 void ListView::on_query_timer_expired() {
   m_query.clear();
+}
+
+void Spire::navigate_to_index(ListView& list_view, int index) {
+  list_view.get_current()->set(index);
+  list_view.get_selection()->push(index);
 }

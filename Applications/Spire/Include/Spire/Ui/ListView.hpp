@@ -3,6 +3,7 @@
 #include <concepts>
 #include <memory>
 #include <unordered_set>
+#include <vector>
 #include <Beam/Threading/TaskRunner.hpp>
 #include <boost/optional/optional.hpp>
 #include <QSpacerItem>
@@ -270,6 +271,7 @@ namespace Details {
       ListViewItemBuilder<> m_item_builder;
       ToText m_to_text;
       std::vector<std::unique_ptr<ItemEntry>> m_items;
+      std::vector<std::unique_ptr<ItemEntry>> m_pending_removals;
       ItemEntry* m_current_entry;
       Box* m_box;
       int m_top_index;
@@ -310,6 +312,32 @@ namespace Details {
       void on_style();
       void on_query_timer_expired();
   };
+
+  /**
+   * Selects an index in a ListView and sets that index to the current value.
+   * @param list_view The ListView to navigate.
+   * @param index The index within the <i>list_view</i> to navigate to.
+   */
+  void navigate_to_index(ListView& list_view, int index);
+
+  /**
+   * Selects a value in a ListView and sets it to the current value.
+   * @param list_view The ListView to navigate.
+   * @param value The value within the <i>list_view</i> to navigate to.
+   */
+  template<typename T>
+  void navigate_to_value(ListView& list_view, const T& value) {
+    auto list = std::dynamic_pointer_cast<ListModel<T>>(list_view.get_list());
+    if(!list) {
+      throw std::runtime_error("Invalid list provided for navigation.");
+    }
+    auto i = std::find(list->begin(), list->end(), value);
+    if(i == list->end()) {
+      return;
+    }
+    auto index = static_cast<int>(std::distance(list->begin(), i));
+    navigate_to_index(list_view, index);
+  }
 
   template<std::derived_from<AnyListModel> T>
   ListView::ListView(std::shared_ptr<T> list,
