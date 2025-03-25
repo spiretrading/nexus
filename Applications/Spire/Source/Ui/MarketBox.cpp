@@ -8,16 +8,17 @@ using namespace Spire;
 
 MarketBox* Spire::make_market_box(std::shared_ptr<MarketModel> current,
     const MarketDatabase& markets, QWidget* parent) {
-  auto settings = MarketBox::Settings([=] (const auto& market) {
-    return QString::fromStdString(markets.FromCode(market).m_displayName);
-  },
-  [=] (const auto& market) {
-    auto& entry = markets.FromCode(market);
-    auto destination_entry = DestinationDatabase::Entry();
-    destination_entry.m_id = entry.m_displayName;
-    destination_entry.m_description = entry.m_description;
-    return new DestinationListItem(std::move(destination_entry));
-  });
+  auto settings = MarketBox::Settings(
+    [=] (const auto& market) {
+      return QString::fromStdString(markets.FromCode(market).m_displayName);
+    },
+    [=] (const auto& market) {
+      auto& entry = markets.FromCode(market);
+      auto destination_entry = DestinationDatabase::Entry();
+      destination_entry.m_id = entry.m_displayName;
+      destination_entry.m_description = entry.m_description;
+      return new DestinationListItem(std::move(destination_entry));
+    });
   auto market_list = std::make_shared<SortedListModel<MarketCode>>(
     std::make_shared<ArrayListModel<MarketCode>>(),
     [=] (const auto& left, const auto& right) {

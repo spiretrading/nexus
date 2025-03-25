@@ -30,20 +30,32 @@ namespace {
     auto style = StyleSheet();
     auto body_selector = Any() > is_a<TableBody>();
     auto item_selector = body_selector > Row() > is_a<TableItem>();
+    style.get(item_selector).
+      set(BackgroundColor(Qt::transparent)).
+      set(border_color(QColor(Qt::transparent)));
+    style.get(body_selector > Row() > HoverItem()).
+      set(border_color(QColor(0xA0A0A0)));
+    style.get(FocusIn() > is_a<TableBody>() > Row() > Current()).
+      set(border_color(QColor(0x4B23A0)));
+    style.get(body_selector > CurrentRow()).
+      set(BackgroundColor(Qt::transparent));
+    style.get(body_selector > Selected()).
+      set(BackgroundColor(QColor(0xE0E0E0)));
+    style.get(FocusIn() > is_a<TableBody>() > Selected()).
+      set(BackgroundColor(QColor(0xE2E0FF)));
+    style.get(body_selector > (Row() && Hover())).
+      set(BackgroundColor(QColor(0xF2F2FF)));
+    style.get(body_selector > (Selected() && Hover())).
+      set(BackgroundColor(QColor(0xD0CCFF)));
     style.get(item_selector > Any() >
         (ReadOnly() && !(+Any() << is_a<ListItem>()) && !Prompt())).
       set(horizontal_padding(scale_width(8)));
     style.get(item_selector > Any() > ReadOnly() >
         (is_a<TextBox>() && !(+Any() << is_a<ListItem>()) && !Prompt())).
       set(horizontal_padding(scale_width(8)));
-    style.get((item_selector > (!ReadOnly() && !DeleteButton())) << Current()).
+    style.get((body_selector > Row() > Current() >
+        (!ReadOnly() && !DeleteButton())) < is_a<TableItem>()).
       set(border_color(QColor(Qt::transparent)));
-    style.get(body_selector > Row() > Current()).
-      set(BackgroundColor(Qt::transparent));
-    style.get(body_selector > Row() > HoverItem()).
-      set(border_color(QColor(0xA0A0A0)));
-    style.get(body_selector > (Row() && Hover())).
-      set(BackgroundColor(0xF2F2FF));
     style.get(item_selector > DeleteButton()).
       set(Visibility(Visibility::INVISIBLE));
     style.get(item_selector > DeleteButton() > Body()).

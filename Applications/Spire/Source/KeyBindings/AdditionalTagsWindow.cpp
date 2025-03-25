@@ -328,6 +328,7 @@ namespace {
     update_style(*box, [] (auto& style) {
       style.get(Any()).
         set(Visibility(Visibility::NONE)).
+        set(BackgroundColor(QColor(0xFFFFFF))).
         set(horizontal_padding(scale_width(8))).
         set(PaddingTop(scale_height(8))).
         set(PaddingBottom(scale_height(18)));
@@ -338,24 +339,23 @@ namespace {
   auto make_action_box(auto on_cancel, auto on_done) {
     auto body = new QWidget();
     auto layout = make_hbox_layout(body);
-    layout->addStretch(1);
     auto cancel_button = make_label_button(QObject::tr("Cancel"));
-    cancel_button->setFixedWidth(scale_width(100));
+    cancel_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     cancel_button->connect_click_signal(std::move(on_cancel));
     layout->addWidget(cancel_button);
     layout->addSpacing(scale_width(8));
     auto done_button = make_label_button(QObject::tr("Done"));
-    done_button->setFixedWidth(scale_width(100));
+    done_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     done_button->connect_click_signal(std::move(on_done));
     layout->addWidget(done_button);
     auto box = new Box(body);
+    box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     update_style(*box, [] (auto& style) {
       style.get(Any()).
         set(BorderTopSize(scale_height(1))).
         set(BorderTopColor(QColor(0xE0E0E0))).
         set(horizontal_padding(scale_width(8))).
-        set(PaddingBottom(scale_height(8))).
-        set(PaddingTop(scale_height(29)));
+        set(vertical_padding(scale_height(8)));
     });
     return box;
   }
