@@ -121,27 +121,26 @@ InteractionsPage::InteractionsPage(
   m_regions = make_region_list(*m_key_bindings, countries, markets);
   m_available_regions =
     make_available_region_list(*m_key_bindings, countries, markets);
-  m_list_view = new ListView(
+  auto list_view = new ListView(
     m_regions, std::bind_front(&InteractionsPage::make_region_list_item, this));
-  m_list_view->setFocusPolicy(Qt::NoFocus);
-  m_list_view->get_list_item(0)->setEnabled(false);
-  m_current_region = make_transform_value_model(m_list_view->get_current(),
+  list_view->setFocusPolicy(Qt::NoFocus);
+  list_view->get_list_item(0)->setEnabled(false);
+  m_current_region = make_transform_value_model(list_view->get_current(),
     [=] (const auto& index) {
       return m_regions->get(index.value_or(0));
     },
     [=] (const auto& region) {
       auto i = std::find(m_regions->rbegin(), m_regions->rend() - 1, region);
       if(i != m_regions->rend()) {
-        return i - m_regions->rbegin();
+        return std::distance(m_regions->begin(), i.base()) - 1;
       }
       throw std::invalid_argument("Region not found.");
     });
-  update_style(*m_list_view, apply_deletable_list_item_style);
-  auto scrollable_list_box = new ScrollableListBox(*m_list_view);
-  scrollable_list_box->setFocusPolicy(Qt::NoFocus);
-  scrollable_list_box->setSizePolicy(
-    QSizePolicy::Expanding, QSizePolicy::Expanding);
-  update_style(*scrollable_list_box, [] (auto& style) {
+  update_style(*list_view, apply_deletable_list_item_style);
+  m_list_box = new ScrollableListBox(*list_view);
+  m_list_box->setFocusPolicy(Qt::NoFocus);
+  m_list_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  update_style(*m_list_box, [] (auto& style) {
     style.get(Any()).
       set(BackgroundColor(QColor(0xFFFFFF))).
       set(border_size(0));
@@ -158,7 +157,7 @@ InteractionsPage::InteractionsPage(
   update_style(*action_box, apply_action_box_style);
   auto master_body = new QWidget();
   auto master_body_layout = make_vbox_layout(master_body);
-  master_body_layout->addWidget(scrollable_list_box);
+  master_body_layout->addWidget(m_list_box);
   master_body_layout->addWidget(action_box);
   auto master_box = new Box(master_body);
   master_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -187,7 +186,7 @@ InteractionsPage::InteractionsPage(
   auto layout = make_hbox_layout(this);
   layout->addWidget(master_box);
   layout->addWidget(scroll_box);
-  m_list_view->get_current()->set(1);
+  navigate_to_index(*m_list_box, 1);
 }
 
 QWidget* InteractionsPage::make_region_list_item(
@@ -226,15 +225,17 @@ void InteractionsPage::on_add_region_click() {
 
 void InteractionsPage::on_current_index(const optional<int>& current) {
   if(current) {
-    if(auto item = m_list_view->get_list_item(*current)) {
+    if(auto item = m_list_box->get_list_view().get_list_item(*current)) {
       item->setFocusPolicy(Qt::NoFocus);
     }
   }
 }
 
 void InteractionsPage::on_add_region(const Region& region) {
-  m_add_region_form->close();
-  delete_later(m_add_region_form);
+  if(m_add_region_form) {
+    m_add_region_form->close();
+    delete_later(m_add_region_form);
+  }
   auto i = std::lower_bound(
     m_regions->begin(), m_regions->end(), region, &region_comparator);
   if(m_regions->insert(region, i) == QValidator::Acceptable) {
@@ -243,16 +244,17 @@ void InteractionsPage::on_add_region(const Region& region) {
     if(i != m_available_regions->end()) {
       m_available_regions->remove(i);
     }
-    m_current_region->set(region);
+    navigate_to_value(*m_list_box, region);
   }
 }
 
 void InteractionsPage::on_delete_region(const Region& region) {
   QTimer::singleShot(0, this, [=] {
     auto i = std::find(m_regions->begin() + 1, m_regions->end(), region);
-    if(i != m_regions->end() && m_regions->remove(i) == QValidator::Acceptable) {
-      if(auto current = m_list_view->get_current()->get()) {
-        m_list_view->get_selection()->push(*current);
+    if(i != m_regions->end() &&
+        m_regions->remove(i) == QValidator::Acceptable) {
+      if(auto current = m_list_box->get_list_view().get_current()->get()) {
+        m_list_box->get_list_view().get_selection()->push(*current);
       }
       m_key_bindings->get_interactions_key_bindings(region)->reset();
       if(region.GetSecurities().empty()) {

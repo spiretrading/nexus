@@ -902,3 +902,8 @@ void ListView::on_style() {
 void ListView::on_query_timer_expired() {
   m_query.clear();
 }
+
+void Spire::navigate_to_index(ListView& list_view, int index) {
+  list_view.get_current()->set(index);
+  list_view.get_selection()->push(index);
+}
