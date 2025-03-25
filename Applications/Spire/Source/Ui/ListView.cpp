@@ -561,6 +561,7 @@ void ListView::move_item(int source, int destination) {
 void ListView::select_current() {
   if(auto current = m_current_controller.get_current()->get()) {
     m_selection_controller.navigate(*current);
+    m_current_entry->m_item.setFocus();
   }
 }
 
@@ -813,10 +814,6 @@ void ListView::on_current(optional<int> current) {
   if(m_current_entry && m_current_entry->m_index != current) {
     m_current_entry->m_item.set_current(false);
     m_current_entry = nullptr;
-  }
-  if(focusPolicy() != Qt::NoFocus &&
-      find_focus_state(*this) != FocusObserver::State::NONE) {
-    setFocus();
   }
   if(current) {
     m_current_entry = m_items[*current].get();
