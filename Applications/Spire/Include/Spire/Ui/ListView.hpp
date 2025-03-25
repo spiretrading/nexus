@@ -3,6 +3,7 @@
 #include <concepts>
 #include <memory>
 #include <unordered_set>
+#include <vector>
 #include <Beam/Threading/TaskRunner.hpp>
 #include <boost/optional/optional.hpp>
 #include <QSpacerItem>
@@ -270,6 +271,7 @@ namespace Details {
       ListViewItemBuilder<> m_item_builder;
       ToText m_to_text;
       std::vector<std::unique_ptr<ItemEntry>> m_items;
+      std::vector<std::unique_ptr<ItemEntry>> m_pending_removals;
       ItemEntry* m_current_entry;
       Box* m_box;
       int m_top_index;
