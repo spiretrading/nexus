@@ -1872,7 +1872,7 @@ UiProfile Spire::make_editable_box_profile() {
       }
       auto query_model = populate_region_box_model();
       auto current = std::make_shared<LocalValueModel<Region>>();
-      current->set(std::any_cast<Region>(query_model->parse("TSX")));
+      current->set(std::any_cast<Region>(*query_model->parse("TSX")));
       return new EditableBox(*new RegionBox(query_model, current));
     }();
     input_box->setMinimumWidth(scale_width(112));
