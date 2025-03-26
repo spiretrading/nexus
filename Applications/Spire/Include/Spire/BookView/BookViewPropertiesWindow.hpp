@@ -33,6 +33,7 @@ namespace Spire {
       std::shared_ptr<SecurityModel> m_security;
       BookViewProperties m_initial_properties;
       InteractionsKeyBindingsModel m_initial_interactions;
+      bool m_are_interactions_detached;
       QWidget* m_highlights_page;
       boost::signals2::scoped_connection m_level_connection;
       boost::signals2::scoped_connection m_security_connection;
