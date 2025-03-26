@@ -13,7 +13,7 @@ ServiceSecurityInfoQueryModel::ServiceSecurityInfoQueryModel(
 
 optional<SecurityInfo>
     ServiceSecurityInfoQueryModel::parse(const QString& query) {
-  auto security = ParseSecurity(query.toStdString(), m_markets);
+  auto security = ParseSecurity(query.toUpper().toStdString(), m_markets);
   if(security == Security()) {
     return none;
   }
@@ -31,8 +31,8 @@ QtPromise<std::vector<SecurityInfo>>
     return {};
   }
   return QtPromise([=, client = m_market_data_client] () mutable {
-    auto securities =
-      client.LoadSecurityInfoFromPrefix(query.trimmed().toStdString());
+    auto securities = client.LoadSecurityInfoFromPrefix(
+      query.toUpper().trimmed().toStdString());
     for(auto& security : securities) {
       m_info.Insert(security.m_security, security);
     }
