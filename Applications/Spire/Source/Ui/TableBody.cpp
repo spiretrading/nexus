@@ -5,8 +5,7 @@
 #include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TableModel.hpp"
-#include "Spire/Spire/TableValueModel.hpp"
-#include "Spire/Spire/ToTextModel.hpp"
+#include "Spire/Spire/TableRowIndexTracker.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/FixedHorizontalLayout.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -15,6 +14,7 @@
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
+using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -56,6 +56,50 @@ namespace {
     item->setFocus(reason);
     return true;
   }
+
+  struct TableValueToTextModel : ValueModel<QString> {
+    std::shared_ptr<TableModel> m_table;
+    TableRowIndexTracker m_row;
+    int m_column;
+    LocalValueModel<QString> m_current;
+    scoped_connection m_connection;
+
+    TableValueToTextModel(
+        std::shared_ptr<TableModel> table, int row, int column)
+        : m_table(std::move(table)),
+          m_row(row),
+          m_column(column),
+          m_current(to_text(m_table->at(m_row.get_index(), column))) {
+      m_connection = m_table->connect_operation_signal(
+        std::bind_front(&TableValueToTextModel::on_operation, this));
+    }
+
+    const Type& get() const override {
+      return m_current.get();
+    }
+
+    connection connect_update_signal(
+        const UpdateSignal::slot_type& slot) const override {
+      return m_current.connect_update_signal(slot);
+    }
+
+    void on_operation(const TableModel::Operation& operation) {
+      visit(operation,
+        [&] (const TableModel::UpdateOperation& operation) {
+          if(m_row.get_index() == operation.m_row &&
+              m_column == operation.m_column) {
+            m_current.set(to_text(operation.m_value));
+          }
+        },
+        [&] (const auto& operation) {
+          m_row.update(operation);
+          if(m_row.get_index() == -1) {
+            m_table = nullptr;
+            m_connection.disconnect();
+          }
+        });
+    }
+  };
 }
 
 Spacing Spire::Styles::spacing(int spacing) {
@@ -68,11 +112,8 @@ GridColor Spire::Styles::grid_color(QColor color) {
 
 QWidget* TableBody::default_item_builder(
     const std::shared_ptr<TableModel>& table, int row, int column) {
-  auto text = make_to_text_model(
-    make_table_value_model<AnyRef>(table, row, column),
-    [] (AnyRef value) { return to_text(value); },
-    [] (const QString&) { return none; });
-  return make_label(text);
+  return make_label(
+    std::make_shared<TableValueToTextModel>(table, row, column));
 }
 
 struct TableBody::Cover : QWidget {
@@ -98,8 +139,11 @@ struct TableBody::ColumnCover : Cover {
 };
 
 struct TableBody::RowCover : Cover {
+  bool m_is_pending_layout;
+
   RowCover(TableBody& body)
-      : Cover(&body) {
+      : Cover(&body),
+        m_is_pending_layout(false) {
     auto layout = new FixedHorizontalLayout(this);
     match(*this, Row());
     layout->setSpacing(body.m_styles.m_horizontal_spacing);
@@ -148,12 +192,19 @@ struct TableBody::RowCover : Cover {
   }
 
   void unmount() {
+    move(-10000, -10000);
     auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != layout()->count(); ++i) {
       if(auto item = get_item(i)) {
         body.m_item_builder.unmount(item->unmount());
       }
     }
+    unmatch(*this, CurrentRow());
+    unmatch(*this, Selected());
+  }
+
+  QSize sizeHint() const override {
+    return layout()->sizeHint();
   }
 };
 
@@ -291,7 +342,9 @@ struct TableBody::Layout : QLayout {
     }
     m_items.insert(m_items.begin() + (index - m_top.size()),
       std::make_unique<QWidgetItem>(&row));
+    row.m_is_pending_layout = true;
     row.show();
+    row.m_is_pending_layout = true;
   }
 
   void move_row(int source, int destination) {
@@ -380,6 +433,7 @@ struct TableBody::Layout : QLayout {
         item->setGeometry(geometry);
       }
       y += row_height + styles.m_vertical_spacing;
+      static_cast<RowCover*>(item->widget())->m_is_pending_layout = false;
     }
   }
 
@@ -1065,10 +1119,7 @@ TableBody::RowCover* TableBody::make_row_cover() {
 }
 
 void TableBody::destroy(RowCover* row) {
-  row->move(-10000, -10000);
   row->unmount();
-  unmatch(*row, CurrentRow());
-  unmatch(*row, Selected());
   m_recycled_rows.push_back(row);
   QTimer::singleShot(0, this, [=] {
     if(std::find(m_recycled_rows.begin(), m_recycled_rows.end(), row) !=
@@ -1118,8 +1169,8 @@ void TableBody::unmount_hidden_rows() {
   auto i = 0;
   while(i != get_layout().count()) {
     auto item = get_layout().itemAt(i);
-    if(!test_visibility(*this, item->geometry())) {
-      auto row = static_cast<RowCover*>(item->widget());
+    auto row = static_cast<RowCover*>(item->widget());
+    if(!test_visibility(*this, item->geometry()) && !row->m_is_pending_layout) {
       get_layout().hide(*item);
       if(row != m_current_row) {
         destroy(row);
@@ -1172,6 +1223,7 @@ void TableBody::update_visible_region() {
     reset_visible_region();
   }
   mount_visible_rows();
+  get_layout().setGeometry(geometry());
   setUpdatesEnabled(are_updates_enabled);
   --m_resize_guard;
 }
@@ -1355,6 +1407,13 @@ void TableBody::on_row_selection(const ListModel<int>::Operation& operation) {
         m_selection_controller.get_selection()->get_row_selection();
       if(auto row = find_row(selection->get(operation.m_index))) {
         match(*row, Selected());
+      }
+    },
+    [&] (const ListModel<int>::PreRemoveOperation& operation) {
+      auto& selection =
+        m_selection_controller.get_selection()->get_row_selection();
+      if(auto row = find_row(selection->get(operation.m_index))) {
+        unmatch(*row, Selected());
       }
     },
     [&] (const ListModel<int>::UpdateOperation& operation) {
