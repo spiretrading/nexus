@@ -33,20 +33,9 @@ bool EnumAdditionalTagSchema::test(const AdditionalTag& tag) const {
   return i != arguments.end();
 }
 
-std::unique_ptr<CanvasNode> EnumAdditionalTagSchema::make_canvas_node(
-    const optional<Nexus::Tag::Type>& value) const {
-  if(!value) {
-    return std::make_unique<NoneNode>(TextType::GetInstance());
-  }
-  auto text = get<std::string>(&*value);
-  if(!text) {
-    return std::make_unique<NoneNode>(TextType::GetInstance());
-  }
-  return std::make_unique<TextNode>(*text)->SetVisible(false);
-}
-
 AnyInputBox* EnumAdditionalTagSchema::make_input_box(
-    std::shared_ptr<AdditionalTagValueModel> current) const {
+    std::shared_ptr<AdditionalTagValueModel> current,
+    const SubmitSignal::slot_type& submission) const {
   auto settings = EnumBox<QString>::Settings();
   auto cases = std::make_shared<ArrayListModel<QString>>();
   auto& arguments = get_order_field_model().m_tag.m_arguments;
@@ -64,5 +53,21 @@ AnyInputBox* EnumAdditionalTagSchema::make_input_box(
     [] (const auto& current) {
       return Nexus::Tag::Type(current.toStdString());
     });
-  return new AnyInputBox(*new EnumBox<QString>(std::move(settings)));
+  auto enum_box = new EnumBox<QString>(std::move(settings));
+  enum_box->connect_submit_signal([=] (const auto& value) {
+    submission(Nexus::Tag::Type(value.toStdString()));
+  });
+  return new AnyInputBox(*enum_box);
+}
+
+std::unique_ptr<CanvasNode> EnumAdditionalTagSchema::make_canvas_node(
+    const optional<Nexus::Tag::Type>& value) const {
+  if(!value) {
+    return std::make_unique<NoneNode>(TextType::GetInstance());
+  }
+  auto text = get<std::string>(&*value);
+  if(!text) {
+    return std::make_unique<NoneNode>(TextType::GetInstance());
+  }
+  return std::make_unique<TextNode>(*text)->SetVisible(false);
 }
