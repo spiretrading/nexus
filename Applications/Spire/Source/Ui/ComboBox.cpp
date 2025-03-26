@@ -476,6 +476,7 @@ void AnyComboBox::on_drop_down_submit(const std::any& submission) {
   m_data->m_submission = submission;
   m_data->m_submission_text = text;
   m_data->m_drop_down_list->hide();
+  auto input_blocker = shared_connection_block(m_data->m_input_connection);
   m_data->m_submit_signal(submission);
 }
 
