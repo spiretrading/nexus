@@ -61,10 +61,13 @@ namespace {
 
   struct ToInputBoxVisitor : CanvasTypeVisitor {
     std::shared_ptr<AdditionalTagValueModel> m_current;
+    const AdditionalTagSchema::SubmitSignal::slot_type* m_submission;
     AnyInputBox* m_input_box;
 
-    ToInputBoxVisitor(std::shared_ptr<AdditionalTagValueModel> current)
-      : m_current(std::move(current)) {}
+    ToInputBoxVisitor(std::shared_ptr<AdditionalTagValueModel> current,
+      const AdditionalTagSchema::SubmitSignal::slot_type& submission)
+      : m_current(std::move(current)),
+        m_submission(&submission) {}
 
     void Visit(const BooleanType& type) override {
     }
@@ -111,6 +114,14 @@ namespace {
       update_style(*box, [] (auto& style) {
         style.get(Any()).set(border_size(0));
       });
+      box->connect_submit_signal(
+        [submission = *m_submission] (const auto& value) {
+          if(!value) {
+            submission(none);
+          } else {
+            submission(Nexus::Tag::Type(*value));
+          }
+        });
       m_input_box = new AnyInputBox(*box);
     }
 
@@ -162,6 +173,14 @@ bool BasicAdditionalTagSchema::test(const AdditionalTag& tag) const {
     CanvasType::Compatibility::EQUAL;
 }
 
+AnyInputBox* BasicAdditionalTagSchema::make_input_box(
+    std::shared_ptr<AdditionalTagValueModel> current,
+    const SubmitSignal::slot_type& submission) const {
+  auto visitor = ToInputBoxVisitor(std::move(current), submission);
+  m_type->Apply(visitor);
+  return visitor.m_input_box;
+}
+
 std::unique_ptr<CanvasNode> BasicAdditionalTagSchema::make_canvas_node(
     const optional<Nexus::Tag::Type>& value) const {
   if(value) {
@@ -175,11 +194,4 @@ std::unique_ptr<CanvasNode> BasicAdditionalTagSchema::make_canvas_node(
     return make_canvas_node(*m_default_value);
   }
   return MakeDefaultCanvasNode(*m_type);
-}
-
-AnyInputBox* BasicAdditionalTagSchema::make_input_box(
-    std::shared_ptr<AdditionalTagValueModel> current) const {
-  auto visitor = ToInputBoxVisitor(std::move(current));
-  m_type->Apply(visitor);
-  return visitor.m_input_box;
 }

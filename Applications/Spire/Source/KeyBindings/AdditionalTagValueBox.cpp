@@ -47,7 +47,9 @@ const AnyInputBox& AdditionalTagValueBox::get_input_box() const {
 
 void AdditionalTagValueBox::update_schema(
     const std::shared_ptr<AdditionalTagSchema>& schema, bool is_read_only) {
-  auto box = schema->make_input_box(m_current);
+  auto box = schema->make_input_box(m_current, [=] (const auto& submission) {
+    m_submit_signal(submission);
+  });
   box->set_read_only(is_read_only);
   layout()->addWidget(box);
   proxy_style(*this, *box);
