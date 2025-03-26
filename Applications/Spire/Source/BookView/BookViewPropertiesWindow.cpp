@@ -43,23 +43,22 @@ BookViewPropertiesWindow::BookViewPropertiesWindow(
   auto navigation_view = new NavigationView();
   navigation_view->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto levels_page = new BookViewLevelPropertiesPage(
-    make_field_value_model(m_properties,
-      &BookViewProperties::m_level_properties));
+  auto levels_page = new BookViewLevelPropertiesPage(make_field_value_model(
+    m_properties, &BookViewProperties::m_level_properties));
   levels_page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_level_connection = levels_page->get_current()->connect_update_signal(
     std::bind_front(&BookViewPropertiesWindow::on_level_update, this));
   navigation_view->add_tab(*levels_page, tr("Levels"));
   m_highlights_page = new BookViewHighlightPropertiesPage(
-    make_field_value_model(m_properties,
-      &BookViewProperties::m_highlight_properties), markets);
-  m_highlights_page->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
+    make_field_value_model(
+      m_properties, &BookViewProperties::m_highlight_properties), markets);
+  m_highlights_page->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Expanding);
   navigation_view->add_tab(*m_highlights_page, tr("Highlights"));
-  auto interactions_page = new BookViewInteractionPropertiesPage(
-    m_key_bindings, m_security);
-  interactions_page->setSizePolicy(QSizePolicy::Expanding,
-    QSizePolicy::Expanding);
+  auto interactions_page =
+    new BookViewInteractionPropertiesPage(m_key_bindings, m_security);
+  interactions_page->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Expanding);
   navigation_view->add_tab(*interactions_page, tr("Interactions"));
   auto actions_body = new QWidget();
   auto actions_body_layout = make_hbox_layout(actions_body);
@@ -94,15 +93,25 @@ BookViewPropertiesWindow::BookViewPropertiesWindow(
 
 void BookViewPropertiesWindow::on_cancel_button_click() {
   m_properties->set(m_initial_properties);
-  copy_interactions(m_initial_interactions,
-    *m_key_bindings->get_interactions_key_bindings(m_security->get()));
+  auto& current_interactions =
+    m_key_bindings->get_interactions_key_bindings(m_security->get());
+  if(current_interactions && current_interactions->is_detached()) {
+    if(m_are_interactions_detached) {
+      copy_interactions(m_initial_interactions, *current_interactions);
+    } else {
+      current_interactions->reset();
+    }
+  }
   close();
 }
 
 void BookViewPropertiesWindow::on_done_button_click() {
   m_initial_properties = m_properties->get();
-  copy_interactions(*m_key_bindings->get_interactions_key_bindings(
-    m_security->get()), m_initial_interactions);
+  if(auto& current_interactions =
+      m_key_bindings->get_interactions_key_bindings(m_security->get())) {
+    copy_interactions(*current_interactions, m_initial_interactions);
+    m_are_interactions_detached = current_interactions->is_detached();
+  }
   close();
 }
 
@@ -115,6 +124,11 @@ void BookViewPropertiesWindow::on_level_update(
 }
 
 void BookViewPropertiesWindow::on_security_update(const Security& security) {
-  copy_interactions(*m_key_bindings->get_interactions_key_bindings(
-    security), m_initial_interactions);
+  if(auto& current_interactions =
+      m_key_bindings->get_interactions_key_bindings(m_security->get())) {
+    m_are_interactions_detached = current_interactions->is_detached();
+    copy_interactions(*current_interactions, m_initial_interactions);
+  } else {
+    m_are_interactions_detached = true;
+  }
 }
