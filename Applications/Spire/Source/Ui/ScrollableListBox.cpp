@@ -111,3 +111,9 @@ void ScrollableListBox::on_list_view_style() {
     m_list_view->updateGeometry();
   }
 }
+
+void Spire::navigate_to_index(ScrollableListBox& list_box, int index) {
+  navigate_to_index(list_box.get_list_view(), index);
+  auto& list_view = list_box.get_list_view();
+  list_box.get_scroll_box().scroll_to(*list_view.get_list_item(index));
+}

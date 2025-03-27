@@ -22,6 +22,14 @@ namespace Spire {
   /** Base class used to define an additional tag. */
   class AdditionalTagSchema {
     public:
+
+      /**
+       * Signals the submission of a value.
+       * @param submission The value being submitted.
+       */
+      using SubmitSignal =
+        Signal<void (const boost::optional<Nexus::Tag::Type>& submission)>;
+
       virtual ~AdditionalTagSchema() = default;
 
       /** Returns an OrderFieldInfoTip::Model that describes this tag. */
@@ -44,9 +52,11 @@ namespace Spire {
        * Makes an input box suitable for representing a value for this type of
        * tag.
        * @param current The tag's current value.
+       * @param submission The slot to call when the input box submits a value.
        */
       virtual AnyInputBox* make_input_box(
-        std::shared_ptr<AdditionalTagValueModel> current) const = 0;
+        std::shared_ptr<AdditionalTagValueModel> current,
+        const SubmitSignal::slot_type& submission) const = 0;
 
       /** Makes a CanvasNode representing this tag. */
       virtual std::unique_ptr<CanvasNode> make_canvas_node() const;

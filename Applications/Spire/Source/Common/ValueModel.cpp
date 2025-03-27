@@ -12,11 +12,11 @@ AnyRef AnyValueModel::get() const {
   return get_ref();
 }
 
-QValidator::State AnyValueModel::test(AnyRef value) const {
+QValidator::State AnyValueModel::test(const AnyRef& value) const {
   return test_ref(std::move(value));
 }
 
-QValidator::State AnyValueModel::set(AnyRef value) {
+QValidator::State AnyValueModel::set(const AnyRef& value) {
   return set_ref(std::move(value));
 }
 

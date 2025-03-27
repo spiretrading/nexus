@@ -23,7 +23,7 @@ namespace Spire {
        * Signals that the value was submitted.
        * @param submission The submitted value.
        */
-      using SubmitSignal = Signal<void (AnyRef submission)>;
+      using SubmitSignal = Signal<void (const AnyRef& submission)>;
 
       /**
        * Constructs a ComboBox.

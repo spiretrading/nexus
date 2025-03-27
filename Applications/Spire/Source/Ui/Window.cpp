@@ -245,14 +245,27 @@ void Window::set_window_attributes(bool is_resizeable) {
   auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
   if(m_is_resizable &&
       maximumSize() != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
+    m_has_maximize_attribute =
+      windowFlags() & Qt::WindowMaximizeButtonHint;
     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
     ::SetWindowLong(hwnd, GWL_STYLE, ::GetWindowLong(hwnd, GWL_STYLE) |
       WS_THICKFRAME | WS_CAPTION);
   } else if(m_is_resizable) {
-    setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
-    ::SetWindowLong(hwnd, GWL_STYLE, ::GetWindowLong(hwnd, GWL_STYLE) |
-      WS_MAXIMIZEBOX | WS_THICKFRAME | WS_CAPTION);
+    if(!m_has_maximize_attribute) {
+      m_has_maximize_attribute =
+        windowFlags() & Qt::WindowMaximizeButtonHint;
+    }
+    if(*m_has_maximize_attribute) {
+      setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
+      ::SetWindowLong(hwnd, GWL_STYLE, ::GetWindowLong(hwnd, GWL_STYLE) |
+        WS_MAXIMIZEBOX | WS_THICKFRAME | WS_CAPTION);
+    } else {
+      ::SetWindowLong(hwnd, GWL_STYLE, ::GetWindowLong(hwnd, GWL_STYLE) |
+        WS_THICKFRAME | WS_CAPTION);
+    }
   } else {
+    m_has_maximize_attribute =
+      windowFlags() & Qt::WindowMaximizeButtonHint;
     setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
     auto style = ::GetWindowLong(hwnd, GWL_STYLE);
     ::SetWindowLong(hwnd, GWL_STYLE, style & ~WS_MAXIMIZEBOX | WS_CAPTION);

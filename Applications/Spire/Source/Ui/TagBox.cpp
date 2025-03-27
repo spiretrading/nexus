@@ -397,17 +397,19 @@ QWidget* TagBox::make_tag(
   }
   tag->set_read_only(m_is_read_only || !isEnabled());
   tag->connect_delete_signal([=] {
-    auto tag_index = [&] {
-      for(auto i = 0; i < get_tags()->get_size(); ++i) {
-        if(label->get() == to_text(m_model->get(i))) {
-          return i;
+    QTimer::singleShot(0, this, [=] {
+      auto tag_index = [&] {
+        for(auto i = 0; i < get_tags()->get_size(); ++i) {
+          if(label->get() == to_text(m_model->get(i))) {
+            return i;
+          }
         }
+        return -1;
+      }();
+      if(tag_index >= 0) {
+        get_tags()->remove(tag_index);
       }
-      return -1;
-    }();
-    if(tag_index >= 0) {
-      get_tags()->remove(tag_index);
-    }
+    });
   });
   connect(tag, &QWidget::destroyed, [=] {
     if(find_focus_state(*this) != FocusObserver::State::NONE) {
