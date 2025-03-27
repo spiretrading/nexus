@@ -382,5 +382,13 @@ TableView* Spire::make_task_keys_table_view(
         Row() > is_a<TableItem>() > is_a<EditableBox>() > is_a<DecimalBox>()).
       set(TextAlign(Qt::Alignment(Qt::AlignRight)));
   });
+  table_view->get_body().get_table()->connect_operation_signal(
+    [=] (const TableModel::Operation& operation) {
+      visit(operation,
+        [&] (const TableModel::AddOperation& operation) {
+          table_view->get_current()->set(
+            TableView::Index(operation.m_index, 1));
+        });
+    });
   return table_view;
 }
