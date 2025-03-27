@@ -169,6 +169,7 @@ void RegionBox::on_current(const Region& region) {
       current->push(regions[i]);
       ++i;
     }
+    sort(*current);
   });
 }
 
