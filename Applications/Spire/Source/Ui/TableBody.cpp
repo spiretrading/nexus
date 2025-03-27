@@ -1223,7 +1223,7 @@ void TableBody::update_visible_region() {
     reset_visible_region();
   }
   mount_visible_rows();
-  get_layout().setGeometry(geometry());
+  get_layout().setGeometry(get_layout().geometry());
   setUpdatesEnabled(are_updates_enabled);
   --m_resize_guard;
 }
