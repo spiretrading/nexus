@@ -104,6 +104,9 @@ void AdditionalTagsBox::on_region(const Region& region) {
 }
 
 void AdditionalTagsBox::on_click() {
+  if(m_is_read_only) {
+    return;
+  }
   auto window = new AdditionalTagsWindow(
     m_current, m_additional_tags, m_destination, m_region, this);
   window->setAttribute(Qt::WA_DeleteOnClose);

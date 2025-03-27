@@ -5,6 +5,7 @@
 #include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListCurrentIndexModel.hpp"
+#include "Spire/Spire/ListIndexTracker.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -92,6 +93,46 @@ namespace {
       std::min(container.parentWidget()->width() + SCROLL_BUFFER,
         widget_geometry.right());
   }
+
+  struct ListValueToTextModel : ValueModel<QString> {
+    std::shared_ptr<AnyListModel> m_list;
+    ListIndexTracker m_index;
+    LocalValueModel<QString> m_current;
+    scoped_connection m_connection;
+
+    ListValueToTextModel(std::shared_ptr<AnyListModel> list, int index)
+        : m_list(std::move(list)),
+          m_index(index),
+          m_current(to_text(m_list->get(m_index.get_index()))) {
+      m_connection = m_list->connect_operation_signal(
+        std::bind_front(&ListValueToTextModel::on_operation, this));
+    }
+
+    const Type& get() const override {
+      return m_current.get();
+    }
+
+    connection connect_update_signal(
+        const UpdateSignal::slot_type& slot) const override {
+      return m_current.connect_update_signal(slot);
+    }
+
+    void on_operation(const AnyListModel::Operation& operation) {
+      visit(operation,
+        [&] (const AnyListModel::UpdateOperation& operation) {
+          if(m_index.get_index() == operation.m_index) {
+            m_current.set(to_text(operation.m_value));
+          }
+        },
+        [&] (const auto& operation) {
+          m_index.update(operation);
+          if(m_index.get_index() == -1) {
+            m_list = nullptr;
+            m_connection.disconnect();
+          }
+        });
+    }
+  };
 }
 
 ListView::ItemEntry::ItemEntry(int index)
@@ -100,7 +141,7 @@ ListView::ItemEntry::ItemEntry(int index)
 
 QWidget* ListView::default_item_builder(
     const std::shared_ptr<AnyListModel>& list, int index) {
-  return make_label(to_text(list->get(index)));
+  return make_label(std::make_shared<ListValueToTextModel>(list, index));
 }
 
 ListView::ListView(std::shared_ptr<AnyListModel> list, QWidget* parent)
@@ -470,9 +511,7 @@ void ListView::pre_remove_item(int index) {
     --item->m_index;
   }
   item->m_click_observer = none;
-  QTimer::singleShot(0, [item = std::move(item)] () mutable {
-    item = nullptr;
-  });
+  m_pending_removals.push_back(std::move(item));
   if(m_focus_index) {
     if(*m_focus_index == index) {
       m_focus_index = none;
@@ -483,6 +522,7 @@ void ListView::pre_remove_item(int index) {
 }
 
 void ListView::remove_item(int index) {
+  m_pending_removals.pop_back();
   m_current_controller.remove(index);
   auto blocker = shared_connection_block(m_selection_connection);
   m_selection_controller.remove(index);
@@ -521,6 +561,7 @@ void ListView::move_item(int source, int destination) {
 void ListView::select_current() {
   if(auto current = m_current_controller.get_current()->get()) {
     m_selection_controller.navigate(*current);
+    m_current_entry->m_item.setFocus();
   }
 }
 
@@ -774,10 +815,6 @@ void ListView::on_current(optional<int> current) {
     m_current_entry->m_item.set_current(false);
     m_current_entry = nullptr;
   }
-  if(focusPolicy() != Qt::NoFocus &&
-      find_focus_state(*this) != FocusObserver::State::NONE) {
-    setFocus();
-  }
   if(current) {
     m_current_entry = m_items[*current].get();
     m_current_entry->m_item.set_current(true);
@@ -860,4 +897,9 @@ void ListView::on_style() {
 
 void ListView::on_query_timer_expired() {
   m_query.clear();
+}
+
+void Spire::navigate_to_index(ListView& list_view, int index) {
+  list_view.get_current()->set(index);
+  list_view.get_selection()->push(index);
 }

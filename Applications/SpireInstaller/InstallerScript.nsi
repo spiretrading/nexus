@@ -14,7 +14,7 @@ ManifestDPIAware true
 
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 Outfile "install.exe"
-InstallDir "$PROGRAMFILES\${PRODUCT_NAME}"
+InstallDir "$PROGRAMFILES64\${PRODUCT_NAME}"
 
 RequestExecutionLevel admin
 
@@ -50,8 +50,8 @@ Section "Spire" SEC01
 
   ; Install Visual C++ Redistributable silently
   SetOutPath "$INSTDIR"
-  File "VC_redist.x86.exe"
-  ExecWait '"$INSTDIR\VC_redist.x86.exe" /quiet /norestart'
+  File "VC_redist.x64.exe"
+  ExecWait '"$INSTDIR\VC_redist.x64.exe" /quiet /norestart'
 
   ; Write uninstaller
   WriteUninstaller "$INSTDIR\uninstall.exe"
@@ -80,7 +80,7 @@ Section "Desktop Shortcut" SEC03
 SectionEnd
 
 ; Uninstaller
-Section "Uninstall"
+Section "Uninstall" SEC04
   SetShellVarContext all
 
   ; Remove desktop and start menu shortcuts
@@ -90,7 +90,7 @@ Section "Uninstall"
   RmDir /r "$SMPROGRAMS\${PRODUCT_NAME}"
 
   Delete "$INSTDIR\Spire.exe"
-  Delete "$INSTDIR\VC_redist.x86.exe"
+  Delete "$INSTDIR\VC_redist.x64.exe"
 
   RmDir /r "$INSTDIR"
 
@@ -99,6 +99,20 @@ Section "Uninstall"
   DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
   DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_DIR_REGKEY}"
 SectionEnd
+
+; Define language strings for section descriptions
+LangString DESC_SEC01 ${LANG_ENGLISH} "Installs the Spire desktop trading application and prerequisites."
+LangString DESC_SEC02 ${LANG_ENGLISH} "Creates Start Menu shortcuts for launching Spire and for uninstalling the application."
+LangString DESC_SEC03 ${LANG_ENGLISH} "Creates a desktop shortcut for Spire."
+LangString DESC_SEC04 ${LANG_ENGLISH} "Removes application files and shortcuts for Spire."
+
+; Insert the description macros
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC01} $(DESC_SEC01)
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC02} $(DESC_SEC02)
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC03} $(DESC_SEC03)
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC04} $(DESC_SEC04)
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 Function .onInit
   SetShellVarContext all

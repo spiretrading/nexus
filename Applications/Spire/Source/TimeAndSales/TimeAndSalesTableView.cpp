@@ -165,8 +165,6 @@ namespace {
   }
 
   struct TimeAndSalesItemBuilder {
-    std::shared_ptr<TimeAndSalesTableModel> m_table;
-
     QWidget* mount(
         const std::shared_ptr<TableModel>& table, int row, int column) {
       if(column >= TimeAndSalesTableModel::COLUMN_SIZE) {
@@ -213,7 +211,9 @@ namespace {
       unmatch(cell, InsideIndicator());
       unmatch(cell, AtBidIndicator());
       unmatch(cell, BelowBidIndicator());
-      auto indicator = m_table->get_bbo_indicator(row);
+      auto time_and_sales_table =
+        std::static_pointer_cast<TimeAndSalesTableModel>(table);
+      auto indicator = time_and_sales_table->get_bbo_indicator(row);
       if(indicator == BboIndicator::UNKNOWN) {
         match(cell, UnknownIndicator());
       } else if(indicator == BboIndicator::ABOVE_ASK) {
@@ -361,8 +361,7 @@ TableView* Spire::make_time_and_sales_table_view(
     std::shared_ptr<TimeAndSalesPropertiesModel> properties, QWidget* parent) {
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
-    set_item_builder(
-      RecycledTableViewItemBuilder(TimeAndSalesItemBuilder(table))).
+    set_item_builder(RecycledTableViewItemBuilder(TimeAndSalesItemBuilder())).
     make();
   update_style(*table_view, apply_table_view_style);
   initialize_table_header(*table_view, properties->get());

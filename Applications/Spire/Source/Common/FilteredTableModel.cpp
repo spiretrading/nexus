@@ -21,6 +21,10 @@ FilteredTableModel::FilteredTableModel(
     std::bind_front(&FilteredTableModel::on_operation, this));
 }
 
+const std::shared_ptr<TableModel>& FilteredTableModel::get_source() const {
+  return m_source;
+}
+
 void FilteredTableModel::set_filter(const Filter& filter) {
   m_filtered_list.set_filter(make_filter(*m_source, filter));
 }

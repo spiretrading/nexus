@@ -36,26 +36,9 @@ bool MaxFloorSchema::test(const AdditionalTag& tag) const {
       tag.m_value->which() == Nexus::Tag::DOUBLE_INDEX);
 }
 
-std::unique_ptr<CanvasNode> MaxFloorSchema::make_canvas_node(
-    const optional<Nexus::Tag::Type>& value) const {
-  auto max_floor_node = [&] {
-    if(value) {
-      if(value->which() == Nexus::Tag::INT_INDEX) {
-        return MaxFloorNode(get<int>(*value));
-      } else if(value->which() == Nexus::Tag::QUANTITY_INDEX) {
-        return MaxFloorNode(get<Quantity>(*value));
-      } else if(value->which() == Nexus::Tag::DOUBLE_INDEX) {
-        return MaxFloorNode(get<double>(*value));
-      }
-      throw CanvasTypeCompatibilityException();
-    }
-    return MaxFloorNode();
-  }();
-  return LinkedNode::SetReferent(std::move(max_floor_node), "security");
-}
-
 AnyInputBox* MaxFloorSchema::make_input_box(
-    std::shared_ptr<AdditionalTagValueModel> current) const {
+    std::shared_ptr<AdditionalTagValueModel> current,
+    const SubmitSignal::slot_type& submission) const {
   auto quantity = make_scalar_value_model_decorator(
     make_transform_value_model(std::move(current),
       [] (const auto& value) -> optional<Quantity> {
@@ -75,7 +58,32 @@ AnyInputBox* MaxFloorSchema::make_input_box(
   update_style(*quantity_box, [] (auto& style) {
     style.get(Any()).set(border_size(0));
   });
+  quantity_box->connect_submit_signal([=] (const auto& value) {
+    if(!value) {
+      submission(none);
+    } else {
+      submission(Nexus::Tag::Type(*value));
+    }
+  });
   return new AnyInputBox(*quantity_box);
+}
+
+std::unique_ptr<CanvasNode> MaxFloorSchema::make_canvas_node(
+    const optional<Nexus::Tag::Type>& value) const {
+  auto max_floor_node = [&] {
+    if(value) {
+      if(value->which() == Nexus::Tag::INT_INDEX) {
+        return MaxFloorNode(get<int>(*value));
+      } else if(value->which() == Nexus::Tag::QUANTITY_INDEX) {
+        return MaxFloorNode(get<Quantity>(*value));
+      } else if(value->which() == Nexus::Tag::DOUBLE_INDEX) {
+        return MaxFloorNode(get<double>(*value));
+      }
+      throw CanvasTypeCompatibilityException();
+    }
+    return MaxFloorNode();
+  }();
+  return LinkedNode::SetReferent(std::move(max_floor_node), "security");
 }
 
 MaxFloorSchema::MaxFloorSchema()

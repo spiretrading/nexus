@@ -50,6 +50,7 @@ namespace Spire {
       TitleBar* m_title_bar;
       QWidget* m_body;
       bool m_is_resizable;
+      boost::optional<bool> m_has_maximize_attribute;
       boost::optional<QSize> m_frame_size;
 
       QSize adjusted_window_size(const QSize& body_size);

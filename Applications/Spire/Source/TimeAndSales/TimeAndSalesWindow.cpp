@@ -98,6 +98,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(
       m_table_view(nullptr),
       m_timer(this) {
   set_svg_icon(":/Icons/time-sales.svg");
+  setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
   setWindowIcon(QIcon(":/Icons/taskbar_icons/time-sales.png"));
   setWindowTitle(TITLE_NAME);
   m_transition_view = new TransitionView(new QWidget());
