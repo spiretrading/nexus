@@ -2,7 +2,6 @@
 #define SPIRE_TABLE_ITEM_HPP
 #include <QWidget>
 #include "Spire/Ui/ClickObserver.hpp"
-#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/MouseObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -71,13 +70,11 @@ namespace Spire {
       mutable ActiveSignal m_active_signal;
       Styles m_styles;
       ClickObserver m_click_observer;
-      FocusObserver m_focus_observer;
       MouseObserver m_mouse_observer;
       boost::signals2::scoped_connection m_style_connection;
 
       void mount(QWidget& body);
       QWidget* unmount();
-      void on_focus(FocusObserver::State state);
       void on_mouse(QWidget& target, const QMouseEvent& event);
       void on_style();
   };
