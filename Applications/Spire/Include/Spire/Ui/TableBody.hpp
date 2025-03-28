@@ -157,6 +157,7 @@ namespace Styles {
       RowCover* m_current_row;
       Styles m_styles;
       bool m_is_transaction;
+      int m_operation_counter;
       int m_resize_guard;
       KeyObserver m_key_observer;
       std::unordered_map<TableItem*, HoverObserver> m_hover_observers;
@@ -179,6 +180,7 @@ namespace Styles {
       int get_left_spacing(int index) const;
       int get_top_spacing(int index) const;
       void add_column_cover(int index, const QRect& geometry);
+      void increment_operation_counter();
       void add_row(int index);
       void pre_remove_row(int index);
       void remove_row(int index);

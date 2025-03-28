@@ -19,6 +19,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto OPERATION_THRESHOLD = 10;
   const auto SCROLL_BUFFER = 1;
 
   bool test_visibility(const QWidget& container, const QRect& geometry) {
@@ -626,6 +627,7 @@ TableBody::TableBody(
       m_item_builder(std::move(item_builder)),
       m_current_row(nullptr),
       m_is_transaction(false),
+      m_operation_counter(0),
       m_resize_guard(0),
       m_key_observer(*this) {
   setLayout(new Layout(*this));
@@ -1003,7 +1005,24 @@ void TableBody::add_column_cover(int index, const QRect& geometry) {
   on_cover_style(*cover);
 }
 
+void TableBody::increment_operation_counter() {
+  ++m_operation_counter;
+  if(m_operation_counter == OPERATION_THRESHOLD) {
+    while(!get_layout().isEmpty()) {
+      auto item = get_layout().itemAt(0);
+      auto row = static_cast<RowCover*>(item->widget());
+      get_layout().hide(*item);
+      if(row != m_current_row) {
+        destroy(row);
+      } else {
+        row->move(-1000, -1000);
+      }
+    }
+  }
+}
+
 void TableBody::add_row(int index) {
+  increment_operation_counter();
   if(get_layout().is_visible(index)) {
     auto current_index = m_current_controller.get_row();
     if(current_index && *current_index >= index) {
@@ -1018,6 +1037,7 @@ void TableBody::add_row(int index) {
 }
 
 void TableBody::pre_remove_row(int index) {
+  increment_operation_counter();
   if(get_layout().is_visible(index)) {
     remove(*find_row(index));
   } else {
@@ -1038,6 +1058,7 @@ void TableBody::remove_row(int index) {
 }
 
 void TableBody::move_row(int source, int destination) {
+  increment_operation_counter();
   auto& layout = get_layout();
   if(layout.is_visible(source)) {
     if(layout.is_visible(destination)) {
@@ -1524,6 +1545,7 @@ void TableBody::on_cover_style(Cover& cover) {
 void TableBody::on_table_operation(const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::StartTransaction&) {
+      m_operation_counter = 0;
       m_is_transaction = true;
     },
     [&] (const TableModel::EndTransaction&) {
@@ -1542,6 +1564,7 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
       move_row(operation.m_source, operation.m_destination);
     });
   if(!m_is_transaction) {
+    m_operation_counter = 0;
     update_visible_region();
   }
 }
