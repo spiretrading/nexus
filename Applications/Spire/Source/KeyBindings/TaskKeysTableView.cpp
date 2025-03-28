@@ -386,7 +386,7 @@ TableView* Spire::make_task_keys_table_view(
     [=] (const TableModel::Operation& operation) {
       visit(operation,
         [&] (const TableModel::AddOperation& operation) {
-          table_view->get_current()->set(
+          table_view->get_body().get_current()->set(
             TableView::Index(operation.m_index, 1));
         });
     });

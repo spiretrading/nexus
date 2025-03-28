@@ -231,6 +231,13 @@ void TaskKeysPage::on_new_task_action() {
   auto window = new_task_form->window();
   window->move(
     mapToGlobal(QPoint(0, 0)) + rect().center() - window->rect().center());
+  connect(new_task_form, &QWidget::destroyed, [=] {
+    if(auto current = m_table_view->get_body().get_current()->get()) {
+      if(auto item = m_table_view->get_body().find_item(*current)) {
+        item->setFocus();
+      }
+    }
+  });
 }
 
 void TaskKeysPage::on_duplicate_task_action() {
