@@ -1,4 +1,5 @@
 #include "Spire/Ui/ScrollableListBox.hpp"
+#include <QResizeEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -26,6 +27,7 @@ ScrollableListBox::ScrollableListBox(ListView& list_view, QWidget* parent)
     : QWidget(parent),
       m_list_view(&list_view),
       m_size_policy(m_list_view->sizePolicy()) {
+  m_list_view->installEventFilter(this);
   setFocusProxy(m_list_view);
   m_scroll_box = new ScrollBox(m_list_view);
   m_scroll_box->setFocusPolicy(Qt::NoFocus);
@@ -49,6 +51,22 @@ ScrollBox& ScrollableListBox::get_scroll_box() {
   return *m_scroll_box;
 }
 
+bool ScrollableListBox::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == m_list_view && event->type() == QEvent::Resize) {
+    auto gap = [&] {
+      if(m_styles.m_direction == Qt::Orientation::Vertical) {
+        return m_styles.m_item_gap;
+      }
+      return m_styles.m_overflow_gap;
+    }();
+    if(auto item = m_list_view->get_list_item(0)) {
+      m_scroll_box->get_vertical_scroll_bar().set_line_size(
+        item->height() + gap);
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
 void ScrollableListBox::showEvent(QShowEvent* event) {
   QTimer::singleShot(0, this, [=] {
     on_current(m_list_view->get_current()->get());
@@ -65,24 +83,36 @@ void ScrollableListBox::on_current(const optional<int>& current) {
 }
 
 void ScrollableListBox::on_list_view_style() {
-  auto direction = Qt::Orientation::Vertical;
+  m_styles.m_direction = Qt::Orientation::Vertical;
+  m_styles.m_item_gap = 0;
+  m_styles.m_overflow_gap = 0;
   auto overflow = Overflow::NONE;
   auto& stylist = find_stylist(*m_list_view);
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (EnumProperty<Qt::Orientation> direction_style) {
         stylist.evaluate(direction_style, [&] (auto d) {
-          direction = d;
+          m_styles.m_direction = d;
         });
       },
       [&] (EnumProperty<Overflow> overflow_style) {
         stylist.evaluate(overflow_style, [&] (auto o) {
           overflow = o;
         });
+      },
+      [&] (const ListItemGap& item_gap) {
+        stylist.evaluate(item_gap, [&] (auto gap) {
+          m_styles.m_item_gap = gap;
+        });
+      },
+      [&] (const ListOverflowGap& overflow_gap) {
+        stylist.evaluate(overflow_gap, [&] (auto gap) {
+          m_styles.m_overflow_gap = gap;
+        });
       });
   }
   auto horizontal_policy = [&] {
-    if(direction == Qt::Orientation::Horizontal) {
+    if(m_styles.m_direction == Qt::Orientation::Horizontal) {
       if(overflow == Overflow::NONE) {
         if(m_size_policy.horizontalPolicy() == QSizePolicy::Preferred) {
           return QSizePolicy::Minimum;
@@ -94,7 +124,7 @@ void ScrollableListBox::on_list_view_style() {
     return QSizePolicy::MinimumExpanding;
   }();
   auto vertical_policy = [&] {
-    if(direction == Qt::Orientation::Vertical) {
+    if(m_styles.m_direction == Qt::Orientation::Vertical) {
       if(overflow == Overflow::NONE) {
         if(m_size_policy.verticalPolicy() == QSizePolicy::Preferred) {
           return QSizePolicy::Minimum;
