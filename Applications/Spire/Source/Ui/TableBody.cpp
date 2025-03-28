@@ -348,11 +348,15 @@ struct TableBody::Layout : QLayout {
   }
 
   void move_row(int source, int destination) {
-    auto source_index = source - get_top_index();
-    auto item = std::move(m_items[source_index]);
-    m_items.erase(m_items.begin() + source_index);
-    m_items.insert(m_items.begin() + (destination - get_top_index()),
-      std::move(item));
+    auto top = get_top_index();
+    auto source_iterator = m_items.begin() + (source - top);
+    auto destination_iterator = m_items.begin() + (destination - top);
+    if(source < destination) {
+      std::rotate(
+        source_iterator, source_iterator + 1, destination_iterator + 1);
+    } else if(destination < source) {
+      std::rotate(destination_iterator, source_iterator, source_iterator + 1);
+    }
   }
 
   void reset_top_index(int top_point) {
