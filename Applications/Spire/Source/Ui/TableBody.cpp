@@ -1024,11 +1024,7 @@ void TableBody::increment_operation_counter() {
 void TableBody::add_row(int index) {
   increment_operation_counter();
   if(get_layout().is_visible(index)) {
-    auto current_index = m_current_controller.get_row();
-    if(current_index && *current_index >= index) {
-      ++*current_index;
-    }
-    mount_row(index, current_index);
+    mount_row(index, none);
   } else {
     get_layout().add_hidden_row(index);
   }
@@ -1089,7 +1085,6 @@ void TableBody::move_row(int source, int destination) {
     }
     layout.add_hidden_row(destination, height);
   }
-  m_current_controller.move_row(source, destination);
   m_selection_controller.move_row(source, destination);
 }
 

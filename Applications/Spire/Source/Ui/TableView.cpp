@@ -4,6 +4,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FilteredTableModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Spire/TableCurrentIndexModel.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -54,16 +55,16 @@ namespace {
         if(!index) {
           return none;
         }
-        auto row = sorted_table->index_to_source(
-          filtered_table->index_to_source(index->m_row));
+        auto row = sorted_table->index_from_source(
+          filtered_table->index_from_source(index->m_row));
         return TableIndex(row, index->m_column);
       },
       [=] (const optional<TableIndex>& index) -> optional<TableIndex> {
         if(!index) {
           return none;
         }
-        auto row = sorted_table->index_from_source(
-          filtered_table->index_from_source(index->m_row));
+        auto row = sorted_table->index_to_source(
+          filtered_table->index_to_source(index->m_row));
         return TableIndex(row, index->m_column);
       });
   }
@@ -334,11 +335,11 @@ void TableView::on_scroll_position(int position) {
 
 TableViewBuilder::TableViewBuilder(
   std::shared_ptr<TableModel> table, QWidget* parent)
-  : m_table(std::move(table)),
+  : m_table(table),
     m_parent(parent),
     m_header(std::make_shared<ArrayListModel<TableHeaderItem::Model>>()),
     m_filter(std::make_shared<EmptyTableFilter>()),
-    m_current(std::make_shared<LocalValueModel<optional<TableIndex>>>()),
+    m_current(std::make_shared<TableCurrentIndexModel>(table)),
     m_selection(std::make_shared<TableSelectionModel>(
       std::make_shared<TableEmptySelectionModel>(),
       std::make_shared<ListSingleSelectionModel>(),
