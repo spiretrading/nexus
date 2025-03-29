@@ -55,8 +55,8 @@ namespace {
         if(!index) {
           return none;
         }
-        auto row = sorted_table->index_from_source(
-          filtered_table->index_from_source(index->m_row));
+        auto row = filtered_table->index_from_source(
+          sorted_table->index_from_source(index->m_row));
         return TableIndex(row, index->m_column);
       },
       [=] (const optional<TableIndex>& index) -> optional<TableIndex> {
