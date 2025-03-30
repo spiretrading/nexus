@@ -48,19 +48,10 @@ int TableCurrentController::get_column_size() const {
 
 void TableCurrentController::add_row(int index) {
   ++m_row_size;
-  auto current = get();
-  if(current && current->m_row == m_row_size - 1 ||
-      index <= current.value_or(TableIndex(-1, -1)).m_row) {
-    on_current(current);
-  }
 }
 
 void TableCurrentController::remove_row(int index) {
   --m_row_size;
-  auto current = get();
-  if(index <= current.value_or(TableIndex(-1, -1)).m_row) {
-    on_current(current);
-  }
 }
 
 void TableCurrentController::navigate_home() {

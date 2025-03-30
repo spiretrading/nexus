@@ -1404,6 +1404,12 @@ void TableBody::on_current(
     }
     m_current_row = nullptr;
   }
+  if(m_operation_counter >= OPERATION_THRESHOLD) {
+    if(!current && previous) {
+      m_selection_controller.remove_row(previous->m_row);
+    }
+    return;
+  }
   if(current) {
     auto current_item = get_current_item();
     match(*current_item, Current());
@@ -1559,7 +1565,12 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
       move_row(operation.m_source, operation.m_destination);
     });
   if(!m_is_transaction) {
-    m_operation_counter = 0;
+    if(m_operation_counter >= OPERATION_THRESHOLD) {
+      m_operation_counter = 0;
+      on_current(none, m_current_controller.get());
+    } else {
+      m_operation_counter = 0;
+    }
     update_visible_region();
   }
 }
