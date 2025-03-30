@@ -223,7 +223,7 @@ TableView::TableView(
     std::bind_front(&TableView::on_filter_clicked, this));
   m_filter_connection = m_filter->connect_filter_signal(
     std::bind_front(&TableView::on_filter, this));
-  m_current_connection = m_body->get_current()->connect_update_signal(
+  m_current_connection = m_current->connect_update_signal(
     std::bind_front(&TableView::on_current, this));
   m_body_style_connection = connect_style_signal(
     *m_body, std::bind_front(&TableView::on_body_style, this));
@@ -335,7 +335,8 @@ void TableView::on_filter(int column, TableFilter::Filter filter) {
   m_filtered_table->set_filter(std::bind_front(&TableView::is_filtered, this));
 }
 
-void TableView::on_current(const optional<Index>& current) {
+void TableView::on_current(const optional<Index>&) {
+  auto current = m_body->get_current()->get();
   if(!current) {
     QObject::disconnect(m_current_item_connection);
     m_current_item = nullptr;
