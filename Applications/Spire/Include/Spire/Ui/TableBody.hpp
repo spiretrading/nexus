@@ -166,6 +166,7 @@ namespace Styles {
       boost::signals2::scoped_connection m_row_style_connection;
       boost::signals2::scoped_connection m_table_connection;
       boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_selection_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
       const Layout& get_layout() const;

@@ -52,6 +52,9 @@ void TableCurrentController::add_row(int index) {
 
 void TableCurrentController::remove_row(int index) {
   --m_row_size;
+  if(m_current->get() && m_current->get()->m_row == index) {
+    m_current->set(none);
+  }
 }
 
 void TableCurrentController::navigate_home() {

@@ -45,7 +45,7 @@ namespace {
     return order;
   }
 
-  struct ViewToSourceIndexModel : ValueModel<optional<TableIndex>> {
+  struct SourceToViewIndexModel : ValueModel<optional<TableIndex>> {
     std::shared_ptr<SortedTableModel> m_sorted_table;
     std::shared_ptr<FilteredTableModel> m_filtered_table;
     std::shared_ptr<TableView::CurrentModel> m_current;
@@ -53,7 +53,7 @@ namespace {
     scoped_connection m_current_connection;
     scoped_connection m_table_connection;
 
-    ViewToSourceIndexModel(std::shared_ptr<SortedTableModel> sorted_table,
+    SourceToViewIndexModel(std::shared_ptr<SortedTableModel> sorted_table,
         std::shared_ptr<FilteredTableModel> filtered_table,
         std::shared_ptr<TableView::CurrentModel> current)
         : m_sorted_table(std::move(sorted_table)),
@@ -61,9 +61,9 @@ namespace {
           m_current(std::move(current)),
           m_index(from_source(m_current->get())) {
       m_current_connection = m_current->connect_update_signal(
-        std::bind_front(&ViewToSourceIndexModel::on_current, this));
+        std::bind_front(&SourceToViewIndexModel::on_current, this));
       m_table_connection = m_sorted_table->connect_operation_signal(
-        std::bind_front(&ViewToSourceIndexModel::on_operation, this));
+        std::bind_front(&SourceToViewIndexModel::on_operation, this));
     }
 
     const Type& get() const {
@@ -189,7 +189,7 @@ TableView::TableView(
     m_current = std::make_shared<TableCurrentIndexModel>(m_table);
   }
   m_body = new TableBody(m_sorted_table,
-    std::make_shared<ViewToSourceIndexModel>(m_sorted_table, m_filtered_table,
+    std::make_shared<SourceToViewIndexModel>(m_sorted_table, m_filtered_table,
       m_current), std::move(selection), m_header_view->get_widths(),
     TranslatedItemBuilder(std::move(item_builder)));
   m_body->setSizePolicy(QSizePolicy::MinimumExpanding,

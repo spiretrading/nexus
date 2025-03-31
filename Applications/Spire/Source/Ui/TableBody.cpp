@@ -1,4 +1,5 @@
 #include "Spire/Ui/TableBody.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QApplication>
 #include <QKeyEvent>
 #include <QPainter>
@@ -662,7 +663,7 @@ TableBody::TableBody(
     std::bind_front(&TableBody::on_table_operation, this));
   m_current_connection = m_current_controller.connect_update_signal(
      std::bind_front(&TableBody::on_current, this));
-  m_selection_controller.connect_row_operation_signal(
+  m_selection_connection = m_selection_controller.connect_row_operation_signal(
     std::bind_front(&TableBody::on_row_selection, this));
   m_widths_connection = m_widths->connect_operation_signal(
     std::bind_front(&TableBody::on_widths_update, this));
@@ -1050,6 +1051,7 @@ void TableBody::pre_remove_row(int index) {
 
 void TableBody::remove_row(int index) {
   m_current_controller.remove_row(index);
+  auto block = shared_connection_block(m_selection_connection);
   m_selection_controller.remove_row(index);
 }
 
