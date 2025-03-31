@@ -133,19 +133,6 @@ namespace {
       m_builder.unmount(widget);
     }
   };
-
-  struct PlaceholderCurrentModel : ValueModel<optional<TableIndex>> {
-    const Type& get() const {
-      throw std::runtime_error(
-        "PlaceholderCurrentModel::get() not implemented.");
-    }
-
-    connection connect_update_signal(
-        const UpdateSignal::slot_type& slot) const {
-      throw std::runtime_error(
-        "PlaceholderCurrentModel::connect_update_signal() not implemented.");
-    }
-  };
 }
 
 QWidget* TableView::default_item_builder(
@@ -198,7 +185,7 @@ TableView::TableView(
     m_sorted_table = std::make_shared<SortedTableModel>(
       m_filtered_table, make_column_order(*m_header));
   }
-  if(std::dynamic_pointer_cast<PlaceholderCurrentModel>(m_current)) {
+  if(!m_current) {
     m_current = std::make_shared<TableCurrentIndexModel>(m_table);
   }
   m_body = new TableBody(m_sorted_table,
@@ -403,7 +390,6 @@ TableViewBuilder::TableViewBuilder(
     m_parent(parent),
     m_header(std::make_shared<ArrayListModel<TableHeaderItem::Model>>()),
     m_filter(std::make_shared<EmptyTableFilter>()),
-    m_current(std::make_shared<PlaceholderCurrentModel>()),
     m_selection(std::make_shared<TableSelectionModel>(
       std::make_shared<TableEmptySelectionModel>(),
       std::make_shared<ListSingleSelectionModel>(),
