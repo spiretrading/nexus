@@ -87,8 +87,8 @@ namespace {
       if(!index) {
         return none;
       }
-      auto row = m_filtered_table->index_from_source(
-        m_sorted_table->index_from_source(index->m_row));
+      auto row = m_sorted_table->index_from_source(
+        m_filtered_table->index_from_source(index->m_row));
       return TableIndex(row, index->m_column);
     }
 
@@ -96,8 +96,8 @@ namespace {
       if(!index) {
         return none;
       }
-      auto row = m_sorted_table->index_to_source(
-        m_filtered_table->index_to_source(index->m_row));
+      auto row = m_filtered_table->index_to_source(
+        m_sorted_table->index_to_source(index->m_row));
       return TableIndex(row, index->m_column);
     }
 
