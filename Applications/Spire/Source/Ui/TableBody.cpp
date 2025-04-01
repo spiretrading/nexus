@@ -1025,7 +1025,7 @@ void TableBody::increment_operation_counter() {
 void TableBody::add_row(int index) {
   increment_operation_counter();
   if(get_layout().is_visible(index)) {
-    mount_row(index, none);
+    mount_row(index, -1);
   } else {
     get_layout().add_hidden_row(index);
   }
