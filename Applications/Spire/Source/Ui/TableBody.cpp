@@ -1,4 +1,5 @@
 #include "Spire/Ui/TableBody.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QApplication>
 #include <QKeyEvent>
 #include <QPainter>
@@ -308,7 +309,7 @@ struct TableBody::Layout : QLayout {
         static_cast<int>(get_top_index() + m_bottom.size());
       add_hidden_row(index, average_row_height);
     } else {
-      add_hidden_row(index, 0);
+      add_hidden_row(index, sizeHint().height() / count());
     }
   }
 
@@ -662,7 +663,7 @@ TableBody::TableBody(
     std::bind_front(&TableBody::on_table_operation, this));
   m_current_connection = m_current_controller.connect_update_signal(
      std::bind_front(&TableBody::on_current, this));
-  m_selection_controller.connect_row_operation_signal(
+  m_selection_connection = m_selection_controller.connect_row_operation_signal(
     std::bind_front(&TableBody::on_row_selection, this));
   m_widths_connection = m_widths->connect_operation_signal(
     std::bind_front(&TableBody::on_widths_update, this));
@@ -1024,11 +1025,7 @@ void TableBody::increment_operation_counter() {
 void TableBody::add_row(int index) {
   increment_operation_counter();
   if(get_layout().is_visible(index)) {
-    auto current_index = m_current_controller.get_row();
-    if(current_index && *current_index >= index) {
-      ++*current_index;
-    }
-    mount_row(index, current_index);
+    mount_row(index, none);
   } else {
     get_layout().add_hidden_row(index);
   }
@@ -1054,6 +1051,7 @@ void TableBody::pre_remove_row(int index) {
 
 void TableBody::remove_row(int index) {
   m_current_controller.remove_row(index);
+  auto block = shared_connection_block(m_selection_connection);
   m_selection_controller.remove_row(index);
 }
 
@@ -1089,7 +1087,6 @@ void TableBody::move_row(int source, int destination) {
     }
     layout.add_hidden_row(destination, height);
   }
-  m_current_controller.move_row(source, destination);
   m_selection_controller.move_row(source, destination);
 }
 
@@ -1409,6 +1406,12 @@ void TableBody::on_current(
     }
     m_current_row = nullptr;
   }
+  if(m_operation_counter >= OPERATION_THRESHOLD) {
+    if(!current && previous) {
+      m_selection_controller.remove_row(previous->m_row);
+    }
+    return;
+  }
   if(current) {
     auto current_item = get_current_item();
     match(*current_item, Current());
@@ -1564,7 +1567,12 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
       move_row(operation.m_source, operation.m_destination);
     });
   if(!m_is_transaction) {
-    m_operation_counter = 0;
+    if(m_operation_counter >= OPERATION_THRESHOLD) {
+      m_operation_counter = 0;
+      on_current(none, m_current_controller.get());
+    } else {
+      m_operation_counter = 0;
+    }
     update_visible_region();
   }
 }
