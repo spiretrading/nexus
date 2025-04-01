@@ -14,9 +14,9 @@ TableCurrentIndexModel::TableCurrentIndexModel(
       m_index(index),
       m_tracker(index.value_or(TableIndex(-1, -1)).m_row) {
   if(m_index.get() && (m_index.get()->m_row < 0 ||
-      m_index.get()->m_row > m_table->get_row_size() ||
+      m_index.get()->m_row >= m_table->get_row_size() ||
       m_index.get()->m_column < 0 ||
-      m_index.get()->m_column > m_table->get_column_size())) {
+      m_index.get()->m_column >= m_table->get_column_size())) {
     m_index.set(none);
     m_tracker.set(-1);
   }
