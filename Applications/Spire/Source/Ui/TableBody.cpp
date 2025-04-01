@@ -309,7 +309,7 @@ struct TableBody::Layout : QLayout {
         static_cast<int>(get_top_index() + m_bottom.size());
       add_hidden_row(index, average_row_height);
     } else {
-      add_hidden_row(index, 0);
+      add_hidden_row(index, sizeHint().height() / count());
     }
   }
 
