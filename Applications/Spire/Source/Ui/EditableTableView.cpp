@@ -4,6 +4,8 @@
 #include <QTimer>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/ProxyValueModel.hpp"
+#include "Spire/Spire/TableCurrentIndexModel.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -346,7 +348,7 @@ struct EditableTableView::EditableItemBuilder {
       button->connect_click_signal([=] {
         auto index = tracker->m_index->get_index();
         QTimer::singleShot(0, m_view, [=] {
-          m_view->delete_row(index);
+          table->remove(index);
         });
       });
       return button;
@@ -418,11 +420,18 @@ EditableTableView::EditableTableView(
     TableViewItemBuilder item_builder, Comparator comparator, QWidget* parent)
     : TableView(std::make_shared<EditableTableModel>(std::move(table), header),
         std::make_shared<EditableTableHeaderModel>(header),
-        std::move(table_filter), std::make_shared<EditableTableCurrentModel>(
-          std::move(current), header->get_size() + 2), std::move(selection),
-        ItemBuilder(this, std::move(item_builder)), std::move(comparator),
-        parent),
+        std::move(table_filter), make_proxy_value_model(
+          std::make_shared<LocalValueModel<optional<Index>>>()),
+        std::move(selection), ItemBuilder(this, std::move(item_builder)),
+        std::move(comparator), parent),
       m_is_processing_key(false) {
+  if(!current) {
+    current = std::make_shared<TableCurrentIndexModel>(get_table());
+  }
+  auto current_proxy =
+    std::static_pointer_cast<ProxyValueModel<optional<Index>>>(get_current());
+  current_proxy->set_source(std::make_shared<EditableTableCurrentModel>(
+    std::move(current), header->get_size() + 2));
   get_header().get_item(0)->set_is_resizeable(false);
   get_header().get_widths()->set(0, scale_width(26));
   set_style(*this, TABLE_VIEW_STYLE());
@@ -445,17 +454,12 @@ void EditableTableView::keyPressEvent(QKeyEvent* event) {
   }
 }
 
-void EditableTableView::delete_row(int row) {
-  get_body().get_table()->remove(row);
-}
-
 EditableTableViewBuilder::EditableTableViewBuilder(
   std::shared_ptr<TableModel> table, QWidget* parent)
   : m_table(std::move(table)),
     m_parent(parent),
     m_header(std::make_shared<ArrayListModel<TableHeaderItem::Model>>()),
     m_filter(std::make_shared<EmptyTableFilter>()),
-    m_current(std::make_shared<LocalValueModel<optional<TableIndex>>>()),
     m_selection(std::make_shared<TableSelectionModel>(
       std::make_shared<TableEmptySelectionModel>(),
       std::make_shared<ListSingleSelectionModel>(),

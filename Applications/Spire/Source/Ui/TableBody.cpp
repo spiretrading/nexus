@@ -1,4 +1,5 @@
 #include "Spire/Ui/TableBody.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QApplication>
 #include <QKeyEvent>
 #include <QPainter>
@@ -19,6 +20,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto OPERATION_THRESHOLD = 10;
   const auto SCROLL_BUFFER = 1;
 
   bool test_visibility(const QWidget& container, const QRect& geometry) {
@@ -307,7 +309,7 @@ struct TableBody::Layout : QLayout {
         static_cast<int>(get_top_index() + m_bottom.size());
       add_hidden_row(index, average_row_height);
     } else {
-      add_hidden_row(index, 0);
+      add_hidden_row(index, sizeHint().height() / count());
     }
   }
 
@@ -348,11 +350,15 @@ struct TableBody::Layout : QLayout {
   }
 
   void move_row(int source, int destination) {
-    auto source_index = source - get_top_index();
-    auto item = std::move(m_items[source_index]);
-    m_items.erase(m_items.begin() + source_index);
-    m_items.insert(m_items.begin() + (destination - get_top_index()),
-      std::move(item));
+    auto top = get_top_index();
+    auto source_iterator = m_items.begin() + (source - top);
+    auto destination_iterator = m_items.begin() + (destination - top);
+    if(source < destination) {
+      std::rotate(
+        source_iterator, source_iterator + 1, destination_iterator + 1);
+    } else if(destination < source) {
+      std::rotate(destination_iterator, source_iterator, source_iterator + 1);
+    }
   }
 
   void reset_top_index(int top_point) {
@@ -622,6 +628,7 @@ TableBody::TableBody(
       m_item_builder(std::move(item_builder)),
       m_current_row(nullptr),
       m_is_transaction(false),
+      m_operation_counter(0),
       m_resize_guard(0),
       m_key_observer(*this) {
   setLayout(new Layout(*this));
@@ -656,7 +663,7 @@ TableBody::TableBody(
     std::bind_front(&TableBody::on_table_operation, this));
   m_current_connection = m_current_controller.connect_update_signal(
      std::bind_front(&TableBody::on_current, this));
-  m_selection_controller.connect_row_operation_signal(
+  m_selection_connection = m_selection_controller.connect_row_operation_signal(
     std::bind_front(&TableBody::on_row_selection, this));
   m_widths_connection = m_widths->connect_operation_signal(
     std::bind_front(&TableBody::on_widths_update, this));
@@ -999,13 +1006,26 @@ void TableBody::add_column_cover(int index, const QRect& geometry) {
   on_cover_style(*cover);
 }
 
-void TableBody::add_row(int index) {
-  if(get_layout().is_visible(index)) {
-    auto current_index = m_current_controller.get_row();
-    if(current_index && *current_index >= index) {
-      ++*current_index;
+void TableBody::increment_operation_counter() {
+  ++m_operation_counter;
+  if(m_operation_counter == OPERATION_THRESHOLD) {
+    while(!get_layout().isEmpty()) {
+      auto item = get_layout().itemAt(0);
+      auto row = static_cast<RowCover*>(item->widget());
+      get_layout().hide(*item);
+      if(row != m_current_row) {
+        destroy(row);
+      } else {
+        row->move(-1000, -1000);
+      }
     }
-    mount_row(index, current_index);
+  }
+}
+
+void TableBody::add_row(int index) {
+  increment_operation_counter();
+  if(get_layout().is_visible(index)) {
+    mount_row(index, -1);
   } else {
     get_layout().add_hidden_row(index);
   }
@@ -1014,6 +1034,7 @@ void TableBody::add_row(int index) {
 }
 
 void TableBody::pre_remove_row(int index) {
+  increment_operation_counter();
   if(get_layout().is_visible(index)) {
     remove(*find_row(index));
   } else {
@@ -1030,10 +1051,12 @@ void TableBody::pre_remove_row(int index) {
 
 void TableBody::remove_row(int index) {
   m_current_controller.remove_row(index);
+  auto block = shared_connection_block(m_selection_connection);
   m_selection_controller.remove_row(index);
 }
 
 void TableBody::move_row(int source, int destination) {
+  increment_operation_counter();
   auto& layout = get_layout();
   if(layout.is_visible(source)) {
     if(layout.is_visible(destination)) {
@@ -1064,7 +1087,6 @@ void TableBody::move_row(int source, int destination) {
     }
     layout.add_hidden_row(destination, height);
   }
-  m_current_controller.move_row(source, destination);
   m_selection_controller.move_row(source, destination);
 }
 
@@ -1384,6 +1406,12 @@ void TableBody::on_current(
     }
     m_current_row = nullptr;
   }
+  if(m_operation_counter >= OPERATION_THRESHOLD) {
+    if(!current && previous) {
+      m_selection_controller.remove_row(previous->m_row);
+    }
+    return;
+  }
   if(current) {
     auto current_item = get_current_item();
     match(*current_item, Current());
@@ -1520,6 +1548,7 @@ void TableBody::on_cover_style(Cover& cover) {
 void TableBody::on_table_operation(const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::StartTransaction&) {
+      m_operation_counter = 0;
       m_is_transaction = true;
     },
     [&] (const TableModel::EndTransaction&) {
@@ -1538,6 +1567,12 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
       move_row(operation.m_source, operation.m_destination);
     });
   if(!m_is_transaction) {
+    if(m_operation_counter >= OPERATION_THRESHOLD) {
+      m_operation_counter = 0;
+      on_current(none, m_current_controller.get());
+    } else {
+      m_operation_counter = 0;
+    }
     update_visible_region();
   }
 }
