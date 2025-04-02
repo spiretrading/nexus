@@ -96,8 +96,6 @@ namespace Spire {
       TableHeader* m_header_view;
       ScrollBox* m_header_scroll_box;
       TableBody* m_body;
-      TableItem* m_current_item;
-      QMetaObject::Connection m_current_item_connection;
       int m_horizontal_spacing;
       int m_vertical_spacing;
       ScrollBox* m_scroll_box;

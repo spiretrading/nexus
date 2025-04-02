@@ -29,12 +29,19 @@ namespace Spire {
       ScrollBox& get_scroll_box();
 
     protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void showEvent(QShowEvent* event) override;
 
     private:
+      struct Styles {
+        Qt::Orientation m_direction;
+        int m_item_gap;
+        int m_overflow_gap;
+      };
       ListView* m_list_view;
       QSizePolicy m_size_policy;
       ScrollBox* m_scroll_box;
+      Styles m_styles;
       boost::signals2::scoped_connection m_list_view_style_connection;
       boost::signals2::scoped_connection m_current_connection;
 

@@ -64,13 +64,6 @@ namespace Spire {
        */
       void remove_row(int index);
 
-      /**
-       * Updates this controller when a row is moved.
-       * @param source The index where the row was moved from.
-       * @param destination The index that the row was moved to.
-       */
-      void move_row(int source, int destination);
-
       /** Sets the current to the first selectable item. */
       void navigate_home();
 

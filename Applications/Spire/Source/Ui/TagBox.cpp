@@ -216,6 +216,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     &m_scrollable_list_box->get_scroll_box().get_horizontal_scroll_bar();
   m_vertical_scroll_bar =
     &m_scrollable_list_box->get_scroll_box().get_vertical_scroll_bar();
+  m_scrollable_list_box->installEventFilter(this);
   auto input_box = make_input_box(m_scrollable_list_box);
   enclose(*this, *input_box);
   link(*this, *m_list_view);
@@ -343,6 +344,8 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::LayoutRequest) {
       update_vertical_scroll_bar_visible();
     }
+  } else if(watched == m_scrollable_list_box && event->type() == QEvent::Show) {
+    return true;
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -397,17 +400,19 @@ QWidget* TagBox::make_tag(
   }
   tag->set_read_only(m_is_read_only || !isEnabled());
   tag->connect_delete_signal([=] {
-    auto tag_index = [&] {
-      for(auto i = 0; i < get_tags()->get_size(); ++i) {
-        if(label->get() == to_text(m_model->get(i))) {
-          return i;
+    QTimer::singleShot(0, this, [=] {
+      auto tag_index = [&] {
+        for(auto i = 0; i < get_tags()->get_size(); ++i) {
+          if(label->get() == to_text(m_model->get(i))) {
+            return i;
+          }
         }
+        return -1;
+      }();
+      if(tag_index >= 0) {
+        get_tags()->remove(tag_index);
       }
-      return -1;
-    }();
-    if(tag_index >= 0) {
-      get_tags()->remove(tag_index);
-    }
+    });
   });
   connect(tag, &QWidget::destroyed, [=] {
     if(find_focus_state(*this) != FocusObserver::State::NONE) {
@@ -641,6 +646,9 @@ void TagBox::on_operation(const AnyListModel::Operation& operation) {
     if(m_list_view->get_current()->get() != m_model->get_size() - 1) {
       m_list_view->get_current()->set(m_model->get_size() - 1);
     }
+    if(m_is_read_only) {
+      scroll_to_start(*m_horizontal_scroll_bar);
+    }
   });
 }
 
@@ -650,15 +658,21 @@ void TagBox::on_text_box_current(const QString& current) {
 }
 
 void TagBox::on_list_view_current(const optional<int>& current) {
-  if(current != m_model->get_size() - 1) {
-    m_list_view->get_current()->set(m_model->get_size() - 1);
+  if(!m_is_read_only) {
+    if(current != m_model->get_size() - 1) {
+      m_list_view->get_current()->set(m_model->get_size() - 1);
+    }
   }
 }
 
 void TagBox::on_list_view_submit(const std::any& submission) {
   m_list_view->setFocusPolicy(Qt::NoFocus);
   setFocus();
-  scroll_to_text_box();
+  if(!m_is_read_only) {
+    scroll_to_text_box();
+  } else {
+    scroll_to_start(*m_horizontal_scroll_bar);
+  }
 }
 
 void TagBox::on_style() {
