@@ -159,9 +159,10 @@ void ContextMenu::add_check_box(const QString& name,
     const std::shared_ptr<BooleanModel>& checked) {
   m_list->push(MenuItem(++m_next_id, MenuItemType::CHECK, name, checked));
   auto item = m_list_view->get_list_item(m_list->get_size() - 1);
-  auto press_observer = std::make_shared<PressObserver>(*item);
-  press_observer->connect_press_end_signal(
-    [=, observer = press_observer] (auto reason) {
+  m_check_item_press_observers.emplace_back(
+    std::make_unique<PressObserver>(*item));
+  m_check_item_press_observers.back()->connect_press_end_signal(
+    [=] (auto reason) {
       auto& check_box = static_cast<CheckBox&>(item->get_body());
       if(reason == PressObserver::Reason::MOUSE &&
           !check_box.rect().contains(check_box.mapFromGlobal(QCursor::pos()))) {
