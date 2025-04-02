@@ -776,6 +776,9 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
       } else {
         m_current_controller.navigate_home_column();
       }
+      if(auto current = m_current_controller.get()) {
+        m_selection_controller.navigate(*current);
+      }
       break;
     case Qt::Key_End:
       if(event->modifiers() & Qt::KeyboardModifier::ControlModifier) {
@@ -783,18 +786,33 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
       } else {
         m_current_controller.navigate_end_column();
       }
+      if(auto current = m_current_controller.get()) {
+        m_selection_controller.navigate(*current);
+      }
       break;
     case Qt::Key_Up:
       m_current_controller.navigate_previous_row();
+      if(auto current = m_current_controller.get()) {
+        m_selection_controller.navigate(*current);
+      }
       break;
     case Qt::Key_Down:
       m_current_controller.navigate_next_row();
+      if(auto current = m_current_controller.get()) {
+        m_selection_controller.navigate(*current);
+      }
       break;
     case Qt::Key_Left:
       m_current_controller.navigate_previous_column();
+      if(auto current = m_current_controller.get()) {
+        m_selection_controller.navigate(*current);
+      }
       break;
     case Qt::Key_Right:
       m_current_controller.navigate_next_column();
+      if(auto current = m_current_controller.get()) {
+        m_selection_controller.navigate(*current);
+      }
       break;
     case Qt::Key_A:
       if(event->modifiers() & Qt::Modifier::CTRL && !event->isAutoRepeat()) {
@@ -1315,7 +1333,7 @@ bool TableBody::navigate_next() {
       }
       return column;
     };
-  if(auto& current = get_current()->get()) {
+  if(auto& current = m_current_controller.get()) {
     auto column =
       get_next_column(*get_current(), current->m_row, current->m_column);
     if(column >= get_table()->get_column_size()) {
@@ -1325,12 +1343,21 @@ bool TableBody::navigate_next() {
       } else {
         get_current()->set(
           Index(row, get_next_column(*get_current(), row, -1)));
+        if(auto current = m_current_controller.get()) {
+          m_selection_controller.navigate(*current);
+        }
       }
     } else {
       get_current()->set(Index(current->m_row, column));
+      if(auto current = m_current_controller.get()) {
+        m_selection_controller.navigate(*current);
+      }
     }
   } else if(get_table()->get_row_size() > 0) {
     get_current()->set(Index(0, get_next_column(*get_current(), 0, -1)));
+    if(auto current = m_current_controller.get()) {
+      m_selection_controller.navigate(*current);
+    }
   } else {
     return false;
   }
@@ -1346,7 +1373,7 @@ bool TableBody::navigate_previous() {
       }
       return column;
     };
-  if(auto& current = get_current()->get()) {
+  if(auto& current = m_current_controller.get()) {
     auto column =
       get_previous_column(*get_current(), current->m_row, current->m_column);
     if(column < 0) {
@@ -1356,15 +1383,24 @@ bool TableBody::navigate_previous() {
       } else {
         get_current()->set(Index(row, get_previous_column(*get_current(),
           row, get_table()->get_column_size())));
+        if(auto current = m_current_controller.get()) {
+          m_selection_controller.navigate(*current);
+        }
       }
     } else {
       get_current()->set(Index(current->m_row, column));
+      if(auto current = m_current_controller.get()) {
+        m_selection_controller.navigate(*current);
+      }
     }
   } else if(get_table()->get_row_size() > 0) {
     auto row = get_table()->get_row_size() - 1;
     auto column =
       get_previous_column(*get_current(), row, get_table()->get_column_size());
     get_current()->set(Index(row, column));
+    if(auto current = m_current_controller.get()) {
+      m_selection_controller.navigate(*current);
+    }
   } else {
     return false;
   }
@@ -1419,12 +1455,9 @@ void TableBody::on_current(
     if(!previous || previous->m_column != current->m_column) {
       match(*m_column_covers[current->m_column], CurrentColumn());
     }
-    m_selection_controller.navigate(*current);
     if(previous_had_focus || QApplication::focusObject() == this) {
       current_item->setFocus(Qt::FocusReason::OtherFocusReason);
     }
-  } else if(previous) {
-    m_selection_controller.remove_row(previous->m_row);
   }
 }
 
