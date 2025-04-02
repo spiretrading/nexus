@@ -362,17 +362,13 @@ TableView* Spire::make_task_keys_table_view(
     QWidget* parent) {
   auto table =
     make_order_task_arguments_table_model(std::move(order_task_arguments));
-  auto table_view = new EditableTableView(
-    std::make_shared<UniqueTaskKeyTableModel>(std::move(table)),
-    make_header_model(), std::make_shared<EmptyTableFilter>(),
-    std::make_shared<LocalValueModel<optional<TableIndex>>>(),
-    std::make_shared<TableSelectionModel>(
-      std::make_shared<TableEmptySelectionModel>(),
-      std::make_shared<ListSingleSelectionModel>(),
-      std::make_shared<ListEmptySelectionModel>()),
-    RecycledTableViewItemBuilder(TaskKeysTableViewItemBuilder(
-      regions, destinations, markets, additional_tags)),
-    &comparator);
+  auto builder = EditableTableViewBuilder(
+    std::make_shared<UniqueTaskKeyTableModel>(std::move(table))).
+    set_header(make_header_model()).
+    set_item_builder(RecycledTableViewItemBuilder(TaskKeysTableViewItemBuilder(
+      regions, destinations, markets, additional_tags))).
+    set_comparator(&comparator);
+  auto table_view = builder.make();
   auto widths = make_header_widths();
   for(auto i = 0; i < std::ssize(widths); ++i) {
     table_view->get_header().get_widths()->set(i + 1, widths[i]);
