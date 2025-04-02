@@ -1885,24 +1885,43 @@ UiProfile Spire::make_editable_box_profile() {
 UiProfile Spire::make_editable_table_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(std::make_shared<
+    StandardUiProperty<TableModel::RemoveOperation>>(
+      "remove", TableModel::RemoveOperation(-1), [] (
+          auto parent, auto& property) {
+        auto form = new QWidget();
+        auto layout = make_hbox_layout(form);
+        auto row = new QSpinBox();
+        auto button = new QPushButton("Remove");
+        layout->addWidget(row);
+        layout->addWidget(button);
+        QObject::connect(button, &QPushButton::pressed, [=, &property] {
+          property.set(TableModel::RemoveOperation(row->value()));
+        });
+        return form;
+      }));
   auto profile = UiProfile("EditableTableView", properties, [] (auto& profile) {
-    auto array_table_model = std::make_shared<ArrayTableModel>();
-    array_table_model->push({QString("Test1"), OrderType(OrderType::MARKET),
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({QString("Test1"), OrderType(OrderType::MARKET),
       optional<Quantity>(10), QKeySequence("F3")});
-    array_table_model->push({QString("Test2"), OrderType(OrderType::STOP),
+    table->push({QString("Test2"), OrderType(OrderType::STOP),
       optional<Quantity>(20), QKeySequence("F7")});
-    array_table_model->push({QString("Test3"), OrderType(OrderType::LIMIT),
+    table->push({QString("Test3"), OrderType(OrderType::LIMIT),
       optional<Quantity>(30), QKeySequence("Ctrl+F2")});
-    auto table_view = new EditableTableView(array_table_model,
-      make_header_model(), std::make_shared<EmptyTableFilter>(),
-      std::make_shared<LocalValueModel<optional<TableIndex>>>(),
-      std::make_shared<TableSelectionModel>(
-        std::make_shared<TableEmptySelectionModel>(),
-        std::make_shared<ListSingleSelectionModel>(),
-        std::make_shared<ListEmptySelectionModel>()),
-      make_row_cell, {});
+    auto builder = EditableTableViewBuilder(table).
+      set_header(make_header_model()).
+      set_item_builder(make_row_cell);
+    auto table_view = builder.make();
     apply_widget_properties(table_view, profile.get_properties());
     table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto& remove_operation =
+      get<TableModel::RemoveOperation>("remove", profile.get_properties());
+    remove_operation.connect_changed_signal([=] (const auto& operation) {
+      if(operation.m_index >= 0 &&
+          operation.m_index < table->get_row_size()) {
+        table->remove(operation.m_index);
+      }
+    });
     return table_view;
   });
   return profile;

@@ -266,6 +266,7 @@ ScrollBox::ScrollBox(QWidget* body, QWidget* parent)
   m_scrollable_layer->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto& vertical_scroll_bar = m_scrollable_layer->get_vertical_scroll_bar();
+  vertical_scroll_bar.set_line_size(scale_height(26));
   vertical_scroll_bar.setVisible(false);
   vertical_scroll_bar.installEventFilter(this);
   vertical_scroll_bar.connect_position_signal(
