@@ -67,7 +67,9 @@ FontBox::FontBox(std::shared_ptr<ValueModel<QFont>> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)) {
   m_font_family_box = make_font_family_box(m_current->get().family());
-  m_font_style_box = make_font_style_box(m_font_family_box->get_current());
+  m_font_style_box = make_font_style_box(m_font_family_box->get_current(),
+    std::make_shared<LocalValueModel<QString>>(
+      QFontDatabase().styleString(m_current->get())));
   auto size_model = std::make_shared<LocalScalarValueModel<optional<int>>>();
   size_model->set_minimum(1);
   auto font_size = [&] {

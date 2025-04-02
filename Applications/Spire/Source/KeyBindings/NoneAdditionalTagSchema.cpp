@@ -16,15 +16,16 @@ bool NoneAdditionalTagSchema::test(const AdditionalTag& tag) const {
   return false;
 }
 
+AnyInputBox* NoneAdditionalTagSchema::make_input_box(
+    std::shared_ptr<AdditionalTagValueModel> current,
+    const SubmitSignal::slot_type& submission) const {
+  current->set(none);
+  return new AnyInputBox(*make_label(""));
+}
+
 std::unique_ptr<CanvasNode> NoneAdditionalTagSchema::make_canvas_node(
     const boost::optional<Nexus::Tag::Type>& value) const {
   return std::make_unique<NoneNode>();
-}
-
-AnyInputBox* NoneAdditionalTagSchema::make_input_box(
-    std::shared_ptr<AdditionalTagValueModel> current) const {
-  current->set(none);
-  return new AnyInputBox(*make_label(""));
 }
 
 NoneAdditionalTagSchema::NoneAdditionalTagSchema()

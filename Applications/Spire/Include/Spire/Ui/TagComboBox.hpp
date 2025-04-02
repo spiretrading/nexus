@@ -84,7 +84,7 @@ namespace Spire {
       void push_combo_box();
       void submit();
       QWidget* find_drop_down_window();
-      void on_combo_box_submit(AnyRef submission);
+      void on_combo_box_submit(const AnyRef& submission);
       void on_focus(FocusObserver::State state);
       void on_operation(const AnyListModel::Operation& operation);
   };

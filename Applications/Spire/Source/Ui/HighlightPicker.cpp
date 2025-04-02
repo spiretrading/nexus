@@ -31,8 +31,12 @@ namespace {
       set(BackgroundColor(Qt::transparent)).
       set(horizontal_padding(scale_width(1))).
       set(vertical_padding(scale_height(1)));
-    style.get(Any() > (is_a<ListItem>() && (Hover() || Current()))).
+    style.get(Any() > Current()).
+      set(BackgroundColor(QColor(0xD0D0D0)));
+    style.get(FocusIn() > Current()).
       set(border_color(QColor(0x4B23A0)));
+    style.get(Any() > (is_a<ListItem>() && Hover())).
+      set(BackgroundColor(QColor(0xE2E0FF)));
     return style;
   }
 

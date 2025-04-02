@@ -45,7 +45,7 @@ namespace {
       return m_value.connect_update_signal(slot);
     }
 
-    void on_update(AnyRef current) {
+    void on_update(const AnyRef& current) {
       auto text = to_text(current);
       if(m_value.get() != text) {
         m_value.set(text);
@@ -476,6 +476,7 @@ void AnyComboBox::on_drop_down_submit(const std::any& submission) {
   m_data->m_submission = submission;
   m_data->m_submission_text = text;
   m_data->m_drop_down_list->hide();
+  auto input_blocker = shared_connection_block(m_data->m_input_connection);
   m_data->m_submit_signal(submission);
 }
 

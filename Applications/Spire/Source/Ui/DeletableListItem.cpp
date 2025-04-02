@@ -19,6 +19,7 @@ DeletableListItem::DeletableListItem(QWidget& body, QWidget* parent)
   update_style(*delete_button, [] (auto& style) {
     style.get(Any()).set(Visibility(Visibility::NONE));
     style.get(Hover() > is_a<Icon>()).set(Fill(QColor(0xB71C1C)));
+    style.get(Press() > is_a<Icon>()).set(Fill(QColor(0xE01616)));
   });
   auto content = new Box(m_body);
   content->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);

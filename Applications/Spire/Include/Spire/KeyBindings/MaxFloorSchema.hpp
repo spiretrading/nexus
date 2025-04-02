@@ -14,11 +14,12 @@ namespace Spire {
 
       bool test(const AdditionalTag& tag) const override;
 
+      AnyInputBox* make_input_box(
+        std::shared_ptr<AdditionalTagValueModel> current,
+        const SubmitSignal::slot_type& submission) const override;
+
       std::unique_ptr<CanvasNode> make_canvas_node(
         const boost::optional<Nexus::Tag::Type>& value) const override;
-
-      AnyInputBox* make_input_box(
-        std::shared_ptr<AdditionalTagValueModel> current) const override;
 
     private:
       MaxFloorSchema();

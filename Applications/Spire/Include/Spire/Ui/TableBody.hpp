@@ -14,6 +14,7 @@
 #include "Spire/Styles/CompositeProperty.hpp"
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
+#include "Spire/Ui/KeyObserver.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/TableCurrentController.hpp"
 #include "Spire/Ui/TableSelectionController.hpp"
@@ -122,6 +123,7 @@ namespace Styles {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
+      void focusInEvent(QFocusEvent* event) override;
       bool focusNextPrevChild(bool next) override;
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
@@ -156,6 +158,7 @@ namespace Styles {
       Styles m_styles;
       bool m_is_transaction;
       int m_resize_guard;
+      KeyObserver m_key_observer;
       std::unordered_map<TableItem*, HoverObserver> m_hover_observers;
       boost::optional<Index> m_hover_index;
       boost::signals2::scoped_connection m_style_connection;
@@ -203,6 +206,7 @@ namespace Styles {
       void on_cover_style(Cover& cover);
       void on_table_operation(const TableModel::Operation& operation);
       void on_widths_update(const ListModel<int>::Operation& operation);
+      bool on_key_press(QWidget& target, QKeyEvent& event);
   };
 }
 

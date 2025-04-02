@@ -67,6 +67,24 @@ namespace {
         return TableIndex(row, index->m_column);
       });
   }
+
+  struct TranslatedItemBuilder {
+    TableViewItemBuilder m_builder;
+
+    QWidget* mount(
+        const std::shared_ptr<TableModel>& table, int row, int column) {
+      auto sorted_table = std::static_pointer_cast<SortedTableModel>(table);
+      auto filtered_table = std::static_pointer_cast<FilteredTableModel>(
+        sorted_table->get_source());
+      return m_builder.mount(filtered_table->get_source(),
+        filtered_table->index_to_source(sorted_table->index_to_source(row)),
+        column);
+    }
+
+    void unmount(QWidget* widget) {
+      m_builder.unmount(widget);
+    }
+  };
 }
 
 QWidget* TableView::default_item_builder(
@@ -121,7 +139,8 @@ TableView::TableView(
   }
   m_body = new TableBody(m_sorted_table, make_transformed_current_model(
       m_sorted_table, m_filtered_table, m_current),
-    std::move(selection), m_header_view->get_widths(), std::move(item_builder));
+    std::move(selection), m_header_view->get_widths(),
+    TranslatedItemBuilder(std::move(item_builder)));
   m_body->setSizePolicy(QSizePolicy::MinimumExpanding,
     QSizePolicy::MinimumExpanding);
   m_body->installEventFilter(this);
@@ -144,7 +163,7 @@ TableView::TableView(
     std::bind_front(&TableView::on_current, this));
   m_body_style_connection = connect_style_signal(
     *m_body, std::bind_front(&TableView::on_body_style, this));
-  setFocusProxy(m_body);
+  setFocusProxy(m_scroll_box);
   on_body_style();
 }
 
@@ -210,8 +229,9 @@ bool TableView::is_filtered(const TableModel& model, int row) {
 }
 
 void TableView::update_scroll_sizes() {
-  m_scroll_box->get_vertical_scroll_bar().set_line_size(
-    m_body->estimate_scroll_line_height());
+  auto scroll_size = m_body->estimate_scroll_line_height();
+  m_scroll_box->get_vertical_scroll_bar().set_line_size(scroll_size);
+  m_scroll_box->get_horizontal_scroll_bar().set_line_size(scroll_size);
 }
 
 void TableView::on_order_update(int index, TableHeaderItem::Order order) {

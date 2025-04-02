@@ -135,6 +135,9 @@ namespace Spire::Styles {
        */
       void unmatch(const Selector& selector);
 
+      /** Directs this Stylist to no longer match any Selector. */
+      void unmatch_all();
+
       /**
        * Applies a function to the evaluation of a property's expression.
        * The function receiving the evaluation may be called multiple times,
@@ -374,6 +377,12 @@ namespace Spire::Styles {
    * @param selector The selector to no longer match.
    */
   void unmatch(QWidget& widget, const Selector& selector);
+
+  /**
+   * Unmatches all Selectors.
+   * @param widget The widget to unmatch from all selectors.
+   */
+  void unmatch_all(QWidget& widget);
 
   /** Connects a slot to a QWidget's StyleSignal. */
   boost::signals2::connection connect_style_signal(
