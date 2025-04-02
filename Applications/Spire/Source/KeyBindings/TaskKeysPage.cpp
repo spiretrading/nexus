@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/TaskKeysPage.hpp"
+#include <QTimer>
 #include "Spire/KeyBindings/AdditionalTag.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/KeyBindings/SearchBarOrderTaskArgumentsListModel.hpp"
@@ -273,21 +274,20 @@ void TaskKeysPage::on_reset() {
 void TaskKeysPage::on_new_task_submission(const QString& name) {
   auto order_task = OrderTaskArguments();
   order_task.m_name = name;
-  if(auto current = m_table_view->get_current()->get()) {
-    m_key_bindings->get_order_task_arguments()->insert(
-      order_task, current->m_row);
-    m_table_view->get_current()->set(TableView::Index(current->m_row, 1));
-  } else {
-    m_key_bindings->get_order_task_arguments()->push(order_task);
-    m_table_view->get_current()->set(TableView::Index(
-      m_key_bindings->get_order_task_arguments()->get_size() - 1, 1));
-  }
-  auto view_current = m_table_view->get_body().get_current()->get();
-  if(auto view_current = m_table_view->get_body().get_current()->get()) {
-    if(auto item = m_table_view->get_body().find_item(*view_current)) {
-      item->get_body().setFocus(Qt::ActiveWindowFocusReason);
+  auto current = [&] {
+    if(auto current = m_table_view->get_current()->get()) {
+      m_key_bindings->get_order_task_arguments()->insert(
+        order_task, current->m_row);
+      return TableIndex(current->m_row, 1);
+    } else {
+      m_key_bindings->get_order_task_arguments()->push(order_task);
+      return TableIndex(
+        m_key_bindings->get_order_task_arguments()->get_size() - 1, 1);
     }
-  }
+  }();
+  QTimer::singleShot(0, this, [=] {
+    m_table_view->get_current()->set(current);
+  });
 }
 
 void TaskKeysPage::on_row_selection(
