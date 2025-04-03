@@ -518,7 +518,10 @@ struct TableBody::Painter {
 
   static void paint_current_item(
       TableBody& body, QPainter& painter, const optional<TableIndex>& current) {
-    auto current_item = body.get_current_item();
+    if(!current) {
+      return;
+    }
+    auto current_item = body.find_item(*current);
     if(!current_item || !current_item->isVisible()) {
       return;
     }
@@ -631,6 +634,7 @@ TableBody::TableBody(
   for(auto row = 0; row != m_table->get_row_size(); ++row) {
     add_row(row);
   }
+  m_operation_counter = 0;
   auto left = 0;
   for(auto column = 0; column != m_widths->get_size() + 1; ++column) {
     auto width = [&] {
@@ -672,14 +676,22 @@ const std::shared_ptr<TableBody::SelectionModel>&
 
 TableItem* TableBody::find_item(const Index& index) {
   if(auto row = find_row(index.m_row)) {
-    if(row == m_current_row && !get_layout().is_visible(*m_current_row_index)) {
-      auto position =
-        m_styles.m_padding.top() + *m_current_row_index * estimate_row_height();
+    if(row == m_current_row &&
+        !get_layout().is_visible(*get_current_row_index())) {
+      auto position = m_styles.m_padding.top() +
+        *get_current_row_index() * estimate_row_height();
       row->move(m_styles.m_padding.left(), position);
     }
     return row->get_item(index.m_column);
   }
   return nullptr;
+}
+
+optional<int> TableBody::get_current_row_index() const {
+  if(m_current_index) {
+    return m_current_index->m_row;
+  }
+  return none;
 }
 
 int TableBody::estimate_scroll_line_height() const {
@@ -862,7 +874,7 @@ void TableBody::paintEvent(QPaintEvent* event) {
   for(auto i = 0; i != static_cast<int>(m_column_covers.size()); ++i) {
     auto cover = m_column_covers[i];
     if(cover->m_background_color.alphaF() != 0 &&
-        m_current_controller.get_column() != i) {
+        m_current_index && m_current_index->m_column != i) {
       painter.fillRect(cover->geometry(), cover->m_background_color);
     }
   }
@@ -870,15 +882,15 @@ void TableBody::paintEvent(QPaintEvent* event) {
     auto& cover = get_layout().get_row(i);
     auto index = get_layout().get_top_index() + i;
     if(cover.m_background_color.alphaF() != 0 &&
-        m_current_controller.get_row() != index) {
+        m_current_index && m_current_index->m_row != index) {
       painter.fillRect(cover.geometry(), cover.m_background_color);
     }
   }
-  Painter::paint_current_item(*this, painter, m_current_controller.get());
+  Painter::paint_current_item(*this, painter, m_current_index);
   Painter::paint_horizontal_borders(*this, painter);
   Painter::paint_vertical_borders(*this, painter);
   Painter::paint_item_borders(*this, painter, m_hover_index);
-  Painter::paint_item_borders(*this, painter, m_current_controller.get());
+  Painter::paint_item_borders(*this, painter, m_current_index);
   QWidget::paintEvent(event);
 }
 
@@ -907,7 +919,7 @@ TableBody::Layout& TableBody::get_layout() {
 TableBody::RowCover* TableBody::find_row(int index) {
   if(get_layout().is_visible(index)) {
     return &get_layout().get_row(index - get_layout().get_top_index());
-  } else if(index == m_current_row_index) {
+  } else if(index == get_current_row_index()) {
     return m_current_row;
   }
   return nullptr;
@@ -923,7 +935,7 @@ TableItem* TableBody::find_item(const optional<Index>& index) {
 TableBody::Index TableBody::get_index(const TableItem& item) const {
   auto row = item.parentWidget();
   if(row == m_current_row) {
-    return Index(*m_current_row_index,
+    return Index(*get_current_row_index(),
       row->layout()->indexOf(&const_cast<TableItem&>(item)));
   }
   auto row_index = get_layout().get_top_index();
@@ -995,8 +1007,8 @@ void TableBody::increment_operation_counter() {
 
 void TableBody::add_row(int index) {
   increment_operation_counter();
-  if(index <= m_current_row_index.get_value_or(-1)) {
-    ++*m_current_row_index;
+  if(index <= get_current_row_index().get_value_or(-1)) {
+    ++m_current_index->m_row;
   }
   if(get_layout().is_visible(index)) {
     mount_row(index);
@@ -1009,20 +1021,19 @@ void TableBody::add_row(int index) {
 
 void TableBody::pre_remove_row(int index) {
   increment_operation_counter();
-  if(index == m_current_row_index) {
-    m_current_row = nullptr;
-    m_current_row_index = none;
-  }
   if(get_layout().is_visible(index)) {
     remove(*find_row(index));
   } else {
-    if(index == m_current_row_index) {
-      destroy(m_current_row);
+    if(index == get_current_row_index()) {
+      auto current_row = m_current_row;
+      m_current_row = nullptr;
+      m_current_index = none;
+      destroy(current_row);
     }
     get_layout().remove_hidden_row(index);
   }
-  if(index < m_current_row_index.get_value_or(-1)) {
-    --*m_current_row_index;
+  if(index < get_current_row_index().get_value_or(-1)) {
+    --m_current_index->m_row;
   }
   if(m_hover_index && m_hover_index->m_row >= index) {
     m_hover_index = none;
@@ -1037,6 +1048,16 @@ void TableBody::remove_row(int index) {
 
 void TableBody::move_row(int source, int destination) {
   increment_operation_counter();
+  if(m_current_index) {
+    auto& current_row = m_current_index->m_row;
+    auto direction = source < destination ? -1 : 1;
+    if(current_row == source) {
+      current_row = destination;
+    } else if((current_row - destination) * direction >= 0 &&
+        (current_row - source) * direction < 0) {
+      current_row += direction;
+    }
+  }
   auto& layout = get_layout();
   if(layout.is_visible(source)) {
     if(layout.is_visible(destination)) {
@@ -1077,7 +1098,7 @@ void TableBody::update_parent() {
 
 TableBody::RowCover* TableBody::mount_row(int index) {
   auto row = [&] {
-    if(index == m_current_row_index) {
+    if(index == get_current_row_index()) {
       return m_current_row;
     }
     return make_row_cover();
@@ -1129,7 +1150,7 @@ void TableBody::remove(RowCover& row) {
   auto item = get_layout().takeAt(get_layout().indexOf(&row));
   if(&row == m_current_row) {
     m_current_row = nullptr;
-    m_current_row_index = none;
+    m_current_index = none;
   }
   destroy(&row);
   delete item;
@@ -1185,9 +1206,9 @@ void TableBody::initialize_visible_region() {
     return;
   }
   if(m_current_controller.get_row() && !m_current_row) {
-    m_current_row_index = m_current_controller.get_row();
+    m_current_index = m_current_controller.get();
     m_current_row = make_row_cover();
-    m_current_row->mount(*m_current_row_index);
+    m_current_row->mount(m_current_index->m_row);
     on_cover_style(*m_current_row);
   }
   mount_row(0);
@@ -1202,7 +1223,7 @@ void TableBody::reset_visible_region() {
   }
   get_layout().reset_top_index(mapFromParent(QPoint(0, 0)).y());
   if(get_layout().get_top_index() < m_table->get_row_size()) {
-    mount_row(get_layout().get_top_index(), none);
+    mount_row(get_layout().get_top_index());
   }
 }
 
@@ -1380,27 +1401,31 @@ void TableBody::on_item_activated(TableItem& item) {
   m_selection_controller.click(index);
 }
 
-// TODO: Continue implementation.
 void TableBody::on_current(
-    const optional<Index>& previous, const optional<Index>& current) {
+    const optional<Index>& p, const optional<Index>& current) {
+  if(current == m_current_index) {
+    return;
+  }
+  auto previous = m_current_index;
   auto previous_had_focus = false;
-  if(m_current_row_index) {
-    if(auto previous_item = find_item(previous)) {
+  if(m_current_index) {
+    if(auto previous_item = find_item(*m_current_index)) {
       previous_had_focus =
         previous_item->isAncestorOf(
           static_cast<QWidget*>(QApplication::focusObject()));
-      if(!current || previous->m_row != current->m_row) {
+      if(!current || m_current_index->m_row != current->m_row) {
         unmatch(*previous_item->parentWidget(), CurrentRow());
       }
       unmatch(*previous_item, Current());
     }
-    if(!current || current->m_column != previous->m_column) {
-      unmatch(*m_column_covers[previous->m_column], CurrentColumn());
+    if(!current || current->m_column != m_current_index->m_column) {
+      unmatch(*m_column_covers[m_current_index->m_column], CurrentColumn());
     }
-    if(m_current_row && get_layout().indexOf(m_current_row) == -1) {
+    if(get_layout().indexOf(m_current_row) == -1) {
       destroy(m_current_row);
     }
     m_current_row = nullptr;
+    m_current_index = none;
   }
   if(m_operation_counter >= OPERATION_THRESHOLD) {
     if(!current && previous) {
@@ -1409,11 +1434,20 @@ void TableBody::on_current(
     return;
   }
   if(current) {
-    auto current_item = get_current_item();
+    m_current_index = current;
+    if(get_layout().is_visible(m_current_index->m_row)) {
+      m_current_row = static_cast<RowCover*>(
+        get_layout().itemAt(m_current_index->m_row - get_layout().get_top_index())->widget());
+    } else {
+      m_current_row = make_row_cover();
+      m_current_row->mount(m_current_index->m_row);
+      on_cover_style(*m_current_row);
+    }
+    auto current_item = m_current_row->get_item(m_current_index->m_column);
     match(*current_item, Current());
     match(*current_item->parentWidget(), CurrentRow());
-    if(!previous || previous->m_column != current->m_column) {
-      match(*m_column_covers[current->m_column], CurrentColumn());
+    if(!previous || previous->m_column != m_current_index->m_column) {
+      match(*m_column_covers[m_current_index->m_column], CurrentColumn());
     }
     if(previous_had_focus || QApplication::focusObject() == this) {
       current_item->setFocus(Qt::FocusReason::OtherFocusReason);

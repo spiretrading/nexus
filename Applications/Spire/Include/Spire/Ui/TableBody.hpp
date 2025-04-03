@@ -155,7 +155,7 @@ namespace Styles {
       std::deque<RowCover*> m_recycled_rows;
       std::vector<ColumnCover*> m_column_covers;
       RowCover* m_current_row;
-      boost::optional<int> m_current_row_index;
+      boost::optional<Index> m_current_index;
       Styles m_styles;
       bool m_is_transaction;
       int m_operation_counter;
@@ -174,6 +174,7 @@ namespace Styles {
       Layout& get_layout();
       RowCover* find_row(int index);
       TableItem* find_item(const boost::optional<Index>& index);
+      boost::optional<int> get_current_row_index() const;
       Index get_index(const TableItem& item) const;
       int get_column_size() const;
       int estimate_row_height() const;
