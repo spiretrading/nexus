@@ -44,7 +44,6 @@ namespace Spire {
 
       bool on_mouse_press(ColorBox& source, ColorBox& destination,
         QWidget& source_picker, const QMouseEvent& mouse_event);
-      void on_palette_current(boost::optional<int> current);
   };
 }
 
