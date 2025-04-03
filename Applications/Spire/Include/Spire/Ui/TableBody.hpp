@@ -201,8 +201,7 @@ namespace Styles {
       bool navigate_next();
       bool navigate_previous();
       void on_item_activated(TableItem& item);
-      void on_current(const boost::optional<Index>& previous,
-        const boost::optional<Index>& current);
+      void on_current(const boost::optional<Index>& current);
       void on_row_selection(const ListModel<int>::Operation& operation);
       void on_hover(TableItem& item, HoverObserver::State state);
       void on_style();

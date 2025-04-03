@@ -18,11 +18,9 @@ namespace Spire {
 
       /**
        * Signals a change to the current navigation index.
-       * @param previous The index of the previous navigation index.
        * @param current The index of the current navigation index.
        */
       using UpdateSignal = Signal<void (
-        const boost::optional<TableIndex>& previous,
         const boost::optional<TableIndex>& current)>;
 
       /**
@@ -105,7 +103,6 @@ namespace Spire {
       std::shared_ptr<CurrentModel> m_current;
       int m_row_size;
       int m_column_size;
-      boost::optional<Index> m_last_current;
       boost::signals2::scoped_connection m_connection;
 
       void on_current(const boost::optional<Index>& current);

@@ -10,7 +10,6 @@ TableCurrentController::TableCurrentController(
   : m_current(std::move(current)),
     m_row_size(row_size),
     m_column_size(column_size),
-    m_last_current(m_current->get()),
     m_connection(m_current->connect_update_signal(
       std::bind_front(&TableCurrentController::on_current, this))) {}
 
@@ -209,7 +208,5 @@ connection TableCurrentController::connect_update_signal(
 }
 
 void TableCurrentController::on_current(const optional<Index>& current) {
-  auto previous = m_last_current;
-  m_last_current = current;
-  m_update_signal(previous, current);
+  m_update_signal(current);
 }

@@ -1401,8 +1401,7 @@ void TableBody::on_item_activated(TableItem& item) {
   m_selection_controller.click(index);
 }
 
-void TableBody::on_current(
-    const optional<Index>& p, const optional<Index>& current) {
+void TableBody::on_current(const optional<Index>& current) {
   if(current == m_current_index) {
     return;
   }
@@ -1436,8 +1435,8 @@ void TableBody::on_current(
   if(current) {
     m_current_index = current;
     if(get_layout().is_visible(m_current_index->m_row)) {
-      m_current_row = static_cast<RowCover*>(
-        get_layout().itemAt(m_current_index->m_row - get_layout().get_top_index())->widget());
+      m_current_row = static_cast<RowCover*>(get_layout().itemAt(
+        m_current_index->m_row - get_layout().get_top_index())->widget());
     } else {
       m_current_row = make_row_cover();
       m_current_row->mount(m_current_index->m_row);
@@ -1596,7 +1595,7 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
   if(!m_is_transaction) {
     if(m_operation_counter >= OPERATION_THRESHOLD) {
       m_operation_counter = 0;
-      on_current(none, m_current_controller.get());
+      on_current(m_current_controller.get());
     } else {
       m_operation_counter = 0;
     }
