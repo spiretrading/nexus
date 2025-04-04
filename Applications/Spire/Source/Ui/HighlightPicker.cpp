@@ -51,11 +51,11 @@ namespace {
     auto highlights =
       std::make_shared<ArrayListModel<HighlightPicker::Highlight>>();
     highlight_list = highlights;
-    highlights->push({"#FFF1F1", "#B71C1C"});
+    highlights->push({"#FAE8EA", "#CB1329"});
     highlights->push({"#FFECFF", "#76008A"});
     highlights->push({"#F4F4FF", "#4C00DA"});
     highlights->push({"#DDF9FF", "#003698"});
-    highlights->push({"#EBFFF0", "#007735"});
+    highlights->push({"#CAFFDE", "#007E00"});
     highlights->push({"#FFFFC4", "#834A2D"});
     highlights->push({"#FFE6C9", "#A00000"});
     highlights->push({"#FFFFFF", "#000000"});
@@ -66,7 +66,7 @@ namespace {
     highlights->push({"#96D8A8", "#004E00"});
     highlights->push({"#FEEE7F", "#630000"});
     highlights->push({"#FFBF76", "#A00000"});
-    highlights->push({"#C6C6C6", "#000000"});
+    highlights->push({"#EBEBEB", "#333333"});
     highlights->push({"#C33A39", "#FFFFFF"});
     highlights->push({"#A937B2", "#FFFFFF"});
     highlights->push({"#6F53C5", "#FFFFFF"});
