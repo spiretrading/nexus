@@ -629,7 +629,7 @@ namespace {
     std::shared_ptr<ValueModel<OrderHighlightArray>> m_highlight_properties;
     bool m_is_ascending;
     ColumnViewListModel<Money> m_prices;
-    std::unordered_map<OrderKey, UserOrder, OrderKeyHash> m_order_status;
+    std::unordered_map<OrderKey, OrderStatus, OrderKeyHash> m_order_status;
     OrderVisibility m_visibility;
     OrderHighlightArray m_highlights;
     scoped_connection m_order_connection;
@@ -652,7 +652,8 @@ namespace {
           m_prices(m_quote_table, static_cast<int>(BookViewColumns::PRICE)) {
       for(auto i = 0; i < m_orders->get_size(); ++i) {
         auto& order = m_orders->get(i);
-        m_order_status[OrderKey(order.m_destination, order.m_price)] = order;
+        m_order_status[OrderKey(order.m_destination, order.m_price)] =
+          order.m_status;
       }
       on_visibility_update(m_visibility_property->get());
       on_highlight_update(m_highlight_properties->get());
@@ -682,7 +683,7 @@ namespace {
           auto key = OrderKey(mpid.substr(1), get_price(*m_quote_table, row));
           if(auto i = m_order_status.find(key); i != m_order_status.end()) {
             m_row_tracker->match_selector(row, SelectorType::HIGHLIGHT_SELECTOR,
-              make_order_status_selector(i->second.m_status));
+              make_order_status_selector(i->second));
           } else {
             m_row_tracker->match_selector(row, SelectorType::HIGHLIGHT_SELECTOR,
               OrderQuote(OrderHighlightState::ACTIVE));
@@ -741,7 +742,8 @@ namespace {
               m_highlights[i]);
           }
           auto& order = m_orders->get(operation.m_index);
-          m_order_status[OrderKey(order.m_destination, order.m_price)] = order;
+          m_order_status[OrderKey(order.m_destination, order.m_price)] =
+            order.m_status;
           if(m_visibility == OrderVisibility::HIGHLIGHTED) {
             update_order_status(order);
           }
@@ -749,16 +751,16 @@ namespace {
         [&] (const ListModel<UserOrder>::UpdateOperation& operation) {
           auto& order = operation.get_value();
           auto key = OrderKey(order.m_destination, order.m_price);
-          m_order_status[key] = order;
+          m_order_status[key] = order.m_status;
           if(m_visibility_property->get() != OrderVisibility::HIGHLIGHTED) {
             return;
           }
           update_order_status(order);
           if(IsTerminal(order.m_status)) {
             QTimer::singleShot(ORDER_HIGHLIGHT_DELAY_MS, this, [=] {
+              m_order_status[key] = OrderStatus::NONE;
               auto updated_order = order;
               updated_order.m_status = OrderStatus::NONE;
-              m_order_status[key] = updated_order;
               update_order_status(updated_order);
             });
           }
@@ -789,7 +791,7 @@ namespace {
               if(auto j = m_order_status.find(key); j != m_order_status.end()) {
                 m_row_tracker->match_selector(i,
                   SelectorType::HIGHLIGHT_SELECTOR,
-                  make_order_status_selector(j->second.m_status));
+                  make_order_status_selector(j->second));
               }
             }
           }
@@ -1022,8 +1024,12 @@ namespace {
           std::bind_front(
             &BookViewOrderQuoteListModel::on_user_order_operation, this))) {
       for(auto i = 0; i < m_user_orders->get_size(); ++i) {
-        m_order_quotes.push_back(
-          make_order_book_quote(m_user_orders->get(i), m_side));
+        auto& order = m_user_orders->get(i);
+        if(auto index = find_order_quote(m_order_quotes, order); index < 0) {
+          m_order_quotes.push_back(make_order_book_quote(order, m_side));
+        } else {
+          m_order_quotes[index].m_quote.m_size += order.m_size;
+        }
       }
     }
 
@@ -1073,19 +1079,39 @@ namespace {
           }
         },
         [&] (const ListModel<UserOrder>::PreRemoveOperation& operation) {
-          QTimer::singleShot(ORDER_HIGHLIGHT_DELAY_MS, this,
-            [=, order = m_user_orders->get(operation.m_index)] {
+          auto remove_order_quote = [=] (int index) {
+            m_transaction.transact([&] {
+              m_transaction.push(
+                PreRemoveOperation(m_book_quotes->get_size() + index));
+              m_order_quotes.erase(m_order_quotes.begin() + index);
+              m_transaction.push(
+                RemoveOperation(m_book_quotes->get_size() + index));
+            });
+          };
+          auto& order = m_user_orders->get(operation.m_index);
+          if(order.m_size > 0) {
+            if(auto index = find_order_quote(m_order_quotes, order);
+                index >= 0) {
+              auto previous_quote = m_order_quotes[index];
+              m_order_quotes[index].m_quote.m_size -= order.m_size;
+              m_order_quotes[index].m_quote.m_size =
+                std::max(Quantity(0), m_order_quotes[index].m_quote.m_size);
+              m_transaction.push(
+                UpdateOperation(m_book_quotes->get_size() + index,
+                  previous_quote, m_order_quotes[index]));
+              if(m_order_quotes[index].m_quote.m_size <= 0) {
+                remove_order_quote(index);
+              }
+            }
+          } else {
+            QTimer::singleShot(ORDER_HIGHLIGHT_DELAY_MS, this,
+              [=, order = order] {
               if(auto index = find_order_quote(m_order_quotes, order);
                   index >= 0 && m_order_quotes[index].m_quote.m_size <= 0) {
-                m_transaction.transact([&] {
-                  m_transaction.push(
-                    PreRemoveOperation(m_book_quotes->get_size() + index));
-                  m_order_quotes.erase(m_order_quotes.begin() + index);
-                  m_transaction.push(
-                    RemoveOperation(m_book_quotes->get_size() + index));
-                });
+                remove_order_quote(index);
               }
             });
+          }
         },
         [&] (const ListModel<UserOrder>::UpdateOperation& operation) {
           auto& order = operation.get_value();
@@ -1094,9 +1120,13 @@ namespace {
           }
           if(auto index = find_order_quote(m_order_quotes, order); index >= 0) {
             auto previous_quote = m_order_quotes[index];
-            m_order_quotes[index].m_quote.m_size = order.m_size;
+            m_order_quotes[index].m_quote.m_size -=
+              operation.get_previous().m_size;
+            if(order.m_size >= 0) {
+              m_order_quotes[index].m_quote.m_size += order.m_size;
+            }
             m_order_quotes[index].m_quote.m_size =
-              std::max(Quantity(0), order.m_size);
+              std::max(Quantity(0), m_order_quotes[index].m_quote.m_size);
             m_transaction.push(
               UpdateOperation(m_book_quotes->get_size() + index,
                 previous_quote, m_order_quotes[index]));

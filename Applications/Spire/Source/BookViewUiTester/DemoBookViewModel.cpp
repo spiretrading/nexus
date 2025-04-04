@@ -15,13 +15,6 @@ namespace {
     return model.get_asks();
   }
 
-  auto get_orders(const BookViewModel& model, Side side) {
-    if(side == Side::BID) {
-      return model.get_bid_orders();
-    }
-    return model.get_ask_orders();
-  }
-
   int find_book_quote(const ListModel<BookQuote>& quotes,
       const optional<OrderFields>& preview_order,
       const std::string& mpid, const Money& price) {
@@ -33,24 +26,6 @@ namespace {
       return -1;
     }
     return std::distance(quotes.begin(), i);
-  }
-
-  int find_order(const ListModel<BookViewModel::UserOrder>& orders,
-      const Destination& destination, const Money& price) {
-    auto i = std::find_if(orders.begin(), orders.end(),
-      [&] (const BookViewModel::UserOrder& order) {
-        return order.m_destination == destination && order.m_price == price;
-      });
-    if(i == orders.end()) {
-      return -1;
-    }
-    return std::distance(orders.begin(), i);
-  }
-
-  auto make_user_order(const DemoBookViewModel::OrderInfo& order) {
-    return BookViewModel::UserOrder(order.m_order_fields.m_destination,
-      order.m_order_fields.m_price, order.m_order_fields.m_quantity,
-      order.m_status);
   }
 }
 
@@ -82,30 +57,6 @@ void DemoBookViewModel::submit_book_quote(const BookQuote& quote) {
     }
   } else if(quote.m_quote.m_size != 0) {
     quotes->push(quote);
-  }
-}
-
-void DemoBookViewModel::submit_order(const OrderInfo& order_info) {
-  auto orders = get_orders(*m_model, order_info.m_order_fields.m_side);
-  auto order_index = find_order(*orders,
-    order_info.m_order_fields.m_destination, order_info.m_order_fields.m_price);
-  if(order_index >= 0) {
-    if(order_info.m_status == OrderStatus::NEW) {
-      auto order = orders->get(order_index);
-      order.m_size += order_info.m_order_fields.m_quantity;
-      order.m_status = order_info.m_status;
-      orders->set(order_index, order);
-    } else {
-      auto order = orders->get(order_index);
-      order.m_size -= order_info.m_order_fields.m_quantity;
-      order.m_status = order_info.m_status;
-      orders->set(order_index, order);
-      if(order.m_size <= 0) {
-        orders->remove(order_index);
-      }
-    }
-  } else if(order_info.m_status == OrderStatus::NEW) {
-    orders->push(make_user_order(order_info));
   }
 }
 
