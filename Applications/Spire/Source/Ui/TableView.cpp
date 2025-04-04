@@ -4,6 +4,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FilteredTableModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/TableCurrentIndexModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -187,10 +188,13 @@ TableView::TableView(
   if(!m_current) {
     m_current = std::make_shared<TableCurrentIndexModel>(m_table);
   }
-  m_body = new TableBody(m_sorted_table,
-    std::make_shared<SourceToViewIndexModel>(m_sorted_table, m_filtered_table,
-      m_current), std::move(selection), m_header_view->get_widths(),
+  auto body_current = make_proxy_value_model(
+    std::make_shared<LocalValueModel<optional<Index>>>());
+  m_body = new TableBody(m_sorted_table, body_current, std::move(selection),
+    m_header_view->get_widths(),
     TranslatedItemBuilder(std::move(item_builder)));
+  body_current->set_source(std::make_shared<SourceToViewIndexModel>(
+    m_sorted_table, m_filtered_table, m_current));
   m_body->setSizePolicy(QSizePolicy::MinimumExpanding,
     QSizePolicy::MinimumExpanding);
   m_body->installEventFilter(this);

@@ -31,20 +31,6 @@ namespace {
         widget_geometry.bottom());
   }
 
-  void move_current_index(int source, int destination, optional<int>& index) {
-    if(!index) {
-      return;
-    }
-    auto direction = source < destination ? -1 : 1;
-    if(*index == source) {
-      *index = destination;
-    } else if(direction == 1 && *index >= destination &&
-        *index < source || direction == -1 && *index > source &&
-        *index <= destination) {
-      *index += direction;
-    }
-  }
-
   bool focus_current(TableBody::CurrentModel& current, TableBody& body,
       Qt::FocusReason reason) {
     auto index = current.get();
@@ -532,7 +518,10 @@ struct TableBody::Painter {
 
   static void paint_current_item(
       TableBody& body, QPainter& painter, const optional<TableIndex>& current) {
-    auto current_item = body.get_current_item();
+    if(!current) {
+      return;
+    }
+    auto current_item = body.find_item(*current);
     if(!current_item || !current_item->isVisible()) {
       return;
     }
@@ -645,6 +634,7 @@ TableBody::TableBody(
   for(auto row = 0; row != m_table->get_row_size(); ++row) {
     add_row(row);
   }
+  m_operation_counter = 0;
   auto left = 0;
   for(auto column = 0; column != m_widths->get_size() + 1; ++column) {
     auto width = [&] {
@@ -661,7 +651,8 @@ TableBody::TableBody(
   }
   m_table_connection = m_table->connect_operation_signal(
     std::bind_front(&TableBody::on_table_operation, this));
-  m_current_connection = m_current_controller.connect_update_signal(
+  m_current_connection =
+    m_current_controller.get_current()->connect_update_signal(
      std::bind_front(&TableBody::on_current, this));
   m_selection_connection = m_selection_controller.connect_row_operation_signal(
     std::bind_front(&TableBody::on_row_selection, this));
@@ -686,16 +677,22 @@ const std::shared_ptr<TableBody::SelectionModel>&
 
 TableItem* TableBody::find_item(const Index& index) {
   if(auto row = find_row(index.m_row)) {
-    auto current_row = m_current_controller.get_row();
-    if(row == get_current_row() && current_row &&
-        !get_layout().is_visible(*current_row)) {
+    if(row == m_current_row &&
+        !get_layout().is_visible(*get_current_row_index())) {
       auto position = m_styles.m_padding.top() +
-        *m_current_controller.get_row() * estimate_row_height();
+        *get_current_row_index() * estimate_row_height();
       row->move(m_styles.m_padding.left(), position);
     }
     return row->get_item(index.m_column);
   }
   return nullptr;
+}
+
+optional<int> TableBody::get_current_row_index() const {
+  if(m_current_index) {
+    return m_current_index->m_row;
+  }
+  return none;
 }
 
 int TableBody::estimate_scroll_line_height() const {
@@ -763,7 +760,7 @@ bool TableBody::focusNextPrevChild(bool next) {
       return true;
     }
   }
-  get_current()->set(none);
+  m_current_controller.get_current()->set(none);
   setFocus();
   return QWidget::focusNextPrevChild(next);
 }
@@ -776,6 +773,9 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
       } else {
         m_current_controller.navigate_home_column();
       }
+      if(auto current = m_current_controller.get()) {
+        m_selection_controller.navigate(*current);
+      }
       break;
     case Qt::Key_End:
       if(event->modifiers() & Qt::KeyboardModifier::ControlModifier) {
@@ -783,18 +783,33 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
       } else {
         m_current_controller.navigate_end_column();
       }
+      if(auto current = m_current_controller.get()) {
+        m_selection_controller.navigate(*current);
+      }
       break;
     case Qt::Key_Up:
       m_current_controller.navigate_previous_row();
+      if(auto current = m_current_controller.get()) {
+        m_selection_controller.navigate(*current);
+      }
       break;
     case Qt::Key_Down:
       m_current_controller.navigate_next_row();
+      if(auto current = m_current_controller.get()) {
+        m_selection_controller.navigate(*current);
+      }
       break;
     case Qt::Key_Left:
       m_current_controller.navigate_previous_column();
+      if(auto current = m_current_controller.get()) {
+        m_selection_controller.navigate(*current);
+      }
       break;
     case Qt::Key_Right:
       m_current_controller.navigate_next_column();
+      if(auto current = m_current_controller.get()) {
+        m_selection_controller.navigate(*current);
+      }
       break;
     case Qt::Key_A:
       if(event->modifiers() & Qt::Modifier::CTRL && !event->isAutoRepeat()) {
@@ -860,7 +875,7 @@ void TableBody::paintEvent(QPaintEvent* event) {
   for(auto i = 0; i != static_cast<int>(m_column_covers.size()); ++i) {
     auto cover = m_column_covers[i];
     if(cover->m_background_color.alphaF() != 0 &&
-        m_current_controller.get_column() != i) {
+        m_current_index && m_current_index->m_column != i) {
       painter.fillRect(cover->geometry(), cover->m_background_color);
     }
   }
@@ -868,15 +883,15 @@ void TableBody::paintEvent(QPaintEvent* event) {
     auto& cover = get_layout().get_row(i);
     auto index = get_layout().get_top_index() + i;
     if(cover.m_background_color.alphaF() != 0 &&
-        m_current_controller.get_row() != index) {
+        m_current_index && m_current_index->m_row != index) {
       painter.fillRect(cover.geometry(), cover.m_background_color);
     }
   }
-  Painter::paint_current_item(*this, painter, m_current_controller.get());
+  Painter::paint_current_item(*this, painter, m_current_index);
   Painter::paint_horizontal_borders(*this, painter);
   Painter::paint_vertical_borders(*this, painter);
   Painter::paint_item_borders(*this, painter, m_hover_index);
-  Painter::paint_item_borders(*this, painter, m_current_controller.get());
+  Painter::paint_item_borders(*this, painter, m_current_index);
   QWidget::paintEvent(event);
 }
 
@@ -905,8 +920,8 @@ TableBody::Layout& TableBody::get_layout() {
 TableBody::RowCover* TableBody::find_row(int index) {
   if(get_layout().is_visible(index)) {
     return &get_layout().get_row(index - get_layout().get_top_index());
-  } else if(index == m_current_controller.get_row()) {
-    return get_current_row();
+  } else if(index == get_current_row_index()) {
+    return m_current_row;
   }
   return nullptr;
 }
@@ -918,41 +933,10 @@ TableItem* TableBody::find_item(const optional<Index>& index) {
   return nullptr;
 }
 
-TableBody::RowCover* TableBody::get_current_row() {
-  if(m_current_row) {
-    return m_current_row;
-  } else if(m_current_controller.get_row()) {
-    if(get_layout().is_visible(*m_current_controller.get_row())) {
-      m_current_row = find_row(*m_current_controller.get_row());
-    } else {
-      m_current_row = make_row_cover();
-      m_current_row->mount(*m_current_controller.get_row());
-      on_cover_style(*m_current_row);
-      m_current_row->move(-1000, -1000);
-      m_current_row->show();
-    }
-    if(auto column = m_current_controller.get_column()) {
-      match(*m_current_row->get_item(*column), Current());
-    }
-    match(*m_current_row, CurrentRow());
-    return m_current_row;
-  }
-  return nullptr;
-}
-
-TableItem* TableBody::get_current_item() {
-  if(auto row = get_current_row()) {
-    if(auto column = m_current_controller.get_column()) {
-      return row->get_item(*column);
-    }
-  }
-  return nullptr;
-}
-
 TableBody::Index TableBody::get_index(const TableItem& item) const {
   auto row = item.parentWidget();
   if(row == m_current_row) {
-    return Index(*m_current_controller.get_row(),
+    return Index(*get_current_row_index(),
       row->layout()->indexOf(&const_cast<TableItem&>(item)));
   }
   auto row_index = get_layout().get_top_index();
@@ -1024,8 +1008,11 @@ void TableBody::increment_operation_counter() {
 
 void TableBody::add_row(int index) {
   increment_operation_counter();
+  if(index <= get_current_row_index().get_value_or(-1)) {
+    ++m_current_index->m_row;
+  }
   if(get_layout().is_visible(index)) {
-    mount_row(index, -1);
+    mount_row(index);
   } else {
     get_layout().add_hidden_row(index);
   }
@@ -1038,11 +1025,16 @@ void TableBody::pre_remove_row(int index) {
   if(get_layout().is_visible(index)) {
     remove(*find_row(index));
   } else {
-    if(index == m_current_controller.get_row() && m_current_row) {
-      destroy(m_current_row);
+    if(index == get_current_row_index()) {
+      auto current_row = m_current_row;
       m_current_row = nullptr;
+      m_current_index = none;
+      destroy(current_row);
     }
     get_layout().remove_hidden_row(index);
+  }
+  if(index < get_current_row_index().get_value_or(-1)) {
+    --m_current_index->m_row;
   }
   if(m_hover_index && m_hover_index->m_row >= index) {
     m_hover_index = none;
@@ -1057,6 +1049,16 @@ void TableBody::remove_row(int index) {
 
 void TableBody::move_row(int source, int destination) {
   increment_operation_counter();
+  if(m_current_index) {
+    auto& current_row = m_current_index->m_row;
+    auto direction = source < destination ? -1 : 1;
+    if(current_row == source) {
+      current_row = destination;
+    } else if((current_row - destination) * direction >= 0 &&
+        (current_row - source) * direction < 0) {
+      current_row += direction;
+    }
+  }
   auto& layout = get_layout();
   if(layout.is_visible(source)) {
     if(layout.is_visible(destination)) {
@@ -1072,9 +1074,7 @@ void TableBody::move_row(int source, int destination) {
       }
     }
   } else if(layout.is_visible(destination)) {
-    auto current_index = m_current_controller.get_row();
-    move_current_index(source, destination, current_index);
-    mount_row(destination, current_index);
+    mount_row(destination);
     if(destination < source) {
       ++source;
     }
@@ -1097,14 +1097,10 @@ void TableBody::update_parent() {
   initialize_visible_region();
 }
 
-TableBody::RowCover* TableBody::mount_row(
-    int index, optional<int> current_index) {
+TableBody::RowCover* TableBody::mount_row(int index) {
   auto row = [&] {
-    if(!current_index) {
-      current_index = m_current_controller.get_row();
-    }
-    if(index == current_index) {
-      return get_current_row();
+    if(index == get_current_row_index()) {
+      return m_current_row;
     }
     return make_row_cover();
   }();
@@ -1155,6 +1151,7 @@ void TableBody::remove(RowCover& row) {
   auto item = get_layout().takeAt(get_layout().indexOf(&row));
   if(&row == m_current_row) {
     m_current_row = nullptr;
+    m_current_index = none;
   }
   destroy(&row);
   delete item;
@@ -1164,7 +1161,7 @@ void TableBody::mount_visible_rows() {
   auto top = mapFromParent(QPoint(0, 0)).y() - SCROLL_BUFFER;
   while(get_layout().get_top_index() - 1 >= 0 &&
       get_layout().get_top_space() > top) {
-    mount_row(get_layout().get_top_index() - 1, none);
+    mount_row(get_layout().get_top_index() - 1);
   }
   auto position = [&] {
     if(get_layout().isEmpty()) {
@@ -1181,8 +1178,7 @@ void TableBody::mount_visible_rows() {
     mapFromParent(QPoint(0, parentWidget()->height())).y() + SCROLL_BUFFER;
   while(get_layout().get_top_index() + get_layout().count() <
       m_table->get_row_size() && position < bottom) {
-    auto row =
-      mount_row(get_layout().get_top_index() + get_layout().count(), none);
+    auto row = mount_row(get_layout().get_top_index() + get_layout().count());
     position += row->sizeHint().height() + m_styles.m_vertical_spacing;
   }
 }
@@ -1210,12 +1206,15 @@ void TableBody::initialize_visible_region() {
       m_table->get_row_size() == 0 || m_table->get_column_size() == 0) {
     return;
   }
-  mount_row(0, none);
+  if(m_current_controller.get_row() && !m_current_row) {
+    m_current_index = m_current_controller.get();
+    m_current_row = make_row_cover();
+    m_current_row->mount(m_current_index->m_row);
+    on_cover_style(*m_current_row);
+  }
+  mount_row(0);
   mount_visible_rows();
   get_layout().set_row_size(m_table->get_row_size());
-  if(m_current_controller.get_row()) {
-    get_current_item();
-  }
   get_layout().invalidate();
 }
 
@@ -1225,7 +1224,7 @@ void TableBody::reset_visible_region() {
   }
   get_layout().reset_top_index(mapFromParent(QPoint(0, 0)).y());
   if(get_layout().get_top_index() < m_table->get_row_size()) {
-    mount_row(get_layout().get_top_index(), none);
+    mount_row(get_layout().get_top_index());
   }
 }
 
@@ -1315,7 +1314,7 @@ bool TableBody::navigate_next() {
       }
       return column;
     };
-  if(auto& current = get_current()->get()) {
+  if(auto& current = m_current_controller.get()) {
     auto column =
       get_next_column(*get_current(), current->m_row, current->m_column);
     if(column >= get_table()->get_column_size()) {
@@ -1325,12 +1324,21 @@ bool TableBody::navigate_next() {
       } else {
         get_current()->set(
           Index(row, get_next_column(*get_current(), row, -1)));
+        if(auto current = m_current_controller.get()) {
+          m_selection_controller.navigate(*current);
+        }
       }
     } else {
       get_current()->set(Index(current->m_row, column));
+      if(auto current = m_current_controller.get()) {
+        m_selection_controller.navigate(*current);
+      }
     }
   } else if(get_table()->get_row_size() > 0) {
     get_current()->set(Index(0, get_next_column(*get_current(), 0, -1)));
+    if(auto current = m_current_controller.get()) {
+      m_selection_controller.navigate(*current);
+    }
   } else {
     return false;
   }
@@ -1346,7 +1354,7 @@ bool TableBody::navigate_previous() {
       }
       return column;
     };
-  if(auto& current = get_current()->get()) {
+  if(auto& current = m_current_controller.get()) {
     auto column =
       get_previous_column(*get_current(), current->m_row, current->m_column);
     if(column < 0) {
@@ -1356,15 +1364,24 @@ bool TableBody::navigate_previous() {
       } else {
         get_current()->set(Index(row, get_previous_column(*get_current(),
           row, get_table()->get_column_size())));
+        if(auto current = m_current_controller.get()) {
+          m_selection_controller.navigate(*current);
+        }
       }
     } else {
       get_current()->set(Index(current->m_row, column));
+      if(auto current = m_current_controller.get()) {
+        m_selection_controller.navigate(*current);
+      }
     }
   } else if(get_table()->get_row_size() > 0) {
     auto row = get_table()->get_row_size() - 1;
     auto column =
       get_previous_column(*get_current(), row, get_table()->get_column_size());
     get_current()->set(Index(row, column));
+    if(auto current = m_current_controller.get()) {
+      m_selection_controller.navigate(*current);
+    }
   } else {
     return false;
   }
@@ -1385,26 +1402,30 @@ void TableBody::on_item_activated(TableItem& item) {
   m_selection_controller.click(index);
 }
 
-void TableBody::on_current(
-    const optional<Index>& previous, const optional<Index>& current) {
+void TableBody::on_current(const optional<Index>& current) {
+  if(current == m_current_index) {
+    return;
+  }
+  auto previous = m_current_index;
   auto previous_had_focus = false;
-  if(previous) {
-    if(auto previous_item = find_item(previous)) {
+  if(m_current_index) {
+    if(auto previous_item = find_item(*m_current_index)) {
       previous_had_focus =
         previous_item->isAncestorOf(
           static_cast<QWidget*>(QApplication::focusObject()));
-      if(!current || previous->m_row != current->m_row) {
+      if(!current || m_current_index->m_row != current->m_row) {
         unmatch(*previous_item->parentWidget(), CurrentRow());
       }
       unmatch(*previous_item, Current());
     }
-    if(!current || current->m_column != previous->m_column) {
-      unmatch(*m_column_covers[previous->m_column], CurrentColumn());
+    if(!current || current->m_column != m_current_index->m_column) {
+      unmatch(*m_column_covers[m_current_index->m_column], CurrentColumn());
     }
-    if(m_current_row && get_layout().indexOf(m_current_row) == -1) {
+    if(get_layout().indexOf(m_current_row) == -1) {
       destroy(m_current_row);
     }
     m_current_row = nullptr;
+    m_current_index = none;
   }
   if(m_operation_counter >= OPERATION_THRESHOLD) {
     if(!current && previous) {
@@ -1413,18 +1434,24 @@ void TableBody::on_current(
     return;
   }
   if(current) {
-    auto current_item = get_current_item();
+    m_current_index = current;
+    if(get_layout().is_visible(m_current_index->m_row)) {
+      m_current_row = static_cast<RowCover*>(get_layout().itemAt(
+        m_current_index->m_row - get_layout().get_top_index())->widget());
+    } else {
+      m_current_row = make_row_cover();
+      m_current_row->mount(m_current_index->m_row);
+      on_cover_style(*m_current_row);
+    }
+    auto current_item = m_current_row->get_item(m_current_index->m_column);
     match(*current_item, Current());
     match(*current_item->parentWidget(), CurrentRow());
-    if(!previous || previous->m_column != current->m_column) {
-      match(*m_column_covers[current->m_column], CurrentColumn());
+    if(!previous || previous->m_column != m_current_index->m_column) {
+      match(*m_column_covers[m_current_index->m_column], CurrentColumn());
     }
-    m_selection_controller.navigate(*current);
     if(previous_had_focus || QApplication::focusObject() == this) {
       current_item->setFocus(Qt::FocusReason::OtherFocusReason);
     }
-  } else if(previous) {
-    m_selection_controller.remove_row(previous->m_row);
   }
 }
 
@@ -1569,7 +1596,7 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
   if(!m_is_transaction) {
     if(m_operation_counter >= OPERATION_THRESHOLD) {
       m_operation_counter = 0;
-      on_current(none, m_current_controller.get());
+      on_current(m_current_controller.get());
     } else {
       m_operation_counter = 0;
     }

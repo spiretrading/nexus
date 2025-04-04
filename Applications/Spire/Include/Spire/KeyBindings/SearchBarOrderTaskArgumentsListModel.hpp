@@ -26,10 +26,8 @@ namespace Spire {
        */
       SearchBarOrderTaskArgumentsListModel(
         std::shared_ptr<OrderTaskArgumentsListModel> source,
-        std::shared_ptr<TextModel> keywords,
-        const Nexus::CountryDatabase& countries,
-        const Nexus::MarketDatabase& markets,
-        const Nexus::DestinationDatabase& destinations);
+        std::shared_ptr<TextModel> keywords, Nexus::CountryDatabase countries,
+        Nexus::MarketDatabase markets, Nexus::DestinationDatabase destinations);
 
       int get_size() const override;
 
