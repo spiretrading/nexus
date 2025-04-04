@@ -651,7 +651,8 @@ TableBody::TableBody(
   }
   m_table_connection = m_table->connect_operation_signal(
     std::bind_front(&TableBody::on_table_operation, this));
-  m_current_connection = m_current_controller.connect_update_signal(
+  m_current_connection =
+    m_current_controller.get_current()->connect_update_signal(
      std::bind_front(&TableBody::on_current, this));
   m_selection_connection = m_selection_controller.connect_row_operation_signal(
     std::bind_front(&TableBody::on_row_selection, this));

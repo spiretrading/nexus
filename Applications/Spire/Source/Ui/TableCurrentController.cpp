@@ -9,9 +9,7 @@ TableCurrentController::TableCurrentController(
   std::shared_ptr<CurrentModel> current, int row_size, int column_size)
   : m_current(std::move(current)),
     m_row_size(row_size),
-    m_column_size(column_size),
-    m_connection(m_current->connect_update_signal(
-      std::bind_front(&TableCurrentController::on_current, this))) {}
+    m_column_size(column_size) {}
 
 const std::shared_ptr<TableCurrentController::CurrentModel>&
     TableCurrentController::get_current() const {
@@ -200,13 +198,4 @@ void TableCurrentController::navigate_previous_column() {
       break;
     }
   }
-}
-
-connection TableCurrentController::connect_update_signal(
-    const UpdateSignal::slot_type& slot) const {
-  return m_update_signal.connect(slot);
-}
-
-void TableCurrentController::on_current(const optional<Index>& current) {
-  m_update_signal(current);
 }
