@@ -155,8 +155,10 @@ namespace Styles {
       std::deque<RowCover*> m_recycled_rows;
       std::vector<ColumnCover*> m_column_covers;
       RowCover* m_current_row;
+      boost::optional<Index> m_current_index;
       Styles m_styles;
       bool m_is_transaction;
+      int m_operation_counter;
       int m_resize_guard;
       KeyObserver m_key_observer;
       std::unordered_map<TableItem*, HoverObserver> m_hover_observers;
@@ -165,26 +167,27 @@ namespace Styles {
       boost::signals2::scoped_connection m_row_style_connection;
       boost::signals2::scoped_connection m_table_connection;
       boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_selection_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
       const Layout& get_layout() const;
       Layout& get_layout();
       RowCover* find_row(int index);
       TableItem* find_item(const boost::optional<Index>& index);
-      RowCover* get_current_row();
-      TableItem* get_current_item();
+      boost::optional<int> get_current_row_index() const;
       Index get_index(const TableItem& item) const;
       int get_column_size() const;
       int estimate_row_height() const;
       int get_left_spacing(int index) const;
       int get_top_spacing(int index) const;
       void add_column_cover(int index, const QRect& geometry);
+      void increment_operation_counter();
       void add_row(int index);
       void pre_remove_row(int index);
       void remove_row(int index);
       void move_row(int source, int destination);
       void update_parent();
-      RowCover* mount_row(int index, boost::optional<int> current_index);
+      RowCover* mount_row(int index);
       RowCover* make_row_cover();
       void destroy(RowCover* row);
       void remove(RowCover& row);
@@ -198,8 +201,7 @@ namespace Styles {
       bool navigate_next();
       bool navigate_previous();
       void on_item_activated(TableItem& item);
-      void on_current(const boost::optional<Index>& previous,
-        const boost::optional<Index>& current);
+      void on_current(const boost::optional<Index>& current);
       void on_row_selection(const ListModel<int>::Operation& operation);
       void on_hover(TableItem& item, HoverObserver::State state);
       void on_style();

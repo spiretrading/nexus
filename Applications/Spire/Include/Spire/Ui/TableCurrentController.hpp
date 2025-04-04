@@ -17,15 +17,6 @@ namespace Spire {
       using CurrentModel = ValueModel<boost::optional<Index>>;
 
       /**
-       * Signals a change to the current navigation index.
-       * @param previous The index of the previous navigation index.
-       * @param current The index of the current navigation index.
-       */
-      using UpdateSignal = Signal<void (
-        const boost::optional<TableIndex>& previous,
-        const boost::optional<TableIndex>& current)>;
-
-      /**
        * Constructs a TableCurrentController over a given current index model.
        * @param current The current index model.
        * @param row_size The number of rows in the table.
@@ -64,13 +55,6 @@ namespace Spire {
        */
       void remove_row(int index);
 
-      /**
-       * Updates this controller when a row is moved.
-       * @param source The index where the row was moved from.
-       * @param destination The index that the row was moved to.
-       */
-      void move_row(int source, int destination);
-
       /** Sets the current to the first selectable item. */
       void navigate_home();
 
@@ -101,21 +85,10 @@ namespace Spire {
       /** Sets the current to the previous (or first) column. */
       void navigate_previous_column();
 
-      /**
-       * Connects a slot to a signal indicating a change to the current index.
-       */
-      boost::signals2::connection connect_update_signal(
-        const UpdateSignal::slot_type& slot) const;
-
     private:
-      mutable UpdateSignal m_update_signal;
       std::shared_ptr<CurrentModel> m_current;
       int m_row_size;
       int m_column_size;
-      boost::optional<Index> m_last_current;
-      boost::signals2::scoped_connection m_connection;
-
-      void on_current(const boost::optional<Index>& current);
   };
 }
 

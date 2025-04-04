@@ -42,8 +42,6 @@ namespace Styles {
       struct EditableItemBuilder;
       struct ItemBuilder;
       bool m_is_processing_key;
-
-      void delete_row(int row);
   };
 
   /**
