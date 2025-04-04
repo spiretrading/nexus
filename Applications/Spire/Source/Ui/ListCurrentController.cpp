@@ -184,9 +184,7 @@ bool ListCurrentController::is_initialized() const {
 }
 
 void ListCurrentController::on_current(optional<int> current) {
-  if(!current) {
-    m_update_signal(current);
-  } else if(current && *current < m_size) {
+  if(!current || *current < m_size) {
     m_update_signal(current);
   }
 }
