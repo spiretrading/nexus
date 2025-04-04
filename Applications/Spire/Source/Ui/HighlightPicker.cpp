@@ -14,6 +14,7 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
+#include "Spire/Ui/SingleSelectionModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -50,11 +51,11 @@ namespace {
     auto highlights =
       std::make_shared<ArrayListModel<HighlightPicker::Highlight>>();
     highlight_list = highlights;
-    highlights->push({"#FFF1F1", "#B71C1C"});
+    highlights->push({"#FAE8EA", "#CB1329"});
     highlights->push({"#FFECFF", "#76008A"});
     highlights->push({"#F4F4FF", "#4C00DA"});
     highlights->push({"#DDF9FF", "#003698"});
-    highlights->push({"#EBFFF0", "#007735"});
+    highlights->push({"#CAFFDE", "#007E00"});
     highlights->push({"#FFFFC4", "#834A2D"});
     highlights->push({"#FFE6C9", "#A00000"});
     highlights->push({"#FFFFFF", "#000000"});
@@ -65,7 +66,7 @@ namespace {
     highlights->push({"#96D8A8", "#004E00"});
     highlights->push({"#FEEE7F", "#630000"});
     highlights->push({"#FFBF76", "#A00000"});
-    highlights->push({"#C6C6C6", "#000000"});
+    highlights->push({"#EBEBEB", "#333333"});
     highlights->push({"#C33A39", "#FFFFFF"});
     highlights->push({"#A937B2", "#FFFFFF"});
     highlights->push({"#6F53C5", "#FFFFFF"});
@@ -102,34 +103,65 @@ namespace {
 }
 
 struct HighlightPicker::HighlightPickerModel {
-  std::shared_ptr<ValueModel<HighlightSwatch::Highlight>> m_highlight_model;
+  std::shared_ptr<ValueModel<HighlightPicker::Highlight>> m_highlight_model;
+  std::shared_ptr<ListModel<HighlightPicker::Highlight>> m_highlight_list;
+  std::shared_ptr<ListView::CurrentModel> m_palette_current;
   std::shared_ptr<ColorModel> m_background_color_model;
   std::shared_ptr<ColorModel> m_text_color_model;
   scoped_connection m_highlight_connection;
+  scoped_connection m_palette_current_connection;
   scoped_connection m_background_color_connection;
   scoped_connection m_text_color_connection;
 
-  explicit HighlightPickerModel(
-    std::shared_ptr<ValueModel<HighlightSwatch::Highlight>> highlight_model)
-    : m_highlight_model(std::move(highlight_model)),
-      m_background_color_model(std::make_shared<LocalColorModel>(
-        m_highlight_model->get().m_background_color)),
-      m_text_color_model(std::make_shared<LocalColorModel>(
-        m_highlight_model->get().m_text_color)),
-      m_highlight_connection(m_highlight_model->connect_update_signal(
-        std::bind_front(&HighlightPickerModel::on_highlight_color, this))),
-      m_background_color_connection(
-        m_background_color_model->connect_update_signal(
-          std::bind_front(&HighlightPickerModel::on_background_color, this))),
-      m_text_color_connection(m_text_color_model->connect_update_signal(
-        std::bind_front(&HighlightPickerModel::on_text_color, this))) {}
+  HighlightPickerModel(
+      std::shared_ptr<ValueModel<HighlightPicker::Highlight>> highlight_model,
+      std::shared_ptr<ListModel<HighlightPicker::Highlight>> highlight_list)
+      : m_highlight_model(std::move(highlight_model)),
+        m_highlight_list(std::move(highlight_list)),
+        m_palette_current(std::make_shared<LocalValueModel<optional<int>>>()),
+        m_background_color_model(std::make_shared<LocalColorModel>(
+          m_highlight_model->get().m_background_color)),
+        m_text_color_model(std::make_shared<LocalColorModel>(
+          m_highlight_model->get().m_text_color)),
+        m_highlight_connection(m_highlight_model->connect_update_signal(
+          std::bind_front(&HighlightPickerModel::on_highlight_color, this))),
+        m_palette_current_connection(m_palette_current->connect_update_signal(
+          std::bind_front(&HighlightPickerModel::on_palette_current, this))),
+        m_background_color_connection(
+          m_background_color_model->connect_update_signal(
+            std::bind_front(&HighlightPickerModel::on_background_color, this))),
+        m_text_color_connection(m_text_color_model->connect_update_signal(
+          std::bind_front(&HighlightPickerModel::on_text_color, this))) {
+    update_palette_index(m_highlight_model->get());
+  }
+
+  void update_palette_index(const Highlight& highlight) {
+    auto i = std::find(m_highlight_list->begin(), m_highlight_list->end(),
+      highlight);
+    auto palette_blocker =
+      shared_connection_block(m_palette_current_connection);
+    if(i != m_highlight_list->end()) {
+      m_palette_current->set(
+        static_cast<int>(std::distance(m_highlight_list->begin(), i)));
+    } else {
+      m_palette_current->set(none);
+    }
+  }
 
   void on_highlight_color(const HighlightPicker::Highlight& highlight) {
+    update_palette_index(highlight);
     auto background_blocker =
       shared_connection_block(m_background_color_connection);
     m_background_color_model->set(highlight.m_background_color);
     auto text_blocker = shared_connection_block(m_text_color_connection);
     m_text_color_model->set(highlight.m_text_color);
+  }
+
+  void on_palette_current(optional<int> current) {
+    if(current) {
+      m_highlight_model->set(
+        std::any_cast<Highlight>(m_highlight_list->get(*current)));
+    }
   }
 
   void on_background_color(const QColor& background_color) {
@@ -160,12 +192,14 @@ struct HighlightPicker::HighlightPickerModel {
     m_highlight_model->set({background_color, text_color});
     auto text_blocker = shared_connection_block(m_text_color_connection);
     m_text_color_model->set(text_color);
+    update_palette_index(m_highlight_model->get());
   }
 
   void on_text_color(const QColor& text_color) {
     auto blocker = shared_connection_block(m_highlight_connection);
     m_highlight_model->set(
       {m_highlight_model->get().m_background_color, text_color});
+    update_palette_index(m_highlight_model->get());
   }
 };
 
@@ -175,10 +209,13 @@ HighlightPicker::HighlightPicker(QWidget& parent)
 HighlightPicker::HighlightPicker(std::shared_ptr<ValueModel<Highlight>> current,
     QWidget& parent)
     : QWidget(&parent),
-      m_model(std::make_shared<HighlightPickerModel>(std::move(current))),
+      m_model(std::make_shared<HighlightPickerModel>(std::move(current),
+        DEFUALT_HIGHLIGHT_LIST())),
       m_background_color_picker(nullptr),
       m_text_color_picker(nullptr) {
-  m_palette = new ListView(DEFUALT_HIGHLIGHT_LIST(), make_highlight_swatch);
+  m_palette = new ListView(m_model->m_highlight_list,
+    m_model->m_palette_current, std::make_shared<ListSingleSelectionModel>(),
+    make_highlight_swatch);
   update_style(*m_palette, [] (auto& style) {
     style = PALETTE_STYLE(style);
   });
@@ -205,8 +242,6 @@ HighlightPicker::HighlightPicker(std::shared_ptr<ValueModel<Highlight>> current,
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(8)));
   });
-  m_palette->get_current()->connect_update_signal(
-    std::bind_front(&HighlightPicker::on_palette_current, this));
   m_palette->setFixedWidth(
     m_palette->get_list_item(0)->sizeHint().width() * 8);
 }
@@ -305,11 +340,4 @@ bool HighlightPicker::on_mouse_press(ColorBox& source, ColorBox& destination,
     }
   }
   return false;
-}
-
-void HighlightPicker::on_palette_current(optional<int> current) {
-  if(current) {
-    get_current()->set(
-      std::any_cast<Highlight>(m_palette->get_list()->get(*current)));
-  }
 }
