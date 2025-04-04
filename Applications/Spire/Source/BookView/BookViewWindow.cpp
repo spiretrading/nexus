@@ -54,6 +54,7 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
       m_task_entry_panel(nullptr),
       m_is_task_entry_panel_for_interactions(false) {
   set_svg_icon(":/Icons/bookview.svg");
+  setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
   setWindowIcon(QIcon(":/Icons/taskbar_icons/bookview.png"));
   setWindowTitle(TITLE_NAME);
   m_transition_view = new TransitionView(new QWidget());

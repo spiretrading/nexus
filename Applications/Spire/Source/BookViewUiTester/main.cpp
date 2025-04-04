@@ -19,6 +19,7 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
+#include "Spire/Spire/ListToTableModel.hpp"
 #include "Spire/Spire/LocalQueryModel.hpp"
 #include "Spire/Spire/LocalTechnicalsModel.hpp"
 #include "Spire/Spire/OptionalScalarValueModelDecorator.hpp"
@@ -30,6 +31,7 @@
 #include "Spire/Ui/MarketBox.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/SideBox.hpp"
+#include "Spire/Ui/TableView.hpp"
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;
@@ -166,6 +168,182 @@ QuantityBox* make_quantity_box(M model, U field) {
         make_field_value_model(model, field))));
 }
 
+auto make_table_header() {
+  auto header = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
+  auto item = TableHeaderItem::Model();
+  item.m_name = "Destination";
+  item.m_order = TableHeaderItem::Order::UNORDERED;
+  header->push(item);
+  item = TableHeaderItem::Model();
+  item.m_order = TableHeaderItem::Order::UNORDERED;
+  item.m_name = "Price";
+  header->push(item);
+  item = TableHeaderItem::Model();
+  item.m_order = TableHeaderItem::Order::UNORDERED;
+  item.m_name = "Quantity";
+  header->push(item);
+  return header;
+}
+
+AnyRef extract(const BookViewModel::UserOrder& order, int index) {
+  if(index == 0) {
+    return order.m_destination;
+  } else if(index == 1) {
+    return order.m_price;
+  }
+  return order.m_size;
+}
+
+auto get_orders(const BookViewModel& model, Side side) {
+  if(side == Side::BID) {
+    return model.get_bid_orders();
+  }
+  return model.get_ask_orders();
+}
+
+struct BookViewOrderTester : QWidget {
+  std::shared_ptr<BookViewModel> m_model;
+  TextBox* m_destination_box;
+  MoneyBox* m_price_box;
+  QuantityBox* m_quantity_box;
+  SideBox* m_side_box;
+  OrderStatusBox* m_status_box;
+  TableView* m_bid_table_view;
+  TableView* m_ask_table_view;
+
+  BookViewOrderTester(std::shared_ptr<BookViewModel> model,
+      QWidget* parent = nullptr)
+      : QWidget(parent),
+        m_model(std::move(model)) {
+    auto order_group_box = new QGroupBox(tr("Order"));
+    order_group_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    auto order_group_layout = new QVBoxLayout(order_group_box);
+    auto fields_layout = new QFormLayout();
+    m_destination_box = new TextBox();
+    fields_layout->addRow(tr("Destination:"), m_destination_box);
+    m_price_box =
+      new MoneyBox(std::make_shared<LocalOptionalMoneyModel>(Money(200)));
+    fields_layout->addRow(tr("Price:"), m_price_box);
+    m_quantity_box = new QuantityBox(
+      std::make_shared<LocalOptionalQuantityModel>(Quantity(10)));
+    fields_layout->addRow(tr("Quantity:"), m_quantity_box);
+    m_side_box = make_side_box();
+    fields_layout->addRow(tr("Side:"), m_side_box);
+    m_status_box = make_order_status_box();
+    fields_layout->addRow(tr("Order Status:"), m_status_box);
+    order_group_layout->addLayout(fields_layout);
+    auto left_layout = new QVBoxLayout();
+    left_layout->addWidget(order_group_box);
+    left_layout->addStretch(1);
+    m_bid_table_view = TableViewBuilder(
+      std::make_shared<ListToTableModel<BookViewModel::UserOrder>>(
+        m_model->get_bid_orders(), 3, &extract)).
+      set_header(make_table_header()).make();
+    m_bid_table_view->get_body().get_current()->connect_update_signal(
+      std::bind_front(&BookViewOrderTester::on_current, this, Side::BID));
+    auto bid_group_box = new QGroupBox(tr("Bid"));
+    auto bid_layout = new QVBoxLayout(bid_group_box);
+    bid_layout->addWidget(m_bid_table_view);
+    m_ask_table_view = TableViewBuilder(
+      std::make_shared<ListToTableModel<BookViewModel::UserOrder>>(
+        m_model->get_ask_orders(), 3, &extract)).
+      set_header(make_table_header()).make();
+    m_ask_table_view->get_body().get_current()->connect_update_signal(
+      std::bind_front(&BookViewOrderTester::on_current, this, Side::ASK));
+    auto ask_group_box = new QGroupBox(tr("Ask"));
+    auto ask_layout = new QVBoxLayout(ask_group_box);
+    ask_layout->addWidget(m_ask_table_view);
+    auto right_layout = new QVBoxLayout();
+    right_layout->addWidget(bid_group_box);
+    right_layout->addWidget(ask_group_box);
+    auto top_layout = new QHBoxLayout();
+    top_layout->addLayout(left_layout);
+    top_layout->addLayout(right_layout);
+    auto add_order_button = make_label_button(tr("Add"));
+    add_order_button->connect_click_signal(
+      std::bind_front(&BookViewOrderTester::on_add_order_click, this));
+    auto update_order_button = make_label_button(tr("Update"));
+    update_order_button->connect_click_signal(
+      std::bind_front(&BookViewOrderTester::on_update_order_click, this));
+    auto delete_order_button = make_label_button(tr("Delete"));
+    delete_order_button->connect_click_signal(
+      std::bind_front(&BookViewOrderTester::on_delete_order_click, this));
+    auto bottom_layout = new QHBoxLayout();
+    bottom_layout->addWidget(add_order_button);
+    bottom_layout->addWidget(update_order_button);
+    bottom_layout->addWidget(delete_order_button);
+    auto layout = new QVBoxLayout(this);
+    layout->addLayout(top_layout);
+    layout->addLayout(bottom_layout);
+    resize(scale(420, 500));
+  }
+
+  void on_add_order_click() {
+    if(m_status_box->get_current()->get() != OrderStatus::NEW) {
+      return;
+    }
+    auto orders = [&] {
+      if(m_side_box->get_current()->get() == Side::BID) {
+        return m_model->get_bid_orders();
+      }
+      return m_model->get_ask_orders();
+    }();
+    orders->push(BookViewModel::UserOrder(
+      m_destination_box->get_current()->get().toStdString(),
+      *m_price_box->get_current()->get(), *m_quantity_box->get_current()->get(),
+      m_status_box->get_current()->get()));
+  }
+
+  void on_update_order_click() {
+    if(m_status_box->get_current()->get() == OrderStatus::NEW) {
+      return;
+    }
+    auto [index, orders] = [&] {
+      if(m_side_box->get_current()->get() == Side::BID) {
+        return std::tuple(m_bid_table_view->get_current()->get(),
+          m_model->get_bid_orders());
+      }
+      return std::tuple(m_ask_table_view->get_current()->get(),
+        m_model->get_ask_orders());
+    }();
+    if(index) {
+      auto user_order = orders->get(index->m_row);
+      user_order.m_status = m_status_box->get_current()->get();
+      user_order.m_size -= *m_quantity_box->get_current()->get();
+      orders->set(index->m_row, user_order);
+      if(orders->get(index->m_row).m_size <= 0) {
+        orders->remove(index->m_row);
+      }
+    }
+  }
+
+  void on_delete_order_click() {
+    auto [index, orders] = [&] {
+      if(m_side_box->get_current()->get() == Side::BID) {
+        return std::tuple(m_bid_table_view->get_current()->get(),
+          m_model->get_bid_orders());
+      }
+      return std::tuple(m_ask_table_view->get_current()->get(),
+        m_model->get_ask_orders());
+    }();
+    if(index) {
+      orders->remove(index->m_row);
+    }
+  }
+
+  void on_current(Side side, const optional<TableView::Index>& current) {
+    if(!current) {
+      return;
+    }
+    auto orders = get_orders(*m_model, side);
+    auto order = orders->get(current->m_row);
+    m_destination_box->get_current()->set(QString::fromStdString(order.m_destination));
+    m_price_box->get_current()->set(order.m_price);
+    m_quantity_box->get_current()->set(order.m_size);
+    m_side_box->get_current()->set(side);
+  }
+};
+
 struct BookViewTester : QWidget {
   TestEnvironment m_environment;
   ServiceClientsBox m_service_clients;
@@ -176,11 +354,8 @@ struct BookViewTester : QWidget {
   LocalTechnicalsModel m_technicals_model;
   std::shared_ptr<OptionalIntegerModel> m_update_period;
   KeyBindingsWindow* m_key_bindings_window;
-  Button* m_submit_order_button;
   QTextEdit* m_logs;
   QTimer m_quote_timer;
-  QTimer m_order_timer;
-  int m_update_count;
   int m_line_number;
 
   BookViewTester(std::shared_ptr<SecurityTechnicalsValueModel> technicals,
@@ -206,9 +381,7 @@ struct BookViewTester : QWidget {
         m_update_period(std::make_shared<LocalOptionalIntegerModel>(1000)),
 BEAM_SUPPRESS_THIS_INITIALIZER()
         m_quote_timer(this),
-        m_order_timer(this),
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
-        m_update_count(0),
         m_line_number(0) {
     auto left_layout = new QVBoxLayout();
     auto book_quote_group_box = new QGroupBox(tr("Market Quote"));
@@ -241,46 +414,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       quote_update_period_box);
     book_quote_layout->addLayout(book_quote_period_layout);
     left_layout->addWidget(book_quote_group_box);
-    auto order_status_group_box = new QGroupBox(tr("Order"));
-    order_status_group_box->setSizePolicy(QSizePolicy::Preferred,
-      QSizePolicy::Fixed);
-    auto order_status_layout = new QVBoxLayout(order_status_group_box);
-    auto order_status_fields_layout = new QFormLayout();
-    auto order_status_destination_box = new TextBox();
-    order_status_fields_layout->addRow(tr("Destination:"),
-      order_status_destination_box);
-    auto order_status_price_box =
-      new MoneyBox(std::make_shared<LocalOptionalMoneyModel>(Money(200)));
-    order_status_fields_layout->addRow(tr("Price:"), order_status_price_box);
-    auto order_status_side_box = make_side_box();
-    auto order_quantity_box = new QuantityBox(
-      std::make_shared<LocalOptionalQuantityModel>(Quantity(10)));
-    order_status_fields_layout->addRow(tr("Quantity:"), order_quantity_box);
-    order_status_fields_layout->addRow(tr("Side:"), order_status_side_box);
-    auto order_status_box = make_order_status_box();
-    order_status_fields_layout->addRow(tr("Order Status:"), order_status_box);
-    auto continuous_update_box = new CheckBox();
-    order_status_fields_layout->addRow(tr("Continuous Update:"),
-      continuous_update_box);
-    auto status_update_count_box = new IntegerBox();
-    status_update_count_box->get_current()->set(3);
-    order_status_fields_layout->addRow(tr("Update count:"),
-      status_update_count_box);
-    auto status_update_period_box = new IntegerBox();
-    status_update_period_box->get_current()->set(10);
-    order_status_fields_layout->addRow(tr("Update Period (ms):"),
-      status_update_period_box);
-    order_status_layout->addLayout(order_status_fields_layout);
-    m_submit_order_button = make_label_button(tr("Submit"));
-    m_submit_order_button->connect_click_signal(
-      std::bind_front(&BookViewTester::on_order_submit_click, this,
-        order_status_destination_box, order_status_price_box,
-        order_quantity_box, order_status_box, order_status_side_box,
-        continuous_update_box, status_update_count_box,
-        status_update_period_box));
-    order_status_layout->addWidget(m_submit_order_button, 0,
-      Qt::AlignRight);
-    left_layout->addWidget(order_status_group_box);
     auto preview_order_group_box = new QGroupBox(tr("Preview Order"));
     preview_order_group_box->setSizePolicy(QSizePolicy::Preferred,
       QSizePolicy::Fixed);
@@ -396,12 +529,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_quote_timer.start(*m_update_period->get());
   }
 
-  void quit_order_timer() {
-    m_order_timer.stop();
-    m_order_timer.disconnect();
-    m_submit_order_button->setEnabled(true);
-  }
-
   void on_quote_timeout() {
     auto bid_quote = make_random_market_quote(Side::BID);
     m_model.submit_book_quote(bid_quote);
@@ -417,17 +544,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       ask_quote.m_mpid));
   }
 
-  void on_order_timeout(const DemoBookViewModel::OrderInfo& order,
-      int update_count) {
-    auto updated_order = order;
-    updated_order.m_status = make_order_status(m_update_count);
-    m_model.submit_order(updated_order);
-    ++m_update_count;
-    if(m_update_count >= update_count) {
-      quit_order_timer();
-    }
-  }
-
   void on_book_quote_submit_click(MarketBox* market_box,
       MoneyBox* price_box, QuantityBox* quantity_box, SideBox* side_box) {
     auto market_code = market_box->get_current()->get();
@@ -436,32 +552,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         *quantity_box->get_current()->get(), side_box->get_current()->get()},
         second_clock::local_time());
     m_model.submit_book_quote(quote);
-  }
-
-  void on_order_submit_click(TextBox* destination_box, MoneyBox* price_box,
-      QuantityBox* quantity_box, OrderStatusBox* status_box, SideBox* side_box,
-      CheckBox* continuous_update_box, IntegerBox* update_count_box,
-      IntegerBox* update_period_box) {
-    auto order = DemoBookViewModel::OrderInfo{
-      OrderFields::MakeLimitOrder(Security(), side_box->get_current()->get(),
-        destination_box->get_current()->get().toStdString(),
-        *quantity_box->get_current()->get(),
-        *price_box->get_current()->get()), status_box->get_current()->get()};
-    if(!continuous_update_box->get_current()->get()) {
-      m_model.submit_order(order);
-    } else {
-      auto update_count = *update_count_box->get_current()->get();
-      while(update_count--) {
-        m_model.submit_order(order);
-      }
-      m_submit_order_button->setEnabled(false);
-      m_order_timer.setInterval(*update_period_box->get_current()->get());
-      connect(&m_order_timer, &QTimer::timeout,
-        std::bind_front(&BookViewTester::on_order_timeout, this, order,
-          *update_count_box->get_current()->get()));
-      m_update_count = 0;
-      m_order_timer.start();
-    }
   }
 
   void on_cancel_order(CancelKeyBindingsModel::Operation operation,
@@ -516,6 +606,7 @@ int main(int argc, char** argv) {
     GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
     get_default_additional_tag_database());
   auto book_views = make_local_aggregate_book_view_model();
+  auto order_tester = BookViewOrderTester(book_views);
   auto tester = BookViewTester(
     book_views->get_technicals(), book_views, key_bindings_window);
   auto markets = GetDefaultMarketDatabase();
@@ -529,7 +620,11 @@ int main(int argc, char** argv) {
   window.show();
   tester.show();
   tester.move(
-    window.pos().x() + window.frameGeometry().width() + scale_width(100),
-    window.pos().y() - 200);
+    window.pos().x() + window.frameGeometry().width() + scale_width(10),
+    window.pos().y());
+  order_tester.show();
+  order_tester.move(
+    window.pos().x() - order_tester.frameGeometry().width() - scale_width(10),
+    window.pos().y());
   application.exec();
 }

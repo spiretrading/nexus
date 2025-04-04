@@ -12,16 +12,6 @@ namespace Spire {
   class DemoBookViewModel {
     public:
 
-      /** Stores details about an Order. */
-      struct OrderInfo {
-
-        /** The Order details. */
-        Nexus::OrderExecutionService::OrderFields m_order_fields;
-
-        /** The Order status. */
-        Nexus::OrderStatus m_status;
-      };
-
       /* Constructs a DemoBookViewModel. */
       explicit DemoBookViewModel(std::shared_ptr<BookViewModel> model);
 
@@ -30,9 +20,6 @@ namespace Spire {
 
       /** Submits an book quote. */
       void submit_book_quote(const Nexus::BookQuote& quote);
-
-      /** Submits an order. */
-      void submit_order(const OrderInfo& order);
 
     private:
       std::shared_ptr<BookViewModel> m_model;
