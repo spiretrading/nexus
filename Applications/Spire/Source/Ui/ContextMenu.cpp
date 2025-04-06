@@ -380,7 +380,11 @@ void ContextMenu::show_submenu(int index) {
     m_active_menu_window->installEventFilter(this);
     m_active_menu_window->get_body().installEventFilter(this);
     position_menu(*m_list_view->get_list_item(index));
-    m_active_menu_window->show();
+    auto& active_menu =
+      static_cast<ContextMenu&>(m_active_menu_window->get_body());
+    if(active_menu.m_list->get_size() != 0) {
+      m_active_menu_window->show();
+    }
   }
 }
 
@@ -392,6 +396,8 @@ void ContextMenu::on_mouse_move(QWidget& target, QMouseEvent& event) {
       if(m_list_view->get_current()->get() != i) {
         hide_active_menu();
         m_list_view->get_current()->set(i);
+        show_submenu(i);
+      } else if(!m_active_menu_window) {
         show_submenu(i);
       }
       break;
