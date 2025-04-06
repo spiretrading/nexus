@@ -21,16 +21,10 @@ using namespace Styles;
 
 namespace {
   const auto MIN_WIDTH = 130;
-  const auto MARGIN_SIZE = 50;
 
-  auto MARGIN_HEIGHT() {
-    static auto height = scale_height(MARGIN_SIZE);
-    return height;
-  }
-
-  auto MARGIN_WIDTH() {
-    static auto width = scale_width(MARGIN_SIZE);
-    return width;
+  auto OVERLAP_WIDTH() {
+    static auto size = scale_width(5);
+    return size;
   }
 
   auto LIST_VIEW_STYLE(StyleSheet style) {
@@ -96,12 +90,14 @@ ContextMenu::ContextMenu(QWidget& parent, ItemViewBuilder item_view_builder)
     : QWidget(&parent),
       m_item_view_builder(std::move(item_view_builder)),
       m_next_id(0),
-      m_active_menu_window(nullptr) {
+      m_active_menu_window(nullptr),
+      m_block_move(0),
+      m_mouse_observer(*this) {
   setAttribute(Qt::WA_Hover);
   setMinimumWidth(scale_width(MIN_WIDTH));
   m_list = std::make_shared<ArrayListModel<MenuItem>>();
-  m_list_view = new ListView(m_list,
-    std::make_shared<ListEmptySelectionModel>(),
+  m_list_view = new ListView(
+    m_list, std::make_shared<ListEmptySelectionModel>(),
     std::bind_front(&ContextMenu::build_item, this));
   m_list_view->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
   update_style(*m_list_view, [&] (auto& style) {
@@ -121,10 +117,12 @@ ContextMenu::ContextMenu(QWidget& parent, ItemViewBuilder item_view_builder)
   m_window->installEventFilter(this);
   m_window->parentWidget()->installEventFilter(this);
   on_window_style();
-  m_window_style_connection =
-    connect_style_signal(*m_window, [=] { on_window_style(); });
+  m_window_style_connection = connect_style_signal(
+    *m_window, std::bind_front(&ContextMenu::on_window_style, this));
   m_list->connect_operation_signal(
     std::bind_front(&ContextMenu::on_list_operation, this));
+  m_mouse_observer.connect_move_signal(
+    std::bind_front(&ContextMenu::on_mouse_move, this));
 }
 
 void ContextMenu::add_menu(const QString& name, ContextMenu& menu) {
@@ -211,7 +209,13 @@ bool ContextMenu::eventFilter(QObject* watched, QEvent* event) {
         event->type() == QEvent::MouseButtonDblClick ||
         event->type() == QEvent::MouseMove) {
       return handle_mouse_event(static_cast<QMouseEvent*>(event));
+    } else if(event->type() == QEvent::Move ||
+        event->type() == QEvent::Resize) {
+      position_menu();
     }
+  } else if(m_active_menu_window && watched ==
+      &m_active_menu_window->get_body() && event->type() == QEvent::Resize) {
+    position_menu();
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -228,18 +232,6 @@ bool ContextMenu::event(QEvent* event) {
     hide_active_menu();
     m_list_view->get_current()->set(none);
     m_list_view->setFocusProxy(nullptr);
-  } else if(event->type() == QEvent::HoverMove) {
-    auto& hover_event = *static_cast<QHoverEvent*>(event);
-    for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
-      auto item = m_list_view->get_list_item(i);
-      if(item->geometry().contains(hover_event.pos())) {
-        if(m_list_view->get_current()->get() != i) {
-          m_list_view->get_current()->set(i);
-          show_submenu(i);
-        }
-        break;
-      }
-    }
   } else if(event->type() == QEvent::HoverLeave) {
     m_list_view->get_current()->set(none);
     m_list_view->setFocusProxy(nullptr);
@@ -250,7 +242,7 @@ bool ContextMenu::event(QEvent* event) {
 
 QWidget* ContextMenu::build_item(
     const std::shared_ptr<AnyListModel>& list, int index) {
-  auto item = std::any_cast<MenuItem&&>(list->get(index));
+  auto item = std::any_cast<MenuItem>(list->get(index));
   auto custom_view = m_custom_views.find(item.m_id);
   if(custom_view != m_custom_views.end()) {
     return custom_view->second;
@@ -264,7 +256,7 @@ QWidget* ContextMenu::build_item(
         m_window->hide();
         m_submit_signal(menu, label);
       });
-    m_submenus[index] = submenu->window();
+    m_submenus[index] = static_cast<OverlayPanel*>(submenu->window());
     return submenu_item;
   }
   return m_item_view_builder(item.m_type, item.m_name, item.m_data);
@@ -314,37 +306,63 @@ bool ContextMenu::handle_mouse_event(QMouseEvent* event) {
   return false;
 }
 
-void ContextMenu::position_menu(ListItem* item) {
-  auto item_pos = m_list_view->mapToGlobal(item->pos());
-  auto menu_geomerty = m_window->geometry();
+void ContextMenu::position_menu() {
+  if(!m_active_menu_window || m_block_move != 0) {
+    return;
+  }
   auto screen_geometry = screen()->availableGeometry();
-  auto menu_margins = m_window->layout()->contentsMargins();
+  auto body_size = m_active_menu_window->get_body().size();
+  auto menu_size = m_active_menu_window->size();
   auto active_menu_margins = m_active_menu_window->layout()->contentsMargins();
-  auto x = [&] {
-    auto right = menu_geomerty.right() - menu_margins.right();
-    if(screen_geometry.right() - right >
-        m_active_menu_window->width() + MARGIN_WIDTH()) {
-      return right - menu_margins.left();
-    } else {
-      return menu_geomerty.x() + menu_margins.left() -
-        m_active_menu_window->width() + active_menu_margins.right();
+  auto candidate_right = m_active_item_geometry.right() -
+    OVERLAP_WIDTH() - active_menu_margins.left() + m_window_border_size.right();
+  auto candidate_top = m_active_item_geometry.top() -
+    active_menu_margins.top() - m_window_border_size.top();
+  auto candidate_bottom = m_active_item_geometry.bottom() -
+    body_size.height() - active_menu_margins.top() - m_window_border_size.top();
+  auto candidate_left = m_active_item_geometry.left() + OVERLAP_WIDTH() -
+    body_size.width() - active_menu_margins.right() -
+    m_window_border_size.left();
+  auto candidate_geometry =
+    QRect(QPoint(candidate_right, candidate_top), menu_size);
+  if(!screen_geometry.contains(candidate_geometry)) {
+    candidate_geometry = QRect();
+  }
+  if(candidate_geometry.isNull()) {
+    candidate_geometry =
+      QRect(QPoint(candidate_right, candidate_bottom), menu_size);
+    if(!screen_geometry.contains(candidate_geometry)) {
+      candidate_geometry = QRect();
     }
-  }();
-  auto y = [&] {
-    if(screen_geometry.bottom() - item_pos.y() + m_window_border_size.top() >
-        m_active_menu_window->height() + MARGIN_HEIGHT()) {
-      return item_pos.y() - menu_margins.top() - m_window_border_size.top();
-    } else {
-      return screen_geometry.bottom() - m_active_menu_window->height() -
-        MARGIN_HEIGHT() + active_menu_margins.bottom();
+  }
+  if(candidate_geometry.isNull()) {
+    candidate_geometry =
+      QRect(QPoint(candidate_left, candidate_top), menu_size);
+    if(!screen_geometry.contains(candidate_geometry)) {
+      candidate_geometry = QRect();
     }
-  }();
-  m_active_menu_window->move(x, y);
+  }
+  if(candidate_geometry.isNull()) {
+    candidate_geometry =
+      QRect(QPoint(candidate_left, candidate_bottom), menu_size);
+  }
+  if(m_active_menu_window->pos() != candidate_geometry.topLeft()) {
+    ++m_block_move;
+    m_active_menu_window->move(candidate_geometry.topLeft());
+    --m_block_move;
+  }
+}
+
+void ContextMenu::position_menu(ListItem& item) {
+  m_active_item_geometry =
+    QRect(item.mapToGlobal(QPoint(0, 0)), item.geometry().size());
+  position_menu();
 }
 
 void ContextMenu::hide_active_menu() {
   if(m_active_menu_window) {
     m_active_menu_window->hide();
+    m_active_menu_window->get_body().removeEventFilter(this);
     m_active_menu_window->removeEventFilter(this);
     m_active_menu_window = nullptr;
   }
@@ -359,9 +377,25 @@ void ContextMenu::show_submenu(int index) {
     }
     hide_active_menu();
     m_active_menu_window = menu_window;
-    m_active_menu_window->show();
-    position_menu(m_list_view->get_list_item(index));
     m_active_menu_window->installEventFilter(this);
+    m_active_menu_window->get_body().installEventFilter(this);
+    position_menu(*m_list_view->get_list_item(index));
+    m_active_menu_window->show();
+  }
+}
+
+void ContextMenu::on_mouse_move(QWidget& target, QMouseEvent& event) {
+  for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
+    auto item = m_list_view->get_list_item(i);
+    auto position = item->mapFromGlobal(event.globalPos());
+    if(item->rect().contains(position)) {
+      if(m_list_view->get_current()->get() != i) {
+        hide_active_menu();
+        m_list_view->get_current()->set(i);
+        show_submenu(i);
+      }
+      break;
+    }
   }
 }
 
@@ -428,7 +462,14 @@ void ContextMenu::on_window_style() {
   }
 }
 
-void Spire::add_action(ContextMenu& menu, const QString& name,  QImage icon,
+void Spire::show_under_cursor(ContextMenu& menu) {
+  auto cursor_position = QCursor::pos();
+  auto margins = menu.window()->layout()->contentsMargins();
+  menu.window()->move(cursor_position - QPoint(margins.left(), margins.top()));
+  menu.show();
+}
+
+void Spire::add_action(ContextMenu& menu, const QString& name, QImage icon,
     const ContextMenu::Action& action) {
   menu.add_action(name, action, make_icon_item(name, std::move(icon)));
 }

@@ -1357,59 +1357,57 @@ UiProfile Spire::make_combo_box_profile() {
 }
 
 UiProfile Spire::make_context_menu_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  auto profile = UiProfile(QString::fromUtf8("ContextMenu"), properties,
+  auto profile = UiProfile(QString::fromUtf8("ContextMenu"), {},
     [] (auto& profile) {
       auto button = make_label_button(QString::fromUtf8("Click me"));
-      auto menu = new ContextMenu(*button);
-      menu->add_action("Undo", profile.make_event_slot<>(
-        QString("Action:Undo")));
-      auto view_menu = new ContextMenu(*static_cast<QWidget*>(menu));
-      view_menu->add_action("Large", profile.make_event_slot<>(
-        QString("Action:Large")));
-      view_menu->add_action("Medium", profile.make_event_slot<>(
-        QString("Action:Medium")));
-      view_menu->add_action("Small", profile.make_event_slot<>(
-        QString("Action:Small")));
-      view_menu->add_separator();
-      auto empty_menu = new ContextMenu(*static_cast<QWidget*>(view_menu));
-      view_menu->add_menu("Empty", *empty_menu);
-      menu->add_menu("View", *view_menu);
-      auto sort_menu = new ContextMenu(*static_cast<QWidget*>(menu));
-      sort_menu->add_action("Name", profile.make_event_slot<>(
-        QString("Action:Name")));
-      sort_menu->add_action("Size", profile.make_event_slot<>(
-        QString("Action:Size")));
-      auto type_menu = new ContextMenu(*static_cast<QWidget*>(sort_menu));
-      type_menu->add_action("Security", profile.make_event_slot<>(
-        QString("Action:Security")));
-      type_menu->add_action("Side", profile.make_event_slot<>(
-        QString("Action:Side")));
-      sort_menu->add_menu("Type", *type_menu);
-      menu->add_menu("Sort by", *sort_menu);
-      menu->add_separator();
-      menu->add_action("Cut", profile.make_event_slot<>(QString("Action:Cut")));
-      menu->add_action("Copy", profile.make_event_slot<>(
-        QString("Action:Copy")));
-      menu->add_action("Paste", profile.make_event_slot<>(
-        QString("Action:Paste")));
-      menu->add_separator();
-      auto date_model = std::make_shared<LocalBooleanModel>();
-      date_model->set(true);
-      date_model->connect_update_signal(
-        profile.make_event_slot<bool>(QString("Date CheckedSignal")));
-      menu->add_check_box("Date", date_model);
-      auto time_model = menu->add_check_box("Time");
-      time_model->connect_update_signal(
-        profile.make_event_slot<bool>(QString("Time CheckedSignal")));
-      menu->add_separator();
-      menu->add_action("This is a long name for test",
-        profile.make_event_slot<>(
-          QString("Action:This is a long name for test")));
-      button->connect_click_signal([=] {
-        auto pos = QCursor::pos();
-        menu->window()->move(pos.x(), pos.y() + button->height());
-        menu->show();
+      button->connect_click_signal([=, &profile] {
+        auto menu = new ContextMenu(*button);
+        menu->add_action(
+          "Undo", profile.make_event_slot<>(QString("Action:Undo")));
+        auto view_menu = new ContextMenu(*static_cast<QWidget*>(menu));
+        view_menu->add_action(
+          "Large", profile.make_event_slot<>(QString("Action:Large")));
+        view_menu->add_action(
+          "Medium", profile.make_event_slot<>(QString("Action:Medium")));
+        view_menu->add_action(
+          "Small", profile.make_event_slot<>(QString("Action:Small")));
+        view_menu->add_separator();
+        auto empty_menu = new ContextMenu(*static_cast<QWidget*>(view_menu));
+        view_menu->add_menu("Empty", *empty_menu);
+        menu->add_menu("View", *view_menu);
+        auto sort_menu = new ContextMenu(*static_cast<QWidget*>(menu));
+        sort_menu->add_action(
+          "Name", profile.make_event_slot<>(QString("Action:Name")));
+        sort_menu->add_action(
+          "Size", profile.make_event_slot<>(QString("Action:Size")));
+        auto type_menu = new ContextMenu(*static_cast<QWidget*>(sort_menu));
+        type_menu->add_action(
+          "Security", profile.make_event_slot<>(QString("Action:Security")));
+        type_menu->add_action(
+          "Side", profile.make_event_slot<>(QString("Action:Side")));
+        sort_menu->add_menu("Type", *type_menu);
+        menu->add_menu("Sort by", *sort_menu);
+        menu->add_separator();
+        menu->add_action(
+          "Cut", profile.make_event_slot<>(QString("Action:Cut")));
+        menu->add_action(
+          "Copy", profile.make_event_slot<>(QString("Action:Copy")));
+        menu->add_action(
+          "Paste", profile.make_event_slot<>(QString("Action:Paste")));
+        menu->add_separator();
+        auto date_model = std::make_shared<LocalBooleanModel>();
+        date_model->set(true);
+        date_model->connect_update_signal(
+          profile.make_event_slot<bool>(QString("Date CheckedSignal")));
+        menu->add_check_box("Date", date_model);
+        auto time_model = menu->add_check_box("Time");
+        time_model->connect_update_signal(
+          profile.make_event_slot<bool>(QString("Time CheckedSignal")));
+        menu->add_separator();
+        menu->add_action("This is a long name for test",
+          profile.make_event_slot<>(
+            QString("Action:This is a long name for test")));
+        show_under_cursor(*menu);
       });
       return button;
     });
