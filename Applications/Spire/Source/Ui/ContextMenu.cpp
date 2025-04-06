@@ -361,8 +361,11 @@ void ContextMenu::position_menu(ListItem& item) {
 
 void ContextMenu::hide_active_menu() {
   if(m_active_menu_window) {
+    auto& body = static_cast<ContextMenu&>(m_active_menu_window->get_body());
+    body.m_list_view->get_current()->set(none);
+    body.m_list_view->setFocusProxy(nullptr);
+    body.removeEventFilter(this);
     m_active_menu_window->hide();
-    m_active_menu_window->get_body().removeEventFilter(this);
     m_active_menu_window->removeEventFilter(this);
     m_active_menu_window = nullptr;
   }
@@ -389,6 +392,9 @@ void ContextMenu::show_submenu(int index) {
 }
 
 void ContextMenu::on_mouse_move(QWidget& target, QMouseEvent& event) {
+  if(!target.window()->isVisible()) {
+    return;
+  }
   for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
     auto item = m_list_view->get_list_item(i);
     auto position = item->mapFromGlobal(event.globalPos());
