@@ -20,8 +20,17 @@ using namespace Spire;
 using namespace Styles;
 
 namespace {
-  const auto MENU_SHOW_DELAY = 400;
   const auto MIN_WIDTH = 130;
+
+  auto MENU_SHOW_DELAY() {
+    #ifdef Q_OS_WIN
+      auto delay = UINT(400);
+      SystemParametersInfo(SPI_GETMENUSHOWDELAY, 0, &delay, 0);
+      return static_cast<int>(delay);
+    #else
+      return 400;
+    #endif
+  }
 
   auto OVERLAP_WIDTH() {
     static auto size = scale_width(5);
@@ -393,7 +402,7 @@ void ContextMenu::defer_hide_submenu() {
     return;
   }
   auto hide_count = m_hide_count;
-  QTimer::singleShot(MENU_SHOW_DELAY, this, [=] {
+  QTimer::singleShot(MENU_SHOW_DELAY(), this, [=] {
     if(hide_count == m_hide_count) {
       hide_submenu();
     }
