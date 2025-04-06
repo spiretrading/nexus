@@ -92,6 +92,7 @@ ContextMenu::ContextMenu(QWidget& parent, ItemViewBuilder item_view_builder)
       m_item_view_builder(std::move(item_view_builder)),
       m_next_id(0),
       m_visible_submenu(nullptr),
+      m_pending_submenu_index(-1),
       m_hide_count(0),
       m_block_move(0),
       m_mouse_observer(*this) {
@@ -393,22 +394,36 @@ void ContextMenu::defer_hide_submenu() {
   }
   auto hide_count = m_hide_count;
   QTimer::singleShot(MENU_SHOW_DELAY, this, [=] {
-    if(hide_count != m_hide_count) {
-      return;
+    if(hide_count == m_hide_count) {
+      hide_submenu();
     }
-    hide_submenu();
+    if(m_pending_submenu_index != -1) {
+      auto index = m_pending_submenu_index;
+      m_pending_submenu_index = -1;
+      if(m_list_view->get_current()->get() == index) {
+        show_submenu(index);
+      }
+    }
   });
 }
 
 void ContextMenu::show_submenu(int index) {
   auto& menu_item = m_list->get(index);
   if(menu_item.m_type == MenuItemType::SUBMENU) {
-    ++m_hide_count;
-    auto menu_window = m_submenus[index];
-    if(m_visible_submenu == menu_window) {
+    if(index == m_pending_submenu_index) {
       return;
     }
-    hide_submenu();
+    auto menu_window = m_submenus[index];
+    if(m_visible_submenu == menu_window) {
+      ++m_hide_count;
+      return;
+    }
+    if(m_visible_submenu) {
+      defer_hide_submenu();
+      m_pending_submenu_index = index;
+      return;
+    }
+    ++m_hide_count;
     m_visible_submenu = menu_window;
     m_visible_submenu->installEventFilter(this);
     m_visible_submenu->get_body().installEventFilter(this);

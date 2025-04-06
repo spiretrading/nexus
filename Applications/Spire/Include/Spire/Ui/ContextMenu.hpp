@@ -151,6 +151,7 @@ namespace Spire {
       ListView* m_list_view;
       OverlayPanel* m_window;
       OverlayPanel* m_visible_submenu;
+      int m_pending_submenu_index;
       int m_hide_count;
       QRect m_active_item_geometry;
       int m_block_move;
