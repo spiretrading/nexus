@@ -40,6 +40,9 @@ namespace {
   auto LIST_VIEW_STYLE(StyleSheet style) {
     style.get(Any()).
       set(EdgeNavigation::CONTAIN);
+    style.get(
+      Any() > (is_a<ListItem>() && Hover() && !Current() && !Selected())).
+      set(BackgroundColor(QColor(0xFFFFFF)));
     style.get(Any() > (is_a<ListItem>() && Disabled()) > is_a<TextBox>()).
       set(TextColor(QColor(0xC8C8C8)));
     return style;
@@ -385,6 +388,17 @@ void ContextMenu::position_submenu(ListItem& item) {
   position_submenu();
 }
 
+bool ContextMenu::is_submenu_hovered() const {
+  if(!m_visible_submenu) {
+    return false;
+  }
+  auto& body = static_cast<ContextMenu&>(m_visible_submenu->get_body());
+  if(body.rect().contains(body.mapFromGlobal(QCursor::pos()))) {
+    return true; 
+  }
+  return body.is_submenu_hovered();
+}
+
 void ContextMenu::hide_submenu() {
   if(m_visible_submenu) {
     auto& body = static_cast<ContextMenu&>(m_visible_submenu->get_body());
@@ -404,7 +418,16 @@ void ContextMenu::defer_hide_submenu() {
   auto hide_count = m_hide_count;
   QTimer::singleShot(MENU_SHOW_DELAY(), this, [=] {
     if(hide_count == m_hide_count) {
-      hide_submenu();
+      if(is_submenu_hovered()) {
+        m_pending_submenu_index = -1;
+        for(auto& submenu : m_submenus) {
+          if(submenu.second == m_visible_submenu) {
+            m_list_view->get_current()->set(submenu.first);
+          }
+        }
+      } else {
+        hide_submenu();
+      }
     }
     if(m_pending_submenu_index != -1) {
       auto index = m_pending_submenu_index;
@@ -446,6 +469,9 @@ void ContextMenu::show_submenu(int index) {
 }
 
 void ContextMenu::on_mouse_move(QWidget& target, QMouseEvent& event) {
+  if(is_submenu_hovered()) {
+    return;
+  }
   for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
     auto item = m_list_view->get_list_item(i);
     auto position = item->mapFromGlobal(event.globalPos());

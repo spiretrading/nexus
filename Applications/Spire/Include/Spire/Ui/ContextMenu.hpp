@@ -169,6 +169,7 @@ namespace Spire {
       bool handle_mouse_event(QMouseEvent* event);
       void position_submenu();
       void position_submenu(ListItem& item);
+      bool is_submenu_hovered() const;
       void hide_submenu();
       void defer_hide_submenu();
       void show_submenu(int index);
