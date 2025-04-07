@@ -69,6 +69,8 @@ namespace Spire {
   class MenuBox;
   class MenuButton;
   class MoneyBox;
+  class MouseMoveObserver;
+  class MouseObserver;
   template<typename T> class MultiSelectionModel;
   class NavigationView;
   class OverlayPanel;
