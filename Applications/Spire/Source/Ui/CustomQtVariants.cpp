@@ -69,6 +69,44 @@ namespace {
     return to_text(any_cast<T>(left)) < to_text(any_cast<T>(right));
   }
 
+  QString find_smallest_text(const Region& region, int n) {
+    auto texts = std::vector<QString>();
+    for(auto& country : region.GetCountries()) {
+      texts.push_back(to_text(country));
+    }
+    for(auto& market : region.GetMarkets()) {
+      texts.push_back(to_text(MarketToken(market)));
+    }
+    for(auto& security : region.GetSecurities()) {
+      texts.push_back(to_text(security));
+    }
+    if(n >= static_cast<int>(texts.size())) {
+      return QString();
+    }
+    std::nth_element(texts.begin(), texts.begin() + n, texts.end());
+    return texts[n];
+  }
+
+  template<>
+  bool compare_text<Region>(const AnyRef& left, const AnyRef& right) {
+    auto& left_region = any_cast<Region>(left);
+    auto& right_region = any_cast<Region>(right);
+    auto i = 0;
+    while(true) {
+      auto left_text = find_smallest_text(left_region, i);
+      auto right_text = find_smallest_text(right_region, i);
+      auto comparator = left_text.compare(right_text);
+      if(comparator == 0) {
+        if(left_text.isEmpty()) {
+          return false;
+        }
+        ++i;
+      } else {
+        return comparator == -1;
+      }
+    }
+  }
+
   template<typename... T>
   bool is_equal_any(const std::any& left, const std::any& right) {
     return apply_any<T...>()(left, right,
@@ -499,13 +537,15 @@ bool Spire::compare(const AnyRef& left, const AnyRef& right) {
   }
   if(left.get_type() == typeid(TimeInForce)) {
     return compare_text<TimeInForce>(left, right);
+  } else if(left.get_type() == typeid(Region)) {
+    return compare_text<Region>(left, right);
   }
   return compare_any<bool, int, optional<int>, std::int64_t,
     optional<std::int64_t>, std::uint64_t, optional<std::uint64_t>, Quantity,
     optional<Quantity>, double, optional<double>, gregorian::date, ptime,
     posix_time::time_duration, std::string, CountryCode, CurrencyId, Money,
-    optional<Money>, Region, OrderStatus, OrderType, Security, Side,
-    QKeySequence, QString>(left, right);
+    optional<Money>, OrderStatus, OrderType, Security, Side, QKeySequence,
+    QString>(left, right);
 }
 
 bool Spire::is_equal(const std::any& left, const std::any& right) {
