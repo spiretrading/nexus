@@ -903,6 +903,18 @@ namespace {
                 this));
             return true;
           }
+        } else if(event->type() == QEvent::MouseButtonPress) {
+          auto& mouse_event = *static_cast<QMouseEvent*>(event);
+          if(mouse_event.button() == Qt::RightButton) {
+            if(auto child =
+                m_table_view->get_body().childAt(mouse_event.pos())) {
+              if(auto item = child->parentWidget()) {
+                item->setFocus(Qt::MouseFocusReason);
+              }
+            } else {
+              m_table_view->get_body().get_current()->set(none);
+            }
+          }
         }
       }
       return QObject::eventFilter(watched, event);
