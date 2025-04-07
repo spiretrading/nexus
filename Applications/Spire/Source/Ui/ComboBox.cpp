@@ -489,6 +489,11 @@ void AnyComboBox::on_focus(FocusObserver::State state) {
         m_data->m_input_focus_proxy, &focus_out_event);
     }
     submit(any_cast<QString>(m_input_box->get_current()->get()), true);
+  } else if(state != FocusObserver::State::NONE && m_data) {
+    m_data->m_submission = to_any(m_current->get());
+    if(m_data->m_submission.has_value()) {
+      m_data->m_submission_text = to_text(m_data->m_submission);
+    }
   }
 }
 
