@@ -102,7 +102,7 @@ namespace {
         }
         ++i;
       } else {
-        return comparator == -1;
+        return comparator < 0;
       }
     }
   }
