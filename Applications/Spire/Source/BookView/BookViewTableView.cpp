@@ -72,27 +72,23 @@ namespace {
     }
   };
 
-  void apply_row_style(StyleSheet& style, const Selector& row_selector,
-      const Selector& text_selector, const HighlightColor& highlight) {
-    style.get(row_selector).set(BackgroundColor(highlight.m_background_color));
-    style.get(text_selector).set(TextColor(highlight.m_text_color));
-  }
-
-  void apply_row_style(StyleSheet& style, const Selector& item_selector,
+  void apply_row_style(StyleSheet& style, const Selector& selector,
       const HighlightColor& highlight) {
-    auto row_selector = item_selector < is_a<TableItem>() < Row();
-    auto text_selector = row_selector > is_a<TableItem>() > is_a<TextBox>();
-    apply_row_style(style, row_selector, text_selector, highlight);
+    auto sibling = selector < is_a<TableItem>() % is_a<TableItem>();
+    style.get(selector || sibling > is_a<TextBox>()).
+      set(BackgroundColor(highlight.m_background_color)).
+      set(TextColor(highlight.m_text_color));
   }
 
   void apply_row_highlight_animation_style(StyleSheet& style,
-      const Selector& row_selector, const Selector& text_selector,
-      const HighlightColor& initial, const HighlightColor& end) {
-    style.get(row_selector).set(BackgroundColor(
-      linear(initial.m_background_color, end.m_background_color,
-        milliseconds(ORDER_HIGHLIGHT_TRANSITION_MS))));
-    style.get(text_selector).set(TextColor(
-      linear(initial.m_text_color, end.m_text_color,
+      const Selector& selector, const HighlightColor& initial,
+      const HighlightColor& end) {
+    auto sibling = selector < is_a<TableItem>() % is_a<TableItem>();
+    style.get(selector || sibling > is_a<TextBox>()).
+      set(BackgroundColor(
+        linear(initial.m_background_color, end.m_background_color,
+          milliseconds(ORDER_HIGHLIGHT_TRANSITION_MS)))).
+      set(TextColor(linear(initial.m_text_color, end.m_text_color,
         milliseconds(ORDER_HIGHLIGHT_TRANSITION_MS))));
   }
 
@@ -253,11 +249,8 @@ namespace {
         const HighlightColor& old_highlight, const HighlightColor& highlight) {
       if(auto item = get_quantity_item(index)) {
         update_style(*item, [&] (auto& style) {
-          auto row_selector = selector < is_a<TableItem>() < Row();
-          auto text_selector =
-            row_selector > is_a<TableItem>() > is_a<TextBox>();
-          apply_row_highlight_animation_style(style, row_selector,
-            text_selector, old_highlight, highlight);
+          apply_row_highlight_animation_style(style, selector,
+            old_highlight, highlight);
         });
       }
     }
@@ -272,14 +265,10 @@ namespace {
       }
       if(auto table_body = get_table_body(*i)) {
         update_style(*table_body, [&] (auto& style) {
-          auto order_selector = OrderQuote(state);
-          auto item_selector = Any() > CurrentRow() > is_a<TableItem>();
-          auto row_selector =
-            item_selector > order_selector < is_a<TableItem>() < CurrentRow();
-          auto text_selector = item_selector > order_selector <
-            is_a<TableItem>() < Row() > is_a<TableItem>() > is_a<TextBox>();
-          apply_row_highlight_animation_style(style, row_selector,
-            text_selector, old_highlight, highlight);
+          auto selector =
+            Any() > CurrentRow() > is_a<TableItem>() > OrderQuote(state);
+          apply_row_highlight_animation_style(style, selector,
+            old_highlight, highlight);
         });
       }
     }
@@ -1389,10 +1378,8 @@ TableView* Spire::make_book_view_table_view(
       set(border_color(QColor(Qt::transparent)));
     style.get(Any() > CurrentColumn()).
       set(BackgroundColor(Qt::transparent));
-    style.get(Any() > CurrentRow()).
-      set(BackgroundColor(SELECTED_BACKGROUND_COLOR)).
-      set(border_color(QColor(0x4B23A0)));
     style.get(Any() > CurrentRow() > is_a<TableItem>() > is_a<TextBox>()).
+      set(BackgroundColor(SELECTED_BACKGROUND_COLOR)).
       set(TextColor(SELECTED_TEXT_COLOR));
     style.get(ShowGrid()).
       set(HorizontalSpacing(scale_width(1))).
