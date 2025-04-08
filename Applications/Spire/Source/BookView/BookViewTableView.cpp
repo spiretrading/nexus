@@ -326,6 +326,9 @@ namespace {
           m_level_properties(std::move(level_properties)),
           m_visibility_property(std::move(visibility_property)),
           m_order_visibility(m_visibility_property->get()) {
+      for(auto i = 0; i < m_table->get_row_size(); ++i) {
+        m_levels.push_back(estimate_level(i));
+      }
       on_properties_update(m_level_properties->get());
       m_operation_connection = m_table->connect_operation_signal(
         std::bind_front(&LevelQuoteModel::on_operation, this));
@@ -484,6 +487,10 @@ namespace {
           m_highlight_properties(std::move(properties)),
           m_markets(markets),
           m_is_ascending(is_ascending) {
+      for(auto i = 0; i < m_quote_table->get_row_size(); ++i) {
+        add_quote(get_mpid(*m_quote_table, i), get_price(*m_quote_table, i),
+          get_size(*m_quote_table, i));
+      }
       on_properties_update(m_highlight_properties->get());
       m_operation_connection = m_quote_table->connect_operation_signal(
         std::bind_front(&MarketHighlightModel::on_table_operation, this));
@@ -520,42 +527,47 @@ namespace {
       }
     }
 
+    bool compare(const Quote& top_quote, const Money& price,
+        const Quantity& size) {
+      if(m_is_ascending) {
+        return top_quote.m_price > price ||
+          top_quote.m_price == price && top_quote.m_size > size;
+      }
+      return top_quote.m_price < price ||
+        top_quote.m_price == price && top_quote.m_size < size;
+    }
+
+    void add_quote(const std::string& mpid, const Money& price,
+        const Quantity& size) {
+      if(auto i = m_highlight_tops.find(mpid); i != m_highlight_tops.end()) {
+        if(compare(i->second, price, size)) {
+          if(m_highlight_contexts.contains(mpid) &&
+              m_highlight_contexts[mpid].m_highlight.m_level ==
+                MarketHighlightLevel::TOP) {
+            for(auto j = 0; j < m_quote_table->get_row_size(); ++j) {
+              if(mpid == get_mpid(*m_quote_table, j) &&
+                  i->second.m_price == get_price(*m_quote_table, j)) {
+                m_row_tracker->unmatch_highlight_selector(j);
+                break;
+              }
+            }
+          }
+          i->second.m_price = price;
+          i->second.m_size = size;
+        }
+      } else {
+        auto& quote = m_highlight_tops[mpid];
+        quote.m_price = price;
+        quote.m_size = size;
+      }
+    }
+
     void on_table_operation(const TableModel::Operation& operation) {
       visit(operation,
         [&] (const TableModel::AddOperation& operation) {
-          auto& mpid = get_mpid(*m_quote_table, operation.m_index);
-          auto& price = get_price(*m_quote_table, operation.m_index);
-          auto& size = get_size(*m_quote_table, operation.m_index);
-          if(auto i = m_highlight_tops.find(mpid);
-              i != m_highlight_tops.end()) {
-            auto is_topmost = [&] {
-              if(m_is_ascending) {
-                return i->second.m_price > price ||
-                  i->second.m_price == price && i->second.m_size > size;
-              }
-              return i->second.m_price < price ||
-                i->second.m_price == price && i->second.m_size < size;
-            }();
-            if(is_topmost) {
-              if(m_highlight_contexts.contains(mpid) &&
-                  m_highlight_contexts[mpid].m_highlight.m_level ==
-                    MarketHighlightLevel::TOP) {
-                for(auto j = 0; j < m_quote_table->get_row_size(); ++j) {
-                  if(mpid == get_mpid(*m_quote_table, j) &&
-                      i->second.m_price == get_price(*m_quote_table, j)) {
-                    m_row_tracker->unmatch_highlight_selector(j);
-                    break;
-                  }
-                }
-              }
-              i->second.m_price = price;
-              i->second.m_size = size;
-            }
-          } else {
-            auto& quote = m_highlight_tops[mpid];
-            quote.m_price = price;
-            quote.m_size = size;
-          }
+          add_quote(get_mpid(*m_quote_table, operation.m_index),
+            get_price(*m_quote_table, operation.m_index),
+            get_size(*m_quote_table, operation.m_index));
         },
         [&] (const TableModel::PreRemoveOperation& operation) {
           auto& mpid = get_mpid(*m_quote_table, operation.m_index);
@@ -1243,13 +1255,15 @@ namespace {
     scoped_connection m_connection;
 
     OrderFilteredListModel(std::shared_ptr<ListModel<BookQuote>> source,
-      std::shared_ptr<HighlightPropertiesModel> highlight_properties)
-      : FilteredListModel<BookQuote>(std::move(source),
-          std::bind_front(&OrderFilteredListModel::filter, this)),
-        m_highlight_properties(std::move(highlight_properties)),
-        m_order_visibility(m_highlight_properties->get().m_order_visibility),
-        m_connection(m_highlight_properties->connect_update_signal(
-          std::bind_front(&OrderFilteredListModel::on_properties, this))) {}
+        std::shared_ptr<HighlightPropertiesModel> highlight_properties)
+        : FilteredListModel<BookQuote>(std::move(source),
+            [] (const auto&, auto) { return false; }),
+          m_highlight_properties(std::move(highlight_properties)),
+          m_order_visibility(m_highlight_properties->get().m_order_visibility),
+          m_connection(m_highlight_properties->connect_update_signal(
+            std::bind_front(&OrderFilteredListModel::on_properties, this))) {
+      set_filter(std::bind_front(&OrderFilteredListModel::filter, this));
+    }
 
     bool filter(const ListModel<BookQuote>& list, int index) {
       if(m_highlight_properties->get().m_order_visibility ==
