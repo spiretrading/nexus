@@ -14,6 +14,7 @@ namespace Spire {
   class BookViewPropertiesWindowFactory;
   class BookViewWindow;
   class BookViewWindowSettings;
+  class ConsolidatedUserOrderListModel;
   class LegacyBookViewWindowSettings;
   class MarketDepth;
   class TechnicalsPanel;
