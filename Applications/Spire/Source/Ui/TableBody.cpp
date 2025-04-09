@@ -875,7 +875,7 @@ void TableBody::paintEvent(QPaintEvent* event) {
   for(auto i = 0; i != static_cast<int>(m_column_covers.size()); ++i) {
     auto cover = m_column_covers[i];
     if(cover->m_background_color.alphaF() != 0 &&
-        m_current_index && m_current_index->m_column != i) {
+        (!m_current_index || m_current_index->m_column != i)) {
       painter.fillRect(cover->geometry(), cover->m_background_color);
     }
   }
@@ -883,7 +883,7 @@ void TableBody::paintEvent(QPaintEvent* event) {
     auto& cover = get_layout().get_row(i);
     auto index = get_layout().get_top_index() + i;
     if(cover.m_background_color.alphaF() != 0 &&
-        m_current_index && m_current_index->m_row != index) {
+        (!m_current_index || m_current_index->m_row != index)) {
       painter.fillRect(cover.geometry(), cover.m_background_color);
     }
   }
