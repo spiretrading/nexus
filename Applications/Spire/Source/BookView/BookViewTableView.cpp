@@ -74,21 +74,22 @@ namespace {
 
   void apply_row_style(StyleSheet& style, const Selector& selector,
       const HighlightColor& highlight) {
-    auto sibling = selector < is_a<TableItem>() % is_a<TableItem>();
-    style.get(selector || sibling > is_a<TextBox>()).
-      set(BackgroundColor(highlight.m_background_color)).
-      set(TextColor(highlight.m_text_color));
+    auto row_selector = selector < is_a<TableItem>() < Row();
+    style.get(row_selector).set(BackgroundColor(highlight.m_background_color));
+    auto text_selector = row_selector > is_a<TableItem>() > is_a<TextBox>();
+    style.get(text_selector).set(TextColor(highlight.m_text_color));
   }
 
-  void apply_row_highlight_animation_style(StyleSheet& style,
+   void apply_row_highlight_animation_style(StyleSheet& style,
       const Selector& selector, const HighlightColor& initial,
       const HighlightColor& end) {
-    auto sibling = selector < is_a<TableItem>() % is_a<TableItem>();
-    style.get(selector || sibling > is_a<TextBox>()).
-      set(BackgroundColor(
-        linear(initial.m_background_color, end.m_background_color,
-          milliseconds(ORDER_HIGHLIGHT_TRANSITION_MS)))).
-      set(TextColor(linear(initial.m_text_color, end.m_text_color,
+    auto row_selector = selector < is_a<TableItem>() < Row();
+    style.get(row_selector).set(BackgroundColor(
+      linear(initial.m_background_color, end.m_background_color,
+        milliseconds(ORDER_HIGHLIGHT_TRANSITION_MS))));
+    auto text_selector = row_selector > is_a<TableItem>() > is_a<TextBox>();
+    style.get(text_selector).set(TextColor(
+      linear(initial.m_text_color, end.m_text_color,
         milliseconds(ORDER_HIGHLIGHT_TRANSITION_MS))));
   }
 
@@ -1445,8 +1446,10 @@ TableView* Spire::make_book_view_table_view(
       set(border_color(QColor(Qt::transparent)));
     style.get(Any() > CurrentColumn()).
       set(BackgroundColor(Qt::transparent));
-    style.get(Any() > CurrentRow() > is_a<TableItem>() > is_a<TextBox>()).
+    style.get(Any() > CurrentRow()).
       set(BackgroundColor(SELECTED_BACKGROUND_COLOR)).
+      set(border_color(QColor(0x4B23A0)));
+    style.get(Any() > CurrentRow() > is_a<TableItem>() > is_a<TextBox>()).
       set(TextColor(SELECTED_TEXT_COLOR));
     style.get(ShowGrid()).
       set(HorizontalSpacing(scale_width(1))).
