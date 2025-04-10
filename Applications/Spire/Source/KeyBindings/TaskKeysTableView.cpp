@@ -246,9 +246,7 @@ namespace {
           } else if(column_id == OrderTaskColumns::REGION) {
             auto current = make_proxy.operator ()<Region>();
             auto region_box = new RegionBox(m_regions, current);
-            region_box->setFixedHeight(scale_height(25));
-            region_box->setSizePolicy(
-              QSizePolicy::Preferred, QSizePolicy::Fixed);
+            region_box->setFixedHeight(region_box->minimumSizeHint().height());
             return {new EditableBox(*region_box),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::DESTINATION) {
