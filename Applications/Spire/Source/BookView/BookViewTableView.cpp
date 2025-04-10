@@ -62,7 +62,7 @@ namespace {
     }
   }
 
-  bool listing_comparator(const AnyRef& left, const AnyRef& right, int, int) {
+  bool listing_comparator(const AnyRef& left, const AnyRef& right) {
     if(left.get_type() == typeid(MpidListing)) {
       return any_cast<MpidListing>(left) < any_cast<MpidListing>(right);
     }
