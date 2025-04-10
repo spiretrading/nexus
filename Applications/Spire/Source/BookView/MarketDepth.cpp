@@ -18,6 +18,7 @@ using namespace Spire::Styles;
 
 namespace {
   optional<int> find_nearest_order(int row, const TableModel& table) {
+/* TODO
     auto top = row;
     auto bottom = row;
     auto size = table.get_row_size();
@@ -33,11 +34,13 @@ namespace {
       --top;
       ++bottom;
     }
+*/
     return none;
   }
 
   void navigate(int current_row, TableView& table_view,
       optional<int>& last_current_row) {
+/* TODO
     auto set_current = [&] (int row) {
       table_view.get_current()->set(TableView::Index(row, 0));
       last_current_row = current_row;
@@ -49,6 +52,7 @@ namespace {
         auto next = find_nearest_order(current_row, *table_view.get_table())) {
       set_current(*next);
     }
+*/
   }
 
   auto make_panel(std::shared_ptr<BookViewModel> model,
@@ -177,6 +181,7 @@ void MarketDepth::on_side_current(const optional<TableView::Index>& current,
     return;
   }
   if(current) {
+/** TODO
     m_last_current_row = none;
     auto blocker = shared_connection_block(opposite_connection);
     opposite_table_view->get_current()->set(none);
@@ -189,6 +194,7 @@ void MarketDepth::on_side_current(const optional<TableView::Index>& current,
           get_size(*table_view->get_table(), current->m_row), side}, {}));
       return;
     }
+*/
   }
   last_side_current_row = none;
   m_selected_quote->set(none);

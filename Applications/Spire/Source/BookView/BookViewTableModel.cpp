@@ -1,44 +1,49 @@
 #include "Spire/BookView/BookViewTableModel.hpp"
+#include "Spire/BookView/MergedBookQuoteListModel.hpp"
 #include "Spire/Spire/ListToTableModel.hpp"
 
+using namespace boost;
 using namespace Nexus;
+using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 namespace {
-  static const auto COLUMN_SIZE = 3;
+  struct ListingExtractor {
+    MpidListing m_mpid;
 
-  AnyRef extract(const BookQuote& quote, int index) {
-    if(index == 0) {
-      return quote.m_mpid;
-    } else if(index == 1) {
-      return quote.m_quote.m_price;
+    AnyRef operator ()(const BookListing& listing, int index) {
+      auto column = static_cast<BookViewColumn>(index);
+      if(auto quote = get<BookQuote>(&listing)) {
+        if(column == BookViewColumn::MPID) {
+          m_mpid = MpidListing(ListingSource::BOOK_QUOTE, quote->m_mpid);
+          return std::as_const(m_mpid);
+        } else if(column == BookViewColumn::PRICE) {
+          return quote->m_quote.m_price;
+        }
+        return quote->m_quote.m_size;
+      } else if(auto order = get<BookViewModel::UserOrder>(&listing)) {
+        if(column == BookViewColumn::MPID) {
+          m_mpid = MpidListing(ListingSource::USER_ORDER, order->m_destination);
+          return std::as_const(m_mpid);
+        } else if(column == BookViewColumn::PRICE) {
+          return order->m_price;
+        }
+        return order->m_size;
+      }
+      auto preview = get<OrderFields>(&listing);
+      if(column == BookViewColumn::MPID) {
+        m_mpid = MpidListing(ListingSource::PREVIEW, preview->m_destination);
+        return std::as_const(m_mpid);
+      } else if(column == BookViewColumn::PRICE) {
+        return preview->m_price;
+      }
+      return preview->m_quantity;
     }
-    return quote.m_quote.m_size;
-  }
+  };
 }
 
 std::shared_ptr<TableModel> Spire::make_book_view_table_model(
-    std::shared_ptr<ListModel<BookQuote>> book_quotes) {
-  return std::make_shared<ListToTableModel<BookQuote>>(
-    std::move(book_quotes), COLUMN_SIZE, &extract);
-}
-
-const std::string& Spire::get_mpid(const TableModel& table, int row) {
-  return table.get<std::string>(row, static_cast<int>(BookViewColumns::MPID));
-}
-
-const Money& Spire::get_price(const TableModel& table, int row) {
-  return table.get<Money>(row, static_cast<int>(BookViewColumns::PRICE));
-}
-
-const Quantity& Spire::get_size(const TableModel& table, int row) {
-  return table.get<Quantity>(row, static_cast<int>(BookViewColumns::SIZE));
-}
-
-bool Spire::is_order(const std::string& mpid) {
-  return !mpid.empty() && mpid.front() == '@';
-}
-
-bool Spire::is_preview_order(const std::string& mpid) {
-  return mpid.size() > 1 && std::string_view(mpid).substr(0, 2) == "@@";
+    std::shared_ptr<ListModel<BookListing>> listings) {
+  return std::make_shared<ListToTableModel<BookListing>>(
+    std::move(listings), BOOK_VIEW_COLUMN_SIZE, ListingExtractor());
 }

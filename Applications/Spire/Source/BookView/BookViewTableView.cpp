@@ -30,17 +30,17 @@ namespace {
 
   QWidget* item_builder(
       const std::shared_ptr<TableModel>& table, int row, int column) {
-    auto column_id = static_cast<BookViewColumns>(column);
-    if(column_id == BookViewColumns::MPID) {
-      auto name = table->get<std::string>(row, column);
-      auto mpid_item = make_label(QString::fromStdString(name));
+    auto column_id = static_cast<BookViewColumn>(column);
+    if(column_id == BookViewColumn::MPID) {
+      auto name = table->get<MpidListing>(row, column);
+      auto mpid_item = make_label(QString::fromStdString(name.m_mpid));
       update_style(*mpid_item, [] (auto& style) {
         style.get(Any()).
           set(PaddingLeft(scale_width(4))).
           set(PaddingRight(scale_width(2)));
       });
       return mpid_item;
-    } else if(column_id == BookViewColumns::PRICE) {
+    } else if(column_id == BookViewColumn::PRICE) {
       auto money_item = make_label(make_to_text_model(
         make_table_value_model<Money>(table, row, column)));
       update_style(*money_item, [] (auto& style) {
@@ -67,7 +67,7 @@ TableView* Spire::make_book_view_table_view(
     std::shared_ptr<BookViewModel> model,
     std::shared_ptr<BookViewPropertiesModel> properties, Side side,
     const MarketDatabase& markets, QWidget* parent) {
-  auto [book_quotes, orders, ordering] = [&] {
+  auto [quotes, orders, ordering] = [&] {
     if(side == Side::BID) {
       return std::tuple(model->get_bids(), model->get_bid_orders(),
         SortedTableModel::Ordering::DESCENDING);
@@ -78,8 +78,10 @@ TableView* Spire::make_book_view_table_view(
   auto is_ascending = ordering == SortedTableModel::Ordering::ASCENDING;
   auto column_orders =
     std::vector<SortedTableModel::ColumnOrder>{{1, ordering}, {2, ordering}};
+  auto merged_table = std::make_shared<MergedBookQuoteListModel>(
+    quotes, orders, model->get_preview_order());
   auto table = std::make_shared<SortedTableModel>(
-    make_book_view_table_model(book_quotes), column_orders);
+    make_book_view_table_model(merged_table), column_orders);
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
     set_item_builder(&item_builder).make();
