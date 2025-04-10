@@ -47,6 +47,8 @@ namespace Spire {
 
         /** The status of the user order. */
         Nexus::OrderStatus m_status;
+
+        bool operator ==(const UserOrder&) const = default;
       };
 
       /** Models a list of UserOrders. */
