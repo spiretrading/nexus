@@ -16,7 +16,7 @@ ConsolidatedUserOrderListModel::ConsolidatedUserOrderListModel(
     std::shared_ptr<BookViewModel::UserOrderListModel> user_orders)
     : m_user_orders(std::move(user_orders)) {
   for(auto i = 0; i != m_user_orders->get_size(); ++i) {
-    on_operation(AddOperation(i));
+    add(m_user_orders->get(i));
   }
   m_connection = m_user_orders->connect_operation_signal(
     std::bind_front(&ConsolidatedUserOrderListModel::on_operation, this));
@@ -43,23 +43,53 @@ void ConsolidatedUserOrderListModel::transact(
   });
 }
 
+void ConsolidatedUserOrderListModel::add(
+    const BookViewModel::UserOrder& order) {
+  auto i = std::lower_bound(
+    m_model.begin(), m_model.end(), order, user_order_comparator);
+  if(i == m_model.end() || i->m_price != order.m_price ||
+      i->m_destination != order.m_destination) {
+    m_model.insert(order, i);
+  } else {
+    auto update = static_cast<BookViewModel::UserOrder>(*i);
+    update.m_size += order.m_size;
+    *i = update;
+  }
+}
+
+void ConsolidatedUserOrderListModel::remove(
+    const BookViewModel::UserOrder& order) {
+  auto i = std::lower_bound(
+    m_model.begin(), m_model.end(), order, user_order_comparator);
+  if(i->m_size == order.m_size) {
+    m_model.remove(i);
+  } else {
+    auto update = static_cast<BookViewModel::UserOrder>(*i);
+    update.m_size -= order.m_size;
+    *i = update;
+  }
+}
+
 void ConsolidatedUserOrderListModel::on_operation(const Operation& operation) {
   visit(operation,
     [&] (const AddOperation& operation) {
-      auto& user_order = m_user_orders->get(operation.m_index);
-      auto i = std::lower_bound(
-        m_model.begin(), m_model.end(), user_order, user_order_comparator);
-      if(i == m_model.end() || i->m_price != user_order.m_price ||
-          i->m_destination != user_order.m_destination) {
-        m_model.insert(user_order, i);
-      } else {
-        auto update = static_cast<BookViewModel::UserOrder>(*i);
-        update.m_size += user_order.m_size;
-        *i = update;
-      }
+      add(m_user_orders->get(operation.m_index));
+    },
+    [&] (const PreRemoveOperation& operation) {
+      m_removed_order = m_user_orders->get(operation.m_index);
+    },
+    [&] (const RemoveOperation& operation) {
+      remove(m_removed_order);
     },
     [&] (const UpdateOperation& operation) {
       auto& user_order = operation.get_value();
+      auto& previous_order = operation.get_previous();
+      if(user_order.m_destination != previous_order.m_destination ||
+          user_order.m_price != previous_order.m_price) {
+        remove(previous_order);
+        add(user_order);
+        return;
+      }
       auto size_delta = user_order.m_size - operation.get_previous().m_size;
       if(size_delta == 0) {
         return;
@@ -67,7 +97,7 @@ void ConsolidatedUserOrderListModel::on_operation(const Operation& operation) {
       auto i = std::lower_bound(
         m_model.begin(), m_model.end(), user_order, user_order_comparator);
       auto update = static_cast<BookViewModel::UserOrder>(*i);
-      update.m_size += user_order.m_size;
+      update.m_size += size_delta;
       *i = update;
     });
 }

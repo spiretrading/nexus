@@ -35,8 +35,11 @@ namespace Spire {
     private:
       std::shared_ptr<BookViewModel::UserOrderListModel> m_user_orders;
       ArrayListModel<BookViewModel::UserOrder> m_model;
+      BookViewModel::UserOrder m_removed_order;
       boost::signals2::scoped_connection m_connection;
 
+      void add(const BookViewModel::UserOrder& order);
+      void remove(const BookViewModel::UserOrder& order);
       void on_operation(const Operation& operation);
   };
 }
