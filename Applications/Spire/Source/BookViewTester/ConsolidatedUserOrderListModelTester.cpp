@@ -258,6 +258,7 @@ TEST_SUITE("ConsolidatedUserOrderListModel") {
     auto user_order = find(consolidated_orders, Money::CENT, "TSX");
     REQUIRE(user_order.has_value());
     REQUIRE(user_order->m_size == 0);
+    REQUIRE(user_order->m_status == OrderStatus::CANCELED);
   }
 
   TEST_CASE("add_after_removal") {

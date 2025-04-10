@@ -2,6 +2,7 @@
 
 using namespace boost;
 using namespace boost::signals2;
+using namespace Nexus;
 using namespace Spire;
 
 namespace {
@@ -9,6 +10,11 @@ namespace {
       const BookViewModel::UserOrder& right) {
     return std::tie(left.m_price, left.m_destination) <
       std::tie(right.m_price, right.m_destination);
+  }
+
+  bool is_transient_status(OrderStatus status) {
+    return status == OrderStatus::NONE || status == OrderStatus::PENDING_NEW &&
+     status == OrderStatus::NEW && status == OrderStatus::PENDING_CANCEL;
   }
 }
 
@@ -45,6 +51,9 @@ void ConsolidatedUserOrderListModel::transact(
 
 void ConsolidatedUserOrderListModel::add(
     const BookViewModel::UserOrder& order) {
+  if(order.m_size == 0 || IsTerminal(order.m_status)) {
+    return;
+  }
   auto i = std::lower_bound(
     m_model.begin(), m_model.end(), order, user_order_comparator);
   if(i == m_model.end() || i->m_price != order.m_price ||
@@ -98,6 +107,9 @@ void ConsolidatedUserOrderListModel::on_operation(const Operation& operation) {
         m_model.begin(), m_model.end(), user_order, user_order_comparator);
       auto update = static_cast<BookViewModel::UserOrder>(*i);
       update.m_size += size_delta;
+      if(!is_transient_status(user_order.m_status)) {
+        update.m_status = user_order.m_status;
+      }
       *i = update;
     });
 }
