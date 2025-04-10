@@ -42,6 +42,10 @@ namespace {
   };
 }
 
+bool Spire::MpidListing::operator <(const MpidListing& listing) const {
+  return m_mpid < listing.m_mpid;
+}
+
 std::shared_ptr<TableModel> Spire::make_book_view_table_model(
     std::shared_ptr<ListModel<BookListing>> listings) {
   return std::make_shared<ListToTableModel<BookListing>>(

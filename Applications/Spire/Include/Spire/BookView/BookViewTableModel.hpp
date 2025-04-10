@@ -43,6 +43,9 @@ namespace Spire {
 
     /** The MPID to display for this listing. */
     std::string m_mpid;
+
+    /** Compares the MPID of two listings. */
+    bool operator <(const MpidListing& listing) const;
   };
 
   /** Makes a TableModel as a view over a ListModel<BookListing>. */

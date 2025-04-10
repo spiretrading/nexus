@@ -61,6 +61,13 @@ namespace {
       return quantity_item;
     }
   }
+
+  bool listing_comparator(const AnyRef& left, const AnyRef& right, int, int) {
+    if(left.get_type() == typeid(MpidListing)) {
+      return any_cast<MpidListing>(left) < any_cast<MpidListing>(right);
+    }
+    return Spire::compare(left, right);
+  }
 }
 
 TableView* Spire::make_book_view_table_view(
@@ -84,7 +91,8 @@ TableView* Spire::make_book_view_table_view(
     make_book_view_table_model(merged_table), column_orders);
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
-    set_item_builder(&item_builder).make();
+    set_item_builder(&item_builder).
+    set_comparator(&listing_comparator).make();
   table_view->get_header().setVisible(false);
   table_view->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
   update_style(table_view->get_body(), [=] (auto& style) {
