@@ -16,7 +16,6 @@ namespace {
   }
 
   int find_book_quote(const ListModel<BookQuote>& quotes,
-      const optional<OrderFields>& preview_order,
       const std::string& mpid, const Money& price) {
     auto i = std::find_if(quotes.begin(), quotes.end(),
       [&] (const BookQuote& quote) {
@@ -47,8 +46,7 @@ const std::shared_ptr<BookViewModel>& DemoBookViewModel::get_model() const {
 
 void DemoBookViewModel::submit_book_quote(const BookQuote& quote) {
   auto quotes = get_quotes(*m_model, quote.m_quote.m_side);
-  auto i = find_book_quote(*quotes, m_model->get_preview_order()->get(),
-    quote.m_mpid, quote.m_quote.m_price);
+  auto i = find_book_quote(*quotes, quote.m_mpid, quote.m_quote.m_price);
   if(i >= 0) {
     if(quote.m_quote.m_size == 0) {
       quotes->remove(i);

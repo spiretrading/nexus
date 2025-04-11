@@ -176,10 +176,10 @@ void MarketDepth::on_side_current(const optional<TableView::Index>& current,
       current->m_row == last_side_current_row) {
     return;
   }
+  auto blocker = shared_connection_block(opposite_connection);
+  opposite_table_view->get_current()->set(none);
   if(current) {
     m_last_current_row = none;
-    auto blocker = shared_connection_block(opposite_connection);
-    opposite_table_view->get_current()->set(none);
     last_side_opposite_row = none;
     auto& mpid = get_mpid(*table_view->get_table(), current->m_row);
     if(is_order(mpid) && !is_preview_order(mpid)) {

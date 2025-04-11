@@ -49,6 +49,8 @@ using namespace Spire::Styles;
 
 using OrderStatusBox = EnumBox<OrderStatus>;
 
+const auto ORDER_COLUMN_COUNT = 4;
+
 std::time_t to_time_t_milliseconds(ptime pt) {
   return (pt - ptime(gregorian::date(1970, 1, 1))).total_milliseconds();
 }
@@ -135,12 +137,6 @@ BookQuote make_random_market_quote(Side side) {
       random_generator.bounded(1000), side}, second_clock::local_time());
 }
 
-OrderStatus make_order_status(int index) {
-  static auto statuses = std::array<OrderStatus, 3>{
-    OrderStatus::FILLED, OrderStatus::CANCELED, OrderStatus::REJECTED};
-  return statuses[index % statuses.size()];
-}
-
 OrderStatusBox* make_order_status_box(QWidget* parent = nullptr) {
   auto settings = OrderStatusBox::Settings();
   auto cases = std::make_shared<ArrayListModel<OrderStatus>>();
@@ -148,6 +144,7 @@ OrderStatusBox* make_order_status_box(QWidget* parent = nullptr) {
   cases->push(OrderStatus::FILLED);
   cases->push(OrderStatus::CANCELED);
   cases->push(OrderStatus::REJECTED);
+  cases->push(OrderStatus::PARTIALLY_FILLED);
   settings.m_cases = std::move(cases);
   return new OrderStatusBox(std::move(settings), parent);
 }
@@ -182,6 +179,10 @@ auto make_table_header() {
   item.m_order = TableHeaderItem::Order::UNORDERED;
   item.m_name = "Quantity";
   header->push(item);
+  item = TableHeaderItem::Model();
+  item.m_order = TableHeaderItem::Order::UNORDERED;
+  item.m_name = "Status";
+  header->push(item);
   return header;
 }
 
@@ -190,8 +191,10 @@ AnyRef extract(const BookViewModel::UserOrder& order, int index) {
     return order.m_destination;
   } else if(index == 1) {
     return order.m_price;
+  } else if(index == 2) {
+    return order.m_size;
   }
-  return order.m_size;
+  return order.m_status;
 }
 
 auto get_orders(const BookViewModel& model, Side side) {
@@ -216,7 +219,7 @@ struct BookViewOrderTester : QWidget {
       : QWidget(parent),
         m_model(std::move(model)) {
     auto order_group_box = new QGroupBox(tr("Order"));
-    order_group_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    order_group_box->setFixedWidth(scale_width(200));
     auto order_group_layout = new QVBoxLayout(order_group_box);
     auto fields_layout = new QFormLayout();
     m_destination_box = new TextBox();
@@ -237,20 +240,22 @@ struct BookViewOrderTester : QWidget {
     left_layout->addStretch(1);
     m_bid_table_view = TableViewBuilder(
       std::make_shared<ListToTableModel<BookViewModel::UserOrder>>(
-        m_model->get_bid_orders(), 3, &extract)).
+        m_model->get_bid_orders(), ORDER_COLUMN_COUNT, &extract)).
       set_header(make_table_header()).make();
     m_bid_table_view->get_body().get_current()->connect_update_signal(
       std::bind_front(&BookViewOrderTester::on_current, this, Side::BID));
     auto bid_group_box = new QGroupBox(tr("Bid"));
+    bid_group_box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
     auto bid_layout = new QVBoxLayout(bid_group_box);
     bid_layout->addWidget(m_bid_table_view);
     m_ask_table_view = TableViewBuilder(
       std::make_shared<ListToTableModel<BookViewModel::UserOrder>>(
-        m_model->get_ask_orders(), 3, &extract)).
+        m_model->get_ask_orders(), ORDER_COLUMN_COUNT, &extract)).
       set_header(make_table_header()).make();
     m_ask_table_view->get_body().get_current()->connect_update_signal(
       std::bind_front(&BookViewOrderTester::on_current, this, Side::ASK));
     auto ask_group_box = new QGroupBox(tr("Ask"));
+    ask_group_box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
     auto ask_layout = new QVBoxLayout(ask_group_box);
     ask_layout->addWidget(m_ask_table_view);
     auto right_layout = new QVBoxLayout();
@@ -279,9 +284,6 @@ struct BookViewOrderTester : QWidget {
   }
 
   void on_add_order_click() {
-    if(m_status_box->get_current()->get() != OrderStatus::NEW) {
-      return;
-    }
     auto orders = [&] {
       if(m_side_box->get_current()->get() == Side::BID) {
         return m_model->get_bid_orders();
@@ -295,9 +297,6 @@ struct BookViewOrderTester : QWidget {
   }
 
   void on_update_order_click() {
-    if(m_status_box->get_current()->get() == OrderStatus::NEW) {
-      return;
-    }
     auto [index, orders] = [&] {
       if(m_side_box->get_current()->get() == Side::BID) {
         return std::tuple(m_bid_table_view->get_current()->get(),
@@ -309,11 +308,13 @@ struct BookViewOrderTester : QWidget {
     if(index) {
       auto user_order = orders->get(index->m_row);
       user_order.m_status = m_status_box->get_current()->get();
-      user_order.m_size -= *m_quantity_box->get_current()->get();
-      orders->set(index->m_row, user_order);
-      if(orders->get(index->m_row).m_size <= 0) {
-        orders->remove(index->m_row);
+      if(m_status_box->get_current()->get() == OrderStatus::NEW) {
+        user_order.m_size = *m_quantity_box->get_current()->get();
+      } else if(m_status_box->get_current()->get() ==
+          OrderStatus::PARTIALLY_FILLED) {
+        user_order.m_size -= *m_quantity_box->get_current()->get();
       }
+      orders->set(index->m_row, user_order);
     }
   }
 
@@ -337,10 +338,12 @@ struct BookViewOrderTester : QWidget {
     }
     auto orders = get_orders(*m_model, side);
     auto order = orders->get(current->m_row);
-    m_destination_box->get_current()->set(QString::fromStdString(order.m_destination));
+    m_destination_box->get_current()->set(
+      QString::fromStdString(order.m_destination));
     m_price_box->get_current()->set(order.m_price);
     m_quantity_box->get_current()->set(order.m_size);
     m_side_box->get_current()->set(side);
+    m_status_box->get_current()->set(order.m_status);
   }
 };
 

@@ -72,25 +72,22 @@ namespace {
     }
   };
 
-  void apply_row_style(StyleSheet& style, const Selector& row_selector,
-      const Selector& text_selector, const HighlightColor& highlight) {
+  void apply_row_style(StyleSheet& style, const Selector& selector,
+      const HighlightColor& highlight) {
+    auto row_selector = selector < is_a<TableItem>() < Row();
     style.get(row_selector).set(BackgroundColor(highlight.m_background_color));
+    auto text_selector = row_selector > is_a<TableItem>() > is_a<TextBox>();
     style.get(text_selector).set(TextColor(highlight.m_text_color));
   }
 
-  void apply_row_style(StyleSheet& style, const Selector& item_selector,
-      const HighlightColor& highlight) {
-    auto row_selector = item_selector < is_a<TableItem>() < Row();
-    auto text_selector = row_selector > is_a<TableItem>() > is_a<TextBox>();
-    apply_row_style(style, row_selector, text_selector, highlight);
-  }
-
-  void apply_row_highlight_animation_style(StyleSheet& style,
-      const Selector& row_selector, const Selector& text_selector,
-      const HighlightColor& initial, const HighlightColor& end) {
+   void apply_row_highlight_animation_style(StyleSheet& style,
+      const Selector& selector, const HighlightColor& initial,
+      const HighlightColor& end) {
+    auto row_selector = selector < is_a<TableItem>() < Row();
     style.get(row_selector).set(BackgroundColor(
       linear(initial.m_background_color, end.m_background_color,
         milliseconds(ORDER_HIGHLIGHT_TRANSITION_MS))));
+    auto text_selector = row_selector > is_a<TableItem>() > is_a<TextBox>();
     style.get(text_selector).set(TextColor(
       linear(initial.m_text_color, end.m_text_color,
         milliseconds(ORDER_HIGHLIGHT_TRANSITION_MS))));
@@ -125,8 +122,8 @@ namespace {
     return model;
   }
 
-  QWidget* get_table_body(QWidget* item) {
-    if(auto table_item = item->parentWidget()) {
+  QWidget* get_table_body(const QWidget& item) {
+    if(auto table_item = item.parentWidget()) {
       if(auto row = table_item->parentWidget()) {
         return row->parentWidget();
       }
@@ -253,11 +250,8 @@ namespace {
         const HighlightColor& old_highlight, const HighlightColor& highlight) {
       if(auto item = get_quantity_item(index)) {
         update_style(*item, [&] (auto& style) {
-          auto row_selector = selector < is_a<TableItem>() < Row();
-          auto text_selector =
-            row_selector > is_a<TableItem>() > is_a<TextBox>();
-          apply_row_highlight_animation_style(style, row_selector,
-            text_selector, old_highlight, highlight);
+          apply_row_highlight_animation_style(style, selector,
+            old_highlight, highlight);
         });
       }
     }
@@ -270,16 +264,12 @@ namespace {
       if(i == m_items.end()) {
         return;
       }
-      if(auto table_body = get_table_body(*i)) {
+      if(auto table_body = get_table_body(**i)) {
         update_style(*table_body, [&] (auto& style) {
-          auto order_selector = OrderQuote(state);
-          auto item_selector = Any() > CurrentRow() > is_a<TableItem>();
-          auto row_selector =
-            item_selector > order_selector < is_a<TableItem>() < CurrentRow();
-          auto text_selector = item_selector > order_selector <
-            is_a<TableItem>() < Row() > is_a<TableItem>() > is_a<TextBox>();
-          apply_row_highlight_animation_style(style, row_selector,
-            text_selector, old_highlight, highlight);
+          auto selector =
+            Any() > CurrentRow() > is_a<TableItem>() > OrderQuote(state);
+          apply_row_highlight_animation_style(style, selector,
+            old_highlight, highlight);
         });
       }
     }
@@ -337,6 +327,9 @@ namespace {
           m_level_properties(std::move(level_properties)),
           m_visibility_property(std::move(visibility_property)),
           m_order_visibility(m_visibility_property->get()) {
+      for(auto i = 0; i < m_table->get_row_size(); ++i) {
+        m_levels.push_back(estimate_level(i));
+      }
       on_properties_update(m_level_properties->get());
       m_operation_connection = m_table->connect_operation_signal(
         std::bind_front(&LevelQuoteModel::on_operation, this));
@@ -495,6 +488,10 @@ namespace {
           m_highlight_properties(std::move(properties)),
           m_markets(markets),
           m_is_ascending(is_ascending) {
+      for(auto i = 0; i < m_quote_table->get_row_size(); ++i) {
+        add_quote(get_mpid(*m_quote_table, i), get_price(*m_quote_table, i),
+          get_size(*m_quote_table, i));
+      }
       on_properties_update(m_highlight_properties->get());
       m_operation_connection = m_quote_table->connect_operation_signal(
         std::bind_front(&MarketHighlightModel::on_table_operation, this));
@@ -531,42 +528,47 @@ namespace {
       }
     }
 
+    bool compare(const Quote& top_quote, const Money& price,
+        const Quantity& size) {
+      if(m_is_ascending) {
+        return top_quote.m_price > price ||
+          top_quote.m_price == price && top_quote.m_size > size;
+      }
+      return top_quote.m_price < price ||
+        top_quote.m_price == price && top_quote.m_size < size;
+    }
+
+    void add_quote(const std::string& mpid, const Money& price,
+        const Quantity& size) {
+      if(auto i = m_highlight_tops.find(mpid); i != m_highlight_tops.end()) {
+        if(compare(i->second, price, size)) {
+          if(m_highlight_contexts.contains(mpid) &&
+              m_highlight_contexts[mpid].m_highlight.m_level ==
+                MarketHighlightLevel::TOP) {
+            for(auto j = 0; j < m_quote_table->get_row_size(); ++j) {
+              if(mpid == get_mpid(*m_quote_table, j) &&
+                  i->second.m_price == get_price(*m_quote_table, j)) {
+                m_row_tracker->unmatch_highlight_selector(j);
+                break;
+              }
+            }
+          }
+          i->second.m_price = price;
+          i->second.m_size = size;
+        }
+      } else {
+        auto& quote = m_highlight_tops[mpid];
+        quote.m_price = price;
+        quote.m_size = size;
+      }
+    }
+
     void on_table_operation(const TableModel::Operation& operation) {
       visit(operation,
         [&] (const TableModel::AddOperation& operation) {
-          auto& mpid = get_mpid(*m_quote_table, operation.m_index);
-          auto& price = get_price(*m_quote_table, operation.m_index);
-          auto& size = get_size(*m_quote_table, operation.m_index);
-          if(auto i = m_highlight_tops.find(mpid);
-              i != m_highlight_tops.end()) {
-            auto is_topmost = [&] {
-              if(m_is_ascending) {
-                return i->second.m_price > price ||
-                  i->second.m_price == price && i->second.m_size > size;
-              }
-              return i->second.m_price < price ||
-                i->second.m_price == price && i->second.m_size < size;
-            }();
-            if(is_topmost) {
-              if(m_highlight_contexts.contains(mpid) &&
-                  m_highlight_contexts[mpid].m_highlight.m_level ==
-                    MarketHighlightLevel::TOP) {
-                for(auto j = 0; j < m_quote_table->get_row_size(); ++j) {
-                  if(mpid == get_mpid(*m_quote_table, j) &&
-                      i->second.m_price == get_price(*m_quote_table, j)) {
-                    m_row_tracker->unmatch_highlight_selector(j);
-                    break;
-                  }
-                }
-              }
-              i->second.m_price = price;
-              i->second.m_size = size;
-            }
-          } else {
-            auto& quote = m_highlight_tops[mpid];
-            quote.m_price = price;
-            quote.m_size = size;
-          }
+          add_quote(get_mpid(*m_quote_table, operation.m_index),
+            get_price(*m_quote_table, operation.m_index),
+            get_size(*m_quote_table, operation.m_index));
         },
         [&] (const TableModel::PreRemoveOperation& operation) {
           auto& mpid = get_mpid(*m_quote_table, operation.m_index);
@@ -623,7 +625,7 @@ namespace {
 
   struct OrderHighlightModel : QObject {
     std::shared_ptr<TableModel> m_quote_table;
-    std::shared_ptr<ListModel<BookViewModel::UserOrder>> m_orders;
+    std::shared_ptr<ListModel<UserOrder>> m_orders;
     std::shared_ptr<RowTracker> m_row_tracker;
     std::shared_ptr<ValueModel<OrderVisibility>> m_visibility_property;
     std::shared_ptr<ValueModel<OrderHighlightArray>> m_highlight_properties;
@@ -637,7 +639,7 @@ namespace {
     scoped_connection m_highlight_connection;
 
     OrderHighlightModel(std::shared_ptr<TableModel> quote_table,
-        std::shared_ptr<ListModel<BookViewModel::UserOrder>> orders,
+        std::shared_ptr<ListModel<UserOrder>> orders,
         std::shared_ptr<RowTracker> row_tracker,
         std::shared_ptr<ValueModel<OrderVisibility>> visibility_property,
         std::shared_ptr<ValueModel<OrderHighlightArray>> highlight_properties,
@@ -732,8 +734,20 @@ namespace {
     }
 
     void on_order_operation(const ListModel<UserOrder>::Operation& operation) {
+      auto restore_order_status = [=] (const UserOrder& order) {
+        QTimer::singleShot(ORDER_HIGHLIGHT_DELAY_MS, this, [=] {
+          auto key = OrderKey(order.m_destination, order.m_price);
+          if(m_order_status.contains(key)) {
+            m_order_status[key] = OrderStatus::NONE;
+            auto updated_order = order;
+            updated_order.m_status = OrderStatus::NONE;
+            update_order_status(updated_order);
+          }
+        });
+      };
       visit(operation,
         [&] (const ListModel<UserOrder>::AddOperation& operation) {
+          auto& order = m_orders->get(operation.m_index);
           auto active_index = static_cast<int>(OrderHighlightState::ACTIVE);
           for(auto i = active_index + 1; i < ORDER_HIGHLIGHT_STATE_COUNT; ++i) {
             m_row_tracker->update_current_order_style(
@@ -741,11 +755,13 @@ namespace {
               HighlightColor(SELECTED_BACKGROUND_COLOR, SELECTED_TEXT_COLOR),
               m_highlights[i]);
           }
-          auto& order = m_orders->get(operation.m_index);
-          m_order_status[OrderKey(order.m_destination, order.m_price)] =
-            order.m_status;
+          auto key = OrderKey(order.m_destination, order.m_price);
+          m_order_status[key] = order.m_status;
           if(m_visibility == OrderVisibility::HIGHLIGHTED) {
             update_order_status(order);
+            if(IsTerminal(order.m_status)) {
+              restore_order_status(order);
+            }
           }
         },
         [&] (const ListModel<UserOrder>::UpdateOperation& operation) {
@@ -755,14 +771,14 @@ namespace {
           if(m_visibility_property->get() != OrderVisibility::HIGHLIGHTED) {
             return;
           }
-          update_order_status(order);
           if(IsTerminal(order.m_status)) {
-            QTimer::singleShot(ORDER_HIGHLIGHT_DELAY_MS, this, [=] {
-              m_order_status[key] = OrderStatus::NONE;
-              auto updated_order = order;
-              updated_order.m_status = OrderStatus::NONE;
-              update_order_status(updated_order);
-            });
+            if(!IsTerminal(operation.get_previous().m_status) &&
+                order.m_size > 0) {
+              update_order_status(order);
+              restore_order_status(order);
+            }
+          } else {
+            update_order_status(order);
           }
         });
     }
@@ -914,6 +930,18 @@ namespace {
                 this));
             return true;
           }
+        } else if(event->type() == QEvent::MouseButtonPress) {
+          auto& mouse_event = *static_cast<QMouseEvent*>(event);
+          if(mouse_event.button() == Qt::RightButton) {
+            if(auto child =
+                m_table_view->get_body().childAt(mouse_event.pos())) {
+              if(auto item = child->parentWidget()) {
+                item->setFocus(Qt::MouseFocusReason);
+              }
+            } else {
+              m_table_view->get_body().get_current()->set(none);
+            }
+          }
         }
       }
       return QObject::eventFilter(watched, event);
@@ -1025,6 +1053,9 @@ namespace {
             &BookViewOrderQuoteListModel::on_user_order_operation, this))) {
       for(auto i = 0; i < m_user_orders->get_size(); ++i) {
         auto& order = m_user_orders->get(i);
+        if(IsTerminal(order.m_status) || order.m_size <= 0) {
+          return;
+        }
         if(auto index = find_order_quote(m_order_quotes, order); index < 0) {
           m_order_quotes.push_back(make_order_book_quote(order, m_side));
         } else {
@@ -1052,6 +1083,19 @@ namespace {
       return m_transaction.connect_operation_signal(slot);
     }
 
+    void remove_order_quote(int index) {
+      if(index < 0 || index >= m_order_quotes.size()) {
+        throw std::out_of_range("Index out of range");
+      }
+      m_transaction.transact([&] {
+        m_transaction.push(
+          PreRemoveOperation(m_book_quotes->get_size() + index));
+        m_order_quotes.erase(m_order_quotes.begin() + index);
+        m_transaction.push(
+          RemoveOperation(m_book_quotes->get_size() + index));
+      });
+    }
+
     void transact(const std::function<void()>& transaction) override {
       m_transaction.transact(transaction);
     }
@@ -1066,6 +1110,9 @@ namespace {
       visit(operation,
         [&] (const ListModel<UserOrder>::AddOperation& operation) {
           auto& order = m_user_orders->get(operation.m_index);
+          if(IsTerminal(order.m_status) || order.m_size <= 0) {
+            return;
+          }
           if(auto index = find_order_quote(m_order_quotes, order); index < 0) {
             m_order_quotes.push_back(make_order_book_quote(order, m_side));
             m_transaction.push(AddOperation(
@@ -1079,38 +1126,21 @@ namespace {
           }
         },
         [&] (const ListModel<UserOrder>::PreRemoveOperation& operation) {
-          auto remove_order_quote = [=] (int index) {
-            m_transaction.transact([&] {
-              m_transaction.push(
-                PreRemoveOperation(m_book_quotes->get_size() + index));
-              m_order_quotes.erase(m_order_quotes.begin() + index);
-              m_transaction.push(
-                RemoveOperation(m_book_quotes->get_size() + index));
-            });
-          };
           auto& order = m_user_orders->get(operation.m_index);
-          if(order.m_size > 0) {
-            if(auto index = find_order_quote(m_order_quotes, order);
-                index >= 0) {
-              auto previous_quote = m_order_quotes[index];
-              m_order_quotes[index].m_quote.m_size -= order.m_size;
-              m_order_quotes[index].m_quote.m_size =
-                std::max(Quantity(0), m_order_quotes[index].m_quote.m_size);
-              m_transaction.push(
-                UpdateOperation(m_book_quotes->get_size() + index,
-                  previous_quote, m_order_quotes[index]));
-              if(m_order_quotes[index].m_quote.m_size <= 0) {
-                remove_order_quote(index);
-              }
+          if(IsTerminal(order.m_status)) {
+            return;
+          }
+          if(auto index = find_order_quote(m_order_quotes, order); index >= 0) {
+            auto previous_quote = m_order_quotes[index];
+            m_order_quotes[index].m_quote.m_size -= order.m_size;
+            m_order_quotes[index].m_quote.m_size =
+              std::max(Quantity(0), m_order_quotes[index].m_quote.m_size);
+            m_transaction.push(
+              UpdateOperation(m_book_quotes->get_size() + index,
+                previous_quote, m_order_quotes[index]));
+            if(m_order_quotes[index].m_quote.m_size <= 0) {
+              remove_order_quote(index);
             }
-          } else {
-            QTimer::singleShot(ORDER_HIGHLIGHT_DELAY_MS, this,
-              [=, order = order] {
-              if(auto index = find_order_quote(m_order_quotes, order);
-                  index >= 0 && m_order_quotes[index].m_quote.m_size <= 0) {
-                remove_order_quote(index);
-              }
-            });
           }
         },
         [&] (const ListModel<UserOrder>::UpdateOperation& operation) {
@@ -1120,16 +1150,44 @@ namespace {
           }
           if(auto index = find_order_quote(m_order_quotes, order); index >= 0) {
             auto previous_quote = m_order_quotes[index];
-            m_order_quotes[index].m_quote.m_size -=
-              operation.get_previous().m_size;
-            if(order.m_size >= 0) {
-              m_order_quotes[index].m_quote.m_size += order.m_size;
+            if(IsTerminal(order.m_status)) {
+              if(!IsTerminal(operation.get_previous().m_status) &&
+                  order.m_size > 0) {
+                m_order_quotes[index].m_quote.m_size -= order.m_size;
+              }
+            } else {
+              if(IsTerminal(operation.get_previous().m_status) &&
+                  order.m_size > 0) {
+                m_order_quotes[index].m_quote.m_size += order.m_size;
+              } else {
+                if(operation.get_previous().m_size > 0) {
+                  m_order_quotes[index].m_quote.m_size -=
+                    operation.get_previous().m_size;
+                }
+                if(order.m_size > 0) {
+                  m_order_quotes[index].m_quote.m_size += order.m_size;
+                }
+              }
             }
             m_order_quotes[index].m_quote.m_size =
               std::max(Quantity(0), m_order_quotes[index].m_quote.m_size);
-            m_transaction.push(
-              UpdateOperation(m_book_quotes->get_size() + index,
-                previous_quote, m_order_quotes[index]));
+            if(m_order_quotes[index].m_quote.m_size <= 0) {
+              QTimer::singleShot(ORDER_HIGHLIGHT_DELAY_MS, this,
+                [=, order = order] {
+                  if(auto index = find_order_quote(m_order_quotes, order);
+                      index >= 0 && m_order_quotes[index].m_quote.m_size <= 0) {
+                    remove_order_quote(index);
+                  }
+                });
+            } else {
+              m_transaction.push(
+                UpdateOperation(m_book_quotes->get_size() + index,
+                  previous_quote, m_order_quotes[index]));
+            }
+          } else if(order.m_size > 0) {
+            m_order_quotes.push_back(make_order_book_quote(order, m_side));
+            m_transaction.push(AddOperation(
+              m_book_quotes->get_size() + m_order_quotes.size() - 1));
           }
         });
     }
@@ -1242,13 +1300,15 @@ namespace {
     scoped_connection m_connection;
 
     OrderFilteredListModel(std::shared_ptr<ListModel<BookQuote>> source,
-      std::shared_ptr<HighlightPropertiesModel> highlight_properties)
-      : FilteredListModel<BookQuote>(std::move(source),
-          std::bind_front(&OrderFilteredListModel::filter, this)),
-        m_highlight_properties(std::move(highlight_properties)),
-        m_order_visibility(m_highlight_properties->get().m_order_visibility),
-        m_connection(m_highlight_properties->connect_update_signal(
-          std::bind_front(&OrderFilteredListModel::on_properties, this))) {}
+        std::shared_ptr<HighlightPropertiesModel> highlight_properties)
+        : FilteredListModel<BookQuote>(std::move(source),
+            [] (const auto&, auto) { return false; }),
+          m_highlight_properties(std::move(highlight_properties)),
+          m_order_visibility(m_highlight_properties->get().m_order_visibility),
+          m_connection(m_highlight_properties->connect_update_signal(
+            std::bind_front(&OrderFilteredListModel::on_properties, this))) {
+      set_filter(std::bind_front(&OrderFilteredListModel::filter, this));
+    }
 
     bool filter(const ListModel<BookQuote>& list, int index) {
       if(m_highlight_properties->get().m_order_visibility ==
@@ -1282,47 +1342,44 @@ namespace {
       std::shared_ptr<MarketHighlightModel> market_highlight_model,
       std::shared_ptr<OrderHighlightModel> order_highlight_model,
       const std::shared_ptr<TableModel>& table, int row, int column) {
-    auto item = [&] {
-      auto column_id = static_cast<BookViewColumns>(column);
-      if(column_id == BookViewColumns::MPID) {
-        auto name = table->get<std::string>(row, column);
-        if(is_preview_order(name)) {
-          name = name.substr(1);
-        }
-        auto mpid_item = make_label(QString::fromStdString(name));
-        update_style(*mpid_item, [] (auto& style) {
-          style.get(Any()).
-            set(PaddingLeft(scale_width(4))).
-            set(PaddingRight(scale_width(2)));
-        });
-        return mpid_item;
-      } else if(column_id == BookViewColumns::PRICE) {
-        auto money_item = make_label(make_to_text_model(
-          make_table_value_model<Money>(table, row, column)));
-        update_style(*money_item, [] (auto& style) {
-          style.get(Any()).
-            set(TextAlign(Qt::AlignRight | Qt::AlignVCenter)).
-            set(horizontal_padding(scale_width(2)));
-        });
-        return money_item;
-      } else if(column_id == BookViewColumns::SIZE) {
-        auto quantity_item = make_label(make_to_text_model(
-          make_table_value_model<Quantity>(table, row, column)));
-        update_style(*quantity_item, [] (auto& style) {
-          style.get(Any()).
-            set(TextAlign(Qt::AlignRight | Qt::AlignVCenter)).
-            set(PaddingLeft(scale_width(2))).
-            set(PaddingRight(scale_width(4)));
-        });
-        row_tracker->set_quantity_item(row, quantity_item);
-        level_quote_model->highlight(row);
-        market_highlight_model->highlight(row);
-        order_highlight_model->highlight(row);
-        return quantity_item;
+    auto column_id = static_cast<BookViewColumns>(column);
+    if(column_id == BookViewColumns::MPID) {
+      auto name = table->get<std::string>(row, column);
+      if(is_preview_order(name)) {
+        name = name.substr(1);
       }
-      return make_label("");
-    }();
-    return item;
+      auto mpid_item = make_label(QString::fromStdString(name));
+      update_style(*mpid_item, [] (auto& style) {
+        style.get(Any()).
+          set(PaddingLeft(scale_width(4))).
+          set(PaddingRight(scale_width(2)));
+      });
+      return mpid_item;
+    } else if(column_id == BookViewColumns::PRICE) {
+      auto money_item = make_label(make_to_text_model(
+        make_table_value_model<Money>(table, row, column)));
+      update_style(*money_item, [] (auto& style) {
+        style.get(Any()).
+          set(TextAlign(Qt::AlignRight | Qt::AlignVCenter)).
+          set(horizontal_padding(scale_width(2)));
+      });
+      return money_item;
+    } else if(column_id == BookViewColumns::SIZE) {
+      auto quantity_item = make_label(make_to_text_model(
+        make_table_value_model<Quantity>(table, row, column)));
+      update_style(*quantity_item, [] (auto& style) {
+        style.get(Any()).
+          set(TextAlign(Qt::AlignRight | Qt::AlignVCenter)).
+          set(PaddingLeft(scale_width(2))).
+          set(PaddingRight(scale_width(4)));
+      });
+      row_tracker->set_quantity_item(row, quantity_item);
+      level_quote_model->highlight(row);
+      market_highlight_model->highlight(row);
+      order_highlight_model->highlight(row);
+      return quantity_item;
+    }
+    return make_label("");
   }
 }
 
