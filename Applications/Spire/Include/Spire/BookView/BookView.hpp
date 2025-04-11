@@ -18,6 +18,7 @@ namespace Spire {
   class LegacyBookViewWindowSettings;
   class MarketDepth;
   class MergedBookQuoteListModel;
+  class PriceLevelModel;
   class TechnicalsPanel;
 }
 
