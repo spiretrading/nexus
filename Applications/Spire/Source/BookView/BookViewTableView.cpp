@@ -138,10 +138,10 @@ TableView* Spire::make_book_view_table_view(
     style.get(Any() > CurrentRow()).
       set(BackgroundColor(SELECTED_BACKGROUND_COLOR)).
       set(border_color(QColor(0x4B23A0)));
-    style.get(Any() > Row() > is_a<TableItem>() > PreviewRow() < Any() < Row()).
+    style.get(Any() > +Row() > is_a<TableItem>() > PreviewRow()).
       set(BackgroundColor(
         properties->get().m_highlight_properties.m_order_highlights[0].m_background_color));
-    style.get(Any() > Row() > is_a<TableItem>() > UserOrderRow() < Any() < Row()).
+    style.get(Any() > +Row() > is_a<TableItem>() > UserOrderRow()).
       set(BackgroundColor(
         properties->get().m_highlight_properties.m_order_highlights[1].m_background_color));
     style.get(Any() > CurrentRow() > is_a<TableItem>() > is_a<TextBox>()).
