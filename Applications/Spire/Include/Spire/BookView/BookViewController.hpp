@@ -53,6 +53,7 @@ namespace Spire {
 
       BookViewController(const BookViewController&) = delete;
       BookViewController& operator =(const BookViewController&) = delete;
+      void set_window(BookViewWindow& window);
       void on_submit_task(const std::shared_ptr<CanvasNode>& task);
       void on_cancel_operation(CancelKeyBindingsModel::Operation operation,
         const Nexus::Security& security,
