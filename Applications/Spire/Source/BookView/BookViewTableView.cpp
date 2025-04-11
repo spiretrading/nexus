@@ -14,6 +14,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  using UserOrderRow = StateSelector<void, struct UserOrderSelectorTag>;
+  using PreviewRow = StateSelector<void, struct PreviewSelectorTag>;
   using ShowGrid = StateSelector<void, struct ShowGridSeletorTag>;
   const auto SELECTED_BACKGROUND_COLOR = QColor(0x8D78EC);
   const auto SELECTED_TEXT_COLOR = QColor(0xFFFFFF);
@@ -32,8 +34,13 @@ namespace {
       const std::shared_ptr<TableModel>& table, int row, int column) {
     auto column_id = static_cast<BookViewColumn>(column);
     if(column_id == BookViewColumn::MPID) {
-      auto name = table->get<MpidListing>(row, column);
-      auto mpid_item = make_label(QString::fromStdString(name.m_mpid));
+      auto& listing = table->get<MpidListing>(row, column);
+      auto mpid_item = make_label(QString::fromStdString(listing.m_mpid));
+      if(listing.m_source == ListingSource::PREVIEW) {
+        match(*mpid_item, PreviewRow());
+      } else if(listing.m_source == ListingSource::USER_ORDER) {
+        match(*mpid_item, UserOrderRow());
+      }
       update_style(*mpid_item, [] (auto& style) {
         style.get(Any()).
           set(PaddingLeft(scale_width(4))).
@@ -68,6 +75,24 @@ namespace {
     }
     return Spire::compare(left, right);
   }
+
+  struct TableViewColumnSizer : QObject {
+    TableViewColumnSizer(TableView& table_view)
+        : QObject(&table_view) {
+      table_view.installEventFilter(this);
+    }
+
+    bool eventFilter(QObject* watched, QEvent* event) override {
+      if(event->type() == QEvent::Resize) {
+        auto& table_view = *static_cast<TableView*>(parent());
+        auto& resize_event = *static_cast<QResizeEvent*>(event);
+        auto column_width = resize_event.size().width() / 3;
+        table_view.get_header().get_widths()->set(0, column_width);
+        table_view.get_header().get_widths()->set(1, column_width);
+      }
+      return QObject::eventFilter(watched, event);
+    }
+  };
 }
 
 TableView* Spire::make_book_view_table_view(
@@ -88,13 +113,14 @@ TableView* Spire::make_book_view_table_view(
   auto merged_table = std::make_shared<MergedBookQuoteListModel>(
     quotes, orders, model->get_preview_order());
   auto table = std::make_shared<SortedTableModel>(
-    make_book_view_table_model(merged_table), column_orders);
+    make_book_view_table_model(merged_table), column_orders,
+    &listing_comparator);
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
-    set_item_builder(&item_builder).
-    set_comparator(&listing_comparator).make();
+    set_item_builder(&item_builder).make();
   table_view->get_header().setVisible(false);
   table_view->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
+  auto column_sizer = new TableViewColumnSizer(*table_view);
   update_style(table_view->get_body(), [=] (auto& style) {
     auto item_selector = Any() > Row() > is_a<TableItem>();
     style.get(item_selector > is_a<TextBox>()).
@@ -112,6 +138,12 @@ TableView* Spire::make_book_view_table_view(
     style.get(Any() > CurrentRow()).
       set(BackgroundColor(SELECTED_BACKGROUND_COLOR)).
       set(border_color(QColor(0x4B23A0)));
+    style.get(Any() > Row() > is_a<TableItem>() > PreviewRow() < Any() < Row()).
+      set(BackgroundColor(
+        properties->get().m_highlight_properties.m_order_highlights[0].m_background_color));
+    style.get(Any() > Row() > is_a<TableItem>() > UserOrderRow() < Any() < Row()).
+      set(BackgroundColor(
+        properties->get().m_highlight_properties.m_order_highlights[1].m_background_color));
     style.get(Any() > CurrentRow() > is_a<TableItem>() > is_a<TextBox>()).
       set(TextColor(SELECTED_TEXT_COLOR));
     style.get(ShowGrid()).

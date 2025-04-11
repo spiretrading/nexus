@@ -13,7 +13,8 @@ MergedBookQuoteListModel::MergedBookQuoteListModel(
     : m_book_quotes(std::move(book_quotes)),
       m_user_orders(std::move(user_orders)),
       m_preview(std::move(preview)),
-      m_previous_preview(m_preview->get()) {
+      m_previous_preview(m_preview->get()),
+      m_reads(10) {
   m_book_quotes_connection = m_book_quotes->connect_operation_signal(
     std::bind_front(&MergedBookQuoteListModel::on_book_quote_operation, this));
   m_user_orders_connection = m_user_orders->connect_operation_signal(
@@ -30,15 +31,15 @@ int MergedBookQuoteListModel::get_size() const {
 const MergedBookQuoteListModel::Type&
     MergedBookQuoteListModel::get(int index) const {
   if(index < m_book_quotes->get_size()) {
-    m_current = m_book_quotes->get(index);
+    m_reads.push_back(m_book_quotes->get(index));
   } else if(index < m_book_quotes->get_size() + m_user_orders->get_size()) {
-    m_current = m_user_orders->get(index - m_book_quotes->get_size());
+    m_reads.push_back(m_user_orders->get(index - m_book_quotes->get_size()));
   } else if(m_previous_preview && index == get_size() - 1) {
-    m_current = *m_previous_preview;
+    m_reads.push_back(*m_previous_preview);
   } else {
     throw std::out_of_range("The index is out of range.");
   }
-  return m_current;
+  return m_reads.back();
 }
 
 connection MergedBookQuoteListModel::connect_operation_signal(
