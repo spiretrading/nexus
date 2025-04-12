@@ -117,17 +117,30 @@ namespace {
 
     void on_properties(const BookViewProperties& properties) {
       auto& table_view = *static_cast<TableView*>(parent());
+      if(properties.m_level_properties.m_is_grid_enabled) {
+        match(table_view.get_body(), ShowGrid());
+      } else {
+        unmatch(table_view.get_body(), ShowGrid());
+      }
       update_style(table_view.get_body(), [=] (auto& style) {
         style.get((Any() > Row() > is_a<TableItem>()) > Any()).
           set(Font(properties.m_level_properties.m_font));
-        auto& preview_highlight = get_highlight(properties,
-          BookViewHighlightProperties::OrderHighlightState::PREVIEW);
-        style.get(Any() > +Row() > is_a<TableItem>() > PreviewRow()).
-          set(BackgroundColor(preview_highlight.m_background_color));
-        auto& active_highlight = get_highlight(properties,
-          BookViewHighlightProperties::OrderHighlightState::ACTIVE);
-        style.get(Any() > +Row() > is_a<TableItem>() > UserOrderRow()).
-          set(BackgroundColor(active_highlight.m_background_color));
+        if(properties.m_highlight_properties.m_order_visibility ==
+            BookViewHighlightProperties::OrderVisibility::HIGHLIGHTED) {
+          auto& preview_highlight = get_highlight(properties,
+            BookViewHighlightProperties::OrderHighlightState::PREVIEW);
+          style.get(Any() > +Row() > is_a<TableItem>() > PreviewRow()).
+            set(BackgroundColor(preview_highlight.m_background_color));
+          auto& active_highlight = get_highlight(properties,
+            BookViewHighlightProperties::OrderHighlightState::ACTIVE);
+          style.get(Any() > +Row() > is_a<TableItem>() > UserOrderRow()).
+            set(BackgroundColor(active_highlight.m_background_color));
+        } else {
+          style.get(Any() > +Row() > is_a<TableItem>() > PreviewRow()).
+            clear();
+          style.get(Any() > +Row() > is_a<TableItem>() > UserOrderRow()).
+            clear();
+        }
         auto& level_colors = properties.m_level_properties.m_color_scheme;
         for(auto i = level_colors.size(); i < m_previous_levels; ++i) {
           style.get(Any() > +Row() > is_a<TableItem>() > PriceLevelRow(i)).
