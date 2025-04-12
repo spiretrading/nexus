@@ -255,4 +255,38 @@ TEST_SUITE("PriceLevelModel") {
       REQUIRE(levels.get(5) == 1);
     }
   }
+  TEST_CASE("decrease_max_level") {
+    auto prices = std::make_shared<ArrayListModel<Money>>();
+    prices->push(10 * Money::ONE);
+    prices->push(11 * Money::ONE);
+    prices->push(12 * Money::ONE);
+    prices->push(13 * Money::ONE);
+    auto max_level = std::make_shared<LocalValueModel<int>>(3);
+    auto levels = PriceLevelModel(prices, max_level);
+    max_level->set(2);
+    REQUIRE(levels.get(0) == 0);
+    REQUIRE(levels.get(1) == 1);
+    REQUIRE(levels.get(2) == 2);
+    REQUIRE(levels.get(3) == 2);
+  }
+  TEST_CASE("increase_max_level") {
+    auto prices = std::make_shared<ArrayListModel<Money>>();
+    prices->push(10 * Money::ONE);
+    prices->push(11 * Money::ONE);
+    prices->push(12 * Money::ONE);
+    prices->push(13 * Money::ONE);
+    prices->push(14 * Money::ONE);
+    prices->push(15 * Money::ONE);
+    prices->push(16 * Money::ONE);
+    auto max_level = std::make_shared<LocalValueModel<int>>(3);
+    auto levels = PriceLevelModel(prices, max_level);
+    max_level->set(5);
+    REQUIRE(levels.get(0) == 0);
+    REQUIRE(levels.get(1) == 1);
+    REQUIRE(levels.get(2) == 2);
+    REQUIRE(levels.get(3) == 3);
+    REQUIRE(levels.get(4) == 4);
+    REQUIRE(levels.get(5) == 5);
+    REQUIRE(levels.get(6) == 5);
+  }
 }
