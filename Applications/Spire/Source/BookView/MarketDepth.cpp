@@ -66,9 +66,9 @@ namespace {
     bbo_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     layout->addWidget(bbo_box);
     auto table_view = make_book_view_table_view(std::move(model),
-      std::move(properties), side, markets);
+      std::move(properties), side);
     table_view->setSizePolicy(QSizePolicy::Expanding,
-     QSizePolicy::Expanding);
+      QSizePolicy::Expanding);
     layout->addWidget(table_view);
     return std::tuple(panel, bbo_box, table_view);
   }

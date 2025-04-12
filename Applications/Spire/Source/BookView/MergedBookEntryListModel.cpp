@@ -1,4 +1,4 @@
-#include "Spire/BookView/MergedBookQuoteListModel.hpp"
+#include "Spire/BookView/MergedBookEntryListModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -6,7 +6,7 @@ using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
-MergedBookQuoteListModel::MergedBookQuoteListModel(
+MergedBookEntryListModel::MergedBookEntryListModel(
     std::shared_ptr<BookQuoteListModel> book_quotes,
     std::shared_ptr<BookViewModel::UserOrderListModel> user_orders,
     std::shared_ptr<BookViewModel::PreviewOrderModel> preview)
@@ -16,20 +16,20 @@ MergedBookQuoteListModel::MergedBookQuoteListModel(
       m_previous_preview(m_preview->get()),
       m_reads(10) {
   m_book_quotes_connection = m_book_quotes->connect_operation_signal(
-    std::bind_front(&MergedBookQuoteListModel::on_book_quote_operation, this));
+    std::bind_front(&MergedBookEntryListModel::on_book_quote_operation, this));
   m_user_orders_connection = m_user_orders->connect_operation_signal(
-    std::bind_front(&MergedBookQuoteListModel::on_user_order_operation, this));
+    std::bind_front(&MergedBookEntryListModel::on_user_order_operation, this));
   m_preview_connection = m_preview->connect_update_signal(
-    std::bind_front(&MergedBookQuoteListModel::on_preview, this));
+    std::bind_front(&MergedBookEntryListModel::on_preview, this));
 }
 
-int MergedBookQuoteListModel::get_size() const {
+int MergedBookEntryListModel::get_size() const {
   auto preview_size = m_previous_preview.has_value() ? 1 : 0;
   return m_book_quotes->get_size() + m_user_orders->get_size() + preview_size;
 }
 
-const MergedBookQuoteListModel::Type&
-    MergedBookQuoteListModel::get(int index) const {
+const MergedBookEntryListModel::Type&
+    MergedBookEntryListModel::get(int index) const {
   if(index < m_book_quotes->get_size()) {
     m_reads.push_back(m_book_quotes->get(index));
   } else if(index < m_book_quotes->get_size() + m_user_orders->get_size()) {
@@ -42,17 +42,17 @@ const MergedBookQuoteListModel::Type&
   return m_reads.back();
 }
 
-connection MergedBookQuoteListModel::connect_operation_signal(
+connection MergedBookEntryListModel::connect_operation_signal(
     const OperationSignal::slot_type& slot) const {
   return m_transaction.connect_operation_signal(slot);
 }
 
-void MergedBookQuoteListModel::transact(
+void MergedBookEntryListModel::transact(
     const std::function<void ()>& transaction) {
   m_transaction.transact(transaction);
 }
 
-void MergedBookQuoteListModel::on_book_quote_operation(
+void MergedBookEntryListModel::on_book_quote_operation(
     const BookQuoteListModel::Operation& operation) {
   visit(operation,
     [&] (BookQuoteListModel::StartTransaction) {
@@ -80,7 +80,7 @@ void MergedBookQuoteListModel::on_book_quote_operation(
     });
 }
 
-void MergedBookQuoteListModel::on_user_order_operation(
+void MergedBookEntryListModel::on_user_order_operation(
     const BookViewModel::UserOrderListModel::Operation& operation) {
   visit(operation,
     [&] (BookViewModel::UserOrderListModel::StartTransaction) {
@@ -114,7 +114,7 @@ void MergedBookQuoteListModel::on_user_order_operation(
     });
 }
 
-void MergedBookQuoteListModel::on_preview(
+void MergedBookEntryListModel::on_preview(
     const optional<OrderFields>& preview) {
   if(preview) {
     auto index = m_book_quotes->get_size() + m_user_orders->get_size();

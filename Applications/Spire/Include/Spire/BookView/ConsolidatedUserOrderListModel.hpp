@@ -12,7 +12,7 @@ namespace Spire {
    * there is only one UserOrder for a given price and destination.
    */
   class ConsolidatedUserOrderListModel :
-      public ListModel<BookViewModel::UserOrder> {
+      public BookViewModel::UserOrderListModel {
     public:
 
       /**

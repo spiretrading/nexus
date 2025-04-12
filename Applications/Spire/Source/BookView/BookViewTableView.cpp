@@ -1,5 +1,7 @@
 #include "Spire/BookView/BookViewTableView.hpp"
 #include "Spire/BookView/BookViewTableModel.hpp"
+#include "Spire/BookView/MergedBookEntryListModel.hpp"
+#include "Spire/BookView/MpidBox.hpp"
 #include "Spire/BookView/PriceLevelModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
@@ -7,8 +9,7 @@
 #include "Spire/Spire/SortedListModel.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
-#include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/Layouts.hpp"
+#include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -20,9 +21,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  using PriceLevelRow = StateSelector<int, struct PriceLevelRowSelectorTag>;
-  using UserOrderRow = StateSelector<void, struct UserOrderSelectorTag>;
-  using PreviewRow = StateSelector<void, struct PreviewSelectorTag>;
   using ShowGrid = StateSelector<void, struct ShowGridSeletorTag>;
   const auto SELECTED_BACKGROUND_COLOR = QColor(0x8D78EC);
   const auto SELECTED_TEXT_COLOR = QColor(0xFFFFFF);
@@ -36,68 +34,6 @@ namespace {
     return model;
   }
 
-  struct MpidBox : QWidget {
-    std::shared_ptr<ValueModel<MpidListing>> m_listing;
-    optional<ListingSource> m_previous_source;
-    std::shared_ptr<ValueModel<int>> m_level;
-    int m_previous_level;
-    scoped_connection m_listing_connection;
-    scoped_connection m_level_connection;
-
-    MpidBox(std::shared_ptr<ValueModel<MpidListing>> listing,
-        std::shared_ptr<ValueModel<int>> level)
-        : m_listing(std::move(listing)),
-          m_level(std::move(level)),
-          m_previous_level(-1) {
-      auto label = make_label(make_read_only_to_text_model(
-        m_listing, std::bind_front(&MpidBox::make_mpid, this)));
-      enclose(*this, *label);
-      proxy_style(*this, *label);
-      update_style(*this, [] (auto& style) {
-        style.get(Any()).
-          set(PaddingLeft(scale_width(4))).
-          set(PaddingRight(scale_width(2)));
-      });
-      on_listing(m_listing->get());
-      on_level(m_level->get());
-      m_listing_connection = m_listing->connect_update_signal(
-        std::bind_front(&MpidBox::on_listing, this));
-      m_level_connection = m_level->connect_update_signal(
-        std::bind_front(&MpidBox::on_level, this));
-    }
-
-    QString make_mpid(const MpidListing& listing) const {
-      if(listing.m_source == ListingSource::USER_ORDER ||
-          listing.m_source == ListingSource::PREVIEW) {
-        return QString::fromStdString('@' + listing.m_mpid);
-      }
-      return QString::fromStdString(listing.m_mpid);
-    }
-
-    void on_listing(const MpidListing& listing) {
-      if(listing.m_source == m_previous_source) {
-        return;
-      }
-      if(m_previous_source == ListingSource::PREVIEW) {
-        unmatch(*this, PreviewRow());
-      } else if(m_previous_source == ListingSource::USER_ORDER) {
-        unmatch(*this, UserOrderRow());
-      }
-      if(listing.m_source == ListingSource::PREVIEW) {
-        match(*this, PreviewRow());
-      } else if(listing.m_source == ListingSource::USER_ORDER) {
-        match(*this, UserOrderRow());
-      }
-      m_previous_source = listing.m_source;
-    }
-
-    void on_level(int level) {
-      unmatch(*this, PriceLevelRow(m_previous_level));
-      match(*this, PriceLevelRow(level));
-      m_previous_level = level;
-    }
-  };
-
   struct ItemBuilder {
     std::shared_ptr<PriceLevelModel> m_price_levels;
 
@@ -105,8 +41,7 @@ namespace {
         const std::shared_ptr<TableModel>& table, int row, int column) {
       auto column_id = static_cast<BookViewColumn>(column);
       if(column_id == BookViewColumn::MPID) {
-        return new MpidBox(
-          make_table_value_model<MpidListing>(table, row, column),
+        return new MpidBox(make_table_value_model<Mpid>(table, row, column),
           make_list_value_model(m_price_levels, row));
       } else if(column_id == BookViewColumn::PRICE) {
         auto money_item = make_label(make_to_text_model(
@@ -131,17 +66,39 @@ namespace {
     }
   };
 
-  bool listing_comparator(const AnyRef& left, const AnyRef& right) {
-    if(left.get_type() == typeid(MpidListing)) {
-      return any_cast<MpidListing>(left) < any_cast<MpidListing>(right);
-    }
-    return Spire::compare(left, right);
-  }
+  struct TableViewStylist : QObject {
+    std::shared_ptr<BookViewPropertiesModel> m_properties;
+    scoped_connection m_connection;
 
-  struct TableViewColumnSizer : QObject {
-    TableViewColumnSizer(TableView& table_view)
-        : QObject(&table_view) {
+    TableViewStylist(TableView& table_view,
+        std::shared_ptr<BookViewPropertiesModel> properties)
+        : QObject(&table_view),
+          m_properties(std::move(properties)) {
       table_view.installEventFilter(this);
+      update_style(table_view.get_body(), [=] (auto& style) {
+        style.get(Any()).
+          set(HorizontalSpacing(0)).
+          set(VerticalSpacing(0)).
+          set(grid_color(QColor(0xE0E0E0)));
+        style.get(ShowGrid()).
+          set(HorizontalSpacing(scale_width(1))).
+          set(VerticalSpacing(scale_height(1)));
+        style.get(Any() > CurrentColumn()).
+          set(BackgroundColor(Qt::transparent));
+        style.get(Any() > CurrentRow()).
+          set(BackgroundColor(SELECTED_BACKGROUND_COLOR)).
+          set(border_color(QColor(0x4B23A0)));
+        style.get(Any() > Row() > Current()).
+          set(BackgroundColor(Qt::transparent)).
+          set(border_color(QColor(Qt::transparent)));
+        style.get(Any() > CurrentRow() > is_a<TableItem>() > Any()).
+          set(TextColor(SELECTED_TEXT_COLOR));
+        style.get((Any() > Row() > is_a<TableItem>()) > Any()).
+          set(vertical_padding(scale_width(1.5)));
+      });
+      on_properties(m_properties->get());
+      m_connection = m_properties->connect_update_signal(
+        std::bind_front(&TableViewStylist::on_properties, this));
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
@@ -154,13 +111,40 @@ namespace {
       }
       return QObject::eventFilter(watched, event);
     }
+
+    void on_properties(const BookViewProperties& properties) {
+      auto& table_view = *static_cast<TableView*>(parent());
+      update_style(table_view.get_body(), [=] (auto& style) {
+        style.get((Any() > Row() > is_a<TableItem>()) > Any()).
+          set(Font(properties.m_level_properties.m_font));
+        auto& highlights = properties.m_highlight_properties.m_order_highlights;
+        style.get(Any() > +Row() > is_a<TableItem>() > PreviewRow()).
+          set(BackgroundColor(highlights[0].m_background_color));
+        style.get(Any() > +Row() > is_a<TableItem>() > UserOrderRow()).
+          set(BackgroundColor(highlights[1].m_background_color));
+        auto& level_colors = properties.m_level_properties.m_color_scheme;
+        for(auto i = std::size_t(0); i != level_colors.size(); ++i) {
+          style.get(Any() > +Row() > is_a<TableItem>() > PriceLevelRow(i)).
+            set(BackgroundColor(level_colors[i]));
+        }
+      });
+    }
   };
+
+  auto make_max_level_model(
+      std::shared_ptr<BookViewPropertiesModel> properties) {
+    return make_transform_value_model(std::move(properties),
+      [] (const auto& properties) {
+        return std::max(static_cast<int>(
+          properties.m_level_properties.m_color_scheme.size()) - 1, 1);
+      });
+  }
 }
 
 TableView* Spire::make_book_view_table_view(
     std::shared_ptr<BookViewModel> model,
     std::shared_ptr<BookViewPropertiesModel> properties, Side side,
-    const MarketDatabase& markets, QWidget* parent) {
+    QWidget* parent) {
   auto [quotes, orders, ordering] = [&] {
     if(side == Side::BID) {
       return std::tuple(model->get_bids(), model->get_bid_orders(),
@@ -169,58 +153,22 @@ TableView* Spire::make_book_view_table_view(
     return std::tuple(model->get_asks(), model->get_ask_orders(),
       SortedTableModel::Ordering::ASCENDING);
   }();
-  auto is_ascending = ordering == SortedTableModel::Ordering::ASCENDING;
   auto column_orders =
     std::vector<SortedTableModel::ColumnOrder>{{1, ordering}, {2, ordering}};
-  auto merged_table = std::make_shared<MergedBookQuoteListModel>(
-    quotes, orders, model->get_preview_order());
+  auto entries = std::make_shared<MergedBookEntryListModel>(
+    std::move(quotes), std::move(orders), model->get_preview_order());
   auto table = std::make_shared<SortedTableModel>(
-    make_book_view_table_model(merged_table), column_orders,
-    &listing_comparator);
+    make_book_view_table_model(std::move(entries)), std::move(column_orders),
+    &book_view_comparator);
   auto price_levels = std::make_shared<PriceLevelModel>(
     std::make_shared<ColumnViewListModel<Money>>(
       table, static_cast<int>(BookViewColumn::PRICE)),
-    std::make_shared<LocalValueModel<int>>(static_cast<int>(
-      properties->get().m_level_properties.m_color_scheme.size() - 1)));
+      make_max_level_model(properties));
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
     set_item_builder(ItemBuilder(std::move(price_levels))).make();
   table_view->get_header().setVisible(false);
   table_view->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
-  auto column_sizer = new TableViewColumnSizer(*table_view);
-  update_style(table_view->get_body(), [=] (auto& style) {
-    auto item_selector = Any() > Row() > is_a<TableItem>();
-    style.get(item_selector > Any()).
-      set(Font(properties->get().m_level_properties.m_font)).
-      set(vertical_padding(scale_width(1.5)));
-    style.get(Any()).
-      set(HorizontalSpacing(0)).
-      set(VerticalSpacing(0)).
-      set(grid_color(QColor(0xE0E0E0)));
-    style.get(Any() > Row() > Current()).
-      set(BackgroundColor(Qt::transparent)).
-      set(border_color(QColor(Qt::transparent)));
-    style.get(Any() > CurrentColumn()).
-      set(BackgroundColor(Qt::transparent));
-    style.get(Any() > CurrentRow()).
-      set(BackgroundColor(SELECTED_BACKGROUND_COLOR)).
-      set(border_color(QColor(0x4B23A0)));
-    style.get(Any() > +Row() > is_a<TableItem>() > PreviewRow()).
-      set(BackgroundColor(
-        properties->get().m_highlight_properties.m_order_highlights[0].m_background_color));
-    style.get(Any() > +Row() > is_a<TableItem>() > UserOrderRow()).
-      set(BackgroundColor(
-        properties->get().m_highlight_properties.m_order_highlights[1].m_background_color));
-    style.get(Any() > CurrentRow() > is_a<TableItem>() > is_a<TextBox>()).
-      set(TextColor(SELECTED_TEXT_COLOR));
-    style.get(ShowGrid()).
-      set(HorizontalSpacing(scale_width(1))).
-      set(VerticalSpacing(scale_height(1)));
-    for(auto i = 0; i != properties->get().m_level_properties.m_color_scheme.size(); ++i) {
-      style.get(Any() > +Row() > is_a<TableItem>() > PriceLevelRow(i)).
-        set(BackgroundColor(
-          properties->get().m_level_properties.m_color_scheme[i]));
-    }
-  });
+  auto stylist = new TableViewStylist(*table_view, std::move(properties));
   return table_view;
 }
