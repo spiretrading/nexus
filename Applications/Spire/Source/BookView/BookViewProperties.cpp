@@ -82,6 +82,12 @@ const BookViewProperties& BookViewProperties::get_default() {
   return PROPERTIES;
 }
 
+const HighlightColor& Spire::get_highlight(const BookViewProperties& properties,
+    BookViewHighlightProperties::OrderHighlightState state) {
+  return properties.m_highlight_properties.m_order_highlights[
+    static_cast<int>(state)];
+}
+
 const QString& Spire::to_text(
     BookViewHighlightProperties::OrderVisibility visibility) {
   if(visibility == BookViewHighlightProperties::OrderVisibility::HIDDEN) {

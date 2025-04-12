@@ -1,0 +1,60 @@
+#ifndef SPIRE_MPID_BOX_HPP
+#define SPIRE_MPID_BOX_HPP
+#include <boost/optional/optional.hpp>
+#include "Spire/BookView/BookView.hpp"
+#include "Spire/BookView/BookViewTableModel.hpp"
+#include "Spire/Spire/ValueModel.hpp"
+#include "Spire/Styles/StateSelector.hpp"
+
+namespace Spire {
+namespace Styles {
+
+  /** Styles an MpidBox based on its price level. */
+  using PriceLevelRow = StateSelector<int, struct PriceLevelRowSelectorTag>;
+
+  /** Styles an MpidBox based on whether it represents a user's order. */
+  using UserOrderRow = StateSelector<void, struct UserOrderSelectorTag>;
+
+  /** Styles an MpidBox based on whether it represents an order preview. */
+  using PreviewRow = StateSelector<void, struct PreviewSelectorTag>;
+}
+
+  /** The type of model used for an MPID. */
+  using MpidModel = ValueModel<Mpid>;
+
+  /**
+   * Displays an MPID in a TableView. The MpidBox can also be used to style the
+   * row in a TableView based on the style state that is matched.
+   */
+  class MpidBox : public QWidget {
+    public:
+
+      /**
+       * Constructs an MpidBox.
+       * @param current The MPID to display.
+       * @param level The price level represented.
+       */
+      MpidBox(std::shared_ptr<MpidModel> current,
+        std::shared_ptr<ValueModel<int>> level);
+
+      /** Returns the displayed MPID. */
+      std::shared_ptr<MpidModel> get_current() const;
+
+      /** Returns the represented price level. */
+      std::shared_ptr<ValueModel<int>> get_level() const;
+
+    private:
+      std::shared_ptr<MpidModel> m_current;
+      boost::optional<Mpid::Origin> m_previous_origin;
+      std::shared_ptr<ValueModel<int>> m_level;
+      int m_previous_level;
+      boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_level_connection;
+
+      QString make_id(const Mpid& mpid) const;
+      void on_current(const Mpid& mpid);
+      void on_level(int level);
+  };
+}
+
+#endif

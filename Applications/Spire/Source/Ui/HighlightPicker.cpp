@@ -22,8 +22,11 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  using NullCurrent = StateSelector<void, struct CurrentSelectorTag>;
+
   auto PALETTE_STYLE(StyleSheet style) {
     style.get(Any()).
+      set(border(scale_width(1), QColor(Qt::transparent))).
       set(EdgeNavigation::CONTAIN).
       set(Overflow::WRAP).
       set(Qt::Horizontal);
@@ -32,6 +35,8 @@ namespace {
       set(BackgroundColor(Qt::transparent)).
       set(horizontal_padding(scale_width(1))).
       set(vertical_padding(scale_height(1)));
+    style.get(FocusIn() && NullCurrent()).
+      set(border_color(QColor(0x4B23A0)));
     style.get(Any() > Current()).
       set(BackgroundColor(QColor(0xD0D0D0)));
     style.get(FocusIn() > Current()).
@@ -243,7 +248,10 @@ HighlightPicker::HighlightPicker(std::shared_ptr<ValueModel<Highlight>> current,
       set(vertical_padding(scale_height(8)));
   });
   m_palette->setFixedWidth(
-    m_palette->get_list_item(0)->sizeHint().width() * 8);
+    m_palette->get_list_item(0)->sizeHint().width() * 8 + scale_width(2));
+  on_palette_current(m_model->m_palette_current->get());
+  m_connection = m_palette->get_current()->connect_update_signal(
+    std::bind_front(&HighlightPicker::on_palette_current, this));
 }
 
 const std::shared_ptr<ValueModel<HighlightPicker::Highlight>>&
@@ -292,6 +300,7 @@ bool HighlightPicker::eventFilter(QObject* watched, QEvent* event) {
 bool HighlightPicker::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     m_panel->show();
+    m_palette->setFocus();
   } else if(event->type() == QEvent::HideToParent) {
     m_panel->hide();
   }
@@ -340,4 +349,12 @@ bool HighlightPicker::on_mouse_press(ColorBox& source, ColorBox& destination,
     }
   }
   return false;
+}
+
+void HighlightPicker::on_palette_current(optional<int> current) {
+  if(!current) {
+    match(*m_palette, NullCurrent());
+  } else {
+    unmatch(*m_palette, NullCurrent());
+  }
 }

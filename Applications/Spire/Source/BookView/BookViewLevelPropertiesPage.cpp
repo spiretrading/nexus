@@ -118,204 +118,206 @@ namespace {
     });
     return box;
   }
-}
 
-struct FillTypeAssociativeValueModel : AssociativeValueModel<FillType> {
-  std::shared_ptr<ValueModel<FillType>> m_fill_type;
-  scoped_connection m_connection;
+  struct FillTypeAssociativeValueModel : AssociativeValueModel<FillType> {
+    std::shared_ptr<ValueModel<FillType>> m_fill_type;
+    scoped_connection m_connection;
 
-  FillTypeAssociativeValueModel(std::shared_ptr<ValueModel<FillType>> fill_type)
-    : AssociativeValueModel<FillType>(fill_type->get()),
-      m_fill_type(std::move(fill_type)),
-BEAM_SUPPRESS_THIS_INITIALIZER()
-      m_connection(m_fill_type->connect_update_signal(
-        std::bind_front(&FillTypeAssociativeValueModel::on_update, this))) {}
-BEAM_UNSUPPRESS_THIS_INITIALIZER()
+    FillTypeAssociativeValueModel(
+      std::shared_ptr<ValueModel<FillType>> fill_type)
+      : AssociativeValueModel<FillType>(fill_type->get()),
+        m_fill_type(std::move(fill_type)),
+  BEAM_SUPPRESS_THIS_INITIALIZER()
+        m_connection(m_fill_type->connect_update_signal(
+          std::bind_front(&FillTypeAssociativeValueModel::on_update, this))) {}
+  BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
-  QValidator::State set(const Type& value) override {
-    auto state = AssociativeValueModel<FillType>::set(value);
-    if(state == QValidator::Acceptable) {
-      auto blocker = shared_connection_block(m_connection);
-      m_fill_type->set(value);
+    QValidator::State set(const Type& value) override {
+      auto state = AssociativeValueModel<FillType>::set(value);
+      if(state == QValidator::Acceptable) {
+        auto blocker = shared_connection_block(m_connection);
+        m_fill_type->set(value);
+      }
+      return state;
     }
-    return state;
-  }
 
-  void on_update(FillType type) {
-    if(type != get()) {
-      AssociativeValueModel<FillType>::set(type);
+    void on_update(FillType type) {
+      if(type != get()) {
+        AssociativeValueModel<FillType>::set(type);
+      }
     }
-  }
-};
+  };
 
-struct PriceLevelModel {
-  std::shared_ptr<FillTypeAssociativeValueModel> m_fill_type;
-  std::shared_ptr<ListModel<QColor>> m_color_scheme;
-  std::shared_ptr<LocalOptionalIntegerModel> m_levels;
-  std::shared_ptr<ArrayListModel<QColor>> m_colors;
-  QColor m_end_color;
-  QTimer* m_timer;
-  scoped_connection m_scheme_connection;
-  scoped_connection m_levels_connection;
-  scoped_connection m_type_connection;
-  scoped_connection m_color_connection;
+  struct PriceLevelPropertiesModel {
+    std::shared_ptr<FillTypeAssociativeValueModel> m_fill_type;
+    std::shared_ptr<ListModel<QColor>> m_color_scheme;
+    std::shared_ptr<LocalOptionalIntegerModel> m_levels;
+    std::shared_ptr<ArrayListModel<QColor>> m_colors;
+    QColor m_end_color;
+    QTimer* m_timer;
+    scoped_connection m_scheme_connection;
+    scoped_connection m_levels_connection;
+    scoped_connection m_type_connection;
+    scoped_connection m_color_connection;
 
-  PriceLevelModel(std::shared_ptr<ValueModel<FillType>> fill_type,
-      std::shared_ptr<ListModel<QColor>> color_scheme, QTimer& timer)
-      : m_fill_type(std::make_shared<FillTypeAssociativeValueModel>(
-          std::move(fill_type))),
-        m_color_scheme(std::move(color_scheme)),
-        m_levels(std::make_shared<LocalOptionalIntegerModel>(
-          m_color_scheme->get_size())),
-        m_colors(std::make_shared<ArrayListModel<QColor>>()),
-        m_timer(&timer) {
-    if(m_color_scheme->get_size() > 0) {
-      m_end_color = m_color_scheme->get(m_color_scheme->get_size() - 1);
+    PriceLevelPropertiesModel(std::shared_ptr<ValueModel<FillType>> fill_type,
+        std::shared_ptr<ListModel<QColor>> color_scheme, QTimer& timer)
+        : m_fill_type(std::make_shared<FillTypeAssociativeValueModel>(
+            std::move(fill_type))),
+          m_color_scheme(std::move(color_scheme)),
+          m_levels(std::make_shared<LocalOptionalIntegerModel>(
+            m_color_scheme->get_size())),
+          m_colors(std::make_shared<ArrayListModel<QColor>>()),
+          m_timer(&timer) {
+      if(m_color_scheme->get_size() > 0) {
+        m_end_color = m_color_scheme->get(m_color_scheme->get_size() - 1);
+      }
+      m_levels->set_minimum(1);
+      m_levels->set_maximum(99);
+      m_scheme_connection = m_color_scheme->connect_operation_signal(
+        std::bind_front(
+          &PriceLevelPropertiesModel::on_color_scheme_operation, this));
+      m_levels_connection = m_levels->connect_update_signal(
+        std::bind_front(&PriceLevelPropertiesModel::on_levels_update, this));
+      m_type_connection = m_fill_type->connect_update_signal(
+        std::bind_front(&PriceLevelPropertiesModel::on_type_update, this));
+      m_color_connection = m_colors->connect_operation_signal(
+        std::bind_front(&PriceLevelPropertiesModel::on_color_operation, this));
+      on_type_update(m_fill_type->get());
+      m_timer->setSingleShot(true);
+      QObject::connect(m_timer, &QTimer::timeout,
+        std::bind_front(&PriceLevelPropertiesModel::on_timeout, this));
     }
-    m_levels->set_minimum(1);
-    m_levels->set_maximum(99);
-    m_scheme_connection = m_color_scheme->connect_operation_signal(
-      std::bind_front(&PriceLevelModel::on_color_scheme_operation, this));
-    m_levels_connection = m_levels->connect_update_signal(
-      std::bind_front(&PriceLevelModel::on_levels_update, this));
-    m_type_connection = m_fill_type->connect_update_signal(
-      std::bind_front(&PriceLevelModel::on_type_update, this));
-    m_color_connection = m_colors->connect_operation_signal(
-      std::bind_front(&PriceLevelModel::on_color_operation, this));
-    on_type_update(m_fill_type->get());
-    m_timer->setSingleShot(true);
-    QObject::connect(m_timer, &QTimer::timeout,
-      std::bind_front(&PriceLevelModel::on_timeout, this));
-  }
 
-  void update_gradient_color_scheme(int levels) {
-    if(m_color_scheme->get_size() > 1) {
-      m_end_color = m_color_scheme->get(m_color_scheme->get_size() - 1);
+    void update_gradient_color_scheme(int levels) {
+      if(m_color_scheme->get_size() > 1) {
+        m_end_color = m_color_scheme->get(m_color_scheme->get_size() - 1);
+      }
+      scale(*m_color_scheme, m_color_scheme->get(0), m_end_color, levels);
     }
-    scale(*m_color_scheme, m_color_scheme->get(0), m_end_color, levels);
-  }
 
-  void on_levels_update(const optional<int> levels) {
-    if(!levels || *levels < m_levels->get_minimum() ||
-        *levels > m_levels->get_maximum()) {
-      return;
-    }
-    if(m_fill_type->get() == FillType::GRADIENT) {
-      update_gradient_color_scheme(*levels);
-    } else {
-      m_color_scheme->transact([&] {
-        if(m_color_scheme->get_size() < *levels) {
-          auto color = m_color_scheme->get(m_color_scheme->get_size() - 1);
-          for(auto i = m_color_scheme->get_size(); i < *levels; ++i) {
-            m_color_scheme->insert(color, i);
-          }
-        } else {
-          while(m_color_scheme->get_size() > *levels) {
-            m_color_scheme->remove(m_color_scheme->get_size() - 1);
-          }
-        }
-      });
-    }
-  }
-
-  void on_type_update(FillType type) {
-    auto current_blocker = shared_connection_block(m_color_connection);
-    if(type == FillType::GRADIENT) {
-      m_colors->transact([&] {
-        if(m_colors->get_size() == 0) {
-          auto size = std::min(m_color_scheme->get_size(), 2);
-          for(auto i = 0; i < size; ++i) {
-            if(i == 1) {
-              m_colors->insert(
-                m_color_scheme->get(m_color_scheme->get_size() - 1), i);
-            } else {
-              m_colors->insert(m_color_scheme->get(i), i);
+    void on_levels_update(const optional<int> levels) {
+      if(!levels || *levels < m_levels->get_minimum() ||
+          *levels > m_levels->get_maximum()) {
+        return;
+      }
+      if(m_fill_type->get() == FillType::GRADIENT) {
+        update_gradient_color_scheme(*levels);
+      } else {
+        m_color_scheme->transact([&] {
+          if(m_color_scheme->get_size() < *levels) {
+            auto color = m_color_scheme->get(m_color_scheme->get_size() - 1);
+            for(auto i = m_color_scheme->get_size(); i < *levels; ++i) {
+              m_color_scheme->insert(color, i);
+            }
+          } else {
+            while(m_color_scheme->get_size() > *levels) {
+              m_color_scheme->remove(m_color_scheme->get_size() - 1);
             }
           }
-        } else if(m_colors->get_size() > 2) {
-          while(m_colors->get_size() > 2) {
-            m_colors->remove(1);
-          }
-        }
-      });
-      update_gradient_color_scheme(m_color_scheme->get_size());
-    } else {
-      m_colors->transact([&] {
-        for(auto i = 0; i < m_colors->get_size(); ++i) {
-          m_colors->set(i, m_color_scheme->get(i));
-        }
-        for(auto i = m_colors->get_size(); i < m_color_scheme->get_size();
-            ++i) {
-          m_colors->insert(m_color_scheme->get(i), i);
-        }
-      });
-    }
-  }
-
-  void on_timeout() {
-    update_gradient_color_scheme(m_color_scheme->get_size());
-  }
-
-  void on_color_scheme_operation(
-      const ListModel<QColor>::Operation& operation) {
-    auto update_levels = [&] {
-      if(auto levels = m_levels->get();
-          levels && *levels != m_color_scheme->get_size()) {
-        auto blocker = shared_connection_block(m_levels_connection);
-        m_levels->set(m_color_scheme->get_size());
+        });
       }
-    };
-    visit(operation,
-      [&] (const ListModel<QColor>::AddOperation& operation) {
-        auto blocker = shared_connection_block(m_color_connection);
-        if(m_fill_type->get() == FillType::SOLID) {
-          m_colors->insert(m_color_scheme->get(operation.m_index),
-            operation.m_index);
-        } else if(operation.m_index == 0) {
-          m_colors->insert(m_color_scheme->get(0), operation.m_index);
-        } else if(operation.m_index == 1) {
-          m_colors->insert(m_end_color, operation.m_index);
-        } else {
-          m_colors->set(1, m_color_scheme->get(operation.m_index));
-        }
-        update_levels();
-      },
-      [&] (const ListModel<QColor>::RemoveOperation& operation) {
-        if(operation.m_index < m_colors->get_size()) {
-          auto blocker = shared_connection_block(m_color_connection);
-          m_colors->remove(operation.m_index);
-        }
-        update_levels();
-      },
-      [&] (const ListModel<QColor>::UpdateOperation& operation) {
-        if(operation.m_index == m_color_scheme->get_size() - 1 &&
-            operation.m_index != 0) {
-          m_end_color = operation.get_value();
-        }
-      });
-  }
+    }
 
-  void on_color_operation(const ListModel<QColor>::Operation& operation) {
-    visit(operation,
-      [&] (const ListModel<QColor>::UpdateOperation& operation) {
-        if(m_fill_type->get() == FillType::GRADIENT) {
-          if(operation.m_index == 0) {
-            m_color_scheme->set(operation.m_index, operation.get_value());
-          } else {
-            m_color_scheme->set(m_color_scheme->get_size() - 1,
-              operation.get_value());
+    void on_type_update(FillType type) {
+      auto current_blocker = shared_connection_block(m_color_connection);
+      if(type == FillType::GRADIENT) {
+        m_colors->transact([&] {
+          if(m_colors->get_size() == 0) {
+            auto size = std::min(m_color_scheme->get_size(), 2);
+            for(auto i = 0; i < size; ++i) {
+              if(i == 1) {
+                m_colors->insert(
+                  m_color_scheme->get(m_color_scheme->get_size() - 1), i);
+              } else {
+                m_colors->insert(m_color_scheme->get(i), i);
+              }
+            }
+          } else if(m_colors->get_size() > 2) {
+            while(m_colors->get_size() > 2) {
+              m_colors->remove(1);
+            }
           }
-          m_timer->start(DEBOUNCE_TIME_MS);
-        } else {
-          m_color_scheme->set(operation.m_index, operation.get_value());
+        });
+        update_gradient_color_scheme(m_color_scheme->get_size());
+      } else {
+        m_colors->transact([&] {
+          for(auto i = 0; i < m_colors->get_size(); ++i) {
+            m_colors->set(i, m_color_scheme->get(i));
+          }
+          for(auto i = m_colors->get_size(); i < m_color_scheme->get_size();
+              ++i) {
+            m_colors->insert(m_color_scheme->get(i), i);
+          }
+        });
+      }
+    }
+
+    void on_timeout() {
+      update_gradient_color_scheme(m_color_scheme->get_size());
+    }
+
+    void on_color_scheme_operation(
+        const ListModel<QColor>::Operation& operation) {
+      auto update_levels = [&] {
+        if(auto levels = m_levels->get();
+            levels && *levels != m_color_scheme->get_size()) {
+          auto blocker = shared_connection_block(m_levels_connection);
+          m_levels->set(m_color_scheme->get_size());
         }
-      });
-  }
-};
+      };
+      visit(operation,
+        [&] (const ListModel<QColor>::AddOperation& operation) {
+          auto blocker = shared_connection_block(m_color_connection);
+          if(m_fill_type->get() == FillType::SOLID) {
+            m_colors->insert(m_color_scheme->get(operation.m_index),
+              operation.m_index);
+          } else if(operation.m_index == 0) {
+            m_colors->insert(m_color_scheme->get(0), operation.m_index);
+          } else if(operation.m_index == 1) {
+            m_colors->insert(m_end_color, operation.m_index);
+          } else {
+            m_colors->set(1, m_color_scheme->get(operation.m_index));
+          }
+          update_levels();
+        },
+        [&] (const ListModel<QColor>::RemoveOperation& operation) {
+          if(operation.m_index < m_colors->get_size()) {
+            auto blocker = shared_connection_block(m_color_connection);
+            m_colors->remove(operation.m_index);
+          }
+          update_levels();
+        },
+        [&] (const ListModel<QColor>::UpdateOperation& operation) {
+          if(operation.m_index == m_color_scheme->get_size() - 1 &&
+              operation.m_index != 0) {
+            m_end_color = operation.get_value();
+          }
+        });
+    }
+
+    void on_color_operation(const ListModel<QColor>::Operation& operation) {
+      visit(operation,
+        [&] (const ListModel<QColor>::UpdateOperation& operation) {
+          if(m_fill_type->get() == FillType::GRADIENT) {
+            if(operation.m_index == 0) {
+              m_color_scheme->set(operation.m_index, operation.get_value());
+            } else {
+              m_color_scheme->set(m_color_scheme->get_size() - 1,
+                operation.get_value());
+            }
+            m_timer->start(DEBOUNCE_TIME_MS);
+          } else {
+            m_color_scheme->set(operation.m_index, operation.get_value());
+          }
+        });
+    }
+  };
+}
 
 struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
   QTimer m_timer;
-  std::shared_ptr<PriceLevelModel> m_model;
+  std::shared_ptr<PriceLevelPropertiesModel> m_model;
   std::shared_ptr<ValueModel<QFont>> m_font;
   QWidget* m_color_boxes;
   ScrollBox* m_scroll_box;
@@ -335,8 +337,8 @@ struct BookViewLevelPropertiesPage::PriceLevelWidget : QWidget {
 BEAM_SUPPRESS_THIS_INITIALIZER()
         m_timer(this),
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
-        m_model(std::make_shared<PriceLevelModel>(std::move(fill_type),
-          std::make_shared<ArrayValueToListModel<QColor>>(
+        m_model(std::make_shared<PriceLevelPropertiesModel>(
+          std::move(fill_type), std::make_shared<ArrayValueToListModel<QColor>>(
             std::move(color_scheme)), m_timer)),
         m_font(std::move(font)),
         m_gradient_color_levels(0) {
