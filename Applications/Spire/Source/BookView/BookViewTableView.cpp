@@ -17,6 +17,7 @@
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
+using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -139,6 +140,18 @@ namespace {
           properties.m_level_properties.m_color_scheme.size()) - 1, 1);
       });
   }
+
+  auto make_filtered_preview_model(
+      std::shared_ptr<BookViewModel::PreviewOrderModel> preview, Side side) {
+    return make_transform_value_model(std::move(preview),
+      [=] (const auto& preview) -> const optional<OrderFields>& {
+        if(preview && preview->m_side == side) {
+          return preview;
+        }
+        static const auto NONE = optional<OrderFields>();
+        return NONE;
+      });
+  }
 }
 
 TableView* Spire::make_book_view_table_view(
@@ -156,7 +169,8 @@ TableView* Spire::make_book_view_table_view(
   auto column_orders =
     std::vector<SortedTableModel::ColumnOrder>{{1, ordering}, {2, ordering}};
   auto entries = std::make_shared<MergedBookEntryListModel>(
-    std::move(quotes), std::move(orders), model->get_preview_order());
+    std::move(quotes), std::move(orders),
+    make_filtered_preview_model(model->get_preview_order(), side));
   auto table = std::make_shared<SortedTableModel>(
     make_book_view_table_model(std::move(entries)), std::move(column_orders),
     &book_view_comparator);
