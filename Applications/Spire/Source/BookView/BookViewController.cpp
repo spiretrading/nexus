@@ -55,14 +55,8 @@ BookViewController::BookViewController(Ref<UserProfile> user_profile)
 
 BookViewController::BookViewController(
     Ref<UserProfile> user_profile, BookViewWindow& window)
-    : m_user_profile(user_profile.Get()),
-      m_window(&window) {
-  m_event_filter = std::make_unique<EventFilter>(*this);
-  m_window->installEventFilter(m_event_filter.get());
-  m_submit_task_connection = m_window->connect_submit_task_signal(
-    std::bind_front(&BookViewController::on_submit_task, this));
-  m_cancel_operation_connection = m_window->connect_cancel_operation_signal(
-    std::bind_front(&BookViewController::on_cancel_operation, this));
+    : m_user_profile(user_profile.Get()) {
+  set_window(window);
 }
 
 BookViewController::~BookViewController() {
@@ -74,18 +68,13 @@ void BookViewController::open() {
     m_window->show();
     return;
   }
-  m_window = new BookViewWindow(Ref(*m_user_profile),
+  auto window = new BookViewWindow(Ref(*m_user_profile),
     m_user_profile->GetSecurityInfoQueryModel(),
     m_user_profile->GetKeyBindings(), m_user_profile->GetMarketDatabase(),
     m_user_profile->GetBookViewPropertiesWindowFactory(),
     m_user_profile->GetBookViewModelBuilder());
-  m_event_filter = std::make_unique<EventFilter>(*this);
-  m_window->installEventFilter(m_event_filter.get());
-  m_submit_task_connection = m_window->connect_submit_task_signal(
-    std::bind_front(&BookViewController::on_submit_task, this));
-  m_cancel_operation_connection = m_window->connect_cancel_operation_signal(
-    std::bind_front(&BookViewController::on_cancel_operation, this));
-  m_window->show();
+  set_window(*window);
+  window->show();
 }
 
 void BookViewController::close() {
@@ -102,6 +91,16 @@ void BookViewController::close() {
 connection BookViewController::connect_closed_signal(
     const ClosedSignal::slot_type& slot) const {
   return m_closed_signal.connect(slot);
+}
+
+void BookViewController::set_window(BookViewWindow& window) {
+  m_event_filter = std::make_unique<EventFilter>(*this);
+  m_window = &window;
+  m_window->installEventFilter(m_event_filter.get());
+  m_submit_task_connection = m_window->connect_submit_task_signal(
+    std::bind_front(&BookViewController::on_submit_task, this));
+  m_cancel_operation_connection = m_window->connect_cancel_operation_signal(
+    std::bind_front(&BookViewController::on_cancel_operation, this));
 }
 
 void BookViewController::on_submit_task(
