@@ -43,7 +43,6 @@ namespace Spire {
       std::shared_ptr<PriceListModel> m_prices;
       std::shared_ptr<MaxLevelModel> m_max_level;
       ArrayListModel<int> m_levels;
-      Nexus::Money m_removed_price;
       boost::signals2::scoped_connection m_price_connection;
       boost::signals2::scoped_connection m_max_level_connection;
 

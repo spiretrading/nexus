@@ -71,9 +71,6 @@ void PriceLevelModel::on_price_operation(
         }
       }
     },
-    [&] (const PriceListModel::PreRemoveOperation& operation) {
-      m_removed_price = m_prices->get(operation.m_index);
-    },
     [&] (const PriceListModel::RemoveOperation& operation) {
       auto level = m_levels.get(operation.m_index);
       m_levels.remove(operation.m_index);

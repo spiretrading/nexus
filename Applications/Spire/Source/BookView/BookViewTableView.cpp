@@ -69,12 +69,14 @@ namespace {
 
   struct TableViewStylist : QObject {
     std::shared_ptr<BookViewPropertiesModel> m_properties;
+    std::size_t m_previous_levels;
     scoped_connection m_connection;
 
     TableViewStylist(TableView& table_view,
         std::shared_ptr<BookViewPropertiesModel> properties)
         : QObject(&table_view),
-          m_properties(std::move(properties)) {
+          m_properties(std::move(properties)),
+          m_previous_levels(0) {
       table_view.installEventFilter(this);
       update_style(table_view.get_body(), [=] (auto& style) {
         style.get(Any()).
@@ -118,13 +120,21 @@ namespace {
       update_style(table_view.get_body(), [=] (auto& style) {
         style.get((Any() > Row() > is_a<TableItem>()) > Any()).
           set(Font(properties.m_level_properties.m_font));
-        auto& highlights = properties.m_highlight_properties.m_order_highlights;
+        auto& preview_highlight = get_highlight(properties,
+          BookViewHighlightProperties::OrderHighlightState::PREVIEW);
         style.get(Any() > +Row() > is_a<TableItem>() > PreviewRow()).
-          set(BackgroundColor(highlights[0].m_background_color));
+          set(BackgroundColor(preview_highlight.m_background_color));
+        auto& active_highlight = get_highlight(properties,
+          BookViewHighlightProperties::OrderHighlightState::ACTIVE);
         style.get(Any() > +Row() > is_a<TableItem>() > UserOrderRow()).
-          set(BackgroundColor(highlights[1].m_background_color));
+          set(BackgroundColor(active_highlight.m_background_color));
         auto& level_colors = properties.m_level_properties.m_color_scheme;
-        for(auto i = std::size_t(0); i != level_colors.size(); ++i) {
+        for(auto i = level_colors.size(); i < m_previous_levels; ++i) {
+          style.get(Any() > +Row() > is_a<TableItem>() > PriceLevelRow(i)).
+            clear();
+        }
+        m_previous_levels = level_colors.size();
+        for(auto i = std::size_t(0); i < level_colors.size(); ++i) {
           style.get(Any() > +Row() > is_a<TableItem>() > PriceLevelRow(i)).
             set(BackgroundColor(level_colors[i]));
         }

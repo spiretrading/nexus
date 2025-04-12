@@ -151,6 +151,10 @@ namespace Spire {
     void Shuttle(Shuttler& shuttle, unsigned int version);
   };
 
+  /** Returns the HighlightColor associated with an OrderHighlightState. */
+  const HighlightColor& get_highlight(const BookViewProperties& properties,
+    BookViewHighlightProperties::OrderHighlightState state);
+
   /** Returns the text representation of a OrderVisibility. */
   const QString& to_text(
     BookViewHighlightProperties::OrderVisibility visibility);
