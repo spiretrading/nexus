@@ -5,6 +5,7 @@
 #include "Spire/BookView/PriceLevelModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
+#include "Spire/Spire/FilteredListModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/SortedListModel.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
@@ -175,6 +176,37 @@ namespace {
         return NONE;
       });
   }
+
+  struct UserOrderDisplayListModel :
+      FilteredListModel<BookViewModel::UserOrder> {
+    std::shared_ptr<BookViewPropertiesModel> m_properties;
+    bool m_previous_is_displayed;
+    scoped_connection m_connection;
+
+    UserOrderDisplayListModel(
+        std::shared_ptr<BookViewModel::UserOrderListModel> orders,
+        std::shared_ptr<BookViewPropertiesModel> properties)
+        : FilteredListModel(std::move(orders),
+            [] (const auto&, auto) { return false; }),
+          m_properties(std::move(properties)) {
+      on_properties(m_properties->get());
+      m_connection = m_properties->connect_update_signal(
+        std::bind_front(&UserOrderDisplayListModel::on_properties, this));
+    }
+
+    void on_properties(const BookViewProperties& properties) {
+      auto is_displayed =
+        properties.m_highlight_properties.m_order_visibility !=
+          BookViewHighlightProperties::OrderVisibility::HIDDEN;
+      if(is_displayed == m_previous_is_displayed) {
+        return;
+      }
+      m_previous_is_displayed = is_displayed;
+      set_filter([=] (const auto&, auto) {
+        return !is_displayed;
+      });
+    }
+  };
 }
 
 TableView* Spire::make_book_view_table_view(
@@ -191,8 +223,10 @@ TableView* Spire::make_book_view_table_view(
   }();
   auto column_orders =
     std::vector<SortedTableModel::ColumnOrder>{{1, ordering}, {2, ordering}};
+  auto displayed_orders =
+    std::make_shared<UserOrderDisplayListModel>(std::move(orders), properties);
   auto entries = std::make_shared<MergedBookEntryListModel>(
-    std::move(quotes), std::move(orders),
+    std::move(quotes), std::move(displayed_orders),
     make_filtered_preview_model(model->get_preview_order(), side));
   auto table = std::make_shared<SortedTableModel>(
     make_book_view_table_model(std::move(entries)), std::move(column_orders),

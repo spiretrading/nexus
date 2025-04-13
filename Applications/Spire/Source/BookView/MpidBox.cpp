@@ -64,7 +64,7 @@ void MpidBox::on_level(int level) {
   if(level == m_previous_level) {
     return;
   }
-  if(m_current->get().m_origin == Mpid::Origin::BOOK_QUOTE) {
+  if(m_previous_origin == Mpid::Origin::BOOK_QUOTE) {
     unmatch(*this, PriceLevelRow(m_previous_level));
     match(*this, PriceLevelRow(level));
   }
