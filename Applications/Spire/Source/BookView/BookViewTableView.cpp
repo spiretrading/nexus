@@ -165,7 +165,7 @@ namespace {
       });
   }
 
-  auto make_filtered_preview_model(
+  auto filter_by_side(
       std::shared_ptr<BookViewModel::PreviewOrderModel> preview, Side side) {
     return make_transform_value_model(std::move(preview),
       [=] (const auto& preview) -> const optional<OrderFields>& {
@@ -176,6 +176,61 @@ namespace {
         return NONE;
       });
   }
+
+  struct PreviewDisplayValueModel : ValueModel<optional<OrderFields>> {
+    mutable UpdateSignal m_update_signal;
+    std::shared_ptr<ValueModel<Type>> m_current;
+    std::shared_ptr<ValueModel<BookViewProperties>> m_properties;
+    bool m_is_displayed;
+    scoped_connection m_current_connection;
+    scoped_connection m_properties_connection;
+
+    PreviewDisplayValueModel(std::shared_ptr<ValueModel<Type>> current,
+        std::shared_ptr<ValueModel<BookViewProperties>> properties)
+        : m_current(std::move(current)),
+          m_properties(std::move(properties)),
+          m_is_displayed(false) {
+      on_properties(m_properties->get());
+      m_current_connection = m_current->connect_update_signal(
+        std::bind_front(&PreviewDisplayValueModel::on_current, this));
+      m_properties_connection = m_properties->connect_update_signal(
+        std::bind_front(&PreviewDisplayValueModel::on_properties, this));
+    }
+
+    const Type& get() const override {
+      if(m_is_displayed) {
+        return m_current->get();
+      }
+      static const auto NONE = optional<OrderFields>();
+      return NONE;
+    }
+
+    connection connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const override {
+      return m_update_signal.connect(slot);
+    }
+
+    void on_current(const Type& current) {
+      if(m_is_displayed) {
+        m_update_signal(current);
+      }
+    }
+
+    void on_properties(const BookViewProperties& properties) {
+      auto is_displayed =
+        properties.m_highlight_properties.m_order_visibility !=
+          BookViewHighlightProperties::OrderVisibility::HIDDEN;
+      if(is_displayed == m_is_displayed) {
+        return;
+      }
+      m_is_displayed = is_displayed;
+      if(m_is_displayed) {
+        m_update_signal(m_current->get());
+      } else {
+        m_update_signal(none);
+      }
+    }
+  };
 
   struct UserOrderDisplayListModel :
       FilteredListModel<BookViewModel::UserOrder> {
@@ -225,9 +280,10 @@ TableView* Spire::make_book_view_table_view(
     std::vector<SortedTableModel::ColumnOrder>{{1, ordering}, {2, ordering}};
   auto displayed_orders =
     std::make_shared<UserOrderDisplayListModel>(std::move(orders), properties);
-  auto entries = std::make_shared<MergedBookEntryListModel>(
-    std::move(quotes), std::move(displayed_orders),
-    make_filtered_preview_model(model->get_preview_order(), side));
+  auto displayed_preview = std::make_shared<PreviewDisplayValueModel>(
+    filter_by_side(model->get_preview_order(), side), properties);
+  auto entries = std::make_shared<MergedBookEntryListModel>(std::move(quotes),
+    std::move(displayed_orders), std::move(displayed_preview));
   auto table = std::make_shared<SortedTableModel>(
     make_book_view_table_model(std::move(entries)), std::move(column_orders),
     &book_view_comparator);
