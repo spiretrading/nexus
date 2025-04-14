@@ -2,6 +2,7 @@
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/BookView/MergedBookEntryListModel.hpp"
 #include "Spire/BookView/MpidBox.hpp"
+#include "Spire/BookView/PreviewOrderDisplayValueModel.hpp"
 #include "Spire/BookView/PriceLevelModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
@@ -69,8 +70,13 @@ namespace {
   };
 
   struct TableViewStylist : QObject {
+    struct PreviousMarketHighlight {
+      MarketCode m_market;
+      BookViewHighlightProperties::MarketHighlightLevel m_level;
+    };
     std::shared_ptr<BookViewPropertiesModel> m_properties;
     std::size_t m_previous_levels;
+    std::vector<PreviousMarketHighlight> m_previous_market_highlights;
     scoped_connection m_connection;
 
     TableViewStylist(TableView& table_view,
@@ -116,6 +122,71 @@ namespace {
       return QObject::eventFilter(watched, event);
     }
 
+    void apply_order_visibility_styles(
+        StyleSheet& style, const BookViewProperties& properties) {
+      if(properties.m_highlight_properties.m_order_visibility ==
+          BookViewHighlightProperties::OrderVisibility::HIGHLIGHTED) {
+        auto& preview_highlight = get_highlight(properties,
+          BookViewHighlightProperties::OrderHighlightState::PREVIEW);
+        style.get(Any() > +Row() > is_a<TableItem>() > PreviewRow()).
+          set(BackgroundColor(preview_highlight.m_background_color));
+        auto& active_highlight = get_highlight(
+          properties, BookViewHighlightProperties::OrderHighlightState::ACTIVE);
+        style.get(Any() > +Row() > is_a<TableItem>() > UserOrderRow()).
+          set(BackgroundColor(active_highlight.m_background_color));
+      } else {
+        style.get(Any() > +Row() > is_a<TableItem>() > PreviewRow()).clear();
+        style.get(Any() > +Row() > is_a<TableItem>() > UserOrderRow()).clear();
+      }
+    }
+
+    void apply_market_highlight_styles(
+        StyleSheet& style, const BookViewProperties& properties) {
+      for(auto& highlight : m_previous_market_highlights) {
+        if(highlight.m_level ==
+            BookViewHighlightProperties::MarketHighlightLevel::TOP) {
+          style.get(Any() > +Row() > is_a<TableItem>() >
+            (TopMarketRow() && MarketRow(highlight.m_market))).clear();
+        } else {
+          style.get(Any() >
+            +Row() > is_a<TableItem>() > MarketRow(highlight.m_market)).clear();
+        }
+      }
+      m_previous_market_highlights.clear();
+      auto& market_highlights =
+        properties.m_highlight_properties.m_market_highlights;
+      for(auto& highlight : market_highlights) {
+        if(highlight.m_level ==
+            BookViewHighlightProperties::MarketHighlightLevel::TOP) {
+          style.get(Any() > +Row() > is_a<TableItem>() >
+            (TopMarketRow() && MarketRow(highlight.m_market))).
+              set(BackgroundColor(highlight.m_color.m_background_color)).
+              set(TextColor(highlight.m_color.m_text_color));
+        } else {
+          style.get(Any() >
+            +Row() > is_a<TableItem>() > MarketRow(highlight.m_market)).
+              set(BackgroundColor(highlight.m_color.m_background_color)).
+              set(TextColor(highlight.m_color.m_text_color));
+        }
+        m_previous_market_highlights.push_back(
+          PreviousMarketHighlight(highlight.m_market, highlight.m_level));
+      }
+    }
+
+    void apply_level_highlight_styles(
+        StyleSheet& style, const BookViewProperties& properties) {
+      auto& level_colors = properties.m_level_properties.m_color_scheme;
+      for(auto i = level_colors.size(); i < m_previous_levels; ++i) {
+        style.get(Any() > +Row() > is_a<TableItem>() > PriceLevelRow(i)).
+          clear();
+      }
+      m_previous_levels = level_colors.size();
+      for(auto i = std::size_t(0); i < level_colors.size(); ++i) {
+        style.get(Any() > +Row() > is_a<TableItem>() > PriceLevelRow(i)).
+          set(BackgroundColor(level_colors[i]));
+      }
+    }
+
     void on_properties(const BookViewProperties& properties) {
       auto& table_view = *static_cast<TableView*>(parent());
       if(properties.m_level_properties.m_is_grid_enabled) {
@@ -126,32 +197,9 @@ namespace {
       update_style(table_view.get_body(), [=] (auto& style) {
         style.get((Any() > Row() > is_a<TableItem>()) > Any()).
           set(Font(properties.m_level_properties.m_font));
-        if(properties.m_highlight_properties.m_order_visibility ==
-            BookViewHighlightProperties::OrderVisibility::HIGHLIGHTED) {
-          auto& preview_highlight = get_highlight(properties,
-            BookViewHighlightProperties::OrderHighlightState::PREVIEW);
-          style.get(Any() > +Row() > is_a<TableItem>() > PreviewRow()).
-            set(BackgroundColor(preview_highlight.m_background_color));
-          auto& active_highlight = get_highlight(properties,
-            BookViewHighlightProperties::OrderHighlightState::ACTIVE);
-          style.get(Any() > +Row() > is_a<TableItem>() > UserOrderRow()).
-            set(BackgroundColor(active_highlight.m_background_color));
-        } else {
-          style.get(Any() > +Row() > is_a<TableItem>() > PreviewRow()).
-            clear();
-          style.get(Any() > +Row() > is_a<TableItem>() > UserOrderRow()).
-            clear();
-        }
-        auto& level_colors = properties.m_level_properties.m_color_scheme;
-        for(auto i = level_colors.size(); i < m_previous_levels; ++i) {
-          style.get(Any() > +Row() > is_a<TableItem>() > PriceLevelRow(i)).
-            clear();
-        }
-        m_previous_levels = level_colors.size();
-        for(auto i = std::size_t(0); i < level_colors.size(); ++i) {
-          style.get(Any() > +Row() > is_a<TableItem>() > PriceLevelRow(i)).
-            set(BackgroundColor(level_colors[i]));
-        }
+        apply_order_visibility_styles(style, properties);
+        apply_market_highlight_styles(style, properties);
+        apply_level_highlight_styles(style, properties);
       });
     }
   };
@@ -176,61 +224,6 @@ namespace {
         return NONE;
       });
   }
-
-  struct PreviewDisplayValueModel : ValueModel<optional<OrderFields>> {
-    mutable UpdateSignal m_update_signal;
-    std::shared_ptr<ValueModel<Type>> m_current;
-    std::shared_ptr<ValueModel<BookViewProperties>> m_properties;
-    bool m_is_displayed;
-    scoped_connection m_current_connection;
-    scoped_connection m_properties_connection;
-
-    PreviewDisplayValueModel(std::shared_ptr<ValueModel<Type>> current,
-        std::shared_ptr<ValueModel<BookViewProperties>> properties)
-        : m_current(std::move(current)),
-          m_properties(std::move(properties)),
-          m_is_displayed(false) {
-      on_properties(m_properties->get());
-      m_current_connection = m_current->connect_update_signal(
-        std::bind_front(&PreviewDisplayValueModel::on_current, this));
-      m_properties_connection = m_properties->connect_update_signal(
-        std::bind_front(&PreviewDisplayValueModel::on_properties, this));
-    }
-
-    const Type& get() const override {
-      if(m_is_displayed) {
-        return m_current->get();
-      }
-      static const auto NONE = optional<OrderFields>();
-      return NONE;
-    }
-
-    connection connect_update_signal(
-        const typename UpdateSignal::slot_type& slot) const override {
-      return m_update_signal.connect(slot);
-    }
-
-    void on_current(const Type& current) {
-      if(m_is_displayed) {
-        m_update_signal(current);
-      }
-    }
-
-    void on_properties(const BookViewProperties& properties) {
-      auto is_displayed =
-        properties.m_highlight_properties.m_order_visibility !=
-          BookViewHighlightProperties::OrderVisibility::HIDDEN;
-      if(is_displayed == m_is_displayed) {
-        return;
-      }
-      m_is_displayed = is_displayed;
-      if(m_is_displayed) {
-        m_update_signal(m_current->get());
-      } else {
-        m_update_signal(none);
-      }
-    }
-  };
 
   struct UserOrderDisplayListModel :
       FilteredListModel<BookViewModel::UserOrder> {
@@ -280,7 +273,7 @@ TableView* Spire::make_book_view_table_view(
     std::vector<SortedTableModel::ColumnOrder>{{1, ordering}, {2, ordering}};
   auto displayed_orders =
     std::make_shared<UserOrderDisplayListModel>(std::move(orders), properties);
-  auto displayed_preview = std::make_shared<PreviewDisplayValueModel>(
+  auto displayed_preview = std::make_shared<PreviewOrderDisplayValueModel>(
     filter_by_side(model->get_preview_order(), side), properties);
   auto entries = std::make_shared<MergedBookEntryListModel>(std::move(quotes),
     std::move(displayed_orders), std::move(displayed_preview));

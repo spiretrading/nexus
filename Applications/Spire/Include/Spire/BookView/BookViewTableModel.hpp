@@ -55,11 +55,14 @@ namespace Spire {
       PREVIEW
     };
 
-    /** The source of the listing. */
-    Origin m_origin;
-
     /** The identifier to display. */
     std::string m_id;
+
+    /** The MPID's originating market. */
+    Nexus::MarketCode m_market;
+
+    /** The source of the listing. */
+    Origin m_origin;
 
     /** Compares two Mpids by id. */
     bool operator <(const Mpid& mpid) const;

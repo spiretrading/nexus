@@ -38,25 +38,33 @@ QString MpidBox::make_id(const Mpid& mpid) const {
 }
 
 void MpidBox::on_current(const Mpid& mpid) {
-  if(mpid.m_origin == m_previous_origin) {
-    return;
-  }
-  if(m_previous_origin) {
-    if(*m_previous_origin == Mpid::Origin::PREVIEW) {
-      unmatch(*this, PreviewRow());
-    } else if(*m_previous_origin == Mpid::Origin::USER_ORDER) {
-      unmatch(*this, UserOrderRow());
-    } else if(*m_previous_origin == Mpid::Origin::BOOK_QUOTE) {
-      unmatch(*this, PriceLevelRow(m_previous_level));
+  if(mpid.m_origin != m_previous_origin) {
+    if(m_previous_origin) {
+      if(*m_previous_origin == Mpid::Origin::PREVIEW) {
+        unmatch(*this, PreviewRow());
+      } else if(*m_previous_origin == Mpid::Origin::USER_ORDER) {
+        unmatch(*this, UserOrderRow());
+      } else if(*m_previous_origin == Mpid::Origin::BOOK_QUOTE) {
+        unmatch(*this, PriceLevelRow(m_previous_level));
+      }
+    }
+    m_previous_origin = mpid.m_origin;
+    if(mpid.m_origin == Mpid::Origin::PREVIEW) {
+      match(*this, PreviewRow());
+    } else if(mpid.m_origin == Mpid::Origin::USER_ORDER) {
+      match(*this, UserOrderRow());
+    } else {
+      match(*this, PriceLevelRow(m_level->get()));
     }
   }
-  m_previous_origin = mpid.m_origin;
-  if(mpid.m_origin == Mpid::Origin::PREVIEW) {
-    match(*this, PreviewRow());
-  } else if(mpid.m_origin == Mpid::Origin::USER_ORDER) {
-    match(*this, UserOrderRow());
-  } else {
-    match(*this, PriceLevelRow(m_level->get()));
+  if(mpid.m_market != m_previous_market) {
+    if(!m_previous_market.IsEmpty()) {
+      unmatch(*this, MarketRow(m_previous_market));
+    }
+    m_previous_market = mpid.m_market;
+    if(!mpid.m_market.IsEmpty()) {
+      match(*this, MarketRow(mpid.m_market));
+    }
   }
 }
 

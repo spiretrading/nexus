@@ -15,7 +15,13 @@ namespace {
       auto column = static_cast<BookViewColumn>(index);
       if(auto quote = get<BookQuote>(&entry)) {
         if(column == BookViewColumn::MPID) {
-          m_mpid = Mpid(Mpid::Origin::BOOK_QUOTE, quote->m_mpid);
+          if(quote->m_isPrimaryMpid) {
+            m_mpid =
+              Mpid(quote->m_mpid, quote->m_market, Mpid::Origin::BOOK_QUOTE);
+          } else {
+            m_mpid =
+              Mpid(quote->m_mpid, MarketCode(), Mpid::Origin::BOOK_QUOTE);
+          }
           return std::as_const(m_mpid);
         } else if(column == BookViewColumn::PRICE) {
           return quote->m_quote.m_price;
@@ -23,7 +29,8 @@ namespace {
         return quote->m_quote.m_size;
       } else if(auto order = get<BookViewModel::UserOrder>(&entry)) {
         if(column == BookViewColumn::MPID) {
-          m_mpid = Mpid(Mpid::Origin::USER_ORDER, order->m_destination);
+          m_mpid =
+            Mpid(order->m_destination, MarketCode(), Mpid::Origin::USER_ORDER);
           return std::as_const(m_mpid);
         } else if(column == BookViewColumn::PRICE) {
           return order->m_price;
@@ -32,7 +39,8 @@ namespace {
       }
       auto preview = get<OrderFields>(&entry);
       if(column == BookViewColumn::MPID) {
-        m_mpid = Mpid(Mpid::Origin::PREVIEW, preview->m_destination);
+        m_mpid =
+          Mpid(preview->m_destination, MarketCode(), Mpid::Origin::PREVIEW);
         return std::as_const(m_mpid);
       } else if(column == BookViewColumn::PRICE) {
         return preview->m_price;

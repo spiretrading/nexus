@@ -130,7 +130,7 @@ BookQuote make_random_market_quote(Side side) {
   auto market_index = random_generator.bounded(
     static_cast<int>(markets.size()));
   auto market_code = markets[market_index].m_code;
-  return BookQuote(to_text(MarketToken(market_code)).toStdString(), false,
+  return BookQuote(to_text(MarketToken(market_code)).toStdString(), true,
     market_code, Quote{Truncate(Money(random_generator.bounded(200.0)), 2),
       random_generator.bounded(1000), side}, second_clock::local_time());
 }
@@ -548,7 +548,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       MoneyBox* price_box, QuantityBox* quantity_box, SideBox* side_box) {
     auto market_code = market_box->get_current()->get();
     auto quote = BookQuote(to_text(MarketToken(market_code)).toStdString(),
-        false, market_code, Quote{*price_box->get_current()->get(),
+        true, market_code, Quote{*price_box->get_current()->get(),
         *quantity_box->get_current()->get(), side_box->get_current()->get()},
         second_clock::local_time());
     m_model.submit_book_quote(quote);

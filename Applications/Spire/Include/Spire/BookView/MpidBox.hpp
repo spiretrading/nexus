@@ -12,6 +12,13 @@ namespace Styles {
   /** Styles an MpidBox based on its price level. */
   using PriceLevelRow = StateSelector<int, struct PriceLevelRowSelectorTag>;
 
+  /** Styles an MpidBox based on its market. */
+  using MarketRow =
+    StateSelector<Nexus::MarketCode, struct MarketRowSelectorTag>;
+
+  /** Styles an MpidBox based on whether it's the top quote for its market. */
+  using TopMarketRow = StateSelector<void, struct TopMarketRowSelectorTag>;
+
   /** Styles an MpidBox based on whether it represents a user's order. */
   using UserOrderRow = StateSelector<void, struct UserOrderSelectorTag>;
 
@@ -48,6 +55,7 @@ namespace Styles {
       boost::optional<Mpid::Origin> m_previous_origin;
       std::shared_ptr<ValueModel<int>> m_level;
       int m_previous_level;
+      Nexus::MarketCode m_previous_market;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_level_connection;
 

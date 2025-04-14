@@ -21,6 +21,7 @@ namespace Spire {
   class MergedBookEntryListModel;
   struct Mpid;
   class MpidBox;
+  class PreviewOrderDisplayValueModel;
   class PriceLevelModel;
   class TechnicalsPanel;
 }
