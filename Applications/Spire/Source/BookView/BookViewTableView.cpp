@@ -1,9 +1,11 @@
 #include "Spire/BookView/BookViewTableView.hpp"
 #include "Spire/BookView/BookViewTableModel.hpp"
+#include "Spire/BookView/IsTopMpidModel.hpp"
 #include "Spire/BookView/MergedBookEntryListModel.hpp"
 #include "Spire/BookView/MpidBox.hpp"
 #include "Spire/BookView/PreviewOrderDisplayValueModel.hpp"
 #include "Spire/BookView/PriceLevelModel.hpp"
+#include "Spire/BookView/TopMpidLevelListModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/FilteredListModel.hpp"
@@ -39,13 +41,17 @@ namespace {
 
   struct ItemBuilder {
     std::shared_ptr<PriceLevelModel> m_price_levels;
+    std::shared_ptr<TopMpidLevelListModel> m_top_mpid_levels;
 
     QWidget* operator ()(
         const std::shared_ptr<TableModel>& table, int row, int column) {
       auto column_id = static_cast<BookViewColumn>(column);
       if(column_id == BookViewColumn::MPID) {
-        return new MpidBox(make_table_value_model<Mpid>(table, row, column),
-          make_list_value_model(m_price_levels, row));
+        auto mpid = make_table_value_model<Mpid>(table, row, column);
+        auto level = make_list_value_model(m_price_levels, row);
+        auto is_top_mpid =
+          std::make_shared<IsTopMpidModel>(m_top_mpid_levels, mpid, level);
+        return new MpidBox(mpid, level, is_top_mpid);
       } else if(column_id == BookViewColumn::PRICE) {
         auto money_item = make_label(make_to_text_model(
           make_table_value_model<Money>(table, row, column)));
@@ -275,7 +281,7 @@ TableView* Spire::make_book_view_table_view(
     std::make_shared<UserOrderDisplayListModel>(std::move(orders), properties);
   auto displayed_preview = std::make_shared<PreviewOrderDisplayValueModel>(
     filter_by_side(model->get_preview_order(), side), properties);
-  auto entries = std::make_shared<MergedBookEntryListModel>(std::move(quotes),
+  auto entries = std::make_shared<MergedBookEntryListModel>(quotes,
     std::move(displayed_orders), std::move(displayed_preview));
   auto table = std::make_shared<SortedTableModel>(
     make_book_view_table_model(std::move(entries)), std::move(column_orders),
@@ -284,9 +290,12 @@ TableView* Spire::make_book_view_table_view(
     std::make_shared<ColumnViewListModel<Money>>(
       table, static_cast<int>(BookViewColumn::PRICE)),
       make_max_level_model(properties));
+  auto top_mpid_levels =
+    std::make_shared<TopMpidLevelListModel>(std::move(quotes));
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
-    set_item_builder(ItemBuilder(std::move(price_levels))).make();
+    set_item_builder(
+      ItemBuilder(std::move(price_levels), std::move(top_mpid_levels))).make();
   table_view->get_header().setVisible(false);
   table_view->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
   auto stylist = new TableViewStylist(*table_view, std::move(properties));

@@ -40,9 +40,11 @@ namespace Styles {
        * Constructs an MpidBox.
        * @param current The MPID to display.
        * @param level The price level represented.
+       * @param top_mpid_level The list of top levels by MPID.
        */
       MpidBox(std::shared_ptr<MpidModel> current,
-        std::shared_ptr<ValueModel<int>> level);
+        std::shared_ptr<ValueModel<int>> level,
+        std::shared_ptr<ValueModel<bool>> is_top_mpid);
 
       /** Returns the displayed MPID. */
       std::shared_ptr<MpidModel> get_current() const;
@@ -50,18 +52,24 @@ namespace Styles {
       /** Returns the represented price level. */
       std::shared_ptr<ValueModel<int>> get_level() const;
 
+      /** Returns whether this represents the top MPID price level. */
+      std::shared_ptr<ValueModel<bool>> is_top_mpid() const;
+
     private:
       std::shared_ptr<MpidModel> m_current;
-      boost::optional<Mpid::Origin> m_previous_origin;
+      boost::optional<Mpid::Origin> m_current_origin;
+      Nexus::MarketCode m_current_market;
       std::shared_ptr<ValueModel<int>> m_level;
-      int m_previous_level;
-      Nexus::MarketCode m_previous_market;
+      int m_current_level;
+      std::shared_ptr<ValueModel<bool>> m_is_top_mpid;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_level_connection;
+      boost::signals2::scoped_connection m_is_top_mpid_connection;
 
       QString make_id(const Mpid& mpid) const;
       void on_current(const Mpid& mpid);
       void on_level(int level);
+      void on_is_top_mpid(bool is_top);
   };
 }
 
