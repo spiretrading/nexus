@@ -34,6 +34,7 @@ namespace Spire {
       mutable UpdateSignal m_update_signal;
       std::shared_ptr<BookViewModel::PreviewOrderModel> m_preview;
       std::shared_ptr<BookViewPropertiesModel> m_properties;
+      bool m_has_preview;
       bool m_is_displayed;
       boost::signals2::scoped_connection m_preview_connection;
       boost::signals2::scoped_connection m_properties_connection;

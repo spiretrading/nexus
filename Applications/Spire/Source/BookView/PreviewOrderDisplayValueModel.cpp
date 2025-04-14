@@ -11,6 +11,7 @@ PreviewOrderDisplayValueModel::PreviewOrderDisplayValueModel(
     std::shared_ptr<BookViewPropertiesModel> properties)
     : m_preview(std::move(preview)),
       m_properties(std::move(properties)),
+      m_has_preview(m_preview->get().has_value()),
       m_is_displayed(false) {
   on_properties(m_properties->get());
   m_preview_connection = m_preview->connect_update_signal(
@@ -34,6 +35,7 @@ connection PreviewOrderDisplayValueModel::connect_update_signal(
 }
 
 void PreviewOrderDisplayValueModel::on_preview(const Type& preview) {
+  m_has_preview = preview.has_value();
   if(m_is_displayed) {
     m_update_signal(preview);
   }
@@ -47,9 +49,11 @@ void PreviewOrderDisplayValueModel::on_properties(
     return;
   }
   m_is_displayed = is_displayed;
-  if(m_is_displayed) {
-    m_update_signal(m_preview->get());
-  } else {
-    m_update_signal(none);
+  if(m_has_preview) {
+    if(m_is_displayed) {
+      m_update_signal(m_preview->get());
+    } else{
+      m_update_signal(none);
+    }
   }
 }
