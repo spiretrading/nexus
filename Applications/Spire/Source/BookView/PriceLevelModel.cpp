@@ -94,7 +94,8 @@ void PriceLevelModel::on_price_operation(
             auto price = m_prices->get(i);
             if(price != following_price) {
               ++following_level;
-              if(following_level == m_max_level->get()) {
+              following_price = price;
+              if(following_level == m_max_level->get() + 1) {
                 break;
               }
             }

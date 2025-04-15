@@ -12,7 +12,7 @@ MpidBox::MpidBox(
     std::shared_ptr<ValueModel<bool>> is_top_mpid)
     : m_current(std::move(current)),
       m_level(std::move(level)),
-      m_current_level(-1),
+      m_current_level(m_level->get()),
       m_is_top_mpid(std::move(is_top_mpid)) {
   auto label = make_label(make_read_only_to_text_model(
     m_current, std::bind_front(&MpidBox::make_id, this)));
@@ -24,7 +24,6 @@ MpidBox::MpidBox(
       set(PaddingRight(scale_width(2)));
   });
   on_current(m_current->get());
-  on_level(m_level->get());
   on_is_top_mpid(m_is_top_mpid->get());
   m_current_connection = m_current->connect_update_signal(
     std::bind_front(&MpidBox::on_current, this));
@@ -71,7 +70,7 @@ void MpidBox::on_current(const Mpid& mpid) {
     } else if(mpid.m_origin == Mpid::Origin::USER_ORDER) {
       match(*this, UserOrderRow());
     } else {
-      match(*this, PriceLevelRow(m_level->get()));
+      match(*this, PriceLevelRow(m_current_level));
     }
   }
   if(mpid.m_market != m_current_market) {

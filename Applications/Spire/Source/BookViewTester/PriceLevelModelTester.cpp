@@ -289,4 +289,111 @@ TEST_SUITE("PriceLevelModel") {
     REQUIRE(levels.get(5) == 5);
     REQUIRE(levels.get(6) == 5);
   }
+  TEST_CASE("remove_with_max_level") {
+    auto prices = std::make_shared<ArrayListModel<Money>>();
+    prices->push(10 * Money::ONE);
+    prices->push(11 * Money::ONE);
+    prices->push(12 * Money::ONE);
+    prices->push(12 * Money::ONE);
+    prices->push(12 * Money::ONE);
+    prices->push(12 * Money::ONE);
+    prices->push(12 * Money::ONE);
+    auto max_level = std::make_shared<LocalValueModel<int>>(4);
+    auto levels = PriceLevelModel(prices, max_level);
+    prices->remove(0);
+    REQUIRE(levels.get(0) == 0);
+    REQUIRE(levels.get(1) == 1);
+    REQUIRE(levels.get(2) == 1);
+    REQUIRE(levels.get(3) == 1);
+    REQUIRE(levels.get(4) == 1);
+    REQUIRE(levels.get(5) == 1);
+  }
+  TEST_CASE("clear_prices") {
+    auto prices = std::make_shared<ArrayListModel<Money>>();
+    auto max_level = std::make_shared<LocalValueModel<int>>(3);
+    auto levels = PriceLevelModel(prices, max_level);
+    prices->push(Money(10 * Money::ONE));
+    prices->remove(0);
+    REQUIRE(levels.get_size() == 0);
+  }
+  TEST_CASE("last_price") {
+    auto prices = std::make_shared<ArrayListModel<Money>>();
+    auto max_level = std::make_shared<LocalValueModel<int>>(3);
+    auto levels = PriceLevelModel(prices, max_level);
+    prices->push(10 * Money::ONE);
+    prices->push(11 * Money::ONE);
+    prices->push(12 * Money::ONE);
+    prices->push(12 * Money::ONE);
+    REQUIRE(levels.get(3) == 2);
+  }
+  TEST_CASE("last_price_at_max_level") {
+    auto prices = std::make_shared<ArrayListModel<Money>>();
+    auto max_level = std::make_shared<LocalValueModel<int>>(2);
+    auto levels = PriceLevelModel(prices, max_level);
+    prices->push(10 * Money::ONE);
+    prices->push(11 * Money::ONE);
+    prices->push(12 * Money::ONE);
+    prices->push(13 * Money::ONE);
+    prices->push(14 * Money::ONE);
+    REQUIRE(levels.get(4) == 2);
+  }
+  TEST_CASE("remove_same_price") {
+    auto prices = std::make_shared<ArrayListModel<Money>>();
+    auto max_level = std::make_shared<LocalValueModel<int>>(3);
+    auto levels = PriceLevelModel(prices, max_level);
+    prices->push(10 * Money::ONE);
+    prices->push(10 * Money::ONE);
+    prices->push(11 * Money::ONE);
+    prices->push(11 * Money::ONE);
+    prices->push(12 * Money::ONE);
+    REQUIRE(levels.get(0) == 0);
+    REQUIRE(levels.get(1) == 0);
+    REQUIRE(levels.get(2) == 1);
+    REQUIRE(levels.get(3) == 1);
+    REQUIRE(levels.get(4) == 2);
+    prices->remove(1);
+    REQUIRE(levels.get(0) == 0);
+    REQUIRE(levels.get(1) == 1);
+    REQUIRE(levels.get(2) == 1);
+    REQUIRE(levels.get(3) == 2);
+  }
+  TEST_CASE("remove_max_price") {
+    auto prices = std::make_shared<ArrayListModel<Money>>();
+    auto max_level = std::make_shared<LocalValueModel<int>>(2);
+    auto levels = PriceLevelModel(prices, max_level);
+    prices->push(10 * Money::ONE);
+    prices->push(11 * Money::ONE);
+    prices->push(12 * Money::ONE);
+    prices->push(13 * Money::ONE);
+    REQUIRE(levels.get(0) == 0);
+    REQUIRE(levels.get(1) == 1);
+    REQUIRE(levels.get(2) == 2);
+    REQUIRE(levels.get(3) == 2);
+    prices->remove(2);
+    REQUIRE(levels.get(0) == 0);
+    REQUIRE(levels.get(1) == 1);
+    REQUIRE(levels.get(2) == 2);
+  }
+  TEST_CASE("insert_middle") {
+    auto prices = std::make_shared<ArrayListModel<Money>>();
+    auto max_level = std::make_shared<LocalValueModel<int>>(3);
+    auto levels = PriceLevelModel(prices, max_level);
+    prices->push(10 * Money::ONE);
+    prices->push(12 * Money::ONE);
+    prices->push(14 * Money::ONE);
+    REQUIRE(levels.get(0) == 0);
+    REQUIRE(levels.get(1) == 1);
+    REQUIRE(levels.get(2) == 2);
+    prices->insert(11 * Money::ONE, 1);
+    REQUIRE(levels.get(0) == 0);
+    REQUIRE(levels.get(1) == 1);
+    REQUIRE(levels.get(2) == 2);
+    REQUIRE(levels.get(3) == 3);
+    prices->insert(11 * Money::ONE, 2);
+    REQUIRE(levels.get(0) == 0);
+    REQUIRE(levels.get(1) == 1);
+    REQUIRE(levels.get(2) == 1);
+    REQUIRE(levels.get(3) == 2);
+    REQUIRE(levels.get(4) == 3);
+  }
 }

@@ -34,6 +34,12 @@ TEST_SUITE("IsTopMpidModel") {
     auto price = std::make_shared<LocalValueModel<Money>>(Money::ONE);
     auto is_top = IsTopMpidModel(top_mpid_levels, mpid, price);
     REQUIRE(!is_top.get());
+    SUBCASE("update_mpid") {
+      auto updated_mpid = TEST_MPID;
+      updated_mpid.m_market = DefaultMarkets::TSXV();
+      mpid->set(updated_mpid);
+      REQUIRE(is_top.get());
+    }
   }
   TEST_CASE("constructor_missing_origin") {
     auto top_mpid_levels = std::make_shared<ArrayListModel<TopMpidLevel>>();
