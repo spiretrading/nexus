@@ -6,14 +6,17 @@
 
 namespace Spire {
 
-  /** Stores the top level among all of a market's MPIDs. */
+  /** Stores the price of an MPID's top-most level. */
   struct TopMpidLevel {
 
     /** The MPID's market. */
     Nexus::MarketCode m_market;
 
-    /** The top level among all MPID's for the represented market. */
-    int m_level;
+    /** The index of the top level within the list of book quotes. */
+    int m_index;
+
+    /** The price of the represented MPID's top-most level. */
+    Nexus::Money m_price;
   };
 
   /**

@@ -49,9 +49,12 @@ namespace {
       if(column_id == BookViewColumn::MPID) {
         auto mpid = make_table_value_model<Mpid>(table, row, column);
         auto level = make_list_value_model(m_price_levels, row);
-        auto is_top_mpid =
-          std::make_shared<IsTopMpidModel>(m_top_mpid_levels, mpid, level);
-        return new MpidBox(mpid, level, is_top_mpid);
+        auto price = make_table_value_model<Money>(
+          table, row, static_cast<int>(BookViewColumn::PRICE));
+        auto is_top_mpid = std::make_shared<IsTopMpidModel>(
+          m_top_mpid_levels, mpid, std::move(price));
+        return new MpidBox(
+          std::move(mpid), std::move(level), std::move(is_top_mpid));
       } else if(column_id == BookViewColumn::PRICE) {
         auto money_item = make_label(make_to_text_model(
           make_table_value_model<Money>(table, row, column)));
@@ -290,8 +293,9 @@ TableView* Spire::make_book_view_table_view(
     std::make_shared<ColumnViewListModel<Money>>(
       table, static_cast<int>(BookViewColumn::PRICE)),
       make_max_level_model(properties));
-  auto top_mpid_levels =
-    std::make_shared<TopMpidLevelListModel>(std::move(quotes));
+  auto top_mpid_levels = std::make_shared<TopMpidLevelListModel>(
+    std::make_shared<SortedListModel<BookQuote>>(
+      std::move(quotes), &BookQuoteListingComparator));
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
     set_item_builder(
