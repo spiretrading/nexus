@@ -120,7 +120,8 @@ void ListItem::mount(QWidget& body) {
   match(body, Body());
   proxy_style(*m_button, *m_box);
   proxy_style(*this, *m_button);
-  updateGeometry();
+  layout()->activate();
+  //updateGeometry();
 }
 
 QWidget* ListItem::unmount() {
