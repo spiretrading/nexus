@@ -40,7 +40,8 @@ namespace Styles {
        * Constructs an MpidBox.
        * @param current The MPID to display.
        * @param level The price level represented.
-       * @param top_mpid_level The list of top levels by MPID.
+       * @param is_top_mpid Whether this listing is the top price for the
+       *        current MPID.
        */
       MpidBox(std::shared_ptr<MpidModel> current,
         std::shared_ptr<ValueModel<int>> level,
