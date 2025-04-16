@@ -352,8 +352,8 @@ void BookViewWindow::on_current(const Security& security) {
     m_interactions->get_default_quantity());
   panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   layout->addWidget(panel);
-  auto market_depth = new MarketDepth(m_model, m_model->get_bbo_quote(),
-    m_factory->get_properties(), m_markets);
+  auto market_depth = new MarketDepth(
+    m_model, m_model->get_bbo_quote(), m_factory->get_properties());
   market_depth->setContextMenuPolicy(Qt::CustomContextMenu);
   m_selected_quote = market_depth->get_selected_book_quote();
   layout->addWidget(market_depth);
