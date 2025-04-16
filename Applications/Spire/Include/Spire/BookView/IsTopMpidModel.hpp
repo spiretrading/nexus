@@ -2,7 +2,7 @@
 #define SPIRE_IS_TOP_MPID_MODEL_HPP
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/MpidBox.hpp"
-#include "Spire/BookView/TopMpidLevelListModel.hpp"
+#include "Spire/BookView/TopMpidPriceListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 
 namespace Spire {
@@ -14,11 +14,11 @@ namespace Spire {
       /**
        * Constructs an IsTopMpidModel by checking if an MPID at a given price
        * is the top-most MPID based on a list top MPID prices.
-       * @param top_mpid_levels The list of top price levels for a every MPID.
+       * @param top_mpid_prices The list of top MPID prices.
        * @param mpid The MPID of the quote to track.
        * @param price The price of the quote to track.
        */
-      IsTopMpidModel(std::shared_ptr<ListModel<TopMpidLevel>> top_mpid_levels,
+      IsTopMpidModel(std::shared_ptr<ListModel<TopMpidPrice>> top_mpid_prices,
         std::shared_ptr<MpidModel> mpid,
         std::shared_ptr<ValueModel<Nexus::Money>> price);
 
@@ -28,21 +28,21 @@ namespace Spire {
         const UpdateSignal::slot_type& slot) const override;
 
     private:
-      std::shared_ptr<ListModel<TopMpidLevel>> m_top_mpid_levels;
+      std::shared_ptr<ListModel<TopMpidPrice>> m_top_mpid_prices;
       std::shared_ptr<MpidModel> m_mpid;
       Nexus::MarketCode m_market;
       std::shared_ptr<ValueModel<Nexus::Money>> m_price;
-      std::shared_ptr<ValueModel<TopMpidLevel>> m_top_mpid;
+      std::shared_ptr<ValueModel<TopMpidPrice>> m_top_mpid;
       LocalValueModel<bool> m_current;
       boost::signals2::scoped_connection m_mpid_connection;
       boost::signals2::scoped_connection m_price_connection;
-      boost::signals2::scoped_connection m_top_mpid_levels_connection;
+      boost::signals2::scoped_connection m_top_mpid_prices_connection;
 
       void initialize_top_mpid();
       void on_mpid(const Mpid& mpid);
-      void on_top_mpid(const TopMpidLevel& top);
+      void on_top_mpid(const TopMpidPrice& top);
       void on_price(Nexus::Money price);
-      void on_operation(const ListModel<TopMpidLevel>::Operation& operation);
+      void on_operation(const ListModel<TopMpidPrice>::Operation& operation);
   };
 }
 

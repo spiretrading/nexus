@@ -5,7 +5,7 @@
 #include "Spire/BookView/MpidBox.hpp"
 #include "Spire/BookView/PreviewOrderDisplayValueModel.hpp"
 #include "Spire/BookView/PriceLevelModel.hpp"
-#include "Spire/BookView/TopMpidLevelListModel.hpp"
+#include "Spire/BookView/TopMpidPriceListModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/FilteredListModel.hpp"
@@ -41,7 +41,7 @@ namespace {
 
   struct ItemBuilder {
     std::shared_ptr<PriceLevelModel> m_price_levels;
-    std::shared_ptr<TopMpidLevelListModel> m_top_mpid_levels;
+    std::shared_ptr<TopMpidPriceListModel> m_top_mpid_prices;
 
     QWidget* operator ()(
         const std::shared_ptr<TableModel>& table, int row, int column) {
@@ -52,7 +52,7 @@ namespace {
         auto price = make_table_value_model<Money>(
           table, row, static_cast<int>(BookViewColumn::PRICE));
         auto is_top_mpid = std::make_shared<IsTopMpidModel>(
-          m_top_mpid_levels, mpid, std::move(price));
+          m_top_mpid_prices, mpid, std::move(price));
         return new MpidBox(
           std::move(mpid), std::move(level), std::move(is_top_mpid));
       } else if(column_id == BookViewColumn::PRICE) {
@@ -293,13 +293,13 @@ TableView* Spire::make_book_view_table_view(
     std::make_shared<ColumnViewListModel<Money>>(
       table, static_cast<int>(BookViewColumn::PRICE)),
       make_max_level_model(properties));
-  auto top_mpid_levels = std::make_shared<TopMpidLevelListModel>(
+  auto top_mpid_prices = std::make_shared<TopMpidPriceListModel>(
     std::make_shared<SortedListModel<BookQuote>>(
       std::move(quotes), &BookQuoteListingComparator));
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
     set_item_builder(
-      ItemBuilder(std::move(price_levels), std::move(top_mpid_levels))).make();
+      ItemBuilder(std::move(price_levels), std::move(top_mpid_prices))).make();
   table_view->get_header().setVisible(false);
   table_view->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
   auto stylist = new TableViewStylist(*table_view, std::move(properties));

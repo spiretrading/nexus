@@ -74,9 +74,6 @@ void PriceLevelModel::on_price_operation(
         }
       });
     },
-    [&] (const PriceListModel::MoveOperation& operation) {
-      m_levels.move(operation.m_source, operation.m_destination);
-    },
     [&] (const PriceListModel::RemoveOperation& operation) {
       auto level = m_levels.get(operation.m_index);
       m_levels.transact([&] {
@@ -107,6 +104,9 @@ void PriceLevelModel::on_price_operation(
           }
         }
       });
+    },
+    [&] (const PriceListModel::MoveOperation& operation) {
+      m_levels.move(operation.m_source, operation.m_destination);
     });
 }
 

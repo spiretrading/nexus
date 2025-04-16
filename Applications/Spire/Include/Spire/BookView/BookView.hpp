@@ -25,8 +25,8 @@ namespace Spire {
   class PreviewOrderDisplayValueModel;
   class PriceLevelModel;
   class TechnicalsPanel;
-  struct TopMpidLevel;
-  class TopMpidLevelListModel;
+  struct TopMpidPrice;
+  class TopMpidPriceListModel;
 }
 
 #endif
