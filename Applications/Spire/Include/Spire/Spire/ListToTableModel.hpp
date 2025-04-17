@@ -218,7 +218,7 @@ namespace Spire {
 
   template<typename T>
   const std::shared_ptr<ListModel<typename ListToTableModel<T>::Type>>&
-      get_source() const {
+      ListToTableModel<T>::get_source() const {
     return m_list;
   }
 
