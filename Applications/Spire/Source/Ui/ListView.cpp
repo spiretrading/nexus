@@ -202,7 +202,8 @@ ListView::ListView(
       m_overflow_gap(DEFAULT_OVERFLOW_GAP),
       m_query_timer(this),
       m_initialize_count(0),
-      m_is_transaction(false) {
+      m_is_transaction(false),
+      m_is_tab_focus_in(false) {
   for(auto i : std::ranges::views::iota(0, m_list->get_size())) {
     auto& entry = make_item_entry(i);
     m_current_controller.add(
@@ -304,6 +305,41 @@ bool ListView::event(QEvent* event) {
     update_parent();
   }
   return QWidget::event(event);
+}
+
+void ListView::focusInEvent(QFocusEvent* event) {
+  if(event->reason() == Qt::TabFocusReason ||
+      event->reason() == Qt::BacktabFocusReason) {
+    m_is_tab_focus_in = true;
+    focusNextPrevChild(event->reason() == Qt::TabFocusReason);
+    m_is_tab_focus_in = false;
+  } else {
+    QWidget::focusInEvent(event);
+  }
+}
+
+bool ListView::focusNextPrevChild(bool next) {
+  m_selection_controller.set_mode(ListSelectionController::Mode::SINGLE);
+  if(auto current = m_current_controller.get_current()->get()) {
+    if(m_is_tab_focus_in && find_focus_state(m_current_entry->m_item) ==
+        FocusObserver::State::NONE) {
+      m_current_entry->m_item.setFocusPolicy(Qt::StrongFocus);
+      auto focus_reason = [&] {
+        if(next) {
+          return Qt::TabFocusReason;
+        }
+        return Qt::BacktabFocusReason;
+      }();
+      m_current_entry->m_item.setFocus(focus_reason);
+      return true;
+    } else {
+      m_current_entry->m_item.setFocusPolicy(Qt::ClickFocus);
+      setFocusProxy(nullptr);
+      setFocusPolicy(Qt::StrongFocus);
+      setFocus();
+    }
+  }
+  return QWidget::focusNextPrevChild(next);
 }
 
 void ListView::keyPressEvent(QKeyEvent* event) {
