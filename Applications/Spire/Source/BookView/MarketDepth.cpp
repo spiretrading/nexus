@@ -1,11 +1,12 @@
 #include "Spire/BookView/MarketDepth.hpp"
+#include <QKeyEvent>
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/BookView/BboBox.hpp"
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/BookView/BookViewTableView.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
-#include "Spire/Spire/ListToTableModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -18,110 +19,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  struct CurrentModel : ValueModel<optional<BookViewModel::UserOrder>> {
-    std::shared_ptr<SortedTableModel> m_table;
-    std::shared_ptr<ValueModel<optional<TableIndex>>> m_table_current;
-    LocalValueModel<optional<BookViewModel::UserOrder>> m_current;
-    scoped_connection m_connection;
-
-    CurrentModel(std::shared_ptr<SortedTableModel> table,
-        std::shared_ptr<ValueModel<optional<TableIndex>>> table_current)
-        : m_table(std::move(table)),
-          m_table_current(std::move(table_current)) {
-      m_connection = m_table_current->connect_update_signal(
-        std::bind_front(&CurrentModel::on_current, this));
-    }
-
-    const Type& get() const override {
-      return m_current.get();
-    }
-
-    QValidator::State test(const Type& value) const override {
-      return m_current.test(value);
-    }
-
-    QValidator::State set(const Type& value) override {
-      return m_current.set(value);
-    }
-
-    connection connect_update_signal(
-        const UpdateSignal::slot_type& slot) const override {
-      return m_current.connect_update_signal(slot);
-    }
-
-    void on_current(const optional<TableIndex>& current) {
-      if(!current) {
-        m_current.set(none);
-        return;
-      }
-      auto source_row = m_table->index_to_source(current->m_row);
-      auto source_list = static_cast<const ListToTableModel<BookEntry>&>(
-        *m_table->get_source().get()).get_source();
-      auto& entry = source_list->get(source_row);
-      if(auto user_order = boost::get<BookViewModel::UserOrder>(&entry)) {
-        m_current.set(*user_order);
-      } else {
-        m_current.set(none);
-      }
-    }
-  };
-
-  struct ConsolidatedCurrentModel : MarketDepth::CurrentUserOrderModel {
-    std::shared_ptr<ValueModel<optional<BookViewModel::UserOrder>>>
-      m_current_bid;
-    std::shared_ptr<ValueModel<optional<BookViewModel::UserOrder>>>
-      m_current_ask;
-    LocalValueModel<optional<MarketDepth::CurrentUserOrder>> m_current;
-    scoped_connection m_bid_connection;
-    scoped_connection m_ask_connection;
-
-    ConsolidatedCurrentModel(
-        std::shared_ptr<ValueModel<optional<BookViewModel::UserOrder>>>
-          current_bid,
-        std::shared_ptr<ValueModel<optional<BookViewModel::UserOrder>>>
-          current_ask)
-        : m_current_bid(std::move(current_bid)),
-          m_current_ask(std::move(current_ask)) {
-      m_bid_connection = m_current_bid->connect_update_signal(
-        std::bind_front(&ConsolidatedCurrentModel::on_bid, this));
-      m_ask_connection = m_current_bid->connect_update_signal(
-        std::bind_front(&ConsolidatedCurrentModel::on_ask, this));
-    }
-
-    const Type& get() const override {
-      return m_current.get();
-    }
-
-    QValidator::State test(const Type& value) const override {
-      return m_current.test(value);
-    }
-
-    QValidator::State set(const Type& value) override {
-      return m_current.set(value);
-    }
-
-    connection connect_update_signal(
-        const UpdateSignal::slot_type& slot) const override {
-      return m_current.connect_update_signal(slot);
-    }
-
-    void on_bid(const optional<BookViewModel::UserOrder>& user_order) {
-      if(user_order) {
-        m_current.set(MarketDepth::CurrentUserOrder(*user_order, Side::BID));
-      } else if(auto& current = m_current_ask->get()) {
-        m_current.set(MarketDepth::CurrentUserOrder(*current, Side::ASK));
-      }
-    }
-
-    void on_ask(const optional<BookViewModel::UserOrder>& user_order) {
-      if(user_order) {
-        m_current.set(MarketDepth::CurrentUserOrder(*user_order, Side::ASK));
-      } else if(auto& current = m_current_bid->get()) {
-        m_current.set(MarketDepth::CurrentUserOrder(*current, Side::BID));
-      }
-    }
-  };
-
   auto make_panel(std::shared_ptr<BookViewModel> model,
       std::shared_ptr<BookViewPropertiesModel> properties, Side side) {
     auto panel = new QWidget();
@@ -143,10 +40,7 @@ namespace {
     layout->addWidget(table_view);
     auto table =
       std::static_pointer_cast<SortedTableModel>(table_view->get_table());
-    auto current = table_view->get_current();
-    auto current_user_order = std::make_shared<CurrentModel>(
-      std::move(table), std::move(current));
-    return std::tuple(panel, bbo_box, table_view, current_user_order);
+    return std::tuple(panel, bbo_box, table_view);
   }
 }
 
@@ -159,16 +53,21 @@ MarketDepth::MarketDepth(std::shared_ptr<BookViewModel> model,
           &BookViewLevelProperties::m_font)),
       m_font(m_font_property->get()) {
   setFocusPolicy(Qt::StrongFocus);
-  auto [bid_panel, bid_bbo, bid_table_view, current_bid] =
+  auto [bid_panel, bid_bbo, bid_table_view] =
     make_panel(m_model, properties, Side::BID);
   link(*this, *bid_bbo);
   m_bid_table_view = bid_table_view;
-  auto [ask_panel, ask_bbo, ask_table_view, current_ask] =
+  m_bid_table_view->get_body().installEventFilter(this);
+  auto [ask_panel, ask_bbo, ask_table_view] =
     make_panel(m_model, properties, Side::ASK);
   link(*this, *ask_bbo);
   m_ask_table_view = ask_table_view;
-  m_current = std::make_shared<ConsolidatedCurrentModel>(
-    std::move(current_bid), std::move(current_ask));
+  m_ask_table_view->get_body().installEventFilter(this);
+  m_current = std::make_shared<CurrentUserOrderModel>(
+    std::static_pointer_cast<SortedTableModel>(m_bid_table_view->get_table()),
+    m_bid_table_view->get_current(),
+    std::static_pointer_cast<SortedTableModel>(m_ask_table_view->get_table()),
+    m_ask_table_view->get_current());
   auto layout = make_hbox_layout(this);
   layout->setSpacing(scale_width(2));
   layout->addWidget(bid_panel, 1);
@@ -185,9 +84,24 @@ MarketDepth::MarketDepth(std::shared_ptr<BookViewModel> model,
     std::bind_front(&MarketDepth::on_font_property_update, this));
 }
 
-const std::shared_ptr<MarketDepth::CurrentUserOrderModel>&
-    MarketDepth::get_current() const {
+const std::shared_ptr<CurrentUserOrderModel>& MarketDepth::get_current() const {
   return m_current;
+}
+
+bool MarketDepth::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::KeyPress) {
+    auto& key_event = *static_cast<QKeyEvent*>(event);
+    if(watched == &m_bid_table_view->get_body() &&
+        key_event.key() == Qt::Key_Right) {
+      m_current->navigate_to_asks();
+      return true;
+    } else if(watched == &m_ask_table_view->get_body() &&
+        key_event.key() == Qt::Key_Left) {
+      m_current->navigate_to_bids();
+      return true;
+    }
+  }
+  return QWidget::eventFilter(watched, event);
 }
 
 void MarketDepth::on_bid_position(int position) {

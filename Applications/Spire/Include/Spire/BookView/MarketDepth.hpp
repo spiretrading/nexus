@@ -3,6 +3,7 @@
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/BookView/CurrentUserOrderModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -13,20 +14,6 @@ namespace Spire {
    */
   class MarketDepth : public QWidget {
     public:
-
-      /** Stores the current UserOrder. */
-      struct CurrentUserOrder {
-
-        /** The current UserOrder. */
-        BookViewModel::UserOrder m_user_order;
-
-        /** The side of the current UserOrder. */
-        Nexus::Side m_side;
-      };
-
-      /** The type used to model a CurrentUserOrder. */
-      using CurrentUserOrderModel =
-        ValueModel<boost::optional<CurrentUserOrder>>;
 
       /**
        * Constructs a MarketDepth.
@@ -39,6 +26,9 @@ namespace Spire {
         QWidget* parent = nullptr);
 
       const std::shared_ptr<CurrentUserOrderModel>& get_current() const;
+
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
       std::shared_ptr<BookViewModel> m_model;
