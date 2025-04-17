@@ -158,18 +158,6 @@ std::shared_ptr<BooleanModel> ContextMenu::add_check_box(const QString& name) {
 void ContextMenu::add_check_box(const QString& name,
     const std::shared_ptr<BooleanModel>& checked) {
   m_list->push(MenuItem(++m_next_id, MenuItemType::CHECK, name, checked));
-  auto item = m_list_view->get_list_item(m_list->get_size() - 1);
-  m_check_item_press_observers.emplace_back(
-    std::make_unique<PressObserver>(*item));
-  m_check_item_press_observers.back()->connect_press_end_signal(
-    [=] (auto reason) {
-      auto& check_box = static_cast<CheckBox&>(item->get_body());
-      if(reason == PressObserver::Reason::MOUSE &&
-          !check_box.rect().contains(check_box.mapFromGlobal(QCursor::pos()))) {
-        check_box.get_current()->set(!check_box.get_current()->get());
-        check_box.setFocus();
-      }
-    });
 }
 
 void ContextMenu::add_separator() {
@@ -393,6 +381,20 @@ void ContextMenu::on_list_operation(
             });
             break;
           case MenuItemType::CHECK:
+            m_check_item_press_observers.emplace(
+              std::piecewise_construct,
+              std::forward_as_tuple(operation.m_index),
+              std::forward_as_tuple(*item));
+            m_check_item_press_observers.at(operation.m_index).
+              connect_press_end_signal([=] (auto reason) {
+                auto& check_box = static_cast<CheckBox&>(item->get_body());
+                if(reason == PressObserver::Reason::MOUSE &&
+                    !check_box.rect().contains(check_box.mapFromGlobal(
+                      QCursor::pos()))) {
+                  check_box.get_current()->set(!check_box.get_current()->get());
+                  check_box.setFocus();
+                }
+              });
             update_style(*item, [] (auto& style) {
               style.get(Any()).set(vertical_padding(scale_height(4)));
               style.get(Hover() > Body() > is_a<Box>()).
@@ -402,6 +404,11 @@ void ContextMenu::on_list_operation(
           default:
             break;
         }
+      }
+    },
+    [&] (const ListModel<MenuItem>::PreRemoveOperation& operation) {
+      if(m_list->get(operation.m_index).m_type == MenuItemType::CHECK) {
+        m_check_item_press_observers.erase(operation.m_index);
       }
     });
 }

@@ -152,7 +152,7 @@ namespace Spire {
       QMargins m_window_border_size;
       boost::optional<QSize> m_window_size;
       std::unordered_map<int, QWidget*> m_submenus;
-      std::vector<std::unique_ptr<PressObserver>> m_check_item_press_observers;
+      std::unordered_map<int, PressObserver> m_check_item_press_observers;
       boost::signals2::scoped_connection m_window_style_connection;
 
       QWidget* build_item(const std::shared_ptr<AnyListModel>& list, int index);
