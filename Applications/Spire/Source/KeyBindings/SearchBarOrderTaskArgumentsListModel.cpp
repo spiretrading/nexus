@@ -30,8 +30,8 @@ namespace {
 
 SearchBarOrderTaskArgumentsListModel::SearchBarOrderTaskArgumentsListModel(
     std::shared_ptr<OrderTaskArgumentsListModel> source,
-    std::shared_ptr<TextModel> keywords, const CountryDatabase& countries,
-    const MarketDatabase& markets, const DestinationDatabase& destinations)
+    std::shared_ptr<TextModel> keywords, CountryDatabase countries,
+    MarketDatabase markets, DestinationDatabase destinations)
     : m_countries(std::move(countries)),
       m_markets(std::move(markets)),
       m_destinations(std::move(destinations)),
@@ -82,7 +82,9 @@ connection SearchBarOrderTaskArgumentsListModel::connect_operation_signal(
 
 void SearchBarOrderTaskArgumentsListModel::transact(
     const std::function<void ()>& transaction) {
-  m_filtered_list.transact([&] { transaction(); });
+  m_filtered_list.transact([&] {
+    transaction();
+  });
 }
 
 void SearchBarOrderTaskArgumentsListModel::on_keywords(

@@ -41,6 +41,7 @@ namespace Spire {
       ColorBox* m_text_color_box;
       QWidget* m_text_color_picker;
       OverlayPanel* m_panel;
+      boost::signals2::scoped_connection m_connection;
 
       bool on_mouse_press(ColorBox& source, ColorBox& destination,
         QWidget& source_picker, const QMouseEvent& mouse_event);

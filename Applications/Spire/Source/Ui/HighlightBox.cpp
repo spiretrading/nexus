@@ -174,7 +174,6 @@ void HighlightBox::show_highlight_picker() {
   }
   if(!m_highlight_picker->isVisible()) {
     m_highlight_picker->show();
-    get_highlight_palette(*m_highlight_picker)->setFocus();
   }
 }
 

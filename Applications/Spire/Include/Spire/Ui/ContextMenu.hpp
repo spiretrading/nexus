@@ -5,6 +5,7 @@
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/MouseMoveObserver.hpp"
 #include "Spire/Ui/PressObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -133,6 +134,8 @@ namespace Spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
+      void hideEvent(QHideEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       struct MenuItem {
@@ -148,10 +151,15 @@ namespace Spire {
       std::shared_ptr<ArrayListModel<MenuItem>> m_list;
       ListView* m_list_view;
       OverlayPanel* m_window;
-      QWidget* m_active_menu_window;
+      OverlayPanel* m_visible_submenu;
+      int m_pending_submenu_index;
+      int m_hide_count;
+      QRect m_active_item_geometry;
+      int m_block_move;
+      MouseMoveObserver m_mouse_observer;
       QMargins m_window_border_size;
       boost::optional<QSize> m_window_size;
-      std::unordered_map<int, QWidget*> m_submenus;
+      std::unordered_map<int, OverlayPanel*> m_submenus;
       std::unordered_map<int, PressObserver> m_check_item_press_observers;
       boost::signals2::scoped_connection m_window_style_connection;
 
@@ -161,13 +169,23 @@ namespace Spire {
       void focus_first_item();
       void handle_right_or_enter_event(QEvent* event);
       bool handle_mouse_event(QMouseEvent* event);
-      void position_menu(ListItem* item);
-      void hide_active_menu();
+      void position_submenu();
+      void position_submenu(ListItem& item);
+      bool is_submenu_hovered() const;
+      void hide_submenu();
+      void defer_hide_submenu();
       void show_submenu(int index);
+      void on_mouse_move(QWidget& target, QMouseEvent& event);
       void on_list_operation(const ListModel<MenuItem>::Operation& operation);
       void on_submit(const std::any& submission);
       void on_window_style();
   };
+
+  /**
+   * Moves a ContextMenu under the cursor and shows it.
+   * @param menu The ContextMenu to position under the cursor and show.
+   */
+  void show_under_cursor(ContextMenu& menu);
 
   /**
    * Adds an action to a ContextMenu displaying an icon along side it.

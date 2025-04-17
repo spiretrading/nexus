@@ -40,16 +40,12 @@ connection Button::connect_click_signal(
 }
 
 void Button::keyPressEvent(QKeyEvent* event) {
-  switch(event->key()) {
-    case Qt::Key_Enter:
-    case Qt::Key_Return:
-      if(!event->isAutoRepeat()) {
-        m_click_signal();
-      }
-      break;
-    default:
-      QWidget::keyPressEvent(event);
+  if((event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) &&
+      event->modifiers() == Qt::NoModifier && !event->isAutoRepeat()) {
+    m_click_signal();
+    return;
   }
+  QWidget::keyPressEvent(event);
 }
 
 void Button::on_press_start(PressObserver::Reason reason) {

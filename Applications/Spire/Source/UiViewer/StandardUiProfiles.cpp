@@ -1357,43 +1357,43 @@ UiProfile Spire::make_combo_box_profile() {
 }
 
 UiProfile Spire::make_context_menu_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  auto profile = UiProfile(QString::fromUtf8("ContextMenu"), properties,
+  auto profile = UiProfile(QString::fromUtf8("ContextMenu"), {},
     [] (auto& profile) {
       auto button = make_label_button(QString::fromUtf8("Click me"));
       button->connect_click_signal([=, &profile] {
         auto menu = new ContextMenu(*button);
-        menu->add_action("Undo", profile.make_event_slot<>(
-          QString("Action:Undo")));
+        menu->add_action(
+          "Undo", profile.make_event_slot<>(QString("Action:Undo")));
         auto view_menu = new ContextMenu(*static_cast<QWidget*>(menu));
-        view_menu->add_action("Large", profile.make_event_slot<>(
-          QString("Action:Large")));
-        view_menu->add_action("Medium", profile.make_event_slot<>(
-          QString("Action:Medium")));
-        view_menu->add_action("Small", profile.make_event_slot<>(
-          QString("Action:Small")));
+        view_menu->add_action(
+          "Large", profile.make_event_slot<>(QString("Action:Large")));
+        view_menu->add_action(
+          "Medium", profile.make_event_slot<>(QString("Action:Medium")));
+        view_menu->add_action(
+          "Small", profile.make_event_slot<>(QString("Action:Small")));
         view_menu->add_separator();
         auto empty_menu = new ContextMenu(*static_cast<QWidget*>(view_menu));
         view_menu->add_menu("Empty", *empty_menu);
         menu->add_menu("View", *view_menu);
         auto sort_menu = new ContextMenu(*static_cast<QWidget*>(menu));
-        sort_menu->add_action("Name", profile.make_event_slot<>(
-          QString("Action:Name")));
-        sort_menu->add_action("Size", profile.make_event_slot<>(
-          QString("Action:Size")));
+        sort_menu->add_action(
+          "Name", profile.make_event_slot<>(QString("Action:Name")));
+        sort_menu->add_action(
+          "Size", profile.make_event_slot<>(QString("Action:Size")));
         auto type_menu = new ContextMenu(*static_cast<QWidget*>(sort_menu));
-        type_menu->add_action("Security", profile.make_event_slot<>(
-          QString("Action:Security")));
-        type_menu->add_action("Side", profile.make_event_slot<>(
-          QString("Action:Side")));
+        type_menu->add_action(
+          "Security", profile.make_event_slot<>(QString("Action:Security")));
+        type_menu->add_action(
+          "Side", profile.make_event_slot<>(QString("Action:Side")));
         sort_menu->add_menu("Type", *type_menu);
         menu->add_menu("Sort by", *sort_menu);
         menu->add_separator();
-        menu->add_action("Cut", profile.make_event_slot<>(QString("Action:Cut")));
-        menu->add_action("Copy", profile.make_event_slot<>(
-          QString("Action:Copy")));
-        menu->add_action("Paste", profile.make_event_slot<>(
-          QString("Action:Paste")));
+        menu->add_action(
+          "Cut", profile.make_event_slot<>(QString("Action:Cut")));
+        menu->add_action(
+          "Copy", profile.make_event_slot<>(QString("Action:Copy")));
+        menu->add_action(
+          "Paste", profile.make_event_slot<>(QString("Action:Paste")));
         menu->add_separator();
         auto date_model = std::make_shared<LocalBooleanModel>();
         date_model->set(true);
@@ -1405,12 +1405,9 @@ UiProfile Spire::make_context_menu_profile() {
           profile.make_event_slot<bool>(QString("Time CheckedSignal")));
         menu->add_separator();
         menu->add_action("This is a long name for test",
-        profile.make_event_slot<>(
-          QString("Action:This is a long name for test")));
-        auto pos = QCursor::pos();
-        menu->window()->move(pos.x(), pos.y() + button->height());
-        menu->window()->setAttribute(Qt::WA_DeleteOnClose);
-        menu->show();
+          profile.make_event_slot<>(
+            QString("Action:This is a long name for test")));
+        show_under_cursor(*menu);
       });
       return button;
     });
@@ -1886,24 +1883,43 @@ UiProfile Spire::make_editable_box_profile() {
 UiProfile Spire::make_editable_table_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(std::make_shared<
+    StandardUiProperty<TableModel::RemoveOperation>>(
+      "remove", TableModel::RemoveOperation(-1), [] (
+          auto parent, auto& property) {
+        auto form = new QWidget();
+        auto layout = make_hbox_layout(form);
+        auto row = new QSpinBox();
+        auto button = new QPushButton("Remove");
+        layout->addWidget(row);
+        layout->addWidget(button);
+        QObject::connect(button, &QPushButton::pressed, [=, &property] {
+          property.set(TableModel::RemoveOperation(row->value()));
+        });
+        return form;
+      }));
   auto profile = UiProfile("EditableTableView", properties, [] (auto& profile) {
-    auto array_table_model = std::make_shared<ArrayTableModel>();
-    array_table_model->push({QString("Test1"), OrderType(OrderType::MARKET),
+    auto table = std::make_shared<ArrayTableModel>();
+    table->push({QString("Test1"), OrderType(OrderType::MARKET),
       optional<Quantity>(10), QKeySequence("F3")});
-    array_table_model->push({QString("Test2"), OrderType(OrderType::STOP),
+    table->push({QString("Test2"), OrderType(OrderType::STOP),
       optional<Quantity>(20), QKeySequence("F7")});
-    array_table_model->push({QString("Test3"), OrderType(OrderType::LIMIT),
+    table->push({QString("Test3"), OrderType(OrderType::LIMIT),
       optional<Quantity>(30), QKeySequence("Ctrl+F2")});
-    auto table_view = new EditableTableView(array_table_model,
-      make_header_model(), std::make_shared<EmptyTableFilter>(),
-      std::make_shared<LocalValueModel<optional<TableIndex>>>(),
-      std::make_shared<TableSelectionModel>(
-        std::make_shared<TableEmptySelectionModel>(),
-        std::make_shared<ListSingleSelectionModel>(),
-        std::make_shared<ListEmptySelectionModel>()),
-      make_row_cell, {});
+    auto builder = EditableTableViewBuilder(table).
+      set_header(make_header_model()).
+      set_item_builder(make_row_cell);
+    auto table_view = builder.make();
     apply_widget_properties(table_view, profile.get_properties());
     table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto& remove_operation =
+      get<TableModel::RemoveOperation>("remove", profile.get_properties());
+    remove_operation.connect_changed_signal([=] (const auto& operation) {
+      if(operation.m_index >= 0 &&
+          operation.m_index < table->get_row_size()) {
+        table->remove(operation.m_index);
+      }
+    });
     return table_view;
   });
   return profile;

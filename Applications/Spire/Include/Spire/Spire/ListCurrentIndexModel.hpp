@@ -22,7 +22,7 @@ namespace Spire {
       /**
        * Constructs a ListCurrentIndexModel that indexes a specified ListModel.
        * @param list The ListModel to index.
-       * @param index The current index. 
+       * @param index The current index.
        */
       ListCurrentIndexModel(
         std::shared_ptr<AnyListModel> list, boost::optional<int> index);

@@ -28,6 +28,8 @@ namespace Spire {
 
       using Comparator = SortedTableModel::Comparator;
 
+      using ValueComparator = SortedTableModel::ValueComparator;
+
       /**
        * The default item builder which uses a label styled TextBox to display
        * the text representation of its value.
@@ -96,8 +98,6 @@ namespace Spire {
       TableHeader* m_header_view;
       ScrollBox* m_header_scroll_box;
       TableBody* m_body;
-      TableItem* m_current_item;
-      QMetaObject::Connection m_current_item_connection;
       int m_horizontal_spacing;
       int m_vertical_spacing;
       ScrollBox* m_scroll_box;
@@ -205,6 +205,10 @@ namespace Spire {
 
       /** Sets the Comparator to use. */
       TableViewBuilder& set_comparator(TableView::Comparator comparator);
+
+      /** Sets the Comparator to use. */
+      TableViewBuilder& set_comparator(
+        TableView::ValueComparator comparator);
 
       /** Makes a new TableView using the current state of this builder. */
       TableView* make() const;
