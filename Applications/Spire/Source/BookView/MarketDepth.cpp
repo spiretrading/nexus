@@ -94,10 +94,12 @@ bool MarketDepth::eventFilter(QObject* watched, QEvent* event) {
     if(watched == &m_bid_table_view->get_body() &&
         key_event.key() == Qt::Key_Right) {
       m_current->navigate_to_asks();
+      m_ask_table_view->setFocus();
       return true;
     } else if(watched == &m_ask_table_view->get_body() &&
         key_event.key() == Qt::Key_Left) {
       m_current->navigate_to_bids();
+      m_bid_table_view->setFocus();
       return true;
     }
   }
