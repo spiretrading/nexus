@@ -48,9 +48,10 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
       SecurityContext(std::move(identifier)),
       m_user_profile(user_profile.Get()),
       m_key_bindings(std::move(key_bindings)),
-      m_markets(std::move(markets)),
       m_factory(std::move(factory)),
       m_model_builder(std::move(model_builder)),
+      m_markets(std::move(markets)),
+      m_market_depth(nullptr),
       m_task_entry_panel(nullptr),
       m_is_task_entry_panel_for_interactions(false) {
   set_svg_icon(":/Icons/bookview.svg");
@@ -93,15 +94,13 @@ void BookViewWindow::keyPressEvent(QKeyEvent* event) {
   auto sequence = QKeySequence(event->modifiers() | event->key());
   if(m_task_entry_panel) {
     on_task_entry_key_press(*event);
-  } else if(
-      m_selected_quote && sequence == QKeySequence(Qt::CTRL + Qt::Key_K)) {
-    if(auto selected_quote = m_selected_quote->get()) {
-      on_cancel_most_recent(*selected_quote);
+  } else if(sequence == QKeySequence(Qt::CTRL + Qt::Key_K)) {
+    if(auto current = m_market_depth->get_current()->get()) {
+      on_cancel_most_recent(*current);
     }
-  } else if(m_selected_quote &&
-      sequence == QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_K)) {
-    if(auto selected_quote = m_selected_quote->get()) {
-      on_cancel_all(*selected_quote);
+  } else if(sequence == QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_K)) {
+    if(auto current = m_market_depth->get_current()->get()) {
+      on_cancel_all(*current);
     }
   } else if(sequence.matches(Qt::Key_QuoteLeft) == QKeySequence::ExactMatch) {
     display_interactions_panel();
@@ -256,21 +255,19 @@ void BookViewWindow::remove_task_entry_panel() {
   setUpdatesEnabled(true);
 }
 
-void BookViewWindow::on_context_menu(
-    MarketDepth* market_depth, const QPoint& pos) {
-  auto menu = new ContextMenu(*market_depth);
-  if(auto selected_quote = market_depth->get_selected_book_quote()->get()) {
+void BookViewWindow::on_context_menu(const QPoint& pos) {
+  auto menu = new ContextMenu(*m_market_depth);
+  if(auto current = m_market_depth->get_current()->get()) {
     menu->add_action(tr("Cancel Most Recent"),
-      std::bind_front(
-        &BookViewWindow::on_cancel_most_recent, this, *selected_quote));
+      std::bind_front(&BookViewWindow::on_cancel_most_recent, this, *current));
     menu->add_action(tr("Cancel All"),
-      std::bind_front(&BookViewWindow::on_cancel_all, this, *selected_quote));
+      std::bind_front(&BookViewWindow::on_cancel_all, this, *current));
     menu->add_separator();
   }
   menu->add_action(tr("Properties"),
     std::bind_front(&BookViewWindow::on_properties_menu, this));
   menu->window()->setAttribute(Qt::WA_DeleteOnClose);
-  menu->window()->move(market_depth->mapToGlobal(pos));
+  menu->window()->move(m_market_depth->mapToGlobal(pos));
   menu->window()->show();
 }
 
@@ -305,20 +302,24 @@ void BookViewWindow::on_task_entry_key_press(const QKeyEvent& event) {
   }
 }
 
-void BookViewWindow::on_cancel_most_recent(const BookQuote& book_quote) {
-  auto operation = Pick(book_quote.m_quote.m_side,
+void BookViewWindow::on_cancel_most_recent(
+    const MarketDepth::CurrentUserOrder& user_order) {
+  auto operation = Pick(user_order.m_side,
     CancelKeyBindingsModel::Operation::MOST_RECENT_ASK,
     CancelKeyBindingsModel::Operation::MOST_RECENT_BID);
-  m_cancel_operation_signal(operation, m_security_view->get_current()->get(),
-    CancelCriteria(book_quote.m_mpid.substr(1), book_quote.m_quote.m_price));
+  m_cancel_operation_signal(
+    operation, m_security_view->get_current()->get(), CancelCriteria(
+      user_order.m_user_order.m_destination, user_order.m_user_order.m_price));
 }
 
-void BookViewWindow::on_cancel_all(const BookQuote& book_quote) {
-  auto operation = Pick(book_quote.m_quote.m_side,
+void BookViewWindow::on_cancel_all(
+    const MarketDepth::CurrentUserOrder& user_order) {
+  auto operation = Pick(user_order.m_side,
     CancelKeyBindingsModel::Operation::ALL_ASKS,
     CancelKeyBindingsModel::Operation::ALL_BIDS);
-  m_cancel_operation_signal(operation, m_security_view->get_current()->get(),
-    CancelCriteria(book_quote.m_mpid.substr(1), book_quote.m_quote.m_price));
+  m_cancel_operation_signal(
+    operation, m_security_view->get_current()->get(), CancelCriteria(
+      user_order.m_user_order.m_destination, user_order.m_user_order.m_price));
 }
 
 void BookViewWindow::on_properties_menu() {
@@ -352,14 +353,12 @@ void BookViewWindow::on_current(const Security& security) {
     m_interactions->get_default_quantity());
   panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   layout->addWidget(panel);
-  auto market_depth = new MarketDepth(
-    m_model, m_model->get_bbo_quote(), m_factory->get_properties());
-  market_depth->setContextMenuPolicy(Qt::CustomContextMenu);
-  m_selected_quote = market_depth->get_selected_book_quote();
-  layout->addWidget(market_depth);
-  body->setFocusProxy(market_depth);
-  connect(market_depth, &QWidget::customContextMenuRequested,
-    std::bind_front(&BookViewWindow::on_context_menu, this, market_depth));
+  m_market_depth = new MarketDepth(m_model, m_factory->get_properties());
+  m_market_depth->setContextMenuPolicy(Qt::CustomContextMenu);
+  layout->addWidget(m_market_depth);
+  body->setFocusProxy(m_market_depth);
+  connect(m_market_depth, &QWidget::customContextMenuRequested,
+    std::bind_front(&BookViewWindow::on_context_menu, this));
   m_transition_view->set_body(*body);
   m_transition_view->set_status(TransitionView::Status::READY);
   m_bid_order_connection = m_model->get_bid_orders()->connect_operation_signal(

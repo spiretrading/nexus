@@ -125,7 +125,7 @@ namespace Spire {
       Nexus::MarketDatabase m_markets;
       std::shared_ptr<InteractionsKeyBindingsModel> m_interactions;
       std::shared_ptr<BookViewModel> m_model;
-      std::shared_ptr<BookQuoteModel> m_selected_quote;
+      MarketDepth* m_market_depth;
       TransitionView* m_transition_view;
       std::string m_link_identifier;
       boost::signals2::scoped_connection m_link_connection;
@@ -139,10 +139,11 @@ namespace Spire {
       void display_interactions_panel();
       void display_task_entry_panel(const OrderTaskArguments& arguments);
       void remove_task_entry_panel();
-      void on_context_menu(MarketDepth* market_depth, const QPoint& pos);
+      void on_context_menu(const QPoint& pos);
       void on_task_entry_key_press(const QKeyEvent& event);
-      void on_cancel_most_recent(const Nexus::BookQuote& book_quote);
-      void on_cancel_all(const Nexus::BookQuote& book_quote);
+      void on_cancel_most_recent(
+        const MarketDepth::CurrentUserOrder& user_order);
+      void on_cancel_all(const MarketDepth::CurrentUserOrder& user_order);
       void on_properties_menu();
       void on_current(const Nexus::Security& security);
       void on_order_operation(Nexus::Side side,

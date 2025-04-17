@@ -1,7 +1,7 @@
 #include "Spire/BookView/MarketDepth.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/BookView/BboBox.hpp"
-#include "Spire/BookView/BookViewTableModel.hpp"
+#include "Spire/BookView/BookViewTableView.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -16,12 +16,18 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  auto make_panel(
-      std::shared_ptr<BookViewModel> model, std::shared_ptr<QuoteModel> bbo,
+  auto make_panel(std::shared_ptr<BookViewModel> model,
       std::shared_ptr<BookViewPropertiesModel> properties, Side side) {
     auto panel = new QWidget();
     panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     auto layout = make_vbox_layout(panel);
+    auto bbo_accessor = [&] {
+      if(side == Side::BID) {
+        return &BboQuote::m_bid;
+      }
+      return &BboQuote::m_ask;
+    }();
+    auto bbo = make_field_value_model(model->get_bbo_quote(), bbo_accessor);
     auto bbo_box = new BboBox(std::move(bbo));
     bbo_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     layout->addWidget(bbo_box);
@@ -34,23 +40,22 @@ namespace {
 }
 
 MarketDepth::MarketDepth(std::shared_ptr<BookViewModel> model,
-    std::shared_ptr<BboQuoteModel> bbo_quote,
     std::shared_ptr<BookViewPropertiesModel> properties, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)),
-      m_selected_quote(
-        std::make_shared<LocalValueModel<optional<BookQuote>>>()),
       m_font_property(make_field_value_model(make_field_value_model(
         properties, &BookViewProperties::m_level_properties),
           &BookViewLevelProperties::m_font)),
-      m_font(m_font_property->get()) {
+      m_font(m_font_property->get()),
+      m_current(
+        std::make_shared<LocalValueModel<optional<CurrentUserOrder>>>()) {
   setFocusPolicy(Qt::StrongFocus);
-  auto [bid_panel, bid_bbo, bid_table_view] = make_panel(m_model,
-    make_field_value_model(bbo_quote, &BboQuote::m_bid), properties, Side::BID);
+  auto [bid_panel, bid_bbo, bid_table_view] =
+    make_panel(m_model, properties, Side::BID);
   link(*this, *bid_bbo);
   m_bid_table_view = bid_table_view;
-  auto [ask_panel, ask_bbo, ask_table_view] = make_panel(m_model,
-    make_field_value_model(bbo_quote, &BboQuote::m_ask), properties, Side::ASK);
+  auto [ask_panel, ask_bbo, ask_table_view] =
+    make_panel(m_model, properties, Side::ASK);
   link(*this, *ask_bbo);
   m_ask_table_view = ask_table_view;
   auto layout = make_hbox_layout(this);
@@ -69,9 +74,9 @@ MarketDepth::MarketDepth(std::shared_ptr<BookViewModel> model,
     std::bind_front(&MarketDepth::on_font_property_update, this));
 }
 
-const std::shared_ptr<BookQuoteModel>&
-    MarketDepth::get_selected_book_quote() const {
-  return m_selected_quote;
+const std::shared_ptr<MarketDepth::CurrentUserOrderModel>&
+    MarketDepth::get_current() const {
+  return m_current;
 }
 
 void MarketDepth::on_bid_position(int position) {

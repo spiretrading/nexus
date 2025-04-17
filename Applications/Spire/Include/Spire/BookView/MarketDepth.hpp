@@ -2,43 +2,51 @@
 #define SPIRE_MARKET_DEPTH_HPP
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
-#include "Spire/BookView/BookViewTableView.hpp"
+#include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
-  /** A ValueModel over optional BookQuote. */
-  using BookQuoteModel = ValueModel<boost::optional<Nexus::BookQuote>>;
-
   /**
-   * Displays a widget that contains the BBO panel along with tables for
-   * bids and asks.
+   * Displays a widget that contains the BBO panel along with tables for bids
+   * and asks.
    */
   class MarketDepth : public QWidget {
     public:
 
+      /** Stores the current UserOrder. */
+      struct CurrentUserOrder {
+
+        /** The current UserOrder. */
+        BookViewModel::UserOrder m_user_order;
+
+        /** The side of the current UserOrder. */
+        Nexus::Side m_side;
+      };
+
+      /** The type used to model a CurrentUserOrder. */
+      using CurrentUserOrderModel =
+        ValueModel<boost::optional<CurrentUserOrder>>;
+
       /**
        * Constructs a MarketDepth.
        * @param model The book view model.
-       * @param bbo_quote The best bid and ask Quotes across all markets.
        * @param properties The properties applied to the table view.
        * @param parent The parent widget.
        */
       MarketDepth(std::shared_ptr<BookViewModel> model,
-        std::shared_ptr<BboQuoteModel> bbo_quote,
         std::shared_ptr<BookViewPropertiesModel> properties,
         QWidget* parent = nullptr);
 
-      /** Returns the currently selected book quote. */
-      const std::shared_ptr<BookQuoteModel>& get_selected_book_quote() const;
+      const std::shared_ptr<CurrentUserOrderModel>& get_current() const;
 
     private:
       std::shared_ptr<BookViewModel> m_model;
-      std::shared_ptr<BookQuoteModel> m_selected_quote;
       std::shared_ptr<ValueModel<QFont>> m_font_property;
       QFont m_font;
       TableView* m_bid_table_view;
       TableView* m_ask_table_view;
+      std::shared_ptr<CurrentUserOrderModel> m_current;
       boost::signals2::scoped_connection m_bid_position_connection;
       boost::signals2::scoped_connection m_ask_position_connection;
       boost::signals2::scoped_connection m_font_property_connection;
