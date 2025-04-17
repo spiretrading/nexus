@@ -249,6 +249,8 @@ namespace Details {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
+      void focusInEvent(QFocusEvent* event) override;
+      bool focusNextPrevChild(bool next) override;
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
       void moveEvent(QMoveEvent* event) override;
@@ -286,6 +288,7 @@ namespace Details {
       QTimer m_query_timer;
       int m_initialize_count;
       bool m_is_transaction;
+      bool m_is_tab_focus_in;
       Beam::Threading::TaskRunner m_operation_queue;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_connection;
