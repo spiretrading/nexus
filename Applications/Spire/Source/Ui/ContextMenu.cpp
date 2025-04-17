@@ -480,6 +480,7 @@ void ContextMenu::on_mouse_move(QWidget& target, QMouseEvent& event) {
         defer_hide_submenu();
         if(target.window()->isVisible() && window()->isVisible()) {
           m_list_view->get_current()->set(i);
+          item->setFocus();
           show_submenu(i);
         }
       } else if(!m_visible_submenu) {
