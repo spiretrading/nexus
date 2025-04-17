@@ -38,6 +38,9 @@ namespace Spire {
       ListToTableModel(
         std::shared_ptr<ListModel<Type>> list, int columns, Accessor accessor);
 
+      /** Returns the list being viewed as a table. */
+      const std::shared_ptr<ListModel<Type>>& get_source() const;
+
       int get_row_size() const override;
 
       int get_column_size() const override;
@@ -212,6 +215,12 @@ namespace Spire {
       m_accessor(std::move(accessor)),
       m_connection(m_list->connect_operation_signal(
         std::bind_front(&ListToTableModel::on_operation, this))) {}
+
+  template<typename T>
+  const std::shared_ptr<ListModel<typename ListToTableModel<T>::Type>>&
+      get_source() const {
+    return m_list;
+  }
 
   template<typename T>
   int ListToTableModel<T>::get_row_size() const {
