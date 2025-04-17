@@ -2,6 +2,7 @@
 #include <QKeyEvent>
 #include <QScreen>
 #include "Spire/BookView/BookViewWindowSettings.hpp"
+#include "Spire/BookView/MarketDepth.hpp"
 #include "Spire/BookView/TechnicalsPanel.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OptionalPriceNode.hpp"
@@ -302,8 +303,7 @@ void BookViewWindow::on_task_entry_key_press(const QKeyEvent& event) {
   }
 }
 
-void BookViewWindow::on_cancel_most_recent(
-    const MarketDepth::CurrentUserOrder& user_order) {
+void BookViewWindow::on_cancel_most_recent(const CurrentUserOrder& user_order) {
   auto operation = Pick(user_order.m_side,
     CancelKeyBindingsModel::Operation::MOST_RECENT_ASK,
     CancelKeyBindingsModel::Operation::MOST_RECENT_BID);
@@ -312,8 +312,7 @@ void BookViewWindow::on_cancel_most_recent(
       user_order.m_user_order.m_destination, user_order.m_user_order.m_price));
 }
 
-void BookViewWindow::on_cancel_all(
-    const MarketDepth::CurrentUserOrder& user_order) {
+void BookViewWindow::on_cancel_all(const CurrentUserOrder& user_order) {
   auto operation = Pick(user_order.m_side,
     CancelKeyBindingsModel::Operation::ALL_ASKS,
     CancelKeyBindingsModel::Operation::ALL_BIDS);

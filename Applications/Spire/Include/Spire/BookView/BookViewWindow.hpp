@@ -3,7 +3,6 @@
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/BookView/BookViewPropertiesWindowFactory.hpp"
-#include "Spire/BookView/MarketDepth.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
@@ -141,9 +140,8 @@ namespace Spire {
       void remove_task_entry_panel();
       void on_context_menu(const QPoint& pos);
       void on_task_entry_key_press(const QKeyEvent& event);
-      void on_cancel_most_recent(
-        const MarketDepth::CurrentUserOrder& user_order);
-      void on_cancel_all(const MarketDepth::CurrentUserOrder& user_order);
+      void on_cancel_most_recent(const CurrentUserOrder& user_order);
+      void on_cancel_all(const CurrentUserOrder& user_order);
       void on_properties_menu();
       void on_current(const Nexus::Security& security);
       void on_order_operation(Nexus::Side side,
