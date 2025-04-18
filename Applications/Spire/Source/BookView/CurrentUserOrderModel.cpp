@@ -151,4 +151,8 @@ void CurrentUserOrderModel::on_ask(const optional<TableIndex>& current_ask) {
 void CurrentUserOrderModel::on_operation(
     const TableModel::Operation& operation) {
   m_undo_navigation->update(operation);
+  if(m_undo_navigation->get_index() == -1) {
+    m_undo_navigation = none;
+    m_undo_navigation_connection.disconnect();
+  }
 }
