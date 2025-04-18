@@ -6,6 +6,7 @@ namespace Spire {
   class BboBox;
   enum class BookViewColumn;
   class BookViewController;
+  class BookViewCurrentTableModel;
   class BookViewHighlightPropertiesPage;
   class BookViewInteractionPropertiesPage;
   class BookViewLevelPropertiesPage;
