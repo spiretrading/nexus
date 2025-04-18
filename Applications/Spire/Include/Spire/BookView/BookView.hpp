@@ -6,6 +6,7 @@ namespace Spire {
   class BboBox;
   enum class BookViewColumn;
   class BookViewController;
+  class BookViewCurrentTableModel;
   class BookViewHighlightPropertiesPage;
   class BookViewInteractionPropertiesPage;
   class BookViewLevelPropertiesPage;
@@ -16,6 +17,8 @@ namespace Spire {
   class BookViewWindow;
   class BookViewWindowSettings;
   class ConsolidatedUserOrderListModel;
+  struct CurrentUserOrder;
+  class CurrentUserOrderModel;
   class IsTopMpidModel;
   class LegacyBookViewWindowSettings;
   class MarketDepth;

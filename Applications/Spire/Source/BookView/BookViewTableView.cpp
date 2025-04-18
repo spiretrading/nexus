@@ -1,5 +1,6 @@
 #include "Spire/BookView/BookViewTableView.hpp"
 #include "Spire/BookView/BookViewTableModel.hpp"
+#include "Spire/BookView/BookViewCurrentTableModel.hpp"
 #include "Spire/BookView/IsTopMpidModel.hpp"
 #include "Spire/BookView/MergedBookEntryListModel.hpp"
 #include "Spire/BookView/MpidBox.hpp"
@@ -10,7 +11,9 @@
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/FilteredListModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
+#include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/SortedListModel.hpp"
+#include "Spire/Spire/TableCurrentIndexModel.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
@@ -296,10 +299,14 @@ TableView* Spire::make_book_view_table_view(
   auto top_mpid_prices = std::make_shared<TopMpidPriceListModel>(
     std::make_shared<SortedListModel<BookQuote>>(
       std::move(quotes), &BookQuoteListingComparator));
+  auto proxy_current = make_proxy_value_model(
+    std::make_shared<LocalValueModel<optional<TableIndex>>>());
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
+    set_current(proxy_current).
     set_item_builder(
       ItemBuilder(std::move(price_levels), std::move(top_mpid_prices))).make();
+  proxy_current->set_source(std::make_shared<BookViewCurrentTableModel>(table));
   table_view->get_header().setVisible(false);
   table_view->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
   auto stylist = new TableViewStylist(*table_view, std::move(properties));
