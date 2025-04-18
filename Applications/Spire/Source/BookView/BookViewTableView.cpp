@@ -1,5 +1,6 @@
 #include "Spire/BookView/BookViewTableView.hpp"
 #include "Spire/BookView/BookViewTableModel.hpp"
+#include "Spire/BookView/BookViewCurrentTableModel.hpp"
 #include "Spire/BookView/IsTopMpidModel.hpp"
 #include "Spire/BookView/MergedBookEntryListModel.hpp"
 #include "Spire/BookView/MpidBox.hpp"
@@ -266,47 +267,6 @@ namespace {
       });
     }
   };
-
-  struct CurrentModel : ValueModel<optional<TableIndex>> {
-    std::shared_ptr<TableModel> m_table;
-    TableCurrentIndexModel m_current;
-
-    CurrentModel(std::shared_ptr<TableModel> table)
-      : m_table(std::move(table)),
-        m_current(m_table) {}
-
-    const Type& get() const override {
-      return m_current.get();
-    }
-
-    QValidator::State test(const Type& value) const override {
-      if(!value) {
-        return m_current.test(value);
-      } else if(value->m_column < 0 ||
-          value->m_column >= m_table->get_column_size() || value->m_row < 0 ||
-          value->m_row >= m_table->get_row_size()) {
-        return QValidator::State::Invalid;
-      }
-      auto& mpid = m_table->get<Mpid>(value->m_row, 0);
-      if(mpid.m_origin != Mpid::Origin::USER_ORDER) {
-        return QValidator::State::Invalid;
-      }
-      return m_current.test(value);
-    }
-
-    QValidator::State set(const Type& value) override {
-      auto state = test(value);
-      if(state == QValidator::State::Invalid) {
-        return state;
-      }
-      return m_current.set(value);
-    }
-
-    connection connect_update_signal(
-        const UpdateSignal::slot_type& slot) const override {
-      return m_current.connect_update_signal(slot);
-    }
-  };
 }
 
 TableView* Spire::make_book_view_table_view(
@@ -346,7 +306,7 @@ TableView* Spire::make_book_view_table_view(
     set_current(proxy_current).
     set_item_builder(
       ItemBuilder(std::move(price_levels), std::move(top_mpid_prices))).make();
-  proxy_current->set_source(std::make_shared<CurrentModel>(table));
+  proxy_current->set_source(std::make_shared<BookViewCurrentTableModel>(table));
   table_view->get_header().setVisible(false);
   table_view->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
   auto stylist = new TableViewStylist(*table_view, std::move(properties));
