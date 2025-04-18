@@ -5,6 +5,7 @@
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/SortedTableModel.hpp"
+#include "Spire/Spire/TableRowIndexTracker.hpp"
 #include "Spire/Ui/TableCurrentController.hpp"
 
 namespace Spire {
@@ -63,10 +64,16 @@ namespace Spire {
       };
       SideEntry m_current_bid;
       SideEntry m_current_ask;
+      boost::optional<TableRowIndexTracker> m_undo_navigation;
       LocalValueModel<boost::optional<CurrentUserOrder>> m_current;
+      boost::signals2::scoped_connection m_undo_navigation_connection;
 
+      void update_side(const SideEntry& selected_side,
+        const SideEntry& other_side, Nexus::Side side,
+        const boost::optional<TableIndex>& current_index);
       void on_bid(const boost::optional<TableIndex>& current_bid);
       void on_ask(const boost::optional<TableIndex>& current_ask);
+      void on_operation(const TableModel::Operation& operation);
   };
 }
 
