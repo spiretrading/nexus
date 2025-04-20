@@ -8,7 +8,8 @@ using namespace Spire;
 
 IsTopMpidModel::IsTopMpidModel(
     std::shared_ptr<ListModel<TopMpidPrice>> top_mpid_prices,
-    std::shared_ptr<MpidModel> mpid, std::shared_ptr<ValueModel<Money>> price)
+    std::shared_ptr<BookEntryModel> mpid,
+    std::shared_ptr<ValueModel<Money>> price)
     : m_top_mpid_prices(std::move(top_mpid_prices)),
       m_mpid(std::move(mpid)),
       m_price(std::move(price)) {
@@ -44,10 +45,10 @@ void IsTopMpidModel::initialize_top_mpid() {
   }
 }
 
-void IsTopMpidModel::on_mpid(const Mpid& mpid) {
+void IsTopMpidModel::on_mpid(const BookEntry& mpid) {
   m_top_mpid = nullptr;
-  if(mpid.m_origin == Mpid::Origin::BOOK_QUOTE) {
-    m_market = mpid.m_market;
+  if(auto quote = boost::get<BookQuote>(&mpid)) {
+    m_market = quote->m_market;
     initialize_top_mpid();
   } else if(m_current.get()) {
     m_market = MarketCode();

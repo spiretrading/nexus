@@ -1,6 +1,7 @@
 #ifndef SPIRE_IS_TOP_MPID_MODEL_HPP
 #define SPIRE_IS_TOP_MPID_MODEL_HPP
 #include "Spire/BookView/BookView.hpp"
+#include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/BookView/MpidBox.hpp"
 #include "Spire/BookView/TopMpidPriceListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -19,7 +20,7 @@ namespace Spire {
        * @param price The price of the quote to track.
        */
       IsTopMpidModel(std::shared_ptr<ListModel<TopMpidPrice>> top_mpid_prices,
-        std::shared_ptr<MpidModel> mpid,
+        std::shared_ptr<BookEntryModel> mpid,
         std::shared_ptr<ValueModel<Nexus::Money>> price);
 
       const bool& get() const override;
@@ -29,7 +30,7 @@ namespace Spire {
 
     private:
       std::shared_ptr<ListModel<TopMpidPrice>> m_top_mpid_prices;
-      std::shared_ptr<MpidModel> m_mpid;
+      std::shared_ptr<BookEntryModel> m_mpid;
       Nexus::MarketCode m_market;
       std::shared_ptr<ValueModel<Nexus::Money>> m_price;
       std::shared_ptr<ValueModel<TopMpidPrice>> m_top_mpid;
@@ -39,7 +40,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_top_mpid_prices_connection;
 
       void initialize_top_mpid();
-      void on_mpid(const Mpid& mpid);
+      void on_mpid(const BookEntry& mpid);
       void on_top_mpid(const TopMpidPrice& top);
       void on_price(Nexus::Money price);
       void on_operation(const ListModel<TopMpidPrice>::Operation& operation);

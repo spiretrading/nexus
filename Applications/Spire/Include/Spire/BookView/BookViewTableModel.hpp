@@ -9,6 +9,7 @@
 #include "Spire/Spire/AnyRef.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 
 namespace Spire {
 
@@ -19,6 +20,9 @@ namespace Spire {
    */
   using BookEntry = boost::variant<Nexus::BookQuote, BookViewModel::UserOrder,
     Nexus::OrderExecutionService::OrderFields>;
+
+  /** The type of ValueModel used for a BookEntry. */
+  using BookEntryModel = ValueModel<BookEntry>;
 
   /** The type used for a list of BookEntries. */
   using BookEntryListModel = ListModel<BookEntry>;
@@ -38,35 +42,6 @@ namespace Spire {
 
   /** The number of columns in a TableModel representing a BookView. */
   static const auto BOOK_VIEW_COLUMN_SIZE = 3;
-
-  /** Represents a MPID column and where it originated. */
-  struct Mpid {
-
-    /** Specifies where the MPID originated. */
-    enum class Origin {
-
-      /** The MPID is from a BookQuote. */
-      BOOK_QUOTE,
-
-      /** The MPID is from a user submitted order. */
-      USER_ORDER,
-
-      /** The MPID is from an order preview. */
-      PREVIEW
-    };
-
-    /** The identifier to display. */
-    std::string m_id;
-
-    /** The MPID's originating market. */
-    Nexus::MarketCode m_market;
-
-    /** The source of the listing. */
-    Origin m_origin;
-
-    /** Compares two Mpids by id. */
-    bool operator <(const Mpid& mpid) const;
-  };
 
   /** Implements the comparator used by the BookEntry TableModel. */
   bool book_view_comparator(const AnyRef& left, const AnyRef& right);

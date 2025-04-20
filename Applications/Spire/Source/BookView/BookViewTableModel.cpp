@@ -9,54 +9,41 @@ using namespace Spire;
 
 namespace {
   struct Extractor {
-    Mpid m_mpid;
-
     AnyRef operator ()(const BookEntry& entry, int index) {
       auto column = static_cast<BookViewColumn>(index);
-      if(auto quote = get<BookQuote>(&entry)) {
-        if(column == BookViewColumn::MPID) {
-          if(quote->m_isPrimaryMpid) {
-            m_mpid =
-              Mpid(quote->m_mpid, quote->m_market, Mpid::Origin::BOOK_QUOTE);
-          } else {
-            m_mpid =
-              Mpid(quote->m_mpid, MarketCode(), Mpid::Origin::BOOK_QUOTE);
-          }
-          return std::as_const(m_mpid);
-        } else if(column == BookViewColumn::PRICE) {
+      if(column == BookViewColumn::MPID) {
+        return entry;
+      } else if(column == BookViewColumn::PRICE) {
+        if(auto quote = get<BookQuote>(&entry)) {
           return quote->m_quote.m_price;
-        }
-        return quote->m_quote.m_size;
-      } else if(auto order = get<BookViewModel::UserOrder>(&entry)) {
-        if(column == BookViewColumn::MPID) {
-          m_mpid =
-            Mpid(order->m_destination, MarketCode(), Mpid::Origin::USER_ORDER);
-          return std::as_const(m_mpid);
-        } else if(column == BookViewColumn::PRICE) {
+        } else if(auto order = get<BookViewModel::UserOrder>(&entry)) {
           return order->m_price;
         }
+        return get<OrderFields>(entry).m_price;
+      }
+      if(auto quote = get<BookQuote>(&entry)) {
+        return quote->m_quote.m_size;
+      } else if(auto order = get<BookViewModel::UserOrder>(&entry)) {
         return order->m_size;
       }
-      auto preview = get<OrderFields>(&entry);
-      if(column == BookViewColumn::MPID) {
-        m_mpid =
-          Mpid(preview->m_destination, MarketCode(), Mpid::Origin::PREVIEW);
-        return std::as_const(m_mpid);
-      } else if(column == BookViewColumn::PRICE) {
-        return preview->m_price;
-      }
-      return preview->m_quantity;
+      return get<OrderFields>(entry).m_quantity;
     }
   };
-}
 
-bool Spire::Mpid::operator <(const Mpid& mpid) const {
-  return m_id < mpid.m_id;
+  const std::string& get_id(const BookEntry& entry) {
+    if(auto quote = get<BookQuote>(&entry)) {
+      return quote->m_mpid;
+    } else if(auto order = get<BookViewModel::UserOrder>(&entry)) {
+      return order->m_destination;
+    }
+    return get<OrderFields>(entry).m_destination;
+  }
 }
 
 bool Spire::book_view_comparator(const AnyRef& left, const AnyRef& right) {
-  if(left.get_type() == typeid(Mpid)) {
-    return any_cast<Mpid>(left) < any_cast<Mpid>(right);
+  if(left.get_type() == typeid(BookEntry)) {
+    return get_id(any_cast<BookEntry>(left)) <
+      get_id(any_cast<BookEntry>(right));
   }
   return Spire::compare(left, right);
 }
