@@ -1,6 +1,7 @@
 #include "Spire/BookView/BookViewTableView.hpp"
-#include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/BookView/BookViewCurrentTableModel.hpp"
+#include "Spire/BookView/BookViewTableModel.hpp"
+#include "Spire/BookView/ConsolidatedUserOrderListModel.hpp"
 #include "Spire/BookView/IsTopMpidModel.hpp"
 #include "Spire/BookView/MergedBookEntryListModel.hpp"
 #include "Spire/BookView/MpidBox.hpp"
@@ -17,11 +18,17 @@
 #include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
+#include "Spire/Styles/ChainExpression.hpp"
+#include "Spire/Styles/LinearExpression.hpp"
+#include "Spire/Styles/RevertExpression.hpp"
+#include "Spire/Styles/TimeoutExpression.hpp"
+#include "Spire/Ui/ColorConversion.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
+using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Nexus::OrderExecutionService;
@@ -50,14 +57,14 @@ namespace {
         const std::shared_ptr<TableModel>& table, int row, int column) {
       auto column_id = static_cast<BookViewColumn>(column);
       if(column_id == BookViewColumn::MPID) {
-        auto mpid = make_table_value_model<Mpid>(table, row, column);
+        auto entry = make_table_value_model<BookEntry>(table, row, column);
         auto level = make_list_value_model(m_price_levels, row);
         auto price = make_table_value_model<Money>(
           table, row, static_cast<int>(BookViewColumn::PRICE));
         auto is_top_mpid = std::make_shared<IsTopMpidModel>(
-          m_top_mpid_prices, mpid, std::move(price));
+          m_top_mpid_prices, entry, std::move(price));
         return new MpidBox(
-          std::move(mpid), std::move(level), std::move(is_top_mpid));
+          std::move(entry), std::move(level), std::move(is_top_mpid));
       } else if(column_id == BookViewColumn::PRICE) {
         auto money_item = make_label(make_to_text_model(
           make_table_value_model<Money>(table, row, column)));
@@ -80,6 +87,76 @@ namespace {
       }
     }
   };
+
+  auto make_row_selector(Selector selector) {
+    return Any() > +Row() > is_a<TableItem>() > selector;
+  }
+
+  auto make_item_selector(Selector selector) {
+    return ChildSelector(
+      make_row_selector(selector), is_a<TableItem>() > Any());
+  }
+
+  void apply_row_style(StyleSheet& style, Selector selector,
+      TextColor text_color, BackgroundColor background_color) {
+    style.get(make_item_selector(selector)).set(std::move(text_color));
+    style.get(make_row_selector(selector)).set(std::move(background_color));
+  }
+
+  void clear_row_style(StyleSheet& style, Selector selector) {
+    style.get(make_row_selector(selector)).clear();
+    style.get(make_item_selector(selector)).clear();
+  }
+
+  void apply_transition_styles(StyleSheet& style,
+      const HighlightColor& active_highlight,
+      const HighlightColor& status_highlight, OrderStatus status) {
+    const auto HIGHLIGHT_TRANSITION_DURATION = milliseconds(100);
+    const auto HIGHLIGHT_DURATION = milliseconds(900);
+    apply_row_style(style, UserOrderRow(status),
+      TextColor(chain(linear(active_highlight.m_text_color,
+        status_highlight.m_text_color, HIGHLIGHT_TRANSITION_DURATION),
+        timeout(status_highlight.m_text_color, HIGHLIGHT_DURATION), revert)),
+      BackgroundColor(chain(linear(active_highlight.m_background_color,
+        status_highlight.m_background_color, HIGHLIGHT_TRANSITION_DURATION),
+        timeout(status_highlight.m_background_color, HIGHLIGHT_DURATION),
+        revert)));
+  }
+
+  void apply_order_visibility_styles(
+      StyleSheet& style, const BookViewProperties& properties) {
+    if(properties.m_highlight_properties.m_order_visibility ==
+        BookViewHighlightProperties::OrderVisibility::HIGHLIGHTED) {
+      auto& preview_highlight = get_highlight(
+        properties, BookViewHighlightProperties::OrderHighlightState::PREVIEW);
+      apply_row_style(style, PreviewRow(),
+        TextColor(preview_highlight.m_text_color),
+        BackgroundColor(preview_highlight.m_background_color));
+      auto& active_highlight = get_highlight(
+        properties, BookViewHighlightProperties::OrderHighlightState::ACTIVE);
+      apply_row_style(style, UserOrderRow(OrderStatus::NONE),
+        TextColor(active_highlight.m_text_color),
+        BackgroundColor(active_highlight.m_background_color));
+      auto& filled_highlight = get_highlight(
+        properties, BookViewHighlightProperties::OrderHighlightState::FILLED);
+      apply_transition_styles(
+        style, active_highlight, filled_highlight, OrderStatus::FILLED);
+      auto& canceled_highlight = get_highlight(
+        properties, BookViewHighlightProperties::OrderHighlightState::CANCELED);
+      apply_transition_styles(
+        style, active_highlight, canceled_highlight, OrderStatus::CANCELED);
+      auto& rejected_highlight = get_highlight(
+        properties, BookViewHighlightProperties::OrderHighlightState::REJECTED);
+      apply_transition_styles(
+        style, active_highlight, rejected_highlight, OrderStatus::REJECTED);
+    } else {
+      clear_row_style(style, PreviewRow());
+      for(auto status : {OrderStatus::NONE, OrderStatus::FILLED,
+          OrderStatus::CANCELED, OrderStatus::REJECTED}) {
+        clear_row_style(style, UserOrderRow(status));
+      }
+    }
+  }
 
   struct TableViewStylist : QObject {
     struct PreviousMarketHighlight {
@@ -134,34 +211,15 @@ namespace {
       return QObject::eventFilter(watched, event);
     }
 
-    void apply_order_visibility_styles(
-        StyleSheet& style, const BookViewProperties& properties) {
-      if(properties.m_highlight_properties.m_order_visibility ==
-          BookViewHighlightProperties::OrderVisibility::HIGHLIGHTED) {
-        auto& preview_highlight = get_highlight(properties,
-          BookViewHighlightProperties::OrderHighlightState::PREVIEW);
-        style.get(Any() > +Row() > is_a<TableItem>() > PreviewRow()).
-          set(BackgroundColor(preview_highlight.m_background_color));
-        auto& active_highlight = get_highlight(
-          properties, BookViewHighlightProperties::OrderHighlightState::ACTIVE);
-        style.get(Any() > +Row() > is_a<TableItem>() > UserOrderRow()).
-          set(BackgroundColor(active_highlight.m_background_color));
-      } else {
-        style.get(Any() > +Row() > is_a<TableItem>() > PreviewRow()).clear();
-        style.get(Any() > +Row() > is_a<TableItem>() > UserOrderRow()).clear();
-      }
-    }
-
     void apply_market_highlight_styles(
         StyleSheet& style, const BookViewProperties& properties) {
       for(auto& highlight : m_previous_market_highlights) {
         if(highlight.m_level ==
             BookViewHighlightProperties::MarketHighlightLevel::TOP) {
-          style.get(Any() > +Row() > is_a<TableItem>() >
-            (TopMarketRow() && MarketRow(highlight.m_market))).clear();
+          clear_row_style(
+            style, TopMarketRow() && MarketRow(highlight.m_market));
         } else {
-          style.get(Any() >
-            +Row() > is_a<TableItem>() > MarketRow(highlight.m_market)).clear();
+          clear_row_style(style, MarketRow(highlight.m_market));
         }
       }
       m_previous_market_highlights.clear();
@@ -170,15 +228,14 @@ namespace {
       for(auto& highlight : market_highlights) {
         if(highlight.m_level ==
             BookViewHighlightProperties::MarketHighlightLevel::TOP) {
-          style.get(Any() > +Row() > is_a<TableItem>() >
-            (TopMarketRow() && MarketRow(highlight.m_market))).
-              set(BackgroundColor(highlight.m_color.m_background_color)).
-              set(TextColor(highlight.m_color.m_text_color));
+          apply_row_style(
+            style, TopMarketRow() && MarketRow(highlight.m_market),
+            TextColor(highlight.m_color.m_text_color),
+            BackgroundColor(highlight.m_color.m_background_color));
         } else {
-          style.get(Any() >
-            +Row() > is_a<TableItem>() > MarketRow(highlight.m_market)).
-              set(BackgroundColor(highlight.m_color.m_background_color)).
-              set(TextColor(highlight.m_color.m_text_color));
+          apply_row_style(style, MarketRow(highlight.m_market),
+            TextColor(highlight.m_color.m_text_color),
+            BackgroundColor(highlight.m_color.m_background_color));
         }
         m_previous_market_highlights.push_back(
           PreviousMarketHighlight(highlight.m_market, highlight.m_level));
@@ -189,13 +246,13 @@ namespace {
         StyleSheet& style, const BookViewProperties& properties) {
       auto& level_colors = properties.m_level_properties.m_color_scheme;
       for(auto i = level_colors.size(); i < m_previous_levels; ++i) {
-        style.get(Any() > +Row() > is_a<TableItem>() > PriceLevelRow(i)).
-          clear();
+        clear_row_style(style, PriceLevelRow(i));
       }
       m_previous_levels = level_colors.size();
       for(auto i = std::size_t(0); i < level_colors.size(); ++i) {
-        style.get(Any() > +Row() > is_a<TableItem>() > PriceLevelRow(i)).
-          set(BackgroundColor(level_colors[i]));
+        apply_row_style(style, PriceLevelRow(i),
+          TextColor(apca_text_color(level_colors[i])),
+          BackgroundColor(level_colors[i]));
       }
     }
 
@@ -284,7 +341,9 @@ TableView* Spire::make_book_view_table_view(
   auto column_orders =
     std::vector<SortedTableModel::ColumnOrder>{{1, ordering}, {2, ordering}};
   auto displayed_orders =
-    std::make_shared<UserOrderDisplayListModel>(std::move(orders), properties);
+    std::make_shared<UserOrderDisplayListModel>(
+      std::make_shared<ConsolidatedUserOrderListModel>(std::move(orders)),
+      properties);
   auto displayed_preview = std::make_shared<PreviewOrderDisplayValueModel>(
     filter_by_side(model->get_preview_order(), side), properties);
   auto entries = std::make_shared<MergedBookEntryListModel>(quotes,

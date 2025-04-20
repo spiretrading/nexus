@@ -3,7 +3,6 @@
 #include <boost/optional/optional.hpp>
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewTableModel.hpp"
-#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Styles/StateSelector.hpp"
 
 namespace Spire {
@@ -20,14 +19,12 @@ namespace Styles {
   using TopMarketRow = StateSelector<void, struct TopMarketRowSelectorTag>;
 
   /** Styles an MpidBox based on whether it represents a user's order. */
-  using UserOrderRow = StateSelector<void, struct UserOrderSelectorTag>;
+  using UserOrderRow =
+    StateSelector<Nexus::OrderStatus, struct UserOrderSelectorTag>;
 
   /** Styles an MpidBox based on whether it represents an order preview. */
   using PreviewRow = StateSelector<void, struct PreviewSelectorTag>;
 }
-
-  /** The type of model used for an MPID. */
-  using MpidModel = ValueModel<Mpid>;
 
   /**
    * Displays an MPID in a TableView. The MpidBox can also be used to style the
@@ -43,23 +40,24 @@ namespace Styles {
        * @param is_top_mpid Whether this listing is the top price for the
        *        current MPID.
        */
-      MpidBox(std::shared_ptr<MpidModel> current,
+      MpidBox(std::shared_ptr<BookEntryModel> current,
         std::shared_ptr<ValueModel<int>> level,
         std::shared_ptr<ValueModel<bool>> is_top_mpid);
 
       /** Returns the displayed MPID. */
-      std::shared_ptr<MpidModel> get_current() const;
+      const std::shared_ptr<BookEntryModel>& get_current() const;
 
       /** Returns the represented price level. */
-      std::shared_ptr<ValueModel<int>> get_level() const;
+      const std::shared_ptr<ValueModel<int>>& get_level() const;
 
       /** Returns whether this represents the top MPID price level. */
-      std::shared_ptr<ValueModel<bool>> is_top_mpid() const;
+      const std::shared_ptr<ValueModel<bool>>& is_top_mpid() const;
 
     private:
-      std::shared_ptr<MpidModel> m_current;
-      boost::optional<Mpid::Origin> m_current_origin;
+      std::shared_ptr<BookEntryModel> m_current;
+      boost::optional<int> m_current_type_index;
       Nexus::MarketCode m_current_market;
+      Nexus::OrderStatus m_current_status;
       std::shared_ptr<ValueModel<int>> m_level;
       int m_current_level;
       std::shared_ptr<ValueModel<bool>> m_is_top_mpid;
@@ -67,8 +65,10 @@ namespace Styles {
       boost::signals2::scoped_connection m_level_connection;
       boost::signals2::scoped_connection m_is_top_mpid_connection;
 
-      QString make_id(const Mpid& mpid) const;
-      void on_current(const Mpid& mpid);
+      void update_row_state(int type_index);
+      void update_market_state(const BookEntry& entry);
+      void update_status(const BookEntry& entry);
+      void on_current(const BookEntry& entry);
       void on_level(int level);
       void on_is_top_mpid(bool is_top);
   };

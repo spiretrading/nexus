@@ -22,11 +22,11 @@ QValidator::State BookViewCurrentTableModel::test(const Type& value) const {
       value->m_row >= m_table->get_row_size()) {
     return QValidator::State::Invalid;
   }
-  auto& mpid = m_table->get<Mpid>(value->m_row, 0);
-  if(mpid.m_origin != Mpid::Origin::USER_ORDER) {
-    return QValidator::State::Invalid;
+  auto& entry = m_table->get<BookEntry>(value->m_row, 0);
+  if(boost::get<BookViewModel::UserOrder>(&entry)) {
+    return m_current.test(value);
   }
-  return m_current.test(value);
+  return QValidator::State::Invalid;
 }
 
 QValidator::State BookViewCurrentTableModel::set(const Type& value) {
