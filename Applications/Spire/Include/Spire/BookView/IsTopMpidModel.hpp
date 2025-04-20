@@ -2,7 +2,6 @@
 #define SPIRE_IS_TOP_MPID_MODEL_HPP
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewTableModel.hpp"
-#include "Spire/BookView/MpidBox.hpp"
 #include "Spire/BookView/TopMpidPriceListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 
