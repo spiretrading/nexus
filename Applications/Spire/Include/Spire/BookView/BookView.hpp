@@ -23,10 +23,10 @@ namespace Spire {
   class LegacyBookViewWindowSettings;
   class MarketDepth;
   class MergedBookEntryListModel;
-  struct Mpid;
   class MpidBox;
   class PreviewOrderDisplayValueModel;
   class PriceLevelModel;
+  class ServiceBookViewModel;
   class TechnicalsPanel;
   struct TopMpidPrice;
   class TopMpidPriceListModel;
