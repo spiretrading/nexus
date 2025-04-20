@@ -1,6 +1,7 @@
 #ifndef SPIRE_CONSOLIDATED_USER_ORDER_LIST_MODEL_HPP
 #define SPIRE_CONSOLIDATED_USER_ORDER_LIST_MODEL_HPP
 #include <memory>
+#include <QObject>
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -12,7 +13,7 @@ namespace Spire {
    * there is only one UserOrder for a given price and destination.
    */
   class ConsolidatedUserOrderListModel :
-      public BookViewModel::UserOrderListModel {
+      public BookViewModel::UserOrderListModel, private QObject {
     public:
 
       /**

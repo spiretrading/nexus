@@ -12,8 +12,8 @@ namespace Spire {
     public:
 
       /**
-       * Constructs an IsTopMpidModel by checking if an MPID at a given price
-       * is the top-most MPID based on a list top MPID prices.
+       * Constructs an IsTopMpidModel by checking if an MPID at a given price is
+       * the top-most MPID based on a list top MPID prices.
        * @param top_mpid_prices The list of top MPID prices.
        * @param mpid The MPID of the quote to track.
        * @param price The price of the quote to track.

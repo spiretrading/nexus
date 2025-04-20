@@ -1,4 +1,5 @@
 #include "Spire/BookView/ConsolidatedUserOrderListModel.hpp"
+#include <QTimer>
 
 using namespace boost;
 using namespace boost::signals2;
@@ -71,10 +72,23 @@ void ConsolidatedUserOrderListModel::remove(
   auto i = std::lower_bound(
     m_model.begin(), m_model.end(), order, user_order_comparator);
   if(i->m_size == order.m_size) {
-    m_model.remove(i);
+    if(order.m_size != 0) {
+      auto update = static_cast<BookViewModel::UserOrder>(*i);
+      update.m_size = 0;
+      update.m_status = order.m_status;
+      *i = update;
+    }
+    QTimer::singleShot(1000, this, [=] {
+      auto i = std::lower_bound(
+        m_model.begin(), m_model.end(), order, user_order_comparator);
+      if(i != m_model.end() && i->m_size == 0) {
+        m_model.remove(i);
+      }
+    });
   } else {
     auto update = static_cast<BookViewModel::UserOrder>(*i);
     update.m_size -= order.m_size;
+    update.m_status = order.m_status;
     *i = update;
   }
 }
@@ -97,6 +111,9 @@ void ConsolidatedUserOrderListModel::on_operation(const Operation& operation) {
           user_order.m_price != previous_order.m_price) {
         remove(previous_order);
         add(user_order);
+        return;
+      } else if(IsTerminal(user_order.m_status)) {
+        remove(user_order);
         return;
       }
       auto size_delta = user_order.m_size - operation.get_previous().m_size;
