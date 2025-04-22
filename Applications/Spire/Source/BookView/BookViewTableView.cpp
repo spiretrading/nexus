@@ -99,8 +99,8 @@ namespace {
 
   void apply_row_style(StyleSheet& style, Selector selector,
       TextColor text_color, BackgroundColor background_color) {
-    style.get(make_item_selector(selector)).set(std::move(text_color));
     style.get(make_row_selector(selector)).set(std::move(background_color));
+    style.get(make_item_selector(selector)).set(std::move(text_color));
   }
 
   void clear_row_style(StyleSheet& style, Selector selector) {
