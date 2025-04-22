@@ -89,7 +89,8 @@ namespace {
   };
 
   auto make_row_selector(Selector selector) {
-    return Any() > +Row() > is_a<TableItem>() > selector;
+    return Any() > Row() > is_a<TableItem>() > selector < is_a<TableItem>() <
+      Row();
   }
 
   auto make_item_selector(Selector selector) {
