@@ -53,6 +53,9 @@ namespace Styles {
       /** Returns whether this represents the top MPID price level. */
       const std::shared_ptr<ValueModel<bool>>& is_top_mpid() const;
 
+    protected:
+      bool event(QEvent* event) override;
+
     private:
       std::shared_ptr<BookEntryModel> m_current;
       boost::optional<int> m_current_type_index;

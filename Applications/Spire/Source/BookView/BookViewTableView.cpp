@@ -89,18 +89,17 @@ namespace {
   };
 
   auto make_row_selector(Selector selector) {
-    return Any() > +Row() > is_a<TableItem>() > selector;
+    return Any() > +Row() > Any() > selector;
   }
 
   auto make_item_selector(Selector selector) {
-    return ChildSelector(
-      make_row_selector(selector), is_a<TableItem>() > Any());
+    return ChildSelector(make_row_selector(selector), Any() > Any());
   }
 
   void apply_row_style(StyleSheet& style, Selector selector,
       TextColor text_color, BackgroundColor background_color) {
-    style.get(make_item_selector(selector)).set(std::move(text_color));
     style.get(make_row_selector(selector)).set(std::move(background_color));
+    style.get(make_item_selector(selector)).set(std::move(text_color));
   }
 
   void clear_row_style(StyleSheet& style, Selector selector) {
@@ -190,9 +189,9 @@ namespace {
         style.get(Any() > Row() > Current()).
           set(BackgroundColor(Qt::transparent)).
           set(border_color(QColor(Qt::transparent)));
-        style.get(Any() > CurrentRow() > is_a<TableItem>() > Any()).
+        style.get(Any() > CurrentRow() > Any() > Any()).
           set(TextColor(SELECTED_TEXT_COLOR));
-        style.get((Any() > Row() > is_a<TableItem>()) > Any()).
+        style.get(Any() > Row() > Any() > Any()).
           set(vertical_padding(scale_width(1.5)));
       });
       on_properties(m_properties->get());
@@ -264,7 +263,7 @@ namespace {
         unmatch(table_view.get_body(), ShowGrid());
       }
       update_style(table_view.get_body(), [=] (auto& style) {
-        style.get((Any() > Row() > is_a<TableItem>()) > Any()).
+        style.get(Any() > Row() > Any() > Any()).
           set(Font(properties.m_level_properties.m_font));
         apply_order_visibility_styles(style, properties);
         apply_market_highlight_styles(style, properties);

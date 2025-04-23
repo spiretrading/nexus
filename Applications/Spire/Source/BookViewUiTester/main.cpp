@@ -591,17 +591,6 @@ int main(int argc, char** argv) {
   application.setApplicationName(QObject::tr("BookView Ui Tester"));
   application.setQuitOnLastWindowClosed(true);
   initialize_resources();
-  auto technicals = std::make_shared<LocalSecurityTechnicalsValueModel>(
-    SecurityTechnicals(1100, Money(144.4), Money(142.11), Money(144.25),
-      Money(144.99)));
-  auto bbo_quote = std::make_shared<LocalValueModel<BboQuote>>(
-    BboQuote(Quote(Money(143.53), 51, Side::BID),
-      Quote(Money(143.54), 39, Side::ASK), second_clock::universal_time()));
-  auto default_bid_quantity = std::make_shared<LocalQuantityModel>(100);
-  auto default_ask_quantity = std::make_shared<LocalQuantityModel>(100);
-  auto properties = std::make_shared<LocalBookViewPropertiesModel>(
-    BookViewProperties(BookViewLevelProperties::get_default(),
-      BookViewHighlightProperties::get_default()));
   auto key_bindings =
     std::make_shared<KeyBindingsModel>(GetDefaultMarketDatabase());
   auto key_bindings_window = KeyBindingsWindow(key_bindings,
