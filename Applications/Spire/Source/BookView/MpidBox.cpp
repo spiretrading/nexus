@@ -68,8 +68,10 @@ const std::shared_ptr<ValueModel<bool>>& MpidBox::is_top_mpid() const {
 
 bool MpidBox::event(QEvent* event) {
   if(event->type() == QEvent::ParentChange) {
-    unmatch(*(parentWidget()->parentWidget()), Row());
-    match(*(parentWidget()->parentWidget()), Row());
+    if(parentWidget() && parentWidget()->parentWidget()) {
+      unmatch(*(parentWidget()->parentWidget()), Row());
+      match(*(parentWidget()->parentWidget()), Row());
+    }
   }
   return QWidget::event(event);
 }
