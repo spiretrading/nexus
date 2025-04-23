@@ -38,7 +38,12 @@ namespace Spire {
       std::unordered_map<int, std::vector<QString>> m_cache;
       boost::signals2::scoped_connection m_connection;
 
-      void on_operation(const OrderTaskArgumentsListModel::Operation& operation);
+      OrderTaskArgumentsContentCache(
+        const OrderTaskArgumentsContentCache&) = delete;
+      OrderTaskArgumentsContentCache& operator =(
+        const OrderTaskArgumentsContentCache&) = delete;
+      void on_operation(
+        const OrderTaskArgumentsListModel::Operation& operation);
   };
 }
 
