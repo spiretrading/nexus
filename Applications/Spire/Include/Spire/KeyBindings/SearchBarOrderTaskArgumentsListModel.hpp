@@ -2,6 +2,7 @@
 #define SPIRE_SEARCH_BAR_ORDER_TASK_ARGUMENTS_LIST_MODEL_HPP
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/OrderTaskArguments.hpp"
+#include "Spire/KeyBindings/OrderTaskArgumentsContentCache.hpp"
 #include "Spire/Spire/FilteredListModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -17,17 +18,16 @@ namespace Spire {
        * initially filter out any elements.
        * @param source The list to perform the keyword filtering on.
        * @param keywords The keywords used to filter out elements.
-       * @param countries The database of countries used to filter by country
-       *        name or short form.
-       * @param markets The database of markets used to filter by market name
-       *        or short form.
-       * @param destinations The database of destinations used to filter by
-       *        destination name or short form.
+       * @param countries The country database to use.
+       * @param markets The market database to use.
+       * @param destinations The destination database to use.
+       * @param additional_tags The additional tag database to use.
        */
       SearchBarOrderTaskArgumentsListModel(
         std::shared_ptr<OrderTaskArgumentsListModel> source,
         std::shared_ptr<TextModel> keywords, Nexus::CountryDatabase countries,
-        Nexus::MarketDatabase markets, Nexus::DestinationDatabase destinations);
+        Nexus::MarketDatabase markets, Nexus::DestinationDatabase destinations,
+        AdditionalTagDatabase additional_tags);
 
       int get_size() const override;
 
@@ -52,13 +52,13 @@ namespace Spire {
       void transact(const std::function<void ()>& transaction) override;
 
     private:
-      Nexus::CountryDatabase m_countries;
-      Nexus::MarketDatabase m_markets;
-      Nexus::DestinationDatabase m_destinations;
+      OrderTaskArgumentsContentCache m_cache;
       FilteredListModel<OrderTaskArguments> m_filtered_list;
       std::shared_ptr<TextModel> m_keywords;
       boost::signals2::scoped_connection m_connection;
 
+      FilteredListModel<OrderTaskArguments>::Filter
+        make_filter(const QString& keywords);
       void on_keywords(const QString& keywords);
   };
 }
