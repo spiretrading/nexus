@@ -12,25 +12,15 @@ namespace {
   }
   
   auto to_text(CountryCode country, const CountryDatabase& countries) {
-    auto& entry = countries.FromCode(country);
-    if(entry.m_code == CountryCode::NONE) {
-      return QString("");
-    }
-    return QString::fromStdString(entry.m_threeLetterCode.GetData());
+    return QString::fromStdString(
+      countries.FromCode(country).m_threeLetterCode.GetData());
   }
 
   auto to_text(MarketCode market, const MarketDatabase& markets) {
-    auto& entry = markets.FromCode(market);
-    if(entry.m_code.IsEmpty()) {
-      return QString("");
-    }
-    return QString::fromStdString(entry.m_displayName);
+    return QString::fromStdString(markets.FromCode(market).m_displayName);
   }
 
   auto to_text(const Security& security, const MarketDatabase& markets) {
-    if(security.GetSymbol().empty()) {
-      return QString("");
-    }
     return QString::fromStdString(ToString(security, markets));
   }
 
@@ -51,11 +41,7 @@ namespace {
 
   auto to_text(const Destination& destination,
       const DestinationDatabase& destinations) {
-    auto& entry = destinations.FromId(destination);
-    if(entry.m_id.empty()) {
-      return QString("");
-    }
-    return QString::fromStdString(entry.m_id);
+    return QString::fromStdString(destinations.FromId(destination).m_id);
   }
 }
 
