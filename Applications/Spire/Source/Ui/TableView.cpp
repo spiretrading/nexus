@@ -472,6 +472,15 @@ TableViewBuilder& TableViewBuilder::set_comparator(
   return *this;
 }
 
+TableViewBuilder& TableViewBuilder::set_comparator(
+    TableView::ValueComparator comparator) {
+  m_comparator = [comparator = std::move(comparator)] (const AnyRef& left,
+      int left_row, const AnyRef& right, int right_row, int column) {
+    return comparator(left, right);
+  };
+  return *this;
+}
+
 TableView* TableViewBuilder::make() const {
   return new TableView(m_table, m_header, m_filter, m_current, m_selection,
     m_item_builder, m_comparator, m_parent);

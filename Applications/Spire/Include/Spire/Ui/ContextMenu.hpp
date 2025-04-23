@@ -6,6 +6,7 @@
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/MouseMoveObserver.hpp"
+#include "Spire/Ui/PressObserver.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -159,6 +160,7 @@ namespace Spire {
       QMargins m_window_border_size;
       boost::optional<QSize> m_window_size;
       std::unordered_map<int, OverlayPanel*> m_submenus;
+      std::unordered_map<int, PressObserver> m_check_item_press_observers;
       boost::signals2::scoped_connection m_window_style_connection;
 
       QWidget* build_item(const std::shared_ptr<AnyListModel>& list, int index);
