@@ -3,11 +3,14 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/FixedHorizontalLayout.hpp"
+#include "Spire/Ui/Layouts.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
+using namespace Spire::Styles;
 
 TableHeader::TableHeader(
     std::shared_ptr<ListModel<TableHeaderItem::Model>> items, QWidget* parent)
@@ -15,7 +18,8 @@ TableHeader::TableHeader(
       m_items(items),
       m_resize_index(-1) {
   m_widths = std::make_shared<ArrayListModel<int>>();
-  auto layout = new FixedHorizontalLayout(this);
+  auto body = new QWidget();
+  auto layout = new FixedHorizontalLayout(body);
   for(auto i = 0; i != m_items->get_size(); ++i) {
     auto item = new TableHeaderItem(make_list_value_model(m_items, i));
     auto is_last = i == m_items->get_size() - 1;
@@ -45,6 +49,15 @@ TableHeader::TableHeader(
     layout->addWidget(item);
     m_item_views.push_back(item);
   }
+  auto box = new Box(body);
+  update_style(*box, [] (auto& style) {
+    style.get(Any()).
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(BorderBottomSize(scale_width(1))).
+      set(BorderBottomColor(0xE0E0E0));
+  });
+  enclose(*this, *box);
+  proxy_style(*this, *box);
   m_widths_connection = m_widths->connect_operation_signal(
     std::bind_front(&TableHeader::on_widths_operation, this));
 }

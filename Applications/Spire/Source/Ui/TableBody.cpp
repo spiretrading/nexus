@@ -465,19 +465,25 @@ struct TableBody::Painter {
     }
     auto width = body.width() - body.m_styles.m_padding.left() -
       body.m_styles.m_padding.right();
-    auto paint_border = [&] (int top) {
+    auto paint_border = [&] (int top, const QColor& color) {
       painter.fillRect(QRect(body.m_styles.m_padding.left(), top, width,
-        body.m_styles.m_vertical_spacing),
-        body.m_styles.m_horizontal_grid_color);
+        body.m_styles.m_vertical_spacing), color);
     };
     if(body.m_styles.m_vertical_spacing != 0) {
       for(auto i = 0; i != body.get_layout().count(); ++i) {
+        auto color = [&] {
+          if(i == 0) {
+            return QColor(Qt::transparent);
+          }
+          return body.m_styles.m_horizontal_grid_color;
+        }();
         auto& row = body.get_layout().get_row(i);
-        paint_border(row.y() - body.m_styles.m_vertical_spacing);
+        paint_border(row.y() - body.m_styles.m_vertical_spacing, color);
       }
       if(body.get_layout().count() > 0) {
         auto& row = body.get_layout().get_row(body.get_layout().count() - 1);
-        paint_border(row.y() + row.height());
+        paint_border(row.y() + row.height(),
+          body.m_styles.m_horizontal_grid_color);
       }
     }
   }
