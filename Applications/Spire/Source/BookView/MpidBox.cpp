@@ -1,7 +1,9 @@
 #include "Spire/BookView/MpidBox.hpp"
+#include <QEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/TableView.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Nexus;
@@ -62,6 +64,14 @@ const std::shared_ptr<ValueModel<int>>& MpidBox::get_level() const {
 
 const std::shared_ptr<ValueModel<bool>>& MpidBox::is_top_mpid() const {
   return m_is_top_mpid;
+}
+
+bool MpidBox::event(QEvent* event) {
+  if(event->type() == QEvent::ParentChange) {
+    unmatch(*(parentWidget()->parentWidget()), Row());
+    match(*(parentWidget()->parentWidget()), Row());
+  }
+  return QWidget::event(event);
 }
 
 void MpidBox::update_row_state(int type_index) {
