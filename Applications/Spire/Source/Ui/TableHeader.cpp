@@ -54,7 +54,8 @@ TableHeader::TableHeader(
     style.get(Any()).
       set(BackgroundColor(QColor(0xFFFFFF))).
       set(BorderBottomSize(scale_width(1))).
-      set(BorderBottomColor(0xE0E0E0));
+      set(BorderBottomColor(0xE0E0E0)).
+      set(PaddingLeft(scale_width(1)));
   });
   enclose(*this, *box);
   proxy_style(*this, *box);

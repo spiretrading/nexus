@@ -163,7 +163,6 @@ TableView::TableView(
   }
   m_header_view = new TableHeader(m_header);
   m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  m_header_view->setContentsMargins({scale_width(1), 0, 0, 0});
   link(*this, *m_header_view);
   m_header_scroll_box = new ScrollBox(m_header_view);
   m_header_scroll_box->set(ScrollBox::DisplayPolicy::NEVER);
