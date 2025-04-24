@@ -1,5 +1,6 @@
 #ifndef SPIRE_DECIMAL_BOX_ADAPTOR_HPP
 #define SPIRE_DECIMAL_BOX_ADAPTOR_HPP
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -228,8 +229,10 @@ namespace Spire {
       QHash<Qt::KeyboardModifier, Type> modifiers, QWidget* parent)
       : QWidget(parent),
         m_current(std::move(current)),
+BEAM_SUPPRESS_THIS_INITIALIZER()
         m_decimal_box(
           std::move(adaptor_model), make_adapted_modifiers(modifiers), this) {
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
     Styles::forward_style(*this, m_decimal_box);
     setFocusProxy(&m_decimal_box);
     enclose(*this, m_decimal_box);

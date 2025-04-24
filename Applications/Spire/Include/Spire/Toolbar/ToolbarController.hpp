@@ -3,6 +3,7 @@
 #include <memory>
 #include <Beam/Pointers/Ref.hpp>
 #include "Spire/Blotter/Blotter.hpp"
+#include "Spire/BookView/BookView.hpp"
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
 #include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/Toolbar/Toolbar.hpp"
@@ -34,6 +35,7 @@ namespace Spire {
       std::unique_ptr<EventFilter> m_event_filter;
       std::unique_ptr<ToolbarWindow> m_toolbar_window;
       std::shared_ptr<ListModel<BlotterModel*>> m_pinned_blotters;
+      std::vector<std::unique_ptr<BookViewController>> m_book_view_controllers;
       std::unique_ptr<KeyBindingsWindow> m_key_bindings_window;
       boost::signals2::scoped_connection m_blotter_added_connection;
       boost::signals2::scoped_connection m_blotter_removed_connection;
@@ -62,6 +64,7 @@ namespace Spire {
       void on_new_blotter(const QString& name);
       void on_blotter_added(BlotterModel& blotter);
       void on_blotter_removed(BlotterModel& blotter);
+      void on_book_view_closed(BookViewController& controller);
       void on_key_bindings_window_closed();
       void on_sign_out();
   };

@@ -1,4 +1,5 @@
 #include "Spire/UiViewer/StandardUiProperties.hpp"
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <limits>
 #include <QCheckBox>
 #include <QLineEdit>
@@ -54,8 +55,10 @@ namespace {
           : Window(parent),
             m_current(std::move(current)),
             m_submission(m_current->get()),
+BEAM_SUPPRESS_THIS_INITIALIZER()
             m_current_connection(m_current->connect_update_signal(
               std::bind_front(&StyleEditorWindow::on_current, this))) {
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
         setWindowTitle(tr("Style Editor"));
         set_svg_icon(":/Icons/spire.svg");
         setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));

@@ -1,6 +1,8 @@
 #include "Spire/Ui/ColorConversion.hpp"
+#include <boost/optional.hpp>
 #include <numbers>
 
+using namespace boost;
 using namespace Spire;
 
 namespace SA98G {
@@ -167,6 +169,73 @@ QColor Spire::to_rgb(const OklchColor& color) {
   lab.m_a = std::cos(h) * color.m_c;
   lab.m_b = std::sin(h) * color.m_c;
   return to_rgb(lab);
+}
+
+OklchColor Spire::interpolate(const OklchColor& start, const OklchColor& end,
+    double ratio) {
+  auto h = 0.0;
+  auto c = optional<double>();
+  if(start.m_h != 0 && end.m_h != 0) {
+    auto h_step = [&] {
+      if(end.m_h > start.m_h && end.m_h - start.m_h > 180) {
+        return end.m_h - (start.m_h + 360);
+      } else if(end.m_h < start.m_h && start.m_h - end.m_h > 180) {
+        return end.m_h + 360 - start.m_h;
+      } else {
+        return end.m_h - start.m_h;
+      }
+    }();
+    h = start.m_h + ratio * h_step;
+  } else if(start.m_h != 0) {
+    h = start.m_h;
+    if(end.m_l == 1 || end.m_l == 0) {
+      c = start.m_c;
+    }
+  } else if(end.m_h != 0) {
+    h = end.m_h;
+    if(start.m_l == 1 || start.m_l == 0) {
+      c = end.m_c;
+    }
+  }
+  if(!c) {
+    c = start.m_c + ratio * (end.m_c - start.m_c);
+  }
+  return OklchColor(start.m_l + ratio * (end.m_l - start.m_l), *c, h);
+}
+
+std::vector<QColor> Spire::scale_oklch(const QColor& start, const QColor& end,
+    int steps) {
+  if(steps <= 0) {
+    return {};
+  }
+  auto colors = std::vector<QColor>(steps);
+  if(steps == 1) {
+    colors[0] = start;
+    return colors;
+  }
+  auto start_oklch = to_oklch(start);
+  auto stop_oklch = to_oklch(end);
+  for(auto i = 0; i < steps; ++i) {
+    auto t = static_cast<double>(i) / (steps - 1);
+    colors[i] = to_rgb(interpolate(start_oklch, stop_oklch, t));
+  }
+  return colors;
+}
+
+std::vector<int> Spire::scale_alpha(int start, int end, int steps) {
+  if(steps <= 0) {
+    return {};
+  }
+  auto alphas = std::vector<int>(steps);
+  if(steps == 1) {
+    alphas[0] = start;
+    return alphas;
+  }
+  auto range = end - start;
+  for(auto i = 0; i < steps; ++i) {
+    alphas[i] = start + static_cast<double>(i) / (steps - 1) * range;
+  }
+  return alphas;
 }
 
 double Spire::apca(double text_luminance, double background_luminance) {

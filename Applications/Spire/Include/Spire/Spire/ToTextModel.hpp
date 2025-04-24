@@ -95,7 +95,7 @@ namespace Spire {
   }
 
   /**
-   * Constructs a ToTextModel with default conversion functions.
+   * Constructs a ToTextModel with a default from text conversion function.
    * @param source The model to convert to text.
    * @param to_text The function used to convert a value to its text
    *        representation.
@@ -108,7 +108,7 @@ namespace Spire {
   }
 
   /**
-   * Constructs a ToTextModel with default conversion functions.
+   * Constructs a ToTextModel.
    * @param source The model to convert to text.
    * @param to_text The function used to convert a value to its text
    *        representation.
@@ -130,6 +130,22 @@ namespace Spire {
   auto make_read_only_to_text_model(std::shared_ptr<T> source) {
     return make_to_text_model(std::move(source),
       [] (const auto& value) {
+        return to_text(value);
+      },
+      [] (const auto& value) -> boost::optional<typename T::Type> {
+        return boost::none;
+      });
+  }
+
+  /**
+   * Constructs a read-only ToTextModel.
+   * @param source The model to convert to text.
+   */
+  template<typename T>
+  auto make_read_only_to_text_model(std::shared_ptr<T> source,
+      typename ToTextModel<typename T::Type>::ToText to_text) {
+    return make_to_text_model(std::move(source),
+      [to_text = std::move(to_text)] (const auto& value) {
         return to_text(value);
       },
       [] (const auto& value) -> boost::optional<typename T::Type> {

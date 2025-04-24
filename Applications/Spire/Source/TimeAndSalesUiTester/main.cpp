@@ -179,9 +179,11 @@ struct TimeAndSalesWindowController {
 
   explicit TimeAndSalesWindowController(
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory)
+BEAM_SUPPRESS_THIS_INITIALIZER()
       : m_time_and_sales_window(populate_securities(),
           GetDefaultMarketDatabase(), std::move(factory),
           std::bind_front(&TimeAndSalesWindowController::model_builder, this)),
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
         m_time_and_sales_test_window(
           std::make_shared<DemoTimeAndSalesModel>()) {
     m_time_and_sales_window.show();

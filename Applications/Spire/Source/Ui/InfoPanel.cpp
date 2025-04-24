@@ -148,6 +148,6 @@ void InfoPanel::on_message_style() {
       });
   }
   if(*has_update) {
-    m_label->setFixedWidth(45 * QFontMetrics(*text_font).averageCharWidth());
+    m_label->setFixedWidth(45 * get_character_width(*text_font));
   }
 }

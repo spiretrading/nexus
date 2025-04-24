@@ -34,6 +34,7 @@ namespace Spire {
   class AnyRef;
   template<typename T> class ArrayListModel;
   class ArrayTableModel;
+  template<typename T> class ArrayValueToListModel;
   template<typename T> class ColumnViewListModel;
   template<typename T> class CompositeModel;
   template<typename T> class ConstantValueModel;
