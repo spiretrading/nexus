@@ -2,6 +2,7 @@
 #include <QKeyEvent>
 #include <QScreen>
 #include "Spire/BookView/BookViewWindowSettings.hpp"
+#include "Spire/BookView/DefaultQuantityModel.hpp"
 #include "Spire/BookView/MarketDepth.hpp"
 #include "Spire/BookView/TechnicalsPanel.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
@@ -348,8 +349,10 @@ void BookViewWindow::on_current(const Security& security) {
   auto body = new QWidget();
   auto layout = make_vbox_layout(body);
   auto panel = new TechnicalsPanel(m_model->get_technicals(),
-    m_interactions->get_default_quantity(),
-    m_interactions->get_default_quantity());
+    std::make_shared<DefaultQuantityModel>(
+      Ref(*m_user_profile), security, Side::BID),
+    std::make_shared<DefaultQuantityModel>(
+      Ref(*m_user_profile), security, Side::ASK));
   panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   layout->addWidget(panel);
   m_market_depth = new MarketDepth(m_model, m_factory->get_properties());
