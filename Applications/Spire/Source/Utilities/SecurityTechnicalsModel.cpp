@@ -1,4 +1,5 @@
 #include "Spire/Utilities/SecurityTechnicalsModel.hpp"
+#include <QTimer>
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
