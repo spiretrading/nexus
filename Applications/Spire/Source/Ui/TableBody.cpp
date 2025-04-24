@@ -473,7 +473,9 @@ struct TableBody::Painter {
       for(auto i = 0; i != body.get_layout().count(); ++i) {
         auto color = [&] {
           if(i == 0) {
-            return QColor(Qt::transparent);
+            if(auto row_cover = body.find_row(0)) {
+              return row_cover->m_background_color;
+            }
           }
           return body.m_styles.m_horizontal_grid_color;
         }();
