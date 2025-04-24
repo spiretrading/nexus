@@ -247,23 +247,33 @@ void InteractionsPage::on_add_region(const Region& region) {
       m_add_region_button->setDisabled(m_available_regions->get_size() == 0);
     }
     navigate_to_value(*m_list_box, region);
+    m_list_box->get_list_view().setFocusProxy(nullptr);
+    m_list_box->get_list_view().setFocusPolicy(Qt::StrongFocus);
   }
 }
 
 void InteractionsPage::on_delete_region(const Region& region) {
   QTimer::singleShot(0, this, [=] {
+    auto current = m_list_box->get_list_view().get_current()->get();
     auto i = std::find(m_regions->begin() + 1, m_regions->end(), region);
     if(i != m_regions->end() &&
         m_regions->remove(i) == QValidator::Acceptable) {
-      if(auto current = m_list_box->get_list_view().get_current()->get()) {
-        m_list_box->get_list_view().get_selection()->push(*current);
-      }
       m_key_bindings->get_interactions_key_bindings(region)->reset();
       if(region.GetSecurities().empty()) {
         auto i = std::lower_bound(m_available_regions->begin(),
           m_available_regions->end(), region, &region_comparator);
         m_available_regions->insert(region, i);
         m_add_region_button->setDisabled(m_available_regions->get_size() == 0);
+      }
+      if(current) {
+        auto size = m_list_box->get_list_view().get_list()->get_size();
+        if(size > 0) {
+          if(*current >= size) {
+            --*current;
+          }
+          navigate_to_index(m_list_box->get_list_view(), *current);
+          m_list_box->get_list_view().setFocus();
+        }
       }
     }
   });

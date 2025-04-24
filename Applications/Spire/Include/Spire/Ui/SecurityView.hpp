@@ -22,7 +22,7 @@ namespace Spire {
       };
 
       /** A ValueModel over a Nexus::Security. */
-      using CurrentModel = ValueModel<Nexus::Security>;
+      using CurrentModel = SecurityModel;
 
       /**
        * Constructs a SecurityView using a default local model.

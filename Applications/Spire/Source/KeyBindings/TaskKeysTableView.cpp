@@ -157,15 +157,17 @@ namespace {
         if(column == REGION_INDEX) {
           auto& key = get<QKeySequence>(row, KEY_INDEX);
           m_region_keys.erase({get<Region>(row, REGION_INDEX), key});
-          if(auto row = find_conflicting_row(std::any_cast<const Region&>(value),
-              key); row != -1) {
+          auto row =
+            find_conflicting_row(std::any_cast<const Region&>(value), key);
+          if(row != -1) {
             result = m_source->set(row, KEY_INDEX, QKeySequence());
           }
         } else if(column == KEY_INDEX) {
           auto& region = get<Region>(row, REGION_INDEX);
           m_region_keys.erase({region, get<QKeySequence>(row, KEY_INDEX)});
-          if(auto row = find_conflicting_row(region,
-              std::any_cast<const QKeySequence&>(value)); row != -1) {
+          auto row = find_conflicting_row(
+            region, std::any_cast<const QKeySequence&>(value));
+          if(row != -1) {
             result = m_source->set(row, KEY_INDEX, QKeySequence());
           }
         }
@@ -177,8 +179,8 @@ namespace {
     }
 
     QValidator::State remove(int row) override {
-      m_region_keys.erase({get<Region>(row, REGION_INDEX),
-        get<QKeySequence>(row, KEY_INDEX)});
+      m_region_keys.erase(
+        {get<Region>(row, REGION_INDEX), get<QKeySequence>(row, KEY_INDEX)});
       return m_source->remove(row);
     }
 
@@ -244,9 +246,7 @@ namespace {
           } else if(column_id == OrderTaskColumns::REGION) {
             auto current = make_proxy.operator ()<Region>();
             auto region_box = new RegionBox(m_regions, current);
-            region_box->setFixedHeight(scale_height(25));
-            region_box->setSizePolicy(
-              QSizePolicy::Preferred, QSizePolicy::Fixed);
+            region_box->setFixedHeight(region_box->minimumSizeHint().height());
             return {new EditableBox(*region_box),
               std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::DESTINATION) {

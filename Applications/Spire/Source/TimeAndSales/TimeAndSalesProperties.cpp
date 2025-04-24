@@ -31,7 +31,7 @@ namespace {
       receiver.SetSource(Ref(buffer));
       receiver.Shuttle(properties);
     } catch(std::exception&) {
-      throw std::runtime_error("Unable to time and sales properties.");
+      throw std::runtime_error("Unable to load time and sales properties.");
     }
     return properties;
   }

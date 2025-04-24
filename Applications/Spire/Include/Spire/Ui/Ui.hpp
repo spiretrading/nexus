@@ -69,6 +69,8 @@ namespace Spire {
   class MenuBox;
   class MenuButton;
   class MoneyBox;
+  class MouseMoveObserver;
+  class MouseObserver;
   template<typename T> class MultiSelectionModel;
   class NavigationView;
   class OverlayPanel;
@@ -163,6 +165,12 @@ namespace Spire {
    * @param widget The widget whose descendants' layout will be invalidated.
    */
   void invalidate_descendant_layouts(QWidget& widget);
+
+  /**
+   * Gets the width of a character.
+   * @param font The font used to calculate the character width.
+   */
+  int get_character_width(const QFont& font);
 }
 
 #endif

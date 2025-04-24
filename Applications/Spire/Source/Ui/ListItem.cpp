@@ -111,6 +111,7 @@ void ListItem::mount(QWidget& body) {
     setTabOrder(this, &*m_button);
     setFocusProxy(&*m_button);
   }
+  setFocusPolicy(focusPolicy());
   if(auto item = layout()->takeAt(0)) {
     delete item;
   }

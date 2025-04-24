@@ -296,6 +296,9 @@ void AnyTagComboBox::on_focus(FocusObserver::State state) {
     } else {
       push_combo_box();
     }
+  } else {
+    copy_list_model(get_current(), m_submission);
+    m_is_modified = false;
   }
 }
 

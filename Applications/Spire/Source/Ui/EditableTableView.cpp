@@ -26,7 +26,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  using DeleteButton = StateSelector<void, struct DeleteButtonSeletorTag>;
   using EmptyCell = StateSelector<void, struct EmptyCellSeletorTag>;
 
   auto TABLE_VIEW_STYLE() {

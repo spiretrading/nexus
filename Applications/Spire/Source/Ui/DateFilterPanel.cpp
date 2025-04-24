@@ -1,4 +1,5 @@
 #include "Spire/Ui/DateFilterPanel.hpp"
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <QEvent>
 #include "Spire/Spire/AssociativeValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -219,6 +220,7 @@ struct DateFilterPanel::DateRangeComposerModel :
       m_end(std::make_shared<LocalOptionalDateModel>()),
       m_offset_value(std::make_shared<LocalOptionalIntegerModel>()),
       m_date_unit(std::make_shared<AssociativeValueModel<DateUnit>>()),
+BEAM_SUPPRESS_THIS_INITIALIZER()
       m_source_connection(m_source->connect_update_signal(
         std::bind_front(&DateRangeComposerModel::on_current, this))),
       m_start_connection(m_start->connect_update_signal(
@@ -229,6 +231,7 @@ struct DateFilterPanel::DateRangeComposerModel :
         std::bind_front(&DateRangeComposerModel::on_offset_value_update, this))),
       m_date_unit_connection(m_date_unit->connect_update_signal(
         std::bind_front(&DateRangeComposerModel::on_date_unit_update, this))) {
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_offset_value->set_minimum(1);
     on_current(m_source->get());
   } 
