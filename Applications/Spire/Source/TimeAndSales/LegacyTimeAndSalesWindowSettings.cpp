@@ -30,8 +30,8 @@ QWidget* LegacyTimeAndSalesWindowSettings::Reopen(
   return window;
 }
 
-void LegacyTimeAndSalesWindowSettings::Apply(Ref<UserProfile> userProfile,
-    Out<QWidget> widget) const {
+void LegacyTimeAndSalesWindowSettings::Apply(
+    Ref<UserProfile> userProfile, Out<QWidget> widget) const {
   auto& window = dynamic_cast<TimeAndSalesWindow&>(*widget);
   restore_geometry(window, m_geometry);
   auto frame_height = get_frame_height();

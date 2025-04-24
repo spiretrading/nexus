@@ -59,6 +59,9 @@ namespace Spire {
         ModelBuilder model_builder, std::string identifier,
         QWidget* parent = nullptr);
 
+      /** Returns the currently displayed security. */
+      const std::shared_ptr<SecurityModel>& get_current() const;
+
       std::unique_ptr<LegacyUI::WindowSettings>
         GetWindowSettings() const override;
 

@@ -1,102 +1,94 @@
 #ifndef SPIRE_BOOK_VIEW_MODEL_HPP
 #define SPIRE_BOOK_VIEW_MODEL_HPP
-#include <map>
-#include <unordered_map>
-#include <Beam/Pointers/Ref.hpp>
-#include <QAbstractItemModel>
-#include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/SecurityInfo.hpp"
-#include "Nexus/Definitions/Side.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
-#include "Spire/Async/EventHandler.hpp"
-#include "Spire/BookView/BookViewProperties.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Nexus/Definitions/BookQuote.hpp"
+#include "Nexus/Definitions/SecurityTechnicals.hpp"
+#include "Nexus/OrderExecutionService/OrderFields.hpp"
+#include "Spire/BookView/BookView.hpp"
+#include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 
 namespace Spire {
 
-  /** Models a single Side of a Security's book. */
-  class BookViewModel : public QAbstractTableModel {
+  /** A ValueModel over a BboQuote. */
+  using BboQuoteModel = ValueModel<Nexus::BboQuote>;
+
+  /** A LocalValueModel over a BboQuote. */
+  using LocalBboQuoteModel = LocalValueModel<Nexus::BboQuote>;
+
+  /** Models a list of BookQuotes. */
+  using BookQuoteListModel = ListModel<Nexus::BookQuote>;
+
+  /** A ValueModel over a SecurityTechnicals. */
+  using SecurityTechnicalsValueModel = ValueModel<Nexus::SecurityTechnicals>;
+
+  /** A LocalValueModel over a SecurityTechnicals. */
+  using LocalSecurityTechnicalsValueModel =
+    LocalValueModel<Nexus::SecurityTechnicals>;
+
+  /** The model for the book view. */
+  class BookViewModel {
     public:
 
-      /** Enumerates the model's columns. */
-      enum Columns {
+      /** A ValueModel over optional OrderFields. */
+      using PreviewOrderModel =
+        ValueModel<boost::optional<Nexus::OrderExecutionService::OrderFields>>;
 
-        /** The MPID column. */
-        MPID_COLUMN,
+      /** Represents the user order. */
+      struct UserOrder {
 
-        /** The price column. */
-        PRICE_COLUMN,
+        /** The order destination. */
+        Nexus::Destination m_destination;
 
-        /** The size column. */
-        SIZE_COLUMN,
+        /** The order price. */
+        Nexus::Money m_price;
+
+        /** The order size. */
+        Nexus::Quantity m_size;
+
+        /** The status of the user order. */
+        Nexus::OrderStatus m_status;
+
+        bool operator ==(const UserOrder&) const = default;
       };
 
-      /** The number of columns available. */
-      static const auto COLUMN_COUNT = 3;
+      /** Models a list of UserOrders. */
+      using UserOrderListModel = ListModel<UserOrder>;
 
-      /**
-       * Constructs a BookViewModel.
-       * @param userProfile The user's profile.
-       * @param properties The BookViewProperties used to display the Quotes.
-       * @param security The Security whose book is to be modeled.
-       * @param side The Side of the book to model.
-       */
-      BookViewModel(Beam::Ref<UserProfile> userProfile,
-        const BookViewProperties& properties, const Nexus::Security& security,
-        Nexus::Side side);
+      virtual ~BookViewModel() = default;
 
-      /**
-       * Sets the properties.
-       * @param properties The display properties.
-       */
-      void SetProperties(const BookViewProperties& properties);
+      /** Returns a list of BookQuotes with the bid side. */
+      virtual const std::shared_ptr<BookQuoteListModel>& get_bids() const = 0;
 
-      int rowCount(const QModelIndex& parent) const override;
+      /** Returns a list of BookQuotes with the ask side. */
+      virtual const std::shared_ptr<BookQuoteListModel>& get_asks() const = 0;
 
-      int columnCount(const QModelIndex& parent) const override;
+      /** Returns a list of orders with the bid side. */
+      virtual const std::shared_ptr<UserOrderListModel>&
+        get_bid_orders() const = 0;
 
-      QVariant data(const QModelIndex& index, int role) const override;
+      /** Returns a list of orders with the ask side. */
+      virtual const std::shared_ptr<UserOrderListModel>&
+        get_ask_orders() const = 0;
 
-      QVariant headerData(
-        int section, Qt::Orientation orientation, int role) const override;
+      /** Returns the preview order. */
+      virtual const std::shared_ptr<PreviewOrderModel>&
+        get_preview_order() const = 0;
+
+      /** Returns the Bbo quote. */
+      virtual const std::shared_ptr<BboQuoteModel>& get_bbo_quote() const = 0;
+
+      /** Returns the technical details about a Security. */
+      virtual const std::shared_ptr<SecurityTechnicalsValueModel>&
+        get_technicals() const = 0;
+
+    protected:
+
+      /** Constructs an empty model. */
+      BookViewModel() = default;
 
     private:
-      struct OrderKey {
-        Nexus::Money m_price;
-        std::string m_destination;
-
-        auto operator <=>(const OrderKey&) const = default;
-      };
-      struct BookQuoteEntry {
-        Nexus::BookQuote m_quote;
-        int m_level;
-      };
-      UserProfile* m_userProfile;
-      BookViewProperties m_properties;
-      Nexus::Security m_security;
-      Nexus::Side m_side;
-      Nexus::SecurityInfo m_securityInfo;
-      std::unordered_map<Nexus::MarketCode, Nexus::MarketQuote> m_marketQuotes;
-      std::unordered_map<Nexus::MarketCode, Nexus::BookQuote> m_topLevels;
-      std::vector<std::unique_ptr<BookQuoteEntry>> m_bookQuotes;
-      std::map<OrderKey, Nexus::Quantity> m_orderQuantities;
-      std::unordered_map<const Nexus::OrderExecutionService::Order*,
-        Nexus::Quantity> m_remainingOrderQuantities;
-      EventHandler m_eventHandler;
-
-      bool TestHighlight(const BookViewProperties::MarketHighlight& highlight,
-        const Nexus::BookQuote& quote) const;
-      void HighlightQuote(const Nexus::BookQuote& quote);
-      void AddQuote(const Nexus::BookQuote& quote, int quoteIndex);
-      void RemoveQuote(int quoteIndex);
-      void OnMarketQuote(const Nexus::MarketQuote& quote);
-      void OnBookQuote(const Nexus::BookQuote& quote);
-      void OnOrderExecuted(const Nexus::OrderExecutionService::Order* order);
-      void OnExecutionReport(const Nexus::OrderExecutionService::Order* order,
-        const Nexus::OrderExecutionService::ExecutionReport& executionReport);
-      void OnBookQuoteInterruption(const std::exception_ptr& e);
-      void OnMarketQuoteInterruption(const std::exception_ptr& e);
+      BookViewModel(const BookViewModel&) = delete;
+      BookViewModel& operator =(const BookViewModel&) = delete;
   };
 }
 

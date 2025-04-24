@@ -14,7 +14,7 @@
 #include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Nexus/TelemetryService/TelemetryClientBox.hpp"
 #include "Spire/Blotter/Blotter.hpp"
-#include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 #include "Spire/Catalog/CatalogSettings.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
@@ -55,6 +55,8 @@ namespace Spire {
        * @param entitlementDatabase Stores the database of market data
        *        entitlements.
        * @param additionalTagDatabase Stores the database of additional tags.
+       * @param book_view_properties Initializes the display properties of the
+       *        BookViewWindow.
        * @param time_and_sales_properties Initializes the time and sales
        *        properties.
        * @param serviceClients The set of clients connected to Spire services.
@@ -70,6 +72,7 @@ namespace Spire {
         const Nexus::MarketDataService::EntitlementDatabase&
           entitlementDatabase,
         const AdditionalTagDatabase& additionalTagDatabase,
+        BookViewProperties book_view_properties,
         TimeAndSalesProperties time_and_sales_properties,
         Nexus::ServiceClientsBox serviceClients,
         Nexus::TelemetryService::TelemetryClientBox telemetryClient);
@@ -160,15 +163,6 @@ namespace Spire {
       /** Returns the CanvasTypeRegistry. */
       CanvasTypeRegistry& GetCanvasTypeRegistry();
 
-      /** Returns the default BookViewProperties. */
-      const BookViewProperties& GetDefaultBookViewProperties() const;
-
-      /**
-       * Sets the default BookViewProperties.
-       * @param properties The BookViewProperties to use as the defaults.
-       */
-      void SetDefaultBookViewProperties(const BookViewProperties& properties);
-
       /** Returns the default OrderImbalanceIndicatorProperties. */
       const OrderImbalanceIndicatorProperties&
         GetDefaultOrderImbalanceIndicatorProperties() const;
@@ -188,6 +182,13 @@ namespace Spire {
       /** Sets the initial OrderImbalanceIndicatorWindowSettings. */
       void SetInitialOrderImbalanceIndicatorWindowSettings(
         const OrderImbalanceIndicatorWindowSettings& settings);
+
+      /** Returns the BookViewPropertiesWindowFactory. */
+      const std::shared_ptr<BookViewPropertiesWindowFactory>&
+        GetBookViewPropertiesWindowFactory() const;
+
+      /** Returns the BookViewModelBuilder. */
+      const BookViewWindow::ModelBuilder& GetBookViewModelBuilder() const;
 
       /** Returns the RiskTimerProperties. */
       const RiskTimerProperties& GetRiskTimerProperties() const;
@@ -238,10 +239,12 @@ namespace Spire {
       std::filesystem::path m_profilePath;
       std::shared_ptr<RecentlyClosedWindowListModel> m_recentlyClosedWindows;
       std::shared_ptr<SecurityInfoQueryModel> m_security_info_query_model;
-      BookViewProperties m_defaultBookViewProperties;
       SavedDashboards m_savedDashboards;
       OrderImbalanceIndicatorProperties
         m_defaultOrderImbalanceIndicatorProperties;
+      std::shared_ptr<BookViewPropertiesWindowFactory>
+        m_book_view_properties_window_factory;
+      BookViewWindow::ModelBuilder m_book_view_model_builder;
       RiskTimerProperties m_riskTimerProperties;
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory>
         m_time_and_sales_properties_window_factory;

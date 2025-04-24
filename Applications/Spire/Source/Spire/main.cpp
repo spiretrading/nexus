@@ -9,7 +9,7 @@
 #include <tclap/CmdLine.h>
 #include "Nexus/TelemetryService/ApplicationDefinitions.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
-#include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/BookView/BookViewPropertiesWindowFactory.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
@@ -225,6 +225,8 @@ int main(int argc, char* argv[]) {
     auto is_manager = is_administrator ||
       !service_clients.GetAdministrationClient().LoadManagedTradingGroups(
         service_clients.GetServiceLocatorClient().GetAccount()).empty();
+    auto book_view_properties =
+      load_book_view_properties(get_profile_path(username));
     auto time_and_sales_properties =
       load_time_and_sales_properties(get_profile_path(username));
     user_profile.emplace(username, is_administrator, is_manager,
@@ -235,7 +237,7 @@ int main(int argc, char* argv[]) {
       service_clients.GetDefinitionsClient().LoadMarketDatabase(),
       service_clients.GetDefinitionsClient().LoadDestinationDatabase(),
       service_clients.GetAdministrationClient().LoadEntitlements(),
-      get_default_additional_tag_database(),
+      get_default_additional_tag_database(), std::move(book_view_properties),
       std::move(time_and_sales_properties), std::move(service_clients),
       *telemetry_client);
     auto sign_in_data = JsonObject();
@@ -249,7 +251,6 @@ int main(int argc, char* argv[]) {
     }
     BlotterSettings::Load(Store(*user_profile));
     CatalogSettings::Load(Store(*user_profile));
-    BookViewProperties::Load(Store(*user_profile));
     RiskTimerProperties::Load(Store(*user_profile));
     PortfolioViewerProperties::Load(Store(*user_profile));
     OrderImbalanceIndicatorProperties::Load(Store(*user_profile));
@@ -294,10 +295,12 @@ int main(int argc, char* argv[]) {
     *user_profile->GetKeyBindings(), user_profile->GetProfilePath());
   PortfolioViewerProperties::Save(*user_profile);
   RiskTimerProperties::Save(*user_profile);
+  save_book_view_properties(
+    user_profile->GetBookViewPropertiesWindowFactory()->get_properties()->get(),
+    user_profile->GetProfilePath());
   save_time_and_sales_properties(user_profile->
     GetTimeAndSalesPropertiesWindowFactory()->get_properties()->get(),
     user_profile->GetProfilePath());
-  BookViewProperties::Save(*user_profile);
   CatalogSettings::Save(*user_profile);
   BlotterSettings::Save(*user_profile);
   toolbar_controller->close();

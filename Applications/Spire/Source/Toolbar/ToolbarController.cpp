@@ -10,6 +10,7 @@
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
+#include "Spire/BookView/BookViewController.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/Charting/ChartWindow.hpp"
 #include "Spire/Dashboard/DashboardWindow.hpp"
@@ -53,8 +54,12 @@ namespace {
     auto windows = std::vector<QWidget*>();
     while(instantiate_security_windows && index < securities.size()) {
       auto width = 0;
-      auto book_view_window = new BookViewWindow(
-        Ref(user_profile), user_profile.GetDefaultBookViewProperties(), "");
+      auto book_view_window = new BookViewWindow(Ref(user_profile),
+        user_profile.GetSecurityInfoQueryModel(),
+        user_profile.GetKeyBindings(),
+        user_profile.GetMarketDatabase(),
+        user_profile.GetBookViewPropertiesWindowFactory(),
+        user_profile.GetBookViewModelBuilder());
       book_view_window->move(next_position);
       book_view_window->show();
       next_position.rx() += book_view_window->frameSize().width();
@@ -73,7 +78,7 @@ namespace {
       time_and_sales_window->show();
       time_and_sales_window->Link(*book_view_window);
       windows.push_back(time_and_sales_window);
-      book_view_window->DisplaySecurity(securities[index]);
+      book_view_window->get_current()->set(securities[index]);
       next_position.rx() += time_and_sales_window->frameSize().width();
       width += time_and_sales_window->frameSize().width();
       instantiate_security_windows = index < securities.size() &&
@@ -161,7 +166,14 @@ void ToolbarController::open() {
     windows = load_default_layout(*m_user_profile, *m_toolbar_window);
   }
   for(auto& window : windows) {
-    window->show();
+    if(auto book_view = dynamic_cast<BookViewWindow*>(window)) {
+      auto controller =
+        std::make_unique<BookViewController>(Ref(*m_user_profile), *book_view);
+      controller->open();
+      m_book_view_controllers.push_back(std::move(controller));
+    } else {
+      window->show();
+    }
   }
   m_toolbar_window->connect_open_signal(
     std::bind_front(&ToolbarController::on_open, this));
@@ -189,6 +201,10 @@ void ToolbarController::close() {
     return;
   }
   WindowSettings::Save(*m_user_profile);
+  auto book_view_controllers = std::move(m_book_view_controllers);
+  for(auto& controller : book_view_controllers) {
+    controller->close();
+  }
   for(auto& window : QApplication::topLevelWidgets()) {
     if(window != &*m_toolbar_window) {
       window->close();
@@ -207,10 +223,11 @@ void ToolbarController::open_chart_window() {
 }
 
 void ToolbarController::open_book_view_window() {
-  auto window = new BookViewWindow(
-    Ref(*m_user_profile), m_user_profile->GetDefaultBookViewProperties());
-  window->setAttribute(Qt::WA_DeleteOnClose);
-  window->show();
+  auto controller = std::make_unique<BookViewController>(Ref(*m_user_profile));
+  controller->connect_closed_signal(std::bind_front(
+    &ToolbarController::on_book_view_closed, this, std::ref(*controller)));
+  controller->open();
+  m_book_view_controllers.push_back(std::move(controller));
 }
 
 void ToolbarController::open_time_and_sales_window() {
@@ -327,7 +344,14 @@ void ToolbarController::on_reopen(const WindowSettings& settings) {
       break;
     }
   }
-  window->show();
+  if(auto book_view = dynamic_cast<BookViewWindow*>(window)) {
+    auto controller =
+      std::make_unique<BookViewController>(Ref(*m_user_profile), *book_view);
+    controller->open();
+    m_book_view_controllers.push_back(std::move(controller));
+  } else {
+    window->show();
+  }
 }
 
 void ToolbarController::on_open_blotter(BlotterModel& blotter) {
@@ -351,7 +375,17 @@ void ToolbarController::on_restore_all() {
 
 void ToolbarController::on_import(
     UserSettings::Categories categories, const std::filesystem::path& path) {
-  import_settings(categories, path, Store(*m_user_profile));
+  auto windows = import_settings(categories, path, Store(*m_user_profile));
+  for(auto& window : windows) {
+    if(auto book_view = dynamic_cast<BookViewWindow*>(window)) {
+      auto controller =
+        std::make_unique<BookViewController>(Ref(*m_user_profile), *book_view);
+      controller->open();
+      m_book_view_controllers.push_back(std::move(controller));
+    } else {
+      window->show();
+    }
+  }
 }
 
 void ToolbarController::on_export(
@@ -383,6 +417,12 @@ void ToolbarController::on_blotter_removed(BlotterModel& blotter) {
       break;
     }
   }
+}
+
+void ToolbarController::on_book_view_closed(BookViewController& controller) {
+  std::erase_if(m_book_view_controllers, [&] (const auto& entry) {
+    return &controller == entry.get();
+  });
 }
 
 void ToolbarController::on_key_bindings_window_closed() {

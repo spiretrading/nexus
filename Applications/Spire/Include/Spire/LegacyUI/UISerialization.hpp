@@ -3,6 +3,7 @@
 #include <Beam/Serialization/TypeRegistry.hpp>
 #include "Spire/Blotter/BlotterWindowSettings.hpp"
 #include "Spire/BookView/BookViewWindowSettings.hpp"
+#include "Spire/BookView/LegacyBookViewWindowSettings.hpp"
 #include "Spire/Canvas/Common/CustomNode.hpp"
 #include "Spire/Canvas/Common/NoneNode.hpp"
 #include "Spire/Canvas/ControlNodes/AggregateNode.hpp"
@@ -258,7 +259,8 @@ namespace Spire {
 
   BEAM_REGISTER_TYPES(RegisterWindowSettingsTypes,
     (BlotterWindowSettings, "Spire.BlotterWindowSettings"),
-    (BookViewWindowSettings, "Spire.BookViewWindowSettings"),
+    (BookViewWindowSettings, "Spire.Current.BookViewWindowSettings"),
+    (LegacyBookViewWindowSettings, "Spire.BookViewWindowSettings"),
     (LegacyUI::CanvasWindowSettings, "Spire.UI.CanvasWindowSettings"),
     (ChartIntervalComboBoxWindowSettings,
       "Spire.ChartIntervalComboBoxWindowSettings"),

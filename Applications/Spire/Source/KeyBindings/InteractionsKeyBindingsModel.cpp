@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <ranges>
 
 using namespace boost;
@@ -16,8 +17,10 @@ namespace {
 
       explicit HierarchicalValueModel(std::shared_ptr<ValueModel<Type>> parent)
         : m_parent(std::move(parent)),
+BEAM_SUPPRESS_THIS_INITIALIZER()
           m_connection(m_parent->connect_update_signal(
             std::bind_front(&HierarchicalValueModel::on_update, this))),
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
           m_value(m_parent->get()) {}
 
       void detach() {
@@ -95,8 +98,10 @@ namespace {
       explicit HierarchicalScalarValueModel(
           std::shared_ptr<ScalarValueModel<Type>> parent)
         : m_parent(std::move(parent)),
+BEAM_SUPPRESS_THIS_INITIALIZER()
           m_connection(m_parent->connect_update_signal(
             std::bind_front(&HierarchicalScalarValueModel::on_update, this))),
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
           m_value(m_parent->get()) {}
 
       void detach() {

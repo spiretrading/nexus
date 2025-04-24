@@ -1,190 +1,218 @@
 #ifndef SPIRE_BOOK_VIEW_PROPERTIES_HPP
 #define SPIRE_BOOK_VIEW_PROPERTIES_HPP
-#include <unordered_map>
+#include <array>
+#include <filesystem>
 #include <vector>
-#include <Beam/Pointers/Out.hpp>
-#include <Beam/Serialization/ShuttleOptional.hpp>
+#include <Beam/Serialization/ShuttleArray.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
-#include <boost/optional/optional.hpp>
 #include <QColor>
 #include <QFont>
 #include "Nexus/Definitions/Market.hpp"
 #include "Spire/BookView/BookView.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Ui/HighlightBox.hpp"
 
 namespace Spire {
 
-  /** Stores the properties used by a BookViewWindow. */
-  class BookViewProperties {
-    public:
+  /** A ValueModel over a BookViewProperties. */
+  using BookViewPropertiesModel = ValueModel<BookViewProperties>;
 
-      /** Stores a market's highlight properties. */
-      struct MarketHighlight {
+  /** A LocalValueModel over a BookViewProperties. */
+  using LocalBookViewPropertiesModel = LocalValueModel<BookViewProperties>;
 
-        /** The color to highlight the market with. */
-        QColor m_color;
+  /** Represents the price level properties in the book view window. */
+  struct BookViewLevelProperties {
 
-        /** Whether to highlight all levels. */
-        bool m_highlightAllLevels;
+    /** Specifies the type of fill used for price levels. */
+    enum class FillType {
 
-        template<typename Shuttler>
-        void Shuttle(Shuttler& shuttle, unsigned int version);
-      };
+      /** The levels are filled with a linear gradient.*/
+      GRADIENT,
 
-      /** Stores options available to highlight Orders. */
-      enum OrderHighlight {
+      /** The levels are filled using a solid color. */
+      SOLID
+    };
 
-        /** Do not display Orders. */
-        HIDE_ORDERS,
+    /** The font used in the text. */
+    QFont m_font;
 
-        /** Display Orders using the BookQuote colors. */
-        DISPLAY_ORDERS,
+    /** Whether to show grid lines. */
+    bool m_is_grid_enabled;
 
-        /** Display Orders using a specified color. */
-        HIGHLIGHT_ORDERS
-      };
+    /** The fill type for price levels. */
+    FillType m_fill_type;
 
-      /** Returns the default BookViewProperties. */
-      static BookViewProperties GetDefault();
+    /** A list of color values used to designate distinct price levels. */
+    std::vector<QColor> m_color_scheme;
 
-      /**
-       * Loads the BookViewWindow Properties from a UserProfile.
-       * @param userProfile The UserProfile to load the properties from.
-       */
-      static void Load(Beam::Out<UserProfile> userProfile);
+    /** Returns the default properties. */
+    static const BookViewLevelProperties& get_default();
 
-      /**
-       * Saves a UserProfile's BookViewWindow Properties.
-       * @param userProfile The UserProfile's properties to save.
-       */
-      static void Save(const UserProfile& userProfile);
+    template<typename Shuttler>
+    void Shuttle(Shuttler& shuttle, unsigned int version);
+  };
 
-      /** Constructs an uninitialized BookViewProperties. */
-      BookViewProperties();
+  /** Represents the highlight properties in the book view window. */
+  struct BookViewHighlightProperties {
 
-      /** Returns the foreground color of a BookQuote. */
-      const QColor& GetBookQuoteForegroundColor() const;
+    /** Specifies the visibility for the user's orders. */
+    enum class OrderVisibility {
 
-      /** Sets the foreground color of a BookQuote. */
-      void SetBookQuoteForegroundColor(const QColor& color);
+      /** The user's orders are not visible. */
+      HIDDEN,
 
-      /**
-       * Returns the list of background colors used for each level of a
-       * BookQuote.
-       */
-      const std::vector<QColor>& GetBookQuoteBackgroundColors() const;
+      /** The user's orders are visible. */
+      VISIBLE,
 
-      /**
-       * Returns the list of background colors used for each level of a
-       * BookQuote.
-       */
-      std::vector<QColor>& GetBookQuoteBackgroundColors();
+      /** The user's orders are highlighted. */
+      HIGHLIGHTED
+    };
 
-      /** Returns the font used for the BboQuote. */
-      const QFont& GetBboQuoteFont() const;
+    /** Specifies the level of price depth for applying highlights. */
+    enum class MarketHighlightLevel {
 
-      /** Sets the font used for the BboQuote. */
-      void SetBboQuoteFont(const QFont& font);
+      /** The highlight applies only to the top price level. */
+      TOP,
 
-      /** Returns the font to used by BookQuotes. */
-      const QFont& GetBookQuoteFont() const;
+      /** The highlight applies to all price levels. */
+      ALL
+    };
 
-      /** Sets the font used by BookQuotes. */
-      void SetBookQuoteFont(const QFont& font);
+    /** Specifies the order state to apply highlight. */
+    enum class OrderHighlightState {
 
-      /**
-       * Returns the MarketHighlight for a specified market.
-       * @param market The market to get the property for.
-       * @return The <i>market</i>'s highlight property.
-       */
-      boost::optional<const MarketHighlight&> GetMarketHighlight(
-        Nexus::MarketCode market) const;
+      /** The preview order. */
+      PREVIEW,
 
-      /**
-       * Sets the MarketHighlight for a specified market.
-       * @param market The market to apply the property to.
-       * @param highlight The MarketHighlight to apply.
-       */
-      void SetMarketHighlight(
-        Nexus::MarketCode market, const MarketHighlight& highlight);
+      /** The submitted order. */
+      ACTIVE,
 
-      /**
-       * Removes the MarketHighlight for a specified market.
-       * @param market The market to remove the highlight from.
-       */
-      void RemoveMarketHighlight(Nexus::MarketCode market);
+      /** The filled order. */
+      FILLED,
 
-      /** Returns the OrderHighlight option. */
-      OrderHighlight GetOrderHighlight() const;
+      /** The canceled order. */
+      CANCELED,
 
-      /** Sets the OrderHighlight option. */
-      void SetOrderHighlight(OrderHighlight orderHighlight);
+      /** The rejected order. */
+      REJECTED
+    };
 
-      /** Returns the OrderHighlight color. */
-      const QColor& GetOrderHighlightColor() const;
+    /** The number of the order highlight state. */
+    static const auto ORDER_HIGHLIGHT_STATE_COUNT = 5;
 
-      /** Sets the OrderHighlight color. */
-      void SetOrderHighlightColor(const QColor& color);
+    /** Specifies a market's highlight properties. */
+    struct MarketHighlight {
 
-      /** Returns <code>true</code> iff grid lines should be displayed. */
-      bool GetShowGrid() const;
+      /** The market that the highlight applies to. */
+      Nexus::MarketCode m_market;
 
-      /** Sets whether grid lines should be displayed. */
-      void SetShowGrid(bool value);
+      /** The color to highlight the market with. */
+      HighlightColor m_color;
 
-      /** Returns <code>true</code> iff the BBO should be displayed. */
-      bool GetShowBbo() const;
+      /** The highlight level. */
+      MarketHighlightLevel m_level;
 
-      /** Sets whether the BBO should be displayed. */
-      void SetShowBbo(bool value);
-
-    private:
-      friend struct Beam::Serialization::DataShuttle;
-      QColor m_bookQuoteForegroundColor;
-      std::vector<QColor> m_bookQuoteBackgroundColors;
-      QFont m_bboQuoteFont;
-      QFont m_bookQuoteFont;
-      std::unordered_map<Nexus::MarketCode, MarketHighlight> m_marketHighlights;
-      OrderHighlight m_orderHighlight;
-      QColor m_orderHighlightColor;
-      bool m_showGrid;
-      bool m_showBbo;
+      auto operator <=>(const MarketHighlight&) const = default;
 
       template<typename Shuttler>
       void Shuttle(Shuttler& shuttle, unsigned int version);
+    };
+
+    /** A list of Highlights for each market. */
+    std::vector<MarketHighlight> m_market_highlights;
+
+    /** The visibility of the user's orders. */
+    OrderVisibility m_order_visibility;
+
+    /** A list of Highlights for the user's orders. */
+    std::array<HighlightColor, ORDER_HIGHLIGHT_STATE_COUNT> m_order_highlights;
+
+    /** Returns the default properties. */
+    static const BookViewHighlightProperties& get_default();
+
+    template<typename Shuttler>
+    void Shuttle(Shuttler& shuttle, unsigned int version);
   };
 
+  /** Represents the properties for the book view window. */
+  struct BookViewProperties {
+
+    /** The properties related to the price level. */
+    BookViewLevelProperties m_level_properties;
+
+    /** The properties related to the highlight. */
+    BookViewHighlightProperties m_highlight_properties;
+
+    /** Returns the default properties. */
+    static const BookViewProperties& get_default();
+
+    template<typename Shuttler>
+    void Shuttle(Shuttler& shuttle, unsigned int version);
+  };
+
+  /** Returns the HighlightColor associated with an OrderHighlightState. */
+  const HighlightColor& get_highlight(const BookViewProperties& properties,
+    BookViewHighlightProperties::OrderHighlightState state);
+
+  /** Returns the text representation of a OrderVisibility. */
+  const QString& to_text(
+    BookViewHighlightProperties::OrderVisibility visibility);
+
+  /** Returns the text representation of a MarketHighlightLevel. */
+  const QString& to_text(
+    BookViewHighlightProperties::MarketHighlightLevel level);
+
+  /** Returns the text representation of a OrderHighlightState. */
+  const QString& to_text(
+    BookViewHighlightProperties::OrderHighlightState state);
+
+  /**
+   * Loads BookViewProperties from a file.
+   * @param path The path to the file to load.
+   * @return The properties loaded from the given <i>path</i>.
+   */
+  BookViewProperties load_book_view_properties(
+    const std::filesystem::path& path);
+
+  /**
+   * Saves BookViewProperties to a file.
+   * @param properties The properties to save.
+   * @param path The path to the save the properties to.
+   */
+  void save_book_view_properties(
+    const BookViewProperties& properties, const std::filesystem::path& path);
+
   template<typename Shuttler>
-  void BookViewProperties::MarketHighlight::Shuttle(
+  void BookViewLevelProperties::Shuttle(
       Shuttler& shuttle, unsigned int version) {
+    shuttle.Shuttle("font", m_font);
+    shuttle.Shuttle("is_grid_enabled", m_is_grid_enabled);
+    shuttle.Shuttle("fill_type", m_fill_type);
+    shuttle.Shuttle("color_scheme", m_color_scheme);
+  }
+
+  template<typename Shuttler>
+  void BookViewHighlightProperties::MarketHighlight::Shuttle(
+      Shuttler& shuttle, unsigned int version) {
+    shuttle.Shuttle("market", m_market);
     shuttle.Shuttle("color", m_color);
-    shuttle.Shuttle("highlight_all_levels", m_highlightAllLevels);
+    shuttle.Shuttle("level", m_level);
+  }
+
+  template<typename Shuttler>
+  void BookViewHighlightProperties::Shuttle(
+      Shuttler& shuttle, unsigned int version) {
+    shuttle.Shuttle("market_highlights", m_market_highlights);
+    shuttle.Shuttle("order_visibility", m_order_visibility);
+    shuttle.Shuttle("order_highlights", m_order_highlights);
   }
 
   template<typename Shuttler>
   void BookViewProperties::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("book_quote_foreground_color", m_bookQuoteForegroundColor);
-    shuttle.Shuttle(
-      "book_quote_background_colors", m_bookQuoteBackgroundColors);
-    shuttle.Shuttle("bbo_quote_font", m_bboQuoteFont);
-    shuttle.Shuttle("book_quote_font", m_bookQuoteFont);
-    shuttle.Shuttle("market_highlights", m_marketHighlights);
-    shuttle.Shuttle("order_highlight", m_orderHighlight);
-    shuttle.Shuttle("order_highlight_color", m_orderHighlightColor);
-    shuttle.Shuttle("show_grid", m_showGrid);
-    if(version >= 2) {
-      shuttle.Shuttle("show_bbo", m_showBbo);
-    } else {
-      m_showBbo = false;
-    }
+    shuttle.Shuttle("level_properties", m_level_properties);
+    shuttle.Shuttle("highlight_properties", m_highlight_properties);
   }
-}
-
-namespace Beam::Serialization {
-  template<>
-  struct Version<Spire::BookViewProperties> :
-    std::integral_constant<unsigned int, 2> {};
 }
 
 #endif
