@@ -112,7 +112,8 @@ void ConsolidatedUserOrderListModel::on_operation(const Operation& operation) {
         remove(previous_order);
         add(user_order);
         return;
-      } else if(IsTerminal(user_order.m_status)) {
+      } else if(user_order.m_status != OrderStatus::FILLED &&
+          IsTerminal(user_order.m_status)) {
         remove(user_order);
         return;
       }
@@ -128,5 +129,8 @@ void ConsolidatedUserOrderListModel::on_operation(const Operation& operation) {
         update.m_status = user_order.m_status;
       }
       *i = update;
+      if(update.m_size == 0) {
+        remove(update);
+      }
     });
 }
