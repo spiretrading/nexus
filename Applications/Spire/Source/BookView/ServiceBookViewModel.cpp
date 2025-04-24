@@ -141,6 +141,7 @@ void ServiceBookViewModel::on_book_quote(const BookQuote& quote) {
   }
   if(existing_iterator == quotes->end() ||
       existing_iterator->m_quote.m_price != quote.m_quote.m_price) {
+    const auto DEPTH_LIMIT = 50;
     if(quote.m_quote.m_size != 0) {
       auto insert_iterator = lower_bound;
       while(insert_iterator != quotes->end() &&
@@ -149,6 +150,9 @@ void ServiceBookViewModel::on_book_quote(const BookQuote& quote) {
           std::tie(insert_iterator->m_quote.m_size,
             insert_iterator->m_timestamp, insert_iterator->m_mpid)) {
         ++insert_iterator;
+      }
+      if(std::distance(quotes->begin(), insert_iterator) >= DEPTH_LIMIT) {
+        return;
       }
       quotes->insert(quote, insert_iterator);
     }
