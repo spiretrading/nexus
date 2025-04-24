@@ -76,7 +76,14 @@ namespace {
         return money_item;
       } else {
         auto quantity_item = make_label(make_to_text_model(
-          make_table_value_model<Quantity>(table, row, column)));
+          make_transform_value_model(
+            make_table_value_model<Quantity>(table, row, column),
+            [] (auto quantity) {
+              if(quantity == 0) {
+                return Quantity(0);
+              }
+              return std::max<Quantity>(1, Floor(quantity / 100, 0));
+            })));
         update_style(*quantity_item, [] (auto& style) {
           style.get(Any()).
             set(TextAlign(Qt::AlignRight | Qt::AlignVCenter)).

@@ -2,6 +2,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
+#include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -21,10 +22,22 @@ namespace {
   const auto FONT_ADJUSTMENT = 6.89;
   const auto WIDTH_SCALE_FACTOR = 0.48276;
 
-  template<typename T, typename U>
-  auto make_bbo_label(std::shared_ptr<QuoteModel> quote, U field) {
-    auto label = make_label(
-      make_to_text_model(make_field_value_model(quote, field)));
+  auto make_quantity_label(std::shared_ptr<QuoteModel> quote) {
+    auto label = make_label(make_to_text_model(make_transform_value_model(
+      make_field_value_model(std::move(quote), &Quote::m_size),
+        [] (auto quantity) {
+          if(quantity == 0) {
+            return Quantity(0);
+          }
+          return std::max<Quantity>(1, Floor(quantity / 100, 0));
+        })));
+    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    return label;
+  }
+
+  auto make_price_label(std::shared_ptr<QuoteModel> quote) {
+    auto label = make_label(make_to_text_model(
+      make_field_value_model(std::move(quote), &Quote::m_price)));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     return label;
   }
@@ -45,7 +58,7 @@ BboBox::BboBox(std::shared_ptr<QuoteModel> quote, QWidget* parent)
         std::bind_front(&BboBox::on_quote, this))) {
   auto body = new QWidget();
   m_body_layout = make_hbox_layout(body);
-  m_money_label = make_bbo_label<Money>(m_quote, &Quote::m_price);
+  m_money_label = make_price_label(m_quote);
   link(*this, *m_money_label);
   m_body_layout->addStretch(1);
   m_body_layout->addWidget(m_money_label);
@@ -58,7 +71,7 @@ BboBox::BboBox(std::shared_ptr<QuoteModel> quote, QWidget* parent)
   m_body_layout->addWidget(label);
   m_gap2 = new QSpacerItem(gap_width, 0, QSizePolicy::Fixed);
   m_body_layout->addItem(m_gap2);
-  auto quantity_label = make_bbo_label<Quantity>(m_quote, &Quote::m_size);
+  auto quantity_label = make_quantity_label(m_quote);
   link(*this, *quantity_label);
   m_body_layout->addWidget(quantity_label);
   m_body_layout->addStretch(1);
