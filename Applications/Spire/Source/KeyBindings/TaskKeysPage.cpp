@@ -182,7 +182,7 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   layout->addWidget(toolbar);
   auto filtered_tasks = std::make_shared<SearchBarOrderTaskArgumentsListModel>(
     m_key_bindings->get_order_task_arguments(), search_box->get_current(),
-      countries, m_markets, m_destinations);
+      countries, m_markets, m_destinations, additional_tags);
   m_table_view = make_task_keys_table_view(
     std::move(filtered_tasks), std::make_shared<ConsolidatedRegionQueryModel>(
       std::move(securities), populate_region_query_model(countries, m_markets)),
