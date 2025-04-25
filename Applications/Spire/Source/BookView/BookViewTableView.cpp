@@ -345,9 +345,9 @@ namespace {
         style.get(ShowGrid()).
           set(HorizontalSpacing(scale_width(1))).
           set(VerticalSpacing(scale_height(1)));
+        apply_level_highlight_styles(style, properties);
         apply_order_visibility_styles(style, properties);
         apply_market_highlight_styles(style, properties);
-        apply_level_highlight_styles(style, properties);
         style.get(Any() > Row() > Any() > Any()).
           set(Font(properties.m_level_properties.m_font));
         style.get(Any() > CurrentColumn()).
