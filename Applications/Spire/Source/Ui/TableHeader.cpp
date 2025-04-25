@@ -48,6 +48,7 @@ TableHeader::TableHeader(
       std::bind_front(&TableHeader::on_filter, this, i));
     layout->addWidget(item);
     m_item_views.push_back(item);
+    link(*this, *item);
   }
   auto box = new Box(body);
   update_style(*box, [] (auto& style) {
