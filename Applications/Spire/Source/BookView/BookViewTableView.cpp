@@ -57,41 +57,84 @@ namespace {
         const std::shared_ptr<TableModel>& table, int row, int column) {
       auto column_id = static_cast<BookViewColumn>(column);
       if(column_id == BookViewColumn::MPID) {
-        auto entry = make_table_value_model<BookEntry>(table, row, column);
-        auto level = make_list_value_model(m_price_levels, row);
-        auto price = make_table_value_model<Money>(
-          table, row, static_cast<int>(BookViewColumn::PRICE));
-        auto is_top_mpid = std::make_shared<IsTopMpidModel>(
-          m_top_mpid_prices, entry, std::move(price));
-        return new MpidBox(
+        auto entry = make_proxy_value_model(
+          std::make_shared<LocalValueModel<BookEntry>>());
+        auto level =
+          make_proxy_value_model(std::make_shared<LocalValueModel<int>>());
+        auto is_top_mpid =
+          make_proxy_value_model(std::make_shared<LocalValueModel<bool>>());
+        auto mpid_box = new MpidBox(
           std::move(entry), std::move(level), std::move(is_top_mpid));
+        reset(*mpid_box, table, row, column);
+        return mpid_box;
       } else if(column_id == BookViewColumn::PRICE) {
-        auto money_item = make_label(make_to_text_model(
-          make_table_value_model<Money>(table, row, column)));
-        update_style(*money_item, [] (auto& style) {
+        auto price =
+          make_proxy_value_model(std::make_shared<LocalValueModel<QString>>());
+        auto price_box = make_label(std::move(price));
+        update_style(*price_box, [] (auto& style) {
           style.get(Any()).
             set(TextAlign(Qt::AlignRight | Qt::AlignVCenter)).
             set(horizontal_padding(scale_width(2)));
         });
-        return money_item;
+        reset(*price_box, table, row, column);
+        return price_box;
       } else {
-        auto quantity_item = make_label(make_to_text_model(
-          make_transform_value_model(
-            make_table_value_model<Quantity>(table, row, column),
-            [] (auto quantity) {
-              if(quantity == 0) {
-                return Quantity(0);
-              }
-              return std::max<Quantity>(1, Floor(quantity / 100, 0));
-            })));
-        update_style(*quantity_item, [] (auto& style) {
+        auto quantity =
+          make_proxy_value_model(std::make_shared<LocalValueModel<QString>>());
+        auto quantity_box = make_label(std::move(quantity));
+        update_style(*quantity_box, [] (auto& style) {
           style.get(Any()).
             set(TextAlign(Qt::AlignRight | Qt::AlignVCenter)).
             set(PaddingLeft(scale_width(2))).
             set(PaddingRight(scale_width(4)));
         });
-        return quantity_item;
+        reset(*quantity_box, table, row, column);
+        return quantity_box;
       }
+    }
+
+    void reset(QWidget& widget, const std::shared_ptr<TableModel>& table,
+        int row, int column) {
+      auto column_id = static_cast<BookViewColumn>(column);
+      if(column_id == BookViewColumn::MPID) {
+        auto& mpid_box = static_cast<MpidBox&>(widget);
+        auto& current_proxy = static_cast<ProxyValueModel<BookEntry>&>(
+          *mpid_box.get_current().get());
+        auto entry = make_table_value_model<BookEntry>(table, row, column);
+        current_proxy.set_source(entry);
+        auto& level_proxy =
+          static_cast<ProxyValueModel<int>&>(*mpid_box.get_level().get());
+        level_proxy.set_source(make_list_value_model(m_price_levels, row));
+        auto& top_proxy =
+          static_cast<ProxyValueModel<bool>&>(*mpid_box.is_top_mpid().get());
+        auto price = make_table_value_model<Money>(
+          table, row, static_cast<int>(BookViewColumn::PRICE));
+        top_proxy.set_source(std::make_shared<IsTopMpidModel>(
+          m_top_mpid_prices, std::move(entry), std::move(price)));
+      } else if(column_id == BookViewColumn::PRICE) {
+        auto& price_box = static_cast<TextBox&>(widget);
+        auto& current_proxy = static_cast<ProxyValueModel<QString>&>(
+          *price_box.get_current().get());
+        current_proxy.set_source(make_to_text_model(
+          make_table_value_model<Money>(table, row, column)));
+      } else {
+        auto& quantity_box = static_cast<TextBox&>(widget);
+        auto& current_proxy = static_cast<ProxyValueModel<QString>&>(
+          *quantity_box.get_current().get());
+        current_proxy.set_source(make_to_text_model(
+          make_transform_value_model(
+            make_table_value_model<Quantity>(table, row, column),
+              [] (auto quantity) {
+                if(quantity == 0) {
+                  return Quantity(0);
+                }
+                return std::max<Quantity>(1, Floor(quantity / 100, 0));
+              })));
+      }
+    }
+
+    void unmount(QWidget* widget) {
+      delete widget;
     }
   };
 
