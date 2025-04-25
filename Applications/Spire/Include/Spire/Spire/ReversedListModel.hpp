@@ -179,7 +179,7 @@ namespace Spire {
       },
       [&] (const RemoveOperation& operation) {
         m_transaction.push(
-          RemoveOperation(index_from_source(operation.m_index)));
+          RemoveOperation(index_from_source(operation.m_index) + 1));
       },
       [&] (const MoveOperation& operation) {
         m_transaction.push(MoveOperation(index_from_source(operation.m_source),
