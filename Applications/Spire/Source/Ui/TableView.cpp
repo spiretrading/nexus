@@ -164,7 +164,9 @@ TableView::TableView(
   m_header_view = new TableHeader(m_header);
   m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   link(*this, *m_header_view);
-  m_header_scroll_box = new ScrollBox(m_header_view);
+  auto box = new Box(m_header_view);
+  box->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
+  m_header_scroll_box = new ScrollBox(box);
   m_header_scroll_box->set(ScrollBox::DisplayPolicy::NEVER);
   m_header_scroll_box->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Fixed);
