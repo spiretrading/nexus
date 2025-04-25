@@ -4,6 +4,7 @@
 #include <Beam/Threading/LiveTimer.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <boost/signals2/signal.hpp>
+#include <QObject>
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/RiskTimer/RiskTimer.hpp"
 #include "Spire/Spire/Spire.hpp"
