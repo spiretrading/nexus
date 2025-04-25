@@ -9,7 +9,7 @@
 #include "Spire/Blotter/OrderLogModel.hpp"
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
-#include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ReversedListModel.hpp"
 
 namespace Spire {
 
@@ -55,6 +55,8 @@ namespace Spire {
       BlotterSettings* m_blotter;
       Nexus::MarketDataService::MarketDataClientBox m_client;
       std::shared_ptr<BookViewModel> m_model;
+      std::shared_ptr<BookQuoteListModel> m_bid_quotes;
+      std::shared_ptr<BookQuoteListModel> m_ask_quotes;
       std::unordered_map<Nexus::MarketCode, Nexus::MarketQuote> m_market_quotes;
       std::vector<const Nexus::OrderExecutionService::Order*> m_ask_orders;
       std::vector<const Nexus::OrderExecutionService::Order*> m_bid_orders;

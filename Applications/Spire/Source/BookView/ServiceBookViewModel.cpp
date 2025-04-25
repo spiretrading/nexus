@@ -47,7 +47,11 @@ ServiceBookViewModel::ServiceBookViewModel(
       m_markets(std::move(markets)),
       m_blotter(&blotter),
       m_client(std::move(client)),
-      m_model(make_local_aggregate_book_view_model()) {
+      m_model(make_local_aggregate_book_view_model()),
+      m_bid_quotes(
+        std::make_shared<ReversedListModel<BookQuote>>(m_model->get_bids())),
+      m_ask_quotes(
+        std::make_shared<ReversedListModel<BookQuote>>(m_model->get_asks())) {
   if(m_security == Security()) {
     return;
   }
@@ -83,12 +87,12 @@ ServiceBookViewModel::ServiceBookViewModel(
 
 const std::shared_ptr<BookQuoteListModel>&
     ServiceBookViewModel::get_bids() const {
-  return m_model->get_bids();
+  return m_bid_quotes;
 }
 
 const std::shared_ptr<BookQuoteListModel>&
     ServiceBookViewModel::get_asks() const {
-  return m_model->get_asks();
+  return m_ask_quotes;
 }
 
 const std::shared_ptr<BookViewModel::UserOrderListModel>&
@@ -122,8 +126,7 @@ void ServiceBookViewModel::on_bbo(const BboQuote& bbo) {
 
 void ServiceBookViewModel::on_book_quote(const BookQuote& quote) {
   auto direction = GetDirection(quote.m_quote.m_side);
-  auto quotes =
-    Pick(quote.m_quote.m_side, m_model->get_asks(), m_model->get_bids());
+  auto quotes = Pick(quote.m_quote.m_side, get_asks(), get_bids());
   auto lower_bound = [&] {
     for(auto i = quotes->begin(); i != quotes->end(); ++i) {
       auto& book_quote = i->m_quote;
@@ -218,8 +221,8 @@ void ServiceBookViewModel::clear(const BookQuoteListModel& quotes) {
 
 void ServiceBookViewModel::on_book_quote_interruption(
     const std::exception_ptr&) {
-  clear(*m_model->get_asks());
-  clear(*m_model->get_bids());
+  clear(*get_asks());
+  clear(*get_bids());
   QueryRealTimeBookQuotesWithSnapshot(m_client, m_security,
     m_event_handler.get_slot<BookQuote>(
       std::bind_front(&ServiceBookViewModel::on_book_quote, this),
