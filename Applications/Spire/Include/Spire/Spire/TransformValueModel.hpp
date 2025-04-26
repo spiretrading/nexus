@@ -109,21 +109,24 @@ namespace Details {
 
   template<typename T, typename F>
   TransformValueModel(std::shared_ptr<T>, F&&) ->
-    TransformValueModel<std::invoke_result_t<F, typename T::Type>,
+    TransformValueModel<std::remove_cvref_t<
+        std::invoke_result_t<F, typename T::Type>>,
       typename T::Type, std::remove_reference_t<F>,
       Details::ThrowTransformInverter<typename T::Type>>;
 
   template<typename T, typename F,
     std::invocable<std::invoke_result_t<F, typename T::Type>> G>
   TransformValueModel(std::shared_ptr<T>, F&&, G&&) ->
-    TransformValueModel<std::invoke_result_t<F, typename T::Type>,
+    TransformValueModel<std::remove_cvref_t<
+        std::invoke_result_t<F, typename T::Type>>,
       typename T::Type, std::remove_reference_t<F>,
       Details::TransformValueModelCollapser<std::remove_reference_t<G>>>;
 
   template<typename T, typename F, std::invocable<
     typename T::Type, std::invoke_result_t<F, typename T::Type>> G>
   TransformValueModel(std::shared_ptr<T>, F&&, G&&) ->
-    TransformValueModel<std::invoke_result_t<F, typename T::Type>,
+    TransformValueModel<std::remove_cvref_t<
+        std::invoke_result_t<F, typename T::Type>>,
       typename T::Type, std::remove_reference_t<F>, std::remove_reference_t<G>>;
 
   template<typename T, typename F>

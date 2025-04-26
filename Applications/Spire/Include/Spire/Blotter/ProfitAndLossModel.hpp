@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/signals2/signal.hpp>
+#include <QObject>
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/Blotter.hpp"

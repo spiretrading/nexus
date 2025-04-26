@@ -4,8 +4,8 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FilteredTableModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/TableCurrentIndexModel.hpp"
-#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
@@ -163,14 +163,9 @@ TableView::TableView(
   }
   m_header_view = new TableHeader(m_header);
   m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  m_header_view->setContentsMargins({scale_width(1), 0, 0, 0});
   link(*this, *m_header_view);
   auto box = new Box(m_header_view);
   box->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
-  update_style(*box, [] (auto& style) {
-    style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
-  });
-  proxy_style(*this, *box);
   m_header_scroll_box = new ScrollBox(box);
   m_header_scroll_box->set(ScrollBox::DisplayPolicy::NEVER);
   m_header_scroll_box->setSizePolicy(
@@ -187,10 +182,13 @@ TableView::TableView(
   if(!m_current) {
     m_current = std::make_shared<TableCurrentIndexModel>(m_table);
   }
-  m_body = new TableBody(m_sorted_table,
-    std::make_shared<SourceToViewIndexModel>(m_sorted_table, m_filtered_table,
-      m_current), std::move(selection), m_header_view->get_widths(),
+  auto body_current = make_proxy_value_model(
+    std::make_shared<LocalValueModel<optional<Index>>>());
+  m_body = new TableBody(m_sorted_table, body_current, std::move(selection),
+    m_header_view->get_widths(),
     TranslatedItemBuilder(std::move(item_builder)));
+  body_current->set_source(std::make_shared<SourceToViewIndexModel>(
+    m_sorted_table, m_filtered_table, m_current));
   m_body->setSizePolicy(QSizePolicy::MinimumExpanding,
     QSizePolicy::MinimumExpanding);
   m_body->installEventFilter(this);
@@ -465,6 +463,15 @@ TableViewBuilder& TableViewBuilder::set_item_builder(
 TableViewBuilder& TableViewBuilder::set_comparator(
     TableView::Comparator comparator) {
   m_comparator = comparator;
+  return *this;
+}
+
+TableViewBuilder& TableViewBuilder::set_comparator(
+    TableView::ValueComparator comparator) {
+  m_comparator = [comparator = std::move(comparator)] (const AnyRef& left,
+      int left_row, const AnyRef& right, int right_row, int column) {
+    return comparator(left, right);
+  };
   return *this;
 }
 

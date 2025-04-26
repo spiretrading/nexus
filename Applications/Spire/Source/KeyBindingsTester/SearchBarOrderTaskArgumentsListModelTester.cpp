@@ -24,7 +24,7 @@ TEST_SUITE("SearchBarOrderTaskArgumentsListModel") {
     auto keywords = std::make_shared<LocalTextModel>();
     auto search_list = SearchBarOrderTaskArgumentsListModel(source, keywords,
       GetDefaultCountryDatabase(), GetDefaultMarketDatabase(),
-      GetDefaultDestinationDatabase());
+      GetDefaultDestinationDatabase(), get_default_additional_tag_database());
     REQUIRE(search_list.get_size() == 3);
     keywords->set("Q");
     REQUIRE(search_list.get_size() == 0);

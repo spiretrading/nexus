@@ -3,6 +3,7 @@
 #include <QCoreApplication>
 #include <QEvent>
 #include <QThread>
+#include <QTimer>
 
 using namespace Beam;
 using namespace boost;
@@ -20,63 +21,66 @@ namespace {
       : QEvent(EventType) {}
   };
 
-  struct TimerDeleter : QObject {
-    std::unique_ptr<QTimer> m_timer;
+  struct GlobalEventHandler : QObject {
+    std::vector<std::weak_ptr<TaskQueue>> m_tasks;
+    QTimer m_timer;
 
-    TimerDeleter(std::unique_ptr<QTimer> timer)
-      : m_timer(std::move(timer)) {}
+    GlobalEventHandler() {
+      if(QThread::currentThread() == QCoreApplication::instance()->thread()) {
+        start_timer();
+      } else {
+        QCoreApplication::postEvent(this, new EventHandlerEvent());
+      }
+    }
 
-    bool event(QEvent* event) {
+    static GlobalEventHandler& get_instance() {
+      static auto instance = GlobalEventHandler();
+      return instance;
+    }
+
+    bool event(QEvent* event) override {
       if(event->type() == EventHandlerEvent::EventType) {
-        m_timer = nullptr;
-        deleteLater();
+        start_timer();
       }
       return QObject::event(event);
+    }
+
+    void start_timer() {
+      connect(
+        &m_timer, &QTimer::timeout, this, &GlobalEventHandler::on_expired);
+      m_timer.start(UPDATE_INTERVAL);
+    }
+
+    void update(std::shared_ptr<TaskQueue> tasks) {
+      auto start = microsec_clock::universal_time();
+      for(auto task = tasks->TryPop(); task && tasks.use_count() != 1;
+          task = tasks->TryPop()) {
+        (*task)();
+        auto duration = microsec_clock::universal_time();
+        if(duration - start > seconds(1) / 10) {
+          return;
+        }
+      }
+    }
+
+    void on_expired() {
+      auto i = m_tasks.begin();
+      while(i != m_tasks.end()) {
+        if(auto tasks = i->lock()) {
+          if(i != m_tasks.begin()) {
+            QCoreApplication::instance()->processEvents();
+          }
+          update(std::move(tasks));
+          ++i;
+        } else {
+          i = m_tasks.erase(i);
+        }
+      }
     }
   };
 }
 
 EventHandler::EventHandler()
     : m_tasks(std::make_shared<TaskQueue>()) {
-  if(QThread::currentThread() == QCoreApplication::instance()->thread()) {
-    start_timer();
-  } else {
-    QCoreApplication::postEvent(this, new EventHandlerEvent());
-  }
-}
-
-EventHandler::~EventHandler() {
-  if(QCoreApplication::instance() != nullptr &&
-      QThread::currentThread() != QCoreApplication::instance()->thread()) {
-    auto deleter = new TimerDeleter(std::move(m_update_timer));
-    QCoreApplication::postEvent(deleter, new EventHandlerEvent());
-  }
-}
-
-bool EventHandler::event(QEvent* event) {
-  if(event->type() == EventHandlerEvent::EventType) {
-    start_timer();
-  }
-  return QObject::event(event);
-}
-
-void EventHandler::start_timer() {
-  m_update_timer = std::make_unique<QTimer>();
-  connect(
-    m_update_timer.get(), &QTimer::timeout, this, &EventHandler::on_expired);
-  m_update_timer->start(UPDATE_INTERVAL);
-}
-
-void EventHandler::on_expired() {
-  auto start = microsec_clock::universal_time();
-  auto tasks = m_tasks;
-  for(auto task = tasks->TryPop(); task && tasks.use_count() != 1;
-      task = tasks->TryPop()) {
-    (*task)();
-    auto duration = microsec_clock::universal_time();
-    if(duration - start > seconds(1) / 10) {
-      QCoreApplication::instance()->processEvents();
-      start = microsec_clock::universal_time();
-    }
-  }
+  GlobalEventHandler::get_instance().m_tasks.push_back(m_tasks);
 }

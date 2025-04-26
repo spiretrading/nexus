@@ -1,11 +1,8 @@
 #ifndef SPIRE_EVENT_HANDLER_HPP
 #define SPIRE_EVENT_HANDLER_HPP
-#include <exception>
-#include <functional>
 #include <memory>
 #include <utility>
 #include <Beam/Queues/TaskQueue.hpp>
-#include <QTimer>
 #include "Spire/Async/Async.hpp"
 
 namespace Spire {
@@ -14,13 +11,11 @@ namespace Spire {
    * Allows for handling events pushed onto a Queue in a manner synchronized
    * with the main Qt event-loop.
    */
-  class EventHandler : public QObject {
+  class EventHandler {
     public:
 
       /** Constructs an EventHandler. */
       EventHandler();
-
-      ~EventHandler();
 
       /**
        * Returns a QueueWriter used to call a slot on every push.
@@ -47,17 +42,11 @@ namespace Spire {
       template<typename F>
       void push(F&& f);
 
-    protected:
-      bool event(QEvent* event) override;
-
     private:
-      std::unique_ptr<QTimer> m_update_timer;
       std::shared_ptr<Beam::TaskQueue> m_tasks;
 
       EventHandler(const EventHandler&) = delete;
       EventHandler& operator =(const EventHandler&) = delete;
-      void start_timer();
-      void on_expired();
   };
 
   template<typename T, typename F>

@@ -186,7 +186,10 @@ TableHeaderItem::TableHeaderItem(
   layout->addLayout(top_layout);
   layout->addLayout(m_bottom_layout);
   auto style = StyleSheet();
-  style.get(Any() > Label()).set(TextColor(QColor(0x808080)));
+  auto font = QFont("Roboto");
+  font.setWeight(QFont::Medium);
+  font.setPixelSize(scale_width(12));
+  style.get(Any() > Label()).set(text_style(font, QColor(0x595959)));
   style.get((Hover() && Sortable()) > Label()).set(TextColor(QColor(0x4B23A0)));
   style.get(Any() > HoverElement()).set(Visibility::INVISIBLE);
   style.get((Hover() && Sortable()) > HoverElement()).

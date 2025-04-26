@@ -182,7 +182,7 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   layout->addWidget(toolbar);
   auto filtered_tasks = std::make_shared<SearchBarOrderTaskArgumentsListModel>(
     m_key_bindings->get_order_task_arguments(), search_box->get_current(),
-      countries, m_markets, m_destinations);
+      countries, m_markets, m_destinations, additional_tags);
   m_table_view = make_task_keys_table_view(
     std::move(filtered_tasks), std::make_shared<ConsolidatedRegionQueryModel>(
       std::move(securities), populate_region_query_model(countries, m_markets)),
@@ -258,10 +258,22 @@ void TaskKeysPage::on_duplicate_task_action() {
 }
 
 void TaskKeysPage::on_delete_task_action() {
-  m_key_bindings->get_order_task_arguments()->transact([&] {
-    for(auto i : *m_table_view->get_selection()->get_row_selection()) {
-      m_key_bindings->get_order_task_arguments()->remove(
-        any_cast<int>(m_table_view->get_body().get_table()->at(i, 0)));
+  QTimer::singleShot(0, this, [=] {
+    auto current = m_table_view->get_body().get_current()->get();
+    m_key_bindings->get_order_task_arguments()->transact([&] {
+      for(auto i : *m_table_view->get_selection()->get_row_selection()) {
+        m_key_bindings->get_order_task_arguments()->remove(
+          any_cast<int>(m_table_view->get_body().get_table()->at(i, 0)));
+      }
+    });
+    auto row_size = m_table_view->get_body().get_table()->get_row_size();
+    if(row_size > 0) {
+      if(current->m_row >= row_size) {
+        --current->m_row;
+      }
+      m_table_view->get_body().get_current()->set(*current);
+      m_table_view->get_body().get_selection()->get_row_selection()->push(
+        current->m_row);
     }
   });
 }
