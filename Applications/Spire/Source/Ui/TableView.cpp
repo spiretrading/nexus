@@ -6,7 +6,6 @@
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/TableCurrentIndexModel.hpp"
-#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
@@ -164,14 +163,9 @@ TableView::TableView(
   }
   m_header_view = new TableHeader(m_header);
   m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-  m_header_view->setContentsMargins({scale_width(1), 0, 0, 0});
   link(*this, *m_header_view);
   auto box = new Box(m_header_view);
   box->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
-  update_style(*box, [] (auto& style) {
-    style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
-  });
-  proxy_style(*this, *box);
   m_header_scroll_box = new ScrollBox(box);
   m_header_scroll_box->set(ScrollBox::DisplayPolicy::NEVER);
   m_header_scroll_box->setSizePolicy(

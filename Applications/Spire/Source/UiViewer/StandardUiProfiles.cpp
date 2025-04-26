@@ -4373,10 +4373,10 @@ UiProfile Spire::make_table_view_profile() {
   populate_widget_properties(properties);
   auto default_style = R"(
     any > TableBody {
-      padding_top: 1px;
-      padding_right: 1px;
-      padding_bottom: 1px;
-      padding_left: 1px;
+      padding_top: 0px;
+      padding_right: 0px;
+      padding_bottom: 0px;
+      padding_left: 0px;
       horizontal_spacing: 1px;
       vertical_spacing: 1px;
       horizontal_grid_color: 0xE0E0E0;
