@@ -20,6 +20,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/TransitionView.hpp"
+#include "Spire/Utilities/LinkMenu.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -268,6 +269,7 @@ void BookViewWindow::on_context_menu(const QPoint& pos) {
   }
   menu->add_action(tr("Properties"),
     std::bind_front(&BookViewWindow::on_properties_menu, this));
+  add_link_menu(*menu, *this, m_markets);
   menu->window()->setAttribute(Qt::WA_DeleteOnClose);
   menu->window()->move(m_market_depth->mapToGlobal(pos));
   menu->window()->show();
