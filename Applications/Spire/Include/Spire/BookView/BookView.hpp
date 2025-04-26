@@ -19,6 +19,7 @@ namespace Spire {
   class ConsolidatedUserOrderListModel;
   struct CurrentUserOrder;
   class CurrentUserOrderModel;
+  class DefaultQuantityModel;
   class IsTopMpidModel;
   class LegacyBookViewWindowSettings;
   class MarketDepth;
