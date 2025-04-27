@@ -36,6 +36,7 @@ struct FRowCover : QWidget {
     setLayout(make_vbox_layout());
     auto item = new FTableItem();
     layout()->addWidget(item);
+    connect_style_signal(*this, std::bind_front(&FRowCover::on_style, this));
   }
 
   FTableItem* get_item() {
@@ -55,6 +56,20 @@ struct FRowCover : QWidget {
   void paintEvent(QPaintEvent* event) override {
     auto painter = QPainter(this);
     painter.fillRect(QRect(QPoint(0, 0), size()), m_background_color);
+  }
+
+  void on_style() {
+    auto& stylist = find_stylist(*this);
+    m_background_color = Qt::transparent;
+    for(auto& property : stylist.get_computed_block()) {
+      property.visit(
+        [&] (const BackgroundColor& color) {
+          stylist.evaluate(color, [=] (auto color) {
+            m_background_color = color;
+          });
+        });
+    }
+    update();
   }
 };
 
@@ -83,10 +98,7 @@ struct FTableBody : QWidget {
 
   FRowCover* make_row_cover() {
     if(m_recycled_rows.empty()) {
-      auto row = new FRowCover(this);
-      connect_style_signal(*row,
-        std::bind_front(&FTableBody::on_cover_style, this, std::ref(*row)));
-      return row;
+      return new FRowCover(this);
     }
     auto row = m_recycled_rows.front();
     m_recycled_rows.pop_front();
@@ -103,20 +115,6 @@ struct FTableBody : QWidget {
 
   void add_row() {
     mount_row();
-  }
-
-  void on_cover_style(FRowCover& cover) {
-    auto& stylist = find_stylist(cover);
-    cover.m_background_color = Qt::transparent;
-    for(auto& property : stylist.get_computed_block()) {
-      property.visit(
-        [&] (const BackgroundColor& color) {
-          stylist.evaluate(color, [=, &cover] (auto color) {
-            cover.m_background_color = color;
-          });
-        });
-    }
-    update();
   }
 };
 
