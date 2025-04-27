@@ -18,20 +18,15 @@ struct FTableItem : QWidget {
   void mount() {
     auto body = make_label(QString("Hello"));
     layout()->addWidget(body);
-    updateGeometry();
-    body->setAttribute(Qt::WA_DontShowOnScreen, false);
   }
 
   QWidget* unmount() {
     auto item = layout()->takeAt(0);
     auto body = item->widget();
-    body->setAttribute(Qt::WA_DontShowOnScreen);
     delete item;
     return body;
   }
 };
-
-using FRow = StateSelector<void, struct FRowTag>;
 
 struct FRowCover : QWidget {
   QColor m_background_color;
@@ -39,7 +34,6 @@ struct FRowCover : QWidget {
   FRowCover(QWidget* body)
       : QWidget(body) {
     setLayout(make_vbox_layout());
-    match(*this, FRow());
     auto item = new FTableItem();
     layout()->addWidget(item);
   }
@@ -53,7 +47,6 @@ struct FRowCover : QWidget {
   }
 
   void unmount() {
-    move(-10000, -10000);
     auto item = get_item();
     auto body = item->unmount();
     delete body;
@@ -85,12 +78,7 @@ struct FTableBody : QWidget {
   void destroy(FRowCover* row) {
     row->unmount();
     m_recycled_rows.push_back(row);
-    QTimer::singleShot(0, this, [=] {
-      if(std::find(m_recycled_rows.begin(), m_recycled_rows.end(), row) !=
-          m_recycled_rows.end()) {
-        row->hide();
-      }
-    });
+    row->hide();
   }
 
   FRowCover* make_row_cover() {
@@ -110,7 +98,6 @@ struct FTableBody : QWidget {
     row->mount();
     layout()->addWidget(row);
     row->show();
-    on_cover_style(*row);
     return row;
   }
 
@@ -138,21 +125,19 @@ int main(int argc, char** argv) {
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Scratch"));
   initialize_resources();
-  auto window = QWidget();
-  auto body = new FTableBody();
-  enclose(window, *body);
-  update_style(*body, [] (auto& style) {
-    style.get(Any() > +FRow() > Any() > Any()).
+  auto body = FTableBody();
+  update_style(body, [] (auto& style) {
+    style.get(Any() > +Any() > Any() > Any()).
       set(BackgroundColor(QColor(0xFF0000)));
-    style.get(ChildSelector(Any() > +FRow() > Any() > Any(), Any() > Any())).
+    style.get(ChildSelector(Any() > +Any() > Any() > Any(), Any() > Any())).
       set(TextColor(QColor(0x00FF00)));
   });
-  body->add();
-  window.show();
+  body.add();
+  body.show();
   QTimer::singleShot(1000, [&] {
-    body->remove();
+    body.remove();
     QTimer::singleShot(1000, [&] {
-      body->add();
+      body.add();
     });
   });
   application.exec();
