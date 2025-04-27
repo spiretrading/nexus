@@ -26,7 +26,8 @@ namespace {
     QTimer m_timer;
 
     GlobalEventHandler() {
-      if(QThread::currentThread() == QCoreApplication::instance()->thread()) {
+      if(QCoreApplication::instance() &&
+          QThread::currentThread() == QCoreApplication::instance()->thread()) {
         start_timer();
       } else {
         QCoreApplication::postEvent(this, new EventHandlerEvent());
