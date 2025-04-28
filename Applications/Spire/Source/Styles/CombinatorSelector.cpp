@@ -44,7 +44,6 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
       int m_count;
       std::unordered_set<const Stylist*> m_selection;
       SelectConnection m_select_connection;
-      scoped_connection m_delete_connection;
 
       MatchEntry()
         : m_count(0) {}
@@ -88,14 +87,6 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
         m_match_connections != 0;
     }
 
-    void remove(const Stylist& stylist) {
-      for(auto selection : m_selection) {
-        if(selection.second.contains(&stylist)) {
-          on_selection(*selection.first, {}, {&stylist});
-        }
-      }
-    }
-
     void on_base(std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
       if(!m_base_connection.is_connected()) {
@@ -137,13 +128,14 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
         auto& entry = m_match_entries[stylist];
         ++entry.m_count;
         if(entry.m_count == 1) {
+          auto match_connections = m_match_connections;
+          m_match_connections = 0;
           entry.m_select_connection = select(m_match_selector, *stylist,
             std::bind_front(&Executor::on_match, this, std::ref(entry)));
+          m_match_connections = match_connections;
           if(entry.m_select_connection.is_connected()) {
             ++m_match_connections;
           }
-          entry.m_delete_connection = stylist->connect_delete_signal(
-            std::bind_front(&Executor::remove, this, std::ref(*stylist)));
         }
       }
       for(auto stylist : removals) {
