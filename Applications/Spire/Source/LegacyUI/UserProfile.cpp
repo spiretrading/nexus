@@ -88,12 +88,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_exchangeRates.Add(exchangeRate);
   }
   m_blotterSettings = std::make_unique<BlotterSettings>(Ref(*this));
-  m_blotterSettings->SetActiveBlotter(
-    m_blotterSettings->GetConsolidatedBlotter());
-  m_blotterSettings->SetDefaultBlotterTaskProperties(
-    BlotterTaskProperties::GetDefault());
-  m_blotterSettings->SetDefaultOrderLogProperties(
-    OrderLogProperties::GetDefault());
 }
 
 UserProfile::~UserProfile() = default;
