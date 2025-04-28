@@ -11,6 +11,7 @@
 #include "Nexus/ServiceClients/TestEnvironment.hpp"
 #include "Nexus/ServiceClients/TestServiceClients.hpp"
 #include "Nexus/TelemetryServiceTests/TelemetryServiceTestEnvironment.hpp"
+#include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/BookView/AggregateBookViewModel.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/BookViewUiTester/DemoBookViewModel.hpp"
@@ -386,6 +387,11 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
         m_quote_timer(this),
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
         m_line_number(0) {
+    auto& settings = m_user_profile.GetBlotterSettings();
+    settings.SetActiveBlotter(settings.GetConsolidatedBlotter());
+    settings.SetDefaultBlotterTaskProperties(
+      BlotterTaskProperties::GetDefault());
+    settings.SetDefaultOrderLogProperties(OrderLogProperties::GetDefault());
     auto left_layout = new QVBoxLayout();
     auto book_quote_group_box = new QGroupBox(tr("Market Quote"));
     book_quote_group_box->setSizePolicy(QSizePolicy::Preferred,
