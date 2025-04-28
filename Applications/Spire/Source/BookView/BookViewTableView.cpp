@@ -23,6 +23,7 @@
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/ColorConversion.hpp"
+#include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -49,49 +50,137 @@ namespace {
     return model;
   }
 
+  template<typename T, typename U>
+  struct BookViewProxyValueModel : ValueModel<U> {
+    using Type = typename ValueModel<U>::Type;
+
+    using UpdateSignal = typename ValueModel<U>::UpdateSignal;
+
+    std::shared_ptr<ProxyValueModel<T>> m_proxy;
+    std::shared_ptr<ValueModel<U>> m_target;
+
+    BookViewProxyValueModel(std::shared_ptr<ValueModel<T>> source)
+      : m_proxy(make_proxy_value_model(std::move(source))) {}
+
+    const std::shared_ptr<ProxyValueModel<T>>& get_proxy() const {
+      return m_proxy;
+    }
+
+    void set_source(std::shared_ptr<ValueModel<T>> source) {
+      get_proxy()->set_source(std::move(source));
+    }
+
+    void set_target(std::shared_ptr<ValueModel<U>> target) {
+      m_target = std::move(target);
+    }
+
+    const Type& get() const override {
+      return m_target->get();
+    }
+
+    QValidator::State test(const Type& value) const override {
+      return m_target->test(value);
+    }
+
+    QValidator::State set(const Type& value) override {
+      return m_target->set(value);
+    }
+
+    connection connect_update_signal(
+        const typename UpdateSignal::slot_type& slot) const override {
+      return m_target->connect_update_signal(slot);
+    }
+  };
+
   struct ItemBuilder {
     std::shared_ptr<PriceLevelModel> m_price_levels;
     std::shared_ptr<TopMpidPriceListModel> m_top_mpid_prices;
 
-    QWidget* operator ()(
+    QWidget* mount(
         const std::shared_ptr<TableModel>& table, int row, int column) {
       auto column_id = static_cast<BookViewColumn>(column);
       if(column_id == BookViewColumn::MPID) {
-        auto entry = make_table_value_model<BookEntry>(table, row, column);
-        auto level = make_list_value_model(m_price_levels, row);
-        auto price = make_table_value_model<Money>(
-          table, row, static_cast<int>(BookViewColumn::PRICE));
-        auto is_top_mpid = std::make_shared<IsTopMpidModel>(
-          m_top_mpid_prices, entry, std::move(price));
-        return new MpidBox(
+        auto entry = make_proxy_value_model(
+          std::make_shared<LocalValueModel<BookEntry>>());
+        auto level =
+          make_proxy_value_model(std::make_shared<LocalValueModel<int>>());
+        auto is_top_mpid =
+          std::make_shared<BookViewProxyValueModel<Money, bool>>(
+            make_table_value_model<Money>(
+              table, row, static_cast<int>(BookViewColumn::PRICE)));
+        is_top_mpid->set_target(std::make_shared<IsTopMpidModel>(
+          m_top_mpid_prices, entry, is_top_mpid->get_proxy()));
+        auto mpid_box = new MpidBox(
           std::move(entry), std::move(level), std::move(is_top_mpid));
+        reset(*mpid_box, table, row, column);
+        return mpid_box;
       } else if(column_id == BookViewColumn::PRICE) {
-        auto money_item = make_label(make_to_text_model(
-          make_table_value_model<Money>(table, row, column)));
-        update_style(*money_item, [] (auto& style) {
+        auto current =
+          std::make_shared<BookViewProxyValueModel<Money, QString>>(
+            make_table_value_model<Money>(table, row, column));
+        current->set_target(make_to_text_model(current->get_proxy()));
+        auto price_box = make_label(std::move(current));
+        update_style(*price_box, [] (auto& style) {
           style.get(Any()).
             set(TextAlign(Qt::AlignRight | Qt::AlignVCenter)).
             set(horizontal_padding(scale_width(2)));
         });
-        return money_item;
+        return price_box;
       } else {
-        auto quantity_item = make_label(make_to_text_model(
-          make_transform_value_model(
-            make_table_value_model<Quantity>(table, row, column),
+        auto current =
+          std::make_shared<BookViewProxyValueModel<Quantity, QString>>(
+            make_table_value_model<Quantity>(table, row, column));
+        current->set_target(make_to_text_model(make_transform_value_model(
+          make_table_value_model<Quantity>(table, row, column),
             [] (auto quantity) {
               if(quantity == 0) {
                 return Quantity(0);
               }
               return std::max<Quantity>(1, Floor(quantity / 100, 0));
             })));
-        update_style(*quantity_item, [] (auto& style) {
+        auto quantity_box = make_label(std::move(current));
+        update_style(*quantity_box, [] (auto& style) {
           style.get(Any()).
             set(TextAlign(Qt::AlignRight | Qt::AlignVCenter)).
             set(PaddingLeft(scale_width(2))).
             set(PaddingRight(scale_width(4)));
         });
-        return quantity_item;
+        return quantity_box;
       }
+    }
+
+    void reset(QWidget& widget, const std::shared_ptr<TableModel>& table,
+        int row, int column) {
+      auto column_id = static_cast<BookViewColumn>(column);
+      if(column_id == BookViewColumn::MPID) {
+        auto& mpid_box = static_cast<MpidBox&>(widget);
+        auto& entry = static_cast<ProxyValueModel<BookEntry>&>(
+          *mpid_box.get_current().get());
+        entry.set_source(make_table_value_model<BookEntry>(table, row, column));
+        auto& level =
+          static_cast<ProxyValueModel<int>&>(*mpid_box.get_level().get());
+        level.set_source(make_list_value_model(m_price_levels, row));
+        auto& is_top_mpid = static_cast<BookViewProxyValueModel<Money, bool>&>(
+          *mpid_box.is_top_mpid().get());
+        is_top_mpid.set_source(make_table_value_model<Money>(
+          table, row, static_cast<int>(BookViewColumn::PRICE)));
+      } else if(column_id == BookViewColumn::PRICE) {
+        auto& price_box = static_cast<TextBox&>(widget);
+        auto& current = static_cast<BookViewProxyValueModel<Money, QString>&>(
+          *price_box.get_current().get());
+        current.set_source(make_table_value_model<Money>(table, row, column));
+      } else {
+        auto& quantity_box = static_cast<TextBox&>(widget);
+        auto& current =
+          static_cast<BookViewProxyValueModel<Quantity, QString>&>(
+            *quantity_box.get_current().get());
+        current.set_source(
+          make_table_value_model<Quantity>(table, row, column));
+      }
+    }
+
+    void unmount(QWidget* widget) {
+      delete widget;
     }
   };
 
@@ -248,7 +337,7 @@ namespace {
       } else {
         unmatch(table_view.get_body(), ShowGrid());
       }
-      update_style(table_view.get_body(), [=] (auto& style) {
+      update_style(table_view.get_body(), [&] (auto& style) {
         style.get(Any()).
           set(HorizontalSpacing(0)).
           set(VerticalSpacing(0)).
@@ -256,9 +345,9 @@ namespace {
         style.get(ShowGrid()).
           set(HorizontalSpacing(scale_width(1))).
           set(VerticalSpacing(scale_height(1)));
+        apply_level_highlight_styles(style, properties);
         apply_order_visibility_styles(style, properties);
         apply_market_highlight_styles(style, properties);
-        apply_level_highlight_styles(style, properties);
         style.get(Any() > Row() > Any() > Any()).
           set(Font(properties.m_level_properties.m_font));
         style.get(Any() > CurrentColumn()).
@@ -367,8 +456,8 @@ TableView* Spire::make_book_view_table_view(
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
     set_current(proxy_current).
-    set_item_builder(
-      ItemBuilder(std::move(price_levels), std::move(top_mpid_prices))).make();
+    set_item_builder(RecycledTableViewItemBuilder(
+      ItemBuilder(std::move(price_levels), std::move(top_mpid_prices)))).make();
   proxy_current->set_source(std::make_shared<BookViewCurrentTableModel>(table));
   table_view->get_header().setVisible(false);
   table_view->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
