@@ -25,33 +25,25 @@ using namespace Spire::Styles;
 namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
-    style.get(ReadOnly() > is_a<TextBox>()).
-      set(BackgroundColor(QColor(Qt::transparent))).
-      set(border_color(QColor(Qt::transparent))).
-      set(horizontal_padding(0));
-    style.get(Disabled() > is_a<TextBox>()).
+    style.get(Any()).
+      set(PaddingRight(scale_width(14)));
+    style.get(Disabled()).
       set(BackgroundColor(QColor(0xF5F5F5))).
       set(border_color(QColor(0xC8C8C8))).
       set(TextColor(QColor(0xC8C8C8)));
-    style.get((ReadOnly() && Disabled()) > is_a<TextBox>()).
+    style.get(ReadOnly()).
       set(BackgroundColor(QColor(Qt::transparent))).
-      set(border_color(QColor(Qt::transparent)));
-    style.get(Any() > (is_a<Icon>() && !(+Any() << is_a<ListItem>()))).
+      set(border_color(QColor(Qt::transparent))).
+      set(PaddingRight(0));
+    style.get(Any() > is_a<Icon>()).
       set(Fill(QColor(0x333333))).
       set(BackgroundColor(QColor(Qt::transparent)));
-    style.get(Disabled() > (is_a<Icon>() && !(+Any() << is_a<ListItem>()))).
+    style.get(Disabled() > is_a<Icon>()).
       set(Fill(QColor(0xC8C8C8)));
-    style.get(ReadOnly() > (is_a<Icon>() && !(+Any() << is_a<ListItem>()))).
+    style.get(ReadOnly() > is_a<Icon>()).
       set(Visibility::NONE);
-    style.get(Any() > (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
-      set(PaddingRight(scale_width(14)));
-    style.get(PopUp() > is_a<TextBox>() ||
-        (+Any() > is_a<Button>() && (Hover() || FocusIn())) > is_a<TextBox>()).
+    style.get(PopUp() || !ReadOnly() && (FocusIn() || Hover())).
       set(border_color(QColor(0x4B23A0)));
-    style.get(ReadOnly() > (is_a<TextBox>() && !(+Any() << is_a<ListItem>()))).
-      set(horizontal_padding(0)).
-      set(border_color(QColor(Qt::transparent))).
-      set(BackgroundColor(QColor(Qt::transparent)));
     return style;
   }
 
@@ -126,7 +118,7 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
   });
   auto layers = new LayeredWidget();
   layers->add(m_text_box);
-  link(*this, *m_text_box);
+  proxy_style(*this, *m_text_box);
   auto icon_layer = new QWidget();
   icon_layer->setAttribute(Qt::WA_TransparentForMouseEvents);
   icon_layer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
