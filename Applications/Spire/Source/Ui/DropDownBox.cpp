@@ -122,14 +122,8 @@ struct DropDownBox::EmptyState : QWidget {
     if(event->type() == QEvent::KeyPress) {
       auto& key_event = *static_cast<QKeyEvent*>(event);
       if(key_event.key() == Qt::Key_Tab || key_event.key() == Qt::Key_Backtab) {
-        auto is_next = [&] {
-          if(key_event.key() == Qt::Key_Tab) {
-            return true;
-          }
-          return false;
-        }();
         m_panel->close();
-        focus_next(*window()->parentWidget(), is_next);
+        focus_next(*window()->parentWidget(), key_event.key() == Qt::Key_Tab);
       } else if(key_event.key() == Qt::Key_Space ||
           key_event.key() == Qt::Key_Enter ||
           key_event.key() == Qt::Key_Return) {
@@ -153,7 +147,7 @@ struct DropDownBox::EmptyState : QWidget {
             m_panel_horizontal_border_width += size;
           });
         },
-          [&] (const BorderRightSize& size) {
+        [&] (const BorderRightSize& size) {
           stylist.evaluate(size, [=] (auto size) {
             m_panel_horizontal_border_width += size;
           });
@@ -192,36 +186,36 @@ DropDownBox::EmptyState*
 }
 
 QWidget* DropDownBox::DropDownPanelWrapper::get_drop_down_window() const {
-  return visit([&] (auto* widget) -> QWidget* {
+  return std::visit([&] (auto* widget) -> QWidget* {
     if(widget) {
       return widget->window();
     }
     return nullptr;
-  });
+  }, m_panel);
 }
 
 bool DropDownBox::DropDownPanelWrapper::is_visible() const {
-  return visit([&] (auto* widget) {
+  return std::visit([&] (auto* widget) {
     return widget && widget->window()->isVisible();
-  });
+  }, m_panel);
 }
 
 void DropDownBox::DropDownPanelWrapper::destroy() {
-  visit([&] (auto* widget) {
+  std::visit([&] (auto* widget) {
     if(widget) {
       widget->hide();
       delete_later(widget);
       m_panel = widget;
     }
-  });
+  }, m_panel);
 }
 
 void DropDownBox::DropDownPanelWrapper::show() {
-  visit([&] (auto* widget) {
+  std::visit([&] (auto* widget) {
     if(widget) {
       widget->show();
     }
-  });
+  }, m_panel);
 }
 
 DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list, QWidget* parent)
@@ -452,9 +446,8 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::MouseButtonPress) {
       auto& mouse_event = *static_cast<QMouseEvent*>(event);
       if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
-        m_drop_down_panel.visit([&] (auto* widget) {
-          widget->window()->setAttribute(Qt::WA_NoMouseReplay);
-        });
+        m_drop_down_panel.get_drop_down_window()->setAttribute(
+          Qt::WA_NoMouseReplay);
       }
     } else if(event->type() == QEvent::MouseButtonRelease) {
       if(!m_is_mouse_press_on_list) {

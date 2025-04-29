@@ -1,7 +1,6 @@
 #ifndef SPIRE_DROP_DOWN_BOX_HPP
 #define SPIRE_DROP_DOWN_BOX_HPP
 #include <functional>
-#include <memory>
 #include <QPointer>
 #include <QTimer>
 #include <QWidget>
@@ -244,8 +243,6 @@ namespace Styles {
         bool is_visible() const;
         void destroy();
         void show();
-        template<typename Visitor>
-        decltype(auto) visit(Visitor&& visitor) const;
       };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<AnyListModel> m_list;
@@ -352,12 +349,6 @@ namespace Styles {
         [to_text = std::forward<F>(to_text)] (const std::any& value) {
           return to_text(std::any_cast<const typename T::Type&>(value));
         }, parent) {}
-
-  template<typename Visitor>
-  decltype(auto) DropDownBox::DropDownPanelWrapper::visit(
-      Visitor&& visitor) const {
-    return std::visit(std::forward<Visitor>(visitor), m_panel);
-  }
 }
 
 #endif
