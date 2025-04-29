@@ -2,6 +2,7 @@
 #include "Spire/Canvas/Operations/CanvasTypeCompatibilityException.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/MaxFloorNode.hpp"
 #include "Spire/KeyBindings/AdditionalTag.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 
@@ -56,7 +57,9 @@ AnyInputBox* MaxFloorSchema::make_input_box(
   quantity->set_minimum(Quantity(-1));
   auto quantity_box = new QuantityBox(std::move(quantity));
   update_style(*quantity_box, [] (auto& style) {
-    style.get(Any()).set(border_size(0));
+    style.get(Any()).
+      set(border_size(0)).
+      set(horizontal_padding(scale_width(8)));
   });
   quantity_box->connect_submit_signal([=] (const auto& value) {
     if(!value) {
