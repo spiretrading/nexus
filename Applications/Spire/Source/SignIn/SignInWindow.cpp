@@ -34,12 +34,12 @@ namespace {
     auto style = StyleSheet();
     style.get(Any() > Body() > is_a<Icon>()).
       set(BackgroundColor(QColor(Qt::transparent))).
-      set(Fill(QColor(0xE2E0FF)));
-    style.get(!Active() > Body() > is_a<Icon>()).
       set(Fill(QColor(0xBAB3D9)));
+    style.get(!Active() > Body() > is_a<Icon>()).
+      set(Fill(QColor(0x684BC7)));
     style.get((Hover() || Press()) > Body() > is_a<Icon>()).
-      set(BackgroundColor(QColor(0x401D8B))).
-      set(Fill(QColor(0xE63F45)));
+      set(BackgroundColor(QColor(0xE63F44))).
+      set(Fill(QColor(0xFFFFFF)));
     return style;
   }
 
