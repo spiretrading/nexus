@@ -114,6 +114,9 @@ void BlotterSettings::Load(Out<UserProfile> userProfile) {
   auto& settings = userProfile->GetBlotterSettings();
   auto nameToBlotter = std::unordered_map<std::string, BlotterModel*>();
   for(auto& setting : data.m_blotters) {
+    if(nameToBlotter.find(setting.m_name) != nameToBlotter.end()) {
+      continue;
+    }
     auto account =
       userProfile->GetServiceClients().GetServiceLocatorClient().FindAccount(
         setting.m_account.m_name);
