@@ -34,7 +34,7 @@ namespace {
     style.get(ReadOnly()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(border_color(QColor(Qt::transparent))).
-      set(PaddingRight(0));
+      set(horizontal_padding(0));
     style.get(Any() > is_a<Icon>()).
       set(Fill(QColor(0x333333))).
       set(BackgroundColor(QColor(Qt::transparent)));
