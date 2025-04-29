@@ -4,11 +4,13 @@
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/KeyBindings/AdditionalTag.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/EnumBox.hpp"
 
 using namespace boost;
 using namespace Spire;
+using namespace Spire::Styles;
 
 EnumAdditionalTagSchema::EnumAdditionalTagSchema(
   OrderFieldInfoTip::Model order_field_model, int key)
@@ -54,6 +56,9 @@ AnyInputBox* EnumAdditionalTagSchema::make_input_box(
       return Nexus::Tag::Type(current.toStdString());
     });
   auto enum_box = new EnumBox<QString>(std::move(settings));
+  update_style(*enum_box, [] (auto& style) {
+    style.get(Any()).set(horizontal_padding(scale_width(8)));
+  });
   enum_box->connect_submit_signal([=] (const auto& value) {
     submission(Nexus::Tag::Type(value.toStdString()));
   });
