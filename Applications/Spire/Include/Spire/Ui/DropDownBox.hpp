@@ -235,8 +235,8 @@ namespace Styles {
         using DropDownPanel = std::variant<DropDownList*, EmptyState*>;
         DropDownPanel m_panel;
 
-        void set(DropDownList* drop_down_list);
-        void set(EmptyState* empty_state);
+        void set(DropDownList& drop_down_list);
+        void set(EmptyState& empty_state);
         DropDownList* get_drop_down_list() const;
         EmptyState* get_empty_state() const;
         QWidget* get_drop_down_window() const;

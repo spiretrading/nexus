@@ -18,6 +18,17 @@ namespace {
       set(border_size(0));
     return style;
   }
+
+  template<bool (QWidget::* method)(bool)>
+  struct FocusNext {
+    friend void focus_next(QWidget& widget, bool next) {
+      (widget.*method)(next);
+    }
+  };
+
+  template struct FocusNext<&QWidget::focusNextPrevChild>;
+
+  void focus_next(QWidget& widget, bool next);
 }
 
 DropDownList::DropDownList(ListView& list_view, QWidget& parent)

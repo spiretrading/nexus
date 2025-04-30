@@ -123,7 +123,7 @@ struct DropDownBox::EmptyState : QWidget {
       auto& key_event = *static_cast<QKeyEvent*>(event);
       if(key_event.key() == Qt::Key_Tab || key_event.key() == Qt::Key_Backtab) {
         m_panel->close();
-        focus_next(*window()->parentWidget(), key_event.key() == Qt::Key_Tab);
+        QApplication::sendEvent(window()->parentWidget(), event);
       } else if(key_event.key() == Qt::Key_Space ||
           key_event.key() == Qt::Key_Enter ||
           key_event.key() == Qt::Key_Return) {
@@ -156,18 +156,18 @@ struct DropDownBox::EmptyState : QWidget {
   }
 };
 
-void DropDownBox::DropDownPanelWrapper::set(DropDownList* drop_down_list) {
+void DropDownBox::DropDownPanelWrapper::set(DropDownList& drop_down_list) {
   if(get_empty_state()) {
     destroy();
   }
-  m_panel = drop_down_list;
+  m_panel = &drop_down_list;
 }
 
-void DropDownBox::DropDownPanelWrapper::set(EmptyState* empty_state) {
+void DropDownBox::DropDownPanelWrapper::set(EmptyState& empty_state) {
   if(get_drop_down_list()) {
     destroy();
   }
-  m_panel = empty_state;
+  m_panel = &empty_state;
 }
 
 DropDownList* DropDownBox::DropDownPanelWrapper::get_drop_down_list() const {
@@ -550,7 +550,7 @@ void DropDownBox::make_drop_down_empty_state() {
   auto empty_state = new EmptyState(*this);
   link(*this, *empty_state);
   empty_state->window()->installEventFilter(this);
-  m_drop_down_panel.set(empty_state);
+  m_drop_down_panel.set(*empty_state);
 }
 
 void DropDownBox::make_drop_down_list() {
@@ -581,7 +581,7 @@ void DropDownBox::make_drop_down_list() {
   auto window = drop_down_list->window();
   window->setWindowFlags(Qt::Popup | (window->windowFlags() & ~Qt::Tool));
   window->installEventFilter(this);
-  m_drop_down_panel.set(drop_down_list);
+  m_drop_down_panel.set(*drop_down_list);
   m_submit_connection = list_view->connect_submit_signal(
     std::bind_front(&DropDownBox::on_submit, this));
 }
