@@ -37,7 +37,8 @@ namespace {
     style.get(Any()).
       set(ListItemGap(scale_height(DEFAULT_GAP))).
       set(ListOverflowGap(scale_width(DEFAULT_OVERFLOW_GAP)));
-    style.get(FocusIn() > (is_a<ListItem>() && (Current() || Selected()))).
+    style.get(FocusIn() >
+        (is_a<ListItem>() && !Disabled() && (Current() || Selected()))).
       set(BackgroundColor(QColor(0xE2E0FF)));
     return style;
   }

@@ -17,9 +17,9 @@ namespace {
       set(vertical_padding(scale_height(5)));
     style.get(Hover()).set(BackgroundColor(QColor(0xF2F2FF)));
     style.get(Current() || Selected()).set(BackgroundColor(QColor(0xE0E0E0)));
-    style.get(Disabled()).
-      set(BackgroundColor(QColor(0xFFFFFF))).
-      set(border_color(QColor(Qt::transparent)));
+    style.get((Current() || Selected()) && Hover()).
+      set(BackgroundColor(QColor(0xE2E0FF)));
+    style.get(Disabled()).set(BackgroundColor(QColor(0xFFFFFF)));
     return style;
   }
 }
