@@ -1,25 +1,29 @@
 #include <QApplication>
+#include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Resources.hpp"
+#include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
+using namespace boost;
+using namespace boost::posix_time;
 using namespace Spire;
 using namespace Spire::Styles;
 
 struct ActivityMessageBox : QWidget {
-  TextBox* m_label;
-
   enum class State {
     NONE,
-    ACTIVE,
     DOWNLOADING,
     DOWNLOAD_COMPLETE,
     INSTALLING
   };
+  TextBox* m_label;
+  State m_state;
 
-  ActivityMessageBox() {
+  ActivityMessageBox()
+      : m_state(State::NONE) {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     auto layout = make_vbox_layout(this);
     m_label = make_label(QString());
@@ -28,9 +32,21 @@ struct ActivityMessageBox : QWidget {
     update_style(*m_label, [] (auto& style) {
       style.get(Any()).
         set(PaddingBottom(scale_height(6))).
-        set(TextColor(QColor(0xFFFFFF))).
-        set(TextAlign(Qt::AlignCenter));
+        set(PaddingLeft(scale_width(76))).
+        set(TextColor(QColor(0xFFFFFF)));
     });
+  }
+
+  void set_state(State state) {
+    if(state == m_state) {
+      return;
+    }
+    if(state == State::DOWNLOADING) {
+      update_style(*m_label, [] (auto& style) {
+        style.get(Any()).
+          set(PaddingLeft(linear(scale_width(76), 0, milliseconds(800))));
+      });
+    }
   }
 };
 
@@ -60,5 +76,9 @@ int main(int argc, char** argv) {
   initialize_resources();
   auto window = UpdaterBox();
   window.show();
+  QTimer::singleShot(1000, [&] {
+    window.m_activity_message_box->set_state(
+      ActivityMessageBox::State::DOWNLOADING);
+  });
   application.exec();
 }

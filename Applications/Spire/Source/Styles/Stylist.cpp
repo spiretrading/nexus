@@ -13,7 +13,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto FRAME_DURATION = time_duration(seconds(1)) / 30;
+  const auto FRAME_DURATION = time_duration(seconds(1)) / 60;
 
   QTimer& get_animation_timer() {
     static auto timer = [] {
