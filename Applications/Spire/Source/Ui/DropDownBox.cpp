@@ -186,7 +186,7 @@ DropDownBox::EmptyState*
 }
 
 QWidget* DropDownBox::DropDownPanelWrapper::get_drop_down_window() const {
-  return std::visit([&] (auto* widget) -> QWidget* {
+  return std::visit([] (auto* widget) -> QWidget* {
     if(widget) {
       return widget->window();
     }
@@ -195,23 +195,22 @@ QWidget* DropDownBox::DropDownPanelWrapper::get_drop_down_window() const {
 }
 
 bool DropDownBox::DropDownPanelWrapper::is_visible() const {
-  return std::visit([&] (auto* widget) {
+  return std::visit([] (auto* widget) {
     return widget && widget->window()->isVisible();
   }, m_panel);
 }
 
 void DropDownBox::DropDownPanelWrapper::destroy() {
-  std::visit([&] (auto* widget) {
+  std::visit([] (auto*& widget) {
     if(widget) {
       widget->hide();
       delete_later(widget);
-      m_panel = widget;
     }
   }, m_panel);
 }
 
 void DropDownBox::DropDownPanelWrapper::show() {
-  std::visit([&] (auto* widget) {
+  std::visit([] (auto* widget) {
     if(widget) {
       widget->show();
     }
