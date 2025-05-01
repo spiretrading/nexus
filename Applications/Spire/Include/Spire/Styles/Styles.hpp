@@ -25,6 +25,7 @@ namespace Spire::Styles {
   class NotSelector;
   class OrSelector;
   class ParentSelector;
+  template<typename T> class PeriodicEvaluator;
   class Property;
   class PropertyMatchSelector;
   class PseudoElement;
