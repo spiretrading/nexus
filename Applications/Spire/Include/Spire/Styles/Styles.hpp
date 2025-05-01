@@ -11,6 +11,7 @@ namespace Spire::Styles {
   class CombinatorSelector;
   template<typename... T> class CompositeProperty;
   template<typename T> class ConstantExpression;
+  template<typename T> class CubicBezierExpression;
   class DescendantSelector;
   class EvaluatedBlock;
   class EvaluatedProperty;
