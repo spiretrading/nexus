@@ -137,8 +137,8 @@ namespace Spire::Styles {
 
       Evaluation<Type> operator()(boost::posix_time::time_duration frame) {
         if(frame <= boost::posix_time::seconds(0)) {
-          return Evaluation(
-            m_start(seconds(0)).m_value, boost::posix_time::seconds(0));
+          return Evaluation(m_start(boost::posix_time::seconds(0)).m_value,
+            boost::posix_time::seconds(0));
         } else if(frame >= m_duration) {
           return Evaluation(
             m_end(m_duration).m_value, boost::posix_time::pos_infin);
