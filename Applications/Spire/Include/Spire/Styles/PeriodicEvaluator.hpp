@@ -55,10 +55,13 @@ namespace Spire::Styles {
   };
 
   template<typename T>
+  PeriodicEvaluator(T) -> PeriodicEvaluator<typename std::remove_reference_t<
+    std::invoke_result_t<T, boost::posix_time::time_duration>>::Type>;
+
+  template<typename T>
   PeriodicEvaluator<T>::PeriodicEvaluator(Evaluator<Type> evaluator)
     : m_evaluator(std::move(evaluator)),
-      m_evaluation(m_evaluator(boost::posix_time::seconds(0))),
-      m_frame_count(0) {
+      m_evaluation(m_evaluator(boost::posix_time::seconds(0))) {
     if(is_complete()) {
       return;
     }
@@ -88,7 +91,7 @@ namespace Spire::Styles {
 
   template<typename T>
   void PeriodicEvaluator<T>::on_timeout() {
-    auto duration = boost::posix_time::millseconds(
+    auto duration = boost::posix_time::milliseconds(
       boost::chrono::duration_cast<boost::chrono::milliseconds>(
         boost::chrono::steady_clock::now() - m_start_time).count());
     m_evaluation.m_next_frame -= duration;
