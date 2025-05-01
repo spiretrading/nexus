@@ -92,19 +92,62 @@ auto make_activity_label(std::shared_ptr<ActivityModel> activity) {
 }
 
 struct ProgressBox : QWidget {
-  ProgressBox() {
-    auto box = new Box();
+  using Fill = StateSelector<void, struct FillTag>;
+  Box* m_fill;
+  std::shared_ptr<ValueModel<int>> m_current;
+  int m_last_current;
+  optional<ExpressionExecutor<int>> m_fill_width;
+  scoped_connection m_connection;
+
+  ProgressBox(std::shared_ptr<ValueModel<int>> current)
+      : m_current(std::move(current)),
+        m_last_current(m_current->get()) {
+    m_fill = new Box();
+    match(*m_fill, Fill());
+    m_fill->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    m_fill->setFixedWidth(compute_fill_width());
+    auto box = new Box(m_fill);
+    link(*this, *m_fill);
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     enclose(*this, *box);
     proxy_style(*this, *box);
     update_style(*this, [] (auto& style) {
       style.get(Any()).
         set(BackgroundColor(QColor(0x321471)));
+      style.get(Any() > Fill()).
+        set(BackgroundColor(QColor(0x8D78EC)));
     });
+    on_current(m_current->get());
+    m_connection = m_current->connect_update_signal(
+      std::bind_front(&ProgressBox::on_current, this));
   }
 
   QSize sizeHint() const {
     return scale(1, 4);
+  }
+
+  void resizeEvent(QResizeEvent* event) override {
+    m_fill->setFixedWidth(compute_fill_width());
+  }
+
+  int compute_fill_width() const {
+    return (width() * m_current->get()) / 100;
+  }
+
+  void on_current(int current) {
+    if(current == m_last_current) {
+      return;
+    }
+    m_fill_width = none;
+    m_fill_width.emplace(make_evaluator(
+      ease(m_fill->width(), compute_fill_width(), milliseconds(400)),
+      find_stylist(*m_fill)));
+    m_fill_width->connect_update_signal(
+      std::bind_front(&ProgressBox::on_fill_width, this));
+  }
+
+  void on_fill_width(int width) {
+    m_fill->setFixedWidth(width);
   }
 };
 
@@ -154,12 +197,14 @@ struct UpdateBox : QWidget {
   std::shared_ptr<ActivityModel> m_activity;
   Activity m_last_activity;
   TextBox* m_activity_label;
+  std::shared_ptr<ValueModel<int>> m_progress;
   ProgressBox* m_progress_box;
   optional<ExpressionExecutor<int>> m_progress_width_executor;
   TextBox* m_time_left_label;
   scoped_connection m_activity_connection;
 
   UpdateBox(std::shared_ptr<ActivityModel> activity,
+      std::shared_ptr<ValueModel<int>> progress,
       std::shared_ptr<ValueModel<time_duration>> time_left)
       : m_activity(std::move(activity)) {
     auto body = new QWidget();
@@ -167,7 +212,7 @@ struct UpdateBox : QWidget {
     layout->addSpacing(scale_height(38));
     m_activity_label = make_activity_label(m_activity);
     layout->addWidget(m_activity_label);
-    m_progress_box = new ProgressBox();
+    m_progress_box = new ProgressBox(std::move(progress));
     m_progress_box->setSizePolicy(
       QSizePolicy::Fixed, m_progress_box->sizePolicy().verticalPolicy());
     m_progress_box->setFixedWidth(scale_width(140));
@@ -234,24 +279,45 @@ int main(int argc, char** argv) {
   application.setApplicationName(QObject::tr("Scratch"));
   initialize_resources();
   auto activity = std::make_shared<LocalValueModel<Activity>>(Activity::NONE);
+  auto progress = std::make_shared<LocalValueModel<int>>(0);
   auto time_left =
     std::make_shared<LocalValueModel<time_duration>>(seconds(40));
-  auto window = UpdateBox(activity, time_left);
+  auto window = UpdateBox(activity, progress, time_left);
   window.show();
-  QTimer::singleShot(1000, [&] {
+  auto time = 0;
+  time += 1000;
+  QTimer::singleShot(time, [&] {
     activity->set(Activity::DOWNLOADING);
-    QTimer::singleShot(6000, [&] {
-      time_left->set(seconds(5));
-      QTimer::singleShot(6000, [&] {
-        activity->set(Activity::DOWNLOAD_COMPLETE);
-        QTimer::singleShot(2000, [&] {
-          activity->set(Activity::INSTALLING);
-          QTimer::singleShot(4000, [&] {
-            window.close();
-          });
-        });
-      });
-    });
+    progress->set(20);
+    time_left->set(seconds(8));
+  });
+  time += 2000;
+  QTimer::singleShot(time, [&] {
+    progress->set(40);
+    time_left->set(seconds(6));
+  });
+  time += 2000;
+  QTimer::singleShot(time, [&] {
+    progress->set(60);
+    time_left->set(seconds(4));
+  });
+  time += 2000;
+  QTimer::singleShot(time, [&] {
+    progress->set(70);
+    time_left->set(seconds(2));
+  });
+  time += 2000;
+  QTimer::singleShot(time, [&] {
+    progress->set(100);
+    activity->set(Activity::DOWNLOAD_COMPLETE);
+  });
+  time += 2000;
+  QTimer::singleShot(time, [&] {
+    activity->set(Activity::INSTALLING);
+  });
+  time += 3000;
+  QTimer::singleShot(time, [&] {
+    window.close();
   });
   application.exec();
 }
