@@ -197,22 +197,26 @@ struct UpdateBox : QWidget {
   std::shared_ptr<ActivityModel> m_activity;
   Activity m_last_activity;
   TextBox* m_activity_label;
-  std::shared_ptr<ValueModel<int>> m_progress;
+  std::shared_ptr<ValueModel<int>> m_download_progress;
+  std::shared_ptr<ValueModel<int>> m_installation_progress;
   ProgressBox* m_progress_box;
   optional<ExpressionExecutor<int>> m_progress_width_executor;
   TextBox* m_time_left_label;
-  scoped_connection m_activity_connection;
+  scoped_connection m_download_progress_connection;
+  scoped_connection m_installation_progress_connection;
 
-  UpdateBox(std::shared_ptr<ActivityModel> activity,
-      std::shared_ptr<ValueModel<int>> progress,
+  UpdateBox(std::shared_ptr<ValueModel<int>> download_progress,
+      std::shared_ptr<ValueModel<int>> installation_progress,
       std::shared_ptr<ValueModel<time_duration>> time_left)
-      : m_activity(std::move(activity)) {
+      : m_activity(std::make_shared<LocalValueModel<Activity>>(Activity::NONE)),
+        m_download_progress(std::move(download_progress)),
+        m_installation_progress(std::move(installation_progress)) {
     auto body = new QWidget();
     auto layout = make_vbox_layout(body);
     layout->addSpacing(scale_height(38));
     m_activity_label = make_activity_label(m_activity);
     layout->addWidget(m_activity_label);
-    m_progress_box = new ProgressBox(std::move(progress));
+    m_progress_box = new ProgressBox(m_download_progress);
     m_progress_box->setSizePolicy(
       QSizePolicy::Fixed, m_progress_box->sizePolicy().verticalPolicy());
     m_progress_box->setFixedWidth(scale_width(140));
@@ -233,9 +237,36 @@ struct UpdateBox : QWidget {
     } else {
       m_last_activity = Activity::NONE;
     }
+    on_download_progress(m_download_progress->get());
+    m_download_progress_connection = m_download_progress->connect_update_signal(
+      std::bind_front(&UpdateBox::on_download_progress, this));
     on_activity(m_activity->get());
-    m_activity_connection = m_activity->connect_update_signal(
+    m_activity->connect_update_signal(
       std::bind_front(&UpdateBox::on_activity, this));
+  }
+
+  void showEvent(QShowEvent* event) override {
+    QTimer::singleShot(1000, this, [=] {
+      m_activity->set(Activity::DOWNLOADING);
+    });
+  }
+
+  void on_download_progress(int progress) {
+    if(m_activity->get() != Activity::DOWNLOADING) {
+      return;
+    }
+    if(progress >= 100) {
+      m_activity->set(Activity::DOWNLOAD_COMPLETE);
+      QTimer::singleShot(2000, this, [=] {
+        m_activity->set(Activity::INSTALLING);
+      });
+    }
+  }
+
+  void on_installation_progress(int progress) {
+    if(m_activity->get() != Activity::INSTALLING) {
+      return;
+    }
   }
 
   void on_activity(Activity activity) {
@@ -259,6 +290,16 @@ struct UpdateBox : QWidget {
     } else if(activity == Activity::DOWNLOAD_COMPLETE) {
       m_time_left_label->hide();
     } else if(activity == Activity::INSTALLING) {
+      auto installation_progress_box = new ProgressBox(m_installation_progress);
+      installation_progress_box->setSizePolicy(
+        QSizePolicy::Fixed, m_progress_box->sizePolicy().verticalPolicy());
+      installation_progress_box->setFixedWidth(scale_width(280));
+      auto progress_item =
+        m_progress_box->parentWidget()->layout()->replaceWidget(
+          m_progress_box, installation_progress_box);
+      m_progress_box = installation_progress_box;
+      delete progress_item->widget();
+      delete progress_item;
       QTimer::singleShot(2000, this, [=] {
         if(m_last_activity == Activity::INSTALLING) {
           m_time_left_label->show();
@@ -278,42 +319,45 @@ int main(int argc, char** argv) {
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Scratch"));
   initialize_resources();
-  auto activity = std::make_shared<LocalValueModel<Activity>>(Activity::NONE);
-  auto progress = std::make_shared<LocalValueModel<int>>(0);
+  auto download_progress = std::make_shared<LocalValueModel<int>>(0);
+  auto installation_progress = std::make_shared<LocalValueModel<int>>(0);
   auto time_left =
     std::make_shared<LocalValueModel<time_duration>>(seconds(40));
-  auto window = UpdateBox(activity, progress, time_left);
+  auto window = UpdateBox(download_progress, installation_progress, time_left);
   window.show();
   auto time = 0;
   time += 1000;
   QTimer::singleShot(time, [&] {
-    activity->set(Activity::DOWNLOADING);
-    progress->set(20);
+    download_progress->set(20);
     time_left->set(seconds(8));
   });
   time += 2000;
   QTimer::singleShot(time, [&] {
-    progress->set(40);
+    download_progress->set(40);
     time_left->set(seconds(6));
   });
   time += 2000;
   QTimer::singleShot(time, [&] {
-    progress->set(60);
+    download_progress->set(60);
     time_left->set(seconds(4));
   });
   time += 2000;
   QTimer::singleShot(time, [&] {
-    progress->set(70);
+    download_progress->set(70);
     time_left->set(seconds(2));
   });
   time += 2000;
   QTimer::singleShot(time, [&] {
-    progress->set(100);
-    activity->set(Activity::DOWNLOAD_COMPLETE);
+    download_progress->set(100);
   });
   time += 2000;
   QTimer::singleShot(time, [&] {
-    activity->set(Activity::INSTALLING);
+    installation_progress->set(20);
+    time_left->set(seconds(2));
+  });
+  time += 2000;
+  QTimer::singleShot(time, [&] {
+    installation_progress->set(100);
   });
   time += 3000;
   QTimer::singleShot(time, [&] {
