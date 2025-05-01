@@ -25,6 +25,39 @@ enum class Activity {
 using ActivityModel = ValueModel<Activity>;
 using ActivityStyle = StateSelector<Activity, struct ActivityStyleTag>;
 
+template<typename T>
+struct ExpressionExecutor : private QObject {
+  using Type = T;
+  using UpdateSignal = Signal<void (const Type& value)>;
+  static inline const auto FRAME_DURATION = time_duration(seconds(1) / 60);
+  mutable UpdateSignal m_update;
+  Evaluator<Type> m_evaluator;
+  int m_frame_count;
+  QTimer m_timer;
+
+  explicit ExpressionExecutor(Evaluator<Type> evaluator)
+    : m_evaluator(std::move(evaluator)),
+      m_frame_count(0) {
+    m_timer.setInterval(FRAME_DURATION.total_milliseconds());
+    connect(&m_timer, &QTimer::timeout, this,
+      std::bind_front(&ExpressionExecutor::on_timeout, this));
+    m_timer.start();
+  }
+
+  connection connect_update_signal(const UpdateSignal::slot_type& slot) const {
+    return m_update.connect(slot);
+  }
+
+  void on_timeout() {
+    ++m_frame_count;
+    auto evaluation = m_evaluator(FRAME_DURATION * m_frame_count);
+    m_update(evaluation.m_value);
+    if(evaluation.m_next_frame == pos_infin) {
+      m_timer.stop();
+    }
+  }
+};
+
 auto make_activity_message(std::shared_ptr<ActivityModel> activity) {
   return make_transform_value_model(std::move(activity), [] (auto activity) {
     if(activity == Activity::NONE) {
@@ -122,6 +155,7 @@ struct UpdateBox : QWidget {
   Activity m_last_activity;
   TextBox* m_activity_label;
   ProgressBox* m_progress_box;
+  optional<ExpressionExecutor<int>> m_progress_width_executor;
   TextBox* m_time_left_label;
   scoped_connection m_activity_connection;
 
@@ -135,7 +169,8 @@ struct UpdateBox : QWidget {
     layout->addWidget(m_activity_label);
     m_progress_box = new ProgressBox();
     m_progress_box->setSizePolicy(
-      QSizePolicy::Expanding, m_progress_box->sizePolicy().verticalPolicy());
+      QSizePolicy::Fixed, m_progress_box->sizePolicy().verticalPolicy());
+    m_progress_box->setFixedWidth(scale_width(140));
     m_progress_box->hide();
     layout->addWidget(m_progress_box);
     m_time_left_label = make_time_left_label(std::move(time_left));
@@ -166,6 +201,11 @@ struct UpdateBox : QWidget {
     m_last_activity = activity;
     if(activity == Activity::DOWNLOADING) {
       m_progress_box->show();
+      m_progress_width_executor.emplace(make_evaluator(
+        ease(scale_width(140), scale_width(280), milliseconds(800)),
+        find_stylist(*m_progress_box)));
+      m_progress_width_executor->connect_update_signal(
+        std::bind_front(&UpdateBox::on_progress_width_update, this));
       QTimer::singleShot(2000, this, [=] {
         if(m_last_activity == Activity::DOWNLOADING) {
           m_time_left_label->show();
@@ -181,6 +221,10 @@ struct UpdateBox : QWidget {
       });
     }
     match(*m_activity_label, ActivityStyle(activity));
+  }
+
+  void on_progress_width_update(int width) {
+    m_progress_box->setFixedWidth(width);
   }
 };
 
