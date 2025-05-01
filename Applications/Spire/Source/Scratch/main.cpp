@@ -2,6 +2,7 @@
 #include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Resources.hpp"
+#include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Styles/CubicBezierExpression.hpp"
 #include "Spire/Styles/LinearExpression.hpp"
@@ -199,6 +200,7 @@ struct UpdateBox : QWidget {
   TextBox* m_activity_label;
   std::shared_ptr<ValueModel<int>> m_download_progress;
   std::shared_ptr<ValueModel<int>> m_installation_progress;
+  std::shared_ptr<ProxyValueModel<int>> m_proxy_progress;
   ProgressBox* m_progress_box;
   optional<ExpressionExecutor<int>> m_progress_width_executor;
   TextBox* m_time_left_label;
@@ -216,7 +218,9 @@ struct UpdateBox : QWidget {
     layout->addSpacing(scale_height(38));
     m_activity_label = make_activity_label(m_activity);
     layout->addWidget(m_activity_label);
-    m_progress_box = new ProgressBox(m_download_progress);
+    m_proxy_progress =
+      make_proxy_value_model(std::make_shared<LocalValueModel<int>>(0));
+    m_progress_box = new ProgressBox(m_proxy_progress);
     m_progress_box->setSizePolicy(
       QSizePolicy::Fixed, m_progress_box->sizePolicy().verticalPolicy());
     m_progress_box->setFixedWidth(scale_width(140));
@@ -311,6 +315,9 @@ struct UpdateBox : QWidget {
 
   void on_progress_width_update(int width) {
     m_progress_box->setFixedWidth(width);
+    if(width == this->width()) {
+      m_proxy_progress->set_source(m_download_progress);
+    }
   }
 };
 
@@ -359,7 +366,7 @@ int main(int argc, char** argv) {
   QTimer::singleShot(time, [&] {
     installation_progress->set(100);
   });
-  time += 3000;
+  time += 500;
   QTimer::singleShot(time, [&] {
     window.close();
   });
