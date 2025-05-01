@@ -18,6 +18,8 @@ DeletableListItem::DeletableListItem(QWidget& body, QWidget* parent)
   delete_button->setFixedSize(scale(26, 24));
   update_style(*delete_button, [] (auto& style) {
     style.get(Any()).set(Visibility(Visibility::NONE));
+    style.get((Hover() || Press()) > Body()).
+      set(BackgroundColor(QColor(0xDFDFEB)));
     style.get(Hover() > is_a<Icon>()).set(Fill(QColor(0xB71C1C)));
     style.get(Press() > is_a<Icon>()).set(Fill(QColor(0xE01616)));
   });
@@ -34,8 +36,6 @@ DeletableListItem::DeletableListItem(QWidget& body, QWidget* parent)
   layout->addWidget(delete_button, 0, Qt::AlignVCenter);
   update_style(*this, [] (auto& style) {
     style.get(Hover() > is_a<Button>()).set(Visibility::VISIBLE);
-    style.get(Hover() > (is_a<Button>() && (Hover() || Press())) > Body()).
-      set(BackgroundColor(QColor(0xDFDFEB)));
   });
   delete_button->connect_click_signal(m_delete_signal);
 }
