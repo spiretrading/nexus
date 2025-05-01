@@ -230,6 +230,20 @@ namespace Styles {
       void mousePressEvent(QMouseEvent* event) override;
 
     private:
+      struct EmptyState;
+      struct DropDownPanelWrapper {
+        using DropDownPanel = std::variant<DropDownList*, EmptyState*>;
+        DropDownPanel m_panel;
+
+        void set(DropDownList& drop_down_list);
+        void set(EmptyState& empty_state);
+        DropDownList* get_drop_down_list() const;
+        EmptyState* get_empty_state() const;
+        QWidget* get_drop_down_window() const;
+        bool is_visible() const;
+        void destroy();
+        void show();
+      };
       mutable SubmitSignal m_submit_signal;
       std::shared_ptr<AnyListModel> m_list;
       std::shared_ptr<CurrentModel> m_current;
@@ -245,7 +259,7 @@ namespace Styles {
       bool m_is_mouse_press_on_list;
       QPoint m_mouse_press_position;
       QPointer<QWidget> m_hovered_item;
-      DropDownList* m_drop_down_list;
+      DropDownPanelWrapper m_drop_down_panel;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_current_connection;
 
@@ -253,10 +267,12 @@ namespace Styles {
       void enter_hovered_item(const QMouseEvent& event);
       void leave_hovered_item();
       void revert_current();
-      bool is_drop_down_list_visible() const;
+      bool is_drop_down_panel_visible() const;
+      void make_drop_down_empty_state();
       void make_drop_down_list();
-      void show_drop_down_list();
-      void hide_drop_down_list();
+      void make_drop_down_panel();
+      void show_drop_down_panel();
+      void hide_drop_down_panel();
       void submit();
       void on_button_press_end(PressObserver::Reason reason);
       void on_current(const boost::optional<int>& current);
