@@ -16,6 +16,7 @@ namespace Spire::Styles {
   class EvaluatedBlock;
   class EvaluatedProperty;
   template<typename T> struct Evaluation;
+  template<typename T> class Executor;
   template<typename T> class Expression;
   class FlipSelector;
   template<typename I, typename T, typename... A>
