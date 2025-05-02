@@ -50,7 +50,6 @@ namespace Spire {
       boost::optional<Styles::PeriodicEvaluator<int>> m_fill_width_evaluator;
       boost::signals2::scoped_connection m_connection;
 
-      int compute_fill_width() const;
       void on_current(int current);
       void on_fill_width_evaluated(int width);
   };

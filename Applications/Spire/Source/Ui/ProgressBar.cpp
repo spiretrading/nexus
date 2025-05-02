@@ -9,6 +9,12 @@ using namespace boost::posix_time;
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  int compute_fill_width(int width, int current) {
+    return (width * current) / 100;
+  }
+}
+
 ProgressBar::ProgressBar()
   : ProgressBar(std::make_shared<LocalProgressModel>(0)) {}
 
@@ -18,7 +24,7 @@ ProgressBar::ProgressBar(std::shared_ptr<ProgressModel> current)
   m_fill = new Box();
   match(*m_fill, Fill());
   m_fill->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
-  m_fill->setFixedWidth(compute_fill_width());
+  m_fill->setFixedWidth(compute_fill_width(width(), m_current->get()));
   auto box = new Box(m_fill);
   link(*this, *m_fill);
   setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
@@ -44,20 +50,25 @@ QSize ProgressBar::sizeHint() const {
 }
 
 void ProgressBar::resizeEvent(QResizeEvent* event) {
-  m_fill->setFixedWidth(compute_fill_width());
-}
-
-int ProgressBar::compute_fill_width() const {
-  return (width() * m_current->get()) / 100;
+  m_fill->setFixedWidth(compute_fill_width(width(), m_current->get()));
 }
 
 void ProgressBar::on_current(int current) {
   if(current == m_last_current) {
     return;
   }
-  m_fill_width_evaluator.emplace(make_evaluator(
-    ease(m_fill->width(), compute_fill_width(), milliseconds(400)),
-    find_stylist(*m_fill)));
+  static const auto DURATION_PER_PIXEL = time_duration(milliseconds(2));
+  static const auto MIN_DURATION = time_duration(milliseconds(30));
+  static const auto MAX_DURATION = time_duration(milliseconds(600));
+  auto current_width = compute_fill_width(width(), current);
+  auto width_delta =
+    current_width - compute_fill_width(width(), m_last_current);
+  m_last_current = current;
+  auto duration =
+    std::clamp(DURATION_PER_PIXEL * width_delta, MIN_DURATION, MAX_DURATION);
+  m_fill_width_evaluator.emplace(
+    make_evaluator(ease(m_fill->width(), current_width, duration),
+      find_stylist(*m_fill)));
   m_fill_width_evaluator->connect_evaluated_signal(
     std::bind_front(&ProgressBar::on_fill_width_evaluated, this));
 }
