@@ -230,7 +230,6 @@ namespace Styles {
       void mousePressEvent(QMouseEvent* event) override;
 
     private:
-      struct EmptyState;
       struct DropDownPanelWrapper {
         using DropDownPanel = std::variant<DropDownList*, EmptyState*>;
         DropDownPanel m_panel;

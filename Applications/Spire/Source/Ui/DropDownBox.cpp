@@ -10,6 +10,7 @@
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownList.hpp"
+#include "Spire/Ui/EmptyState.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -47,22 +48,6 @@ namespace {
     return style;
   }
 
-  auto make_empty_label() {
-    auto label = make_label(QObject::tr("Empty"));
-    auto font = QFont("Roboto");
-    font.setWeight(QFont::Normal);
-    font.setPixelSize(scale_width(12));
-    font.setItalic(true);
-    update_style(*label, [&] (auto& style) {
-      style.get(Any()).
-        set(TextAlign(Qt::AlignCenter)).
-        set(text_style(font, QColor(0xA0A0A0))).
-        set(horizontal_padding(scale_width(9))).
-        set(vertical_padding(scale_height(6)));
-    });
-    return label;
-  }
-
   bool has_focus(const QWidget& root) {
     if(auto focus_widget = QApplication::focusWidget()) {
       return is_ancestor(&root, focus_widget);
@@ -70,83 +55,6 @@ namespace {
     return false;
   }
 }
-
-struct DropDownBox::EmptyState : QWidget {
-  OverlayPanel* m_panel;
-  int m_panel_horizontal_border_width;
-  ClickObserver m_click_observer;
-  scoped_connection m_panel_style_connection;
-
-  explicit EmptyState(QWidget& parent)
-      : QWidget(&parent),
-        m_panel_horizontal_border_width(0),
-        m_click_observer(*this) {
-    auto label = make_empty_label();
-    enclose(*this, *label);
-    proxy_style(*this, *label);
-    m_panel = new OverlayPanel(*this, parent);
-    m_panel->setWindowFlags(Qt::Popup | (m_panel->windowFlags() & ~Qt::Tool));
-    m_panel->set_closed_on_focus_out(true);
-    m_panel->installEventFilter(this);
-    on_panel_style();
-    m_click_observer.connect_click_signal(
-      std::bind_front(&EmptyState::on_click, this));
-    m_panel_style_connection = connect_style_signal(*m_panel,
-      std::bind_front(&EmptyState::on_panel_style, this));
-  }
-
-  QSize sizeHint() const override {
-    auto parent_width = m_panel->parentWidget()->size().width();
-    return {parent_width - m_panel_horizontal_border_width,
-      QWidget::sizeHint().height()};
-  }
-
-  bool event(QEvent* event) override {
-    if(event->type() == QEvent::ShowToParent) {
-      m_panel->show();
-    } else if(event->type() == QEvent::HideToParent) {
-      m_panel->hide();
-    }
-    return QWidget::event(event);
-  }
-
-  bool eventFilter(QObject* watched, QEvent* event) override {
-    if(event->type() == QEvent::KeyPress) {
-      auto& key_event = *static_cast<QKeyEvent*>(event);
-      if(key_event.key() == Qt::Key_Tab || key_event.key() == Qt::Key_Backtab) {
-        m_panel->close();
-        QApplication::sendEvent(window()->parentWidget(), event);
-      } else if(key_event.key() == Qt::Key_Space ||
-          key_event.key() == Qt::Key_Enter ||
-          key_event.key() == Qt::Key_Return) {
-        m_panel->close();
-      }
-    }
-    return QWidget::eventFilter(watched, event);
-  }
-
-  void on_click() {
-    m_panel->close();
-  }
-
-  void on_panel_style() {
-    m_panel_horizontal_border_width = 0;
-    auto& stylist = find_stylist(*m_panel);
-    for(auto& property : stylist.get_computed_block()) {
-      property.visit(
-        [&] (const BorderLeftSize& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_panel_horizontal_border_width += size;
-          });
-        },
-        [&] (const BorderRightSize& size) {
-          stylist.evaluate(size, [=] (auto size) {
-            m_panel_horizontal_border_width += size;
-          });
-        });
-    }
-  }
-};
 
 void DropDownBox::DropDownPanelWrapper::set(DropDownList& drop_down_list) {
   if(get_empty_state()) {
@@ -169,8 +77,7 @@ DropDownList* DropDownBox::DropDownPanelWrapper::get_drop_down_list() const {
   return nullptr;
 }
 
-DropDownBox::EmptyState*
-    DropDownBox::DropDownPanelWrapper::get_empty_state() const {
+EmptyState* DropDownBox::DropDownPanelWrapper::get_empty_state() const {
   if(auto empty_state = std::get_if<EmptyState*>(&m_panel)) {
     return *empty_state;
   }
@@ -195,7 +102,6 @@ bool DropDownBox::DropDownPanelWrapper::is_visible() const {
 void DropDownBox::DropDownPanelWrapper::destroy() {
   std::visit([] (auto*& widget) {
     if(widget) {
-      widget->hide();
       delete_later(widget);
     }
   }, m_panel);
@@ -434,6 +340,7 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
       hide_drop_down_panel();
     } else if(event->type() == QEvent::Hide) {
       leave_hovered_item();
+      hide_drop_down_panel();
     } else if(event->type() == QEvent::MouseButtonPress) {
       auto& mouse_event = *static_cast<QMouseEvent*>(event);
       if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
@@ -538,7 +445,7 @@ void DropDownBox::make_drop_down_empty_state() {
   if(auto empty_state = m_drop_down_panel.get_empty_state()) {
     return;
   }
-  auto empty_state = new EmptyState(*this);
+  auto empty_state = new EmptyState(tr("Empty"), *this);
   link(*this, *empty_state);
   empty_state->window()->installEventFilter(this);
   m_drop_down_panel.set(*empty_state);
