@@ -6,6 +6,7 @@
 #include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Styles/CubicBezierExpression.hpp"
 #include "Spire/Styles/LinearExpression.hpp"
+#include "Spire/Styles/PeriodicEvaluator.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -25,39 +26,6 @@ enum class Activity {
 
 using ActivityModel = ValueModel<Activity>;
 using ActivityStyle = StateSelector<Activity, struct ActivityStyleTag>;
-
-template<typename T>
-struct ExpressionExecutor : private QObject {
-  using Type = T;
-  using UpdateSignal = Signal<void (const Type& value)>;
-  static inline const auto FRAME_DURATION = time_duration(seconds(1) / 60);
-  mutable UpdateSignal m_update;
-  Evaluator<Type> m_evaluator;
-  int m_frame_count;
-  QTimer m_timer;
-
-  explicit ExpressionExecutor(Evaluator<Type> evaluator)
-    : m_evaluator(std::move(evaluator)),
-      m_frame_count(0) {
-    m_timer.setInterval(FRAME_DURATION.total_milliseconds());
-    connect(&m_timer, &QTimer::timeout, this,
-      std::bind_front(&ExpressionExecutor::on_timeout, this));
-    m_timer.start();
-  }
-
-  connection connect_update_signal(const UpdateSignal::slot_type& slot) const {
-    return m_update.connect(slot);
-  }
-
-  void on_timeout() {
-    ++m_frame_count;
-    auto evaluation = m_evaluator(FRAME_DURATION * m_frame_count);
-    m_update(evaluation.m_value);
-    if(evaluation.m_next_frame == pos_infin) {
-      m_timer.stop();
-    }
-  }
-};
 
 auto make_activity_message(std::shared_ptr<ActivityModel> activity) {
   return make_transform_value_model(std::move(activity), [] (auto activity) {
@@ -97,7 +65,7 @@ struct ProgressBox : QWidget {
   Box* m_fill;
   std::shared_ptr<ValueModel<int>> m_current;
   int m_last_current;
-  optional<ExpressionExecutor<int>> m_fill_width;
+  optional<PeriodicEvaluator<int>> m_fill_width_evaluator;
   scoped_connection m_connection;
 
   ProgressBox(std::shared_ptr<ValueModel<int>> current)
@@ -139,15 +107,14 @@ struct ProgressBox : QWidget {
     if(current == m_last_current) {
       return;
     }
-    m_fill_width = none;
-    m_fill_width.emplace(make_evaluator(
+    m_fill_width_evaluator.emplace(make_evaluator(
       ease(m_fill->width(), compute_fill_width(), milliseconds(400)),
       find_stylist(*m_fill)));
-    m_fill_width->connect_update_signal(
-      std::bind_front(&ProgressBox::on_fill_width, this));
+    m_fill_width_evaluator->connect_evaluated_signal(
+      std::bind_front(&ProgressBox::on_fill_width_evaluated, this));
   }
 
-  void on_fill_width(int width) {
+  void on_fill_width_evaluated(int width) {
     m_fill->setFixedWidth(width);
   }
 };
@@ -202,7 +169,7 @@ struct UpdateBox : QWidget {
   std::shared_ptr<ValueModel<int>> m_installation_progress;
   std::shared_ptr<ProxyValueModel<int>> m_proxy_progress;
   ProgressBox* m_progress_box;
-  optional<ExpressionExecutor<int>> m_progress_width_executor;
+  optional<PeriodicEvaluator<int>> m_progress_width_evaluator;
   TextBox* m_time_left_label;
   scoped_connection m_download_progress_connection;
   scoped_connection m_installation_progress_connection;
@@ -281,11 +248,11 @@ struct UpdateBox : QWidget {
     m_last_activity = activity;
     if(activity == Activity::DOWNLOADING) {
       m_progress_box->show();
-      m_progress_width_executor.emplace(make_evaluator(
+      m_progress_width_evaluator.emplace(make_evaluator(
         ease(scale_width(140), scale_width(280), milliseconds(800)),
         find_stylist(*m_progress_box)));
-      m_progress_width_executor->connect_update_signal(
-        std::bind_front(&UpdateBox::on_progress_width_update, this));
+      m_progress_width_evaluator->connect_evaluated_signal(
+        std::bind_front(&UpdateBox::on_progress_width_evaluated, this));
       QTimer::singleShot(2000, this, [=] {
         if(m_last_activity == Activity::DOWNLOADING) {
           m_time_left_label->show();
@@ -313,9 +280,9 @@ struct UpdateBox : QWidget {
     match(*m_activity_label, ActivityStyle(activity));
   }
 
-  void on_progress_width_update(int width) {
+  void on_progress_width_evaluated(int width) {
     m_progress_box->setFixedWidth(width);
-    if(width == this->width()) {
+    if(m_progress_width_evaluator->is_complete()) {
       m_proxy_progress->set_source(m_download_progress);
     }
   }
