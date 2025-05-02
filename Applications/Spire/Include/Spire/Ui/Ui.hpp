@@ -77,6 +77,7 @@ namespace Spire {
   class PercentBox;
   class PopupBox;
   class PressObserver;
+  class ProgressBar;
   class RegionBox;
   class RegionListItem;
   class ResponsiveLabel;

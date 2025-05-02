@@ -9,6 +9,7 @@
 #include "Spire/Styles/PeriodicEvaluator.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/ProgressBar.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
@@ -60,65 +61,6 @@ auto make_activity_label(std::shared_ptr<ActivityModel> activity) {
   return label;
 }
 
-struct ProgressBox : QWidget {
-  using Fill = StateSelector<void, struct FillTag>;
-  Box* m_fill;
-  std::shared_ptr<ValueModel<int>> m_current;
-  int m_last_current;
-  optional<PeriodicEvaluator<int>> m_fill_width_evaluator;
-  scoped_connection m_connection;
-
-  ProgressBox(std::shared_ptr<ValueModel<int>> current)
-      : m_current(std::move(current)),
-        m_last_current(m_current->get()) {
-    m_fill = new Box();
-    match(*m_fill, Fill());
-    m_fill->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
-    m_fill->setFixedWidth(compute_fill_width());
-    auto box = new Box(m_fill);
-    link(*this, *m_fill);
-    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-    enclose(*this, *box);
-    proxy_style(*this, *box);
-    update_style(*this, [] (auto& style) {
-      style.get(Any()).
-        set(BackgroundColor(QColor(0x321471)));
-      style.get(Any() > Fill()).
-        set(BackgroundColor(QColor(0x8D78EC)));
-    });
-    on_current(m_current->get());
-    m_connection = m_current->connect_update_signal(
-      std::bind_front(&ProgressBox::on_current, this));
-  }
-
-  QSize sizeHint() const {
-    return scale(1, 4);
-  }
-
-  void resizeEvent(QResizeEvent* event) override {
-    m_fill->setFixedWidth(compute_fill_width());
-  }
-
-  int compute_fill_width() const {
-    return (width() * m_current->get()) / 100;
-  }
-
-  void on_current(int current) {
-    if(current == m_last_current) {
-      return;
-    }
-    m_fill_width_evaluator.emplace(make_evaluator(
-      ease(m_fill->width(), compute_fill_width(), milliseconds(400)),
-      find_stylist(*m_fill)));
-    m_fill_width_evaluator->connect_evaluated_signal(
-      std::bind_front(&ProgressBox::on_fill_width_evaluated, this));
-  }
-
-  void on_fill_width_evaluated(int width) {
-    m_fill->setFixedWidth(width);
-  }
-};
-
 auto make_time_left_message(
     std::shared_ptr<ValueModel<time_duration>> time_left) {
   return make_transform_value_model(std::move(time_left),
@@ -162,52 +104,51 @@ auto make_time_left_label(std::shared_ptr<ValueModel<time_duration>> current) {
 }
 
 struct UpdateBox : QWidget {
-  std::shared_ptr<ActivityModel> m_activity;
-  Activity m_last_activity;
-  TextBox* m_activity_label;
-  std::shared_ptr<ValueModel<int>> m_download_progress;
-  std::shared_ptr<ValueModel<int>> m_installation_progress;
-  std::shared_ptr<ProxyValueModel<int>> m_proxy_progress;
-  ProgressBox* m_progress_box;
+  std::shared_ptr<ProgressModel> m_download_progress;
+  std::shared_ptr<ProgressModel> m_installation_progress;
+  std::shared_ptr<ProxyValueModel<ProgressModel::Type>> m_proxy_progress;
+  ProgressBar* m_progress_bar;
   optional<PeriodicEvaluator<int>> m_progress_width_evaluator;
   TextBox* m_time_left_label;
+  std::shared_ptr<ActivityModel> m_activity;
+  optional<Activity> m_last_activity;
+  TextBox* m_activity_label;
   scoped_connection m_download_progress_connection;
-  scoped_connection m_installation_progress_connection;
 
-  UpdateBox(std::shared_ptr<ValueModel<int>> download_progress,
-      std::shared_ptr<ValueModel<int>> installation_progress,
+  UpdateBox(std::shared_ptr<ProgressModel> download_progress,
+      std::shared_ptr<ProgressModel> installation_progress,
       std::shared_ptr<ValueModel<time_duration>> time_left)
-      : m_activity(std::make_shared<LocalValueModel<Activity>>(Activity::NONE)),
-        m_download_progress(std::move(download_progress)),
-        m_installation_progress(std::move(installation_progress)) {
+      : m_download_progress(std::move(download_progress)),
+        m_installation_progress(std::move(installation_progress)),
+        m_proxy_progress(
+          make_proxy_value_model(std::make_shared<LocalProgressModel>(0))),
+        m_activity(
+          std::make_shared<LocalValueModel<Activity>>(Activity::NONE)) {
     auto body = new QWidget();
     auto layout = make_vbox_layout(body);
     layout->addSpacing(scale_height(38));
     m_activity_label = make_activity_label(m_activity);
     layout->addWidget(m_activity_label);
-    m_proxy_progress =
-      make_proxy_value_model(std::make_shared<LocalValueModel<int>>(0));
-    m_progress_box = new ProgressBox(m_proxy_progress);
-    m_progress_box->setSizePolicy(
-      QSizePolicy::Fixed, m_progress_box->sizePolicy().verticalPolicy());
-    m_progress_box->setFixedWidth(scale_width(140));
-    m_progress_box->hide();
-    layout->addWidget(m_progress_box);
+    m_progress_bar = new ProgressBar(m_proxy_progress);
+    m_progress_bar->setSizePolicy(
+      QSizePolicy::Fixed, m_progress_bar->sizePolicy().verticalPolicy());
+    m_progress_bar->setFixedWidth(scale_width(140));
+    m_progress_bar->hide();
+    layout->addWidget(m_progress_bar);
     m_time_left_label = make_time_left_label(std::move(time_left));
     layout->addWidget(m_time_left_label);
     m_time_left_label->hide();
     auto box = new Box(body);
     enclose(*this, *box);
     proxy_style(*this, *box);
+    link(*this, *m_progress_bar);
     update_style(*this, [] (auto& style) {
-      style.get(Any()).set(BackgroundColor(QColor(0x4B23A0)));
+      style.get(Any()).
+        set(BackgroundColor(QColor(0x4B23A0)));
+      style.get(Any() > is_a<ProgressBar>()).
+        set(BackgroundColor(QColor(0x321471)));
     });
     setFixedSize(scale(280, 232));
-    if(m_activity->get() == Activity::NONE) {
-      m_last_activity = Activity::DOWNLOADING;
-    } else {
-      m_last_activity = Activity::NONE;
-    }
     on_download_progress(m_download_progress->get());
     m_download_progress_connection = m_download_progress->connect_update_signal(
       std::bind_front(&UpdateBox::on_download_progress, this));
@@ -244,13 +185,15 @@ struct UpdateBox : QWidget {
     if(activity == m_last_activity) {
       return;
     }
-    unmatch(*m_activity_label, ActivityStyle(m_last_activity));
+    if(m_last_activity) {
+      unmatch(*m_activity_label, ActivityStyle(*m_last_activity));
+    }
     m_last_activity = activity;
     if(activity == Activity::DOWNLOADING) {
-      m_progress_box->show();
+      m_progress_bar->show();
       m_progress_width_evaluator.emplace(make_evaluator(
         ease(scale_width(140), scale_width(280), milliseconds(800)),
-        find_stylist(*m_progress_box)));
+        find_stylist(*m_progress_bar)));
       m_progress_width_evaluator->connect_evaluated_signal(
         std::bind_front(&UpdateBox::on_progress_width_evaluated, this));
       QTimer::singleShot(2000, this, [=] {
@@ -261,14 +204,15 @@ struct UpdateBox : QWidget {
     } else if(activity == Activity::DOWNLOAD_COMPLETE) {
       m_time_left_label->hide();
     } else if(activity == Activity::INSTALLING) {
-      auto installation_progress_box = new ProgressBox(m_installation_progress);
-      installation_progress_box->setSizePolicy(
-        QSizePolicy::Fixed, m_progress_box->sizePolicy().verticalPolicy());
-      installation_progress_box->setFixedWidth(scale_width(280));
+      auto installation_progress_bar = new ProgressBar(m_installation_progress);
+      installation_progress_bar->setSizePolicy(
+        QSizePolicy::Fixed, m_progress_bar->sizePolicy().verticalPolicy());
+      installation_progress_bar->setFixedWidth(scale_width(280));
       auto progress_item =
-        m_progress_box->parentWidget()->layout()->replaceWidget(
-          m_progress_box, installation_progress_box);
-      m_progress_box = installation_progress_box;
+        m_progress_bar->parentWidget()->layout()->replaceWidget(
+          m_progress_bar, installation_progress_bar);
+      m_progress_bar = installation_progress_bar;
+      link(*this, *m_progress_bar);
       delete progress_item->widget();
       delete progress_item;
       QTimer::singleShot(2000, this, [=] {
@@ -281,7 +225,7 @@ struct UpdateBox : QWidget {
   }
 
   void on_progress_width_evaluated(int width) {
-    m_progress_box->setFixedWidth(width);
+    m_progress_bar->setFixedWidth(width);
     if(m_progress_width_evaluator->is_complete()) {
       m_proxy_progress->set_source(m_download_progress);
     }
@@ -293,8 +237,8 @@ int main(int argc, char** argv) {
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Scratch"));
   initialize_resources();
-  auto download_progress = std::make_shared<LocalValueModel<int>>(0);
-  auto installation_progress = std::make_shared<LocalValueModel<int>>(0);
+  auto download_progress = std::make_shared<LocalProgressModel>(0);
+  auto installation_progress = std::make_shared<LocalProgressModel>(0);
   auto time_left =
     std::make_shared<LocalValueModel<time_duration>>(seconds(40));
   auto window = UpdateBox(download_progress, installation_progress, time_left);
