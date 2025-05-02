@@ -40,6 +40,7 @@ namespace Spire {
   class EditableBox;
   class EditableTableView;
   template<typename T> class EmptySelectionModel;
+  class EmptyState;
   class EmptyTableFilter;
   class EnabledObserver;
   template<typename T> class EnumBox;
