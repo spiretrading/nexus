@@ -1,4 +1,6 @@
 #include <QApplication>
+#include <QFormLayout>
+#include <QSpinBox>
 #include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Resources.hpp"
@@ -8,6 +10,7 @@
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/PeriodicEvaluator.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ProgressBar.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -22,11 +25,14 @@ enum class Activity {
   NONE,
   DOWNLOADING,
   DOWNLOAD_COMPLETE,
-  INSTALLING
+  INSTALLING,
+  DOWNLOAD_ERROR,
+  INSTALLATION_ERROR
 };
 
 using ActivityModel = ValueModel<Activity>;
 using ActivityStyle = StateSelector<Activity, struct ActivityStyleTag>;
+using Transitioned = StateSelector<void, struct TransitionedStyleTag>;
 
 auto make_activity_message(std::shared_ptr<ActivityModel> activity) {
   return make_transform_value_model(std::move(activity), [] (auto activity) {
@@ -35,7 +41,7 @@ auto make_activity_message(std::shared_ptr<ActivityModel> activity) {
     } else if(activity == Activity::DOWNLOADING) {
       return QObject::tr("Downloading update...");
     } else if(activity == Activity::DOWNLOAD_COMPLETE) {
-      return QObject::tr("Download complete");
+      return QObject::tr("Download complete.");
     }
     return QObject::tr("Installing update...");
   });
@@ -53,10 +59,29 @@ auto make_activity_label(std::shared_ptr<ActivityModel> activity) {
       set(TextColor(QColor(0xFFFFFF)));
     style.get(ActivityStyle(Activity::DOWNLOADING)).
       set(PaddingLeft(ease(scale_width(76), 0, milliseconds(800))));
-    style.get(ActivityStyle(Activity::DOWNLOAD_COMPLETE)).
-      set(PaddingLeft(0));
-    style.get(ActivityStyle(Activity::INSTALLING)).
-      set(PaddingLeft(0));
+    style.get(Transitioned() || ActivityStyle(Activity::DOWNLOAD_COMPLETE) ||
+      ActivityStyle(Activity::INSTALLING)).set(PaddingLeft(0));
+  });
+  return label;
+}
+
+auto make_error_message(std::shared_ptr<ActivityModel> activity) {
+  return make_transform_value_model(std::move(activity), [] (auto activity) {
+    if(activity == Activity::DOWNLOAD_ERROR) {
+      return QObject::tr("Unable to complete download.");
+    }
+    return QObject::tr("Unable to complete installation.");
+  });
+}
+
+auto make_error_message_label(std::shared_ptr<ActivityModel> activity) {
+  auto label = make_label(make_error_message(activity));
+  label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  update_style(*label, [] (auto& style) {
+    style.get(Any()).
+      set(TextColor(QColor(0xFAEB96))).
+      set(TextAlign(Qt::AlignCenter)).
+      set(PaddingBottom(scale_height(15)));
   });
   return label;
 }
@@ -68,7 +93,7 @@ auto make_time_left_message(
       if(time_left == pos_infin) {
         return QString();
       } else if(time_left.total_seconds() <= 10) {
-        return QObject::tr("A few seconds left");
+        return QObject::tr("A few seconds left.");
       }
       auto hours = time_left.hours();
       auto minutes = time_left.minutes();
@@ -85,7 +110,7 @@ auto make_time_left_message(
         parts << QStringLiteral("%1s").arg(10 * seconds);
       }
       auto duration_text = parts.join("");
-      return QStringLiteral("About %1 left").arg(duration_text);
+      return QStringLiteral("About %1 left.").arg(duration_text);
     });
 }
 
@@ -103,133 +128,334 @@ auto make_time_left_label(std::shared_ptr<ValueModel<time_duration>> current) {
   return label;
 }
 
-struct UpdateBox : QWidget {
-  std::shared_ptr<ProgressModel> m_download_progress;
-  std::shared_ptr<ProgressModel> m_installation_progress;
-  std::shared_ptr<ProxyValueModel<ProgressModel::Type>> m_proxy_progress;
-  ProgressBar* m_progress_bar;
-  optional<PeriodicEvaluator<int>> m_progress_width_evaluator;
-  TextBox* m_time_left_label;
-  std::shared_ptr<ActivityModel> m_activity;
-  optional<Activity> m_last_activity;
-  TextBox* m_activity_label;
-  scoped_connection m_download_progress_connection;
+auto make_action_button(QString label) {
+  auto button = make_label_button(std::move(label));
+  update_style(*button, [] (auto& style) {
+    auto font = QFont("Roboto");
+    font.setWeight(QFont::Bold);
+    font.setPixelSize(scale_width(14));
+    style.get(Any() > Body()).
+      set(BackgroundColor(QColor(0x684BC7))).
+      set(border_color(QColor(0x684BC7))).
+      set(text_style(font, QColor(0xE2E0FF)));
+    style.get(Hover() > Body()).
+      set(BackgroundColor(QColor(0x8D78EC))).
+      set(border_color(QColor(0x8D78EC))).
+      set(TextColor(QColor(0xFFFFFF)));
+    style.get(Press() > Body()).
+      set(BackgroundColor(QColor(0x4B23A0))).
+      set(TextColor(QColor(0xFFFFFF)));
+    style.get(FocusVisible() > Body()).
+      set(border_color(QColor(0x8D78EC)));
+    style.get(Disabled() > Body()).
+      set(BackgroundColor(QColor(0x4B23A0))).
+      set(TextColor(QColor(0x684BC7)));
+  });
+  button->setFixedSize(scale(120, 30));
+  return button;
+}
 
-  UpdateBox(std::shared_ptr<ProgressModel> download_progress,
-      std::shared_ptr<ProgressModel> installation_progress,
-      std::shared_ptr<ValueModel<time_duration>> time_left)
-      : m_download_progress(std::move(download_progress)),
-        m_installation_progress(std::move(installation_progress)),
-        m_proxy_progress(
-          make_proxy_value_model(std::make_shared<LocalProgressModel>(0))),
-        m_activity(
-          std::make_shared<LocalValueModel<Activity>>(Activity::NONE)) {
-    auto body = new QWidget();
-    auto layout = make_vbox_layout(body);
-    layout->addSpacing(scale_height(38));
-    m_activity_label = make_activity_label(m_activity);
-    layout->addWidget(m_activity_label);
-    m_progress_bar = new ProgressBar(m_proxy_progress);
-    m_progress_bar->setSizePolicy(
-      QSizePolicy::Fixed, m_progress_bar->sizePolicy().verticalPolicy());
-    m_progress_bar->setFixedWidth(scale_width(140));
-    m_progress_bar->hide();
-    layout->addWidget(m_progress_bar);
-    m_time_left_label = make_time_left_label(std::move(time_left));
-    layout->addWidget(m_time_left_label);
-    m_time_left_label->hide();
-    auto box = new Box(body);
-    enclose(*this, *box);
-    proxy_style(*this, *box);
-    link(*this, *m_progress_bar);
-    update_style(*this, [] (auto& style) {
-      style.get(Any()).
-        set(BackgroundColor(QColor(0x4B23A0)));
-      style.get(Any() > is_a<ProgressBar>()).
-        set(BackgroundColor(QColor(0x321471)));
-    });
-    setFixedSize(scale(280, 232));
-    on_download_progress(m_download_progress->get());
-    m_download_progress_connection = m_download_progress->connect_update_signal(
-      std::bind_front(&UpdateBox::on_download_progress, this));
-    on_activity(m_activity->get());
-    m_activity->connect_update_signal(
-      std::bind_front(&UpdateBox::on_activity, this));
-  }
+class SignInUpdateBox : public QWidget {
+  public:
 
-  void showEvent(QShowEvent* event) override {
-    QTimer::singleShot(1000, this, [=] {
-      m_activity->set(Activity::DOWNLOADING);
-    });
-  }
+    /** Lists the operations performed during an update. */
+    enum class Operation {
 
-  void on_download_progress(int progress) {
-    if(m_activity->get() != Activity::DOWNLOADING) {
-      return;
-    }
-    if(progress >= 100) {
-      m_activity->set(Activity::DOWNLOAD_COMPLETE);
-      QTimer::singleShot(2000, this, [=] {
-        m_activity->set(Activity::INSTALLING);
+      /** The update is being downloaded. */
+      DOWNLOAD,
+
+      /** The update is being installed. */
+      INSTALL
+    };
+
+    /**
+     * Signals a request to retry an operation.
+     * @param operation The operation to retry.
+     */
+    using RetrySignal = Signal<void (Operation operation)>;
+
+    /** Signals a request to cancel the update. */
+    using CancelSignal = Signal<void ()>;
+
+    SignInUpdateBox(std::shared_ptr<ProgressModel> download_progress,
+        std::shared_ptr<ProgressModel> installation_progress,
+        std::shared_ptr<ValueModel<time_duration>> time_left)
+        : m_download_progress(std::move(download_progress)),
+          m_installation_progress(std::move(installation_progress)),
+          m_proxy_progress(
+            make_proxy_value_model(std::make_shared<LocalProgressModel>(0))),
+          m_time_left(std::move(time_left)),
+          m_activity(
+            std::make_shared<LocalValueModel<Activity>>(Activity::NONE)) {
+      auto body = new QWidget();
+      auto layout = make_vbox_layout(body);
+      auto box = new Box(body);
+      enclose(*this, *box);
+      proxy_style(*this, *box);
+      setFixedSize(scale(280, 232));
+      update_style(*this, [] (auto& style) {
+        style.get(Any()).
+          set(BackgroundColor(QColor(0x4B23A0)));
+        style.get(Any() > is_a<ProgressBar>()).
+          set(BackgroundColor(QColor(0x321471)));
       });
+      layout_activity();
+      m_download_progress_connection =
+        m_download_progress->connect_update_signal(
+          std::bind_front(&SignInUpdateBox::on_download_progress, this));
+      m_installation_progress_connection =
+        m_installation_progress->connect_update_signal(
+          std::bind_front(&SignInUpdateBox::on_installation_progress, this));
+      m_activity->connect_update_signal(
+        std::bind_front(&SignInUpdateBox::on_activity, this));
     }
-  }
 
-  void on_installation_progress(int progress) {
-    if(m_activity->get() != Activity::INSTALLING) {
-      return;
+    connection connect_retry_signal(const RetrySignal::slot_type& slot) const {
+      return m_retry_signal.connect(slot);
     }
-  }
 
-  void on_activity(Activity activity) {
-    if(activity == m_last_activity) {
-      return;
+    connection connect_cancel_signal(
+        const CancelSignal::slot_type& slot) const {
+      return m_cancel_signal.connect(slot);
     }
-    if(m_last_activity) {
-      unmatch(*m_activity_label, ActivityStyle(*m_last_activity));
-    }
-    m_last_activity = activity;
-    if(activity == Activity::DOWNLOADING) {
-      m_progress_bar->show();
-      m_progress_width_evaluator.emplace(make_evaluator(
-        ease(scale_width(140), scale_width(280), milliseconds(800)),
-        find_stylist(*m_progress_bar)));
-      m_progress_width_evaluator->connect_evaluated_signal(
-        std::bind_front(&UpdateBox::on_progress_width_evaluated, this));
-      QTimer::singleShot(2000, this, [=] {
-        if(m_last_activity == Activity::DOWNLOADING) {
-          m_time_left_label->show();
+
+  protected:
+    void showEvent(QShowEvent* event) override {
+      QTimer::singleShot(1000, this, [=] {
+        if(m_activity->get() == Activity::NONE) {
+          m_activity->set(Activity::DOWNLOADING);
         }
       });
-    } else if(activity == Activity::DOWNLOAD_COMPLETE) {
-      m_time_left_label->hide();
-    } else if(activity == Activity::INSTALLING) {
-      auto installation_progress_bar = new ProgressBar(m_installation_progress);
-      installation_progress_bar->setSizePolicy(
+    }
+
+  private:
+    mutable RetrySignal m_retry_signal;
+    mutable CancelSignal m_cancel_signal;
+    std::shared_ptr<ProgressModel> m_download_progress;
+    std::shared_ptr<ProgressModel> m_installation_progress;
+    std::shared_ptr<ProxyValueModel<ProgressModel::Type>> m_proxy_progress;
+    std::shared_ptr<ValueModel<time_duration>> m_time_left;
+    ProgressBar* m_progress_bar;
+    optional<PeriodicEvaluator<int>> m_progress_width_evaluator;
+    TextBox* m_time_left_label;
+    std::shared_ptr<ActivityModel> m_activity;
+    optional<Activity> m_last_activity;
+    TextBox* m_activity_label;
+    scoped_connection m_download_progress_connection;
+    scoped_connection m_installation_progress_connection;
+
+    QWidget& get_body() {
+      return *static_cast<Box*>(layout()->itemAt(0)->widget())->get_body();
+    }
+
+    void clear_layout() {
+      auto layout = static_cast<QBoxLayout*>(get_body().layout());
+      clear(*layout);
+      m_progress_bar = nullptr;
+      m_time_left_label = nullptr;
+      m_activity_label = nullptr;
+    }
+
+    void layout_activity() {
+      auto layout = static_cast<QBoxLayout*>(get_body().layout());
+      layout->addSpacing(scale_height(38));
+      m_activity_label = make_activity_label(m_activity);
+      layout->addWidget(m_activity_label);
+      m_progress_bar = new ProgressBar(m_proxy_progress);
+      m_progress_bar->setSizePolicy(
         QSizePolicy::Fixed, m_progress_bar->sizePolicy().verticalPolicy());
-      installation_progress_bar->setFixedWidth(scale_width(280));
-      auto progress_item =
-        m_progress_bar->parentWidget()->layout()->replaceWidget(
-          m_progress_bar, installation_progress_bar);
-      m_progress_bar = installation_progress_bar;
+      m_progress_bar->setFixedWidth(scale_width(140));
+      m_progress_bar->hide();
+      layout->addWidget(m_progress_bar);
       link(*this, *m_progress_bar);
-      delete progress_item->widget();
-      delete progress_item;
-      QTimer::singleShot(2000, this, [=] {
-        if(m_last_activity == Activity::INSTALLING) {
-          m_time_left_label->show();
-        }
-      });
+      m_time_left_label = make_time_left_label(m_time_left);
+      m_time_left_label->hide();
+      layout->addWidget(m_time_left_label);
+      layout->addStretch(1);
+      on_download_progress(m_download_progress->get());
+      on_installation_progress(m_installation_progress->get());
+      on_activity(m_activity->get());
     }
-    match(*m_activity_label, ActivityStyle(activity));
-  }
 
-  void on_progress_width_evaluated(int width) {
-    m_progress_bar->setFixedWidth(width);
-    if(m_progress_width_evaluator->is_complete()) {
-      m_proxy_progress->set_source(m_download_progress);
+    void layout_error() {
+      auto layout = static_cast<QBoxLayout*>(get_body().layout());
+      layout->addSpacing(scale_height(20));
+      layout->addWidget(make_error_message_label(m_activity));
+      layout->addSpacing(scale_height(105));
+      auto button_layout = make_hbox_layout();
+      auto cancel_button = make_action_button(tr("Cancel"));
+      cancel_button->connect_click_signal(
+        std::bind_front( &SignInUpdateBox::on_cancel, this));
+      button_layout->addWidget(cancel_button);
+      button_layout->addStretch(1);
+      auto retry_button = make_action_button(tr("Retry"));
+      retry_button->connect_click_signal(
+        std::bind_front( &SignInUpdateBox::on_retry, this));
+      button_layout->addWidget(retry_button);
+      layout->addLayout(button_layout);
     }
-  }
+
+    void on_download_progress(int progress) {
+      if(m_activity->get() == Activity::DOWNLOAD_ERROR) {
+        if(progress != -1) {
+          m_activity->set(Activity::DOWNLOADING);
+        }
+      } else if(m_activity->get() == Activity::DOWNLOADING) {
+        if(progress == -1) {
+          m_activity->set(Activity::DOWNLOAD_ERROR);
+        } else if(progress >= 100) {
+          m_activity->set(Activity::DOWNLOAD_COMPLETE);
+          QTimer::singleShot(2000, this, [=] {
+            m_activity->set(Activity::INSTALLING);
+          });
+        }
+      }
+    }
+
+    void on_installation_progress(int progress) {
+      if(m_activity->get() == Activity::INSTALLATION_ERROR) {
+        if(progress != -1) {
+          m_activity->set(Activity::INSTALLING);
+        }
+      } else if(m_activity->get() == Activity::INSTALLING) {
+        if(progress == -1) {
+          m_activity->set(Activity::INSTALLATION_ERROR);
+        }
+      }
+    }
+
+    void on_activity(Activity activity) {
+      if(activity == m_last_activity) {
+        return;
+      }
+      if(m_last_activity && m_activity_label) {
+        unmatch(*m_activity_label, ActivityStyle(*m_last_activity));
+      }
+      if(activity == Activity::DOWNLOADING) {
+        if(m_last_activity == Activity::DOWNLOAD_ERROR) {
+          m_last_activity = activity;
+          clear_layout();
+          layout_activity();
+          match(*m_activity_label, Transitioned());
+        }
+        m_progress_bar->show();
+        if(!is_match(*m_activity_label, Transitioned())) {
+          m_progress_width_evaluator.emplace(make_evaluator(
+            ease(scale_width(140), scale_width(280), milliseconds(800)),
+            find_stylist(*m_progress_bar)));
+          m_progress_width_evaluator->connect_evaluated_signal(std::bind_front(
+            &SignInUpdateBox::on_progress_width_evaluated, this));
+        } else {
+          m_progress_bar->setFixedWidth(scale_width(280));
+        }
+        QTimer::singleShot(2000, this, [=] {
+          if(m_last_activity == Activity::DOWNLOADING) {
+            m_time_left_label->show();
+          }
+        });
+      } else if(activity == Activity::DOWNLOAD_ERROR ||
+          activity == Activity::INSTALLATION_ERROR) {
+        clear_layout();
+        layout_error();
+      } else if(activity == Activity::DOWNLOAD_COMPLETE) {
+        m_time_left_label->hide();
+      } else if(activity == Activity::INSTALLING) {
+        if(m_last_activity == Activity::INSTALLATION_ERROR) {
+          m_last_activity = activity;
+          clear_layout();
+          layout_activity();
+          match(*m_activity_label, Transitioned());
+        }
+        auto installation_progress_bar = new ProgressBar(
+          m_installation_progress);
+        installation_progress_bar->setSizePolicy(
+          QSizePolicy::Fixed, m_progress_bar->sizePolicy().verticalPolicy());
+        installation_progress_bar->setFixedWidth(scale_width(280));
+        auto progress_item =
+          m_progress_bar->parentWidget()->layout()->replaceWidget(
+            m_progress_bar, installation_progress_bar);
+        m_progress_bar = installation_progress_bar;
+        link(*this, *m_progress_bar);
+        delete progress_item->widget();
+        delete progress_item;
+        QTimer::singleShot(2000, this, [=] {
+          if(m_last_activity == Activity::INSTALLING) {
+            m_time_left_label->show();
+          }
+        });
+      }
+      if(m_activity_label) {
+        match(*m_activity_label, ActivityStyle(activity));
+      }
+      m_last_activity = activity;
+    }
+
+    void on_progress_width_evaluated(int width) {
+      m_progress_bar->setFixedWidth(width);
+      if(m_progress_width_evaluator->is_complete()) {
+        m_proxy_progress->set_source(m_download_progress);
+      }
+    }
+
+    void on_cancel() {
+      m_cancel_signal();
+    }
+
+    void on_retry() {
+      if(m_activity->get() == Activity::DOWNLOAD_ERROR) {
+        m_retry_signal(Operation::DOWNLOAD);
+      } else {
+        m_retry_signal(Operation::INSTALL);
+      }
+    }
+};
+
+class Controller : public QWidget {
+  public:
+    explicit Controller(std::shared_ptr<ProgressModel> download_progress,
+        std::shared_ptr<ProgressModel> installation_progress,
+        std::shared_ptr<ValueModel<time_duration>> time_left,
+        QWidget* parent = nullptr)
+        : QWidget(parent),
+          m_download_progress(std::move(download_progress)),
+          m_installation_progress(std::move(installation_progress)),
+          m_time_left(std::move(time_left)) {
+      auto download_spin_box = new QSpinBox();
+      download_spin_box->setRange(-1, 100);
+      auto install_spin_box = new QSpinBox();
+      install_spin_box->setRange(-1, 100);
+      auto  seconds_remaining_spin_box = new QSpinBox();
+      seconds_remaining_spin_box->setRange(0, INT_MAX);
+      auto layout = new QFormLayout();
+      layout->addRow("Download progress:", download_spin_box);
+      layout->addRow("Installation progress:", install_spin_box);
+      layout->addRow("Seconds remaining:", seconds_remaining_spin_box);
+      setLayout(layout);
+      connect(download_spin_box, QOverload<int>::of(&QSpinBox::valueChanged),
+        this, &Controller::on_download_progress);
+      connect(install_spin_box, QOverload<int>::of(&QSpinBox::valueChanged),
+        this, &Controller::on_installation_progress);
+      connect(seconds_remaining_spin_box,
+        QOverload<int>::of(&QSpinBox::valueChanged), this,
+        &Controller::on_seconds_remaining);
+    }
+
+  private:
+    std::shared_ptr<ProgressModel> m_download_progress;
+    std::shared_ptr<ProgressModel> m_installation_progress;
+    std::shared_ptr<ValueModel<time_duration>> m_time_left;
+
+    void on_download_progress(int value) {
+      m_download_progress->set(value);
+    }
+
+    void on_installation_progress(int value) {
+      m_installation_progress->set(value);
+    }
+
+    void on_seconds_remaining(int value) {
+      m_time_left->set(seconds(value));
+    }
 };
 
 int main(int argc, char** argv) {
@@ -239,47 +465,12 @@ int main(int argc, char** argv) {
   initialize_resources();
   auto download_progress = std::make_shared<LocalProgressModel>(0);
   auto installation_progress = std::make_shared<LocalProgressModel>(0);
-  auto time_left =
-    std::make_shared<LocalValueModel<time_duration>>(seconds(40));
-  auto window = UpdateBox(download_progress, installation_progress, time_left);
+  auto time_left = std::make_shared<LocalValueModel<time_duration>>(seconds(0));
+  auto controller =
+    Controller(download_progress, installation_progress, time_left);
+  auto window =
+    SignInUpdateBox(download_progress, installation_progress, time_left);
+  controller.show();
   window.show();
-  auto time = 0;
-  time += 1000;
-  QTimer::singleShot(time, [&] {
-    download_progress->set(20);
-    time_left->set(seconds(8));
-  });
-  time += 2000;
-  QTimer::singleShot(time, [&] {
-    download_progress->set(40);
-    time_left->set(seconds(6));
-  });
-  time += 2000;
-  QTimer::singleShot(time, [&] {
-    download_progress->set(60);
-    time_left->set(seconds(4));
-  });
-  time += 2000;
-  QTimer::singleShot(time, [&] {
-    download_progress->set(70);
-    time_left->set(seconds(2));
-  });
-  time += 2000;
-  QTimer::singleShot(time, [&] {
-    download_progress->set(100);
-  });
-  time += 2000;
-  QTimer::singleShot(time, [&] {
-    installation_progress->set(20);
-    time_left->set(seconds(2));
-  });
-  time += 2000;
-  QTimer::singleShot(time, [&] {
-    installation_progress->set(100);
-  });
-  time += 500;
-  QTimer::singleShot(time, [&] {
-    window.close();
-  });
   application.exec();
 }
