@@ -1,15 +1,21 @@
 #include "Spire/SignInUiTester/SignInUiTester.hpp"
+#include <QFormLayout>
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include "Spire/SignIn/SignInWindow.hpp"
 #include "Version.hpp"
 
+using namespace boost;
+using namespace boost::posix_time;
 using namespace Spire;
 
 SignInUiTester::SignInUiTester()
     : m_is_closing(false),
       m_track(std::make_shared<LocalTrackModel>(Track::CURRENT)),
+      m_download_progress(std::make_shared<LocalProgressModel>(0)),
+      m_installation_progress(std::make_shared<LocalProgressModel>(0)),
+      m_time_left(std::make_shared<LocalValueModel<time_duration>>(seconds(0))),
       m_window(nullptr) {
   setWindowFlags(Qt::Window | Qt::MSWindowsFixedSizeDialogHint);
   auto layout = new QVBoxLayout(this);
@@ -31,6 +37,26 @@ SignInUiTester::SignInUiTester()
   m_local_environment_check_box = new QCheckBox(tr("Local Environment"));
   server_layout->addWidget(m_local_environment_check_box);
   layout->addWidget(server_group);
+  auto update_group = new QGroupBox(tr("Update"));
+  auto update_layout = new QFormLayout();
+  m_download_spin_box = new QSpinBox();
+  m_download_spin_box->setRange(-1, 100);
+  connect(m_download_spin_box, QOverload<int>::of(&QSpinBox::valueChanged),
+    this, &SignInUiTester::on_download_progress);
+  update_layout->addRow("Download progress:", m_download_spin_box);
+  m_install_spin_box = new QSpinBox();
+  m_install_spin_box->setRange(-1, 100);
+  connect(m_install_spin_box, QOverload<int>::of(&QSpinBox::valueChanged),
+    this, &SignInUiTester::on_installation_progress);
+  update_layout->addRow("Installation progress:", m_install_spin_box);
+  m_seconds_remaining_spin_box = new QSpinBox();
+  m_seconds_remaining_spin_box->setRange(0, INT_MAX);
+  connect(m_seconds_remaining_spin_box,
+    QOverload<int>::of(&QSpinBox::valueChanged), this,
+    &SignInUiTester::on_seconds_remaining);
+  update_layout->addRow("Seconds remaining:", m_seconds_remaining_spin_box);
+  update_group->setLayout(update_layout);
+  layout->addWidget(update_group);
   auto state_group = new QGroupBox(tr("State"));
   auto state_layout = new QHBoxLayout(state_group);
   m_accept_button = new QPushButton(tr("Accept"));
@@ -72,6 +98,18 @@ bool SignInUiTester::eventFilter(QObject* watched, QEvent* event) {
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void SignInUiTester::on_download_progress(int value) {
+  m_download_progress->set(value);
+}
+
+void SignInUiTester::on_installation_progress(int value) {
+  m_installation_progress->set(value);
+}
+
+void SignInUiTester::on_seconds_remaining(int value) {
+  m_time_left->set(seconds(value));
 }
 
 void SignInUiTester::on_accept() {
