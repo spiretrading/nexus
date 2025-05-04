@@ -273,8 +273,10 @@ void SignInController::open() {
   tracks.push_back(Track::CLASSIC);
   tracks.push_back(Track::PREVIEW);
   auto track = std::make_shared<LocalTrackModel>(load_track());
+  /** TODO */
   m_sign_in_window = new SignInWindow(
-    m_version, std::move(tracks), std::move(track), std::move(servers));
+    m_version, std::move(tracks), std::move(track), std::move(servers),
+    nullptr, nullptr, nullptr);
   m_sign_in_window->connect_sign_in_signal(
     std::bind_front(&SignInController::on_sign_in, this));
   m_sign_in_window->connect_cancel_signal(

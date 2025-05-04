@@ -20,6 +20,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  static const auto TOP_LAYOUT_ITEM = 3;
+
   auto BUTTON_SIZE() {
     static auto size = scale(32, 26);
     return size;
@@ -88,9 +90,18 @@ namespace {
 
 SignInWindow::SignInWindow(std::string version, std::vector<Track> tracks,
     std::shared_ptr<TrackModel> track, std::vector<std::string> servers,
+    std::shared_ptr<ProgressModel> download_progress,
+    std::shared_ptr<ProgressModel> installation_progress,
+    std::shared_ptr<ValueModel<boost::posix_time::time_duration>> time_left,
     QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint),
+      m_version(std::move(version)),
       m_servers(std::move(servers)),
+      m_download_progress(std::move(download_progress)),
+      m_installation_progress(std::move(installation_progress)),
+      m_time_left(std::move(time_left)),
+      m_username(std::make_shared<LocalTextModel>()),
+      m_password(std::make_shared<LocalTextModel>()),
       m_server_box(nullptr),
       m_is_dragging(false),
       m_last_focus(nullptr) {
@@ -113,130 +124,42 @@ SignInWindow::SignInWindow(std::string version, std::vector<Track> tracks,
   layout->addSpacing(scale_height(22));
   m_track_button = new TrackMenuButton(std::move(tracks), std::move(track));
   m_track_button->setFixedWidth(scale_width(280));
-  layout->addWidget(m_track_button, 0, Qt::AlignCenter);
-  layout->addSpacing(scale_height(10));
-  m_status_label = make_label("");
-  update_style(*m_status_label, [&] (auto& style) {
-    style = STATUS_LABEL_STYLE(style);
-  });
-  layout->addWidget(m_status_label, 0, Qt::AlignCenter);
-  layout->addSpacing(scale_height(20));
-  m_username_text_box = new TextBox();
-  m_username_text_box->setFixedSize(scale(280, 30));
-  m_username_text_box->get_current()->connect_update_signal(
-    [=] (const auto& current) {
-      m_sign_in_button->setDisabled(current.isEmpty());
-    });
-  m_username_text_box->set_placeholder(tr("Username"));
-  update_style(*m_username_text_box, [&] (auto& style) {
-    style = INPUT_STYLE(style);
-  });
-  m_username_key_observer.emplace(*m_username_text_box);
-  m_username_key_observer->connect_key_press_signal(
-    std::bind_front(&SignInWindow::on_key_press, this));
-  layout->addWidget(m_username_text_box, 0, Qt::AlignCenter);
-  layout->addSpacing(scale_height(15));
-  auto password_layout = make_hbox_layout();
-  password_layout->setContentsMargins(scale_width(52), 0, scale_width(52), 0);
-  m_password_text_box = new TextBox();
-  m_password_text_box->set_placeholder(tr("Password"));
-  update_style(*m_password_text_box, [&] (auto& style) {
-    style = PASSWORD_INPUT_STYLE(style);
-  });
-  m_password_text_box->get_current()->connect_update_signal(
-    [=] (const auto& current) {
-      m_chroma_hash_widget->set_text(current);
-    });
-  m_password_key_observer.emplace(*m_password_text_box);
-  m_password_key_observer->connect_key_press_signal(
-    std::bind_front(&SignInWindow::on_key_press, this));
-  password_layout->addWidget(m_password_text_box);
-  m_chroma_hash_widget = new ChromaHashWidget();
-  m_chroma_hash_widget->setFixedWidth(scale_width(34));
-  m_chroma_hash_widget->setContentsMargins(
-    {scale_width(2), scale_height(2), scale_width(2), scale_height(2)});
-  password_layout->addWidget(m_chroma_hash_widget);
-  layout->addLayout(password_layout);
-  if(m_servers.size() > 1) {
-    layout->addSpacing(scale_height(15));
-    auto server_list = std::make_shared<ArrayListModel<std::string>>(m_servers);
-    m_server_box = new DropDownBox(server_list);
-    m_server_box->setFixedSize(scale(280, 30));
-    m_server_box->get_current()->set(0);
-    update_style(*m_server_box, [&] (auto& style) {
-      style.get((Hover() || FocusIn()) > is_a<TextBox>()).
-        set(border_color(QColor(0xFFA95E)));
-      style.get(Any() > is_a<DropDownList>() >
-          is_a<ListView>() > is_a<ListItem>() > Body()).set(
-        FontSize(scale_height(14)));
-      style.get(Any() > is_a<DropDownList>() >
-          is_a<ListView>() > is_a<ListItem>()).set(
-        vertical_padding(scale_height(7)));
-      style.get(Any() > is_a<TextBox>()).set(
-        FontSize(scale_height(14)));
-    });
-    layout->addWidget(m_server_box, 0, Qt::AlignCenter);
-    setFixedSize(scale(384, 391));
-  } else {
-    setFixedSize(scale(384, 346));
-  }
-  layout->addSpacing(scale_height(30));
-  auto button_layout = make_hbox_layout();
-  button_layout->setContentsMargins(scale_width(52), 0, scale_width(52), 0);
-  auto build_label =
-    make_label(QString(tr("Build ")) + QString::fromStdString(version));
-  update_style(*build_label, [&] (auto& style) {
-    style = BUILD_LABEL_STYLE(style);
-  });
-  button_layout->addWidget(build_label);
-  button_layout->addStretch(103);
-  m_sign_in_button = make_label_button(tr("Sign In"));
-  m_sign_in_button->setFixedSize(scale(120, 30));
-  set_style(*m_sign_in_button, SIGN_IN_BUTTON_STYLE());
-  m_sign_in_button->connect_click_signal(
-    std::bind_front(&SignInWindow::try_sign_in, this));
-  m_sign_in_button->setDisabled(true);
-  button_layout->addWidget(m_sign_in_button);
-  layout->addLayout(button_layout);
-  layout->addSpacing(scale_height(48));
-  setTabOrder(m_username_text_box, m_password_text_box);
-  if(m_server_box) {
-    setTabOrder(m_password_text_box, m_server_box);
-    setTabOrder(m_server_box, m_sign_in_button);
-  } else {
-    setTabOrder(m_password_text_box, m_sign_in_button);
-  }
-  set_state(State::NONE);
+  layout->addWidget(m_track_button, 0, Qt::AlignHCenter);
+  layout_sign_in();
+}
+
+SignInWindow::State SignInWindow::get_state() const {
+  return m_state;
 }
 
 void SignInWindow::set_state(State state) {
-  switch(state) {
-    case State::NONE: {
-      reset_all();
-      break;
+  if(state == m_state) {
+    return;
+  }
+  if(state == State::NONE) {
+    reset_all();
+  } else if(state == State::SIGNING_IN) {
+    m_username_text_box->setEnabled(false);
+    m_password_text_box->setEnabled(false);
+    if(m_server_box) {
+      m_server_box->setEnabled(false);
     }
-    case State::SIGNING_IN: {
-      m_username_text_box->setEnabled(false);
-      m_password_text_box->setEnabled(false);
-      if(m_server_box) {
-        m_server_box->setEnabled(false);
-      }
-      static_cast<TextBox&>(
-        m_sign_in_button->get_body()).get_current()->set(tr("Cancel"));
-      m_status_label->get_current()->set("");
-      m_track_button->set_state(TrackMenuButton::State::LOADING);
-      break;
-    }
-    case State::CANCELLING: {
-      reset_all();
-      state = State::NONE;
-      break;
-    }
-    case State::ERROR: {
-      m_status_label->get_current()->set(tr("Sign in failed."));
-      reset_visuals();
-      break;
-    }
+    static_cast<TextBox&>(
+      m_sign_in_button->get_body()).get_current()->set(tr("Cancel"));
+    m_status_label->get_current()->set("");
+    m_track_button->set_state(TrackMenuButton::State::LOADING);
+  } else if(state == State::UPDATING) {
+    QTimer::singleShot(0, this, [=] {
+      m_track_button->set_state(TrackMenuButton::State::READ_ONLY);
+      clear_sign_in();
+      layout_update();
+    });
+  } else if(state == State::CANCELLING) {
+    reset_all();
+    state = State::NONE;
+  } else if(state == State::ERROR) {
+    m_status_label->get_current()->set(tr("Sign in failed."));
+    reset_visuals();
   }
   m_state = state;
 }
@@ -297,6 +220,138 @@ void SignInWindow::mouseReleaseEvent(QMouseEvent* event) {
   m_is_dragging = false;
 }
 
+void SignInWindow::layout_sign_in() {
+  auto layout = make_vbox_layout();
+  layout->addSpacing(scale_height(10));
+  m_status_label = make_label("");
+  update_style(*m_status_label, [&] (auto& style) {
+    style = STATUS_LABEL_STYLE(style);
+  });
+  layout->addWidget(m_status_label, 0, Qt::AlignCenter);
+  layout->addSpacing(scale_height(20));
+  m_username_text_box = new TextBox(m_username);
+  m_username_text_box->setFixedSize(scale(280, 30));
+  m_username_text_box->get_current()->connect_update_signal(
+    [=] (const auto& current) {
+      m_sign_in_button->setDisabled(current.isEmpty());
+    });
+  m_username_text_box->set_placeholder(tr("Username"));
+  update_style(*m_username_text_box, [&] (auto& style) {
+    style = INPUT_STYLE(style);
+  });
+  m_username_key_observer.emplace(*m_username_text_box);
+  m_username_key_observer->connect_key_press_signal(
+    std::bind_front(&SignInWindow::on_key_press, this));
+  layout->addWidget(m_username_text_box, 0, Qt::AlignCenter);
+  layout->addSpacing(scale_height(15));
+  auto password_layout = make_hbox_layout();
+  password_layout->setContentsMargins(scale_width(52), 0, scale_width(52), 0);
+  m_password_text_box = new TextBox(m_password);
+  m_password_text_box->set_placeholder(tr("Password"));
+  update_style(*m_password_text_box, [&] (auto& style) {
+    style = PASSWORD_INPUT_STYLE(style);
+  });
+  m_password_text_box->get_current()->connect_update_signal(
+    [=] (const auto& current) {
+      m_chroma_hash_widget->set_text(current);
+    });
+  m_password_key_observer.emplace(*m_password_text_box);
+  m_password_key_observer->connect_key_press_signal(
+    std::bind_front(&SignInWindow::on_key_press, this));
+  password_layout->addWidget(m_password_text_box);
+  m_chroma_hash_widget = new ChromaHashWidget();
+  m_chroma_hash_widget->setFixedWidth(scale_width(34));
+  m_chroma_hash_widget->setContentsMargins(
+    {scale_width(2), scale_height(2), scale_width(2), scale_height(2)});
+  password_layout->addWidget(m_chroma_hash_widget);
+  layout->addLayout(password_layout);
+  if(m_servers.size() > 1) {
+    layout->addSpacing(scale_height(15));
+    auto server_list = std::make_shared<ArrayListModel<std::string>>(m_servers);
+    m_server_box = new DropDownBox(server_list);
+    m_server_box->setFixedSize(scale(280, 30));
+    m_server_box->get_current()->set(0);
+    update_style(*m_server_box, [&] (auto& style) {
+      style.get((Hover() || FocusIn()) > is_a<TextBox>()).
+        set(border_color(QColor(0xFFA95E)));
+      style.get(Any() > is_a<DropDownList>() >
+          is_a<ListView>() > is_a<ListItem>() > Body()).set(
+        FontSize(scale_height(14)));
+      style.get(Any() > is_a<DropDownList>() >
+          is_a<ListView>() > is_a<ListItem>()).set(
+        vertical_padding(scale_height(7)));
+      style.get(Any() > is_a<TextBox>()).set(
+        FontSize(scale_height(14)));
+    });
+    layout->addWidget(m_server_box, 0, Qt::AlignCenter);
+    setFixedSize(scale(384, 391));
+  } else {
+    setFixedSize(scale(384, 346));
+  }
+  layout->addSpacing(scale_height(30));
+  auto button_layout = make_hbox_layout();
+  button_layout->setContentsMargins(scale_width(52), 0, scale_width(52), 0);
+  auto build_label =
+    make_label(QString(tr("Build ")) + QString::fromStdString(m_version));
+  update_style(*build_label, [&] (auto& style) {
+    style = BUILD_LABEL_STYLE(style);
+  });
+  button_layout->addWidget(build_label);
+  button_layout->addStretch(103);
+  m_sign_in_button = make_label_button(tr("Sign In"));
+  m_sign_in_button->setFixedSize(scale(120, 30));
+  set_style(*m_sign_in_button, SIGN_IN_BUTTON_STYLE());
+  m_sign_in_button->connect_click_signal(
+    std::bind_front(&SignInWindow::try_sign_in, this));
+  m_sign_in_button->setDisabled(m_username->get().isEmpty());
+  button_layout->addWidget(m_sign_in_button);
+  layout->addLayout(button_layout);
+  layout->addSpacing(scale_height(48));
+  setTabOrder(m_username_text_box, m_password_text_box);
+  if(m_server_box) {
+    setTabOrder(m_password_text_box, m_server_box);
+    setTabOrder(m_server_box, m_sign_in_button);
+  } else {
+    setTabOrder(m_password_text_box, m_sign_in_button);
+  }
+  static_cast<QVBoxLayout*>(this->layout())->addLayout(layout);
+  set_state(State::NONE);
+}
+
+void SignInWindow::clear_sign_in() {
+  auto layout = static_cast<QVBoxLayout*>(this->layout());
+  auto sign_in_layout = layout->takeAt(TOP_LAYOUT_ITEM);
+  clear(*sign_in_layout->layout());
+  delete sign_in_layout;
+  m_status_label = nullptr;
+  m_username_text_box = nullptr;
+  m_username_key_observer = none;
+  m_password_text_box = nullptr;
+  m_password_key_observer = none;
+  m_chroma_hash_widget = nullptr;
+  m_server_box = nullptr;
+  m_last_focus = nullptr;
+}
+
+void SignInWindow::layout_update() {
+  m_update_box = new SignInUpdateBox(
+    m_download_progress, m_installation_progress, m_time_left);
+  m_update_box->connect_cancel_signal(
+    std::bind_front(&SignInWindow::on_cancel_update, this));
+  auto layout = static_cast<QVBoxLayout*>(this->layout());
+  layout->addWidget(m_update_box, 0, Qt::AlignHCenter);
+  layout->addStretch(1);
+}
+
+void SignInWindow::clear_update() {
+  auto layout = static_cast<QVBoxLayout*>(this->layout());
+  auto update_item = layout->takeAt(TOP_LAYOUT_ITEM);
+  delete update_item->widget();
+  delete update_item;
+  m_update_box = nullptr;
+  delete layout->takeAt(TOP_LAYOUT_ITEM);
+}
+
 void SignInWindow::reset_all() {
   m_status_label->get_current()->set("");
   reset_visuals();
@@ -339,14 +394,14 @@ void SignInWindow::try_sign_in() {
         }
         return std::string();
       }();
+      set_state(State::SIGNING_IN);
       m_sign_in_signal(m_username_text_box->get_current()->get().toStdString(),
         m_password_text_box->get_current()->get().toStdString(),
         m_track_button->get_current()->get(), server);
-      set_state(State::SIGNING_IN);
     }
   } else {
-    m_cancel_signal();
     set_state(State::CANCELLING);
+    m_cancel_signal();
   }
 }
 
@@ -358,4 +413,15 @@ void SignInWindow::on_key_press(QWidget& target, const QKeyEvent& event) {
       m_sign_in_button->setFocus();
     }
   }
+}
+
+void SignInWindow::on_cancel_update() {
+  QTimer::singleShot(0, this, [=] {
+    clear_update();
+    layout_sign_in();
+    m_username_text_box->get_highlight()->set(
+      Highlight(m_username->get().size()));
+    m_username_text_box->setFocus();
+    set_state(State::NONE);
+  });
 }

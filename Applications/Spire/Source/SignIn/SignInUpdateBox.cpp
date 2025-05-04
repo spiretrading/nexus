@@ -104,7 +104,7 @@ SignInUpdateBox::SignInUpdateBox(
   auto box = new Box(body);
   enclose(*this, *box);
   proxy_style(*this, *box);
-  setFixedSize(scale(280, 232));
+  setFixedSize(scale(280, 227));
   update_style(*this, [] (auto& style) {
     style.get(Any()).
       set(BackgroundColor(QColor(0x4B23A0)));
@@ -205,6 +205,7 @@ void SignInUpdateBox::clear_layout() {
   auto layout = static_cast<QBoxLayout*>(get_body().layout());
   clear(*layout);
   m_progress_bar = nullptr;
+  m_progress_width_evaluator = none;
   m_time_left_label = nullptr;
   m_activity_label = nullptr;
 }
@@ -306,6 +307,11 @@ void SignInUpdateBox::on_activity(Activity activity) {
         m_time_left_label->show();
       }
     });
+    auto last_activity = m_last_activity;
+    on_download_progress(m_download_progress->get());
+    if(last_activity != m_last_activity) {
+      return;
+    }
   } else if(activity == Activity::DOWNLOAD_ERROR ||
       activity == Activity::INSTALLATION_ERROR) {
     clear_layout();
@@ -319,8 +325,7 @@ void SignInUpdateBox::on_activity(Activity activity) {
       layout_activity();
       match(*m_activity_label, Transitioned());
     }
-    auto installation_progress_bar = new ProgressBar(
-      m_installation_progress);
+    auto installation_progress_bar = new ProgressBar(m_installation_progress);
     installation_progress_bar->setSizePolicy(
       QSizePolicy::Fixed, m_progress_bar->sizePolicy().verticalPolicy());
     installation_progress_bar->setFixedWidth(scale_width(280));
@@ -336,6 +341,11 @@ void SignInUpdateBox::on_activity(Activity activity) {
         m_time_left_label->show();
       }
     });
+    auto last_activity = m_last_activity;
+    on_installation_progress(m_installation_progress->get());
+    if(last_activity != m_last_activity) {
+      return;
+    }
   }
   if(m_activity_label) {
     match(*m_activity_label, ActivityStyle(activity));

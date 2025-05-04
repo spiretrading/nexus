@@ -110,6 +110,10 @@ void SignInUiTester::on_installation_progress(int value) {
 
 void SignInUiTester::on_seconds_remaining(int value) {
   m_time_left->set(seconds(value));
+  if(m_time_left->get() > seconds(0) &&
+      m_window->get_state() == SignInWindow::State::SIGNING_IN) {
+    m_window->set_state(SignInWindow::State::UPDATING);
+  }
 }
 
 void SignInUiTester::on_accept() {
@@ -158,7 +162,8 @@ void SignInUiTester::on_rebuild() {
   if(m_local_environment_check_box->isChecked()) {
     servers.push_back("Local Environment");
   }
-  m_window = new SignInWindow(SPIRE_VERSION, tracks, m_track, servers);
+  m_window = new SignInWindow(SPIRE_VERSION, tracks, m_track, servers,
+    m_download_progress, m_installation_progress, m_time_left);
   m_window->connect_sign_in_signal(
     std::bind_front(&SignInUiTester::on_sign_in, this));
   m_window->connect_cancel_signal(
@@ -175,6 +180,9 @@ void SignInUiTester::on_sign_in(const std::string& username,
   m_accept_button->setEnabled(true);
   m_reject_button->setEnabled(true);
   m_error_button->setEnabled(true);
+  if(m_time_left->get() > seconds(0)) {
+    m_window->set_state(SignInWindow::State::UPDATING);
+  }
 }
 
 void SignInUiTester::on_cancel() {

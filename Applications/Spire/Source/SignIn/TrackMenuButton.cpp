@@ -207,10 +207,14 @@ void TrackMenuButton::set_state(State state) {
   if(m_state == State::LOADING) {
     m_button->setDisabled(true);
     m_spinner->movie()->start();
-  } else {
+  } else if(m_state == State::READY) {
     if(m_is_multitrack) {
       m_button->setDisabled(false);
     }
+    m_spinner->movie()->stop();
+    m_spinner->movie()->jumpToFrame(0);
+  } else {
+    m_button->setDisabled(true);
     m_spinner->movie()->stop();
     m_spinner->movie()->jumpToFrame(0);
   }
