@@ -150,9 +150,13 @@ void SignInWindow::set_state(State state) {
     m_track_button->set_state(TrackMenuButton::State::LOADING);
   } else if(state == State::UPDATING) {
     QTimer::singleShot(0, this, [=] {
-      m_track_button->set_state(TrackMenuButton::State::READ_ONLY);
-      clear_sign_in();
-      layout_update();
+      QTimer::singleShot(2000, this, [=] {
+        if(m_state == State::UPDATING) {
+          m_track_button->set_state(TrackMenuButton::State::READ_ONLY);
+          clear_sign_in();
+          layout_update();
+        }
+      });
     });
   } else if(state == State::CANCELLING) {
     reset_all();

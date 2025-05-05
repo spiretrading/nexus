@@ -10,6 +10,7 @@ namespace Spire {
   class SignInUpdateBox;
   enum class Track;
   class TrackMenuButton;
+  class UpdateDownloadChannelFactory;
 }
 
 #endif

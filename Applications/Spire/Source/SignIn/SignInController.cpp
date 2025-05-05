@@ -1,6 +1,5 @@
 #include "Spire/SignIn/SignInController.hpp"
 #include <filesystem>
-#include <Beam/IO/WrapperChannel.hpp>
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/WebServices/HttpClient.hpp>
 #include <Beam/WebServices/TcpChannelFactory.hpp>
@@ -12,10 +11,9 @@
 #include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Spire/SignIn/SignInException.hpp"
 #include "Spire/SignIn/SignInWindow.hpp"
+#include "Spire/SignIn/UpdateDownloadChannelFactory.hpp"
 #include "Spire/Spire/QtValueModel.hpp"
 #include "Spire/Spire/Utility.hpp"
-
-#include <Beam/Threading/LiveTimer.hpp>
 
 using namespace Beam;
 using namespace Beam::IO;
@@ -23,99 +21,12 @@ using namespace Beam::Network;
 using namespace Beam::ServiceLocator;
 using namespace Beam::WebServices;
 using namespace boost;
-using namespace boost::chrono;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  struct ProgressReader {
-    std::shared_ptr<ProgressModel> m_download_progress;
-    std::shared_ptr<ValueModel<time_duration>> m_time_left;
-    std::size_t m_download_size;
-    ReaderBox* m_reader;
-    std::size_t m_total_read_bytes;
-    optional<steady_clock::time_point> m_start_time;
-    EventHandler m_event_handler;
-    std::size_t m_last_block;
-
-    explicit ProgressReader(std::shared_ptr<ProgressModel> download_progress,
-      std::shared_ptr<ValueModel<time_duration>> time_left,
-      std::size_t download_size, ReaderBox& reader)
-      : m_download_progress(std::move(download_progress)),
-        m_time_left(std::move(time_left)),
-        m_download_size(download_size),
-        m_reader(&reader),
-        m_total_read_bytes(0),
-        m_last_block(0) {}
-
-    bool IsDataAvailable() const {
-      return m_reader->IsDataAvailable();
-    }
-
-    template<typename R>
-    std::size_t Read(Out<R> destination) {
-      return update_download_progress(m_reader->Read(Store(destination)));
-    }
-
-    std::size_t Read(char* destination, std::size_t size) {
-      return update_download_progress(m_reader->Read(destination, size));
-    }
-
-    template<typename R>
-    std::size_t Read(Out<R> destination, std::size_t size) {
-      return update_download_progress(m_reader->Read(Store(destination), size));
-    }
-
-    std::size_t update_download_progress(std::size_t size) {
-      const auto BLOCK_SIZE = 1024 * 1024;
-      m_total_read_bytes += size;
-      if(!m_start_time) {
-        m_start_time = steady_clock::now();
-      }
-      if(m_total_read_bytes - m_last_block > BLOCK_SIZE) {
-        auto progress = std::min<std::size_t>(99, std::max<std::size_t>(
-          1, (100 * m_total_read_bytes) / m_download_size));
-        auto elapsed_time = steady_clock::now() - *m_start_time;
-        auto total_time =
-          elapsed_time / (static_cast<double>(progress) / 100.0);
-        auto remaining_time =
-          posix_time::milliseconds(duration_cast<chrono::milliseconds>(
-            total_time - elapsed_time).count());
-        m_time_left->set(remaining_time);
-        m_download_progress->set(progress);
-        m_last_block = m_total_read_bytes;
-        auto blocker = Threading::LiveTimer(posix_time::seconds(1));
-        blocker.Start();
-        blocker.Wait();
-      }
-      return size;
-    }
-  };
-}
-
-namespace Beam {
-  template<>
-  struct ImplementsConcept<ProgressReader, IO::Reader> : std::true_type {};
-}
-
-namespace {
-  std::unique_ptr<ChannelBox> make_progress_channel(
-      const std::shared_ptr<ProgressModel>& download_progress,
-      const std::shared_ptr<ValueModel<time_duration>>& time_left,
-      const Uri& uri) {
-    static const auto DOWNLOAD_SIZE = 52277248;
-    auto tcp_channel = TcpSocketChannelFactory()(uri);
-    auto reader = std::make_unique<ProgressReader>(
-      download_progress, time_left, DOWNLOAD_SIZE, tcp_channel->GetReader());
-    auto progress_channel = std::make_unique<ChannelBox>(
-      std::in_place_type<WrapperChannel<std::unique_ptr<ChannelBox>,
-        std::unique_ptr<ProgressReader>>>, std::move(tcp_channel),
-        std::move(reader));
-    return progress_channel;
-  }
-
   std::size_t index(Track track) {
     return static_cast<std::underlying_type_t<Track>>(track);
   }
@@ -290,25 +201,23 @@ namespace {
     auto request = HttpRequest(get_update_url(
       address, track, build + "/" + get_application_filename(track).string()));
     auto directory_listing = std::string();
-    download_progress->set(0);
     try {
-      auto client =
-        HttpClient<std::unique_ptr<ChannelBox>>(
-          std::bind_front(make_progress_channel, download_progress, time_left));
+      static const auto DOWNLOAD_SIZE = 52277248;
+      auto client = HttpClient<std::unique_ptr<ChannelBox>>(
+        UpdateDownloadChannelFactory(
+          DOWNLOAD_SIZE, download_progress, time_left));
       auto response = client.Send(request);
       if(response.GetStatusCode() != HttpStatusCode::OK) {
         download_progress->set(-1);
         return false;
       }
-
-      // CAN'T UPDATE FROM HERE, HAVE TO UPDATE FROM SAME THREAD.
       download_progress->set(100);
       installation_progress->set(30);
-      time_left->set(posix_time::seconds(3));
+      time_left->set(seconds(3));
       auto executable_path = get_application_path(track);
       try {
-//        std::filesystem::rename(executable_path,
-//          load_temporary_directory() / executable_path.filename());
+        std::filesystem::rename(executable_path,
+          load_temporary_directory() / executable_path.filename());
       } catch(const std::filesystem::filesystem_error& e) {
         if(e.code() != std::errc::no_such_file_or_directory) {
           installation_progress->set(-1);
@@ -316,12 +225,12 @@ namespace {
         }
       }
       {
-//        auto out_file = std::ofstream(executable_path, std::ios::binary);
-//        out_file.write(
-//          response.GetBody().GetData(), response.GetBody().GetSize());
+        auto out_file = std::ofstream(executable_path, std::ios::binary);
+        out_file.write(
+          response.GetBody().GetData(), response.GetBody().GetSize());
       }
       installation_progress->set(100);
-      time_left->set(posix_time::seconds(0));
+      time_left->set(seconds(0));
       return launch_update(address, track, username, password);
     } catch(const std::exception&) {
       if(download_progress->get() != 100) {
@@ -372,8 +281,7 @@ SignInController::SignInController(
     m_service_clients_factory(std::move(service_clients_factory)),
     m_download_progress(std::make_shared<QtValueModel<int>>(0)),
     m_installation_progress(std::make_shared<QtValueModel<int>>(0)),
-    m_time_left(
-      std::make_shared<QtValueModel<time_duration>>(posix_time::seconds(0))),
+    m_time_left(std::make_shared<QtValueModel<time_duration>>(seconds(0))),
     m_sign_in_window(nullptr) {
   EventHandler();
 }
