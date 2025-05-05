@@ -3,7 +3,6 @@
 #include <QGroupBox>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include "Spire/SignIn/SignInWindow.hpp"
 #include "Version.hpp"
 
 using namespace boost;
@@ -166,6 +165,8 @@ void SignInUiTester::on_rebuild() {
     m_download_progress, m_installation_progress, m_time_left);
   m_window->connect_sign_in_signal(
     std::bind_front(&SignInUiTester::on_sign_in, this));
+  m_window->connect_retry_signal(
+    std::bind_front(&SignInUiTester::on_retry, this));
   m_window->connect_cancel_signal(
     std::bind_front(&SignInUiTester::on_cancel, this));
   m_window->installEventFilter(this);
@@ -183,6 +184,16 @@ void SignInUiTester::on_sign_in(const std::string& username,
   if(m_time_left->get() > seconds(0)) {
     m_window->set_state(SignInWindow::State::UPDATING);
   }
+}
+
+void SignInUiTester::on_retry(SignInWindow::Operation operation) {
+  auto message = [&] {
+    if(operation == SignInWindow::Operation::DOWNLOAD) {
+      return tr("Retry Download");
+    }
+    return tr("Retry Installation");
+  }();
+  m_signals_text->append(message);
 }
 
 void SignInUiTester::on_cancel() {

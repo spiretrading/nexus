@@ -133,6 +133,7 @@ TrackMenuButton::TrackMenuButton(std::vector<Track> tracks,
       m_state(State::READY),
       m_selected(
         std::make_shared<AssociativeValueModel<Track>>(m_current->get())) {
+  setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
   auto body = new QWidget();
   auto body_layout = make_hbox_layout(body);
   body_layout->addStretch(1);

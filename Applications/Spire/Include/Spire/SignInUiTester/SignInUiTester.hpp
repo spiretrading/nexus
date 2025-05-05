@@ -6,6 +6,7 @@
 #include <QTextEdit>
 #include <QWidget>
 #include "Spire/SignIn/SignIn.hpp"
+#include "Spire/SignIn/SignInWindow.hpp"
 #include "Spire/SignIn/Track.hpp"
 #include "Spire/Ui/ProgressBar.hpp"
 
@@ -55,6 +56,7 @@ namespace Spire {
       void on_rebuild();
       void on_sign_in(const std::string& username, const std::string& password,
         Track track, const std::string& server);
+      void on_retry(SignInWindow::Operation operation);
       void on_cancel();
   };
 }

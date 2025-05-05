@@ -38,6 +38,8 @@ namespace Spire {
         ERROR
       };
 
+      using Operation = SignInUpdateBox::Operation;
+
       /**
        * Signals an attempt to sign in.
        * @param username The username to sign in with.
@@ -51,6 +53,8 @@ namespace Spire {
 
       /** Signals to cancel a previous sign in operation. */
       using CancelSignal = Signal<void ()>;
+
+      using RetrySignal = SignInUpdateBox::RetrySignal;
 
       /**
        * Constructs a SignInWindow in the NONE state.
@@ -85,6 +89,10 @@ namespace Spire {
       boost::signals2::connection connect_sign_in_signal(
         const SignInSignal::slot_type& slot) const;
 
+      /** Connects a slot to the retry signal. */
+      boost::signals2::connection connect_retry_signal(
+        const RetrySignal::slot_type& slot) const;
+
       /** Connects a slot to the cancel signal. */
       boost::signals2::connection connect_cancel_signal(
         const CancelSignal::slot_type& slot) const;
@@ -98,6 +106,7 @@ namespace Spire {
     private:
       mutable SignInSignal m_sign_in_signal;
       mutable CancelSignal m_cancel_signal;
+      mutable RetrySignal m_retry_signal;
       std::string m_version;
       std::vector<std::string> m_servers;
       std::shared_ptr<ProgressModel> m_download_progress;

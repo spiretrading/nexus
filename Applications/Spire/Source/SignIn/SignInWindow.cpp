@@ -126,6 +126,8 @@ SignInWindow::SignInWindow(std::string version, std::vector<Track> tracks,
   m_track_button->setFixedWidth(scale_width(280));
   layout->addWidget(m_track_button, 0, Qt::AlignHCenter);
   layout_sign_in();
+  layout->addSpacing(scale_height(48));
+  setFixedWidth(scale_width(384));
 }
 
 SignInWindow::State SignInWindow::get_state() const {
@@ -177,6 +179,11 @@ void SignInWindow::set_error(const QString& message) {
 connection SignInWindow::connect_sign_in_signal(
     const SignInSignal::slot_type& slot) const {
   return m_sign_in_signal.connect(slot);
+}
+
+connection SignInWindow::connect_retry_signal(
+    const RetrySignal::slot_type& slot) const {
+  return m_retry_signal.connect(slot);
 }
 
 connection SignInWindow::connect_cancel_signal(
@@ -288,11 +295,11 @@ void SignInWindow::layout_sign_in() {
         FontSize(scale_height(14)));
     });
     layout->addWidget(m_server_box, 0, Qt::AlignCenter);
-    setFixedSize(scale(384, 391));
+    setFixedHeight(scale_height(393));
   } else {
-    setFixedSize(scale(384, 346));
+    setFixedHeight(scale_height(348));
   }
-  layout->addSpacing(scale_height(30));
+  layout->addStretch(1);
   auto button_layout = make_hbox_layout();
   button_layout->setContentsMargins(scale_width(52), 0, scale_width(52), 0);
   auto build_label =
@@ -310,7 +317,6 @@ void SignInWindow::layout_sign_in() {
   m_sign_in_button->setDisabled(m_username->get().isEmpty());
   button_layout->addWidget(m_sign_in_button);
   layout->addLayout(button_layout);
-  layout->addSpacing(scale_height(48));
   setTabOrder(m_username_text_box, m_password_text_box);
   if(m_server_box) {
     setTabOrder(m_password_text_box, m_server_box);
@@ -340,11 +346,11 @@ void SignInWindow::clear_sign_in() {
 void SignInWindow::layout_update() {
   m_update_box = new SignInUpdateBox(
     m_download_progress, m_installation_progress, m_time_left);
+  m_update_box->connect_retry_signal(m_retry_signal);
   m_update_box->connect_cancel_signal(
     std::bind_front(&SignInWindow::on_cancel_update, this));
   auto layout = static_cast<QVBoxLayout*>(this->layout());
-  layout->addWidget(m_update_box, 0, Qt::AlignHCenter);
-  layout->addStretch(1);
+  layout->insertWidget(TOP_LAYOUT_ITEM, m_update_box, 0, Qt::AlignHCenter);
 }
 
 void SignInWindow::clear_update() {
@@ -353,7 +359,6 @@ void SignInWindow::clear_update() {
   delete update_item->widget();
   delete update_item;
   m_update_box = nullptr;
-  delete layout->takeAt(TOP_LAYOUT_ITEM);
 }
 
 void SignInWindow::reset_all() {
