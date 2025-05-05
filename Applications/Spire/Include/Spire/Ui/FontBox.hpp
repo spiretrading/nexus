@@ -37,8 +37,6 @@ namespace Spire {
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_size_connection;
 
-      void update_font_size_box_enabled(const QString& family,
-        const QString& style);
       void on_current(const QFont& font);
       void on_style_current(const QString& style);
       void on_size_current(const boost::optional<int>& value);

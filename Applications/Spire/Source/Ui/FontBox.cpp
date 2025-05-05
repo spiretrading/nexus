@@ -119,15 +119,6 @@ const std::shared_ptr<ValueModel<QFont>>& FontBox::get_current() const {
   return m_current;
 }
 
-void FontBox::update_font_size_box_enabled(const QString& family,
-    const QString& style) {
-  if(QFontDatabase().isScalable(family, style)) {
-    m_font_size_box->setEnabled(true);
-  } else {
-    m_font_size_box->setEnabled(false);
-  }
-}
-
 void FontBox::on_current(const QFont& font) {
   auto family = font.family();
   if(family != m_font_family_box->get_current()->get()) {
@@ -144,7 +135,7 @@ void FontBox::on_current(const QFont& font) {
     auto blocker = shared_connection_block(m_size_connection);
     m_font_size_box->get_current()->set(size);
   }
-  update_font_size_box_enabled(family, style);
+  m_font_size_box->setEnabled(QFontDatabase().isScalable(family, style));
 }
 
 void FontBox::on_style_current(const QString& style) {
@@ -163,8 +154,10 @@ void FontBox::on_style_current(const QString& style) {
     if(auto size = m_font_size_box->get_current()->get()) {
       font.setPixelSize(scale_width(*size));
     }
+    m_font_size_box->setEnabled(true);
+  } else {
+    m_font_size_box->setEnabled(false);
   }
-  update_font_size_box_enabled(family, style);
   auto blocker = shared_connection_block(m_font_connection);
   m_current->set(font);
 }
