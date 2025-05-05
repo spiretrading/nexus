@@ -1,5 +1,6 @@
 #include "Spire/SignIn/SignInController.hpp"
 #include <filesystem>
+#include <Beam/IO/WrapperChannel.hpp>
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/WebServices/HttpClient.hpp>
 #include <Beam/WebServices/TcpChannelFactory.hpp>
@@ -9,10 +10,13 @@
 #include <QThread>
 #include <QUuid>
 #include "Nexus/ServiceClients/ServiceClientsBox.hpp"
+#include "Spire/Async/EventHandler.hpp"
 #include "Spire/Async/QtPromise.hpp"
 #include "Spire/SignIn/SignInException.hpp"
 #include "Spire/SignIn/SignInWindow.hpp"
 #include "Spire/Spire/Utility.hpp"
+
+#include <Beam/Threading/LiveTimer.hpp>
 
 using namespace Beam;
 using namespace Beam::IO;
@@ -20,11 +24,100 @@ using namespace Beam::Network;
 using namespace Beam::ServiceLocator;
 using namespace Beam::WebServices;
 using namespace boost;
+using namespace boost::chrono;
+using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  struct ProgressReader {
+    std::shared_ptr<ProgressModel> m_download_progress;
+    std::shared_ptr<ValueModel<time_duration>> m_time_left;
+    std::size_t m_download_size;
+    ReaderBox* m_reader;
+    std::size_t m_total_read_bytes;
+    optional<steady_clock::time_point> m_start_time;
+    EventHandler m_event_handler;
+    std::size_t m_last_block;
+
+    explicit ProgressReader(std::shared_ptr<ProgressModel> download_progress,
+      std::shared_ptr<ValueModel<time_duration>> time_left,
+      std::size_t download_size, ReaderBox& reader)
+      : m_download_progress(std::move(download_progress)),
+        m_time_left(std::move(time_left)),
+        m_download_size(download_size),
+        m_reader(&reader),
+        m_total_read_bytes(0),
+        m_last_block(0) {}
+
+    bool IsDataAvailable() const {
+      return m_reader->IsDataAvailable();
+    }
+
+    template<typename R>
+    std::size_t Read(Out<R> destination) {
+      return update_download_progress(m_reader->Read(Store(destination)));
+    }
+
+    std::size_t Read(char* destination, std::size_t size) {
+      return update_download_progress(m_reader->Read(destination, size));
+    }
+
+    template<typename R>
+    std::size_t Read(Out<R> destination, std::size_t size) {
+      return update_download_progress(m_reader->Read(Store(destination), size));
+    }
+
+    std::size_t update_download_progress(std::size_t size) {
+      m_total_read_bytes += size;
+      m_event_handler.push(
+        std::bind_front(&ProgressReader::on_update, this, m_total_read_bytes));
+      if(m_total_read_bytes - m_last_block > 1000000) {
+        auto blocker = Threading::LiveTimer(posix_time::seconds(1));
+        blocker.Start();
+        blocker.Wait();
+        m_last_block = m_total_read_bytes;
+      }
+      return size;
+    }
+
+    void on_update(std::size_t size) {
+      auto progress = std::max<std::size_t>(1, (100 * size) / m_download_size);
+      if(!m_start_time) {
+        m_start_time = steady_clock::now();
+      } else {
+        auto elapsed_time = steady_clock::now() - *m_start_time;
+        m_time_left->set(posix_time::milliseconds(
+          static_cast<int>(duration_cast<chrono::milliseconds>(
+            elapsed_time).count() / (static_cast<double>(progress) / 100.0))));
+      }
+      m_download_progress->set(progress);
+    }
+  };
+}
+
+namespace Beam {
+  template<>
+  struct ImplementsConcept<ProgressReader, IO::Reader> : std::true_type {};
+}
+
+namespace {
+  std::unique_ptr<ChannelBox> make_progress_channel(
+      const std::shared_ptr<ProgressModel>& download_progress,
+      const std::shared_ptr<ValueModel<time_duration>>& time_left,
+      const Uri& uri) {
+    static const auto DOWNLOAD_SIZE = 62914560;
+    auto tcp_channel = TcpSocketChannelFactory()(uri);
+    auto reader = std::make_unique<ProgressReader>(
+      download_progress, time_left, DOWNLOAD_SIZE, tcp_channel->GetReader());
+    auto progress_channel = std::make_unique<ChannelBox>(
+      std::in_place_type<WrapperChannel<std::unique_ptr<ChannelBox>,
+        std::unique_ptr<ProgressReader>>>, std::move(tcp_channel),
+        std::move(reader));
+    return progress_channel;
+  }
+
   std::size_t index(Track track) {
     return static_cast<std::underlying_type_t<Track>>(track);
   }
@@ -192,33 +285,52 @@ namespace {
 
   bool update_build(
       const IpAddress& address, Track track, const std::string& username,
-      const std::string& password, const std::string& build) {
+      const std::string& password, const std::string& build,
+      const std::shared_ptr<ProgressModel>& download_progress,
+      const std::shared_ptr<ProgressModel>& installation_progress,
+      const std::shared_ptr<ValueModel<time_duration>>& time_left) {
     auto request = HttpRequest(get_update_url(
       address, track, build + "/" + get_application_filename(track).string()));
     auto directory_listing = std::string();
+    download_progress->set(0);
     try {
       auto client =
-        HttpClient<std::unique_ptr<ChannelBox>>(TcpSocketChannelFactory());
+        HttpClient<std::unique_ptr<ChannelBox>>(
+          std::bind_front(make_progress_channel, download_progress, time_left));
       auto response = client.Send(request);
       if(response.GetStatusCode() != HttpStatusCode::OK) {
+        download_progress->set(-1);
         return false;
       }
+
+      // CAN'T UPDATE FROM HERE, HAVE TO UPDATE FROM SAME THREAD.
+      download_progress->set(100);
+      installation_progress->set(30);
+      time_left->set(posix_time::seconds(3));
       auto executable_path = get_application_path(track);
       try {
-        std::filesystem::rename(executable_path,
-          load_temporary_directory() / executable_path.filename());
+//        std::filesystem::rename(executable_path,
+//          load_temporary_directory() / executable_path.filename());
       } catch(const std::filesystem::filesystem_error& e) {
         if(e.code() != std::errc::no_such_file_or_directory) {
+          installation_progress->set(-1);
           return false;
         }
       }
       {
-        auto out_file = std::ofstream(executable_path, std::ios::binary);
-        out_file.write(
-          response.GetBody().GetData(), response.GetBody().GetSize());
+//        auto out_file = std::ofstream(executable_path, std::ios::binary);
+//        out_file.write(
+//          response.GetBody().GetData(), response.GetBody().GetSize());
       }
+      installation_progress->set(100);
+      time_left->set(posix_time::seconds(0));
       return launch_update(address, track, username, password);
     } catch(const std::exception&) {
+      if(download_progress->get() != 100) {
+        download_progress->set(-1);
+      } else {
+        installation_progress->set(-1);
+      }
       return false;
     }
   }
@@ -260,7 +372,13 @@ SignInController::SignInController(
   : m_version(std::move(version)),
     m_servers(std::move(servers)),
     m_service_clients_factory(std::move(service_clients_factory)),
-    m_sign_in_window(nullptr) {}
+    m_download_progress(std::make_shared<LocalProgressModel>(0)),
+    m_installation_progress(std::make_shared<LocalProgressModel>(0)),
+    m_time_left(
+      std::make_shared<LocalValueModel<time_duration>>(posix_time::seconds(0))),
+    m_sign_in_window(nullptr) {
+  EventHandler();
+}
 
 void SignInController::open() {
   auto servers = std::vector<std::string>();
@@ -273,10 +391,9 @@ void SignInController::open() {
   tracks.push_back(Track::CLASSIC);
   tracks.push_back(Track::PREVIEW);
   auto track = std::make_shared<LocalTrackModel>(load_track());
-  /** TODO */
   m_sign_in_window = new SignInWindow(
     m_version, std::move(tracks), std::move(track), std::move(servers),
-    nullptr, nullptr, nullptr);
+    m_download_progress, m_installation_progress, m_time_left);
   m_sign_in_window->connect_sign_in_signal(
     std::bind_front(&SignInController::on_sign_in, this));
   m_sign_in_window->connect_cancel_signal(
@@ -313,7 +430,9 @@ void SignInController::on_sign_in(const std::string& username,
       auto version = load_version(track, m_version);
       if(latest_build != version) {
         m_run_update.set(index(track));
-        if(update_build(address, track, username, password, latest_build)) {
+        m_sign_in_window->set_state(SignInWindow::State::UPDATING);
+        if(update_build(address, track, username, password, latest_build,
+            m_download_progress, m_installation_progress, m_time_left)) {
           return none;
         }
       } else if(track != Track::CURRENT) {
