@@ -24,7 +24,7 @@ namespace Spire {
     public:
 
       /** Selects the fill bar. */
-      using Fill = Styles::StateSelector<void, struct FillTag>;
+      using Fill = Styles::StateSelector<void, struct ProgressFillTag>;
 
       /** Constructs a ProgressBar using a LocalProgressModel starting at 0. */
       ProgressBar();

@@ -164,10 +164,10 @@ auto SignInUpdateBox::make_activity_label(
   update_style(*label, [] (auto& style) {
     style.get(Any()).
       set(PaddingBottom(scale_height(6))).
-      set(PaddingLeft(scale_width(76))).
+      set(PaddingLeft(scale_width(94))).
       set(TextColor(QColor(0xFFFFFF)));
     style.get(ActivityStyle(Activity::DOWNLOADING)).
-      set(PaddingLeft(ease(scale_width(76), 0, milliseconds(800))));
+      set(PaddingLeft(ease(scale_width(94), 0, milliseconds(800))));
     style.get(Transitioned() || ActivityStyle(Activity::DOWNLOAD_COMPLETE) ||
       ActivityStyle(Activity::INSTALLING)).set(PaddingLeft(0));
   });
