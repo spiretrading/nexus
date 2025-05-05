@@ -69,23 +69,21 @@ namespace {
     }
 
     std::size_t update_download_progress(std::size_t size) {
+      const auto BLOCK_SIZE = 1024 * 1024;
       m_total_read_bytes += size;
       if(!m_start_time) {
         m_start_time = steady_clock::now();
       }
-      if(m_total_read_bytes - m_last_block > 1000000) {
-        auto progress = std::max<std::size_t>(
-          1, (100 * m_total_read_bytes) / m_download_size);
+      if(m_total_read_bytes - m_last_block > BLOCK_SIZE) {
+        auto progress = std::min<std::size_t>(99, std::max<std::size_t>(
+          1, (100 * m_total_read_bytes) / m_download_size));
         auto elapsed_time = steady_clock::now() - *m_start_time;
-        qDebug() << "Elapsed: " <<
-          duration_cast<chrono::seconds>(elapsed_time).count();
-        qDebug() << "Progress: " << progress;
-        qDebug() << "ETA: " << 
-          static_cast<int>(duration_cast<chrono::seconds>(
-            elapsed_time).count() / (static_cast<double>(progress) / 100.0));
-        m_time_left->set(posix_time::milliseconds(
-          static_cast<int>(duration_cast<chrono::milliseconds>(
-            elapsed_time).count() / (static_cast<double>(progress) / 100.0))));
+        auto total_time =
+          elapsed_time / (static_cast<double>(progress) / 100.0);
+        auto remaining_time =
+          posix_time::milliseconds(duration_cast<chrono::milliseconds>(
+            total_time - elapsed_time).count());
+        m_time_left->set(remaining_time);
         m_download_progress->set(progress);
         m_last_block = m_total_read_bytes;
         auto blocker = Threading::LiveTimer(posix_time::seconds(1));
@@ -107,7 +105,7 @@ namespace {
       const std::shared_ptr<ProgressModel>& download_progress,
       const std::shared_ptr<ValueModel<time_duration>>& time_left,
       const Uri& uri) {
-    static const auto DOWNLOAD_SIZE = 62914560;
+    static const auto DOWNLOAD_SIZE = 52277248;
     auto tcp_channel = TcpSocketChannelFactory()(uri);
     auto reader = std::make_unique<ProgressReader>(
       download_progress, time_left, DOWNLOAD_SIZE, tcp_channel->GetReader());
