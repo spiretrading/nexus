@@ -10,10 +10,9 @@
 #include <QThread>
 #include <QUuid>
 #include "Nexus/ServiceClients/ServiceClientsBox.hpp"
-#include "Spire/Async/EventHandler.hpp"
-#include "Spire/Async/QtPromise.hpp"
 #include "Spire/SignIn/SignInException.hpp"
 #include "Spire/SignIn/SignInWindow.hpp"
+#include "Spire/Spire/QtValueModel.hpp"
 #include "Spire/Spire/Utility.hpp"
 
 #include <Beam/Threading/LiveTimer.hpp>
@@ -71,28 +70,29 @@ namespace {
 
     std::size_t update_download_progress(std::size_t size) {
       m_total_read_bytes += size;
-      m_event_handler.push(
-        std::bind_front(&ProgressReader::on_update, this, m_total_read_bytes));
-      if(m_total_read_bytes - m_last_block > 1000000) {
-        auto blocker = Threading::LiveTimer(posix_time::seconds(1));
-        blocker.Start();
-        blocker.Wait();
-        m_last_block = m_total_read_bytes;
-      }
-      return size;
-    }
-
-    void on_update(std::size_t size) {
-      auto progress = std::max<std::size_t>(1, (100 * size) / m_download_size);
       if(!m_start_time) {
         m_start_time = steady_clock::now();
-      } else {
+      }
+      if(m_total_read_bytes - m_last_block > 1000000) {
+        auto progress = std::max<std::size_t>(
+          1, (100 * m_total_read_bytes) / m_download_size);
         auto elapsed_time = steady_clock::now() - *m_start_time;
+        qDebug() << "Elapsed: " <<
+          duration_cast<chrono::seconds>(elapsed_time).count();
+        qDebug() << "Progress: " << progress;
+        qDebug() << "ETA: " << 
+          static_cast<int>(duration_cast<chrono::seconds>(
+            elapsed_time).count() / (static_cast<double>(progress) / 100.0));
         m_time_left->set(posix_time::milliseconds(
           static_cast<int>(duration_cast<chrono::milliseconds>(
             elapsed_time).count() / (static_cast<double>(progress) / 100.0))));
+        m_download_progress->set(progress);
+        m_last_block = m_total_read_bytes;
+        auto blocker = Threading::LiveTimer(posix_time::seconds(1));
+        blocker.Start();
+        blocker.Wait();
       }
-      m_download_progress->set(progress);
+      return size;
     }
   };
 }
@@ -372,10 +372,10 @@ SignInController::SignInController(
   : m_version(std::move(version)),
     m_servers(std::move(servers)),
     m_service_clients_factory(std::move(service_clients_factory)),
-    m_download_progress(std::make_shared<LocalProgressModel>(0)),
-    m_installation_progress(std::make_shared<LocalProgressModel>(0)),
+    m_download_progress(std::make_shared<QtValueModel<int>>(0)),
+    m_installation_progress(std::make_shared<QtValueModel<int>>(0)),
     m_time_left(
-      std::make_shared<LocalValueModel<time_duration>>(posix_time::seconds(0))),
+      std::make_shared<QtValueModel<time_duration>>(posix_time::seconds(0))),
     m_sign_in_window(nullptr) {
   EventHandler();
 }
