@@ -324,7 +324,8 @@ void SignInWindow::layout_sign_in() {
   } else {
     setTabOrder(m_password_text_box, m_sign_in_button);
   }
-  static_cast<QVBoxLayout*>(this->layout())->addLayout(layout);
+  static_cast<QVBoxLayout*>(this->layout())->insertLayout(
+    TOP_LAYOUT_ITEM, layout);
   set_state(State::NONE);
 }
 

@@ -235,7 +235,7 @@ void SignInUpdateBox::layout_error() {
   auto layout = static_cast<QBoxLayout*>(get_body().layout());
   layout->addSpacing(scale_height(20));
   layout->addWidget(make_error_message_label(m_activity));
-  layout->addSpacing(scale_height(105));
+  layout->addStretch(1);
   auto button_layout = make_hbox_layout();
   auto cancel_button = make_action_button(tr("Cancel"));
   cancel_button->connect_click_signal(
