@@ -9,6 +9,7 @@
 #include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Spire/Async/QtPromise.hpp"
 #include "Spire/SignIn/SignIn.hpp"
+#include "Spire/Ui/ProgressBar.hpp"
 
 namespace Spire {
 
@@ -67,6 +68,9 @@ namespace Spire {
       std::string m_version;
       std::vector<ServerEntry> m_servers;
       ServiceClientsFactory m_service_clients_factory;
+      std::shared_ptr<ProgressModel> m_download_progress;
+      std::shared_ptr<ProgressModel> m_installation_progress;
+      std::shared_ptr<ValueModel<boost::posix_time::time_duration>> m_time_left;
       SignInWindow* m_sign_in_window;
       QtPromise<void> m_sign_in_promise;
       std::bitset<3> m_run_update;

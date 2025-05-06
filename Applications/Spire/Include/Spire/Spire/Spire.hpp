@@ -60,6 +60,7 @@ namespace Spire {
   template<typename T> class OptionalScalarValueModelDecorator;
   template<typename T> class ProxyScalarValueModel;
   template<typename T> class ProxyValueModel;
+  template<typename T> class QtValueModel;
   template<typename T> class QueryModel;
   template<typename T> class ReversedListModel;
   class RowView;

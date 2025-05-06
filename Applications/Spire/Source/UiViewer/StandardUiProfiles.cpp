@@ -81,6 +81,7 @@
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/PercentBox.hpp"
 #include "Spire/Ui/PopupBox.hpp"
+#include "Spire/Ui/ProgressBar.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/RegionBox.hpp"
 #include "Spire/Ui/RegionDropDownBox.hpp"
@@ -1050,7 +1051,8 @@ UiProfile Spire::make_box_profile() {
       border_color: 0xC8C8C8;
     }
   )";
-  properties.push_back(make_style_property("style_sheet", std::move(default_style)));
+  properties.push_back(
+    make_style_property("style_sheet", std::move(default_style)));
   auto profile = UiProfile(QString::fromUtf8("Box"), properties,
     [] (auto& profile) {
       auto box = new Box(nullptr);
@@ -3391,6 +3393,26 @@ UiProfile Spire::make_popup_box_profile() {
       }
     });
     return widget;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_progress_bar_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  get<int>("width", properties).set(scale_width(224));
+  properties.push_back(make_standard_property("current", 0));
+  auto profile = UiProfile("ProgressBar", properties, [] (auto& profile) {
+    auto& current = get<int>("current", profile.get_properties());
+    auto current_model = std::make_shared<LocalProgressModel>(current.get());
+    auto progress_bar = new ProgressBar(current_model);
+    apply_widget_properties(progress_bar, profile.get_properties());
+    current.connect_changed_signal([=] (const auto& current) {
+      current_model->set(std::clamp(current, 0, 100));
+    });
+    progress_bar->get_current()->connect_update_signal(
+      profile.make_event_slot<int>("Current"));
+    return progress_bar;
   });
   return profile;
 }
