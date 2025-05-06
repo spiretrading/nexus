@@ -41,6 +41,12 @@ namespace Spire {
    * @param alignment How to align the <i>body</i> within the <i>parent</i>.
    */
   void enclose(QWidget& parent, QWidget& body, Qt::Alignment alignment);
+
+  /**
+   * Clears out the contents of a QLayout, deleting all items and their
+   * contents.
+   */
+  void clear(QLayout& layout);
 }
 
 #endif
