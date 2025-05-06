@@ -32,3 +32,17 @@ void Spire::enclose(QWidget& parent, QWidget& body, Qt::Alignment alignment) {
   layout->setAlignment(alignment);
   layout->addWidget(&body);
 }
+
+void Spire::clear(QLayout& layout) {
+  while(auto item = layout.takeAt(0)) {
+    if(auto sub_layout = item->layout()) {
+      clear(*sub_layout);
+      delete sub_layout;
+    } else if(auto widget = item->widget()) {
+      delete widget;
+      delete item;
+    } else if(auto spacer = item->spacerItem()) {
+      delete spacer;
+    }
+  }
+}

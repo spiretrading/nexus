@@ -120,9 +120,10 @@ const std::shared_ptr<ValueModel<QFont>>& FontBox::get_current() const {
 }
 
 void FontBox::on_current(const QFont& font) {
-  if(font.family() != m_font_family_box->get_current()->get()) {
+  auto family = font.family();
+  if(family != m_font_family_box->get_current()->get()) {
     auto blocker = shared_connection_block(m_style_connection);
-    m_font_family_box->get_current()->set(font.family());
+    m_font_family_box->get_current()->set(family);
   }
   auto style = QFontDatabase().styleString(font);
   if(style != m_font_style_box->get_current()->get()) {
@@ -134,6 +135,7 @@ void FontBox::on_current(const QFont& font) {
     auto blocker = shared_connection_block(m_size_connection);
     m_font_size_box->get_current()->set(size);
   }
+  m_font_size_box->setEnabled(QFontDatabase().isScalable(family, style));
 }
 
 void FontBox::on_style_current(const QString& style) {
@@ -146,9 +148,9 @@ void FontBox::on_style_current(const QString& style) {
       style == font_database.styleString(current_font)) {
     return;
   }
-  auto font =
-    font_database.font(m_font_family_box->get_current()->get(), style, -1);
-  if(font_database.isScalable(m_font_family_box->get_current()->get(), style)) {
+  auto& family = m_font_family_box->get_current()->get();
+  auto font = font_database.font(family, style, -1);
+  if(font_database.isScalable(family, style)) {
     if(auto size = m_font_size_box->get_current()->get()) {
       font.setPixelSize(scale_width(*size));
     }

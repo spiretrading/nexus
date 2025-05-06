@@ -264,7 +264,10 @@ void AnyTagComboBox::push_combo_box() {
     m_tag_box->get_current()->set("");
     submit();
   } else {
-    m_tag_box->get_current()->set("");
+    auto drop_down_window = find_drop_down_window();
+    if(drop_down_window && !drop_down_window->isVisible()) {
+      m_tag_box->get_current()->set("");
+    }
   }
 }
 

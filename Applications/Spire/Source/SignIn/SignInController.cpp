@@ -9,9 +9,10 @@
 #include <QThread>
 #include <QUuid>
 #include "Nexus/ServiceClients/ServiceClientsBox.hpp"
-#include "Spire/Async/QtPromise.hpp"
 #include "Spire/SignIn/SignInException.hpp"
 #include "Spire/SignIn/SignInWindow.hpp"
+#include "Spire/SignIn/UpdateDownloadChannelFactory.hpp"
+#include "Spire/Spire/QtValueModel.hpp"
 #include "Spire/Spire/Utility.hpp"
 
 using namespace Beam;
@@ -20,6 +21,7 @@ using namespace Beam::Network;
 using namespace Beam::ServiceLocator;
 using namespace Beam::WebServices;
 using namespace boost;
+using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
@@ -192,23 +194,33 @@ namespace {
 
   bool update_build(
       const IpAddress& address, Track track, const std::string& username,
-      const std::string& password, const std::string& build) {
+      const std::string& password, const std::string& build,
+      const std::shared_ptr<ProgressModel>& download_progress,
+      const std::shared_ptr<ProgressModel>& installation_progress,
+      const std::shared_ptr<ValueModel<time_duration>>& time_left) {
     auto request = HttpRequest(get_update_url(
       address, track, build + "/" + get_application_filename(track).string()));
     auto directory_listing = std::string();
     try {
-      auto client =
-        HttpClient<std::unique_ptr<ChannelBox>>(TcpSocketChannelFactory());
+      static const auto DOWNLOAD_SIZE = 52277248;
+      auto client = HttpClient<std::unique_ptr<ChannelBox>>(
+        UpdateDownloadChannelFactory(
+          DOWNLOAD_SIZE, download_progress, time_left));
       auto response = client.Send(request);
       if(response.GetStatusCode() != HttpStatusCode::OK) {
+        download_progress->set(-1);
         return false;
       }
+      download_progress->set(100);
+      installation_progress->set(30);
+      time_left->set(seconds(3));
       auto executable_path = get_application_path(track);
       try {
         std::filesystem::rename(executable_path,
           load_temporary_directory() / executable_path.filename());
       } catch(const std::filesystem::filesystem_error& e) {
         if(e.code() != std::errc::no_such_file_or_directory) {
+          installation_progress->set(-1);
           return false;
         }
       }
@@ -217,8 +229,15 @@ namespace {
         out_file.write(
           response.GetBody().GetData(), response.GetBody().GetSize());
       }
+      installation_progress->set(100);
+      time_left->set(seconds(0));
       return launch_update(address, track, username, password);
     } catch(const std::exception&) {
+      if(download_progress->get() != 100) {
+        download_progress->set(-1);
+      } else {
+        installation_progress->set(-1);
+      }
       return false;
     }
   }
@@ -260,7 +279,12 @@ SignInController::SignInController(
   : m_version(std::move(version)),
     m_servers(std::move(servers)),
     m_service_clients_factory(std::move(service_clients_factory)),
-    m_sign_in_window(nullptr) {}
+    m_download_progress(std::make_shared<QtValueModel<int>>(0)),
+    m_installation_progress(std::make_shared<QtValueModel<int>>(0)),
+    m_time_left(std::make_shared<QtValueModel<time_duration>>(seconds(0))),
+    m_sign_in_window(nullptr) {
+  EventHandler();
+}
 
 void SignInController::open() {
   auto servers = std::vector<std::string>();
@@ -274,7 +298,8 @@ void SignInController::open() {
   tracks.push_back(Track::PREVIEW);
   auto track = std::make_shared<LocalTrackModel>(load_track());
   m_sign_in_window = new SignInWindow(
-    m_version, std::move(tracks), std::move(track), std::move(servers));
+    m_version, std::move(tracks), std::move(track), std::move(servers),
+    m_download_progress, m_installation_progress, m_time_left);
   m_sign_in_window->connect_sign_in_signal(
     std::bind_front(&SignInController::on_sign_in, this));
   m_sign_in_window->connect_cancel_signal(
@@ -311,7 +336,9 @@ void SignInController::on_sign_in(const std::string& username,
       auto version = load_version(track, m_version);
       if(latest_build != version) {
         m_run_update.set(index(track));
-        if(update_build(address, track, username, password, latest_build)) {
+        m_sign_in_window->set_state(SignInWindow::State::UPDATING);
+        if(update_build(address, track, username, password, latest_build,
+            m_download_progress, m_installation_progress, m_time_left)) {
           return none;
         }
       } else if(track != Track::CURRENT) {

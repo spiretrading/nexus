@@ -7,8 +7,10 @@ namespace Spire {
   class SignInController;
   class SignInException;
   class SignInWindow;
+  class SignInUpdateBox;
   enum class Track;
   class TrackMenuButton;
+  class UpdateDownloadChannelFactory;
 }
 
 #endif
