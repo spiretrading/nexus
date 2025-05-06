@@ -90,6 +90,7 @@ namespace Spire {
         QString m_completion;
         QString m_last_completion;
         bool m_has_autocomplete_selection;
+        bool m_is_querying;
         boost::signals2::scoped_connection m_current_connection;
         boost::signals2::scoped_connection m_input_connection;
         boost::signals2::scoped_connection m_highlight_connection;
