@@ -347,9 +347,11 @@ void SignInWindow::clear_sign_in() {
 void SignInWindow::layout_update() {
   m_update_box = new SignInUpdateBox(
     m_download_progress, m_installation_progress, m_time_left);
+  m_update_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_update_box->connect_retry_signal(m_retry_signal);
   m_update_box->connect_cancel_signal(
     std::bind_front(&SignInWindow::on_cancel_update, this));
+  m_update_box->setFixedWidth(scale_width(280));
   auto layout = static_cast<QVBoxLayout*>(this->layout());
   layout->insertWidget(TOP_LAYOUT_ITEM, m_update_box, 0, Qt::AlignHCenter);
 }

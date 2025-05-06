@@ -104,7 +104,6 @@ SignInUpdateBox::SignInUpdateBox(
   auto box = new Box(body);
   enclose(*this, *box);
   proxy_style(*this, *box);
-  setFixedSize(scale(280, 227));
   update_style(*this, [] (auto& style) {
     style.get(Any()).
       set(BackgroundColor(QColor(0x4B23A0)));
