@@ -133,6 +133,7 @@ TrackMenuButton::TrackMenuButton(std::vector<Track> tracks,
       m_state(State::READY),
       m_selected(
         std::make_shared<AssociativeValueModel<Track>>(m_current->get())) {
+  setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
   auto body = new QWidget();
   auto body_layout = make_hbox_layout(body);
   body_layout->addStretch(1);
@@ -207,10 +208,14 @@ void TrackMenuButton::set_state(State state) {
   if(m_state == State::LOADING) {
     m_button->setDisabled(true);
     m_spinner->movie()->start();
-  } else {
+  } else if(m_state == State::READY) {
     if(m_is_multitrack) {
       m_button->setDisabled(false);
     }
+    m_spinner->movie()->stop();
+    m_spinner->movie()->jumpToFrame(0);
+  } else {
+    m_button->setDisabled(true);
     m_spinner->movie()->stop();
     m_spinner->movie()->jumpToFrame(0);
   }

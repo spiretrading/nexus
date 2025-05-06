@@ -22,7 +22,10 @@ namespace Spire {
         READY,
 
         /** The button is non-interactive and displaying the load animation. */
-        LOADING
+        LOADING,
+
+        /** The button is neither interactive nor displaying the animation. */
+        READ_ONLY,
       };
 
       /**
