@@ -19,6 +19,7 @@ namespace {
     ReaderBox* m_reader;
     std::size_t m_total_read_bytes;
     optional<steady_clock::time_point> m_start_time;
+    steady_clock::time_point m_last_read_time;
     std::size_t m_last_block;
 
     explicit ProgressReader(std::shared_ptr<ProgressModel> download_progress,
@@ -53,9 +54,12 @@ namespace {
       const auto BLOCK_SIZE = 1024 * 1024;
       m_total_read_bytes += size;
       if(!m_start_time) {
-        m_start_time = steady_clock::now();
+        m_last_read_time = steady_clock::now();
+        m_start_time = m_last_read_time;
       }
-      if(m_total_read_bytes - m_last_block > BLOCK_SIZE) {
+      auto last_duration = steady_clock::now() - m_last_read_time;
+      if(m_total_read_bytes - m_last_block > BLOCK_SIZE &&
+          last_duration >= chrono::seconds(3)) {
         auto progress = std::min<std::size_t>(99, std::max<std::size_t>(
           1, (100 * m_total_read_bytes) / m_download_size));
         auto elapsed_time = steady_clock::now() - *m_start_time;
@@ -67,6 +71,7 @@ namespace {
         m_time_left->set(remaining_time);
         m_download_progress->set(progress);
         m_last_block = m_total_read_bytes;
+        m_last_read_time = steady_clock::now();
       }
       return size;
     }
