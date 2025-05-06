@@ -78,11 +78,11 @@ namespace Spire {
         std::any m_submission;
         QString m_submission_text;
         QWidget* m_input_focus_proxy;
-        ListView* m_list_view;
         FocusObserver m_focus_observer;
         KeyObserver m_key_observer;
         std::shared_ptr<AnyListModel> m_matches;
         DropDownList* m_drop_down_list;
+        EmptyState* m_empty_state;
         boost::optional<QString> m_user_query;
         std::uint32_t m_completion_tag;
         QtPromise<void> m_query_result;
