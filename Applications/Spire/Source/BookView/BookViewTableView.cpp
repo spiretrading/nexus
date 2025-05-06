@@ -130,8 +130,8 @@ namespace {
         auto current =
           std::make_shared<BookViewProxyValueModel<Quantity, QString>>(
             make_table_value_model<Quantity>(table, row, column));
-        current->set_target(make_to_text_model(make_transform_value_model(
-          make_table_value_model<Quantity>(table, row, column),
+        current->set_target(
+          make_to_text_model(make_transform_value_model(current->get_proxy(),
             [] (auto quantity) {
               if(quantity == 0) {
                 return Quantity(0);
@@ -431,8 +431,8 @@ TableView* Spire::make_book_view_table_view(
     return std::tuple(model->get_asks(), model->get_ask_orders(),
       SortedTableModel::Ordering::ASCENDING);
   }();
-  auto column_orders =
-    std::vector<SortedTableModel::ColumnOrder>{{1, ordering}, {2, ordering}};
+  auto column_orders = std::vector<SortedTableModel::ColumnOrder>{
+    {1, ordering}, {2, SortedTableModel::Ordering::DESCENDING}};
   auto displayed_orders =
     std::make_shared<UserOrderDisplayListModel>(
       std::make_shared<ConsolidatedUserOrderListModel>(std::move(orders)),
