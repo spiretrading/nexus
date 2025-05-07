@@ -22,6 +22,7 @@ namespace {
   };
 
   struct GlobalEventHandler : QObject {
+    static inline auto TIME_SLICE = seconds(1) / 10;
     std::vector<std::weak_ptr<TaskQueue>> m_tasks;
     QTimer m_timer;
 
@@ -52,29 +53,32 @@ namespace {
       m_timer.start(UPDATE_INTERVAL);
     }
 
-    void update(std::shared_ptr<TaskQueue> tasks) {
+    time_duration update(std::shared_ptr<TaskQueue> tasks) {
       auto start = microsec_clock::universal_time();
       for(auto task = tasks->TryPop(); task && tasks.use_count() != 1;
           task = tasks->TryPop()) {
         (*task)();
-        auto duration = microsec_clock::universal_time();
-        if(duration - start > seconds(1) / 10) {
-          return;
+        auto duration = microsec_clock::universal_time() - start;
+        if(duration >= TIME_SLICE) {
+          return duration;
         }
       }
+      return microsec_clock::universal_time() - start;
     }
 
     void on_expired() {
-      auto i = m_tasks.begin();
-      while(i != m_tasks.end()) {
-        if(auto tasks = i->lock()) {
-          if(i != m_tasks.begin()) {
-            QCoreApplication::instance()->processEvents();
-          }
-          update(std::move(tasks));
+      auto i = std::size_t(0);
+      auto running_time = seconds(0);
+      while(i < m_tasks.size()) {
+        if(running_time >= TIME_SLICE) {
+          QCoreApplication::instance()->processEvents();
+          running_time = seconds(0);
+        }
+        if(auto tasks = m_tasks[i].lock()) {
+          running_time += update(std::move(tasks));
           ++i;
         } else {
-          i = m_tasks.erase(i);
+          m_tasks.erase(m_tasks.begin() + i);
         }
       }
     }

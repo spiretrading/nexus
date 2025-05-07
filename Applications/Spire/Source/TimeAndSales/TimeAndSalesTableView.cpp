@@ -1,6 +1,7 @@
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
 #include <QMovie>
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ConstantValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -12,6 +13,7 @@
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
+using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
@@ -362,6 +364,8 @@ TableView* Spire::make_time_and_sales_table_view(
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
     set_item_builder(RecycledTableViewItemBuilder(TimeAndSalesItemBuilder())).
+    set_current(
+      std::make_shared<ConstantValueModel<optional<TableIndex>>>(none)).
     make();
   update_style(*table_view, apply_table_view_style);
   initialize_table_header(*table_view, properties->get());
