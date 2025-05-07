@@ -75,6 +75,9 @@ void MpidBox::update_row_state(int type_index) {
       unmatch(*this, PriceLevelRow(m_current_level));
     } else if(*m_current_type_index == USER_ORDER_TYPE_INDEX) {
       unmatch(*this, UserOrderRow(OrderStatus::NONE));
+      if(m_current_status != OrderStatus::NONE) {
+        unmatch(*this, UserOrderRow(m_current_status));
+      }
     } else {
       unmatch(*this, PreviewRow());
     }
