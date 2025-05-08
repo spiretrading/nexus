@@ -212,11 +212,17 @@ namespace {
     }
 
     void transact(const std::function<void()>& transaction) override {
-      m_color_scheme->transact([&] {
+      if(m_is_blocked) {
         m_colors.transact([&] {
           transaction();
         });
-      });
+      } else {
+        m_color_scheme->transact([&] {
+          m_colors.transact([&] {
+            transaction();
+          });
+        });
+      }
     }
 
     void on_color_scheme_operation(
