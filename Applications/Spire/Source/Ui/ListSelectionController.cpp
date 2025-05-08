@@ -87,7 +87,7 @@ void ListSelectionController::remove(int index) {
       }
     });
   }
-  if(m_size == 0) {
+  if(m_size == 0 || index == m_range_anchor) {
     m_range_anchor = none;
   }
   if(operation) {
