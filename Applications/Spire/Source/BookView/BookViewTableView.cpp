@@ -101,9 +101,9 @@ namespace {
       auto column_id = static_cast<BookViewColumn>(column);
       if(column_id == BookViewColumn::MPID) {
         auto entry = make_proxy_value_model(
-          std::make_shared<LocalValueModel<BookEntry>>());
+          make_table_value_model<BookEntry>(table, row, column));
         auto level =
-          make_proxy_value_model(std::make_shared<LocalValueModel<int>>());
+          make_proxy_value_model(make_list_value_model(m_price_levels, row));
         auto is_top_mpid =
           std::make_shared<BookViewProxyValueModel<Money, bool>>(
             make_table_value_model<Money>(
@@ -112,7 +112,6 @@ namespace {
           m_top_mpid_prices, entry, is_top_mpid->get_proxy()));
         auto mpid_box = new MpidBox(
           std::move(entry), std::move(level), std::move(is_top_mpid));
-        reset(*mpid_box, table, row, column);
         return mpid_box;
       } else if(column_id == BookViewColumn::PRICE) {
         auto current =
