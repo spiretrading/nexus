@@ -146,6 +146,9 @@ bool ColorBox::eventFilter(QObject* watched, QEvent* event) {
       auto& mouse_event = *static_cast<QMouseEvent*>(event);
       if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
         return true;
+      } else if(!m_color_picker_panel->rect().contains(mouse_event.pos()) &&
+          m_is_modified) {
+        submit();
       }
     }
   } else if(event->type() == QEvent::KeyPress) {
