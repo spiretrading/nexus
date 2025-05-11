@@ -54,6 +54,7 @@ struct FRowCover : QWidget {
   void unmount() {
     auto item = get_item();
     auto body = item->unmount();
+    unmatch(*body, PriceLevel());
     delete body;
   }
 
