@@ -97,10 +97,6 @@ struct Stylist::StyleEventFilter : QObject {
 };
 
 Stylist::~Stylist() {
-  while(!m_matches.empty()) {
-    auto selector = *m_matches.begin();
-    unmatch(selector);
-  }
   m_delete_signal();
   get_animation_timer().disconnect(m_animation_connection);
   for(auto& rule : m_rules) {
@@ -266,7 +262,8 @@ void Stylist::unmatch(const Selector& selector) {
 
 void Stylist::unmatch_all() {
   while(!m_matches.empty()) {
-    unmatch(*m_matches.begin());
+    auto selector = std::move(*m_matches.begin());
+    unmatch(selector);
   }
 }
 

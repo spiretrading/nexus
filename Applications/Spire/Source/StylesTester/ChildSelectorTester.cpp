@@ -1,8 +1,10 @@
 #include <doctest/doctest.h>
+#include <boost/optional/optional.hpp>
 #include <QWidget>
 #include "Spire/Styles/Selectors.hpp"
 #include "Spire/StylesTester/StylesTester.hpp"
 
+using namespace boost;
 using namespace Spire;
 using namespace Spire::Styles;
 using namespace Spire::Styles::Tests;
@@ -53,6 +55,43 @@ TEST_SUITE("ChildSelector") {
           updates.push_back({std::move(additions), std::move(removals)});
         });
       require_selection(updates, graph, {"C", "D"}, {});
+    });
+  }
+
+  TEST_CASE("recycle") {
+    run_test([] {
+      auto parent = QWidget();
+      auto updates = std::deque<SelectionUpdate>();
+      auto connection = select(ChildSelector(Any(), Any()),
+        find_stylist(parent), [&] (auto&& additions, auto&& removals) {
+          updates.push_back({std::move(additions), std::move(removals)});
+        });
+      REQUIRE(updates.empty());
+      auto child = optional<QWidget>();
+      child.emplace();
+      child->setParent(&parent);
+      REQUIRE(updates.size() == 1);
+      auto update = updates.front();
+      updates.pop_front();
+      REQUIRE(update.m_additions.size() == 1);
+      REQUIRE(update.m_additions.contains(&find_stylist(*child)));
+      REQUIRE(update.m_removals.empty());
+      auto child_stylist = &find_stylist(*child);
+      child = none;
+      REQUIRE(updates.size() == 1);
+      update = updates.front();
+      updates.pop_front();
+      REQUIRE(update.m_removals.size() == 1);
+      REQUIRE(update.m_removals.contains(child_stylist));
+      REQUIRE(update.m_additions.empty());
+      child.emplace();
+      child->setParent(&parent);
+      REQUIRE(updates.size() == 1);
+      update = updates.front();
+      updates.pop_front();
+      REQUIRE(update.m_additions.size() == 1);
+      REQUIRE(update.m_additions.contains(&find_stylist(*child)));
+      REQUIRE(update.m_removals.empty());
     });
   }
 }
