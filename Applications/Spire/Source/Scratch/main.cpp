@@ -41,10 +41,10 @@ struct FRowCover : QWidget {
     auto item = new FTableItem();
     layout()->addWidget(item);
     update_style(*this, [] (auto& style) {
-      style.get(+Any() > Any() > PriceLevel()).
-        set(BackgroundColor(QColor(0xFF0000)));
-      style.get(ChildSelector(
-          +Any() > Any() > PriceLevel(), Any() > Any())).
+      auto row_selector =
+        ChildSelector(+Any(), ChildSelector(Any(), PriceLevel()));
+      style.get(row_selector).set(BackgroundColor(QColor(0xFF0000)));
+      style.get(ChildSelector(row_selector, ChildSelector(Any(), Any()))).
         set(TextColor(QColor(0x00FF00)));
     });
     connect_style_signal(*this, std::bind_front(&FRowCover::on_style, this));
