@@ -86,47 +86,20 @@ struct FRowCover : QWidget {
 };
 
 struct FTableBody : QWidget {
-  std::deque<FRowCover*> m_recycled_rows;
+  FRowCover* m_row;
 
   FTableBody() {
     setLayout(make_vbox_layout());
+    m_row = new FRowCover(this);
+    layout()->addWidget(m_row);
   }
 
   void add() {
-    add_row();
+    m_row->mount();
   }
 
   void remove() {
-    auto item = layout()->takeAt(0);
-    destroy(static_cast<FRowCover*>(item->widget()));
-    delete item;
-  }
-
-  void destroy(FRowCover* row) {
-    row->unmount();
-    m_recycled_rows.push_back(row);
-    row->hide();
-  }
-
-  FRowCover* make_row_cover() {
-    if(m_recycled_rows.empty()) {
-      return new FRowCover(this);
-    }
-    auto row = m_recycled_rows.front();
-    m_recycled_rows.pop_front();
-    return row;
-  }
-
-  FRowCover* mount_row() {
-    auto row = make_row_cover();
-    row->mount();
-    layout()->addWidget(row);
-    row->show();
-    return row;
-  }
-
-  void add_row() {
-    mount_row();
+    m_row->unmount();
   }
 };
 
