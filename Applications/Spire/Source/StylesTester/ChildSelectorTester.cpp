@@ -9,6 +9,18 @@ using namespace Spire;
 using namespace Spire::Styles;
 using namespace Spire::Styles::Tests;
 
+namespace {
+  void require_selection(std::deque<SelectionUpdate>& updates,
+      const std::unordered_set<const Stylist*>& additions,
+      const std::unordered_set<const Stylist*>& removals) {
+    REQUIRE(updates.size() >= 1);
+    auto update = std::move(updates.front());
+    updates.pop_front();
+    REQUIRE(update.m_additions == additions);
+    REQUIRE(update.m_removals == removals);
+  }
+}
+
 TEST_SUITE("ChildSelector") {
   TEST_CASE("equality") {
     REQUIRE(ChildSelector(Foo(), Foo()) == ChildSelector(Foo(), Foo()));
@@ -98,43 +110,35 @@ TEST_SUITE("ChildSelector") {
   TEST_CASE("flip_compound_child") {
     run_test([] {
       auto parent = QWidget();
-      auto updates = std::deque<SelectionUpdate>();
-      auto connection =
-        select(ChildSelector(+Any(), ChildSelector(Any(), Foo())),
+      auto updates_a = std::deque<SelectionUpdate>();
+      auto row_selector = ChildSelector(+Any(), ChildSelector(Any(), Foo()));
+      auto connection_a = select(row_selector, find_stylist(parent),
+        [&] (auto&& additions, auto&& removals) {
+          updates_a.push_back({std::move(additions), std::move(removals)});
+        });
+      auto updates_b = std::deque<SelectionUpdate>();
+      auto connection_b =
+        select(ChildSelector(row_selector, ChildSelector(Any(), Any())),
           find_stylist(parent), [&] (auto&& additions, auto&& removals) {
-            updates.push_back({std::move(additions), std::move(removals)});
+            updates_b.push_back({std::move(additions), std::move(removals)});
           });
-      REQUIRE(updates.empty());
-      auto child_a = optional<QWidget>();
-      child_a.emplace();
+      REQUIRE(updates_a.empty());
+      auto child_a = new QWidget();
       child_a->setParent(&parent);
-      REQUIRE(updates.empty());
-      auto child_b = optional<QWidget>();
-      child_b.emplace();
-      match(*child_b, Foo());
-      child_b->setParent(&*child_a);
-      REQUIRE(updates.size() == 1);
-      auto update = updates.front();
-      updates.pop_front();
-      REQUIRE(update.m_additions.size() == 1);
-      REQUIRE(update.m_additions.contains(&find_stylist(parent)));
-      REQUIRE(update.m_removals.empty());
-      child_b = none;
-      REQUIRE(updates.size() == 1);
-      update = updates.front();
-      updates.pop_front();
-      REQUIRE(update.m_removals.size() == 1);
-      REQUIRE(update.m_removals.contains(&find_stylist(parent)));
-      REQUIRE(update.m_additions.empty());
-      child_b.emplace();
-      match(*child_b, Foo());
-      child_b->setParent(&*child_a);
-      REQUIRE(updates.size() == 1);
-      update = updates.front();
-      updates.pop_front();
-      REQUIRE(update.m_additions.size() == 1);
-      REQUIRE(update.m_additions.contains(&find_stylist(parent)));
-      REQUIRE(update.m_removals.empty());
+      REQUIRE(updates_a.empty());
+      for(auto i = 0; i != 100; ++i) {
+        auto child_b = new QWidget();
+        match(*child_b, Foo());
+        child_b->setParent(&*child_a);
+        require_selection(updates_a, {&find_stylist(parent)}, {});
+        require_selection(updates_b, {&find_stylist(*child_b)}, {});
+        auto child_b_stylist = &find_stylist(*child_b);
+        child_b->setParent(nullptr);
+        unmatch(*child_b, Foo());
+        delete child_b;
+        require_selection(updates_a, {}, {&find_stylist(parent)});
+        require_selection(updates_b, {}, {child_b_stylist});
+      }
     });
   }
 }
