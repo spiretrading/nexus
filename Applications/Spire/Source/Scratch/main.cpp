@@ -40,6 +40,13 @@ struct FRowCover : QWidget {
     setLayout(make_vbox_layout());
     auto item = new FTableItem();
     layout()->addWidget(item);
+    update_style(*this, [] (auto& style) {
+      style.get(+Any() > Any() > PriceLevel()).
+        set(BackgroundColor(QColor(0xFF0000)));
+      style.get(ChildSelector(
+          +Any() > Any() > PriceLevel(), Any() > Any())).
+        set(TextColor(QColor(0x00FF00)));
+    });
     connect_style_signal(*this, std::bind_front(&FRowCover::on_style, this));
   }
 
@@ -129,13 +136,6 @@ int main(int argc, char** argv) {
   application.setApplicationName(QObject::tr("Scratch"));
   initialize_resources();
   auto body = FTableBody();
-  update_style(body, [] (auto& style) {
-    style.get(Any() > +Any() > Any() > PriceLevel()).
-      set(BackgroundColor(QColor(0xFF0000)));
-    style.get(ChildSelector(
-        Any() > +Any() > Any() > PriceLevel(), Any() > Any())).
-      set(TextColor(QColor(0x00FF00)));
-  });
   body.add();
   body.show();
   auto is_remove = true;

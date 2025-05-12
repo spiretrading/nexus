@@ -94,4 +94,48 @@ TEST_SUITE("ChildSelector") {
       REQUIRE(update.m_removals.empty());
     });
   }
+
+  TEST_CASE("flip_compound_child") {
+    run_test([] {
+      auto parent = QWidget();
+      auto updates = std::deque<SelectionUpdate>();
+      auto connection =
+        select(ChildSelector(Any(), ChildSelector(+Foo(), Bar())),
+          find_stylist(parent), [&] (auto&& additions, auto&& removals) {
+            updates.push_back({std::move(additions), std::move(removals)});
+          });
+      REQUIRE(updates.empty());
+      auto child_a = optional<QWidget>();
+      child_a.emplace();
+      match(*child_a, Foo());
+      child_a->setParent(&parent);
+      REQUIRE(updates.empty());
+      auto child_b = optional<QWidget>();
+      child_b.emplace();
+      match(*child_b, Bar());
+      child_b->setParent(&*child_a);
+      REQUIRE(updates.size() == 1);
+      auto update = updates.front();
+      updates.pop_front();
+      REQUIRE(update.m_additions.size() == 1);
+      REQUIRE(update.m_additions.contains(&find_stylist(*child_a)));
+      REQUIRE(update.m_removals.empty());
+      child_b = none;
+      REQUIRE(updates.size() == 1);
+      update = updates.front();
+      updates.pop_front();
+      REQUIRE(update.m_removals.size() == 1);
+      REQUIRE(update.m_removals.contains(&find_stylist(*child_a)));
+      REQUIRE(update.m_additions.empty());
+      child_b.emplace();
+      match(*child_b, Bar());
+      child_b->setParent(&*child_a);
+      REQUIRE(updates.size() == 1);
+      update = updates.front();
+      updates.pop_front();
+      REQUIRE(update.m_additions.size() == 1);
+      REQUIRE(update.m_additions.contains(&find_stylist(*child_a)));
+      REQUIRE(update.m_removals.empty());
+    });
+  }
 }
