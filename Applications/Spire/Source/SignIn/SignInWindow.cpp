@@ -53,20 +53,6 @@ namespace {
     return style;
   }
 
-  auto SERVER_BOX_STYLE(StyleSheet style) {
-    style.get(Hover() || FocusIn()).
-      set(border_color(QColor(0xFFA95E)));
-    style.get(Any() > is_a<DropDownList>() >
-      is_a<ListView>() > is_a<ListItem>() > Body()).set(
-        FontSize(scale_height(14)));
-    style.get(Any() > is_a<DropDownList>() >
-      is_a<ListView>() > is_a<ListItem>()).set(
-        vertical_padding(scale_height(7)));
-    style.get(Any() > is_a<TextBox>()).
-      set(FontSize(scale_height(14)));
-    return style;
-  }
-
   auto SIGN_IN_BUTTON_STYLE() {
     auto style = StyleSheet();
     auto font = QFont("Roboto");
@@ -97,6 +83,20 @@ namespace {
     style.get(Any() > is_a<TextBox>()).
       set(border_size(0)).
       set(EchoMode(QLineEdit::EchoMode::Password)).
+      set(FontSize(scale_height(14)));
+    return style;
+  }
+
+  auto SERVER_BOX_STYLE(StyleSheet style) {
+    style.get(Hover() || FocusIn()).
+      set(border_color(QColor(0xFFA95E)));
+    style.get(Any() > is_a<DropDownList>() >
+        is_a<ListView>() > is_a<ListItem>() > Body()).
+      set(FontSize(scale_height(14)));
+    style.get(Any() > is_a<DropDownList>() >
+        is_a<ListView>() > is_a<ListItem>()).
+      set(vertical_padding(scale_height(7)));
+    style.get(Any() > is_a<TextBox>()).
       set(FontSize(scale_height(14)));
     return style;
   }
@@ -271,7 +271,7 @@ QWidget* SignInWindow::make_password_input_box() {
     {scale_width(2), scale_height(2), scale_width(2), scale_height(2)});
   layout->addWidget(m_chroma_hash_widget);
   auto box = new Box(body);
-  update_style(*box, [&] (auto& style) {
+  update_style(*box, [] (auto& style) {
     style = PASSWORD_INPUT_STYLE(style);
   });
   box->setFixedSize(scale(280, 30));
@@ -283,7 +283,7 @@ void SignInWindow::layout_sign_in() {
   auto layout = make_vbox_layout();
   layout->addSpacing(scale_height(10));
   m_status_label = make_label("");
-  update_style(*m_status_label, [&] (auto& style) {
+  update_style(*m_status_label, [] (auto& style) {
     style = STATUS_LABEL_STYLE(style);
   });
   layout->addWidget(m_status_label, 0, Qt::AlignCenter);
@@ -295,7 +295,7 @@ void SignInWindow::layout_sign_in() {
       m_sign_in_button->setDisabled(current.isEmpty());
     });
   m_username_text_box->set_placeholder(tr("Username"));
-  update_style(*m_username_text_box, [&] (auto& style) {
+  update_style(*m_username_text_box, [] (auto& style) {
     style = USER_NAME_INPUT_STYLE(style);
   });
   m_username_key_observer.emplace(*m_username_text_box);
@@ -310,7 +310,7 @@ void SignInWindow::layout_sign_in() {
     m_server_box = new DropDownBox(server_list);
     m_server_box->setFixedSize(scale(280, 30));
     m_server_box->get_current()->set(0);
-    update_style(*m_server_box, [&] (auto& style) {
+    update_style(*m_server_box, [] (auto& style) {
       style = SERVER_BOX_STYLE(style);
     });
     layout->addWidget(m_server_box, 0, Qt::AlignCenter);
@@ -323,7 +323,7 @@ void SignInWindow::layout_sign_in() {
   button_layout->setContentsMargins(scale_width(52), 0, scale_width(52), 0);
   auto build_label =
     make_label(QString(tr("Build ")) + QString::fromStdString(m_version));
-  update_style(*build_label, [&] (auto& style) {
+  update_style(*build_label, [] (auto& style) {
     style = BUILD_LABEL_STYLE(style);
   });
   button_layout->addWidget(build_label);
