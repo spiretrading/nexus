@@ -175,6 +175,10 @@ void ServiceBookViewModel::on_book_quote(const BookQuote& quote) {
       auto insert_index = std::distance(quotes->begin(), insert_iterator);
       if(insert_index > existing_index) {
         --insert_index;
+        if(insert_index == existing_index) {
+          *existing_iterator = quote;
+          return;
+        }
       }
       quotes->remove(existing_index);
       quotes->insert(quote, insert_index);
