@@ -49,7 +49,8 @@ struct MouseObserver::EventFilter : QObject {
       auto filter = m_mouse_signal(*static_cast<QWidget*>(watched),
         *static_cast<QMouseEvent*>(event));
       return filter;
-    } else if(event->type() == QEvent::ChildAdded) {
+    } else if(event->type() == QEvent::ChildAdded ||
+        event->type() == QEvent::ChildPolished) {
       auto& child = *static_cast<QChildEvent&>(*event).child();
       if(child.isWidgetType()) {
         add(static_cast<QWidget&>(child));
@@ -62,13 +63,17 @@ struct MouseObserver::EventFilter : QObject {
   }
 
   void add(QWidget& child) {
+    auto i = m_children.find(&child);
+    if(i != m_children.end()) {
+      return;
+    }
     auto observer = std::make_unique<MouseObserver>(child);
     auto connection = observer->connect_filtered_mouse_signal(
       [=] (auto& target, auto& event) {
         return m_mouse_signal(target, event);
       });
     auto child_entry = Child(std::move(observer), std::move(connection));
-    m_children.insert(std::pair(&child, std::move(child_entry)));
+    m_children.insert(i, std::pair(&child, std::move(child_entry)));
   }
 };
 
