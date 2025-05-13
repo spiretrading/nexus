@@ -23,7 +23,7 @@ namespace {
     }
   }
 
-  struct ChildObserver : public QObject {
+  struct ChildObserver : QObject {
     SelectionUpdateSignal m_on_update;
     std::unordered_map<const QObject*, const Stylist*> m_children_stylists;
     scoped_connection m_link_connection;
@@ -60,7 +60,8 @@ namespace {
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
-      if(event->type() == QEvent::ChildAdded) {
+      if(event->type() == QEvent::ChildAdded ||
+          event->type() == QEvent::ChildPolished) {
         auto& child = *static_cast<QChildEvent&>(*event).child();
         if(child.isWidgetType()) {
           auto& stylist = find_stylist(static_cast<QWidget&>(child));

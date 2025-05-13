@@ -154,7 +154,7 @@ void Stylist::set_style(StyleSheet style) {
   apply(*m_style);
   for(auto& rule : rules) {
     auto i = std::find_if(m_rules.begin(), m_rules.end(),
-      [&] (auto& item) {
+      [&] (const auto& item) {
         return item.get() == rule.get();
       });
     if(i == m_rules.end()) {
