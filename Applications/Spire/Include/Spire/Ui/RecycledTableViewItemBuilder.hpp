@@ -72,8 +72,8 @@ namespace Spire {
     } else {
       auto widget = pool.front();
       pool.pop_front();
-      widget->setAttribute(Qt::WA_DontShowOnScreen, false);
       m_builder.reset(*widget, table, row, column);
+      widget->setAttribute(Qt::WA_DontShowOnScreen, false);
       return widget;
     }
   }
