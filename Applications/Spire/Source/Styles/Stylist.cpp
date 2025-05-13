@@ -97,6 +97,7 @@ struct Stylist::StyleEventFilter : QObject {
 };
 
 Stylist::~Stylist() {
+  unmatch_all();
   m_delete_signal();
   get_animation_timer().disconnect(m_animation_connection);
   for(auto& rule : m_rules) {
