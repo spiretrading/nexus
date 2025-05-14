@@ -263,8 +263,7 @@ void Stylist::unmatch(const Selector& selector) {
 
 void Stylist::unmatch_all() {
   while(!m_matches.empty()) {
-    auto selector = *m_matches.begin();
-    unmatch(selector);
+    unmatch(*m_matches.begin());
   }
 }
 
