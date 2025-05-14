@@ -73,7 +73,6 @@ namespace Spire {
       auto widget = pool.front();
       pool.pop_front();
       m_builder.reset(*widget, table, row, column);
-      widget->setAttribute(Qt::WA_DontShowOnScreen, false);
       return widget;
     }
   }
@@ -82,7 +81,6 @@ namespace Spire {
   void RecycledTableViewItemBuilder<B>::unmount(QWidget* widget) {
     auto& pool = get_pool(m_columns[widget]);
     pool.push_back(widget);
-    widget->setAttribute(Qt::WA_DontShowOnScreen);
   }
 
   template<typename B>
