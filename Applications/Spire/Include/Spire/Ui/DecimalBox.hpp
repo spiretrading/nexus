@@ -143,6 +143,11 @@ namespace Styles {
         POSITIVE,
         NEGATIVE
       };
+      enum class ButtonType {
+        NONE,
+        UP,
+        DOWN
+      };
       struct DecimalToTextModel;
       struct EditableData {
         mutable SubmitSignal m_submit_signal;
@@ -150,10 +155,10 @@ namespace Styles {
         boost::optional<Decimal> m_submission;
         Box* m_up_button;
         Box* m_down_button;
-        Box* m_active_button;
         boost::optional<FocusObserver> m_focus_observer;
         int m_repeat_delay_timer_id;
         int m_repeat_interval_timer_id;
+        ButtonType m_pressed_button_type;
       };
       std::shared_ptr<OptionalDecimalModel> m_current;
       std::shared_ptr<DecimalToTextModel> m_adaptor_model;

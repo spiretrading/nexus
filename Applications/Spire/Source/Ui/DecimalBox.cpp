@@ -50,7 +50,7 @@ namespace {
     return size;
   }
 
-  auto is_mouse_inside(const QWidget& widget) {
+  auto is_under_mouse(const QWidget& widget) {
     return widget.rect().contains(widget.mapFromGlobal(QCursor::pos()));
   }
 
@@ -553,17 +553,15 @@ void DecimalBox::mousePressEvent(QMouseEvent* event) {
   if(m_data && event->button() == Qt::LeftButton) {
     event->accept();
     if(m_data->m_up_button->geometry().contains(event->pos())) {
-      m_data->m_active_button = m_data->m_up_button;
+      m_data->m_pressed_button_type = ButtonType::UP;
       increment();
       m_data->m_repeat_delay_timer_id = startTimer(REPEAT_DELAY_TIMER_INTERVAL);
       return;
     } else if(m_data->m_down_button->geometry().contains(event->pos())) {
-      m_data->m_active_button = m_data->m_down_button;
+      m_data->m_pressed_button_type = ButtonType::DOWN;
       decrement();
       m_data->m_repeat_delay_timer_id = startTimer(REPEAT_DELAY_TIMER_INTERVAL);
       return;
-    } else {
-      m_data->m_active_button = nullptr;
     }
   }
   QWidget::mousePressEvent(event);
@@ -572,6 +570,7 @@ void DecimalBox::mousePressEvent(QMouseEvent* event) {
 void DecimalBox::mouseReleaseEvent(QMouseEvent* event) {
   if(event->button() == Qt::LeftButton) {
     event->accept();
+    m_data->m_pressed_button_type = ButtonType::NONE;
     reset();
     return;
   }
@@ -600,13 +599,13 @@ void DecimalBox::timerEvent(QTimerEvent* event) {
     m_data->m_repeat_delay_timer_id = -1;
     m_data->m_repeat_interval_timer_id = startTimer(REPEAT_TIMER_INTERVAL);
   } else if(event->timerId() == m_data->m_repeat_interval_timer_id) {
-    if(m_data->m_up_button == m_data->m_active_button &&
+    if(m_data->m_pressed_button_type == ButtonType::UP &&
         m_data->m_up_button->isEnabled() &&
-        is_mouse_inside(*m_data->m_up_button)) {
+        is_under_mouse(*m_data->m_up_button)) {
       increment();
-    } else if(m_data->m_down_button == m_data->m_active_button &&
+    } else if(m_data->m_pressed_button_type == ButtonType::DOWN &&
         m_data->m_down_button->isEnabled() &&
-        is_mouse_inside(*m_data->m_down_button)) {
+        is_under_mouse(*m_data->m_down_button)) {
       decrement();
     } else {
       reset();
@@ -650,7 +649,7 @@ void DecimalBox::initialize_editable_data() const {
     std::bind_front(&DecimalBox::on_submit, self));
   m_text_box.connect_reject_signal(
     std::bind_front(&DecimalBox::on_reject, self));
-  m_data->m_active_button = nullptr;
+  m_data->m_pressed_button_type = ButtonType::NONE;
   m_data->m_repeat_delay_timer_id = -1;
   m_data->m_repeat_interval_timer_id = -1;
   m_data->m_focus_observer.emplace(*self);
@@ -686,7 +685,6 @@ void DecimalBox::reset() {
       killTimer(m_data->m_repeat_interval_timer_id);
       m_data->m_repeat_interval_timer_id = -1;
     }
-    m_data->m_active_button = nullptr;
   }
 }
 
