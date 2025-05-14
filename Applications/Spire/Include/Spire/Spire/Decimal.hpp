@@ -2,6 +2,7 @@
 #define SPIRE_DECIMAL_HPP
 #include <memory>
 #include <boost/multiprecision/cpp_dec_float.hpp>
+#include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ScalarValueModel.hpp"
 
@@ -159,6 +160,8 @@ namespace Spire {
   template<typename T>
   QValidator::State ToDecimalModel<T>::set(
       const boost::optional<Decimal>& value) {
+    auto blocker =
+      boost::signals2::shared_connection_block(m_update_connection);
     auto state = m_model->set(from_decimal<Type>(value));
     if(state == QValidator::State::Invalid) {
       return QValidator::State::Invalid;

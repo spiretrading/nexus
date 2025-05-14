@@ -553,17 +553,17 @@ void DecimalBox::mousePressEvent(QMouseEvent* event) {
   if(m_data && event->button() == Qt::LeftButton) {
     event->accept();
     if(m_data->m_up_button->geometry().contains(event->pos())) {
-      m_tick = TickIndicator::UP;
+      m_data->m_active_button = m_data->m_up_button;
       increment();
       m_data->m_repeat_delay_timer_id = startTimer(REPEAT_DELAY_TIMER_INTERVAL);
       return;
     } else if(m_data->m_down_button->geometry().contains(event->pos())) {
-      m_tick = TickIndicator::DOWN;
+      m_data->m_active_button = m_data->m_down_button;
       decrement();
       m_data->m_repeat_delay_timer_id = startTimer(REPEAT_DELAY_TIMER_INTERVAL);
       return;
     } else {
-      m_tick = TickIndicator::NONE;
+      m_data->m_active_button = nullptr;
     }
   }
   QWidget::mousePressEvent(event);
@@ -595,23 +595,19 @@ void DecimalBox::timerEvent(QTimerEvent* event) {
     QWidget::timerEvent(event);
     return;
   }
-  auto update = [&] {
-    if(m_tick == TickIndicator::UP) {
-      increment();
-    } else if(m_tick == TickIndicator::DOWN) {
-      decrement();
-    }
-  };
   if(event->timerId() == m_data->m_repeat_delay_timer_id) {
     killTimer(m_data->m_repeat_delay_timer_id);
     m_data->m_repeat_delay_timer_id = -1;
     m_data->m_repeat_interval_timer_id = startTimer(REPEAT_TIMER_INTERVAL);
   } else if(event->timerId() == m_data->m_repeat_interval_timer_id) {
-    if(m_tick == TickIndicator::UP && m_data->m_up_button->isEnabled() &&
-          is_mouse_inside(*m_data->m_up_button) ||
-        m_tick == TickIndicator::DOWN && m_data->m_down_button->isEnabled() &&
-          is_mouse_inside(*m_data->m_down_button)) {
-      update();
+    if(m_data->m_up_button == m_data->m_active_button &&
+        m_data->m_up_button->isEnabled() &&
+        is_mouse_inside(*m_data->m_up_button)) {
+      increment();
+    } else if(m_data->m_down_button == m_data->m_active_button &&
+        m_data->m_down_button->isEnabled() &&
+        is_mouse_inside(*m_data->m_down_button)) {
+      decrement();
     } else {
       reset();
     }
@@ -654,6 +650,7 @@ void DecimalBox::initialize_editable_data() const {
     std::bind_front(&DecimalBox::on_submit, self));
   m_text_box.connect_reject_signal(
     std::bind_front(&DecimalBox::on_reject, self));
+  m_data->m_active_button = nullptr;
   m_data->m_repeat_delay_timer_id = -1;
   m_data->m_repeat_interval_timer_id = -1;
   m_data->m_focus_observer.emplace(*self);
@@ -689,8 +686,8 @@ void DecimalBox::reset() {
       killTimer(m_data->m_repeat_interval_timer_id);
       m_data->m_repeat_interval_timer_id = -1;
     }
+    m_data->m_active_button = nullptr;
   }
-  m_tick = TickIndicator::NONE;
 }
 
 void DecimalBox::step_by(const Decimal& value) {
@@ -738,10 +735,10 @@ void DecimalBox::on_current(const optional<Decimal>& current) {
     } else if(m_tick == TickIndicator::UP) {
       unmatch(*this, Uptick());
     }
-    if(*current > *m_last_current + m_modifiers[Qt::NoModifier]) {
+    if(*current > *m_last_current) {
       m_tick = TickIndicator::UP;
       match(*this, Uptick());
-    } else if(*current < *m_last_current - m_modifiers[Qt::NoModifier]) {
+    } else if(*current < *m_last_current) {
       m_tick = TickIndicator::DOWN;
       match(*this, Downtick());
     }

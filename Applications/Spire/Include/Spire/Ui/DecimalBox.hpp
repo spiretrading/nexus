@@ -150,6 +150,7 @@ namespace Styles {
         boost::optional<Decimal> m_submission;
         Box* m_up_button;
         Box* m_down_button;
+        Box* m_active_button;
         boost::optional<FocusObserver> m_focus_observer;
         int m_repeat_delay_timer_id;
         int m_repeat_interval_timer_id;
