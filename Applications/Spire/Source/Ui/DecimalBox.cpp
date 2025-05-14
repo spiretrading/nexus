@@ -8,7 +8,6 @@
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Box.hpp"
-#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -19,6 +18,9 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto REPEAT_DELAY_TIMER_INTERVAL = 500;
+  const auto REPEAT_TIMER_INTERVAL = 150;
+
   auto validate_fractional_part(const Decimal& value, int decimal_places) {
     if(value < pow(Decimal(10), -decimal_places)) {
       return QValidator::State::Intermediate;
@@ -48,8 +50,12 @@ namespace {
     return size;
   }
 
+  auto is_mouse_inside(const QWidget& widget) {
+    return widget.rect().contains(widget.mapFromGlobal(QCursor::pos()));
+  }
+
   auto make_button(QImage icon, QWidget& parent) {
-    auto button = make_icon_button(std::move(icon), &parent);
+    auto button = new Box(new Icon(std::move(icon)), &parent);
     update_style(*button, [&] (auto& style) {
       style.get(Any() > Body()).
         set(BackgroundColor(QColor(0xFFFFFF))).
@@ -453,8 +459,8 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
   enclose(*this, m_text_box);
   proxy_style(*this, m_text_box);
   update_style(*this, [] (auto& style) {
-    style.get(ReadOnly() > is_a<Button>()).set(Visibility::NONE);
-    style.get(+Any() > (is_a<Button>() && !matches(Visibility::NONE))).
+    style.get(ReadOnly() > is_a<Box>()).set(Visibility::NONE);
+    style.get(+Any() > (is_a<Box>() && !matches(Visibility::NONE))).
       set(PaddingRight(scale_width(24)));
   });
   m_style_connection =
@@ -498,6 +504,7 @@ void DecimalBox::set_read_only(bool is_read_only) {
   m_text_box.set_read_only(is_read_only);
   if(is_read_only) {
     match(*this, ReadOnly());
+    reset();
   } else {
     initialize_editable_data();
     unmatch(*this, ReadOnly());
@@ -516,6 +523,19 @@ connection DecimalBox::connect_reject_signal(
   return m_data->m_reject_signal.connect(slot);
 }
 
+void DecimalBox::changeEvent(QEvent* event) {
+  if(event->type() == QEvent::EnabledChange) {
+    if(!isEnabled()) {
+      reset();
+    }
+  } else if(event->type() == QEvent::ActivationChange) {
+    if(!isActiveWindow()) {
+      reset();
+    }
+  }
+  QWidget::changeEvent(event);
+}
+
 void DecimalBox::keyPressEvent(QKeyEvent* event) {
   if(!is_read_only()) {
     if(event->key() == Qt::Key_Up) {
@@ -529,6 +549,35 @@ void DecimalBox::keyPressEvent(QKeyEvent* event) {
   QWidget::keyPressEvent(event);
 }
 
+void DecimalBox::mousePressEvent(QMouseEvent* event) {
+  if(m_data && event->button() == Qt::LeftButton) {
+    event->accept();
+    if(m_data->m_up_button->geometry().contains(event->pos())) {
+      m_tick = TickIndicator::UP;
+      increment();
+      m_data->m_repeat_delay_timer_id = startTimer(REPEAT_DELAY_TIMER_INTERVAL);
+      return;
+    } else if(m_data->m_down_button->geometry().contains(event->pos())) {
+      m_tick = TickIndicator::DOWN;
+      decrement();
+      m_data->m_repeat_delay_timer_id = startTimer(REPEAT_DELAY_TIMER_INTERVAL);
+      return;
+    } else {
+      m_tick = TickIndicator::NONE;
+    }
+  }
+  QWidget::mousePressEvent(event);
+}
+
+void DecimalBox::mouseReleaseEvent(QMouseEvent* event) {
+  if(event->button() == Qt::LeftButton) {
+    event->accept();
+    reset();
+    return;
+  }
+  QWidget::mouseReleaseEvent(event);
+}
+
 void DecimalBox::resizeEvent(QResizeEvent* event) {
   update_button_positions();
   QWidget::resizeEvent(event);
@@ -539,6 +588,36 @@ void DecimalBox::showEvent(QShowEvent* event) {
     initialize_editable_data();
   }
   QWidget::showEvent(event);
+}
+
+void DecimalBox::timerEvent(QTimerEvent* event) {
+  if(!m_data) {
+    QWidget::timerEvent(event);
+    return;
+  }
+  auto update = [&] {
+    if(m_tick == TickIndicator::UP) {
+      increment();
+    } else if(m_tick == TickIndicator::DOWN) {
+      decrement();
+    }
+  };
+  if(event->timerId() == m_data->m_repeat_delay_timer_id) {
+    killTimer(m_data->m_repeat_delay_timer_id);
+    m_data->m_repeat_delay_timer_id = -1;
+    m_data->m_repeat_interval_timer_id = startTimer(REPEAT_TIMER_INTERVAL);
+  } else if(event->timerId() == m_data->m_repeat_interval_timer_id) {
+    if(m_tick == TickIndicator::UP && m_data->m_up_button->isEnabled() &&
+          is_mouse_inside(*m_data->m_up_button) ||
+        m_tick == TickIndicator::DOWN && m_data->m_down_button->isEnabled() &&
+          is_mouse_inside(*m_data->m_down_button)) {
+      update();
+    } else {
+      reset();
+    }
+  } else {
+    QWidget::timerEvent(event);
+  }
 }
 
 void DecimalBox::wheelEvent(QWheelEvent* event) {
@@ -568,17 +647,18 @@ void DecimalBox::initialize_editable_data() const {
   m_data->m_submission = m_current->get();
   m_data->m_up_button = make_up_button(*self);
   m_data->m_up_button->show();
-  m_data->m_up_button->connect_click_signal(
-    std::bind_front(&DecimalBox::increment, self));
   m_data->m_down_button = make_down_button(*self);
   m_data->m_down_button->show();
-  m_data->m_down_button->connect_click_signal(
-    std::bind_front(&DecimalBox::decrement, self));
   self->update_button_positions();
   m_text_box.connect_submit_signal(
     std::bind_front(&DecimalBox::on_submit, self));
   m_text_box.connect_reject_signal(
     std::bind_front(&DecimalBox::on_reject, self));
+  m_data->m_repeat_delay_timer_id = -1;
+  m_data->m_repeat_interval_timer_id = -1;
+  m_data->m_focus_observer.emplace(*self);
+  m_data->m_focus_observer->connect_state_signal(
+    std::bind_front(&DecimalBox::on_focus, self));
 }
 
 void DecimalBox::decrement() {
@@ -597,6 +677,20 @@ Decimal DecimalBox::get_increment() const {
     return increment.value();
   }
   return m_modifiers[Qt::NoModifier];
+}
+
+void DecimalBox::reset() {
+  if(m_data) {
+    if(m_data->m_repeat_delay_timer_id != -1) {
+      killTimer(m_data->m_repeat_delay_timer_id);
+      m_data->m_repeat_delay_timer_id = -1;
+    }
+    if(m_data->m_repeat_interval_timer_id != -1) {
+      killTimer(m_data->m_repeat_interval_timer_id);
+      m_data->m_repeat_interval_timer_id = -1;
+    }
+  }
+  m_tick = TickIndicator::NONE;
 }
 
 void DecimalBox::step_by(const Decimal& value) {
@@ -644,10 +738,10 @@ void DecimalBox::on_current(const optional<Decimal>& current) {
     } else if(m_tick == TickIndicator::UP) {
       unmatch(*this, Uptick());
     }
-    if(*current > *m_last_current) {
+    if(*current > *m_last_current + m_modifiers[Qt::NoModifier]) {
       m_tick = TickIndicator::UP;
       match(*this, Uptick());
-    } else if(*current < *m_last_current) {
+    } else if(*current < *m_last_current - m_modifiers[Qt::NoModifier]) {
       m_tick = TickIndicator::DOWN;
       match(*this, Downtick());
     }
@@ -682,6 +776,12 @@ void DecimalBox::on_current(const optional<Decimal>& current) {
     m_data->m_down_button->setEnabled(!is_read_only() &&
       (!m_current->get_minimum() ||
         !m_current->get() || m_current->get() > m_current->get_minimum()));
+  }
+}
+
+void DecimalBox::on_focus(const FocusObserver::State& state) {
+  if(state == FocusObserver::State::NONE) {
+    reset();
   }
 }
 

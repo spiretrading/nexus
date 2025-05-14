@@ -4,6 +4,7 @@
 #include <QHash>
 #include "Spire/Spire/Decimal.hpp"
 #include "Spire/Styles/Stylist.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -122,9 +123,13 @@ namespace Styles {
         const RejectSignal::slot_type& slot) const;
 
     protected:
+      void changeEvent(QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
+      void mouseReleaseEvent(QMouseEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
+      void timerEvent(QTimerEvent* event) override;
       void wheelEvent(QWheelEvent* event) override;
 
     private:
@@ -143,8 +148,11 @@ namespace Styles {
         mutable SubmitSignal m_submit_signal;
         mutable RejectSignal m_reject_signal;
         boost::optional<Decimal> m_submission;
-        Button* m_up_button;
-        Button* m_down_button;
+        Box* m_up_button;
+        Box* m_down_button;
+        boost::optional<FocusObserver> m_focus_observer;
+        int m_repeat_delay_timer_id;
+        int m_repeat_interval_timer_id;
       };
       std::shared_ptr<OptionalDecimalModel> m_current;
       std::shared_ptr<DecimalToTextModel> m_adaptor_model;
@@ -161,9 +169,11 @@ namespace Styles {
       void decrement();
       void increment();
       Decimal get_increment() const;
+      void reset();
       void step_by(const Decimal& value);
       void update_button_positions();
       void on_current(const boost::optional<Decimal>& current);
+      void on_focus(const FocusObserver::State& state);
       void on_submit(const QString& submission);
       void on_reject(const QString& value);
       void on_style();
