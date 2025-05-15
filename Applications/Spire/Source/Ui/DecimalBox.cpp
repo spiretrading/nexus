@@ -414,8 +414,7 @@ struct DecimalBox::StepButton : QWidget {
   void mouseReleaseEvent(QMouseEvent* event) override {
     if(event->button() == Qt::LeftButton) {
       event->accept();
-      unmatch(*this, Press());
-      reset_timers();
+      reset();
     } else {
       QWidget::mouseReleaseEvent(event);
     }
@@ -431,14 +430,17 @@ struct DecimalBox::StepButton : QWidget {
           rect().contains(mapFromGlobal(QCursor::pos()))) {
         m_press_signal();
       } else {
-        reset_timers();
+        reset();
       }
     } else {
       QWidget::timerEvent(event);
     }
   }
 
-  void reset_timers() {
+  void reset() {
+    if(is_match(*this, Press())) {
+      unmatch(*this, Press());
+    }
     if(m_repeat_delay_timer_id != -1) {
       killTimer(m_repeat_delay_timer_id);
       m_repeat_delay_timer_id = -1;
@@ -451,7 +453,7 @@ struct DecimalBox::StepButton : QWidget {
 
   void on_focus(const FocusObserver::State& state) {
     if(state == FocusObserver::State::NONE) {
-      reset_timers();
+      reset();
     }
   }
 };
