@@ -40,3 +40,29 @@ void Spire::Styles::Tests::require_selection(
     REQUIRE(matches.m_removals.contains(&find_stylist(*graph.at(removal))));
   }
 }
+
+void Spire::Styles::Tests::require_selection(
+    std::deque<SelectionUpdate>& updates,
+    const std::unordered_set<const Stylist*>& additions,
+    const std::unordered_set<const Stylist*>& removals) {
+  REQUIRE(updates.size() >= 1);
+  auto update = std::move(updates.front());
+  updates.pop_front();
+  REQUIRE(update.m_additions == additions);
+  REQUIRE(update.m_removals == removals);
+}
+
+void Spire::Styles::Tests::require_selection(
+    std::deque<SelectionUpdate>& updates,
+    const std::unordered_set<const QWidget*>& additions,
+    const std::unordered_set<const QWidget*>& removals) {
+  auto stylist_additions = std::unordered_set<const Stylist*>();
+  for(auto& addition : additions) {
+    stylist_additions.insert(&find_stylist(*addition));
+  }
+  auto stylist_removals = std::unordered_set<const Stylist*>();
+  for(auto& removal : removals) {
+    stylist_removals.insert(&find_stylist(*removal));
+  }
+  require_selection(updates, stylist_additions, stylist_removals);
+}

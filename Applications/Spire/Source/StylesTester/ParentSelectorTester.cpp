@@ -53,4 +53,22 @@ TEST_SUITE("ParentSelector") {
       require_selection(updates, graph, {"B"}, {});
     });
   }
+
+  TEST_CASE("parent_chain") {
+    run_test([] {
+      auto child = QWidget();
+      auto updates = std::deque<SelectionUpdate>();
+      auto connection =
+        select(ParentSelector(Any(), ParentSelector(Any(), Any())),
+          find_stylist(child), [&] (auto&& additions, auto&& removals) {
+            updates.push_back({std::move(additions), std::move(removals)});
+          });
+      auto parent_a = new QWidget();
+      child.setParent(parent_a);
+      REQUIRE(updates.empty());
+      auto parent_b = new QWidget();
+      parent_a->setParent(parent_b);
+      require_selection(updates, {parent_b}, {});
+    });
+  }
 }

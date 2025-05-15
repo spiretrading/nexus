@@ -120,10 +120,6 @@ const Selector& ChildSelector::get_child() const {
 }
 
 ChildSelector Spire::Styles::operator >(Selector base, Selector child) {
-  if(base.get_type() == typeid(ChildSelector)) {
-    auto& base_child = base.as<ChildSelector>();
-    return base_child.get_base() > (base_child.get_child() > child);
-  }
   return ChildSelector(std::move(base), std::move(child));
 }
 
