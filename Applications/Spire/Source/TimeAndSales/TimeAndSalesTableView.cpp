@@ -1,5 +1,6 @@
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
 #include <QMovie>
+#include <QTimer>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ConstantValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -15,79 +16,18 @@
 
 using namespace boost;
 using namespace boost::posix_time;
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto CELL_VERTICAL_PADDING = 1.5;
-  const auto PULL_DELAY_TIMEOUT_MS = 1000;
+  using IndicatorRow = StateSelector<BboIndicator, struct IndicatorRowTag>;
+  using ShowGrid = StateSelector<void, struct ShowGridTag>;
 
   auto TABLE_BODY_BOTTOM_PADDING() {
     static auto height = scale_height(44);
     return height;
-  }
-
-  struct HeaderItemProperties {
-    Qt::Alignment m_alignment;
-    int m_width;
-  };
-
-  void apply_indicator_style(StyleSheet& style, const Selector& item_selector,
-      const Selector& indicator_selector, const QColor& background_color,
-      const QColor& text_color) {
-    style.get(item_selector > (indicator_selector < is_a<TableItem>() < Row())).
-      set(BackgroundColor(background_color));
-    style.get(item_selector > indicator_selector).
-      set(TextColor(text_color));
-  };
-
-  auto apply_table_view_style(StyleSheet& style) {
-    auto body_selector = Any() > is_a<TableBody>();
-    auto body_item_selector = body_selector > Row() > is_a<TableItem>();
-    auto header_selector = Any() > is_a<TableHeader>();
-    auto font = QFont("Roboto");
-    font.setWeight(QFont::Medium);
-    font.setPixelSize(scale_width(10));
-    style.get(header_selector > is_a<TableHeaderItem>()).
-      set(PaddingLeft(scale_width(4))).
-      set(PaddingTop(scale_height(5))).
-      set(PaddingBottom(scale_height(4)));
-    style.get(
-        header_selector > is_a<TableHeaderItem>() > TableHeaderItem::Label()).
-      set(Font(font));
-    style.get(body_selector).
-      set(grid_color(Qt::transparent)).
-      set(padding(0)).
-      set(spacing(0));
-    style.get(body_selector > Row() > Current()).
-      set(BackgroundColor(Qt::transparent)).
-      set(border_color(QColor(Qt::transparent)));
-    style.get(body_selector > CurrentRow()).
-      set(BackgroundColor(Qt::transparent));
-    style.get(body_selector > CurrentColumn()).
-      set(BackgroundColor(Qt::transparent));
-    style.get(Any() > is_a<TableBody>()).
-      set(PaddingBottom(TABLE_BODY_BOTTOM_PADDING()));
-    apply_indicator_style(style, body_item_selector, AboveAskIndicator(),
-      QColor(0xEBFFF0), QColor(0x007735));
-    apply_indicator_style(style, body_item_selector, AtAskIndicator(),
-      QColor(0xEBFFF0), QColor(0x007735));
-    apply_indicator_style(style, body_item_selector, InsideIndicator(),
-      QColor(0xFFFFFF), QColor(Qt::black));
-    apply_indicator_style(style, body_item_selector, AtBidIndicator(),
-      QColor(0xFFF1F1), QColor(0xB71C1C));
-    apply_indicator_style(style, body_item_selector, BelowBidIndicator(),
-      QColor(0xFFF1F1), QColor(0xB71C1C));
-    style.get(body_item_selector > is_a<TextBox>()).
-      set(border_size(0)).
-      set(horizontal_padding(scale_width(2))).
-      set(vertical_padding(scale_height(CELL_VERTICAL_PADDING))).
-      set(Font(font));
-  }
-
-  auto apply_table_cell_right_align_style(StyleSheet& style) {
-    style.get(Any()).set(TextAlign(Qt::AlignRight | Qt::AlignVCenter));
   }
 
   auto make_header_model() {
@@ -106,6 +46,11 @@ namespace {
     add_item("", "");
     return model;
   }
+
+  struct HeaderItemProperties {
+    Qt::Alignment m_alignment;
+    int m_width;
+  };
 
   auto make_header_item_properties() {
     auto properties = std::vector<HeaderItemProperties>();
@@ -145,28 +90,7 @@ namespace {
       });
   }
 
-  void initialize_table_header(
-      TableView& table_view, const TimeAndSalesProperties& properties) {
-    auto header_properties = make_header_item_properties();
-    auto& header = table_view.get_header();
-    for(auto i = 0; i != TimeAndSalesTableModel::COLUMN_SIZE; ++i) {
-      if(properties.is_visible(
-          static_cast<TimeAndSalesTableModel::Column>(i))) {
-        table_view.show_column(i);
-      } else {
-        table_view.hide_column(i);
-      }
-    }
-    for(auto i = 0; i < std::ssize(header_properties); ++i) {
-      header.get_widths()->set(i, header_properties[i].m_width);
-      update_style(*header.get_item(i), [&] (auto& style) {
-        style.get(Any() > TableHeaderItem::Label()).
-          set(TextAlign(header_properties[i].m_alignment));
-      });
-    }
-  }
-
-  struct TimeAndSalesItemBuilder {
+  struct ItemBuilder {
     QWidget* mount(
         const std::shared_ptr<TableModel>& table, int row, int column) {
       if(column >= TimeAndSalesTableModel::COLUMN_SIZE) {
@@ -176,7 +100,10 @@ namespace {
       auto cell = make_label(QString());
       if(column_id == TimeAndSalesTableModel::Column::PRICE ||
           column_id == TimeAndSalesTableModel::Column::SIZE) {
-        update_style(*cell, apply_table_cell_right_align_style);
+        update_style(*cell, [] (auto& style) {
+          style.get(Any()).
+            set(TextAlign(Qt::AlignRight | Qt::AlignVCenter));
+        });
       }
       reset(*cell, table, row, column);
       return cell;
@@ -202,33 +129,18 @@ namespace {
         current.set(
           QString::fromStdString(table->get<std::string>(row, column)));
       } else if(column_id == TimeAndSalesTableModel::Column::CONDITION) {
-        current.set(
-          to_text(table->get<TimeAndSale::Condition>(row, column)));
+        current.set(to_text(table->get<TimeAndSale::Condition>(row, column)));
       } else {
         current.set(to_text(table->get<std::string>(row, column)));
       }
-      unmatch(cell, UnknownIndicator());
-      unmatch(cell, AboveAskIndicator());
-      unmatch(cell, AtAskIndicator());
-      unmatch(cell, InsideIndicator());
-      unmatch(cell, AtBidIndicator());
-      unmatch(cell, BelowBidIndicator());
+      for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
+        auto indicator = static_cast<BboIndicator>(i);
+        unmatch(cell, IndicatorRow(indicator));
+      }
       auto time_and_sales_table =
         std::static_pointer_cast<TimeAndSalesTableModel>(table);
       auto indicator = time_and_sales_table->get_bbo_indicator(row);
-      if(indicator == BboIndicator::UNKNOWN) {
-        match(cell, UnknownIndicator());
-      } else if(indicator == BboIndicator::ABOVE_ASK) {
-        match(cell, AboveAskIndicator());
-      } else if(indicator == BboIndicator::AT_ASK) {
-        match(cell, AtAskIndicator());
-      } else if(indicator == BboIndicator::INSIDE) {
-        match(cell, InsideIndicator());
-      } else if(indicator == BboIndicator::AT_BID) {
-        match(cell, AtBidIndicator());
-      } else if(indicator == BboIndicator::BELOW_BID) {
-        match(cell, BelowBidIndicator());
-      }
+      match(cell, IndicatorRow(indicator));
     }
 
     void unmount(QWidget* widget) {
@@ -338,6 +250,7 @@ namespace {
         return;
       }
       m_is_loading = true;
+      const auto PULL_DELAY_TIMEOUT_MS = 1000;
       m_timer.start(PULL_DELAY_TIMEOUT_MS);
     }
 
@@ -356,6 +269,89 @@ namespace {
       display();
     }
   };
+
+  struct TableViewStylist : QObject {
+    std::shared_ptr<TimeAndSalesPropertiesModel> m_properties;
+    scoped_connection m_connection;
+
+    TableViewStylist(TableView& table_view,
+        std::shared_ptr<TimeAndSalesPropertiesModel> properties)
+        : QObject(&table_view),
+          m_properties(std::move(properties)) {
+      update_style(table_view, [&] (auto& style) {
+        style.get(ShowGrid() > is_a<TableBody>()).
+          set(HorizontalSpacing(scale_width(1))).
+          set(VerticalSpacing(scale_height(1)));
+      });
+      update_style(table_view.get_header(), [&] (auto& style) {
+        style.get(Any()).
+          set(PaddingLeft(scale_width(4))).
+          set(PaddingTop(scale_height(5))).
+          set(PaddingBottom(scale_height(4)));
+      });
+      update_style(table_view.get_body(), [&] (auto& style) {
+        style.get(Any()).
+          set(grid_color(QColor(0xE0E0E0))).
+          set(padding(0)).
+          set(spacing(0)).
+          set(PaddingBottom(TABLE_BODY_BOTTOM_PADDING()));
+        style.get(Any() > Row() > is_a<TableItem>() > is_a<TextBox>()).
+          set(border_size(0)).
+          set(horizontal_padding(scale_width(2))).
+          set(vertical_padding(scale_height(1.5)));
+      });
+      auto header_properties = make_header_item_properties();
+      auto& header = table_view.get_header();
+      for(auto i = 0; i < std::ssize(header_properties); ++i) {
+        header.get_widths()->set(i, header_properties[i].m_width);
+        update_style(*header.get_item(i), [&] (auto& style) {
+          style.get(Any() > TableHeaderItem::Label()).
+            set(TextAlign(header_properties[i].m_alignment));
+        });
+      }
+      on_properties(m_properties->get());
+      m_connection = m_properties->connect_update_signal(
+        std::bind_front(&TableViewStylist::on_properties, this));
+    }
+
+    void on_properties(const TimeAndSalesProperties& properties) {
+      const auto DEBOUNCE_TIME_MS = 100;
+      QTimer::singleShot(DEBOUNCE_TIME_MS, [=] {
+        auto& table_view = *static_cast<TableView*>(parent());
+        update_style(table_view.get_header(), [&] (auto& style) {
+          style.get(Any() > is_a<TableHeaderItem>() > TableHeaderItem::Label()).
+            set(Font(properties.get_font()));
+        });
+        update_style(table_view.get_body(), [&] (auto& style) {
+          style.get(Any() > Row() > is_a<TableItem>() > is_a<TextBox>()).
+            set(Font(properties.get_font()));
+          for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
+            auto indicator = static_cast<BboIndicator>(i);
+            auto selector = IndicatorRow(indicator);
+            auto highlight = properties.get_highlight_color(indicator);
+            style.get(Any() > Row() > is_a<TableItem>() > selector).
+              set(TextColor(highlight.m_text_color));
+            style.get(Any() > +Row() > is_a<TableItem>() > selector).
+              set(BackgroundColor(highlight.m_background_color));
+          }
+        });
+        if(properties.is_grid_enabled()) {
+          match(table_view, ShowGrid());
+        } else {
+          unmatch(table_view, ShowGrid());
+        }
+        auto& header = table_view.get_header();
+        for(auto i = 0; i != TimeAndSalesTableModel::COLUMN_SIZE; ++i) {
+          if(properties.is_visible(
+              static_cast<TimeAndSalesTableModel::Column>(i))) {
+            table_view.show_column(i);
+          } else {
+            table_view.hide_column(i);
+          }
+        }
+      });
+    }
+  };
 }
 
 TableView* Spire::make_time_and_sales_table_view(
@@ -363,13 +359,12 @@ TableView* Spire::make_time_and_sales_table_view(
     std::shared_ptr<TimeAndSalesPropertiesModel> properties, QWidget* parent) {
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
-    set_item_builder(RecycledTableViewItemBuilder(TimeAndSalesItemBuilder())).
+    set_item_builder(RecycledTableViewItemBuilder(ItemBuilder())).
     set_current(
       std::make_shared<ConstantValueModel<optional<TableIndex>>>(none)).
     make();
-  update_style(*table_view, apply_table_view_style);
-  initialize_table_header(*table_view, properties->get());
   make_header_menu(*table_view, properties);
   auto pull_indicator = new PullIndicator(*table_view);
+  auto stylist = new TableViewStylist(*table_view, std::move(properties));
   return table_view;
 }
