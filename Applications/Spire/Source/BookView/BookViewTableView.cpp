@@ -184,11 +184,11 @@ namespace {
   };
 
   auto make_row_selector(Selector selector) {
-    return Any() > +Row() > Any() > selector;
+    return Any() > (+Row() > (Any() > selector));
   }
 
   auto make_item_selector(Selector selector) {
-    return ChildSelector(make_row_selector(selector), Any() > Any());
+    return make_row_selector(selector) > Any() > Any();
   }
 
   void apply_row_style(StyleSheet& style, Selector selector,
