@@ -57,6 +57,28 @@ namespace Spire::Styles::Tests {
     const std::unordered_map<std::string, QWidget*>& graph,
     const std::unordered_set<std::string>& expected_additions,
     const std::unordered_set<std::string>& expected_removals);
+
+  /**
+   * Tests for a SelectionUpdate containing additions and removals of specific
+   * Stylists.
+   * @param updates The queue of updates used to verify the selection.
+   * @param additions The expected set of Stylists added to the selection.
+   * @param removals The expected set of Stylists removed from the selection.
+   */
+  void require_selection(std::deque<SelectionUpdate>& updates,
+    const std::unordered_set<const Stylist*>& additions,
+    const std::unordered_set<const Stylist*>& removals);
+
+  /**
+   * Tests for a SelectionUpdate containing additions and removals of specific
+   * QWidgets.
+   * @param updates The queue of updates used to verify the selection.
+   * @param additions The expected set of QWidgets added to the selection.
+   * @param removals The expected set of QWidgets removed from the selection.
+   */
+  void require_selection(std::deque<SelectionUpdate>& updates,
+    const std::unordered_set<const QWidget*>& additions,
+    const std::unordered_set<const QWidget*>& removals);
 }
 
 #endif
