@@ -438,9 +438,7 @@ struct DecimalBox::StepButton : QWidget {
   }
 
   void reset() {
-    if(is_match(*this, Press())) {
-      unmatch(*this, Press());
-    }
+    unmatch(*this, Press());
     if(m_repeat_delay_timer_id != -1) {
       killTimer(m_repeat_delay_timer_id);
       m_repeat_delay_timer_id = -1;
