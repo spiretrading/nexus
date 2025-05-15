@@ -1,14 +1,11 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
 #include <boost/signals2/connection.hpp>
-#include <QTimer>
 #include "Nexus/Definitions/Market.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/SecurityContext.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesWindowFactory.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesTableModel.hpp"
-#include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/SecurityBox.hpp"
 #include "Spire/Ui/Window.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -82,19 +79,13 @@ namespace Spire {
       std::string m_link_identifier;
       boost::signals2::scoped_connection m_link_connection;
       SecurityView* m_security_view;
-      TimeAndSalesProperties m_properties;
-      QTimer m_timer;
-      boost::signals2::scoped_connection m_properties_connection;
 
-      void update_grid(const TimeAndSalesProperties& properties);
       void on_context_menu(QWidget* parent, const QPoint& pos);
       void on_export_menu();
       void on_properties_menu();
       void on_begin_loading();
       void on_end_loading();
       void on_current(const Nexus::Security& security);
-      void on_properties(const TimeAndSalesProperties& properties);
-      void on_timeout();
   };
 }
 

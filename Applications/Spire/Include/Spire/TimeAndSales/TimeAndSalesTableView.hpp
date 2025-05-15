@@ -5,29 +5,6 @@
 #include "Spire/Ui/TableView.hpp"
 
 namespace Spire {
-namespace Styles {
-
-  /** Selects components with the UNKNOWN indicator. */
-  using UnknownIndicator =
-    StateSelector<void, struct UnknownIndicatorSeletorTag>;
-
-  /** Selects components with the ABOVE_ASK indicator. */
-  using AboveAskIndicator =
-    StateSelector<void, struct AboveAskIndicatorSeletorTag>;
-
-  /** Selects components with the AT_ASK indicator. */
-  using AtAskIndicator = StateSelector<void, struct AtAskIndicatorSeletorTag>;
-
-  /** Selects components with the INSIDE indicator. */
-  using InsideIndicator = StateSelector<void, struct InsideIndicatorSeletorTag>;
-
-  /** Selects components with the AT_BID indicator. */
-  using AtBidIndicator = StateSelector<void, struct AtBidIndicatorSeletorTag>;
-
-  /** Selects components with the BELOW_BID indicator. */
-  using BelowBidIndicator =
-    StateSelector<void, struct BelowBidIndicatorSeletorTag>;
-}
 
   /**
    * Returns a new TableView for the time and sales.
