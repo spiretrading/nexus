@@ -30,6 +30,12 @@ namespace Styles {
 
   /** The current value has decreased. */
   using Downtick = StateSelector<void, struct DowntickTag>;
+
+  /** Selects the up button. */
+  using UpButton = StateSelector<void, struct UpButtonTag>;
+
+  /** Selects the down button. */
+  using DownButton = StateSelector<void, struct DownButtonTag>;
 }
 
   /** Represents a widget for inputting decimal values. */
@@ -139,12 +145,13 @@ namespace Styles {
         NEGATIVE
       };
       struct DecimalToTextModel;
+      struct StepButton;
       struct EditableData {
         mutable SubmitSignal m_submit_signal;
         mutable RejectSignal m_reject_signal;
         boost::optional<Decimal> m_submission;
-        Button* m_up_button;
-        Button* m_down_button;
+        StepButton* m_up_button;
+        StepButton* m_down_button;
       };
       std::shared_ptr<OptionalDecimalModel> m_current;
       std::shared_ptr<DecimalToTextModel> m_adaptor_model;

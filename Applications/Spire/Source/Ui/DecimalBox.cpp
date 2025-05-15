@@ -9,6 +9,7 @@
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -19,6 +20,9 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto REPEAT_DELAY_TIMEOUT_MS = 500;
+  const auto REPEAT_TIMEOUT_MS = 150;
+
   auto validate_fractional_part(const Decimal& value, int decimal_places) {
     if(value < pow(Decimal(10), -decimal_places)) {
       return QValidator::State::Intermediate;
@@ -46,34 +50,6 @@ namespace {
   auto BUTTON_SIZE() {
     static auto size = scale(10, 10);
     return size;
-  }
-
-  auto make_button(QImage icon, QWidget& parent) {
-    auto button = make_icon_button(std::move(icon), &parent);
-    update_style(*button, [&] (auto& style) {
-      style.get(Any() > Body()).
-        set(BackgroundColor(QColor(0xFFFFFF))).
-        set(Fill(QColor(0x333333)));
-      style.get(Hover() > Body()).
-        set(BackgroundColor(QColor(0xEBEBEB))).
-        set(Fill(QColor(0x4B23A0)));
-      style.get(Disabled() > Body()).
-        set(BackgroundColor(QColor(Qt::transparent))).
-        set(Fill(QColor(0xC8C8C8)));
-    });
-    button->setFocusPolicy(Qt::NoFocus);
-    button->setFixedSize(BUTTON_SIZE());
-    return button;
-  }
-
-  auto make_up_button(QWidget& parent) {
-    static auto icon = imageFromSvg(":/Icons/arrow-up.svg", BUTTON_SIZE());
-    return make_button(icon, parent);
-  }
-
-  auto make_down_button(QWidget& parent) {
-    static auto icon = imageFromSvg(":/Icons/arrow-down.svg", BUTTON_SIZE());
-    return make_button(icon, parent);
   }
 
   auto make_modifiers(const OptionalDecimalModel& current) {
@@ -380,6 +356,106 @@ struct DecimalBox::DecimalToTextModel : TextModel {
   }
 };
 
+struct DecimalBox::StepButton : QWidget {
+  using PressSignal = Signal<void()>;
+  mutable PressSignal m_press_signal;
+  FocusObserver m_focus_observer;
+  int m_repeat_delay_timer_id;
+  int m_repeat_timer_id;
+
+  StepButton(QImage icon, QWidget& parent)
+      : QWidget(&parent),
+        m_focus_observer(parent),
+        m_repeat_delay_timer_id(-1),
+        m_repeat_timer_id(-1) {
+    auto button_icon = new Icon(std::move(icon));
+    auto box = new Box(button_icon);
+    proxy_style(*this, *box);
+    link(*this, *button_icon);
+    enclose(*this, *box);
+    update_style(*this, [] (auto& style) {
+      style.get(Any() > is_a<Icon>()).
+        set(BackgroundColor(QColor(0xFFFFFF))).
+        set(Fill(QColor(0x333333)));
+      style.get(Hover() > is_a<Icon>()).
+        set(BackgroundColor(QColor(0xEBEBEB))).
+        set(Fill(QColor(0x4B23A0)));
+      style.get(Press() > is_a<Icon>()).
+        set(BackgroundColor(QColor(0xEBEBEB))).
+        set(Fill(QColor(0x7E71B8)));
+      style.get(Disabled() > is_a<Icon>()).
+        set(BackgroundColor(QColor(Qt::transparent))).
+        set(Fill(QColor(0xC8C8C8)));
+    });
+    setFocusPolicy(Qt::NoFocus);
+    setFixedSize(BUTTON_SIZE());
+    m_focus_observer.connect_state_signal(
+      std::bind_front(&StepButton::on_focus, this));
+  }
+
+  connection connect_press_signal(const PressSignal::slot_type& slot) const {
+    return m_press_signal.connect(slot);
+  }
+
+  void mousePressEvent(QMouseEvent* event) override {
+    if(QWidget* parent = parentWidget()) {
+      parent->setFocus();
+    }
+    if(event->button() == Qt::LeftButton) {
+      event->accept();
+      match(*this, Press());
+      m_press_signal();
+      m_repeat_delay_timer_id = startTimer(REPEAT_DELAY_TIMEOUT_MS);
+    } else {
+      QWidget::mousePressEvent(event);
+    }
+  }
+
+  void mouseReleaseEvent(QMouseEvent* event) override {
+    if(event->button() == Qt::LeftButton) {
+      event->accept();
+      reset();
+    } else {
+      QWidget::mouseReleaseEvent(event);
+    }
+  }
+
+  void timerEvent(QTimerEvent* event) override {
+    if(event->timerId() == m_repeat_delay_timer_id) {
+      killTimer(m_repeat_delay_timer_id);
+      m_repeat_delay_timer_id = -1;
+      m_repeat_timer_id = startTimer(REPEAT_TIMEOUT_MS);
+    } else if(event->timerId() == m_repeat_timer_id) {
+      if(isEnabled() && isVisible() &&
+          rect().contains(mapFromGlobal(QCursor::pos()))) {
+        m_press_signal();
+      } else {
+        reset();
+      }
+    } else {
+      QWidget::timerEvent(event);
+    }
+  }
+
+  void reset() {
+    unmatch(*this, Press());
+    if(m_repeat_delay_timer_id != -1) {
+      killTimer(m_repeat_delay_timer_id);
+      m_repeat_delay_timer_id = -1;
+    }
+    if(m_repeat_timer_id != -1) {
+      killTimer(m_repeat_timer_id);
+      m_repeat_timer_id = -1;
+    }
+  }
+
+  void on_focus(const FocusObserver::State& state) {
+    if(state == FocusObserver::State::NONE) {
+      reset();
+    }
+  }
+};
+
 QValidator::State DecimalBox::validate(const Decimal& value,
     const optional<Decimal>& min, const optional<Decimal>& max) {
   auto validate_fractional_part = [] (const Decimal& value,
@@ -453,8 +529,8 @@ DecimalBox::DecimalBox(std::shared_ptr<OptionalDecimalModel> current,
   enclose(*this, m_text_box);
   proxy_style(*this, m_text_box);
   update_style(*this, [] (auto& style) {
-    style.get(ReadOnly() > is_a<Button>()).set(Visibility::NONE);
-    style.get(+Any() > (is_a<Button>() && !matches(Visibility::NONE))).
+    style.get(ReadOnly() > is_a<StepButton>()).set(Visibility::NONE);
+    style.get(+Any() > (is_a<StepButton>() && !matches(Visibility::NONE))).
       set(PaddingRight(scale_width(24)));
   });
   m_style_connection =
@@ -566,14 +642,18 @@ void DecimalBox::initialize_editable_data() const {
   auto self = const_cast<DecimalBox*>(this);
   self->m_data = std::make_unique<EditableData>();
   m_data->m_submission = m_current->get();
-  m_data->m_up_button = make_up_button(*self);
+  static auto up_icon = imageFromSvg(":/Icons/arrow-up.svg", BUTTON_SIZE());
+  m_data->m_up_button = new StepButton(up_icon, *self);
   m_data->m_up_button->show();
-  m_data->m_up_button->connect_click_signal(
+  m_data->m_up_button->connect_press_signal(
     std::bind_front(&DecimalBox::increment, self));
-  m_data->m_down_button = make_down_button(*self);
+  match(*m_data->m_up_button, UpButton());
+  static auto down_icon = imageFromSvg(":/Icons/arrow-down.svg", BUTTON_SIZE());
+  m_data->m_down_button = new StepButton(down_icon, *self);
   m_data->m_down_button->show();
-  m_data->m_down_button->connect_click_signal(
+  m_data->m_down_button->connect_press_signal(
     std::bind_front(&DecimalBox::decrement, self));
+  match(*m_data->m_down_button, DownButton());
   self->update_button_positions();
   m_text_box.connect_submit_signal(
     std::bind_front(&DecimalBox::on_submit, self));
@@ -600,7 +680,6 @@ Decimal DecimalBox::get_increment() const {
 }
 
 void DecimalBox::step_by(const Decimal& value) {
-  setFocus();
   auto current = [&] {
     if(m_current->get()) {
       return *m_current->get();
