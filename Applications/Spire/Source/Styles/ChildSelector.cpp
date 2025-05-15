@@ -23,7 +23,7 @@ namespace {
     }
   }
 
-  struct ChildObserver : public QObject {
+  struct ChildObserver : QObject {
     SelectionUpdateSignal m_on_update;
     std::unordered_map<const QObject*, const Stylist*> m_children_stylists;
     scoped_connection m_link_connection;
@@ -36,13 +36,15 @@ namespace {
       for(auto child : stylist.get_widget().children()) {
         if(child && child->isWidgetType()) {
           auto& stylist = find_stylist(static_cast<QWidget&>(*child));
-          add(stylist);
-          children.insert(&stylist);
+          if(add(stylist)) {
+            children.insert(&stylist);
+          }
         }
       }
       for(auto& link : stylist.get_links()) {
-        add(*link);
-        children.insert(link);
+        if(add(*link)) {
+          children.insert(link);
+        }
       }
       m_link_connection = stylist.connect_link_signal(
         std::bind_front(&ChildObserver::on_link, this));
@@ -58,12 +60,14 @@ namespace {
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
-      if(event->type() == QEvent::ChildAdded) {
+      if(event->type() == QEvent::ChildAdded ||
+          event->type() == QEvent::ChildPolished) {
         auto& child = *static_cast<QChildEvent&>(*event).child();
         if(child.isWidgetType()) {
           auto& stylist = find_stylist(static_cast<QWidget&>(child));
-          add(stylist);
-          m_on_update({&stylist}, {});
+          if(add(stylist)) {
+            m_on_update({&stylist}, {});
+          }
         }
       } else if(event->type() == QEvent::ChildRemoved) {
         remove(*static_cast<QChildEvent&>(*event).child());
@@ -71,27 +75,34 @@ namespace {
       return QObject::eventFilter(watched, event);
     }
 
-    void add(const Stylist& stylist) {
+    bool add(const Stylist& stylist) {
       auto& child = stylist.get_widget();
+      auto i = m_children_stylists.find(&child);
+      if(i != m_children_stylists.end()) {
+        return false;
+      }
       auto connection = stylist.connect_delete_signal(
         std::bind_front(&ChildObserver::remove, this, std::ref(child)));
       m_delete_connections.AddConnection(&child, connection);
-      m_children_stylists.insert_or_assign(&child, &stylist);
+      m_children_stylists.insert(i, std::pair(&child, &stylist));
+      return true;
     }
 
     void remove(const QObject& child) {
       auto i = m_children_stylists.find(&child);
-      if(i != m_children_stylists.end()) {
-        m_delete_connections.Disconnect(&child);
-        auto stylist = i->second;
-        m_children_stylists.erase(i);
-        m_on_update({}, {stylist});
+      if(i == m_children_stylists.end()) {
+        return;
       }
+      m_delete_connections.Disconnect(&child);
+      auto stylist = i->second;
+      m_children_stylists.erase(i);
+      m_on_update({}, {stylist});
     }
 
     void on_link(const Stylist& link) {
-      add(link);
-      m_on_update({&link}, {});
+      if(add(link)) {
+        m_on_update({&link}, {});
+      }
     }
   };
 }
