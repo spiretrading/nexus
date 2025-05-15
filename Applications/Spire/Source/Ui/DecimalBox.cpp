@@ -9,6 +9,7 @@
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -358,11 +359,13 @@ struct DecimalBox::DecimalToTextModel : TextModel {
 struct DecimalBox::StepButton : QWidget {
   using PressSignal = Signal<void()>;
   mutable PressSignal m_press_signal;
+  FocusObserver m_focus_observer;
   int m_repeat_delay_timer_id;
   int m_repeat_timer_id;
 
   StepButton(QImage icon, QWidget& parent)
       : QWidget(&parent),
+        m_focus_observer(parent),
         m_repeat_delay_timer_id(-1),
         m_repeat_timer_id(-1) {
     auto button_icon = new Icon(std::move(icon));
@@ -386,6 +389,8 @@ struct DecimalBox::StepButton : QWidget {
     });
     setFocusPolicy(Qt::NoFocus);
     setFixedSize(BUTTON_SIZE());
+    m_focus_observer.connect_state_signal(
+      std::bind_front(&StepButton::on_focus, this));
   }
 
   connection connect_press_signal(const PressSignal::slot_type& slot) const {
@@ -441,6 +446,12 @@ struct DecimalBox::StepButton : QWidget {
     if(m_repeat_timer_id != -1) {
       killTimer(m_repeat_timer_id);
       m_repeat_timer_id = -1;
+    }
+  }
+
+  void on_focus(const FocusObserver::State& state) {
+    if(state == FocusObserver::State::NONE) {
+      reset_timers();
     }
   }
 };
@@ -648,9 +659,6 @@ void DecimalBox::initialize_editable_data() const {
     std::bind_front(&DecimalBox::on_submit, self));
   m_text_box.connect_reject_signal(
     std::bind_front(&DecimalBox::on_reject, self));
-  m_data->m_focus_observer.emplace(*self);
-  m_data->m_focus_observer->connect_state_signal(
-    std::bind_front(&DecimalBox::on_focus, self));
 }
 
 void DecimalBox::decrement() {
@@ -753,13 +761,6 @@ void DecimalBox::on_current(const optional<Decimal>& current) {
     m_data->m_down_button->setEnabled(!is_read_only() &&
       (!m_current->get_minimum() ||
         !m_current->get() || m_current->get() > m_current->get_minimum()));
-  }
-}
-
-void DecimalBox::on_focus(const FocusObserver::State& state) {
-  if(state == FocusObserver::State::NONE && m_data) {
-    m_data->m_up_button->reset_timers();
-    m_data->m_down_button->reset_timers();
   }
 }
 

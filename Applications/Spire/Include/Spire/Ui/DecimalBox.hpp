@@ -4,7 +4,6 @@
 #include <QHash>
 #include "Spire/Spire/Decimal.hpp"
 #include "Spire/Styles/Stylist.hpp"
-#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -153,7 +152,6 @@ namespace Styles {
         boost::optional<Decimal> m_submission;
         StepButton* m_up_button;
         StepButton* m_down_button;
-        boost::optional<FocusObserver> m_focus_observer;
       };
       std::shared_ptr<OptionalDecimalModel> m_current;
       std::shared_ptr<DecimalToTextModel> m_adaptor_model;
@@ -173,7 +171,6 @@ namespace Styles {
       void step_by(const Decimal& value);
       void update_button_positions();
       void on_current(const boost::optional<Decimal>& current);
-      void on_focus(const FocusObserver::State& state);
       void on_submit(const QString& submission);
       void on_reject(const QString& value);
       void on_style();
