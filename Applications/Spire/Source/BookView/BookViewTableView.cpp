@@ -267,8 +267,29 @@ namespace {
         : QObject(&table_view),
           m_properties(std::move(properties)),
           m_previous_levels(0) {
-      table_view.installEventFilter(this);
+      update_style(table_view.get_body(), [&] (auto& style) {
+        style.get(Any()).
+          set(HorizontalSpacing(0)).
+          set(VerticalSpacing(0)).
+          set(grid_color(QColor(0xE0E0E0)));
+        style.get(ShowGrid()).
+          set(HorizontalSpacing(scale_width(1))).
+          set(VerticalSpacing(scale_height(1)));
+        style.get(Any() > CurrentColumn()).
+          set(BackgroundColor(Qt::transparent));
+        style.get(Any() > CurrentRow()).
+          set(BackgroundColor(SELECTED_BACKGROUND_COLOR)).
+          set(border_color(QColor(0x4B23A0)));
+        style.get(Any() > Row() > Current()).
+          set(BackgroundColor(Qt::transparent)).
+          set(border_color(QColor(Qt::transparent)));
+        style.get(Any() > CurrentRow() > Any() > Any()).
+          set(TextColor(SELECTED_TEXT_COLOR));
+        style.get(Any() > Row() > Any() > Any()).
+          set(vertical_padding(scale_width(1.5)));
+      });
       on_properties(m_properties->get());
+      table_view.installEventFilter(this);
       m_connection = m_properties->connect_update_signal(
         std::bind_front(&TableViewStylist::on_properties, this));
     }
@@ -337,30 +358,11 @@ namespace {
         unmatch(table_view.get_body(), ShowGrid());
       }
       update_style(table_view.get_body(), [&] (auto& style) {
-        style.get(Any()).
-          set(HorizontalSpacing(0)).
-          set(VerticalSpacing(0)).
-          set(grid_color(QColor(0xE0E0E0)));
-        style.get(ShowGrid()).
-          set(HorizontalSpacing(scale_width(1))).
-          set(VerticalSpacing(scale_height(1)));
         apply_level_highlight_styles(style, properties);
         apply_order_visibility_styles(style, properties);
         apply_market_highlight_styles(style, properties);
         style.get(Any() > Row() > Any() > Any()).
           set(Font(properties.m_level_properties.m_font));
-        style.get(Any() > CurrentColumn()).
-          set(BackgroundColor(Qt::transparent));
-        style.get(Any() > CurrentRow()).
-          set(BackgroundColor(SELECTED_BACKGROUND_COLOR)).
-          set(border_color(QColor(0x4B23A0)));
-        style.get(Any() > Row() > Current()).
-          set(BackgroundColor(Qt::transparent)).
-          set(border_color(QColor(Qt::transparent)));
-        style.get(Any() > CurrentRow() > Any() > Any()).
-          set(TextColor(SELECTED_TEXT_COLOR));
-        style.get(Any() > Row() > Any() > Any()).
-          set(vertical_padding(scale_width(1.5)));
       });
     }
   };
