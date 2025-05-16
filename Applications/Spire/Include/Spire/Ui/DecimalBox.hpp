@@ -170,6 +170,7 @@ namespace Styles {
       Decimal get_increment() const;
       void step_by(const Decimal& value);
       void update_button_positions();
+      void update_button_states();
       void on_current(const boost::optional<Decimal>& current);
       void on_submit(const QString& submission);
       void on_reject(const QString& value);

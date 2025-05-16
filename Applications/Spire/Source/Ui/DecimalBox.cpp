@@ -658,6 +658,7 @@ void DecimalBox::initialize_editable_data() const {
   link(*self, *m_data->m_down_button);
   match(*m_data->m_down_button, DownButton());
   self->update_button_positions();
+  self->update_button_states();
   m_text_box.connect_submit_signal(
     std::bind_front(&DecimalBox::on_submit, self));
   m_text_box.connect_reject_signal(
@@ -719,6 +720,18 @@ void DecimalBox::update_button_positions() {
   m_data->m_down_button->move(button_pos);
 }
 
+void DecimalBox::update_button_states() {
+  if(!m_data) {
+    return;
+  }
+  m_data->m_up_button->setEnabled(!is_read_only() &&
+    (!m_current->get_maximum() ||
+      !m_current->get() || m_current->get() < m_current->get_maximum()));
+  m_data->m_down_button->setEnabled(!is_read_only() &&
+    (!m_current->get_minimum() ||
+      !m_current->get() || m_current->get() > m_current->get_minimum()));
+}
+
 void DecimalBox::on_current(const optional<Decimal>& current) {
   if(m_last_current && current) {
     if(m_tick == TickIndicator::DOWN) {
@@ -757,14 +770,7 @@ void DecimalBox::on_current(const optional<Decimal>& current) {
       m_sign = SignIndicator::NEGATIVE;
     }
   }
-  if(m_data) {
-    m_data->m_up_button->setEnabled(!is_read_only() &&
-      (!m_current->get_maximum() ||
-        !m_current->get() || m_current->get() < m_current->get_maximum()));
-    m_data->m_down_button->setEnabled(!is_read_only() &&
-      (!m_current->get_minimum() ||
-        !m_current->get() || m_current->get() > m_current->get_minimum()));
-  }
+  update_button_states();
 }
 
 void DecimalBox::on_submit(const QString& submission) {
