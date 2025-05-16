@@ -94,13 +94,13 @@ void EditableBox::keyPressEvent(QKeyEvent* event) {
     return;
   } else if(event->key() == Qt::Key_Escape) {
     set_read_only(true);
-  } else if(event->key() == Qt::Key_Space) {
+  } else if(event->key() == Qt::Key_Space && is_input_box_enabled()) {
     set_read_only(false);
   } else if(event->key() == Qt::Key_Backspace ||
       event->key() == Qt::Key_Delete) {
     m_input_box->get_current()->set(m_make_default_value());
   } else {
-    if(!is_read_only()) {
+    if(!is_input_box_enabled() || !is_read_only()) {
       QWidget::keyPressEvent(event);
       return;
     }
@@ -125,6 +125,11 @@ bool EditableBox::focusNextPrevChild(bool next) {
   return QWidget::focusNextPrevChild(next);
 }
 
+bool EditableBox::is_input_box_enabled() const {
+  auto proxy = find_focus_proxy(*m_input_box);
+  return proxy && proxy->isEnabled();
+}
+
 void EditableBox::select_all_text() {
   m_input_box->get_highlight()->set(Highlight(0, -1));
 }
@@ -143,7 +148,7 @@ void EditableBox::on_focus(FocusObserver::State state) {
 }
 
 bool EditableBox::on_click(QWidget& target, QMouseEvent& event) {
-  if(!is_read_only()) {
+  if(!is_input_box_enabled() || !is_read_only()) {
     return false;
   }
   if(event.type() == QEvent::MouseButtonDblClick &&
