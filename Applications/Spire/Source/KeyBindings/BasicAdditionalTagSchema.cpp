@@ -113,7 +113,7 @@ namespace {
             return Nexus::Tag::Type(*value);
           })));
       update_style(*box, [] (auto& style) {
-        style.get(Any())
+        style.get(ReadOnly())
           .set(border_size(0))
           .set(horizontal_padding(scale_width(8)));
       });
