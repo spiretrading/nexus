@@ -1,9 +1,11 @@
 #include "Spire/Ui/TableBody.hpp"
+#include "Nexus/Definitions/BookQuote.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QApplication>
 #include <QKeyEvent>
 #include <QPainter>
 #include <QTimer>
+#include "Spire/BookView/MpidBox.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
@@ -1119,6 +1121,29 @@ TableBody::RowCover* TableBody::mount_row(int index) {
   if(row != m_current_row) {
     on_cover_style(*row);
   }
+  qDebug() << "Mounting: " << row << " " << index;
+  auto dstr = QString();
+  auto stream = QTextStream(&dstr);
+  for(auto i = 0; i != get_layout().count(); ++i) {
+    auto& r = get_layout().get_row(i);
+    auto mpid_item = r.get_item(0);
+    auto& mpid_body = mpid_item->get_body();
+    auto& mpid = static_cast<MpidBox&>(mpid_body).get_current();
+    auto price_item = r.get_item(1);
+    auto& price_body = price_item->get_body();
+    auto& price = static_cast<TextBox&>(price_body).get_current();
+    auto size_item = r.get_item(2);
+    auto& size_body = size_item->get_body();
+    auto& size = static_cast<TextBox&>(size_body).get_current();
+    stream << QStringLiteral("\t i: ")
+           << i << " "
+           << &r << " "
+           << QString::fromStdString(boost::get<Nexus::BookQuote>(mpid->get()).m_mpid) << " "
+           << price->get() << " "
+           << size->get()
+           << QStringLiteral("\n");
+  }
+  qDebug() << dstr;
   return row;
 }
 

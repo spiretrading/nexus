@@ -125,6 +125,9 @@ void ServiceBookViewModel::on_bbo(const BboQuote& bbo) {
 }
 
 void ServiceBookViewModel::on_book_quote(const BookQuote& quote) {
+  if(quote.m_quote.m_side != Side::BID) {
+    return;
+  }
   auto direction = GetDirection(quote.m_quote.m_side);
   auto quotes = Pick(quote.m_quote.m_side, get_asks(), get_bids());
   auto lower_bound = [&] {

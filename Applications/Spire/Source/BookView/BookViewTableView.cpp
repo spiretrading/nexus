@@ -457,8 +457,8 @@ TableView* Spire::make_book_view_table_view(
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
     set_current(proxy_current).
-    set_item_builder(RecycledTableViewItemBuilder(
-      ItemBuilder(std::move(price_levels), std::move(top_mpid_prices)))).make();
+    set_item_builder(
+      ItemBuilder(std::move(price_levels), std::move(top_mpid_prices))).make();
   proxy_current->set_source(std::make_shared<BookViewCurrentTableModel>(table));
   table_view->get_header().setVisible(false);
   table_view->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
