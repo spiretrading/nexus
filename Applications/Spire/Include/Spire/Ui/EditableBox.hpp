@@ -125,7 +125,6 @@ namespace Details {
       boost::optional<std::chrono::steady_clock::time_point> m_focus_time;
       bool m_is_submit_connected;
 
-
       bool is_input_box_enabled() const;
       void select_all_text();
       bool on_click(QWidget& target, QMouseEvent& event);
