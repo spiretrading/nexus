@@ -387,6 +387,7 @@ struct DecimalBox::StepButton : QWidget {
         set(BackgroundColor(QColor(Qt::transparent))).
         set(Fill(QColor(0xC8C8C8)));
     });
+    setCursor(Qt::ArrowCursor);
     setFocusPolicy(Qt::NoFocus);
     setFixedSize(BUTTON_SIZE());
     m_focus_observer.connect_state_signal(
@@ -643,16 +644,18 @@ void DecimalBox::initialize_editable_data() const {
   self->m_data = std::make_unique<EditableData>();
   m_data->m_submission = m_current->get();
   static auto up_icon = imageFromSvg(":/Icons/arrow-up.svg", BUTTON_SIZE());
-  m_data->m_up_button = new StepButton(up_icon, *self);
+  m_data->m_up_button = new StepButton(up_icon, self->m_text_box);
   m_data->m_up_button->show();
   m_data->m_up_button->connect_press_signal(
     std::bind_front(&DecimalBox::increment, self));
+  link(*self, *m_data->m_up_button);
   match(*m_data->m_up_button, UpButton());
   static auto down_icon = imageFromSvg(":/Icons/arrow-down.svg", BUTTON_SIZE());
-  m_data->m_down_button = new StepButton(down_icon, *self);
+  m_data->m_down_button = new StepButton(down_icon, self->m_text_box);
   m_data->m_down_button->show();
   m_data->m_down_button->connect_press_signal(
     std::bind_front(&DecimalBox::decrement, self));
+  link(*self, *m_data->m_down_button);
   match(*m_data->m_down_button, DownButton());
   self->update_button_positions();
   m_text_box.connect_submit_signal(
