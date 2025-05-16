@@ -152,12 +152,13 @@ namespace {
           set(HorizontalSpacing(scale_width(1))).
           set(VerticalSpacing(scale_height(1)));
       });
-      update_style(table_view.get_header(), [&] (auto& style) {
-        style.get(Any()).
-          set(PaddingLeft(scale_width(4))).
-          set(PaddingTop(scale_height(5))).
-          set(PaddingBottom(scale_height(4)));
-      });
+      update_style(table_view.get_header(),
+        [&] (auto& style) {
+          style.get(Any() > is_a<TableHeaderItem>()).
+            set(PaddingLeft(scale_width(4))).
+            set(PaddingTop(scale_height(5))).
+            set(PaddingBottom(scale_height(4)));
+        });
       update_style(table_view.get_body(), [&] (auto& style) {
         style.get(Any()).
           set(grid_color(QColor(0xE0E0E0))).
@@ -178,12 +179,13 @@ namespace {
             set(TextAlign(header_properties[i].m_alignment));
         });
       }
-      on_properties(m_properties->get());
+      apply_column_visibility(m_properties->get());
+      apply_styles(m_properties->get());
       m_connection = m_properties->connect_update_signal(
         std::bind_front(&TableViewStylist::on_properties, this));
     }
 
-    void on_properties(const TimeAndSalesProperties& properties) {
+    void apply_column_visibility(const TimeAndSalesProperties& properties) {
       auto& table_view = *static_cast<TableView*>(parent());
       for(auto i = 0; i != TimeAndSalesTableModel::COLUMN_SIZE; ++i) {
         if(properties.is_visible(
@@ -193,31 +195,39 @@ namespace {
           table_view.hide_column(i);
         }
       }
+    }
+
+    void apply_styles(const TimeAndSalesProperties& properties) {
+      auto& table_view = *static_cast<TableView*>(parent());
+      update_style(table_view.get_header(), [&] (auto& style) {
+        style.get(Any() > is_a<TableHeaderItem>() > TableHeaderItem::Label()).
+          set(Font(properties.get_font()));
+      });
+      update_style(table_view.get_body(), [&] (auto& style) {
+        style.get(Any() > Row() > is_a<TableItem>() > is_a<TextBox>()).
+          set(Font(properties.get_font()));
+        for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
+          auto indicator = static_cast<BboIndicator>(i);
+          auto selector = IndicatorRow(indicator);
+          auto highlight = properties.get_highlight_color(indicator);
+          style.get(Any() > Row() > is_a<TableItem>() > selector).
+            set(TextColor(highlight.m_text_color));
+          style.get(Any() > +Row() > is_a<TableItem>() > selector).
+            set(BackgroundColor(highlight.m_background_color));
+        }
+      });
+      if(properties.is_grid_enabled()) {
+        match(table_view, ShowGrid());
+      } else {
+        unmatch(table_view, ShowGrid());
+      }
+    }
+
+    void on_properties(const TimeAndSalesProperties& properties) {
+      apply_column_visibility(properties);
       const auto DEBOUNCE_TIME_MS = 100;
       QTimer::singleShot(DEBOUNCE_TIME_MS, this, [=] {
-        auto& table_view = *static_cast<TableView*>(parent());
-        update_style(table_view.get_header(), [&] (auto& style) {
-          style.get(Any() > is_a<TableHeaderItem>() > TableHeaderItem::Label()).
-            set(Font(properties.get_font()));
-        });
-        update_style(table_view.get_body(), [&] (auto& style) {
-          style.get(Any() > Row() > is_a<TableItem>() > is_a<TextBox>()).
-            set(Font(properties.get_font()));
-          for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
-            auto indicator = static_cast<BboIndicator>(i);
-            auto selector = IndicatorRow(indicator);
-            auto highlight = properties.get_highlight_color(indicator);
-            style.get(Any() > Row() > is_a<TableItem>() > selector).
-              set(TextColor(highlight.m_text_color));
-            style.get(Any() > +Row() > is_a<TableItem>() > selector).
-              set(BackgroundColor(highlight.m_background_color));
-          }
-        });
-        if(properties.is_grid_enabled()) {
-          match(table_view, ShowGrid());
-        } else {
-          unmatch(table_view, ShowGrid());
-        }
+        apply_styles(properties);
       });
     }
   };
