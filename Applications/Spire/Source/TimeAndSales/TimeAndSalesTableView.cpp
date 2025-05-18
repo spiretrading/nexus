@@ -212,7 +212,7 @@ namespace {
           auto highlight = properties.get_highlight_color(indicator);
           style.get(Any() > Row() > is_a<TableItem>() > selector).
             set(TextColor(highlight.m_text_color));
-          style.get(Any() > +Row() > is_a<TableItem>() > selector).
+          style.get(Any() > (+Row() > (is_a<TableItem>() > selector))).
             set(BackgroundColor(highlight.m_background_color));
         }
       });
