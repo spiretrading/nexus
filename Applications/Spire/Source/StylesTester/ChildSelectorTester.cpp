@@ -9,18 +9,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 using namespace Spire::Styles::Tests;
 
-namespace {
-  void require_selection(std::deque<SelectionUpdate>& updates,
-      const std::unordered_set<const Stylist*>& additions,
-      const std::unordered_set<const Stylist*>& removals) {
-    REQUIRE(updates.size() >= 1);
-    auto update = std::move(updates.front());
-    updates.pop_front();
-    REQUIRE(update.m_additions == additions);
-    REQUIRE(update.m_removals == removals);
-  }
-}
-
 TEST_SUITE("ChildSelector") {
   TEST_CASE("equality") {
     REQUIRE(ChildSelector(Foo(), Foo()) == ChildSelector(Foo(), Foo()));
