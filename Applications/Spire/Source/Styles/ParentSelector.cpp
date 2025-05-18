@@ -20,7 +20,7 @@ namespace {
     }
   }
 
-  struct ParentObserver : public QObject {
+  struct ParentObserver : QObject {
     const Stylist* m_stylist;
     SelectionUpdateSignal m_on_update;
     std::unordered_map<QObject*, const Stylist*> m_parent_stylists;
@@ -91,6 +91,10 @@ const Selector& ParentSelector::get_base() const {
 
 const Selector& ParentSelector::get_parent() const {
   return m_parent;
+}
+
+ParentSelector Spire::Styles::operator <(Selector base, Selector parent) {
+  return ParentSelector(std::move(base), std::move(parent));
 }
 
 SelectConnection Spire::Styles::select(const ParentSelector& selector,

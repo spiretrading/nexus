@@ -57,7 +57,7 @@ AnyInputBox* MaxFloorSchema::make_input_box(
   quantity->set_minimum(Quantity(-1));
   auto quantity_box = new QuantityBox(std::move(quantity));
   update_style(*quantity_box, [] (auto& style) {
-    style.get(Any()).
+    style.get(ReadOnly()).
       set(border_size(0)).
       set(horizontal_padding(scale_width(8)));
   });

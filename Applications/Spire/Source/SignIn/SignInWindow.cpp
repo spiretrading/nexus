@@ -45,10 +45,11 @@ namespace {
     return style;
   }
 
-  auto INPUT_STYLE(StyleSheet style) {
+  auto USER_NAME_INPUT_STYLE(StyleSheet style) {
     style.get(Any()).
-      set(border_size(0)).
       set(FontSize(scale_height(14)));
+    style.get(Hover() || Focus()).
+      set(border_color(QColor(0xFFA95E)));
     return style;
   }
 
@@ -75,8 +76,28 @@ namespace {
   }
 
   auto PASSWORD_INPUT_STYLE(StyleSheet style) {
-    style = INPUT_STYLE(std::move(style));
-    style.get(Any()).set(EchoMode(QLineEdit::EchoMode::Password));
+    style.get(Any()).
+      set(border(scale_width(1), QColor(0xC8C8C8)));
+    style.get(Hover() || Focus()).
+      set(border_color(QColor(0xFFA95E)));
+    style.get(Any() > is_a<TextBox>()).
+      set(border_size(0)).
+      set(EchoMode(QLineEdit::EchoMode::Password)).
+      set(FontSize(scale_height(14)));
+    return style;
+  }
+
+  auto SERVER_BOX_STYLE(StyleSheet style) {
+    style.get(Hover() || FocusIn()).
+      set(border_color(QColor(0xFFA95E)));
+    style.get(Any() > is_a<DropDownList>() >
+        is_a<ListView>() > is_a<ListItem>() > Body()).
+      set(FontSize(scale_height(14)));
+    style.get(Any() > is_a<DropDownList>() >
+        is_a<ListView>() > is_a<ListItem>()).
+      set(vertical_padding(scale_height(7)));
+    style.get(Any() > is_a<TextBox>()).
+      set(FontSize(scale_height(14)));
     return style;
   }
 
@@ -231,11 +252,38 @@ void SignInWindow::mouseReleaseEvent(QMouseEvent* event) {
   m_is_dragging = false;
 }
 
+QWidget* SignInWindow::make_password_input_box() {
+  auto body = new QWidget();
+  auto layout = make_hbox_layout(body);
+  m_password_text_box = new TextBox(m_password);
+  m_password_text_box->set_placeholder(tr("Password"));
+  m_password_text_box->get_current()->connect_update_signal(
+    [=] (const auto& current) {
+      m_chroma_hash_widget->set_text(current);
+    });
+  m_password_key_observer.emplace(*m_password_text_box);
+  m_password_key_observer->connect_key_press_signal(
+    std::bind_front(&SignInWindow::on_key_press, this));
+  layout->addWidget(m_password_text_box);
+  m_chroma_hash_widget = new ChromaHashWidget();
+  m_chroma_hash_widget->setFixedWidth(scale_width(34));
+  m_chroma_hash_widget->setContentsMargins(
+    {scale_width(2), scale_height(2), scale_width(2), scale_height(2)});
+  layout->addWidget(m_chroma_hash_widget);
+  auto box = new Box(body);
+  update_style(*box, [] (auto& style) {
+    style = PASSWORD_INPUT_STYLE(style);
+  });
+  box->setFixedSize(scale(280, 30));
+  link(*box, *m_password_text_box);
+  return box;
+}
+
 void SignInWindow::layout_sign_in() {
   auto layout = make_vbox_layout();
   layout->addSpacing(scale_height(10));
   m_status_label = make_label("");
-  update_style(*m_status_label, [&] (auto& style) {
+  update_style(*m_status_label, [] (auto& style) {
     style = STATUS_LABEL_STYLE(style);
   });
   layout->addWidget(m_status_label, 0, Qt::AlignCenter);
@@ -247,52 +295,23 @@ void SignInWindow::layout_sign_in() {
       m_sign_in_button->setDisabled(current.isEmpty());
     });
   m_username_text_box->set_placeholder(tr("Username"));
-  update_style(*m_username_text_box, [&] (auto& style) {
-    style = INPUT_STYLE(style);
+  update_style(*m_username_text_box, [] (auto& style) {
+    style = USER_NAME_INPUT_STYLE(style);
   });
   m_username_key_observer.emplace(*m_username_text_box);
   m_username_key_observer->connect_key_press_signal(
     std::bind_front(&SignInWindow::on_key_press, this));
   layout->addWidget(m_username_text_box, 0, Qt::AlignCenter);
   layout->addSpacing(scale_height(15));
-  auto password_layout = make_hbox_layout();
-  password_layout->setContentsMargins(scale_width(52), 0, scale_width(52), 0);
-  m_password_text_box = new TextBox(m_password);
-  m_password_text_box->set_placeholder(tr("Password"));
-  update_style(*m_password_text_box, [&] (auto& style) {
-    style = PASSWORD_INPUT_STYLE(style);
-  });
-  m_password_text_box->get_current()->connect_update_signal(
-    [=] (const auto& current) {
-      m_chroma_hash_widget->set_text(current);
-    });
-  m_password_key_observer.emplace(*m_password_text_box);
-  m_password_key_observer->connect_key_press_signal(
-    std::bind_front(&SignInWindow::on_key_press, this));
-  password_layout->addWidget(m_password_text_box);
-  m_chroma_hash_widget = new ChromaHashWidget();
-  m_chroma_hash_widget->setFixedWidth(scale_width(34));
-  m_chroma_hash_widget->setContentsMargins(
-    {scale_width(2), scale_height(2), scale_width(2), scale_height(2)});
-  password_layout->addWidget(m_chroma_hash_widget);
-  layout->addLayout(password_layout);
+  layout->addWidget(make_password_input_box(), 0, Qt::AlignCenter);
   if(m_servers.size() > 1) {
     layout->addSpacing(scale_height(15));
     auto server_list = std::make_shared<ArrayListModel<std::string>>(m_servers);
     m_server_box = new DropDownBox(server_list);
     m_server_box->setFixedSize(scale(280, 30));
     m_server_box->get_current()->set(0);
-    update_style(*m_server_box, [&] (auto& style) {
-      style.get((Hover() || FocusIn()) > is_a<TextBox>()).
-        set(border_color(QColor(0xFFA95E)));
-      style.get(Any() > is_a<DropDownList>() >
-          is_a<ListView>() > is_a<ListItem>() > Body()).set(
-        FontSize(scale_height(14)));
-      style.get(Any() > is_a<DropDownList>() >
-          is_a<ListView>() > is_a<ListItem>()).set(
-        vertical_padding(scale_height(7)));
-      style.get(Any() > is_a<TextBox>()).set(
-        FontSize(scale_height(14)));
+    update_style(*m_server_box, [] (auto& style) {
+      style = SERVER_BOX_STYLE(style);
     });
     layout->addWidget(m_server_box, 0, Qt::AlignCenter);
     setFixedHeight(scale_height(393));
@@ -304,7 +323,7 @@ void SignInWindow::layout_sign_in() {
   button_layout->setContentsMargins(scale_width(52), 0, scale_width(52), 0);
   auto build_label =
     make_label(QString(tr("Build ")) + QString::fromStdString(m_version));
-  update_style(*build_label, [&] (auto& style) {
+  update_style(*build_label, [] (auto& style) {
     style = BUILD_LABEL_STYLE(style);
   });
   button_layout->addWidget(build_label);

@@ -290,9 +290,11 @@ namespace {
     buttons_visible.connect_changed_signal([=] (auto value) {
       update_style(*box, [&] (auto& style) {
         if(value) {
-          style.get(Any() > is_a<Button>()).set(Visibility::VISIBLE);
+          style.get(Any() > (DownButton() || UpButton())).
+            set(Visibility::VISIBLE);
         } else {
-          style.get(Any() > is_a<Button>()).set(Visibility::NONE);
+          style.get(Any() > (DownButton() || UpButton())).
+            set(Visibility::NONE);
         }
       });
     });
