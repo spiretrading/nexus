@@ -97,10 +97,7 @@ struct Stylist::StyleEventFilter : QObject {
 };
 
 Stylist::~Stylist() {
-  while(!m_matches.empty()) {
-    auto selector = *m_matches.begin();
-    unmatch(selector);
-  }
+  unmatch_all();
   m_delete_signal();
   get_animation_timer().disconnect(m_animation_connection);
   for(auto& rule : m_rules) {
@@ -158,7 +155,7 @@ void Stylist::set_style(StyleSheet style) {
   apply(*m_style);
   for(auto& rule : rules) {
     auto i = std::find_if(m_rules.begin(), m_rules.end(),
-      [&] (auto& item) {
+      [&] (const auto& item) {
         return item.get() == rule.get();
       });
     if(i == m_rules.end()) {

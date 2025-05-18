@@ -130,6 +130,7 @@ namespace Spire {
       QPoint m_last_pos;
       ChromaHashWidget* m_chroma_hash_widget;
 
+      QWidget* make_password_input_box();
       void layout_sign_in();
       void clear_sign_in();
       void layout_update();

@@ -8,7 +8,6 @@
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
-#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
 using namespace boost;

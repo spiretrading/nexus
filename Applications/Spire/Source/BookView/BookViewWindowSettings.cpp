@@ -1,6 +1,7 @@
 #include "Spire/BookView/BookViewWindowSettings.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Beam;
 using namespace Nexus;

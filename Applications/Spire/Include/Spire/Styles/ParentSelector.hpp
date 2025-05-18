@@ -34,12 +34,7 @@ namespace Spire::Styles {
    * @param base The selector for the base widget.
    * @param parent The selector for the parent.
    */
-  template<typename T, typename U, typename = std::enable_if_t<
-    std::is_constructible_v<Selector, const T&> &&
-    std::is_constructible_v<Selector, const U&>>>
-  auto operator <(T base, U parent) {
-    return ParentSelector(std::move(base), std::move(parent));
-  }
+  ParentSelector operator <(Selector base, Selector parent);
 
   SelectConnection select(const ParentSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update);
