@@ -3,7 +3,6 @@
 #include <QApplication>
 #include <QKeyEvent>
 #include <QPainter>
-#include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
@@ -189,6 +188,9 @@ struct TableBody::RowCover : Cover {
     }
     unmatch(*this, CurrentRow());
     unmatch(*this, Selected());
+    if(!testAttribute(Qt::WA_WState_Hidden)) {
+      setAttribute(Qt::WA_WState_Hidden);
+    }
   }
 
   QSize sizeHint() const override {
@@ -1131,6 +1133,7 @@ TableBody::RowCover* TableBody::make_row_cover() {
   }
   auto row = m_recycled_rows.front();
   m_recycled_rows.pop_front();
+  row->m_is_pending_layout = false;
   for(auto i = 0; i != m_widths->get_size(); ++i) {
     auto spacing = get_left_spacing(i);
     if(auto item = row->get_item(i)) {
@@ -1147,12 +1150,6 @@ TableBody::RowCover* TableBody::make_row_cover() {
 void TableBody::destroy(RowCover* row) {
   row->unmount();
   m_recycled_rows.push_back(row);
-  QTimer::singleShot(0, this, [=] {
-    if(std::find(m_recycled_rows.begin(), m_recycled_rows.end(), row) !=
-        m_recycled_rows.end()) {
-      row->hide();
-    }
-  });
 }
 
 void TableBody::remove(RowCover& row) {
