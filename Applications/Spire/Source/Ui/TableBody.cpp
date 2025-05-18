@@ -1134,6 +1134,9 @@ TableBody::RowCover* TableBody::make_row_cover() {
   auto row = m_recycled_rows.front();
   m_recycled_rows.pop_front();
   row->m_is_pending_layout = false;
+  row->layout()->setSpacing(m_styles.m_horizontal_spacing);
+  row->layout()->setContentsMargins(
+    m_styles.m_horizontal_spacing, 0, m_styles.m_horizontal_spacing, 0);
   for(auto i = 0; i != m_widths->get_size(); ++i) {
     auto spacing = get_left_spacing(i);
     if(auto item = row->get_item(i)) {
