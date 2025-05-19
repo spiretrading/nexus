@@ -45,7 +45,8 @@ Window::Window(QWidget* parent)
     : QWidget(parent),
       m_body(nullptr),
       m_is_resizable(true) {
-  setWindowFlags(windowFlags() | Qt::Window | Qt::WindowSystemMenuHint);
+  setWindowFlags(windowFlags() | Qt::Window | Qt::WindowSystemMenuHint |
+    Qt::FramelessWindowHint);
   m_title_bar = new TitleBar(make_svg_window_icon(":/Icons/spire.svg"), this);
   auto box_body = new QWidget();
   auto layout = make_vbox_layout(box_body);
@@ -184,11 +185,6 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
         *result = HTTOP;
         return true;
       }
-    }
-    auto pos = m_title_bar->mapFromGlobal({x, y});
-    if(m_title_bar->get_title_label().geometry().contains(pos)) {
-      *result = HTCAPTION;
-      return true;
     }
     *result = HTCLIENT;
     return true;

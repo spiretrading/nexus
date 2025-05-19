@@ -73,7 +73,8 @@ namespace {
 
 TitleBar::TitleBar(QImage icon, QWidget* parent)
     : QWidget(parent),
-      m_window_icon(nullptr) {
+      m_window_icon(nullptr),
+      m_is_dragging(false) {
   setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_title_label = make_label("", this);
   m_title_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -132,6 +133,33 @@ void TitleBar::changeEvent(QEvent* event) {
   if(event->type() == QEvent::ParentChange) {
     connect_window_signals();
   }
+}
+
+void TitleBar::mouseMoveEvent(QMouseEvent* event) {
+  if(!m_is_dragging) {
+    return;
+  }
+  auto delta = event->globalPos();
+  delta -= m_last_pos;
+  auto window_pos = window()->pos();
+  window_pos += delta;
+  m_last_pos = event->globalPos();
+  window()->move(window_pos);
+}
+
+void TitleBar::mousePressEvent(QMouseEvent* event) {
+  if(m_is_dragging || event->button() != Qt::LeftButton) {
+    return;
+  }
+  m_is_dragging = true;
+  m_last_pos = event->globalPos();
+}
+
+void TitleBar::mouseReleaseEvent(QMouseEvent* event) {
+  if(event->button() != Qt::LeftButton) {
+    return;
+  }
+  m_is_dragging = false;
 }
 
 bool TitleBar::eventFilter(QObject* watched, QEvent* event) {
