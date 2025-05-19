@@ -28,6 +28,9 @@ namespace Spire {
 
     protected:
       void changeEvent(QEvent* event) override;
+      void mouseMoveEvent(QMouseEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
+      void mouseReleaseEvent(QMouseEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
@@ -38,6 +41,8 @@ namespace Spire {
       Button* m_maximize_button;
       Button* m_restore_button;
       Button* m_close_button;
+      bool m_is_dragging;
+      QPoint m_last_pos;
 
       void connect_window_signals();
       void on_window_title_change(const QString& title);
