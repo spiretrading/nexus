@@ -5,6 +5,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
+#include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -44,7 +45,8 @@ MenuButton::MenuButton(QWidget& body, QWidget* parent)
   m_menu_window->installEventFilter(this);
   m_timer.setSingleShot(true);
   on_menu_window_style();
-  connect_style_signal(*m_menu_window, [=] { on_menu_window_style(); });
+  connect_style_signal(
+    *m_menu_window, std::bind_front(&MenuButton::on_menu_window_style, this));
 }
 
 QWidget& MenuButton::get_body() {
@@ -57,6 +59,7 @@ ContextMenu& MenuButton::get_menu() {
 
 bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Hide) {
+    unmatch(*this, PopUp());
     unmatch(*this, Press());
   } else if(event->type() == QEvent::MouseButtonPress) {
     auto& mouse_event = *static_cast<QMouseEvent*>(event);
@@ -94,6 +97,7 @@ bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
             forward_mouse_event(child, QEvent::MouseButtonPress);
             forward_mouse_event(child, QEvent::MouseButtonRelease);
           } else {
+            unmatch(*this, PopUp());
             m_menu_window->hide();
           }
         }
@@ -105,6 +109,7 @@ bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
     if(key_event.key() == Qt::Key_Space) {
       if(m_menu->focusProxy() == m_menu->focusWidget()) {
         match(*this, Press());
+        unmatch(*this, PopUp());
         m_menu_window->hide();
       }
     }
@@ -149,6 +154,7 @@ void MenuButton::mouseReleaseEvent(QMouseEvent* event) {
 
 void MenuButton::show_menu() {
   m_menu_window->show();
+  match(*this, PopUp());
   update_menu_width();
 }
 
@@ -263,8 +269,8 @@ MenuButton* Spire::make_menu_label_button(QString label, QWidget* parent) {
       set(Fill(QColor(Qt::black)));
     style.get(Disabled() > Body() > is_a<Icon>()).
       set(Fill(QColor(0xC8C8C8)));
-    style.get(
-        (FocusVisible() || Hover() || Press() || FocusIn()) > Body() > Label()).
+    style.get((FocusIn() ||
+      FocusVisible() || Hover() || PopUp() || Press()) > Body() > Label()).
       set(border_color(QColor(0x4B23A0)));
     style.get(Disabled() > Body() > Label()).
       set(BackgroundColor(QColor(0xF5F5F5))).
