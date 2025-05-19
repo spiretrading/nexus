@@ -8,6 +8,7 @@
 #include <QPainterPath>
 #include <QScreen>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
@@ -59,7 +60,9 @@ InfoTip::InfoTip(QWidget* body, QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint | Qt::Tool |
         Qt::NoDropShadowWindowHint | Qt::WindowDoesNotAcceptFocus),
       m_body(body),
-      m_is_interactive(false) {
+      m_is_interactive(false),
+      m_fade_state(FadeState::NONE),
+      m_animation(nullptr) {
   setAttribute(Qt::WA_ShowWithoutActivating);
   setAttribute(Qt::WA_TranslucentBackground);
   m_container = new QWidget(this);
@@ -127,12 +130,30 @@ void InfoTip::set_interactive(bool is_interactive) {
 }
 
 void InfoTip::fade_in() {
-  fade_window(this, false, milliseconds(FADE_IN_MS));
+  if(m_fade_state == FadeState::FADING_IN) {
+    return;
+  }
+  m_fade_state = FadeState::FADING_IN;
+  if(m_animation) {
+    m_animation->stop();
+    delete_later(m_animation);
+  }
+  m_animation = fade_window(this, false, milliseconds(FADE_IN_MS));
+  connect(m_animation, &QPropertyAnimation::finished, this,
+    &InfoTip::on_fade_in_finished);
 }
 
 void InfoTip::fade_out() {
-  auto animation = fade_window(this, true, milliseconds(FADE_IN_MS));
-  connect(animation, &QPropertyAnimation::finished, this,
+  if(m_fade_state == FadeState::FADING_OUT) {
+    return;
+  }
+  m_fade_state = FadeState::FADING_OUT;
+  if(m_animation) {
+    m_animation->stop();
+    delete_later(m_animation);
+  }
+  m_animation = fade_window(this, true, milliseconds(FADE_IN_MS));
+  connect(m_animation, &QPropertyAnimation::finished, this,
     &InfoTip::on_fade_out_finished);
 }
 
@@ -263,7 +284,12 @@ QPixmap InfoTip::render_background() const {
   return pixmap;
 }
 
+void InfoTip::on_fade_in_finished() {
+  delete_later(m_animation);
+}
+
 void InfoTip::on_fade_out_finished() {
+  delete_later(m_animation);
   if(!parentWidget()->underMouse()) {
     m_show_timer.stop();
     hide();

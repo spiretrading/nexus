@@ -4,6 +4,8 @@
 #include <QTimer>
 #include <QWidget>
 
+class QPropertyAnimation;
+
 namespace Spire {
 
   /**
@@ -43,7 +45,11 @@ namespace Spire {
         LEFT,
         RIGHT
       };
-
+      enum class FadeState {
+        NONE,
+        FADING_IN,
+        FADING_OUT
+      };
       QWidget* m_body;
       QWidget* m_container;
       bool m_is_interactive;
@@ -51,6 +57,8 @@ namespace Spire {
       QColor m_background_color;
       QColor m_border_color;
       int m_border_size;
+      FadeState m_fade_state;
+      QPropertyAnimation* m_animation;
       boost::signals2::scoped_connection m_style_connection;
 
       void fade_in();
@@ -63,6 +71,7 @@ namespace Spire {
       QPoint get_position() const;
       QRect hover_rect() const;
       QPixmap render_background() const;
+      void on_fade_in_finished();
       void on_fade_out_finished();
       void on_show_timeout();
       void on_style();
