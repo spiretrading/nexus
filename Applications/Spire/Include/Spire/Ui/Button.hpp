@@ -36,6 +36,7 @@ namespace Styles {
 
     protected:
       void keyPressEvent(QKeyEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
 
     private:
       mutable ClickSignal m_click_signal;
