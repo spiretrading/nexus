@@ -3,6 +3,7 @@
 #include <boost/signals2/connection.hpp>
 #include <QTimer>
 #include <QWidget>
+#include "Spire/Ui/HoverObserver.hpp"
 
 class QPropertyAnimation;
 
@@ -53,6 +54,7 @@ namespace Spire {
       QWidget* m_body;
       QWidget* m_container;
       bool m_is_interactive;
+      HoverObserver m_hover_observer;
       QTimer m_show_timer;
       QColor m_background_color;
       QColor m_border_color;
@@ -71,6 +73,7 @@ namespace Spire {
       QPoint get_position() const;
       QRect hover_rect() const;
       QPixmap render_background() const;
+      void on_hover(HoverObserver::State state);
       void on_fade_in_finished();
       void on_fade_out_finished();
       void on_show_timeout();
