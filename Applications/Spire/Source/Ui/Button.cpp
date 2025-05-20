@@ -48,6 +48,14 @@ void Button::keyPressEvent(QKeyEvent* event) {
   QWidget::keyPressEvent(event);
 }
 
+void Button::mousePressEvent(QMouseEvent* event) {
+  if(event->button() == Qt::LeftButton) {
+    event->accept();
+    return;
+  }
+  QWidget::mousePressEvent(event);
+}
+
 void Button::on_press_start(PressObserver::Reason reason) {
   match(*this, Press());
 }

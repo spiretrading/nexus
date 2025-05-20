@@ -1,7 +1,9 @@
 #include "Spire/Ui/TitleBar.hpp"
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QTimer>
 #include <QMouseEvent>
+#include <QWindow>
 #ifdef Q_OS_WIN
   #include <qt_windows.h>
 #endif
@@ -153,6 +155,12 @@ void TitleBar::mousePressEvent(QMouseEvent* event) {
   }
   m_is_dragging = true;
   m_last_pos = event->globalPos();
+  QTimer::singleShot(100, this, [=] {
+    if(m_is_dragging) {
+      window()->windowHandle()->startSystemMove();
+      m_is_dragging = false;
+    }
+  });
 }
 
 void TitleBar::mouseReleaseEvent(QMouseEvent* event) {
