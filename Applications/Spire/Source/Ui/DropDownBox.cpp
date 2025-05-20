@@ -269,6 +269,8 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
           clear(*m_selection);
         }
       }
+    } else if(event->type() == QEvent::MouseButtonPress) {
+      mousePressEvent(static_cast<QMouseEvent*>(event));
     }
   } else if(watched == m_drop_down_panel.get_drop_down_list()) {
     auto drop_down_list = m_drop_down_panel.get_drop_down_list();

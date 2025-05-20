@@ -54,6 +54,7 @@ void AdditionalTagValueBox::update_schema(
   layout()->addWidget(box);
   proxy_style(*this, *box);
   setFocusProxy(box);
+  setFocusPolicy(Qt::NoFocus);
 }
 
 void AdditionalTagValueBox::on_schema(
