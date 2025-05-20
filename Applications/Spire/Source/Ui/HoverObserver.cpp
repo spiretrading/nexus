@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <QChildEvent>
 #include <QPointer>
+#include <QTimer>
 #include "Spire/Spire/ExtensionCache.hpp"
 #include "Spire/Ui/GlobalPositionObserver.hpp"
 
@@ -45,17 +46,22 @@ struct HoverObserver::EventFilter : QObject {
   QPointer<QWidget> m_widget;
   State m_state;
   std::unique_ptr<Observers> m_observers;
+  QTimer m_hover_timer;
 
   EventFilter(QWidget& widget)
       : m_widget(&widget),
         m_block_signal(false),
-        m_state(State::NONE) {
+        m_state(State::NONE),
+        m_hover_timer(this) {
     widget.connect(
       &widget, &QObject::destroyed, this, &EventFilter::destroy_observers);
     widget.installEventFilter(this);
     if(widget.isEnabled() && widget.isVisible()) {
       initialize_observers();
     }
+    const auto HOVER_PERIOD_MS = 300;
+    m_hover_timer.setInterval(HOVER_PERIOD_MS);
+    connect(&m_hover_timer, &QTimer::timeout, this, &EventFilter::on_timeout);
   }
 
   void initialize_observers() {
@@ -92,6 +98,9 @@ struct HoverObserver::EventFilter : QObject {
       return;
     }
     m_state = state;
+    if(state == State::MOUSE_IN) {
+      m_hover_timer.start();
+    }
     if(!m_block_signal) {
       m_state_signal(state);
     }
@@ -160,6 +169,17 @@ struct HoverObserver::EventFilter : QObject {
     if(m_widget) {
       set_state(::get_state(
         *m_widget, get_observers().m_position_observer.get_position()));
+    }
+  }
+
+  void on_timeout() {
+    if(m_widget && m_observers && m_state != State::NONE) {
+      auto state =
+        ::get_state(*m_widget, m_observers->m_position_observer.get_position());
+      if(state == State::NONE) {
+        set_state(State::NONE);
+        m_hover_timer.stop();
+      }
     }
   }
 };
