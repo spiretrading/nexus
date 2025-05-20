@@ -132,7 +132,7 @@ namespace {
   void update_component_style(QWidget& component) {
     update_style(component, [] (auto& style) {
       style.get(Any()).set(TextAlign(Qt::AlignCenter));
-      style.get(Any() > is_a<Button>()).set(Visibility::NONE);
+      style.get(Any() > (DownButton() || UpButton())).set(Visibility::NONE);
     });
   }
 

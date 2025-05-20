@@ -329,7 +329,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       set(border_size(0)).
       set(horizontal_padding(scale_width(0))).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-    style.get(Any() > is_a<Button>()).set(Visibility::NONE);
+    style.get(Any() > (DownButton() || UpButton())).set(Visibility::NONE);
     return style;
   }
 
@@ -340,7 +340,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       set(horizontal_padding(scale_width(0))).
       set(LeadingZeros(2)).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-    style.get(Any() > is_a<Button>()).set(Visibility::NONE);
+    style.get(Any() > (DownButton() || UpButton())).set(Visibility::NONE);
     return style;
   }
 
@@ -351,7 +351,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       set(horizontal_padding(scale_width(0))).
       set(LeadingZeros(2)).set(TrailingZeros(3)).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
-    style.get(Any() > is_a<Button>()).set(Visibility::NONE);
+    style.get(Any() > (DownButton() || UpButton())).set(Visibility::NONE);
     return style;
   }
 

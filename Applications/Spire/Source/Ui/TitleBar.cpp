@@ -147,6 +147,8 @@ void TitleBar::mouseMoveEvent(QMouseEvent* event) {
   window_pos += delta;
   m_last_pos = event->globalPos();
   window()->move(window_pos);
+  window()->windowHandle()->startSystemMove();
+  m_is_dragging = false;
 }
 
 void TitleBar::mousePressEvent(QMouseEvent* event) {
@@ -155,12 +157,6 @@ void TitleBar::mousePressEvent(QMouseEvent* event) {
   }
   m_is_dragging = true;
   m_last_pos = event->globalPos();
-  QTimer::singleShot(100, this, [=] {
-    if(m_is_dragging) {
-      window()->windowHandle()->startSystemMove();
-      m_is_dragging = false;
-    }
-  });
 }
 
 void TitleBar::mouseReleaseEvent(QMouseEvent* event) {

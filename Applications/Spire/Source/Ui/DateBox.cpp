@@ -37,7 +37,7 @@ namespace {
       set(TextAlign(Qt::AlignCenter)).
       set(border_size(0)).
       set(padding(0));
-    style.get(Any() > is_a<Button>()).set(Visibility::NONE);
+    style.get(Any() > (DownButton() || UpButton())).set(Visibility::NONE);
   }
 
   auto make_year_box(const std::shared_ptr<OptionalIntegerModel>& current) {
