@@ -45,8 +45,9 @@ Window::Window(QWidget* parent)
     : QWidget(parent),
       m_body(nullptr),
       m_is_resizable(true) {
-  setWindowFlags(windowFlags() | Qt::Window | Qt::WindowSystemMenuHint |
-    Qt::FramelessWindowHint);
+  setWindowFlags(windowFlags() | Qt::CustomizeWindowHint |
+    Qt::FramelessWindowHint | Qt::Window | Qt::WindowSystemMenuHint);
+  setAttribute(Qt::WA_TranslucentBackground);
   m_title_bar = new TitleBar(make_svg_window_icon(":/Icons/spire.svg"), this);
   auto box_body = new QWidget();
   auto layout = make_vbox_layout(box_body);
