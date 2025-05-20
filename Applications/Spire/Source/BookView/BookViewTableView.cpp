@@ -38,8 +38,8 @@ using namespace Spire::Styles;
 
 namespace {
   using ShowGrid = StateSelector<void, struct ShowGridSeletorTag>;
-  const auto SELECTED_BACKGROUND_COLOR = QColor(0x8D78EC);
-  const auto SELECTED_TEXT_COLOR = QColor(0xFFFFFF);
+  const auto CURRENT_BACKGROUND_COLOR = QColor(0x8D78EC);
+  const auto CURRENT_TEXT_COLOR = QColor(0xFFFFFF);
 
   auto make_header_model() {
     auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
@@ -250,6 +250,14 @@ namespace {
         clear_row_style(style, UserOrderRow(status));
       }
     }
+    style.get(Any() > CurrentRow()).
+      set(BackgroundColor(CURRENT_BACKGROUND_COLOR)).
+      set(border_color(QColor(0x4B23A0)));
+    style.get(Any() > Row() > Current()).
+      set(BackgroundColor(Qt::transparent)).
+      set(border_color(QColor(Qt::transparent)));
+    style.get(Any() > CurrentRow() > Any() > Any()).
+      set(TextColor(CURRENT_TEXT_COLOR));
   }
 
   struct TableViewStylist : QObject {
@@ -277,14 +285,6 @@ namespace {
           set(VerticalSpacing(scale_height(1)));
         style.get(Any() > CurrentColumn()).
           set(BackgroundColor(Qt::transparent));
-        style.get(Any() > CurrentRow()).
-          set(BackgroundColor(SELECTED_BACKGROUND_COLOR)).
-          set(border_color(QColor(0x4B23A0)));
-        style.get(Any() > Row() > Current()).
-          set(BackgroundColor(Qt::transparent)).
-          set(border_color(QColor(Qt::transparent)));
-        style.get(Any() > CurrentRow() > Any() > Any()).
-          set(TextColor(SELECTED_TEXT_COLOR));
         style.get(Any() > Row() > Any() > Any()).
           set(vertical_padding(scale_width(1.5)));
       });
