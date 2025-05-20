@@ -61,6 +61,7 @@ InfoTip::InfoTip(QWidget* body, QWidget* parent)
         Qt::NoDropShadowWindowHint | Qt::WindowDoesNotAcceptFocus),
       m_body(body),
       m_is_interactive(false),
+      m_hover_observer(*parent),
       m_fade_state(FadeState::NONE),
       m_animation(nullptr) {
   setAttribute(Qt::WA_ShowWithoutActivating);
@@ -77,7 +78,10 @@ InfoTip::InfoTip(QWidget* body, QWidget* parent)
   parent->installEventFilter(this);
   match(*m_body, Body());
   link(*this, *m_body);
-  m_style_connection = connect_style_signal(*this, [=] { on_style(); });
+  m_hover_observer.connect_state_signal(
+    std::bind_front(&InfoTip::on_hover, this));
+  m_style_connection =
+    connect_style_signal(*this, std::bind_front(&InfoTip::on_style, this));
   set_style(*this, DEFAULT_STYLE());
   connect(m_body, &QObject::destroyed, this, [=] {
     deleteLater();
@@ -86,17 +90,9 @@ InfoTip::InfoTip(QWidget* body, QWidget* parent)
 
 bool InfoTip::eventFilter(QObject* watched, QEvent* event) {
   switch(event->type()) {
-    case QEvent::Enter:
-      m_show_timer.start();
-      break;
     case QEvent::MouseMove:
       if(!parentWidget()->rect().contains(
           static_cast<QMouseEvent*>(event)->pos())) {
-        fade_out();
-      }
-      break;
-    case QEvent::Leave:
-      if(!(m_is_interactive && hover_rect().contains(QCursor::pos()))) {
         fade_out();
       }
       break;
@@ -293,6 +289,16 @@ void InfoTip::on_fade_out_finished() {
   if(!parentWidget()->underMouse()) {
     m_show_timer.stop();
     hide();
+  }
+}
+
+void InfoTip::on_hover(HoverObserver::State state) {
+  if(state == HoverObserver::State::NONE) {
+    if(!(m_is_interactive && hover_rect().contains(QCursor::pos()))) {
+      fade_out();
+    }
+  } else {
+    m_show_timer.start();
   }
 }
 
