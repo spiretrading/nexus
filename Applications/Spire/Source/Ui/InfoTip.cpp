@@ -17,9 +17,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto DEFAULT_SHOW_DELAY_MS = 500;
   const auto DROP_SHADOW_SIZE = 5;
-  const auto DROP_SHADOW_COLOR = QColor(0, 0, 0, 63);
   const auto FADE_IN_MS = 100;
 
   auto ARROW_SIZE() {
@@ -72,9 +70,14 @@ InfoTip::InfoTip(QWidget* body, QWidget* parent)
   layout->addWidget(m_container);
   auto container_layout = make_hbox_layout(m_container);
   container_layout->addWidget(m_body);
+  const auto DEFAULT_SHOW_DELAY_MS = 500;
   m_show_timer.setInterval(DEFAULT_SHOW_DELAY_MS);
   m_show_timer.setSingleShot(true);
   connect(&m_show_timer, &QTimer::timeout, this, &InfoTip::on_show_timeout);
+  const auto INTERACTIVE_PERIOD_MS = 300;
+  m_interactive_timer.setInterval(INTERACTIVE_PERIOD_MS);
+  connect(&m_interactive_timer, &QTimer::timeout, this,
+    &InfoTip::on_interactive_timeout);
   parent->installEventFilter(this);
   match(*m_body, Body());
   link(*this, *m_body);
@@ -90,12 +93,6 @@ InfoTip::InfoTip(QWidget* body, QWidget* parent)
 
 bool InfoTip::eventFilter(QObject* watched, QEvent* event) {
   switch(event->type()) {
-    case QEvent::MouseMove:
-      if(!parentWidget()->rect().contains(
-          static_cast<QMouseEvent*>(event)->pos())) {
-        fade_out();
-      }
-      break;
     case QEvent::ToolTip:
       return true;
   }
@@ -104,16 +101,11 @@ bool InfoTip::eventFilter(QObject* watched, QEvent* event) {
 
 void InfoTip::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
-    if(isEnabled() && parentWidget()->underMouse()) {
+    if(is_hovered()) {
       m_show_timer.start();
     }
   }
   return QWidget::changeEvent(event);
-}
-
-void InfoTip::leaveEvent(QEvent* event) {
-  fade_out();
-  QWidget::leaveEvent(event);
 }
 
 void InfoTip::paintEvent(QPaintEvent* event) {
@@ -125,6 +117,16 @@ void InfoTip::set_interactive(bool is_interactive) {
   m_is_interactive = is_interactive;
 }
 
+QRect InfoTip::get_interactive_region() const {
+  return QRect(get_position(), QSize(width(), height()));
+}
+
+bool InfoTip::is_hovered() const {
+  return isEnabled() && (m_hover_observer.get_state() !=
+    HoverObserver::State::NONE || m_is_interactive &&
+      get_interactive_region().contains(QCursor::pos()));
+}
+
 void InfoTip::fade_in() {
   if(m_fade_state == FadeState::FADING_IN) {
     return;
@@ -134,6 +136,7 @@ void InfoTip::fade_in() {
     m_animation->stop();
     delete_later(m_animation);
   }
+  m_interactive_timer.start();
   m_animation = fade_window(this, false, milliseconds(FADE_IN_MS));
   connect(m_animation, &QPropertyAnimation::finished, this,
     &InfoTip::on_fade_in_finished);
@@ -148,6 +151,7 @@ void InfoTip::fade_out() {
     m_animation->stop();
     delete_later(m_animation);
   }
+  m_interactive_timer.stop();
   m_animation = fade_window(this, true, milliseconds(FADE_IN_MS));
   connect(m_animation, &QPropertyAnimation::finished, this,
     &InfoTip::on_fade_out_finished);
@@ -181,8 +185,8 @@ QPainterPath InfoTip::get_arrow_path() const {
 }
 
 InfoTip::BodyOrientation InfoTip::get_body_orientation() const {
-  auto parent_position = parentWidget()->mapToGlobal(
-    parentWidget()->rect().bottomLeft());
+  auto parent_position =
+    parentWidget()->mapToGlobal(parentWidget()->rect().bottomLeft());
   auto screen_geometry =
     get_current_screen(parent_position)->availableGeometry();
   if(parent_position.x() + width() >
@@ -228,41 +232,37 @@ InfoTip::Orientation InfoTip::get_orientation() const {
 }
 
 QPoint InfoTip::get_position() const {
-  auto parent_pos = parentWidget()->mapToGlobal(
-    parentWidget()->rect().bottomLeft());
+  auto parent_position =
+    parentWidget()->mapToGlobal(parentWidget()->rect().bottomLeft());
   auto orientation = get_orientation();
   auto x = [&] {
     if(orientation == Orientation::BOTTOM_LEFT ||
         orientation == Orientation::TOP_LEFT) {
-      return parent_pos.x() - DROP_SHADOW_WIDTH();
+      return parent_position.x() - DROP_SHADOW_WIDTH();
     }
-    return parent_pos.x() + parentWidget()->width() -
+    return parent_position.x() + parentWidget()->width() -
       2 * ARROW_X_POSITION() - ARROW_SIZE().width() - DROP_SHADOW_WIDTH();
   }();
   auto y = [&] {
     if(orientation == Orientation::TOP_LEFT ||
         orientation == Orientation::TOP_RIGHT) {
-      return parent_pos.y() - parentWidget()->height() - height() -
+      return parent_position.y() - parentWidget()->height() - height() -
         scale_height(1);
     }
-    return parent_pos.y() + scale_height(1);
+    return parent_position.y() + scale_height(1);
   }();
   if(get_body_orientation() == BodyOrientation::LEFT) {
     x -= width() - (2 * DROP_SHADOW_WIDTH() + ARROW_SIZE().width() +
       2 * ARROW_X_POSITION());
   }
-  return {x, y};
-}
-
-QRect InfoTip::hover_rect() const {
-  return QRect(get_position(), QSize(width(), height()));
+  return QPoint(x, y);
 }
 
 QPixmap InfoTip::render_background() const {
   auto scene = QGraphicsScene();
   scene.setSceneRect(rect());
   auto shadow = QGraphicsDropShadowEffect();
-  shadow.setColor(DROP_SHADOW_COLOR);
+  shadow.setColor(QColor(0, 0, 0, 63));
   shadow.setOffset(0, 0);
   shadow.setBlurRadius(scale_width(5));
   auto path = get_arrow_path();
@@ -282,33 +282,41 @@ QPixmap InfoTip::render_background() const {
 
 void InfoTip::on_fade_in_finished() {
   delete_later(m_animation);
+  if(!is_hovered()) {
+    fade_out();
+  }
 }
 
 void InfoTip::on_fade_out_finished() {
   delete_later(m_animation);
-  if(!parentWidget()->underMouse()) {
-    m_show_timer.stop();
-    hide();
-  }
-}
-
-void InfoTip::on_hover(HoverObserver::State state) {
-  if(state == HoverObserver::State::NONE) {
-    if(!(m_is_interactive && hover_rect().contains(QCursor::pos()))) {
-      fade_out();
-    }
-  } else {
+  m_show_timer.stop();
+  hide();
+  if(is_hovered()) {
     m_show_timer.start();
   }
 }
 
+void InfoTip::on_hover(HoverObserver::State state) {
+  if(is_hovered()) {
+    m_show_timer.start();
+  } else {
+    fade_out();
+  }
+}
+
 void InfoTip::on_show_timeout() {
-  if(isEnabled() && parentWidget()->underMouse()) {
+  if(is_hovered()) {
     layout()->setContentsMargins(get_margins());
     move(get_position());
     fade_in();
     show();
     adjustSize();
+  }
+}
+
+void InfoTip::on_interactive_timeout() {
+  if(!is_hovered()) {
+    fade_out();
   }
 }
 

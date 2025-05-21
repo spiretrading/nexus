@@ -32,7 +32,6 @@ namespace Spire {
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void changeEvent(QEvent* event) override;
-      void leaveEvent(QEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
 
     private:
@@ -56,6 +55,7 @@ namespace Spire {
       bool m_is_interactive;
       HoverObserver m_hover_observer;
       QTimer m_show_timer;
+      QTimer m_interactive_timer;
       QColor m_background_color;
       QColor m_border_color;
       int m_border_size;
@@ -63,6 +63,8 @@ namespace Spire {
       QPropertyAnimation* m_animation;
       boost::signals2::scoped_connection m_style_connection;
 
+      QRect get_interactive_region() const;
+      bool is_hovered() const;
       void fade_in();
       void fade_out();
       QPainterPath get_arrow_path() const;
@@ -71,12 +73,12 @@ namespace Spire {
       QMargins get_margins() const;
       Orientation get_orientation() const;
       QPoint get_position() const;
-      QRect hover_rect() const;
       QPixmap render_background() const;
       void on_hover(HoverObserver::State state);
       void on_fade_in_finished();
       void on_fade_out_finished();
       void on_show_timeout();
+      void on_interactive_timeout();
       void on_style();
   };
 }
