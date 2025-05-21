@@ -85,8 +85,6 @@ namespace {
       set(Fill(QColor(0xB71C1C)));
     style.get((item_selector > EmptyCell()) << (HoverItem() || Current())).
       set(border_color(QColor(Qt::transparent)));
-    style.get(body_selector > CurrentRow()).
-      set(BackgroundColor(QColor(0xE2E0FF)));
     style.get(body_selector > CurrentColumn()).
       set(BackgroundColor(Qt::transparent));
     return style;
@@ -446,7 +444,6 @@ void EditableTableView::keyPressEvent(QKeyEvent* event) {
       m_is_processing_key = true;
       auto target = find_focus_proxy(item->get_body());
       QCoreApplication::sendEvent(target, event);
-      target->setFocus();
       m_is_processing_key = false;
     }
   } else {
