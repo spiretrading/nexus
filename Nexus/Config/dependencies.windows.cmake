@@ -77,6 +77,6 @@ set(QT_WINDOWS_ACCESSIBILITY_LIBRARY_OPTIMIZED_PATH
 set(QUICK_FIX_INCLUDE_PATH
   "${PROJECT_BINARY_DIR}/Dependencies/quickfix-v.1.15.1/include")
 set(QUICK_FIX_LIBRARY_DEBUG_PATH
-  "${PROJECT_BINARY_DIR}/Dependencies/quickfix-v.1.15.1/src/C++/Release/quickfix.lib")
+  "${PROJECT_BINARY_DIR}/Dependencies/quickfix-v.1.15.1/src/C++/Debug/quickfixd.lib")
 set(QUICK_FIX_LIBRARY_OPTIMIZED_PATH
-  "${PROJECT_BINARY_DIR}/Dependencies/quickfix-v.1.15.1/src/C++/Debug/quickfix.lib")
+  "${PROJECT_BINARY_DIR}/Dependencies/quickfix-v.1.15.1/src/C++/Release/quickfix.lib")
