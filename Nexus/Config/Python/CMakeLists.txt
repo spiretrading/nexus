@@ -16,7 +16,7 @@ endif()
 target_compile_options(Python PRIVATE
   $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-fvisibility=hidden>)
 if(UNIX)
-  set_target_properties(Python PROPERTIES PREFIX "")
+  set_target_properties(Python PROPERTIES PREFIX "" INSTALL_RPATH "$ORIGIN")
 endif()
 target_link_libraries(Python
   debug ${ASPEN_PYTHON_LIBRARY_DEBUG_PATH}
