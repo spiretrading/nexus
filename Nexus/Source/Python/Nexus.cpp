@@ -5,7 +5,8 @@ using namespace Nexus;
 using namespace Nexus::Python;
 using namespace pybind11;
 
-PYBIND11_MODULE(_nexus, m) {
+PYBIND11_MODULE(nexus, m) {
+  auto beamModule = module::import("beam");
   ExportQueries(m);
   ExportAccounting(m);
   ExportAdministrationService(m);

@@ -20,29 +20,13 @@ IF NOT EXIST "%PYTHON_PATH%" (
     EXIT /B 1
   )
 )
-IF NOT EXIST "%PYTHON_PATH%\nexus" (
-  MKDIR "%PYTHON_PATH%\nexus"
-  IF %ERRORLEVEL% GEQ 1 (
-    ECHO Error: Unable to create directory "%PYTHON_PATH%\nexus".
-    EXIT /B 1
-  )
-)
-IF NOT EXIST "Python\__init__.py" (
-  ECHO Error: Source file "Python\__init__.py" not found.
+IF NOT EXIST "..\Nexus\Libraries\%CONFIG%\nexus.pyd" (
+  ECHO Error: Source file "..\Nexus\Libraries\%CONFIG%\nexus.pyd" not found.
   EXIT /B 1
 )
-COPY "Python\__init__.py" "%PYTHON_PATH%\nexus" >nul
+COPY "..\Nexus\Libraries\%CONFIG%\nexus.pyd" "%PYTHON_PATH%" >nul
 IF %ERRORLEVEL% GEQ 1 (
-  ECHO Error: Failed to copy "__init__.py" to "%PYTHON_PATH%\nexus".
-  EXIT /B 1
-)
-IF NOT EXIST "..\Nexus\Libraries\%CONFIG%\_nexus.pyd" (
-  ECHO Error: Source file "..\Nexus\Libraries\%CONFIG%\_nexus.pyd" not found.
-  EXIT /B 1
-)
-COPY "..\Nexus\Libraries\%CONFIG%\_nexus.pyd" "%PYTHON_PATH%\nexus" >nul
-IF %ERRORLEVEL% GEQ 1 (
-  ECHO Error: Failed to copy "_nexus.pyd" to "%PYTHON_PATH%\nexus".
+  ECHO Error: Failed to copy "nexus.pyd" to "%PYTHON_PATH%".
   EXIT /B 1
 )
 EXIT /B 0
