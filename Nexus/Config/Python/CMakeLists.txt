@@ -4,17 +4,19 @@ include_directories(SYSTEM ${PYBIND11_INCLUDE_PATH})
 include_directories(SYSTEM ${PYTHON_INCLUDE_PATH})
 add_library(Python SHARED ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-set_target_properties(Python PROPERTIES OUTPUT_NAME _nexus)
+set_target_properties(Python PROPERTIES OUTPUT_NAME nexus)
 target_compile_definitions(Python
   PRIVATE ASPEN_USE_DLL BEAM_USE_DLL NEXUS_BUILD_DLL BEAM_ENABLE_STACK_PRINT)
+set_target_properties(Python PROPERTIES CXX_VISIBILITY_PRESET default
+  VISIBILITY_INLINES_HIDDEN 0)
 if(MSVC)
   target_compile_definitions(Python PRIVATE HAVE_SNPRINTF)
   set_target_properties(Python PROPERTIES SUFFIX ".pyd")
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-  target_compile_options(Python PRIVATE -fvisibility=hidden)
 endif()
+target_compile_options(Python PRIVATE
+  $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-fvisibility=hidden>)
 if(UNIX)
-  set_target_properties(Python PROPERTIES PREFIX "")
+  set_target_properties(Python PROPERTIES PREFIX "" INSTALL_RPATH "$ORIGIN")
 endif()
 target_link_libraries(Python
   debug ${ASPEN_PYTHON_LIBRARY_DEBUG_PATH}
