@@ -1,6 +1,7 @@
 #ifndef SPIRE_SERVICE_BOOK_VIEW_MODEL_HPP
 #define SPIRE_SERVICE_BOOK_VIEW_MODEL_HPP
 #include <unordered_map>
+#include <vector>
 #include "Nexus/Definitions/Market.hpp"
 #include "Nexus/MarketDataService/MarketDataClientBox.hpp"
 #include "Spire/Async/EventHandler.hpp"
@@ -57,6 +58,7 @@ namespace Spire {
       std::shared_ptr<BookViewModel> m_model;
       std::shared_ptr<BookQuoteListModel> m_bid_quotes;
       std::shared_ptr<BookQuoteListModel> m_ask_quotes;
+      std::vector<Nexus::BookQuote> m_buffered_book_quotes;
       std::unordered_map<Nexus::MarketCode, Nexus::MarketQuote> m_market_quotes;
       std::vector<const Nexus::OrderExecutionService::Order*> m_ask_orders;
       std::vector<const Nexus::OrderExecutionService::Order*> m_bid_orders;
@@ -69,6 +71,8 @@ namespace Spire {
 
       void clear(const BookQuoteListModel& quotes);
       void on_bbo(const Nexus::BboQuote& quote);
+      void buffer_book_quote(const Nexus::BookQuote& quote);
+      void on_end_book_quote_buffer();
       void on_book_quote(const Nexus::BookQuote& quote);
       void on_book_quote_interruption(const std::exception_ptr& e);
       void on_market_quote(const Nexus::MarketQuote& quote);
