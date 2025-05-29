@@ -105,7 +105,7 @@ void DropDownBox::DropDownPanelWrapper::destroy() {
 }
 
 void DropDownBox::DropDownPanelWrapper::show() {
-  std::visit([] (auto* widget) {
+  std::visit([] (auto widget) {
     if(widget) {
       widget->show();
     }
@@ -161,6 +161,7 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
       m_to_text(std::move(to_text)),
       m_timer(this),
       m_is_read_only(false),
+      m_has_update(false),
       m_is_mouse_press_on_list(false) {
   m_text_box = new TextBox();
   m_text_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -196,6 +197,7 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
   set_style(*this, DEFAULT_STYLE());
   setFocusProxy(m_button);
   on_current(get_current()->get());
+  m_has_update = false;
   m_current_connection = get_current()->connect_update_signal(
     std::bind_front(&DropDownBox::on_current, this));
   m_button_press_observer->connect_press_end_signal(
@@ -261,7 +263,7 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::FocusIn) {
       m_submission = m_current->get();
     } else if(event->type() == QEvent::FocusOut) {
-      if(!is_read_only() && is_drop_down_panel_visible() && !has_focus(*this)) {
+      if(!is_read_only() && !has_focus(*this) && m_has_update) {
         submit();
         if(m_submission) {
           m_selection->push(*m_submission);
@@ -336,6 +338,14 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::Close) {
       auto& close_event = static_cast<QCloseEvent&>(*event);
       close_event.ignore();
+      if(!is_read_only() && m_has_update) {
+        submit();
+        if(m_submission) {
+          m_selection->push(*m_submission);
+        } else {
+          clear(*m_selection);
+        }
+      }
       hide_drop_down_panel();
     } else if(event->type() == QEvent::Hide) {
       leave_hovered_item();
@@ -378,13 +388,10 @@ void DropDownBox::keyPressEvent(QKeyEvent* event) {
 }
 
 void DropDownBox::mousePressEvent(QMouseEvent* event) {
-  if(is_read_only()) {
-    return;
-  }
   if(event->button() == Qt::LeftButton) {
     if(is_drop_down_panel_visible()) {
       hide_drop_down_panel();
-    } else {
+    } else if(!is_read_only() && isEnabled()) {
       m_is_mouse_press_on_list = false;
       m_mouse_press_position = event->globalPos();
       show_drop_down_panel();
@@ -504,6 +511,7 @@ void DropDownBox::hide_drop_down_panel() {
 
 void DropDownBox::submit() {
   m_submission = m_current->get();
+  m_has_update = false;
   if(m_submission) {
     m_submit_signal(m_list->get(*m_submission));
   }
@@ -523,6 +531,7 @@ void DropDownBox::on_button_press_end(PressObserver::Reason reason) {
 }
 
 void DropDownBox::on_current(const optional<int>& current) {
+  m_has_update = true;
   auto text = [&] {
     if(current) {
       return m_to_text(m_list->get(*current));
