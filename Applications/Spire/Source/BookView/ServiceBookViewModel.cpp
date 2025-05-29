@@ -61,7 +61,7 @@ ServiceBookViewModel::ServiceBookViewModel(
     std::bind_front(&ServiceBookViewModel::on_bbo, this)));
   QueryRealTimeBookQuotesWithSnapshot(m_client, m_security,
     m_event_handler.get_slot<BookQuote>(
-      std::bind_front(&ServiceBookViewModel::on_book_quote, this),
+      std::bind_front(&ServiceBookViewModel::buffer_book_quote, this),
       std::bind_front(&ServiceBookViewModel::on_book_quote_interruption, this)),
     InterruptionPolicy::BREAK_QUERY);
   QueryRealTimeMarketQuotesWithSnapshot(m_client, m_security,
@@ -122,6 +122,25 @@ const std::shared_ptr<SecurityTechnicalsValueModel>&
 
 void ServiceBookViewModel::on_bbo(const BboQuote& bbo) {
   m_model->get_bbo_quote()->set(bbo);
+}
+
+void ServiceBookViewModel::buffer_book_quote(const Nexus::BookQuote& quote) {
+  m_buffered_book_quotes.push_back(quote);
+  if(m_buffered_book_quotes.size() == 1) {
+    m_event_handler.push(
+      std::bind_front(&ServiceBookViewModel::on_end_book_quote_buffer, this));
+  }
+}
+
+void ServiceBookViewModel::on_end_book_quote_buffer() {
+  get_asks()->transact([&] {
+    get_bids()->transact([&] {
+      for(auto& quote : m_buffered_book_quotes) {
+        on_book_quote(quote);
+      }
+    });
+  });
+  m_buffered_book_quotes.clear();
 }
 
 void ServiceBookViewModel::on_book_quote(const BookQuote& quote) {

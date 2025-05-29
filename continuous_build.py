@@ -81,22 +81,14 @@ def copy_python_libraries(path, version, repo_path):
     'aspen%s' % python_ext)
   if os.path.isfile(aspen_lib):
     shutil.copy2(aspen_lib, python_path)
-  beam_python_path = os.path.join(python_path, 'beam')
-  makedirs(beam_python_path)
   beam_lib = os.path.join(beam_path, 'Beam', 'Libraries', 'Release',
-    '_beam%s' % python_ext)
+    'beam%s' % python_ext)
   if os.path.isfile(beam_lib):
-    shutil.copy2(beam_lib, beam_python_path)
-    shutil.copy2(os.path.join(beam_path, 'Applications', 'Python',
-      '__init__.py'), beam_python_path)
-  nexus_python_path = os.path.join(python_path, 'nexus')
-  makedirs(nexus_python_path)
+    shutil.copy2(beam_lib, python_path)
   nexus_lib = os.path.join(repo_path, 'Nexus', 'Libraries', 'Release',
-    '_nexus%s' % python_ext)
+    'nexus%s' % python_ext)
   if os.path.isfile(nexus_lib):
-    shutil.copy2(nexus_lib, nexus_python_path)
-    shutil.copy2(os.path.join(repo_path, 'Applications', 'Python',
-      '__init__.py'), nexus_python_path)
+    shutil.copy2(nexus_lib, python_path)
 
 
 def build_repo(repo, path, branch):
