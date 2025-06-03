@@ -34,6 +34,7 @@ namespace Spire {
   class AnyRef;
   template<typename T> class ArrayListModel;
   class ArrayTableModel;
+  template<typename T> class ArrayValueToListModel;
   template<typename T> class ColumnViewListModel;
   template<typename T> class CompositeModel;
   template<typename T> class ConstantValueModel;
@@ -67,7 +68,8 @@ namespace Spire {
   class Scalar;
   template<typename T> class ScalarValueModel;
   template<typename T> class ScalarValueModelDecorator;
-  class ServiceSecurityQueryModel;
+  class SecurityDeck;
+  class ServiceSecurityInfoQueryModel;
   template<typename T> class SortedListModel;
   class SortedTableModel;
   template<typename T> struct SubscriptionResult;

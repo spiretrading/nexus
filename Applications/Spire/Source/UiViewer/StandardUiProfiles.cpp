@@ -4476,7 +4476,6 @@ UiProfile Spire::make_table_view_profile() {
       auto layout = make_hbox_layout(form);
       auto column = new QSpinBox();
       column->setMinimum(-1);
-      column->setMaximum(2);
       auto button = new QPushButton("Apply");
       layout->addWidget(column);
       layout->addWidget(button);
@@ -4570,13 +4569,11 @@ UiProfile Spire::make_table_view_profile() {
     auto& hide_column = get<int>("hide-column", profile.get_properties());
     hide_column.connect_changed_signal([=] (int column) {
       auto& widths = view->get_header().get_widths();
-      if(column >= 0 && column < widths->get_size()) {
-        view->get_header().get_item(column)->setVisible(false);
-      } else if(column == -1) {
+      if(column >= 0) {
+        view->hide_column(column);
+      } else {
         for(auto i = 0; i < widths->get_size(); ++i) {
-          if(!view->get_header().get_item(i)->isVisible()) {
-            view->get_header().get_item(i)->setVisible(true);
-          }
+          view->show_column(i);
         }
       }
     });

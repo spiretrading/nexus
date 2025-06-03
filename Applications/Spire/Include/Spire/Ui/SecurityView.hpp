@@ -1,7 +1,9 @@
 #ifndef SPIRE_SECURITY_VIEW_HPP
 #define SPIRE_SECURITY_VIEW_HPP
-#include <vector>
+#include <Beam/Serialization/DataShuttle.hpp>
+#include <boost/signals2/connection.hpp>
 #include <QStackedWidget>
+#include "Spire/Spire/SecurityDeck.hpp"
 #include "Spire/Ui/SecurityDialog.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -14,8 +16,13 @@ namespace Spire {
   class SecurityView : public QWidget {
     public:
 
+      /** Stores the SecurityView's persistent state. */
+      struct State {
+        SecurityDeck m_securities;
+      };
+
       /** A ValueModel over a Nexus::Security. */
-      using CurrentModel = ValueModel<Nexus::Security>;
+      using CurrentModel = SecurityModel;
 
       /**
        * Constructs a SecurityView using a default local model.
@@ -49,6 +56,12 @@ namespace Spire {
       /** Returns the body. */
       QWidget& get_body();
 
+      /** Saves the state of this SecurityView. */
+      State save_state() const;
+
+      /** Restores the state of this SecurityView. */
+      void restore(const State& state);
+
     protected:
       void keyPressEvent(QKeyEvent* event) override;
 
@@ -57,10 +70,22 @@ namespace Spire {
       std::shared_ptr<CurrentModel> m_current;
       QWidget* m_body;
       QStackedWidget* m_layers;
-      std::vector<Nexus::Security> m_securities;
-      int m_current_index;
+      SecurityDeck m_securities;
+      boost::signals2::scoped_connection m_current_connection;
 
+      void on_current(const Nexus::Security& security);
       void on_submit(const Nexus::Security& security);
+  };
+}
+
+namespace Beam::Serialization {
+  template<>
+  struct Shuttle<Spire::SecurityView::State> {
+    template<typename Shuttler>
+    void operator ()(Shuttler& shuttle, Spire::SecurityView::State& value,
+        unsigned int version) const {
+      shuttle.Shuttle("securities", value.m_securities);
+    }
   };
 }
 

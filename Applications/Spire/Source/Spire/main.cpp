@@ -9,7 +9,7 @@
 #include <tclap/CmdLine.h>
 #include "Nexus/TelemetryService/ApplicationDefinitions.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
-#include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/BookView/BookViewPropertiesWindowFactory.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
@@ -23,7 +23,6 @@
 #include "Spire/SignIn/SignInException.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Spire/SpireServiceClients.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/Toolbar/ToolbarController.hpp"
 #include "Version.hpp"
 #include <QtPlugin>
@@ -218,15 +217,19 @@ int main(int argc, char* argv[]) {
     };
   auto sign_in_controller = std::unique_ptr<SignInController>();
   auto sign_in_handler = [&] (auto service_clients) {
+    auto username =
+      service_clients.GetServiceLocatorClient().GetAccount().m_name;
     auto is_administrator =
       service_clients.GetAdministrationClient().CheckAdministrator(
         service_clients.GetServiceLocatorClient().GetAccount());
     auto is_manager = is_administrator ||
       !service_clients.GetAdministrationClient().LoadManagedTradingGroups(
         service_clients.GetServiceLocatorClient().GetAccount()).empty();
-    user_profile.emplace(
-      service_clients.GetServiceLocatorClient().GetAccount().m_name,
-      is_administrator, is_manager,
+    auto book_view_properties =
+      load_book_view_properties(get_profile_path(username));
+    auto time_and_sales_properties =
+      load_time_and_sales_properties(get_profile_path(username));
+    user_profile.emplace(username, is_administrator, is_manager,
       service_clients.GetDefinitionsClient().LoadCountryDatabase(),
       service_clients.GetDefinitionsClient().LoadTimeZoneDatabase(),
       service_clients.GetDefinitionsClient().LoadCurrencyDatabase(),
@@ -234,7 +237,8 @@ int main(int argc, char* argv[]) {
       service_clients.GetDefinitionsClient().LoadMarketDatabase(),
       service_clients.GetDefinitionsClient().LoadDestinationDatabase(),
       service_clients.GetAdministrationClient().LoadEntitlements(),
-      get_default_additional_tag_database(), std::move(service_clients),
+      get_default_additional_tag_database(), std::move(book_view_properties),
+      std::move(time_and_sales_properties), std::move(service_clients),
       *telemetry_client);
     auto sign_in_data = JsonObject();
     sign_in_data["version"] = std::string(SPIRE_VERSION);
@@ -247,9 +251,7 @@ int main(int argc, char* argv[]) {
     }
     BlotterSettings::Load(Store(*user_profile));
     CatalogSettings::Load(Store(*user_profile));
-    BookViewProperties::Load(Store(*user_profile));
     RiskTimerProperties::Load(Store(*user_profile));
-    TimeAndSalesProperties::Load(Store(*user_profile));
     PortfolioViewerProperties::Load(Store(*user_profile));
     OrderImbalanceIndicatorProperties::Load(Store(*user_profile));
     SavedDashboards::Load(Store(*user_profile));
@@ -292,9 +294,13 @@ int main(int argc, char* argv[]) {
   save_key_bindings_profile(
     *user_profile->GetKeyBindings(), user_profile->GetProfilePath());
   PortfolioViewerProperties::Save(*user_profile);
-  TimeAndSalesProperties::Save(*user_profile);
   RiskTimerProperties::Save(*user_profile);
-  BookViewProperties::Save(*user_profile);
+  save_book_view_properties(
+    user_profile->GetBookViewPropertiesWindowFactory()->get_properties()->get(),
+    user_profile->GetProfilePath());
+  save_time_and_sales_properties(user_profile->
+    GetTimeAndSalesPropertiesWindowFactory()->get_properties()->get(),
+    user_profile->GetProfilePath());
   CatalogSettings::Save(*user_profile);
   BlotterSettings::Save(*user_profile);
   toolbar_controller->close();

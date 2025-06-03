@@ -6,7 +6,6 @@
 #include <Beam/Serialization/ShuttleOptional.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/RegionMap.hpp"
-#include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
@@ -57,9 +56,6 @@ namespace Details {
     /** Defines a local value model over the Categories. */
     using LocalCategoriesModel = LocalValueModel<Categories>;
 
-    /** The book view properties. */
-    boost::optional<BookViewProperties> m_book_view_properties;
-
     /** The dashboards. */
     boost::optional<SavedDashboards> m_dashboards;
 
@@ -98,8 +94,10 @@ namespace Details {
    * @param categories The categories to import.
    * @param path The file path to import from.
    * @param user_profile The user's profile.
+   * @return The list of top-level windows to open as part of the restored
+   *         layout.
    */
-  void import_settings(UserSettings::Categories categories,
+  std::vector<QWidget*> import_settings(UserSettings::Categories categories,
     const std::filesystem::path& path, Beam::Out<UserProfile> userProfile);
 }
 
@@ -109,7 +107,6 @@ namespace Beam::Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Spire::UserSettings& value,
         unsigned int version) {
-      shuttle.Shuttle("book_view_properties", value.m_book_view_properties);
       shuttle.Shuttle("dashboards", value.m_dashboards);
       shuttle.Shuttle("order_imbalance_indicator_properties",
         value.m_order_imbalance_indicator_properties);

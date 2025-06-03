@@ -1,4 +1,5 @@
 #include "Spire/BookView/TechnicalsPanel.hpp"
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <QEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
@@ -25,17 +26,7 @@ namespace {
   }
 
   auto get_value_field_minimum_width() {
-    return QFontMetrics(LABEL_FONT()).averageCharWidth() * 8;
-  }
-
-  auto to_text(Money value) {
-    return Spire::to_text(value, QLocale::system());
-  }
-
-  auto to_text(Quantity value) {
-    auto text = QLocale::system().toString(static_cast<double>(value), 'f', 6);
-    text = text.remove(QRegExp("\\.?0+$"));
-    return text;
+    return get_character_width(LABEL_FONT()) * 8;
   }
 
   auto to_default_quantity(Quantity bid_quantity, Quantity ask_quantity) {
@@ -44,7 +35,7 @@ namespace {
 
   template<typename T, typename U>
   auto make_technicals_value_field(
-      std::shared_ptr<SecurityTechnicalsModel> technicals, U field) {
+      std::shared_ptr<SecurityTechnicalsValueModel> technicals, U field) {
     auto label = make_label(
       make_to_text_model(make_field_value_model(technicals, field),
         [] (const auto& value) {
@@ -101,17 +92,19 @@ namespace {
 }
 
 TechnicalsPanel::TechnicalsPanel(
-    std::shared_ptr<SecurityTechnicalsModel> technicals,
+    std::shared_ptr<SecurityTechnicalsValueModel> technicals,
     std::shared_ptr<QuantityModel> default_bid_quantity,
     std::shared_ptr<QuantityModel> default_ask_quantity, QWidget* parent)
     : QWidget(parent),
       m_technicals(std::move(technicals)),
       m_bid_quantity(std::move(default_bid_quantity)),
       m_ask_quantity(std::move(default_ask_quantity)),
+BEAM_SUPPRESS_THIS_INITIALIZER()
       m_bid_quantity_connection(m_bid_quantity->connect_update_signal(
         std::bind_front(&TechnicalsPanel::on_bid_quantity_update, this))),
       m_ask_quantity_connection(m_ask_quantity->connect_update_signal(
         std::bind_front(&TechnicalsPanel::on_ask_quantity_update, this))) {
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
   m_default_field = make_label("");
   m_default_field->setMinimumWidth(get_value_field_minimum_width());
   on_ask_quantity_update(m_ask_quantity->get());
@@ -165,7 +158,7 @@ TechnicalsPanel::TechnicalsPanel(
   });
 }
 
-const std::shared_ptr<SecurityTechnicalsModel>&
+const std::shared_ptr<SecurityTechnicalsValueModel>&
     TechnicalsPanel::get_technicals() const {
   return m_technicals;
 }
