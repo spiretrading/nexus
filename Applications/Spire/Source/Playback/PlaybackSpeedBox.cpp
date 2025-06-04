@@ -1,6 +1,5 @@
 #include "Spire/Playback/PlaybackSpeedBox.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/LocalValueModel.hpp"
 
 using namespace Spire;
 
@@ -29,11 +28,11 @@ namespace {
 
 PlaybackSpeedBox* Spire::make_playback_speed_box(QWidget* parent) {
   return make_playback_speed_box(
-    std::make_shared<LocalValueModel<Decimal>>(Decimal(1)), parent);
+    std::make_shared<LocalPlaybackSpeedModel>(Decimal(1)), parent);
 }
 
 PlaybackSpeedBox* Spire::make_playback_speed_box(
-    std::shared_ptr<ValueModel<Decimal>> current, QWidget* parent) {
+    std::shared_ptr<PlaybackSpeedModel> current, QWidget* parent) {
   auto settings = setup();
   settings.m_current = std::move(current);
   return new PlaybackSpeedBox(std::move(settings), parent);
