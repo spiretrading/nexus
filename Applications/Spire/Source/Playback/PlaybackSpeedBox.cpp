@@ -1,4 +1,4 @@
-#include "Spire/Ui/PlaybackSpeedBox.hpp"
+#include "Spire/Playback/PlaybackSpeedBox.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 
@@ -20,7 +20,7 @@ namespace {
           return make_label(to_text(value));
         });
       settings.m_cases = std::make_shared<ArrayListModel<Decimal>>(
-        std::vector<Decimal>{0.1 , 0.5, 1, 2, 5, 10, 100});
+        std::vector<Decimal>{0.1, 0.5, 1, 2, 5, 10, 100});
       return settings;
     }();
     return settings;

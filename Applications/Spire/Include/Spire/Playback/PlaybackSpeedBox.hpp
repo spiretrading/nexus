@@ -1,5 +1,6 @@
 #ifndef SPIRE_PLAYBACK_SPEED_BOX_HPP
 #define SPIRE_PLAYBACK_SPEED_BOX_HPP
+#include "Spire/Playback/Playback.hpp"
 #include "Spire/Spire/Decimal.hpp"
 #include "Spire/Ui/EnumBox.hpp"
 
@@ -13,7 +14,7 @@ namespace Spire {
    * @param parent The parent widget.
    */
   PlaybackSpeedBox* make_playback_speed_box(QWidget* parent = nullptr);
-  
+
   /**
    * Returns a PlaybackSpeedBox.
    * @param current The current playback speed.
