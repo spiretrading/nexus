@@ -12,10 +12,10 @@ namespace {
   PlaybackSpeedBox::Settings setup() {
     static auto settings = [] {
       auto settings = PlaybackSpeedBox::Settings(
-        [] (auto& value) {
+        [] (const auto& value) {
           return to_text(value);
         },
-        [] (auto& value) {
+        [] (const auto& value) {
           return make_label(to_text(value));
         });
       settings.m_cases = std::make_shared<ArrayListModel<Decimal>>(
