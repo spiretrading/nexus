@@ -12,7 +12,6 @@
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
-#include "Spire/Playback/PlaybackSpeedBox.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -3313,31 +3312,6 @@ UiProfile Spire::make_percent_box_profile() {
     properties, DecimalBoxProfileProperties(Decimal(1)));
   auto profile = UiProfile("PercentBox",
     properties, setup_decimal_box_with_decimal_profile<PercentBox>);
-  return profile;
-}
-
-UiProfile Spire::make_playback_speed_box_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  properties.push_back(make_standard_property("read_only", false));
-  auto profile = UiProfile("PlaybackSpeedBox", properties, [] (auto& profile) {
-    auto speed_box = make_playback_speed_box();
-    speed_box->setFixedWidth(scale_width(58));
-    apply_widget_properties(speed_box, profile.get_properties());
-    auto& read_only = get<bool>("read_only", profile.get_properties());
-    read_only.connect_changed_signal([=] (auto is_read_only) {
-      speed_box->set_read_only(is_read_only);
-    });
-    auto current_slot = profile.make_event_slot<QString>("Current");
-    speed_box->get_current()->connect_update_signal([=] (const auto& value) {
-      current_slot(to_string(value));
-    });
-    auto submit_slot = profile.make_event_slot<QString>("Submit");
-    speed_box->connect_submit_signal([=] (const auto& value) {
-      submit_slot(to_string(value));
-    });
-    return speed_box;
-  });
   return profile;
 }
 

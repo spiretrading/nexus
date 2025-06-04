@@ -188,9 +188,6 @@ namespace Spire {
   /** Returns a UiProfile for the PercentBox. */
   UiProfile make_percent_box_profile();
 
-  /** Returns a UiProfile for the PlaybackSpeedBox. */
-  UiProfile make_playback_speed_box_profile();
-
   /** Returns a UiProfile for the PopupBox. */
   UiProfile make_popup_box_profile();
 
