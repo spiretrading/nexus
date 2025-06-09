@@ -20,12 +20,12 @@ namespace {
   using ImageTrack = StateSelector<void, struct ImageTrackSelectorTag>;
   using ImageThumb = StateSelector<void, struct ImageThumbSelectorTag>;
 
-  auto DEFUALT_TRACK_WIDTH() {
+  auto DEFAULT_TRACK_WIDTH() {
     static auto width = scale_width(4);
     return width;
   }
 
-  auto DEFUALT_TRACK_HEIGHT() {
+  auto DEFAULT_TRACK_HEIGHT() {
     static auto height = scale_height(4);
     return height;
   }
@@ -324,11 +324,11 @@ QSize Slider::sizeHint() const {
     return QSize(0, 0);
   }();
   if(m_orientation == Qt::Vertical) {
-    return QSize(std::max(DEFUALT_TRACK_WIDTH(), thumb_size.width()),
+    return QSize(std::max(DEFAULT_TRACK_WIDTH(), thumb_size.width()),
       scale_height(220));
   }
   return QSize(scale_width(220),
-    std::max(DEFUALT_TRACK_HEIGHT(), thumb_size.height()));
+    std::max(DEFAULT_TRACK_HEIGHT(), thumb_size.height()));
 }
 
 void Slider::keyPressEvent(QKeyEvent* event) {
@@ -444,9 +444,9 @@ void Slider::update_track() {
   if(m_track_image.isNull()) {
     m_track_fill->show();
     if(m_orientation == Qt::Orientation::Vertical) {
-      m_track->get_body()->setFixedWidth(DEFUALT_TRACK_WIDTH());
+      m_track->get_body()->setFixedWidth(DEFAULT_TRACK_WIDTH());
     } else {
-      m_track->get_body()->setFixedHeight(DEFUALT_TRACK_HEIGHT());
+      m_track->get_body()->setFixedHeight(DEFAULT_TRACK_HEIGHT());
     }
   } else {
     m_track_fill->hide();
