@@ -36,7 +36,7 @@ namespace {
     return decimal_modifiers;
   }
 
-  ptime to_local_time(const ptime& utc_time) {
+  auto to_local_time(const ptime& utc_time) {
     if(utc_time.is_not_a_date_time()) {
       return utc_time;
     }
@@ -224,7 +224,7 @@ void SeekBar::on_hover(HoverObserver::State state) {
     m_tip->setWindowOpacity(0.0);
     m_tip->setVisible(true);
     animation->start(QAbstractAnimation::DeleteWhenStopped);
-  } else {
+  } else if(m_tip) {
     m_tip->setVisible(false);
   }
 }
