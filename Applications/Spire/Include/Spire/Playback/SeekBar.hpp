@@ -57,10 +57,10 @@ namespace Spire {
       const std::shared_ptr<DurationModel>& get_current() const;
 
     private:
-      struct SeekBarModel;
+      struct SliderPositionModel;
       Slider* m_slider;
       TextBox* m_tip;
-      std::shared_ptr<SeekBarModel> m_model;
+      std::shared_ptr<SliderPositionModel> m_model;
       boost::optional<HoverObserver> m_hover_observer;
       boost::optional<MouseMoveObserver> m_mouse_move_observer;
 

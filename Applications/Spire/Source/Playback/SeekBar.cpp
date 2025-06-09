@@ -87,7 +87,7 @@ namespace {
   }
 }
 
-struct SeekBar::SeekBarModel : ScalarValueModel<Decimal> {
+struct SeekBar::SliderPositionModel : ScalarValueModel<Decimal> {
   std::shared_ptr<TimelineModel> m_timeline;
   std::shared_ptr<DurationModel> m_current;
   LocalValueModel<Decimal> m_value;
@@ -95,16 +95,16 @@ struct SeekBar::SeekBarModel : ScalarValueModel<Decimal> {
   scoped_connection m_current_connection;
   scoped_connection m_timeline_connection;
 
-  SeekBarModel(std::shared_ptr<TimelineModel> timeline,
+  SliderPositionModel(std::shared_ptr<TimelineModel> timeline,
       std::shared_ptr<DurationModel> source)
       : m_timeline(std::move(timeline)),
         m_current(std::move(source)),
         m_value(::to_decimal(m_current->get())),
         m_state(test(m_value.get())) {
     m_current_connection = m_current->connect_update_signal(
-      std::bind_front(&SeekBarModel::on_current_update, this));
+      std::bind_front(&SliderPositionModel::on_current_update, this));
     m_timeline_connection = m_timeline->connect_update_signal(
-      std::bind_front(&SeekBarModel::on_timeline_update, this));
+      std::bind_front(&SliderPositionModel::on_timeline_update, this));
   }
 
   optional<Decimal> get_minimum() const override {
@@ -167,7 +167,7 @@ SeekBar::SeekBar(std::shared_ptr<TimelineModel> timeline,
     std::shared_ptr<DurationModel> current,
     QHash<Qt::KeyboardModifier, time_duration> modifiers, QWidget* parent)
     : QWidget(parent),
-      m_model(std::make_shared<SeekBarModel>(std::move(timeline),
+      m_model(std::make_shared<SliderPositionModel>(std::move(timeline),
         std::move(current))),
       m_tip(nullptr) {
   m_slider = new Slider(m_model, to_decimal_modifiers(modifiers));
