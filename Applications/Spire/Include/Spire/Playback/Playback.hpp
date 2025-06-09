@@ -2,6 +2,7 @@
 #define SPIRE_PLAYBACK_HPP
 
 namespace Spire {
+  class SeekBar;
 }
 
 #endif
