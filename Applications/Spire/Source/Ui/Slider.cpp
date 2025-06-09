@@ -47,6 +47,7 @@ namespace {
 
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
+    style.get(Any()).set(Qt::Horizontal);
     style.get(Any() > TrackRail()).
       set(BackgroundColor(QColor(0xC8C8C8)));
     style.get(Any() > (Track() && Hover()) > TrackRail()).
@@ -297,9 +298,37 @@ void Slider::set_step(const Decimal& step) {
   m_step = step;
 }
 
+Decimal Slider::to_value(const QPoint& position) const {
+  auto position_in_track =
+    m_track->get_body()->mapFromGlobal(mapToGlobal(position));
+  auto track_size = m_track->get_body()->size();
+  auto range = *m_current->get_maximum() - *m_current->get_minimum();
+  if(m_orientation == Qt::Horizontal) {
+    auto x = std::clamp(position_in_track.x(), 0, track_size.width());
+    return *m_current->get_minimum() + x * range / track_size.width();
+  }
+  auto y = std::clamp(position_in_track.y(), 0, track_size.height());
+  return *m_current->get_minimum() + y * range / track_size.height();
+}
+
 connection Slider::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
+}
+
+QSize Slider::sizeHint() const {
+  auto thumb_size = [&] {
+    if(m_thumb->isVisible()) {
+      return get_thumb_size(m_orientation);
+    }
+    return QSize(0, 0);
+  }();
+  if(m_orientation == Qt::Vertical) {
+    return QSize(std::max(DEFUALT_TRACK_WIDTH(), thumb_size.width()),
+      scale_height(220));
+  }
+  return QSize(scale_width(220),
+    std::max(DEFUALT_TRACK_HEIGHT(), thumb_size.height()));
 }
 
 void Slider::keyPressEvent(QKeyEvent* event) {

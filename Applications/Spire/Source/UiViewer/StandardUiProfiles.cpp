@@ -4028,11 +4028,6 @@ UiProfile Spire::make_slider_profile() {
       update_style(*slider, [&] (auto& style) {
         style.get(Any()).set(value);
       });
-      if(value == Qt::Horizontal) {
-        slider->setFixedSize(scale(220, 26));
-      } else {
-        slider->setFixedSize(scale(26, 220));
-      }
     });
     auto& minimum = get<Decimal>("minimum", profile.get_properties());
     minimum.connect_changed_signal([=] (auto value) {
