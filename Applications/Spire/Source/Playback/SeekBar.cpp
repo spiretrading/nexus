@@ -184,9 +184,6 @@ SeekBar::SeekBar(std::shared_ptr<TimelineModel> timeline,
   m_hover_observer.emplace(*m_slider);
   m_hover_observer->connect_state_signal(
     std::bind_front(&SeekBar::on_hover, this));
-  m_mouse_move_observer.emplace(*m_slider);
-  m_mouse_move_observer->connect_move_signal(
-    std::bind_front(&SeekBar::on_mouse_move, this));
 }
 
 const std::shared_ptr<TimelineModel>& SeekBar::get_timeline() const {
@@ -198,16 +195,14 @@ const std::shared_ptr<DurationModel>& SeekBar::get_current() const {
 }
 
 void SeekBar::on_mouse_move(QWidget& target, QMouseEvent& event) {
-  if(m_tip && m_tip->isVisible()) {
-    m_tip->get_current()->set(
-      format_date_time(to_local_time(m_model->m_timeline->get().m_start) +
-        ::to_time_duration(m_slider->to_value(
-          m_slider->mapFromGlobal(event.globalPos())))));
-    m_tip->adjustSize();
-    m_tip->move(std::clamp(event.globalX() - m_tip->width() / 2, 0,
-      screen()->availableGeometry().width()),
-      mapToGlobal(m_slider->pos()).y() - scale_height(4) - m_tip->height());
-  }
+  m_tip->get_current()->set(
+    format_date_time(to_local_time(m_model->m_timeline->get().m_start) +
+      ::to_time_duration(m_slider->to_value(
+        m_slider->mapFromGlobal(event.globalPos())))));
+  m_tip->adjustSize();
+  m_tip->move(std::clamp(event.globalX() - m_tip->width() / 2, 0,
+    screen()->availableGeometry().width()),
+    mapToGlobal(m_slider->pos()).y() - scale_height(4) - m_tip->height());
 }
 
 void SeekBar::on_hover(HoverObserver::State state) {
@@ -225,7 +220,11 @@ void SeekBar::on_hover(HoverObserver::State state) {
     m_tip->setWindowOpacity(0.0);
     m_tip->setVisible(true);
     animation->start(QAbstractAnimation::DeleteWhenStopped);
+    m_mouse_move_observer.emplace(*m_slider);
+    m_mouse_move_observer->connect_move_signal(
+      std::bind_front(&SeekBar::on_mouse_move, this));
   } else if(m_tip) {
     m_tip->setVisible(false);
+    m_mouse_move_observer.reset();
   }
 }
