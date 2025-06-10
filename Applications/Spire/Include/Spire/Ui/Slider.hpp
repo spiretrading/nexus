@@ -79,9 +79,20 @@ namespace Styles {
       /** Sets the size of a step. */
       void set_step(const Decimal& step);
 
+      /**
+       * Converts a pixel position to the corresponding slider value.
+       * @param position The pixel position relative to the slider's coordinate
+       *        system.
+       * @return The corresponding slider value, guaranteed to be within
+       *         the slider's minimum and maximum range.
+       */
+      Decimal to_value(const QPoint& position) const;
+
       /** Connects a slot to the value submission signal. */
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
+
+      QSize sizeHint() const override;
 
     protected:
       void keyPressEvent(QKeyEvent* event) override;
