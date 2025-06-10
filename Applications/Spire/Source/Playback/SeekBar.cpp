@@ -96,9 +96,9 @@ struct SeekBar::SliderPositionModel : ScalarValueModel<Decimal> {
   scoped_connection m_timeline_connection;
 
   SliderPositionModel(std::shared_ptr<TimelineModel> timeline,
-      std::shared_ptr<DurationModel> source)
+      std::shared_ptr<DurationModel> current)
       : m_timeline(std::move(timeline)),
-        m_current(std::move(source)),
+        m_current(std::move(current)),
         m_value(::to_decimal(m_current->get())),
         m_state(test(m_value.get())) {
     m_current_connection = m_current->connect_update_signal(
@@ -115,22 +115,22 @@ struct SeekBar::SliderPositionModel : ScalarValueModel<Decimal> {
     return ::to_decimal(m_timeline->get().m_duration);
   }
 
-  QValidator::State get_state() const {
-    return m_value.get_state();
+  QValidator::State get_state() const override {
+    return m_state;
   }
 
-  const Decimal& get() const {
+  const Decimal& get() const override {
     return m_value.get();
   }
 
-  QValidator::State test(const Decimal& value) const {
+  QValidator::State test(const Decimal& value) const override {
     if(value < get_minimum() || value > get_maximum()) {
       return QValidator::Invalid;
     }
     return m_current->test(to_time_duration(value));
   }
 
-  QValidator::State set(const Decimal& value) {
+  QValidator::State set(const Decimal& value) override {
     m_state = test(value);
     if(m_state == QValidator::Invalid) {
       return QValidator::Invalid;
@@ -143,7 +143,8 @@ struct SeekBar::SliderPositionModel : ScalarValueModel<Decimal> {
     return m_state;
   }
 
-  connection connect_update_signal(const UpdateSignal::slot_type& slot) const {
+  connection connect_update_signal(
+      const UpdateSignal::slot_type& slot) const override {
     return m_value.connect_update_signal(slot);
   }
 
