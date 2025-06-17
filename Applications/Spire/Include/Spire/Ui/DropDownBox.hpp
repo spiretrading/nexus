@@ -253,6 +253,7 @@ namespace Styles {
       Button* m_button;
       QTimer m_timer;
       bool m_is_read_only;
+      bool m_has_update;
       boost::optional<int> m_submission;
       boost::optional<PressObserver> m_button_press_observer;
       bool m_is_mouse_press_on_list;

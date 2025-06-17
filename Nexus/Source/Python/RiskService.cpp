@@ -66,6 +66,28 @@ void Nexus::Python::ExportApplicationRiskClient(module& module) {
     }));
 }
 
+void Nexus::Python::ExportInventorySnapshot(module& module) {
+  class_<InventorySnapshot>(module, "InventorySnapshot")
+    .def(init())
+    .def(init<const InventorySnapshot&>())
+    .def(init<std::vector<RiskInventory>, Beam::Queries::Sequence,
+      std::vector<OrderId>>())
+    .def_readwrite("inventories", &InventorySnapshot::m_inventories)
+    .def_readwrite("sequence", &InventorySnapshot::m_sequence)
+    .def_readwrite("excluded_orders", &InventorySnapshot::m_excludedOrders)
+    .def(self == self)
+    .def(self != self);
+  module.def("make_portfolio", &MakePortfolio<OrderExecutionClientBox>);
+/*
+  template<typename OrderExecutionClient>
+  std::tuple<RiskPortfolio, Beam::Queries::Sequence,
+      std::vector<const OrderExecutionService::Order*>> MakePortfolio(
+      const InventorySnapshot& snapshot,
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      MarketDatabase markets, OrderExecutionClient& client) {
+*/
+}
+
 void Nexus::Python::ExportLocalRiskDataStore(module& module) {
   class_<ToPythonRiskDataStore<LocalRiskDataStore>, VirtualRiskDataStore,
       std::shared_ptr<ToPythonRiskDataStore<LocalRiskDataStore>>>(module,
@@ -121,6 +143,7 @@ void Nexus::Python::ExportRiskService(module& module) {
   ExportRiskClient<ToPythonRiskClient<RiskClientBox>>(submodule,
     "RiskClientBox");
   ExportApplicationRiskClient(submodule);
+  ExportInventorySnapshot(submodule);
   ExportRiskDataStore(submodule);
   ExportLocalRiskDataStore(submodule);
   ExportMySqlRiskDataStore(submodule);
