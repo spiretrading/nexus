@@ -1,5 +1,6 @@
 #ifndef SPIRE_BOOK_VIEW_WINDOW_HPP
 #define SPIRE_BOOK_VIEW_WINDOW_HPP
+#include <boost/optional/optional.hpp>
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/BookView/BookViewPropertiesWindowFactory.hpp"
@@ -8,6 +9,7 @@
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/SecurityContext.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/Ui/KeyObserver.hpp"
 #include "Spire/Ui/SecurityBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
@@ -126,6 +128,7 @@ namespace Spire {
       std::shared_ptr<BookViewModel> m_model;
       MarketDepth* m_market_depth;
       TransitionView* m_transition_view;
+      boost::optional<KeyObserver> m_page_key_observer;
       std::string m_link_identifier;
       boost::signals2::scoped_connection m_link_connection;
       SecurityView* m_security_view;
@@ -138,6 +141,7 @@ namespace Spire {
       void display_interactions_panel();
       void display_task_entry_panel(const OrderTaskArguments& arguments);
       void remove_task_entry_panel();
+      bool on_key_press(QWidget& target, const QKeyEvent& event);
       void on_context_menu(const QPoint& pos);
       void on_task_entry_key_press(const QKeyEvent& event);
       void on_cancel_most_recent(const CurrentUserOrder& user_order);

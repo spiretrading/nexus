@@ -31,6 +31,16 @@ using namespace Spire::Styles;
 
 namespace {
   const auto TITLE_NAME = QObject::tr("Book View");
+
+  template<bool (QWidget::* method)(QEvent*)>
+  struct SendEvent {
+    friend void send_event(QWidget& widget, const QEvent& event) {
+      (widget.*method)(const_cast<QEvent*>(&event));
+    }
+  };
+
+  template struct SendEvent<&QWidget::event>;
+  void send_event(QWidget& widget, const QEvent& event);
 }
 
 BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
@@ -258,6 +268,17 @@ void BookViewWindow::remove_task_entry_panel() {
   setUpdatesEnabled(true);
 }
 
+bool BookViewWindow::on_key_press(QWidget& target, const QKeyEvent& event) {
+  if(&target != m_security_view &&
+      (event.key() == Qt::Key_PageUp || event.key() == Qt::Key_PageDown) &&
+        !(event.modifiers() &
+          (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier))) {
+    send_event(*m_security_view, event);
+    return true;
+  }
+  return false;
+}
+
 void BookViewWindow::on_context_menu(const QPoint& pos) {
   auto menu = new ContextMenu(*m_market_depth);
   if(auto current = m_market_depth->get_current()->get()) {
@@ -370,6 +391,9 @@ void BookViewWindow::on_current(const Security& security) {
   m_ask_order_connection = m_model->get_ask_orders()->connect_operation_signal(
     std::bind_front(&BookViewWindow::on_order_operation, this, Side::ASK));
   SetDisplayedSecurity(security);
+  m_page_key_observer.emplace(*this);
+  m_page_key_observer->connect_filtered_key_press_signal(
+    std::bind_front(&BookViewWindow::on_key_press, this));
 }
 
 void BookViewWindow::on_order_operation(Side side,
