@@ -17,6 +17,12 @@ namespace Nexus::Python {
   void ExportBuyingPowerModel(pybind11::module& module);
 
   /**
+   * Exports the PortfolioUpdateEntry class.
+   * @param module The module to export to.
+   */
+  void ExportPortfolioUpdateEntry(pybind11::module& module);
+
+  /**
    * Exports the PositionOrderBook class.
    * @param module The module to export to.
    */
@@ -33,6 +39,12 @@ namespace Nexus::Python {
    * @param module The module to export to.
    */
   void ExportSecurityInventory(pybind11::module& module);
+
+  /**
+   * Exports the SecurityValuation class.
+   * @param module The module to export to.
+   */
+  void ExportSecurityValuation(pybind11::module& module);
 
   /**
    * Exports the TrueAverageBookkeeper class.

@@ -78,14 +78,6 @@ void Nexus::Python::ExportInventorySnapshot(module& module) {
     .def(self == self)
     .def(self != self);
   module.def("make_portfolio", &MakePortfolio<OrderExecutionClientBox>);
-/*
-  template<typename OrderExecutionClient>
-  std::tuple<RiskPortfolio, Beam::Queries::Sequence,
-      std::vector<const OrderExecutionService::Order*>> MakePortfolio(
-      const InventorySnapshot& snapshot,
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      MarketDatabase markets, OrderExecutionClient& client) {
-*/
 }
 
 void Nexus::Python::ExportLocalRiskDataStore(module& module) {
