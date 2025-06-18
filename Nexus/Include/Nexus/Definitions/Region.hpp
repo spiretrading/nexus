@@ -331,56 +331,33 @@ namespace Nexus {
     } else if(m_isGlobal) {
       return false;
     }
-    auto leftOverSecurities = std::unordered_set<Security>();
     for(auto& security : m_securities) {
-      if(region.m_securities.find(security) == region.m_securities.end()) {
-        leftOverSecurities.insert(security);
+      if(region.m_securities.count(security)) {
+        continue;
       }
-    }
-    auto securityIterator = leftOverSecurities.begin();
-    while(securityIterator != leftOverSecurities.end()) {
-      auto entry = MarketEntry(securityIterator->GetMarket(),
-        securityIterator->GetCountry());
-      if(region.m_markets.find(entry) != region.m_markets.end()) {
-        securityIterator = leftOverSecurities.erase(securityIterator);
-      } else {
-        ++securityIterator;
+      if(region.m_markets.count(
+          MarketEntry(security.GetMarket(), security.GetCountry()))) {
+        continue;
       }
-    }
-    securityIterator = leftOverSecurities.begin();
-    while(securityIterator != leftOverSecurities.end()) {
-      if(region.m_countries.find(securityIterator->GetCountry()) !=
-          region.m_countries.end()) {
-        securityIterator = leftOverSecurities.erase(securityIterator);
-      } else {
-        ++securityIterator;
+      if(region.m_countries.count(security.GetCountry())) {
+        continue;
       }
-    }
-    if(!leftOverSecurities.empty()) {
       return false;
     }
-    auto leftOverMarkets = std::unordered_set<MarketEntry, MarketEntryHash>();
-    for(auto& market : m_markets) {
-      if(region.m_markets.find(market) == region.m_markets.end()) {
-        leftOverMarkets.insert(market);
+    for(auto& entry : m_markets) {
+      if(region.m_markets.count(entry)) {
+        continue;
       }
-    }
-    auto marketIterator = leftOverMarkets.begin();
-    while(marketIterator != leftOverMarkets.end()) {
-      if(region.m_countries.find(marketIterator->m_country) !=
-          region.m_countries.end()) {
-        marketIterator = leftOverMarkets.erase(marketIterator);
-      } else {
-        ++marketIterator;
+      if(region.m_countries.count(entry.m_country)) {
+        continue;
       }
-    }
-    if(!leftOverMarkets.empty()) {
       return false;
     }
     for(auto& country : m_countries) {
-      if(region.m_countries.find(country) == region.m_countries.end()) {
-        return false;
+      if(region.m_countries.count(country)) {
+        continue;
       }
+      return false;
     }
     return true;
   }
