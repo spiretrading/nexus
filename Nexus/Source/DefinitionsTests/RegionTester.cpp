@@ -147,12 +147,4 @@ TEST_SUITE("Region") {
     TestProperSubset(us, combined);
     TestProperSubset(ca, combined);
   }
-
-  TEST_CASE("foo") {
-    auto ca = Region(DefaultCountries::CA());
-    auto ry = ParseSecurity("RY.TSX");
-    auto foo = Region(ry);
-    REQUIRE(ry <= ca);
-    REQUIRE(foo <= ca);
-  }
 }
