@@ -18,6 +18,12 @@ namespace Nexus::Python {
   void ExportApplicationRiskClient(pybind11::module& module);
 
   /**
+   * Exports the InventorySnapshot class.
+   * @param module The module to export to.
+   */
+  void ExportInventorySnapshot(pybind11::module& module);
+
+  /**
    * Exports the LocalRiskDataStore class.
    * @param module The module to export to.
    */

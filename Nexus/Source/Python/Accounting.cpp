@@ -55,12 +55,23 @@ void Nexus::Python::ExportBuyingPowerModel(module& module) {
 void Nexus::Python::ExportAccounting(module& module) {
   auto submodule = module.def_submodule("accounting");
   ExportBuyingPowerModel(submodule);
+  ExportPortfolioUpdateEntry(submodule);
   ExportPositionOrderBook(submodule);
   ExportPosition(submodule);
   ExportSecurityInventory(submodule);
+  ExportSecurityValuation(submodule);
   ExportTrueAverageBookkeeper(submodule);
   ExportTrueAverageBookkeeperReactor(submodule);
   ExportTrueAveragePortfolio(submodule);
+}
+
+void Nexus::Python::ExportPortfolioUpdateEntry(module& module) {
+  using Entry = PortfolioUpdateEntry<Inventory<Position<Security>>>;
+  class_<Entry>(module, "PortfolioUpdateEntry").
+    def_readwrite("security_inventory", &Entry::m_securityInventory).
+    def_readwrite("unrealized_security", &Entry::m_unrealizedSecurity).
+    def_readwrite("currency_inventory", &Entry::m_currencyInventory).
+    def_readwrite("unrealized_currency", &Entry::m_unrealizedCurrency);
 }
 
 void Nexus::Python::ExportPositionOrderBook(module& module) {
@@ -114,6 +125,16 @@ void Nexus::Python::ExportSecurityInventory(module& module) {
     def(self != self);
 }
 
+void Nexus::Python::ExportSecurityValuation(module& module) {
+  class_<SecurityValuation>(module, "SecurityValuation").
+    def(init()).
+    def(init<const SecurityValuation&>()).
+    def(init<CurrencyId>()).
+    def_readwrite("currency", &SecurityValuation::m_currency).
+    def_readwrite("ask_value", &SecurityValuation::m_askValue).
+    def_readwrite("bid_value", &SecurityValuation::m_bidValue);
+}
+
 void Nexus::Python::ExportTrueAverageBookkeeper(module& module) {
   ExportView<TrueAverageBookkeeper<Inventory<Position<Security>>>::Inventory>(
     module, "InventoryView");
@@ -155,10 +176,15 @@ void Nexus::Python::ExportTrueAveragePortfolio(module& module) {
     def("update_bid", &Portfolio::UpdateBid).
     def("update", static_cast<bool (Portfolio::*)(
       const Security&, Money, Money)>(&Portfolio::Update));
-  module.def("get_realized_profit_and_loss", &GetRealizedProfitAndLoss<
-    Inventory::Position>);
-  module.def("get_unrealized_profit_and_loss", &GetUnrealizedProfitAndLoss<
-    Inventory::Position>);
+  class_<Portfolio::SecurityEntry>(outer, "SecurityEntry").
+    def(init<CurrencyId>()).
+    def(init<const Portfolio::SecurityEntry&>()).
+    def_readwrite("valuation", &Portfolio::SecurityEntry::m_valuation).
+    def_readwrite("unrealized", &Portfolio::SecurityEntry::m_unrealized);
+  module.def("get_realized_profit_and_loss",
+    &GetRealizedProfitAndLoss<Inventory::Position>);
+  module.def("get_unrealized_profit_and_loss",
+    &GetUnrealizedProfitAndLoss<Inventory::Position>);
   module.def("get_total_profit_and_loss", static_cast<
     boost::optional<Money> (*)(const Inventory&, const SecurityValuation&)>(
       &GetTotalProfitAndLoss<Inventory::Position>));
