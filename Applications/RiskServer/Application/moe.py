@@ -22,10 +22,11 @@ def parse_positions(file_path, currencies):
       position.key = nexus.accounting.Position.Key(
         nexus.parse_security(row['Security']),
         currencies.from_code(row['Currency']).id)
-      position.quantity = nexus.Quantity(
-        nexus.Quantity.from_value(row['Open Quantity']))
+      position.quantity = nexus.Quantity.from_value(row['Open Quantity'])
+      position.cost_basis = nexus.Money.from_value(row['Cost Basis'])
       if row['Side'] == 'Short':
         position.quantity = -position.quantity
+        position.cost_basis = -position.cost_basis
       positions.append(Entry(row['Account'], position))
   return positions
 
@@ -41,10 +42,11 @@ def moe(service_clients, position, destination, mode):
   side = nexus.accounting.side(position.position)
   if mode == Mode.MOE_OUT:
     side = nexus.get_opposite(side)
-  fields = nexus.order_execution_service.OrderFields.make_market_order(
+  price = abs(nexus.accounting.average_price(position.position))
+  fields = nexus.order_execution_service.OrderFields.make_limit_order(
     directory_entry, position.position.key.index,
     position.position.key.currency, side, destination,
-    position.position.quantity)
+    abs(position.position.quantity), price)
   service_clients.get_order_execution_client().submit(fields)
 
 def report_yaml_error(error):
