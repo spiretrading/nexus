@@ -162,5 +162,9 @@
     <file>Icons/sign_in/wordmark_classic.svg</file>
     <file>Icons/sign_in/wordmark_current.svg</file>
     <file>Icons/sign_in/wordmark_preview.svg</file>
+    <file>Icons/end.svg</file>
+    <file>Icons/pause.svg</file>
+    <file>Icons/play.svg</file>
+    <file>Icons/start.svg</file>
   </qresource>
 </RCC>
