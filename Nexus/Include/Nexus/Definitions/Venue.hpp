@@ -42,17 +42,17 @@ namespace Nexus {
   class VenueDatabase {
     public:
 
-      /** Stores a single entry in a VenueDatabase. **/
+      /** Stores a single entry in a VenueDatabase. */
       struct Entry {
 
         /** The venue. */
         Venue m_venue;
 
         /** The venue's country code. */
-        CountryCode m_countryCode;
+        CountryCode m_country_code;
 
         /** The venue's time zone. */
-        std::string m_timeZone;
+        std::string m_time_zone;
 
         /** The default currency used. */
         CurrencyId m_currency;
@@ -61,56 +61,55 @@ namespace Nexus {
         std::string m_description;
 
         /** The common display name. */
-        std::string m_displayName;
+        std::string m_display_name;
 
         bool operator ==(const Entry& rhs) const = default;
       };
 
-      /** Returns an Entry representing no venue. */
-      static const Entry& GetNoneEntry();
+      /** An Entry representing no venue. */
+      inline static const auto NONE = Entry();
 
       /** Constructs an empty VenueDatabase. */
       VenueDatabase() = default;
 
       /** Returns all Entries. */
-      const std::vector<Entry>& GetEntries() const;
+      const std::vector<Entry>& get_entries() const;
 
       /**
        * Returns an Entry from its Venue.
        * @param venue The Venue to lookup.
-       * @return The Entry with the specified <i>venue</i>.
+       * @return The Entry with the specified venue.
        */
-      const Entry& From(Venue venue) const;
+      const Entry& from(Venue venue) const;
 
       /**
        * Returns an Entry from its display name.
-       * @param displayName The market's display name.
-       * @return The Entry with the specified <i>displayName</i>.
+       * @param display_name The market's display name.
+       * @return The Entry with the specified display_name.
        */
-      const Entry& FromDisplayName(std::string_view displayName) const;
+      const Entry& from_display_name(std::string_view display_name) const;
 
       /**
        * Returns all Entries participating in a specified country.
        * @param country The CountryCode to lookup.
-       * @return The list of all Entries with the specified <i>country</i>.
+       * @return The list of all Entries with the specified country.
        */
-      std::vector<Entry> From(CountryCode country) const;
+      std::vector<Entry> from(CountryCode country) const;
 
       /**
        * Adds an Entry.
        * @param entry The Entry to add.
        */
-      void Add(const Entry& entry);
+      void add(const Entry& entry);
 
       /**
-       * Deletes an Entry.
+       * Removes an Entry.
        * @param venue The Venue to delete.
        */
-      void Delete(Venue venue);
+      void remove(Venue venue);
 
     private:
       friend struct Beam::Serialization::Shuttle<VenueDatabase>;
-      static Entry MakeNoneEntry();
       std::vector<Entry> m_entries;
   };
 
@@ -240,56 +239,47 @@ namespace Nexus {
     }
   }
 
-  inline const VenueDatabase::Entry& VenueDatabase::GetNoneEntry() {
-    static auto NONE = MakeNoneEntry();
-    return NONE;
-  }
-
   inline const std::vector<VenueDatabase::Entry>&
-      VenueDatabase::GetEntries() const {
+      VenueDatabase::get_entries() const {
     return m_entries;
   }
 
-  inline const VenueDatabase::Entry& VenueDatabase::From(Venue venue) const {
-    auto comparator = Entry();
-    comparator.m_code = code;
-    auto i = std::lower_bound(m_entries.begin(), m_entries.end(),
-      comparator,
-      [] (auto& lhs, auto& rhs) {
-        return lhs.m_code < rhs.m_code;
+  inline const VenueDatabase::Entry& VenueDatabase::from(Venue venue) const {
+    auto i = std::lower_bound(m_entries.begin(), m_entries.end(), venue,
+      [] (const auto& lhs, auto rhs) {
+        return lhs.m_venue < rhs;
       });
-    if(i != m_entries.end() && i->m_code == code) {
+    if(i != m_entries.end() && i->m_venue == venue) {
       return *i;
     }
-    return GetNoneEntry();
+    return NONE;
   }
 
   inline const VenueDatabase::Entry&
-      VenueDatabase::FromDisplayName(std::string_view displayName) const {
+      VenueDatabase::from_display_name(std::string_view display_name) const {
     auto i = std::find_if(m_entries.begin(), m_entries.end(),
       [&] (auto& entry) {
-        return entry.m_displayName == displayName;
+        return entry.m_display_name == display_name;
       });
     if(i == m_entries.end()) {
-      return GetNoneEntry();
+      return NONE;
     }
     return *i;
   }
 
   inline std::vector<VenueDatabase::Entry>
-      VenueDatabase::From(CountryCode country) const {
+      VenueDatabase::from(CountryCode country) const {
     auto entries = std::vector<VenueDatabase::Entry>();
     std::copy_if(m_entries.begin(), m_entries.end(),
-      std::back_inserter(entries),
-      [&] (auto& entry) {
-        return entry.m_countryCode == country;
+      std::back_inserter(entries), [&] (const auto& entry) {
+        return entry.m_country_code == country;
       });
     return entries;
   }
 
-  inline void VenueDatabase::Add(const Entry& entry) {
-    auto i = std::lower_bound(m_entries.begin(), m_entries.end(),
-      entry, [] (auto& lhs, auto& rhs) {
+  inline void VenueDatabase::add(const Entry& entry) {
+    auto i = std::lower_bound(m_entries.begin(), m_entries.end(), entry,
+      [] (const auto& lhs, const auto& rhs) {
         return lhs.m_venue < rhs.m_venue;
       });
     if(i == m_entries.end() || i->m_venue != entry.m_venue) {
@@ -297,26 +287,17 @@ namespace Nexus {
     }
   }
 
-  inline void VenueDatabase::Delete(Venue venue) {
-    auto i = std::find_if(m_entries.begin(), m_entries.end(),
-      [&] (const auto& entry) {
-        return entry.m_venue == venue;
+  inline void VenueDatabase::remove(Venue venue) {
+    auto i = std::lower_bound(m_entries.begin(), m_entries.end(), venue,
+      [] (const auto& lhs, auto rhs) {
+        return lhs.m_venue < rhs;
       });
-    if(i == m_entries.end()) {
-      return;
+    if(i != m_entries.end() && i->m_venue == venue) {
+      m_entries.erase(i);
     }
-    m_entries.erase(i);
   }
 
-  inline VenueDatabase::Entry VenueDatabase::MakeNoneEntry() {
-    auto entry = Entry();
-    entry.m_timeZone = "UTC";
-    entry.m_description = "";
-    return entry;
-  }
-
-  inline std::ostream& operator <<(std::ostream& out,
-      const VenueDatabase::Entry& entry) {
+  inline std::ostream& operator <<(std::ostream& out, const VenueDatabase::Entry& entry) {
     return out << '(' << entry.m_venue << ' ' << entry.m_countryCode << ' ' <<
       entry.m_timeZone << ' ' << entry.m_currency << ' ' <<
       entry.m_description << ' ' << entry.m_displayName << ')';
