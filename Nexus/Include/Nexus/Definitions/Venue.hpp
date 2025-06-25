@@ -113,6 +113,7 @@ namespace Nexus {
       std::vector<Entry> m_entries;
   };
 
+#if 0
   /**
    * Returns the time of the start of day relative to a specified venue in UTC.
    * @param venue The venue whose start of day in UTC is to be returned.
@@ -239,6 +240,17 @@ namespace Nexus {
     }
   }
 
+  inline std::ostream& operator <<(std::ostream& out,
+      const VenueDatabase::Entry& entry) {
+    return out << '(' << entry.m_venue << ' ' << entry.m_country_code << ' ' <<
+      entry.m_time_zone << ' ' << entry.m_currency << ' ' <<
+      entry.m_description << ' ' << entry.m_display_name << ')';
+  }
+#endif
+
+  inline Venue::Venue(Beam::FixedString<4> mic)
+    : m_mic(std::move(mic)) {}
+
   inline const std::vector<VenueDatabase::Entry>&
       VenueDatabase::get_entries() const {
     return m_entries;
@@ -296,12 +308,6 @@ namespace Nexus {
       m_entries.erase(i);
     }
   }
-
-  inline std::ostream& operator <<(std::ostream& out, const VenueDatabase::Entry& entry) {
-    return out << '(' << entry.m_venue << ' ' << entry.m_countryCode << ' ' <<
-      entry.m_timeZone << ' ' << entry.m_currency << ' ' <<
-      entry.m_description << ' ' << entry.m_displayName << ')';
-  }
 }
 
 namespace Beam::Serialization {
@@ -310,12 +316,12 @@ namespace Beam::Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::VenueDatabase::Entry& value,
         unsigned int version) {
-      shuttle.Shuttle("code", value.m_code);
-      shuttle.Shuttle("country_code", value.m_countryCode);
-      shuttle.Shuttle("time_zone", value.m_timeZone);
+      shuttle.Shuttle("venue", value.m_venue);
+      shuttle.Shuttle("country_code", value.m_country_code);
+      shuttle.Shuttle("time_zone", value.m_time_zone);
       shuttle.Shuttle("currency", value.m_currency);
       shuttle.Shuttle("description", value.m_description);
-      shuttle.Shuttle("display_name", value.m_displayName);
+      shuttle.Shuttle("display_name", value.m_display_name);
     }
   };
 
