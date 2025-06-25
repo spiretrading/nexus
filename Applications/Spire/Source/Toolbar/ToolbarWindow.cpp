@@ -139,6 +139,9 @@ ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
     WindowType::ORDER_IMBALANCE_INDICATOR,
     ":/Icons/toolbar/order_imbalance_indicator.svg",
     QColor(0xBF9540), QColor(0x9A7324), QColor(0xE0B04F)));
+  bottom_layout->addWidget(make_icon_tool_button(
+    WindowType::REPLAY, ":/Icons/toolbar/replay.svg",
+    QColor(0xAE60FC), QColor(0x993FF2), QColor(0xC48AFF)));
   auto blotter_button = make_blotter_button();
   m_blotter_menu = &blotter_button->get_menu();
   populate_blotter_menu();
@@ -406,6 +409,9 @@ const QString& Spire::to_text(ToolbarWindow::WindowType type) {
     return value;
   } else if(type == ToolbarWindow::WindowType::ORDER_IMBALANCE_INDICATOR) {
     static const auto value = QObject::tr("Order Imbalance Indicator");
+    return value;
+  } else if(type == ToolbarWindow::WindowType::REPLAY) {
+    static const auto value = QObject::tr("Replay");
     return value;
   } else if(type == ToolbarWindow::WindowType::PORTFOLIO) {
     static const auto value = QObject::tr("Portfolio");
