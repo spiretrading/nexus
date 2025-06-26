@@ -1,8 +1,7 @@
 #include <sstream>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/BboQuote.hpp"
-#include <boost/date_time/posix_time/posix_time_io.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 using namespace Nexus;
 using namespace boost;
