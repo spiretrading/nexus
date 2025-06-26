@@ -68,35 +68,12 @@ namespace Nexus {
   }
 
   namespace DefaultCurrencies {
-    inline CurrencyId AUD() {
-      static auto value = GetDefaultCurrencyDatabase().from("AUD").m_id;
-      return value;
-    }
-
-    inline CurrencyId CAD() {
-      static auto value = GetDefaultCurrencyDatabase().from("CAD").m_id;
-      return value;
-    }
-
-    inline CurrencyId HKD() {
-      static auto value = GetDefaultCurrencyDatabase().from("HKD").m_id;
-      return value;
-    }
-
-    inline CurrencyId JPY() {
-      static auto value = GetDefaultCurrencyDatabase().from("JPY").m_id;
-      return value;
-    }
-
-    inline CurrencyId USD() {
-      static auto value = GetDefaultCurrencyDatabase().from("USD").m_id;
-      return value;
-    }
-
-    inline CurrencyId XBT() {
-      static auto value = GetDefaultCurrencyDatabase().from("XBT").m_id;
-      return value;
-    }
+    inline const auto AUD = GetDefaultCurrencyDatabase().from("AUD").m_id;
+    inline const auto CAD = GetDefaultCurrencyDatabase().from("CAD").m_id;
+    inline const auto HKD = GetDefaultCurrencyDatabase().from("HKD").m_id;
+    inline const auto JPY = GetDefaultCurrencyDatabase().from("JPY").m_id;
+    inline const auto USD = GetDefaultCurrencyDatabase().from("USD").m_id;
+    inline const auto XBT = GetDefaultCurrencyDatabase().from("XBT").m_id;
   }
 }
 

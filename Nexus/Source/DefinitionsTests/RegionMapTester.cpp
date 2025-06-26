@@ -7,7 +7,7 @@ using namespace Nexus;
 
 TEST_SUITE("RegionMap") {
   TEST_CASE("venue_region_subset_of_country_region") {
-    auto map = RegionMap<int>(-1);
+    auto map = RegionMap(-1);
     map.Set(DefaultCountries::US, 1);
     map.Set(DefaultCountries::CA, 2);
     auto usCode = map.Get(DefaultCountries::US);
@@ -17,17 +17,15 @@ TEST_SUITE("RegionMap") {
     auto brCode = map.Get(DefaultCountries::BR);
     REQUIRE(brCode == -1);
     REQUIRE(
-      map.Get(GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ())) == 1);
-    REQUIRE(
-      map.Get(GetDefaultVenueDatabase().from(DefaultVenues::TSX())) == 2);
+      map.Get(GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ)) == 1);
+    REQUIRE(map.Get(GetDefaultVenueDatabase().from(DefaultVenues::TSX)) == 2);
   }
 
   TEST_CASE("set_country_security_venue") {
-    auto map = RegionMap<int>(-1);
+    auto map = RegionMap(-1);
     auto country = DefaultCountries::CA;
-    auto venue = GetDefaultVenueDatabase().from(DefaultVenues::TSX());
-    auto security =
-      Security("TST", DefaultVenues::TSX(), DefaultCountries::CA);
+    auto venue = GetDefaultVenueDatabase().from(DefaultVenues::TSX);
+    auto security = Security("TST", DefaultVenues::TSX, DefaultCountries::CA);
     map.Set(country, 1);
     map.Set(security, 2);
     map.Set(venue, 3);
@@ -37,7 +35,7 @@ TEST_SUITE("RegionMap") {
   }
 
   TEST_CASE("region_map_iterator") {
-    auto map = RegionMap<int>(-1);
+    auto map = RegionMap(-1);
     map.Set(DefaultCountries::US, 1);
     map.Set(DefaultCountries::CA, 2);
     auto mapIterator = map.Begin();

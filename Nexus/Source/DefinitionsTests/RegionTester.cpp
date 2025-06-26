@@ -40,21 +40,21 @@ namespace {
 TEST_SUITE("Region") {
   TEST_CASE("venue_region_subset_of_country_region") {
     auto country = DefaultCountries::US;
-    auto venue = GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ());
+    auto venue = GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ);
     TestProperSubset(venue, country);
   }
 
   TEST_CASE("security_region_subset_of_venue_region") {
-    auto venue = GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ());
+    auto venue = GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ);
     auto security =
-      Security("TST", DefaultVenues::NASDAQ(), DefaultCountries::US);
+      Security("TST", DefaultVenues::NASDAQ, DefaultCountries::US);
     TestProperSubset(security, venue);
   }
 
   TEST_CASE("security_region_subset_of_country_region") {
     auto country = DefaultCountries::US;
     auto security =
-      Security("TST", DefaultVenues::NASDAQ(), DefaultCountries::US);
+      Security("TST", DefaultVenues::NASDAQ, DefaultCountries::US);
     TestProperSubset(security, country);
   }
 
@@ -105,15 +105,15 @@ TEST_SUITE("Region") {
 
   TEST_CASE("distinct_venues") {
     auto nasdaq =
-      Region(GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ()));
-    auto nyse = Region(GetDefaultVenueDatabase().from(DefaultVenues::NYSE()));
+      Region(GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ));
+    auto nyse = Region(GetDefaultVenueDatabase().from(DefaultVenues::NYSE));
     TestDistinctSets(nasdaq, nyse);
   }
 
   TEST_CASE("venue_entry_constructor_equivalence") {
-    auto fromCodes = Region(DefaultVenues::NASDAQ(), DefaultCountries::US);
+    auto fromCodes = Region(DefaultVenues::NASDAQ, DefaultCountries::US);
     auto fromEntry =
-      Region(GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ()));
+      Region(GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ));
     REQUIRE(fromCodes == fromEntry);
     REQUIRE(fromCodes <= fromEntry);
   }
@@ -129,7 +129,7 @@ TEST_SUITE("Region") {
     auto ca = Region(DefaultCountries::CA);
     auto unionRegion = us + ca;
     auto security =
-      Security("TST", DefaultVenues::NASDAQ(), DefaultCountries::US);
+      Security("TST", DefaultVenues::NASDAQ, DefaultCountries::US);
     REQUIRE(security <= unionRegion);
     REQUIRE(security < unionRegion);
     REQUIRE(unionRegion >= security);

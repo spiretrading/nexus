@@ -82,17 +82,11 @@ namespace Nexus {
 
   namespace DefaultCountries {
     inline const auto AU = GetDefaultCountryDatabase().from("AU").m_code;
-
     inline const auto BR = GetDefaultCountryDatabase().from("BR").m_code;
-
     inline const auto CA = GetDefaultCountryDatabase().from("CA").m_code;
-
     inline const auto CN = GetDefaultCountryDatabase().from("CN").m_code;
-
     inline const auto HK = GetDefaultCountryDatabase().from("HK").m_code;
-
     inline const auto JP = GetDefaultCountryDatabase().from("JP").m_code;
-
     inline const auto US = GetDefaultCountryDatabase().from("US").m_code;
   }
 }
