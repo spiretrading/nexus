@@ -40,7 +40,7 @@ namespace {
     return play_toggle;
   }
 
-  struct PlaybackDateModel : public OptionalDateModel {
+  struct PlaybackDateModel : OptionalDateModel {
     std::shared_ptr<ValueModel<ptime>> m_source;
     optional<date> m_min_date;
     LocalValueModel<optional<date>> m_value;
@@ -76,18 +76,16 @@ namespace {
     QValidator::State test(const optional<date>& value) const override {
       if(!value || get_minimum() && value < get_minimum() ||
           value > get_maximum()) {
-        return QValidator::Invalid;
+        return QValidator::Intermediate;
       }
       return QValidator::Acceptable;
     }
 
     QValidator::State set(const optional<date>& value) override {
       m_state = test(value);
-      if(m_state == QValidator::Invalid) {
-        return QValidator::Invalid;
-      }
       m_value.set(value);
-      if(*value != m_source->get().date()) {
+      if(m_state == QValidator::Acceptable &&
+          *value != m_source->get().date()) {
         m_source->set(ptime(*value, m_source->get().time_of_day()));
       }
       return m_state;
@@ -103,7 +101,7 @@ namespace {
     }
   };
 
-  struct PlaybackTimeModel : public OptionalDurationModel {
+  struct PlaybackTimeModel : OptionalDurationModel {
     using local_adjustor = boost::date_time::c_local_adjustor<ptime>;
     std::shared_ptr<TimelineModel> m_timeline;
     mutable TimeClientBox m_time_client;

@@ -197,7 +197,9 @@ struct PlaybackControlPanelTester : QWidget {
   }
 
   void on_timeline_update(const Timeline& timeline) {
+    m_start_time->blockSignals(true);
     m_start_time->setDateTime(to_qdate_time(timeline.m_start));
+    m_start_time->blockSignals(false);
   }
 
   void on_playhead_update(const time_duration& playhead) {
