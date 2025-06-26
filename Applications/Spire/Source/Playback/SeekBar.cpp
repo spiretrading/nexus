@@ -136,8 +136,7 @@ struct SeekBar::SliderPositionModel : ScalarValueModel<Decimal> {
       return QValidator::Invalid;
     }
     m_value.set(value);
-    {
-      auto blocker = shared_connection_block(m_current_connection);
+    if(auto current = to_time_duration(value); current != m_current->get()) {
       m_current->set(to_time_duration(value));
     }
     return m_state;
@@ -149,7 +148,7 @@ struct SeekBar::SliderPositionModel : ScalarValueModel<Decimal> {
   }
 
   void on_current_update(const time_duration& time) {
-    set(::to_decimal(time));
+    m_value.set(::to_decimal(time));
   }
 
   void on_timeline_update(const Timeline& timeline) {
@@ -161,8 +160,12 @@ struct SeekBar::SliderPositionModel : ScalarValueModel<Decimal> {
 
 SeekBar::SeekBar(std::shared_ptr<TimelineModel> timeline, QWidget* parent)
   : SeekBar(std::move(timeline),
-      std::make_shared<LocalDurationModel>(time_duration(0, 0, 0)),
-      make_default_modifiers(), parent) {}
+      std::make_shared<LocalDurationModel>(time_duration(0, 0, 0)), parent) {}
+
+SeekBar::SeekBar(std::shared_ptr<TimelineModel> timeline,
+  std::shared_ptr<DurationModel> current, QWidget* parent)
+  : SeekBar(std::move(timeline), std::move(current), make_default_modifiers(),
+      parent) {}
 
 SeekBar::SeekBar(std::shared_ptr<TimelineModel> timeline,
     std::shared_ptr<DurationModel> current,
@@ -227,4 +230,8 @@ void SeekBar::on_hover(HoverObserver::State state) {
     m_tip->setVisible(false);
     m_mouse_move_observer.reset();
   }
+}
+
+ptime Spire::get_end_time(const Timeline& timeline) {
+  return timeline.m_start + timeline.m_duration;
 }
