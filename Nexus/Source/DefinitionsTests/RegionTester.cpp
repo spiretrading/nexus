@@ -39,7 +39,7 @@ namespace {
 
 TEST_SUITE("Region") {
   TEST_CASE("venue_region_subset_of_country_region") {
-    auto country = DefaultCountries::US();
+    auto country = DefaultCountries::US;
     auto venue = GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ());
     TestProperSubset(venue, country);
   }
@@ -47,23 +47,23 @@ TEST_SUITE("Region") {
   TEST_CASE("security_region_subset_of_venue_region") {
     auto venue = GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ());
     auto security =
-      Security("TST", DefaultVenues::NASDAQ(), DefaultCountries::US());
+      Security("TST", DefaultVenues::NASDAQ(), DefaultCountries::US);
     TestProperSubset(security, venue);
   }
 
   TEST_CASE("security_region_subset_of_country_region") {
-    auto country = DefaultCountries::US();
+    auto country = DefaultCountries::US;
     auto security =
-      Security("TST", DefaultVenues::NASDAQ(), DefaultCountries::US());
+      Security("TST", DefaultVenues::NASDAQ(), DefaultCountries::US);
     TestProperSubset(security, country);
   }
 
   TEST_CASE("distinct_country_regions") {
-    auto us = Region(DefaultCountries::US());
-    auto ca = Region(DefaultCountries::CA());
+    auto us = Region(DefaultCountries::US);
+    auto ca = Region(DefaultCountries::CA);
     TestDistinctSets(us, ca);
     auto northAmerica = us + ca;
-    auto br = DefaultCountries::BR();
+    auto br = DefaultCountries::BR;
     TestDistinctSets(northAmerica, br);
     TestProperSubset(us, northAmerica);
     TestProperSubset(ca, northAmerica);
@@ -80,8 +80,8 @@ TEST_SUITE("Region") {
   }
 
   TEST_CASE("named_and_unnamed_region_equality") {
-    auto r1 = Region(DefaultCountries::US());
-    auto r2 = Region(DefaultCountries::US());
+    auto r1 = Region(DefaultCountries::US);
+    auto r2 = Region(DefaultCountries::US);
     r2.SetName("US Region");
     REQUIRE(r1 == r2);
     REQUIRE(r1 <= r2);
@@ -91,7 +91,7 @@ TEST_SUITE("Region") {
   }
 
   TEST_CASE("global_region_superset_of_all") {
-    auto country = Region(DefaultCountries::US());
+    auto country = Region(DefaultCountries::US);
     auto global = Region::Global();
     auto namedGlobal = Region::Global("All Venues");
     TestProperSubset(country, global);
@@ -111,7 +111,7 @@ TEST_SUITE("Region") {
   }
 
   TEST_CASE("venue_entry_constructor_equivalence") {
-    auto fromCodes = Region(DefaultVenues::NASDAQ(), DefaultCountries::US());
+    auto fromCodes = Region(DefaultVenues::NASDAQ(), DefaultCountries::US);
     auto fromEntry =
       Region(GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ()));
     REQUIRE(fromCodes == fromEntry);
@@ -120,16 +120,16 @@ TEST_SUITE("Region") {
 
   TEST_CASE("empty_subset_of_non_empty") {
     auto empty = Region();
-    auto country = Region(DefaultCountries::US());
+    auto country = Region(DefaultCountries::US);
     TestProperSubset(empty, country);
   }
 
   TEST_CASE("security_in_union_region") {
-    auto us = Region(DefaultCountries::US());
-    auto ca = Region(DefaultCountries::CA());
+    auto us = Region(DefaultCountries::US);
+    auto ca = Region(DefaultCountries::CA);
     auto unionRegion = us + ca;
     auto security =
-      Security("TST", DefaultVenues::NASDAQ(), DefaultCountries::US());
+      Security("TST", DefaultVenues::NASDAQ(), DefaultCountries::US);
     REQUIRE(security <= unionRegion);
     REQUIRE(security < unionRegion);
     REQUIRE(unionRegion >= security);
@@ -137,8 +137,8 @@ TEST_SUITE("Region") {
   }
 
   TEST_CASE("combine_regions_operator_plus_and_plus_eq") {
-    auto us = Region(DefaultCountries::US());
-    auto ca = Region(DefaultCountries::CA());
+    auto us = Region(DefaultCountries::US);
+    auto ca = Region(DefaultCountries::CA);
     auto combined = us;
     combined += ca;
     auto plusCombined = us + ca;

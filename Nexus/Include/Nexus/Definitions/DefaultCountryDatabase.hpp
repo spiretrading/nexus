@@ -81,40 +81,19 @@ namespace Nexus {
   }
 
   namespace DefaultCountries {
-    inline CountryCode AU() {
-      static auto value = GetDefaultCountryDatabase().from("AU").m_code;
-      return value;
-    }
+    inline const auto AU = GetDefaultCountryDatabase().from("AU").m_code;
 
-    inline CountryCode BR() {
-      static auto value = GetDefaultCountryDatabase().from("BR").m_code;
-      return value;
-    }
+    inline const auto BR = GetDefaultCountryDatabase().from("BR").m_code;
 
-    inline CountryCode CA() {
-      static auto value = GetDefaultCountryDatabase().from("CA").m_code;
-      return value;
-    }
+    inline const auto CA = GetDefaultCountryDatabase().from("CA").m_code;
 
-    inline CountryCode CN() {
-      static auto value = GetDefaultCountryDatabase().from("CN").m_code;
-      return value;
-    }
+    inline const auto CN = GetDefaultCountryDatabase().from("CN").m_code;
 
-    inline CountryCode HK() {
-      static auto value = GetDefaultCountryDatabase().from("HK").m_code;
-      return value;
-    }
+    inline const auto HK = GetDefaultCountryDatabase().from("HK").m_code;
 
-    inline CountryCode JP() {
-      static auto value = GetDefaultCountryDatabase().from("JP").m_code;
-      return value;
-    }
+    inline const auto JP = GetDefaultCountryDatabase().from("JP").m_code;
 
-    inline CountryCode US() {
-      static auto value = GetDefaultCountryDatabase().from("US").m_code;
-      return value;
-    }
+    inline const auto US = GetDefaultCountryDatabase().from("US").m_code;
   }
 }
 
