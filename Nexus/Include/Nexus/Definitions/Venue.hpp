@@ -23,6 +23,9 @@ namespace Nexus {
   class Venue {
     public:
 
+      /** The type used to store the MIC. */
+      using Code = Beam::FixedString<4>;
+
       /** Constructs an empty Venue. */
       Venue() = default;
 
@@ -30,9 +33,31 @@ namespace Nexus {
        * @brief Constructs a Venue from a market identifier code.
        * @param mic The market identifier code.
        */
-      Venue(Beam::FixedString<4> mic);
+      Venue(const char* mic) noexcept;
+
+      /**
+       * @brief Constructs a Venue from a market identifier code.
+       * @param mic The market identifier code.
+       */
+      Venue(const std::string& mic) noexcept;
+
+      /**
+       * @brief Constructs a Venue from a market identifier code.
+       * @param mic The market identifier code.
+       */
+      Venue(std::string_view mic) noexcept;
+
+      /**
+       * @brief Constructs a Venue from a market identifier code.
+       * @param mic The market identifier code.
+       */
+      Venue(Code mic) noexcept;
+
+      Code get_code() const;
 
       auto operator <=>(const Venue&) const = default;
+
+      Venue& operator =(const char* mic) noexcept;
 
     private:
       Beam::FixedString<4> m_mic;
@@ -113,7 +138,102 @@ namespace Nexus {
       std::vector<Entry> m_entries;
   };
 
-#if 0
+  /**
+   * Parses an Entry from a string.
+   * @param source The string to parse.
+   * @param database The VenueDatabase containing the available Entry.
+   * @return The Entry represented by the <i>source</i>.
+   */
+  inline const VenueDatabase::Entry& parse_venue_entry(
+      std::string_view source, const VenueDatabase& database) {
+    auto& entry = database.from_display_name(source);
+    if(entry.m_venue == Venue()) {
+      return database.from(source);
+    }
+    return entry;
+  }
+
+  /**
+   * Parses a Venue from a string.
+   * @param source The string to parse.
+   * @param database The VenueDatabase containing the available Venues to parse.
+   * @return The Venue represented by the <i>source</i>.
+   */
+  inline Venue parse_venue(
+      std::string_view source, const VenueDatabase& database) {
+    return parse_venue_entry(source, database).m_venue;
+  }
+
+  /**
+   * Parses an Entry from a YAML node.
+   * @param node The node to parse the VenueDatabase Entry from.
+   * @return The Entry represented by the <i>node</i>.
+   */
+  inline VenueDatabase::Entry parse_venue_database_entry(
+      const YAML::Node& node, const CountryDatabase& country_database,
+      const CurrencyDatabase& currency_database) {
+    return Beam::TryOrNest([&] {
+      auto entry = VenueDatabase::Entry();
+      entry.m_venue = Beam::Extract<std::string>(node, "code");
+      entry.m_country_code = parse_country_code(
+        Beam::Extract<std::string>(node, "country_code"), country_database);
+      if(entry.m_country_code == CountryCode::NONE) {
+        BOOST_THROW_EXCEPTION(
+          Beam::MakeYamlParserException("Invalid country code.", node.Mark()));
+      }
+      entry.m_time_zone = Beam::Extract<std::string>(node, "time_zone");
+      entry.m_currency = parse_currency(
+        Beam::Extract<std::string>(node, "currency"), currency_database);
+      if(entry.m_currency == CurrencyId::NONE) {
+        BOOST_THROW_EXCEPTION(
+          Beam::MakeYamlParserException("Invalid currency.", node.Mark()));
+      }
+      entry.m_description = Beam::Extract<std::string>(node, "description");
+      entry.m_display_name = Beam::Extract<std::string>(node, "display_name");
+      return entry;
+    }, std::runtime_error("Failed to parse market database entry."));
+  }
+
+  /**
+   * Parses a VenueDatabase from a YAML node.
+   * @param node The node to parse the VenueDatabase from.
+   * @param country_database The CountryDatabase used to parse country codes.
+   * @param currency_database The CurrencyDatabase used to parse currencies.
+   * @return The VenueDatabase represented by the <i>node</i>.
+   */
+  inline VenueDatabase parse_venue_database(
+      const YAML::Node& node, const CountryDatabase& country_database,
+      const CurrencyDatabase& currency_database) {
+    return Beam::TryOrNest([&] {
+      auto database = VenueDatabase();
+      for(auto& node : node) {
+        database.add(parse_venue_database_entry(
+          node, country_database, currency_database));
+      }
+      return database;
+    }, std::runtime_error("Failed to parse venue database."));
+  }
+
+  inline std::string to_string(Venue value, const VenueDatabase& database) {
+    auto& entry = database.from(value);
+    if(entry.m_venue == Venue()) {
+      return value.get_code().GetData();
+    } else {
+      return entry.m_display_name;
+    }
+  }
+
+  inline std::ostream& operator <<(std::ostream& out, Venue venue) {
+    return out << venue.get_code();
+  }
+
+  inline std::ostream& operator <<(std::ostream& out,
+      const VenueDatabase::Entry& entry) {
+    return out << '(' << entry.m_venue << ' ' << entry.m_country_code << ' ' <<
+      entry.m_time_zone << ' ' << entry.m_currency << ' ' <<
+      entry.m_description << ' ' << entry.m_display_name << ')';
+  }
+
   /**
    * Returns the time of the start of day relative to a specified venue in UTC.
    * @param venue The venue whose start of day in UTC is to be returned.
@@ -127,129 +247,49 @@ namespace Nexus {
    *         day is the beginning of the day in that venue's local time, then
    *         converts that value back to UTC.
    */
-  inline boost::posix_time::ptime VenueDateToUtc(Venue venue,
-      boost::posix_time::ptime dateTime, const VenueDatabase& venueDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase) {
-    auto venueTimeZone = timeZoneDatabase.time_zone_from_region(
-      venueDatabase.From(venue).m_timeZone);
-    auto utcTimeZone = timeZoneDatabase.time_zone_from_region("UTC");
-    auto universalDateTime = boost::local_time::local_date_time(dateTime.date(),
-      dateTime.time_of_day(), utcTimeZone,
+  inline boost::posix_time::ptime venue_date_to_utc(Venue venue,
+      boost::posix_time::ptime date_time, const VenueDatabase& venue_database,
+      const boost::local_time::tz_database& time_zone_database) {
+    auto venue_time_zone = time_zone_database.time_zone_from_region(
+      venue_database.from(venue).m_time_zone);
+    auto utc_time_zone = time_zone_database.time_zone_from_region("UTC");
+    auto universal_date_time = boost::local_time::local_date_time(
+      date_time.date(), date_time.time_of_day(), utc_time_zone,
       boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
-    auto currentVenueDateTime = universalDateTime.local_time_in(venueTimeZone);
-    auto venueCutOffDateTime = boost::posix_time::ptime(
-      currentVenueDateTime.local_time().date(), boost::posix_time::seconds(0));
-    auto venueCutOffLocalDateTime = boost::local_time::local_date_time(
-      venueCutOffDateTime.date(), venueCutOffDateTime.time_of_day(),
-      venueTimeZone,
+    auto current_venue_date_time =
+      universal_date_time.local_time_in(venue_time_zone);
+    auto venue_cut_off_date_time =
+      boost::posix_time::ptime(current_venue_date_time.local_time().date(),
+        boost::posix_time::seconds(0));
+    auto venue_cut_off_local_date_time = boost::local_time::local_date_time(
+      venue_cut_off_date_time.date(), venue_cut_off_date_time.time_of_day(),
+      venue_time_zone,
       boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
-    auto universalCutOffTime = venueCutOffLocalDateTime.local_time_in(
-      utcTimeZone);
-    auto utcVenueDate = boost::posix_time::ptime(
-      universalCutOffTime.local_time().date(),
-      universalCutOffTime.local_time().time_of_day());
-    return utcVenueDate;
+    auto universal_cut_off_time = venue_cut_off_local_date_time.local_time_in(
+      utc_time_zone);
+    auto utc_venue_date = boost::posix_time::ptime(
+      universal_cut_off_time.local_time().date(),
+      universal_cut_off_time.local_time().time_of_day());
+    return utc_venue_date;
   }
 
-  /**
-   * Parses a Venue from a string.
-   * @param source The string to parse.
-   * @param database The VenueDatabase containing the available Venues to parse.
-   * @return The Venue represented by the <i>source</i>.
-   */
-  inline Venue ParseVenue(
-      std::string_view source, const VenueDatabase& database) {
-    auto& entry = database.FromDisplayName(source);
-    if(entry.m_venue == Venue()) {
-      return database.From(source).m_venue;
-    }
-    return entry.m_venue;
-  }
+  inline Venue::Venue(const char* mic) noexcept
+    : m_mic(mic) {}
 
-  /**
-   * Parses an Entry from a string.
-   * @param source The string to parse.
-   * @param database The VenueDatabase containing the available Entry.
-   * @return The Entry represented by the <i>source</i>.
-   */
-  inline const VenueDatabase::Entry& ParseVenueEntry(
-      std::string_view source, const VenueDatabase& database) {
-    auto& entry = database.FromDisplayName(source);
-    if(entry.m_venue == Venue()) {
-      return database.From(source);
-    }
-    return entry;
-  }
-
-  /**
-   * Parses an Entry from a YAML node.
-   * @param node The node to parse the VenueDatabase Entry from.
-   * @return The Entry represented by the <i>node</i>.
-   */
-  inline VenueDatabase::Entry ParseVenueDatabaseEntry(
-      const YAML::Node& node, const CountryDatabase& countryDatabase,
-      const CurrencyDatabase& currencyDatabase) {
-    return Beam::TryOrNest([&] {
-      auto entry = VenueDatabase::Entry();
-      entry.m_venue = Beam::Extract<std::string>(node, "code");
-      entry.m_countryCode = ParseCountryCode(
-        Beam::Extract<std::string>(node, "country_code"), countryDatabase);
-      if(entry.m_countryCode == CountryCode::NONE) {
-        BOOST_THROW_EXCEPTION(
-          Beam::MakeYamlParserException("Invalid country code.", node.Mark()));
-      }
-      entry.m_timeZone = Beam::Extract<std::string>(node, "time_zone");
-      entry.m_currency = ParseCurrency(
-        Beam::Extract<std::string>(node, "currency"), currencyDatabase);
-      if(entry.m_currency == CurrencyId::NONE) {
-        BOOST_THROW_EXCEPTION(
-          Beam::MakeYamlParserException("Invalid currency.", node.Mark()));
-      }
-      entry.m_description = Beam::Extract<std::string>(node, "description");
-      entry.m_displayName = Beam::Extract<std::string>(node, "display_name");
-      return entry;
-    }, std::runtime_error("Failed to parse market database entry."));
-  }
-
-  /**
-   * Parses a VenueDatabase from a YAML node.
-   * @param node The node to parse the VenueDatabase from.
-   * @param countryDatabase The CountryDatabase used to parse country codes.
-   * @param currencyDatabase The CurrencyDatabase used to parse currencies.
-   * @return The VenueDatabase represented by the <i>node</i>.
-   */
-  inline VenueDatabase ParseVenueDatabase(
-      const YAML::Node& node, const CountryDatabase& countryDatabase,
-      const CurrencyDatabase& currencyDatabase) {
-    return Beam::TryOrNest([&] {
-      auto database = VenueDatabase();
-      for(auto& node : node) {
-        database.Add(
-          ParseVenueDatabaseEntry(node, countryDatabase, currencyDatabase));
-      }
-      return database;
-    }, std::runtime_error("Failed to parse venue database."));
-  }
-
-  inline std::string ToString(Venue value, const VenueDatabase& database) {
-    auto& entry = database.From(value);
-    if(entry.m_venue == Venue()) {
-      return value.GetData();
-    } else {
-      return entry.m_displayName;
-    }
-  }
-
-  inline std::ostream& operator <<(std::ostream& out,
-      const VenueDatabase::Entry& entry) {
-    return out << '(' << entry.m_venue << ' ' << entry.m_country_code << ' ' <<
-      entry.m_time_zone << ' ' << entry.m_currency << ' ' <<
-      entry.m_description << ' ' << entry.m_display_name << ')';
-  }
-#endif
-
-  inline Venue::Venue(Beam::FixedString<4> mic)
+  inline Venue::Venue(std::string_view mic) noexcept
     : m_mic(std::move(mic)) {}
+
+  inline Venue::Venue(Code mic) noexcept
+    : m_mic(std::move(mic)) {}
+
+  inline Venue::Code Venue::get_code() const {
+    return m_mic;
+  }
+
+  inline Venue& Venue::operator =(const char* mic) noexcept {
+    m_mic = mic;
+    return *this;
+  }
 
   inline const std::vector<VenueDatabase::Entry>&
       VenueDatabase::get_entries() const {
@@ -270,7 +310,7 @@ namespace Nexus {
   inline const VenueDatabase::Entry&
       VenueDatabase::from_display_name(std::string_view display_name) const {
     auto i = std::find_if(m_entries.begin(), m_entries.end(),
-      [&] (auto& entry) {
+      [&] (const auto& entry) {
         return entry.m_display_name == display_name;
       });
     if(i == m_entries.end()) {
@@ -308,6 +348,10 @@ namespace Nexus {
       m_entries.erase(i);
     }
   }
+
+  inline std::size_t hash_value(Venue venue) {
+    return std::hash<Nexus::Venue::Code>()(venue.get_code());
+  }
 }
 
 namespace Beam::Serialization {
@@ -328,9 +372,18 @@ namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::VenueDatabase> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::VenueDatabase& value,
-        unsigned int version) {
+    void operator ()(
+        Shuttler& shuttle, Nexus::VenueDatabase& value, unsigned int version) {
       shuttle.Shuttle("entries", value.m_entries);
+    }
+  };
+}
+
+namespace std {
+  template<>
+  struct std::hash<Nexus::Venue> {
+    std::size_t operator ()(Nexus::Venue venue) const {
+      return hash_value(venue);
     }
   };
 }

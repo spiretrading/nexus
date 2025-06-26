@@ -1,6 +1,6 @@
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/Region.hpp"
 
 using namespace Nexus;
@@ -38,23 +38,23 @@ namespace {
 }
 
 TEST_SUITE("Region") {
-  TEST_CASE("market_region_subset_of_country_region") {
+  TEST_CASE("venue_region_subset_of_country_region") {
     auto country = DefaultCountries::US();
-    auto market = GetDefaultMarketDatabase().FromCode(DefaultMarkets::NASDAQ());
-    TestProperSubset(market, country);
+    auto venue = GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ());
+    TestProperSubset(venue, country);
   }
 
-  TEST_CASE("security_region_subset_of_market_region") {
-    auto market = GetDefaultMarketDatabase().FromCode(DefaultMarkets::NASDAQ());
+  TEST_CASE("security_region_subset_of_venue_region") {
+    auto venue = GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ());
     auto security =
-      Security("TST", DefaultMarkets::NASDAQ(), DefaultCountries::US());
-    TestProperSubset(security, market);
+      Security("TST", DefaultVenues::NASDAQ(), DefaultCountries::US());
+    TestProperSubset(security, venue);
   }
 
   TEST_CASE("security_region_subset_of_country_region") {
     auto country = DefaultCountries::US();
     auto security =
-      Security("TST", DefaultMarkets::NASDAQ(), DefaultCountries::US());
+      Security("TST", DefaultVenues::NASDAQ(), DefaultCountries::US());
     TestProperSubset(security, country);
   }
 
@@ -93,7 +93,7 @@ TEST_SUITE("Region") {
   TEST_CASE("global_region_superset_of_all") {
     auto country = Region(DefaultCountries::US());
     auto global = Region::Global();
-    auto namedGlobal = Region::Global("All Markets");
+    auto namedGlobal = Region::Global("All Venues");
     TestProperSubset(country, global);
     TestProperSubset(country, namedGlobal);
     REQUIRE(global == namedGlobal);
@@ -103,18 +103,17 @@ TEST_SUITE("Region") {
     REQUIRE(!(global > namedGlobal));
   }
 
-  TEST_CASE("distinct_markets") {
-    auto nasdaq = Region(
-      GetDefaultMarketDatabase().FromCode(DefaultMarkets::NASDAQ()));
-    auto nyse = Region(
-      GetDefaultMarketDatabase().FromCode(DefaultMarkets::NYSE()));
+  TEST_CASE("distinct_venues") {
+    auto nasdaq =
+      Region(GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ()));
+    auto nyse = Region(GetDefaultVenueDatabase().from(DefaultVenues::NYSE()));
     TestDistinctSets(nasdaq, nyse);
   }
 
-  TEST_CASE("market_entry_constructor_equivalence") {
-    auto fromCodes = Region(DefaultMarkets::NASDAQ(), DefaultCountries::US());
-    auto fromEntry = Region(
-      GetDefaultMarketDatabase().FromCode(DefaultMarkets::NASDAQ()));
+  TEST_CASE("venue_entry_constructor_equivalence") {
+    auto fromCodes = Region(DefaultVenues::NASDAQ(), DefaultCountries::US());
+    auto fromEntry =
+      Region(GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ()));
     REQUIRE(fromCodes == fromEntry);
     REQUIRE(fromCodes <= fromEntry);
   }
@@ -130,7 +129,7 @@ TEST_SUITE("Region") {
     auto ca = Region(DefaultCountries::CA());
     auto unionRegion = us + ca;
     auto security =
-      Security("TST", DefaultMarkets::NASDAQ(), DefaultCountries::US());
+      Security("TST", DefaultVenues::NASDAQ(), DefaultCountries::US());
     REQUIRE(security <= unionRegion);
     REQUIRE(security < unionRegion);
     REQUIRE(unionRegion >= security);

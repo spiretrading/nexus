@@ -16,42 +16,42 @@ namespace Nexus {
         entry.m_id = CurrencyId(36);
         entry.m_code = "AUD";
         entry.m_sign = "$";
-        database.Add(entry);
+        database.add(entry);
       }
       {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(124);
         entry.m_code = "CAD";
         entry.m_sign = "$";
-        database.Add(entry);
+        database.add(entry);
       }
       {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(344);
         entry.m_code = "HKD";
         entry.m_sign = "$";
-        database.Add(entry);
+        database.add(entry);
       }
       {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(392);
         entry.m_code = "JPY";
         entry.m_sign = reinterpret_cast<const char*>(u8"\u00A5");
-        database.Add(entry);
+        database.add(entry);
       }
       {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(840);
         entry.m_code = "USD";
         entry.m_sign = "$";
-        database.Add(entry);
+        database.add(entry);
       }
       {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(1001);
         entry.m_code = "XBT";
         entry.m_sign = reinterpret_cast<const char*>(u8"\u20BF");
-        database.Add(entry);
+        database.add(entry);
       }
       return database;
     }();
@@ -63,38 +63,38 @@ namespace Nexus {
    * @param source The string to parse.
    * @return The CurrencyId represented by the <i>source</i>.
    */
-  inline CurrencyId ParseCurrency(const std::string& source) {
-    return ParseCurrency(source, GetDefaultCurrencyDatabase());
+  inline CurrencyId parse_currency(std::string_view source) {
+    return parse_currency(source, GetDefaultCurrencyDatabase());
   }
 
   namespace DefaultCurrencies {
     inline CurrencyId AUD() {
-      static auto value = GetDefaultCurrencyDatabase().FromCode("AUD").m_id;
+      static auto value = GetDefaultCurrencyDatabase().from("AUD").m_id;
       return value;
     }
 
     inline CurrencyId CAD() {
-      static auto value = GetDefaultCurrencyDatabase().FromCode("CAD").m_id;
+      static auto value = GetDefaultCurrencyDatabase().from("CAD").m_id;
       return value;
     }
 
     inline CurrencyId HKD() {
-      static auto value = GetDefaultCurrencyDatabase().FromCode("HKD").m_id;
+      static auto value = GetDefaultCurrencyDatabase().from("HKD").m_id;
       return value;
     }
 
     inline CurrencyId JPY() {
-      static auto value = GetDefaultCurrencyDatabase().FromCode("JPY").m_id;
+      static auto value = GetDefaultCurrencyDatabase().from("JPY").m_id;
       return value;
     }
 
     inline CurrencyId USD() {
-      static auto value = GetDefaultCurrencyDatabase().FromCode("USD").m_id;
+      static auto value = GetDefaultCurrencyDatabase().from("USD").m_id;
       return value;
     }
 
     inline CurrencyId XBT() {
-      static auto value = GetDefaultCurrencyDatabase().FromCode("XBT").m_id;
+      static auto value = GetDefaultCurrencyDatabase().from("XBT").m_id;
       return value;
     }
   }

@@ -1,366 +1,366 @@
-#ifndef NEXUS_DEFAULT_MARKET_DATABASE_HPP
-#define NEXUS_DEFAULT_MARKET_DATABASE_HPP
+#ifndef NEXUS_DEFAULT_VENUE_DATABASE_HPP
+#define NEXUS_DEFAULT_VENUE_DATABASE_HPP
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 
 namespace Nexus {
 
   /**
-   * Returns the default MarketDatabase, typically used for testing purposes.
+   * Returns the default VenueDatabase, typically used for testing purposes.
    */
-  inline const MarketDatabase& GetDefaultMarketDatabase() {
+  inline const VenueDatabase& GetDefaultVenueDatabase() {
     static auto database = [] {
-      auto database = MarketDatabase();
+      auto database = VenueDatabase();
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XASX";
-        entry.m_countryCode = DefaultCountries::AU();
-        entry.m_timeZone = "Australian_Eastern_Standard_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XASX";
+        entry.m_country_code = DefaultCountries::AU();
+        entry.m_time_zone = "Australian_Eastern_Standard_Time";
         entry.m_currency = DefaultCurrencies::AUD();
         entry.m_description = "Australian Stock Market";
-        entry.m_displayName = "ASX";
-        database.Add(entry);
+        entry.m_display_name = "ASX";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "CHIA";
-        entry.m_countryCode = DefaultCountries::AU();
-        entry.m_timeZone = "Australian_Eastern_Standard_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "CHIA";
+        entry.m_country_code = DefaultCountries::AU();
+        entry.m_time_zone = "Australian_Eastern_Standard_Time";
         entry.m_currency = DefaultCurrencies::AUD();
         entry.m_description = "CHI-X Australia";
-        entry.m_displayName = "CXA";
-        database.Add(entry);
+        entry.m_display_name = "CXA";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XASE";
-        entry.m_countryCode = DefaultCountries::US();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XASE";
+        entry.m_country_code = DefaultCountries::US();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::USD();
         entry.m_description = "NYSE MKT LLC";
-        entry.m_displayName = "ASEX";
-        database.Add(entry);
+        entry.m_display_name = "ASEX";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "ARCX";
-        entry.m_countryCode = DefaultCountries::US();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "ARCX";
+        entry.m_country_code = DefaultCountries::US();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::USD();
         entry.m_description = "NYSE ARCA";
-        entry.m_displayName = "ARCX";
-        database.Add(entry);
+        entry.m_display_name = "ARCX";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "BATS";
-        entry.m_countryCode = DefaultCountries::US();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "BATS";
+        entry.m_country_code = DefaultCountries::US();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::USD();
         entry.m_description = "BATS Exchange";
-        entry.m_displayName = "BATS";
-        database.Add(entry);
+        entry.m_display_name = "BATS";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "BATY";
-        entry.m_countryCode = DefaultCountries::US();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "BATY";
+        entry.m_country_code = DefaultCountries::US();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::USD();
         entry.m_description = "BATS-Y Exchange";
-        entry.m_displayName = "BATY";
-        database.Add(entry);
+        entry.m_display_name = "BATY";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XBOS";
-        entry.m_countryCode = DefaultCountries::US();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XBOS";
+        entry.m_country_code = DefaultCountries::US();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::USD();
         entry.m_description = "NASDAQ OMX BX";
-        entry.m_displayName = "BOSX";
-        database.Add(entry);
+        entry.m_display_name = "BOSX";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XCBO";
-        entry.m_countryCode = DefaultCountries::US();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XCBO";
+        entry.m_country_code = DefaultCountries::US();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::USD();
         entry.m_description = "Chicago Board of Options Exchange";
-        entry.m_displayName = "CBOE";
-        database.Add(entry);
+        entry.m_display_name = "CBOE";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XCIS";
-        entry.m_countryCode = DefaultCountries::US();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XCIS";
+        entry.m_country_code = DefaultCountries::US();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::USD();
         entry.m_description = "National Stock Exchange";
-        entry.m_displayName = "NSEX";
-        database.Add(entry);
+        entry.m_display_name = "NSEX";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XADF";
-        entry.m_countryCode = DefaultCountries::US();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XADF";
+        entry.m_country_code = DefaultCountries::US();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::USD();
         entry.m_description = "FINRA Alternative Display Facility";
-        entry.m_displayName = "ADFX";
-        database.Add(entry);
+        entry.m_display_name = "ADFX";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XISX";
-        entry.m_countryCode = DefaultCountries::US();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XISX";
+        entry.m_country_code = DefaultCountries::US();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::USD();
         entry.m_description = "International Securities Exchange";
-        entry.m_displayName = "ISE";
-        database.Add(entry);
+        entry.m_display_name = "ISE";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "EDGA";
-        entry.m_countryCode = DefaultCountries::US();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "EDGA";
+        entry.m_country_code = DefaultCountries::US();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::USD();
         entry.m_description = "EDGA Exchange";
-        entry.m_displayName = "EDGA";
-        database.Add(entry);
+        entry.m_display_name = "EDGA";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "EDGX";
-        entry.m_countryCode = DefaultCountries::US();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "EDGX";
+        entry.m_country_code = DefaultCountries::US();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::USD();
         entry.m_description = "EDGX Exchange";
-        entry.m_displayName = "EDGX";
-        database.Add(entry);
+        entry.m_display_name = "EDGX";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XNYS";
-        entry.m_countryCode = DefaultCountries::US();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XNYS";
+        entry.m_country_code = DefaultCountries::US();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::USD();
         entry.m_description = "NYSE";
-        entry.m_displayName = "NYSE";
-        database.Add(entry);
+        entry.m_display_name = "NYSE";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XNAS";
-        entry.m_countryCode = DefaultCountries::US();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XNAS";
+        entry.m_country_code = DefaultCountries::US();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::USD();
         entry.m_description = "NASDAQ";
-        entry.m_displayName = "NSDQ";
-        database.Add(entry);
+        entry.m_display_name = "NSDQ";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XPHL";
-        entry.m_countryCode = DefaultCountries::US();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XPHL";
+        entry.m_country_code = DefaultCountries::US();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::USD();
         entry.m_description = "NASDAQ OMX PHLX";
-        entry.m_displayName = "PHLX";
-        database.Add(entry);
+        entry.m_display_name = "PHLX";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XATS";
-        entry.m_countryCode = DefaultCountries::CA();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XATS";
+        entry.m_country_code = DefaultCountries::CA();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::CAD();
         entry.m_description = "Alpha Exchange";
-        entry.m_displayName = "XATS";
-        database.Add(entry);
+        entry.m_display_name = "XATS";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "CHIC";
-        entry.m_countryCode = DefaultCountries::CA();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "CHIC";
+        entry.m_country_code = DefaultCountries::CA();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::CAD();
         entry.m_description = "CHI-X Canada ATS";
-        entry.m_displayName = "CHIC";
-        database.Add(entry);
+        entry.m_display_name = "CHIC";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XCNQ";
-        entry.m_countryCode = DefaultCountries::CA();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XCNQ";
+        entry.m_country_code = DefaultCountries::CA();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::CAD();
         entry.m_description = "Canadian Securities Exchange";
-        entry.m_displayName = "CSE";
-        database.Add(entry);
+        entry.m_display_name = "CSE";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "CSE2";
-        entry.m_countryCode = DefaultCountries::CA();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "CSE2";
+        entry.m_country_code = DefaultCountries::CA();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::CAD();
         entry.m_description = "Canadian Securities Exchange - CSE2";
-        entry.m_displayName = "CSE2";
-        database.Add(entry);
+        entry.m_display_name = "CSE2";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XCX2";
-        entry.m_countryCode = DefaultCountries::CA();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XCX2";
+        entry.m_country_code = DefaultCountries::CA();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::CAD();
         entry.m_description = "CX2";
-        entry.m_displayName = "CX2";
-        database.Add(entry);
+        entry.m_display_name = "CX2";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "LYNX";
-        entry.m_countryCode = DefaultCountries::CA();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "LYNX";
+        entry.m_country_code = DefaultCountries::CA();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::CAD();
         entry.m_description = "Lynx ATS";
-        entry.m_displayName = "LYNX";
-        database.Add(entry);
+        entry.m_display_name = "LYNX";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "MATN";
-        entry.m_countryCode = DefaultCountries::CA();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "MATN";
+        entry.m_country_code = DefaultCountries::CA();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::CAD();
         entry.m_description = "MATCH Now";
-        entry.m_displayName = "MATN";
-        database.Add(entry);
+        entry.m_display_name = "MATN";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "NEOE";
-        entry.m_countryCode = DefaultCountries::CA();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "NEOE";
+        entry.m_country_code = DefaultCountries::CA();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::CAD();
         entry.m_description = "Aequitas NEO Exchange";
-        entry.m_displayName = "NEOE";
-        database.Add(entry);
+        entry.m_display_name = "NEOE";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "OMGA";
-        entry.m_countryCode = DefaultCountries::CA();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "OMGA";
+        entry.m_country_code = DefaultCountries::CA();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::CAD();
         entry.m_description = "Omega ATS";
-        entry.m_displayName = "OMGA";
-        database.Add(entry);
+        entry.m_display_name = "OMGA";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "PURE";
-        entry.m_countryCode = DefaultCountries::CA();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "PURE";
+        entry.m_country_code = DefaultCountries::CA();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::CAD();
         entry.m_description = "Pure Trading";
-        entry.m_displayName = "PURE";
-        database.Add(entry);
+        entry.m_display_name = "PURE";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XTSE";
-        entry.m_countryCode = DefaultCountries::CA();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XTSE";
+        entry.m_country_code = DefaultCountries::CA();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::CAD();
         entry.m_description = "Toronto Stock Exchange";
-        entry.m_displayName = "TSX";
-        database.Add(entry);
+        entry.m_display_name = "TSX";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XTSX";
-        entry.m_countryCode = DefaultCountries::CA();
-        entry.m_timeZone = "Eastern_Time";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XTSX";
+        entry.m_country_code = DefaultCountries::CA();
+        entry.m_time_zone = "Eastern_Time";
         entry.m_currency = DefaultCurrencies::CAD();
         entry.m_description = "TSX Venture Exchange";
-        entry.m_displayName = "TSXV";
-        database.Add(entry);
+        entry.m_display_name = "TSXV";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XHKG";
-        entry.m_countryCode = DefaultCountries::HK();
-        entry.m_timeZone = "Asia/Hong_Kong";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XHKG";
+        entry.m_country_code = DefaultCountries::HK();
+        entry.m_time_zone = "Asia/Hong_Kong";
         entry.m_currency = DefaultCurrencies::HKD();
         entry.m_description = "Hong Kong Stock Exchange";
-        entry.m_displayName = "HKEX";
-        database.Add(entry);
+        entry.m_display_name = "HKEX";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XFKA";
-        entry.m_countryCode = DefaultCountries::JP();
-        entry.m_timeZone = "Asia/Tokyo";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XFKA";
+        entry.m_country_code = DefaultCountries::JP();
+        entry.m_time_zone = "Asia/Tokyo";
         entry.m_currency = DefaultCurrencies::JPY();
         entry.m_description = "Fukuoka Stock Exchange";
-        entry.m_displayName = "XFKA";
-        database.Add(entry);
+        entry.m_display_name = "XFKA";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XTKS";
-        entry.m_countryCode = DefaultCountries::JP();
-        entry.m_timeZone = "Asia/Tokyo";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XTKS";
+        entry.m_country_code = DefaultCountries::JP();
+        entry.m_time_zone = "Asia/Tokyo";
         entry.m_currency = DefaultCurrencies::JPY();
         entry.m_description = "Tokyo Stock Exchange";
-        entry.m_displayName = "TSE";
-        database.Add(entry);
+        entry.m_display_name = "TSE";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XOSE";
-        entry.m_countryCode = DefaultCountries::JP();
-        entry.m_timeZone = "Asia/Tokyo";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XOSE";
+        entry.m_country_code = DefaultCountries::JP();
+        entry.m_time_zone = "Asia/Tokyo";
         entry.m_currency = DefaultCurrencies::JPY();
         entry.m_description = "Osaka Exchange";
-        entry.m_displayName = "OSE";
-        database.Add(entry);
+        entry.m_display_name = "OSE";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XNGO";
-        entry.m_countryCode = DefaultCountries::JP();
-        entry.m_timeZone = "Asia/Tokyo";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XNGO";
+        entry.m_country_code = DefaultCountries::JP();
+        entry.m_time_zone = "Asia/Tokyo";
         entry.m_currency = DefaultCurrencies::JPY();
         entry.m_description = "Nagoya Stock Exchange";
-        entry.m_displayName = "NSE";
-        database.Add(entry);
+        entry.m_display_name = "NSE";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "XSAP";
-        entry.m_countryCode = DefaultCountries::JP();
-        entry.m_timeZone = "Asia/Tokyo";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "XSAP";
+        entry.m_country_code = DefaultCountries::JP();
+        entry.m_time_zone = "Asia/Tokyo";
         entry.m_currency = DefaultCurrencies::JPY();
         entry.m_description = "Sapporo Securities Exchange";
-        entry.m_displayName = "SSE";
-        database.Add(entry);
+        entry.m_display_name = "SSE";
+        database.add(entry);
       }
       {
-        auto entry = MarketDatabase::Entry();
-        entry.m_code = "CHIJ";
-        entry.m_countryCode = DefaultCountries::JP();
-        entry.m_timeZone = "Asia/Tokyo";
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = "CHIJ";
+        entry.m_country_code = DefaultCountries::JP();
+        entry.m_time_zone = "Asia/Tokyo";
         entry.m_currency = DefaultCurrencies::JPY();
         entry.m_description = "CHI-X Japan";
-        entry.m_displayName = "CHIJ";
-        database.Add(entry);
+        entry.m_display_name = "CHIJ";
+        database.add(entry);
       }
       return database;
     }();
@@ -368,187 +368,187 @@ namespace Nexus {
   }
 
   /**
-   * Parses a MarketCode from a string using the default database.
+   * Parses a Venue from a string using the default database.
    * @param source The string to parse.
-   * @return The MarketCode represented by the <i>source</i>.
+   * @return The Venue represented by the <i>source</i>.
    */
-  inline MarketCode ParseMarketCode(const std::string& source) {
-    return ParseMarketCode(source, GetDefaultMarketDatabase());
+  inline Venue parse_venue(std::string_view source) {
+    return parse_venue(source, GetDefaultVenueDatabase());
   }
 
-  namespace DefaultMarkets {
-    inline MarketCode HKEX() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XHKG").m_code;
+  namespace DefaultVenues {
+    inline Venue HKEX() {
+      static auto value = GetDefaultVenueDatabase().from("XHKG").m_venue;
       return value;
     }
 
-    inline MarketCode ASX() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XASX").m_code;
+    inline Venue ASX() {
+      static auto value = GetDefaultVenueDatabase().from("XASX").m_venue;
       return value;
     }
 
-    inline MarketCode CXA() {
-      static auto value = GetDefaultMarketDatabase().FromCode("CHIA").m_code;
+    inline Venue CXA() {
+      static auto value = GetDefaultVenueDatabase().from("CHIA").m_venue;
       return value;
     }
 
-    inline MarketCode ASEX() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XASE").m_code;
+    inline Venue ASEX() {
+      static auto value = GetDefaultVenueDatabase().from("XASE").m_venue;
       return value;
     }
 
-    inline MarketCode ARCX() {
-      static auto value = GetDefaultMarketDatabase().FromCode("ARCX").m_code;
+    inline Venue ARCX() {
+      static auto value = GetDefaultVenueDatabase().from("ARCX").m_venue;
       return value;
     }
 
-    inline MarketCode BATS() {
-      static auto value = GetDefaultMarketDatabase().FromCode("BATS").m_code;
+    inline Venue BATS() {
+      static auto value = GetDefaultVenueDatabase().from("BATS").m_venue;
       return value;
     }
 
-    inline MarketCode BATY() {
-      static auto value = GetDefaultMarketDatabase().FromCode("BATY").m_code;
+    inline Venue BATY() {
+      static auto value = GetDefaultVenueDatabase().from("BATY").m_venue;
       return value;
     }
 
-    inline MarketCode BOSX() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XBOS").m_code;
+    inline Venue BOSX() {
+      static auto value = GetDefaultVenueDatabase().from("XBOS").m_venue;
       return value;
     }
 
-    inline MarketCode CBOE() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XCBO").m_code;
+    inline Venue CBOE() {
+      static auto value = GetDefaultVenueDatabase().from("XCBO").m_venue;
       return value;
     }
 
-    inline MarketCode CSE() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XCNQ").m_code;
+    inline Venue CSE() {
+      static auto value = GetDefaultVenueDatabase().from("XCNQ").m_venue;
       return value;
     }
 
-    inline MarketCode CSE2() {
-      static auto value = GetDefaultMarketDatabase().FromCode("CSE2").m_code;
+    inline Venue CSE2() {
+      static auto value = GetDefaultVenueDatabase().from("CSE2").m_venue;
       return value;
     }
 
-    inline MarketCode NSEX() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XCIS").m_code;
+    inline Venue NSEX() {
+      static auto value = GetDefaultVenueDatabase().from("XCIS").m_venue;
       return value;
     }
 
-    inline MarketCode ADFX() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XADF").m_code;
+    inline Venue ADFX() {
+      static auto value = GetDefaultVenueDatabase().from("XADF").m_venue;
       return value;
     }
 
-    inline MarketCode ISE() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XISX").m_code;
+    inline Venue ISE() {
+      static auto value = GetDefaultVenueDatabase().from("XISX").m_venue;
       return value;
     }
 
-    inline MarketCode EDGA() {
-      static auto value = GetDefaultMarketDatabase().FromCode("EDGA").m_code;
+    inline Venue EDGA() {
+      static auto value = GetDefaultVenueDatabase().from("EDGA").m_venue;
       return value;
     }
 
-    inline MarketCode EDGX() {
-      static auto value = GetDefaultMarketDatabase().FromCode("EDGX").m_code;
+    inline Venue EDGX() {
+      static auto value = GetDefaultVenueDatabase().from("EDGX").m_venue;
       return value;
     }
 
-    inline MarketCode PHLX() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XPHL").m_code;
+    inline Venue PHLX() {
+      static auto value = GetDefaultVenueDatabase().from("XPHL").m_venue;
       return value;
     }
 
-    inline MarketCode CHIC() {
-      static auto value = GetDefaultMarketDatabase().FromCode("CHIC").m_code;
+    inline Venue CHIC() {
+      static auto value = GetDefaultVenueDatabase().from("CHIC").m_venue;
       return value;
     }
 
-    inline MarketCode LYNX() {
-      static auto value = GetDefaultMarketDatabase().FromCode("LYNX").m_code;
+    inline Venue LYNX() {
+      static auto value = GetDefaultVenueDatabase().from("LYNX").m_venue;
       return value;
     }
 
-    inline MarketCode NASDAQ() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XNAS").m_code;
+    inline Venue NASDAQ() {
+      static auto value = GetDefaultVenueDatabase().from("XNAS").m_venue;
       return value;
     }
 
-    inline MarketCode NYSE() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XNYS").m_code;
+    inline Venue NYSE() {
+      static auto value = GetDefaultVenueDatabase().from("XNYS").m_venue;
       return value;
     }
 
-    inline MarketCode MATN() {
-      static auto value = GetDefaultMarketDatabase().FromCode("MATN").m_code;
+    inline Venue MATN() {
+      static auto value = GetDefaultVenueDatabase().from("MATN").m_venue;
       return value;
     }
 
-    inline MarketCode NEOE() {
-      static auto value = GetDefaultMarketDatabase().FromCode("NEOE").m_code;
+    inline Venue NEOE() {
+      static auto value = GetDefaultVenueDatabase().from("NEOE").m_venue;
       return value;
     }
 
-    inline MarketCode OMGA() {
-      static auto value = GetDefaultMarketDatabase().FromCode("OMGA").m_code;
+    inline Venue OMGA() {
+      static auto value = GetDefaultVenueDatabase().from("OMGA").m_venue;
       return value;
     }
 
-    inline MarketCode PURE() {
-      static auto value = GetDefaultMarketDatabase().FromCode("PURE").m_code;
+    inline Venue PURE() {
+      static auto value = GetDefaultVenueDatabase().from("PURE").m_venue;
       return value;
     }
 
-    inline MarketCode TSX() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XTSE").m_code;
+    inline Venue TSX() {
+      static auto value = GetDefaultVenueDatabase().from("XTSE").m_venue;
       return value;
     }
 
-    inline MarketCode TSXV() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XTSX").m_code;
+    inline Venue TSXV() {
+      static auto value = GetDefaultVenueDatabase().from("XTSX").m_venue;
       return value;
     }
 
-    inline MarketCode XATS() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XATS").m_code;
+    inline Venue XATS() {
+      static auto value = GetDefaultVenueDatabase().from("XATS").m_venue;
       return value;
     }
 
-    inline MarketCode XCX2() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XCX2").m_code;
+    inline Venue XCX2() {
+      static auto value = GetDefaultVenueDatabase().from("XCX2").m_venue;
       return value;
     }
 
-    inline MarketCode XFKA() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XFKA").m_code;
+    inline Venue XFKA() {
+      static auto value = GetDefaultVenueDatabase().from("XFKA").m_venue;
       return value;
     }
 
-    inline MarketCode TSE() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XTKS").m_code;
+    inline Venue TSE() {
+      static auto value = GetDefaultVenueDatabase().from("XTKS").m_venue;
       return value;
     }
 
-    inline MarketCode OSE() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XOSE").m_code;
+    inline Venue OSE() {
+      static auto value = GetDefaultVenueDatabase().from("XOSE").m_venue;
       return value;
     }
 
-    inline MarketCode NSE() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XNGO").m_code;
+    inline Venue NSE() {
+      static auto value = GetDefaultVenueDatabase().from("XNGO").m_venue;
       return value;
     }
 
-    inline MarketCode SSE() {
-      static auto value = GetDefaultMarketDatabase().FromCode("XSAP").m_code;
+    inline Venue SSE() {
+      static auto value = GetDefaultVenueDatabase().from("XSAP").m_venue;
       return value;
     }
 
-    inline MarketCode CHIJ() {
-      static auto value = GetDefaultMarketDatabase().FromCode("CHIJ").m_code;
+    inline Venue CHIJ() {
+      static auto value = GetDefaultVenueDatabase().from("CHIJ").m_venue;
       return value;
     }
   }

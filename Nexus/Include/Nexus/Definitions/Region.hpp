@@ -6,10 +6,10 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleUnorderedSet.hpp>
 #include <boost/functional/hash.hpp>
-#include "Nexus/Definitions/Country.hpp"
-#include "Nexus/Definitions/Market.hpp"
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Definitions.hpp"
+#include "Nexus/Definitions/Country.hpp"
+#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 
 namespace Nexus {
 
@@ -42,17 +42,17 @@ namespace Nexus {
       Region(CountryCode country);
 
       /**
-       * Constructs a Region consisting of a single market.
-       * @param market The market to represent.
-       * @param country The country the market belongs to.
+       * Constructs a Region consisting of a single venue.
+       * @param venue The venue to represent.
+       * @param country The country the venue belongs to.
        */
-      Region(MarketCode market, CountryCode country);
+      Region(Venue venue, CountryCode country);
 
       /**
-       * Constructs a Region consisting of a single market.
-       * @param market The market to represent.
+       * Constructs a Region consisting of a single venue.
+       * @param venue The venue to represent.
        */
-      Region(const MarketDatabase::Entry& market);
+      Region(const VenueDatabase::Entry& venue);
 
       /**
        * Constructs a Region consisting of a single Security.
@@ -75,8 +75,8 @@ namespace Nexus {
       /** Returns the countries in this Region. */
       const std::unordered_set<CountryCode>& GetCountries() const;
 
-      /** Returns the markets in this Region. */
-      std::unordered_set<MarketCode> GetMarkets() const;
+      /** Returns the venues in this Region. */
+      std::unordered_set<Venue> GetVenues() const;
 
       /** Returns the Securities in this Region. */
       const std::unordered_set<Security>& GetSecurities() const;
@@ -132,24 +132,24 @@ namespace Nexus {
 
     private:
       struct GlobalTag {};
-      struct MarketEntry {
-        MarketCode m_market;
+      struct VenueEntry {
+        Venue m_venue;
         CountryCode m_country;
 
-        MarketEntry() = default;
-        MarketEntry(MarketCode market, CountryCode country);
-        bool operator ==(const MarketEntry& marketEntry) const;
-        friend struct Beam::Serialization::Shuttle<MarketEntry>;
+        VenueEntry() = default;
+        VenueEntry(Venue venue, CountryCode country);
+        bool operator ==(const VenueEntry& venueEntry) const;
+        friend struct Beam::Serialization::Shuttle<VenueEntry>;
       };
-      struct MarketEntryHash {
-        std::size_t operator ()(const MarketEntry& marketEntry) const;
+      struct VenueEntryHash {
+        std::size_t operator ()(const VenueEntry& venueEntry) const;
       };
       friend struct Beam::Serialization::Shuttle<Region>;
-      friend struct Beam::Serialization::Shuttle<Region::MarketEntry>;
+      friend struct Beam::Serialization::Shuttle<Region::VenueEntry>;
       std::string m_name;
       bool m_isGlobal;
       std::unordered_set<CountryCode> m_countries;
-      std::unordered_set<MarketEntry, MarketEntryHash> m_markets;
+      std::unordered_set<VenueEntry, VenueEntryHash> m_venues;
       std::unordered_set<Security> m_securities;
 
       explicit Region(GlobalTag);
@@ -171,8 +171,8 @@ namespace Nexus {
     for(auto& country : region.GetCountries()) {
       boost::hash_combine(seed, country);
     }
-    for(auto& market : region.GetMarkets()) {
-      boost::hash_combine(seed, market);
+    for(auto& venue : region.GetVenues()) {
+      boost::hash_combine(seed, venue);
     }
     for(auto& security : region.GetSecurities()) {
       boost::hash_combine(seed, security);
@@ -209,19 +209,18 @@ namespace Nexus {
     return left;
   }
 
-  inline Region::MarketEntry::MarketEntry(MarketCode market,
-    CountryCode country)
-    : m_market(market),
+  inline Region::VenueEntry::VenueEntry(Venue venue, CountryCode country)
+    : m_venue(venue),
       m_country(country) {}
 
-  inline bool Region::MarketEntry::operator ==(
-      const MarketEntry& marketEntry) const {
-    return m_market == marketEntry.m_market;
+  inline bool Region::VenueEntry::operator ==(
+      const VenueEntry& venueEntry) const {
+    return m_venue == venueEntry.m_venue;
   }
 
-  inline std::size_t Region::MarketEntryHash::operator ()(
-      const Region::MarketEntry& value) const {
-    return std::hash<MarketCode>()(value.m_market);
+  inline std::size_t Region::VenueEntryHash::operator ()(
+      const Region::VenueEntry& value) const {
+    return std::hash<Venue>()(value.m_venue);
   }
 
   inline Region Region::Global() {
@@ -244,26 +243,26 @@ namespace Nexus {
     m_countries.insert(country);
   }
 
-  inline Region::Region(MarketCode market, CountryCode country)
+  inline Region::Region(Venue venue, CountryCode country)
       : m_isGlobal(false) {
-    m_markets.insert(MarketEntry(market, country));
+    m_venues.insert(VenueEntry(venue, country));
   }
 
-  inline Region::Region(const MarketDatabase::Entry& market)
-    : Region(market.m_code, market.m_countryCode) {}
+  inline Region::Region(const VenueDatabase::Entry& venue)
+    : Region(venue.m_venue, venue.m_country_code) {}
 
   inline Region::Region(Security security)
       : m_isGlobal(false) {
     if(security.GetSymbol() == "*") {
-      if(security.GetMarket() == "*" || security.GetMarket() == MarketCode()) {
+      if(security.GetVenue() == "*" || security.GetVenue() == Venue()) {
         if(security.GetCountry() == CountryCode::NONE) {
           m_isGlobal = true;
         } else {
           m_countries.insert(security.GetCountry());
         }
       } else {
-        m_markets.insert(
-          MarketEntry(security.GetMarket(), security.GetCountry()));
+        m_venues.insert(
+          VenueEntry(security.GetVenue(), security.GetCountry()));
       }
     } else {
       m_securities.insert(std::move(security));
@@ -283,19 +282,19 @@ namespace Nexus {
   }
 
   inline bool Region::IsEmpty() const {
-    return m_countries.empty() && m_markets.empty() && m_securities.empty();
+    return m_countries.empty() && m_venues.empty() && m_securities.empty();
   }
 
   inline const std::unordered_set<CountryCode>& Region::GetCountries() const {
     return m_countries;
   }
 
-  inline std::unordered_set<MarketCode> Region::GetMarkets() const {
-    auto markets = std::unordered_set<MarketCode>();
-    for(auto& market : m_markets) {
-      markets.insert(market.m_market);
+  inline std::unordered_set<Venue> Region::GetVenues() const {
+    auto venues = std::unordered_set<Venue>();
+    for(auto& venue : m_venues) {
+      venues.insert(venue.m_venue);
     }
-    return markets;
+    return venues;
   }
 
   inline const std::unordered_set<Security>& Region::GetSecurities() const {
@@ -310,11 +309,11 @@ namespace Nexus {
     if(region.m_isGlobal) {
       m_isGlobal = true;
       m_countries = {};
-      m_markets = {};
+      m_venues = {};
       m_securities = {};
     } else if(!m_isGlobal) {
       m_countries.insert(region.m_countries.begin(), region.m_countries.end());
-      m_markets.insert(region.m_markets.begin(), region.m_markets.end());
+      m_venues.insert(region.m_venues.begin(), region.m_venues.end());
       m_securities.insert(
         region.m_securities.begin(), region.m_securities.end());
     }
@@ -335,8 +334,8 @@ namespace Nexus {
       if(region.m_securities.count(security)) {
         continue;
       }
-      if(region.m_markets.count(
-          MarketEntry(security.GetMarket(), security.GetCountry()))) {
+      if(region.m_venues.count(
+          VenueEntry(security.GetVenue(), security.GetCountry()))) {
         continue;
       }
       if(region.m_countries.count(security.GetCountry())) {
@@ -344,8 +343,8 @@ namespace Nexus {
       }
       return false;
     }
-    for(auto& entry : m_markets) {
-      if(region.m_markets.count(entry)) {
+    for(auto& entry : m_venues) {
+      if(region.m_venues.count(entry)) {
         continue;
       }
       if(region.m_countries.count(entry.m_country)) {
@@ -363,8 +362,8 @@ namespace Nexus {
   }
 
   inline bool Region::operator ==(const Region& region) const {
-    return std::tie(m_isGlobal, m_countries, m_markets, m_securities) ==
-      std::tie(region.m_isGlobal, region.m_countries, region.m_markets,
+    return std::tie(m_isGlobal, m_countries, m_venues, m_securities) ==
+      std::tie(region.m_isGlobal, region.m_countries, region.m_venues,
         region.m_securities);
   }
 
@@ -390,11 +389,11 @@ namespace Nexus {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::Region::MarketEntry> {
+  struct Shuttle<Nexus::Region::VenueEntry> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::Region::MarketEntry& value,
+    void operator ()(Shuttler& shuttle, Nexus::Region::VenueEntry& value,
         unsigned int version) {
-      shuttle.Shuttle("market", value.m_market);
+      shuttle.Shuttle("venue", value.m_venue);
       shuttle.Shuttle("country", value.m_country);
     }
   };
@@ -407,7 +406,7 @@ namespace Beam::Serialization {
       shuttle.Shuttle("name", value.m_name);
       shuttle.Shuttle("is_global", value.m_isGlobal);
       shuttle.Shuttle("countries", value.m_countries);
-      shuttle.Shuttle("markets", value.m_markets);
+      shuttle.Shuttle("venues", value.m_venues);
       shuttle.Shuttle("securities", value.m_securities);
     }
   };

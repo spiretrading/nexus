@@ -13,58 +13,58 @@ namespace Nexus {
       {
         auto entry = CountryDatabase::Entry();
         entry.m_name = "Australia";
-        entry.m_twoLetterCode = "AU";
-        entry.m_threeLetterCode = "AUS";
+        entry.m_two_letter_code = "AU";
+        entry.m_three_letter_code = "AUS";
         entry.m_code = CountryCode(36);
-        database.Add(entry);
+        database.add(entry);
       }
       {
         auto entry = CountryDatabase::Entry();
         entry.m_name = "Brazil";
-        entry.m_twoLetterCode = "BR";
-        entry.m_threeLetterCode = "BRA";
+        entry.m_two_letter_code = "BR";
+        entry.m_three_letter_code = "BRA";
         entry.m_code = CountryCode(76);
-        database.Add(entry);
+        database.add(entry);
       }
       {
         auto entry = CountryDatabase::Entry();
         entry.m_name = "Canada";
-        entry.m_twoLetterCode = "CA";
-        entry.m_threeLetterCode = "CAN";
+        entry.m_two_letter_code = "CA";
+        entry.m_three_letter_code = "CAN";
         entry.m_code = CountryCode(124);
-        database.Add(entry);
+        database.add(entry);
       }
       {
         auto entry = CountryDatabase::Entry();
         entry.m_name = "China";
-        entry.m_twoLetterCode = "CN";
-        entry.m_threeLetterCode = "CHN";
+        entry.m_two_letter_code = "CN";
+        entry.m_three_letter_code = "CHN";
         entry.m_code = CountryCode(156);
-        database.Add(entry);
+        database.add(entry);
       }
       {
         auto entry = CountryDatabase::Entry();
         entry.m_name = "Hong Kong";
-        entry.m_twoLetterCode = "HK";
-        entry.m_threeLetterCode = "HKG";
+        entry.m_two_letter_code = "HK";
+        entry.m_three_letter_code = "HKG";
         entry.m_code = CountryCode(344);
-        database.Add(entry);
+        database.add(entry);
       }
       {
         auto entry = CountryDatabase::Entry();
         entry.m_name = "Japan";
-        entry.m_twoLetterCode = "JP";
-        entry.m_threeLetterCode = "JPN";
+        entry.m_two_letter_code = "JP";
+        entry.m_three_letter_code = "JPN";
         entry.m_code = CountryCode(392);
-        database.Add(entry);
+        database.add(entry);
       }
       {
         auto entry = CountryDatabase::Entry();
         entry.m_name = "United States";
-        entry.m_twoLetterCode = "US";
-        entry.m_threeLetterCode = "USA";
+        entry.m_two_letter_code = "US";
+        entry.m_three_letter_code = "USA";
         entry.m_code = CountryCode(840);
-        database.Add(entry);
+        database.add(entry);
       }
       return database;
     }();
@@ -76,50 +76,43 @@ namespace Nexus {
    * @param source The string to parse.
    * @return The CountryCode represented by the <i>source</i>.
    */
-  inline CountryCode ParseCountryCode(const std::string& source) {
-    return ParseCountryCode(source, GetDefaultCountryDatabase());
+  inline CountryCode parse_country_code(std::string_view source) {
+    return parse_country_code(source, GetDefaultCountryDatabase());
   }
 
   namespace DefaultCountries {
     inline CountryCode AU() {
-      static auto value = GetDefaultCountryDatabase().FromTwoLetterCode(
-        "AU").m_code;
+      static auto value = GetDefaultCountryDatabase().from("AU").m_code;
       return value;
     }
 
     inline CountryCode BR() {
-      static auto value = GetDefaultCountryDatabase().FromTwoLetterCode(
-        "BR").m_code;
+      static auto value = GetDefaultCountryDatabase().from("BR").m_code;
       return value;
     }
 
     inline CountryCode CA() {
-      static auto value = GetDefaultCountryDatabase().FromTwoLetterCode(
-        "CA").m_code;
+      static auto value = GetDefaultCountryDatabase().from("CA").m_code;
       return value;
     }
 
     inline CountryCode CN() {
-      static auto value = GetDefaultCountryDatabase().FromTwoLetterCode(
-        "CN").m_code;
+      static auto value = GetDefaultCountryDatabase().from("CN").m_code;
       return value;
     }
 
     inline CountryCode HK() {
-      static auto value = GetDefaultCountryDatabase().FromTwoLetterCode(
-        "HK").m_code;
+      static auto value = GetDefaultCountryDatabase().from("HK").m_code;
       return value;
     }
 
     inline CountryCode JP() {
-      static auto value = GetDefaultCountryDatabase().FromTwoLetterCode(
-        "JP").m_code;
+      static auto value = GetDefaultCountryDatabase().from("JP").m_code;
       return value;
     }
 
     inline CountryCode US() {
-      static auto value = GetDefaultCountryDatabase().FromTwoLetterCode(
-        "US").m_code;
+      static auto value = GetDefaultCountryDatabase().from("US").m_code;
       return value;
     }
   }

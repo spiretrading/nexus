@@ -1,12 +1,12 @@
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/RegionMap.hpp"
 
 using namespace Nexus;
 
 TEST_SUITE("RegionMap") {
-  TEST_CASE("market_region_subset_of_country_region") {
+  TEST_CASE("venue_region_subset_of_country_region") {
     auto map = RegionMap<int>(-1);
     map.Set(DefaultCountries::US(), 1);
     map.Set(DefaultCountries::CA(), 2);
@@ -16,24 +16,24 @@ TEST_SUITE("RegionMap") {
     REQUIRE(caCode == 2);
     auto brCode = map.Get(DefaultCountries::BR());
     REQUIRE(brCode == -1);
-    REQUIRE(map.Get(GetDefaultMarketDatabase().FromCode(
-      DefaultMarkets::NASDAQ())) == 1);
-    REQUIRE(map.Get(GetDefaultMarketDatabase().FromCode(
-      DefaultMarkets::TSX())) == 2);
+    REQUIRE(
+      map.Get(GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ())) == 1);
+    REQUIRE(
+      map.Get(GetDefaultVenueDatabase().from(DefaultVenues::TSX())) == 2);
   }
 
-  TEST_CASE("set_country_security_market") {
+  TEST_CASE("set_country_security_venue") {
     auto map = RegionMap<int>(-1);
     auto country = DefaultCountries::CA();
-    auto market = GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSX());
-    auto security = Security("TST", DefaultMarkets::TSX(),
-      DefaultCountries::CA());
+    auto venue = GetDefaultVenueDatabase().from(DefaultVenues::TSX());
+    auto security =
+      Security("TST", DefaultVenues::TSX(), DefaultCountries::CA());
     map.Set(country, 1);
     map.Set(security, 2);
-    map.Set(market, 3);
+    map.Set(venue, 3);
     REQUIRE(map.Get(country) == 1);
     REQUIRE(map.Get(security) == 2);
-    REQUIRE(map.Get(market) == 3);
+    REQUIRE(map.Get(venue) == 3);
   }
 
   TEST_CASE("region_map_iterator") {

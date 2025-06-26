@@ -5,6 +5,7 @@
 #include <istream>
 #include <ostream>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
@@ -32,13 +33,13 @@ namespace Details {
     public:
 
       /** Constructs an invalid code. */
-      constexpr CountryCode();
+      constexpr CountryCode() noexcept;
 
       /**
        * Constructs a CountryCode from its ISO code.
        * @param value The country's ISO code.
        */
-      constexpr explicit CountryCode(std::uint16_t value);
+      constexpr explicit CountryCode(std::uint16_t value) noexcept;
 
       /** Returns the integral representation of this code. */
       constexpr explicit operator std::uint16_t() const;
@@ -55,6 +56,12 @@ namespace Details {
   class CountryDatabase {
     public:
 
+      /** The type used to represent a two-letter country code. */
+      using TwoLetterCode = Beam::FixedString<2>;
+
+      /** The type used to represent a three-letter country code. */
+      using ThreeLetterCode = Beam::FixedString<3>;
+
       /** Stores a single entry in a CountryDatabase. */
       struct Entry {
 
@@ -65,71 +72,87 @@ namespace Details {
         std::string m_name;
 
         /** The country's two letter code. */
-        Beam::FixedString<2> m_twoLetterCode;
+        TwoLetterCode m_two_letter_code;
 
         /** The country's three letter code. */
-        Beam::FixedString<3> m_threeLetterCode;
+        ThreeLetterCode m_three_letter_code;
 
         bool operator ==(const Entry& rhs) const = default;
       };
+
+      /** The entry returned for any failed lookup. */
+      inline static const auto NONE = [] {
+        auto none = Entry();
+        none.m_two_letter_code = "??";
+        none.m_three_letter_code = "???";
+        none.m_name = "";
+        none.m_code = CountryCode::NONE;
+        return none;
+      }();
 
       /** Constructs an empty CountryDatabase. */
       CountryDatabase() = default;
 
       /** Returns the list of countries represented. */
-      const std::vector<Entry>& GetEntries() const;
+      const std::vector<Entry>& get_entries() const;
 
       /** Returns the country represented by its numeric code. */
-      const Entry& FromCode(CountryCode code) const;
+      const Entry& from(CountryCode code) const;
 
       /** Returns the country represented by its name. */
-      const Entry& FromName(const std::string& name) const;
+      const Entry& from_name(std::string_view name) const;
+
+      /** Returns the country represented by its code. */
+      const Entry& from(const char* code) const;
+
+      /** Returns the country represented by its code. */
+      const Entry& from(std::string_view code) const;
 
       /** Returns the country represented by its two letter code. */
-      const Entry& FromTwoLetterCode(const Beam::FixedString<2>& code) const;
+      const Entry& from(TwoLetterCode code) const;
 
       /** Returns the country represented by its three letter code. */
-      const Entry& FromThreeLetterCode(const Beam::FixedString<3>& code) const;
+      const Entry& from(ThreeLetterCode code) const;
 
       /**
        * Adds an Entry.
        * @param entry The Entry to add.
        */
-      void Add(const Entry& entry);
+      void add(const Entry& entry);
 
       /**
-       * Deletes an Entry.
+       * Removes an Entry.
        * @param code The CountryCode of the Entry to delete.
        */
-      void Delete(CountryCode code);
+      void remove(CountryCode code);
 
     private:
       friend struct Beam::Serialization::Shuttle<CountryDatabase>;
-      static Entry MakeNoneEntry();
-      template<typename T>
-      struct NoneEntry {
-        static Entry NONE_ENTRY;
-      };
+
       std::vector<Entry> m_entries;
   };
 
   /**
    * Parses a CountryCode from a string.
    * @param source The string to parse.
-   * @param countryDatabase The CountryDatabase used to find the CountryCode.
+   * @param database The CountryDatabase used to find the CountryCode.
    * @return The CountryCode represented by the <i>source</i>.
    */
-  inline CountryCode ParseCountryCode(const std::string& source,
-      const CountryDatabase& countryDatabase) {
-    auto code = countryDatabase.FromTwoLetterCode(source);
-    if(code.m_code != CountryCode::NONE) {
-      return code.m_code;
+  inline CountryCode parse_country_code(
+      std::string_view source, const CountryDatabase& database) {
+    auto length = source.size();
+    if(length == 2) {
+      auto code = database.from(CountryDatabase::TwoLetterCode(source));
+      if(code.m_code != CountryCode::NONE) {
+        return code.m_code;
+      }
+    } else if(length == 3) {
+      auto code = database.from(CountryDatabase::ThreeLetterCode(source));
+      if(code.m_code != CountryCode::NONE) {
+        return code.m_code;
+      }
     }
-    code = countryDatabase.FromThreeLetterCode(source);
-    if(code.m_code != CountryCode::NONE) {
-      return code.m_code;
-    }
-    return countryDatabase.FromName(source).m_code;
+    return database.from_name(source).m_code;
   }
 
   /**
@@ -137,15 +160,15 @@ namespace Details {
    * @param node The node to parse the CountryDatabase Entry from.
    * @return The CountryDatabase Entry represented by the <i>node</i>.
    */
-  inline CountryDatabase::Entry ParseCountryDatabaseEntry(
+  inline CountryDatabase::Entry parse_country_database_entry(
       const YAML::Node& node) {
     return Beam::TryOrNest([&] {
       auto entry = CountryDatabase::Entry();
       entry.m_name = Beam::Extract<std::string>(node, "name");
-      entry.m_twoLetterCode = Beam::Extract<std::string>(node,
-        "two_letter_code");
-      entry.m_threeLetterCode = Beam::Extract<std::string>(node,
-        "three_letter_code");
+      entry.m_two_letter_code =
+        Beam::Extract<std::string>(node, "two_letter_code");
+      entry.m_three_letter_code =
+        Beam::Extract<std::string>(node, "three_letter_code");
       entry.m_code = Beam::Extract<CountryCode>(node, "code");
       return entry;
     }, std::runtime_error("Failed to parse country database entry."));
@@ -156,11 +179,11 @@ namespace Details {
    * @param node The node to parse the CountryDatabase from.
    * @return The CountryDatabase represented by the <i>node</i>.
    */
-  inline CountryDatabase ParseCountryDatabase(const YAML::Node& node) {
+  inline CountryDatabase parse_country_database(const YAML::Node& node) {
     return Beam::TryOrNest([&] {
       auto database = CountryDatabase();
-      for(auto& entryNode : node) {
-        database.Add(ParseCountryDatabaseEntry(entryNode));
+      for(auto& entry : node) {
+        database.add(parse_country_database_entry(entry));
       }
       return database;
     }, std::runtime_error("Failed to parse country database."));
@@ -181,10 +204,10 @@ namespace Details {
     return static_cast<std::uint16_t>(code);
   }
 
-  constexpr CountryCode::CountryCode()
+  constexpr CountryCode::CountryCode() noexcept
     : CountryCode(~0) {}
 
-  constexpr CountryCode::CountryCode(std::uint16_t value)
+  constexpr CountryCode::CountryCode(std::uint16_t value) noexcept
     : m_value(value) {}
 
   constexpr CountryCode::operator std::uint16_t() const {
@@ -192,62 +215,77 @@ namespace Details {
   }
 
   inline const std::vector<CountryDatabase::Entry>&
-      CountryDatabase::GetEntries() const {
+      CountryDatabase::get_entries() const {
     return m_entries;
   }
 
-  inline const CountryDatabase::Entry& CountryDatabase::FromCode(
+  inline const CountryDatabase::Entry& CountryDatabase::from(
       CountryCode code) const {
-    auto i = std::find_if(m_entries.begin(), m_entries.end(),
-      [&] (auto& entry) {
-        return entry.m_code == code;
+    auto i = std::lower_bound(m_entries.begin(), m_entries.end(), code,
+      [] (const auto& lhs, auto rhs) {
+        return lhs.m_code < rhs;
       });
-    if(i == m_entries.end()) {
-      return NoneEntry<void>::NONE_ENTRY;
+    if(i == m_entries.end() || i->m_code != code) {
+      return NONE;
     }
     return *i;
   }
 
-  inline const CountryDatabase::Entry& CountryDatabase::FromName(
-      const std::string& name) const {
+  inline const CountryDatabase::Entry& CountryDatabase::from_name(
+      std::string_view name) const {
     auto i = std::find_if(m_entries.begin(), m_entries.end(),
-      [&] (auto& entry) {
+      [&] (const auto& entry) {
         return entry.m_name == name;
       });
     if(i == m_entries.end()) {
-      return NoneEntry<void>::NONE_ENTRY;
+      return NONE;
     }
     return *i;
   }
 
-  inline const CountryDatabase::Entry& CountryDatabase::FromTwoLetterCode(
-      const Beam::FixedString<2>& code) const {
+  inline const CountryDatabase::Entry& CountryDatabase::from(
+      const char* code) const {
+    return from(std::string_view(code));
+  }
+
+  inline const CountryDatabase::Entry& CountryDatabase::from(
+      std::string_view code) const {
+    auto length = code.size();
+    if(length == 2) {
+      return from(TwoLetterCode(code));
+    } else if(length == 3) {
+      return from(ThreeLetterCode(code));
+    }
+    return NONE;
+  }
+
+  inline const CountryDatabase::Entry& CountryDatabase::from(
+      TwoLetterCode code) const {
     auto i = std::find_if(m_entries.begin(), m_entries.end(),
-      [&] (auto& entry) {
-        return entry.m_twoLetterCode == code;
+      [&] (const auto& entry) {
+        return entry.m_two_letter_code == code;
       });
     if(i == m_entries.end()) {
-      return NoneEntry<void>::NONE_ENTRY;
+      return NONE;
     }
     return *i;
   }
 
-  inline const CountryDatabase::Entry& CountryDatabase::FromThreeLetterCode(
-      const Beam::FixedString<3>& code) const {
+  inline const CountryDatabase::Entry& CountryDatabase::from(
+      ThreeLetterCode code) const {
     auto i = std::find_if(m_entries.begin(), m_entries.end(),
-      [&] (auto& entry) {
-        return entry.m_threeLetterCode == code;
+      [&] (const auto& entry) {
+        return entry.m_three_letter_code == code;
       });
     if(i == m_entries.end()) {
-      return NoneEntry<void>::NONE_ENTRY;
+      return NONE;
     }
     return *i;
   }
 
-  inline void CountryDatabase::Add(const Entry& entry) {
-    auto i = std::lower_bound(m_entries.begin(), m_entries.end(),
-      entry,
-      [] (auto& lhs, auto& rhs) {
+  inline void CountryDatabase::add(const Entry& entry) {
+    auto i = std::lower_bound(m_entries.begin(), m_entries.end(), entry,
+      [] (const auto& lhs, const auto& rhs) {
         return lhs.m_code < rhs.m_code;
       });
     if(i == m_entries.end() || i->m_code != entry.m_code) {
@@ -255,29 +293,15 @@ namespace Details {
     }
   }
 
-  inline void CountryDatabase::Delete(CountryCode code) {
-    auto i = std::find_if(m_entries.begin(), m_entries.end(),
-      [&] (auto& entry) {
-        return entry.m_code == code;
+  inline void CountryDatabase::remove(CountryCode code) {
+    auto i = std::lower_bound(m_entries.begin(), m_entries.end(), code,
+      [] (const auto& lhs, auto rhs) {
+        return lhs.m_code < rhs;
       });
-    if(i == m_entries.end()) {
-      return;
+    if(i != m_entries.end() && i->m_code == code) {
+      m_entries.erase(i);
     }
-    m_entries.erase(i);
   }
-
-  inline CountryDatabase::Entry CountryDatabase::MakeNoneEntry() {
-    auto noneEntry = Entry();
-    noneEntry.m_twoLetterCode = "??";
-    noneEntry.m_threeLetterCode = "???";
-    noneEntry.m_name = "None";
-    noneEntry.m_code = CountryCode::NONE;
-    return noneEntry;
-  }
-
-  template<typename T>
-  CountryDatabase::Entry CountryDatabase::NoneEntry<T>::NONE_ENTRY =
-    CountryDatabase::MakeNoneEntry();
 
 namespace Details {
   template<typename T>
@@ -316,8 +340,8 @@ namespace Beam::Serialization {
         unsigned int version) {
       shuttle.Shuttle("code", value.m_code);
       shuttle.Shuttle("name", value.m_name);
-      shuttle.Shuttle("two_letter_code", value.m_twoLetterCode);
-      shuttle.Shuttle("three_letter_code", value.m_threeLetterCode);
+      shuttle.Shuttle("two_letter_code", value.m_two_letter_code);
+      shuttle.Shuttle("three_letter_code", value.m_three_letter_code);
     }
   };
 

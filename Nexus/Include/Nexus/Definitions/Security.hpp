@@ -8,8 +8,8 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/functional/hash.hpp>
 #include "Nexus/Definitions/Country.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
-#include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 
 namespace Nexus {
 
@@ -23,10 +23,10 @@ namespace Nexus {
       /**
        * Constructs a Security.
        * @param symbol The ticker symbol.
-       * @param market The primary market the symbol is listed on.
+       * @param venue The primary venue the symbol is listed on.
        * @param country The country the symbol is listed on.
        */
-      Security(std::string symbol, MarketCode market, CountryCode country);
+      Security(std::string symbol, Venue venue, CountryCode country);
 
       /**
        * Constructs a Security.
@@ -62,8 +62,8 @@ namespace Nexus {
       /** Returns the symbol. */
       const std::string& GetSymbol() const;
 
-      /** Returns the Market. */
-      MarketCode GetMarket() const;
+      /** Returns the venue. */
+      Venue GetVenue() const;
 
       /** Returns the Country that issued the security. */
       CountryCode GetCountry() const;
@@ -72,69 +72,69 @@ namespace Nexus {
       friend struct Beam::Serialization::Shuttle<Security>;
       friend std::size_t hash_value(const Security& security);
       std::string m_symbol;
-      MarketCode m_market;
+      Venue m_venue;
       CountryCode m_country;
   };
 
   /**
    * Parses a Security.
    * @param source The string to parse.
-   * @param marketDatabase The database containing all MarketCodes.
+   * @param venueDatabase The database containing all venues.
    * @return The Security represented by the <i>source</i>.
    */
   inline Security ParseSecurity(const std::string& source,
-      const MarketDatabase& marketDatabase) {
-    auto seperator = source.find_last_of('.');
-    if(seperator == std::string::npos) {
+      const VenueDatabase& venueDatabase) {
+    auto separator = source.find_last_of('.');
+    if(separator == std::string::npos) {
       return Security();
     }
-    auto symbol = source.substr(0, seperator);
-    auto marketSource = source.substr(seperator + 1);
-    auto market = &marketDatabase.FromDisplayName(marketSource);
-    if(market->m_code == MarketCode()) {
-      market = &marketDatabase.FromCode(marketSource);
-      if(market->m_code == MarketCode()) {
+    auto symbol = source.substr(0, separator);
+    auto venueSource = source.substr(separator + 1);
+    auto venue = &venueDatabase.from_display_name(venueSource);
+    if(venue->m_venue == Venue()) {
+      venue = &venueDatabase.from(venueSource);
+      if(venue->m_venue == Venue()) {
         return Security();
       }
     }
-    return Security(std::move(symbol), market->m_code, market->m_countryCode);
+    return Security(std::move(symbol), venue->m_venue, venue->m_country_code);
   }
 
   /**
-   * Parses a Security using the default MarketDatabase.
+   * Parses a Security using the default VenueDatabase.
    * @param source The string to parse.
    * @return The Security represented by the <i>source</i>.
    */
   inline Security ParseSecurity(const std::string& source) {
-    return ParseSecurity(source, GetDefaultMarketDatabase());
+    return ParseSecurity(source, GetDefaultVenueDatabase());
   }
 
   inline std::string ToString(const Security& value,
-      const MarketDatabase& marketDatabase) {
-    if(value.GetMarket().IsEmpty() || value.GetSymbol().empty()) {
+      const VenueDatabase& venueDatabase) {
+    if(value.GetVenue() == Venue() || value.GetSymbol().empty()) {
       return value.GetSymbol();
     }
-    auto& market = marketDatabase.FromCode(value.GetMarket());
-    if(market.m_code.IsEmpty()) {
-      return (value.GetSymbol() + ".") + value.GetMarket().GetData();
+    auto& venue = venueDatabase.from(value.GetVenue());
+    if(venue.m_venue == Venue()) {
+      return (value.GetSymbol() + ".") + value.GetVenue().get_code().GetData();
     } else {
-      return (value.GetSymbol() + ".") + market.m_displayName;
+      return (value.GetSymbol() + ".") + venue.m_display_name;
     }
   }
 
   /**
-   * Performs a more precise equality test, ensuring that the market is equal.
+   * Performs a more precise equality test, ensuring that the venue is equal.
    * @param left The left hand side of the equality.
    * @param right The right hand side of the equality.
    * @return <code>true</code> iff <i>left</i> is equal to <i>right</i> and
-   *         both have equal markets.
+   *         both have equal venues.
    */
   inline bool PreciseEqualTo(const Security& left, const Security& right) {
-    return left == right && left.GetMarket() == right.GetMarket();
+    return left == right && left.GetVenue() == right.GetVenue();
   }
 
   inline std::string ToString(const Security& value) {
-    return ToString(value, GetDefaultMarketDatabase());
+    return ToString(value, GetDefaultVenueDatabase());
   }
 
   inline std::ostream& operator <<(std::ostream& out, const Security& value) {
@@ -158,10 +158,10 @@ namespace Nexus {
   inline Security::Security()
     : m_country(CountryCode::NONE) {}
 
-  inline Security::Security(std::string symbol, MarketCode market,
+  inline Security::Security(std::string symbol, Venue venue,
     CountryCode country)
     : m_symbol(std::move(symbol)),
-      m_market(market),
+      m_venue(venue),
       m_country(country) {}
 
   inline Security::Security(std::string symbol, CountryCode country)
@@ -185,8 +185,8 @@ namespace Nexus {
     return m_symbol;
   }
 
-  inline MarketCode Security::GetMarket() const {
-    return m_market;
+  inline Venue Security::GetVenue() const {
+    return m_venue;
   }
 
   inline CountryCode Security::GetCountry() const {
@@ -201,7 +201,7 @@ namespace Beam::Serialization {
     void operator ()(Shuttler& shuttle, Nexus::Security& value,
         unsigned int version) {
       shuttle.Shuttle("symbol", value.m_symbol);
-      shuttle.Shuttle("market", value.m_market);
+      shuttle.Shuttle("venue", value.m_venue);
       shuttle.Shuttle("country", value.m_country);
     }
   };
@@ -232,7 +232,7 @@ namespace Details {
   using SecurityUnorderedSet = std::unordered_set<Security>;
 
   /**
-   * Specifies an unordered set that precisely matches a Security's market.
+   * Specifies an unordered set that precisely matches a Security's venue.
    * @param <V> The set's value type.
    */
   using PreciseSecurityUnorderedSet = std::unordered_set<Security,
@@ -246,7 +246,7 @@ namespace Details {
   using SecurityMap = std::unordered_map<Security, V>;
 
   /**
-   * Specifies an unordered map that precisely matches a Security's market.
+   * Specifies an unordered map that precisely matches a Security's venue.
    * @param <V> The map's value type.
    */
   template<typename V>

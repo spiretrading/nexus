@@ -13,7 +13,7 @@
 #include <boost/date_time/gregorian/gregorian_types.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/Definitions/Definitions.hpp"
-#include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 
 namespace Nexus {
 
@@ -29,7 +29,7 @@ namespace Nexus {
 
         /**
          * The point in time when the event occurs in the time zone of the
-         * market.
+         * venue.
          */
         boost::posix_time::ptime m_timestamp;
 
@@ -42,8 +42,8 @@ namespace Nexus {
        */
       struct Rule {
 
-        /** The markets to apply the rule to. */
-        std::vector<MarketCode> m_markets;
+        /** The venues to apply the rule to. */
+        std::vector<Venue> m_venues;
 
         /** The days of the week to match, leave empty to match every day. */
         std::vector<boost::gregorian::greg_weekday> m_weekdays;
@@ -76,26 +76,25 @@ namespace Nexus {
       explicit TradingSchedule(std::vector<Rule> rules);
 
       /**
-       * Returns a list of events matching a date and market.
+       * Returns a list of events matching a date and venue.
        * @param date The date to match.
-       * @param market The market to match.
+       * @param venue The venue to match.
        * @return A list of events taking place on the specified <i>date</i> and
-       *         <i>market</i>.
+       *         <i>venue</i>.
        */
-      std::vector<Event> Find(boost::gregorian::date date,
-        MarketCode market) const;
+      std::vector<Event> Find(boost::gregorian::date date, Venue venue) const;
 
       /**
-       * Returns a list of events matching a date, market, and predicate.
+       * Returns a list of events matching a date, venue, and predicate.
        * @param date The date to match.
-       * @param market The market to match.
+       * @param venue The venue to match.
        * @param f The predicate the event must satisfy.
        * @return A list of events taking place on the specified <i>date</i> and
-       *         <i>market</i> and matching <i>f</i>.
+       *         <i>venue</i> and matching <i>f</i>.
        */
       template<typename F>
-      std::vector<Event> Find(boost::gregorian::date date,
-        MarketCode market, F&& f) const;
+      std::vector<Event> Find(
+        boost::gregorian::date date, Venue venue, F&& f) const;
 
     private:
       friend struct Beam::Serialization::Shuttle<TradingSchedule>;
@@ -103,19 +102,19 @@ namespace Nexus {
   };
 
   /**
-   * Tests if a market and date match a rule.
-   * @param market The market to test.
+   * Tests if a venue and date match a rule.
+   * @param venue The venue to test.
    * @param date The date to test.
    * @param rule The rule to match.
-   * @return <code>true</code> iff the <i>market</i> is equal to the
-   *         <i>rule</i>'s market and the <i>date</i> is a subset of the
-   *         dates specified by the <i>rule</i>.
+   * @return <code>true</code> iff the <i>venue</i> is equal to the
+   *         <i>rule</i>'s venue and the <i>date</i> is a subset of the dates
+   *         specified by the <i>rule</i>.
    */
-  inline bool IsMatch(MarketCode market, boost::gregorian::date date,
+  inline bool IsMatch(Venue venue, boost::gregorian::date date,
       const TradingSchedule::Rule& rule) {
-    if(!rule.m_markets.empty()) {
-      if(std::find(rule.m_markets.begin(), rule.m_markets.end(), market) ==
-          rule.m_markets.end()) {
+    if(!rule.m_venues.empty()) {
+      if(std::find(rule.m_venues.begin(), rule.m_venues.end(), venue) ==
+          rule.m_venues.end()) {
         return false;
       }
     }
@@ -149,16 +148,16 @@ namespace Nexus {
   /**
    * Parses a TradingSchedule::Rule from a YAML node.
    * @param node The node to parse the TradingSchedule from.
-   * @param database The database used to parse market codes.
+   * @param database The database used to parse venues.
    * @return The list of TradingSchedule::Rules represented by the <i>node</i>.
    */
   inline std::vector<TradingSchedule::Rule> ParseTradingScheduleRules(
-      const YAML::Node& node, const MarketDatabase& database) {
+      const YAML::Node& node, const VenueDatabase& database) {
     auto rules = std::vector<TradingSchedule::Rule>();
     rules.emplace_back();
-    for(auto& marketNode : node["markets"]) {
-      rules.back().m_markets.push_back(ParseMarketCode(
-        Beam::Extract<std::string>(marketNode), database));
+    for(auto& venueNode : node["venues"]) {
+      rules.back().m_venues.push_back(
+        parse_venue(Beam::Extract<std::string>(venueNode), database));
     }
     for(auto& eventNode : node["events"]) {
       auto event = TradingSchedule::Event();
@@ -225,11 +224,11 @@ namespace Nexus {
   /**
    * Parses a TradingSchedule from a YAML node.
    * @param node The node to parse the TradingSchedule from.
-   * @param database The database used to parse market codes.
+   * @param database The database used to parse venues.
    * @return The TradingSchedule represented by the <i>node</i>.
    */
   inline TradingSchedule ParseTradingSchedule(const YAML::Node& node,
-      const MarketDatabase& database) {
+      const VenueDatabase& database) {
     auto rules = std::vector<TradingSchedule::Rule>();
     for(auto& node : node) {
       auto subRules = ParseTradingScheduleRules(node, database);
@@ -248,15 +247,15 @@ namespace Nexus {
     : m_rules(std::move(rules)) {}
 
   inline std::vector<TradingSchedule::Event> TradingSchedule::Find(
-      boost::gregorian::date date, MarketCode market) const {
-    return Find(date, market, [] (const auto&) { return true; });
+      boost::gregorian::date date, Venue venue) const {
+    return Find(date, venue, [] (const auto&) { return true; });
   }
 
   template<typename F>
   std::vector<TradingSchedule::Event> TradingSchedule::Find(
-      boost::gregorian::date date, MarketCode market, F&& f) const {
+      boost::gregorian::date date, Venue venue, F&& f) const {
     for(auto& rule : m_rules) {
-      if(IsMatch(market, date, rule)) {
+      if(IsMatch(venue, date, rule)) {
         auto events = std::vector<TradingSchedule::Event>();
         for(auto& event : rule.m_events) {
           if(f(event)) {
@@ -288,7 +287,7 @@ namespace Beam::Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::TradingSchedule::Rule& value,
         unsigned int version) {
-      shuttle.Shuttle("markets", value.m_markets);
+      shuttle.Shuttle("venues", value.m_venues);
       shuttle.Shuttle("weekdays", value.m_weekdays);
       shuttle.Shuttle("days", value.m_days);
       shuttle.Shuttle("months", value.m_months);
