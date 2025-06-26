@@ -21,7 +21,7 @@ namespace Nexus {
     boost::posix_time::ptime m_timestamp;
 
     /** Constructs an uninitialized BboQuote. */
-    BboQuote();
+    BboQuote() noexcept;
 
     /**
      * Constructs a BboQuote.
@@ -29,7 +29,7 @@ namespace Nexus {
      * @param ask The best ask.
      * @param timestamp The time of the transaction.
      */
-    BboQuote(Quote bid, Quote ask, boost::posix_time::ptime timestamp);
+    BboQuote(Quote bid, Quote ask, boost::posix_time::ptime timestamp) noexcept;
 
     bool operator ==(const BboQuote& rhs) const = default;
   };
@@ -39,13 +39,13 @@ namespace Nexus {
       value.m_timestamp << ")";
   }
 
-  inline BboQuote::BboQuote() {
+  inline BboQuote::BboQuote() noexcept {
     m_bid.m_side = Side::BID;
     m_ask.m_side = Side::ASK;
   }
 
-  inline BboQuote::BboQuote(Quote bid, Quote ask,
-      boost::posix_time::ptime timestamp)
+  inline BboQuote::BboQuote(
+      Quote bid, Quote ask, boost::posix_time::ptime timestamp) noexcept
       : m_bid(std::move(bid)),
         m_ask(std::move(ask)),
         m_timestamp(timestamp) {
