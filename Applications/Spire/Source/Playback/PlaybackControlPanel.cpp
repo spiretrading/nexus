@@ -94,7 +94,7 @@ namespace {
     }
 
     connection connect_update_signal(
-      const UpdateSignal::slot_type& slot) const override {
+        const UpdateSignal::slot_type& slot) const override {
       return m_value.connect_update_signal(slot);
     }
 
@@ -128,11 +128,13 @@ namespace {
     }
 
     optional<time_duration> get_maximum() const override {
+      auto start_date =
+        local_adjustor::utc_to_local(m_timeline->get().m_start).date();
       auto end_time = get_start_time() + m_timeline->get().m_duration;
       auto now = local_adjustor::utc_to_local(m_time_client.GetTime());
-      if(now.date() > m_timeline->get().m_start.date()) {
+      if(now.date() > start_date) {
         return end_time;
-      } else if(now.date() < m_timeline->get().m_start.date()) {
+      } else if(now.date() < start_date) {
         return get_minimum();
       }
       return std::min(end_time, now.time_of_day());

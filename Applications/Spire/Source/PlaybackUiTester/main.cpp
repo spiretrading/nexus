@@ -6,7 +6,6 @@
 #include "Spire/Playback/PlaybackControlPanel.hpp"
 #include "Spire/Spire/Resources.hpp"
 
-using namespace Beam;
 using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::gregorian;
