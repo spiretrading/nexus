@@ -5,8 +5,8 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Quote.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 
 namespace Nexus {
 
@@ -17,10 +17,10 @@ namespace Nexus {
     std::string m_mpid;
 
     /** Whether the MPID is the Market's primary participant. */
-    bool m_isPrimaryMpid;
+    bool m_is_primary_mpid = false;
 
-    /** The market this quote comes from. */
-    MarketCode m_market;
+    /** The venue this quote comes from. */
+    Venue m_venue;
 
     /** The quote. */
     Quote m_quote;
@@ -38,17 +38,17 @@ namespace Nexus {
    * @return <code>true</code> iff <i>lhs</i> should be listed before <i>rhs</i>
    *         according to its Side and price.
    */
-  inline bool BookQuoteListingComparator(const BookQuote& lhs,
-      const BookQuote& rhs) {
+  inline bool listing_comparator(const BookQuote& lhs, const BookQuote& rhs) {
     if(lhs.m_quote.m_price != rhs.m_quote.m_price) {
-      return QuoteListingComparator(lhs.m_quote, rhs.m_quote);
+      return listing_comparator(lhs.m_quote, rhs.m_quote);
     }
     return lhs.m_mpid < rhs.m_mpid;
   }
 
   inline std::ostream& operator <<(std::ostream& out, const BookQuote& quote) {
-    return out << "(" << quote.m_mpid << " " << quote.m_isPrimaryMpid << " " <<
-      quote.m_market << " " << quote.m_quote << " " << quote.m_timestamp << ")";
+    return out << '(' << quote.m_mpid << ' ' << quote.m_is_primary_mpid <<
+      ' ' << quote.m_venue << ' ' << quote.m_quote << ' ' <<
+      quote.m_timestamp << ')';
   }
 }
 
@@ -59,8 +59,8 @@ namespace Beam::Serialization {
     void operator ()(Shuttler& shuttle, Nexus::BookQuote& value,
         unsigned int version) {
       shuttle.Shuttle("mpid", value.m_mpid);
-      shuttle.Shuttle("is_primary_mpid", value.m_isPrimaryMpid);
-      shuttle.Shuttle("market", value.m_market);
+      shuttle.Shuttle("is_primary_mpid", value.m_is_primary_mpid);
+      shuttle.Shuttle("venue", value.m_venue);
       shuttle.Shuttle("quote", value.m_quote);
       shuttle.Shuttle("timestamp", value.m_timestamp);
     }

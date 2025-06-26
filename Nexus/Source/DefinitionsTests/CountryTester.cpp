@@ -93,4 +93,43 @@ TEST_SUITE("Country") {
     CHECK(parse_country_code("Eight", database) == CountryCode(8));
     CHECK(parse_country_code("Unknown", database) == CountryCode::NONE);
   }
+
+  TEST_CASE("parse_country_database_entry") {
+    auto yaml = R"(
+      - name: "United States"
+        two_letter_code: "US"
+        three_letter_code: "USA"
+        code: 840)";
+    auto node = YAML::Load(yaml);
+    auto entry = parse_country_database_entry(node[0]);
+    REQUIRE(entry.m_name == "United States");
+    REQUIRE(entry.m_two_letter_code == "US");
+    REQUIRE(entry.m_three_letter_code == "USA");
+    REQUIRE(entry.m_code == CountryCode(840));
+  }
+
+  TEST_CASE("parse_country_database") {
+    auto yaml = R"(
+    - name: "Country A"
+      two_letter_code: "AA"
+      three_letter_code: "AAA"
+      code: 10
+    - name: "Country B"
+      two_letter_code: "BB"
+      three_letter_code: "BBB"
+      code: 20)";
+    auto node = YAML::Load(yaml);
+    auto database = parse_country_database(node);
+    REQUIRE(database.get_entries().size() == 2);
+    auto country_a = database.from("AA");
+    REQUIRE(country_a.m_name == "Country A");
+    REQUIRE(country_a.m_two_letter_code == "AA");
+    REQUIRE(country_a.m_three_letter_code == "AAA");
+    REQUIRE(country_a.m_code == CountryCode(10));
+    auto country_b = database.from("BB");
+    REQUIRE(country_b.m_name == "Country B");
+    REQUIRE(country_b.m_two_letter_code == "BB");
+    REQUIRE(country_b.m_three_letter_code == "BBB");
+    REQUIRE(country_b.m_code == CountryCode(20));
+  }
 }

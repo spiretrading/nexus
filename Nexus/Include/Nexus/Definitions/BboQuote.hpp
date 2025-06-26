@@ -35,8 +35,8 @@ namespace Nexus {
   };
 
   inline std::ostream& operator <<(std::ostream& out, const BboQuote& value) {
-    return out << "(" << value.m_bid << " " << value.m_ask << " " <<
-      value.m_timestamp << ")";
+    return out << '(' << value.m_bid << ' ' << value.m_ask << ' ' <<
+      value.m_timestamp << ')';
   }
 
   inline BboQuote::BboQuote() noexcept {

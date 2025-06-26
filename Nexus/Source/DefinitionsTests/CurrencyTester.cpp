@@ -87,4 +87,50 @@ TEST_SUITE("Currency") {
     CHECK(entries[0].m_id == CurrencyId(1));
     CHECK(entries[1].m_id == CurrencyId(2));
   }
+
+  TEST_CASE("parse_currency") {
+    auto database = CurrencyDatabase();
+    database.add({CurrencyId(840), "USD", "$"});
+    auto id = parse_currency("USD", database);
+    REQUIRE(id == CurrencyId(840));
+  }
+
+  TEST_CASE("parse_currency_unknown") {
+    auto database = CurrencyDatabase();
+    auto id = parse_currency("EUR", database);
+    REQUIRE(id == CurrencyId::NONE);
+  }
+
+  TEST_CASE("parse_currency_database_entry") {
+    auto yaml = R"(
+      - id: 840
+        code: "USD"
+        sign: "$")";
+    auto node = YAML::Load(yaml);
+    auto entry = parse_currency_database_entry(node[0]);
+    REQUIRE(entry.m_id == CurrencyId(840));
+    REQUIRE(entry.m_code == "USD");
+    REQUIRE(entry.m_sign == "$");
+  }
+
+  TEST_CASE("parse_currency_database") {
+    auto yaml = R"(
+      - id: 978
+        code: "EUR"
+        sign: "E"
+      - id: 826
+        code: "GBP"
+        sign: "L")";
+    auto node = YAML::Load(yaml);
+    auto database = parse_currency_database(node);
+    REQUIRE(database.get_entries().size() == 2);
+    auto gbp = database.from("GBP");
+    REQUIRE(gbp.m_id == CurrencyId(826));
+    REQUIRE(gbp.m_code == "GBP");
+    REQUIRE(gbp.m_sign == "L");
+    auto eur = database.from("EUR");
+    REQUIRE(eur.m_id == CurrencyId(978));
+    REQUIRE(eur.m_code == "EUR");
+    REQUIRE(eur.m_sign == "E");
+  }
 }

@@ -35,13 +35,13 @@ TEST_SUITE("BboQuote") {
     auto timestamp = time_from_string("2025-06-24 09:15:42.123");
     auto bbo = BboQuote(bid, ask, timestamp);
     auto ss = std::ostringstream();
-    ss << timestamp;
-    auto timestamp_as_string = ss.str();
-    ss = std::ostringstream();
+    ss << bbo;
     auto expected = "(" + std::string("(") +
-      ToString(bid.m_price) + " " + ToString(bid.m_size) + " BID) " +
-      std::string("(") + ToString(ask.m_price) + " " +
-      ToString(ask.m_size) + " ASK) " + timestamp_as_string + ")";
+      lexical_cast<std::string>(bid.m_price) + " " +
+      lexical_cast<std::string>(bid.m_size) + " BID) " +
+      std::string("(") + lexical_cast<std::string>(ask.m_price) + " " +
+      lexical_cast<std::string>(ask.m_size) + " ASK) " +
+      lexical_cast<std::string>(timestamp) + ")";
     CHECK(ss.str() == expected);
   }
 }
