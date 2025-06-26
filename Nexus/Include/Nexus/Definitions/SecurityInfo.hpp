@@ -3,7 +3,6 @@
 #include <string>
 #include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/Definitions/Security.hpp"
 

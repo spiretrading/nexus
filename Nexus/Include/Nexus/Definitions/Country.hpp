@@ -13,7 +13,6 @@
 #include <Beam/Utilities/FixedString.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/hash.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 
 namespace Nexus {
 namespace Details {

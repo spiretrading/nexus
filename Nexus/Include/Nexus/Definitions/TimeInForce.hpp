@@ -9,7 +9,6 @@
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/functional/hash.hpp>
 #include <boost/lexical_cast.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 
 namespace Nexus {
 namespace Details {

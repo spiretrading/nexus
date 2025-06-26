@@ -6,7 +6,6 @@
 #include <Beam/Collections/Enum.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/throw_exception.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 
 namespace Nexus {
 

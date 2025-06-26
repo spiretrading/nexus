@@ -17,14 +17,14 @@ TEST_SUITE("RegionMap") {
     auto brCode = map.Get(DefaultCountries::BR);
     REQUIRE(brCode == -1);
     REQUIRE(
-      map.Get(GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ)) == 1);
-    REQUIRE(map.Get(GetDefaultVenueDatabase().from(DefaultVenues::TSX)) == 2);
+      map.Get(DEFAULT_VENUES.from(DefaultVenues::NASDAQ)) == 1);
+    REQUIRE(map.Get(DEFAULT_VENUES.from(DefaultVenues::TSX)) == 2);
   }
 
   TEST_CASE("set_country_security_venue") {
     auto map = RegionMap(-1);
     auto country = DefaultCountries::CA;
-    auto venue = GetDefaultVenueDatabase().from(DefaultVenues::TSX);
+    auto venue = DEFAULT_VENUES.from(DefaultVenues::TSX);
     auto security = Security("TST", DefaultVenues::TSX, DefaultCountries::CA);
     map.Set(country, 1);
     map.Set(security, 2);

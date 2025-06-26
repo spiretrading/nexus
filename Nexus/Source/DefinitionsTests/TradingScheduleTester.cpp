@@ -135,7 +135,7 @@ TEST_SUITE("TradingSchedule") {
           "    - code: OPEN\n"
           "      time: 9:30:00";
     auto node = YAML::Load(ss);
-    auto schedule = ParseTradingSchedule(node, GetDefaultVenueDatabase());
+    auto schedule = ParseTradingSchedule(node, DEFAULT_VENUES);
     auto emptyEvents =
       schedule.Find(date(2020, 1, 15), DefaultVenues::NASDAQ);
     REQUIRE(emptyEvents.empty());

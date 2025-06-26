@@ -2,7 +2,6 @@
 #define NEXUS_CURRENCY_PAIR_NOT_FOUND_EXCEPTION_HPP
 #include <stdexcept>
 #include <boost/exception/exception.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 
 namespace Nexus {
 

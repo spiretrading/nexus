@@ -5,7 +5,6 @@
 #include <tuple>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Region.hpp"
 
 namespace Nexus {

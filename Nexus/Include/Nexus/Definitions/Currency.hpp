@@ -13,7 +13,6 @@
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/FixedString.hpp>
 #include "Nexus/Definitions/Country.hpp"
-#include "Nexus/Definitions/Definitions.hpp"
 
 namespace Nexus {
 namespace Details {

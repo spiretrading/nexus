@@ -4,7 +4,6 @@
 #include <ostream>
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Collections/EnumSet.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 
 namespace Nexus {
@@ -28,11 +27,11 @@ namespace Nexus {
    * @param bidValue The value to return if <i>side</i> is a BID.
    */
   template<typename T>
-  T& Pick(Side side, T& askValue, T& bidValue) {
+  T& pick(Side side, T& ask, T& bid) {
     if(side == Side::ASK) {
-      return askValue;
+      return ask;
     }
-    return bidValue;
+    return bid;
   }
 
   /**
@@ -42,15 +41,15 @@ namespace Nexus {
    * @param bidValue The value to return if <i>side</i> is a BID.
    */
   template<typename T>
-  const T& Pick(Side side, const T& askValue, const T& bidValue) {
+  const T& pick(Side side, const T& ask, const T& bid) {
     if(side == Side::ASK) {
-      return askValue;
+      return ask;
     }
-    return bidValue;
+    return bid;
   }
 
   /** Returns the direction of the Side as a magnitude. */
-  inline int GetDirection(Side value) {
+  inline int get_direction(Side value) {
     if(value == Side::ASK) {
       return -1;
     } else if(value == Side::BID) {
@@ -60,7 +59,7 @@ namespace Nexus {
   }
 
   /** Returns the Side of a position. */
-  inline Side GetSide(Quantity quantity) {
+  inline Side get_side(Quantity quantity) {
     if(quantity > 0) {
       return Side::BID;
     } else if(quantity < 0) {
@@ -70,7 +69,7 @@ namespace Nexus {
   }
 
   /** Returns the opposite of a Side. */
-  inline Side GetOpposite(Side value) {
+  inline Side get_opposite(Side value) {
     if(value == Side::BID) {
       return Side::ASK;
     } else if(value == Side::ASK) {
@@ -80,7 +79,7 @@ namespace Nexus {
   }
 
   /** Returns the single character representation of a Side. */
-  inline char ToChar(Side value) {
+  inline char to_char(Side value) {
     if(value == Side::ASK) {
       return 'A';
     } else if(value == Side::BID) {
@@ -96,6 +95,10 @@ namespace Nexus {
       return out << "BID";
     }
     return out << "NONE";
+  }
+
+  inline std::ostream& operator <<(std::ostream& out, Side::Type side) {
+    return out << Side(side);
   }
 }
 

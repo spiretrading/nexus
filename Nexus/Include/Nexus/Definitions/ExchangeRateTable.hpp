@@ -8,7 +8,6 @@
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include "Nexus/Definitions/CurrencyPairNotFoundException.hpp"
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/ExchangeRate.hpp"
 
 namespace Nexus {

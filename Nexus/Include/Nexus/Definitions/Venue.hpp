@@ -14,7 +14,6 @@
 #include <boost/date_time/posix_time/ptime.hpp>
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 
 namespace Nexus {
@@ -56,8 +55,6 @@ namespace Nexus {
       Code get_code() const;
 
       auto operator <=>(const Venue&) const = default;
-
-      Venue& operator =(const char* mic) noexcept;
 
     private:
       Beam::FixedString<4> m_mic;
@@ -174,7 +171,7 @@ namespace Nexus {
       const CurrencyDatabase& currency_database) {
     return Beam::TryOrNest([&] {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = Beam::Extract<std::string>(node, "code");
+      entry.m_venue = Beam::Extract<std::string>(node, "venue");
       entry.m_country_code = parse_country_code(
         Beam::Extract<std::string>(node, "country_code"), country_database);
       if(entry.m_country_code == CountryCode::NONE) {
@@ -237,14 +234,14 @@ namespace Nexus {
   /**
    * Returns the time of the start of day relative to a specified venue in UTC.
    * @param venue The venue whose start of day in UTC is to be returned.
-   * @param dateTime The date/time, in UTC, to convert into the venue's start of
-   *        day, in UTC.
-   * @param venueDatabase The VenueDatabase to use for time zone info.
-   * @param timeZoneDatabase The time zone database to use for time zone
+   * @param date_time The date/time, in UTC, to convert into the venue's start
+   *        of day, in UTC.
+   * @param venue_database The VenueDatabase to use for time zone info.
+   * @param time_zone_database The time zone database to use for time zone
    *        conversions.
-   * @return Takes the date represented by <i>dateTime</i>, converts it into the
-   *         venue's local time, truncates the time of day so that the time of
-   *         day is the beginning of the day in that venue's local time, then
+   * @return Takes the date represented by <i>date_time</i>, converts it into
+   *         the venue's local time, truncates the time of day so that the time
+   *         of day is the beginning of the day in that venue's local time, then
    *         converts that value back to UTC.
    */
   inline boost::posix_time::ptime venue_date_to_utc(Venue venue,
@@ -276,6 +273,9 @@ namespace Nexus {
   inline Venue::Venue(const char* mic) noexcept
     : m_mic(mic) {}
 
+  inline Venue::Venue(const std::string& mic) noexcept
+    : m_mic(mic) {}
+
   inline Venue::Venue(std::string_view mic) noexcept
     : m_mic(std::move(mic)) {}
 
@@ -284,11 +284,6 @@ namespace Nexus {
 
   inline Venue::Code Venue::get_code() const {
     return m_mic;
-  }
-
-  inline Venue& Venue::operator =(const char* mic) noexcept {
-    m_mic = mic;
-    return *this;
   }
 
   inline const std::vector<VenueDatabase::Entry>&

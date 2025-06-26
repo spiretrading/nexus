@@ -40,12 +40,12 @@ namespace {
 TEST_SUITE("Region") {
   TEST_CASE("venue_region_subset_of_country_region") {
     auto country = DefaultCountries::US;
-    auto venue = GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ);
+    auto venue = DEFAULT_VENUES.from(DefaultVenues::NASDAQ);
     TestProperSubset(venue, country);
   }
 
   TEST_CASE("security_region_subset_of_venue_region") {
-    auto venue = GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ);
+    auto venue = DEFAULT_VENUES.from(DefaultVenues::NASDAQ);
     auto security =
       Security("TST", DefaultVenues::NASDAQ, DefaultCountries::US);
     TestProperSubset(security, venue);
@@ -105,15 +105,15 @@ TEST_SUITE("Region") {
 
   TEST_CASE("distinct_venues") {
     auto nasdaq =
-      Region(GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ));
-    auto nyse = Region(GetDefaultVenueDatabase().from(DefaultVenues::NYSE));
+      Region(DEFAULT_VENUES.from(DefaultVenues::NASDAQ));
+    auto nyse = Region(DEFAULT_VENUES.from(DefaultVenues::NYSE));
     TestDistinctSets(nasdaq, nyse);
   }
 
   TEST_CASE("venue_entry_constructor_equivalence") {
     auto fromCodes = Region(DefaultVenues::NASDAQ, DefaultCountries::US);
     auto fromEntry =
-      Region(GetDefaultVenueDatabase().from(DefaultVenues::NASDAQ));
+      Region(DEFAULT_VENUES.from(DefaultVenues::NASDAQ));
     REQUIRE(fromCodes == fromEntry);
     REQUIRE(fromCodes <= fromEntry);
   }

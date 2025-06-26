@@ -17,7 +17,6 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/rational.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 
 namespace Nexus {
 

@@ -6,7 +6,6 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleUnorderedSet.hpp>
 #include <boost/functional/hash.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Venue.hpp"

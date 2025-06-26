@@ -8,7 +8,6 @@
 #include <Beam/Serialization/ShuttleUnorderedMap.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <boost/optional/optional.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Market.hpp"
 
 namespace Nexus {

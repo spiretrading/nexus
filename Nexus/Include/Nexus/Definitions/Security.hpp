@@ -106,7 +106,7 @@ namespace Nexus {
    * @return The Security represented by the <i>source</i>.
    */
   inline Security ParseSecurity(const std::string& source) {
-    return ParseSecurity(source, GetDefaultVenueDatabase());
+    return ParseSecurity(source, DEFAULT_VENUES);
   }
 
   inline std::string ToString(const Security& value,
@@ -134,7 +134,7 @@ namespace Nexus {
   }
 
   inline std::string ToString(const Security& value) {
-    return ToString(value, GetDefaultVenueDatabase());
+    return ToString(value, DEFAULT_VENUES);
   }
 
   inline std::ostream& operator <<(std::ostream& out, const Security& value) {

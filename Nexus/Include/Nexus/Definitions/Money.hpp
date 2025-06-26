@@ -8,7 +8,6 @@
 #include <Beam/Serialization/Sender.hpp>
 #include <boost/functional/hash.hpp>
 #include <boost/optional/optional.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 
 namespace Nexus {

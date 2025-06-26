@@ -5,7 +5,6 @@
 #include <boost/rational.hpp>
 #include "Nexus/Definitions/CurrencyPair.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Money.hpp"
 
 namespace Nexus {
