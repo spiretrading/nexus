@@ -17,10 +17,27 @@ TEST_SUITE("Country") {
 
   TEST_CASE("stream") {
     auto ss = std::stringstream();
-    ss << CountryCode(100);
-    auto read_code = CountryCode();
-    ss >> read_code;
-    CHECK(read_code == CountryCode(100));
+    ss << CountryCode(156);
+    CHECK(ss.str() == "CN");
+  }
+
+  TEST_CASE("stream_unknown") {
+    auto ss = std::stringstream();
+    ss << CountryCode(9999);
+    CHECK(ss.str() == "9999");
+  }
+
+  TEST_CASE("context_stream") {
+    auto entry1 = CountryDatabase::Entry();
+    entry1.m_code = CountryCode(124);
+    entry1.m_name = "Canada";
+    entry1.m_two_letter_code = "CA";
+    entry1.m_three_letter_code = "CAN";
+    auto database = CountryDatabase();
+    database.add(entry1);
+    auto ss = std::stringstream();
+    ss << database << entry1.m_code;
+    CHECK(ss.str() == "CA");
   }
 
   TEST_CASE("none") {
@@ -32,12 +49,12 @@ TEST_SUITE("Country") {
   }
 
   TEST_CASE("code_lookup") {
-    auto database = CountryDatabase();
     auto entry1 = CountryDatabase::Entry();
     entry1.m_code = CountryCode(2);
     entry1.m_name = "Two";
     entry1.m_two_letter_code = "TT";
     entry1.m_three_letter_code = "TTT";
+    auto database = CountryDatabase();
     database.add(entry1);
     auto entry2 = CountryDatabase::Entry();
     entry2.m_code = CountryCode(1);

@@ -247,6 +247,6 @@ TEST_SUITE("Venue") {
     ss.str(std::string());
     auto parsed_entry = parse_venue_entry("LmnVenue", database);
     ss << parsed_entry;
-    CHECK(ss.str() == "(LMN 124 America/Toronto 124 Desc3 LmnVenue)");
+    CHECK(ss.str() == "(LMN CA America/Toronto CAD Desc3 LmnVenue)");
   }
 }

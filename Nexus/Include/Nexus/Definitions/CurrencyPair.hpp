@@ -1,5 +1,6 @@
 #ifndef NEXUS_CURRENCY_PAIR_HPP
 #define NEXUS_CURRENCY_PAIR_HPP
+#include <ostream>
 #include <stdexcept>
 #include <string_view>
 #include <Beam/Serialization/DataShuttle.hpp>
@@ -64,6 +65,10 @@ namespace Nexus {
    */
   inline CurrencyPair invert(CurrencyPair pair) {
     return {pair.m_counter, pair.m_base};
+  }
+
+  inline std::ostream& operator <<(std::ostream& out, CurrencyPair pair) {
+    return out << pair.m_base << '/' << pair.m_counter;
   }
 }
 

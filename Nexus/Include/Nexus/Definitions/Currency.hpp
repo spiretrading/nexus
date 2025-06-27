@@ -7,29 +7,22 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/FixedString.hpp>
+#include <Beam/Utilities/ScopedStreamManipulator.hpp>
+#include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/Definitions/Country.hpp"
 
 namespace Nexus {
-namespace Details {
-  template<typename T>
-  struct CurrencyIdDefinitions {
-
-    /** Stores an invalid id. */
-    static const T NONE;
-
-    constexpr auto operator <=>(const CurrencyIdDefinitions& rhs) const =
-      default;
-  };
-}
 
   /** Stores a currency id, typically the ISO 4217 NUM. */
-  class CurrencyId : private Details::CurrencyIdDefinitions<CurrencyId> {
+  class CurrencyId {
     public:
+
+      /** Represents an invalid or no currency. */
+      static const CurrencyId NONE;
 
       /** Constructs an invalid id. */
       constexpr CurrencyId() noexcept;
@@ -41,15 +34,15 @@ namespace Details {
       constexpr explicit CurrencyId(std::uint16_t value) noexcept;
 
       /** Returns the integral representation of this id. */
-      constexpr explicit operator std::uint16_t() const;
+      constexpr explicit operator std::uint16_t() const noexcept;
 
       auto operator <=>(const CurrencyId& rhs) const = default;
-
-      using Details::CurrencyIdDefinitions<CurrencyId>::NONE;
 
     private:
       std::uint16_t m_value;
   };
+
+  inline const CurrencyId CurrencyId::NONE(~0);
 
   /** Stores the database of all Currency. */
   class CurrencyDatabase {
@@ -158,7 +151,21 @@ namespace Details {
     }, std::runtime_error("Failed to parse currency database."));
   }
 
+  inline auto operator <<(std::ostream& out, const CurrencyDatabase& database) {
+    return Beam::ScopedStreamManipulator(out, database);
+  }
+
   inline std::ostream& operator <<(std::ostream& out, CurrencyId value) {
+    extern const CurrencyDatabase DEFAULT_CURRENCIES;
+    auto database = static_cast<const CurrencyDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID));
+    if(!database) {
+      database = &DEFAULT_CURRENCIES;
+    }
+    auto& entry = database->from(value);
+    if(entry.m_id != CurrencyId::NONE) {
+      return out << entry.m_code;
+    }
     return out << static_cast<std::uint16_t>(value);
   }
 
@@ -179,7 +186,7 @@ namespace Details {
   constexpr CurrencyId::CurrencyId(std::uint16_t value) noexcept
     : m_value(value) {}
 
-  constexpr CurrencyId::operator std::uint16_t() const {
+  constexpr CurrencyId::operator std::uint16_t() const noexcept {
     return m_value;
   }
 
@@ -232,11 +239,6 @@ namespace Details {
     }
     m_entries.erase(i);
   }
-
-namespace Details {
-  template<typename T>
-  const T CurrencyIdDefinitions<T>::NONE;
-}
 }
 
 namespace Beam::Serialization {

@@ -11,25 +11,18 @@
 #include <Beam/Serialization/Sender.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/FixedString.hpp>
+#include <Beam/Utilities/ScopedStreamManipulator.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/hash.hpp>
 
 namespace Nexus {
-namespace Details {
-  template<typename T>
-  struct CountryCodeDefinitions {
-
-    /** Stores an invalid country code. */
-    static const T NONE;
-
-    constexpr auto operator <=>(const CountryCodeDefinitions& other) const =
-      default;
-  };
-}
 
   /** Identifies a country by a unique code. */
-  class CountryCode : private Details::CountryCodeDefinitions<CountryCode> {
+  class CountryCode {
     public:
+
+      /** Represents an invalid or no country. */
+      static const CountryCode NONE;
 
       /** Constructs an invalid code. */
       constexpr CountryCode() noexcept;
@@ -41,15 +34,15 @@ namespace Details {
       constexpr explicit CountryCode(std::uint16_t value) noexcept;
 
       /** Returns the integral representation of this code. */
-      constexpr explicit operator std::uint16_t() const;
+      constexpr explicit operator std::uint16_t() const noexcept;
 
       constexpr auto operator <=>(const CountryCode& other) const = default;
-
-      using Details::CountryCodeDefinitions<CountryCode>::NONE;
 
     private:
       std::uint16_t m_value;
   };
+
+  inline const CountryCode CountryCode::NONE(~0);
 
   /** Stores the database of all countries. */
   class CountryDatabase {
@@ -188,7 +181,21 @@ namespace Details {
     }, std::runtime_error("Failed to parse country database."));
   }
 
+  inline auto operator <<(std::ostream& out, const CountryDatabase& database) {
+    return Beam::ScopedStreamManipulator(out, database);
+  }
+
   inline std::ostream& operator <<(std::ostream& out, CountryCode code) {
+    extern const CountryDatabase DEFAULT_COUNTRIES;
+    auto database = static_cast<const CountryDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<CountryDatabase>::ID));
+    if(!database) {
+      database = &DEFAULT_COUNTRIES;
+    }
+    auto& entry = database->from(code);
+    if(entry.m_code != CountryCode::NONE) {
+      return out << entry.m_two_letter_code;
+    }
     return out << static_cast<std::uint16_t>(code);
   }
 
@@ -209,7 +216,7 @@ namespace Details {
   constexpr CountryCode::CountryCode(std::uint16_t value) noexcept
     : m_value(value) {}
 
-  constexpr CountryCode::operator std::uint16_t() const {
+  constexpr CountryCode::operator std::uint16_t() const noexcept {
     return m_value;
   }
 
@@ -301,11 +308,6 @@ namespace Details {
       m_entries.erase(i);
     }
   }
-
-namespace Details {
-  template<typename T>
-  const T CountryCodeDefinitions<T>::NONE(~0);
-}
 }
 
 namespace Beam::Serialization {
@@ -361,6 +363,6 @@ namespace std {
       return Nexus::hash_value(value);
     }
   };
-};
+}
 
 #endif
