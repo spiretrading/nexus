@@ -82,7 +82,7 @@ TEST_SUITE("Currency") {
     high.m_code = "AAA";
     high.m_sign = "A$";
     database.add(high);
-    auto& entries = database.get_entries();
+    auto entries = database.get_entries();
     REQUIRE(entries.size() == 2);
     CHECK(entries[0].m_id == CurrencyId(1));
     CHECK(entries[1].m_id == CurrencyId(2));

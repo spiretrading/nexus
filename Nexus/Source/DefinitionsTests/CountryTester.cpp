@@ -62,7 +62,7 @@ TEST_SUITE("Country") {
     entry2.m_two_letter_code = "OO";
     entry2.m_three_letter_code = "OOO";
     database.add(entry2);
-    auto& entries = database.get_entries();
+    auto entries = database.get_entries();
     CHECK(entries.size() == 2);
     CHECK(entries[0].m_code == CountryCode(1));
     CHECK(entries[1].m_code == CountryCode(2));

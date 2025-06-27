@@ -7,6 +7,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <Beam/Collections/View.hpp>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <Beam/Utilities/Expect.hpp>
@@ -73,8 +74,10 @@ namespace Nexus {
       /** Constructs an empty CurrencyDatabase. */
       CurrencyDatabase() = default;
 
+      CurrencyDatabase(const CurrencyDatabase& database) noexcept;
+
       /** Returns the list of currencies represented. */
-      const std::vector<Entry>& get_entries() const;
+      Beam::View<const Entry> get_entries() const;
 
       /**
        * Returns an Entry from its CurrencyId.
@@ -102,10 +105,11 @@ namespace Nexus {
        */
       void remove(CurrencyId id);
 
+      CurrencyDatabase& operator =(const CurrencyDatabase& database) noexcept;
+
     private:
       friend struct Beam::Serialization::Shuttle<CurrencyDatabase>;
-
-      std::vector<Entry> m_entries;
+      std::atomic<std::shared_ptr<std::vector<Entry>>> m_entries;
   };
 
   /**
@@ -189,54 +193,99 @@ namespace Nexus {
     return m_value;
   }
 
-  inline const std::vector<CurrencyDatabase::Entry>&
+  inline CurrencyDatabase::CurrencyDatabase(
+    const CurrencyDatabase& database) noexcept
+    : m_entries(database.m_entries.load()) {}
+
+  inline Beam::View<const CurrencyDatabase::Entry>
       CurrencyDatabase::get_entries() const {
-    return m_entries;
+    if(auto entries = m_entries.load()) {
+      return Beam::View(Beam::SharedIterator(entries, entries->begin()),
+        Beam::SharedIterator(entries, entries->end()));
+    }
+    return Beam::View<const Entry>();
   }
 
   inline const CurrencyDatabase::Entry& CurrencyDatabase::from(
       CurrencyId id) const {
-    auto i = std::lower_bound(m_entries.begin(), m_entries.end(), id,
-      [] (const auto& lhs, auto rhs) {
-        return lhs.m_id < rhs;
-      });
-    if(i != m_entries.end() && i->m_id == id) {
-      return *i;
+    if(auto entries = m_entries.load()) {
+      auto i = std::lower_bound(entries->begin(), entries->end(), id,
+        [] (const auto& lhs, auto rhs) {
+          return lhs.m_id < rhs;
+        });
+      if(i != entries->end() && i->m_id == id) {
+        return *i;
+      }
     }
     return NONE;
   }
 
   inline const CurrencyDatabase::Entry& CurrencyDatabase::from(
       Beam::FixedString<3> code) const {
-    auto i = std::find_if(m_entries.begin(), m_entries.end(),
-      [&] (const auto& entry) {
-        return entry.m_code == code;
-      });
-    if(i == m_entries.end()) {
-      return NONE;
+    if(auto entries = m_entries.load()) {
+      auto i = std::find_if(entries->begin(), entries->end(),
+        [&] (const auto& entry) {
+          return entry.m_code == code;
+        });
+      if(i != entries->end()) {
+        return *i;
+      }
     }
-    return *i;
+    return NONE;
   }
 
   inline void CurrencyDatabase::add(const Entry& entry) {
-    auto i = std::lower_bound(m_entries.begin(), m_entries.end(), entry,
-      [] (const auto& lhs, const auto& rhs) {
-        return lhs.m_id < rhs.m_id;
-      });
-    if(i == m_entries.end() || i->m_id != entry.m_id) {
-      m_entries.insert(i, entry);
+    while(true) {
+      auto entries = m_entries.load();
+      auto new_entries = [&] {
+        if(!entries) {
+          auto new_entries = std::make_shared<std::vector<Entry>>();
+          new_entries->push_back(entry);
+          return new_entries;
+        }
+        auto i = std::lower_bound(entries->begin(), entries->end(), entry,
+          [] (const auto& lhs, const auto& rhs) {
+            return lhs.m_id < rhs.m_id;
+          });
+        if(i == entries->end() || i->m_id != entry.m_id) {
+          auto new_entries = std::make_shared<std::vector<Entry>>(*entries);
+          new_entries->insert(
+            new_entries->begin() + std::distance(entries->begin(), i), entry);
+          return new_entries;
+        }
+        return std::shared_ptr<std::vector<Entry>>();
+      }();
+      if(new_entries && m_entries.compare_exchange_weak(entries, new_entries)) {
+        break;
+      }
     }
   }
 
   inline void CurrencyDatabase::remove(CurrencyId id) {
-    auto i = std::lower_bound(m_entries.begin(), m_entries.end(), id,
-      [] (const auto& lhs, auto rhs) {
-        return lhs.m_id < rhs;
-      });
-    if(i == m_entries.end() || i->m_id != id) {
-      return;
+    while(true) {
+      auto entries = m_entries.load();
+      if(!entries) {
+        break;
+      }
+      auto i = std::lower_bound(entries->begin(), entries->end(), id,
+        [] (const auto& lhs, auto rhs) {
+          return lhs.m_id < rhs;
+        });
+      if(i != entries->end() && i->m_id == id) {
+        auto new_entries = std::make_shared<std::vector<Entry>>(*entries);
+        new_entries->erase(
+          new_entries->begin() + std::distance(entries->begin(), i));
+        if(m_entries.compare_exchange_weak(entries, new_entries)) {
+          break;
+        }
+      }
     }
-    m_entries.erase(i);
+  }
+
+  inline CurrencyDatabase& CurrencyDatabase::operator =(
+      const CurrencyDatabase& database) noexcept {
+    m_entries.store(database.m_entries.load());
+    return *this;
   }
 }
 
