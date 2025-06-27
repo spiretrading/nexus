@@ -6,8 +6,8 @@
 namespace Nexus {
 
   /** Signals that an operation depending on a CurrencyPair failed. */
-  class CurrencyPairNotFoundException : public std::runtime_error,
-      public boost::exception {
+  class CurrencyPairNotFoundException : public boost::exception,
+      public std::runtime_error {
     public:
 
       /** Constructs a CurrencyPairNotFoundException. */

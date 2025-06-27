@@ -13,7 +13,6 @@
 #include <Beam/Utilities/FixedString.hpp>
 #include <Beam/Utilities/ScopedStreamManipulator.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include "Nexus/Definitions/Country.hpp"
 
 namespace Nexus {
 

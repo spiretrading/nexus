@@ -5,6 +5,7 @@
 #include <string_view>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 
@@ -31,7 +32,7 @@ namespace Nexus {
   inline CurrencyPair parse_currency_pair(
       std::string_view symbol, const CurrencyDatabase& database) {
     auto separator = symbol.find('/');
-    if(separator == std::string::npos) {
+    if(separator == std::string_view::npos) {
       BOOST_THROW_EXCEPTION(std::runtime_error("Missing separator '/'"));
     }
     auto base_code = symbol.substr(0, separator);

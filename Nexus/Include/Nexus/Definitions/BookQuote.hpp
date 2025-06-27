@@ -2,8 +2,8 @@
 #define NEXUS_BOOK_QUOTE_HPP
 #include <string>
 #include <ostream>
-#include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/Definitions/Quote.hpp"
 #include "Nexus/Definitions/Venue.hpp"

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <istream>
 #include <ostream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -13,7 +14,6 @@
 #include <Beam/Utilities/FixedString.hpp>
 #include <Beam/Utilities/ScopedStreamManipulator.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include <boost/functional/hash.hpp>
 
 namespace Nexus {
 

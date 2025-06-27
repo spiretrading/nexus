@@ -1,7 +1,9 @@
 #ifndef NEXUS_BBO_QUOTE_HPP
 #define NEXUS_BBO_QUOTE_HPP
+#include <cassert>
 #include <ostream>
-#include <Beam/Serialization/DataShuttle.hpp>
+#include <utility>
+#include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include "Nexus/Definitions/Quote.hpp"
