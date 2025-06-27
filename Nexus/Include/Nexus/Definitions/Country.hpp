@@ -354,6 +354,8 @@ namespace Nexus {
         if(m_entries.compare_exchange_weak(entries, new_entries)) {
           break;
         }
+      } else {
+        break;
       }
     }
   }
