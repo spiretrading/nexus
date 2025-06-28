@@ -1,6 +1,7 @@
 #ifndef NEXUS_COUNTRY_HPP
 #define NEXUS_COUNTRY_HPP
 #include <algorithm>
+#include <atomic>
 #include <cstdint>
 #include <istream>
 #include <memory>
@@ -85,9 +86,7 @@ namespace Nexus {
       }();
 
       /** Constructs an empty CountryDatabase. */
-      CountryDatabase() = default;
-
-      CountryDatabase(const CountryDatabase& database) noexcept;
+      CountryDatabase();
 
       /** Returns the list of countries represented. */
       Beam::View<const Entry> get_entries() const;
@@ -122,11 +121,10 @@ namespace Nexus {
        */
       void remove(CountryCode code);
 
-      CountryDatabase& operator =(const CountryDatabase& database) noexcept;
-
     private:
       friend struct Beam::Serialization::Shuttle<CountryDatabase>;
-      std::atomic<std::shared_ptr<std::vector<Entry>>> m_entries;
+      std::shared_ptr<std::atomic<std::shared_ptr<std::vector<Entry>>>>
+        m_entries;
   };
 
   /**
@@ -225,13 +223,13 @@ namespace Nexus {
     return m_value;
   }
 
-  inline CountryDatabase::CountryDatabase(
-    const CountryDatabase& database) noexcept
-    : m_entries(database.m_entries.load()) {}
+  inline CountryDatabase::CountryDatabase()
+    : m_entries(
+        std::make_shared<std::atomic<std::shared_ptr<std::vector<Entry>>>>()) {}
 
   inline Beam::View<const CountryDatabase::Entry>
       CountryDatabase::get_entries() const {
-    if(auto entries = m_entries.load()) {
+    if(auto entries = m_entries->load()) {
       return Beam::View(Beam::SharedIterator(entries, entries->begin()),
         Beam::SharedIterator(entries, entries->end()));
     }
@@ -240,7 +238,7 @@ namespace Nexus {
 
   inline const CountryDatabase::Entry& CountryDatabase::from(
       CountryCode code) const {
-    if(auto entries = m_entries.load()) {
+    if(auto entries = m_entries->load()) {
       auto i = std::lower_bound(entries->begin(), entries->end(), code,
         [] (const auto& lhs, auto rhs) {
           return lhs.m_code < rhs;
@@ -254,7 +252,7 @@ namespace Nexus {
 
   inline const CountryDatabase::Entry& CountryDatabase::from_name(
       std::string_view name) const {
-    if(auto entries = m_entries.load()) {
+    if(auto entries = m_entries->load()) {
       auto i = std::find_if(entries->begin(), entries->end(),
         [&] (const auto& entry) {
           return entry.m_name == name;
@@ -284,7 +282,7 @@ namespace Nexus {
 
   inline const CountryDatabase::Entry& CountryDatabase::from(
       TwoLetterCode code) const {
-    if(auto entries = m_entries.load()) {
+    if(auto entries = m_entries->load()) {
       auto i = std::find_if(entries->begin(), entries->end(),
         [&] (const auto& entry) {
           return entry.m_two_letter_code == code;
@@ -298,7 +296,7 @@ namespace Nexus {
 
   inline const CountryDatabase::Entry& CountryDatabase::from(
       ThreeLetterCode code) const {
-    if(auto entries = m_entries.load()) {
+    if(auto entries = m_entries->load()) {
       auto i = std::find_if(entries->begin(), entries->end(),
         [&] (const auto& entry) {
           return entry.m_three_letter_code == code;
@@ -312,7 +310,7 @@ namespace Nexus {
 
   inline void CountryDatabase::add(const Entry& entry) {
     while(true) {
-      auto entries = m_entries.load();
+      auto entries = m_entries->load();
       auto new_entries = [&] {
         if(!entries) {
           auto new_entries = std::make_shared<std::vector<Entry>>();
@@ -331,7 +329,8 @@ namespace Nexus {
         }
         return std::shared_ptr<std::vector<Entry>>();
       }();
-      if(new_entries && m_entries.compare_exchange_weak(entries, new_entries)) {
+      if(!new_entries ||
+          m_entries->compare_exchange_weak(entries, new_entries)) {
         break;
       }
     }
@@ -339,7 +338,7 @@ namespace Nexus {
 
   inline void CountryDatabase::remove(CountryCode code) {
     while(true) {
-      auto entries = m_entries.load();
+      auto entries = m_entries->load();
       if(!entries) {
         break;
       }
@@ -351,19 +350,13 @@ namespace Nexus {
         auto new_entries = std::make_shared<std::vector<Entry>>(*entries);
         new_entries->erase(
           new_entries->begin() + std::distance(entries->begin(), i));
-        if(m_entries.compare_exchange_weak(entries, new_entries)) {
+        if(m_entries->compare_exchange_weak(entries, new_entries)) {
           break;
         }
       } else {
         break;
       }
     }
-  }
-
-  inline CountryDatabase& CountryDatabase::operator =(
-      const CountryDatabase& database) noexcept {
-    m_entries.store(database.m_entries.load());
-    return *this;
   }
 }
 

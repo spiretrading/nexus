@@ -1,6 +1,8 @@
 #ifndef NEXUS_DESTINATION_HPP
 #define NEXUS_DESTINATION_HPP
 #include <algorithm>
+#include <atomic>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -8,6 +10,7 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleUnorderedMap.hpp>
 #include <Beam/Utilities/Expect.hpp>
+#include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/Venue.hpp"
 
@@ -39,11 +42,9 @@ namespace Nexus {
       inline static const auto NONE = Entry();
 
       /** Constructs an empty DestinationDatabase. */
-      DestinationDatabase() = default;
+      DestinationDatabase();
 
-      DestinationDatabase(const DestinationDatabase& database) noexcept;
-
-      /** Returns the list of currencies represented. */
+      /** Returns the list of destinations represented. */
       Beam::View<const Entry> get_entries() const;
 
       /**
@@ -95,7 +96,7 @@ namespace Nexus {
        * @param destination The preferred destination to associate with the
        *        <i>venue</i>.
        */
-      void set_preferred_desintation(
+      void set_preferred_destination(
         Venue venue, const Destination& destination);
 
       /**
@@ -110,17 +111,15 @@ namespace Nexus {
        */
       void remove_preferred_destination(Venue venue);
 
-      DestinationDatabase& operator =(
-        const DestinationDatabase& database) noexcept;
-
     private:
       friend struct Beam::Serialization::Shuttle<DestinationDatabase>;
       struct Data {
-        std::vector<Entry> entries;
-        std::unordered_map<Venue, Destination> preferred_destinations;
-        boost::optional<Entry> manual_order_entry_destination;
+        std::vector<Entry> m_entries;
+        std::unordered_map<Venue, Destination> m_preferred_destinations;
+        boost::optional<Entry> m_manual_order_entry_destination;
       };
-      std::atomic<std::shared_ptr<Data>> m_data{std::make_shared<Data>()};  };
+      std::shared_ptr<std::atomic<std::shared_ptr<Data>>> m_data;
+  };
 
   /**
    * Parses a DestinationDatabase Entry from a YAML node.
@@ -173,7 +172,7 @@ namespace Nexus {
           BOOST_THROW_EXCEPTION(
             Beam::MakeYamlParserException("Invalid destination.", node.Mark()));
         }
-        destination_database.set_preferred_desintation(venue, destination);
+        destination_database.set_preferred_destination(venue, destination);
       }
       auto manual_order_entry = parse_destination_database_entry(
         Beam::GetNode(node, "manual_order_entry"), database);
@@ -183,14 +182,14 @@ namespace Nexus {
     }, std::runtime_error("Failed to parse destination database."));
   }
 
-  inline DestinationDatabase::DestinationDatabase(
-    const DestinationDatabase& other) noexcept
-    : m_data(other.m_data.load()) {}
+  inline DestinationDatabase::DestinationDatabase()
+    : m_data(std::make_shared<std::atomic<std::shared_ptr<Data>>>()) {}
 
   inline Beam::View<const DestinationDatabase::Entry>
       DestinationDatabase::get_entries() const {
-    if(auto data = m_data.load()) {
-      auto entries = std::shared_ptr<std::vector<Entry>>(data, &data->entries);
+    if(auto data = m_data->load()) {
+      auto entries =
+        std::shared_ptr<std::vector<Entry>>(data, &data->m_entries);
       return Beam::View(Beam::SharedIterator(entries, entries->begin()),
         Beam::SharedIterator(entries, entries->end()));
     }
@@ -199,12 +198,13 @@ namespace Nexus {
 
   inline const DestinationDatabase::Entry&
       DestinationDatabase::from(const Destination& id) const {
-    if(auto data = m_data.load()) {
-      auto i = std::lower_bound(data->entries.begin(), data->entries.end(), id,
-        [] (auto const& lhs, auto const& rhs) {
-          return lhs.m_id < rhs;
-        });
-      if(i != data->entries.end() && i->m_id == id) {
+    if(auto data = m_data->load()) {
+      auto i =
+        std::lower_bound(data->m_entries.begin(), data->m_entries.end(), id,
+          [] (auto const& lhs, auto const& rhs) {
+            return lhs.m_id < rhs;
+          });
+      if(i != data->m_entries.end() && i->m_id == id) {
         return *i;
       }
     }
@@ -213,9 +213,9 @@ namespace Nexus {
 
   inline const DestinationDatabase::Entry&
       DestinationDatabase::get_preferred_destination(Venue venue) const {
-    if(auto data = m_data.load()) {
-      auto i = data->preferred_destinations.find(venue);
-      if(i != data->preferred_destinations.end()) {
+    if(auto data = m_data->load()) {
+      auto i = data->m_preferred_destinations.find(venue);
+      if(i != data->m_preferred_destinations.end()) {
         return from(i->second);
       }
     }
@@ -225,8 +225,8 @@ namespace Nexus {
   template<typename P>
   inline const DestinationDatabase::Entry&
       DestinationDatabase::select_first(P&& predicate) const {
-    if(auto data = m_data.load()) {
-      for(auto& entry : data->entries) {
+    if(auto data = m_data->load()) {
+      for(auto& entry : data->m_entries) {
         if(predicate(entry)) {
           return entry;
         }
@@ -239,8 +239,8 @@ namespace Nexus {
   inline std::vector<DestinationDatabase::Entry>
       DestinationDatabase::select_all(P&& predicate) const {
     auto result = std::vector<Entry>();
-    if(auto data = m_data.load()) {
-      for(auto& entry : data->entries) {
+    if(auto data = m_data->load()) {
+      for(auto& entry : data->m_entries) {
         if(predicate(entry)) {
           result.push_back(entry);
         }
@@ -251,8 +251,8 @@ namespace Nexus {
 
   inline const boost::optional<DestinationDatabase::Entry>&
       DestinationDatabase::get_manual_order_entry_destination() const {
-    if(auto data = m_data.load()) {
-      return data->manual_order_entry_destination;
+    if(auto data = m_data->load()) {
+      return data->m_manual_order_entry_destination;
     }
     static const auto NONE = boost::optional<DestinationDatabase::Entry>();
     return NONE;
@@ -261,10 +261,21 @@ namespace Nexus {
   inline void DestinationDatabase::set_manual_order_entry_destination(
       const Entry& entry) {
     while(true) {
-      auto old = m_data.load();
-      auto ne = std::make_shared<Data>(*old);
-      ne->manual_order_entry_destination = entry;
-      if(m_data.compare_exchange_weak(old, ne)) {
+      auto data = m_data->load();
+      auto new_data = [&] {
+        if(!data) {
+          auto new_data = std::make_shared<Data>();
+          new_data->m_manual_order_entry_destination = entry;
+          return new_data;
+        }
+        if(data->m_manual_order_entry_destination == entry) {
+          return std::shared_ptr<Data>();
+        }
+        auto new_data = std::make_shared<Data>(*data);
+        new_data->m_manual_order_entry_destination = entry;
+        return new_data;
+      }();
+      if(!new_data || m_data->compare_exchange_weak(data, new_data)) {
         break;
       }
     }
@@ -272,32 +283,52 @@ namespace Nexus {
 
   inline void DestinationDatabase::add(const Entry& entry) {
     while(true) {
-      auto old = m_data.load();
-      auto ne = std::make_shared<Data>(*old);
-      auto i = std::lower_bound(
-        ne->entries.begin(), ne->entries.end(), entry,
-        [] (auto const& lhs, auto const& rhs) {
-          return lhs.m_id < rhs.m_id;
-        });
-      if(i == ne->entries.end() || i->m_id != entry.m_id) {
-        ne->entries.insert(
-          ne->entries.begin() + std::distance(ne->entries.begin(), i), entry);
-      } else {
-        return;
-      }
-      if(m_data.compare_exchange_weak(old, ne)) {
+      auto data = m_data->load();
+      auto new_data = [&] {
+        if(!data) {
+          auto new_data = std::make_shared<Data>();
+          new_data->m_entries.push_back(entry);
+          return new_data;
+        }
+        auto i = std::lower_bound(
+          data->m_entries.begin(), data->m_entries.end(), entry,
+          [] (const auto& lhs, const auto& rhs) {
+            return lhs.m_id < rhs.m_id;
+          });
+        if(i == data->m_entries.end() || i->m_id != entry.m_id) {
+          auto new_data = std::make_shared<Data>(*data);
+          new_data->m_entries.insert(new_data->m_entries.begin() +
+            std::distance(data->m_entries.begin(), i), entry);
+          return new_data;
+        }
+        return std::shared_ptr<Data>();
+      }();
+      if(!new_data || m_data->compare_exchange_weak(data, new_data)) {
         break;
       }
     }
   }
 
-  inline void DestinationDatabase::set_preferred_desintation(
+  inline void DestinationDatabase::set_preferred_destination(
       Venue venue, const Destination& destination) {
     while(true) {
-      auto old = m_data.load();
-      auto ne = std::make_shared<Data>(*old);
-      ne->preferred_destinations[venue] = destination;
-      if(m_data.compare_exchange_weak(old, ne)) {
+      auto data = m_data->load();
+      auto new_data = [&] {
+        if(!data) {
+          auto new_data = std::make_shared<Data>();
+          new_data->m_preferred_destinations[venue] = destination;
+          return new_data;
+        }
+        auto i = data->m_preferred_destinations.find(venue);
+        if(i == data->m_preferred_destinations.end() ||
+            i->second != destination) {
+          auto new_data = std::make_shared<Data>(*data);
+          new_data->m_preferred_destinations[venue] = destination;
+          return new_data;
+        }
+        return std::shared_ptr<Data>();
+      }();
+      if(!new_data || m_data->compare_exchange_weak(data, new_data)) {
         break;
       }
     }
@@ -305,20 +336,23 @@ namespace Nexus {
 
   inline void DestinationDatabase::remove(const Destination& id) {
     while(true) {
-      auto old = m_data.load();
-      auto ne = std::make_shared<Data>(*old);
+      auto data = m_data->load();
+      if(!data) {
+        break;
+      }
       auto i = std::lower_bound(
-        ne->entries.begin(), ne->entries.end(), id,
-        [] (auto const& lhs, auto const& rhs) {
+        data->m_entries.begin(), data->m_entries.end(), id,
+        [] (const auto& lhs, const auto& rhs) {
           return lhs.m_id < rhs;
         });
-      if(i != ne->entries.end() && i->m_id == id) {
-        ne->entries.erase(
-          ne->entries.begin() + std::distance(ne->entries.begin(), i));
+      if(i != data->m_entries.end() && i->m_id == id) {
+        auto new_data = std::make_shared<Data>(*data);
+        new_data->m_entries.erase(new_data->m_entries.begin() +
+          std::distance(data->m_entries.begin(), i));
+        if(m_data->compare_exchange_weak(data, new_data)) {
+          break;
+        }
       } else {
-        return;
-      }
-      if(m_data.compare_exchange_weak(old, ne)) {
         break;
       }
     }
@@ -326,22 +360,16 @@ namespace Nexus {
 
   inline void DestinationDatabase::remove_preferred_destination(Venue venue) {
     while(true) {
-      auto old = m_data.load();
-      if(!old->preferred_destinations.count(venue)) {
-        return;
+      auto data = m_data->load();
+      if(!data || data->m_preferred_destinations.count(venue) == 0) {
+        break;
       }
-      auto ne = std::make_shared<Data>(*old);
-      ne->preferred_destinations.erase(venue);
-      if(m_data.compare_exchange_weak(old, ne)) {
+      auto new_data = std::make_shared<Data>(*data);
+      new_data->m_preferred_destinations.erase(venue);
+      if(m_data->compare_exchange_weak(data, new_data)) {
         break;
       }
     }
-  }
-
-  inline DestinationDatabase& DestinationDatabase::operator =(
-      const DestinationDatabase& other) noexcept {
-    m_data.store(other.m_data.load());
-    return *this;
   }
 }
 
@@ -353,7 +381,7 @@ namespace Beam::Serialization {
         Nexus::DestinationDatabase::Entry& value, unsigned int version) {
       shuttle.Shuttle("id", value.m_id);
       shuttle.Shuttle("venues", value.m_venues);
-      shuttle.Shuttle("descriptions", value.m_description);
+      shuttle.Shuttle("description", value.m_description);
     }
   };
 

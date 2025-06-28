@@ -1,10 +1,10 @@
 #ifndef NEXUS_EXCHANGE_RATE_HPP
 #define NEXUS_EXCHANGE_RATE_HPP
+#include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleRational.hpp>
 #include <boost/rational.hpp>
 #include "Nexus/Definitions/CurrencyPair.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/Money.hpp"
 
 namespace Nexus {
@@ -19,7 +19,7 @@ namespace Nexus {
     boost::rational<int> m_rate;
 
     /** Constructs an ExchangeRate between two NONE currencies. */
-    ExchangeRate();
+    ExchangeRate() noexcept;
 
     /**
      * Constructs an ExchangeRate.
@@ -28,35 +28,41 @@ namespace Nexus {
      *        currency.
      */
     ExchangeRate(CurrencyPair pair, boost::rational<int> rate);
+
+    bool operator ==(const ExchangeRate&) const = default;
   };
 
   /**
    * Switches the base currency with the counter currency in an ExchangeRate.
-   * @param exchangeRate The ExchangeRate to invert.
+   * @param rate The ExchangeRate to invert.
    * @return The ExchangeRate with the base and counter inverted.
    */
-  inline ExchangeRate Invert(const ExchangeRate& exchangeRate) {
-    return {Invert(exchangeRate.m_pair),
-      {exchangeRate.m_rate.denominator(), exchangeRate.m_rate.numerator()}};
+  inline ExchangeRate invert(const ExchangeRate& rate) {
+    return ExchangeRate(invert(rate.m_pair),
+      boost::rational<int>(rate.m_rate.denominator(), rate.m_rate.numerator()));
   }
 
   /**
    * Converts a Money value according to an ExchangeRate.
    * @param value The value to convert.
-   * @param exchangeRate The ExchangeRate to use in the conversion.
+   * @param rate The ExchangeRate to use in the conversion.
    * @return The <i>value</i> converted according to the specified
    *         <i>exchangeRate</i>.
    */
-  inline Money Convert(Money value, const ExchangeRate& exchangeRate) {
-    return (exchangeRate.m_rate.numerator() * value) /
-      exchangeRate.m_rate.denominator();
+  inline Money convert(Money value, const ExchangeRate& rate) {
+    return (rate.m_rate.numerator() * value) / rate.m_rate.denominator();
   }
 
-  inline ExchangeRate::ExchangeRate()
+  inline std::ostream& operator<<(std::ostream& out, const ExchangeRate& rate) {
+    return out << '(' << rate.m_pair << ' ' << rate.m_rate.numerator() << '/' <<
+      rate.m_rate.denominator() << ')';
+  }
+
+  inline ExchangeRate::ExchangeRate() noexcept
     : m_rate(1) {}
 
-  inline ExchangeRate::ExchangeRate(CurrencyPair pair,
-    boost::rational<int> rate)
+  inline ExchangeRate::ExchangeRate(
+    CurrencyPair pair, boost::rational<int> rate)
     : m_pair(pair),
       m_rate(rate) {}
 }

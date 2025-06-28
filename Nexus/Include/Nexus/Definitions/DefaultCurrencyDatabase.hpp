@@ -26,6 +26,13 @@ namespace Nexus {
     }
     {
       auto entry = CurrencyDatabase::Entry();
+      entry.m_id = CurrencyId(978);
+      entry.m_code = "EUR";
+      entry.m_sign = "€";
+      database.add(entry);
+    }
+    {
+      auto entry = CurrencyDatabase::Entry();
       entry.m_id = CurrencyId(826);
       entry.m_code = "GBP";
       entry.m_sign = "£";
@@ -74,6 +81,7 @@ namespace Nexus {
   namespace DefaultCurrencies {
     inline const auto AUD = DEFAULT_CURRENCIES.from("AUD").m_id;
     inline const auto CAD = DEFAULT_CURRENCIES.from("CAD").m_id;
+    inline const auto EUR = DEFAULT_CURRENCIES.from("EUR").m_id;
     inline const auto GBP = DEFAULT_CURRENCIES.from("GBP").m_id;
     inline const auto HKD = DEFAULT_CURRENCIES.from("HKD").m_id;
     inline const auto JPY = DEFAULT_CURRENCIES.from("JPY").m_id;

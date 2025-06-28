@@ -1,8 +1,10 @@
 #ifndef NEXUS_CURRENCY_HPP
 #define NEXUS_CURRENCY_HPP
 #include <algorithm>
+#include <atomic>
 #include <cstdint>
 #include <istream>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -72,9 +74,7 @@ namespace Nexus {
       }();
 
       /** Constructs an empty CurrencyDatabase. */
-      CurrencyDatabase() = default;
-
-      CurrencyDatabase(const CurrencyDatabase& database) noexcept;
+      CurrencyDatabase();
 
       /** Returns the list of currencies represented. */
       Beam::View<const Entry> get_entries() const;
@@ -105,11 +105,10 @@ namespace Nexus {
        */
       void remove(CurrencyId id);
 
-      CurrencyDatabase& operator =(const CurrencyDatabase& database) noexcept;
-
     private:
       friend struct Beam::Serialization::Shuttle<CurrencyDatabase>;
-      std::atomic<std::shared_ptr<std::vector<Entry>>> m_entries;
+      std::shared_ptr<std::atomic<std::shared_ptr<std::vector<Entry>>>>
+        m_entries;
   };
 
   /**
@@ -193,13 +192,13 @@ namespace Nexus {
     return m_value;
   }
 
-  inline CurrencyDatabase::CurrencyDatabase(
-    const CurrencyDatabase& database) noexcept
-    : m_entries(database.m_entries.load()) {}
+  inline CurrencyDatabase::CurrencyDatabase()
+    : m_entries(
+        std::make_shared<std::atomic<std::shared_ptr<std::vector<Entry>>>>()) {}
 
   inline Beam::View<const CurrencyDatabase::Entry>
       CurrencyDatabase::get_entries() const {
-    if(auto entries = m_entries.load()) {
+    if(auto entries = m_entries->load()) {
       return Beam::View(Beam::SharedIterator(entries, entries->begin()),
         Beam::SharedIterator(entries, entries->end()));
     }
@@ -208,7 +207,7 @@ namespace Nexus {
 
   inline const CurrencyDatabase::Entry& CurrencyDatabase::from(
       CurrencyId id) const {
-    if(auto entries = m_entries.load()) {
+    if(auto entries = m_entries->load()) {
       auto i = std::lower_bound(entries->begin(), entries->end(), id,
         [] (const auto& lhs, auto rhs) {
           return lhs.m_id < rhs;
@@ -222,7 +221,7 @@ namespace Nexus {
 
   inline const CurrencyDatabase::Entry& CurrencyDatabase::from(
       Beam::FixedString<3> code) const {
-    if(auto entries = m_entries.load()) {
+    if(auto entries = m_entries->load()) {
       auto i = std::find_if(entries->begin(), entries->end(),
         [&] (const auto& entry) {
           return entry.m_code == code;
@@ -236,7 +235,7 @@ namespace Nexus {
 
   inline void CurrencyDatabase::add(const Entry& entry) {
     while(true) {
-      auto entries = m_entries.load();
+      auto entries = m_entries->load();
       auto new_entries = [&] {
         if(!entries) {
           auto new_entries = std::make_shared<std::vector<Entry>>();
@@ -255,7 +254,8 @@ namespace Nexus {
         }
         return std::shared_ptr<std::vector<Entry>>();
       }();
-      if(new_entries && m_entries.compare_exchange_weak(entries, new_entries)) {
+      if(!new_entries ||
+          m_entries->compare_exchange_weak(entries, new_entries)) {
         break;
       }
     }
@@ -263,7 +263,7 @@ namespace Nexus {
 
   inline void CurrencyDatabase::remove(CurrencyId id) {
     while(true) {
-      auto entries = m_entries.load();
+      auto entries = m_entries->load();
       if(!entries) {
         break;
       }
@@ -275,19 +275,13 @@ namespace Nexus {
         auto new_entries = std::make_shared<std::vector<Entry>>(*entries);
         new_entries->erase(
           new_entries->begin() + std::distance(entries->begin(), i));
-        if(m_entries.compare_exchange_weak(entries, new_entries)) {
+        if(m_entries->compare_exchange_weak(entries, new_entries)) {
           break;
         }
       } else {
         break;
       }
     }
-  }
-
-  inline CurrencyDatabase& CurrencyDatabase::operator =(
-      const CurrencyDatabase& database) noexcept {
-    m_entries.store(database.m_entries.load());
-    return *this;
   }
 }
 
@@ -343,6 +337,6 @@ namespace std {
       return Nexus::hash_value(value);
     }
   };
-};
+}
 
 #endif
