@@ -1,11 +1,7 @@
 #ifndef NEXUS_ORDER_STATUS_HPP
 #define NEXUS_ORDER_STATUS_HPP
 #include <ostream>
-#include <stdexcept>
-#include <string>
 #include <Beam/Collections/Enum.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/throw_exception.hpp>
 
 namespace Nexus {
 
@@ -55,13 +51,11 @@ namespace Nexus {
    * Returns <code>true</code> iff an OrderStatus represents an Order's final
    * state.
    */
-  inline bool IsTerminal(OrderStatus status) {
-    if(status == OrderStatus::REJECTED || status == OrderStatus::EXPIRED ||
-        status == OrderStatus::CANCELED || status == OrderStatus::FILLED ||
-        status == OrderStatus::DONE_FOR_DAY) {
-      return true;
-    }
-    return false;
+  [[nodiscard]]
+  inline bool is_terminal(OrderStatus status) {
+    return status == OrderStatus::REJECTED || status == OrderStatus::EXPIRED ||
+      status == OrderStatus::CANCELED || status == OrderStatus::FILLED ||
+      status == OrderStatus::DONE_FOR_DAY;
   }
 
   inline std::ostream& operator <<(std::ostream& out, OrderStatus value) {

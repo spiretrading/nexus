@@ -2,8 +2,8 @@
 #define NEXUS_ORDER_TYPE_HPP
 #include <ostream>
 #include <stdexcept>
+#include <string>
 #include <Beam/Collections/Enum.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/throw_exception.hpp>
 
 namespace Nexus {
@@ -24,7 +24,8 @@ namespace Nexus {
     STOP);
 
   /** Returns the single character FIX representation of an OrderType. */
-  inline char ToChar(OrderType value) {
+  [[nodiscard]]
+  inline char to_char(OrderType value) {
     if(value == OrderType::MARKET) {
       return '1';
     } else if(value == OrderType::LIMIT) {
@@ -35,7 +36,7 @@ namespace Nexus {
       return '3';
     }
     BOOST_THROW_EXCEPTION(std::runtime_error("OrderType not found: " +
-      boost::lexical_cast<std::string>(static_cast<int>(value))));
+      std::to_string(static_cast<int>(value))));
   }
 
   inline std::ostream& operator <<(std::ostream& out, OrderType value) {
