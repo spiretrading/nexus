@@ -3,7 +3,8 @@
 #include <functional>
 #include <istream>
 #include <ostream>
-#include <string>
+#include <stdexcept>
+#include <string_view>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <boost/functional/hash.hpp>
@@ -11,36 +12,22 @@
 #include "Nexus/Definitions/Quantity.hpp"
 
 namespace Nexus {
-namespace Details {
-  template<typename T>
-  struct MoneyDefinitions {
 
-    /** Stores a value of 0.00. */
-    static const T ZERO;
-
-    /** Stores a value of 1.00. */
-    static const T ONE;
-
-    /** Stores a value of 0.01. */
-    static const T CENT;
-
-    /** Stores a value of 0.0001. */
-    static const T BIP;
-
-    auto operator <=>(const MoneyDefinitions& rhs) const = default;
-  };
-}
-
-  /** Used to represent money without rounding or floating point issues. */
-  class Money : private Details::MoneyDefinitions<Money> {
+  /** Used to represent money. */
+  class Money {
     public:
 
-      /**
-       * Returns a Money value from a string.
-       * @param value The value to represent.
-       * @return A Money value representing the specified <i>value</i>.
-       */
-      static boost::optional<Money> FromValue(const std::string& value);
+      /** Stores a value of 0.00. */
+      static const Money ZERO;
+
+      /** Stores a value of 1.00. */
+      static const Money ONE;
+
+      /** Stores a value of 0.01. */
+      static const Money CENT;
+
+      /** Stores a value of 0.0001. */
+      static const Money BIP;
 
       /** Constructs a Money value of ZERO. */
       constexpr Money() = default;
@@ -123,27 +110,34 @@ namespace Details {
 
       auto operator <=>(const Money& rhs) const = default;
 
-      using Details::MoneyDefinitions<Money>::ZERO;
-      using Details::MoneyDefinitions<Money>::ONE;
-      using Details::MoneyDefinitions<Money>::CENT;
-      using Details::MoneyDefinitions<Money>::BIP;
     private:
-      template<typename T> friend constexpr std::enable_if_t<
-        std::is_same_v<decltype(std::declval<T>() * std::declval<Quantity>()),
-          Quantity>, Money> operator *(T lhs, Money rhs);
-      template<typename T> friend constexpr std::enable_if_t<
-        std::is_same_v<decltype(std::declval<Quantity>() / std::declval<T>()),
-          Quantity>, Money> operator /(Money lhs, T rhs);
-      friend std::ostream& operator <<(std::ostream& out, Money value);
-      friend Money Abs(Money value);
-      friend Money Floor(Money value, int decimalPlaces);
-      friend Money Ceil(Money value, int decimalPlaces);
-      friend Money Truncate(Money value, int decimalPlaces);
-      friend Money Round(Money value, int decimalPlaces);
-      template<typename, typename> friend struct Beam::Serialization::Send;
-      template<typename, typename> friend struct Beam::Serialization::Receive;
       Quantity m_value;
   };
+
+  /**
+   * Attempts to parse a monetary amount.
+   * @param value The input string representing a money amount.
+   * @return The parsed Money if successful, or boost::none on failure.
+   */
+  inline boost::optional<Money> try_parse_money(std::string_view value) {
+    if(auto quantity = try_parse_quantity(value)) {
+      return Money(*quantity);
+    }
+    return boost::none;
+  }
+
+  /**
+   * Parses a monetary amount.
+   * @param value The input string representing a money amount.
+   * @return The parsed Money object.
+   * @throws std::invalid_argument If the input cannot be parsed as Money.
+   */
+  inline Money parse_money(std::string_view value) {
+    if(auto money = try_parse_money(value)) {
+      return *money;
+    }
+    throw std::invalid_argument("Invalid Money value given.");
+  }
 
   /**
    * Returns the modulus of two Money objects.
@@ -175,7 +169,7 @@ namespace Details {
   constexpr std::enable_if_t<
     std::is_same_v<decltype(std::declval<T>() * std::declval<Quantity>()),
       Quantity>, Money> operator *(T lhs, Money rhs) {
-    return Money{lhs * rhs.m_value};
+    return Money(lhs * static_cast<Quantity>(rhs));
   }
 
   /**
@@ -188,51 +182,51 @@ namespace Details {
   constexpr std::enable_if_t<
     std::is_same_v<decltype(std::declval<Quantity>() / std::declval<T>()),
       Quantity>, Money> operator /(Money lhs, T rhs) {
-    return Money{lhs.m_value / rhs};
+    return Money(static_cast<Quantity>(lhs) / rhs);
   }
 
   /**
    * Returns the absolute value.
    * @param value The value.
    */
-  inline Money Abs(Money value) {
-    return Money{Abs(value.m_value)};
+  inline Money abs(Money value) {
+    return Money(abs(static_cast<Quantity>(value)));
   }
 
   /**
    * Returns the floor.
    * @param value The value to floor.
-   * @param decimalPlaces The decimal place to floor to.
+   * @param decimal_places The decimal place to floor to.
    */
-  inline Money Floor(Money value, int decimalPlaces) {
-    return Money{Floor(value.m_value, decimalPlaces)};
+  inline Money floor(Money value, int decimal_places) {
+    return Money(floor(static_cast<Quantity>(value), decimal_places));
   }
 
   /**
    * Returns the ceiling.
    * @param value The value to ceil.
-   * @param decimalPlaces The decimal place to ceil to.
+   * @param decimal_places The decimal place to ceil to.
    */
-  inline Money Ceil(Money value, int decimalPlaces) {
-    return Money{Ceil(value.m_value, decimalPlaces)};
+  inline Money ceil(Money value, int decimal_places) {
+    return Money(ceil(static_cast<Quantity>(value), decimal_places));
   }
 
   /**
    * Returns the truncated value.
    * @param value The value to truncate.
-   * @param decimalPlaces The decimal place to truncate.
+   * @param decimal_places The decimal place to truncate.
    */
-  inline Money Truncate(Money value, int decimalPlaces) {
-    return Money{Truncate(value.m_value, decimalPlaces)};
+  inline Money truncate(Money value, int decimal_places) {
+    return Money(truncate(static_cast<Quantity>(value), decimal_places));
   }
 
   /**
    * Returns the rounded value.
    * @param value The value to round.
-   * @param decimalPlaces The decimal place to round to.
+   * @param decimal_places The decimal place to round to.
    */
-  inline Money Round(Money value, int decimalPlaces) {
-    return Money{Round(value.m_value, decimalPlaces)};
+  inline Money round(Money value, int decimal_places) {
+    return Money(round(static_cast<Quantity>(value), decimal_places));
   }
 
   inline std::size_t hash_value(Money money) noexcept {
@@ -240,11 +234,12 @@ namespace Details {
   }
 
   inline std::ostream& operator <<(std::ostream& out, Money value) {
-    auto fraction = value.m_value - Floor(value.m_value, 0);
-    auto s = boost::lexical_cast<std::string>(value.m_value);
+    auto fraction =
+      static_cast<Quantity>(value) - floor(static_cast<Quantity>(value), 0);
     if(fraction == 0) {
-      return out << s << ".00";
+      return out << static_cast<Quantity>(value) << ".00";
     }
+    auto s = boost::lexical_cast<std::string>(static_cast<Quantity>(value));
     if(s.size() > 1 && *(s.end() - 1) == '.') {
       return out << s << "00";
     } else if(s.size() > 2 && *(s.end() - 2) == '.') {
@@ -264,21 +259,12 @@ namespace Details {
   inline std::istream& operator >>(std::istream& in, Money& value) {
     auto symbol = std::string();
     in >> symbol;
-    auto parsedValue = Money::FromValue(symbol);
-    if(!parsedValue.is_initialized()) {
-      in.setstate(std::ios::failbit);
+    if(auto parsed_value = try_parse_money(symbol)) {
+      value = *parsed_value;
       return in;
     }
-    value = *parsedValue;
+    in.setstate(std::ios::failbit);
     return in;
-  }
-
-  inline boost::optional<Money> Money::FromValue(const std::string& value) {
-    auto quantity = Quantity::FromValue(value);
-    if(!quantity.is_initialized()) {
-      return boost::none;
-    }
-    return Money{*quantity};
   }
 
   inline constexpr Money::Money(Quantity value)
@@ -335,19 +321,10 @@ namespace Details {
     return Money(-m_value);
   }
 
-namespace Details {
-  template<typename T>
-  const T MoneyDefinitions<T>::ZERO(0);
-
-  template<typename T>
-  const T MoneyDefinitions<T>::ONE(1);
-
-  template<typename T>
-  const T MoneyDefinitions<T>::CENT(T(1) / 100);
-
-  template<typename T>
-  const T MoneyDefinitions<T>::BIP(T(1) / 10000);
-}
+  inline const Money Money::ZERO(0);
+  inline const Money Money::ONE(1);
+  inline const Money Money::CENT(Money(1) / 100);
+  inline const Money Money::BIP(Money(1) / 10000);
 }
 
 namespace Beam::Serialization {
@@ -357,9 +334,9 @@ namespace Beam::Serialization {
   template<>
   struct Send<Nexus::Money> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        Nexus::Money value) const {
-      shuttle.Send(name, value.m_value);
+    void operator ()(
+        Shuttler& shuttle, const char* name, Nexus::Money value) const {
+      shuttle.Send(name, static_cast<Nexus::Quantity>(value));
     }
   };
 
@@ -370,7 +347,7 @@ namespace Beam::Serialization {
         Nexus::Money& value) const {
       auto representation = Nexus::Quantity();
       shuttle.Shuttle(name, representation);
-      value = Nexus::Money{representation};
+      value = Nexus::Money(representation);
     }
   };
 }

@@ -15,8 +15,9 @@ TEST_SUITE("Quantity") {
   }
 
   TEST_CASE("from_string") {
-    REQUIRE(Quantity::FromValue("1") == Quantity(1));
-    REQUIRE(Quantity::FromValue("1.1") == Quantity(1.1));
+    REQUIRE(parse_quantity("1") == Quantity(1));
+    REQUIRE(parse_quantity("1.1") == Quantity(1.1));
+    REQUIRE(try_parse_quantity("1a.1") == none);
   }
 
   TEST_CASE("assignment") {
@@ -31,98 +32,86 @@ TEST_SUITE("Quantity") {
   }
 
   TEST_CASE("floor") {
-    REQUIRE(Floor(Quantity(1), 0) == Quantity(1));
-    REQUIRE(Floor(Quantity(-1), 0) == Quantity(-1));
-    REQUIRE(Floor(Quantity(10), -1) == Quantity(10));
-    REQUIRE(Floor(Quantity(-10), -1) == Quantity(-10));
-    REQUIRE(Floor(Quantity(10), 1) == Quantity(10));
-    REQUIRE(Floor(Quantity(-10), 1) == Quantity(-10));
-    REQUIRE(Floor(*Quantity::FromValue("-1.5"), 0) == Quantity(-2));
-    REQUIRE(Floor(*Quantity::FromValue("-1.5"), -1) == Quantity(-10));
-    REQUIRE(Floor(*Quantity::FromValue("-0.5"), -1) == Quantity(-10));
-    REQUIRE(Floor(*Quantity::FromValue("0.5"), -1) == Quantity(0));
-    REQUIRE(Floor(*Quantity::FromValue("0.5"), 0) == Quantity(0));
-    REQUIRE(Floor(*Quantity::FromValue("0.5"), 1) ==
-      Quantity::FromValue("0.5"));
-    REQUIRE(Floor(*Quantity::FromValue("0.5"), 2) ==
-      Quantity::FromValue("0.5"));
-    REQUIRE(Floor(Quantity(5), 0) == Quantity(5));
-    REQUIRE(Floor(Quantity(5), -1) == Quantity(0));
-    REQUIRE(Floor(Quantity(5), -2) == Quantity(0));
-    REQUIRE(Floor(Quantity(37), 0) == Quantity(37));
-    REQUIRE(Floor(Quantity(37), -1) == Quantity(30));
-    REQUIRE(Floor(Quantity(37), -2) == Quantity(0));
-    REQUIRE(Floor(Quantity(33), 0) == Quantity(33));
-    REQUIRE(Floor(Quantity(33), -1) == Quantity(30));
-    REQUIRE(Floor(Quantity(33), -2) == Quantity(0));
-    REQUIRE(Floor(Quantity(73), 0) == Quantity(73));
-    REQUIRE(Floor(Quantity(73), -1) == Quantity(70));
-    REQUIRE(Floor(Quantity(73), -2) == Quantity(0));
-    REQUIRE(Floor(*Quantity::FromValue("555.555"), -3) == Quantity(0));
-    REQUIRE(Floor(*Quantity::FromValue("555.555"), -2) == Quantity(500));
-    REQUIRE(Floor(*Quantity::FromValue("555.555"), -1) == Quantity(550));
-    REQUIRE(Floor(*Quantity::FromValue("555.555"), 0) == Quantity(555));
-    REQUIRE(Floor(*Quantity::FromValue("555.555"), 1) ==
-      Quantity::FromValue("555.5"));
-    REQUIRE(Floor(*Quantity::FromValue("555.555"), 2) ==
-      Quantity::FromValue("555.55"));
-    REQUIRE(Floor(*Quantity::FromValue("555.555"), 3) ==
-      Quantity::FromValue("555.555"));
-    REQUIRE(Floor(*Quantity::FromValue("555.555"), 4) ==
-      Quantity::FromValue("555.555"));
-    REQUIRE(Floor(*Quantity::FromValue("-555.555"), 1) ==
-      Quantity::FromValue("-555.6"));
+    REQUIRE(floor(Quantity(1), 0) == Quantity(1));
+    REQUIRE(floor(Quantity(-1), 0) == Quantity(-1));
+    REQUIRE(floor(Quantity(10), -1) == Quantity(10));
+    REQUIRE(floor(Quantity(-10), -1) == Quantity(-10));
+    REQUIRE(floor(Quantity(10), 1) == Quantity(10));
+    REQUIRE(floor(Quantity(-10), 1) == Quantity(-10));
+    REQUIRE(floor(parse_quantity("-1.5"), 0) == Quantity(-2));
+    REQUIRE(floor(parse_quantity("-1.5"), -1) == Quantity(-10));
+    REQUIRE(floor(parse_quantity("-0.5"), -1) == Quantity(-10));
+    REQUIRE(floor(parse_quantity("0.5"), -1) == Quantity(0));
+    REQUIRE(floor(parse_quantity("0.5"), 0) == Quantity(0));
+    REQUIRE(floor(parse_quantity("0.5"), 1) == parse_quantity("0.5"));
+    REQUIRE(floor(parse_quantity("0.5"), 2) == parse_quantity("0.5"));
+    REQUIRE(floor(Quantity(5), 0) == Quantity(5));
+    REQUIRE(floor(Quantity(5), -1) == Quantity(0));
+    REQUIRE(floor(Quantity(5), -2) == Quantity(0));
+    REQUIRE(floor(Quantity(37), 0) == Quantity(37));
+    REQUIRE(floor(Quantity(37), -1) == Quantity(30));
+    REQUIRE(floor(Quantity(37), -2) == Quantity(0));
+    REQUIRE(floor(Quantity(33), 0) == Quantity(33));
+    REQUIRE(floor(Quantity(33), -1) == Quantity(30));
+    REQUIRE(floor(Quantity(33), -2) == Quantity(0));
+    REQUIRE(floor(Quantity(73), 0) == Quantity(73));
+    REQUIRE(floor(Quantity(73), -1) == Quantity(70));
+    REQUIRE(floor(Quantity(73), -2) == Quantity(0));
+    REQUIRE(floor(parse_quantity("555.555"), -3) == Quantity(0));
+    REQUIRE(floor(parse_quantity("555.555"), -2) == Quantity(500));
+    REQUIRE(floor(parse_quantity("555.555"), -1) == Quantity(550));
+    REQUIRE(floor(parse_quantity("555.555"), 0) == Quantity(555));
+    REQUIRE(floor(parse_quantity("555.555"), 1) == parse_quantity("555.5"));
+    REQUIRE(floor(parse_quantity("555.555"), 2) == parse_quantity("555.55"));
+    REQUIRE(floor(parse_quantity("555.555"), 3) == parse_quantity("555.555"));
+    REQUIRE(floor(parse_quantity("555.555"), 4) == parse_quantity("555.555"));
+    REQUIRE(floor(parse_quantity("-555.555"), 1) == parse_quantity("-555.6"));
   }
 
   TEST_CASE("ceil") {
-    REQUIRE(Ceil(Quantity(1), 0) == Quantity(1));
-    REQUIRE(Ceil(Quantity(-1), 0) == Quantity(-1));
-    REQUIRE(Ceil(Quantity(10), -1) == Quantity(10));
-    REQUIRE(Ceil(Quantity(-10), -1) == Quantity(-10));
-    REQUIRE(Ceil(Quantity(10), 1) == Quantity(10));
-    REQUIRE(Ceil(Quantity(-10), 1) == Quantity(-10));
-    REQUIRE(Ceil(*Quantity::FromValue("-1.5"), 0) == Quantity(-1));
-    REQUIRE(Ceil(*Quantity::FromValue("-1.5"), -1) == Quantity(0));
-    REQUIRE(Ceil(*Quantity::FromValue("-0.5"), -1) == Quantity(0));
-    REQUIRE(Ceil(*Quantity::FromValue("0.5"), -1) == Quantity(10));
-    REQUIRE(Ceil(*Quantity::FromValue("0.5"), 0) == Quantity(1));
-    REQUIRE(Ceil(*Quantity::FromValue("0.5"), 1) == Quantity::FromValue("0.5"));
-    REQUIRE(Ceil(*Quantity::FromValue("0.5"), 2) == Quantity::FromValue("0.5"));
-    REQUIRE(Ceil(Quantity(5), 0) == Quantity(5));
-    REQUIRE(Ceil(Quantity(5), -1) == Quantity(10));
-    REQUIRE(Ceil(Quantity(5), -2) == Quantity(100));
-    REQUIRE(Ceil(Quantity(37), 0) == Quantity(37));
-    REQUIRE(Ceil(Quantity(37), -1) == Quantity(40));
-    REQUIRE(Ceil(Quantity(37), -2) == Quantity(100));
-    REQUIRE(Ceil(Quantity(33), 0) == Quantity(33));
-    REQUIRE(Ceil(Quantity(33), -1) == Quantity(40));
-    REQUIRE(Ceil(Quantity(33), -2) == Quantity(100));
-    REQUIRE(Ceil(Quantity(73), 0) == Quantity(73));
-    REQUIRE(Ceil(Quantity(73), -1) == Quantity(80));
-    REQUIRE(Ceil(Quantity(73), -2) == Quantity(100));
-    REQUIRE(Ceil(*Quantity::FromValue("555.555"), -3) == Quantity(1000));
-    REQUIRE(Ceil(*Quantity::FromValue("555.555"), -2) == Quantity(600));
-    REQUIRE(Ceil(*Quantity::FromValue("555.555"), -1) == Quantity(560));
-    REQUIRE(Ceil(*Quantity::FromValue("555.555"), 0) == Quantity(556));
-    REQUIRE(Ceil(*Quantity::FromValue("555.555"), 1) ==
-      Quantity::FromValue("555.6"));
-    REQUIRE(Ceil(*Quantity::FromValue("555.555"), 2) ==
-      Quantity::FromValue("555.56"));
-    REQUIRE(Ceil(*Quantity::FromValue("555.555"), 3) ==
-      Quantity::FromValue("555.555"));
-    REQUIRE(Ceil(*Quantity::FromValue("555.555"), 4) ==
-      Quantity::FromValue("555.555"));
-    REQUIRE(Ceil(*Quantity::FromValue("-555.555"), 1) ==
-      Quantity::FromValue("-555.5"));
+    REQUIRE(ceil(Quantity(1), 0) == Quantity(1));
+    REQUIRE(ceil(Quantity(-1), 0) == Quantity(-1));
+    REQUIRE(ceil(Quantity(10), -1) == Quantity(10));
+    REQUIRE(ceil(Quantity(-10), -1) == Quantity(-10));
+    REQUIRE(ceil(Quantity(10), 1) == Quantity(10));
+    REQUIRE(ceil(Quantity(-10), 1) == Quantity(-10));
+    REQUIRE(ceil(parse_quantity("-1.5"), 0) == Quantity(-1));
+    REQUIRE(ceil(parse_quantity("-1.5"), -1) == Quantity(0));
+    REQUIRE(ceil(parse_quantity("-0.5"), -1) == Quantity(0));
+    REQUIRE(ceil(parse_quantity("0.5"), -1) == Quantity(10));
+    REQUIRE(ceil(parse_quantity("0.5"), 0) == Quantity(1));
+    REQUIRE(ceil(parse_quantity("0.5"), 1) == parse_quantity("0.5"));
+    REQUIRE(ceil(parse_quantity("0.5"), 2) == parse_quantity("0.5"));
+    REQUIRE(ceil(Quantity(5), 0) == Quantity(5));
+    REQUIRE(ceil(Quantity(5), -1) == Quantity(10));
+    REQUIRE(ceil(Quantity(5), -2) == Quantity(100));
+    REQUIRE(ceil(Quantity(37), 0) == Quantity(37));
+    REQUIRE(ceil(Quantity(37), -1) == Quantity(40));
+    REQUIRE(ceil(Quantity(37), -2) == Quantity(100));
+    REQUIRE(ceil(Quantity(33), 0) == Quantity(33));
+    REQUIRE(ceil(Quantity(33), -1) == Quantity(40));
+    REQUIRE(ceil(Quantity(33), -2) == Quantity(100));
+    REQUIRE(ceil(Quantity(73), 0) == Quantity(73));
+    REQUIRE(ceil(Quantity(73), -1) == Quantity(80));
+    REQUIRE(ceil(Quantity(73), -2) == Quantity(100));
+    REQUIRE(ceil(parse_quantity("555.555"), -3) == Quantity(1000));
+    REQUIRE(ceil(parse_quantity("555.555"), -2) == Quantity(600));
+    REQUIRE(ceil(parse_quantity("555.555"), -1) == Quantity(560));
+    REQUIRE(ceil(parse_quantity("555.555"), 0) == Quantity(556));
+    REQUIRE(ceil(parse_quantity("555.555"), 1) == parse_quantity("555.6"));
+    REQUIRE(ceil(parse_quantity("555.555"), 2) == parse_quantity("555.56"));
+    REQUIRE(ceil(parse_quantity("555.555"), 3) == parse_quantity("555.555"));
+    REQUIRE(ceil(parse_quantity("555.555"), 4) == parse_quantity("555.555"));
+    REQUIRE(ceil(parse_quantity("-555.555"), 1) == parse_quantity("-555.5"));
   }
 
   TEST_CASE("round") {
-    REQUIRE(Round(*Quantity::FromValue("0.5"), 0) == Quantity(1));
-    REQUIRE(Round(Quantity(5), -2) == Quantity(0));
-    REQUIRE(Round(Quantity(37), -2) == Quantity(0));
-    REQUIRE(Round(Quantity(33), -2) == Quantity(0));
-    REQUIRE(Round(Quantity(37), -3) == Quantity(0));
-    REQUIRE(Round(Quantity(73), -2) == Quantity(100));
-    REQUIRE(Round(Quantity(73), -2) == Quantity(100));
+    REQUIRE(round(parse_quantity("0.5"), 0) == Quantity(1));
+    REQUIRE(round(Quantity(5), -2) == Quantity(0));
+    REQUIRE(round(Quantity(37), -2) == Quantity(0));
+    REQUIRE(round(Quantity(33), -2) == Quantity(0));
+    REQUIRE(round(Quantity(37), -3) == Quantity(0));
+    REQUIRE(round(Quantity(73), -2) == Quantity(100));
+    REQUIRE(round(Quantity(73), -2) == Quantity(100));
   }
 }

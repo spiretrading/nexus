@@ -22,18 +22,18 @@ namespace Nexus {
     Quantity m_size;
 
     /** The reference price of the imbalance. */
-    Money m_referencePrice;
+    Money m_reference_price;
 
     /** The timestamp. */
     boost::posix_time::ptime m_timestamp;
 
-    bool operator ==(const OrderImbalance& orderImbalance) const = default;
+    bool operator ==(const OrderImbalance&) const = default;
   };
 
-  inline std::ostream& operator <<(std::ostream& out,
-      const OrderImbalance& value) {
+  inline std::ostream& operator <<(
+      std::ostream& out, const OrderImbalance& value) {
     return out << "(" << value.m_security << " " << value.m_side << " " <<
-      value.m_size << " " << value.m_referencePrice << " " <<
+      value.m_size << " " << value.m_reference_price << " " <<
       value.m_timestamp << ")";
   }
 }
@@ -47,7 +47,7 @@ namespace Beam::Serialization {
       shuttle.Shuttle("security", value.m_security);
       shuttle.Shuttle("side", value.m_side);
       shuttle.Shuttle("size", value.m_size);
-      shuttle.Shuttle("reference_price", value.m_referencePrice);
+      shuttle.Shuttle("reference_price", value.m_reference_price);
       shuttle.Shuttle("timestamp", value.m_timestamp);
     }
   };

@@ -30,13 +30,6 @@ namespace Nexus {
       /** The multiplier used. */
       static constexpr auto MULTIPLIER = std::int64_t(1000000);
 
-      /**
-       * Returns a Quantity from a string.
-       * @param value The value to represent.
-       * @return A Quantity representing the specified <i>value</i>.
-       */
-      static boost::optional<Quantity> FromValue(const std::string& value);
-
       /** Constructs a Quantity with a value of 0. */
       constexpr Quantity();
 
@@ -56,7 +49,7 @@ namespace Nexus {
       constexpr Quantity(double value);
 
       /** Returns a Quantity from its raw representation. */
-      static constexpr  Quantity FromRepresentation(boost::float64_t value);
+      static constexpr Quantity from_representation(boost::float64_t value);
 
       /** Converts this Quantity into a float. */
       explicit constexpr operator boost::float64_t() const;
@@ -154,43 +147,110 @@ namespace Nexus {
       constexpr Quantity operator -() const;
 
       /** Returns the raw representation of this Quantity. */
-      constexpr boost::float64_t GetRepresentation() const;
+      constexpr boost::float64_t get_representation() const;
 
       constexpr auto operator<=>(const Quantity&) const = default;
 
     private:
-      template<typename, typename> friend struct Beam::Serialization::Send;
-      template<typename, typename> friend struct Beam::Serialization::Receive;
-      friend std::ostream& operator <<(std::ostream& out, Quantity value);
-      friend Quantity operator %(Quantity lhs, Quantity rhs);
-      friend Quantity fmod(Quantity lhs, Quantity rhs);
-      friend Quantity Abs(Quantity);
-      friend class std::numeric_limits<Nexus::Quantity>;
       boost::float64_t m_value;
   };
 
+  /**
+   * Attempts to parse a Quantity.
+   * @param value The input string representing a quantity.
+   * @return The parsed Quantity if successful, or boost::none on failure.
+   */
+  inline boost::optional<Quantity> try_parse_quantity(std::string_view value) {
+    if(value.empty()) {
+      return boost::none;
+    }
+    auto i = value.begin();
+    auto sign = std::int64_t();
+    if(*i == '-') {
+      sign = -1;
+      ++i;
+    } else {
+      sign = 1;
+      if(*i == '+') {
+        ++i;
+      }
+    }
+    auto left_hand = std::int64_t(0);
+    auto has_decimals = false;
+    while(i != value.end()) {
+      if(*i >= '0' && *i <= '9') {
+        left_hand *= 10;
+        left_hand += *i - '0';
+        ++i;
+      } else if(*i == '.') {
+        has_decimals = true;
+        ++i;
+        break;
+      } else {
+        return boost::none;
+      }
+    }
+    auto exponent = std::int64_t(0);
+    auto right_hand = std::int64_t(0);
+    if(has_decimals) {
+      auto q = value.end() - 1;
+      while(*q == '0') {
+        --q;
+      }
+      while(i <= q) {
+        if(*i >= '0' && *i <= '9') {
+          right_hand *= 10;
+          right_hand += *i - '0';
+          --exponent;
+          ++i;
+        } else {
+          return boost::none;
+        }
+      }
+    }
+    auto lhs = Quantity::MULTIPLIER * static_cast<boost::float64_t>(left_hand);
+    auto rhs = Quantity::MULTIPLIER * static_cast<boost::float64_t>(right_hand);
+    while(exponent != 0) {
+      rhs /= 10;
+      ++exponent;
+    }
+    return Quantity::from_representation(sign * (lhs + rhs));
+  }
+
+  /**
+   * Parses a Quantity.
+   * @param value The input string representing a quantity.
+   * @return The parsed Quantity.
+   * @throws std::invalid_argument If the input cannot be parsed.
+   */
+  inline Quantity parse_quantity(std::string_view value) {
+    if(auto money = try_parse_quantity(value)) {
+      return *money;
+    }
+    throw std::invalid_argument("Invalid Quantity value given.");
+  }
+
   inline std::ostream& operator <<(std::ostream& out, Quantity value) {
-    auto unscaledValue = value.m_value / Quantity::MULTIPLIER;
-    auto integerPart = boost::float64_t();
-    auto fraction = std::modf(unscaledValue, &integerPart);
+    auto unscaled_value = value.get_representation() / Quantity::MULTIPLIER;
+    auto integer_part = boost::float64_t();
+    auto fraction = std::modf(unscaled_value, &integer_part);
     if(fraction == 0) {
-      return out << static_cast<std::int64_t>(integerPart);
+      return out << static_cast<std::int64_t>(integer_part);
     }
     auto ifs = boost::io::ios_flags_saver(out);
     out << std::fixed;
-    out << unscaledValue;
+    out << unscaled_value;
     return out;
   }
 
   inline std::istream& operator >>(std::istream& in, Quantity& value) {
     auto symbol = std::string();
     in >> symbol;
-    auto parsedValue = Quantity::FromValue(symbol);
-    if(!parsedValue.is_initialized()) {
-      in.setstate(std::ios::failbit);
+    if(auto parsed_value = try_parse_quantity(symbol)) {
+      value = *parsed_value;
       return in;
     }
-    value = *parsedValue;
+    in.setstate(std::ios::failbit);
     return in;
   }
 
@@ -266,7 +326,8 @@ namespace Nexus {
    * @return <i>lhs</i> % <i>rhs</i>
    */
   inline Quantity operator %(Quantity lhs, Quantity rhs) {
-    return Quantity::FromRepresentation(std::fmod(lhs.m_value, rhs.m_value));
+    return Quantity::from_representation(
+      std::fmod(lhs.get_representation(), rhs.get_representation()));
   }
 
   /**
@@ -276,25 +337,26 @@ namespace Nexus {
    * @return <i>lhs</i> % <i>rhs</i>
    */
   inline Quantity fmod(Quantity lhs, Quantity rhs) {
-    return Quantity::FromRepresentation(std::fmod(lhs.m_value, rhs.m_value));
+    return Quantity::from_representation(
+      std::fmod(lhs.get_representation(), rhs.get_representation()));
   }
 
   /**
    * Returns the absolute value.
    * @param value The value.
    */
-  inline Quantity Abs(Quantity value) {
-    return Quantity::FromRepresentation(std::abs(value.m_value));
+  inline Quantity abs(Quantity value) {
+    return Quantity::from_representation(std::abs(value.get_representation()));
   }
 
   /**
    * Returns the floor.
    * @param value The value to floor.
-   * @param decimalPlaces The decimal place to floor to.
+   * @param decimal_places The decimal place to floor to.
    */
-  inline Quantity Floor(Quantity value, int decimalPlaces) {
-    if(decimalPlaces > 0) {
-      auto multiplier = Beam::PowerOfTen(decimalPlaces);
+  inline Quantity floor(Quantity value, int decimal_places) {
+    if(decimal_places > 0) {
+      auto multiplier = Beam::PowerOfTen(decimal_places);
       auto remainder = value % (Quantity(1) / multiplier);
       if(value > 0 || remainder == 0) {
         return value - remainder;
@@ -302,7 +364,7 @@ namespace Nexus {
         return value - ((Quantity(1) / multiplier) + remainder);
       }
     } else {
-      auto multiplier = Beam::PowerOfTen(-decimalPlaces);
+      auto multiplier = Beam::PowerOfTen(-decimal_places);
       auto remainder = value % multiplier;
       if(value > 0 || remainder == 0) {
         return value - remainder;
@@ -315,101 +377,43 @@ namespace Nexus {
   /**
    * Returns the ceiling.
    * @param value The value to ceil.
-   * @param decimalPlaces The decimal place to ceil to.
+   * @param decimal_laces The decimal place to ceil to.
    */
-  inline Quantity Ceil(Quantity value, int decimalPlaces) {
-    return -Floor(-value, decimalPlaces);
+  inline Quantity ceil(Quantity value, int decimal_places) {
+    return -floor(-value, decimal_places);
   }
 
   /**
    * Returns the truncated value.
    * @param value The value to truncate.
-   * @param decimalPlaces The decimal place to truncate.
+   * @param decimal_places The decimal place to truncate.
    */
-  inline Quantity Truncate(Quantity value, int decimalPlaces) {
+  inline Quantity truncate(Quantity value, int decimal_places) {
     if(value < 0) {
-      return Ceil(value, decimalPlaces);
+      return ceil(value, decimal_places);
     } else {
-      return Floor(value, decimalPlaces);
+      return floor(value, decimal_places);
     }
   }
 
   /**
    * Returns the rounded value.
    * @param value The value to round.
-   * @param decimalPlaces The decimal place to round to.
+   * @param decimal_places The decimal place to round to.
    */
-  inline Quantity Round(Quantity value, int decimalPlaces) {
-    if(decimalPlaces >= 0) {
-      auto multiplier = Beam::PowerOfTen(decimalPlaces + 1);
-      return Floor(value + Quantity(5) / multiplier, decimalPlaces);
+  inline Quantity round(Quantity value, int decimal_places) {
+    if(decimal_places >= 0) {
+      auto multiplier = Beam::PowerOfTen(decimal_places + 1);
+      return floor(value + Quantity(5) / multiplier, decimal_places);
     } else {
-      auto multiplier = Beam::PowerOfTen(-(decimalPlaces + 1));
-      return Floor(value + Quantity(5) * multiplier, decimalPlaces);
+      auto multiplier = Beam::PowerOfTen(-(decimal_places + 1));
+      return floor(value + Quantity(5) * multiplier, decimal_places);
     }
   }
 
   inline std::size_t hash_value(Quantity quantity) noexcept {
     auto source = static_cast<boost::float64_t>(quantity);
     return std::hash<decltype(source)>()(source);
-  }
-
-  inline boost::optional<Quantity> Quantity::FromValue(
-      const std::string& value) {
-    if(value.empty()) {
-      return boost::none;
-    }
-    auto i = value.begin();
-    auto sign = std::int64_t();
-    if(*i == '-') {
-      sign = -1;
-      ++i;
-    } else {
-      sign = 1;
-      if(*i == '+') {
-        ++i;
-      }
-    }
-    auto leftHand = std::int64_t(0);
-    auto hasDecimals = false;
-    while(i != value.end()) {
-      if(*i >= '0' && *i <= '9') {
-        leftHand *= 10;
-        leftHand += *i - '0';
-        ++i;
-      } else if(*i == '.') {
-        hasDecimals = true;
-        ++i;
-        break;
-      } else {
-        return boost::none;
-      }
-    }
-    auto exponent = std::int64_t(0);
-    auto rightHand = std::int64_t(0);
-    if(hasDecimals) {
-      auto q = value.end() - 1;
-      while(*q == '0') {
-        --q;
-      }
-      while(i <= q) {
-        if(*i >= '0' && *i <= '9') {
-          rightHand *= 10;
-          rightHand += *i - '0';
-          --exponent;
-          ++i;
-        } else {
-          return boost::none;
-        }
-      }
-    }
-    auto lhs = MULTIPLIER * static_cast<boost::float64_t>(leftHand);
-    auto rhs = MULTIPLIER * static_cast<boost::float64_t>(rightHand);
-    while(exponent != 0) {
-      rhs /= 10;
-      ++exponent;
-    }
-    return Quantity::FromRepresentation(sign * (lhs + rhs));
   }
 
   inline constexpr Quantity::Quantity()
@@ -430,7 +434,7 @@ namespace Nexus {
   inline constexpr Quantity::Quantity(double value)
     : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
 
-  inline constexpr Quantity Quantity::FromRepresentation(
+  inline constexpr Quantity Quantity::from_representation(
       boost::float64_t value) {
     auto q = Quantity();
     q.m_value = value;
@@ -466,7 +470,7 @@ namespace Nexus {
   }
 
   inline constexpr Quantity Quantity::operator +(Quantity rhs) const {
-    return FromRepresentation(m_value + rhs.m_value);
+    return from_representation(m_value + rhs.m_value);
   }
 
   inline constexpr Quantity& Quantity::operator +=(Quantity rhs) {
@@ -486,7 +490,7 @@ namespace Nexus {
   }
 
   inline constexpr Quantity Quantity::operator -(Quantity rhs) const {
-    return FromRepresentation(m_value - rhs.m_value);
+    return from_representation(m_value - rhs.m_value);
   }
 
   inline constexpr Quantity& Quantity::operator -=(Quantity rhs) {
@@ -506,7 +510,7 @@ namespace Nexus {
   }
 
   inline constexpr Quantity Quantity::operator *(Quantity rhs) const {
-    return FromRepresentation(m_value * (rhs.m_value / MULTIPLIER));
+    return from_representation(m_value * (rhs.m_value / MULTIPLIER));
   }
 
   inline constexpr Quantity& Quantity::operator *=(Quantity rhs) {
@@ -515,7 +519,7 @@ namespace Nexus {
   }
 
   inline constexpr Quantity Quantity::operator /(Quantity rhs) const {
-    return FromRepresentation(MULTIPLIER * (m_value / rhs.m_value));
+    return from_representation(MULTIPLIER * (m_value / rhs.m_value));
   }
 
   inline constexpr Quantity& Quantity::operator /=(Quantity rhs) {
@@ -524,10 +528,10 @@ namespace Nexus {
   }
 
   inline constexpr Quantity Quantity::operator -() const {
-    return FromRepresentation(-m_value);
+    return from_representation(-m_value);
   }
 
-  inline constexpr boost::float64_t Quantity::GetRepresentation() const {
+  inline constexpr boost::float64_t Quantity::get_representation() const {
     return m_value;
   }
 }
@@ -541,18 +545,18 @@ namespace Beam::Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, const char* name,
         const Nexus::Quantity& value) const {
-      shuttle.Send(name, value.m_value);
+      shuttle.Send(name, value.get_representation());
     }
   };
 
   template<>
   struct Receive<Nexus::Quantity> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        Nexus::Quantity& value) const {
+    void operator ()(
+        Shuttler& shuttle, const char* name, Nexus::Quantity& value) const {
       auto representation = boost::float64_t();
       shuttle.Shuttle(name, representation);
-      value = Nexus::Quantity::FromRepresentation(representation);
+      value = Nexus::Quantity::from_representation(representation);
     }
   };
 }
@@ -613,47 +617,47 @@ namespace std {
         numeric_limits<boost::float64_t>::tinyness_before;
 
       static constexpr Nexus::Quantity min() {
-        return Nexus::Quantity::FromRepresentation(
+        return Nexus::Quantity::from_representation(
           numeric_limits<boost::float64_t>::min());
       }
 
       static constexpr Nexus::Quantity lowest() {
-        return Nexus::Quantity::FromRepresentation(
+        return Nexus::Quantity::from_representation(
           numeric_limits<boost::float64_t>::lowest());
       }
 
       static constexpr Nexus::Quantity max() {
-        return Nexus::Quantity::FromRepresentation(
+        return Nexus::Quantity::from_representation(
           numeric_limits<boost::float64_t>::max());
       }
 
       static constexpr Nexus::Quantity epsilon() {
-        return Nexus::Quantity::FromRepresentation(
+        return Nexus::Quantity::from_representation(
           numeric_limits<boost::float64_t>::epsilon());
       }
 
       static constexpr Nexus::Quantity round_error() {
-        return Nexus::Quantity::FromRepresentation(
+        return Nexus::Quantity::from_representation(
           numeric_limits<boost::float64_t>::round_error());
       }
 
       static constexpr Nexus::Quantity infinity() {
-        return Nexus::Quantity::FromRepresentation(
+        return Nexus::Quantity::from_representation(
           numeric_limits<boost::float64_t>::infinity());
       }
 
       static constexpr Nexus::Quantity quiet_NaN() {
-        return Nexus::Quantity::FromRepresentation(
+        return Nexus::Quantity::from_representation(
           numeric_limits<boost::float64_t>::quiet_NaN());
       }
 
       static constexpr Nexus::Quantity signaling_NaN() {
-        return Nexus::Quantity::FromRepresentation(
+        return Nexus::Quantity::from_representation(
           numeric_limits<boost::float64_t>::signaling_NaN());
       }
 
       static constexpr Nexus::Quantity denorm_min() {
-        return Nexus::Quantity::FromRepresentation(
+        return Nexus::Quantity::from_representation(
           numeric_limits<boost::float64_t>::denorm_min());
       }
   };
