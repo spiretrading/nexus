@@ -306,7 +306,7 @@ namespace Details {
 
   template<typename T>
   RegionMap<T>::RegionMap(T globalValue)
-    : m_root(Region::Global(), std::move(globalValue)),
+    : m_root(Region::GLOBAL, std::move(globalValue)),
       m_size(1) {}
 
   template<typename T>

@@ -39,7 +39,7 @@ TEST_SUITE("RegionMap") {
     map.set(US, 1);
     map.set(CA, 2);
     auto i = map.begin();
-    REQUIRE(std::get<0>(*i) == Region::Global());
+    REQUIRE(std::get<0>(*i) == Region::GLOBAL);
     ++i;
     REQUIRE(std::get<0>(*i) == US);
   }

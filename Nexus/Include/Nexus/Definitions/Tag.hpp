@@ -8,6 +8,7 @@
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <boost/variant.hpp>
 #include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 
 namespace Nexus {
 
@@ -58,12 +59,10 @@ namespace Nexus {
       Tag(int key, Type value);
 
       /** Returns the key. */
-      int GetKey() const;
+      int get_key() const;
 
       /** Returns the value. */
-      const Type& GetValue() const;
-
-      bool operator ==(const Tag& tag) const = default;
+      const Type& get_value() const;
 
     private:
       friend struct Beam::Serialization::Shuttle<Tag>;
@@ -72,18 +71,18 @@ namespace Nexus {
   };
 
   inline std::ostream& operator <<(std::ostream& out, const Tag& value) {
-    return out << '(' << value.GetKey() << ' ' << value.GetValue() << ')';
+    return out << '(' << value.get_key() << ' ' << value.get_value() << ')';
   }
 
   inline Tag::Tag(int key, Type value)
     : m_key(key),
       m_value(std::move(value)) {}
 
-  inline int Tag::GetKey() const {
+  inline int Tag::get_key() const {
     return m_key;
   }
 
-  inline const Tag::Type& Tag::GetValue() const {
+  inline const Tag::Type& Tag::get_value() const {
     return m_value;
   }
 }
@@ -92,8 +91,8 @@ namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::Tag> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::Tag& value,
-        unsigned int version) {
+    void operator ()(
+        Shuttler& shuttle, Nexus::Tag& value, unsigned int version) const {
       shuttle.Shuttle("key", value.m_key);
       shuttle.Shuttle("value", value.m_value);
     }

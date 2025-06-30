@@ -17,13 +17,13 @@ namespace Nexus {
     public:
 
       /** Returns the global Region. */
-      static Region Global();
+      static const Region GLOBAL;
 
       /**
        * Constructs a global named Region.
        * @param name The name of the Region.
        */
-      static Region Global(std::string name);
+      static Region make_global(std::string name);
 
       /** Constructs an empty Region. */
       Region();
@@ -184,11 +184,9 @@ namespace Nexus {
     return left;
   }
 
-  inline Region Region::Global() {
-    return Region(GlobalTag());
-  }
+  inline const Region Region::GLOBAL = Region(Region::GlobalTag());
 
-  inline Region Region::Global(std::string name) {
+  inline Region Region::make_global(std::string name) {
     return Region(GlobalTag(), std::move(name));
   }
 

@@ -87,8 +87,8 @@ TEST_SUITE("Region") {
 
   TEST_CASE("global_region_superset_of_all") {
     auto country = Region(US);
-    auto global = Region::Global();
-    auto named_global = Region::Global("All Venues");
+    auto global = Region::GLOBAL;
+    auto named_global = Region::make_global("All Venues");
     require_proper_subset(country, global);
     require_proper_subset(country, named_global);
     REQUIRE(global == named_global);

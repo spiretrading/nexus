@@ -1,7 +1,8 @@
 #ifndef NEXUS_SECURITY_INFO_HPP
 #define NEXUS_SECURITY_INFO_HPP
-#include <string>
+#include <functional>
 #include <ostream>
+#include <string>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/Definitions/Security.hpp"
@@ -21,7 +22,7 @@ namespace Nexus {
     std::string m_sector;
 
     /** The board lot. */
-    Quantity m_boardLot;
+    Quantity m_board_lot;
 
     bool operator ==(const SecurityInfo& rhs) const = default;
   };
@@ -29,7 +30,7 @@ namespace Nexus {
   inline std::ostream& operator <<(std::ostream& out,
       const SecurityInfo& value) {
     return out << '(' << value.m_security << ' ' << value.m_name << ' ' <<
-      value.m_sector << ' ' << value.m_boardLot << ')';
+      value.m_sector << ' ' << value.m_board_lot << ')';
   }
 }
 
@@ -38,11 +39,11 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::SecurityInfo> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::SecurityInfo& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("security", value.m_security);
       shuttle.Shuttle("name", value.m_name);
       shuttle.Shuttle("sector", value.m_sector);
-      shuttle.Shuttle("board_lot", value.m_boardLot);
+      shuttle.Shuttle("board_lot", value.m_board_lot);
     }
   };
 }

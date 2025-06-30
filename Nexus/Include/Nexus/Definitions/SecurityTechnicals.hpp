@@ -30,7 +30,7 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::SecurityTechnicals> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::SecurityTechnicals& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("volume", value.m_volume);
       shuttle.Shuttle("high", value.m_high);
       shuttle.Shuttle("low", value.m_low);
