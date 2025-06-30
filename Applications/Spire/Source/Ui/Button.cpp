@@ -14,8 +14,8 @@ using namespace Spire::Styles;
 Button::Button(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body),
-      m_press_observer(*this),
-      m_click_observer(*this) {
+      m_click_observer(*this),
+      m_press_observer(*this) {
   setFocusPolicy(Qt::StrongFocus);
   match(*m_body, Body());
   enclose(*this, *m_body);

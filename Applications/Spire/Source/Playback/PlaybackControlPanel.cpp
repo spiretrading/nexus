@@ -372,21 +372,17 @@ void PlaybackControlPanel::on_play_checked(bool checked) {
 }
 
 void PlaybackControlPanel::on_jump_to_start_click() {
-  QTimer::singleShot(0, this, [=] {
-    m_playhead->set(time_duration(0, 0, 0));
-  });
+  m_playhead->set(time_duration(0, 0, 0));
 }
 
 void PlaybackControlPanel::on_jump_to_end_click() {
-  QTimer::singleShot(0, this, [=] {
-    if(get_end_time(get_timeline()->get()) <
-        m_playhead->m_time_client.GetTime()) {
-      m_playhead->set(get_timeline()->get().m_duration);
-    } else {
-      m_playhead->set(std::max(m_playhead->m_time_client.GetTime() -
-        m_playhead->m_timeline->get().m_start, time_duration(0, 0, 0)));
-    }
-  });
+  if(get_end_time(get_timeline()->get()) <
+      m_playhead->m_time_client.GetTime()) {
+    m_playhead->set(get_timeline()->get().m_duration);
+  } else {
+    m_playhead->set(std::max(m_playhead->m_time_client.GetTime() -
+      m_playhead->m_timeline->get().m_start, time_duration(0, 0, 0)));
+  }
 }
 
 void PlaybackControlPanel::on_date_submit(const optional<date>& date) {
