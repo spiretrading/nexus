@@ -26,13 +26,13 @@ namespace Nexus {
       static Region make_global(std::string name);
 
       /** Constructs an empty Region. */
-      Region();
+      Region() noexcept;
 
       /**
        * Constructs an empty named Region.
        * @param name The name of the Region.
        */
-      explicit Region(std::string name);
+      explicit Region(std::string name) noexcept;
 
       /**
        * Constructs a Region consisting of a single country.
@@ -190,10 +190,10 @@ namespace Nexus {
     return Region(GlobalTag(), std::move(name));
   }
 
-  inline Region::Region()
+  inline Region::Region() noexcept
     : m_is_global(false) {}
 
-  inline Region::Region(std::string name)
+  inline Region::Region(std::string name) noexcept
     : m_is_global(false),
       m_name(std::move(name)) {}
 

@@ -36,20 +36,13 @@ namespace Nexus {
        * Constructs a Money value.
        * @param value The value to represent.
        */
-      explicit constexpr Money(Quantity value);
+      explicit constexpr Money(Quantity value) noexcept;
 
       /** Converts this Money to a float. */
       explicit constexpr operator boost::float64_t() const;
 
       /** Converts this Money to a Quantity. */
       explicit constexpr operator Quantity() const;
-
-      /**
-       * Assignment operator.
-       * @param rhs The right hand side of the operation.
-       * @return <i>this</i>.
-       */
-      constexpr Money& operator =(Money rhs);
 
       /**
        * Adds two Money instances together.
@@ -267,7 +260,7 @@ namespace Nexus {
     return in;
   }
 
-  inline constexpr Money::Money(Quantity value)
+  inline constexpr Money::Money(Quantity value) noexcept
     : m_value(value) {}
 
   inline constexpr Money::operator boost::float64_t() const {
@@ -276,11 +269,6 @@ namespace Nexus {
 
   inline constexpr Money::operator Quantity() const {
     return m_value;
-  }
-
-  inline constexpr Money& Money::operator =(Money rhs) {
-    m_value = rhs.m_value;
-    return *this;
   }
 
   inline constexpr Money Money::operator +(Money rhs) const {

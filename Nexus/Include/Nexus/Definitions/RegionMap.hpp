@@ -61,7 +61,7 @@ namespace Details {
         public:
           using iterator_category = std::forward_iterator_tag;
 
-          using value_type = std::tuple<const Region, T>;
+          using value_type = std::tuple<const Region, Element>;
 
           using difference_type = std::ptrdiff_t;
 
@@ -85,13 +85,13 @@ namespace Details {
           bool operator !=(const Iterator& rhs);
 
           /** Dereferences this Iterator. */
-          std::tuple<const Region, T>& operator *();
+          std::tuple<const Region, Element>& operator *();
 
         private:
-          friend class RegionMap<T>;
-          std::deque<Details::Node<T>*> m_nodes;
+          friend class RegionMap<Element>;
+          std::deque<Details::Node<Element>*> m_nodes;
 
-          Iterator(Details::Node<T>& root);
+          Iterator(Details::Node<Element>& root);
       };
 
       /** Allows iterating over a RegionMap. */
@@ -99,7 +99,7 @@ namespace Details {
         public:
           using iterator_category = std::forward_iterator_tag;
 
-          using value_type = const std::tuple<const Region, T>;
+          using value_type = const std::tuple<const Region, Element>;
 
           using difference_type = std::ptrdiff_t;
 
@@ -123,27 +123,27 @@ namespace Details {
           bool operator !=(const ConstIterator& rhs);
 
           /** Dereferences this ConstIterator. */
-          const std::tuple<const Region, T>& operator *();
+          const std::tuple<const Region, Element>& operator *();
 
         private:
-          friend class RegionMap<T>;
-          std::deque<const Details::Node<T>*> m_nodes;
+          friend class RegionMap<Element>;
+          std::deque<const Details::Node<Element>*> m_nodes;
 
-          ConstIterator(const Details::Node<T>& root);
+          ConstIterator(const Details::Node<Element>& root);
       };
 
       /**
        * Constructs a RegionMap.
-       * @param globalValue The value associated with the 'global' Region.
+       * @param global The value associated with the 'global' Region.
        */
-      explicit RegionMap(T globalValue);
+      explicit RegionMap(Element global);
 
       /**
        * Constructs a RegionMap.
        * @param name The name of the 'global' Region.
-       * @param globalValue The value associated with the 'global' Region.
+       * @param global The value associated with the 'global' Region.
        */
-      RegionMap(std::string name, T globalValue);
+      RegionMap(std::string name, Element global);
 
       /** Returns the number of Regions represented. */
       std::size_t get_size() const;
@@ -153,21 +153,21 @@ namespace Details {
        * @param region The Region to retrieve the associated value of.
        * @return The value associated with the <i>region</i>.
        */
-      const T& get(const Region& region) const;
+      const Element& get(const Region& region) const;
 
       /**
        * Returns the value associated with a Region.
        * @param region The Region to retrieve the associated value of.
        * @return The value associated with the <i>region</i>.
        */
-      T& get(const Region& region);
+      Element& get(const Region& region);
 
       /**
        * Sets a value to be associated with a Region.
        * @param region The Region to associate.
        * @param value The value to associate with the <i>region</i>.
        */
-      void set(const Region& region, const T& value);
+      void set(const Region& region, const Element& value);
 
       /**
        * Erases a Region.
@@ -208,17 +208,18 @@ namespace Details {
     private:
       friend struct Beam::Serialization::DataShuttle;
       friend struct Beam::Serialization::Shuttle<RegionMap>;
-      Details::Node<T> m_root;
+      Details::Node<Element> m_root;
       std::size_t m_size;
 
       RegionMap(Beam::Serialization::ReceiveBuilder);
-      void insert(Details::Node<T>& root, Region region, T value);
-      static Details::Node<T>& find(
-        Details::Node<T>& root, const Region& region);
-      static const Details::Node<T>& find(
-        const Details::Node<T>& root, const Region& region);
-      std::pair<Details::Node<T>*, Details::Node<T>*> find(
-        Details::Node<T>* parent, Details::Node<T>* root, const Region& region);
+      void insert(Details::Node<Element>& root, Region region, Element value);
+      static Details::Node<Element>& find(
+        Details::Node<Element>& root, const Region& region);
+      static const Details::Node<Element>& find(
+        const Details::Node<Element>& root, const Region& region);
+      std::pair<Details::Node<Element>*, Details::Node<Element>*> find(
+        Details::Node<Element>* parent, Details::Node<Element>* root,
+        const Region& region);
   };
 
   template<typename T>
@@ -252,19 +253,20 @@ namespace Details {
   }
 
   template<typename T>
-  std::tuple<const Region, T>& RegionMap<T>::Iterator::operator *() {
-    return static_cast<std::tuple<const Region, T>&>(
+  std::tuple<const Region, typename RegionMap<T>::Element>&
+      RegionMap<T>::Iterator::operator *() {
+    return static_cast<std::tuple<const Region, Element>&>(
       m_nodes.front()->m_element);
   }
 
   template<typename T>
-  RegionMap<T>::Iterator::Iterator(Details::Node<T>& root) {
+  RegionMap<T>::Iterator::Iterator(Details::Node<Element>& root) {
     m_nodes.push_back(&root);
   }
 
   template<typename T>
-  typename RegionMap<T>::ConstIterator& RegionMap<T>::ConstIterator::
-      operator ++() {
+  typename RegionMap<T>::ConstIterator&
+      RegionMap<T>::ConstIterator::operator ++() {
     auto node = m_nodes.front();
     m_nodes.pop_front();
     std::transform(node->m_sub_regions.begin(), node->m_sub_regions.end(),
@@ -275,8 +277,8 @@ namespace Details {
   }
 
   template<typename T>
-  typename RegionMap<T>::ConstIterator RegionMap<T>::ConstIterator::
-      operator ++(int) {
+  typename RegionMap<T>::ConstIterator
+      RegionMap<T>::ConstIterator::operator ++(int) {
     auto tmp = *this;
     ++*this;
     return tmp;
@@ -295,23 +297,25 @@ namespace Details {
   }
 
   template<typename T>
-  const std::tuple<const Region, T>& RegionMap<T>::ConstIterator::operator *() {
+  const std::tuple<const Region, typename RegionMap<T>::Element>&
+      RegionMap<T>::ConstIterator::operator *() {
     return m_nodes.front()->m_element;
   }
 
   template<typename T>
-  RegionMap<T>::ConstIterator::ConstIterator(const Details::Node<T>& root) {
+  RegionMap<T>::ConstIterator::ConstIterator(
+      const Details::Node<Element>& root) {
     m_nodes.push_back(&root);
   }
 
   template<typename T>
-  RegionMap<T>::RegionMap(T globalValue)
-    : m_root(Region::GLOBAL, std::move(globalValue)),
+  RegionMap<T>::RegionMap(Element global)
+    : m_root(Region::GLOBAL, std::move(global)),
       m_size(1) {}
 
   template<typename T>
-  RegionMap<T>::RegionMap(std::string name, T globalValue)
-    : m_root(Region::Global(std::move(name)), std::move(globalValue)),
+  RegionMap<T>::RegionMap(std::string name, Element global)
+    : m_root(Region::make_global(std::move(name)), std::move(global)),
       m_size(1) {}
 
   template<typename T>
@@ -320,17 +324,18 @@ namespace Details {
   }
 
   template<typename T>
-  const T& RegionMap<T>::get(const Region& region) const {
+  const typename RegionMap<T>::Element&
+      RegionMap<T>::get(const Region& region) const {
     return std::get<1>(find(m_root, region).m_element);
   }
 
   template<typename T>
-  T& RegionMap<T>::get(const Region& region) {
+  typename RegionMap<T>::Element& RegionMap<T>::get(const Region& region) {
     return std::get<1>(find(m_root, region).m_element);
   }
 
   template<typename T>
-  void RegionMap<T>::set(const Region& region, const T& value) {
+  void RegionMap<T>::set(const Region& region, const Element& value) {
     if(region == std::get<0>(m_root.m_element)) {
       std::get<1>(m_root.m_element) = value;
       return;
@@ -395,12 +400,13 @@ namespace Details {
 
   template<typename T>
   RegionMap<T>::RegionMap(Beam::Serialization::ReceiveBuilder)
-    : m_root(Region::Global(), {}),
+    : m_root(Region::GLOBAL, {}),
       m_size(1) {}
 
   template<typename T>
-  void RegionMap<T>::insert(Details::Node<T>& root, Region region, T value) {
-    auto sub_regions = std::vector<std::unique_ptr<Details::Node<T>>>();
+  void RegionMap<T>::insert(
+      Details::Node<Element>& root, Region region, Element value) {
+    auto sub_regions = std::vector<std::unique_ptr<Details::Node<Element>>>();
     auto i = root.m_sub_regions.begin();
     while(i != root.m_sub_regions.end()) {
       if(region < std::get<0>((*i)->m_element)) {
@@ -416,16 +422,16 @@ namespace Details {
         ++i;
       }
     }
-    auto sub_region =
-      std::make_unique<Details::Node<T>>(std::move(region), std::move(value));
+    auto sub_region = std::make_unique<Details::Node<Element>>(
+      std::move(region), std::move(value));
     sub_region->m_sub_regions.swap(sub_regions);
     root.m_sub_regions.push_back(std::move(sub_region));
     ++m_size;
   }
 
   template<typename T>
-  Details::Node<T>& RegionMap<T>::find(
-      Details::Node<T>& root, const Region& region) {
+  Details::Node<typename RegionMap<T>::Element>& RegionMap<T>::find(
+      Details::Node<Element>& root, const Region& region) {
     for(auto& sub_region : root.m_sub_regions) {
       if(region <= std::get<0>(sub_region->m_element)) {
         return find(*sub_region, region);
@@ -435,14 +441,16 @@ namespace Details {
   }
 
   template<typename T>
-  const Details::Node<T>& RegionMap<T>::find(
-      const Details::Node<T>& root, const Region& region) {
-    return find(const_cast<Details::Node<T>&>(root), region);
+  const Details::Node<typename RegionMap<T>::Element>& RegionMap<T>::find(
+      const Details::Node<Element>& root, const Region& region) {
+    return find(const_cast<Details::Node<Element>&>(root), region);
   }
 
   template<typename T>
-  std::pair<Details::Node<T>*, Details::Node<T>*> RegionMap<T>::find(
-      Details::Node<T>* parent, Details::Node<T>* root, const Region& region) {
+  std::pair<Details::Node<typename RegionMap<T>::Element>*,
+      Details::Node<typename RegionMap<T>::Element>*> RegionMap<T>::find(
+      Details::Node<Element>* parent, Details::Node<Element>* root,
+      const Region& region) {
     for(auto& sub_region : root->m_sub_regions) {
       if(region <= std::get<0>(sub_region->m_element)) {
         return find(root, sub_region.get(), region);

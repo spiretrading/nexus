@@ -37,7 +37,7 @@ namespace Details {
       /** The condition's code. */
       std::string m_code;
 
-      bool operator ==(const Condition& condition) const = default;
+      bool operator ==(const Condition&) const = default;
     };
 
     /** The time of the transaction. */
@@ -61,7 +61,7 @@ namespace Details {
     /** The seller MPID. */
     std::string m_sellerMpid;
 
-    bool operator ==(const TimeAndSale& timeAndSale) const = default;
+    bool operator ==(const TimeAndSale&) const = default;
   };
 
   inline std::ostream& operator <<(std::ostream& out,

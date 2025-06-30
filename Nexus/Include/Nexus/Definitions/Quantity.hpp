@@ -31,22 +31,22 @@ namespace Nexus {
       static constexpr auto MULTIPLIER = std::int64_t(1000000);
 
       /** Constructs a Quantity with a value of 0. */
-      constexpr Quantity();
+      constexpr Quantity() noexcept;
 
       /** Constructs a Quantity from an int32. */
-      constexpr Quantity(std::int32_t value);
+      constexpr Quantity(std::int32_t value) noexcept;
 
       /** Constructs a Quantity from a uint32. */
-      constexpr Quantity(std::uint32_t value);
+      constexpr Quantity(std::uint32_t value) noexcept;
 
       /** Constructs a Quantity from an int64. */
-      constexpr Quantity(std::int64_t value);
+      constexpr Quantity(std::int64_t value) noexcept;
 
       /** Constructs a Quantity from a uint64. */
-      constexpr Quantity(std::uint64_t value);
+      constexpr Quantity(std::uint64_t value) noexcept;
 
       /** Constructs a Quantity from a double. */
-      constexpr Quantity(double value);
+      constexpr Quantity(double value) noexcept;
 
       /** Returns a Quantity from its raw representation. */
       static constexpr Quantity from_representation(boost::float64_t value);
@@ -416,22 +416,22 @@ namespace Nexus {
     return std::hash<decltype(source)>()(source);
   }
 
-  inline constexpr Quantity::Quantity()
+  inline constexpr Quantity::Quantity() noexcept
     : m_value(0) {}
 
-  inline constexpr Quantity::Quantity(std::int32_t value)
+  inline constexpr Quantity::Quantity(std::int32_t value) noexcept
     : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
 
-  inline constexpr Quantity::Quantity(std::uint32_t value)
+  inline constexpr Quantity::Quantity(std::uint32_t value) noexcept
     : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
 
-  inline constexpr Quantity::Quantity(std::int64_t value)
+  inline constexpr Quantity::Quantity(std::int64_t value) noexcept
     : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
 
-  inline constexpr Quantity::Quantity(std::uint64_t value)
+  inline constexpr Quantity::Quantity(std::uint64_t value) noexcept
     : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
 
-  inline constexpr Quantity::Quantity(double value)
+  inline constexpr Quantity::Quantity(double value) noexcept
     : m_value(static_cast<boost::float64_t>(MULTIPLIER * value)) {}
 
   inline constexpr Quantity Quantity::from_representation(

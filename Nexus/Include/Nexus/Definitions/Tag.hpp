@@ -64,6 +64,8 @@ namespace Nexus {
       /** Returns the value. */
       const Type& get_value() const;
 
+      bool operator ==(const Tag&) const = default;
+
     private:
       friend struct Beam::Serialization::Shuttle<Tag>;
       int m_key;

@@ -24,7 +24,7 @@ namespace Nexus {
     /** The board lot. */
     Quantity m_board_lot;
 
-    bool operator ==(const SecurityInfo& rhs) const = default;
+    bool operator ==(const SecurityInfo&) const = default;
   };
 
   inline std::ostream& operator <<(std::ostream& out,
