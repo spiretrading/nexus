@@ -57,7 +57,7 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::BookQuote> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::BookQuote& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("mpid", value.m_mpid);
       shuttle.Shuttle("is_primary_mpid", value.m_is_primary_mpid);
       shuttle.Shuttle("venue", value.m_venue);

@@ -378,7 +378,7 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::DestinationDatabase::Entry> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
-        Nexus::DestinationDatabase::Entry& value, unsigned int version) {
+        Nexus::DestinationDatabase::Entry& value, unsigned int version) const {
       shuttle.Shuttle("id", value.m_id);
       shuttle.Shuttle("venues", value.m_venues);
       shuttle.Shuttle("description", value.m_description);
@@ -389,7 +389,7 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::DestinationDatabase> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::DestinationDatabase& value,
-        unsigned int version) {
+        unsigned int version) const {
 #if 0 // TODO
       shuttle.Shuttle("entries", value.m_entries);
       shuttle.Shuttle("preferred_destinations", value.m_preferred_destinations);

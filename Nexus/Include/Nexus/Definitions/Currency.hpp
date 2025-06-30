@@ -313,7 +313,7 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::CurrencyDatabase::Entry> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::CurrencyDatabase::Entry& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("id", value.m_id);
       shuttle.Shuttle("code", value.m_code);
       shuttle.Shuttle("sign", value.m_sign);
@@ -324,7 +324,7 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::CurrencyDatabase> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::CurrencyDatabase& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("entries", value.m_entries);
     }
   };

@@ -4,6 +4,8 @@
 #include "Nexus/Definitions/Region.hpp"
 
 using namespace Nexus;
+using namespace Nexus::DefaultCountries;
+using namespace Nexus::DefaultVenues;
 
 namespace {
   void TestProperSubset(const Region& subset, const Region& superset) {
@@ -39,32 +41,27 @@ namespace {
 
 TEST_SUITE("Region") {
   TEST_CASE("venue_region_subset_of_country_region") {
-    auto country = DefaultCountries::US;
-    auto venue = DEFAULT_VENUES.from(DefaultVenues::NASDAQ);
-    TestProperSubset(venue, country);
+    auto venue = DEFAULT_VENUES.from(NASDAQ);
+    TestProperSubset(venue, US);
   }
 
   TEST_CASE("security_region_subset_of_venue_region") {
-    auto venue = DEFAULT_VENUES.from(DefaultVenues::NASDAQ);
-    auto security =
-      Security("TST", DefaultVenues::NASDAQ, DefaultCountries::US);
+    auto venue = DEFAULT_VENUES.from(NASDAQ);
+    auto security = Security("TST", NASDAQ);
     TestProperSubset(security, venue);
   }
 
   TEST_CASE("security_region_subset_of_country_region") {
-    auto country = DefaultCountries::US;
-    auto security =
-      Security("TST", DefaultVenues::NASDAQ, DefaultCountries::US);
-    TestProperSubset(security, country);
+    auto security = Security("TST", NASDAQ);
+    TestProperSubset(security, US);
   }
 
   TEST_CASE("distinct_country_regions") {
-    auto us = Region(DefaultCountries::US);
-    auto ca = Region(DefaultCountries::CA);
+    auto us = Region(US);
+    auto ca = Region(CA);
     TestDistinctSets(us, ca);
     auto northAmerica = us + ca;
-    auto br = DefaultCountries::BR;
-    TestDistinctSets(northAmerica, br);
+    TestDistinctSets(northAmerica, BR);
     TestProperSubset(us, northAmerica);
     TestProperSubset(ca, northAmerica);
   }
@@ -80,8 +77,8 @@ TEST_SUITE("Region") {
   }
 
   TEST_CASE("named_and_unnamed_region_equality") {
-    auto r1 = Region(DefaultCountries::US);
-    auto r2 = Region(DefaultCountries::US);
+    auto r1 = Region(US);
+    auto r2 = Region(US);
     r2.SetName("US Region");
     REQUIRE(r1 == r2);
     REQUIRE(r1 <= r2);
@@ -91,7 +88,7 @@ TEST_SUITE("Region") {
   }
 
   TEST_CASE("global_region_superset_of_all") {
-    auto country = Region(DefaultCountries::US);
+    auto country = Region(US);
     auto global = Region::Global();
     auto namedGlobal = Region::Global("All Venues");
     TestProperSubset(country, global);
@@ -104,32 +101,29 @@ TEST_SUITE("Region") {
   }
 
   TEST_CASE("distinct_venues") {
-    auto nasdaq =
-      Region(DEFAULT_VENUES.from(DefaultVenues::NASDAQ));
-    auto nyse = Region(DEFAULT_VENUES.from(DefaultVenues::NYSE));
+    auto nasdaq = Region(DEFAULT_VENUES.from(NASDAQ));
+    auto nyse = Region(DEFAULT_VENUES.from(NYSE));
     TestDistinctSets(nasdaq, nyse);
   }
 
   TEST_CASE("venue_entry_constructor_equivalence") {
-    auto fromCodes = Region(DefaultVenues::NASDAQ, DefaultCountries::US);
-    auto fromEntry =
-      Region(DEFAULT_VENUES.from(DefaultVenues::NASDAQ));
+    auto fromCodes = Region(NASDAQ, US);
+    auto fromEntry = Region(DEFAULT_VENUES.from(NASDAQ));
     REQUIRE(fromCodes == fromEntry);
     REQUIRE(fromCodes <= fromEntry);
   }
 
   TEST_CASE("empty_subset_of_non_empty") {
     auto empty = Region();
-    auto country = Region(DefaultCountries::US);
+    auto country = Region(US);
     TestProperSubset(empty, country);
   }
 
   TEST_CASE("security_in_union_region") {
-    auto us = Region(DefaultCountries::US);
-    auto ca = Region(DefaultCountries::CA);
+    auto us = Region(US);
+    auto ca = Region(CA);
     auto unionRegion = us + ca;
-    auto security =
-      Security("TST", DefaultVenues::NASDAQ, DefaultCountries::US);
+    auto security = Security("TST", NASDAQ);
     REQUIRE(security <= unionRegion);
     REQUIRE(security < unionRegion);
     REQUIRE(unionRegion >= security);
@@ -137,8 +131,8 @@ TEST_SUITE("Region") {
   }
 
   TEST_CASE("combine_regions_operator_plus_and_plus_eq") {
-    auto us = Region(DefaultCountries::US);
-    auto ca = Region(DefaultCountries::CA);
+    auto us = Region(US);
+    auto ca = Region(CA);
     auto combined = us;
     combined += ca;
     auto plusCombined = us + ca;

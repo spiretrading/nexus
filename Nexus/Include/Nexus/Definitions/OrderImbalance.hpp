@@ -44,7 +44,7 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::OrderImbalance> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::OrderImbalance& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("security", value.m_security);
       shuttle.Shuttle("side", value.m_side);
       shuttle.Shuttle("size", value.m_size);

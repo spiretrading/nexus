@@ -6,9 +6,9 @@
 #include <string_view>
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
-#include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/FixedString.hpp>
+#include <Beam/Utilities/ScopedStreamManipulator.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
@@ -32,25 +32,7 @@ namespace Nexus {
        * @brief Constructs a Venue from a market identifier code.
        * @param mic The market identifier code.
        */
-      Venue(const char* mic) noexcept;
-
-      /**
-       * @brief Constructs a Venue from a market identifier code.
-       * @param mic The market identifier code.
-       */
-      Venue(const std::string& mic) noexcept;
-
-      /**
-       * @brief Constructs a Venue from a market identifier code.
-       * @param mic The market identifier code.
-       */
-      Venue(std::string_view mic) noexcept;
-
-      /**
-       * @brief Constructs a Venue from a market identifier code.
-       * @param mic The market identifier code.
-       */
-      Venue(Code mic) noexcept;
+      explicit Venue(Code mic) noexcept;
 
       Code get_code() const;
 
@@ -105,6 +87,13 @@ namespace Nexus {
       const Entry& from(Venue venue) const;
 
       /**
+       * Returns an Entry from its Venue.
+       * @param venue The Venue to lookup.
+       * @return The Entry with the specified venue.
+       */
+      const Entry& from(std::string_view venue) const;
+
+      /**
        * Returns an Entry from its display name.
        * @param display_name The market's display name.
        * @return The Entry with the specified display_name.
@@ -145,7 +134,7 @@ namespace Nexus {
       std::string_view source, const VenueDatabase& database) {
     auto& entry = database.from_display_name(source);
     if(entry.m_venue == Venue()) {
-      return database.from(source);
+      return database.from(Venue(source));
     }
     return entry;
   }
@@ -171,7 +160,7 @@ namespace Nexus {
       const CurrencyDatabase& currency_database) {
     return Beam::TryOrNest([&] {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = Beam::Extract<std::string>(node, "venue");
+      entry.m_venue = Venue(Beam::Extract<std::string>(node, "venue"));
       entry.m_country_code = parse_country_code(
         Beam::Extract<std::string>(node, "country_code"), country_database);
       if(entry.m_country_code == CountryCode::NONE) {
@@ -270,15 +259,6 @@ namespace Nexus {
     return utc_venue_date;
   }
 
-  inline Venue::Venue(const char* mic) noexcept
-    : m_mic(mic) {}
-
-  inline Venue::Venue(const std::string& mic) noexcept
-    : m_mic(mic) {}
-
-  inline Venue::Venue(std::string_view mic) noexcept
-    : m_mic(std::move(mic)) {}
-
   inline Venue::Venue(Code mic) noexcept
     : m_mic(std::move(mic)) {}
 
@@ -300,6 +280,11 @@ namespace Nexus {
       return *i;
     }
     return NONE;
+  }
+
+  inline const VenueDatabase::Entry&
+      VenueDatabase::from(std::string_view venue) const {
+    return from(Venue(venue));
   }
 
   inline const VenueDatabase::Entry&

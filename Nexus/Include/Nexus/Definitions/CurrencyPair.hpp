@@ -78,7 +78,7 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::CurrencyPair> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::CurrencyPair& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("base", value.m_base);
       shuttle.Shuttle("counter", value.m_counter);
     }

@@ -8,9 +8,8 @@ using namespace Nexus;
 
 TEST_SUITE("OrderImbalance") {
   TEST_CASE("stream") {
-    auto imbalance = OrderImbalance(
-      Security("ABC", DefaultVenues::TSX, DefaultCountries::CA), Side::BID, 42,
-      Money(12345), time_from_string("2020-01-02 03:04:05"));
+    auto imbalance = OrderImbalance(Security("ABC", DefaultVenues::TSX),
+      Side::BID, 42, Money(12345), time_from_string("2020-01-02 03:04:05"));
     auto ss = std::ostringstream();
     ss << imbalance.m_security;
     auto expected_security = ss.str();

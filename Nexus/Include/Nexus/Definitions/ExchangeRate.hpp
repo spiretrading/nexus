@@ -72,7 +72,7 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::ExchangeRate> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::ExchangeRate& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("pair", value.m_pair);
       shuttle.Shuttle("rate", value.m_rate);
     }

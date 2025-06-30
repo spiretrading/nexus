@@ -252,20 +252,7 @@ namespace Nexus {
 
   inline Region::Region(Security security)
       : m_isGlobal(false) {
-    if(security.GetSymbol() == "*") {
-      if(security.GetVenue() == "*" || security.GetVenue() == Venue()) {
-        if(security.GetCountry() == CountryCode::NONE) {
-          m_isGlobal = true;
-        } else {
-          m_countries.insert(security.GetCountry());
-        }
-      } else {
-        m_venues.insert(
-          VenueEntry(security.GetVenue(), security.GetCountry()));
-      }
-    } else {
-      m_securities.insert(std::move(security));
-    }
+    m_securities.insert(std::move(security));
   }
 
   inline const std::string& Region::GetName() const {
@@ -324,6 +311,8 @@ namespace Nexus {
   }
 
   inline bool Region::operator <=(const Region& region) const {
+    return false;
+#if 0
     if(region.m_isGlobal) {
       return true;
     } else if(m_isGlobal) {
@@ -358,6 +347,7 @@ namespace Nexus {
       return false;
     }
     return true;
+#endif
   }
 
   inline bool Region::operator ==(const Region& region) const {

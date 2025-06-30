@@ -60,8 +60,8 @@ namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::BboQuote> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::BboQuote& value,
-        unsigned int version) {
+    void operator ()(
+        Shuttler& shuttle, Nexus::BboQuote& value, unsigned int version) const {
       shuttle.Shuttle("bid", value.m_bid);
       shuttle.Shuttle("ask", value.m_ask);
       shuttle.Shuttle("timestamp", value.m_timestamp);

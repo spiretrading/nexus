@@ -367,8 +367,8 @@ namespace Beam::Serialization {
   template<>
   struct Send<Nexus::CountryCode> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        Nexus::CountryCode value) const {
+    void operator ()(
+        Shuttler& shuttle, const char* name, Nexus::CountryCode value) const {
       shuttle.Send(name, static_cast<std::uint16_t>(value));
     }
   };
@@ -376,8 +376,8 @@ namespace Beam::Serialization {
   template<>
   struct Receive<Nexus::CountryCode> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        Nexus::CountryCode& value) const {
+    void operator ()(
+        Shuttler& shuttle, const char* name, Nexus::CountryCode& value) const {
       auto representation = std::uint16_t();
       shuttle.Shuttle(name, representation);
       value = Nexus::CountryCode(representation);
@@ -388,7 +388,7 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::CountryDatabase::Entry> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::CountryDatabase::Entry& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("code", value.m_code);
       shuttle.Shuttle("name", value.m_name);
       shuttle.Shuttle("two_letter_code", value.m_two_letter_code);
@@ -400,7 +400,7 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::CountryDatabase> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::CountryDatabase& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("entries", value.m_entries);
     }
   };

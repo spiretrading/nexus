@@ -13,7 +13,7 @@ namespace Nexus {
     auto database = VenueDatabase();
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XASX";
+      entry.m_venue = Venue("XASX");
       entry.m_country_code = DefaultCountries::AU;
       entry.m_time_zone = "Australian_Eastern_Standard_Time";
       entry.m_currency = DefaultCurrencies::AUD;
@@ -23,7 +23,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "CHIA";
+      entry.m_venue = Venue("CHIA");
       entry.m_country_code = DefaultCountries::AU;
       entry.m_time_zone = "Australian_Eastern_Standard_Time";
       entry.m_currency = DefaultCurrencies::AUD;
@@ -33,7 +33,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XASE";
+      entry.m_venue = Venue("XASE");
       entry.m_country_code = DefaultCountries::US;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::USD;
@@ -43,7 +43,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "ARCX";
+      entry.m_venue = Venue("ARCX");
       entry.m_country_code = DefaultCountries::US;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::USD;
@@ -53,7 +53,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "BATS";
+      entry.m_venue = Venue("BATS");
       entry.m_country_code = DefaultCountries::US;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::USD;
@@ -63,7 +63,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "BATY";
+      entry.m_venue = Venue("BATY");
       entry.m_country_code = DefaultCountries::US;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::USD;
@@ -73,7 +73,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XBOS";
+      entry.m_venue = Venue("XBOS");
       entry.m_country_code = DefaultCountries::US;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::USD;
@@ -83,7 +83,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XCBO";
+      entry.m_venue = Venue("XCBO");
       entry.m_country_code = DefaultCountries::US;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::USD;
@@ -93,7 +93,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XCIS";
+      entry.m_venue = Venue("XCIS");
       entry.m_country_code = DefaultCountries::US;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::USD;
@@ -103,7 +103,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XADF";
+      entry.m_venue = Venue("XADF");
       entry.m_country_code = DefaultCountries::US;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::USD;
@@ -113,7 +113,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XISX";
+      entry.m_venue = Venue("XISX");
       entry.m_country_code = DefaultCountries::US;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::USD;
@@ -123,7 +123,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "EDGA";
+      entry.m_venue = Venue("EDGA");
       entry.m_country_code = DefaultCountries::US;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::USD;
@@ -133,7 +133,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "EDGX";
+      entry.m_venue = Venue("EDGX");
       entry.m_country_code = DefaultCountries::US;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::USD;
@@ -143,7 +143,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XNYS";
+      entry.m_venue = Venue("XNYS");
       entry.m_country_code = DefaultCountries::US;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::USD;
@@ -153,7 +153,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XNAS";
+      entry.m_venue = Venue("XNAS");
       entry.m_country_code = DefaultCountries::US;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::USD;
@@ -163,7 +163,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XPHL";
+      entry.m_venue = Venue("XPHL");
       entry.m_country_code = DefaultCountries::US;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::USD;
@@ -173,7 +173,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XATS";
+      entry.m_venue = Venue("XATS");
       entry.m_country_code = DefaultCountries::CA;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::CAD;
@@ -183,7 +183,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "CHIC";
+      entry.m_venue = Venue("CHIC");
       entry.m_country_code = DefaultCountries::CA;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::CAD;
@@ -193,7 +193,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XCNQ";
+      entry.m_venue = Venue("XCNQ");
       entry.m_country_code = DefaultCountries::CA;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::CAD;
@@ -203,7 +203,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "CSE2";
+      entry.m_venue = Venue("CSE2");
       entry.m_country_code = DefaultCountries::CA;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::CAD;
@@ -213,7 +213,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XCX2";
+      entry.m_venue = Venue("XCX2");
       entry.m_country_code = DefaultCountries::CA;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::CAD;
@@ -223,7 +223,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "LYNX";
+      entry.m_venue = Venue("LYNX");
       entry.m_country_code = DefaultCountries::CA;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::CAD;
@@ -233,7 +233,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "MATN";
+      entry.m_venue = Venue("MATN");
       entry.m_country_code = DefaultCountries::CA;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::CAD;
@@ -243,7 +243,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "NEOE";
+      entry.m_venue = Venue("NEOE");
       entry.m_country_code = DefaultCountries::CA;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::CAD;
@@ -253,7 +253,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "OMGA";
+      entry.m_venue = Venue("OMGA");
       entry.m_country_code = DefaultCountries::CA;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::CAD;
@@ -263,7 +263,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "PURE";
+      entry.m_venue = Venue("PURE");
       entry.m_country_code = DefaultCountries::CA;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::CAD;
@@ -273,7 +273,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XTSE";
+      entry.m_venue = Venue("XTSE");
       entry.m_country_code = DefaultCountries::CA;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::CAD;
@@ -283,7 +283,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XTSX";
+      entry.m_venue = Venue("XTSX");
       entry.m_country_code = DefaultCountries::CA;
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::CAD;
@@ -293,7 +293,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XHKG";
+      entry.m_venue = Venue("XHKG");
       entry.m_country_code = DefaultCountries::HK;
       entry.m_time_zone = "Asia/Hong_Kong";
       entry.m_currency = DefaultCurrencies::HKD;
@@ -303,7 +303,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XFKA";
+      entry.m_venue = Venue("XFKA");
       entry.m_country_code = DefaultCountries::JP;
       entry.m_time_zone = "Asia/Tokyo";
       entry.m_currency = DefaultCurrencies::JPY;
@@ -313,7 +313,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XTKS";
+      entry.m_venue = Venue("XTKS");
       entry.m_country_code = DefaultCountries::JP;
       entry.m_time_zone = "Asia/Tokyo";
       entry.m_currency = DefaultCurrencies::JPY;
@@ -323,7 +323,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XOSE";
+      entry.m_venue = Venue("XOSE");
       entry.m_country_code = DefaultCountries::JP;
       entry.m_time_zone = "Asia/Tokyo";
       entry.m_currency = DefaultCurrencies::JPY;
@@ -333,7 +333,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XNGO";
+      entry.m_venue = Venue("XNGO");
       entry.m_country_code = DefaultCountries::JP;
       entry.m_time_zone = "Asia/Tokyo";
       entry.m_currency = DefaultCurrencies::JPY;
@@ -343,7 +343,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "XSAP";
+      entry.m_venue = Venue("XSAP");
       entry.m_country_code = DefaultCountries::JP;
       entry.m_time_zone = "Asia/Tokyo";
       entry.m_currency = DefaultCurrencies::JPY;
@@ -353,7 +353,7 @@ namespace Nexus {
     }
     {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = "CHIJ";
+      entry.m_venue = Venue("CHIJ");
       entry.m_country_code = DefaultCountries::JP;
       entry.m_time_zone = "Asia/Tokyo";
       entry.m_currency = DefaultCurrencies::JPY;

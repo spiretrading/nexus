@@ -136,7 +136,7 @@ TEST_SUITE("Venue") {
     auto node = YAML::Load(yaml_text);
     auto entry =
       parse_venue_database_entry(node, DEFAULT_COUNTRIES, DEFAULT_CURRENCIES);
-    CHECK(entry.m_venue == "NYC1");
+    CHECK(entry.m_venue == Venue("NYC1"));
     CHECK(entry.m_country_code == DefaultCountries::US);
     CHECK(entry.m_time_zone == "America/New_York");
     CHECK(entry.m_currency == DefaultCurrencies::USD);
@@ -200,7 +200,7 @@ TEST_SUITE("Venue") {
 
   TEST_CASE("parse_venue") {
     auto entry = VenueDatabase::Entry();
-    entry.m_venue = "ABC";
+    entry.m_venue = Venue("ABC");
     entry.m_country_code = DefaultCountries::US;
     entry.m_time_zone = "America/New_York";
     entry.m_currency = DefaultCurrencies::USD;
@@ -216,7 +216,7 @@ TEST_SUITE("Venue") {
 
   TEST_CASE("to_string") {
     auto entry = VenueDatabase::Entry();
-    entry.m_venue = "XYZ";
+    entry.m_venue = Venue("XYZ");
     entry.m_country_code = DefaultCountries::US;
     entry.m_time_zone = "America/New_York";
     entry.m_currency = DefaultCurrencies::USD;
@@ -232,7 +232,7 @@ TEST_SUITE("Venue") {
 
   TEST_CASE("stream") {
     auto entry = VenueDatabase::Entry();
-    entry.m_venue = "LMN";
+    entry.m_venue = Venue("LMN");
     entry.m_country_code = DefaultCountries::CA;
     entry.m_time_zone = "America/Toronto";
     entry.m_currency = DefaultCurrencies::CAD;

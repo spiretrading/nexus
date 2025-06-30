@@ -25,7 +25,7 @@ TEST_SUITE("RegionMap") {
     auto map = RegionMap(-1);
     auto country = DefaultCountries::CA;
     auto venue = DEFAULT_VENUES.from(DefaultVenues::TSX);
-    auto security = Security("TST", DefaultVenues::TSX, DefaultCountries::CA);
+    auto security = Security("TST", DefaultVenues::TSX);
     map.Set(country, 1);
     map.Set(security, 2);
     map.Set(venue, 3);
