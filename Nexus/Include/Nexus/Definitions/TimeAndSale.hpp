@@ -7,6 +7,7 @@
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 
 namespace Nexus {
 namespace Details {
@@ -53,19 +54,19 @@ namespace Details {
     Condition m_condition;
 
     /** The market center. */
-    std::string m_marketCenter;
+    std::string m_market_center;
 
     /** The buyer MPID. */
-    std::string m_buyerMpid;
+    std::string m_buyer_mpid;
 
     /** The seller MPID. */
-    std::string m_sellerMpid;
+    std::string m_seller_mpid;
 
     bool operator ==(const TimeAndSale&) const = default;
   };
 
-  inline std::ostream& operator <<(std::ostream& out,
-      TimeAndSale::Condition::Type value) {
+  inline std::ostream& operator <<(
+      std::ostream& out, TimeAndSale::Condition::Type value) {
     if(value == TimeAndSale::Condition::Type::REGULAR) {
       return out << "@";
     } else if(value == TimeAndSale::Condition::Type::OPEN) {
@@ -76,16 +77,22 @@ namespace Details {
     return out << "NONE";
   }
 
+  inline std::ostream& operator <<(
+      std::ostream& out, TimeAndSale::Condition::Type::Type value) {
+    return out << TimeAndSale::Condition::Type(value);
+  }
+
   inline std::ostream& operator <<(std::ostream& out,
       const TimeAndSale::Condition& value) {
-    return out << "(" << value.m_type << " " << value.m_code << ")";
+    return out << '(' << value.m_type << ' ' << value.m_code << ')';
   }
 
   inline std::ostream& operator <<(std::ostream& out,
       const TimeAndSale& value) {
-    return out << "(" << value.m_timestamp << " " << value.m_price << " " <<
-      value.m_size << " " << value.m_condition << " " << value.m_marketCenter <<
-      value.m_buyerMpid << " " << value.m_sellerMpid << ")";
+    return out << '(' << value.m_timestamp << ' ' << value.m_price << ' ' <<
+      value.m_size << ' ' << value.m_condition << ' ' <<
+      value.m_market_center << ' ' << value.m_buyer_mpid << ' ' <<
+      value.m_seller_mpid << ')';
   }
 }
 
@@ -109,9 +116,9 @@ namespace Beam::Serialization {
       shuttle.Shuttle("price", value.m_price);
       shuttle.Shuttle("size", value.m_size);
       shuttle.Shuttle("condition", value.m_condition);
-      shuttle.Shuttle("market_center", value.m_marketCenter);
-      shuttle.Shuttle("buyer_mpid", value.m_buyerMpid);
-      shuttle.Shuttle("seller_mpid", value.m_sellerMpid);
+      shuttle.Shuttle("market_center", value.m_market_center);
+      shuttle.Shuttle("buyer_mpid", value.m_buyer_mpid);
+      shuttle.Shuttle("seller_mpid", value.m_seller_mpid);
     }
   };
 }
