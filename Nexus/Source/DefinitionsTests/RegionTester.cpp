@@ -8,7 +8,7 @@ using namespace Nexus::DefaultCountries;
 using namespace Nexus::DefaultVenues;
 
 namespace {
-  void TestProperSubset(const Region& subset, const Region& superset) {
+  void require_proper_subset(const Region& subset, const Region& superset) {
     REQUIRE(subset < superset);
     REQUIRE(subset <= superset);
     REQUIRE(!(subset == superset));
@@ -23,7 +23,7 @@ namespace {
     REQUIRE(superset > subset);
   }
 
-  void TestDistinctSets(const Region& a, const Region& b) {
+  void require_distinct_regions(const Region& a, const Region& b) {
     REQUIRE(!(a < b));
     REQUIRE(!(a <= b));
     REQUIRE(!(a == b));
@@ -41,29 +41,27 @@ namespace {
 
 TEST_SUITE("Region") {
   TEST_CASE("venue_region_subset_of_country_region") {
-    auto venue = DEFAULT_VENUES.from(NASDAQ);
-    TestProperSubset(venue, US);
+    require_proper_subset(NASDAQ, US);
   }
 
   TEST_CASE("security_region_subset_of_venue_region") {
-    auto venue = DEFAULT_VENUES.from(NASDAQ);
     auto security = Security("TST", NASDAQ);
-    TestProperSubset(security, venue);
+    require_proper_subset(security, NASDAQ);
   }
 
   TEST_CASE("security_region_subset_of_country_region") {
     auto security = Security("TST", NASDAQ);
-    TestProperSubset(security, US);
+    require_proper_subset(security, US);
   }
 
   TEST_CASE("distinct_country_regions") {
     auto us = Region(US);
     auto ca = Region(CA);
-    TestDistinctSets(us, ca);
+    require_distinct_regions(us, ca);
     auto northAmerica = us + ca;
-    TestDistinctSets(northAmerica, BR);
-    TestProperSubset(us, northAmerica);
-    TestProperSubset(ca, northAmerica);
+    require_distinct_regions(northAmerica, BR);
+    require_proper_subset(us, northAmerica);
+    require_proper_subset(ca, northAmerica);
   }
 
   TEST_CASE("empty_regions_are_equal_and_subsets") {
@@ -78,8 +76,8 @@ TEST_SUITE("Region") {
 
   TEST_CASE("named_and_unnamed_region_equality") {
     auto r1 = Region(US);
-    auto r2 = Region(US);
-    r2.SetName("US Region");
+    auto r2 = Region("US Region");
+    r2 += US;
     REQUIRE(r1 == r2);
     REQUIRE(r1 <= r2);
     REQUIRE(r1 >= r2);
@@ -90,44 +88,37 @@ TEST_SUITE("Region") {
   TEST_CASE("global_region_superset_of_all") {
     auto country = Region(US);
     auto global = Region::Global();
-    auto namedGlobal = Region::Global("All Venues");
-    TestProperSubset(country, global);
-    TestProperSubset(country, namedGlobal);
-    REQUIRE(global == namedGlobal);
-    REQUIRE(global <= namedGlobal);
-    REQUIRE(global >= namedGlobal);
-    REQUIRE(!(global < namedGlobal));
-    REQUIRE(!(global > namedGlobal));
+    auto named_global = Region::Global("All Venues");
+    require_proper_subset(country, global);
+    require_proper_subset(country, named_global);
+    REQUIRE(global == named_global);
+    REQUIRE(global <= named_global);
+    REQUIRE(global >= named_global);
+    REQUIRE(!(global < named_global));
+    REQUIRE(!(global > named_global));
   }
 
   TEST_CASE("distinct_venues") {
-    auto nasdaq = Region(DEFAULT_VENUES.from(NASDAQ));
-    auto nyse = Region(DEFAULT_VENUES.from(NYSE));
-    TestDistinctSets(nasdaq, nyse);
-  }
-
-  TEST_CASE("venue_entry_constructor_equivalence") {
-    auto fromCodes = Region(NASDAQ, US);
-    auto fromEntry = Region(DEFAULT_VENUES.from(NASDAQ));
-    REQUIRE(fromCodes == fromEntry);
-    REQUIRE(fromCodes <= fromEntry);
+    auto nasdaq = Region(NASDAQ);
+    auto nyse = Region(NYSE);
+    require_distinct_regions(nasdaq, nyse);
   }
 
   TEST_CASE("empty_subset_of_non_empty") {
     auto empty = Region();
     auto country = Region(US);
-    TestProperSubset(empty, country);
+    require_proper_subset(empty, country);
   }
 
   TEST_CASE("security_in_union_region") {
     auto us = Region(US);
     auto ca = Region(CA);
-    auto unionRegion = us + ca;
+    auto union_region = us + ca;
     auto security = Security("TST", NASDAQ);
-    REQUIRE(security <= unionRegion);
-    REQUIRE(security < unionRegion);
-    REQUIRE(unionRegion >= security);
-    REQUIRE(unionRegion > security);
+    REQUIRE(security <= union_region);
+    REQUIRE(security < union_region);
+    REQUIRE(union_region >= security);
+    REQUIRE(union_region > security);
   }
 
   TEST_CASE("combine_regions_operator_plus_and_plus_eq") {
@@ -135,9 +126,9 @@ TEST_SUITE("Region") {
     auto ca = Region(CA);
     auto combined = us;
     combined += ca;
-    auto plusCombined = us + ca;
-    REQUIRE(combined == plusCombined);
-    TestProperSubset(us, combined);
-    TestProperSubset(ca, combined);
+    auto plus_combined = us + ca;
+    REQUIRE(combined == plus_combined);
+    require_proper_subset(us, combined);
+    require_proper_subset(ca, combined);
   }
 }

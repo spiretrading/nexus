@@ -6,13 +6,13 @@ using namespace Nexus;
 TEST_SUITE("Currency") {
   TEST_CASE("comparison") {
     auto default_id = CurrencyId();
-    CHECK(default_id == CurrencyId::NONE);
+    REQUIRE(default_id == CurrencyId::NONE);
     auto id1 = CurrencyId(100);
     auto id2 = CurrencyId(100);
     auto id3 = CurrencyId(50);
-    CHECK(id1 == id2);
-    CHECK(id3 < id1);
-    CHECK(id1 > id3);
+    REQUIRE(id1 == id2);
+    REQUIRE(id3 < id1);
+    REQUIRE(id1 > id3);
   }
 
   TEST_CASE("stream") {
@@ -20,14 +20,14 @@ TEST_SUITE("Currency") {
     ss << CurrencyId(256);
     auto read_id = CurrencyId();
     ss >> read_id;
-    CHECK(read_id == CurrencyId(256));
+    REQUIRE(read_id == CurrencyId(256));
   }
 
   TEST_CASE("none") {
     auto none = Nexus::CurrencyDatabase::NONE;
-    CHECK(none.m_id == CurrencyId::NONE);
-    CHECK(none.m_code == "???");
-    CHECK(none.m_sign == "?");
+    REQUIRE(none.m_id == CurrencyId::NONE);
+    REQUIRE(none.m_code == "???");
+    REQUIRE(none.m_sign == "?");
   }
 
   TEST_CASE("id_lookup") {
@@ -42,9 +42,9 @@ TEST_SUITE("Currency") {
     entry2.m_code = "BBB";
     entry2.m_sign = "B$";
     database.add(entry2);
-    CHECK(database.from(CurrencyId(10)).m_sign == "A$");
-    CHECK(database.from(CurrencyId(5)).m_sign == "B$");
-    CHECK(database.from(CurrencyId(7)).m_id == CurrencyId::NONE);
+    REQUIRE(database.from(CurrencyId(10)).m_sign == "A$");
+    REQUIRE(database.from(CurrencyId(5)).m_sign == "B$");
+    REQUIRE(database.from(CurrencyId(7)).m_id == CurrencyId::NONE);
   }
 
   TEST_CASE("code_lookup") {
@@ -54,8 +54,8 @@ TEST_SUITE("Currency") {
     entry.m_code = "CCC";
     entry.m_sign = "C$";
     database.add(entry);
-    CHECK(database.from("CCC").m_id == CurrencyId(20));
-    CHECK(database.from("XXX").m_id == CurrencyId::NONE);
+    REQUIRE(database.from("CCC").m_id == CurrencyId(20));
+    REQUIRE(database.from("XXX").m_id == CurrencyId::NONE);
   }
 
   TEST_CASE("remove") {
@@ -65,9 +65,9 @@ TEST_SUITE("Currency") {
     entry.m_code = "DDD";
     entry.m_sign = "D$";
     database.add(entry);
-    CHECK(database.from(CurrencyId(30)).m_id == CurrencyId(30));
+    REQUIRE(database.from(CurrencyId(30)).m_id == CurrencyId(30));
     database.remove(CurrencyId(30));
-    CHECK(database.from(CurrencyId(30)).m_id == CurrencyId::NONE);
+    REQUIRE(database.from(CurrencyId(30)).m_id == CurrencyId::NONE);
   }
 
   TEST_CASE("sort_order") {
@@ -84,8 +84,8 @@ TEST_SUITE("Currency") {
     database.add(high);
     auto entries = database.get_entries();
     REQUIRE(entries.size() == 2);
-    CHECK(entries[0].m_id == CurrencyId(1));
-    CHECK(entries[1].m_id == CurrencyId(2));
+    REQUIRE(entries[0].m_id == CurrencyId(1));
+    REQUIRE(entries[1].m_id == CurrencyId(2));
   }
 
   TEST_CASE("parse_currency") {

@@ -1,10 +1,13 @@
 #ifndef NEXUS_VENUE_HPP
 #define NEXUS_VENUE_HPP
 #include <algorithm>
+#include <atomic>
+#include <memory>
 #include <ostream>
 #include <string>
 #include <string_view>
 #include <vector>
+#include <Beam/Collections/View.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/FixedString.hpp>
@@ -76,8 +79,10 @@ namespace Nexus {
       /** Constructs an empty VenueDatabase. */
       VenueDatabase() = default;
 
+      VenueDatabase(const VenueDatabase&) noexcept;
+
       /** Returns all Entries. */
-      const std::vector<Entry>& get_entries() const;
+      Beam::View<const Entry> get_entries() const;
 
       /**
        * Returns an Entry from its Venue.
@@ -119,9 +124,11 @@ namespace Nexus {
        */
       void remove(Venue venue);
 
+      VenueDatabase& operator =(const VenueDatabase&) noexcept;
+
     private:
       friend struct Beam::Serialization::Shuttle<VenueDatabase>;
-      std::vector<Entry> m_entries;
+      std::atomic<std::shared_ptr<std::vector<Entry>>> m_entries;
   };
 
   /**
@@ -140,6 +147,18 @@ namespace Nexus {
   }
 
   /**
+   * Parses an Entry from a string.
+   * @param source The string to parse.
+   * @param database The VenueDatabase containing the available Entry.
+   * @return The Entry represented by the <i>source</i>.
+   */
+  inline const VenueDatabase::Entry& parse_venue_entry(
+      std::string_view source) {
+    extern const VenueDatabase& DEFAULT_VENUES;
+    return parse_venue_entry(source, DEFAULT_VENUES);
+  }
+
+  /**
    * Parses a Venue from a string.
    * @param source The string to parse.
    * @param database The VenueDatabase containing the available Venues to parse.
@@ -148,6 +167,16 @@ namespace Nexus {
   inline Venue parse_venue(
       std::string_view source, const VenueDatabase& database) {
     return parse_venue_entry(source, database).m_venue;
+  }
+
+  /**
+   * Parses a Venue from a string using the default database.
+   * @param source The string to parse.
+   * @return The Venue represented by the <i>source</i>.
+   */
+  inline Venue parse_venue(std::string_view source) {
+    extern const VenueDatabase& DEFAULT_VENUES;
+    return parse_venue(source, DEFAULT_VENUES);
   }
 
   /**
@@ -200,16 +229,21 @@ namespace Nexus {
     }, std::runtime_error("Failed to parse venue database."));
   }
 
-  inline std::string to_string(Venue value, const VenueDatabase& database) {
-    auto& entry = database.from(value);
-    if(entry.m_venue == Venue()) {
-      return value.get_code().GetData();
-    } else {
-      return entry.m_display_name;
-    }
+  inline auto operator <<(std::ostream& out, const VenueDatabase& database) {
+    return Beam::ScopedStreamManipulator(out, database);
   }
 
   inline std::ostream& operator <<(std::ostream& out, Venue venue) {
+    extern const VenueDatabase DEFAULT_VENUES;
+    auto database = static_cast<const VenueDatabase*>(
+      out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID));
+    if(!database) {
+      database = &DEFAULT_VENUES;
+    }
+    auto& entry = database->from(venue);
+    if(entry.m_venue != Venue()) {
+      return out << entry.m_display_name;
+    }
     return out << venue.get_code();
   }
 
@@ -266,18 +300,24 @@ namespace Nexus {
     return m_mic;
   }
 
-  inline const std::vector<VenueDatabase::Entry>&
+  inline Beam::View<const VenueDatabase::Entry>
       VenueDatabase::get_entries() const {
-    return m_entries;
+    if(auto entries = m_entries.load()) {
+      return Beam::View(Beam::SharedIterator(entries, entries->begin()),
+        Beam::SharedIterator(entries, entries->end()));
+    }
+    return Beam::View<const Entry>();
   }
 
   inline const VenueDatabase::Entry& VenueDatabase::from(Venue venue) const {
-    auto i = std::lower_bound(m_entries.begin(), m_entries.end(), venue,
-      [] (const auto& lhs, auto rhs) {
-        return lhs.m_venue < rhs;
-      });
-    if(i != m_entries.end() && i->m_venue == venue) {
-      return *i;
+    if(auto entries = m_entries.load()) {
+      auto i = std::lower_bound(entries->begin(), entries->end(), venue,
+        [] (const auto& lhs, auto rhs) {
+          return lhs.m_venue < rhs;
+        });
+      if(i != entries->end() && i->m_venue == venue) {
+        return *i;
+      }
     }
     return NONE;
   }
@@ -289,43 +329,78 @@ namespace Nexus {
 
   inline const VenueDatabase::Entry&
       VenueDatabase::from_display_name(std::string_view display_name) const {
-    auto i = std::find_if(m_entries.begin(), m_entries.end(),
-      [&] (const auto& entry) {
-        return entry.m_display_name == display_name;
-      });
-    if(i == m_entries.end()) {
-      return NONE;
+    if(auto entries = m_entries.load()) {
+      auto i = std::find_if(entries->begin(), entries->end(),
+        [&] (const auto& entry) {
+          return entry.m_display_name == display_name;
+        });
+      if(i != entries->end()) {
+        return *i;
+      }
     }
-    return *i;
+    return NONE;
   }
 
   inline std::vector<VenueDatabase::Entry>
       VenueDatabase::from(CountryCode country) const {
-    auto entries = std::vector<VenueDatabase::Entry>();
-    std::copy_if(m_entries.begin(), m_entries.end(),
-      std::back_inserter(entries), [&] (const auto& entry) {
-        return entry.m_country_code == country;
-      });
-    return entries;
+    auto result = std::vector<VenueDatabase::Entry>();
+    if(auto entries = m_entries.load()) {
+      std::copy_if(entries->begin(), entries->end(), std::back_inserter(result),
+        [&] (const auto& entry) {
+          return entry.m_country_code == country;
+        });
+    }
+    return result;
   }
 
   inline void VenueDatabase::add(const Entry& entry) {
-    auto i = std::lower_bound(m_entries.begin(), m_entries.end(), entry,
-      [] (const auto& lhs, const auto& rhs) {
-        return lhs.m_venue < rhs.m_venue;
-      });
-    if(i == m_entries.end() || i->m_venue != entry.m_venue) {
-      m_entries.insert(i, entry);
+    while(true) {
+      auto entries = m_entries.load();
+      auto new_entries = [&] {
+        if(!entries) {
+          auto new_entries = std::make_shared<std::vector<Entry>>();
+          new_entries->push_back(entry);
+          return new_entries;
+        }
+        auto i = std::lower_bound(entries->begin(), entries->end(), entry,
+          [] (const auto& lhs, const auto& rhs) {
+            return lhs.m_venue < rhs.m_venue;
+          });
+        if(i == entries->end() || i->m_venue != entry.m_venue) {
+          auto new_entries = std::make_shared<std::vector<Entry>>(*entries);
+          new_entries->insert(
+            new_entries->begin() + std::distance(entries->begin(), i), entry);
+          return new_entries;
+        }
+        return std::shared_ptr<std::vector<Entry>>();
+      }();
+      if(!new_entries ||
+          m_entries.compare_exchange_weak(entries, new_entries)) {
+        break;
+      }
     }
   }
 
   inline void VenueDatabase::remove(Venue venue) {
-    auto i = std::lower_bound(m_entries.begin(), m_entries.end(), venue,
-      [] (const auto& lhs, auto rhs) {
-        return lhs.m_venue < rhs;
-      });
-    if(i != m_entries.end() && i->m_venue == venue) {
-      m_entries.erase(i);
+    while(true) {
+      auto entries = m_entries.load();
+      if(!entries) {
+        break;
+      }
+      auto i = std::lower_bound(entries->begin(), entries->end(), venue,
+        [] (const auto& lhs, auto rhs) {
+          return lhs.m_venue < rhs;
+        });
+      if(i != entries->end() && i->m_venue == venue) {
+        auto new_entries = std::make_shared<std::vector<Entry>>(*entries);
+        new_entries->erase(
+          new_entries->begin() + std::distance(entries->begin(), i));
+        if(m_entries.compare_exchange_weak(entries, new_entries)) {
+          break;
+        }
+      } else {
+        break;
+      }
     }
   }
 
@@ -339,7 +414,7 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::VenueDatabase::Entry> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::VenueDatabase::Entry& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("venue", value.m_venue);
       shuttle.Shuttle("country_code", value.m_country_code);
       shuttle.Shuttle("time_zone", value.m_time_zone);
@@ -352,8 +427,8 @@ namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::VenueDatabase> {
     template<typename Shuttler>
-    void operator ()(
-        Shuttler& shuttle, Nexus::VenueDatabase& value, unsigned int version) {
+    void operator ()(Shuttler& shuttle, Nexus::VenueDatabase& value,
+        unsigned int version) const {
       shuttle.Shuttle("entries", value.m_entries);
     }
   };

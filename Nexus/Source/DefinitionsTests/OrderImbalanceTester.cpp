@@ -34,6 +34,6 @@ TEST_SUITE("OrderImbalance") {
     auto expected_output = "(" + expected_security + " " + expected_side +
       " " + expected_size + " " + expected_price + " " + expected_timestamp +
       ")";
-    CHECK(ss.str() == expected_output);
+    REQUIRE(ss.str() == expected_output);
   }
 }

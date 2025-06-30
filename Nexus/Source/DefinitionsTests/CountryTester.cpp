@@ -6,25 +6,25 @@ using namespace Nexus;
 TEST_SUITE("Country") {
   TEST_CASE("comparison") {
     auto default_code = CountryCode();
-    CHECK(default_code == CountryCode::NONE);
+    REQUIRE(default_code == CountryCode::NONE);
     auto code1 = CountryCode(42);
     auto code2 = CountryCode(42);
     auto code3 = CountryCode(7);
-    CHECK(code1 == code2);
-    CHECK(code3 < code1);
-    CHECK(code1 > code3);
+    REQUIRE(code1 == code2);
+    REQUIRE(code3 < code1);
+    REQUIRE(code1 > code3);
   }
 
   TEST_CASE("stream") {
     auto ss = std::stringstream();
     ss << CountryCode(156);
-    CHECK(ss.str() == "CN");
+    REQUIRE(ss.str() == "CN");
   }
 
   TEST_CASE("stream_unknown") {
     auto ss = std::stringstream();
     ss << CountryCode(9999);
-    CHECK(ss.str() == "9999");
+    REQUIRE(ss.str() == "9999");
   }
 
   TEST_CASE("context_stream") {
@@ -37,15 +37,15 @@ TEST_SUITE("Country") {
     database.add(entry1);
     auto ss = std::stringstream();
     ss << database << entry1.m_code;
-    CHECK(ss.str() == "CA");
+    REQUIRE(ss.str() == "CA");
   }
 
   TEST_CASE("none") {
     auto none = CountryDatabase::NONE;
-    CHECK(none.m_code == CountryCode::NONE);
-    CHECK(none.m_name == "");
-    CHECK(none.m_two_letter_code == "??");
-    CHECK(none.m_three_letter_code == "???");
+    REQUIRE(none.m_code == CountryCode::NONE);
+    REQUIRE(none.m_name == "");
+    REQUIRE(none.m_two_letter_code == "??");
+    REQUIRE(none.m_three_letter_code == "???");
   }
 
   TEST_CASE("code_lookup") {
@@ -63,11 +63,11 @@ TEST_SUITE("Country") {
     entry2.m_three_letter_code = "OOO";
     database.add(entry2);
     auto entries = database.get_entries();
-    CHECK(entries.size() == 2);
-    CHECK(entries[0].m_code == CountryCode(1));
-    CHECK(entries[1].m_code == CountryCode(2));
-    CHECK(database.from(CountryCode(1)).m_name == "One");
-    CHECK(database.from(CountryCode(3)).m_code == CountryCode::NONE);
+    REQUIRE(entries.size() == 2);
+    REQUIRE(entries[0].m_code == CountryCode(1));
+    REQUIRE(entries[1].m_code == CountryCode(2));
+    REQUIRE(database.from(CountryCode(1)).m_name == "One");
+    REQUIRE(database.from(CountryCode(3)).m_code == CountryCode::NONE);
   }
 
   TEST_CASE("name_lookup") {
@@ -78,10 +78,10 @@ TEST_SUITE("Country") {
     entry.m_two_letter_code = "FL";
     entry.m_three_letter_code = "FIV";
     database.add(entry);
-    CHECK(database.from_name("FiveLand").m_code == CountryCode(5));
-    CHECK(database.from("FL").m_code == CountryCode(5));
-    CHECK(database.from("FIV").m_code == CountryCode(5));
-    CHECK(database.from_name("Unknown").m_code == CountryCode::NONE);
+    REQUIRE(database.from_name("FiveLand").m_code == CountryCode(5));
+    REQUIRE(database.from("FL").m_code == CountryCode(5));
+    REQUIRE(database.from("FIV").m_code == CountryCode(5));
+    REQUIRE(database.from_name("Unknown").m_code == CountryCode::NONE);
   }
 
   TEST_CASE("remove") {
@@ -92,9 +92,9 @@ TEST_SUITE("Country") {
     entry.m_two_letter_code = "NI";
     entry.m_three_letter_code = "NIN";
     database.add(entry);
-    CHECK(database.from(CountryCode(9)).m_code == CountryCode(9));
+    REQUIRE(database.from(CountryCode(9)).m_code == CountryCode(9));
     database.remove(CountryCode(9));
-    CHECK(database.from(CountryCode(9)).m_code == CountryCode::NONE);
+    REQUIRE(database.from(CountryCode(9)).m_code == CountryCode::NONE);
   }
 
   TEST_CASE("parse") {
@@ -105,10 +105,10 @@ TEST_SUITE("Country") {
     entry.m_two_letter_code = "EI";
     entry.m_three_letter_code = "EGT";
     database.add(entry);
-    CHECK(parse_country_code("EI", database) == CountryCode(8));
-    CHECK(parse_country_code("EGT", database) == CountryCode(8));
-    CHECK(parse_country_code("Eight", database) == CountryCode(8));
-    CHECK(parse_country_code("Unknown", database) == CountryCode::NONE);
+    REQUIRE(parse_country_code("EI", database) == CountryCode(8));
+    REQUIRE(parse_country_code("EGT", database) == CountryCode(8));
+    REQUIRE(parse_country_code("Eight", database) == CountryCode(8));
+    REQUIRE(parse_country_code("Unknown", database) == CountryCode::NONE);
   }
 
   TEST_CASE("parse_country_database_entry") {

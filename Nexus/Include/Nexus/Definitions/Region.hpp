@@ -45,13 +45,7 @@ namespace Nexus {
        * @param venue The venue to represent.
        * @param country The country the venue belongs to.
        */
-      Region(Venue venue, CountryCode country);
-
-      /**
-       * Constructs a Region consisting of a single venue.
-       * @param venue The venue to represent.
-       */
-      Region(const VenueDatabase::Entry& venue);
+      Region(Venue venue);
 
       /**
        * Constructs a Region consisting of a single Security.
@@ -60,31 +54,28 @@ namespace Nexus {
       Region(Security security);
 
       /** Returns the name of this Region. */
-      const std::string& GetName() const;
-
-      /** Sets the name of this Region. */
-      void SetName(const std::string& name);
+      const std::string& get_name() const;
 
       /** Returns <code>true</code> iff this is the global Region. */
-      bool IsGlobal() const;
+      bool is_global() const;
 
       /** Returns <code>true</code> iff this Region is empty. */
-      bool IsEmpty() const;
+      bool is_empty() const;
 
       /** Returns the countries in this Region. */
-      const std::unordered_set<CountryCode>& GetCountries() const;
+      const std::unordered_set<CountryCode>& get_countries() const;
 
       /** Returns the venues in this Region. */
-      std::unordered_set<Venue> GetVenues() const;
+      const std::unordered_set<Venue>& get_venues() const;
 
       /** Returns the Securities in this Region. */
-      const std::unordered_set<Security>& GetSecurities() const;
+      const std::unordered_set<Security>& get_securities() const;
 
       /**
        * Returns <code>true</code> iff <i>region</i> is a subset of
        * <i>this</i>.
        */
-      bool Contains(const Region& region) const;
+      bool contains(const Region& region) const;
 
       /**
        * Combines <i>this</i> Region with another.
@@ -131,24 +122,11 @@ namespace Nexus {
 
     private:
       struct GlobalTag {};
-      struct VenueEntry {
-        Venue m_venue;
-        CountryCode m_country;
-
-        VenueEntry() = default;
-        VenueEntry(Venue venue, CountryCode country);
-        bool operator ==(const VenueEntry& venueEntry) const;
-        friend struct Beam::Serialization::Shuttle<VenueEntry>;
-      };
-      struct VenueEntryHash {
-        std::size_t operator ()(const VenueEntry& venueEntry) const;
-      };
       friend struct Beam::Serialization::Shuttle<Region>;
-      friend struct Beam::Serialization::Shuttle<Region::VenueEntry>;
       std::string m_name;
-      bool m_isGlobal;
+      bool m_is_global;
       std::unordered_set<CountryCode> m_countries;
-      std::unordered_set<VenueEntry, VenueEntryHash> m_venues;
+      std::unordered_set<Venue> m_venues;
       std::unordered_set<Security> m_securities;
 
       explicit Region(GlobalTag);
@@ -156,10 +134,8 @@ namespace Nexus {
   };
 
   inline std::ostream& operator <<(std::ostream& out, const Region& region) {
-    if(region.IsGlobal()) {
-      return out << "GLOBAL";
-    } else if(!region.GetName().empty()) {
-      return out << region.GetName();
+    if(!region.get_name().empty()) {
+      return out << region.get_name();
     } else {
       return out;
     }
@@ -167,13 +143,13 @@ namespace Nexus {
 
   inline std::size_t hash_value(const Region& region) {
     auto seed = std::size_t(0);
-    for(auto& country : region.GetCountries()) {
+    for(auto& country : region.get_countries()) {
       boost::hash_combine(seed, country);
     }
-    for(auto& venue : region.GetVenues()) {
+    for(auto& venue : region.get_venues()) {
       boost::hash_combine(seed, venue);
     }
-    for(auto& security : region.GetSecurities()) {
+    for(auto& security : region.get_securities()) {
       boost::hash_combine(seed, security);
     }
     return seed;
@@ -208,96 +184,71 @@ namespace Nexus {
     return left;
   }
 
-  inline Region::VenueEntry::VenueEntry(Venue venue, CountryCode country)
-    : m_venue(venue),
-      m_country(country) {}
-
-  inline bool Region::VenueEntry::operator ==(
-      const VenueEntry& venueEntry) const {
-    return m_venue == venueEntry.m_venue;
-  }
-
-  inline std::size_t Region::VenueEntryHash::operator ()(
-      const Region::VenueEntry& value) const {
-    return std::hash<Venue>()(value.m_venue);
-  }
-
   inline Region Region::Global() {
-    return Region(GlobalTag{});
+    return Region(GlobalTag());
   }
 
   inline Region Region::Global(std::string name) {
-    return Region(GlobalTag{}, std::move(name));
+    return Region(GlobalTag(), std::move(name));
   }
 
   inline Region::Region()
-    : m_isGlobal(false) {}
+    : m_is_global(false) {}
 
   inline Region::Region(std::string name)
-    : m_isGlobal(false),
+    : m_is_global(false),
       m_name(std::move(name)) {}
 
   inline Region::Region(CountryCode country)
-      : m_isGlobal(false) {
+      : m_is_global(false) {
     m_countries.insert(country);
   }
 
-  inline Region::Region(Venue venue, CountryCode country)
-      : m_isGlobal(false) {
-    m_venues.insert(VenueEntry(venue, country));
+  inline Region::Region(Venue venue)
+      : m_is_global(false) {
+    m_venues.insert(venue);
   }
 
-  inline Region::Region(const VenueDatabase::Entry& venue)
-    : Region(venue.m_venue, venue.m_country_code) {}
-
   inline Region::Region(Security security)
-      : m_isGlobal(false) {
+      : m_is_global(false) {
     m_securities.insert(std::move(security));
   }
 
-  inline const std::string& Region::GetName() const {
+  inline const std::string& Region::get_name() const {
     return m_name;
   }
 
-  inline void Region::SetName(const std::string& name) {
-    m_name = name;
+  inline bool Region::is_global() const {
+    return m_is_global;
   }
 
-  inline bool Region::IsGlobal() const {
-    return m_isGlobal;
-  }
-
-  inline bool Region::IsEmpty() const {
+  inline bool Region::is_empty() const {
     return m_countries.empty() && m_venues.empty() && m_securities.empty();
   }
 
-  inline const std::unordered_set<CountryCode>& Region::GetCountries() const {
+  inline const std::unordered_set<CountryCode>& Region::get_countries() const {
     return m_countries;
   }
 
-  inline std::unordered_set<Venue> Region::GetVenues() const {
-    auto venues = std::unordered_set<Venue>();
-    for(auto& venue : m_venues) {
-      venues.insert(venue.m_venue);
-    }
-    return venues;
+  inline const std::unordered_set<Venue>& Region::get_venues() const {
+    return m_venues;
   }
 
-  inline const std::unordered_set<Security>& Region::GetSecurities() const {
+  inline const std::unordered_set<Security>& Region::get_securities() const {
     return m_securities;
   }
 
-  inline bool Region::Contains(const Region& region) const {
+  inline bool Region::contains(const Region& region) const {
     return region <= *this;
   }
 
   inline Region& Region::operator +=(const Region& region) {
-    if(region.m_isGlobal) {
-      m_isGlobal = true;
+    if(region.m_is_global) {
+      m_is_global = true;
       m_countries = {};
       m_venues = {};
       m_securities = {};
-    } else if(!m_isGlobal) {
+    } else if(!m_is_global) {
       m_countries.insert(region.m_countries.begin(), region.m_countries.end());
       m_venues.insert(region.m_venues.begin(), region.m_venues.end());
       m_securities.insert(
@@ -311,48 +262,46 @@ namespace Nexus {
   }
 
   inline bool Region::operator <=(const Region& region) const {
-    return false;
-#if 0
-    if(region.m_isGlobal) {
+    if(region.m_is_global) {
       return true;
-    } else if(m_isGlobal) {
+    } else if(m_is_global) {
       return false;
     }
     for(auto& security : m_securities) {
-      if(region.m_securities.count(security)) {
+      if(region.m_securities.contains(security)) {
         continue;
       }
-      if(region.m_venues.count(
-          VenueEntry(security.GetVenue(), security.GetCountry()))) {
+      if(region.m_venues.contains(security.get_venue())) {
         continue;
       }
-      if(region.m_countries.count(security.GetCountry())) {
+      auto country = DEFAULT_VENUES.from(security.get_venue()).m_country_code;
+      if(country != CountryCode::NONE && region.m_countries.contains(country)) {
         continue;
       }
       return false;
     }
-    for(auto& entry : m_venues) {
-      if(region.m_venues.count(entry)) {
+    for(auto& venue : m_venues) {
+      if(region.m_venues.contains(venue)) {
         continue;
       }
-      if(region.m_countries.count(entry.m_country)) {
+      auto country = DEFAULT_VENUES.from(venue).m_country_code;
+      if(country != CountryCode::NONE && region.m_countries.contains(country)) {
         continue;
       }
       return false;
     }
     for(auto& country : m_countries) {
-      if(region.m_countries.count(country)) {
+      if(region.m_countries.contains(country)) {
         continue;
       }
       return false;
     }
     return true;
-#endif
   }
 
   inline bool Region::operator ==(const Region& region) const {
-    return std::tie(m_isGlobal, m_countries, m_venues, m_securities) ==
-      std::tie(region.m_isGlobal, region.m_countries, region.m_venues,
+    return std::tie(m_is_global, m_countries, m_venues, m_securities) ==
+      std::tie(region.m_is_global, region.m_countries, region.m_venues,
         region.m_securities);
   }
 
@@ -369,31 +318,21 @@ namespace Nexus {
   }
 
   inline Region::Region(GlobalTag)
-    : m_isGlobal(true) {}
+    : m_is_global(true) {}
 
   inline Region::Region(GlobalTag, std::string name)
-    : m_isGlobal(true),
+    : m_is_global(true),
       m_name(std::move(name)) {}
 }
 
 namespace Beam::Serialization {
-  template<>
-  struct Shuttle<Nexus::Region::VenueEntry> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::Region::VenueEntry& value,
-        unsigned int version) {
-      shuttle.Shuttle("venue", value.m_venue);
-      shuttle.Shuttle("country", value.m_country);
-    }
-  };
-
   template<>
   struct Shuttle<Nexus::Region> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::Region& value,
         unsigned int version) {
       shuttle.Shuttle("name", value.m_name);
-      shuttle.Shuttle("is_global", value.m_isGlobal);
+      shuttle.Shuttle("is_global", value.m_is_global);
       shuttle.Shuttle("countries", value.m_countries);
       shuttle.Shuttle("venues", value.m_venues);
       shuttle.Shuttle("securities", value.m_securities);

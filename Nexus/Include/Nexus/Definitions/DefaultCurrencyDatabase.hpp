@@ -1,81 +1,84 @@
 #ifndef NEXUS_DEFAULT_CURRENCY_DATABASE_HPP
 #define NEXUS_DEFAULT_CURRENCY_DATABASE_HPP
+#include <atomic>
 #include <memory>
 #include "Nexus/Definitions/Currency.hpp"
 
 namespace Nexus {
-
-  /**
-   * Returns the default CurrencyDatabase, typically used for testing purposes.
-   */
-  inline const auto DEFAULT_CURRENCIES = [] {
-    auto database = CurrencyDatabase();
-    {
-      auto entry = CurrencyDatabase::Entry();
-      entry.m_id = CurrencyId(36);
-      entry.m_code = "AUD";
-      entry.m_sign = "$";
-      database.add(entry);
-    }
-    {
-      auto entry = CurrencyDatabase::Entry();
-      entry.m_id = CurrencyId(124);
-      entry.m_code = "CAD";
-      entry.m_sign = "$";
-      database.add(entry);
-    }
-    {
-      auto entry = CurrencyDatabase::Entry();
-      entry.m_id = CurrencyId(978);
-      entry.m_code = "EUR";
-      entry.m_sign = "€";
-      database.add(entry);
-    }
-    {
-      auto entry = CurrencyDatabase::Entry();
-      entry.m_id = CurrencyId(826);
-      entry.m_code = "GBP";
-      entry.m_sign = "£";
-      database.add(entry);
-    }
-    {
-      auto entry = CurrencyDatabase::Entry();
-      entry.m_id = CurrencyId(344);
-      entry.m_code = "HKD";
-      entry.m_sign = "$";
-      database.add(entry);
-    }
-    {
-      auto entry = CurrencyDatabase::Entry();
-      entry.m_id = CurrencyId(392);
-      entry.m_code = "JPY";
-      entry.m_sign = reinterpret_cast<const char*>(u8"\u00A5");
-      database.add(entry);
-    }
-    {
-      auto entry = CurrencyDatabase::Entry();
-      entry.m_id = CurrencyId(840);
-      entry.m_code = "USD";
-      entry.m_sign = "$";
-      database.add(entry);
-    }
-    {
-      auto entry = CurrencyDatabase::Entry();
-      entry.m_id = CurrencyId(1001);
-      entry.m_code = "XBT";
-      entry.m_sign = reinterpret_cast<const char*>(u8"\u20BF");
-      database.add(entry);
-    }
+namespace Details {
+  inline const CurrencyDatabase& get_base_currency_database() {
+    static auto database = [] {
+      auto database = CurrencyDatabase();
+      {
+        auto entry = CurrencyDatabase::Entry();
+        entry.m_id = CurrencyId(36);
+        entry.m_code = "AUD";
+        entry.m_sign = "$";
+        database.add(entry);
+      }
+      {
+        auto entry = CurrencyDatabase::Entry();
+        entry.m_id = CurrencyId(124);
+        entry.m_code = "CAD";
+        entry.m_sign = "$";
+        database.add(entry);
+      }
+      {
+        auto entry = CurrencyDatabase::Entry();
+        entry.m_id = CurrencyId(978);
+        entry.m_code = "EUR";
+        entry.m_sign = "€";
+        database.add(entry);
+      }
+      {
+        auto entry = CurrencyDatabase::Entry();
+        entry.m_id = CurrencyId(826);
+        entry.m_code = "GBP";
+        entry.m_sign = "£";
+        database.add(entry);
+      }
+      {
+        auto entry = CurrencyDatabase::Entry();
+        entry.m_id = CurrencyId(344);
+        entry.m_code = "HKD";
+        entry.m_sign = "$";
+        database.add(entry);
+      }
+      {
+        auto entry = CurrencyDatabase::Entry();
+        entry.m_id = CurrencyId(392);
+        entry.m_code = "JPY";
+        entry.m_sign = reinterpret_cast<const char*>(u8"\u00A5");
+        database.add(entry);
+      }
+      {
+        auto entry = CurrencyDatabase::Entry();
+        entry.m_id = CurrencyId(840);
+        entry.m_code = "USD";
+        entry.m_sign = "$";
+        database.add(entry);
+      }
+      {
+        auto entry = CurrencyDatabase::Entry();
+        entry.m_id = CurrencyId(1001);
+        entry.m_code = "XBT";
+        entry.m_sign = reinterpret_cast<const char*>(u8"\u20BF");
+        database.add(entry);
+      }
+      return database;
+    }();
     return database;
-  }();
+  }
 
-  /**
-   * Parses a CurrencyId from a string.
-   * @param source The string to parse.
-   * @return The CurrencyId represented by the <i>source</i>.
-   */
-  inline CurrencyId parse_currency(std::string_view source) {
-    return parse_currency(source, DEFAULT_CURRENCIES);
+  inline auto default_currencies = get_base_currency_database();
+}
+
+  /** Returns the default CurrencyDatabase. */
+  inline const auto& DEFAULT_CURRENCIES = Details::default_currencies;
+
+  /** Updates the default CurrencyDatabase. */
+  inline void set_default_currencies(CurrencyDatabase database) {
+    Details::default_currencies = database;
   }
 
   namespace DefaultCurrencies {

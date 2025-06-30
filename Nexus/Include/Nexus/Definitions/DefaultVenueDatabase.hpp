@@ -364,15 +364,6 @@ namespace Nexus {
     return database;
   }();
 
-  /**
-   * Parses a Venue from a string using the default database.
-   * @param source The string to parse.
-   * @return The Venue represented by the <i>source</i>.
-   */
-  inline Venue parse_venue(std::string_view source) {
-    return parse_venue(source, DEFAULT_VENUES);
-  }
-
   namespace DefaultVenues {
     inline const auto HKEX = DEFAULT_VENUES.from("XHKG").m_venue;
     inline const auto ASX = DEFAULT_VENUES.from("XASX").m_venue;

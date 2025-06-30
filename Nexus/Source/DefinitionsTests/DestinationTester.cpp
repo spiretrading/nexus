@@ -11,11 +11,11 @@ TEST_SUITE("Destination") {
     for(auto& entry : database.get_entries()) {
       ++count;
     }
-    CHECK(count == 0);
-    CHECK(database.from("nope") == DestinationDatabase::NONE);
-    CHECK(database.get_preferred_destination(Venue()) ==
+    REQUIRE(count == 0);
+    REQUIRE(database.from("nope") == DestinationDatabase::NONE);
+    REQUIRE(database.get_preferred_destination(Venue()) ==
       DestinationDatabase::NONE);
-    CHECK_FALSE(database.get_manual_order_entry_destination().has_value());
+    REQUIRE_FALSE(database.get_manual_order_entry_destination().has_value());
   }
 
   TEST_CASE("copy") {
@@ -26,8 +26,8 @@ TEST_SUITE("Destination") {
     entry.m_venues.push_back(Venue("vZ"));
     auto database2 = database1;
     database1.add(entry);
-    CHECK(database1.from("Z") == entry);
-    CHECK(database2.from("Z") == entry);
+    REQUIRE(database1.from("Z") == entry);
+    REQUIRE(database2.from("Z") == DestinationDatabase::NONE);
   }
 
   TEST_CASE("update") {
@@ -46,19 +46,19 @@ TEST_SUITE("Destination") {
     for(auto& entry : database.get_entries()) {
       ids.push_back(entry.m_id);
     }
-    CHECK(ids.size() == 2);
-    CHECK(ids.at(0) == "A");
-    CHECK(ids.at(1) == "B");
-    CHECK(database.from("A") != DestinationDatabase::NONE);
-    CHECK(database.from("A").m_description == "first");
-    CHECK(database.from("C") == DestinationDatabase::NONE);
+    REQUIRE(ids.size() == 2);
+    REQUIRE(ids.at(0) == "A");
+    REQUIRE(ids.at(1) == "B");
+    REQUIRE(database.from("A") != DestinationDatabase::NONE);
+    REQUIRE(database.from("A").m_description == "first");
+    REQUIRE(database.from("C") == DestinationDatabase::NONE);
     database.remove("A");
     auto count_after = 0;
     for(auto& entry : database.get_entries()) {
       ++count_after;
     }
-    CHECK(count_after == 1);
-    CHECK(database.from("A") == DestinationDatabase::NONE);
+    REQUIRE(count_after == 1);
+    REQUIRE(database.from("A") == DestinationDatabase::NONE);
   }
 
   TEST_CASE("preferred_destination") {
@@ -70,11 +70,11 @@ TEST_SUITE("Destination") {
     entry.m_venues.push_back(venue);
     database.add(entry);
     database.set_preferred_destination(venue, entry.m_id);
-    CHECK(
+    REQUIRE(
       database.get_preferred_destination(venue) != DestinationDatabase::NONE);
-    CHECK(database.get_preferred_destination(venue).m_id == "X");
+    REQUIRE(database.get_preferred_destination(venue).m_id == "X");
     database.remove_preferred_destination(venue);
-    CHECK(
+    REQUIRE(
       database.get_preferred_destination(venue) == DestinationDatabase::NONE);
   }
 
@@ -86,8 +86,8 @@ TEST_SUITE("Destination") {
     entry.m_venues.push_back(Venue("m"));
     database.set_manual_order_entry_destination(entry);
     auto moe = database.get_manual_order_entry_destination();
-    CHECK(moe.has_value());
-    CHECK(moe->m_id == "MO");
+    REQUIRE(moe.has_value());
+    REQUIRE(moe->m_id == "MO");
   }
 
   TEST_CASE("select") {
@@ -107,14 +107,14 @@ TEST_SUITE("Destination") {
     auto first = database.select_first([] (const auto& e) {
       return e.m_id == "20";
     });
-    CHECK(first != DestinationDatabase::NONE);
-    CHECK(first.m_id == "20");
+    REQUIRE(first != DestinationDatabase::NONE);
+    REQUIRE(first.m_id == "20");
     auto all = database.select_all([](const auto& e) {
       return e.m_description.find('a') != std::string::npos;
     });
-    CHECK(all.size() == 2);
-    CHECK(std::find(all.begin(), all.end(), entry2) != all.end());
-    CHECK(std::find(all.begin(), all.end(), entry3) != all.end());
+    REQUIRE(all.size() == 2);
+    REQUIRE(std::find(all.begin(), all.end(), entry2) != all.end());
+    REQUIRE(std::find(all.begin(), all.end(), entry3) != all.end());
   }
 
   TEST_CASE("parse_destination_database_entry") {
@@ -125,9 +125,9 @@ TEST_SUITE("Destination") {
     auto entry = parse_destination_database_entry(node, DEFAULT_VENUES);
     REQUIRE(entry.m_id == "X1");
     REQUIRE(entry.m_venues.size() == 2);
-    CHECK(entry.m_venues[0] == Venue("XNYS"));
-    CHECK(entry.m_venues[1] == Venue("XTSE"));
-    CHECK(entry.m_description == "one");
+    REQUIRE(entry.m_venues[0] == Venue("XNYS"));
+    REQUIRE(entry.m_venues[1] == Venue("XTSE"));
+    REQUIRE(entry.m_description == "one");
   }
 
   TEST_CASE("parse_destination_database") {
@@ -154,19 +154,19 @@ TEST_SUITE("Destination") {
       ids.push_back(entry.m_id);
     }
     REQUIRE(ids.size() == 2);
-    CHECK(ids[0] == "A1");
-    CHECK(ids[1] == "B2");
+    REQUIRE(ids[0] == "A1");
+    REQUIRE(ids[1] == "B2");
     auto a1 = database.from("A1");
-    CHECK(a1.m_description == "first");
+    REQUIRE(a1.m_description == "first");
     auto b2 = database.from("B2");
-    CHECK(b2.m_venues.size() == 2);
-    CHECK(b2.m_description == "second");
-    CHECK(database.get_preferred_destination(Venue("XNYS")) !=
+    REQUIRE(b2.m_venues.size() == 2);
+    REQUIRE(b2.m_description == "second");
+    REQUIRE(database.get_preferred_destination(Venue("XNYS")) !=
       DestinationDatabase::NONE);
-    CHECK(database.get_preferred_destination(Venue("XNYS")).m_id == "A1");
+    REQUIRE(database.get_preferred_destination(Venue("XNYS")).m_id == "A1");
     auto moe = database.get_manual_order_entry_destination();
     REQUIRE(moe.has_value());
-    CHECK(moe->m_id == "M0");
-    CHECK(moe->m_venues.size() == 1);
+    REQUIRE(moe->m_id == "M0");
+    REQUIRE(moe->m_venues.size() == 1);
   }
 }

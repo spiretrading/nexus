@@ -51,7 +51,8 @@ TEST_SUITE("ExchangeRateTable") {
     auto table = ExchangeRateTable();
     auto pair = CurrencyPair(GBP, JPY);
     auto value = Money(1);
-    REQUIRE_THROWS_AS(table.convert(value, pair), CurrencyPairNotFoundException);
+    REQUIRE_THROWS_AS(
+      table.convert(value, pair), CurrencyPairNotFoundException);
     REQUIRE_THROWS_AS(
       table.convert(value, GBP, JPY), CurrencyPairNotFoundException);
   }

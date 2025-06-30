@@ -45,21 +45,21 @@ TEST_SUITE("Venue") {
   TEST_CASE("equality") {
     auto default_v1 = Venue();
     auto default_v2 = Venue();
-    CHECK(default_v1 == default_v2);
+    REQUIRE(default_v1 == default_v2);
     auto mic = FixedString<4>("ABCD");
     auto v1 = Venue(mic);
     auto v2 = Venue("ABCD");
-    CHECK(v1 == v2);
+    REQUIRE(v1 == v2);
     auto v3 = Venue("WXYZ");
-    CHECK_FALSE(v1 == v3);
+    REQUIRE_FALSE(v1 == v3);
   }
 
   TEST_CASE("constructor") {
     auto database = VenueDatabase();
-    CHECK(database.get_entries().empty());
+    REQUIRE(database.get_entries().empty());
     auto none = VenueDatabase::NONE;
     auto result = database.from(Venue(Venue::Code("ABCD")));
-    CHECK(result == none);
+    REQUIRE(result == none);
   }
 
   TEST_CASE("find_remove") {
@@ -67,23 +67,23 @@ TEST_SUITE("Venue") {
     auto venue = Venue("ABCD");
     auto entry = VenueDatabase::Entry();
     entry.m_venue = venue;
-    entry.m_country_code = CountryCode();
+    entry.m_country_code = CountryCode(123);
     entry.m_time_zone = "UTC";
-    entry.m_currency = CurrencyId();
+    entry.m_currency = CurrencyId(321);
     entry.m_description = "Description";
     entry.m_display_name = "DisplayName";
     database.add(entry);
-    CHECK(database.get_entries().size() == 1);
+    REQUIRE(database.get_entries().size() == 1);
     auto& found = database.from(venue);
-    CHECK(found != VenueDatabase::NONE);
-    CHECK(found == entry);
+    REQUIRE(found != VenueDatabase::NONE);
+    REQUIRE(found == entry);
     auto& found_by_name = database.from_display_name("DisplayName");
-    CHECK(found_by_name == entry);
-    auto country_list = database.from(CountryCode());
-    CHECK(country_list.size() == 1);
-    CHECK(country_list.front() == entry);
+    REQUIRE(found_by_name == entry);
+    auto country_list = database.from(CountryCode(123));
+    REQUIRE(country_list.size() == 1);
+    REQUIRE(country_list.front() == entry);
     database.remove(venue);
-    CHECK(database.get_entries().empty());
+    REQUIRE(database.get_entries().empty());
   }
 
   TEST_CASE("venue_data_utc") {
@@ -136,12 +136,12 @@ TEST_SUITE("Venue") {
     auto node = YAML::Load(yaml_text);
     auto entry =
       parse_venue_database_entry(node, DEFAULT_COUNTRIES, DEFAULT_CURRENCIES);
-    CHECK(entry.m_venue == Venue("NYC1"));
-    CHECK(entry.m_country_code == DefaultCountries::US);
-    CHECK(entry.m_time_zone == "America/New_York");
-    CHECK(entry.m_currency == DefaultCurrencies::USD);
-    CHECK(entry.m_description == "New York Stock Exchange");
-    CHECK(entry.m_display_name == "NYSE");
+    REQUIRE(entry.m_venue == Venue("NYC1"));
+    REQUIRE(entry.m_country_code == DefaultCountries::US);
+    REQUIRE(entry.m_time_zone == "America/New_York");
+    REQUIRE(entry.m_currency == DefaultCurrencies::USD);
+    REQUIRE(entry.m_description == "New York Stock Exchange");
+    REQUIRE(entry.m_display_name == "NYSE");
   }
 
   TEST_CASE("parse_venue_database_entry_invalid_country") {
@@ -153,7 +153,7 @@ TEST_SUITE("Venue") {
       description: "London Stock Exchange"
       display_name: "LSE")";
     auto node = YAML::Load(yaml_text);
-    CHECK_THROWS_AS(parse_venue_database_entry(
+    REQUIRE_THROWS_AS(parse_venue_database_entry(
       node, DEFAULT_COUNTRIES, DEFAULT_CURRENCIES), std::runtime_error);
   }
 
@@ -166,7 +166,7 @@ TEST_SUITE("Venue") {
       description: "Tokyo Stock Exchange"
       display_name: "TSE")";
     auto node = YAML::Load(yaml_text);
-    CHECK_THROWS_AS(parse_venue_database_entry(
+    REQUIRE_THROWS_AS(parse_venue_database_entry(
       node, DEFAULT_COUNTRIES, DEFAULT_CURRENCIES), std::runtime_error);
   }
 
@@ -189,13 +189,13 @@ TEST_SUITE("Venue") {
     auto database =
       parse_venue_database(node, DEFAULT_COUNTRIES, DEFAULT_CURRENCIES);
     auto entry_alpha = parse_venue_entry("Alpha", database);
-    CHECK(entry_alpha.m_venue.get_code() == "ABC");
-    CHECK(entry_alpha.m_display_name == "Alpha");
+    REQUIRE(entry_alpha.m_venue.get_code() == "ABC");
+    REQUIRE(entry_alpha.m_display_name == "Alpha");
     auto entry_beta = parse_venue_entry("Beta", database);
-    CHECK(entry_beta.m_venue.get_code() == "DEF");
-    CHECK(entry_beta.m_display_name == "Beta");
+    REQUIRE(entry_beta.m_venue.get_code() == "DEF");
+    REQUIRE(entry_beta.m_display_name == "Beta");
     auto entry_by_code = parse_venue_entry("DEF", database);
-    CHECK(entry_by_code.m_venue.get_code() == "DEF");
+    REQUIRE(entry_by_code.m_venue.get_code() == "DEF");
   }
 
   TEST_CASE("parse_venue") {
@@ -209,25 +209,9 @@ TEST_SUITE("Venue") {
     auto database = VenueDatabase();
     database.add(entry);
     auto venue_alpha = parse_venue("Alpha", database);
-    CHECK(venue_alpha.get_code() == "ABC");
+    REQUIRE(venue_alpha.get_code() == "ABC");
     auto venue_code = parse_venue("ABC", database);
-    CHECK(venue_code.get_code() == "ABC");
-  }
-
-  TEST_CASE("to_string") {
-    auto entry = VenueDatabase::Entry();
-    entry.m_venue = Venue("XYZ");
-    entry.m_country_code = DefaultCountries::US;
-    entry.m_time_zone = "America/New_York";
-    entry.m_currency = DefaultCurrencies::USD;
-    entry.m_description = "Desc";
-    entry.m_display_name = "XyzVenue";
-    auto database = VenueDatabase();
-    database.add(entry);
-    auto known = parse_venue("XyzVenue", database);
-    CHECK(to_string(known, database) == "XyzVenue");
-    auto unknown = Venue("UNK");
-    CHECK(to_string(unknown, database) == "UNK");
+    REQUIRE(venue_code.get_code() == "ABC");
   }
 
   TEST_CASE("stream") {
@@ -243,10 +227,10 @@ TEST_SUITE("Venue") {
     auto venue = parse_venue("LmnVenue", database);
     auto ss = std::ostringstream();
     ss << venue;
-    CHECK(ss.str() == "LMN");
+    REQUIRE(ss.str() == "LMN");
     ss.str(std::string());
     auto parsed_entry = parse_venue_entry("LmnVenue", database);
     ss << parsed_entry;
-    CHECK(ss.str() == "(LMN CA America/Toronto CAD Desc3 LmnVenue)");
+    REQUIRE(ss.str() == "(LMN CA America/Toronto CAD Desc3 LmnVenue)");
   }
 }

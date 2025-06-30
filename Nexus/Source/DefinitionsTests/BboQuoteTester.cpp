@@ -10,13 +10,13 @@ using namespace boost::posix_time;
 TEST_SUITE("BboQuote") {
   TEST_CASE("default_constructor") {
     auto bbq = BboQuote();
-    CHECK(bbq.m_bid.m_side == Side::BID);
-    CHECK(bbq.m_ask.m_side == Side::ASK);
-    CHECK(bbq.m_bid.m_price == Money::ZERO);
-    CHECK(bbq.m_ask.m_price == Money::ZERO);
-    CHECK(bbq.m_bid.m_size == Quantity(0));
-    CHECK(bbq.m_ask.m_size == Quantity(0));
-    CHECK(bbq.m_timestamp.is_not_a_date_time());
+    REQUIRE(bbq.m_bid.m_side == Side::BID);
+    REQUIRE(bbq.m_ask.m_side == Side::ASK);
+    REQUIRE(bbq.m_bid.m_price == Money::ZERO);
+    REQUIRE(bbq.m_ask.m_price == Money::ZERO);
+    REQUIRE(bbq.m_bid.m_size == Quantity(0));
+    REQUIRE(bbq.m_ask.m_size == Quantity(0));
+    REQUIRE(bbq.m_timestamp.is_not_a_date_time());
   }
 
   TEST_CASE("constructor") {
@@ -24,9 +24,9 @@ TEST_SUITE("BboQuote") {
     auto ask = Quote(Money(20), Quantity(2), Side::ASK);
     auto timestamp = time_from_string("2025-06-25 15:30:00.000");
     auto bbo = BboQuote(bid, ask, timestamp);
-    CHECK(bbo.m_bid == bid);
-    CHECK(bbo.m_ask == ask);
-    CHECK(bbo.m_timestamp == timestamp);
+    REQUIRE(bbo.m_bid == bid);
+    REQUIRE(bbo.m_ask == ask);
+    REQUIRE(bbo.m_timestamp == timestamp);
   }
 
   TEST_CASE("stream") {
@@ -42,6 +42,6 @@ TEST_SUITE("BboQuote") {
       std::string("(") + lexical_cast<std::string>(ask.m_price) + " " +
       lexical_cast<std::string>(ask.m_size) + " ASK) " +
       lexical_cast<std::string>(timestamp) + ")";
-    CHECK(ss.str() == expected);
+    REQUIRE(ss.str() == expected);
   }
 }

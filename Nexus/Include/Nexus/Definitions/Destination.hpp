@@ -42,7 +42,9 @@ namespace Nexus {
       inline static const auto NONE = Entry();
 
       /** Constructs an empty DestinationDatabase. */
-      DestinationDatabase();
+      DestinationDatabase() = default;
+
+      DestinationDatabase(const DestinationDatabase& database) noexcept;
 
       /** Returns the list of destinations represented. */
       Beam::View<const Entry> get_entries() const;
@@ -111,6 +113,8 @@ namespace Nexus {
        */
       void remove_preferred_destination(Venue venue);
 
+      DestinationDatabase& operator =(const DestinationDatabase&) noexcept;
+
     private:
       friend struct Beam::Serialization::Shuttle<DestinationDatabase>;
       struct Data {
@@ -118,7 +122,7 @@ namespace Nexus {
         std::unordered_map<Venue, Destination> m_preferred_destinations;
         boost::optional<Entry> m_manual_order_entry_destination;
       };
-      std::shared_ptr<std::atomic<std::shared_ptr<Data>>> m_data;
+      std::atomic<std::shared_ptr<Data>> m_data;
   };
 
   /**
@@ -182,12 +186,13 @@ namespace Nexus {
     }, std::runtime_error("Failed to parse destination database."));
   }
 
-  inline DestinationDatabase::DestinationDatabase()
-    : m_data(std::make_shared<std::atomic<std::shared_ptr<Data>>>()) {}
+  inline DestinationDatabase::DestinationDatabase(
+    const DestinationDatabase& database) noexcept
+    : m_data(database.m_data.load()) {}
 
   inline Beam::View<const DestinationDatabase::Entry>
       DestinationDatabase::get_entries() const {
-    if(auto data = m_data->load()) {
+    if(auto data = m_data.load()) {
       auto entries =
         std::shared_ptr<std::vector<Entry>>(data, &data->m_entries);
       return Beam::View(Beam::SharedIterator(entries, entries->begin()),
@@ -198,7 +203,7 @@ namespace Nexus {
 
   inline const DestinationDatabase::Entry&
       DestinationDatabase::from(const Destination& id) const {
-    if(auto data = m_data->load()) {
+    if(auto data = m_data.load()) {
       auto i =
         std::lower_bound(data->m_entries.begin(), data->m_entries.end(), id,
           [] (auto const& lhs, auto const& rhs) {
@@ -213,7 +218,7 @@ namespace Nexus {
 
   inline const DestinationDatabase::Entry&
       DestinationDatabase::get_preferred_destination(Venue venue) const {
-    if(auto data = m_data->load()) {
+    if(auto data = m_data.load()) {
       auto i = data->m_preferred_destinations.find(venue);
       if(i != data->m_preferred_destinations.end()) {
         return from(i->second);
@@ -225,7 +230,7 @@ namespace Nexus {
   template<typename P>
   inline const DestinationDatabase::Entry&
       DestinationDatabase::select_first(P&& predicate) const {
-    if(auto data = m_data->load()) {
+    if(auto data = m_data.load()) {
       for(auto& entry : data->m_entries) {
         if(predicate(entry)) {
           return entry;
@@ -239,7 +244,7 @@ namespace Nexus {
   inline std::vector<DestinationDatabase::Entry>
       DestinationDatabase::select_all(P&& predicate) const {
     auto result = std::vector<Entry>();
-    if(auto data = m_data->load()) {
+    if(auto data = m_data.load()) {
       for(auto& entry : data->m_entries) {
         if(predicate(entry)) {
           result.push_back(entry);
@@ -251,7 +256,7 @@ namespace Nexus {
 
   inline const boost::optional<DestinationDatabase::Entry>&
       DestinationDatabase::get_manual_order_entry_destination() const {
-    if(auto data = m_data->load()) {
+    if(auto data = m_data.load()) {
       return data->m_manual_order_entry_destination;
     }
     static const auto NONE = boost::optional<DestinationDatabase::Entry>();
@@ -261,7 +266,7 @@ namespace Nexus {
   inline void DestinationDatabase::set_manual_order_entry_destination(
       const Entry& entry) {
     while(true) {
-      auto data = m_data->load();
+      auto data = m_data.load();
       auto new_data = [&] {
         if(!data) {
           auto new_data = std::make_shared<Data>();
@@ -275,7 +280,7 @@ namespace Nexus {
         new_data->m_manual_order_entry_destination = entry;
         return new_data;
       }();
-      if(!new_data || m_data->compare_exchange_weak(data, new_data)) {
+      if(!new_data || m_data.compare_exchange_weak(data, new_data)) {
         break;
       }
     }
@@ -283,7 +288,7 @@ namespace Nexus {
 
   inline void DestinationDatabase::add(const Entry& entry) {
     while(true) {
-      auto data = m_data->load();
+      auto data = m_data.load();
       auto new_data = [&] {
         if(!data) {
           auto new_data = std::make_shared<Data>();
@@ -303,7 +308,7 @@ namespace Nexus {
         }
         return std::shared_ptr<Data>();
       }();
-      if(!new_data || m_data->compare_exchange_weak(data, new_data)) {
+      if(!new_data || m_data.compare_exchange_weak(data, new_data)) {
         break;
       }
     }
@@ -312,7 +317,7 @@ namespace Nexus {
   inline void DestinationDatabase::set_preferred_destination(
       Venue venue, const Destination& destination) {
     while(true) {
-      auto data = m_data->load();
+      auto data = m_data.load();
       auto new_data = [&] {
         if(!data) {
           auto new_data = std::make_shared<Data>();
@@ -328,7 +333,7 @@ namespace Nexus {
         }
         return std::shared_ptr<Data>();
       }();
-      if(!new_data || m_data->compare_exchange_weak(data, new_data)) {
+      if(!new_data || m_data.compare_exchange_weak(data, new_data)) {
         break;
       }
     }
@@ -336,7 +341,7 @@ namespace Nexus {
 
   inline void DestinationDatabase::remove(const Destination& id) {
     while(true) {
-      auto data = m_data->load();
+      auto data = m_data.load();
       if(!data) {
         break;
       }
@@ -349,7 +354,7 @@ namespace Nexus {
         auto new_data = std::make_shared<Data>(*data);
         new_data->m_entries.erase(new_data->m_entries.begin() +
           std::distance(data->m_entries.begin(), i));
-        if(m_data->compare_exchange_weak(data, new_data)) {
+        if(m_data.compare_exchange_weak(data, new_data)) {
           break;
         }
       } else {
@@ -360,16 +365,22 @@ namespace Nexus {
 
   inline void DestinationDatabase::remove_preferred_destination(Venue venue) {
     while(true) {
-      auto data = m_data->load();
+      auto data = m_data.load();
       if(!data || data->m_preferred_destinations.count(venue) == 0) {
         break;
       }
       auto new_data = std::make_shared<Data>(*data);
       new_data->m_preferred_destinations.erase(venue);
-      if(m_data->compare_exchange_weak(data, new_data)) {
+      if(m_data.compare_exchange_weak(data, new_data)) {
         break;
       }
     }
+  }
+
+  inline DestinationDatabase& DestinationDatabase::operator =(
+      const DestinationDatabase& database) noexcept {
+    m_data.store(database.m_data.load());
+    return *this;
   }
 }
 
