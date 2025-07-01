@@ -1,3 +1,4 @@
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
@@ -104,5 +105,9 @@ TEST_SUITE("Money") {
       auto round_value = round(*value, 2);
       REQUIRE(round_value == try_parse_money("75.51"));
     }
+  }
+
+  TEST_CASE("shuttle") {
+    Beam::Serialization::Tests::TestRoundTripShuttle(Money(567));
   }
 }

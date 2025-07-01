@@ -1,3 +1,4 @@
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
@@ -113,5 +114,9 @@ TEST_SUITE("Quantity") {
     REQUIRE(round(Quantity(37), -3) == Quantity(0));
     REQUIRE(round(Quantity(73), -2) == Quantity(100));
     REQUIRE(round(Quantity(73), -2) == Quantity(100));
+  }
+
+  TEST_CASE("shuttle") {
+    Beam::Serialization::Tests::TestRoundTripShuttle(Quantity(567));
   }
 }

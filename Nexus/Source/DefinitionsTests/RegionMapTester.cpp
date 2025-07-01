@@ -43,4 +43,8 @@ TEST_SUITE("RegionMap") {
     ++i;
     REQUIRE(std::get<0>(*i) == US);
   }
+
+  TEST_CASE("shuttle") {
+    REQUIRE(false);
+  }
 }

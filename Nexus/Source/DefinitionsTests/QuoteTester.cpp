@@ -1,3 +1,4 @@
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Quote.hpp"
  
@@ -57,5 +58,10 @@ TEST_SUITE("Quote") {
     auto ss = std::ostringstream();
     ss << quote;
     REQUIRE(ss.str() == "(1.00 100 BID)");
+  }
+
+  TEST_CASE("shuttle") {
+    Beam::Serialization::Tests::TestRoundTripShuttle(
+      Quote(Money(1), Quantity(100), Side::BID));
   }
 }

@@ -2,6 +2,7 @@
 #define NEXUS_ORDER_IMBALANCE_HPP
 #include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
+#include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
