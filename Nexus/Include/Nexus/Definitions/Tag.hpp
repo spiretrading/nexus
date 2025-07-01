@@ -56,7 +56,7 @@ namespace Nexus {
        * @param key The Tag's key.
        * @param value The tag's value.
        */
-      Tag(int key, Type value);
+      Tag(int key, Type value) noexcept;
 
       /** Returns the key. */
       int get_key() const;
@@ -76,7 +76,7 @@ namespace Nexus {
     return out << '(' << value.get_key() << ' ' << value.get_value() << ')';
   }
 
-  inline Tag::Tag(int key, Type value)
+  inline Tag::Tag(int key, Type value) noexcept
     : m_key(key),
       m_value(std::move(value)) {}
 

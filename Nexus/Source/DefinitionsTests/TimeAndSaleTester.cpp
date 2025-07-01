@@ -11,15 +11,15 @@ TEST_SUITE("TimeAndSale") {
   TEST_CASE("stream_condition") {
     auto ss = std::stringstream();
     ss << TimeAndSale::Condition::Type::REGULAR;
-    CHECK(ss.str() == "@");
+    REQUIRE(ss.str() == "@");
     ss.str("");
     ss.clear();
     ss << TimeAndSale::Condition::Type::OPEN;
-    CHECK(ss.str() == "OPEN");
+    REQUIRE(ss.str() == "OPEN");
     ss.str("");
     ss.clear();
     ss << TimeAndSale::Condition::Type::CLOSE;
-    CHECK(ss.str() == "CLOSE");
+    REQUIRE(ss.str() == "CLOSE");
   }
 
   TEST_CASE("stream_code") {
@@ -27,7 +27,7 @@ TEST_SUITE("TimeAndSale") {
       TimeAndSale::Condition(TimeAndSale::Condition::Type::OPEN, "X");
     auto ss = std::stringstream();
     ss << condition;
-    CHECK(ss.str() == "(OPEN X)");
+    REQUIRE(ss.str() == "(OPEN X)");
   }
 
   TEST_CASE("stream") {
@@ -43,6 +43,6 @@ TEST_SUITE("TimeAndSale") {
       time_and_sale.m_condition << ' ' <<
       time_and_sale.m_market_center << ' ' << time_and_sale.m_buyer_mpid <<
       ' ' << time_and_sale.m_seller_mpid << ')';
-    CHECK(ss.str() == expected.str());
+    REQUIRE(ss.str() == expected.str());
   }
 }

@@ -23,8 +23,8 @@ namespace Nexus {
   /**
    * Returns a value based on a Side.
    * @param side The Side to pick the value from.
-   * @param askValue The value to return if <i>side</i> is an ASK.
-   * @param bidValue The value to return if <i>side</i> is a BID.
+   * @param ask The value to return if <i>side</i> is an ASK.
+   * @param bid The value to return if <i>side</i> is a BID.
    */
   template<typename T>
   T& pick(Side side, T& ask, T& bid) {
@@ -37,8 +37,8 @@ namespace Nexus {
   /**
    * Returns a value based on a Side.
    * @param side The Side to pick the value from.
-   * @param askValue The value to return if <i>side</i> is an ASK.
-   * @param bidValue The value to return if <i>side</i> is a BID.
+   * @param ask The value to return if <i>side</i> is an ASK.
+   * @param bid The value to return if <i>side</i> is a BID.
    */
   template<typename T>
   const T& pick(Side side, const T& ask, const T& bid) {

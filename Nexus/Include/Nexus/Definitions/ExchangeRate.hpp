@@ -27,7 +27,7 @@ namespace Nexus {
      * @param rate The conversion rate from the base currency to the counter
      *        currency.
      */
-    ExchangeRate(CurrencyPair pair, boost::rational<int> rate);
+    ExchangeRate(CurrencyPair pair, boost::rational<int> rate) noexcept;
 
     bool operator ==(const ExchangeRate&) const = default;
   };
@@ -46,8 +46,7 @@ namespace Nexus {
    * Converts a Money value according to an ExchangeRate.
    * @param value The value to convert.
    * @param rate The ExchangeRate to use in the conversion.
-   * @return The <i>value</i> converted according to the specified
-   *         <i>exchangeRate</i>.
+   * @return The <i>value</i> converted according to the specified <i>rate</i>.
    */
   inline Money convert(Money value, const ExchangeRate& rate) {
     return (rate.m_rate.numerator() * value) / rate.m_rate.denominator();
@@ -62,7 +61,7 @@ namespace Nexus {
     : m_rate(1) {}
 
   inline ExchangeRate::ExchangeRate(
-    CurrencyPair pair, boost::rational<int> rate)
+    CurrencyPair pair, boost::rational<int> rate) noexcept
     : m_pair(pair),
       m_rate(rate) {}
 }

@@ -79,7 +79,7 @@ namespace Nexus {
       /** Constructs an empty VenueDatabase. */
       VenueDatabase() = default;
 
-      VenueDatabase(const VenueDatabase&) noexcept;
+      VenueDatabase(const VenueDatabase& database) noexcept;
 
       /** Returns all Entries. */
       Beam::View<const Entry> get_entries() const;
@@ -300,6 +300,9 @@ namespace Nexus {
     return m_mic;
   }
 
+  inline VenueDatabase::VenueDatabase(const VenueDatabase& database) noexcept
+    : m_entries(database.m_entries.load()) {}
+
   inline Beam::View<const VenueDatabase::Entry>
       VenueDatabase::get_entries() const {
     if(auto entries = m_entries.load()) {
@@ -402,6 +405,12 @@ namespace Nexus {
         break;
       }
     }
+  }
+
+  inline VenueDatabase& VenueDatabase::operator =(
+      const VenueDatabase& database) noexcept {
+    m_entries.store(database.m_entries.load());
+    return *this;
   }
 
   inline std::size_t hash_value(Venue venue) {

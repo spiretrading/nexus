@@ -72,7 +72,7 @@ namespace Nexus {
        * Constructs a TradingSchedule.
        * @param rules The list of rules in order of precedence to match against.
        */
-      explicit TradingSchedule(std::vector<Rule> rules);
+      explicit TradingSchedule(std::vector<Rule> rules) noexcept;
 
       /**
        * Returns a list of events matching a date and venue.
@@ -81,7 +81,7 @@ namespace Nexus {
        * @return A list of events taking place on the specified <i>date</i> and
        *         <i>venue</i>.
        */
-      std::vector<Event> Find(boost::gregorian::date date, Venue venue) const;
+      std::vector<Event> find(boost::gregorian::date date, Venue venue) const;
 
       /**
        * Returns a list of events matching a date, venue, and predicate.
@@ -92,7 +92,7 @@ namespace Nexus {
        *         <i>venue</i> and matching <i>f</i>.
        */
       template<typename F>
-      std::vector<Event> Find(
+      std::vector<Event> find(
         boost::gregorian::date date, Venue venue, F&& f) const;
 
     private:
@@ -109,7 +109,7 @@ namespace Nexus {
    *         <i>rule</i>'s venue and the <i>date</i> is a subset of the dates
    *         specified by the <i>rule</i>.
    */
-  inline bool IsMatch(Venue venue, boost::gregorian::date date,
+  inline bool is_match(Venue venue, boost::gregorian::date date,
       const TradingSchedule::Rule& rule) {
     if(!rule.m_venues.empty()) {
       if(std::find(rule.m_venues.begin(), rule.m_venues.end(), venue) ==
@@ -150,70 +150,70 @@ namespace Nexus {
    * @param database The database used to parse venues.
    * @return The list of TradingSchedule::Rules represented by the <i>node</i>.
    */
-  inline std::vector<TradingSchedule::Rule> ParseTradingScheduleRules(
+  inline std::vector<TradingSchedule::Rule> parse_trading_schedule_rules(
       const YAML::Node& node, const VenueDatabase& database) {
     auto rules = std::vector<TradingSchedule::Rule>();
     rules.emplace_back();
-    for(auto& venueNode : node["venues"]) {
+    for(auto& venue : node["venues"]) {
       rules.back().m_venues.push_back(
-        parse_venue(Beam::Extract<std::string>(venueNode), database));
+        parse_venue(Beam::Extract<std::string>(venue), database));
     }
-    for(auto& eventNode : node["events"]) {
+    for(auto& event_node : node["events"]) {
       auto event = TradingSchedule::Event();
       auto time = Beam::Parsers::Parse<boost::posix_time::time_duration>(
-        Beam::Extract<std::string>(eventNode, "time"));
-      event.m_timestamp = boost::posix_time::ptime(boost::gregorian::date(
-        1900, 1, 1), time);
-      event.m_code = Beam::Extract<std::string>(eventNode, "code");
+        Beam::Extract<std::string>(event_node, "time"));
+      event.m_timestamp =
+        boost::posix_time::ptime(boost::gregorian::date(1900, 1, 1), time);
+      event.m_code = Beam::Extract<std::string>(event_node, "code");
       rules.back().m_events.push_back(event);
     }
     std::sort(rules.back().m_events.begin(), rules.back().m_events.end(),
-      [] (auto& left, auto& right) {
+      [] (const auto& left, const auto& right) {
         return std::tie(left.m_timestamp, left.m_code) <
-          std::tie(right.m_timestamp, left.m_code);
+          std::tie(right.m_timestamp, right.m_code);
       });
-    auto& timeNode = node["time"];
-    if(timeNode.IsDefined()) {
-      auto& weekdaysNode = timeNode["weekdays"];
-      if(weekdaysNode.IsDefined()) {
-        for(auto& weekdayNode : weekdaysNode) {
+    auto& time_node = node["time"];
+    if(time_node.IsDefined()) {
+      auto& weekdays_node = time_node["weekdays"];
+      if(weekdays_node.IsDefined()) {
+        for(auto& weekday_node : weekdays_node) {
           rules.back().m_weekdays.push_back(
-            Beam::Extract<boost::gregorian::greg_weekday>(weekdayNode));
+            Beam::Extract<boost::gregorian::greg_weekday>(weekday_node));
         }
       }
-      auto& daysNode = timeNode["days"];
-      if(daysNode.IsDefined()) {
-        for(auto& dayNode : daysNode) {
+      auto& days_node = time_node["days"];
+      if(days_node.IsDefined()) {
+        for(auto& day_node : days_node) {
           rules.back().m_days.push_back(
-            Beam::Extract<boost::gregorian::greg_day>(dayNode));
+            Beam::Extract<boost::gregorian::greg_day>(day_node));
         }
       }
-      auto& monthsNode = timeNode["months"];
-      if(monthsNode.IsDefined()) {
-        for(auto& monthNode : monthsNode) {
+      auto& months_node = time_node["months"];
+      if(months_node.IsDefined()) {
+        for(auto& month_node : months_node) {
           rules.back().m_months.push_back(
-            Beam::Extract<boost::gregorian::greg_month>(monthNode));
+            Beam::Extract<boost::gregorian::greg_month>(month_node));
         }
       }
-      auto& yearsNode = timeNode["years"];
-      if(yearsNode.IsDefined()) {
-        for(auto& yearNode : yearsNode) {
+      auto& years_node = time_node["years"];
+      if(years_node.IsDefined()) {
+        for(auto& year_node : years_node) {
           rules.back().m_years.push_back(
-            Beam::Extract<boost::gregorian::greg_year>(yearNode));
+            Beam::Extract<boost::gregorian::greg_year>(year_node));
         }
       }
     } else {
-      auto& datesNode = node["dates"];
-      if(datesNode.IsDefined()) {
+      auto& dates_node = node["dates"];
+      if(dates_node.IsDefined()) {
         auto rule = rules.back();
         rules.pop_back();
-        for(auto& dateNode : datesNode) {
-          auto date = Beam::Extract<boost::gregorian::date>(dateNode);
-          auto dateRule = rule;
-          dateRule.m_days.push_back(date.day());
-          dateRule.m_months.push_back(date.month());
-          dateRule.m_years.push_back(date.year());
-          rules.push_back(dateRule);
+        for(auto& date_node : dates_node) {
+          auto date = Beam::Extract<boost::gregorian::date>(date_node);
+          auto date_rule = rule;
+          date_rule.m_days.push_back(date.day());
+          date_rule.m_months.push_back(date.month());
+          date_rule.m_years.push_back(date.year());
+          rules.push_back(date_rule);
         }
       }
     }
@@ -226,41 +226,41 @@ namespace Nexus {
    * @param database The database used to parse venues.
    * @return The TradingSchedule represented by the <i>node</i>.
    */
-  inline TradingSchedule ParseTradingSchedule(const YAML::Node& node,
-      const VenueDatabase& database) {
+  inline TradingSchedule parse_trading_schedule(
+      const YAML::Node& node, const VenueDatabase& database) {
     auto rules = std::vector<TradingSchedule::Rule>();
     for(auto& node : node) {
-      auto subRules = ParseTradingScheduleRules(node, database);
-      rules.insert(rules.end(), std::make_move_iterator(subRules.begin()),
-        std::make_move_iterator(subRules.end()));
+      auto sub_rules = parse_trading_schedule_rules(node, database);
+      rules.insert(rules.end(), std::make_move_iterator(sub_rules.begin()),
+        std::make_move_iterator(sub_rules.end()));
     }
     return TradingSchedule(std::move(rules));
   }
 
-  inline std::ostream& operator <<(std::ostream& out,
-      const TradingSchedule::Event& event) {
-    return out << '(' << " " << event.m_code << " " << event.m_timestamp << ')';
+  inline std::ostream& operator <<(
+      std::ostream& out, const TradingSchedule::Event& event) {
+    return out << '(' << event.m_code << ' ' << event.m_timestamp << ')';
   }
 
-  inline TradingSchedule::TradingSchedule(std::vector<Rule> rules)
+  inline TradingSchedule::TradingSchedule(std::vector<Rule> rules) noexcept
     : m_rules(std::move(rules)) {}
 
-  inline std::vector<TradingSchedule::Event> TradingSchedule::Find(
+  inline std::vector<TradingSchedule::Event> TradingSchedule::find(
       boost::gregorian::date date, Venue venue) const {
-    return Find(date, venue, [] (const auto&) { return true; });
+    return find(date, venue, [] (const auto&) { return true; });
   }
 
   template<typename F>
-  std::vector<TradingSchedule::Event> TradingSchedule::Find(
+  std::vector<TradingSchedule::Event> TradingSchedule::find(
       boost::gregorian::date date, Venue venue, F&& f) const {
     for(auto& rule : m_rules) {
-      if(IsMatch(venue, date, rule)) {
+      if(is_match(venue, date, rule)) {
         auto events = std::vector<TradingSchedule::Event>();
         for(auto& event : rule.m_events) {
           if(f(event)) {
             events.push_back(event);
-            events.back().m_timestamp = boost::posix_time::ptime(date,
-              event.m_timestamp.time_of_day());
+            events.back().m_timestamp =
+              boost::posix_time::ptime(date, event.m_timestamp.time_of_day());
           }
         }
         return events;
@@ -275,7 +275,7 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::TradingSchedule::Event> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::TradingSchedule::Event& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("code", value.m_code);
       shuttle.Shuttle("timestamp", value.m_timestamp);
     }
@@ -285,7 +285,7 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::TradingSchedule::Rule> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::TradingSchedule::Rule& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("venues", value.m_venues);
       shuttle.Shuttle("weekdays", value.m_weekdays);
       shuttle.Shuttle("days", value.m_days);
@@ -299,7 +299,7 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::TradingSchedule> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::TradingSchedule& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("rules", value.m_rules);
     }
   };

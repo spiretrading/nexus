@@ -23,7 +23,7 @@ namespace Nexus {
        * @param symbol The ticker symbol.
        * @param venue The primary venue the symbol is listed on.
        */
-      Security(std::string symbol, Venue venue);
+      Security(std::string symbol, Venue venue) noexcept;
 
       /** Returns the symbol. */
       const std::string& get_symbol() const;
@@ -89,7 +89,7 @@ namespace Nexus {
     return seed;
   }
 
-  inline Security::Security(std::string symbol, Venue venue)
+  inline Security::Security(std::string symbol, Venue venue) noexcept
     : m_symbol(std::move(symbol)),
       m_venue(venue) {}
 
