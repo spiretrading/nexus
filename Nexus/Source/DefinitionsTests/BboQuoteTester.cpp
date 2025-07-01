@@ -1,7 +1,7 @@
 #include <sstream>
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/BboQuote.hpp"
-#include <boost/date_time/posix_time/posix_time.hpp>
 
 using namespace Nexus;
 using namespace boost;
@@ -43,5 +43,13 @@ TEST_SUITE("BboQuote") {
       lexical_cast<std::string>(ask.m_size) + " ASK) " +
       lexical_cast<std::string>(timestamp) + ")";
     REQUIRE(ss.str() == expected);
+  }
+
+  TEST_CASE("shuttle") {
+    auto bid = Quote(Money(10), Quantity(1), Side::BID);
+    auto ask = Quote(Money(20), Quantity(2), Side::ASK);
+    auto timestamp = time_from_string("2025-06-25 15:30:00.000");
+    auto bbo = BboQuote(bid, ask, timestamp);
+    Beam::Serialization::Tests::TestRoundTripShuttle(bbo);
   }
 }

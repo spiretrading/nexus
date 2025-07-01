@@ -1,7 +1,9 @@
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/Currency.hpp"
+#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 
 using namespace Nexus;
+using namespace Nexus::DefaultCurrencies;
 
 TEST_SUITE("Currency") {
   TEST_CASE("comparison") {
@@ -23,21 +25,25 @@ TEST_SUITE("Currency") {
     REQUIRE(read_id == CurrencyId(256));
   }
 
+  TEST_CASE("shuttle_id") {
+    Beam::Serialization::Tests::TestRoundTripShuttle(CurrencyId(42));
+  }
+
   TEST_CASE("none") {
-    auto none = Nexus::CurrencyDatabase::NONE;
+    auto none = CurrencyDatabase::NONE;
     REQUIRE(none.m_id == CurrencyId::NONE);
     REQUIRE(none.m_code == "???");
     REQUIRE(none.m_sign == "?");
   }
 
   TEST_CASE("id_lookup") {
-    auto database = Nexus::CurrencyDatabase();
-    auto entry1 = Nexus::CurrencyDatabase::Entry();
+    auto database = CurrencyDatabase();
+    auto entry1 = CurrencyDatabase::Entry();
     entry1.m_id = CurrencyId(10);
     entry1.m_code = "AAA";
     entry1.m_sign = "A$";
     database.add(entry1);
-    auto entry2 = Nexus::CurrencyDatabase::Entry();
+    auto entry2 = CurrencyDatabase::Entry();
     entry2.m_id = CurrencyId(5);
     entry2.m_code = "BBB";
     entry2.m_sign = "B$";
@@ -48,8 +54,8 @@ TEST_SUITE("Currency") {
   }
 
   TEST_CASE("code_lookup") {
-    auto database = Nexus::CurrencyDatabase();
-    auto entry = Nexus::CurrencyDatabase::Entry();
+    auto database = CurrencyDatabase();
+    auto entry = CurrencyDatabase::Entry();
     entry.m_id = CurrencyId(20);
     entry.m_code = "CCC";
     entry.m_sign = "C$";
@@ -59,8 +65,8 @@ TEST_SUITE("Currency") {
   }
 
   TEST_CASE("remove") {
-    auto database = Nexus::CurrencyDatabase();
-    auto entry = Nexus::CurrencyDatabase::Entry();
+    auto database = CurrencyDatabase();
+    auto entry = CurrencyDatabase::Entry();
     entry.m_id = CurrencyId(30);
     entry.m_code = "DDD";
     entry.m_sign = "D$";
@@ -71,13 +77,13 @@ TEST_SUITE("Currency") {
   }
 
   TEST_CASE("sort_order") {
-    auto database = Nexus::CurrencyDatabase();
-    auto low = Nexus::CurrencyDatabase::Entry();
+    auto database = CurrencyDatabase();
+    auto low = CurrencyDatabase::Entry();
     low.m_id = CurrencyId(1);
     low.m_code = "ZZZ";
     low.m_sign = "Z$";
     database.add(low);
-    auto high = Nexus::CurrencyDatabase::Entry();
+    auto high = CurrencyDatabase::Entry();
     high.m_id = CurrencyId(2);
     high.m_code = "AAA";
     high.m_sign = "A$";
@@ -86,6 +92,18 @@ TEST_SUITE("Currency") {
     REQUIRE(entries.size() == 2);
     REQUIRE(entries[0].m_id == CurrencyId(1));
     REQUIRE(entries[1].m_id == CurrencyId(2));
+  }
+
+  TEST_CASE("shuttle") {
+    Beam::Serialization::Tests::TestRoundTripShuttle(DEFAULT_CURRENCIES,
+      [] (const auto& currencies) {
+        auto expected_entries = DEFAULT_CURRENCIES.get_entries();
+        auto entries = currencies.get_entries();
+        REQUIRE(expected_entries.size() == entries.size());
+        for(auto i = std::size_t(0); i != entries.size(); ++i) {
+          REQUIRE(expected_entries[i] == entries[i]);
+        }
+      });
   }
 
   TEST_CASE("parse_currency") {

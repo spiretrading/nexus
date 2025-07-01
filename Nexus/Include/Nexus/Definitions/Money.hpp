@@ -8,6 +8,7 @@
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <boost/functional/hash.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/Quantity.hpp"
 

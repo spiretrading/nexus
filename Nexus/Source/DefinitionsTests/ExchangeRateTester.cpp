@@ -1,10 +1,11 @@
-#include <boost/rational.hpp>
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/ExchangeRate.hpp"
 
 using namespace boost;
 using namespace Nexus;
+using namespace Nexus::DefaultCurrencies;
 
 TEST_SUITE("ExchangeRate") {
   TEST_CASE("default_constructor") {
@@ -15,7 +16,7 @@ TEST_SUITE("ExchangeRate") {
   }
 
   TEST_CASE("constructor") {
-    auto pair = CurrencyPair(DefaultCurrencies::USD, DefaultCurrencies::EUR);
+    auto pair = CurrencyPair(USD, EUR);
     auto rate  = rational<int>(3, 4);
     auto exchange_rate = ExchangeRate(pair, rate);
     REQUIRE(exchange_rate.m_rate == rate);
@@ -23,7 +24,7 @@ TEST_SUITE("ExchangeRate") {
   }
 
   TEST_CASE("invert") {
-    auto pair = CurrencyPair(DefaultCurrencies::GBP, DefaultCurrencies::JPY);
+    auto pair = CurrencyPair(GBP, JPY);
     auto rate  = rational<int>(2, 5);
     auto exchange_rate = ExchangeRate(pair, rate);
     auto inverse_rate = invert(exchange_rate);
@@ -33,7 +34,7 @@ TEST_SUITE("ExchangeRate") {
   }
 
   TEST_CASE("invert_twice") {
-    auto pair = CurrencyPair(DefaultCurrencies::AUD, DefaultCurrencies::CAD);
+    auto pair = CurrencyPair(AUD, CAD);
     auto rate  = rational<int>(7, 9);
     auto exchange_rate = ExchangeRate(pair, rate);
     auto back = invert(invert(exchange_rate));
@@ -43,8 +44,7 @@ TEST_SUITE("ExchangeRate") {
   TEST_CASE("convert") {
     auto rate = rational<int>(3, 2);
     auto original = 100 * Money::ONE;
-    auto exchange_rate = ExchangeRate(
-      CurrencyPair(DefaultCurrencies::EUR, DefaultCurrencies::GBP), rate);
+    auto exchange_rate = ExchangeRate(CurrencyPair(EUR, GBP), rate);
     auto converted = convert(original, exchange_rate);
     auto expected  = (rate.numerator() * original) / rate.denominator();
     REQUIRE(converted == expected);
@@ -53,10 +53,23 @@ TEST_SUITE("ExchangeRate") {
   TEST_CASE("convert_then_invert") {
     auto rate = rational<int>(5, 3);
     auto original = 45 * Money::ONE;
-    auto exchange_rate = ExchangeRate(
-      CurrencyPair(DefaultCurrencies::USD, DefaultCurrencies::CAD), rate);
+    auto exchange_rate = ExchangeRate(CurrencyPair(USD, CAD), rate);
     auto converted = convert(original, exchange_rate);
     auto back = convert(converted, invert(exchange_rate));
     REQUIRE(back == original);
+  }
+
+  TEST_CASE("stream") {
+    auto pair = CurrencyPair(EUR, USD);
+    auto rate = ExchangeRate(pair, rational<int>(3, 2));
+    auto ss = std::ostringstream();
+    ss << rate;
+    CHECK(ss.str() == "(EUR/USD 3/2)");
+  }
+
+  TEST_CASE("shuttle") {
+    auto pair = CurrencyPair(EUR, USD);
+    auto rate = ExchangeRate(pair, rational<int>(3, 2));
+    Beam::Serialization::Tests::TestRoundTripShuttle(rate);
   }
 }

@@ -1,5 +1,5 @@
 #include <sstream>
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/BookQuote.hpp"
 
@@ -42,5 +42,12 @@ TEST_SUITE("BookQuote") {
       quote.m_quote.m_size << " " << quote.m_quote.m_side << ") " <<
       quote.m_timestamp << ")";
     REQUIRE(ss.str() == expected.str());
+  }
+
+  TEST_CASE("shuttle") {
+    auto quote = BookQuote("MPX", true, Venue("TEST"),
+      Quote(500 * Money::ONE, 25, Side::ASK),
+        time_from_string("2025-06-25 15:30:00.000"));
+    Beam::Serialization::Tests::TestRoundTripShuttle(quote);
   }
 }

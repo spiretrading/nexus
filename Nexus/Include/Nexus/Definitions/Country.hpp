@@ -13,6 +13,7 @@
 #include <Beam/Collections/View.hpp>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
+#include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/FixedString.hpp>
 #include <Beam/Utilities/ScopedStreamManipulator.hpp>
@@ -420,7 +421,16 @@ namespace Beam::Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::CountryDatabase& value,
         unsigned int version) const {
-      shuttle.Shuttle("entries", value.m_entries);
+      if constexpr(IsSender<Shuttler>::value) {
+        if(auto entries = value.m_entries.load()) {
+          shuttle.Send("entries", *entries);
+        }
+      } else {
+        auto entries =
+          std::make_shared<std::vector<Nexus::CountryDatabase::Entry>>();
+        shuttle.Shuttle("entries", *entries);
+        value.m_entries.store(std::move(entries));
+      }
     }
   };
 }

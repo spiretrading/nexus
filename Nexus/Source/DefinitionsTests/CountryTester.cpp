@@ -1,5 +1,6 @@
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/Country.hpp"
+#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 
 using namespace Nexus;
 
@@ -38,6 +39,10 @@ TEST_SUITE("Country") {
     auto ss = std::stringstream();
     ss << database << entry1.m_code;
     REQUIRE(ss.str() == "CA");
+  }
+
+  TEST_CASE("shuttle_code") {
+    Beam::Serialization::Tests::TestRoundTripShuttle(CountryCode(42));
   }
 
   TEST_CASE("none") {
@@ -97,6 +102,18 @@ TEST_SUITE("Country") {
     REQUIRE(database.from(CountryCode(9)).m_code == CountryCode::NONE);
   }
 
+  TEST_CASE("shuttle") {
+    Beam::Serialization::Tests::TestRoundTripShuttle(DEFAULT_COUNTRIES,
+      [] (const auto& countries) {
+        auto expected_entries = DEFAULT_COUNTRIES.get_entries();
+        auto entries = countries.get_entries();
+        REQUIRE(expected_entries.size() == entries.size());
+        for(auto i = std::size_t(0); i != entries.size(); ++i) {
+          REQUIRE(expected_entries[i] == entries[i]);
+        }
+      });
+  }
+
   TEST_CASE("parse") {
     auto database = CountryDatabase();
     auto entry = CountryDatabase::Entry();
@@ -110,6 +127,7 @@ TEST_SUITE("Country") {
     REQUIRE(parse_country_code("Eight", database) == CountryCode(8));
     REQUIRE(parse_country_code("Unknown", database) == CountryCode::NONE);
   }
+
 
   TEST_CASE("parse_country_database_entry") {
     auto yaml = R"(

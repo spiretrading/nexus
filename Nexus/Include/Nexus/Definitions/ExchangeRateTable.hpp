@@ -3,6 +3,8 @@
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>
+#include <Beam/Serialization/DataShuttle.hpp>
+#include <Beam/Serialization/ShuttleUnorderedMap.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/optional/optional.hpp>
@@ -51,11 +53,12 @@ namespace Nexus {
 
       /**
        * Adds or updates an exchange rate in the table.
-       * @param exchange_rate The exchange rate to add or update.
+       * @param rate The exchange rate to add or update.
        */
-      void add(const ExchangeRate& exchange_rate);
+      void add(const ExchangeRate& rate);
 
     private:
+      friend struct Beam::Serialization::Shuttle<ExchangeRateTable>;
       mutable boost::mutex m_mutex;
       std::unordered_map<CurrencyPair, ExchangeRate> m_direct_rates;
       mutable std::unordered_map<CurrencyPair, ExchangeRate> m_derived_rates;
@@ -128,13 +131,28 @@ namespace Nexus {
     return convert(value, CurrencyPair(base, counter));
   }
 
-  void ExchangeRateTable::add(const ExchangeRate& exchange_rate) {
+  void ExchangeRateTable::add(const ExchangeRate& rate) {
     auto lock = boost::lock_guard(m_mutex);
-    m_direct_rates[exchange_rate.m_pair] = exchange_rate;
-    auto inverse = invert(exchange_rate);
+    m_direct_rates[rate.m_pair] = rate;
+    auto inverse = invert(rate);
     m_direct_rates[inverse.m_pair] = inverse;
     m_derived_rates.clear();
   }
+}
+
+namespace Beam::Serialization {
+  template<>
+  struct Shuttle<Nexus::ExchangeRateTable> {
+    template<typename Shuttler>
+    void operator ()(Shuttler& shuttle, Nexus::ExchangeRateTable& value,
+        unsigned int version) const {
+      auto lock = boost::lock_guard(value.m_mutex);
+      shuttle.Shuttle("direct_rates", value.m_direct_rates);
+      if constexpr(IsReceiver<Shuttler>::value) {
+        value.m_derived_rates.clear();
+      }
+    }
+  };
 }
 
 #endif

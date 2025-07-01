@@ -27,14 +27,14 @@ namespace Details {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(978);
         entry.m_code = "EUR";
-        entry.m_sign = "€";
+        entry.m_sign = "\xE2\x82\xAC";
         database.add(entry);
       }
       {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(826);
         entry.m_code = "GBP";
-        entry.m_sign = "£";
+        entry.m_sign = "\xC2\xA3";
         database.add(entry);
       }
       {
@@ -48,7 +48,7 @@ namespace Details {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(392);
         entry.m_code = "JPY";
-        entry.m_sign = reinterpret_cast<const char*>(u8"\u00A5");
+        entry.m_sign = "\xC2\xA5";
         database.add(entry);
       }
       {
@@ -62,7 +62,7 @@ namespace Details {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(1001);
         entry.m_code = "XBT";
-        entry.m_sign = reinterpret_cast<const char*>(u8"\u20BF");
+        entry.m_sign = "\xE2\x82\xBF";
         database.add(entry);
       }
       return database;

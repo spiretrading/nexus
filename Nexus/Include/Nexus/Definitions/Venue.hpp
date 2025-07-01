@@ -420,6 +420,29 @@ namespace Nexus {
 
 namespace Beam::Serialization {
   template<>
+  struct IsStructure<Nexus::Venue> : std::false_type {};
+
+  template<>
+  struct Send<Nexus::Venue> {
+    template<typename Shuttler>
+    void operator ()(
+        Shuttler& shuttle, const char* name, Nexus::Venue value) const {
+      shuttle.Send(name, value.get_code());
+    }
+  };
+
+  template<>
+  struct Receive<Nexus::Venue> {
+    template<typename Shuttler>
+    void operator ()(
+        Shuttler& shuttle, const char* name, Nexus::Venue& value) const {
+      auto code = Nexus::Venue::Code();
+      shuttle.Shuttle(name, code);
+      value = Nexus::Venue(code);
+    }
+  };
+
+  template<>
   struct Shuttle<Nexus::VenueDatabase::Entry> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::VenueDatabase::Entry& value,

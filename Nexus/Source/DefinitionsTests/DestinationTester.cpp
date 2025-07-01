@@ -1,6 +1,7 @@
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultVenueDatabase.hpp"
-#include "Nexus/Definitions/Destination.hpp"
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 
 using namespace Nexus;
 
@@ -115,6 +116,24 @@ TEST_SUITE("Destination") {
     REQUIRE(all.size() == 2);
     REQUIRE(std::find(all.begin(), all.end(), entry2) != all.end());
     REQUIRE(std::find(all.begin(), all.end(), entry3) != all.end());
+  }
+
+  TEST_CASE("shuttle") {
+    Beam::Serialization::Tests::TestRoundTripShuttle(DEFAULT_DESTINATIONS,
+      [] (const auto& destinations) {
+        auto expected_entries = DEFAULT_DESTINATIONS.get_entries();
+        auto entries = destinations.get_entries();
+        REQUIRE(expected_entries.size() == entries.size());
+        for(auto i = std::size_t(0); i != entries.size(); ++i) {
+          REQUIRE(expected_entries[i] == entries[i]);
+        }
+        REQUIRE((destinations.get_manual_order_entry_destination() ==
+          DEFAULT_DESTINATIONS.get_manual_order_entry_destination()));
+        for(auto& venue : DEFAULT_VENUES.get_entries()) {
+          REQUIRE(destinations.get_preferred_destination(venue.m_venue) ==
+            DEFAULT_DESTINATIONS.get_preferred_destination(venue.m_venue));
+        }
+      });
   }
 
   TEST_CASE("parse_destination_database_entry") {

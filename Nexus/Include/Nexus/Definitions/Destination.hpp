@@ -8,7 +8,9 @@
 #include <vector>
 #include <Beam/Collections/View.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
+#include <Beam/Serialization/ShuttleOptional.hpp>
 #include <Beam/Serialization/ShuttleUnorderedMap.hpp>
+#include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/optional/optional.hpp>
@@ -401,12 +403,23 @@ namespace Beam::Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::DestinationDatabase& value,
         unsigned int version) const {
-#if 0 // TODO
-      shuttle.Shuttle("entries", value.m_entries);
-      shuttle.Shuttle("preferred_destinations", value.m_preferred_destinations);
-      shuttle.Shuttle("manual_order_entry_destination",
-        value.m_manual_order_entry_destination);
-#endif
+      if constexpr(IsSender<Shuttler>::value) {
+        if(auto data = value.m_data.load()) {
+          shuttle.Send("entries", data->m_entries);
+          shuttle.Send(
+            "preferred_destinations", data->m_preferred_destinations);
+          shuttle.Send("manual_order_entry_destination",
+            data->m_manual_order_entry_destination);
+        }
+      } else {
+        auto data = std::make_shared<Nexus::DestinationDatabase::Data>();
+        shuttle.Shuttle("entries", data->m_entries);
+        shuttle.Shuttle(
+          "preferred_destinations", data->m_preferred_destinations);
+        shuttle.Shuttle("manual_order_entry_destination",
+          data->m_manual_order_entry_destination);
+        value.m_data.store(std::move(data));
+      }
     }
   };
 }
