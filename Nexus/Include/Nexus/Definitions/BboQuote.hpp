@@ -33,7 +33,7 @@ namespace Nexus {
      */
     BboQuote(Quote bid, Quote ask, boost::posix_time::ptime timestamp) noexcept;
 
-    bool operator ==(const BboQuote& rhs) const = default;
+    bool operator ==(const BboQuote&) const = default;
   };
 
   inline std::ostream& operator <<(std::ostream& out, const BboQuote& value) {

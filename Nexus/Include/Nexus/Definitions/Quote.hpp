@@ -19,7 +19,7 @@ namespace Nexus {
     /** The quote's Side. */
     Side m_side;
 
-    bool operator ==(const Quote& rhs) const = default;
+    bool operator ==(const Quote&) const = default;
   };
 
   /**

@@ -28,7 +28,7 @@ namespace Nexus {
     /** The timestamp. */
     boost::posix_time::ptime m_timestamp;
 
-    bool operator ==(const BookQuote& quote) const = default;
+    bool operator ==(const BookQuote&) const = default;
   };
 
   /**

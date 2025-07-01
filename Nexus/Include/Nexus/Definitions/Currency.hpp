@@ -38,7 +38,7 @@ namespace Nexus {
       /** Returns the integral representation of this id. */
       constexpr explicit operator std::uint16_t() const noexcept;
 
-      auto operator <=>(const CurrencyId& rhs) const = default;
+      auto operator <=>(const CurrencyId&) const = default;
 
     private:
       std::uint16_t m_value;

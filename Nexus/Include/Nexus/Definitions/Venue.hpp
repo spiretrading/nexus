@@ -70,7 +70,7 @@ namespace Nexus {
         /** The common display name. */
         std::string m_display_name;
 
-        bool operator ==(const Entry& rhs) const = default;
+        bool operator ==(const Entry&) const = default;
       };
 
       /** An Entry representing no venue. */

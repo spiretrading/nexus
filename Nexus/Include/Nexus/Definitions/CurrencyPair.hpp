@@ -20,7 +20,7 @@ namespace Nexus {
     /** The counter currency. */
     CurrencyId m_counter;
 
-    auto operator <=>(const CurrencyPair& rhs) const = default;
+    auto operator <=>(const CurrencyPair&) const = default;
   };
 
   /**

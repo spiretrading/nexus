@@ -35,7 +35,7 @@ namespace Nexus {
         /** The destination's description. */
         std::string m_description;
 
-        bool operator ==(const Entry& rhs) const = default;
+        bool operator ==(const Entry&) const = default;
       };
 
       /** The entry returned for any failed lookup. */

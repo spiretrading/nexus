@@ -32,7 +32,7 @@ namespace Nexus {
          */
         boost::posix_time::ptime m_timestamp;
 
-        bool operator ==(const Event& event) const = default;
+        bool operator ==(const Event&) const = default;
       };
 
       /**
@@ -62,7 +62,7 @@ namespace Nexus {
          */
         std::vector<Event> m_events;
 
-        bool operator ==(const Rule& rule) const = default;
+        bool operator ==(const Rule&) const = default;
       };
 
       /** Constructs an empty TradingSchedule. */

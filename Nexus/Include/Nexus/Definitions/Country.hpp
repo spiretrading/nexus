@@ -39,7 +39,7 @@ namespace Nexus {
       /** Returns the integral representation of this code. */
       constexpr explicit operator std::uint16_t() const noexcept;
 
-      constexpr auto operator <=>(const CountryCode& other) const = default;
+      constexpr auto operator <=>(const CountryCode&) const = default;
 
     private:
       std::uint16_t m_value;
