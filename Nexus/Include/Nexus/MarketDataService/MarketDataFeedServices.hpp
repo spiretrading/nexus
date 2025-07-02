@@ -1,5 +1,6 @@
 #ifndef NEXUS_MARKET_DATA_FEED_SERVICES_HPP
 #define NEXUS_MARKET_DATA_FEED_SERVICES_HPP
+#include <string>
 #include <Beam/Serialization/ShuttleVariant.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/Services/RecordMessage.hpp>
@@ -13,6 +14,9 @@ namespace Nexus::MarketDataService {
   using MarketDataFeedMessage = boost::variant<SecurityBboQuote,
     SecurityBookQuote, SecurityMarketQuote, SecurityTimeAndSale,
     MarketOrderImbalance>;
+
+  /** Standard name for the market data feed service. */
+  inline const auto FEED_SERVICE_NAME = std::string("market_data_feed_service");
 
   BEAM_DEFINE_MESSAGES(MarketDataFeedMessages,
 

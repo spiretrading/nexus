@@ -1,5 +1,6 @@
 #ifndef NEXUS_MARKET_DATA_REGISTRY_SERVICES_HPP
 #define NEXUS_MARKET_DATA_REGISTRY_SERVICES_HPP
+#include <string>
 #include <Beam/Queries/QueryResult.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/Services/RecordMessage.hpp>
@@ -19,6 +20,14 @@ namespace Nexus::MarketDataService {
     Beam::Queries::QueryResult<SequencedMarketQuote>;
   using TimeAndSaleQueryResult =
     Beam::Queries::QueryResult<SequencedTimeAndSale>;
+
+  /** Standard name for the market data registry service. */
+  inline const auto REGISTRY_SERVICE_NAME =
+    std::string("market_data_registry_service");
+
+  /** Standard name for the market data relay service. */
+  inline const auto RELAY_SERVICE_NAME =
+    std::string("market_data_relay_service");
 
   BEAM_DEFINE_SERVICES(MarketDataRegistryServices,
 
