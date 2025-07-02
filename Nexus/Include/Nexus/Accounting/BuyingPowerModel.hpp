@@ -110,7 +110,7 @@ namespace Nexus::Accounting {
     auto& entry = m_buyingPowerEntries[orderFields.m_security];
     auto& buyingPower = m_currencyToBuyingPower[orderFields.m_currency];
     buyingPower -= ComputeBuyingPower(entry);
-    auto& orderEntries = Pick(orderFields.m_side, entry.m_asks, entry.m_bids);
+    auto& orderEntries = pick(orderFields.m_side, entry.m_asks, entry.m_bids);
     auto orderEntry = OrderEntry(id, orderFields, expectedPrice);
     auto insertIterator = std::lower_bound(orderEntries.begin(),
       orderEntries.end(), orderEntry,
@@ -144,11 +144,11 @@ namespace Nexus::Accounting {
     auto& buyingPowerEntry = m_buyingPowerEntries.at(orderFields.m_security);
     auto& buyingPower = m_currencyToBuyingPower[orderFields.m_currency];
     buyingPower -= ComputeBuyingPower(buyingPowerEntry);
-    auto& orderEntries = Pick(orderFields.m_side, buyingPowerEntry.m_asks,
+    auto& orderEntries = pick(orderFields.m_side, buyingPowerEntry.m_asks,
       buyingPowerEntry.m_bids);
     for(auto& orderEntry : orderEntries) {
       if(executionReport.m_id == orderEntry.m_id) {
-        if(IsTerminal(executionReport.m_status)) {
+        if(is_terminal(executionReport.m_status)) {
           orderEntry.m_remainingQuantity = 0;
         } else {
           orderEntry.m_remainingQuantity -= executionReport.m_lastQuantity;
@@ -159,17 +159,16 @@ namespace Nexus::Accounting {
     auto lastQuantity = executionReport.m_lastQuantity;
     if((orderFields.m_side == Side::BID && buyingPowerEntry.m_quantity < 0) ||
         (orderFields.m_side == Side::ASK && buyingPowerEntry.m_quantity > 0)) {
-      auto delta =
-        std::min(Abs(buyingPowerEntry.m_quantity), lastQuantity);
+      auto delta = std::min(abs(buyingPowerEntry.m_quantity), lastQuantity);
       buyingPowerEntry.m_expenditure -=
-        GetDirection(GetOpposite(orderFields.m_side)) * delta *
+        get_direction(get_opposite(orderFields.m_side)) * delta *
         (buyingPowerEntry.m_expenditure / buyingPowerEntry.m_quantity);
-      buyingPowerEntry.m_quantity += GetDirection(orderFields.m_side) * delta;
+      buyingPowerEntry.m_quantity += get_direction(orderFields.m_side) * delta;
       lastQuantity -= delta;
     }
-    buyingPowerEntry.m_quantity += GetDirection(orderFields.m_side) *
+    buyingPowerEntry.m_quantity += get_direction(orderFields.m_side) *
       lastQuantity;
-    buyingPowerEntry.m_expenditure += GetDirection(orderFields.m_side) *
+    buyingPowerEntry.m_expenditure += get_direction(orderFields.m_side) *
       lastQuantity * executionReport.m_lastPrice;
     buyingPower += ComputeBuyingPower(buyingPowerEntry);
   }

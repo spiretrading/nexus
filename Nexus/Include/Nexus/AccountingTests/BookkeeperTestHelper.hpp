@@ -23,13 +23,13 @@ namespace Nexus::Accounting::Tests {
     auto bookkeeper = BookkeeperType();
 
     // Execute the two transactions.
-    bookkeeper.RecordTransaction("Coke", DefaultCurrencies::USD(), addQuantity,
+    bookkeeper.RecordTransaction("Coke", DefaultCurrencies::USD, addQuantity,
       addValue, addFees);
-    bookkeeper.RecordTransaction("Coke", DefaultCurrencies::USD(),
+    bookkeeper.RecordTransaction("Coke", DefaultCurrencies::USD,
       removeQuantity, removeValue, removeFees);
 
     // Pull out the inventory and run tests on it.
-    auto cokeEntry = bookkeeper.GetInventory("Coke", DefaultCurrencies::USD());
+    auto cokeEntry = bookkeeper.GetInventory("Coke", DefaultCurrencies::USD);
     REQUIRE(cokeEntry.m_position.m_costBasis == expectedCostBasis);
     REQUIRE(cokeEntry.m_fees == addFees + removeFees);
     REQUIRE(cokeEntry.m_grossProfitAndLoss == expectedEarnings);
@@ -37,12 +37,12 @@ namespace Nexus::Accounting::Tests {
 
     // Do it in reverse order.
     auto reverseBookkeeper = BookkeeperType();
-    reverseBookkeeper.RecordTransaction("Coke", DefaultCurrencies::USD(),
+    reverseBookkeeper.RecordTransaction("Coke", DefaultCurrencies::USD,
       removeQuantity, removeValue, removeFees);
-    reverseBookkeeper.RecordTransaction("Coke", DefaultCurrencies::USD(),
+    reverseBookkeeper.RecordTransaction("Coke", DefaultCurrencies::USD,
       addQuantity, addValue, addFees);
-    auto reverseCokeEntry = reverseBookkeeper.GetInventory("Coke",
-      DefaultCurrencies::USD());
+    auto reverseCokeEntry =
+      reverseBookkeeper.GetInventory("Coke", DefaultCurrencies::USD);
     REQUIRE(reverseCokeEntry.m_position.m_costBasis == expectedCostBasis);
     REQUIRE(reverseCokeEntry.m_fees == addFees + removeFees);
     REQUIRE(reverseCokeEntry.m_grossProfitAndLoss == expectedEarnings);

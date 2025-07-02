@@ -7,8 +7,6 @@
 #include <Beam/Queries/StandardDataTypes.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
-#include "Nexus/Definitions/Definitions.hpp"
-#include "Nexus/Definitions/MarketQuote.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Nexus/Definitions/Security.hpp"
@@ -26,7 +24,6 @@ namespace Nexus::Queries {
   using OrderImbalanceType = Beam::Queries::NativeDataType<OrderImbalance>;
   using BboQuoteType = Beam::Queries::NativeDataType<BboQuote>;
   using BookQuoteType = Beam::Queries::NativeDataType<BookQuote>;
-  using MarketQuoteType = Beam::Queries::NativeDataType<MarketQuote>;
   using TimeAndSaleType = Beam::Queries::NativeDataType<TimeAndSale>;
   using OrderFieldsType = Beam::Queries::NativeDataType<
     OrderExecutionService::OrderFields>;
@@ -35,7 +32,7 @@ namespace Nexus::Queries {
   using QueryVariant = boost::variant<bool, char, int, double, std::uint64_t,
     std::string, boost::posix_time::ptime, boost::posix_time::time_duration,
     Quantity, Money, Security, SecurityInfo, OrderImbalance, BboQuote,
-    BookQuote, MarketQuote, TimeAndSale, OrderExecutionService::OrderFields,
+    BookQuote, TimeAndSale, OrderExecutionService::OrderFields,
     OrderExecutionService::OrderInfo>;
   using SequencedQueryVariant = Beam::Queries::SequencedValue<QueryVariant>;
 
@@ -60,9 +57,8 @@ namespace Nexus::Queries {
 
   struct QueryTypes {
     using ExtendedNativeTypes = boost::mpl::list<Quantity, Money, Security,
-      SecurityInfo, OrderImbalance, BboQuote, BookQuote, MarketQuote,
-      TimeAndSale, OrderExecutionService::OrderFields,
-      OrderExecutionService::OrderInfo>;
+      SecurityInfo, OrderImbalance, BboQuote, BookQuote, TimeAndSale,
+      OrderExecutionService::OrderFields, OrderExecutionService::OrderInfo>;
     using NativeTypes = boost::mpl::insert_range<
       Beam::Queries::QueryTypes::NativeTypes,
       boost::mpl::end<Beam::Queries::QueryTypes::NativeTypes>::type,

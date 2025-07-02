@@ -7,7 +7,7 @@
 #include "Nexus/Accounting/Accounting.hpp"
 #include "Nexus/Accounting/Bookkeeper.hpp"
 #include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
@@ -95,18 +95,14 @@ namespace Nexus::Accounting {
       /** The type used to map currencies to unrealized profit and losses. */
       using UnrealizedProfitAndLossMap = std::unordered_map<CurrencyId, Money>;
 
-      /**
-       * Constructs a Portfolio.
-       * @param markets The database of markets used.
-       */
-      explicit Portfolio(MarketDatabase markets);
+      /** Constructs an empty Portfolio. */
+      Portfolio() = default;
 
       /**
-       * Constructs a Portfolio.
-       * @param markets The database of markets used.
-       * @param bookkeeper 
+       * Constructs a Portfolio for an existing set of positions.
+       * @param bookkeeper The bookkeeper with the existing set of positions.
        */
-      Portfolio(MarketDatabase markets, Bookkeeper bookkeeper);
+      explicit Portfolio(Bookkeeper bookkeeper);
 
       /** Returns the Bookkeeper. */
       const Bookkeeper& GetBookkeeper() const;
@@ -156,7 +152,6 @@ namespace Nexus::Accounting {
       bool Update(const Security& security, Money askValue, Money bidValue);
 
     private:
-      MarketDatabase m_marketDatabase;
       Bookkeeper m_bookkeeper;
       SecurityEntryMap m_securityEntries;
       UnrealizedProfitAndLossMap m_unrealizedCurrencies;
@@ -295,13 +290,8 @@ namespace Nexus::Accounting {
     : m_valuation(currency) {}
 
   template<typename B>
-  Portfolio<B>::Portfolio(MarketDatabase marketDatabase)
-    : m_marketDatabase(std::move(marketDatabase)) {}
-
-  template<typename B>
-  Portfolio<B>::Portfolio(MarketDatabase marketDatabase, Bookkeeper bookkeeper)
-      : m_marketDatabase(std::move(marketDatabase)),
-        m_bookkeeper(std::move(bookkeeper)) {
+  Portfolio<B>::Portfolio(Bookkeeper bookkeeper)
+      : m_bookkeeper(std::move(bookkeeper)) {
     for(auto& inventory : m_bookkeeper.GetInventoryRange()) {
       GetSecurityEntry(inventory.m_position.m_key.m_index);
     }
@@ -334,8 +324,8 @@ namespace Nexus::Accounting {
     auto& security = orderFields.m_security;
     auto currency = orderFields.m_currency;
     auto& securityEntry = GetSecurityEntry(security);
-    auto quantity = GetDirection(orderFields.m_side) *
-      executionReport.m_lastQuantity;
+    auto quantity =
+      get_direction(orderFields.m_side) * executionReport.m_lastQuantity;
     m_bookkeeper.RecordTransaction(security, currency, quantity,
       executionReport.m_lastQuantity * executionReport.m_lastPrice,
       OrderExecutionService::GetFeeTotal(executionReport));
@@ -397,8 +387,7 @@ namespace Nexus::Accounting {
       const Security& security) {
     auto securityIterator = m_securityEntries.find(security);
     if(securityIterator == m_securityEntries.end()) {
-      auto currency = m_marketDatabase.FromCode(
-        security.GetMarket()).m_currency;
+      auto currency = DEFAULT_VENUES.from(security.get_venue()).m_currency;
       securityIterator = m_securityEntries.insert(
         std::pair(security, SecurityEntry(currency))).first;
     }

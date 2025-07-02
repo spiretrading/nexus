@@ -2,7 +2,7 @@
 #include "Nexus/Accounting/PositionOrderBook.hpp"
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;
@@ -11,15 +11,17 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Accounting;
+using namespace Nexus::DefaultCountries;
+using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::DefaultVenues;
 using namespace Nexus::OrderExecutionService;
 
 namespace {
-  const auto SECURITY_A = Security("TST", DefaultMarkets::NASDAQ(),
-    DefaultCountries::US());
+  const auto SECURITY_A = Security("TST", NASDAQ);
 
   auto MakeOrderFields(Side side, Quantity quantity, Money price) {
     return OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
-      SECURITY_A, DefaultCurrencies::USD(), side, "NYSE", quantity, price);
+      SECURITY_A, USD, side, "NYSE", quantity, price);
   }
 
   auto AddOrder(OrderId id, const OrderFields& fields,

@@ -5,7 +5,6 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/RiskService/RiskService.hpp"
 
 namespace Nexus::RiskService {

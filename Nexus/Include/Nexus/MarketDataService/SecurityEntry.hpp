@@ -5,8 +5,8 @@
 #include <Beam/Queries/Sequencer.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
 #include <boost/optional/optional.hpp>
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
@@ -27,9 +27,6 @@ namespace Nexus::MarketDataService {
 
         /** The next Sequence to use for a BookQuote. */
         Beam::Queries::Sequence m_nextBookQuoteSequence;
-
-        /** The next Sequence to use for a MarketQuote. */
-        Beam::Queries::Sequence m_nextMarketQuoteSequence;
 
         /** The next Sequence to use for a TimeAndSale. */
         Beam::Queries::Sequence m_nextTimeAndSaleSequence;
@@ -61,15 +58,6 @@ namespace Nexus::MarketDataService {
        */
       boost::optional<SequencedSecurityBboQuote> PublishBboQuote(
         const BboQuote& bboQuote, int sourceId);
-
-      /**
-       * Sets a MarketQuote.
-       * @param marketQuote The MarketQuote to set.
-       * @param sourceId The id of the source setting the value.
-       * @return The MarketQuote to publish.
-       */
-      boost::optional<SequencedSecurityMarketQuote> PublishMarketQuote(
-        const MarketQuote& marketQuote, int sourceId);
 
       /**
        * Updates a BookQuote.
@@ -113,7 +101,6 @@ namespace Nexus::MarketDataService {
       };
       Security m_security;
       Beam::Queries::Sequencer m_bboSequencer;
-      Beam::Queries::Sequencer m_marketQuoteSequencer;
       Beam::Queries::Sequencer m_bookQuoteSequencer;
       Beam::Queries::Sequencer m_timeAndSaleSequencer;
       SecurityTechnicals m_technicals;
@@ -122,8 +109,6 @@ namespace Nexus::MarketDataService {
       boost::posix_time::ptime m_technicalsResetTime;
       SequencedSecurityBboQuote m_bboQuote;
       SequencedSecurityTimeAndSale m_timeAndSale;
-      std::unordered_map<MarketCode, SequencedSecurityMarketQuote>
-        m_marketQuotes;
       std::vector<BookQuoteEntry> m_askBook;
       std::vector<BookQuoteEntry> m_bidBook;
 
@@ -166,16 +151,6 @@ namespace Nexus::MarketDataService {
       }
     }
     {
-      auto results = dataStore.LoadMarketQuotes(query);
-      if(results.empty()) {
-        initialSequences.m_nextMarketQuoteSequence =
-          Beam::Queries::Sequence::First();
-      } else {
-        initialSequences.m_nextMarketQuoteSequence =
-          Beam::Queries::Increment(results.back().GetSequence());
-      }
-    }
-    {
       auto results = dataStore.LoadTimeAndSales(query);
       if(results.empty()) {
         initialSequences.m_nextTimeAndSaleSequence =
@@ -197,11 +172,10 @@ namespace Nexus::MarketDataService {
       const InitialSequences& initialSequences)
       : m_security(std::move(security)),
         m_bboSequencer(initialSequences.m_nextBboQuoteSequence),
-        m_marketQuoteSequencer(initialSequences.m_nextMarketQuoteSequence),
         m_bookQuoteSequencer(initialSequences.m_nextBookQuoteSequence),
         m_timeAndSaleSequencer(initialSequences.m_nextTimeAndSaleSequence),
         m_marketCenter(TechnicalAnalysis::GetDefaultMarketCenter(
-          m_security.GetMarket())) {
+          m_security.get_venue())) {
     m_technicals.m_close = closePrice;
   }
 
@@ -220,12 +194,11 @@ namespace Nexus::MarketDataService {
   inline boost::optional<SequencedSecurityBboQuote>
       SecurityEntry::PublishBboQuote(const BboQuote& bboQuote, int sourceId) {
     if(m_technicalsResetTime == boost::posix_time::not_a_date_time) {
-      auto& marketEntry = GetDefaultMarketDatabase().FromCode(
-        m_security.GetMarket());
-      if(marketEntry != MarketDatabase::GetNoneEntry()) {
+      auto& marketEntry = DEFAULT_VENUES.from(m_security.get_venue());
+      if(marketEntry.m_venue != Venue()) {
         auto marketTimeZone =
           GetDefaultTimeZoneDatabase().time_zone_from_region(
-            marketEntry.m_timeZone);
+            marketEntry.m_time_zone);
         auto marketResetTime = boost::local_time::local_date_time(
           bboQuote.m_timestamp, marketTimeZone) + boost::gregorian::days(1);
         marketResetTime -= marketResetTime.local_time().time_of_day();
@@ -251,18 +224,9 @@ namespace Nexus::MarketDataService {
     return value;
   }
 
-  inline boost::optional<SequencedSecurityMarketQuote>
-      SecurityEntry::PublishMarketQuote(
-        const MarketQuote& marketQuote, int sourceId) {
-    auto value = m_marketQuoteSequencer.MakeSequencedValue(marketQuote,
-      m_security);
-    m_marketQuotes[marketQuote.m_market] = value;
-    return value;
-  }
-
   inline boost::optional<SequencedSecurityBookQuote>
       SecurityEntry::UpdateBookQuote(const BookQuote& delta, int sourceId) {
-    auto book = Pick(delta.m_quote.m_side, &m_askBook, &m_bidBook);
+    auto book = pick(delta.m_quote.m_side, &m_askBook, &m_bidBook);
     auto entryIterator = Beam::LinearLowerBound(book->begin(), book->end(),
       delta, [] (const auto& lhs, const auto& rhs) {
         return BookQuoteListingComparator(**lhs.m_quote, rhs);
@@ -319,7 +283,7 @@ namespace Nexus::MarketDataService {
       m_technicals.m_low = timeAndSale.m_price;
     }
     m_technicals.m_volume += timeAndSale.m_size;
-    if(timeAndSale.m_marketCenter == m_marketCenter) {
+    if(timeAndSale.m_market_center == m_marketCenter) {
       m_nextClose = timeAndSale.m_price;
     }
     auto value = m_timeAndSaleSequencer.MakeSequencedValue(
@@ -334,14 +298,12 @@ namespace Nexus::MarketDataService {
   }
 
   inline boost::optional<SecuritySnapshot> SecurityEntry::LoadSnapshot() const {
-    if(m_security.GetMarket().IsEmpty()) {
+    if(m_security.get_venue() == Venue()) {
       return boost::none;
     }
     auto snapshot = SecuritySnapshot(m_security);
     snapshot.m_bboQuote = m_bboQuote;
     snapshot.m_timeAndSale = m_timeAndSale;
-    snapshot.m_marketQuotes.insert(m_marketQuotes.begin(),
-      m_marketQuotes.end());
     for(auto& entry : m_askBook) {
       if((*entry.m_quote)->m_quote.m_size > 0) {
         snapshot.m_askBook.push_back(entry.m_quote);

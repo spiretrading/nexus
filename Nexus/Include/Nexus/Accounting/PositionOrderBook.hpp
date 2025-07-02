@@ -221,12 +221,12 @@ namespace Nexus::Accounting {
     if(securityEntry.m_position == 0) {
       return true;
     }
-    if(Nexus::GetSide(securityEntry.m_position) == fields.m_side) {
+    if(Nexus::get_side(securityEntry.m_position) == fields.m_side) {
       return true;
     }
-    auto openQuantity = Pick(fields.m_side, securityEntry.m_askOpenQuantity,
+    auto openQuantity = pick(fields.m_side, securityEntry.m_askOpenQuantity,
       securityEntry.m_bidOpenQuantity);
-    if(openQuantity + fields.m_quantity > Abs(securityEntry.m_position)) {
+    if(openQuantity + fields.m_quantity > abs(securityEntry.m_position)) {
       return true;
     }
     return false;
@@ -237,9 +237,9 @@ namespace Nexus::Accounting {
     auto& fields = order.GetInfo().m_fields;
     m_fields.emplace(order.GetInfo().m_orderId, fields);
     auto& securityEntry = m_securityEntries[fields.m_security];
-    auto& orders = Pick(fields.m_side, securityEntry.m_asks,
+    auto& orders = pick(fields.m_side, securityEntry.m_asks,
       securityEntry.m_bids);
-    auto& openQuantity = Pick(fields.m_side, securityEntry.m_askOpenQuantity,
+    auto& openQuantity = pick(fields.m_side, securityEntry.m_askOpenQuantity,
       securityEntry.m_bidOpenQuantity);
     openQuantity += fields.m_quantity;
     auto entry = OrderEntry(order, m_orderSequenceNumber);
@@ -257,7 +257,7 @@ namespace Nexus::Accounting {
 
   inline void PositionOrderBook::Update(
       const OrderExecutionService::ExecutionReport& report) {
-    if(report.m_lastQuantity == 0 && !IsTerminal(report.m_status)) {
+    if(report.m_lastQuantity == 0 && !is_terminal(report.m_status)) {
       return;
     }
     auto fieldsIterator = m_fields.find(report.m_id);
@@ -270,7 +270,7 @@ namespace Nexus::Accounting {
       return;
     }
     auto& securityEntry = securityEntryIterator->second;
-    auto& orders = Pick(fields.m_side, securityEntry.m_asks,
+    auto& orders = pick(fields.m_side, securityEntry.m_asks,
       securityEntry.m_bids);
     auto entryIterator = std::find_if(orders.begin(), orders.end(),
       [&] (const auto& entry) {
@@ -279,21 +279,21 @@ namespace Nexus::Accounting {
     if(entryIterator == orders.end()) {
       return;
     }
-    if(IsTerminal(report.m_status)) {
+    if(is_terminal(report.m_status)) {
       m_liveOrders.Invalidate();
     }
     m_openingOrders.Invalidate();
     if(report.m_lastQuantity != 0) {
       m_positions.Invalidate();
     }
-    securityEntry.m_position += GetDirection(fields.m_side) *
+    securityEntry.m_position += get_direction(fields.m_side) *
       report.m_lastQuantity;
-    auto& openQuantity = Pick(fields.m_side, securityEntry.m_askOpenQuantity,
+    auto& openQuantity = pick(fields.m_side, securityEntry.m_askOpenQuantity,
       securityEntry.m_bidOpenQuantity);
     openQuantity -= report.m_lastQuantity;
     auto& entry = *entryIterator;
     entry.m_remainingQuantity -= report.m_lastQuantity;
-    if(entry.m_remainingQuantity == 0 || IsTerminal(report.m_status)) {
+    if(entry.m_remainingQuantity == 0 || is_terminal(report.m_status)) {
       openQuantity -= entry.m_remainingQuantity;
       m_fields.erase(report.m_id);
       orders.erase(entryIterator);

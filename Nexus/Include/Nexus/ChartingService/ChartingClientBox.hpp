@@ -8,7 +8,6 @@
 #include "Nexus/ChartingService/ChartingQueryResults.hpp"
 #include "Nexus/ChartingService/ChartingService.hpp"
 #include "Nexus/ChartingService/SecurityChartingQuery.hpp"
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Queries/Queries.hpp"
 
 namespace Nexus::ChartingService {

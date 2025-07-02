@@ -3,7 +3,7 @@
 #include <functional>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/functional/hash.hpp>
-#include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 
@@ -13,41 +13,40 @@ namespace Nexus::MarketDataService {
   struct EntitlementKey {
 
     /** The market that the data is being provided for. */
-    MarketCode m_market;
+    Venue m_venue;
 
     /** The source of the market data. */
-    MarketCode m_source;
+    Venue m_source;
 
     /** Constructs an EntitlementKey. */
     EntitlementKey() = default;
 
     /**
      * Constructs an EntitlementKey where the market and source are equal.
-     * @param market The market that the data is being provided for.
+     * @param venue The venue that the data is being provided for.
      */
-    EntitlementKey(MarketCode market);
+    EntitlementKey(Venue venue);
 
     /**
      * Constructs an EntitlementKey.
-     * @param market The market that the data is being provided for.
+     * @param venue The venue that the data is being provided for.
      * @param source The source of the market data.
      */
-    EntitlementKey(MarketCode market, MarketCode source);
+    EntitlementKey(Venue venue, Venue source);
 
     bool operator ==(const EntitlementKey& rhs) const = default;
   };
 
-  inline EntitlementKey::EntitlementKey(MarketCode market)
-    : m_market(market),
-      m_source(market) {}
+  inline EntitlementKey::EntitlementKey(Venue venue)
+    : EntitlementKey(venue, venue) {}
 
-  inline EntitlementKey::EntitlementKey(MarketCode market, MarketCode source)
-    : m_market(market),
+  inline EntitlementKey::EntitlementKey(Venue venue, Venue source)
+    : m_venue(venue),
       m_source(source) {}
 
   inline std::size_t hash_value(const EntitlementKey& value) {
     auto seed = std::size_t(0);
-    boost::hash_combine(seed, value.m_market);
+    boost::hash_combine(seed, value.m_venue);
     boost::hash_combine(seed, value.m_source);
     return seed;
   }
@@ -106,7 +105,7 @@ namespace Nexus::MarketDataService {
   template<typename T>
   bool HasEntitlement(const EntitlementSet& entitlements,
       const SecurityMarketDataQuery& query) {
-    return entitlements.HasEntitlement(query.GetIndex().GetMarket(),
+    return entitlements.HasEntitlement(query.GetIndex().get_venue(),
       GetMarketDataType<T>());
   }
 
@@ -120,9 +119,9 @@ namespace Nexus::MarketDataService {
    */
   template<typename T>
   bool HasEntitlement(
-      const EntitlementSet& entitlements, const MarketWideDataQuery& query) {
-    return entitlements.HasEntitlement(query.GetIndex(),
-      GetMarketDataType<T>());
+      const EntitlementSet& entitlements, const VenueQuery& query) {
+    return entitlements.HasEntitlement(
+      query.GetIndex(), GetMarketDataType<T>());
   }
 
   inline bool EntitlementSet::HasEntitlement(
@@ -130,7 +129,7 @@ namespace Nexus::MarketDataService {
     auto entitlementIterator = m_entitlements.find(key);
     if(entitlementIterator == m_entitlements.end()) {
       entitlementIterator = m_entitlements.find(
-        EntitlementKey(MarketCode(), key.m_source));
+        EntitlementKey(Venue(), key.m_source));
       if(entitlementIterator == m_entitlements.end()) {
         return false;
       }
@@ -150,7 +149,7 @@ namespace Beam::Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
         Nexus::MarketDataService::EntitlementKey& value, unsigned int version) {
-      shuttle.Shuttle("market", value.m_market);
+      shuttle.Shuttle("venue", value.m_venue);
       shuttle.Shuttle("source", value.m_source);
     }
   };

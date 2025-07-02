@@ -12,7 +12,6 @@ namespace Nexus::Queries {
   using OrderImbalanceValue = Beam::Queries::NativeValue<OrderImbalanceType>;
   using BboQuoteValue = Beam::Queries::NativeValue<BboQuoteType>;
   using BookQuoteValue = Beam::Queries::NativeValue<BookQuoteType>;
-  using MarketQuoteValue = Beam::Queries::NativeValue<MarketQuoteType>;
   using TimeAndSaleValue = Beam::Queries::NativeValue<TimeAndSaleType>;
   using OrderFieldsValue = Beam::Queries::NativeValue<OrderFieldsType>;
   using OrderInfoValue = Beam::Queries::NativeValue<OrderInfoType>;

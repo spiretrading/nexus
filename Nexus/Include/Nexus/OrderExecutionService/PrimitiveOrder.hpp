@@ -68,7 +68,7 @@ namespace Nexus::OrderExecutionService {
         m_status = report.m_status;
       }
       m_publisher.Push(report);
-      if(IsTerminal(report.m_status)) {
+      if(is_terminal(report.m_status)) {
         m_publisher.Break();
       }
     });
@@ -124,7 +124,7 @@ namespace Nexus::OrderExecutionService {
   inline void RejectCancelRequest(PrimitiveOrder& order,
       boost::posix_time::ptime timestamp, std::string reason) {
     order.With([&] (auto status, const auto& reports) {
-      if(IsTerminal(status)) {
+      if(is_terminal(status)) {
         return;
       }
       auto& lastReport = reports.back();

@@ -29,8 +29,8 @@ namespace Nexus::Accounting {
         }
         bookkeeper.RecordTransaction(order.GetInfo().m_fields.m_security,
           order.GetInfo().m_fields.m_currency,
-          GetDirection(order.GetInfo().m_fields.m_side) * report.m_lastQuantity,
-          report.m_lastQuantity * report.m_lastPrice,
+          get_direction(order.GetInfo().m_fields.m_side) *
+            report.m_lastQuantity, report.m_lastQuantity * report.m_lastPrice,
           OrderExecutionService::GetFeeTotal(report));
         return bookkeeper.GetInventory(order.GetInfo().m_fields.m_security,
           order.GetInfo().m_fields.m_currency);

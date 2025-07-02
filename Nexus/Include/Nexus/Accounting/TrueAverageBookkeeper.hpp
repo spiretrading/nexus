@@ -69,8 +69,8 @@ namespace Details {
       m_inventories.insert(std::pair(inventory.m_position.m_key, inventory));
       auto& total = InternalGetTotal(inventory.m_position.m_key.m_currency);
       total.m_grossProfitAndLoss += inventory.m_grossProfitAndLoss;
-      total.m_position.m_quantity += Abs(inventory.m_position.m_quantity);
-      total.m_position.m_costBasis += Abs(inventory.m_position.m_costBasis);
+      total.m_position.m_quantity += abs(inventory.m_position.m_quantity);
+      total.m_position.m_costBasis += abs(inventory.m_position.m_costBasis);
       total.m_fees += inventory.m_fees;
       total.m_volume += inventory.m_volume;
       total.m_transactionCount += inventory.m_transactionCount;
@@ -93,12 +93,12 @@ namespace Details {
     if(quantity == 0) {
       return;
     }
-    entry.m_volume += Abs(quantity);
+    entry.m_volume += abs(quantity);
     ++entry.m_transactionCount;
-    total.m_volume += Abs(quantity);
+    total.m_volume += abs(quantity);
     ++total.m_transactionCount;
-    auto price = Abs(costBasis / quantity);
-    auto remainingQuantity = Abs(quantity);
+    auto price = abs(costBasis / quantity);
+    auto remainingQuantity = abs(quantity);
     auto direction = [&] {
       if(quantity < 0) {
         return Quantity(-1);
@@ -107,12 +107,12 @@ namespace Details {
       }
     }();
     total.m_grossProfitAndLoss -= entry.m_grossProfitAndLoss;
-    total.m_position.m_quantity -= Abs(entry.m_position.m_quantity);
-    total.m_position.m_costBasis -= Abs(entry.m_position.m_costBasis);
+    total.m_position.m_quantity -= abs(entry.m_position.m_quantity);
+    total.m_position.m_costBasis -= abs(entry.m_position.m_costBasis);
     if((entry.m_position.m_quantity > 0 && quantity < 0) ||
         (entry.m_position.m_quantity < 0 && quantity > 0)) {
       auto transactionReduction =
-        std::min(remainingQuantity, Abs(entry.m_position.m_quantity));
+        std::min(remainingQuantity, abs(entry.m_position.m_quantity));
       auto averagePrice = GetAveragePrice(entry.m_position);
       entry.m_grossProfitAndLoss +=
         -direction * transactionReduction * (price - averagePrice);
@@ -126,8 +126,8 @@ namespace Details {
       remainingQuantity -= transactionReduction;
       if(remainingQuantity == 0) {
         total.m_grossProfitAndLoss += entry.m_grossProfitAndLoss;
-        total.m_position.m_quantity += Abs(entry.m_position.m_quantity);
-        total.m_position.m_costBasis += Abs(entry.m_position.m_costBasis);
+        total.m_position.m_quantity += abs(entry.m_position.m_quantity);
+        total.m_position.m_costBasis += abs(entry.m_position.m_costBasis);
         return;
       }
     }
@@ -136,8 +136,8 @@ namespace Details {
     entry.m_position.m_quantity += quantityDelta;
     entry.m_position.m_costBasis += costBasisDelta;
     total.m_grossProfitAndLoss += entry.m_grossProfitAndLoss;
-    total.m_position.m_quantity += Abs(entry.m_position.m_quantity);
-    total.m_position.m_costBasis += Abs(entry.m_position.m_costBasis);
+    total.m_position.m_quantity += abs(entry.m_position.m_quantity);
+    total.m_position.m_costBasis += abs(entry.m_position.m_costBasis);
   }
 
   template<typename I>

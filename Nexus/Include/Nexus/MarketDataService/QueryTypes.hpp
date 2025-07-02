@@ -19,7 +19,7 @@ namespace Nexus::MarketDataService {
 
   template<>
   struct MarketDataQueryType<OrderImbalance> {
-    using type = MarketWideDataQuery;
+    using type = VenueQuery;
   };
 
   template<>
@@ -34,11 +34,6 @@ namespace Nexus::MarketDataService {
 
   template<>
   struct MarketDataQueryType<BookQuote> {
-    using type = SecurityMarketDataQuery;
-  };
-
-  template<>
-  struct MarketDataQueryType<MarketQuote> {
     using type = SecurityMarketDataQuery;
   };
 

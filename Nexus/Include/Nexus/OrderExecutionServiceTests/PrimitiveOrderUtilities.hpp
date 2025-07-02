@@ -182,7 +182,7 @@ namespace Nexus::OrderExecutionService::Tests {
           break;
         }
       }
-      isPendingCancel &= !IsTerminal(status);
+      isPendingCancel &= !is_terminal(status);
       return isPendingCancel;
     });
   }

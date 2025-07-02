@@ -44,16 +44,15 @@ namespace Nexus::MarketDataService {
 
   template<typename D>
   class HistoricalDataStoreQueryWrapper<OrderImbalance, D> :
-      public BaseHistoricalDataStoreQueryWrapper<MarketWideDataQuery,
-        OrderImbalance, MarketCode, D> {
+      public BaseHistoricalDataStoreQueryWrapper<VenueQuery,
+        OrderImbalance, Venue, D> {
     public:
       template<typename DF>
       explicit HistoricalDataStoreQueryWrapper(DF&& dataStore)
-        : BaseHistoricalDataStoreQueryWrapper<MarketWideDataQuery,
-            OrderImbalance, MarketCode, D>(std::forward<DF>(dataStore)) {}
+        : BaseHistoricalDataStoreQueryWrapper<VenueQuery,
+            OrderImbalance, Venue, D>(std::forward<DF>(dataStore)) {}
 
-      std::vector<SequencedOrderImbalance> Load(
-          const MarketWideDataQuery& query) {
+      std::vector<SequencedOrderImbalance> Load(const VenueQuery& query) {
         return this->m_dataStore->LoadOrderImbalances(query);
       }
   };
@@ -87,22 +86,6 @@ namespace Nexus::MarketDataService {
       std::vector<SequencedBookQuote> Load(
           const SecurityMarketDataQuery& query) {
         return this->m_dataStore->LoadBookQuotes(query);
-      }
-  };
-
-  template<typename D>
-  class HistoricalDataStoreQueryWrapper<MarketQuote, D> :
-      public BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-        MarketQuote, Security, D> {
-    public:
-      template<typename DF>
-      explicit HistoricalDataStoreQueryWrapper(DF&& dataStore)
-        : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-            MarketQuote, Security, D>(std::forward<DF>(dataStore)) {}
-
-      std::vector<SequencedMarketQuote> Load(
-          const SecurityMarketDataQuery& query) {
-        return this->m_dataStore->LoadMarketQuotes(query);
       }
   };
 

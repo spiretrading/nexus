@@ -18,7 +18,7 @@
 #include "Nexus/AdministrationService/AdministrationServlet.hpp"
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTests.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/MarketDataService/EntitlementSet.hpp"
 
 namespace Nexus::AdministrationService::Tests {
@@ -210,27 +210,23 @@ namespace Nexus::AdministrationService::Tests {
     auto globalEntitlement = MarketDataService::EntitlementDatabase::Entry();
     globalEntitlement.m_name = "global";
     globalEntitlement.m_groupEntry = globalEntitlementGroup;
-    auto& marketDatabase = GetDefaultMarketDatabase();
-    auto markets = std::vector<MarketCode>();
-    for(auto& entry : marketDatabase.GetEntries()) {
-      markets.push_back(entry.m_code);
+    auto venues = std::vector<Venue>();
+    for(auto& entry : DEFAULT_VENUES.get_entries()) {
+      venues.push_back(entry.m_venue);
     }
-    markets.push_back(MarketCode());
-    for(auto& market : markets) {
+    venues.push_back(Venue());
+    for(auto& venue : venues) {
       globalEntitlement.m_applicability[
-        MarketDataService::EntitlementKey(market)].Set(
+        MarketDataService::EntitlementKey(venue)].Set(
           MarketDataService::MarketDataType::TIME_AND_SALE);
       globalEntitlement.m_applicability[
-        MarketDataService::EntitlementKey(market)].Set(
+        MarketDataService::EntitlementKey(venue)].Set(
           MarketDataService::MarketDataType::BOOK_QUOTE);
       globalEntitlement.m_applicability[
-        MarketDataService::EntitlementKey(market)].Set(
-          MarketDataService::MarketDataType::MARKET_QUOTE);
-      globalEntitlement.m_applicability[
-        MarketDataService::EntitlementKey(market)].Set(
+        MarketDataService::EntitlementKey(venue)].Set(
           MarketDataService::MarketDataType::BBO_QUOTE);
       globalEntitlement.m_applicability[
-        MarketDataService::EntitlementKey(market)].Set(
+        MarketDataService::EntitlementKey(venue)].Set(
           MarketDataService::MarketDataType::ORDER_IMBALANCE);
     }
     auto entitlements = MarketDataService::EntitlementDatabase();

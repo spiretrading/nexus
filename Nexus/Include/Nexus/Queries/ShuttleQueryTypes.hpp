@@ -13,7 +13,6 @@ namespace Nexus::Queries {
     (OrderImbalanceType, "Nexus.Queries.OrderImbalanceType"),
     (BboQuoteType, "Nexus.Queries.BboQuoteType"),
     (BookQuoteType, "Nexus.Queries.BookQuoteType"),
-    (MarketQuoteType, "Nexus.Queries.MarketQuoteType"),
     (TimeAndSaleType, "Nexus.Queries.TimeAndSaleType"),
     (OrderFieldsType, "Nexus.Queries.OrderFieldsType"),
     (OrderInfoType, "Nexus.Queries.OrderInfoType"));
@@ -26,7 +25,6 @@ namespace Nexus::Queries {
     (OrderImbalanceValue, "Nexus.Queries.OrderImbalanceValue"),
     (BboQuoteValue, "Nexus.Queries.BboQuoteValue"),
     (BookQuoteValue, "Nexus.Queries.BookQuoteValue"),
-    (MarketQuoteValue, "Nexus.Queries.MarketQuoteValue"),
     (TimeAndSaleValue, "Nexus.Queries.TimeAndSaleValue"),
     (OrderFieldsValue, "Nexus.Queries.OrderFieldsValue"),
     (OrderInfoValue, "Nexus.Queries.OrderInfoValue"));

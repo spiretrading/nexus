@@ -2,6 +2,10 @@
 #define NEXUS_MARKET_DATA_TYPE_HPP
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Collections/EnumSet.hpp>
+#include "Nexus/Definitions/BboQuote.hpp"
+#include "Nexus/Definitions/BookQuote.hpp"
+#include "Nexus/Definitions/OrderImbalance.hpp"
+#include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 
 namespace Nexus::MarketDataService {
@@ -14,9 +18,6 @@ namespace Nexus::MarketDataService {
 
     /** A BookQuote. */
     BOOK_QUOTE,
-
-    /** A MarketQuote. */
-    MARKET_QUOTE,
 
     /** A BboQuote. */
     BBO_QUOTE,
@@ -34,8 +35,6 @@ namespace Nexus::MarketDataService {
       return MarketDataType::TIME_AND_SALE;
     } else if(std::is_same<T, BookQuote>::value) {
       return MarketDataType::BOOK_QUOTE;
-    } else if(std::is_same<T, MarketQuote>::value) {
-      return MarketDataType::MARKET_QUOTE;
     } else if(std::is_same<T, BboQuote>::value) {
       return MarketDataType::BBO_QUOTE;
     } else if(std::is_same<T, OrderImbalance>::value) {

@@ -2,7 +2,7 @@
 #include "Nexus/Accounting/BookkeeperReactor.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 
@@ -12,14 +12,15 @@ using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Accounting;
+using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::DefaultVenues;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::OrderExecutionService::Tests;
 
 namespace {
   using TestBookkeeper = TrueAverageBookkeeper<Inventory<Position<Security>>>;
 
-  const auto TST_SECURITY = Security("TST", DefaultMarkets::NYSE(),
-    DefaultCountries::US());
+  const auto TST_SECURITY = Security("TST", NYSE);
 }
 
 TEST_SUITE("BookkeeperReactor") {
@@ -31,8 +32,8 @@ TEST_SUITE("BookkeeperReactor") {
       });
     Trigger::set_trigger(trigger);
     auto order = PrimitiveOrder(OrderInfo(OrderFields::MakeLimitOrder(
-      TST_SECURITY, DefaultCurrencies::USD(), Side::BID, "NYSE", 1000,
-      Money::ONE), 10, ptime(date(2019, 10, 3))));
+      TST_SECURITY, USD, Side::BID, "NYSE", 1000, Money::ONE), 10,
+      ptime(date(2019, 10, 3))));
     SetOrderStatus(order, OrderStatus::NEW, ptime(date(2019, 10, 3)));
     Fill(order, 100, ptime(date(2019, 10, 3)));
     auto bookkeeper = BookkeeperReactor<TestBookkeeper>(constant(&order));
@@ -51,8 +52,7 @@ TEST_SUITE("BookkeeperReactor") {
     REQUIRE(inventory.m_transactionCount == 1);
     REQUIRE(inventory.m_fees == Money::ZERO);
     REQUIRE(inventory.m_position.m_key.m_index == TST_SECURITY);
-    REQUIRE(inventory.m_position.m_key.m_currency ==
-      DefaultCurrencies::USD());
+    REQUIRE(inventory.m_position.m_key.m_currency == USD);
     REQUIRE(inventory.m_position.m_quantity == 100);
     REQUIRE(inventory.m_position.m_costBasis == 100 * Money::ONE);
   }

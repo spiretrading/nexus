@@ -11,7 +11,6 @@
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
-#include "Nexus/Definitions/MarketQuote.hpp"
 #include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
@@ -20,20 +19,15 @@
 namespace Nexus {
   using SequencedBboQuote = Beam::Queries::SequencedValue<BboQuote>;
   using SequencedBookQuote = Beam::Queries::SequencedValue<BookQuote>;
-  using SequencedMarketQuote = Beam::Queries::SequencedValue<MarketQuote>;
   using SequencedTimeAndSale = Beam::Queries::SequencedValue<TimeAndSale>;
   using SecurityBboQuote = Beam::Queries::IndexedValue<BboQuote, Security>;
   using SecurityBookQuote = Beam::Queries::IndexedValue<BookQuote, Security>;
-  using SecurityMarketQuote =
-    Beam::Queries::IndexedValue<MarketQuote, Security>;
   using SecurityTimeAndSale =
     Beam::Queries::IndexedValue<TimeAndSale, Security>;
   using SequencedSecurityBboQuote =
     Beam::Queries::SequencedValue<SecurityBboQuote>;
   using SequencedSecurityBookQuote =
     Beam::Queries::SequencedValue<SecurityBookQuote>;
-  using SequencedSecurityMarketQuote =
-    Beam::Queries::SequencedValue<SecurityMarketQuote>;
   using SequencedSecurityTimeAndSale =
     Beam::Queries::SequencedValue<SecurityTimeAndSale>;
 

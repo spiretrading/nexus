@@ -275,7 +275,7 @@ namespace Nexus::OrderExecutionService {
    */
   inline boost::optional<Tag> FindField(const OrderFields& fields, int key) {
     for(auto& tag : fields.m_additionalFields) {
-      if(tag.GetKey() == key) {
+      if(tag.get_key() == key) {
         return tag;
       }
     }

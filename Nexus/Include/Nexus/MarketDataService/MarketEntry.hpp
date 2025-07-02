@@ -27,10 +27,10 @@ namespace MarketDataService {
 
       //! Constructs a MarketEntry.
       /*!
-        \param market The market represented.
+        \param venue The venue represented.
         \param initialSequences The initial Sequences to use.
       */
-      MarketEntry(MarketCode market, const InitialSequences& initialSequences);
+      MarketEntry(Venue venue, const InitialSequences& initialSequences);
 
       //! Clears market data that originated from a specified source.
       /*!
@@ -44,11 +44,11 @@ namespace MarketDataService {
         \param sourceId The id of the source setting the value.
         \return The OrderImbalance to publish.
       */
-      boost::optional<SequencedMarketOrderImbalance> PublishOrderImbalance(
+      boost::optional<SequencedVenueOrderImbalance> PublishOrderImbalance(
         const OrderImbalance& orderImbalance, int sourceId);
 
     private:
-      MarketCode m_market;
+      Venue m_venue;
       Beam::Queries::Sequencer m_orderImbalanceSequencer;
   };
 
@@ -60,9 +60,9 @@ namespace MarketDataService {
   */
   template<typename DataStore>
   MarketEntry::InitialSequences LoadInitialSequences(DataStore& dataStore,
-      MarketCode market) {
-    MarketWideDataQuery query;
-    query.SetIndex(market);
+      Venue venue) {
+    auto query = VenueQuery();
+    query.SetIndex(venue);
     query.SetRange(Beam::Queries::Range::Total());
     query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::TAIL, 1);
     MarketEntry::InitialSequences initialSequences;
@@ -77,19 +77,19 @@ namespace MarketDataService {
     return initialSequences;
   }
 
-  inline MarketEntry::MarketEntry(MarketCode market,
+  inline MarketEntry::MarketEntry(Venue venue,
       const InitialSequences& initialSequences)
-      : m_market{market},
-        m_orderImbalanceSequencer{
-          initialSequences.m_nextOrderImbalanceSequence} {}
+      : m_venue(venue),
+        m_orderImbalanceSequencer(
+          initialSequences.m_nextOrderImbalanceSequence) {}
 
   inline void MarketEntry::Clear(int sourceId) {}
 
-  inline boost::optional<SequencedMarketOrderImbalance> MarketEntry::
+  inline boost::optional<SequencedVenueOrderImbalance> MarketEntry::
       PublishOrderImbalance(const OrderImbalance& orderImbalance,
       int sourceId) {
     return m_orderImbalanceSequencer.MakeSequencedValue(orderImbalance,
-      m_market);
+      m_venue);
   }
 }
 }

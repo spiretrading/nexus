@@ -4,7 +4,6 @@
 #include <Beam/IO/Connection.hpp>
 #include <Beam/Utilities/Concept.hpp>
 #include <boost/optional.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/MarketEntry.hpp"
@@ -30,7 +29,7 @@ namespace Nexus::MarketDataService {
      *         <i>query</i>.
      */
     std::vector<SequencedOrderImbalance> LoadOrderImbalances(
-      const MarketWideDataQuery& query);
+      const VenueQuery& query);
 
     /**
      * Executes a search query over a Security's BboQuotes.
@@ -49,14 +48,6 @@ namespace Nexus::MarketDataService {
       const SecurityMarketDataQuery& query);
 
     /**
-     * Executes a search query over a Security's MarketQuotes.
-     * @param query The search query to execute.
-     * @return The list of MarketQuotes that satisfy the search <i>query</i>.
-     */
-    std::vector<SequencedMarketQuote> LoadMarketQuotes(
-      const SecurityMarketDataQuery& query);
-
-    /**
      * Executes a search query over a Security's TimeAndSales.
      * @param query The search query to execute.
      * @return The list of TimeAndSales that satisfy the search <i>query</i>.
@@ -71,16 +62,10 @@ namespace Nexus::MarketDataService {
     void Store(const SecurityInfo& info);
 
     /**
-     * Stores a SequencedMarketOrderImbalance.
-     * @param orderImbalance The SequencedMarketOrderImbalance to store.
+     * Stores a list of SequencedVenueOrderImbalances.
+     * @param orderImbalances The SequencedVenueOrderImbalances to store.
      */
-    void Store(const SequencedMarketOrderImbalance& orderImbalance);
-
-    /**
-     * Stores a list of SequencedMarketOrderImbalances.
-     * @param orderImbalances The SequencedMarketOrderImbalances to store.
-     */
-    void Store(const std::vector<SequencedMarketOrderImbalance>&
+    void Store(const std::vector<SequencedVenueOrderImbalance>&
       orderImbalances);
 
     /**
@@ -94,18 +79,6 @@ namespace Nexus::MarketDataService {
      * @param bboQuotes The list of SequencedSecurityBboQuotes to store.
      */
     void Store(const std::vector<SequencedSecurityBboQuote>& bboQuotes);
-
-    /**
-     * Stores a SequencedSecurityMarketQuote.
-     * @param marketQuote The SequencedSecurityMarketQuote to store.
-     */
-    void Store(const SequencedSecurityMarketQuote& marketQuote);
-
-    /**
-     * Stores a list of SequencedSecurityMarketQuotes.
-     * @param marketQuotes The list of SequencedSecurityMarketQuotes to store.
-     */
-    void Store(const std::vector<SequencedSecurityMarketQuote>& marketQuotes);
 
     /**
      * Stores a SequencedSecurityBookQuote.
