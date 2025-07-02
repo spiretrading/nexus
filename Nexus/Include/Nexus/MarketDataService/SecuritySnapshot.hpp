@@ -3,7 +3,6 @@
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Nexus/Definitions/Security.hpp"
-#include "Nexus/MarketDataService/MarketDataType.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 
 namespace Nexus::MarketDataService {
@@ -26,7 +25,7 @@ namespace Nexus::MarketDataService {
     /** The list of BookQuotes that are bids. */
     std::vector<SequencedBookQuote> m_bids;
 
-    /** Constructs a SecuritySnapshot. */
+    /** Constructs an empty SecuritySnapshot. */
     SecuritySnapshot() = default;
 
     /**
@@ -34,10 +33,12 @@ namespace Nexus::MarketDataService {
      * @param security The Security represented.
      */
     SecuritySnapshot(Security security) noexcept;
+
+    bool operator ==(const SecuritySnapshot&) const = default;
   };
 
   inline SecuritySnapshot::SecuritySnapshot(Security security) noexcept
-    : m_security(security) {}
+    : m_security(std::move(security)) {}
 }
 
 namespace Beam::Serialization {
