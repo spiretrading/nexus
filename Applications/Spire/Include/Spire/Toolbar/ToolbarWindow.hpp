@@ -42,6 +42,9 @@ namespace Spire {
         /** The order imbalance indicator window. */
         ORDER_IMBALANCE_INDICATOR,
 
+        /** The replay window. */
+        REPLAY,
+
         /** The portfolio window. */
         PORTFOLIO,
 

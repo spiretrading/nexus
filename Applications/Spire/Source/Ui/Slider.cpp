@@ -255,6 +255,8 @@ Slider::Slider(std::shared_ptr<ScalarValueModel<Decimal>> current,
   m_track = new Box(track_body);
   m_track->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   match(*m_track, Track());
+  link(*m_track, *track_rail);
+  link(*m_track, *m_track_fill);
   m_body = new QWidget();
   m_track_layout = new QBoxLayout(get_layout_direction(m_orientation), m_body);
   m_track_layout->setContentsMargins({});
