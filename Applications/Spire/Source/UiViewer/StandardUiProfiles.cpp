@@ -2427,12 +2427,19 @@ UiProfile Spire::make_icon_button_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_property<QString>("tooltip", "Tooltip"));
+  properties.push_back(make_standard_property<bool>("disable_on_click", false));
   auto profile = UiProfile("IconButton", properties, [] (auto& profile) {
     auto& tooltip = get<QString>("tooltip", profile.get_properties());
     auto button = make_icon_button(
       imageFromSvg(":/Icons/demo.svg", scale(26, 26)), tooltip.get());
     apply_widget_properties(button, profile.get_properties());
-    button->connect_click_signal(profile.make_event_slot("ClickSignal"));
+    auto& disable_on_click =
+      get<bool>("disable_on_click", profile.get_properties());
+    auto click_signal_slot = profile.make_event_slot("ClickSignal");
+    button->connect_click_signal([=, &disable_on_click] () {
+      button->setDisabled(disable_on_click.get());
+      click_signal_slot();
+    });
     return button;
   });
   return profile;
