@@ -180,58 +180,6 @@ namespace Nexus::MarketDataService {
       void OnReconnect(const std::shared_ptr<ServiceProtocolClient>& client);
   };
 
-  /**
-   * Submits a query for real time BboQuotes with a snapshot.
-   * @param security The Security to query.
-   * @param client The MarketDataClient to submit the query to.
-   * @param queue The Queue to write to.
-   */
-  template<typename MarketDataClient>
-  Beam::Routines::Routine::Id query_real_time_with_snapshot(Security security,
-      MarketDataClient& client, Beam::ScopedQueueWriter<BboQuote> queue) {
-    return Beam::Routines::Spawn(
-      [=, security = std::move(security),
-          client = Beam::CapturePtr<MarketDataClient>(client),
-          queue = std::move(queue)] () mutable {
-        auto snapshotQueue = std::make_shared<Beam::Queue<SequencedBboQuote>>();
-        client->QueryBboQuotes(Beam::Queries::MakeLatestQuery(security),
-          snapshotQueue);
-        auto snapshot = SequencedBboQuote();
-        try {
-          snapshot = snapshotQueue->Pop();
-          queue.Push(std::move(*snapshot));
-        } catch(const Beam::PipeBrokenException&) {
-          return;
-        }
-        auto continuationQuery = SecurityMarketDataQuery();
-        continuationQuery.SetIndex(std::move(security));
-        continuationQuery.SetRange(
-          Beam::Queries::Increment(snapshot.GetSequence()),
-          Beam::Queries::Sequence::Last());
-        continuationQuery.SetSnapshotLimit(
-          Beam::Queries::SnapshotLimit::Unlimited());
-        continuationQuery.SetInterruptionPolicy(
-          Beam::Queries::InterruptionPolicy::IGNORE_CONTINUE);
-        client->QueryBboQuotes(continuationQuery, std::move(queue));
-      });
-  }
-
-  /**
-   * Submits a query to retrieve the SecurityInfo for a single security.
-   * @param security The Security to query.
-   * @param client The MarketDataClient to submit the query to.
-   * @return The SecurityInfo for the given <i>security</i>.
-   */
-  template<typename MarketDataClient>
-  boost::optional<SecurityInfo> load_security_info(
-      const Security& security, MarketDataClient& client) {
-    auto result = client.QuerySecurityInfo(MakeSecurityInfoQuery(security));
-    if(!result.empty()) {
-      return result.front();
-    }
-    return boost::none;
-  }
-
   template<typename B>
   template<typename BF>
   MarketDataClient<B>::MarketDataClient(BF&& clientBuilder)

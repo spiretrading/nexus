@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <vector>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Queues/Queue.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Routines/Routine.hpp>
 #include "Nexus/Definitions/SecurityInfo.hpp"
@@ -213,8 +214,8 @@ namespace Nexus::MarketDataService {
    * @param interruption_policy The policy used when the query is interrupted.
    */
   template<typename MarketDataClient>
-  Beam::Routines::Routine::Id query_real_time_book_quotes_with_snapshot(
-      MarketDataClient& market_data_client, const Security& security,
+  Beam::Routines::Routine::Id query_real_time_with_snapshot(
+      MarketDataClient&& market_data_client, const Security& security,
       Beam::ScopedQueueWriter<BookQuote> queue,
       Beam::Queries::InterruptionPolicy interruption_policy =
         Beam::Queries::InterruptionPolicy::BREAK_QUERY) {
@@ -257,6 +258,58 @@ namespace Nexus::MarketDataService {
           market_data_client->query(query, std::move(queue));
         }
       });
+  }
+
+  /**
+   * Submits a query for real time BboQuotes with a snapshot.
+   * @param security The Security to query.
+   * @param client The MarketDataClient to submit the query to.
+   * @param queue The Queue to write to.
+   */
+  template<typename MarketDataClient>
+  Beam::Routines::Routine::Id query_real_time_with_snapshot(Security security,
+      MarketDataClient&& client, Beam::ScopedQueueWriter<BboQuote> queue) {
+    return Beam::Routines::Spawn(
+      [=, security = std::move(security),
+          client = Beam::CapturePtr<MarketDataClient>(client),
+          queue = std::move(queue)] () mutable {
+        auto snapshot_queue =
+          std::make_shared<Beam::Queue<SequencedBboQuote>>();
+        client->query(Beam::Queries::MakeLatestQuery(security), snapshot_queue);
+        auto snapshot = SequencedBboQuote();
+        try {
+          snapshot = snapshot_queue->Pop();
+          queue.Push(std::move(*snapshot));
+        } catch(const Beam::PipeBrokenException&) {
+          return;
+        }
+        auto continuation_query = SecurityMarketDataQuery();
+        continuation_query.SetIndex(std::move(security));
+        continuation_query.SetRange(
+          Beam::Queries::Increment(snapshot.GetSequence()),
+          Beam::Queries::Sequence::Last());
+        continuation_query.SetSnapshotLimit(
+          Beam::Queries::SnapshotLimit::Unlimited());
+        continuation_query.SetInterruptionPolicy(
+          Beam::Queries::InterruptionPolicy::IGNORE_CONTINUE);
+        client->query(continuation_query, std::move(queue));
+      });
+  }
+
+  /**
+   * Submits a query to retrieve the SecurityInfo for a single security.
+   * @param security The Security to query.
+   * @param client The MarketDataClient to submit the query to.
+   * @return The SecurityInfo for the given <i>security</i>.
+   */
+  template<typename MarketDataClient>
+  boost::optional<SecurityInfo> load_security_info(
+      const Security& security, MarketDataClient& client) {
+    auto result = client.query(make_security_info_query(security));
+    if(!result.empty()) {
+      return result.front();
+    }
+    return boost::none;
   }
 
   template<typename T, typename... Args>
