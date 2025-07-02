@@ -1,12 +1,13 @@
 #ifndef NEXUS_MARKET_DATA_TYPE_HPP
 #define NEXUS_MARKET_DATA_TYPE_HPP
+#include <ostream>
+#include <type_traits>
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Collections/EnumSet.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 
 namespace Nexus::MarketDataService {
 
@@ -30,17 +31,30 @@ namespace Nexus::MarketDataService {
 
   /** Returns a static type's MarketDataType. */
   template<typename T>
-  MarketDataType GetMarketDataType() {
-    if(std::is_same<T, TimeAndSale>::value) {
+  MarketDataType get_market_data_type() {
+    if constexpr(std::is_same_v<T, TimeAndSale>) {
       return MarketDataType::TIME_AND_SALE;
-    } else if(std::is_same<T, BookQuote>::value) {
+    } else if constexpr(std::is_same_v<T, BookQuote>) {
       return MarketDataType::BOOK_QUOTE;
-    } else if(std::is_same<T, BboQuote>::value) {
+    } else if constexpr(std::is_same_v<T, BboQuote>) {
       return MarketDataType::BBO_QUOTE;
-    } else if(std::is_same<T, OrderImbalance>::value) {
+    } else if constexpr(std::is_same_v<T, OrderImbalance>) {
       return MarketDataType::ORDER_IMBALANCE;
     }
     return MarketDataType::NONE;
+  }
+
+  inline std::ostream& operator<<(std::ostream& out, MarketDataType type) {
+    if(type == MarketDataType::TIME_AND_SALE) {
+      return out << "TIME_AND_SALE";
+    } else if(type == MarketDataType::BOOK_QUOTE) {
+      return out << "BOOK_QUOTE";
+    } else if(type == MarketDataType::BBO_QUOTE) {
+      return out << "BBO_QUOTE";
+    } else if(type == MarketDataType::ORDER_IMBALANCE) {
+      return out << "ORDER_IMBALANCE";
+    }
+    return out << "NONE";
   }
 }
 
