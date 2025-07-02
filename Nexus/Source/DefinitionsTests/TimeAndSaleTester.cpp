@@ -1,4 +1,5 @@
 #include <sstream>
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/TimeAndSale.hpp"
 
@@ -44,5 +45,12 @@ TEST_SUITE("TimeAndSale") {
       time_and_sale.m_market_center << ' ' << time_and_sale.m_buyer_mpid <<
       ' ' << time_and_sale.m_seller_mpid << ')';
     REQUIRE(ss.str() == expected.str());
+  }
+
+  TEST_CASE("shuttle") {
+    Beam::Serialization::Tests::TestRoundTripShuttle(TimeAndSale(ptime(
+      date(2025, 6, 30), time_duration(9, 30, 0)), Money(100), Quantity(200),
+      TimeAndSale::Condition(TimeAndSale::Condition::Type::CLOSE, "Z"), "NYSE",
+      "BUY123", "SELL456"));
   }
 }

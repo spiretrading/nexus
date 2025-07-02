@@ -2,6 +2,7 @@
 #define NEXUS_TAG_HPP
 #include <ostream>
 #include <string>
+#include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/Serialization/ShuttleVariant.hpp>
 #include <boost/date_time/gregorian/greg_date.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>

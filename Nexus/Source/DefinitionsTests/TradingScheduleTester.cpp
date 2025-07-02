@@ -1,3 +1,4 @@
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/TradingSchedule.hpp"
@@ -150,5 +151,20 @@ TEST_SUITE("TradingSchedule") {
     auto ss = std::ostringstream();
     ss << event;
     REQUIRE(ss.str() == "(EV 1900-Jan-01 09:30:00)");
+  }
+
+  TEST_CASE("shuttle") {
+    auto events = std::vector<TradingSchedule::Event>();
+    events.push_back(
+      {"O", ptime(date(2025, 7, 1), time_duration(1, 30, 0, 0))});
+    auto rules = std::vector<TradingSchedule::Rule>();
+    rules.push_back(TradingSchedule::Rule(
+      {NYSE}, {Tuesday}, {1}, {7}, {2025}, events));
+    auto schedule = TradingSchedule(rules);
+    Beam::Serialization::Tests::TestRoundTripShuttle(schedule,
+      [&] (const auto& schedule) {
+        auto e1 = schedule.find(date(2025, 7, 1), NYSE);
+        REQUIRE(e1 == events);
+      });
   }
 }

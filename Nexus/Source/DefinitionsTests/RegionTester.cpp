@@ -1,3 +1,4 @@
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultVenueDatabase.hpp"
@@ -130,5 +131,12 @@ TEST_SUITE("Region") {
     REQUIRE(combined == plus_combined);
     require_proper_subset(us, combined);
     require_proper_subset(ca, combined);
+  }
+
+  TEST_CASE("shuttle") {
+    auto region = Region(AU);
+    region += TSX;
+    region += Security("TST", NYSE);
+    Beam::Serialization::Tests::TestRoundTripShuttle(region);
   }
 }

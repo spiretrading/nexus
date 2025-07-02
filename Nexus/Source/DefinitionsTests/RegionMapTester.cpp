@@ -1,3 +1,4 @@
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultVenueDatabase.hpp"
@@ -45,6 +46,19 @@ TEST_SUITE("RegionMap") {
   }
 
   TEST_CASE("shuttle") {
-    REQUIRE(false);
+    auto map = Nexus::RegionMap(0);
+    map.set(US, 1);
+    map.set(CA, 2);
+    map.set(GB, 3);
+    map.set(Region(std::string("CustomRegion")), 4);
+    Beam::Serialization::Tests::TestRoundTripShuttle(map,
+      [&] (const auto& result) {
+        for(auto& region : map) {
+          REQUIRE(result.get(std::get<0>(region)) == std::get<1>(region));
+        }
+        for(auto& region : result) {
+          REQUIRE(map.get(std::get<0>(region)) == std::get<1>(region));
+        }
+      });
   }
 }

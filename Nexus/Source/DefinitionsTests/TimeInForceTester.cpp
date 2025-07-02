@@ -1,4 +1,5 @@
 #include <sstream>
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/TimeInForce.hpp"
 
@@ -46,5 +47,10 @@ TEST_SUITE("TimeInForce") {
     ss << tif;
     auto output = ss.str();
     REQUIRE(output == "(GTX " + lexical_cast<std::string>(expiry) + ")");
+  }
+
+  TEST_CASE("shuttle") {
+    Beam::Serialization::Tests::TestRoundTripShuttle(TimeInForce(
+      TimeInForce::Type::GTX, time_from_string("2025-06-30 08:45:00")));
   }
 }

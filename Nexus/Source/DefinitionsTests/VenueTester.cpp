@@ -1,6 +1,8 @@
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 
 using namespace Beam;
@@ -232,5 +234,17 @@ TEST_SUITE("Venue") {
     auto parsed_entry = parse_venue_entry("LmnVenue", database);
     ss << parsed_entry;
     REQUIRE(ss.str() == "(LMN CA America/Toronto CAD Desc3 LmnVenue)");
+  }
+
+  TEST_CASE("shuttle") {
+    Beam::Serialization::Tests::TestRoundTripShuttle(DEFAULT_VENUES,
+      [] (const auto& venues) {
+        auto expected_entries = DEFAULT_VENUES.get_entries();
+        auto entries = venues.get_entries();
+        REQUIRE(expected_entries.size() == entries.size());
+        for(auto i = std::size_t(0); i != entries.size(); ++i) {
+          REQUIRE(expected_entries[i] == entries[i]);
+        }
+      });
   }
 }

@@ -1,4 +1,5 @@
 #include <sstream>
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Tag.hpp"
@@ -20,6 +21,7 @@ namespace {
     ss << tag;
     REQUIRE(ss.str() == "(" + lexical_cast<std::string>(key) + " " +
       lexical_cast<std::string>(value) + ")");
+    Beam::Serialization::Tests::TestRoundTripShuttle(tag);
   }
 }
 
