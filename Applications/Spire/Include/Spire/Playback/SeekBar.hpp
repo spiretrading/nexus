@@ -39,6 +39,15 @@ namespace Spire {
         QWidget* parent = nullptr);
 
       /**
+       * Constructs a SeekBar with the default modifiers.
+       * @param timeline The timeline that the SeekBar represents.
+       * @param current The current position as time offset from the start time.
+       * @param parent The parent widget.
+       */
+      SeekBar(std::shared_ptr<TimelineModel> timeline,
+        std::shared_ptr<DurationModel> current, QWidget* parent = nullptr);
+
+      /**
        * Constructs a SeekBar.
        * @param timeline The timeline that the SeekBar represents.
        * @param current The current position as time offset from the start time.
@@ -67,6 +76,12 @@ namespace Spire {
       void on_mouse_move(QWidget& target, QMouseEvent& event);
       void on_hover(HoverObserver::State state);
   };
+
+  /**
+   * Returns the end time of the timeline.
+   * @param timeline The timeline to get the end time of.
+   */
+  boost::posix_time::ptime get_end_time(const Timeline& timeline);
 }
 
 #endif
