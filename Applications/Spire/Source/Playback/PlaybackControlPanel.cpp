@@ -379,7 +379,7 @@ void PlaybackControlPanel::on_jump_to_start_click() {
 
 void PlaybackControlPanel::on_jump_to_end_click() {
   if(get_end_time(get_timeline()->get()) <
-    m_playhead->m_time_client.GetTime()) {
+      m_playhead->m_time_client.GetTime()) {
     m_playhead->set(get_timeline()->get().m_duration);
   } else {
     m_playhead->set(std::max(m_playhead->m_time_client.GetTime() -
