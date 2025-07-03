@@ -11,7 +11,6 @@
 #include "Nexus/Accounting/Accounting.hpp"
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Definitions/BboQuote.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReportPublisher.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"

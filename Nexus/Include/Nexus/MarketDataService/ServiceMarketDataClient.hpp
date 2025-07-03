@@ -1,217 +1,119 @@
-#ifndef NEXUS_MARKET_DATA_CLIENT_HPP
-#define NEXUS_MARKET_DATA_CLIENT_HPP
-#include <vector>
-#include <Beam/IO/ConnectException.hpp>
-#include <Beam/IO/Connection.hpp>
+#ifndef NEXUS_SERVICE_MARKET_DATA_CLIENT_HPP
+#define NEXUS_SERVICE_MARKET_DATA_CLIENT_HPP
+#include <functional>
+#include <utility>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queries/QueryClientPublisher.hpp>
-#include <Beam/Services/ServiceProtocolClientHandler.hpp>
-#include <Beam/Utilities/BeamWorkaround.hpp>
-#include <boost/lexical_cast.hpp>
-#include "Nexus/Definitions/SecurityInfo.hpp"
-#include "Nexus/MarketDataService/SecuritySnapshot.hpp"
+#include <Beam/Pointers/Dereference.hpp>
+#include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServices.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
-#include "Nexus/MarketDataService/QueryTypes.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
 namespace Nexus::MarketDataService {
 
   /**
-   * Client used to access market data services.
+   * Implements a MarketDataClient using Beam services.
    * @param <B> The type used to build ServiceProtocolClients to the server.
    */
   template<typename B>
-  class MarketDataClient {
+  class ServiceMarketDataClient {
     public:
 
       /** The type used to build ServiceProtocolClients to the server. */
       using ServiceProtocolClientBuilder = Beam::GetTryDereferenceType<B>;
 
       /**
-       * Constructs a MarketDataClient.
-       * @param clientBuilder Initializes the ServiceProtocolClientBuilder.
+       * Constructs a ServiceMarketDataClient.
+       * @param client_builder Initializes the ServiceProtocolClientBuilder.
        */
       template<typename BF>
-      explicit MarketDataClient(BF&& clientBuilder);
+      explicit ServiceMarketDataClient(BF&& client_builder);
 
-      ~MarketDataClient();
+      ~ServiceMarketDataClient();
 
-      /**
-       * Submits a query for a Market's OrderImbalances.
-       * @param query The query to submit.
-       * @param queue The queue that will store the result of the query.
-       */
-      void QueryOrderImbalances(const MarketWideDataQuery& query,
+      void query(const VenueMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedOrderImbalance> queue);
-
-      /**
-       * Submits a query for a Market's OrderImbalances.
-       * @param query The query to submit.
-       * @param queue The queue that will store the result of the query.
-       */
-      void QueryOrderImbalances(const MarketWideDataQuery& query,
+      void query(const VenueMarketDataQuery& query,
         Beam::ScopedQueueWriter<OrderImbalance> queue);
-
-      /**
-       * Submits a query for a Security's BboQuotes.
-       * @param query The query to submit.
-       * @param queue The queue that will store the result of the query.
-       */
-      void QueryBboQuotes(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedBboQuote> queue);
-
-      /**
-       * Submits a query for a Security's BboQuotes.
-       * @param query The query to submit.
-       * @param queue The queue that will store the result of the query.
-       */
-      void QueryBboQuotes(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<BboQuote> queue);
-
-      /**
-       * Submits a query for a Security's BookQuotes.
-       * @param query The query to submit.
-       * @param queue The queue that will store the result of the query.
-       */
-      void QueryBookQuotes(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedBookQuote> queue);
-
-      /**
-       * Submits a query for a Security's BookQuotes.
-       * @param query The query to submit.
-       * @param queue The queue that will store the result of the query.
-       */
-      void QueryBookQuotes(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<BookQuote> queue);
-
-      /**
-       * Submits a query for a Security's MarketQuotes.
-       * @param query The query to submit.
-       * @param queue The queue that will store the result of the query.
-       */
-      void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        Beam::ScopedQueueWriter<SequencedMarketQuote> queue);
-
-      /**
-       * Submits a query for a Security's MarketQuotes.
-       * @param query The query to submit.
-       * @param queue The queue that will store the result of the query.
-       */
-      void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        Beam::ScopedQueueWriter<MarketQuote> queue);
-
-      /**
-       * Submits a query for a Security's TimeAndSales.
-       * @param query The query to submit.
-       * @param queue The queue that will store the result of the query.
-       */
-      void QueryTimeAndSales(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
-
-      /**
-       * Submits a query for a Security's TimeAndSales.
-       * @param query The query to submit.
-       * @param queue The queue that will store the result of the query.
-       */
-      void QueryTimeAndSales(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<TimeAndSale> queue);
-
-      /**
-       * Loads a Security's real-time snapshot.
-       * @param security The Security whose SecuritySnapshot is to be loaded.
-       * @return The real-time snapshot of the specified <i>security</i>.
-       */
-      SecuritySnapshot LoadSecuritySnapshot(const Security& security);
-
-      /**
-       * Loads the SecurityTechnicals for a specified Security.
-       * @param security The Security whose SecurityTechnicals is to be loaded.
-       * @return The SecurityTechnicals for the specified <i>security</i>.
-       */
-      SecurityTechnicals LoadSecurityTechnicals(const Security& security);
-
-      /**
-       * Queries for all SecurityInfo objects that are within a region.
-       * @param query The query to submit.
-       * @return The list of SecurityInfo objects that match the <i>query</i>.
-       */
-      std::vector<SecurityInfo> QuerySecurityInfo(
-        const SecurityInfoQuery& query);
-
-      /**
-       * Loads SecurityInfo objects that match a prefix.
-       * @param prefix The prefix to search for.
-       * @return The list of SecurityInfo objects that match the <i>prefix</i>.
-       */
-      std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
+      std::vector<SecurityInfo> query(const SecurityInfoQuery& query);
+      SecuritySnapshot load_snapshot(const Security& security);
+      SecurityTechnicals load_technicals(const Security& security);
+      std::vector<SecurityInfo> load_security_info_from_prefix(
         const std::string& prefix);
-
-      void Close();
+      void close();
 
     private:
       template<typename Value, typename Query, typename QueryService,
         typename EndQueryMessage>
-      using QueryClientPublisher = Beam::Queries::QueryClientPublisher<Value,
-        Query, Queries::EvaluatorTranslator,
+      using QueryClientPublisher = Beam::Queries::QueryClientPublisher<
+        Value, Query, Queries::EvaluatorTranslator,
         Beam::Services::ServiceProtocolClientHandler<B>, QueryService,
         EndQueryMessage>;
       using ServiceProtocolClient =
         typename ServiceProtocolClientBuilder::Client;
       Beam::Services::ServiceProtocolClientHandler<B> m_clientHandler;
-      QueryClientPublisher<OrderImbalance, MarketWideDataQuery,
+      QueryClientPublisher<OrderImbalance, VenueMarketDataQuery,
         QueryOrderImbalancesService, EndOrderImbalanceQueryMessage>
-        m_orderImbalancePublisher;
+        m_order_imbalance_publisher;
       QueryClientPublisher<BboQuote, SecurityMarketDataQuery,
-        QueryBboQuotesService, EndBboQuoteQueryMessage> m_bboQuotePublisher;
+        QueryBboQuotesService, EndBboQuoteQueryMessage> m_bbo_quote_publisher;
       QueryClientPublisher<BookQuote, SecurityMarketDataQuery,
-        QueryBookQuotesService, EndBookQuoteQueryMessage> m_bookQuotePublisher;
-      QueryClientPublisher<MarketQuote, SecurityMarketDataQuery,
-        QueryMarketQuotesService, EndMarketQuoteQueryMessage>
-        m_marketQuotePublisher;
+        QueryBookQuotesService, EndBookQuoteQueryMessage>
+          m_book_quote_publisher;
       QueryClientPublisher<TimeAndSale, SecurityMarketDataQuery,
         QueryTimeAndSalesService, EndTimeAndSaleQueryMessage>
-        m_timeAndSalePublisher;
+        m_time_and_sale_publisher;
       Beam::IO::OpenState m_openState;
 
-      MarketDataClient(const MarketDataClient&) = delete;
-      MarketDataClient& operator =(const MarketDataClient&) = delete;
-      void OnReconnect(const std::shared_ptr<ServiceProtocolClient>& client);
+      ServiceMarketDataClient(const MarketDataClient&) = delete;
+      ServiceMarketDataClient& operator =(const MarketDataClient&) = delete;
+      void on_reconnect(const std::shared_ptr<ServiceProtocolClient>& client);
   };
 
   template<typename B>
   template<typename BF>
-  MarketDataClient<B>::MarketDataClient(BF&& clientBuilder)
+  ServiceMarketDataClient<B>::ServiceMarketDataClient(BF&& client_builder)
 BEAM_SUPPRESS_THIS_INITIALIZER()
-      try : m_clientHandler(std::forward<BF>(clientBuilder),
-              std::bind_front(&MarketDataClient::OnReconnect, this)),
-            m_orderImbalancePublisher(Beam::Ref(m_clientHandler)),
-            m_bboQuotePublisher(Beam::Ref(m_clientHandler)),
-            m_bookQuotePublisher(Beam::Ref(m_clientHandler)),
-            m_marketQuotePublisher(Beam::Ref(m_clientHandler)),
-            m_timeAndSalePublisher(Beam::Ref(m_clientHandler)) {
+      try : m_client_handler(std::forward<BF>(client_builder),
+              std::bind_front(&ServiceMarketDataClient::on_reconnect, this)),
+            m_order_imbalance_publisher(Beam::Ref(m_client_handler)),
+            m_bbo_quote_publisher(Beam::Ref(m_client_handler)),
+            m_book_quote_publisher(Beam::Ref(m_client_handler)),
+            m_time_and_sale_publisher(Beam::Ref(m_client_handler)) {
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
     Queries::RegisterQueryTypes(
-      Beam::Store(m_clientHandler.GetSlots().GetRegistry()));
-    RegisterMarketDataRegistryServices(Beam::Store(m_clientHandler.GetSlots()));
-    RegisterMarketDataRegistryMessages(Beam::Store(m_clientHandler.GetSlots()));
-    m_orderImbalancePublisher.
+      Beam::Store(m_client_handler.GetSlots().GetRegistry()));
+    RegisterMarketDataRegistryServices(
+      Beam::Store(m_client_handler.GetSlots()));
+    m_order_imbalance_publisher.
       template AddMessageHandler<OrderImbalanceMessage>();
-    m_bboQuotePublisher.template AddMessageHandler<BboQuoteMessage>();
-    m_bookQuotePublisher.template AddMessageHandler<BookQuoteMessage>();
-    m_marketQuotePublisher.template AddMessageHandler<MarketQuoteMessage>();
-    m_timeAndSalePublisher.template AddMessageHandler<TimeAndSaleMessage>();
+    m_bbo_quote_publisher.template AddMessageHandler<BboQuoteMessage>();
+    m_book_quote_publisher.template AddMessageHandler<BookQuoteMessage>();
+    m_time_and_sale_publisher.template AddMessageHandler<TimeAndSaleMessage>();
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::IO::ConnectException(
       "Failed to connect to the market data server."));
   }
 
   template<typename B>
-  MarketDataClient<B>::~MarketDataClient() {
-    Close();
+  ServiceMarketDataClient<B>::~ServiceMarketDataClient() {
+    close();
   }
 
+#if 0
   template<typename B>
   void MarketDataClient<B>::QueryOrderImbalances(
       const MarketWideDataQuery& query,
@@ -345,6 +247,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_marketQuotePublisher.Recover(*client);
     m_timeAndSalePublisher.Recover(*client);
   }
+#endif
 }
 
 #endif

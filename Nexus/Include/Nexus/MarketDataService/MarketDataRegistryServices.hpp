@@ -7,17 +7,15 @@
 #include <Beam/Services/Service.hpp>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
-#include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
+#include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
 namespace Nexus::MarketDataService {
   using OrderImbalanceQueryResult =
     Beam::Queries::QueryResult<SequencedOrderImbalance>;
   using BboQuoteQueryResult = Beam::Queries::QueryResult<SequencedBboQuote>;
   using BookQuoteQueryResult = Beam::Queries::QueryResult<SequencedBookQuote>;
-  using MarketQuoteQueryResult =
-    Beam::Queries::QueryResult<SequencedMarketQuote>;
   using TimeAndSaleQueryResult =
     Beam::Queries::QueryResult<SequencedTimeAndSale>;
 
@@ -38,7 +36,7 @@ namespace Nexus::MarketDataService {
      */
     (QueryOrderImbalancesService,
       "Nexus.MarketDataService.QueryOrderImbalancesService",
-      OrderImbalanceQueryResult, MarketWideDataQuery, query),
+      OrderImbalanceQueryResult, VenueMarketDataQuery, query),
 
     /**
      * Queries a Security's BboQuotes.
@@ -55,15 +53,6 @@ namespace Nexus::MarketDataService {
      */
     (QueryBookQuotesService, "Nexus.MarketDataService.QueryBookQuotesService",
       BookQuoteQueryResult, SecurityMarketDataQuery, query),
-
-    /**
-     * Queries a Security's MarketQuotes.
-     * @param query The query to run.
-     * @return The list of MarketQuotes satisfying the query.
-     */
-    (QueryMarketQuotesService,
-      "Nexus.MarketDataService.QueryMarketQuotesService",
-      MarketQuoteQueryResult, SecurityMarketDataQuery, query),
 
     /**
      * Queries a Security's TimeAndSales.
@@ -113,11 +102,11 @@ namespace Nexus::MarketDataService {
   BEAM_DEFINE_MESSAGES(MarketDataRegistryMessages,
 
     /**
-     * Sends a query's SequencedMarketOrderImbalance.
-     * @param order_imbalance The query's SequencedMarketOrderImbalance.
+     * Sends a query's SequencedVenueOrderImbalance.
+     * @param order_imbalance The query's SequencedVenueOrderImbalance.
      */
     (OrderImbalanceMessage, "Nexus.MarketDataService.OrderImbalanceMessage",
-      SequencedMarketOrderImbalance, order_imbalance),
+      SequencedVenueOrderImbalance, order_imbalance),
 
     /**
      * Sends a query's SequencedSecurityBboQuote.
@@ -125,13 +114,6 @@ namespace Nexus::MarketDataService {
      */
     (BboQuoteMessage, "Nexus.MarketDataService.BboQuoteMessage",
       SequencedSecurityBboQuote, bbo_quote),
-
-    /**
-     * Sends a query's SequencedSecurityMarketQuote.
-     * @param market_quote The query's SequencedSecurityMarketQuote.
-     */
-    (MarketQuoteMessage, "Nexus.MarketDataService.MarketQuoteMessage",
-      SequencedSecurityMarketQuote, market_quote),
 
     /**
      * Sends a query's SequencedSecurityBookQuote.
@@ -149,12 +131,12 @@ namespace Nexus::MarketDataService {
 
     /**
      * Terminates a previous OrderImbalance query.
-     * @param market The market that was queried.
+     * @param venue The venue that was queried.
      * @param id The id of query to end.
      */
     (EndOrderImbalanceQueryMessage,
-      "Nexus.MarketDataService.EndOrderImbalanceQueryMessage", MarketCode,
-      market, int, id),
+      "Nexus.MarketDataService.EndOrderImbalanceQueryMessage", Venue, venue,
+      int, id),
 
     /**
      * Terminates a previous BboQuote query.
@@ -171,15 +153,6 @@ namespace Nexus::MarketDataService {
      */
     (EndBookQuoteQueryMessage,
       "Nexus.MarketDataService.EndBookQuoteQueryMessage", Security, security,
-      int, id),
-
-    /**
-     * Terminates a previous MarketQuote query.
-     * @param security The Security that was queried.
-     * @param id The id of query to end.
-     */
-    (EndMarketQuoteQueryMessage,
-      "Nexus.MarketDataService.EndMarketQuoteQueryMessage", Security, security,
       int, id),
 
     /**
@@ -210,11 +183,6 @@ namespace Nexus::MarketDataService {
   template<>
   struct MarketDataMessageType<BboQuote> {
     using type = BboQuoteMessage;
-  };
-
-  template<>
-  struct MarketDataMessageType<MarketQuote> {
-    using type = MarketQuoteMessage;
   };
 
   template<>

@@ -6,8 +6,8 @@
 #include <boost/functional/factory.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
-#include "Nexus/MarketDataService/MarketDataClient.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
+#include "Nexus/MarketDataService/ServiceMarketDataClient.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;
@@ -23,11 +23,10 @@ using namespace Nexus::MarketDataService;
 using namespace Nexus::Queries;
 
 namespace {
-  using TestMarketDataClient = MarketDataClient<
-    TestServiceProtocolClientBuilder>;
+  using TestMarketDataClient =
+    ServiceMarketDataClient<TestServiceProtocolClientBuilder>;
 
-  const auto SECURITY_A = Security("TST", DefaultMarkets::NYSE(),
-    DefaultCountries::US());
+  const auto SECURITY_A = Security("TST", NYSE);
 
   struct ClientEntry {
     TestMarketDataClient m_client;
@@ -37,74 +36,73 @@ namespace {
   };
 
   struct Fixture {
-    std::shared_ptr<TestServerConnection> m_serverConnection;
+    std::shared_ptr<TestServerConnection> m_server_connection;
     TestServiceProtocolServer m_server;
-    std::shared_ptr<Queue<std::vector<any>>> m_requestQueue;
+    std::shared_ptr<Queue<std::vector<any>>> m_request_queue;
 
     Fixture()
-      : m_serverConnection(std::make_shared<TestServerConnection>()),
-        m_server(m_serverConnection, factory<std::unique_ptr<TriggerTimer>>(),
+      : m_server_connection(std::make_shared<TestServerConnection>()),
+        m_server(m_server_connection, factory<std::unique_ptr<TriggerTimer>>(),
           NullSlot(), NullSlot()),
-        m_requestQueue(std::make_shared<Queue<std::vector<any>>>()) {
+        m_request_queue(std::make_shared<Queue<std::vector<any>>>()) {
       Nexus::Queries::RegisterQueryTypes(
         Store(m_server.GetSlots().GetRegistry()));
       RegisterMarketDataRegistryServices(Store(m_server.GetSlots()));
       RegisterMarketDataRegistryMessages(Store(m_server.GetSlots()));
       QueryBboQuotesService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::OnQuerySecurityBboQuotes, this));
+        std::bind_front(&Fixture::on_query_security_bbo_quotes, this));
     }
 
     template<typename T>
-    using Request = RequestToken<
-      TestServiceProtocolServer::ServiceProtocolClient, T>;
+    using Request =
+      RequestToken<TestServiceProtocolServer::ServiceProtocolClient, T>;
 
-    std::unique_ptr<ClientEntry> MakeClient() {
-      auto builder = TestServiceProtocolClientBuilder(
-        [this] {
-          return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
-            "test", *m_serverConnection);
-        }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
+    std::unique_ptr<ClientEntry> make_client() {
+      auto builder = TestServiceProtocolClientBuilder([this] {
+        return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
+          "test", *m_server_connection);
+      }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
       return std::make_unique<ClientEntry>(builder);
     }
 
-    void OnQuerySecurityBboQuotes(Request<QueryBboQuotesService>& request,
+    void on_query_security_bbo_quotes(Request<QueryBboQuotesService>& request,
         const SecurityMarketDataQuery& query) {
       auto parameters = std::vector<any>();
       parameters.push_back(request);
       parameters.push_back(query);
-      m_requestQueue->Push(parameters);
+      m_request_queue->Push(parameters);
     }
   };
 }
 
 TEST_SUITE("MarketDataClient") {
   TEST_CASE_FIXTURE(Fixture, "real_time_bbo_quote_query") {
-    auto client = MakeClient();
+    auto client = make_client();
     auto query = SecurityMarketDataQuery();
     query.SetIndex(SECURITY_A);
     query.SetRange(Beam::Queries::Range::RealTime());
-    auto bboQuotes = std::make_shared<Queue<BboQuote>>();
-    client->m_client.QueryBboQuotes(query, bboQuotes);
-    auto request = m_requestQueue->Pop();
+    auto bbo_quotes = std::make_shared<Queue<BboQuote>>();
+    client->m_client.query(query, bbo_quotes);
+    auto request = m_request_queue->Pop();
     REQUIRE(request.size() == 2);
-    auto requestToken = optional<Request<QueryBboQuotesService>>();
-    REQUIRE_NOTHROW(requestToken =
+    auto request_token = optional<Request<QueryBboQuotesService>>();
+    REQUIRE_NOTHROW(request_token =
       any_cast<Request<QueryBboQuotesService>>(request[0]));
-    optional<SecurityMarketDataQuery> requestQuery;
-    REQUIRE_NOTHROW(requestQuery =
-      any_cast<SecurityMarketDataQuery>(request[1]));
-    REQUIRE(requestQuery->GetIndex() == SECURITY_A);
-    REQUIRE(requestQuery->GetRange() == Beam::Queries::Range::RealTime());
-    auto queryResponse = BboQuoteQueryResult();
-    queryResponse.m_queryId = 123;
-    requestToken->SetResult(queryResponse);
+    auto request_query = optional<SecurityMarketDataQuery>();
+    REQUIRE_NOTHROW(
+      request_query = any_cast<SecurityMarketDataQuery>(request[1]));
+    REQUIRE(request_query->GetIndex() == SECURITY_A);
+    REQUIRE(request_query->GetRange() == Beam::Queries::Range::RealTime());
+    auto query_response = BboQuoteQueryResult();
+    query_response.m_queryId = 123;
+    request_token->SetResult(query_response);
     auto bbo = BboQuote(Quote(Money::ONE, 100, Side::BID),
       Quote(Money::ONE + Money::CENT, 200, Side::ASK),
-      second_clock::universal_time());
-    SendRecordMessage<BboQuoteMessage>(requestToken->GetClient(),
+      time_from_string("2021-01-11 15:30:05.000"));
+    SendRecordMessage<BboQuoteMessage>(request_token->GetClient(),
       SequencedValue(IndexedValue(bbo, SECURITY_A),
       Beam::Queries::Sequence(1)));
-    auto updatedBbo = bboQuotes->Pop();
-    REQUIRE(updatedBbo == bbo);
+    auto updated_bbo = bbo_quotes->Pop();
+    REQUIRE(updated_bbo == bbo);
   }
 }

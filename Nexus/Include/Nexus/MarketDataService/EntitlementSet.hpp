@@ -4,7 +4,6 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/functional/hash.hpp>
 #include "Nexus/Definitions/Venue.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 
 namespace Nexus::MarketDataService {
