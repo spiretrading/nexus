@@ -166,7 +166,7 @@ namespace {
     }
 
     connection connect_update_signal(
-      const UpdateSignal::slot_type& slot) const override {
+        const UpdateSignal::slot_type& slot) const override {
       return m_value.connect_update_signal(slot);
     }
 
