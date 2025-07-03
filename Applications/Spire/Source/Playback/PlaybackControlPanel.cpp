@@ -183,15 +183,20 @@ namespace {
 }
 
 struct PlaybackControlPanel::PlayheadModel : DurationModel {
+  mutable UpdateSignal m_update_signal;
   std::shared_ptr<TimelineModel> m_timeline;
   TimeClientBox m_time_client;
   std::shared_ptr<DurationModel> m_source;
+  scoped_connection m_connection;
 
   PlayheadModel(std::shared_ptr<TimelineModel> timeline,
-    TimeClientBox time_client, std::shared_ptr<DurationModel> source)
-    : m_timeline(std::move(timeline)),
-      m_time_client(std::move(time_client)),
-      m_source(std::move(source)) {}
+      TimeClientBox time_client, std::shared_ptr<DurationModel> source)
+      : m_timeline(std::move(timeline)),
+        m_time_client(std::move(time_client)),
+        m_source(std::move(source)) {
+    m_connection = m_source->connect_update_signal(
+      std::bind_front(&PlayheadModel::on_update, this));
+  }
 
   optional<time_duration> get_minimum() const override {
     return m_source->get_minimum();
@@ -221,7 +226,11 @@ struct PlaybackControlPanel::PlayheadModel : DurationModel {
 
   connection connect_update_signal(
       const UpdateSignal::slot_type& slot) const override {
-    return m_source->connect_update_signal(slot);
+    return m_update_signal.connect(slot);
+  }
+
+  void on_update(const time_duration& value) {
+    m_update_signal(value);
   }
 };
 
