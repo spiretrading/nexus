@@ -23,14 +23,15 @@ TEST_SUITE("MarketDataClient") {
     query_real_time_with_snapshot(client, security, book_queue);
     auto operation1 = operations->Pop();
     auto load_operation =
-      get<TestMarketDataClient::LoadSecuritySnapshotOperation>(&*operation1);
+      std::get_if<TestMarketDataClient::LoadSecuritySnapshotOperation>(
+        &*operation1);
     REQUIRE(load_operation);
     REQUIRE(load_operation->m_security == security);
     auto snapshot = SecuritySnapshot(security);
-    load_operation->m_result.SetResult(snapshot);
+    load_operation->m_result.set(snapshot);
     auto operation2 = operations->Pop();
     auto query_operation =
-      get<TestMarketDataClient::QueryBookQuoteOperation>(&*operation2);
+      std::get_if<TestMarketDataClient::QueryBookQuoteOperation>(&*operation2);
     REQUIRE(query_operation);
     REQUIRE(query_operation->m_query.GetIndex() == security);
     REQUIRE(query_operation->m_query.GetRange() == Range::RealTime());
@@ -47,7 +48,8 @@ TEST_SUITE("MarketDataClient") {
     query_real_time_with_snapshot(client, security, book_queue);
     auto operation1 = operations->Pop();
     auto load_operation =
-      get<TestMarketDataClient::LoadSecuritySnapshotOperation>(&*operation1);
+      std::get_if<TestMarketDataClient::LoadSecuritySnapshotOperation>(
+        &*operation1);
     auto snapshot = SecuritySnapshot(security);
     snapshot.m_asks.push_back(SequencedBookQuote(
       BookQuote("MP", false, CHIC, Quote(12 * Money::CENT, 222, Side::ASK),
@@ -56,14 +58,14 @@ TEST_SUITE("MarketDataClient") {
       SequencedBookQuote(BookQuote("MP", false, PURE, Quote(9 * Money::CENT, 44,
         Side::BID), time_from_string("2021-01-11 15:30:05.000")),
         Queries::Sequence(7)));
-    load_operation->m_result.SetResult(snapshot);
+    load_operation->m_result.set(snapshot);
     auto book_quote = book_queue->Pop();
     REQUIRE(book_quote == snapshot.m_asks.front());
     book_quote = book_queue->Pop();
     REQUIRE(book_quote == snapshot.m_bids.front());
     auto operation2 = operations->Pop();
     auto continuation_operation =
-      get<TestMarketDataClient::QueryBookQuoteOperation>(&*operation2);
+      std::get_if<TestMarketDataClient::QueryBookQuoteOperation>(&*operation2);
     REQUIRE(continuation_operation);
     REQUIRE(continuation_operation->m_query.GetIndex() == security);
     REQUIRE(continuation_operation->m_query.GetRange().GetStart() ==
@@ -83,7 +85,7 @@ TEST_SUITE("MarketDataClient") {
     query_real_time_with_snapshot(security, client, quote_queue);
     auto operation1 = operations->Pop();
     auto* snapshot_operation =
-      get<TestMarketDataClient::QuerySequencedBboQuoteOperation>(
+      std::get_if<TestMarketDataClient::QuerySequencedBboQuoteOperation>(
         &*operation1);
     REQUIRE(snapshot_operation);
     REQUIRE(snapshot_operation->m_query.GetIndex() == security);
@@ -96,7 +98,7 @@ TEST_SUITE("MarketDataClient") {
     REQUIRE(quote == sequenced_quote.GetValue());
     auto operation2 = operations->Pop();
     auto continuation_operation =
-      get<TestMarketDataClient::QueryBboQuoteOperation>(&*operation2);
+      std::get_if<TestMarketDataClient::QueryBboQuoteOperation>(&*operation2);
     REQUIRE(continuation_operation);
     REQUIRE(continuation_operation->m_query.GetIndex() == security);
     REQUIRE(continuation_operation->m_query.GetRange().GetStart() ==

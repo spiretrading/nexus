@@ -26,7 +26,8 @@ TEST_SUITE("TestMarketDataClient") {
     client.query(query, imbalances);
     auto operation = operations->Pop();
     auto received_query =
-      get<TestMarketDataClient::QueryOrderImbalanceOperation>(&*operation);
+      std::get_if<TestMarketDataClient::QueryOrderImbalanceOperation>(
+        &*operation);
     REQUIRE(received_query != nullptr);
     REQUIRE(received_query->m_query.GetIndex() == NYSE);
   }
@@ -44,12 +45,14 @@ TEST_SUITE("TestMarketDataClient") {
     sequenced_query.SetIndex(NASDAQ);
     client.query(sequenced_query, sequenced_imbalances);
     auto op1 = operations->Pop();
-    auto oi_op = get<TestMarketDataClient::QueryOrderImbalanceOperation>(&*op1);
+    auto oi_op =
+      std::get_if<TestMarketDataClient::QueryOrderImbalanceOperation>(&*op1);
     REQUIRE(oi_op);
     REQUIRE(oi_op->m_query.GetIndex() == NYSE);
     auto op2 = operations->Pop();
     auto seq_op =
-      get<TestMarketDataClient::QuerySequencedOrderImbalanceOperation>(&*op2);
+      std::get_if<TestMarketDataClient::QuerySequencedOrderImbalanceOperation>(
+        &*op2);
     REQUIRE(seq_op);
     REQUIRE(seq_op->m_query.GetIndex() == NASDAQ);
   }
@@ -81,8 +84,8 @@ TEST_SUITE("TestMarketDataClient") {
     client.close();
     thread.join();
     if(auto op = operations->TryPop()) {
-      auto oi_op =
-        get<TestMarketDataClient::QuerySequencedOrderImbalanceOperation>(&**op);
+      auto oi_op = std::get_if<
+        TestMarketDataClient::QuerySequencedOrderImbalanceOperation>(&**op);
       REQUIRE(oi_op->m_query.GetIndex() == NYSE);
     } else {
       REQUIRE_THROWS_AS(imbalances->Pop(), PipeBrokenException);

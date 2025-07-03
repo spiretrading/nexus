@@ -1,8 +1,10 @@
 #ifndef NEXUS_TEST_MARKET_DATA_CLIENT_HPP
 #define NEXUS_TEST_MARKET_DATA_CLIENT_HPP
+#include <variant>
 #include <Beam/Collections/SynchronizedList.hpp>
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/ServicesTests/ServiceResult.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 
@@ -102,7 +104,8 @@ namespace Nexus::MarketDataService::Tests {
         SecurityInfoQuery m_query;
 
         /** Used to return a value to the caller. */
-        Beam::Routines::Eval<std::vector<SecurityInfo>> m_result;
+        Beam::Services::Tests::ServiceResult<std::vector<SecurityInfo>>
+          m_result;
       };
 
       /** Records a call to load_snapshot(...). */
@@ -112,7 +115,7 @@ namespace Nexus::MarketDataService::Tests {
         Security m_security;
 
         /** Used to return a value to the caller. */
-        Beam::Routines::Eval<SecuritySnapshot> m_result;
+        Beam::Services::Tests::ServiceResult<SecuritySnapshot> m_result;
       };
 
       /** Records a call to load_technicals(...). */
@@ -122,7 +125,7 @@ namespace Nexus::MarketDataService::Tests {
         Security m_security;
 
         /** Used to return a value to the caller. */
-        Beam::Routines::Eval<SecurityTechnicals> m_result;
+        Beam::Services::Tests::ServiceResult<SecurityTechnicals> m_result;
       };
 
       /** Records a call to load_security_info_from_prefix(...). */
@@ -132,11 +135,12 @@ namespace Nexus::MarketDataService::Tests {
         std::string m_prefix;
 
         /** Used to return a value to the caller. */
-        Beam::Routines::Eval<std::vector<SecurityInfo>> m_result;
+        Beam::Services::Tests::ServiceResult<std::vector<SecurityInfo>>
+          m_result;
       };
 
       /** A variant covering all possible TestMarketDataClient operations. */
-      using Operation = boost::variant<QuerySequencedOrderImbalanceOperation,
+      using Operation = std::variant<QuerySequencedOrderImbalanceOperation,
         QueryOrderImbalanceOperation, QuerySequencedBboQuoteOperation,
         QueryBboQuoteOperation, QuerySequencedBookQuoteOperation,
         QueryBookQuoteOperation, QuerySequencedTimeAndSaleOperation,
@@ -179,7 +183,8 @@ namespace Nexus::MarketDataService::Tests {
     private:
       Beam::ScopedQueueWriter<std::shared_ptr<Operation>> m_operations;
       Beam::SynchronizedVector<std::weak_ptr<Beam::BaseQueue>> m_queues;
-      Beam::SynchronizedUnorderedSet<Beam::Routines::BaseEval*> m_evals;
+      Beam::SynchronizedUnorderedSet<Beam::Services::Tests::BaseServiceResult*>
+        m_pending_results;
       Beam::IO::OpenState m_open_state;
 
       TestMarketDataClient(const TestMarketDataClient&) = delete;
@@ -187,7 +192,7 @@ namespace Nexus::MarketDataService::Tests {
       template<typename T>
       void append_queue(std::shared_ptr<Operation> operation);
       template<typename T, typename R, typename... Args>
-      R append_eval(Args&&... args);
+      R append_result(Args&&... args);
   };
 
   inline TestMarketDataClient::TestMarketDataClient(
@@ -256,25 +261,25 @@ namespace Nexus::MarketDataService::Tests {
 
   inline std::vector<SecurityInfo> TestMarketDataClient::query(
       const SecurityInfoQuery& query) {
-    return append_eval<SecurityInfoQueryOperation, std::vector<SecurityInfo>>(
+    return append_result<SecurityInfoQueryOperation, std::vector<SecurityInfo>>(
       query);
   }
 
   inline SecuritySnapshot TestMarketDataClient::load_snapshot(
       const Security& security) {
-    return append_eval<LoadSecuritySnapshotOperation, SecuritySnapshot>(
+    return append_result<LoadSecuritySnapshotOperation, SecuritySnapshot>(
       security);
   }
 
   inline SecurityTechnicals TestMarketDataClient::load_technicals(
       const Security& security) {
-    return append_eval<LoadSecurityTechnicalsOperation, SecurityTechnicals>(
+    return append_result<LoadSecurityTechnicalsOperation, SecurityTechnicals>(
       security);
   }
 
   inline std::vector<SecurityInfo> TestMarketDataClient::
       load_security_info_from_prefix(const std::string& prefix) {
-    return append_eval<
+    return append_result<
       LoadSecurityInfoFromPrefixOperation, std::vector<SecurityInfo>>(prefix);
   }
 
@@ -286,12 +291,12 @@ namespace Nexus::MarketDataService::Tests {
         }
       });
       m_queues.Clear();
-      m_evals.With([] (auto& evals) {
-        for(auto& eval : evals) {
-          eval->SetException(Beam::IO::EndOfFileException());
+      m_pending_results.With([] (auto& results) {
+        for(auto& result : results) {
+          result->set(std::make_exception_ptr(Beam::IO::EndOfFileException()));
         }
       });
-      m_evals.Clear();
+      m_pending_results.Clear();
     }
     m_open_state.Close();
   }
@@ -300,7 +305,7 @@ namespace Nexus::MarketDataService::Tests {
   void TestMarketDataClient::append_queue(
       std::shared_ptr<Operation> operation) {
     auto queue = std::shared_ptr<Beam::BaseQueue>(
-      operation, &boost::get<T>(*operation).m_queue);
+      operation, &std::get<T>(*operation).m_queue);
     m_queues.PushBack(queue);
     if(!m_open_state.IsOpen()) {
       m_queues.RemoveIf([&] (const auto& weak_queue) {
@@ -314,18 +319,18 @@ namespace Nexus::MarketDataService::Tests {
   }
 
   template<typename T, typename R, typename... Args>
-  R TestMarketDataClient::append_eval(Args&&... args) {
+  R TestMarketDataClient::append_result(Args&&... args) {
     auto async = Beam::Routines::Async<R>();
     auto operation = std::make_shared<Operation>(
-      T(std::forward<Args>(args)..., async.GetEval()));
-    m_evals.Insert(&boost::get<T>(*operation).m_result);
+      std::in_place_type<T>, std::forward<Args>(args)..., async.GetEval());
+    m_pending_results.Insert(&std::get<T>(*operation).m_result);
     if(!m_open_state.IsOpen()) {
-      m_evals.Erase(&boost::get<T>(*operation).m_result);
+      m_pending_results.Erase(&std::get<T>(*operation).m_result);
       BOOST_THROW_EXCEPTION(Beam::IO::EndOfFileException());
     }
     m_operations.Push(operation);
     auto result = std::move(async.Get());
-    m_evals.Erase(&boost::get<T>(*operation).m_result);
+    m_pending_results.Erase(&std::get<T>(*operation).m_result);
     return result;
   }
 }
