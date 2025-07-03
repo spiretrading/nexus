@@ -156,9 +156,11 @@ namespace {
     QValidator::State set(const optional<time_duration>& value) override {
       m_state = test(value);
       m_value.set(value);
-      if(auto playhead = *value - get_start_time();
-          playhead != m_playhead->get()) {
-        m_playhead->set(playhead);
+      if(m_state == QValidator::Acceptable) {
+        if(auto playhead = *value - get_start_time();
+            playhead != m_playhead->get()) {
+          m_playhead->set(playhead);
+        }
       }
       return m_state;
     }
