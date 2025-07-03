@@ -97,17 +97,13 @@ namespace Nexus::Queries {
     if(expression.GetName() == "symbol") {
       SetEvaluator(Beam::Queries::MakeFunctionEvaluatorNode(
         [] (const Security& security) {
-          return security.GetSymbol();
+          return security.get_symbol();
         }, std::move(securityExpression)));
-    } else if(expression.GetName() == "market") {
+    } else if(expression.GetName() == "venue") {
       SetEvaluator(Beam::Queries::MakeFunctionEvaluatorNode(
         [] (const Security& security) {
-          return static_cast<std::string>(security.GetMarket().GetData());
-        }, std::move(securityExpression)));
-    } else if(expression.GetName() == "country") {
-      SetEvaluator(Beam::Queries::MakeFunctionEvaluatorNode(
-        [] (const Security& security) {
-          return security.GetCountry();
+          return static_cast<std::string>(
+            security.get_venue().get_code().GetData());
         }, std::move(securityExpression)));
     } else {
       Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
@@ -134,7 +130,7 @@ namespace Nexus::Queries {
     } else if(expression.GetName() == "board_lot") {
       SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
         Quantity, SecurityInfo>>(std::move(securityInfoExpression),
-          &SecurityInfo::m_boardLot));
+          &SecurityInfo::m_board_lot));
     } else {
       Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
     }
@@ -161,15 +157,15 @@ namespace Nexus::Queries {
     } else if(expression.GetName() == "market_center") {
       SetEvaluator(std::make_unique<
         Beam::Queries::MemberAccessEvaluatorNode<std::string, TimeAndSale>>(
-        std::move(timeAndSaleExpression), &TimeAndSale::m_marketCenter));
+        std::move(timeAndSaleExpression), &TimeAndSale::m_market_center));
     } else if(expression.GetName() == "buyer_mpid") {
       SetEvaluator(std::make_unique<
         Beam::Queries::MemberAccessEvaluatorNode<std::string, TimeAndSale>>(
-        std::move(timeAndSaleExpression), &TimeAndSale::m_buyerMpid));
+        std::move(timeAndSaleExpression), &TimeAndSale::m_buyer_mpid));
     } else if(expression.GetName() == "seller_mpid") {
       SetEvaluator(std::make_unique<
         Beam::Queries::MemberAccessEvaluatorNode<std::string, TimeAndSale>>(
-        std::move(timeAndSaleExpression), &TimeAndSale::m_sellerMpid));
+        std::move(timeAndSaleExpression), &TimeAndSale::m_seller_mpid));
     } else {
       Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
     }

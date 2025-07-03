@@ -1,10 +1,14 @@
 #ifndef NEXUS_SERVICE_MARKET_DATA_CLIENT_HPP
 #define NEXUS_SERVICE_MARKET_DATA_CLIENT_HPP
+#include <exception>
 #include <functional>
 #include <utility>
+#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queries/QueryClientPublisher.hpp>
 #include <Beam/Pointers/Dereference.hpp>
+#include <Beam/Services/ServiceRequestException.hpp>
+#include <boost/lexical_cast.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServices.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
@@ -64,7 +68,7 @@ namespace Nexus::MarketDataService {
         EndQueryMessage>;
       using ServiceProtocolClient =
         typename ServiceProtocolClientBuilder::Client;
-      Beam::Services::ServiceProtocolClientHandler<B> m_clientHandler;
+      Beam::Services::ServiceProtocolClientHandler<B> m_client_handler;
       QueryClientPublisher<OrderImbalance, VenueMarketDataQuery,
         QueryOrderImbalancesService, EndOrderImbalanceQueryMessage>
         m_order_imbalance_publisher;
@@ -72,11 +76,11 @@ namespace Nexus::MarketDataService {
         QueryBboQuotesService, EndBboQuoteQueryMessage> m_bbo_quote_publisher;
       QueryClientPublisher<BookQuote, SecurityMarketDataQuery,
         QueryBookQuotesService, EndBookQuoteQueryMessage>
-          m_book_quote_publisher;
+        m_book_quote_publisher;
       QueryClientPublisher<TimeAndSale, SecurityMarketDataQuery,
         QueryTimeAndSalesService, EndTimeAndSaleQueryMessage>
         m_time_and_sale_publisher;
-      Beam::IO::OpenState m_openState;
+      Beam::IO::OpenState m_open_state;
 
       ServiceMarketDataClient(const MarketDataClient&) = delete;
       ServiceMarketDataClient& operator =(const MarketDataClient&) = delete;
@@ -98,6 +102,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       Beam::Store(m_client_handler.GetSlots().GetRegistry()));
     RegisterMarketDataRegistryServices(
       Beam::Store(m_client_handler.GetSlots()));
+    RegisterMarketDataRegistryMessages(
+      Beam::Store(m_client_handler.GetSlots()));
     m_order_imbalance_publisher.
       template AddMessageHandler<OrderImbalanceMessage>();
     m_bbo_quote_publisher.template AddMessageHandler<BboQuoteMessage>();
@@ -113,80 +119,69 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     close();
   }
 
-#if 0
   template<typename B>
-  void MarketDataClient<B>::QueryOrderImbalances(
-      const MarketWideDataQuery& query,
+  void ServiceMarketDataClient<B>::query(const VenueMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) {
-    m_orderImbalancePublisher.SubmitQuery(query, std::move(queue));
+    m_order_imbalance_publisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>
-  void MarketDataClient<B>::QueryOrderImbalances(
-      const MarketWideDataQuery& query,
+  void ServiceMarketDataClient<B>::query(const VenueMarketDataQuery& query,
       Beam::ScopedQueueWriter<OrderImbalance> queue) {
-    m_orderImbalancePublisher.SubmitQuery(query, std::move(queue));
+    m_order_imbalance_publisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>
-  void MarketDataClient<B>::QueryBboQuotes(const SecurityMarketDataQuery& query,
+  void ServiceMarketDataClient<B>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
-    m_bboQuotePublisher.SubmitQuery(query, std::move(queue));
+    m_bbo_quote_publisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>
-  void MarketDataClient<B>::QueryBboQuotes(const SecurityMarketDataQuery& query,
+  void ServiceMarketDataClient<B>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<BboQuote> queue) {
-    m_bboQuotePublisher.SubmitQuery(query, std::move(queue));
+    m_bbo_quote_publisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>
-  void MarketDataClient<B>::QueryBookQuotes(
-      const SecurityMarketDataQuery& query,
+  void ServiceMarketDataClient<B>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
-    m_bookQuotePublisher.SubmitQuery(query, std::move(queue));
+    m_book_quote_publisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>
-  void MarketDataClient<B>::QueryBookQuotes(
-      const SecurityMarketDataQuery& query,
+  void ServiceMarketDataClient<B>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<BookQuote> queue) {
-    m_bookQuotePublisher.SubmitQuery(query, std::move(queue));
+    m_book_quote_publisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>
-  void MarketDataClient<B>::QueryMarketQuotes(
-      const SecurityMarketDataQuery& query,
-      Beam::ScopedQueueWriter<SequencedMarketQuote> queue) {
-    m_marketQuotePublisher.SubmitQuery(query, std::move(queue));
-  }
-
-  template<typename B>
-  void MarketDataClient<B>::QueryMarketQuotes(
-      const SecurityMarketDataQuery& query,
-      Beam::ScopedQueueWriter<MarketQuote> queue) {
-    m_marketQuotePublisher.SubmitQuery(query, std::move(queue));
-  }
-
-  template<typename B>
-  void MarketDataClient<B>::QueryTimeAndSales(
-      const SecurityMarketDataQuery& query,
+  void ServiceMarketDataClient<B>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
-    m_timeAndSalePublisher.SubmitQuery(query, std::move(queue));
+    m_time_and_sale_publisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>
-  void MarketDataClient<B>::QueryTimeAndSales(
-      const SecurityMarketDataQuery& query,
+  void ServiceMarketDataClient<B>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<TimeAndSale> queue) {
-    m_timeAndSalePublisher.SubmitQuery(query, std::move(queue));
+    m_time_and_sale_publisher.SubmitQuery(query, std::move(queue));
   }
 
   template<typename B>
-  SecuritySnapshot MarketDataClient<B>::LoadSecuritySnapshot(
+  std::vector<SecurityInfo> ServiceMarketDataClient<B>::query(
+      const SecurityInfoQuery& query) {
+    return Beam::Services::ServiceOrThrowWithNested([&] {
+      auto client = m_client_handler.GetClient();
+      return client->template SendRequest<QuerySecurityInfoService>(query);
+    }, "Failed to query for security info records: " +
+      boost::lexical_cast<std::string>(query));
+  }
+
+  template<typename B>
+  SecuritySnapshot ServiceMarketDataClient<B>::load_snapshot(
       const Security& security) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
+      auto client = m_client_handler.GetClient();
       return client->template SendRequest<LoadSecuritySnapshotService>(
         security);
     }, "Failed to load security snapshot: " +
@@ -194,10 +189,10 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
-  SecurityTechnicals MarketDataClient<B>::LoadSecurityTechnicals(
+  SecurityTechnicals ServiceMarketDataClient<B>::load_technicals(
       const Security& security) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
+      auto client = m_client_handler.GetClient();
       return client->template SendRequest<LoadSecurityTechnicalsService>(
         security);
     }, "Failed to load security technicals: " +
@@ -205,49 +200,37 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
-  std::vector<SecurityInfo> MarketDataClient<B>::QuerySecurityInfo(
-      const SecurityInfoQuery& query) {
+  std::vector<SecurityInfo>
+      ServiceMarketDataClient<B>::load_security_info_from_prefix(
+        const std::string& prefix) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<QuerySecurityInfoService>(query);
-    }, "Failed to query for security info records: " +
-      boost::lexical_cast<std::string>(query));
-  }
-
-  template<typename B>
-  std::vector<SecurityInfo> MarketDataClient<B>::LoadSecurityInfoFromPrefix(
-      const std::string& prefix) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
+      auto client = m_client_handler.GetClient();
       return client->template SendRequest<LoadSecurityInfoFromPrefixService>(
         prefix);
     }, "Failed to load security info from prefix: \"" + prefix + "\"");
   }
 
   template<typename B>
-  void MarketDataClient<B>::Close() {
-    if(m_openState.SetClosing()) {
+  void ServiceMarketDataClient<B>::close() {
+    if(m_open_state.SetClosing()) {
       return;
     }
-    m_clientHandler.Close();
-    m_orderImbalancePublisher.Break();
-    m_bboQuotePublisher.Break();
-    m_bookQuotePublisher.Break();
-    m_marketQuotePublisher.Break();
-    m_timeAndSalePublisher.Break();
-    m_openState.Close();
+    m_client_handler.Close();
+    m_order_imbalance_publisher.Break();
+    m_bbo_quote_publisher.Break();
+    m_book_quote_publisher.Break();
+    m_time_and_sale_publisher.Break();
+    m_open_state.Close();
   }
 
   template<typename B>
-  void MarketDataClient<B>::OnReconnect(
+  void ServiceMarketDataClient<B>::on_reconnect(
       const std::shared_ptr<ServiceProtocolClient>& client) {
-    m_orderImbalancePublisher.Recover(*client);
-    m_bboQuotePublisher.Recover(*client);
-    m_bookQuotePublisher.Recover(*client);
-    m_marketQuotePublisher.Recover(*client);
-    m_timeAndSalePublisher.Recover(*client);
+    m_order_imbalance_publisher.Recover(*client);
+    m_bbo_quote_publisher.Recover(*client);
+    m_book_quote_publisher.Recover(*client);
+    m_time_and_sale_publisher.Recover(*client);
   }
-#endif
 }
 
 #endif
