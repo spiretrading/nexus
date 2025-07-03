@@ -74,8 +74,7 @@ namespace {
     }
 
     QValidator::State test(const optional<date>& value) const override {
-      if(!value || get_minimum() && value < get_minimum() ||
-          value > get_maximum()) {
+      if(!value || value < get_minimum() || value > get_maximum()) {
         return QValidator::Intermediate;
       }
       return QValidator::Acceptable;
