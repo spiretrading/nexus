@@ -148,16 +148,13 @@ namespace {
     QValidator::State test(
         const optional<time_duration>& value) const override {
       if(!value || value < get_minimum() || value > get_maximum()) {
-        return QValidator::Invalid;
+        return QValidator::Intermediate;
       }
       return QValidator::Acceptable;
     }
 
     QValidator::State set(const optional<time_duration>& value) override {
       m_state = test(value);
-      if(m_state == QValidator::Invalid) {
-        return QValidator::Invalid;
-      }
       m_value.set(value);
       if(auto playhead = *value - get_start_time();
           playhead != m_playhead->get()) {
