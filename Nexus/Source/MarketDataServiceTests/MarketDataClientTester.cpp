@@ -1,4 +1,5 @@
 #include <Beam/Queues/Queue.hpp>
+#include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
@@ -6,6 +7,7 @@
 
 using namespace Beam;
 using namespace Beam::Queries;
+using namespace Beam::Routines;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -105,5 +107,41 @@ TEST_SUITE("MarketDataClient") {
       Queries::Sequence::Sequence(4));
     REQUIRE(continuation_operation->m_query.GetSnapshotLimit() ==
       SnapshotLimit::Unlimited());
+  }
+
+  TEST_CASE("load_security_info") {
+    auto operations = std::make_shared<
+      Queue<std::shared_ptr<TestMarketDataClient::Operation>>>();
+    auto client = TestMarketDataClient(operations);
+    auto security = Security("SYM", NASDAQ);
+    auto queue = Queue<optional<SecurityInfo>>();
+    Spawn([&] {
+      queue.Push(load_security_info(security, client));
+    });
+    auto operation1 = operations->Pop();
+    auto* info_operation =
+      std::get_if<TestMarketDataClient::SecurityInfoQueryOperation>(
+        &*operation1);
+    REQUIRE(info_operation);
+    REQUIRE(info_operation->m_query.GetIndex() == security);
+    SUBCASE("single_result") {
+      auto info_result = SecurityInfo(security, "SYMBOL", "Tech", 100);
+      info_operation->m_result.set({info_result});
+      auto received_info = queue.Pop();
+      REQUIRE(received_info == info_result);
+    }
+    SUBCASE("empty") {
+      info_operation->m_result.set(std::vector<SecurityInfo>());
+      auto received_info = queue.Pop();
+      REQUIRE(received_info == none);
+    }
+    SUBCASE("multiple_result") {
+      auto info_result = SecurityInfo(security, "SYMBOL", "Tech", 100);
+      auto info_result2 =
+        SecurityInfo(Security("FOO", NYSE), "LOBMYS", "Hcet", 200);
+      info_operation->m_result.set({info_result, info_result2});
+      auto received_info = queue.Pop();
+      REQUIRE(received_info == info_result);
+    }
   }
 }
