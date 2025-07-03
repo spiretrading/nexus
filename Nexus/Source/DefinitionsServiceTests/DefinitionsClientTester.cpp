@@ -56,14 +56,14 @@ TEST_SUITE("DefinitionsClient") {
   TEST_CASE("load_minimum_spire_client_version") {
     require_operation<
       TestDefinitionsClient::LoadMinimumSpireClientVersionOperation>(
-        [&] (auto& client) {
+        [] (auto& client) {
           return client.load_minimum_spire_client_version();
         }, "v1.2.3");
   }
 
   TEST_CASE("load_organization_name") {
     require_operation<TestDefinitionsClient::LoadOrganizationNameOperation>(
-      [&] (auto& client) {
+      [] (auto& client) {
         return client.load_organization_name();
       }, "Spire Trading");
   }
@@ -73,7 +73,7 @@ TEST_SUITE("DefinitionsClient") {
     auto entry = DEFAULT_COUNTRIES.from(CA);
     countries.add(entry);
     require_operation<TestDefinitionsClient::LoadCountryDatabaseOperation>(
-      [&] (auto& client) {
+      [] (auto& client) {
         return client.load_country_database();
       }, countries,
       [&] (const auto& result) {
@@ -84,7 +84,7 @@ TEST_SUITE("DefinitionsClient") {
 
   TEST_CASE("load_time_zone_database") {
     require_operation<TestDefinitionsClient::LoadTimeZoneDatabaseOperation>(
-      [&] (auto& client) {
+      [] (auto& client) {
         return client.load_time_zone_database();
       }, get_default_time_zone_database(),
       [&] (const auto& result) {
@@ -98,7 +98,7 @@ TEST_SUITE("DefinitionsClient") {
     auto entry = DEFAULT_CURRENCIES.from(USD);
     currencies.add(entry);
     require_operation<TestDefinitionsClient::LoadCurrencyDatabaseOperation>(
-      [&] (auto& client) {
+      [] (auto& client) {
         return client.load_currency_database();
       }, currencies,
       [&] (const auto& result) {
@@ -112,7 +112,7 @@ TEST_SUITE("DefinitionsClient") {
     auto entry = DEFAULT_DESTINATIONS.from(CHIX);
     destinations.add(entry);
     require_operation<TestDefinitionsClient::LoadDestinationDatabaseOperation>(
-      [&] (auto& client) {
+      [] (auto& client) {
         return client.load_destination_database();
       }, destinations,
       [&] (const auto& result) {
@@ -126,7 +126,7 @@ TEST_SUITE("DefinitionsClient") {
     auto entry = DEFAULT_VENUES.from(ASX);
     venues.add(entry);
     require_operation<TestDefinitionsClient::LoadVenueDatabaseOperation>(
-      [&] (auto& client) {
+      [] (auto& client) {
         return client.load_venue_database();
       }, venues,
       [&] (const auto& result) {
@@ -139,7 +139,7 @@ TEST_SUITE("DefinitionsClient") {
     auto rates = std::vector<ExchangeRate>();
     rates.push_back(ExchangeRate(CurrencyPair(AUD, CAD), rational<int>(1, 3)));
     require_operation<TestDefinitionsClient::LoadExchangeRatesOperation>(
-      [&] (auto& client) {
+      [] (auto& client) {
         return client.load_exchange_rates();
       }, rates);
   }
@@ -149,7 +149,7 @@ TEST_SUITE("DefinitionsClient") {
     schemas.push_back(ComplianceRuleSchema("rule1", {}));
     require_operation<
       TestDefinitionsClient::LoadComplianceRuleSchemasOperation>(
-        [&] (auto& client) {
+        [] (auto& client) {
           return client.load_compliance_rule_schemas();
         }, schemas);
   }
@@ -163,7 +163,7 @@ TEST_SUITE("DefinitionsClient") {
       {ASX}, {Tuesday}, {1}, {7}, {2025}, events));
     auto schedule = TradingSchedule(rules);
     require_operation<TestDefinitionsClient::LoadTradingScheduleOperation>(
-      [&] (auto& client) {
+      [] (auto& client) {
         return client.load_trading_schedule();
       }, schedule,
       [&] (const auto& result) {

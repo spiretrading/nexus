@@ -1,7 +1,6 @@
 #ifndef NEXUS_DEFINITIONS_SESSION_HPP
 #define NEXUS_DEFINITIONS_SESSION_HPP
 #include <Beam/ServiceLocator/AuthenticatedSession.hpp>
-#include "Nexus/DefinitionsService/DefinitionsService.hpp"
 
 namespace Nexus::DefinitionsService {
 

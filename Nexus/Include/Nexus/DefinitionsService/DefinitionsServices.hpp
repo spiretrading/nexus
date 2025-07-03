@@ -11,9 +11,8 @@
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/ExchangeRate.hpp"
-#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/TradingSchedule.hpp"
-#include "Nexus/DefinitionsService/DefinitionsService.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 
 namespace Nexus::DefinitionsService {
 
@@ -68,11 +67,11 @@ namespace Nexus::DefinitionsService {
       DestinationDatabase),
 
     /**
-     * Loads the MarketDatabase.
-     * @return The MarketDatabase.
+     * Loads the VenueDatabase.
+     * @return The VenueDatabase.
      */
-    (LoadMarketDatabaseService,
-      "Nexus.DefinitionsServices.LoadMarketDatabaseService", MarketDatabase),
+    (LoadVenueDatabaseService,
+      "Nexus.DefinitionsServices.LoadVenueDatabaseService", VenueDatabase),
 
     /**
      * Loads the list of ExchangeRates.
@@ -91,7 +90,7 @@ namespace Nexus::DefinitionsService {
       std::vector<Compliance::ComplianceRuleSchema>),
 
     /**
-     * Loads a single day's market trading schedule.
+     * Loads a single day's trading schedule.
      * @return The TradingSchedule.
      */
     (LoadTradingScheduleService,

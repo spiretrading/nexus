@@ -7,6 +7,7 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queries/QueryClientPublisher.hpp>
 #include <Beam/Pointers/Dereference.hpp>
+#include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <Beam/Services/ServiceRequestException.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
