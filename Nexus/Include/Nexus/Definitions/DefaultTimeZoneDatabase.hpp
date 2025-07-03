@@ -1,15 +1,13 @@
 #ifndef NEXUS_DEFAULT_TIME_ZONE_DATABASE_HPP
 #define NEXUS_DEFAULT_TIME_ZONE_DATABASE_HPP
 #include <sstream>
+#include <string>
 #include <boost/date_time/local_time/tz_database.hpp>
 
 namespace Nexus {
-
-  /**
-   * Returns the default time zone table, typically used for testing purposes.
-   */
-  inline const std::string& GetDefaultTimeZoneTable() {
-    static auto database = std::string(
+namespace Details {
+  inline const std::string& get_base_time_zone_table() {
+    static const auto database = std::string(
       "\"Africa/Abidjan\",\"GMT\",\"GMT\",\"\",\"\",\"+00:00:00\",\"+00:00:00\",\"\",\"\",\"\",\"+00:00:00\"\n"
       "\"Africa/Accra\",\"GMT\",\"GMT\",\"\",\"\",\"+00:00:00\",\"+00:00:00\",\"\",\"\",\"\",\"+00:00:00\"\n"
       "\"Africa/Addis_Ababa\",\"EAT\",\"EAT\",\"\",\"\",\"+03:00:00\",\"+00:00:00\",\"\",\"\",\"\",\"+00:00:00\"\n"
@@ -533,15 +531,16 @@ namespace Nexus {
       "\"Eastern_Time\",\"EST\",\"Eastern Standard Time\",\"EDT\",\"Eastern Daylight Time\",\"-05:00:00\",\"+01:00:00\",\"2;0;3\",\"+02:00:00\",\"1;0;11\",\"+02:00:00\"\n");
     return database;
   }
+}
 
   /**
    * Returns the default time zone database, typically used for testing
    * purposes.
    */
-  inline const boost::local_time::tz_database& GetDefaultTimeZoneDatabase() {
+  inline boost::local_time::tz_database get_default_time_zone_database() {
     static auto database = [] {
       auto database = boost::local_time::tz_database();
-      auto stream = std::stringstream(GetDefaultTimeZoneTable());
+      auto stream = std::stringstream(Details::get_base_time_zone_table());
       database.load_from_stream(stream);
       return database;
     }();

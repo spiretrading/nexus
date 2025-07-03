@@ -2,7 +2,7 @@
 #define NEXUS_MARKET_DATA_CLIENT_HPP
 #include <memory>
 #include <string>
-#include <type_traits>
+#include <utility>
 #include <vector>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/Queue.hpp>

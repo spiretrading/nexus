@@ -3,6 +3,7 @@
 #include <variant>
 #include <Beam/Collections/SynchronizedList.hpp>
 #include <Beam/Collections/SynchronizedSet.hpp>
+#include <Beam/IO/EndOfFileException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/ServicesTests/ServiceResult.hpp>
 #include <boost/throw_exception.hpp>

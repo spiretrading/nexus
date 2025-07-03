@@ -1,5 +1,6 @@
 #ifndef NEXUS_DEFINITIONS_SERVICES_HPP
 #define NEXUS_DEFINITIONS_SERVICES_HPP
+#include <string>
 #include <vector>
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
@@ -15,6 +16,10 @@
 #include "Nexus/DefinitionsService/DefinitionsService.hpp"
 
 namespace Nexus::DefinitionsService {
+
+  /** Standard name for the definitions service. */
+  inline const auto SERVICE_NAME = std::string("definitions_service");
+
   BEAM_DEFINE_SERVICES(DefinitionsServices,
 
     /**

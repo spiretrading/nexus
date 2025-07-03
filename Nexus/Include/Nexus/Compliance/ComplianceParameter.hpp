@@ -10,7 +10,6 @@
 #include <boost/variant/recursive_variant.hpp>
 #include <boost/variant/variant.hpp>
 #include "Nexus/Compliance/Compliance.hpp"
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Security.hpp"
 
