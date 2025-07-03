@@ -366,12 +366,9 @@ void PlaybackControlPanel::pause() {
 }
 
 void PlaybackControlPanel::on_play_checked(bool checked) {
-  auto& tooltip = *m_play_toggle->findChild<Tooltip*>("Tooltip");
   if(checked) {
-    tooltip.set_label(tr("Pause (Space)"));
     play();
   } else {
-    tooltip.set_label(tr("Play (Space)"));
     pause();
   }
 }
@@ -409,6 +406,12 @@ void PlaybackControlPanel::on_playhead_update(const time_duration& playhead) {
 }
 
 void PlaybackControlPanel::on_state_update(const State& state) {
+  auto& tooltip = *m_play_toggle->findChild<Tooltip*>("Tooltip");
+  if(state == State::PAUSED) {
+    tooltip.set_label(tr("Play (Space)"));
+  } else {
+    tooltip.set_label(tr("Pause (Space)"));
+  }
   auto is_real_time = state == State::REAL_TIME;
   m_speed_box->setDisabled(is_real_time);
   m_end_button->setDisabled(is_real_time || is_playhead_at_end());
