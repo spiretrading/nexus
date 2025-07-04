@@ -19,5 +19,8 @@ TEST_SUITE("AccountRoles") {
     ss.str("");
     ss << AccountRole::ADMINISTRATOR;
     REQUIRE(ss.str() == "ADMINISTRATOR");
+    ss.str("");
+    ss << AccountRole::NONE;
+    REQUIRE(ss.str() == "NONE");
   }
 }

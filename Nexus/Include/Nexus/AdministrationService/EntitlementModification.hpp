@@ -4,7 +4,6 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include "Nexus/AdministrationService/AdministrationService.hpp"
 
 namespace Nexus::AdministrationService {
 
@@ -19,12 +18,12 @@ namespace Nexus::AdministrationService {
        * Constructs an EntitlementModification.
        * @param entitlements The list of entitlements to grant to the account.
        */
-      EntitlementModification(
-        std::vector<Beam::ServiceLocator::DirectoryEntry> entitlements);
+      EntitlementModification(std::vector<Beam::ServiceLocator::DirectoryEntry>
+        entitlements) noexcept;
 
       /** Returns the list of entitlements to grant. */
       const std::vector<Beam::ServiceLocator::DirectoryEntry>&
-        GetEntitlements() const;
+        get_entitlements() const;
 
     private:
       friend struct Beam::Serialization::Shuttle<EntitlementModification>;
@@ -32,11 +31,11 @@ namespace Nexus::AdministrationService {
   };
 
   inline EntitlementModification::EntitlementModification(
-    std::vector<Beam::ServiceLocator::DirectoryEntry> entitlements)
+    std::vector<Beam::ServiceLocator::DirectoryEntry> entitlements) noexcept
     : m_entitlements(std::move(entitlements)) {}
 
   inline const std::vector<Beam::ServiceLocator::DirectoryEntry>&
-      EntitlementModification::GetEntitlements() const {
+      EntitlementModification::get_entitlements() const {
     return m_entitlements;
   }
 }
