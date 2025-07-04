@@ -1,5 +1,6 @@
 #ifndef NEXUS_ADMINISTRATION_SERVICE_MESSAGE_HPP
 #define NEXUS_ADMINISTRATION_SERVICE_MESSAGE_HPP
+#include <ostream>
 #include <string>
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
@@ -7,7 +8,6 @@
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include "Nexus/AdministrationService/AdministrationService.hpp"
 
 namespace Nexus::AdministrationService {
 
@@ -22,21 +22,21 @@ namespace Nexus::AdministrationService {
       struct Body {
 
         /** The MIME-type of the message. */
-        std::string m_contentType;
+        std::string m_content_type;
 
         /** The contents of the message. */
         std::string m_message;
 
         /** Returns an empty body. */
-        static const Body& EMPTY();
+        static const Body EMPTY;
 
         /**
          * Makes a plain text body.
-         * @param message The plaint text message.
+         * @param message The plain text message.
          */
-        static Body MakePlainText(std::string message);
+        static Body make_plain_text(std::string message);
 
-        bool operator ==(const Body& rhs) const = default;
+        bool operator ==(const Body&) const = default;
       };
 
       /** Constructs an empty Message. */
@@ -53,19 +53,19 @@ namespace Nexus::AdministrationService {
         boost::posix_time::ptime timestamp, std::vector<Body> bodies);
 
       /** Returns this message's unique id. */
-      Id GetId() const;
+      Id get_id() const;
 
       /** Returns the account that sent the message. */
-      const Beam::ServiceLocator::DirectoryEntry& GetAccount() const;
+      const Beam::ServiceLocator::DirectoryEntry& get_account() const;
 
       /** Returns the timestamp when the message was received. */
-      boost::posix_time::ptime GetTimestamp() const;
+      boost::posix_time::ptime get_timestamp() const;
 
       /** Returns the first body. */
-      const Body& GetBody() const;
+      const Body& get_body() const;
 
       /** Returns the list of message bodies. */
-      const std::vector<Body>& GetBodies() const;
+      const std::vector<Body>& get_bodies() const;
 
     private:
       friend struct Beam::Serialization::Shuttle<Message>;
@@ -75,18 +75,22 @@ namespace Nexus::AdministrationService {
       std::vector<Body> m_bodies;
   };
 
-  inline const Message::Body& Message::Body::EMPTY() {
-    static auto value = MakePlainText({});
-    return value;
+  inline const auto Message::Body::EMPTY = Message::Body::make_plain_text("");
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const Message::Body& body) {
+    out << '(' << body.m_content_type << ' ' << body.m_message << ')';
+    return out;
   }
 
-  inline Message::Body Message::Body::MakePlainText(std::string message) {
-    return {"text/plain", std::move(message)};
+  inline Message::Body Message::Body::make_plain_text(std::string message) {
+    return Body("text/plain", std::move(message));
   }
 
   inline Message::Message()
       : m_id(-1) {
-    m_bodies.push_back(Body::EMPTY());
+    m_bodies.reserve(1);
+    m_bodies.push_back(Body::EMPTY);
   }
 
   inline Message::Message(Id id, Beam::ServiceLocator::DirectoryEntry account,
@@ -95,30 +99,31 @@ namespace Nexus::AdministrationService {
         m_account(std::move(account)),
         m_timestamp(timestamp) {
     if(bodies.empty()) {
-      m_bodies.push_back(Body::EMPTY());
+      m_bodies.reserve(1);
+      m_bodies.push_back(Body::EMPTY);
     } else {
       m_bodies = std::move(bodies);
     }
   }
 
-  inline Message::Id Message::GetId() const {
+  inline Message::Id Message::get_id() const {
     return m_id;
   }
 
   inline const Beam::ServiceLocator::DirectoryEntry&
-      Message::GetAccount() const {
+      Message::get_account() const {
     return m_account;
   }
 
-  inline boost::posix_time::ptime Message::GetTimestamp() const {
+  inline boost::posix_time::ptime Message::get_timestamp() const {
     return m_timestamp;
   }
 
-  inline const Message::Body& Message::GetBody() const {
+  inline const Message::Body& Message::get_body() const {
     return m_bodies.front();
   }
 
-  inline const std::vector<Message::Body>& Message::GetBodies() const {
+  inline const std::vector<Message::Body>& Message::get_bodies() const {
     return m_bodies;
   }
 }
@@ -130,7 +135,7 @@ namespace Beam::Serialization {
     void operator ()(Shuttler& shuttle,
         Nexus::AdministrationService::Message::Body& value,
         unsigned int version) {
-      shuttle.Shuttle("content_type", value.m_contentType);
+      shuttle.Shuttle("content_type", value.m_content_type);
       shuttle.Shuttle("message", value.m_message);
     }
   };
@@ -147,7 +152,7 @@ namespace Beam::Serialization {
       if(Beam::Serialization::IsReceiver<Shuttler>::value) {
         if(value.m_bodies.empty()) {
           value.m_bodies.push_back(
-            Nexus::AdministrationService::Message::Body::EMPTY());
+            Nexus::AdministrationService::Message::Body::EMPTY);
         }
       }
     }
