@@ -1,5 +1,5 @@
-#ifndef NEXUS_ADMINISTRATION_CLIENT_HPP
-#define NEXUS_ADMINISTRATION_CLIENT_HPP
+#ifndef NEXUS_SERVICE_ADMINISTRATION_CLIENT_HPP
+#define NEXUS_SERVICE_ADMINISTRATION_CLIENT_HPP
 #include <vector>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/ConnectException.hpp>
