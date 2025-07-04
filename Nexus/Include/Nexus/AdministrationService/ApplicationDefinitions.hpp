@@ -2,7 +2,6 @@
 #define NEXUS_ADMINISTRATION_APPLICATION_DEFINITIONS_HPP
 #include <Beam/Services/ApplicationDefinitions.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
-#include "Nexus/AdministrationService/AdministrationService.hpp"
 
 namespace Nexus::AdministrationService {
 

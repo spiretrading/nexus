@@ -1,7 +1,6 @@
 #ifndef NEXUS_ADMINISTRATION_SESSION_HPP
 #define NEXUS_ADMINISTRATION_SESSION_HPP
 #include <Beam/ServiceLocator/AuthenticatedSession.hpp>
-#include "Nexus/AdministrationService/AdministrationService.hpp"
 
 namespace Nexus::AdministrationService {
 

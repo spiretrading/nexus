@@ -1,7 +1,7 @@
 #ifndef NEXUS_ADMINISTRATION_SERVICE_RISK_MODIFICATION_HPP
 #define NEXUS_ADMINISTRATION_SERVICE_RISK_MODIFICATION_HPP
+#include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
-#include "Nexus/AdministrationService/AdministrationService.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 
 namespace Nexus::AdministrationService {
@@ -17,10 +17,10 @@ namespace Nexus::AdministrationService {
        * Constructs a RiskModification.
        * @param parameters The risk parameters being requested.
        */
-      RiskModification(RiskService::RiskParameters parameters);
+      RiskModification(RiskService::RiskParameters parameters) noexcept;
 
       /** Returns the requested risk parameters. */
-      const RiskService::RiskParameters& GetParameters() const;
+      const RiskService::RiskParameters& get_parameters() const;
 
     private:
       friend struct Beam::Serialization::Shuttle<RiskModification>;
@@ -28,11 +28,11 @@ namespace Nexus::AdministrationService {
   };
 
   inline RiskModification::RiskModification(
-    RiskService::RiskParameters parameters)
+    RiskService::RiskParameters parameters) noexcept
     : m_parameters(std::move(parameters)) {}
 
   inline const RiskService::RiskParameters&
-      RiskModification::GetParameters() const {
+      RiskModification::get_parameters() const {
     return m_parameters;
   }
 }
@@ -43,7 +43,7 @@ namespace Beam::Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
         Nexus::AdministrationService::RiskModification& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("parameters", value.m_parameters);
     }
   };

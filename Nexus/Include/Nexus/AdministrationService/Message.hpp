@@ -134,7 +134,7 @@ namespace Beam::Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
         Nexus::AdministrationService::Message::Body& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("content_type", value.m_content_type);
       shuttle.Shuttle("message", value.m_message);
     }
@@ -144,7 +144,8 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::AdministrationService::Message> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
-        Nexus::AdministrationService::Message& value, unsigned int version) {
+        Nexus::AdministrationService::Message& value,
+        unsigned int version) const {
       shuttle.Shuttle("id", value.m_id);
       shuttle.Shuttle("account", value.m_account);
       shuttle.Shuttle("timestamp", value.m_timestamp);

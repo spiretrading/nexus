@@ -46,7 +46,7 @@ namespace Beam::Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
         Nexus::AdministrationService::EntitlementModification& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("entitlements", value.m_entitlements);
     }
   };

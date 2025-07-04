@@ -1,7 +1,6 @@
 #ifndef NEXUS_ADMINISTRATION_DATA_STORE_EXCEPTION_HPP
 #define NEXUS_ADMINISTRATION_DATA_STORE_EXCEPTION_HPP
 #include <Beam/IO/IOException.hpp>
-#include "Nexus/AdministrationService/AdministrationService.hpp"
 
 namespace Nexus::AdministrationService {
 
@@ -19,8 +18,6 @@ namespace Nexus::AdministrationService {
        * @param message A message describing the error.
        */
       AdministrationDataStoreException(const std::string& message);
-
-      virtual ~AdministrationDataStoreException() throw();
   };
 
   inline AdministrationDataStoreException::AdministrationDataStoreException()
@@ -29,9 +26,6 @@ namespace Nexus::AdministrationService {
   inline AdministrationDataStoreException::AdministrationDataStoreException(
     const std::string& message)
     : Beam::IO::IOException(message) {}
-
-  inline AdministrationDataStoreException::~AdministrationDataStoreException()
-    throw() {}
 }
 
 #endif

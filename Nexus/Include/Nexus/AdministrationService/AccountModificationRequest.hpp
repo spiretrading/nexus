@@ -216,7 +216,7 @@ namespace Beam::Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
         Nexus::AdministrationService::AccountModificationRequest::Update& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("status", value.m_status);
       shuttle.Shuttle("account", value.m_account);
       shuttle.Shuttle("sequence_number", value.m_sequence_number);
@@ -229,7 +229,7 @@ namespace Beam::Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
         Nexus::AdministrationService::AccountModificationRequest& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("id", value.m_id);
       shuttle.Shuttle("type", value.m_type);
       shuttle.Shuttle("account", value.m_account);

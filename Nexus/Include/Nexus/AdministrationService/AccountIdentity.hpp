@@ -76,7 +76,7 @@ namespace Beam::Serialization {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
         Nexus::AdministrationService::AccountIdentity& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("registration_time", value.registration_time);
       shuttle.Shuttle("last_login_time", value.last_login_time);
       shuttle.Shuttle("first_name", value.first_name);
