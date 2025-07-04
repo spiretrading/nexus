@@ -1,5 +1,6 @@
 #ifndef NEXUS_ADMINISTRATION_SERVICES_HPP
 #define NEXUS_ADMINISTRATION_SERVICES_HPP
+#include <string>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Services/RecordMessage.hpp>
@@ -16,6 +17,10 @@
 #include "Nexus/RiskService/RiskParameters.hpp"
 
 namespace Nexus::AdministrationService {
+
+  /** Standard name for the administration service. */
+  inline const auto SERVICE_NAME = std::string("administration_service");
+
   BEAM_DEFINE_SERVICES(AdministrationServices,
 
     /**
