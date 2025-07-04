@@ -22,6 +22,15 @@ namespace {
 }
 
 TEST_SUITE("AccountModificationRequest") {
+  TEST_CASE("is_terminal") {
+    REQUIRE(is_terminal(AccountModificationRequest::Status::GRANTED));
+    REQUIRE(is_terminal(AccountModificationRequest::Status::REJECTED));
+    REQUIRE(!is_terminal(AccountModificationRequest::Status::NONE));
+    REQUIRE(!is_terminal(AccountModificationRequest::Status::PENDING));
+    REQUIRE(!is_terminal(AccountModificationRequest::Status::REVIEWED));
+    REQUIRE(!is_terminal(AccountModificationRequest::Status::SCHEDULED));
+  }
+
   TEST_CASE("stream_type") {
     auto ss = std::ostringstream();
     ss << AccountModificationRequest::Type::ENTITLEMENTS;
