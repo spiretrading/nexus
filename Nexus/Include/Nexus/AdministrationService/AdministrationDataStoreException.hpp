@@ -17,7 +17,7 @@ namespace Nexus::AdministrationService {
        * Constructs a AdministrationDataStoreException.
        * @param message A message describing the error.
        */
-      AdministrationDataStoreException(const std::string& message);
+      explicit AdministrationDataStoreException(const std::string& message);
   };
 
   inline AdministrationDataStoreException::AdministrationDataStoreException()
