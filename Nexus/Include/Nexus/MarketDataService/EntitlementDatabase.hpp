@@ -39,6 +39,8 @@ namespace Nexus::MarketDataService {
          * entitlement grants.
          */
         std::unordered_map<EntitlementKey, MarketDataTypeSet> m_applicability;
+
+        bool operator ==(const Entry&) const = default;
       };
 
       /** Constructs an empty MarketDatabase. */
