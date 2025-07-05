@@ -6,6 +6,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Queues/Publisher.hpp>
+#include <Beam/Queues/StateQueue.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
@@ -18,6 +19,12 @@
 #include "Nexus/RiskService/RiskState.hpp"
 
 namespace Nexus::AdministrationService {
+
+  /** Used to push updates about an account's RiskState. */
+  using RiskStateQueue = Beam::AbstractQueue<RiskService::RiskState>;
+
+  /** Used to push updates about an account's RiskParameters. */
+  using RiskParametersQueue = Beam::AbstractQueue<RiskService::RiskParameters>;
 
   /** Provides a generic interface over an arbitrary AdministrationClient. */
   class AdministrationClient {
@@ -37,111 +44,283 @@ namespace Nexus::AdministrationService {
       explicit AdministrationClient(
         const std::unique_ptr<AdministrationClient>& client);
 
+      /**
+       * Loads the list of accounts that match a set of roles.
+       * @param roles The roles to match.
+       * @return The list of directory entries of accounts that match the
+       *         specified roles.
+       */
       std::vector<Beam::ServiceLocator::DirectoryEntry> load_accounts_by_roles(
         AccountRoles roles);
 
+      /** Loads the DirectoryEntry containing all administrators. */
       Beam::ServiceLocator::DirectoryEntry load_administrators_root_entry();
 
+      /** Loads the DirectoryEntry containing all service accounts. */
       Beam::ServiceLocator::DirectoryEntry load_services_root_entry();
 
+      /** Loads the DirectoryEntry containing all trading groups. */
       Beam::ServiceLocator::DirectoryEntry load_trading_groups_root_entry();
 
+      /**
+       * Returns <code>true</code> iff an account is an administrator.
+       * @param account The account to test.
+       * @return <code>true</code> iff the <i>account</i> is an administrator.
+       */
       bool check_administrator(
         const Beam::ServiceLocator::DirectoryEntry& account);
 
+      /**
+       * Returns an accounts roles.
+       * @param account The account to lookup.
+       * @return The roles associated with the <i>account</i>.
+       */
       AccountRoles load_account_roles(
         const Beam::ServiceLocator::DirectoryEntry& account);
 
+      /**
+       * Returns the roles one account has over another.
+       * @param parent The account whose roles are to be loaded.
+       * @param child The account being supervised.
+       * @return The roles that the <i>parent</i> account has over the
+       *         <i>child</i> account.
+       */
       AccountRoles load_account_roles(
         const Beam::ServiceLocator::DirectoryEntry& parent,
         const Beam::ServiceLocator::DirectoryEntry& child);
 
+      /**
+       * Loads the DirectoryEntry representing an account's trading group.
+       * @param account The account whose trading group is to be loaded.
+       * @return The directory of the <i>account</i>'s trading group.
+       */
       Beam::ServiceLocator::DirectoryEntry load_parent_trading_group(
         const Beam::ServiceLocator::DirectoryEntry& account);
 
+      /**
+       * Loads an account's identity.
+       * @param account The account whose identity is to be loaded.
+       * @return The AccountIdentity for the specified <i>account</i>.
+       */
       AccountIdentity load_identity(
         const Beam::ServiceLocator::DirectoryEntry& account);
 
+      /**
+       * Sets the identity for an account.
+       * @param account The account to set the identity for.
+       * @param identity The AccountIdentity to assign to the <i>account</i>.
+       */
       void store_identity(const Beam::ServiceLocator::DirectoryEntry& account,
         const AccountIdentity& identity);
 
+      /**
+       * Loads a TradingGroup from its DirectoryEntry.
+       * @param directory The DirectoryEntry of the TradingGroup to load.
+       * @return The TradingGroup represented by the specified <i>directory</i>.
+       */
       TradingGroup load_trading_group(
         const Beam::ServiceLocator::DirectoryEntry& directory);
 
+      /**
+       * Loads the DirectoryEntries of TradingGroups managed by an account.
+       * @param account The account to load the TradingGroups from.
+       * @return The list of TradingGroups managed by the <i>account</i>.
+       */
       std::vector<Beam::ServiceLocator::DirectoryEntry>
         load_managed_trading_groups(const Beam::ServiceLocator::DirectoryEntry&
           account);
 
+      /**
+       * Loads the system administrators.
+       * @return The list of system administrators.
+       */
       std::vector<Beam::ServiceLocator::DirectoryEntry> load_administrators();
 
+      /**
+       * Loads the accounts providing system services.
+       * @return The list of accounts providing system services.
+       */
       std::vector<Beam::ServiceLocator::DirectoryEntry> load_services();
 
+      /**
+       * Loads the EntitlementDatabase.
+       * @return The EntitlementDatabase.
+       */
       MarketDataService::EntitlementDatabase load_entitlements();
 
+      /**
+       * Loads the entitlements granted to an account.
+       * @param account The account to load the entitlements for.
+       * @return The list of entitlements granted to the <i>account</i>.
+       */
       std::vector<Beam::ServiceLocator::DirectoryEntry> load_entitlements(
         const Beam::ServiceLocator::DirectoryEntry& account);
 
+      /**
+       * Sets an account's entitlements.
+       * @param account The account of the entitlements to set.
+       * @param entitlements The list of entitlements to grant to the
+       *        <i>account</i>.
+       */
       void store_entitlements(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const std::vector<Beam::ServiceLocator::DirectoryEntry>&
           entitlements);
 
+      /**
+       * Returns the object publishing an account's RiskParameters.
+       * @param account The account to monitor.
+       */
       const Beam::Publisher<RiskService::RiskParameters>&
         get_risk_parameters_publisher(
           const Beam::ServiceLocator::DirectoryEntry& account);
 
+      /**
+       * Sets an account's RiskParameters.
+       * @param account The account whose RiskParameters are to be set.
+       * @param riskParameters The RiskParameters to assign to the
+       *        <i>account</i>.
+       */
       void store_risk_parameters(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskService::RiskParameters& risk_parameters);
 
+      /**
+       * Returns the object publishing an account's RiskState.
+       * @param account The account to monitor.
+       */
       const Beam::Publisher<RiskService::RiskState>& get_risk_state_publisher(
         const Beam::ServiceLocator::DirectoryEntry& account);
 
+      /**
+       * Sets an account's RiskState.
+       * @param account The account to set RiskState of.
+       * @param riskState The <i>account</i>'s current RiskState.
+       */
       void store_risk_state(const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskService::RiskState& risk_state);
 
+      /**
+       * Loads an account modification request.
+       * @param id The id of the request to load.
+       * @return The request with the specified <i>id</i>.
+       */
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
 
+      /**
+       * Given an account, loads the ids of requests to modify that account.
+       * @param account The account whose requests are to be loaded.
+       * @param startId The id of the first request to load (exclusive) or -1
+       *        to start with the most recent request.
+       * @param maxCount The maximum number of ids to load.
+       * @return The list of account modification requests.
+       */
       std::vector<AccountModificationRequest::Id>
         load_account_modification_request_ids(
           const Beam::ServiceLocator::DirectoryEntry& account,
           AccountModificationRequest::Id start_id, int max_count);
 
+      /**
+       * Given an account, loads the ids of requests that the account is
+       * authorized to manage.
+       * @param account The account managing modifications.
+       * @param startId The id of the first request to load (exclusive) or -1
+       *        to start with the most recent request.
+       * @param maxCount The maximum number of ids to load.
+       * @return The list of account modification requests.
+       */
       std::vector<AccountModificationRequest::Id>
         load_managed_account_modification_request_ids(
           const Beam::ServiceLocator::DirectoryEntry& account,
           AccountModificationRequest::Id start_id, int max_count);
 
+      /**
+       * Loads an entitlement modification.
+       * @param id The id of the request to load.
+       * @return The entitlement modification with the specified <i>id</i>.
+       */
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
 
+      /**
+       * Submits a request to modify an account's entitlements.
+       * @param account The account to modify.
+       * @param modification The modification to apply.
+       * @param comment The comment to associate with the request.
+       * @return An object representing the request.
+       */
       AccountModificationRequest submit_account_modification_request(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const EntitlementModification& modification, const Message& comment);
 
+      /**
+       * Loads a risk modification.
+       * @param id The id of the request to load.
+       * @return The risk modification with the specified <i>id</i>.
+       */
       RiskModification load_risk_modification(
         AccountModificationRequest::Id id);
 
+      /**
+       * Submits a request to modify an account's risk parameters.
+       * @param account The account to modify.
+       * @param modification The modification to apply.
+       * @param comment The comment to associate with the request.
+       * @return An object representing the request.
+       */
       AccountModificationRequest submit_account_modification_request(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskModification& modification, const Message& comment);
 
+      /**
+       * Loads the status of an account modification request.
+       * @param id The id of the request.
+       * @return The update representing the current status of the request.
+       */
       AccountModificationRequest::Update
         load_account_modification_request_status(
           AccountModificationRequest::Id id);
 
+      /**
+       * Approves an account modification request.
+       * @param id The id of the request to approve.
+       * @param comment The comment to associate with the update.
+       * @return An object representing the update.
+       */
       AccountModificationRequest::Update approve_account_modification_request(
         AccountModificationRequest::Id id, const Message& comment);
 
+      /**
+       * Rejects an account modification request.
+       * @param id The id of the request to reject.
+       * @param comment The comment to associate with the update.
+       * @return An object representing the update.
+       */
       AccountModificationRequest::Update reject_account_modification_request(
         AccountModificationRequest::Id id, const Message& comment);
 
+      /**
+       * Loads a message.
+       * @param id The id of the message.
+       * @return The message with the specified <i>id</i>.
+       */
       Message load_message(Message::Id id);
 
+      /**
+       * Loads the list of messages associated with an account modification.
+       * @param id The id of the request.
+       * @return A list of message ids associated with the request.
+       */
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
 
+      /**
+       * Appends a message to an account modification request.
+       * @param id The id of the request to send the message to.
+       * @param message The message to append.
+       * @return The appended message.
+       */
       Message send_account_modification_request_message(
         AccountModificationRequest::Id id, const Message& message);
 
@@ -332,6 +511,21 @@ namespace Nexus::AdministrationService {
       };
       std::shared_ptr<VirtualAdministrationClient> m_client;
   };
+
+  /**
+   * Loads an account's RiskParameters.
+   * @param client The ServiceAdministrationClient used to load the parameters.
+   * @param account The account whose parameters are to be loaded.
+   * @return The <i>account</i>'s RiskParameters.
+   */
+  template<typename Client>
+  RiskService::RiskParameters load_risk_parameters(
+      Client& client, const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto queue =
+      std::make_shared<Beam::StateQueue<RiskService::RiskParameters>>();
+    client.get_risk_parameters_publisher(account).Monitor(queue);
+    return queue->Pop();
+  }
 
   template<typename T, typename... Args>
   AdministrationClient::AdministrationClient(

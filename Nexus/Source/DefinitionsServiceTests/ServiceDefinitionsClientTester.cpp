@@ -2,11 +2,11 @@
 #include <memory>
 #include <vector>
 #include <Beam/Queues/Queue.hpp>
+#include <Beam/ServicesTests/ServicesTests.hpp>
 #include <Beam/SignalHandling/NullSlot.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
 #include <doctest/doctest.h>
-#include <Beam/ServicesTests/ServicesTests.hpp>
 #include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
@@ -101,8 +101,7 @@ namespace {
 
     std::unique_ptr<TestServiceDefinitionsClient> make_client() {
       auto builder = TestServiceProtocolClientBuilder([&] {
-        return std::make_unique<
-          TestServiceProtocolClientBuilder::Channel>(
+        return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
           "test", *m_server_connection);
       }, factory<std::unique_ptr<
         TestServiceProtocolClientBuilder::Timer>>());
