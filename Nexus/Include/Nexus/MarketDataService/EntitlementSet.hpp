@@ -4,7 +4,9 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/functional/hash.hpp>
 #include "Nexus/Definitions/Venue.hpp"
+#include "Nexus/MarketDataService/MarketDataType.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
+#include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
 namespace Nexus::MarketDataService {
 
@@ -118,7 +120,7 @@ namespace Nexus::MarketDataService {
    */
   template<typename T>
   bool HasEntitlement(
-      const EntitlementSet& entitlements, const VenueQuery& query) {
+      const EntitlementSet& entitlements, const VenueMarketDataQuery& query) {
     return entitlements.HasEntitlement(
       query.GetIndex(), GetMarketDataType<T>());
   }

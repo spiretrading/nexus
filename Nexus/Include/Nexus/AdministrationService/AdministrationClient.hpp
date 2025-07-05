@@ -26,8 +26,8 @@ namespace Nexus::AdministrationService {
       template<typename T, typename... Args>
       explicit AdministrationClient(std::in_place_type_t<T>, Args&&... args);
 
-      template<typename AdministrationClient>
-      explicit AdministrationClient(AdministrationClient client);
+      template<typename C>
+      explicit AdministrationClient(C client);
 
       explicit AdministrationClient(AdministrationClient* client);
 
@@ -339,10 +339,9 @@ namespace Nexus::AdministrationService {
     : m_client(std::make_shared<WrappedAdministrationClient<T>>(
         std::forward<Args>(args)...)) {}
 
-  template<typename AdministrationClient>
-  AdministrationClient::AdministrationClient(AdministrationClient client)
-    : AdministrationClient(
-        std::in_place_type<AdministrationClient>, std::move(client)) {}
+  template<typename C>
+  AdministrationClient::AdministrationClient(C client)
+    : AdministrationClient(std::in_place_type<C>, std::move(client)) {}
 
   inline AdministrationClient::AdministrationClient(
     AdministrationClient* client)

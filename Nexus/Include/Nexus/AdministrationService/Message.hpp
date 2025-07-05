@@ -67,6 +67,8 @@ namespace Nexus::AdministrationService {
       /** Returns the list of message bodies. */
       const std::vector<Body>& get_bodies() const;
 
+      bool operator ==(const Message&) const = default;
+
     private:
       friend struct Beam::Serialization::Shuttle<Message>;
       Id m_id;

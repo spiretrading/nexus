@@ -7,7 +7,6 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/MarketDataService/EntitlementSet.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/MarketDataType.hpp"
 
 namespace Nexus::MarketDataService {
