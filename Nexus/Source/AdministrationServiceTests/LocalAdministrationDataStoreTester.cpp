@@ -217,8 +217,7 @@ TEST_SUITE("LocalAdministrationDataStore") {
     auto loaded_modification = data_store.with_transaction([&] {
       return data_store.load_entitlement_modification(request.get_id());
     });
-    REQUIRE(loaded_modification.get_entitlements() ==
-      modification.get_entitlements());
+    TestJsonEquality(loaded_modification, modification);
   }
 
   TEST_CASE("load_non_existent_entitlement_modification") {
@@ -226,7 +225,7 @@ TEST_SUITE("LocalAdministrationDataStore") {
     auto modification = data_store.with_transaction([&] {
       return data_store.load_entitlement_modification(123);
     });
-    REQUIRE(modification.get_entitlements().empty());
+    TestJsonEquality(modification, EntitlementModification());
   }
 
   TEST_CASE("store_and_load_risk_modification") {
@@ -250,8 +249,7 @@ TEST_SUITE("LocalAdministrationDataStore") {
     auto loaded_modification = data_store.with_transaction([&] {
       return data_store.load_risk_modification(request.get_id());
     });
-    REQUIRE(
-      loaded_modification.get_parameters() == modification.get_parameters());
+    TestJsonEquality(loaded_modification, modification);
   }
 
   TEST_CASE("load_non_existent_risk_modification") {
@@ -259,7 +257,7 @@ TEST_SUITE("LocalAdministrationDataStore") {
     auto modification = data_store.with_transaction([&] {
       return data_store.load_risk_modification(456);
     });
-    REQUIRE(modification.get_parameters() == RiskParameters());
+    TestJsonEquality(modification, RiskModification());
   }
 
   TEST_CASE("store_and_load_status") {
