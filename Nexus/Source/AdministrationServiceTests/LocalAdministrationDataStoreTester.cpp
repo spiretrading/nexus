@@ -1,0 +1,367 @@
+#include <doctest/doctest.h>
+#include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
+#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+
+using namespace Beam;
+using namespace Beam::ServiceLocator;
+using namespace boost;
+using namespace boost::posix_time;
+using namespace Nexus;
+using namespace Nexus::AdministrationService;
+using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::RiskService;
+
+TEST_SUITE("LocalAdministrationDataStore") {
+  TEST_CASE("store_and_load_identity") {
+    auto data_store = LocalAdministrationDataStore();
+    auto account = DirectoryEntry::MakeAccount(123, "user1");
+    auto identity = AccountIdentity();
+    identity.m_first_name = "John";
+    identity.m_last_name = "Doe";
+    data_store.with_transaction([&] {
+      data_store.store(account, identity);
+    });
+    auto loaded_identity = data_store.with_transaction([&] {
+      return data_store.load_identity(account);
+    });
+    REQUIRE(loaded_identity.m_first_name == identity.m_first_name);
+    REQUIRE(loaded_identity.m_last_name == identity.m_last_name);
+  }
+
+  TEST_CASE("load_non_existent_identity") {
+    auto data_store = LocalAdministrationDataStore();
+    auto account = DirectoryEntry::MakeAccount(123, "user1");
+    auto identity = data_store.with_transaction([&] {
+      return data_store.load_identity(account);
+    });
+    REQUIRE(identity.m_first_name.empty());
+    REQUIRE(identity.m_last_name.empty());
+  }
+
+  TEST_CASE("load_all_identities") {
+    auto data_store = LocalAdministrationDataStore();
+    auto empty_identities = data_store.with_transaction([&] {
+      return data_store.load_all_account_identities();
+    });
+    REQUIRE(empty_identities.empty());
+    auto account_a = DirectoryEntry::MakeAccount(123, "user1");
+    auto identity_a = AccountIdentity();
+    identity_a.m_first_name = "Jane";
+    identity_a.m_last_name = "Murphy";
+    auto account_b = DirectoryEntry::MakeAccount(345, "user2");
+    auto identity_b = AccountIdentity();
+    identity_b.m_first_name = "Riley";
+    identity_b.m_last_name = "Miller";
+    data_store.with_transaction([&] {
+      data_store.store(account_a, identity_a);
+      data_store.store(account_b, identity_b);
+    });
+    auto all_identities = data_store.with_transaction([&] {
+      return data_store.load_all_account_identities();
+    });
+    REQUIRE(all_identities.size() == 2);
+    auto first_identity = all_identities[0];
+    REQUIRE(first_identity.m_index == account_a);
+    REQUIRE(first_identity.m_identity.m_first_name == identity_a.m_first_name);
+    REQUIRE(first_identity.m_identity.m_last_name == identity_a.m_last_name);
+    auto second_identity = all_identities[1];
+    REQUIRE(second_identity.m_index == account_b);
+    REQUIRE(second_identity.m_identity.m_first_name == identity_b.m_first_name);
+    REQUIRE(second_identity.m_identity.m_last_name == identity_b.m_last_name);
+  }
+
+  TEST_CASE("store_and_load_risk_parameters") {
+    auto data_store = LocalAdministrationDataStore();
+    auto account = DirectoryEntry::MakeAccount(123, "user1");
+    auto parameters = RiskParameters(
+      CAD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, 100, seconds(5));
+    data_store.with_transaction([&] {
+      data_store.store(account, parameters);
+    });
+    auto loaded_parameters = data_store.with_transaction([&] {
+      return data_store.load_risk_parameters(account);
+    });
+    REQUIRE(loaded_parameters == parameters);
+  }
+
+  TEST_CASE("load_non_existent_risk_parameters") {
+    auto data_store = LocalAdministrationDataStore();
+    auto account = DirectoryEntry::MakeAccount(123, "user1");
+    auto parameters = data_store.with_transaction([&] {
+      return data_store.load_risk_parameters(account);
+    });
+    REQUIRE(parameters == RiskParameters());
+  }
+
+  TEST_CASE("load_all_risk_parameters") {
+    auto data_store = LocalAdministrationDataStore();
+    auto empty_parameters = data_store.with_transaction([&] {
+      return data_store.load_all_risk_parameters();
+    });
+    REQUIRE(empty_parameters.empty());
+    auto account_a = DirectoryEntry::MakeAccount(123, "user1");
+    auto parameters_a = RiskParameters(USD, 100 * Money::ONE,
+      RiskState::Type::ACTIVE, 10 * Money::ONE, 50, seconds(10));
+    auto account_b = DirectoryEntry::MakeAccount(345, "user2");
+    auto parameters_b = RiskParameters(EUR, 200 * Money::ONE,
+      RiskState::Type::DISABLED, 20 * Money::ONE, 25, seconds(20));
+    data_store.with_transaction([&] {
+      data_store.store(account_a, parameters_a);
+      data_store.store(account_b, parameters_b);
+    });
+    auto all_parameters = data_store.with_transaction([&] {
+      return data_store.load_all_risk_parameters();
+    });
+    REQUIRE(all_parameters.size() == 2);
+    auto first_parameters = all_parameters[0];
+    REQUIRE(first_parameters.m_index == account_a);
+    REQUIRE(first_parameters.m_parameters == parameters_a);
+    auto second_parameters = all_parameters[1];
+    REQUIRE(second_parameters.m_index == account_b);
+    REQUIRE(second_parameters.m_parameters == parameters_b);
+  }
+
+  TEST_CASE("store_and_load_risk_state") {
+    auto data_store = LocalAdministrationDataStore();
+    auto account = DirectoryEntry::MakeAccount(123, "user1");
+    auto state = RiskState(
+      RiskState::Type::ACTIVE, time_from_string("2024-05-20 10:00:00"));
+    data_store.with_transaction([&] {
+      data_store.store(account, state);
+    });
+    auto loaded_state = data_store.with_transaction([&] {
+      return data_store.load_risk_state(account);
+    });
+    REQUIRE(loaded_state == state);
+  }
+
+  TEST_CASE("load_non_existent_risk_state") {
+    auto data_store = LocalAdministrationDataStore();
+    auto account = DirectoryEntry::MakeAccount(123, "user1");
+    auto state = data_store.with_transaction([&] {
+      return data_store.load_risk_state(account);
+    });
+    REQUIRE(state == RiskState());
+  }
+
+  TEST_CASE("load_all_risk_states") {
+    auto data_store = LocalAdministrationDataStore();
+    auto empty_states = data_store.with_transaction([&] {
+      return data_store.load_all_risk_states();
+    });
+    REQUIRE(empty_states.empty());
+    auto account_a = DirectoryEntry::MakeAccount(123, "user1");
+    auto state_a = RiskState(
+      RiskState::Type::CLOSE_ORDERS, time_from_string("2024-06-06 10:00:00"));
+    auto account_b = DirectoryEntry::MakeAccount(345, "user2");
+    auto state_b = RiskState(
+      RiskState::Type::DISABLED, time_from_string("2024-02-01 13:45:00"));
+    data_store.with_transaction([&] {
+      data_store.store(account_a, state_a);
+      data_store.store(account_b, state_b);
+    });
+    auto all_states = data_store.with_transaction([&] {
+      return data_store.load_all_risk_states();
+    });
+    REQUIRE(all_states.size() == 2);
+    auto first_state = all_states[0];
+    REQUIRE(first_state.m_index == account_a);
+    REQUIRE(first_state.m_state == state_a);
+    auto second_state = all_states[1];
+    REQUIRE(second_state.m_index == account_b);
+    REQUIRE(second_state.m_state == state_b);
+  }
+
+  TEST_CASE("store_and_load_entitlement_modification") {
+    auto data_store = LocalAdministrationDataStore();
+    auto account = DirectoryEntry::MakeAccount(123, "user1");
+    auto submission_account = DirectoryEntry::MakeAccount(456, "admin");
+    auto submission_time = time_from_string("2024-07-05 10:00:00");
+    auto request = AccountModificationRequest(
+      1, AccountModificationRequest::Type::ENTITLEMENTS, account,
+      submission_account, submission_time);
+    auto entitlements = std::vector<DirectoryEntry>();
+    entitlements.push_back(DirectoryEntry::MakeDirectory(12, "TSX"));
+    auto modification = EntitlementModification(entitlements);
+    data_store.with_transaction([&] {
+      data_store.store(request, modification);
+    });
+    auto loaded_request = data_store.with_transaction([&] {
+      return data_store.load_account_modification_request(request.get_id());
+    });
+    REQUIRE(loaded_request.get_id() == request.get_id());
+    REQUIRE(loaded_request.get_type() == request.get_type());
+    REQUIRE(loaded_request.get_account() == request.get_account());
+    REQUIRE(loaded_request.get_submission_account() ==
+      request.get_submission_account());
+    REQUIRE(loaded_request.get_timestamp() == request.get_timestamp());
+    auto loaded_modification = data_store.with_transaction([&] {
+      return data_store.load_entitlement_modification(request.get_id());
+    });
+    REQUIRE(loaded_modification.get_entitlements() ==
+      modification.get_entitlements());
+  }
+
+  TEST_CASE("load_non_existent_entitlement_modification") {
+    auto data_store = LocalAdministrationDataStore();
+    auto modification = data_store.with_transaction([&] {
+      return data_store.load_entitlement_modification(123);
+    });
+    REQUIRE(modification.get_entitlements().empty());
+  }
+
+  TEST_CASE("store_and_load_risk_modification") {
+    auto data_store = LocalAdministrationDataStore();
+    auto account = DirectoryEntry::MakeAccount(123, "user1");
+    auto submission_account = DirectoryEntry::MakeAccount(456, "admin");
+    auto submission_time = time_from_string("2024-07-05 11:00:00");
+    auto request = AccountModificationRequest(
+      2, AccountModificationRequest::Type::RISK, account, submission_account,
+      submission_time);
+    auto parameters = RiskParameters(USD, 10000 * Money::ONE,
+      RiskState::Type::ACTIVE, 1000 * Money::ONE, 10, seconds(60));
+    auto modification = RiskModification(parameters);
+    data_store.with_transaction([&] {
+      data_store.store(request, modification);
+    });
+    auto loaded_request = data_store.with_transaction([&] {
+      return data_store.load_account_modification_request(request.get_id());
+    });
+    REQUIRE(loaded_request.get_type() == request.get_type());
+    REQUIRE(loaded_request.get_account() == request.get_account());
+    REQUIRE(loaded_request.get_submission_account() ==
+      request.get_submission_account());
+    REQUIRE(loaded_request.get_timestamp() == request.get_timestamp());
+    auto loaded_modification = data_store.with_transaction([&] {
+      return data_store.load_risk_modification(request.get_id());
+    });
+    REQUIRE(
+      loaded_modification.get_parameters() == modification.get_parameters());
+  }
+
+  TEST_CASE("load_non_existent_risk_modification") {
+    auto data_store = LocalAdministrationDataStore();
+    auto modification = data_store.with_transaction([&] {
+      return data_store.load_risk_modification(456);
+    });
+    REQUIRE(modification.get_parameters() == RiskParameters());
+  }
+
+  TEST_CASE("store_and_load_status") {
+    auto data_store = LocalAdministrationDataStore();
+    auto request_id = 1;
+    auto admin_account = DirectoryEntry::MakeAccount(123, "admin");
+    auto manager_account = DirectoryEntry::MakeAccount(456, "manager");
+    auto first_update = AccountModificationRequest::Update(
+      AccountModificationRequest::Status::PENDING, admin_account, 1,
+      time_from_string("2024-07-05 14:00:00"));
+    data_store.with_transaction([&] {
+      data_store.store(request_id, first_update);
+    });
+    auto loaded_status = data_store.with_transaction([&] {
+      return data_store.load_account_modification_request_status(request_id);
+    });
+    REQUIRE(loaded_status == first_update);
+    auto second_update = AccountModificationRequest::Update(
+      AccountModificationRequest::Status::GRANTED, manager_account, 2,
+      time_from_string("2024-07-05 14:05:00"));
+    data_store.with_transaction([&] {
+      data_store.store(request_id, second_update);
+    });
+    loaded_status = data_store.with_transaction([&] {
+      return data_store.load_account_modification_request_status(request_id);
+    });
+    REQUIRE(loaded_status == second_update);
+  }
+
+  TEST_CASE("load_non_existent_status") {
+    auto data_store = LocalAdministrationDataStore();
+    auto status = data_store.with_transaction([&] {
+      return data_store.load_account_modification_request_status(999);
+    });
+    REQUIRE(status == AccountModificationRequest::Update());
+  }
+
+  TEST_CASE("store_and_load_message") {
+    auto data_store = LocalAdministrationDataStore();
+    auto request_id = 1;
+    auto account = DirectoryEntry::MakeAccount(123, "user1");
+    auto timestamp = time_from_string("2024-07-05 15:00:00");
+    auto message = Message(10, account, timestamp,
+      {Message::Body::make_plain_text("Hello world")});
+    data_store.with_transaction([&] {
+      data_store.store(request_id, message);
+    });
+    auto loaded_message = data_store.with_transaction([&] {
+      return data_store.load_message(message.get_id());
+    });
+    REQUIRE(loaded_message == message);
+    auto message_ids = data_store.with_transaction([&] {
+      return data_store.load_message_ids(request_id);
+    });
+    REQUIRE(message_ids.size() == 1);
+    REQUIRE(message_ids[0] == message.get_id());
+    auto last_message_id = data_store.with_transaction([&] {
+      return data_store.load_last_message_id();
+    });
+    REQUIRE(last_message_id == message.get_id());
+  }
+
+  TEST_CASE("load_messages") {
+    auto data_store = LocalAdministrationDataStore();
+    auto last_id = data_store.with_transaction([&] {
+      return data_store.load_last_message_id();
+    });
+    REQUIRE(last_id == -1);
+    auto request_a = 1;
+    auto request_b = 2;
+    auto account = DirectoryEntry::MakeAccount(123, "user1");
+    auto message_a1 =
+      Message(100, account, time_from_string("2024-07-05 16:00:00"), {});
+    auto message_a2 =
+      Message(102, account, time_from_string("2024-07-05 16:05:00"), {});
+    auto message_b1 =
+      Message(101, account, time_from_string("2024-07-05 16:01:00"), {});
+    data_store.with_transaction([&] {
+      data_store.store(request_a, message_a1);
+      data_store.store(request_b, message_b1);
+      data_store.store(request_a, message_a2);
+    });
+    auto ids_a = data_store.with_transaction([&] {
+      return data_store.load_message_ids(request_a);
+    });
+    REQUIRE(ids_a.size() == 2);
+    REQUIRE(ids_a[0] == 100);
+    REQUIRE(ids_a[1] == 102);
+    auto ids_b = data_store.with_transaction([&] {
+      return data_store.load_message_ids(request_b);
+    });
+    REQUIRE(ids_b.size() == 1);
+    REQUIRE(ids_b[0] == 101);
+    auto ids_c = data_store.with_transaction([&] {
+      return data_store.load_message_ids(3);
+    });
+    REQUIRE(ids_c.empty());
+    last_id = data_store.with_transaction([&] {
+      return data_store.load_last_message_id();
+    });
+    REQUIRE(last_id == 102);
+    auto message_c1 =
+      Message(50, account, time_from_string("2024-07-05 16:10:00"), {});
+    data_store.with_transaction([&] {
+      data_store.store(request_b, message_c1);
+    });
+    last_id = data_store.with_transaction([&] {
+      return data_store.load_last_message_id();
+    });
+    REQUIRE(last_id == 102);
+    auto loaded_message = data_store.with_transaction([&] {
+      return data_store.load_message(50);
+    });
+    REQUIRE(loaded_message == message_c1);
+    auto non_existent_message = data_store.with_transaction([&] {
+      return data_store.load_message(999);
+    });
+    REQUIRE(non_existent_message == Message());
+  }
+}

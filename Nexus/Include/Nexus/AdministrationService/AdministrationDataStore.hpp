@@ -94,7 +94,7 @@ namespace Nexus::AdministrationService {
        * @param account The account of the identity to store.
        * @param identity The AccountIdentity to store.
        */
-      void store_identity(const Beam::ServiceLocator::DirectoryEntry& account,
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
         const AccountIdentity& identity);
 
       /** Loads all RiskParameters. */
@@ -113,8 +113,7 @@ namespace Nexus::AdministrationService {
        * @param account The account of the RiskParameters to store.
        * @param risk_parameters The RiskParameters to store for the account.
        */
-      void store_risk_parameters(
-        const Beam::ServiceLocator::DirectoryEntry& account,
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskService::RiskParameters& risk_parameters);
 
       /** Loads all RiskStates. */
@@ -133,7 +132,7 @@ namespace Nexus::AdministrationService {
        * @param account The account of the RiskState to store.
        * @param risk_state The RiskState to store for the account.
        */
-      void store_risk_state(const Beam::ServiceLocator::DirectoryEntry& account,
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskService::RiskState& risk_state);
 
       /**
@@ -181,8 +180,7 @@ namespace Nexus::AdministrationService {
        * @param request The modification request.
        * @param modification The details of the modification.
        */
-      void store_entitlement_modification(
-        const AccountModificationRequest& request,
+      void store(const AccountModificationRequest& request,
         const EntitlementModification& modification);
 
       /**
@@ -198,7 +196,7 @@ namespace Nexus::AdministrationService {
        * @param request The modification request.
        * @param modification The details of the modification.
        */
-      void store_risk_modification(const AccountModificationRequest& request,
+      void store(const AccountModificationRequest& request,
         const RiskModification& modification);
 
       /**
@@ -206,8 +204,7 @@ namespace Nexus::AdministrationService {
        * @param id The id of the request.
        * @param message The Message to store.
        */
-      void store_message(AccountModificationRequest::Id id,
-        const Message& message);
+      void store(AccountModificationRequest::Id id, const Message& message);
 
       /**
        * Loads the status of an AccountModificationRequest.
@@ -215,16 +212,16 @@ namespace Nexus::AdministrationService {
        * @return The update containing the current status of the request with
        *         the specified id.
        */
-      AccountModificationRequest::Update load_account_modification_request_status(
-        AccountModificationRequest::Id id);
+      AccountModificationRequest::Update
+        load_account_modification_request_status(
+          AccountModificationRequest::Id id);
 
       /**
        * Stores the status of an AccountModificationRequest.
        * @param id The id of the request.
        * @param status The update containing the current status.
        */
-      void store_account_modification_request_status(
-        AccountModificationRequest::Id id,
+      void store(AccountModificationRequest::Id id,
         const AccountModificationRequest::Update& status);
 
       /**
@@ -269,21 +266,18 @@ namespace Nexus::AdministrationService {
           load_all_account_identities() = 0;
         virtual AccountIdentity load_identity(
           const Beam::ServiceLocator::DirectoryEntry& account) = 0;
-        virtual void store_identity(
-          const Beam::ServiceLocator::DirectoryEntry& account,
+        virtual void store(const Beam::ServiceLocator::DirectoryEntry& account,
           const AccountIdentity& identity) = 0;
         virtual std::vector<IndexedRiskParameters>
           load_all_risk_parameters() = 0;
         virtual RiskService::RiskParameters load_risk_parameters(
           const Beam::ServiceLocator::DirectoryEntry& account) = 0;
-        virtual void store_risk_parameters(
-          const Beam::ServiceLocator::DirectoryEntry& account,
+        virtual void store(const Beam::ServiceLocator::DirectoryEntry& account,
           const RiskService::RiskParameters& risk_parameters) = 0;
         virtual std::vector<IndexedRiskState> load_all_risk_states() = 0;
         virtual RiskService::RiskState load_risk_state(
           const Beam::ServiceLocator::DirectoryEntry& account) = 0;
-        virtual void store_risk_state(
-          const Beam::ServiceLocator::DirectoryEntry& account,
+        virtual void store(const Beam::ServiceLocator::DirectoryEntry& account,
           const RiskService::RiskState& risk_state) = 0;
         virtual AccountModificationRequest load_account_modification_request(
           AccountModificationRequest::Id id) = 0;
@@ -296,21 +290,18 @@ namespace Nexus::AdministrationService {
             AccountModificationRequest::Id start_id, int max_count) = 0;
         virtual EntitlementModification load_entitlement_modification(
           AccountModificationRequest::Id id) = 0;
-        virtual void store_entitlement_modification(
-          const AccountModificationRequest& request,
+        virtual void store(const AccountModificationRequest& request,
           const EntitlementModification& modification) = 0;
         virtual RiskModification load_risk_modification(
           AccountModificationRequest::Id id) = 0;
-        virtual void store_risk_modification(
-          const AccountModificationRequest& request,
+        virtual void store(const AccountModificationRequest& request,
           const RiskModification& modification) = 0;
-        virtual void store_message(
+        virtual void store(
           AccountModificationRequest::Id id, const Message& message) = 0;
         virtual AccountModificationRequest::Update
           load_account_modification_request_status(
             AccountModificationRequest::Id id) = 0;
-        virtual void store_account_modification_request_status(
-          AccountModificationRequest::Id id,
+        virtual void store(AccountModificationRequest::Id id,
           const AccountModificationRequest::Update& status) = 0;
         virtual Message::Id load_last_message_id() = 0;
         virtual Message load_message(Message::Id id) = 0;
@@ -331,19 +322,17 @@ namespace Nexus::AdministrationService {
           load_all_account_identities() override;
         AccountIdentity load_identity(
           const Beam::ServiceLocator::DirectoryEntry& account) override;
-        void store_identity(const Beam::ServiceLocator::DirectoryEntry& account,
+        void store(const Beam::ServiceLocator::DirectoryEntry& account,
           const AccountIdentity& identity) override;
         std::vector<IndexedRiskParameters> load_all_risk_parameters() override;
         RiskService::RiskParameters load_risk_parameters(
           const Beam::ServiceLocator::DirectoryEntry& account) override;
-        void store_risk_parameters(
-          const Beam::ServiceLocator::DirectoryEntry& account,
+        void store(const Beam::ServiceLocator::DirectoryEntry& account,
           const RiskService::RiskParameters& risk_parameters) override;
         std::vector<IndexedRiskState> load_all_risk_states() override;
         RiskService::RiskState load_risk_state(
           const Beam::ServiceLocator::DirectoryEntry& account) override;
-        void store_risk_state(
-          const Beam::ServiceLocator::DirectoryEntry& account,
+        void store(const Beam::ServiceLocator::DirectoryEntry& account,
           const RiskService::RiskState& risk_state) override;
         AccountModificationRequest load_account_modification_request(
           AccountModificationRequest::Id id) override;
@@ -356,21 +345,18 @@ namespace Nexus::AdministrationService {
             AccountModificationRequest::Id start_id, int max_count) override;
         EntitlementModification load_entitlement_modification(
           AccountModificationRequest::Id id) override;
-        void store_entitlement_modification(
-          const AccountModificationRequest& request,
+        void store(const AccountModificationRequest& request,
           const EntitlementModification& modification) override;
         RiskModification load_risk_modification(
           AccountModificationRequest::Id id) override;
-        void store_risk_modification(
-          const AccountModificationRequest& request,
+        void store(const AccountModificationRequest& request,
           const RiskModification& modification) override;
-        void store_message(AccountModificationRequest::Id id,
-          const Message& message) override;
+        void store(
+          AccountModificationRequest::Id id, const Message& message) override;
         AccountModificationRequest::Update
           load_account_modification_request_status(
             AccountModificationRequest::Id id) override;
-        void store_account_modification_request_status(
-          AccountModificationRequest::Id id,
+        void store(AccountModificationRequest::Id id,
           const AccountModificationRequest::Update& status) override;
         Message::Id load_last_message_id() override;
         Message load_message(Message::Id id) override;
@@ -407,10 +393,10 @@ namespace Nexus::AdministrationService {
     return m_data_store->load_identity(account);
   }
 
-  inline void AdministrationDataStore::store_identity(
+  inline void AdministrationDataStore::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountIdentity& identity) {
-    m_data_store->store_identity(account, identity);
+    m_data_store->store(account, identity);
   }
 
   inline std::vector<AdministrationDataStore::IndexedRiskParameters>
@@ -424,10 +410,10 @@ namespace Nexus::AdministrationService {
     return m_data_store->load_risk_parameters(account);
   }
 
-  inline void AdministrationDataStore::store_risk_parameters(
+  inline void AdministrationDataStore::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskParameters& risk_parameters) {
-    m_data_store->store_risk_parameters(account, risk_parameters);
+    m_data_store->store(account, risk_parameters);
   }
 
   inline std::vector<AdministrationDataStore::IndexedRiskState>
@@ -440,10 +426,10 @@ namespace Nexus::AdministrationService {
     return m_data_store->load_risk_state(account);
   }
 
-  inline void AdministrationDataStore::store_risk_state(
+  inline void AdministrationDataStore::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskState& risk_state) {
-    m_data_store->store_risk_state(account, risk_state);
+    m_data_store->store(account, risk_state);
   }
 
   inline AccountModificationRequest
@@ -473,10 +459,10 @@ namespace Nexus::AdministrationService {
     return m_data_store->load_entitlement_modification(id);
   }
 
-  inline void AdministrationDataStore::store_entitlement_modification(
+  inline void AdministrationDataStore::store(
       const AccountModificationRequest& request,
       const EntitlementModification& modification) {
-    m_data_store->store_entitlement_modification(request, modification);
+    m_data_store->store(request, modification);
   }
 
   inline RiskModification AdministrationDataStore::load_risk_modification(
@@ -484,15 +470,15 @@ namespace Nexus::AdministrationService {
     return m_data_store->load_risk_modification(id);
   }
 
-  inline void AdministrationDataStore::store_risk_modification(
+  inline void AdministrationDataStore::store(
       const AccountModificationRequest& request,
       const RiskModification& modification) {
-    m_data_store->store_risk_modification(request, modification);
+    m_data_store->store(request, modification);
   }
 
-  inline void AdministrationDataStore::store_message(
+  inline void AdministrationDataStore::store(
       AccountModificationRequest::Id id, const Message& message) {
-    m_data_store->store_message(id, message);
+    m_data_store->store(id, message);
   }
 
   inline AccountModificationRequest::Update
@@ -501,11 +487,9 @@ namespace Nexus::AdministrationService {
     return m_data_store->load_account_modification_request_status(id);
   }
 
-  inline void
-      AdministrationDataStore::store_account_modification_request_status(
-        AccountModificationRequest::Id id,
+  inline void AdministrationDataStore::store(AccountModificationRequest::Id id,
         const AccountModificationRequest::Update& status) {
-    m_data_store->store_account_modification_request_status(id, status);
+    m_data_store->store(id, status);
   }
 
   inline Message::Id AdministrationDataStore::load_last_message_id() {
@@ -551,11 +535,10 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename T>
-  void AdministrationDataStore::
-      WrappedAdministrationDataStore<T>::store_identity(
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const AccountIdentity& identity) {
-    m_data_store.store_identity(account, identity);
+  void AdministrationDataStore::WrappedAdministrationDataStore<T>::store(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const AccountIdentity& identity) {
+    m_data_store.store(account, identity);
   }
 
   template<typename T>
@@ -573,11 +556,10 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename T>
-  void AdministrationDataStore::
-      WrappedAdministrationDataStore<T>::store_risk_parameters(
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& risk_parameters) {
-    m_data_store.store_risk_parameters(account, risk_parameters);
+  void AdministrationDataStore::WrappedAdministrationDataStore<T>::store(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const RiskService::RiskParameters& risk_parameters) {
+    m_data_store.store(account, risk_parameters);
   }
 
   template<typename T>
@@ -595,10 +577,9 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename T>
-  void AdministrationDataStore::
-      WrappedAdministrationDataStore<T>::store_risk_state(
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& risk_state) {
+  void AdministrationDataStore::WrappedAdministrationDataStore<T>::store(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const RiskService::RiskState& risk_state) {
     m_data_store.store_risk_state(account, risk_state);
   }
 
@@ -634,11 +615,10 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename T>
-  void AdministrationDataStore::
-      WrappedAdministrationDataStore<T>::store_entitlement_modification(
-        const AccountModificationRequest& request,
-        const EntitlementModification& modification) {
-    m_data_store.store_entitlement_modification(request, modification);
+  void AdministrationDataStore::WrappedAdministrationDataStore<T>::store(
+      const AccountModificationRequest& request,
+      const EntitlementModification& modification) {
+    m_data_store.store(request, modification);
   }
 
   template<typename T>
@@ -649,18 +629,16 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename T>
-  void AdministrationDataStore::
-      WrappedAdministrationDataStore<T>::store_risk_modification(
-        const AccountModificationRequest& request,
-        const RiskModification& modification) {
-    m_data_store.store_risk_modification(request, modification);
+  void AdministrationDataStore::WrappedAdministrationDataStore<T>::store(
+      const AccountModificationRequest& request,
+      const RiskModification& modification) {
+    m_data_store.store(request, modification);
   }
 
   template<typename T>
-  void AdministrationDataStore::
-      WrappedAdministrationDataStore<T>::store_message(
-        AccountModificationRequest::Id id, const Message& message) {
-    m_data_store.store_message(id, message);
+  void AdministrationDataStore::WrappedAdministrationDataStore<T>::store(
+      AccountModificationRequest::Id id, const Message& message) {
+    m_data_store.store(id, message);
   }
 
   template<typename T>
@@ -672,10 +650,9 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename T>
-  void AdministrationDataStore::WrappedAdministrationDataStore<T>::
-      store_account_modification_request_status(
-        AccountModificationRequest::Id id,
-        const AccountModificationRequest::Update& status) {
+  void AdministrationDataStore::WrappedAdministrationDataStore<T>::store(
+      AccountModificationRequest::Id id,
+      const AccountModificationRequest::Update& status) {
     m_data_store.store_account_modification_request_status(id, status);
   }
 
