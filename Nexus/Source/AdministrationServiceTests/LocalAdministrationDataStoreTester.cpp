@@ -1,8 +1,10 @@
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 
 using namespace Beam;
+using namespace Beam::Serialization::Tests;
 using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
@@ -24,8 +26,17 @@ TEST_SUITE("LocalAdministrationDataStore") {
     auto loaded_identity = data_store.with_transaction([&] {
       return data_store.load_identity(account);
     });
-    REQUIRE(loaded_identity.m_first_name == identity.m_first_name);
-    REQUIRE(loaded_identity.m_last_name == identity.m_last_name);
+    TestJsonEquality(loaded_identity, identity);
+    auto updated_identity = AccountIdentity();
+    updated_identity.m_first_name = "Riley";
+    updated_identity.m_last_name = "Miller";
+    data_store.with_transaction([&] {
+      data_store.store(account, updated_identity);
+    });
+    auto updated_loaded_identity = data_store.with_transaction([&] {
+      return data_store.load_identity(account);
+    });
+    TestJsonEquality(updated_loaded_identity, updated_identity);
   }
 
   TEST_CASE("load_non_existent_identity") {
@@ -34,8 +45,7 @@ TEST_SUITE("LocalAdministrationDataStore") {
     auto identity = data_store.with_transaction([&] {
       return data_store.load_identity(account);
     });
-    REQUIRE(identity.m_first_name.empty());
-    REQUIRE(identity.m_last_name.empty());
+    TestJsonEquality(AccountIdentity(), identity);
   }
 
   TEST_CASE("load_all_identities") {
@@ -60,14 +70,10 @@ TEST_SUITE("LocalAdministrationDataStore") {
       return data_store.load_all_account_identities();
     });
     REQUIRE(all_identities.size() == 2);
-    auto first_identity = all_identities[0];
-    REQUIRE(first_identity.m_index == account_a);
-    REQUIRE(first_identity.m_identity.m_first_name == identity_a.m_first_name);
-    REQUIRE(first_identity.m_identity.m_last_name == identity_a.m_last_name);
-    auto second_identity = all_identities[1];
-    REQUIRE(second_identity.m_index == account_b);
-    REQUIRE(second_identity.m_identity.m_first_name == identity_b.m_first_name);
-    REQUIRE(second_identity.m_identity.m_last_name == identity_b.m_last_name);
+    REQUIRE(all_identities[0].m_index == account_a);
+    TestJsonEquality(all_identities[0].m_identity, identity_a);
+    REQUIRE(all_identities[1].m_index == account_b);
+    TestJsonEquality(all_identities[1].m_identity, identity_b);
   }
 
   TEST_CASE("store_and_load_risk_parameters") {
@@ -82,6 +88,15 @@ TEST_SUITE("LocalAdministrationDataStore") {
       return data_store.load_risk_parameters(account);
     });
     REQUIRE(loaded_parameters == parameters);
+    auto updated_parameters = RiskParameters(USD,
+      10 * Money::ONE, RiskState::Type::DISABLED, Money::ONE, 50, seconds(15));
+    data_store.with_transaction([&] {
+      data_store.store(account, updated_parameters);
+    });
+    auto updated_loaded_parameters = data_store.with_transaction([&] {
+      return data_store.load_risk_parameters(account);
+    });
+    REQUIRE(updated_loaded_parameters == updated_parameters);
   }
 
   TEST_CASE("load_non_existent_risk_parameters") {
@@ -133,6 +148,15 @@ TEST_SUITE("LocalAdministrationDataStore") {
       return data_store.load_risk_state(account);
     });
     REQUIRE(loaded_state == state);
+    auto updated_state = RiskState(
+      RiskState::Type::DISABLED, time_from_string("2024-07-05 18:00:00"));
+    data_store.with_transaction([&] {
+      data_store.store(account, updated_state);
+    });
+    auto updated_loaded_state = data_store.with_transaction([&] {
+      return data_store.load_risk_state(account);
+    });
+    REQUIRE(updated_loaded_state == updated_state);
   }
 
   TEST_CASE("load_non_existent_risk_state") {
@@ -189,12 +213,7 @@ TEST_SUITE("LocalAdministrationDataStore") {
     auto loaded_request = data_store.with_transaction([&] {
       return data_store.load_account_modification_request(request.get_id());
     });
-    REQUIRE(loaded_request.get_id() == request.get_id());
-    REQUIRE(loaded_request.get_type() == request.get_type());
-    REQUIRE(loaded_request.get_account() == request.get_account());
-    REQUIRE(loaded_request.get_submission_account() ==
-      request.get_submission_account());
-    REQUIRE(loaded_request.get_timestamp() == request.get_timestamp());
+    TestJsonEquality(loaded_request, request);
     auto loaded_modification = data_store.with_transaction([&] {
       return data_store.load_entitlement_modification(request.get_id());
     });
@@ -227,11 +246,7 @@ TEST_SUITE("LocalAdministrationDataStore") {
     auto loaded_request = data_store.with_transaction([&] {
       return data_store.load_account_modification_request(request.get_id());
     });
-    REQUIRE(loaded_request.get_type() == request.get_type());
-    REQUIRE(loaded_request.get_account() == request.get_account());
-    REQUIRE(loaded_request.get_submission_account() ==
-      request.get_submission_account());
-    REQUIRE(loaded_request.get_timestamp() == request.get_timestamp());
+    TestJsonEquality(loaded_request, request);
     auto loaded_modification = data_store.with_transaction([&] {
       return data_store.load_risk_modification(request.get_id());
     });
