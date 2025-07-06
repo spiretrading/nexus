@@ -379,4 +379,137 @@ TEST_SUITE("LocalAdministrationDataStore") {
     });
     REQUIRE(non_existent_message == Message());
   }
+
+  TEST_CASE("load_account_modification_request_ids_out_of_order") {
+    auto data_store = LocalAdministrationDataStore();
+    auto account = DirectoryEntry::MakeAccount(100, "user_a");
+    auto modification = EntitlementModification();
+    data_store.with_transaction([&] {
+      data_store.store(AccountModificationRequest(
+        5, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+        time_from_string("2024-07-05 10:00:00")), modification);
+      data_store.store(AccountModificationRequest(
+        1, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+        time_from_string("2024-07-05 10:01:00")), modification);
+      data_store.store(AccountModificationRequest(
+        10, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+        time_from_string("2024-07-05 10:02:00")), modification);
+      data_store.store(AccountModificationRequest(
+        3, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+        time_from_string("2024-07-05 10:03:00")), modification);
+    });
+    auto ids = data_store.with_transaction([&] {
+      return data_store.load_account_modification_request_ids(0, 100);
+    });
+    REQUIRE(ids.size() == 4);
+    REQUIRE(ids[0] == 1);
+    REQUIRE(ids[1] == 3);
+    REQUIRE(ids[2] == 5);
+    REQUIRE(ids[3] == 10);
+  }
+
+  TEST_CASE("load_account_modification_request_ids_with_start_id") {
+    auto data_store = LocalAdministrationDataStore();
+    auto account = DirectoryEntry::MakeAccount(100, "user_a");
+    auto modification = EntitlementModification();
+    data_store.with_transaction([&] {
+      data_store.store(AccountModificationRequest(
+        10, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+        time_from_string("2024-07-05 10:00:00")), modification);
+      data_store.store(AccountModificationRequest(
+        20, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+        time_from_string("2024-07-05 10:01:00")), modification);
+      data_store.store(AccountModificationRequest(
+        30, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+        time_from_string("2024-07-05 10:02:00")), modification);
+      data_store.store(AccountModificationRequest(
+        40, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+        time_from_string("2024-07-05 10:03:00")), modification);
+    });
+    auto ids = data_store.with_transaction([&] {
+      return data_store.load_account_modification_request_ids(20, 100);
+    });
+    REQUIRE(ids.size() == 2);
+    REQUIRE(ids[0] == 30);
+    REQUIRE(ids[1] == 40);
+  }
+
+  TEST_CASE("load_account_modification_request_ids_with_max_count") {
+    auto data_store = LocalAdministrationDataStore();
+    auto account = DirectoryEntry::MakeAccount(100, "user_a");
+    auto modification = EntitlementModification();
+    data_store.with_transaction([&] {
+      data_store.store(AccountModificationRequest(
+        10, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+        time_from_string("2024-07-05 10:00:00")), modification);
+      data_store.store(AccountModificationRequest(
+        20, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+        time_from_string("2024-07-05 10:01:00")), modification);
+      data_store.store(AccountModificationRequest(
+        30, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+        time_from_string("2024-07-05 10:02:00")), modification);
+      data_store.store(AccountModificationRequest(
+        40, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+        time_from_string("2024-07-05 10:03:00")), modification);
+    });
+    auto ids = data_store.with_transaction([&] {
+      return data_store.load_account_modification_request_ids(0, 2);
+    });
+    REQUIRE(ids.size() == 2);
+    REQUIRE(ids[0] == 10);
+    REQUIRE(ids[1] == 20);
+  }
+
+  TEST_CASE("load_account_modification_request_ids_by_account") {
+    auto data_store = LocalAdministrationDataStore();
+    auto account_a = DirectoryEntry::MakeAccount(100, "user_a");
+    auto account_b = DirectoryEntry::MakeAccount(200, "user_b");
+    auto modification = EntitlementModification();
+    data_store.with_transaction([&] {
+      data_store.store(AccountModificationRequest(
+        1, AccountModificationRequest::Type::ENTITLEMENTS, account_a, account_a,
+        time_from_string("2024-07-05 10:00:00")), modification);
+      data_store.store(AccountModificationRequest(
+        2, AccountModificationRequest::Type::ENTITLEMENTS, account_b, account_b,
+        time_from_string("2024-07-05 10:01:00")), modification);
+      data_store.store(AccountModificationRequest(
+        3, AccountModificationRequest::Type::ENTITLEMENTS, account_a, account_a,
+        time_from_string("2024-07-05 10:02:00")), modification);
+    });
+    auto ids = data_store.with_transaction([&] {
+      return data_store.load_account_modification_request_ids(
+        account_a, 0, 100);
+    });
+    REQUIRE(ids.size() == 2);
+    REQUIRE(ids[0] == 1);
+    REQUIRE(ids[1] == 3);
+  }
+
+  TEST_CASE("load_account_modification_request_ids_by_account_with_start_id") {
+    auto data_store = LocalAdministrationDataStore();
+    auto account_a = DirectoryEntry::MakeAccount(100, "user_a");
+    auto account_b = DirectoryEntry::MakeAccount(200, "user_b");
+    auto modification = EntitlementModification();
+    data_store.with_transaction([&] {
+      data_store.store(AccountModificationRequest(1,
+        AccountModificationRequest::Type::ENTITLEMENTS, account_a, account_a,
+        time_from_string("2024-07-05 10:00:00")), modification);
+      data_store.store(AccountModificationRequest(2,
+        AccountModificationRequest::Type::ENTITLEMENTS, account_b, account_b,
+        time_from_string("2024-07-05 10:01:00")), modification);
+      data_store.store(AccountModificationRequest(3,
+        AccountModificationRequest::Type::ENTITLEMENTS, account_a, account_a,
+        time_from_string("2024-07-05 10:02:00")), modification);
+      data_store.store(AccountModificationRequest(4,
+        AccountModificationRequest::Type::ENTITLEMENTS, account_a, account_a,
+        time_from_string("2024-07-05 10:03:00")), modification);
+    });
+    auto ids = data_store.with_transaction([&] {
+      return data_store.load_account_modification_request_ids(
+        account_a, 1, 100);
+    });
+    REQUIRE(ids.size() == 2);
+    REQUIRE(ids[0] == 3);
+    REQUIRE(ids[1] == 4);
+  }
 }

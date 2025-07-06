@@ -187,14 +187,15 @@ namespace Nexus::AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& account,
         AccountModificationRequest::Id start_id, int max_count) {
     auto ids = std::vector<AccountModificationRequest::Id>();
-    auto i = m_account_modification_requests.begin(start_id);
+    auto i = m_account_modification_requests.begin();
     while(i != m_account_modification_requests.end() &&
         static_cast<int>(ids.size()) < max_count) {
-      if(i->second.get_account() == account) {
+      if(i->second.get_id() > start_id && i->second.get_account() == account) {
         ids.push_back(i->first);
       }
       ++i;
     }
+    std::sort(ids.begin(), ids.end());
     return ids;
   }
 
@@ -202,12 +203,15 @@ namespace Nexus::AdministrationService {
       LocalAdministrationDataStore::load_account_modification_request_ids(
         AccountModificationRequest::Id start_id, int max_count) {
     auto ids = std::vector<AccountModificationRequest::Id>();
-    auto i = m_account_modification_requests.begin(start_id);
+    auto i = m_account_modification_requests.begin();
     while(i != m_account_modification_requests.end() &&
         static_cast<int>(ids.size()) < max_count) {
-      ids.push_back(i->first);
+      if(i->second.get_id() > start_id) {
+        ids.push_back(i->first);
+      }
       ++i;
     }
+    std::sort(ids.begin(), ids.end());
     return ids;
   }
 
