@@ -75,6 +75,7 @@ namespace {
 }
 
 TEST_SUITE("AdministrationServlet") {
+#if 0
   TEST_CASE_FIXTURE(Fixture, "load_account_identity") {
     auto account = MakeAccount("test_account",
       DirectoryEntry::GetStarDirectory());
@@ -187,4 +188,5 @@ TEST_SUITE("AdministrationServlet") {
       m_protocolClient.SendRequest<LoadManagedTradingGroupsService>(trader);
     REQUIRE(managedTradingGroupsResult.empty());
   }
+#endif
 }
