@@ -95,7 +95,6 @@ TEST_SUITE("AdministrationServlet") {
       DirectoryEntry::GetStarDirectory(), "administrators");
     auto services_group = service_locator.LoadDirectoryEntry(
       DirectoryEntry::GetStarDirectory(), "services");
-    auto calling_admin = fixture.make_account("a", admin_group);
     auto admin_account = fixture.make_account("b", admin_group);
     auto service_account = fixture.make_account("c", services_group);
     auto roles = AccountRoles();
@@ -103,16 +102,16 @@ TEST_SUITE("AdministrationServlet") {
     auto result =
       fixture.m_admin_client->SendRequest<LoadAccountsByRolesService>(roles);
     REQUIRE(result.size() == 2);
-    REQUIRE(
-      std::find(result.begin(), result.end(), calling_admin) != result.end());
+    REQUIRE(std::find(result.begin(), result.end(), fixture.m_admin_account) !=
+      result.end());
     REQUIRE(
       std::find(result.begin(), result.end(), admin_account) != result.end());
     roles.Set(AccountRole::SERVICE);
     result =
       fixture.m_admin_client->SendRequest<LoadAccountsByRolesService>(roles);
     REQUIRE(result.size() == 3);
-    REQUIRE(
-      std::find(result.begin(), result.end(), calling_admin) != result.end());
+    REQUIRE(std::find(result.begin(), result.end(), fixture.m_admin_account) !=
+      result.end());
     REQUIRE(
       std::find(result.begin(), result.end(), admin_account) != result.end());
     REQUIRE(
