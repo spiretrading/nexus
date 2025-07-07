@@ -9,8 +9,8 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
 #include <Beam/Threading/Sync.hpp>
+#include <Beam/TimeService/TimeClient.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include "Nexus/AdministrationService/AdministrationServices.hpp"
 #include "Nexus/AdministrationService/AdministrationSession.hpp"
 
@@ -21,8 +21,9 @@ namespace Nexus::AdministrationService {
    * @param <C> The container instantiating this servlet.
    * @param <S> The type of ServiceLocatorClient used to manage accounts.
    * @param <D> The type of AdministrationDataStore to use.
+   * @param <R> The type of TimeClient to use.
    */
-  template<typename C, typename S, typename D>
+  template<typename C, typename S, typename D, typename R>
   class AdministrationServlet {
     public:
       using Container = C;
@@ -34,15 +35,20 @@ namespace Nexus::AdministrationService {
       /** The type of AdministrationDataStore used. */
       using AdministrationDataStore = Beam::GetTryDereferenceType<D>;
 
+      /** The type of TimeClient used. */
+      using TimeClient = Beam::GetTryDereferenceType<R>;
+
       /**
        * Constructs an AdministrationServlet.
        * @param service_locator_client Initializes the ServiceLocatorClient.
        * @param entitlements The list of available entitlements.
        * @param data_store Initializes the AdministrationDataStore.
+       * @param time_client Initializes the TimeClient.
        */
-      template<typename SF, typename DF>
-      AdministrationServlet(SF&& serviceLocatorClient,
-        MarketDataService::EntitlementDatabase entitlements, DF&& dataStore);
+      template<typename SF, typename DF, typename RF>
+      AdministrationServlet(SF&& service_locator_client,
+        MarketDataService::EntitlementDatabase entitlements, DF&& data_store,
+        RF&& time_client);
 
       void RegisterServices(
         Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots);
@@ -69,6 +75,7 @@ namespace Nexus::AdministrationService {
       Beam::GetOptionalLocalPtr<S> m_service_locator_client;
       MarketDataService::EntitlementDatabase m_entitlements;
       Beam::GetOptionalLocalPtr<D> m_data_store;
+      Beam::GetOptionalLocalPtr<R> m_time_client;
       Beam::ServiceLocator::DirectoryEntry m_administrators_root;
       Beam::ServiceLocator::DirectoryEntry m_services_root;
       Beam::ServiceLocator::DirectoryEntry m_trading_groups_root;
@@ -209,23 +216,25 @@ namespace Nexus::AdministrationService {
         Message message);
   };
 
-  template<typename S, typename D>
+  template<typename S, typename D, typename R>
   struct MetaAdministrationServlet {
     using Session = AdministrationSession;
     template<typename C>
     struct apply {
-      using type = AdministrationServlet<C, S, D>;
+      using type = AdministrationServlet<C, S, D, R>;
     };
   };
 
-  template<typename C, typename S, typename D>
-  template<typename SF, typename DF>
-  AdministrationServlet<C, S, D>::AdministrationServlet(
+  template<typename C, typename S, typename D, typename R>
+  template<typename SF, typename DF, typename RF>
+  AdministrationServlet<C, S, D, R>::AdministrationServlet(
       SF&& service_locator_client,
-      MarketDataService::EntitlementDatabase entitlements, DF&& data_store)
+      MarketDataService::EntitlementDatabase entitlements, DF&& data_store,
+      RF&& time_client)
       : m_service_locator_client(std::forward<SF>(service_locator_client)),
         m_entitlements(std::move(entitlements)),
-        m_data_store(std::forward<DF>(data_store)) {
+        m_data_store(std::forward<DF>(data_store)),
+        m_time_client(std::forward<RF>(time_client)) {
     try {
       auto request_ids =
         m_data_store->load_account_modification_request_ids(-1, 1);
@@ -250,8 +259,8 @@ namespace Nexus::AdministrationService {
     }
   }
 
-  template<typename C, typename S, typename D>
-  void AdministrationServlet<C, S, D>::RegisterServices(
+  template<typename C, typename S, typename D, typename R>
+  void AdministrationServlet<C, S, D, R>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     RegisterAdministrationServices(Store(slots));
     RegisterAdministrationMessages(Store(slots));
@@ -337,8 +346,8 @@ namespace Nexus::AdministrationService {
         this));
   }
 
-  template<typename C, typename S, typename D>
-  void AdministrationServlet<C, S, D>::HandleClientClosed(
+  template<typename C, typename S, typename D, typename R>
+  void AdministrationServlet<C, S, D, R>::HandleClientClosed(
       ServiceProtocolClient& client) {
     Beam::Threading::With(m_risk_parameters_subscribers,
       [&] (auto& risk_parameters_subscribers) {
@@ -356,8 +365,8 @@ namespace Nexus::AdministrationService {
     });
   }
 
-  template<typename C, typename S, typename D>
-  void AdministrationServlet<C, S, D>::Close() {
+  template<typename C, typename S, typename D, typename R>
+  void AdministrationServlet<C, S, D, R>::Close() {
     if(m_open_state.SetClosing()) {
       return;
     }
@@ -365,13 +374,13 @@ namespace Nexus::AdministrationService {
     m_open_state.Close();
   }
 
-  template<typename C, typename S, typename D>
-  AccountRoles AdministrationServlet<C, S, D>::load_account_roles(
+  template<typename C, typename S, typename D, typename R>
+  AccountRoles AdministrationServlet<C, S, D, R>::load_account_roles(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto roles = AccountRoles();
     auto parents = m_service_locator_client->LoadParents(account);
-    auto trading_groups = m_service_locator_client->LoadChildren(
-      m_trading_groups_root);
+    auto trading_groups =
+      m_service_locator_client->LoadChildren(m_trading_groups_root);
     for(auto& parent : parents) {
       if(parent == m_administrators_root) {
         roles.Set(AccountRole::ADMINISTRATOR);
@@ -402,8 +411,8 @@ namespace Nexus::AdministrationService {
     return roles;
   }
 
-  template<typename C, typename S, typename D>
-  AccountRoles AdministrationServlet<C, S, D>::load_account_roles(
+  template<typename C, typename S, typename D, typename R>
+  AccountRoles AdministrationServlet<C, S, D, R>::load_account_roles(
       const Beam::ServiceLocator::DirectoryEntry& parent,
       const Beam::ServiceLocator::DirectoryEntry& child) {
     if(parent == child) {
@@ -434,8 +443,8 @@ namespace Nexus::AdministrationService {
     return roles;
   }
 
-  template<typename C, typename S, typename D>
-  bool AdministrationServlet<C, S, D>::check_administrator(
+  template<typename C, typename S, typename D, typename R>
+  bool AdministrationServlet<C, S, D, R>::check_administrator(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto parents = m_service_locator_client->LoadParents(account);
     auto is_administrator = std::find(parents.begin(), parents.end(),
@@ -443,8 +452,8 @@ namespace Nexus::AdministrationService {
     return is_administrator;
   }
 
-  template<typename C, typename S, typename D>
-  bool AdministrationServlet<C, S, D>::check_read_permission(
+  template<typename C, typename S, typename D, typename R>
+  bool AdministrationServlet<C, S, D, R>::check_read_permission(
       const Beam::ServiceLocator::DirectoryEntry& parent,
       const Beam::ServiceLocator::DirectoryEntry& child) {
     if(parent == child) {
@@ -472,9 +481,9 @@ namespace Nexus::AdministrationService {
     return false;
   }
 
-  template<typename C, typename S, typename D>
+  template<typename C, typename S, typename D, typename R>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
-      AdministrationServlet<C, S, D>::load_managed_trading_groups(
+      AdministrationServlet<C, S, D, R>::load_managed_trading_groups(
         const Beam::ServiceLocator::DirectoryEntry& account) {
     auto parents = m_service_locator_client->LoadParents(account);
     auto trading_groups =
@@ -500,8 +509,8 @@ namespace Nexus::AdministrationService {
     return result;
   }
 
-  template<typename C, typename S, typename D>
-  TradingGroup AdministrationServlet<C, S, D>::load_trading_group(
+  template<typename C, typename S, typename D, typename R>
+  TradingGroup AdministrationServlet<C, S, D, R>::load_trading_group(
       const Beam::ServiceLocator::DirectoryEntry& directory) {
     auto managers_directory =
       m_service_locator_client->LoadDirectoryEntry(directory, "managers");
@@ -514,9 +523,9 @@ namespace Nexus::AdministrationService {
     return trading_group;
   }
 
-  template<typename C, typename S, typename D>
+  template<typename C, typename S, typename D, typename R>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
-      AdministrationServlet<C, S, D>::load_entitlements(
+      AdministrationServlet<C, S, D, R>::load_entitlements(
         const Beam::ServiceLocator::DirectoryEntry& account) {
     auto parents = m_service_locator_client->LoadParents(account);
     auto result = std::vector<Beam::ServiceLocator::DirectoryEntry>();
@@ -530,8 +539,8 @@ namespace Nexus::AdministrationService {
     return result;
   }
 
-  template<typename C, typename S, typename D>
-  void AdministrationServlet<C, S, D>::grant_entitlements(
+  template<typename C, typename S, typename D, typename R>
+  void AdministrationServlet<C, S, D, R>::grant_entitlements(
       const Beam::ServiceLocator::DirectoryEntry& admin_account,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements) {
@@ -545,9 +554,8 @@ namespace Nexus::AdministrationService {
             entry) == existing_entitlements.end()) {
           m_service_locator_client->Associate(account, entry);
           auto ss = std::stringstream();
-          ss << boost::posix_time::to_simple_string(
-            boost::posix_time::second_clock::universal_time()) << ": " <<
-            admin_account.m_name << " grants entitlement \"" <<
+          ss << boost::posix_time::to_simple_string(m_time_client->GetTime()) <<
+            ": " << admin_account.m_name << " grants entitlement \"" <<
             entitlement.m_name << "\"" << " to " << account.m_name << ".\n";
           std::cout << ss.str() << std::flush;
         }
@@ -556,9 +564,8 @@ namespace Nexus::AdministrationService {
             entry) != existing_entitlements.end()) {
           m_service_locator_client->Detach(account, entry);
           auto ss = std::stringstream();
-          ss << boost::posix_time::to_simple_string(
-            boost::posix_time::second_clock::universal_time()) << ": " <<
-            admin_account.m_name << " revokes entitlement \"" <<
+          ss << boost::posix_time::to_simple_string(m_time_client->GetTime()) <<
+            ": " << admin_account.m_name << " revokes entitlement \"" <<
             entitlement.m_name << "\"" << " from " << account.m_name << ".\n";
           std::cout << ss.str() << std::flush;
         }
@@ -566,8 +573,8 @@ namespace Nexus::AdministrationService {
     }
   }
 
-  template<typename C, typename S, typename D>
-  void AdministrationServlet<C, S, D>::update_risk_parameters(
+  template<typename C, typename S, typename D, typename R>
+  void AdministrationServlet<C, S, D, R>::update_risk_parameters(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskParameters& parameters) {
     auto& subscribers = Beam::Threading::With(m_risk_parameters_subscribers,
@@ -585,8 +592,8 @@ namespace Nexus::AdministrationService {
     });
   }
 
-  template<typename C, typename S, typename D>
-  void AdministrationServlet<C, S, D>::ensure_modification_read_permission(
+  template<typename C, typename S, typename D, typename R>
+  void AdministrationServlet<C, S, D, R>::ensure_modification_read_permission(
       const Beam::ServiceLocator::DirectoryEntry& account,
       AccountModificationRequest::Id id) {
     auto request = m_data_store->with_transaction([&] {
@@ -598,8 +605,8 @@ namespace Nexus::AdministrationService {
     }
   }
 
-  template<typename C, typename S, typename D>
-  AccountModificationRequest AdministrationServlet<C, S, D>::
+  template<typename C, typename S, typename D, typename R>
+  AccountModificationRequest AdministrationServlet<C, S, D, R>::
       make_modification_request(
         const Beam::ServiceLocator::DirectoryEntry& session_account,
         const Beam::ServiceLocator::DirectoryEntry& submission_account,
@@ -611,13 +618,13 @@ namespace Nexus::AdministrationService {
         "Insufficient permissions.");
     }
     auto request_id = ++m_last_modification_request_id;
-    auto timestamp = boost::posix_time::second_clock::universal_time();
+    auto timestamp = m_time_client->GetTime();
     return AccountModificationRequest(
       request_id, type, account, submission_account, timestamp);
   }
 
-  template<typename C, typename S, typename D>
-  void AdministrationServlet<C, S, D>::store_modification_request(
+  template<typename C, typename S, typename D, typename R>
+  void AdministrationServlet<C, S, D, R>::store_modification_request(
       const AccountModificationRequest& request, const Message& comment,
       const AccountRoles& roles) {
     if(comment.get_bodies().size() > 1 ||
@@ -640,9 +647,9 @@ namespace Nexus::AdministrationService {
     m_data_store->store(request.get_id(), update);
   }
 
-  template<typename C, typename S, typename D>
+  template<typename C, typename S, typename D, typename R>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
-      AdministrationServlet<C, S, D>::on_load_accounts_by_roles(
+      AdministrationServlet<C, S, D, R>::on_load_accounts_by_roles(
         ServiceProtocolClient& client, AccountRoles roles) {
     auto& session = client.GetSession();
     auto accounts = std::vector<Beam::ServiceLocator::DirectoryEntry>();
@@ -674,48 +681,48 @@ namespace Nexus::AdministrationService {
     return accounts;
   }
 
-  template<typename C, typename S, typename D>
-  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D>::
+  template<typename C, typename S, typename D, typename R>
+  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D, R>::
       on_load_administrators_root_entry(ServiceProtocolClient& client) {
     return m_administrators_root;
   }
 
-  template<typename C, typename S, typename D>
-  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D>::
+  template<typename C, typename S, typename D, typename R>
+  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D, R>::
       on_load_services_root_entry(ServiceProtocolClient& client) {
     return m_services_root;
   }
 
-  template<typename C, typename S, typename D>
-  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D>::
+  template<typename C, typename S, typename D, typename R>
+  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D, R>::
       on_load_trading_groups_root_entry(ServiceProtocolClient& client) {
     return m_trading_groups_root;
   }
 
-  template<typename C, typename S, typename D>
-  bool AdministrationServlet<C, S, D>::on_check_administrator_request(
+  template<typename C, typename S, typename D, typename R>
+  bool AdministrationServlet<C, S, D, R>::on_check_administrator_request(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return check_administrator(account);
   }
 
-  template<typename C, typename S, typename D>
-  AccountRoles AdministrationServlet<C, S, D>::on_load_account_roles_request(
+  template<typename C, typename S, typename D, typename R>
+  AccountRoles AdministrationServlet<C, S, D, R>::on_load_account_roles_request(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return load_account_roles(account);
   }
 
-  template<typename C, typename S, typename D>
-  AccountRoles AdministrationServlet<C, S, D>::
-    on_load_supervised_account_roles_request(ServiceProtocolClient& client,
-      const Beam::ServiceLocator::DirectoryEntry& parent,
-      const Beam::ServiceLocator::DirectoryEntry& child) {
+  template<typename C, typename S, typename D, typename R>
+  AccountRoles AdministrationServlet<C, S, D, R>::
+      on_load_supervised_account_roles_request(ServiceProtocolClient& client,
+        const Beam::ServiceLocator::DirectoryEntry& parent,
+        const Beam::ServiceLocator::DirectoryEntry& child) {
     return load_account_roles(parent, child);
   }
 
-  template<typename C, typename S, typename D>
-  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D>::
+  template<typename C, typename S, typename D, typename R>
+  Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D, R>::
       on_load_parent_trading_group_request(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account) {
     auto parents = m_service_locator_client->LoadParents(account);
@@ -735,8 +742,8 @@ namespace Nexus::AdministrationService {
     return {};
   }
 
-  template<typename C, typename S, typename D>
-  AccountIdentity AdministrationServlet<C, S, D>::
+  template<typename C, typename S, typename D, typename R>
+  AccountIdentity AdministrationServlet<C, S, D, R>::
       on_load_account_identity_request(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account) {
     auto identity = m_data_store->with_transaction([&] {
@@ -749,8 +756,8 @@ namespace Nexus::AdministrationService {
     return identity;
   }
 
-  template<typename C, typename S, typename D>
-  void AdministrationServlet<C, S, D>::on_store_account_identity_request(
+  template<typename C, typename S, typename D, typename R>
+  void AdministrationServlet<C, S, D, R>::on_store_account_identity_request(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountIdentity& identity) {
@@ -761,8 +768,8 @@ namespace Nexus::AdministrationService {
     });
   }
 
-  template<typename C, typename S, typename D>
-  TradingGroup AdministrationServlet<C, S, D>::on_load_trading_group_request(
+  template<typename C, typename S, typename D, typename R>
+  TradingGroup AdministrationServlet<C, S, D, R>::on_load_trading_group_request(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& directory) {
     auto proper_directory =
@@ -770,38 +777,38 @@ namespace Nexus::AdministrationService {
     return load_trading_group(proper_directory);
   }
 
-  template<typename C, typename S, typename D>
+  template<typename C, typename S, typename D, typename R>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
-      AdministrationServlet<C, S, D>::on_load_administrators_request(
+      AdministrationServlet<C, S, D, R>::on_load_administrators_request(
         ServiceProtocolClient& client) {
     return m_service_locator_client->LoadChildren(m_administrators_root);
   }
 
-  template<typename C, typename S, typename D>
+  template<typename C, typename S, typename D, typename R>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
-      AdministrationServlet<C, S, D>::on_load_services_request(
+      AdministrationServlet<C, S, D, R>::on_load_services_request(
         ServiceProtocolClient& client) {
     auto services_directory = m_service_locator_client->LoadDirectoryEntry(
       Beam::ServiceLocator::DirectoryEntry::GetStarDirectory(), "services");
     return m_service_locator_client->LoadChildren(services_directory);
   }
 
-  template<typename C, typename S, typename D>
-  MarketDataService::EntitlementDatabase AdministrationServlet<C, S, D>::
+  template<typename C, typename S, typename D, typename R>
+  MarketDataService::EntitlementDatabase AdministrationServlet<C, S, D, R>::
       on_load_entitlements_request(ServiceProtocolClient& client) {
     return m_entitlements;
   }
 
-  template<typename C, typename S, typename D>
+  template<typename C, typename S, typename D, typename R>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
-      AdministrationServlet<C, S, D>::on_load_account_entitlements_request(
+      AdministrationServlet<C, S, D, R>::on_load_account_entitlements_request(
         ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account) {
     return load_entitlements(account);
   }
 
-  template<typename C, typename S, typename D>
-  void AdministrationServlet<C, S, D>::on_store_entitlements_request(
+  template<typename C, typename S, typename D, typename R>
+  void AdministrationServlet<C, S, D, R>::on_store_entitlements_request(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements) {
@@ -813,8 +820,8 @@ namespace Nexus::AdministrationService {
     grant_entitlements(session.GetAccount(), account, entitlements);
   }
 
-  template<typename C, typename S, typename D>
-  RiskService::RiskParameters AdministrationServlet<C, S, D>::
+  template<typename C, typename S, typename D, typename R>
+  RiskService::RiskParameters AdministrationServlet<C, S, D, R>::
       on_monitor_risk_parameters_request(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account) {
     auto& subscribers = Beam::Threading::With(m_risk_parameters_subscribers,
@@ -833,8 +840,8 @@ namespace Nexus::AdministrationService {
     return parameters;
   }
 
-  template<typename C, typename S, typename D>
-  void AdministrationServlet<C, S, D>::on_store_risk_parameters_request(
+  template<typename C, typename S, typename D, typename R>
+  void AdministrationServlet<C, S, D, R>::on_store_risk_parameters_request(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskParameters& parameters) {
@@ -846,8 +853,8 @@ namespace Nexus::AdministrationService {
     update_risk_parameters(account, parameters);
   }
 
-  template<typename C, typename S, typename D>
-  RiskService::RiskState AdministrationServlet<C, S, D>::
+  template<typename C, typename S, typename D, typename R>
+  RiskService::RiskState AdministrationServlet<C, S, D, R>::
       on_monitor_risk_state_request(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account) {
     auto risk_state = m_data_store->with_transaction([&] {
@@ -867,8 +874,8 @@ namespace Nexus::AdministrationService {
     return risk_state;
   }
 
-  template<typename C, typename S, typename D>
-  void AdministrationServlet<C, S, D>::on_store_risk_state_request(
+  template<typename C, typename S, typename D, typename R>
+  void AdministrationServlet<C, S, D, R>::on_store_risk_state_request(
       Beam::Services::RequestToken<ServiceProtocolClient,
       StoreRiskStateService>& request,
       const Beam::ServiceLocator::DirectoryEntry& account,
@@ -897,16 +904,16 @@ namespace Nexus::AdministrationService {
     });
   }
 
-  template<typename C, typename S, typename D>
+  template<typename C, typename S, typename D, typename R>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
-      AdministrationServlet<C, S, D>::on_load_managed_trading_groups_request(
+      AdministrationServlet<C, S, D, R>::on_load_managed_trading_groups_request(
         ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account) {
     return load_managed_trading_groups(account);
   }
 
-  template<typename C, typename S, typename D>
-  AccountModificationRequest AdministrationServlet<C, S, D>::
+  template<typename C, typename S, typename D, typename R>
+  AccountModificationRequest AdministrationServlet<C, S, D, R>::
       on_load_account_modification_request(ServiceProtocolClient& client,
         AccountModificationRequest::Id id) {
     auto& session = client.GetSession();
@@ -920,11 +927,12 @@ namespace Nexus::AdministrationService {
     return request;
   }
 
-  template<typename C, typename S, typename D>
-  std::vector<AccountModificationRequest::Id> AdministrationServlet<C, S, D>::
-      on_load_account_modification_request_ids(ServiceProtocolClient& client,
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        AccountModificationRequest::Id start_id, int max_count) {
+  template<typename C, typename S, typename D, typename R>
+  std::vector<AccountModificationRequest::Id>
+      AdministrationServlet<C, S, D, R>::
+        on_load_account_modification_request_ids(ServiceProtocolClient& client,
+          const Beam::ServiceLocator::DirectoryEntry& account,
+          AccountModificationRequest::Id start_id, int max_count) {
     auto& session = client.GetSession();
     if(!check_read_permission(session.GetAccount(), account)) {
       throw Beam::Services::ServiceRequestException(
@@ -937,12 +945,13 @@ namespace Nexus::AdministrationService {
     return ids;
   }
 
-  template<typename C, typename S, typename D>
-  std::vector<AccountModificationRequest::Id> AdministrationServlet<C, S, D>::
-      on_load_managed_account_modification_request_ids(
-        ServiceProtocolClient& client,
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        AccountModificationRequest::Id start_id, int max_count) {
+  template<typename C, typename S, typename D, typename R>
+  std::vector<AccountModificationRequest::Id>
+      AdministrationServlet<C, S, D, R>::
+        on_load_managed_account_modification_request_ids(
+          ServiceProtocolClient& client,
+          const Beam::ServiceLocator::DirectoryEntry& account,
+          AccountModificationRequest::Id start_id, int max_count) {
     auto& session = client.GetSession();
     if(!check_read_permission(session.GetAccount(), account)) {
       throw Beam::Services::ServiceRequestException(
@@ -984,8 +993,8 @@ namespace Nexus::AdministrationService {
     return ids;
   }
 
-  template<typename C, typename S, typename D>
-  EntitlementModification AdministrationServlet<C, S, D>::
+  template<typename C, typename S, typename D, typename R>
+  EntitlementModification AdministrationServlet<C, S, D, R>::
       on_load_entitlement_modification(
         ServiceProtocolClient& client, AccountModificationRequest::Id id) {
     auto& session = client.GetSession();
@@ -996,8 +1005,8 @@ namespace Nexus::AdministrationService {
     return modification;
   }
 
-  template<typename C, typename S, typename D>
-  AccountModificationRequest AdministrationServlet<C, S, D>::
+  template<typename C, typename S, typename D, typename R>
+  AccountModificationRequest AdministrationServlet<C, S, D, R>::
       on_submit_entitlement_modification_request(ServiceProtocolClient& client,
         Beam::ServiceLocator::DirectoryEntry account,
         const EntitlementModification& modification, Message comment) {
@@ -1032,8 +1041,8 @@ namespace Nexus::AdministrationService {
     return request;
   }
 
-  template<typename C, typename S, typename D>
-  RiskModification AdministrationServlet<C, S, D>::on_load_risk_modification(
+  template<typename C, typename S, typename D, typename R>
+  RiskModification AdministrationServlet<C, S, D, R>::on_load_risk_modification(
       ServiceProtocolClient& client, AccountModificationRequest::Id id) {
     auto& session = client.GetSession();
     ensure_modification_read_permission(session.GetAccount(), id);
@@ -1043,8 +1052,8 @@ namespace Nexus::AdministrationService {
     return modification;
   }
 
-  template<typename C, typename S, typename D>
-  AccountModificationRequest AdministrationServlet<C, S, D>::
+  template<typename C, typename S, typename D, typename R>
+  AccountModificationRequest AdministrationServlet<C, S, D, R>::
       on_submit_risk_modification_request(ServiceProtocolClient& client,
         Beam::ServiceLocator::DirectoryEntry account,
         const RiskModification& modification, Message comment) {
@@ -1067,8 +1076,8 @@ namespace Nexus::AdministrationService {
     return request;
   }
 
-  template<typename C, typename S, typename D>
-  AccountModificationRequest::Update AdministrationServlet<C, S, D>::
+  template<typename C, typename S, typename D, typename R>
+  AccountModificationRequest::Update AdministrationServlet<C, S, D, R>::
       on_load_account_modification_request_status(
         ServiceProtocolClient& client, AccountModificationRequest::Id id) {
     auto& session = client.GetSession();
@@ -1085,8 +1094,8 @@ namespace Nexus::AdministrationService {
     return status;
   }
 
-  template<typename C, typename S, typename D>
-  AccountModificationRequest::Update AdministrationServlet<C, S, D>::
+  template<typename C, typename S, typename D, typename R>
+  AccountModificationRequest::Update AdministrationServlet<C, S, D, R>::
       on_approve_account_modification_request(ServiceProtocolClient& client,
         AccountModificationRequest::Id id, Message comment) {
     auto& session = client.GetSession();
@@ -1099,7 +1108,7 @@ namespace Nexus::AdministrationService {
       throw Beam::Services::ServiceRequestException(
         "Insufficient permissions.");
     }
-    auto timestamp = boost::posix_time::second_clock::universal_time();
+    auto timestamp = m_time_client->GetTime();
     if(comment.get_bodies().size() == 1 &&
         comment.get_body().m_message.empty()) {
       comment = Message();
@@ -1148,8 +1157,8 @@ namespace Nexus::AdministrationService {
     return update;
   }
 
-  template<typename C, typename S, typename D>
-  AccountModificationRequest::Update AdministrationServlet<C, S, D>::
+  template<typename C, typename S, typename D, typename R>
+  AccountModificationRequest::Update AdministrationServlet<C, S, D, R>::
       on_reject_account_modification_request(ServiceProtocolClient& client,
         AccountModificationRequest::Id id, Message comment) {
     auto& session = client.GetSession();
@@ -1162,7 +1171,7 @@ namespace Nexus::AdministrationService {
       throw Beam::Services::ServiceRequestException(
         "Insufficient permissions.");
     }
-    auto timestamp = boost::posix_time::second_clock::universal_time();
+    auto timestamp = m_time_client->GetTime();
     if(comment.get_bodies().size() == 1 &&
         comment.get_body().m_message.empty()) {
       comment = Message();
@@ -1190,8 +1199,8 @@ namespace Nexus::AdministrationService {
     return update;
   }
 
-  template<typename C, typename S, typename D>
-  Message AdministrationServlet<C, S, D>::on_load_message(
+  template<typename C, typename S, typename D, typename R>
+  Message AdministrationServlet<C, S, D, R>::on_load_message(
       ServiceProtocolClient& client, Message::Id id) {
 
     /** TODO: check permissions */
@@ -1200,9 +1209,10 @@ namespace Nexus::AdministrationService {
     });
   }
 
-  template<typename C, typename S, typename D>
-  std::vector<Message::Id> AdministrationServlet<C, S, D>::on_load_message_ids(
-      ServiceProtocolClient& client, AccountModificationRequest::Id id) {
+  template<typename C, typename S, typename D, typename R>
+  std::vector<Message::Id> AdministrationServlet<C, S, D, R>::
+      on_load_message_ids(ServiceProtocolClient& client,
+        AccountModificationRequest::Id id) {
     auto& session = client.GetSession();
     auto request = m_data_store->with_transaction([&] {
       return m_data_store->load_account_modification_request(id);
@@ -1217,8 +1227,8 @@ namespace Nexus::AdministrationService {
     return message_ids;
   }
 
-  template<typename C, typename S, typename D>
-  Message AdministrationServlet<C, S, D>::
+  template<typename C, typename S, typename D, typename R>
+  Message AdministrationServlet<C, S, D, R>::
       on_send_account_modification_request_message(
         ServiceProtocolClient& client, AccountModificationRequest::Id id,
         Message message) {
@@ -1231,7 +1241,7 @@ namespace Nexus::AdministrationService {
       throw Beam::Services::ServiceRequestException(
         "Insufficient permissions.");
     }
-    auto timestamp = boost::posix_time::second_clock::universal_time();
+    auto timestamp = m_time_client->GetTime();
     message = Message(
       ++m_last_message_id, account, timestamp, message.get_bodies());
     m_data_store->with_transaction([&] {
