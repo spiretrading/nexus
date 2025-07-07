@@ -145,7 +145,10 @@ namespace Nexus::AdministrationService {
     try {
       m_connection->execute(Viper::select(get_indexed_account_identity_row(),
         "account_identities", std::back_inserter(identities)));
-    } catch(const Viper::ExecuteException& e) {
+      for(auto& identity : identities) {
+        identity.m_index = m_directory_entries.Load(identity.m_index.m_id);
+      }
+    } catch(const std::exception& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
     return identities;
@@ -185,7 +188,10 @@ namespace Nexus::AdministrationService {
     try {
       m_connection->execute(Viper::select(get_indexed_risk_parameters_row(),
         "risk_parameters", std::back_inserter(parameters)));
-    } catch(const Viper::ExecuteException& e) {
+      for(auto& parameter : parameters) {
+        parameter.m_index = m_directory_entries.Load(parameter.m_index.m_id);
+      }
+    } catch(const std::exception& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
     return parameters;
@@ -208,8 +214,8 @@ namespace Nexus::AdministrationService {
   template<typename C>
   void SqlAdministrationDataStore<C>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& riskParameters) {
-    auto parameters = IndexedRiskParameters(account, riskParameters);
+      const RiskService::RiskParameters& risk_parameters) {
+    auto parameters = IndexedRiskParameters(account, risk_parameters);
     try {
       m_connection->execute(Viper::upsert(
         get_indexed_risk_parameters_row(), "risk_parameters", &parameters));
@@ -225,7 +231,10 @@ namespace Nexus::AdministrationService {
     try {
       m_connection->execute(Viper::select(get_indexed_risk_state_row(),
         "risk_states", std::back_inserter(states)));
-    } catch(const Viper::ExecuteException& e) {
+      for(auto& state : states) {
+        state.m_index = m_directory_entries.Load(state.m_index.m_id);
+      }
+    } catch(const std::exception& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
     return states;
@@ -265,7 +274,11 @@ namespace Nexus::AdministrationService {
       m_connection->execute(Viper::select(
         get_account_modification_request_row(), "account_modification_requests",
         Viper::sym("id") == id, &request));
-    } catch(const Viper::ExecuteException& e) {
+      request = AccountModificationRequest(request.get_id(), request.get_type(),
+        m_directory_entries.Load(request.get_account().m_id),
+        m_directory_entries.Load(request.get_submission_account().m_id),
+        request.get_timestamp());
+    } catch(const std::exception& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
     return request;
@@ -284,9 +297,9 @@ namespace Nexus::AdministrationService {
     try {
       m_connection->execute(Viper::select(
         Viper::Row<AccountModificationRequest::Id>("id"),
-        "account_modification_requests", Viper::sym("id") < start_id &&
+        "account_modification_requests", Viper::sym("id") > start_id &&
         Viper::sym("account") == account.m_id,
-        Viper::order_by("id", Viper::Order::DESC), Viper::limit(max_count),
+        Viper::order_by("id", Viper::Order::ASC), Viper::limit(max_count),
         std::back_inserter(ids)));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
@@ -306,8 +319,8 @@ namespace Nexus::AdministrationService {
     try {
       m_connection->execute(Viper::select(
         Viper::Row<AccountModificationRequest::Id>("id"),
-        "account_modification_requests", Viper::sym("id") < start_id,
-        Viper::order_by("id", Viper::Order::DESC), Viper::limit(max_count),
+        "account_modification_requests", Viper::sym("id") > start_id,
+        Viper::order_by("id", Viper::Order::ASC), Viper::limit(max_count),
         std::back_inserter(ids)));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
@@ -319,17 +332,17 @@ namespace Nexus::AdministrationService {
   EntitlementModification
       SqlAdministrationDataStore<C>::load_entitlement_modification(
       AccountModificationRequest::Id id) {
-    auto ids = std::vector<unsigned int>();
+    auto entitlements = std::vector<Beam::ServiceLocator::DirectoryEntry>();
     try {
+      auto ids = std::vector<unsigned int>();
       m_connection->execute(Viper::select(
         Viper::Row<unsigned int>("entitlement"), "entitlement_modifications",
         Viper::sym("id") == id, std::back_inserter(ids)));
-    } catch(const Viper::ExecuteException& e) {
+      for(auto& id : ids) {
+        entitlements.push_back(m_directory_entries.Load(id));
+      }
+    } catch(const std::exception& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
-    }
-    auto entitlements = std::vector<Beam::ServiceLocator::DirectoryEntry>();
-    for(auto& id : ids) {
-      entitlements.push_back(m_directory_entries.Load(id));
     }
     return entitlements;
   }
@@ -387,7 +400,7 @@ namespace Nexus::AdministrationService {
   void SqlAdministrationDataStore<C>::store(
       AccountModificationRequest::Id id, const Message& message) {
     auto index = AdministrationMessageIndex(
-      id, message.get_account(), message.get_timestamp());
+      message.get_id(), message.get_account(), message.get_timestamp());
     auto bodies = std::vector<IndexedMessageBody>();
     for(auto& body : message.get_bodies()) {
       bodies.push_back({message.get_id(), body});
@@ -417,9 +430,10 @@ namespace Nexus::AdministrationService {
       m_connection->execute(Viper::select(
         get_account_modification_request_status_row(),
         "account_modification_request_status", Viper::sym("id") == id,
-        Viper::order_by("sequence_number", Viper::Order::DESC),
-        Viper::limit(1), &status));
-    } catch(const Viper::ExecuteException& e) {
+        Viper::order_by("sequence_number", Viper::Order::DESC), Viper::limit(1),
+        &status));
+      status.m_account = m_directory_entries.Load(status.m_account.m_id);
+    } catch(const std::exception& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
     return status;
@@ -461,7 +475,10 @@ namespace Nexus::AdministrationService {
       m_connection->execute(Viper::select(
         get_administration_message_index_row(), "administration_messages",
         Viper::sym("id") == id, &index));
-    } catch(const Viper::ExecuteException& e) {
+      if(index) {
+        index->m_account = m_directory_entries.Load(index->m_account.m_id);
+      }
+    } catch(const std::exception& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
     if(!index) {

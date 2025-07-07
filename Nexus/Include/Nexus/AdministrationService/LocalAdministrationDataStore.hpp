@@ -277,7 +277,7 @@ namespace Nexus::AdministrationService {
 
   inline Message::Id LocalAdministrationDataStore::load_last_message_id() {
     if(m_messages.empty()) {
-      return -1;
+      return 0;
     }
     return m_last_message_id;
   }

@@ -200,7 +200,7 @@ namespace Nexus::AdministrationService::Tests {
         1, AccountModificationRequest::Type::ENTITLEMENTS, account,
         submission_account, submission_time);
       auto entitlements = std::vector<DirectoryEntry>();
-      entitlements.push_back(DirectoryEntry::MakeDirectory(12, "TSX"));
+      entitlements.push_back(DirectoryEntry::MakeDirectory(23, "TSX"));
       auto modification = EntitlementModification(entitlements);
       data_store.with_transaction([&] {
         data_store.store(request, modification);
@@ -313,7 +313,7 @@ namespace Nexus::AdministrationService::Tests {
       auto last_id = data_store.with_transaction([&] {
         return data_store.load_last_message_id();
       });
-      REQUIRE(last_id == -1);
+      REQUIRE(last_id == 0);
       auto request_a = 1;
       auto request_b = 2;
       auto account = DirectoryEntry::MakeAccount(123, "user1");

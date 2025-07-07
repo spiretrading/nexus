@@ -18,17 +18,25 @@ namespace {
 namespace {
   struct Builder {
     auto operator ()() const {
+      auto directory_entries =
+        std::unordered_map<unsigned int, DirectoryEntry>();
+      directory_entries.insert(
+        std::pair(23, DirectoryEntry::MakeDirectory(23, "TSX")));
+      directory_entries.insert(
+        std::pair(100, DirectoryEntry::MakeAccount(100, "user_a")));
+      directory_entries.insert(
+        std::pair(123, DirectoryEntry::MakeAccount(123, "user1")));
+      directory_entries.insert(
+        std::pair(345, DirectoryEntry::MakeAccount(345, "user2")));
+      directory_entries.insert(
+        std::pair(456, DirectoryEntry::MakeAccount(456, "admin")));
       return TestSqlAdministrationDataStore(
-        std::make_unique<Connection>(":memory:"), [] (auto id) {
-          auto name = [&] {
-            if(id == 123) {
-              return "user1";
-            } else if(id == 456) {
-              return "admin";
-            }
-            return "";
-          }();
-          return DirectoryEntry::MakeAccount(id, name);
+        std::make_unique<Connection>(":memory:"), [=] (auto id) {
+          auto i = directory_entries.find(id);
+          if(i != directory_entries.end()) {
+            return i->second;
+          }
+          return DirectoryEntry();
         });
     }
   };

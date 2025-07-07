@@ -63,7 +63,7 @@ namespace Nexus::AdministrationService {
         boost::posix_time::ptime m_timestamp;
 
         /** Constructs an empty Update. */
-        Update() = default;
+        Update() noexcept;
 
         /**
          * Constructs an Update.
@@ -160,6 +160,11 @@ namespace Nexus::AdministrationService {
     return out << '(' << update.m_status << ' ' << update.m_account << ' '
       << update.m_sequence_number << ' ' << update.m_timestamp << ')';
   }
+
+  inline AccountModificationRequest::Update::Update() noexcept
+    : Update(AccountModificationRequest::Status::NONE,
+        Beam::ServiceLocator::DirectoryEntry(), -1,
+        boost::posix_time::not_a_date_time) {}
 
   inline AccountModificationRequest::Update::Update(Status status,
     Beam::ServiceLocator::DirectoryEntry account, int sequence_number,
