@@ -1,7 +1,9 @@
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationService/CachedAdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationDataStoreTestSuite.hpp"
 
+using namespace Beam;
 using namespace Nexus;
 using namespace Nexus::AdministrationService;
 using namespace Nexus::AdministrationService::Tests;
@@ -9,11 +11,12 @@ using namespace Nexus::AdministrationService::Tests;
 namespace {
   struct Builder {
     auto operator ()() const {
-      return LocalAdministrationDataStore();
+      return CachedAdministrationDataStore<LocalAdministrationDataStore>(
+        Initialize());
     }
   };
 }
 
-TEST_SUITE("LocalAdministrationDataStore") {
+TEST_SUITE("CachedAdministrationDataStore") {
   TEST_CASE_TEMPLATE_INVOKE(AdministrationDataStoreTestSuite, Builder);
 }
