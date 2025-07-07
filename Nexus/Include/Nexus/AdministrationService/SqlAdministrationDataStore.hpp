@@ -1,7 +1,6 @@
 #ifndef NEXUS_SQL_ADMINISTRATION_DATA_STORE_HPP
 #define NEXUS_SQL_ADMINISTRATION_DATA_STORE_HPP
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/KeyValueCache.hpp>
 #include <boost/throw_exception.hpp>
@@ -16,8 +15,13 @@ namespace Nexus::AdministrationService {
    * @param <C> The type of SQL connection.
    */
   template<typename C>
-  class SqlAdministrationDataStore : public AdministrationDataStore {
+  class SqlAdministrationDataStore {
     public:
+      using IndexedAccountIdentity =
+        AdministrationDataStore::IndexedAccountIdentity;
+      using IndexedRiskParameters =
+        AdministrationDataStore::IndexedRiskParameters;
+      using IndexedRiskState = AdministrationDataStore::IndexedRiskState;
 
       /** The type of SQL connection. */
       using Connection = C;
@@ -30,137 +34,116 @@ namespace Nexus::AdministrationService {
       /**
        * Constructs an SqlAdministrationDataStore.
        * @param connection The connection to the SQL database.
-       * @param directoryEntrySourceFunction The function used to load
+       * @param directory_entry_source_function The function used to load
        *        DirectoryEntries.
        */
       SqlAdministrationDataStore(std::unique_ptr<Connection> connection,
-        const DirectoryEntrySourceFunction& directoryEntrySourceFunction);
+        DirectoryEntrySourceFunction directory_entry_source_function);
 
-      ~SqlAdministrationDataStore() override;
+      ~SqlAdministrationDataStore();
 
-      std::vector<IndexedAccountIdentity> LoadAllAccountIdentities() override;
-
-      AccountIdentity LoadIdentity(
-        const Beam::ServiceLocator::DirectoryEntry& account) override;
-
-      void Store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const AccountIdentity& identity) override;
-
-      std::vector<IndexedRiskParameters> LoadAllRiskParameters() override;
-
-      RiskService::RiskParameters LoadRiskParameters(
-        const Beam::ServiceLocator::DirectoryEntry& account) override;
-
-      void Store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& riskParameters) override;
-
-      std::vector<IndexedRiskState> LoadAllRiskStates() override;
-
-      RiskService::RiskState LoadRiskState(
-        const Beam::ServiceLocator::DirectoryEntry& account) override;
-
-      void Store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& riskState) override;
-
-      AccountModificationRequest LoadAccountModificationRequest(
-        AccountModificationRequest::Id id) override;
-
+      std::vector<IndexedAccountIdentity> load_all_account_identities();
+      AccountIdentity load_identity(
+        const Beam::ServiceLocator::DirectoryEntry& account);
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const AccountIdentity& identity);
+      std::vector<IndexedRiskParameters> load_all_risk_parameters();
+      RiskService::RiskParameters load_risk_parameters(
+        const Beam::ServiceLocator::DirectoryEntry& account);
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const RiskService::RiskParameters& risk_parameters);
+      std::vector<IndexedRiskState> load_all_risk_states();
+      RiskService::RiskState load_risk_state(
+        const Beam::ServiceLocator::DirectoryEntry& account);
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const RiskService::RiskState& risk_state);
+      AccountModificationRequest load_account_modification_request(
+        AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest::Id>
-        LoadAccountModificationRequestIds(
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        AccountModificationRequest::Id startId, int maxCount) override;
-
+        load_account_modification_request_ids(
+          const Beam::ServiceLocator::DirectoryEntry& account,
+          AccountModificationRequest::Id start_id, int max_count);
       std::vector<AccountModificationRequest::Id>
-        LoadAccountModificationRequestIds(
-        AccountModificationRequest::Id startId, int maxCount) override;
-
-      EntitlementModification LoadEntitlementModification(
-        AccountModificationRequest::Id id) override;
-
-      void Store(const AccountModificationRequest& request,
-        const EntitlementModification& modification) override;
-
-      RiskModification LoadRiskModification(
-        AccountModificationRequest::Id id) override;
-
-      void Store(const AccountModificationRequest& request,
-        const RiskModification& modification) override;
-
-      void Store(AccountModificationRequest::Id id,
-        const Message& message) override;
-
-      AccountModificationRequest::Update LoadAccountModificationRequestStatus(
-        AccountModificationRequest::Id id) override;
-
-      void Store(AccountModificationRequest::Id id,
-        const AccountModificationRequest::Update& status) override;
-
-      Message::Id LoadLastMessageId() override;
-
-      Message LoadMessage(Message::Id id) override;
-
-      std::vector<Message::Id> LoadMessageIds(
-        AccountModificationRequest::Id id) override;
-
-      void WithTransaction(const std::function<void ()>& transaction) override;
-
-      void Close() override;
+        load_account_modification_request_ids(
+          AccountModificationRequest::Id start_id, int max_count);
+      EntitlementModification load_entitlement_modification(
+        AccountModificationRequest::Id id);
+      void store(const AccountModificationRequest& request,
+        const EntitlementModification& modification);
+      RiskModification load_risk_modification(
+        AccountModificationRequest::Id id);
+      void store(const AccountModificationRequest& request,
+        const RiskModification& modification);
+      void store(AccountModificationRequest::Id id, const Message& message);
+      AccountModificationRequest::Update
+        load_account_modification_request_status(
+          AccountModificationRequest::Id id);
+      void store(AccountModificationRequest::Id id,
+        const AccountModificationRequest::Update& status);
+      Message::Id load_last_message_id();
+      Message load_message(Message::Id id);
+      std::vector<Message::Id> load_message_ids(
+        AccountModificationRequest::Id id);
+      template<typename F>
+      decltype(auto) with_transaction(F&& transaction);
+      void close();
 
     private:
       mutable Beam::Threading::Mutex m_mutex;
       std::unique_ptr<Connection> m_connection;
       Beam::KeyValueCache<unsigned int, Beam::ServiceLocator::DirectoryEntry,
-        Beam::Threading::Mutex> m_directoryEntries;
-      Beam::IO::OpenState m_openState;
+        Beam::Threading::Mutex> m_directory_entries;
+      Beam::IO::OpenState m_open_state;
   };
 
   template<typename C>
   SqlAdministrationDataStore<C>::SqlAdministrationDataStore(
       std::unique_ptr<Connection> connection,
-      const DirectoryEntrySourceFunction& directoryEntrySourceFunction)
+      DirectoryEntrySourceFunction directory_entry_source_function)
       : m_connection(std::move(connection)),
-        m_directoryEntries(directoryEntrySourceFunction) {
+        m_directory_entries(std::move(directory_entry_source_function)) {
     try {
       m_connection->open();
       m_connection->execute(Viper::create_if_not_exists(
-        GetIndexedAccountIdentityRow(), "account_identities"));
+        get_indexed_account_identity_row(), "account_identities"));
       m_connection->execute(Viper::create_if_not_exists(
-        GetIndexedRiskParametersRow(), "risk_parameters"));
+        get_indexed_risk_parameters_row(), "risk_parameters"));
       m_connection->execute(Viper::create_if_not_exists(
-        GetIndexedRiskStateRow(), "risk_states"));
+        get_indexed_risk_state_row(), "risk_states"));
       m_connection->execute(Viper::create_if_not_exists(
-        GetAccountModificationRequestRow(), "account_modification_requests"));
+        get_account_modification_request_row(),
+        "account_modification_requests"));
       m_connection->execute(Viper::create_if_not_exists(
-        GetEntitlementModificationRow(), "entitlement_modifications"));
+        get_entitlement_modification_row(), "entitlement_modifications"));
       m_connection->execute(Viper::create_if_not_exists(
-        GetRiskModificationRow(), "risk_modifications"));
+        get_risk_modification_row(), "risk_modifications"));
       m_connection->execute(Viper::create_if_not_exists(
-        GetIndexedAccountModificationRequestStatus(),
+        get_indexed_account_modification_request_status(),
         "account_modification_request_status"));
       m_connection->execute(Viper::create_if_not_exists(
-        GetAdministrationMessageIndexRow(), "administration_messages"));
+        get_administration_message_index_row(), "administration_messages"));
       m_connection->execute(Viper::create_if_not_exists(
-        GetIndexedMessageBodyRow(), "administration_message_bodies"));
+        get_indexed_message_body_row(), "administration_message_bodies"));
       m_connection->execute(Viper::create_if_not_exists(
-        GetAccountModificationRequestMessageIndexRow(),
+        get_account_modification_request_message_index_row(),
         "account_modification_request_messages"));
     } catch(const std::exception&) {
-      Close();
+      close();
       BOOST_RETHROW;
     }
   }
 
   template<typename C>
   SqlAdministrationDataStore<C>::~SqlAdministrationDataStore() {
-    Close();
+    close();
   }
 
   template<typename C>
   std::vector<AdministrationDataStore::IndexedAccountIdentity>
-      SqlAdministrationDataStore<C>::LoadAllAccountIdentities() {
+      SqlAdministrationDataStore<C>::load_all_account_identities() {
     auto identities = std::vector<IndexedAccountIdentity>();
     try {
-      m_connection->execute(Viper::select(GetIndexedAccountIdentityRow(),
+      m_connection->execute(Viper::select(get_indexed_account_identity_row(),
         "account_identities", std::back_inserter(identities)));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
@@ -169,11 +152,11 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  AccountIdentity SqlAdministrationDataStore<C>::LoadIdentity(
+  AccountIdentity SqlAdministrationDataStore<C>::load_identity(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto identity = AccountIdentity();
     try {
-      m_connection->execute(Viper::select(GetAccountIdentityRow(),
+      m_connection->execute(Viper::select(get_account_identity_row(),
         "account_identities", Viper::sym("account") == account.m_id,
         &identity));
     } catch(const Viper::ExecuteException& e) {
@@ -183,13 +166,13 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  void SqlAdministrationDataStore<C>::Store(
+  void SqlAdministrationDataStore<C>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountIdentity& identity) {
-    auto row = IndexedAccountIdentity{account, identity};
+    auto row = IndexedAccountIdentity(account, identity);
     try {
-      m_connection->execute(Viper::upsert(GetIndexedAccountIdentityRow(),
-        "account_identities", &row));
+      m_connection->execute(Viper::upsert(
+        get_indexed_account_identity_row(), "account_identities", &row));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
@@ -197,10 +180,10 @@ namespace Nexus::AdministrationService {
 
   template<typename C>
   std::vector<AdministrationDataStore::IndexedRiskParameters>
-      SqlAdministrationDataStore<C>::LoadAllRiskParameters() {
+      SqlAdministrationDataStore<C>::load_all_risk_parameters() {
     auto parameters = std::vector<IndexedRiskParameters>();
     try {
-      m_connection->execute(Viper::select(GetIndexedRiskParametersRow(),
+      m_connection->execute(Viper::select(get_indexed_risk_parameters_row(),
         "risk_parameters", std::back_inserter(parameters)));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
@@ -209,11 +192,12 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  RiskService::RiskParameters SqlAdministrationDataStore<C>::LoadRiskParameters(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+  RiskService::RiskParameters
+      SqlAdministrationDataStore<C>::load_risk_parameters(
+        const Beam::ServiceLocator::DirectoryEntry& account) {
     auto parameters = RiskService::RiskParameters();
     try {
-      m_connection->execute(Viper::select(GetRiskParametersRow(),
+      m_connection->execute(Viper::select(get_risk_parameters_row(),
         "risk_parameters", Viper::sym("account") == account.m_id, &parameters));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
@@ -222,13 +206,13 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  void SqlAdministrationDataStore<C>::Store(
+  void SqlAdministrationDataStore<C>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskParameters& riskParameters) {
-    auto parameters = IndexedRiskParameters{account, riskParameters};
+    auto parameters = IndexedRiskParameters(account, riskParameters);
     try {
-      m_connection->execute(Viper::upsert(GetIndexedRiskParametersRow(),
-        "risk_parameters", &parameters));
+      m_connection->execute(Viper::upsert(
+        get_indexed_risk_parameters_row(), "risk_parameters", &parameters));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
@@ -236,10 +220,10 @@ namespace Nexus::AdministrationService {
 
   template<typename C>
   std::vector<AdministrationDataStore::IndexedRiskState>
-      SqlAdministrationDataStore<C>::LoadAllRiskStates() {
+      SqlAdministrationDataStore<C>::load_all_risk_states() {
     auto states = std::vector<IndexedRiskState>();
     try {
-      m_connection->execute(Viper::select(GetIndexedRiskStateRow(),
+      m_connection->execute(Viper::select(get_indexed_risk_state_row(),
         "risk_states", std::back_inserter(states)));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
@@ -248,11 +232,11 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  RiskService::RiskState SqlAdministrationDataStore<C>::LoadRiskState(
+  RiskService::RiskState SqlAdministrationDataStore<C>::load_risk_state(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto state = RiskService::RiskState();
     try {
-      m_connection->execute(Viper::select(GetRiskStateRow(),
+      m_connection->execute(Viper::select(get_risk_state_row(),
         "risk_states", Viper::sym("account") == account.m_id, &state));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
@@ -261,13 +245,13 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  void SqlAdministrationDataStore<C>::Store(
+  void SqlAdministrationDataStore<C>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& riskState) {
-    auto indexedState = IndexedRiskState{account, riskState};
+      const RiskService::RiskState& risk_state) {
+    auto indexed_state = IndexedRiskState(account, risk_state);
     try {
-      m_connection->execute(Viper::upsert(GetIndexedRiskStateRow(),
-        "risk_states", &indexedState));
+      m_connection->execute(Viper::upsert(
+        get_indexed_risk_state_row(), "risk_states", &indexed_state));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
@@ -275,11 +259,12 @@ namespace Nexus::AdministrationService {
 
   template<typename C>
   AccountModificationRequest SqlAdministrationDataStore<C>::
-      LoadAccountModificationRequest(AccountModificationRequest::Id id) {
+      load_account_modification_request(AccountModificationRequest::Id id) {
     auto request = AccountModificationRequest();
     try {
-      m_connection->execute(Viper::select(GetAccountModificationRequestRow(),
-        "account_modification_requests", Viper::sym("id") == id, &request));
+      m_connection->execute(Viper::select(
+        get_account_modification_request_row(), "account_modification_requests",
+        Viper::sym("id") == id, &request));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
@@ -288,20 +273,20 @@ namespace Nexus::AdministrationService {
 
   template<typename C>
   std::vector<AccountModificationRequest::Id>
-      SqlAdministrationDataStore<C>::LoadAccountModificationRequestIds(
+      SqlAdministrationDataStore<C>::load_account_modification_request_ids(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      AccountModificationRequest::Id startId, int maxCount) {
-    if(startId == -1) {
-      startId = std::numeric_limits<AccountModificationRequest::Id>::max();
+      AccountModificationRequest::Id start_id, int max_count) {
+    if(start_id == -1) {
+      start_id = std::numeric_limits<AccountModificationRequest::Id>::max();
     }
-    maxCount = std::min(maxCount, 1000);
+    max_count = std::min(max_count, 1000);
     auto ids = std::vector<AccountModificationRequest::Id>();
     try {
       m_connection->execute(Viper::select(
         Viper::Row<AccountModificationRequest::Id>("id"),
-        "account_modification_requests", Viper::sym("id") < startId &&
+        "account_modification_requests", Viper::sym("id") < start_id &&
         Viper::sym("account") == account.m_id,
-        Viper::order_by("id", Viper::Order::DESC), Viper::limit(maxCount),
+        Viper::order_by("id", Viper::Order::DESC), Viper::limit(max_count),
         std::back_inserter(ids)));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
@@ -311,18 +296,18 @@ namespace Nexus::AdministrationService {
 
   template<typename C>
   std::vector<AccountModificationRequest::Id>
-      SqlAdministrationDataStore<C>::LoadAccountModificationRequestIds(
-      AccountModificationRequest::Id startId, int maxCount) {
-    if(startId == -1) {
-      startId = std::numeric_limits<AccountModificationRequest::Id>::max();
+      SqlAdministrationDataStore<C>::load_account_modification_request_ids(
+      AccountModificationRequest::Id start_id, int max_count) {
+    if(start_id == -1) {
+      start_id = std::numeric_limits<AccountModificationRequest::Id>::max();
     }
-    maxCount = std::min(maxCount, 1000);
+    max_count = std::min(max_count, 1000);
     auto ids = std::vector<AccountModificationRequest::Id>();
     try {
       m_connection->execute(Viper::select(
         Viper::Row<AccountModificationRequest::Id>("id"),
-        "account_modification_requests", Viper::sym("id") < startId,
-        Viper::order_by("id", Viper::Order::DESC), Viper::limit(maxCount),
+        "account_modification_requests", Viper::sym("id") < start_id,
+        Viper::order_by("id", Viper::Order::DESC), Viper::limit(max_count),
         std::back_inserter(ids)));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
@@ -332,7 +317,7 @@ namespace Nexus::AdministrationService {
 
   template<typename C>
   EntitlementModification
-      SqlAdministrationDataStore<C>::LoadEntitlementModification(
+      SqlAdministrationDataStore<C>::load_entitlement_modification(
       AccountModificationRequest::Id id) {
     auto ids = std::vector<unsigned int>();
     try {
@@ -344,23 +329,24 @@ namespace Nexus::AdministrationService {
     }
     auto entitlements = std::vector<Beam::ServiceLocator::DirectoryEntry>();
     for(auto& id : ids) {
-      entitlements.push_back(m_directoryEntries.Load(id));
+      entitlements.push_back(m_directory_entries.Load(id));
     }
     return entitlements;
   }
 
   template<typename C>
-  void SqlAdministrationDataStore<C>::Store(
+  void SqlAdministrationDataStore<C>::store(
       const AccountModificationRequest& request,
       const EntitlementModification& modification) {
     auto entitlements = std::vector<EntitlementModificationRow>();
-    for(auto& entitlement : modification.GetEntitlements()) {
-      entitlements.push_back({request.GetId(), entitlement});
+    for(auto& entitlement : modification.get_entitlements()) {
+      entitlements.push_back({request.get_id(), entitlement});
     }
     try {
-      m_connection->execute(Viper::insert(GetAccountModificationRequestRow(),
-        "account_modification_requests", &request));
-      m_connection->execute(Viper::insert(GetEntitlementModificationRow(),
+      m_connection->execute(Viper::insert(
+        get_account_modification_request_row(), "account_modification_requests",
+        &request));
+      m_connection->execute(Viper::insert(get_entitlement_modification_row(),
         "entitlement_modifications", entitlements.begin(), entitlements.end()));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
@@ -368,11 +354,11 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  RiskModification SqlAdministrationDataStore<C>::LoadRiskModification(
+  RiskModification SqlAdministrationDataStore<C>::load_risk_modification(
       AccountModificationRequest::Id id) {
     auto parameters = RiskService::RiskParameters();
     try {
-      m_connection->execute(Viper::select(GetRiskParametersRow(),
+      m_connection->execute(Viper::select(get_risk_parameters_row(),
         "risk_modifications", Viper::sym("id") == id, &parameters));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
@@ -381,40 +367,42 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  void SqlAdministrationDataStore<C>::Store(
+  void SqlAdministrationDataStore<C>::store(
       const AccountModificationRequest& request,
       const RiskModification& modification) {
-    auto indexedModification = IndexedRiskModification{request.GetId(),
-      request.GetAccount(), modification.GetParameters()};
+    auto indexed_modification = IndexedRiskModification(
+      request.get_id(), request.get_account(), modification.get_parameters());
     try {
-      m_connection->execute(Viper::insert(GetAccountModificationRequestRow(),
-        "account_modification_requests", &request));
-      m_connection->execute(Viper::insert(GetRiskModificationRow(),
-        "risk_modifications", &indexedModification));
+      m_connection->execute(Viper::insert(
+        get_account_modification_request_row(), "account_modification_requests",
+        &request));
+      m_connection->execute(Viper::insert(get_risk_modification_row(),
+        "risk_modifications", &indexed_modification));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
   }
 
   template<typename C>
-  void SqlAdministrationDataStore<C>::Store(AccountModificationRequest::Id id,
-      const Message& message) {
-    auto index = AdministrationMessageIndex{id, message.GetAccount(),
-      message.GetTimestamp()};
+  void SqlAdministrationDataStore<C>::store(
+      AccountModificationRequest::Id id, const Message& message) {
+    auto index = AdministrationMessageIndex(
+      id, message.get_account(), message.get_timestamp());
     auto bodies = std::vector<IndexedMessageBody>();
-    for(auto& body : message.GetBodies()) {
-      bodies.push_back({message.GetId(), body});
+    for(auto& body : message.get_bodies()) {
+      bodies.push_back({message.get_id(), body});
     }
-    auto modificationIndex = AccountModificationRequestMessageIndex{id,
-      message.GetId()};
+    auto modification_index =
+      AccountModificationRequestMessageIndex(id, message.get_id());
     try {
-      m_connection->execute(Viper::insert(GetAdministrationMessageIndexRow(),
-        "administration_messages", &index));
-      m_connection->execute(Viper::insert(GetIndexedMessageBodyRow(),
+      m_connection->execute(Viper::insert(
+        get_administration_message_index_row(), "administration_messages",
+        &index));
+      m_connection->execute(Viper::insert(get_indexed_message_body_row(),
         "administration_message_bodies", bodies.begin(), bodies.end()));
       m_connection->execute(Viper::insert(
-        GetAccountModificationRequestMessageIndexRow(),
-        "account_modification_request_messages", &modificationIndex));
+        get_account_modification_request_message_index_row(),
+        "account_modification_request_messages", &modification_index));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
@@ -422,12 +410,12 @@ namespace Nexus::AdministrationService {
 
   template<typename C>
   AccountModificationRequest::Update
-      SqlAdministrationDataStore<C>::LoadAccountModificationRequestStatus(
-      AccountModificationRequest::Id id) {
+      SqlAdministrationDataStore<C>::load_account_modification_request_status(
+        AccountModificationRequest::Id id) {
     auto status = AccountModificationRequest::Update();
     try {
       m_connection->execute(Viper::select(
-        GetAccountModificationRequestStatusRow(),
+        get_account_modification_request_status_row(),
         "account_modification_request_status", Viper::sym("id") == id,
         Viper::order_by("sequence_number", Viper::Order::DESC),
         Viper::limit(1), &status));
@@ -438,20 +426,20 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  void SqlAdministrationDataStore<C>::Store(AccountModificationRequest::Id id,
+  void SqlAdministrationDataStore<C>::store(AccountModificationRequest::Id id,
       const AccountModificationRequest::Update& status) {
-    auto indexedUpdated = IndexedAccountModificationRequestStatus{id, status};
+    auto indexed_updated = IndexedAccountModificationRequestStatus(id, status);
     try {
       m_connection->execute(Viper::insert(
-        GetIndexedAccountModificationRequestStatus(),
-        "account_modification_request_status", &indexedUpdated));
+        get_indexed_account_modification_request_status(),
+        "account_modification_request_status", &indexed_updated));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
   }
 
   template<typename C>
-  Message::Id SqlAdministrationDataStore<C>::LoadLastMessageId() {
+  Message::Id SqlAdministrationDataStore<C>::load_last_message_id() {
     auto id = std::optional<Message::Id>();
     try {
       m_connection->execute(Viper::select(Viper::Row<Message::Id>("id"),
@@ -467,11 +455,12 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  Message SqlAdministrationDataStore<C>::LoadMessage(Message::Id id) {
+  Message SqlAdministrationDataStore<C>::load_message(Message::Id id) {
     auto index = std::optional<AdministrationMessageIndex>();
     try {
-      m_connection->execute(Viper::select(GetAdministrationMessageIndexRow(),
-        "administration_messages", Viper::sym("id") == id, &index));
+      m_connection->execute(Viper::select(
+        get_administration_message_index_row(), "administration_messages",
+        Viper::sym("id") == id, &index));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
@@ -480,18 +469,18 @@ namespace Nexus::AdministrationService {
     }
     auto bodies = std::vector<Message::Body>();
     try {
-      m_connection->execute(Viper::select(GetMessageBodyRow(),
+      m_connection->execute(Viper::select(get_message_body_row(),
         "administration_message_bodies", Viper::sym("id") == id,
         std::back_inserter(bodies)));
     } catch(const Viper::ExecuteException& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
-    return Message(index->m_id, index->m_account, index->m_timestamp,
-      std::move(bodies));
+    return Message(
+      index->m_id, index->m_account, index->m_timestamp, std::move(bodies));
   }
 
   template<typename C>
-  std::vector<Message::Id> SqlAdministrationDataStore<C>::LoadMessageIds(
+  std::vector<Message::Id> SqlAdministrationDataStore<C>::load_message_ids(
       AccountModificationRequest::Id id) {
     auto ids = std::vector<Message::Id>();
     try {
@@ -506,19 +495,33 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  void SqlAdministrationDataStore<C>::WithTransaction(
-      const std::function<void ()>& transaction) {
-    auto lock = std::lock_guard(m_mutex);
-    Viper::transaction(*m_connection, transaction);
+  template<typename F>
+  decltype(auto) SqlAdministrationDataStore<C>::with_transaction(
+      F&& transaction) {
+    using Result = std::remove_reference_t<
+      decltype(std::forward<F>(transaction)())>;
+    if constexpr(std::is_same_v<Result, void>) {
+      auto lock = std::lock_guard(m_mutex);
+      Viper::transaction(*m_connection, std::forward<F>(transaction));
+    } else {
+      auto result = boost::optional<Result>();
+      {
+        auto lock = std::lock_guard(m_mutex);
+        Viper::transaction(*m_connection, [&] {
+          result.emplace(std::forward<F>(transaction)());
+        });
+      }
+      return Result(std::move(*result));
+    }
   }
 
   template<typename C>
-  void SqlAdministrationDataStore<C>::Close() {
-    if(m_openState.SetClosing()) {
+  void SqlAdministrationDataStore<C>::close() {
+    if(m_open_state.SetClosing()) {
       return;
     }
     m_connection->close();
-    m_openState.Close();
+    m_open_state.Close();
   }
 }
 

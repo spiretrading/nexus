@@ -44,7 +44,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("load_non_existent_identity") {
-      auto data_store = LocalAdministrationDataStore();
       auto account = DirectoryEntry::MakeAccount(123, "user1");
       auto identity = data_store.with_transaction([&] {
         return data_store.load_identity(account);
@@ -53,7 +52,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("load_all_identities") {
-      auto data_store = LocalAdministrationDataStore();
       auto empty_identities = data_store.with_transaction([&] {
         return data_store.load_all_account_identities();
       });
@@ -81,7 +79,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("store_and_load_risk_parameters") {
-      auto data_store = LocalAdministrationDataStore();
       auto account = DirectoryEntry::MakeAccount(123, "user1");
       auto parameters = RiskParameters(
         CAD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, 100, seconds(5));
@@ -104,7 +101,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("load_non_existent_risk_parameters") {
-      auto data_store = LocalAdministrationDataStore();
       auto account = DirectoryEntry::MakeAccount(123, "user1");
       auto parameters = data_store.with_transaction([&] {
         return data_store.load_risk_parameters(account);
@@ -113,7 +109,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("load_all_risk_parameters") {
-      auto data_store = LocalAdministrationDataStore();
       auto empty_parameters = data_store.with_transaction([&] {
         return data_store.load_all_risk_parameters();
       });
@@ -141,7 +136,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("store_and_load_risk_state") {
-      auto data_store = LocalAdministrationDataStore();
       auto account = DirectoryEntry::MakeAccount(123, "user1");
       auto state = RiskState(
         RiskState::Type::ACTIVE, time_from_string("2024-05-20 10:00:00"));
@@ -164,7 +158,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("load_non_existent_risk_state") {
-      auto data_store = LocalAdministrationDataStore();
       auto account = DirectoryEntry::MakeAccount(123, "user1");
       auto state = data_store.with_transaction([&] {
         return data_store.load_risk_state(account);
@@ -173,7 +166,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("load_all_risk_states") {
-      auto data_store = LocalAdministrationDataStore();
       auto empty_states = data_store.with_transaction([&] {
         return data_store.load_all_risk_states();
       });
@@ -201,7 +193,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("store_and_load_entitlement_modification") {
-      auto data_store = LocalAdministrationDataStore();
       auto account = DirectoryEntry::MakeAccount(123, "user1");
       auto submission_account = DirectoryEntry::MakeAccount(456, "admin");
       auto submission_time = time_from_string("2024-07-05 10:00:00");
@@ -225,7 +216,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("load_non_existent_entitlement_modification") {
-      auto data_store = LocalAdministrationDataStore();
       auto modification = data_store.with_transaction([&] {
         return data_store.load_entitlement_modification(123);
       });
@@ -233,7 +223,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("store_and_load_risk_modification") {
-      auto data_store = LocalAdministrationDataStore();
       auto account = DirectoryEntry::MakeAccount(123, "user1");
       auto submission_account = DirectoryEntry::MakeAccount(456, "admin");
       auto submission_time = time_from_string("2024-07-05 11:00:00");
@@ -257,7 +246,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("load_non_existent_risk_modification") {
-      auto data_store = LocalAdministrationDataStore();
       auto modification = data_store.with_transaction([&] {
         return data_store.load_risk_modification(456);
       });
@@ -265,7 +253,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("store_and_load_status") {
-      auto data_store = LocalAdministrationDataStore();
       auto request_id = 1;
       auto admin_account = DirectoryEntry::MakeAccount(123, "admin");
       auto manager_account = DirectoryEntry::MakeAccount(456, "manager");
@@ -292,7 +279,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("load_non_existent_status") {
-      auto data_store = LocalAdministrationDataStore();
       auto status = data_store.with_transaction([&] {
         return data_store.load_account_modification_request_status(999);
       });
@@ -300,7 +286,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("store_and_load_message") {
-      auto data_store = LocalAdministrationDataStore();
       auto request_id = 1;
       auto account = DirectoryEntry::MakeAccount(123, "user1");
       auto timestamp = time_from_string("2024-07-05 15:00:00");
@@ -325,7 +310,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("load_messages") {
-      auto data_store = LocalAdministrationDataStore();
       auto last_id = data_store.with_transaction([&] {
         return data_store.load_last_message_id();
       });
@@ -383,7 +367,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("load_account_modification_request_ids_out_of_order") {
-      auto data_store = LocalAdministrationDataStore();
       auto account = DirectoryEntry::MakeAccount(100, "user_a");
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
@@ -411,7 +394,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("load_account_modification_request_ids_with_start_id") {
-      auto data_store = LocalAdministrationDataStore();
       auto account = DirectoryEntry::MakeAccount(100, "user_a");
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
@@ -437,7 +419,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("load_account_modification_request_ids_with_max_count") {
-      auto data_store = LocalAdministrationDataStore();
       auto account = DirectoryEntry::MakeAccount(100, "user_a");
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
@@ -463,7 +444,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("load_account_modification_request_ids_by_account") {
-      auto data_store = LocalAdministrationDataStore();
       auto account_a = DirectoryEntry::MakeAccount(100, "user_a");
       auto account_b = DirectoryEntry::MakeAccount(200, "user_b");
       auto modification = EntitlementModification();
@@ -488,7 +468,6 @@ namespace Nexus::AdministrationService::Tests {
     }
 
     SUBCASE("load_account_modification_request_ids_by_account_with_start_id") {
-      auto data_store = LocalAdministrationDataStore();
       auto account_a = DirectoryEntry::MakeAccount(100, "user_a");
       auto account_b = DirectoryEntry::MakeAccount(200, "user_b");
       auto modification = EntitlementModification();

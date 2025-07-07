@@ -51,14 +51,14 @@ namespace Viper {
   template<>
   struct ToSql<Nexus::Quantity> {
     void operator ()(Nexus::Quantity value, std::string& column) const {
-      to_sql(value.GetRepresentation(), column);
+      to_sql(value.get_representation(), column);
     }
   };
 
   template<>
   struct FromSql<Nexus::Quantity> {
     auto operator ()(const RawColumn& column) const {
-      return Nexus::Quantity::FromRepresentation(
+      return Nexus::Quantity::from_representation(
         from_sql<boost::float64_t>(column));
     }
   };
