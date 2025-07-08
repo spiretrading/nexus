@@ -27,6 +27,7 @@ using namespace Nexus::AdministrationService;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
 using namespace Nexus::MarketDataService;
+using namespace Nexus::RiskService;
 
 namespace {
   struct Fixture {
@@ -40,21 +41,24 @@ namespace {
     EntitlementDatabase m_entitlements;
     std::shared_ptr<TestServerConnection> m_server_connection;
     optional<ServletContainer> m_container;
+    TradingGroup m_trading_group;
     DirectoryEntry m_admin_account;
     std::unique_ptr<TestServiceProtocolClient> m_admin_client;
+    DirectoryEntry m_manager_account;
+    std::unique_ptr<TestServiceProtocolClient> m_manager_client;
     DirectoryEntry m_trader_account;
     std::unique_ptr<TestServiceProtocolClient> m_trader_client;
 
     Fixture()
-      : m_time_client(time_from_string("2024-07-04 12:00:00")),
-        m_server_connection(std::make_shared<TestServerConnection>()) {
+        : m_time_client(time_from_string("2024-07-04 12:00:00")),
+          m_server_connection(std::make_shared<TestServerConnection>()) {
       auto entitlement1 = m_service_locator_environment.GetRoot().MakeDirectory(
         "entitlement1", DirectoryEntry::GetStarDirectory());
       auto entitlement2 = m_service_locator_environment.GetRoot().MakeDirectory(
         "entitlement2", DirectoryEntry::GetStarDirectory());
       m_entitlements.Add({"Entitlement1", Money(100), USD, entitlement1,
         {{EntitlementKey(NYSE),
-        MarketDataTypeSet({MarketDataType::BBO_QUOTE})}}});
+          MarketDataTypeSet({MarketDataType::BBO_QUOTE})}}});
       m_entitlements.Add({"Entitlement2", Money(200), CAD, entitlement2,
         {{EntitlementKey(TSX),
           MarketDataTypeSet({MarketDataType::BOOK_QUOTE})}}});
@@ -68,12 +72,15 @@ namespace {
         Initialize(&m_service_locator_environment.GetRoot(), m_entitlements,
           &m_data_store, &m_time_client)), m_server_connection,
         factory<std::unique_ptr<TriggerTimer>>());
+      m_trading_group = make_trading_group("trading_group");
       auto admin_group =
         m_service_locator_environment.GetRoot().LoadDirectoryEntry(
           DirectoryEntry::GetStarDirectory(), "administrators");
       make_account("admin", admin_group);
-      make_account("trader", DirectoryEntry::GetStarDirectory());
       std::tie(m_admin_account, m_admin_client) = make_client("admin");
+      make_account("manager", m_trading_group.get_managers_directory());
+      std::tie(m_manager_account, m_manager_client) = make_client("manager");
+      make_account("trader", m_trading_group.get_traders_directory());
       std::tie(m_trader_account, m_trader_client) = make_client("trader");
     }
 
@@ -232,19 +239,14 @@ TEST_SUITE("AdministrationServlet") {
     REQUIRE(service_roles.Test(AccountRole::SERVICE));
     REQUIRE(!service_roles.Test(AccountRole::TRADER));
     REQUIRE(!service_roles.Test(AccountRole::MANAGER));
-    auto trading_group = fixture.make_trading_group("test_trading_group");
-    auto manager_account =
-      fixture.make_account("manager43", trading_group.get_managers_directory());
     auto manager_roles = fixture.m_trader_client->SendRequest<
-      LoadAccountRolesService>(manager_account);
+      LoadAccountRolesService>(fixture.m_manager_account);
     REQUIRE(!manager_roles.Test(AccountRole::ADMINISTRATOR));
     REQUIRE(!manager_roles.Test(AccountRole::SERVICE));
     REQUIRE(!manager_roles.Test(AccountRole::TRADER));
     REQUIRE(manager_roles.Test(AccountRole::MANAGER));
-    auto trader_account =
-      fixture.make_account("trader96", trading_group.get_traders_directory());
     auto trader_roles = fixture.m_trader_client->SendRequest<
-      LoadAccountRolesService>(trader_account);
+      LoadAccountRolesService>(fixture.m_trader_account);
     REQUIRE(!trader_roles.Test(AccountRole::ADMINISTRATOR));
     REQUIRE(!trader_roles.Test(AccountRole::SERVICE));
     REQUIRE(trader_roles.Test(AccountRole::TRADER));
@@ -253,28 +255,19 @@ TEST_SUITE("AdministrationServlet") {
 
   TEST_CASE("load_supervised_account_roles") {
     auto fixture = Fixture();
-    auto trading_group = fixture.make_trading_group("test_trading_group");
-    auto manager_account =
-      fixture.make_account("manager43", trading_group.get_managers_directory());
-    auto trader_account =
-      fixture.make_account("trader96", trading_group.get_traders_directory());
     auto roles =
       fixture.m_admin_client->SendRequest<LoadSupervisedAccountRolesService>(
-        fixture.m_admin_account, trader_account);
+        fixture.m_admin_account, fixture.m_trader_account);
     REQUIRE(roles.Test(AccountRole::ADMINISTRATOR));
     REQUIRE(roles.Test(AccountRole::MANAGER));
-    roles = fixture.m_admin_client->SendRequest<
-      LoadSupervisedAccountRolesService>(manager_account, trader_account);
+    roles =
+      fixture.m_admin_client->SendRequest<LoadSupervisedAccountRolesService>(
+        fixture.m_manager_account, fixture.m_trader_account);
     REQUIRE(!roles.Test(AccountRole::ADMINISTRATOR));
     REQUIRE(roles.Test(AccountRole::MANAGER));
     roles =
       fixture.m_admin_client->SendRequest<LoadSupervisedAccountRolesService>(
-        manager_account, fixture.m_trader_account);
-    REQUIRE(!roles.Test(AccountRole::ADMINISTRATOR));
-    REQUIRE(!roles.Test(AccountRole::MANAGER));
-    roles =
-      fixture.m_admin_client->SendRequest<LoadSupervisedAccountRolesService>(
-        trader_account, manager_account);
+        fixture.m_trader_account, fixture.m_manager_account);
     REQUIRE(!roles.Test(AccountRole::ADMINISTRATOR));
     REQUIRE(!roles.Test(AccountRole::MANAGER));
     roles =
@@ -286,12 +279,9 @@ TEST_SUITE("AdministrationServlet") {
 
   TEST_CASE("load_parent_trading_group") {
     auto fixture = Fixture();
-    auto trading_group = fixture.make_trading_group("test_trading_group");
-    auto trader_account =
-      fixture.make_account("trader96", trading_group.get_traders_directory());
-    auto parent_group =fixture.m_admin_client->SendRequest<
-      LoadParentTradingGroupService>(trader_account);
-    REQUIRE(parent_group == trading_group.get_entry());
+    auto parent_group = fixture.m_admin_client->SendRequest<
+      LoadParentTradingGroupService>(fixture.m_trader_account);
+    REQUIRE(parent_group == fixture.m_trading_group.get_entry());
     parent_group = fixture.m_admin_client->SendRequest<
       LoadParentTradingGroupService>(fixture.m_admin_account);
     REQUIRE(parent_group == DirectoryEntry());
@@ -338,22 +328,17 @@ TEST_SUITE("AdministrationServlet") {
 
   TEST_CASE("load_trading_group") {
     auto fixture = Fixture();
-    auto trading_group = fixture.make_trading_group("test_trading_group");
-    auto manager =
-      fixture.make_account("manager44", trading_group.get_managers_directory());
-    auto trader =
-      fixture.make_account("trader96", trading_group.get_traders_directory());
     auto result = fixture.m_admin_client->SendRequest<LoadTradingGroupService>(
-      trading_group.get_entry());
-    REQUIRE(result.get_entry() == trading_group.get_entry());
+      fixture.m_trading_group.get_entry());
+    REQUIRE(result.get_entry() == fixture.m_trading_group.get_entry());
     REQUIRE(result.get_managers_directory() ==
-      trading_group.get_managers_directory());
+      fixture.m_trading_group.get_managers_directory());
     REQUIRE(result.get_traders_directory() ==
-      trading_group.get_traders_directory());
+      fixture.m_trading_group.get_traders_directory());
     REQUIRE(result.get_managers().size() == 1);
-    REQUIRE(result.get_managers().front() == manager);
+    REQUIRE(result.get_managers().front() == fixture.m_manager_account);
     REQUIRE(result.get_traders().size() == 1);
-    REQUIRE(result.get_traders().front() == trader);
+    REQUIRE(result.get_traders().front() == fixture.m_trader_account);
   }
 
   TEST_CASE("load_administrators") {
@@ -421,6 +406,196 @@ TEST_SUITE("AdministrationServlet") {
       REQUIRE_THROWS_AS(
         fixture.m_trader_client->SendRequest<StoreEntitlementsService>(
           fixture.m_trader_account, entitlements), ServiceRequestException);
+    }
+  }
+
+  TEST_CASE("load_managed_trading_groups") {
+    auto fixture = Fixture();
+    auto trading_group1 = fixture.make_trading_group("group1");
+    auto trading_group2 = fixture.make_trading_group("group2");
+    auto manager_account = fixture.make_account(
+      "manager44", trading_group1.get_managers_directory());
+    SUBCASE("admin") {
+      auto result = fixture.m_admin_client->SendRequest<
+        LoadManagedTradingGroupsService>(fixture.m_admin_account);
+      REQUIRE(result.size() == 3);
+      REQUIRE(std::find(result.begin(), result.end(),
+        fixture.m_trading_group.get_entry()) != result.end());
+      REQUIRE(
+        std::find(result.begin(), result.end(), trading_group1.get_entry()) !=
+          result.end());
+      REQUIRE(
+        std::find(result.begin(), result.end(), trading_group2.get_entry()) !=
+          result.end());
+    }
+    SUBCASE("manager") {
+      auto result = fixture.m_admin_client->SendRequest<
+        LoadManagedTradingGroupsService>(manager_account);
+      REQUIRE(result.size() == 1);
+      REQUIRE(result.front() == trading_group1.get_entry());
+    }
+    SUBCASE("trader") {
+      auto result = fixture.m_admin_client->SendRequest<
+        LoadManagedTradingGroupsService>(fixture.m_trader_account);
+      REQUIRE(result.empty());
+    }
+  }
+
+  TEST_CASE("submit_and_load_entitlement_modification") {
+    auto fixture = Fixture();
+    auto entitlements = std::vector<DirectoryEntry>();
+    for(auto& entry : fixture.m_entitlements.GetEntries()) {
+      entitlements.push_back(entry.m_groupEntry);
+    }
+    auto modification = EntitlementModification(entitlements);
+    auto comment = AdministrationService::Message(
+      0, fixture.m_trader_account, fixture.m_time_client.GetTime(),
+      {AdministrationService::Message::Body::make_plain_text("Test comment")});
+    SUBCASE("admin") {
+      auto request = fixture.m_admin_client->SendRequest<
+        SubmitEntitlementModificationRequestService>(
+          fixture.m_trader_account, modification, comment);
+      REQUIRE(request.get_id() == 1);
+      REQUIRE(request.get_account() == fixture.m_trader_account);
+      REQUIRE(request.get_submission_account() == fixture.m_admin_account);
+      REQUIRE(request.get_type() ==
+        AccountModificationRequest::Type::ENTITLEMENTS);
+      auto loaded_request = fixture.m_admin_client->SendRequest<
+        LoadAccountModificationRequestService>(request.get_id());
+      REQUIRE(loaded_request.get_id() == request.get_id());
+      REQUIRE(loaded_request.get_account() == request.get_account());
+      REQUIRE(loaded_request.get_submission_account() ==
+        request.get_submission_account());
+      REQUIRE(loaded_request.get_timestamp() == request.get_timestamp());
+      REQUIRE(loaded_request.get_type() == request.get_type());
+      auto loaded_modification = fixture.m_admin_client->SendRequest<
+        LoadEntitlementModificationService>(request.get_id());
+      REQUIRE(loaded_modification.get_entitlements().size() ==
+        modification.get_entitlements().size());
+      for(auto& entitlement : modification.get_entitlements()) {
+        REQUIRE(std::find(loaded_modification.get_entitlements().begin(),
+          loaded_modification.get_entitlements().end(), entitlement) !=
+          loaded_modification.get_entitlements().end());
+      }
+    }
+    SUBCASE("trader") {
+      auto request = fixture.m_trader_client->SendRequest<
+        SubmitEntitlementModificationRequestService>(
+          DirectoryEntry(), modification, comment);
+      REQUIRE(request.get_account() == fixture.m_trader_account);
+      REQUIRE(request.get_submission_account() == fixture.m_trader_account);
+      auto initial_status = fixture.m_trader_client->SendRequest<
+        LoadAccountModificationRequestStatusService>(request.get_id());
+      REQUIRE(
+        initial_status.m_status == AccountModificationRequest::Status::PENDING);
+      REQUIRE(initial_status.m_account == fixture.m_trader_account);
+      auto review_comment = AdministrationService::Message(
+        0, fixture.m_manager_account, fixture.m_time_client.GetTime(),
+        {AdministrationService::Message::Body::make_plain_text(
+          "Reviewed by manager")});
+      auto review_update = fixture.m_manager_client->SendRequest<
+        ApproveAccountModificationRequestService>(
+          request.get_id(), review_comment);
+      REQUIRE(
+        review_update.m_status == AccountModificationRequest::Status::REVIEWED);
+      auto review_entitlements = fixture.m_manager_client->SendRequest<
+        LoadAccountEntitlementsService>(fixture.m_trader_account);
+      REQUIRE(review_entitlements.empty());
+      SUBCASE("approve") {
+        auto comment = AdministrationService::Message(
+          0, fixture.m_admin_account, fixture.m_time_client.GetTime(),
+          {AdministrationService::Message::Body::make_plain_text(
+            "Approved by admin")});
+        auto update = fixture.m_admin_client->SendRequest<
+          ApproveAccountModificationRequestService>(request.get_id(), comment);
+        REQUIRE(
+          update.m_status == AccountModificationRequest::Status::GRANTED);
+        REQUIRE(update.m_account == fixture.m_admin_account);
+        auto status = fixture.m_trader_client->SendRequest<
+          LoadAccountModificationRequestStatusService>(request.get_id());
+        REQUIRE(
+          status.m_status == AccountModificationRequest::Status::GRANTED);
+        REQUIRE(status.m_account == fixture.m_admin_account);
+        auto entitlements = fixture.m_manager_client->SendRequest<
+          LoadAccountEntitlementsService>(fixture.m_trader_account);
+        REQUIRE(
+          entitlements.size() == fixture.m_entitlements.GetEntries().size());
+        for(auto& entitlement : fixture.m_entitlements.GetEntries()) {
+          REQUIRE(std::find(entitlements.begin(), entitlements.end(),
+            entitlement.m_groupEntry) != entitlements.end());
+        }
+      }
+      SUBCASE("reject") {
+        auto comment = AdministrationService::Message(
+          0, fixture.m_admin_account, fixture.m_time_client.GetTime(),
+          {AdministrationService::Message::Body::make_plain_text(
+            "Rejected by admin")});
+        auto update = fixture.m_admin_client->SendRequest<
+          RejectAccountModificationRequestService>(request.get_id(), comment);
+        REQUIRE(
+          update.m_status == AccountModificationRequest::Status::REJECTED);
+        REQUIRE(update.m_account == fixture.m_admin_account);
+        auto status = fixture.m_trader_client->SendRequest<
+          LoadAccountModificationRequestStatusService>(request.get_id());
+        REQUIRE(
+          status.m_status == AccountModificationRequest::Status::REJECTED);
+        REQUIRE(status.m_account == fixture.m_admin_account);
+        auto entitlements = fixture.m_manager_client->SendRequest<
+          LoadAccountEntitlementsService>(fixture.m_trader_account);
+        REQUIRE(entitlements.empty());
+      }
+    }
+  }
+
+  TEST_CASE("submit_and_load_risk_modification") {
+    auto fixture = Fixture();
+    auto parameters = RiskParameters(
+      USD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, 100, seconds(1));
+    auto modification = RiskModification(parameters);
+    auto comment = AdministrationService::Message(
+      0, fixture.m_trader_account, fixture.m_time_client.GetTime(),
+      {AdministrationService::Message::Body::make_plain_text("Test comment")});
+    SUBCASE("admin") {
+      auto request = fixture.m_admin_client->SendRequest<
+        SubmitRiskModificationRequestService>(
+          fixture.m_trader_account, modification, comment);
+      REQUIRE(request.get_id() == 1);
+      REQUIRE(request.get_account() == fixture.m_trader_account);
+      REQUIRE(request.get_submission_account() == fixture.m_admin_account);
+      REQUIRE(request.get_type() == AccountModificationRequest::Type::RISK);
+      auto loaded_request = fixture.m_admin_client->SendRequest<
+        LoadAccountModificationRequestService>(request.get_id());
+      REQUIRE(loaded_request.get_id() == request.get_id());
+      REQUIRE(loaded_request.get_account() == request.get_account());
+      REQUIRE(loaded_request.get_submission_account() ==
+        request.get_submission_account());
+      REQUIRE(loaded_request.get_timestamp() == request.get_timestamp());
+      REQUIRE(loaded_request.get_type() == request.get_type());
+      auto loaded_modification = fixture.m_admin_client->SendRequest<
+        LoadRiskModificationService>(request.get_id());
+      REQUIRE(loaded_modification.get_parameters() ==
+        modification.get_parameters());
+    }
+    SUBCASE("trader") {
+      auto request = fixture.m_trader_client->SendRequest<
+        SubmitRiskModificationRequestService>(
+          DirectoryEntry(), modification, comment);
+      REQUIRE(request.get_account() == fixture.m_trader_account);
+      REQUIRE(request.get_submission_account() == fixture.m_trader_account);
+      auto initial_status = fixture.m_trader_client->SendRequest<
+        LoadAccountModificationRequestStatusService>(request.get_id());
+      REQUIRE(
+        initial_status.m_status == AccountModificationRequest::Status::PENDING);
+      REQUIRE(initial_status.m_account == fixture.m_trader_account);
+      auto review_comment = AdministrationService::Message(
+        0, fixture.m_manager_account, fixture.m_time_client.GetTime(),
+        {AdministrationService::Message::Body::make_plain_text(
+          "Rejected by manager.")});
+      auto review_update = fixture.m_manager_client->SendRequest<
+        RejectAccountModificationRequestService>(
+        request.get_id(), review_comment);
+      REQUIRE(
+        review_update.m_status == AccountModificationRequest::Status::REJECTED);
     }
   }
 }

@@ -612,8 +612,7 @@ namespace Nexus::AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& submission_account,
         const Beam::ServiceLocator::DirectoryEntry& account,
         const AccountRoles& roles, AccountModificationRequest::Type type) {
-    if(!check_read_permission(session_account, submission_account) ||
-        roles.GetBitset().none()) {
+    if(!check_read_permission(session_account, submission_account)) {
       throw Beam::Services::ServiceRequestException(
         "Insufficient permissions.");
     }
@@ -653,26 +652,66 @@ namespace Nexus::AdministrationService {
         ServiceProtocolClient& client, AccountRoles roles) {
     auto& session = client.GetSession();
     auto accounts = std::vector<Beam::ServiceLocator::DirectoryEntry>();
-    if(check_administrator(session.GetAccount())) {
-      if(roles.Test(AccountRole::ADMINISTRATOR)) {
-        auto administrators =
-          m_service_locator_client->LoadChildren(m_administrators_root);
-        for(auto& administrator : administrators) {
-          if(administrator.m_type ==
+    if(!check_administrator(session.GetAccount())) {
+      return accounts;
+    }
+    if(roles.Test(AccountRole::ADMINISTRATOR)) {
+      auto administrators =
+        m_service_locator_client->LoadChildren(m_administrators_root);
+      for(auto& administrator : administrators) {
+        if(administrator.m_type ==
+            Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT) {
+          accounts.push_back(std::move(administrator));
+        }
+      }
+    }
+    if(roles.Test(AccountRole::MANAGER)) {
+      auto trading_groups =
+        m_service_locator_client->LoadChildren(m_trading_groups_root);
+      for(auto& trading_group : trading_groups) {
+        auto managers_directory =
+          m_service_locator_client->LoadDirectoryEntry(
+            trading_group, "managers");
+        auto managers =
+          m_service_locator_client->LoadChildren(managers_directory);
+        for(auto& manager : managers) {
+          if(manager.m_type ==
               Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT) {
-            accounts.push_back(std::move(administrator));
+            if(std::find(accounts.begin(), accounts.end(), manager) ==
+                accounts.end()) {
+              accounts.push_back(std::move(manager));
+            }
           }
         }
       }
-      if(roles.Test(AccountRole::SERVICE)) {
-        auto service_accounts =
-          m_service_locator_client->LoadChildren(m_services_root);
-        for(auto& service_account : service_accounts) {
-          if(service_account.m_type ==
+    }
+    if(roles.Test(AccountRole::SERVICE)) {
+      auto service_accounts =
+        m_service_locator_client->LoadChildren(m_services_root);
+      for(auto& service_account : service_accounts) {
+        if(service_account.m_type ==
+            Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT) {
+          if(std::find(accounts.begin(), accounts.end(), service_account) ==
+              accounts.end()) {
+            accounts.push_back(std::move(service_account));
+          }
+        }
+      }
+    }
+    if(roles.Test(AccountRole::TRADER)) {
+      auto trading_groups =
+        m_service_locator_client->LoadChildren(m_trading_groups_root);
+      for(auto& trading_group : trading_groups) {
+        auto traders_directory = m_service_locator_client->LoadDirectoryEntry(
+          trading_group, "traders");
+        auto traders =
+          m_service_locator_client->LoadChildren(traders_directory);
+        for(auto& trader : traders) {
+          if(trader.m_type ==
               Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT) {
-            if(std::find(accounts.begin(), accounts.end(), service_account) ==
+            if(std::find(accounts.begin(), accounts.end(), trader) ==
                 accounts.end()) {
-              accounts.push_back(std::move(service_account));
+              accounts.push_back(std::move(trader));
             }
           }
         }
