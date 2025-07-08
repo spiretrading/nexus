@@ -127,6 +127,13 @@ namespace Nexus::AdministrationService::Tests {
         Beam::Services::Tests::ServiceResult<void> m_result;
       };
 
+      /** Records a call to get_risk_parameters_publisher(). */
+      struct MonitorRiskParametersOperation {
+        Beam::ServiceLocator::DirectoryEntry m_account;
+        Beam::Services::Tests::ServiceResult<RiskService::RiskParameters>
+          m_result;
+      };
+
       /** Records a call to store_risk_parameters(). */
       struct StoreRiskParametersOperation {
         Beam::ServiceLocator::DirectoryEntry m_account;
@@ -259,8 +266,9 @@ namespace Nexus::AdministrationService::Tests {
         LoadManagedTradingGroupsOperation, LoadAdministratorsOperation,
         LoadServicesOperation, LoadEntitlementsOperation,
         LoadAccountEntitlementsOperation, StoreEntitlementsOperation,
-        StoreRiskParametersOperation, LoadRiskStateOperation,
-        StoreRiskStateOperation, LoadAccountModificationRequestOperation,
+        MonitorRiskParametersOperation, StoreRiskParametersOperation,
+        LoadRiskStateOperation, StoreRiskStateOperation,
+        LoadAccountModificationRequestOperation,
         LoadAccountModificationRequestIdsOperation,
         LoadManagedAccountModificationRequestIdsOperation,
         LoadEntitlementModificationOperation,

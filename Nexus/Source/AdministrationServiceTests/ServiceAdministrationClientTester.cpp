@@ -1,4 +1,3 @@
-#include <future>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/ServicesTests/ServicesTests.hpp>
 #include <Beam/SignalHandling/NullSlot.hpp>
@@ -6,10 +5,8 @@
 #include <boost/functional/factory.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationService/ServiceAdministrationClient.hpp"
-#include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
 
 using namespace Beam;
-using namespace Beam::Routines;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Services;
 using namespace Beam::Services::Tests;
@@ -18,499 +15,263 @@ using namespace Beam::Threading;
 using namespace boost;
 using namespace Nexus;
 using namespace Nexus::AdministrationService;
-using namespace Nexus::AdministrationService::Tests;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
 using namespace Nexus::MarketDataService;
+using namespace Nexus::RiskService;
 
 namespace {
-  using OperationQueue =
-    Queue<std::shared_ptr<TestAdministrationClient::Operation>>;
-  using TestServiceAdministrationClient =
-    ServiceAdministrationClient<TestServiceProtocolClientBuilder>;
-
-  template<typename O, typename F, typename R, typename E>
-  void require_operation(TestServiceAdministrationClient& client,
-      OperationQueue& operations, F&& f, const R& expected, E&& e) {
-    auto future = std::async(std::launch::async, [&] {
-      return std::forward<F>(f)(client);
-    });
-    auto operation = operations.Pop();
-    auto specific = std::get_if<O>(&*operation);
-    REQUIRE(specific);
-    specific->m_result.set(expected);
-    std::forward<E>(e)(std::move(future).get());
-  }
-
-  template<typename O, typename F>
-  void require_operation(TestServiceAdministrationClient& client,
-      OperationQueue& operations, F&& f) {
-    auto future = std::async(std::launch::async, [&] {
-      return std::forward<F>(f)(client);
-    });
-    auto operation = operations.Pop();
-    auto specific = std::get_if<O>(&*operation);
-    REQUIRE(specific);
-    specific->m_result.set();
-  }
-
-  template<typename O, typename F, typename R>
-  void require_operation(TestServiceAdministrationClient& client,
-      OperationQueue& operations, F&& f, const R& expected) {
-    require_operation<O>(client, operations, std::forward<F>(f), expected,
-      [&] (const auto& result) {
-        REQUIRE(result == expected);
-      });
-  }
-
   struct Fixture {
+    using TestServiceAdministrationClient =
+      ServiceAdministrationClient<TestServiceProtocolClientBuilder>;
     std::shared_ptr<TestServerConnection> m_server_connection;
     TestServiceProtocolServer m_server;
-    std::shared_ptr<OperationQueue> m_operations;
+    std::unique_ptr<TestServiceAdministrationClient> m_client;
 
     Fixture()
-      : m_server_connection(std::make_shared<TestServerConnection>()),
-        m_server(m_server_connection,
-          factory<std::unique_ptr<TriggerTimer>>(), NullSlot(), NullSlot()),
-        m_operations(std::make_shared<OperationQueue>()) {
+        : m_server_connection(std::make_shared<TestServerConnection>()),
+          m_server(m_server_connection,
+            factory<std::unique_ptr<TriggerTimer>>(), NullSlot(), NullSlot()) {
       RegisterAdministrationServices(Store(m_server.GetSlots()));
       RegisterAdministrationMessages(Store(m_server.GetSlots()));
-      LoadAccountsByRolesService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::on_load_accounts_by_roles, this));
-      LoadAdministratorsRootEntryService::AddRequestSlot(
-        Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::on_load_administrators_root_entry, this));
-      LoadServicesRootEntryService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::on_load_services_root_entry, this));
-      LoadTradingGroupsRootEntryService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::on_load_trading_groups_root_entry, this));
-      CheckAdministratorService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::on_check_administrator, this));
-      LoadAccountRolesService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::on_load_account_roles, this));
-      LoadSupervisedAccountRolesService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::on_load_supervised_account_roles, this));
-      LoadParentTradingGroupService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::on_load_parent_trading_group, this));
-      LoadAccountIdentityService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::on_load_identity, this));
-      StoreAccountIdentityService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::on_store_identity, this));
-      LoadTradingGroupService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::on_load_trading_group, this));
-      LoadManagedTradingGroupsService::AddRequestSlot(
-        Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::on_load_managed_trading_groups, this));
-      LoadAdministratorsService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::on_load_administrators, this));
-      LoadServicesService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::on_load_services, this));
-      LoadEntitlementsService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::on_load_entitlements, this));
-      LoadAccountEntitlementsService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::on_load_account_entitlements, this));
-      StoreEntitlementsService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::on_store_entitlements, this));
-    }
-
-    template<typename T>
-    using Request =
-      RequestToken<TestServiceProtocolServer::ServiceProtocolClient, T>;
-
-    std::unique_ptr<TestServiceAdministrationClient> make_client() {
-      auto builder = TestServiceProtocolClientBuilder([&] {
+      auto builder = TestServiceProtocolClientBuilder([=] {
         return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
           "test", *m_server_connection);
       }, factory<std::unique_ptr<
         TestServiceProtocolClientBuilder::Timer>>());
-      return std::make_unique<TestServiceAdministrationClient>(builder);
+      m_client = std::make_unique<TestServiceAdministrationClient>(builder);
     }
 
-    void on_load_accounts_by_roles(
-        Request<LoadAccountsByRolesService>& request, AccountRoles roles) {
-      auto async = Async<std::vector<DirectoryEntry>>();
-      auto operation = std::make_shared<TestAdministrationClient::Operation>(
-        std::in_place_type<
-          TestAdministrationClient::LoadAccountsByRolesOperation>, roles,
-        async.GetEval());
-      m_operations->Push(operation);
-      auto result = std::move(async.Get());
-      request.SetResult(std::move(result));
-    }
-
-    void on_load_administrators_root_entry(
-        Request<LoadAdministratorsRootEntryService>& request) {
-      auto async = Async<DirectoryEntry>();
-      auto operation = std::make_shared<TestAdministrationClient::Operation>(
-        std::in_place_type<
-          TestAdministrationClient::LoadAdministratorsRootEntryOperation>,
-        async.GetEval());
-      m_operations->Push(operation);
-      auto result = std::move(async.Get());
-      request.SetResult(std::move(result));
-    }
-
-    void on_load_services_root_entry(
-        Request<LoadServicesRootEntryService>& request) {
-      auto async = Async<DirectoryEntry>();
-      auto operation = std::make_shared<TestAdministrationClient::Operation>(
-        std::in_place_type<
-          TestAdministrationClient::LoadServicesRootEntryOperation>,
-        async.GetEval());
-      m_operations->Push(operation);
-      auto result = std::move(async.Get());
-      request.SetResult(std::move(result));
-    }
-
-    void on_load_trading_groups_root_entry(
-        Request<LoadTradingGroupsRootEntryService>& request) {
-      auto async = Async<DirectoryEntry>();
-      auto operation = std::make_shared<TestAdministrationClient::Operation>(
-        std::in_place_type<
-          TestAdministrationClient::LoadTradingGroupsRootEntryOperation>,
-        async.GetEval());
-      m_operations->Push(operation);
-      auto result = std::move(async.Get());
-      request.SetResult(std::move(result));
-    }
-
-    void on_check_administrator(Request<CheckAdministratorService>& request,
-        const DirectoryEntry& account) {
-      auto async = Async<bool>();
-      auto operation = std::make_shared<TestAdministrationClient::Operation>(
-        std::in_place_type<
-          TestAdministrationClient::CheckAdministratorOperation>, account,
-        async.GetEval());
-      m_operations->Push(operation);
-      auto result = std::move(async.Get());
-      request.SetResult(result);
-    }
-
-    void on_load_account_roles(Request<LoadAccountRolesService>& request,
-        const DirectoryEntry& account) {
-      auto async = Async<AccountRoles>();
-      auto operation = std::make_shared<TestAdministrationClient::Operation>(
-        std::in_place_type<TestAdministrationClient::LoadAccountRolesOperation>,
-        account, async.GetEval());
-      m_operations->Push(operation);
-      auto result = std::move(async.Get());
-      request.SetResult(result);
-    }
-
-    void on_load_supervised_account_roles(
-        Request<LoadSupervisedAccountRolesService>& request,
-        const DirectoryEntry& parent, const DirectoryEntry& child) {
-      auto async = Async<AccountRoles>();
-      auto operation = std::make_shared<TestAdministrationClient::Operation>(
-        std::in_place_type<
-          TestAdministrationClient::LoadParentChildAccountRolesOperation>,
-        parent, child, async.GetEval());
-      m_operations->Push(operation);
-      auto result = std::move(async.Get());
-      request.SetResult(result);
-    }
-
-    void on_load_parent_trading_group(
-        Request<LoadParentTradingGroupService>& request,
-        const DirectoryEntry& account) {
-      auto async = Async<DirectoryEntry>();
-      auto operation = std::make_shared<TestAdministrationClient::Operation>(
-        std::in_place_type<
-          TestAdministrationClient::LoadParentTradingGroupOperation>, account,
-        async.GetEval());
-      m_operations->Push(operation);
-      auto result = std::move(async.Get());
-      request.SetResult(result);
-    }
-
-    void on_load_identity(Request<LoadAccountIdentityService>& request,
-        const DirectoryEntry& account) {
-      auto async = Async<AccountIdentity>();
-      auto operation = std::make_shared<TestAdministrationClient::Operation>(
-        std::in_place_type<TestAdministrationClient::LoadIdentityOperation>,
-        account, async.GetEval());
-      m_operations->Push(operation);
-      auto result = std::move(async.Get());
-      request.SetResult(result);
-    }
-
-    void on_store_identity(Request<StoreAccountIdentityService>& request,
-        const DirectoryEntry& account, const AccountIdentity& identity) {
-      auto async = Async<void>();
-      auto operation = std::make_shared<TestAdministrationClient::Operation>(
-        std::in_place_type<TestAdministrationClient::StoreIdentityOperation>,
-        account, identity, async.GetEval());
-      m_operations->Push(operation);
-      async.Get();
-      request.SetResult();
-    }
-
-    void on_load_trading_group(Request<LoadTradingGroupService>& request,
-        const DirectoryEntry& directory) {
-      auto async = Async<TradingGroup>();
-      auto operation = std::make_shared<TestAdministrationClient::Operation>(
-        std::in_place_type<TestAdministrationClient::LoadTradingGroupOperation>,
-        directory, async.GetEval());
-      m_operations->Push(operation);
-      auto result = std::move(async.Get());
-      request.SetResult(result);
-    }
-
-    void on_load_managed_trading_groups(
-        Request<LoadManagedTradingGroupsService>& request,
-        const DirectoryEntry& account) {
-      auto async = Async<std::vector<DirectoryEntry>>();
-      auto operation = std::make_shared<TestAdministrationClient::Operation>(
-        std::in_place_type<
-          TestAdministrationClient::LoadManagedTradingGroupsOperation>,
-        account, async.GetEval());
-      m_operations->Push(operation);
-      auto result = std::move(async.Get());
-      request.SetResult(result);
-    }
-
-    void on_load_administrators(Request<LoadAdministratorsService>& request) {
-      auto async = Async<std::vector<DirectoryEntry>>();
-      auto operation = std::make_shared<TestAdministrationClient::Operation>(
-        std::in_place_type<
-          TestAdministrationClient::LoadAdministratorsOperation>,
-        async.GetEval());
-      m_operations->Push(operation);
-      auto result = std::move(async.Get());
-      request.SetResult(result);
-    }
-
-    void on_load_services(Request<LoadServicesService>& request) {
-      auto async = Async<std::vector<DirectoryEntry>>();
-      auto operation = std::make_shared<TestAdministrationClient::Operation>(
-        std::in_place_type<TestAdministrationClient::LoadServicesOperation>,
-        async.GetEval());
-      m_operations->Push(operation);
-      auto result = std::move(async.Get());
-      request.SetResult(result);
-    }
-
-    void on_load_entitlements(Request<LoadEntitlementsService>& request) {
-      auto async = Async<EntitlementDatabase>();
-      auto operation = std::make_shared<TestAdministrationClient::Operation>(
-        std::in_place_type<TestAdministrationClient::LoadEntitlementsOperation>,
-        async.GetEval());
-      m_operations->Push(operation);
-      auto result = std::move(async.Get());
-      request.SetResult(result);
-    }
-
-    void on_load_account_entitlements(
-        Request<LoadAccountEntitlementsService>& request,
-        const DirectoryEntry& account) {
-      auto async = Async<std::vector<DirectoryEntry>>();
-      auto operation = std::make_shared<TestAdministrationClient::Operation>(
-        std::in_place_type<
-          TestAdministrationClient::LoadAccountEntitlementsOperation>, account,
-        async.GetEval());
-      m_operations->Push(operation);
-      auto result = std::move(async.Get());
-      request.SetResult(result);
-    }
-
-    void on_store_entitlements(Request<StoreEntitlementsService>& request,
-        const DirectoryEntry& account,
-        const std::vector<DirectoryEntry>& entitlements) {
-      auto async = Async<void>();
-      auto operation = std::make_shared<TestAdministrationClient::Operation>(
-        std::in_place_type<
-          TestAdministrationClient::StoreEntitlementsOperation>, account,
-        entitlements, async.GetEval());
-      m_operations->Push(operation);
-      async.Get();
-      request.SetResult();
+    template<typename T, typename F>
+    void handle(F&& handler) {
+      T::AddRequestSlot(Store(m_server.GetSlots()),
+        [handler = std::forward<F>(handler)] (auto&&... args) {
+          try {
+            handler(std::forward<decltype(args)>(args)...);
+          } catch(...) {
+            throw ServiceRequestException("Test failed.");
+          }
+        });
     }
   };
 }
 
+#define REQUIRE_NO_THROW(expression) \
+  [&] { \
+    REQUIRE_NOTHROW(return (expression)); \
+    throw 0; \
+  }()
+
 TEST_SUITE("ServiceAdministrationClient") {
   TEST_CASE("load_accounts_by_roles") {
     auto fixture = Fixture();
-    auto client = fixture.make_client();
+    auto account = DirectoryEntry::MakeAccount(16, "entitled_account");
     auto roles = AccountRoles();
     auto accounts = std::vector{DirectoryEntry::MakeAccount(1, "test_account")};
-    require_operation<TestAdministrationClient::LoadAccountsByRolesOperation>(
-      *client, *fixture.m_operations, [&] (auto& client) {
-        return client.load_accounts_by_roles(roles);
-      }, accounts);
+    fixture.handle<LoadAccountsByRolesService>(
+      [&] (auto& request, const auto& received_roles) {
+        REQUIRE(received_roles == roles);
+        request.SetResult(accounts);
+      });
+    auto received_accounts = REQUIRE_NO_THROW(
+      fixture.m_client->load_accounts_by_roles(roles));
+    REQUIRE(received_accounts == accounts);
   }
 
   TEST_CASE("load_administrators_root_entry") {
     auto fixture = Fixture();
-    auto client = fixture.make_client();
-    auto entry = DirectoryEntry::MakeAccount(1, "admin_root");
-    require_operation<
-      TestAdministrationClient::LoadAdministratorsRootEntryOperation>(
-        *client, *fixture.m_operations, [&] (auto& client) {
-          return client.load_administrators_root_entry();
-        }, entry);
+    auto entry = DirectoryEntry::MakeDirectory(1, "admin_root");
+    fixture.handle<LoadAdministratorsRootEntryService>([&] (auto& request) {
+      request.SetResult(entry);
+    });
+    auto received_entry =
+      REQUIRE_NO_THROW(fixture.m_client->load_administrators_root_entry());
+    REQUIRE(received_entry == entry);
   }
 
   TEST_CASE("load_services_root_entry") {
     auto fixture = Fixture();
-    auto client = fixture.make_client();
-    auto entry = DirectoryEntry::MakeAccount(2, "services_root");
-    require_operation<TestAdministrationClient::LoadServicesRootEntryOperation>(
-      *client, *fixture.m_operations, [&] (auto& client) {
-        return client.load_services_root_entry();
-      }, entry);
+    auto entry = DirectoryEntry::MakeDirectory(2, "services_root");
+    fixture.handle<LoadServicesRootEntryService>([&] (auto& request) {
+      request.SetResult(entry);
+    });
+    auto received_entry =
+      REQUIRE_NO_THROW(fixture.m_client->load_services_root_entry());
+    REQUIRE(received_entry == entry);
   }
 
   TEST_CASE("load_trading_groups_root_entry") {
     auto fixture = Fixture();
-    auto client = fixture.make_client();
-    auto entry = DirectoryEntry::MakeAccount(3, "trading_groups_root");
-    require_operation<TestAdministrationClient::LoadTradingGroupsRootEntryOperation>(
-      *client, *fixture.m_operations, [&] (auto& client) {
-        return client.load_trading_groups_root_entry();
-      }, entry);
+    auto entry = DirectoryEntry::MakeDirectory(3, "trading_groups_root");
+    fixture.handle<LoadTradingGroupsRootEntryService>([&] (auto& request) {
+      request.SetResult(entry);
+    });
+    auto received_entry =
+      REQUIRE_NO_THROW(fixture.m_client->load_trading_groups_root_entry());
+    REQUIRE(received_entry == entry);
   }
 
   TEST_CASE("check_administrator") {
     auto fixture = Fixture();
-    auto client = fixture.make_client();
     auto account = DirectoryEntry::MakeAccount(4, "admin_account");
-    require_operation<TestAdministrationClient::CheckAdministratorOperation>(
-      *client, *fixture.m_operations, [&] (auto& client) {
-        return client.check_administrator(account);
-      }, true);
+    fixture.handle<CheckAdministratorService>(
+      [&] (auto& request, const auto& received_account) {
+        REQUIRE(received_account == account);
+        request.SetResult(true);
+      });
+    auto is_administrator =
+      REQUIRE_NO_THROW(fixture.m_client->check_administrator(account));
+    REQUIRE(is_administrator);
   }
 
   TEST_CASE("load_account_roles") {
     auto fixture = Fixture();
-    auto client = fixture.make_client();
     auto account = DirectoryEntry::MakeAccount(5, "account");
     auto roles = AccountRoles();
     roles.Set(AccountRole::MANAGER);
-    require_operation<TestAdministrationClient::LoadAccountRolesOperation>(
-      *client, *fixture.m_operations, [&] (auto& client) {
-        return client.load_account_roles(account);
-      }, roles);
+    fixture.handle<LoadAccountRolesService>(
+      [&] (auto& request, const auto& received_account) {
+        REQUIRE(received_account == account);
+        request.SetResult(roles);
+      });
+    auto received_roles =
+      REQUIRE_NO_THROW(fixture.m_client->load_account_roles(account));
+    REQUIRE(received_roles == roles);
   }
 
   TEST_CASE("load_supervised_account_roles") {
     auto fixture = Fixture();
-    auto client = fixture.make_client();
     auto parent = DirectoryEntry::MakeAccount(6, "parent_account");
     auto child = DirectoryEntry::MakeAccount(7, "child_account");
     auto roles = AccountRoles();
     roles.Set(AccountRole::TRADER);
-    require_operation<
-      TestAdministrationClient::LoadParentChildAccountRolesOperation>(
-        *client, *fixture.m_operations, [&] (auto& client) {
-          return client.load_account_roles(parent, child);
-        }, roles);
+    fixture.handle<LoadSupervisedAccountRolesService>(
+      [&] (auto& request, const auto& received_parent,
+          const auto& received_child) {
+        REQUIRE(received_parent == parent);
+        REQUIRE(received_child == child);
+        request.SetResult(roles);
+      });
+    auto received_roles =
+      REQUIRE_NO_THROW(fixture.m_client->load_account_roles(parent, child));
+    REQUIRE(received_roles == roles);
   }
 
   TEST_CASE("load_parent_trading_group") {
     auto fixture = Fixture();
-    auto client = fixture.make_client();
     auto account = DirectoryEntry::MakeAccount(8, "trader_account");
     auto parent_group = DirectoryEntry::MakeAccount(9, "parent_group");
-    require_operation<
-      TestAdministrationClient::LoadParentTradingGroupOperation>(
-        *client, *fixture.m_operations, [&] (auto& client) {
-          return client.load_parent_trading_group(account);
-        }, parent_group);
+    fixture.handle<LoadParentTradingGroupService>(
+      [&] (auto& request, const auto& received_account) {
+        REQUIRE(received_account == account);
+        request.SetResult(parent_group);
+      });
+    auto received_parent_group =
+      REQUIRE_NO_THROW(fixture.m_client->load_parent_trading_group(account));
+    REQUIRE(received_parent_group == parent_group);
   }
 
   TEST_CASE("load_identity") {
     auto fixture = Fixture();
-    auto client = fixture.make_client();
     auto account = DirectoryEntry::MakeAccount(10, "identity_account");
     auto identity = AccountIdentity();
     identity.m_first_name = "John";
     identity.m_last_name = "Doe";
-    require_operation<TestAdministrationClient::LoadIdentityOperation>(
-      *client, *fixture.m_operations, [&] (auto& client) {
-        return client.load_identity(account);
-      }, identity,
-      [&] (const auto& received) {
-        REQUIRE(identity.m_first_name == received.m_first_name);
-        REQUIRE(identity.m_last_name == received.m_last_name);
+    fixture.handle<LoadAccountIdentityService>(
+      [&] (auto& request, const auto& received_account) {
+        REQUIRE(received_account == account);
+        request.SetResult(identity);
       });
+    auto received_identity =
+      REQUIRE_NO_THROW(fixture.m_client->load_identity(account));
+    REQUIRE(received_identity.m_first_name == identity.m_first_name);
+    REQUIRE(received_identity.m_last_name == identity.m_last_name);
   }
 
   TEST_CASE("store_identity") {
     auto fixture = Fixture();
-    auto client = fixture.make_client();
     auto account = DirectoryEntry::MakeAccount(11, "identity_account");
     auto identity = AccountIdentity();
     identity.m_first_name = "Jane";
     identity.m_last_name = "Smith";
-    require_operation<TestAdministrationClient::StoreIdentityOperation>(
-      *client, *fixture.m_operations, [&] (auto& client) {
-        client.store_identity(account, identity);
+    fixture.handle<StoreAccountIdentityService>(
+      [&] (auto& request, const auto& received_account,
+          const auto& received_identity) {
+        REQUIRE(received_account == account);
+        REQUIRE(received_identity.m_first_name == identity.m_first_name);
+        REQUIRE(received_identity.m_last_name == identity.m_last_name);
+        request.SetResult();
       });
+    REQUIRE_NOTHROW(fixture.m_client->store_identity(account, identity));
   }
 
   TEST_CASE("load_trading_group") {
     auto fixture = Fixture();
-    auto client = fixture.make_client();
-    auto directory = DirectoryEntry::MakeAccount(1, "trading_group");
+    auto directory = DirectoryEntry::MakeDirectory(1, "trading_group");
     auto trading_group = TradingGroup(directory,
-      DirectoryEntry::MakeAccount(2, "managers"),
+      DirectoryEntry::MakeDirectory(2, "managers"),
       {DirectoryEntry::MakeAccount(3, "manager1")},
-      DirectoryEntry::MakeAccount(4, "traders"),
+      DirectoryEntry::MakeDirectory(4, "traders"),
       {DirectoryEntry::MakeAccount(5, "trader1")});
-    require_operation<TestAdministrationClient::LoadTradingGroupOperation>(
-      *client, *fixture.m_operations, [&] (auto& client) {
-        return client.load_trading_group(directory);
-      }, trading_group,
-      [&] (const auto& received) {
-        REQUIRE(received.get_entry() == trading_group.get_entry());
-        REQUIRE(received.get_managers_directory() ==
-          trading_group.get_managers_directory());
-        REQUIRE(received.get_managers() == trading_group.get_managers());
-        REQUIRE(received.get_traders_directory() ==
-          trading_group.get_traders_directory());
-        REQUIRE(received.get_traders() == trading_group.get_traders());
+    fixture.handle<LoadTradingGroupService>(
+      [&] (auto& request, const auto& received_directory) {
+        REQUIRE(received_directory == directory);
+        request.SetResult(trading_group);
       });
+    auto received_trading_group =
+      REQUIRE_NO_THROW(fixture.m_client->load_trading_group(directory));
+    REQUIRE(received_trading_group.get_entry() == trading_group.get_entry());
+    REQUIRE(received_trading_group.get_managers_directory() ==
+      trading_group.get_managers_directory());
+    REQUIRE(
+      received_trading_group.get_managers() == trading_group.get_managers());
+    REQUIRE(received_trading_group.get_traders_directory() ==
+      trading_group.get_traders_directory());
+    REQUIRE(
+      received_trading_group.get_traders() == trading_group.get_traders());
   }
 
   TEST_CASE("load_managed_trading_groups") {
     auto fixture = Fixture();
-    auto client = fixture.make_client();
     auto account = DirectoryEntry::MakeAccount(6, "manager_account");
     auto managed_groups = std::vector{DirectoryEntry::MakeAccount(7, "group1"),
       DirectoryEntry::MakeAccount(8, "group2")};
-    require_operation<
-      TestAdministrationClient::LoadManagedTradingGroupsOperation>(
-        *client, *fixture.m_operations, [&] (auto& client) {
-          return client.load_managed_trading_groups(account);
-        }, managed_groups);
+    fixture.handle<LoadManagedTradingGroupsService>(
+      [&] (auto& request, const auto& received_account) {
+        REQUIRE(received_account == account);
+        request.SetResult(managed_groups);
+      });
+    auto received_groups =
+      REQUIRE_NO_THROW(fixture.m_client->load_managed_trading_groups(account));
+    REQUIRE(received_groups == managed_groups);
   }
 
   TEST_CASE("load_administrators") {
     auto fixture = Fixture();
-    auto client = fixture.make_client();
     auto administrators = std::vector{DirectoryEntry::MakeAccount(9, "admin1"),
       DirectoryEntry::MakeAccount(10, "admin2")};
-    require_operation<TestAdministrationClient::LoadAdministratorsOperation>(
-      *client, *fixture.m_operations, [&] (auto& client) {
-        return client.load_administrators();
-      }, administrators);
+    fixture.handle<LoadAdministratorsService>([&] (auto& request) {
+      request.SetResult(administrators);
+    });
+    auto received_administrators =
+      REQUIRE_NO_THROW(fixture.m_client->load_administrators());
+    REQUIRE(received_administrators == administrators);
   }
 
   TEST_CASE("load_services") {
     auto fixture = Fixture();
-    auto client = fixture.make_client();
     auto services = std::vector{DirectoryEntry::MakeAccount(11, "service1"),
       DirectoryEntry::MakeAccount(12, "service2")};
-    require_operation<TestAdministrationClient::LoadServicesOperation>(
-      *client, *fixture.m_operations, [&] (auto& client) {
-        return client.load_services();
-      }, services);
+    fixture.handle<LoadServicesService>([&] (auto& request) {
+      request.SetResult(services);
+    });
+    auto received_services =
+      REQUIRE_NO_THROW(fixture.m_client->load_services());
+    REQUIRE(received_services == services);
   }
 
   TEST_CASE("load_entitlements") {
     auto fixture = Fixture();
-    auto client = fixture.make_client();
     auto entitlements = EntitlementDatabase();
     entitlements.Add({"Entitlement1", Money(100), USD,
       DirectoryEntry::MakeAccount(1, "group1"), {{EntitlementKey(NYSE),
@@ -518,39 +279,57 @@ TEST_SUITE("ServiceAdministrationClient") {
     entitlements.Add({"Entitlement2", Money(200), CAD,
       DirectoryEntry::MakeAccount(2, "group2"), {{EntitlementKey(TSX),
         MarketDataTypeSet({MarketDataType::BOOK_QUOTE})}}});
-    require_operation<TestAdministrationClient::LoadEntitlementsOperation>(
-      *client, *fixture.m_operations, [&] (auto& client) {
-        return client.load_entitlements();
-      }, entitlements,
-      [&] (const auto& received) {
-        REQUIRE(received.GetEntries() == entitlements.GetEntries());
-      });
+    fixture.handle<LoadEntitlementsService>([&] (auto& request) {
+      request.SetResult(entitlements);
+    });
+    auto received_entitlements =
+      REQUIRE_NO_THROW(fixture.m_client->load_entitlements());
+    REQUIRE(received_entitlements.GetEntries() == entitlements.GetEntries());
   }
 
   TEST_CASE("load_account_entitlements") {
     auto fixture = Fixture();
-    auto client = fixture.make_client();
     auto account = DirectoryEntry::MakeAccount(13, "entitled_account");
     auto entitlements = std::vector{
       DirectoryEntry::MakeAccount(14, "entitlement1"),
       DirectoryEntry::MakeAccount(15, "entitlement2")};
-    require_operation<
-      TestAdministrationClient::LoadAccountEntitlementsOperation>(
-        *client, *fixture.m_operations, [&] (auto& client) {
-          return client.load_entitlements(account);
-        }, entitlements);
+    fixture.handle<LoadAccountEntitlementsService>(
+      [&] (auto& request, const auto& received_account) {
+        REQUIRE(received_account == account);
+        request.SetResult(entitlements);
+      });
+    auto received_entitlements =
+      REQUIRE_NO_THROW(fixture.m_client->load_entitlements(account));
+    REQUIRE(received_entitlements == entitlements);
   }
 
   TEST_CASE("store_entitlements") {
     auto fixture = Fixture();
-    auto client = fixture.make_client();
     auto account = DirectoryEntry::MakeAccount(16, "entitled_account");
     auto entitlements = std::vector{
       DirectoryEntry::MakeAccount(17, "entitlement1"),
       DirectoryEntry::MakeAccount(18, "entitlement2")};
-    require_operation<TestAdministrationClient::StoreEntitlementsOperation>(
-      *client, *fixture.m_operations, [&] (auto& client) {
-        client.store_entitlements(account, entitlements);
+    fixture.handle<StoreEntitlementsService>(
+      [&] (auto& request, const auto& received_account,
+          const auto& received_entitlements) {
+        REQUIRE(received_account == account);
+        REQUIRE(received_entitlements == entitlements);
+        request.SetResult();
       });
+    REQUIRE_NOTHROW(
+      fixture.m_client->store_entitlements(account, entitlements));
+  }
+
+  TEST_CASE("risk_parameters") {
+    auto fixture = Fixture();
+    auto account_a = DirectoryEntry::MakeAccount(55, "Alexis");
+    auto parameters_a = std::make_shared<Queue<RiskParameters>>();
+    fixture.handle<MonitorRiskParametersService>(
+      [&] (auto& request, const auto& received_account) {
+        REQUIRE(received_account == account_a);
+        request.SetResult(RiskParameters());
+      });
+    REQUIRE_NO_THROW(fixture.m_client->get_risk_parameters_publisher(
+      account_a).Monitor(parameters_a));
   }
 }
