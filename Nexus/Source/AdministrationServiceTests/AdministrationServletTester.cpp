@@ -8,6 +8,8 @@
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationService/AdministrationServlet.hpp"
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
+#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 
 using namespace Beam;
 using namespace Beam::Serialization;
@@ -22,6 +24,8 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::AdministrationService;
+using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::DefaultVenues;
 using namespace Nexus::MarketDataService;
 
 namespace {
@@ -33,6 +37,7 @@ namespace {
     ServiceLocatorTestEnvironment m_service_locator_environment;
     optional<ServiceLocatorClientBox> m_servlet_service_locator_client;
     LocalAdministrationDataStore m_data_store;
+    EntitlementDatabase m_entitlements;
     std::shared_ptr<TestServerConnection> m_server_connection;
     optional<ServletContainer> m_container;
     DirectoryEntry m_admin_account;
@@ -43,14 +48,26 @@ namespace {
     Fixture()
       : m_time_client(time_from_string("2024-07-04 12:00:00")),
         m_server_connection(std::make_shared<TestServerConnection>()) {
+      auto entitlement1 = m_service_locator_environment.GetRoot().MakeDirectory(
+        "entitlement1", DirectoryEntry::GetStarDirectory());
+      auto entitlement2 = m_service_locator_environment.GetRoot().MakeDirectory(
+        "entitlement2", DirectoryEntry::GetStarDirectory());
+      m_entitlements.Add({"Entitlement1", Money(100), USD, entitlement1,
+        {{EntitlementKey(NYSE),
+        MarketDataTypeSet({MarketDataType::BBO_QUOTE})}}});
+      m_entitlements.Add({"Entitlement2", Money(200), CAD, entitlement2,
+        {{EntitlementKey(TSX),
+          MarketDataTypeSet({MarketDataType::BOOK_QUOTE})}}});
       auto servlet_account = make_account(
         "administration_service", DirectoryEntry::GetStarDirectory());
+      m_service_locator_environment.GetRoot().StorePermissions(
+        servlet_account, DirectoryEntry::GetStarDirectory(), Permissions(~0));
       m_servlet_service_locator_client =
         m_service_locator_environment.MakeClient(servlet_account.m_name, "");
       m_container.emplace(Initialize(*m_servlet_service_locator_client,
-        Initialize(&m_service_locator_environment.GetRoot(),
-          EntitlementDatabase(), &m_data_store, &m_time_client)),
-          m_server_connection, factory<std::unique_ptr<TriggerTimer>>());
+        Initialize(&m_service_locator_environment.GetRoot(), m_entitlements,
+          &m_data_store, &m_time_client)), m_server_connection,
+        factory<std::unique_ptr<TriggerTimer>>());
       auto admin_group =
         m_service_locator_environment.GetRoot().LoadDirectoryEntry(
           DirectoryEntry::GetStarDirectory(), "administrators");
@@ -372,7 +389,38 @@ TEST_SUITE("AdministrationServlet") {
   TEST_CASE("load_entitlements") {
     auto fixture = Fixture();
     auto result =
-      fixture.m_admin_client->SendRequest<LoadEntitlementsService>();
-    REQUIRE(result.GetEntries().empty());
+      fixture.m_trader_client->SendRequest<LoadEntitlementsService>();
+    REQUIRE(result.GetEntries() == fixture.m_entitlements.GetEntries());
+  }
+
+  TEST_CASE("store_and_load_account_entitlements") {
+    auto fixture = Fixture();
+    auto entitlements = std::vector<DirectoryEntry>();
+    for(auto& entry : fixture.m_entitlements.GetEntries()) {
+      entitlements.push_back(entry.m_groupEntry);
+    }
+    SUBCASE("admin") {
+      REQUIRE_NOTHROW(
+        fixture.m_admin_client->SendRequest<StoreEntitlementsService>(
+          fixture.m_trader_account, entitlements));
+      auto result = fixture.m_admin_client->SendRequest<
+        LoadAccountEntitlementsService>(fixture.m_trader_account);
+      REQUIRE(result.size() == entitlements.size());
+      for(auto& entitlement : entitlements) {
+        REQUIRE(
+          std::find(result.begin(), result.end(), entitlement) != result.end());
+      }
+      REQUIRE_NOTHROW(
+        fixture.m_admin_client->SendRequest<StoreEntitlementsService>(
+          fixture.m_trader_account, std::vector<DirectoryEntry>()));
+      result = fixture.m_admin_client->SendRequest<
+        LoadAccountEntitlementsService>(fixture.m_trader_account);
+      REQUIRE(result.empty());
+    }
+    SUBCASE("trader") {
+      REQUIRE_THROWS_AS(
+        fixture.m_trader_client->SendRequest<StoreEntitlementsService>(
+          fixture.m_trader_account, entitlements), ServiceRequestException);
+    }
   }
 }
