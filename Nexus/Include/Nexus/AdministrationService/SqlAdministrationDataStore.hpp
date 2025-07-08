@@ -287,8 +287,8 @@ namespace Nexus::AdministrationService {
   template<typename C>
   std::vector<AccountModificationRequest::Id>
       SqlAdministrationDataStore<C>::load_account_modification_request_ids(
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      AccountModificationRequest::Id start_id, int max_count) {
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        AccountModificationRequest::Id start_id, int max_count) {
     if(start_id == -1) {
       start_id = std::numeric_limits<AccountModificationRequest::Id>::max();
     }
@@ -310,7 +310,7 @@ namespace Nexus::AdministrationService {
   template<typename C>
   std::vector<AccountModificationRequest::Id>
       SqlAdministrationDataStore<C>::load_account_modification_request_ids(
-      AccountModificationRequest::Id start_id, int max_count) {
+        AccountModificationRequest::Id start_id, int max_count) {
     if(start_id == -1) {
       start_id = std::numeric_limits<AccountModificationRequest::Id>::max();
     }
@@ -331,7 +331,7 @@ namespace Nexus::AdministrationService {
   template<typename C>
   EntitlementModification
       SqlAdministrationDataStore<C>::load_entitlement_modification(
-      AccountModificationRequest::Id id) {
+        AccountModificationRequest::Id id) {
     auto entitlements = std::vector<Beam::ServiceLocator::DirectoryEntry>();
     try {
       auto ids = std::vector<unsigned int>();

@@ -386,8 +386,8 @@ namespace Nexus::AdministrationService {
         roles.Set(AccountRole::ADMINISTRATOR);
       } else if(parent == m_services_root) {
         roles.Set(AccountRole::SERVICE);
-      } else if(!roles.Test(AccountRole::TRADER) &&
-          parent.m_name == "traders") {
+      } else if(
+          !roles.Test(AccountRole::TRADER) && parent.m_name == "traders") {
         auto entry_parents = m_service_locator_client->LoadParents(parent);
         for(auto& entry_parent : entry_parents) {
           if(std::find(trading_groups.begin(), trading_groups.end(),
@@ -396,8 +396,8 @@ namespace Nexus::AdministrationService {
             break;
           }
         }
-      } else if(!roles.Test(AccountRole::MANAGER) &&
-          parent.m_name == "managers") {
+      } else if(
+          !roles.Test(AccountRole::MANAGER) && parent.m_name == "managers") {
         auto entry_parents = m_service_locator_client->LoadParents(parent);
         for(auto& entry_parent : entry_parents) {
           if(std::find(trading_groups.begin(), trading_groups.end(),
@@ -761,6 +761,11 @@ namespace Nexus::AdministrationService {
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountIdentity& identity) {
+    auto& session = client.GetSession();
+    if(!check_administrator(session.GetAccount())) {
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
+    }
     auto account_entry =
       m_service_locator_client->LoadDirectoryEntry(account.m_id);
     m_data_store->with_transaction([&] {
