@@ -1,3 +1,4 @@
+#include <any>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/ServicesTests/ServicesTests.hpp>
 #include <Beam/SignalHandling/NullSlot.hpp>
@@ -27,6 +28,7 @@ namespace {
     std::shared_ptr<TestServerConnection> m_server_connection;
     TestServiceProtocolServer m_server;
     std::unique_ptr<TestServiceAdministrationClient> m_client;
+    std::unordered_map<std::type_index, std::any> m_handlers;
 
     Fixture()
         : m_server_connection(std::make_shared<TestServerConnection>()),
@@ -44,6 +46,24 @@ namespace {
 
     template<typename T, typename F>
     void handle(F&& handler) {
+      using Slot = typename Services::Details::GetSlotType<T>::type;
+      auto& stored_handler = m_handlers[typeid(T)];
+      if(stored_handler.has_value()) {
+        *std::any_cast<std::shared_ptr<Slot>>>(stored_handler) = std::forward<F>(handler);
+      } else {
+        auto new_handler = std::make_shared<Slot>(std::forward<F>(handler));
+        stored_handler = new_handler;
+        T::AddRequestSlot(Store(m_server.GetSlots()),
+          [handler = std::move(new_handler)] (auto&&... args) {
+            try {
+              (*handler)(std::forward<decltype(args)>(args)...);
+            } catch(...) {
+              throw ServiceRequestException("Test failed.");
+            }
+          });
+      }
+/*
+      m_handlers[typeid(T)] = 
       T::AddRequestSlot(Store(m_server.GetSlots()),
         [handler = std::forward<F>(handler)] (auto&&... args) {
           try {
@@ -52,6 +72,7 @@ namespace {
             throw ServiceRequestException("Test failed.");
           }
         });
+*/
     }
   };
 }
@@ -331,5 +352,14 @@ TEST_SUITE("ServiceAdministrationClient") {
       });
     REQUIRE_NO_THROW(fixture.m_client->get_risk_parameters_publisher(
       account_a).Monitor(parameters_a));
+    auto account_b = DirectoryEntry::MakeAccount(66, "Aurora");
+    auto parameters_b = std::make_shared<Queue<RiskParameters>>();
+    fixture.handle<MonitorRiskParametersService>(
+      [&] (auto& request, const auto& received_account) {
+        REQUIRE(received_account == account_b);
+        request.SetResult(RiskParameters());
+      });
+    REQUIRE_NO_THROW(fixture.m_client->get_risk_parameters_publisher(
+      account_b).Monitor(parameters_b));
   }
 }
