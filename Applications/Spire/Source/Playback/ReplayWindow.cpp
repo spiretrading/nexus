@@ -1,8 +1,9 @@
-#include "Spire/Playback/PlaybackControlPanel.hpp"
+#include "Spire/Playback/ReplayWindow.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Ui/DateBox.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/MenuButton.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 
@@ -181,7 +182,7 @@ namespace {
   };
 }
 
-struct PlaybackControlPanel::PlayheadModel : DurationModel {
+struct ReplayWindow::PlayheadModel : DurationModel {
   mutable UpdateSignal m_update_signal;
   std::shared_ptr<TimelineModel> m_timeline;
   TimeClientBox m_time_client;
@@ -233,23 +234,24 @@ struct PlaybackControlPanel::PlayheadModel : DurationModel {
   }
 };
 
-PlaybackControlPanel::PlaybackControlPanel(
+ReplayWindow::ReplayWindow(
     std::shared_ptr<TimelineModel> timeline, TimeClientBox time_client,
     std::shared_ptr<DurationModel> playhead,
     std::shared_ptr<PlaybackSpeedModel> speed, optional<date> min_date,
     QWidget* parent)
-    : QWidget(parent),
+    : Window(parent),
       m_playhead(std::make_shared<PlayheadModel>(std::move(timeline),
         std::move(time_client), std::move(playhead))),
       m_state(State::PAUSED) {
+  setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
+  setWindowTitle(tr("Replay"));
+  set_svg_icon(":/Icons/replay.svg");
   auto body = new QWidget();
   auto layout = make_vbox_layout(body);
-  layout->addStretch();
   m_seek_bar = new SeekBar(get_timeline(), m_playhead);
   layout->addWidget(m_seek_bar);
   layout->addSpacing(scale_height(10));
-  auto controls_body = new QWidget();
-  auto controls_body_layout = make_hbox_layout(controls_body);
+  auto controls_body_layout = make_hbox_layout();
   auto date_box = new DateBox(std::make_shared<PlaybackDateModel>(
     make_field_value_model(get_timeline(), &Timeline::m_start),
     std::move(min_date)));
@@ -260,77 +262,79 @@ PlaybackControlPanel::PlaybackControlPanel(
     get_timeline(), m_playhead->m_time_client, m_playhead));
   time_box->setFixedWidth(scale_width(70));
   controls_body_layout->addWidget(time_box);
-  controls_body_layout->addSpacing(scale_width(21));
-  controls_body_layout->addStretch();
+  controls_body_layout->addSpacing(scale_width(28));
   m_start_button = make_playback_icon_button(
     ":/Icons/start.svg", tr("Jump to Start (Home)"));
   m_start_button->connect_click_signal(
-    std::bind_front(&PlaybackControlPanel::on_jump_to_start_click, this));
+    std::bind_front(&ReplayWindow::on_jump_to_start_click, this));
   controls_body_layout->addWidget(m_start_button);
   controls_body_layout->addSpacing(scale_width(2));
   m_play_toggle = make_play_toggle_button();
   m_play_toggle->get_current()->connect_update_signal(
-    std::bind_front(&PlaybackControlPanel::on_play_checked, this));
+    std::bind_front(&ReplayWindow::on_play_checked, this));
   controls_body_layout->addWidget(m_play_toggle);
   controls_body_layout->addSpacing(scale_width(2));
   m_end_button = make_playback_icon_button(
     ":/Icons/end.svg", tr("Jump to End (End)"));
   m_end_button->connect_click_signal(
-    std::bind_front(&PlaybackControlPanel::on_jump_to_end_click, this));
+    std::bind_front(&ReplayWindow::on_jump_to_end_click, this));
   controls_body_layout->addWidget(m_end_button);
   controls_body_layout->addStretch();
-  controls_body_layout->addSpacing(scale_width(65));
+  auto attach_button = make_menu_icon_button(
+    imageFromSvg(":/Icons/target.svg", scale(26, 26)), tr("Attach to"));
+  attach_button->setFixedWidth(scale_width(32));
+  controls_body_layout->addWidget(attach_button);
+  controls_body_layout->addSpacing(scale_width(8));
   m_speed_box = make_playback_speed_box(std::move(speed));
   m_speed_box->setFixedWidth(scale_width(60));
   controls_body_layout->addWidget(m_speed_box);
-  auto controls_box = new Box(controls_body);
-  layout->addWidget(controls_box);
-  layout->addStretch();
-  auto box = new Box(body);
-  proxy_style(*this, *box);
-  enclose(*this, *box);
-  update_style(*this, [] (auto& style) {
+  layout->addLayout(controls_body_layout);
+  auto content = new Box(body);
+  content->setFixedWidth(scale_width(512));
+  update_style(*content, [] (auto& style) {
     style.get(Any()).
+      set(BackgroundColor(QColor(0xFFFFFF))).
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(8)));
   });
+  set_body(content);
   on_playhead_update(get_playhead()->get());
   on_state_update(m_state.get());
   m_state.connect_update_signal(
-    std::bind_front(&PlaybackControlPanel::on_state_update, this));
+    std::bind_front(&ReplayWindow::on_state_update, this));
   m_date_connection = date_box->connect_submit_signal(
-    std::bind_front(&PlaybackControlPanel::on_date_submit, this));
+    std::bind_front(&ReplayWindow::on_date_submit, this));
   m_playhead_connection = m_playhead->connect_update_signal(
-    std::bind_front(&PlaybackControlPanel::on_playhead_update, this));
+    std::bind_front(&ReplayWindow::on_playhead_update, this));
   m_timeline_connection = get_timeline()->connect_update_signal(
-    std::bind_front(&PlaybackControlPanel::on_timeline_update, this));
+    std::bind_front(&ReplayWindow::on_timeline_update, this));
 }
 
 const std::shared_ptr<TimelineModel>&
-    PlaybackControlPanel::get_timeline() const {
+    ReplayWindow::get_timeline() const {
   return m_playhead->m_timeline;
 }
 
-TimeClientBox PlaybackControlPanel::get_time_client() const {
+TimeClientBox ReplayWindow::get_time_client() const {
   return m_playhead->m_time_client;
 }
 
 const std::shared_ptr<DurationModel>&
-    PlaybackControlPanel::get_playhead() const {
+    ReplayWindow::get_playhead() const {
   return m_playhead->m_source;
 }
 
 const std::shared_ptr<PlaybackSpeedModel>&
-    PlaybackControlPanel::get_speed() const {
+    ReplayWindow::get_speed() const {
   return m_speed_box->get_current();
 }
 
-connection PlaybackControlPanel::connect_state_signal(
+connection ReplayWindow::connect_state_signal(
     const StateSignal::slot_type& slot) const {
   return m_state.connect_update_signal(slot);
 }
 
-void PlaybackControlPanel::keyPressEvent(QKeyEvent* event) {
+void ReplayWindow::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Space && m_seek_bar->hasFocus() &&
       m_play_toggle->isEnabled()) {
     m_play_toggle->get_current()->set(!m_play_toggle->get_current()->get());
@@ -346,11 +350,11 @@ void PlaybackControlPanel::keyPressEvent(QKeyEvent* event) {
   }
 }
 
-bool PlaybackControlPanel::is_playhead_at_end() const {
+bool ReplayWindow::is_playhead_at_end() const {
   return get_playhead()->get() >= get_timeline()->get().m_duration;
 }
 
-void PlaybackControlPanel::play() {
+void ReplayWindow::play() {
   if(get_timeline()->get().m_start + m_playhead->get() <
       m_playhead->m_time_client.GetTime() - TIME_TOLERANCE) {
     if(m_state.get() != State::REPLAYING) {
@@ -361,13 +365,13 @@ void PlaybackControlPanel::play() {
   }
 }
 
-void PlaybackControlPanel::pause() {
+void ReplayWindow::pause() {
   if(m_state.get() != State::PAUSED) {
     m_state.set(State::PAUSED);
   }
 }
 
-void PlaybackControlPanel::on_play_checked(bool checked) {
+void ReplayWindow::on_play_checked(bool checked) {
   if(checked) {
     play();
   } else {
@@ -375,11 +379,11 @@ void PlaybackControlPanel::on_play_checked(bool checked) {
   }
 }
 
-void PlaybackControlPanel::on_jump_to_start_click() {
+void ReplayWindow::on_jump_to_start_click() {
   m_playhead->set(time_duration(0, 0, 0));
 }
 
-void PlaybackControlPanel::on_jump_to_end_click() {
+void ReplayWindow::on_jump_to_end_click() {
   if(get_end_time(get_timeline()->get()) <
       m_playhead->m_time_client.GetTime()) {
     m_playhead->set(get_timeline()->get().m_duration);
@@ -389,13 +393,13 @@ void PlaybackControlPanel::on_jump_to_end_click() {
   }
 }
 
-void PlaybackControlPanel::on_date_submit(const optional<date>& date) {
+void ReplayWindow::on_date_submit(const optional<date>& date) {
   if(m_play_toggle->isEnabled()) {
     m_play_toggle->get_current()->set(true);
   }
 }
 
-void PlaybackControlPanel::on_playhead_update(const time_duration& playhead) {
+void ReplayWindow::on_playhead_update(const time_duration& playhead) {
   if(is_playhead_at_end()) {
     m_play_toggle->get_current()->set(false);
   } else if(m_state.get() != State::PAUSED) {
@@ -407,7 +411,7 @@ void PlaybackControlPanel::on_playhead_update(const time_duration& playhead) {
   m_play_toggle->setDisabled(is_playhead_at_end());
 }
 
-void PlaybackControlPanel::on_state_update(const State& state) {
+void ReplayWindow::on_state_update(const State& state) {
   auto& tooltip = *m_play_toggle->findChild<Tooltip*>("Tooltip");
   if(state == State::PAUSED) {
     tooltip.set_label(tr("Play (Space)"));
@@ -419,7 +423,7 @@ void PlaybackControlPanel::on_state_update(const State& state) {
   m_end_button->setDisabled(is_real_time || is_playhead_at_end());
 }
 
-void PlaybackControlPanel::on_timeline_update(const Timeline& timeline) {
+void ReplayWindow::on_timeline_update(const Timeline& timeline) {
   auto is_valid = !timeline.m_start.is_special() &&
     timeline.m_duration.is_positive();
   m_start_button->setEnabled(is_valid);

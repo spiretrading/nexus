@@ -166,6 +166,8 @@
     <file>Icons/end.svg</file>
     <file>Icons/pause.svg</file>
     <file>Icons/play.svg</file>
+    <file>Icons/replay.svg</file>
     <file>Icons/start.svg</file>
+    <file>Icons/target.svg</file>
   </qresource>
 </RCC>
