@@ -749,6 +749,11 @@ namespace Nexus::AdministrationService {
   AccountRoles AdministrationServlet<C, S, D, R>::on_load_account_roles_request(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto& session = client.GetSession();
+    if(!check_read_permission(session.GetAccount(), account)) {
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
+    }
     return load_account_roles(account);
   }
 
@@ -757,6 +762,12 @@ namespace Nexus::AdministrationService {
       on_load_supervised_account_roles_request(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& parent,
         const Beam::ServiceLocator::DirectoryEntry& child) {
+    auto& session = client.GetSession();
+    if(!check_read_permission(session.GetAccount(), parent) ||
+        !check_read_permission(session.GetAccount(), child)) {
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
+    }
     return load_account_roles(parent, child);
   }
 
@@ -764,6 +775,11 @@ namespace Nexus::AdministrationService {
   Beam::ServiceLocator::DirectoryEntry AdministrationServlet<C, S, D, R>::
       on_load_parent_trading_group_request(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto& session = client.GetSession();
+    if(!check_read_permission(session.GetAccount(), account)) {
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
+    }
     auto parents = m_service_locator_client->LoadParents(account);
     auto trading_groups =
       m_service_locator_client->LoadChildren(m_trading_groups_root);
@@ -785,6 +801,11 @@ namespace Nexus::AdministrationService {
   AccountIdentity AdministrationServlet<C, S, D, R>::
       on_load_account_identity_request(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto& session = client.GetSession();
+    if(!check_read_permission(session.GetAccount(), account)) {
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
+    }
     auto identity = m_data_store->with_transaction([&] {
       return m_data_store->load_identity(account);
     });
@@ -816,8 +837,17 @@ namespace Nexus::AdministrationService {
   TradingGroup AdministrationServlet<C, S, D, R>::on_load_trading_group_request(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& directory) {
+    auto& session = client.GetSession();
     auto proper_directory =
       m_service_locator_client->LoadDirectoryEntry(directory.m_id);
+    if(!check_administrator(session.GetAccount())) {
+      auto managed_groups = load_managed_trading_groups(session.GetAccount());
+      if(std::find(managed_groups.begin(), managed_groups.end(),
+          proper_directory) == managed_groups.end()) {
+        throw Beam::Services::ServiceRequestException(
+          "Insufficient permissions.");
+      }
+    }
     return load_trading_group(proper_directory);
   }
 
@@ -825,6 +855,11 @@ namespace Nexus::AdministrationService {
   std::vector<Beam::ServiceLocator::DirectoryEntry>
       AdministrationServlet<C, S, D, R>::on_load_administrators_request(
         ServiceProtocolClient& client) {
+    auto& session = client.GetSession();
+    if(!check_administrator(session.GetAccount())) {
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
+    }
     return m_service_locator_client->LoadChildren(m_administrators_root);
   }
 
@@ -832,9 +867,12 @@ namespace Nexus::AdministrationService {
   std::vector<Beam::ServiceLocator::DirectoryEntry>
       AdministrationServlet<C, S, D, R>::on_load_services_request(
         ServiceProtocolClient& client) {
-    auto services_directory = m_service_locator_client->LoadDirectoryEntry(
-      Beam::ServiceLocator::DirectoryEntry::GetStarDirectory(), "services");
-    return m_service_locator_client->LoadChildren(services_directory);
+    auto& session = client.GetSession();
+    if(!check_administrator(session.GetAccount())) {
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
+    }
+    return m_service_locator_client->LoadChildren(m_services_root);
   }
 
   template<typename C, typename S, typename D, typename R>
@@ -848,6 +886,11 @@ namespace Nexus::AdministrationService {
       AdministrationServlet<C, S, D, R>::on_load_account_entitlements_request(
         ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto& session = client.GetSession();
+    if(!check_read_permission(session.GetAccount(), account)) {
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
+    }
     return load_entitlements(account);
   }
 
@@ -868,6 +911,11 @@ namespace Nexus::AdministrationService {
   RiskService::RiskParameters AdministrationServlet<C, S, D, R>::
       on_monitor_risk_parameters_request(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto& session = client.GetSession();
+    if(!check_read_permission(session.GetAccount(), account)) {
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
+    }
     auto& subscribers = Beam::Threading::With(m_risk_parameters_subscribers,
       [&] (auto& risk_parameters_subscribers) -> decltype(auto) {
         return risk_parameters_subscribers[account];
@@ -901,6 +949,11 @@ namespace Nexus::AdministrationService {
   RiskService::RiskState AdministrationServlet<C, S, D, R>::
       on_monitor_risk_state_request(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto& session = client.GetSession();
+    if(!check_read_permission(session.GetAccount(), account)) {
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
+    }
     auto risk_state = m_data_store->with_transaction([&] {
       return Beam::Threading::With(m_risk_state_entries,
         [&] (auto& risk_state_entries) {
@@ -953,6 +1006,11 @@ namespace Nexus::AdministrationService {
       AdministrationServlet<C, S, D, R>::on_load_managed_trading_groups_request(
         ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto& session = client.GetSession();
+    if(!check_read_permission(session.GetAccount(), account)) {
+      throw Beam::Services::ServiceRequestException(
+        "Insufficient permissions.");
+    }
     return load_managed_trading_groups(account);
   }
 
@@ -1246,8 +1304,6 @@ namespace Nexus::AdministrationService {
   template<typename C, typename S, typename D, typename R>
   Message AdministrationServlet<C, S, D, R>::on_load_message(
       ServiceProtocolClient& client, Message::Id id) {
-
-    /** TODO: check permissions */
     return m_data_store->with_transaction([&] {
       return m_data_store->load_message(id);
     });

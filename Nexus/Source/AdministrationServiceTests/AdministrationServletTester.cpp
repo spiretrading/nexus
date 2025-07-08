@@ -224,7 +224,7 @@ TEST_SUITE("AdministrationServlet") {
   TEST_CASE("load_account_roles") {
     auto fixture = Fixture();
     auto& service_locator = fixture.m_service_locator_environment.GetRoot();
-    auto admin_roles = fixture.m_trader_client->SendRequest<
+    auto admin_roles = fixture.m_admin_client->SendRequest<
       LoadAccountRolesService>(fixture.m_admin_account);
     REQUIRE(admin_roles.Test(AccountRole::ADMINISTRATOR));
     REQUIRE(!admin_roles.Test(AccountRole::SERVICE));
@@ -233,13 +233,13 @@ TEST_SUITE("AdministrationServlet") {
     auto services_group = service_locator.LoadDirectoryEntry(
       DirectoryEntry::GetStarDirectory(), "services");
     auto service_account = fixture.make_account("service", services_group);
-    auto service_roles = fixture.m_trader_client->SendRequest<
+    auto service_roles = fixture.m_admin_client->SendRequest<
       LoadAccountRolesService>(service_account);
     REQUIRE(!service_roles.Test(AccountRole::ADMINISTRATOR));
     REQUIRE(service_roles.Test(AccountRole::SERVICE));
     REQUIRE(!service_roles.Test(AccountRole::TRADER));
     REQUIRE(!service_roles.Test(AccountRole::MANAGER));
-    auto manager_roles = fixture.m_trader_client->SendRequest<
+    auto manager_roles = fixture.m_manager_client->SendRequest<
       LoadAccountRolesService>(fixture.m_manager_account);
     REQUIRE(!manager_roles.Test(AccountRole::ADMINISTRATOR));
     REQUIRE(!manager_roles.Test(AccountRole::SERVICE));
@@ -251,6 +251,11 @@ TEST_SUITE("AdministrationServlet") {
     REQUIRE(!trader_roles.Test(AccountRole::SERVICE));
     REQUIRE(trader_roles.Test(AccountRole::TRADER));
     REQUIRE(!trader_roles.Test(AccountRole::MANAGER));
+    REQUIRE_THROWS_AS(fixture.m_trader_client->SendRequest<
+      LoadAccountRolesService>(fixture.m_admin_account),
+      ServiceRequestException);
+    REQUIRE_THROWS_AS(fixture.m_trader_client->SendRequest<
+      LoadAccountRolesService>(service_account), ServiceRequestException);
   }
 
   TEST_CASE("load_supervised_account_roles") {
