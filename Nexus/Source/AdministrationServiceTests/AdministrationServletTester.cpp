@@ -1,10 +1,10 @@
-#include <boost/functional/factory.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/ServicesTests/ServicesTests.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
+#include <boost/functional/factory.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationService/AdministrationServlet.hpp"
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
