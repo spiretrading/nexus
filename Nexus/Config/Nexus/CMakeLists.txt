@@ -8,10 +8,6 @@ source_group("AdministrationService"
 file(GLOB_RECURSE
   backtester_header_files ${NEXUS_INCLUDE_PATH}/Nexus/Backtester/*.hpp)
 source_group("Backtester" FILES ${backtester_header_files})
-file(GLOB_RECURSE binary_sequence_protocol_header_files
-  ${NEXUS_INCLUDE_PATH}/Nexus/BinarySequenceProtocol/*.hpp)
-source_group("BinarySequenceProtocol"
-  FILES ${binary_sequence_protocol_header_files})
 file(GLOB_RECURSE charting_service_header_files
   ${NEXUS_INCLUDE_PATH}/Nexus/ChartingService/*.hpp)
 source_group("ChartingService" FILES ${charting_service_header_files})
@@ -72,13 +68,12 @@ file(GLOB_RECURSE telemetry_service_header_files
 source_group("TelemetryService" FILES ${telemetry_service_header_files})
 file(GLOB_RECURSE header_files ${accounting_header_files}
   ${administration_service_header_files} ${backtester_header_files}
-  ${binary_sequence_protocol_header_files} ${charting_service_header_files}
-  ${compliance_header_files} ${definitions_header_files}
-  ${definitions_service_header_files} ${fee_handling_header_files}
-  ${fix_utilities_header_files} ${internal_matcher_header_files}
-  ${market_data_service_header_files} ${mold_udp64_header_files}
-  ${order_execution_service_header_files} ${parsers_header_files}
-  ${queries_header_files} ${risk_service_header_files}
+  ${charting_service_header_files} ${compliance_header_files}
+  ${definitions_header_files} ${definitions_service_header_files}
+  ${fee_handling_header_files} ${fix_utilities_header_files}
+  ${internal_matcher_header_files} ${market_data_service_header_files}
+  ${mold_udp64_header_files} ${order_execution_service_header_files}
+  ${parsers_header_files} ${queries_header_files} ${risk_service_header_files}
   ${service_clients_header_files} ${simulation_matcher_header_files}
   ${soup_bin_tcp_header_files} ${stamp_protocol_header_files}
   ${technical_analysis_header_files} ${telemetry_service_header_files})
