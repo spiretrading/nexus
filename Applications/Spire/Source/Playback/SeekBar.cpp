@@ -76,7 +76,7 @@ namespace {
 
   auto make_tip() {
     auto tip = make_label("");
-    tip->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
+    tip->setWindowFlags(Qt::ToolTip | Qt::FramelessWindowHint);
     update_style(*tip, [] (auto& style) {
       style.get(Any()).
         set(BackgroundColor(QColor(0x333333))).
@@ -202,9 +202,6 @@ void SeekBar::on_mouse_move(QWidget& target, QMouseEvent& event) {
 }
 
 void SeekBar::on_hover(HoverObserver::State state) {
-  if(!isActiveWindow()) {
-    return;
-  }
   if(state == HoverObserver::State::MOUSE_OVER) {
     if(!m_tip) {
       m_tip = make_tip();
