@@ -81,7 +81,7 @@ namespace {
       style.get(Any()).
         set(BackgroundColor(QColor(0x333333))).
         set(TextColor(QColor(0xFFFFFF))).
-        set(horizontal_padding(scale_width(6))).
+        set(horizontal_padding(scale_width(5))).
         set(vertical_padding(scale_height(5)));
     });
     return tip;
