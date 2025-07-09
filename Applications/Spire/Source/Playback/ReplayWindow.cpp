@@ -246,6 +246,7 @@ ReplayWindow::ReplayWindow(
   setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
   setWindowTitle(tr("Replay"));
   set_svg_icon(":/Icons/replay.svg");
+  setWindowIcon(QIcon(":/Icons/taskbar_icons/replay.png"));
   auto body = new QWidget();
   auto layout = make_vbox_layout(body);
   m_seek_bar = new SeekBar(get_timeline(), m_playhead);
