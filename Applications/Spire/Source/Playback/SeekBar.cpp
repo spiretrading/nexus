@@ -14,8 +14,9 @@ namespace {
 
   auto make_default_modifiers() {
     static auto modifiers = QHash<Qt::KeyboardModifier, time_duration>();
-    modifiers[Qt::NoModifier] = time_duration(0, 0, 10);
-    modifiers[Qt::ShiftModifier] = time_duration(0, 1, 0);
+    modifiers[Qt::NoModifier] = time_duration(0, 0, 1);
+    modifiers[Qt::ShiftModifier] = time_duration(0, 0, 10);
+    modifiers[Qt::ControlModifier] = time_duration(0, 1, 0);
     return modifiers;
   }
 
@@ -179,11 +180,6 @@ SeekBar::SeekBar(std::shared_ptr<TimelineModel> timeline,
   setFocusProxy(m_slider);
   enclose(*this, *m_slider);
   proxy_style(*this, *m_slider);
-  update_style(*this, [] (auto& style) {
-    style.get(Active() > is_a<Slider>() > Thumb()).set(Visibility::VISIBLE);
-    style.get(!Active() > is_a<Slider>() > Thumb()).set(Visibility::NONE);
-    style.get(!Active() > is_a<Slider>() > Track()).set(horizontal_padding(0));
-  });
   m_hover_observer.emplace(*m_slider);
   m_hover_observer->connect_state_signal(
     std::bind_front(&SeekBar::on_hover, this));
