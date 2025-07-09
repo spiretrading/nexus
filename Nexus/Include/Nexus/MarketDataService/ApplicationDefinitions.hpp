@@ -1,16 +1,15 @@
 #ifndef NEXUS_MARKET_DATA_APPLICATION_DEFINITIONS_HPP
 #define NEXUS_MARKET_DATA_APPLICATION_DEFINITIONS_HPP
 #include <Beam/IO/ConnectException.hpp>
-#include <Beam/Parsers/Parse.hpp>
-#include <Beam/Services/ApplicationDefinitions.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
+#include <Beam/Parsers/Parse.hpp>
 #include <Beam/Pointers/Ref.hpp>
+#include <Beam/Services/ApplicationDefinitions.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/Country.hpp"
-#include "Nexus/MarketDataService/MarketDataClient.hpp"
+#include "Nexus/MarketDataService/ServiceMarketDataClient.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 
 namespace Nexus::MarketDataService {
 
@@ -22,7 +21,7 @@ namespace Nexus::MarketDataService {
       using SessionBuilder = Beam::Services::ZLibSessionBuilder<>;
 
       /** Defines the standard MarketDataClient used for applications. */
-      using Client = MarketDataClient<SessionBuilder>;
+      using Client = ServiceMarketDataClient<SessionBuilder>;
 
       /**
        * Constructs an ApplicationMarketDataClient.
