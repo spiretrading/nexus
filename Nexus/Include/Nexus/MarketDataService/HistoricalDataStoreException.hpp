@@ -1,7 +1,6 @@
 #ifndef NEXUS_MARKET_DATA_SERVICE_HISTORICAL_DATA_STORE_EXCEPTION_HPP
 #define NEXUS_MARKET_DATA_SERVICE_HISTORICAL_DATA_STORE_EXCEPTION_HPP
 #include <Beam/IO/IOException.hpp>
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 
 namespace Nexus::MarketDataService {
 

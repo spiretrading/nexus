@@ -13,8 +13,6 @@ namespace Nexus::AdministrationService::Tests {
     using namespace Beam::ServiceLocator;
     using namespace boost;
     using namespace boost::posix_time;
-    using namespace Nexus;
-    using namespace Nexus::AdministrationService;
     using namespace Nexus::DefaultCurrencies;
     using namespace Nexus::RiskService;
     auto data_store = T()();

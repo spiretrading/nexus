@@ -1,0 +1,102 @@
+#ifndef NEXUS_MARKET_DATA_SERVICE_HISTORICAL_DATA_STORE_TEST_SUITE_HPP
+#define NEXUS_MARKET_DATA_SERVICE_HISTORICAL_DATA_STORE_TEST_SUITE_HPP
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <doctest/doctest.h>
+#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
+#include "Nexus/MarketDataService/HistoricalDataStore.hpp"
+
+namespace Nexus::MarketDataService::Tests {
+  TEST_CASE_TEMPLATE_DEFINE(
+      "HistoricalDataStore", T, HistoricalDataStoreTestSuite) {
+    using namespace Beam;
+    using namespace Beam::Queries;
+    using namespace boost;
+    using namespace boost::posix_time;
+    using namespace Nexus::DefaultCountries;
+    using namespace Nexus::DefaultVenues;
+    auto data_store = T()();
+
+    SUBCASE("security_info") {
+      auto security_a = Security("TST", NYSE);
+      auto info_a = SecurityInfo();
+      info_a.m_security = security_a;
+      info_a.m_name = "Test Inc.";
+      info_a.m_sector = "Technology";
+      data_store.store(info_a);
+      auto security_b = Security("ABC", TSX);
+      auto info_b = SecurityInfo();
+      info_b.m_security = security_b;
+      info_b.m_name = "ABC Corp.";
+      info_b.m_sector = "Financials";
+      data_store.store(info_b);
+      auto query_a = SecurityInfoQuery();
+      query_a.SetIndex(security_a);
+      query_a.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto results_a = data_store.load_security_info(query_a);
+      REQUIRE(results_a.size() == 1);
+      REQUIRE(results_a[0] == info_a);
+      auto query_b = SecurityInfoQuery();
+      query_b.SetIndex(security_b);
+      query_b.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto results_b = data_store.load_security_info(query_b);
+      REQUIRE(results_b.size() == 1);
+      REQUIRE(results_b[0] == info_b);
+      auto query_c = SecurityInfoQuery();
+      query_c.SetIndex(Security("XYZ", NASDAQ));
+      query_c.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto results_c = data_store.load_security_info(query_c);
+      REQUIRE(results_c.empty());
+      auto query_all = SecurityInfoQuery();
+      query_all.SetIndex(US);
+      query_all.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto results_all = data_store.load_security_info(query_all);
+      REQUIRE(results_all.size() == 1);
+      REQUIRE(results_all[0] == info_a);
+    }
+
+    SUBCASE("order_imbalance") {
+      auto imbalance_a = SequencedValue(VenueOrderImbalance(
+        OrderImbalance(Security("TST", NYSE), Side::BID, 100, 100 * Money::ONE,
+          time_from_string("2024-07-09 10:00:00")), NYSE),
+        Beam::Queries::Sequence(1));
+      auto imbalance_b = SequencedValue(VenueOrderImbalance(
+        OrderImbalance(Security("ABC", TSX), Side::ASK, 200, 200 * Money::ONE,
+          time_from_string("2024-07-09 10:05:00")), TSX),
+        Beam::Queries::Sequence(2));
+      auto imbalance_c = SequencedValue(VenueOrderImbalance(
+        OrderImbalance(Security("XYZ", NASDAQ), Side::BID, 300,
+          300 * Money::ONE, time_from_string("2024-07-09 10:10:00")), NYSE),
+        Beam::Queries::Sequence(3));
+      data_store.store(imbalance_a);
+      auto imbalances = std::vector<SequencedVenueOrderImbalance>();
+      imbalances.push_back(imbalance_b);
+      imbalances.push_back(imbalance_c);
+      data_store.store(imbalances);
+      auto query_a = VenueMarketDataQuery();
+      query_a.SetIndex(NYSE);
+      query_a.SetRange(Beam::Queries::Sequence(1), Beam::Queries::Sequence(1));
+      query_a.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto results_a = data_store.load_order_imbalances(query_a);
+      REQUIRE(results_a.size() == 1);
+      REQUIRE(*results_a[0] == *imbalance_a);
+      auto query_b = VenueMarketDataQuery();
+      query_b.SetIndex(TSX);
+      query_b.SetRange(Beam::Queries::Sequence(2), Beam::Queries::Sequence(2));
+      query_b.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto results_b = data_store.load_order_imbalances(query_b);
+      REQUIRE(results_b.size() == 1);
+      REQUIRE(*results_b[0] == *imbalance_b);
+      auto query_all = VenueMarketDataQuery();
+      query_all.SetIndex(NYSE);
+      query_all.SetRange(Range::Total());
+      query_all.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto results_all = data_store.load_order_imbalances(query_all);
+      REQUIRE(results_all.size() == 2);
+      REQUIRE(*results_all[0] == *imbalance_a);
+      REQUIRE(*results_all[1] == *imbalance_c);
+    }
+  }
+}
+
+#endif
