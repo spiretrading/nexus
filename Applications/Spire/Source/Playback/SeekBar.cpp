@@ -126,16 +126,13 @@ struct SeekBar::SliderPositionModel : ScalarValueModel<Decimal> {
 
   QValidator::State test(const Decimal& value) const override {
     if(value < get_minimum() || value > get_maximum()) {
-      return QValidator::Invalid;
+      return QValidator::Intermediate;
     }
     return m_current->test(to_time_duration(value));
   }
 
   QValidator::State set(const Decimal& value) override {
     m_state = test(value);
-    if(m_state == QValidator::Invalid) {
-      return QValidator::Invalid;
-    }
     m_value.set(value);
     if(auto current = to_time_duration(value); current != m_current->get()) {
       m_current->set(to_time_duration(value));
