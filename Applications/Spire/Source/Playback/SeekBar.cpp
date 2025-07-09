@@ -14,8 +14,9 @@ namespace {
 
   auto make_default_modifiers() {
     static auto modifiers = QHash<Qt::KeyboardModifier, time_duration>();
-    modifiers[Qt::NoModifier] = time_duration(0, 0, 10);
-    modifiers[Qt::ShiftModifier] = time_duration(0, 1, 0);
+    modifiers[Qt::NoModifier] = time_duration(0, 0, 1);
+    modifiers[Qt::ShiftModifier] = time_duration(0, 0, 10);
+    modifiers[Qt::ControlModifier] = time_duration(0, 1, 0);
     return modifiers;
   }
 
@@ -75,12 +76,12 @@ namespace {
 
   auto make_tip() {
     auto tip = make_label("");
-    tip->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
+    tip->setWindowFlags(Qt::ToolTip | Qt::FramelessWindowHint);
     update_style(*tip, [] (auto& style) {
       style.get(Any()).
         set(BackgroundColor(QColor(0x333333))).
         set(TextColor(QColor(0xFFFFFF))).
-        set(horizontal_padding(scale_width(6))).
+        set(horizontal_padding(scale_width(5))).
         set(vertical_padding(scale_height(5)));
     });
     return tip;
@@ -125,16 +126,13 @@ struct SeekBar::SliderPositionModel : ScalarValueModel<Decimal> {
 
   QValidator::State test(const Decimal& value) const override {
     if(value < get_minimum() || value > get_maximum()) {
-      return QValidator::Invalid;
+      return QValidator::Intermediate;
     }
     return m_current->test(to_time_duration(value));
   }
 
   QValidator::State set(const Decimal& value) override {
     m_state = test(value);
-    if(m_state == QValidator::Invalid) {
-      return QValidator::Invalid;
-    }
     m_value.set(value);
     if(auto current = to_time_duration(value); current != m_current->get()) {
       m_current->set(to_time_duration(value));
@@ -179,11 +177,6 @@ SeekBar::SeekBar(std::shared_ptr<TimelineModel> timeline,
   setFocusProxy(m_slider);
   enclose(*this, *m_slider);
   proxy_style(*this, *m_slider);
-  update_style(*this, [] (auto& style) {
-    style.get(Active() > is_a<Slider>() > Thumb()).set(Visibility::VISIBLE);
-    style.get(!Active() > is_a<Slider>() > Thumb()).set(Visibility::NONE);
-    style.get(!Active() > is_a<Slider>() > Track()).set(horizontal_padding(0));
-  });
   m_hover_observer.emplace(*m_slider);
   m_hover_observer->connect_state_signal(
     std::bind_front(&SeekBar::on_hover, this));
@@ -209,9 +202,6 @@ void SeekBar::on_mouse_move(QWidget& target, QMouseEvent& event) {
 }
 
 void SeekBar::on_hover(HoverObserver::State state) {
-  if(!isActiveWindow()) {
-    return;
-  }
   if(state == HoverObserver::State::MOUSE_OVER) {
     if(!m_tip) {
       m_tip = make_tip();
