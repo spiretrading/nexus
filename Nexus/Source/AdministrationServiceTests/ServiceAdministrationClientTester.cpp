@@ -1,3 +1,4 @@
+#include <memory>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/ServicesTests/ServicesTests.hpp>
