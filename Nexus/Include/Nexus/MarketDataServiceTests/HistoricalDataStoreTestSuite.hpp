@@ -96,6 +96,53 @@ namespace Nexus::MarketDataService::Tests {
       REQUIRE(*results_all[0] == *imbalance_a);
       REQUIRE(*results_all[1] == *imbalance_c);
     }
+
+    SUBCASE("bbo_quote") {
+      auto security = Security("TST", NYSE);
+      auto bbo_a = BboQuote(Quote(Money::ONE, 100, Side::BID),
+        Quote(Money::ONE + Money::CENT, 100, Side::ASK),
+        time_from_string("2024-07-09 12:00:00"));
+      auto sequenced_bbo_a = SequencedValue(bbo_a, Beam::Queries::Sequence(1));
+      data_store.store(SequencedSecurityBboQuote(
+        SecurityBboQuote(bbo_a, security), Beam::Queries::Sequence(1)));
+      auto bbo_b = BboQuote(Quote(Money::ONE, 200, Side::BID),
+        Quote(Money::ONE + Money::CENT, 200, Side::ASK),
+        time_from_string("2024-07-09 12:01:00"));
+      auto sequenced_bbo_b = SequencedValue(bbo_b, Beam::Queries::Sequence(2));
+      auto bbo_c = BboQuote(Quote(2 * Money::ONE, 300, Side::BID),
+        Quote(2 * Money::ONE + Money::CENT, 300, Side::ASK),
+        time_from_string("2024-07-09 12:02:00"));
+      auto sequenced_bbo_c = SequencedValue(bbo_c, Beam::Queries::Sequence(3));
+      auto quotes = std::vector<SequencedSecurityBboQuote>();
+      quotes.push_back(SequencedSecurityBboQuote(
+        SecurityBboQuote(bbo_b, security), Beam::Queries::Sequence(2)));
+      quotes.push_back(SequencedSecurityBboQuote(
+        SecurityBboQuote(bbo_c, security), Beam::Queries::Sequence(3)));
+      data_store.store(quotes);
+      auto other_security = Security("ABC", TSX);
+      auto other_bbo = BboQuote(Quote(10 * Money::ONE, 100, Side::BID),
+        Quote(10 * Money::ONE + Money::CENT, 100, Side::ASK),
+        time_from_string("2024-07-09 12:00:00"));
+      data_store.store(SequencedSecurityBboQuote(SecurityBboQuote(
+        other_bbo, other_security), Beam::Queries::Sequence(4)));
+      auto query_one = SecurityMarketDataQuery();
+      query_one.SetIndex(security);
+      query_one.SetRange(
+        Beam::Queries::Sequence(2), Beam::Queries::Sequence(2));
+      query_one.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto results_one = data_store.load_bbo_quotes(query_one);
+      REQUIRE(results_one.size() == 1);
+      REQUIRE(results_one[0] == sequenced_bbo_b);
+      auto query_all = SecurityMarketDataQuery();
+      query_all.SetIndex(security);
+      query_all.SetRange(Range::Total());
+      query_all.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto results_all = data_store.load_bbo_quotes(query_all);
+      REQUIRE(results_all.size() == 3);
+      REQUIRE(results_all[0] == sequenced_bbo_a);
+      REQUIRE(results_all[1] == sequenced_bbo_b);
+      REQUIRE(results_all[2] == sequenced_bbo_c);
+    }
   }
 }
 
