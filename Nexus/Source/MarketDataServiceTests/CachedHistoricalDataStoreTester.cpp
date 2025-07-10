@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include "Nexus/MarketDataService/AsyncHistoricalDataStore.hpp"
+#include "Nexus/MarketDataService/CachedHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataServiceTests/HistoricalDataStoreTestSuite.hpp"
 
@@ -11,11 +11,12 @@ using namespace Nexus::MarketDataService::Tests;
 namespace {
   struct Builder {
     auto operator ()() const {
-      return AsyncHistoricalDataStore<LocalHistoricalDataStore>(Initialize());
+      return CachedHistoricalDataStore<LocalHistoricalDataStore>(
+        Initialize(), 1000);
     }
   };
 }
 
-TEST_SUITE("AsyncHistoricalDataStore") {
+TEST_SUITE("CachedHistoricalDataStore") {
   TEST_CASE_TEMPLATE_INVOKE(HistoricalDataStoreTestSuite, Builder);
 }

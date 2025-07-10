@@ -30,7 +30,6 @@ namespace Nexus::MarketDataService {
       explicit AsyncHistoricalDataStore(DF&& data_store);
 
       ~AsyncHistoricalDataStore();
-
       std::vector<SecurityInfo> load_security_info(
         const SecurityInfoQuery& query);
       void store(const SecurityInfo& info);
