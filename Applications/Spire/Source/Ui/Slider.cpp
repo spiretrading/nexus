@@ -320,7 +320,7 @@ connection Slider::connect_submit_signal(
 
 QSize Slider::sizeHint() const {
   auto thumb_size = [&] {
-    if(m_thumb->isVisible()) {
+    if(!m_thumb->isHidden()) {
       return get_thumb_size(m_orientation);
     }
     return QSize(0, 0);
