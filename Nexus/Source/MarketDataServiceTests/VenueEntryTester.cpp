@@ -1,7 +1,6 @@
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultVenueDatabase.hpp"
-#include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/VenueEntry.hpp"
 
