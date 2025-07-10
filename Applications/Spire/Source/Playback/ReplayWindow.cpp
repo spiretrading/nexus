@@ -252,44 +252,44 @@ ReplayWindow::ReplayWindow(
   m_seek_bar = new SeekBar(get_timeline(), m_playhead);
   layout->addWidget(m_seek_bar);
   layout->addSpacing(scale_height(10));
-  auto controls_body_layout = make_hbox_layout();
+  auto bottom_layout = make_hbox_layout();
   auto date_box = new DateBox(std::make_shared<PlaybackDateModel>(
     make_field_value_model(get_timeline(), &Timeline::m_start),
     std::move(min_date)));
   date_box->setFixedWidth(scale_width(100));
-  controls_body_layout->addWidget(date_box);
-  controls_body_layout->addSpacing(scale_width(8));
+  bottom_layout->addWidget(date_box);
+  bottom_layout->addSpacing(scale_width(8));
   auto time_box = new DurationBox(std::make_shared<PlaybackTimeModel>(
     get_timeline(), m_playhead->m_time_client, m_playhead));
   time_box->setFixedWidth(scale_width(70));
-  controls_body_layout->addWidget(time_box);
-  controls_body_layout->addSpacing(scale_width(28));
+  bottom_layout->addWidget(time_box);
+  bottom_layout->addSpacing(scale_width(28));
   m_start_button = make_playback_icon_button(
     ":/Icons/start.svg", tr("Jump to Start (Home)"));
   m_start_button->connect_click_signal(
     std::bind_front(&ReplayWindow::on_jump_to_start_click, this));
-  controls_body_layout->addWidget(m_start_button);
-  controls_body_layout->addSpacing(scale_width(2));
+  bottom_layout->addWidget(m_start_button);
+  bottom_layout->addSpacing(scale_width(2));
   m_play_toggle = make_play_toggle_button();
   m_play_toggle->get_current()->connect_update_signal(
     std::bind_front(&ReplayWindow::on_play_checked, this));
-  controls_body_layout->addWidget(m_play_toggle);
-  controls_body_layout->addSpacing(scale_width(2));
+  bottom_layout->addWidget(m_play_toggle);
+  bottom_layout->addSpacing(scale_width(2));
   m_end_button = make_playback_icon_button(
     ":/Icons/end.svg", tr("Jump to End (End)"));
   m_end_button->connect_click_signal(
     std::bind_front(&ReplayWindow::on_jump_to_end_click, this));
-  controls_body_layout->addWidget(m_end_button);
-  controls_body_layout->addStretch();
+  bottom_layout->addWidget(m_end_button);
+  bottom_layout->addStretch();
   auto attach_button = make_menu_icon_button(
     imageFromSvg(":/Icons/target.svg", scale(26, 26)), tr("Attach to"));
   attach_button->setFixedWidth(scale_width(32));
-  controls_body_layout->addWidget(attach_button);
-  controls_body_layout->addSpacing(scale_width(8));
+  bottom_layout->addWidget(attach_button);
+  bottom_layout->addSpacing(scale_width(8));
   m_speed_box = make_playback_speed_box(std::move(speed));
   m_speed_box->setFixedWidth(scale_width(60));
-  controls_body_layout->addWidget(m_speed_box);
-  layout->addLayout(controls_body_layout);
+  bottom_layout->addWidget(m_speed_box);
+  layout->addLayout(bottom_layout);
   auto content = new Box(body);
   content->setFixedWidth(scale_width(512));
   update_style(*content, [] (auto& style) {
