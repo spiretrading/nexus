@@ -1,56 +1,31 @@
 #ifndef NEXUS_MARKET_DATA_REGISTRY_HPP
 #define NEXUS_MARKET_DATA_REGISTRY_HPP
-#include <memory>
-#include <unordered_set>
-#include <Beam/Collections/SynchronizedMap.hpp>
-#include <Beam/Collections/SynchronizedSet.hpp>
-#include <Beam/Collections/Trie.hpp>
-#include <Beam/Threading/Sync.hpp>
-#include <Beam/Utilities/AssertionException.hpp>
-#include <Beam/Utilities/Remote.hpp>
-#include <boost/optional/optional.hpp>
-#include <boost/range/adaptor/map.hpp>
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
-#include "Nexus/Definitions/SecurityInfo.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
-#include "Nexus/MarketDataService/MarketEntry.hpp"
-#include "Nexus/MarketDataService/SecurityEntry.hpp"
-#include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
+#include <string_view>
+#include "Nexus/MarketDataService/HistoricalDataStore.hpp"
+#include "Nexus/Queries/StandardValues.hpp"
 
 namespace Nexus::MarketDataService {
 namespace Details {
   template<typename DataStore>
-  Money LoadClosePrice(const Security& security, DataStore& dataStore) {
-    auto marketCenters =
-      [&] () -> std::vector<std::string> {
-        if(security.GetCountry() == DefaultCountries::CA()) {
-          return {"TSE", "CDX", "CNQ"};
-        } else if(security.GetCountry() == DefaultCountries::AU()) {
-          return {"ASX"};
-        } else if(!security.GetMarket().IsEmpty()) {
-          return {std::string{security.GetMarket().GetData()}};
-        } else {
-          return {};
-        }
-      }();
-    for(auto& marketCenter : marketCenters) {
-      auto queryMarketCode = Beam::Queries::StringValue(marketCenter);
-      auto marketCodeExpression = Beam::Queries::ConstantExpression(
-        queryMarketCode);
-      auto parameterExpression = Beam::Queries::ParameterExpression(
+  Money load_close_price(const Security& security, DataStore& data_store) {
+    auto market_centers = std::vector<std::string_view>(); // TODO
+    for(auto& market_center : market_centers) {
+      auto query_market_code = Beam::Queries::StringValue(market_center);
+      auto market_code_expression =
+        Beam::Queries::ConstantExpression(query_market_code);
+      auto parameter_expression = Beam::Queries::ParameterExpression(
         0, Nexus::Queries::TimeAndSaleType());
-      auto accessExpression = Beam::Queries::MemberAccessExpression(
-        "market_center", Beam::Queries::StringType(), parameterExpression);
-      auto equalExpression = Beam::Queries::MakeEqualsExpression(
-        marketCodeExpression, accessExpression);
-      auto previousCloseQuery = MarketDataService::SecurityMarketDataQuery();
-      previousCloseQuery.SetIndex(security);
-      previousCloseQuery.SetRange(Beam::Queries::Range::Total());
-      previousCloseQuery.SetSnapshotLimit(
+      auto access_expression = Beam::Queries::MemberAccessExpression(
+        "market_center", Beam::Queries::StringType(), parameter_expression);
+      auto equal_expression = Beam::Queries::MakeEqualsExpression(
+        market_code_expression, access_expression);
+      auto previous_close_query = MarketDataService::SecurityMarketDataQuery();
+      previous_close_query.SetIndex(security);
+      previous_close_query.SetRange(Beam::Queries::Range::Total());
+      previous_close_query.SetSnapshotLimit(
         Beam::Queries::SnapshotLimit::Type::TAIL, 1);
-      previousCloseQuery.SetFilter(equalExpression);
-      auto result = dataStore.LoadTimeAndSales(previousCloseQuery);
+      previous_close_query.SetFilter(equal_expression);
+      auto result = data_store.load_time_and_sales(previous_close_query);
       if(!result.empty()) {
         return result.back()->m_price;
       }
@@ -59,25 +34,21 @@ namespace Details {
   }
 }
 
+#if 0
   /** Keeps and updates the registry of market data. */
   class MarketDataRegistry {
     public:
 
-      /** Constructs a MarketDataRegistry. */
+      /** Constructs an empty MarketDataRegistry. */
       MarketDataRegistry();
-
-      /**
-       * Adds or updates a SecurityInfo to this registry.
-       * @param securityInfo The SecurityInfo to add or update.
-       */
-      void Add(const SecurityInfo& securityInfo);
 
       /**
        * Returns a list of SecurityInfo's matching a prefix.
        * @param prefix The prefix to search for.
        * @return The list of SecurityInfo's that match the <i>prefix</i>.
        */
-      std::vector<SecurityInfo> SearchSecurityInfo(const std::string& prefix);
+      std::vector<SecurityInfo>
+        search_security_info(std::string_view prefix) const;
 
       /**
        * Returns a Security's primary listing.
@@ -85,62 +56,7 @@ namespace Details {
        * @return The <i>security</i>'s primary listing, if no such listing
        *         exists then the MarketCode will be set to empty.
        */
-      Security GetPrimaryListing(const Security& security);
-
-      /**
-       * Publishes an OrderImbalance.
-       * @param orderImbalance The OrderImbalance to publish.
-       * @param sourceId The id of the source setting the value.
-       * @param dataStore Used to initialize the market's data.
-       * @param f Receives synchronized access to the updated data.
-       */
-      template<typename DataStore, typename F>
-      void PublishOrderImbalance(const MarketOrderImbalance& orderImbalance,
-        int sourceId, DataStore& dataStore, const F& f);
-
-      /**
-       * Publishes a BboQuote.
-       * @param bboQuote The BboQuote to publish.
-       * @param sourceId The id of the source setting the value.
-       * @param dataStore Used to initialize the Security's data.
-       * @param f Receives synchronized access to the updated data.
-       */
-      template<typename DataStore, typename F>
-      void PublishBboQuote(const SecurityBboQuote& bboQuote, int sourceId,
-        DataStore& dataStore, const F& f);
-
-      /**
-       * Sets a MarketQuote.
-       * @param marketQuote The MarketQuote to set.
-       * @param sourceId The id of the source setting the value.
-       * @param dataStore Used to initialize the Security's data.
-       * @param f Receives synchronized access to the updated data.
-       */
-      template<typename DataStore, typename F>
-      void PublishMarketQuote(const SecurityMarketQuote& marketQuote,
-        int sourceId, DataStore& dataStore, const F& f);
-
-      /**
-       * Updates a BookQuote.
-       * @param delta The BookQuote storing the change.
-       * @param sourceId The id of the source setting the value.
-       * @param dataStore Used to initialize the Security's data.
-       * @param f Receives synchronized access to the updated data.
-       */
-      template<typename DataStore, typename F>
-      void UpdateBookQuote(const SecurityBookQuote& delta, int sourceId,
-        DataStore& dataStore, const F& f);
-
-      /**
-       * Publishes a TimeAndSale.
-       * @param timeAndSale The TimeAndSale to publish.
-       * @param sourceId The id of the source setting the value.
-       * @param dataStore Used to initialize the Security's data.
-       * @param f Receives synchronized access to the updated data.
-       */
-      template<typename DataStore, typename F>
-      void PublishTimeAndSale(const SecurityTimeAndSale& timeAndSale,
-        int sourceId, DataStore& dataStore, const F& f);
+      Security get_primary_listing(const Security& security);
 
       /**
        * Returns a Security's SecurityTechnicals.
@@ -148,21 +64,72 @@ namespace Details {
        *        returned.
        * @return A snapshot of the <i>security</i>'s SecurityTechnicals.
        */
-      boost::optional<SecurityTechnicals> FindSecurityTechnicals(
-        const Security& security);
+      boost::optional<SecurityTechnicals>
+        find_security_technicals(const Security& security) const;
 
       /**
        * Returns a Security's real time snapshot.
        * @param security The Security whose snapshot is to be returned.
        * @return The real-time snapshot of the <i>security</i>.
        */
-      boost::optional<SecuritySnapshot> FindSnapshot(const Security& security);
+      boost::optional<SecuritySnapshot>
+        find_snapshot(const Security& security) const;
+
+      /**
+       * Adds or updates a SecurityInfo to this registry.
+       * @param info The SecurityInfo to add or update.
+       */
+      void add(const SecurityInfo& info);
+
+      /**
+       * Publishes an OrderImbalance.
+       * @param imbalance The OrderImbalance to publish.
+       * @param source_id The id of the source setting the value.
+       * @param data_store Used to initialize the market's data.
+       * @param f Receives synchronized access to the updated data.
+       */
+      template<typename DataStore, typename F>
+      void publish(const VenueOrderImbalance& imbalance, int source_id,
+        DataStore& data_store, const F& f);
+
+      /**
+       * Publishes a BboQuote.
+       * @param quote The BboQuote to publish.
+       * @param source_id The id of the source setting the value.
+       * @param data_store Used to initialize the Security's data.
+       * @param f Receives synchronized access to the updated data.
+       */
+      template<typename DataStore, typename F>
+      void publish(const SecurityBboQuote& quote, int source_id,
+        DataStore& data_store, const F& f);
+
+      /**
+       * Updates a BookQuote.
+       * @param delta The BookQuote storing the change.
+       * @param source_id The id of the source setting the value.
+       * @param data_store Used to initialize the Security's data.
+       * @param f Receives synchronized access to the updated data.
+       */
+      template<typename DataStore, typename F>
+      void publish(const SecurityBookQuote& delta, int source_id,
+        DataStore& data_store, const F& f);
+
+      /**
+       * Publishes a TimeAndSale.
+       * @param time_and_sale The TimeAndSale to publish.
+       * @param source_id The id of the source setting the value.
+       * @param data_store Used to initialize the Security's data.
+       * @param f Receives synchronized access to the updated data.
+       */
+      template<typename DataStore, typename F>
+      void publish(const SecurityTimeAndSale& time_and_sale, int source_id,
+        DataStore& dataStore, const F& f);
 
       /**
        * Clears market data that originated from a specified source.
-       * @param sourceId The id of the source to clear.
+       * @param source_id The id of the source to clear.
        */
-      void Clear(int sourceId);
+      void clear(int source_id);
 
     private:
       using SyncMarketEntry = Beam::Threading::Sync<MarketEntry,
@@ -185,7 +152,8 @@ namespace Details {
       boost::optional<SyncSecurityEntry&> LoadSecurityEntry(
         const Security& security, DataStore& dataStore);
   };
-
+#endif
+#if 0
   inline MarketDataRegistry::MarketDataRegistry()
     : m_securityDatabase('\0') {}
 
@@ -442,6 +410,7 @@ namespace Details {
     });
     return **entry;
   }
+#endif
 }
 
 #endif
