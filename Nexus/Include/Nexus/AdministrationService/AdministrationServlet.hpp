@@ -529,9 +529,9 @@ namespace Nexus::AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& account) {
     auto parents = m_service_locator_client->LoadParents(account);
     auto result = std::vector<Beam::ServiceLocator::DirectoryEntry>();
-    for(auto& available_entitlement : m_entitlements.GetEntries()) {
+    for(auto& available_entitlement : m_entitlements.get_entries()) {
       auto entry_iterator = std::find(
-        parents.begin(), parents.end(), available_entitlement.m_groupEntry);
+        parents.begin(), parents.end(), available_entitlement.m_group_entry);
       if(entry_iterator != parents.end()) {
         result.push_back(*entry_iterator);
       }
@@ -547,8 +547,8 @@ namespace Nexus::AdministrationService {
     auto existing_entitlements = load_entitlements(account);
     auto entitlement_set =
       std::unordered_set(entitlements.begin(), entitlements.end());
-    for(auto& entitlement : m_entitlements.GetEntries()) {
-      auto& entry = entitlement.m_groupEntry;
+    for(auto& entitlement : m_entitlements.get_entries()) {
+      auto& entry = entitlement.m_group_entry;
       if(entitlement_set.find(entry) != entitlement_set.end()) {
         if(std::find(existing_entitlements.begin(), existing_entitlements.end(),
             entry) == existing_entitlements.end()) {
@@ -1125,10 +1125,10 @@ namespace Nexus::AdministrationService {
           Beam::ServiceLocator::DirectoryEntry::Type::DIRECTORY) {
         throw Beam::Services::ServiceRequestException("Invalid entitlement.");
       }
-      if(std::find_if(m_entitlements.GetEntries().begin(),
-          m_entitlements.GetEntries().end(), [&] (auto& entry) {
-            return entry.m_groupEntry == entitlement;
-          }) == m_entitlements.GetEntries().end()) {
+      auto entries = m_entitlements.get_entries();
+      if(std::find_if(entries.begin(), entries.end(), [&] (auto& entry) {
+            return entry.m_group_entry == entitlement;
+          }) == entries.end()) {
         throw Beam::Services::ServiceRequestException("Invalid entitlement.");
       }
     }

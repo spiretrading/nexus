@@ -290,10 +290,10 @@ TEST_SUITE("ServiceAdministrationClient") {
   TEST_CASE("load_entitlements") {
     auto fixture = Fixture();
     auto entitlements = EntitlementDatabase();
-    entitlements.Add({"Entitlement1", Money(100), USD,
+    entitlements.add({"Entitlement1", Money(100), USD,
       DirectoryEntry::MakeAccount(1, "group1"), {{EntitlementKey(NYSE),
         MarketDataTypeSet({MarketDataType::BBO_QUOTE})}}});
-    entitlements.Add({"Entitlement2", Money(200), CAD,
+    entitlements.add({"Entitlement2", Money(200), CAD,
       DirectoryEntry::MakeAccount(2, "group2"), {{EntitlementKey(TSX),
         MarketDataTypeSet({MarketDataType::BOOK_QUOTE})}}});
     fixture.handle<LoadEntitlementsService>([&] (auto& request) {
@@ -301,7 +301,7 @@ TEST_SUITE("ServiceAdministrationClient") {
     });
     auto received_entitlements =
       REQUIRE_NO_THROW(fixture.m_client->load_entitlements());
-    REQUIRE(received_entitlements.GetEntries() == entitlements.GetEntries());
+    TestJsonEquality(received_entitlements, entitlements);
   }
 
   TEST_CASE("load_account_entitlements") {

@@ -56,10 +56,10 @@ namespace {
         "entitlement1", DirectoryEntry::GetStarDirectory());
       auto entitlement2 = m_service_locator_environment.GetRoot().MakeDirectory(
         "entitlement2", DirectoryEntry::GetStarDirectory());
-      m_entitlements.Add({"Entitlement1", Money(100), USD, entitlement1,
+      m_entitlements.add({"Entitlement1", Money(100), USD, entitlement1,
         {{EntitlementKey(NYSE),
           MarketDataTypeSet({MarketDataType::BBO_QUOTE})}}});
-      m_entitlements.Add({"Entitlement2", Money(200), CAD, entitlement2,
+      m_entitlements.add({"Entitlement2", Money(200), CAD, entitlement2,
         {{EntitlementKey(TSX),
           MarketDataTypeSet({MarketDataType::BOOK_QUOTE})}}});
       auto servlet_account = make_account(
@@ -380,14 +380,14 @@ TEST_SUITE("AdministrationServlet") {
     auto fixture = Fixture();
     auto result =
       fixture.m_trader_client->SendRequest<LoadEntitlementsService>();
-    REQUIRE(result.GetEntries() == fixture.m_entitlements.GetEntries());
+    TestJsonEquality(result, fixture.m_entitlements);
   }
 
   TEST_CASE("store_and_load_account_entitlements") {
     auto fixture = Fixture();
     auto entitlements = std::vector<DirectoryEntry>();
-    for(auto& entry : fixture.m_entitlements.GetEntries()) {
-      entitlements.push_back(entry.m_groupEntry);
+    for(auto& entry : fixture.m_entitlements.get_entries()) {
+      entitlements.push_back(entry.m_group_entry);
     }
     SUBCASE("admin") {
       REQUIRE_NOTHROW(
@@ -449,8 +449,8 @@ TEST_SUITE("AdministrationServlet") {
   TEST_CASE("submit_and_load_entitlement_modification") {
     auto fixture = Fixture();
     auto entitlements = std::vector<DirectoryEntry>();
-    for(auto& entry : fixture.m_entitlements.GetEntries()) {
-      entitlements.push_back(entry.m_groupEntry);
+    for(auto& entry : fixture.m_entitlements.get_entries()) {
+      entitlements.push_back(entry.m_group_entry);
     }
     auto modification = EntitlementModification(entitlements);
     auto comment = AdministrationService::Message(
@@ -524,10 +524,10 @@ TEST_SUITE("AdministrationServlet") {
         auto entitlements = fixture.m_manager_client->SendRequest<
           LoadAccountEntitlementsService>(fixture.m_trader_account);
         REQUIRE(
-          entitlements.size() == fixture.m_entitlements.GetEntries().size());
-        for(auto& entitlement : fixture.m_entitlements.GetEntries()) {
+          entitlements.size() == fixture.m_entitlements.get_entries().size());
+        for(auto& entitlement : fixture.m_entitlements.get_entries()) {
           REQUIRE(std::find(entitlements.begin(), entitlements.end(),
-            entitlement.m_groupEntry) != entitlements.end());
+            entitlement.m_group_entry) != entitlements.end());
         }
       }
       SUBCASE("reject") {
