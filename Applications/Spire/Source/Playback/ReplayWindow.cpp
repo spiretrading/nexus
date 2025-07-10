@@ -311,8 +311,7 @@ ReplayWindow::ReplayWindow(
     std::bind_front(&ReplayWindow::on_timeline_update, this));
 }
 
-const std::shared_ptr<TimelineModel>&
-    ReplayWindow::get_timeline() const {
+const std::shared_ptr<TimelineModel>& ReplayWindow::get_timeline() const {
   return m_playhead->m_timeline;
 }
 
@@ -320,13 +319,11 @@ TimeClientBox ReplayWindow::get_time_client() const {
   return m_playhead->m_time_client;
 }
 
-const std::shared_ptr<DurationModel>&
-    ReplayWindow::get_playhead() const {
+const std::shared_ptr<DurationModel>& ReplayWindow::get_playhead() const {
   return m_playhead->m_source;
 }
 
-const std::shared_ptr<PlaybackSpeedModel>&
-    ReplayWindow::get_speed() const {
+const std::shared_ptr<PlaybackSpeedModel>& ReplayWindow::get_speed() const {
   return m_speed_box->get_current();
 }
 
