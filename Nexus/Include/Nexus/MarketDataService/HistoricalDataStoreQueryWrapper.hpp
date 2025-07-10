@@ -4,7 +4,6 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 
 namespace Nexus::MarketDataService {
 
@@ -28,7 +27,7 @@ namespace Nexus::MarketDataService {
         Beam::Queries::IndexedValue<Value, Index>>;
 
       template<typename DF>
-      explicit BaseHistoricalDataStoreQueryWrapper(DF&& dataStore);
+      explicit BaseHistoricalDataStoreQueryWrapper(DF&& data_store);
 
       virtual ~BaseHistoricalDataStoreQueryWrapper();
 
@@ -39,77 +38,57 @@ namespace Nexus::MarketDataService {
       void Close();
 
     protected:
-      Beam::GetOptionalLocalPtr<D> m_dataStore;
+      Beam::GetOptionalLocalPtr<D> m_data_store;
   };
 
   template<typename D>
-  class HistoricalDataStoreQueryWrapper<OrderImbalance, D> :
-      public BaseHistoricalDataStoreQueryWrapper<VenueQuery,
-        OrderImbalance, Venue, D> {
+  class HistoricalDataStoreQueryWrapper<OrderImbalance, D> final :
+      public BaseHistoricalDataStoreQueryWrapper<
+        VenueMarketDataQuery, OrderImbalance, Venue, D> {
     public:
       template<typename DF>
-      explicit HistoricalDataStoreQueryWrapper(DF&& dataStore)
-        : BaseHistoricalDataStoreQueryWrapper<VenueQuery,
-            OrderImbalance, Venue, D>(std::forward<DF>(dataStore)) {}
-
-      std::vector<SequencedOrderImbalance> Load(const VenueQuery& query) {
-        return this->m_dataStore->LoadOrderImbalances(query);
-      }
+      explicit HistoricalDataStoreQueryWrapper(DF&& data_store);
+      std::vector<SequencedOrderImbalance> Load(
+        const VenueMarketDataQuery& query);
   };
 
   template<typename D>
-  class HistoricalDataStoreQueryWrapper<BboQuote, D> :
-      public BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-        BboQuote, Security, D> {
+  class HistoricalDataStoreQueryWrapper<BboQuote, D> final :
+      public BaseHistoricalDataStoreQueryWrapper<
+        SecurityMarketDataQuery, BboQuote, Security, D> {
     public:
       template<typename DF>
-      explicit HistoricalDataStoreQueryWrapper(DF&& dataStore)
-        : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery, BboQuote,
-            Security, D>(std::forward<DF>(dataStore)) {}
-
-      std::vector<SequencedBboQuote> Load(
-          const SecurityMarketDataQuery& query) {
-        return this->m_dataStore->LoadBboQuotes(query);
-      }
+      explicit HistoricalDataStoreQueryWrapper(DF&& data_store);
+      std::vector<SequencedBboQuote> Load(const SecurityMarketDataQuery& query);
   };
 
   template<typename D>
-  class HistoricalDataStoreQueryWrapper<BookQuote, D> :
-      public BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-        BookQuote, Security, D> {
+  class HistoricalDataStoreQueryWrapper<BookQuote, D> final :
+      public BaseHistoricalDataStoreQueryWrapper<
+        SecurityMarketDataQuery, BookQuote, Security, D> {
     public:
       template<typename DF>
-      explicit HistoricalDataStoreQueryWrapper(DF&& dataStore)
-        : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-            BookQuote, Security, D>(std::forward<DF>(dataStore)) {}
-
+      explicit HistoricalDataStoreQueryWrapper(DF&& data_store);
       std::vector<SequencedBookQuote> Load(
-          const SecurityMarketDataQuery& query) {
-        return this->m_dataStore->LoadBookQuotes(query);
-      }
+        const SecurityMarketDataQuery& query);
   };
 
   template<typename D>
-  class HistoricalDataStoreQueryWrapper<TimeAndSale, D> :
-      public BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-        TimeAndSale, Security, D> {
+  class HistoricalDataStoreQueryWrapper<TimeAndSale, D> final :
+      public BaseHistoricalDataStoreQueryWrapper<
+        SecurityMarketDataQuery, TimeAndSale, Security, D> {
     public:
       template<typename DF>
-      explicit HistoricalDataStoreQueryWrapper(DF&& dataStore)
-        : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery,
-            TimeAndSale, Security, D>(std::forward<DF>(dataStore)) {}
-
+      explicit HistoricalDataStoreQueryWrapper(DF&& data_store);
       std::vector<SequencedTimeAndSale> Load(
-          const SecurityMarketDataQuery& query) {
-        return this->m_dataStore->LoadTimeAndSales(query);
-      }
+        const SecurityMarketDataQuery& query);
   };
 
   template<typename Q, typename V, typename I, typename D>
   template<typename DF>
   BaseHistoricalDataStoreQueryWrapper<Q, V, I, D>::
-    BaseHistoricalDataStoreQueryWrapper(DF&& dataStore)
-    : m_dataStore(std::forward<DF>(dataStore)) {}
+    BaseHistoricalDataStoreQueryWrapper(DF&& data_store)
+    : m_data_store(std::forward<DF>(data_store)) {}
 
   template<typename Q, typename V, typename I, typename D>
   BaseHistoricalDataStoreQueryWrapper<Q, V, I, D>::
@@ -120,18 +99,74 @@ namespace Nexus::MarketDataService {
   template<typename Q, typename V, typename I, typename D>
   void BaseHistoricalDataStoreQueryWrapper<Q, V, I, D>::Store(
       const IndexedValue& value) {
-    m_dataStore->Store(value);
+    m_data_store->store(value);
   }
 
   template<typename Q, typename V, typename I, typename D>
   void BaseHistoricalDataStoreQueryWrapper<Q, V, I, D>::Store(
       const std::vector<IndexedValue>& values) {
-    return m_dataStore->Store(values);
+    m_data_store->store(values);
   }
 
   template<typename Q, typename V, typename I, typename D>
   void BaseHistoricalDataStoreQueryWrapper<Q, V, I, D>::Close() {
-    m_dataStore->Close();
+    m_data_store->close();
+  }
+
+  template<typename D>
+  template<typename DF>
+  HistoricalDataStoreQueryWrapper<OrderImbalance, D>::
+    HistoricalDataStoreQueryWrapper(DF&& data_store)
+    : BaseHistoricalDataStoreQueryWrapper<VenueMarketDataQuery, OrderImbalance,
+        Venue, D>(std::forward<DF>(data_store)) {}
+
+  template<typename D>
+  std::vector<SequencedOrderImbalance>
+      HistoricalDataStoreQueryWrapper<OrderImbalance, D>::Load(
+        const VenueMarketDataQuery& query) {
+    return this->m_data_store->load_order_imbalances(query);
+  }
+
+  template<typename D>
+  template<typename DF>
+  HistoricalDataStoreQueryWrapper<BboQuote, D>::HistoricalDataStoreQueryWrapper(
+    DF&& data_store)
+    : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery, BboQuote,
+        Security, D>(std::forward<DF>(data_store)) {}
+
+  template<typename D>
+  std::vector<SequencedBboQuote>
+      HistoricalDataStoreQueryWrapper<BboQuote, D>::Load(
+        const SecurityMarketDataQuery& query) {
+    return this->m_data_store->load_bbo_quotes(query);
+  }
+
+  template<typename D>
+  template<typename DF>
+  HistoricalDataStoreQueryWrapper<BookQuote, D>::
+    HistoricalDataStoreQueryWrapper(DF&& data_store)
+    : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery, BookQuote,
+        Security, D>(std::forward<DF>(data_store)) {}
+
+  template<typename D>
+  std::vector<SequencedBookQuote>
+      HistoricalDataStoreQueryWrapper<BookQuote, D>::Load(
+        const SecurityMarketDataQuery& query) {
+    return this->m_data_store->load_book_quotes(query);
+  }
+
+  template<typename D>
+  template<typename DF>
+  HistoricalDataStoreQueryWrapper<TimeAndSale, D>::
+    HistoricalDataStoreQueryWrapper(DF&& data_store)
+    : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery, TimeAndSale,
+        Security, D>(std::forward<DF>(data_store)) {}
+
+  template<typename D>
+  std::vector<SequencedTimeAndSale>
+      HistoricalDataStoreQueryWrapper<TimeAndSale, D>::Load(
+        const SecurityMarketDataQuery& query) {
+    return this->m_data_store->load_time_and_sales(query);
   }
 }
 

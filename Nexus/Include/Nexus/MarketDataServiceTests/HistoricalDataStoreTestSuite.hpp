@@ -143,6 +143,115 @@ namespace Nexus::MarketDataService::Tests {
       REQUIRE(results_all[1] == sequenced_bbo_b);
       REQUIRE(results_all[2] == sequenced_bbo_c);
     }
+
+    SUBCASE("book_quote") {
+      auto security = Security("TST", NYSE);
+      auto book_quote_a = BookQuote("MPID", true, NYSE,
+        Quote(Money::ONE, 100, Side::BID),
+        time_from_string("2024-07-09 12:00:00"));
+      auto sequenced_book_quote_a =
+        SequencedValue(book_quote_a, Beam::Queries::Sequence(1));
+      data_store.store(SequencedSecurityBookQuote(
+        SecurityBookQuote(book_quote_a, security), Beam::Queries::Sequence(1)));
+      auto book_quote_b =
+        BookQuote("MPID", true, NYSE, Quote(Money::ONE, 200, Side::BID),
+          time_from_string("2024-07-09 12:01:00"));
+      auto sequenced_book_quote_b =
+        SequencedValue(book_quote_b, Beam::Queries::Sequence(2));
+      auto book_quote_c = BookQuote("MPID", true, NYSE,
+        Quote(Money::ONE + Money::CENT, 300, Side::ASK),
+        time_from_string("2024-07-09 12:02:00"));
+      auto sequenced_book_quote_c =
+        SequencedValue(book_quote_c, Beam::Queries::Sequence(3));
+      auto quotes = std::vector<SequencedSecurityBookQuote>();
+      quotes.push_back(
+        SequencedSecurityBookQuote(SecurityBookQuote(book_quote_b, security),
+          Beam::Queries::Sequence(2)));
+      quotes.push_back(
+        SequencedSecurityBookQuote(SecurityBookQuote(book_quote_c, security),
+          Beam::Queries::Sequence(3)));
+      data_store.store(quotes);
+      auto other_security = Security("ABC", TSX);
+      auto other_book_quote =
+        BookQuote("MPID", true, TSX, Quote(10 * Money::ONE, 100, Side::BID),
+          time_from_string("2024-07-09 12:00:00"));
+      data_store.store(SequencedSecurityBookQuote(SecurityBookQuote(
+        other_book_quote, other_security), Beam::Queries::Sequence(4)));
+      auto query_one = SecurityMarketDataQuery();
+      query_one.SetIndex(security);
+      query_one.SetRange(
+        Beam::Queries::Sequence(2), Beam::Queries::Sequence(2));
+      query_one.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto results_one = data_store.load_book_quotes(query_one);
+      REQUIRE(results_one.size() == 1);
+      REQUIRE(results_one[0] == sequenced_book_quote_b);
+      auto query_all = SecurityMarketDataQuery();
+      query_all.SetIndex(security);
+      query_all.SetRange(Range::Total());
+      query_all.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto results_all = data_store.load_book_quotes(query_all);
+      REQUIRE(results_all.size() == 3);
+      REQUIRE(results_all[0] == sequenced_book_quote_a);
+      REQUIRE(results_all[1] == sequenced_book_quote_b);
+      REQUIRE(results_all[2] == sequenced_book_quote_c);
+    }
+
+    SUBCASE("time_and_sale") {
+      auto security = Security("TST", NYSE);
+      auto time_and_sale_a =
+        TimeAndSale(time_from_string("2024-07-09 12:00:00"), Money::ONE, 100,
+          TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, ""),
+          "NYSE", "B1", "S2");
+      auto sequenced_time_and_sale_a =
+        SequencedValue(time_and_sale_a, Beam::Queries::Sequence(1));
+      data_store.store(SequencedSecurityTimeAndSale(
+        SecurityTimeAndSale(time_and_sale_a, security),
+        Beam::Queries::Sequence(1)));
+      auto time_and_sale_b =
+        TimeAndSale(time_from_string("2024-07-09 12:01:00"), Money::ONE, 200,
+          TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, ""),
+          "NYSE", "B5", "S12");
+      auto sequenced_time_and_sale_b =
+        SequencedValue(time_and_sale_b, Beam::Queries::Sequence(2));
+      auto time_and_sale_c = TimeAndSale(
+        time_from_string("2024-07-09 12:02:00"), Money::ONE + Money::CENT, 300,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, ""),
+        "NYSE", "B52", "S11");
+      auto sequenced_time_and_sale_c =
+        SequencedValue(time_and_sale_c, Beam::Queries::Sequence(3));
+      auto time_and_sales = std::vector<SequencedSecurityTimeAndSale>();
+      time_and_sales.push_back(SequencedSecurityTimeAndSale(
+        SecurityTimeAndSale(time_and_sale_b, security),
+        Beam::Queries::Sequence(2)));
+      time_and_sales.push_back(SequencedSecurityTimeAndSale(
+        SecurityTimeAndSale(time_and_sale_c, security),
+        Beam::Queries::Sequence(3)));
+      data_store.store(time_and_sales);
+      auto other_security = Security("ABC", TSX);
+      auto other_time_and_sale = TimeAndSale(
+        time_from_string("2024-07-09 12:00:00"), 10 * Money::ONE, 100,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, ""),
+        "TSX", "B12", "S5");
+      data_store.store(SequencedSecurityTimeAndSale(SecurityTimeAndSale(
+        other_time_and_sale, other_security), Beam::Queries::Sequence(4)));
+      auto query_one = SecurityMarketDataQuery();
+      query_one.SetIndex(security);
+      query_one.SetRange(
+        Beam::Queries::Sequence(2), Beam::Queries::Sequence(2));
+      query_one.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto results_one = data_store.load_time_and_sales(query_one);
+      REQUIRE(results_one.size() == 1);
+      REQUIRE(results_one[0] == sequenced_time_and_sale_b);
+      auto query_all = SecurityMarketDataQuery();
+      query_all.SetIndex(security);
+      query_all.SetRange(Range::Total());
+      query_all.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      auto results_all = data_store.load_time_and_sales(query_all);
+      REQUIRE(results_all.size() == 3);
+      REQUIRE(results_all[0] == sequenced_time_and_sale_a);
+      REQUIRE(results_all[1] == sequenced_time_and_sale_b);
+      REQUIRE(results_all[2] == sequenced_time_and_sale_c);
+    }
   }
 }
 
