@@ -3,7 +3,7 @@
 #include <QTextEdit>
 #include <QTimeEdit>
 #include <QVBoxLayout>
-#include "Spire/Playback/PlaybackControlPanel.hpp"
+#include "Spire/Playback/ReplayWindow.hpp"
 #include "Spire/Spire/Resources.hpp"
 
 using namespace Beam::TimeService;
@@ -14,18 +14,18 @@ using namespace boost::signals2;
 using namespace Spire;
 
 namespace {
-  using PlayStateModel = ValueModel<PlaybackControlPanel::State>;
-  using LocalPlayStateModel = LocalValueModel<PlaybackControlPanel::State>;
+  using PlayStateModel = ValueModel<ReplayWindow::State>;
+  using LocalPlayStateModel = LocalValueModel<ReplayWindow::State>;
 
   auto to_qt_time(const time_duration& duration) {
     return QTime::fromMSecsSinceStartOfDay(duration.total_milliseconds());
   }
 
-  auto to_text(PlaybackControlPanel::State state) {
-    if(state == PlaybackControlPanel::State::REPLAYING) {
+  auto to_text(ReplayWindow::State state) {
+    if(state == ReplayWindow::State::REPLAYING) {
       static const auto value = QObject::tr("Replaying");
       return value;
-    } else if(state == PlaybackControlPanel::State::PAUSED) {
+    } else if(state == ReplayWindow::State::PAUSED) {
       static const auto value = QObject::tr("Paused");
       return value;
     } else {
@@ -47,19 +47,19 @@ namespace {
 }
 
 struct DemoPlaybackController : private QObject {
-  PlaybackControlPanel m_control_panel;
+  ReplayWindow m_replay_window;
   std::shared_ptr<BooleanModel> m_timer_enabled;
-  std::shared_ptr<ValueModel<PlaybackControlPanel::State>> m_play_state;
+  std::shared_ptr<ValueModel<ReplayWindow::State>> m_play_state;
   QTimer m_timer;
 
   DemoPlaybackController(std::shared_ptr<TimelineModel> timeline,
       TimeClientBox time_client, std::shared_ptr<DurationModel> playhead,
       std::shared_ptr<PlaybackSpeedModel> speed)
-      : m_control_panel(PlaybackControlPanel(std::move(timeline),
+      : m_replay_window(ReplayWindow(std::move(timeline),
           std::move(time_client), std::move(playhead), std::move(speed),
           microsec_clock::universal_time().date() - months(6))),
         m_play_state(std::make_shared<LocalPlayStateModel>(
-          PlaybackControlPanel::State::PAUSED)),
+          ReplayWindow::State::PAUSED)),
         m_timer_enabled(std::make_shared<LocalBooleanModel>(false)),
 BEAM_SUPPRESS_THIS_INITIALIZER()
         m_timer(this) {
@@ -71,8 +71,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       std::bind_front(&DemoPlaybackController::on_timeout, this));
   }
 
-  void on_state_update(PlaybackControlPanel::State state) {
-    if(state == PlaybackControlPanel::State::PAUSED) {
+  void on_state_update(ReplayWindow::State state) {
+    if(state == ReplayWindow::State::PAUSED) {
       m_timer.stop();
     } else if(m_timer_enabled->get()) {
       m_timer.start();
@@ -80,24 +80,22 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   void on_timeout() {
-    auto& timeline = m_control_panel.get_timeline()->get();
-    if(m_play_state->get() == PlaybackControlPanel::State::REAL_TIME) {
-      auto now = m_control_panel.get_time_client().GetTime();
-      m_control_panel.get_playhead()->set(now - timeline.m_start);
-      auto next_second = 1000 - (now.time_of_day().total_milliseconds() % 1000);
-      m_timer.start(next_second);
+    auto& timeline = m_replay_window.get_timeline()->get();
+    if(m_play_state->get() == ReplayWindow::State::REAL_TIME) {
+      auto now = m_replay_window.get_time_client().GetTime();
+      m_replay_window.get_playhead()->set(now - timeline.m_start);
     } else {
       auto duration = std::min(timeline.m_duration,
-        m_control_panel.get_time_client().GetTime() - timeline.m_start);
-      m_control_panel.get_playhead()->set(
-        std::min(m_control_panel.get_playhead()->get() +
-          milliseconds(static_cast<long long>(m_control_panel.get_speed()->get()
+        m_replay_window.get_time_client().GetTime() - timeline.m_start);
+      m_replay_window.get_playhead()->set(
+        std::min(m_replay_window.get_playhead()->get() +
+          milliseconds(static_cast<long long>(m_replay_window.get_speed()->get()
             * 1000)), duration));
     }
   }
 };
 
-struct PlaybackControlPanelTester : QWidget {
+struct ReplayWindowTester : QWidget {
   DemoPlaybackController* m_controller;
   QDateTimeEdit* m_start_time;
   QTimeEdit* m_playhead;
@@ -106,7 +104,7 @@ struct PlaybackControlPanelTester : QWidget {
   scoped_connection m_playhead_connection;
   scoped_connection m_state_connection;
 
-  PlaybackControlPanelTester(DemoPlaybackController& controller)
+  ReplayWindowTester(DemoPlaybackController& controller)
       : m_controller(&controller) {
     setAttribute(Qt::WA_ShowWithoutActivating);
     auto layout = new QVBoxLayout(this);
@@ -119,16 +117,16 @@ struct PlaybackControlPanelTester : QWidget {
     m_start_time->setCalendarPopup(true);
     form_layout->addRow("Start Time(UTC):", m_start_time);
     connect(m_start_time, &QDateTimeEdit::dateTimeChanged,
-      std::bind_front(&PlaybackControlPanelTester::on_date_time_changed, this));
+      std::bind_front(&ReplayWindowTester::on_date_time_changed, this));
     auto duration = new QTimeEdit(QTime(8, 0, 0));
     duration->setDisplayFormat("hh:mm:ss:zzz");
     connect(duration, &QTimeEdit::timeChanged,
-      std::bind_front(&PlaybackControlPanelTester::on_duration_changed, this));
+      std::bind_front(&ReplayWindowTester::on_duration_changed, this));
     form_layout->addRow("Duration:", duration);
     m_playhead = new QTimeEdit(QTime(0, 0, 0));
     m_playhead->setDisplayFormat("hh:mm:ss:zzz");
     connect(m_playhead, &QTimeEdit::timeChanged,
-      std::bind_front(&PlaybackControlPanelTester::on_playhead_changed, this));
+      std::bind_front(&ReplayWindowTester::on_playhead_changed, this));
     form_layout->addRow("Current:", m_playhead);
     auto timer_check_box = new CheckBox(m_controller->m_timer_enabled);
     form_layout->addRow("Enable Timer:", timer_check_box);
@@ -137,22 +135,22 @@ struct PlaybackControlPanelTester : QWidget {
     m_event_log->setReadOnly(true);
     layout->addWidget(m_event_log);
     m_timeline_connection =
-      m_controller->m_control_panel.get_timeline()->connect_update_signal(
-        std::bind_front(&PlaybackControlPanelTester::on_timeline_update, this));
+      m_controller->m_replay_window.get_timeline()->connect_update_signal(
+        std::bind_front(&ReplayWindowTester::on_timeline_update, this));
     m_playhead_connection =
-      m_controller->m_control_panel.get_playhead()->connect_update_signal(
-        std::bind_front(&PlaybackControlPanelTester::on_playhead_update, this));
-    m_state_connection = m_controller->m_control_panel.connect_state_signal(
-      std::bind_front(&PlaybackControlPanelTester::on_state_update, this));
-    m_controller->m_control_panel.installEventFilter(this);
+      m_controller->m_replay_window.get_playhead()->connect_update_signal(
+        std::bind_front(&ReplayWindowTester::on_playhead_update, this));
+    m_state_connection = m_controller->m_replay_window.connect_state_signal(
+      std::bind_front(&ReplayWindowTester::on_state_update, this));
+    m_controller->m_replay_window.installEventFilter(this);
   }
 
   const std::shared_ptr<TimelineModel>& get_timeline() const {
-    return m_controller->m_control_panel.get_timeline();
+    return m_controller->m_replay_window.get_timeline();
   }
 
   const std::shared_ptr<DurationModel>& get_playhead() const {
-    return m_controller->m_control_panel.get_playhead();
+    return m_controller->m_replay_window.get_playhead();
   }
 
   bool eventFilter(QObject* object, QEvent* event) override {
@@ -163,9 +161,9 @@ struct PlaybackControlPanelTester : QWidget {
   }
 
   void showEvent(QShowEvent* event) override {
-    m_controller->m_control_panel.show();
-    m_controller->m_control_panel.adjustSize();
-    move(m_controller->m_control_panel.pos() + QPoint(0, 200));
+    m_controller->m_replay_window.show();
+    m_controller->m_replay_window.adjustSize();
+    move(m_controller->m_replay_window.pos() + QPoint(0, 200));
     resize(500, 600);
   }
 
@@ -211,7 +209,7 @@ struct PlaybackControlPanelTester : QWidget {
         get_timeline()->get().m_start + playhead))));
   }
 
-  void on_state_update(PlaybackControlPanel::State state) {
+  void on_state_update(ReplayWindow::State state) {
     m_controller->m_play_state->set(state);
     m_event_log->append(QString("State: %1").arg(to_text(state)));
   }
@@ -228,7 +226,7 @@ int main(int argc, char** argv) {
         time_duration(8, 0, 0)}), TimeClientBox(UtcTimeClient()),
     std::make_shared<LocalDurationModel>(time_duration(0, 0, 0)),
     std::make_shared<LocalPlaybackSpeedModel>(1));
-  auto tester = PlaybackControlPanelTester(controller);
+  auto tester = ReplayWindowTester(controller);
   tester.show();
   application.exec();
 }

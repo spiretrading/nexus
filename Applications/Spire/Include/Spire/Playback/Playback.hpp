@@ -2,7 +2,7 @@
 #define SPIRE_PLAYBACK_HPP
 
 namespace Spire {
-  class PlaybackControlPanel;
+  class ReplayWindow;
   class SeekBar;
 }
 

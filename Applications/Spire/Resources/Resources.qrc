@@ -109,6 +109,7 @@
     <file>Icons/taskbar_icons/dashboard.png</file>
     <file>Icons/taskbar_icons/imbalance-indicator.png</file>
     <file>Icons/taskbar_icons/key-bindings.png</file>
+    <file>Icons/taskbar_icons/replay.png</file>
     <file>Icons/taskbar_icons/spire.png</file>
     <file>Icons/taskbar_icons/time-sales.png</file>
     <file>Icons/spire.svg</file>
@@ -166,6 +167,8 @@
     <file>Icons/end.svg</file>
     <file>Icons/pause.svg</file>
     <file>Icons/play.svg</file>
+    <file>Icons/replay.svg</file>
     <file>Icons/start.svg</file>
+    <file>Icons/target.svg</file>
   </qresource>
 </RCC>

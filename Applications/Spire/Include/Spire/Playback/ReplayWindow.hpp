@@ -1,17 +1,18 @@
-#ifndef SPIRE_PLAYBACK_CONTROL_PANEL_HPP
-#define SPIRE_PLAYBACK_CONTROL_PANEL_HPP
+#ifndef SPIRE_REPLAY_WINDOW_HPP
+#define SPIRE_REPLAY_WINDOW_HPP
 #include <Beam/TimeService/TimeClientBox.hpp>
 #include "Spire/Playback/Playback.hpp"
 #include "Spire/Playback/PlaybackSpeedBox.hpp"
 #include "Spire/Playback/SeekBar.hpp"
 #include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/Window.hpp"
 
 namespace Spire {
 
   /**
-   * Displays a panel that the user can control replay.
+   * Displays a window that the user can control replay.
    */
-  class PlaybackControlPanel : public QWidget {
+  class ReplayWindow : public Window {
     public:
 
       /** Enumerates the different play states. */
@@ -34,7 +35,7 @@ namespace Spire {
       using StateSignal = Signal<void (State state)>;
 
       /**
-       * Constructs a PlaybackControlPanel.
+       * Constructs a ReplayWindow.
        * @param timeline The timeline that defines the start and duration of
        *        the playback.
        * @param time_client The time client that provides the current time.
@@ -43,7 +44,7 @@ namespace Spire {
        * @param min_date The minimum date for the replay.
        * @param parent The parent widget.
        */
-      PlaybackControlPanel(std::shared_ptr<TimelineModel> timeline,
+      ReplayWindow(std::shared_ptr<TimelineModel> timeline,
         Beam::TimeService::TimeClientBox time_client,
         std::shared_ptr<DurationModel> playhead,
         std::shared_ptr<PlaybackSpeedModel> speed,
