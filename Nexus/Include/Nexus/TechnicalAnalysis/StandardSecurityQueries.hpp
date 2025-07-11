@@ -25,30 +25,6 @@
 namespace Nexus::TechnicalAnalysis {
 
   /**
-   * Returns the default market center for a given MarketCode.
-   * @param code The market code to lookup.
-   * @return The default market center for the given <i>market</i>.
-   */
-  inline std::string GetDefaultMarketCenter(Venue venue) {
-    if(venue == DefaultVenues::ASX) {
-      return "ASX";
-    } else if(venue == DefaultVenues::CSE) {
-      return "CNQ";
-    } else if(venue == DefaultVenues::HKEX) {
-      return "HKEX";
-    } else if(venue == DefaultVenues::NEOE) {
-      return "AQL";
-    } else if(venue == DefaultVenues::TSX) {
-      return "TSE";
-    } else if(venue == DefaultVenues::TSXV) {
-      return "CDX";
-    } else if(venue != Venue()) {
-      return venue.get_code().GetData();
-    }
-    return {};
-  }
-
-  /**
    * Returns a query to retrieve a Security's opening trade.
    * @param security The Security to query.
    * @param date The date to retrieve the opening trade for.

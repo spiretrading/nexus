@@ -32,6 +32,15 @@ namespace Nexus {
   };
 
   /**
+   * Tests if two BookQuote's represent the same listing, that is they share
+   * the same side, price and MPID.
+   */
+  inline bool is_same_listing(const BookQuote& lhs, const BookQuote& rhs) {
+    return std::tie(lhs.m_quote.m_side, lhs.m_quote.m_price, lhs.m_mpid) ==
+      std::tie(rhs.m_quote.m_side, rhs.m_quote.m_price, rhs.m_mpid);
+  }
+
+  /**
    * Tests if one BookQuote should be listed before another.
    * @param lhs The left hand side of the comparator.
    * @param rhs The right hand side of the comparator.

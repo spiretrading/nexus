@@ -59,6 +59,9 @@ namespace Nexus {
         /** The venue's country code. */
         CountryCode m_country_code;
 
+        /** The default market center used for trades on the venue. */
+        std::string m_market_center;
+
         /** The venue's time zone. */
         std::string m_time_zone;
 
@@ -197,6 +200,7 @@ namespace Nexus {
         BOOST_THROW_EXCEPTION(
           Beam::MakeYamlParserException("Invalid country code.", node.Mark()));
       }
+      entry.m_market_center = Beam::Extract<std::string>(node, "market_center");
       entry.m_time_zone = Beam::Extract<std::string>(node, "time_zone");
       entry.m_currency = parse_currency(
         Beam::Extract<std::string>(node, "currency"), currency_database);
@@ -251,8 +255,9 @@ namespace Nexus {
   inline std::ostream& operator <<(std::ostream& out,
       const VenueDatabase::Entry& entry) {
     return out << '(' << entry.m_venue << ' ' << entry.m_country_code << ' ' <<
-      entry.m_time_zone << ' ' << entry.m_currency << ' ' <<
-      entry.m_description << ' ' << entry.m_display_name << ')';
+      entry.m_market_center << ' ' << entry.m_time_zone << ' ' <<
+      entry.m_currency << ' ' << entry.m_description << ' ' <<
+      entry.m_display_name << ')';
   }
 
   /**
@@ -450,6 +455,7 @@ namespace Beam::Serialization {
         unsigned int version) const {
       shuttle.Shuttle("venue", value.m_venue);
       shuttle.Shuttle("country_code", value.m_country_code);
+      shuttle.Shuttle("market_center", value.m_market_center);
       shuttle.Shuttle("time_zone", value.m_time_zone);
       shuttle.Shuttle("currency", value.m_currency);
       shuttle.Shuttle("description", value.m_description);

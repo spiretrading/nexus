@@ -27,8 +27,9 @@ namespace {
     auto database = VenueDatabase();
     auto entry = VenueDatabase::Entry();
     entry.m_venue = Venue("AEST");
-    entry.m_time_zone = "Australian_Eastern_Standard_Time";
     entry.m_country_code = CountryCode::NONE;
+    entry.m_market_center = "ASX";
+    entry.m_time_zone = "Australian_Eastern_Standard_Time";
     entry.m_currency = CurrencyId::NONE;
     entry.m_description = "";
     entry.m_display_name = "";
@@ -70,6 +71,7 @@ TEST_SUITE("Venue") {
     auto entry = VenueDatabase::Entry();
     entry.m_venue = venue;
     entry.m_country_code = CountryCode(123);
+    entry.m_market_center = "ABCD";
     entry.m_time_zone = "UTC";
     entry.m_currency = CurrencyId(321);
     entry.m_description = "Description";
@@ -131,6 +133,7 @@ TEST_SUITE("Venue") {
     const auto yaml_text = R"(
       venue: "NYC1"
       country_code: "US"
+      market_center: "NNN"
       time_zone: "America/New_York"
       currency: "USD"
       description: "New York Stock Exchange"
@@ -140,6 +143,7 @@ TEST_SUITE("Venue") {
       parse_venue_database_entry(node, DEFAULT_COUNTRIES, DEFAULT_CURRENCIES);
     REQUIRE(entry.m_venue == Venue("NYC1"));
     REQUIRE(entry.m_country_code == DefaultCountries::US);
+    REQUIRE(entry.m_market_center == "NNN");
     REQUIRE(entry.m_time_zone == "America/New_York");
     REQUIRE(entry.m_currency == DefaultCurrencies::USD);
     REQUIRE(entry.m_description == "New York Stock Exchange");
@@ -150,6 +154,7 @@ TEST_SUITE("Venue") {
     const auto yaml_text = R"(
       venue: "LON1"
       country_code: "XX"
+      market_center: "LL"
       time_zone: "Europe/London"
       currency: "GBP"
       description: "London Stock Exchange"
@@ -163,6 +168,7 @@ TEST_SUITE("Venue") {
     const auto yaml_text = R"(
       venue: "TOK1"
       country_code: "JP"
+      market_center: "JPJP"
       time_zone: "Asia/Tokyo"
       currency: "XXX"
       description: "Tokyo Stock Exchange"
@@ -177,12 +183,14 @@ TEST_SUITE("Venue") {
     const auto yaml_text = R"(
       - venue: "ABC"
         country_code: "US"
+        market_center: "CBA"
         time_zone: "America/New_York"
         currency: "USD"
         description: "Desc1"
         display_name: "Alpha"
       - venue: "DEF"
         country_code: "GB"
+        market_center: "BG"
         time_zone: "Europe/London"
         currency: "GBP"
         description: "Desc2"
@@ -204,6 +212,7 @@ TEST_SUITE("Venue") {
     auto entry = VenueDatabase::Entry();
     entry.m_venue = Venue("ABC");
     entry.m_country_code = DefaultCountries::US;
+    entry.m_market_center = "AABBCC";
     entry.m_time_zone = "America/New_York";
     entry.m_currency = DefaultCurrencies::USD;
     entry.m_description = "Desc1";
@@ -220,6 +229,7 @@ TEST_SUITE("Venue") {
     auto entry = VenueDatabase::Entry();
     entry.m_venue = Venue("LMN");
     entry.m_country_code = DefaultCountries::CA;
+    entry.m_market_center = "LMN";
     entry.m_time_zone = "America/Toronto";
     entry.m_currency = DefaultCurrencies::CAD;
     entry.m_description = "Desc3";
@@ -233,7 +243,7 @@ TEST_SUITE("Venue") {
     ss.str(std::string());
     auto parsed_entry = parse_venue_entry("LmnVenue", database);
     ss << parsed_entry;
-    REQUIRE(ss.str() == "(LMN CA America/Toronto CAD Desc3 LmnVenue)");
+    REQUIRE(ss.str() == "(LMN CA LMN America/Toronto CAD Desc3 LmnVenue)");
   }
 
   TEST_CASE("shuttle") {

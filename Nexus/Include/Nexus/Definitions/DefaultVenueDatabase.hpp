@@ -15,6 +15,7 @@ namespace Nexus {
       auto entry = VenueDatabase::Entry();
       entry.m_venue = Venue("XASX");
       entry.m_country_code = DefaultCountries::AU;
+      entry.m_market_center = "ASX";
       entry.m_time_zone = "Australian_Eastern_Standard_Time";
       entry.m_currency = DefaultCurrencies::AUD;
       entry.m_description = "Australian Stock Market";
@@ -25,6 +26,7 @@ namespace Nexus {
       auto entry = VenueDatabase::Entry();
       entry.m_venue = Venue("CHIA");
       entry.m_country_code = DefaultCountries::AU;
+      entry.m_market_center = "CXA";
       entry.m_time_zone = "Australian_Eastern_Standard_Time";
       entry.m_currency = DefaultCurrencies::AUD;
       entry.m_description = "CHI-X Australia";
@@ -245,6 +247,7 @@ namespace Nexus {
       auto entry = VenueDatabase::Entry();
       entry.m_venue = Venue("NEOE");
       entry.m_country_code = DefaultCountries::CA;
+      entry.m_market_center = "AQL";
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::CAD;
       entry.m_description = "Aequitas NEO Exchange";
@@ -275,6 +278,7 @@ namespace Nexus {
       auto entry = VenueDatabase::Entry();
       entry.m_venue = Venue("XTSE");
       entry.m_country_code = DefaultCountries::CA;
+      entry.m_market_center = "TSE";
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::CAD;
       entry.m_description = "Toronto Stock Exchange";
@@ -285,6 +289,7 @@ namespace Nexus {
       auto entry = VenueDatabase::Entry();
       entry.m_venue = Venue("XTSX");
       entry.m_country_code = DefaultCountries::CA;
+      entry.m_market_center = "CDX";
       entry.m_time_zone = "Eastern_Time";
       entry.m_currency = DefaultCurrencies::CAD;
       entry.m_description = "TSX Venture Exchange";

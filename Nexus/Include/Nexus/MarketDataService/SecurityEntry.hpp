@@ -8,7 +8,6 @@
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
-#include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
 
 namespace Nexus::MarketDataService {
 
@@ -67,12 +66,12 @@ namespace Nexus::MarketDataService {
 
       /**
        * Updates a BookQuote.
-       * @param delta The BookQuote storing the change.
+       * @param quote The updated BookQuote to publish.
        * @param source_id The id of the source setting the value.
        * @return The BookQuote to publish.
        */
       boost::optional<SequencedSecurityBookQuote> publish(
-        const BookQuote& delta, int source_id);
+        const BookQuote& quote, int source_id);
 
       /**
        * Publishes a TimeAndSale.
@@ -80,7 +79,7 @@ namespace Nexus::MarketDataService {
        * @param source_id The id of the source setting the value.
        * @return The TimeAndSale to publish.
        */
-      boost::optional<SequencedSecurityTimeAndSale> publish_time_and_sale(
+      boost::optional<SequencedSecurityTimeAndSale> publish(
         const TimeAndSale& time_and_sale, int source_id);
 
       /**
@@ -106,8 +105,8 @@ namespace Nexus::MarketDataService {
       boost::posix_time::ptime m_technicals_reset_time;
       SequencedSecurityBboQuote m_bbo_quote;
       SequencedSecurityTimeAndSale m_time_and_sale;
-      std::vector<BookQuoteEntry> m_ask_book;
-      std::vector<BookQuoteEntry> m_bid_book;
+      std::vector<BookQuoteEntry> m_asks;
+      std::vector<BookQuoteEntry> m_bids;
 
       SecurityEntry(const SecurityEntry&) = delete;
       SecurityEntry& operator =(const SecurityEntry&) = delete;
@@ -198,14 +197,14 @@ namespace Nexus::MarketDataService {
     auto snapshot = SecuritySnapshot(m_security);
     snapshot.m_bbo_quote = m_bbo_quote;
     snapshot.m_time_and_sale = m_time_and_sale;
-    for(auto& entry : m_ask_book) {
-      if((*entry.m_quote)->m_quote.m_size > 0) {
-        snapshot.m_asks.push_back(entry.m_quote);
+    for(auto& ask : m_asks) {
+      if((*ask.m_quote)->m_quote.m_size > 0) {
+        snapshot.m_asks.push_back(ask.m_quote);
       }
     }
-    for(auto& entry : m_bid_book) {
-      if((*entry.m_quote)->m_quote.m_size > 0) {
-        snapshot.m_bids.push_back(entry.m_quote);
+    for(auto& bid : m_bids) {
+      if((*bid.m_quote)->m_quote.m_size > 0) {
+        snapshot.m_bids.push_back(bid.m_quote);
       }
     }
     return snapshot;
@@ -248,88 +247,64 @@ namespace Nexus::MarketDataService {
     return value;
   }
 
-#if 0
-  inline boost::optional<SequencedSecurityBookQuote>
-      SecurityEntry::UpdateBookQuote(const BookQuote& delta, int sourceId) {
-    auto book = pick(delta.m_quote.m_side, &m_askBook, &m_bidBook);
-    auto entryIterator = Beam::LinearLowerBound(book->begin(), book->end(),
-      delta, [] (const auto& lhs, const auto& rhs) {
-        return BookQuoteListingComparator(**lhs.m_quote, rhs);
+  inline boost::optional<SequencedSecurityBookQuote> SecurityEntry::publish(
+      const BookQuote& quote, int source_id) {
+    auto& book = *pick(quote.m_quote.m_side, &m_asks, &m_bids);
+    auto i = std::lower_bound(book.begin(), book.end(), quote,
+      [] (const auto& lhs, const auto& rhs) {
+        return listing_comparator(**lhs.m_quote, rhs);
       });
-    if(entryIterator == book->end()) {
-      if(delta.m_quote.m_size <= 0) {
+    if(i != book.end() && is_same_listing(*i->m_quote, quote)) {
+      if(quote.m_quote.m_size <= 0) {
+        book.erase(i);
         return boost::none;
       }
-      auto value = m_bookQuoteSequencer.MakeSequencedValue(delta, m_security);
-      book->emplace_back(std::move(value), sourceId);
-      entryIterator = book->end() - 1;
-    } else {
-      auto& entry = *entryIterator;
-      if((*entry.m_quote)->m_quote.m_price != delta.m_quote.m_price ||
-          (*entry.m_quote)->m_mpid != delta.m_mpid) {
-        if(delta.m_quote.m_size <= 0) {
-          return boost::none;
-        }
-        if((*entry.m_quote)->m_quote.m_size == 0) {
-          auto value = m_bookQuoteSequencer.MakeSequencedValue(delta,
-            m_security);
-          auto quoteEntry = BookQuoteEntry(std::move(value), sourceId);
-          entry = quoteEntry;
-        } else {
-          auto value = m_bookQuoteSequencer.MakeSequencedValue(delta,
-            m_security);
-          entryIterator = book->emplace(entryIterator, std::move(value),
-            sourceId);
-        }
-      } else {
-        (*entry.m_quote)->m_quote.m_size = std::max<Quantity>(0,
-          (*entry.m_quote)->m_quote.m_size + delta.m_quote.m_size);
-        (*entry.m_quote)->m_timestamp = delta.m_timestamp;
-        entry.m_quote.GetSequence() =
-          m_bookQuoteSequencer.IncrementNextSequence(delta.m_timestamp);
-        entry.m_sourceId = sourceId;
-      }
+      auto sequenced_quote =
+        m_book_quote_sequencer.MakeSequencedValue(quote, m_security);
+      i->m_quote = sequenced_quote;
+      i->m_source_id = source_id;
+      return sequenced_quote;
     }
-    return entryIterator->m_quote;
+    if(quote.m_quote.m_size <= 0) {
+      return boost::none;
+    }
+    auto sequenced_quote =
+      m_book_quote_sequencer.MakeSequencedValue(quote, m_security);
+    book.emplace(i, sequenced_quote, source_id);
+    return sequenced_quote;
   }
 
-  inline boost::optional<SequencedSecurityTimeAndSale>
-      SecurityEntry::PublishTimeAndSale(
-        const TimeAndSale& timeAndSale, int sourceId) {
+  inline boost::optional<SequencedSecurityTimeAndSale> SecurityEntry::publish(
+      const TimeAndSale& time_and_sale, int source_id) {
     if(m_technicals.m_open == Money::ZERO) {
-      m_technicals.m_open = timeAndSale.m_price;
+      m_technicals.m_open = time_and_sale.m_price;
     }
     if(m_technicals.m_high == Money::ZERO ||
-        timeAndSale.m_price > m_technicals.m_high) {
-      m_technicals.m_high = timeAndSale.m_price;
+        time_and_sale.m_price > m_technicals.m_high) {
+      m_technicals.m_high = time_and_sale.m_price;
     }
     if(m_technicals.m_low == Money::ZERO ||
-        timeAndSale.m_price < m_technicals.m_low) {
-      m_technicals.m_low = timeAndSale.m_price;
+        time_and_sale.m_price < m_technicals.m_low) {
+      m_technicals.m_low = time_and_sale.m_price;
     }
-    m_technicals.m_volume += timeAndSale.m_size;
-    if(timeAndSale.m_market_center == m_marketCenter) {
-      m_nextClose = timeAndSale.m_price;
+    m_technicals.m_volume += time_and_sale.m_size;
+    if(time_and_sale.m_market_center == m_market_center) {
+      m_next_close = time_and_sale.m_price;
     }
-    auto value = m_timeAndSaleSequencer.MakeSequencedValue(
-      timeAndSale, m_security);
-    m_timeAndSale = value;
+    auto value = m_time_and_sale_sequencer.MakeSequencedValue(
+      time_and_sale, m_security);
+    m_time_and_sale = value;
     return value;
   }
 
-  inline void SecurityEntry::Clear(int sourceId) {
-    auto askRange = std::remove_if(m_askBook.begin(), m_askBook.end(),
-      [&] (auto& bookQuoteEntry) {
-        return bookQuoteEntry.m_sourceId == sourceId;
-      });
-    m_askBook.erase(askRange, m_askBook.end());
-    auto bidRange = std::remove_if(m_bidBook.begin(), m_bidBook.end(),
-      [&] (auto& bookQuoteEntry) {
-        return bookQuoteEntry.m_sourceId == sourceId;
-      });
-    m_bidBook.erase(bidRange, m_bidBook.end());
+  inline void SecurityEntry::clear(int source_id) {
+    std::erase_if(m_asks, [&] (const auto& entry) {
+      return entry.m_source_id == source_id;
+    });
+    std::erase_if(m_bids, [&] (const auto& entry) {
+      return entry.m_source_id == source_id;
+    });
   }
-#endif
 }
 
 #endif
