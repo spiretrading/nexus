@@ -1,40 +1,49 @@
 #ifndef NEXUS_MARKET_DATA_REGISTRY_HPP
 #define NEXUS_MARKET_DATA_REGISTRY_HPP
+#include <memory>
 #include <string_view>
+#include <unordered_set>
+#include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/Collections/SynchronizedSet.hpp>
+#include <Beam/Collections/Trie.hpp>
+#include <Beam/Threading/Mutex.hpp>
+#include <Beam/Threading/Sync.hpp>
+#include <Beam/Utilities/Remote.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/optional/optional.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
+#include "Nexus/MarketDataService/SecurityEntry.hpp"
+#include "Nexus/MarketDataService/VenueEntry.hpp"
 #include "Nexus/Queries/StandardValues.hpp"
 
 namespace Nexus::MarketDataService {
 namespace Details {
   template<typename DataStore>
-  Money load_close_price(const Security& security, DataStore& data_store) {
-    auto market_centers = std::vector<std::string_view>(); // TODO
-    for(auto& market_center : market_centers) {
-      auto query_market_code = Beam::Queries::StringValue(market_center);
-      auto market_code_expression =
-        Beam::Queries::ConstantExpression(query_market_code);
-      auto parameter_expression = Beam::Queries::ParameterExpression(
-        0, Nexus::Queries::TimeAndSaleType());
-      auto access_expression = Beam::Queries::MemberAccessExpression(
-        "market_center", Beam::Queries::StringType(), parameter_expression);
-      auto equal_expression = Beam::Queries::MakeEqualsExpression(
-        market_code_expression, access_expression);
-      auto previous_close_query = MarketDataService::SecurityMarketDataQuery();
-      previous_close_query.SetIndex(security);
-      previous_close_query.SetRange(Beam::Queries::Range::Total());
-      previous_close_query.SetSnapshotLimit(
-        Beam::Queries::SnapshotLimit::Type::TAIL, 1);
-      previous_close_query.SetFilter(equal_expression);
-      auto result = data_store.load_time_and_sales(previous_close_query);
-      if(!result.empty()) {
-        return result.back()->m_price;
-      }
+  Money load_close_price(const Security& security,
+      std::string_view market_center, DataStore& data_store) {
+    auto query_market_code = Beam::Queries::StringValue(market_center);
+    auto market_code_expression =
+      Beam::Queries::ConstantExpression(query_market_code);
+    auto parameter_expression =
+      Beam::Queries::ParameterExpression(0, Nexus::Queries::TimeAndSaleType());
+    auto access_expression = Beam::Queries::MemberAccessExpression(
+      "market_center", Beam::Queries::StringType(), parameter_expression);
+    auto equal_expression = Beam::Queries::MakeEqualsExpression(
+      market_code_expression, access_expression);
+    auto previous_close_query = MarketDataService::SecurityMarketDataQuery();
+    previous_close_query.SetIndex(security);
+    previous_close_query.SetRange(Beam::Queries::Range::Total());
+    previous_close_query.SetSnapshotLimit(
+      Beam::Queries::SnapshotLimit::Type::TAIL, 1);
+    previous_close_query.SetFilter(equal_expression);
+    auto result = data_store.load_time_and_sales(previous_close_query);
+    if(!result.empty()) {
+      return result.back()->m_price;
     }
     return Money::ZERO;
   }
 }
 
-#if 0
   /** Keeps and updates the registry of market data. */
   class MarketDataRegistry {
     public:
@@ -48,7 +57,7 @@ namespace Details {
        * @return The list of SecurityInfo's that match the <i>prefix</i>.
        */
       std::vector<SecurityInfo>
-        search_security_info(std::string_view prefix) const;
+        search_security_info(const std::string& prefix) const;
 
       /**
        * Returns a Security's primary listing.
@@ -56,7 +65,7 @@ namespace Details {
        * @return The <i>security</i>'s primary listing, if no such listing
        *         exists then the MarketCode will be set to empty.
        */
-      Security get_primary_listing(const Security& security);
+      Security get_primary_listing(const Security& security) const;
 
       /**
        * Returns a Security's SecurityTechnicals.
@@ -132,60 +141,48 @@ namespace Details {
       void clear(int source_id);
 
     private:
-      using SyncMarketEntry = Beam::Threading::Sync<MarketEntry,
-        Beam::Threading::Mutex>;
-      using SyncSecurityEntry = Beam::Threading::Sync<SecurityEntry,
-        Beam::Threading::Mutex>;
-      Beam::Threading::Sync<rtv::Trie<char, SecurityInfo>> m_securityDatabase;
-      Beam::SynchronizedUnorderedSet<Security> m_verifiedSecurities;
-      Beam::SynchronizedUnorderedMap<MarketCode, std::shared_ptr<Beam::Remote<
-        SyncMarketEntry, Beam::Threading::Mutex>>> m_marketEntries;
+      using SyncVenueEntry =
+        Beam::Threading::Sync<VenueEntry, Beam::Threading::Mutex>;
+      using SyncSecurityEntry =
+        Beam::Threading::Sync<SecurityEntry, Beam::Threading::Mutex>;
+      Beam::Threading::Sync<rtv::Trie<char, SecurityInfo>> m_security_database;
+      Beam::SynchronizedUnorderedSet<Security> m_verified_securities;
+      Beam::SynchronizedUnorderedMap<Venue, std::shared_ptr<
+        Beam::Remote<SyncVenueEntry, Beam::Threading::Mutex>>> m_market_entries;
       Beam::SynchronizedUnorderedMap<Security, std::shared_ptr<Beam::Remote<
-        SyncSecurityEntry, Beam::Threading::Mutex>>> m_securityEntries;
+        SyncSecurityEntry, Beam::Threading::Mutex>>> m_security_entries;
 
       MarketDataRegistry(const MarketDataRegistry&) = delete;
       MarketDataRegistry& operator =(const MarketDataRegistry&) = delete;
       template<typename DataStore>
-      boost::optional<SyncMarketEntry&> LoadMarketEntry(MarketCode market,
-        DataStore& dataStore);
+      boost::optional<SyncVenueEntry&> load(Venue venue, DataStore& data_store);
       template<typename DataStore>
-      boost::optional<SyncSecurityEntry&> LoadSecurityEntry(
-        const Security& security, DataStore& dataStore);
+      boost::optional<SyncSecurityEntry&>
+        load(const Security& security, DataStore& data_store);
   };
-#endif
-#if 0
+
   inline MarketDataRegistry::MarketDataRegistry()
-    : m_securityDatabase('\0') {}
+    : m_security_database('\0') {}
 
-  inline void MarketDataRegistry::Add(const SecurityInfo& securityInfo) {
-    auto key = ToString(securityInfo.m_security);
-    auto name = boost::to_upper_copy(securityInfo.m_name);
-    Beam::Threading::With(m_securityDatabase, [&] (auto& securityDatabase) {
-      securityDatabase[key.c_str()] = securityInfo;
-      securityDatabase[name.c_str()] = securityInfo;
-    });
-    m_verifiedSecurities.Update(securityInfo.m_security);
-  }
-
-  inline std::vector<SecurityInfo> MarketDataRegistry::SearchSecurityInfo(
-      const std::string& prefix) {
+  inline std::vector<SecurityInfo> MarketDataRegistry::search_security_info(
+      const std::string& prefix) const {
     static const auto MAX_MATCH_COUNT = 8;
     auto matches = std::unordered_set<SecurityInfo>();
-    auto uppercasePrefix = boost::to_upper_copy(prefix);
-    Beam::Threading::With(m_securityDatabase, [&] (auto& securityDatabase) {
-      for(auto i = securityDatabase.startsWith(uppercasePrefix.c_str());
-          i != securityDatabase.end(); ++i) {
+    auto uppercase_prefix = boost::to_upper_copy(prefix);
+    Beam::Threading::With(m_security_database, [&] (auto& database) {
+      for(auto i = database.startsWith(uppercase_prefix.c_str());
+          i != database.end(); ++i) {
         matches.insert(*i->second);
       }
     });
     auto i = matches.begin();
     while(i != matches.end()) {
-      auto entry = m_securityEntries.FindValue(i->m_security);
+      auto entry = m_security_entries.FindValue(i->m_security);
       if(!entry || !(*entry)->IsAvailable()) {
         i = matches.erase(i);
       } else {
-        Beam::Threading::With(***entry, [&] (auto& entry) {
-          if((*entry.GetBboQuote())->m_ask.m_price == Money::ZERO) {
+        Beam::Threading::With(***entry, [&] (const auto& entry) {
+          if((*entry.get_bbo_quote())->m_ask.m_price == Money::ZERO) {
             i = matches.erase(i);
           } else {
             ++i;
@@ -193,98 +190,130 @@ namespace Details {
         });
       }
     }
-    auto result = std::vector<SecurityInfo>(matches.begin(), matches.end());
+    auto result = std::vector(matches.begin(), matches.end());
     if(result.size() > MAX_MATCH_COUNT) {
       result.erase(result.begin() + MAX_MATCH_COUNT, result.end());
     }
     return result;
   }
 
-  inline Security MarketDataRegistry::GetPrimaryListing(
-      const Security& security) {
-    if(security.GetSymbol().empty() ||
-        security.GetCountry() == CountryCode::NONE) {
-      return Security(security.GetSymbol(), CountryCode::NONE);
+  inline Security MarketDataRegistry::get_primary_listing(
+      const Security& security) const {
+/** TODO
+    if(security.get_symbol().empty() || security.get_venue() == Venue()) {
+      return Security(security.get_symbol(), Venue());
     }
-    if(auto verifiedSecurity = m_verifiedSecurities.FindValue(security)) {
-      return std::move(*verifiedSecurity);
+    if(auto verified_security = m_verified_securities.FindValue(security)) {
+      return std::move(*verified_security);
     }
-    auto entry = m_securityEntries.Find(security);
+    auto entry = m_security_entries.Find(security);
     if(!entry || !(*entry)->IsAvailable()) {
-      return Security(security.GetSymbol(), security.GetCountry());
+      return Security(security.get_symbol(), Venue());
     }
     return Beam::Threading::With(***entry, [&] (auto& entry) {
-      if(entry.GetSecurity().GetMarket().IsEmpty()) {
-        return Security(security.GetSymbol(), security.GetCountry());
+      if(entry.get_security().get_venue() == Venue()) {
+        return Security(security.get_symbol(), Venue());
       }
-      return entry.GetSecurity();
+      return entry.get_security();
+    });
+*/
+    return security;
+  }
+
+  inline boost::optional<SecurityTechnicals>
+      MarketDataRegistry::find_security_technicals(
+        const Security& security) const {
+    auto entry = m_security_entries.Find(security);
+    if(!entry || !(*entry)->IsAvailable()) {
+      return boost::none;
+    }
+    return Beam::Threading::With(***entry, [&] (const auto& entry) {
+      return entry.get_security_technicals();
     });
   }
 
+  inline boost::optional<SecuritySnapshot>
+      MarketDataRegistry::find_snapshot(const Security& security) const {
+    auto entry = m_security_entries.Find(security);
+    if(!entry || !(*entry)->IsAvailable()) {
+      return boost::none;
+    }
+    return Beam::Threading::With(***entry, [&] (const auto& entry) {
+      return entry.load_snapshot();
+    });
+  }
+
+  inline void MarketDataRegistry::add(const SecurityInfo& info) {
+    auto key = boost::lexical_cast<std::string>(info.m_security);
+    auto name = boost::to_upper_copy(info.m_name);
+    Beam::Threading::With(m_security_database, [&] (auto& database) {
+      database[key.c_str()] = info;
+      database[name.c_str()] = info;
+    });
+    m_verified_securities.Update(info.m_security);
+  }
+
   template<typename DataStore, typename F>
-  void MarketDataRegistry::PublishOrderImbalance(
-      const MarketOrderImbalance& orderImbalance, int sourceId,
-      DataStore& dataStore, const F& f) {
-    auto securityEntry = LoadSecurityEntry(orderImbalance->m_security,
-      dataStore);
-    if(!securityEntry) {
+  void MarketDataRegistry::publish(const VenueOrderImbalance& imbalance,
+      int source_id, DataStore& data_store, const F& f) {
+    auto security_entry = load(imbalance->m_security, data_store);
+    if(!security_entry) {
       return;
     }
-    auto marketEntry = LoadMarketEntry(orderImbalance.GetIndex(), dataStore);
-    if(!marketEntry) {
+    auto venue_entry = load(imbalance.GetIndex(), data_store);
+    if(!venue_entry) {
       return;
     }
-    auto [security, referencePrice] = Beam::Threading::With(*securityEntry,
-      [&] (auto& securityEntry) {
-        auto referencePrice = [&] {
-          if(orderImbalance->m_referencePrice == Money::ZERO) {
-            auto& bbo = **securityEntry.GetBboQuote();
-            return Pick(orderImbalance->m_side, bbo.m_ask.m_price,
-              bbo.m_bid.m_price);
+    auto [security, reference_price] =
+      Beam::Threading::With(*security_entry, [&] (const auto& entry) {
+        auto reference_price = [&] {
+          if(imbalance->m_reference_price == Money::ZERO) {
+            auto& bbo = **entry.get_bbo_quote();
+            return pick(
+              imbalance->m_side, bbo.m_ask.m_price, bbo.m_bid.m_price);
           }
-          return orderImbalance->m_referencePrice;
+          return imbalance->m_reference_price;
         }();
-        return std::tuple(securityEntry.GetSecurity(), referencePrice);
+        return std::tuple(entry.get_security(), reference_price);
       });
-    Beam::Threading::With(*marketEntry, [&] (auto& entry) {
-      auto sanitizedOrderImbalance = OrderImbalance(orderImbalance);
-      sanitizedOrderImbalance.m_security = std::move(security);
-      sanitizedOrderImbalance.m_referencePrice = std::move(referencePrice);
-      if(auto sequencedOrderImbalance = entry.PublishOrderImbalance(
-          std::move(sanitizedOrderImbalance), sourceId)) {
-        f(*sequencedOrderImbalance);
+    Beam::Threading::With(*venue_entry, [&] (auto& entry) {
+      auto sanitized_imbalance = OrderImbalance(imbalance);
+      sanitized_imbalance.m_security = std::move(security);
+      sanitized_imbalance.m_reference_price = std::move(reference_price);
+      if(auto sequenced_imbalance =
+          entry.publish(std::move(sanitized_imbalance), source_id)) {
+        f(*sequenced_imbalance);
       }
     });
   }
 
   template<typename DataStore, typename F>
-  void MarketDataRegistry::PublishBboQuote(const SecurityBboQuote& bboQuote,
-      int sourceId, DataStore& dataStore, const F& f) {
-    auto entry = LoadSecurityEntry(bboQuote.GetIndex(), dataStore);
+  void MarketDataRegistry::publish(const SecurityBboQuote& quote,
+      int source_id, DataStore& data_store, const F& f) {
+    auto entry = load(quote.GetIndex(), data_store);
     if(!entry) {
       return;
     }
     Beam::Threading::With(*entry, [&] (auto& entry) {
-      if(entry.GetSecurity().GetMarket().IsEmpty()) {
-        if(auto verifiedSecurity =
-            m_verifiedSecurities.FindValue(bboQuote.GetIndex())) {
-          entry.SetSecurity(std::move(*verifiedSecurity));
+      if(entry.get_security().get_venue() == Venue()) {
+        if(auto security = m_verified_securities.FindValue(quote.GetIndex())) {
+          entry.set_security(std::move(*security));
         } else {
-          entry.SetSecurity(bboQuote.GetIndex());
+          entry.set_security(quote.GetIndex());
         }
-        auto key = ToString(entry.GetSecurity());
-        auto info = SecurityInfo(entry.GetSecurity(), key, "", 0);
-        Beam::Threading::With(m_securityDatabase, [&] (auto& securityDatabase) {
-          securityDatabase.insert(key.c_str(), info);
+        auto key = boost::lexical_cast<std::string>(entry.get_security());
+        auto info = SecurityInfo(entry.get_security(), key, "", 0);
+        Beam::Threading::With(m_security_database, [&] (auto& database) {
+          database.insert(key.c_str(), info);
         });
       }
-      if(auto sequencedBboQuote =
-          entry.PublishBboQuote(std::move(bboQuote), sourceId)) {
-        f(*sequencedBboQuote);
+      if(auto sequenced_quote = entry.publish(std::move(quote), source_id)) {
+        f(*sequenced_quote);
       }
     });
   }
 
+#if 0
   template<typename DataStore, typename F>
   void MarketDataRegistry::PublishMarketQuote(
       const SecurityMarketQuote& marketQuote, int sourceId,
@@ -329,28 +358,6 @@ namespace Details {
           entry.PublishTimeAndSale(std::move(timeAndSale), sourceId)) {
         f(*sequencedTimeAndSale);
       }
-    });
-  }
-
-  inline boost::optional<SecurityTechnicals>
-      MarketDataRegistry::FindSecurityTechnicals(const Security& security) {
-    auto entry = m_securityEntries.Find(security);
-    if(!entry || !(*entry)->IsAvailable()) {
-      return boost::none;
-    }
-    return Beam::Threading::With(***entry, [&] (auto& entry) {
-      return entry.GetSecurityTechnicals();
-    });
-  }
-
-  inline boost::optional<SecuritySnapshot> MarketDataRegistry::FindSnapshot(
-      const Security& security) {
-    auto entry = m_securityEntries.Find(security);
-    if(!entry || !(*entry)->IsAvailable()) {
-      return boost::none;
-    }
-    return Beam::Threading::With(***entry, [&] (auto& entry) {
-      return entry.LoadSnapshot();
     });
   }
 
