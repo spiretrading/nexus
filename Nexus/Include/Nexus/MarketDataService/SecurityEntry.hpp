@@ -1,10 +1,10 @@
 #ifndef NEXUS_MARKET_DATA_SECURITY_ENTRY_HPP
 #define NEXUS_MARKET_DATA_SECURITY_ENTRY_HPP
 #include <Beam/Queries/Sequencer.hpp>
+#include <boost/date_time/local_time/tz_database.hpp>
 #include <boost/optional/optional.hpp>
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
@@ -31,10 +31,13 @@ namespace Nexus::MarketDataService {
       /**
        * Constructs a SecurityEntry.
        * @param security The Security represented.
+       * @param venues The venues publishing market data.
+       * @param time_zones The database of time zones.
        * @param close The closing price.
        * @param initial_sequences The initial Sequences to use.
        */
-      SecurityEntry(Security security, Money close,
+      SecurityEntry(Security security, VenueDatabase venues,
+        boost::local_time::tz_database time_zones, Money close,
         const InitialSequences& initial_sequences);
 
       /** Returns the Security. */
@@ -96,6 +99,8 @@ namespace Nexus::MarketDataService {
         BookQuoteEntry(const SequencedSecurityBookQuote& quote, int source_id);
       };
       Security m_security;
+      VenueDatabase m_venues;
+      boost::local_time::tz_database m_time_zones;
       Beam::Queries::Sequencer m_bbo_sequencer;
       Beam::Queries::Sequencer m_book_quote_sequencer;
       Beam::Queries::Sequencer m_time_and_sale_sequencer;
@@ -164,15 +169,20 @@ namespace Nexus::MarketDataService {
     : m_quote(quote),
       m_source_id(source_id) {}
 
-  inline SecurityEntry::SecurityEntry(
-      Security security, Money close, const InitialSequences& initial_sequences)
+  inline SecurityEntry::SecurityEntry(Security security, VenueDatabase venues,
+      boost::local_time::tz_database time_zones, Money close,
+      const InitialSequences& initial_sequences)
       : m_security(std::move(security)),
+        m_venues(std::move(venues)),
+        m_time_zones(std::move(time_zones)),
         m_bbo_sequencer(initial_sequences.m_next_bbo_quote_sequence),
         m_book_quote_sequencer(initial_sequences.m_next_book_quote_sequence),
         m_time_and_sale_sequencer(
-          initial_sequences.m_next_time_and_sale_sequence),
-        m_market_center(TechnicalAnalysis::GetDefaultMarketCenter(
-          m_security.get_venue())) {
+          initial_sequences.m_next_time_and_sale_sequence) {
+    m_market_center = m_venues.from(m_security.get_venue()).m_market_center;
+    if(m_market_center.empty()) {
+      m_market_center = m_security.get_venue().get_code().GetData();
+    }
     m_technicals.m_close = close;
   }
 
@@ -217,9 +227,9 @@ namespace Nexus::MarketDataService {
   inline boost::optional<SequencedSecurityBboQuote> SecurityEntry::publish(
       const BboQuote& bbo_quote, int source_id) {
     if(m_technicals_reset_time == boost::posix_time::not_a_date_time) {
-      auto& venue_entry = DEFAULT_VENUES.from(m_security.get_venue());
+      auto& venue_entry = m_venues.from(m_security.get_venue());
       if(venue_entry.m_venue != Venue()) {
-        auto time_zone = get_default_time_zone_database().time_zone_from_region(
+        auto time_zone = m_time_zones.time_zone_from_region(
           venue_entry.m_time_zone);
         auto reset_time = boost::local_time::local_date_time(
           bbo_quote.m_timestamp, time_zone) + boost::gregorian::days(1);
@@ -291,8 +301,8 @@ namespace Nexus::MarketDataService {
     if(time_and_sale.m_market_center == m_market_center) {
       m_next_close = time_and_sale.m_price;
     }
-    auto value = m_time_and_sale_sequencer.MakeSequencedValue(
-      time_and_sale, m_security);
+    auto value =
+      m_time_and_sale_sequencer.MakeSequencedValue(time_and_sale, m_security);
     m_time_and_sale = value;
     return value;
   }
