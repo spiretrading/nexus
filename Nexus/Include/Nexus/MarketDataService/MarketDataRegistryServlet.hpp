@@ -11,7 +11,6 @@
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServices.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistrySession.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"

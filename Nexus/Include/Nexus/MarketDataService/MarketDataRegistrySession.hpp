@@ -3,7 +3,6 @@
 #include <Beam/ServiceLocator/AuthenticatedSession.hpp>
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/MarketDataService/EntitlementSet.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 
 namespace Nexus::MarketDataService {
 
@@ -26,11 +25,11 @@ namespace Nexus::MarketDataService {
    * @param type The type of market data to test.
    * @return <code>true</code> iff the session has been granted the entitlement.
    */
-  inline bool HasEntitlement(const MarketDataRegistrySession& session,
+  inline bool has_entitlement(const MarketDataRegistrySession& session,
       const EntitlementKey& key, MarketDataType type) {
     return session.m_roles.Test(AdministrationService::AccountRole::SERVICE) ||
       session.m_roles.Test(AdministrationService::AccountRole::ADMINISTRATOR) ||
-      session.m_entitlements.HasEntitlement(key, type);
+      session.m_entitlements.contains(key, type);
   }
 
   /**
@@ -40,11 +39,11 @@ namespace Nexus::MarketDataService {
    * @return <code>true</code> iff the session has been granted the entitlement.
    */
   template<typename T>
-  bool HasEntitlement(const MarketDataRegistrySession& session,
+  bool has_entitlement(const MarketDataRegistrySession& session,
       const SecurityMarketDataQuery& query) {
     return session.m_roles.Test(AdministrationService::AccountRole::SERVICE) ||
       session.m_roles.Test(AdministrationService::AccountRole::ADMINISTRATOR) ||
-      HasEntitlement<T>(session.m_entitlements, query);
+      contains<T>(session.m_entitlements, query);
   }
 
   /**
@@ -54,11 +53,11 @@ namespace Nexus::MarketDataService {
    * @return <code>true</code> iff the session has been granted the entitlement.
    */
   template<typename T>
-  bool HasEntitlement(const MarketDataRegistrySession& session,
-      const MarketWideDataQuery& query) {
+  bool has_entitlement(const MarketDataRegistrySession& session,
+      const VenueMarketDataQuery& query) {
     return session.m_roles.Test(AdministrationService::AccountRole::SERVICE) ||
       session.m_roles.Test(AdministrationService::AccountRole::ADMINISTRATOR) ||
-      HasEntitlement<T>(session.m_entitlements, query);
+      contains<T>(session.m_entitlements, query);
   }
 }
 
