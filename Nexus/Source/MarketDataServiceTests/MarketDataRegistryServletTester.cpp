@@ -14,6 +14,7 @@
 #include "Nexus/MarketDataService/MarketDataRegistryServlet.hpp"
 
 using namespace Beam;
+using namespace Beam::Queries;
 using namespace Beam::Serialization;
 using namespace Beam::Serialization::Tests;
 using namespace Beam::ServiceLocator;
@@ -82,6 +83,8 @@ namespace {
       auto authenticator = SessionAuthenticator(service_locator_client);
       auto protocol_client = std::make_unique<TestServiceProtocolClient>(
         Initialize(name, *m_server_connection), Initialize());
+      Nexus::Queries::RegisterQueryTypes(
+        Beam::Store(protocol_client->GetSlots().GetRegistry()));
       RegisterMarketDataRegistryServices(Store(protocol_client->GetSlots()));
       RegisterMarketDataRegistryMessages(Store(protocol_client->GetSlots()));
       authenticator(*protocol_client);
@@ -96,12 +99,29 @@ TEST_SUITE("MarketDataRegistryServlet") {
     auto fixture = Fixture();
     auto security = Security("A", TSX);
     auto info = SecurityInfo(security, "SECURITY A", "", 100);
+    fixture.m_data_store.store(info);
     fixture.m_registry.add(info);
-    auto query = SecurityInfoQuery();
-    query.SetIndex(security);
+    auto query = make_security_info_query(security);
     auto result =
       fixture.m_client->SendRequest<QuerySecurityInfoService>(query);
     REQUIRE(result.size() == 1);
     REQUIRE(result.front() == info);
+  }
+
+  TEST_CASE("load_security_info_from_prefix") {
+    auto fixture = Fixture();
+    auto security_a = Security("A", TSX);
+    auto info_a = SecurityInfo(security_a, "SECURITY A", "", 100);
+    fixture.m_registry.add(info_a);
+    auto security_b = Security("B", TSX);
+    auto info_b = SecurityInfo(security_b, "SECURITY B", "", 100);
+    fixture.m_registry.add(info_b);
+    auto security_c = Security("C", TSX);
+    auto info_c = SecurityInfo(security_c, "SECURITY C", "", 100);
+    fixture.m_registry.add(info_c);
+    auto result =
+      fixture.m_client->SendRequest<LoadSecurityInfoFromPrefixService>("A");
+    REQUIRE(result.size() == 1);
+    REQUIRE(result.front() == info_a);
   }
 }

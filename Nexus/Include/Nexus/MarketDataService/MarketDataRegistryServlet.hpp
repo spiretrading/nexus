@@ -7,6 +7,7 @@
 #include <Beam/Services/ServiceProtocolServlet.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
+#include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServices.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistrySession.hpp"
@@ -87,12 +88,10 @@ namespace Nexus::MarketDataService {
       MarketDataRegistryServlet& operator =(
         const MarketDataRegistryServlet&) = delete;
       Security normalize(const Security& security);
-      template<typename Type, typename Service, typename Subscriptions,
-        typename Loader>
+      template<typename Type, typename Service, typename Subscriptions>
       void on_query(
           Beam::Services::RequestToken<ServiceProtocolClient, Service>& request,
-          const SecurityMarketDataQuery& query, Subscriptions& subscriptions,
-          Loader&& loader);
+          const SecurityMarketDataQuery& query, Subscriptions& subscriptions);
       void on_query_order_imbalance(Beam::Services::RequestToken<
         ServiceProtocolClient, QueryOrderImbalancesService>& request,
         const VenueMarketDataQuery& query);
@@ -322,12 +321,10 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C, typename R, typename D, typename A>
-  template<typename Type, typename Service, typename Subscriptions,
-    typename Loader>
+  template<typename Type, typename Service, typename Subscriptions>
   void MarketDataRegistryServlet<C, R, D, A>::on_query(
       Beam::Services::RequestToken<ServiceProtocolClient, Service>& request,
-      const SecurityMarketDataQuery& query, Subscriptions& subscriptions,
-      Loader&& loader) {
+      const SecurityMarketDataQuery& query, Subscriptions& subscriptions) {
     using Result =
       Beam::Queries::QueryResult<Beam::Queries::SequencedValue<Type>>;
     auto& session = request.GetSession();
@@ -345,7 +342,7 @@ namespace Nexus::MarketDataService {
     auto result = Result();
     result.m_queryId = subscriptions.Initialize(
       security, request.GetClient(), query.GetRange(), std::move(filter));
-    result.m_snapshot = std::forward<Loader>(loader)(query);
+    result.m_snapshot = load<Type>(*m_data_store, query);
     subscriptions.Commit(security, std::move(result), [&] (const auto& result) {
       request.SetResult(result);
     });
@@ -384,10 +381,7 @@ namespace Nexus::MarketDataService {
   void MarketDataRegistryServlet<C, R, D, A>::on_query_bbo_quotes(
       Beam::Services::RequestToken<ServiceProtocolClient,
         QueryBboQuotesService>& request, const SecurityMarketDataQuery& query) {
-    on_query<BboQuote>(request, query, m_bbo_quote_subscriptions,
-      [&] (const auto& query) {
-        return m_data_store->load_bbo_quotes(query);
-      });
+    on_query<BboQuote>(request, query, m_bbo_quote_subscriptions);
   }
 
   template<typename C, typename R, typename D, typename A>
@@ -401,10 +395,7 @@ namespace Nexus::MarketDataService {
       Beam::Services::RequestToken<
         ServiceProtocolClient, QueryBookQuotesService>& request,
       const SecurityMarketDataQuery& query) {
-    on_query<BookQuote>(request, query, m_book_quote_subscriptions,
-      [&] (const auto& query) {
-        return m_data_store->load_book_quotes(query);
-      });
+    on_query<BookQuote>(request, query, m_book_quote_subscriptions);
   }
 
   template<typename C, typename R, typename D, typename A>
@@ -418,10 +409,7 @@ namespace Nexus::MarketDataService {
       Beam::Services::RequestToken<
         ServiceProtocolClient, QueryTimeAndSalesService>& request,
       const SecurityMarketDataQuery& query) {
-    on_query<TimeAndSale>(request, query, m_time_and_sale_subscriptions,
-      [&] (const auto& query) {
-        return m_data_store->load_time_and_sales(query);
-      });
+    on_query<TimeAndSale>(request, query, m_time_and_sale_subscriptions);
   }
 
   template<typename C, typename R, typename D, typename A>

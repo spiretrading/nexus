@@ -1,6 +1,7 @@
 #ifndef NEXUS_HISTORICAL_DATA_STORE_HPP
 #define NEXUS_HISTORICAL_DATA_STORE_HPP
 #include <memory>
+#include <type_traits>
 #include <utility>
 #include <vector>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -203,6 +204,44 @@ namespace Nexus::MarketDataService {
       };
       std::shared_ptr<VirtualHistoricalDataStore> m_data_store;
   };
+
+  /**
+   * Provides a generic means of loading data from a HistoricalDataStore.
+   * @param <T> The type of market data to query.
+   * @param data_store The HistoricalDataStore to load from.
+   * @param query The search query to execute.
+   * @return The list of values that satisfy the search <i>query</i>.
+   */
+  template<typename T, typename D>
+  std::vector<Beam::Queries::SequencedValue<T>> load(
+      D& data_store, const VenueMarketDataQuery& query) {
+    if constexpr(std::is_same_v<T, OrderImbalance>) {
+      return data_store.load_order_imbalances(query);
+    } else {
+      static_assert("Invalid market data type.");
+    }
+  }
+
+  /**
+   * Provides a generic means of loading data from a HistoricalDataStore.
+   * @param <T> The type of market data to query.
+   * @param data_store The HistoricalDataStore to load from.
+   * @param query The search query to execute.
+   * @return The list of values that satisfy the search <i>query</i>.
+   */
+  template<typename T, typename D>
+  std::vector<Beam::Queries::SequencedValue<T>> load(
+      D& data_store, const SecurityMarketDataQuery& query) {
+    if constexpr(std::is_same_v<T, BboQuote>) {
+      return data_store.load_bbo_quotes(query);
+    } else if constexpr(std::is_same_v<T, BookQuote>) {
+      return data_store.load_book_quotes(query);
+    } else if constexpr(std::is_same_v<T, TimeAndSale>) {
+      return data_store.load_time_and_sales(query);
+    } else {
+      static_assert("Invalid market data type.");
+    }
+  }
 
   template<typename T, typename... Args>
   HistoricalDataStore::HistoricalDataStore(
