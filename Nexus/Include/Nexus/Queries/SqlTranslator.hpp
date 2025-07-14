@@ -15,7 +15,6 @@
 #include <Beam/Queries/SqlTranslator.hpp>
 #include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <Beam/Queries/VariableExpression.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/SqlDefinitions.hpp"
 #include "Nexus/Queries/ExpressionVisitor.hpp"
@@ -34,8 +33,8 @@ namespace Nexus::Queries {
        * @param parameter The parameter/table name.
        * @param expression The Expression to translate.
        */
-      SqlTranslator(std::string parameter,
-        Beam::Queries::Expression expression);
+      SqlTranslator(
+        std::string parameter, Beam::Queries::Expression expression);
 
       void Visit(const Beam::Queries::ConstantExpression& expression) override;
 
@@ -43,15 +42,15 @@ namespace Nexus::Queries {
         const Beam::Queries::MemberAccessExpression& expression) override;
 
     private:
-      void TranslateSecurityMemberAccessExpression(
+      void translate_security_member_access_expression(
         const Beam::Queries::MemberAccessExpression& expression);
-      void TranslateSecurityInfoMemberAccessExpression(
+      void translate_security_info_member_access_expression(
         const Beam::Queries::MemberAccessExpression& expression);
-      void TranslateTimeAndSaleMemberAccessExpression(
+      void translate_time_and_sale_member_access_expression(
         const Beam::Queries::MemberAccessExpression& expression);
-      void TranslateOrderFieldsMemberAccessExpression(
+      void translate_order_fields_member_access_expression(
         const Beam::Queries::MemberAccessExpression& expression);
-      void TranslateOrderInfoMemberAccessExpression(
+      void translate_order_info_member_access_expression(
         const Beam::Queries::MemberAccessExpression& expression);
   };
 
@@ -61,16 +60,16 @@ namespace Nexus::Queries {
    * @param expression The Expression to translate.
    * @return The SQL query representing the <i>expression</i>.
    */
-  inline auto MakeSqlQuery(std::string parameter,
-      Beam::Queries::Expression expression) {
-    return Beam::Queries::MakeSqlQuery<SqlTranslator>(std::move(parameter),
-      std::move(expression));
+  inline auto make_sql_query(
+      std::string parameter, Beam::Queries::Expression expression) {
+    return Beam::Queries::MakeSqlQuery<SqlTranslator>(
+      std::move(parameter), std::move(expression));
   }
 
-  inline SqlTranslator::SqlTranslator(std::string parameter,
-    Beam::Queries::Expression expression)
-    : Beam::Queries::SqlTranslator(std::move(parameter),
-        std::move(expression)) {}
+  inline SqlTranslator::SqlTranslator(
+    std::string parameter, Beam::Queries::Expression expression)
+    : Beam::Queries::SqlTranslator(
+        std::move(parameter), std::move(expression)) {}
 
   inline void SqlTranslator::Visit(
       const Beam::Queries::ConstantExpression& expression) {
@@ -87,24 +86,23 @@ namespace Nexus::Queries {
   inline void SqlTranslator::Visit(
       const Beam::Queries::MemberAccessExpression& expression) {
     if(expression.GetExpression()->GetType() == SecurityType()) {
-      TranslateSecurityMemberAccessExpression(expression);
+      translate_security_member_access_expression(expression);
     } else if(expression.GetExpression()->GetType() == SecurityInfoType()) {
-      TranslateSecurityInfoMemberAccessExpression(expression);
+      translate_security_info_member_access_expression(expression);
     } else if(expression.GetExpression()->GetType() == TimeAndSaleType()) {
-      TranslateTimeAndSaleMemberAccessExpression(expression);
+      translate_time_and_sale_member_access_expression(expression);
     } else if(expression.GetExpression()->GetType() == OrderFieldsType()) {
-      TranslateOrderFieldsMemberAccessExpression(expression);
+      translate_order_fields_member_access_expression(expression);
     } else if(expression.GetExpression()->GetType() == OrderInfoType()) {
-      TranslateOrderInfoMemberAccessExpression(expression);
+      translate_order_info_member_access_expression(expression);
     } else {
       Beam::Queries::SqlTranslator::Visit(expression);
     }
   }
 
-  inline void SqlTranslator::TranslateSecurityMemberAccessExpression(
+  inline void SqlTranslator::translate_security_member_access_expression(
       const Beam::Queries::MemberAccessExpression& expression) {
-    if(expression.GetName() == "symbol" || expression.GetName() == "market" ||
-        expression.GetName() == "country") {
+    if(expression.GetName() == "symbol" || expression.GetName() == "venue") {
       expression.GetExpression()->Apply(*this);
       auto term = GetTranslation();
       GetTranslation() = Viper::access(term, expression.GetName());
@@ -113,7 +111,7 @@ namespace Nexus::Queries {
     }
   }
 
-  inline void SqlTranslator::TranslateSecurityInfoMemberAccessExpression(
+  inline void SqlTranslator::translate_security_info_member_access_expression(
       const Beam::Queries::MemberAccessExpression& expression) {
     if(expression.GetName() == "security") {
       expression.GetExpression()->Apply(*this);
@@ -129,7 +127,7 @@ namespace Nexus::Queries {
     }
   }
 
-  inline void SqlTranslator::TranslateTimeAndSaleMemberAccessExpression(
+  inline void SqlTranslator::translate_time_and_sale_member_access_expression(
       const Beam::Queries::MemberAccessExpression& expression) {
     if(expression.GetName() == "timestamp" || expression.GetName() == "price" ||
         expression.GetName() == "size") {
@@ -153,7 +151,7 @@ namespace Nexus::Queries {
     }
   }
 
-  inline void SqlTranslator::TranslateOrderFieldsMemberAccessExpression(
+  inline void SqlTranslator::translate_order_fields_member_access_expression(
       const Beam::Queries::MemberAccessExpression& expression) {
     if(expression.GetName() == "security") {
       expression.GetExpression()->Apply(*this);
@@ -163,7 +161,7 @@ namespace Nexus::Queries {
     }
   }
 
-  inline void SqlTranslator::TranslateOrderInfoMemberAccessExpression(
+  inline void SqlTranslator::translate_order_info_member_access_expression(
       const Beam::Queries::MemberAccessExpression& expression) {
     if(expression.GetName() == "fields") {
       expression.GetExpression()->Apply(*this);

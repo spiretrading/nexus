@@ -35,6 +35,20 @@ namespace Viper {
   };
 
   template<>
+  struct ToSql<Nexus::Venue> {
+    void operator ()(Nexus::Venue value, std::string& column) const {
+      to_sql(value.get_code(), column);
+    }
+  };
+
+  template<>
+  struct FromSql<Nexus::Venue> {
+    auto operator ()(const RawColumn& column) const {
+      return Nexus::Venue(from_sql<Nexus::Venue::Code>(column));
+    }
+  };
+
+  template<>
   struct ToSql<Nexus::CurrencyId> {
     void operator ()(Nexus::CurrencyId value, std::string& column) const {
       to_sql(static_cast<std::uint16_t>(value), column);

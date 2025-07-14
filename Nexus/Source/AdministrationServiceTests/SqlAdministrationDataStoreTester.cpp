@@ -13,9 +13,7 @@ using namespace Viper::Sqlite3;
 
 namespace {
   using TestSqlAdministrationDataStore = SqlAdministrationDataStore<Connection>;
-}
 
-namespace {
   struct Builder {
     auto operator ()() const {
       auto directory_entries =

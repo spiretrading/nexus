@@ -43,15 +43,15 @@ namespace Nexus::Queries {
       const Beam::SynchronizedUnorderedSet<OrderExecutionService::OrderId>*
         m_liveOrders;
 
-      void TranslateSecurityMemberAccessExpression(
+      void translate_security_member_access_expression(
         const Beam::Queries::MemberAccessExpression& expression);
-      void TranslateSecurityInfoMemberAccessExpression(
+      void translate_security_info_member_access_expression(
         const Beam::Queries::MemberAccessExpression& expression);
-      void TranslateTimeAndSaleMemberAccessExpression(
+      void translate_time_and_sale_member_access_expression(
         const Beam::Queries::MemberAccessExpression& expression);
-      void TranslateOrderFieldsMemberAccessExpression(
+      void translate_order_fields_member_access_expression(
         const Beam::Queries::MemberAccessExpression& expression);
-      void TranslateOrderInfoMemberAccessExpression(
+      void translate_order_info_member_access_expression(
         const Beam::Queries::MemberAccessExpression& expression);
   };
 
@@ -75,21 +75,21 @@ namespace Nexus::Queries {
   inline void EvaluatorTranslator::Visit(
       const Beam::Queries::MemberAccessExpression& expression) {
     if(expression.GetExpression()->GetType() == SecurityType()) {
-      TranslateSecurityMemberAccessExpression(expression);
+      translate_security_member_access_expression(expression);
     } else if(expression.GetExpression()->GetType() == SecurityInfoType()) {
-      TranslateSecurityInfoMemberAccessExpression(expression);
+      translate_security_info_member_access_expression(expression);
     } else if(expression.GetExpression()->GetType() == TimeAndSaleType()) {
-      TranslateTimeAndSaleMemberAccessExpression(expression);
+      translate_time_and_sale_member_access_expression(expression);
     } else if(expression.GetExpression()->GetType() == OrderFieldsType()) {
-      TranslateOrderFieldsMemberAccessExpression(expression);
+      translate_order_fields_member_access_expression(expression);
     } else if(expression.GetExpression()->GetType() == OrderInfoType()) {
-      TranslateOrderInfoMemberAccessExpression(expression);
+      translate_order_info_member_access_expression(expression);
     } else {
       Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
     }
   }
 
-  inline void EvaluatorTranslator::TranslateSecurityMemberAccessExpression(
+  inline void EvaluatorTranslator::translate_security_member_access_expression(
       const Beam::Queries::MemberAccessExpression& expression) {
     expression.GetExpression()->Apply(*this);
     auto securityExpression = Beam::StaticCast<std::unique_ptr<
@@ -110,8 +110,9 @@ namespace Nexus::Queries {
     }
   }
 
-  inline void EvaluatorTranslator::TranslateSecurityInfoMemberAccessExpression(
-      const Beam::Queries::MemberAccessExpression& expression) {
+  inline void EvaluatorTranslator::
+      translate_security_info_member_access_expression(
+        const Beam::Queries::MemberAccessExpression& expression) {
     expression.GetExpression()->Apply(*this);
     auto securityInfoExpression = Beam::StaticCast<std::unique_ptr<
       Beam::Queries::EvaluatorNode<SecurityInfo>>>(GetEvaluator());
@@ -136,8 +137,9 @@ namespace Nexus::Queries {
     }
   }
 
-  inline void EvaluatorTranslator::TranslateTimeAndSaleMemberAccessExpression(
-      const Beam::Queries::MemberAccessExpression& expression) {
+  inline void EvaluatorTranslator::
+      translate_time_and_sale_member_access_expression(
+        const Beam::Queries::MemberAccessExpression& expression) {
     expression.GetExpression()->Apply(*this);
     auto timeAndSaleExpression = Beam::StaticCast<std::unique_ptr<
       Beam::Queries::EvaluatorNode<TimeAndSale>>>(GetEvaluator());
@@ -171,8 +173,9 @@ namespace Nexus::Queries {
     }
   }
 
-  inline void EvaluatorTranslator::TranslateOrderFieldsMemberAccessExpression(
-      const Beam::Queries::MemberAccessExpression& expression) {
+  inline void EvaluatorTranslator::
+      translate_order_fields_member_access_expression(
+        const Beam::Queries::MemberAccessExpression& expression) {
     expression.GetExpression()->Apply(*this);
     auto orderFieldsExpression = Beam::StaticCast<std::unique_ptr<
       Beam::Queries::EvaluatorNode<OrderExecutionService::OrderFields>>>(
@@ -187,8 +190,9 @@ namespace Nexus::Queries {
     }
   }
 
-  inline void EvaluatorTranslator::TranslateOrderInfoMemberAccessExpression(
-      const Beam::Queries::MemberAccessExpression& expression) {
+  inline void EvaluatorTranslator::
+      translate_order_info_member_access_expression(
+        const Beam::Queries::MemberAccessExpression& expression) {
     expression.GetExpression()->Apply(*this);
     auto orderInfoExpression = Beam::StaticCast<std::unique_ptr<
       Beam::Queries::EvaluatorNode<OrderExecutionService::OrderInfo>>>(
