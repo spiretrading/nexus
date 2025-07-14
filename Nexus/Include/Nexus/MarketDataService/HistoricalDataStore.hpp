@@ -213,9 +213,9 @@ namespace Nexus::MarketDataService {
    * @return The list of values that satisfy the search <i>query</i>.
    */
   template<typename T, typename D>
-  std::vector<Beam::Queries::SequencedValue<T>> load(
-      D& data_store, const VenueMarketDataQuery& query) {
-    if constexpr(std::is_same_v<T, OrderImbalance>) {
+  auto load(D& data_store, const VenueMarketDataQuery& query) {
+    if constexpr(std::is_same_v<T, OrderImbalance> ||
+        std::is_same_v<T, SequencedOrderImbalance>) {
       return data_store.load_order_imbalances(query);
     } else {
       static_assert("Invalid market data type.");
@@ -230,13 +230,15 @@ namespace Nexus::MarketDataService {
    * @return The list of values that satisfy the search <i>query</i>.
    */
   template<typename T, typename D>
-  std::vector<Beam::Queries::SequencedValue<T>> load(
-      D& data_store, const SecurityMarketDataQuery& query) {
-    if constexpr(std::is_same_v<T, BboQuote>) {
+  auto load(D& data_store, const SecurityMarketDataQuery& query) {
+    if constexpr(
+        std::is_same_v<T, BboQuote> || std::is_same_v<T, SequencedBboQuote>) {
       return data_store.load_bbo_quotes(query);
-    } else if constexpr(std::is_same_v<T, BookQuote>) {
+    } else if constexpr(
+        std::is_same_v<T, BookQuote> || std::is_same_v<T, SequencedBookQuote>) {
       return data_store.load_book_quotes(query);
-    } else if constexpr(std::is_same_v<T, TimeAndSale>) {
+    } else if constexpr(std::is_same_v<T, TimeAndSale> ||
+        std::is_same_v<T, SequencedTimeAndSale>) {
       return data_store.load_time_and_sales(query);
     } else {
       static_assert("Invalid market data type.");
