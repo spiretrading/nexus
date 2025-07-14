@@ -88,10 +88,12 @@ namespace Nexus::MarketDataService {
       MarketDataRegistryServlet& operator =(
         const MarketDataRegistryServlet&) = delete;
       Security normalize(const Security& security);
-      template<typename Type, typename Service, typename Subscriptions>
+      Venue normalize(Venue venue);
+      template<typename Type, typename Service, typename Query,
+        typename Subscriptions>
       void on_query(
           Beam::Services::RequestToken<ServiceProtocolClient, Service>& request,
-          const SecurityMarketDataQuery& query, Subscriptions& subscriptions);
+          const Query& query, Subscriptions& subscriptions);
       void on_query_order_imbalance(Beam::Services::RequestToken<
         ServiceProtocolClient, QueryOrderImbalancesService>& request,
         const VenueMarketDataQuery& query);
@@ -165,7 +167,7 @@ namespace Nexus::MarketDataService {
     m_registry->publish(imbalance, source_id, *m_data_store,
       [&] (const auto& imbalance) {
         m_data_store->store(imbalance);
-        m_order_imbalance_subscriptions.publish(imbalance,
+        m_order_imbalance_subscriptions.Publish(imbalance,
           [&] (const auto& clients) {
             Beam::Services::BroadcastRecordMessage<OrderImbalanceMessage>(
               clients, imbalance);
@@ -179,7 +181,7 @@ namespace Nexus::MarketDataService {
     m_registry->publish(quote, source_id, *m_data_store,
       [&] (const auto& quote) {
         m_data_store->store(quote);
-        m_bbo_quote_subscriptions.publish(quote,
+        m_bbo_quote_subscriptions.Publish(quote,
           [&] (const auto& clients) {
             Beam::Services::BroadcastRecordMessage<BboQuoteMessage>(
               clients, quote);
@@ -198,7 +200,7 @@ namespace Nexus::MarketDataService {
         if(security.get_venue() == Venue()) {
           return;
         }
-        m_book_quote_subscriptions.publish(quote, [&] (const auto& client) {
+        m_book_quote_subscriptions.Publish(quote, [&] (const auto& client) {
           return has_entitlement(
             client.GetSession(), key, MarketDataType::BOOK_QUOTE);
         },
@@ -215,7 +217,7 @@ namespace Nexus::MarketDataService {
     m_registry->publish(time_and_sale, source_id, *m_data_store,
       [&] (const auto& time_and_sale) {
         m_data_store->store(time_and_sale);
-        m_time_and_sale_subscriptions.publish(time_and_sale,
+        m_time_and_sale_subscriptions.Publish(time_and_sale,
           [&] (const auto& clients) {
             Beam::Services::BroadcastRecordMessage<TimeAndSaleMessage>(
               clients, time_and_sale);
@@ -321,10 +323,16 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename C, typename R, typename D, typename A>
-  template<typename Type, typename Service, typename Subscriptions>
+  Venue MarketDataRegistryServlet<C, R, D, A>::normalize(Venue venue) {
+    return venue;
+  }
+
+  template<typename C, typename R, typename D, typename A>
+  template<typename Type, typename Service, typename Query,
+    typename Subscriptions>
   void MarketDataRegistryServlet<C, R, D, A>::on_query(
       Beam::Services::RequestToken<ServiceProtocolClient, Service>& request,
-      const SecurityMarketDataQuery& query, Subscriptions& subscriptions) {
+      const Query& query, Subscriptions& subscriptions) {
     using Result =
       Beam::Queries::QueryResult<Beam::Queries::SequencedValue<Type>>;
     auto& session = request.GetSession();
@@ -332,8 +340,8 @@ namespace Nexus::MarketDataService {
       request.SetResult(Result());
       return;
     }
-    auto security = normalize(query.GetIndex());
-    if(security == Security()) {
+    auto index = normalize(query.GetIndex());
+    if(index == Query::Index()) {
       request.SetResult(Result());
       return;
     }
@@ -341,9 +349,9 @@ namespace Nexus::MarketDataService {
       Beam::Queries::Translate<Queries::EvaluatorTranslator>(query.GetFilter());
     auto result = Result();
     result.m_queryId = subscriptions.Initialize(
-      security, request.GetClient(), query.GetRange(), std::move(filter));
+      index, request.GetClient(), query.GetRange(), std::move(filter));
     result.m_snapshot = load<Type>(*m_data_store, query);
-    subscriptions.Commit(security, std::move(result), [&] (const auto& result) {
+    subscriptions.Commit(index, std::move(result), [&] (const auto& result) {
       request.SetResult(result);
     });
   }
@@ -353,22 +361,7 @@ namespace Nexus::MarketDataService {
       Beam::Services::RequestToken<ServiceProtocolClient,
         QueryOrderImbalancesService>& request,
       const VenueMarketDataQuery& query) {
-    auto& session = request.GetSession();
-    if(!has_entitlement<OrderImbalance>(session, query)) {
-      request.SetResult(OrderImbalanceQueryResult());
-      return;
-    }
-    auto filter =
-      Beam::Queries::Translate<Queries::EvaluatorTranslator>(query.GetFilter());
-    auto result = OrderImbalanceQueryResult();
-    result.m_queryId = m_order_imbalance_subscriptions.Initialize(
-      query.GetIndex(), request.GetClient(), query.GetRange(),
-      std::move(filter));
-    result.m_snapshot = m_data_store->load_order_imbalances(query);
-    m_order_imbalance_subscriptions.Commit(query.GetIndex(), std::move(result),
-      [&] (const auto& result) {
-        request.SetResult(result);
-      });
+    on_query<OrderImbalance>(request, query, m_order_imbalance_subscriptions);
   }
 
   template<typename C, typename R, typename D, typename A>
