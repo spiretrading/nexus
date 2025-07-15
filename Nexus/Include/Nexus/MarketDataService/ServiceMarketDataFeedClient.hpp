@@ -1,5 +1,5 @@
-#ifndef NEXUS_MARKET_DATA_FEED_CLIENT_HPP
-#define NEXUS_MARKET_DATA_FEED_CLIENT_HPP
+#ifndef NEXUS_SERVICE_MARKET_DATA_FEED_CLIENT_HPP
+#define NEXUS_SERVICE_MARKET_DATA_FEED_CLIENT_HPP
 #include <vector>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -25,7 +25,7 @@ namespace Nexus::MarketDataService {
    * @param <H> The type of Timer used for heartbeats.
    */
   template<typename O, typename S, typename P, typename H>
-  class MarketDataFeedClient {
+  class ServiceMarketDataFeedClient {
     public:
 
       /** The type used to represent order ids. */
@@ -48,17 +48,18 @@ namespace Nexus::MarketDataService {
         ServiceProtocolClient>::type;
 
       /**
-       * Constructs a MarketDataFeedClient.
+       * Constructs a ServiceMarketDataFeedClient.
        * @param channel Initializes the Channel to the ServiceProtocol server.
        * @param authenticator The Authenticator to use.
        * @param samplingTimer Initializes the SamplingTimer.
        * @param heartbeatTimer Initializes the Timer used for heartbeats.
        */
       template<typename CF, typename SF, typename HF>
-      MarketDataFeedClient(CF&& channel, const Authenticator& authenticator,
-        SF&& samplingTimer, HF&& heartbeatTimer);
+      ServiceMarketDataFeedClient(
+        CF&& channel, const Authenticator& authenticator, SF&& samplingTimer,
+        HF&& heartbeatTimer);
 
-      ~MarketDataFeedClient();
+      ~ServiceMarketDataFeedClient();
 
       /**
        * Adds or updates a SecurityInfo.
@@ -180,8 +181,9 @@ namespace Nexus::MarketDataService {
       Beam::IO::OpenState m_openState;
       Beam::RoutineTaskQueue m_tasks;
 
-      MarketDataFeedClient(const MarketDataFeedClient&) = delete;
-      MarketDataFeedClient& operator =(const MarketDataFeedClient&) = delete;
+      ServiceMarketDataFeedClient(const ServiceMarketDataFeedClient&) = delete;
+      ServiceMarketDataFeedClient& operator =(
+        const ServiceMarketDataFeedClient&) = delete;
       void UpdateBookSampling(const SecurityBookQuote& bookQuote);
       void LockedAddOrder(const Security& security, MarketCode market,
         const std::string& mpid, bool isPrimaryMpid, const OrderId& id,
@@ -230,7 +232,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  MarketDataFeedClient<O, S, P, H>::OrderEntry::OrderEntry(
+  ServiceMarketDataFeedClient<O, S, P, H>::OrderEntry::OrderEntry(
     const Security& security, MarketCode market, const std::string& mpid,
     bool isPrimaryMpid, Side side, Money price, Quantity size)
     : m_security(security),
@@ -243,8 +245,8 @@ namespace Nexus::MarketDataService {
 
   template<typename O, typename S, typename P, typename H>
   template<typename CF, typename SF, typename HF>
-  MarketDataFeedClient<O, S, P, H>::MarketDataFeedClient(CF&& channel,
-      const Authenticator& authenticator, SF&& samplingTimer,
+  ServiceMarketDataFeedClient<O, S, P, H>::ServiceMarketDataFeedClient(
+      CF&& channel, const Authenticator& authenticator, SF&& samplingTimer,
       HF&& heartbeatTimer)
       try : m_client(std::forward<CF>(channel),
               std::forward<HF>(heartbeatTimer)),
@@ -254,7 +256,7 @@ namespace Nexus::MarketDataService {
       Beam::ServiceLocator::Authenticate(authenticator, m_client);
       m_samplingTimer->GetPublisher().Monitor(
         m_tasks.GetSlot<Beam::Threading::Timer::Result>(
-        std::bind_front(&MarketDataFeedClient::OnTimerExpired, this)));
+        std::bind_front(&ServiceMarketDataFeedClient::OnTimerExpired, this)));
       m_samplingTimer->Start();
     } catch(const std::exception&) {
       Close();
@@ -266,12 +268,12 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  MarketDataFeedClient<O, S, P, H>::~MarketDataFeedClient() {
+  ServiceMarketDataFeedClient<O, S, P, H>::~ServiceMarketDataFeedClient() {
     Close();
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::Add(const SecurityInfo& info) {
+  void ServiceMarketDataFeedClient<O, S, P, H>::Add(const SecurityInfo& info) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
       Beam::Services::SendRecordMessage<SetSecurityInfoMessage>(m_client, info);
     }, "Failed to add security info: " +
@@ -279,14 +281,14 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::Publish(
+  void ServiceMarketDataFeedClient<O, S, P, H>::Publish(
       const MarketOrderImbalance& orderImbalance) {
     auto lock = boost::lock_guard(m_mutex);
     m_orderImbalances.push_back(orderImbalance);
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::Publish(
+  void ServiceMarketDataFeedClient<O, S, P, H>::Publish(
       const SecurityBboQuote& bboQuote) {
     auto lock = boost::lock_guard(m_mutex);
     auto& updates = m_quoteUpdates[bboQuote.GetIndex()];
@@ -294,7 +296,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::Publish(
+  void ServiceMarketDataFeedClient<O, S, P, H>::Publish(
       const SecurityMarketQuote& marketQuote) {
     auto lock = boost::lock_guard(m_mutex);
     m_quoteUpdates[marketQuote.GetIndex()].m_marketQuotes[
@@ -302,7 +304,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::Publish(
+  void ServiceMarketDataFeedClient<O, S, P, H>::Publish(
       const SecurityBookQuote& bookQuote) {
     auto id = bookQuote.GetIndex().GetSymbol() + '-' +
       boost::lexical_cast<std::string>(bookQuote.GetIndex().GetCountry()) +
@@ -328,7 +330,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::Publish(
+  void ServiceMarketDataFeedClient<O, S, P, H>::Publish(
       const SecurityTimeAndSale& timeAndSale) {
     auto lock = boost::lock_guard(m_mutex);
     auto& updates = m_quoteUpdates[timeAndSale.GetIndex()];
@@ -336,18 +338,18 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::AddOrder(const Security& security,
-      MarketCode market, const std::string& mpid, bool isPrimaryMpid,
-      const OrderId& id, Side side, Money price, Quantity size,
-      boost::posix_time::ptime timestamp) {
+  void ServiceMarketDataFeedClient<O, S, P, H>::AddOrder(
+      const Security& security, MarketCode market, const std::string& mpid,
+      bool isPrimaryMpid, const OrderId& id, Side side, Money price,
+      Quantity size, boost::posix_time::ptime timestamp) {
     auto lock = boost::lock_guard(m_mutex);
     LockedAddOrder(security, market, mpid, isPrimaryMpid, id, side, price,
       size, timestamp);
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::ModifyOrderSize(const OrderId& id,
-      Quantity size, boost::posix_time::ptime timestamp) {
+  void ServiceMarketDataFeedClient<O, S, P, H>::ModifyOrderSize(
+      const OrderId& id, Quantity size, boost::posix_time::ptime timestamp) {
     auto lock = boost::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);
     if(orderIterator == m_orders.end()) {
@@ -360,8 +362,8 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::OffsetOrderSize(const OrderId& id,
-      Quantity delta, boost::posix_time::ptime timestamp) {
+  void ServiceMarketDataFeedClient<O, S, P, H>::OffsetOrderSize(
+      const OrderId& id, Quantity delta, boost::posix_time::ptime timestamp) {
     auto lock = boost::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);
     if(orderIterator == m_orders.end()) {
@@ -375,8 +377,8 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::ModifyOrderPrice(const OrderId& id,
-      Money price, boost::posix_time::ptime timestamp) {
+  void ServiceMarketDataFeedClient<O, S, P, H>::ModifyOrderPrice(
+      const OrderId& id, Money price, boost::posix_time::ptime timestamp) {
     auto lock = boost::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);
     if(orderIterator == m_orders.end()) {
@@ -389,8 +391,8 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::DeleteOrder(const OrderId& id,
-      boost::posix_time::ptime timestamp) {
+  void ServiceMarketDataFeedClient<O, S, P, H>::DeleteOrder(
+      const OrderId& id, boost::posix_time::ptime timestamp) {
     auto lock = boost::lock_guard(m_mutex);
     auto orderIterator = m_orders.find(id);
     if(orderIterator == m_orders.end()) {
@@ -400,7 +402,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::Close() {
+  void ServiceMarketDataFeedClient<O, S, P, H>::Close() {
     if(m_openState.SetClosing()) {
       return;
     }
@@ -412,7 +414,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::UpdateBookSampling(
+  void ServiceMarketDataFeedClient<O, S, P, H>::UpdateBookSampling(
       const SecurityBookQuote& bookQuote) {
     auto book = [&] {
       if(bookQuote->m_quote.m_side == Side::ASK) {
@@ -436,7 +438,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::LockedAddOrder(
+  void ServiceMarketDataFeedClient<O, S, P, H>::LockedAddOrder(
       const Security& security, MarketCode market, const std::string& mpid,
       bool isPrimaryMpid, const OrderId& id, Side side, Money price,
       Quantity size, boost::posix_time::ptime timestamp) {
@@ -456,7 +458,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::LockedDeleteOrder(
+  void ServiceMarketDataFeedClient<O, S, P, H>::LockedDeleteOrder(
       typename std::unordered_map<OrderId, OrderEntry>::iterator& orderIterator,
       boost::posix_time::ptime timestamp) {
     auto& entry = orderIterator->second;
@@ -469,7 +471,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void MarketDataFeedClient<O, S, P, H>::OnTimerExpired(
+  void ServiceMarketDataFeedClient<O, S, P, H>::OnTimerExpired(
       Beam::Threading::Timer::Result result) {
     auto messages = std::vector<MarketDataFeedMessage>();
     auto quoteUpdates = std::unordered_map<Security, QuoteUpdates>();
