@@ -2,6 +2,7 @@
 #define NEXUS_MARKET_DATA_FEED_SERVLET_HPP
 #include <atomic>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Services/ServiceProtocolServlet.hpp>
 #include <Beam/Utilities/ReportException.hpp>
@@ -27,14 +28,14 @@ namespace Nexus::MarketDataService {
 
       /**
        * Constructs a MarketDataFeedServlet.
-       * @param marketDataRegistry The registry storing all market data
-       *        originating from this servlet.
+       * @param registry The registry storing all market data originating from
+       *        this servlet.
        */
       template<typename RF>
-      explicit MarketDataFeedServlet(RF&& marketDataRegistry);
+      explicit MarketDataFeedServlet(RF&& registry);
 
-      void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
-        ServiceProtocolClient>> slots);
+      void RegisterServices(
+        Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots);
 
       void HandleClientAccepted(ServiceProtocolClient& client);
 
@@ -44,19 +45,19 @@ namespace Nexus::MarketDataService {
 
     private:
       Beam::GetOptionalLocalPtr<R> m_registry;
-      std::atomic_int m_nextSourceId;
-      Beam::IO::OpenState m_openState;
+      std::atomic_int m_next_source_id;
+      Beam::IO::OpenState m_open_state;
 
       MarketDataFeedServlet(const MarketDataFeedServlet&) = delete;
       MarketDataFeedServlet& operator =(const MarketDataFeedServlet&) = delete;
-      void OnSetSecurityInfoMessage(ServiceProtocolClient& client,
-        const SecurityInfo& securityInfo);
-      void OnSendMarketDataFeedMessages(ServiceProtocolClient& client,
+      void on_set_security_info_message(
+        ServiceProtocolClient& client, const SecurityInfo& info);
+      void on_send_market_data_feed_messages(ServiceProtocolClient& client,
         const std::vector<MarketDataFeedMessage>& messages);
   };
 
   struct MarketDataFeedSession {
-    int m_sourceId;
+    int m_source_id;
   };
 
   template<typename R>
@@ -70,70 +71,57 @@ namespace Nexus::MarketDataService {
 
   template<typename C, typename R>
   template<typename RF>
-  MarketDataFeedServlet<C, R>::MarketDataFeedServlet(RF&& marketDataRegistry)
-    : m_registry(std::forward<RF>(marketDataRegistry)),
-      m_nextSourceId(0) {}
+  MarketDataFeedServlet<C, R>::MarketDataFeedServlet(RF&& registry)
+    : m_registry(std::forward<RF>(registry)),
+      m_next_source_id(0) {}
 
   template<typename C, typename R>
   void MarketDataFeedServlet<C, R>::RegisterServices(Beam::Out<
       Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     RegisterMarketDataFeedMessages(Beam::Store(slots));
-    Beam::Services::AddMessageSlot<SetSecurityInfoMessage>(Beam::Store(slots),
-      std::bind_front(&MarketDataFeedServlet::OnSetSecurityInfoMessage, this));
+    Beam::Services::AddMessageSlot<SetSecurityInfoMessage>(
+      Store(slots), std::bind_front(
+        &MarketDataFeedServlet::on_set_security_info_message, this));
     Beam::Services::AddMessageSlot<SendMarketDataFeedMessages>(
-      Beam::Store(slots), std::bind_front(
-        &MarketDataFeedServlet::OnSendMarketDataFeedMessages, this));
+      Store(slots), std::bind_front(
+        &MarketDataFeedServlet::on_send_market_data_feed_messages, this));
   }
 
   template<typename C, typename R>
   void MarketDataFeedServlet<C, R>::HandleClientAccepted(
       ServiceProtocolClient& client) {
     auto& session = client.GetSession();
-    session.m_sourceId = ++m_nextSourceId;
+    session.m_source_id = ++m_next_source_id;
   }
 
   template<typename C, typename R>
   void MarketDataFeedServlet<C, R>::HandleClientClosed(
       ServiceProtocolClient& client) {
     auto& session = client.GetSession();
-    m_registry->Clear(session.m_sourceId);
+    m_registry->clear(session.m_source_id);
   }
 
   template<typename C, typename R>
   void MarketDataFeedServlet<C, R>::Close() {
-    m_openState.Close();
+    m_open_state.Close();
   }
 
   template<typename C, typename R>
-  void MarketDataFeedServlet<C, R>::OnSetSecurityInfoMessage(
-      ServiceProtocolClient& client, const SecurityInfo& securityInfo) {
-    m_registry->Add(securityInfo);
+  void MarketDataFeedServlet<C, R>::on_set_security_info_message(
+      ServiceProtocolClient& client, const SecurityInfo& info) {
+    m_registry->add(info);
   }
 
   template<typename C, typename R>
-  void MarketDataFeedServlet<C, R>::OnSendMarketDataFeedMessages(
+  void MarketDataFeedServlet<C, R>::on_send_market_data_feed_messages(
       ServiceProtocolClient& client,
       const std::vector<MarketDataFeedMessage>& messages) {
-    auto sourceId = client.GetSession().m_sourceId;
-    auto visitor = Beam::MakeVariantLambdaVisitor<void>(
-      [&] (const SecurityBboQuote& bboQuote) {
-        m_registry->PublishBboQuote(bboQuote, sourceId);
-      },
-      [&] (const SecurityMarketQuote& marketQuote) {
-        m_registry->PublishMarketQuote(marketQuote, sourceId);
-      },
-      [&] (const SecurityBookQuote& bookQuote) {
-        m_registry->UpdateBookQuote(bookQuote, sourceId);
-      },
-      [&] (const SecurityTimeAndSale& timeAndSale) {
-        m_registry->PublishTimeAndSale(timeAndSale, sourceId);
-      },
-      [&] (const MarketOrderImbalance& orderImbalance) {
-        m_registry->PublishOrderImbalance(orderImbalance, sourceId);
-      });
+    auto source_id = client.GetSession().m_source_id;
     for(auto& message : messages) {
       try {
-        boost::apply_visitor(visitor, message);
+        boost::apply_visitor([&] (const auto& data) {
+          m_registry->publish(data, source_id);
+        }, message);
       } catch(const std::exception&) {
         std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
       }

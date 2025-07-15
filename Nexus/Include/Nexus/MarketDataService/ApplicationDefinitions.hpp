@@ -25,11 +25,11 @@ namespace Nexus::MarketDataService {
 
       /**
        * Constructs an ApplicationMarketDataClient.
-       * @param serviceLocatorClient The ServiceLocatorClient used to
+       * @param service_locator_client The ServiceLocatorClient used to
        *        authenticate sessions.
        */
       explicit ApplicationMarketDataClient(
-        SessionBuilder::ServiceLocatorClient serviceLocatorClient);
+        SessionBuilder::ServiceLocatorClient service_locator_client);
 
       /** Returns a reference to the Client. */
       Client& operator *();
@@ -71,25 +71,27 @@ namespace Nexus::MarketDataService {
 
       /**
        * Constructs an ApplicationMarketDataFeedClient.
-       * @param serviceLocatorClient The ServiceLocatorClient used to
+       * @param service_locator_client The ServiceLocatorClient used to
        *        authenticate sessions.
-       * @param samplingTime The duration used for message sampling.
+       * @param sampling_time The duration used for message sampling.
        * @param country The country to publish market data for, used to
        *        determine which market data registry server to connect to.
        */
       template<typename ServiceLocatorClient>
-      ApplicationMarketDataFeedClient(ServiceLocatorClient serviceLocatorClient,
-        boost::posix_time::time_duration samplingTime, CountryCode country);
+      ApplicationMarketDataFeedClient(
+        ServiceLocatorClient service_locator_client,
+        boost::posix_time::time_duration sampling_time, CountryCode country);
 
       /**
        * Constructs an ApplicationMarketDataFeedClient.
-       * @param serviceLocatorClient The ServiceLocatorClient used to
+       * @param service_locator_client The ServiceLocatorClient used to
        *        authenticate sessions.
-       * @param samplingTime The duration used for message sampling.
+       * @param sampling_time The duration used for message sampling.
        */
       template<typename ServiceLocatorClient>
-      ApplicationMarketDataFeedClient(ServiceLocatorClient serviceLocatorClient,
-        boost::posix_time::time_duration samplingTime);
+      ApplicationMarketDataFeedClient(
+        ServiceLocatorClient service_locator_client,
+        boost::posix_time::time_duration sampling_time);
 
       /** Returns a reference to the Client. */
       Client& operator *();
@@ -120,25 +122,25 @@ namespace Nexus::MarketDataService {
 
   /**
    * Makes a SessionBuilder for a standard MarketDataClient.
-   * @param serviceLocatorClient The ServiceLocatorClient used to authenticate
+   * @param service_locator_client The ServiceLocatorClient used to authenticate
    *        sessions.
-   * @param servicePredicate The function used to match an appropriate
+   * @param service_predicate The function used to match an appropriate
    *        ServiceEntry.
    * @param service The name of the service to connect to.
    */
   template<typename SessionBuilder, typename Predicate>
-  SessionBuilder MakeBasicMarketDataClientSessionBuilder(
-      typename SessionBuilder::ServiceLocatorClient serviceLocatorClient,
-      Predicate&& servicePredicate,
+  SessionBuilder make_basic_market_data_client_session_builder(
+      typename SessionBuilder::ServiceLocatorClient service_locator_client,
+      Predicate&& service_predicate,
       const std::string& service = RELAY_SERVICE_NAME) {
-    auto clientBox = Beam::ServiceLocator::ServiceLocatorClientBox(
-      &Beam::FullyDereference(serviceLocatorClient));
-    return SessionBuilder(std::move(serviceLocatorClient),
-      [=, servicePredicate = std::forward<Predicate>(servicePredicate)]
+    auto client = Beam::ServiceLocator::ServiceLocatorClientBox(
+      &Beam::FullyDereference(service_locator_client));
+    return SessionBuilder(std::move(service_locator_client),
+      [=, service_predicate = std::forward<Predicate>(service_predicate)]
           () mutable {
         return std::make_unique<Beam::Network::TcpSocketChannel>(
-          Beam::ServiceLocator::LocateServiceAddresses(clientBox, service,
-            servicePredicate));
+          Beam::ServiceLocator::LocateServiceAddresses(
+            client, service, service_predicate));
       },
       [] {
         return std::make_unique<Beam::Threading::LiveTimer>(
@@ -148,21 +150,22 @@ namespace Nexus::MarketDataService {
 
   /**
    * Returns a SessionBuilder for a standard MarketDataClient.
-   * @param serviceLocatorClient The ServiceLocatorClient used to authenticate
+   * @param service_locator_client The ServiceLocatorClient used to authenticate
    *        sessions.
    * @param service The name of the service to connect to.
    */
   inline ApplicationMarketDataClient::SessionBuilder
-      MakeMarketDataClientSessionBuilder(
-      ApplicationMarketDataClient::SessionBuilder::ServiceLocatorClient
-        serviceLocatorClient, const std::string& service = RELAY_SERVICE_NAME) {
-    auto clientBox = Beam::ServiceLocator::ServiceLocatorClientBox(
-      &Beam::FullyDereference(serviceLocatorClient));
+      make_market_data_client_session_builder(
+        ApplicationMarketDataClient::SessionBuilder::ServiceLocatorClient
+          service_locator_client,
+        const std::string& service = RELAY_SERVICE_NAME) {
+    auto client = Beam::ServiceLocator::ServiceLocatorClientBox(
+      &Beam::FullyDereference(service_locator_client));
     return ApplicationMarketDataClient::SessionBuilder(
-      std::move(serviceLocatorClient),
+      std::move(service_locator_client),
       [=] () mutable {
         return std::make_unique<Beam::Network::TcpSocketChannel>(
-          Beam::ServiceLocator::LocateServiceAddresses(clientBox, service));
+          Beam::ServiceLocator::LocateServiceAddresses(client, service));
       },
       [] {
         return std::make_unique<Beam::Threading::LiveTimer>(
@@ -171,8 +174,9 @@ namespace Nexus::MarketDataService {
   }
 
   inline ApplicationMarketDataClient::ApplicationMarketDataClient(
-    SessionBuilder::ServiceLocatorClient serviceLocatorClient)
-    : m_client(MakeMarketDataClientSessionBuilder(serviceLocatorClient)) {}
+    SessionBuilder::ServiceLocatorClient service_locator_client)
+    : m_client(
+        make_market_data_client_session_builder(service_locator_client)) {}
 
   inline ApplicationMarketDataClient::Client&
       ApplicationMarketDataClient::operator *() {
@@ -206,25 +210,25 @@ namespace Nexus::MarketDataService {
 
   template<typename ServiceLocatorClient>
   inline ApplicationMarketDataFeedClient::ApplicationMarketDataFeedClient(
-      ServiceLocatorClient serviceLocatorClient,
-      boost::posix_time::time_duration samplingTime, CountryCode country)
-      try : m_client([&] {
-              auto service = FindMarketDataFeedService(country,
-                Beam::FullyDereference(serviceLocatorClient));
-              if(!service) {
-                BOOST_THROW_EXCEPTION(Beam::IO::ConnectException(
-                  "No market data services available."));
-              }
-              auto addresses =
-                Beam::Parsers::Parse<std::vector<Beam::Network::IpAddress>>(
-                  boost::get<std::string>(service->GetProperties().At(
-                    "addresses")));
-              return Client(Beam::Initialize(addresses),
-                Beam::ServiceLocator::SessionAuthenticator(
-                  std::move(serviceLocatorClient)),
-                Beam::Initialize(samplingTime),
-                Beam::Initialize(boost::posix_time::seconds(10)));
-            }()) {
+    ServiceLocatorClient service_locator_client,
+    boost::posix_time::time_duration sampling_time, CountryCode country)
+    try : m_client([&] {
+            auto service = find_market_data_feed_service(
+              country, Beam::FullyDereference(service_locator_client));
+            if(!service) {
+              BOOST_THROW_EXCEPTION(Beam::IO::ConnectException(
+                "No market data services available."));
+            }
+            auto addresses =
+              Beam::Parsers::Parse<std::vector<Beam::Network::IpAddress>>(
+                boost::get<std::string>(service->GetProperties().At(
+                  "addresses")));
+            return Client(Beam::Initialize(addresses),
+              Beam::ServiceLocator::SessionAuthenticator(
+                std::move(service_locator_client)),
+              Beam::Initialize(sampling_time),
+              Beam::Initialize(boost::posix_time::seconds(10)));
+          }()) {
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::IO::ConnectException(
       "Unable to initialize the market data feed client."));
@@ -232,25 +236,25 @@ namespace Nexus::MarketDataService {
 
   template<typename ServiceLocatorClient>
   inline ApplicationMarketDataFeedClient::ApplicationMarketDataFeedClient(
-      ServiceLocatorClient serviceLocatorClient,
-      boost::posix_time::time_duration samplingTime)
-      try : m_client([&] {
-              auto services = serviceLocatorClient.Locate(FEED_SERVICE_NAME);
-              if(services.empty()) {
-                BOOST_THROW_EXCEPTION(Beam::IO::ConnectException(
-                  "No market data services available."));
-              }
-              auto& service = services.front();
-              auto addresses =
-                Beam::Parsers::Parse<std::vector<Beam::Network::IpAddress>>(
-                  boost::get<std::string>(service.GetProperties().At(
-                    "addresses")));
-              return Client(Beam::Initialize(addresses),
-                Beam::ServiceLocator::SessionAuthenticator(
-                  std::move(serviceLocatorClient)),
-                Beam::Initialize(samplingTime),
-                Beam::Initialize(boost::posix_time::seconds(10)));
-            }()) {
+    ServiceLocatorClient service_locator_client,
+    boost::posix_time::time_duration sampling_time)
+    try : m_client([&] {
+            auto services = service_locator_client.Locate(FEED_SERVICE_NAME);
+            if(services.empty()) {
+              BOOST_THROW_EXCEPTION(Beam::IO::ConnectException(
+                "No market data services available."));
+            }
+            auto& service = services.front();
+            auto addresses =
+              Beam::Parsers::Parse<std::vector<Beam::Network::IpAddress>>(
+                boost::get<std::string>(service.GetProperties().At(
+                  "addresses")));
+            return Client(Beam::Initialize(addresses),
+              Beam::ServiceLocator::SessionAuthenticator(
+                std::move(service_locator_client)),
+              Beam::Initialize(sampling_time),
+              Beam::Initialize(boost::posix_time::seconds(10)));
+          }()) {
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::IO::ConnectException(
       "Unable to initialize the market data feed client."));
