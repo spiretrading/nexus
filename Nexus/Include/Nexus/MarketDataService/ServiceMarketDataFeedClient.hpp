@@ -12,12 +12,13 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/thread/mutex.hpp>
+#include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedServices.hpp"
 
 namespace Nexus::MarketDataService {
 
   /**
-   * Client used to access the MarketDataFeedServlet.
+   * Implements a MarketDataFeedClient using Beam services.
    * @param <O> The type used to represent order ids.
    * @param <S> The type of Timer used to sample market data sent to the
    *        servlet.
@@ -51,175 +52,95 @@ namespace Nexus::MarketDataService {
        * Constructs a ServiceMarketDataFeedClient.
        * @param channel Initializes the Channel to the ServiceProtocol server.
        * @param authenticator The Authenticator to use.
-       * @param samplingTimer Initializes the SamplingTimer.
-       * @param heartbeatTimer Initializes the Timer used for heartbeats.
+       * @param sampling_timer Initializes the SamplingTimer.
+       * @param heartbeat_timer Initializes the Timer used for heartbeats.
        */
       template<typename CF, typename SF, typename HF>
       ServiceMarketDataFeedClient(
-        CF&& channel, const Authenticator& authenticator, SF&& samplingTimer,
-        HF&& heartbeatTimer);
-
+        CF&& channel, const Authenticator& authenticator, SF&& sampling_timer,
+        HF&& heartbeat_timer);
       ~ServiceMarketDataFeedClient();
-
-      /**
-       * Adds or updates a SecurityInfo.
-       * @param info The SecurityInfo to add or update.
-       */
-      void Add(const SecurityInfo& info);
-
-      /**
-       * Publishes an OrderImbalance.
-       * @param orderImbalance The OrderImbalance to publish.
-       */
-      void Publish(const MarketOrderImbalance& orderImbalance);
-
-      /**
-       * Publishes a BboQuote.
-       * @param bboQuote The BboQuote to publish.
-       */
-      void Publish(const SecurityBboQuote& bboQuote);
-
-      /**
-       * Publishes a MarketQuote.
-       * @param marketQuote The MarketQuote to publish.
-       */
-      void Publish(const SecurityMarketQuote& marketQuote);
-
-      /**
-       * Sets a BookQuote.
-       * @param bookQuote The BookQuote to set.
-       */
-      void Publish(const SecurityBookQuote& bookQuote);
-
-      /**
-       * Publishes a TimeAndSale.
-       * @param timeAndSale The TimeAndSale to publish.
-       */
-      void Publish(const SecurityTimeAndSale& timeAndSale);
-
-      /**
-       * Adds an order.
-       * @param security The Security the order belongs to.
-       * @param market The market the order belongs to.
-       * @param mpid The MPID submitting the order.
-       * @param isPrimaryMpid Whether the <i>mpid</i> is the <i>market</i>'s
-       *        primary MPID.
-       * @param id The order id.
-       * @param side The order's Side.
-       * @param price The price of the order.
-       * @param size The size of the order.
-       * @param timestamp The Order's timestamp.
-       */
-      void AddOrder(const Security& security, MarketCode market,
-        const std::string& mpid, bool isPrimaryMpid, const OrderId& id,
+      void add(const SecurityInfo& info);
+      void publish(const VenueOrderImbalance& imbalance);
+      void publish(const SecurityBboQuote& quote);
+      void publish(const SecurityBookQuote& quote);
+      void publish(const SecurityTimeAndSale& time_and_sale);
+      void add_order(const Security& security, Venue venue,
+        const std::string& mpid, bool is_primary_mpid, const OrderId& id,
         Side side, Money price, Quantity size,
         boost::posix_time::ptime timestamp);
-
-      /**
-       * Modifies the size of an order.
-       * @param id The order id.
-       * @param size The order's new size.
-       * @param timestamp The modification's timestamp.
-       */
-      void ModifyOrderSize(const OrderId& id, Quantity size,
-        boost::posix_time::ptime timestamp);
-
-      /**
-       * Adds an offset to the size of an order.
-       * @param id The order id.
-       * @param delta The change in the order's size.
-       * @param timestamp The modification's timestamp.
-       */
-      void OffsetOrderSize(const OrderId& id, Quantity delta,
-        boost::posix_time::ptime timestamp);
-
-      /**
-       * Modifies the price of an order.
-       * @param id The order id.
-       * @param price The order's new price.
-       * @param timestamp The modification's timestamp.
-       */
-      void ModifyOrderPrice(const OrderId& id, Money price,
-        boost::posix_time::ptime timestamp);
-
-      /**
-       * Deletes an order.
-       * @param id The order id.
-       * @param timestamp The modification's timestamp.
-       */
-      void DeleteOrder(const OrderId& id, boost::posix_time::ptime timestamp);
-
-      void Close();
+      void modify_order_size(
+        const OrderId& id, Quantity size, boost::posix_time::ptime timestamp);
+      void offset_order_size(
+        const OrderId& id, Quantity delta, boost::posix_time::ptime timestamp);
+      void modify_order_price(
+        const OrderId& id, Money price, boost::posix_time::ptime timestamp);
+      void remove_order(const OrderId& id, boost::posix_time::ptime timestamp);
+      void close();
 
     private:
       struct OrderEntry {
         Security m_security;
-        MarketCode m_market;
+        Venue m_venue;
         std::string m_mpid;
-        bool m_isPrimaryMpid;
+        bool m_is_primary_mpid;
         Side m_side;
         Money m_price;
         Quantity m_size;
-
-        OrderEntry(const Security& security, MarketCode market,
-          const std::string& mpid, bool isPrimaryMpid, Side side, Money price,
-          Quantity size);
       };
       struct QuoteUpdates {
-        boost::optional<SecurityBboQuote> m_bboQuote;
-        std::unordered_map<MarketCode, SecurityMarketQuote> m_marketQuotes;
-        std::vector<SecurityBookQuote> m_askBook;
-        std::vector<SecurityBookQuote> m_bidBook;
-        std::vector<SecurityTimeAndSale> m_timeAndSales;
+        boost::optional<SecurityBboQuote> m_bbo_quote;
+        std::vector<SecurityBookQuote> m_asks;
+        std::vector<SecurityBookQuote> m_bids;
+        std::vector<SecurityTimeAndSale> m_time_and_sales;
       };
       mutable boost::mutex m_mutex;
       ServiceProtocolClient m_client;
-      Beam::GetOptionalLocalPtr<S> m_samplingTimer;
-      std::unordered_map<Security, QuoteUpdates> m_quoteUpdates;
-      std::vector<MarketOrderImbalance> m_orderImbalances;
+      Beam::GetOptionalLocalPtr<S> m_sampling_timer;
+      std::unordered_map<Security, QuoteUpdates> m_quote_updates;
+      std::vector<VenueOrderImbalance> m_order_imbalances;
       std::unordered_map<OrderId, OrderEntry> m_orders;
-      Beam::IO::OpenState m_openState;
+      Beam::IO::OpenState m_open_state;
       Beam::RoutineTaskQueue m_tasks;
 
       ServiceMarketDataFeedClient(const ServiceMarketDataFeedClient&) = delete;
       ServiceMarketDataFeedClient& operator =(
         const ServiceMarketDataFeedClient&) = delete;
-      void UpdateBookSampling(const SecurityBookQuote& bookQuote);
-      void LockedAddOrder(const Security& security, MarketCode market,
-        const std::string& mpid, bool isPrimaryMpid, const OrderId& id,
+      void update_book_sampling(const SecurityBookQuote& quote);
+      void locked_add_order(const Security& security, Venue venue,
+        const std::string& mpid, bool is_primary_mpid, const OrderId& id,
         Side side, Money price, Quantity size,
         boost::posix_time::ptime timestamp);
-      void LockedDeleteOrder(
-        typename std::unordered_map<OrderId, OrderEntry>::iterator&
-        orderIterator, boost::posix_time::ptime timestamp);
-      void OnTimerExpired(Beam::Threading::Timer::Result result);
+      void locked_remove_order(
+        typename std::unordered_map<OrderId, OrderEntry>::iterator& i,
+        boost::posix_time::ptime timestamp);
+      void on_timer_expired(Beam::Threading::Timer::Result result);
   };
 
   /**
    * Finds a MarketDataFeedService for a specified country.
    * @param country The country to service.
-   * @param serviceLocatorClient The ServiceLocatorClient used to locate
-   *        services.
+   * @param client The ServiceLocatorClient used to locate services.
    * @return The ServiceEntry belonging to the MarketDataFeedService for the
    *         specified <i>country</i>.
    */
   template<typename ServiceLocatorClient>
   boost::optional<Beam::ServiceLocator::ServiceEntry>
-      FindMarketDataFeedService(CountryCode country,
-      ServiceLocatorClient& serviceLocatorClient) {
+      find_market_data_feed_service(
+        CountryCode country, ServiceLocatorClient& client) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto services = serviceLocatorClient.Locate(FEED_SERVICE_NAME);
+      auto services = client.Locate(FEED_SERVICE_NAME);
       for(auto& entry : services) {
         auto& properties = entry.GetProperties();
-        auto countriesProperty = properties.Get("countries");
-        if(!countriesProperty) {
+        auto countries_property = properties.Get("countries");
+        if(!countries_property) {
           return boost::make_optional(entry);
-        } else if(auto countriesList = boost::get<std::vector<Beam::JsonValue>>(
-            &*countriesProperty)) {
-          for(auto countryEntry : *countriesList) {
-            if(auto value = boost::get<double>(&countryEntry)) {
-              if(static_cast<CountryCode>(static_cast<std::uint16_t>(*value)) ==
-                  country) {
+        } else if(auto countries =
+            boost::get<std::vector<Beam::JsonValue>>(&*countries_property)) {
+          for(auto country : *countries) {
+            if(auto value = boost::get<double>(&country)) {
+              if(static_cast<CountryCode>(
+                  static_cast<std::uint16_t>(*value)) == country) {
                 return boost::make_optional(entry);
               }
             }
@@ -232,34 +153,22 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  ServiceMarketDataFeedClient<O, S, P, H>::OrderEntry::OrderEntry(
-    const Security& security, MarketCode market, const std::string& mpid,
-    bool isPrimaryMpid, Side side, Money price, Quantity size)
-    : m_security(security),
-      m_market(market),
-      m_mpid(mpid),
-      m_isPrimaryMpid(isPrimaryMpid),
-      m_side(side),
-      m_price(price),
-      m_size(size) {}
-
-  template<typename O, typename S, typename P, typename H>
   template<typename CF, typename SF, typename HF>
   ServiceMarketDataFeedClient<O, S, P, H>::ServiceMarketDataFeedClient(
-      CF&& channel, const Authenticator& authenticator, SF&& samplingTimer,
-      HF&& heartbeatTimer)
+      CF&& channel, const Authenticator& authenticator, SF&& sampling_timer,
+      HF&& heartbeat_timer)
       try : m_client(std::forward<CF>(channel),
-              std::forward<HF>(heartbeatTimer)),
-            m_samplingTimer(std::forward<SF>(samplingTimer)) {
+              std::forward<HF>(heartbeat_timer)),
+            m_sampling_timer(std::forward<SF>(sampling_timer)) {
     RegisterMarketDataFeedMessages(Beam::Store(m_client.GetSlots()));
     try {
       Beam::ServiceLocator::Authenticate(authenticator, m_client);
-      m_samplingTimer->GetPublisher().Monitor(
-        m_tasks.GetSlot<Beam::Threading::Timer::Result>(
-        std::bind_front(&ServiceMarketDataFeedClient::OnTimerExpired, this)));
-      m_samplingTimer->Start();
+      m_sampling_timer->GetPublisher().Monitor(
+        m_tasks.GetSlot<Beam::Threading::Timer::Result>(std::bind_front(
+          &ServiceMarketDataFeedClient::on_timer_expired, this)));
+      m_sampling_timer->Start();
     } catch(const std::exception&) {
-      Close();
+      close();
       BOOST_RETHROW;
     }
   } catch(const std::exception&) {
@@ -269,11 +178,11 @@ namespace Nexus::MarketDataService {
 
   template<typename O, typename S, typename P, typename H>
   ServiceMarketDataFeedClient<O, S, P, H>::~ServiceMarketDataFeedClient() {
-    Close();
+    close();
   }
 
   template<typename O, typename S, typename P, typename H>
-  void ServiceMarketDataFeedClient<O, S, P, H>::Add(const SecurityInfo& info) {
+  void ServiceMarketDataFeedClient<O, S, P, H>::add(const SecurityInfo& info) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
       Beam::Services::SendRecordMessage<SetSecurityInfoMessage>(m_client, info);
     }, "Failed to add security info: " +
@@ -281,237 +190,216 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  void ServiceMarketDataFeedClient<O, S, P, H>::Publish(
-      const MarketOrderImbalance& orderImbalance) {
+  void ServiceMarketDataFeedClient<O, S, P, H>::publish(
+      const VenueOrderImbalance& imbalance) {
     auto lock = boost::lock_guard(m_mutex);
-    m_orderImbalances.push_back(orderImbalance);
+    m_order_imbalances.push_back(imbalance);
   }
 
   template<typename O, typename S, typename P, typename H>
-  void ServiceMarketDataFeedClient<O, S, P, H>::Publish(
-      const SecurityBboQuote& bboQuote) {
+  void ServiceMarketDataFeedClient<O, S, P, H>::publish(
+      const SecurityBboQuote& quote) {
     auto lock = boost::lock_guard(m_mutex);
-    auto& updates = m_quoteUpdates[bboQuote.GetIndex()];
-    updates.m_bboQuote = bboQuote;
+    auto& updates = m_quote_updates[quote.GetIndex()];
+    updates.m_bbo_quote = quote;
   }
 
   template<typename O, typename S, typename P, typename H>
-  void ServiceMarketDataFeedClient<O, S, P, H>::Publish(
-      const SecurityMarketQuote& marketQuote) {
+  void ServiceMarketDataFeedClient<O, S, P, H>::publish(
+      const SecurityBookQuote& quote) {
+    auto id = quote.GetIndex().get_symbol() + '-' +
+      boost::lexical_cast<std::string>(quote.GetIndex().get_venue()) +
+      quote->m_mpid + '-' +
+      boost::lexical_cast<std::string>(quote->m_quote.m_price) +
+      to_char(quote->m_quote.m_side);
     auto lock = boost::lock_guard(m_mutex);
-    m_quoteUpdates[marketQuote.GetIndex()].m_marketQuotes[
-      marketQuote->m_market] = marketQuote;
-  }
-
-  template<typename O, typename S, typename P, typename H>
-  void ServiceMarketDataFeedClient<O, S, P, H>::Publish(
-      const SecurityBookQuote& bookQuote) {
-    auto id = bookQuote.GetIndex().GetSymbol() + '-' +
-      boost::lexical_cast<std::string>(bookQuote.GetIndex().GetCountry()) +
-      bookQuote->m_mpid + '-' +
-      boost::lexical_cast<std::string>(bookQuote->m_quote.m_price) +
-      ToChar(bookQuote->m_quote.m_side);
-    auto lock = boost::lock_guard(m_mutex);
-    auto orderIterator = m_orders.find(id);
-    if(orderIterator == m_orders.end()) {
-      LockedAddOrder(bookQuote.GetIndex(), bookQuote->m_market,
-        bookQuote->m_mpid, bookQuote->m_isPrimaryMpid, id,
-        bookQuote->m_quote.m_side, bookQuote->m_quote.m_price,
-        bookQuote->m_quote.m_size, bookQuote->m_timestamp);
+    auto i = m_orders.find(id);
+    if(i == m_orders.end()) {
+      locked_add_order(quote.GetIndex(), quote->m_venue, quote->m_mpid,
+        quote->m_is_primary_mpid, id, quote->m_quote.m_side,
+        quote->m_quote.m_price, quote->m_quote.m_size, quote->m_timestamp);
     } else {
-      LockedDeleteOrder(orderIterator, bookQuote->m_timestamp);
-      if(bookQuote->m_quote.m_size != 0) {
-        LockedAddOrder(bookQuote.GetIndex(), bookQuote->m_market,
-          bookQuote->m_mpid, bookQuote->m_isPrimaryMpid, id,
-          bookQuote->m_quote.m_side, bookQuote->m_quote.m_price,
-          bookQuote->m_quote.m_size, bookQuote->m_timestamp);
+      locked_remove_order(i, quote->m_timestamp);
+      if(quote->m_quote.m_size != 0) {
+        locked_add_order(quote.GetIndex(), quote->m_venue, quote->m_mpid,
+          quote->m_is_primary_mpid, id, quote->m_quote.m_side,
+          quote->m_quote.m_price, quote->m_quote.m_size, quote->m_timestamp);
       }
     }
   }
 
   template<typename O, typename S, typename P, typename H>
-  void ServiceMarketDataFeedClient<O, S, P, H>::Publish(
-      const SecurityTimeAndSale& timeAndSale) {
+  void ServiceMarketDataFeedClient<O, S, P, H>::publish(
+      const SecurityTimeAndSale& time_and_sale) {
     auto lock = boost::lock_guard(m_mutex);
-    auto& updates = m_quoteUpdates[timeAndSale.GetIndex()];
-    updates.m_timeAndSales.push_back(timeAndSale);
+    auto& updates = m_quote_updates[time_and_sale.GetIndex()];
+    updates.m_time_and_sales.push_back(time_and_sale);
   }
 
   template<typename O, typename S, typename P, typename H>
-  void ServiceMarketDataFeedClient<O, S, P, H>::AddOrder(
-      const Security& security, MarketCode market, const std::string& mpid,
-      bool isPrimaryMpid, const OrderId& id, Side side, Money price,
+  void ServiceMarketDataFeedClient<O, S, P, H>::add_order(
+      const Security& security, Venue venue, const std::string& mpid,
+      bool is_primary_mpid, const OrderId& id, Side side, Money price,
       Quantity size, boost::posix_time::ptime timestamp) {
     auto lock = boost::lock_guard(m_mutex);
-    LockedAddOrder(security, market, mpid, isPrimaryMpid, id, side, price,
+    locked_add_order(security, venue, mpid, is_primary_mpid, id, side, price,
       size, timestamp);
   }
 
   template<typename O, typename S, typename P, typename H>
-  void ServiceMarketDataFeedClient<O, S, P, H>::ModifyOrderSize(
+  void ServiceMarketDataFeedClient<O, S, P, H>::modify_order_size(
       const OrderId& id, Quantity size, boost::posix_time::ptime timestamp) {
     auto lock = boost::lock_guard(m_mutex);
-    auto orderIterator = m_orders.find(id);
-    if(orderIterator == m_orders.end()) {
+    auto i = m_orders.find(id);
+    if(i == m_orders.end()) {
       return;
     }
-    auto entry = orderIterator->second;
-    LockedDeleteOrder(orderIterator, timestamp);
-    LockedAddOrder(entry.m_security, entry.m_market, entry.m_mpid,
-      entry.m_isPrimaryMpid, id, entry.m_side, entry.m_price, size, timestamp);
+    auto entry = i->second;
+    locked_remove_order(i, timestamp);
+    locked_add_order(entry.m_security, entry.m_venue, entry.m_mpid,
+      entry.m_is_primary_mpid, id, entry.m_side, entry.m_price, size,
+      timestamp);
   }
 
   template<typename O, typename S, typename P, typename H>
-  void ServiceMarketDataFeedClient<O, S, P, H>::OffsetOrderSize(
+  void ServiceMarketDataFeedClient<O, S, P, H>::offset_order_size(
       const OrderId& id, Quantity delta, boost::posix_time::ptime timestamp) {
     auto lock = boost::lock_guard(m_mutex);
-    auto orderIterator = m_orders.find(id);
-    if(orderIterator == m_orders.end()) {
+    auto i = m_orders.find(id);
+    if(i == m_orders.end()) {
       return;
     }
-    auto entry = orderIterator->second;
-    LockedDeleteOrder(orderIterator, timestamp);
-    LockedAddOrder(entry.m_security, entry.m_market, entry.m_mpid,
-      entry.m_isPrimaryMpid, id, entry.m_side, entry.m_price,
+    auto entry = i->second;
+    locked_remove_order(i, timestamp);
+    locked_add_order(entry.m_security, entry.m_venue, entry.m_mpid,
+      entry.m_is_primary_mpid, id, entry.m_side, entry.m_price,
       entry.m_size + delta, timestamp);
   }
 
   template<typename O, typename S, typename P, typename H>
-  void ServiceMarketDataFeedClient<O, S, P, H>::ModifyOrderPrice(
+  void ServiceMarketDataFeedClient<O, S, P, H>::modify_order_price(
       const OrderId& id, Money price, boost::posix_time::ptime timestamp) {
     auto lock = boost::lock_guard(m_mutex);
-    auto orderIterator = m_orders.find(id);
-    if(orderIterator == m_orders.end()) {
+    auto i = m_orders.find(id);
+    if(i == m_orders.end()) {
       return;
     }
-    auto entry = orderIterator->second;
-    LockedDeleteOrder(orderIterator, timestamp);
-    LockedAddOrder(entry.m_security, entry.m_market, entry.m_mpid,
-      entry.m_isPrimaryMpid, id, entry.m_side, price, entry.m_size, timestamp);
+    auto entry = i->second;
+    locked_remove_order(i, timestamp);
+    locked_add_order(entry.m_security, entry.m_venue, entry.m_mpid,
+      entry.m_is_primary_mpid, id, entry.m_side, price, entry.m_size,
+      timestamp);
   }
 
   template<typename O, typename S, typename P, typename H>
-  void ServiceMarketDataFeedClient<O, S, P, H>::DeleteOrder(
+  void ServiceMarketDataFeedClient<O, S, P, H>::remove_order(
       const OrderId& id, boost::posix_time::ptime timestamp) {
     auto lock = boost::lock_guard(m_mutex);
-    auto orderIterator = m_orders.find(id);
-    if(orderIterator == m_orders.end()) {
+    auto i = m_orders.find(id);
+    if(i == m_orders.end()) {
       return;
     }
-    LockedDeleteOrder(orderIterator, timestamp);
+    locked_remove_order(i, timestamp);
   }
 
   template<typename O, typename S, typename P, typename H>
-  void ServiceMarketDataFeedClient<O, S, P, H>::Close() {
-    if(m_openState.SetClosing()) {
+  void ServiceMarketDataFeedClient<O, S, P, H>::close() {
+    if(m_open_state.SetClosing()) {
       return;
     }
-    m_samplingTimer->Cancel();
+    m_sampling_timer->Cancel();
     m_tasks.Break();
     m_tasks.Wait();
     m_client.Close();
-    m_openState.Close();
+    m_open_state.Close();
   }
 
   template<typename O, typename S, typename P, typename H>
-  void ServiceMarketDataFeedClient<O, S, P, H>::UpdateBookSampling(
-      const SecurityBookQuote& bookQuote) {
-    auto book = [&] {
-      if(bookQuote->m_quote.m_side == Side::ASK) {
-        return &(m_quoteUpdates[bookQuote.GetIndex()].m_askBook);
-      } else {
-        BEAM_ASSERT(bookQuote->m_quote.m_side == Side::BID);
-        return &(m_quoteUpdates[bookQuote.GetIndex()].m_bidBook);
-      }
-    }();
-    auto quoteIterator = std::lower_bound(book->begin(), book->end(), bookQuote,
-      &BookQuoteListingComparator);
-    if(quoteIterator == book->end()) {
-      book->push_back(bookQuote);
-    } else if((*quoteIterator)->m_quote.m_price == bookQuote->m_quote.m_price &&
-        (*quoteIterator)->m_mpid == bookQuote->m_mpid) {
-      (*quoteIterator)->m_quote.m_size += bookQuote->m_quote.m_size;
-      (*quoteIterator)->m_timestamp = bookQuote->m_timestamp;
+  void ServiceMarketDataFeedClient<O, S, P, H>::update_book_sampling(
+      const SecurityBookQuote& quote) {
+    auto& book = pick(quote->m_quote.m_side,
+      m_quote_updates[quote.GetIndex()].m_asks,
+      m_quote_updates[quote.GetIndex()].m_bids);
+    auto i =
+      std::lower_bound(book.begin(), book.end(), quote, &listing_comparator);
+    if(i == book.end()) {
+      book.push_back(quote);
+    } else if((*i)->m_quote.m_price == quote->m_quote.m_price &&
+        (*i)->m_mpid == quote->m_mpid) {
+      (*i)->m_quote.m_size += quote->m_quote.m_size;
+      (*i)->m_timestamp = quote->m_timestamp;
     } else {
-      book->insert(quoteIterator, bookQuote);
+      book.insert(i, quote);
     }
   }
 
   template<typename O, typename S, typename P, typename H>
-  void ServiceMarketDataFeedClient<O, S, P, H>::LockedAddOrder(
-      const Security& security, MarketCode market, const std::string& mpid,
-      bool isPrimaryMpid, const OrderId& id, Side side, Money price,
+  void ServiceMarketDataFeedClient<O, S, P, H>::locked_add_order(
+      const Security& security, Venue venue, const std::string& mpid,
+      bool is_primary_mpid, const OrderId& id, Side side, Money price,
       Quantity size, boost::posix_time::ptime timestamp) {
     if(size <= 0) {
       return;
     }
-    auto orderIterator = m_orders.find(id);
-    if(orderIterator != m_orders.end()) {
-      LockedDeleteOrder(orderIterator, timestamp);
+    auto i = m_orders.find(id);
+    if(i != m_orders.end()) {
+      locked_remove_order(i, timestamp);
     }
-    m_orders.insert(std::pair(id, OrderEntry(security, market, mpid,
-      isPrimaryMpid, side, price, size)));
-    auto bookQuote = BookQuote(mpid, isPrimaryMpid, market,
-      Quote(price, size, side), timestamp);
-    UpdateBookSampling(Beam::Queries::IndexedValue(
-      std::move(bookQuote), security));
+    m_orders.insert(std::pair(id,
+      OrderEntry(security, venue, mpid, is_primary_mpid, side, price, size)));
+    auto quote = BookQuote(
+      mpid, is_primary_mpid, venue, Quote(price, size, side), timestamp);
+    update_book_sampling(
+      Beam::Queries::IndexedValue(std::move(quote), security));
   }
 
   template<typename O, typename S, typename P, typename H>
-  void ServiceMarketDataFeedClient<O, S, P, H>::LockedDeleteOrder(
-      typename std::unordered_map<OrderId, OrderEntry>::iterator& orderIterator,
+  void ServiceMarketDataFeedClient<O, S, P, H>::locked_remove_order(
+      typename std::unordered_map<OrderId, OrderEntry>::iterator& i,
       boost::posix_time::ptime timestamp) {
-    auto& entry = orderIterator->second;
-    auto bookQuote = BookQuote(entry.m_mpid, entry.m_isPrimaryMpid,
-      entry.m_market, Quote(entry.m_price, -entry.m_size, entry.m_side),
-      timestamp);
-    UpdateBookSampling(Beam::Queries::IndexedValue(std::move(bookQuote),
-      entry.m_security));
-    m_orders.erase(orderIterator);
+    auto& entry = i->second;
+    auto quote = BookQuote(entry.m_mpid, entry.m_is_primary_mpid, entry.m_venue,
+      Quote(entry.m_price, -entry.m_size, entry.m_side), timestamp);
+    update_book_sampling(
+      Beam::Queries::IndexedValue(std::move(quote), entry.m_security));
+    m_orders.erase(i);
   }
 
   template<typename O, typename S, typename P, typename H>
-  void ServiceMarketDataFeedClient<O, S, P, H>::OnTimerExpired(
+  void ServiceMarketDataFeedClient<O, S, P, H>::on_timer_expired(
       Beam::Threading::Timer::Result result) {
     auto messages = std::vector<MarketDataFeedMessage>();
-    auto quoteUpdates = std::unordered_map<Security, QuoteUpdates>();
-    auto orderImbalances = std::vector<MarketOrderImbalance>();
+    auto quote_updates = std::unordered_map<Security, QuoteUpdates>();
+    auto order_imbalances = std::vector<VenueOrderImbalance>();
     {
       auto lock = boost::lock_guard(m_mutex);
-      quoteUpdates.swap(m_quoteUpdates);
-      orderImbalances.swap(m_orderImbalances);
+      quote_updates.swap(m_quote_updates);
+      order_imbalances.swap(m_order_imbalances);
     }
-    for(auto& [security, updates] : quoteUpdates) {
-      if(updates.m_bboQuote.is_initialized()) {
-        messages.push_back(std::move(*updates.m_bboQuote));
+    for(auto& [security, updates] : quote_updates) {
+      if(updates.m_bbo_quote) {
+        messages.push_back(std::move(*updates.m_bbo_quote));
       }
-      std::transform(updates.m_marketQuotes.begin(),
-        updates.m_marketQuotes.end(), std::back_inserter(messages),
-        [] (const auto& quote) -> decltype(auto) {
-          return std::move(quote.second);
-        });
-      std::copy_if(std::make_move_iterator(updates.m_askBook.begin()),
-        std::make_move_iterator(updates.m_askBook.end()),
-        std::back_inserter(messages),
-        [] (const auto& quote) {
+      std::copy_if(std::make_move_iterator(updates.m_asks.begin()),
+        std::make_move_iterator(updates.m_asks.end()),
+        std::back_inserter(messages), [] (const auto& quote) {
           return quote->m_quote.m_size != 0;
         });
-      std::copy_if(std::make_move_iterator(updates.m_bidBook.begin()),
-        std::make_move_iterator(updates.m_bidBook.end()),
-        std::back_inserter(messages),
-        [] (const auto& quote) {
+      std::copy_if(std::make_move_iterator(updates.m_bids.begin()),
+        std::make_move_iterator(updates.m_bids.end()),
+        std::back_inserter(messages), [] (const auto& quote) {
           return quote->m_quote.m_size != 0;
         });
-      std::move(updates.m_timeAndSales.begin(), updates.m_timeAndSales.end(),
-        std::back_inserter(messages));
+      std::move(updates.m_time_and_sales.begin(),
+        updates.m_time_and_sales.end(), std::back_inserter(messages));
     }
-    std::move(orderImbalances.begin(), orderImbalances.end(),
+    std::move(order_imbalances.begin(), order_imbalances.end(),
       std::back_inserter(messages));
     if(!messages.empty()) {
-      Beam::Services::SendRecordMessage<SendMarketDataFeedMessages>(m_client,
-        messages);
+      Beam::Services::SendRecordMessage<SendMarketDataFeedMessages>(
+        m_client, messages);
     }
-    m_samplingTimer->Start();
+    m_sampling_timer->Start();
   }
 }
 
