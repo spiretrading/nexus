@@ -1,5 +1,6 @@
 #ifndef NEXUS_SERVICE_MARKET_DATA_FEED_CLIENT_HPP
 #define NEXUS_SERVICE_MARKET_DATA_FEED_CLIENT_HPP
+#include <algorithm>
 #include <vector>
 #include <Beam/IO/Connection.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -320,8 +321,10 @@ namespace Nexus::MarketDataService {
     auto& book = pick(quote->m_quote.m_side,
       m_quote_updates[quote.GetIndex()].m_asks,
       m_quote_updates[quote.GetIndex()].m_bids);
-    auto i =
-      std::lower_bound(book.begin(), book.end(), quote, &listing_comparator);
+    auto i = std::lower_bound(book.begin(), book.end(), quote,
+      [] (const auto& lhs, const auto& rhs) {
+        return listing_comparator(lhs, rhs);
+      });
     if(i == book.end()) {
       book.push_back(quote);
     } else if((*i)->m_quote.m_price == quote->m_quote.m_price &&
