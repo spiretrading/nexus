@@ -1,16 +1,19 @@
 #ifndef NEXUS_CHARTING_SERVICES_HPP
 #define NEXUS_CHARTING_SERVICES_HPP
+#include <Beam/Queries/QueryResult.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
-#include "Nexus/ChartingService/ChartingService.hpp"
-#include "Nexus/ChartingService/ChartingQueryResults.hpp"
 #include "Nexus/ChartingService/SecurityChartingQuery.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 #include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
 
 namespace Nexus::ChartingService {
+  using SecurityChartingQueryResult =
+    Beam::Queries::QueryResult<Queries::SequencedQueryVariant>;
+  BEAM_DEFINE_RECORD(TimePriceQueryResult, Beam::Queries::Sequence, start,
+    Beam::Queries::Sequence, end, TechnicalAnalysis::TimePriceSeries, series);
 
   /** Standard name for the charting service. */
   inline const auto SERVICE_NAME = std::string("charting_service");
