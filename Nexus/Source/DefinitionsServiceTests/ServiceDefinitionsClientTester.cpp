@@ -136,8 +136,15 @@ TEST_SUITE("ServiceDefinitionsClient") {
     fixture.handle<LoadDestinationDatabaseService>([&] (auto& request) {
       request.SetResult(DEFAULT_DESTINATIONS);
     });
-    TestJsonEquality(
-      fixture.m_client->load_destination_database(), DEFAULT_DESTINATIONS);
+    auto entries =
+      fixture.m_client->load_destination_database().get_entries();
+    auto expected_entries = DEFAULT_DESTINATIONS.get_entries();
+    REQUIRE(entries.size() == expected_entries.size());
+    for(auto& entry : entries) {
+      REQUIRE(
+        std::find(expected_entries.begin(), expected_entries.end(), entry) !=
+          expected_entries.end());
+    }
   }
 
   TEST_CASE("load_venue_database") {

@@ -6,6 +6,7 @@
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 
 namespace Viper {
   template<>

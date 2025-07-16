@@ -1,9 +1,8 @@
 #ifndef NEXUS_CANDLESTICK_HPP
 #define NEXUS_CANDLESTICK_HPP
 #include <algorithm>
-#include <tuple>
+#include <utility>
 #include <Beam/Serialization/DataShuttle.hpp>
-#include "Nexus/TechnicalAnalysis/TechnicalAnalysis.hpp"
 
 namespace Nexus::TechnicalAnalysis {
 
@@ -74,7 +73,7 @@ namespace Nexus::TechnicalAnalysis {
        */
       void Update(Range value);
 
-      bool operator ==(const Candlestick& candlestick) const = default;
+      bool operator ==(const Candlestick&) const = default;
 
     private:
       friend struct Beam::Serialization::Shuttle<Candlestick>;

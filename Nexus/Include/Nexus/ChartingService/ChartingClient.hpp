@@ -11,7 +11,6 @@
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <boost/atomic/atomic.hpp>
 #include <boost/lexical_cast.hpp>
-#include "Nexus/ChartingService/ChartingService.hpp"
 #include "Nexus/ChartingService/ChartingServices.hpp"
 #include "Nexus/ChartingService/SecurityChartingQuery.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"

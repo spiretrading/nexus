@@ -11,6 +11,10 @@
 #include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
 
 namespace Nexus::ChartingService {
+
+  /** Standard name for the charting service. */
+  inline const auto SERVICE_NAME = std::string("charting_service");
+
   BEAM_DEFINE_SERVICES(ChartingServices,
 
     /**

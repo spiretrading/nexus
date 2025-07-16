@@ -2,7 +2,6 @@
 #define NEXUS_CHARTING_SERVICE_APPLICATION_DEFINITIONS_HPP
 #include <Beam/Services/ApplicationDefinitions.hpp>
 #include "Nexus/ChartingService/ChartingClient.hpp"
-#include "Nexus/ChartingService/ChartingService.hpp"
 
 namespace Nexus::ChartingService {
 
