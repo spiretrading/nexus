@@ -260,6 +260,210 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     completion_token.Get();
   }
 
+  TEST_CASE("order_add_and_remove") {
+    auto fixture = Fixture();
+    auto security = Security("GOOG", NASDAQ);
+    auto order_id = "1";
+    auto bbo_quote = SecurityBboQuote(BboQuote(Quote(
+      Money::CENT, 100, Side::BID), Quote(2 * Money::CENT, 200, Side::ASK),
+      time_from_string("2024-07-15 12:00:02")), security);
+    auto completion_token = Async<void>();
+    fixture.handle<SendMarketDataFeedMessages>(
+      [&] (auto& client, const auto& messages) {
+        REQUIRE(messages.size() == 1);
+        auto& message = messages.front();
+        auto received_quote = get<SecurityBboQuote>(&message);
+        REQUIRE(received_quote);
+        REQUIRE(*received_quote == bbo_quote);
+        completion_token.GetEval().SetResult();
+      });
+    fixture.m_client->add_order(security, NASDAQ, "MP1", true, order_id,
+      Side::BID, Money::ONE, 100, time_from_string("2024-07-15 12:00:00"));
+    fixture.m_client->remove_order(order_id,
+      time_from_string("2024-07-15 12:00:01"));
+    fixture.m_client->publish(bbo_quote);
+    fixture.m_sampling_timer.Trigger();
+    completion_token.Get();
+  }
+
+  TEST_CASE("order_aggregation") {
+    auto fixture = Fixture();
+    auto security = Security("GOOG", NASDAQ);
+    auto price = Money::ONE;
+    auto mpid = "MP1";
+    auto timestamp1 = time_from_string("2024-07-15 12:00:00");
+    auto timestamp2 = time_from_string("2024-07-15 12:00:01");
+    auto completion_token = Async<void>();
+    fixture.handle<SendMarketDataFeedMessages>(
+      [&] (auto& client, const auto& messages) {
+        REQUIRE(messages.size() == 1);
+        auto& message = messages.front();
+        auto received_quote = get<SecurityBookQuote>(&message);
+        REQUIRE(received_quote);
+        REQUIRE(received_quote->GetIndex() == security);
+        REQUIRE((*received_quote)->m_mpid == mpid);
+        REQUIRE((*received_quote)->m_quote.m_price == price);
+        REQUIRE((*received_quote)->m_quote.m_side == Side::BID);
+        REQUIRE((*received_quote)->m_quote.m_size == 300);
+        REQUIRE((*received_quote)->m_timestamp == timestamp2);
+        completion_token.GetEval().SetResult();
+      });
+    fixture.m_client->add_order(
+      security, NASDAQ, mpid, true, "1", Side::BID, price, 100, timestamp1);
+    fixture.m_client->add_order(
+      security, NASDAQ, mpid, true, "2", Side::BID, price, 200, timestamp2);
+    fixture.m_sampling_timer.Trigger();
+    completion_token.Get();
+  }
+
+  TEST_CASE("order_modify_size") {
+    auto fixture = Fixture();
+    auto security = Security("GOOG", NASDAQ);
+    auto price = Money::ONE;
+    auto mpid = "MP1";
+    auto order_id = "1";
+    auto timestamp1 = time_from_string("2024-07-15 12:00:00");
+    auto timestamp2 = time_from_string("2024-07-15 12:00:01");
+    auto completion_token = Async<void>();
+    fixture.handle<SendMarketDataFeedMessages>(
+      [&] (auto& client, const auto& messages) {
+        REQUIRE(messages.size() == 1);
+        auto& message = messages.front();
+        auto received_quote = get<SecurityBookQuote>(&message);
+        REQUIRE(received_quote);
+        REQUIRE(received_quote->GetIndex() == security);
+        REQUIRE((*received_quote)->m_mpid == mpid);
+        REQUIRE((*received_quote)->m_quote.m_price == price);
+        REQUIRE((*received_quote)->m_quote.m_side == Side::BID);
+        REQUIRE((*received_quote)->m_quote.m_size == 150);
+        REQUIRE((*received_quote)->m_timestamp == timestamp2);
+        completion_token.GetEval().SetResult();
+      });
+    fixture.m_client->add_order(security, NASDAQ, mpid, true, order_id,
+      Side::BID, price, 100, timestamp1);
+    fixture.m_client->modify_order_size(order_id, 150, timestamp2);
+    fixture.m_sampling_timer.Trigger();
+    completion_token.Get();
+  }
+
+  TEST_CASE("order_modify_price") {
+    auto fixture = Fixture();
+    auto security = Security("GOOG", NASDAQ);
+    auto mpid = "MP1";
+    auto order_id = "1";
+    auto price1 = Money::ONE;
+    auto price2 = 2 * Money::ONE;
+    auto timestamp1 = time_from_string("2024-07-15 12:00:00");
+    auto timestamp2 = time_from_string("2024-07-15 12:00:01");
+    auto completion_token = Async<void>();
+    fixture.handle<SendMarketDataFeedMessages>(
+      [&] (auto& client, const auto& messages) {
+        REQUIRE(messages.size() == 1);
+        auto& message = messages.front();
+        auto received_quote = get<SecurityBookQuote>(&message);
+        REQUIRE(received_quote);
+        REQUIRE(received_quote->GetIndex() == security);
+        REQUIRE((*received_quote)->m_mpid == mpid);
+        REQUIRE((*received_quote)->m_quote.m_price == price2);
+        REQUIRE((*received_quote)->m_quote.m_side == Side::BID);
+        REQUIRE((*received_quote)->m_quote.m_size == 100);
+        REQUIRE((*received_quote)->m_timestamp == timestamp2);
+        completion_token.GetEval().SetResult();
+      });
+    fixture.m_client->add_order(security, NASDAQ, mpid, true, order_id,
+      Side::BID, price1, 100, timestamp1);
+    fixture.m_client->modify_order_price(order_id, price2, timestamp2);
+    fixture.m_sampling_timer.Trigger();
+    completion_token.Get();
+  }
+
+  TEST_CASE("order_invalid_operations") {
+    auto fixture = Fixture();
+    auto security = Security("GOOG", NASDAQ);
+    auto bbo_quote = SecurityBboQuote(BboQuote(Quote(
+      Money::CENT, 100, Side::BID), Quote(2 * Money::CENT, 200, Side::ASK),
+      time_from_string("2024-07-15 12:00:01")), security);
+    auto completion_token = Async<void>();
+    fixture.handle<SendMarketDataFeedMessages>(
+      [&] (auto& client, const auto& messages) {
+        REQUIRE(messages.size() == 1);
+        auto& message = messages.front();
+        auto received_quote = get<SecurityBboQuote>(&message);
+        REQUIRE(received_quote);
+        REQUIRE(*received_quote == bbo_quote);
+        completion_token.GetEval().SetResult();
+      });
+    fixture.m_client->modify_order_size(
+      "1", 150, time_from_string("2024-07-15 12:00:00"));
+    fixture.m_client->offset_order_size(
+      "2", 50, time_from_string("2024-07-15 12:00:00"));
+    fixture.m_client->modify_order_price(
+      "3", Money::ONE, time_from_string("2024-07-15 12:00:00"));
+    fixture.m_client->remove_order(
+      "4", time_from_string("2024-07-15 12:00:00"));
+    fixture.m_client->publish(bbo_quote);
+    fixture.m_sampling_timer.Trigger();
+    completion_token.Get();
+  }
+
+  TEST_CASE("order_complex_sequence") {
+    auto fixture = Fixture();
+    auto security = Security("GOOG", NASDAQ);
+    auto mpid = "MP1";
+    auto price1 = Money::ONE;
+    auto price2 = 2 * Money::ONE;
+    auto timestamp1 = time_from_string("2024-07-15 12:00:00");
+    auto timestamp2 = time_from_string("2024-07-15 12:00:01");
+    auto timestamp3 = time_from_string("2024-07-15 12:00:02");
+    auto timestamp4 = time_from_string("2024-07-15 12:00:03");
+    auto timestamp5 = time_from_string("2024-07-15 12:00:04");
+    auto completion_token = Async<void>();
+    fixture.handle<SendMarketDataFeedMessages>(
+      [&] (auto& client, const auto& messages) {
+        REQUIRE(messages.size() == 2);
+        auto received_quotes = std::vector<SecurityBookQuote>();
+        for(auto& message : messages) {
+          if(auto quote = get<SecurityBookQuote>(&message)) {
+            received_quotes.push_back(*quote);
+          }
+        }
+        REQUIRE(received_quotes.size() == 2);
+        auto quote1 =
+          std::find_if(received_quotes.begin(), received_quotes.end(),
+            [&] (const auto& quote) {
+              return quote->m_quote.m_price == price1;
+            });
+        REQUIRE(quote1 != received_quotes.end());
+        REQUIRE(quote1->GetIndex() == security);
+        REQUIRE((*quote1)->m_mpid == mpid);
+        REQUIRE((*quote1)->m_quote.m_side == Side::BID);
+        REQUIRE((*quote1)->m_quote.m_size == 125);
+        REQUIRE((*quote1)->m_timestamp == timestamp3);
+        auto quote2 =
+          std::find_if(received_quotes.begin(), received_quotes.end(),
+            [&] (const auto& quote) {
+              return quote->m_quote.m_price == price2;
+            });
+        REQUIRE(quote2 != received_quotes.end());
+        REQUIRE(quote2->GetIndex() == security);
+        REQUIRE((*quote2)->m_mpid == mpid);
+        REQUIRE((*quote2)->m_quote.m_side == Side::BID);
+        REQUIRE((*quote2)->m_quote.m_size == 75);
+        REQUIRE((*quote2)->m_timestamp == timestamp5);
+        completion_token.GetEval().SetResult();
+      });
+    fixture.m_client->add_order(
+      security, NASDAQ, mpid, true, "A", Side::BID, price1, 100, timestamp1);
+    fixture.m_client->add_order(
+      security, NASDAQ, mpid, true, "B", Side::BID, price1, 50, timestamp2);
+    fixture.m_client->offset_order_size("A", 25, timestamp3);
+    fixture.m_client->remove_order("B", timestamp4);
+    fixture.m_client->add_order(
+      security, NASDAQ, mpid, true, "C", Side::BID, price2, 75, timestamp5);
+    fixture.m_sampling_timer.Trigger();
+    completion_token.Get();
+  }
+
   TEST_CASE("publish_time_and_sale") {
     auto fixture = Fixture();
     auto security = Security("GOOG", NASDAQ);
