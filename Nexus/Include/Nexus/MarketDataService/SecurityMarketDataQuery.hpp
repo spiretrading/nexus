@@ -9,6 +9,7 @@
 #include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
+#include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
 namespace Nexus {
   using SequencedBboQuote = Beam::Queries::SequencedValue<BboQuote>;

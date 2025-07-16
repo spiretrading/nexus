@@ -3,9 +3,8 @@
 #include <Beam/Queries/BasicQuery.hpp>
 #include <Beam/Queries/ExpressionQuery.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
-#include "Nexus/ChartingService/ChartingService.hpp"
-#include "Nexus/Definitions/Security.hpp"
-#include "Nexus/MarketDataService/SecuritySnapshot.hpp"
+#include "Nexus/MarketDataService/MarketDataType.hpp"
+#include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
 namespace Nexus::ChartingService {
 
@@ -15,10 +14,10 @@ namespace Nexus::ChartingService {
     public:
 
       /** Returns the type of data to query. */
-      MarketDataService::MarketDataType GetMarketDataType() const;
+      MarketDataService::MarketDataType get_market_data_type() const;
 
       /** Sets the type of data to query. */
-      void SetMarketDataType(MarketDataService::MarketDataType type);
+      void set_market_data_type(MarketDataService::MarketDataType type);
 
     private:
       friend struct Beam::Serialization::DataShuttle;
@@ -28,12 +27,12 @@ namespace Nexus::ChartingService {
       void Shuttle(Shuttler& shuttle, unsigned int version);
   };
 
-  inline MarketDataService::MarketDataType SecurityChartingQuery::
-      GetMarketDataType() const {
+  inline MarketDataService::MarketDataType
+      SecurityChartingQuery::get_market_data_type() const {
     return m_type;
   }
 
-  inline void SecurityChartingQuery::SetMarketDataType(
+  inline void SecurityChartingQuery::set_market_data_type(
       MarketDataService::MarketDataType type) {
     m_type = type;
   }
@@ -41,8 +40,8 @@ namespace Nexus::ChartingService {
   template<typename Shuttler>
   void SecurityChartingQuery::Shuttle(Shuttler& shuttle, unsigned int version) {
     Beam::Queries::BasicQuery<Security>::Shuttle(shuttle, version);
-    Beam::Serialization::Shuttle<Beam::Queries::ExpressionQuery>()(shuttle,
-      *this, version);
+    Beam::Serialization::Shuttle<Beam::Queries::ExpressionQuery>()(
+      shuttle, *this, version);
     shuttle.Shuttle("type", m_type);
   }
 }

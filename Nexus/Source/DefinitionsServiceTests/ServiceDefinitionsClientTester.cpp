@@ -48,8 +48,7 @@ namespace {
       auto builder = TestServiceProtocolClientBuilder([=] {
         return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
           "test", *m_server_connection);
-      }, factory<std::unique_ptr<
-        TestServiceProtocolClientBuilder::Timer>>());
+      }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
       m_client = std::make_unique<TestServiceDefinitionsClient>(builder);
     }
 

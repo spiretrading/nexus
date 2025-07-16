@@ -1,0 +1,21 @@
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <doctest/doctest.h>
+#include "Nexus/ChartingService/SecurityChartingQuery.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
+
+using namespace Beam;
+using namespace Beam::Queries;
+using namespace Nexus;
+using namespace Nexus::DefaultVenues;
+using namespace Nexus::MarketDataService;
+using namespace Nexus::ChartingService;
+
+TEST_SUITE("SecurityChartingQuery") {
+  TEST_CASE("get_set_market_data_type") {
+    auto query = SecurityChartingQuery();
+    query.set_market_data_type(MarketDataType::BBO_QUOTE);
+    REQUIRE(query.get_market_data_type() == MarketDataType::BBO_QUOTE);
+    query.set_market_data_type(MarketDataType::TIME_AND_SALE);
+    REQUIRE(query.get_market_data_type() == MarketDataType::TIME_AND_SALE);
+  }
+}

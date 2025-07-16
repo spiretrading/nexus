@@ -5,6 +5,7 @@
 #include <Beam/Queries/SequencedValue.hpp>
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Nexus/Definitions/Venue.hpp"
+#include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
 namespace Nexus {
   using SequencedOrderImbalance = Beam::Queries::SequencedValue<OrderImbalance>;

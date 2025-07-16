@@ -278,25 +278,10 @@ namespace Nexus {
       const boost::local_time::tz_database& time_zone_database) {
     auto venue_time_zone = time_zone_database.time_zone_from_region(
       venue_database.from(venue).m_time_zone);
-    auto utc_time_zone = time_zone_database.time_zone_from_region("UTC");
-    auto universal_date_time = boost::local_time::local_date_time(
-      date_time.date(), date_time.time_of_day(), utc_time_zone,
+    auto venue_local_date = boost::local_time::local_date_time(
+      date_time.date(), boost::posix_time::seconds(0), venue_time_zone,
       boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
-    auto current_venue_date_time =
-      universal_date_time.local_time_in(venue_time_zone);
-    auto venue_cut_off_date_time =
-      boost::posix_time::ptime(current_venue_date_time.local_time().date(),
-        boost::posix_time::seconds(0));
-    auto venue_cut_off_local_date_time = boost::local_time::local_date_time(
-      venue_cut_off_date_time.date(), venue_cut_off_date_time.time_of_day(),
-      venue_time_zone,
-      boost::local_time::local_date_time::NOT_DATE_TIME_ON_ERROR);
-    auto universal_cut_off_time = venue_cut_off_local_date_time.local_time_in(
-      utc_time_zone);
-    auto utc_venue_date = boost::posix_time::ptime(
-      universal_cut_off_time.local_time().date(),
-      universal_cut_off_time.local_time().time_of_day());
-    return utc_venue_date;
+    return venue_local_date.utc_time();
   }
 
   inline Venue::Venue(Code mic) noexcept
