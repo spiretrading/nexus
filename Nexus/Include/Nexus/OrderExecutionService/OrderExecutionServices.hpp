@@ -12,6 +12,9 @@ namespace Nexus::OrderExecutionService {
   using OrderSubmissionQueryResult =
     Beam::Queries::QueryResult<SequencedOrderRecord>;
 
+  /** Standard name for the order execution service. */
+  inline const std::string SERVICE_NAME = "order_execution_service";
+
   BEAM_DEFINE_SERVICES(OrderExecutionServices,
 
     /**
