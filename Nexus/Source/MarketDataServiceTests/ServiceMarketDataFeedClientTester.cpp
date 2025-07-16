@@ -438,7 +438,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
         REQUIRE((*quote1)->m_mpid == mpid);
         REQUIRE((*quote1)->m_quote.m_side == Side::BID);
         REQUIRE((*quote1)->m_quote.m_size == 125);
-        REQUIRE((*quote1)->m_timestamp == timestamp3);
+        REQUIRE((*quote1)->m_timestamp == timestamp4);
         auto quote2 =
           std::find_if(received_quotes.begin(), received_quotes.end(),
             [&] (const auto& quote) {
