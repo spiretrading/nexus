@@ -75,7 +75,8 @@ TEST_SUITE("DistributedMarketDataClient") {
           operations->Pop());
       auto test_imbalance = SequencedValue(
         OrderImbalance(Security("ABC", TSX), Side::BID, 100, Money::ONE,
-          time_from_string("2024-06-12 13:05:12:00")), Queries::Sequence(100));
+          time_from_string("2024-06-12 13:05:12:00")),
+        Beam::Queries::Sequence(100));
       received_query->m_queue.Push(test_imbalance);
       auto received_imbalance = imbalances->Pop();
       REQUIRE(received_imbalance == test_imbalance);
@@ -90,7 +91,8 @@ TEST_SUITE("DistributedMarketDataClient") {
           operations->Pop());
       auto test_imbalance = SequencedValue(
         OrderImbalance(Security("IBM", NYSE), Side::ASK, 200, 3 * Money::ONE,
-          time_from_string("2025-02-18 17:23:30:12")), Queries::Sequence(200));
+          time_from_string("2025-02-18 17:23:30:12")),
+        Beam::Queries::Sequence(200));
       received_query->m_queue.Push(test_imbalance);
       auto received_imbalance = imbalances->Pop();
       REQUIRE(received_imbalance == test_imbalance);
@@ -153,10 +155,11 @@ TEST_SUITE("DistributedMarketDataClient") {
       auto received_query = require_operation<
         TestMarketDataClient::QuerySequencedBboQuoteOperation>(
           operations->Pop());
-      auto test_bbo = SequencedValue(BboQuote(
-        Quote(10 * Money::ONE, 100, Side::BID),
-        Quote(11 * Money::ONE, 100, Side::ASK),
-        time_from_string("2024-06-12 13:05:12:00")), Queries::Sequence(100));
+      auto test_bbo =
+        SequencedValue(BboQuote(Quote(10 * Money::ONE, 100, Side::BID),
+          Quote(11 * Money::ONE, 100, Side::ASK),
+          time_from_string("2024-06-12 13:05:12:00")),
+        Beam::Queries::Sequence(100));
       received_query->m_queue.Push(test_bbo);
       auto received_bbo = bbo_quotes->Pop();
       REQUIRE(received_bbo == test_bbo);
@@ -169,10 +172,11 @@ TEST_SUITE("DistributedMarketDataClient") {
       auto received_query = require_operation<
         TestMarketDataClient::QuerySequencedBboQuoteOperation>(
           operations->Pop());
-      auto test_bbo = SequencedValue(BboQuote(
-        Quote(20 * Money::ONE, 200, Side::BID),
-        Quote(21 * Money::ONE, 200, Side::ASK),
-        time_from_string("2025-02-18 17:23:30:12")), Queries::Sequence(200));
+      auto test_bbo =
+        SequencedValue(BboQuote(Quote(20 * Money::ONE, 200, Side::BID),
+          Quote(21 * Money::ONE, 200, Side::ASK),
+          time_from_string("2025-02-18 17:23:30:12")),
+        Beam::Queries::Sequence(200));
       received_query->m_queue.Push(test_bbo);
       auto received_bbo = bbo_quotes->Pop();
       REQUIRE(received_bbo == test_bbo);
@@ -196,8 +200,7 @@ TEST_SUITE("DistributedMarketDataClient") {
       auto operations = fixture.m_operations.get(TSX);
       auto received_query = require_operation<
         TestMarketDataClient::QueryBboQuoteOperation>(operations->Pop());
-      auto test_bbo = BboQuote(
-        Quote(10 * Money::ONE, 100, Side::BID),
+      auto test_bbo = BboQuote(Quote(10 * Money::ONE, 100, Side::BID),
         Quote(11 * Money::ONE, 100, Side::ASK),
         time_from_string("2024-06-12 13:05:12:00"));
       received_query->m_queue.Push(test_bbo);
@@ -211,8 +214,7 @@ TEST_SUITE("DistributedMarketDataClient") {
       auto operations = fixture.m_operations.get(NYSE);
       auto received_query = require_operation<
         TestMarketDataClient::QueryBboQuoteOperation>(operations->Pop());
-      auto test_bbo = BboQuote(
-        Quote(20 * Money::ONE, 200, Side::BID),
+      auto test_bbo = BboQuote(Quote(20 * Money::ONE, 200, Side::BID),
         Quote(21 * Money::ONE, 200, Side::ASK),
         time_from_string("2025-02-18 17:23:30:12"));
       received_query->m_queue.Push(test_bbo);
@@ -241,7 +243,8 @@ TEST_SUITE("DistributedMarketDataClient") {
           operations->Pop());
       auto test_book_quote = SequencedValue(BookQuote(
         "MMID12", true, TSX, Quote(10 * Money::ONE, 100, Side::BID),
-        time_from_string("2024-06-12 13:05:12:00")), Queries::Sequence(100));
+        time_from_string("2024-06-12 13:05:12:00")),
+        Beam::Queries::Sequence(100));
       received_query->m_queue.Push(test_book_quote);
       auto received_book_quote = book_quotes->Pop();
       REQUIRE(received_book_quote == test_book_quote);
@@ -256,7 +259,8 @@ TEST_SUITE("DistributedMarketDataClient") {
           operations->Pop());
       auto test_book_quote = SequencedValue(BookQuote(
         "MMID5", false, NYSE, Quote(20 * Money::ONE, 200, Side::ASK),
-        time_from_string("2025-02-18 17:23:30:12")), Queries::Sequence(200));
+        time_from_string("2025-02-18 17:23:30:12")),
+        Beam::Queries::Sequence(200));
       received_query->m_queue.Push(test_book_quote);
       auto received_book_quote = book_quotes->Pop();
       REQUIRE(received_book_quote == test_book_quote);
@@ -282,7 +286,8 @@ TEST_SUITE("DistributedMarketDataClient") {
         TestMarketDataClient::QueryBookQuoteOperation>(operations->Pop());
       auto test_book_quote = SequencedValue(BookQuote(
         "MMID12", true, TSX, Quote(10 * Money::ONE, 100, Side::BID),
-        time_from_string("2024-06-12 13:05:12:00")), Queries::Sequence(100));
+        time_from_string("2024-06-12 13:05:12:00")),
+        Beam::Queries::Sequence(100));
       received_query->m_queue.Push(test_book_quote);
       auto received_book_quote = book_quotes->Pop();
       REQUIRE(received_book_quote == test_book_quote);
@@ -296,7 +301,8 @@ TEST_SUITE("DistributedMarketDataClient") {
         TestMarketDataClient::QueryBookQuoteOperation>(operations->Pop());
       auto test_book_quote = SequencedValue(BookQuote(
         "MMID5", false, NYSE, Quote(20 * Money::ONE, 200, Side::ASK),
-        time_from_string("2025-02-18 17:23:30:12")), Queries::Sequence(200));
+        time_from_string("2025-02-18 17:23:30:12")),
+        Beam::Queries::Sequence(200));
       received_query->m_queue.Push(test_book_quote);
       auto received_book_quote = book_quotes->Pop();
       REQUIRE(received_book_quote == test_book_quote);
@@ -324,7 +330,7 @@ TEST_SUITE("DistributedMarketDataClient") {
       auto test_time_and_sale = SequencedValue(TimeAndSale(
         time_from_string("2024-07-09 12:00:00.123"), Money::ONE, 100,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-        "TSX", "B1", "S1"), Queries::Sequence(100));
+        "TSX", "B1", "S1"), Beam::Queries::Sequence(100));
       received_query->m_queue.Push(test_time_and_sale);
       auto received_time_and_sale = time_and_sales->Pop();
       REQUIRE(received_time_and_sale == test_time_and_sale);
@@ -340,7 +346,7 @@ TEST_SUITE("DistributedMarketDataClient") {
       auto test_time_and_sale = SequencedValue(TimeAndSale(
         time_from_string("2025-02-18 17:23:30.12"), 150 * Money::ONE, 200,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-        "NYSE", "B52", "S46"), Queries::Sequence(200));
+        "NYSE", "B52", "S46"), Beam::Queries::Sequence(200));
       received_query->m_queue.Push(test_time_and_sale);
       auto received_time_and_sale = time_and_sales->Pop();
       REQUIRE(received_time_and_sale == test_time_and_sale);
@@ -429,10 +435,11 @@ TEST_SUITE("DistributedMarketDataClient") {
         TestMarketDataClient::LoadSecuritySnapshotOperation>(operations->Pop());
       REQUIRE(received_operation->m_security == security);
       auto test_snapshot = SecuritySnapshot();
-      test_snapshot.m_bbo_quote = SequencedValue(BboQuote(
-        Quote(10 * Money::ONE, 100, Side::BID),
-        Quote(11 * Money::ONE, 100, Side::ASK),
-        time_from_string("2024-06-12 13:05:12:00")), Queries::Sequence(100));
+      test_snapshot.m_bbo_quote =
+        SequencedValue(BboQuote(Quote(10 * Money::ONE, 100, Side::BID),
+          Quote(11 * Money::ONE, 100, Side::ASK),
+          time_from_string("2024-06-12 13:05:12:00")),
+          Beam::Queries::Sequence(100));
       received_operation->m_result.set(test_snapshot);
       auto received_snapshot = result.get();
       REQUIRE(received_snapshot.m_bbo_quote == test_snapshot.m_bbo_quote);
@@ -447,10 +454,11 @@ TEST_SUITE("DistributedMarketDataClient") {
         TestMarketDataClient::LoadSecuritySnapshotOperation>(operations->Pop());
       REQUIRE(received_operation->m_security == security);
       auto test_snapshot = SecuritySnapshot();
-      test_snapshot.m_bbo_quote = SequencedValue(BboQuote(
-        Quote(20 * Money::ONE, 200, Side::BID),
-        Quote(21 * Money::ONE, 200, Side::ASK),
-        time_from_string("2025-02-18 17:23:30:12")), Queries::Sequence(200));
+      test_snapshot.m_bbo_quote =
+        SequencedValue(BboQuote(Quote(20 * Money::ONE, 200, Side::BID),
+          Quote(21 * Money::ONE, 200, Side::ASK),
+          time_from_string("2025-02-18 17:23:30:12")),
+          Beam::Queries::Sequence(200));
       received_operation->m_result.set(test_snapshot);
       auto received_snapshot = result.get();
       REQUIRE(received_snapshot.m_bbo_quote == test_snapshot.m_bbo_quote);

@@ -55,11 +55,12 @@ TEST_SUITE("MarketDataClient") {
     auto snapshot = SecuritySnapshot(security);
     snapshot.m_asks.push_back(SequencedBookQuote(
       BookQuote("MP", false, CHIC, Quote(12 * Money::CENT, 222, Side::ASK),
-        time_from_string("2021-01-11 15:30:05.000")), Queries::Sequence(5)));
+        time_from_string("2021-01-11 15:30:05.000")),
+        Beam::Queries::Sequence(5)));
     snapshot.m_bids.push_back(
       SequencedBookQuote(BookQuote("MP", false, PURE, Quote(9 * Money::CENT, 44,
         Side::BID), time_from_string("2021-01-11 15:30:05.000")),
-        Queries::Sequence(7)));
+        Beam::Queries::Sequence(7)));
     load_operation->m_result.set(snapshot);
     auto book_quote = book_queue->Pop();
     REQUIRE(book_quote == snapshot.m_asks.front());
@@ -71,9 +72,9 @@ TEST_SUITE("MarketDataClient") {
     REQUIRE(continuation_operation);
     REQUIRE(continuation_operation->m_query.GetIndex() == security);
     REQUIRE(continuation_operation->m_query.GetRange().GetStart() ==
-      Queries::Sequence(8));
+      Beam::Queries::Sequence(8));
     REQUIRE(continuation_operation->m_query.GetRange().GetEnd() ==
-      Queries::Sequence::Last());
+      Beam::Queries::Sequence::Last());
     REQUIRE(continuation_operation->m_query.GetSnapshotLimit() ==
       SnapshotLimit::Unlimited());
   }
@@ -94,7 +95,7 @@ TEST_SUITE("MarketDataClient") {
     auto sequenced_quote = SequencedBboQuote(BboQuote(
       Quote(50 * Money::CENT, 213, Side::BID),
       Quote(55 * Money::CENT, 312, Side::ASK),
-      time_from_string("2021-02-25 15:30:05.000")), Queries::Sequence(3));
+      time_from_string("2021-02-25 15:30:05.000")), Beam::Queries::Sequence(3));
     snapshot_operation->m_queue.Push(sequenced_quote);
     auto quote = quote_queue->Pop();
     REQUIRE(quote == sequenced_quote.GetValue());
@@ -104,7 +105,7 @@ TEST_SUITE("MarketDataClient") {
     REQUIRE(continuation_operation);
     REQUIRE(continuation_operation->m_query.GetIndex() == security);
     REQUIRE(continuation_operation->m_query.GetRange().GetStart() ==
-      Queries::Sequence::Sequence(4));
+      Beam::Queries::Sequence::Sequence(4));
     REQUIRE(continuation_operation->m_query.GetSnapshotLimit() ==
       SnapshotLimit::Unlimited());
   }
