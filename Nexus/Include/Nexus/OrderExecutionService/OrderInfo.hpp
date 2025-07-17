@@ -1,14 +1,11 @@
 #ifndef NEXUS_ORDER_INFO_HPP
 #define NEXUS_ORDER_INFO_HPP
 #include <ostream>
-#include <tuple>
-#include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
 namespace Nexus::OrderExecutionService {
@@ -20,87 +17,86 @@ namespace Nexus::OrderExecutionService {
     OrderFields m_fields;
 
     /** The account that submitted the Order. */
-    Beam::ServiceLocator::DirectoryEntry m_submissionAccount;
+    Beam::ServiceLocator::DirectoryEntry m_submission_account;
 
     /** The Order's id. */
-    OrderId m_orderId;
+    OrderId m_order_id;
 
     /** Whether the Order is a short sale. */
-    bool m_shortingFlag;
+    bool m_shorting_flag;
 
     /** The Order's timestamp. */
     boost::posix_time::ptime m_timestamp;
 
     /** Constructs an empty OrderInfo. */
-    OrderInfo();
+    OrderInfo() noexcept;
 
     /**
      * Constructs an OrderInfo.
      * @param fields The OrderFields used in the submission.
-     * @param submissionAccount The account that submitted the Order.
-     * @param orderId The Order's id.
-     * @param shortingFlag Whether the Order is a short sale.
+     * @param submission_account The account that submitted the Order.
+     * @param order_id The Order's id.
+     * @param shorting_flag Whether the Order is a short sale.
      * @param timestamp The Order's timestamp.
      */
     OrderInfo(OrderFields fields,
-      Beam::ServiceLocator::DirectoryEntry submissionAccount, OrderId orderId,
-      bool shortingFlag, boost::posix_time::ptime timestamp);
+      Beam::ServiceLocator::DirectoryEntry submission_account, OrderId order_id,
+      bool shorting_flag, boost::posix_time::ptime timestamp) noexcept;
 
     /**
      * Constructs an OrderInfo whose submission account is the same as the
      * account that the Order is assigned to.
      * @param fields The OrderFields used in the submission.
-     * @param orderId The Order's id.
-     * @param shortingFlag Whether the Order is a short sale.
+     * @param order_id The Order's id.
+     * @param shorting_flag Whether the Order is a short sale.
      * @param timestamp The Order's timestamp.
      */
-    OrderInfo(OrderFields fields, OrderId orderId, bool shortingFlag,
-      boost::posix_time::ptime timestamp);
+    OrderInfo(OrderFields fields, OrderId order_id, bool shorting_flag,
+      boost::posix_time::ptime timestamp) noexcept;
 
     /**
      * Constructs an OrderInfo whose submission account is the same as the
      * account that the Order is assigned to and whose shorting flag is false.
      * @param fields The OrderFields used in the submission.
-     * @param orderId The Order's id.
-     * @param shortingFlag Whether the Order is a short sale.
+     * @param order_id The Order's id.
      * @param timestamp The Order's timestamp.
      */
-    OrderInfo(OrderFields fields, OrderId orderId,
-      boost::posix_time::ptime timestamp);
+    OrderInfo(OrderFields fields, OrderId order_id,
+      boost::posix_time::ptime timestamp) noexcept;
 
-    bool operator ==(const OrderInfo& rhs) const = default;
+    bool operator ==(const OrderInfo&) const = default;
   };
 
   inline std::ostream& operator <<(std::ostream& out, const OrderInfo& value) {
-    return out << "(" << value.m_fields << " " << value.m_submissionAccount <<
-      " " << value.m_orderId << " " << value.m_shortingFlag << " " <<
-      value.m_timestamp << ")";
+    return out << '(' << value.m_fields << ' ' << value.m_submission_account <<
+      ' ' << value.m_order_id << ' ' << value.m_shorting_flag << ' ' <<
+      value.m_timestamp << ')';
   }
 
-  inline OrderInfo::OrderInfo()
-    : m_orderId(static_cast<OrderId>(-1)),
-      m_shortingFlag(false) {}
+  inline OrderInfo::OrderInfo() noexcept
+    : m_order_id(static_cast<OrderId>(-1)),
+      m_shorting_flag(false) {}
 
   inline OrderInfo::OrderInfo(OrderFields fields,
-    Beam::ServiceLocator::DirectoryEntry submissionAccount, OrderId orderId,
-    bool shortingFlag, boost::posix_time::ptime timestamp)
+    Beam::ServiceLocator::DirectoryEntry submission_account, OrderId order_id,
+    bool shorting_flag, boost::posix_time::ptime timestamp) noexcept
     : m_fields(std::move(fields)),
-      m_submissionAccount(std::move(submissionAccount)),
-      m_orderId(orderId),
-      m_shortingFlag(shortingFlag),
+      m_submission_account(std::move(submission_account)),
+      m_order_id(order_id),
+      m_shorting_flag(shorting_flag),
       m_timestamp(timestamp) {}
 
-  inline OrderInfo::OrderInfo(OrderFields fields, OrderId orderId,
-    bool shortingFlag, boost::posix_time::ptime timestamp)
+  inline OrderInfo::OrderInfo(OrderFields fields, OrderId order_id,
+    bool shorting_flag, boost::posix_time::ptime timestamp) noexcept
     : m_fields(std::move(fields)),
-      m_submissionAccount(m_fields.m_account),
-      m_orderId(orderId),
-      m_shortingFlag(shortingFlag),
+      m_submission_account(m_fields.m_account),
+      m_order_id(order_id),
+      m_shorting_flag(shorting_flag),
       m_timestamp(timestamp) {}
 
-  inline OrderInfo::OrderInfo(OrderFields fields, OrderId orderId,
-    boost::posix_time::ptime timestamp)
-    : OrderInfo(fields, orderId, false, timestamp) {}
+  inline OrderInfo::OrderInfo(OrderFields fields, OrderId order_id,
+    boost::posix_time::ptime timestamp) noexcept
+    : OrderInfo(fields, order_id, false, timestamp) {}
 }
 
 namespace Beam::Serialization {
@@ -108,11 +104,12 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::OrderExecutionService::OrderInfo> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
-        Nexus::OrderExecutionService::OrderInfo& value, unsigned int version) {
+        Nexus::OrderExecutionService::OrderInfo& value,
+        unsigned int version) const {
       shuttle.Shuttle("fields", value.m_fields);
-      shuttle.Shuttle("submission_account", value.m_submissionAccount);
-      shuttle.Shuttle("order_id", value.m_orderId);
-      shuttle.Shuttle("shorting_flag", value.m_shortingFlag);
+      shuttle.Shuttle("submission_account", value.m_submission_account);
+      shuttle.Shuttle("order_id", value.m_order_id);
+      shuttle.Shuttle("shorting_flag", value.m_shorting_flag);
       shuttle.Shuttle("timestamp", value.m_timestamp);
     }
   };

@@ -6,7 +6,6 @@
 #include <Beam/Queries/SequencedValue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/OrderInfo.hpp"
 #include "Nexus/OrderExecutionService/OrderRecord.hpp"
 

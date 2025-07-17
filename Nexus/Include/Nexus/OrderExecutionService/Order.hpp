@@ -2,7 +2,6 @@
 #define NEXUS_ORDER_HPP
 #include <Beam/Queues/SnapshotPublisher.hpp>
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/OrderInfo.hpp"
 
 namespace Nexus::OrderExecutionService {

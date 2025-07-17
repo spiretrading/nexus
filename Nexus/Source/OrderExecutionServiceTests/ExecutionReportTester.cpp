@@ -100,7 +100,7 @@ TEST_SUITE("ExecutionReport") {
       " 1.00 2.00 3.00 text [(100 value1) (200 value2)])");
   }
 
-  TEST_CASE("serialization") {
+  TEST_CASE("shuttle") {
     auto timestamp =
       ptime(gregorian::date(2024, 5, 21), time_duration(1, 2, 3));
     auto report = ExecutionReport(123, timestamp);
