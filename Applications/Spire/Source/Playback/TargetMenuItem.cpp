@@ -73,7 +73,7 @@ QString Spire::to_text(const TargetMenuItem::Target& target) {
     return QObject::tr("%1 (%2)").
       arg(::to_text(*target.m_security)).
       arg(target.m_window_types.size());
-  } if(target.m_window_types.size() == 1) {
+  } else if(target.m_window_types.size() == 1) {
     return to_text(target.m_window_types[0]);
   } else {
     return QObject::tr("Unassigned (%1)").arg(target.m_window_types.size());

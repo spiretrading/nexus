@@ -14,16 +14,14 @@ namespace Spire {
       /** Represents a window group target available for replay attachment. */
       struct Target {
 
-        /** The group’s associated color, or null if uncolored. */
+        /** The color associated with the target. */
         boost::optional<QColor> m_color;
 
-        /** The assigned security, or null if unassigned. */
+        /** The security assigned to the target. */
         boost::optional<Nexus::Security> m_security;
 
         /** The window types in the group. */
         std::vector<ToolbarWindow::WindowType> m_window_types;
-
-        auto operator <=>(const Target&) const = default;
       };
 
       /**
