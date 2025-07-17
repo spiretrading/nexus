@@ -173,8 +173,8 @@ namespace Nexus::OrderExecutionService {
    * @param price The price of the Order.
    */
   inline OrderFields make_limit_order_fields(
-      Beam::ServiceLocator::DirectoryEntry account, Security security, Side side,
-      Quantity quantity, Money price) {
+      Beam::ServiceLocator::DirectoryEntry account, Security security,
+      Side side, Quantity quantity, Money price) {
     return make_limit_order_fields(std::move(account), std::move(security),
       CurrencyId::NONE, side, {}, quantity, price);
   }

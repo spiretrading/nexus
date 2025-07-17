@@ -12,11 +12,11 @@ namespace Nexus::OrderExecutionService {
       virtual ~Order() = default;
 
       /** Returns the submission info. */
-      virtual const OrderInfo& GetInfo() const = 0;
+      virtual const OrderInfo& get_info() const = 0;
 
       /** Returns the object publishing ExecutionReport updates. */
       virtual const Beam::SnapshotPublisher<ExecutionReport,
-        std::vector<ExecutionReport>>& GetPublisher() const = 0;
+        std::vector<ExecutionReport>>& get_publisher() const = 0;
 
     protected:
 
