@@ -26,11 +26,11 @@ namespace Nexus::Queries {
 
       /**
        * Constructs an EvaluatorTranslator maintaining a set of live Orders.
-       * @param liveOrders The set of live Orders.
+       * @param live_orders The set of live Orders.
        */
-      EvaluatorTranslator(Beam::Ref<
+      explicit EvaluatorTranslator(Beam::Ref<
         const Beam::SynchronizedUnorderedSet<OrderExecutionService::OrderId>>
-          liveOrders);
+          live_orders);
 
       std::unique_ptr<Beam::Queries::EvaluatorTranslator<QueryTypes>>
         NewTranslator() const override;
@@ -41,7 +41,7 @@ namespace Nexus::Queries {
 
     private:
       const Beam::SynchronizedUnorderedSet<OrderExecutionService::OrderId>*
-        m_liveOrders;
+        m_live_orders;
 
       void translate_security_member_access_expression(
         const Beam::Queries::MemberAccessExpression& expression);
@@ -56,17 +56,17 @@ namespace Nexus::Queries {
   };
 
   inline EvaluatorTranslator::EvaluatorTranslator()
-    : m_liveOrders(nullptr) {}
+    : m_live_orders(nullptr) {}
 
   inline EvaluatorTranslator::EvaluatorTranslator(Beam::Ref<
     const Beam::SynchronizedUnorderedSet<OrderExecutionService::OrderId>>
-      liveOrders)
-    : m_liveOrders(liveOrders.Get()) {}
+      live_orders)
+    : m_live_orders(live_orders.Get()) {}
 
   inline std::unique_ptr<Beam::Queries::EvaluatorTranslator<QueryTypes>>
       EvaluatorTranslator::NewTranslator() const {
-    if(m_liveOrders) {
-      return std::make_unique<EvaluatorTranslator>(Beam::Ref(*m_liveOrders));
+    if(m_live_orders) {
+      return std::make_unique<EvaluatorTranslator>(Beam::Ref(*m_live_orders));
     } else {
       return std::make_unique<EvaluatorTranslator>();
     }
@@ -92,19 +92,19 @@ namespace Nexus::Queries {
   inline void EvaluatorTranslator::translate_security_member_access_expression(
       const Beam::Queries::MemberAccessExpression& expression) {
     expression.GetExpression()->Apply(*this);
-    auto securityExpression = Beam::StaticCast<std::unique_ptr<
-      Beam::Queries::EvaluatorNode<Security>>>(GetEvaluator());
+    auto security_expression = Beam::StaticCast<
+      std::unique_ptr<Beam::Queries::EvaluatorNode<Security>>>(GetEvaluator());
     if(expression.GetName() == "symbol") {
       SetEvaluator(Beam::Queries::MakeFunctionEvaluatorNode(
         [] (const Security& security) {
           return security.get_symbol();
-        }, std::move(securityExpression)));
+        }, std::move(security_expression)));
     } else if(expression.GetName() == "venue") {
       SetEvaluator(Beam::Queries::MakeFunctionEvaluatorNode(
         [] (const Security& security) {
           return static_cast<std::string>(
             security.get_venue().get_code().GetData());
-        }, std::move(securityExpression)));
+        }, std::move(security_expression)));
     } else {
       Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
     }
@@ -114,24 +114,24 @@ namespace Nexus::Queries {
       translate_security_info_member_access_expression(
         const Beam::Queries::MemberAccessExpression& expression) {
     expression.GetExpression()->Apply(*this);
-    auto securityInfoExpression = Beam::StaticCast<std::unique_ptr<
+    auto security_info_expression = Beam::StaticCast<std::unique_ptr<
       Beam::Queries::EvaluatorNode<SecurityInfo>>>(GetEvaluator());
     if(expression.GetName() == "security") {
-      SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
-        Security, SecurityInfo>>(std::move(securityInfoExpression),
-          &SecurityInfo::m_security));
+      SetEvaluator(std::make_unique<
+        Beam::Queries::MemberAccessEvaluatorNode<Security, SecurityInfo>>(
+          std::move(security_info_expression), &SecurityInfo::m_security));
     } else if(expression.GetName() == "name") {
-      SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
-        std::string, SecurityInfo>>(std::move(securityInfoExpression),
-          &SecurityInfo::m_name));
+      SetEvaluator(std::make_unique<
+        Beam::Queries::MemberAccessEvaluatorNode<std::string, SecurityInfo>>(
+          std::move(security_info_expression), &SecurityInfo::m_name));
     } else if(expression.GetName() == "sector") {
-      SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
-        std::string, SecurityInfo>>(std::move(securityInfoExpression),
-          &SecurityInfo::m_sector));
+      SetEvaluator(std::make_unique<
+        Beam::Queries::MemberAccessEvaluatorNode<std::string, SecurityInfo>>(
+          std::move(security_info_expression), &SecurityInfo::m_sector));
     } else if(expression.GetName() == "board_lot") {
-      SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
-        Quantity, SecurityInfo>>(std::move(securityInfoExpression),
-          &SecurityInfo::m_board_lot));
+      SetEvaluator(std::make_unique<
+        Beam::Queries::MemberAccessEvaluatorNode<Quantity, SecurityInfo>>(
+          std::move(security_info_expression), &SecurityInfo::m_board_lot));
     } else {
       Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
     }
@@ -141,33 +141,32 @@ namespace Nexus::Queries {
       translate_time_and_sale_member_access_expression(
         const Beam::Queries::MemberAccessExpression& expression) {
     expression.GetExpression()->Apply(*this);
-    auto timeAndSaleExpression = Beam::StaticCast<std::unique_ptr<
+    auto time_and_sale_expression = Beam::StaticCast<std::unique_ptr<
       Beam::Queries::EvaluatorNode<TimeAndSale>>>(GetEvaluator());
     if(expression.GetName() == "timestamp") {
-      SetEvaluator(std::make_unique<
-        Beam::Queries::MemberAccessEvaluatorNode<boost::posix_time::ptime,
-        TimeAndSale>>(std::move(timeAndSaleExpression),
-        &TimeAndSale::m_timestamp));
+      SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
+        boost::posix_time::ptime, TimeAndSale>>(
+          std::move(time_and_sale_expression), &TimeAndSale::m_timestamp));
     } else if(expression.GetName() == "price") {
       SetEvaluator(std::make_unique<
         Beam::Queries::MemberAccessEvaluatorNode<Money, TimeAndSale>>(
-        std::move(timeAndSaleExpression), &TimeAndSale::m_price));
+          std::move(time_and_sale_expression), &TimeAndSale::m_price));
     } else if(expression.GetName() == "size") {
       SetEvaluator(std::make_unique<
         Beam::Queries::MemberAccessEvaluatorNode<Quantity, TimeAndSale>>(
-        std::move(timeAndSaleExpression), &TimeAndSale::m_size));
+          std::move(time_and_sale_expression), &TimeAndSale::m_size));
     } else if(expression.GetName() == "market_center") {
       SetEvaluator(std::make_unique<
         Beam::Queries::MemberAccessEvaluatorNode<std::string, TimeAndSale>>(
-        std::move(timeAndSaleExpression), &TimeAndSale::m_market_center));
+          std::move(time_and_sale_expression), &TimeAndSale::m_market_center));
     } else if(expression.GetName() == "buyer_mpid") {
       SetEvaluator(std::make_unique<
         Beam::Queries::MemberAccessEvaluatorNode<std::string, TimeAndSale>>(
-        std::move(timeAndSaleExpression), &TimeAndSale::m_buyer_mpid));
+          std::move(time_and_sale_expression), &TimeAndSale::m_buyer_mpid));
     } else if(expression.GetName() == "seller_mpid") {
       SetEvaluator(std::make_unique<
         Beam::Queries::MemberAccessEvaluatorNode<std::string, TimeAndSale>>(
-        std::move(timeAndSaleExpression), &TimeAndSale::m_seller_mpid));
+          std::move(time_and_sale_expression), &TimeAndSale::m_seller_mpid));
     } else {
       Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
     }
@@ -177,14 +176,14 @@ namespace Nexus::Queries {
       translate_order_fields_member_access_expression(
         const Beam::Queries::MemberAccessExpression& expression) {
     expression.GetExpression()->Apply(*this);
-    auto orderFieldsExpression = Beam::StaticCast<std::unique_ptr<
+    auto order_fields_expression = Beam::StaticCast<std::unique_ptr<
       Beam::Queries::EvaluatorNode<OrderExecutionService::OrderFields>>>(
-      GetEvaluator());
+        GetEvaluator());
     if(expression.GetName() == "security") {
       SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
         Security, OrderExecutionService::OrderFields>>(
-        std::move(orderFieldsExpression),
-        &OrderExecutionService::OrderFields::m_security));
+          std::move(order_fields_expression),
+          &OrderExecutionService::OrderFields::m_security));
     } else {
       Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
     }
@@ -194,37 +193,38 @@ namespace Nexus::Queries {
       translate_order_info_member_access_expression(
         const Beam::Queries::MemberAccessExpression& expression) {
     expression.GetExpression()->Apply(*this);
-    auto orderInfoExpression = Beam::StaticCast<std::unique_ptr<
+    auto order_info_expression = Beam::StaticCast<std::unique_ptr<
       Beam::Queries::EvaluatorNode<OrderExecutionService::OrderInfo>>>(
-      GetEvaluator());
+        GetEvaluator());
     if(expression.GetName() == "fields") {
       SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
         OrderExecutionService::OrderFields, OrderExecutionService::OrderInfo>>(
-        std::move(orderInfoExpression),
-        &OrderExecutionService::OrderInfo::m_fields));
+          std::move(order_info_expression),
+          &OrderExecutionService::OrderInfo::m_fields));
     } else if(expression.GetName() == "order_id") {
       SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
         OrderExecutionService::OrderId, OrderExecutionService::OrderInfo>>(
-        std::move(orderInfoExpression),
-        &OrderExecutionService::OrderInfo::m_orderId));
+          std::move(order_info_expression),
+          &OrderExecutionService::OrderInfo::m_order_id));
     } else if(expression.GetName() == "shorting_flag") {
       SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
-        bool, OrderExecutionService::OrderInfo>>(std::move(orderInfoExpression),
-        &OrderExecutionService::OrderInfo::m_shortingFlag));
+        bool, OrderExecutionService::OrderInfo>>(
+          std::move(order_info_expression),
+          &OrderExecutionService::OrderInfo::m_shorting_flag));
     } else if(expression.GetName() == "timestamp") {
       SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
         boost::posix_time::ptime, OrderExecutionService::OrderInfo>>(
-        std::move(orderInfoExpression),
-        &OrderExecutionService::OrderInfo::m_timestamp));
+          std::move(order_info_expression),
+          &OrderExecutionService::OrderInfo::m_timestamp));
     } else if(expression.GetName() == "is_live") {
       SetEvaluator(Beam::Queries::MakeFunctionEvaluatorNode(
-        [liveOrders = m_liveOrders] (
-            const OrderExecutionService::OrderInfo& orderInfo) {
-          if(!liveOrders) {
+        [live_orders = m_live_orders] (
+            const OrderExecutionService::OrderInfo& info) {
+          if(!live_orders) {
             return false;
           }
-          return liveOrders->Contains(orderInfo.m_orderId);
-        }, std::move(orderInfoExpression)));
+          return live_orders->Contains(info.m_order_id);
+        }, std::move(order_info_expression)));
     } else {
       Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
     }

@@ -4,7 +4,6 @@
 #include <Beam/Services/Service.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
 namespace Nexus::OrderExecutionService {
   using ExecutionReportQueryResult =

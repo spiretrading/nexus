@@ -6,11 +6,13 @@
 #include <Beam/Queries/SequencedValue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
+#include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderInfo.hpp"
 #include "Nexus/OrderExecutionService/OrderRecord.hpp"
 
 namespace Nexus::OrderExecutionService {
-  using SequencedOrder = Beam::Queries::SequencedValue<const Order*>;
+  using SequencedOrder =
+    Beam::Queries::SequencedValue<std::shared_ptr<const Order>>;
   using SequencedOrderInfo = Beam::Queries::SequencedValue<OrderInfo>;
   using SequencedOrderRecord = Beam::Queries::SequencedValue<OrderRecord>;
   using SequencedExecutionReport =
