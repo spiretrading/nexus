@@ -67,30 +67,35 @@ namespace Nexus::MarketDataService {
       const SecurityInfo& info) {
     m_client.add(info);
     m_sampling_timer->Trigger();
+    Beam::Routines::FlushPendingRoutines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::publish(
       const VenueOrderImbalance& imbalance) {
     m_client.publish(imbalance);
     m_sampling_timer->Trigger();
+    Beam::Routines::FlushPendingRoutines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::publish(
       const SecurityBboQuote& quote) {
     m_client.publish(quote);
     m_sampling_timer->Trigger();
+    Beam::Routines::FlushPendingRoutines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::publish(
       const SecurityBookQuote& quote) {
     m_client.publish(quote);
     m_sampling_timer->Trigger();
+    Beam::Routines::FlushPendingRoutines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::publish(
       const SecurityTimeAndSale& time_and_sale) {
     m_client.publish(time_and_sale);
     m_sampling_timer->Trigger();
+    Beam::Routines::FlushPendingRoutines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::add_order(
@@ -100,6 +105,7 @@ namespace Nexus::MarketDataService {
     m_client.add_order(
       security, venue, mpid, is_primary_mpid, id, side, price, size, timestamp);
     m_sampling_timer->Trigger();
+    Beam::Routines::FlushPendingRoutines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::modify_order_size(
@@ -107,6 +113,7 @@ namespace Nexus::MarketDataService {
       boost::posix_time::ptime timestamp) {
     m_client.modify_order_size(id, size, timestamp);
     m_sampling_timer->Trigger();
+    Beam::Routines::FlushPendingRoutines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::offset_order_size(
@@ -114,22 +121,26 @@ namespace Nexus::MarketDataService {
       boost::posix_time::ptime timestamp) {
     m_client.offset_order_size(id, delta, timestamp);
     m_sampling_timer->Trigger();
+    Beam::Routines::FlushPendingRoutines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::modify_order_price(
       const std::string& id, Money price, boost::posix_time::ptime timestamp) {
     m_client.modify_order_price(id, price, timestamp);
     m_sampling_timer->Trigger();
+    Beam::Routines::FlushPendingRoutines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::remove_order(
       const std::string& id, boost::posix_time::ptime timestamp) {
     m_client.remove_order(id, timestamp);
     m_sampling_timer->Trigger();
+    Beam::Routines::FlushPendingRoutines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::close() {
     m_client.close();
+    Beam::Routines::FlushPendingRoutines();
   }
 }
 

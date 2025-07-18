@@ -151,12 +151,12 @@ namespace Nexus::Accounting {
         if(is_terminal(executionReport.m_status)) {
           orderEntry.m_remainingQuantity = 0;
         } else {
-          orderEntry.m_remainingQuantity -= executionReport.m_lastQuantity;
+          orderEntry.m_remainingQuantity -= executionReport.m_last_quantity;
         }
         break;
       }
     }
-    auto lastQuantity = executionReport.m_lastQuantity;
+    auto lastQuantity = executionReport.m_last_quantity;
     if((orderFields.m_side == Side::BID && buyingPowerEntry.m_quantity < 0) ||
         (orderFields.m_side == Side::ASK && buyingPowerEntry.m_quantity > 0)) {
       auto delta = std::min(abs(buyingPowerEntry.m_quantity), lastQuantity);
@@ -169,7 +169,7 @@ namespace Nexus::Accounting {
     buyingPowerEntry.m_quantity += get_direction(orderFields.m_side) *
       lastQuantity;
     buyingPowerEntry.m_expenditure += get_direction(orderFields.m_side) *
-      lastQuantity * executionReport.m_lastPrice;
+      lastQuantity * executionReport.m_last_price;
     buyingPower += ComputeBuyingPower(buyingPowerEntry);
   }
 

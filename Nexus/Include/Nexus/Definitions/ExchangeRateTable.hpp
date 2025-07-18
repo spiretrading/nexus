@@ -22,6 +22,8 @@ namespace Nexus {
       /** Constructs an empty table. */
       ExchangeRateTable() = default;
 
+      ExchangeRateTable(const ExchangeRateTable& table);
+
       /**
        * Finds the exchange rate for a given currency pair.
        * @param pair The currency pair to look up.
@@ -64,7 +66,13 @@ namespace Nexus {
       mutable std::unordered_map<CurrencyPair, ExchangeRate> m_derived_rates;
   };
 
-  boost::optional<ExchangeRate>
+  inline ExchangeRateTable::ExchangeRateTable(const ExchangeRateTable& table) {
+    auto lock = boost::lock_guard(table.m_mutex);
+    m_direct_rates = table.m_direct_rates;
+    m_derived_rates = table.m_derived_rates;
+  }
+
+  inline boost::optional<ExchangeRate>
       ExchangeRateTable::find(CurrencyPair pair) const {
     {
       auto lock = boost::lock_guard(m_mutex);
@@ -119,19 +127,20 @@ namespace Nexus {
     return boost::none;
   }
 
-  Money ExchangeRateTable::convert(Money value, CurrencyPair pair) const {
+  inline Money ExchangeRateTable::convert(
+      Money value, CurrencyPair pair) const {
     if(auto rate = find(pair)) {
       return Nexus::convert(value, *rate);
     }
     throw CurrencyPairNotFoundException();
   }
 
-  Money ExchangeRateTable::convert(
+  inline Money ExchangeRateTable::convert(
       Money value, CurrencyId base, CurrencyId counter) const {
     return convert(value, CurrencyPair(base, counter));
   }
 
-  void ExchangeRateTable::add(const ExchangeRate& rate) {
+  inline void ExchangeRateTable::add(const ExchangeRate& rate) {
     auto lock = boost::lock_guard(m_mutex);
     m_direct_rates[rate.m_pair] = rate;
     auto inverse = invert(rate);
