@@ -4,6 +4,7 @@
 namespace Spire {
   class ReplayWindow;
   class SeekBar;
+  class TargetMenuItem;
 }
 
 #endif
