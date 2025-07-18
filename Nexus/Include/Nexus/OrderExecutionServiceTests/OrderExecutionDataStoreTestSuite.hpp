@@ -7,6 +7,10 @@
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 
 namespace Nexus::OrderExecutionService::Tests {
+  inline void clear_time_in_force_timestamp(TimeInForce& time_in_force) {
+    time_in_force = TimeInForce(time_in_force.get_type());
+  }
+
   TEST_CASE_TEMPLATE_DEFINE(
       "OrderExecutionDataStore", T, OrderExecutionDataStoreTestSuite) {
     using namespace Beam;
@@ -31,6 +35,8 @@ namespace Nexus::OrderExecutionService::Tests {
         IndexedValue(info, account_a), Beam::Queries::Sequence(1));
       data_store.store(sequenced_info);
       auto loaded_record = data_store.load_order_record(1);
+      clear_time_in_force_timestamp(
+        (**loaded_record)->m_info.m_fields.m_time_in_force);
       REQUIRE(loaded_record);
       REQUIRE(**loaded_record == OrderRecord(info, {}));
       REQUIRE((*loaded_record)->GetIndex() == account_a);
@@ -65,8 +71,12 @@ namespace Nexus::OrderExecutionService::Tests {
       query_a.SetSnapshotLimit(SnapshotLimit::Unlimited());
       auto results_a = data_store.load_order_records(query_a);
       REQUIRE(results_a.size() == 2);
+      clear_time_in_force_timestamp(
+        results_a[0]->m_info.m_fields.m_time_in_force);
       REQUIRE(results_a[0] ==
         SequencedValue(OrderRecord(info1, {}), Beam::Queries::Sequence(1)));
+      clear_time_in_force_timestamp(
+        results_a[1]->m_info.m_fields.m_time_in_force);
       REQUIRE(results_a[1] ==
         SequencedValue(OrderRecord(info3, {}), Beam::Queries::Sequence(3)));
       auto query_b = AccountQuery();
@@ -75,6 +85,8 @@ namespace Nexus::OrderExecutionService::Tests {
       query_b.SetSnapshotLimit(SnapshotLimit::Unlimited());
       auto results_b = data_store.load_order_records(query_b);
       REQUIRE(results_b.size() == 1);
+      clear_time_in_force_timestamp(
+        results_b[0]->m_info.m_fields.m_time_in_force);
       REQUIRE(results_b[0] ==
         SequencedValue(OrderRecord(info2, {}), Beam::Queries::Sequence(2)));
     }
@@ -133,6 +145,8 @@ namespace Nexus::OrderExecutionService::Tests {
       data_store.store(sequenced_report2);
       auto loaded_record = data_store.load_order_record(1);
       REQUIRE(loaded_record);
+      clear_time_in_force_timestamp(
+        (**loaded_record)->m_info.m_fields.m_time_in_force);
       REQUIRE((**loaded_record)->m_info == info);
       REQUIRE((**loaded_record)->m_execution_reports.size() == 2);
       REQUIRE((**loaded_record)->m_execution_reports[0] == report1);

@@ -1,7 +1,6 @@
 #ifndef NEXUS_ORDER_EXECUTION_DATA_STORE_EXCEPTION_HPP
 #define NEXUS_ORDER_EXECUTION_DATA_STORE_EXCEPTION_HPP
 #include <Beam/IO/IOException.hpp>
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
 namespace Nexus::OrderExecutionService {
 
