@@ -39,8 +39,6 @@ MenuButton::MenuButton(QWidget& body, QWidget* parent)
   link(*this, *m_menu);
   m_menu_window = static_cast<OverlayPanel*>(m_menu->window());
   m_menu_window->set_closed_on_focus_out(false);
-  m_menu_window->layout()->itemAt(0)->widget()->setSizePolicy(
-    QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_menu_window->set_positioning(OverlayPanel::Positioning::PARENT);
   m_menu_window->installEventFilter(this);
   m_timer.setSingleShot(true);
@@ -152,21 +150,19 @@ void MenuButton::mouseReleaseEvent(QMouseEvent* event) {
   QWidget::mouseReleaseEvent(event);
 }
 
+void MenuButton::resizeEvent(QResizeEvent* event) {
+  update_minimum_menu_width();
+}
+
 void MenuButton::show_menu() {
   m_menu_window->show();
   match(*this, PopUp());
-  update_menu_width();
 }
 
-void MenuButton::update_menu_width() {
-  auto margins = m_menu_window->layout()->contentsMargins();
-  auto max_width = std::max(
-    {MINIMUM_MENU_WIDTH(), width(), m_menu->sizeHint().width()});
-  auto window_width = max_width + margins.left() + margins.right();
-  if(max_width == m_menu->sizeHint().width()) {
-    window_width += m_menu_border_size;
-  }
-  m_menu_window->setFixedWidth(window_width);
+void MenuButton::update_minimum_menu_width() {
+  m_menu->setMinimumWidth(
+    std::max(MINIMUM_MENU_WIDTH(), width() - m_menu_border_size));
+  updateGeometry();
 }
 
 void MenuButton::on_menu_window_style() {
@@ -188,8 +184,8 @@ void MenuButton::on_menu_window_style() {
         });
       });
   }
-  if(*has_update && m_menu->isVisible()) {
-    update_menu_width();
+  if(*has_update) {
+    update_minimum_menu_width();
   }
 }
 
