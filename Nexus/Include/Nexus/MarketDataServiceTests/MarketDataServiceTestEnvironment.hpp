@@ -16,18 +16,16 @@
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
-#include "Nexus/AdministrationService/AdministrationClientBox.hpp"
-#include "Nexus/MarketDataService/HistoricalDataStoreBox.hpp"
+#include "Nexus/AdministrationService/AdministrationClient.hpp"
+#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
-#include "Nexus/MarketDataService/MarketDataClient.hpp"
-#include "Nexus/MarketDataService/MarketDataClientBox.hpp"
-#include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
-#include "Nexus/MarketDataService/MarketDataFeedClientBox.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedServlet.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServlet.hpp"
-#include "Nexus/MarketDataServiceTests/MarketDataServiceTests.hpp"
-#include "Nexus/MarketDataServiceTests/TestMarketDataFeedClient.hpp"
+#include "Nexus/MarketDataService/ServiceMarketDataClient.hpp"
+#include "Nexus/MarketDataService/ServiceMarketDataFeedClient.hpp"
+#include "Nexus/MarketDataServiceTests/TestEnvironmentMarketDataFeedClient.hpp"
 
 namespace Nexus::MarketDataService::Tests {
 
@@ -40,55 +38,55 @@ namespace Nexus::MarketDataService::Tests {
 
       /**
        * Constructs an MarketDataServiceTestEnvironment.
-       * @param serviceLocatorClient The ServiceLocatorClient to use.
-       * @param administrationClient The AdministrationClient to use.
+       * @param service_locator_client The ServiceLocatorClient to use.
+       * @param administration_client The AdministrationClient to use.
        */
       MarketDataServiceTestEnvironment(
-        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-        AdministrationService::AdministrationClientBox administrationClient);
+        Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
+        AdministrationService::AdministrationClient administration_client);
 
       /**
        * Constructs an MarketDataServiceTestEnvironment.
-       * @param serviceLocatorClient The ServiceLocatorClient to use.
-       * @param administrationClient The AdministrationClient to use.
-       * @param dataStore The data store containing market data to test with.
+       * @param service_locator_client The ServiceLocatorClient to use.
+       * @param administration_client The AdministrationClient to use.
+       * @param data_store The data store containing market data to test with.
        */
       MarketDataServiceTestEnvironment(
-        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-        AdministrationService::AdministrationClientBox administrationClient,
-        HistoricalDataStoreBox dataStore);
+        Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
+        AdministrationService::AdministrationClient administration_client,
+        HistoricalDataStore data_store);
 
       ~MarketDataServiceTestEnvironment();
 
       /** Returns the historical data store. */
-      HistoricalDataStoreBox& GetDataStore();
+      HistoricalDataStore& get_data_store();
 
       /** Returns the MarketDataRegistry. */
-      const MarketDataRegistry& GetRegistry() const;
+      const MarketDataRegistry& get_registry() const;
 
       /** Returns this test environment's MarketDataClient. */
-      MarketDataClientBox& GetRegistryClient();
+      MarketDataClient& get_registry_client();
 
       /** Returns this test environment's MarketDataFeedClient. */
-      MarketDataFeedClientBox& GetFeedClient();
+      MarketDataFeedClient& get_feed_client();
 
       /**
        * Returns a new MarketDataClient.
-       * @param serviceLocatorClient The ServiceLocatorClient used to
+       * @param service_locator_client The ServiceLocatorClient used to
        *        authenticate the MarketDataClient.
        */
-      MarketDataClientBox MakeRegistryClient(
-        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
+      MarketDataClient make_registry_client(
+        Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client);
 
       /**
        * Returns a new MarketDataFeedClient.
-       * @param serviceLocatorClient The ServiceLocatorClient used to
-       *        authenticate the MarketDataFeedClient.
+       * @param service_locator_client The ServiceLocatorClient used to
+       *        authenticate the MarketDataClient.
        */
-      MarketDataFeedClientBox MakeFeedClient(
-        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
+      MarketDataFeedClient make_feed_client(
+        Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client);
 
-      void Close();
+      void close();
 
     private:
       using ServerConnection =
@@ -99,8 +97,7 @@ namespace Nexus::MarketDataService::Tests {
         Beam::Services::ServiceProtocolServletContainer<
           Beam::ServiceLocator::MetaAuthenticationServletAdapter<
             MetaMarketDataRegistryServlet<MarketDataRegistry*,
-              HistoricalDataStoreBox,
-              AdministrationService::AdministrationClientBox>,
+              HistoricalDataStore, AdministrationService::AdministrationClient>,
             Beam::ServiceLocator::ServiceLocatorClientBox,
             Beam::NativePointerPolicy>,
           ServerConnection*,
@@ -109,7 +106,7 @@ namespace Nexus::MarketDataService::Tests {
           std::shared_ptr<Beam::Threading::TriggerTimer>>;
       using BaseRegistryServlet = MarketDataRegistryServlet<
         ServiceProtocolServletContainer, MarketDataRegistry*,
-        HistoricalDataStoreBox, AdministrationService::AdministrationClientBox>;
+        HistoricalDataStore, AdministrationService::AdministrationClient>;
       using RegistryServlet =
         Beam::ServiceLocator::AuthenticationServletAdapter<
           ServiceProtocolServletContainer, BaseRegistryServlet*,
@@ -126,107 +123,131 @@ namespace Nexus::MarketDataService::Tests {
       using ServiceProtocolClientBuilder =
         Beam::Services::AuthenticatedServiceProtocolClientBuilder<
           Beam::ServiceLocator::ServiceLocatorClientBox,
-          Beam::Services::MessageProtocol<
-            std::unique_ptr<ClientChannel>,
+          Beam::Services::MessageProtocol<std::unique_ptr<ClientChannel>,
             Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
             Beam::Codecs::NullEncoder>,
           Beam::Threading::TriggerTimer>;
-      Beam::ServiceLocator::ServiceLocatorClientBox m_serviceLocatorClient;
-      AdministrationService::AdministrationClientBox m_administrationClient;
+      Beam::ServiceLocator::ServiceLocatorClientBox m_service_locator_client;
+      AdministrationService::AdministrationClient m_administration_client;
       MarketDataRegistry m_registry;
-      ServerConnection m_serverConnection;
-      HistoricalDataStoreBox m_dataStore;
-      BaseRegistryServlet m_registryServlet;
+      ServerConnection m_server_connection;
+      HistoricalDataStore m_data_store;
+      BaseRegistryServlet m_registry_servlet;
       ServiceProtocolServletContainer m_container;
-      ServerConnection m_feedServerConnection;
-      FeedServiceProtocolServletContainer m_feedContainer;
-      Beam::Threading::TriggerTimer m_samplingTimer;
-      MarketDataClientBox m_registryClient;
-      MarketDataFeedClientBox m_feedClient;
+      ServerConnection m_feed_server_connection;
+      FeedServiceProtocolServletContainer m_feed_container;
+      MarketDataClient m_registry_client;
+      MarketDataFeedClient m_feed_client;
   };
 
-  inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
-    Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-    AdministrationService::AdministrationClientBox administrationClient)
-    : MarketDataServiceTestEnvironment(std::move(serviceLocatorClient),
-        std::move(administrationClient),
-        HistoricalDataStoreBox(std::in_place_type<LocalHistoricalDataStore>)) {}
-
-  inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
-    Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-    AdministrationService::AdministrationClientBox administrationClient,
-    HistoricalDataStoreBox dataStore)
-    : m_serviceLocatorClient(std::move(serviceLocatorClient)),
-      m_administrationClient(std::move(administrationClient)),
-      m_dataStore(std::move(dataStore)),
-      m_registryServlet(m_administrationClient, &m_registry, m_dataStore),
-      m_container(Beam::Initialize(m_serviceLocatorClient,
-        &m_registryServlet), &m_serverConnection,
-        boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()),
-      m_feedContainer(Beam::Initialize(m_serviceLocatorClient,
-        &m_registryServlet), &m_feedServerConnection,
-        boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()),
-      m_registryClient(MakeRegistryClient(m_serviceLocatorClient)),
-      m_feedClient(
-        std::in_place_type<TestMarketDataFeedClient<BaseRegistryServlet*>>,
-        &m_registryServlet) {}
-
-  inline MarketDataServiceTestEnvironment::~MarketDataServiceTestEnvironment() {
-    Close();
+  inline MarketDataServiceTestEnvironment make_market_data_test_environment(
+      Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
+        service_locator_environment,
+      AdministrationService::Tests::AdministrationServiceTestEnvironment&
+        administration_environment) {
+    auto& root_client = service_locator_environment.GetRoot();
+    auto services_root =
+      Beam::ServiceLocator::LoadOrCreateDirectory(root_client, "services",
+        Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
+    auto market_data_account =
+      root_client.MakeAccount("market_data_service", "", services_root);
+    root_client.StorePermissions(market_data_account,
+      Beam::ServiceLocator::DirectoryEntry::GetStarDirectory(),
+      Beam::ServiceLocator::Permissions(~0));
+    auto service_locator_client =
+      service_locator_environment.MakeClient("market_data_service", "");
+    auto administration_client =
+      administration_environment.make_client(service_locator_client);
+    return MarketDataServiceTestEnvironment(
+      std::move(service_locator_client), std::move(administration_client));
   }
 
-  inline HistoricalDataStoreBox&
-      MarketDataServiceTestEnvironment::GetDataStore() {
-    return m_dataStore;
+  inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
+    Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
+    AdministrationService::AdministrationClient administration_client)
+    : MarketDataServiceTestEnvironment(std::move(service_locator_client),
+        std::move(administration_client),
+        HistoricalDataStore(std::in_place_type<LocalHistoricalDataStore>)) {}
+
+  inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
+    Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
+    AdministrationService::AdministrationClient administration_client,
+    HistoricalDataStore data_store)
+    : m_service_locator_client(std::move(service_locator_client)),
+      m_administration_client(std::move(administration_client)),
+      m_registry(DEFAULT_VENUES, get_default_time_zone_database()),
+      m_data_store(std::move(data_store)),
+      m_registry_servlet(m_administration_client, &m_registry, m_data_store),
+      m_container(Beam::Initialize(m_service_locator_client,
+        &m_registry_servlet), &m_server_connection,
+        boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()),
+      m_feed_container(Beam::Initialize(m_service_locator_client,
+        &m_registry_servlet), &m_feed_server_connection,
+        boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()),
+      m_registry_client(make_registry_client(m_service_locator_client)),
+      m_feed_client(make_feed_client(m_service_locator_client)) {}
+
+  inline MarketDataServiceTestEnvironment::~MarketDataServiceTestEnvironment() {
+    close();
+  }
+
+  inline HistoricalDataStore&
+      MarketDataServiceTestEnvironment::get_data_store() {
+    return m_data_store;
   }
 
   inline const MarketDataRegistry&
-      MarketDataServiceTestEnvironment::GetRegistry() const {
+      MarketDataServiceTestEnvironment::get_registry() const {
     return m_registry;
   }
 
-  inline MarketDataClientBox&
-      MarketDataServiceTestEnvironment::GetRegistryClient() {
-    return m_registryClient;
+  inline MarketDataClient&
+      MarketDataServiceTestEnvironment::get_registry_client() {
+    return m_registry_client;
   }
 
-  inline MarketDataFeedClientBox&
-      MarketDataServiceTestEnvironment::GetFeedClient() {
-    return m_feedClient;
+  inline MarketDataFeedClient&
+      MarketDataServiceTestEnvironment::get_feed_client() {
+    return m_feed_client;
   }
 
-  inline MarketDataClientBox
-      MarketDataServiceTestEnvironment::MakeRegistryClient(
-        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
-    return MarketDataClientBox(
-      std::in_place_type<MarketDataClient<ServiceProtocolClientBuilder>>,
-      ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
+  inline MarketDataClient
+      MarketDataServiceTestEnvironment::make_registry_client(
+        Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client) {
+    return MarketDataClient(
+      std::in_place_type<ServiceMarketDataClient<ServiceProtocolClientBuilder>>,
+      ServiceProtocolClientBuilder(std::move(service_locator_client),
         std::bind_front(boost::factory<
           std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
-          "test_market_data_client", std::ref(m_serverConnection)),
+          "test_market_data_client", std::ref(m_server_connection)),
         boost::factory<
           std::unique_ptr<ServiceProtocolClientBuilder::Timer>>()));
   }
 
-  inline MarketDataFeedClientBox
-      MarketDataServiceTestEnvironment::MakeFeedClient(
-        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
-    using Client = MarketDataService::MarketDataFeedClient<std::string,
-      Beam::Threading::TriggerTimer*, Beam::Services::MessageProtocol<
-        ClientChannel,
+  inline MarketDataFeedClient
+      MarketDataServiceTestEnvironment::make_feed_client(
+        Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client) {
+    using Client = ServiceMarketDataFeedClient<
+      std::string, std::shared_ptr<Beam::Threading::TriggerTimer>,
+      Beam::Services::MessageProtocol<ClientChannel,
         Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-        Beam::Codecs::NullEncoder>,
-      Beam::Threading::TriggerTimer>;
-    return MarketDataFeedClientBox(std::in_place_type<Client>,
-      Beam::Initialize("test_market_data_feed_client", m_feedServerConnection),
+        Beam::Codecs::NullEncoder>, Beam::Threading::TriggerTimer>;
+    auto sampling_timer = std::make_shared<Beam::Threading::TriggerTimer>();
+    auto service_client = MarketDataFeedClient(
+      std::in_place_type<Client>, Beam::Initialize(
+        "test_market_data_feed_client", m_feed_server_connection),
       Beam::ServiceLocator::SessionAuthenticator(
-        std::move(serviceLocatorClient)), &m_samplingTimer, Beam::Initialize());
+        std::move(service_locator_client)), sampling_timer,
+        Beam::Initialize());
+    return MarketDataFeedClient(
+      std::in_place_type<TestEnvironmentMarketDataFeedClient>,
+      std::move(service_client), std::move(sampling_timer));
   }
 
-  inline void MarketDataServiceTestEnvironment::Close() {
-    m_feedContainer.Close();
+  inline void MarketDataServiceTestEnvironment::close() {
+    m_feed_container.Close();
     m_container.Close();
-    m_registryServlet.Close();
+    m_registry_servlet.Close();
   }
 }
 
