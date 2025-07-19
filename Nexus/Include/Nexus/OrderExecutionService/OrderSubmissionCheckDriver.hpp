@@ -3,11 +3,11 @@
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Threading/Sync.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheck.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheckException.hpp"
+#include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 namespace Nexus::OrderExecutionService {
 
@@ -52,7 +52,6 @@ namespace Nexus::OrderExecutionService {
 
     private:
       Beam::GetOptionalLocalPtr<D> m_driver;
-      Beam::Threading::Sync<std::vector<std::unique_ptr<Order>>> m_orders;
       std::vector<std::unique_ptr<OrderSubmissionCheck>> m_checks;
       Beam::IO::OpenState m_open_state;
 
@@ -60,6 +59,11 @@ namespace Nexus::OrderExecutionService {
       OrderSubmissionCheckDriver& operator =(
         const OrderSubmissionCheckDriver&) = delete;
   };
+
+  template<typename DF>
+  OrderSubmissionCheckDriver(
+    DF&&, std::vector<std::unique_ptr<OrderSubmissionCheck>>) ->
+      OrderSubmissionCheckDriver<std::decay_t<DF>>;
 
   template<typename D>
   template<typename DF>
@@ -97,12 +101,7 @@ namespace Nexus::OrderExecutionService {
       for(auto i = m_checks.begin(); i != submission_iterator; ++i) {
         (*i)->reject(info);
       }
-      auto order = make_rejected_order(info, e.what());
-      auto result = order;
-      Beam::Threading::With(m_orders, [&] (auto& orders) {
-        orders.push_back(order);
-      });
-      return result;
+      return make_rejected_order(info, e.what());
     }
     auto order = m_driver->submit(info);
     for(auto& check : m_checks) {
