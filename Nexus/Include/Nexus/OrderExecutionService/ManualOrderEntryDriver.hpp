@@ -6,7 +6,6 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
