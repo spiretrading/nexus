@@ -5,7 +5,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheck.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheckException.hpp"
 
@@ -28,28 +28,26 @@ namespace Nexus::OrderExecutionService {
 
       /**
        * Constructs an OrderSubmissionCheckDriver.
-       * @param orderExecutionDriver The OrderExecutionDriver to send the
-       *        submission to if all checks pass.
-       * @param orderSubmissionChecks The list of order submission checks to
-       *        perform.
+       * @param driver The OrderExecutionDriver to send the submission to if all
+       *        checks pass.
+       * @param checks The list of order submission checks to perform.
        */
       template<typename DF>
-      OrderSubmissionCheckDriver(DF&& orderExecutionDriver,
-        std::vector<std::unique_ptr<OrderSubmissionCheck>>
-          orderSubmissionChecks);
+      OrderSubmissionCheckDriver(
+        DF&& driver, std::vector<std::unique_ptr<OrderSubmissionCheck>> checks);
 
       ~OrderSubmissionCheckDriver();
 
-      const Order& Recover(const SequencedAccountOrderRecord& order);
+      const Order& recover(const SequencedAccountOrderRecord& order);
 
-      const Order& Submit(const OrderInfo& orderInfo);
+      const Order& submit(const OrderInfo& info);
 
-      void Cancel(const OrderExecutionSession& session, OrderId orderId);
+      void cancel(const OrderExecutionSession& session, OrderId id);
 
-      void Update(const OrderExecutionSession& session, OrderId orderId,
-        const ExecutionReport& executionReport);
+      void update(const OrderExecutionSession& session, OrderId id,
+        const ExecutionReport& report);
 
-      void Close();
+      void close();
 
     private:
       Beam::GetOptionalLocalPtr<D> m_orderExecutionDriver;

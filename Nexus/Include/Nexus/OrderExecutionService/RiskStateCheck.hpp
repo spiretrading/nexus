@@ -1,5 +1,6 @@
 #ifndef NEXUS_RISK_STATE_CHECK_HPP
 #define NEXUS_RISK_STATE_CHECK_HPP
+#include <memory>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Queues/StateQueue.hpp>
@@ -26,54 +27,63 @@ namespace Nexus::OrderExecutionService {
 
       /**
        * Constructs a RiskStateCheck.
-       * @param administrationClient Initializes the AdministrationClient.
+       * @param administration_client Initializes the AdministrationClient.
        */
       template<typename CF>
-      RiskStateCheck(CF&& administrationClient);
+      RiskStateCheck(CF&& administration_client);
 
-      void Submit(const OrderInfo& orderInfo) override;
+      void submit(const OrderInfo& info) override;
 
-      void Add(const Order& order) override;
+      void add(const Order& order) override;
 
     private:
       struct AccountEntry {
         Beam::Threading::Sync<Accounting::PositionOrderBook>
-          m_positionOrderBook;
+          m_position_order_book;
         std::shared_ptr<Beam::StateQueue<RiskService::RiskState>>
-          m_riskStateQueue;
-        Beam::MultiQueueWriter<ExecutionReport> m_executionReportQueue;
+          m_risk_state_queue;
+        Beam::MultiQueueWriter<ExecutionReport> m_execution_report_queue;
 
         AccountEntry();
       };
-      Beam::GetOptionalLocalPtr<C> m_administrationClient;
+      Beam::GetOptionalLocalPtr<C> m_administration_client;
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
-        std::shared_ptr<AccountEntry>> m_accountEntries;
+        std::shared_ptr<AccountEntry>> m_account_entries;
 
-      AccountEntry& LoadAccountEntry(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+      AccountEntry& load(const Beam::ServiceLocator::DirectoryEntry& account);
   };
+
+  /**
+   * Makes a new RiskStateCheck.
+   * @param administration_client Initializes the AdministrationClient.
+   */
+  template<typename AdministrationClient>
+  auto make_risk_state_check(AdministrationClient&& administration_client) {
+    return std::make_unique<RiskStateCheck<std::decay_t<AdministrationClient>>>(
+      std::forward<AdministrationClient>(administration_client));
+  }
 
   template<typename C>
   RiskStateCheck<C>::AccountEntry::AccountEntry()
-    : m_riskStateQueue(
+    : m_risk_state_queue(
         std::make_shared<Beam::StateQueue<RiskService::RiskState>>()) {}
 
   template<typename C>
   template<typename CF>
-  RiskStateCheck<C>::RiskStateCheck(CF&& administrationClient)
-    : m_administrationClient(std::forward<CF>(administrationClient)) {}
+  RiskStateCheck<C>::RiskStateCheck(CF&& administration_client)
+    : m_administration_client(std::forward<CF>(administration_client)) {}
 
   template<typename C>
-  void RiskStateCheck<C>::Submit(const OrderInfo& orderInfo) {
-    auto& accountEntry = LoadAccountEntry(orderInfo.m_fields.m_account);
-    Beam::Threading::With(accountEntry.m_positionOrderBook,
-      [&] (auto& positionOrderBook) {
-        while(auto report = accountEntry.m_executionReportQueue.TryPop()) {
-          positionOrderBook.Update(std::move(*report));
+  void RiskStateCheck<C>::submit(const OrderInfo& info) {
+    auto& account_entry = load(info.m_fields.m_account);
+    Beam::Threading::With(account_entry.m_position_order_book,
+      [&] (auto& position_order_book) {
+        while(auto report = account_entry.m_execution_report_queue.TryPop()) {
+          position_order_book.Update(std::move(*report));
         }
-        if(accountEntry.m_riskStateQueue->Peek().m_type !=
+        if(account_entry.m_risk_state_queue->Peek().m_type !=
             RiskService::RiskState::Type::ACTIVE) {
-          if(positionOrderBook.TestOpeningOrderSubmission(orderInfo.m_fields)) {
+          if(position_order_book.TestOpeningOrderSubmission(info.m_fields)) {
             BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
               "Only closing orders are permitted."));
           }
@@ -82,26 +92,26 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C>
-  void RiskStateCheck<C>::Add(const Order& order) {
-    auto& accountEntry = LoadAccountEntry(order.GetInfo().m_fields.m_account);
-    Beam::Threading::With(accountEntry.m_positionOrderBook,
-      [&] (auto& positionOrderBook) {
-        positionOrderBook.Add(order);
-        order.GetPublisher().Monitor(
-          accountEntry.m_executionReportQueue.GetWriter());
+  void RiskStateCheck<C>::add(const Order& order) {
+    auto& account_entry = load(order.get_info().m_fields.m_account);
+    Beam::Threading::With(account_entry.m_position_order_book,
+      [&] (auto& position_order_book) {
+        position_order_book.Add(order);
+        order.get_publisher().Monitor(
+          account_entry.m_execution_report_queue.GetWriter());
       });
   }
 
   template<typename C>
-  typename RiskStateCheck<C>::AccountEntry& RiskStateCheck<C>::LoadAccountEntry(
+  typename RiskStateCheck<C>::AccountEntry& RiskStateCheck<C>::load(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto& entry = *m_accountEntries.GetOrInsert(account, [&] {
+    auto& entry = *m_account_entries.GetOrInsert(account, [&] {
       auto entry = std::make_shared<AccountEntry>();
-      m_administrationClient->GetRiskStatePublisher(account).Monitor(
-        entry->m_riskStateQueue);
+      m_administration_client->get_risk_state_publisher(account).Monitor(
+        entry->m_risk_state_queue);
       return entry;
     });
-    entry.m_riskStateQueue->Peek();
+    entry.m_risk_state_queue->Peek();
     return entry;
   }
 }
