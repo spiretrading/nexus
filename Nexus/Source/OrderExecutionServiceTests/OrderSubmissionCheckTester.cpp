@@ -37,7 +37,7 @@ TEST_SUITE("OrderSubmissionCheck") {
     auto timestamp = time_from_string("2024-05-21 00:00:10.000");
     auto fields = make_test_order_fields();
     auto info = OrderInfo(fields, 123, timestamp);
-    auto order = PrimitiveOrder(info);
+    auto order = std::make_shared<PrimitiveOrder>(info);
     auto check = TestOrderSubmissionCheck();
     check.add(order);
   }

@@ -19,7 +19,7 @@ namespace Nexus::OrderExecutionService {
        * Adds an Order that successfully passed all submission checks.
        * @param order The successfully submitted Order.
        */
-      virtual void add(const Order& order);
+      virtual void add(const std::shared_ptr<const Order>& order);
 
       /**
        * Indicates that a submission was rejected.
@@ -37,7 +37,8 @@ namespace Nexus::OrderExecutionService {
       OrderSubmissionCheck& operator =(const OrderSubmissionCheck&) = delete;
   };
 
-  inline void OrderSubmissionCheck::add(const Order& order) {}
+  inline void OrderSubmissionCheck::add(
+    const std::shared_ptr<const Order>& order) {}
 
   inline void OrderSubmissionCheck::reject(const OrderInfo& info) {}
 }

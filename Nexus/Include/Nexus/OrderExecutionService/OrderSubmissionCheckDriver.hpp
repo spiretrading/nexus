@@ -38,9 +38,10 @@ namespace Nexus::OrderExecutionService {
 
       ~OrderSubmissionCheckDriver();
 
-      const Order& recover(const SequencedAccountOrderRecord& order);
+      std::shared_ptr<const Order> recover(
+        const SequencedAccountOrderRecord& record);
 
-      const Order& submit(const OrderInfo& info);
+      std::shared_ptr<const Order> submit(const OrderInfo& info);
 
       void cancel(const OrderExecutionSession& session, OrderId id);
 
@@ -50,10 +51,10 @@ namespace Nexus::OrderExecutionService {
       void close();
 
     private:
-      Beam::GetOptionalLocalPtr<D> m_orderExecutionDriver;
+      Beam::GetOptionalLocalPtr<D> m_driver;
       Beam::Threading::Sync<std::vector<std::unique_ptr<Order>>> m_orders;
       std::vector<std::unique_ptr<OrderSubmissionCheck>> m_checks;
-      Beam::IO::OpenState m_openState;
+      Beam::IO::OpenState m_open_state;
 
       OrderSubmissionCheckDriver(const OrderSubmissionCheckDriver&) = delete;
       OrderSubmissionCheckDriver& operator =(
@@ -63,69 +64,69 @@ namespace Nexus::OrderExecutionService {
   template<typename D>
   template<typename DF>
   OrderSubmissionCheckDriver<D>::OrderSubmissionCheckDriver(
-    DF&& orderExecutionDriver,
-    std::vector<std::unique_ptr<OrderSubmissionCheck>> orderSubmissionChecks)
-    : m_orderExecutionDriver(std::forward<DF>(orderExecutionDriver)),
-      m_checks(std::move(orderSubmissionChecks)) {}
+    DF&& driver,
+    std::vector<std::unique_ptr<OrderSubmissionCheck>> checks)
+    : m_driver(std::forward<DF>(driver)),
+      m_checks(std::move(checks)) {}
 
   template<typename D>
   OrderSubmissionCheckDriver<D>::~OrderSubmissionCheckDriver() {
-    Close();
+    close();
   }
 
   template<typename D>
-  const Order& OrderSubmissionCheckDriver<D>::Recover(
-      const SequencedAccountOrderRecord& orderRecord) {
-    auto& order = m_orderExecutionDriver->Recover(orderRecord);
+  std::shared_ptr<const Order> OrderSubmissionCheckDriver<D>::recover(
+      const SequencedAccountOrderRecord& record) {
+    auto order = m_driver->recover(record);
     for(auto& check : m_checks) {
-      check->Add(order);
+      check->add(order);
     }
     return order;
   }
 
   template<typename D>
-  const Order& OrderSubmissionCheckDriver<D>::Submit(
-      const OrderInfo& orderInfo) {
-    auto submissionIterator = m_checks.begin();
+  std::shared_ptr<const Order> OrderSubmissionCheckDriver<D>::submit(
+      const OrderInfo& info) {
+    auto submission_iterator = m_checks.begin();
     try {
-      while(submissionIterator != m_checks.end()) {
-        (*submissionIterator)->Submit(orderInfo);
-        ++submissionIterator;
+      while(submission_iterator != m_checks.end()) {
+        (*submission_iterator)->submit(info);
+        ++submission_iterator;
       }
     } catch(const std::exception& e) {
-      for(auto i = m_checks.begin(); i != submissionIterator; ++i) {
-        (*i)->Reject(orderInfo);
+      for(auto i = m_checks.begin(); i != submission_iterator; ++i) {
+        (*i)->reject(info);
       }
-      auto order = MakeRejectedOrder(orderInfo, e.what());
-      auto result = order.get();
+      auto order = make_rejected_order(info, e.what());
+      auto result = order;
       Beam::Threading::With(m_orders, [&] (auto& orders) {
-        orders.emplace_back(std::move(order));
+        orders.push_back(order);
       });
-      return *result;
+      return result;
     }
-    auto& order = m_orderExecutionDriver->Submit(orderInfo);
+    auto order = m_driver->submit(info);
     for(auto& check : m_checks) {
-      check->Add(order);
+      check->add(order);
     }
     return order;
   }
 
   template<typename D>
-  void OrderSubmissionCheckDriver<D>::Cancel(
-      const OrderExecutionSession& session, OrderId orderId) {
-    return m_orderExecutionDriver->Cancel(session, orderId);
+  void OrderSubmissionCheckDriver<D>::cancel(
+      const OrderExecutionSession& session, OrderId id) {
+    m_driver->cancel(session, id);
   }
 
   template<typename D>
-  void OrderSubmissionCheckDriver<D>::Update(
-      const OrderExecutionSession& session, OrderId orderId,
-      const ExecutionReport& executionReport) {
-    return m_orderExecutionDriver->Update(session, orderId, executionReport);
+  void OrderSubmissionCheckDriver<D>::update(
+      const OrderExecutionSession& session, OrderId id,
+      const ExecutionReport& report) {
+    return m_driver->update(session, id, report);
   }
 
   template<typename D>
-  void OrderSubmissionCheckDriver<D>::Close() {
-    m_openState.Close();
+  void OrderSubmissionCheckDriver<D>::close() {
+    m_open_state.Close();
   }
 }
 

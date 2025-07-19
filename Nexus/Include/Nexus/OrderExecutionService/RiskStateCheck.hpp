@@ -34,7 +34,7 @@ namespace Nexus::OrderExecutionService {
 
       void submit(const OrderInfo& info) override;
 
-      void add(const Order& order) override;
+      void add(const std::shared_ptr<const Order>& order) override;
 
     private:
       struct AccountEntry {
@@ -92,12 +92,12 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C>
-  void RiskStateCheck<C>::add(const Order& order) {
-    auto& account_entry = load(order.get_info().m_fields.m_account);
+  void RiskStateCheck<C>::add(const std::shared_ptr<const Order>& order) {
+    auto& account_entry = load(order->get_info().m_fields.m_account);
     Beam::Threading::With(account_entry.m_position_order_book,
       [&] (auto& position_order_book) {
-        position_order_book.Add(order);
-        order.get_publisher().Monitor(
+        position_order_book.Add(*order);
+        order->get_publisher().Monitor(
           account_entry.m_execution_report_queue.GetWriter());
       });
   }

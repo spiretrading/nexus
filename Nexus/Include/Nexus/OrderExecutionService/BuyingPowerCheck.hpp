@@ -51,7 +51,7 @@ namespace Nexus::OrderExecutionService {
 
       void submit(const OrderInfo& info) override;
 
-      void add(const Order& order) override;
+      void add(const std::shared_ptr<const Order>& order) override;
 
       void reject(const OrderInfo& info) override;
 
@@ -162,43 +162,43 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename A, typename M>
-  void BuyingPowerCheck<A, M>::add(const Order& order) {
+  void BuyingPowerCheck<A, M>::add(const std::shared_ptr<const Order>& order) {
     auto& buying_power_entry =
-      load_buying_power_entry(order.get_info().m_fields.m_account);
+      load_buying_power_entry(order->get_info().m_fields.m_account);
     auto price = [&] {
       try {
-        return get_expected_price(order.get_info().m_fields);
+        return get_expected_price(order->get_info().m_fields);
       } catch(const std::exception&) {
-        if(order.get_info().m_fields.m_type == OrderType::LIMIT) {
-          return order.get_info().m_fields.m_price;
+        if(order->get_info().m_fields.m_type == OrderType::LIMIT) {
+          return order->get_info().m_fields.m_price;
         }
         return Money::ZERO;
       }
     }();
     Beam::Threading::With(
       buying_power_entry.m_buying_power_model, [&] (auto& buying_power_model) {
-        if(buying_power_model.HasOrder(order.get_info().m_order_id)) {
+        if(buying_power_model.HasOrder(order->get_info().m_order_id)) {
           return;
         }
         buying_power_entry.m_currencies.Insert(
-          order.get_info().m_order_id, order.get_info().m_fields.m_currency);
-        auto converted_fields = order.get_info().m_fields;
+          order->get_info().m_order_id, order->get_info().m_fields.m_currency);
+        auto converted_fields = order->get_info().m_fields;
         converted_fields.m_currency =
           buying_power_entry.m_risk_parameters_queue->Peek().m_currency;
         auto converted_price = Money();
         try {
           converted_fields.m_price = m_exchange_rates.convert(
-            order.get_info().m_fields.m_price,
-            order.get_info().m_fields.m_currency, converted_fields.m_currency);
+            order->get_info().m_fields.m_price,
+            order->get_info().m_fields.m_currency, converted_fields.m_currency);
           converted_price = m_exchange_rates.convert(price,
-            order.get_info().m_fields.m_currency, converted_fields.m_currency);
+            order->get_info().m_fields.m_currency, converted_fields.m_currency);
         } catch(const CurrencyPairNotFoundException&) {
           return;
         }
         buying_power_model.Submit(
-          order.get_info().m_order_id, converted_fields, converted_price);
+          order->get_info().m_order_id, converted_fields, converted_price);
       });
-    order.get_publisher().Monitor(
+    order->get_publisher().Monitor(
       buying_power_entry.m_execution_report_queue.GetWriter());
   }
 
