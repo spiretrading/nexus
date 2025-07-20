@@ -4,7 +4,6 @@
 #include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/functional/hash.hpp>
-#include "Nexus/Accounting/Accounting.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Side.hpp"
@@ -28,7 +27,7 @@ namespace Details {
     /** The Currency used to value the inventory. */
     CurrencyId m_currency;
 
-    bool operator ==(const Key& key) const = default;
+    bool operator ==(const Key&) const = default;
   };
 
   template<typename Index>
@@ -57,16 +56,16 @@ namespace Details {
     Quantity m_quantity;
 
     /** The total cost of the currently held inventory. */
-    Money m_costBasis;
+    Money m_cost_basis;
 
-    bool operator ==(const Position& position) const = default;
+    bool operator ==(const Position&) const = default;
   };
 
   template<typename Index>
-  std::ostream& operator <<(std::ostream& out,
-      const Position<Index>& position) {
+  std::ostream& operator <<(
+      std::ostream& out, const Position<Index>& position) {
     return out << '(' << position.m_key << ' ' << position.m_quantity << ' ' <<
-      position.m_costBasis << ')';
+      position.m_cost_basis << ')';
   }
 
   /**
@@ -75,11 +74,11 @@ namespace Details {
    * @return The average price of the <i>position</i>.
    */
   template<typename I>
-  Money GetAveragePrice(const Position<I>& position) {
+  Money get_average_price(const Position<I>& position) {
     if(position.m_quantity == 0) {
       return Money::ZERO;
     }
-    return position.m_costBasis / position.m_quantity;
+    return position.m_cost_basis / position.m_quantity;
   }
 
   /**
@@ -88,7 +87,7 @@ namespace Details {
    * @return The Side corresponding to the <i>position</i>.
    */
   template<typename I>
-  Side GetSide(const Position<I>& position) {
+  Side get_side(const Position<I>& position) {
     if(position.m_quantity == 0) {
       return Side::NONE;
     } else if(position.m_quantity > 0) {
@@ -116,7 +115,7 @@ namespace Beam::Serialization {
         Nexus::Accounting::Position<I>& value, unsigned int version) {
       shuttle.Shuttle("key", value.m_key);
       shuttle.Shuttle("quantity", value.m_quantity);
-      shuttle.Shuttle("cost_basis", value.m_costBasis);
+      shuttle.Shuttle("cost_basis", value.m_cost_basis);
     }
   };
 }

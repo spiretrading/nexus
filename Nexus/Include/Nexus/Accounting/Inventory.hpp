@@ -3,7 +3,6 @@
 #include <ostream>
 #include <utility>
 #include <Beam/Serialization/DataShuttle.hpp>
-#include "Nexus/Accounting/Accounting.hpp"
 #include "Nexus/Accounting/Position.hpp"
 
 namespace Nexus::Accounting {
@@ -22,7 +21,7 @@ namespace Nexus::Accounting {
     Position m_position;
 
     /** The Inventory's gross profit and loss. */
-    Money m_grossProfitAndLoss;
+    Money m_gross_profit_and_loss;
 
     /** The transaction fees. */
     Money m_fees;
@@ -31,29 +30,29 @@ namespace Nexus::Accounting {
     Quantity m_volume;
 
     /** The number of transactions made. */
-    int m_transactionCount;
+    int m_transaction_count;
 
     /** Constructs an empty Inventory. */
-    Inventory();
+    Inventory() noexcept;
 
     /**
      * Constructs an Inventory.
      * @param key The Key uniquely identifying this Inventory.
      */
-    explicit Inventory(typename Position::Key key);
+    explicit Inventory(typename Position::Key key) noexcept;
 
     /**
      * Constructs an Inventory.
      * @param position The currently held Position.
-     * @param grossProfitAndLoss The Inventory's gross profit and loss.
+     * @param gross_profit_and_loss The Inventory's gross profit and loss.
      * @param fees The transaction fees.
      * @param volume The total quantity that was transacted.
-     * @param transactionCount The number of transactions made.
+     * @param transaction_count The number of transactions made.
      */
-    Inventory(Position position, Money grossProfitAndLoss, Money fees,
-      Quantity volume, int transactionCount);
+    Inventory(Position position, Money gross_profit_and_loss, Money fees,
+      Quantity volume, int transaction_count);
 
-    bool operator ==(const Inventory& inventory) const = default;
+    bool operator ==(const Inventory&) const = default;
   };
 
   /**
@@ -63,36 +62,36 @@ namespace Nexus::Accounting {
   * @return <code>true</code> iff the <i>inventory</i> is empty.
   */
   template<typename P>
-  bool IsEmpty(const Inventory<P>& inventory) {
+  bool is_empty(const Inventory<P>& inventory) {
     return inventory == Inventory<P>(inventory.m_position.m_key);
   }
 
   template<typename P>
-  Inventory<P>::Inventory()
+  Inventory<P>::Inventory() noexcept
     : m_volume(0),
-      m_transactionCount(0) {}
+      m_transaction_count(0) {}
 
   template<typename P>
-  Inventory<P>::Inventory(typename P::Key key)
+  Inventory<P>::Inventory(typename P::Key key) noexcept
     : m_position(std::move(key)),
       m_volume(0),
-      m_transactionCount(0) {}
+      m_transaction_count(0) {}
 
   template<typename P>
-  Inventory<P>::Inventory(Position position, Money grossProfitAndLoss,
-    Money fees, Quantity volume, int transactionCount)
+  Inventory<P>::Inventory(Position position, Money gross_profit_and_loss,
+    Money fees, Quantity volume, int transaction_count)
     : m_position(std::move(position)),
-      m_grossProfitAndLoss(grossProfitAndLoss),
+      m_gross_profit_and_loss(gross_profit_and_loss),
       m_fees(fees),
       m_volume(volume),
-      m_transactionCount(transactionCount) {}
+      m_transaction_count(transaction_count) {}
 
   template<typename Position>
   std::ostream& operator <<(
       std::ostream& out, const Inventory<Position>& inventory) {
     return out << '(' << inventory.m_position << ' ' <<
-      inventory.m_grossProfitAndLoss << ' ' << inventory.m_fees << ' ' <<
-      inventory.m_volume << ' ' << inventory.m_transactionCount << ')';
+      inventory.m_gross_profit_and_loss << ' ' << inventory.m_fees << ' ' <<
+      inventory.m_volume << ' ' << inventory.m_transaction_count << ')';
   }
 }
 
@@ -103,10 +102,10 @@ namespace Beam::Serialization {
     void operator ()(Shuttler& shuttle, Nexus::Accounting::Inventory<P>& value,
         unsigned int version) {
       shuttle.Shuttle("position", value.m_position);
-      shuttle.Shuttle("gross_profit_and_loss", value.m_grossProfitAndLoss);
+      shuttle.Shuttle("gross_profit_and_loss", value.m_gross_profit_and_loss);
       shuttle.Shuttle("fees", value.m_fees);
       shuttle.Shuttle("volume", value.m_volume);
-      shuttle.Shuttle("transaction_count", value.m_transactionCount);
+      shuttle.Shuttle("transaction_count", value.m_transaction_count);
     }
   };
 }
