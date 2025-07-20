@@ -40,6 +40,8 @@ namespace Nexus::OrderExecutionService {
       std::shared_ptr<const Order> recover(
         const SequencedAccountOrderRecord& record);
 
+      void add(const std::shared_ptr<const Order>& order);
+
       std::shared_ptr<const Order> submit(const OrderInfo& info);
 
       void cancel(const OrderExecutionSession& session, OrderId id);
@@ -54,6 +56,7 @@ namespace Nexus::OrderExecutionService {
         virtual ~VirtualOrderExecutionDriver() = default;
         virtual std::shared_ptr<const Order> recover(
           const SequencedAccountOrderRecord& record) = 0;
+        virtual void add(const std::shared_ptr<const Order>& order) = 0;
         virtual std::shared_ptr<const Order> submit(const OrderInfo& info) = 0;
         virtual void cancel(const OrderExecutionSession& session,
           OrderId id) = 0;
@@ -70,6 +73,7 @@ namespace Nexus::OrderExecutionService {
         WrappedOrderExecutionDriver(Args&&... args);
         std::shared_ptr<const Order> recover(
           const SequencedAccountOrderRecord& record) override;
+        void add(const std::shared_ptr<const Order>& order) override;
         std::shared_ptr<const Order> submit(const OrderInfo& info) override;
         void cancel(const OrderExecutionSession& session, OrderId id) override;
         void update(const OrderExecutionSession& session, OrderId id,
@@ -106,6 +110,11 @@ namespace Nexus::OrderExecutionService {
     return m_driver->recover(record);
   }
 
+  inline void OrderExecutionDriver::add(
+      const std::shared_ptr<const Order>& order) {
+    return m_driver->add(order);
+  }
+
   inline std::shared_ptr<const Order> OrderExecutionDriver::submit(
       const OrderInfo& info) {
     return m_driver->submit(info);
@@ -137,6 +146,12 @@ namespace Nexus::OrderExecutionService {
       OrderExecutionDriver::WrappedOrderExecutionDriver<D>::recover(
         const SequencedAccountOrderRecord& record) {
     return m_driver->recover(record);
+  }
+
+  template<typename D>
+  void OrderExecutionDriver::WrappedOrderExecutionDriver<D>::add(
+      const std::shared_ptr<const Order>& order) {
+    m_driver->add(order);
   }
 
   template<typename D>

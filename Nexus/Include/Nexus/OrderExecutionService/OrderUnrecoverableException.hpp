@@ -2,7 +2,6 @@
 #define NEXUS_ORDER_UNRECOVERABLE_EXCEPTION_HPP
 #include <stdexcept>
 #include <boost/exception/exception.hpp>
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
 namespace Nexus::OrderExecutionService {
 

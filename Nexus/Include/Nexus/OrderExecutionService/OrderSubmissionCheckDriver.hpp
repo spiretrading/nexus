@@ -35,19 +35,14 @@ namespace Nexus::OrderExecutionService {
       template<typename DF>
       OrderSubmissionCheckDriver(
         DF&& driver, std::vector<std::unique_ptr<OrderSubmissionCheck>> checks);
-
       ~OrderSubmissionCheckDriver();
-
       std::shared_ptr<const Order> recover(
         const SequencedAccountOrderRecord& record);
-
+      void add(const std::shared_ptr<const Order>& order);
       std::shared_ptr<const Order> submit(const OrderInfo& info);
-
       void cancel(const OrderExecutionSession& session, OrderId id);
-
       void update(const OrderExecutionSession& session, OrderId id,
         const ExecutionReport& report);
-
       void close();
 
     private:
@@ -86,6 +81,15 @@ namespace Nexus::OrderExecutionService {
       check->add(order);
     }
     return order;
+  }
+
+  template<typename D>
+  void OrderSubmissionCheckDriver<D>::add(
+      const std::shared_ptr<const Order>& order) {
+    for(auto& check : m_checks) {
+      check->add(order);
+    }
+    m_driver->add(order);
   }
 
   template<typename D>
