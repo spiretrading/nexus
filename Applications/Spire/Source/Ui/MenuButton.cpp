@@ -151,7 +151,7 @@ void MenuButton::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void MenuButton::resizeEvent(QResizeEvent* event) {
-  update_minimum_menu_width();
+  update_menu_minimum_width();
 }
 
 void MenuButton::show_menu() {
@@ -159,7 +159,7 @@ void MenuButton::show_menu() {
   match(*this, PopUp());
 }
 
-void MenuButton::update_minimum_menu_width() {
+void MenuButton::update_menu_minimum_width() {
   m_menu->setMinimumWidth(
     std::max(MINIMUM_MENU_WIDTH(), width() - m_menu_border_size));
   updateGeometry();
@@ -185,7 +185,7 @@ void MenuButton::on_menu_window_style() {
       });
   }
   if(*has_update) {
-    update_minimum_menu_width();
+    update_menu_minimum_width();
   }
 }
 

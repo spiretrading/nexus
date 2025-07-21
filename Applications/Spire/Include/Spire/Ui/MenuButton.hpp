@@ -41,7 +41,7 @@ namespace Spire {
       int m_menu_border_size;
 
       void show_menu();
-      void update_minimum_menu_width();
+      void update_menu_minimum_width();
       void on_menu_window_style();
   };
 
