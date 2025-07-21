@@ -1,10 +1,10 @@
 #ifndef NEXUS_BOOKKEEPER_REACTOR_HPP
 #define NEXUS_BOOKKEEPER_REACTOR_HPP
+#include <optional>
 #include <tuple>
 #include <utility>
 #include <Aspen/Aspen.hpp>
 #include <Beam/Reactors/PublisherReactor.hpp>
-#include "Nexus/Accounting/Accounting.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 
 namespace Nexus::Accounting {
@@ -16,31 +16,30 @@ namespace Nexus::Accounting {
    *        reports.
    */
   template<typename Bookkeeper, typename Orders>
-  auto BookkeeperReactor(Orders orders) {
-    return Aspen::lift(
-      [bookkeeper = Bookkeeper()] (
-          const std::tuple<const OrderExecutionService::Order*,
-            OrderExecutionService::ExecutionReport>& update) mutable ->
+  auto make_bookkeeper_reactor(Orders orders) {
+    return Aspen::lift([bookkeeper = Bookkeeper()] (
+        const std::tuple<const OrderExecutionService::Order*,
+          OrderExecutionService::ExecutionReport>& update) mutable ->
             std::optional<typename Bookkeeper::Inventory> {
-        auto& order = *std::get<0>(update);
-        auto& report = std::get<1>(update);
-        if(report.m_lastQuantity == 0) {
-          return std::nullopt;
-        }
-        bookkeeper.RecordTransaction(order.GetInfo().m_fields.m_security,
-          order.GetInfo().m_fields.m_currency,
-          get_direction(order.GetInfo().m_fields.m_side) *
-            report.m_lastQuantity, report.m_lastQuantity * report.m_lastPrice,
-          OrderExecutionService::GetFeeTotal(report));
-        return bookkeeper.GetInventory(order.GetInfo().m_fields.m_security,
-          order.GetInfo().m_fields.m_currency);
-      }, Aspen::concur(Aspen::lift(
-      [] (const OrderExecutionService::Order* order) {
-        return Aspen::Shared(Aspen::lift(
-          [=] (const OrderExecutionService::ExecutionReport& executionReport) {
-            return std::tuple(order, executionReport);
-          }, Beam::Reactors::PublisherReactor(order->GetPublisher())));
-      }, std::move(orders))));
+      auto& order = *std::get<0>(update);
+      auto& report = std::get<1>(update);
+      if(report.m_last_quantity == 0) {
+        return std::nullopt;
+      }
+      bookkeeper.record(order.get_info().m_fields.m_security,
+        order.get_info().m_fields.m_currency,
+        get_direction(order.get_info().m_fields.m_side) *
+          report.m_last_quantity,
+        report.m_last_quantity * report.m_last_price, get_fee_total(report));
+      return bookkeeper.get_inventory(order.get_info().m_fields.m_security,
+        order.get_info().m_fields.m_currency);
+    }, Aspen::concur(Aspen::lift(
+    [] (const OrderExecutionService::Order* order) {
+      return Aspen::Shared(Aspen::lift(
+        [=] (const OrderExecutionService::ExecutionReport& report) {
+          return std::tuple(order, report);
+        }, Beam::Reactors::PublisherReactor(order->get_publisher())));
+    }, std::move(orders))));
   }
 }
 

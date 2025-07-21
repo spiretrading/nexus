@@ -100,7 +100,7 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::Accounting::Inventory<P>> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::Accounting::Inventory<P>& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("position", value.m_position);
       shuttle.Shuttle("gross_profit_and_loss", value.m_gross_profit_and_loss);
       shuttle.Shuttle("fees", value.m_fees);
