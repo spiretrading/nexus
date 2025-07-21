@@ -156,11 +156,11 @@ TEST_SUITE("ShortingModel") {
       make_limit_order_fields(security, CAD, Side::BID, "TSX", 100, Money::ONE);
     model.submit(2, bid_fields);
     auto bid_report = ExecutionReport(2, boost::posix_time::not_a_date_time);
-    bid_report.m_last_quantity = 100;
+    bid_report.m_last_quantity = 200;
     bid_report.m_status = OrderStatus::FILLED;
     model.update(bid_report);
-    auto ask_fields2 =
-      make_limit_order_fields(security, CAD, Side::ASK, "TSX", 50, Money::ONE);
+    auto ask_fields2 = make_limit_order_fields(
+      security, CAD, Side::ASK, "TSX", 50, 2 * Money::ONE);
     REQUIRE(!model.submit(3, ask_fields2));
   }
 
