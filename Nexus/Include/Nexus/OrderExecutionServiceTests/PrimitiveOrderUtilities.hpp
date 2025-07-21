@@ -11,7 +11,7 @@ namespace Nexus::OrderExecutionService::Tests {
    * @param order The Order to cancel.
    * @param timestamp The cancel timestamp.
    */
-  inline void cancel(
+  inline ExecutionReport cancel(
       PrimitiveOrder& order, boost::posix_time::ptime timestamp) {
     auto monitor = std::make_shared<Beam::Queue<ExecutionReport>>();
     order.get_publisher().Monitor(monitor);
@@ -28,39 +28,44 @@ namespace Nexus::OrderExecutionService::Tests {
     auto updated_report = make_updated_execution_report(
       last_report, OrderStatus::CANCELED, timestamp);
     order.update(updated_report);
+    return updated_report;
   }
 
   /**
    * Sets the OrderStatus of an Order to CANCELED.
    * @param order The Order to cancel.
    */
-  inline void cancel(PrimitiveOrder& order) {
-    cancel(order, order.get_publisher().GetSnapshot()->back().m_timestamp);
+  inline ExecutionReport cancel(PrimitiveOrder& order) {
+    return cancel(
+      order, order.get_publisher().GetSnapshot()->back().m_timestamp);
   }
 
   /**
    * Sets the OrderStatus of an Order being tested.
    * @param order The Order to set the OrderStatus for.
-   * @param newStatus The OrderStatus to assign to the <i>order</i>.
+   * @param new_status The OrderStatus to assign to the <i>order</i>.
    * @param timestamp The modification's timestamp.
    */
-  inline void set_order_status(PrimitiveOrder& order, OrderStatus new_status,
-      boost::posix_time::ptime timestamp) {
+  inline ExecutionReport set_order_status(PrimitiveOrder& order,
+      OrderStatus new_status, boost::posix_time::ptime timestamp) {
+    auto updated_report = ExecutionReport();
     order.with([&] (auto status, const auto& reports) {
       auto& last_report = reports.back();
-      auto updated_report =
+      updated_report =
         make_updated_execution_report(last_report, new_status, timestamp);
       order.update(updated_report);
     });
+    return updated_report;
   }
 
   /**
    * Sets the OrderStatus of an Order being tested.
    * @param order The Order to set the OrderStatus for.
-   * @param newStatus The OrderStatus to assign to the <i>order</i>.
+   * @param new_status The OrderStatus to assign to the <i>order</i>.
    */
-  inline void set_order_status(PrimitiveOrder& order, OrderStatus new_status) {
-    set_order_status(order, new_status,
+  inline ExecutionReport set_order_status(
+      PrimitiveOrder& order, OrderStatus new_status) {
+    return set_order_status(order, new_status,
       order.get_publisher().GetSnapshot()->back().m_timestamp);
   }
 
@@ -69,17 +74,17 @@ namespace Nexus::OrderExecutionService::Tests {
    * @param order The Order to set the OrderStatus for.
    * @param timestamp The modification's timestamp.
    */
-  inline void accept(
+  inline ExecutionReport accept(
       PrimitiveOrder& order, boost::posix_time::ptime timestamp) {
-    set_order_status(order, OrderStatus::NEW, timestamp);
+    return set_order_status(order, OrderStatus::NEW, timestamp);
   }
 
   /**
    * Sets the OrderStatus of an Order to NEW.
    * @param order The Order to set the OrderStatus for.
    */
-  inline void accept(PrimitiveOrder& order) {
-    set_order_status(order, OrderStatus::NEW);
+  inline ExecutionReport accept(PrimitiveOrder& order) {
+    return set_order_status(order, OrderStatus::NEW);
   }
 
   /**
@@ -87,17 +92,17 @@ namespace Nexus::OrderExecutionService::Tests {
    * @param order The Order to set the OrderStatus for.
    * @param timestamp The modification's timestamp.
    */
-  inline void reject(
+  inline ExecutionReport reject(
       PrimitiveOrder& order, boost::posix_time::ptime timestamp) {
-    set_order_status(order, OrderStatus::REJECTED, timestamp);
+    return set_order_status(order, OrderStatus::REJECTED, timestamp);
   }
 
   /**
    * Sets the OrderStatus of an Order to REJECTED.
    * @param order The Order to set the OrderStatus for.
    */
-  inline void reject(PrimitiveOrder& order) {
-    set_order_status(order, OrderStatus::REJECTED);
+  inline ExecutionReport reject(PrimitiveOrder& order) {
+    return set_order_status(order, OrderStatus::REJECTED);
   }
 
   /**
@@ -107,8 +112,9 @@ namespace Nexus::OrderExecutionService::Tests {
    * @param quantity The amount to fill the order for.
    * @param timestamp The modification's timestamp.
    */
-  inline void fill(PrimitiveOrder& order, Money price, Quantity quantity,
-      boost::posix_time::ptime timestamp) {
+  inline ExecutionReport fill(PrimitiveOrder& order, Money price,
+      Quantity quantity, boost::posix_time::ptime timestamp) {
+    auto updated_report = ExecutionReport();
     order.with([&] (auto status, const auto& reports) {
       auto cumulative_quantity = Quantity();
       for(auto& report : reports) {
@@ -125,12 +131,13 @@ namespace Nexus::OrderExecutionService::Tests {
           return OrderStatus::PARTIALLY_FILLED;
         }
       }();
-      auto updated_report =
+      updated_report =
         make_updated_execution_report(last_report, new_status, timestamp);
       updated_report.m_last_price = price;
       updated_report.m_last_quantity = quantity;
       order.update(updated_report);
     });
+    return updated_report;
   }
 
   /**
@@ -139,8 +146,9 @@ namespace Nexus::OrderExecutionService::Tests {
    * @param price The price of the fill.
    * @param quantity The amount to fill the order for.
    */
-  inline void fill(PrimitiveOrder& order, Money price, Quantity quantity) {
-    fill(order, price, quantity,
+  inline ExecutionReport fill(
+      PrimitiveOrder& order, Money price, Quantity quantity) {
+    return fill(order, price, quantity,
       order.get_publisher().GetSnapshot()->back().m_timestamp);
   }
 
@@ -150,9 +158,9 @@ namespace Nexus::OrderExecutionService::Tests {
    * @param quantity The amount to fill the order for.
    * @param timestamp The modification's timestamp.
    */
-  inline void fill(PrimitiveOrder& order, Quantity quantity,
+  inline ExecutionReport fill(PrimitiveOrder& order, Quantity quantity,
       boost::posix_time::ptime timestamp) {
-    fill(order, order.get_info().m_fields.m_price, quantity, timestamp);
+    return fill(order, order.get_info().m_fields.m_price, quantity, timestamp);
   }
 
   /**
@@ -160,8 +168,8 @@ namespace Nexus::OrderExecutionService::Tests {
    * @param order The Order to fill.
    * @param quantity The amount to fill the order for.
    */
-  inline void fill(PrimitiveOrder& order, Quantity quantity) {
-    fill(order, order.get_info().m_fields.m_price, quantity);
+  inline ExecutionReport fill(PrimitiveOrder& order, Quantity quantity) {
+    return fill(order, order.get_info().m_fields.m_price, quantity);
   }
 
   /**

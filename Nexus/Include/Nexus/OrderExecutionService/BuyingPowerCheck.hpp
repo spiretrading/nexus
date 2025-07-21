@@ -132,7 +132,7 @@ namespace Nexus::OrderExecutionService {
             report->m_last_price = m_exchange_rates.convert(
               report->m_last_price, *currency, risk_parameters.m_currency);
           }
-          buying_power_model.Update(*report);
+          buying_power_model.update(*report);
         }
         auto converted_fields = fields;
         converted_fields.m_currency = risk_parameters.m_currency;
@@ -148,13 +148,13 @@ namespace Nexus::OrderExecutionService {
         }
         buying_power_entry.m_currencies.Insert(
           info.m_order_id, fields.m_currency);
-        auto updated_buying_power = buying_power_model.Submit(
+        auto updated_buying_power = buying_power_model.submit(
           info.m_order_id, converted_fields, converted_price);
         if(updated_buying_power > risk_parameters.m_buyingPower) {
           auto report = ExecutionReport();
           report.m_id = info.m_order_id;
           report.m_status = OrderStatus::REJECTED;
-          buying_power_model.Update(report);
+          buying_power_model.update(report);
           BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
             "Order exceeds available buying power."));
         }
@@ -177,7 +177,7 @@ namespace Nexus::OrderExecutionService {
     }();
     Beam::Threading::With(
       buying_power_entry.m_buying_power_model, [&] (auto& buying_power_model) {
-        if(buying_power_model.HasOrder(order->get_info().m_order_id)) {
+        if(buying_power_model.has_order(order->get_info().m_order_id)) {
           return;
         }
         buying_power_entry.m_currencies.Insert(
@@ -195,7 +195,7 @@ namespace Nexus::OrderExecutionService {
         } catch(const CurrencyPairNotFoundException&) {
           return;
         }
-        buying_power_model.Submit(
+        buying_power_model.submit(
           order->get_info().m_order_id, converted_fields, converted_price);
       });
     order->get_publisher().Monitor(
@@ -207,13 +207,13 @@ namespace Nexus::OrderExecutionService {
     auto& buying_power_entry = load_buying_power_entry(info.m_fields.m_account);
     Beam::Threading::With(
       buying_power_entry.m_buying_power_model, [&] (auto& buying_power_model) {
-        if(!buying_power_model.HasOrder(info.m_order_id)) {
+        if(!buying_power_model.has_order(info.m_order_id)) {
           return;
         }
         auto report = ExecutionReport();
         report.m_id = info.m_order_id;
         report.m_status = OrderStatus::REJECTED;
-        buying_power_model.Update(report);
+        buying_power_model.update(report);
       });
   }
 
@@ -221,8 +221,8 @@ namespace Nexus::OrderExecutionService {
   BboQuote BuyingPowerCheck<A, M>::load_bbo_quote(const Security& security) {
     auto publisher = m_bbo_quotes.GetOrInsert(security, [&] {
       auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
-      MarketDataService::query_real_time_with_snapshot(security,
-        *m_market_data_client, publisher);
+      MarketDataService::query_real_time_with_snapshot(
+        security, *m_market_data_client, publisher);
       return publisher;
     });
     try {
