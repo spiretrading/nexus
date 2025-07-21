@@ -30,6 +30,7 @@ namespace Spire {
       void keyReleaseEvent(QKeyEvent* event) override;
       void mousePressEvent(QMouseEvent* event) override;
       void mouseReleaseEvent(QMouseEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       QWidget* m_body;
@@ -40,7 +41,7 @@ namespace Spire {
       int m_menu_border_size;
 
       void show_menu();
-      void update_menu_width();
+      void update_menu_minimum_width();
       void on_menu_window_style();
   };
 
