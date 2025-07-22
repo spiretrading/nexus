@@ -1,9 +1,14 @@
 #include <QApplication>
 #include <QFormLayout>
+#include <QGroupBox>
+#include <QListWidget>
 #include <QTextEdit>
 #include <QTimeEdit>
 #include <QVBoxLayout>
+#include "Spire/Playback/ReplayAttachMenuButton.hpp"
 #include "Spire/Playback/ReplayWindow.hpp"
+#include "Spire/Spire/FieldValueModel.hpp"
+#include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 
 using namespace Beam::TimeService;
@@ -11,6 +16,7 @@ using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace boost::signals2;
+using namespace Nexus;
 using namespace Spire;
 
 namespace {
@@ -32,6 +38,56 @@ namespace {
       static const auto value = QObject::tr("Real Time");
       return value;
     }
+  }
+
+  auto to_text_with_color(const TargetMenuItem::Target& target) {
+    auto text = to_text(target);
+    if(target.m_color) {
+      return QString("%1 [color:%2]").arg(text).arg(target.m_color->name());
+    }
+    return text;
+  }
+
+  auto populate_targets() {
+    auto targets = std::vector<SelectableTarget>();
+    targets.push_back({{none, none, {ToolbarWindow::WindowType::BOOK_VIEW}},
+      false});
+    targets.push_back({{QColor(0xBF9541), none,
+      {ToolbarWindow::WindowType::BOOK_VIEW,
+       ToolbarWindow::WindowType::TIME_AND_SALES}}, false});
+    targets.push_back({{QColor(0x00BFA0), none,
+      {ToolbarWindow::WindowType::BOOK_VIEW,
+       ToolbarWindow::WindowType::TIME_AND_SALES}}, false});
+    targets.push_back({{QColor(Qt::red), none,
+      {ToolbarWindow::WindowType::BOOK_VIEW}}, false});
+    targets.push_back({{none, none,
+      {ToolbarWindow::WindowType::TIME_AND_SALES}}, false});
+    targets.push_back({{QColor(0xFF7B00), ParseSecurity("ABX.TSX"),
+      {ToolbarWindow::WindowType::BOOK_VIEW,
+       ToolbarWindow::WindowType::TIME_AND_SALES,
+       ToolbarWindow::WindowType::TIME_AND_SALES}}, true});
+    targets.push_back({{none, ParseSecurity("ABX.TSX"),
+      {ToolbarWindow::WindowType::BOOK_VIEW}}, false});
+    targets.push_back({{none, ParseSecurity("ABX.TSX"),
+      {ToolbarWindow::WindowType::TIME_AND_SALES}}, false});
+    targets.push_back({{QColor(Qt::blue), ParseSecurity("ARE.TSX"),
+      {ToolbarWindow::WindowType::TIME_AND_SALES,
+       ToolbarWindow::WindowType::BOOK_VIEW}}, false});
+    targets.push_back({{QColor(0x993EF2), ParseSecurity("MFC.TSX"),
+      {ToolbarWindow::WindowType::TIME_AND_SALES,
+       ToolbarWindow::WindowType::TIME_AND_SALES}}, false});
+    targets.push_back({{QColor(Qt::green), ParseSecurity("TD.TSX"),
+      {ToolbarWindow::WindowType::TIME_AND_SALES,
+       ToolbarWindow::WindowType::TIME_AND_SALES}}, false});
+    return targets;
+  }
+
+  auto make_check_box(std::shared_ptr<ListModel<SelectableTarget>> targets,
+      int index) {
+    auto check_box = new CheckBox(make_field_value_model(
+      make_list_value_model(targets, index), &SelectableTarget::m_selected));
+    check_box->set_label(to_text_with_color(targets->get(index).m_target));
+    return check_box;
   }
 
   class UtcTimeClient {
@@ -215,6 +271,84 @@ struct ReplayWindowTester : QWidget {
   }
 };
 
+struct ReplayAttachMenuButtonTester : QWidget {
+  std::shared_ptr<ListModel<SelectableTarget>> m_targets;
+  std::vector<SelectableTarget> m_candidate_targets;
+  QVBoxLayout* m_target_group_layout;
+
+  ReplayAttachMenuButtonTester()
+    : m_targets(std::make_shared<ArrayListModel<SelectableTarget>>()),
+      m_candidate_targets(populate_targets()) {
+    setAttribute(Qt::WA_ShowWithoutActivating);
+    for(auto& target : m_candidate_targets) {
+      m_targets->push(target);
+    }
+    auto layout = new QVBoxLayout(this);
+    auto top_layout = new QHBoxLayout();
+    layout->addLayout(top_layout);
+    auto left_layout = new QVBoxLayout();
+    auto candidates_group = new QGroupBox("Candidate Targets");
+    auto candidates_group_layout = new QVBoxLayout(candidates_group);
+    auto list_widget = new QListWidget();
+    candidates_group_layout->addWidget(list_widget);
+    left_layout->addWidget(candidates_group);
+    top_layout->addLayout(left_layout, 1);
+    auto right_layout = new QVBoxLayout();
+    auto target_group = new QGroupBox("Targets");
+    m_target_group_layout = new QVBoxLayout(target_group);
+    right_layout->addWidget(target_group);
+    top_layout->addLayout(right_layout, 1);
+    for(auto i = 0; i < m_targets->get_size(); ++i) {
+      auto target = m_targets->get(i);
+      auto name = to_text_with_color(target.m_target);
+      list_widget->addItem(name);
+      auto list_item = list_widget->item(i);
+      list_item->setFlags(list_item->flags() | Qt::ItemIsUserCheckable);
+      list_item->setCheckState(Qt::Checked);
+      m_target_group_layout->addWidget(make_check_box(m_targets, i));
+    }
+    m_target_group_layout->addStretch(1);
+    auto menu_button = make_replay_attach_menu_button(m_targets);
+    menu_button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    layout->addWidget(menu_button, 0, Qt::AlignHCenter);
+    connect(list_widget, &QListWidget::itemChanged,
+      std::bind_front(&ReplayAttachMenuButtonTester::list_item_changed, this));
+    m_targets->connect_operation_signal(
+      std::bind_front(&ReplayAttachMenuButtonTester::on_operation, this));
+  }
+
+  void list_item_changed(QListWidgetItem* item) {
+    if(item->checkState() == Qt::Checked) {
+      auto index = item->listWidget()->row(item);
+      if(index >= 0 && index < m_candidate_targets.size()) {
+        m_targets->push(m_candidate_targets[index]);
+      }
+    } else {
+      auto i = std::find_if(m_targets->begin(), m_targets->end(),
+        [=] (const SelectableTarget& target) {
+          return to_text_with_color(target.m_target) == item->text();
+        });
+      if(i != m_targets->end()) {
+        m_targets->remove(i);
+      }
+    }
+  }
+
+  void on_operation(const SelectableTargetListModel::Operation& operation) {
+    visit(operation,
+      [=] (const SelectableTargetListModel::AddOperation& operation) {
+        m_target_group_layout->insertWidget(m_target_group_layout->count() - 1,
+          make_check_box(m_targets, operation.m_index));
+      },
+      [=] (const SelectableTargetListModel::PreRemoveOperation& operation) {
+        if(auto item = m_target_group_layout->takeAt(operation.m_index)) {
+          delete item->widget();
+          delete item;
+        }
+      });
+  }
+};
+
 int main(int argc, char** argv) {
   auto application = QApplication(argc, argv);
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
@@ -228,5 +362,10 @@ int main(int argc, char** argv) {
     std::make_shared<LocalPlaybackSpeedModel>(1));
   auto tester = ReplayWindowTester(controller);
   tester.show();
+  auto menu_button_tester = ReplayAttachMenuButtonTester();
+  menu_button_tester.show();
+  menu_button_tester.resize(700, 500);
+  menu_button_tester.move(
+    tester.mapToGlobal(tester.rect().topRight()) + QPoint(10, 0));
   application.exec();
 }
