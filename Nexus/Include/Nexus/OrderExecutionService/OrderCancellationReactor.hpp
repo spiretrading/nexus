@@ -81,11 +81,11 @@ namespace Nexus::OrderExecutionService {
         }
         m_trigger = Aspen::Trigger::get_trigger();
         for(auto& order : m_orders) {
-          m_client->Cancel(order);
-          order->GetPublisher().Monitor(m_tasks->GetSlot<ExecutionReport>(
+          m_client->cancel(order);
+          order->get_publisher().Monitor(m_tasks->GetSlot<ExecutionReport>(
             [cancel_count = m_cancel_count.get(), trigger = m_trigger] (
                 const ExecutionReport& report) {
-              if(IsTerminal(report.m_status)) {
+              if(is_terminal(report.m_status)) {
                 if(--*cancel_count == 0) {
                   trigger->signal();
                 }
