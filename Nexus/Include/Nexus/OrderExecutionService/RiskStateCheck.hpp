@@ -79,11 +79,11 @@ namespace Nexus::OrderExecutionService {
     Beam::Threading::With(account_entry.m_position_order_book,
       [&] (auto& position_order_book) {
         while(auto report = account_entry.m_execution_report_queue.TryPop()) {
-          position_order_book.Update(std::move(*report));
+          position_order_book.update(std::move(*report));
         }
         if(account_entry.m_risk_state_queue->Peek().m_type !=
             RiskService::RiskState::Type::ACTIVE) {
-          if(position_order_book.TestOpeningOrderSubmission(info.m_fields)) {
+          if(position_order_book.test_opening_order_submission(info.m_fields)) {
             BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
               "Only closing orders are permitted."));
           }
@@ -96,7 +96,7 @@ namespace Nexus::OrderExecutionService {
     auto& account_entry = load(order->get_info().m_fields.m_account);
     Beam::Threading::With(account_entry.m_position_order_book,
       [&] (auto& position_order_book) {
-        position_order_book.Add(*order);
+        position_order_book.add(order);
         order->get_publisher().Monitor(
           account_entry.m_execution_report_queue.GetWriter());
       });

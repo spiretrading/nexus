@@ -1,11 +1,11 @@
 #ifndef NEXUS_ORDER_CANCELLATION_REACTOR_HPP
 #define NEXUS_ORDER_CANCELLATION_REACTOR_HPP
 #include <atomic>
+#include <memory>
 #include <Aspen/Aspen.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include "Nexus/OrderExecutionService/Order.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
 namespace Nexus::OrderExecutionService {
 
@@ -18,7 +18,7 @@ namespace Nexus::OrderExecutionService {
   template<typename C, typename S>
   class OrderCancellationReactor {
     public:
-      using Type = const Order*;
+      using Type = std::shared_ptr<const Order>;
 
       /** The type of OrderExecutionClient used to cancel the orders. */
       using OrderExecutionClient = Beam::GetTryDereferenceType<C>;
@@ -38,13 +38,13 @@ namespace Nexus::OrderExecutionService {
 
       Aspen::State commit(int sequence) noexcept;
 
-      const Order* eval() const noexcept(is_noexcept);
+      std::shared_ptr<const Order> eval() const noexcept(is_noexcept);
 
     private:
       Beam::GetOptionalLocalPtr<C> m_client;
       Series m_series;
       bool m_is_series_complete;
-      std::vector<const Order*> m_orders;
+      std::vector<std::shared_ptr<const Order>> m_orders;
       std::unique_ptr<std::atomic_int> m_cancel_count;
       Aspen::Trigger* m_trigger;
       std::unique_ptr<Beam::RoutineTaskQueue> m_tasks;
@@ -81,7 +81,7 @@ namespace Nexus::OrderExecutionService {
         }
         m_trigger = Aspen::Trigger::get_trigger();
         for(auto& order : m_orders) {
-          m_client->Cancel(*order);
+          m_client->Cancel(order);
           order->GetPublisher().Monitor(m_tasks->GetSlot<ExecutionReport>(
             [cancel_count = m_cancel_count.get(), trigger = m_trigger] (
                 const ExecutionReport& report) {
@@ -105,7 +105,7 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C, typename S>
-  const Order* OrderCancellationReactor<C, S>::eval()
+  std::shared_ptr<const Order> OrderCancellationReactor<C, S>::eval()
       const noexcept(is_noexcept) {
     return m_series.eval();
   }
