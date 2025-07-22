@@ -37,14 +37,14 @@ MenuButton::MenuButton(QWidget& body, QWidget* parent)
   m_menu = new ContextMenu(*this);
   m_menu->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   link(*this, *m_menu);
-  m_menu_window = static_cast<OverlayPanel*>(m_menu->window());
-  m_menu_window->set_closed_on_focus_out(false);
-  m_menu_window->set_positioning(OverlayPanel::Positioning::PARENT);
-  m_menu_window->installEventFilter(this);
+  auto menu_window = static_cast<OverlayPanel*>(m_menu->window());
+  menu_window->set_closed_on_focus_out(false);
+  menu_window->set_positioning(OverlayPanel::Positioning::PARENT);
+  menu_window->installEventFilter(this);
   m_timer.setSingleShot(true);
   on_menu_window_style();
   connect_style_signal(
-    *m_menu_window, std::bind_front(&MenuButton::on_menu_window_style, this));
+    *menu_window, std::bind_front(&MenuButton::on_menu_window_style, this));
 }
 
 QWidget& MenuButton::get_body() {
@@ -59,6 +59,7 @@ bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Hide) {
     unmatch(*this, PopUp());
     unmatch(*this, Press());
+    m_menu->hide();
   } else if(event->type() == QEvent::MouseButtonPress) {
     auto& mouse_event = *static_cast<QMouseEvent*>(event);
     if(mouse_event.button() == Qt::LeftButton) {
@@ -96,7 +97,7 @@ bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
             forward_mouse_event(child, QEvent::MouseButtonRelease);
           } else {
             unmatch(*this, PopUp());
-            m_menu_window->hide();
+            m_menu->hide();
           }
         }
       }
@@ -108,7 +109,7 @@ bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
       if(m_menu->focusProxy() == m_menu->focusWidget()) {
         match(*this, Press());
         unmatch(*this, PopUp());
-        m_menu_window->hide();
+        m_menu->hide();
       }
     }
   }
@@ -155,7 +156,7 @@ void MenuButton::resizeEvent(QResizeEvent* event) {
 }
 
 void MenuButton::show_menu() {
-  m_menu_window->show();
+  m_menu->show();
   match(*this, PopUp());
 }
 
@@ -167,7 +168,7 @@ void MenuButton::update_menu_minimum_width() {
 
 void MenuButton::on_menu_window_style() {
   m_menu_border_size = 0;
-  auto& stylist = find_stylist(*m_menu_window);
+  auto& stylist = find_stylist(*m_menu->window());
   auto has_update = std::make_shared<bool>(false);
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
