@@ -2,6 +2,7 @@
 #define NEXUS_ORDER_WRAPPER_REACTOR_HPP
 #include <memory>
 #include <Aspen/Aspen.hpp>
+#include <Beam/Queues/Queue.hpp>
 #include <Beam/Reactors/QueueReactor.hpp>
 #include "Nexus/OrderExecutionService/Order.hpp"
 
@@ -10,7 +11,7 @@ namespace Nexus::OrderExecutionService {
   /** Implements a reactor that evaluates to an existing Order object. */
   class OrderWrapperReactor {
     public:
-      using Type = const Order*;
+      using Type = std::shared_ptr<const Order>;
 
       /**
        * Constructs an OrderWrapperReactor.

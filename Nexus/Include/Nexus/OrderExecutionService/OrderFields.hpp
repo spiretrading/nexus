@@ -80,7 +80,7 @@ namespace Nexus::OrderExecutionService {
      */
     bool operator <(const OrderFields& rhs) const;
 
-    bool operator ==(const OrderFields& rhs) const = default;
+    bool operator ==(const OrderFields&) const = default;
   };
 
   /**
