@@ -2923,6 +2923,8 @@ UiProfile Spire::make_market_box_profile() {
 UiProfile Spire::make_menu_button_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_standard_property("item_count", 3));
+  properties.push_back(make_standard_property<QString>("item_label", "Item"));
   auto profile = UiProfile("MenuButton", properties, [] (auto& profile) {
     auto label = make_label("MenuButton");
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -2935,14 +2937,25 @@ UiProfile Spire::make_menu_button_profile() {
     });
     auto menu_button = new MenuButton(*label);
     menu_button->setFixedWidth(scale_width(120));
-    auto& menu = menu_button->get_menu();
-    menu.add_action("Minimize All",
-      profile.make_event_slot<>(QString("Action:Minimize All")));
-    menu.add_action("Restore All",
-      profile.make_event_slot<>(QString("Action:Restore All")));
-    menu.add_action("This is a long name for test",
-      profile.make_event_slot<>(
-        QString("Action:This is a long name for test")));
+    auto& item_label = get<QString>("item_label", profile.get_properties());
+    auto& item_count = get<int>("item_count", profile.get_properties());
+    item_count.connect_changed_signal([=, &item_label, &profile] (auto count) {
+      menu_button->get_menu().reset();
+      for(auto i = 0; i < count; ++i) {
+        auto item_name = QString("%1%2").arg(item_label.get()).arg(i + 1);
+        menu_button->get_menu().add_action(item_name,
+          profile.make_event_slot<>(QString("Action:%1").arg(item_name)));
+      }
+    });
+    item_label.connect_changed_signal(
+      [=, &item_count, &profile] (const auto& value) {
+      menu_button->get_menu().reset();
+      for(auto i = 0; i < item_count.get(); ++i) {
+        auto item_name = QString("%1%2").arg(value).arg(i + 1);
+        menu_button->get_menu().add_action(item_name,
+          profile.make_event_slot<>(QString("Action:%1").arg(item_name)));
+      }
+    });
     apply_widget_properties(menu_button, profile.get_properties());
     return menu_button;
   });
