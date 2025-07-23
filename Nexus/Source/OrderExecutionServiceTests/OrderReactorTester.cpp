@@ -24,6 +24,7 @@ namespace {
     Trigger m_trigger;
     optional<Aspen::Shared<Aspen::Box<std::shared_ptr<const Order>>>> m_order;
     int m_sequence;
+    OrderId m_next_id;
     std::shared_ptr<Beam::Queue<
       std::shared_ptr<TestOrderExecutionClient::Operation>>> m_operations;
     TestOrderExecutionClient m_client;
@@ -33,6 +34,7 @@ namespace {
           m_commits.Push(true);
         }),
         m_sequence(0),
+        m_next_id(123),
         m_operations(std::make_shared<Beam::Queue<
           std::shared_ptr<TestOrderExecutionClient::Operation>>>()),
         m_client(m_operations) {
@@ -50,26 +52,59 @@ namespace {
       REQUIRE(m_order->commit(m_sequence) == expected_state);
       ++m_sequence;
     }
+
+    template<typename F>
+    std::shared_ptr<PrimitiveOrder> require_submit(F&& expect) {
+      auto submit = std::async(std::launch::async, [&] {
+        auto operation = m_operations->Pop();
+        auto submit = std::get_if<TestOrderExecutionClient::SubmitOperation>(
+          operation.get());
+        REQUIRE(submit);
+        std::forward<F>(expect)(submit->m_fields);
+        auto order = std::make_shared<PrimitiveOrder>(OrderInfo(
+          submit->m_fields, m_next_id,
+          time_from_string("2025-05-06 10:12:13:00")));
+        ++m_next_id;
+        submit->m_result.set(order);
+        return order;
+      });
+      require_state(Aspen::State::EVALUATED);
+      auto expected_order = submit.get();
+      REQUIRE(m_order->eval() == expected_order);
+      require_state(Aspen::State::NONE);
+      return expected_order;
+    }
+
+    void require_cancel(PrimitiveOrder& order) {
+      auto cancel_async = std::async(std::launch::async, [&] {
+        auto operation = m_operations->Pop();
+        auto cancel = std::get_if<TestOrderExecutionClient::CancelOperation>(
+          operation.get());
+        REQUIRE(cancel);
+        REQUIRE(cancel->m_id == order.get_info().m_order_id);
+      });
+      cancel_async.get();
+      set_order_status(order, OrderStatus::PENDING_CANCEL);
+      require_state(Aspen::State::NONE);
+      cancel(order);
+    }
   };
 }
 
 TEST_SUITE("OrderReactor") {
   TEST_CASE("empty_quantity") {
-    auto operations = std::make_shared<
-      Beam::Queue<std::shared_ptr<TestOrderExecutionClient::Operation>>>();
-    auto client = TestOrderExecutionClient(operations);
+    auto fixture = Fixture();
     auto security = Security("TST", TSX);
     auto fields =
       make_limit_order_fields(security, CAD, Side::BID, "TSX", 0, Money::ONE);
     auto quantity_reactor = Aspen::constant(Quantity(0));
-    auto reactor = make_limit_order_reactor(&client,
+    fixture.set(Aspen::Shared(make_limit_order_reactor(&fixture.m_client,
       Aspen::constant(fields.m_account), Aspen::constant(fields.m_security),
       Aspen::constant(fields.m_currency), Aspen::constant(fields.m_side),
       Aspen::constant(fields.m_destination), quantity_reactor,
-      Aspen::constant(fields.m_price), Aspen::constant(fields.m_time_in_force));
-    auto state = reactor.commit(0);
-    REQUIRE(Aspen::is_complete(state));
-    REQUIRE(!operations->TryPop());
+      Aspen::constant(fields.m_price),
+      Aspen::constant(fields.m_time_in_force))));
+    fixture.require_state(Aspen::State::COMPLETE);
   }
 
   TEST_CASE("single_limit_order_submission") {
@@ -83,26 +118,14 @@ TEST_SUITE("OrderReactor") {
       Aspen::constant(fields.m_destination), Aspen::constant(fields.m_quantity),
       Aspen::constant(fields.m_price),
       Aspen::constant(fields.m_time_in_force))));
-    auto submit = std::async(std::launch::async, [&] {
-      auto operation = fixture.m_operations->Pop();
-      auto submit =
-        std::get_if<TestOrderExecutionClient::SubmitOperation>(operation.get());
-      REQUIRE(submit);
-      REQUIRE(submit->m_fields.m_security == security);
-      REQUIRE(submit->m_fields.m_quantity == 100);
-      REQUIRE(submit->m_fields.m_price == Money::ONE);
-      REQUIRE(submit->m_fields.m_side == Side::BID);
-      REQUIRE(submit->m_fields.m_currency == CAD);
-      REQUIRE(submit->m_fields.m_destination == "TSX");
-      auto order = std::make_shared<PrimitiveOrder>(OrderInfo(
-        submit->m_fields, 123, time_from_string("2025-05-06 10:12:13:00")));
-      submit->m_result.set(order);
-      return order;
+    auto expected_order = fixture.require_submit([&] (const auto& fields) {
+      REQUIRE(fields.m_security == security);
+      REQUIRE(fields.m_quantity == 100);
+      REQUIRE(fields.m_price == Money::ONE);
+      REQUIRE(fields.m_side == Side::BID);
+      REQUIRE(fields.m_currency == CAD);
+      REQUIRE(fields.m_destination == "TSX");
     });
-    fixture.require_state(Aspen::State::EVALUATED);
-    auto expected_order = submit.get();
-    REQUIRE(fixture.m_order->eval() == expected_order);
-    fixture.require_state(Aspen::State::NONE);
     accept(*expected_order);
     fixture.require_state(Aspen::State::NONE);
     fill(*expected_order, 100);
@@ -122,52 +145,19 @@ TEST_SUITE("OrderReactor") {
       Aspen::constant(fields.m_destination), quantity,
       Aspen::constant(fields.m_price),
       Aspen::constant(fields.m_time_in_force))));
-    auto submit1 = std::async(std::launch::async, [&] {
-      auto operation = fixture.m_operations->Pop();
-      auto submit =
-        std::get_if<TestOrderExecutionClient::SubmitOperation>(operation.get());
-      REQUIRE(submit);
-      REQUIRE(submit->m_fields.m_quantity == 100);
-      auto order = std::make_shared<PrimitiveOrder>(OrderInfo(
-        submit->m_fields, 123, time_from_string("2025-05-06 10:12:13:00")));
-      submit->m_result.set(order);
-      return order;
+    auto order1 = fixture.require_submit([&] (const auto& fields) {
+      REQUIRE(fields.m_quantity == 100);
     });
-    fixture.require_state(Aspen::State::EVALUATED);
-    auto order1 = submit1.get();
-    REQUIRE(fixture.m_order->eval() == order1);
-    fixture.require_state(Aspen::State::NONE);
     accept(*order1);
     fixture.require_state(Aspen::State::NONE);
     fill(*order1, 40);
     fixture.require_state(Aspen::State::NONE);
-    quantity->set_complete(70);
-    auto cancel_async = std::async(std::launch::async, [&] {
-      auto operation = fixture.m_operations->Pop();
-      auto cancel =
-        std::get_if<TestOrderExecutionClient::CancelOperation>(operation.get());
-      REQUIRE(cancel);
-      REQUIRE(cancel->m_id == 123);
+    quantity->set_complete(Quantity(70));
+    fixture.require_state(Aspen::State::NONE);
+    fixture.require_cancel(*order1);
+    auto order2 = fixture.require_submit([&] (const auto& fields) {
+      REQUIRE(fields.m_quantity == 30);
     });
-    fixture.require_state(Aspen::State::NONE);
-    set_order_status(*order1, OrderStatus::PENDING_CANCEL);
-    fixture.require_state(Aspen::State::NONE);
-    cancel(*order1);
-    auto submit2 = std::async(std::launch::async, [&] {
-      auto operation = fixture.m_operations->Pop();
-      auto submit =
-        std::get_if<TestOrderExecutionClient::SubmitOperation>(operation.get());
-      REQUIRE(submit);
-      REQUIRE(submit->m_fields.m_quantity == 30);
-      auto order = std::make_shared<PrimitiveOrder>(OrderInfo(
-        submit->m_fields, 124, time_from_string("2025-05-06 10:13:00:00")));
-      submit->m_result.set(order);
-      return order;
-    });
-    fixture.require_state(Aspen::State::EVALUATED);
-    auto order2 = submit2.get();
-    REQUIRE(fixture.m_order->eval() == order2);
-    fixture.require_state(Aspen::State::NONE);
     accept(*order2);
     fixture.require_state(Aspen::State::NONE);
     fill(*order2, 30);
@@ -175,164 +165,72 @@ TEST_SUITE("OrderReactor") {
   }
 
   TEST_CASE("order_rejection") {
-    auto commits = Beam::Queue<bool>();
-    auto trigger = Trigger([&] {
-      commits.Push(true);
-    });
-    Trigger::set_trigger(trigger);
-    auto operations = std::make_shared<
-      Beam::Queue<std::shared_ptr<TestOrderExecutionClient::Operation>>>();
-    auto client = TestOrderExecutionClient(operations);
+    auto fixture = Fixture();
     auto security = Security("TST", TSX);
     auto fields =
       make_limit_order_fields(security, CAD, Side::BID, "TSX", 100, Money::ONE);
-    auto reactor = make_limit_order_reactor(&client,
+    fixture.set(Aspen::Shared(make_limit_order_reactor(&fixture.m_client,
       Aspen::constant(fields.m_account), Aspen::constant(fields.m_security),
       Aspen::constant(fields.m_currency), Aspen::constant(fields.m_side),
       Aspen::constant(fields.m_destination), Aspen::constant(fields.m_quantity),
-      Aspen::constant(fields.m_price), Aspen::constant(fields.m_time_in_force));
-    auto submit = std::async(std::launch::async, [&] {
-      auto operation = operations->Pop();
-      auto submit =
-        std::get_if<TestOrderExecutionClient::SubmitOperation>(operation.get());
-      REQUIRE(submit);
-      auto order = std::make_shared<PrimitiveOrder>(OrderInfo(
-        submit->m_fields, 123, time_from_string("2025-05-06 10:12:13:00")));
-      submit->m_result.set(order);
-      return order;
-    });
-    auto state = reactor.commit(0);
-    REQUIRE(state == Aspen::State::EVALUATED);
-    auto order = submit.get();
-    REQUIRE(reactor.eval() == order);
+      Aspen::constant(fields.m_price),
+      Aspen::constant(fields.m_time_in_force))));
+    auto order = fixture.require_submit([&] (const auto& fields) {});
     accept(*order);
-    commits.Pop();
+    fixture.require_state(Aspen::State::NONE);
     reject(*order);
-    commits.Pop();
-    state = reactor.commit(1);
-    REQUIRE(state == Aspen::State::COMPLETE);
+    fixture.require_state(Aspen::State::COMPLETE_EVALUATED);
+    REQUIRE_THROWS(fixture.m_order->eval());
   }
 
   TEST_CASE("order_cancellation") {
-    auto commits = Beam::Queue<bool>();
-    auto trigger = Trigger([&] {
-      commits.Push(true);
-    });
-    Trigger::set_trigger(trigger);
-    auto operations = std::make_shared<
-      Beam::Queue<std::shared_ptr<TestOrderExecutionClient::Operation>>>();
-    auto client = TestOrderExecutionClient(operations);
+    auto fixture = Fixture();
     auto security = Security("TST", TSX);
     auto fields =
       make_limit_order_fields(security, CAD, Side::BID, "TSX", 100, Money::ONE);
     auto quantity = Shared<Aspen::Queue<Quantity>>();
     quantity->push(100);
-    auto reactor = make_limit_order_reactor(&client,
+    fixture.set(Aspen::Shared(make_limit_order_reactor(&fixture.m_client,
       Aspen::constant(fields.m_account), Aspen::constant(fields.m_security),
       Aspen::constant(fields.m_currency), Aspen::constant(fields.m_side),
       Aspen::constant(fields.m_destination), quantity,
-      Aspen::constant(fields.m_price), Aspen::constant(fields.m_time_in_force));
-    auto submit = std::async(std::launch::async, [&] {
-      auto operation = operations->Pop();
-      auto submit =
-        std::get_if<TestOrderExecutionClient::SubmitOperation>(operation.get());
-      REQUIRE(submit);
-      auto order = std::make_shared<PrimitiveOrder>(OrderInfo(
-        submit->m_fields, 123, time_from_string("2025-05-06 10:12:13:00")));
-      submit->m_result.set(order);
-      return order;
-    });
-    auto state = reactor.commit(0);
-    REQUIRE(state == Aspen::State::EVALUATED);
-    auto order = submit.get();
-    REQUIRE(reactor.eval() == order);
+      Aspen::constant(fields.m_price),
+      Aspen::constant(fields.m_time_in_force))));
+    auto order = fixture.require_submit([&] (const auto& fields) {});
     accept(*order);
-    commits.Pop();
-    quantity->push(0);
-    auto cancel_async = std::async(std::launch::async, [&] {
-      auto operation = operations->Pop();
-      auto cancel =
-        std::get_if<TestOrderExecutionClient::CancelOperation>(operation.get());
-      REQUIRE(cancel);
-      REQUIRE(cancel->m_id == 123);
-    });
-    state = reactor.commit(1);
-    REQUIRE(state == Aspen::State::NONE);
-    cancel_async.get();
-    cancel(*order);
-    commits.Pop();
-    state = reactor.commit(2);
-    REQUIRE(state == Aspen::State::COMPLETE);
+    fixture.require_state(Aspen::State::NONE);
+    quantity->set_complete(Quantity(0));
+    fixture.require_state(Aspen::State::NONE);
+    fixture.require_cancel(*order);
+    fixture.require_state(Aspen::State::COMPLETE);
   }
 
   TEST_CASE("fields_update_triggers_resubmission") {
-    auto commits = Beam::Queue<bool>();
-    auto trigger = Trigger([&] {
-      commits.Push(true);
-    });
-    Trigger::set_trigger(trigger);
-    auto operations = std::make_shared<
-      Beam::Queue<std::shared_ptr<TestOrderExecutionClient::Operation>>>();
-    auto client = TestOrderExecutionClient(operations);
+    auto fixture = Fixture();
     auto security = Shared<Aspen::Queue<Security>>();
     security->push(Security("TST", TSX));
     auto fields = make_limit_order_fields(
       Security("TST", TSX), CAD, Side::BID, "TSX", 100, Money::ONE);
-    auto reactor = make_limit_order_reactor(&client,
+    fixture.set(Aspen::Shared(make_limit_order_reactor(&fixture.m_client,
       Aspen::constant(fields.m_account), security,
       Aspen::constant(fields.m_currency), Aspen::constant(fields.m_side),
       Aspen::constant(fields.m_destination), Aspen::constant(fields.m_quantity),
-      Aspen::constant(fields.m_price), Aspen::constant(fields.m_time_in_force));
-    auto submit1 = std::async(std::launch::async, [&] {
-      auto operation = operations->Pop();
-      auto submit =
-        std::get_if<TestOrderExecutionClient::SubmitOperation>(operation.get());
-      REQUIRE(submit);
-      REQUIRE(submit->m_fields.m_security == Security("TST", TSX));
-      auto order = std::make_shared<PrimitiveOrder>(OrderInfo(
-        submit->m_fields, 123, time_from_string("2025-05-06 10:12:13:00")));
-      submit->m_result.set(order);
-      return order;
+      Aspen::constant(fields.m_price),
+      Aspen::constant(fields.m_time_in_force))));
+    auto order1 = fixture.require_submit([&] (const auto& fields) {
+      REQUIRE(fields.m_security == Security("TST", TSX));
     });
-    auto state = reactor.commit(0);
-    REQUIRE(state == Aspen::State::EVALUATED);
-    auto order1 = submit1.get();
-    REQUIRE(reactor.eval() == order1);
     accept(*order1);
-    commits.Pop();
+    fixture.require_state(Aspen::State::NONE);
     security->push(Security("TST2", TSX));
-    auto cancel_async = std::async(std::launch::async, [&] {
-      auto operation = operations->Pop();
-      auto cancel =
-        std::get_if<TestOrderExecutionClient::CancelOperation>(operation.get());
-      REQUIRE(cancel);
-      REQUIRE(cancel->m_id == 123);
+    fixture.require_state(Aspen::State::NONE);
+    fixture.require_cancel(*order1);
+    auto order2 = fixture.require_submit([&] (const auto& fields) {
+      REQUIRE(fields.m_security == Security("TST2", TSX));
     });
-    state = reactor.commit(1);
-    REQUIRE(state == Aspen::State::NONE);
-    cancel_async.get();
-    cancel(*order1);
-    commits.Pop();
-    auto submit2 = std::async(std::launch::async, [&] {
-      auto operation = operations->Pop();
-      auto submit =
-        std::get_if<TestOrderExecutionClient::SubmitOperation>(operation.get());
-      REQUIRE(submit);
-      REQUIRE(submit->m_fields.m_security == Security("TST2", TSX));
-      auto order = std::make_shared<PrimitiveOrder>(OrderInfo(
-        submit->m_fields, 124, time_from_string("2025-05-06 10:13:00:00")));
-      submit->m_result.set(order);
-      return order;
-    });
-    state = reactor.commit(2);
-    REQUIRE(state == Aspen::State::EVALUATED);
-    auto order2 = submit2.get();
-    REQUIRE(reactor.eval() == order2);
     accept(*order2);
-    commits.Pop();
+    fixture.require_state(Aspen::State::NONE);
     fill(*order2, 100);
-    commits.Pop();
-    state = reactor.commit(3);
-    REQUIRE(state == Aspen::State::COMPLETE);
+    fixture.require_state(Aspen::State::COMPLETE);
   }
 }

@@ -280,6 +280,8 @@ namespace Nexus::OrderExecutionService {
               m_execution_reports->GetWriter());
             m_state |= WAITING;
             return Aspen::State::EVALUATED;
+          } else if(m_state & FIELDS_COMPLETE && !(m_state & WAITING)) {
+            return Aspen::State::COMPLETE;
           }
         } catch(const std::exception&) {
           m_order_fields.reset();
