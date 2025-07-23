@@ -1,6 +1,7 @@
 #ifndef NEXUS_ORDER_EXECUTION_SERVICES_HPP
 #define NEXUS_ORDER_EXECUTION_SERVICES_HPP
 #include <Beam/Queries/QueryResult.hpp>
+#include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
