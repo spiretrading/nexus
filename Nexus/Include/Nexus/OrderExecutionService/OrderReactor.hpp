@@ -211,7 +211,7 @@ namespace Nexus::OrderExecutionService {
           m_last_order_fields->m_time_in_force, std::move(time_in_force)),
         Aspen::VectorSync(m_last_order_fields->m_additional_fields,
           std::move(additional_fields))),
-      m_order(nullptr),
+      m_order(std::shared_ptr<const Order>()),
       m_state(NONE),
       m_execution_reports(
         std::make_shared<Beam::MultiQueueWriter<ExecutionReport>>()),

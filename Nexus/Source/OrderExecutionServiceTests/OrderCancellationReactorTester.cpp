@@ -4,8 +4,8 @@
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/OrderExecutionService/OrderCancellationReactor.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
-#include "Nexus/OrderExecutionServiceTests/TestOrderExecutionClient.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
+#include "Nexus/OrderExecutionServiceTests/TestOrderExecutionClient.hpp"
 
 using namespace Aspen;
 using namespace Beam;
