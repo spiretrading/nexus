@@ -427,7 +427,7 @@ namespace Nexus::OrderExecutionService {
     auto revised_query = query;
     if(revised_query.GetIndex().m_type ==
         Beam::ServiceLocator::DirectoryEntry::Type::NONE) {
-      revised_query.SetIndex(session.get_account());
+      revised_query.SetIndex(session.GetAccount());
     }
     if(!session.has_permission(revised_query.GetIndex())) {
       request.SetResult(OrderSubmissionQueryResult());
@@ -477,155 +477,146 @@ namespace Nexus::OrderExecutionService {
       });
   }
 
-#if 0
   template<typename C, typename T, typename S, typename U, typename A,
     typename O, typename D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::
-      OnQueryExecutionReportsRequest(Beam::Services::RequestToken<
-      ServiceProtocolClient, QueryExecutionReportsService>& request,
-      const AccountQuery& query) {
+      on_query_execution_reports_request(Beam::Services::RequestToken<
+        ServiceProtocolClient, QueryExecutionReportsService>& request,
+        const AccountQuery& query) {
     auto& session = request.GetSession();
-    auto revisedQuery = std::move(query);
-    if(revisedQuery.GetIndex().m_type ==
+    auto revised_query = query;
+    if(revised_query.GetIndex().m_type ==
         Beam::ServiceLocator::DirectoryEntry::Type::NONE) {
-      revisedQuery.SetIndex(session.GetAccount());
+      revised_query.SetIndex(session.GetAccount());
     }
-    if(!session.HasOrderExecutionPermission(revisedQuery.GetIndex())) {
+    if(!session.has_permission(revised_query.GetIndex())) {
       request.SetResult(ExecutionReportQueryResult());
       return;
     }
     auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
-      revisedQuery.GetFilter());
+      revised_query.GetFilter());
     auto result = ExecutionReportQueryResult();
-    result.m_queryId = m_executionReportSubscriptions.Initialize(
-      revisedQuery.GetIndex(), request.GetClient(), revisedQuery.GetRange(),
+    result.m_queryId = m_execution_report_subscriptions.Initialize(
+      revised_query.GetIndex(), request.GetClient(), revised_query.GetRange(),
       std::move(filter));
-    result.m_snapshot = m_dataStore->LoadExecutionReports(revisedQuery);
-    m_executionReportSubscriptions.Commit(revisedQuery.GetIndex(),
-      std::move(result), [&] (auto result) {
+    result.m_snapshot = m_data_store->load_execution_reports(revised_query);
+    m_execution_report_subscriptions.Commit(
+      revised_query.GetIndex(), std::move(result), [&] (const auto& result) {
         request.SetResult(result);
       });
   }
 
   template<typename C, typename T, typename S, typename U, typename A,
     typename O, typename D>
-  void OrderExecutionServlet<C, T, S, U, A, O, D>::OnNewOrderSingleRequest(
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::on_new_order_single_request(
       Beam::Services::RequestToken<ServiceProtocolClient,
-      NewOrderSingleService>& request, const OrderFields& requestFields) {
+        NewOrderSingleService>& request, const OrderFields& fields) {
     auto& session = request.GetSession();
-    auto revisedFields = boost::optional<OrderFields>();
-    auto fields = &requestFields;
-    if(fields->m_account.m_type ==
+    auto revised_fields = boost::optional<OrderFields>();
+    auto order_fields = &fields;
+    if(order_fields->m_account.m_type ==
         Beam::ServiceLocator::DirectoryEntry::Type::NONE) {
-      if(!revisedFields) {
-        revisedFields.emplace(*fields);
-        fields = revisedFields.get_ptr();
+      if(!revised_fields) {
+        revised_fields.emplace(*order_fields);
+        order_fields = revised_fields.get_ptr();
       }
-      revisedFields->m_account = session.GetAccount();
+      revised_fields->m_account = session.GetAccount();
     }
-    if(fields->m_destination.empty()) {
-      if(!revisedFields) {
-        revisedFields.emplace(*fields);
-        fields = revisedFields.get_ptr();
+    if(order_fields->m_destination.empty()) {
+      if(!revised_fields) {
+        revised_fields.emplace(*order_fields);
+        order_fields = revised_fields.get_ptr();
       }
-      revisedFields->m_destination =
-        m_destinationDatabase.GetPreferredDestination(
-        fields->m_security.GetMarket()).m_id;
+      revised_fields->m_destination = m_destinations.get_preferred_destination(
+        order_fields->m_security.get_venue()).m_id;
     }
-    if(fields->m_currency == CurrencyId::NONE) {
-      if(!revisedFields) {
-        revisedFields.emplace(*fields);
-        fields = revisedFields.get_ptr();
+    if(order_fields->m_currency == CurrencyId::NONE) {
+      if(!revised_fields) {
+        revised_fields.emplace(*order_fields);
+        order_fields = revised_fields.get_ptr();
       }
-      revisedFields->m_currency =
-        m_marketDatabase.FromCode(fields->m_security.GetMarket()).m_currency;
+      revised_fields->m_currency =
+        m_venues.from(order_fields->m_security.get_venue()).m_currency;
     }
-    auto orderId = m_uidClient->LoadNextUid();
-    auto shortingModel = m_shortingModels.GetOrInsert(fields->m_account,
+    auto order_id = m_uid_client->LoadNextUid();
+    auto shorting_model = m_shorting_models.GetOrInsert(order_fields->m_account,
       boost::factory<std::shared_ptr<SyncShortingModel>>());
-    auto shortingFlag = Beam::Threading::With(*shortingModel,
-      [&] (auto& shortingModel) {
-        return shortingModel.Submit(orderId, *fields);
+    auto shorting_flag = Beam::Threading::With(*shorting_model,
+      [&] (auto& model) {
+        return model.submit(order_id, *order_fields);
       });
-    auto orderInfo = OrderInfo(*fields, session.GetAccount(), orderId,
-      shortingFlag, m_timeClient->GetTime());
-    auto order = static_cast<const Order*>(nullptr);
-    if(!session.HasOrderExecutionPermission(orderInfo.m_fields.m_account)) {
-      auto rejectedOrder = MakeRejectedOrder(orderInfo,
-        "Insufficient permissions to execute order.");
-      order = rejectedOrder.get();
-      m_rejectedOrders.push_back(std::move(rejectedOrder));
-    } else if(orderInfo.m_fields.m_security.GetMarket() == MarketCode()) {
-      auto rejectedOrder = MakeRejectedOrder(orderInfo,
-        "Market not specified.");
-      order = rejectedOrder.get();
-      m_rejectedOrders.push_back(std::move(rejectedOrder));
-    } else if(orderInfo.m_fields.m_security.GetCountry() == CountryCode()) {
-      auto rejectedOrder = MakeRejectedOrder(orderInfo,
-        "Country not specified.");
-      order = rejectedOrder.get();
-      m_rejectedOrders.push_back(std::move(rejectedOrder));
-    } else if(orderInfo.m_fields.m_security.GetSymbol().empty()) {
-      auto rejectedOrder = MakeRejectedOrder(orderInfo,
-        "Ticker symbol not specified.");
-      order = rejectedOrder.get();
-      m_rejectedOrders.push_back(std::move(rejectedOrder));
-    } else {
-      order = &m_driver->Submit(orderInfo);
-    }
-    m_registry.Publish(orderInfo,
+    auto order_info = OrderInfo(*order_fields, session.GetAccount(), order_id,
+      shorting_flag, m_time_client->GetTime());
+    auto order = [&] () -> std::shared_ptr<const Order> {
+      if(!session.has_permission(order_info.m_fields.m_account)) {
+        auto order = make_rejected_order(
+          order_info, "Insufficient permissions to execute order.");
+        m_rejected_orders.push_back(order);
+        return order;
+      } else if(order_info.m_fields.m_security.get_venue() == Venue()) {
+        auto order = make_rejected_order(order_info, "Market not specified.");
+        m_rejected_orders.push_back(order);
+        return order;
+      } else if(order_info.m_fields.m_security.get_symbol().empty()) {
+        auto order =
+          make_rejected_order(order_info, "Ticker symbol not specified.");
+        m_rejected_orders.push_back(order);
+        return order;
+      }
+      return m_driver->submit(order_info);
+    }();
+    m_registry.publish(order_info,
       [&] {
-        return LoadInitialSequences(*m_dataStore, orderInfo.m_fields.m_account);
+        return load_initial_sequences(
+          *m_data_store, order_info.m_fields.m_account);
       },
-      [&] (const auto& orderInfo) {
-        m_liveOrders.Insert((*orderInfo)->m_orderId);
-        m_dataStore->Store(orderInfo);
-        request.SetResult(orderInfo);
-        auto orderRecord = Beam::Queries::SequencedValue(
-          Beam::Queries::IndexedValue(OrderRecord(**orderInfo, {}),
-          orderInfo->GetIndex()), orderInfo.GetSequence());
-        m_submissionSubscriptions.Publish(orderRecord,
+      [&] (const auto& info) {
+        m_live_orders.Insert((*info)->m_order_id);
+        m_data_store->store(info);
+        request.SetResult(info);
+        auto order_record =
+          Beam::Queries::SequencedValue(Beam::Queries::IndexedValue(
+            OrderRecord(**info, {}), info->GetIndex()), info.GetSequence());
+        m_submission_subscriptions.Publish(order_record,
           [&] (const auto& client) {
             return &client != &request.GetClient();
           },
           [&] (const auto& clients) {
             Beam::Services::BroadcastRecordMessage<OrderSubmissionMessage>(
-              clients, orderRecord);
+              clients, order_record);
           });
       });
-    order->GetPublisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
-      std::bind(&OrderExecutionServlet::OnExecutionReport, this,
-        std::placeholders::_1, orderInfo.m_fields.m_account,
-        std::ref(*shortingModel))));
+    order->get_publisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
+      std::bind(&OrderExecutionServlet::on_execution_report, this,
+        std::placeholders::_1, order_info.m_fields.m_account,
+        std::ref(*shorting_model))));
   }
 
   template<typename C, typename T, typename S, typename U, typename A,
     typename O, typename D>
-  void OrderExecutionServlet<C, T, S, U, A, O, D>::OnUpdateOrderRequest(
-      ServiceProtocolClient& client, OrderId orderId,
-      const ExecutionReport& executionReport) {
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::on_update_order_request(
+      ServiceProtocolClient& client, OrderId id,
+      const ExecutionReport& report) {
     auto& session = client.GetSession();
-    if(!session.IsAdministrator()) {
+    if(!session.is_administrator()) {
       throw Beam::Services::ServiceRequestException(
         "Insufficient permissions.");
     }
-    auto sanitizedExecutionReport = executionReport;
-    sanitizedExecutionReport.m_id = orderId;
-    if(sanitizedExecutionReport.m_timestamp ==
-        boost::posix_time::not_a_date_time) {
-      sanitizedExecutionReport.m_timestamp = m_timeClient->GetTime();
+    auto sanitized_report = report;
+    sanitized_report.m_id = id;
+    if(sanitized_report.m_timestamp == boost::posix_time::not_a_date_time) {
+      sanitized_report.m_timestamp = m_time_client->GetTime();
     }
-    m_driver->Update(session, orderId, sanitizedExecutionReport);
+    m_driver->update(session, id, sanitized_report);
   }
 
   template<typename C, typename T, typename S, typename U, typename A,
     typename O, typename D>
-  void OrderExecutionServlet<C, T, S, U, A, O, D>::OnCancelOrder(
-      ServiceProtocolClient& client, OrderId orderId) {
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::on_cancel_order(
+      ServiceProtocolClient& client, OrderId id) {
     auto& session = client.GetSession();
-    m_driver->Cancel(session, orderId);
+    m_driver->cancel(session, id);
   }
-#endif
 }
 
 #endif
