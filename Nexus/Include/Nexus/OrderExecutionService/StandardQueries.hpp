@@ -8,6 +8,7 @@
 #include <Beam/Queries/ParameterExpression.hpp>
 #include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <Beam/Queries/StandardValues.hpp>
+#include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/Routine.hpp>
 #include <boost/date_time/local_time/tz_database.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -86,14 +87,14 @@ namespace Nexus::OrderExecutionService {
    * @param queue The Queue to write to.
    */
   template<typename OrderExecutionClient>
-  void query_daily_order_submissions(
+  Beam::Routines::Routine::Id query_daily_order_submissions(
       const Beam::ServiceLocator::DirectoryEntry& account,
       boost::posix_time::ptime start, boost::posix_time::ptime end,
       const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones,
       OrderExecutionClient&& client,
       Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue) {
-    Beam::Routines::Spawn([=, queue = std::move(queue),
+    return Beam::Routines::Spawn([=, queue = std::move(queue),
         client = Beam::CapturePtr<OrderExecutionClient>(client)] () mutable {
       auto venue_time_zones =
         std::unordered_map<std::string, std::vector<Venue>>();
