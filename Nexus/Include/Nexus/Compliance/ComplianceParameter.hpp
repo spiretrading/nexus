@@ -6,6 +6,7 @@
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/Serialization/ShuttleVariant.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
+#include <Beam/Utilities/Streamable.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/variant/recursive_variant.hpp>
 #include <boost/variant/variant.hpp>
@@ -33,6 +34,25 @@ namespace Nexus::Compliance {
 
     bool operator ==(const ComplianceParameter&) const = default;
   };
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const ComplianceParameter& parameter) {
+    return out << '(' << parameter.m_name << ' ' << parameter.m_value << ')';
+  }
+}
+
+namespace boost {
+  inline std::ostream& operator <<(
+      std::ostream& out, const Nexus::Compliance::ComplianceValue& value) {
+    if(auto v =
+        boost::get<std::vector<Nexus::Compliance::ComplianceValue>>(&value)) {
+      return out << Beam::Stream(*v);
+    }
+    boost::apply_visitor([&] (const auto& value) {
+      out << value;
+    }, value);
+    return out;
+  }
 }
 
 namespace Beam::Serialization {

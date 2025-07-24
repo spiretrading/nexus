@@ -5,6 +5,7 @@
 #include "Nexus/Definitions/Security.hpp"
 
 using namespace Beam;
+using namespace Beam::Queries;
 using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
