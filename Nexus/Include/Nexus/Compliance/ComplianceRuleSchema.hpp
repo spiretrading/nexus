@@ -4,7 +4,7 @@
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
-#include "Nexus/Compliance/Compliance.hpp"
+#include <Beam/Utilities/Streamable.hpp>
 #include "Nexus/Compliance/ComplianceParameter.hpp"
 
 namespace Nexus::Compliance {
@@ -25,12 +25,12 @@ namespace Nexus::Compliance {
         std::string name, std::vector<ComplianceParameter> parameters);
 
       /** Returns the name of the rule. */
-      const std::string& GetName() const;
+      const std::string& get_name() const;
 
       /** Returns the rule's parameters. */
-      const std::vector<ComplianceParameter>& GetParameters() const;
+      const std::vector<ComplianceParameter>& get_parameters() const;
 
-      bool operator ==(const ComplianceRuleSchema& rhs) const = default;
+      bool operator ==(const ComplianceRuleSchema&) const = default;
 
     private:
       friend struct Beam::Serialization::Shuttle<ComplianceRuleSchema>;
@@ -38,17 +38,23 @@ namespace Nexus::Compliance {
       std::vector<ComplianceParameter> m_parameters;
   };
 
+  inline std::ostream& operator <<(
+      std::ostream& out, const ComplianceRuleSchema& rule) {
+    return out << '(' << rule.get_name() << ' ' <<
+      Beam::Stream(rule.get_parameters()) << ')';
+  }
+
   inline ComplianceRuleSchema::ComplianceRuleSchema(
     std::string name, std::vector<ComplianceParameter> parameters)
     : m_name(std::move(name)),
       m_parameters(std::move(parameters)) {}
 
-  inline const std::string& ComplianceRuleSchema::GetName() const {
+  inline const std::string& ComplianceRuleSchema::get_name() const {
     return m_name;
   }
 
-  inline const std::vector<ComplianceParameter>& ComplianceRuleSchema::
-      GetParameters() const {
+  inline const std::vector<ComplianceParameter>&
+      ComplianceRuleSchema::get_parameters() const {
     return m_parameters;
   }
 }
