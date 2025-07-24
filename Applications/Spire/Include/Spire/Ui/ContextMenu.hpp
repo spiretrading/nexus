@@ -121,6 +121,9 @@ namespace Spire {
       /** Resets the menu, removing all actions. */
       void reset();
 
+      /** Returns the number of menu items. */
+      int get_count() const;
+
       /**
        * Returns the menu item at a specified index, or <code>nullptr</code> iff
        * the index is out of range.
@@ -154,6 +157,7 @@ namespace Spire {
       OverlayPanel* m_visible_submenu;
       int m_pending_submenu_index;
       int m_hide_count;
+      int m_last_show_items;
       QRect m_active_item_geometry;
       int m_block_move;
       MouseMoveObserver m_mouse_observer;
