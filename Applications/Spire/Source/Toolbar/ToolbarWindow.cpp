@@ -309,9 +309,9 @@ void ToolbarWindow::populate_recently_closed_menu() {
     auto& window = m_recently_closed_windows->get(i);
     m_recently_closed_menu->add_action(
       QString::fromStdString(window->GetName()), [=] {
-      auto window = m_recently_closed_windows->get(i);
-      m_reopen_signal(*window);
-    });
+        auto window = m_recently_closed_windows->get(i);
+        m_reopen_signal(*window);
+      });
   }
 }
 
