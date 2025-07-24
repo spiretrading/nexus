@@ -183,6 +183,10 @@ void ContextMenu::reset() {
   clear(*m_list);
 }
 
+int ContextMenu::get_count() const {
+  return m_list->get_size();
+}
+
 QWidget* ContextMenu::get_menu_item(int index) {
   return m_list_view->get_list_item(index);
 }

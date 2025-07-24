@@ -6,6 +6,7 @@
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
+#include "Spire/Ui/EmptyState.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -28,6 +29,8 @@ namespace {
 MenuButton::MenuButton(QWidget& body, QWidget* parent)
     : QWidget(parent),
       m_body(&body),
+      m_empty_message(tr("Empty")),
+      m_empty_state(nullptr),
       m_timer(this),
       m_is_mouse_down_on_button(false),
       m_menu_border_size(0) {
@@ -55,11 +58,19 @@ ContextMenu& MenuButton::get_menu() {
   return *m_menu;
 }
 
+void MenuButton::set_empty_message(const QString& message) {
+  m_empty_message = message;
+  if(m_empty_state) {
+    delete m_empty_state;
+    m_empty_state = make_empty_state();
+  }
+}
+
 bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Hide) {
     unmatch(*this, PopUp());
     unmatch(*this, Press());
-    m_menu->hide();
+    hide_panel();
   } else if(event->type() == QEvent::MouseButtonPress) {
     auto& mouse_event = *static_cast<QMouseEvent*>(event);
     if(mouse_event.button() == Qt::LeftButton) {
@@ -97,7 +108,7 @@ bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
             forward_mouse_event(child, QEvent::MouseButtonRelease);
           } else {
             unmatch(*this, PopUp());
-            m_menu->hide();
+            hide_panel();
           }
         }
       }
@@ -109,7 +120,7 @@ bool MenuButton::eventFilter(QObject* watched, QEvent* event) {
       if(m_menu->focusProxy() == m_menu->focusWidget()) {
         match(*this, Press());
         unmatch(*this, PopUp());
-        m_menu->hide();
+        hide_panel();
       }
     }
   }
@@ -120,7 +131,7 @@ void MenuButton::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Space || event->key() == Qt::Key_Enter ||
       event->key() == Qt::Key_Return) {
     match(*this, Press());
-    show_menu();
+    show_panel();
   }
   QWidget::keyPressEvent(event);
 }
@@ -137,7 +148,7 @@ void MenuButton::mousePressEvent(QMouseEvent* event) {
   if(!m_is_mouse_down_on_button && event->button() == Qt::LeftButton) {
     m_is_mouse_down_on_button = true;
     match(*this, Press());
-    show_menu();
+    show_panel();
     m_timer.start(500);
   }
   QWidget::mousePressEvent(event);
@@ -152,18 +163,50 @@ void MenuButton::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void MenuButton::resizeEvent(QResizeEvent* event) {
-  update_menu_minimum_width();
+  update_panel_minimum_width();
 }
 
-void MenuButton::show_menu() {
-  m_menu->show();
+int MenuButton::get_panel_minimum_width() const {
+  return std::max(MINIMUM_MENU_WIDTH(), width()) - m_menu_border_size;
+}
+
+EmptyState* MenuButton::make_empty_state() {
+  auto empty_state = new EmptyState(m_empty_message, *this);
+  empty_state->window()->installEventFilter(this);
+  empty_state->setMinimumWidth(get_panel_minimum_width());
+  return empty_state;
+}
+
+void MenuButton::show_panel() {
+  if(m_menu->get_count() > 0) {
+    m_menu->show();
+    if(m_empty_state) {
+      delete m_empty_state;
+      m_empty_state = nullptr;
+    }
+  } else {
+    if(!m_empty_state) {
+      m_empty_state = make_empty_state();
+    }
+    m_empty_state->show();
+  }
   match(*this, PopUp());
 }
 
-void MenuButton::update_menu_minimum_width() {
-  m_menu->setMinimumWidth(
-    std::max(MINIMUM_MENU_WIDTH(), width() - m_menu_border_size));
-  updateGeometry();
+void MenuButton::hide_panel() {
+  if(m_empty_state) {
+    m_empty_state->hide();
+  } else {
+    m_menu->hide();
+  }
+}
+
+void MenuButton::update_panel_minimum_width() {
+  auto minimum_width = get_panel_minimum_width();
+  m_menu->setMinimumWidth(minimum_width);
+  if(m_empty_state) {
+    m_empty_state->setMinimumWidth(minimum_width);
+  }
 }
 
 void MenuButton::on_menu_window_style() {
@@ -186,7 +229,7 @@ void MenuButton::on_menu_window_style() {
       });
   }
   if(*has_update) {
-    update_menu_minimum_width();
+    update_panel_minimum_width();
   }
 }
 

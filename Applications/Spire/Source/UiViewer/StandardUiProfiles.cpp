@@ -2925,6 +2925,8 @@ UiProfile Spire::make_menu_button_profile() {
   populate_widget_properties(properties);
   properties.push_back(make_standard_property("item_count", 3));
   properties.push_back(make_standard_property<QString>("item_label", "Item"));
+  properties.push_back(
+    make_standard_property<QString>("empty_message", "Empty"));
   auto profile = UiProfile("MenuButton", properties, [] (auto& profile) {
     auto label = make_label("MenuButton");
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -2955,6 +2957,11 @@ UiProfile Spire::make_menu_button_profile() {
         menu_button->get_menu().add_action(item_name,
           profile.make_event_slot<>(QString("Action:%1").arg(item_name)));
       }
+    });
+    auto& empty_message =
+      get<QString>("empty_message", profile.get_properties());
+    empty_message.connect_changed_signal([=] (const auto& value) {
+      menu_button->set_empty_message(value);
     });
     apply_widget_properties(menu_button, profile.get_properties());
     return menu_button;

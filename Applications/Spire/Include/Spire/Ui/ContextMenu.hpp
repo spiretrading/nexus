@@ -121,6 +121,9 @@ namespace Spire {
       /** Resets the menu, removing all actions. */
       void reset();
 
+      /** Returns the number of menu items. */
+      int get_count() const;
+
       /**
        * Returns the menu item at a specified index, or <code>nullptr</code> iff
        * the index is out of range.
