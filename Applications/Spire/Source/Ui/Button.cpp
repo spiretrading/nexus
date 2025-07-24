@@ -44,6 +44,9 @@ void Button::keyPressEvent(QKeyEvent* event) {
       event->modifiers() == Qt::NoModifier && !event->isAutoRepeat()) {
     m_click_signal();
     return;
+  } else if(event->key() == Qt::Key_Space && !event->isAutoRepeat()) {
+    event->accept();
+    return;
   }
   QWidget::keyPressEvent(event);
 }
