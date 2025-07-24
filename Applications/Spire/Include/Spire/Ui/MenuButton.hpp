@@ -24,6 +24,12 @@ namespace Spire {
       /** Returns the menu. */
       ContextMenu& get_menu();
 
+      /**
+       * Sets the message of the empty state.
+       * @param message The message displayed when the menu is empty.
+       */
+      void set_empty_message(const QString& message);
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
@@ -34,14 +40,18 @@ namespace Spire {
 
     private:
       QWidget* m_body;
+      QString m_empty_message;
       ContextMenu* m_menu;
-      OverlayPanel* m_menu_window;
+      EmptyState* m_empty_state;
       QTimer m_timer;
       bool m_is_mouse_down_on_button;
       int m_menu_border_size;
 
-      void show_menu();
-      void update_menu_minimum_width();
+      int get_panel_minimum_width() const;
+      EmptyState* make_empty_state();
+      void show_panel();
+      void hide_panel();
+      void update_panel_minimum_width();
       void on_menu_window_style();
   };
 

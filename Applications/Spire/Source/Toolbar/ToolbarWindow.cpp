@@ -308,17 +308,13 @@ Button* ToolbarWindow::make_icon_tool_button(
 
 void ToolbarWindow::populate_recently_closed_menu() {
   m_recently_closed_menu->reset();
-  if(m_recently_closed_windows->get_size() == 0) {
-    m_recently_closed_menu->add_disabled_action(tr("Empty"));
-  } else {
-    for(auto i = 0; i < m_recently_closed_windows->get_size(); ++i) {
-      auto& window = m_recently_closed_windows->get(i);
-      m_recently_closed_menu->add_action(
-        QString::fromStdString(window->GetName()), [=] {
-          auto window = m_recently_closed_windows->get(i);
-          m_reopen_signal(*window);
-        });
-    }
+  for(auto i = 0; i < m_recently_closed_windows->get_size(); ++i) {
+    auto& window = m_recently_closed_windows->get(i);
+    m_recently_closed_menu->add_action(
+      QString::fromStdString(window->GetName()), [=] {
+        auto window = m_recently_closed_windows->get(i);
+        m_reopen_signal(*window);
+      });
   }
 }
 
