@@ -9,16 +9,18 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/variant/recursive_variant.hpp>
 #include <boost/variant/variant.hpp>
-#include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 
 namespace Nexus::Compliance {
 
   /** Defines the set of types that can be used as a compliance parameter. */
   using ComplianceValue = boost::make_recursive_variant<bool, Quantity, double,
     std::string, boost::posix_time::ptime, boost::posix_time::time_duration,
-    CurrencyId, Money, Security, std::vector<boost::recursive_variant_>>::type;
+    CurrencyId, Money, Security, Venue, Region,
+    std::vector<boost::recursive_variant_>>::type;
 
   /** Stores a single parameter used by a compliance rule. */
   struct ComplianceParameter {
@@ -29,7 +31,7 @@ namespace Nexus::Compliance {
     /** The parameter's value. */
     ComplianceValue m_value;
 
-    bool operator ==(const ComplianceParameter& rhs) const = default;
+    bool operator ==(const ComplianceParameter&) const = default;
   };
 }
 
@@ -38,7 +40,8 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::Compliance::ComplianceParameter> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
-        Nexus::Compliance::ComplianceParameter& value, unsigned int version) {
+        Nexus::Compliance::ComplianceParameter& value,
+        unsigned int version) const {
       shuttle.Shuttle("name", value.m_name);
       shuttle.Shuttle("value", value.m_value);
     }

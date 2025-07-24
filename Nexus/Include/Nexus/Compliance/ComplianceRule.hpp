@@ -1,11 +1,8 @@
 #ifndef NEXUS_COMPLIANCE_RULE_HPP
 #define NEXUS_COMPLIANCE_RULE_HPP
 #include <vector>
-#include <boost/noncopyable.hpp>
-#include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceParameter.hpp"
 #include "Nexus/Compliance/ComplianceRuleEntry.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
 namespace Nexus::Compliance {
 
