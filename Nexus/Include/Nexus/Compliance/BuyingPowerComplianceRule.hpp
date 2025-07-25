@@ -1,28 +1,21 @@
 #ifndef NEXUS_BUYING_POWER_COMPLIANCE_RULE_HPP
 #define NEXUS_BUYING_POWER_COMPLIANCE_RULE_HPP
+#include <type_traits>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Threading/Sync.hpp>
-#include <Beam/Utilities/Algorithm.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Accounting/BuyingPowerModel.hpp"
 #include "Nexus/Definitions/BboQuote.hpp"
-#include "Nexus/Definitions/Currency.hpp"
+#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
-#include "Nexus/Definitions/Region.hpp"
-#include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
-#include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
-#include "Nexus/OrderExecutionService/ExecutionReport.hpp"
-#include "Nexus/OrderExecutionService/Order.hpp"
-#include "Nexus/OrderExecutionService/OrderFields.hpp"
 
 namespace Nexus::Compliance {
 
@@ -45,59 +38,59 @@ namespace Nexus::Compliance {
       /**
        * Constructs a BuyingPowerComplianceRule.
        * @param parameters The list of buying power parameters.
-       * @param exchangeRates The list of ExchangeRates.
-       * @param marketDataClient Initializes the MarketDataClient used to price
-       *        Orders.
+       * @param exchange_rates Used to convert currencies.
+       * @param market_data_client Initializes the MarketDataClient used to
+       *        price Orders.
        */
       template<typename CF>
       BuyingPowerComplianceRule(
         const std::vector<ComplianceParameter>& parameters,
-        const std::vector<ExchangeRate>& exchangeRates,
+        const ExchangeRateTable& exchange_rates,
         CF&& marketDataClient);
 
-      void Submit(const OrderExecutionService::Order& order) override;
+      void submit(const std::shared_ptr<
+        const OrderExecutionService::Order>& order) override;
 
-      void Add(const OrderExecutionService::Order& order) override;
+      void add(const std::shared_ptr<
+        const OrderExecutionService::Order>& order) override;
 
     private:
       CurrencyId m_currency;
-      Money m_buyingPower;
+      Money m_buying_power;
       Region m_region;
-      ExchangeRateTable m_exchangeRates;
-      Beam::GetOptionalLocalPtr<C> m_marketDataClient;
-      Beam::Threading::Sync<Accounting::BuyingPowerModel> m_buyingPowerModel;
+      ExchangeRateTable m_exchange_rates;
+      Beam::GetOptionalLocalPtr<C> m_market_data_client;
+      Beam::Threading::Sync<Accounting::BuyingPowerModel> m_buying_power_model;
       Beam::MultiQueueWriter<OrderExecutionService::ExecutionReport>
-        m_executionReportQueue;
+        m_execution_report_queue;
       std::unordered_map<OrderExecutionService::OrderId, CurrencyId>
         m_currencies;
       Beam::SynchronizedUnorderedMap<Security,
-        std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bboQuotes;
+        std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bbo_quotes;
 
-      BboQuote LoadBboQuote(const Security& security);
-      Money GetExpectedPrice(
-        const OrderExecutionService::OrderFields& orderFields);
+      BboQuote load_bbo_quote(const Security& security);
+      Money get_expected_price(
+        const OrderExecutionService::OrderFields& fields);
   };
-
 
   template<typename MarketDataClient>
   BuyingPowerComplianceRule(const std::vector<ComplianceParameter>&,
-    const std::vector<ExchangeRate>&, MarketDataClient&&) ->
-    BuyingPowerComplianceRule<std::decay_t<MarketDataClient>>;
+    const ExchangeRateTable&, MarketDataClient&&) ->
+      BuyingPowerComplianceRule<std::decay_t<MarketDataClient>>;
 
   /**
    * Returns a ComplianceRuleSchema representing a BuyingPowerComplianceRule.
    */
-  inline ComplianceRuleSchema MakeBuyingPowerComplianceRuleSchema() {
+  inline ComplianceRuleSchema make_buying_power_compliance_rule_schema() {
     auto parameters = std::vector<ComplianceParameter>();
-    parameters.emplace_back("currency", DefaultCurrencies::USD());
+    parameters.emplace_back("currency", DefaultCurrencies::USD);
     parameters.emplace_back("buying_power", Money::ZERO);
-    auto symbols = std::vector<ComplianceValue>();
-    symbols.push_back(Security("*", MarketCode(), CountryCode::NONE));
-    parameters.emplace_back("symbols", symbols);
+    parameters.emplace_back("region", Region::GLOBAL);
     auto schema = ComplianceRuleSchema("buying_power", std::move(parameters));
     return schema;
   }
 
+#if 0
   template<typename C>
   template<typename CF>
   BuyingPowerComplianceRule<C>::BuyingPowerComplianceRule(
@@ -250,6 +243,7 @@ namespace Nexus::Compliance {
       }
     }
   }
+#endif
 }
 
 #endif

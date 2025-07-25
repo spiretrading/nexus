@@ -1,9 +1,10 @@
 #ifndef NEXUS_COMPLIANCE_RULE_ENTRY_HPP
 #define NEXUS_COMPLIANCE_RULE_ENTRY_HPP
+#include <cstdint>
+#include <ostream>
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
 
 namespace Nexus::Compliance {
@@ -21,11 +22,29 @@ namespace Details {
 
     /** The rule has been deleted. */
     DELETED);
+
+  inline std::ostream& operator <<(
+      std::ostream& out, ComplianceRuleEntryStateDefinition::Type state) {
+    if(state == ComplianceRuleEntryStateDefinition::ACTIVE) {
+      return out << "ACTIVE";
+    } else if(state == ComplianceRuleEntryStateDefinition::PASSIVE) {
+      return out << "PASSIVE";
+    } else if(state == ComplianceRuleEntryStateDefinition::DISABLED) {
+      return out << "DISABLED";
+    } else if(state == ComplianceRuleEntryStateDefinition::DELETED) {
+      return out << "DELETED";
+    } else {
+      return out << "UNKNOWN";
+    }
+  }
 }
 
   /** Represents a single instance of a compliance rule. */
   class ComplianceRuleEntry {
     public:
+
+      /** Type used to identify a rule. */
+      using Id = std::uint64_t;
 
       /**
        * Specifies how this rule handles operations that fail to pass this
@@ -33,90 +52,90 @@ namespace Details {
        */
       using State = Details::ComplianceRuleEntryStateDefinition;
 
-      /** Constructs an empty ComplianceRuleEntry. */
-      ComplianceRuleEntry();
-
       /**
        * Constructs a ComplianceRuleEntry.
        * @param id The entry's id.
-       * @param directoryEntry The DirectoryEntry this rule is assigned to.
+       * @param directory_entry The DirectoryEntry this rule is assigned to.
        * @param state The rule's State.
        * @param schema The entry's schema.
        */
-      ComplianceRuleEntry(ComplianceRuleId id,
-        Beam::ServiceLocator::DirectoryEntry directoryEntry, State state,
-        ComplianceRuleSchema schema);
+      ComplianceRuleEntry(
+        Id id, Beam::ServiceLocator::DirectoryEntry directory_entry,
+        State state, ComplianceRuleSchema schema) noexcept;
 
       /** Returns the id. */
-      ComplianceRuleId GetId() const;
-
-      /**
-       * Sets the id.
-       * @param id This entry's new id.
-       */
-      void SetId(const ComplianceRuleId& id);
+      Id get_id() const;
 
       /** Returns the DirectoryEntry this rule is assigned to. */
-      const Beam::ServiceLocator::DirectoryEntry& GetDirectoryEntry() const;
+      const Beam::ServiceLocator::DirectoryEntry& get_directory_entry() const;
 
       /** Returns the State. */
-      State GetState() const;
+      State get_state() const;
 
       /**
        * Sets the State.
        * @param state This entry's new State.
        */
-      void SetState(State state);
+      void set_state(State state);
 
       /** Returns the schema. */
-      const ComplianceRuleSchema& GetSchema() const;
+      const ComplianceRuleSchema& get_schema() const;
 
-      bool operator ==(const ComplianceRuleEntry& rhs) const = default;
+      bool operator ==(const ComplianceRuleEntry&) const = default;
 
     private:
+      friend struct Beam::Serialization::DataShuttle;
       friend struct Beam::Serialization::Shuttle<ComplianceRuleEntry>;
-      ComplianceRuleId m_id;
-      Beam::ServiceLocator::DirectoryEntry m_directoryEntry;
+      Id m_id;
+      Beam::ServiceLocator::DirectoryEntry m_directory_entry;
       State m_state;
       ComplianceRuleSchema m_schema;
+
+      ComplianceRuleEntry(Beam::Serialization::ReceiveBuilder);
   };
 
-  inline ComplianceRuleEntry::ComplianceRuleEntry()
-    : m_id(0),
-      m_state(State::ACTIVE) {}
+  inline std::ostream& operator <<(
+      std::ostream& out, ComplianceRuleEntry::State state) {
+    return out << static_cast<ComplianceRuleEntry::State::Type>(state);
+  }
 
-  inline ComplianceRuleEntry::ComplianceRuleEntry(ComplianceRuleId id,
-    Beam::ServiceLocator::DirectoryEntry directoryEntry, State state,
-    ComplianceRuleSchema schema)
-    : m_id(std::move(id)),
-      m_directoryEntry(std::move(directoryEntry)),
+  inline std::ostream& operator <<(
+      std::ostream& out, const ComplianceRuleEntry& entry) {
+    return out << '(' << entry.get_id() << ' ' << entry.get_directory_entry() <<
+      ' ' << entry.get_state() << ' ' << entry.get_schema() << ')';
+  }
+
+  inline ComplianceRuleEntry::ComplianceRuleEntry(Id id,
+    Beam::ServiceLocator::DirectoryEntry directory_entry, State state,
+    ComplianceRuleSchema schema) noexcept
+    : m_id(id),
+      m_directory_entry(std::move(directory_entry)),
       m_state(state),
       m_schema(std::move(schema)) {}
 
-  inline ComplianceRuleId ComplianceRuleEntry::GetId() const {
+  inline ComplianceRuleEntry::Id ComplianceRuleEntry::get_id() const {
     return m_id;
   }
 
-  inline void ComplianceRuleEntry::SetId(const ComplianceRuleId& id) {
-    m_id = id;
+  inline const Beam::ServiceLocator::DirectoryEntry&
+      ComplianceRuleEntry::get_directory_entry() const {
+    return m_directory_entry;
   }
 
-  inline const Beam::ServiceLocator::DirectoryEntry& ComplianceRuleEntry::
-      GetDirectoryEntry() const {
-    return m_directoryEntry;
-  }
-
-  inline ComplianceRuleEntry::State ComplianceRuleEntry::GetState() const {
+  inline ComplianceRuleEntry::State ComplianceRuleEntry::get_state() const {
     return m_state;
   }
 
-  inline void ComplianceRuleEntry::SetState(State state) {
+  inline void ComplianceRuleEntry::set_state(State state) {
     m_state = state;
   }
 
-  inline const ComplianceRuleSchema& ComplianceRuleEntry::GetSchema() const {
+  inline const ComplianceRuleSchema& ComplianceRuleEntry::get_schema() const {
     return m_schema;
   }
+
+  inline ComplianceRuleEntry::ComplianceRuleEntry(
+    Beam::Serialization::ReceiveBuilder) {}
 }
 
 namespace Beam::Serialization {
@@ -124,9 +143,10 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::Compliance::ComplianceRuleEntry> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
-        Nexus::Compliance::ComplianceRuleEntry& value, unsigned int version) {
+        Nexus::Compliance::ComplianceRuleEntry& value,
+        unsigned int version) const {
       shuttle.Shuttle("id", value.m_id);
-      shuttle.Shuttle("directory_entry", value.m_directoryEntry);
+      shuttle.Shuttle("directory_entry", value.m_directory_entry);
       shuttle.Shuttle("state", value.m_state);
       shuttle.Shuttle("schema", value.m_schema);
     }

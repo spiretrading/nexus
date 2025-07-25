@@ -5,6 +5,7 @@
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/EndOfFileException.hpp>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/Queues/Queue.hpp>
 #include <Beam/ServicesTests/ServiceResult.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
@@ -195,6 +196,12 @@ namespace Nexus::MarketDataService::Tests {
       template<typename T, typename R, typename... Args>
       R append_result(Args&&... args);
   };
+
+  /** Makes an appropriate queue for monitoring test operations. */
+  inline auto make_test_market_data_operation_queue() {
+    return std::make_shared<Beam::Queue<std::shared_ptr<
+      TestMarketDataClient::Operation>>>();
+  }
 
   inline TestMarketDataClient::TestMarketDataClient(
     Beam::ScopedQueueWriter<std::shared_ptr<Operation>> operations) noexcept
