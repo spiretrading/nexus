@@ -47,6 +47,7 @@ MenuButton* Spire::make_replay_attach_menu_button(
     QWidget* parent) {
   auto button = make_menu_icon_button(
     imageFromSvg(":/Icons/target.svg", scale(26, 26)), QObject::tr("Attach to"));
+  button->set_empty_message(QObject::tr("No available windows"));
   auto assigned_targets = std::make_shared<SortedListModel<SelectableTarget>>(
     std::make_shared<FilteredListModel<SelectableTarget>>(targets,
       [] (const ListModel<SelectableTarget>& targets, int index) {
