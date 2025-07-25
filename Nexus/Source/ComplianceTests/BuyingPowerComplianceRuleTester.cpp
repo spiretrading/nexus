@@ -61,4 +61,24 @@ TEST_SUITE("BuyingPowerComplianceRule") {
     auto order = std::make_shared<PrimitiveOrder>(order_info);
     REQUIRE_NOTHROW(rule.submit(order));
   }
+
+  TEST_CASE("submit_exceeds_buying_power") {
+    auto fixture = Fixture();
+    auto parameters = std::vector<ComplianceParameter>();
+    parameters.emplace_back("currency", USD);
+    parameters.emplace_back("buying_power", 100 * Money::ONE);
+    parameters.emplace_back("region", Region::GLOBAL);
+    auto exchange_rates = ExchangeRateTable();
+    auto rule = BuyingPowerComplianceRule(parameters, exchange_rates,
+      fixture.m_market_data_environment.get_registry_client());
+    auto security = Security("TST", NYSE);
+    fixture.m_market_data_environment.update_bbo(security, Money::ONE);
+    auto fields = make_limit_order_fields(
+      DirectoryEntry::MakeAccount(1, "test"), security, USD, Side::BID, "NYSE",
+      101, 2 * Money::ONE);
+    auto order_info =
+      OrderInfo(fields, 1, time_from_string("2024-07-25 10:00:00"));
+    auto order = std::make_shared<PrimitiveOrder>(order_info);
+    REQUIRE_THROWS_AS(rule.submit(order), ComplianceCheckException);
+  }
 }
