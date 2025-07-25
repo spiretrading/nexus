@@ -234,7 +234,7 @@ namespace Nexus::OrderExecutionService {
     m_submissions_data_store.Store(info);
     auto connection = m_writer_pool.Acquire();
     connection->execute(
-      Viper::insert(m_live_orders_row, "live_orders", &(*info)->m_order_id));
+      Viper::insert(m_live_orders_row, "live_orders", &(*info)->m_id));
   }
 
   template<typename C>
@@ -244,14 +244,14 @@ namespace Nexus::OrderExecutionService {
       return;
     }
     m_submissions_data_store.Store(info);
-    auto order_ids = std::vector<OrderId>();
-    std::transform(info.begin(), info.end(),
-      std::back_inserter(order_ids), [] (auto& i) {
-        return (*i)->m_order_id;
+    auto ids = std::vector<OrderId>();
+    std::transform(info.begin(), info.end(), std::back_inserter(ids),
+      [] (auto& i) {
+        return (*i)->m_id;
       });
     auto connection = m_writer_pool.Acquire();
     connection->execute(Viper::insert(
-      m_live_orders_row, "live_orders", order_ids.begin(), order_ids.end()));
+      m_live_orders_row, "live_orders", ids.begin(), ids.end()));
   }
 
   template<typename C>
@@ -313,7 +313,7 @@ namespace Nexus::OrderExecutionService {
     info->m_submission_account =
       m_account_entries.Load(info->m_submission_account.m_id);
     auto sequenced_reports = m_execution_reports_data_store.Load(
-      Viper::sym("order_id") == info->m_order_id);
+      Viper::sym("order_id") == info->m_id);
     auto reports = std::vector<ExecutionReport>();
     for(auto& report : sequenced_reports) {
       reports.push_back(std::move(*report));

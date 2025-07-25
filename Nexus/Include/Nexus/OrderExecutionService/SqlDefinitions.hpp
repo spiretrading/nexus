@@ -25,7 +25,7 @@ namespace Nexus::OrderExecutionService {
         [] (auto& row) -> auto& {
           return row.m_fields.m_account.m_id;
         }).
-      add_column("order_id", &OrderInfo::m_order_id).
+      add_column("order_id", &OrderInfo::m_id).
       add_column("submission_account",
         [] (auto& row) {
           return row.m_submission_account.m_id;

@@ -213,9 +213,9 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     return Beam::Services::ServiceOrThrowWithNested([&] {
       auto client = m_client_handler.GetClient();
       Beam::Services::SendRecordMessage<CancelOrderMessage>(
-        *client, order.get_info().m_order_id);
+        *client, order.get_info().m_id);
     }, "Failed to cancel order: " +
-      boost::lexical_cast<std::string>(order.get_info().m_order_id));
+      boost::lexical_cast<std::string>(order.get_info().m_id));
   }
 
   template<typename B>
@@ -242,11 +242,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   template<typename B>
   std::shared_ptr<PrimitiveOrder> ServiceOrderExecutionClient<B>::load(
       const OrderRecord& record) {
-    return m_orders.GetOrInsert(record.m_info.m_order_id, [&] {
+    return m_orders.GetOrInsert(record.m_info.m_id, [&] {
       auto complete_record = record;
       m_execution_report_log.With([&] (auto& log) {
         auto i = std::remove_if(log.begin(), log.end(), [&] (auto& report) {
-          if(report.m_id == complete_record.m_info.m_order_id &&
+          if(report.m_id == complete_record.m_info.m_id &&
               (complete_record.m_execution_reports.empty() ||
               report.m_sequence ==
               complete_record.m_execution_reports.back().m_sequence + 1)) {
@@ -285,7 +285,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         order->with([&] (auto status, const auto& reports) {
           if(!is_terminal(status)) {
             entries[order->get_info().m_fields.m_account].push_back(
-              order->get_info().m_order_id);
+              order->get_info().m_id);
           }
         });
       }
@@ -313,7 +313,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       auto result =
         client.template SendRequest<QueryOrderSubmissionsService>(query);
       for(auto& record : result.m_snapshot) {
-        auto order = m_orders.Get(record->m_info.m_order_id);
+        auto order = m_orders.Get(record->m_info.m_id);
         order->with([&] (auto status, const auto& reports) {
           for(auto& report : record->m_execution_reports) {
             if(report.m_sequence > reports.back().m_sequence) {

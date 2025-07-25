@@ -205,7 +205,7 @@ namespace Nexus::Queries {
       SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
         OrderExecutionService::OrderId, OrderExecutionService::OrderInfo>>(
           std::move(order_info_expression),
-          &OrderExecutionService::OrderInfo::m_order_id));
+          &OrderExecutionService::OrderInfo::m_id));
     } else if(expression.GetName() == "shorting_flag") {
       SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
         bool, OrderExecutionService::OrderInfo>>(
@@ -223,7 +223,7 @@ namespace Nexus::Queries {
           if(!live_orders) {
             return false;
           }
-          return live_orders->Contains(info.m_order_id);
+          return live_orders->Contains(info.m_id);
         }, std::move(order_info_expression)));
     } else {
       Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);

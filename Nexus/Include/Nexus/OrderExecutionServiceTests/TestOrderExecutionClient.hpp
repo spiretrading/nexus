@@ -195,7 +195,7 @@ namespace Nexus::OrderExecutionService::Tests {
 
   inline void TestOrderExecutionClient::cancel(const Order& order) {
     auto operation =
-      std::make_shared<Operation>(CancelOperation(order.get_info().m_order_id));
+      std::make_shared<Operation>(CancelOperation(order.get_info().m_id));
     m_operations.Push(operation);
   }
 

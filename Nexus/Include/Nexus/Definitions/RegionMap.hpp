@@ -466,9 +466,6 @@ namespace Beam::Serialization {
   struct IsStructure<Nexus::RegionMap<T>> : std::false_type {};
 
   template<typename T>
-  struct IsDefaultConstructable<Nexus::RegionMap<T>> : std::false_type {};
-
-  template<typename T>
   struct Send<Nexus::RegionMap<T>> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, const char* name,

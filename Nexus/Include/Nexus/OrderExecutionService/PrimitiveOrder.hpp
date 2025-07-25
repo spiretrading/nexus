@@ -50,7 +50,7 @@ namespace Nexus::OrderExecutionService {
 
   inline PrimitiveOrder::PrimitiveOrder(OrderInfo info)
       : m_info(std::move(info)) {
-    auto report = ExecutionReport(m_info.m_order_id, m_info.m_timestamp);
+    auto report = ExecutionReport(m_info.m_id, m_info.m_timestamp);
     update(report);
   }
 

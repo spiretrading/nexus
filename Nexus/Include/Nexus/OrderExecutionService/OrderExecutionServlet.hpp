@@ -279,12 +279,12 @@ namespace Nexus::OrderExecutionService {
           boost::factory<std::shared_ptr<SyncShortingModel>>());
       shorting_model.With([&] (auto& shorting_model) {
         shorting_model.submit(
-          order_record->m_info.m_order_id, order_record->m_info.m_fields);
+          order_record->m_info.m_id, order_record->m_info.m_fields);
         for(auto& report : order_record->m_execution_reports) {
           shorting_model.update(report);
         }
       });
-      m_live_orders.Insert(order_record->m_info.m_order_id);
+      m_live_orders.Insert(order_record->m_info.m_id);
       auto order = std::shared_ptr<const Order>();
       try {
         order = m_driver->recover(Beam::Queries::SequencedValue(
@@ -292,9 +292,9 @@ namespace Nexus::OrderExecutionService {
           order_record.GetSequence()));
       } catch(const std::exception&) {
         try {
-          std::throw_with_nested(std::runtime_error(
-            "Unable to recover order: " + boost::lexical_cast<std::string>(
-              order_record->m_info.m_order_id)));
+          std::throw_with_nested(
+            std::runtime_error("Unable to recover order: " +
+              boost::lexical_cast<std::string>(order_record->m_info.m_id)));
         } catch(const std::exception&) {
           std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
           continue;
@@ -455,7 +455,7 @@ namespace Nexus::OrderExecutionService {
               auto submission_iterator =
                 std::find_if(submission_result.m_snapshot.begin(),
                   submission_result.m_snapshot.end(), [&] (const auto& record) {
-                    return record->m_info.m_order_id == report->m_id;
+                    return record->m_info.m_id == report->m_id;
                   });
               if(submission_iterator == submission_result.m_snapshot.end()) {
                 continue;
@@ -571,7 +571,7 @@ namespace Nexus::OrderExecutionService {
           *m_data_store, order_info.m_fields.m_account);
       },
       [&] (const auto& info) {
-        m_live_orders.Insert((*info)->m_order_id);
+        m_live_orders.Insert((*info)->m_id);
         m_data_store->store(info);
         request.SetResult(info);
         auto order_record =

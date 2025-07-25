@@ -58,7 +58,7 @@ namespace Nexus::OrderExecutionService {
       std::string m_destination;
       Beam::GetOptionalLocalPtr<D> m_driver;
       Beam::GetOptionalLocalPtr<A> m_administration_client;
-      Beam::SynchronizedUnorderedSet<OrderId> m_order_ids;
+      Beam::SynchronizedUnorderedSet<OrderId> m_ids;
       Beam::IO::OpenState m_open_state;
 
       ManualOrderEntryDriver(const ManualOrderEntryDriver&) = delete;
@@ -88,7 +88,7 @@ namespace Nexus::OrderExecutionService {
       const SequencedAccountOrderRecord& record) {
     if((*record)->m_info.m_fields.m_destination == m_destination) {
       auto order = std::make_shared<PrimitiveOrder>(**record);
-      m_order_ids.Insert(order->get_info().m_order_id);
+      m_ids.Insert(order->get_info().m_id);
       return order;
     } else {
       return m_driver->recover(record);
@@ -112,7 +112,7 @@ namespace Nexus::OrderExecutionService {
     if(!is_administrator) {
       auto order = make_rejected_order(
         info, "Insufficient permissions to execute a manual order.");
-      m_order_ids.Insert(order->get_info().m_order_id);
+      m_ids.Insert(order->get_info().m_id);
       return order;
     }
     auto order = std::make_shared<PrimitiveOrder>(info);
@@ -131,14 +131,14 @@ namespace Nexus::OrderExecutionService {
       updated_report.m_last_market = m_destination;
       order->update(updated_report);
     });
-    m_order_ids.Insert(order->get_info().m_order_id);
+    m_ids.Insert(order->get_info().m_id);
     return order;
   }
 
   template<typename D, typename A>
   void ManualOrderEntryDriver<D, A>::cancel(
       const OrderExecutionSession& session, OrderId id) {
-    if(m_order_ids.Contains(id)) {
+    if(m_ids.Contains(id)) {
       return;
     }
     return m_driver->cancel(session, id);
@@ -148,7 +148,7 @@ namespace Nexus::OrderExecutionService {
   void ManualOrderEntryDriver<D, A>::update(
       const OrderExecutionSession& session, OrderId id,
       const ExecutionReport& report) {
-    if(m_order_ids.Contains(id)) {
+    if(m_ids.Contains(id)) {
       return;
     }
     return m_driver->Update(session, id, report);

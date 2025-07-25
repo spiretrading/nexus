@@ -239,7 +239,7 @@ namespace Nexus::Accounting {
   inline void PositionOrderBook::add(
       std::shared_ptr<const OrderExecutionService::Order> order) {
     auto& fields = order->get_info().m_fields;
-    m_fields.emplace(order->get_info().m_order_id, fields);
+    m_fields.emplace(order->get_info().m_id, fields);
     auto& security_entry = m_security_entries[fields.m_security];
     auto& orders = pick(fields.m_side, security_entry.m_asks,
       security_entry.m_bids);
@@ -278,7 +278,7 @@ namespace Nexus::Accounting {
       pick(fields.m_side, security_entry.m_asks, security_entry.m_bids);
     auto entry_iterator = std::find_if(orders.begin(), orders.end(),
       [&] (const auto& entry) {
-        return entry.m_order->get_info().m_order_id == report.m_id;
+        return entry.m_order->get_info().m_id == report.m_id;
       });
     if(entry_iterator == orders.end()) {
       return;

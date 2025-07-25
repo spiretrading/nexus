@@ -38,7 +38,7 @@ TEST_SUITE("OrderInfo") {
     auto info = OrderInfo();
     REQUIRE(info.m_fields == OrderFields());
     REQUIRE(info.m_submission_account == DirectoryEntry());
-    REQUIRE(info.m_order_id == static_cast<OrderId>(-1));
+    REQUIRE(info.m_id == static_cast<OrderId>(-1));
     REQUIRE(!info.m_shorting_flag);
     REQUIRE(info.m_timestamp == ptime());
   }
@@ -46,39 +46,39 @@ TEST_SUITE("OrderInfo") {
   TEST_CASE("constructor") {
     auto fields = make_test_order_fields();
     auto submission_account = DirectoryEntry::MakeAccount(456, "submit");
-    auto order_id = OrderId(123);
+    auto id = OrderId(123);
     auto shorting_flag = true;
     auto timestamp = time_from_string("2024-05-21 01:02:03");
     auto info =
-      OrderInfo(fields, submission_account, order_id, shorting_flag, timestamp);
+      OrderInfo(fields, submission_account, id, shorting_flag, timestamp);
     REQUIRE(info.m_fields == fields);
     REQUIRE(info.m_submission_account == submission_account);
-    REQUIRE(info.m_order_id == order_id);
+    REQUIRE(info.m_id == id);
     REQUIRE(info.m_shorting_flag == shorting_flag);
     REQUIRE(info.m_timestamp == timestamp);
   }
 
   TEST_CASE("constructor_without_submission_account") {
     auto fields = make_test_order_fields();
-    auto order_id = OrderId(123);
+    auto id = OrderId(123);
     auto shorting_flag = true;
     auto timestamp = time_from_string("2024-05-21 01:02:03");
-    auto info = OrderInfo(fields, order_id, shorting_flag, timestamp);
+    auto info = OrderInfo(fields, id, shorting_flag, timestamp);
     REQUIRE(info.m_fields == fields);
     REQUIRE(info.m_submission_account == fields.m_account);
-    REQUIRE(info.m_order_id == order_id);
+    REQUIRE(info.m_id == id);
     REQUIRE(info.m_shorting_flag == shorting_flag);
     REQUIRE(info.m_timestamp == timestamp);
   }
 
   TEST_CASE("constructor_without_shorting_flag") {
     auto fields = make_test_order_fields();
-    auto order_id = OrderId(123);
+    auto id = OrderId(123);
     auto timestamp = time_from_string("2024-05-21 01:02:03");
-    auto info = OrderInfo(fields, order_id, timestamp);
+    auto info = OrderInfo(fields, id, timestamp);
     REQUIRE(info.m_fields == fields);
     REQUIRE(info.m_submission_account == fields.m_account);
-    REQUIRE(info.m_order_id == order_id);
+    REQUIRE(info.m_id == id);
     REQUIRE(!info.m_shorting_flag);
     REQUIRE(info.m_timestamp == timestamp);
   }
@@ -86,11 +86,11 @@ TEST_SUITE("OrderInfo") {
   TEST_CASE("stream") {
     auto fields = make_test_order_fields();
     auto submission_account = DirectoryEntry::MakeAccount(456, "submit");
-    auto order_id = OrderId(123);
+    auto id = OrderId(123);
     auto shorting_flag = true;
     auto timestamp = time_from_string("2024-05-21 01:02:03");
     auto info =
-      OrderInfo(fields, submission_account, order_id, shorting_flag, timestamp);
+      OrderInfo(fields, submission_account, id, shorting_flag, timestamp);
     auto stream = std::stringstream();
     stream << info;
     REQUIRE(stream.str() == "(((ACCOUNT 123 test) TST.TSX CAD LIMIT BID TSX 100"
@@ -100,11 +100,11 @@ TEST_SUITE("OrderInfo") {
   TEST_CASE("shuttle") {
     auto fields = make_test_order_fields();
     auto submission_account = DirectoryEntry::MakeAccount(456, "submit");
-    auto order_id = OrderId(123);
+    auto id = OrderId(123);
     auto shorting_flag = true;
     auto timestamp = time_from_string("2024-05-21 01:02:03");
     auto info =
-      OrderInfo(fields, submission_account, order_id, shorting_flag, timestamp);
+      OrderInfo(fields, submission_account, id, shorting_flag, timestamp);
     TestRoundTripShuttle(info);
   }
 }

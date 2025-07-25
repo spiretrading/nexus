@@ -46,8 +46,8 @@ namespace {
           make_administration_service_test_environment(
             m_service_locator_environment)),
         m_market_data_environment(
-          make_market_data_test_environment(m_service_locator_environment,
-            m_administration_environment)) {}
+          make_market_data_service_test_environment(
+            m_service_locator_environment, m_administration_environment)) {}
   };
 }
 

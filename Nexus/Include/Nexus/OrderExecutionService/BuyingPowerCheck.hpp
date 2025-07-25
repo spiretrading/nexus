@@ -146,13 +146,12 @@ namespace Nexus::OrderExecutionService {
           BOOST_THROW_EXCEPTION(
             OrderSubmissionCheckException("Currency not recognized."));
         }
-        buying_power_entry.m_currencies.Insert(
-          info.m_order_id, fields.m_currency);
+        buying_power_entry.m_currencies.Insert(info.m_id, fields.m_currency);
         auto updated_buying_power = buying_power_model.submit(
-          info.m_order_id, converted_fields, converted_price);
+          info.m_id, converted_fields, converted_price);
         if(updated_buying_power > risk_parameters.m_buyingPower) {
           auto report = ExecutionReport();
-          report.m_id = info.m_order_id;
+          report.m_id = info.m_id;
           report.m_status = OrderStatus::REJECTED;
           buying_power_model.update(report);
           BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
@@ -177,11 +176,11 @@ namespace Nexus::OrderExecutionService {
     }();
     Beam::Threading::With(
       buying_power_entry.m_buying_power_model, [&] (auto& buying_power_model) {
-        if(buying_power_model.has_order(order->get_info().m_order_id)) {
+        if(buying_power_model.has_order(order->get_info().m_id)) {
           return;
         }
         buying_power_entry.m_currencies.Insert(
-          order->get_info().m_order_id, order->get_info().m_fields.m_currency);
+          order->get_info().m_id, order->get_info().m_fields.m_currency);
         auto converted_fields = order->get_info().m_fields;
         converted_fields.m_currency =
           buying_power_entry.m_risk_parameters_queue->Peek().m_currency;
@@ -196,7 +195,7 @@ namespace Nexus::OrderExecutionService {
           return;
         }
         buying_power_model.submit(
-          order->get_info().m_order_id, converted_fields, converted_price);
+          order->get_info().m_id, converted_fields, converted_price);
       });
     order->get_publisher().Monitor(
       buying_power_entry.m_execution_report_queue.GetWriter());
@@ -207,11 +206,11 @@ namespace Nexus::OrderExecutionService {
     auto& buying_power_entry = load_buying_power_entry(info.m_fields.m_account);
     Beam::Threading::With(
       buying_power_entry.m_buying_power_model, [&] (auto& buying_power_model) {
-        if(!buying_power_model.has_order(info.m_order_id)) {
+        if(!buying_power_model.has_order(info.m_id)) {
           return;
         }
         auto report = ExecutionReport();
-        report.m_id = info.m_order_id;
+        report.m_id = info.m_id;
         report.m_status = OrderStatus::REJECTED;
         buying_power_model.update(report);
       });

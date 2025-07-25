@@ -40,8 +40,8 @@ TEST_SUITE("OrderRecord") {
   TEST_CASE("constructor") {
     auto info = make_test_order_info();
     auto reports = std::vector<ExecutionReport>();
-    reports.push_back(ExecutionReport(
-      info.m_order_id, time_from_string("2024-05-21 01:02:04")));
+    reports.push_back(
+      ExecutionReport(info.m_id, time_from_string("2024-05-21 01:02:04")));
     auto record = OrderRecord(info, reports);
     REQUIRE(record.m_info == info);
     REQUIRE(record.m_execution_reports == reports);
@@ -51,12 +51,12 @@ TEST_SUITE("OrderRecord") {
     auto info = make_test_order_info();
     auto reports = std::vector<ExecutionReport>();
     auto report1 =
-      ExecutionReport(info.m_order_id, time_from_string("2024-05-21 01:02:04"));
+      ExecutionReport(info.m_id, time_from_string("2024-05-21 01:02:04"));
     report1.m_sequence = 1;
     report1.m_status = OrderStatus::NEW;
     reports.push_back(report1);
     auto report2 =
-      ExecutionReport(info.m_order_id, time_from_string("2024-05-21 01:02:05"));
+      ExecutionReport(info.m_id, time_from_string("2024-05-21 01:02:05"));
     report2.m_sequence = 2;
     report2.m_status = OrderStatus::PARTIALLY_FILLED;
     report2.m_last_quantity = 50;
@@ -77,8 +77,8 @@ TEST_SUITE("OrderRecord") {
   TEST_CASE("shuttle") {
     auto info = make_test_order_info();
     auto reports = std::vector<ExecutionReport>();
-    reports.push_back(ExecutionReport(
-      info.m_order_id, time_from_string("2024-05-21 01:02:04")));
+    reports.push_back(
+      ExecutionReport(info.m_id, time_from_string("2024-05-21 01:02:04")));
     auto record = OrderRecord(info, reports);
     TestRoundTripShuttle(record);
   }

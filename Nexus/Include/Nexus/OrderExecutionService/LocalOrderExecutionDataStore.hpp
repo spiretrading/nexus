@@ -57,7 +57,7 @@ namespace Nexus::OrderExecutionService {
     auto records = std::vector<SequencedAccountOrderRecord>();
     for(auto& submission : submissions) {
       auto record = OrderRecord(**submission,
-        m_execution_reports.Get((*submission)->m_order_id).With(
+        m_execution_reports.Get((*submission)->m_id).With(
           [] (const auto& reports) {
             return reports;
           }));
@@ -91,7 +91,7 @@ namespace Nexus::OrderExecutionService {
     auto records = std::vector<SequencedOrderRecord>();
     for(auto& submission : submissions) {
       auto record = OrderRecord(
-        *submission, m_execution_reports.Get(submission->m_order_id).Acquire());
+        *submission, m_execution_reports.Get(submission->m_id).Acquire());
       records.emplace_back(record, submission.GetSequence());
     }
     return records;
@@ -100,16 +100,16 @@ namespace Nexus::OrderExecutionService {
   inline void LocalOrderExecutionDataStore::store(
       const SequencedAccountOrderInfo& info) {
     m_order_submission_data_store.Store(info);
-    m_orders.Insert((*info)->m_order_id, info);
-    m_live_orders.Insert((*info)->m_order_id);
+    m_orders.Insert((*info)->m_id, info);
+    m_live_orders.Insert((*info)->m_id);
   }
 
   inline void LocalOrderExecutionDataStore::store(
       const std::vector<SequencedAccountOrderInfo>& info) {
     m_order_submission_data_store.Store(info);
     for(auto& i : info) {
-      m_live_orders.Insert((*i)->m_order_id);
-      m_orders.Insert((*i)->m_order_id, i);
+      m_live_orders.Insert((*i)->m_id);
+      m_orders.Insert((*i)->m_id, i);
     }
   }
 

@@ -43,8 +43,8 @@ namespace {
           make_administration_service_test_environment(
             m_service_locator_environment)),
         m_market_data_environment(
-          make_market_data_test_environment(m_service_locator_environment,
-            m_administration_environment)),
+          make_market_data_service_test_environment(
+            m_service_locator_environment, m_administration_environment)),
         m_market_data_client(m_market_data_environment.get_registry_client()) {
     m_market_data_environment.get_feed_client().publish(
       SecurityBboQuote(BboQuote(Quote(Money::ONE, 100, Side::BID),

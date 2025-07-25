@@ -86,6 +86,23 @@ namespace Nexus::MarketDataService::Tests {
       MarketDataFeedClient make_feed_client(
         Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client);
 
+      /**
+       * Publishes a BboQuote where only the price is significant and the size
+       * is set to 100.
+       * @param security The security whose BboQuote is being updated.
+       * @param bid The BboQuote's bid price.
+       * @param ask The BboQuote's ask price.
+       */
+      void update_bbo(const Security& security, Money bid, Money ask);
+
+      /**
+       * Publishes a BboQuote where only the price is significant and both the
+       * bid and ask share the same price.
+       * @param security The security whose BboQuote is being updated.
+       * @param price The BboQuote's bid and ask price.
+       */
+      void update_bbo(const Security& security, Money price);
+
       void close();
 
     private:
@@ -140,7 +157,8 @@ namespace Nexus::MarketDataService::Tests {
       MarketDataFeedClient m_feed_client;
   };
 
-  inline MarketDataServiceTestEnvironment make_market_data_test_environment(
+  inline MarketDataServiceTestEnvironment
+        make_market_data_service_test_environment(
       Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
         service_locator_environment,
       AdministrationService::Tests::AdministrationServiceTestEnvironment&
@@ -242,6 +260,18 @@ namespace Nexus::MarketDataService::Tests {
     return MarketDataFeedClient(
       std::in_place_type<TestEnvironmentMarketDataFeedClient>,
       std::move(service_client), std::move(sampling_timer));
+  }
+
+  inline void MarketDataServiceTestEnvironment::update_bbo(
+      const Security& security, Money bid, Money ask) {
+    get_feed_client().publish(SecurityBboQuote(
+      BboQuote(Quote(bid, 100, Side::BID), Quote(ask, 100, Side::ASK),
+        boost::posix_time::ptime()), security));
+  }
+
+  inline void MarketDataServiceTestEnvironment::update_bbo(
+      const Security& security, Money price) {
+    update_bbo(security, price, price);
   }
 
   inline void MarketDataServiceTestEnvironment::close() {

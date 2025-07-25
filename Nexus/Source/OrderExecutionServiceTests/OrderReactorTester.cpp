@@ -81,7 +81,7 @@ namespace {
         auto cancel = std::get_if<TestOrderExecutionClient::CancelOperation>(
           operation.get());
         REQUIRE(cancel);
-        REQUIRE(cancel->m_id == order.get_info().m_order_id);
+        REQUIRE(cancel->m_id == order.get_info().m_id);
       });
       cancel_async.get();
       set_order_status(order, OrderStatus::PENDING_CANCEL);
