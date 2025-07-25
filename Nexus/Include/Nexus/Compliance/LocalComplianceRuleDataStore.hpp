@@ -39,6 +39,11 @@ namespace Nexus::Compliance {
         std::vector<std::shared_ptr<ComplianceRuleEntry>>>
           m_entries_by_directory_entry;
       Beam::IO::OpenState m_open_state;
+
+      LocalComplianceRuleDataStore(
+        const LocalComplianceRuleDataStore&) = delete;
+      LocalComplianceRuleDataStore& operator =(
+        const LocalComplianceRuleDataStore&) = delete;
   };
 
   inline LocalComplianceRuleDataStore::~LocalComplianceRuleDataStore() {
