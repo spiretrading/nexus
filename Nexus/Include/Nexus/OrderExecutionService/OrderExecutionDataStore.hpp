@@ -24,19 +24,19 @@ namespace Nexus::OrderExecutionService {
       /**
        * Constructs an OrderExecutionDataStore by copying an existing data
        * store.
-       * @param client The client to copy.
+       * @param data_store The data store to copy.
        */
       template<typename DataStore>
-      explicit OrderExecutionDataStore(DataStore dataStore);
+      explicit OrderExecutionDataStore(DataStore data_store);
 
       explicit OrderExecutionDataStore(
-        OrderExecutionDataStore* dataStore);
+        OrderExecutionDataStore* data_store);
 
       explicit OrderExecutionDataStore(
-        const std::shared_ptr<OrderExecutionDataStore>& dataStore);
+        const std::shared_ptr<OrderExecutionDataStore>& data_store);
 
       explicit OrderExecutionDataStore(
-        const std::unique_ptr<OrderExecutionDataStore>& dataStore);
+        const std::unique_ptr<OrderExecutionDataStore>& data_store);
 
       /**
        * Loads an OrderRecord from its id.
