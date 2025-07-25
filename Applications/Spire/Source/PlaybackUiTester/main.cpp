@@ -277,8 +277,8 @@ struct ReplayAttachMenuButtonTester : QWidget {
   QVBoxLayout* m_target_group_layout;
 
   ReplayAttachMenuButtonTester()
-    : m_targets(std::make_shared<ArrayListModel<SelectableTarget>>()),
-      m_candidate_targets(populate_targets()) {
+      : m_targets(std::make_shared<ArrayListModel<SelectableTarget>>()),
+        m_candidate_targets(populate_targets()) {
     setAttribute(Qt::WA_ShowWithoutActivating);
     for(auto& target : m_candidate_targets) {
       m_targets->push(target);
@@ -299,9 +299,7 @@ struct ReplayAttachMenuButtonTester : QWidget {
     right_layout->addWidget(target_group);
     top_layout->addLayout(right_layout, 1);
     for(auto i = 0; i < m_targets->get_size(); ++i) {
-      auto target = m_targets->get(i);
-      auto name = to_text_with_color(target.m_target);
-      list_widget->addItem(name);
+      list_widget->addItem(to_text_with_color(m_targets->get(i).m_target));
       auto list_item = list_widget->item(i);
       list_item->setFlags(list_item->flags() | Qt::ItemIsUserCheckable);
       list_item->setCheckState(Qt::Checked);
@@ -325,7 +323,7 @@ struct ReplayAttachMenuButtonTester : QWidget {
       }
     } else {
       auto i = std::find_if(m_targets->begin(), m_targets->end(),
-        [=] (const SelectableTarget& target) {
+        [&] (const SelectableTarget& target) {
           return to_text_with_color(target.m_target) == item->text();
         });
       if(i != m_targets->end()) {
@@ -336,11 +334,11 @@ struct ReplayAttachMenuButtonTester : QWidget {
 
   void on_operation(const SelectableTargetListModel::Operation& operation) {
     visit(operation,
-      [=] (const SelectableTargetListModel::AddOperation& operation) {
+      [&] (const SelectableTargetListModel::AddOperation& operation) {
         m_target_group_layout->insertWidget(m_target_group_layout->count() - 1,
           make_check_box(m_targets, operation.m_index));
       },
-      [=] (const SelectableTargetListModel::PreRemoveOperation& operation) {
+      [&] (const SelectableTargetListModel::PreRemoveOperation& operation) {
         if(auto item = m_target_group_layout->takeAt(operation.m_index)) {
           delete item->widget();
           delete item;

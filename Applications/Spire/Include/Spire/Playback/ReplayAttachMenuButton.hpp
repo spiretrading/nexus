@@ -20,7 +20,7 @@ namespace Spire {
   using SelectableTargetListModel = ListModel<SelectableTarget>;
 
   /**
-   * Returns a ReplayAttachMenuButton.
+   * Returns a MenuButton configured as ReplayAttachMenuButton.
    * @param targets The replay attachment targets that user can select.
    * @param parent The parent widget.
    */

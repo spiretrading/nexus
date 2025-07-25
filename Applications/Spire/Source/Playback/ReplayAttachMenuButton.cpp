@@ -33,10 +33,9 @@ namespace {
 
   void add_target_menu_item(ContextMenu& menu,
       std::shared_ptr<SelectableTargetListModel> targets, int index) {
-    auto& target = targets->get(index);
-    auto selected = make_field_value_model(
-      make_list_value_model(targets, index), &SelectableTarget::m_selected);
-    auto item = new TargetMenuItem(targets->get(index).m_target, selected);
+    auto item = new TargetMenuItem(targets->get(index).m_target,
+      make_field_value_model(
+        make_list_value_model(targets, index), &SelectableTarget::m_selected));
     item->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     menu.add_action("", nullptr, item);
   }
