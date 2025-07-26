@@ -36,51 +36,18 @@ namespace Nexus::Compliance {
 
       ~ComplianceClient();
 
-      /**
-       * Loads all ComplianceRuleEntries for a specified DirectoryEntry.
-       * @param entry The DirectoryEntry to query.
-       * @return The list of all ComplianceRuleEntries assigned to the
-       *         <i>entry</i>.
-       */
       std::vector<ComplianceRuleEntry> Load(
         const Beam::ServiceLocator::DirectoryEntry& entry);
 
-      /**
-       * Assigns a new compliance rule to a DirectoryEntry.
-       * @param entry The DirectoryEntry to assign the rule to.
-       * @param state The rule's initial State.
-       * @param schema The ComplianceRuleSchema specifying the rule to add.
-       * @return The id of the new entry.
-       */
       ComplianceRuleId Add(const Beam::ServiceLocator::DirectoryEntry& entry,
         ComplianceRuleEntry::State state, const ComplianceRuleSchema& schema);
 
-      /**
-       * Updates an existing compliance rule.
-       * @param entry The ComplianceRuleEntry to update.
-       */
       void Update(const ComplianceRuleEntry& entry);
 
-      /**
-       * Deletes a ComplianceRuleEntry.
-       * \param id The ComplianceRuleId to delete.
-       */
       void Delete(ComplianceRuleId id);
 
-      /**
-       * Reports a compliance violation.
-       * @param violationRecord The violation to report.
-       */
       void Report(const ComplianceRuleViolationRecord& violationRecord);
 
-      /**
-       * Monitors updates to a DirectoryEntry's ComplianceRuleEntries.
-       * @param directoryEntry The DirectoryEntry to monitor.
-       * @param queue Stores the changes to the <i>directoryEntry</i>'s
-       *        ComplianceRuleEntries.
-       * @param snapshot Stores the snapshot of the current
-       *        ComplianceRuleEntries.
-       */
       void MonitorComplianceRuleEntries(
         const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
         Beam::ScopedQueueWriter<ComplianceRuleEntry> queue,
