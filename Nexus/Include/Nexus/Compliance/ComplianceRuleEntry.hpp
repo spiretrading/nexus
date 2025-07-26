@@ -52,6 +52,9 @@ namespace Details {
        */
       using State = Details::ComplianceRuleEntryStateDefinition;
 
+      /** Constructs an empty ComplianceRuleEntry. */
+      ComplianceRuleEntry() noexcept;
+
       /**
        * Constructs a ComplianceRuleEntry.
        * @param id The entry's id.
@@ -90,8 +93,6 @@ namespace Details {
       Beam::ServiceLocator::DirectoryEntry m_directory_entry;
       State m_state;
       ComplianceRuleSchema m_schema;
-
-      ComplianceRuleEntry(Beam::Serialization::ReceiveBuilder);
   };
 
   inline std::ostream& operator <<(
@@ -104,6 +105,10 @@ namespace Details {
     return out << '(' << entry.get_id() << ' ' << entry.get_directory_entry() <<
       ' ' << entry.get_state() << ' ' << entry.get_schema() << ')';
   }
+
+  inline ComplianceRuleEntry::ComplianceRuleEntry() noexcept
+    : m_id(0),
+      m_state(State::ACTIVE) {}
 
   inline ComplianceRuleEntry::ComplianceRuleEntry(Id id,
     Beam::ServiceLocator::DirectoryEntry directory_entry, State state,
@@ -133,9 +138,6 @@ namespace Details {
   inline const ComplianceRuleSchema& ComplianceRuleEntry::get_schema() const {
     return m_schema;
   }
-
-  inline ComplianceRuleEntry::ComplianceRuleEntry(
-    Beam::Serialization::ReceiveBuilder) {}
 }
 
 namespace Beam::Serialization {

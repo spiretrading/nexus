@@ -41,7 +41,7 @@ namespace Nexus::Compliance {
      * @return The id of the new entry.
      */
     (AddComplianceRuleEntryService,
-      "Nexus.Compliance.AddComplianceRuleEntryService", ComplianceRuleId,
+      "Nexus.Compliance.AddComplianceRuleEntryService", ComplianceRuleEntry::Id,
       Beam::ServiceLocator::DirectoryEntry, directory_entry,
       ComplianceRuleEntry::State, state, ComplianceRuleSchema, schema),
 
@@ -59,7 +59,7 @@ namespace Nexus::Compliance {
      */
     (DeleteComplianceRuleEntryService,
       "Nexus.Compliance.DeleteComplianceRuleEntryService", void,
-      ComplianceRuleId, id));
+      ComplianceRuleEntry::Id, id));
 
   BEAM_DEFINE_MESSAGES(ComplianceMessages,
 

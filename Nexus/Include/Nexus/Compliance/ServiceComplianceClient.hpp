@@ -1,5 +1,5 @@
-#ifndef NEXUS_COMPLIANCE_CLIENT_HPP
-#define NEXUS_COMPLIANCE_CLIENT_HPP
+#ifndef NEXUS_SERVICE_COMPLIANCE_CLIENT_HPP
+#define NEXUS_SERVICE_COMPLIANCE_CLIENT_HPP
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/Connection.hpp>
@@ -10,7 +10,6 @@
 #include <Beam/Threading/Mutex.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/range/adaptor/map.hpp>
 #include "Nexus/Compliance/ComplianceServices.hpp"
 #include "Nexus/Compliance/ComplianceRuleViolationRecord.hpp"
 
@@ -21,7 +20,7 @@ namespace Nexus::Compliance {
    * @param <B> The type used to build ServiceProtocolClients to the server.
    */
   template<typename B>
-  class ComplianceClient {
+  class ServiceComplianceClient {
     public:
 
       /** The type used to build ServiceProtocolClients to the server. */
@@ -32,28 +31,22 @@ namespace Nexus::Compliance {
        * @param clientBuilder Initializes the ServiceProtocolClientBuilder.
        */
       template<typename CF>
-      explicit ComplianceClient(CF&& clientBuilder);
+      explicit ServiceComplianceClient(CF&& clientBuilder);
 
-      ~ComplianceClient();
-
-      std::vector<ComplianceRuleEntry> Load(
-        const Beam::ServiceLocator::DirectoryEntry& entry);
-
-      ComplianceRuleId Add(const Beam::ServiceLocator::DirectoryEntry& entry,
+      ~ServiceComplianceClient();
+      std::vector<ComplianceRuleEntry> load(
+        const Beam::ServiceLocator::DirectoryEntry& directory_entry);
+      ComplianceRuleEntry::Id add(
+        const Beam::ServiceLocator::DirectoryEntry& directory_entry,
         ComplianceRuleEntry::State state, const ComplianceRuleSchema& schema);
-
-      void Update(const ComplianceRuleEntry& entry);
-
-      void Delete(ComplianceRuleId id);
-
-      void Report(const ComplianceRuleViolationRecord& violationRecord);
-
-      void MonitorComplianceRuleEntries(
-        const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
+      void update(const ComplianceRuleEntry& entry);
+      void remove(ComplianceRuleEntry::Id id);
+      void report(const ComplianceRuleViolationRecord& record);
+      void monitor_compliance_rule_entries(
+        const Beam::ServiceLocator::DirectoryEntry& directory_entry,
         Beam::ScopedQueueWriter<ComplianceRuleEntry> queue,
         Beam::Out<std::vector<ComplianceRuleEntry>> snapshot);
-
-      void Close();
+      void close();
 
     private:
       struct PublisherEntry {
@@ -62,125 +55,126 @@ namespace Nexus::Compliance {
       };
       using ServiceProtocolClient =
         typename ServiceProtocolClientBuilder::Client;
-      Beam::Services::ServiceProtocolClientHandler<B> m_clientHandler;
+      Beam::Services::ServiceProtocolClientHandler<B> m_client_handler;
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
         std::shared_ptr<PublisherEntry>> m_publishers;
-      Beam::IO::OpenState m_openState;
+      Beam::IO::OpenState m_open_state;
 
-      ComplianceClient(const ComplianceClient&) = delete;
-      ComplianceClient& operator =(const ComplianceClient&) = delete;
-      void OnComplianceRuleEntry(ServiceProtocolClient& client,
-        const ComplianceRuleEntry& entry);
+      ServiceComplianceClient(const ServiceComplianceClient&) = delete;
+      ServiceComplianceClient& operator =(
+        const ServiceComplianceClient&) = delete;
+      void on_compliance_rule_entry(
+        ServiceProtocolClient& client, const ComplianceRuleEntry& entry);
   };
 
   template<typename B>
   template<typename CF>
-  ComplianceClient<B>::ComplianceClient(CF&& clientBuilder)
-      try : m_clientHandler(std::forward<CF>(clientBuilder)) {
-    RegisterComplianceServices(Beam::Store(m_clientHandler.GetSlots()));
-    RegisterComplianceMessages(Beam::Store(m_clientHandler.GetSlots()));
+  ServiceComplianceClient<B>::ServiceComplianceClient(CF&& client_builder)
+      try : m_client_handler(std::forward<CF>(client_builder)) {
+    RegisterComplianceServices(Store(m_client_handler.GetSlots()));
+    RegisterComplianceMessages(Store(m_client_handler.GetSlots()));
     Beam::Services::AddMessageSlot<ComplianceRuleEntryMessage>(
-      Store(m_clientHandler.GetSlots()),
-      std::bind_front(&ComplianceClient::OnComplianceRuleEntry, this));
+      Store(m_client_handler.GetSlots()), std::bind_front(
+        &ServiceComplianceClient::on_compliance_rule_entry, this));
   } catch(const std::exception&) {
     Beam::Services::RethrowNestedServiceException(
       "Failed to connect to the compliance server.");
   }
 
   template<typename B>
-  ComplianceClient<B>::~ComplianceClient() {
-    Close();
+  ServiceComplianceClient<B>::~ServiceComplianceClient() {
+    close();
   }
 
   template<typename B>
-  std::vector<ComplianceRuleEntry> ComplianceClient<B>::Load(
-      const Beam::ServiceLocator::DirectoryEntry& entry) {
+  std::vector<ComplianceRuleEntry> ServiceComplianceClient<B>::load(
+      const Beam::ServiceLocator::DirectoryEntry& directory_entry) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
+      auto client = m_client_handler.GetClient();
       return client->template SendRequest<
-        LoadDirectoryEntryComplianceRuleEntryService>(entry);
+        LoadDirectoryEntryComplianceRuleEntryService>(directory_entry);
     }, "Failed to load compliance rule entries: " +
-      boost::lexical_cast<std::string>(entry));
+      boost::lexical_cast<std::string>(directory_entry));
   }
 
   template<typename B>
-  ComplianceRuleId ComplianceClient<B>::Add(
-      const Beam::ServiceLocator::DirectoryEntry& entry,
+  ComplianceRuleEntry::Id ServiceComplianceClient<B>::add(
+      const Beam::ServiceLocator::DirectoryEntry& directory_entry,
       ComplianceRuleEntry::State state, const ComplianceRuleSchema& schema) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<AddComplianceRuleEntryService>(entry,
-        state, schema);
+      auto client = m_client_handler.GetClient();
+      return client->template SendRequest<AddComplianceRuleEntryService>(
+        directory_entry, state, schema);
     }, "Failed to add compliance rule entry: " +
-      boost::lexical_cast<std::string>(entry));
+      boost::lexical_cast<std::string>(directory_entry));
   }
 
   template<typename B>
-  void ComplianceClient<B>::Update(const ComplianceRuleEntry& entry) {
+  void ServiceComplianceClient<B>::update(const ComplianceRuleEntry& entry) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
+      auto client = m_client_handler.GetClient();
       client->template SendRequest<UpdateComplianceRuleEntryService>(entry);
     }, "Failed to update compliance entry: " +
-      boost::lexical_cast<std::string>(entry.GetId()));
+      boost::lexical_cast<std::string>(entry.get_id()));
   }
 
   template<typename B>
-  void ComplianceClient<B>::Delete(ComplianceRuleId id) {
+  void ServiceComplianceClient<B>::remove(ComplianceRuleEntry::Id id) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
+      auto client = m_client_handler.GetClient();
       client->template SendRequest<DeleteComplianceRuleEntryService>(id);
     }, "Failed to delete compliance rule entry: " +
       boost::lexical_cast<std::string>(id));
   }
 
   template<typename B>
-  void ComplianceClient<B>::Report(
-      const ComplianceRuleViolationRecord& violationRecord) {
+  void ServiceComplianceClient<B>::report(
+      const ComplianceRuleViolationRecord& record) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
+      auto client = m_client_handler.GetClient();
       Beam::Services::SendRecordMessage<ReportComplianceRuleViolationMessage>(
-        *client, violationRecord);
-    }, "Failed to report violation: " + boost::lexical_cast<std::string>(
-      violationRecord.m_account) + ", " + boost::lexical_cast<std::string>(
-      violationRecord.m_orderId));
+        *client, record);
+    }, "Failed to report violation: " +
+      boost::lexical_cast<std::string>(record.m_account) + ", " +
+      boost::lexical_cast<std::string>(record.m_order_id));
   }
 
   template<typename B>
-  void ComplianceClient<B>::MonitorComplianceRuleEntries(
-      const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
+  void ServiceComplianceClient<B>::monitor_compliance_rule_entries(
+      const Beam::ServiceLocator::DirectoryEntry& directory_entry,
       Beam::ScopedQueueWriter<ComplianceRuleEntry> queue,
       Beam::Out<std::vector<ComplianceRuleEntry>> snapshot) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto publisher = m_publishers.GetOrInsert(directoryEntry,
+      auto publisher = m_publishers.GetOrInsert(directory_entry,
         boost::factory<std::shared_ptr<PublisherEntry>>());
-      auto client = m_clientHandler.GetClient();
+      auto client = m_client_handler.GetClient();
       publisher->m_initializer.Call([&] {
         client->template SendRequest<MonitorComplianceRuleEntryService>(
-          directoryEntry);
+          directory_entry);
       });
       publisher->m_publisher.With([&] {
         *snapshot = client->template SendRequest<
-          LoadDirectoryEntryComplianceRuleEntryService>(directoryEntry);
+          LoadDirectoryEntryComplianceRuleEntryService>(directory_entry);
         publisher->m_publisher.Monitor(std::move(queue));
       });
     }, "Failed to monitor compliance rule entries: " +
-      boost::lexical_cast<std::string>(directoryEntry));
+      boost::lexical_cast<std::string>(directory_entry));
   }
 
   template<typename B>
-  void ComplianceClient<B>::Close() {
-    if(m_openState.SetClosing()) {
+  void ServiceComplianceClient<B>::close() {
+    if(m_open_state.SetClosing()) {
       return;
     }
-    m_clientHandler.Close();
+    m_client_handler.Close();
     m_publishers.Clear();
-    m_openState.Close();
+    m_open_state.Close();
   }
 
   template<typename B>
-  void ComplianceClient<B>::OnComplianceRuleEntry(ServiceProtocolClient& client,
-      const ComplianceRuleEntry& entry) {
-    if(auto publisher = m_publishers.FindValue(entry.GetDirectoryEntry())) {
+  void ServiceComplianceClient<B>::on_compliance_rule_entry(
+      ServiceProtocolClient& client, const ComplianceRuleEntry& entry) {
+    if(auto publisher = m_publishers.FindValue(entry.get_directory_entry())) {
       (*publisher)->m_publisher.Push(entry);
     }
   }
