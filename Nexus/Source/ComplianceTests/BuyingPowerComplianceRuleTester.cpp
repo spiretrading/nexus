@@ -47,7 +47,6 @@ TEST_SUITE("BuyingPowerComplianceRule") {
     auto parameters = std::vector<ComplianceParameter>();
     parameters.emplace_back("currency", USD);
     parameters.emplace_back("buying_power", 1000 * Money::ONE);
-    parameters.emplace_back("region", Region::GLOBAL);
     auto exchange_rates = ExchangeRateTable();
     auto rule = BuyingPowerComplianceRule(parameters, exchange_rates,
       fixture.m_market_data_environment.get_registry_client());
@@ -67,7 +66,6 @@ TEST_SUITE("BuyingPowerComplianceRule") {
     auto parameters = std::vector<ComplianceParameter>();
     parameters.emplace_back("currency", USD);
     parameters.emplace_back("buying_power", 100 * Money::ONE);
-    parameters.emplace_back("region", Region::GLOBAL);
     auto exchange_rates = ExchangeRateTable();
     auto rule = BuyingPowerComplianceRule(parameters, exchange_rates,
       fixture.m_market_data_environment.get_registry_client());

@@ -57,7 +57,6 @@ namespace Nexus::Compliance {
     private:
       CurrencyId m_currency;
       Money m_buying_power;
-      Region m_region;
       ExchangeRateTable m_exchange_rates;
       Beam::GetOptionalLocalPtr<C> m_market_data_client;
       Beam::Threading::Sync<Accounting::BuyingPowerModel> m_buying_power_model;
@@ -85,7 +84,6 @@ namespace Nexus::Compliance {
     auto parameters = std::vector<ComplianceParameter>();
     parameters.emplace_back("currency", DefaultCurrencies::USD);
     parameters.emplace_back("buying_power", Money::ZERO);
-    parameters.emplace_back("region", Region::GLOBAL);
     auto schema = ComplianceRuleSchema("buying_power", std::move(parameters));
     return schema;
   }
@@ -101,8 +99,6 @@ namespace Nexus::Compliance {
         m_currency = boost::get<CurrencyId>(parameter.m_value);
       } else if(parameter.m_name == "buying_power") {
         m_buying_power = boost::get<Money>(parameter.m_value);
-      } else if(parameter.m_name == "region") {
-        m_region += boost::get<Region>(parameter.m_value);
       }
     }
   }
@@ -111,9 +107,6 @@ namespace Nexus::Compliance {
   void BuyingPowerComplianceRule<C>::submit(
       const std::shared_ptr<const OrderExecutionService::Order>& order) {
     auto& fields = order->get_info().m_fields;
-    if(!m_region.contains(fields.m_security)) {
-      return;
-    }
     auto price = get_expected_price(fields);
     Beam::Threading::With(m_buying_power_model, [&] (auto& buying_power_model) {
       while(auto report = m_execution_report_queue.TryPop()) {
@@ -160,9 +153,6 @@ namespace Nexus::Compliance {
   void BuyingPowerComplianceRule<C>::add(
       const std::shared_ptr<const OrderExecutionService::Order>& order) {
     auto& fields = order->get_info().m_fields;
-    if(!m_region.contains(fields.m_security)) {
-      return;
-    }
     auto price = [&] {
       try {
         return get_expected_price(order->get_info().m_fields);
