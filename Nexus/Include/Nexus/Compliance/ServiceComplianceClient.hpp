@@ -11,7 +11,6 @@
 #include <boost/functional/factory.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/range/adaptor/map.hpp>
-#include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceServices.hpp"
 #include "Nexus/Compliance/ComplianceRuleViolationRecord.hpp"
 

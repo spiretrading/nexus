@@ -14,13 +14,9 @@
 #include <Beam/Utilities/Active.hpp>
 #include <Beam/Utilities/Rethrow.hpp>
 #include <boost/functional/factory.hpp>
-#include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceClient.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
-#include "Nexus/OrderExecutionService/OrderFields.hpp"
-#include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 namespace Nexus::Compliance {

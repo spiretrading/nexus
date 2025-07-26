@@ -1,16 +1,17 @@
 #ifndef NEXUS_COMPLIANCE_SERVICES_HPP
 #define NEXUS_COMPLIANCE_SERVICES_HPP
+#include <string>
 #include <vector>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
-#include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceRuleEntry.hpp"
-#include "Nexus/Compliance/ComplianceRuleSchema.hpp"
 #include "Nexus/Compliance/ComplianceRuleViolationRecord.hpp"
 
 namespace Nexus::Compliance {
+  inline const auto SERVICE_NAME = std::string("compliance_service");
+
   BEAM_DEFINE_SERVICES(ComplianceServices,
 
     /**

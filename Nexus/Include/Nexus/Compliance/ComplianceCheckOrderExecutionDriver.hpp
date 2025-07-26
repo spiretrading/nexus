@@ -1,16 +1,14 @@
 #ifndef NEXUS_COMPLIANCE_CHECK_ORDER_EXECUTION_DRIVER_HPP
 #define NEXUS_COMPLIANCE_CHECK_ORDER_EXECUTION_DRIVER_HPP
-#include <Beam/Collections/SynchronizedList.hpp>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
-#include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceRuleSet.hpp"
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
-#include "Nexus/OrderExecutionService/OrderFields.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 namespace Nexus::Compliance {
