@@ -182,4 +182,53 @@ TEST_SUITE("ServiceComplianceClient") {
     REQUIRE_NOTHROW(fixture.m_client->report(record));
     REQUIRE(is_called.Get());
   }
+
+  TEST_CASE("monitor_compliance_rule_entries") {
+    auto fixture = Fixture();
+    auto account = DirectoryEntry::MakeAccount(5, "monitor_account");
+    auto initial_entries = std::vector{
+      ComplianceRuleEntry(200, account, ComplianceRuleEntry::State::ACTIVE,
+        ComplianceRuleSchema("ruleA", {})),
+      ComplianceRuleEntry(201, account, ComplianceRuleEntry::State::DISABLED,
+        ComplianceRuleSchema("ruleB", {}))
+    };
+    auto server_side_client =
+      static_cast<TestServiceProtocolServer::ServiceProtocolClient*>(nullptr);
+    fixture.on_request<MonitorComplianceRuleEntryService>(
+      [&] (auto& request, const auto& received_entry) {
+        REQUIRE(received_entry == account);
+        server_side_client = &request.GetClient();
+        request.SetResult(initial_entries);
+      });
+    auto queue = std::make_shared<Queue<ComplianceRuleEntry>>();
+    auto snapshot = std::vector<ComplianceRuleEntry>();
+    REQUIRE_NOTHROW(fixture.m_client->monitor_compliance_rule_entries(
+      account, queue, Store(snapshot)));
+    REQUIRE(snapshot == initial_entries);
+    auto updated_entry = ComplianceRuleEntry(202, account,
+      ComplianceRuleEntry::State::ACTIVE, ComplianceRuleSchema("ruleC", {}));
+    SendRecordMessage<ComplianceRuleEntryMessage>(
+      *server_side_client, updated_entry);
+    REQUIRE(queue->Pop() == updated_entry);
+    auto reconnect_async = Async<void>();
+    auto reconnected_entries = std::vector{
+      ComplianceRuleEntry(200, account, ComplianceRuleEntry::State::PASSIVE,
+        ComplianceRuleSchema("ruleA", {})),
+      ComplianceRuleEntry(201, account, ComplianceRuleEntry::State::DISABLED,
+        ComplianceRuleSchema("ruleB", {})),
+      ComplianceRuleEntry(202, account, ComplianceRuleEntry::State::DISABLED,
+        ComplianceRuleSchema("ruleC", {}))
+    };
+    fixture.on_request<MonitorComplianceRuleEntryService>(
+      [&] (auto& request, const auto& received_entry) {
+        REQUIRE(received_entry == account);
+        server_side_client = &request.GetClient();
+        request.SetResult(reconnected_entries);
+        reconnect_async.GetEval().SetResult();
+      });
+    server_side_client->Close();
+    reconnect_async.Get();
+    REQUIRE(queue->Pop() == reconnected_entries[0]);
+    REQUIRE(queue->Pop() == reconnected_entries[2]);
+  }
 }

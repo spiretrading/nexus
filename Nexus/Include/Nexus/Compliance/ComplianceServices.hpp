@@ -28,9 +28,12 @@ namespace Nexus::Compliance {
     /**
      * Monitors changes to a DirectoryEntry's ComplianceRuleEntries.
      * @param directory_entry The DirectoryEntry to monitor.
+     * @return The list of ComplianceRuleEntries assigned to the
+     *         <i>directory_entry</i>.
      */
     (MonitorComplianceRuleEntryService,
-      "Nexus.Compliance.MonitorComplianceRuleEntryService", void,
+      "Nexus.Compliance.MonitorComplianceRuleEntryService",
+      std::vector<ComplianceRuleEntry>,
       Beam::ServiceLocator::DirectoryEntry, directory_entry),
 
     /**
