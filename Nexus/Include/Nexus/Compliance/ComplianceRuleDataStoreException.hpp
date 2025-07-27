@@ -1,7 +1,6 @@
 #ifndef NEXUS_COMPLIANCE_RULE_DATA_STORE_EXCEPTION_HPP
 #define NEXUS_COMPLIANCE_RULE_DATA_STORE_EXCEPTION_HPP
 #include <Beam/IO/IOException.hpp>
-#include "Nexus/Compliance/Compliance.hpp"
 
 namespace Nexus::Compliance {
 
@@ -17,8 +16,6 @@ namespace Nexus::Compliance {
        * @param message A message describing the error.
        */
       explicit ComplianceRuleDataStoreException(const std::string& message);
-
-      virtual ~ComplianceRuleDataStoreException() throw();
   };
 
   inline ComplianceRuleDataStoreException::ComplianceRuleDataStoreException()
@@ -27,9 +24,6 @@ namespace Nexus::Compliance {
   inline ComplianceRuleDataStoreException::ComplianceRuleDataStoreException(
     const std::string& message)
     : Beam::IO::IOException(message) {}
-
-  inline ComplianceRuleDataStoreException::~ComplianceRuleDataStoreException()
-    throw() {}
 }
 
 #endif
