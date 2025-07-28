@@ -1,7 +1,5 @@
 #ifndef NEXUS_REJECT_CANCELS_COMPLIANCE_RULE_HPP
 #define NEXUS_REJECT_CANCELS_COMPLIANCE_RULE_HPP
-#include <string>
-#include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 
@@ -21,7 +19,8 @@ namespace Nexus::Compliance {
        */
       explicit RejectCancelsComplianceRule(std::string reason);
 
-      void Cancel(const OrderExecutionService::Order& order) override;
+      void cancel(const std::shared_ptr<
+        const OrderExecutionService::Order>& order) override;
 
     private:
       std::string m_reason;
@@ -34,8 +33,8 @@ namespace Nexus::Compliance {
     std::string reason)
     : m_reason(std::move(reason)) {}
 
-  inline void RejectCancelsComplianceRule::Cancel(
-      const OrderExecutionService::Order& order) {
+  inline void RejectCancelsComplianceRule::cancel(const std::shared_ptr<
+      const OrderExecutionService::Order>& order) {
     throw ComplianceCheckException(m_reason);
   }
 }
