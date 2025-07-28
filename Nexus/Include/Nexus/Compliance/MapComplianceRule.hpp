@@ -55,6 +55,12 @@ namespace Nexus::Compliance {
         m_rules;
   };
 
+  template<typename K>
+  MapComplianceRule(ComplianceRuleSchema,
+    std::function<std::unique_ptr<ComplianceRule>(const ComplianceRuleSchema&)>,
+    K) -> MapComplianceRule<
+      std::invoke_result_t<K, const OrderExecutionService::Order&>>;
+
   /**
    * Returns a MapComplianceRule that applies per Security.
    * @param schema The ComplianceRuleSchema to apply.

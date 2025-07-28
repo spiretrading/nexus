@@ -12,7 +12,7 @@ using namespace Nexus::Compliance::Tests;
 using namespace Nexus::DefaultVenues;
 using namespace Nexus::OrderExecutionService;
 
-TEST_SUITE("map_compliance_rule") {
+TEST_SUITE("MapComplianceRule") {
   TEST_CASE("submit") {
     auto rule_operations =
       std::make_shared<Queue<std::shared_ptr<TestComplianceRule::Queue>>>();
@@ -25,7 +25,7 @@ TEST_SUITE("map_compliance_rule") {
       return order.get_info().m_fields.m_security;
     };
     auto schema = ComplianceRuleSchema("test_rule", {});
-    auto rule = MapComplianceRule<Security>(schema, rule_builder, key_builder);
+    auto rule = MapComplianceRule(schema, rule_builder, key_builder);
     auto info = OrderInfo();
     info.m_id = 42;
     info.m_fields.m_security = Security("FOO", TSX);
@@ -67,7 +67,7 @@ TEST_SUITE("map_compliance_rule") {
       return order.get_info().m_fields.m_security;
     };
     auto schema = ComplianceRuleSchema("test_rule", {});
-    auto rule = MapComplianceRule<Security>(schema, rule_builder, key_builder);
+    auto rule = MapComplianceRule(schema, rule_builder, key_builder);
     auto info1 = OrderInfo();
     info1.m_id = 100;
     info1.m_fields.m_security = Security("BAR", TSX);
