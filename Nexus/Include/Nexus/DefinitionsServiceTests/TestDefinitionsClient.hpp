@@ -99,6 +99,9 @@ namespace Nexus::DefinitionsService::Tests {
         LoadExchangeRatesOperation, LoadComplianceRuleSchemasOperation,
         LoadTradingScheduleOperation>;
 
+      /** The type of Queue used to send and receive operations. */
+      using Queue = Beam::Queue<std::shared_ptr<Operation>>;
+
       /**
        * Constructs a TestDefinitionsClient.
        * @param operations The queue to push all operations on.

@@ -4,6 +4,7 @@
 #include <variant>
 #include <Beam/IO/NotConnectedException.hpp>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/Queues/Queue.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Routines/Async.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
@@ -70,6 +71,9 @@ namespace Nexus::OrderExecutionService::Tests {
       /** A variant covering all possible operations. */
       using Operation = std::variant<
         RecoverOperation, SubmitOperation, CancelOperation, UpdateOperation>;
+
+      /** The type of Queue used to send and receive operations. */
+      using Queue = Beam::Queue<std::shared_ptr<Operation>>;
 
       /**
        * Constructs a TestOrderExecutionDriver.

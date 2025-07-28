@@ -5,6 +5,7 @@
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/EndOfFileException.hpp>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/Queues/Queue.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/ServicesTests/ServiceResult.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
@@ -128,6 +129,9 @@ namespace Nexus::OrderExecutionService::Tests {
         QueryOrderRecordOperation, QuerySequencedOrderOperation,
         QueryOrderOperation, QuerySequencedExecutionReportOperation,
         QueryExecutionReportOperation, CloseOperation>;
+
+      /** The type of Queue used to send and receive operations. */
+      using Queue = Beam::Queue<std::shared_ptr<Operation>>;
 
       /**
        * Constructs a TestOrderExecutionClient.

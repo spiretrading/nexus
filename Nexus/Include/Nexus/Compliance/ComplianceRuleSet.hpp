@@ -191,7 +191,8 @@ namespace Nexus::Compliance {
           rule->m_rule->cancel(order);
         } catch(const ComplianceCheckException& e) {
           m_compliance_client->report({account, order->get_info().m_id,
-            rule_entry->get_id(), rule_entry->get_schema().m_name, e.what()});
+            rule_entry->get_id(), rule_entry->get_schema().get_name(),
+            e.what()});
           if(rule_entry->get_state() == ComplianceRuleEntry::State::ACTIVE) {
             throw;
           }
@@ -210,7 +211,8 @@ namespace Nexus::Compliance {
           rule->m_rule->cancel(order);
         } catch(const ComplianceCheckException& e) {
           m_compliance_client->report({account, order->get_info().m_id,
-            rule_entry->get_id(), rule_entry->get_schema().m_name, e.what()});
+            rule_entry->get_id(), rule_entry->get_schema().get_name(),
+            e.what()});
           if(rule_entry->get_state() == ComplianceRuleEntry::State::ACTIVE) {
             throw;
           }

@@ -27,12 +27,11 @@ namespace {
 
   struct Fixture {
     ServiceLocatorTestEnvironment m_service_locator_environment;
-    std::shared_ptr<Queue<std::shared_ptr<TestComplianceClient::Operation>>>
-      m_operations;
+    std::shared_ptr<TestComplianceClient::Queue> m_operations;
     TestComplianceClient m_client;
 
     Fixture()
-      : m_operations(make_test_compliance_operation_queue()),
+      : m_operations(std::make_shared<TestComplianceClient::Queue>()),
         m_client(m_operations) {}
   };
 }

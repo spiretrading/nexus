@@ -25,12 +25,9 @@ using namespace Nexus::DefinitionsService;
 using namespace Nexus::DefinitionsService::Tests;
 
 namespace {
-  using OperationQueue =
-    Queue<std::shared_ptr<TestDefinitionsClient::Operation>>;
-
   template<typename O, typename F, typename R, typename E>
   void require_operation(F&& f, const R& expected, E&& e) {
-    auto operations = std::make_shared<OperationQueue>();
+    auto operations = std::make_shared<TestDefinitionsClient::Queue>();
     auto client = DefinitionsClient(
       std::in_place_type<TestDefinitionsClient>, operations);
     auto future = std::async(std::launch::async, [&] {

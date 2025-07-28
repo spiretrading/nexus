@@ -66,6 +66,9 @@ namespace Nexus::Compliance::Tests {
         UpdateOperation, RemoveOperation, ReportOperation,
         MonitorComplianceRuleEntriesOperation>;
 
+      /** The type of Queue used to send and receive operations. */
+      using Queue = Beam::Queue<std::shared_ptr<Operation>>;
+
       /**
        * Constructs a TestComplianceClient.
        * @param operations The queue to push all operations on.
@@ -107,12 +110,6 @@ namespace Nexus::Compliance::Tests {
       template<typename T, typename R, typename... Args>
       R append_result(Args&&... args);
   };
-
-  /** Makes an appropriate queue for monitoring test operations. */
-  inline auto make_test_compliance_operation_queue() {
-    return std::make_shared<
-      Beam::Queue<std::shared_ptr<TestComplianceClient::Operation>>>();
-  }
 
   inline TestComplianceClient::TestComplianceClient(
       Beam::ScopedQueueWriter<std::shared_ptr<Operation>> operations) noexcept

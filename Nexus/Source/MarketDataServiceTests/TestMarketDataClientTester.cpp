@@ -11,14 +11,9 @@ using namespace Nexus::DefaultVenues;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::MarketDataService::Tests;
 
-namespace {
-  using OperationQueue =
-    Queue<std::shared_ptr<TestMarketDataClient::Operation>>;
-}
-
 TEST_SUITE("TestMarketDataClient") {
   TEST_CASE("query") {
-    auto operations = std::make_shared<OperationQueue>();
+    auto operations = std::make_shared<TestMarketDataClient::Queue>();
     auto client = TestMarketDataClient(operations);
     auto imbalances = std::make_shared<Queue<OrderImbalance>>();
     auto query = VenueMarketDataQuery();
@@ -33,7 +28,7 @@ TEST_SUITE("TestMarketDataClient") {
   }
 
   TEST_CASE("multiple_streaming_queries") {
-    auto operations = std::make_shared<OperationQueue>();
+    auto operations = std::make_shared<TestMarketDataClient::Queue>();
     auto client = TestMarketDataClient(operations);
     auto imbalances = std::make_shared<Queue<OrderImbalance>>();
     auto sequenced_imbalances =
@@ -58,7 +53,7 @@ TEST_SUITE("TestMarketDataClient") {
   }
 
   TEST_CASE("streaming_query_after_close") {
-    auto operations = std::make_shared<OperationQueue>();
+    auto operations = std::make_shared<TestMarketDataClient::Queue>();
     auto client = TestMarketDataClient(operations);
     client.close();
     auto imbalances = std::make_shared<Queue<OrderImbalance>>();
@@ -70,7 +65,7 @@ TEST_SUITE("TestMarketDataClient") {
   }
 
   TEST_CASE("streaming_query_during_close_race") {
-    auto operations = std::make_shared<OperationQueue>();
+    auto operations = std::make_shared<TestMarketDataClient::Queue>();
     auto client = TestMarketDataClient(operations);
     auto imbalances = std::make_shared<Queue<OrderImbalance>>();
     auto started = std::atomic<bool>(false);
@@ -93,7 +88,7 @@ TEST_SUITE("TestMarketDataClient") {
   }
 
   TEST_CASE("load_snapshot_after_close_throws") {
-    auto operations = std::make_shared<OperationQueue>();
+    auto operations = std::make_shared<TestMarketDataClient::Queue>();
     auto client = TestMarketDataClient(operations);
     client.close();
     REQUIRE_THROWS_AS(client.load_snapshot(Security()), IO::EndOfFileException);

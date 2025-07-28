@@ -38,152 +38,153 @@ namespace Nexus::Compliance {
 
       /**
        * Constructs a ComplianceCheckOrderExecutionDriver.
-       * @param orderExecutionDriver The OrderExecutionDriver to send operations
-       *        to if all checks pass.
-       * @param timeClient Initializes the TimeClient.
-       * @param complianceRuleSet Contains the set of compliance rules used to
+       * @param driver The OrderExecutionDriver to send operations to if all
+       *        checks pass.
+       * @param time_client Initializes the TimeClient.
+       * @param compliance_rule_set Contains the set of compliance rules used to
        *        check order execution operations.
        */
       template<typename DF, typename CF, typename SF>
-      ComplianceCheckOrderExecutionDriver(DF&& orderExecutionDriver,
-        CF&& timeClient, SF&& complianceRuleSet);
+      ComplianceCheckOrderExecutionDriver(
+        DF&& driver, CF&& time_client, SF&& compliance_rule_set);
 
       ~ComplianceCheckOrderExecutionDriver();
-
-      const OrderExecutionService::Order& Recover(
-        const OrderExecutionService::SequencedAccountOrderRecord& order);
-
-      const OrderExecutionService::Order& Submit(
-        const OrderExecutionService::OrderInfo& orderInfo);
-
-      void Cancel(const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId orderId);
-
-      void Update(const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId orderId,
-        const OrderExecutionService::ExecutionReport& executionReport);
-
-      void Close();
+      std::shared_ptr<const OrderExecutionService::Order> recover(
+        const OrderExecutionService::SequencedAccountOrderRecord& record);
+      void add(
+        const std::shared_ptr<const OrderExecutionService::Order>& order);
+      std::shared_ptr<const OrderExecutionService::Order>
+        submit(const OrderExecutionService::OrderInfo& info);
+      void cancel(const OrderExecutionService::OrderExecutionSession& session,
+        OrderExecutionService::OrderId id);
+      void update(const OrderExecutionService::OrderExecutionSession& session,
+        OrderExecutionService::OrderId id,
+        const OrderExecutionService::ExecutionReport& report);
+      void close();
 
     private:
-      Beam::GetOptionalLocalPtr<D> m_orderExecutionDriver;
-      Beam::GetOptionalLocalPtr<C> m_timeClient;
-      Beam::GetOptionalLocalPtr<S> m_complianceRuleSet;
+      Beam::GetOptionalLocalPtr<D> m_driver;
+      Beam::GetOptionalLocalPtr<C> m_time_client;
+      Beam::GetOptionalLocalPtr<S> m_compliance_rule_set;
       Beam::SynchronizedUnorderedMap<OrderExecutionService::OrderId,
-        std::unique_ptr<OrderExecutionService::PrimitiveOrder>> m_orders;
-      Beam::IO::OpenState m_openState;
+        std::shared_ptr<OrderExecutionService::PrimitiveOrder>> m_orders;
+      Beam::IO::OpenState m_open_state;
       Beam::RoutineTaskQueue m_tasks;
 
       ComplianceCheckOrderExecutionDriver(
         const ComplianceCheckOrderExecutionDriver&) = delete;
       ComplianceCheckOrderExecutionDriver& operator =(
         const ComplianceCheckOrderExecutionDriver&) = delete;
-      void OnExecutionReport(OrderExecutionService::PrimitiveOrder& order,
+      void on_execution_report(OrderExecutionService::PrimitiveOrder& order,
         const OrderExecutionService::ExecutionReport& executionReport);
   };
 
   template<typename D, typename C, typename S>
   template<typename DF, typename CF, typename SF>
   ComplianceCheckOrderExecutionDriver<D, C, S>::
-    ComplianceCheckOrderExecutionDriver(DF&& orderExecutionDriver,
-      CF&& timeClient, SF&& complianceRuleSet)
-    : m_orderExecutionDriver(std::forward<DF>(orderExecutionDriver)),
-      m_timeClient(std::forward<CF>(timeClient)),
-      m_complianceRuleSet(std::forward<SF>(complianceRuleSet)) {}
+      ComplianceCheckOrderExecutionDriver(
+        DF&& driver, CF&& time_client, SF&& compliance_rule_set)
+    : m_driver(std::forward<DF>(driver)),
+      m_time_client(std::forward<CF>(time_client)),
+      m_compliance_rule_set(std::forward<SF>(compliance_rule_set)) {}
 
   template<typename D, typename C, typename S>
   ComplianceCheckOrderExecutionDriver<D, C, S>::
       ~ComplianceCheckOrderExecutionDriver() {
-    Close();
+    close();
   }
 
   template<typename D, typename C, typename S>
-  const OrderExecutionService::Order&
-      ComplianceCheckOrderExecutionDriver<D, C, S>::Recover(
-        const OrderExecutionService::SequencedAccountOrderRecord& orderRecord) {
-    auto& order = m_orderExecutionDriver->Recover(orderRecord);
-    m_complianceRuleSet->Add(order);
+  std::shared_ptr<const OrderExecutionService::Order>
+      ComplianceCheckOrderExecutionDriver<D, C, S>::recover(
+        const OrderExecutionService::SequencedAccountOrderRecord& record) {
+    auto order = m_driver->recover(record);
+    m_compliance_rule_set->add(order);
     return order;
   }
 
   template<typename D, typename C, typename S>
-  const OrderExecutionService::Order&
-      ComplianceCheckOrderExecutionDriver<D, C, S>::Submit(
-        const OrderExecutionService::OrderInfo& orderInfo) {
-    auto instance = std::make_unique<OrderExecutionService::PrimitiveOrder>(
-      orderInfo);
-    auto& order = *instance;
-    m_orders.Insert(orderInfo.m_orderId, std::move(instance));
+  void ComplianceCheckOrderExecutionDriver<D, C, S>::add(
+      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+    m_driver->add(order);
+    m_compliance_rule_set->add(order);
+  }
+
+  template<typename D, typename C, typename S>
+  std::shared_ptr<const OrderExecutionService::Order>
+      ComplianceCheckOrderExecutionDriver<D, C, S>::submit(
+        const OrderExecutionService::OrderInfo& info) {
+    auto order = std::make_shared<OrderExecutionService::PrimitiveOrder>(info);
+    m_orders.Insert(info.m_id, order);
     try {
-      m_complianceRuleSet->Submit(order);
+      m_compliance_rule_set->submit(order);
     } catch(const std::exception& e) {
-      order.With([&] (auto status, const auto& reports) {
-        auto& lastReport = reports.back();
-        auto updatedReport =
-          OrderExecutionService::ExecutionReport::MakeUpdatedReport(
-          lastReport, OrderStatus::REJECTED, m_timeClient->GetTime());
-        updatedReport.m_text = e.what();
-        order.Update(updatedReport);
+      order->with([&] (auto status, const auto& reports) {
+        auto& last_report = reports.back();
+        auto update = OrderExecutionService::make_updated_execution_report(
+          last_report, OrderStatus::REJECTED, m_time_client->GetTime());
+        update.m_text = e.what();
+        order->update(update);
       });
       return order;
     }
-    auto& driverOrder = m_orderExecutionDriver->Submit(orderInfo);
-    driverOrder.GetPublisher().Monitor(
+    auto driver_order = m_driver->submit(info);
+    driver_order->get_publisher().Monitor(
       m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(std::bind_front(
-        &ComplianceCheckOrderExecutionDriver::OnExecutionReport,
-        this, std::ref(order))));
+        &ComplianceCheckOrderExecutionDriver::on_execution_report, this,
+        std::ref(*order))));
     return order;
   }
 
   template<typename D, typename C, typename S>
-  void ComplianceCheckOrderExecutionDriver<D, C, S>::Cancel(
+  void ComplianceCheckOrderExecutionDriver<D, C, S>::cancel(
       const OrderExecutionService::OrderExecutionSession& session,
-      OrderExecutionService::OrderId orderId) {
-    auto order = m_orders.Find(orderId);
+      OrderExecutionService::OrderId id) {
+    auto order = m_orders.Find(id);
     if(!order) {
-      m_orderExecutionDriver->Cancel(session, orderId);
+      m_driver->cancel(session, id);
       return;
     }
     try {
-      m_complianceRuleSet->Cancel(session.GetAccount(), **order);
+      m_compliance_rule_set->cancel(session.GetAccount(), *order);
     } catch(const std::exception& e) {
-      OrderExecutionService::RejectCancelRequest(**order,
-        m_timeClient->GetTime(), e.what());
+      OrderExecutionService::reject_cancel_request(
+        **order, m_time_client->GetTime(), e.what());
       return;
     }
-    m_orderExecutionDriver->Cancel(session, orderId);
+    m_driver->cancel(session, id);
   }
 
   template<typename D, typename C, typename S>
-  void ComplianceCheckOrderExecutionDriver<D, C, S>::Update(
+  void ComplianceCheckOrderExecutionDriver<D, C, S>::update(
       const OrderExecutionService::OrderExecutionSession& session,
-      OrderExecutionService::OrderId orderId,
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    m_orderExecutionDriver->Update(session, orderId, executionReport);
+      OrderExecutionService::OrderId id,
+      const OrderExecutionService::ExecutionReport& report) {
+    m_driver->update(session, id, report);
   }
 
   template<typename D, typename C, typename S>
-  void ComplianceCheckOrderExecutionDriver<D, C, S>::Close() {
-    if(m_openState.SetClosing()) {
+  void ComplianceCheckOrderExecutionDriver<D, C, S>::close() {
+    if(m_open_state.SetClosing()) {
       return;
     }
     m_tasks.Break();
     m_tasks.Wait();
-    m_orderExecutionDriver->Close();
-    m_openState.Close();
+    m_driver->close();
+    m_open_state.Close();
   }
 
   template<typename D, typename C, typename S>
-  void ComplianceCheckOrderExecutionDriver<D, C, S>::OnExecutionReport(
+  void ComplianceCheckOrderExecutionDriver<D, C, S>::on_execution_report(
       OrderExecutionService::PrimitiveOrder& order,
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    if(executionReport.m_status == OrderStatus::PENDING_NEW) {
+      const OrderExecutionService::ExecutionReport& report) {
+    if(report.m_status == OrderStatus::PENDING_NEW) {
       return;
     }
-    order.With([&] (auto status, const auto& reports) {
-      auto update = executionReport;
+    order.with([&] (auto status, const auto& reports) {
+      auto update = report;
       update.m_sequence = reports.back().m_sequence + 1;
-      order.Update(update);
+      order.update(update);
     });
   }
 }

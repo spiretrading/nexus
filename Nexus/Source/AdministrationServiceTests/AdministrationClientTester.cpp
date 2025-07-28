@@ -18,12 +18,9 @@ using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::RiskService;
 
 namespace {
-  using OperationQueue =
-    Queue<std::shared_ptr<TestAdministrationClient::Operation>>;
-
   template<typename O, typename F, typename R, typename E>
   void require_operation(F&& f, const R& expected, E&& e) {
-    auto operations = std::make_shared<OperationQueue>();
+    auto operations = std::make_shared<TestAdministrationClient::Queue>();
     auto client = AdministrationClient(
       std::in_place_type<TestAdministrationClient>, operations);
     auto future = std::async(std::launch::async, [&] {
@@ -38,7 +35,7 @@ namespace {
 
   template<typename O, typename F>
   void require_operation(F&& f) {
-    auto operations = std::make_shared<OperationQueue>();
+    auto operations = std::make_shared<TestAdministrationClient::Queue>();
     auto client = AdministrationClient(
       std::in_place_type<TestAdministrationClient>, operations);
     auto future = std::async(std::launch::async, [&] {
