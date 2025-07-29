@@ -4,18 +4,10 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/TaggedQueueReader.hpp>
-#include <Beam/TimeService/TimeClient.hpp>
-#include "Nexus/Compliance/Compliance.hpp"
+#include <Beam/TimeService/TimeClientBox.hpp>
+#include <boost/throw_exception.hpp>
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
-#include "Nexus/Compliance/ComplianceRuleSchema.hpp"
-#include "Nexus/Compliance/MapComplianceRule.hpp"
-#include "Nexus/Compliance/SecurityFilterComplianceRule.hpp"
-#include "Nexus/Compliance/TimeFilterComplianceRule.hpp"
-#include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/Region.hpp"
-#include "Nexus/OrderExecutionService/ExecutionReport.hpp"
-#include "Nexus/OrderExecutionService/Order.hpp"
 
 namespace Nexus::Compliance {
 
@@ -40,174 +32,117 @@ namespace Nexus::Compliance {
        *        cancel.
        * @param offset The offset from the submission price to restrict
        *        submissions.
-       * @param timeClient Initializes the TimeClient.
+       * @param time_client Initializes the TimeClient.
        */
       template<typename CF>
       OpposingOrderSubmissionComplianceRule(
         boost::posix_time::time_duration timeout, Money offset,
-        CF&& timeClient);
+        CF&& time_client);
 
-      void Add(const OrderExecutionService::Order& order) override;
-
-      void Submit(const OrderExecutionService::Order& order) override;
+      void submit(const std::shared_ptr<
+        const OrderExecutionService::Order>& order) override;
+      void add(const std::shared_ptr<
+        const OrderExecutionService::Order>& order) override;
 
     private:
       boost::posix_time::time_duration m_timeout;
       Money m_offset;
-      Beam::GetOptionalLocalPtr<C> m_timeClient;
-      Beam::TaggedQueueReader<const OrderExecutionService::Order*,
-        OrderExecutionService::ExecutionReport> m_executionReportQueue;
-      boost::posix_time::ptime m_lastAskCancelTime;
-      Money m_askPrice;
-      boost::posix_time::ptime m_lastBidCancelTime;
-      Money m_bidPrice;
+      Beam::GetOptionalLocalPtr<C> m_time_client;
+      Beam::TaggedQueueReader<OrderExecutionService::OrderFields,
+        OrderExecutionService::ExecutionReport> m_reports;
+      boost::posix_time::ptime m_last_ask_cancel_time;
+      Money m_ask_price;
+      boost::posix_time::ptime m_last_bid_cancel_time;
+      Money m_bid_price;
 
-      Money GetSubmissionPrice(const OrderExecutionService::Order& order);
-      bool TestSubmissionPriceInRange(
-        const OrderExecutionService::Order& order);
+      Money get_submission_price(
+        const OrderExecutionService::OrderFields& fields) const;
+      bool test_price_in_range(
+        const OrderExecutionService::OrderFields& fields) const;
   };
 
   template<typename TimeClient>
-  OpposingOrderSubmissionComplianceRule(boost::posix_time::time_duration, Money,
-    TimeClient&& timeClient) -> OpposingOrderSubmissionComplianceRule<
-      std::decay_t<TimeClient>>;
-
-  /**
-   * Returns a ComplianceRuleSchema representing an
-   * OpposingOrderSubmissionComplianceRule.
-   */
-  inline ComplianceRuleSchema
-      MakeOpposingOrderSubmissionComplianceRuleSchema() {
-    auto parameters = std::vector<ComplianceParameter>();
-    auto symbols = std::vector<ComplianceValue>();
-    symbols.push_back(Security());
-    parameters.emplace_back("symbols", symbols);
-    parameters.emplace_back("start_period", boost::posix_time::time_duration());
-    parameters.emplace_back("end_period", boost::posix_time::time_duration());
-    parameters.emplace_back("timeout", Quantity(0));
-    parameters.emplace_back("offset", Money::ZERO);
-    auto schema = ComplianceRuleSchema("opposing_order_submission", parameters);
-    return schema;
-  }
-
-  /**
-   * Returns an OpposingOrderSubmissionComplianceRule from a list of
-   * ComplianceParameters.
-   * @param parameters The list of ComplianceParameters used to build the rule.
-   * @param timeClient Initializes the TimeClient.
-   */
-  template<typename TimeClient>
-  std::unique_ptr<ComplianceRule> MakeOpposingOrderSubmissionComplianceRule(
-      const std::vector<ComplianceParameter>& parameters,
-      const TimeClient& timeClient) {
-    auto region = Region();
-    auto startPeriod = boost::posix_time::time_duration();
-    auto endPeriod = boost::posix_time::time_duration();
-    auto timeout = boost::posix_time::time_duration();
-    auto offset = Money();
-    for(auto& parameter : parameters) {
-      if(parameter.m_name == "symbols") {
-        for(auto& security :
-            boost::get<std::vector<ComplianceValue>>(parameter.m_value)) {
-          region += boost::get<Security>(security);
-        }
-      } else if(parameter.m_name == "start_period") {
-        startPeriod =
-          boost::get<boost::posix_time::time_duration>(parameter.m_value);
-      } else if(parameter.m_name == "end_period") {
-        endPeriod =
-          boost::get<boost::posix_time::time_duration>(parameter.m_value);
-      } else if(parameter.m_name == "timeout") {
-        timeout = boost::posix_time::seconds(
-          static_cast<int>(boost::get<Quantity>(parameter.m_value)));
-      } else if(parameter.m_name == "offset") {
-        offset = boost::get<Money>(parameter.m_value);
-      }
-    }
-    auto mapRule = MakeMapSecurityComplianceRule({}, [=] (const auto&) {
-      return std::make_unique<OpposingOrderSubmissionComplianceRule<
-        TimeClient>>(timeout, offset, timeClient);
-    });
-    auto timeFilter = std::make_unique<TimeFilterComplianceRule<TimeClient>>(
-      startPeriod, endPeriod, timeClient, std::move(mapRule));
-    return std::make_unique<SecurityFilterComplianceRule>(
-      std::move(region), std::move(timeFilter));
-  }
+  OpposingOrderSubmissionComplianceRule(
+    boost::posix_time::time_duration, Money, TimeClient&&) ->
+      OpposingOrderSubmissionComplianceRule<
+        std::remove_reference_t<TimeClient>>;
 
   template<typename C>
   template<typename CF>
   OpposingOrderSubmissionComplianceRule<C>::
     OpposingOrderSubmissionComplianceRule(
-      boost::posix_time::time_duration timeout, Money offset, CF&& timeClient)
+      boost::posix_time::time_duration timeout, Money offset, CF&& time_client)
     : m_timeout(timeout),
       m_offset(offset),
-      m_timeClient(std::forward<CF>(timeClient)),
-      m_lastAskCancelTime(boost::posix_time::min_date_time),
-      m_askPrice(std::numeric_limits<Money>::max()),
-      m_lastBidCancelTime(boost::posix_time::min_date_time),
-      m_bidPrice(Money::ZERO) {}
+      m_time_client(std::forward<CF>(time_client)),
+      m_last_ask_cancel_time(boost::posix_time::min_date_time),
+      m_ask_price(std::numeric_limits<Money>::max()),
+      m_last_bid_cancel_time(boost::posix_time::min_date_time),
+      m_bid_price(Money::ZERO) {}
 
   template<typename C>
-  void OpposingOrderSubmissionComplianceRule<C>::Add(
-      const OrderExecutionService::Order& order) {
-    if(order.GetInfo().m_fields.m_type != OrderType::LIMIT &&
-        order.GetInfo().m_fields.m_type != OrderType::MARKET) {
+  void OpposingOrderSubmissionComplianceRule<C>::submit(
+      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+    if(order->get_info().m_fields.m_type != OrderType::LIMIT &&
+        order->get_info().m_fields.m_type != OrderType::MARKET) {
       return;
     }
-    order.GetPublisher().Monitor(m_executionReportQueue.GetSlot(&order));
-  }
-
-  template<typename C>
-  void OpposingOrderSubmissionComplianceRule<C>::Submit(
-      const OrderExecutionService::Order& order) {
-    if(order.GetInfo().m_fields.m_type != OrderType::LIMIT &&
-        order.GetInfo().m_fields.m_type != OrderType::MARKET) {
-      return;
-    }
-    auto time = m_timeClient->GetTime();
-    while(auto executionReport = m_executionReportQueue.TryPop()) {
-      if(executionReport->m_value.m_status == OrderStatus::CANCELED) {
-        auto side = executionReport->m_key->GetInfo().m_fields.m_side;
-        auto submissionPrice = GetSubmissionPrice(*executionReport->m_key);
+    auto time = m_time_client->GetTime();
+    while(auto report = m_reports.TryPop()) {
+      if(report->m_value.m_status == OrderStatus::CANCELED) {
+        auto side = report->m_key.m_side;
+        auto price = get_submission_price(report->m_key);
         if(side == Side::ASK) {
-          if((time - m_lastAskCancelTime) > m_timeout) {
-            m_askPrice = std::numeric_limits<Money>::max();
+          if((time - m_last_ask_cancel_time) > m_timeout) {
+            m_ask_price = std::numeric_limits<Money>::max();
           }
-          if(executionReport->m_value.m_timestamp >= m_lastAskCancelTime) {
-            if(submissionPrice <= m_askPrice) {
-              m_lastAskCancelTime = executionReport->m_value.m_timestamp;
-              m_askPrice = submissionPrice;
+          if(report->m_value.m_timestamp >= m_last_ask_cancel_time) {
+            if(price <= m_ask_price) {
+              m_last_ask_cancel_time = report->m_value.m_timestamp;
+              m_ask_price = price;
             }
           }
         } else {
-          if((time - m_lastBidCancelTime) > m_timeout) {
-            m_bidPrice = Money::ZERO;
+          if((time - m_last_bid_cancel_time) > m_timeout) {
+            m_bid_price = Money::ZERO;
           }
-          if(executionReport->m_value.m_timestamp >= m_lastBidCancelTime) {
-            if(submissionPrice >= m_bidPrice) {
-              m_lastBidCancelTime = executionReport->m_value.m_timestamp;
-              m_bidPrice = submissionPrice;
+          if(report->m_value.m_timestamp >= m_last_bid_cancel_time) {
+            if(price >= m_bid_price) {
+              m_last_bid_cancel_time = report->m_value.m_timestamp;
+              m_bid_price = price;
             }
           }
         }
       }
     }
-    auto& lastCancelTime = Pick(order.GetInfo().m_fields.m_side,
-      m_lastBidCancelTime, m_lastAskCancelTime);
-    if(TestSubmissionPriceInRange(order) &&
-        lastCancelTime >= (time - m_timeout)) {
+    auto& cancel_time = pick(order->get_info().m_fields.m_side,
+      m_last_bid_cancel_time, m_last_ask_cancel_time);
+    if(test_price_in_range(order->get_info().m_fields) &&
+        cancel_time >= (time - m_timeout)) {
       BOOST_THROW_EXCEPTION(
         ComplianceCheckException("Opposing order can not be submitted yet."));
     }
-    order.GetPublisher().Monitor(m_executionReportQueue.GetSlot(&order));
+    order->get_publisher().Monitor(
+      m_reports.GetSlot(order->get_info().m_fields));
   }
 
   template<typename C>
-  Money OpposingOrderSubmissionComplianceRule<C>::GetSubmissionPrice(
-      const OrderExecutionService::Order& order) {
-    if(order.GetInfo().m_fields.m_type == OrderType::LIMIT) {
-      return order.GetInfo().m_fields.m_price;
-    } else if(order.GetInfo().m_fields.m_side == Side::ASK) {
+  void OpposingOrderSubmissionComplianceRule<C>::add(
+      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+    if(order->get_info().m_fields.m_type != OrderType::LIMIT &&
+        order->get_info().m_fields.m_type != OrderType::MARKET) {
+      return;
+    }
+    order->get_publisher().Monitor(
+      m_reports.GetSlot(order->get_info().m_fields));
+  }
+
+  template<typename C>
+  Money OpposingOrderSubmissionComplianceRule<C>::get_submission_price(
+      const OrderExecutionService::OrderFields& fields) const {
+    if(fields.m_type == OrderType::LIMIT) {
+      return fields.m_price;
+    } else if(fields.m_side == Side::ASK) {
       return Money::ZERO;
     } else {
       return std::numeric_limits<Money>::max();
@@ -215,13 +150,13 @@ namespace Nexus::Compliance {
   }
 
   template<typename C>
-  bool OpposingOrderSubmissionComplianceRule<C>::TestSubmissionPriceInRange(
-      const OrderExecutionService::Order& order) {
-    auto price = GetSubmissionPrice(order);
-    if(order.GetInfo().m_fields.m_side == Side::ASK) {
-      return price <= m_bidPrice + m_offset;
+  bool OpposingOrderSubmissionComplianceRule<C>::test_price_in_range(
+      const OrderExecutionService::OrderFields& fields) const {
+    auto price = get_submission_price(fields);
+    if(fields.m_side == Side::ASK) {
+      return price <= m_bid_price + m_offset;
     } else {
-      return price >= m_askPrice - m_offset;
+      return price >= m_ask_price - m_offset;
     }
   }
 }

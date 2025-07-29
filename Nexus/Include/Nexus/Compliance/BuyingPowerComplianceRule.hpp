@@ -84,8 +84,7 @@ namespace Nexus::Compliance {
     auto parameters = std::vector<ComplianceParameter>();
     parameters.emplace_back("currency", DefaultCurrencies::USD);
     parameters.emplace_back("buying_power", Money::ZERO);
-    auto schema = ComplianceRuleSchema("buying_power", std::move(parameters));
-    return schema;
+    return ComplianceRuleSchema("buying_power", std::move(parameters));
   }
 
   template<typename C>

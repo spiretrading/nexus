@@ -1,17 +1,13 @@
 #ifndef NEXUS_OPPOSING_ORDER_CANCELLATION_COMPLIANCE_RULE_HPP
 #define NEXUS_OPPOSING_ORDER_CANCELLATION_COMPLIANCE_RULE_HPP
+#include <type_traits>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/TaggedQueueReader.hpp>
 #include <Beam/TimeService/TimeClientBox.hpp>
+#include <boost/throw_exception.hpp>
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
-#include "Nexus/Compliance/ComplianceRuleSchema.hpp"
-#include "Nexus/Compliance/SecurityFilterComplianceRule.hpp"
-#include "Nexus/Compliance/TimeFilterComplianceRule.hpp"
-#include "Nexus/Definitions/Region.hpp"
-#include "Nexus/OrderExecutionService/ExecutionReport.hpp"
-#include "Nexus/OrderExecutionService/Order.hpp"
 
 namespace Nexus::Compliance {
 
@@ -34,125 +30,67 @@ namespace Nexus::Compliance {
       /**
        * Constructs an OpposingOrderCancellationComplianceRule.
        * @param timeout The amount of time to restrict cancels after a fill.
-       * @param timeClient Initializes the TimeClient.
+       * @param time_client Initializes the TimeClient.
        */
       template<typename CF>
       OpposingOrderCancellationComplianceRule(
-        boost::posix_time::time_duration timeout, CF&& timeClient);
+        boost::posix_time::time_duration timeout, CF&& time_client);
 
-      void Add(const OrderExecutionService::Order& order) override;
-
-      void Cancel(const OrderExecutionService::Order& order) override;
+      void cancel(const std::shared_ptr<
+        const OrderExecutionService::Order>& order) override;
+      void add(const std::shared_ptr<
+        const OrderExecutionService::Order>& order) override;
 
     private:
       boost::posix_time::time_duration m_timeout;
-      Beam::GetOptionalLocalPtr<C> m_timeClient;
-      Beam::TaggedQueueReader<const OrderExecutionService::Order*,
-        OrderExecutionService::ExecutionReport> m_executionReportQueue;
-      boost::posix_time::ptime m_lastAskFillTime;
-      boost::posix_time::ptime m_lastBidFillTime;
+      Beam::GetOptionalLocalPtr<C> m_time_client;
+      Beam::TaggedQueueReader<Side, OrderExecutionService::ExecutionReport>
+        m_reports;
+      boost::posix_time::ptime m_last_ask_fill_time;
+      boost::posix_time::ptime m_last_bid_fill_time;
   };
 
   template<typename TimeClient>
-  OpposingOrderCancellationComplianceRule(boost::posix_time::time_duration,
-    TimeClient&& timeClient) -> OpposingOrderCancellationComplianceRule<
-    std::decay_t<TimeClient>>;
-
-  /**
-   * Returns a ComplianceRuleSchema representing an
-   * OpposingOrderCancellationComplianceRule.
-   */
-  inline ComplianceRuleSchema
-      MakeOpposingOrderCancellationComplianceRuleSchema() {
-    auto parameters = std::vector<ComplianceParameter>();
-    auto symbols = std::vector<ComplianceValue>();
-    symbols.push_back(Security());
-    parameters.emplace_back("symbols", symbols);
-    parameters.emplace_back("start_period", boost::posix_time::time_duration());
-    parameters.emplace_back("end_period", boost::posix_time::time_duration());
-    parameters.emplace_back("timeout", Quantity(0));
-    auto schema = ComplianceRuleSchema("opposing_order_cancellation",
-      parameters);
-    return schema;
-  }
-
-  /**
-   * Returns an OpposingOrderCancellationComplianceRule from a list of
-   * ComplianceParameters.
-   * @param parameters The list of ComplianceParameters used to build the rule.
-   * @param timeClient Initializes the TimeClient.
-   */
-  template<typename TimeClient>
-  std::unique_ptr<ComplianceRule> MakeOpposingOrderCancellationComplianceRule(
-      const std::vector<ComplianceParameter>& parameters,
-      const TimeClient& timeClient) {
-    auto region = Region();
-    auto startPeriod = boost::posix_time::time_duration();
-    auto endPeriod = boost::posix_time::time_duration();
-    auto timeout = boost::posix_time::time_duration();
-    for(auto& parameter : parameters) {
-      if(parameter.m_name == "symbols") {
-        for(auto& security :
-            boost::get<std::vector<ComplianceValue>>(parameter.m_value)) {
-          region += boost::get<Security>(security);
-        }
-      } else if(parameter.m_name == "start_period") {
-        startPeriod =
-          boost::get<boost::posix_time::time_duration>(parameter.m_value);
-      } else if(parameter.m_name == "end_period") {
-        endPeriod =
-          boost::get<boost::posix_time::time_duration>(parameter.m_value);
-      } else if(parameter.m_name == "timeout") {
-        timeout = boost::posix_time::seconds(
-          static_cast<int>(boost::get<Quantity>(parameter.m_value)));
-      }
-    }
-    auto mapRule = MakeMapSecurityComplianceRule({}, [=] (const auto&) {
-      return std::make_unique<OpposingOrderCancellationComplianceRule<
-        std::decay_t<TimeClient>>>(timeout, timeClient);
-    });
-    auto timeFilter = std::make_unique<TimeFilterComplianceRule<
-      std::decay_t<TimeClient>>>(startPeriod, endPeriod, timeClient,
-      std::move(mapRule));
-    return std::make_unique<SecurityFilterComplianceRule>(
-      std::move(region), std::move(timeFilter));
-  }
+  OpposingOrderCancellationComplianceRule(
+    boost::posix_time::time_duration, TimeClient&&) ->
+      OpposingOrderCancellationComplianceRule<
+        std::remove_reference_t<TimeClient>>;
 
   template<typename C>
   template<typename CF>
   OpposingOrderCancellationComplianceRule<C>::
-    OpposingOrderCancellationComplianceRule(
-      boost::posix_time::time_duration timeout, CF&& timeClient)
+      OpposingOrderCancellationComplianceRule(
+        boost::posix_time::time_duration timeout, CF&& time_client)
     : m_timeout(timeout),
-      m_timeClient(std::forward<CF>(timeClient)),
-      m_lastAskFillTime(boost::posix_time::not_a_date_time),
-      m_lastBidFillTime(boost::posix_time::not_a_date_time) {}
+      m_time_client(std::forward<CF>(time_client)),
+      m_last_ask_fill_time(boost::posix_time::not_a_date_time),
+      m_last_bid_fill_time(boost::posix_time::not_a_date_time) {}
 
   template<typename C>
-  void OpposingOrderCancellationComplianceRule<C>::Add(
-      const OrderExecutionService::Order& order) {
-    order.GetPublisher().Monitor(m_executionReportQueue.GetSlot(&order));
-  }
-
-  template<typename C>
-  void OpposingOrderCancellationComplianceRule<C>::Cancel(
-      const OrderExecutionService::Order& order) {
-    while(auto executionReport = m_executionReportQueue.TryPop()) {
-      if(executionReport->m_value.m_lastQuantity != 0) {
-        auto& lastFillTime = Pick(
-          executionReport->m_key->GetInfo().m_fields.m_side, m_lastAskFillTime,
-          m_lastBidFillTime);
-        lastFillTime = executionReport->m_value.m_timestamp;
+  void OpposingOrderCancellationComplianceRule<C>::cancel(
+      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+    while(auto report = m_reports.TryPop()) {
+      if(report->m_value.m_last_quantity != 0) {
+        auto& last_fill_time =
+          pick(report->m_key, m_last_ask_fill_time, m_last_bid_fill_time);
+        last_fill_time = report->m_value.m_timestamp;
       }
     }
-    auto time = m_timeClient->GetTime();
-    auto& lastFillTime = Pick(
-      order.GetInfo().m_fields.m_side, m_lastBidFillTime, m_lastAskFillTime);
-    if(lastFillTime != boost::posix_time::not_a_date_time &&
-        lastFillTime >= (time - m_timeout)) {
+    auto time = m_time_client->GetTime();
+    auto& last_fill_time = pick(order->get_info().m_fields.m_side,
+      m_last_bid_fill_time, m_last_ask_fill_time);
+    if(last_fill_time != boost::posix_time::not_a_date_time &&
+        last_fill_time >= (time - m_timeout)) {
       BOOST_THROW_EXCEPTION(
         ComplianceCheckException("Opposing order can not be canceled yet."));
     }
+  }
+
+  template<typename C>
+  void OpposingOrderCancellationComplianceRule<C>::add(
+      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+    order->get_publisher().Monitor(
+      m_reports.GetSlot(order->get_info().m_fields.m_side));
   }
 }
 

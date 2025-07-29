@@ -123,7 +123,7 @@ TEST_SUITE("TimeFilterComplianceRule") {
   }
 
   TEST_CASE("edge_case_start_equals_end") {
-    auto time_client = FixedTimeClient(time_from_string("2024-07-25 14:00:00")); // 10:00 NY time (EDT)
+    auto time_client = FixedTimeClient(time_from_string("2024-07-25 14:00:00"));
     auto operations = std::make_shared<TestComplianceRule::Queue>();
     auto rule = TimeFilterComplianceRule(hours(10), hours(10),
       get_default_time_zone_database(), DEFAULT_VENUES, &time_client,
