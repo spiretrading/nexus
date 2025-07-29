@@ -3,8 +3,7 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/TaggedQueueReader.hpp>
-#include <Beam/TimeService/TimeClient.hpp>
-#include "Nexus/Compliance/Compliance.hpp"
+#include <Beam/TimeService/TimeClientBox.hpp>
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
