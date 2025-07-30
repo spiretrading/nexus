@@ -12,7 +12,8 @@ using namespace Viper::Sqlite3;
 namespace {
   struct Builder {
     auto operator ()() const {
-      return SqlComplianceRuleDataStore();
+      return SqlComplianceRuleDataStore(
+        std::make_unique<Connection>(":memory:"));
     }
   };
 }

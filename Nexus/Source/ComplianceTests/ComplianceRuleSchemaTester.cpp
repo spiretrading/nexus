@@ -4,7 +4,6 @@
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
 #include "Nexus/Compliance/ComplianceParameter.hpp"
 #include "Nexus/Definitions/DefaultVenueDatabase.hpp"
-#include <Beam/Serialization/Serialization.hpp>
 
 using namespace Nexus;
 using namespace Nexus::Compliance;
