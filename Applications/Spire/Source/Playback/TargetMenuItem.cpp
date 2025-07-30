@@ -1,7 +1,10 @@
 #include "Spire/Playback/TargetMenuItem.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/Layouts.hpp"
 
+using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -20,12 +23,12 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   setAttribute(Qt::WA_NoMousePropagation);
   auto body = new QWidget();
   auto layout = make_hbox_layout(body);
-  if(target.m_color) {
+  if(m_target.m_color.isValid()) {
     auto marker = new Box();
     marker->setFixedSize(scale(10, 10));
     update_style(*marker, [&] (auto& style) {
       style.get(Any()).
-        set(BackgroundColor(*target.m_color)).
+        set(BackgroundColor(m_target.m_color)).
         set(border_radius(scale_width(5)));
     });
     layout->addWidget(marker, 0, Qt::AlignVCenter);
@@ -64,18 +67,18 @@ void TargetMenuItem::on_click() {
 }
 
 QString Spire::to_text(const TargetMenuItem::Target& target) {
-  if(target.m_security) {
-    if(target.m_window_types.size() == 1) {
+  if(target.m_security != Security()) {
+    if(target.m_count == 1) {
       return QObject::tr("%1 - %2").
-        arg(::to_text(*target.m_security)).
-        arg(to_text(target.m_window_types[0]));
+        arg(::to_text(target.m_security)).
+        arg(target.m_name);
     }
     return QObject::tr("%1 (%2)").
-      arg(::to_text(*target.m_security)).
-      arg(target.m_window_types.size());
-  } else if(target.m_window_types.size() == 1) {
-    return to_text(target.m_window_types[0]);
+      arg(::to_text(target.m_security)).
+      arg(target.m_count);
+  } else if(target.m_count == 1) {
+    return target.m_name;
   } else {
-    return QObject::tr("Unassigned (%1)").arg(target.m_window_types.size());
+    return QObject::tr("Unassigned (%1)").arg(target.m_count);
   }
 }

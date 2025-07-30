@@ -40,45 +40,37 @@ namespace {
     }
   }
 
-  auto to_text_with_color(const TargetMenuItem::Target& target) {
-    auto text = to_text(target);
-    if(target.m_color) {
-      return QString("%1 [color:%2]").arg(text).arg(target.m_color->name());
-    }
-    return text;
+  auto to_text_with_identifier(const TargetMenuItem::Target& target) {
+    return QString("%1 [ID:%2]").
+      arg(to_text(target)).
+      arg(QString::fromStdString(target.m_identifier));
   }
 
   auto populate_targets() {
     auto targets = std::vector<SelectableTarget>();
-    targets.push_back({{none, none, {ToolbarWindow::WindowType::BOOK_VIEW}},
-      false});
-    targets.push_back({{QColor(0xBF9541), none,
-      {ToolbarWindow::WindowType::BOOK_VIEW,
-       ToolbarWindow::WindowType::TIME_AND_SALES}}, false});
-    targets.push_back({{QColor(0x00BFA0), none,
-      {ToolbarWindow::WindowType::BOOK_VIEW,
-       ToolbarWindow::WindowType::TIME_AND_SALES}}, false});
-    targets.push_back({{QColor(Qt::red), none,
-      {ToolbarWindow::WindowType::BOOK_VIEW}}, false});
-    targets.push_back({{none, none,
-      {ToolbarWindow::WindowType::TIME_AND_SALES}}, false});
-    targets.push_back({{QColor(0xFF7B00), ParseSecurity("ABX.TSX"),
-      {ToolbarWindow::WindowType::BOOK_VIEW,
-       ToolbarWindow::WindowType::TIME_AND_SALES,
-       ToolbarWindow::WindowType::TIME_AND_SALES}}, true});
-    targets.push_back({{none, ParseSecurity("ABX.TSX"),
-      {ToolbarWindow::WindowType::BOOK_VIEW}}, false});
-    targets.push_back({{none, ParseSecurity("ABX.TSX"),
-      {ToolbarWindow::WindowType::TIME_AND_SALES}}, false});
-    targets.push_back({{QColor(Qt::blue), ParseSecurity("ARE.TSX"),
-      {ToolbarWindow::WindowType::TIME_AND_SALES,
-       ToolbarWindow::WindowType::BOOK_VIEW}}, false});
-    targets.push_back({{QColor(0x993EF2), ParseSecurity("MFC.TSX"),
-      {ToolbarWindow::WindowType::TIME_AND_SALES,
-       ToolbarWindow::WindowType::TIME_AND_SALES}}, false});
-    targets.push_back({{QColor(Qt::green), ParseSecurity("TD.TSX"),
-      {ToolbarWindow::WindowType::TIME_AND_SALES,
-       ToolbarWindow::WindowType::TIME_AND_SALES}}, false});
+    auto identifier = 0;
+    targets.push_back({{to_string(identifier++), "Book View", QColor(),
+      Security(), 1}, false});
+    targets.push_back({{to_string(identifier++), "", QColor(0xBF9541),
+      Security(), 2}, false});
+    targets.push_back({{to_string(identifier++), "", QColor(0x00BFA0),
+      Security(), 2}, false});
+    targets.push_back({{to_string(identifier++), "Book View", QColor(Qt::red),
+      Security(), 1}, false});
+    targets.push_back({{to_string(identifier++), "Time and Sales", QColor(),
+      Security(), 1}, false});
+    targets.push_back({{to_string(identifier++), "", QColor(0xFF7B00),
+      ParseSecurity("ABX.TSX"), 3}, true});
+    targets.push_back({{to_string(identifier++), "Book View", QColor(),
+      ParseSecurity("ABX.TSX"), 1}, false});
+    targets.push_back({{to_string(identifier++), "Time and Sales", QColor(),
+      ParseSecurity("ABX.TSX"), 1}, false});
+    targets.push_back({{to_string(identifier++), "", QColor(Qt::blue),
+      ParseSecurity("ARE.TSX"), 2}, false});
+    targets.push_back({{to_string(identifier++), "", QColor(0x993EF2),
+      ParseSecurity("MFC.TSX"), 2}, false});
+    targets.push_back({{to_string(identifier++), "Time and Sales",
+      QColor(Qt::green), ParseSecurity("TD.TSX"), 2}, false});
     return targets;
   }
 
@@ -86,7 +78,7 @@ namespace {
       int index) {
     auto check_box = new CheckBox(make_field_value_model(
       make_list_value_model(targets, index), &SelectableTarget::m_selected));
-    check_box->set_label(to_text_with_color(targets->get(index).m_target));
+    check_box->set_label(to_text_with_identifier(targets->get(index).m_target));
     return check_box;
   }
 
@@ -299,9 +291,11 @@ struct ReplayAttachMenuButtonTester : QWidget {
     right_layout->addWidget(target_group);
     top_layout->addLayout(right_layout, 1);
     for(auto i = 0; i < m_targets->get_size(); ++i) {
-      list_widget->addItem(to_text_with_color(m_targets->get(i).m_target));
+      list_widget->addItem(to_text_with_identifier(m_targets->get(i).m_target));
       auto list_item = list_widget->item(i);
       list_item->setFlags(list_item->flags() | Qt::ItemIsUserCheckable);
+      list_item->setData(Qt::UserRole,
+        QString::fromStdString(m_targets->get(i).m_target.m_identifier));
       list_item->setCheckState(Qt::Checked);
       m_target_group_layout->addWidget(make_check_box(m_targets, i));
     }
@@ -324,7 +318,8 @@ struct ReplayAttachMenuButtonTester : QWidget {
     } else {
       auto i = std::find_if(m_targets->begin(), m_targets->end(),
         [&] (const SelectableTarget& target) {
-          return to_text_with_color(target.m_target) == item->text();
+          return target.m_target.m_identifier ==
+            item->data(Qt::UserRole).toString().toStdString();
         });
       if(i != m_targets->end()) {
         m_targets->remove(i);

@@ -1,4 +1,5 @@
 #include "Spire/Playback/ReplayAttachMenuButton.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/FilteredListModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
@@ -9,26 +10,28 @@
 #include "Spire/Ui/ListView.hpp"
 
 using namespace boost::signals2;
+using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  bool is_valid(const Security& security) {
+    return security != Security();
+  }
+
   bool assigned_targets_comparator(const SelectableTarget& left,
       const SelectableTarget& right) {
-    return to_text(*left.m_target.m_security) <
-      to_text(*right.m_target.m_security);
+    return to_text(left.m_target.m_security) <
+      to_text(right.m_target.m_security);
   }
 
   bool unassigned_targets_comparator(const SelectableTarget& left,
       const SelectableTarget& right) {
-    if(left.m_target.m_window_types.size() == 1 &&
-        left.m_target.m_window_types.size() ==
-          right.m_target.m_window_types.size()) {
-      return to_text(left.m_target.m_window_types[0]) <
-        to_text(right.m_target.m_window_types[0]);
+    if(left.m_target.m_count == 1 &&
+        left.m_target.m_count == right.m_target.m_count) {
+      return left.m_target.m_name < right.m_target.m_name;
     }
-    return left.m_target.m_window_types.size() >
-      right.m_target.m_window_types.size();
+    return left.m_target.m_count > right.m_target.m_count;
   }
 
   void add_target_menu_item(ContextMenu& menu,
@@ -50,12 +53,12 @@ MenuButton* Spire::make_replay_attach_menu_button(
   auto assigned_targets = std::make_shared<SortedListModel<SelectableTarget>>(
     std::make_shared<FilteredListModel<SelectableTarget>>(targets,
       [] (const ListModel<SelectableTarget>& targets, int index) {
-        return !targets.get(index).m_target.m_security.has_value();
+        return !is_valid(targets.get(index).m_target.m_security);
       }), assigned_targets_comparator);
   auto unassigned_targets = std::make_shared<SortedListModel<SelectableTarget>>(
     std::make_shared<FilteredListModel<SelectableTarget>>(targets,
       [] (const ListModel<SelectableTarget>& targets, int index) {
-        return targets.get(index).m_target.m_security.has_value();
+        return is_valid(targets.get(index).m_target.m_security);
       }), unassigned_targets_comparator);
   auto add_items = [=] {
     auto& menu = button->get_menu();

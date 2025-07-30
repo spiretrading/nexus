@@ -2,7 +2,7 @@
 #define SPIRE_TARGET_MENU_ITEM_HPP
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Playback/Playback.hpp"
-#include "Spire/Toolbar/ToolbarWindow.hpp"
+#include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/ClickObserver.hpp"
 
 namespace Spire {
@@ -14,14 +14,20 @@ namespace Spire {
       /** Represents a window group target available for replay attachment. */
       struct Target {
 
+        /** The unique identifier of the window group target. */
+        std::string m_identifier;
+
+        /** The target name. */
+        QString m_name;
+
         /** The color associated with the target. */
-        boost::optional<QColor> m_color;
+        QColor m_color;
 
         /** The security assigned to the target. */
-        boost::optional<Nexus::Security> m_security;
+        Nexus::Security m_security;
 
-        /** The window types in the group. */
-        std::vector<ToolbarWindow::WindowType> m_window_types;
+        /** The number of windows in the group. */
+        int m_count;
       };
 
       /**
