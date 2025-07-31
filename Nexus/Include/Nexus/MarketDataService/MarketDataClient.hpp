@@ -1,7 +1,9 @@
 #ifndef NEXUS_MARKET_DATA_CLIENT_HPP
 #define NEXUS_MARKET_DATA_CLIENT_HPP
+#include <concepts>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -206,25 +208,28 @@ namespace Nexus::MarketDataService {
       std::shared_ptr<VirtualMarketDataClient> m_client;
   };
 
+  template<typename T>
+  concept IsMarketDataClient = std::constructible_from<
+    MarketDataClient, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
+
   /**
    * Submits a query for a Security's real-time BookQuotes with snapshot.
-   * @param market_data_client The MarketDataClient used to submit the query.
+   * @param client The MarketDataClient used to submit the query.
    * @param security The Security to query for.
    * @param queue The queue that will store the result of the query.
    * @param interruption_policy The policy used when the query is interrupted.
    */
-  template<typename MarketDataClient>
+  template<IsMarketDataClient C>
   Beam::Routines::Routine::Id query_real_time_with_snapshot(
-      MarketDataClient&& market_data_client, const Security& security,
+      C&& client, const Security& security,
       Beam::ScopedQueueWriter<BookQuote> queue,
       Beam::Queries::InterruptionPolicy interruption_policy =
         Beam::Queries::InterruptionPolicy::BREAK_QUERY) {
-    return Beam::Routines::Spawn([market_data_client =
-          Beam::CapturePtr<MarketDataClient>(market_data_client), security,
-          queue = std::move(queue), interruption_policy] () mutable {
+    return Beam::Routines::Spawn([client = Beam::CapturePtr<C>(client),
+          security, queue = std::move(queue), interruption_policy] () mutable {
         auto snapshot = SecuritySnapshot();
         try {
-          snapshot = market_data_client->load_snapshot(security);
+          snapshot = client->load_snapshot(security);
         } catch(const std::exception&) {
           queue.Break(std::current_exception());
           return;
@@ -234,7 +239,7 @@ namespace Nexus::MarketDataService {
           query.SetIndex(security);
           query.SetRange(Beam::Queries::Range::RealTime());
           query.SetInterruptionPolicy(interruption_policy);
-          market_data_client->query(query, std::move(queue));
+          client->query(query, std::move(queue));
         } else {
           auto start = Beam::Queries::Sequence::First();
           try {
@@ -255,7 +260,7 @@ namespace Nexus::MarketDataService {
           query.SetRange(start, Beam::Queries::Sequence::Last());
           query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
           query.SetInterruptionPolicy(interruption_policy);
-          market_data_client->query(query, std::move(queue));
+          client->query(query, std::move(queue));
         }
       });
   }
@@ -266,12 +271,11 @@ namespace Nexus::MarketDataService {
    * @param client The MarketDataClient to submit the query to.
    * @param queue The Queue to write to.
    */
-  template<typename MarketDataClient>
+  template<IsMarketDataClient C>
   Beam::Routines::Routine::Id query_real_time_with_snapshot(Security security,
-      MarketDataClient&& client, Beam::ScopedQueueWriter<BboQuote> queue) {
+      C&& client, Beam::ScopedQueueWriter<BboQuote> queue) {
     return Beam::Routines::Spawn(
-      [=, security = std::move(security),
-          client = Beam::CapturePtr<MarketDataClient>(client),
+      [=, security = std::move(security), client = Beam::CapturePtr<C>(client),
           queue = std::move(queue)] () mutable {
         auto snapshot_queue =
           std::make_shared<Beam::Queue<SequencedBboQuote>>();
@@ -302,9 +306,8 @@ namespace Nexus::MarketDataService {
    * @param client The MarketDataClient to submit the query to.
    * @return The SecurityInfo for the given <i>security</i>.
    */
-  template<typename MarketDataClient>
   boost::optional<SecurityInfo> load_security_info(
-      const Security& security, MarketDataClient& client) {
+      const Security& security, IsMarketDataClient auto& client) {
     auto result = client.query(make_security_info_query(security));
     if(!result.empty()) {
       return result.front();
