@@ -262,8 +262,7 @@ namespace Nexus::Compliance {
     auto is_administrator = m_administration_client->check_administrator(
       session.GetAccount());
     if(!is_administrator) {
-      throw Beam::Services::ServiceRequestException(
-        "Insufficient permissions.");
+      return;
     }
     record.m_timestamp = m_time_client->GetTime();
     m_data_store->store(record);

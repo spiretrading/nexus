@@ -95,12 +95,12 @@ TEST_SUITE("ComplianceServlet") {
     auto entry = ComplianceRuleEntry(
       id, second_account, ComplianceRuleEntry::State::ACTIVE, schema);
     fixture.m_data_store.store(entry);
-    SUBCASE("fails_without_permission") {
+    SUBCASE("without_permission") {
       REQUIRE_THROWS_AS(fixture.m_client->template SendRequest<
         LoadDirectoryEntryComplianceRuleEntryService>(second_account),
         Beam::Services::ServiceRequestException);
     }
-    SUBCASE("succeeds_with_permission") {
+    SUBCASE("with_permission") {
       fixture.m_service_locator_environment.GetRoot().StorePermissions(
         fixture.m_client_account, second_account, Permission::READ);
       auto result = fixture.m_client->template SendRequest<
@@ -113,13 +113,13 @@ TEST_SUITE("ComplianceServlet") {
   TEST_CASE("add_compliance_rule_entry") {
     auto fixture = Fixture();
     auto schema = ComplianceRuleSchema("TestRule", {});
-    SUBCASE("fails_without_administrator_permission") {
+    SUBCASE("without_permission") {
       REQUIRE_THROWS_AS(
         fixture.m_client->template SendRequest<AddComplianceRuleEntryService>(
           fixture.m_client_account, ComplianceRuleEntry::State::ACTIVE, schema),
-          Beam::Services::ServiceRequestException);
+          ServiceRequestException);
     }
-    SUBCASE("succeeds_with_administrator_permission") {
+    SUBCASE("with_permission") {
       fixture.m_administration_environment.make_administrator(
         fixture.m_client_account);
       auto id = fixture.m_client->template SendRequest<
@@ -131,6 +131,156 @@ TEST_SUITE("ComplianceServlet") {
       REQUIRE(rules[0].get_id() == id);
       REQUIRE(rules[0].get_directory_entry() == fixture.m_client_account);
       REQUIRE(rules[0].get_schema() == schema);
+    }
+  }
+
+  TEST_CASE("update_compliance_rule_entry") {
+    auto fixture = Fixture();
+    auto second_account =
+      fixture.make_account("second", DirectoryEntry::GetStarDirectory());
+    auto schema = ComplianceRuleSchema("TestRule", {});
+    auto id = fixture.m_data_store.load_next_compliance_rule_entry_id();
+    auto entry = ComplianceRuleEntry(
+      id, second_account, ComplianceRuleEntry::State::ACTIVE, schema);
+    fixture.m_data_store.store(entry);
+    SUBCASE("without_permission") {
+      REQUIRE_THROWS_AS(fixture.m_client->template SendRequest<
+        UpdateComplianceRuleEntryService>(entry), ServiceRequestException);
+    }
+    SUBCASE("with_permission") {
+      auto updated_entry = entry;
+      updated_entry.set_state(ComplianceRuleEntry::State::PASSIVE);
+      fixture.m_administration_environment.make_administrator(
+        fixture.m_client_account);
+      fixture.m_client->template SendRequest<UpdateComplianceRuleEntryService>(
+        updated_entry);
+      auto updated_rules =
+        fixture.m_data_store.load_compliance_rule_entries(second_account);
+      REQUIRE(updated_rules.size() == 1);
+      REQUIRE(updated_rules[0] == updated_entry);
+    }
+  }
+
+  TEST_CASE("delete_compliance_rule_entry") {
+    auto fixture = Fixture();
+    auto schema = ComplianceRuleSchema("TestRule", {});
+    auto id = fixture.m_data_store.load_next_compliance_rule_entry_id();
+    auto entry = ComplianceRuleEntry(
+      id, fixture.m_client_account, ComplianceRuleEntry::State::ACTIVE, schema);
+    fixture.m_data_store.store(entry);
+    SUBCASE("without_permission") {
+      REQUIRE_THROWS_AS(
+        fixture.m_client->template SendRequest<
+          DeleteComplianceRuleEntryService>(id), ServiceRequestException);
+    }
+    SUBCASE("with_permission") {
+      fixture.m_administration_environment.make_administrator(
+        fixture.m_client_account);
+      fixture.m_client->template SendRequest<DeleteComplianceRuleEntryService>(
+        id);
+      auto rules = fixture.m_data_store.load_compliance_rule_entries(
+        fixture.m_client_account);
+      REQUIRE(rules.empty());
+      auto deleted_entry = fixture.m_data_store.load_compliance_rule_entry(id);
+      REQUIRE(!deleted_entry);
+    }
+  }
+
+  TEST_CASE("report_compliance_rule_violation") {
+    auto fixture = Fixture();
+    auto schema = ComplianceRuleSchema("TestRule", {});
+    auto id = fixture.m_data_store.load_next_compliance_rule_entry_id();
+    auto entry = ComplianceRuleEntry(
+      id, fixture.m_client_account, ComplianceRuleEntry::State::ACTIVE, schema);
+    fixture.m_data_store.store(entry);
+    auto violation = ComplianceRuleViolationRecord();
+    violation.m_account = fixture.m_client_account;
+    violation.m_order_id = 123;
+    violation.m_rule_id = id;
+    violation.m_schema_name = schema.get_name();
+    violation.m_reason = "Broke the rules.";
+    SUBCASE("without_permission") {
+      SendRecordMessage<ReportComplianceRuleViolationMessage>(
+        *fixture.m_client,  violation);
+    }
+    SUBCASE("with_permission") {
+      fixture.m_administration_environment.make_administrator(
+        fixture.m_client_account);
+      SendRecordMessage<ReportComplianceRuleViolationMessage>(
+        *fixture.m_client,  violation);
+    }
+  }
+
+  TEST_CASE("monitor_compliance_rule_entry") {
+    auto fixture = Fixture();
+    auto second_account =
+      fixture.make_account("second", DirectoryEntry::GetStarDirectory());
+    auto third_account =
+      fixture.make_account("third", DirectoryEntry::GetStarDirectory());
+    auto initial_entry = [&] {
+      auto id = fixture.m_data_store.load_next_compliance_rule_entry_id();
+      auto entry = ComplianceRuleEntry(id, third_account,
+        ComplianceRuleEntry::State::ACTIVE,
+        ComplianceRuleSchema("InitialRule", {}));
+      fixture.m_data_store.store(entry);
+      return entry;
+    }();
+    auto schema = ComplianceRuleSchema("TestRule", {});
+    SUBCASE("without_permission") {
+      REQUIRE_THROWS_AS(fixture.m_client->template SendRequest<
+        MonitorComplianceRuleEntryService>(second_account),
+        ServiceRequestException);
+    }
+    SUBCASE("with_permission") {
+      fixture.m_service_locator_environment.GetRoot().StorePermissions(
+        fixture.m_client_account, second_account, Permission::READ);
+      fixture.m_administration_environment.make_administrator(
+        fixture.m_client_account);
+      auto rules = fixture.m_client->template SendRequest<
+        MonitorComplianceRuleEntryService>(second_account);
+      REQUIRE(rules.size() == 1);
+      REQUIRE(rules[0] == initial_entry);
+      auto id = fixture.m_client->template SendRequest<
+        AddComplianceRuleEntryService>(second_account,
+          ComplianceRuleEntry::State::ACTIVE, schema);
+      auto message = fixture.m_client->ReadMessage();
+      auto received_message = std::dynamic_pointer_cast<
+        RecordMessage<ComplianceRuleEntryMessage, TestServiceProtocolClient>>(
+          message);
+      REQUIRE(received_message != nullptr);
+      REQUIRE(
+        received_message->GetRecord().compliance_rule_entry.get_id() == id);
+      REQUIRE(received_message->GetRecord().
+        compliance_rule_entry.get_directory_entry() == second_account);
+      REQUIRE(
+        received_message->GetRecord().compliance_rule_entry.get_schema() ==
+          schema);
+      auto updated_entry = received_message->GetRecord().compliance_rule_entry;
+      updated_entry.set_state(ComplianceRuleEntry::State::PASSIVE);
+      fixture.m_client->template SendRequest<
+        UpdateComplianceRuleEntryService>(updated_entry);
+      message = fixture.m_client->ReadMessage();
+      received_message = std::dynamic_pointer_cast<
+        RecordMessage<ComplianceRuleEntryMessage, TestServiceProtocolClient>>(
+          message);
+      REQUIRE(received_message != nullptr);
+      REQUIRE(
+        received_message->GetRecord().compliance_rule_entry.get_id() == id);
+      REQUIRE(received_message->GetRecord().compliance_rule_entry.get_state() ==
+        ComplianceRuleEntry::State::PASSIVE);
+      fixture.m_client->template SendRequest<
+        DeleteComplianceRuleEntryService>(initial_entry.get_id());
+      fixture.m_client->template SendRequest<
+        DeleteComplianceRuleEntryService>(id);
+      message = fixture.m_client->ReadMessage();
+      received_message = std::dynamic_pointer_cast<
+        RecordMessage<ComplianceRuleEntryMessage, TestServiceProtocolClient>>(
+          message);
+      REQUIRE(received_message != nullptr);
+      REQUIRE(
+        received_message->GetRecord().compliance_rule_entry.get_id() == id);
+      REQUIRE(received_message->GetRecord().compliance_rule_entry.get_state() ==
+        ComplianceRuleEntry::State::DELETED);
     }
   }
 }
