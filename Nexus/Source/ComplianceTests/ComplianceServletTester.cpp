@@ -217,11 +217,19 @@ TEST_SUITE("ComplianceServlet") {
       fixture.make_account("second", DirectoryEntry::GetStarDirectory());
     auto third_account =
       fixture.make_account("third", DirectoryEntry::GetStarDirectory());
-    auto initial_entry = [&] {
+    auto initial_second_account_entry = [&] {
+      auto id = fixture.m_data_store.load_next_compliance_rule_entry_id();
+      auto entry = ComplianceRuleEntry(id, second_account,
+        ComplianceRuleEntry::State::PASSIVE,
+        ComplianceRuleSchema("Second Account Rule", {}));
+      fixture.m_data_store.store(entry);
+      return entry;
+    }();
+    auto initial_third_account_entry = [&] {
       auto id = fixture.m_data_store.load_next_compliance_rule_entry_id();
       auto entry = ComplianceRuleEntry(id, third_account,
         ComplianceRuleEntry::State::ACTIVE,
-        ComplianceRuleSchema("InitialRule", {}));
+        ComplianceRuleSchema("Third Account Rule", {}));
       fixture.m_data_store.store(entry);
       return entry;
     }();
@@ -239,7 +247,7 @@ TEST_SUITE("ComplianceServlet") {
       auto rules = fixture.m_client->template SendRequest<
         MonitorComplianceRuleEntryService>(second_account);
       REQUIRE(rules.size() == 1);
-      REQUIRE(rules[0] == initial_entry);
+      REQUIRE(rules[0] == initial_second_account_entry);
       auto id = fixture.m_client->template SendRequest<
         AddComplianceRuleEntryService>(second_account,
           ComplianceRuleEntry::State::ACTIVE, schema);
@@ -269,7 +277,7 @@ TEST_SUITE("ComplianceServlet") {
       REQUIRE(received_message->GetRecord().compliance_rule_entry.get_state() ==
         ComplianceRuleEntry::State::PASSIVE);
       fixture.m_client->template SendRequest<
-        DeleteComplianceRuleEntryService>(initial_entry.get_id());
+        DeleteComplianceRuleEntryService>(initial_third_account_entry.get_id());
       fixture.m_client->template SendRequest<
         DeleteComplianceRuleEntryService>(id);
       message = fixture.m_client->ReadMessage();
