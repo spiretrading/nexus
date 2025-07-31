@@ -9,6 +9,7 @@
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Queues/ValueSnapshotPublisher.hpp>
 #include <Beam/SignalHandling/NullSlot.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
@@ -23,7 +24,8 @@ namespace Nexus::Accounting {
    * @param <P> The type of Portfolio to update.
    * @param <C> The type of MarketDataClient to use.
    */
-  template<typename P, MarketDataService::IsMarketDataClient C>
+  template<Beam::IsInstanceOrIndirect<Portfolio> P,
+    MarketDataService::IsMarketDataClient C>
   class PortfolioController {
     public:
 
@@ -45,9 +47,8 @@ namespace Nexus::Accounting {
        * @param market_data_client Initializes the MarketDataClient.
        * @param orders The Orders to include in the Portfolio.
        */
-      template<typename PF>
-      PortfolioController(PF&& portfolio,
-        MarketDataService::IsMarketDataClient auto&& market_data_client,
+      template<Beam::Initializes<P> PF, Beam::Initializes<C> MC>
+      PortfolioController(PF&& portfolio, MC&& market_data_client,
         Beam::ScopedQueueReader<
           std::shared_ptr<const OrderExecutionService::Order>> orders);
 
@@ -74,16 +75,17 @@ namespace Nexus::Accounting {
         const OrderExecutionService::ExecutionReportEntry& executionReport);
   };
 
-  template<typename P, MarketDataService::IsMarketDataClient C>
+  template<Beam::IsInstanceOrIndirect<Portfolio> P,
+    MarketDataService::IsMarketDataClient C>
   PortfolioController(P&&, C&&, Beam::ScopedQueueReader<
     std::shared_ptr<const OrderExecutionService::Order>>) ->
       PortfolioController<std::decay_t<P>, std::remove_reference_t<C>>;
 
-  template<typename P, MarketDataService::IsMarketDataClient C>
-  template<typename PF>
+  template<Beam::IsInstanceOrIndirect<Portfolio> P,
+    MarketDataService::IsMarketDataClient C>
+  template<Beam::Initializes<P> PF, Beam::Initializes<C> MC>
   PortfolioController<P, C>::PortfolioController(PF&& portfolio,
-      MarketDataService::IsMarketDataClient auto&& market_data_client,
-      Beam::ScopedQueueReader<
+      MC&& market_data_client, Beam::ScopedQueueReader<
         std::shared_ptr<const OrderExecutionService::Order>> orders)
     : m_portfolio(std::forward<PF>(portfolio)),
       m_market_data_client(
@@ -113,14 +115,16 @@ namespace Nexus::Accounting {
     });
   }
 
-  template<typename P, MarketDataService::IsMarketDataClient C>
+  template<Beam::IsInstanceOrIndirect<Portfolio> P,
+    MarketDataService::IsMarketDataClient C>
   const Beam::SnapshotPublisher<typename PortfolioController<P, C>::UpdateEntry,
     typename PortfolioController<P, C>::Portfolio*>&
       PortfolioController<P, C>::get_publisher() const {
     return m_publisher;
   }
 
-  template<typename P, MarketDataService::IsMarketDataClient C>
+  template<Beam::IsInstanceOrIndirect<Portfolio> P,
+    MarketDataService::IsMarketDataClient C>
   void PortfolioController<P, C>::subscribe(const Security& security) {
     if(auto security_iterator = m_securities.find(security);
         security_iterator == m_securities.end()) {
@@ -138,7 +142,8 @@ namespace Nexus::Accounting {
     }
   }
 
-  template<typename P, MarketDataService::IsMarketDataClient C>
+  template<Beam::IsInstanceOrIndirect<Portfolio> P,
+    MarketDataService::IsMarketDataClient C>
   void PortfolioController<P, C>::push_update(const Security& security) {
     auto security_entry_iterator =
       m_portfolio->get_security_entries().find(security);
@@ -165,7 +170,8 @@ namespace Nexus::Accounting {
     m_publisher.Push(update);
   }
 
-  template<typename P, MarketDataService::IsMarketDataClient C>
+  template<Beam::IsInstanceOrIndirect<Portfolio> P,
+    MarketDataService::IsMarketDataClient C>
   void PortfolioController<P, C>::on_bbo(
       const Security& security, const BboQuote& bbo) {
     auto& last_bbo = m_bbo_quotes[security];
@@ -193,7 +199,8 @@ namespace Nexus::Accounting {
     });
   }
 
-  template<typename P, MarketDataService::IsMarketDataClient C>
+  template<Beam::IsInstanceOrIndirect<Portfolio> P,
+    MarketDataService::IsMarketDataClient C>
   void PortfolioController<P, C>::on_execution_report(
       const OrderExecutionService::ExecutionReportEntry& entry) {
     if(entry.m_report.m_status == OrderStatus::PENDING_NEW) {

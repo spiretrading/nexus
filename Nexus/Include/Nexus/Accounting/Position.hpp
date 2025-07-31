@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/functional/hash.hpp>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
@@ -60,6 +61,13 @@ namespace Details {
 
     bool operator ==(const Position&) const = default;
   };
+
+  /**
+   * Concept that evaluates to true if a type is a Position specialization.
+   * @param <T> The type to test.
+   */
+  template<typename T>
+  concept IsPosition = Beam::is_instance_v<T, Position>;
 
   template<typename Index>
   std::ostream& operator <<(

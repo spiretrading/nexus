@@ -3,6 +3,7 @@
 #include <ostream>
 #include <utility>
 #include <Beam/Serialization/DataShuttle.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Accounting/Position.hpp"
 
 namespace Nexus::Accounting {
@@ -11,7 +12,7 @@ namespace Nexus::Accounting {
    * Stores bookkeeping info for a single inventory.
    * @param <P> The type used to manage inventory Positions.
    */
-  template<typename P>
+  template<IsPosition P>
   struct Inventory {
 
     /** The type used to manage inventory Positions. */
@@ -56,6 +57,13 @@ namespace Nexus::Accounting {
   };
 
   /**
+   * Concept that evaluates to true if a type is an Inventory instantiation.
+   * @param <T> The type to test.
+   */
+  template<typename T>
+  concept IsInventory = Beam::is_instance_v<T, Inventory>;
+
+  /**
   * Tests if an Inventory is empty, ie. has no position, volume, or
   * transactions.
   * @param inventory The inventory to test.
@@ -66,18 +74,18 @@ namespace Nexus::Accounting {
     return inventory == Inventory<P>(inventory.m_position.m_key);
   }
 
-  template<typename P>
+  template<IsPosition P>
   Inventory<P>::Inventory() noexcept
     : m_volume(0),
       m_transaction_count(0) {}
 
-  template<typename P>
+  template<IsPosition P>
   Inventory<P>::Inventory(typename P::Key key) noexcept
     : m_position(std::move(key)),
       m_volume(0),
       m_transaction_count(0) {}
 
-  template<typename P>
+  template<IsPosition P>
   Inventory<P>::Inventory(Position position, Money gross_profit_and_loss,
     Money fees, Quantity volume, int transaction_count)
     : m_position(std::move(position)),

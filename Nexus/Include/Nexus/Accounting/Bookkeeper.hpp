@@ -15,7 +15,7 @@ namespace Nexus::Accounting {
    * Performs bookkeeping and cost management of inventories.
    * @param <I> The type of Inventory to manage.
    */
-  template<typename I>
+  template<IsInventory I>
   class Bookkeeper {
     public:
 
@@ -42,7 +42,7 @@ namespace Nexus::Accounting {
        */
       template<typename B,
         typename = std::enable_if_t<
-          !std::is_same_v<std::decay_t<B>, Bookkeeper>>>
+          !std::is_same_v<std::remove_cvref_t<B>, Bookkeeper>>>
       explicit Bookkeeper(B&& bookkeeper);
 
       Bookkeeper(const Bookkeeper& bookkeeper);
@@ -114,73 +114,82 @@ namespace Nexus::Accounting {
       std::unique_ptr<VirtualBookkeeper> m_bookkeeper;
   };
 
-  template<typename I>
+  /**
+   * Concept that evaluates to true if a type is a Bookkeeper instantiation.
+   * @param <T> The type to test.
+   */
+  template<typename T>
+  concept IsBookkeeper = std::constructible_from<Bookkeeper<
+    typename std::remove_pointer_t<std::remove_cvref_t<T>>::Inventory>,
+    std::remove_pointer_t<std::remove_cvref_t<T>>*>;
+
+  template<IsInventory I>
   template<typename T, typename... Args>
   Bookkeeper<I>::Bookkeeper(std::in_place_type_t<T>, Args&&... args)
     : m_bookkeeper(
         std::make_unique<WrappedBookkeeper<T>>(std::forward<Args>(args)...)) {}
 
-  template<typename I>
+  template<IsInventory I>
   template<typename B, typename>
   Bookkeeper<I>::Bookkeeper(B&& bookkeeper)
     : Bookkeeper(
         std::in_place_type<std::decay_t<B>>, std::forward<B>(bookkeeper)) {}
 
-  template<typename I>
+  template<IsInventory I>
   Bookkeeper<I>::Bookkeeper(const Bookkeeper& bookkeeper)
     : m_bookkeeper(bookkeeper.m_bookkeeper->clone()) {}
 
-  template<typename I>
+  template<IsInventory I>
   void Bookkeeper<I>::record(const Index& index, CurrencyId currency,
       Quantity quantity, Money cost_basis, Money fees) {
     m_bookkeeper->record(index, currency, quantity, cost_basis, fees);
   }
 
-  template<typename I>
+  template<IsInventory I>
   const typename Bookkeeper<I>::Inventory& Bookkeeper<I>::get_inventory(
       const Index& index, CurrencyId currency) const {
     return m_bookkeeper->get_inventory(index, currency);
   }
 
-  template<typename I>
+  template<IsInventory I>
   const typename Bookkeeper<I>::Inventory& Bookkeeper<I>::get_total(
       CurrencyId currency) const {
     return m_bookkeeper->get_total(currency);
   }
 
-  template<typename I>
+  template<IsInventory I>
   Beam::View<const typename Bookkeeper<I>::Inventory>
       Bookkeeper<I>::get_inventory_range() const {
     return m_bookkeeper->get_inventory_range();
   }
 
-  template<typename I>
+  template<IsInventory I>
   Beam::View<const typename Bookkeeper<I>::Inventory>
       Bookkeeper<I>::get_totals_range() const {
     return m_bookkeeper->get_totals_range();
   }
 
-  template<typename I>
+  template<IsInventory I>
   template<typename B>
   template<typename... Args>
   Bookkeeper<I>::WrappedBookkeeper<B>::WrappedBookkeeper(Args&&... args)
     : m_bookkeeper(std::forward<Args>(args)...) {}
 
-  template<typename I>
+  template<IsInventory I>
   template<typename B>
   std::unique_ptr<typename Bookkeeper<I>::VirtualBookkeeper>
       Bookkeeper<I>::WrappedBookkeeper<B>::clone() const {
     return std::make_unique<WrappedBookkeeper<B>>(*m_bookkeeper);
   }
 
-  template<typename I>
+  template<IsInventory I>
   template<typename B>
   void Bookkeeper<I>::WrappedBookkeeper<B>::record(const Index& index,
       CurrencyId currency, Quantity quantity, Money cost_basis, Money fees) {
     m_bookkeeper->record(index, currency, quantity, cost_basis, fees);
   }
 
-  template<typename I>
+  template<IsInventory I>
   template<typename B>
   const typename Bookkeeper<I>::Inventory&
       Bookkeeper<I>::WrappedBookkeeper<B>::get_inventory(const Index& index,
@@ -188,7 +197,7 @@ namespace Nexus::Accounting {
     return m_bookkeeper->get_inventory(index, currency);
   }
 
-  template<typename I>
+  template<IsInventory I>
   template<typename B>
   const typename Bookkeeper<I>::Inventory&
       Bookkeeper<I>::WrappedBookkeeper<B>::get_total(
@@ -196,14 +205,14 @@ namespace Nexus::Accounting {
     return m_bookkeeper->get_total(currency);
   }
 
-  template<typename I>
+  template<IsInventory I>
   template<typename B>
   Beam::View<const typename Bookkeeper<I>::Inventory>
       Bookkeeper<I>::WrappedBookkeeper<B>::get_inventory_range() const {
     return m_bookkeeper->get_inventory_range();
   }
 
-  template<typename I>
+  template<IsInventory I>
   template<typename B>
   Beam::View<const typename Bookkeeper<I>::Inventory>
       Bookkeeper<I>::WrappedBookkeeper<B>::get_totals_range() const {

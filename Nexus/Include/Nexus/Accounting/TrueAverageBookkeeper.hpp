@@ -22,7 +22,7 @@ namespace Details {
    * Implements a Bookkeeper using true average bookkeeping.
    * @param <I> The type of Inventory to manage.
    */
-  template<typename I>
+  template<IsInventory I>
   class TrueAverageBookkeeper {
     public:
       using Inventory = typename Bookkeeper<I>::Inventory;
@@ -53,7 +53,7 @@ namespace Details {
       Inventory& internal_get_total(CurrencyId currency);
   };
 
-  template<typename I>
+  template<IsInventory I>
   TrueAverageBookkeeper<I>::TrueAverageBookkeeper(
       const Beam::View<const Inventory>& inventories) {
     for(auto& inventory : inventories) {
@@ -71,7 +71,7 @@ namespace Details {
     }
   }
 
-  template<typename I>
+  template<IsInventory I>
   void TrueAverageBookkeeper<I>::record(const Index& index,
       CurrencyId currency, Quantity quantity, Money cost_basis, Money fees) {
     auto key = Key(index, currency);
@@ -134,7 +134,7 @@ namespace Details {
     total.m_position.m_cost_basis += abs(entry.m_position.m_cost_basis);
   }
 
-  template<typename I>
+  template<IsInventory I>
   const typename TrueAverageBookkeeper<I>::Inventory&
       TrueAverageBookkeeper<I>::get_inventory(
         const Index& index, CurrencyId currency) const {
@@ -150,7 +150,7 @@ namespace Details {
     return inventory_iterator->second;
   }
 
-  template<typename I>
+  template<IsInventory I>
   const typename TrueAverageBookkeeper<I>::Inventory&
       TrueAverageBookkeeper<I>::get_total(CurrencyId currency) const {
     auto totals_iterator = m_totals.find(currency);
@@ -166,7 +166,7 @@ namespace Details {
     return totals_iterator->second;
   }
 
-  template<typename I>
+  template<IsInventory I>
   Beam::View<const typename TrueAverageBookkeeper<I>::Inventory>
       TrueAverageBookkeeper<I>::get_inventory_range() const {
     using Accessor = Details::ValueAccessor<std::pair<const Key, Inventory>>;
@@ -175,7 +175,7 @@ namespace Details {
       boost::make_transform_iterator(m_inventories.end(), Accessor()));
   }
 
-  template<typename I>
+  template<IsInventory I>
   Beam::View<const typename TrueAverageBookkeeper<I>::Inventory>
       TrueAverageBookkeeper<I>::get_totals_range() const {
     using Accessor =
@@ -185,7 +185,7 @@ namespace Details {
       boost::make_transform_iterator(m_totals.end(), Accessor()));
   }
 
-  template<typename I>
+  template<IsInventory I>
   typename TrueAverageBookkeeper<I>::Inventory&
       TrueAverageBookkeeper<I>::internal_get_total(CurrencyId currency) {
     auto totals_iterator = m_totals.find(currency);

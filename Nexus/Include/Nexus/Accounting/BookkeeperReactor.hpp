@@ -5,6 +5,7 @@
 #include <utility>
 #include <Aspen/Aspen.hpp>
 #include <Beam/Reactors/PublisherReactor.hpp>
+#include "Nexus/Accounting/Bookkeeper.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 
 namespace Nexus::Accounting {
@@ -15,12 +16,12 @@ namespace Nexus::Accounting {
    * @param orders The reactor producing the orders to monitor for execution
    *        reports.
    */
-  template<typename Bookkeeper, typename Orders>
+  template<IsBookkeeper B, typename Orders>
   auto make_bookkeeper_reactor(Orders orders) {
-    return Aspen::lift([bookkeeper = Bookkeeper()] (
+    return Aspen::lift([bookkeeper = B()] (
         const std::tuple<const OrderExecutionService::Order*,
           OrderExecutionService::ExecutionReport>& update) mutable ->
-            std::optional<typename Bookkeeper::Inventory> {
+            std::optional<typename B::Inventory> {
       auto& order = *std::get<0>(update);
       auto& report = std::get<1>(update);
       if(report.m_last_quantity == 0) {

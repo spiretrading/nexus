@@ -1,5 +1,6 @@
 #ifndef NEXUS_PORTFOLIO_HPP
 #define NEXUS_PORTFOLIO_HPP
+#include <type_traits>
 #include <unordered_map>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleOptional.hpp>
@@ -14,7 +15,7 @@
 namespace Nexus::Accounting {
 
   /** Stores an update to a Portfolio's snapshot. */
-  template<typename I>
+  template<IsInventory I>
   struct PortfolioUpdateEntry {
 
     /** The type of Inventory used. */
@@ -52,14 +53,14 @@ namespace Nexus::Accounting {
      * Constructs a SecurityValuation.
      * @param currency The currency used to value the Security.
      */
-    explicit SecurityValuation(CurrencyId currency);
+    explicit SecurityValuation(CurrencyId currency) noexcept;
   };
 
   /**
    * Monitors transactions as part of a portfolio and reports the P/L.
    * @param <B> The type of Bookkeeper to use.
    */
-  template<typename B>
+  template<IsBookkeeper B>
   class Portfolio {
     public:
 
@@ -85,7 +86,7 @@ namespace Nexus::Accounting {
          * Constructs a SecurityEntry.
          * @param currency The currency used to value the Security.
          */
-        explicit SecurityEntry(CurrencyId currency);
+        explicit SecurityEntry(CurrencyId currency) noexcept;
       };
 
       /** The type used to map Securities to SecurityEntries. */
@@ -240,9 +241,9 @@ namespace Nexus::Accounting {
    * @return The total profit and loss of  all Inventory in the <i>portfolio</i>
    *         for the specified <i>currency</i>.
    */
-  template<typename Portfolio>
-  Money get_total_profit_and_loss(const Portfolio& portfolio,
-      CurrencyId currency) {
+  template<typename B>
+  Money get_total_profit_and_loss(
+      const Portfolio<B>& portfolio, CurrencyId currency) {
     auto unrealized_profit_and_loss = Money();
     auto profit_and_loss_iterator =
       portfolio.get_unrealized_profit_and_losses().find(currency);
@@ -262,7 +263,8 @@ namespace Nexus::Accounting {
    * @param f The function to call with a Portfolio's entry.
    */
   template<typename B, typename F>
-  void for_each(const Portfolio<B>& portfolio, F&& f) {
+    requires std::invocable<F, typename Portfolio<B>::UpdateEntry>
+  void for_each(const Portfolio<B>& portfolio, F f) {
     auto& security_entries = portfolio.get_security_entries();
     for(auto& security_entry_pair : security_entries) {
       auto& security = security_entry_pair.first;
@@ -289,18 +291,18 @@ namespace Nexus::Accounting {
     }
   }
 
-  inline SecurityValuation::SecurityValuation(CurrencyId currency)
+  inline SecurityValuation::SecurityValuation(CurrencyId currency) noexcept
     : m_currency(currency) {}
 
-  template<typename B>
-  Portfolio<B>::SecurityEntry::SecurityEntry(CurrencyId currency)
+  template<IsBookkeeper B>
+  Portfolio<B>::SecurityEntry::SecurityEntry(CurrencyId currency) noexcept
     : m_valuation(currency) {}
 
-  template<typename B>
+  template<IsBookkeeper B>
   Portfolio<B>::Portfolio(VenueDatabase venues)
     : m_venues(std::move(venues)) {}
 
-  template<typename B>
+  template<IsBookkeeper B>
   Portfolio<B>::Portfolio(Bookkeeper bookkeeper, VenueDatabase venues)
       : m_bookkeeper(std::move(bookkeeper)),
         m_venues(std::move(venues)) {
@@ -309,25 +311,25 @@ namespace Nexus::Accounting {
     }
   }
 
-  template<typename B>
+  template<IsBookkeeper B>
   const typename Portfolio<B>::Bookkeeper&
       Portfolio<B>::get_bookkeeper() const {
     return m_bookkeeper;
   }
 
-  template<typename B>
+  template<IsBookkeeper B>
   const typename Portfolio<B>::SecurityEntryMap&
       Portfolio<B>::get_security_entries() const {
     return m_security_entries;
   }
 
-  template<typename B>
+  template<IsBookkeeper B>
   const typename Portfolio<B>::UnrealizedProfitAndLossMap&
       Portfolio<B>::get_unrealized_profit_and_losses() const {
     return m_unrealized_currencies;
   }
 
-  template<typename B>
+  template<IsBookkeeper B>
   bool Portfolio<B>::update(const OrderExecutionService::OrderFields& fields,
       const OrderExecutionService::ExecutionReport& report) {
     if(report.m_last_quantity == 0) {
@@ -351,21 +353,21 @@ namespace Nexus::Accounting {
     return true;
   }
 
-  template<typename B>
+  template<IsBookkeeper B>
   bool Portfolio<B>::update_ask(const Security& security, Money value) {
     auto& entry = get_entry(security);
     entry.m_valuation.m_ask_value = value;
     return update(security, entry);
   }
 
-  template<typename B>
+  template<IsBookkeeper B>
   bool Portfolio<B>::update_bid(const Security& security, Money value) {
     auto& entry = get_entry(security);
     entry.m_valuation.m_bid_value = value;
     return update(security, entry);
   }
 
-  template<typename B>
+  template<IsBookkeeper B>
   bool Portfolio<B>::update(
       const Security& security, Money ask_value, Money bid_value) {
     auto& entry = get_entry(security);
@@ -374,7 +376,7 @@ namespace Nexus::Accounting {
     return update(security, entry);
   }
 
-  template<typename B>
+  template<IsBookkeeper B>
   boost::optional<Money> Portfolio<B>::calculate_unrealized(
       const typename Bookkeeper::Inventory& inventory,
       const SecurityEntry& entry) {
@@ -391,7 +393,7 @@ namespace Nexus::Accounting {
     return boost::none;
   }
 
-  template<typename B>
+  template<IsBookkeeper B>
   typename Portfolio<B>::SecurityEntry& Portfolio<B>::get_entry(
       const Security& security) {
     auto security_iterator = m_security_entries.find(security);
@@ -403,7 +405,7 @@ namespace Nexus::Accounting {
     return security_iterator->second;
   }
 
-  template<typename B>
+  template<IsBookkeeper B>
   bool Portfolio<B>::update(const Security& security, SecurityEntry& entry) {
     auto inventory =
       m_bookkeeper.get_inventory(security, entry.m_valuation.m_currency);
