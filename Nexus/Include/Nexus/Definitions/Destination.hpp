@@ -4,6 +4,7 @@
 #include <atomic>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 #include <Beam/Collections/View.hpp>
@@ -70,14 +71,14 @@ namespace Nexus {
        * @param predicate The predicate to match against.
        */
       template<typename P>
-      const Entry& select_first(P&& predicate) const;
+      const Entry& select_first(P predicate) const;
 
       /**
        * Returns all Entries matching a predicate.
        * @param predicate The predicate to match against.
        */
       template<typename P>
-      std::vector<Entry> select_all(P&& predicate) const;
+      std::vector<Entry> select_all(P predicate) const;
 
       /** Returns the manual order entry destination. */
       const boost::optional<Entry>& get_manual_order_entry_destination() const;
@@ -230,8 +231,8 @@ namespace Nexus {
   }
 
   template<typename P>
-  inline const DestinationDatabase::Entry&
-      DestinationDatabase::select_first(P&& predicate) const {
+  const DestinationDatabase::Entry&
+      DestinationDatabase::select_first(P predicate) const {
     if(auto data = m_data.load()) {
       for(auto& entry : data->m_entries) {
         if(predicate(entry)) {
@@ -243,8 +244,8 @@ namespace Nexus {
   }
 
   template<typename P>
-  inline std::vector<DestinationDatabase::Entry>
-      DestinationDatabase::select_all(P&& predicate) const {
+  std::vector<DestinationDatabase::Entry>
+      DestinationDatabase::select_all(P predicate) const {
     auto result = std::vector<Entry>();
     if(auto data = m_data.load()) {
       for(auto& entry : data->m_entries) {

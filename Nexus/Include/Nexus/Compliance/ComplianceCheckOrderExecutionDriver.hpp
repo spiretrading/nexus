@@ -6,6 +6,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Compliance/ComplianceRuleSet.hpp"
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionDriver.hpp"

@@ -8,11 +8,12 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
-#include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
+#include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
 #include <Beam/Threading/CallOnce.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/Active.hpp>
 #include <Beam/Utilities/Rethrow.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/functional/factory.hpp>
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceClient.hpp"
@@ -27,7 +28,7 @@ namespace Nexus::Compliance {
    * @param <S> The type of ServiceLocatorClient used to lookup DirectoryEntries
    *        for accounts and their parents.
    */
-  template<typename C, typename S>
+  template<IsComplianceClient C, typename S>
   class ComplianceRuleSet {
     public:
 
@@ -54,7 +55,7 @@ namespace Nexus::Compliance {
        * @param service_locator_client Initializes The ServiceLocatorClient.
        * @param builder Constructs compliance rules from a ComplianceRuleEntry.
        */
-      template<typename CF, typename SF>
+      template<Beam::Initializes<C> CF, Beam::Initializes<S> SF>
       ComplianceRuleSet(CF&& compliance_client, SF&& service_locator_client,
         ComplianceRuleBuilder builder);
 
@@ -108,20 +109,20 @@ namespace Nexus::Compliance {
       void on_compliance_update(const ComplianceRuleEntry& updated_entry);
   };
 
-  template<typename C, typename S>
+  template<typename C,  typename S>
   ComplianceRuleSet(C&&, S&&, std::function<
     std::unique_ptr<ComplianceRule> (const ComplianceRuleEntry&)>) ->
       ComplianceRuleSet<std::remove_reference_t<C>, std::remove_reference_t<S>>;
 
-  template<typename C, typename S>
-  template<typename CF, typename SF>
+  template<IsComplianceClient C,  typename S>
+  template<Beam::Initializes<C> CF, Beam::Initializes<S> SF>
   ComplianceRuleSet<C, S>::ComplianceRuleSet(CF&& compliance_client,
       SF&& service_locator_client, ComplianceRuleBuilder builder)
     : m_compliance_client(std::forward<CF>(compliance_client)),
       m_service_locator_client(std::forward<SF>(service_locator_client)),
       m_builder(std::move(builder)) {}
 
-  template<typename C, typename S>
+  template<IsComplianceClient C,  typename S>
   void ComplianceRuleSet<C, S>::submit(
       const std::shared_ptr<const OrderExecutionService::Order>& order) {
     auto exception = std::exception_ptr();
@@ -175,7 +176,7 @@ namespace Nexus::Compliance {
     Beam::Rethrow(exception);
   }
 
-  template<typename C, typename S>
+  template<IsComplianceClient C,  typename S>
   void ComplianceRuleSet<C, S>::cancel(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const std::shared_ptr<const OrderExecutionService::Order>& order) {
@@ -221,7 +222,7 @@ namespace Nexus::Compliance {
     }
   }
 
-  template<typename C, typename S>
+  template<IsComplianceClient C,  typename S>
   void ComplianceRuleSet<C, S>::add(
       const std::shared_ptr<const OrderExecutionService::Order>& order) {
     auto entry = load(order->get_info().m_fields.m_account);
@@ -242,7 +243,7 @@ namespace Nexus::Compliance {
     }
   }
 
-  template<typename C, typename S>
+  template<IsComplianceClient C,  typename S>
   std::shared_ptr<typename ComplianceRuleSet<C, S>::Entry>
       ComplianceRuleSet<C, S>::load(
         const Beam::ServiceLocator::DirectoryEntry& directory_entry) {
@@ -282,7 +283,7 @@ namespace Nexus::Compliance {
     return entry;
   }
 
-  template<typename C, typename S>
+  template<IsComplianceClient C,  typename S>
   void ComplianceRuleSet<C, S>::update(
       const ComplianceRuleEntry& updated_entry, Entry& entry) {
     auto lock = boost::lock_guard(entry.m_mutex);
@@ -308,7 +309,7 @@ namespace Nexus::Compliance {
     }
   }
 
-  template<typename C, typename S>
+  template<IsComplianceClient C,  typename S>
   void ComplianceRuleSet<C, S>::on_compliance_update(
       const ComplianceRuleEntry& updated_entry) {
     auto entry = load(updated_entry.get_directory_entry());

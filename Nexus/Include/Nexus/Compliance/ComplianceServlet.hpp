@@ -9,6 +9,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
 #include <Beam/Services/ServiceRequestException.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/Compliance/ComplianceRuleDataStore.hpp"
 #include "Nexus/Compliance/ComplianceServices.hpp"
@@ -24,7 +25,9 @@ namespace Nexus::Compliance {
    * @param D The type of ComplianceRuleDataStore to use.
    * @param T The type of TimeClient used for timestamps.
    */
-  template<typename C, typename S, typename A, typename D, typename T>
+  template<typename C, typename S,
+    AdministrationService::IsAdministrationClient A,
+    IsComplianceRuleDataStore D, typename T>
   class ComplianceServlet {
     public:
       using Container = C;
@@ -49,7 +52,8 @@ namespace Nexus::Compliance {
        * @param data_store Initializes the ComplianceRuleDataStore.
        * @param time_client Initializes the TimeClient.
        */
-      template<typename SF, typename AF, typename DF, typename TF>
+      template<Beam::Initializes<S> SF, Beam::Initializes<A> AF,
+        Beam::Initializes<D> DF, Beam::Initializes<T> TF>
       ComplianceServlet(SF&& service_locator_client, AF&& administration_client,
         DF&& data_store, TF&& time_client);
 
@@ -91,7 +95,8 @@ namespace Nexus::Compliance {
         ServiceProtocolClient& client, ComplianceRuleViolationRecord record);
   };
 
-  template<typename S, typename A, typename D, typename T>
+  template<typename S, AdministrationService::IsAdministrationClient A,
+    IsComplianceRuleDataStore D, typename T>
   struct MetaComplianceServlet {
     using Session = ComplianceSession;
     template<typename C>
@@ -100,8 +105,11 @@ namespace Nexus::Compliance {
     };
   };
 
-  template<typename C, typename S, typename A, typename D, typename T>
-  template<typename SF, typename AF, typename DF, typename TF>
+  template<typename C, typename S,
+    AdministrationService::IsAdministrationClient A,
+    IsComplianceRuleDataStore D, typename T>
+  template<Beam::Initializes<S> SF, Beam::Initializes<A> AF,
+    Beam::Initializes<D> DF, Beam::Initializes<T> TF>
   ComplianceServlet<C, S, A, D, T>::ComplianceServlet(
       SF&& service_locator_client, AF&& administration_client, DF&& data_store,
       TF&& time_client)
@@ -117,7 +125,9 @@ namespace Nexus::Compliance {
     }
   }
 
-  template<typename C, typename S, typename A, typename D, typename T>
+  template<typename C, typename S,
+    AdministrationService::IsAdministrationClient A,
+    IsComplianceRuleDataStore D, typename T>
   void ComplianceServlet<C, S, A, D, T>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     RegisterComplianceServices(Store(slots));
@@ -139,7 +149,9 @@ namespace Nexus::Compliance {
         &ComplianceServlet::on_report_compliance_rule_violation, this));
   }
 
-  template<typename C, typename S, typename A, typename D, typename T>
+  template<typename C, typename S,
+    AdministrationService::IsAdministrationClient A,
+    IsComplianceRuleDataStore D, typename T>
   void ComplianceServlet<C, S, A, D, T>::HandleClientClosed(
       ServiceProtocolClient& client) {
     m_subscriptions.With([&] (auto& subscriptions) {
@@ -149,7 +161,9 @@ namespace Nexus::Compliance {
     });
   }
 
-  template<typename C, typename S, typename A, typename D, typename T>
+  template<typename C, typename S,
+    AdministrationService::IsAdministrationClient A,
+    IsComplianceRuleDataStore D, typename T>
   void ComplianceServlet<C, S, A, D, T>::Close() {
     if(m_open_state.SetClosing()) {
       return;
@@ -157,7 +171,9 @@ namespace Nexus::Compliance {
     m_open_state.Close();
   }
 
-  template<typename C, typename S, typename A, typename D, typename T>
+  template<typename C, typename S,
+    AdministrationService::IsAdministrationClient A,
+    IsComplianceRuleDataStore D, typename T>
   std::vector<ComplianceRuleEntry> ComplianceServlet<C, S, A, D, T>::
       on_load_directory_entry_compliance_rule_entry(
         ServiceProtocolClient& client,
@@ -173,7 +189,9 @@ namespace Nexus::Compliance {
     return m_data_store->load_compliance_rule_entries(directory_entry);
   }
 
-  template<typename C, typename S, typename A, typename D, typename T>
+  template<typename C, typename S,
+    AdministrationService::IsAdministrationClient A,
+    IsComplianceRuleDataStore D, typename T>
   std::vector<ComplianceRuleEntry>
       ComplianceServlet<C, S, A, D, T>::on_monitor_compliance_rule_entry(
         ServiceProtocolClient& client,
@@ -190,7 +208,9 @@ namespace Nexus::Compliance {
     return m_data_store->load_compliance_rule_entries(directory_entry);
   }
 
-  template<typename C, typename S, typename A, typename D, typename T>
+  template<typename C, typename S,
+    AdministrationService::IsAdministrationClient A,
+    IsComplianceRuleDataStore D, typename T>
   ComplianceRuleEntry::Id
       ComplianceServlet<C, S, A, D, T>::on_add_compliance_rule_entry(
         ServiceProtocolClient& client,
@@ -214,7 +234,9 @@ namespace Nexus::Compliance {
     return entry.get_id();
   }
 
-  template<typename C, typename S, typename A, typename D, typename T>
+  template<typename C, typename S,
+    AdministrationService::IsAdministrationClient A,
+    IsComplianceRuleDataStore D, typename T>
   void ComplianceServlet<C, S, A, D, T>::on_update_compliance_rule_entry(
       ServiceProtocolClient& client, const ComplianceRuleEntry& entry) {
     auto& session = client.GetSession();
@@ -232,7 +254,9 @@ namespace Nexus::Compliance {
     });
   }
 
-  template<typename C, typename S, typename A, typename D, typename T>
+  template<typename C, typename S,
+    AdministrationService::IsAdministrationClient A,
+    IsComplianceRuleDataStore D, typename T>
   void ComplianceServlet<C, S, A, D, T>::on_delete_compliance_rule_entry(
       ServiceProtocolClient& client, ComplianceRuleEntry::Id id) {
     auto& session = client.GetSession();
@@ -255,7 +279,9 @@ namespace Nexus::Compliance {
     });
   }
 
-  template<typename C, typename S, typename A, typename D, typename T>
+  template<typename C, typename S,
+    AdministrationService::IsAdministrationClient A,
+    IsComplianceRuleDataStore D, typename T>
   void ComplianceServlet<C, S, A, D, T>::on_report_compliance_rule_violation(
       ServiceProtocolClient& client, ComplianceRuleViolationRecord record) {
     auto& session = client.GetSession();

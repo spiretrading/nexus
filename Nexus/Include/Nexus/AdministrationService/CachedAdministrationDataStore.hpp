@@ -1,9 +1,9 @@
 #ifndef NEXUS_CACHED_ADMINISTRATION_DATA_STORE_HPP
 #define NEXUS_CACHED_ADMINISTRATION_DATA_STORE_HPP
-#include <type_traits>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
 
 namespace Nexus::AdministrationService {
@@ -12,7 +12,7 @@ namespace Nexus::AdministrationService {
    * Caches an AdministratorDataStore in memory.
    * @param <D> The type of AdministrationDataStore to cache.
    */
-  template<typename D>
+  template<IsAdministrationDataStore D>
   class CachedAdministrationDataStore {
     public:
       using IndexedAccountIdentity =
@@ -28,7 +28,7 @@ namespace Nexus::AdministrationService {
        * Constructs a CachedAdministrationDataStore.
        * @param data_store The AdministrationDataStore to cache.
        */
-      template<typename S>
+      template<Beam::Initializes<D> S>
       CachedAdministrationDataStore(S&& data_store);
       ~CachedAdministrationDataStore();
       std::vector<IndexedAccountIdentity> load_all_account_identities();
@@ -82,8 +82,8 @@ namespace Nexus::AdministrationService {
       LocalAdministrationDataStore m_cache;
   };
 
-  template<typename D>
-  template<typename S>
+  template<IsAdministrationDataStore D>
+  template<Beam::Initializes<D> S>
   CachedAdministrationDataStore<D>::CachedAdministrationDataStore(
       S&& data_store)
       : m_data_store(std::forward<S>(data_store)) {
@@ -106,24 +106,24 @@ namespace Nexus::AdministrationService {
     }
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   CachedAdministrationDataStore<D>::~CachedAdministrationDataStore() {
     close();
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   std::vector<typename CachedAdministrationDataStore<D>::IndexedAccountIdentity>
       CachedAdministrationDataStore<D>::load_all_account_identities() {
     return m_cache.load_all_account_identities();
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   AccountIdentity CachedAdministrationDataStore<D>::load_identity(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_cache.load_identity(account);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   void CachedAdministrationDataStore<D>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountIdentity& identity) {
@@ -131,20 +131,20 @@ namespace Nexus::AdministrationService {
     m_cache.store(account, identity);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   std::vector<typename CachedAdministrationDataStore<D>::IndexedRiskParameters>
       CachedAdministrationDataStore<D>::load_all_risk_parameters() {
     return m_cache.load_all_risk_parameters();
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   RiskService::RiskParameters CachedAdministrationDataStore<D>::
       load_risk_parameters(
         const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_cache.load_risk_parameters(account);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   void CachedAdministrationDataStore<D>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskParameters& risk_parameters) {
@@ -152,19 +152,19 @@ namespace Nexus::AdministrationService {
     m_cache.store(account, risk_parameters);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   std::vector<typename CachedAdministrationDataStore<D>::IndexedRiskState>
       CachedAdministrationDataStore<D>::load_all_risk_states() {
     return m_cache.load_all_risk_states();
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   RiskService::RiskState CachedAdministrationDataStore<D>::load_risk_state(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_cache.load_risk_state(account);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   void CachedAdministrationDataStore<D>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskState& risk_state) {
@@ -172,13 +172,13 @@ namespace Nexus::AdministrationService {
     m_cache.store(account, risk_state);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   AccountModificationRequest CachedAdministrationDataStore<D>::
       load_account_modification_request(AccountModificationRequest::Id id) {
     return m_data_store->load_account_modification_request(id);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   std::vector<AccountModificationRequest::Id> CachedAdministrationDataStore<D>::
       load_account_modification_request_ids(
         const Beam::ServiceLocator::DirectoryEntry& account,
@@ -187,7 +187,7 @@ namespace Nexus::AdministrationService {
       account, start_id, max_count);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   std::vector<AccountModificationRequest::Id>
       CachedAdministrationDataStore<D>::load_account_modification_request_ids(
         AccountModificationRequest::Id start_id, int max_count) {
@@ -195,69 +195,69 @@ namespace Nexus::AdministrationService {
       start_id, max_count);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   EntitlementModification CachedAdministrationDataStore<D>::
       load_entitlement_modification(AccountModificationRequest::Id id) {
     return m_data_store->load_entitlement_modification(id);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   void CachedAdministrationDataStore<D>::store(
       const AccountModificationRequest& request,
       const EntitlementModification& modification) {
     m_data_store->store(request, modification);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   RiskModification CachedAdministrationDataStore<D>::load_risk_modification(
       AccountModificationRequest::Id id) {
     return m_data_store->load_risk_modification(id);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   void CachedAdministrationDataStore<D>::store(
       const AccountModificationRequest& request,
       const RiskModification& modification) {
     m_data_store->store(request, modification);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   void CachedAdministrationDataStore<D>::store(
       AccountModificationRequest::Id id, const Message& message) {
     m_data_store->store(id, message);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   AccountModificationRequest::Update CachedAdministrationDataStore<D>::
       load_account_modification_request_status(
         AccountModificationRequest::Id id) {
     return m_data_store->load_account_modification_request_status(id);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   void CachedAdministrationDataStore<D>::store(
       AccountModificationRequest::Id id,
       const AccountModificationRequest::Update& status) {
     m_data_store->store(id, status);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   Message::Id CachedAdministrationDataStore<D>::load_last_message_id() {
     return m_data_store->load_last_message_id();
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   Message CachedAdministrationDataStore<D>::load_message(Message::Id id) {
     return m_data_store->load_message(id);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   std::vector<Message::Id> CachedAdministrationDataStore<D>::load_message_ids(
       AccountModificationRequest::Id id) {
     return m_data_store->load_message_ids(id);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   template<typename F>
   decltype(auto) CachedAdministrationDataStore<D>::with_transaction(
       F&& transaction) {
@@ -266,7 +266,7 @@ namespace Nexus::AdministrationService {
     });
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   void CachedAdministrationDataStore<D>::close() {
     m_data_store->close();
     m_cache.close();

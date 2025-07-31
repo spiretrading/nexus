@@ -1,5 +1,6 @@
 #ifndef NEXUS_ADMINISTRATION_DATA_STORE_HPP
 #define NEXUS_ADMINISTRATION_DATA_STORE_HPP
+#include <type_traits>
 #include <utility>
 #include <vector>
 #include <memory>
@@ -58,23 +59,26 @@ namespace Nexus::AdministrationService {
       };
 
       /**
-       * Constructs an AdministrationDataStore using a specific implementation.
-       * @param args The arguments to construct the implementation.
+       * Constructs an AdministrationDataStore of a specified type using
+       * emplacement.
+       * @param <T> The type of data store to emplace.
+       * @param args The arguments to pass to the emplaced data store.
        */
       template<typename T, typename... Args>
       explicit AdministrationDataStore(std::in_place_type_t<T>, Args&&... args);
 
       /**
-       * Constructs an AdministrationDataStore from a shared pointer.
-       * @param data_store The shared pointer to the data store implementation.
+       * Constructs a AdministrationDataStore by copying an existing data store.
+       * @param data_store The data store to copy.
        */
+      template<typename D>
+      explicit AdministrationDataStore(D data_store);
+
+      explicit AdministrationDataStore(AdministrationDataStore* data_store);
+
       explicit AdministrationDataStore(
         const std::shared_ptr<AdministrationDataStore>& data_store);
 
-      /**
-       * Constructs an AdministrationDataStore from a unique pointer.
-       * @param data_store The unique pointer to the data store implementation.
-       */
       explicit AdministrationDataStore(
         const std::unique_ptr<AdministrationDataStore>& data_store);
 
@@ -257,9 +261,6 @@ namespace Nexus::AdministrationService {
       void close();
 
     private:
-      /**
-       * Provides a virtual interface for type erasure.
-       */
       struct VirtualAdministrationDataStore {
         virtual ~VirtualAdministrationDataStore() = default;
         virtual std::vector<IndexedAccountIdentity>
@@ -314,7 +315,8 @@ namespace Nexus::AdministrationService {
       template<typename T>
       struct WrappedAdministrationDataStore final :
           VirtualAdministrationDataStore {
-        T m_data_store;
+        using AdministrationDataStore = T;
+        Beam::GetOptionalLocalPtr<AdministrationDataStore> m_data_store;
 
         template<typename... Args>
         WrappedAdministrationDataStore(Args&&... args);
@@ -369,11 +371,24 @@ namespace Nexus::AdministrationService {
       std::shared_ptr<VirtualAdministrationDataStore> m_data_store;
   };
 
+  /** Checks if a type implements an AdministrationDataStore. */
+  template<typename T>
+  concept IsAdministrationDataStore = std::constructible_from<
+    AdministrationDataStore, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
+
   template<typename T, typename... Args>
-  inline AdministrationDataStore::AdministrationDataStore(
+  AdministrationDataStore::AdministrationDataStore(
     std::in_place_type_t<T>, Args&&... args)
     : m_data_store(std::make_shared<WrappedAdministrationDataStore<T>>(
         std::forward<Args>(args)...)) {}
+
+  template<typename D>
+  AdministrationDataStore::AdministrationDataStore(D data_store)
+    : AdministrationDataStore(std::in_place_type<D>, std::move(data_store)) {}
+
+  inline AdministrationDataStore::AdministrationDataStore(
+    AdministrationDataStore* data_store)
+    : AdministrationDataStore(*data_store) {}
 
   inline AdministrationDataStore::AdministrationDataStore(
     const std::shared_ptr<AdministrationDataStore>& data_store)
@@ -524,70 +539,70 @@ namespace Nexus::AdministrationService {
   std::vector<AdministrationDataStore::IndexedAccountIdentity>
       AdministrationDataStore::WrappedAdministrationDataStore<T>::
         load_all_account_identities() {
-    return m_data_store.load_all_account_identities();
+    return m_data_store->load_all_account_identities();
   }
 
   template<typename T>
   AccountIdentity AdministrationDataStore::
       WrappedAdministrationDataStore<T>::load_identity(
         const Beam::ServiceLocator::DirectoryEntry& account) {
-    return m_data_store.load_identity(account);
+    return m_data_store->load_identity(account);
   }
 
   template<typename T>
   void AdministrationDataStore::WrappedAdministrationDataStore<T>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountIdentity& identity) {
-    m_data_store.store(account, identity);
+    m_data_store->store(account, identity);
   }
 
   template<typename T>
   std::vector<AdministrationDataStore::IndexedRiskParameters>
       AdministrationDataStore::
         WrappedAdministrationDataStore<T>::load_all_risk_parameters() {
-    return m_data_store.load_all_risk_parameters();
+    return m_data_store->load_all_risk_parameters();
   }
 
   template<typename T>
   RiskService::RiskParameters AdministrationDataStore::
       WrappedAdministrationDataStore<T>::load_risk_parameters(
         const Beam::ServiceLocator::DirectoryEntry& account) {
-    return m_data_store.load_risk_parameters(account);
+    return m_data_store->load_risk_parameters(account);
   }
 
   template<typename T>
   void AdministrationDataStore::WrappedAdministrationDataStore<T>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskParameters& risk_parameters) {
-    m_data_store.store(account, risk_parameters);
+    m_data_store->store(account, risk_parameters);
   }
 
   template<typename T>
   std::vector<AdministrationDataStore::IndexedRiskState>
       AdministrationDataStore::
         WrappedAdministrationDataStore<T>::load_all_risk_states() {
-    return m_data_store.load_all_risk_states();
+    return m_data_store->load_all_risk_states();
   }
 
   template<typename T>
   RiskService::RiskState AdministrationDataStore::
       WrappedAdministrationDataStore<T>::load_risk_state(
         const Beam::ServiceLocator::DirectoryEntry& account) {
-    return m_data_store.load_risk_state(account);
+    return m_data_store->load_risk_state(account);
   }
 
   template<typename T>
   void AdministrationDataStore::WrappedAdministrationDataStore<T>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskState& risk_state) {
-    m_data_store.store_risk_state(account, risk_state);
+    m_data_store->store_risk_state(account, risk_state);
   }
 
   template<typename T>
   AccountModificationRequest AdministrationDataStore::
       WrappedAdministrationDataStore<T>::load_account_modification_request(
         AccountModificationRequest::Id id) {
-    return m_data_store.load_account_modification_request(id);
+    return m_data_store->load_account_modification_request(id);
   }
 
   template<typename T>
@@ -595,7 +610,7 @@ namespace Nexus::AdministrationService {
       WrappedAdministrationDataStore<T>::load_account_modification_request_ids(
         const Beam::ServiceLocator::DirectoryEntry& account,
         AccountModificationRequest::Id start_id, int max_count) {
-    return m_data_store.load_account_modification_request_ids(
+    return m_data_store->load_account_modification_request_ids(
       account, start_id, max_count);
   }
 
@@ -603,7 +618,7 @@ namespace Nexus::AdministrationService {
   std::vector<AccountModificationRequest::Id> AdministrationDataStore::
       WrappedAdministrationDataStore<T>::load_account_modification_request_ids(
         AccountModificationRequest::Id start_id, int max_count) {
-    return m_data_store.load_account_modification_request_ids(
+    return m_data_store->load_account_modification_request_ids(
       start_id, max_count);
   }
 
@@ -611,34 +626,34 @@ namespace Nexus::AdministrationService {
   EntitlementModification AdministrationDataStore::
       WrappedAdministrationDataStore<T>::load_entitlement_modification(
         AccountModificationRequest::Id id) {
-    return m_data_store.load_entitlement_modification(id);
+    return m_data_store->load_entitlement_modification(id);
   }
 
   template<typename T>
   void AdministrationDataStore::WrappedAdministrationDataStore<T>::store(
       const AccountModificationRequest& request,
       const EntitlementModification& modification) {
-    m_data_store.store(request, modification);
+    m_data_store->store(request, modification);
   }
 
   template<typename T>
   RiskModification AdministrationDataStore::
       WrappedAdministrationDataStore<T>::load_risk_modification(
         AccountModificationRequest::Id id) {
-    return m_data_store.load_risk_modification(id);
+    return m_data_store->load_risk_modification(id);
   }
 
   template<typename T>
   void AdministrationDataStore::WrappedAdministrationDataStore<T>::store(
       const AccountModificationRequest& request,
       const RiskModification& modification) {
-    m_data_store.store(request, modification);
+    m_data_store->store(request, modification);
   }
 
   template<typename T>
   void AdministrationDataStore::WrappedAdministrationDataStore<T>::store(
       AccountModificationRequest::Id id, const Message& message) {
-    m_data_store.store(id, message);
+    m_data_store->store(id, message);
   }
 
   template<typename T>
@@ -646,45 +661,45 @@ namespace Nexus::AdministrationService {
       WrappedAdministrationDataStore<T>::
         load_account_modification_request_status(
           AccountModificationRequest::Id id) {
-    return m_data_store.load_account_modification_request_status(id);
+    return m_data_store->load_account_modification_request_status(id);
   }
 
   template<typename T>
   void AdministrationDataStore::WrappedAdministrationDataStore<T>::store(
       AccountModificationRequest::Id id,
       const AccountModificationRequest::Update& status) {
-    m_data_store.store_account_modification_request_status(id, status);
+    m_data_store->store_account_modification_request_status(id, status);
   }
 
   template<typename T>
   Message::Id AdministrationDataStore::
       WrappedAdministrationDataStore<T>::load_last_message_id() {
-    return m_data_store.load_last_message_id();
+    return m_data_store->load_last_message_id();
   }
 
   template<typename T>
   Message AdministrationDataStore::
       WrappedAdministrationDataStore<T>::load_message(Message::Id id) {
-    return m_data_store.load_message(id);
+    return m_data_store->load_message(id);
   }
 
   template<typename T>
   std::vector<Message::Id> AdministrationDataStore::
       WrappedAdministrationDataStore<T>::load_message_ids(
         AccountModificationRequest::Id id) {
-    return m_data_store.load_message_ids(id);
+    return m_data_store->load_message_ids(id);
   }
 
   template<typename T>
   void AdministrationDataStore::
       WrappedAdministrationDataStore<T>::with_transaction(
         const std::function<void ()>& transaction) {
-    m_data_store.with_transaction(transaction);
+    m_data_store->with_transaction(transaction);
   }
 
   template<typename T>
   void AdministrationDataStore::WrappedAdministrationDataStore<T>::close() {
-    m_data_store.close();
+    m_data_store->close();
   }
 }
 

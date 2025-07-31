@@ -1,10 +1,10 @@
 #ifndef NEXUS_CACHED_COMPLIANCE_RULE_DATA_STORE_HPP
 #define NEXUS_CACHED_COMPLIANCE_RULE_DATA_STORE_HPP
-#include <type_traits>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Threading/Mutex.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Compliance/LocalComplianceRuleDataStore.hpp"
 
 namespace Nexus::Compliance {
@@ -13,7 +13,7 @@ namespace Nexus::Compliance {
    * Caches a ComplianceRuleDataStore.
    * @param <D> The type of ComplianceRuleDataStore to cache.
    */
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   class CachedComplianceRuleDataStore {
     public:
 
@@ -24,7 +24,7 @@ namespace Nexus::Compliance {
        * Constructs a CachedComplianceRuleDataStore.
        * @param data_store The ComplianceRuleDataStore to cache.
        */
-      template<typename DF>
+      template<Beam::Initializes<D> DF>
       explicit CachedComplianceRuleDataStore(DF&& data_store);
 
       ~CachedComplianceRuleDataStore();
@@ -53,10 +53,10 @@ namespace Nexus::Compliance {
 
   template<typename D>
   CachedComplianceRuleDataStore(D&&) ->
-    CachedComplianceRuleDataStore<std::decay_t<D>>;
+    CachedComplianceRuleDataStore<std::remove_reference_t<D>>;
 
-  template<typename D>
-  template<typename DF>
+  template<IsComplianceRuleDataStore D>
+  template<Beam::Initializes<D> DF>
   CachedComplianceRuleDataStore<D>::CachedComplianceRuleDataStore(
       DF&& data_store)
       : m_data_store(std::forward<DF>(data_store)) {
@@ -71,26 +71,26 @@ namespace Nexus::Compliance {
     }
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   CachedComplianceRuleDataStore<D>::~CachedComplianceRuleDataStore() {
     close();
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   std::vector<ComplianceRuleEntry>
       CachedComplianceRuleDataStore<D>::load_all_compliance_rule_entries() {
     auto lock = boost::lock_guard(m_mutex);
     return m_cache.load_all_compliance_rule_entries();
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   ComplianceRuleEntry::Id
       CachedComplianceRuleDataStore<D>::load_next_compliance_rule_entry_id() {
     auto lock = boost::lock_guard(m_mutex);
     return m_data_store->load_next_compliance_rule_entry_id();
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   boost::optional<ComplianceRuleEntry>
       CachedComplianceRuleDataStore<D>::load_compliance_rule_entry(
         ComplianceRuleEntry::Id id) {
@@ -98,7 +98,7 @@ namespace Nexus::Compliance {
     return m_cache.load_compliance_rule_entry(id);
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   std::vector<ComplianceRuleEntry>
       CachedComplianceRuleDataStore<D>::load_compliance_rule_entries(
         const Beam::ServiceLocator::DirectoryEntry& directory_entry) {
@@ -106,7 +106,7 @@ namespace Nexus::Compliance {
     return m_cache.load_compliance_rule_entries(directory_entry);
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   void CachedComplianceRuleDataStore<D>::store(
       const ComplianceRuleEntry& entry) {
     auto lock = boost::lock_guard(m_mutex);
@@ -114,14 +114,14 @@ namespace Nexus::Compliance {
     m_cache.store(entry);
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   void CachedComplianceRuleDataStore<D>::remove(ComplianceRuleEntry::Id id) {
     auto lock = boost::lock_guard(m_mutex);
     m_data_store->remove(id);
     m_cache.remove(id);
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   void CachedComplianceRuleDataStore<D>::store(
       const ComplianceRuleViolationRecord& record) {
     auto lock = boost::lock_guard(m_mutex);
@@ -129,7 +129,7 @@ namespace Nexus::Compliance {
     m_cache.store(record);
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   void CachedComplianceRuleDataStore<D>::close() {
     if(m_open_state.SetClosing()) {
       return;

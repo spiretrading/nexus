@@ -1,6 +1,5 @@
 #ifndef NEXUS_BUYING_POWER_COMPLIANCE_RULE_HPP
 #define NEXUS_BUYING_POWER_COMPLIANCE_RULE_HPP
-#include <type_traits>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -8,6 +7,7 @@
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Accounting/BuyingPowerModel.hpp"
 #include "Nexus/Definitions/BboQuote.hpp"
@@ -26,7 +26,7 @@ namespace Nexus::Compliance {
    * @param <C> The type of MarketDataClient used to price Orders for buying
    *            power checks.
    */
-  template<typename C>
+  template<MarketDataService::IsMarketDataClient C>
   class BuyingPowerComplianceRule : public ComplianceRule {
     public:
 
@@ -43,7 +43,7 @@ namespace Nexus::Compliance {
        * @param market_data_client Initializes the MarketDataClient used to
        *        price Orders.
        */
-      template<typename CF>
+      template<Beam::Initializes<C> CF>
       BuyingPowerComplianceRule(
         const std::vector<ComplianceParameter>& parameters,
         const ExchangeRateTable& exchange_rates, CF&& market_data_client);
@@ -75,7 +75,7 @@ namespace Nexus::Compliance {
   template<typename MarketDataClient>
   BuyingPowerComplianceRule(const std::vector<ComplianceParameter>&,
     const ExchangeRateTable&, MarketDataClient&&) ->
-      BuyingPowerComplianceRule<std::decay_t<MarketDataClient>>;
+      BuyingPowerComplianceRule<std::remove_reference_t<MarketDataClient>>;
 
   /**
    * Returns a ComplianceRuleSchema representing a BuyingPowerComplianceRule.
@@ -87,8 +87,8 @@ namespace Nexus::Compliance {
     return ComplianceRuleSchema("buying_power", std::move(parameters));
   }
 
-  template<typename C>
-  template<typename CF>
+  template<MarketDataService::IsMarketDataClient C>
+  template<Beam::Initializes<C> CF>
   BuyingPowerComplianceRule<C>::BuyingPowerComplianceRule(
       const std::vector<ComplianceParameter>& parameters,
       const ExchangeRateTable& exchange_rates, CF&& market_data_client)
@@ -102,7 +102,7 @@ namespace Nexus::Compliance {
     }
   }
 
-  template<typename C>
+  template<MarketDataService::IsMarketDataClient C>
   void BuyingPowerComplianceRule<C>::submit(
       const std::shared_ptr<const OrderExecutionService::Order>& order) {
     auto& fields = order->get_info().m_fields;
@@ -148,7 +148,7 @@ namespace Nexus::Compliance {
     });
   }
 
-  template<typename C>
+  template<MarketDataService::IsMarketDataClient C>
   void BuyingPowerComplianceRule<C>::add(
       const std::shared_ptr<const OrderExecutionService::Order>& order) {
     auto& fields = order->get_info().m_fields;
@@ -181,7 +181,7 @@ namespace Nexus::Compliance {
     });
   }
 
-  template<typename C>
+  template<MarketDataService::IsMarketDataClient C>
   BboQuote BuyingPowerComplianceRule<C>::load_bbo_quote(const Security& security) {
     auto publisher = m_bbo_quotes.GetOrInsert(security, [&] {
       auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
@@ -198,7 +198,7 @@ namespace Nexus::Compliance {
     }
   }
 
-  template<typename C>
+  template<MarketDataService::IsMarketDataClient C>
   Money BuyingPowerComplianceRule<C>::get_expected_price(
       const OrderExecutionService::OrderFields& fields) {
     auto bbo = load_bbo_quote(fields.m_security);

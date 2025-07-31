@@ -92,8 +92,10 @@ namespace Nexus {
        *         <i>venue</i> and matching <i>f</i>.
        */
       template<typename F>
+        requires std::invocable<F&, const Event&> &&
+          std::convertible_to<std::invoke_result_t<F&, const Event&>, bool>
       std::vector<Event> find(
-        boost::gregorian::date date, Venue venue, F&& f) const;
+        boost::gregorian::date date, Venue venue, F f) const;
 
     private:
       friend struct Beam::Serialization::Shuttle<TradingSchedule>;
@@ -251,8 +253,11 @@ namespace Nexus {
   }
 
   template<typename F>
+    requires std::invocable<F&, const TradingSchedule::Event&> &&
+      std::convertible_to<
+        std::invoke_result_t<F&, const TradingSchedule::Event&>, bool>
   std::vector<TradingSchedule::Event> TradingSchedule::find(
-      boost::gregorian::date date, Venue venue, F&& f) const {
+      boost::gregorian::date date, Venue venue, F f) const {
     for(auto& rule : m_rules) {
       if(is_match(venue, date, rule)) {
         auto events = std::vector<TradingSchedule::Event>();

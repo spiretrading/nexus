@@ -5,6 +5,7 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/Definitions/Venue.hpp"
@@ -37,7 +38,7 @@ namespace Nexus::Compliance {
        *        cancel requests.
        * @param rule The rule to apply within the time period.
        */
-      template<typename CF>
+      template<Beam::Initializes<C> CF>
       TimeFilterComplianceRule(boost::posix_time::time_duration start,
         boost::posix_time::time_duration end,
         boost::local_time::tz_database time_zones, VenueDatabase venues,
@@ -70,7 +71,7 @@ namespace Nexus::Compliance {
       TimeFilterComplianceRule<std::remove_reference_t<TimeClient>>;
 
   template<typename C>
-  template<typename CF>
+  template<Beam::Initializes<C> CF>
   TimeFilterComplianceRule<C>::TimeFilterComplianceRule(
     boost::posix_time::time_duration start,
     boost::posix_time::time_duration end,

@@ -1,6 +1,7 @@
 #ifndef NEXUS_ADMINISTRATION_CLIENT_HPP
 #define NEXUS_ADMINISTRATION_CLIENT_HPP
 #include <memory>
+#include <type_traits>
 #include <utility>
 #include <vector>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -30,9 +31,19 @@ namespace Nexus::AdministrationService {
   class AdministrationClient {
     public:
 
+      /**
+       * Constructs an AdministrationClient of a specified type using
+       * emplacement.
+       * @param <T> The type of client to emplace.
+       * @param args The arguments to pass to the emplaced client.
+       */
       template<typename T, typename... Args>
       explicit AdministrationClient(std::in_place_type_t<T>, Args&&... args);
 
+      /**
+       * Constructs a AdministrationClient by copying an existing client.
+       * @param client The client to copy.
+       */
       template<typename C>
       explicit AdministrationClient(C client);
 
@@ -512,15 +523,20 @@ namespace Nexus::AdministrationService {
       std::shared_ptr<VirtualAdministrationClient> m_client;
   };
 
+  /** Checks if a type implements an AdministrationClient. */
+  template<typename T>
+  concept IsAdministrationClient = std::constructible_from<
+    AdministrationClient, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
+
   /**
    * Loads an account's RiskParameters.
    * @param client The ServiceAdministrationClient used to load the parameters.
    * @param account The account whose parameters are to be loaded.
    * @return The <i>account</i>'s RiskParameters.
    */
-  template<typename Client>
   RiskService::RiskParameters load_risk_parameters(
-      Client& client, const Beam::ServiceLocator::DirectoryEntry& account) {
+      IsAdministrationClient auto& client,
+      const Beam::ServiceLocator::DirectoryEntry& account) {
     auto queue =
       std::make_shared<Beam::StateQueue<RiskService::RiskParameters>>();
     client.get_risk_parameters_publisher(account).Monitor(queue);

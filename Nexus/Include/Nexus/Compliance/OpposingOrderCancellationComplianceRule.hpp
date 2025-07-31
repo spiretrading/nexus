@@ -5,6 +5,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/TaggedQueueReader.hpp>
 #include <Beam/TimeService/TimeClientBox.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
@@ -32,7 +33,7 @@ namespace Nexus::Compliance {
        * @param timeout The amount of time to restrict cancels after a fill.
        * @param time_client Initializes the TimeClient.
        */
-      template<typename CF>
+      template<Beam::Initializes<C> CF>
       OpposingOrderCancellationComplianceRule(
         boost::posix_time::time_duration timeout, CF&& time_client);
 
@@ -57,7 +58,7 @@ namespace Nexus::Compliance {
         std::remove_reference_t<TimeClient>>;
 
   template<typename C>
-  template<typename CF>
+  template<Beam::Initializes<C> CF>
   OpposingOrderCancellationComplianceRule<C>::
       OpposingOrderCancellationComplianceRule(
         boost::posix_time::time_duration timeout, CF&& time_client)

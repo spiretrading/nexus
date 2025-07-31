@@ -1,6 +1,7 @@
 #ifndef NEXUS_CHARTING_CLIENT_HPP
 #define NEXUS_CHARTING_CLIENT_HPP
 #include <memory>
+#include <type_traits>
 #include <utility>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
@@ -85,6 +86,11 @@ namespace Nexus::ChartingService {
       };
       std::shared_ptr<VirtualChartingClient> m_client;
   };
+
+  /** Checks if a type implements a ChartingClient. */
+  template<typename T>
+  concept IsChartingClient = std::constructible_from<
+    ChartingClient, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
 
   template<typename T, typename... Args>
   ChartingClient::ChartingClient(std::in_place_type_t<T>, Args&&... args)

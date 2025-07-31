@@ -5,6 +5,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/TaggedQueueReader.hpp>
 #include <Beam/TimeService/TimeClientBox.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
@@ -34,7 +35,7 @@ namespace Nexus::Compliance {
        *        submissions.
        * @param time_client Initializes the TimeClient.
        */
-      template<typename CF>
+      template<Beam::Initializes<C> CF>
       OpposingOrderSubmissionComplianceRule(
         boost::posix_time::time_duration timeout, Money offset,
         CF&& time_client);
@@ -68,7 +69,7 @@ namespace Nexus::Compliance {
         std::remove_reference_t<TimeClient>>;
 
   template<typename C>
-  template<typename CF>
+  template<Beam::Initializes<C> CF>
   OpposingOrderSubmissionComplianceRule<C>::
     OpposingOrderSubmissionComplianceRule(
       boost::posix_time::time_duration timeout, Money offset, CF&& time_client)

@@ -134,6 +134,11 @@ namespace Nexus::Compliance {
       std::shared_ptr<VirtualComplianceClient> m_client;
   };
 
+  /** Checks if a type implements a ComplianceClient. */
+  template<typename T>
+  concept IsComplianceClient = std::constructible_from<
+    ComplianceClient, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
+
   template<typename T, typename... Args>
   ComplianceClient::ComplianceClient(std::in_place_type_t<T>, Args&&... args)
     : m_client(std::make_shared<WrappedComplianceClient<T>>(

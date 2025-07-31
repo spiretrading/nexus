@@ -1,5 +1,6 @@
 #ifndef NEXUS_COMPLIANCE_RULE_DATA_STORE_HPP
 #define NEXUS_COMPLIANCE_RULE_DATA_STORE_HPP
+#include <type_traits>
 #include <utility>
 #include <vector>
 #include <boost/optional/optional.hpp>
@@ -119,6 +120,11 @@ namespace Nexus::Compliance {
       };
       std::shared_ptr<VirtualComplianceRuleDataStore> m_data_store;
   };
+
+  /** Checks if a type implements a ComplianceRuleDataStore. */
+  template<typename T>
+  concept IsComplianceRuleDataStore = std::constructible_from<
+    ComplianceRuleDataStore, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
 
   template<typename T, typename... Args>
   ComplianceRuleDataStore::ComplianceRuleDataStore(
