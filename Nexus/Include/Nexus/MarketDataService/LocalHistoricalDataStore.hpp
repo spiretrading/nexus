@@ -8,7 +8,7 @@
 
 namespace Nexus::MarketDataService {
 
-  /** Implements an HistorcalDataStore in memory. */
+  /** Implements an HistoricalDataStore in memory. */
   class LocalHistoricalDataStore {
     public:
 
