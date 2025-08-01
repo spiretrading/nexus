@@ -1,6 +1,7 @@
 #ifndef NEXUS_ORDER_EXECUTION_DATA_STORE_HPP
 #define NEXUS_ORDER_EXECUTION_DATA_STORE_HPP
 #include <memory>
+#include <type_traits>
 #include <utility>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <boost/optional/optional.hpp>
@@ -128,6 +129,11 @@ namespace Nexus::OrderExecutionService {
       };
       std::shared_ptr<VirtualOrderExecutionDataStore> m_data_store;
   };
+
+  /** Checks if a type implements an OrderExecutionDataStore. */
+  template<typename T>
+  concept IsOrderExecutionDataStore = std::constructible_from<
+    OrderExecutionDataStore, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
 
   template<typename T, typename... Args>
   OrderExecutionDataStore::OrderExecutionDataStore(

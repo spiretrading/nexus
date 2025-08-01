@@ -9,6 +9,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Reactors/QueueReactor.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 
 namespace Nexus::OrderExecutionService {
@@ -29,9 +30,9 @@ namespace Nexus::OrderExecutionService {
    * @param <FR> The type of reactor producing the order's time in force.
    * @param <RR> The type of reactor producing the order's additional fields.
    */
-  template<typename C, typename AR, typename SR, typename CR, typename OR,
-    typename TR, typename DR, typename QR, typename PR, typename FR,
-    typename RR>
+  template<IsOrderExecutionClient C, typename AR, typename SR, typename CR,
+    typename OR, typename TR, typename DR, typename QR, typename PR,
+    typename FR, typename RR>
   class OrderReactor {
     public:
       using Type = std::shared_ptr<const Order>;
@@ -85,7 +86,7 @@ namespace Nexus::OrderExecutionService {
        * @param additional_fields The type of reactor producing the additional
        *        fields.
        */
-      template<typename CF>
+      template<Beam::Initializes<C> CF>
       OrderReactor(CF&& client, AccountReactor account,
         SecurityReactor security, CurrencyReactor currency,
         OrderTypeReactor order_type, SideReactor side,
@@ -132,8 +133,8 @@ namespace Nexus::OrderExecutionService {
   OrderReactor(C&&, AR, SR, CR, OR, TR, DR, QR, PR, FR, std::vector<RR>) ->
     OrderReactor<std::decay_t<C>, AR, SR, CR, OR, TR, DR, QR, PR, FR, RR>;
 
-  template<typename C, typename A, typename S, typename R, typename T,
-    typename D, typename Q, typename M, typename F>
+  template<IsOrderExecutionClient C, typename A, typename S, typename R,
+    typename T, typename D, typename Q, typename M, typename F>
   auto make_limit_order_reactor(C&& client, A account, S security, R currency,
       T side, D destination, Q quantity, M price, F time_in_force) {
     return OrderReactor(std::forward<C>(client), std::move(account),
@@ -143,8 +144,8 @@ namespace Nexus::OrderExecutionService {
       std::move(time_in_force), std::vector<Aspen::Constant<Tag>>());
   }
 
-  template<typename C, typename A, typename S, typename R, typename T,
-    typename D, typename Q, typename M>
+  template<IsOrderExecutionClient C, typename A, typename S, typename R,
+    typename T, typename D, typename Q, typename M>
   auto make_limit_order_reactor(C&& client, A account, S security, R currency,
       T side, D destination, Q quantity, M price) {
     return make_limit_order_reactor(std::forward<C>(client), std::move(account),
@@ -153,7 +154,8 @@ namespace Nexus::OrderExecutionService {
       Aspen::constant(TimeInForce(TimeInForce::Type::DAY)));
   }
 
-  template<typename C, typename S, typename T, typename Q, typename M>
+  template<IsOrderExecutionClient C, typename S, typename T, typename Q,
+    typename M>
   auto make_limit_order_reactor(
       C&& client, S security, T side, Q quantity, M price) {
     return make_limit_order_reactor(std::forward<C>(client),
@@ -162,8 +164,8 @@ namespace Nexus::OrderExecutionService {
       Aspen::constant(std::string()), std::move(quantity), std::move(price));
   }
 
-  template<typename C, typename S, typename T, typename Q, typename M,
-    typename F>
+  template<IsOrderExecutionClient C, typename S, typename T, typename Q,
+    typename M, typename F>
   auto make_limit_order_reactor(
       C&& client, S security, T side, Q quantity, M price, F time_in_force) {
     return make_limit_order_reactor(std::forward<C>(client),
@@ -173,7 +175,7 @@ namespace Nexus::OrderExecutionService {
       std::move(time_in_force));
   }
 
-  template<typename C, typename S, typename T, typename Q>
+  template<IsOrderExecutionClient C, typename S, typename T, typename Q>
   auto make_market_order_reactor(C&& client, S security, T side, Q quantity) {
     return OrderReactor(std::forward<C>(client),
       Aspen::constant(Beam::ServiceLocator::DirectoryEntry()),
@@ -185,10 +187,10 @@ namespace Nexus::OrderExecutionService {
       std::vector<Aspen::Constant<Tag>>());
   }
 
-  template<typename C, typename AR, typename SR, typename CR, typename OR,
-    typename TR, typename DR, typename QR, typename PR, typename FR,
-    typename RR>
-  template<typename CF>
+  template<IsOrderExecutionClient C, typename AR, typename SR, typename CR,
+    typename OR, typename TR, typename DR, typename QR, typename PR,
+    typename FR, typename RR>
+  template<Beam::Initializes<C> CF>
   OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR, FR, RR>::OrderReactor(
     CF&& client, AccountReactor account, SecurityReactor security,
     CurrencyReactor currency, OrderTypeReactor order_type, SideReactor side,
@@ -217,9 +219,9 @@ namespace Nexus::OrderExecutionService {
         std::make_shared<Beam::MultiQueueWriter<ExecutionReport>>()),
       m_queue(m_execution_reports) {}
 
-  template<typename C, typename AR, typename SR, typename CR, typename OR,
-    typename TR, typename DR, typename QR, typename PR, typename FR,
-    typename RR>
+  template<IsOrderExecutionClient C, typename AR, typename SR, typename CR,
+    typename OR, typename TR, typename DR, typename QR, typename PR,
+    typename FR, typename RR>
   Aspen::State OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR, FR, RR>::commit(
       int sequence) noexcept {
     if(m_state & WAITING) {
@@ -296,9 +298,9 @@ namespace Nexus::OrderExecutionService {
     return Aspen::State::NONE;
   }
 
-  template<typename C, typename AR, typename SR, typename CR, typename OR,
-    typename TR, typename DR, typename QR, typename PR, typename FR,
-    typename RR>
+  template<IsOrderExecutionClient C, typename AR, typename SR, typename CR,
+    typename OR, typename TR, typename DR, typename QR, typename PR,
+    typename FR, typename RR>
   std::shared_ptr<const Order>
       OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR, FR, RR>::eval() const {
     return *m_order;

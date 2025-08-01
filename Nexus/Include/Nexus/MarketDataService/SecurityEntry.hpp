@@ -123,9 +123,8 @@ namespace Nexus::MarketDataService {
    * @param security The security to load the InitialSequences for.
    * @return The set of InitialSequences for the specified <i>security</i>.
    */
-  template<typename DataStore>
   SecurityEntry::InitialSequences load_initial_sequences(
-      DataStore& data_store, const Security& security) {
+      IsHistoricalDataStore auto& data_store, const Security& security) {
     auto query = SecurityMarketDataQuery();
     query.SetIndex(security);
     query.SetRange(Beam::Queries::Range::Total());

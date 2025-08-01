@@ -3,6 +3,7 @@
 #include <atomic>
 #include <utility>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 
 namespace Nexus::OrderExecutionService {
 
@@ -56,9 +57,8 @@ namespace Nexus::OrderExecutionService {
    * @param account The account to load the InitialSequences for.
    * @return The set of InitialSequences for the specified <i>account</i>.
    */
-  template<typename DataStore>
   AccountOrderSubmissionEntry::InitialSequences load_initial_sequences(
-      DataStore& data_store,
+      IsOrderExecutionDataStore auto& data_store,
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto query = Beam::Queries::MakeLatestQuery(account);
     auto initial_sequences = AccountOrderSubmissionEntry::InitialSequences();

@@ -3,7 +3,6 @@
 #include <memory>
 #include <type_traits>
 #include <utility>
-#include <vector>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
@@ -205,7 +204,7 @@ namespace Nexus::MarketDataService {
       std::shared_ptr<VirtualHistoricalDataStore> m_data_store;
   };
 
-  /** Checks if a type implements a HistoricalDataStore. */
+  /** Checks if a type implements an HistoricalDataStore. */
   template<typename T>
   concept IsHistoricalDataStore = std::constructible_from<
     HistoricalDataStore, std::remove_pointer_t<std::remove_cvref_t<T>>*>;

@@ -25,7 +25,8 @@ namespace Nexus::MarketDataService {
    * @param <D> The type of data store storing historical market data.
    * @param <A> The type of AdministrationClient to use.
    */
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   class MarketDataRegistryServlet {
     public:
 
@@ -47,7 +48,8 @@ namespace Nexus::MarketDataService {
        *        originating from this servlet.
        * @param data_store Initializes the historical market data store.
        */
-      template<typename AF, typename RF, typename DF>
+      template<Beam::Initializes<A> AF, Beam::Initializes<R> RF,
+        Beam::Initializes<D> DF>
       MarketDataRegistryServlet(AF&& administration_client,
         RF&& market_data_registry, DF&& data_store);
 
@@ -124,7 +126,8 @@ namespace Nexus::MarketDataService {
         ServiceProtocolClient& client, const std::string& prefix);
   };
 
-  template<typename R, typename D, typename A>
+  template<typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   struct MetaMarketDataRegistryServlet {
     using Session = MarketDataRegistrySession;
     template<typename C>
@@ -133,8 +136,10 @@ namespace Nexus::MarketDataService {
     };
   };
 
-  template<typename C, typename R, typename D, typename A>
-  template<typename AF, typename RF, typename DF>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
+  template<Beam::Initializes<A> AF, Beam::Initializes<R> RF,
+    Beam::Initializes<D> DF>
   MarketDataRegistryServlet<C, R, D, A>::MarketDataRegistryServlet(
       AF&& administration_client, RF&& registry, DF&& data_store)
       : m_administration_client(std::forward<AF>(administration_client)),
@@ -155,13 +160,15 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::add(const SecurityInfo& info) {
     m_data_store->store(info);
     m_registry->add(info);
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::publish(
       const VenueOrderImbalance& imbalance, int source_id) {
     m_registry->publish(imbalance, source_id, *m_data_store,
@@ -175,7 +182,8 @@ namespace Nexus::MarketDataService {
       });
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::publish(
       const SecurityBboQuote& quote, int source_id) {
     m_registry->publish(quote, source_id, *m_data_store,
@@ -189,7 +197,8 @@ namespace Nexus::MarketDataService {
       });
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::publish(
       const SecurityBookQuote& delta, int source_id) {
     auto security = m_registry->get_primary_listing(delta.GetIndex());
@@ -211,7 +220,8 @@ namespace Nexus::MarketDataService {
       });
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::publish(
       const SecurityTimeAndSale& time_and_sale, int source_id) {
     m_registry->publish(time_and_sale, source_id, *m_data_store,
@@ -225,12 +235,14 @@ namespace Nexus::MarketDataService {
       });
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::clear(int source_id) {
     m_registry->clear(source_id);
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
@@ -267,7 +279,8 @@ namespace Nexus::MarketDataService {
       &MarketDataRegistryServlet::on_load_security_info_from_prefix, this));
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::HandleClientAccepted(
       ServiceProtocolClient& client) {
     auto& session = client.GetSession();
@@ -287,7 +300,8 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::HandleClientClosed(
       ServiceProtocolClient& client) {
     m_order_imbalance_subscriptions.RemoveAll(client);
@@ -296,7 +310,8 @@ namespace Nexus::MarketDataService {
     m_time_and_sale_subscriptions.RemoveAll(client);
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::Close() {
     if(m_open_state.SetClosing()) {
       return;
@@ -305,7 +320,8 @@ namespace Nexus::MarketDataService {
     m_open_state.Close();
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   Security MarketDataRegistryServlet<C, R, D, A>::normalize(
       const Security& security) {
     if(security.get_venue() == Venue()) {
@@ -322,12 +338,14 @@ namespace Nexus::MarketDataService {
     return {};
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   Venue MarketDataRegistryServlet<C, R, D, A>::normalize(Venue venue) {
     return venue;
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   template<typename Type, typename Service, typename Query,
     typename Subscriptions>
   void MarketDataRegistryServlet<C, R, D, A>::on_query(
@@ -356,7 +374,8 @@ namespace Nexus::MarketDataService {
     });
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::on_query_order_imbalance(
       Beam::Services::RequestToken<ServiceProtocolClient,
         QueryOrderImbalancesService>& request,
@@ -364,26 +383,30 @@ namespace Nexus::MarketDataService {
     on_query<OrderImbalance>(request, query, m_order_imbalance_subscriptions);
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::on_end_order_imbalance_query(
       ServiceProtocolClient& client, Venue venue, int id) {
     m_order_imbalance_subscriptions.End(venue, id);
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::on_query_bbo_quotes(
       Beam::Services::RequestToken<ServiceProtocolClient,
         QueryBboQuotesService>& request, const SecurityMarketDataQuery& query) {
     on_query<BboQuote>(request, query, m_bbo_quote_subscriptions);
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::on_end_bbo_quote_query(
       ServiceProtocolClient& client, const Security& security, int id) {
     m_bbo_quote_subscriptions.End(security, id);
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::on_query_book_quotes(
       Beam::Services::RequestToken<
         ServiceProtocolClient, QueryBookQuotesService>& request,
@@ -391,13 +414,15 @@ namespace Nexus::MarketDataService {
     on_query<BookQuote>(request, query, m_book_quote_subscriptions);
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::on_end_book_quote_query(
       ServiceProtocolClient& client, const Security& security, int id) {
     m_book_quote_subscriptions.End(security, id);
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::on_query_time_and_sales(
       Beam::Services::RequestToken<
         ServiceProtocolClient, QueryTimeAndSalesService>& request,
@@ -405,13 +430,15 @@ namespace Nexus::MarketDataService {
     on_query<TimeAndSale>(request, query, m_time_and_sale_subscriptions);
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::on_end_time_and_sale_query(
       ServiceProtocolClient& client, const Security& security, int id) {
     m_time_and_sale_subscriptions.End(security, id);
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   SecuritySnapshot MarketDataRegistryServlet<C, R, D, A>::
       on_load_security_snapshot(
         ServiceProtocolClient& client, Security security) {
@@ -449,7 +476,8 @@ namespace Nexus::MarketDataService {
     return *snapshot;
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   SecurityTechnicals MarketDataRegistryServlet<C, R, D, A>::
       on_load_security_technicals(
         ServiceProtocolClient& client, Security security) {
@@ -460,14 +488,16 @@ namespace Nexus::MarketDataService {
     return {};
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   std::vector<SecurityInfo> MarketDataRegistryServlet<C, R, D, A>::
       on_query_security_info(
         ServiceProtocolClient& client, const SecurityInfoQuery& query) {
     return m_data_store->load_security_info(query);
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, IsHistoricalDataStore D,
+    AdministrationService::IsAdministrationClient A>
   std::vector<SecurityInfo> MarketDataRegistryServlet<C, R, D, A>::
       on_load_security_info_from_prefix(
         ServiceProtocolClient& client, const std::string& prefix) {

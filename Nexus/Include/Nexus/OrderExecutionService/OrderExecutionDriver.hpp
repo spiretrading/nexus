@@ -83,6 +83,11 @@ namespace Nexus::OrderExecutionService {
       std::shared_ptr<VirtualOrderExecutionDriver> m_driver;
   };
 
+  /** Checks if a type implements an OrderExecutionDriver. */
+  template<typename T>
+  concept IsOrderExecutionDriver = std::constructible_from<
+    OrderExecutionDriver, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
+
   template<typename T, typename... Args>
   OrderExecutionDriver::OrderExecutionDriver(
     std::in_place_type_t<T>, Args&&... args)

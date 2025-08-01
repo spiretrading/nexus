@@ -167,6 +167,11 @@ namespace Nexus::OrderExecutionService {
       std::shared_ptr<VirtualOrderExecutionClient> m_client;
   };
 
+  /** Checks if a type implements an OrderExecutionClient. */
+  template<typename T>
+  concept IsOrderExecutionClient = std::constructible_from<
+    OrderExecutionClient, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
+
   template<typename T, typename... Args>
   OrderExecutionClient::OrderExecutionClient(
     std::in_place_type_t<T>, Args&&... args)

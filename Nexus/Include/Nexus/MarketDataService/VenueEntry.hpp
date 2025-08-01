@@ -51,9 +51,8 @@ namespace Nexus::MarketDataService {
    * @param venue The venue to load the InitialSequences for.
    * @return The set of InitialSequences for the specified <i>venue</i>.
    */
-  template<typename DataStore>
-  VenueEntry::InitialSequences
-      load_initial_sequences(DataStore& data_store, Venue venue) {
+  VenueEntry::InitialSequences load_initial_sequences(
+      IsHistoricalDataStore auto& data_store, Venue venue) {
     auto query = VenueMarketDataQuery();
     query.SetIndex(venue);
     query.SetRange(Beam::Queries::Range::Total());

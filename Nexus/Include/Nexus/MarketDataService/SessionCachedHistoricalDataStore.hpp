@@ -4,6 +4,7 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/SessionCachedDataStore.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStoreQueryWrapper.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 
@@ -13,7 +14,7 @@ namespace Nexus::MarketDataService {
    * Caches historical market data for a specified session.
    * @param <D> The underlying data store to cache.
    */
-  template<typename D>
+  template<IsHistoricalDataStore D>
   class SessionCachedHistoricalDataStore {
     public:
 
@@ -25,7 +26,7 @@ namespace Nexus::MarketDataService {
        * @param data_store Initializes the data store to commit data to.
        * @param block_size The size of a single cache block.
        */
-      template<typename DF>
+      template<Beam::Initializes<D> DF>
       SessionCachedHistoricalDataStore(DF&& data_store, int block_size);
       ~SessionCachedHistoricalDataStore();
       std::vector<SecurityInfo> load_security_info(
@@ -67,8 +68,8 @@ namespace Nexus::MarketDataService {
         const SessionCachedHistoricalDataStore&) = delete;
   };
 
-  template<typename D>
-  template<typename DF>
+  template<IsHistoricalDataStore D>
+  template<Beam::Initializes<D> DF>
   SessionCachedHistoricalDataStore<D>::SessionCachedHistoricalDataStore(
     DF&& data_store, int block_size)
     : m_data_store(std::forward<DF>(data_store)),
@@ -76,95 +77,95 @@ namespace Nexus::MarketDataService {
       m_book_quote_data_store(&*m_data_store, block_size / 10),
       m_time_and_sale_data_store(&*m_data_store, block_size) {}
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   SessionCachedHistoricalDataStore<D>::~SessionCachedHistoricalDataStore() {
     close();
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   std::vector<SecurityInfo> SessionCachedHistoricalDataStore<D>::
       load_security_info(const SecurityInfoQuery& query) {
     return m_data_store->load_security_info(query);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void SessionCachedHistoricalDataStore<D>::store(const SecurityInfo& info) {
     m_data_store->store(info);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   std::vector<SequencedOrderImbalance> SessionCachedHistoricalDataStore<D>::
       load_order_imbalances(const VenueMarketDataQuery& query) {
     return m_data_store->load_order_imbalances(query);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void SessionCachedHistoricalDataStore<D>::store(
       const SequencedVenueOrderImbalance& imbalance) {
     m_data_store->store(imbalance);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void SessionCachedHistoricalDataStore<D>::store(
       const std::vector<SequencedVenueOrderImbalance>& imbalances) {
     m_data_store->store(imbalances);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   std::vector<SequencedBboQuote> SessionCachedHistoricalDataStore<D>::
       load_bbo_quotes(const SecurityMarketDataQuery& query) {
     return m_bbo_quote_data_store.Load(query);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void SessionCachedHistoricalDataStore<D>::store(
       const SequencedSecurityBboQuote& quote) {
     m_bbo_quote_data_store.Store(quote);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void SessionCachedHistoricalDataStore<D>::store(
       const std::vector<SequencedSecurityBboQuote>& quotes) {
     m_bbo_quote_data_store.Store(quotes);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   std::vector<SequencedBookQuote> SessionCachedHistoricalDataStore<D>::
       load_book_quotes(const SecurityMarketDataQuery& query) {
     return m_book_quote_data_store.Load(query);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void SessionCachedHistoricalDataStore<D>::store(
       const SequencedSecurityBookQuote& quote) {
     m_book_quote_data_store.Store(quote);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void SessionCachedHistoricalDataStore<D>::store(
       const std::vector<SequencedSecurityBookQuote>& quotes) {
     m_book_quote_data_store.Store(quotes);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   std::vector<SequencedTimeAndSale> SessionCachedHistoricalDataStore<D>::
       load_time_and_sales(const SecurityMarketDataQuery& query) {
     return m_time_and_sale_data_store.Load(query);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void SessionCachedHistoricalDataStore<D>::store(
       const SequencedSecurityTimeAndSale& time_and_sale) {
     m_time_and_sale_data_store.Store(time_and_sale);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void SessionCachedHistoricalDataStore<D>::store(
       const std::vector<SequencedSecurityTimeAndSale>& time_and_sales) {
     m_time_and_sale_data_store.Store(time_and_sales);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void SessionCachedHistoricalDataStore<D>::close() {
     if(m_open_state.SetClosing()) {
       return;

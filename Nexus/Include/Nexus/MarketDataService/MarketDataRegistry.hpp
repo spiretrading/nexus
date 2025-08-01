@@ -21,9 +21,9 @@
 #include "Nexus/Queries/StandardValues.hpp"
 
 namespace Nexus::MarketDataService::Details {
-  template<typename DataStore>
+  template<IsHistoricalDataStore D>
   Money load_close_price(const Security& security,
-      std::string_view market_center, DataStore& data_store) {
+      std::string_view market_center, D& data_store) {
     auto query_market_code = Beam::Queries::StringValue(market_center);
     auto market_code_expression =
       Beam::Queries::ConstantExpression(query_market_code);
@@ -126,9 +126,9 @@ namespace Nexus::MarketDataService {
        * @param data_store Used to initialize the market's data.
        * @param f Receives synchronized access to the updated data.
        */
-      template<typename DataStore, typename F>
+      template<IsHistoricalDataStore D, typename F>
       void publish(const VenueOrderImbalance& imbalance, int source_id,
-        DataStore& data_store, const F& f);
+        D& data_store, const F& f);
 
       /**
        * Publishes a BboQuote.
@@ -137,9 +137,9 @@ namespace Nexus::MarketDataService {
        * @param data_store Used to initialize the Security's data.
        * @param f Receives synchronized access to the updated data.
        */
-      template<typename DataStore, typename F>
-      void publish(const SecurityBboQuote& quote, int source_id,
-        DataStore& data_store, const F& f);
+      template<IsHistoricalDataStore D, typename F>
+      void publish(const SecurityBboQuote& quote, int source_id, D& data_store,
+        const F& f);
 
       /**
        * Updates a BookQuote.
@@ -148,9 +148,9 @@ namespace Nexus::MarketDataService {
        * @param data_store Used to initialize the Security's data.
        * @param f Receives synchronized access to the updated data.
        */
-      template<typename DataStore, typename F>
+      template<IsHistoricalDataStore D, typename F>
       void publish(const SecurityBookQuote& delta, int source_id,
-        DataStore& data_store, const F& f);
+        D& data_store, const F& f);
 
       /**
        * Publishes a TimeAndSale.
@@ -159,9 +159,9 @@ namespace Nexus::MarketDataService {
        * @param data_store Used to initialize the Security's data.
        * @param f Receives synchronized access to the updated data.
        */
-      template<typename DataStore, typename F>
+      template<IsHistoricalDataStore D, typename F>
       void publish(const SecurityTimeAndSale& time_and_sale, int source_id,
-        DataStore& dataStore, const F& f);
+        D& data_store, const F& f);
 
       /**
        * Clears market data that originated from a specified source.
@@ -188,11 +188,11 @@ namespace Nexus::MarketDataService {
 
       MarketDataRegistry(const MarketDataRegistry&) = delete;
       MarketDataRegistry& operator =(const MarketDataRegistry&) = delete;
-      template<typename DataStore>
-      boost::optional<SyncVenueEntry&> load(Venue venue, DataStore& data_store);
-      template<typename DataStore>
+      template<IsHistoricalDataStore D>
+      boost::optional<SyncVenueEntry&> load(Venue venue, D& data_store);
+      template<IsHistoricalDataStore D>
       boost::optional<SyncSecurityEntry&>
-        load(const Security& security, DataStore& data_store);
+        load(const Security& security, D& data_store);
   };
 }
 
@@ -303,9 +303,9 @@ namespace Nexus::MarketDataService {
     m_primary_listings.Update(country_key, info.m_security);
   }
 
-  template<typename DataStore, typename F>
+  template<IsHistoricalDataStore D, typename F>
   void MarketDataRegistry::publish(const VenueOrderImbalance& imbalance,
-      int source_id, DataStore& data_store, const F& f) {
+      int source_id, D& data_store, const F& f) {
     auto security_entry = load(imbalance->m_security, data_store);
     if(!security_entry) {
       return;
@@ -337,9 +337,9 @@ namespace Nexus::MarketDataService {
     });
   }
 
-  template<typename DataStore, typename F>
+  template<IsHistoricalDataStore D, typename F>
   void MarketDataRegistry::publish(const SecurityBboQuote& quote,
-      int source_id, DataStore& data_store, const F& f) {
+      int source_id, D& data_store, const F& f) {
     auto entry = load(quote.GetIndex(), data_store);
     if(!entry) {
       return;
@@ -351,9 +351,9 @@ namespace Nexus::MarketDataService {
     });
   }
 
-  template<typename DataStore, typename F>
+  template<IsHistoricalDataStore D, typename F>
   void MarketDataRegistry::publish(const SecurityBookQuote& delta,
-      int source_id, DataStore& data_store, const F& f) {
+      int source_id, D& data_store, const F& f) {
     auto entry = load(delta.GetIndex(), data_store);
     if(!entry) {
       return;
@@ -365,9 +365,9 @@ namespace Nexus::MarketDataService {
     });
   }
 
-  template<typename DataStore, typename F>
+  template<IsHistoricalDataStore D, typename F>
   void MarketDataRegistry::publish(const SecurityTimeAndSale& time_and_sale,
-      int source_id, DataStore& data_store, const F& f) {
+      int source_id, D& data_store, const F& f) {
     auto entry = load(time_and_sale.GetIndex(), data_store);
     if(!entry) {
       return;
@@ -397,9 +397,9 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename DataStore>
-  inline boost::optional<MarketDataRegistry::SyncVenueEntry&>
-      MarketDataRegistry::load(Venue venue, DataStore& data_store) {
+  template<IsHistoricalDataStore D>
+  boost::optional<MarketDataRegistry::SyncVenueEntry&>
+      MarketDataRegistry::load(Venue venue, D& data_store) {
     if(venue == Venue()) {
       return boost::none;
     }
@@ -413,10 +413,10 @@ namespace Nexus::MarketDataService {
     return **entry;
   }
 
-  template<typename DataStore>
+  template<IsHistoricalDataStore D>
   boost::optional<MarketDataRegistry::SyncSecurityEntry&>
       MarketDataRegistry::load(
-        const Security& security, DataStore& data_store) {
+        const Security& security, D& data_store) {
     if(security.get_symbol().empty() || security.get_venue() == Venue()) {
       return boost::none;
     }

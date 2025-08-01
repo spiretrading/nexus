@@ -15,9 +15,11 @@
 #include <boost/date_time/local_time/tz_database.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/optional/optional.hpp>
+#include "Nexus/ChartingService/ChartingClient.hpp"
 #include "Nexus/ChartingService/SecurityChartingQuery.hpp"
 #include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/Security.hpp"
+#include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 #include "Nexus/Queries/StandardValues.hpp"
@@ -63,8 +65,8 @@ namespace Nexus::TechnicalAnalysis {
    * @param time_zones The database of timezones.
    * @return The opening trade for the specified <i>security</i>.
    */
-  template<typename MarketDataClient>
-  boost::optional<TimeAndSale> load_open(MarketDataClient& client,
+  boost::optional<TimeAndSale> load_open(
+      MarketDataService::IsMarketDataClient auto& client,
       const Security& security, boost::posix_time::ptime date,
       const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones) {
@@ -87,30 +89,29 @@ namespace Nexus::TechnicalAnalysis {
    * @param time_zones The database of timezones.
    * @param queue The Queue to store the opening trade in.
    */
-  template<typename MarketDataClient>
-  void query_open(MarketDataClient&& client, const Security& security,
+  template<MarketDataService::IsMarketDataClient C>
+  void query_open(C&& client, const Security& security,
       boost::posix_time::ptime date, const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones,
       Beam::ScopedQueueWriter<TimeAndSale> queue) {
-    Beam::Routines::Spawn(
-      [=, client = Beam::CapturePtr<MarketDataClient>(client),
-          queue = std::move(queue)] () mutable {
-        if(auto open = load_open(*client, security, date, venues, time_zones)) {
-          queue.Push(*open);
-          return;
-        }
-        auto query = make_open_query(security, date, venues, time_zones);
-        query.SetRange(
-          query.GetRange().GetStart(), Beam::Queries::Sequence::Last());
-        query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
-        auto local_queue = std::make_shared<Beam::Queue<TimeAndSale>>();
-        client->query(query, local_queue);
-        try {
-          auto time_and_sale = local_queue->Pop();
-          queue.Push(std::move(time_and_sale));
-        } catch(const std::exception&) {}
-        local_queue->Break();
-      });
+    Beam::Routines::Spawn([=, client = Beam::CapturePtr<C>(client),
+        queue = std::move(queue)] () mutable {
+      if(auto open = load_open(*client, security, date, venues, time_zones)) {
+        queue.Push(*open);
+        return;
+      }
+      auto query = make_open_query(security, date, venues, time_zones);
+      query.SetRange(
+        query.GetRange().GetStart(), Beam::Queries::Sequence::Last());
+      query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
+      auto local_queue = std::make_shared<Beam::Queue<TimeAndSale>>();
+      client->query(query, local_queue);
+      try {
+        auto time_and_sale = local_queue->Pop();
+        queue.Push(std::move(time_and_sale));
+      } catch(const std::exception&) {}
+      local_queue->Break();
+    });
   }
 
   /**
@@ -153,8 +154,8 @@ namespace Nexus::TechnicalAnalysis {
    * @return The previous session's closing trade for the specified
    *         <i>security</i>.
    */
-  template<typename MarketDataClient>
-  boost::optional<TimeAndSale> load_previous_close(MarketDataClient& client,
+  boost::optional<TimeAndSale> load_previous_close(
+      MarketDataService::IsMarketDataClient auto& client,
       const Security& security, boost::posix_time::ptime date,
       const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones) {
@@ -282,10 +283,9 @@ namespace Nexus::TechnicalAnalysis {
    * @param time_zones The database of timezones.
    * @param queue The Queue to store the high price in.
    */
-  template<typename ChartingClient>
-  void query_daily_high(ChartingClient& client, const Security& security,
-      boost::posix_time::ptime start, boost::posix_time::ptime end,
-      const VenueDatabase& venues,
+  void query_daily_high(ChartingService::IsChartingClient auto& client,
+      const Security& security, boost::posix_time::ptime start,
+      boost::posix_time::ptime end, const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones,
       Beam::ScopedQueueWriter<Money> queue) {
     client.query(
@@ -330,10 +330,9 @@ namespace Nexus::TechnicalAnalysis {
    * @param time_zones The database of timezones.
    * @param queue The Queue to store the low price in.
    */
-  template<typename ChartingClient>
-  void query_daily_low(ChartingClient& client, const Security& security,
-      boost::posix_time::ptime start, boost::posix_time::ptime end,
-      const VenueDatabase& venues,
+  void query_daily_low(ChartingService::IsChartingClient auto& client,
+      const Security& security, boost::posix_time::ptime start,
+      boost::posix_time::ptime end, const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones,
       Beam::ScopedQueueWriter<Money> queue) {
     client.query(make_daily_low_query(security, start, end, venues, time_zones),
@@ -375,10 +374,9 @@ namespace Nexus::TechnicalAnalysis {
    * @param time_zones The database of timezones.
    * @param queue The Queue to store the volume in.
    */
-  template<typename ChartingClient>
-  void query_daily_volume(ChartingClient& client, Security security,
-      boost::posix_time::ptime start, boost::posix_time::ptime end,
-      const VenueDatabase& venues,
+  void query_daily_volume(ChartingService::IsChartingClient auto& client,
+      Security security, boost::posix_time::ptime start,
+      boost::posix_time::ptime end, const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones,
       Beam::ScopedQueueWriter<Quantity> queue) {
     client.query(make_daily_volume_query(

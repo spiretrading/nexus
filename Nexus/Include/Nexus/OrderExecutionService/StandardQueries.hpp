@@ -86,16 +86,15 @@ namespace Nexus::OrderExecutionService {
    * @param client The OrderExecutionClient to query.
    * @param queue The Queue to write to.
    */
-  template<typename OrderExecutionClient>
+  template<IsOrderExecutionClient C>
   Beam::Routines::Routine::Id query_daily_order_submissions(
       const Beam::ServiceLocator::DirectoryEntry& account,
       boost::posix_time::ptime start, boost::posix_time::ptime end,
       const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones,
-      OrderExecutionClient&& client,
-      Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue) {
+      C&& client, Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue) {
     return Beam::Routines::Spawn([=, queue = std::move(queue),
-        client = Beam::CapturePtr<OrderExecutionClient>(client)] () mutable {
+        client = Beam::CapturePtr<C>(client)] () mutable {
       auto venue_time_zones =
         std::unordered_map<std::string, std::vector<Venue>>();
       for(auto& venue : venues.get_entries()) {
@@ -159,9 +158,8 @@ namespace Nexus::OrderExecutionService {
    * @param client The OrderExecutionClient to query.
    * @param queue The Queue to write to.
    */
-  template<typename OrderExecutionClient>
   void query_live_prders(const Beam::ServiceLocator::DirectoryEntry& account,
-      OrderExecutionClient& client,
+      IsOrderExecutionClient auto& client,
       Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue) {
     client.query(make_live_orders_query(account), std::move(queue));
   }
@@ -171,10 +169,9 @@ namespace Nexus::OrderExecutionService {
    * @param account The account to query.
    * @param client The OrderExecutionClient to query.
    */
-  template<typename OrderExecutionClient>
   std::vector<std::shared_ptr<const Order>> load_live_orders(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      OrderExecutionClient& client) {
+      IsOrderExecutionClient auto& client) {
     auto queue = std::make_shared<Beam::Queue<std::shared_ptr<const Order>>>();
     query_live_orders(account, client, queue);
     auto orders = std::vector<std::shared_ptr<const Order>>();
@@ -223,9 +220,8 @@ namespace Nexus::OrderExecutionService {
    * @param client The OrderExecutionClient to query.
    * @param queue The Queue to write to.
    */
-  template<typename OrderExecutionClient>
   void query_order_ids(const Beam::ServiceLocator::DirectoryEntry& account,
-      const std::vector<OrderId>& ids, OrderExecutionClient& client,
+      const std::vector<OrderId>& ids, IsOrderExecutionClient auto& client,
       Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue) {
     client.query(make_order_id_query(account, ids), std::move(queue));
   }
@@ -236,10 +232,9 @@ namespace Nexus::OrderExecutionService {
    * @param ids The order ids to query.
    * @param client The OrderExecutionClient to query.
    */
-  template<typename OrderExecutionClient>
   std::vector<std::shared_ptr<const Order>> load_orders(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const std::vector<OrderId>& ids, OrderExecutionClient& client) {
+      const std::vector<OrderId>& ids, IsOrderExecutionClient auto& client) {
     auto queue = std::make_shared<Beam::Queue<std::shared_ptr<const Order>>>();
     query_order_ids(account, ids, client, queue);
     auto orders = std::vector<std::shared_ptr<const Order>>();

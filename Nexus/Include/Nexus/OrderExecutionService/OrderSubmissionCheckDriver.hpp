@@ -3,7 +3,9 @@
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheck.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheckException.hpp"
@@ -16,7 +18,7 @@ namespace Nexus::OrderExecutionService {
    * @param <D> The type of OrderExecutionDriver to send the submission to if
    *        all checks pass.
    */
-  template<typename D>
+  template<IsOrderExecutionDriver D>
   class OrderSubmissionCheckDriver {
     public:
 
@@ -32,7 +34,7 @@ namespace Nexus::OrderExecutionService {
        *        checks pass.
        * @param checks The list of order submission checks to perform.
        */
-      template<typename DF>
+      template<Beam::Initializes<D> DF>
       OrderSubmissionCheckDriver(
         DF&& driver, std::vector<std::unique_ptr<OrderSubmissionCheck>> checks);
       ~OrderSubmissionCheckDriver();
@@ -58,22 +60,21 @@ namespace Nexus::OrderExecutionService {
   template<typename DF>
   OrderSubmissionCheckDriver(
     DF&&, std::vector<std::unique_ptr<OrderSubmissionCheck>>) ->
-      OrderSubmissionCheckDriver<std::decay_t<DF>>;
+      OrderSubmissionCheckDriver<std::remove_reference_t<DF>>;
 
-  template<typename D>
-  template<typename DF>
+  template<IsOrderExecutionDriver D>
+  template<Beam::Initializes<D> DF>
   OrderSubmissionCheckDriver<D>::OrderSubmissionCheckDriver(
-    DF&& driver,
-    std::vector<std::unique_ptr<OrderSubmissionCheck>> checks)
+    DF&& driver, std::vector<std::unique_ptr<OrderSubmissionCheck>> checks)
     : m_driver(std::forward<DF>(driver)),
       m_checks(std::move(checks)) {}
 
-  template<typename D>
+  template<IsOrderExecutionDriver D>
   OrderSubmissionCheckDriver<D>::~OrderSubmissionCheckDriver() {
     close();
   }
 
-  template<typename D>
+  template<IsOrderExecutionDriver D>
   std::shared_ptr<const Order> OrderSubmissionCheckDriver<D>::recover(
       const SequencedAccountOrderRecord& record) {
     auto order = m_driver->recover(record);
@@ -83,7 +84,7 @@ namespace Nexus::OrderExecutionService {
     return order;
   }
 
-  template<typename D>
+  template<IsOrderExecutionDriver D>
   void OrderSubmissionCheckDriver<D>::add(
       const std::shared_ptr<const Order>& order) {
     for(auto& check : m_checks) {
@@ -92,7 +93,7 @@ namespace Nexus::OrderExecutionService {
     m_driver->add(order);
   }
 
-  template<typename D>
+  template<IsOrderExecutionDriver D>
   std::shared_ptr<const Order> OrderSubmissionCheckDriver<D>::submit(
       const OrderInfo& info) {
     auto submission_iterator = m_checks.begin();
@@ -114,20 +115,20 @@ namespace Nexus::OrderExecutionService {
     return order;
   }
 
-  template<typename D>
+  template<IsOrderExecutionDriver D>
   void OrderSubmissionCheckDriver<D>::cancel(
       const OrderExecutionSession& session, OrderId id) {
     m_driver->cancel(session, id);
   }
 
-  template<typename D>
+  template<IsOrderExecutionDriver D>
   void OrderSubmissionCheckDriver<D>::update(
       const OrderExecutionSession& session, OrderId id,
       const ExecutionReport& report) {
     return m_driver->update(session, id, report);
   }
 
-  template<typename D>
+  template<IsOrderExecutionDriver D>
   void OrderSubmissionCheckDriver<D>::close() {
     m_open_state.Close();
   }

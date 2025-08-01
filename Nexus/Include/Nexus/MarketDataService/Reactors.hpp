@@ -4,6 +4,7 @@
 #include <Aspen/Aspen.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Reactors/QueryReactor.hpp>
+#include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 
 namespace Nexus::MarketDataService {
@@ -13,10 +14,10 @@ namespace Nexus::MarketDataService {
    * @param client The market data client to query.
    * @param query The reactor producing the queries to submit.
    */
-  template<typename MarketDataClient, typename QueryReactor>
-  auto make_bbo_quote_reactor(MarketDataClient&& client, QueryReactor&& query) {
+  template<IsMarketDataClient C, typename QueryReactor>
+  auto make_bbo_quote_reactor(C&& client, QueryReactor&& query) {
     return Beam::Reactors::QueryReactor<BboQuote>(
-      [client = Beam::CapturePtr<MarketDataClient>(client)] (
+      [client = Beam::CapturePtr<C>(client)] (
           const auto& query, const auto& queue) {
         client->query(query, queue);
       },
@@ -28,10 +29,9 @@ namespace Nexus::MarketDataService {
    * @param client The market data client to query.
    * @param security The security whose current BboQuotes are to be queried.
    */
-  template<typename MarketDataClient, typename SecurityReactor>
-  auto make_current_bbo_quote_reactor(
-      MarketDataClient&& client, SecurityReactor&& security) {
-    return make_bbo_quote_reactor(std::forward<MarketDataClient>(client),
+  template<IsMarketDataClient C, typename SecurityReactor>
+  auto make_current_bbo_quote_reactor(C&& client, SecurityReactor&& security) {
+    return make_bbo_quote_reactor(std::forward<C>(client),
       Aspen::lift(&Beam::Queries::MakeCurrentQuery<Security>,
         std::forward<SecurityReactor>(security)));
   }
@@ -41,10 +41,10 @@ namespace Nexus::MarketDataService {
    * @param client The market data client to query.
    * @param security The security whose real time BboQuotes are to be queried.
    */
-  template<typename MarketDataClient, typename SecurityReactor>
+  template<IsMarketDataClient C, typename SecurityReactor>
   auto make_real_time_bbo_quote_reactor(
-      MarketDataClient&& client, SecurityReactor&& security) {
-    return make_bbo_quote_reactor(std::forward<MarketDataClient>(client),
+      C&& client, SecurityReactor&& security) {
+    return make_bbo_quote_reactor(std::forward<C>(client),
       Aspen::lift(&Beam::Queries::MakeRealTimeQuery<Security>,
         std::forward<SecurityReactor>(security)));
   }
@@ -54,11 +54,10 @@ namespace Nexus::MarketDataService {
    * @param client The market data client to query.
    * @param query The reactor producing the queries to submit.
    */
-  template<typename MarketDataClient, typename QueryReactor>
-  auto make_book_quote_reactor(
-      MarketDataClient&& client, QueryReactor&& query) {
+  template<IsMarketDataClient C, typename QueryReactor>
+  auto make_book_quote_reactor(C&& client, QueryReactor&& query) {
     return Beam::Reactors::QueryReactor<BookQuote>(
-      [client = Beam::CapturePtr<MarketDataClient>(client)] (
+      [client = Beam::CapturePtr<C>(client)] (
           const auto& query, const auto& queue) {
         client->query(query, queue);
       },
@@ -70,10 +69,9 @@ namespace Nexus::MarketDataService {
    * @param client The market data client to query.
    * @param security The security whose current BookQuotes are to be queried.
    */
-  template<typename MarketDataClient, typename SecurityReactor>
-  auto make_current_book_quote_reactor(
-      MarketDataClient&& client, SecurityReactor&& security) {
-    return make_book_quote_reactor(std::forward<MarketDataClient>(client),
+  template<IsMarketDataClient C, typename SecurityReactor>
+  auto make_current_book_quote_reactor(C&& client, SecurityReactor&& security) {
+    return make_book_quote_reactor(std::forward<C>(client),
       Aspen::lift(&Beam::Queries::MakeCurrentQuery<Security>,
         std::forward<SecurityReactor>(security)));
   }
@@ -83,10 +81,10 @@ namespace Nexus::MarketDataService {
    * @param client The market data client to query.
    * @param security The security whose real time BookQuotes are to be queried.
    */
-  template<typename MarketDataClient, typename SecurityReactor>
+  template<IsMarketDataClient C, typename SecurityReactor>
   auto make_real_time_book_quote_reactor(
-      MarketDataClient&& client, SecurityReactor&& security) {
-    return make_book_quote_reactor(std::forward<MarketDataClient>(client),
+      C&& client, SecurityReactor&& security) {
+    return make_book_quote_reactor(std::forward<C>(client),
       Aspen::lift(&Beam::Queries::MakeRealTimeQuery<Security>,
         std::forward<SecurityReactor>(security)));
   }
@@ -96,11 +94,10 @@ namespace Nexus::MarketDataService {
    * @param client The market data client to query.
    * @param query The reactor producing the queries to submit.
    */
-  template<typename MarketDataClient, typename QueryReactor>
-  auto make_time_and_sales_reactor(
-      MarketDataClient&& client, QueryReactor&& query) {
+  template<IsMarketDataClient C, typename QueryReactor>
+  auto make_time_and_sales_reactor(C&& client, QueryReactor&& query) {
     return Beam::Reactors::QueryReactor<TimeAndSale>(
-      [client = Beam::CapturePtr<MarketDataClient>(client)] (
+      [client = Beam::CapturePtr<C>(client)] (
           const auto& query, const auto& queue) {
         client->query(query, queue);
       },
@@ -112,10 +109,10 @@ namespace Nexus::MarketDataService {
    * @param client The market data client to query.
    * @param security The security whose current TimeAndSales are to be queried.
    */
-  template<typename MarketDataClient, typename SecurityReactor>
+  template<IsMarketDataClient C, typename SecurityReactor>
   auto make_current_time_and_sales_reactor(
-      MarketDataClient&& client, SecurityReactor&& security) {
-    return make_time_and_sales_reactor(std::forward<MarketDataClient>(client),
+      C&& client, SecurityReactor&& security) {
+    return make_time_and_sales_reactor(std::forward<C>(client),
       Aspen::lift(&Beam::Queries::MakeCurrentQuery<Security>,
         std::forward<SecurityReactor>(security)));
   }
@@ -126,10 +123,10 @@ namespace Nexus::MarketDataService {
    * @param security The security whose real time TimeAndSales are to be
    *        queried.
    */
-  template<typename MarketDataClient, typename SecurityReactor>
+  template<IsMarketDataClient C, typename SecurityReactor>
   auto make_real_time_time_and_sales_reactor(
-      MarketDataClient&& client, SecurityReactor&& security) {
-    return make_time_and_sales_reactor(std::forward<MarketDataClient>(client),
+      C&& client, SecurityReactor&& security) {
+    return make_time_and_sales_reactor(std::forward<C>(client),
       Aspen::lift(&Beam::Queries::MakeRealTimeQuery<Security>,
         std::forward<SecurityReactor>(security)));
   }

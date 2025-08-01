@@ -2,6 +2,7 @@
 #define NEXUS_MARKET_DATA_FEED_CLIENT_HPP
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include "Nexus/Definitions/SecurityInfo.hpp"
@@ -175,6 +176,10 @@ namespace Nexus::MarketDataService {
       };
       std::shared_ptr<VirtualMarketDataFeedClient> m_client;
   };
+
+  template<typename T>
+  concept IsMarketDataFeedClient = std::constructible_from<
+    MarketDataFeedClient, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
 
   template<typename T, typename... Args>
   MarketDataFeedClient::MarketDataFeedClient(

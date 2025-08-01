@@ -19,6 +19,7 @@
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/Venue.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionServices.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionRegistry.hpp"
@@ -40,8 +41,9 @@ namespace Nexus::OrderExecutionService {
    *        messaging.
    * @param <D> The type of OrderExecutionDataStore to use.
    */
-  template<typename C, typename T, typename S, typename U, typename A,
-    typename O, typename D>
+  template<typename C, typename T, typename S, typename U,
+    AdministrationService::IsAdministrationClient A,
+    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
   class OrderExecutionServlet {
     public:
       using Container = C;
@@ -81,8 +83,9 @@ namespace Nexus::OrderExecutionService {
        * @param driver Initializes the OrderExecutionDriver.
        * @param data_store Initializes the OrderExecutionDataStore.
        */
-      template<typename TF, typename SF, typename UF, typename AF, typename OF,
-        typename DF>
+      template<Beam::Initializes<T> TF, Beam::Initializes<S> SF,
+        Beam::Initializes<U> UF, Beam::Initializes<A> AF,
+        Beam::Initializes<O> OF, Beam::Initializes<D> DF>
       OrderExecutionServlet(boost::posix_time::ptime session_start_time,
         VenueDatabase venues, DestinationDatabase destinations,
         TF&& time_client, SF&& service_locator_client, UF&& uid_client,
@@ -150,8 +153,9 @@ namespace Nexus::OrderExecutionService {
       void on_cancel_order(ServiceProtocolClient& client, OrderId id);
   };
 
-  template<typename T, typename S, typename U, typename A, typename O,
-    typename D>
+  template<typename T, typename S, typename U,
+    AdministrationService::IsAdministrationClient A,
+    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
   struct MetaOrderExecutionServlet {
     using Session = OrderExecutionSession;
     template<typename C>
@@ -160,10 +164,12 @@ namespace Nexus::OrderExecutionService {
     };
   };
 
-  template<typename C, typename T, typename S, typename U, typename A,
-    typename O, typename D>
-  template<typename TF, typename SF, typename UF, typename AF, typename OF,
-    typename DF>
+  template<typename C, typename T, typename S, typename U,
+    AdministrationService::IsAdministrationClient A,
+    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
+  template<Beam::Initializes<T> TF, Beam::Initializes<S> SF,
+    Beam::Initializes<U> UF, Beam::Initializes<A> AF, Beam::Initializes<O> OF,
+    Beam::Initializes<D> DF>
   OrderExecutionServlet<C, T, S, U, A, O, D>::OrderExecutionServlet(
       boost::posix_time::ptime session_start_time, VenueDatabase venues,
       DestinationDatabase destinations, TF&& time_client,
@@ -190,8 +196,9 @@ namespace Nexus::OrderExecutionService {
     }
   }
 
-  template<typename C, typename T, typename S, typename U, typename A,
-    typename O, typename D>
+  template<typename C, typename T, typename S, typename U,
+    AdministrationService::IsAdministrationClient A,
+    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
@@ -211,8 +218,9 @@ namespace Nexus::OrderExecutionService {
       std::bind_front(&OrderExecutionServlet::on_cancel_order, this));
   }
 
-  template<typename C, typename T, typename S, typename U, typename A,
-    typename O, typename D>
+  template<typename C, typename T, typename S, typename U,
+    AdministrationService::IsAdministrationClient A,
+    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::HandleClientAccepted(
       ServiceProtocolClient& client) {
     auto& session = client.GetSession();
@@ -234,8 +242,9 @@ namespace Nexus::OrderExecutionService {
     }
   }
 
-  template<typename C, typename T, typename S, typename U, typename A,
-    typename O, typename D>
+  template<typename C, typename T, typename S, typename U,
+    AdministrationService::IsAdministrationClient A,
+    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::HandleClientClosed(
       ServiceProtocolClient& client) {
     m_execution_report_subscriptions.RemoveAll(client);
@@ -243,8 +252,9 @@ namespace Nexus::OrderExecutionService {
     m_submission_subscriptions.RemoveAll(client);
   }
 
-  template<typename C, typename T, typename S, typename U, typename A,
-    typename O, typename D>
+  template<typename C, typename T, typename S, typename U,
+    AdministrationService::IsAdministrationClient A,
+    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::Close() {
     if(m_open_state.SetClosing()) {
       return;
@@ -257,8 +267,9 @@ namespace Nexus::OrderExecutionService {
     m_open_state.Close();
   }
 
-  template<typename C, typename T, typename S, typename U, typename A,
-    typename O, typename D>
+  template<typename C, typename T, typename S, typename U,
+    AdministrationService::IsAdministrationClient A,
+    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::recover(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto recovery_query = AccountQuery();
@@ -320,8 +331,9 @@ namespace Nexus::OrderExecutionService {
     }
   }
 
-  template<typename C, typename T, typename S, typename U, typename A,
-    typename O, typename D>
+  template<typename C, typename T, typename S, typename U,
+    AdministrationService::IsAdministrationClient A,
+    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::recover_trading_session() {
     auto accounts = m_service_locator_client->LoadAllAccounts();
     auto routines = Beam::Routines::RoutineHandlerGroup();
@@ -333,8 +345,9 @@ namespace Nexus::OrderExecutionService {
     routines.Wait();
   }
 
-  template<typename C, typename T, typename S, typename U, typename A,
-    typename O, typename D>
+  template<typename C, typename T, typename S, typename U,
+    AdministrationService::IsAdministrationClient A,
+    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::on_execution_report(
       const ExecutionReport& report,
       const Beam::ServiceLocator::DirectoryEntry& account,
@@ -371,8 +384,9 @@ namespace Nexus::OrderExecutionService {
     }
   }
 
-  template<typename C, typename T, typename S, typename U, typename A,
-    typename O, typename D>
+  template<typename C, typename T, typename S, typename U,
+    AdministrationService::IsAdministrationClient A,
+    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::on_load_order_by_id_request(
       Beam::Services::RequestToken<ServiceProtocolClient, LoadOrderByIdService>&
         request, OrderId id) {
@@ -417,8 +431,9 @@ namespace Nexus::OrderExecutionService {
       });
   }
 
-  template<typename C, typename T, typename S, typename U, typename A,
-    typename O, typename D>
+  template<typename C, typename T, typename S, typename U,
+    AdministrationService::IsAdministrationClient A,
+    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::
       on_query_order_submissions_request(Beam::Services::RequestToken<
         ServiceProtocolClient, QueryOrderSubmissionsService>& request,
@@ -477,8 +492,9 @@ namespace Nexus::OrderExecutionService {
       });
   }
 
-  template<typename C, typename T, typename S, typename U, typename A,
-    typename O, typename D>
+  template<typename C, typename T, typename S, typename U,
+    AdministrationService::IsAdministrationClient A,
+    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::
       on_query_execution_reports_request(Beam::Services::RequestToken<
         ServiceProtocolClient, QueryExecutionReportsService>& request,
@@ -506,8 +522,9 @@ namespace Nexus::OrderExecutionService {
       });
   }
 
-  template<typename C, typename T, typename S, typename U, typename A,
-    typename O, typename D>
+  template<typename C, typename T, typename S, typename U,
+    AdministrationService::IsAdministrationClient A,
+    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::on_new_order_single_request(
       Beam::Services::RequestToken<ServiceProtocolClient,
         NewOrderSingleService>& request, const OrderFields& fields) {
@@ -592,8 +609,9 @@ namespace Nexus::OrderExecutionService {
         std::ref(*shorting_model))));
   }
 
-  template<typename C, typename T, typename S, typename U, typename A,
-    typename O, typename D>
+  template<typename C, typename T, typename S, typename U,
+    AdministrationService::IsAdministrationClient A,
+    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::on_update_order_request(
       ServiceProtocolClient& client, OrderId id,
       const ExecutionReport& report) {
@@ -610,8 +628,9 @@ namespace Nexus::OrderExecutionService {
     m_driver->update(session, id, sanitized_report);
   }
 
-  template<typename C, typename T, typename S, typename U, typename A,
-    typename O, typename D>
+  template<typename C, typename T, typename S, typename U,
+    AdministrationService::IsAdministrationClient A,
+    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::on_cancel_order(
       ServiceProtocolClient& client, OrderId id) {
     auto& session = client.GetSession();

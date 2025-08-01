@@ -7,6 +7,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/DefaultVenueDatabase.hpp"
@@ -22,7 +23,7 @@ namespace Nexus::OrderExecutionService {
    * @param <C> The type of MarketDataClient used to determine the price of a
    *        Security.
    */
-  template<typename C>
+  template<MarketDataService::IsMarketDataClient C>
   class BoardLotCheck : public OrderSubmissionCheck {
     public:
 
@@ -38,7 +39,7 @@ namespace Nexus::OrderExecutionService {
        * @param venues The available venues to submit an order to.
        * @param time_zones The database of timezones.
        */
-      template<typename CF>
+      template<Beam::Initializes<C> CF>
       BoardLotCheck(CF&& market_data_client, VenueDatabase venues,
         boost::local_time::tz_database time_zones);
 
@@ -64,27 +65,27 @@ namespace Nexus::OrderExecutionService {
         const Security& security, boost::posix_time::ptime timestamp);
   };
 
-  template<typename C>
-  BoardLotCheck<C>::ClosingEntry::ClosingEntry()
-    : m_last_update(boost::posix_time::neg_infin) {}
-
-  template<typename MarketDataClient>
-  auto make_board_lot_check(MarketDataClient&& market_data_client,
+  template<MarketDataService::IsMarketDataClient C>
+  auto make_board_lot_check(C&& market_data_client,
       VenueDatabase venues, boost::local_time::tz_database time_zones) {
-    return std::make_unique<BoardLotCheck<std::decay_t<MarketDataClient>>>(
-      std::forward<MarketDataClient>(market_data_client), std::move(venues),
+    return std::make_unique<BoardLotCheck<std::remove_reference_t<C>>>(
+      std::forward<C>(market_data_client), std::move(venues),
       std::move(time_zones));
   }
 
-  template<typename C>
-  template<typename CF>
+  template<MarketDataService::IsMarketDataClient C>
+  BoardLotCheck<C>::ClosingEntry::ClosingEntry()
+    : m_last_update(boost::posix_time::neg_infin) {}
+
+  template<MarketDataService::IsMarketDataClient C>
+  template<Beam::Initializes<C> CF>
   BoardLotCheck<C>::BoardLotCheck(CF&& market_data_client, VenueDatabase venues,
     boost::local_time::tz_database time_zones)
     : m_market_data_client(std::forward<CF>(market_data_client)),
       m_venues(std::move(venues)),
       m_time_zones(std::move(time_zones)) {}
 
-  template<typename C>
+  template<MarketDataService::IsMarketDataClient C>
   void BoardLotCheck<C>::submit(const OrderInfo& info) {
     if(info.m_fields.m_security.get_venue() != DefaultVenues::TSX &&
         info.m_fields.m_security.get_venue() != DefaultVenues::TSXV &&
@@ -111,7 +112,7 @@ namespace Nexus::OrderExecutionService {
     }
   }
 
-  template<typename C>
+  template<MarketDataService::IsMarketDataClient C>
   Money BoardLotCheck<C>::load_price(
       const Security& security, boost::posix_time::ptime timestamp) {
     auto& closing_entry = m_closing_entries.Get(security);

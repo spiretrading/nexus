@@ -208,6 +208,7 @@ namespace Nexus::MarketDataService {
       std::shared_ptr<VirtualMarketDataClient> m_client;
   };
 
+  /** Checks if a type implements a MarketDataClient. */
   template<typename T>
   concept IsMarketDataClient = std::constructible_from<
     MarketDataClient, std::remove_pointer_t<std::remove_cvref_t<T>>*>;

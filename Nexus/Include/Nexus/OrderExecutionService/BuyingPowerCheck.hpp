@@ -1,13 +1,14 @@
 #ifndef NEXUS_BUYING_POWER_CHECK_HPP
 #define NEXUS_BUYING_POWER_CHECK_HPP
-#include <type_traits>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Threading/Sync.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Accounting/BuyingPowerModel.hpp"
+#include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/Definitions/Security.hpp"
@@ -26,7 +27,8 @@ namespace Nexus::OrderExecutionService {
    * @param <M> The type of MarketDataClient used to price Orders for buying
    *        power checks.
    */
-  template<typename A, typename M>
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M>
   class BuyingPowerCheck : public OrderSubmissionCheck {
     public:
 
@@ -45,14 +47,12 @@ namespace Nexus::OrderExecutionService {
        * @param administration_client Initializes the AdministrationClient.
        * @param market_data_client Initializes the MarketDataClient.
        */
-      template<typename AF, typename MF>
+      template<Beam::Initializes<A> AF, Beam::Initializes<M> MF>
       BuyingPowerCheck(const ExchangeRateTable& exchange_rates,
         AF&& administration_client, MF&& market_data_client);
 
       void submit(const OrderInfo& info) override;
-
       void add(const std::shared_ptr<const Order>& order) override;
-
       void reject(const OrderInfo& info) override;
 
     private:
@@ -80,30 +80,31 @@ namespace Nexus::OrderExecutionService {
         const Beam::ServiceLocator::DirectoryEntry& account);
   };
 
-  template<typename AdministrationClient, typename MarketDataClient>
-  auto make_buying_power_check(const ExchangeRateTable& exchange_rates,
-      AdministrationClient&& administration_client,
-      MarketDataClient&& market_data_client) {
-    return std::make_unique<BuyingPowerCheck<
-      std::decay_t<AdministrationClient>, std::decay_t<MarketDataClient>>>(
-        exchange_rates,
-        std::forward<AdministrationClient>(administration_client),
-        std::forward<MarketDataClient>(market_data_client));
-  }
-
   /**
    * Makes a BuyingPowerCheck.
    * @param exchange_rates The list of ExchangeRates.
    * @param administration_client Initializes the AdministrationClient.
    * @param market_data_client Initializes the MarketDataClient.
    */
-  template<typename A, typename M>
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M>
+  auto make_buying_power_check(const ExchangeRateTable& exchange_rates,
+      A&& administration_client, M&& market_data_client) {
+    return std::make_unique<
+      BuyingPowerCheck<std::remove_reference_t<A>, std::remove_reference_t<M>>>(
+        exchange_rates, std::forward<A>(administration_client),
+        std::forward<M>(market_data_client));
+  }
+
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M>
   BuyingPowerCheck<A, M>::BuyingPowerEntry::BuyingPowerEntry()
     : m_risk_parameters_queue(
         std::make_shared<Beam::StateQueue<RiskService::RiskParameters>>()) {}
 
-  template<typename A, typename M>
-  template<typename AF, typename MF>
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M>
+  template<Beam::Initializes<A> AF, Beam::Initializes<M> MF>
   BuyingPowerCheck<A, M>::BuyingPowerCheck(
     const ExchangeRateTable& exchange_rates, AF&& administration_client,
     MF&& market_data_client)
@@ -111,7 +112,8 @@ namespace Nexus::OrderExecutionService {
       m_administration_client(std::forward<AF>(administration_client)),
       m_market_data_client(std::forward<MF>(market_data_client)) {}
 
-  template<typename A, typename M>
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M>
   void BuyingPowerCheck<A, M>::submit(const OrderInfo& info) {
     auto& fields = info.m_fields;
     auto price = get_expected_price(fields);
@@ -160,7 +162,8 @@ namespace Nexus::OrderExecutionService {
       });
   }
 
-  template<typename A, typename M>
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M>
   void BuyingPowerCheck<A, M>::add(const std::shared_ptr<const Order>& order) {
     auto& buying_power_entry =
       load_buying_power_entry(order->get_info().m_fields.m_account);
@@ -201,7 +204,8 @@ namespace Nexus::OrderExecutionService {
       buying_power_entry.m_execution_report_queue.GetWriter());
   }
 
-  template<typename A, typename M>
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M>
   void BuyingPowerCheck<A, M>::reject(const OrderInfo& info) {
     auto& buying_power_entry = load_buying_power_entry(info.m_fields.m_account);
     Beam::Threading::With(
@@ -216,7 +220,8 @@ namespace Nexus::OrderExecutionService {
       });
   }
 
-  template<typename A, typename M>
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M>
   BboQuote BuyingPowerCheck<A, M>::load_bbo_quote(const Security& security) {
     auto publisher = m_bbo_quotes.GetOrInsert(security, [&] {
       auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
@@ -233,7 +238,8 @@ namespace Nexus::OrderExecutionService {
     }
   }
 
-  template<typename A, typename M>
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M>
   Money BuyingPowerCheck<A, M>::get_expected_price(const OrderFields& fields) {
     auto bbo = load_bbo_quote(fields.m_security);
     if(fields.m_type == OrderType::LIMIT) {
@@ -251,7 +257,8 @@ namespace Nexus::OrderExecutionService {
     }
   }
 
-  template<typename A, typename M>
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M>
   typename BuyingPowerCheck<A, M>::BuyingPowerEntry&
       BuyingPowerCheck<A,M>::load_buying_power_entry(
         const Beam::ServiceLocator::DirectoryEntry& account) {

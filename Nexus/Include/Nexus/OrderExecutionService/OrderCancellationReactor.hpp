@@ -5,7 +5,9 @@
 #include <Aspen/Aspen.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/OrderExecutionService/Order.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 
 namespace Nexus::OrderExecutionService {
 
@@ -15,7 +17,7 @@ namespace Nexus::OrderExecutionService {
    * @param <C> The type of OrderExecutionClient used to cancel the orders.
    * @param <S> The type series producing the orders to cancel.
    */
-  template<typename C, typename S>
+  template<IsOrderExecutionClient C, typename S>
   class OrderCancellationReactor {
     public:
       using Type = std::shared_ptr<const Order>;
@@ -33,7 +35,7 @@ namespace Nexus::OrderExecutionService {
        * @param client The OrderExecutionClient used to cancel the order.
        * @param series Produces the series of orders to cancel upon completion.
        */
-      template<typename CF>
+      template<Beam::Initializes<C> CF>
       OrderCancellationReactor(CF&& client, Series series);
 
       Aspen::State commit(int sequence) noexcept;
@@ -54,8 +56,8 @@ namespace Nexus::OrderExecutionService {
   OrderCancellationReactor(C&&, S) ->
     OrderCancellationReactor<std::decay_t<C>, S>;
 
-  template<typename C, typename S>
-  template<typename CF>
+  template<IsOrderExecutionClient C, typename S>
+  template<Beam::Initializes<C> CF>
   OrderCancellationReactor<C, S>::OrderCancellationReactor(CF&& client,
     Series series)
     : m_client(std::forward<CF>(client)),
@@ -64,7 +66,7 @@ namespace Nexus::OrderExecutionService {
       m_cancel_count(std::make_unique<std::atomic_int>(0)),
       m_tasks(std::make_unique<Beam::RoutineTaskQueue>()) {}
 
-  template<typename C, typename S>
+  template<IsOrderExecutionClient C, typename S>
   Aspen::State OrderCancellationReactor<C, S>::commit(int sequence) noexcept {
     if(!m_is_series_complete) {
       auto state = m_series.commit(sequence);
@@ -104,7 +106,7 @@ namespace Nexus::OrderExecutionService {
     return Aspen::State::NONE;
   }
 
-  template<typename C, typename S>
+  template<IsOrderExecutionClient C, typename S>
   std::shared_ptr<const Order> OrderCancellationReactor<C, S>::eval()
       const noexcept(is_noexcept) {
     return m_series.eval();

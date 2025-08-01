@@ -10,6 +10,7 @@
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Threading/Timer.hpp>
 #include <Beam/Utilities/AssertionException.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/thread/mutex.hpp>
@@ -56,7 +57,7 @@ namespace Nexus::MarketDataService {
        * @param sampling_timer Initializes the SamplingTimer.
        * @param heartbeat_timer Initializes the Timer used for heartbeats.
        */
-      template<typename CF, typename SF, typename HF>
+      template<typename CF, Beam::Initializes<S> SF, Beam::Initializes<H> HF>
       ServiceMarketDataFeedClient(
         CF&& channel, const Authenticator& authenticator, SF&& sampling_timer,
         HF&& heartbeat_timer);
@@ -154,7 +155,7 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename O, typename S, typename P, typename H>
-  template<typename CF, typename SF, typename HF>
+  template<typename CF, Beam::Initializes<S> SF, Beam::Initializes<H> HF>
   ServiceMarketDataFeedClient<O, S, P, H>::ServiceMarketDataFeedClient(
       CF&& channel, const Authenticator& authenticator, SF&& sampling_timer,
       HF&& heartbeat_timer)
