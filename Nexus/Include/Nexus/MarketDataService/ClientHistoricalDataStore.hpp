@@ -6,6 +6,7 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/Queue.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 
@@ -15,7 +16,7 @@ namespace Nexus::MarketDataService {
    * Wraps a MarketDataClient for use as a HistoricalDataStore.
    * @param <C> The type of MarketDataClient to wrap.
    */
-  template<typename C>
+  template<IsMarketDataClient C>
   class ClientHistoricalDataStore {
     public:
 
@@ -26,7 +27,7 @@ namespace Nexus::MarketDataService {
        * Constructs a ClientHistoricalDataStore.
        * @param client Initializes the client to wrap.
        */
-      template<typename CF>
+      template<Beam::Initializes<C> CF>
       explicit ClientHistoricalDataStore(CF&& client);
       ~ClientHistoricalDataStore();
       std::vector<SecurityInfo> load_security_info(
@@ -64,91 +65,91 @@ namespace Nexus::MarketDataService {
       std::vector<T> submit(const Query& query);
   };
 
-  template<typename C>
-  template<typename CF>
+  template<IsMarketDataClient C>
+  template<Beam::Initializes<C> CF>
   ClientHistoricalDataStore<C>::ClientHistoricalDataStore(CF&& client)
     : m_client(std::forward<CF>(client)) {}
 
-  template<typename C>
+  template<IsMarketDataClient C>
   ClientHistoricalDataStore<C>::~ClientHistoricalDataStore() {
     close();
   }
 
-  template<typename C>
+  template<IsMarketDataClient C>
   std::vector<SecurityInfo> ClientHistoricalDataStore<C>::load_security_info(
       const SecurityInfoQuery& query) {
     return m_client->query(query);
   }
 
-  template<typename C>
+  template<IsMarketDataClient C>
   void ClientHistoricalDataStore<C>::store(const SecurityInfo& info) {}
 
-  template<typename C>
+  template<IsMarketDataClient C>
   std::vector<SequencedOrderImbalance>
       ClientHistoricalDataStore<C>::load_order_imbalances(
         const VenueMarketDataQuery& query) {
     return submit<SequencedOrderImbalance>(query);
   }
 
-  template<typename C>
+  template<IsMarketDataClient C>
   void ClientHistoricalDataStore<C>::store(
     const SequencedVenueOrderImbalance& imbalance) {}
 
-  template<typename C>
+  template<IsMarketDataClient C>
   void ClientHistoricalDataStore<C>::store(
     const std::vector<SequencedVenueOrderImbalance>& imbalances) {}
 
-  template<typename C>
+  template<IsMarketDataClient C>
   std::vector<SequencedBboQuote>
       ClientHistoricalDataStore<C>::load_bbo_quotes(
         const SecurityMarketDataQuery& query) {
     return submit<SequencedBboQuote>(query);
   }
 
-  template<typename C>
+  template<IsMarketDataClient C>
   void ClientHistoricalDataStore<C>::store(
     const SequencedSecurityBboQuote& quote) {}
 
-  template<typename C>
+  template<IsMarketDataClient C>
   void ClientHistoricalDataStore<C>::store(
     const std::vector<SequencedSecurityBboQuote>& quotes) {}
 
-  template<typename C>
+  template<IsMarketDataClient C>
   std::vector<SequencedBookQuote>
       ClientHistoricalDataStore<C>::load_book_quotes(
         const SecurityMarketDataQuery& query) {
     return submit<SequencedBookQuote>(query);
   }
 
-  template<typename C>
+  template<IsMarketDataClient C>
   void ClientHistoricalDataStore<C>::store(
     const SequencedSecurityBookQuote& quote) {}
 
-  template<typename C>
+  template<IsMarketDataClient C>
   void ClientHistoricalDataStore<C>::store(
     const std::vector<SequencedSecurityBookQuote>& quotes) {}
 
-  template<typename C>
+  template<IsMarketDataClient C>
   std::vector<SequencedTimeAndSale>
       ClientHistoricalDataStore<C>::load_time_and_sales(
         const SecurityMarketDataQuery& query) {
     return submit<SequencedTimeAndSale>(query);
   }
 
-  template<typename C>
+  template<IsMarketDataClient C>
   void ClientHistoricalDataStore<C>::store(
     const SequencedSecurityTimeAndSale& time_and_sale) {}
 
-  template<typename C>
+  template<IsMarketDataClient C>
   void ClientHistoricalDataStore<C>::store(
     const std::vector<SequencedSecurityTimeAndSale>& time_and_sales) {}
 
-  template<typename C>
+  template<IsMarketDataClient C>
   void ClientHistoricalDataStore<C>::close() {
     m_open_state.Close();
   }
 
-  template<typename C>
+  template<IsMarketDataClient C>
   template<typename T, typename Query>
   std::vector<T> ClientHistoricalDataStore<C>::submit(const Query& query) {
     auto queue = std::make_shared<Beam::Queue<T>>();

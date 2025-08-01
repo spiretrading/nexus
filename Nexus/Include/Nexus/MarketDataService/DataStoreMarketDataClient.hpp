@@ -4,6 +4,7 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 
@@ -13,7 +14,7 @@ namespace Nexus::MarketDataService {
    * Implements a MarketDataClient that directly queries a data store.
    * @param <D> The type of HistoricalDataStore to query.
    */
-  template<typename D>
+  template<IsHistoricalDataStore D>
   class DataStoreMarketDataClient {
     public:
 
@@ -24,7 +25,7 @@ namespace Nexus::MarketDataService {
        * Constructs a DataStoreMarketDataClient.
        * @param dataStore Initializes the HistoricalDataStore.
        */
-      template<typename S>
+      template<Beam::Initializes<D> S>
       explicit DataStoreMarketDataClient(S&& dataStore);
       ~DataStoreMarketDataClient();
       void query(const VenueMarketDataQuery& query,
@@ -59,17 +60,17 @@ namespace Nexus::MarketDataService {
         const DataStoreMarketDataClient&) = delete;
   };
 
-  template<typename D>
-  template<typename S>
+  template<IsHistoricalDataStore D>
+  template<Beam::Initializes<D> S>
   DataStoreMarketDataClient<D>::DataStoreMarketDataClient(S&& data_store)
     : m_data_store(std::forward<S>(data_store)) {}
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   DataStoreMarketDataClient<D>::~DataStoreMarketDataClient() {
     close();
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void DataStoreMarketDataClient<D>::query(const VenueMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) {
     auto values = m_data_store->load_order_imbalances(query);
@@ -78,7 +79,7 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void DataStoreMarketDataClient<D>::query(const VenueMarketDataQuery& query,
       Beam::ScopedQueueWriter<OrderImbalance> queue) {
     auto values = m_data_store->load_order_imbalances(query);
@@ -87,7 +88,7 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void DataStoreMarketDataClient<D>::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
@@ -97,7 +98,7 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void DataStoreMarketDataClient<D>::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<BboQuote> queue) {
@@ -107,7 +108,7 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void DataStoreMarketDataClient<D>::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
@@ -117,7 +118,7 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void DataStoreMarketDataClient<D>::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<BookQuote> queue) {
@@ -127,7 +128,7 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void DataStoreMarketDataClient<D>::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
@@ -137,7 +138,7 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void DataStoreMarketDataClient<D>::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<TimeAndSale> queue) {
@@ -147,32 +148,32 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   std::vector<SecurityInfo> DataStoreMarketDataClient<D>::query(
       const SecurityInfoQuery& query) {
     return m_data_store->load_security_info(query);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   SecuritySnapshot DataStoreMarketDataClient<D>::load_snapshot(
       const Security& security) {
     return {};
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   SecurityTechnicals DataStoreMarketDataClient<D>::load_technicals(
       const Security& security) {
     return {};
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   std::vector<SecurityInfo>
       DataStoreMarketDataClient<D>::load_security_info_from_prefix(
         const std::string& prefix) {
     return {};
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void DataStoreMarketDataClient<D>::close() {
     if(m_open_state.SetClosing()) {
       return;
