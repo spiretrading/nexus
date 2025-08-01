@@ -205,6 +205,11 @@ namespace Nexus::MarketDataService {
       std::shared_ptr<VirtualHistoricalDataStore> m_data_store;
   };
 
+  /** Checks if a type implements a HistoricalDataStore. */
+  template<typename T>
+  concept IsHistoricalDataStore = std::constructible_from<
+    HistoricalDataStore, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
+
   /**
    * Provides a generic means of loading data from a HistoricalDataStore.
    * @param <T> The type of market data to query.
@@ -212,7 +217,7 @@ namespace Nexus::MarketDataService {
    * @param query The search query to execute.
    * @return The list of values that satisfy the search <i>query</i>.
    */
-  template<typename T, typename D>
+  template<typename T, IsHistoricalDataStore D>
   auto load(D& data_store, const VenueMarketDataQuery& query) {
     if constexpr(std::is_same_v<T, OrderImbalance> ||
         std::is_same_v<T, SequencedOrderImbalance>) {
@@ -229,7 +234,7 @@ namespace Nexus::MarketDataService {
    * @param query The search query to execute.
    * @return The list of values that satisfy the search <i>query</i>.
    */
-  template<typename T, typename D>
+  template<typename T, IsHistoricalDataStore D>
   auto load(D& data_store, const SecurityMarketDataQuery& query) {
     if constexpr(
         std::is_same_v<T, BboQuote> || std::is_same_v<T, SequencedBboQuote>) {

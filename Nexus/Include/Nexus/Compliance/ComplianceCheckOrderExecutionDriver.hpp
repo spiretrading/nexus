@@ -21,7 +21,8 @@ namespace Nexus::Compliance {
    * @param <C> The type of TimeClient used for Order timestamps.
    * @param <S> The type of ComplianceRuleSet used to validate operations.
    */
-  template<typename D, typename C, typename S>
+  template<typename D, typename C,
+    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   class ComplianceCheckOrderExecutionDriver {
     public:
 
@@ -45,7 +46,8 @@ namespace Nexus::Compliance {
        * @param compliance_rule_set Contains the set of compliance rules used to
        *        check order execution operations.
        */
-      template<typename DF, typename CF, typename SF>
+      template<Beam::Initializes<D> DF, Beam::Initializes<C> CF,
+        Beam::Initializes<S> SF>
       ComplianceCheckOrderExecutionDriver(
         DF&& driver, CF&& time_client, SF&& compliance_rule_set);
 
@@ -80,8 +82,10 @@ namespace Nexus::Compliance {
         const OrderExecutionService::ExecutionReport& executionReport);
   };
 
-  template<typename D, typename C, typename S>
-  template<typename DF, typename CF, typename SF>
+  template<typename D, typename C,
+    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
+  template<Beam::Initializes<D> DF, Beam::Initializes<C> CF,
+    Beam::Initializes<S> SF>
   ComplianceCheckOrderExecutionDriver<D, C, S>::
       ComplianceCheckOrderExecutionDriver(
         DF&& driver, CF&& time_client, SF&& compliance_rule_set)
@@ -89,13 +93,15 @@ namespace Nexus::Compliance {
       m_time_client(std::forward<CF>(time_client)),
       m_compliance_rule_set(std::forward<SF>(compliance_rule_set)) {}
 
-  template<typename D, typename C, typename S>
+  template<typename D, typename C,
+    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   ComplianceCheckOrderExecutionDriver<D, C, S>::
       ~ComplianceCheckOrderExecutionDriver() {
     close();
   }
 
-  template<typename D, typename C, typename S>
+  template<typename D, typename C,
+    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   std::shared_ptr<const OrderExecutionService::Order>
       ComplianceCheckOrderExecutionDriver<D, C, S>::recover(
         const OrderExecutionService::SequencedAccountOrderRecord& record) {
@@ -104,14 +110,16 @@ namespace Nexus::Compliance {
     return order;
   }
 
-  template<typename D, typename C, typename S>
+  template<typename D, typename C,
+    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   void ComplianceCheckOrderExecutionDriver<D, C, S>::add(
       const std::shared_ptr<const OrderExecutionService::Order>& order) {
     m_driver->add(order);
     m_compliance_rule_set->add(order);
   }
 
-  template<typename D, typename C, typename S>
+  template<typename D, typename C,
+    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   std::shared_ptr<const OrderExecutionService::Order>
       ComplianceCheckOrderExecutionDriver<D, C, S>::submit(
         const OrderExecutionService::OrderInfo& info) {
@@ -137,7 +145,8 @@ namespace Nexus::Compliance {
     return order;
   }
 
-  template<typename D, typename C, typename S>
+  template<typename D, typename C,
+    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   void ComplianceCheckOrderExecutionDriver<D, C, S>::cancel(
       const OrderExecutionService::OrderExecutionSession& session,
       OrderExecutionService::OrderId id) {
@@ -156,7 +165,8 @@ namespace Nexus::Compliance {
     m_driver->cancel(session, id);
   }
 
-  template<typename D, typename C, typename S>
+  template<typename D, typename C,
+    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   void ComplianceCheckOrderExecutionDriver<D, C, S>::update(
       const OrderExecutionService::OrderExecutionSession& session,
       OrderExecutionService::OrderId id,
@@ -164,7 +174,8 @@ namespace Nexus::Compliance {
     m_driver->update(session, id, report);
   }
 
-  template<typename D, typename C, typename S>
+  template<typename D, typename C,
+    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   void ComplianceCheckOrderExecutionDriver<D, C, S>::close() {
     if(m_open_state.SetClosing()) {
       return;
@@ -175,7 +186,8 @@ namespace Nexus::Compliance {
     m_open_state.Close();
   }
 
-  template<typename D, typename C, typename S>
+  template<typename D, typename C,
+    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   void ComplianceCheckOrderExecutionDriver<D, C, S>::on_execution_report(
       OrderExecutionService::PrimitiveOrder& order,
       const OrderExecutionService::ExecutionReport& report) {

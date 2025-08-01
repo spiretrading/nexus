@@ -5,6 +5,7 @@
 #include <Beam/Queries/AsyncDataStore.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStoreQueryWrapper.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
@@ -15,7 +16,7 @@ namespace Nexus::MarketDataService {
    * Implements a HistoricalDataStore using an AsyncDataStore as its backing.
    * @param <D> The underlying data store to commit the data to.
    */
-  template<typename D>
+  template<IsHistoricalDataStore D>
   class AsyncHistoricalDataStore {
     public:
 
@@ -26,7 +27,7 @@ namespace Nexus::MarketDataService {
        * Constructs an AsyncHistoricalDataStore.
        * @param data_store Initializes the data store to commit data to.
        */
-      template<typename DF>
+      template<Beam::Initializes<D> DF>
       explicit AsyncHistoricalDataStore(DF&& data_store);
 
       ~AsyncHistoricalDataStore();
@@ -71,8 +72,8 @@ namespace Nexus::MarketDataService {
         const AsyncHistoricalDataStore&) = delete;
   };
 
-  template<typename D>
-  template<typename DF>
+  template<IsHistoricalDataStore D>
+  template<Beam::Initializes<D> DF>
   AsyncHistoricalDataStore<D>::AsyncHistoricalDataStore(DF&& data_store)
     : m_data_store(std::forward<DF>(data_store)),
       m_order_imbalance_data_store(&*m_data_store),
@@ -80,12 +81,12 @@ namespace Nexus::MarketDataService {
       m_book_quote_data_store(&*m_data_store),
       m_time_and_sale_data_store(&*m_data_store) {}
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   AsyncHistoricalDataStore<D>::~AsyncHistoricalDataStore() {
     close();
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   std::vector<SecurityInfo> AsyncHistoricalDataStore<D>::load_security_info(
       const SecurityInfoQuery& query) {
     auto local_info = m_security_info.load_security_info(query);
@@ -109,7 +110,7 @@ namespace Nexus::MarketDataService {
     return info;
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void AsyncHistoricalDataStore<D>::store(const SecurityInfo& info) {
     m_security_info.store(info);
     m_tasks.Push([=, this] {
@@ -117,80 +118,80 @@ namespace Nexus::MarketDataService {
     });
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   std::vector<SequencedOrderImbalance> AsyncHistoricalDataStore<D>::
       load_order_imbalances(const VenueMarketDataQuery& query) {
     return m_order_imbalance_data_store.Load(query);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void AsyncHistoricalDataStore<D>::store(
       const SequencedVenueOrderImbalance& imbalance) {
     m_order_imbalance_data_store.Store(imbalance);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void AsyncHistoricalDataStore<D>::store(
       const std::vector<SequencedVenueOrderImbalance>& imbalances) {
     m_order_imbalance_data_store.Store(imbalances);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   std::vector<SequencedBboQuote> AsyncHistoricalDataStore<D>::load_bbo_quotes(
       const SecurityMarketDataQuery& query) {
     return m_bbo_quote_data_store.Load(query);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void AsyncHistoricalDataStore<D>::store(
       const SequencedSecurityBboQuote& quote) {
     m_bbo_quote_data_store.Store(quote);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void AsyncHistoricalDataStore<D>::store(
       const std::vector<SequencedSecurityBboQuote>& quotes) {
     m_bbo_quote_data_store.Store(quotes);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   std::vector<SequencedBookQuote> AsyncHistoricalDataStore<D>::load_book_quotes(
       const SecurityMarketDataQuery& query) {
     return m_book_quote_data_store.Load(query);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void AsyncHistoricalDataStore<D>::store(
       const SequencedSecurityBookQuote& quote) {
     m_book_quote_data_store.Store(quote);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void AsyncHistoricalDataStore<D>::store(
       const std::vector<SequencedSecurityBookQuote>& quotes) {
     m_book_quote_data_store.Store(quotes);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   std::vector<SequencedTimeAndSale>
       AsyncHistoricalDataStore<D>::load_time_and_sales(
         const SecurityMarketDataQuery& query) {
     return m_time_and_sale_data_store.Load(query);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void AsyncHistoricalDataStore<D>::store(
       const SequencedSecurityTimeAndSale& time_and_sale) {
     m_time_and_sale_data_store.Store(time_and_sale);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void AsyncHistoricalDataStore<D>::store(
       const std::vector<SequencedSecurityTimeAndSale>& time_and_sales) {
     m_time_and_sale_data_store.Store(time_and_sales);
   }
 
-  template<typename D>
+  template<IsHistoricalDataStore D>
   void AsyncHistoricalDataStore<D>::close() {
     if(m_open_state.SetClosing()) {
       return;

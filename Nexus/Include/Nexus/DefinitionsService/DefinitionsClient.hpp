@@ -105,6 +105,11 @@ namespace Nexus::DefinitionsService {
       std::shared_ptr<VirtualDefinitionsClient> m_client;
   };
 
+  /** Checks if a type implements a DefinitionsClient. */
+  template<typename T>
+  concept IsDefinitionsClient = std::constructible_from<
+    DefinitionsClient, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
+
   template<typename T, typename... Args>
   DefinitionsClient::DefinitionsClient(std::in_place_type_t<T>, Args&&... args)
     : m_client(std::make_shared<WrappedDefinitionsClient<T>>(
