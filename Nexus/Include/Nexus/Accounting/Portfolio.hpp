@@ -307,7 +307,7 @@ namespace Nexus::Accounting {
       : m_bookkeeper(std::move(bookkeeper)),
         m_venues(std::move(venues)) {
     for(auto& inventory : m_bookkeeper.get_inventory_range()) {
-      get_security_entry(inventory.m_position.m_key.m_index);
+      get_entry(inventory.m_position.m_key.m_index);
     }
   }
 

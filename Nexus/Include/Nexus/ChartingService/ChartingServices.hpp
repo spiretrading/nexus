@@ -5,7 +5,6 @@
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
 #include "Nexus/ChartingService/SecurityChartingQuery.hpp"
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 #include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
 

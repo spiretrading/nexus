@@ -262,4 +262,137 @@ TEST_SUITE("PortfolioController") {
     REQUIRE(
       bbo_update.m_unrealized_security != initial_update.m_unrealized_security);
   }
+
+  TEST_CASE("out_of_order_execution_reports") {
+    auto fixture = Fixture();
+    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto order_queue = std::make_shared<Queue<std::shared_ptr<const Order>>>();
+    auto controller = PortfolioController(
+      &portfolio, fixture.m_market_data_client, order_queue);
+    auto updates = std::make_shared<Queue<TestPortfolio::UpdateEntry>>();
+    controller.get_publisher().Monitor(updates);
+    auto timestamp = time_from_string("2024-07-21 10:00:00.000");
+    auto fields_a =
+      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 100, Money::CENT);
+    auto info_a = OrderInfo(fields_a, 1, false, timestamp);
+    auto order_a = std::make_shared<PrimitiveOrder>(info_a);
+    auto fields_b =
+      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 100, 2 * Money::CENT);
+    auto info_b = OrderInfo(fields_b, 2, false, timestamp);
+    auto order_b = std::make_shared<PrimitiveOrder>(info_b);
+    auto fields_c =
+      make_limit_order_fields(TST, CAD, Side::ASK, "TSX", 100, 3 * Money::CENT);
+    auto info_c = OrderInfo(fields_c, 3, false, timestamp);
+    auto order_c = std::make_shared<PrimitiveOrder>(info_c);
+    order_queue->Push(order_a);
+    order_queue->Push(order_b);
+    order_queue->Push(order_c);
+    accept(*order_a, timestamp + seconds(1));
+    accept(*order_b, timestamp + seconds(2));
+    accept(*order_c, timestamp + seconds(3));
+    fill(*order_a, 100, timestamp + seconds(4));
+    auto update1 = updates->Pop();
+    REQUIRE(update1.m_security_inventory.m_position.m_quantity == 100);
+    REQUIRE(update1.m_security_inventory.m_position.m_cost_basis ==
+      100 * Money::CENT);
+    fill(*order_c, 100, timestamp + seconds(5));
+    auto update2 = updates->Pop();
+    REQUIRE(update2.m_security_inventory.m_position.m_quantity == 0);
+    REQUIRE(update2.m_security_inventory.m_position.m_cost_basis ==
+      Money::ZERO);
+    fill(*order_b, 100, timestamp + seconds(6));
+    auto update3 = updates->Pop();
+    REQUIRE(update3.m_security_inventory.m_position.m_quantity == 100);
+    REQUIRE(update3.m_security_inventory.m_position.m_cost_basis ==
+      200 * Money::CENT);
+    REQUIRE(!updates->TryPop());
+  }
+
+  TEST_CASE("zero_position_bbo_update") {
+    auto fixture = Fixture();
+    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto order_queue = std::make_shared<Queue<std::shared_ptr<const Order>>>();
+    auto controller = PortfolioController(
+      &portfolio, fixture.m_market_data_client, order_queue);
+    auto updates = std::make_shared<Queue<TestPortfolio::UpdateEntry>>();
+    controller.get_publisher().Monitor(updates);
+    auto timestamp = time_from_string("2024-07-21 10:00:00.000");
+    auto fields_buy = make_limit_order_fields(
+      Security("FOO", TSX), CAD, Side::BID, "TSX", 100, Money::ONE);
+    auto info_buy = OrderInfo(fields_buy, 1, false, timestamp);
+    auto order_buy = std::make_shared<PrimitiveOrder>(info_buy);
+    order_queue->Push(order_buy);
+    accept(*order_buy, timestamp + seconds(1));
+    fill(*order_buy, 100, timestamp + seconds(2));
+    auto update1 = updates->Pop();
+    REQUIRE(update1.m_security_inventory.m_position.m_quantity == 100);
+    REQUIRE(update1.m_unrealized_security == Money::ZERO);
+    auto fields_sell = make_limit_order_fields(
+      Security("FOO", TSX), CAD, Side::ASK, "TSX", 100, Money::ONE);
+    auto info_sell = OrderInfo(fields_sell, 2, false, timestamp);
+    auto order_sell = std::make_shared<PrimitiveOrder>(info_sell);
+    order_queue->Push(order_sell);
+    accept(*order_sell, timestamp + seconds(3));
+    fill(*order_sell, 100, timestamp + seconds(4));
+    auto update2 = updates->Pop();
+    REQUIRE(update2.m_security_inventory.m_position.m_quantity == 0);
+    REQUIRE(update2.m_unrealized_security == Money::ZERO);
+    auto new_bbo = BboQuote(Quote(2 * Money::ONE, 100, Side::BID),
+      Quote(2 * Money::ONE, 100, Side::ASK), timestamp + seconds(5));
+    fixture.m_market_data_environment.get_feed_client().publish(
+      SecurityBboQuote(new_bbo, Security("FOO", TSX)));
+    REQUIRE(!updates->TryPop());
+    auto fields_short = make_limit_order_fields(
+      Security("FOO", TSX), CAD, Side::ASK, "TSX", 100, Money::ONE);
+    auto info_short = OrderInfo(fields_short, 3, false, timestamp);
+    auto order_short = std::make_shared<PrimitiveOrder>(info_short);
+    order_queue->Push(order_short);
+    accept(*order_short, timestamp + seconds(6));
+    fill(*order_short, 100, timestamp + seconds(7));
+    auto update3 = updates->Pop();
+    REQUIRE(update3.m_security_inventory.m_position.m_quantity == -100);
+  }
+
+  TEST_CASE("empty_snapshot") {
+    auto fixture = Fixture();
+    auto portfolio = [&] {
+      auto inventories = std::vector{TestPortfolio::Inventory({TST, CAD})};
+      auto bookkeeper = TestPortfolio::Bookkeeper(inventories);
+      return TestPortfolio(DEFAULT_VENUES);
+    }();
+    auto order_queue = std::make_shared<Queue<std::shared_ptr<const Order>>>();
+    auto controller = PortfolioController(
+      &portfolio, fixture.m_market_data_client, order_queue);
+    auto updates = std::make_shared<Queue<TestPortfolio::UpdateEntry>>();
+    controller.get_publisher().Monitor(updates);
+    REQUIRE(!updates->TryPop());
+  }
+
+  TEST_CASE("no_bbo_available") {
+    auto fixture = Fixture();
+    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto order_queue = std::make_shared<Queue<std::shared_ptr<const Order>>>();
+    auto controller = PortfolioController(
+      &portfolio, fixture.m_market_data_client, order_queue);
+    auto updates = std::make_shared<Queue<TestPortfolio::UpdateEntry>>();
+    controller.get_publisher().Monitor(updates);
+    auto timestamp = time_from_string("2024-07-21 10:00:00.000");
+    auto fields =
+      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 100, Money::ONE);
+    auto info = OrderInfo(fields, 1, false, timestamp);
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    order_queue->Push(order);
+    accept(*order, timestamp + seconds(1));
+    fill(*order, 100, timestamp + seconds(2));
+    auto update1 = updates->Pop();
+    REQUIRE(update1.m_security_inventory.m_position.m_quantity == 100);
+    REQUIRE(update1.m_unrealized_security == Money::ZERO);
+    auto new_bbo = BboQuote(Quote(2 * Money::ONE, 100, Side::BID),
+      Quote(2 * Money::ONE, 100, Side::ASK), timestamp + seconds(3));
+    fixture.m_market_data_environment.get_feed_client().publish(
+      SecurityBboQuote(new_bbo, TST));
+    auto update2 = updates->Pop();
+    REQUIRE(update2.m_security_inventory.m_position.m_quantity == 100);
+    REQUIRE(update2.m_unrealized_security == 100 * Money::ONE);
+  }
 }
