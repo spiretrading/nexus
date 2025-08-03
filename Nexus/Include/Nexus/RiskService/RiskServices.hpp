@@ -19,6 +19,9 @@ namespace Nexus::RiskService {
   BEAM_DEFINE_RECORD(RiskStateUpdate, Beam::ServiceLocator::DirectoryEntry,
     account, RiskState, risk_state);
 
+  /** Standard name for the risk service. */
+  inline const std::string SERVICE_NAME = "risk_service";
+
   BEAM_DEFINE_SERVICES(RiskServices,
 
     /**

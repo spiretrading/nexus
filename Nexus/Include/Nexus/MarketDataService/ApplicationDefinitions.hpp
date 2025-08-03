@@ -9,7 +9,7 @@
 #include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/MarketDataService/ServiceMarketDataClient.hpp"
-#include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
+#include "Nexus/MarketDataService/ServiceMarketDataFeedClient.hpp"
 
 namespace Nexus::MarketDataService {
 
@@ -62,7 +62,7 @@ namespace Nexus::MarketDataService {
     public:
 
       /** Defines the standard MarketDataFeedClient used for applications. */
-      using Client = MarketDataFeedClient<std::string,
+      using Client = ServiceMarketDataFeedClient<std::string,
         Beam::Threading::LiveTimer, Beam::Services::MessageProtocol<
           Beam::Network::TcpSocketChannel,
           Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,

@@ -9,7 +9,6 @@
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/RiskService/RiskService.hpp"
 
 namespace Nexus::RiskService {
 
@@ -22,7 +21,7 @@ namespace Nexus::RiskService {
     /** The Security being indexed. */
     Security m_security;
 
-    bool operator ==(const RiskPortfolioKey& key) const = default;
+    bool operator ==(const RiskPortfolioKey&) const = default;
   };
 
   /** The type used to represent a portfolio's position. */
@@ -32,8 +31,8 @@ namespace Nexus::RiskService {
   using RiskInventory = Accounting::Inventory<RiskPosition>;
 
   /** The type of Portfolio used. */
-  using RiskPortfolio = Accounting::Portfolio<
-    Accounting::TrueAverageBookkeeper<RiskInventory>>;
+  using RiskPortfolio =
+    Accounting::Portfolio<Accounting::TrueAverageBookkeeper<RiskInventory>>;
 
   /** The type of valuation used. */
   using RiskSecurityValuation = Accounting::SecurityValuation;
@@ -43,8 +42,8 @@ namespace Nexus::RiskService {
     Beam::KeyValuePair<RiskPortfolioKey, RiskInventory>;
 
   /** The Publisher used for portfolio events. */
-  using RiskPortfolioUpdatePublisher = Beam::Publisher<
-    Beam::KeyValuePair<RiskPortfolioKey, RiskInventory>>;
+  using RiskPortfolioUpdatePublisher =
+    Beam::Publisher<Beam::KeyValuePair<RiskPortfolioKey, RiskInventory>>;
 
   inline std::size_t hash_value(const RiskPortfolioKey& value) {
     auto seed = std::size_t(0);
@@ -58,8 +57,8 @@ namespace Beam::Serialization {
   template<>
   struct Shuttle<Nexus::RiskService::RiskPortfolioKey> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::RiskService::RiskPortfolioKey& value,
+    void operator ()(
+        Shuttler& shuttle, Nexus::RiskService::RiskPortfolioKey& value,
         unsigned int version) const {
       shuttle.Shuttle("account", value.m_account);
       shuttle.Shuttle("security", value.m_security);
@@ -74,6 +73,6 @@ namespace std {
       return Nexus::RiskService::hash_value(value);
     }
   };
-};
+}
 
 #endif
