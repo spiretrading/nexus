@@ -100,15 +100,19 @@ struct DemoPlaybackController : private QObject {
   std::shared_ptr<ValueModel<ReplayWindow::State>> m_play_state;
   QTimer m_timer;
 
-  DemoPlaybackController(std::shared_ptr<TimelineModel> timeline,
-      TimeClientBox time_client, std::shared_ptr<DurationModel> playhead,
-      std::shared_ptr<PlaybackSpeedModel> speed)
-      : m_replay_window(ReplayWindow(std::move(timeline),
-          std::move(time_client), std::move(playhead), std::move(speed),
+  DemoPlaybackController()
+      : m_replay_window(ReplayWindow(
+          std::make_shared<LocalTimelineModel>(
+            Timeline{ptime(microsec_clock::universal_time().date(),
+              time_duration(4, 0, 0)), time_duration(8, 0, 0)}),
+          TimeClientBox(UtcTimeClient()),
+          std::make_shared<LocalDurationModel>(time_duration(0, 0, 0)),
+          std::make_shared<ArrayListModel<SelectableTarget>>(),
+          std::make_shared<LocalPlaybackSpeedModel>(1),
           microsec_clock::universal_time().date() - months(6))),
+        m_timer_enabled(std::make_shared<LocalBooleanModel>(false)),
         m_play_state(std::make_shared<LocalPlayStateModel>(
           ReplayWindow::State::PAUSED)),
-        m_timer_enabled(std::make_shared<LocalBooleanModel>(false)),
 BEAM_SUPPRESS_THIS_INITIALIZER()
         m_timer(this) {
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
@@ -145,15 +149,18 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
 struct ReplayWindowTester : QWidget {
   DemoPlaybackController* m_controller;
+  std::vector<SelectableTarget> m_candidate_targets;
   QDateTimeEdit* m_start_time;
   QTimeEdit* m_playhead;
   QTextEdit* m_event_log;
   scoped_connection m_timeline_connection;
   scoped_connection m_playhead_connection;
   scoped_connection m_state_connection;
+  scoped_connection m_targets_connection;
 
   ReplayWindowTester(DemoPlaybackController& controller)
-      : m_controller(&controller) {
+      : m_controller(&controller),
+        m_candidate_targets(populate_targets()) {
     setAttribute(Qt::WA_ShowWithoutActivating);
     auto layout = new QVBoxLayout(this);
     auto form_layout = new QFormLayout();
@@ -179,6 +186,23 @@ struct ReplayWindowTester : QWidget {
     auto timer_check_box = new CheckBox(m_controller->m_timer_enabled);
     form_layout->addRow("Enable Timer:", timer_check_box);
     layout->addLayout(form_layout);
+    auto candidates_group = new QGroupBox("Candidate Targets");
+    auto candidates_group_layout = new QVBoxLayout(candidates_group);
+    auto list_widget = new QListWidget();
+    candidates_group_layout->addWidget(list_widget);
+    for(auto i = 0; i < m_candidate_targets.size(); ++i) {
+      auto& target = m_candidate_targets[i];
+      m_controller->m_replay_window.get_targets()->push(target);
+      list_widget->addItem(to_text_with_identifier(target.m_target));
+      auto list_item = list_widget->item(i);
+      list_item->setFlags(list_item->flags() | Qt::ItemIsUserCheckable);
+      list_item->setData(Qt::UserRole,
+        QString::fromStdString(target.m_target.m_identifier));
+      list_item->setCheckState(Qt::Checked);
+    }
+    connect(list_widget, &QListWidget::itemChanged,
+      std::bind_front(&ReplayWindowTester::on_list_item_changed, this));
+    layout->addWidget(candidates_group);
     m_event_log = new QTextEdit();
     m_event_log->setReadOnly(true);
     layout->addWidget(m_event_log);
@@ -190,6 +214,9 @@ struct ReplayWindowTester : QWidget {
         std::bind_front(&ReplayWindowTester::on_playhead_update, this));
     m_state_connection = m_controller->m_replay_window.connect_state_signal(
       std::bind_front(&ReplayWindowTester::on_state_update, this));
+    m_targets_connection =
+      m_controller->m_replay_window.get_targets()->connect_operation_signal(
+        std::bind_front(&ReplayWindowTester::on_targets_operation, this));
     m_controller->m_replay_window.installEventFilter(this);
   }
 
@@ -212,7 +239,7 @@ struct ReplayWindowTester : QWidget {
     m_controller->m_replay_window.show();
     m_controller->m_replay_window.adjustSize();
     move(m_controller->m_replay_window.pos() + QPoint(0, 200));
-    resize(500, 600);
+    resize(500, 800);
   }
 
   void on_date_time_changed(const QDateTime& date_time) {
@@ -261,82 +288,41 @@ struct ReplayWindowTester : QWidget {
     m_controller->m_play_state->set(state);
     m_event_log->append(QString("State: %1").arg(to_text(state)));
   }
-};
 
-struct ReplayAttachMenuButtonTester : QWidget {
-  std::shared_ptr<ListModel<SelectableTarget>> m_targets;
-  std::vector<SelectableTarget> m_candidate_targets;
-  QVBoxLayout* m_target_group_layout;
-
-  ReplayAttachMenuButtonTester()
-      : m_targets(std::make_shared<ArrayListModel<SelectableTarget>>()),
-        m_candidate_targets(populate_targets()) {
-    setAttribute(Qt::WA_ShowWithoutActivating);
-    for(auto& target : m_candidate_targets) {
-      m_targets->push(target);
-    }
-    auto layout = new QVBoxLayout(this);
-    auto top_layout = new QHBoxLayout();
-    layout->addLayout(top_layout);
-    auto left_layout = new QVBoxLayout();
-    auto candidates_group = new QGroupBox("Candidate Targets");
-    auto candidates_group_layout = new QVBoxLayout(candidates_group);
-    auto list_widget = new QListWidget();
-    candidates_group_layout->addWidget(list_widget);
-    left_layout->addWidget(candidates_group);
-    top_layout->addLayout(left_layout, 1);
-    auto right_layout = new QVBoxLayout();
-    auto target_group = new QGroupBox("Targets");
-    m_target_group_layout = new QVBoxLayout(target_group);
-    right_layout->addWidget(target_group);
-    top_layout->addLayout(right_layout, 1);
-    for(auto i = 0; i < m_targets->get_size(); ++i) {
-      list_widget->addItem(to_text_with_identifier(m_targets->get(i).m_target));
-      auto list_item = list_widget->item(i);
-      list_item->setFlags(list_item->flags() | Qt::ItemIsUserCheckable);
-      list_item->setData(Qt::UserRole,
-        QString::fromStdString(m_targets->get(i).m_target.m_identifier));
-      list_item->setCheckState(Qt::Checked);
-      m_target_group_layout->addWidget(make_check_box(m_targets, i));
-    }
-    m_target_group_layout->addStretch(1);
-    auto menu_button = make_replay_attach_menu_button(m_targets);
-    menu_button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    layout->addWidget(menu_button, 0, Qt::AlignHCenter);
-    connect(list_widget, &QListWidget::itemChanged,
-      std::bind_front(&ReplayAttachMenuButtonTester::list_item_changed, this));
-    m_targets->connect_operation_signal(
-      std::bind_front(&ReplayAttachMenuButtonTester::on_operation, this));
-  }
-
-  void list_item_changed(QListWidgetItem* item) {
+  void on_list_item_changed(QListWidgetItem* item) {
+    auto& targets = m_controller->m_replay_window.get_targets();
     if(item->checkState() == Qt::Checked) {
       auto index = item->listWidget()->row(item);
       if(index >= 0 && index < m_candidate_targets.size()) {
-        m_targets->push(m_candidate_targets[index]);
+        targets->push(m_candidate_targets[index]);
       }
     } else {
-      auto i = std::find_if(m_targets->begin(), m_targets->end(),
+      auto i = std::find_if(targets->begin(), targets->end(),
         [&] (const SelectableTarget& target) {
           return target.m_target.m_identifier ==
             item->data(Qt::UserRole).toString().toStdString();
         });
-      if(i != m_targets->end()) {
-        m_targets->remove(i);
+      if(i != targets->end()) {
+        targets->remove(i);
       }
     }
   }
 
-  void on_operation(const SelectableTargetListModel::Operation& operation) {
+  void on_targets_operation(
+      const SelectableTargetListModel::Operation& operation) {
     visit(operation,
-      [&] (const SelectableTargetListModel::AddOperation& operation) {
-        m_target_group_layout->insertWidget(m_target_group_layout->count() - 1,
-          make_check_box(m_targets, operation.m_index));
-      },
-      [&] (const SelectableTargetListModel::PreRemoveOperation& operation) {
-        if(auto item = m_target_group_layout->takeAt(operation.m_index)) {
-          delete item->widget();
-          delete item;
+      [&] (const SelectableTargetListModel::UpdateOperation& operation) {
+        if(operation.get_previous().m_selected !=
+            operation.get_value().m_selected) {
+          auto select_status = [&] {
+            if(operation.get_value().m_selected) {
+              return "Selected";
+            } else {
+              return "Deselected";
+            }
+          }();
+          m_event_log->append(QString("%1 target: %2").arg(select_status).
+            arg(to_text_with_identifier(operation.get_value().m_target)));
         }
       });
   }
@@ -347,18 +333,8 @@ int main(int argc, char** argv) {
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Playback Ui Tester"));
   initialize_resources();
-  auto controller = DemoPlaybackController(
-    std::make_shared<LocalTimelineModel>(Timeline{
-      ptime(microsec_clock::universal_time().date(), time_duration(4, 0, 0)),
-        time_duration(8, 0, 0)}), TimeClientBox(UtcTimeClient()),
-    std::make_shared<LocalDurationModel>(time_duration(0, 0, 0)),
-    std::make_shared<LocalPlaybackSpeedModel>(1));
+  auto controller = DemoPlaybackController();
   auto tester = ReplayWindowTester(controller);
   tester.show();
-  auto menu_button_tester = ReplayAttachMenuButtonTester();
-  menu_button_tester.show();
-  menu_button_tester.resize(700, 500);
-  menu_button_tester.move(
-    tester.mapToGlobal(tester.rect().topRight()) + QPoint(10, 0));
   application.exec();
 }
