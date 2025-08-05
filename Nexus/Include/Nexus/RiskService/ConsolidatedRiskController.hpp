@@ -11,7 +11,6 @@
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/RiskService/RiskController.hpp"
-#include "Nexus/RiskService/RiskService.hpp"
 
 namespace Nexus::RiskService {
 

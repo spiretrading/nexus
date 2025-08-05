@@ -20,7 +20,6 @@
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/RiskService/RiskDataStore.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
-#include "Nexus/RiskService/RiskService.hpp"
 #include "Nexus/RiskService/RiskStateModel.hpp"
 #include "Nexus/RiskService/RiskTransitionModel.hpp"
 
