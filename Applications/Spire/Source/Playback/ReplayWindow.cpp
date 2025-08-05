@@ -237,11 +237,13 @@ struct ReplayWindow::PlayheadModel : DurationModel {
 ReplayWindow::ReplayWindow(
     std::shared_ptr<TimelineModel> timeline, TimeClientBox time_client,
     std::shared_ptr<DurationModel> playhead,
+    std::shared_ptr<SelectableTargetListModel> targets,
     std::shared_ptr<PlaybackSpeedModel> speed, optional<date> min_date,
     QWidget* parent)
     : Window(parent),
       m_playhead(std::make_shared<PlayheadModel>(std::move(timeline),
         std::move(time_client), std::move(playhead))),
+      m_targets(std::move(targets)),
       m_state(State::PAUSED) {
   setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
   setWindowTitle(tr("Replay"));
@@ -281,8 +283,7 @@ ReplayWindow::ReplayWindow(
     std::bind_front(&ReplayWindow::on_jump_to_end_click, this));
   bottom_layout->addWidget(m_end_button);
   bottom_layout->addStretch();
-  auto attach_button = make_menu_icon_button(
-    imageFromSvg(":/Icons/target.svg", scale(26, 26)), tr("Attach to"));
+  auto attach_button = make_replay_attach_menu_button(m_targets);
   attach_button->setFixedWidth(scale_width(32));
   bottom_layout->addWidget(attach_button);
   bottom_layout->addSpacing(scale_width(8));
@@ -321,6 +322,11 @@ TimeClientBox ReplayWindow::get_time_client() const {
 
 const std::shared_ptr<DurationModel>& ReplayWindow::get_playhead() const {
   return m_playhead->m_source;
+}
+
+const std::shared_ptr<SelectableTargetListModel>&
+    ReplayWindow::get_targets() const {
+  return m_targets;
 }
 
 const std::shared_ptr<PlaybackSpeedModel>& ReplayWindow::get_speed() const {

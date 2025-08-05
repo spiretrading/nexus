@@ -3,6 +3,7 @@
 #include <Beam/TimeService/TimeClientBox.hpp>
 #include "Spire/Playback/Playback.hpp"
 #include "Spire/Playback/PlaybackSpeedBox.hpp"
+#include "Spire/Playback/ReplayAttachMenuButton.hpp"
 #include "Spire/Playback/SeekBar.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
@@ -40,6 +41,7 @@ namespace Spire {
        *        the playback.
        * @param time_client The time client that provides the current time.
        * @param playhead The current position within the timeline.
+       * @param targets The replay attachment targets that user can select.
        * @param speed The playback speed.
        * @param min_date The minimum date for the replay.
        * @param parent The parent widget.
@@ -47,6 +49,7 @@ namespace Spire {
       ReplayWindow(std::shared_ptr<TimelineModel> timeline,
         Beam::TimeService::TimeClientBox time_client,
         std::shared_ptr<DurationModel> playhead,
+        std::shared_ptr<SelectableTargetListModel> targets,
         std::shared_ptr<PlaybackSpeedModel> speed,
         boost::optional<boost::gregorian::date> min_date,
         QWidget* parent = nullptr);
@@ -59,6 +62,9 @@ namespace Spire {
 
       /** Returns the timeline position. */
       const std::shared_ptr<DurationModel>& get_playhead() const;
+
+      /** Returns the replay attachment targets. */
+      const std::shared_ptr<SelectableTargetListModel>& get_targets() const;
 
       /** Returns the replay speed. */
       const std::shared_ptr<PlaybackSpeedModel>& get_speed() const;
@@ -73,6 +79,7 @@ namespace Spire {
     private:
       struct PlayheadModel;
       std::shared_ptr<PlayheadModel> m_playhead;
+      std::shared_ptr<SelectableTargetListModel> m_targets;
       LocalValueModel<State> m_state;
       SeekBar* m_seek_bar;
       Button* m_start_button;
