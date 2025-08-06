@@ -130,7 +130,7 @@ namespace Nexus::Compliance {
     } catch(const std::exception& e) {
       order->with([&] (auto status, const auto& reports) {
         auto& last_report = reports.back();
-        auto update = OrderExecutionService::make_updated_execution_report(
+        auto update = make_update(
           last_report, OrderStatus::REJECTED, m_time_client->GetTime());
         update.m_text = e.what();
         order->update(update);

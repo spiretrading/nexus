@@ -25,8 +25,8 @@ namespace Nexus::OrderExecutionService::Tests {
     while(auto report = monitor->TryPop()) {
       last_report = std::move(*report);
     }
-    auto updated_report = make_updated_execution_report(
-      last_report, OrderStatus::CANCELED, timestamp);
+    auto updated_report =
+      make_update(last_report, OrderStatus::CANCELED, timestamp);
     order.update(updated_report);
     return updated_report;
   }
@@ -51,8 +51,7 @@ namespace Nexus::OrderExecutionService::Tests {
     auto updated_report = ExecutionReport();
     order.with([&] (auto status, const auto& reports) {
       auto& last_report = reports.back();
-      updated_report =
-        make_updated_execution_report(last_report, new_status, timestamp);
+      updated_report = make_update(last_report, new_status, timestamp);
       order.update(updated_report);
     });
     return updated_report;
@@ -131,8 +130,7 @@ namespace Nexus::OrderExecutionService::Tests {
           return OrderStatus::PARTIALLY_FILLED;
         }
       }();
-      updated_report =
-        make_updated_execution_report(last_report, new_status, timestamp);
+      updated_report = make_update(last_report, new_status, timestamp);
       updated_report.m_last_price = price;
       updated_report.m_last_quantity = quantity;
       order.update(updated_report);

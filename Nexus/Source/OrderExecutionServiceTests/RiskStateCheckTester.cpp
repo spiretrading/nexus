@@ -52,8 +52,7 @@ TEST_SUITE("RiskStateCheck") {
       fixture.m_administration_environment.get_client();
     auto check = make_risk_state_check(administration_client);
     auto account = DirectoryEntry::MakeAccount(123);
-    administration_client.store_risk_state(
-      account, RiskState(RiskState::Type::DISABLED));
+    administration_client.store(account, RiskState(RiskState::Type::DISABLED));
     auto fields = make_test_order_fields();
     auto info = OrderInfo(fields, 1, time_from_string("2024-07-18 10:01:00"));
     REQUIRE_THROWS_AS(check->submit(info), OrderSubmissionCheckException);

@@ -59,11 +59,10 @@ namespace {
     static auto parameters = [] {
       auto parameters = RiskParameters();
       parameters.m_currency = CAD;
-      parameters.m_buyingPower = Money(100);
-      parameters.m_allowedState = RiskState::Type::ACTIVE;
-      parameters.m_netLoss = Money(200);
-      parameters.m_lossFromTop = 23;
-      parameters.m_transitionTime = seconds(100);
+      parameters.m_buying_power = Money(100);
+      parameters.m_allowed_state = RiskState::Type::ACTIVE;
+      parameters.m_net_loss = Money(200);
+      parameters.m_transition_time = seconds(100);
       return parameters;
     }();
     return parameters;
@@ -158,17 +157,17 @@ TEST_SUITE("AdministrationClient") {
     identity.m_last_name = "Smith";
     require_operation<TestAdministrationClient::StoreIdentityOperation>(
       [&] (auto& client) {
-        return client.store_identity(account, identity);
+        return client.store(account, identity);
       });
   }
 
   TEST_CASE("store_risk_parameters") {
     auto account = DirectoryEntry::MakeAccount(10, "risk_account");
     auto risk_parameters = RiskParameters(USD, Money(1000),
-      RiskState(RiskState::Type::ACTIVE, ptime()), Money(500), 10, seconds(60));
+      RiskState(RiskState::Type::ACTIVE, ptime()), Money(500), seconds(60));
     require_operation<TestAdministrationClient::StoreRiskParametersOperation>(
       [&] (auto& client) {
-        client.store_risk_parameters(account, risk_parameters);
+        client.store(account, risk_parameters);
       });
   }
 
@@ -177,7 +176,7 @@ TEST_SUITE("AdministrationClient") {
     auto risk_state = RiskState(RiskState::Type::DISABLED, ptime());
     require_operation<TestAdministrationClient::StoreRiskStateOperation>(
       [&] (auto& client) {
-        client.store_risk_state(account, risk_state);
+        client.store(account, risk_state);
       });
   }
 
@@ -244,8 +243,7 @@ TEST_SUITE("AdministrationClient") {
     require_operation<
       TestAdministrationClient::SubmitEntitlementModificationRequestOperation>(
         [&] (auto& client) {
-          return client.submit_account_modification_request(
-            account, modification, comment);
+          return client.submit(account, modification, comment);
         }, request,
         [&] (const auto& received) {
           REQUIRE(received.get_id() == request.get_id());
@@ -273,8 +271,7 @@ TEST_SUITE("AdministrationClient") {
     require_operation<
       TestAdministrationClient::SubmitRiskModificationRequestOperation>(
         [&] (auto& client) {
-          return client.submit_account_modification_request(
-            account, modification, comment);
+          return client.submit(account, modification, comment);
         }, request,
         [&] (const auto& received) {
           REQUIRE(received.get_id() == request.get_id());

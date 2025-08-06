@@ -36,8 +36,8 @@ TEST_SUITE("OpposingOrderSubmissionComplianceRule") {
     auto ask_order = std::make_shared<PrimitiveOrder>(ask_info);
     rule.add(ask_order);
     ask_order->with([&] (auto status, const auto& reports) {
-      auto cancel_report = make_updated_execution_report(reports.back(),
-        OrderStatus::CANCELED, time_from_string("2024-07-29 09:59:59"));
+      auto cancel_report = make_update(reports.back(), OrderStatus::CANCELED,
+        time_from_string("2024-07-29 09:59:59"));
       ask_order->update(cancel_report);
     });
     auto bid_fields =
@@ -63,8 +63,8 @@ TEST_SUITE("OpposingOrderSubmissionComplianceRule") {
     auto ask_order = std::make_shared<PrimitiveOrder>(ask_info);
     rule.add(ask_order);
     ask_order->with([&] (auto status, const auto& reports) {
-      auto cancel_report = make_updated_execution_report(reports.back(),
-        OrderStatus::CANCELED, time_from_string("2024-07-29 09:59:59"));
+      auto cancel_report = make_update(reports.back(), OrderStatus::CANCELED,
+        time_from_string("2024-07-29 09:59:59"));
       ask_order->update(cancel_report);
     });
     auto bid_fields = make_limit_order_fields(
@@ -88,8 +88,8 @@ TEST_SUITE("OpposingOrderSubmissionComplianceRule") {
     auto ask_order1 = std::make_shared<PrimitiveOrder>(ask_info1);
     rule.add(ask_order1);
     ask_order1->with([&] (auto status, const auto& reports) {
-      auto cancel_report1 = make_updated_execution_report(reports.back(),
-        OrderStatus::CANCELED, time_from_string("2024-07-29 09:59:55"));
+      auto cancel_report1 = make_update(reports.back(), OrderStatus::CANCELED,
+        time_from_string("2024-07-29 09:59:55"));
       ask_order1->update(cancel_report1);
     });
     auto ask_info2 =
@@ -97,8 +97,8 @@ TEST_SUITE("OpposingOrderSubmissionComplianceRule") {
     auto ask_order2 = std::make_shared<PrimitiveOrder>(ask_info2);
     rule.add(ask_order2);
     ask_order2->with([&] (auto status, const auto& reports) {
-      auto cancel_report2 = make_updated_execution_report(reports.back(),
-        OrderStatus::CANCELED, time_from_string("2024-07-29 09:59:58"));
+      auto cancel_report2 = make_update(reports.back(), OrderStatus::CANCELED,
+        time_from_string("2024-07-29 09:59:58"));
       ask_order2->update(cancel_report2);
     });
     auto bid_fields =
@@ -126,8 +126,8 @@ TEST_SUITE("OpposingOrderSubmissionComplianceRule") {
     auto bid_order = std::make_shared<PrimitiveOrder>(bid_info);
     rule.add(bid_order);
     bid_order->with([&] (auto status, const auto& reports) {
-      auto cancel_report = make_updated_execution_report(reports.back(),
-        OrderStatus::CANCELED, time_from_string("2024-07-29 09:59:59"));
+      auto cancel_report = make_update(reports.back(), OrderStatus::CANCELED,
+        time_from_string("2024-07-29 09:59:59"));
       bid_order->update(cancel_report);
     });
     auto bid_info2 =

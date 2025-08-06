@@ -118,14 +118,14 @@ namespace Nexus::OrderExecutionService {
     auto order = std::make_shared<PrimitiveOrder>(info);
     order->with([&] (auto status, const auto& reports) {
       auto& last_report = reports.back();
-      auto updated_report = make_updated_execution_report(
-        last_report, OrderStatus::NEW, info.m_timestamp);
+      auto updated_report =
+        make_update(last_report, OrderStatus::NEW, info.m_timestamp);
       order->update(updated_report);
     });
     order->with([&] (auto status, const auto& reports) {
       auto& last_report = reports.back();
-      auto updated_report = make_updated_execution_report(
-        last_report, OrderStatus::FILLED, info.m_timestamp);
+      auto updated_report =
+        make_update(last_report, OrderStatus::FILLED, info.m_timestamp);
       updated_report.m_last_quantity = order->get_info().m_fields.m_quantity;
       updated_report.m_last_price = order->get_info().m_fields.m_price;
       updated_report.m_last_market = m_destination;

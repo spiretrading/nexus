@@ -41,9 +41,9 @@ TEST_SUITE("ExecutionReportPublisher") {
     auto info = OrderInfo(fields, 2, false, timestamp);
     auto order = std::make_shared<PrimitiveOrder>(info);
     auto report1 = ExecutionReport(2, timestamp);
-    auto report2 = make_updated_execution_report(
-      report1, OrderStatus::NEW, timestamp + seconds(1));
-    auto report3 = make_updated_execution_report(
+    auto report2 =
+      make_update(report1, OrderStatus::NEW, timestamp + seconds(1));
+    auto report3 = make_update(
       report2, OrderStatus::PARTIALLY_FILLED, timestamp + seconds(2));
     order->update(report2);
     order->update(report3);

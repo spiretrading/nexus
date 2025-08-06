@@ -113,11 +113,10 @@ TEST_SUITE("ServiceOrderExecutionClient") {
     auto info = OrderInfo(fields, id, timestamp1);
     auto report1 = ExecutionReport(id, timestamp1);
     auto timestamp2 = timestamp1 + seconds(1);
-    auto report2 =
-      make_updated_execution_report(report1, OrderStatus::NEW, timestamp2);
+    auto report2 = make_update(report1, OrderStatus::NEW, timestamp2);
     auto timestamp3 = timestamp2 + seconds(1);
-    auto report3 = make_updated_execution_report(
-      report2, OrderStatus::PARTIALLY_FILLED, timestamp3);
+    auto report3 =
+      make_update(report2, OrderStatus::PARTIALLY_FILLED, timestamp3);
     report3.m_last_quantity = 50;
     auto record = OrderRecord(info, {report1, report2, report3});
     fixture.on_request<LoadOrderByIdService>(

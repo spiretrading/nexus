@@ -54,8 +54,8 @@ TEST_SUITE("ExecutionReport") {
     initial_report.m_additional_tags.emplace_back(100, "value");
     auto timestamp2 =
       ptime(gregorian::date(2024, 5, 21), time_duration(4, 5, 6));
-    auto updated_report = make_updated_execution_report(
-      initial_report, OrderStatus::FILLED, timestamp2);
+    auto updated_report =
+      make_update(initial_report, OrderStatus::FILLED, timestamp2);
     REQUIRE(updated_report.m_id == 123);
     REQUIRE(updated_report.m_timestamp == timestamp2);
     REQUIRE(updated_report.m_sequence == 1);

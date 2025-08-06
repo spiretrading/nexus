@@ -121,7 +121,7 @@ namespace Nexus::AdministrationService {
        * @param account The account to set the identity for.
        * @param identity The AccountIdentity to assign to the <i>account</i>.
        */
-      void store_identity(const Beam::ServiceLocator::DirectoryEntry& account,
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
         const AccountIdentity& identity);
 
       /**
@@ -138,8 +138,8 @@ namespace Nexus::AdministrationService {
        * @return The list of TradingGroups managed by the <i>account</i>.
        */
       std::vector<Beam::ServiceLocator::DirectoryEntry>
-        load_managed_trading_groups(const Beam::ServiceLocator::DirectoryEntry&
-          account);
+        load_managed_trading_groups(
+          const Beam::ServiceLocator::DirectoryEntry& account);
 
       /**
        * Loads the system administrators.
@@ -189,12 +189,11 @@ namespace Nexus::AdministrationService {
       /**
        * Sets an account's RiskParameters.
        * @param account The account whose RiskParameters are to be set.
-       * @param riskParameters The RiskParameters to assign to the
+       * @param parameters The RiskParameters to assign to the
        *        <i>account</i>.
        */
-      void store_risk_parameters(
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& risk_parameters);
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const RiskService::RiskParameters& parameters);
 
       /**
        * Returns the object publishing an account's RiskState.
@@ -206,10 +205,10 @@ namespace Nexus::AdministrationService {
       /**
        * Sets an account's RiskState.
        * @param account The account to set RiskState of.
-       * @param riskState The <i>account</i>'s current RiskState.
+       * @param state The <i>account</i>'s current RiskState.
        */
-      void store_risk_state(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& risk_state);
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const RiskService::RiskState& state);
 
       /**
        * Loads an account modification request.
@@ -222,9 +221,9 @@ namespace Nexus::AdministrationService {
       /**
        * Given an account, loads the ids of requests to modify that account.
        * @param account The account whose requests are to be loaded.
-       * @param startId The id of the first request to load (exclusive) or -1
+       * @param start_id The id of the first request to load (exclusive) or -1
        *        to start with the most recent request.
-       * @param maxCount The maximum number of ids to load.
+       * @param max_count The maximum number of ids to load.
        * @return The list of account modification requests.
        */
       std::vector<AccountModificationRequest::Id>
@@ -236,9 +235,9 @@ namespace Nexus::AdministrationService {
        * Given an account, loads the ids of requests that the account is
        * authorized to manage.
        * @param account The account managing modifications.
-       * @param startId The id of the first request to load (exclusive) or -1
+       * @param start_id The id of the first request to load (exclusive) or -1
        *        to start with the most recent request.
-       * @param maxCount The maximum number of ids to load.
+       * @param max_count The maximum number of ids to load.
        * @return The list of account modification requests.
        */
       std::vector<AccountModificationRequest::Id>
@@ -261,7 +260,7 @@ namespace Nexus::AdministrationService {
        * @param comment The comment to associate with the request.
        * @return An object representing the request.
        */
-      AccountModificationRequest submit_account_modification_request(
+      AccountModificationRequest submit(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const EntitlementModification& modification, const Message& comment);
 
@@ -280,7 +279,7 @@ namespace Nexus::AdministrationService {
        * @param comment The comment to associate with the request.
        * @return An object representing the request.
        */
-      AccountModificationRequest submit_account_modification_request(
+      AccountModificationRequest submit(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskModification& modification, const Message& comment);
 
@@ -359,8 +358,7 @@ namespace Nexus::AdministrationService {
           const Beam::ServiceLocator::DirectoryEntry& account) = 0;
         virtual AccountIdentity load_identity(
           const Beam::ServiceLocator::DirectoryEntry& account) = 0;
-        virtual void store_identity(
-          const Beam::ServiceLocator::DirectoryEntry& account,
+        virtual void store(const Beam::ServiceLocator::DirectoryEntry& account,
           const AccountIdentity& identity) = 0;
         virtual TradingGroup load_trading_group(
           const Beam::ServiceLocator::DirectoryEntry& directory) = 0;
@@ -382,14 +380,12 @@ namespace Nexus::AdministrationService {
         virtual const Beam::Publisher<RiskService::RiskParameters>&
           get_risk_parameters_publisher(
             const Beam::ServiceLocator::DirectoryEntry& account) = 0;
-        virtual void store_risk_parameters(
-          const Beam::ServiceLocator::DirectoryEntry& account,
+        virtual void store(const Beam::ServiceLocator::DirectoryEntry& account,
           const RiskService::RiskParameters& risk_parameters) = 0;
         virtual const Beam::Publisher<RiskService::RiskState>&
           get_risk_state_publisher(
             const Beam::ServiceLocator::DirectoryEntry& account) = 0;
-        virtual void store_risk_state(
-          const Beam::ServiceLocator::DirectoryEntry& account,
+        virtual void store(const Beam::ServiceLocator::DirectoryEntry& account,
           const RiskService::RiskState& risk_state) = 0;
         virtual AccountModificationRequest load_account_modification_request(
           AccountModificationRequest::Id id) = 0;
@@ -403,13 +399,13 @@ namespace Nexus::AdministrationService {
             AccountModificationRequest::Id start_id, int max_count) = 0;
         virtual EntitlementModification load_entitlement_modification(
           AccountModificationRequest::Id id) = 0;
-        virtual AccountModificationRequest submit_account_modification_request(
+        virtual AccountModificationRequest submit(
           const Beam::ServiceLocator::DirectoryEntry& account,
           const EntitlementModification& modification,
           const Message& comment) = 0;
         virtual RiskModification load_risk_modification(
           AccountModificationRequest::Id id) = 0;
-        virtual AccountModificationRequest submit_account_modification_request(
+        virtual AccountModificationRequest submit(
           const Beam::ServiceLocator::DirectoryEntry& account,
           const RiskModification& modification, const Message& comment) = 0;
         virtual AccountModificationRequest::Update
@@ -454,8 +450,7 @@ namespace Nexus::AdministrationService {
           const Beam::ServiceLocator::DirectoryEntry& account) override;
         AccountIdentity load_identity(
           const Beam::ServiceLocator::DirectoryEntry& account) override;
-        void store_identity(
-          const Beam::ServiceLocator::DirectoryEntry& account,
+        void store(const Beam::ServiceLocator::DirectoryEntry& account,
           const AccountIdentity& identity) override;
         TradingGroup load_trading_group(
           const Beam::ServiceLocator::DirectoryEntry& directory) override;
@@ -476,13 +471,11 @@ namespace Nexus::AdministrationService {
         const Beam::Publisher<RiskService::RiskParameters>&
           get_risk_parameters_publisher(
             const Beam::ServiceLocator::DirectoryEntry& account) override;
-        void store_risk_parameters(
-          const Beam::ServiceLocator::DirectoryEntry& account,
+        void store(const Beam::ServiceLocator::DirectoryEntry& account,
           const RiskService::RiskParameters& risk_parameters) override;
         const Beam::Publisher<RiskService::RiskState>& get_risk_state_publisher(
           const Beam::ServiceLocator::DirectoryEntry& account) override;
-        void store_risk_state(
-          const Beam::ServiceLocator::DirectoryEntry& account,
+        void store(const Beam::ServiceLocator::DirectoryEntry& account,
           const RiskService::RiskState& risk_state) override;
         AccountModificationRequest load_account_modification_request(
           AccountModificationRequest::Id id) override;
@@ -496,13 +489,13 @@ namespace Nexus::AdministrationService {
             AccountModificationRequest::Id start_id, int max_count) override;
         EntitlementModification load_entitlement_modification(
           AccountModificationRequest::Id id) override;
-        AccountModificationRequest submit_account_modification_request(
+        AccountModificationRequest submit(
           const Beam::ServiceLocator::DirectoryEntry& account,
           const EntitlementModification& modification,
           const Message& comment) override;
         RiskModification load_risk_modification(
           AccountModificationRequest::Id id) override;
-        AccountModificationRequest submit_account_modification_request(
+        AccountModificationRequest submit(
           const Beam::ServiceLocator::DirectoryEntry& account,
           const RiskModification& modification,
           const Message& comment) override;
@@ -612,10 +605,10 @@ namespace Nexus::AdministrationService {
     return m_client->load_identity(account);
   }
 
-  inline void AdministrationClient::store_identity(
+  inline void AdministrationClient::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountIdentity& identity) {
-    m_client->store_identity(account, identity);
+    m_client->store(account, identity);
   }
 
   inline TradingGroup AdministrationClient::load_trading_group(
@@ -662,10 +655,10 @@ namespace Nexus::AdministrationService {
     return m_client->get_risk_parameters_publisher(account);
   }
 
-  inline void AdministrationClient::store_risk_parameters(
+  inline void AdministrationClient::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& risk_parameters) {
-    m_client->store_risk_parameters(account, risk_parameters);
+      const RiskService::RiskParameters& parameters) {
+    m_client->store(account, parameters);
   }
 
   inline const Beam::Publisher<RiskService::RiskState>&
@@ -674,10 +667,10 @@ namespace Nexus::AdministrationService {
     return m_client->get_risk_state_publisher(account);
   }
 
-  inline void AdministrationClient::store_risk_state(
+  inline void AdministrationClient::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& risk_state) {
-    m_client->store_risk_state(account, risk_state);
+      const RiskService::RiskState& state) {
+    m_client->store(account, state);
   }
 
   inline AccountModificationRequest AdministrationClient::
@@ -706,12 +699,10 @@ namespace Nexus::AdministrationService {
     return m_client->load_entitlement_modification(id);
   }
 
-  inline AccountModificationRequest AdministrationClient::
-      submit_account_modification_request(
+  inline AccountModificationRequest AdministrationClient::submit(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const EntitlementModification& modification, const Message& comment) {
-    return m_client->submit_account_modification_request(
-      account, modification, comment);
+    return m_client->submit(account, modification, comment);
   }
 
   inline RiskModification AdministrationClient::load_risk_modification(
@@ -719,12 +710,10 @@ namespace Nexus::AdministrationService {
     return m_client->load_risk_modification(id);
   }
 
-  inline AccountModificationRequest AdministrationClient::
-    submit_account_modification_request(
+  inline AccountModificationRequest AdministrationClient::submit(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskModification& modification, const Message& comment) {
-    return m_client->submit_account_modification_request(
-      account, modification, comment);
+    return m_client->submit(account, modification, comment);
   }
 
   inline AccountModificationRequest::Update AdministrationClient::
@@ -832,10 +821,10 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  void AdministrationClient::WrappedAdministrationClient<C>::store_identity(
+  void AdministrationClient::WrappedAdministrationClient<C>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountIdentity& identity) {
-    m_client->store_identity(account, identity);
+    m_client->store(account, identity);
   }
 
   template<typename C>
@@ -896,10 +885,10 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  void AdministrationClient::WrappedAdministrationClient<C>::
-      store_risk_parameters(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& risk_parameters) {
-    m_client->store_risk_parameters(account, risk_parameters);
+  void AdministrationClient::WrappedAdministrationClient<C>::store(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const RiskService::RiskParameters& parameters) {
+    m_client->store(account, parameters);
   }
 
   template<typename C>
@@ -911,10 +900,10 @@ namespace Nexus::AdministrationService {
   }
 
   template<typename C>
-  void AdministrationClient::WrappedAdministrationClient<C>::store_risk_state(
+  void AdministrationClient::WrappedAdministrationClient<C>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& risk_state) {
-    m_client->store_risk_state(account, risk_state);
+      const RiskService::RiskState& state) {
+    m_client->store(account, state);
   }
 
   template<typename C>
@@ -953,11 +942,10 @@ namespace Nexus::AdministrationService {
 
   template<typename C>
   AccountModificationRequest AdministrationClient::
-      WrappedAdministrationClient<C>::submit_account_modification_request(
+      WrappedAdministrationClient<C>::submit(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const EntitlementModification& modification, const Message& comment) {
-    return m_client->submit_account_modification_request(
-      account, modification, comment);
+    return m_client->submit(account, modification, comment);
   }
 
   template<typename C>
@@ -968,11 +956,10 @@ namespace Nexus::AdministrationService {
 
   template<typename C>
   AccountModificationRequest AdministrationClient::
-      WrappedAdministrationClient<C>::submit_account_modification_request(
+      WrappedAdministrationClient<C>::submit(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskModification& modification, const Message& comment) {
-    return m_client->submit_account_modification_request(
-      account, modification, comment);
+    return m_client->submit(account, modification, comment);
   }
 
   template<typename C>

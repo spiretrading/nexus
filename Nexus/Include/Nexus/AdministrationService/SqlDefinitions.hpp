@@ -59,15 +59,14 @@ namespace Nexus::AdministrationService {
   inline const auto& get_risk_parameters_row() {
     static auto ROW = Viper::Row<RiskService::RiskParameters>().
       add_column("currency", &RiskService::RiskParameters::m_currency).
-      add_column("buying_power", &RiskService::RiskParameters::m_buyingPower).
-      add_column("net_loss", &RiskService::RiskParameters::m_netLoss).
+      add_column("buying_power", &RiskService::RiskParameters::m_buying_power).
+      add_column("net_loss", &RiskService::RiskParameters::m_net_loss).
       add_column("allowed_state",
         [] (auto& row) -> auto& {
-          return row.m_allowedState.m_type;
+          return row.m_allowed_state.m_type;
         }).
-      add_column("loss_from_top", &RiskService::RiskParameters::m_lossFromTop).
       add_column("transition_time",
-        &RiskService::RiskParameters::m_transitionTime);
+        &RiskService::RiskParameters::m_transition_time);
     return ROW;
   }
 

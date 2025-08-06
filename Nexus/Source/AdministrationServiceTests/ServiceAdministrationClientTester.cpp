@@ -218,7 +218,7 @@ TEST_SUITE("ServiceAdministrationClient") {
         REQUIRE(received_identity.m_last_name == identity.m_last_name);
         request.SetResult();
       });
-    REQUIRE_NOTHROW(fixture.m_client->store_identity(account, identity));
+    REQUIRE_NOTHROW(fixture.m_client->store(account, identity));
   }
 
   TEST_CASE("load_trading_group") {
@@ -341,7 +341,7 @@ TEST_SUITE("ServiceAdministrationClient") {
     auto account_a = DirectoryEntry::MakeAccount(55, "Alexis");
     auto parameters_a = std::make_shared<Queue<RiskParameters>>();
     auto account_a_parameters = RiskParameters(USD, 100 * Money::ONE,
-      RiskState::Type::ACTIVE, 10 * Money::ONE, 50, seconds(10));
+      RiskState::Type::ACTIVE, 10 * Money::ONE, seconds(10));
     fixture.handle<MonitorRiskParametersService>(
       [&] (auto& request, const auto& received_account) {
         REQUIRE(received_account == account_a);
@@ -353,7 +353,7 @@ TEST_SUITE("ServiceAdministrationClient") {
     auto account_b = DirectoryEntry::MakeAccount(66, "Aurora");
     auto parameters_b = std::make_shared<Queue<RiskParameters>>();
     auto account_b_parameters = RiskParameters(CAD, 200 * Money::ONE,
-      RiskState::Type::ACTIVE, Money::ONE, 200, seconds(90));
+      RiskState::Type::ACTIVE, Money::ONE, seconds(90));
     auto server_side_client =
       static_cast<TestServiceProtocolServer::ServiceProtocolClient*>(nullptr);
     fixture.handle<MonitorRiskParametersService>(
@@ -365,11 +365,11 @@ TEST_SUITE("ServiceAdministrationClient") {
     REQUIRE_NO_THROW(fixture.m_client->get_risk_parameters_publisher(
       account_b).Monitor(parameters_b));
     REQUIRE(account_b_parameters == parameters_b->Pop());
-    account_a_parameters.m_buyingPower = 123 * Money::ONE;
+    account_a_parameters.m_buying_power = 123 * Money::ONE;
     SendRecordMessage<RiskParametersMessage>(
       *server_side_client, account_a, account_a_parameters);
     REQUIRE(account_a_parameters == parameters_a->Pop());
-    account_b_parameters.m_buyingPower = 567 * Money::ONE;
+    account_b_parameters.m_buying_power = 567 * Money::ONE;
     SendRecordMessage<RiskParametersMessage>(
       *server_side_client, account_b, account_b_parameters);
     REQUIRE(account_b_parameters == parameters_b->Pop());
@@ -395,11 +395,11 @@ TEST_SUITE("ServiceAdministrationClient") {
     server_side_client = updated_server_side_client.Get();
     REQUIRE(recovered_accounts.contains(account_a));
     REQUIRE(recovered_accounts.contains(account_b));
-    account_a_parameters.m_buyingPower = 456 * Money::ONE;
+    account_a_parameters.m_buying_power = 456 * Money::ONE;
     SendRecordMessage<RiskParametersMessage>(
       *server_side_client, account_a, account_a_parameters);
     REQUIRE(account_a_parameters == parameters_a->Pop());
-    account_b_parameters.m_buyingPower = 789 * Money::ONE;
+    account_b_parameters.m_buying_power = 789 * Money::ONE;
     SendRecordMessage<RiskParametersMessage>(
       *server_side_client, account_b, account_b_parameters);
     REQUIRE(account_b_parameters == parameters_b->Pop());
@@ -409,7 +409,7 @@ TEST_SUITE("ServiceAdministrationClient") {
     auto fixture = Fixture();
     auto account = DirectoryEntry::MakeAccount(19, "risk_account");
     auto parameters = RiskParameters(USD, 100 * Money::ONE,
-      RiskState::Type::ACTIVE, 10 * Money::ONE, 50, seconds(10));
+      RiskState::Type::ACTIVE, 10 * Money::ONE, seconds(10));
     fixture.handle<StoreRiskParametersService>(
       [&] (auto& request, const auto& received_account,
           const auto& received_parameters) {
@@ -418,7 +418,7 @@ TEST_SUITE("ServiceAdministrationClient") {
         request.SetResult();
       });
     REQUIRE_NOTHROW(
-      fixture.m_client->store_risk_parameters(account, parameters));
+      fixture.m_client->store(account, parameters));
   }
 
   TEST_CASE("get_risk_state_publisher") {
@@ -499,7 +499,7 @@ TEST_SUITE("ServiceAdministrationClient") {
         REQUIRE(received_risk_state == risk_state);
         request.SetResult();
       });
-    REQUIRE_NOTHROW(fixture.m_client->store_risk_state(account, risk_state));
+    REQUIRE_NOTHROW(fixture.m_client->store(account, risk_state));
   }
 
   TEST_CASE("load_account_modification_request") {
@@ -597,8 +597,7 @@ TEST_SUITE("ServiceAdministrationClient") {
         request.SetResult(request_data);
       });
     auto received_request = REQUIRE_NO_THROW(
-      fixture.m_client->submit_account_modification_request(
-        account, modification, comment));
+      fixture.m_client->submit(account, modification, comment));
     TestJsonEquality(received_request, request_data);
   }
 
@@ -606,7 +605,7 @@ TEST_SUITE("ServiceAdministrationClient") {
     auto fixture = Fixture();
     auto id = 39;
     auto risk_parameters = RiskParameters(USD, 1000 * Money::ONE,
-      RiskState::Type::ACTIVE, 100 * Money::ONE, 10, seconds(30));
+      RiskState::Type::ACTIVE, 100 * Money::ONE, seconds(30));
     auto modification = RiskModification(risk_parameters);
     fixture.handle<LoadRiskModificationService>(
       [&] (auto& request, auto received_id) {
@@ -622,7 +621,7 @@ TEST_SUITE("ServiceAdministrationClient") {
     auto fixture = Fixture();
     auto account = DirectoryEntry::MakeAccount(40, "risk_mod_account");
     auto risk_parameters = RiskParameters(CAD, 500 * Money::ONE,
-      RiskState::Type::ACTIVE, 50 * Money::ONE, 5, seconds(60));
+      RiskState::Type::ACTIVE, 50 * Money::ONE, seconds(60));
     auto modification = RiskModification(risk_parameters);
     auto comment = AdministrationService::Message();
     auto request_data = AccountModificationRequest(
@@ -637,8 +636,7 @@ TEST_SUITE("ServiceAdministrationClient") {
         request.SetResult(request_data);
       });
     auto received_request = REQUIRE_NO_THROW(
-      fixture.m_client->submit_account_modification_request(
-        account, modification, comment));
+      fixture.m_client->submit(account, modification, comment));
     TestJsonEquality(received_request, request_data);
   }
 

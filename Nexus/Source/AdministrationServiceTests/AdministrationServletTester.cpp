@@ -555,7 +555,7 @@ TEST_SUITE("AdministrationServlet") {
   TEST_CASE("submit_and_load_risk_modification") {
     auto fixture = Fixture();
     auto parameters = RiskParameters(
-      USD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, 100, seconds(1));
+      USD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, seconds(1));
     auto modification = RiskModification(parameters);
     auto comment = AdministrationService::Message(
       0, fixture.m_trader_account, fixture.m_time_client.GetTime(),

@@ -79,7 +79,7 @@ namespace Nexus::AdministrationService::Tests {
     SUBCASE("store_and_load_risk_parameters") {
       auto account = DirectoryEntry::MakeAccount(123, "user1");
       auto parameters = RiskParameters(
-        CAD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, 100, seconds(5));
+        CAD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, seconds(5));
       data_store.with_transaction([&] {
         data_store.store(account, parameters);
       });
@@ -88,7 +88,7 @@ namespace Nexus::AdministrationService::Tests {
       });
       REQUIRE(loaded_parameters == parameters);
       auto updated_parameters = RiskParameters(USD, 10 * Money::ONE,
-        RiskState::Type::DISABLED, Money::ONE, 50, seconds(15));
+        RiskState::Type::DISABLED, Money::ONE, seconds(15));
       data_store.with_transaction([&] {
         data_store.store(account, updated_parameters);
       });
@@ -113,10 +113,10 @@ namespace Nexus::AdministrationService::Tests {
       REQUIRE(empty_parameters.empty());
       auto account_a = DirectoryEntry::MakeAccount(123, "user1");
       auto parameters_a = RiskParameters(USD, 100 * Money::ONE,
-        RiskState::Type::ACTIVE, 10 * Money::ONE, 50, seconds(10));
+        RiskState::Type::ACTIVE, 10 * Money::ONE, seconds(10));
       auto account_b = DirectoryEntry::MakeAccount(345, "user2");
       auto parameters_b = RiskParameters(EUR, 200 * Money::ONE,
-        RiskState::Type::DISABLED, 20 * Money::ONE, 25, seconds(20));
+        RiskState::Type::DISABLED, 20 * Money::ONE, seconds(20));
       data_store.with_transaction([&] {
         data_store.store(account_a, parameters_a);
         data_store.store(account_b, parameters_b);
@@ -228,7 +228,7 @@ namespace Nexus::AdministrationService::Tests {
         2, AccountModificationRequest::Type::RISK, account, submission_account,
         submission_time);
       auto parameters = RiskParameters(USD, 10000 * Money::ONE,
-        RiskState::Type::ACTIVE, 1000 * Money::ONE, 10, seconds(60));
+        RiskState::Type::ACTIVE, 1000 * Money::ONE, seconds(60));
       auto modification = RiskModification(parameters);
       data_store.with_transaction([&] {
         data_store.store(request, modification);

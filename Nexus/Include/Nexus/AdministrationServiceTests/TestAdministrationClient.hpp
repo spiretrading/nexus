@@ -138,7 +138,7 @@ namespace Nexus::AdministrationService::Tests {
       /** Records a call to store_risk_parameters(). */
       struct StoreRiskParametersOperation {
         Beam::ServiceLocator::DirectoryEntry m_account;
-        RiskService::RiskParameters m_risk_parameters;
+        RiskService::RiskParameters m_parameters;
         Beam::Services::Tests::ServiceResult<void> m_result;
       };
 
@@ -151,7 +151,7 @@ namespace Nexus::AdministrationService::Tests {
       /** Records a call to store_risk_state(). */
       struct StoreRiskStateOperation {
         Beam::ServiceLocator::DirectoryEntry m_account;
-        RiskService::RiskState m_risk_state;
+        RiskService::RiskState m_state;
         Beam::Services::Tests::ServiceResult<void> m_result;
       };
 
@@ -310,7 +310,7 @@ namespace Nexus::AdministrationService::Tests {
         const Beam::ServiceLocator::DirectoryEntry& account);
       AccountIdentity load_identity(
         const Beam::ServiceLocator::DirectoryEntry& account);
-      void store_identity(const Beam::ServiceLocator::DirectoryEntry& account,
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
         const AccountIdentity& identity);
       TradingGroup load_trading_group(
         const Beam::ServiceLocator::DirectoryEntry& directory);
@@ -328,13 +328,12 @@ namespace Nexus::AdministrationService::Tests {
       const Beam::Publisher<RiskService::RiskParameters>&
         get_risk_parameters_publisher(
           const Beam::ServiceLocator::DirectoryEntry& account);
-      void store_risk_parameters(
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& risk_parameters);
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const RiskService::RiskParameters& parameters);
       const Beam::Publisher<RiskService::RiskState>& get_risk_state_publisher(
         const Beam::ServiceLocator::DirectoryEntry& account);
-      void store_risk_state(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& risk_state);
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const RiskService::RiskState& state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest::Id>
@@ -347,12 +346,12 @@ namespace Nexus::AdministrationService::Tests {
           AccountModificationRequest::Id start_id, int max_count);
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
-      AccountModificationRequest submit_account_modification_request(
+      AccountModificationRequest submit(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const EntitlementModification& modification, const Message& comment);
       RiskModification load_risk_modification(
         AccountModificationRequest::Id id);
-      AccountModificationRequest submit_account_modification_request(
+      AccountModificationRequest submit(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskModification& modification, const Message& comment);
       AccountModificationRequest::Update
@@ -443,9 +442,9 @@ namespace Nexus::AdministrationService::Tests {
     return append_result<LoadIdentityOperation, AccountIdentity>(account);
   }
 
-  inline void TestAdministrationClient::store_identity(
+  inline void TestAdministrationClient::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-        const AccountIdentity& identity) {
+      const AccountIdentity& identity) {
     return append_result<StoreIdentityOperation, void>(account, identity);
   }
 
@@ -499,11 +498,11 @@ namespace Nexus::AdministrationService::Tests {
     throw std::runtime_error("Not supported.");
   }
 
-  inline void TestAdministrationClient::store_risk_parameters(
+  inline void TestAdministrationClient::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& risk_parameters) {
+      const RiskService::RiskParameters& parameters) {
     return append_result<StoreRiskParametersOperation, void>(
-      account, risk_parameters);
+      account, parameters);
   }
 
   inline const Beam::Publisher<RiskService::RiskState>&
@@ -512,10 +511,10 @@ namespace Nexus::AdministrationService::Tests {
     throw std::runtime_error("Not supported.");
   }
 
-  inline void TestAdministrationClient::store_risk_state(
+  inline void TestAdministrationClient::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& risk_state) {
-    return append_result<StoreRiskStateOperation, void>(account, risk_state);
+      const RiskService::RiskState& state) {
+    return append_result<StoreRiskStateOperation, void>(account, state);
   }
 
   inline AccountModificationRequest
@@ -550,11 +549,9 @@ namespace Nexus::AdministrationService::Tests {
       LoadEntitlementModificationOperation, EntitlementModification>(id);
   }
 
-  inline AccountModificationRequest
-      TestAdministrationClient::submit_account_modification_request(
+  inline AccountModificationRequest TestAdministrationClient::submit(
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const EntitlementModification& modification,
-        const Message& comment) {
+        const EntitlementModification& modification, const Message& comment) {
     return append_result<SubmitEntitlementModificationRequestOperation,
       AccountModificationRequest>(account, modification, comment);
   }
@@ -564,8 +561,7 @@ namespace Nexus::AdministrationService::Tests {
     return append_result<LoadRiskModificationOperation, RiskModification>(id);
   }
 
-  inline AccountModificationRequest
-      TestAdministrationClient::submit_account_modification_request(
+  inline AccountModificationRequest TestAdministrationClient::submit(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskModification& modification, const Message& comment) {
     return append_result<SubmitRiskModificationRequestOperation,

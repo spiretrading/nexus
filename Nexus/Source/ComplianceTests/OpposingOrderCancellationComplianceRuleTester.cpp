@@ -36,8 +36,8 @@ TEST_SUITE("OpposingOrderCancellationComplianceRule") {
     auto ask_order = std::make_shared<PrimitiveOrder>(ask_info);
     rule.add(ask_order);
     ask_order->with([&] (auto status, const auto& reports) {
-      auto report = make_updated_execution_report(reports.back(),
-        OrderStatus::FILLED, time_from_string("2024-07-29 09:59:59"));
+      auto report = make_update(reports.back(), OrderStatus::FILLED,
+        time_from_string("2024-07-29 09:59:59"));
       report.m_last_quantity = 100;
       ask_order->update(report);
     });
@@ -65,12 +65,12 @@ TEST_SUITE("OpposingOrderCancellationComplianceRule") {
     auto ask_order = std::make_shared<PrimitiveOrder>(ask_info);
     rule.add(ask_order);
     ask_order->with([&] (auto status, const auto& reports) {
-      auto report1 = make_updated_execution_report(reports.back(),
-        OrderStatus::PARTIALLY_FILLED, time_from_string("2024-07-29 09:59:55"));
+      auto report1 = make_update(reports.back(), OrderStatus::PARTIALLY_FILLED,
+        time_from_string("2024-07-29 09:59:55"));
       report1.m_last_quantity = 50;
       ask_order->update(report1);
-      auto report2 = make_updated_execution_report(report1,
-        OrderStatus::PARTIALLY_FILLED, time_from_string("2024-07-29 09:59:58"));
+      auto report2 = make_update(report1, OrderStatus::PARTIALLY_FILLED,
+        time_from_string("2024-07-29 09:59:58"));
       report2.m_last_quantity = 50;
       ask_order->update(report2);
     });

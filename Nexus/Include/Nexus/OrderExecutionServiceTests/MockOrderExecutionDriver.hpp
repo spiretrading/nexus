@@ -125,8 +125,7 @@ namespace Nexus::OrderExecutionService::Tests {
       if(i != reports.end()) {
         return;
       }
-      auto update = make_updated_execution_report(
-        reports.back(), OrderStatus::PENDING_CANCEL,
+      auto update = make_update(reports.back(), OrderStatus::PENDING_CANCEL,
         boost::posix_time::microsec_clock::universal_time());
       order->update(update);
     });

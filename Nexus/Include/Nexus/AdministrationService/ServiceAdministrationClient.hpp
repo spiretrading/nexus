@@ -52,7 +52,7 @@ namespace Nexus::AdministrationService {
         const Beam::ServiceLocator::DirectoryEntry& account);
       AccountIdentity load_identity(
         const Beam::ServiceLocator::DirectoryEntry& account);
-      void store_identity(const Beam::ServiceLocator::DirectoryEntry& account,
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
         const AccountIdentity& identity);
       TradingGroup load_trading_group(
         const Beam::ServiceLocator::DirectoryEntry& directory);
@@ -70,13 +70,12 @@ namespace Nexus::AdministrationService {
       const Beam::Publisher<RiskService::RiskParameters>&
         get_risk_parameters_publisher(
           const Beam::ServiceLocator::DirectoryEntry& account);
-      void store_risk_parameters(
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& risk_parameters);
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const RiskService::RiskParameters& parameters);
       const Beam::Publisher<RiskService::RiskState>& get_risk_state_publisher(
         const Beam::ServiceLocator::DirectoryEntry& account);
-      void store_risk_state(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& risk_state);
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const RiskService::RiskState& state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest::Id>
@@ -89,12 +88,12 @@ namespace Nexus::AdministrationService {
           AccountModificationRequest::Id start_id, int max_count);
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
-      AccountModificationRequest submit_account_modification_request(
+      AccountModificationRequest submit(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const EntitlementModification& modification, const Message& comment);
       RiskModification load_risk_modification(
         AccountModificationRequest::Id id);
-      AccountModificationRequest submit_account_modification_request(
+      AccountModificationRequest submit(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskModification& modification, const Message& comment);
       AccountModificationRequest::Update
@@ -258,7 +257,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
-  void ServiceAdministrationClient<B>::store_identity(
+  void ServiceAdministrationClient<B>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountIdentity& identity) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
@@ -366,16 +365,16 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
-  void ServiceAdministrationClient<B>::store_risk_parameters(
+  void ServiceAdministrationClient<B>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& risk_parameters) {
+      const RiskService::RiskParameters& parameters) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
       auto client = m_client_handler.GetClient();
       client->template SendRequest<StoreRiskParametersService>(
-        account, risk_parameters);
+        account, parameters);
     }, "Failed to store risk parameters: " +
       boost::lexical_cast<std::string>(account) + ", " +
-      boost::lexical_cast<std::string>(risk_parameters));
+      boost::lexical_cast<std::string>(parameters));
   }
 
   template<typename B>
@@ -401,15 +400,15 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
-  void ServiceAdministrationClient<B>::store_risk_state(
+  void ServiceAdministrationClient<B>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& risk_state) {
+      const RiskService::RiskState& state) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
       auto client = m_client_handler.GetClient();
-      client->template SendRequest<StoreRiskStateService>(account, risk_state);
+      client->template SendRequest<StoreRiskStateService>(account, state);
     }, "Failed to store risk state: " +
       boost::lexical_cast<std::string>(account) + ", " +
-      boost::lexical_cast<std::string>(risk_state));
+      boost::lexical_cast<std::string>(state));
   }
 
   template<typename B>
@@ -470,7 +469,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
   template<typename B>
   AccountModificationRequest
-      ServiceAdministrationClient<B>::submit_account_modification_request(
+      ServiceAdministrationClient<B>::submit(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const EntitlementModification& modification, const Message& comment) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
@@ -494,7 +493,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
   template<typename B>
   AccountModificationRequest
-      ServiceAdministrationClient<B>::submit_account_modification_request(
+      ServiceAdministrationClient<B>::submit(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const RiskModification& modification, const Message& comment) {
     return Beam::Services::ServiceOrThrowWithNested([&] {

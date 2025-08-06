@@ -66,9 +66,8 @@ TEST_SUITE("BuyingPowerCheck") {
       exchange_rates, administration_client, market_data_client);
     auto risk_parameters = RiskService::RiskParameters();
     risk_parameters.m_currency = CAD;
-    risk_parameters.m_buyingPower = 1000 * Money::ONE;
-    administration_client.store_risk_parameters(
-      fields.m_account, risk_parameters);
+    risk_parameters.m_buying_power = 1000 * Money::ONE;
+    administration_client.store(fields.m_account, risk_parameters);
     auto& feed_client = fixture.m_market_data_environment.get_feed_client();
     auto bbo = BboQuote(Quote(Money::ONE, 100, Side::BID),
       Quote(Money::ONE + Money::CENT, 100, Side::ASK),

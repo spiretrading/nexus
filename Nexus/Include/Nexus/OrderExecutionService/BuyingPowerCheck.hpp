@@ -151,7 +151,7 @@ namespace Nexus::OrderExecutionService {
         buying_power_entry.m_currencies.Insert(info.m_id, fields.m_currency);
         auto updated_buying_power = buying_power_model.submit(
           info.m_id, converted_fields, converted_price);
-        if(updated_buying_power > risk_parameters.m_buyingPower) {
+        if(updated_buying_power > risk_parameters.m_buying_power) {
           auto report = ExecutionReport();
           report.m_id = info.m_id;
           report.m_status = OrderStatus::REJECTED;

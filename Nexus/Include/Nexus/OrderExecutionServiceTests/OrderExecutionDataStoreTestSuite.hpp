@@ -103,9 +103,9 @@ namespace Nexus::OrderExecutionService::Tests {
       auto sequenced_report1 = SequencedAccountExecutionReport(
         IndexedValue(report1, account_a), Beam::Queries::Sequence(2));
       data_store.store(sequenced_report1);
-      auto report2 = make_updated_execution_report(
+      auto report2 = make_update(
         report1, OrderStatus::NEW, time_from_string("2024-07-17 10:06:00"));
-      auto report3 = make_updated_execution_report(
+      auto report3 = make_update(
         report2, OrderStatus::FILLED, time_from_string("2024-07-17 10:07:00"));
       auto sequenced_report2 = SequencedAccountExecutionReport(
         IndexedValue(report2, account_a), Beam::Queries::Sequence(3));
@@ -138,7 +138,7 @@ namespace Nexus::OrderExecutionService::Tests {
       auto sequenced_report1 = SequencedAccountExecutionReport(
         IndexedValue(report1, account_a), Beam::Queries::Sequence(2));
       data_store.store(sequenced_report1);
-      auto report2 = make_updated_execution_report(
+      auto report2 = make_update(
         report1, OrderStatus::NEW, time_from_string("2024-07-17 10:11:00"));
       auto sequenced_report2 = SequencedAccountExecutionReport(
         IndexedValue(report2, account_a), Beam::Queries::Sequence(3));

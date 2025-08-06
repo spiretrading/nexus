@@ -106,7 +106,7 @@ namespace Nexus::OrderExecutionService {
     auto order = std::make_shared<PrimitiveOrder>(std::move(info));
     order->with([&] (auto status, const auto& reports) {
       auto& last_report = reports.back();
-      auto updated_report = make_updated_execution_report(
+      auto updated_report = make_update(
         last_report, OrderStatus::REJECTED, order->get_info().m_timestamp);
       updated_report.m_text = reason;
       order->update(updated_report);
@@ -127,8 +127,8 @@ namespace Nexus::OrderExecutionService {
         return;
       }
       auto& last_report = reports.back();
-      auto updated_report = make_updated_execution_report(
-        last_report, OrderStatus::CANCEL_REJECT, timestamp);
+      auto updated_report =
+        make_update(last_report, OrderStatus::CANCEL_REJECT, timestamp);
       updated_report.m_text = reason;
       order.update(updated_report);
     });

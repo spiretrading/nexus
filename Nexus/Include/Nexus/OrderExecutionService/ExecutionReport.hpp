@@ -78,9 +78,8 @@ namespace Nexus::OrderExecutionService {
    * @param status The new OrderStatus.
    * @param timestamp The timestamp.
    */
-  inline ExecutionReport make_updated_execution_report(
-      const ExecutionReport& report, OrderStatus status,
-      boost::posix_time::ptime timestamp) {
+  inline ExecutionReport make_update(const ExecutionReport& report,
+      OrderStatus status, boost::posix_time::ptime timestamp) {
     auto updated_report = ExecutionReport();
     updated_report.m_id = report.m_id;
     updated_report.m_timestamp = timestamp;
