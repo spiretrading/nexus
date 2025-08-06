@@ -157,7 +157,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       Beam::MakeConverterQueueWriter<SequencedOrderRecord>(std::move(queue),
         [this] (const auto& record) {
           return Beam::Queries::SequencedValue(
-            load(record), record.GetSequence());
+            std::static_pointer_cast<const Order>(load(record)),
+            record.GetSequence());
         }));
   }
 
@@ -167,7 +168,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_order_submission_publisher.SubmitQuery(query,
       Beam::MakeConverterQueueWriter<SequencedOrderRecord>(std::move(queue),
         [this] (const auto& record) {
-          return load(record);
+          return std::static_pointer_cast<const Order>(load(record));
         }));
   }
 

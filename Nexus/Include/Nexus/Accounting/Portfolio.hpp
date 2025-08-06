@@ -108,7 +108,7 @@ namespace Nexus::Accounting {
        * @param venues The venues used to identify the currency used for an
        *        position.
        */
-      explicit Portfolio(Bookkeeper bookkeeper, VenueDatabase venues);
+      Portfolio(Bookkeeper bookkeeper, VenueDatabase venues);
 
       /** Returns the Bookkeeper. */
       const Bookkeeper& get_bookkeeper() const;

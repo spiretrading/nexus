@@ -6,7 +6,6 @@
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/RiskService/RiskService.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
 namespace Nexus::RiskService {

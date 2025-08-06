@@ -158,7 +158,7 @@ namespace Nexus::OrderExecutionService {
    * @param client The OrderExecutionClient to query.
    * @param queue The Queue to write to.
    */
-  void query_live_prders(const Beam::ServiceLocator::DirectoryEntry& account,
+  void query_live_orders(const Beam::ServiceLocator::DirectoryEntry& account,
       IsOrderExecutionClient auto& client,
       Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue) {
     client.query(make_live_orders_query(account), std::move(queue));

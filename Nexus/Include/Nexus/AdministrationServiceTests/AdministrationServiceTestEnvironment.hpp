@@ -117,12 +117,12 @@ namespace Nexus::AdministrationService::Tests {
    */
   template<typename ServiceLocatorClient>
   inline Beam::ServiceLocator::DirectoryEntry make_administrator_account(
-      ServiceLocatorClient& serviceLocatorClient, const std::string& name,
+      ServiceLocatorClient& client, const std::string& name,
       const std::string& password) {
-    auto account = serviceLocatorClient.MakeAccount(name, password,
-      Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
-    serviceLocatorClient.StorePermissions(account,
-      Beam::ServiceLocator::DirectoryEntry::GetStarDirectory(),
+    auto account = client.MakeAccount(
+      name, password, Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
+    client.StorePermissions(
+      account, Beam::ServiceLocator::DirectoryEntry::GetStarDirectory(),
       Beam::ServiceLocator::Permissions().Set(
         Beam::ServiceLocator::Permission::READ).Set(
         Beam::ServiceLocator::Permission::MOVE).Set(

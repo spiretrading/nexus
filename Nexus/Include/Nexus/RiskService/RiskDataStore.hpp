@@ -1,6 +1,7 @@
 #ifndef NEXUS_RISK_DATA_STORE_HPP
 #define NEXUS_RISK_DATA_STORE_HPP
 #include <memory>
+#include <type_traits>
 #include <utility>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/RiskService/InventorySnapshot.hpp"
@@ -49,7 +50,95 @@ namespace Nexus::RiskService {
         const InventorySnapshot& snapshot);
 
       void close();
+
+    private:
+      struct VirtualRiskDataStore {
+        virtual ~VirtualRiskDataStore() = default;
+        virtual InventorySnapshot load_inventory_snapshot(
+          const Beam::ServiceLocator::DirectoryEntry&) = 0;
+        virtual void store(const Beam::ServiceLocator::DirectoryEntry& account,
+          const InventorySnapshot&) = 0;
+        virtual void close() = 0;
+      };
+      template<typename D>
+      struct WrappedRiskDataStore final : VirtualRiskDataStore {
+        using RiskDataStoreType = D;
+        Beam::GetOptionalLocalPtr<RiskDataStoreType> m_data_store;
+
+        template<typename... Args>
+        WrappedRiskDataStore(Args&&... args);
+        InventorySnapshot load_inventory_snapshot(
+          const Beam::ServiceLocator::DirectoryEntry& account) override;
+        void store(const Beam::ServiceLocator::DirectoryEntry& account,
+          const InventorySnapshot& snapshot) override;
+        void close() override;
+      };
+      std::shared_ptr<VirtualRiskDataStore> m_data_store;
   };
+
+  /** Checks if a type implements a RiskDataStore. */
+  template<typename T>
+  concept IsRiskDataStore = std::constructible_from<
+    RiskDataStore, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
+
+  template<typename T, typename... Args>
+  RiskDataStore::RiskDataStore(std::in_place_type_t<T>, Args&&... args)
+    : m_data_store(std::make_shared<WrappedRiskDataStore<T>>(
+        std::forward<Args>(args)...)) {}
+
+  template<typename D>
+  RiskDataStore::RiskDataStore(D data_store)
+    : RiskDataStore(std::in_place_type<D>, std::move(data_store)) {}
+
+  inline RiskDataStore::RiskDataStore(RiskDataStore* data_store)
+    : RiskDataStore(*data_store) {}
+
+  inline RiskDataStore::RiskDataStore(
+    const std::shared_ptr<RiskDataStore>& data_store)
+    : RiskDataStore(*data_store) {}
+
+  inline RiskDataStore::RiskDataStore(
+    const std::unique_ptr<RiskDataStore>& data_store)
+    : RiskDataStore(*data_store) {}
+
+  inline InventorySnapshot RiskDataStore::load_inventory_snapshot(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    return m_data_store->load_inventory_snapshot(account);
+  }
+
+  inline void RiskDataStore::store(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const InventorySnapshot& snapshot) {
+    m_data_store->store(account, snapshot);
+  }
+
+  inline void RiskDataStore::close() {
+    m_data_store->close();
+  }
+
+  template<typename D>
+  template<typename... Args>
+  RiskDataStore::WrappedRiskDataStore<D>::WrappedRiskDataStore(Args&&... args)
+    : m_data_store(std::forward<Args>(args)...) {}
+
+  template<typename D>
+  InventorySnapshot RiskDataStore::WrappedRiskDataStore<D>::
+      load_inventory_snapshot(
+        const Beam::ServiceLocator::DirectoryEntry& account) {
+    return m_data_store->load_inventory_snapshot(account);
+  }
+
+  template<typename D>
+  void RiskDataStore::WrappedRiskDataStore<D>::store(
+      const Beam::ServiceLocator::DirectoryEntry& account,
+      const InventorySnapshot& snapshot) {
+    m_data_store->store(account, snapshot);
+  }
+
+  template<typename D>
+  void RiskDataStore::WrappedRiskDataStore<D>::close() {
+    m_data_store->close();
+  }
 }
 
 #endif

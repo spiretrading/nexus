@@ -1,7 +1,9 @@
 #ifndef NEXUS_RISK_PORTFOLIO_TYPES_HPP
 #define NEXUS_RISK_PORTFOLIO_TYPES_HPP
 #include <functional>
+#include <ostream>
 #include <boost/functional/hash.hpp>
+#include <Beam/Queues/Publisher.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Utilities/KeyValuePair.hpp>
 #include "Nexus/Accounting/Inventory.hpp"
@@ -44,6 +46,11 @@ namespace Nexus::RiskService {
   /** The Publisher used for portfolio events. */
   using RiskPortfolioUpdatePublisher =
     Beam::Publisher<Beam::KeyValuePair<RiskPortfolioKey, RiskInventory>>;
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const RiskPortfolioKey& key) {
+    return out << '(' << key.m_account << ' ' << key.m_security << ')';
+  }
 
   inline std::size_t hash_value(const RiskPortfolioKey& value) {
     auto seed = std::size_t(0);

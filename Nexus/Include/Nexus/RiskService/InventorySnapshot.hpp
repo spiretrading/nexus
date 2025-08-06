@@ -53,11 +53,12 @@ namespace Nexus::RiskService {
    *         <i>account</i>, and the list of Orders excluded from the portfolio.
    */
   std::tuple<RiskPortfolio, Beam::Queries::Sequence,
-      std::vector<const OrderExecutionService::Order*>> make_portfolio(
-      const InventorySnapshot& snapshot,
-      const Beam::ServiceLocator::DirectoryEntry& account, VenueDatabase venues,
-      OrderExecutionService::IsOrderExecutionClient auto& client) {
-    auto excluded_orders = OrderExecutionService::load_order_ids(
+      std::vector<std::shared_ptr<const OrderExecutionService::Order>>>
+        make_portfolio(const InventorySnapshot& snapshot,
+          const Beam::ServiceLocator::DirectoryEntry& account,
+          VenueDatabase venues,
+          OrderExecutionService::IsOrderExecutionClient auto& client) {
+    auto excluded_orders = OrderExecutionService::load_orders(
       account, snapshot.m_excluded_orders, client);
     auto trailing_order_query = OrderExecutionService::AccountQuery();
     trailing_order_query.SetIndex(account);
@@ -74,7 +75,7 @@ namespace Nexus::RiskService {
       sequence = std::max(sequence, order.GetSequence());
     });
     auto portfolio = RiskPortfolio(
-      std::move(venues), RiskPortfolio::Bookkeeper(snapshot.m_inventories));
+      RiskPortfolio::Bookkeeper(snapshot.m_inventories), std::move(venues));
     return {std::move(portfolio), sequence, std::move(excluded_orders)};
   }
 }
@@ -88,7 +89,7 @@ namespace Beam::Serialization {
         unsigned int version) const {
       shuttle.Shuttle("inventories", value.m_inventories);
       shuttle.Shuttle("sequence", value.m_sequence);
-      shuttle.Shuttle("excluded_orders", value.m_excludedOrders);
+      shuttle.Shuttle("excluded_orders", value.m_excluded_orders);
     }
   };
 }
