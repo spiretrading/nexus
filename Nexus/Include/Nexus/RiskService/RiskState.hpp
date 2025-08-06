@@ -18,6 +18,19 @@ namespace Details {
 
     /** The account may no longer submit Orders. */
     DISABLED);
+
+  inline std::ostream& operator <<(
+      std::ostream& out, RiskStateTypeDefinition::Type type) {
+    if(type == RiskStateTypeDefinition::ACTIVE) {
+      return out << "ACTIVE";
+    } else if(type == RiskStateTypeDefinition::CLOSE_ORDERS) {
+      return out << "CLOSE_ORDERS";
+    } else if(type == RiskStateTypeDefinition::DISABLED) {
+      return out << "DISABLED";
+    } else {
+      return out << "NONE";
+    }
+  }
 }
 
   /** Stores the risk monitoring state of an account. */
@@ -56,19 +69,12 @@ namespace Details {
      */
     RiskState(Type type, boost::posix_time::ptime expiry);
 
-    bool operator ==(const RiskState& rhs) const = default;
+    bool operator ==(const RiskState&) const = default;
   };
 
-  inline std::ostream& operator <<(std::ostream& out, RiskState::Type type) {
-    if(type == RiskState::Type::ACTIVE) {
-      return out << "ACTIVE";
-    } else if(type == RiskState::Type::CLOSE_ORDERS) {
-      return out << "CLOSE_ORDERS";
-    } else if(type == RiskState::Type::DISABLED) {
-      return out << "DISABLED";
-    } else {
-      return out << "NONE";
-    }
+  inline std::ostream& operator <<(
+      std::ostream& out, RiskState::Type type) {
+    return out << static_cast<RiskState::Type::Type>(type);
   }
 
   inline std::ostream& operator <<(std::ostream& out, const RiskState& state) {
@@ -94,7 +100,7 @@ namespace Beam::Serialization {
   struct Shuttle<Nexus::RiskService::RiskState> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle, Nexus::RiskService::RiskState& value,
-        unsigned int version) {
+        unsigned int version) const {
       shuttle.Shuttle("type", value.m_type);
       shuttle.Shuttle("expiry", value.m_expiry);
     }
