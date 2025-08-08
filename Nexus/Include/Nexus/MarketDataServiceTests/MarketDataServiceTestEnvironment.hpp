@@ -172,6 +172,7 @@ namespace Nexus::MarketDataService::Tests {
     root_client.StorePermissions(market_data_account,
       Beam::ServiceLocator::DirectoryEntry::GetStarDirectory(),
       Beam::ServiceLocator::Permissions(~0));
+    administration_environment.make_administrator(market_data_account);
     auto service_locator_client =
       service_locator_environment.MakeClient("market_data_service", "");
     auto administration_client =

@@ -15,12 +15,12 @@
 namespace Nexus::RiskService {
 
   /** Represents an entry in a RiskState table. */
-  using RiskStateEntry = Beam::KeyValuePair<
-    Beam::ServiceLocator::DirectoryEntry, RiskState>;
+  using RiskStateEntry =
+    Beam::KeyValuePair<Beam::ServiceLocator::DirectoryEntry, RiskState>;
 
   /** Represents an entry in a RiskPortfolio table. */
-  using RiskPortfolioEntry = Beam::KeyValuePair<RiskPortfolioKey,
-    RiskInventory>;
+  using RiskPortfolioEntry =
+    Beam::KeyValuePair<RiskPortfolioKey, RiskInventory>;
 
   /**
    * Consolidates the RiskControllers for multiple accounts.
@@ -33,8 +33,10 @@ namespace Nexus::RiskService {
    * @param <T> The type of TimeClient to use.
    * @param <D> The type of RiskDataStore to use.
    */
-  template<typename A, typename M, typename O, typename R, typename T,
-    typename D>
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M,
+    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
+    IsRiskDataStore D>
   class ConsolidatedRiskController {
     public:
 
@@ -121,8 +123,10 @@ namespace Nexus::RiskService {
         const RiskPortfolio::UpdateEntry& entry);
   };
 
-  template<typename A, typename M, typename O, typename R, typename T,
-    typename D>
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M,
+    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
+    IsRiskDataStore D>
   ConsolidatedRiskController(
     Beam::ScopedQueueReader<Beam::ServiceLocator::DirectoryEntry>, A&&, M&&,
     O&&, R&&, T&&, D&&, std::vector<ExchangeRate>, MarketDatabase,
@@ -131,8 +135,10 @@ namespace Nexus::RiskService {
     std::remove_reference_t<O>, typename std::invoke_result_t<R>::element_type,
     std::remove_reference_t<T>, std::remove_reference_t<D>>;
 
-  template<typename A, typename M, typename O, typename R, typename T,
-    typename D>
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M,
+    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
+    IsRiskDataStore D>
   template<typename AF, typename MF, typename OF, typename TF, typename DF>
   ConsolidatedRiskController<A, M, O, R, T, D>::ConsolidatedRiskController(
     Beam::ScopedQueueReader<Beam::ServiceLocator::DirectoryEntry> accounts,
@@ -156,22 +162,28 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
           std::bind_front(&ConsolidatedRiskController::OnAccount, this))) {}
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
-  template<typename A, typename M, typename O, typename R, typename T,
-    typename D>
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M,
+    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
+    IsRiskDataStore D>
   const Beam::Publisher<RiskStateEntry>& ConsolidatedRiskController<
       A, M, O, R, T, D>::GetRiskStatePublisher() const {
     return m_statePublisher;
   }
 
-  template<typename A, typename M, typename O, typename R, typename T,
-    typename D>
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M,
+    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
+    IsRiskDataStore D>
   const Beam::Publisher<RiskPortfolioEntry>& ConsolidatedRiskController<
       A, M, O, R, T, D>::GetPortfolioPublisher() const {
     return m_portfolioPublisher;
   }
 
-  template<typename A, typename M, typename O, typename R, typename T,
-    typename D>
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M,
+    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
+    IsRiskDataStore D>
   void ConsolidatedRiskController<A, M, O, R, T, D>::OnAccount(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto controller = [&] {
@@ -200,16 +212,20 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_controllers.push_back(std::move(controller));
   }
 
-  template<typename A, typename M, typename O, typename R, typename T,
-    typename D>
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M,
+    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
+    IsRiskDataStore D>
   void ConsolidatedRiskController<A, M, O, R, T, D>::OnRiskState(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskState& state) {
     m_statePublisher.Push(account, state);
   }
 
-  template<typename A, typename M, typename O, typename R, typename T,
-    typename D>
+  template<AdministrationService::IsAdministrationClient A,
+    MarketDataService::IsMarketDataClient M,
+    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
+    IsRiskDataStore D>
   void ConsolidatedRiskController<A, M, O, R, T, D>::OnPortfolioEntry(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskPortfolio::UpdateEntry& entry) {

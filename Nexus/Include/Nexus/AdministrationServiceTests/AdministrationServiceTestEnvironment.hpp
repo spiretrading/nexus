@@ -214,7 +214,6 @@ namespace Nexus::AdministrationService::Tests {
     for(auto& entry : DEFAULT_VENUES.get_entries()) {
       venues.push_back(entry.m_venue);
     }
-    venues.push_back(Venue());
     for(auto& venue : venues) {
       global_entitlement.m_applicability[
         MarketDataService::EntitlementKey(venue)].Set(

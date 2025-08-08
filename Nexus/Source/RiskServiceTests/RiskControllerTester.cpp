@@ -72,6 +72,16 @@ namespace {
       m_administration_environment.make_administrator(servlet_account);
       m_service_locator =
         m_service_locator_environment.MakeClient("risk_service", "");
+      auto entitlements = [&] {
+        auto entitlements = std::vector<DirectoryEntry>();
+        for(auto& entry : m_administration_environment.get_client().
+            load_entitlements().get_entries()) {
+          entitlements.push_back(entry.m_group_entry);
+        }
+        return entitlements;
+      }();
+      m_administration_environment.get_client().store_entitlements(
+        m_service_locator->GetAccount(), entitlements);
       m_administration_client =
         m_administration_environment.make_client(*m_service_locator);
       m_trader_account =
@@ -94,6 +104,10 @@ namespace {
         std::make_shared<Queue<std::shared_ptr<PrimitiveOrder>>>();
       m_order_execution_environment.get_driver().as<MockOrderExecutionDriver>().
         get_publisher().Monitor(m_order_submissions);
+      m_market_data_environment.get_feed_client().publish(
+        SecurityBboQuote(BboQuote(Quote(parse_money("1.00"), 100, Side::BID),
+          Quote(parse_money("1.01"), 100, Side::ASK), m_time_client.GetTime()),
+          TSLA));
     }
   };
 }
@@ -134,8 +148,8 @@ TEST_SUITE("RiskController") {
   TEST_CASE("single_security_existing_position") {
     auto fixture = Fixture();
     auto snapshot = InventorySnapshot();
-    snapshot.m_inventories.push_back(RiskInventory(
-      RiskPosition({TSLA, USD}), Money::ONE, Money::CENT, 200, 2));
+    snapshot.m_inventories.push_back(RiskInventory(RiskPosition({TSLA, USD},
+      200, 200 * (99 * Money::CENT)), Money::ZERO, Money::ZERO, 200, 1));
     fixture.m_data_store.store(fixture.m_trader_account, snapshot);
     auto controller = RiskController(fixture.m_trader_account,
       *fixture.m_administration_client, *fixture.m_market_data_client,
@@ -150,22 +164,24 @@ TEST_SUITE("RiskController") {
     auto update = portfolio->Pop();
     REQUIRE(update.m_security_inventory.m_position.m_key.m_index == TSLA);
     REQUIRE(update.m_security_inventory.m_position.m_key.m_currency == USD);
-    REQUIRE(update.m_unrealized_security == Money::ONE);
-    REQUIRE(update.m_unrealized_currency == Money::CENT);
+    REQUIRE(update.m_unrealized_security == 2 * Money::ONE);
+    REQUIRE(update.m_unrealized_currency == 2 * Money::ONE);
     REQUIRE(update.m_security_inventory.m_position.m_quantity == 200);
-    auto order = fixture.m_service_order_execution_client->submit(
+    auto order = fixture.m_trader_order_execution_client->submit(
       make_market_order_fields(TSLA, Side::BID, 100));
     auto received_order = fixture.m_order_submissions->Pop();
     accept(*received_order);
-    fill(*received_order, parse_money("1.01"), 100);
+    fill(*received_order, parse_money("0.99"), 100);
     update = portfolio->Pop();
     REQUIRE(update.m_security_inventory.m_position.m_key.m_index == TSLA);
     REQUIRE(update.m_security_inventory.m_position.m_quantity == 300);
     fixture.m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(BboQuote(Quote(parse_money("0.99"), 100, Side::BID),
-        Quote(parse_money("1.00"), 100, Side::ASK),
+      SecurityBboQuote(BboQuote(Quote(parse_money("0.98"), 100, Side::BID),
+        Quote(parse_money("0.99"), 100, Side::ASK),
         fixture.m_time_client.GetTime()), TSLA));
     REQUIRE(state->Pop().m_type == RiskState::Type::CLOSE_ORDERS);
+    fixture.m_time_client.SetTime(
+      fixture.m_time_client.GetTime() + minutes(10));
     fixture.m_timer.Trigger();
     REQUIRE(state->Pop().m_type == RiskState::Type::DISABLED);
   }
