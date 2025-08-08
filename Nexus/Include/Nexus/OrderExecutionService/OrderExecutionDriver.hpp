@@ -37,6 +37,14 @@ namespace Nexus::OrderExecutionService {
       explicit OrderExecutionDriver(
         const std::unique_ptr<OrderExecutionDriver>& driver);
 
+      /** Returns a reference to the concrete implementation. */
+      template<typename T>
+      const T& as() const;
+
+      /** Returns a reference to the concrete implementation. */
+      template<typename T>
+      T& as();
+
       std::shared_ptr<const Order> recover(
         const SequencedAccountOrderRecord& record);
 
@@ -109,6 +117,17 @@ namespace Nexus::OrderExecutionService {
   inline OrderExecutionDriver::OrderExecutionDriver(
     const std::unique_ptr<OrderExecutionDriver>& driver)
     : OrderExecutionDriver(*driver) {}
+
+  template<typename T>
+  const T& OrderExecutionDriver::as() const {
+    return const_cast<OrderExecutionDriver&>(*this).as<T>();
+  }
+
+  template<typename T>
+  T& OrderExecutionDriver::as() {
+    return *dynamic_cast<WrappedOrderExecutionDriver<T>&>(
+      *m_driver.get()).m_driver;
+  }
 
   inline std::shared_ptr<const Order> OrderExecutionDriver::recover(
       const SequencedAccountOrderRecord& record) {

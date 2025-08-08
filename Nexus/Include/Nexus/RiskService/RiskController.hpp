@@ -321,7 +321,7 @@ namespace Nexus::RiskService {
     IsRiskDataStore D>
   void RiskController<A, M, O, R, T, D>::on_portfolio_update(
       const RiskPortfolio::UpdateEntry& update) {
-    update([&] {
+    this->update([&] {
       m_portfolio_controller->get_publisher().With([&] {
         m_state_model->update_portfolio();
       });
