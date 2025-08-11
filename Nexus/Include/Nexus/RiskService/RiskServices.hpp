@@ -8,7 +8,6 @@
 #include "Nexus/Definitions/Region.hpp"
 #include "Nexus/RiskService/InventorySnapshot.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
-#include "Nexus/RiskService/RiskService.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
 namespace Nexus::RiskService {

@@ -19,81 +19,73 @@ namespace Nexus::RiskService {
   };
 
   /** Returns a row representing a InventoryEntry. */
-  inline const auto& GetInventoryEntriesRow() {
+  inline const auto& get_inventory_entries_row() {
     static auto ROW = Viper::Row<InventoryEntry>().
       add_column("account", &InventoryEntry::m_account).
-      extend(Viper::Row<RiskInventory>().
-        extend(Viper::Row<RiskPosition>().
-          extend(Viper::Row<RiskPosition::Key>().
-            extend(Viper::Row<Security>().
-              add_column("symbol", Viper::varchar(16),
-                [] (auto& row) {
-                  return row.GetSymbol();
-                },
-                [] (auto& row, auto column) {
-                  row = Security(std::move(column), row.GetMarket(),
-                    row.GetCountry());
+        extend(Viper::Row<RiskInventory>().
+          extend(Viper::Row<RiskPosition>().
+            extend(Viper::Row<RiskPosition::Key>().
+              extend(Viper::Row<Security>().
+                add_column("symbol", Viper::varchar(16),
+                  [] (auto& row) {
+                    return row.get_symbol();
+                  },
+                  [] (auto& row, auto column) {
+                    row = Security(std::move(column), row.get_venue());
+                  }).
+                add_column("venue", Viper::varchar(16),
+                  [] (auto& row) {
+                    return row.get_venue();
+                  },
+                  [] (auto& row, auto column) {
+                    row = Security(row.get_symbol(), column);
+                  }),
+                [] (auto& entry) -> auto& {
+                  return entry.m_index;
                 }).
-              add_column("market", Viper::varchar(16),
-                [] (auto& row) {
-                  return row.GetMarket();
-                },
-                [] (auto& row, auto column) {
-                  row = Security(row.GetSymbol(), column, row.GetCountry());
-                }).
-              add_column("country",
-                [] (auto& row) {
-                  return row.GetCountry();
-                },
-                [] (auto& row, auto column) {
-                  row = Security(row.GetSymbol(), row.GetMarket(), column);
+              add_column("currency",
+                [] (auto& entry) -> auto& {
+                  return entry.m_currency;
                 }),
               [] (auto& entry) -> auto& {
-                return entry.m_index;
+                return entry.m_key;
               }).
-            add_column("currency",
+            add_column("quantity",
               [] (auto& entry) -> auto& {
-                return entry.m_currency;
+                return entry.m_quantity;
+              }).
+            add_column("cost_basis",
+              [] (auto& entry) -> auto& {
+                return entry.m_cost_basis;
               }),
             [] (auto& entry) -> auto& {
-              return entry.m_key;
+              return entry.m_position;
             }).
-          add_column("quantity",
+          add_column("gross_profit_and_loss",
             [] (auto& entry) -> auto& {
-              return entry.m_quantity;
+              return entry.m_gross_profit_and_loss;
             }).
-          add_column("cost_basis",
+          add_column("fees",
             [] (auto& entry) -> auto& {
-              return entry.m_costBasis;
-            }),
-          [] (auto& entry) -> auto& {
-            return entry.m_position;
-          }).
-        add_column("gross_profit_and_loss",
-          [] (auto& entry) -> auto& {
-            return entry.m_grossProfitAndLoss;
-          }).
-        add_column("fees",
-          [] (auto& entry) -> auto& {
-            return entry.m_fees;
-          }).
-        add_column("volume",
-          [] (auto& entry) -> auto& {
-            return entry.m_volume;
-          }).
-        add_column("transaction_count",
-          [] (auto& entry) -> auto& {
-            return entry.m_transactionCount;
-          }), &InventoryEntry::m_inventory).
-      add_index("account", "account");
+              return entry.m_fees;
+            }).
+          add_column("volume",
+            [] (auto& entry) -> auto& {
+              return entry.m_volume;
+            }).
+          add_column("transaction_count",
+            [] (auto& entry) -> auto& {
+              return entry.m_transaction_count;
+            }), &InventoryEntry::m_inventory).
+        add_index("account", "account");
     return ROW;
   }
 
   /** Converts a RiskInventory into a InventoryEntry. */
-  inline auto ConvertInventorySnapshotInventories(
+  inline auto convert_inventory_snapshot_inventories(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return [=] (const RiskInventory& inventory) {
-      return InventoryEntry{account.m_id, inventory};
+      return InventoryEntry(account.m_id, inventory);
     };
   }
 
@@ -108,7 +100,7 @@ namespace Nexus::RiskService {
   };
 
   /** Returns a row representing a SequenceEntry. */
-  inline const auto& GetInventorySequencesRow() {
+  inline const auto& get_inventory_sequences_row() {
     static auto ROW = Viper::Row<InventorySequence>().
       add_column("account", &InventorySequence::m_account).
       add_column("sequence", &InventorySequence::m_sequence).
@@ -127,7 +119,7 @@ namespace Nexus::RiskService {
   };
 
   /** Returns a row representing a InventoryExcludedOrderId. */
-  inline const auto& GetInventoryExcludedOrdersRow() {
+  inline const auto& get_inventory_excluded_orders_row() {
     static auto ROW = Viper::Row<InventoryExcludedOrderId>().
       add_column("account", &InventoryExcludedOrderId::m_account).
       add_column("id", &InventoryExcludedOrderId::m_id).
@@ -136,10 +128,10 @@ namespace Nexus::RiskService {
   }
 
   /** Converts an order id into a InventoryExcludedOrderId. */
-  inline auto ConvertInventoryExcludedOrders(
+  inline auto convert_inventory_excluded_orders(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return [=] (OrderExecutionService::OrderId id) {
-      return InventoryExcludedOrderId{account.m_id, id};
+      return InventoryExcludedOrderId(account.m_id, id);
     };
   }
 }

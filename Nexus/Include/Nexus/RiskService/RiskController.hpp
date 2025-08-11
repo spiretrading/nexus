@@ -16,6 +16,7 @@
 #include <boost/optional/optional.hpp>
 #include "Nexus/Accounting/PortfolioController.hpp"
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
+#include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
@@ -77,7 +78,7 @@ namespace Nexus::RiskService {
        * @param transition_timer Initializes the transition Timer.
        * @param time_client Initializes the TimeClient.
        * @param data_store Initializes the RiskDataStore.
-       * @param exchange_rates The list of exchange rates.
+       * @param exchange_rates The exchange rates.
        * @param venues The venues used by the portfolio.
        * @param destinations The destination database used to flatten positions.
        */

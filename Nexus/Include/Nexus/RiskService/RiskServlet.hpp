@@ -9,7 +9,6 @@
 #include <Beam/Queues/SnapshotPublisher.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/RiskService/ConsolidatedRiskController.hpp"
-#include "Nexus/RiskService/RiskService.hpp"
 #include "Nexus/RiskService/RiskServices.hpp"
 #include "Nexus/RiskService/RiskSession.hpp"
 
