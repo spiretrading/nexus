@@ -102,8 +102,28 @@ namespace {
           DEFAULT_DESTINATIONS)),
         m_server_connection, factory<std::unique_ptr<TriggerTimer>>());
     }
+
+    auto make_client(const std::string& name) {
+      m_service_locator_environment.GetRoot().MakeAccount(
+        name, "", DirectoryEntry::GetStarDirectory());
+      auto service_locator_client =
+        m_service_locator_environment.MakeClient(name, "");
+      auto authenticator = SessionAuthenticator(service_locator_client);
+      auto protocol_client = std::make_unique<TestServiceProtocolClient>(
+        Initialize(name, *m_server_connection), Initialize());
+      RegisterRiskServices(Store(protocol_client->GetSlots()));
+      RegisterRiskMessages(Store(protocol_client->GetSlots()));
+      authenticator(*protocol_client);
+      return std::tuple(
+        service_locator_client.GetAccount(), std::move(protocol_client));
+    }
   };
 }
 
 TEST_SUITE("RiskServlet") {
+  TEST_CASE("load_inventory") {
+    auto fixture = Fixture();
+    auto [account, client] = fixture.make_client("user");
+    client->SendRequest<LoadInventorySnapshotService>();
+  }
 }
