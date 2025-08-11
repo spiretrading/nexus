@@ -1,4 +1,5 @@
 #include <Beam/Queues/Queue.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
