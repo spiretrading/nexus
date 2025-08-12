@@ -63,6 +63,9 @@ source_group("StampProtocol" FILES ${stamp_protocol_header_files})
 file(GLOB_RECURSE technical_analysis_header_files
   ${NEXUS_INCLUDE_PATH}/Nexus/TechnicalAnalysis/*.hpp)
 source_group("TechnicalAnalysis" FILES ${technical_analysis_header_files})
+file(GLOB_RECURSE test_environment_header_files
+  ${NEXUS_INCLUDE_PATH}/Nexus/TestEnvironment/*.hpp)
+source_group("TestEnvironment" FILES ${test_environment_header_files})
 file(GLOB_RECURSE header_files ${accounting_header_files}
   ${administration_service_header_files} ${backtester_header_files}
   ${charting_service_header_files} ${clients_header_files}
@@ -73,7 +76,8 @@ file(GLOB_RECURSE header_files ${accounting_header_files}
   ${order_execution_service_header_files} ${parsers_header_files}
   ${queries_header_files} ${risk_service_header_files}
   ${simulation_matcher_header_files} ${soup_bin_tcp_header_files}
-  ${stamp_protocol_header_files} ${technical_analysis_header_files})
+  ${stamp_protocol_header_files} ${technical_analysis_header_files}
+  ${test_environment_header_files})
 add_library(Nexus ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Nexus PROPERTIES LINKER_LANGUAGE CXX OUTPUT_NAME nexus)

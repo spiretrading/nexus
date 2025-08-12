@@ -1,315 +1,322 @@
-#ifndef NEXUS_SERVICE_CLIENTS_BOX_HPP
-#define NEXUS_SERVICE_CLIENTS_BOX_HPP
+#ifndef NEXUS_CLIENTS_HPP
+#define NEXUS_CLIENTS_HPP
 #include <memory>
 #include <type_traits>
+#include <utility>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/RegistryService/RegistryClientBox.hpp>
 #include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
 #include <Beam/Threading/TimerBox.hpp>
 #include <Beam/TimeService/TimeClientBox.hpp>
-#include "Nexus/AdministrationService/AdministrationClientBox.hpp"
-#include "Nexus/ChartingService/ChartingClientBox.hpp"
-#include "Nexus/Compliance/ComplianceClientBox.hpp"
-#include "Nexus/DefinitionsService/DefinitionsClientBox.hpp"
-#include "Nexus/MarketDataService/MarketDataClientBox.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionClientBox.hpp"
-#include "Nexus/RiskService/RiskClientBox.hpp"
+#include "Nexus/AdministrationService/AdministrationClient.hpp"
+#include "Nexus/ChartingService/ChartingClient.hpp"
+#include "Nexus/Compliance/ComplianceClient.hpp"
+#include "Nexus/DefinitionsService/DefinitionsClient.hpp"
+#include "Nexus/MarketDataService/MarketDataClient.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
+#include "Nexus/RiskService/RiskClient.hpp"
 
 namespace Nexus {
 
-  /** Provides a generic interface over arbitrary ServiceClients. */
-  class ServiceClientsBox {
+  /** Consolidates the clients used for Nexus services. */
+  class Clients {
     public:
+
+      /** The service locator client interface. */
       using ServiceLocatorClient =
         Beam::ServiceLocator::ServiceLocatorClientBox;
 
+      /** The registry client interface. */
       using RegistryClient = Beam::RegistryService::RegistryClientBox;
 
-      using AdministrationClient =
-        AdministrationService::AdministrationClientBox;
+      /** The administration client interface. */
+      using AdministrationClient = AdministrationService::AdministrationClient;
 
-      using DefinitionsClient = DefinitionsService::DefinitionsClientBox;
+      /** The definitions client interface. */
+      using DefinitionsClient = DefinitionsService::DefinitionsClient;
 
-      using MarketDataClient = MarketDataService::MarketDataClientBox;
+      /** The market data client interface. */
+      using MarketDataClient = MarketDataService::MarketDataClient;
 
-      using ChartingClient = ChartingService::ChartingClientBox;
+      /** The charting client interface. */
+      using ChartingClient = ChartingService::ChartingClient;
 
-      using ComplianceClient = Compliance::ComplianceClientBox;
+      /** The compliance client interface. */
+      using ComplianceClient = Compliance::ComplianceClient;
 
-      using OrderExecutionClient =
-        OrderExecutionService::OrderExecutionClientBox;
+      /** The order execution client interface. */
+      using OrderExecutionClient = OrderExecutionService::OrderExecutionClient;
 
-      using RiskClient = RiskService::RiskClientBox;
+      /** The risk client interface. */
+      using RiskClient = RiskService::RiskClient;
 
+      /** The time client interface. */
       using TimeClient = Beam::TimeService::TimeClientBox;
 
+      /** The timer interface. */
       using Timer = Beam::Threading::TimerBox;
 
       /**
-       * Constructs a ServiceClientsBox of a specified type using emplacement.
-       * @param <T> The type of service clients to emplace.
-       * @param args The arguments to pass to the emplaced service clients.
+       * Constructs Clients of a specified type using emplacement.
+       * @param <T> The type of clients to emplace.
+       * @param args The arguments to pass to the emplaced clients.
        */
       template<typename T, typename... Args>
-      explicit ServiceClientsBox(std::in_place_type_t<T>, Args&&... args);
+      explicit Clients(std::in_place_type_t<T>, Args&&... args);
 
       /**
-       * Constructs a ServiceClientsBox by copying existing service clients.
+       * Constructs Clients by copying existing clients.
        * @param clients The clients to copy.
        */
-      template<typename ServiceClients>
-      explicit ServiceClientsBox(ServiceClients clients);
+      template<typename C>
+      explicit Clients(C clients);
 
-      explicit ServiceClientsBox(ServiceClientsBox* clients);
+      explicit Clients(Clients* clients);
 
-      explicit ServiceClientsBox(
-        const std::shared_ptr<ServiceClientsBox>& clients);
+      explicit Clients(const std::shared_ptr<Clients>& clients);
 
-      explicit ServiceClientsBox(
-        const std::unique_ptr<ServiceClientsBox>& clients);
+      explicit Clients(const std::unique_ptr<Clients>& clients);
 
-      ServiceLocatorClient& GetServiceLocatorClient();
+      /** Returns the service locator client. */
+      ServiceLocatorClient& get_service_locator_client();
 
-      RegistryClient& GetRegistryClient();
+      /** Returns the registry client. */
+      RegistryClient& get_registry_client();
 
-      AdministrationClient& GetAdministrationClient();
+      /** Returns the administration client. */
+      AdministrationClient& get_administration_client();
 
-      DefinitionsClient& GetDefinitionsClient();
+      /** Returns the definitions client. */
+      DefinitionsClient& get_definitions_client();
 
-      MarketDataClient& GetMarketDataClient();
+      /** Returns the market data client. */
+      MarketDataClient& get_market_data_client();
 
-      ChartingClient& GetChartingClient();
+      /** Returns the charting client. */
+      ChartingClient& get_charting_client();
 
-      ComplianceClient& GetComplianceClient();
+      /** Returns the compliance client. */
+      ComplianceClient& get_compliance_client();
 
-      OrderExecutionClient& GetOrderExecutionClient();
+      /** Returns the order execution client. */
+      OrderExecutionClient& get_order_execution_client();
 
-      RiskClient& GetRiskClient();
+      /** Returns the risk client. */
+      RiskClient& get_risk_client();
 
-      TimeClient& GetTimeClient();
+      /** Returns the time client. */
+      TimeClient& get_time_client();
 
-      std::unique_ptr<Timer> MakeTimer(
+      /** Creates a timer with the specified expiry. */
+      std::unique_ptr<Timer> make_timer(
         boost::posix_time::time_duration expiry);
 
-      void Close();
+      /** Closes all clients. */
+      void close();
 
     private:
-      struct VirtualServiceClients {
-        virtual ~VirtualServiceClients() = default;
-        virtual ServiceLocatorClient& GetServiceLocatorClient() = 0;
-        virtual RegistryClient& GetRegistryClient() = 0;
-        virtual AdministrationClient& GetAdministrationClient() = 0;
-        virtual DefinitionsClient& GetDefinitionsClient() = 0;
-        virtual MarketDataClient& GetMarketDataClient() = 0;
-        virtual ChartingClient& GetChartingClient() = 0;
-        virtual ComplianceClient& GetComplianceClient() = 0;
-        virtual OrderExecutionClient& GetOrderExecutionClient() = 0;
-        virtual RiskClient& GetRiskClient() = 0;
-        virtual TimeClient& GetTimeClient() = 0;
-        virtual std::unique_ptr<Timer> MakeTimer(
+      struct VirtualClients {
+        virtual ~VirtualClients() = default;
+        virtual ServiceLocatorClient& get_service_locator_client() = 0;
+        virtual RegistryClient& get_registry_client() = 0;
+        virtual AdministrationClient& get_administration_client() = 0;
+        virtual DefinitionsClient& get_definitions_client() = 0;
+        virtual MarketDataClient& get_market_data_client() = 0;
+        virtual ChartingClient& get_charting_client() = 0;
+        virtual ComplianceClient& get_compliance_client() = 0;
+        virtual OrderExecutionClient& get_order_execution_client() = 0;
+        virtual RiskClient& get_risk_client() = 0;
+        virtual TimeClient& get_time_client() = 0;
+        virtual std::unique_ptr<Timer> make_timer(
           boost::posix_time::time_duration expiry) = 0;
-        virtual void Close() = 0;
+        virtual void close() = 0;
       };
       template<typename C>
-      struct WrappedServiceClients final : VirtualServiceClients {
+      struct WrappedClients final : VirtualClients {
         using Clients = C;
         Beam::GetOptionalLocalPtr<Clients> m_clients;
-        ServiceLocatorClient m_serviceLocatorClient;
-        RegistryClient m_registryClient;
-        AdministrationClient m_administrationClient;
-        DefinitionsClient m_definitionsClient;
-        MarketDataClient m_marketDataClient;
-        ChartingClient m_chartingClient;
-        ComplianceClient m_complianceClient;
-        OrderExecutionClient m_orderExecutionClient;
-        RiskClient m_riskClient;
-        TimeClient m_timeClient;
+        ServiceLocatorClient m_service_locator_client;
+        RegistryClient m_registry_client;
+        AdministrationClient m_administration_client;
+        DefinitionsClient m_definitions_client;
+        MarketDataClient m_market_data_client;
+        ChartingClient m_charting_client;
+        ComplianceClient m_compliance_client;
+        OrderExecutionClient m_order_execution_client;
+        RiskClient m_risk_client;
+        TimeClient m_time_client;
 
         template<typename... Args>
-        WrappedServiceClients(Args&&... args);
-        ServiceLocatorClient& GetServiceLocatorClient() override;
-        RegistryClient& GetRegistryClient() override;
-        AdministrationClient& GetAdministrationClient() override;
-        DefinitionsClient& GetDefinitionsClient() override;
-        MarketDataClient& GetMarketDataClient() override;
-        ChartingClient& GetChartingClient() override;
-        ComplianceClient& GetComplianceClient() override;
-        OrderExecutionClient& GetOrderExecutionClient() override;
-        RiskClient& GetRiskClient() override;
-        TimeClient& GetTimeClient() override;
-        std::unique_ptr<Timer> MakeTimer(
+        WrappedClients(Args&&... args);
+        ServiceLocatorClient& get_service_locator_client() override;
+        RegistryClient& get_registry_client() override;
+        AdministrationClient& get_administration_client() override;
+        DefinitionsClient& get_definitions_client() override;
+        MarketDataClient& get_market_data_client() override;
+        ChartingClient& get_charting_client() override;
+        ComplianceClient& get_compliance_client() override;
+        OrderExecutionClient& get_order_execution_client() override;
+        RiskClient& get_risk_client() override;
+        TimeClient& get_time_client() override;
+        std::unique_ptr<Timer> make_timer(
           boost::posix_time::time_duration expiry) override;
-        void Close() override;
+        void close() override;
       };
-
-      std::shared_ptr<VirtualServiceClients> m_clients;
+      std::shared_ptr<VirtualClients> m_clients;
   };
 
+  /** Checks if a type implements the Clients interface. */
+  template<typename T>
+  concept IsClients = std::constructible_from<
+    Clients, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
+
   template<typename T, typename... Args>
-  ServiceClientsBox::ServiceClientsBox(std::in_place_type_t<T>, Args&&... args)
-    : m_clients(std::make_shared<WrappedServiceClients<T>>(
+  Clients::Clients(std::in_place_type_t<T>, Args&&... args)
+    : m_clients(std::make_shared<WrappedClients<T>>(
         std::forward<Args>(args)...)) {}
 
-  template<typename ServiceClients>
-  ServiceClientsBox::ServiceClientsBox(ServiceClients clients)
-    : ServiceClientsBox(std::in_place_type<ServiceClients>,
-        std::move(clients)) {}
+  template<typename C>
+  Clients::Clients(C clients)
+    : Clients(std::in_place_type<Clients>, std::move(clients)) {}
 
-  inline ServiceClientsBox::ServiceClientsBox(ServiceClientsBox* clients)
-    : ServiceClientsBox(*clients) {}
+  inline Clients::Clients(Clients* clients)
+    : Clients(*clients) {}
 
-  inline ServiceClientsBox::ServiceClientsBox(
-    const std::shared_ptr<ServiceClientsBox>& clients)
-    : ServiceClientsBox(*clients) {}
+  inline Clients::Clients(const std::shared_ptr<Clients>& clients)
+    : Clients(*clients) {}
 
-  inline ServiceClientsBox::ServiceClientsBox(
-    const std::unique_ptr<ServiceClientsBox>& clients)
-    : ServiceClientsBox(*clients) {}
+  inline Clients::Clients(const std::unique_ptr<Clients>& clients)
+    : Clients(*clients) {}
 
-  inline ServiceClientsBox::ServiceLocatorClient&
-      ServiceClientsBox::GetServiceLocatorClient() {
-    return m_clients->GetServiceLocatorClient();
+  inline Clients::ServiceLocatorClient& Clients::get_service_locator_client() {
+    return m_clients->get_service_locator_client();
   }
 
-  inline ServiceClientsBox::RegistryClient&
-      ServiceClientsBox::GetRegistryClient() {
-    return m_clients->GetRegistryClient();
+  inline Clients::RegistryClient& Clients::get_registry_client() {
+    return m_clients->get_registry_client();
   }
 
-  inline ServiceClientsBox::AdministrationClient&
-      ServiceClientsBox::GetAdministrationClient() {
-    return m_clients->GetAdministrationClient();
+  inline Clients::AdministrationClient& Clients::get_administration_client() {
+    return m_clients->get_administration_client();
   }
 
-  inline ServiceClientsBox::DefinitionsClient&
-      ServiceClientsBox::GetDefinitionsClient() {
-    return m_clients->GetDefinitionsClient();
+  inline Clients::DefinitionsClient& Clients::get_definitions_client() {
+    return m_clients->get_definitions_client();
   }
 
-  inline ServiceClientsBox::MarketDataClient&
-      ServiceClientsBox::GetMarketDataClient() {
-    return m_clients->GetMarketDataClient();
+  inline Clients::MarketDataClient& Clients::get_market_data_client() {
+    return m_clients->get_market_data_client();
   }
 
-  inline ServiceClientsBox::ChartingClient&
-      ServiceClientsBox::GetChartingClient() {
-    return m_clients->GetChartingClient();
+  inline Clients::ChartingClient& Clients::get_charting_client() {
+    return m_clients->get_charting_client();
   }
 
-  inline ServiceClientsBox::ComplianceClient&
-      ServiceClientsBox::GetComplianceClient() {
-    return m_clients->GetComplianceClient();
+  inline Clients::ComplianceClient& Clients::get_compliance_client() {
+    return m_clients->get_compliance_client();
   }
 
-  inline ServiceClientsBox::OrderExecutionClient&
-      ServiceClientsBox::GetOrderExecutionClient() {
-    return m_clients->GetOrderExecutionClient();
+  inline Clients::OrderExecutionClient& Clients::get_order_execution_client() {
+    return m_clients->get_order_execution_client();
   }
 
-  inline ServiceClientsBox::RiskClient& ServiceClientsBox::GetRiskClient() {
-    return m_clients->GetRiskClient();
+  inline Clients::RiskClient& Clients::get_risk_client() {
+    return m_clients->get_risk_client();
   }
 
-  inline ServiceClientsBox::TimeClient& ServiceClientsBox::GetTimeClient() {
-    return m_clients->GetTimeClient();
+  inline Clients::TimeClient& Clients::get_time_client() {
+    return m_clients->get_time_client();
   }
 
-  inline std::unique_ptr<ServiceClientsBox::Timer>
-      ServiceClientsBox::MakeTimer(boost::posix_time::time_duration expiry) {
-    return m_clients->MakeTimer(expiry);
+  inline std::unique_ptr<Clients::Timer> Clients::make_timer(
+      boost::posix_time::time_duration expiry) {
+    return m_clients->make_timer(expiry);
   }
 
-  inline void ServiceClientsBox::Close() {
-    m_clients->Close();
+  inline void Clients::close() {
+    m_clients->close();
   }
 
   template<typename C>
   template<typename... Args>
-  ServiceClientsBox::WrappedServiceClients<C>::WrappedServiceClients(
-    Args&&... args)
+  Clients::WrappedClients<C>::WrappedClients(Args&&... args)
     : m_clients(std::forward<Args>(args)...),
-      m_serviceLocatorClient(&m_clients->GetServiceLocatorClient()),
-      m_registryClient(&m_clients->GetRegistryClient()),
-      m_administrationClient(&m_clients->GetAdministrationClient()),
-      m_definitionsClient(&m_clients->GetDefinitionsClient()),
-      m_marketDataClient(&m_clients->GetMarketDataClient()),
-      m_chartingClient(&m_clients->GetChartingClient()),
-      m_complianceClient(&m_clients->GetComplianceClient()),
-      m_orderExecutionClient(&m_clients->GetOrderExecutionClient()),
-      m_riskClient(&m_clients->GetRiskClient()),
-      m_timeClient(&m_clients->GetTimeClient()) {}
+      m_service_locator_client(m_clients->get_service_locator_client()),
+      m_registry_client(m_clients->get_registry_client()),
+      m_administration_client(m_clients->get_administration_client()),
+      m_definitions_client(m_clients->get_definitions_client()),
+      m_market_data_client(m_clients->get_market_data_client()),
+      m_charting_client(m_clients->get_charting_client()),
+      m_compliance_client(m_clients->get_compliance_client()),
+      m_order_execution_client(m_clients->get_order_execution_client()),
+      m_risk_client(m_clients->get_risk_client()),
+      m_time_client(m_clients->get_time_client()) {}
 
   template<typename C>
-  ServiceClientsBox::ServiceLocatorClient&
-      ServiceClientsBox::WrappedServiceClients<C>::GetServiceLocatorClient() {
-    return m_serviceLocatorClient;
+  Clients::ServiceLocatorClient&
+      Clients::WrappedClients<C>::get_service_locator_client() {
+    return m_serviceLocator_client;
   }
 
   template<typename C>
-  ServiceClientsBox::RegistryClient&
-      ServiceClientsBox::WrappedServiceClients<C>::GetRegistryClient() {
-    return m_registryClient;
+  Clients::RegistryClient& Clients::WrappedClients<C>::get_registry_client() {
+    return m_registry_client;
   }
 
   template<typename C>
-  ServiceClientsBox::AdministrationClient&
-      ServiceClientsBox::WrappedServiceClients<C>::GetAdministrationClient() {
-    return m_administrationClient;
+  Clients::AdministrationClient&
+      Clients::WrappedClients<C>::get_administration_client() {
+    return m_administration_client;
   }
 
   template<typename C>
-  ServiceClientsBox::DefinitionsClient&
-      ServiceClientsBox::WrappedServiceClients<C>::GetDefinitionsClient() {
-    return m_definitionsClient;
+  Clients::DefinitionsClient&
+      Clients::WrappedClients<C>::get_definitions_client() {
+    return m_definitions_client;
   }
 
   template<typename C>
-  ServiceClientsBox::MarketDataClient&
-      ServiceClientsBox::WrappedServiceClients<C>::GetMarketDataClient() {
-    return m_marketDataClient;
+  Clients::MarketDataClient&
+      Clients::WrappedClients<C>::get_market_data_client() {
+    return m_market_data_client;
   }
 
   template<typename C>
-  ServiceClientsBox::ChartingClient&
-      ServiceClientsBox::WrappedServiceClients<C>::GetChartingClient() {
-    return m_chartingClient;
+  Clients::ChartingClient& Clients::WrappedClients<C>::get_charting_client() {
+    return m_charting_client;
   }
 
   template<typename C>
-  ServiceClientsBox::ComplianceClient&
-      ServiceClientsBox::WrappedServiceClients<C>::GetComplianceClient() {
-    return m_complianceClient;
+  Clients::ComplianceClient&
+      Clients::WrappedClients<C>::get_compliance_client() {
+    return m_compliance_client;
   }
 
   template<typename C>
-  ServiceClientsBox::OrderExecutionClient&
-      ServiceClientsBox::WrappedServiceClients<C>::GetOrderExecutionClient() {
-    return m_orderExecutionClient;
+  Clients::OrderExecutionClient&
+      Clients::WrappedClients<C>::get_order_execution_client() {
+    return m_order_execution_client;
   }
 
   template<typename C>
-  ServiceClientsBox::RiskClient&
-      ServiceClientsBox::WrappedServiceClients<C>::GetRiskClient() {
-    return m_riskClient;
+  Clients::RiskClient& Clients::WrappedClients<C>::get_risk_client() {
+    return m_risk_client;
   }
 
   template<typename C>
-  ServiceClientsBox::TimeClient&
-      ServiceClientsBox::WrappedServiceClients<C>::GetTimeClient() {
-    return m_timeClient;
+  Clients::TimeClient& Clients::WrappedClients<C>::get_time_client() {
+    return m_time_client;
   }
 
   template<typename C>
-  std::unique_ptr<ServiceClientsBox::Timer>
-      ServiceClientsBox::WrappedServiceClients<C>::MakeTimer(
-        boost::posix_time::time_duration expiry) {
-    return std::make_unique<Beam::Threading::TimerBox>(
-      m_clients->MakeTimer(expiry));
+  std::unique_ptr<Clients::Timer> Clients::WrappedClients<C>::make_timer(
+      boost::posix_time::time_duration expiry) {
+    return std::make_unique<Clients::Timer>(m_clients->make_timer(expiry));
   }
 
   template<typename C>
-  void ServiceClientsBox::WrappedServiceClients<C>::Close() {
-    m_clients->Close();
+  void Clients::WrappedClients<C>::close() {
+    m_clients->close();
   }
 }
 

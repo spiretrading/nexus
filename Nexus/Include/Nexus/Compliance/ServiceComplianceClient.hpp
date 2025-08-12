@@ -8,6 +8,7 @@
 #include <Beam/Routines/Async.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <boost/lexical_cast.hpp>
+#include "Nexus/Compliance/ComplianceClient.hpp"
 #include "Nexus/Compliance/ComplianceServices.hpp"
 #include "Nexus/Compliance/ComplianceRuleViolationRecord.hpp"
 
