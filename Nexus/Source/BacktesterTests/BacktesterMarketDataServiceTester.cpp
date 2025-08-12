@@ -71,4 +71,36 @@ TEST_SUITE("BacktesterMarketDataService") {
     auto received_bbo = bbo_queue->Pop();
     REQUIRE(received_bbo == bbo);
   }
+
+  TEST_CASE("query_bbo_quotes") {
+    auto fixture = Fixture();
+    auto start_time =
+      fixture.m_event_handler_environment.get_time_environment().GetTime();
+    auto& data_store = fixture.
+      m_source_environment.get_market_data_environment().get_data_store();
+    auto bbo_before = BboQuote(Quote(Money(99), 100, Side::BID),
+      Quote(Money(101), 100, Side::ASK), start_time - minutes(10));
+    data_store.store(SequencedValue(
+      IndexedValue(bbo_before, TD), Beam::Queries::Sequence(10)));
+    auto bbo_at_start = BboQuote(Quote(Money(100), 100, Side::BID),
+      Quote(Money(102), 100, Side::ASK), start_time);
+    data_store.store(SequencedValue(
+      IndexedValue(bbo_at_start, TD), Beam::Queries::Sequence(11)));
+    auto bbo_after = BboQuote(Quote(Money(101), 100, Side::BID),
+      Quote(Money(103), 100, Side::ASK), start_time + minutes(10));
+    data_store.store(
+      SequencedValue(IndexedValue(bbo_after, TD), Beam::Queries::Sequence(12)));
+    auto event_handler = BacktesterEventHandler(start_time);
+    auto service = BacktesterMarketDataService(Ref(event_handler),
+      Ref(fixture.m_event_handler_environment.get_market_data_environment()),
+      *fixture.m_source_market_data_client);
+    auto bbo_queue = std::make_shared<Queue<BboQuote>>();
+    auto query = MakeRealTimeQuery(TD);
+    fixture.m_backtesting_market_data_client->query(query, bbo_queue);
+    service.query_bbo_quotes(query);
+    auto received_bbo1 = bbo_queue->Pop();
+    REQUIRE(received_bbo1 == bbo_at_start);
+    auto received_bbo2 = bbo_queue->Pop();
+    REQUIRE(received_bbo2 == bbo_after);
+  }
 }
