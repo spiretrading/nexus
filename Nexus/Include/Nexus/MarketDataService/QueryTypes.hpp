@@ -11,34 +11,34 @@ namespace Nexus::MarketDataService {
    * @param <T> The type of market data to query.
    */
   template<typename T>
-  struct MarketDataQueryType {};
+  struct market_data_query_type {};
 
   template<typename T>
-  using GetMarketDataQueryType = typename MarketDataQueryType<T>::type;
+  using market_data_query_type_t = typename market_data_query_type<T>::type;
 
   template<>
-  struct MarketDataQueryType<OrderImbalance> {
+  struct market_data_query_type<OrderImbalance> {
     using type = VenueMarketDataQuery;
   };
 
   template<>
-  struct MarketDataQueryType<TimeAndSale> {
+  struct market_data_query_type<TimeAndSale> {
     using type = SecurityMarketDataQuery;
   };
 
   template<>
-  struct MarketDataQueryType<BboQuote> {
+  struct market_data_query_type<BboQuote> {
     using type = SecurityMarketDataQuery;
   };
 
   template<>
-  struct MarketDataQueryType<BookQuote> {
+  struct market_data_query_type<BookQuote> {
     using type = SecurityMarketDataQuery;
   };
 
   template<typename T>
-  struct MarketDataQueryType<Beam::Queries::SequencedValue<T>> {
-    using type = GetMarketDataQueryType<T>;
+  struct market_data_query_type<Beam::Queries::SequencedValue<T>> {
+    using type = market_data_query_type_t<T>;
   };
 }
 

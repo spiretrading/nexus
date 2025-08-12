@@ -135,7 +135,7 @@ namespace Nexus::RiskService {
   }
 
   template<typename C>
-  void RiskClient::WrappedRiskClient<C>::Reset(const Region& region) {
+  void RiskClient::WrappedRiskClient<C>::reset(const Region& region) {
     return m_client->reset(region);
   }
 

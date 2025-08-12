@@ -146,12 +146,12 @@ namespace Nexus::ChartingService {
       load_time_price_series(const Security& security,
         boost::posix_time::ptime start, boost::posix_time::ptime end,
         boost::posix_time::time_duration interval) {
-    return m_client->LoadTimePriceSeries(security, start, end, interval);
+    return m_client->load_time_price_series(security, start, end, interval);
   }
 
   template<typename C>
   void ChartingClient::WrappedChartingClient<C>::close() {
-    m_client->Close();
+    m_client->close();
   }
 }
 

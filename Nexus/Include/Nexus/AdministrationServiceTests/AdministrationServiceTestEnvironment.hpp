@@ -146,6 +146,23 @@ namespace Nexus::AdministrationService::Tests {
       environment.MakeClient("administration_service", "1234"));
   }
 
+  /**
+   * Grants all available entitlements to an account.
+   * @param environment The test environment that the entitlements are being
+   *        granted on.
+   * @param account The account to grant the entitlements to.
+   */
+  inline void grant_all_entitlements(
+      AdministrationServiceTestEnvironment& environment,
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto entitlements = std::vector<Beam::ServiceLocator::DirectoryEntry>();
+    for(auto& entry :
+        environment.get_client().load_entitlements().get_entries()) {
+      entitlements.push_back(entry.m_group_entry);
+    }
+    environment.get_client().store_entitlements(account, entitlements);
+  }
+
   inline AdministrationServiceTestEnvironment::
     AdministrationServiceTestEnvironment(
       Beam::ServiceLocator::ServiceLocatorClientBox client)

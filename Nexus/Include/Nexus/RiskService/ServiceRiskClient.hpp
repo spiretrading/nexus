@@ -4,8 +4,8 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/TablePublisher.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <Beam/Utilities/Remote.hpp>
-#include <Beam/Utilities/Workaround.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/RiskService/RiskClient.hpp"
 #include "Nexus/RiskService/RiskServices.hpp"
@@ -121,7 +121,7 @@ namespace Nexus::RiskService {
 
   template<typename B>
   void ServiceRiskClient<B>::close() {
-    if(m_openState.SetClosing()) {
+    if(m_open_state.SetClosing()) {
       return;
     }
     m_tasks.Break();

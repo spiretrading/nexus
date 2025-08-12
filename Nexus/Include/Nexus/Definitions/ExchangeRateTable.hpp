@@ -3,6 +3,7 @@
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleUnorderedMap.hpp>
 #include <boost/thread/locks.hpp>
@@ -21,6 +22,9 @@ namespace Nexus {
 
       /** Constructs an empty table. */
       ExchangeRateTable() = default;
+
+      /** Constructs a table from a list of exchange rates. */
+      explicit ExchangeRateTable(const std::vector<ExchangeRate>& rates);
 
       ExchangeRateTable(const ExchangeRateTable& table);
 
@@ -65,6 +69,13 @@ namespace Nexus {
       std::unordered_map<CurrencyPair, ExchangeRate> m_direct_rates;
       mutable std::unordered_map<CurrencyPair, ExchangeRate> m_derived_rates;
   };
+
+  inline ExchangeRateTable::ExchangeRateTable(
+      const std::vector<ExchangeRate>& rates) {
+    for(auto& rate : rates) {
+      add(rate);
+    }
+  }
 
   inline ExchangeRateTable::ExchangeRateTable(const ExchangeRateTable& table) {
     auto lock = boost::lock_guard(table.m_mutex);

@@ -64,7 +64,7 @@ namespace Details {
       template<typename MarketDataType>
       struct QueryEntry {
         using Query =
-          MarketDataService::GetMarketDataQueryType<MarketDataType>;
+          MarketDataService::market_data_query_type_t<MarketDataType>;
         Beam::Queries::IndexedExpressionSubscriptions<
           typename MarketDataType::Value, Queries::QueryVariant,
           typename Query::Index, ServiceProtocolClient> m_queries;
@@ -136,13 +136,13 @@ namespace Details {
 
   template<typename C, MarketDataService::IsMarketDataClient M>
   void ChartingServlet<C, M>::Close() {
-    if(m_openState.SetClosing()) {
+    if(m_open_state.SetClosing()) {
       return;
     }
     m_tasks.Break();
     m_tasks.Wait();
     m_market_data_client->close();
-    m_openState.Close();
+    m_open_state.Close();
   }
 
   template<typename C, MarketDataService::IsMarketDataClient M>
@@ -194,7 +194,7 @@ namespace Details {
     auto current_end = start_time + interval;
     auto time_and_sales_iterator = time_and_sales.begin();
     while(time_and_sales_iterator != time_and_sales.end() &&
-        current_start <= endTime) {
+        current_start <= end_time) {
       auto candlestick =
         TechnicalAnalysis::TimePriceCandlestick(current_start, current_end);
       auto has_point = false;
@@ -219,7 +219,7 @@ namespace Details {
       Beam::Services::RequestToken<ServiceProtocolClient, QuerySecurityService>&
         request, const SecurityChartingQuery& query, int client_query_id,
       QueryEntry<MarketDataType>& query_entry) {
-    using Query = MarketDataService::GetMarketDataQueryType<MarketDataType>;
+    using Query = MarketDataService::market_data_query_type_t<MarketDataType>;
     if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
       query_entry.m_real_time_subscriptions.TestAndSet(query.GetIndex(), [&] {
         auto real_time_query = Query();
@@ -248,8 +248,8 @@ namespace Details {
       query.GetUpdatePolicy(), std::move(evaluator));
     auto snapshot_query = query;
     snapshot_query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
-    auto snapshot = MarketDataService::HistoricalDataStoreLoad<MarketDataType>(
-      m_data_store, snapshot_query);
+    auto snapshot =
+      MarketDataService::load<MarketDataType>(m_data_store, snapshot_query);
     query_entry.m_queries.Commit(query.GetIndex(), request.GetClient(),
       query.GetSnapshotLimit(), std::move(result), std::move(snapshot),
       [&] (auto&& result) {
@@ -263,9 +263,9 @@ namespace Details {
       const MarketDataType& value, QueryEntry<MarketDataType>& queries) {
     auto indexed_value = Beam::Queries::SequencedValue(
       Beam::Queries::IndexedValue(*value, index), value.GetSequence());
-    m_data_store.Store(indexed_value);
+    m_data_store.store(indexed_value);
     queries.m_queries.Publish(indexed_value,
-      [&] (auto& client, auto id, auto& value) {
+      [&] (auto& client, auto id, const auto& value) {
         Beam::Services::SendRecordMessage<SecurityQueryMessage>(
           client, id, value);
       });

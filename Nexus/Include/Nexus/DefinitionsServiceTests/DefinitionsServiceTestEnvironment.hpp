@@ -81,10 +81,10 @@ namespace Nexus::DefinitionsService::Tests {
     Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client)
     : m_container(Beam::Initialize(std::move(service_locator_client),
         Beam::Initialize("1", "Spire Trading Inc.",
-          get_default_time_zone_database(), DEFAULT_COUNTRIES,
-          DEFAULT_CURRENCIES, DEFAULT_VENUES, DEFAULT_DESTINATIONS,
-          ExchangeRateTable(),
-          std::vector<Compliance::ComplianceRuleSchema>())),
+          Nexus::Details::get_base_time_zone_table(), DEFAULT_COUNTRIES,
+          DEFAULT_CURRENCIES, DEFAULT_DESTINATIONS, DEFAULT_VENUES,
+          std::vector<ExchangeRate>(),
+          std::vector<Compliance::ComplianceRuleSchema>(), TradingSchedule())),
         &m_server_connection,
         boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
 

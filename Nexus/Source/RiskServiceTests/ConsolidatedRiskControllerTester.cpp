@@ -67,16 +67,8 @@ namespace {
       m_administration_environment.make_administrator(servlet_account);
       m_service_locator =
         m_service_locator_environment.MakeClient("risk_service", "");
-      auto entitlements = [&] {
-        auto entitlements = std::vector<DirectoryEntry>();
-        for(auto& entry : m_administration_environment.get_client().
-            load_entitlements().get_entries()) {
-          entitlements.push_back(entry.m_group_entry);
-        }
-        return entitlements;
-      }();
-      m_administration_environment.get_client().store_entitlements(
-        m_service_locator->GetAccount(), entitlements);
+      grant_all_entitlements(
+        m_administration_environment, m_service_locator->GetAccount());
       m_administration_client =
         m_administration_environment.make_client(*m_service_locator);
       m_market_data_client =
