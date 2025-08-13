@@ -298,10 +298,12 @@ MenuButton* Spire::make_menu_label_button(QString label, QWidget* parent) {
   icon_layer_layout->addWidget(arrow_icon);
   icon_layer_layout->addSpacing(scale_width(8));
   auto layers = new LayeredWidget();
+  layers->setFocusPolicy(Qt::StrongFocus);
   layers->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   layers->add(button_label);
   layers->add(icon_layer);
   auto menu_button = new MenuButton(*layers);
+  menu_button->setFocusProxy(layers);
   update_style(*menu_button, [] (auto& style) {
     style.get(Any() > Body() > is_a<Icon>()).
       set(Fill(QColor(0x333333)));
