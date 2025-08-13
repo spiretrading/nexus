@@ -36,8 +36,10 @@ namespace Nexus {
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
       void query(const MarketDataService::SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<TimeAndSale> queue);
-      std::vector<SecurityInfo> query(const SecurityInfoQuery& query);
-      SecuritySnapshot load_snapshot(const Security& security);
+      std::vector<SecurityInfo> query(
+        const MarketDataService::SecurityInfoQuery& query);
+      MarketDataService::SecuritySnapshot load_snapshot(
+        const Security& security);
       SecurityTechnicals load_technicals(const Security& security);
       std::vector<SecurityInfo> load_security_info_from_prefix(
         const std::string& prefix);
@@ -120,12 +122,12 @@ namespace Nexus {
   }
 
   inline std::vector<SecurityInfo> BacktesterMarketDataClient::query(
-      const SecurityInfoQuery& query) {
+      const MarketDataService::SecurityInfoQuery& query) {
     return m_market_data_client.query(query);
   }
 
-  inline SecuritySnapshot BacktesterMarketDataClient::load_snapshot(
-      const Security& security) {
+  inline MarketDataService::SecuritySnapshot
+      BacktesterMarketDataClient::load_snapshot(const Security& security) {
     return m_market_data_client.load_snapshot(security);
   }
 
