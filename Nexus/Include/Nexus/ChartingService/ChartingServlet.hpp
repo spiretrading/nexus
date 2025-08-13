@@ -13,6 +13,7 @@
 #include "Nexus/ChartingService/ChartingServices.hpp"
 #include "Nexus/MarketDataService/CachedHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/ClientHistoricalDataStore.hpp"
+#include "Nexus/MarketDataService/QueryTypes.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 #include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
 

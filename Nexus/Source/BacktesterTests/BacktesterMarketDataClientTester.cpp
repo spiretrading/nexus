@@ -20,18 +20,6 @@ using namespace Nexus::MarketDataService::Tests;
 namespace {
   const auto TD = Security("TD", TSX);
 
-  MarketDataClient make_market_data_client(TestEnvironment& environment) {
-    environment.get_service_locator_environment().GetRoot().
-      MakeAccount("backtester", "", DirectoryEntry::GetStarDirectory());
-    auto service_locator =
-      environment.get_service_locator_environment().MakeClient(
-        "backtester", "");
-    grant_all_entitlements(environment.get_administration_environment(),
-      service_locator.GetAccount());
-    return environment.get_market_data_environment().make_registry_client(
-      service_locator);
-  }
-
   struct Fixture {
     TestEnvironment m_source_environment;
     TestEnvironment m_event_handler_environment;
@@ -45,7 +33,7 @@ namespace {
         m_event_handler(time_from_string("2025-08-12 09:00:00.000")),
         m_market_data_service(Ref(m_event_handler),
           Ref(m_event_handler_environment.get_market_data_environment()),
-          make_market_data_client(m_source_environment)) {
+          make_market_data_client(m_source_environment, "back_tester")) {
       auto start_time =
         m_event_handler_environment.get_time_environment().GetTime();
       auto& data_store =
@@ -70,7 +58,7 @@ TEST_SUITE("BacktesterMarketDataClient") {
   TEST_CASE("query_bbo_quote") {
     auto fixture = Fixture();
     auto client = BacktesterMarketDataClient(Ref(fixture.m_market_data_service),
-      make_market_data_client(fixture.m_event_handler_environment));
+      make_market_data_client(fixture.m_event_handler_environment, "client1"));
     auto query = MakeRealTimeQuery(TD);
     auto queue = std::make_shared<Queue<BboQuote>>();
     client.query(query, queue);
@@ -96,7 +84,7 @@ TEST_SUITE("BacktesterMarketDataClient") {
       data_store.store(bbo_quote);
     }
     auto client = BacktesterMarketDataClient(Ref(fixture.m_market_data_service),
-      make_market_data_client(fixture.m_event_handler_environment));
+      make_market_data_client(fixture.m_event_handler_environment, "handler1"));
     auto query = SecurityMarketDataQuery();
     query.SetIndex(TD);
     query.SetRange(Range::Historical());

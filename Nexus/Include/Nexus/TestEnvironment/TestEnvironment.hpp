@@ -195,6 +195,20 @@ namespace Nexus {
       void publish_market_data(const Index& index, const Value& value);
   };
 
+  /**
+   * Makes a MarketDataClient connected to a TestEnvironment with all available
+   * entitlements.
+   * @param environment The test environment to connect the MarketDataClient to.
+   * @param account_name The name of the account.
+   */
+  inline MarketDataService::MarketDataClient make_market_data_client(
+      TestEnvironment& environment, const std::string& account_name) {
+    return MarketDataService::Tests::make_market_data_client(
+      environment.get_service_locator_environment(),
+      environment.get_administration_environment(),
+      environment.get_market_data_environment(), account_name);
+  }
+
   inline TestEnvironment::TestEnvironment()
     : TestEnvironment(MarketDataService::HistoricalDataStore(
         std::in_place_type<MarketDataService::LocalHistoricalDataStore>)) {}
@@ -529,7 +543,6 @@ namespace Nexus {
       get_market_data_environment().get_feed_client().publish(
         Beam::Queries::IndexedValue(revised_value, index));
     }
-    Beam::Routines::FlushPendingRoutines();
   }
 }
 

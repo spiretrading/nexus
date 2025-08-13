@@ -181,6 +181,33 @@ namespace Nexus::MarketDataService::Tests {
       std::move(service_locator_client), std::move(administration_client));
   }
 
+  /**
+   * Makes a MarketDataClient connected to a MarketDataTestEnvironment with all
+   * available entitlements.
+   * @param service_locator_environment The service locator environment managing
+   *        the test account.
+   * @param administration_environment The administration service managing
+   *        entitlements.
+   * @param market_data_environment The market data test environment to
+   *        connect the MarketDataClient to.
+   * @param account_name The name of the account.
+   */
+  inline MarketDataClient make_market_data_client(
+      Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
+        service_locator_environment,
+      AdministrationService::Tests::AdministrationServiceTestEnvironment&
+        administration_environment,
+      MarketDataServiceTestEnvironment& market_data_environment,
+      const std::string& account_name) {
+    service_locator_environment.GetRoot().MakeAccount(account_name, "",
+      Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
+    auto service_locator =
+      service_locator_environment.MakeClient(account_name, "");
+    grant_all_entitlements(
+      administration_environment, service_locator.GetAccount());
+    return market_data_environment.make_registry_client(service_locator);
+  }
+
   inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
     Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
     AdministrationService::AdministrationClient administration_client)
