@@ -8,6 +8,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Utilities/Expect.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/MoldUdp64/MoldUdp64Message.hpp"
 #include "Nexus/MoldUdp64/MoldUdp64Packet.hpp"
 
@@ -28,94 +29,95 @@ namespace Nexus::MoldUdp64 {
        * Constructs a MoldUdp64Client.
        * @param channel The Channel to connect to the MoldUdp64 server
        */
-      template<typename CF>
+      template<Beam::Initializes<C> CF>
       explicit MoldUdp64Client(CF&& channel);
 
       ~MoldUdp64Client();
 
       /** Reads the next message from the feed. */
-      MoldUdp64Message Read();
+      MoldUdp64Message read();
 
       /**
        * Reads the next message from the feed.
-       * @param sequenceNumber The message's sequence number.
+       * @param sequence_number The message's sequence number.
        */
-      MoldUdp64Message Read(Beam::Out<std::uint64_t> sequenceNumber);
+      MoldUdp64Message read(Beam::Out<std::uint64_t> sequence_number);
 
-      void Close();
+      void close();
 
     private:
       Beam::GetOptionalLocalPtr<C> m_channel;
       Beam::IO::SharedBuffer m_buffer;
       MoldUdp64Packet m_packet;
       const char* m_source;
-      std::size_t m_remainingSize;
-      std::uint64_t m_sequenceNumber;
-      Beam::IO::OpenState m_openState;
+      std::size_t m_remaining_size;
+      std::uint64_t m_sequence_number;
+      Beam::IO::OpenState m_open_state;
 
       MoldUdp64Client(const MoldUdp64Client&) = delete;
       MoldUdp64Client& operator =(const MoldUdp64Client&) = delete;
   };
 
   template<typename C>
-  template<typename CF>
+  template<Beam::Initializes<C> CF>
   MoldUdp64Client<C>::MoldUdp64Client(CF&& channel)
-    try : m_channel(std::forward<C>(channel)),
-          m_sequenceNumber(-1) {
+    try : m_channel(std::forward<CF>(channel)),
+          m_sequence_number(-1) {
     } catch(const std::exception&) {
-      std::throw_with_nested(Beam::IO::ConnectException(
-        "MoldUDP64 client failed to connect."));
+      std::throw_with_nested(
+        Beam::IO::ConnectException("MoldUDP64 client failed to connect."));
     }
 
   template<typename C>
   MoldUdp64Client<C>::~MoldUdp64Client() {
-    Close();
+    close();
   }
 
   template<typename C>
-  MoldUdp64Message MoldUdp64Client<C>::Read() {
-    auto sequenceNumber = std::uint64_t();
-    return Read(Beam::Store(sequenceNumber));
+  MoldUdp64Message MoldUdp64Client<C>::read() {
+    auto sequence_number = std::uint64_t();
+    return read(Beam::Store(sequence_number));
   }
 
   template<typename C>
-  MoldUdp64Message MoldUdp64Client<C>::Read(
-      Beam::Out<std::uint64_t> sequenceNumber) {
-    if(m_sequenceNumber == -1 ||
-        m_sequenceNumber == m_packet.m_sequenceNumber + m_packet.m_count) {
+  MoldUdp64Message MoldUdp64Client<C>::read(
+      Beam::Out<std::uint64_t> sequence_number) {
+    if(m_sequence_number == -1 ||
+        m_sequence_number == m_packet.m_sequence_number + m_packet.m_count) {
       while(true) {
         m_buffer.Reset();
         Beam::TryOrNest([&] {
           m_channel->GetReader().Read(Beam::Store(m_buffer));
-          m_packet = MoldUdp64Packet::Parse(
-            m_buffer.GetData(), m_buffer.GetSize());
+          m_packet =
+            MoldUdp64Packet::parse(m_buffer.GetData(), m_buffer.GetSize());
         }, Beam::IO::IOException("Failed to read MoldUDP64 packet."));
         if(m_packet.m_count != 0) {
-          m_sequenceNumber = m_packet.m_sequenceNumber;
+          m_sequence_number = m_packet.m_sequence_number;
           m_source = m_packet.m_payload;
-          m_remainingSize = m_buffer.GetSize() - MoldUdp64Packet::PACKET_LENGTH;
+          m_remaining_size =
+            m_buffer.GetSize() - MoldUdp64Packet::PACKET_LENGTH;
           break;
         }
       }
     }
     auto message = Beam::TryOrNest([&] {
-      return MoldUdp64Message::Parse(m_source, m_remainingSize);
+      return MoldUdp64Message::parse(m_source, m_remaining_size);
     }, Beam::IO::IOException("Failed to read MoldUDP64 packet."));
-    auto messageSize = message.m_length + sizeof(message.m_length);
-    m_remainingSize -= messageSize;
-    m_source += messageSize;
-    *sequenceNumber = m_sequenceNumber;
-    ++m_sequenceNumber;
+    auto message_size = message.m_length + sizeof(message.m_length);
+    m_remaining_size -= message_size;
+    m_source += message_size;
+    *sequence_number = m_sequence_number;
+    ++m_sequence_number;
     return message;
   }
 
   template<typename C>
-  void MoldUdp64Client<C>::Close() {
-    if(m_openState.SetClosing()) {
+  void MoldUdp64Client<C>::close() {
+    if(m_open_state.SetClosing()) {
       return;
     }
     m_channel->GetConnection().Close();
-    m_openState.Close();
+    m_open_state.Close();
   }
 }
 
