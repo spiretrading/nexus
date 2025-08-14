@@ -9,17 +9,14 @@ namespace Nexus::Compliance {
   class ComplianceCheckException :
       public std::runtime_error, public boost::exception {
     public:
+      using std::runtime_error::runtime_error;
 
-      /**
-       * Constructs a ComplianceCheckException.
-       * @param message A message describing the failure.
-       */
-      explicit ComplianceCheckException(const std::string& message);
+      /** Constructs a ComplianceCheckException. */
+      ComplianceCheckException();
   };
 
-  inline ComplianceCheckException::ComplianceCheckException(
-    const std::string& message)
-    : std::runtime_error(message) {}
+  inline ComplianceCheckException::ComplianceCheckException()
+    : std::runtime_error("Compliance check failed.") {}
 }
 
 #endif

@@ -7,26 +7,17 @@
 namespace Nexus::FixUtilities {
 
   /** Indicates that a FIX Order submission should be rejected. */
-  class FixOrderRejectedException : public std::runtime_error,
-      public boost::exception {
+  class FixOrderRejectedException :
+      public std::runtime_error, public boost::exception {
     public:
+      using std::runtime_error::runtime_error;
 
       /** Constructs a FixOrderRejectedException. */
       FixOrderRejectedException();
-
-      /**
-       * Constructs a FixOrderRejectedException.
-       * @param message A message describing the error.
-       */
-      FixOrderRejectedException(const std::string& message);
   };
 
   inline FixOrderRejectedException::FixOrderRejectedException()
     : std::runtime_error("Invalid order.") {}
-
-  inline FixOrderRejectedException::FixOrderRejectedException(
-    const std::string& message)
-    : std::runtime_error(message) {}
 }
 
 #endif

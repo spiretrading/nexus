@@ -9,23 +9,14 @@ namespace Nexus::SoupBinTcp {
   class SoupBinTcpParserException :
       public std::runtime_error, public boost::exception {
     public:
+      using std::runtime_error::runtime_error;
 
       /** Constructs a SoupBinTcpParserException. */
       SoupBinTcpParserException();
-
-      /**
-       * Constructs a SoupBinTcpParserException.
-       * @param message A message describing the error.
-       */
-      explicit SoupBinTcpParserException(const std::string& message);
   };
 
   inline SoupBinTcpParserException::SoupBinTcpParserException()
     : std::runtime_error("Operation failed") {}
-
-  inline SoupBinTcpParserException::SoupBinTcpParserException(
-    const std::string& message)
-    : std::runtime_error(message) {}
 }
 
 #endif

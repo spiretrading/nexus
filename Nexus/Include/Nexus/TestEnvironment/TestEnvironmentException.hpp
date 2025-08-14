@@ -9,23 +9,14 @@ namespace Nexus {
   class TestEnvironmentException :
       public std::runtime_error, public boost::exception {
     public:
+      using std::runtime_error::runtime_error;
 
       /** Constructs a TestEnvironmentException. */
       TestEnvironmentException();
-
-      /**
-       * Constructs a TestEnvironmentException.
-       * @param message A message describing the error.
-       */
-      TestEnvironmentException(const std::string& message);
   };
 
   inline TestEnvironmentException::TestEnvironmentException()
     : TestEnvironmentException("Invalid operation performed.") {}
-
-  inline TestEnvironmentException::TestEnvironmentException(
-    const std::string& message)
-    : std::runtime_error(message) {}
 }
 
 #endif

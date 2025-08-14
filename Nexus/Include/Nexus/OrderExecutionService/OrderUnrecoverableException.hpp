@@ -6,8 +6,8 @@
 namespace Nexus::OrderExecutionService {
 
   /** Exception to indicate that an Order can not be recovered. */
-  class OrderUnrecoverableException : public std::runtime_error,
-      public boost::exception {
+  class OrderUnrecoverableException :
+      public std::runtime_error, public boost::exception {
     public:
       using std::runtime_error::runtime_error;
 
