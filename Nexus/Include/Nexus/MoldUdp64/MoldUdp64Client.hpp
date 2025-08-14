@@ -59,6 +59,9 @@ namespace Nexus::MoldUdp64 {
   };
 
   template<typename C>
+  MoldUdp64Client(C&&) -> MoldUdp64Client<std::remove_reference_t<C>>;
+
+  template<typename C>
   template<Beam::Initializes<C> CF>
   MoldUdp64Client<C>::MoldUdp64Client(CF&& channel)
     try : m_channel(std::forward<CF>(channel)),
