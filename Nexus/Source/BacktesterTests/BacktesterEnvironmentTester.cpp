@@ -1,0 +1,51 @@
+#include <doctest/doctest.h>
+#include "Nexus/Backtester/BacktesterClients.hpp"
+#include "Nexus/Backtester/BacktesterEnvironment.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
+#include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
+#include "Nexus/TestEnvironment/TestClients.hpp"
+#include "Nexus/TestEnvironment/TestEnvironment.hpp"
+
+using namespace Beam;
+using namespace Beam::Queries;
+using namespace boost;
+using namespace boost::posix_time;
+using namespace Nexus;
+using namespace Nexus::DefaultVenues;
+using namespace Nexus::MarketDataService;
+using namespace Nexus::OrderExecutionService;
+
+TEST_SUITE("BacktesterEnvironment") {
+  TEST_CASE("fill_limit_order") {
+    auto start_time = time_from_string("2020-12-11 00:00:10");
+    auto data_store = LocalHistoricalDataStore();
+    auto security = Security("TST", NYSE);
+    auto timestamp = start_time - seconds(1);
+    auto bbo = SequencedValue(
+      IndexedValue(BboQuote(Quote(99 * Money::CENT, 100, Side::BID),
+        Quote(Money::ONE, 100, Side::ASK), timestamp), security),
+      EncodeTimestamp(timestamp, Beam::Queries::Sequence(1)));
+    data_store.store(bbo);
+    timestamp = start_time + seconds(1);
+    bbo = SequencedValue(
+      IndexedValue(BboQuote(Quote(98 * Money::CENT, 100, Side::BID),
+        Quote(99 * Money::CENT, 100, Side::ASK), timestamp), security),
+      EncodeTimestamp(timestamp, Beam::Queries::Sequence(2)));
+    data_store.store(bbo);
+    auto test_environment = TestEnvironment(HistoricalDataStore(&data_store));
+    auto backtester = BacktesterEnvironment(start_time,
+      Clients(std::in_place_type<TestClients>, Ref(test_environment)));
+    auto clients = BacktesterClients(Ref(backtester));
+    auto& order_execution_client = clients.get_order_execution_client();
+    auto order = order_execution_client.submit(
+      make_limit_order_fields(security, Side::BID, 100, 99 * Money::CENT));
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    order->get_publisher().Monitor(reports);
+    REQUIRE(reports->Pop().m_status == OrderStatus::PENDING_NEW);
+    REQUIRE(reports->Pop().m_status == OrderStatus::NEW);
+    auto fill = reports->Pop();
+    REQUIRE(fill.m_status == OrderStatus::FILLED);
+    REQUIRE(fill.m_last_price == 99 * Money::CENT);
+    REQUIRE(fill.m_last_quantity == 100);
+  }
+}

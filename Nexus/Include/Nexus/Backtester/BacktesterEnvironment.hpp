@@ -9,7 +9,9 @@
 #include <boost/optional/optional.hpp>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
+#include "Nexus/Backtester/BacktesterMarketDataClient.hpp"
 #include "Nexus/Backtester/BacktesterMarketDataService.hpp"
+#include "Nexus/Backtester/BacktesterTimeClient.hpp"
 #include "Nexus/Backtester/CutoffHistoricalDataStore.hpp"
 #include "Nexus/ChartingServiceTests/ChartingServiceTestEnvironment.hpp"
 #include "Nexus/Clients/Clients.hpp"
@@ -163,10 +165,10 @@ namespace Nexus {
         m_market_data_service(Beam::Ref(m_event_handler),
           Beam::Ref(m_market_data_environment),
           m_clients.get_market_data_client()),
-        m_market_data_client(std::make_unique<BacktesterMarketDataClient>(
+        m_market_data_client(std::in_place_type<BacktesterMarketDataClient>,
           Beam::Ref(m_market_data_service),
           m_market_data_environment.make_registry_client(
-            m_service_locator_client))),
+            m_service_locator_client)),
         m_charting_environment(m_service_locator_client, m_market_data_client),
         m_compliance_environment(
           m_service_locator_client, m_administration_client, m_time_client) {
@@ -190,8 +192,8 @@ namespace Nexus {
         std::in_place_type<Beam::Threading::TriggerTimer>);
       m_risk_environment.emplace(m_service_locator_client,
         m_administration_client, m_market_data_client,
-        *m_order_execution_client, transition_timer_factory,
-        m_time_client, definitions_client.load_exchange_rates(),
+        *m_order_execution_client, transition_timer_factory, m_time_client,
+        ExchangeRateTable(definitions_client.load_exchange_rates()),
         definitions_client.load_venue_database(),
         definitions_client.load_destination_database());
       auto root_account = m_service_locator_client.GetAccount();

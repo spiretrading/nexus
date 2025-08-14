@@ -95,6 +95,10 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<MarketDataService::IsMarketDataClient M, typename T>
+  void SimulationOrderExecutionDriver<M, T>::add(
+    const std::shared_ptr<const Order>& order) {}
+
+  template<MarketDataService::IsMarketDataClient M, typename T>
   std::shared_ptr<const Order> SimulationOrderExecutionDriver<M, T>::submit(
       const OrderInfo& info) {
     auto order = std::make_shared<PrimitiveOrder>(info);

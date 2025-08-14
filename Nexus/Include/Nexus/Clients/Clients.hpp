@@ -255,7 +255,7 @@ namespace Nexus {
   template<typename C>
   Clients::ServiceLocatorClient&
       Clients::WrappedClients<C>::get_service_locator_client() {
-    return m_serviceLocator_client;
+    return m_service_locator_client;
   }
 
   template<typename C>
