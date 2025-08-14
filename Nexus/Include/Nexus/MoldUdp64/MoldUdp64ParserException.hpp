@@ -1,40 +1,31 @@
-#ifndef NEXUS_MOLDUDP64PARSEREXCEPTION_HPP
-#define NEXUS_MOLDUDP64PARSEREXCEPTION_HPP
+#ifndef NEXUS_MOLD_UDP_64_PARSER_EXCEPTION_HPP
+#define NEXUS_MOLD_UDP_64_PARSER_EXCEPTION_HPP
 #include <stdexcept>
 #include <boost/exception/exception.hpp>
-#include "Nexus/MoldUdp64/MoldUdp64.hpp"
 
-namespace Nexus {
-namespace MoldUdp64 {
+namespace Nexus::MoldUdp64 {
 
-  /*! \class MoldUdp64ParserException
-      \brief Indicates that parsing an MoldUDP64 message failed.
-   */
-  class MoldUdp64ParserException : public std::runtime_error,
-      public boost::exception {
+  /** Indicates that parsing an MoldUDP64 message failed. */
+  class MoldUdp64ParserException :
+      public std::runtime_error, public boost::exception {
     public:
 
-      //! Constructs an MoldUdp64ParserException.
+      /** Constructs a MoldUdp64ParserException. */
       MoldUdp64ParserException();
 
-      //! Constructs a MoldUdp64ParserException.
-      /*!
-        \param message A message describing the error.
-      */
-      MoldUdp64ParserException(const std::string& message);
-
-      virtual ~MoldUdp64ParserException() throw();
+      /**
+       * Constructs a MoldUdp64ParserException.
+       * @param message A message describing the error.
+       */
+      explicit MoldUdp64ParserException(const std::string& message);
   };
 
   inline MoldUdp64ParserException::MoldUdp64ParserException()
-      : std::runtime_error("Operation failed") {}
+    : std::runtime_error("Operation failed") {}
 
   inline MoldUdp64ParserException::MoldUdp64ParserException(
-      const std::string& message)
-      : std::runtime_error(message) {}
-
-  inline MoldUdp64ParserException::~MoldUdp64ParserException() throw() {}
-}
+    const std::string& message)
+    : std::runtime_error(message) {}
 }
 
 #endif
