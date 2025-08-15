@@ -9,7 +9,7 @@
 namespace Nexus {
 
   /** Parses an OrderStatus. */
-  inline const auto& OrderStatusParser() {
+  inline const auto& order_status_parser() {
     static const auto parser = Beam::Parsers::EnumeratorParser(
       begin(Beam::MakeRange<OrderStatus>()),
       end(Beam::MakeRange<OrderStatus>()),
@@ -20,7 +20,7 @@ namespace Nexus {
 
 namespace Beam::Parsers {
   template<>
-  const auto default_parser<Nexus::OrderStatus> = Nexus::OrderStatusParser();
+  const auto default_parser<Nexus::OrderStatus> = Nexus::order_status_parser();
 }
 
 #endif

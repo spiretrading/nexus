@@ -9,10 +9,9 @@
 namespace Nexus {
 
   /** Parses an OrderType. */
-  inline const auto& OrderTypeParser() {
+  inline const auto& order_type_parser() {
     static const auto parser = Beam::Parsers::EnumeratorParser(
-      begin(Beam::MakeRange<OrderType>()),
-      end(Beam::MakeRange<OrderType>()),
+      begin(Beam::MakeRange<OrderType>()), end(Beam::MakeRange<OrderType>()),
       &boost::lexical_cast<std::string, OrderType>);
     return parser;
   }
@@ -20,7 +19,7 @@ namespace Nexus {
 
 namespace Beam::Parsers {
   template<>
-  const auto default_parser<Nexus::OrderType> = Nexus::OrderTypeParser();
+  const auto default_parser<Nexus::OrderType> = Nexus::order_type_parser();
 }
 
 #endif

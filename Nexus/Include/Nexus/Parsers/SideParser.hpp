@@ -9,7 +9,7 @@
 namespace Nexus {
 
   /** Parses a Side. */
-  inline const auto& SideParser() {
+  inline const auto& side_parser() {
     static const auto parser = Beam::Parsers::EnumeratorParser(
       begin(Beam::MakeRange<Side>()), end(Beam::MakeRange<Side>()),
       &boost::lexical_cast<std::string, Side>);
@@ -19,7 +19,7 @@ namespace Nexus {
 
 namespace Beam::Parsers {
   template<>
-  const auto default_parser<Nexus::Side> = Nexus::SideParser();
+  const auto default_parser<Nexus::Side> = Nexus::side_parser();
 }
 
 #endif

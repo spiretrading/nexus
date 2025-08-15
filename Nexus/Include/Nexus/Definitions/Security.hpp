@@ -48,10 +48,17 @@ namespace Nexus {
   inline Security parse_security(
       std::string_view source, const VenueDatabase& database) {
     auto separator = source.find_last_of('.');
-    if(separator == std::string_view::npos) {
+    if(separator == std::string_view::npos || separator == 0) {
       return Security();
     }
     auto symbol = source.substr(0, separator);
+    auto is_alphanumeric =
+      std::none_of(symbol.begin(), symbol.end(), [] (auto c) {
+        return std::isspace(static_cast<unsigned char>(c));
+      });
+    if(!is_alphanumeric) {
+      return Security();
+    }
     auto venue = parse_venue(source.substr(separator + 1), database);
     if(venue == Venue()) {
       return Security();

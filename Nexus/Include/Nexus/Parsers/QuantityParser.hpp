@@ -5,8 +5,8 @@
 
 namespace Nexus {
 
-  //! Returns a Quantity parser.
-  inline const auto& QuantityParser() {
+  /** Returns a Quantity parser. */
+  inline const auto& quantity_parser() {
     static const auto parser = Beam::Parsers::DecimalParser<Quantity>();
     return parser;
   }
@@ -14,7 +14,7 @@ namespace Nexus {
 
 namespace Beam::Parsers {
   template<>
-  const auto default_parser<Nexus::Quantity> = Nexus::QuantityParser();
+  const auto default_parser<Nexus::Quantity> = Nexus::quantity_parser();
 }
 
 #endif

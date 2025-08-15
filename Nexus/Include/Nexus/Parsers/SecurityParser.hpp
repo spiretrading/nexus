@@ -1,29 +1,27 @@
-#ifndef NEXUS_SECURITYPARSER_HPP
-#define NEXUS_SECURITYPARSER_HPP
+#ifndef NEXUS_SECURITY_PARSER_HPP
+#define NEXUS_SECURITY_PARSER_HPP
 #include <cctype>
 #include <Beam/Parsers/Parser.hpp>
 #include <Beam/Parsers/SubParserStream.hpp>
+#include <Beam/Parsers/Types.hpp>
 #include "Nexus/Definitions/Security.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
-#include "Nexus/Parsers/Parsers.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 
 namespace Nexus {
 
-  /*! \class SecurityParser
-      \brief Matches a Security.
-   */
+  /** Matches a Security. */
   class SecurityParser {
     public:
       using Result = Security;
 
-      //! Constructs a SecurityParser using the default MarketDatabase.
-      SecurityParser();
+      /** Constructs a SecurityParser using the default venues. */
+      SecurityParser() noexcept;
 
-      //! Constructs a SecurityParser.
-      /*!
-        \param marketDatabase The database of markets to match against.
-      */
-      SecurityParser(const MarketDatabase& marketDatabase);
+      /**
+       * Constructs a SecurityParser.
+       * @param venues The venues to parse.
+       */
+      explicit SecurityParser(const VenueDatabase& venues) noexcept;
 
       template<typename Stream>
       bool Read(Stream& source, Result& value) const;
@@ -32,14 +30,14 @@ namespace Nexus {
       bool Read(Stream& source) const;
 
     private:
-      MarketDatabase m_marketDatabase;
+      VenueDatabase m_venues;
   };
 
-  inline SecurityParser::SecurityParser()
-    : SecurityParser(GetDefaultMarketDatabase()) {}
+  inline SecurityParser::SecurityParser() noexcept
+    : SecurityParser(DEFAULT_VENUES) {}
 
-  inline SecurityParser::SecurityParser(const MarketDatabase& marketDatabase)
-    : m_marketDatabase(marketDatabase) {}
+  inline SecurityParser::SecurityParser(const VenueDatabase& venues) noexcept
+    : m_venues(venues) {}
 
   template<typename Stream>
   bool SecurityParser::Read(Stream& source, Result& value) const {
@@ -53,8 +51,8 @@ namespace Nexus {
         break;
       }
     }
-    value = ParseSecurity(symbol, m_marketDatabase);
-    if(value.GetMarket() == MarketCode()) {
+    value = parse_security(symbol, m_venues);
+    if(value.get_venue() == Venue()) {
       return false;
     }
     context.Accept();
@@ -66,6 +64,11 @@ namespace Nexus {
     auto security = Security();
     return Read(source, security);
   }
+}
+
+namespace Beam::Parsers {
+  template<>
+  const auto default_parser<Nexus::Security> = Nexus::SecurityParser();
 }
 
 #endif

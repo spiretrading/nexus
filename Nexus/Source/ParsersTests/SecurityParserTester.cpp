@@ -8,6 +8,7 @@ using namespace Beam;
 using namespace Beam::IO;
 using namespace Beam::Parsers;
 using namespace Nexus;
+using namespace Nexus::DefaultVenues;
 
 TEST_SUITE("SecurityParser") {
   TEST_CASE("well_formed_security") {
@@ -15,20 +16,44 @@ TEST_SUITE("SecurityParser") {
     auto stream = ParserStreamFromString("ABX.TSX");
     auto security = Security();
     REQUIRE(parser.Read(stream, security));
-    REQUIRE(security.GetSymbol() == "ABX");
-    REQUIRE(security.GetMarket() == DefaultMarkets::TSX());
-    REQUIRE(security.GetCountry() == DefaultCountries::CA());
-    stream = ParserStreamFromString("ABX.XST");
-    REQUIRE(!parser.Read(stream, security));
+    REQUIRE(security.get_symbol() == "ABX");
+    REQUIRE(security.get_venue() == TSX);
   }
 
-  TEST_CASE("upper_case_security") {
+  TEST_CASE("invalid_venue") {
+    auto parser = SecurityParser();
+    auto stream = ParserStreamFromString("ABX.XST");
+    auto security = Security();
+    REQUIRE_FALSE(parser.Read(stream, security));
+  }
+
+  TEST_CASE("lowercase_security") {
     auto parser = SecurityParser();
     auto stream = ParserStreamFromString("aBx.TsX");
     auto security = Security();
     REQUIRE(parser.Read(stream, security));
-    REQUIRE(security.GetSymbol() == "ABX");
-    REQUIRE(security.GetMarket() == DefaultMarkets::TSX());
-    REQUIRE(security.GetCountry() == DefaultCountries::CA());
+    REQUIRE(security.get_symbol() == "ABX");
+    REQUIRE(security.get_venue() == TSX);
+  }
+
+  TEST_CASE("missing_dot") {
+    auto parser = SecurityParser();
+    auto stream = ParserStreamFromString("ABXTSX");
+    auto security = Security();
+    REQUIRE_FALSE(parser.Read(stream, security));
+  }
+
+  TEST_CASE("empty_symbol") {
+    auto parser = SecurityParser();
+    auto stream = ParserStreamFromString(".TSX");
+    auto security = Security();
+    REQUIRE_FALSE(parser.Read(stream, security));
+  }
+
+  TEST_CASE("empty_venue") {
+    auto parser = SecurityParser();
+    auto stream = ParserStreamFromString("ABX.");
+    auto security = Security();
+    REQUIRE_FALSE(parser.Read(stream, security));
   }
 }
