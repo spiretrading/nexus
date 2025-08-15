@@ -321,7 +321,7 @@ namespace Nexus::MarketDataService {
       return;
     }
     if constexpr(std::is_same_v<typename Query::Index, Security>) {
-      if(query.GetIndex().get_venue() == Venue()) {
+      if(!query.GetIndex().get_venue()) {
         request.SetResult(result);
         return;
       }

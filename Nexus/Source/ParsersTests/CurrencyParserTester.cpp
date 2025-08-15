@@ -24,7 +24,7 @@ TEST_SUITE("CurrencyParser") {
     auto stream = ParserStreamFromString("ZZZ");
     auto currency = CurrencyId();
     REQUIRE_FALSE(parser.Read(stream, currency));
-    REQUIRE(currency == CurrencyId::NONE);
+    REQUIRE(!currency);
   }
 
   TEST_CASE("lowercase_currency") {
@@ -32,7 +32,7 @@ TEST_SUITE("CurrencyParser") {
     auto stream = ParserStreamFromString("usd");
     auto currency = CurrencyId();
     REQUIRE_FALSE(parser.Read(stream, currency));
-    REQUIRE(currency == CurrencyId::NONE);
+    REQUIRE(!currency);
   }
 
   TEST_CASE("partial_currency") {
@@ -40,7 +40,7 @@ TEST_SUITE("CurrencyParser") {
     auto stream = ParserStreamFromString("US");
     auto currency = CurrencyId();
     REQUIRE_FALSE(parser.Read(stream, currency));
-    REQUIRE(currency == CurrencyId::NONE);
+    REQUIRE(!currency);
   }
 
   TEST_CASE("multiple_currencies") {

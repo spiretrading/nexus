@@ -65,6 +65,11 @@ TEST_SUITE("Venue") {
     REQUIRE(result == none);
   }
 
+  TEST_CASE("empty") {
+    REQUIRE_FALSE(static_cast<bool>(Venue()));
+    REQUIRE(static_cast<bool>(Venue("ABCD")));
+  }
+
   TEST_CASE("find_remove") {
     auto database = VenueDatabase();
     auto venue = Venue("ABCD");

@@ -547,7 +547,7 @@ namespace Nexus::OrderExecutionService {
       revised_fields->m_destination = m_destinations.get_preferred_destination(
         order_fields->m_security.get_venue()).m_id;
     }
-    if(order_fields->m_currency == CurrencyId::NONE) {
+    if(!order_fields->m_currency) {
       if(!revised_fields) {
         revised_fields.emplace(*order_fields);
         order_fields = revised_fields.get_ptr();
@@ -570,7 +570,7 @@ namespace Nexus::OrderExecutionService {
           order_info, "Insufficient permissions to execute order.");
         m_rejected_orders.push_back(order);
         return order;
-      } else if(order_info.m_fields.m_security.get_venue() == Venue()) {
+      } else if(!order_info.m_fields.m_security.get_venue()) {
         auto order = make_rejected_order(order_info, "Market not specified.");
         m_rejected_orders.push_back(order);
         return order;

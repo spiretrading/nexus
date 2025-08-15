@@ -7,13 +7,18 @@ using namespace Nexus;
 TEST_SUITE("Country") {
   TEST_CASE("comparison") {
     auto default_code = CountryCode();
-    REQUIRE(default_code == CountryCode::NONE);
+    REQUIRE(!default_code);
     auto code1 = CountryCode(42);
     auto code2 = CountryCode(42);
     auto code3 = CountryCode(7);
     REQUIRE(code1 == code2);
     REQUIRE(code3 < code1);
     REQUIRE(code1 > code3);
+  }
+
+  TEST_CASE("empty") {
+    REQUIRE_FALSE(static_cast<bool>(CountryCode()));
+    REQUIRE(static_cast<bool>(CountryCode(840)));
   }
 
   TEST_CASE("stream") {
@@ -47,7 +52,7 @@ TEST_SUITE("Country") {
 
   TEST_CASE("none") {
     auto none = CountryDatabase::NONE;
-    REQUIRE(none.m_code == CountryCode::NONE);
+    REQUIRE(!none.m_code);
     REQUIRE(none.m_name == "");
     REQUIRE(none.m_two_letter_code == "??");
     REQUIRE(none.m_three_letter_code == "???");
@@ -72,7 +77,7 @@ TEST_SUITE("Country") {
     REQUIRE(entries[0].m_code == CountryCode(1));
     REQUIRE(entries[1].m_code == CountryCode(2));
     REQUIRE(database.from(CountryCode(1)).m_name == "One");
-    REQUIRE(database.from(CountryCode(3)).m_code == CountryCode::NONE);
+    REQUIRE(!database.from(CountryCode(3)).m_code);
   }
 
   TEST_CASE("name_lookup") {
@@ -86,7 +91,7 @@ TEST_SUITE("Country") {
     REQUIRE(database.from_name("FiveLand").m_code == CountryCode(5));
     REQUIRE(database.from("FL").m_code == CountryCode(5));
     REQUIRE(database.from("FIV").m_code == CountryCode(5));
-    REQUIRE(database.from_name("Unknown").m_code == CountryCode::NONE);
+    REQUIRE(!database.from_name("Unknown").m_code);
   }
 
   TEST_CASE("remove") {
@@ -99,7 +104,7 @@ TEST_SUITE("Country") {
     database.add(entry);
     REQUIRE(database.from(CountryCode(9)).m_code == CountryCode(9));
     database.remove(CountryCode(9));
-    REQUIRE(database.from(CountryCode(9)).m_code == CountryCode::NONE);
+    REQUIRE(!database.from(CountryCode(9)).m_code);
   }
 
   TEST_CASE("shuttle") {
@@ -125,7 +130,7 @@ TEST_SUITE("Country") {
     REQUIRE(parse_country_code("EI", database) == CountryCode(8));
     REQUIRE(parse_country_code("EGT", database) == CountryCode(8));
     REQUIRE(parse_country_code("Eight", database) == CountryCode(8));
-    REQUIRE(parse_country_code("Unknown", database) == CountryCode::NONE);
+    REQUIRE(!parse_country_code("Unknown", database));
   }
 
 

@@ -39,6 +39,9 @@ namespace Nexus {
       /** Returns the integral representation of this id. */
       constexpr explicit operator std::uint16_t() const noexcept;
 
+      /** Tests if this CurrencyId is not equal to NONE. */
+      constexpr explicit operator bool() const;
+
       auto operator <=>(const CurrencyId&) const = default;
 
     private:
@@ -179,7 +182,7 @@ namespace Nexus {
       database = &DEFAULT_CURRENCIES;
     }
     auto& entry = database->from(value);
-    if(entry.m_id != CurrencyId::NONE) {
+    if(entry.m_id) {
       return out << entry.m_code;
     }
     return out << static_cast<std::uint16_t>(value);
@@ -204,6 +207,10 @@ namespace Nexus {
 
   constexpr CurrencyId::operator std::uint16_t() const noexcept {
     return m_value;
+  }
+
+  constexpr CurrencyId::operator bool() const {
+    return m_value != NONE.m_value;
   }
 
   inline CurrencyDatabase::CurrencyDatabase(

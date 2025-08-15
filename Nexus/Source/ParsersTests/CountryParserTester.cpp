@@ -24,7 +24,7 @@ TEST_SUITE("CountryParser") {
     auto stream = ParserStreamFromString("QQQQQ");
     auto country = CountryCode();
     REQUIRE_FALSE(parser.Read(stream, country));
-    REQUIRE(country == CountryCode::NONE);
+    REQUIRE(!country);
   }
 
   TEST_CASE("lowercase_country") {
@@ -32,7 +32,7 @@ TEST_SUITE("CountryParser") {
     auto stream = ParserStreamFromString("can");
     auto country = CountryCode();
     REQUIRE_FALSE(parser.Read(stream, country));
-    REQUIRE(country == CountryCode::NONE);
+    REQUIRE(!country);
   }
 
   TEST_CASE("partial_country") {
@@ -40,7 +40,7 @@ TEST_SUITE("CountryParser") {
     auto stream = ParserStreamFromString("CA");
     auto country = CountryCode();
     REQUIRE_FALSE(parser.Read(stream, country));
-    REQUIRE(country == CountryCode::NONE);
+    REQUIRE(!country);
   }
 
   TEST_CASE("multiple_countries") {

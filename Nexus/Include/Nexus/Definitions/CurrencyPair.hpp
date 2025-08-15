@@ -38,11 +38,11 @@ namespace Nexus {
     auto base_code = symbol.substr(0, separator);
     auto counter_code = symbol.substr(separator + 1);
     auto base = database.from(base_code).m_id;
-    if(base == CurrencyId::NONE) {
+    if(!base) {
       BOOST_THROW_EXCEPTION(std::runtime_error("Invalid base currency code."));
     }
     auto counter = database.from(counter_code).m_id;
-    if(counter == CurrencyId::NONE) {
+    if(!counter) {
       BOOST_THROW_EXCEPTION(
         std::runtime_error("Invalid counter currency code."));
     }

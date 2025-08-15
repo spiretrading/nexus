@@ -123,7 +123,7 @@ namespace Nexus::RiskService {
 
   template<typename T>
   void RiskStateModel<T>::update_portfolio() {
-    if(m_parameters.m_currency == CurrencyId::NONE) {
+    if(!m_parameters.m_currency) {
       return;
     }
     auto profit_and_loss = Money::ZERO;

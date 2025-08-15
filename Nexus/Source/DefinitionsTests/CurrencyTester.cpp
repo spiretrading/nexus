@@ -8,13 +8,18 @@ using namespace Nexus::DefaultCurrencies;
 TEST_SUITE("Currency") {
   TEST_CASE("comparison") {
     auto default_id = CurrencyId();
-    REQUIRE(default_id == CurrencyId::NONE);
+    REQUIRE(!default_id);
     auto id1 = CurrencyId(100);
     auto id2 = CurrencyId(100);
     auto id3 = CurrencyId(50);
     REQUIRE(id1 == id2);
     REQUIRE(id3 < id1);
     REQUIRE(id1 > id3);
+  }
+
+  TEST_CASE("empty") {
+    REQUIRE_FALSE(static_cast<bool>(CurrencyId()));
+    REQUIRE(static_cast<bool>(CurrencyId(840)));
   }
 
   TEST_CASE("stream") {
@@ -31,7 +36,7 @@ TEST_SUITE("Currency") {
 
   TEST_CASE("none") {
     auto none = CurrencyDatabase::NONE;
-    REQUIRE(none.m_id == CurrencyId::NONE);
+    REQUIRE(!none.m_id);
     REQUIRE(none.m_code == "???");
     REQUIRE(none.m_sign == "?");
   }
@@ -50,7 +55,7 @@ TEST_SUITE("Currency") {
     database.add(entry2);
     REQUIRE(database.from(CurrencyId(10)).m_sign == "A$");
     REQUIRE(database.from(CurrencyId(5)).m_sign == "B$");
-    REQUIRE(database.from(CurrencyId(7)).m_id == CurrencyId::NONE);
+    REQUIRE(!database.from(CurrencyId(7)).m_id);
   }
 
   TEST_CASE("code_lookup") {
@@ -61,7 +66,7 @@ TEST_SUITE("Currency") {
     entry.m_sign = "C$";
     database.add(entry);
     REQUIRE(database.from("CCC").m_id == CurrencyId(20));
-    REQUIRE(database.from("XXX").m_id == CurrencyId::NONE);
+    REQUIRE(!database.from("XXX").m_id);
   }
 
   TEST_CASE("remove") {
@@ -73,7 +78,7 @@ TEST_SUITE("Currency") {
     database.add(entry);
     REQUIRE(database.from(CurrencyId(30)).m_id == CurrencyId(30));
     database.remove(CurrencyId(30));
-    REQUIRE(database.from(CurrencyId(30)).m_id == CurrencyId::NONE);
+    REQUIRE(!database.from(CurrencyId(30)).m_id);
   }
 
   TEST_CASE("sort_order") {
@@ -116,7 +121,7 @@ TEST_SUITE("Currency") {
   TEST_CASE("parse_currency_unknown") {
     auto database = CurrencyDatabase();
     auto id = parse_currency("EUR", database);
-    REQUIRE(id == CurrencyId::NONE);
+    REQUIRE(!id);
   }
 
   TEST_CASE("parse_currency_database_entry") {

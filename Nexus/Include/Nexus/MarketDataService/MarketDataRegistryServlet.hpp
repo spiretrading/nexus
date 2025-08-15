@@ -206,7 +206,7 @@ namespace Nexus::MarketDataService {
     m_registry->publish(delta, source_id, *m_data_store,
       [&] (const auto& quote) {
         m_data_store->store(quote);
-        if(security.get_venue() == Venue()) {
+        if(!security.get_venue()) {
           return;
         }
         m_book_quote_subscriptions.Publish(quote, [&] (const auto& client) {
@@ -324,7 +324,7 @@ namespace Nexus::MarketDataService {
     AdministrationService::IsAdministrationClient A>
   Security MarketDataRegistryServlet<C, R, D, A>::normalize(
       const Security& security) {
-    if(security.get_venue() == Venue()) {
+    if(!security.get_venue()) {
       return security;
     }
     auto result =
@@ -444,7 +444,7 @@ namespace Nexus::MarketDataService {
         ServiceProtocolClient& client, Security security) {
     auto& session = client.GetSession();
     security = normalize(security);
-    if(security == Security()) {
+    if(!security) {
       return {};
     }
     auto snapshot = m_registry->find_snapshot(security);

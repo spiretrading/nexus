@@ -9,13 +9,18 @@ TEST_SUITE("Security") {
   TEST_CASE("default") {
     auto security = Security();
     REQUIRE(security.get_symbol().empty());
-    REQUIRE(security.get_venue() == Venue());
+    REQUIRE(!security.get_venue());
   }
 
   TEST_CASE("constructor") {
     auto security = Security("AAPL", NASDAQ);
     REQUIRE(security.get_symbol() == "AAPL");
     REQUIRE(security.get_venue() == NASDAQ);
+  }
+
+  TEST_CASE("empty") {
+    REQUIRE_FALSE(static_cast<bool>(Security()));
+    REQUIRE(static_cast<bool>(Security("AAPL", NASDAQ)));
   }
 
   TEST_CASE("hash") {
@@ -27,7 +32,7 @@ TEST_SUITE("Security") {
 
   TEST_CASE("parse") {
     auto invalid = parse_security("XYZ", DEFAULT_VENUES);
-    REQUIRE(invalid == Security());
+    REQUIRE(!invalid);
     auto valid = parse_security("TSLA.NSDQ", DEFAULT_VENUES);
     REQUIRE(valid.get_symbol() == "TSLA");
     REQUIRE(valid.get_venue() == NASDAQ);
@@ -55,6 +60,34 @@ TEST_SUITE("Security") {
     ss = std::istringstream("INVALID");
     auto invalid_security = Security();
     ss >> invalid_security;
-    REQUIRE(invalid_security == Security());
+    REQUIRE(!invalid_security);
+  }
+
+  TEST_CASE("parse_security_set") {
+    auto yaml = R"(
+      - ABX.TSX
+      - RY.TSX
+      - MSFT.NSDQ
+    )";
+    auto node = YAML::Load(yaml);
+    auto securities = parse_security_set(node);
+    REQUIRE(securities.size() == 3);
+    REQUIRE(securities.contains(Security("ABX", TSX)));
+    REQUIRE(securities.contains(Security("RY", TSX)));
+    REQUIRE(securities.contains(Security("MSFT", NASDAQ)));
+  }
+
+  TEST_CASE("parse_security_set_with_invalid") {
+    auto yaml = R"(
+      - ABX.TSX
+      - "   .TSX"
+      - INVALID
+      - RY.TSX
+    )";
+    auto node = YAML::Load(yaml);
+    auto securities = parse_security_set(node);
+    REQUIRE(securities.size() == 2);
+    REQUIRE(securities.contains(Security("ABX", TSX)));
+    REQUIRE(securities.contains(Security("RY", TSX)));
   }
 }

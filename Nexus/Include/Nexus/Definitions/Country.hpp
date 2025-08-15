@@ -40,6 +40,9 @@ namespace Nexus {
       /** Returns the integral representation of this code. */
       constexpr explicit operator std::uint16_t() const noexcept;
 
+      /** Tests if this CountryCode is not equal to NONE. */
+      constexpr explicit operator bool() const;
+
       constexpr auto operator <=>(const CountryCode&) const = default;
 
     private:
@@ -142,12 +145,12 @@ namespace Nexus {
     auto length = source.size();
     if(length == 2) {
       auto code = database.from(CountryDatabase::TwoLetterCode(source));
-      if(code.m_code != CountryCode::NONE) {
+      if(code.m_code) {
         return code.m_code;
       }
     } else if(length == 3) {
       auto code = database.from(CountryDatabase::ThreeLetterCode(source));
-      if(code.m_code != CountryCode::NONE) {
+      if(code.m_code) {
         return code.m_code;
       }
     }
@@ -210,7 +213,7 @@ namespace Nexus {
       database = &DEFAULT_COUNTRIES;
     }
     auto& entry = database->from(code);
-    if(entry.m_code != CountryCode::NONE) {
+    if(entry.m_code) {
       return out << entry.m_two_letter_code;
     }
     return out << static_cast<std::uint16_t>(code);
@@ -235,6 +238,10 @@ namespace Nexus {
 
   constexpr CountryCode::operator std::uint16_t() const noexcept {
     return m_value;
+  }
+
+  constexpr CountryCode::operator bool() const {
+    return m_value != NONE.m_value;
   }
 
   inline CountryDatabase::CountryDatabase(

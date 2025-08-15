@@ -72,7 +72,7 @@ void Nexus::Python::ExportApplicationMarketDataFeedClient(module& module) {
   static auto factory = [] (ServiceLocatorClientBox serviceLocatorClient,
       time_duration sampling, CountryCode country) {
     auto service = [&] {
-      if(country == CountryCode::NONE) {
+      if(!country) {
         auto services = serviceLocatorClient.Locate(FEED_SERVICE_NAME);
         if(services.empty()) {
           BOOST_THROW_EXCEPTION(ConnectException(

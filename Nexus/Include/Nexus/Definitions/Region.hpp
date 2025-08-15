@@ -273,7 +273,7 @@ namespace Nexus {
         continue;
       }
       auto country = DEFAULT_VENUES.from(security.get_venue()).m_country_code;
-      if(country != CountryCode::NONE && region.m_countries.contains(country)) {
+      if(country && region.m_countries.contains(country)) {
         continue;
       }
       return false;
@@ -283,7 +283,7 @@ namespace Nexus {
         continue;
       }
       auto country = DEFAULT_VENUES.from(venue).m_country_code;
-      if(country != CountryCode::NONE && region.m_countries.contains(country)) {
+      if(country && region.m_countries.contains(country)) {
         continue;
       }
       return false;

@@ -13,7 +13,7 @@ TEST_SUITE("EntitlementDatabase") {
     auto none = EntitlementDatabase::NONE;
     REQUIRE(none.m_name.empty());
     REQUIRE(none.m_price == Money::ZERO);
-    REQUIRE(none.m_currency == CurrencyId::NONE);
+    REQUIRE(!none.m_currency);
     REQUIRE(none.m_group_entry == DirectoryEntry());
     REQUIRE(none.m_applicability.empty());
   }

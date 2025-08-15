@@ -200,7 +200,7 @@ namespace Nexus::MarketDataService {
 
   inline boost::optional<SecuritySnapshot>
       SecurityEntry::load_snapshot() const {
-    if(m_security.get_venue() == Venue()) {
+    if(!m_security.get_venue()) {
       return boost::none;
     }
     auto snapshot = SecuritySnapshot(m_security);
@@ -227,7 +227,7 @@ namespace Nexus::MarketDataService {
       const BboQuote& bbo_quote, int source_id) {
     if(m_technicals_reset_time == boost::posix_time::not_a_date_time) {
       auto& venue_entry = m_venues.from(m_security.get_venue());
-      if(venue_entry.m_venue != Venue()) {
+      if(venue_entry.m_venue) {
         auto time_zone = m_time_zones.time_zone_from_region(
           venue_entry.m_time_zone);
         auto reset_time = boost::local_time::local_date_time(

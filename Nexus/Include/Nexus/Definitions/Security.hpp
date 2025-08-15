@@ -4,7 +4,9 @@
 #include <ostream>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <Beam/Serialization/DataShuttle.hpp>
+#include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/hash.hpp>
 #include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/Venue.hpp"
@@ -30,6 +32,9 @@ namespace Nexus {
 
       /** Returns the venue. */
       Venue get_venue() const;
+
+      /** Returns true if this Security is not empty. */
+      explicit operator bool() const;
 
       auto operator <=>(const Security&) const = default;
 
@@ -59,11 +64,10 @@ namespace Nexus {
     if(!is_alphanumeric) {
       return Security();
     }
-    auto venue = parse_venue(source.substr(separator + 1), database);
-    if(venue == Venue()) {
-      return Security();
+    if(auto venue = parse_venue(source.substr(separator + 1), database)) {
+      return Security(std::string(symbol), venue);
     }
-    return Security(std::string(symbol), venue);
+    return Security();
   }
 
   /**
@@ -76,7 +80,7 @@ namespace Nexus {
   }
 
   inline std::ostream& operator <<(std::ostream& out, const Security& value) {
-    if(value.get_venue() == Venue() || value.get_symbol().empty()) {
+    if(!value.get_venue() || value.get_symbol().empty()) {
       return out << value.get_symbol();
     }
     return out << value.get_symbol() << '.' << value.get_venue();
@@ -107,6 +111,10 @@ namespace Nexus {
   inline Venue Security::get_venue() const {
     return m_venue;
   }
+
+  inline Security::operator bool() const {
+    return !m_symbol.empty() && m_venue;
+  }
 }
 
 namespace Beam::Serialization {
@@ -128,6 +136,36 @@ namespace std {
       return Nexus::hash_value(value);
     }
   };
+}
+
+namespace Nexus {
+
+  /**
+   * Parses a set of symbols from a YAML config.
+   * @param config The config to parse.
+   * @param venues The available venues to parse.
+   * @return The set of parsed symbols.
+   */
+  inline std::unordered_set<Security> parse_security_set(
+      const YAML::Node& config, const VenueDatabase& venues) {
+    auto securities = std::unordered_set<Security>();
+    for(auto& item : config) {
+      if(auto security = parse_security(item.as<std::string>(), venues)) {
+        securities.insert(security);
+      }
+    }
+    return securities;
+  }
+
+  /**
+   * Parses a set of symbols from a YAML config using the default venues.
+   * @param config The config to parse.
+   * @return The set of parsed symbols.
+   */
+  inline std::unordered_set<Security> parse_security_set(
+      const YAML::Node& config) {
+    return parse_security_set(config, DEFAULT_VENUES);
+  }
 }
 
 #endif

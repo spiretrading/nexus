@@ -142,7 +142,7 @@ namespace Nexus {
       auto names = Beam::Extract<std::vector<std::string>>(node, "venues");
       for(auto& name : names) {
         auto venue = parse_venue(name, database);
-        if(venue == Venue()) {
+        if(!venue) {
           BOOST_THROW_EXCEPTION(
             Beam::MakeYamlParserException("Invalid venue.", node.Mark()));
         }
@@ -170,7 +170,7 @@ namespace Nexus {
       for(auto node : Beam::GetNode(node, "preferred_destinations")) {
         auto venue =
           parse_venue(Beam::Extract<std::string>(node, "venue"), database);
-        if(venue == Venue()) {
+        if(!venue) {
           BOOST_THROW_EXCEPTION(
             Beam::MakeYamlParserException("Invalid venue.", node.Mark()));
         }

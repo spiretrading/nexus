@@ -52,7 +52,7 @@ namespace Nexus {
       }
     }
     value = parse_security(symbol, m_venues);
-    if(value.get_venue() == Venue()) {
+    if(!value.get_venue()) {
       return false;
     }
     context.Accept();

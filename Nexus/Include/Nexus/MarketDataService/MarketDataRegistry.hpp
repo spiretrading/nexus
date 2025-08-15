@@ -239,7 +239,7 @@ namespace Nexus::MarketDataService {
 
   inline Security MarketDataRegistry::get_primary_listing(
       const Security& security) const {
-    if(security.get_symbol().empty() || security.get_venue() == Venue()) {
+    if(security.get_symbol().empty() || !security.get_venue()) {
       return Security(security.get_symbol(), Venue());
     }
     auto venue_key =
@@ -248,7 +248,7 @@ namespace Nexus::MarketDataService {
       return std::move(*verified_security);
     }
     auto& venue_entry = m_venues.from(security.get_venue());
-    if(venue_entry.m_venue == Venue()) {
+    if(!venue_entry.m_venue) {
       return security;
     }
     auto country_key = 
@@ -292,7 +292,7 @@ namespace Nexus::MarketDataService {
       database[name.c_str()] = info;
     });
     auto& venue_entry = m_venues.from(info.m_security.get_venue());
-    if(venue_entry.m_venue == Venue()) {
+    if(!venue_entry.m_venue) {
       return;
     }
     auto venue_key = PrimaryListingKey(
@@ -400,7 +400,7 @@ namespace Nexus::MarketDataService {
   template<IsHistoricalDataStore D>
   boost::optional<MarketDataRegistry::SyncVenueEntry&>
       MarketDataRegistry::load(Venue venue, D& data_store) {
-    if(venue == Venue()) {
+    if(!venue) {
       return boost::none;
     }
     auto entry = m_venue_entries.GetOrInsert(venue, [&] {
@@ -417,7 +417,7 @@ namespace Nexus::MarketDataService {
   boost::optional<MarketDataRegistry::SyncSecurityEntry&>
       MarketDataRegistry::load(
         const Security& security, D& data_store) {
-    if(security.get_symbol().empty() || security.get_venue() == Venue()) {
+    if(security.get_symbol().empty() || !security.get_venue()) {
       return boost::none;
     }
     auto entry = m_security_entries.GetOrInsert(security, [&] {

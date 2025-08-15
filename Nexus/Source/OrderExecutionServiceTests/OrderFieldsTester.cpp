@@ -22,8 +22,8 @@ TEST_SUITE("OrderFields") {
   TEST_CASE("default_constructor") {
     auto fields = OrderFields();
     REQUIRE(fields.m_account == DirectoryEntry());
-    REQUIRE(fields.m_security == Security());
-    REQUIRE(fields.m_currency == CurrencyId::NONE);
+    REQUIRE(!fields.m_security);
+    REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::NONE);
     REQUIRE(fields.m_side == Side::NONE);
     REQUIRE(fields.m_destination.empty());
@@ -112,7 +112,7 @@ TEST_SUITE("OrderFields") {
       account, security, side, destination, quantity, price);
     REQUIRE(fields.m_account == account);
     REQUIRE(fields.m_security == security);
-    REQUIRE(fields.m_currency == CurrencyId::NONE);
+    REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::LIMIT);
     REQUIRE(fields.m_side == side);
     REQUIRE(fields.m_destination == destination);
@@ -132,7 +132,7 @@ TEST_SUITE("OrderFields") {
       make_limit_order_fields(security, side, destination, quantity, price);
     REQUIRE(fields.m_account == DirectoryEntry());
     REQUIRE(fields.m_security == security);
-    REQUIRE(fields.m_currency == CurrencyId::NONE);
+    REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::LIMIT);
     REQUIRE(fields.m_side == side);
     REQUIRE(fields.m_destination == destination);
@@ -172,7 +172,7 @@ TEST_SUITE("OrderFields") {
       make_limit_order_fields(account, security, side, quantity, price);
     REQUIRE(fields.m_account == account);
     REQUIRE(fields.m_security == security);
-    REQUIRE(fields.m_currency == CurrencyId::NONE);
+    REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::LIMIT);
     REQUIRE(fields.m_side == side);
     REQUIRE(fields.m_destination.empty());
@@ -190,7 +190,7 @@ TEST_SUITE("OrderFields") {
     auto fields = make_limit_order_fields(security, side, quantity, price);
     REQUIRE(fields.m_account == DirectoryEntry());
     REQUIRE(fields.m_security == security);
-    REQUIRE(fields.m_currency == CurrencyId::NONE);
+    REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::LIMIT);
     REQUIRE(fields.m_side == side);
     REQUIRE(fields.m_destination.empty());
@@ -251,7 +251,7 @@ TEST_SUITE("OrderFields") {
       make_market_order_fields(account, security, side, destination, quantity);
     REQUIRE(fields.m_account == account);
     REQUIRE(fields.m_security == security);
-    REQUIRE(fields.m_currency == CurrencyId::NONE);
+    REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::MARKET);
     REQUIRE(fields.m_side == side);
     REQUIRE(fields.m_destination == destination);
@@ -270,7 +270,7 @@ TEST_SUITE("OrderFields") {
       make_market_order_fields(security, side, destination, quantity);
     REQUIRE(fields.m_account == DirectoryEntry());
     REQUIRE(fields.m_security == security);
-    REQUIRE(fields.m_currency == CurrencyId::NONE);
+    REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::MARKET);
     REQUIRE(fields.m_side == side);
     REQUIRE(fields.m_destination == destination);
@@ -306,7 +306,7 @@ TEST_SUITE("OrderFields") {
     auto fields = make_market_order_fields(account, security, side, quantity);
     REQUIRE(fields.m_account == account);
     REQUIRE(fields.m_security == security);
-    REQUIRE(fields.m_currency == CurrencyId::NONE);
+    REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::MARKET);
     REQUIRE(fields.m_side == side);
     REQUIRE(fields.m_destination.empty());
@@ -323,7 +323,7 @@ TEST_SUITE("OrderFields") {
     auto fields = make_market_order_fields(security, side, quantity);
     REQUIRE(fields.m_account == DirectoryEntry());
     REQUIRE(fields.m_security == security);
-    REQUIRE(fields.m_currency == CurrencyId::NONE);
+    REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::MARKET);
     REQUIRE(fields.m_side == side);
     REQUIRE(fields.m_destination.empty());

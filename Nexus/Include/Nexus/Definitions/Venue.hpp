@@ -38,7 +38,11 @@ namespace Nexus {
        */
       explicit Venue(Code mic) noexcept;
 
+      /** Returns the MIC. */
       Code get_code() const;
+
+      /** Returns true if this is not an empty venue. */
+      explicit operator bool() const;
 
       auto operator <=>(const Venue&) const = default;
 
@@ -144,7 +148,7 @@ namespace Nexus {
   inline const VenueDatabase::Entry& parse_venue_entry(
       std::string_view source, const VenueDatabase& database) {
     auto& entry = database.from_display_name(source);
-    if(entry.m_venue == Venue()) {
+    if(!entry.m_venue) {
       return database.from(Venue(source));
     }
     return entry;
@@ -196,7 +200,7 @@ namespace Nexus {
       entry.m_venue = Venue(Beam::Extract<std::string>(node, "venue"));
       entry.m_country_code = parse_country_code(
         Beam::Extract<std::string>(node, "country_code"), country_database);
-      if(entry.m_country_code == CountryCode::NONE) {
+      if(!entry.m_country_code) {
         BOOST_THROW_EXCEPTION(
           Beam::MakeYamlParserException("Invalid country code.", node.Mark()));
       }
@@ -204,7 +208,7 @@ namespace Nexus {
       entry.m_time_zone = Beam::Extract<std::string>(node, "time_zone");
       entry.m_currency = parse_currency(
         Beam::Extract<std::string>(node, "currency"), currency_database);
-      if(entry.m_currency == CurrencyId::NONE) {
+      if(!entry.m_currency) {
         BOOST_THROW_EXCEPTION(
           Beam::MakeYamlParserException("Invalid currency.", node.Mark()));
       }
@@ -246,7 +250,7 @@ namespace Nexus {
       database = &DEFAULT_VENUES;
     }
     auto& entry = database->from(venue);
-    if(entry.m_venue != Venue()) {
+    if(entry.m_venue) {
       return out << entry.m_display_name;
     }
     return out << venue.get_code();
@@ -289,6 +293,10 @@ namespace Nexus {
 
   inline Venue::Code Venue::get_code() const {
     return m_mic;
+  }
+
+  inline Venue::operator bool() const {
+    return !m_mic.IsEmpty();
   }
 
   inline VenueDatabase::VenueDatabase(const VenueDatabase& database) noexcept
