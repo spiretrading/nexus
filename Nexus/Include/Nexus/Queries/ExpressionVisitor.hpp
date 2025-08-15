@@ -1,6 +1,5 @@
 #ifndef NEXUS_EXPRESSION_VISITOR_HPP
 #define NEXUS_EXPRESSION_VISITOR_HPP
-#include "Nexus/Queries/Queries.hpp"
 
 namespace Nexus::Queries {
 

@@ -2,7 +2,6 @@
 #define NEXUS_TRAVERSAL_EXPRESSION_VISITOR_HPP
 #include <Beam/Queries/TraversalExpressionVisitor.hpp>
 #include "Nexus/Queries/ExpressionVisitor.hpp"
-#include "Nexus/Queries/Queries.hpp"
 
 namespace Nexus::Queries {
 

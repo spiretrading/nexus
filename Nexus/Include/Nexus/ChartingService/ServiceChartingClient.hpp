@@ -14,6 +14,7 @@
 #include "Nexus/ChartingService/ChartingClient.hpp"
 #include "Nexus/ChartingService/ChartingServices.hpp"
 #include "Nexus/ChartingService/SecurityChartingQuery.hpp"
+#include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 #include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
 
@@ -50,8 +51,8 @@ namespace Nexus::ChartingService {
       using SecurityChartingPublisher = Beam::Queries::SequencedValuePublisher<
         SecurityChartingQuery, Queries::QueryVariant>;
       boost::atomic_int m_next_query_id;
-      Beam::SynchronizedUnorderedMap<int,
-        std::shared_ptr<SecurityChartingPublisher>>
+      Beam::SynchronizedUnorderedMap<
+        int, std::shared_ptr<SecurityChartingPublisher>>
           m_security_charting_publishers;
       Beam::Services::ServiceProtocolClientHandler<B> m_client_handler;
       Beam::IO::OpenState m_open_state;

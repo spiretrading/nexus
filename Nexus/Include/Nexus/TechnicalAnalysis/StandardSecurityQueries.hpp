@@ -52,7 +52,7 @@ namespace Nexus::TechnicalAnalysis {
     auto market_center = venues.from(security.get_venue()).m_market_center;
     query.SetFilter(
       Beam::Queries::ConstantExpression(std::move(market_center)) ==
-        Queries::TimeAndSaleAccessor(parameter).m_marketCenter);
+        Queries::TimeAndSaleAccessor(parameter).get_market_center());
     return query;
   }
 
@@ -139,7 +139,7 @@ namespace Nexus::TechnicalAnalysis {
     auto market_center = venues.from(security.get_venue()).m_market_center;
     query.SetFilter(
       Beam::Queries::ConstantExpression(std::move(market_center)) ==
-        Queries::TimeAndSaleAccessor(parameter).m_marketCenter);
+        Queries::TimeAndSaleAccessor(parameter).get_market_center());
     return query;
   }
 
@@ -268,7 +268,7 @@ namespace Nexus::TechnicalAnalysis {
       Beam::Queries::ParameterExpression(1, Nexus::Queries::MoneyType()));
     auto high = Beam::Queries::ReduceExpression(
       max, Queries::TimeAndSaleAccessor(Beam::Queries::ParameterExpression(
-        0, Queries::TimeAndSaleType())).m_price,
+        0, Queries::TimeAndSaleType())).get_price(),
       Queries::MoneyValue(Money::ZERO));
     return make_query(security, start, end, venues, time_zones, high);
   }
@@ -315,7 +315,7 @@ namespace Nexus::TechnicalAnalysis {
       Beam::Queries::ParameterExpression(1, Nexus::Queries::MoneyType()));
     auto low = Beam::Queries::ReduceExpression(
       min, Queries::TimeAndSaleAccessor(Beam::Queries::ParameterExpression(
-        0, Queries::TimeAndSaleType())).m_price,
+        0, Queries::TimeAndSaleType())).get_price(),
       Queries::MoneyValue(99999999 * Money::ONE));
     return make_query(security, start, end, venues, time_zones, low);
   }
@@ -360,7 +360,7 @@ namespace Nexus::TechnicalAnalysis {
       Beam::Queries::ParameterExpression(1, Queries::QuantityType());
     auto volume = Beam::Queries::ReduceExpression(
       sum, Queries::TimeAndSaleAccessor(Beam::Queries::ParameterExpression(
-        0, Queries::TimeAndSaleType())).m_size, Queries::QuantityValue(0));
+        0, Queries::TimeAndSaleType())).get_size(), Queries::QuantityValue(0));
     return make_query(security, start, end, venues, time_zones, volume);
   }
 

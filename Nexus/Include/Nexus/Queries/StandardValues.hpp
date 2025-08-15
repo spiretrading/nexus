@@ -1,7 +1,6 @@
 #ifndef NEXUS_QUERY_STANDARD_VALUES_HPP
 #define NEXUS_QUERY_STANDARD_VALUES_HPP
 #include <Beam/Queries/StandardValues.hpp>
-#include "Nexus/Queries/Queries.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 
 namespace Nexus::Queries {

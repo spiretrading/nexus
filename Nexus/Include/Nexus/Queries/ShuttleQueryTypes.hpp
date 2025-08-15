@@ -30,8 +30,8 @@ namespace Nexus::Queries {
     (OrderInfoValue, "Nexus.Queries.OrderInfoValue"));
 
   template<typename Sender>
-  void RegisterQueryTypes(Beam::Out<Beam::Serialization::TypeRegistry<Sender>>
-      registry) {
+  void RegisterQueryTypes(
+      Beam::Out<Beam::Serialization::TypeRegistry<Sender>> registry) {
     Beam::Queries::RegisterQueryTypes(Beam::Store(registry));
     RegisterDataTypes(Beam::Store(registry));
     RegisterValueTypes(Beam::Store(registry));

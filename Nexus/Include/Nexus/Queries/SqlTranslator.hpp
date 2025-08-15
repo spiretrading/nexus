@@ -18,7 +18,6 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/SqlDefinitions.hpp"
 #include "Nexus/Queries/ExpressionVisitor.hpp"
-#include "Nexus/Queries/Queries.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 
 namespace Nexus::Queries {

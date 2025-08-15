@@ -10,7 +10,6 @@
 #include <Beam/Utilities/Casts.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Queries/ExpressionVisitor.hpp"
-#include "Nexus/Queries/Queries.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 
 namespace Nexus::Queries {

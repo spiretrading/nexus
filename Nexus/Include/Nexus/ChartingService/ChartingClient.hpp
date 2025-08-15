@@ -8,7 +8,6 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/ChartingService/ChartingServices.hpp"
 #include "Nexus/ChartingService/SecurityChartingQuery.hpp"
-#include "Nexus/Queries/Queries.hpp"
 
 namespace Nexus::ChartingService {
 

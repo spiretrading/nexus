@@ -2,6 +2,7 @@
 #define NEXUS_DEFINITIONS_SQL_DEFINITIONS_HPP
 #include <Viper/Conversions.hpp>
 #include <Viper/DataTypes/NativeToDataType.hpp>
+#include <Beam/Sql/Conversions.hpp>
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"

@@ -58,8 +58,8 @@ TEST_SUITE("StandardSecurityQueries") {
     SUBCASE("time_and_sale") {
       auto min = MakeMinExpression(ParameterExpression(0, MoneyType()),
         ParameterExpression(1, MoneyType()));
-      auto low = ReduceExpression(min,
-        TimeAndSaleAccessor(ParameterExpression(0, TimeAndSaleType())).m_price,
+      auto low = ReduceExpression(min, TimeAndSaleAccessor(
+        ParameterExpression(0, TimeAndSaleType())).get_price(),
         MoneyValue(99999999 * Money::ONE));
       auto query = make_query(security, start_date, end_date, DEFAULT_VENUES,
         get_default_time_zone_database(), low);
