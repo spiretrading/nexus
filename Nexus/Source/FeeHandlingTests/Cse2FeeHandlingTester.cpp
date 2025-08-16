@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/FeeHandling/Cse2FeeTable.hpp"
 #include "Nexus/FeeHandlingTests/FeeTableTestUtilities.hpp"
@@ -55,153 +56,153 @@ namespace {
 TEST_SUITE("Cse2FeeHandling") {
   TEST_CASE("zero_quantity") {
     auto table = make_fee_table();
-    auto expectedFee = Money::ZERO;
+    auto expected_fee = Money::ZERO;
     auto fee = calculate_fee(table, make_order_fields(Money::CENT),
       make_execution_report(Money::ZERO, 0, ""));
-    REQUIRE(fee == expectedFee);
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("active_subdollar_regular") {
     auto table = make_fee_table();
-    auto expectedFee = 100 * lookup_regular_fee(
+    auto expected_fee = 100 * lookup_regular_fee(
       table, LiquidityFlag::ACTIVE, Cse2FeeTable::PriceClass::SUBDOLLAR);
     auto fee = calculate_fee(table, make_order_fields(Money::CENT),
       make_execution_report(Money::CENT, 100, "TT "));
-    REQUIRE(fee == expectedFee);
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("active_default_regular") {
     auto table = make_fee_table();
-    auto expectedFee = 200 * lookup_regular_fee(
+    auto expected_fee = 200 * lookup_regular_fee(
       table, LiquidityFlag::ACTIVE, Cse2FeeTable::PriceClass::DEFAULT);
     auto fee = calculate_fee(table, make_order_fields(Money::ONE),
       make_execution_report(Money::ONE, 200, "TT "));
-    REQUIRE(fee == expectedFee);
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("passive_sub_dollar_regular") {
     auto table = make_fee_table();
-    auto expectedFee = 300 * lookup_regular_fee(
+    auto expected_fee = 300 * lookup_regular_fee(
       table, LiquidityFlag::PASSIVE, Cse2FeeTable::PriceClass::SUBDOLLAR);
     auto fee = calculate_fee(table, make_order_fields(Money::CENT),
       make_execution_report(Money::CENT, 300, "PT "));
-    REQUIRE(fee == expectedFee);
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("passive_default_regular") {
     auto table = make_fee_table();
-    auto expectedFee = 400 * lookup_regular_fee(
+    auto expected_fee = 400 * lookup_regular_fee(
       table, LiquidityFlag::PASSIVE, Cse2FeeTable::PriceClass::DEFAULT);
     auto fee = calculate_fee(table, make_order_fields(Money::ONE),
       make_execution_report(Money::ONE, 400, "PT "));
-    REQUIRE(fee == expectedFee);
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("active_subdollar_dark") {
     auto table = make_fee_table();
-    auto expectedFee = 500 * lookup_dark_fee(
+    auto expected_fee = 500 * lookup_dark_fee(
       table, LiquidityFlag::ACTIVE, Cse2FeeTable::PriceClass::SUBDOLLAR);
     auto fee = calculate_fee(table, make_order_fields(Money::CENT),
       make_execution_report(Money::CENT, 500, "TTD"));
-    REQUIRE(fee == expectedFee);
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("active_default_dark") {
     auto table = make_fee_table();
-    auto expectedFee = 500 * lookup_dark_fee(
+    auto expected_fee = 500 * lookup_dark_fee(
       table, LiquidityFlag::ACTIVE, Cse2FeeTable::PriceClass::DEFAULT);
     auto fee = calculate_fee(table, make_order_fields(Money::ONE),
       make_execution_report(Money::ONE, 500, "TTD"));
-    REQUIRE(fee == expectedFee);
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("passive_subdollar_dark") {
     auto table = make_fee_table();
-    auto expectedFee = 600 * lookup_dark_fee(
+    auto expected_fee = 600 * lookup_dark_fee(
       table, LiquidityFlag::PASSIVE, Cse2FeeTable::PriceClass::SUBDOLLAR);
     auto fee = calculate_fee(table, make_order_fields(Money::CENT),
       make_execution_report(Money::CENT, 600, "PTD"));
-    REQUIRE(fee == expectedFee);
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("passive_default_dark") {
     auto table = make_fee_table();
-    auto expectedFee = 600 * lookup_dark_fee(
+    auto expected_fee = 600 * lookup_dark_fee(
       table, LiquidityFlag::PASSIVE, Cse2FeeTable::PriceClass::DEFAULT);
     auto fee = calculate_fee(table, make_order_fields(Money::ONE),
       make_execution_report(Money::ONE, 600, "PTD"));
-    REQUIRE(fee == expectedFee);
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("active_cse_debenture") {
     auto table = make_fee_table();
-    auto expectedFee = 100 * lookup_debentures_or_notes_fee(table,
+    auto expected_fee = 100 * lookup_debentures_or_notes_fee(table,
       LiquidityFlag::ACTIVE, Cse2FeeTable::ListingMarket::CSE);
     auto fee = calculate_fee(table, make_order_fields("TST.DB", Money::CENT,
-      DefaultMarkets::CSE()), make_execution_report(Money::CENT, 100, "TC "));
-    REQUIRE(fee == expectedFee);
+      CSE), make_execution_report(Money::CENT, 100, "TC "));
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("passive_cse_debenture") {
     auto table = make_fee_table();
-    auto expectedFee = 100 * lookup_debentures_or_notes_fee(table,
+    auto expected_fee = 100 * lookup_debentures_or_notes_fee(table,
       LiquidityFlag::PASSIVE, Cse2FeeTable::ListingMarket::CSE);
     auto fee = calculate_fee(table, make_order_fields("TST.NO", Money::CENT,
-      DefaultMarkets::CSE()), make_execution_report(Money::CENT, 100, "PC "));
-    REQUIRE(fee == expectedFee);
+      CSE), make_execution_report(Money::CENT, 100, "PC "));
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("active_tsx_debenture") {
     auto table = make_fee_table();
-    auto expectedFee = 300 * lookup_debentures_or_notes_fee(table,
+    auto expected_fee = 300 * lookup_debentures_or_notes_fee(table,
       LiquidityFlag::ACTIVE, Cse2FeeTable::ListingMarket::TSX_TSXV);
     auto fee = calculate_fee(table, make_order_fields("TST.NT", Money::CENT,
-      DefaultMarkets::TSX()), make_execution_report(Money::CENT, 300, "TT "));
-    REQUIRE(fee == expectedFee);
+      TSX), make_execution_report(Money::CENT, 300, "TT "));
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("passive_tsx_debenture") {
     auto table = make_fee_table();
-    auto expectedFee = 400 * lookup_debentures_or_notes_fee(table,
+    auto expected_fee = 400 * lookup_debentures_or_notes_fee(table,
       LiquidityFlag::PASSIVE, Cse2FeeTable::ListingMarket::TSX_TSXV);
     auto fee = calculate_fee(table, make_order_fields("TST.NS", Money::ONE,
-      DefaultMarkets::TSXV()), make_execution_report(Money::ONE, 400, "PV "));
-    REQUIRE(fee == expectedFee);
+      TSXV), make_execution_report(Money::ONE, 400, "PV "));
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("active_subdollar_oddlot") {
     auto table = make_fee_table();
-    auto expectedFee = 50 * lookup_oddlot_fee(
+    auto expected_fee = 50 * lookup_oddlot_fee(
       table, LiquidityFlag::ACTIVE, Cse2FeeTable::PriceClass::SUBDOLLAR);
     auto fee = calculate_fee(table, make_order_fields(Money::CENT),
       make_execution_report(Money::CENT, 50, "TT "));
-    REQUIRE(fee == expectedFee);
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("passive_subdollar_oddlot") {
     auto table = make_fee_table();
-    auto expectedFee = 20 * lookup_oddlot_fee(
+    auto expected_fee = 20 * lookup_oddlot_fee(
       table, LiquidityFlag::PASSIVE, Cse2FeeTable::PriceClass::SUBDOLLAR);
     auto fee = calculate_fee(table, make_order_fields(Money::CENT),
       make_execution_report(Money::CENT, 20, "PT "));
-    REQUIRE(fee == expectedFee);
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("active_oddlot") {
     auto table = make_fee_table();
-    auto expectedFee = 50 * lookup_oddlot_fee(
+    auto expected_fee = 50 * lookup_oddlot_fee(
       table, LiquidityFlag::ACTIVE, Cse2FeeTable::PriceClass::DEFAULT);
     auto fee = calculate_fee(table, make_order_fields(Money::ONE),
       make_execution_report(Money::ONE, 50, "TT "));
-    REQUIRE(fee == expectedFee);
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("passive_oddlot") {
     auto table = make_fee_table();
-    auto expectedFee = 20 * lookup_oddlot_fee(
+    auto expected_fee = 20 * lookup_oddlot_fee(
       table, LiquidityFlag::PASSIVE, Cse2FeeTable::PriceClass::DEFAULT);
     auto fee = calculate_fee(table, make_order_fields(Money::ONE),
       make_execution_report(Money::ONE, 20, "PT "));
-    REQUIRE(fee == expectedFee);
+    REQUIRE(fee == expected_fee);
   }
 }

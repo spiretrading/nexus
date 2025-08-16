@@ -2,7 +2,8 @@
 #define NEXUS_CSE2_FEE_TABLE_HPP
 #include <array>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include "Nexus/FeeHandling/parse_fee_table.hpp"
+#include "Nexus/FeeHandling/LiquidityFlag.hpp"
+#include "Nexus/FeeHandling/ParseFeeTable.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
@@ -64,7 +65,7 @@ namespace Nexus {
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
       m_dark_table;
 
-    /** The debutures or notes table. */
+    /** The debentures or notes table. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, LISTING_MARKET_COUNT>
       m_debentures_or_notes_table;
 
