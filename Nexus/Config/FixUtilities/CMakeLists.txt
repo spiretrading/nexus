@@ -17,6 +17,9 @@ if(UNIX)
     optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     pthread rt)
 endif()
+if(WIN32)
+  target_link_libraries(FixUtilitiesTests crypt32 Secur32 shlwapi ws2_32.lib)
+endif()
 add_custom_command(TARGET FixUtilitiesTests
   POST_BUILD COMMAND FixUtilitiesTests)
 install(TARGETS FixUtilitiesTests CONFIGURATIONS Debug

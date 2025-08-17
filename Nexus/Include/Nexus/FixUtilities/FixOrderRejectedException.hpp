@@ -2,7 +2,6 @@
 #define NEXUS_FIX_ORDER_REJECTED_EXCEPTION_HPP
 #include <stdexcept>
 #include <boost/exception/exception.hpp>
-#include "Nexus/FixUtilities/FixUtilities.hpp"
 
 namespace Nexus::FixUtilities {
 
