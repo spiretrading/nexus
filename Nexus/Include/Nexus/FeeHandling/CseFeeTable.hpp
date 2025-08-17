@@ -41,7 +41,7 @@ namespace Nexus {
    * @param config The configuration to parse the CseFeeTable from.
    * @return The CseFeeTable represented by the <i>config</i>.
    */
-  inline CseFeeTable ParseCseFeeTable(const YAML::Node& config) {
+  inline CseFeeTable parse_cse_fee_table(const YAML::Node& config) {
     auto table = CseFeeTable();
     parse_fee_table(config, "fee_table", Beam::Store(table.m_fee_table));
     return table;
