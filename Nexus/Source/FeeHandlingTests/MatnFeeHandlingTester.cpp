@@ -45,7 +45,7 @@ TEST_SUITE("MatnFeeHandling") {
   TEST_CASE("zero_quantity") {
     auto table = make_fee_table();
     test_per_share_fee_calculation(table, Money::ONE, 0, LiquidityFlag::NONE,
-      Money::ZERO, [&] (const auto& table, const auto& report) {
+      Money::ZERO, [] (const auto& table, const auto& report) {
         return calculate_fee(
           table, MatnFeeTable::Classification::DEFAULT, report);
       });
@@ -57,7 +57,7 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::PriceClass::DEFAULT);
     test_per_share_fee_calculation(
       table, 5 * Money::ONE, 100, LiquidityFlag::ACTIVE, expected_fee,
-      [&] (const auto& table, const auto& report) {
+      [] (const auto& table, const auto& report) {
         return calculate_fee(
           table, MatnFeeTable::Classification::DEFAULT, report);
       });
@@ -65,7 +65,7 @@ TEST_SUITE("MatnFeeHandling") {
       lookup_fee(table, MatnFeeTable::GeneralIndex::MAX_CHARGE,
         MatnFeeTable::PriceClass::DEFAULT);
     test_fee_calculation(table, 5 * Money::ONE, 1000000, LiquidityFlag::ACTIVE,
-      expected_max_fee, [&] (const auto& table, const auto& report) {
+      expected_max_fee, [] (const auto& table, const auto& report) {
         return calculate_fee(
           table, MatnFeeTable::Classification::DEFAULT, report);
       });
@@ -77,7 +77,7 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::PriceClass::DEFAULT);
     test_per_share_fee_calculation(
       table, 5 * Money::ONE, 100, LiquidityFlag::PASSIVE, expected_fee,
-      [&] (const auto& table, const auto& report) {
+      [] (const auto& table, const auto& report) {
         return calculate_fee(
           table, MatnFeeTable::Classification::DEFAULT, report);
       });
@@ -85,7 +85,7 @@ TEST_SUITE("MatnFeeHandling") {
       lookup_fee(table, MatnFeeTable::GeneralIndex::MAX_CHARGE,
         MatnFeeTable::PriceClass::DEFAULT);
     test_fee_calculation(table, 5 * Money::ONE, 1000000, LiquidityFlag::PASSIVE,
-      expected_max_fee, [&] (const auto& table, const auto& report) {
+      expected_max_fee, [] (const auto& table, const auto& report) {
         return calculate_fee(
           table, MatnFeeTable::Classification::DEFAULT, report);
       });
@@ -97,7 +97,7 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::PriceClass::SUBFIVE_DOLLAR);
     test_per_share_fee_calculation(
       table, Money::ONE, 100, LiquidityFlag::ACTIVE, expected_fee,
-      [&] (const auto& table, const auto& report) {
+      [] (const auto& table, const auto& report) {
         return calculate_fee(
           table, MatnFeeTable::Classification::DEFAULT, report);
       });
@@ -105,7 +105,7 @@ TEST_SUITE("MatnFeeHandling") {
       lookup_fee(table, MatnFeeTable::GeneralIndex::MAX_CHARGE,
         MatnFeeTable::PriceClass::SUBFIVE_DOLLAR);
     test_fee_calculation(table, Money::ONE, 1000000, LiquidityFlag::ACTIVE,
-      expected_max_fee, [&] (const auto& table, const auto& report) {
+      expected_max_fee, [] (const auto& table, const auto& report) {
         return calculate_fee(
           table, MatnFeeTable::Classification::DEFAULT, report);
       });
@@ -117,7 +117,7 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::PriceClass::SUBFIVE_DOLLAR);
     test_per_share_fee_calculation(
       table, Money::ONE, 100, LiquidityFlag::PASSIVE, expected_fee,
-      [&] (const auto& table, const auto& report) {
+      [] (const auto& table, const auto& report) {
         return calculate_fee(
           table, MatnFeeTable::Classification::DEFAULT, report);
       });
@@ -125,7 +125,7 @@ TEST_SUITE("MatnFeeHandling") {
       lookup_fee(table, MatnFeeTable::GeneralIndex::MAX_CHARGE,
         MatnFeeTable::PriceClass::SUBFIVE_DOLLAR);
     test_fee_calculation(table, Money::ONE, 1000000, LiquidityFlag::PASSIVE,
-      expected_max_fee, [&] (const auto& table, const auto& report) {
+      expected_max_fee, [] (const auto& table, const auto& report) {
         return calculate_fee(
           table, MatnFeeTable::Classification::DEFAULT, report);
       });
@@ -137,7 +137,7 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::PriceClass::SUBDOLLAR);
     test_per_share_fee_calculation(
       table, Money::CENT, 100, LiquidityFlag::ACTIVE, expected_fee,
-      [&] (const auto& table, const auto& report) {
+      [] (const auto& table, const auto& report) {
         return calculate_fee(
           table, MatnFeeTable::Classification::DEFAULT, report);
       });
@@ -145,7 +145,7 @@ TEST_SUITE("MatnFeeHandling") {
       lookup_fee(table, MatnFeeTable::GeneralIndex::MAX_CHARGE,
         MatnFeeTable::PriceClass::SUBDOLLAR);
     test_fee_calculation(table, Money::CENT, 1000000, LiquidityFlag::ACTIVE,
-      expected_max_fee, [&] (const auto& table, const auto& report) {
+      expected_max_fee, [] (const auto& table, const auto& report) {
         return calculate_fee(
           table, MatnFeeTable::Classification::DEFAULT, report);
       });
@@ -157,7 +157,7 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::PriceClass::SUBDOLLAR);
     test_per_share_fee_calculation(
       table, Money::CENT, 100, LiquidityFlag::PASSIVE, expected_fee,
-      [&] (const auto& table, const auto& report) {
+      [] (const auto& table, const auto& report) {
         return calculate_fee(
           table, MatnFeeTable::Classification::DEFAULT, report);
       });
@@ -165,7 +165,7 @@ TEST_SUITE("MatnFeeHandling") {
       lookup_fee(table, MatnFeeTable::GeneralIndex::MAX_CHARGE,
         MatnFeeTable::PriceClass::SUBDOLLAR);
     test_fee_calculation(table, Money::CENT, 1000000, LiquidityFlag::PASSIVE,
-      expected_max_fee, [&] (const auto& table, const auto& report) {
+      expected_max_fee, [] (const auto& table, const auto& report) {
         return calculate_fee(
           table, MatnFeeTable::Classification::DEFAULT, report);
       });
@@ -177,7 +177,7 @@ TEST_SUITE("MatnFeeHandling") {
       lookup_fee(table, LiquidityFlag::ACTIVE, MatnFeeTable::Category::ETF);
     test_per_share_fee_calculation(
       table, Money::ONE, 100, LiquidityFlag::ACTIVE, expected_fee,
-      [&] (const auto& table, const auto& report) {
+      [] (const auto& table, const auto& report) {
         return calculate_fee(table, MatnFeeTable::Classification::ETF, report);
       });
   }
@@ -188,7 +188,7 @@ TEST_SUITE("MatnFeeHandling") {
       lookup_fee(table, LiquidityFlag::PASSIVE, MatnFeeTable::Category::ETF);
     test_per_share_fee_calculation(
       table, Money::ONE, 100, LiquidityFlag::PASSIVE, expected_fee,
-      [&] (const auto& table, const auto& report) {
+      [] (const auto& table, const auto& report) {
         return calculate_fee(table, MatnFeeTable::Classification::ETF, report);
       });
   }
@@ -199,7 +199,7 @@ TEST_SUITE("MatnFeeHandling") {
       lookup_fee(table, LiquidityFlag::ACTIVE, MatnFeeTable::Category::ODD_LOT);
     test_per_share_fee_calculation(
       table, Money::ONE, 50, LiquidityFlag::ACTIVE, expected_fee,
-      [&] (const auto& table, const auto& report) {
+      [] (const auto& table, const auto& report) {
         return calculate_fee(
           table, MatnFeeTable::Classification::DEFAULT, report);
       });
@@ -211,7 +211,7 @@ TEST_SUITE("MatnFeeHandling") {
       table, LiquidityFlag::PASSIVE, MatnFeeTable::Category::ODD_LOT);
     test_per_share_fee_calculation(
       table, Money::ONE, 50, LiquidityFlag::PASSIVE, expected_fee,
-      [&] (const auto& table, const auto& report) {
+      [] (const auto& table, const auto& report) {
         return calculate_fee(
           table, MatnFeeTable::Classification::DEFAULT, report);
       });
@@ -223,7 +223,7 @@ TEST_SUITE("MatnFeeHandling") {
       lookup_fee(table, LiquidityFlag::ACTIVE, MatnFeeTable::Category::ODD_LOT);
     test_per_share_fee_calculation(
       table, Money::ONE, 50, LiquidityFlag::ACTIVE, expected_fee,
-      [&] (const auto& table, const auto& report) {
+      [] (const auto& table, const auto& report) {
         return calculate_fee(table, MatnFeeTable::Classification::ETF, report);
       });
   }
@@ -234,7 +234,7 @@ TEST_SUITE("MatnFeeHandling") {
       table, LiquidityFlag::PASSIVE, MatnFeeTable::Category::ODD_LOT);
     test_per_share_fee_calculation(
       table, Money::ONE, 50, LiquidityFlag::PASSIVE, expected_fee,
-      [&] (const auto& table, const auto& report) {
+      [] (const auto& table, const auto& report) {
         return calculate_fee(table, MatnFeeTable::Classification::ETF, report);
       });
   }
@@ -290,7 +290,7 @@ TEST_SUITE("MatnFeeHandling") {
       MatnFeeTable::PriceClass::DEFAULT);
     test_per_share_fee_calculation(
       table, 5 * Money::ONE, 100, LiquidityFlag::NONE, expected_fee,
-      [&] (const auto& table, const auto& report) {
+      [] (const auto& table, const auto& report) {
         return calculate_fee(
           table, MatnFeeTable::Classification::DEFAULT, report);
       });
