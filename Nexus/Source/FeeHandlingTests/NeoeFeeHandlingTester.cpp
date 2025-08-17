@@ -62,14 +62,14 @@ TEST_SUITE("NeoeFeeHandling") {
         return calculate_fee(
           table, NeoeFeeTable::Classification::GENERAL, fields, report);
       });
-    test_per_share_fee_calculation(table, fields.m_price, 0,
-      LiquidityFlag::NONE, Money::ZERO,
+    test_per_share_fee_calculation(
+      table, fields.m_price, 0, LiquidityFlag::NONE, Money::ZERO,
       [&] (const auto& table, const auto& report) {
         return calculate_fee(
           table, NeoeFeeTable::Classification::INTERLISTED, fields, report);
       });
-    test_per_share_fee_calculation(table, fields.m_price, 0,
-      LiquidityFlag::NONE, Money::ZERO,
+    test_per_share_fee_calculation(
+      table, fields.m_price, 0, LiquidityFlag::NONE, Money::ZERO,
       [&] (const auto& table, const auto& report) {
         return calculate_fee(
           table, NeoeFeeTable::Classification::ETF, fields, report);
@@ -84,8 +84,8 @@ TEST_SUITE("NeoeFeeHandling") {
         NeoeFeeTable::Classification::ETF}) {
       auto expected_fee = get_fee_lookup(classification)(
         table, LiquidityFlag::ACTIVE, NeoeFeeTable::PriceClass::DEFAULT);
-      test_per_share_fee_calculation(table, Money::ONE, 100,
-        LiquidityFlag::ACTIVE, expected_fee,
+      test_per_share_fee_calculation(
+        table, Money::ONE, 100, LiquidityFlag::ACTIVE, expected_fee,
         [&] (const auto& table, const auto& report) {
           return calculate_fee(table, classification, fields, report);
         });
@@ -100,8 +100,8 @@ TEST_SUITE("NeoeFeeHandling") {
         NeoeFeeTable::Classification::ETF}) {
       auto expected_fee = get_fee_lookup(classification)(
         table, LiquidityFlag::PASSIVE, NeoeFeeTable::PriceClass::DEFAULT);
-      test_per_share_fee_calculation(table, Money::ONE, 100,
-        LiquidityFlag::PASSIVE, expected_fee,
+      test_per_share_fee_calculation(
+        table, Money::ONE, 100, LiquidityFlag::PASSIVE, expected_fee,
         [&] (const auto& table, const auto& report) {
           return calculate_fee(table, classification, fields, report);
         });
@@ -116,8 +116,8 @@ TEST_SUITE("NeoeFeeHandling") {
         NeoeFeeTable::Classification::ETF}) {
       auto expected_fee = get_fee_lookup(classification)(
         table, LiquidityFlag::ACTIVE, NeoeFeeTable::PriceClass::SUBDOLLAR);
-      test_per_share_fee_calculation(table, Money::CENT, 100,
-        LiquidityFlag::ACTIVE, expected_fee,
+      test_per_share_fee_calculation(
+        table, Money::CENT, 100, LiquidityFlag::ACTIVE, expected_fee,
         [&] (const auto& table, const auto& report) {
           return calculate_fee(table, classification, fields, report);
         });
@@ -132,8 +132,8 @@ TEST_SUITE("NeoeFeeHandling") {
         NeoeFeeTable::Classification::ETF}) {
       auto expected_fee = get_fee_lookup(classification)(
         table, LiquidityFlag::PASSIVE, NeoeFeeTable::PriceClass::SUBDOLLAR);
-      test_per_share_fee_calculation(table, Money::CENT, 100,
-        LiquidityFlag::PASSIVE, expected_fee,
+      test_per_share_fee_calculation(
+        table, Money::CENT, 100, LiquidityFlag::PASSIVE, expected_fee,
         [&] (const auto& table, const auto& report) {
           return calculate_fee(table, classification, fields, report);
         });

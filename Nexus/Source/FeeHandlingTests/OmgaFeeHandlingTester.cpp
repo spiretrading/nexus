@@ -51,8 +51,8 @@ TEST_SUITE("OmgaFeeHandling") {
     populate_fee_table(Store(table.m_fee_table));
     auto fields = make_order_fields(Money::ONE);
     fields.m_quantity = 0;
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::NONE,
-      Money::ZERO,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::NONE, Money::ZERO,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, false, fields, report);
       });
@@ -64,8 +64,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ACTIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::ACTIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::ACTIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, false, fields, report);
       });
@@ -77,8 +77,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::PASSIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::PASSIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::PASSIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, false, fields, report);
       });
@@ -90,8 +90,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_hidden_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::HIDDEN_PASSIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::PASSIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::PASSIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, false, fields, report);
       });
@@ -103,8 +103,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_hidden_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::HIDDEN_ACTIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::ACTIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::ACTIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, false, fields, report);
       });
@@ -116,8 +116,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ETF_ACTIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::ACTIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::ACTIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, true, fields, report);
       });
@@ -129,8 +129,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ETF_PASSIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::PASSIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::PASSIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, true, fields, report);
       });
@@ -142,8 +142,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_order_fields(Money::ONE, 50);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::ACTIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::ACTIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, false, fields, report);
       });
@@ -155,8 +155,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_order_fields(Money::ONE, 50);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::PASSIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::PASSIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, false, fields, report);
       });
@@ -168,8 +168,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ACTIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::ACTIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::ACTIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, false, fields, report);
       });
@@ -181,8 +181,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::PASSIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::PASSIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::PASSIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, false, fields, report);
       });
@@ -194,8 +194,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_hidden_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::HIDDEN_PASSIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::PASSIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::PASSIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, false, fields, report);
       });
@@ -207,8 +207,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_hidden_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::HIDDEN_ACTIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::ACTIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::ACTIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, false, fields, report);
       });
@@ -220,8 +220,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ETF_ACTIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::ACTIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::ACTIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, true, fields, report);
       });
@@ -233,8 +233,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ETF_PASSIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::PASSIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::PASSIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, true, fields, report);
       });
@@ -246,8 +246,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_order_fields(Money::CENT, 50);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::ACTIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::ACTIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, false, fields, report);
       });
@@ -259,8 +259,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_order_fields(Money::CENT, 50);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::PASSIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::PASSIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, false, fields, report);
       });
@@ -272,8 +272,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_hidden_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::HIDDEN_ACTIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::ACTIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::ACTIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, true, fields, report);
       });
@@ -285,8 +285,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_hidden_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::HIDDEN_PASSIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::PASSIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::PASSIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, true, fields, report);
       });
@@ -298,8 +298,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_order_fields(Money::ONE, 50);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::ACTIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::ACTIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, true, fields, report);
       });
@@ -311,8 +311,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_order_fields(Money::ONE, 50);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::PASSIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::PASSIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, true, fields, report);
       });
@@ -324,8 +324,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_hidden_order_fields(Money::ONE, 50);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::ACTIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::ACTIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, true, fields, report);
       });
@@ -337,8 +337,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_hidden_order_fields(Money::ONE, 50);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::PASSIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::PASSIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, true, fields, report);
       });
@@ -386,8 +386,8 @@ TEST_SUITE("OmgaFeeHandling") {
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::PASSIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::NONE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::NONE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(table, false, fields, report);
       });

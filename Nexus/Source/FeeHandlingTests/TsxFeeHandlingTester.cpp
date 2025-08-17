@@ -51,8 +51,8 @@ TEST_SUITE("TsxFeeHandling") {
     auto expected_fee = Money::ZERO;
     auto fields = make_order_fields(Money::ONE);
     fields.m_quantity = 0;
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::NONE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::NONE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(
           table, TsxFeeTable::Classification::DEFAULT, fields, report);
@@ -65,8 +65,8 @@ TEST_SUITE("TsxFeeHandling") {
       table, TsxFeeTable::PriceClass::SUBDOLLAR, TsxFeeTable::Type::ACTIVE);
     auto fields = make_order_fields(50 * Money::CENT);
     fields.m_quantity = 100;
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::ACTIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::ACTIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(
           table, TsxFeeTable::Classification::INTERLISTED, fields, report);
@@ -79,8 +79,8 @@ TEST_SUITE("TsxFeeHandling") {
       table, TsxFeeTable::PriceClass::SUBDOLLAR, TsxFeeTable::Type::PASSIVE);
     auto fields = make_order_fields(50 * Money::CENT);
     fields.m_quantity = 100;
-    test_per_share_fee_calculation(table, fields, LiquidityFlag::PASSIVE,
-      expected_fee,
+    test_per_share_fee_calculation(
+      table, fields, LiquidityFlag::PASSIVE, expected_fee,
       [] (const auto& table, const auto& fields, const auto& report) {
         return calculate_fee(
           table, TsxFeeTable::Classification::INTERLISTED, fields, report);
