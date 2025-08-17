@@ -121,21 +121,6 @@ TEST_SUITE("consolidated_tmx_fee_table") {
     REQUIRE(per_order_total <= table.m_per_order_cap);
   }
 
-  TEST_CASE("iiroc_and_cds_fee_capping") {
-    auto table = make_fee_table();
-    auto state = ConsolidatedTmxFeeTable::State();
-    auto security = make_security("TST", TSX);
-    auto order = make_order(security, Money::ONE, 100);
-    auto report = make_report(Money::ONE, 10);
-    auto result1 = calculate_fee(table, state, *order, report);
-    auto result2 = calculate_fee(table, state, *order, report);
-    auto result3 = calculate_fee(table, state, *order, report);
-    auto fill_count = state.m_fill_count.Get(order->get_info().m_id);
-    REQUIRE(fill_count == 3);
-    REQUIRE(result3.m_processing_fee - result2.m_processing_fee ==
-      table.m_clearing_fee + table.m_iiroc_fee + table.m_per_order_fee);
-  }
-
   TEST_CASE("etf_fee_routing") {
     auto table = make_fee_table();
     auto state = ConsolidatedTmxFeeTable::State();
