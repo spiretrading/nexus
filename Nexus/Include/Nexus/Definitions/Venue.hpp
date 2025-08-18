@@ -243,7 +243,7 @@ namespace Nexus {
   }
 
   inline std::ostream& operator <<(std::ostream& out, Venue venue) {
-    extern const VenueDatabase DEFAULT_VENUES;
+    extern const VenueDatabase& DEFAULT_VENUES;
     auto database = static_cast<const VenueDatabase*>(
       out.pword(Beam::ScopedStreamManipulator<VenueDatabase>::ID));
     if(!database) {
