@@ -21,6 +21,7 @@ using namespace Nexus::Python;
 using namespace pybind11;
 
 namespace {
+#if 0
   template<typename IndexType>
   void ExportKey(object& module, const std::string& name) {
     class_<Accounting::Details::Key<IndexType>>(module, name.c_str()).
@@ -41,8 +42,9 @@ namespace {
       portfolio, CurrencyId currency) {
     return GetTotalProfitAndLoss(portfolio, currency);
   }
+#endif
 }
-
+/*
 void Nexus::Python::ExportBuyingPowerModel(module& module) {
   auto outer = class_<BuyingPowerModel>(module, "BuyingPowerModel").
     def(init()).
@@ -51,9 +53,22 @@ void Nexus::Python::ExportBuyingPowerModel(module& module) {
     def("submit", &BuyingPowerModel::Submit).
     def("update", &BuyingPowerModel::Update);
 }
-
-void Nexus::Python::ExportAccounting(module& module) {
+*/
+void Nexus::Python::export_accounting(module& module) {
   auto submodule = module.def_submodule("accounting");
+  export_position<object>(submodule, "Position");
+  export_position<Security>(submodule, "SecurityPosition");
+  export_inventory<Position<object>>(submodule, "Inventory");
+  export_inventory<Position<Security>>(submodule, "SecurityInventory");
+  export_bookkeeper<Bookkeeper<Inventory<Position<object>>>>(
+    submodule, "Bookkeeper");
+  export_bookkeeper<Bookkeeper<Inventory<Position<Security>>>>(
+    submodule, "SecurityBookkeeper");
+  export_bookkeeper<TrueAverageBookkeeper<Inventory<Position<object>>>>(
+    submodule, "TrueAverageBookkeeper");
+  export_bookkeeper<TrueAverageBookkeeper<Inventory<Position<Security>>>>(
+    submodule, "SecurityTrueAverageBookkeeper");
+/*
   ExportBuyingPowerModel(submodule);
   ExportPortfolioUpdateEntry(submodule);
   ExportPositionOrderBook(submodule);
@@ -63,8 +78,9 @@ void Nexus::Python::ExportAccounting(module& module) {
   ExportTrueAverageBookkeeper(submodule);
   ExportTrueAverageBookkeeperReactor(submodule);
   ExportTrueAveragePortfolio(submodule);
+*/
 }
-
+/*
 void Nexus::Python::ExportPortfolioUpdateEntry(module& module) {
   using Entry = PortfolioUpdateEntry<Inventory<Position<Security>>>;
   class_<Entry>(module, "PortfolioUpdateEntry").
@@ -190,3 +206,4 @@ void Nexus::Python::ExportTrueAveragePortfolio(module& module) {
       &GetTotalProfitAndLoss<Inventory::Position>));
   module.def("get_total_profit_and_loss", &PythonGetTotalProfitAndLoss);
 }
+*/

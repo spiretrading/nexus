@@ -85,7 +85,7 @@ void Nexus::Python::export_book_quote(module& module) {
 
 void Nexus::Python::export_country(module& module) {
   class_<CountryCode>(module, "CountryCode").
-    def(init<>()).
+    def(init()).
     def(init<std::uint16_t>()).
     def_readonly_static("NONE", &CountryCode::NONE).
     def("__int__", [] (const CountryCode& self) {
@@ -100,7 +100,7 @@ void Nexus::Python::export_country(module& module) {
       return std::hash<CountryCode>()(self);
     });
   auto country_database = class_<CountryDatabase>(module, "CountryDatabase").
-    def(init<>()).
+    def(init()).
     def(init<const CountryDatabase&>()).
     def_property_readonly("entries", &CountryDatabase::get_entries).
     def("from_code",
@@ -113,7 +113,7 @@ void Nexus::Python::export_country(module& module) {
     def("add", &CountryDatabase::add).
     def("remove", &CountryDatabase::remove);
   class_<CountryDatabase::Entry>(country_database, "Entry").
-    def(init<>()).
+    def(init()).
     def_readwrite("code", &CountryDatabase::Entry::m_code).
     def_readwrite("name", &CountryDatabase::Entry::m_name).
     def_readwrite(
@@ -122,6 +122,7 @@ void Nexus::Python::export_country(module& module) {
       "three_letter_code", &CountryDatabase::Entry::m_three_letter_code).
     def(self == self).
     def(self != self);
+  ExportView<const CountryDatabase::Entry>(module, "CountryDatabaseEntryView");
   module.def("parse_country_code", static_cast<CountryCode (*)(
     std::string_view, const CountryDatabase&)>(parse_country_code));
   module.def("parse_country_code", static_cast<CountryCode (*)(
@@ -132,7 +133,7 @@ void Nexus::Python::export_country(module& module) {
 
 void Nexus::Python::export_currency(module& module) {
   class_<CurrencyId>(module, "CurrencyId").
-    def(init<>()).
+    def(init()).
     def(init<std::uint16_t>()).
     def_readonly_static("NONE", &CurrencyId::NONE).
     def("__int__", [] (CurrencyId self) {
@@ -147,7 +148,7 @@ void Nexus::Python::export_currency(module& module) {
       return std::hash<CurrencyId>()(self);
     });
   auto currency_database = class_<CurrencyDatabase>(module, "CurrencyDatabase").
-    def(init<>()).
+    def(init()).
     def(init<const CurrencyDatabase&>()).
     def_property_readonly("entries", &CurrencyDatabase::get_entries).
     def("from_id",
@@ -157,12 +158,14 @@ void Nexus::Python::export_currency(module& module) {
     def("add", &CurrencyDatabase::add).
     def("remove", &CurrencyDatabase::remove);
   class_<CurrencyDatabase::Entry>(currency_database, "Entry").
-    def(init<>()).
+    def(init()).
     def_readwrite("id", &CurrencyDatabase::Entry::m_id).
     def_readwrite("code", &CurrencyDatabase::Entry::m_code).
     def_readwrite("sign", &CurrencyDatabase::Entry::m_sign).
     def(self == self).
     def(self != self);
+  ExportView<const CurrencyDatabase::Entry>(
+    module, "CurrencyDatabaseEntryView");
   module.def("parse_currency",
     static_cast<CurrencyId (*)(std::string_view, const CurrencyDatabase&)>(
       parse_currency));
@@ -174,7 +177,7 @@ void Nexus::Python::export_currency(module& module) {
 
 void Nexus::Python::export_currency_pair(module& module) {
   class_<CurrencyPair>(module, "CurrencyPair").
-    def(init<>()).
+    def(init()).
     def(init<const CurrencyPair&>()).
     def(init<CurrencyId, CurrencyId>()).
     def_readwrite("base", &CurrencyPair::m_base).
@@ -311,11 +314,12 @@ void Nexus::Python::export_definitions(module& module) {
   export_country(module);
   export_currency(module);
   export_currency_pair(module);
+  export_destination(module);
+  export_venue(module);
   export_default_countries(module);
   export_default_currencies(module);
   export_default_destinations(module);
   export_default_venues(module);
-  export_destination(module);
   export_exchange_rate(module);
   export_exchange_rate_table(module);
   export_money(module);
@@ -334,13 +338,12 @@ void Nexus::Python::export_definitions(module& module) {
   export_time_and_sale(module);
   export_time_in_force(module);
   export_trading_schedule(module);
-  export_venue(module);
 }
 
 void Nexus::Python::export_destination(module& module) {
   auto destination_database =
     class_<DestinationDatabase>(module, "DestinationDatabase").
-      def(init<>()).
+      def(init()).
       def(init<const DestinationDatabase&>()).
       def_property_readonly("entries", &DestinationDatabase::get_entries).
       def("from_id", &DestinationDatabase::from).
@@ -369,13 +372,15 @@ void Nexus::Python::export_destination(module& module) {
       def("remove_preferred_destination",
         &DestinationDatabase::remove_preferred_destination);
   class_<DestinationDatabase::Entry>(destination_database, "Entry").
-    def(init<>()).
+    def(init()).
     def(init<const DestinationDatabase::Entry&>()).
     def_readwrite("id", &DestinationDatabase::Entry::m_id).
     def_readwrite("venues", &DestinationDatabase::Entry::m_venues).
     def_readwrite("description", &DestinationDatabase::Entry::m_description).
     def(self == self).
     def(self != self);
+  ExportView<const DestinationDatabase::Entry>(
+    module, "DestinationDatabaseEntryView");
   module.def("parse_destination_database_entry",
     static_cast<DestinationDatabase::Entry (*)(const YAML::Node&,
       const VenueDatabase&)>(&parse_destination_database_entry));
@@ -385,7 +390,7 @@ void Nexus::Python::export_destination(module& module) {
 
 void Nexus::Python::export_exchange_rate(module& module) {
   class_<ExchangeRate>(module, "ExchangeRate").
-    def(init<>()).
+    def(init()).
     def(init<const ExchangeRate&>()).
     def(init<CurrencyPair, rational<int>>()).
     def_readwrite("pair", &ExchangeRate::m_pair).
@@ -401,7 +406,7 @@ void Nexus::Python::export_exchange_rate(module& module) {
 
 void Nexus::Python::export_exchange_rate_table(module& module) {
   class_<ExchangeRateTable>(module, "ExchangeRateTable").
-    def(init<>()).
+    def(init()).
     def(init<const std::vector<ExchangeRate>&>()).
     def(init<const ExchangeRateTable&>()).
     def("find", &ExchangeRateTable::find).
@@ -470,7 +475,7 @@ void Nexus::Python::export_money(module& module) {
 
 void Nexus::Python::export_order_imbalance(module& module) {
   class_<OrderImbalance>(module, "OrderImbalance").
-    def(init<>()).
+    def(init()).
     def(init<Security, Side, Quantity, Money, ptime>()).
     def(init<const OrderImbalance&>()).
     def_readwrite("security", &OrderImbalance::m_security).
@@ -601,7 +606,7 @@ void Nexus::Python::export_quantity(module& module) {
 
 void Nexus::Python::export_quote(module& module) {
   class_<Quote>(module, "Quote").
-    def(init<>()).
+    def(init()).
     def(init<const Quote&>()).
     def(init<Money, Quantity, Side>()).
     def_readwrite("price", &Quote::m_price).
@@ -619,7 +624,7 @@ void Nexus::Python::export_region(module& module) {
   class_<Region>(module, "Region").
     def_readonly_static("GLOBAL", &Region::GLOBAL).
     def_static("make_global", &Region::make_global).
-    def(init<>()).
+    def(init()).
     def(init<std::string>()).
     def(init<CountryCode>()).
     def(init<Venue>()).
@@ -670,7 +675,7 @@ void Nexus::Python::export_region_map(module& module) {
 
 void Nexus::Python::export_security(module& module) {
   class_<Security>(module, "Security").
-    def(init<>()).
+    def(init()).
     def(init<const Security&>()).
     def(init<std::string, Venue>()).
     def_property_readonly("symbol", &Security::get_symbol).
@@ -698,7 +703,7 @@ void Nexus::Python::export_security(module& module) {
 
 void Nexus::Python::export_security_info(module& module) {
   class_<SecurityInfo>(module, "SecurityInfo").
-    def(init<>()).
+    def(init()).
     def(init<const SecurityInfo&>()).
     def(init<Security, std::string, std::string, Quantity>()).
     def_readwrite("security", &SecurityInfo::m_security).
@@ -715,7 +720,7 @@ void Nexus::Python::export_security_info(module& module) {
 
 void Nexus::Python::export_security_technicals(module& module) {
   class_<SecurityTechnicals>(module, "SecurityTechnicals").
-    def(init<>()).
+    def(init()).
     def(init<const SecurityTechnicals&>()).
     def_readwrite("volume", &SecurityTechnicals::m_volume).
     def_readwrite("high", &SecurityTechnicals::m_high).
@@ -740,7 +745,7 @@ void Nexus::Python::export_side(module& module) {
 
 void Nexus::Python::export_tag(module& module) {
   class_<Tag>(module, "Tag").
-    def(init<>()).
+    def(init()).
     def(init<const Tag&>()).
     def(init<int, Tag::Type>()).
     def_property_readonly("key", &Tag::get_key).
@@ -752,7 +757,7 @@ void Nexus::Python::export_tag(module& module) {
 
 void Nexus::Python::export_time_and_sale(module& module) {
   auto outer = class_<TimeAndSale>(module, "TimeAndSale").
-    def(init<>()).
+    def(init()).
     def(init<const TimeAndSale&>()).
     def(init<ptime, Money, Quantity, TimeAndSale::Condition, std::string,
       std::string, std::string>()).
@@ -767,7 +772,7 @@ void Nexus::Python::export_time_and_sale(module& module) {
     def(self == self).
     def(self != self);
   auto inner = class_<TimeAndSale::Condition>(outer, "Condition").
-    def(init<>()).
+    def(init()).
     def(init<const TimeAndSale::Condition&>()).
     def_readwrite("type", &TimeAndSale::Condition::m_type).
     def_readwrite("code", &TimeAndSale::Condition::m_code).
@@ -785,7 +790,7 @@ void Nexus::Python::export_time_and_sale(module& module) {
 
 void Nexus::Python::export_time_in_force(module& module) {
   auto outer = class_<TimeInForce>(module, "TimeInForce").
-    def(init<>()).
+    def(init()).
     def(init<const TimeInForce&>()).
     def(init<TimeInForce::Type>()).
     def(init<TimeInForce::Type, ptime>()).
@@ -821,7 +826,7 @@ void Nexus::Python::export_trading_schedule(module& module) {
       });
     });
   class_<TradingSchedule::Event>(outer, "Event").
-    def(init<>()).
+    def(init()).
     def(init<const TradingSchedule::Event&>()).
     def_readwrite("code", &TradingSchedule::Event::m_code).
     def_readwrite("timestamp", &TradingSchedule::Event::m_timestamp).
@@ -829,7 +834,7 @@ void Nexus::Python::export_trading_schedule(module& module) {
     def(self == self).
     def(self != self);
   class_<TradingSchedule::Rule>(outer, "Rule").
-    def(init<>()).
+    def(init()).
     def(init<const TradingSchedule::Rule&>()).
     def_readwrite("venues", &TradingSchedule::Rule::m_venues).
     def_readwrite("weekdays", &TradingSchedule::Rule::m_weekdays).
@@ -845,7 +850,7 @@ void Nexus::Python::export_trading_schedule(module& module) {
 
 void Nexus::Python::export_venue(module& module) {
   class_<Venue>(module, "Venue").
-    def(init<>()).
+    def(init()).
     def(init<Venue::Code>()).
     def_property_readonly("code", &Venue::get_code).
     def("__bool__", &Venue::operator bool).
@@ -860,7 +865,7 @@ void Nexus::Python::export_venue(module& module) {
     }).
     def("__str__", &lexical_cast<std::string, Venue>);
   auto venue_database = class_<VenueDatabase>(module, "VenueDatabase").
-    def(init<>()).
+    def(init()).
     def(init<const VenueDatabase&>()).
     def_property_readonly("entries", &VenueDatabase::get_entries).
     def("from", overload_cast<Venue>(&VenueDatabase::from, const_)).
@@ -870,7 +875,7 @@ void Nexus::Python::export_venue(module& module) {
     def("add", &VenueDatabase::add).
     def("remove", &VenueDatabase::remove);
   class_<VenueDatabase::Entry>(venue_database, "Entry").
-    def(init<>()).
+    def(init()).
     def(init<const VenueDatabase::Entry&>()).
     def_readwrite("venue", &VenueDatabase::Entry::m_venue).
     def_readwrite("country_code", &VenueDatabase::Entry::m_country_code).
@@ -881,6 +886,7 @@ void Nexus::Python::export_venue(module& module) {
     def_readwrite("display_name", &VenueDatabase::Entry::m_display_name).
     def(self == self).
     def(self != self);
+  ExportView<const VenueDatabase::Entry>(module, "VenueDatabaseEntryView");
   module.def("parse_venue", static_cast<
     Venue (*)(std::string_view, const VenueDatabase&)>(&parse_venue));
   module.def("parse_venue",
