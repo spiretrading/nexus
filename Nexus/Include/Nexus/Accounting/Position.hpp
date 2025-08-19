@@ -132,8 +132,8 @@ namespace std {
   template <typename I>
   struct hash<Nexus::Accounting::Details::Key<I>> {
     size_t operator()(const Nexus::Accounting::Details::Key<I>& value) const {
-      std::size_t seed = 0;
-      boost::hash_combine(seed, value.m_index);
+      auto seed = std::size_t(0);
+      boost::hash_combine(seed, std::hash<I>()(value.m_index));
       boost::hash_combine(seed, value.m_currency);
       return seed;
     }

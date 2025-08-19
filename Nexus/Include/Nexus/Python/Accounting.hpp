@@ -1,6 +1,7 @@
 #ifndef NEXUS_PYTHON_ACCOUNTING_HPP
 #define NEXUS_PYTHON_ACCOUNTING_HPP
 #include <string_view>
+#include <Beam/Python/Collections.hpp>
 #include <Beam/Python/Utilities.hpp>
 #include <boost/lexical_cast.hpp>
 #include <pybind11/operators.h>
@@ -14,6 +15,15 @@ namespace pybind11 {
       std::ostream& out, const object& value) {
     return out << str(value).cast<std::string>();
   }
+}
+
+namespace std {
+  template<>
+  struct hash<pybind11::object> {
+    size_t operator()(const pybind11::object &o) const noexcept {
+      return pybind11::hash(o);
+    }
+  };
 }
 
 namespace Nexus::Python {
@@ -54,6 +64,12 @@ namespace Nexus::Python {
   }
 
   /**
+   * Exports the BuyingPowerModel class.
+   * @param module The module to export to.
+   */
+  void export_buying_power_model(pybind11::module& module);
+
+  /**
    * Exports the Inventory class.
    * @param <P> The type of Position.
    * @param module The module to export to.
@@ -63,11 +79,15 @@ namespace Nexus::Python {
   template<Accounting::IsPosition P>
   auto export_inventory(pybind11::module& module, std::string_view name) {
     using Inventory = Accounting::Inventory<P>;
+    Beam::Python::ExportView<Inventory>(
+      module, (std::string(name) + "View").c_str());
+    Beam::Python::ExportView<const Inventory>(
+      module, (std::string(name) + "ConstView").c_str());
     auto inventory = pybind11::class_<Inventory>(module, name.data()).
       def(pybind11::init()).
       def(pybind11::init<typename Inventory::Position::Key>()).
-      def(pybind11::init<typename Inventory::Position, Money, Money, Quantity,
-        int>()).
+      def(pybind11::init<
+        typename Inventory::Position, Money, Money, Quantity, int>()).
       def_readwrite("position", &Inventory::m_position).
       def_readwrite("gross_profit_and_loss",
         &Inventory::m_gross_profit_and_loss).
@@ -110,6 +130,13 @@ namespace Nexus::Python {
       def(pybind11::init()).
       def(pybind11::init<const Key&>()).
       def(pybind11::init<const typename Key::Index&, CurrencyId>()).
+      def(pybind11::init([](const pybind11::tuple& tuple) {
+        if(tuple.size() != 2) {
+          throw std::runtime_error("Invalid tuple size.");
+        }
+        return Key(
+          tuple[0].cast<typename Key::Index>(), tuple[1].cast<CurrencyId>());
+      })).
       def_readwrite("index", &Key::m_index).
       def_readwrite("currency", &Key::m_currency).
       def("__str__", &boost::lexical_cast<std::string, Key>).
@@ -122,6 +149,7 @@ namespace Nexus::Python {
           return std::hash<Key>()(key);
         }
       });
+    pybind11::implicitly_convertible<pybind11::tuple, Key>();
     module.def("average_price", &Accounting::get_average_price<I>);
     module.def("side", &Accounting::get_side<I>);
     if constexpr(!std::is_same_v<I, pybind11::object>) {
@@ -130,13 +158,13 @@ namespace Nexus::Python {
     }
   }
 
-#if 0
   /**
-   * Exports the BuyingPowerModel class.
+   * Exports the ShortingModel class.
    * @param module The module to export to.
    */
-  void ExportBuyingPowerModel(pybind11::module& module);
+  void export_shorting_model(pybind11::module& module);
 
+#if 0
   /**
    * Exports the PortfolioUpdateEntry class.
    * @param module The module to export to.
@@ -150,22 +178,10 @@ namespace Nexus::Python {
   void ExportPositionOrderBook(pybind11::module& module);
 
   /**
-   * Exports the Inventory<Position<Security>> class.
-   * @param module The module to export to.
-   */
-  void ExportSecurityInventory(pybind11::module& module);
-
-  /**
    * Exports the SecurityValuation class.
    * @param module The module to export to.
    */
   void ExportSecurityValuation(pybind11::module& module);
-
-  /**
-   * Exports the TrueAverageBookkeeper class.
-   * @param module The module to export to.
-   */
-  void ExportTrueAverageBookkeeper(pybind11::module& module);
 
   /**
    * Exports the BookkeeperReactor using a TrueAverageBookkeeper.

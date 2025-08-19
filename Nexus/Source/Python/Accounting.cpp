@@ -7,13 +7,12 @@
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Accounting/Position.hpp"
 #include "Nexus/Accounting/PositionOrderBook.hpp"
+#include "Nexus/Accounting/ShortingModel.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 
 using namespace Aspen;
 using namespace Beam;
 using namespace Beam::Python;
-using namespace boost;
-using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Accounting;
 using namespace Nexus::OrderExecutionService;
@@ -22,21 +21,6 @@ using namespace pybind11;
 
 namespace {
 #if 0
-  template<typename IndexType>
-  void ExportKey(object& module, const std::string& name) {
-    class_<Accounting::Details::Key<IndexType>>(module, name.c_str()).
-      def(init()).
-      def(init<IndexType, CurrencyId>()).
-      def(init<const Accounting::Details::Key<IndexType>&>()).
-      def_readwrite("index", &Accounting::Details::Key<IndexType>::m_index).
-      def_readwrite("currency",
-        &Accounting::Details::Key<IndexType>::m_currency).
-      def("__str__",
-        &lexical_cast<std::string, Accounting::Details::Key<IndexType>>).
-      def(self == self).
-      def(self != self);
-  }
-
   Money PythonGetTotalProfitAndLoss(
       const Portfolio<TrueAverageBookkeeper<Inventory<Position<Security>>>>&
       portfolio, CurrencyId currency) {
@@ -44,16 +28,7 @@ namespace {
   }
 #endif
 }
-/*
-void Nexus::Python::ExportBuyingPowerModel(module& module) {
-  auto outer = class_<BuyingPowerModel>(module, "BuyingPowerModel").
-    def(init()).
-    def("has_order", &BuyingPowerModel::HasOrder).
-    def("get_buying_power", &BuyingPowerModel::GetBuyingPower).
-    def("submit", &BuyingPowerModel::Submit).
-    def("update", &BuyingPowerModel::Update);
-}
-*/
+
 void Nexus::Python::export_accounting(module& module) {
   auto submodule = module.def_submodule("accounting");
   export_position<object>(submodule, "Position");
@@ -68,18 +43,35 @@ void Nexus::Python::export_accounting(module& module) {
     submodule, "TrueAverageBookkeeper");
   export_bookkeeper<TrueAverageBookkeeper<Inventory<Position<Security>>>>(
     submodule, "SecurityTrueAverageBookkeeper");
+  export_buying_power_model(submodule);
+  export_shorting_model(submodule);
 /*
-  ExportBuyingPowerModel(submodule);
   ExportPortfolioUpdateEntry(submodule);
   ExportPositionOrderBook(submodule);
-  ExportPosition(submodule);
-  ExportSecurityInventory(submodule);
   ExportSecurityValuation(submodule);
-  ExportTrueAverageBookkeeper(submodule);
   ExportTrueAverageBookkeeperReactor(submodule);
   ExportTrueAveragePortfolio(submodule);
 */
 }
+
+void Nexus::Python::export_buying_power_model(pybind11::module& module) {
+  class_<BuyingPowerModel>(module, "BuyingPowerModel").
+    def(init()).
+    def("has_order", &BuyingPowerModel::has_order, arg("id")).
+    def(
+      "get_buying_power", &BuyingPowerModel::get_buying_power, arg("currency")).
+    def("submit", &BuyingPowerModel::submit, arg("id"), arg("fields"),
+      arg("expected_price")).
+    def("update", &BuyingPowerModel::update, arg("report"));
+}
+
+void Nexus::Python::export_shorting_model(pybind11::module& module) {
+  class_<ShortingModel>(module, "ShortingModel").
+    def(init()).
+    def("submit", &ShortingModel::submit, arg("id"), arg("fields")).
+    def("update", &ShortingModel::update, arg("report"));
+}
+
 /*
 void Nexus::Python::ExportPortfolioUpdateEntry(module& module) {
   using Entry = PortfolioUpdateEntry<Inventory<Position<Security>>>;
@@ -107,40 +99,6 @@ void Nexus::Python::ExportPositionOrderBook(module& module) {
     def_readwrite("quantity", &PositionOrderBook::PositionEntry::m_quantity);
 }
 
-void Nexus::Python::ExportPosition(module& module) {
-  auto outer = class_<Position<Security>>(module, "Position").
-    def(init()).
-    def(init<Position<Security>::Key>()).
-    def(init<const Position<Security>&>()).
-    def(init<Position<Security>::Key, Quantity, Money>()).
-    def_readwrite("key", &Position<Security>::m_key).
-    def_readwrite("quantity", &Position<Security>::m_quantity).
-    def_readwrite("cost_basis", &Position<Security>::m_costBasis).
-    def("__str__", &lexical_cast<std::string, Position<Security>>).
-    def(self == self).
-    def(self != self);
-  ExportKey<Security>(outer, "Key");
-  module.def("average_price", &GetAveragePrice<Security>);
-  module.def("side", &Accounting::GetSide<Security>);
-}
-
-void Nexus::Python::ExportSecurityInventory(module& module) {
-  using Inventory = Accounting::Inventory<Position<Security>>;
-  class_<Inventory>(module, "SecurityInventory").
-    def(init()).
-    def(init<Position<Security>::Key>()).
-    def(init<Position<Security>, Money, Money, Quantity, int>()).
-    def(init<const Inventory&>()).
-    def_readwrite("position", &Inventory::m_position).
-    def_readwrite("gross_profit_and_loss", &Inventory::m_grossProfitAndLoss).
-    def_readwrite("fees", &Inventory::m_fees).
-    def_readwrite("volume", &Inventory::m_volume).
-    def_readwrite("transaction_count", &Inventory::m_transactionCount).
-    def("__str__", &lexical_cast<std::string, Inventory>).
-    def(self == self).
-    def(self != self);
-}
-
 void Nexus::Python::ExportSecurityValuation(module& module) {
   class_<SecurityValuation>(module, "SecurityValuation").
     def(init()).
@@ -149,21 +107,6 @@ void Nexus::Python::ExportSecurityValuation(module& module) {
     def_readwrite("currency", &SecurityValuation::m_currency).
     def_readwrite("ask_value", &SecurityValuation::m_askValue).
     def_readwrite("bid_value", &SecurityValuation::m_bidValue);
-}
-
-void Nexus::Python::ExportTrueAverageBookkeeper(module& module) {
-  ExportView<TrueAverageBookkeeper<Inventory<Position<Security>>>::Inventory>(
-    module, "InventoryView");
-  class_<TrueAverageBookkeeper<Inventory<Position<Security>>>>(module,
-      "TrueAverageBookkeeper").
-    def(init()).
-    def(init<const TrueAverageBookkeeper<Inventory<Position<Security>>>&>()).
-    def("record_transaction", &TrueAverageBookkeeper<
-      Inventory<Position<Security>>>::RecordTransaction).
-    def("get_inventory", &TrueAverageBookkeeper<
-      Inventory<Position<Security>>>::GetInventory).
-    def("get_total", &TrueAverageBookkeeper<
-      Inventory<Position<Security>>>::GetTotal);
 }
 
 void Nexus::Python::ExportTrueAverageBookkeeperReactor(module& module) {
