@@ -47,7 +47,6 @@ namespace Styles {
 
       void closeEvent(QCloseEvent* event) override;
       bool event(QEvent* event) override;
-      bool eventFilter(QObject* watched, QEvent* event) override;
       bool nativeEvent(
         const QByteArray& eventType, void* message, long* result) override;
 
@@ -59,7 +58,6 @@ namespace Styles {
       boost::optional<bool> m_has_maximize_attribute;
       boost::optional<QSize> m_frame_size;
 
-      QSize adjusted_window_size(const QSize& body_size);
       void on_highlighted(bool is_match);
       void on_screen_changed(QScreen* screen);
       void set_window_attributes(bool is_resizeable);
