@@ -2,63 +2,49 @@
 #define NEXUS_PYTHON_DEFINITIONS_SERVICE_HPP
 #include <type_traits>
 #include <pybind11/pybind11.h>
-#include "Nexus/DefinitionsService/DefinitionsClientBox.hpp"
+#include "Nexus/DefinitionsService/DefinitionsClient.hpp"
 #include "Nexus/Python/DllExport.hpp"
 
 namespace Nexus::Python {
-
-  /** Returns the exported DefinitionsClientBox. */
-  NEXUS_EXPORT_DLL pybind11::class_<DefinitionsService::DefinitionsClientBox>&
-    GetExportedDefinitionsClientBox();
-
-  /**
-   * Exports the ApplicationDefinitionsClient class.
-   * @param module The module to export to.
-   */
-  void ExportApplicationDefinitionsClient(pybind11::module& module);
 
   /**
    * Exports the DefinitionsService namespace.
    * @param module The module to export to.
    */
-  void ExportDefinitionsService(pybind11::module& module);
+  void export_definitions_service(pybind11::module& module);
 
   /**
-   * Exports the DefinitionsTestEnvironment class.
+   * Exports the DefinitionsServiceTestEnvironment class.
    * @param module The module to export to.
    */
-  void ExportDefinitionsServiceTestEnvironment(pybind11::module& module);
+  void export_definitions_service_test_environment(pybind11::module& module);
 
   /**
    * Exports a DefinitionsClient class.
-   * @param <Client> The type of DefinitionsClient to export.
+   * @param <C> The type of DefinitionsClient to export.
    * @param module The module to export to.
    * @param name The name of the class.
    * @return The exported DefinitionsClient.
    */
-  template<typename Client>
-  auto ExportDefinitionsClient(pybind11::module& module,
-      const std::string& name) {
-    auto client = pybind11::class_<Client, std::shared_ptr<Client>>(module,
-      name.c_str()).
+  template<typename C>
+  auto export_definitions_client(
+      pybind11::module& module, std::string_view name) {
+    auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
       def("load_minimum_spire_client_version",
-        &Client::LoadMinimumSpireClientVersion).
-      def("load_organization_name", &Client::LoadOrganizationName).
-      def("load_country_database", &Client::LoadCountryDatabase).
-      def("load_time_zone_database", &Client::LoadTimeZoneDatabase).
-      def("load_currency_database", &Client::LoadCurrencyDatabase).
-      def("load_destination_database", &Client::LoadDestinationDatabase).
-      def("load_market_database", &Client::LoadMarketDatabase).
-      def("load_exchange_rates", &Client::LoadExchangeRates).
-      def("load_compliance_rule_schemas", &Client::LoadComplianceRuleSchemas).
-      def("load_trading_schedule", &Client::LoadTradingSchedule).
-      def("close", &Client::Close);
-    if constexpr(!std::is_same_v<Client,
-        DefinitionsService::DefinitionsClientBox>) {
-      pybind11::implicitly_convertible<Client,
-        DefinitionsService::DefinitionsClientBox>();
-      GetExportedDefinitionsClientBox().def(
-        pybind11::init<std::shared_ptr<Client>>());
+        &C::load_minimum_spire_client_version).
+      def("load_organization_name", &C::load_organization_name).
+      def("load_country_database", &C::load_country_database).
+      def("load_time_zone_database", &C::load_time_zone_database).
+      def("load_currency_database", &C::load_currency_database).
+      def("load_destination_database", &C::load_destination_database).
+      def("load_venue_database", &C::load_venue_database).
+      def("load_exchange_rates", &C::load_exchange_rates).
+      def("load_compliance_rule_schemas", &C::load_compliance_rule_schemas).
+      def("load_trading_schedule", &C::load_trading_schedule).
+      def("close", &C::close);
+    if constexpr(!std::is_same_v<C, DefinitionsService::DefinitionsClient>) {
+      pybind11::implicitly_convertible<
+        C, DefinitionsService::DefinitionsClient>();
     }
     return client;
   }

@@ -7,7 +7,7 @@
 #include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
 #include <pybind11/pybind11.h>
-#include "Nexus/DefinitionsService/DefinitionsClientBox.hpp"
+#include "Nexus/DefinitionsService/DefinitionsClient.hpp"
 
 namespace Nexus::DefinitionsService {
 
@@ -33,32 +33,22 @@ namespace Nexus::DefinitionsService {
       ~ToPythonDefinitionsClient();
 
       /** Returns the wrapped client. */
-      const Client& GetClient() const;
+      const Client& get_client() const;
 
       /** Returns the wrapped client. */
-      Client& GetClient();
-
-      std::string LoadMinimumSpireClientVersion();
-
-      std::string LoadOrganizationName();
-
-      CountryDatabase LoadCountryDatabase();
-
-      boost::local_time::tz_database LoadTimeZoneDatabase();
-
-      CurrencyDatabase LoadCurrencyDatabase();
-
-      DestinationDatabase LoadDestinationDatabase();
-
-      MarketDatabase LoadMarketDatabase();
-
-      std::vector<ExchangeRate> LoadExchangeRates();
-
-      std::vector<Compliance::ComplianceRuleSchema> LoadComplianceRuleSchemas();
-
-      TradingSchedule LoadTradingSchedule();
-
-      void Close();
+      Client& get_client();
+      std::string load_minimum_spire_client_version();
+      std::string load_organization_name();
+      CountryDatabase load_country_database();
+      boost::local_time::tz_database load_time_zone_database();
+      CurrencyDatabase load_currency_database();
+      DestinationDatabase load_destination_database();
+      VenueDatabase load_venue_database();
+      std::vector<ExchangeRate> load_exchange_rates();
+      std::vector<Compliance::ComplianceRuleSchema>
+        load_compliance_rule_schemas();
+      TradingSchedule load_trading_schedule();
+      void close();
 
     private:
       boost::optional<Client> m_client;
@@ -70,7 +60,7 @@ namespace Nexus::DefinitionsService {
 
   template<typename Client>
   ToPythonDefinitionsClient(Client&&) ->
-    ToPythonDefinitionsClient<std::decay_t<Client>>;
+    ToPythonDefinitionsClient<std::remove_reference_t<Client>>;
 
   template<typename C>
   template<typename... Args, typename>
@@ -86,82 +76,82 @@ namespace Nexus::DefinitionsService {
 
   template<typename C>
   const typename ToPythonDefinitionsClient<C>::Client&
-      ToPythonDefinitionsClient<C>::GetClient() const {
+      ToPythonDefinitionsClient<C>::get_client() const {
     return *m_client;
   }
 
   template<typename C>
   typename ToPythonDefinitionsClient<C>::Client&
-      ToPythonDefinitionsClient<C>::GetClient() {
+      ToPythonDefinitionsClient<C>::get_client() {
     return *m_client;
   }
 
   template<typename C>
-  std::string ToPythonDefinitionsClient<C>::LoadMinimumSpireClientVersion() {
+  std::string ToPythonDefinitionsClient<C>::load_minimum_spire_client_version() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadMinimumSpireClientVersion();
+    return m_client->load_minimum_spire_client_version();
   }
 
   template<typename C>
-  std::string ToPythonDefinitionsClient<C>::LoadOrganizationName() {
+  std::string ToPythonDefinitionsClient<C>::load_organization_name() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadOrganizationName();
+    return m_client->load_organization_name();
   }
 
   template<typename C>
-  CountryDatabase ToPythonDefinitionsClient<C>::LoadCountryDatabase() {
+  CountryDatabase ToPythonDefinitionsClient<C>::load_country_database() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadCountryDatabase();
+    return m_client->load_country_database();
   }
 
   template<typename C>
   boost::local_time::tz_database
-      ToPythonDefinitionsClient<C>::LoadTimeZoneDatabase() {
+      ToPythonDefinitionsClient<C>::load_time_zone_database() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadTimeZoneDatabase();
+    return m_client->load_time_zone_database();
   }
 
   template<typename C>
-  CurrencyDatabase ToPythonDefinitionsClient<C>::LoadCurrencyDatabase() {
+  CurrencyDatabase ToPythonDefinitionsClient<C>::load_currency_database() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadCurrencyDatabase();
+    return m_client->load_currency_database();
   }
 
   template<typename C>
-  DestinationDatabase ToPythonDefinitionsClient<C>::LoadDestinationDatabase() {
+  DestinationDatabase ToPythonDefinitionsClient<C>::load_destination_database() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadDestinationDatabase();
+    return m_client->load_destination_database();
   }
 
   template<typename C>
-  MarketDatabase ToPythonDefinitionsClient<C>::LoadMarketDatabase() {
+  VenueDatabase ToPythonDefinitionsClient<C>::load_venue_database() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadMarketDatabase();
+    return m_client->load_venue_database();
   }
 
   template<typename C>
-  std::vector<ExchangeRate> ToPythonDefinitionsClient<C>::LoadExchangeRates() {
+  std::vector<ExchangeRate> ToPythonDefinitionsClient<C>::load_exchange_rates() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadExchangeRates();
+    return m_client->load_exchange_rates();
   }
 
   template<typename C>
   std::vector<Compliance::ComplianceRuleSchema>
-      ToPythonDefinitionsClient<C>::LoadComplianceRuleSchemas() {
+      ToPythonDefinitionsClient<C>::load_compliance_rule_schemas() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadComplianceRuleSchemas();
+    return m_client->load_compliance_rule_schemas();
   }
 
   template<typename C>
-  TradingSchedule ToPythonDefinitionsClient<C>::LoadTradingSchedule() {
+  TradingSchedule ToPythonDefinitionsClient<C>::load_trading_schedule() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadTradingSchedule();
+    return m_client->load_trading_schedule();
   }
 
   template<typename C>
-  void ToPythonDefinitionsClient<C>::Close() {
+  void ToPythonDefinitionsClient<C>::close() {
     auto release = Beam::Python::GilRelease();
-    m_client->Close();
+    m_client->close();
   }
 }
 

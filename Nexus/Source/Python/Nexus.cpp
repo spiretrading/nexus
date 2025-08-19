@@ -13,7 +13,7 @@ PYBIND11_MODULE(nexus, m) {
 //  ExportChartingService(m);
 //  ExportCompliance(m);
   export_definitions(m);
-//  ExportDefinitionsService(m);
+  export_definitions_service(m);
 //  ExportFeeHandling(m);
 //  ExportMarketDataService(m);
 //  ExportOrderExecutionService(m);
