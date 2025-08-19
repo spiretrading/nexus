@@ -57,9 +57,15 @@ Window::Window(QWidget* parent)
   box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   proxy_style(*this, *box);
   update_style(*this, [] (auto& style) {
-    style.get(Any()).set(BackgroundColor(QColor(0xF5F5F5)));
+    style.get(Any()).
+      set(BackgroundColor(QColor(0xF5F5F5))).
+      set(border(scale_width(1), QColor(0xA0A0A0)));
+    style.get(Highlighted()).
+      set(border_color(QColor(0x7F5EEC)));
   });
   enclose(*this, *box);
+  find_stylist(*this).connect_match_signal(Highlighted(),
+    std::bind_front(&Window::on_highlighted, this));
 }
 
 void Window::set_icon(const QImage& icon) {
@@ -226,6 +232,14 @@ void Window::set_body(QWidget* body) {
 
 QSize Window::adjusted_window_size(const QSize& body_size) {
   return {body_size.width(), body_size.height() + m_title_bar->height()};
+}
+
+void Window::on_highlighted(bool is_match) {
+  if(is_match) {
+    match(*m_title_bar, Highlighted());
+  } else {
+    unmatch(*m_title_bar, Highlighted());
+  }
 }
 
 void Window::on_screen_changed(QScreen* screen) {

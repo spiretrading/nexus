@@ -4916,12 +4916,14 @@ UiProfile Spire::make_title_bar_profile() {
     {"TimeAndSales",
       {":/Icons/time-sales.svg", ":/Icons/taskbar_icons/time-sales.png"}}});
   populate_enum_properties(properties, "icon", icon_property);
+  properties.push_back(make_standard_property("highlighted", false));
   auto profile = UiProfile("TitleBar", properties, [] (auto& profile) {
     auto& title = get<QString>("title", profile.get_properties());
     auto& icon =
       get<std::tuple<QString, QString>>("icon", profile.get_properties());
+    auto& highlighted = get<bool>("highlighted", profile.get_properties());
     auto button = make_label_button("Click me");
-    button->connect_click_signal([&title, &icon] {
+    button->connect_click_signal([&title, &icon, &highlighted] {
       auto window = QPointer<Window>(new Window());
       window->setAttribute(Qt::WA_DeleteOnClose);
       title.connect_changed_signal([=] (const auto& text) {
@@ -4933,6 +4935,16 @@ UiProfile Spire::make_title_bar_profile() {
         if(window) {
           window->set_svg_icon(get<0>(value));
           window->setWindowIcon(QIcon(get<1>(value)));
+        }
+      });
+      highlighted.connect_changed_signal([=] (auto is_highlighted) {
+        if(!window) {
+          return;
+        }
+        if(is_highlighted) {
+          match(*window, Highlighted());
+        } else {
+          unmatch(*window, Highlighted());
         }
       });
       window->show();
