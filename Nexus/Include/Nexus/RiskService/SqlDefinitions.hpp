@@ -15,40 +15,36 @@ namespace Nexus::RiskService {
     std::uint32_t m_account;
 
     /** The inventory stored. */
-    RiskInventory m_inventory;
+    Accounting::Inventory m_inventory;
   };
 
   /** Returns a row representing a InventoryEntry. */
   inline const auto& get_inventory_entries_row() {
     static auto ROW = Viper::Row<InventoryEntry>().
       add_column("account", &InventoryEntry::m_account).
-        extend(Viper::Row<RiskInventory>().
-          extend(Viper::Row<RiskPosition>().
-            extend(Viper::Row<RiskPosition::Key>().
-              extend(Viper::Row<Security>().
-                add_column("symbol", Viper::varchar(16),
-                  [] (auto& row) {
-                    return row.get_symbol();
-                  },
-                  [] (auto& row, auto column) {
-                    row = Security(std::move(column), row.get_venue());
-                  }).
-                add_column("venue", Viper::varchar(16),
-                  [] (auto& row) {
-                    return row.get_venue();
-                  },
-                  [] (auto& row, auto column) {
-                    row = Security(row.get_symbol(), column);
-                  }),
-                [] (auto& entry) -> auto& {
-                  return entry.m_index;
+        extend(Viper::Row<Accounting::Inventory>().
+          extend(Viper::Row<Accounting::Position>().
+            extend(Viper::Row<Security>().
+              add_column("symbol", Viper::varchar(16),
+                [] (auto& row) {
+                  return row.get_symbol();
+                },
+                [] (auto& row, auto column) {
+                  row = Security(std::move(column), row.get_venue());
                 }).
-              add_column("currency",
-                [] (auto& entry) -> auto& {
-                  return entry.m_currency;
+              add_column("venue", Viper::varchar(16),
+                [] (auto& row) {
+                  return row.get_venue();
+                },
+                [] (auto& row, auto column) {
+                  row = Security(row.get_symbol(), column);
                 }),
               [] (auto& entry) -> auto& {
-                return entry.m_key;
+                return entry.m_security;
+              }).
+            add_column("currency",
+              [] (auto& entry) -> auto& {
+                return entry.m_currency;
               }).
             add_column("quantity",
               [] (auto& entry) -> auto& {
@@ -84,7 +80,7 @@ namespace Nexus::RiskService {
   /** Converts a RiskInventory into a InventoryEntry. */
   inline auto convert_inventory_snapshot_inventories(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    return [=] (const RiskInventory& inventory) {
+    return [=] (const Accounting::Inventory& inventory) {
       return InventoryEntry(account.m_id, inventory);
     };
   }

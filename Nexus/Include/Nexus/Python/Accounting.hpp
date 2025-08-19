@@ -1,30 +1,12 @@
 #ifndef NEXUS_PYTHON_ACCOUNTING_HPP
 #define NEXUS_PYTHON_ACCOUNTING_HPP
 #include <string_view>
-#include <Beam/Python/Collections.hpp>
-#include <Beam/Python/Utilities.hpp>
+#include <type_traits>
 #include <boost/lexical_cast.hpp>
-#include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include "Nexus/Accounting/Bookkeeper.hpp"
-#include "Nexus/Accounting/Inventory.hpp"
-#include "Nexus/Accounting/Position.hpp"
-
-namespace pybind11 {
-  inline std::ostream& pybind11::operator <<(
-      std::ostream& out, const object& value) {
-    return out << str(value).cast<std::string>();
-  }
-}
-
-namespace std {
-  template<>
-  struct hash<pybind11::object> {
-    size_t operator()(const pybind11::object &o) const noexcept {
-      return pybind11::hash(o);
-    }
-  };
-}
+#include "Nexus/Accounting/Portfolio.hpp"
+#include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 
 namespace Nexus::Python {
 
@@ -34,34 +16,33 @@ namespace Nexus::Python {
    */
   void export_accounting(pybind11::module& module);
 
-  template<Accounting::IsBookkeeper Bookkeeper>
+  /**
+   * Exports the Bookkeeper class.
+   * @param <B> The type of bookkeeper to export.
+   * @param module The module to export to.
+   */
+  template<Accounting::IsBookkeeper B>
   auto export_bookkeeper(pybind11::module& module, std::string_view name) {
-    using Index = typename Bookkeeper::Index;
-    auto bookkeeper = pybind11::class_<Bookkeeper>(module, name.data()).
-      def("record", &Bookkeeper::record, pybind11::arg("index"),
+    auto bookkeeper = pybind11::class_<B>(module, name.data()).
+      def("record", &B::record, pybind11::arg("index"),
         pybind11::arg("currency"), pybind11::arg("quantity"),
         pybind11::arg("cost_basis"), pybind11::arg("fees")).
-      def("get_inventory", &Bookkeeper::get_inventory, pybind11::arg("index"),
+      def("get_inventory", &B::get_inventory, pybind11::arg("index"),
         pybind11::arg("currency")).
-      def("get_total", &Bookkeeper::get_total, pybind11::arg("currency")).
-      def_property_readonly("inventories", &Bookkeeper::get_inventory_range).
-      def_property_readonly("totals", &Bookkeeper::get_totals_range);
-    if constexpr(!std::is_same_v<Index, pybind11::object>) {
-      pybind11::implicitly_convertible<Accounting::Bookkeeper<
-        Accounting::Inventory<Accounting::Position<pybind11::object>>>,
-          Bookkeeper>();
-    }
-    if constexpr(!std::is_same_v<Bookkeeper, Accounting::Bookkeeper<
-        Accounting::Inventory<Accounting::Position<Index>>>>) {
-      pybind11::implicitly_convertible<Bookkeeper, Accounting::Bookkeeper<
-        Accounting::Inventory<Accounting::Position<Index>>>>();
-      if constexpr(!std::is_same_v<Index, pybind11::object>) {
-        pybind11::implicitly_convertible<Bookkeeper, Accounting::Bookkeeper<
-          Accounting::Inventory<Accounting::Position<pybind11::object>>>>();
-      }
+      def("get_total", &B::get_total, pybind11::arg("currency")).
+      def_property_readonly("inventories", &B::get_inventory_range).
+      def_property_readonly("totals", &B::get_totals_range);
+    if constexpr(!std::is_same_v<B, Accounting::Bookkeeper>) {
+      pybind11::implicitly_convertible<B, Accounting::Bookkeeper>();
     }
     return bookkeeper;
   }
+
+  /**
+   * Exports the bookkeeper reactor.
+   * @param module The module to export to.
+   */
+  void export_bookkeeper_reactor(pybind11::module& module);
 
   /**
    * Exports the BuyingPowerModel class.
@@ -70,131 +51,118 @@ namespace Nexus::Python {
   void export_buying_power_model(pybind11::module& module);
 
   /**
-   * Exports the Inventory class.
-   * @param <P> The type of Position.
+   * Exports the Inventory struct.
+   * @param module The module to export to.
+   */
+  void export_inventory(pybind11::module& module);
+
+  /**
+   * Exports the Portfolio class.
+   * @param <B> The type of Bookkeeper.
    * @param module The module to export to.
    * @param name The name used to export the class.
    * @return The exported class.
    */
-  template<Accounting::IsPosition P>
-  auto export_inventory(pybind11::module& module, std::string_view name) {
-    using Inventory = Accounting::Inventory<P>;
-    Beam::Python::ExportView<Inventory>(
-      module, (std::string(name) + "View").c_str());
-    Beam::Python::ExportView<const Inventory>(
-      module, (std::string(name) + "ConstView").c_str());
-    auto inventory = pybind11::class_<Inventory>(module, name.data()).
-      def(pybind11::init()).
-      def(pybind11::init<typename Inventory::Position::Key>()).
-      def(pybind11::init<
-        typename Inventory::Position, Money, Money, Quantity, int>()).
-      def_readwrite("position", &Inventory::m_position).
-      def_readwrite("gross_profit_and_loss",
-        &Inventory::m_gross_profit_and_loss).
-      def_readwrite("fees", &Inventory::m_fees).
-      def_readwrite("volume", &Inventory::m_volume).
-      def_readwrite("transaction_count", &Inventory::m_transaction_count).
-      def(pybind11::self == pybind11::self).
-      def(pybind11::self != pybind11::self).
-      def("__str__", &boost::lexical_cast<std::string, Inventory>);
-    module.def("is_empty", &Accounting::is_empty<P>);
-    if constexpr(!std::is_same_v<typename P::Index, pybind11::object>) {
-      pybind11::implicitly_convertible<
-        Accounting::Position<pybind11::object>, Inventory>();
+  template<Accounting::IsBookkeeper B>
+  auto export_portfolio(pybind11::module& module, std::string_view name) {
+    using Portfolio = Accounting::Portfolio<B>;
+    using Bookkeeper = typename Portfolio::Bookkeeper;
+    auto portfolio = pybind11::class_<Portfolio>(module, name.data()).
+      def(pybind11::init<const Bookkeeper&>()).
+      def(pybind11::init<const Bookkeeper&, const VenueDatabase&>()).
+      def_property_readonly("bookkeeper", &Portfolio::get_bookkeeper).
+      def_property_readonly("security_entries",
+        &Portfolio::get_security_entries).
+      def_property_readonly("unrealized_profit_and_losses",
+        &Portfolio::get_unrealized_profit_and_losses).
+      def("update", static_cast<bool (Portfolio::*)(
+        const OrderExecutionService::OrderFields&,
+        const OrderExecutionService::ExecutionReport&)>(&Portfolio::update),
+        pybind11::arg("fields"), pybind11::arg("report")).
+      def("update_ask", &Portfolio::update_ask, pybind11::arg("security"),
+        pybind11::arg("value")).
+      def("update_bid", &Portfolio::update_bid, pybind11::arg("security"),
+        pybind11::arg("value")).
+      def("update", static_cast<bool (Portfolio::*)(
+          const Security&, Money, Money)>(&Portfolio::update),
+        pybind11::arg("security"), pybind11::arg("ask_value"),
+        pybind11::arg("bid_value")).
+      def("__iter__", [] (const Portfolio& portfolio) {
+        auto updates = std::vector<Accounting::PortfolioUpdateEntry>();
+        Accounting::for_each(
+          portfolio, [&] (const Accounting::PortfolioUpdateEntry& update) {
+            updates.push_back(update);
+          });
+        return pybind11::make_iterator(updates.begin(), updates.end());
+      }, pybind11::keep_alive<0, 1>());
+    if constexpr(std::is_same_v<Bookkeeper, Accounting::Bookkeeper>) {
+      portfolio.def(pybind11::init([] {
+          return Portfolio(Bookkeeper(Accounting::TrueAverageBookkeeper()));
+        })).
+        def(pybind11::init([] (const VenueDatabase& venues) {
+          return Portfolio(Bookkeeper(Accounting::TrueAverageBookkeeper()), venues);
+        }));
+    } else {
+      portfolio.def(pybind11::init()).
+        def(pybind11::init<const VenueDatabase&>());
     }
-    return inventory;
+    using SecurityEntry = typename Portfolio::SecurityEntry;
+    pybind11::class_<SecurityEntry>(portfolio, "SecurityEntry").
+      def(pybind11::init<CurrencyId>()).
+      def_readwrite("valuation", &SecurityEntry::m_valuation).
+      def_readwrite("unrealized", &SecurityEntry::m_unrealized);
+    module.def("get_realized_profit_and_loss",
+      static_cast<Money (*)(const Accounting::Inventory&)>(
+        &Accounting::get_realized_profit_and_loss));
+    module.def("get_unrealized_profit_and_loss",
+      static_cast<boost::optional<Money> (*)(
+        const Accounting::Inventory&, const Accounting::SecurityValuation&)>(
+          &Accounting::get_unrealized_profit_and_loss));
+    module.def("get_total_profit_and_loss",
+      static_cast<boost::optional<Money> (*)(
+        const Accounting::Inventory&, const Accounting::SecurityValuation&)>(
+          &Accounting::get_total_profit_and_loss));
+    module.def("get_total_profit_and_loss",
+      static_cast<Money (*)(const Portfolio&, CurrencyId)>(
+        &Accounting::get_total_profit_and_loss<B>));
+    return portfolio;
   }
 
   /**
-   * Exports the Position class.
-   * @param <I> The type of Index.
+   * Exports the PortfolioController class.
    * @param module The module to export to.
-   * @param name The name used to export the class.
-   * @return The exported class.
    */
-  template<typename I>
-  auto export_position(pybind11::module& module, std::string_view name) {
-    using Position = Accounting::Position<I>;
-    using Key = typename Position::Key;
-    auto position = pybind11::class_<Position>(module, name.data()).
-      def(pybind11::init()).
-      def(pybind11::init<const Position&>()).
-      def(pybind11::init<const Key&, Quantity, Money>()).
-      def_readwrite("key", &Position::m_key).
-      def_readwrite("quantity", &Position::m_quantity).
-      def_readwrite("cost_basis", &Position::m_cost_basis).
-      def("__str__", &boost::lexical_cast<std::string, Position>).
-      def(pybind11::self == pybind11::self).
-      def(pybind11::self != pybind11::self);
-    pybind11::class_<Key>(position, "Key").
-      def(pybind11::init()).
-      def(pybind11::init<const Key&>()).
-      def(pybind11::init<const typename Key::Index&, CurrencyId>()).
-      def(pybind11::init([](const pybind11::tuple& tuple) {
-        if(tuple.size() != 2) {
-          throw std::runtime_error("Invalid tuple size.");
-        }
-        return Key(
-          tuple[0].cast<typename Key::Index>(), tuple[1].cast<CurrencyId>());
-      })).
-      def_readwrite("index", &Key::m_index).
-      def_readwrite("currency", &Key::m_currency).
-      def("__str__", &boost::lexical_cast<std::string, Key>).
-      def(pybind11::self == pybind11::self).
-      def(pybind11::self != pybind11::self).
-      def("__hash__", [] (const Key& key) {
-        if constexpr(std::is_same_v<I, pybind11::object>) {
-          return pybind11::hash(key.m_index);
-        } else {
-          return std::hash<Key>()(key);
-        }
-      });
-    pybind11::implicitly_convertible<pybind11::tuple, Key>();
-    module.def("average_price", &Accounting::get_average_price<I>);
-    module.def("side", &Accounting::get_side<I>);
-    if constexpr(!std::is_same_v<I, pybind11::object>) {
-      pybind11::implicitly_convertible<
-        Accounting::Position<pybind11::object>, Position>();
-    }
-  }
+  void export_portfolio_controller(pybind11::module& module);
+
+  /**
+   * Exports the PortfolioUpdateEntry struct.
+   * @param module The module to export to.
+   */
+  void export_portfolio_update_entry(pybind11::module& module);
+
+  /**
+   * Exports the Position struct.
+   * @param module The module to export to.
+   */
+  void export_position(pybind11::module& module);
+
+  /**
+   * Exports the PositionOrderBook class.
+   * @param module The module to export to.
+   */
+  void export_position_order_book(pybind11::module& module);
+
+  /**
+   * Exports the SecurityValuation struct.
+   * @param module The module to export to.
+   */
+  void export_security_valuation(pybind11::module& module);
 
   /**
    * Exports the ShortingModel class.
    * @param module The module to export to.
    */
   void export_shorting_model(pybind11::module& module);
-
-#if 0
-  /**
-   * Exports the PortfolioUpdateEntry class.
-   * @param module The module to export to.
-   */
-  void ExportPortfolioUpdateEntry(pybind11::module& module);
-
-  /**
-   * Exports the PositionOrderBook class.
-   * @param module The module to export to.
-   */
-  void ExportPositionOrderBook(pybind11::module& module);
-
-  /**
-   * Exports the SecurityValuation class.
-   * @param module The module to export to.
-   */
-  void ExportSecurityValuation(pybind11::module& module);
-
-  /**
-   * Exports the BookkeeperReactor using a TrueAverageBookkeeper.
-   * @param module The module to export to.
-   */
-  void ExportTrueAverageBookkeeperReactor(pybind11::module& module);
-
-  /**
-   * Exports the TrueAveragePortfolio class.
-   * @param module The module to export to.
-   */
-  void ExportTrueAveragePortfolio(pybind11::module& module);
-#endif
 }
 
 #endif

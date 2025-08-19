@@ -23,6 +23,7 @@ using namespace Beam::UidService::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
+using namespace Nexus::Accounting;
 using namespace Nexus::AdministrationService;
 using namespace Nexus::AdministrationService::Tests;
 using namespace Nexus::DefaultCurrencies;
@@ -115,7 +116,7 @@ TEST_SUITE("RiskController") {
     auto state = std::make_shared<Queue<RiskState>>();
     controller.get_risk_state_publisher().Monitor(state);
     REQUIRE(state->Pop() == RiskState::Type::ACTIVE);
-    auto portfolio = std::make_shared<Queue<RiskPortfolio::UpdateEntry>>();
+    auto portfolio = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_portfolio_publisher().Monitor(portfolio);
     auto order = fixture.m_trader_order_execution_client->submit(
       make_market_order_fields(TSLA, Side::BID, 100));
@@ -140,7 +141,7 @@ TEST_SUITE("RiskController") {
   TEST_CASE("single_security_existing_position") {
     auto fixture = Fixture();
     auto snapshot = InventorySnapshot();
-    snapshot.m_inventories.push_back(RiskInventory(RiskPosition({TSLA, USD},
+    snapshot.m_inventories.push_back(Inventory(Position(TSLA, USD,
       200, 200 * (99 * Money::CENT)), Money::ZERO, Money::ZERO, 200, 1));
     fixture.m_data_store.store(fixture.m_trader_account, snapshot);
     auto controller = RiskController(fixture.m_trader_account,
@@ -151,11 +152,11 @@ TEST_SUITE("RiskController") {
     auto state = std::make_shared<Queue<RiskState>>();
     controller.get_risk_state_publisher().Monitor(state);
     REQUIRE(state->Pop() == RiskState::Type::ACTIVE);
-    auto portfolio = std::make_shared<Queue<RiskPortfolio::UpdateEntry>>();
+    auto portfolio = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_portfolio_publisher().Monitor(portfolio);
     auto update = portfolio->Pop();
-    REQUIRE(update.m_security_inventory.m_position.m_key.m_index == TSLA);
-    REQUIRE(update.m_security_inventory.m_position.m_key.m_currency == USD);
+    REQUIRE(update.m_security_inventory.m_position.m_security == TSLA);
+    REQUIRE(update.m_security_inventory.m_position.m_currency == USD);
     REQUIRE(update.m_unrealized_security == 2 * Money::ONE);
     REQUIRE(update.m_unrealized_currency == 2 * Money::ONE);
     REQUIRE(update.m_security_inventory.m_position.m_quantity == 200);
@@ -165,7 +166,7 @@ TEST_SUITE("RiskController") {
     accept(*received_order);
     fill(*received_order, parse_money("0.99"), 100);
     update = portfolio->Pop();
-    REQUIRE(update.m_security_inventory.m_position.m_key.m_index == TSLA);
+    REQUIRE(update.m_security_inventory.m_position.m_security == TSLA);
     REQUIRE(update.m_security_inventory.m_position.m_quantity == 300);
     fixture.m_market_data_environment.get_feed_client().publish(
       SecurityBboQuote(BboQuote(Quote(parse_money("0.98"), 100, Side::BID),

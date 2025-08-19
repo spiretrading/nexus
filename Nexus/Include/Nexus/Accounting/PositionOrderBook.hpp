@@ -2,6 +2,7 @@
 #define NEXUS_POSITION_ORDER_BOOK_HPP
 #include <functional>
 #include <memory>
+#include <ostream>
 #include <ranges>
 #include <unordered_map>
 #include <vector>
@@ -39,8 +40,7 @@ namespace Nexus::Accounting {
        * @param positions The initial set of positions to populate the book
        *        with.
        */
-      explicit PositionOrderBook(
-        Beam::View<const Inventory<Position<Security>>> positions);
+      explicit PositionOrderBook(Beam::View<const Inventory> positions);
 
       //! Returns all live Orders.
       const std::vector<std::shared_ptr<const OrderExecutionService::Order>>&
@@ -110,6 +110,11 @@ namespace Nexus::Accounting {
           m_opening_orders;
       Beam::CachedValue<std::vector<PositionEntry>> m_positions;
   };
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const PositionOrderBook::PositionEntry& entry) {
+    return out << '(' << entry.m_security << ' ' << entry.m_quantity << ')';
+  }
 
   inline PositionOrderBook::OrderEntry::OrderEntry(
     std::shared_ptr<const OrderExecutionService::Order> order,
@@ -191,11 +196,10 @@ namespace Nexus::Accounting {
   }
 
   inline PositionOrderBook::PositionOrderBook(
-      Beam::View<const Inventory<Position<Security>>> positions)
-    : PositionOrderBook() {
+      Beam::View<const Inventory> positions)
+      : PositionOrderBook() {
     for(auto& position : positions) {
-      auto& security_entry =
-        m_security_entries[position.m_position.m_key.m_index];
+      auto& security_entry = m_security_entries[position.m_position.m_security];
       security_entry.m_position = position.m_position.m_quantity;
     }
   }

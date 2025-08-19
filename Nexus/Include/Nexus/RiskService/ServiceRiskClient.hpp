@@ -40,8 +40,8 @@ namespace Nexus::RiskService {
     private:
       using ServiceProtocolClient =
         typename ServiceProtocolClientBuilder::Client;
-      Beam::Remote<Beam::TablePublisher<RiskPortfolioKey, RiskInventory>>
-        m_publisher;
+      Beam::Remote<Beam::TablePublisher<
+        RiskPortfolioKey, Accounting::Inventory>> m_publisher;
       Beam::Services::ServiceProtocolClientHandler<B> m_client_handler;
       Beam::IO::OpenState m_open_state;
       Beam::RoutineTaskQueue m_tasks;
@@ -157,7 +157,7 @@ namespace Nexus::RiskService {
             });
           if(entry_iterator == entries.end()) {
             m_publisher->Delete(snapshot_entry.first,
-              RiskInventory(snapshot_entry.second.m_position.m_key));
+              Accounting::Inventory(get_key(snapshot_entry.second.m_position)));
           }
         }
       }
@@ -174,10 +174,10 @@ namespace Nexus::RiskService {
       for(auto& update : inventories) {
         if(update.inventory.m_transaction_count == 0) {
           m_publisher->Delete(RiskPortfolioKey(update.account,
-            update.inventory.m_position.m_key.m_index), update.inventory);
+            update.inventory.m_position.m_security), update.inventory);
         } else {
           m_publisher->Push(RiskPortfolioKey(update.account,
-            update.inventory.m_position.m_key.m_index), update.inventory);
+            update.inventory.m_position.m_security), update.inventory);
         }
       }
     });

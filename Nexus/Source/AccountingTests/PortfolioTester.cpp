@@ -14,9 +14,7 @@ using namespace Nexus::DefaultVenues;
 using namespace Nexus::OrderExecutionService;
 
 namespace {
-  using TestBookkeeper = TrueAverageBookkeeper<Inventory<Position<Security>>>;
-  using TestPortfolio = Portfolio<TestBookkeeper>;
-  using TestInventory = TestPortfolio::Inventory;
+  using TestPortfolio = Portfolio<TrueAverageBookkeeper>;
 
   auto TST = Security("TST", TSX);
   auto MSFT = Security("MSFT", NASDAQ);
@@ -47,7 +45,7 @@ TEST_SUITE("Portfolio") {
   }
 
   TEST_CASE("constructor") {
-    auto bookkeeper = TestBookkeeper();
+    auto bookkeeper = TrueAverageBookkeeper();
     bookkeeper.record(TST, CAD, 1, Money::ONE, Money::ZERO);
     auto portfolio = Portfolio(bookkeeper, DEFAULT_VENUES);
     REQUIRE(
@@ -91,14 +89,14 @@ TEST_SUITE("Portfolio") {
   }
 
   TEST_CASE("get_realized_profit_and_loss") {
-    auto inventory = TestInventory();
+    auto inventory = Inventory();
     inventory.m_gross_profit_and_loss = 100 * Money::ONE;
     inventory.m_fees = 10 * Money::ONE;
     REQUIRE(get_realized_profit_and_loss(inventory) == 90 * Money::ONE);
   }
 
   TEST_CASE("get_unrealized_profit_and_loss") {
-    auto inventory = TestInventory();
+    auto inventory = Inventory();
     inventory.m_position.m_quantity = 100;
     inventory.m_position.m_cost_basis = 1000 * Money::ONE;
     auto valuation = SecurityValuation(CAD);
@@ -109,7 +107,7 @@ TEST_SUITE("Portfolio") {
   }
 
   TEST_CASE("get_total_profit_and_loss_inventory") {
-    auto inventory = TestInventory();
+    auto inventory = Inventory();
     inventory.m_position.m_quantity = 100;
     inventory.m_position.m_cost_basis = 1000 * Money::ONE;
     inventory.m_gross_profit_and_loss = 50 * Money::ONE;

@@ -41,8 +41,9 @@ namespace Nexus::RiskService {
        */
       template<Beam::Initializes<C> CF>
       RiskTransitionModel(Beam::ServiceLocator::DirectoryEntry account,
-        const std::vector<RiskInventory>& inventory, RiskState risk_state,
-        CF&& order_execution_client, DestinationDatabase destinations) noexcept;
+        const std::vector<Accounting::Inventory>& inventory,
+        RiskState risk_state, CF&& order_execution_client,
+        DestinationDatabase destinations) noexcept;
 
       /**
        * Adds an Order.
@@ -87,14 +88,14 @@ namespace Nexus::RiskService {
 
   template<typename CF>
   RiskTransitionModel(Beam::ServiceLocator::DirectoryEntry,
-    const std::vector<RiskInventory>&, RiskState, CF&&, DestinationDatabase) ->
-      RiskTransitionModel<std::remove_reference_t<CF>>;
+    const std::vector<Accounting::Inventory>&, RiskState, CF&&,
+      DestinationDatabase) -> RiskTransitionModel<std::remove_reference_t<CF>>;
 
   template<OrderExecutionService::IsOrderExecutionClient C>
   template<Beam::Initializes<C> CF>
   RiskTransitionModel<C>::RiskTransitionModel(
     Beam::ServiceLocator::DirectoryEntry account,
-    const std::vector<RiskInventory>& inventory, RiskState risk_state,
+    const std::vector<Accounting::Inventory>& inventory, RiskState risk_state,
     CF&& order_execution_client, DestinationDatabase destinations) noexcept
     : m_account(std::move(account)),
       m_risk_state(std::move(risk_state)),

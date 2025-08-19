@@ -26,26 +26,17 @@ namespace Nexus::RiskService {
     bool operator ==(const RiskPortfolioKey&) const = default;
   };
 
-  /** The type used to represent a portfolio's position. */
-  using RiskPosition = Accounting::Position<Security>;
-
-  /** The type used to represent a portfolio's Inventory. */
-  using RiskInventory = Accounting::Inventory<RiskPosition>;
-
   /** The type of Portfolio used. */
   using RiskPortfolio =
-    Accounting::Portfolio<Accounting::TrueAverageBookkeeper<RiskInventory>>;
-
-  /** The type of valuation used. */
-  using RiskSecurityValuation = Accounting::SecurityValuation;
+    Accounting::Portfolio<Accounting::TrueAverageBookkeeper>;
 
   /** Stores an Inventory update. */
   using RiskInventoryEntry =
-    Beam::KeyValuePair<RiskPortfolioKey, RiskInventory>;
+    Beam::KeyValuePair<RiskPortfolioKey, Accounting::Inventory>;
 
   /** The Publisher used for portfolio events. */
-  using RiskPortfolioUpdatePublisher =
-    Beam::Publisher<Beam::KeyValuePair<RiskPortfolioKey, RiskInventory>>;
+  using RiskPortfolioUpdatePublisher = Beam::Publisher<
+    Beam::KeyValuePair<RiskPortfolioKey, Accounting::Inventory>>;
 
   inline std::ostream& operator <<(
       std::ostream& out, const RiskPortfolioKey& key) {

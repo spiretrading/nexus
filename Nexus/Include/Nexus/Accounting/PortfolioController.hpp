@@ -19,8 +19,8 @@
 namespace Nexus::Accounting {
 
   /**
-   * Uses the BboQuote published by a MarketDataClient and the Orders
-   * published by an OrderExecutionPublisher to update a Portfolio.
+   * Uses the BboQuote published by a MarketDataClient and the Orders published
+   * by an OrderExecutionPublisher to update a Portfolio.
    * @param <P> The type of Portfolio to update.
    * @param <C> The type of MarketDataClient to use.
    */
@@ -35,12 +35,6 @@ namespace Nexus::Accounting {
       /** The type of MarketDataClient to use. */
       using MarketDataClient = Beam::GetTryDereferenceType<C>;
 
-      /** The type of Inventory stored by the Portfolio. */
-      using Inventory = typename Portfolio::Bookkeeper::Inventory;
-
-      /** The type of updates published. */
-      using UpdateEntry = typename Portfolio::UpdateEntry;
-
       /**
        * Constructs a PortfolioController.
        * @param portfolio Initializes the Portfolio.
@@ -53,7 +47,7 @@ namespace Nexus::Accounting {
           std::shared_ptr<const OrderExecutionService::Order>> orders);
 
       /** Returns the object publishing updates to the Portfolio. */
-      const Beam::SnapshotPublisher<UpdateEntry, Portfolio*>&
+      const Beam::SnapshotPublisher<PortfolioUpdateEntry, Portfolio*>&
         get_publisher() const;
 
     private:
@@ -61,7 +55,8 @@ namespace Nexus::Accounting {
       Beam::GetOptionalLocalPtr<C> m_market_data_client;
       OrderExecutionService::ExecutionReportPublisher
         m_execution_report_publisher;
-      Beam::ValueSnapshotPublisher<UpdateEntry, Portfolio*> m_publisher;
+      Beam::ValueSnapshotPublisher<PortfolioUpdateEntry, Portfolio*>
+        m_publisher;
       std::unordered_map<Security, BboQuote> m_bbo_quotes;
       std::unordered_set<Security> m_securities;
       Beam::RoutineTaskQueue m_tasks;
@@ -99,7 +94,7 @@ namespace Nexus::Accounting {
     m_publisher.With([&] {
       for(auto& inventory :
           m_portfolio->get_bookkeeper().get_inventory_range()) {
-        subscribe(inventory.m_position.m_key.m_index);
+        subscribe(inventory.m_position.m_security);
       }
       auto reports = boost::optional<
         std::vector<OrderExecutionService::ExecutionReportEntry>>();
@@ -117,7 +112,7 @@ namespace Nexus::Accounting {
 
   template<Beam::IsInstanceOrIndirect<Portfolio> P,
     MarketDataService::IsMarketDataClient C>
-  const Beam::SnapshotPublisher<typename PortfolioController<P, C>::UpdateEntry,
+  const Beam::SnapshotPublisher<PortfolioUpdateEntry,
     typename PortfolioController<P, C>::Portfolio*>&
       PortfolioController<P, C>::get_publisher() const {
     return m_publisher;
@@ -153,7 +148,7 @@ namespace Nexus::Accounting {
     auto& security_entry = security_entry_iterator->second;
     auto& security_inventory = m_portfolio->get_bookkeeper().get_inventory(
       security, security_entry.m_valuation.m_currency);
-    auto update = UpdateEntry();
+    auto update = PortfolioUpdateEntry();
     update.m_security_inventory = security_inventory;
     update.m_unrealized_security = security_entry.m_unrealized;
     update.m_currency_inventory = m_portfolio->get_bookkeeper().get_total(

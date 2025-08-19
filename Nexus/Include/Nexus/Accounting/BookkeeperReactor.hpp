@@ -13,15 +13,16 @@ namespace Nexus::Accounting {
   /**
    * Returns a reactor that produces updates to a bookkeeper's inventory based
    * on a series of execution reports.
+   * @param bookkeeper The initial state of the bookkeeper.
    * @param orders The reactor producing the orders to monitor for execution
    *        reports.
    */
   template<IsBookkeeper B, typename Orders>
-  auto make_bookkeeper_reactor(Orders orders) {
-    return Aspen::lift([bookkeeper = B()] (
-        const std::tuple<const OrderExecutionService::Order*,
+  auto make_bookkeeper_reactor(B bookkeeper, Orders orders) {
+    return Aspen::lift([bookkeeper = std::move(bookkeeper)] (
+        const std::tuple<std::shared_ptr<const OrderExecutionService::Order>,
           OrderExecutionService::ExecutionReport>& update) mutable ->
-            std::optional<typename B::Inventory> {
+            std::optional<Inventory> {
       auto& order = *std::get<0>(update);
       auto& report = std::get<1>(update);
       if(report.m_last_quantity == 0) {
@@ -35,12 +36,23 @@ namespace Nexus::Accounting {
       return bookkeeper.get_inventory(order.get_info().m_fields.m_security,
         order.get_info().m_fields.m_currency);
     }, Aspen::concur(Aspen::lift(
-    [] (const OrderExecutionService::Order* order) {
+    [] (const std::shared_ptr<const OrderExecutionService::Order>& order) {
       return Aspen::Shared(Aspen::lift(
         [=] (const OrderExecutionService::ExecutionReport& report) {
           return std::tuple(order, report);
         }, Beam::Reactors::PublisherReactor(order->get_publisher())));
     }, std::move(orders))));
+  }
+
+  /**
+   * Returns a reactor that produces updates to a bookkeeper's inventory based
+   * on a series of execution reports.
+   * @param orders The reactor producing the orders to monitor for execution
+   *        reports.
+   */
+  template<IsBookkeeper B, typename Orders>
+  auto make_bookkeeper_reactor(Orders orders) {
+    return make_bookkeeper_reactor(B(), std::move(orders));
   }
 }
 

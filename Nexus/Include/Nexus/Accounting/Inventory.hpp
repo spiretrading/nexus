@@ -8,15 +8,8 @@
 
 namespace Nexus::Accounting {
 
-  /**
-   * Stores bookkeeping info for a single inventory.
-   * @param <P> The type used to manage inventory Positions.
-   */
-  template<IsPosition P>
+  /** Stores bookkeeping info for a single inventory. */
   struct Inventory {
-
-    /** The type used to manage inventory Positions. */
-    using Position = P;
 
     /** The currently held Position. */
     Position m_position;
@@ -38,9 +31,16 @@ namespace Nexus::Accounting {
 
     /**
      * Constructs an Inventory.
-     * @param key The Key uniquely identifying this Inventory.
+     * @param security The Security being managed.
+     * @param currency The currency being transacted.
      */
-    explicit Inventory(typename Position::Key key) noexcept;
+    Inventory(Security security, CurrencyId currency) noexcept;
+
+    /**
+     * Constructs an Inventory.
+     * @param key Stores the position's security and currency.
+     */
+    explicit Inventory(Position::Key key) noexcept;
 
     /**
      * Constructs an Inventory.
@@ -57,36 +57,29 @@ namespace Nexus::Accounting {
   };
 
   /**
-   * Concept that evaluates to true if a type is an Inventory instantiation.
-   * @param <T> The type to test.
-   */
-  template<typename T>
-  concept IsInventory = Beam::is_instance_v<T, Inventory>;
-
-  /**
   * Tests if an Inventory is empty, ie. has no position, volume, or
   * transactions.
   * @param inventory The inventory to test.
   * @return <code>true</code> iff the <i>inventory</i> is empty.
   */
-  template<typename P>
-  bool is_empty(const Inventory<P>& inventory) {
-    return inventory == Inventory<P>(inventory.m_position.m_key);
+  inline bool is_empty(const Inventory& inventory) {
+    return inventory == Inventory(
+      inventory.m_position.m_security, inventory.m_position.m_currency);
   }
 
-  template<IsPosition P>
-  Inventory<P>::Inventory() noexcept
+  inline Inventory::Inventory() noexcept
     : m_volume(0),
       m_transaction_count(0) {}
 
-  template<IsPosition P>
-  Inventory<P>::Inventory(typename P::Key key) noexcept
-    : m_position(std::move(key)),
+  inline Inventory::Inventory(Security security, CurrencyId currency) noexcept
+    : m_position(std::move(security), currency),
       m_volume(0),
       m_transaction_count(0) {}
 
-  template<IsPosition P>
-  Inventory<P>::Inventory(Position position, Money gross_profit_and_loss,
+  inline Inventory::Inventory(Position::Key key) noexcept
+    : Inventory(std::move(key.m_security), key.m_currency) {}
+
+  inline Inventory::Inventory(Position position, Money gross_profit_and_loss,
     Money fees, Quantity volume, int transaction_count)
     : m_position(std::move(position)),
       m_gross_profit_and_loss(gross_profit_and_loss),
@@ -94,9 +87,8 @@ namespace Nexus::Accounting {
       m_volume(volume),
       m_transaction_count(transaction_count) {}
 
-  template<typename Position>
-  std::ostream& operator <<(
-      std::ostream& out, const Inventory<Position>& inventory) {
+  inline std::ostream& operator <<(
+      std::ostream& out, const Inventory& inventory) {
     return out << '(' << inventory.m_position << ' ' <<
       inventory.m_gross_profit_and_loss << ' ' << inventory.m_fees << ' ' <<
       inventory.m_volume << ' ' << inventory.m_transaction_count << ')';
@@ -104,10 +96,10 @@ namespace Nexus::Accounting {
 }
 
 namespace Beam::Serialization {
-  template<typename P>
-  struct Shuttle<Nexus::Accounting::Inventory<P>> {
+  template<>
+  struct Shuttle<Nexus::Accounting::Inventory> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::Accounting::Inventory<P>& value,
+    void operator ()(Shuttler& shuttle, Nexus::Accounting::Inventory& value,
         unsigned int version) const {
       shuttle.Shuttle("position", value.m_position);
       shuttle.Shuttle("gross_profit_and_loss", value.m_gross_profit_and_loss);

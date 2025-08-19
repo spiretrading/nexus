@@ -12,14 +12,14 @@
 
 namespace Nexus::RiskService {
   BEAM_DEFINE_RECORD(SecurityValuationUpdate, Security, security,
-    RiskSecurityValuation, valuation);
+    Accounting::SecurityValuation, valuation);
   BEAM_DEFINE_RECORD(InventoryUpdate, Beam::ServiceLocator::DirectoryEntry,
-    account, RiskInventory, inventory);
+    account, Accounting::Inventory, inventory);
   BEAM_DEFINE_RECORD(RiskStateUpdate, Beam::ServiceLocator::DirectoryEntry,
     account, RiskState, risk_state);
 
   /** Standard name for the risk service. */
-  inline const std::string SERVICE_NAME = "risk_service";
+  inline const auto SERVICE_NAME = std::string("risk_service");
 
   BEAM_DEFINE_SERVICES(RiskServices,
 

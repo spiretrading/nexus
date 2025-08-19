@@ -29,6 +29,7 @@ using namespace Beam::UidService::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
+using namespace Nexus::Accounting;
 using namespace Nexus::AdministrationService;
 using namespace Nexus::AdministrationService::Tests;
 using namespace Nexus::DefaultCurrencies;
@@ -135,7 +136,7 @@ namespace {
   }
 
   auto setup_account(Fixture& fixture, const std::string& name,
-      const std::vector<RiskInventory>& inventories) {
+      const std::vector<Inventory>& inventories) {
     auto account = fixture.m_service_locator_environment.GetRoot().MakeAccount(
       name, "", DirectoryEntry::GetStarDirectory());
     auto snapshot = InventorySnapshot();
@@ -156,7 +157,7 @@ namespace {
     REQUIRE(update_message != nullptr);
     REQUIRE(update_message->GetRecord().inventories.size() == 1);
     auto& inventory = update_message->GetRecord().inventories[0].inventory;
-    REQUIRE(inventory.m_position.m_key.m_index == expected_security);
+    REQUIRE(inventory.m_position.m_security == expected_security);
     REQUIRE(inventory.m_position.m_quantity == expected_quantity);
     REQUIRE(inventory.m_position.m_cost_basis == expected_cost_basis);
   }
@@ -203,16 +204,16 @@ TEST_SUITE("RiskServlet") {
     auto [admin_entry, admin_client] = fixture.make_client("admin");
     auto [account1, client1, inventories1] = setup_account(fixture, "account1",
       {
-        RiskInventory(RiskPosition({BAC, USD}, 100, 100 * Money::ONE),
+        Inventory(Position(BAC, USD, 100, 100 * Money::ONE),
           Money::ZERO, 5 * Money::ONE, 100, 1),
-        RiskInventory(RiskPosition({TSLA, USD}, 200, 200 * Money::ONE),
+        Inventory(Position(TSLA, USD, 200, 200 * Money::ONE),
           Money::ZERO, 7 * Money::ONE, 200, 2)
       });
     auto [account2, client2, inventories2] = setup_account(fixture, "account2",
       {
-        RiskInventory(RiskPosition({BAC, USD}, 300, 300 * Money::ONE),
+        Inventory(Position(BAC, USD, 300, 300 * Money::ONE),
           Money::ZERO, 10 * Money::ONE, 300, 1),
-        RiskInventory(RiskPosition({TSLA, USD}, 400, 300 * Money::ONE),
+        Inventory(Position(TSLA, USD, 400, 300 * Money::ONE),
           Money::ZERO, 14 * Money::ONE, 300, 6)
       });
     auto region = Region(BAC);
@@ -221,7 +222,7 @@ TEST_SUITE("RiskServlet") {
       LoadInventorySnapshotService>(account1).m_inventories;
     std::sort(reset_inventories1.begin(), reset_inventories1.end(),
       [] (const auto& lhs, const auto& rhs) {
-        return lhs.m_position.m_key.m_index < rhs.m_position.m_key.m_index;
+        return lhs.m_position.m_security < rhs.m_position.m_security;
       });
     REQUIRE(reset_inventories1.size() == 2);
     REQUIRE(reset_inventories1[0].m_position == inventories1[0].m_position);
@@ -234,7 +235,7 @@ TEST_SUITE("RiskServlet") {
       LoadInventorySnapshotService>(account2).m_inventories;
     std::sort(reset_inventories2.begin(), reset_inventories2.end(),
       [] (const auto& lhs, const auto& rhs) {
-        return lhs.m_position.m_key.m_index < rhs.m_position.m_key.m_index;
+        return lhs.m_position.m_security < rhs.m_position.m_security;
       });
     REQUIRE(reset_inventories2.size() == 2);
     REQUIRE(reset_inventories2[0].m_position == inventories2[0].m_position);
@@ -256,16 +257,16 @@ TEST_SUITE("RiskServlet") {
     auto [admin_account_, admin_client] = fixture.make_client("admin");
     auto [account1, client1, inventories1] = setup_account(fixture, "account1",
       {
-        RiskInventory(RiskPosition({BAC, USD}, 100, 100 * Money::ONE),
+        Inventory(Position(BAC, USD, 100, 100 * Money::ONE),
           Money::ZERO, 5 * Money::ONE, 100, 1),
-        RiskInventory(RiskPosition({TSLA, USD}, 200, 200 * Money::ONE),
+        Inventory(Position(TSLA, USD, 200, 200 * Money::ONE),
           Money::ZERO, 7 * Money::ONE, 200, 2)
       });
     auto [account2, client2, inventories2] = setup_account(fixture, "account2",
       {
-        RiskInventory(RiskPosition({BAC, USD}, 300, 300 * Money::ONE),
+        Inventory(Position(BAC, USD, 300, 300 * Money::ONE),
           Money::ZERO, 10 * Money::ONE, 300, 1),
-        RiskInventory(RiskPosition({TSLA, USD}, 400, 300 * Money::ONE),
+        Inventory(Position(TSLA, USD, 400, 300 * Money::ONE),
           Money::ZERO, 14 * Money::ONE, 300, 6)
       });
     auto entries1 =

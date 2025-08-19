@@ -28,9 +28,7 @@ using namespace Nexus::OrderExecutionService::Tests;
 
 namespace {
   const auto TST = Security("TST", TSX);
-
-  using TestPortfolio =
-    Portfolio<TrueAverageBookkeeper<Inventory<Position<Security>>>>;
+  using TestPortfolio = Portfolio<TrueAverageBookkeeper>;
 
   struct Fixture {
     ServiceLocatorTestEnvironment m_service_locator_environment;
@@ -82,10 +80,10 @@ TEST_SUITE("PortfolioController") {
     fill(*order, 100, timestamp + seconds(2));
     order_queue->Push(order);
     order_queue->Break();
-    auto updates = std::make_shared<Queue<TestPortfolio::UpdateEntry>>();
+    auto updates = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_publisher().Monitor(updates);
     auto update = updates->Pop();
-    REQUIRE(update.m_security_inventory.m_position.m_key.m_index == TST);
+    REQUIRE(update.m_security_inventory.m_position.m_security == TST);
     REQUIRE(update.m_security_inventory.m_position.m_quantity == 100);
     REQUIRE(
       update.m_security_inventory.m_position.m_cost_basis == 100 * Money::ONE);
@@ -97,7 +95,7 @@ TEST_SUITE("PortfolioController") {
     auto order_queue = std::make_shared<Queue<std::shared_ptr<const Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
-    auto updates = std::make_shared<Queue<TestPortfolio::UpdateEntry>>();
+    auto updates = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_publisher().Monitor(updates);
     auto timestamp = time_from_string("2024-07-21 10:00:00.000");
     auto security1 = Security("AAA", TSX);
@@ -116,7 +114,7 @@ TEST_SUITE("PortfolioController") {
     accept(*order1, timestamp + seconds(1));
     fill(*order1, 50, timestamp + seconds(2));
     auto update1 = updates->Pop();
-    REQUIRE(update1.m_security_inventory.m_position.m_key.m_index == security1);
+    REQUIRE(update1.m_security_inventory.m_position.m_security == security1);
     REQUIRE(update1.m_security_inventory.m_position.m_quantity == 50);
     REQUIRE(
       update1.m_security_inventory.m_position.m_cost_basis == 50 * Money::ONE);
@@ -129,7 +127,7 @@ TEST_SUITE("PortfolioController") {
     fill(*order2, 75, timestamp + seconds(2));
     order_queue->Break();
     auto update2 = updates->Pop();
-    REQUIRE(update2.m_security_inventory.m_position.m_key.m_index == security2);
+    REQUIRE(update2.m_security_inventory.m_position.m_security == security2);
     REQUIRE(update2.m_security_inventory.m_position.m_quantity == 75);
     REQUIRE(
       update2.m_security_inventory.m_position.m_cost_basis == 75 * Money::ONE);
@@ -141,7 +139,7 @@ TEST_SUITE("PortfolioController") {
     auto order_queue = std::make_shared<Queue<std::shared_ptr<const Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
-    auto updates = std::make_shared<Queue<TestPortfolio::UpdateEntry>>();
+    auto updates = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_publisher().Monitor(updates);
     auto timestamp = time_from_string("2024-07-21 10:00:00.000");
     auto fields =
@@ -159,7 +157,7 @@ TEST_SUITE("PortfolioController") {
     fixture.m_market_data_environment.get_feed_client().publish(
       SecurityBboQuote(new_bbo, TST));
     auto bbo_update = updates->Pop();
-    REQUIRE(bbo_update.m_security_inventory.m_position.m_key.m_index == TST);
+    REQUIRE(bbo_update.m_security_inventory.m_position.m_security == TST);
     REQUIRE(bbo_update.m_security_inventory.m_position.m_quantity == 100);
     REQUIRE(
       bbo_update.m_unrealized_security != initial_update.m_unrealized_security);
@@ -173,7 +171,7 @@ TEST_SUITE("PortfolioController") {
     auto order_queue = std::make_shared<Queue<std::shared_ptr<const Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
-    auto updates = std::make_shared<Queue<TestPortfolio::UpdateEntry>>();
+    auto updates = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_publisher().Monitor(updates);
     auto timestamp = time_from_string("2024-07-21 10:00:00.000");
     auto fields =
@@ -194,7 +192,7 @@ TEST_SUITE("PortfolioController") {
     fixture.m_market_data_environment.get_feed_client().publish(
       SecurityBboQuote(changed_bbo, TST));
     auto final_update = updates->Pop();
-    REQUIRE(final_update.m_security_inventory.m_position.m_key.m_index == TST);
+    REQUIRE(final_update.m_security_inventory.m_position.m_security == TST);
     REQUIRE(final_update.m_security_inventory.m_position.m_quantity == 100);
     REQUIRE(final_update.m_unrealized_security == 100 * Money::ONE);
   }
@@ -221,15 +219,15 @@ TEST_SUITE("PortfolioController") {
     fill(*order, 100, timestamp + seconds(2));
     order_queue->Push(order);
     order_queue->Break();
-    auto updates = std::make_shared<Queue<TestPortfolio::UpdateEntry>>();
+    auto updates = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_publisher().Monitor(updates);
     auto update1 = updates->Pop();
-    REQUIRE(update1.m_security_inventory.m_position.m_key.m_index == TST);
+    REQUIRE(update1.m_security_inventory.m_position.m_security == TST);
     REQUIRE(update1.m_security_inventory.m_position.m_quantity == 50);
     REQUIRE(
       update1.m_security_inventory.m_position.m_cost_basis == 50 * Money::CENT);
     auto update2 = updates->Pop();
-    REQUIRE(update2.m_security_inventory.m_position.m_key.m_index == TST);
+    REQUIRE(update2.m_security_inventory.m_position.m_security == TST);
     REQUIRE(update2.m_security_inventory.m_position.m_quantity == 150);
     REQUIRE(update2.m_security_inventory.m_position.m_cost_basis ==
       100 * Money::ONE + 50 * Money::CENT);
@@ -241,7 +239,7 @@ TEST_SUITE("PortfolioController") {
     auto order_queue = std::make_shared<Queue<std::shared_ptr<const Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
-    auto updates = std::make_shared<Queue<TestPortfolio::UpdateEntry>>();
+    auto updates = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_publisher().Monitor(updates);
     auto timestamp = time_from_string("2024-07-21 10:00:00.000");
     auto fields =
@@ -269,7 +267,7 @@ TEST_SUITE("PortfolioController") {
     auto order_queue = std::make_shared<Queue<std::shared_ptr<const Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
-    auto updates = std::make_shared<Queue<TestPortfolio::UpdateEntry>>();
+    auto updates = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_publisher().Monitor(updates);
     auto timestamp = time_from_string("2024-07-21 10:00:00.000");
     auto fields_a =
@@ -314,7 +312,7 @@ TEST_SUITE("PortfolioController") {
     auto order_queue = std::make_shared<Queue<std::shared_ptr<const Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
-    auto updates = std::make_shared<Queue<TestPortfolio::UpdateEntry>>();
+    auto updates = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_publisher().Monitor(updates);
     auto timestamp = time_from_string("2024-07-21 10:00:00.000");
     auto fields_buy = make_limit_order_fields(
@@ -356,14 +354,14 @@ TEST_SUITE("PortfolioController") {
   TEST_CASE("empty_snapshot") {
     auto fixture = Fixture();
     auto portfolio = [&] {
-      auto inventories = std::vector{TestPortfolio::Inventory({TST, CAD})};
+      auto inventories = std::vector{Inventory(TST, CAD)};
       auto bookkeeper = TestPortfolio::Bookkeeper(inventories);
       return TestPortfolio(DEFAULT_VENUES);
     }();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<const Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
-    auto updates = std::make_shared<Queue<TestPortfolio::UpdateEntry>>();
+    auto updates = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_publisher().Monitor(updates);
     REQUIRE(!updates->TryPop());
   }
@@ -374,7 +372,7 @@ TEST_SUITE("PortfolioController") {
     auto order_queue = std::make_shared<Queue<std::shared_ptr<const Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
-    auto updates = std::make_shared<Queue<TestPortfolio::UpdateEntry>>();
+    auto updates = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_publisher().Monitor(updates);
     auto timestamp = time_from_string("2024-07-21 10:00:00.000");
     auto fields =

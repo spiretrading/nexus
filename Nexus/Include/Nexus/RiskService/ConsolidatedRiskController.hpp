@@ -21,7 +21,7 @@ namespace Nexus::RiskService {
 
   /** Represents an entry in a RiskPortfolio table. */
   using RiskPortfolioEntry =
-    Beam::KeyValuePair<RiskPortfolioKey, RiskInventory>;
+    Beam::KeyValuePair<RiskPortfolioKey, Accounting::Inventory>;
 
   /**
    * Consolidates the RiskControllers for multiple accounts.
@@ -114,7 +114,7 @@ namespace Nexus::RiskService {
       DestinationDatabase m_destinations;
       Beam::TablePublisher<Beam::ServiceLocator::DirectoryEntry, RiskState>
         m_state_publisher;
-      Beam::TablePublisher<RiskPortfolioKey, RiskInventory>
+      Beam::TablePublisher<RiskPortfolioKey, Accounting::Inventory>
         m_portfolio_publisher;
       std::vector<std::unique_ptr<RiskController>> m_controllers;
       Beam::RoutineTaskQueue m_tasks;
@@ -128,7 +128,7 @@ namespace Nexus::RiskService {
         const RiskState& state);
       void on_portfolio_entry(
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskPortfolio::UpdateEntry& entry);
+        const Accounting::PortfolioUpdateEntry& entry);
   };
 
   template<AdministrationService::IsAdministrationClient A,
@@ -218,7 +218,7 @@ namespace Nexus::RiskService {
       m_tasks.GetSlot<RiskState>(std::bind_front(
         &ConsolidatedRiskController::on_risk_state, this, account)));
     controller->get_portfolio_publisher().Monitor(
-      m_tasks.GetSlot<RiskPortfolio::UpdateEntry>(std::bind_front(
+      m_tasks.GetSlot<Accounting::PortfolioUpdateEntry>(std::bind_front(
         &ConsolidatedRiskController::on_portfolio_entry, this, account)));
     m_controllers.push_back(std::move(controller));
   }
@@ -239,9 +239,9 @@ namespace Nexus::RiskService {
     IsRiskDataStore D>
   void ConsolidatedRiskController<A, M, O, R, T, D>::on_portfolio_entry(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskPortfolio::UpdateEntry& entry) {
+      const Accounting::PortfolioUpdateEntry& entry) {
     auto key = RiskPortfolioKey(
-      account, entry.m_security_inventory.m_position.m_key.m_index);
+      account, entry.m_security_inventory.m_position.m_security);
     m_portfolio_publisher.Push(std::move(key), entry.m_security_inventory);
   }
 }

@@ -18,6 +18,7 @@ using namespace Beam::UidService::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
+using namespace Nexus::Accounting;
 using namespace Nexus::AdministrationService;
 using namespace Nexus::AdministrationService::Tests;
 using namespace Nexus::DefaultCurrencies;
@@ -58,10 +59,10 @@ TEST_SUITE("InventorySnapshot") {
   TEST_CASE("strip") {
     auto abc = Security("ABC", TSX);
     auto xyz = Security("XYZ", TSX);
-    auto abc_inventory = RiskInventory(RiskPosition(
-      {abc, CAD}, 1, Money::ONE), Money::ZERO, Money::ZERO, 1, 1);
-    auto xyz_inventory = RiskInventory(RiskPosition(
-      {xyz, CAD}, 0, Money::ZERO), Money::ZERO, Money::ZERO, 0, 0);
+    auto abc_inventory = Inventory(
+      Position(abc, CAD, 1, Money::ONE), Money::ZERO, Money::ZERO, 1, 1);
+    auto xyz_inventory = Inventory(
+      Position(xyz, CAD, 0, Money::ZERO), Money::ZERO, Money::ZERO, 0, 0);
     auto snapshot = InventorySnapshot();
     snapshot.m_inventories.push_back(abc_inventory);
     snapshot.m_inventories.push_back(xyz_inventory);
@@ -74,10 +75,10 @@ TEST_SUITE("InventorySnapshot") {
     auto fixture = Fixture();
     auto abc = Security("ABC", TSX);
     auto xyz = Security("XYZ", TSX);
-    auto abc_inventory = RiskInventory(RiskPosition(
-      {abc, CAD}, 10, Money::ONE), Money::ZERO, Money::ZERO, 2, 2);
-    auto xyz_inventory = RiskInventory(RiskPosition(
-      {xyz, CAD}, 5, Money::ONE), Money::ZERO, Money::ZERO, 1, 1);
+    auto abc_inventory = Inventory(
+      Position(abc, CAD, 10, Money::ONE), Money::ZERO, Money::ZERO, 2, 2);
+    auto xyz_inventory = Inventory(
+      Position(xyz, CAD, 5, Money::ONE), Money::ZERO, Money::ZERO, 1, 1);
     auto snapshot_sequence = Beam::Queries::Sequence(100);
     auto excluded_order_ids = std::vector<OrderId>{1, 2};
     auto snapshot = InventorySnapshot();
@@ -133,10 +134,10 @@ TEST_SUITE("InventorySnapshot") {
   TEST_CASE("shuttle") {
     auto abc = Security("ABC", TSX);
     auto xyz = Security("XYZ", TSX);
-    auto abc_inventory = RiskInventory(RiskPosition(
-      {abc, CAD}, 5, 12 * Money::CENT), 10 * Money::ONE, 6 * Money::ONE, 5, 3);
-    auto xyz_inventory = RiskInventory(RiskPosition(
-      {xyz, CAD}, 0, Money::ZERO), Money::ZERO, Money::ZERO, 0, 0);
+    auto abc_inventory = Inventory(Position(abc, CAD, 5, 12 * Money::CENT),
+      10 * Money::ONE, 6 * Money::ONE, 5, 3);
+    auto xyz_inventory = Inventory(
+      Position(xyz, CAD, 0, Money::ZERO), Money::ZERO, Money::ZERO, 0, 0);
     auto snapshot = InventorySnapshot();
     snapshot.m_inventories.push_back(abc_inventory);
     snapshot.m_inventories.push_back(xyz_inventory);

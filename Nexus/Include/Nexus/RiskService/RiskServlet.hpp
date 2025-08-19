@@ -292,13 +292,13 @@ namespace Nexus::RiskService {
     auto reset_inventories = std::vector<InventoryUpdate>();
     for(auto inventory : portfolio.get_bookkeeper().get_inventory_range()) {
       auto& base_inventory = base_portfolio.get_bookkeeper().get_inventory(
-        inventory.m_position.m_key.m_index,
-        inventory.m_position.m_key.m_currency);
-      if(base_inventory.m_position.m_key.m_index <= region) {
+        inventory.m_position.m_security, inventory.m_position.m_currency);
+      if(base_inventory.m_position.m_security <= region) {
         if(inventory.m_position.m_quantity == 0) {
           auto update = InventoryUpdate();
           update.account = account;
-          update.inventory = RiskInventory(inventory.m_position.m_key);
+          update.inventory =
+            Accounting::Inventory(get_key(inventory.m_position));
           reset_inventories.push_back(update);
         }
         inventory.m_position.m_quantity = base_inventory.m_position.m_quantity;
@@ -312,8 +312,8 @@ namespace Nexus::RiskService {
         inventory.m_transaction_count = base_inventory.m_transaction_count -
           inventory.m_transaction_count;
         updated_snapshot.m_inventories.push_back(inventory);
-        m_tasks.Push([this, key =
-            RiskPortfolioKey(account, inventory.m_position.m_key.m_index)] {
+        m_tasks.Push([this,
+            key = RiskPortfolioKey(account, inventory.m_position.m_security)] {
           m_volumes[key] = -1;
         });
       } else {

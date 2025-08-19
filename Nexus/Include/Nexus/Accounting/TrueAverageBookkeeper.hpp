@@ -18,16 +18,9 @@ namespace Details {
   };
 }
 
-  /**
-   * Implements a Bookkeeper using true average bookkeeping.
-   * @param <I> The type of Inventory to manage.
-   */
-  template<IsInventory I>
+  /** Implements a Bookkeeper using true average bookkeeping. */
   class TrueAverageBookkeeper {
     public:
-      using Inventory = typename Bookkeeper<I>::Inventory;
-      using Index = typename Bookkeeper<I>::Index;
-      using Key = typename Bookkeeper<I>::Key;
 
       /** Constructs an empty bookkeeper. */
       TrueAverageBookkeeper() = default;
@@ -39,29 +32,28 @@ namespace Details {
       explicit TrueAverageBookkeeper(
         const Beam::View<const Inventory>& inventories);
 
-      void record(const Index& index, CurrencyId currency,
+      void record(const Security& security, CurrencyId currency,
         Quantity quantity, Money cost_basis, Money fees);
       const Inventory& get_inventory(
-        const Index& index, CurrencyId currency) const;
+        const Security& security, CurrencyId currency) const;
       const Inventory& get_total(CurrencyId currency) const;
       Beam::View<const Inventory> get_inventory_range() const;
       Beam::View<const Inventory> get_totals_range() const;
     private:
-      std::unordered_map<Key, Inventory> m_inventories;
+      std::unordered_map<Position::Key, Inventory> m_inventories;
       std::unordered_map<CurrencyId, Inventory> m_totals;
 
       Inventory& internal_get_total(CurrencyId currency);
   };
 
-  template<IsInventory I>
-  TrueAverageBookkeeper<I>::TrueAverageBookkeeper(
+  inline TrueAverageBookkeeper::TrueAverageBookkeeper(
       const Beam::View<const Inventory>& inventories) {
     for(auto& inventory : inventories) {
       if(is_empty(inventory)) {
         continue;
       }
-      m_inventories.insert(std::pair(inventory.m_position.m_key, inventory));
-      auto& total = internal_get_total(inventory.m_position.m_key.m_currency);
+      m_inventories.insert(std::pair(get_key(inventory.m_position), inventory));
+      auto& total = internal_get_total(inventory.m_position.m_currency);
       total.m_gross_profit_and_loss += inventory.m_gross_profit_and_loss;
       total.m_position.m_quantity += abs(inventory.m_position.m_quantity);
       total.m_position.m_cost_basis += abs(inventory.m_position.m_cost_basis);
@@ -71,10 +63,9 @@ namespace Details {
     }
   }
 
-  template<IsInventory I>
-  void TrueAverageBookkeeper<I>::record(const Index& index,
+  inline void TrueAverageBookkeeper::record(const Security& security,
       CurrencyId currency, Quantity quantity, Money cost_basis, Money fees) {
-    auto key = Key(index, currency);
+    auto key = Position::Key(security, currency);
     auto entry_iterator = m_inventories.find(key);
     if(entry_iterator == m_inventories.end()) {
       entry_iterator =
@@ -134,15 +125,13 @@ namespace Details {
     total.m_position.m_cost_basis += abs(entry.m_position.m_cost_basis);
   }
 
-  template<IsInventory I>
-  const typename TrueAverageBookkeeper<I>::Inventory&
-      TrueAverageBookkeeper<I>::get_inventory(
-        const Index& index, CurrencyId currency) const {
-    auto key = Key(index, currency);
+  inline const Inventory& TrueAverageBookkeeper::get_inventory(
+      const Security& security, CurrencyId currency) const {
+    auto key = Position::Key(security, currency);
     auto inventory_iterator = m_inventories.find(key);
     if(inventory_iterator == m_inventories.end()) {
       static auto empty_inventories =
-        Beam::SynchronizedUnorderedMap<Key, Inventory>();
+        Beam::SynchronizedUnorderedMap<Position::Key, Inventory>();
       return empty_inventories.GetOrInsert(key, [&] {
         return Inventory(key);
       });
@@ -150,34 +139,32 @@ namespace Details {
     return inventory_iterator->second;
   }
 
-  template<IsInventory I>
-  const typename TrueAverageBookkeeper<I>::Inventory&
-      TrueAverageBookkeeper<I>::get_total(CurrencyId currency) const {
+  inline const Inventory&
+      TrueAverageBookkeeper::get_total(CurrencyId currency) const {
     auto totals_iterator = m_totals.find(currency);
     if(totals_iterator == m_totals.end()) {
       static auto empty_totals =
         Beam::SynchronizedUnorderedMap<CurrencyId, Inventory>();
       return empty_totals.GetOrInsert(currency, [&] {
         auto totals = Inventory();
-        totals.m_position.m_key.m_currency = currency;
+        totals.m_position.m_currency = currency;
         return totals;
       });
     }
     return totals_iterator->second;
   }
 
-  template<IsInventory I>
-  Beam::View<const typename TrueAverageBookkeeper<I>::Inventory>
-      TrueAverageBookkeeper<I>::get_inventory_range() const {
-    using Accessor = Details::ValueAccessor<std::pair<const Key, Inventory>>;
+  inline Beam::View<const Inventory>
+      TrueAverageBookkeeper::get_inventory_range() const {
+    using Accessor =
+      Details::ValueAccessor<std::pair<const Position::Key, Inventory>>;
     return Beam::View(
       boost::make_transform_iterator(m_inventories.begin(), Accessor()),
       boost::make_transform_iterator(m_inventories.end(), Accessor()));
   }
 
-  template<IsInventory I>
-  Beam::View<const typename TrueAverageBookkeeper<I>::Inventory>
-      TrueAverageBookkeeper<I>::get_totals_range() const {
+  inline Beam::View<const Inventory>
+      TrueAverageBookkeeper::get_totals_range() const {
     using Accessor =
       Details::ValueAccessor<std::pair<const CurrencyId, Inventory>>;
     return Beam::View(
@@ -185,13 +172,12 @@ namespace Details {
       boost::make_transform_iterator(m_totals.end(), Accessor()));
   }
 
-  template<IsInventory I>
-  typename TrueAverageBookkeeper<I>::Inventory&
-      TrueAverageBookkeeper<I>::internal_get_total(CurrencyId currency) {
+  inline Inventory&
+      TrueAverageBookkeeper::internal_get_total(CurrencyId currency) {
     auto totals_iterator = m_totals.find(currency);
     if(totals_iterator == m_totals.end()) {
       totals_iterator = m_totals.insert(std::pair(currency, Inventory())).first;
-      totals_iterator->second.m_position.m_key.m_currency = currency;
+      totals_iterator->second.m_position.m_currency = currency;
     }
     return totals_iterator->second;
   }

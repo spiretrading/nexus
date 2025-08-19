@@ -15,10 +15,6 @@ using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::OrderExecutionService::Tests;
 
-namespace {
-  using TestInventory = Inventory<Position<Security>>;
-}
-
 TEST_SUITE("PositionOrderBook") {
   TEST_CASE("constructor") {
     auto book = PositionOrderBook();
@@ -29,8 +25,7 @@ TEST_SUITE("PositionOrderBook") {
 
   TEST_CASE("initial_positions_population") {
     auto security = Security("TST", TSX);
-    auto inventory = TestInventory(Position(
-      TestInventory::Position::Key(security, CAD), 100, 100 * Money::ONE),
+    auto inventory = Inventory(Position(security, CAD, 100, 100 * Money::ONE),
       Money::ZERO, Money::ZERO, 100, 1);
     auto book = PositionOrderBook(View(std::vector{inventory}));
     auto positions = book.get_positions();
@@ -55,8 +50,7 @@ TEST_SUITE("PositionOrderBook") {
 
   TEST_CASE("add_order_opening_vs_closing") {
     auto security = Security("TST", TSX);
-    auto inventory = TestInventory(Position(
-      TestInventory::Position::Key(security, CAD), 100, 100 * Money::ONE),
+    auto inventory = Inventory(Position(security, CAD, 100, 100 * Money::ONE),
       Money::ZERO, Money::ZERO, 100, 1);
     auto book = PositionOrderBook(View(std::vector{inventory}));
     auto opening_fields =

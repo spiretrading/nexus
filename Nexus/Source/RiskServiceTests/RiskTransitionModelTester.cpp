@@ -164,9 +164,9 @@ TEST_SUITE("RiskTransitionModel") {
   }
 
   TEST_CASE("initial_inventory") {
-    auto inventory = std::vector<RiskInventory>();
-    inventory.push_back(Inventory(Position(Position<Security>::Key(XIU, CAD),
-      -300, 300 * Money::ONE), Money::ONE, Money::ZERO, 300, 1));
+    auto inventory = std::vector<Inventory>();
+    inventory.push_back(Inventory(Position(XIU, CAD, -300, 300 * Money::ONE),
+      Money::ONE, Money::ZERO, 300, 1));
     auto operations = std::make_shared<TestOrderExecutionClient::Queue>();
     auto client = TestOrderExecutionClient(operations);
     auto model = RiskTransitionModel(ACCOUNT, inventory,

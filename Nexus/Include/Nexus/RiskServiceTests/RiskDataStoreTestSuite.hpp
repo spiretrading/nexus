@@ -12,6 +12,7 @@ namespace Nexus::RiskService::Tests {
     using namespace Beam::Queries;
     using namespace Beam::ServiceLocator;
     using namespace Nexus;
+    using namespace Nexus::Accounting;
     using namespace Nexus::DefaultCurrencies;
     using namespace Nexus::DefaultVenues;
     using namespace Nexus::OrderExecutionService;
@@ -27,9 +28,8 @@ namespace Nexus::RiskService::Tests {
     }
 
     SUBCASE("store_load_inventory") {
-      auto inventories = std::vector<RiskInventory>();
-      inventories.emplace_back(
-        RiskInventory::Position::Key(Security("A", NYSE), USD));
+      auto inventories = std::vector<Inventory>();
+      inventories.emplace_back(Position::Key(Security("A", NYSE), USD));
       inventories.back().m_position.m_cost_basis = 1000 * Money::ONE;
       inventories.back().m_position.m_quantity = 123;
       inventories.back().m_fees = 3 * Money::ONE;
@@ -48,16 +48,14 @@ namespace Nexus::RiskService::Tests {
     }
 
     SUBCASE("store_empty_inventory") {
-      auto inventories = std::vector<RiskInventory>();
-      inventories.emplace_back(
-        RiskInventory::Position::Key(Security("A", NYSE), USD));
+      auto inventories = std::vector<Inventory>();
+      inventories.emplace_back(Position::Key(Security("A", NYSE), USD));
       inventories.back().m_position.m_cost_basis = 1000 * Money::ONE;
       inventories.back().m_position.m_quantity = 123;
       inventories.back().m_fees = 3 * Money::ONE;
       inventories.back().m_transaction_count = 332;
       inventories.back().m_volume = 433;
-      inventories.emplace_back(
-        RiskInventory::Position::Key(Security("B", NYSE), USD));
+      inventories.emplace_back(Position::Key(Security("B", NYSE), USD));
       auto account = DirectoryEntry::MakeAccount(123, "test");
       auto snapshot = InventorySnapshot(inventories, Sequence(200), {});
       data_store.store(account, snapshot);

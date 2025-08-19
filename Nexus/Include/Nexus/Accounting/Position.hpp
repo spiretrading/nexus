@@ -2,56 +2,37 @@
 #define NEXUS_POSITION_HPP
 #include <cstdint>
 #include <ostream>
+#include <utility>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/functional/hash.hpp>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
 
 namespace Nexus::Accounting {
-namespace Details {
 
-  /**
-   * Identifies an inventory managed in a specific Currency.
-   * @param I The type of index used.
-   */
-  template<typename I>
-  struct Key {
-
-    /** The type of index used. */
-    using Index = I;
-
-    /** The inventory's index. */
-    Index m_index;
-
-    /** The Currency used to value the inventory. */
-    CurrencyId m_currency;
-
-    bool operator ==(const Key&) const = default;
-  };
-
-  template<typename Index>
-  std::ostream& operator <<(std::ostream& out, const Key<Index>& key) {
-    return out << '(' << key.m_index << ' ' << key.m_currency << ')';
-  }
-}
-
-  /**
-   * Stores information about a single Inventory position.
-   * @param I Used to identify the Position.
-   */
-  template<typename I>
+  /** Stores information about a single position. */
   struct Position {
 
-    /** Used to identify the Position. */
-    using Index = I;
+    /** Stores a key that can be used to identify a position. */
+    struct Key {
 
-    /** The type used to uniquely identifier this Position. */
-    using Key = Details::Key<Index>;
+      /** The position's security. */
+      Security m_security;
 
-    /** Uniquely identifies this Position. */
-    Key m_key;
+      /** The currency used to trade the position. */
+      CurrencyId m_currency;
+
+      bool operator ==(const Key&) const = default;
+    };
+
+    /** The security held. */
+    Security m_security;
+
+    /** The position's currency. */
+    CurrencyId m_currency;
 
     /** The quantity of inventory held. */
     Quantity m_quantity;
@@ -62,18 +43,20 @@ namespace Details {
     bool operator ==(const Position&) const = default;
   };
 
-  /**
-   * Concept that evaluates to true if a type is a Position specialization.
-   * @param <T> The type to test.
-   */
-  template<typename T>
-  concept IsPosition = Beam::is_instance_v<T, Position>;
+  inline std::ostream& operator <<(
+      std::ostream& out, const Position& position) {
+    return out << '(' << position.m_security << ' ' << position.m_currency <<
+      ' ' << position.m_quantity << ' ' << position.m_cost_basis << ')';
+  }
 
-  template<typename Index>
-  std::ostream& operator <<(
-      std::ostream& out, const Position<Index>& position) {
-    return out << '(' << position.m_key << ' ' << position.m_quantity << ' ' <<
-      position.m_cost_basis << ')';
+  inline std::ostream& operator <<(
+      std::ostream& out, const Position::Key& key) {
+    return out << '(' << key.m_security << ' ' << key.m_currency << ')';
+  }
+
+  /** Returns a Position's key. */
+  inline Position::Key get_key(const Position& position) {
+    return Position::Key(position.m_security, position.m_currency);
   }
 
   /**
@@ -81,8 +64,7 @@ namespace Details {
    * @param position The Position to measure.
    * @return The average price of the <i>position</i>.
    */
-  template<typename I>
-  Money get_average_price(const Position<I>& position) {
+  inline Money get_average_price(const Position& position) {
     if(position.m_quantity == 0) {
       return Money::ZERO;
     }
@@ -94,8 +76,7 @@ namespace Details {
    * @param position The Position to measure.
    * @return The Side corresponding to the <i>position</i>.
    */
-  template<typename I>
-  Side get_side(const Position<I>& position) {
+  inline Side get_side(const Position& position) {
     if(position.m_quantity == 0) {
       return Side::NONE;
     } else if(position.m_quantity > 0) {
@@ -106,34 +87,35 @@ namespace Details {
 }
 
 namespace Beam::Serialization {
-  template<typename I>
-  struct Shuttle<Nexus::Accounting::Details::Key<I>> {
+  template<>
+  struct Shuttle<Nexus::Accounting::Position> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::Accounting::Details::Key<I>& value, unsigned int version) {
-      shuttle.Shuttle("index", value.m_index);
+    void operator ()(Shuttler& shuttle, Nexus::Accounting::Position& value,
+        unsigned int version) const {
+      shuttle.Shuttle("security", value.m_security);
       shuttle.Shuttle("currency", value.m_currency);
+      shuttle.Shuttle("quantity", value.m_quantity);
+      shuttle.Shuttle("cost_basis", value.m_cost_basis);
     }
   };
 
-  template<typename I>
-  struct Shuttle<Nexus::Accounting::Position<I>> {
+  template<>
+  struct Shuttle<Nexus::Accounting::Position::Key> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::Accounting::Position<I>& value, unsigned int version) {
-      shuttle.Shuttle("key", value.m_key);
-      shuttle.Shuttle("quantity", value.m_quantity);
-      shuttle.Shuttle("cost_basis", value.m_cost_basis);
+    void operator ()(Shuttler& shuttle, Nexus::Accounting::Position::Key& key,
+        unsigned int version) const {
+      shuttle.Shuttle("security", key.m_security);
+      shuttle.Shuttle("currency", key.m_currency);
     }
   };
 }
 
 namespace std {
-  template <typename I>
-  struct hash<Nexus::Accounting::Details::Key<I>> {
-    size_t operator()(const Nexus::Accounting::Details::Key<I>& value) const {
-      auto seed = std::size_t(0);
-      boost::hash_combine(seed, std::hash<I>()(value.m_index));
+  template<>
+  struct hash<Nexus::Accounting::Position::Key> {
+    size_t operator()(const Nexus::Accounting::Position::Key& value) const {
+      auto seed = size_t(0);
+      boost::hash_combine(seed, std::hash<Nexus::Security>()(value.m_security));
       boost::hash_combine(seed, value.m_currency);
       return seed;
     }

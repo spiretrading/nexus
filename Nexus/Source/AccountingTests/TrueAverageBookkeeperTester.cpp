@@ -1,6 +1,5 @@
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/Security.hpp"
@@ -11,16 +10,13 @@ using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
 
 namespace {
-  using TestBookkeeper = TrueAverageBookkeeper<Inventory<Position<Security>>>;
-  using TestInventory = TestBookkeeper::Inventory;
-
   auto TST = Security("TST", TSX);
   auto MSFT = Security("MSFT", NASDAQ);
 }
 
 TEST_SUITE("TrueAverageBookkeeper") {
   TEST_CASE("empty_bookkeeper") {
-    auto bookkeeper = TestBookkeeper();
+    auto bookkeeper = TrueAverageBookkeeper();
     auto cad_inventory = bookkeeper.get_inventory(TST, CAD);
     REQUIRE(is_empty(cad_inventory));
     auto usd_inventory = bookkeeper.get_inventory(MSFT, USD);
@@ -32,7 +28,7 @@ TEST_SUITE("TrueAverageBookkeeper") {
   }
 
   TEST_CASE("buy_and_sell_to_flat") {
-    auto bookkeeper = TestBookkeeper();
+    auto bookkeeper = TrueAverageBookkeeper();
     bookkeeper.record(TST, CAD, 100, 1000 * Money::ONE, Money::CENT);
     auto& inventory1 = bookkeeper.get_inventory(TST, CAD);
     REQUIRE(inventory1.m_position.m_quantity == 100);
@@ -53,7 +49,7 @@ TEST_SUITE("TrueAverageBookkeeper") {
   }
 
   TEST_CASE("sell_to_short_and_buy_to_flat") {
-    auto bookkeeper = TestBookkeeper();
+    auto bookkeeper = TrueAverageBookkeeper();
     bookkeeper.record(TST, CAD, -100, -1000 * Money::ONE, Money::CENT);
     auto& inventory1 = bookkeeper.get_inventory(TST, CAD);
     REQUIRE(inventory1.m_position.m_quantity == -100);
@@ -74,7 +70,7 @@ TEST_SUITE("TrueAverageBookkeeper") {
   }
 
   TEST_CASE("multiple_buys_and_sells") {
-    auto bookkeeper = TestBookkeeper();
+    auto bookkeeper = TrueAverageBookkeeper();
     bookkeeper.record(TST, CAD, 100, 1000 * Money::ONE, Money::ZERO);
     bookkeeper.record(TST, CAD, 100, 1200 * Money::ONE, Money::ZERO);
     auto& inventory1 = bookkeeper.get_inventory(TST, CAD);
@@ -88,7 +84,7 @@ TEST_SUITE("TrueAverageBookkeeper") {
   }
 
   TEST_CASE("multiple_inventories_and_currencies") {
-    auto bookkeeper = TestBookkeeper();
+    auto bookkeeper = TrueAverageBookkeeper();
     bookkeeper.record(TST, CAD, 100, 1000 * Money::ONE, Money::CENT);
     bookkeeper.record(MSFT, USD, 50, 7500 * Money::ONE, Money::CENT);
     auto& tst_inventory = bookkeeper.get_inventory(TST, CAD);

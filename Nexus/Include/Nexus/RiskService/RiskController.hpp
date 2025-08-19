@@ -95,8 +95,9 @@ namespace Nexus::RiskService {
       const Beam::Publisher<RiskState>& get_risk_state_publisher() const;
 
       /** Returns a Publisher for the account's Portfolio. */
-      const Beam::SnapshotPublisher<RiskPortfolio::UpdateEntry, RiskPortfolio*>&
-        get_portfolio_publisher() const;
+      const Beam::SnapshotPublisher<
+        Accounting::PortfolioUpdateEntry, RiskPortfolio*>&
+          get_portfolio_publisher() const;
 
     private:
       mutable Beam::Threading::Mutex m_mutex;
@@ -126,7 +127,7 @@ namespace Nexus::RiskService {
       void update(F&& f);
       void on_transition_timer(Beam::Threading::Timer::Result result);
       void on_risk_parameters_update(const RiskParameters& parameters);
-      void on_portfolio_update(const RiskPortfolio::UpdateEntry& update);
+      void on_portfolio_update(const Accounting::PortfolioUpdateEntry& update);
       void on_order_submission(
         const OrderExecutionService::SequencedOrder& order);
       void on_execution_report(const OrderExecutionService::Order& order,
@@ -166,7 +167,7 @@ namespace Nexus::RiskService {
     auto lock = std::lock_guard(m_mutex);
     auto [portfolio, sequence, excluded_orders] =
       make_portfolio(std::move(venues));
-    auto inventories = std::vector<RiskInventory>();
+    auto inventories = std::vector<Accounting::Inventory>();
     for(auto& inventory : portfolio.get_bookkeeper().get_inventory_range()) {
       inventories.push_back(inventory);
     }
@@ -194,7 +195,7 @@ namespace Nexus::RiskService {
       m_tasks.GetSlot<OrderExecutionService::SequencedOrder>(
         std::bind_front(&RiskController::on_order_submission, this)));
     m_portfolio_controller->get_publisher().Monitor(
-      m_tasks.GetSlot<RiskPortfolio::UpdateEntry>(
+      m_tasks.GetSlot<Accounting::PortfolioUpdateEntry>(
         std::bind_front(&RiskController::on_portfolio_update, this)));
     m_administration_client->get_risk_parameters_publisher(m_account).Monitor(
       m_tasks.GetSlot<RiskParameters>(
@@ -219,8 +220,9 @@ namespace Nexus::RiskService {
     MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
-  const Beam::SnapshotPublisher<RiskPortfolio::UpdateEntry, RiskPortfolio*>&
-      RiskController<A, M, O, R, T, D>::get_portfolio_publisher() const {
+  const Beam::SnapshotPublisher<
+      Accounting::PortfolioUpdateEntry, RiskPortfolio*>&
+        RiskController<A, M, O, R, T, D>::get_portfolio_publisher() const {
     return m_portfolio_controller->get_publisher();
   }
 
@@ -321,7 +323,7 @@ namespace Nexus::RiskService {
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   void RiskController<A, M, O, R, T, D>::on_portfolio_update(
-      const RiskPortfolio::UpdateEntry& update) {
+      const Accounting::PortfolioUpdateEntry& update) {
     this->update([&] {
       m_portfolio_controller->get_publisher().With([&] {
         m_state_model->update_portfolio();
