@@ -1,12 +1,18 @@
 #include "Nexus/Python/AdministrationService.hpp"
 #include <Beam/Python/Beam.hpp>
+#include <Beam/Sql/SqlConnection.hpp>
 #include <boost/lexical_cast.hpp>
+#include <Viper/MySql/Connection.hpp>
+#include <Viper/Sqlite3/Connection.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStoreException.hpp"
+#include "Nexus/AdministrationService/CachedAdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
+#include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
+#include "Nexus/AdministrationService/SqlAdministrationDataStore.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Python/ToPythonAdministrationClient.hpp"
 #include "Nexus/Python/ToPythonAdministrationDataStore.hpp"
@@ -113,12 +119,16 @@ void Nexus::Python::export_administration_service(module& module) {
   export_administration_data_store<ToPythonAdministrationDataStore<
     AdministrationDataStore>>(submodule, "AdministrationDataStore");
   export_administration_data_store_exception(submodule);
+  export_cached_administration_data_store(submodule);
   export_entitlement_modification(submodule);
   export_indexed_account_identity(submodule);
   export_indexed_risk_parameters(submodule);
   export_indexed_risk_state(submodule);
+  export_local_administration_data_store(submodule);
   export_message(submodule);
+  export_mysql_administration_data_store(submodule);
   export_risk_modification(submodule);
+  export_sqlite_administration_data_store(submodule);
   export_trading_group(submodule);
   ExportQueueSuite<RiskState>(submodule, "RiskState");
   ExportQueueSuite<RiskParameters>(submodule, "RiskParameters");
@@ -153,6 +163,14 @@ void Nexus::Python::export_administration_service_test_environment(
   module.def("make_administration_service_test_environment",
     &make_administration_service_test_environment, call_guard<GilRelease>());
   module.def("grant_all_entitlements", &grant_all_entitlements);
+}
+
+void Nexus::Python::export_cached_administration_data_store(module& module) {
+  using DataStore = ToPythonAdministrationDataStore<
+    CachedAdministrationDataStore<AdministrationDataStore>>;
+  auto data_store = export_administration_data_store<DataStore>(
+    module, "CachedAdministrationDataStore");
+  data_store.def(init<AdministrationDataStore>());
 }
 
 void Nexus::Python::export_entitlement_modification(module& module) {
@@ -194,6 +212,14 @@ void Nexus::Python::export_indexed_risk_state(module& module) {
     def_readwrite("state", &AdministrationDataStore::IndexedRiskState::m_state);
 }
 
+void Nexus::Python::export_local_administration_data_store(module& module) {
+  using DataStore =
+    ToPythonAdministrationDataStore<LocalAdministrationDataStore>;
+  auto data_store = export_administration_data_store<DataStore>(
+    module, "LocalAdministrationDataStore");
+  data_store.def(init());
+}
+
 void Nexus::Python::export_message(module& module) {
   auto message = class_<Message>(module, "Message").
     def(init()).
@@ -219,12 +245,42 @@ void Nexus::Python::export_message(module& module) {
     def("__str__", &boost::lexical_cast<std::string, Message::Body>);
 }
 
+void Nexus::Python::export_mysql_administration_data_store(module& module) {
+  using DataStore = ToPythonAdministrationDataStore<
+    SqlAdministrationDataStore<SqlConnection<Viper::MySql::Connection>>>;
+  auto data_store = export_administration_data_store<DataStore>(
+    module, "MySqlAdministrationDataStore");
+  data_store.def(init([] (std::string host, unsigned int port,
+    std::string username, std::string password, std::string database,
+    const SqlAdministrationDataStore<SqlConnection<
+      Viper::MySql::Connection>>::DirectoryEntrySourceFunction& source) {
+  return std::make_shared<DataStore>(
+    std::make_unique<SqlConnection<Viper::MySql::Connection>>(
+      Viper::MySql::Connection(host, port, username, password, database)),
+      source);
+  }), call_guard<GilRelease>());
+}
+
 void Nexus::Python::export_risk_modification(module& module) {
   class_<RiskModification>(module, "RiskModification").
     def(init()).
     def(init<const RiskModification&>()).
     def(init<RiskParameters>()).
     def_property_readonly("parameters", &RiskModification::get_parameters);
+}
+
+void Nexus::Python::export_sqlite_administration_data_store(module& module) {
+  using DataStore = ToPythonAdministrationDataStore<
+    SqlAdministrationDataStore<SqlConnection<Viper::Sqlite3::Connection>>>;
+  auto data_store = export_administration_data_store<DataStore>(
+    module, "SqliteAdministrationDataStore");
+  data_store.def(init([] (std::string path, const SqlAdministrationDataStore<
+      SqlConnection<Viper::Sqlite3::Connection>>::DirectoryEntrySourceFunction&
+        source) {
+    return std::make_shared<DataStore>(
+      std::make_unique<SqlConnection<Viper::Sqlite3::Connection>>(path),
+      source);
+  }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::export_trading_group(module& module) {

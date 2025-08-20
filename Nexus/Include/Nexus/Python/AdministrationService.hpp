@@ -198,6 +198,12 @@ namespace Nexus::Python {
   void export_administration_service_test_environment(pybind11::module& module);
 
   /**
+   * Exports the CachedAdministrationDataStore class.
+   * @param module The module to export to.
+   */
+  void export_cached_administration_data_store(pybind11::module& module);
+
+  /**
    * Exports the EntitlementModificationRequest class.
    * @param module The module to export to.
    */
@@ -222,16 +228,34 @@ namespace Nexus::Python {
   void export_indexed_risk_state(pybind11::module& module);
 
   /**
+   * Exports the LocalAdministrationDataStore class.
+   * @param module The module to export to.
+   */
+  void export_local_administration_data_store(pybind11::module& module);
+
+  /**
    * Exports the Message class.
    * @param module The module to export to.
    */
   void export_message(pybind11::module& module);
 
   /**
+   * Exports the MySqlAdministrationDataStore class.
+   * @param module The module to export to.
+   */
+  void export_mysql_administration_data_store(pybind11::module& module);
+
+  /**
    * Exports the RiskModificationRequest class.
    * @param module The module to export to.
    */
   void export_risk_modification(pybind11::module& module);
+
+  /**
+   * Exports the SqliteAdministrationDataStore class.
+   * @param module The module to export to.
+   */
+  void export_sqlite_administration_data_store(pybind11::module& module);
 
   /**
    * Exports the TradingGroup class.
