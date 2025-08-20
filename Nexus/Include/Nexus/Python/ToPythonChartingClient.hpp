@@ -7,7 +7,7 @@
 #include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
 #include <pybind11/pybind11.h>
-#include "Nexus/ChartingService/ChartingClientBox.hpp"
+#include "Nexus/ChartingService/ChartingClient.hpp"
 
 namespace Nexus::ChartingService {
 
@@ -33,19 +33,16 @@ namespace Nexus::ChartingService {
       ~ToPythonChartingClient();
 
       /** Returns the wrapped client. */
-      const Client& GetClient() const;
+      const Client& get_client() const;
 
       /** Returns the wrapped client. */
-      Client& GetClient();
-
-      void QuerySecurity(const SecurityChartingQuery& query,
+      Client& get_client();
+      void query(const SecurityChartingQuery& query,
         Beam::ScopedQueueWriter<Queries::QueryVariant> queue);
-
-      TimePriceQueryResult LoadTimePriceSeries(const Security& security,
-        boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
+      TimePriceQueryResult load_time_price_series(const Security& security,
+        boost::posix_time::ptime start, boost::posix_time::ptime end,
         boost::posix_time::time_duration interval);
-
-      void Close();
+      void close();
 
     private:
       boost::optional<Client> m_client;
@@ -57,7 +54,7 @@ namespace Nexus::ChartingService {
 
   template<typename Client>
   ToPythonChartingClient(Client&&) ->
-    ToPythonChartingClient<std::decay_t<Client>>;
+    ToPythonChartingClient<std::remove_reference_t<Client>>;
 
   template<typename C>
   template<typename... Args, typename>
@@ -73,38 +70,35 @@ namespace Nexus::ChartingService {
 
   template<typename C>
   const typename ToPythonChartingClient<C>::Client&
-      ToPythonChartingClient<C>::GetClient() const {
+      ToPythonChartingClient<C>::get_client() const {
     return *m_client;
   }
 
   template<typename C>
   typename ToPythonChartingClient<C>::Client&
-      ToPythonChartingClient<C>::GetClient() {
+      ToPythonChartingClient<C>::get_client() {
     return *m_client;
   }
 
   template<typename C>
-  void ToPythonChartingClient<C>::QuerySecurity(
-      const SecurityChartingQuery& query,
+  void ToPythonChartingClient<C>::query(const SecurityChartingQuery& query,
       Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QuerySecurity(query, std::move(queue));
+    m_client->query(query, std::move(queue));
   }
 
   template<typename C>
-  TimePriceQueryResult ToPythonChartingClient<C>::LoadTimePriceSeries(
-      const Security& security,
-      boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
-      boost::posix_time::time_duration interval) {
+  TimePriceQueryResult ToPythonChartingClient<C>::load_time_price_series(
+      const Security& security, boost::posix_time::ptime start,
+      boost::posix_time::ptime end, boost::posix_time::time_duration interval) {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadTimePriceSeries(security, startTime, endTime,
-      interval);
+    return m_client->load_time_price_series(security, start, end, interval);
   }
 
   template<typename C>
-  void ToPythonChartingClient<C>::Close() {
+  void ToPythonChartingClient<C>::close() {
     auto release = Beam::Python::GilRelease();
-    m_client->Close();
+    m_client->close();
   }
 }
 

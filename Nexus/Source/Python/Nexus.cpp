@@ -9,8 +9,8 @@ PYBIND11_MODULE(nexus, m) {
   auto beam_module = module::import("beam");
   export_queries(m);
   export_accounting(m);
-//  ExportAdministrationService(m);
-//  ExportChartingService(m);
+  export_administration_service(m);
+  export_charting_service(m);
 //  ExportCompliance(m);
   export_definitions(m);
   export_definitions_service(m);
