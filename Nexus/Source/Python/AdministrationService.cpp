@@ -251,13 +251,13 @@ void Nexus::Python::export_mysql_administration_data_store(module& module) {
   auto data_store = export_administration_data_store<DataStore>(
     module, "MySqlAdministrationDataStore");
   data_store.def(init([] (std::string host, unsigned int port,
-    std::string username, std::string password, std::string database,
-    const SqlAdministrationDataStore<SqlConnection<
-      Viper::MySql::Connection>>::DirectoryEntrySourceFunction& source) {
-  return std::make_shared<DataStore>(
-    std::make_unique<SqlConnection<Viper::MySql::Connection>>(
-      Viper::MySql::Connection(host, port, username, password, database)),
-      source);
+      std::string username, std::string password, std::string database,
+      const SqlAdministrationDataStore<SqlConnection<
+        Viper::MySql::Connection>>::DirectoryEntrySourceFunction& source) {
+    return std::make_shared<DataStore>(
+      std::make_unique<SqlConnection<Viper::MySql::Connection>>(
+        Viper::MySql::Connection(host, port, username, password, database)),
+        source);
   }), call_guard<GilRelease>());
 }
 
