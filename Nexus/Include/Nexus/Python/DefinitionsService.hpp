@@ -3,7 +3,6 @@
 #include <type_traits>
 #include <pybind11/pybind11.h>
 #include "Nexus/DefinitionsService/DefinitionsClient.hpp"
-#include "Nexus/Python/DllExport.hpp"
 
 namespace Nexus::Python {
 

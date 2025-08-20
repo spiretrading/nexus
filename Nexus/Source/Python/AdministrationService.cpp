@@ -1,184 +1,243 @@
 #include "Nexus/Python/AdministrationService.hpp"
 #include <Beam/Python/Beam.hpp>
-#include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
+#include <boost/lexical_cast.hpp>
+#include "Nexus/AdministrationService/AccountIdentity.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequest.hpp"
+#include "Nexus/AdministrationService/AccountRoles.hpp"
+#include "Nexus/AdministrationService/AdministrationDataStoreException.hpp"
+#include "Nexus/AdministrationService/EntitlementModification.hpp"
+#include "Nexus/AdministrationService/Message.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Python/ToPythonAdministrationClient.hpp"
+#include "Nexus/Python/ToPythonAdministrationDataStore.hpp"
 
 using namespace Beam;
 using namespace Beam::Python;
 using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::AdministrationService;
 using namespace Nexus::AdministrationService::Tests;
+using namespace Nexus::MarketDataService;
 using namespace Nexus::Python;
 using namespace Nexus::RiskService;
 using namespace pybind11;
 
-namespace {
-  auto administrationClientBox =
-    std::unique_ptr<class_<AdministrationClientBox>>();
-}
-
-class_<AdministrationClientBox>&
-    Nexus::Python::GetExportedAdministrationClientBox() {
-  return *administrationClientBox;
-}
-
-void Nexus::Python::ExportAccountIdentity(module& module) {
+void Nexus::Python::export_account_identity(module& module) {
   class_<AccountIdentity>(module, "AccountIdentity").
     def(init()).
     def(init<const AccountIdentity&>()).
-    def_readwrite("registration_time", &AccountIdentity::m_registrationTime).
-    def_readwrite("last_login_time", &AccountIdentity::m_lastLoginTime).
-    def_readwrite("first_name", &AccountIdentity::m_firstName).
-    def_readwrite("last_name", &AccountIdentity::m_lastName).
-    def_readwrite("email_address", &AccountIdentity::m_emailAddress).
-    def_readwrite("address_line_one", &AccountIdentity::m_addressLineOne).
-    def_readwrite("address_line_two", &AccountIdentity::m_addressLineTwo).
-    def_readwrite("address_line_three", &AccountIdentity::m_addressLineThree).
+    def_readwrite("registration_time", &AccountIdentity::m_registration_time).
+    def_readwrite("last_login_time", &AccountIdentity::m_last_login_time).
+    def_readwrite("first_name", &AccountIdentity::m_first_name).
+    def_readwrite("last_name", &AccountIdentity::m_last_name).
+    def_readwrite("email_address", &AccountIdentity::m_email_address).
+    def_readwrite("address_line_one", &AccountIdentity::m_address_line_one).
+    def_readwrite("address_line_two", &AccountIdentity::m_address_line_two).
+    def_readwrite("address_line_three", &AccountIdentity::m_address_line_three).
     def_readwrite("city", &AccountIdentity::m_city).
     def_readwrite("province", &AccountIdentity::m_province).
     def_readwrite("country", &AccountIdentity::m_country).
-    def_readwrite("photo_id", &AccountIdentity::m_photoId).
-    def_readwrite("user_notes", &AccountIdentity::m_userNotes);
+    def_readwrite("photo_id", &AccountIdentity::m_photo_id).
+    def_readwrite("user_notes", &AccountIdentity::m_user_notes).
+    def("__str__", &boost::lexical_cast<std::string, AccountIdentity>);
 }
 
-void Nexus::Python::ExportAccountModificationRequest(module& module) {
-  auto outer = class_<AccountModificationRequest>(module,
-    "AccountModificationRequest").
-    def(init<AccountModificationRequest::Id, AccountModificationRequest::Type,
-      DirectoryEntry, DirectoryEntry, ptime>()).
-    def(init<const AccountModificationRequest&>()).
-    def_property_readonly("id", &AccountModificationRequest::GetId).
-    def_property_readonly("type", &AccountModificationRequest::GetType).
-    def_property_readonly("account", &AccountModificationRequest::GetAccount).
-    def_property_readonly("submission_account",
-      &AccountModificationRequest::GetSubmissionAccount).
-    def_property_readonly("timestamp",
-      &AccountModificationRequest::GetTimestamp);
-  enum_<AccountModificationRequest::Type>(outer, "Type").
+void Nexus::Python::export_account_modification_request(module& module) {
+  auto request =
+    class_<AccountModificationRequest>(module, "AccountModificationRequest").
+      def(init<const AccountModificationRequest&>()).
+      def(init<AccountModificationRequest::Id, AccountModificationRequest::Type,
+        DirectoryEntry, DirectoryEntry, ptime>()).
+      def_property_readonly("id", &AccountModificationRequest::get_id).
+      def_property_readonly("type", &AccountModificationRequest::get_type).
+      def_property_readonly(
+        "account", &AccountModificationRequest::get_account).
+      def_property_readonly("submission_account",
+        &AccountModificationRequest::get_submission_account).
+      def_property_readonly("timestamp",
+        &AccountModificationRequest::get_timestamp);
+  enum_<AccountModificationRequest::Type>(request, "Type").
     value("ENTITLEMENTS", AccountModificationRequest::Type::ENTITLEMENTS).
     value("RISK", AccountModificationRequest::Type::RISK);
-  enum_<AccountModificationRequest::Status>(outer, "Status").
+  enum_<AccountModificationRequest::Status>(request, "Status").
     value("NONE", AccountModificationRequest::Status::NONE).
     value("PENDING", AccountModificationRequest::Status::PENDING).
     value("REVIEWED", AccountModificationRequest::Status::REVIEWED).
     value("SCHEDULED", AccountModificationRequest::Status::SCHEDULED).
     value("GRANTED", AccountModificationRequest::Status::GRANTED).
     value("REJECTED", AccountModificationRequest::Status::REJECTED);
-  class_<AccountModificationRequest::Update>(outer, "Update").
+  class_<AccountModificationRequest::Update>(request, "Update").
     def(init()).
+    def(init<const AccountModificationRequest::Update&>()).
     def(init<AccountModificationRequest::Status, DirectoryEntry, int, ptime>()).
     def_readwrite("status", &AccountModificationRequest::Update::m_status).
     def_readwrite("account", &AccountModificationRequest::Update::m_account).
     def_readwrite("sequence_number",
-      &AccountModificationRequest::Update::m_sequenceNumber).
+      &AccountModificationRequest::Update::m_sequence_number).
     def_readwrite("timestamp",
-      &AccountModificationRequest::Update::m_timestamp);
+      &AccountModificationRequest::Update::m_timestamp).
+    def(self == self).
+    def(self != self).
+    def("__str__",
+      &boost::lexical_cast<std::string, AccountModificationRequest::Update>);
+  module.def("is_terminal", &is_terminal);
 }
 
-void Nexus::Python::ExportAdministrationService(module& module) {
+void Nexus::Python::export_account_roles(module& module) {
+  enum_<AccountRole::Type>(module, "AccountRole").
+    value("TRADER", AccountRole::TRADER).
+    value("MANAGER", AccountRole::MANAGER).
+    value("SERVICE", AccountRole::SERVICE).
+    value("ADMINISTRATOR", AccountRole::ADMINISTRATOR);
+  ExportEnumSet<AccountRoles>(module, "AccountRoles");
+}
+
+void Nexus::Python::export_administration_data_store_exception(module& module) {
+  register_exception<AdministrationDataStoreException>(
+    module, "AdministrationDataStoreException", GetIOException());
+}
+
+void Nexus::Python::export_administration_service(module& module) {
   auto submodule = module.def_submodule("administration_service");
-  ExportAccountIdentity(submodule);
-  ExportAccountModificationRequest(submodule);
-  administrationClientBox = std::make_unique<class_<AdministrationClientBox>>(
-    ExportAdministrationClient<AdministrationClientBox>(submodule,
-      "AdministrationClient"));
-  ExportAdministrationClient<
-    ToPythonAdministrationClient<AdministrationClientBox>>(submodule,
-      "AdministrationClientBox");
-  ExportApplicationAdministrationClient(submodule);
-  ExportEntitlementModification(submodule);
-  ExportMessage(submodule);
-  ExportTradingGroup(submodule);
+  export_account_identity(submodule);
+  export_account_modification_request(submodule);
+  export_account_roles(submodule);
+  export_administration_client<ToPythonAdministrationClient<
+    AdministrationClient>>(submodule, "AdministrationClient");
+  submodule.def("load_risk_parameters",
+    [] (AdministrationClient& client, const DirectoryEntry& account) {
+      return load_risk_parameters(client, account);
+    }, call_guard<GilRelease>());
+  export_administration_data_store<ToPythonAdministrationDataStore<
+    AdministrationDataStore>>(submodule, "AdministrationDataStore");
+  export_administration_data_store_exception(submodule);
+  export_entitlement_modification(submodule);
+  export_indexed_account_identity(submodule);
+  export_indexed_risk_parameters(submodule);
+  export_indexed_risk_state(submodule);
+  export_message(submodule);
+  export_risk_modification(submodule);
+  export_trading_group(submodule);
   ExportQueueSuite<RiskState>(submodule, "RiskState");
   ExportQueueSuite<RiskParameters>(submodule, "RiskParameters");
   auto test_module = submodule.def_submodule("tests");
-  ExportAdministrationServiceTestEnvironment(test_module);
+  export_administration_service_test_environment(test_module);
 }
 
-void Nexus::Python::ExportAdministrationServiceTestEnvironment(module& module) {
-  class_<AdministrationServiceTestEnvironment>(module,
-      "AdministrationServiceTestEnvironment").
+void Nexus::Python::export_administration_service_test_environment(
+    module& module) {
+  using TestEnvironment = AdministrationServiceTestEnvironment;
+  class_<TestEnvironment>(module, "AdministrationServiceTestEnvironment").
     def(init<ServiceLocatorClientBox>(), call_guard<GilRelease>()).
-    def("__del__",
-      [] (AdministrationServiceTestEnvironment& self) {
-        self.Close();
-      }, call_guard<GilRelease>()).
-    def("close", &AdministrationServiceTestEnvironment::Close,
+    def(init<ServiceLocatorClientBox, EntitlementDatabase>(),
       call_guard<GilRelease>()).
-    def("make_administrator",
-      &AdministrationServiceTestEnvironment::MakeAdministrator,
+    def("__del__", [] (AdministrationServiceTestEnvironment& self) {
+      self.close();
+    }, call_guard<GilRelease>()).
+    def("get_client", [] (TestEnvironment& self) {
+      return ToPythonAdministrationClient(self.get_client());
+    }).
+    def("make_administrator", &TestEnvironment::make_administrator,
       call_guard<GilRelease>()).
-    def("make_client",
-      [] (AdministrationServiceTestEnvironment& self,
-          ServiceLocatorClientBox serviceLocatorClient) {
-        return ToPythonAdministrationClient(self.MakeClient(
-          std::move(serviceLocatorClient)));
-      }, call_guard<GilRelease>());
+    def("make_client", [] (TestEnvironment& self,
+        ServiceLocatorClientBox service_locator_client) {
+      return ToPythonAdministrationClient(
+        self.make_client(std::move(service_locator_client)));
+    }, call_guard<GilRelease>()).
+    def("close", &TestEnvironment::close, call_guard<GilRelease>());
+  module.def("make_administrator_account",
+    &make_administrator_account<ServiceLocatorClientBox>,
+    call_guard<GilRelease>());
+  module.def("make_administration_service_test_environment",
+    &make_administration_service_test_environment, call_guard<GilRelease>());
+  module.def("grant_all_entitlements", &grant_all_entitlements);
 }
 
-void Nexus::Python::ExportApplicationAdministrationClient(module& module) {
-  using PythonApplicationAdministrationClient = ToPythonAdministrationClient<
-    AdministrationClient<DefaultSessionBuilder<ServiceLocatorClientBox>>>;
-  ExportAdministrationClient<PythonApplicationAdministrationClient>(module,
-    "ApplicationAdministrationClient").
-    def(init([] (ServiceLocatorClientBox serviceLocatorClient) {
-      return std::make_shared<PythonApplicationAdministrationClient>(
-        MakeDefaultSessionBuilder(std::move(serviceLocatorClient),
-          AdministrationService::SERVICE_NAME));
-    }));
-}
-
-void Nexus::Python::ExportEntitlementModification(module& module) {
+void Nexus::Python::export_entitlement_modification(module& module) {
   class_<EntitlementModification>(module, "EntitlementModification").
     def(init()).
-    def(init<std::vector<DirectoryEntry>>()).
     def(init<const EntitlementModification&>()).
-    def_property_readonly("entitlements",
-      &EntitlementModification::GetEntitlements);
+    def(init<const std::vector<DirectoryEntry>&>()).
+    def_property_readonly(
+      "entitlements", &EntitlementModification::get_entitlements);
 }
 
-void Nexus::Python::ExportMessage(module& module) {
-  auto outer = class_<AdministrationService::Message>(module, "Message").
+void Nexus::Python::export_indexed_account_identity(module& module) {
+  class_<AdministrationDataStore::IndexedAccountIdentity>(
+    module, "IndexedAccountIdentity").
+      def(init()).
+      def(init<const AdministrationDataStore::IndexedAccountIdentity&>()).
+      def_readwrite("index",
+        &AdministrationDataStore::IndexedAccountIdentity::m_index).
+      def_readwrite("identity",
+        &AdministrationDataStore::IndexedAccountIdentity::m_identity);
+}
+
+void Nexus::Python::export_indexed_risk_parameters(module& module) {
+  class_<AdministrationDataStore::IndexedRiskParameters>(
+    module, "IndexedRiskParameters").
+      def(init()).
+      def(init<const AdministrationDataStore::IndexedRiskParameters&>()).
+      def_readwrite("index",
+        &AdministrationDataStore::IndexedRiskParameters::m_index).
+      def_readwrite("parameters",
+        &AdministrationDataStore::IndexedRiskParameters::m_parameters);
+}
+
+void Nexus::Python::export_indexed_risk_state(module& module) {
+  class_<AdministrationDataStore::IndexedRiskState>(module, "IndexedRiskState").
     def(init()).
-    def(init<AdministrationService::Message::Id, DirectoryEntry, ptime,
-      std::vector<AdministrationService::Message::Body>>()).
-    def(init<const AdministrationService::Message&>()).
-    def_property_readonly("id", &AdministrationService::Message::GetId).
-    def_property_readonly("account",
-      &AdministrationService::Message::GetAccount).
-    def_property_readonly("timestamp",
-      &AdministrationService::Message::GetTimestamp).
-    def_property_readonly("body", &AdministrationService::Message::GetBody).
-    def_property_readonly("bodies", &AdministrationService::Message::GetBodies);
-  class_<AdministrationService::Message::Body>(outer, "Body").
+    def(init<const AdministrationDataStore::IndexedRiskState&>()).
+    def_readwrite("index", &AdministrationDataStore::IndexedRiskState::m_index).
+    def_readwrite("state", &AdministrationDataStore::IndexedRiskState::m_state);
+}
+
+void Nexus::Python::export_message(module& module) {
+  auto message = class_<Message>(module, "Message").
     def(init()).
-    def(init<std::string, std::string>()).
-    def(init<const AdministrationService::Message::Body&>()).
-    def_property_readonly_static("EMPTY",
-      &AdministrationService::Message::Body::EMPTY).
-    def_static("make_plain_text",
-      &AdministrationService::Message::Body::MakePlainText).
-    def_readwrite("content_type",
-      &AdministrationService::Message::Body::m_contentType).
-    def_readwrite("message",
-      &AdministrationService::Message::Body::m_message).
+    def(init<const Message&>()).
+    def(init<
+      Message::Id, DirectoryEntry, ptime, const std::vector<Message::Body>&>()).
+    def_property_readonly("id", &Message::get_id).
+    def_property_readonly("account", &Message::get_account).
+    def_property_readonly("timestamp", &Message::get_timestamp).
+    def_property_readonly("body", &Message::get_body).
+    def_property_readonly("bodies", &Message::get_bodies).
     def(self == self).
     def(self != self);
+  class_<Message::Body>(message, "Body").
+    def(init()).
+    def(init<const Message::Body&>()).
+    def_readwrite("content_type", &Message::Body::m_content_type).
+    def_readwrite("message", &Message::Body::m_message).
+    def_readonly_static("NONE", &Message::Body::EMPTY).
+    def_static("make_plain_text", &Message::Body::make_plain_text).
+    def(self == self).
+    def(self != self).
+    def("__str__", &boost::lexical_cast<std::string, Message::Body>);
 }
 
-void Nexus::Python::ExportTradingGroup(module& module) {
+void Nexus::Python::export_risk_modification(module& module) {
+  class_<RiskModification>(module, "RiskModification").
+    def(init()).
+    def(init<const RiskModification&>()).
+    def(init<RiskParameters>()).
+    def_property_readonly("parameters", &RiskModification::get_parameters);
+}
+
+void Nexus::Python::export_trading_group(module& module) {
   class_<TradingGroup>(module, "TradingGroup").
     def(init()).
-    def(init<const DirectoryEntry&, const DirectoryEntry&,
-      const std::vector<DirectoryEntry>&, const DirectoryEntry&,
-      const std::vector<DirectoryEntry>&>()).
     def(init<const TradingGroup&>()).
-    def_property_readonly("entry", &TradingGroup::GetEntry).
-    def_property_readonly("managers", &TradingGroup::GetManagers).
-    def_property_readonly("traders", &TradingGroup::GetTraders);
+    def(init<DirectoryEntry, DirectoryEntry, std::vector<DirectoryEntry>,
+      DirectoryEntry, std::vector<DirectoryEntry>>()).
+    def_property_readonly("entry", &TradingGroup::get_entry).
+    def_property_readonly(
+      "managers_directory", &TradingGroup::get_managers_directory).
+    def_property_readonly("managers", &TradingGroup::get_managers).
+    def_property_readonly(
+      "traders_directory", &TradingGroup::get_traders_directory).
+    def_property_readonly("traders", &TradingGroup::get_traders);
 }

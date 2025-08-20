@@ -10,7 +10,7 @@
 //#include "Nexus/Python/FeeHandling.hpp"
 //#include "Nexus/Python/MarketDataService.hpp"
 //#include "Nexus/Python/OrderExecutionService.hpp"
-//#include "Nexus/Python/Queries.hpp"
+#include "Nexus/Python/Queries.hpp"
 //#include "Nexus/Python/RiskService.hpp"
 //#include "Nexus/Python/ServiceClients.hpp"
 //#include "Nexus/Python/TechnicalAnalysis.hpp"

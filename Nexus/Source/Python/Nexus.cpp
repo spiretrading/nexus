@@ -7,7 +7,7 @@ using namespace pybind11;
 
 PYBIND11_MODULE(nexus, m) {
   auto beam_module = module::import("beam");
-//  ExportQueries(m);
+  export_queries(m);
   export_accounting(m);
 //  ExportAdministrationService(m);
 //  ExportChartingService(m);
