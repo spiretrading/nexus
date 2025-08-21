@@ -236,13 +236,13 @@ void Nexus::Python::export_market_data_service_test_environment(
     def("__del__", [] (TestEnvironment& self) {
       self.close();
     }, call_guard<GilRelease>()).
-    def("get_data_store", [] (TestEnvironment& self) {
+    def_property_readonly("data_store", [] (TestEnvironment& self) {
       return ToPythonHistoricalDataStore(self.get_data_store());
     }).
-    def("get_registry_client", [] (TestEnvironment& self) {
+    def_property_readonly("registry_client", [] (TestEnvironment& self) {
       return ToPythonMarketDataClient(self.get_registry_client());
     }).
-    def("get_feed_client", [] (TestEnvironment& self) {
+    def_property_readonly("feed_client", [] (TestEnvironment& self) {
       return ToPythonMarketDataFeedClient(self.get_feed_client());
     }).
     def("make_registry_client", [] (TestEnvironment& self,

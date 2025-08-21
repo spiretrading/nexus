@@ -88,7 +88,7 @@ void Nexus::Python::export_portfolio_controller(module& module) {
   class_<PortfolioController>(module, "PortfolioController").
     def(init<Portfolio<Bookkeeper>*, MarketDataClient,
       ScopedQueueReader<std::shared_ptr<const Order>>>(), keep_alive<1, 2>()).
-    def("get_publisher", &PortfolioController::get_publisher,
+    def_property_readonly("publisher", &PortfolioController::get_publisher,
       return_value_policy::reference_internal);
 }
 

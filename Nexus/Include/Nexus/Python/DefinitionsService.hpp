@@ -1,6 +1,6 @@
 #ifndef NEXUS_PYTHON_DEFINITIONS_SERVICE_HPP
 #define NEXUS_PYTHON_DEFINITIONS_SERVICE_HPP
-#include <type_traits>
+#include <string_view>
 #include <pybind11/pybind11.h>
 #include "Nexus/DefinitionsService/DefinitionsClient.hpp"
 
@@ -41,10 +41,6 @@ namespace Nexus::Python {
       def("load_compliance_rule_schemas", &C::load_compliance_rule_schemas).
       def("load_trading_schedule", &C::load_trading_schedule).
       def("close", &C::close);
-    if constexpr(!std::is_same_v<C, DefinitionsService::DefinitionsClient>) {
-      pybind11::implicitly_convertible<
-        C, DefinitionsService::DefinitionsClient>();
-    }
     return client;
   }
 }

@@ -1,228 +1,202 @@
 #ifndef NEXUS_PYTHON_ORDER_EXECUTION_SERVICE_HPP
 #define NEXUS_PYTHON_ORDER_EXECUTION_SERVICE_HPP
-#include <type_traits>
+#include <string_view>
 #include <pybind11/pybind11.h>
-#include "Nexus/OrderExecutionService/OrderExecutionClientBox.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionDataStoreBox.hpp"
-#include "Nexus/Python/DllExport.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 
 namespace Nexus::Python {
-
-  /** Returns the exported OrderExecutionClientBox. */
-  NEXUS_EXPORT_DLL pybind11::class_<
-    OrderExecutionService::OrderExecutionClientBox>&
-      GetExportedOrderExecutionClientBox();
-
-  /** Returns the exported OrderExecutionDataStoreBox. */
-  NEXUS_EXPORT_DLL pybind11::class_<
-    OrderExecutionService::OrderExecutionDataStoreBox>&
-      GetExportedOrderExecutionDataStoreBox();
-
-  /**
-   * Exports the ApplicationOrderExecutionClient class.
-   * @param module The module to export to.
-   */
-  void ExportApplicationOrderExecutionClient(pybind11::module& module);
 
   /**
    * Exports the ExecutionReport struct.
    * @param module The module to export to.
    */
-  void ExportExecutionReport(pybind11::module& module);
+  void export_execution_report(pybind11::module& module);
+
+  /**
+   * Exports the ExecutionReportPublisher class.
+   * @param module The module to export to.
+   */
+  void export_execution_report_publisher(pybind11::module& module);
 
   /**
    * Exports the LocalOrderExecutionDataStore class.
    * @param module The module to export to.
    */
-  void ExportLocalOrderExecutionDataStore(pybind11::module& module);
-
-  /**
-   * Exports the MockOrderExecutionDriver class.
-   * @param module The module to export to.
-   */
-  void ExportMockOrderExecutionDriver(pybind11::module& module);
+  void export_local_order_execution_data_store(pybind11::module& module);
 
   /**
    * Exports the MySqlOrderExecutionDataStore class.
    * @param module The module to export to.
    */
-  void ExportMySqlOrderExecutionDataStore(pybind11::module& module);
+  void export_my_sql_order_execution_data_store(pybind11::module& module);
 
   /**
    * Exports the Order class.
    * @param module The module to export to.
    */
-  void ExportOrder(pybind11::module& module);
+  void export_order(pybind11::module& module);
 
   /**
    * Exports the OrderCancellationReactor class.
    * @param module The module to export to.
    */
-  void ExportOrderCancellationReactor(pybind11::module& module);
-
-  /**
-   * Exports the OrderExecutionService namespace.
-   * @param module The module to export to.
-   */
-  void ExportOrderExecutionService(pybind11::module& module);
-
-  /**
-   * Exports the OrderExecutionServiceTestEnvironment class.
-   * @param module The module to export to.
-   */
-  void ExportOrderExecutionServiceTestEnvironment(pybind11::module& module);
-
-  /**
-   * Exports the OrderFields struct.
-   * @param module The module to export to.
-   */
-  void ExportOrderFields(pybind11::module& module);
-
-  /**
-   * Exports the OrderInfo struct.
-   * @param module The module to export to.
-   */
-  void ExportOrderInfo(pybind11::module& module);
-
-  /**
-   * Exports the OrderReactor class.
-   * @param module The module to export to.
-   */
-  void ExportOrderReactor(pybind11::module& module);
-
-  /**
-   * Exports the OrderRecord struct.
-   * @param module The module to export to.
-   */
-  void ExportOrderRecord(pybind11::module& module);
-
-  /**
-   * Exports the OrderWrapperReactor class.
-   * @param module The module to export to.
-   */
-  void ExportOrderWrapperReactor(pybind11::module& module);
-
-  /**
-   * Exports the PrimitiveOrder class.
-   * @param module The module to export to.
-   */
-  void ExportPrimitiveOrder(pybind11::module& module);
-
-  /**
-   * Exports the standard queries.
-   * @param module The module to export to.
-   */
-  void ExportStandardQueries(pybind11::module& module);
-
-  /**
-   * Exports the SqliteOrderExecutionDataStore class.
-   * @param module The module to export to.
-   */
-  void ExportSqliteOrderExecutionDataStore(pybind11::module& module);
+  void export_order_cancellation_reactor(pybind11::module& module);
 
   /**
    * Exports an OrderExecutionClient class.
-   * @param <Client> The type of OrderExecutionClient to export.
+   * @param <C> The type of OrderExecutionClient to export.
    * @param module The module to export to.
    * @param name The name of the class.
    * @return The exported OrderExecutionClient.
    */
-  template<typename Client>
-  auto ExportOrderExecutionClient(pybind11::module& module,
-      const std::string& name) {
-    auto client = pybind11::class_<Client, std::shared_ptr<Client>>(module,
-      name.c_str()).
-      def("load_order", [] (Client& self, OrderExecutionService::OrderId id) ->
-          const OrderExecutionService::Order* {
-        auto order = self.LoadOrder(id);
-        if(!order) {
-          return nullptr;
-        }
-        return &*order;
-      }, pybind11::return_value_policy::reference_internal).
-      def("query_sequenced_order_records", static_cast<void (Client::*)(
-        const OrderExecutionService::AccountQuery&,
-        Beam::ScopedQueueWriter<OrderExecutionService::SequencedOrderRecord>)>(
-          &Client::QueryOrderRecords)).
-      def("query_order_records", static_cast<void (Client::*)(
-        const OrderExecutionService::AccountQuery&,
-        Beam::ScopedQueueWriter<OrderExecutionService::OrderRecord>)>(
-          &Client::QueryOrderRecords)).
-      def("query_sequenced_order_submissions", static_cast<void (Client::*)(
-        const OrderExecutionService::AccountQuery&,
-        Beam::ScopedQueueWriter<OrderExecutionService::SequencedOrder>)>(
-          &Client::QueryOrderSubmissions)).
-      def("query_order_submissions", static_cast<void (Client::*)(
-        const OrderExecutionService::AccountQuery&,
-        Beam::ScopedQueueWriter<const OrderExecutionService::Order*>)>(
-          &Client::QueryOrderSubmissions)).
-      def("query_sequenced_execution_reports", static_cast<void (Client::*)(
-        const OrderExecutionService::AccountQuery&, Beam::ScopedQueueWriter<
-          OrderExecutionService::SequencedExecutionReport>)>(
-            &Client::QueryExecutionReports)).
-      def("query_execution_reports", static_cast<void (Client::*)(
-        const OrderExecutionService::AccountQuery&,
-        Beam::ScopedQueueWriter<OrderExecutionService::ExecutionReport>)>(
-          &Client::QueryExecutionReports)).
-      def("submit", &Client::Submit,
-        pybind11::return_value_policy::reference_internal).
-      def("cancel", &Client::Cancel).
-      def("update", &Client::Update).
-      def("close", &Client::Close);
-    if constexpr(!std::is_same_v<Client,
-        OrderExecutionService::OrderExecutionClientBox>) {
-      pybind11::implicitly_convertible<Client,
-        OrderExecutionService::OrderExecutionClientBox>();
-      GetExportedOrderExecutionClientBox().def(
-        pybind11::init<std::shared_ptr<Client>>());
-    }
+  template<typename C>
+  auto export_order_execution_client(pybind11::module& module,
+      std::string_view name) {
+    auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
+      def("load_order", &C::load_order).
+      def("query_sequenced_order_records",
+        static_cast<void (C::*)(const OrderExecutionService::AccountQuery&,
+          Beam::ScopedQueueWriter<
+            OrderExecutionService::SequencedOrderRecord>)>(&C::query)).
+      def("query_order_records",
+        static_cast<void (C::*)(const OrderExecutionService::AccountQuery&,
+          Beam::ScopedQueueWriter<OrderExecutionService::OrderRecord>)>(
+            &C::query)).
+      def("query_sequenced_orders",
+        static_cast<void (C::*)(const OrderExecutionService::AccountQuery&,
+          Beam::ScopedQueueWriter<OrderExecutionService::SequencedOrder>)>(
+            &C::query)).
+      def("query_orders",
+        static_cast<void (C::*)(const OrderExecutionService::AccountQuery&,
+          Beam::ScopedQueueWriter<
+            std::shared_ptr<const OrderExecutionService::Order>>)>(&C::query)).
+      def("query_sequenced_execution_reports",
+        static_cast<void (C::*)(const OrderExecutionService::AccountQuery&,
+          Beam::ScopedQueueWriter<
+            OrderExecutionService::SequencedExecutionReport>)>(&C::query)).
+      def("query_execution_reports",
+        static_cast<void (C::*)(const OrderExecutionService::AccountQuery&,
+          Beam::ScopedQueueWriter<OrderExecutionService::ExecutionReport>)>(
+            &C::query)).
+      def("submit", &C::submit).
+      def("cancel", static_cast<
+        void (C::*)(const OrderExecutionService::Order&)>(&C::cancel)).
+      def("update", &C::update).
+      def("close", &C::close);
     return client;
   }
 
   /**
    * Exports an OrderExecutionDataStore class.
-   * @param <DataStore> The type of OrderExecutionDataStore to export.
+   * @param <D> The type of OrderExecutionDataStore to export.
    * @param module The module to export to.
    * @param name The name of the class.
    * @return The exported OrderExecutionDataStore.
    */
-  template<typename DataStore>
-  auto ExportOrderExecutionDataStore(pybind11::module& module,
-      const std::string& name) {
-    auto dataStore = pybind11::class_<DataStore, std::shared_ptr<DataStore>>(
-      module, name.c_str()).
-      def("load_order", &DataStore::LoadOrder).
-      def("load_order_submissions", static_cast<
-        std::vector<OrderExecutionService::SequencedOrderRecord> (
-          DataStore::*)(const OrderExecutionService::AccountQuery&)>(
-            &DataStore::LoadOrderSubmissions)).
-      def("load_execution_reports", static_cast<
-        std::vector<OrderExecutionService::SequencedExecutionReport> (
-          DataStore::*)(const OrderExecutionService::AccountQuery&)>(
-            &DataStore::LoadExecutionReports)).
-      def("store", static_cast<void (DataStore::*)(
-        const OrderExecutionService::SequencedAccountOrderInfo&)>(
-          &DataStore::Store)).
-      def("store", static_cast<void (DataStore::*)(
+  template<typename D>
+  auto export_order_execution_data_store(pybind11::module& module,
+      std::string_view name) {
+    auto data_store = pybind11::class_<D, std::shared_ptr<D>>(
+        module, name.data()).
+      def("load_order_record", &D::load_order_record).
+      def("load_order_records", static_cast<
+        std::vector<OrderExecutionService::SequencedOrderRecord> (D::*)(
+          const OrderExecutionService::AccountQuery&)>(
+            &D::load_order_records)).
+      def("store", static_cast<
+        void (D::*)(const OrderExecutionService::SequencedAccountOrderInfo&)>(
+          &D::store)).
+      def("store", static_cast<void (D::*)(
         const std::vector<OrderExecutionService::SequencedAccountOrderInfo>&)>(
-          &DataStore::Store)).
-      def("store", static_cast<void (DataStore::*)(
+          &D::store)).
+      def("load_execution_reports", static_cast<
+        std::vector<OrderExecutionService::SequencedExecutionReport> (D::*)(
+          const OrderExecutionService::AccountQuery&)>(
+            &D::load_execution_reports)).
+      def("store", static_cast<void (D::*)(
         const OrderExecutionService::SequencedAccountExecutionReport&)>(
-          &DataStore::Store)).
-      def("store", static_cast<void (DataStore::*)(
-        const std::vector<
-          OrderExecutionService::SequencedAccountExecutionReport>&)>(
-            &DataStore::Store)).
-      def("close", &DataStore::Close);
-    if constexpr(!std::is_same_v<DataStore,
-        OrderExecutionService::OrderExecutionDataStoreBox>) {
-      pybind11::implicitly_convertible<DataStore,
-        OrderExecutionService::OrderExecutionDataStoreBox>();
-      GetExportedOrderExecutionDataStoreBox().def(
-        pybind11::init<std::shared_ptr<DataStore>>());
-    }
-    return dataStore;
+          &D::store)).
+      def("store", static_cast<void (D::*)(const std::vector<
+        OrderExecutionService::SequencedAccountExecutionReport>&)>(
+          &D::store)).
+      def("close", &D::close);
+    return data_store;
   }
+
+  /**
+   * Exports the OrderExecutionDataStoreException class.
+   * @param module The module to export to.
+   */
+  void export_order_execution_data_store_exception(pybind11::module& module);
+
+  /**
+   * Exports the OrderExecutionService namespace.
+   * @param module The module to export to.
+   */
+  void export_order_execution_service(pybind11::module& module);
+
+  /**
+   * Exports the OrderExecutionServiceTestEnvironment class.
+   * @param module The module to export to.
+   */
+  void export_order_execution_service_test_environment(
+    pybind11::module& module);
+
+  /**
+   * Exports the OrderFields struct.
+   * @param module The module to export to.
+   */
+  void export_order_fields(pybind11::module& module);
+
+  /**
+   * Exports the OrderInfo struct.
+   * @param module The module to export to.
+   */
+  void export_order_info(pybind11::module& module);
+
+  /**
+   * Exports the OrderReactor class.
+   * @param module The module to export to.
+   */
+  void export_order_reactor(pybind11::module& module);
+
+  /**
+   * Exports the OrderRecord struct.
+   * @param module The module to export to.
+   */
+  void export_order_record(pybind11::module& module);
+
+  /**
+   * Exports the OrderWrapperReactor class.
+   * @param module The module to export to.
+   */
+  void export_order_wrapper_reactor(pybind11::module& module);
+
+  /**
+   * Exports the PrimitiveOrder class.
+   * @param module The module to export to.
+   */
+  void export_primitive_order(pybind11::module& module);
+
+  /**
+   * Exports the ReplicatedOrderExecutionDataStore class.
+   * @param module The module to export to.
+   */
+  void export_replicated_order_execution_data_store(
+    pybind11::module& module);
+
+  /**
+   * Exports the standard queries.
+   * @param module The module to export to.
+   */
+  void export_standard_queries(pybind11::module& module);
+
+  /**
+   * Exports the SqliteOrderExecutionDataStore class.
+   * @param module The module to export to.
+   */
+  void export_sqlite_order_execution_data_store(pybind11::module& module);
 }
 
 #endif

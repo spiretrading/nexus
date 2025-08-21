@@ -122,7 +122,7 @@ namespace Nexus::OrderExecutionService {
           while(true) {
             auto value = snapshot_queue->Pop();
             if(value.GetValue()->get_info().m_timestamp < venue_end) {
-              queue->Push(std::move(value.GetValue()));
+              queue.Push(std::move(value.GetValue()));
             }
           }
         } catch(const std::exception&) {}

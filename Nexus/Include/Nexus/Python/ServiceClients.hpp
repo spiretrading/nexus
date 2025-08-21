@@ -186,11 +186,6 @@ namespace Python {
           return std::shared_ptr(serviceClients.MakeTimer(expiry));
         }).
       def("close", &Clients::Close);
-    if constexpr(!std::is_same_v<Clients, ServiceClientsBox>) {
-      pybind11::implicitly_convertible<Clients, ServiceClientsBox>();
-      GetExportedServiceClientsBox().def(
-        pybind11::init<std::shared_ptr<Clients>>());
-    }
     return clients;
   }
 }

@@ -79,10 +79,6 @@ namespace Nexus::Python {
         def("store", static_cast<void (D::*)(
           const std::vector<SequencedSecurityTimeAndSale>&)>(&D::store)).
         def("close", &D::close);
-    if constexpr(!std::is_same_v<D, MarketDataService::HistoricalDataStore>) {
-      pybind11::implicitly_convertible<
-        D, MarketDataService::HistoricalDataStore>();
-    }
     return data_store;
   }
 
@@ -139,10 +135,6 @@ namespace Nexus::Python {
       def("load_technicals", &C::load_technicals).
       def("load_security_info_from_prefix", &C::load_security_info_from_prefix).
       def("close", &C::close);
-    if constexpr(!std::is_same_v<C, MarketDataService::MarketDataClient>) {
-      pybind11::implicitly_convertible<
-        C, MarketDataService::MarketDataClient>();
-    }
     return client;
   }
 
@@ -172,10 +164,6 @@ namespace Nexus::Python {
       def("modify_order_price", &C::modify_order_price).
       def("remove_order", &C::remove_order).
       def("close", &C::close);
-    if constexpr(!std::is_same_v<C, MarketDataService::MarketDataFeedClient>) {
-      pybind11::implicitly_convertible<
-        C, MarketDataService::MarketDataFeedClient>();
-    }
     return client;
   }
 

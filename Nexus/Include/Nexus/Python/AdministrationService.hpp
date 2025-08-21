@@ -1,6 +1,6 @@
 #ifndef NEXUS_PYTHON_ADMINISTRATION_SERVICE_HPP
 #define NEXUS_PYTHON_ADMINISTRATION_SERVICE_HPP
-#include <type_traits>
+#include <string_view>
 #include <pybind11/pybind11.h>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
@@ -101,11 +101,6 @@ namespace Nexus::Python {
       def("send_account_modification_request_message",
         &C::send_account_modification_request_message).
       def("close", &C::close);
-    if constexpr(!std::is_same_v<
-        C, AdministrationService::AdministrationClient>) {
-      pybind11::implicitly_convertible<
-        C, AdministrationService::AdministrationClient>();
-    }
     return client;
   }
 
@@ -171,11 +166,6 @@ namespace Nexus::Python {
         def("load_message_ids", &D::load_message_ids).
         def("with_transaction", &D::with_transaction).
         def("close", &D::close);
-    if constexpr(!std::is_same_v<
-        D, AdministrationService::AdministrationDataStore>) {
-      pybind11::implicitly_convertible<
-        D, AdministrationService::AdministrationDataStore>();
-    }
     return data_store;
   }
 

@@ -38,12 +38,13 @@ void Nexus::Python::export_queries(module& module) {
 void Nexus::Python::export_time_and_sale_accessor(module& module) {
   class_<TimeAndSaleAccessor>(module, "TimeAndSaleAccessor").
     def(init<Expression>()).
-    def("get_timestamp", &TimeAndSaleAccessor::get_timestamp).
-    def("get_price", &TimeAndSaleAccessor::get_price).
-    def("get_size", &TimeAndSaleAccessor::get_size).
-    def("get_market_center", &TimeAndSaleAccessor::get_market_center).
-    def("get_buyer_mpid", &TimeAndSaleAccessor::get_buyer_mpid).
-    def("get_seller_mpid", &TimeAndSaleAccessor::get_seller_mpid);
+    def_property_readonly("timestamp", &TimeAndSaleAccessor::get_timestamp).
+    def_property_readonly("price", &TimeAndSaleAccessor::get_price).
+    def_property_readonly("size", &TimeAndSaleAccessor::get_size).
+    def_property_readonly(
+      "market_center", &TimeAndSaleAccessor::get_market_center).
+    def_property_readonly("buyer_mpid", &TimeAndSaleAccessor::get_buyer_mpid).
+    def_property_readonly("seller_mpid", &TimeAndSaleAccessor::get_seller_mpid);
 }
 
 void Nexus::Python::export_value(module& module) {

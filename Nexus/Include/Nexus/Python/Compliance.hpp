@@ -1,7 +1,6 @@
 #ifndef NEXUS_PYTHON_COMPLIANCE_HPP
 #define NEXUS_PYTHON_COMPLIANCE_HPP
 #include <string_view>
-#include <type_traits>
 #include <pybind11/pybind11.h>
 #include "Nexus/Compliance/ComplianceClient.hpp"
 #include "Nexus/Compliance/ComplianceRuleDataStore.hpp"
@@ -45,9 +44,6 @@ namespace Nexus::Python {
         return snapshot;
       }).
       def("close", &C::close);
-    if constexpr(!std::is_same_v<C, Compliance::ComplianceClient>) {
-      pybind11::implicitly_convertible<C, Compliance::ComplianceClient>();
-    }
     return client;
   }
 
@@ -83,10 +79,6 @@ namespace Nexus::Python {
           const Compliance::ComplianceRuleViolationRecord&)>(&D::store)).
         def("remove", &D::remove).
         def("close", &D::close);
-    if constexpr(!std::is_same_v<D, Compliance::ComplianceRuleDataStore>) {
-      pybind11::implicitly_convertible<
-        D, Compliance::ComplianceRuleDataStore>();
-    }
     return data_store;
   }
 

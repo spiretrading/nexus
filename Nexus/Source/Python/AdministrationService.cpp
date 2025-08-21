@@ -146,7 +146,7 @@ void Nexus::Python::export_administration_service_test_environment(
     def("__del__", [] (AdministrationServiceTestEnvironment& self) {
       self.close();
     }, call_guard<GilRelease>()).
-    def("get_client", [] (TestEnvironment& self) {
+    def_property_readonly("client", [] (TestEnvironment& self) {
       return ToPythonAdministrationClient(self.get_client());
     }).
     def("make_administrator", &TestEnvironment::make_administrator,

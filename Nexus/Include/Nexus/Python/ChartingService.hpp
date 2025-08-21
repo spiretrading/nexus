@@ -1,7 +1,6 @@
 #ifndef NEXUS_PYTHON_CHARTING_SERVICE_HPP
 #define NEXUS_PYTHON_CHARTING_SERVICE_HPP
 #include <string_view>
-#include <type_traits>
 #include <pybind11/pybind11.h>
 #include "Nexus/ChartingService/ChartingClient.hpp"
 
@@ -20,9 +19,6 @@ namespace Nexus::Python {
       def("query", &C::query).
       def("load_time_price_series", &C::load_time_price_series).
       def("close", &C::close);
-    if constexpr(!std::is_same_v<C, ChartingService::ChartingClient>) {
-      pybind11::implicitly_convertible<C, ChartingService::ChartingClient>();
-    }
     return client;
   }
 

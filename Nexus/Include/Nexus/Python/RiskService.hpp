@@ -87,10 +87,6 @@ namespace Nexus::Python {
       def("get_risk_portfolio_update_publisher",
         &Client::GetRiskPortfolioUpdatePublisher).
       def("close", &Client::Close);
-    if constexpr(!std::is_same_v<Client, RiskService::RiskClientBox>) {
-      pybind11::implicitly_convertible<Client, RiskService::RiskClientBox>();
-      GetExportedRiskClientBox().def(pybind11::init<std::shared_ptr<Client>>());
-    }
     return client;
   }
 }

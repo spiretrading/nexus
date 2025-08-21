@@ -341,7 +341,7 @@ void Nexus::Python::export_destination(module& module) {
       def(init<const DestinationDatabase&>()).
       def_property_readonly("entries", &DestinationDatabase::get_entries).
       def("from_id", &DestinationDatabase::from).
-      def("get_preferred_destination",
+      def_property_readonly("preferred_destination",
         &DestinationDatabase::get_preferred_destination).
       def("select_first",
         [] (const DestinationDatabase& self, const object& predicate) {
@@ -721,9 +721,9 @@ void Nexus::Python::export_side(module& module) {
     value("BID", Side::BID);
   module.def("pick", static_cast<
     const object& (*)(Side, const object&, const object&)>(&pick<object>));
-  module.def("get_direction", &get_direction);
-  module.def("get_side", &get_side);
-  module.def("get_opposite", &get_opposite);
+  module.def("direction", &get_direction);
+  module.def("side", &get_side);
+  module.def("opposite", &get_opposite);
   module.def("to_char", static_cast<char (*)(Side)>(&to_char));
 }
 
