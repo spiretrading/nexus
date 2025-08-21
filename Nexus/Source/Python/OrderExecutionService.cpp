@@ -100,7 +100,7 @@ void Nexus::Python::export_my_sql_order_execution_data_store(module& module) {
       module, "MySqlOrderExecutionDataStore").
     def(init([] (std::string host, unsigned int port, std::string username,
         std::string password, std::string database) {
-      return std::make_shared<DataStore>([=] {
+      return std::make_shared<ToPythonOrderExecutionDataStore<DataStore>>([=] {
         auto release = GilRelease();
         return SqlConnection(Viper::MySql::Connection(host, port, username,
           password, database));
@@ -439,9 +439,10 @@ void Nexus::Python::export_sqlite_order_execution_data_store(module& module) {
   export_order_execution_data_store<ToPythonOrderExecutionDataStore<DataStore>>(
     module, "SqliteOrderExecutionDataStore").
       def(init([] (std::string path) {
-        return std::make_shared<DataStore>([=] {
-          auto release = GilRelease();
-          return SqlConnection(Viper::Sqlite3::Connection(path));
-        });
+        return std::make_shared<ToPythonOrderExecutionDataStore<DataStore>>(
+          [=] {
+            auto release = GilRelease();
+            return SqlConnection(Viper::Sqlite3::Connection(path));
+          });
       }));
 }
