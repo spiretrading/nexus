@@ -96,9 +96,7 @@ void Nexus::Python::export_country(module& module) {
     def(self != self).
     def(self < self).
     def("__str__", &lexical_cast<std::string, CountryCode>).
-    def("__hash__", [] (const CountryCode& self) {
-      return std::hash<CountryCode>()(self);
-    });
+    def("__hash__", std::hash<CountryCode>());
   auto country_database = class_<CountryDatabase>(module, "CountryDatabase").
     def(init()).
     def(init<const CountryDatabase&>()).
@@ -144,9 +142,7 @@ void Nexus::Python::export_currency(module& module) {
     def(self != self).
     def(self < self).
     def("__str__", &lexical_cast<std::string, CurrencyId>).
-    def("__hash__", [] (CurrencyId self) {
-      return std::hash<CurrencyId>()(self);
-    });
+    def("__hash__", std::hash<CurrencyId>());
   auto currency_database = class_<CurrencyDatabase>(module, "CurrencyDatabase").
     def(init()).
     def(init<const CurrencyDatabase&>()).
@@ -189,9 +185,7 @@ void Nexus::Python::export_currency_pair(module& module) {
     def(self > self).
     def(self >= self).
     def("__str__", &lexical_cast<std::string, CurrencyPair>).
-    def("__hash__", [] (const CurrencyPair& self) {
-      return std::hash<CurrencyPair>()(self);
-    });
+    def("__hash__", std::hash<CurrencyPair>());
   module.def("parse_currency_pair", static_cast<CurrencyPair (*)(
     std::string_view, const CurrencyDatabase&)>(parse_currency_pair));
   module.def("parse_currency_pair",
@@ -433,9 +427,7 @@ void Nexus::Python::export_money(module& module) {
     def("__abs__", static_cast<Money (*)(Money)>(&abs)).
     def("__floor__",
       bind_integer_precision(static_cast<Money (*)(Money, int)>(&floor))).
-    def("__hash__", [] (Money self) {
-      return std::hash<Money>()(self);
-    }).
+    def("__hash__", std::hash<Money>()).
     def("__ceil__",
       bind_integer_precision(static_cast<Money (*)(Money, int)>(&ceil))).
     def("__trunc__",
@@ -531,9 +523,7 @@ void Nexus::Python::export_quantity(module& module) {
       bind_integer_precision(static_cast<Quantity (*)(Quantity, int)>(&floor))).
     def("__ceil__",
       bind_integer_precision(static_cast<Quantity (*)(Quantity, int)>(&ceil))).
-    def("__hash__", [] (Quantity self) {
-      return std::hash<Quantity>()(self);
-    }).
+    def("__hash__", std::hash<Quantity>()).
     def("__trunc__", bind_integer_precision(
       static_cast<Quantity (*)(Quantity, int)>(&truncate))).
     def("__round__",
@@ -636,9 +626,7 @@ void Nexus::Python::export_region(module& module) {
     def_property_readonly("venues", &Region::get_venues).
     def_property_readonly("securities", &Region::get_securities).
     def("contains", &Region::contains).
-    def("__hash__", [] (const Region& self) {
-      return std::hash<Region>()(self);
-    }).
+    def("__hash__", std::hash<Region>()).
     def("__str__", &lexical_cast<std::string, Region>).
     def(self + self).
     def(self += self).
@@ -687,9 +675,7 @@ void Nexus::Python::export_security(module& module) {
     def(self != self).
     def(self >= self).
     def(self > self).
-    def("__hash__", [] (const Security& self) {
-      return std::hash<Security>()(self);
-    }).
+    def("__hash__", std::hash<Security>()).
     def("__str__", &lexical_cast<std::string, Security>);
   module.def("parse_security", static_cast<Security (*)(
     std::string_view, const VenueDatabase&)>(&parse_security));
@@ -712,9 +698,7 @@ void Nexus::Python::export_security_info(module& module) {
     def_readwrite("board_lot", &SecurityInfo::m_board_lot).
     def(self == self).
     def(self != self).
-    def("__hash__", [] (const SecurityInfo& self) {
-      return std::hash<SecurityInfo>()(self);
-    }).
+    def("__hash__", std::hash<SecurityInfo>()).
     def("__str__", &lexical_cast<std::string, SecurityInfo>);
 }
 
@@ -796,9 +780,7 @@ void Nexus::Python::export_time_in_force(module& module) {
     def(init<TimeInForce::Type, ptime>()).
     def_property_readonly("type", &TimeInForce::get_type).
     def_property_readonly("expiry", &TimeInForce::get_expiry).
-    def("__hash__", [] (const TimeInForce& self) {
-      return std::hash<TimeInForce>()(self);
-    }).
+    def("__hash__", std::hash<TimeInForce>()).
     def("__str__", &lexical_cast<std::string, TimeInForce>).
     def(self == self).
     def(self != self);
@@ -860,9 +842,7 @@ void Nexus::Python::export_venue(module& module) {
     def(self != self).
     def(self >= self).
     def(self > self).
-    def("__hash__", [] (Venue self) {
-      return std::hash<Venue>()(self);
-    }).
+    def("__hash__", std::hash<Venue>()).
     def("__str__", &lexical_cast<std::string, Venue>);
   auto venue_database = class_<VenueDatabase>(module, "VenueDatabase").
     def(init()).

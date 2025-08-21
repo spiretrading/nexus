@@ -14,7 +14,7 @@ namespace Nexus::Python {
    * @param name The name of the class.
    * @return The exported ChartingClient.
    */
-  template<typename C>
+  template<ChartingService::IsChartingClient C>
   auto export_charting_client(pybind11::module& module, std::string_view name) {
     auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
       def("query", &C::query).

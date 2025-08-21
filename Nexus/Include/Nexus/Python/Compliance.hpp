@@ -27,7 +27,7 @@ namespace Nexus::Python {
    * @param name The name of the class.
    * @return The exported ComplianceClient.
    */
-  template<typename C>
+  template<Compliance::IsComplianceClient C>
   auto export_compliance_client(
       pybind11::module& module, std::string_view name) {
     auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
@@ -64,7 +64,7 @@ namespace Nexus::Python {
    * @param name The name of the class.
    * @return The exported ComplianceRuleDataStore.
    */
-  template<typename D>
+  template<Compliance::IsComplianceRuleDataStore D>
   auto export_compliance_rule_data_store(
       pybind11::module& module, std::string_view name) {
     auto data_store = pybind11::class_<D, std::shared_ptr<D>>(

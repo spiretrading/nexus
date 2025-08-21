@@ -327,7 +327,7 @@ namespace Nexus::MarketDataService {
       }
       if(!m_securities.FindValue(query.GetIndex())) {
         auto client = m_market_data_clients.Acquire();
-        auto info = load_security_info(query.GetIndex(), *client);
+        auto info = load_security_info(*client, query.GetIndex());
         if(info) {
           m_securities.Update(info->m_security);
         }

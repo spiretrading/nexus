@@ -15,7 +15,7 @@ namespace Nexus::Compliance {
    * Wraps a ComplianceRuleDataStore for use with Python.
    * @param <D> The type of ComplianceRuleDataStore to wrap.
    */
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   class ToPythonComplianceRuleDataStore {
     public:
 
@@ -61,53 +61,53 @@ namespace Nexus::Compliance {
   ToPythonComplianceRuleDataStore(DataStore&&) ->
     ToPythonComplianceRuleDataStore<std::remove_reference_t<DataStore>>;
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   template<typename... Args, typename>
   ToPythonComplianceRuleDataStore<D>::ToPythonComplianceRuleDataStore(
     Args&&... args)
     : m_data_store((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   ToPythonComplianceRuleDataStore<D>::~ToPythonComplianceRuleDataStore() {
     auto release = Beam::Python::GilRelease();
     m_data_store.reset();
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   const typename ToPythonComplianceRuleDataStore<D>::DataStore&
       ToPythonComplianceRuleDataStore<D>::get_data_store() const {
     return *m_data_store;
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   typename ToPythonComplianceRuleDataStore<D>::DataStore&
       ToPythonComplianceRuleDataStore<D>::get_data_store() {
     return *m_data_store;
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   std::vector<ComplianceRuleEntry> ToPythonComplianceRuleDataStore<D>::
       load_all_compliance_rule_entries() {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_all_compliance_rule_entries();
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   ComplianceRuleEntry::Id
       ToPythonComplianceRuleDataStore<D>::load_next_compliance_rule_entry_id() {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_next_compliance_rule_entry_id();
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   boost::optional<ComplianceRuleEntry> ToPythonComplianceRuleDataStore<D>::
       load_compliance_rule_entry(ComplianceRuleEntry::Id id) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_compliance_rule_entry(id);
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   std::vector<ComplianceRuleEntry>
       ToPythonComplianceRuleDataStore<D>::load_compliance_rule_entries(
         const Beam::ServiceLocator::DirectoryEntry& directory_entry) {
@@ -115,27 +115,27 @@ namespace Nexus::Compliance {
     return m_data_store->load_compliance_rule_entries(directory_entry);
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   void ToPythonComplianceRuleDataStore<D>::store(
       const ComplianceRuleEntry& entry) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(entry);
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   void ToPythonComplianceRuleDataStore<D>::remove(ComplianceRuleEntry::Id id) {
     auto release = Beam::Python::GilRelease();
     m_data_store->remove(id);
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   void ToPythonComplianceRuleDataStore<D>::store(
       const ComplianceRuleViolationRecord& record) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(record);
   }
 
-  template<typename D>
+  template<IsComplianceRuleDataStore D>
   void ToPythonComplianceRuleDataStore<D>::close() {
     auto release = Beam::Python::GilRelease();
     m_data_store->close();

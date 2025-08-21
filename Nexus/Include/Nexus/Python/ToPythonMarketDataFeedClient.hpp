@@ -15,7 +15,7 @@ namespace Nexus::MarketDataService {
    * Wraps a MarketDataFeedClient for use with Python.
    * param <C> The type of MarketDataFeedClient to wrap.
    */
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   class ToPythonMarketDataFeedClient {
     public:
 
@@ -70,64 +70,64 @@ namespace Nexus::MarketDataService {
   ToPythonMarketDataFeedClient(Client&&) ->
     ToPythonMarketDataFeedClient<std::remove_reference_t<Client>>;
 
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   template<typename... Args, typename>
   ToPythonMarketDataFeedClient<C>::ToPythonMarketDataFeedClient(Args&&... args)
     : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   ToPythonMarketDataFeedClient<C>::~ToPythonMarketDataFeedClient() {
     auto release = Beam::Python::GilRelease();
     m_client.reset();
   }
 
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   const typename ToPythonMarketDataFeedClient<C>::Client&
       ToPythonMarketDataFeedClient<C>::get_client() const {
     return *m_client;
   }
 
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   typename ToPythonMarketDataFeedClient<C>::Client&
       ToPythonMarketDataFeedClient<C>::get_client() {
     return *m_client;
   }
 
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   void ToPythonMarketDataFeedClient<C>::add(const SecurityInfo& info) {
     auto release = Beam::Python::GilRelease();
     m_client->add(info);
   }
 
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   void ToPythonMarketDataFeedClient<C>::publish(
       const VenueOrderImbalance& imbalance) {
     auto release = Beam::Python::GilRelease();
     m_client->publish(imbalance);
   }
 
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   void ToPythonMarketDataFeedClient<C>::publish(const SecurityBboQuote& quote) {
     auto release = Beam::Python::GilRelease();
     m_client->publish(quote);
   }
 
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   void ToPythonMarketDataFeedClient<C>::publish(
       const SecurityBookQuote& quote) {
     auto release = Beam::Python::GilRelease();
     m_client->publish(quote);
   }
 
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   void ToPythonMarketDataFeedClient<C>::publish(
       const SecurityTimeAndSale& time_and_sale) {
     auto release = Beam::Python::GilRelease();
     m_client->publish(time_and_sale);
   }
 
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   void ToPythonMarketDataFeedClient<C>::add_order(
       const Security& security, Venue venue, const std::string& mpid,
       bool is_primary_mpid, const std::string& id, Side side, Money price,
@@ -137,35 +137,35 @@ namespace Nexus::MarketDataService {
       price, size, timestamp);
   }
 
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   void ToPythonMarketDataFeedClient<C>::modify_order_size(const std::string& id,
       Quantity size, boost::posix_time::ptime timestamp) {
     auto release = Beam::Python::GilRelease();
     m_client->modify_order_size(id, size, timestamp);
   }
 
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   void ToPythonMarketDataFeedClient<C>::offset_order_size(const std::string& id,
       Quantity delta, boost::posix_time::ptime timestamp) {
     auto release = Beam::Python::GilRelease();
     m_client->offset_order_size(id, delta, timestamp);
   }
 
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   void ToPythonMarketDataFeedClient<C>::modify_order_price(
       const std::string& id, Money price, boost::posix_time::ptime timestamp) {
     auto release = Beam::Python::GilRelease();
     m_client->modify_order_price(id, price, timestamp);
   }
 
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   void ToPythonMarketDataFeedClient<C>::remove_order(
       const std::string& id, boost::posix_time::ptime timestamp) {
     auto release = Beam::Python::GilRelease();
     m_client->remove_order(id, timestamp);
   }
 
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   void ToPythonMarketDataFeedClient<C>::close() {
     auto release = Beam::Python::GilRelease();
     m_client->close();

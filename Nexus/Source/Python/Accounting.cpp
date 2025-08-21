@@ -135,9 +135,7 @@ void Nexus::Python::export_position(module& module) {
     def("__str__", &boost::lexical_cast<std::string, Position::Key>).
     def(self == self).
     def(self != self).
-    def("__hash__", [] (const Position::Key& key) {
-      return std::hash<Position::Key>()(key);
-    });
+    def("__hash__", std::hash<Position::Key>());
   implicitly_convertible<tuple, Position::Key>();
   module.def("average_price", &Accounting::get_average_price);
   module.def("side", &Accounting::get_side);
@@ -184,63 +182,3 @@ void Nexus::Python::export_shorting_model(module& module) {
     def("submit", &ShortingModel::submit, arg("id"), arg("fields")).
     def("update", &ShortingModel::update, arg("report"));
 }
-
-/*
-void Nexus::Python::ExportPositionOrderBook(module& module) {
-  auto outer = class_<PositionOrderBook>(module, "PositionOrderBook").
-    def(init()).
-    def_property_readonly("live_orders", &PositionOrderBook::GetLiveOrders).
-    def_property_readonly("opening_orders",
-      &PositionOrderBook::GetOpeningOrders).
-    def_property_readonly("positions", &PositionOrderBook::GetPositions).
-    def("test_opening_order_submission",
-      &PositionOrderBook::TestOpeningOrderSubmission).
-    def("add", &PositionOrderBook::Add).
-    def("update", &PositionOrderBook::Update);
-  class_<PositionOrderBook::PositionEntry>(outer, "Entry").
-    def(init<Security, Quantity>()).
-    def_readwrite("security", &PositionOrderBook::PositionEntry::m_security).
-    def_readwrite("quantity", &PositionOrderBook::PositionEntry::m_quantity);
-}
-
-void Nexus::Python::ExportTrueAverageBookkeeperReactor(module& module) {
-  module.def("TrueAverageBookkeeperReactor",
-    [] (SharedBox<const Order*> orders) {
-      return to_object(BookkeeperReactor<
-        TrueAverageBookkeeper<Inventory<Position<Security>>>>(
-        std::move(orders)));
-    });
-}
-
-void Nexus::Python::ExportTrueAveragePortfolio(module& module) {
-  using Inventory = Accounting::Inventory<Position<Security>>;
-  using Portfolio = Accounting::Portfolio<TrueAverageBookkeeper<Inventory>>;
-  auto outer = class_<Portfolio>(module, "TrueAveragePortfolio").
-    def(init<const MarketDatabase&>()).
-    def(init<const MarketDatabase&, TrueAverageBookkeeper<Inventory>>()).
-    def(init<const Portfolio&>()).
-    def_property_readonly("bookkeeper", &Portfolio::GetBookkeeper).
-    def_property_readonly("security_entries", &Portfolio::GetSecurityEntries).
-    def_property_readonly("unrealized_profit_and_losses",
-      &Portfolio::GetUnrealizedProfitAndLosses).
-    def("update", static_cast<bool (Portfolio::*)(const OrderFields&,
-      const ExecutionReport& executionReport)>(&Portfolio::Update)).
-    def("update_ask", &Portfolio::UpdateAsk).
-    def("update_bid", &Portfolio::UpdateBid).
-    def("update", static_cast<bool (Portfolio::*)(
-      const Security&, Money, Money)>(&Portfolio::Update));
-  class_<Portfolio::SecurityEntry>(outer, "SecurityEntry").
-    def(init<CurrencyId>()).
-    def(init<const Portfolio::SecurityEntry&>()).
-    def_readwrite("valuation", &Portfolio::SecurityEntry::m_valuation).
-    def_readwrite("unrealized", &Portfolio::SecurityEntry::m_unrealized);
-  module.def("get_realized_profit_and_loss",
-    &GetRealizedProfitAndLoss<Inventory::Position>);
-  module.def("get_unrealized_profit_and_loss",
-    &GetUnrealizedProfitAndLoss<Inventory::Position>);
-  module.def("get_total_profit_and_loss", static_cast<
-    boost::optional<Money> (*)(const Inventory&, const SecurityValuation&)>(
-      &GetTotalProfitAndLoss<Inventory::Position>));
-  module.def("get_total_profit_and_loss", &PythonGetTotalProfitAndLoss);
-}
-*/

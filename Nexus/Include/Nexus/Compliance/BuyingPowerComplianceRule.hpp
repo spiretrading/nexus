@@ -186,7 +186,7 @@ namespace Nexus::Compliance {
     auto publisher = m_bbo_quotes.GetOrInsert(security, [&] {
       auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
       MarketDataService::query_real_time_with_snapshot(
-        security, *m_market_data_client, publisher);
+        *m_market_data_client, security, publisher);
       return publisher;
     });
     try {

@@ -1,4 +1,5 @@
 #include "Nexus/Python/MarketDataService.hpp"
+#include <Aspen/Python/Box.hpp>
 #include <Beam/Python/Beam.hpp>
 #include <Beam/Sql/SqlConnection.hpp>
 #include <Viper/MySql/Connection.hpp>
@@ -20,8 +21,10 @@
 #include "Nexus/Python/ToPythonMarketDataClient.hpp"
 #include "Nexus/Python/ToPythonMarketDataFeedClient.hpp"
 
+using namespace Aspen;
 using namespace Beam;
 using namespace Beam::Python;
+using namespace Beam::Queries;
 using namespace Beam::ServiceLocator;
 using namespace Nexus;
 using namespace Nexus::AdministrationService;
@@ -94,9 +97,7 @@ void Nexus::Python::export_entitlement_set(module& module) {
     def_readwrite("source", &EntitlementKey::m_source).
     def(self == self).
     def(self != self).
-    def("__hash__", [] (const EntitlementKey& key) {
-      return std::hash<EntitlementKey>()(key);
-    });
+    def("__hash__",  std::hash<EntitlementKey>());
   class_<EntitlementSet>(module, "EntitlementSet").
     def(init()).
     def(init<const EntitlementSet&>()).
@@ -131,6 +132,55 @@ void Nexus::Python::export_local_historical_data_store(module& module) {
 }
 
 void Nexus::Python::export_market_data_reactors(module& module) {
+  auto aspen_module = pybind11::module::import("aspen");
+  export_box<SecurityMarketDataQuery>(aspen_module, "SecurityMarketDataQuery");
+  export_box<Security>(aspen_module, "Security");
+  module.def("bbo_quote_reactor",
+    [] (MarketDataClient client, SharedBox<SecurityMarketDataQuery> query) {
+      return to_object(
+        make_bbo_quote_reactor(std::move(client), std::move(query)));
+    }, arg("client"), arg("query"));
+  module.def("current_bbo_quote_reactor",
+    [] (MarketDataClient client, SharedBox<Security> security) {
+      return to_object(
+        make_current_bbo_quote_reactor(std::move(client), std::move(security)));
+    }, arg("client"), arg("security"));
+  module.def("real_time_bbo_quote_reactor",
+    [] (MarketDataClient client, SharedBox<Security> security) {
+      return to_object(make_real_time_bbo_quote_reactor(
+        std::move(client), std::move(security)));
+    }, arg("client"), arg("security"));
+  module.def("book_quote_reactor",
+    [] (MarketDataClient client, SharedBox<SecurityMarketDataQuery> query) {
+      return to_object(
+        make_book_quote_reactor(std::move(client), std::move(query)));
+    }, arg("client"), arg("query"));
+
+  module.def("current_book_quote_reactor",
+    [] (MarketDataClient client, SharedBox<Security> security) {
+      return to_object(make_current_book_quote_reactor(
+        std::move(client), std::move(security)));
+    }, arg("client"), arg("security"));
+  module.def("real_time_book_quote_reactor",
+    [] (MarketDataClient client, SharedBox<Security> security) {
+      return to_object(make_real_time_book_quote_reactor(
+        std::move(client), std::move(security)));
+    }, arg("client"), arg("security"));
+  module.def("time_and_sales_reactor",
+    [] (MarketDataClient client, SharedBox<SecurityMarketDataQuery> query) {
+      return to_object(
+        make_time_and_sales_reactor(std::move(client), std::move(query)));
+    }, arg("client"), arg("query"));
+  module.def("current_time_and_sales_reactor",
+    [] (MarketDataClient client, SharedBox<Security> security) {
+      return to_object(make_current_time_and_sales_reactor(
+        std::move(client), std::move(security)));
+    }, arg("client"), arg("security"));
+  module.def("real_time_time_and_sales_reactor",
+    [] (MarketDataClient client, SharedBox<Security> security) {
+      return to_object(make_real_time_time_and_sales_reactor(
+        std::move(client), std::move(security)));
+    }, arg("client"), arg("security"));
 }
 
 void Nexus::Python::export_market_data_service(module& module) {
@@ -152,6 +202,25 @@ void Nexus::Python::export_market_data_service(module& module) {
   export_mysql_historical_data_store(submodule);
   export_security_snapshot(submodule);
   export_sqlite_historical_data_store(submodule);
+  submodule.def("query_real_time_book_quotes_with_snapshot",
+    [] (MarketDataClient client, const Security& security,
+        ScopedQueueWriter<BookQuote> queue,
+        InterruptionPolicy interruption_policy) {
+      return query_real_time_with_snapshot(
+        client, security, std::move(queue), interruption_policy);
+    }, arg("client"), arg("security"), arg("queue"),
+    arg("interruption_policy") =
+      Beam::Queries::InterruptionPolicy::BREAK_QUERY);
+  submodule.def("query_real_time_bbo_quotes_with_snapshot",
+    [] (MarketDataClient client, const Security& security,
+        Beam::ScopedQueueWriter<BboQuote> queue) {
+      return query_real_time_with_snapshot(
+        std::move(client), security, std::move(queue));
+    });
+  submodule.def("load_security_info",
+    [] (MarketDataClient& client, const Security& security) {
+      return load_security_info(client, security);
+    });
   auto test_module = submodule.def_submodule("tests");
   export_market_data_service_test_environment(test_module);
 }

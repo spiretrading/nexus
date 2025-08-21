@@ -15,7 +15,7 @@ namespace Nexus::ChartingService {
    * Wraps an ChartingClient for use with Python.
    * @tparam <C> The type of ChartingClient to wrap.
    */
-  template<typename C>
+  template<IsChartingClient C>
   class ToPythonChartingClient {
     public:
 
@@ -56,38 +56,38 @@ namespace Nexus::ChartingService {
   ToPythonChartingClient(Client&&) ->
     ToPythonChartingClient<std::remove_reference_t<Client>>;
 
-  template<typename C>
+  template<IsChartingClient C>
   template<typename... Args, typename>
   ToPythonChartingClient<C>::ToPythonChartingClient(Args&&... args)
     : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
-  template<typename C>
+  template<IsChartingClient C>
   ToPythonChartingClient<C>::~ToPythonChartingClient() {
     auto release = Beam::Python::GilRelease();
     m_client.reset();
   }
 
-  template<typename C>
+  template<IsChartingClient C>
   const typename ToPythonChartingClient<C>::Client&
       ToPythonChartingClient<C>::get_client() const {
     return *m_client;
   }
 
-  template<typename C>
+  template<IsChartingClient C>
   typename ToPythonChartingClient<C>::Client&
       ToPythonChartingClient<C>::get_client() {
     return *m_client;
   }
 
-  template<typename C>
+  template<IsChartingClient C>
   void ToPythonChartingClient<C>::query(const SecurityChartingQuery& query,
       Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
     auto release = Beam::Python::GilRelease();
     m_client->query(query, std::move(queue));
   }
 
-  template<typename C>
+  template<IsChartingClient C>
   TimePriceQueryResult ToPythonChartingClient<C>::load_time_price_series(
       const Security& security, boost::posix_time::ptime start,
       boost::posix_time::ptime end, boost::posix_time::time_duration interval) {
@@ -95,7 +95,7 @@ namespace Nexus::ChartingService {
     return m_client->load_time_price_series(security, start, end, interval);
   }
 
-  template<typename C>
+  template<IsChartingClient C>
   void ToPythonChartingClient<C>::close() {
     auto release = Beam::Python::GilRelease();
     m_client->close();

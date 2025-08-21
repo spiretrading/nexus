@@ -15,7 +15,7 @@ namespace Nexus::AdministrationService {
    * Wraps an AdministrationDataStore for use with Python.
    * @param <D> The type of AdministrationDataStore to wrap.
    */
-  template<typename D>
+  template<IsAdministrationDataStore D>
   class ToPythonAdministrationDataStore {
     public:
 
@@ -99,46 +99,46 @@ namespace Nexus::AdministrationService {
   ToPythonAdministrationDataStore(DataStore&&) ->
     ToPythonAdministrationDataStore<std::remove_reference_t<DataStore>>;
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   template<typename... Args, typename>
   ToPythonAdministrationDataStore<D>::ToPythonAdministrationDataStore(
     Args&&... args)
     : m_data_store((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   ToPythonAdministrationDataStore<D>::~ToPythonAdministrationDataStore() {
     auto release = Beam::Python::GilRelease();
     m_data_store.reset();
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   const typename ToPythonAdministrationDataStore<D>::DataStore&
       ToPythonAdministrationDataStore<D>::get_data_store() const {
     return *m_data_store;
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   typename ToPythonAdministrationDataStore<D>::DataStore&
       ToPythonAdministrationDataStore<D>::get_data_store() {
     return *m_data_store;
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   std::vector<AdministrationDataStore::IndexedAccountIdentity>
       ToPythonAdministrationDataStore<D>::load_all_account_identities() {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_all_account_identities();
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   AccountIdentity ToPythonAdministrationDataStore<D>::load_identity(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_identity(account);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountIdentity& identity) {
@@ -146,14 +146,14 @@ namespace Nexus::AdministrationService {
     m_data_store->store(account, identity);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   std::vector<AdministrationDataStore::IndexedRiskParameters>
       ToPythonAdministrationDataStore<D>::load_all_risk_parameters() {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_all_risk_parameters();
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   RiskService::RiskParameters
       ToPythonAdministrationDataStore<D>::load_risk_parameters(
         const Beam::ServiceLocator::DirectoryEntry& account) {
@@ -161,7 +161,7 @@ namespace Nexus::AdministrationService {
     return m_data_store->load_risk_parameters(account);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskParameters& risk_parameters) {
@@ -169,21 +169,21 @@ namespace Nexus::AdministrationService {
     m_data_store->store(account, risk_parameters);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   std::vector<AdministrationDataStore::IndexedRiskState>
       ToPythonAdministrationDataStore<D>::load_all_risk_states() {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_all_risk_states();
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   RiskService::RiskState ToPythonAdministrationDataStore<D>::load_risk_state(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_risk_state(account);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskState& risk_state) {
@@ -191,7 +191,7 @@ namespace Nexus::AdministrationService {
     m_data_store->store(account, risk_state);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   AccountModificationRequest
       ToPythonAdministrationDataStore<D>::load_account_modification_request(
         AccountModificationRequest::Id id) {
@@ -199,7 +199,7 @@ namespace Nexus::AdministrationService {
     return m_data_store->load_account_modification_request(id);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   std::vector<AccountModificationRequest::Id>
       ToPythonAdministrationDataStore<D>::load_account_modification_request_ids(
         const Beam::ServiceLocator::DirectoryEntry& account,
@@ -209,7 +209,7 @@ namespace Nexus::AdministrationService {
       account, start_id, max_count);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   std::vector<AccountModificationRequest::Id>
       ToPythonAdministrationDataStore<D>::load_account_modification_request_ids(
         AccountModificationRequest::Id start_id, int max_count) {
@@ -218,7 +218,7 @@ namespace Nexus::AdministrationService {
       start_id, max_count);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   EntitlementModification
       ToPythonAdministrationDataStore<D>::load_entitlement_modification(
         AccountModificationRequest::Id id) {
@@ -226,7 +226,7 @@ namespace Nexus::AdministrationService {
     return m_data_store->load_entitlement_modification(id);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::store(
       const AccountModificationRequest& request,
       const EntitlementModification& modification) {
@@ -234,14 +234,14 @@ namespace Nexus::AdministrationService {
     m_data_store->store(request, modification);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   RiskModification ToPythonAdministrationDataStore<D>::load_risk_modification(
       AccountModificationRequest::Id id) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_risk_modification(id);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::store(
       const AccountModificationRequest& request,
       const RiskModification& modification) {
@@ -249,14 +249,14 @@ namespace Nexus::AdministrationService {
     m_data_store->store(request, modification);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::store(
       AccountModificationRequest::Id id, const Message& message) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(id, message);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   AccountModificationRequest::Update ToPythonAdministrationDataStore<D>::
       load_account_modification_request_status(
         AccountModificationRequest::Id id) {
@@ -264,7 +264,7 @@ namespace Nexus::AdministrationService {
     return m_data_store->load_account_modification_request_status(id);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::store(
       AccountModificationRequest::Id id,
       const AccountModificationRequest::Update& status) {
@@ -272,33 +272,33 @@ namespace Nexus::AdministrationService {
     m_data_store->store(id, status);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   Message::Id ToPythonAdministrationDataStore<D>::load_last_message_id() {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_last_message_id();
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   Message ToPythonAdministrationDataStore<D>::load_message(Message::Id id) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_message(id);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   std::vector<Message::Id> ToPythonAdministrationDataStore<D>::load_message_ids(
       AccountModificationRequest::Id id) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_message_ids(id);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::with_transaction(
       const std::function<void ()>& transaction) {
     auto release = Beam::Python::GilRelease();
     m_data_store->with_transaction(transaction);
   }
 
-  template<typename D>
+  template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::close() {
     auto release = Beam::Python::GilRelease();
     m_data_store->close();

@@ -15,7 +15,7 @@ namespace Nexus::AdministrationService {
    * Wraps an AdministrationClient for use with Python.
    * @param <C> The type of AdministrationClient to wrap.
    */
-  template<typename C>
+  template<IsAdministrationClient C>
   class ToPythonAdministrationClient {
     public:
 
@@ -125,31 +125,31 @@ namespace Nexus::AdministrationService {
   ToPythonAdministrationClient(Client&&) ->
     ToPythonAdministrationClient<std::remove_reference_t<Client>>;
 
-  template<typename C>
+  template<IsAdministrationClient C>
   template<typename... Args, typename>
   ToPythonAdministrationClient<C>::ToPythonAdministrationClient(Args&&... args)
     : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
-  template<typename C>
+  template<IsAdministrationClient C>
   ToPythonAdministrationClient<C>::~ToPythonAdministrationClient() {
     auto release = Beam::Python::GilRelease();
     m_client.reset();
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   const typename ToPythonAdministrationClient<C>::Client&
       ToPythonAdministrationClient<C>::get_client() const {
     return *m_client;
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   typename ToPythonAdministrationClient<C>::Client&
       ToPythonAdministrationClient<C>::get_client() {
     return *m_client;
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
       ToPythonAdministrationClient<C>::load_accounts_by_roles(
         AccountRoles roles) {
@@ -157,42 +157,42 @@ namespace Nexus::AdministrationService {
     return m_client->load_accounts_by_roles(roles);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   Beam::ServiceLocator::DirectoryEntry
       ToPythonAdministrationClient<C>::load_administrators_root_entry() {
     auto release = Beam::Python::GilRelease();
     return m_client->load_administrators_root_entry();
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   Beam::ServiceLocator::DirectoryEntry
       ToPythonAdministrationClient<C>::load_services_root_entry() {
     auto release = Beam::Python::GilRelease();
     return m_client->load_services_root_entry();
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   Beam::ServiceLocator::DirectoryEntry
       ToPythonAdministrationClient<C>::load_trading_groups_root_entry() {
     auto release = Beam::Python::GilRelease();
     return m_client->load_trading_groups_root_entry();
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   bool ToPythonAdministrationClient<C>::check_administrator(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_client->check_administrator(account);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   AccountRoles ToPythonAdministrationClient<C>::load_account_roles(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_account_roles(account);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   AccountRoles ToPythonAdministrationClient<C>::load_account_roles(
       const Beam::ServiceLocator::DirectoryEntry& parent,
       const Beam::ServiceLocator::DirectoryEntry& child) {
@@ -200,7 +200,7 @@ namespace Nexus::AdministrationService {
     return m_client->load_account_roles(parent, child);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   Beam::ServiceLocator::DirectoryEntry
       ToPythonAdministrationClient<C>::load_parent_trading_group(
         const Beam::ServiceLocator::DirectoryEntry& account) {
@@ -208,14 +208,14 @@ namespace Nexus::AdministrationService {
     return m_client->load_parent_trading_group(account);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   AccountIdentity ToPythonAdministrationClient<C>::load_identity(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_identity(account);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   void ToPythonAdministrationClient<C>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const AccountIdentity& identity) {
@@ -223,14 +223,14 @@ namespace Nexus::AdministrationService {
     m_client->store(account, identity);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   TradingGroup ToPythonAdministrationClient<C>::load_trading_group(
       const Beam::ServiceLocator::DirectoryEntry& directory) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_trading_group(directory);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
       ToPythonAdministrationClient<C>::load_managed_trading_groups(
         const Beam::ServiceLocator::DirectoryEntry& account) {
@@ -238,28 +238,28 @@ namespace Nexus::AdministrationService {
     return m_client->load_managed_trading_groups(account);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
       ToPythonAdministrationClient<C>::load_administrators() {
     auto release = Beam::Python::GilRelease();
     return m_client->load_administrators();
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
       ToPythonAdministrationClient<C>::load_services() {
     auto release = Beam::Python::GilRelease();
     return m_client->load_services();
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   MarketDataService::EntitlementDatabase
       ToPythonAdministrationClient<C>::load_entitlements() {
     auto release = Beam::Python::GilRelease();
     return m_client->load_entitlements();
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   std::vector<Beam::ServiceLocator::DirectoryEntry>
       ToPythonAdministrationClient<C>::load_entitlements(
         const Beam::ServiceLocator::DirectoryEntry& account) {
@@ -267,7 +267,7 @@ namespace Nexus::AdministrationService {
     return m_client->load_entitlements(account);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   void ToPythonAdministrationClient<C>::store_entitlements(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements) {
@@ -275,7 +275,7 @@ namespace Nexus::AdministrationService {
     m_client->store_entitlements(account, entitlements);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   const Beam::Publisher<RiskService::RiskParameters>&
       ToPythonAdministrationClient<C>::get_risk_parameters_publisher(
         const Beam::ServiceLocator::DirectoryEntry& account) {
@@ -283,7 +283,7 @@ namespace Nexus::AdministrationService {
     return m_client->get_risk_parameters_publisher(account);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   void ToPythonAdministrationClient<C>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskParameters& parameters) {
@@ -291,7 +291,7 @@ namespace Nexus::AdministrationService {
     m_client->store(account, parameters);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   const Beam::Publisher<RiskService::RiskState>&
       ToPythonAdministrationClient<C>::get_risk_state_publisher(
         const Beam::ServiceLocator::DirectoryEntry& account) {
@@ -299,7 +299,7 @@ namespace Nexus::AdministrationService {
     return m_client->get_risk_state_publisher(account);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   void ToPythonAdministrationClient<C>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskService::RiskState& state) {
@@ -307,7 +307,7 @@ namespace Nexus::AdministrationService {
     m_client->store(account, state);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   AccountModificationRequest
       ToPythonAdministrationClient<C>::load_account_modification_request(
         AccountModificationRequest::Id id) {
@@ -315,7 +315,7 @@ namespace Nexus::AdministrationService {
     return m_client->load_account_modification_request(id);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   std::vector<AccountModificationRequest::Id>
       ToPythonAdministrationClient<C>::load_account_modification_request_ids(
         const Beam::ServiceLocator::DirectoryEntry& account,
@@ -325,7 +325,7 @@ namespace Nexus::AdministrationService {
       account, start_id, max_count);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   std::vector<AccountModificationRequest::Id>
       ToPythonAdministrationClient<C>::
         load_managed_account_modification_request_ids(
@@ -336,7 +336,7 @@ namespace Nexus::AdministrationService {
       account, start_id, max_count);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   EntitlementModification
       ToPythonAdministrationClient<C>::load_entitlement_modification(
         AccountModificationRequest::Id id) {
@@ -344,7 +344,7 @@ namespace Nexus::AdministrationService {
     return m_client->load_entitlement_modification(id);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   AccountModificationRequest ToPythonAdministrationClient<C>::submit(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const EntitlementModification& modification, const Message& comment) {
@@ -352,14 +352,14 @@ namespace Nexus::AdministrationService {
     return m_client->submit(account, modification, comment);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   RiskModification ToPythonAdministrationClient<C>::load_risk_modification(
       AccountModificationRequest::Id id) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_risk_modification(id);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   AccountModificationRequest ToPythonAdministrationClient<C>::submit(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskModification& modification, const Message& comment) {
@@ -367,7 +367,7 @@ namespace Nexus::AdministrationService {
     return m_client->submit(account, modification, comment);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   AccountModificationRequest::Update
       ToPythonAdministrationClient<C>::load_account_modification_request_status(
         AccountModificationRequest::Id id) {
@@ -375,7 +375,7 @@ namespace Nexus::AdministrationService {
     return m_client->load_account_modification_request_status(id);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   AccountModificationRequest::Update
       ToPythonAdministrationClient<C>::approve_account_modification_request(
         AccountModificationRequest::Id id, const Message& comment) {
@@ -383,7 +383,7 @@ namespace Nexus::AdministrationService {
     return m_client->approve_account_modification_request(id, comment);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   AccountModificationRequest::Update
       ToPythonAdministrationClient<C>::reject_account_modification_request(
         AccountModificationRequest::Id id, const Message& comment) {
@@ -391,20 +391,20 @@ namespace Nexus::AdministrationService {
     return m_client->reject_account_modification_request(id, comment);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   Message ToPythonAdministrationClient<C>::load_message(Message::Id id) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_message(id);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   std::vector<Message::Id> ToPythonAdministrationClient<C>::load_message_ids(
       AccountModificationRequest::Id id) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_message_ids(id);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   Message ToPythonAdministrationClient<C>::
       send_account_modification_request_message(
         AccountModificationRequest::Id id, const Message& message) {
@@ -412,7 +412,7 @@ namespace Nexus::AdministrationService {
     return m_client->send_account_modification_request_message(id, message);
   }
 
-  template<typename C>
+  template<IsAdministrationClient C>
   void ToPythonAdministrationClient<C>::close() {
     auto release = Beam::Python::GilRelease();
     m_client->close();

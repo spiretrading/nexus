@@ -25,7 +25,7 @@ namespace Nexus::Python {
    * @param name The name of the class.
    * @return The exported DefinitionsClient.
    */
-  template<typename C>
+  template<DefinitionsService::IsDefinitionsClient C>
   auto export_definitions_client(
       pybind11::module& module, std::string_view name) {
     auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).

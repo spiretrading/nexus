@@ -222,12 +222,12 @@ namespace Nexus::MarketDataService {
    */
   template<IsMarketDataClient C>
   Beam::Routines::Routine::Id query_real_time_with_snapshot(
-      C&& client, const Security& security,
-      Beam::ScopedQueueWriter<BookQuote> queue,
+      C&& client, Security security, Beam::ScopedQueueWriter<BookQuote> queue,
       Beam::Queries::InterruptionPolicy interruption_policy =
         Beam::Queries::InterruptionPolicy::BREAK_QUERY) {
     return Beam::Routines::Spawn([client = Beam::CapturePtr<C>(client),
-          security, queue = std::move(queue), interruption_policy] () mutable {
+          security = std::move(security), queue = std::move(queue),
+          interruption_policy] () mutable {
         auto snapshot = SecuritySnapshot();
         try {
           snapshot = client->load_snapshot(security);
@@ -268,15 +268,15 @@ namespace Nexus::MarketDataService {
 
   /**
    * Submits a query for real time BboQuotes with a snapshot.
-   * @param security The Security to query.
    * @param client The MarketDataClient to submit the query to.
+   * @param security The Security to query.
    * @param queue The Queue to write to.
    */
   template<IsMarketDataClient C>
-  Beam::Routines::Routine::Id query_real_time_with_snapshot(Security security,
-      C&& client, Beam::ScopedQueueWriter<BboQuote> queue) {
+  Beam::Routines::Routine::Id query_real_time_with_snapshot(C&& client,
+      Security security, Beam::ScopedQueueWriter<BboQuote> queue) {
     return Beam::Routines::Spawn(
-      [=, security = std::move(security), client = Beam::CapturePtr<C>(client),
+      [=, client = Beam::CapturePtr<C>(client), security = std::move(security),
           queue = std::move(queue)] () mutable {
         auto snapshot_queue =
           std::make_shared<Beam::Queue<SequencedBboQuote>>();
@@ -303,12 +303,12 @@ namespace Nexus::MarketDataService {
 
   /**
    * Submits a query to retrieve the SecurityInfo for a single security.
-   * @param security The Security to query.
    * @param client The MarketDataClient to submit the query to.
+   * @param security The Security to query.
    * @return The SecurityInfo for the given <i>security</i>.
    */
   boost::optional<SecurityInfo> load_security_info(
-      const Security& security, IsMarketDataClient auto& client) {
+      IsMarketDataClient auto& client, const Security& security) {
     auto result = client.query(make_security_info_query(security));
     if(!result.empty()) {
       return result.front();

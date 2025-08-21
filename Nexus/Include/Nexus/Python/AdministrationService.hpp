@@ -27,12 +27,12 @@ namespace Nexus::Python {
 
   /**
    * Exports an AdministrationClient class.
-   * @param <Client> The type of AdministrationClient to export.
+   * @param <C> The type of AdministrationClient to export.
    * @param module The module to export to.
    * @param name The name of the class.
    * @return The exported AdministrationClient.
    */
-  template<typename C>
+  template<AdministrationService::IsAdministrationClient C>
   auto export_administration_client(
       pybind11::module& module, std::string_view name) {
     auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
@@ -116,7 +116,7 @@ namespace Nexus::Python {
    * @param name The name of the class.
    * @return The exported AdministrationDataStore.
    */
-  template<typename D>
+  template<AdministrationService::IsAdministrationDataStore D>
   auto export_administration_data_store(
       pybind11::module& module, std::string_view name) {
     auto data_store =

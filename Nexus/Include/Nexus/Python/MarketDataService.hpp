@@ -51,7 +51,7 @@ namespace Nexus::Python {
    * @param name The name of the class to export.
    * @return The exported class.
    */
-  template<typename D>
+  template<MarketDataService::IsHistoricalDataStore D>
   auto export_historical_data_store(
       pybind11::module& module, std::string_view name) {
     auto data_store =
@@ -105,7 +105,7 @@ namespace Nexus::Python {
    * @param name The name of the class.
    * @return The exported MarketDataClient.
    */
-  template<typename C>
+  template<MarketDataService::IsMarketDataClient C>
   auto export_market_data_client(
       pybind11::module& module, std::string_view name) {
     auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
@@ -153,7 +153,7 @@ namespace Nexus::Python {
    * @param name The name of the class.
    * @return The exported MarketDataFeedClient.
    */
-  template<typename C>
+  template<MarketDataService::IsMarketDataFeedClient C>
   auto export_market_data_feed_client(
       pybind11::module& module, std::string_view name) {
     auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).

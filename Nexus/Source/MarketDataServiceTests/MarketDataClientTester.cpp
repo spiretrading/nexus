@@ -85,7 +85,7 @@ TEST_SUITE("MarketDataClient") {
     auto client = TestMarketDataClient(operations);
     auto quote_queue = std::make_shared<Queue<BboQuote>>();
     auto security = Security("SYM", NASDAQ);
-    query_real_time_with_snapshot(security, client, quote_queue);
+    query_real_time_with_snapshot(client, security, quote_queue);
     auto operation1 = operations->Pop();
     auto* snapshot_operation =
       std::get_if<TestMarketDataClient::QuerySequencedBboQuoteOperation>(
@@ -117,7 +117,7 @@ TEST_SUITE("MarketDataClient") {
     auto security = Security("SYM", NASDAQ);
     auto queue = Queue<optional<SecurityInfo>>();
     Spawn([&] {
-      queue.Push(load_security_info(security, client));
+      queue.Push(load_security_info(client, security));
     });
     auto operation1 = operations->Pop();
     auto* info_operation =
