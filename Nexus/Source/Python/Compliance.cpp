@@ -44,6 +44,9 @@ void Nexus::Python::export_compliance(module& module) {
   export_compliance_client<ToPythonComplianceClient<ComplianceClient>>(
     submodule, "ComplianceClient");
   export_compliance_parameter(submodule);
+  export_compliance_rule_data_store<
+    ToPythonComplianceRuleDataStore<ComplianceRuleDataStore>>(
+      submodule, "ComplianceRuleDataStore");
   export_compliance_rule_data_store_exception(submodule);
   export_compliance_rule_entry(submodule);
   export_compliance_rule_schema(submodule);

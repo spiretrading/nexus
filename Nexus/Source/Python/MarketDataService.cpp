@@ -1,13 +1,19 @@
 #include "Nexus/Python/MarketDataService.hpp"
-#include <Aspen/Python/Box.hpp>
-#include <Beam/IO/ConnectException.hpp>
 #include <Beam/Python/Beam.hpp>
 #include <Beam/Sql/SqlConnection.hpp>
-#include <boost/throw_exception.hpp>
 #include <Viper/MySql/Connection.hpp>
 #include <Viper/Sqlite3/Connection.hpp>
-#include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
+#include "Nexus/MarketDataService/AsyncHistoricalDataStore.hpp"
+#include "Nexus/MarketDataService/CachedHistoricalDataStore.hpp"
+#include "Nexus/MarketDataService/ClientHistoricalDataStore.hpp"
+#include "Nexus/MarketDataService/DataStoreMarketDataClient.hpp"
+#include "Nexus/MarketDataService/EntitlementDatabase.hpp"
+#include "Nexus/MarketDataService/EntitlementSet.hpp"
+#include "Nexus/MarketDataService/HistoricalDataStoreException.hpp"
+#include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
+#include "Nexus/MarketDataService/MarketDataType.hpp"
 #include "Nexus/MarketDataService/Reactors.hpp"
+#include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 #include "Nexus/MarketDataService/SqlHistoricalDataStore.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/Python/ToPythonHistoricalDataStore.hpp"
@@ -15,310 +21,244 @@
 #include "Nexus/Python/ToPythonMarketDataFeedClient.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Network;
-using namespace Beam::Parsers;
 using namespace Beam::Python;
-using namespace Beam::Queries;
-using namespace Beam::Services;
 using namespace Beam::ServiceLocator;
-using namespace boost;
-using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::AdministrationService;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::MarketDataService::Tests;
-using namespace Nexus::Python;
 using namespace pybind11;
 
-namespace {
-  auto historicalDataStoreBox =
-    std::unique_ptr<class_<HistoricalDataStoreBox>>();
-  auto marketDataClientBox = std::unique_ptr<class_<MarketDataClientBox>>();
-  auto marketDataFeedClientBox =
-    std::unique_ptr<class_<MarketDataFeedClientBox>>();
+void Nexus::Python::export_async_historical_data_store(module& module) {
+  using DataStore =
+    ToPythonHistoricalDataStore<AsyncHistoricalDataStore<HistoricalDataStore>>;
+  auto data_store =
+    export_historical_data_store<DataStore>(module, "AsyncHistoricalDataStore");
+  data_store.def(init<HistoricalDataStore>());
 }
 
-class_<HistoricalDataStoreBox>&
-    Nexus::Python::GetExportedHistoricalDataStoreBox() {
-  return *historicalDataStoreBox;
+void Nexus::Python::export_cached_historical_data_store(module& module) {
+  using DataStore =
+    ToPythonHistoricalDataStore<CachedHistoricalDataStore<HistoricalDataStore>>;
+  auto data_store = export_historical_data_store<DataStore>(
+    module, "CachedHistoricalDataStore");
+  data_store.def(init<HistoricalDataStore, int>());
 }
 
-class_<MarketDataClientBox>& Nexus::Python::GetExportedMarketDataClientBox() {
-  return *marketDataClientBox;
+void Nexus::Python::export_client_historical_data_store(module& module) {
+  using DataStore =
+    ToPythonHistoricalDataStore<ClientHistoricalDataStore<MarketDataClient>>;
+  auto data_store = export_historical_data_store<DataStore>(
+    module, "ClientHistoricalDataStore");
+  data_store.def(init<MarketDataClient>());
 }
 
-class_<MarketDataFeedClientBox>&
-    Nexus::Python::GetExportedMarketDataFeedClientBox() {
-  return *marketDataFeedClientBox;
+void Nexus::Python::export_data_store_market_data_client(module& module) {
+  using Client =
+    ToPythonMarketDataClient<DataStoreMarketDataClient<HistoricalDataStore>>;
+  auto client =
+    export_market_data_client<Client>(module, "DataStoreMarketDataClient");
+  client.def(init<HistoricalDataStore>());
 }
 
-void Nexus::Python::ExportApplicationMarketDataClient(module& module) {
-  using PythonApplicationMarketDataClient = ToPythonMarketDataClient<
-    MarketDataClient<ZLibSessionBuilder<ServiceLocatorClientBox>>>;
-  ExportMarketDataClient<PythonApplicationMarketDataClient>(module,
-    "ApplicationMarketDataClient").
-    def(init([] (ServiceLocatorClientBox serviceLocatorClient) {
-      return std::make_shared<PythonApplicationMarketDataClient>(
-        MakeSessionBuilder<ZLibSessionBuilder<ServiceLocatorClientBox>>(
-          std::move(serviceLocatorClient),
-          MarketDataService::RELAY_SERVICE_NAME));
-    }));
+void Nexus::Python::export_entitlement_database(module& module) {
+  ExportView<EntitlementDatabase::Entry>(
+    module, "EntitlementDatabaseEntryView");
+  ExportView<const EntitlementDatabase::Entry>(
+    module, "EntitlementDatabaseEntryConstView");
+  auto database = class_<EntitlementDatabase>(module, "EntitlementDatabase").
+    def(init()).
+    def(init<const EntitlementDatabase&>()).
+    def_property_readonly("entries", &EntitlementDatabase::get_entries).
+    def("add", &EntitlementDatabase::add).
+    def("remove", &EntitlementDatabase::remove);
+  database.def_readonly_static("NONE", &EntitlementDatabase::NONE);
+  class_<EntitlementDatabase::Entry>(module, "Entry").
+    def(init()).
+    def(init<const EntitlementDatabase::Entry&>()).
+    def_readwrite("name", &EntitlementDatabase::Entry::m_name).
+    def_readwrite("price", &EntitlementDatabase::Entry::m_price).
+    def_readwrite("currency", &EntitlementDatabase::Entry::m_currency).
+    def_readwrite("group_entry", &EntitlementDatabase::Entry::m_group_entry).
+    def_readwrite("applicability",
+      &EntitlementDatabase::Entry::m_applicability);
 }
 
-void Nexus::Python::ExportApplicationMarketDataFeedClient(module& module) {
-  using PythonApplicationMarketDataFeedClient =
-    ToPythonMarketDataFeedClient<ApplicationMarketDataFeedClient::Client>;
-  static auto factory = [] (ServiceLocatorClientBox serviceLocatorClient,
-      time_duration sampling, CountryCode country) {
-    auto service = [&] {
-      if(!country) {
-        auto services = serviceLocatorClient.Locate(FEED_SERVICE_NAME);
-        if(services.empty()) {
-          BOOST_THROW_EXCEPTION(ConnectException(
-            "No market data services available."));
-        }
-        return services.front();
-      } else {
-        if(auto service = FindMarketDataFeedService(country,
-            serviceLocatorClient)) {
-          return *service;
-        }
-        BOOST_THROW_EXCEPTION(ConnectException(
-          "No market data services available."));
-      }
-    }();
-    auto addresses = Parse<std::vector<IpAddress>>(get<std::string>(
-      service.GetProperties().At("addresses")));
-    return std::make_shared<PythonApplicationMarketDataFeedClient>(
-      Initialize(addresses),
-      SessionAuthenticator(std::move(serviceLocatorClient)),
-      Initialize(sampling), Initialize(seconds(10)));
-  };
-  ExportMarketDataFeedClient<PythonApplicationMarketDataFeedClient>(module,
-      "ApplicationMarketDataFeedClient").
-    def(init(
-      [] (ServiceLocatorClientBox serviceLocatorClient, time_duration sampling,
-          CountryCode country) {
-        return factory(std::move(serviceLocatorClient), sampling, country);
-      })).
-    def(init(
-      [] (ServiceLocatorClientBox serviceLocatorClient, CountryCode country) {
-        return factory(std::move(serviceLocatorClient), milliseconds(10),
-          country);
-      })).
-    def(init(
-      [] (ServiceLocatorClientBox serviceLocatorClient,
-          time_duration sampling) {
-        return factory(std::move(serviceLocatorClient), sampling,
-          CountryCode::NONE);
-      })).
-    def(init([] (ServiceLocatorClientBox serviceLocatorClient) {
-      return factory(std::move(serviceLocatorClient), milliseconds(10),
-        CountryCode::NONE);
-    }));
+void Nexus::Python::export_entitlement_set(module& module) {
+  class_<EntitlementKey>(module, "EntitlementKey").
+    def(init()).
+    def(init<const EntitlementKey&>()).
+    def(init<Venue>()).
+    def(init<Venue, Venue>()).
+    def_readwrite("venue", &EntitlementKey::m_venue).
+    def_readwrite("source", &EntitlementKey::m_source).
+    def(self == self).
+    def(self != self).
+    def("__hash__", [] (const EntitlementKey& key) {
+      return std::hash<EntitlementKey>()(key);
+    });
+  class_<EntitlementSet>(module, "EntitlementSet").
+    def(init()).
+    def(init<const EntitlementSet&>()).
+    def("contains", &EntitlementSet::contains).
+    def("grant", &EntitlementSet::grant).
+    def(self == self).
+    def(self != self);
 }
 
-void Nexus::Python::ExportMarketDataReactors(module& module) {
-  auto aspenModule = pybind11::module::import("aspen");
-  Aspen::export_box<SecurityMarketDataQuery>(aspenModule,
-    "SecurityMarketDataQuery");
-  Aspen::export_box<Security>(aspenModule, "Security");
-  module.def("bbo_quote_reactor",
-    [] (MarketDataClientBox client,
-        Aspen::SharedBox<SecurityMarketDataQuery> query) {
-      return Aspen::to_object(BboQuoteReactor(std::move(client),
-        std::move(query)));
-    });
-  module.def("current_bbo_quote_reactor",
-    [] (MarketDataClientBox client, Aspen::SharedBox<Security> security) {
-      return Aspen::to_object(CurrentBboQuoteReactor(std::move(client),
-        std::move(security)));
-    });
-  module.def("real_time_bbo_quote_reactor",
-    [] (MarketDataClientBox client, Aspen::SharedBox<Security> security) {
-      return Aspen::to_object(RealTimeBboQuoteReactor(std::move(client),
-        std::move(security)));
-    });
-  module.def("book_quote_reactor",
-    [] (MarketDataClientBox client,
-        Aspen::SharedBox<SecurityMarketDataQuery> query) {
-      return Aspen::to_object(BookQuoteReactor(std::move(client),
-        std::move(query)));
-    });
-  module.def("current_book_quote_reactor",
-    [] (MarketDataClientBox client, Aspen::SharedBox<Security> security) {
-      return Aspen::to_object(CurrentBookQuoteReactor(std::move(client),
-        std::move(security)));
-    });
-  module.def("real_time_book_quote_reactor",
-    [] (MarketDataClientBox client, Aspen::SharedBox<Security> security) {
-      return Aspen::to_object(RealTimeBookQuoteReactor(std::move(client),
-        std::move(security)));
-    });
-  module.def("market_quote_reactor",
-    [] (MarketDataClientBox client,
-        Aspen::SharedBox<SecurityMarketDataQuery> query) {
-      return Aspen::to_object(MarketQuoteReactor(std::move(client),
-        std::move(query)));
-    });
-  module.def("current_market_quote_reactor",
-    [] (MarketDataClientBox client, Aspen::SharedBox<Security> security) {
-      return Aspen::to_object(CurrentMarketQuoteReactor(std::move(client),
-        std::move(security)));
-    });
-  module.def("real_time_market_quote_reactor",
-    [] (MarketDataClientBox client, Aspen::SharedBox<Security> security) {
-      return Aspen::to_object(RealTimeMarketQuoteReactor(std::move(client),
-        std::move(security)));
-    });
-  module.def("time_and_sales_reactor",
-    [] (MarketDataClientBox client,
-        Aspen::SharedBox<SecurityMarketDataQuery> query) {
-      return Aspen::to_object(TimeAndSalesReactor(std::move(client),
-        std::move(query)));
-    });
-  module.def("current_time_and_sales_reactor",
-    [] (MarketDataClientBox client, Aspen::SharedBox<Security> security) {
-      return Aspen::to_object(CurrentTimeAndSalesReactor(std::move(client),
-        std::move(security)));
-    });
-  module.def("real_time_time_and_sales_reactor",
-    [] (MarketDataClientBox client, Aspen::SharedBox<Security> security) {
-      return Aspen::to_object(RealTimeTimeAndSalesReactor(std::move(client),
-        std::move(security)));
-    });
+void Nexus::Python::export_historical_data_store_exception(module& module) {
+  register_exception<HistoricalDataStoreException>(
+    module, "HistoricalDataStoreException", GetIOException());
 }
 
-void Nexus::Python::ExportMarketDataService(module& module) {
+void Nexus::Python::export_local_historical_data_store(module& module) {
+  using DataStore = ToPythonHistoricalDataStore<LocalHistoricalDataStore>;
+  auto data_store =
+    export_historical_data_store<DataStore>(module, "LocalHistoricalDataStore");
+  data_store.def(init());
+  data_store.def("load_all_order_imbalances", [] (DataStore& self) {
+    return self.get_data_store().load_order_imbalances();
+  }, call_guard<GilRelease>());
+  data_store.def("load_all_bbo_quotes", [] (DataStore& self) {
+    return self.get_data_store().load_bbo_quotes();
+  }, call_guard<GilRelease>());
+  data_store.def("load_all_book_quotes", [] (DataStore& self) {
+    return self.get_data_store().load_book_quotes();
+  }, call_guard<GilRelease>());
+  data_store.def("load_all_time_and_sales", [] (DataStore& self) {
+    return self.get_data_store().load_time_and_sales();
+  }, call_guard<GilRelease>());
+}
+
+void Nexus::Python::export_market_data_reactors(module& module) {
+}
+
+void Nexus::Python::export_market_data_service(module& module) {
   auto submodule = module.def_submodule("market_data_service");
-  historicalDataStoreBox = std::make_unique<class_<HistoricalDataStoreBox>>(
-    ExportHistoricalDataStore<HistoricalDataStoreBox>(submodule,
-      "HistoricalDataStore"));
-  marketDataClientBox = std::make_unique<class_<MarketDataClientBox>>(
-    ExportMarketDataClient<MarketDataClientBox>(submodule, "MarketDataClient"));
-  ExportMarketDataClient<ToPythonMarketDataClient<MarketDataClientBox>>(
-    submodule, "MarketDataClientBox");
-  ExportApplicationMarketDataClient(submodule);
-  marketDataFeedClientBox = std::make_unique<class_<MarketDataFeedClientBox>>(
-    ExportMarketDataFeedClient<MarketDataFeedClientBox>(submodule,
-      "MarketDataFeedClient"));
-  ExportMarketDataFeedClient<
-    ToPythonMarketDataFeedClient<MarketDataFeedClientBox>>(submodule,
-      "MarketDataFeedClientBox");
-  ExportApplicationMarketDataFeedClient(submodule);
-  ExportSecuritySnapshot(submodule);
-  ExportMarketDataReactors(submodule);
-  ExportMySqlHistoricalDataStore(submodule);
-  ExportSqliteHistoricalDataStore(submodule);
-  submodule.def("query_real_time_with_snapshot",
-    [] (Security security, MarketDataClientBox client,
-        ScopedQueueWriter<BboQuote> queue) {
-      return QueryRealTimeWithSnapshot(security, std::move(client),
-        std::move(queue));
-    });
-  submodule.def("query_real_time_book_quotes_with_snapshot",
-    [] (MarketDataClientBox marketDataClient, Security security,
-        ScopedQueueWriter<BookQuote> queue,
-        InterruptionPolicy interruptionPolicy) {
-      return QueryRealTimeBookQuotesWithSnapshot(std::move(marketDataClient),
-        std::move(security), std::move(queue), interruptionPolicy);
-    });
-  submodule.def("query_real_time_book_quotes_with_snapshot",
-    [] (MarketDataClientBox marketDataClient, Security security,
-        ScopedQueueWriter<BookQuote> queue) {
-      return QueryRealTimeBookQuotesWithSnapshot(std::move(marketDataClient),
-        std::move(security), std::move(queue));
-    });
-  submodule.def("query_real_time_market_quotes_with_snapshot",
-    [] (MarketDataClientBox marketDataClient, Security security,
-        ScopedQueueWriter<MarketQuote> queue,
-        InterruptionPolicy interruptionPolicy) {
-      return QueryRealTimeMarketQuotesWithSnapshot(std::move(marketDataClient),
-        security, std::move(queue), interruptionPolicy);
-    });
-  submodule.def("query_real_time_market_quotes_with_snapshot",
-    [] (MarketDataClientBox marketDataClient, Security security,
-        ScopedQueueWriter<MarketQuote> queue) {
-      return QueryRealTimeMarketQuotesWithSnapshot(std::move(marketDataClient),
-        security, std::move(queue));
-    });
-  auto testModule = submodule.def_submodule("tests");
-  ExportMarketDataServiceTestEnvironment(testModule);
+  export_async_historical_data_store(submodule);
+  export_cached_historical_data_store(submodule);
+  export_client_historical_data_store(submodule);
+  export_data_store_market_data_client(submodule);
+  export_entitlement_database(submodule);
+  export_entitlement_set(submodule);
+  export_historical_data_store<ToPythonHistoricalDataStore<
+    HistoricalDataStore>>(submodule, "HistoricalDataStore");
+  export_historical_data_store_exception(submodule);
+  export_local_historical_data_store(submodule);
+  export_market_data_client<ToPythonMarketDataClient<MarketDataClient>>(
+    submodule, "MarketDataClient");
+  export_market_data_reactors(submodule);
+  export_market_data_type(submodule);
+  export_mysql_historical_data_store(submodule);
+  export_security_snapshot(submodule);
+  export_sqlite_historical_data_store(submodule);
+  auto test_module = submodule.def_submodule("tests");
+  export_market_data_service_test_environment(test_module);
 }
 
-void Nexus::Python::ExportMarketDataServiceTestEnvironment(module& module) {
-  class_<MarketDataServiceTestEnvironment>(module,
-      "MarketDataServiceTestEnvironment").
-    def(init(
-      [] (ServiceLocatorClientBox serviceLocatorClient,
-          AdministrationClientBox administrationClient) {
-        return std::make_unique<MarketDataServiceTestEnvironment>(
-          std::move(serviceLocatorClient), std::move(administrationClient));
-      }), call_guard<GilRelease>()).
-    def("__del__", [] (MarketDataServiceTestEnvironment& self) {
-      self.Close();
+void Nexus::Python::export_market_data_service_test_environment(
+    module& module) {
+  using TestEnvironment = MarketDataServiceTestEnvironment;
+  class_<TestEnvironment>(module, "MarketDataServiceTestEnvironment").
+    def(init<ServiceLocatorClientBox, AdministrationClient>(),
+      call_guard<GilRelease>()).
+    def(init<ServiceLocatorClientBox, AdministrationClient,
+      HistoricalDataStore>(), call_guard<GilRelease>()).
+    def("__del__", [] (TestEnvironment& self) {
+      self.close();
     }, call_guard<GilRelease>()).
-    def("get_data_store", &MarketDataServiceTestEnvironment::GetDataStore,
-      return_value_policy::copy).
-    def("get_registry", &MarketDataServiceTestEnvironment::GetRegistry,
-      return_value_policy::reference_internal).
-    def("get_registry_client",
-      &MarketDataServiceTestEnvironment::GetRegistryClient,
-      return_value_policy::copy).
-    def("get_feed_client", &MarketDataServiceTestEnvironment::GetFeedClient,
-      return_value_policy::copy).
-    def("make_registry_client",
-      [] (MarketDataServiceTestEnvironment& self,
-          ServiceLocatorClientBox serviceLocatorClient) {
-        return ToPythonMarketDataClient(self.MakeRegistryClient(
-          std::move(serviceLocatorClient)));
-      }, call_guard<GilRelease>()).
-    def("make_feed_client",
-      [] (MarketDataServiceTestEnvironment& self,
-          ServiceLocatorClientBox serviceLocatorClient) {
-        return ToPythonMarketDataFeedClient(self.MakeFeedClient(
-          std::move(serviceLocatorClient)));
-      }, call_guard<GilRelease>()).
-    def("close", &MarketDataServiceTestEnvironment::Close,
-      call_guard<GilRelease>());
+    def("get_data_store", [] (TestEnvironment& self) {
+      return ToPythonHistoricalDataStore(self.get_data_store());
+    }).
+    def("get_registry_client", [] (TestEnvironment& self) {
+      return ToPythonMarketDataClient(self.get_registry_client());
+    }).
+    def("get_feed_client", [] (TestEnvironment& self) {
+      return ToPythonMarketDataFeedClient(self.get_feed_client());
+    }).
+    def("make_registry_client", [] (TestEnvironment& self,
+        ServiceLocatorClientBox service_locator_client) {
+      return ToPythonMarketDataClient(
+        self.make_registry_client(std::move(service_locator_client)));
+    }, call_guard<GilRelease>()).
+    def("make_feed_client", [] (TestEnvironment& self,
+        ServiceLocatorClientBox service_locator_client) {
+      return ToPythonMarketDataFeedClient(
+        self.make_feed_client(std::move(service_locator_client)));
+    }, call_guard<GilRelease>()).
+    def("update_bbo", static_cast<void (TestEnvironment::*)(
+      const Security&, Money, Money)>(&TestEnvironment::update_bbo),
+      call_guard<GilRelease>()).
+    def("update_bbo", static_cast<void (TestEnvironment::*)(
+      const Security&, Money)>(&TestEnvironment::update_bbo),
+      call_guard<GilRelease>()).
+    def("close", &TestEnvironment::close, call_guard<GilRelease>());
+  module.def("make_market_data_service_test_environment",
+    &make_market_data_service_test_environment, call_guard<GilRelease>());
+  module.def("make_market_data_client", &make_market_data_client,
+    call_guard<GilRelease>());
 }
 
-void Nexus::Python::ExportMySqlHistoricalDataStore(module& module) {
-  using PythonHistoricalDataStore = ToPythonHistoricalDataStore<
+void Nexus::Python::export_market_data_type(module& module) {
+  enum_<MarketDataType::Type>(module, "MarketDataType").
+    value("TIME_AND_SALE", MarketDataType::TIME_AND_SALE).
+    value("BOOK_QUOTE", MarketDataType::BOOK_QUOTE).
+    value("BBO_QUOTE", MarketDataType::BBO_QUOTE).
+    value("ORDER_IMBALANCE", MarketDataType::ORDER_IMBALANCE);
+  ExportEnumSet<MarketDataTypeSet>(module, "MarketDataTypeSet");
+}
+
+void Nexus::Python::export_mysql_historical_data_store(module& module) {
+  using DataStore = ToPythonHistoricalDataStore<
     SqlHistoricalDataStore<SqlConnection<Viper::MySql::Connection>>>;
-  ExportHistoricalDataStore<PythonHistoricalDataStore>(module,
-      "MySqlHistoricalDataStore").
+  export_historical_data_store<DataStore>(module, "MySqlHistoricalDataStore").
+    def(init([] (const VenueDatabase& venues, std::string host,
+        unsigned int port, std::string username, std::string password,
+        std::string database) {
+      return std::make_shared<DataStore>(venues, [=] {
+        auto release = Beam::Python::GilRelease();
+        return SqlConnection(
+          Viper::MySql::Connection(host, port, username, password, database));
+      });
+    })).
     def(init([] (std::string host, unsigned int port, std::string username,
         std::string password, std::string database) {
-      return std::make_shared<PythonHistoricalDataStore>([=] {
-        return SqlConnection(Viper::MySql::Connection(host, port, username,
-          password, database));
+      return std::make_shared<DataStore>(DEFAULT_VENUES, [=] {
+        auto release = Beam::Python::GilRelease();
+        return SqlConnection(
+          Viper::MySql::Connection(host, port, username, password, database));
       });
-    }), call_guard<GilRelease>());
+    }));
 }
 
-void Nexus::Python::ExportSecuritySnapshot(module& module) {
+void Nexus::Python::export_security_snapshot(module& module) {
   class_<SecuritySnapshot>(module, "SecuritySnapshot").
     def(init()).
-    def(init<const Security&>()).
     def(init<const SecuritySnapshot&>()).
+    def(init<Security>()).
     def_readwrite("security", &SecuritySnapshot::m_security).
-    def_readwrite("bbo_quote", &SecuritySnapshot::m_bboQuote).
-    def_readwrite("time_and_sale", &SecuritySnapshot::m_timeAndSale).
-    def_readwrite("market_quotes", &SecuritySnapshot::m_marketQuotes).
-    def_readwrite("ask_book", &SecuritySnapshot::m_askBook).
-    def_readwrite("bid_book", &SecuritySnapshot::m_bidBook);
+    def_readwrite("bbo_quote", &SecuritySnapshot::m_bbo_quote).
+    def_readwrite("time_and_sale", &SecuritySnapshot::m_time_and_sale).
+    def_readwrite("asks", &SecuritySnapshot::m_asks).
+    def_readwrite("bids", &SecuritySnapshot::m_bids).
+    def(self == self).
+    def(self != self);
 }
 
-void Nexus::Python::ExportSqliteHistoricalDataStore(module& module) {
-  using PythonHistoricalDataStore = ToPythonHistoricalDataStore<
+void Nexus::Python::export_sqlite_historical_data_store(module& module) {
+  using DataStore = ToPythonHistoricalDataStore<
     SqlHistoricalDataStore<SqlConnection<Viper::Sqlite3::Connection>>>;
-  ExportHistoricalDataStore<PythonHistoricalDataStore>(module,
-      "SqliteHistoricalDataStore").
-    def(init([] (std::string path) {
-      return std::make_shared<PythonHistoricalDataStore>([=] {
+  export_historical_data_store<DataStore>(module, "SqliteHistoricalDataStore").
+    def(init([] (const VenueDatabase& venues, std::string path) {
+      return std::make_shared<DataStore>(venues, [=] {
+        auto release = Beam::Python::GilRelease();
         return SqlConnection(Viper::Sqlite3::Connection(path));
       });
-    }), call_guard<GilRelease>());
+    })).
+    def(init([] (std::string path) {
+      return std::make_shared<DataStore>(DEFAULT_VENUES, [=] {
+        auto release = Beam::Python::GilRelease();
+        return SqlConnection(Viper::Sqlite3::Connection(path));
+      });
+    }));
 }

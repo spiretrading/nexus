@@ -8,7 +8,7 @@
 #include "Nexus/Python/Definitions.hpp"
 #include "Nexus/Python/DefinitionsService.hpp"
 #include "Nexus/Python/FeeHandling.hpp"
-//#include "Nexus/Python/MarketDataService.hpp"
+#include "Nexus/Python/MarketDataService.hpp"
 //#include "Nexus/Python/OrderExecutionService.hpp"
 #include "Nexus/Python/Queries.hpp"
 //#include "Nexus/Python/RiskService.hpp"

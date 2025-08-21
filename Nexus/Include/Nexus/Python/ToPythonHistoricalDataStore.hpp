@@ -7,7 +7,7 @@
 #include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
 #include <pybind11/pybind11.h>
-#include "Nexus/MarketDataService/HistoricalDataStoreBox.hpp"
+#include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 
 namespace Nexus::MarketDataService {
 
@@ -33,56 +33,35 @@ namespace Nexus::MarketDataService {
       ~ToPythonHistoricalDataStore();
 
       /** Returns the wrapped data store. */
-      const DataStore& GetDataStore() const;
+      const DataStore& get_data_store() const;
 
       /** Returns the wrapped data store. */
-      DataStore& GetDataStore();
+      DataStore& get_data_store();
 
-      std::vector<SecurityInfo> LoadSecurityInfo(
+      std::vector<SecurityInfo> load_security_info(
         const SecurityInfoQuery& query);
-
-      std::vector<SequencedOrderImbalance> LoadOrderImbalances(
-        const MarketWideDataQuery& query);
-
-      std::vector<SequencedBboQuote> LoadBboQuotes(
+      void store(const SecurityInfo& info);
+      std::vector<SequencedOrderImbalance> load_order_imbalances(
+        const VenueMarketDataQuery& query);
+      void store(const SequencedVenueOrderImbalance& imbalance);
+      void store(const std::vector<SequencedVenueOrderImbalance>& imbalances);
+      std::vector<SequencedBboQuote> load_bbo_quotes(
         const SecurityMarketDataQuery& query);
-
-      std::vector<SequencedBookQuote> LoadBookQuotes(
+      void store(const SequencedSecurityBboQuote& quote);
+      void store(const std::vector<SequencedSecurityBboQuote>& quotes);
+      std::vector<SequencedBookQuote> load_book_quotes(
         const SecurityMarketDataQuery& query);
-
-      std::vector<SequencedMarketQuote> LoadMarketQuotes(
+      void store(const SequencedSecurityBookQuote& quote);
+      void store(const std::vector<SequencedSecurityBookQuote>& quotes);
+      std::vector<SequencedTimeAndSale> load_time_and_sales(
         const SecurityMarketDataQuery& query);
-
-      std::vector<SequencedTimeAndSale> LoadTimeAndSales(
-        const SecurityMarketDataQuery& query);
-
-      void Store(const SecurityInfo& info);
-
-      void Store(const SequencedMarketOrderImbalance& orderImbalance);
-
-      void Store(
-        const std::vector<SequencedMarketOrderImbalance>& orderImbalances);
-
-      void Store(const SequencedSecurityBboQuote& bboQuote);
-
-      void Store(const std::vector<SequencedSecurityBboQuote>& bboQuotes);
-
-      void Store(const SequencedSecurityMarketQuote& marketQuote);
-
-      void Store(const std::vector<SequencedSecurityMarketQuote>& marketQuotes);
-
-      void Store(const SequencedSecurityBookQuote& bookQuote);
-
-      void Store(const std::vector<SequencedSecurityBookQuote>& bookQuotes);
-
-      void Store(const SequencedSecurityTimeAndSale& timeAndSale);
-
-      void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
-
-      void Close();
+      void store(const SequencedSecurityTimeAndSale& time_and_sale);
+      void store(
+        const std::vector<SequencedSecurityTimeAndSale>& time_and_sales);
+      void close();
 
     private:
-      boost::optional<DataStore> m_dataStore;
+      boost::optional<DataStore> m_data_store;
 
       ToPythonHistoricalDataStore(const ToPythonHistoricalDataStore&) = delete;
       ToPythonHistoricalDataStore& operator =(
@@ -91,158 +70,137 @@ namespace Nexus::MarketDataService {
 
   template<typename DataStore>
   ToPythonHistoricalDataStore(DataStore&&) ->
-    ToPythonHistoricalDataStore<std::decay_t<DataStore>>;
+    ToPythonHistoricalDataStore<std::remove_reference_t<DataStore>>;
 
   template<typename D>
   template<typename... Args, typename>
   ToPythonHistoricalDataStore<D>::ToPythonHistoricalDataStore(Args&&... args)
-    : m_dataStore((Beam::Python::GilRelease(), boost::in_place_init),
+    : m_data_store((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
   template<typename D>
   ToPythonHistoricalDataStore<D>::~ToPythonHistoricalDataStore() {
     auto release = Beam::Python::GilRelease();
-    m_dataStore.reset();
+    m_data_store.reset();
   }
 
   template<typename D>
   const typename ToPythonHistoricalDataStore<D>::DataStore&
-      ToPythonHistoricalDataStore<D>::GetDataStore() const {
-    return *m_dataStore;
+      ToPythonHistoricalDataStore<D>::get_data_store() const {
+    return *m_data_store;
   }
 
   template<typename D>
   typename ToPythonHistoricalDataStore<D>::DataStore&
-      ToPythonHistoricalDataStore<D>::GetDataStore() {
-    return *m_dataStore;
+      ToPythonHistoricalDataStore<D>::get_data_store() {
+    return *m_data_store;
   }
 
   template<typename D>
-  std::vector<SecurityInfo> ToPythonHistoricalDataStore<D>::LoadSecurityInfo(
+  std::vector<SecurityInfo> ToPythonHistoricalDataStore<D>::load_security_info(
       const SecurityInfoQuery& query) {
     auto release = Beam::Python::GilRelease();
-    return m_dataStore->LoadSecurityInfo(query);
+    return m_data_store->load_security_info(query);
+  }
+
+  template<typename D>
+  void ToPythonHistoricalDataStore<D>::store(const SecurityInfo& info) {
+    auto release = Beam::Python::GilRelease();
+    m_data_store->store(info);
   }
 
   template<typename D>
   std::vector<SequencedOrderImbalance>
-      ToPythonHistoricalDataStore<D>::LoadOrderImbalances(
-        const MarketWideDataQuery& query) {
+      ToPythonHistoricalDataStore<D>::load_order_imbalances(
+        const VenueMarketDataQuery& query) {
     auto release = Beam::Python::GilRelease();
-    return m_dataStore->LoadOrderImbalances(query);
+    return m_data_store->load_order_imbalances(query);
   }
 
   template<typename D>
-  std::vector<SequencedBboQuote> ToPythonHistoricalDataStore<D>::LoadBboQuotes(
-      const SecurityMarketDataQuery& query) {
+  void ToPythonHistoricalDataStore<D>::store(
+      const SequencedVenueOrderImbalance& imbalance) {
     auto release = Beam::Python::GilRelease();
-    return m_dataStore->LoadBboQuotes(query);
+    m_data_store->store(imbalance);
+  }
+
+  template<typename D>
+  void ToPythonHistoricalDataStore<D>::store(
+      const std::vector<SequencedVenueOrderImbalance>& imbalances) {
+    auto release = Beam::Python::GilRelease();
+    m_data_store->store(imbalances);
+  }
+
+  template<typename D>
+  std::vector<SequencedBboQuote>
+      ToPythonHistoricalDataStore<D>::load_bbo_quotes(
+        const SecurityMarketDataQuery& query) {
+    auto release = Beam::Python::GilRelease();
+    return m_data_store->load_bbo_quotes(query);
+  }
+
+  template<typename D>
+  void ToPythonHistoricalDataStore<D>::store(
+      const SequencedSecurityBboQuote& quote) {
+    auto release = Beam::Python::GilRelease();
+    m_data_store->store(quote);
+  }
+
+  template<typename D>
+  void ToPythonHistoricalDataStore<D>::store(
+      const std::vector<SequencedSecurityBboQuote>& quotes) {
+    auto release = Beam::Python::GilRelease();
+    m_data_store->store(quotes);
   }
 
   template<typename D>
   std::vector<SequencedBookQuote>
-      ToPythonHistoricalDataStore<D>::LoadBookQuotes(
+      ToPythonHistoricalDataStore<D>::load_book_quotes(
         const SecurityMarketDataQuery& query) {
     auto release = Beam::Python::GilRelease();
-    return m_dataStore->LoadBookQuotes(query);
+    return m_data_store->load_book_quotes(query);
   }
 
   template<typename D>
-  std::vector<SequencedMarketQuote>
-      ToPythonHistoricalDataStore<D>::LoadMarketQuotes(
-        const SecurityMarketDataQuery& query) {
+  void ToPythonHistoricalDataStore<D>::store(
+      const SequencedSecurityBookQuote& quote) {
     auto release = Beam::Python::GilRelease();
-    return m_dataStore->LoadMarketQuotes(query);
+    m_data_store->store(quote);
+  }
+
+  template<typename D>
+  void ToPythonHistoricalDataStore<D>::store(
+      const std::vector<SequencedSecurityBookQuote>& quotes) {
+    auto release = Beam::Python::GilRelease();
+    m_data_store->store(quotes);
   }
 
   template<typename D>
   std::vector<SequencedTimeAndSale>
-      ToPythonHistoricalDataStore<D>::LoadTimeAndSales(
+      ToPythonHistoricalDataStore<D>::load_time_and_sales(
         const SecurityMarketDataQuery& query) {
     auto release = Beam::Python::GilRelease();
-    return m_dataStore->LoadTimeAndSales(query);
+    return m_data_store->load_time_and_sales(query);
   }
 
   template<typename D>
-  void ToPythonHistoricalDataStore<D>::Store(const SecurityInfo& info) {
+  void ToPythonHistoricalDataStore<D>::store(
+      const SequencedSecurityTimeAndSale& time_and_sale) {
     auto release = Beam::Python::GilRelease();
-    m_dataStore->Store(info);
+    m_data_store->store(time_and_sale);
   }
 
   template<typename D>
-  void ToPythonHistoricalDataStore<D>::Store(
-      const SequencedMarketOrderImbalance& orderImbalance) {
+  void ToPythonHistoricalDataStore<D>::store(
+      const std::vector<SequencedSecurityTimeAndSale>& time_and_sales) {
     auto release = Beam::Python::GilRelease();
-    m_dataStore->Store(orderImbalance);
+    m_data_store->store(time_and_sales);
   }
 
   template<typename D>
-  void ToPythonHistoricalDataStore<D>::Store(
-      const std::vector<SequencedMarketOrderImbalance>& orderImbalances) {
+  void ToPythonHistoricalDataStore<D>::close() {
     auto release = Beam::Python::GilRelease();
-    m_dataStore->Store(orderImbalances);
-  }
-
-  template<typename D>
-  void ToPythonHistoricalDataStore<D>::Store(
-      const SequencedSecurityBboQuote& bboQuote) {
-    auto release = Beam::Python::GilRelease();
-    m_dataStore->Store(bboQuote);
-  }
-
-  template<typename D>
-  void ToPythonHistoricalDataStore<D>::Store(
-      const std::vector<SequencedSecurityBboQuote>& bboQuotes) {
-    auto release = Beam::Python::GilRelease();
-    m_dataStore->Store(bboQuotes);
-  }
-
-  template<typename D>
-  void ToPythonHistoricalDataStore<D>::Store(
-      const SequencedSecurityMarketQuote& marketQuote) {
-    auto release = Beam::Python::GilRelease();
-    m_dataStore->Store(marketQuote);
-  }
-
-  template<typename D>
-  void ToPythonHistoricalDataStore<D>::Store(
-      const std::vector<SequencedSecurityMarketQuote>& marketQuotes) {
-    auto release = Beam::Python::GilRelease();
-    m_dataStore->Store(marketQuotes);
-  }
-
-  template<typename D>
-  void ToPythonHistoricalDataStore<D>::Store(
-      const SequencedSecurityBookQuote& bookQuote) {
-    auto release = Beam::Python::GilRelease();
-    m_dataStore->Store(bookQuote);
-  }
-
-  template<typename D>
-  void ToPythonHistoricalDataStore<D>::Store(
-      const std::vector<SequencedSecurityBookQuote>& bookQuotes) {
-    auto release = Beam::Python::GilRelease();
-    m_dataStore->Store(bookQuotes);
-  }
-
-  template<typename D>
-  void ToPythonHistoricalDataStore<D>::Store(
-      const SequencedSecurityTimeAndSale& timeAndSale) {
-    auto release = Beam::Python::GilRelease();
-    m_dataStore->Store(timeAndSale);
-  }
-
-  template<typename D>
-  void ToPythonHistoricalDataStore<D>::Store(
-      const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
-    auto release = Beam::Python::GilRelease();
-    m_dataStore->Store(timeAndSales);
-  }
-
-  template<typename D>
-  void ToPythonHistoricalDataStore<D>::Close() {
-    auto release = Beam::Python::GilRelease();
-    m_dataStore->Close();
+    m_data_store->close();
   }
 }
 
