@@ -63,6 +63,17 @@ namespace {
     return windows;
   }
 
+  auto get_minimized_windows(const std::vector<Window*>& windows) {
+    auto minimized_windows = std::unordered_set<HWND>();
+    for(auto window : windows) {
+      auto hwnd = reinterpret_cast<HWND>(window->winId());
+      if(IsIconic(hwnd)) {
+        minimized_windows.insert(hwnd);
+      }
+    }
+    return minimized_windows;
+  }
+
   void reorder_window(HWND hwnd, HWND insert_after) {
     SetWindowPos(hwnd, insert_after, 0, 0, 0, 0,
       SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
@@ -94,16 +105,21 @@ namespace {
   }
 
   void restore(const std::vector<HWND>& z_order_windows,
-      const std::vector<Window*>& targets) {
+      const std::vector<Window*>& targets,
+      const std::unordered_set<HWND>& minimized_windows) {
     for(auto i = z_order_windows.begin(); i != z_order_windows.end(); ++i) {
       if(contains(targets, *i)) {
-        auto after_window = [&] {
-          if(i == z_order_windows.begin()) {
-            return HWND_TOP;
-          }
-          return *(i - 1);
-        }();
-        reorder_window(*i, after_window);
+        if(minimized_windows.contains(*i)) {
+          ShowWindow(*i, SW_SHOWMINNOACTIVE);
+        } else {
+          auto after_window = [&] {
+            if(i == z_order_windows.begin()) {
+              return HWND_TOP;
+            }
+            return *(i - 1);
+          }();
+          reorder_window(*i, after_window);
+        }
       }
     }
   }
@@ -155,7 +171,8 @@ void WindowHighlight::Overlay::paintEvent(QPaintEvent*) {
 
 WindowHighlight::WindowHighlight(std::vector<Window*> windows)
     : m_windows(std::move(windows)),
-      m_z_order_windows(get_z_order_windows()) {
+      m_z_order_windows(get_z_order_windows()),
+      m_minimized_windows(get_minimized_windows(m_windows)) {
   for(auto window : m_windows) {
     match(*window, Highlighted());
   }
@@ -167,11 +184,12 @@ WindowHighlight::WindowHighlight(std::vector<Window*> windows)
 }
 
 WindowHighlight::~WindowHighlight() {
-  restore(m_z_order_windows, m_windows);
   for(auto window : m_windows) {
     unmatch(*window, Highlighted());
+    window->repaint();
   }
   m_overlays.clear();
+  restore(m_z_order_windows, m_windows, m_minimized_windows);
 }
 
 WindowHighlight::Overlay* WindowHighlight::make_overlay(QScreen* screen) {

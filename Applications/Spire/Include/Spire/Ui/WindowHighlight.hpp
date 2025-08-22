@@ -27,6 +27,7 @@ namespace Spire {
       };
       std::vector<Window*> m_windows;
       std::vector<HWND> m_z_order_windows;
+      std::unordered_set<HWND> m_minimized_windows;
       std::unordered_map<QScreen*, std::unique_ptr<Overlay>> m_overlays;
 
       Overlay* make_overlay(QScreen* screen);
