@@ -34,17 +34,29 @@ namespace Nexus {
   class ToPythonClients {
     public:
       using ServiceLocatorClient =
-        Beam::ServiceLocator::ServiceLocatorClientBox;
-      using RegistryClient = Beam::RegistryService::RegistryClientBox;
-      using AdministrationClient = AdministrationService::AdministrationClient;
-      using DefinitionsClient = DefinitionsService::DefinitionsClient;
-      using MarketDataClient = MarketDataService::MarketDataClient;
-      using ChartingClient = ChartingService::ChartingClient;
-      using ComplianceClient = Compliance::ComplianceClient;
-      using OrderExecutionClient = OrderExecutionService::OrderExecutionClient;
-      using RiskClient = RiskService::RiskClient;
-      using TimeClient = Beam::TimeService::TimeClientBox;
-      using Timer = Beam::Threading::TimerBox;
+        Beam::ServiceLocator::ToPythonServiceLocatorClient<
+          Beam::ServiceLocator::ServiceLocatorClientBox>;
+      using RegistryClient = Beam::RegistryService::ToPythonRegistryClient<
+        Beam::RegistryService::RegistryClientBox>;
+      using AdministrationClient =
+        AdministrationService::ToPythonAdministrationClient<
+          AdministrationService::AdministrationClient>;
+      using DefinitionsClient = DefinitionsService::ToPythonDefinitionsClient<
+        DefinitionsService::DefinitionsClient>;
+      using MarketDataClient = MarketDataService::ToPythonMarketDataClient<
+        MarketDataService::MarketDataClient>;
+      using ChartingClient = ChartingService::ToPythonChartingClient<
+        ChartingService::ChartingClient>;
+      using ComplianceClient = Compliance::ToPythonComplianceClient<
+        Compliance::ComplianceClient>;
+      using OrderExecutionClient =
+        OrderExecutionService::ToPythonOrderExecutionClient<
+          OrderExecutionService::OrderExecutionClient>;
+      using RiskClient =
+        RiskService::ToPythonRiskClient<RiskService::RiskClient>;
+      using TimeClient =
+        Beam::TimeService::ToPythonTimeClient<Beam::TimeService::TimeClientBox>;
+      using Timer = Beam::Threading::ToPythonTimer<Beam::Threading::TimerBox>;
 
       /** The type of clients to wrap. */
       using Clients = C;
@@ -106,44 +118,16 @@ namespace Nexus {
   ToPythonClients<C>::ToPythonClients(Args&&... args)
     : m_clients((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...),
-      m_service_locator_client(boost::in_place_init, std::in_place_type<
-        Beam::ServiceLocator::ToPythonServiceLocatorClient<
-          Beam::ServiceLocator::ServiceLocatorClientBox>>,
-        &m_clients->get_service_locator_client()),
-      m_registry_client(boost::in_place_init,
-        std::in_place_type<Beam::RegistryService::ToPythonRegistryClient<
-          Beam::RegistryService::RegistryClientBox>>,
-        &m_clients->get_registry_client()),
-      m_administration_client(boost::in_place_init, std::in_place_type<
-        AdministrationService::ToPythonAdministrationClient<
-          AdministrationService::AdministrationClient>>,
-        &m_clients->get_administration_client()),
-      m_definitions_client(boost::in_place_init,
-        std::in_place_type<DefinitionsService::ToPythonDefinitionsClient<
-          DefinitionsService::DefinitionsClient>>,
-        &m_clients->get_definitions_client()),
-      m_market_data_client(boost::in_place_init,
-        std::in_place_type<MarketDataService::ToPythonMarketDataClient<
-          MarketDataService::MarketDataClient>>,
-        &m_clients->get_market_data_client()),
-      m_charting_client(boost::in_place_init,
-        std::in_place_type<ChartingService::ToPythonChartingClient<
-          ChartingService::ChartingClient>>,
-        &m_clients->get_charting_client()),
-      m_compliance_client(boost::in_place_init,
-        std::in_place_type<Compliance::ToPythonComplianceClient<
-          Compliance::ComplianceClient>>,
-        &m_clients->get_compliance_client()),
-      m_order_execution_client(boost::in_place_init, std::in_place_type<
-        OrderExecutionService::ToPythonOrderExecutionClient<
-          OrderExecutionService::OrderExecutionClient>>,
-        &m_clients->get_order_execution_client()),
-      m_risk_client(boost::in_place_init,
-        std::in_place_type<RiskService::ToPythonRiskClient<
-          RiskService::RiskClient>>, &m_clients->get_risk_client()),
-      m_time_client(
-        Beam::TimeService::ToPythonTimeClient<Beam::TimeService::TimeClientBox>(
-          &m_clients->get_time_client())) {}
+      m_service_locator_client(&m_clients->get_service_locator_client()),
+      m_registry_client(&m_clients->get_registry_client()),
+      m_administration_client(&m_clients->get_administration_client()),
+      m_definitions_client(&m_clients->get_definitions_client()),
+      m_market_data_client(&m_clients->get_market_data_client()),
+      m_charting_client(&m_clients->get_charting_client()),
+      m_compliance_client(&m_clients->get_compliance_client()),
+      m_order_execution_client(&m_clients->get_order_execution_client()),
+      m_risk_client(&m_clients->get_risk_client()),
+      m_time_client(&m_clients->get_time_client()) {}
 
   template<IsClients C>
   ToPythonClients<C>::~ToPythonClients() {
@@ -237,8 +221,7 @@ namespace Nexus {
   std::unique_ptr<typename ToPythonClients<C>::Timer>
       ToPythonClients<C>::make_timer(boost::posix_time::time_duration expiry) {
     auto release = Beam::Python::GilRelease();
-    return std::make_unique<Timer>(std::in_place_type<
-      Beam::Threading::ToPythonTimer<Beam::Threading::TimerBox>>,
+    return std::make_unique<Timer>(
       Beam::Threading::TimerBox(m_clients->make_timer(expiry)));
   }
 
