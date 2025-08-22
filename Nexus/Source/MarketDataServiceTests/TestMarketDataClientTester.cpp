@@ -1,3 +1,4 @@
+#include <future>
 #include <Beam/Queues/Queue.hpp>
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
@@ -69,7 +70,7 @@ TEST_SUITE("TestMarketDataClient") {
     auto client = TestMarketDataClient(operations);
     auto imbalances = std::make_shared<Queue<OrderImbalance>>();
     auto started = std::atomic<bool>(false);
-    auto thread = std::thread([&] {
+    auto query_async = std::async(std::launch::async, [&] {
       auto query = VenueMarketDataQuery();
       query.SetIndex(NYSE);
       started = true;
@@ -77,7 +78,7 @@ TEST_SUITE("TestMarketDataClient") {
     });
     while(!started) {}
     client.close();
-    thread.join();
+    query_async.get();
     if(auto op = operations->TryPop()) {
       auto oi_op = std::get_if<
         TestMarketDataClient::QuerySequencedOrderImbalanceOperation>(&**op);

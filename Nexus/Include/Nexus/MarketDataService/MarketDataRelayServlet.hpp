@@ -190,39 +190,39 @@ namespace Nexus::MarketDataService {
     RegisterMarketDataRegistryServices(Store(slots));
     RegisterMarketDataRegistryMessages(Store(slots));
     QueryOrderImbalancesService::AddRequestSlot(Store(slots),
-      [=] (auto& request, const auto& query) {
+      [=, this] (auto& request, const auto& query) {
         handle_query_request(request, query, m_order_imbalance_subscriptions,
           m_order_imbalance_real_time_subscriptions);
       });
     Beam::Services::AddMessageSlot<EndOrderImbalanceQueryMessage>(Store(slots),
-      [=] (auto& client, const auto& index, auto id) {
+      [=, this] (auto& client, const auto& index, auto id) {
         on_end_query(client, index, id, m_order_imbalance_subscriptions);
       });
     QueryBboQuotesService::AddRequestSlot(Store(slots),
-      [=] (auto& request, const auto& query) {
+      [=, this] (auto& request, const auto& query) {
         handle_query_request(request, query, m_bbo_quote_subscriptions,
           m_bbo_quote_real_time_subscriptions);
       });
     Beam::Services::AddMessageSlot<EndBboQuoteQueryMessage>(Store(slots),
-      [=] (auto& client, const auto& index, auto id) {
+      [=, this] (auto& client, const auto& index, auto id) {
         on_end_query(client, index, id, m_bbo_quote_subscriptions);
       });
     QueryBookQuotesService::AddRequestSlot(Store(slots),
-      [=] (auto& request, const auto& query) {
+      [=, this] (auto& request, const auto& query) {
         handle_query_request(request, query, m_book_quote_subscriptions,
           m_book_quote_real_time_subscriptions);
       });
     Beam::Services::AddMessageSlot<EndBookQuoteQueryMessage>(Store(slots),
-      [=] (auto& client, const auto& index, auto id) {
+      [=, this] (auto& client, const auto& index, auto id) {
         on_end_query(client, index, id, m_book_quote_subscriptions);
       });
     QueryTimeAndSalesService::AddRequestSlot(Store(slots),
-      [=] (auto& request, const auto& query) {
+      [=, this] (auto& request, const auto& query) {
         handle_query_request(request, query, m_time_and_sale_subscriptions,
           m_time_and_sale_real_time_subscriptions);
       });
     Beam::Services::AddMessageSlot<EndTimeAndSaleQueryMessage>(Store(slots),
-      [=] (auto& client, const auto& index, auto id) {
+      [=, this] (auto& client, const auto& index, auto id) {
         on_end_query(client, index, id, m_time_and_sale_subscriptions);
       });
     LoadSecuritySnapshotService::AddSlot(Store(slots), std::bind_front(

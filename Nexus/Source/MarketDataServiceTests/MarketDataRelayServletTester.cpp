@@ -51,6 +51,31 @@ namespace {
     DirectoryEntry m_client_account;
     std::unique_ptr<TestServiceProtocolClient> m_client;
 
+    auto make_account(const std::string& name, const DirectoryEntry& parent) {
+      return m_service_locator_environment.GetRoot().MakeAccount(
+        name, "", parent);
+    }
+
+    auto make_client(const std::string& name) {
+      auto service_locator_client =
+        m_service_locator_environment.MakeClient(name, "");
+      auto authenticator = SessionAuthenticator(service_locator_client);
+      auto protocol_client = std::make_unique<TestServiceProtocolClient>(
+        Initialize(name, *m_server_connection), Initialize());
+      Nexus::Queries::RegisterQueryTypes(
+        Beam::Store(protocol_client->GetSlots().GetRegistry()));
+      RegisterMarketDataRegistryServices(Store(protocol_client->GetSlots()));
+      RegisterMarketDataRegistryMessages(Store(protocol_client->GetSlots()));
+      authenticator(*protocol_client);
+      return std::tuple(
+        service_locator_client.GetAccount(), std::move(protocol_client));
+    }
+
+    auto make_relay_client() {
+      return std::make_unique<MarketDataClient>(
+        std::in_place_type<TestMarketDataClient>, m_operations);
+    }
+
     Fixture()
         : m_time_client(time_from_string("2024-07-04 12:00:00")),
           m_server_connection(std::make_shared<TestServerConnection>()),
@@ -82,31 +107,6 @@ namespace {
       m_servlet_administration_client->store_entitlements(
         m_client_account, {global_entitlement});
       std::tie(m_client_account, m_client) = make_client("client");
-    }
-
-    auto make_account(const std::string& name, const DirectoryEntry& parent) {
-      return m_service_locator_environment.GetRoot().MakeAccount(
-        name, "", parent);
-    }
-
-    auto make_client(const std::string& name) {
-      auto service_locator_client =
-        m_service_locator_environment.MakeClient(name, "");
-      auto authenticator = SessionAuthenticator(service_locator_client);
-      auto protocol_client = std::make_unique<TestServiceProtocolClient>(
-        Initialize(name, *m_server_connection), Initialize());
-      Nexus::Queries::RegisterQueryTypes(
-        Beam::Store(protocol_client->GetSlots().GetRegistry()));
-      RegisterMarketDataRegistryServices(Store(protocol_client->GetSlots()));
-      RegisterMarketDataRegistryMessages(Store(protocol_client->GetSlots()));
-      authenticator(*protocol_client);
-      return std::tuple(
-        service_locator_client.GetAccount(), std::move(protocol_client));
-    }
-
-    auto make_relay_client() {
-      return std::make_unique<MarketDataClient>(
-        std::in_place_type<TestMarketDataClient>, m_operations);
     }
   };
 }
