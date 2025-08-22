@@ -1,6 +1,5 @@
 #include <doctest/doctest.h>
 #include <Viper/Sqlite3/Connection.hpp>
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/MarketDataService/SqlHistoricalDataStore.hpp"
 #include "Nexus/MarketDataServiceTests/HistoricalDataStoreTestSuite.hpp"
 

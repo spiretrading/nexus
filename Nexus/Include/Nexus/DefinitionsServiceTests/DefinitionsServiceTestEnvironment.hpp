@@ -14,10 +14,6 @@
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 #include "Nexus/DefinitionsService/DefinitionsServlet.hpp"
 #include "Nexus/DefinitionsService/ServiceDefinitionsClient.hpp"

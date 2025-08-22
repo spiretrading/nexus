@@ -4,7 +4,7 @@
 #include <Beam/Parsers/Types.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/lexical_cast.hpp>
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
+#include "Nexus/Definitions/Country.hpp"
 
 namespace Nexus {
 

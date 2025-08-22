@@ -3,7 +3,6 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/RiskService/RiskParameters.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 
 using namespace Beam;
 using namespace Nexus;

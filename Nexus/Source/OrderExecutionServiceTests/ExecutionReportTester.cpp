@@ -2,8 +2,6 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 
 using namespace Beam;

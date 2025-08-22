@@ -1,7 +1,6 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;

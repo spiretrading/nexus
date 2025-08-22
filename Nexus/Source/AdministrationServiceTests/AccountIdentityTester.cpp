@@ -1,7 +1,6 @@
 #include <sstream>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 
 using namespace boost;

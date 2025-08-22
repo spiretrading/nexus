@@ -4,9 +4,7 @@
 #include <doctest/doctest.h>
 #include "Nexus/Compliance/TimeFilterComplianceRule.hpp"
 #include "Nexus/ComplianceTests/TestComplianceRule.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;

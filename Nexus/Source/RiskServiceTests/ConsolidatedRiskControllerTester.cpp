@@ -5,9 +5,6 @@
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/RiskService/LocalRiskDataStore.hpp"

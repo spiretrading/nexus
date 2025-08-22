@@ -1,7 +1,6 @@
 #include <Beam/Queues/Queue.hpp>
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/MarketDataServiceTests/TestMarketDataClient.hpp"
 
 using namespace Beam;

@@ -1,7 +1,6 @@
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Compliance/OpposingOrderCancellationComplianceRule.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;

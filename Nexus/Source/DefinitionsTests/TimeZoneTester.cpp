@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 
 using namespace boost;
 using namespace boost::gregorian;

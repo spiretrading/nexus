@@ -1,8 +1,6 @@
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/BookkeeperReactor.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 

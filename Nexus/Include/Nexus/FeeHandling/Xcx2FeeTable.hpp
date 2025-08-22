@@ -3,7 +3,6 @@
 #include <array>
 #include <unordered_set>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/FeeHandling/ParseFeeTable.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"

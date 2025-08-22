@@ -1,7 +1,4 @@
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheck.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 

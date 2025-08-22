@@ -4,11 +4,10 @@
 #include <pybind11/operators.h>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
+#include "Nexus/Definitions/Country.hpp"
+#include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/CurrencyPair.hpp"
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
+#include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/ExchangeRate.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/Definitions/Money.hpp"
@@ -27,6 +26,7 @@
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Nexus/Definitions/TradingSchedule.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 

@@ -1,7 +1,6 @@
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterMarketDataService.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 
 using namespace Beam;

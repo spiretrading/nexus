@@ -1,6 +1,6 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
+#include "Nexus/Definitions/Country.hpp"
 
 using namespace Nexus;
 

@@ -1,7 +1,5 @@
 #ifndef NEXUS_DEFAULT_VENUE_DATABASE_HPP
 #define NEXUS_DEFAULT_VENUE_DATABASE_HPP
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 
 namespace Nexus {

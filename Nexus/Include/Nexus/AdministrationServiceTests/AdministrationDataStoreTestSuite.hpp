@@ -3,7 +3,6 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 
 namespace Nexus::AdministrationService::Tests {
   TEST_CASE_TEMPLATE_DEFINE(

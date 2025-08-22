@@ -1,8 +1,5 @@
 #include <sstream>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/FixUtilities/FixOrderLog.hpp"
 
 using namespace Beam;

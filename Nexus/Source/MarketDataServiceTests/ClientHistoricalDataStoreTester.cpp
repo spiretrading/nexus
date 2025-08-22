@@ -1,6 +1,5 @@
 #include <future>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/MarketDataService/ClientHistoricalDataStore.hpp"
 #include "Nexus/MarketDataServiceTests/TestMarketDataClient.hpp"
 

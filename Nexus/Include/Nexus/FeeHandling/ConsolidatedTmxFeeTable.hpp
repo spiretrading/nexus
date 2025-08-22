@@ -7,8 +7,6 @@
 #include <Beam/Utilities/Algorithm.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/throw_exception.hpp>
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/FeeHandling/ChicFeeTable.hpp"
 #include "Nexus/FeeHandling/CseFeeTable.hpp"
 #include "Nexus/FeeHandling/Cse2FeeTable.hpp"

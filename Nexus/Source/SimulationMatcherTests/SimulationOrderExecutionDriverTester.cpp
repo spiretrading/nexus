@@ -1,5 +1,4 @@
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/SimulationMatcher/SimulationOrderExecutionDriver.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 

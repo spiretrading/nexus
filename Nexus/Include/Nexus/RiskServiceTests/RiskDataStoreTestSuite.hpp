@@ -2,8 +2,6 @@
 #define NEXUS_RISK_DATA_STORE_TEST_SUITE_HPP
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/RiskService/RiskDataStore.hpp"
 
 namespace Nexus::RiskService::Tests {

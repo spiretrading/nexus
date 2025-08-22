@@ -4,7 +4,7 @@
 #include <Beam/Parsers/Types.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/lexical_cast.hpp>
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+#include "Nexus/Definitions/Currency.hpp"
 
 namespace Nexus {
 

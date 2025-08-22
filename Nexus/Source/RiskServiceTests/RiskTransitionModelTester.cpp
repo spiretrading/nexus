@@ -4,7 +4,6 @@
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <doctest/doctest.h>
 #include <boost/functional/factory.hpp>
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/OrderExecutionServiceTests/TestOrderExecutionClient.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/RiskService/RiskTransitionModel.hpp"

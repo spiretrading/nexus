@@ -4,7 +4,6 @@
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 
 using namespace Beam;
 using namespace Beam::Routines;

@@ -1,7 +1,6 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationService/RiskModification.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 
 using namespace boost;
 using namespace boost::posix_time;

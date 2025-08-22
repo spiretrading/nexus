@@ -1,7 +1,5 @@
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/RiskService/RiskStateModel.hpp"
 
 using namespace Beam;

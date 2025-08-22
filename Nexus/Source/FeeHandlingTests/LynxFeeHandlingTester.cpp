@@ -1,6 +1,4 @@
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/FeeHandling/LynxFeeTable.hpp"
 #include "Nexus/FeeHandlingTests/FeeTableTestUtilities.hpp"
 

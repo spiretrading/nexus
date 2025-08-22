@@ -2,9 +2,6 @@
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/Security.hpp"
 
 using namespace Nexus;

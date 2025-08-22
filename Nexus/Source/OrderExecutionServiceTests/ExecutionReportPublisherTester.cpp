@@ -1,7 +1,6 @@
 #include <Beam/Queues/Queue.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReportPublisher.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 

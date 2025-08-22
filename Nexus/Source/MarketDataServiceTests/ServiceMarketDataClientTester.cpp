@@ -5,8 +5,6 @@
 #include <Beam/SignalHandling/NullSlot.hpp>
 #include <boost/functional/factory.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/MarketDataService/ServiceMarketDataClient.hpp"
 
 using namespace Beam;

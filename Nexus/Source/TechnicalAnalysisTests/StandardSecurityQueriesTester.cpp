@@ -3,7 +3,6 @@
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/MarketDataServiceTests/TestMarketDataClient.hpp"
 #include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
 
