@@ -68,6 +68,10 @@ namespace Nexus::AdministrationService::Tests {
       auto all_identities = data_store.with_transaction([&] {
         return data_store.load_all_account_identities();
       });
+      std::sort(all_identities.begin(), all_identities.end(),
+        [] (const auto& left, const auto& right) {
+          return left.m_index < right.m_index;
+        });
       REQUIRE(all_identities.size() == 2);
       REQUIRE(all_identities[0].m_index == account_a);
       TestJsonEquality(all_identities[0].m_identity, identity_a);
