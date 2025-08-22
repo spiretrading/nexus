@@ -105,7 +105,7 @@ TEST_SUITE("MarketDataClient") {
     REQUIRE(continuation_operation);
     REQUIRE(continuation_operation->m_query.GetIndex() == security);
     REQUIRE(continuation_operation->m_query.GetRange().GetStart() ==
-      Beam::Queries::Sequence::Sequence(4));
+      Beam::Queries::Sequence(4));
     REQUIRE(continuation_operation->m_query.GetSnapshotLimit() ==
       SnapshotLimit::Unlimited());
   }

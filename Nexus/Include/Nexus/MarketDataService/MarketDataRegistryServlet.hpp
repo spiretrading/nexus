@@ -359,7 +359,7 @@ namespace Nexus::MarketDataService {
       return;
     }
     auto index = normalize(query.GetIndex());
-    if(index == Query::Index()) {
+    if(index == typename Query::Index()) {
       request.SetResult(Result());
       return;
     }

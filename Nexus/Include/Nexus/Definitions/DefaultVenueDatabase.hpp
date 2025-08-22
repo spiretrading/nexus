@@ -373,7 +373,7 @@ namespace Details {
 }
 
   /** Returns the default VenueDatabase, typically used for testing purposes. */
-  inline const auto& DEFAULT_VENUES = Details::default_venues;
+  inline const VenueDatabase& DEFAULT_VENUES = Details::default_venues;
 
   /** Updates the default VenueDatabase. */
   inline void set_default_venues(VenueDatabase database) {

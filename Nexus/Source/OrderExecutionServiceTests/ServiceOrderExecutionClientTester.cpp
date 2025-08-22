@@ -44,7 +44,7 @@ namespace {
         Beam::Store(m_server.GetSlots().GetRegistry()));
       RegisterOrderExecutionServices(Store(m_server.GetSlots()));
       RegisterOrderExecutionMessages(Store(m_server.GetSlots()));
-      auto builder = TestServiceProtocolClientBuilder([=] {
+      auto builder = TestServiceProtocolClientBuilder([=, this] {
         return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
           "test", *m_server_connection);
       }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());

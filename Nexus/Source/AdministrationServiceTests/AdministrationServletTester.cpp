@@ -49,6 +49,37 @@ namespace {
     DirectoryEntry m_trader_account;
     std::unique_ptr<TestServiceProtocolClient> m_trader_client;
 
+    auto make_account(const std::string& name, const DirectoryEntry& parent) {
+      return m_service_locator_environment.GetRoot().MakeAccount(
+        name, "", parent);
+    }
+
+    auto make_trading_group(const std::string& name) {
+      auto& service_locator = m_service_locator_environment.GetRoot();
+      auto trading_groups_root = service_locator.LoadDirectoryEntry(
+        DirectoryEntry::GetStarDirectory(), "trading_groups");
+      auto trading_group = service_locator.MakeDirectory(
+        "test_trading_group", trading_groups_root);
+      auto managers_group =
+        service_locator.MakeDirectory("managers", trading_group);
+      auto traders_group =
+        service_locator.MakeDirectory("traders", trading_group);
+      return TradingGroup(trading_group, managers_group, {}, traders_group, {});
+    }
+
+    auto make_client(const std::string& name) {
+      auto service_locator_client =
+        m_service_locator_environment.MakeClient(name, "");
+      auto authenticator = SessionAuthenticator(service_locator_client);
+      auto protocol_client = std::make_unique<TestServiceProtocolClient>(
+        Initialize(name, *m_server_connection), Initialize());
+      RegisterAdministrationServices(Store(protocol_client->GetSlots()));
+      RegisterAdministrationMessages(Store(protocol_client->GetSlots()));
+      authenticator(*protocol_client);
+      return std::tuple(
+        service_locator_client.GetAccount(), std::move(protocol_client));
+    }
+
     Fixture()
         : m_time_client(time_from_string("2024-07-04 12:00:00")),
           m_server_connection(std::make_shared<TestServerConnection>()) {
@@ -82,37 +113,6 @@ namespace {
       std::tie(m_manager_account, m_manager_client) = make_client("manager");
       make_account("trader", m_trading_group.get_traders_directory());
       std::tie(m_trader_account, m_trader_client) = make_client("trader");
-    }
-
-    auto make_account(const std::string& name, const DirectoryEntry& parent) {
-      return m_service_locator_environment.GetRoot().MakeAccount(
-        name, "", parent);
-    }
-
-    auto make_trading_group(const std::string& name) {
-      auto& service_locator = m_service_locator_environment.GetRoot();
-      auto trading_groups_root = service_locator.LoadDirectoryEntry(
-        DirectoryEntry::GetStarDirectory(), "trading_groups");
-      auto trading_group = service_locator.MakeDirectory(
-        "test_trading_group", trading_groups_root);
-      auto managers_group =
-        service_locator.MakeDirectory("managers", trading_group);
-      auto traders_group =
-        service_locator.MakeDirectory("traders", trading_group);
-      return TradingGroup(trading_group, managers_group, {}, traders_group, {});
-    }
-
-    auto make_client(const std::string& name) {
-      auto service_locator_client =
-        m_service_locator_environment.MakeClient(name, "");
-      auto authenticator = SessionAuthenticator(service_locator_client);
-      auto protocol_client = std::make_unique<TestServiceProtocolClient>(
-        Initialize(name, *m_server_connection), Initialize());
-      RegisterAdministrationServices(Store(protocol_client->GetSlots()));
-      RegisterAdministrationMessages(Store(protocol_client->GetSlots()));
-      authenticator(*protocol_client);
-      return std::tuple(
-        service_locator_client.GetAccount(), std::move(protocol_client));
     }
   };
 }

@@ -6,6 +6,7 @@
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
 
 namespace Nexus {
+  class TimerBacktesterEvent;
 
   /** Implements a Timer used by the backtester. */
   class BacktesterTimer {

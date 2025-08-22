@@ -41,6 +41,24 @@ namespace {
     DirectoryEntry m_client_account;
     std::unique_ptr<TestServiceProtocolClient> m_client;
 
+    auto make_account(const std::string& name, const DirectoryEntry& parent) {
+      return m_service_locator_environment.GetRoot().MakeAccount(
+        name, "", parent);
+    }
+
+    auto make_client(const std::string& name) {
+      auto service_locator_client =
+        m_service_locator_environment.MakeClient(name, "");
+      auto authenticator = SessionAuthenticator(service_locator_client);
+      auto protocol_client = std::make_unique<TestServiceProtocolClient>(
+        Initialize(name, *m_server_connection), Initialize());
+      RegisterComplianceServices(Store(protocol_client->GetSlots()));
+      RegisterComplianceMessages(Store(protocol_client->GetSlots()));
+      authenticator(*protocol_client);
+      return std::tuple(
+        service_locator_client.GetAccount(), std::move(protocol_client));
+    }
+
     Fixture()
       : m_time_client(time_from_string("2025-07-03 13:00:00")),
         m_administration_environment(
@@ -63,24 +81,6 @@ namespace {
       m_client_account =
         make_account("client", DirectoryEntry::GetStarDirectory());
       std::tie(m_client_account, m_client) = make_client("client");
-    }
-
-    auto make_account(const std::string& name, const DirectoryEntry& parent) {
-      return m_service_locator_environment.GetRoot().MakeAccount(
-        name, "", parent);
-    }
-
-    auto make_client(const std::string& name) {
-      auto service_locator_client =
-        m_service_locator_environment.MakeClient(name, "");
-      auto authenticator = SessionAuthenticator(service_locator_client);
-      auto protocol_client = std::make_unique<TestServiceProtocolClient>(
-        Initialize(name, *m_server_connection), Initialize());
-      RegisterComplianceServices(Store(protocol_client->GetSlots()));
-      RegisterComplianceMessages(Store(protocol_client->GetSlots()));
-      authenticator(*protocol_client);
-      return std::tuple(
-        service_locator_client.GetAccount(), std::move(protocol_client));
     }
   };
 }

@@ -477,11 +477,13 @@ namespace Beam::Serialization {
 
 namespace std {
   template<>
-  struct std::hash<Nexus::Venue> {
+  struct hash<Nexus::Venue> {
     std::size_t operator ()(Nexus::Venue venue) const {
       return hash_value(venue);
     }
   };
 }
+
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 
 #endif

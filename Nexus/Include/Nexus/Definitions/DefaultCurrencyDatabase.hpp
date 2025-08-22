@@ -74,7 +74,8 @@ namespace Details {
 }
 
   /** Returns the default CurrencyDatabase. */
-  inline const auto& DEFAULT_CURRENCIES = Details::default_currencies;
+  inline const CurrencyDatabase& DEFAULT_CURRENCIES =
+    Details::default_currencies;
 
   /** Updates the default CurrencyDatabase. */
   inline void set_default_currencies(CurrencyDatabase database) {

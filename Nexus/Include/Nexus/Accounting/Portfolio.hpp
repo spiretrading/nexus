@@ -299,13 +299,13 @@ namespace Nexus::Accounting {
     if(valuation.m_ask_value) {
       out << *valuation.m_ask_value;
     } else {
-      out << 'None';
+      out << "None";
     }
     out << ' ';
     if(valuation.m_bid_value) {
       out << *valuation.m_bid_value;
     } else {
-      out << 'None';
+      out << "None";
     }
     out << ')';
     return out;

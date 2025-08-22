@@ -77,7 +77,8 @@ namespace Nexus::AdministrationService {
       std::vector<Body> m_bodies;
   };
 
-  inline const auto Message::Body::EMPTY = Message::Body::make_plain_text("");
+  inline const Message::Body Message::Body::EMPTY =
+    Message::Body::make_plain_text("");
 
   inline std::ostream& operator <<(
       std::ostream& out, const Message::Body& body) {

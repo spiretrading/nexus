@@ -210,7 +210,7 @@ namespace Nexus {
   }
 
   constexpr CurrencyId::operator bool() const {
-    return m_value != NONE.m_value;
+    return m_value != CurrencyId().m_value;
   }
 
   inline CurrencyDatabase::CurrencyDatabase(
@@ -374,5 +374,7 @@ namespace std {
     }
   };
 }
+
+#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 
 #endif

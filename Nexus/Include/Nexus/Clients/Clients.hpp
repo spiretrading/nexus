@@ -311,7 +311,7 @@ namespace Nexus {
   template<typename C>
   std::unique_ptr<Clients::Timer> Clients::WrappedClients<C>::make_timer(
       boost::posix_time::time_duration expiry) {
-    return std::make_unique<Clients::Timer>(m_clients->make_timer(expiry));
+    return std::make_unique<Timer>(m_clients->make_timer(expiry));
   }
 
   template<typename C>

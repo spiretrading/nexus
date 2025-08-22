@@ -37,7 +37,7 @@ namespace {
             factory<std::unique_ptr<TriggerTimer>>(), NullSlot(), NullSlot()) {
       RegisterComplianceServices(Store(m_server.GetSlots()));
       RegisterComplianceMessages(Store(m_server.GetSlots()));
-      auto builder = TestServiceProtocolClientBuilder([=] {
+      auto builder = TestServiceProtocolClientBuilder([=, this] {
         return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
           "test", *m_server_connection);
       }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());

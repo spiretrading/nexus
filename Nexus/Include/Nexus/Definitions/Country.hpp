@@ -241,7 +241,7 @@ namespace Nexus {
   }
 
   constexpr CountryCode::operator bool() const {
-    return m_value != NONE.m_value;
+    return m_value != CountryCode().m_value;
   }
 
   inline CountryDatabase::CountryDatabase(
@@ -450,5 +450,7 @@ namespace std {
     }
   };
 }
+
+#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 
 #endif

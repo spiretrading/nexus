@@ -82,7 +82,7 @@ namespace Details {
 }
 
   /** Returns the default CountryDatabase. */
-  inline const auto& DEFAULT_COUNTRIES = Details::default_countries;
+  inline const CountryDatabase& DEFAULT_COUNTRIES = Details::default_countries;
 
   /** Updates the default CountryDatabase. */
   inline void set_default_countries(CountryDatabase database) {

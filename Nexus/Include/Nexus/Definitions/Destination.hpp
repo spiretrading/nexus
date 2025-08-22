@@ -425,4 +425,6 @@ namespace Beam::Serialization {
   };
 }
 
+#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
+
 #endif
