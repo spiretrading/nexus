@@ -65,19 +65,19 @@ void Nexus::Python::export_execution_report(module& module) {
 }
 
 void Nexus::Python::export_execution_report_publisher(module& module) {
-  ExportSnapshotPublisher<
-    ExecutionReportEntry, std::vector<ExecutionReportEntry>>(
-      module, "ExecutionReportEntry");
-  class_<ExecutionReportEntry>(module, "ExecutionReportEntry").
+  class_<ExecutionReportEntry>(module, "OrderExecutionReport").
     def(init()).
     def(init<const ExecutionReportEntry&>()).
     def(init<std::shared_ptr<const Order>, ExecutionReport>()).
     def_readwrite("order", &ExecutionReportEntry::m_order).
     def_readwrite("report", &ExecutionReportEntry::m_report);
+  ExportSnapshotPublisher<
+    ExecutionReportEntry, std::vector<ExecutionReportEntry>>(
+      module, "BaseOrderExecutionReport");
   class_<ExecutionReportPublisher,
     SnapshotPublisher<ExecutionReportEntry, std::vector<ExecutionReportEntry>>,
     std::shared_ptr<ExecutionReportPublisher>>(
-      module, "ExecutionReportPublisher").
+      module, "OrderExecutionReportPublisher").
         def(init<ScopedQueueReader<std::shared_ptr<const Order>>>());
 }
 
