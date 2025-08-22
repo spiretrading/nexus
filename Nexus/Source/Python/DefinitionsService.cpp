@@ -32,7 +32,6 @@ void Nexus::Python::export_definitions_service_test_environment(
       call_guard<GilRelease>()).
     def("make_client", [] (DefinitionsServiceTestEnvironment& self,
         ServiceLocatorClientBox client) {
-      return ToPythonDefinitionsClient<DefinitionsClient>(
-        self.make_client(std::move(client)));
+      return ToPythonDefinitionsClient(self.make_client(std::move(client)));
     }, call_guard<GilRelease>(), pybind11::arg("service_locator_client"));
 }

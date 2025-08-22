@@ -236,10 +236,11 @@ void Nexus::Python::export_order_execution_service_test_environment(
     def("__del__", [] (OrderExecutionServiceTestEnvironment& self) {
       self.close();
     }, call_guard<GilRelease>()).
-    def_property_readonly("data_store",
-      [] (OrderExecutionServiceTestEnvironment& self) {
-        return ToPythonOrderExecutionDataStore(&self.get_data_store());
-      }, keep_alive<0, 1>()).
+    def_property_readonly(
+      "data_store", static_cast<LocalOrderExecutionDataStore& (
+        OrderExecutionServiceTestEnvironment::*)()>(
+          &OrderExecutionServiceTestEnvironment::get_data_store),
+      return_value_policy::reference_internal).
     def_property_readonly("driver",
       [] (OrderExecutionServiceTestEnvironment& self) -> auto& {
         return self.get_driver().as<MockOrderExecutionDriver>();
