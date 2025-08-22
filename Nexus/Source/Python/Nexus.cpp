@@ -17,8 +17,8 @@ PYBIND11_MODULE(nexus, m) {
   export_fee_handling(m);
   export_market_data_service(m);
   export_order_execution_service(m);
-//  ExportRiskService(m);
-//  ExportServiceClients(m);
+  export_risk_service(m);
+  export_service_clients(m);
 //  ExportBacktester(m);
-//  ExportTechnicalAnalysis(m);
+  export_technical_analysis(m);
 }

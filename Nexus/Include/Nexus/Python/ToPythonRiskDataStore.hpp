@@ -1,9 +1,12 @@
 #ifndef NEXUS_PYTHON_RISK_DATA_STORE_HPP
 #define NEXUS_PYTHON_RISK_DATA_STORE_HPP
 #include <memory>
+#include <type_traits>
 #include <Beam/Python/GilRelease.hpp>
+#include <Beam/Utilities/TypeList.hpp>
+#include <boost/optional/optional.hpp>
 #include <pybind11/pybind11.h>
-#include "Nexus/RiskService/VirtualRiskDataStore.hpp"
+#include "Nexus/RiskService/RiskDataStore.hpp"
 
 namespace Nexus::RiskService {
 
@@ -11,8 +14,8 @@ namespace Nexus::RiskService {
    * Wraps a RiskDataStore for use with Python.
    * @param <D> The type of RiskDataStore to wrap.
    */
-  template<typename D>
-  class ToPythonRiskDataStore final : public VirtualRiskDataStore {
+  template<IsRiskDataStore D>
+  class ToPythonRiskDataStore {
     public:
 
       /** The type of DataStore to wrap. */
@@ -20,65 +23,73 @@ namespace Nexus::RiskService {
 
       /**
        * Constructs a ToPythonRiskDataStore.
-       * @param dataStore The data store to wrap.
+       * @param args The arguments to forward to the DataStore's constructor.
        */
-      ToPythonRiskDataStore(std::unique_ptr<DataStore> dataStore);
+      template<typename... Args, typename =
+        Beam::disable_copy_constructor_t<ToPythonRiskDataStore, Args...>>
+      ToPythonRiskDataStore(Args&&... args);
 
-      ~ToPythonRiskDataStore() override;
+      ~ToPythonRiskDataStore();
 
-      InventorySnapshot LoadInventorySnapshot(
-        const Beam::ServiceLocator::DirectoryEntry& account) override;
+      /** Returns the wrapped data store. */
+      const DataStore& get_data_store() const;
 
-      void Store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const InventorySnapshot& snapshot) override;
+      /** Returns the wrapped data store. */
+      DataStore& get_data_store();
 
-      void Close() override;
+      InventorySnapshot load_inventory_snapshot(
+        const Beam::ServiceLocator::DirectoryEntry& account);
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const InventorySnapshot& snapshot);
+      void close();
 
     private:
-      std::unique_ptr<DataStore> m_dataStore;
+      boost::optional<DataStore> m_data_store;
   };
 
-  /**
-   * Makes a ToPythonRiskDataStore.
-   * @param dataStore The data store to wrap.
-   */
-  template<typename DataStore>
-  auto MakeToPythonRiskDataStore(std::unique_ptr<DataStore> dataStore) {
-    return std::make_unique<ToPythonRiskDataStore<DataStore>>(
-      std::move(dataStore));
-  }
+  template<IsRiskDataStore D>
+  template<typename... Args, typename>
+  ToPythonRiskDataStore<D>::ToPythonRiskDataStore(Args&&... args)
+    : m_data_store((Beam::Python::GilRelease(), boost::in_place_init),
+        std::forward<Args>(args)...) {}
 
-  template<typename D>
-  ToPythonRiskDataStore<D>::ToPythonRiskDataStore(
-    std::unique_ptr<DataStore> dataStore)
-    : m_dataStore(std::move(dataStore)) {}
-
-  template<typename D>
+  template<IsRiskDataStore D>
   ToPythonRiskDataStore<D>::~ToPythonRiskDataStore() {
-    Close();
     auto release = Beam::Python::GilRelease();
-    m_dataStore.reset();
+    m_data_store.reset();
   }
 
-  template<typename D>
-  InventorySnapshot ToPythonRiskDataStore<D>::LoadInventorySnapshot(
+  template<IsRiskDataStore D>
+  const typename ToPythonRiskDataStore<D>::DataStore&
+      ToPythonRiskDataStore<D>::get_data_store() const {
+    return *m_data_store;
+  }
+
+  template<IsRiskDataStore D>
+  typename ToPythonRiskDataStore<D>::DataStore&
+      ToPythonRiskDataStore<D>::get_data_store() {
+    return *m_data_store;
+  }
+
+  template<IsRiskDataStore D>
+  InventorySnapshot ToPythonRiskDataStore<D>::load_inventory_snapshot(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
-    return m_dataStore->LoadInventorySnapshot(account);
+    return m_data_store->load_inventory_snapshot(account);
   }
 
-  template<typename D>
-  void ToPythonRiskDataStore<D>::Store(
+  template<IsRiskDataStore D>
+  void ToPythonRiskDataStore<D>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const InventorySnapshot& snapshot) {
     auto release = Beam::Python::GilRelease();
-    return m_dataStore->Store(account, snapshot);
+    m_data_store->store(account, snapshot);
   }
 
-  template<typename D>
-  void ToPythonRiskDataStore<D>::Close() {
+  template<IsRiskDataStore D>
+  void ToPythonRiskDataStore<D>::close() {
     auto release = Beam::Python::GilRelease();
-    m_dataStore->Close();
+    m_data_store->close();
   }
 }
 

@@ -15,6 +15,7 @@
 #include "Nexus/OrderExecutionService/ReplicatedOrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/SqlOrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
+#include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 #include "Nexus/Python/ToPythonOrderExecutionClient.hpp"
@@ -93,6 +94,28 @@ void Nexus::Python::export_local_order_execution_data_store(module& module) {
           &LocalOrderExecutionDataStore::load_execution_reports));
 }
 
+void Nexus::Python::export_mock_order_execution_driver(module& module) {
+  class_<MockOrderExecutionDriver>(module, "MockOrderExecutionDriver").
+    def(init()).
+    def("__del__", [] (MockOrderExecutionDriver& self) {
+      auto release = GilRelease();
+      self.close();
+    }).
+    def("set_order_status_new_on_submission",
+      &MockOrderExecutionDriver::set_order_status_new_on_submission).
+    def("find", &MockOrderExecutionDriver::find,
+      return_value_policy::reference_internal).
+    def("add_recovery", &MockOrderExecutionDriver::add_recovery).
+    def("get_publisher", &MockOrderExecutionDriver::get_publisher,
+      return_value_policy::reference_internal).
+    def("recover", &MockOrderExecutionDriver::recover).
+    def("add", &MockOrderExecutionDriver::add).
+    def("submit", &MockOrderExecutionDriver::submit, call_guard<GilRelease>()).
+    def("cancel", &MockOrderExecutionDriver::cancel, call_guard<GilRelease>()).
+    def("update", &MockOrderExecutionDriver::update, call_guard<GilRelease>()).
+    def("close", &MockOrderExecutionDriver::close, call_guard<GilRelease>());
+}
+
 void Nexus::Python::export_my_sql_order_execution_data_store(module& module) {
   using DataStore =
     SqlOrderExecutionDataStore<SqlConnection<Viper::MySql::Connection>>;
@@ -142,6 +165,10 @@ void Nexus::Python::export_order_execution_service(module& module) {
   export_my_sql_order_execution_data_store(submodule);
   export_order(submodule);
   export_order_cancellation_reactor(submodule);
+  export_order_execution_client<ToPythonOrderExecutionClient<
+    OrderExecutionClient>>(submodule, "OrderExecutionClient");
+  export_order_execution_data_store<ToPythonOrderExecutionDataStore<
+    OrderExecutionDataStore>>(submodule, "OrderExecutionDataStore");
   export_order_execution_data_store_exception(submodule);
   export_order_fields(submodule);
   export_order_info(submodule);
@@ -153,7 +180,48 @@ void Nexus::Python::export_order_execution_service(module& module) {
   export_standard_queries(submodule);
   export_sqlite_order_execution_data_store(submodule);
   auto test_module = submodule.def_submodule("tests");
+  export_mock_order_execution_driver(test_module);
   export_order_execution_service_test_environment(test_module);
+  test_module.def("cancel",
+    overload_cast<PrimitiveOrder&, boost::posix_time::ptime>(&cancel),
+    call_guard<GilRelease>(), arg("order"), arg("timestamp"));
+  test_module.def(
+    "cancel", overload_cast<PrimitiveOrder&>(&cancel), call_guard<GilRelease>(),
+    arg("order"));
+  test_module.def("set_order_status",
+    overload_cast<PrimitiveOrder&, OrderStatus, boost::posix_time::ptime>(
+      &set_order_status), call_guard<GilRelease>(), arg("order"),
+    arg("new_status"), arg("timestamp"));
+  test_module.def("set_order_status",
+    overload_cast<PrimitiveOrder&, OrderStatus>(&set_order_status),
+    call_guard<GilRelease>(), arg("order"), arg("new_status"));
+  test_module.def("accept",
+    overload_cast<PrimitiveOrder&, boost::posix_time::ptime>(&accept),
+    call_guard<GilRelease>(), arg("order"), arg("timestamp"));
+  test_module.def("accept",
+    overload_cast<PrimitiveOrder&>(&accept), call_guard<GilRelease>(),
+    arg("order"));
+  test_module.def("reject",
+    overload_cast<PrimitiveOrder&, boost::posix_time::ptime>(&reject),
+    call_guard<GilRelease>(), arg("order"), arg("timestamp"));
+  test_module.def("reject",
+    overload_cast<PrimitiveOrder&>(&reject), call_guard<GilRelease>(),
+    arg("order"));
+  test_module.def("fill",
+    overload_cast<PrimitiveOrder&, Money, Quantity,
+      boost::posix_time::ptime>(&fill), call_guard<GilRelease>(),
+    arg("order"), arg("price"), arg("quantity"), arg("timestamp"));
+  test_module.def("fill",
+    overload_cast<PrimitiveOrder&, Money, Quantity>(&fill),
+    call_guard<GilRelease>(), arg("order"), arg("price"), arg("quantity"));
+  test_module.def("fill",
+    overload_cast<PrimitiveOrder&, Quantity, boost::posix_time::ptime>(&fill),
+    call_guard<GilRelease>(), arg("order"), arg("quantity"), arg("timestamp"));
+  test_module.def("fill",
+    overload_cast<PrimitiveOrder&, Quantity>(&fill), call_guard<GilRelease>(),
+    arg("order"), arg("quantity"));
+  test_module.def("is_pending_cancel", &is_pending_cancel,
+    call_guard<GilRelease>(), arg("order"));
 }
 
 void Nexus::Python::export_order_execution_service_test_environment(
@@ -165,9 +233,6 @@ void Nexus::Python::export_order_execution_service_test_environment(
     def(init<const VenueDatabase&, const DestinationDatabase&,
       ServiceLocatorClientBox, UidClientBox, AdministrationClient>(),
       call_guard<GilRelease>()).
-    def(init<const VenueDatabase&, const DestinationDatabase&,
-      ServiceLocatorClientBox, UidClientBox, AdministrationClient,
-      TimeClientBox, OrderExecutionDriver>(), call_guard<GilRelease>()).
     def("__del__", [] (OrderExecutionServiceTestEnvironment& self) {
       self.close();
     }, call_guard<GilRelease>()).
@@ -176,8 +241,9 @@ void Nexus::Python::export_order_execution_service_test_environment(
         return ToPythonOrderExecutionDataStore(&self.get_data_store());
       }, keep_alive<0, 1>()).
     def_property_readonly("driver",
-      &OrderExecutionServiceTestEnvironment::get_driver,
-      return_value_policy::reference_internal).
+      [] (OrderExecutionServiceTestEnvironment& self) -> auto& {
+        return self.get_driver().as<MockOrderExecutionDriver>();
+      }, return_value_policy::reference_internal).
     def("make_client",
       [] (OrderExecutionServiceTestEnvironment& self,
           ServiceLocatorClientBox service_locator_client) {
@@ -359,6 +425,8 @@ void Nexus::Python::export_order_record(module& module) {
     def(self == self).
     def(self != self).
     def("__str__", &boost::lexical_cast<std::string, OrderRecord>);
+  ExportQueueSuite<OrderRecord>(module, "OrderRecord");
+  ExportQueueSuite<SequencedOrderRecord>(module, "SequencedOrderRecord");
 }
 
 void Nexus::Python::export_order_wrapper_reactor(module& module) {
@@ -381,6 +449,10 @@ void Nexus::Python::export_primitive_order(module& module) {
     arg("reason"));
   module.def("reject_cancel_request", &reject_cancel_request, arg("order"),
     arg("timestamp"), arg("reason"));
+  ExportPublisher<std::shared_ptr<const PrimitiveOrder>>(
+    module, "ConstPrimitiveOrderPublisher");
+  ExportPublisher<std::shared_ptr<PrimitiveOrder>>(
+    module, "PrimitiveOrderPublisher");
 }
 
 void Nexus::Python::export_replicated_order_execution_data_store(

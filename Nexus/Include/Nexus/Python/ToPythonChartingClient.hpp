@@ -13,7 +13,7 @@ namespace Nexus::ChartingService {
 
   /**
    * Wraps an ChartingClient for use with Python.
-   * @tparam <C> The type of ChartingClient to wrap.
+   * @param <C> The type of ChartingClient to wrap.
    */
   template<IsChartingClient C>
   class ToPythonChartingClient {

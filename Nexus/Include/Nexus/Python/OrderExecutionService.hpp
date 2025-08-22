@@ -26,6 +26,12 @@ namespace Nexus::Python {
   void export_local_order_execution_data_store(pybind11::module& module);
 
   /**
+   * Exports the MockOrderExecutionDriver class.
+   * @param module The module to export to.
+   */
+  void export_mock_order_execution_driver(pybind11::module& module);
+
+  /**
    * Exports the MySqlOrderExecutionDataStore class.
    * @param module The module to export to.
    */
