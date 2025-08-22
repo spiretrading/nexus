@@ -7,6 +7,7 @@
 #include <QPointer>
 #include <QPushButton>
 #include <QRandomGenerator>
+#include <QScreen>
 #include <QSpinBox>
 #include <QStringBuilder>
 #include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"

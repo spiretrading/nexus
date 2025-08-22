@@ -1,9 +1,7 @@
 #ifndef SPIRE_WINDOW_HIGHLIGHT_HPP
 #define SPIRE_WINDOW_HIGHLIGHT_HPP
 #include <QPainterPath>
-#include <QScreen>
 #include <unordered_map>
-#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -39,7 +37,6 @@ namespace Spire {
       std::unordered_map<QScreen*, std::vector<QRect>>
         get_window_rectangles() const;
       QRegion snap_region(const std::vector<QRect>& rectangles);
-      void clear();
       void update_geometry();
   };
 }

@@ -1,12 +1,11 @@
 #include "Spire/Ui/WindowHighlight.hpp"
 #include <QApplication>
 #include <QPainter>
+#include <QScreen>
 #include <QWindow>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Window.hpp"
 
-using namespace boost;
-using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -52,38 +51,31 @@ namespace {
     return i != windows.end();
   }
 
-  std::vector<HWND> get_z_order() {
-    auto order = std::vector<HWND>();
+  auto get_z_order_windows() {
+    auto windows = std::vector<HWND>();
     auto hwnd = GetTopWindow(NULL);
     while(hwnd) {
       if(IsWindowVisible(hwnd)) {
-        order.push_back(hwnd);
+        windows.push_back(hwnd);
       }
       hwnd = GetWindow(hwnd, GW_HWNDNEXT);
     }
-    return order;
+    return windows;
   }
 
-  auto find_closest(const std::vector<int>& candidates, int target) {
-    return *std::min_element(candidates.begin(), candidates.end(),
-      [target] (int a, int b) {
-        return std::abs(a - target) < std::abs(b - target);
-      });
-  };
-
-  void reorder_window(HWND window, HWND insert_after) {
-    SetWindowPos(window, insert_after, 0, 0, 0, 0,
+  void reorder_window(HWND hwnd, HWND insert_after) {
+    SetWindowPos(hwnd, insert_after, 0, 0, 0, 0,
       SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
   }
 
-  void raise_window(HWND window) {
+  void raise_window(HWND hwnd) {
     auto insert_after_window = [&] {
       if(auto activated_window = QApplication::activeWindow()) {
         return reinterpret_cast<HWND>(activated_window->winId());
       }
       return HWND_TOP;
     }();
-    reorder_window(window, insert_after_window);
+    reorder_window(hwnd, insert_after_window);
   }
 
   void raise(const std::vector<HWND>& z_order_windows,
@@ -139,16 +131,14 @@ void WindowHighlight::Overlay::paintEvent(QPaintEvent*) {
 
 WindowHighlight::WindowHighlight(std::vector<Window*> windows)
     : m_windows(std::move(windows)),
-      m_z_order_windows(get_z_order()) {
+      m_z_order_windows(get_z_order_windows()) {
   for(auto window : m_windows) {
     match(*window, Highlighted());
   }
   raise(m_z_order_windows, m_windows);
   update_geometry();
-  auto activated_window = QApplication::activeWindow();
   for(auto& [_, overlay] : m_overlays) {
-    reorder_window(reinterpret_cast<HWND>(overlay->winId()),
-      reinterpret_cast<HWND>(activated_window->winId()));
+    raise_window(reinterpret_cast<HWND>(overlay->winId()));
   }
 }
 
@@ -157,12 +147,11 @@ WindowHighlight::~WindowHighlight() {
   for(auto window : m_windows) {
     unmatch(*window, Highlighted());
   }
-  clear();
+  m_overlays.clear();
 }
 
 WindowHighlight::Overlay* WindowHighlight::make_overlay(QScreen* screen) {
-  auto i = m_overlays.find(screen);
-  if(i != m_overlays.end()) {
+  if(auto i = m_overlays.find(screen); i != m_overlays.end()) {
     return i->second.get();
   }
   m_overlays[screen] = std::make_unique<Overlay>(*screen);
@@ -195,11 +184,10 @@ QPainterPath WindowHighlight::remove_screen_edges(const QScreen& screen,
           (element.y <= screen_geometry.top() ||
             element.y >= screen_geometry.bottom()))) {
       result.moveTo(element.x, element.y);
-      previous_element = element;
     } else {
       result.lineTo(element.x, element.y);
-      previous_element = element;
     }
+    previous_element = element;
   }
   return result;
 }
@@ -270,13 +258,6 @@ QRegion WindowHighlight::snap_region(const std::vector<QRect>& rectangles) {
     }
   }
   return region;
-}
-
-void WindowHighlight::clear() {
-  for(auto& [_, overlay] : m_overlays) {
-    overlay->hide();
-  }
-  m_overlays.clear();
 }
 
 void WindowHighlight::update_geometry() {
