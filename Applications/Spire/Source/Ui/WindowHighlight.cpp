@@ -107,6 +107,30 @@ namespace {
       }
     }
   }
+
+  auto remove_screen_edges(const QScreen& screen, const QPainterPath& path) {
+    auto result = QPainterPath();
+    auto previous_element = QPainterPath::Element();
+    auto screen_geometry = screen.geometry().adjusted(
+      HALF_HIGHLIGHT_WIDTH(), HALF_HIGHLIGHT_HEIGHT(),
+      -HALF_HIGHLIGHT_WIDTH(), -HALF_HIGHLIGHT_HEIGHT());
+    for(auto i = 0; i < path.elementCount(); ++i) {
+      auto element = path.elementAt(i);
+      if(element.type == QPainterPath::MoveToElement ||
+          (element.x == previous_element.x &&
+            (element.x <= screen_geometry.left() ||
+              element.x >= screen_geometry.right())) ||
+          (element.y == previous_element.y &&
+            (element.y <= screen_geometry.top() ||
+              element.y >= screen_geometry.bottom()))) {
+        result.moveTo(element.x, element.y);
+      } else {
+        result.lineTo(element.x, element.y);
+      }
+      previous_element = element;
+    }
+    return result;
+  }
 }
 
 WindowHighlight::Overlay::Overlay(QScreen& screen)
@@ -166,30 +190,6 @@ QPainterPath WindowHighlight::make_overlay_path(const QScreen& screen,
   }
   path = path.simplified();
   return remove_screen_edges(screen, path);
-}
-
-QPainterPath WindowHighlight::remove_screen_edges(const QScreen& screen,
-    const QPainterPath& path) const {
-  auto result = QPainterPath();
-  auto previous_element = QPainterPath::Element();
-  auto screen_geometry = screen.geometry().adjusted(HALF_HIGHLIGHT_WIDTH(),
-    HALF_HIGHLIGHT_HEIGHT(), -HALF_HIGHLIGHT_WIDTH(), -HALF_HIGHLIGHT_HEIGHT());
-  for(auto i = 0; i < path.elementCount(); ++i) {
-    auto element = path.elementAt(i);
-    if(element.type == QPainterPath::MoveToElement ||
-        (element.x == previous_element.x &&
-          (element.x <= screen_geometry.left() ||
-            element.x >= screen_geometry.right())) ||
-        (element.y == previous_element.y &&
-          (element.y <= screen_geometry.top() ||
-            element.y >= screen_geometry.bottom()))) {
-      result.moveTo(element.x, element.y);
-    } else {
-      result.lineTo(element.x, element.y);
-    }
-    previous_element = element;
-  }
-  return result;
 }
 
 std::unordered_map<QScreen*, std::vector<QRect>>

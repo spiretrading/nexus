@@ -32,8 +32,6 @@ namespace Spire {
       Overlay* make_overlay(QScreen* screen);
       QPainterPath make_overlay_path(const QScreen& screen,
         const std::vector<QRect>& rectangles, const QRegion& region) const;
-      QPainterPath remove_screen_edges(const QScreen& screen,
-        const QPainterPath& path) const;
       std::unordered_map<QScreen*, std::vector<QRect>>
         get_window_rectangles() const;
       QRegion snap_region(const std::vector<QRect>& rectangles);
