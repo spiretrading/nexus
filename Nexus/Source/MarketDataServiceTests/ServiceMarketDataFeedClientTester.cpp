@@ -8,7 +8,6 @@
 #include <Beam/Threading/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/MarketDataService/ServiceMarketDataFeedClient.hpp"
 
 using namespace Beam;

@@ -1,7 +1,6 @@
 #include <sstream>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 
 using namespace Nexus;

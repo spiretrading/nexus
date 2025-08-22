@@ -2,7 +2,6 @@
 #include <sstream>
 #include <doctest/doctest.h>
 #include "Nexus/Compliance/ComplianceParameter.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 
 using namespace Nexus;
 using namespace Nexus::Compliance;

@@ -1,8 +1,7 @@
 #include <doctest/doctest.h>
-#include "Nexus/OrderExecutionService/StandardQueries.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 #include "Nexus/Definitions/Security.hpp"
+#include "Nexus/OrderExecutionService/StandardQueries.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;

@@ -3,8 +3,6 @@
 #include <doctest/doctest.h>
 #include "Nexus/Compliance/ComplianceRuleSet.hpp"
 #include "Nexus/ComplianceTests/TestComplianceClient.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 

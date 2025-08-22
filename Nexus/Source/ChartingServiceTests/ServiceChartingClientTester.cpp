@@ -8,7 +8,6 @@
 #include <boost/functional/factory.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/ChartingService/ServiceChartingClient.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;

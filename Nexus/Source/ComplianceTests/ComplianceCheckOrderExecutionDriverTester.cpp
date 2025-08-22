@@ -5,8 +5,6 @@
 #include "Nexus/Compliance/ComplianceCheckOrderExecutionDriver.hpp"
 #include "Nexus/ComplianceTests/TestComplianceClient.hpp"
 #include "Nexus/ComplianceTests/TestComplianceRule.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionServiceTests/TestOrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"

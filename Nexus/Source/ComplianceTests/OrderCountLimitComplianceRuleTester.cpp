@@ -1,6 +1,5 @@
 #include <doctest/doctest.h>
 #include "Nexus/Compliance/OrderCountLimitComplianceRule.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Nexus;

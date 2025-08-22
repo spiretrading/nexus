@@ -17,7 +17,6 @@
 #include <boost/optional/optional.hpp>
 #include "Nexus/ChartingService/ChartingClient.hpp"
 #include "Nexus/ChartingService/SecurityChartingQuery.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"

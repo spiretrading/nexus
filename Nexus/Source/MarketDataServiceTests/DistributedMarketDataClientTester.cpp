@@ -3,8 +3,6 @@
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/MarketDataService/DistributedMarketDataClient.hpp"
 #include "Nexus/MarketDataServiceTests/TestMarketDataClient.hpp"
 

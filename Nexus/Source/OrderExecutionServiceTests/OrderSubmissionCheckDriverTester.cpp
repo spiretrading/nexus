@@ -1,9 +1,6 @@
 #include <future>
 #include <Beam/Queues/Queue.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheckDriver.hpp"
 #include "Nexus/OrderExecutionServiceTests/TestOrderExecutionDriver.hpp"
 

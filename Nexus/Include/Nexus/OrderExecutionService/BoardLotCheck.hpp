@@ -10,7 +10,6 @@
 #include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheck.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheckException.hpp"

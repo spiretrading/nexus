@@ -2,8 +2,6 @@
 #define NEXUS_MARKET_DATA_SERVICE_HISTORICAL_DATA_STORE_TEST_SUITE_HPP
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 
 namespace Nexus::MarketDataService::Tests {

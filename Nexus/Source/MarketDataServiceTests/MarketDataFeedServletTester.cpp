@@ -3,8 +3,6 @@
 #include <Beam/ServicesTests/ServicesTests.hpp>
 #include <boost/functional/factory.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedServlet.hpp"
 
 using namespace Beam;

@@ -7,7 +7,6 @@
 #include <boost/functional/hash.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 
 namespace Nexus {
 

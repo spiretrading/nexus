@@ -2,7 +2,6 @@
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 
 using namespace boost;
 using namespace Nexus;

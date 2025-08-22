@@ -7,7 +7,6 @@
 #include <boost/optional/optional.hpp>
 #include "Nexus/Accounting/Bookkeeper.hpp"
 #include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"

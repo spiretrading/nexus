@@ -5,7 +5,6 @@
 #include <Beam/Parsers/SubParserStream.hpp>
 #include <Beam/Parsers/Types.hpp>
 #include "Nexus/Definitions/Security.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 
 namespace Nexus {
 

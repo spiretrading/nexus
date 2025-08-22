@@ -8,7 +8,6 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/hash.hpp>
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 
 namespace Nexus {

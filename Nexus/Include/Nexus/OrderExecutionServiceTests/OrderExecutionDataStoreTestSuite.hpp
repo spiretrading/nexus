@@ -2,8 +2,6 @@
 #define NEXUS_ORDER_EXECUTION_DATA_STORE_TEST_SUITE_HPP
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 
 namespace Nexus::OrderExecutionService::Tests {

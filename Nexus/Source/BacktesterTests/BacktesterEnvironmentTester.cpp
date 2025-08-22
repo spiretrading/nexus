@@ -1,7 +1,6 @@
 #include <doctest/doctest.h>
 #include "Nexus/Backtester/BacktesterClients.hpp"
 #include "Nexus/Backtester/BacktesterEnvironment.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"

@@ -4,7 +4,7 @@
 #include <Beam/Parsers/Types.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/lexical_cast.hpp>
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 
 namespace Nexus {
 

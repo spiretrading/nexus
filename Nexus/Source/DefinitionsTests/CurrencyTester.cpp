@@ -1,6 +1,6 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+#include "Nexus/Definitions/Currency.hpp"
 
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;

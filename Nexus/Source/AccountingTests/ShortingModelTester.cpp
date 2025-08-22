@@ -1,8 +1,6 @@
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/ShortingModel.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 
 using namespace Nexus;
 using namespace Nexus::Accounting;

@@ -2,7 +2,6 @@
 #include <doctest/doctest.h>
 #include "Nexus/Compliance/MapComplianceRule.hpp"
 #include "Nexus/ComplianceTests/TestComplianceRule.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;

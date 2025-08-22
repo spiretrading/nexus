@@ -8,8 +8,6 @@
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationService/AdministrationServlet.hpp"
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 
 using namespace Beam;
 using namespace Beam::Serialization;
