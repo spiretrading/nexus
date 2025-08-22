@@ -4,7 +4,6 @@
 using namespace Beam;
 using namespace Beam::Queries;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
 using namespace Nexus::DefaultVenues;
 using namespace Nexus::MarketDataService;
 

@@ -26,7 +26,7 @@ namespace Nexus::RiskService {
    * @param <T> The type of TimeClient to use.
    * @param <D> The type of RiskDataStore to use.
    */
-  template<typename C, AdministrationService::IsAdministrationClient A,
+  template<typename C, IsAdministrationClient A,
     MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
@@ -136,8 +136,7 @@ namespace Nexus::RiskService {
           SubscribeRiskPortfolioUpdatesService>& request);
   };
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   struct MetaRiskServlet {
@@ -148,7 +147,7 @@ namespace Nexus::RiskService {
     };
   };
 
-  template<typename C, AdministrationService::IsAdministrationClient A,
+  template<typename C, IsAdministrationClient A,
     MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
@@ -181,7 +180,7 @@ namespace Nexus::RiskService {
     }
   }
 
-  template<typename C, AdministrationService::IsAdministrationClient A,
+  template<typename C, IsAdministrationClient A,
     MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
@@ -198,7 +197,7 @@ namespace Nexus::RiskService {
         &RiskServlet::on_subscribe_risk_portfolio_updates_request, this));
   }
 
-  template<typename C, AdministrationService::IsAdministrationClient A,
+  template<typename C, IsAdministrationClient A,
     MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
@@ -216,7 +215,7 @@ namespace Nexus::RiskService {
     }
   }
 
-  template<typename C, AdministrationService::IsAdministrationClient A,
+  template<typename C, IsAdministrationClient A,
     MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
@@ -225,7 +224,7 @@ namespace Nexus::RiskService {
     m_portfolio_subscribers.Remove(&client);
   }
 
-  template<typename C, AdministrationService::IsAdministrationClient A,
+  template<typename C, IsAdministrationClient A,
     MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
@@ -239,7 +238,7 @@ namespace Nexus::RiskService {
     m_open_state.Close();
   }
 
-  template<typename C, AdministrationService::IsAdministrationClient A,
+  template<typename C, IsAdministrationClient A,
     MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
@@ -259,7 +258,7 @@ namespace Nexus::RiskService {
         std::bind_front(&RiskServlet::on_portfolio, this)));
   }
 
-  template<typename C, AdministrationService::IsAdministrationClient A,
+  template<typename C, IsAdministrationClient A,
     MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
@@ -297,8 +296,7 @@ namespace Nexus::RiskService {
         if(inventory.m_position.m_quantity == 0) {
           auto update = InventoryUpdate();
           update.account = account;
-          update.inventory =
-            Accounting::Inventory(get_key(inventory.m_position));
+          update.inventory = Inventory(get_key(inventory.m_position));
           reset_inventories.push_back(update);
         }
         inventory.m_position.m_quantity = base_inventory.m_position.m_quantity;
@@ -341,7 +339,7 @@ namespace Nexus::RiskService {
     }
   }
 
-  template<typename C, AdministrationService::IsAdministrationClient A,
+  template<typename C, IsAdministrationClient A,
     MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
@@ -352,7 +350,7 @@ namespace Nexus::RiskService {
     });
   }
 
-  template<typename C, AdministrationService::IsAdministrationClient A,
+  template<typename C, IsAdministrationClient A,
     MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
@@ -361,7 +359,7 @@ namespace Nexus::RiskService {
     m_administration_client->store(entry.m_key, entry.m_value);
   }
 
-  template<typename C, AdministrationService::IsAdministrationClient A,
+  template<typename C, IsAdministrationClient A,
     MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
@@ -390,7 +388,7 @@ namespace Nexus::RiskService {
     });
   }
 
-  template<typename C, AdministrationService::IsAdministrationClient A,
+  template<typename C, IsAdministrationClient A,
     MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
@@ -406,7 +404,7 @@ namespace Nexus::RiskService {
     return m_data_store->load_inventory_snapshot(account);
   }
 
-  template<typename C, AdministrationService::IsAdministrationClient A,
+  template<typename C, IsAdministrationClient A,
     MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
@@ -431,7 +429,7 @@ namespace Nexus::RiskService {
     make_controller();
   }
 
-  template<typename C, AdministrationService::IsAdministrationClient A,
+  template<typename C, IsAdministrationClient A,
     MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>

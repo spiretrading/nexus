@@ -20,7 +20,7 @@ namespace Nexus::OrderExecutionService {
    * @param <C> The type of AdministrationClient used to monitor an account's
    *        RiskState.
    */
-  template<AdministrationService::IsAdministrationClient C>
+  template<IsAdministrationClient C>
   class RiskStateCheck : public OrderSubmissionCheck {
     public:
 
@@ -40,8 +40,7 @@ namespace Nexus::OrderExecutionService {
 
     private:
       struct AccountEntry {
-        Beam::Threading::Sync<Accounting::PositionOrderBook>
-          m_position_order_book;
+        Beam::Threading::Sync<PositionOrderBook> m_position_order_book;
         std::shared_ptr<Beam::StateQueue<RiskService::RiskState>>
           m_risk_state_queue;
         Beam::MultiQueueWriter<ExecutionReport> m_execution_report_queue;
@@ -59,23 +58,23 @@ namespace Nexus::OrderExecutionService {
    * Makes a new RiskStateCheck.
    * @param administration_client Initializes the AdministrationClient.
    */
-  template<AdministrationService::IsAdministrationClient C>
+  template<IsAdministrationClient C>
   auto make_risk_state_check(C&& administration_client) {
     return std::make_unique<RiskStateCheck<std::remove_reference_t<C>>>(
       std::forward<C>(administration_client));
   }
 
-  template<AdministrationService::IsAdministrationClient C>
+  template<IsAdministrationClient C>
   RiskStateCheck<C>::AccountEntry::AccountEntry()
     : m_risk_state_queue(
         std::make_shared<Beam::StateQueue<RiskService::RiskState>>()) {}
 
-  template<AdministrationService::IsAdministrationClient C>
+  template<IsAdministrationClient C>
   template<Beam::Initializes<C> CF>
   RiskStateCheck<C>::RiskStateCheck(CF&& administration_client)
     : m_administration_client(std::forward<CF>(administration_client)) {}
 
-  template<AdministrationService::IsAdministrationClient C>
+  template<IsAdministrationClient C>
   void RiskStateCheck<C>::submit(const OrderInfo& info) {
     auto& account_entry = load(info.m_fields.m_account);
     Beam::Threading::With(account_entry.m_position_order_book,
@@ -93,7 +92,7 @@ namespace Nexus::OrderExecutionService {
       });
   }
 
-  template<AdministrationService::IsAdministrationClient C>
+  template<IsAdministrationClient C>
   void RiskStateCheck<C>::add(const std::shared_ptr<const Order>& order) {
     auto& account_entry = load(order->get_info().m_fields.m_account);
     Beam::Threading::With(account_entry.m_position_order_book,
@@ -104,7 +103,7 @@ namespace Nexus::OrderExecutionService {
       });
   }
 
-  template<AdministrationService::IsAdministrationClient C>
+  template<IsAdministrationClient C>
   typename RiskStateCheck<C>::AccountEntry& RiskStateCheck<C>::load(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto& entry = *m_account_entries.GetOrInsert(account, [&] {

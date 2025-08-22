@@ -7,7 +7,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCountries;
-using namespace Nexus::AdministrationService;
 
 namespace {
   const auto& get_test_identity() {

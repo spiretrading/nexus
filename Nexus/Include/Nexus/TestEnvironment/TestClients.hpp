@@ -25,7 +25,7 @@ namespace Nexus {
       using ServiceLocatorClient =
         Beam::ServiceLocator::ServiceLocatorClientBox;
       using RegistryClient = Beam::RegistryService::RegistryClientBox;
-      using AdministrationClient = AdministrationService::AdministrationClient;
+      using AdministrationClient = Nexus::AdministrationClient;
       using DefinitionsClient = DefinitionsService::DefinitionsClient;
       using MarketDataClient = MarketDataService::MarketDataClient;
       using ChartingClient = ChartingService::ChartingClient;

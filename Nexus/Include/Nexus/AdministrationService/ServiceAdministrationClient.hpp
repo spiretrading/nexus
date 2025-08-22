@@ -14,7 +14,7 @@
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/AdministrationService/AdministrationServices.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /**
    * Client used to access the Nexus Administration service.

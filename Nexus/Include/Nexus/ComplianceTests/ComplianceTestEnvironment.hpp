@@ -35,7 +35,7 @@ namespace Nexus::Compliance::Tests {
        */
       ComplianceTestEnvironment(
         Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
-        AdministrationService::AdministrationClient administration_client,
+        AdministrationClient administration_client,
         Beam::TimeService::TimeClientBox time_client);
 
       ~ComplianceTestEnvironment();
@@ -59,8 +59,8 @@ namespace Nexus::Compliance::Tests {
         Beam::Services::ServiceProtocolServletContainer<
           Beam::ServiceLocator::MetaAuthenticationServletAdapter<
             MetaComplianceServlet<Beam::ServiceLocator::ServiceLocatorClientBox,
-              AdministrationService::AdministrationClient,
-              LocalComplianceRuleDataStore*, Beam::TimeService::TimeClientBox>,
+              AdministrationClient, LocalComplianceRuleDataStore*,
+              Beam::TimeService::TimeClientBox>,
             Beam::ServiceLocator::ServiceLocatorClientBox>,
           ServerConnection*,
           Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
@@ -84,7 +84,7 @@ namespace Nexus::Compliance::Tests {
 
   inline ComplianceTestEnvironment::ComplianceTestEnvironment(
     Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
-    AdministrationService::AdministrationClient administration_client,
+    AdministrationClient administration_client,
     Beam::TimeService::TimeClientBox time_client)
     : m_container(Beam::Initialize(service_locator_client, Beam::Initialize(
         service_locator_client, std::move(administration_client), &m_data_store,

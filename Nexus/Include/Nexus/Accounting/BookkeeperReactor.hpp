@@ -8,7 +8,7 @@
 #include "Nexus/Accounting/Bookkeeper.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 
-namespace Nexus::Accounting {
+namespace Nexus {
 
   /**
    * Returns a reactor that produces updates to a bookkeeper's inventory based

@@ -131,7 +131,7 @@ namespace Nexus::RiskService {
         m_portfolio.get_unrealized_profit_and_losses() | std::views::keys) {
       try {
         auto currency_profit_and_loss =
-          Accounting::get_total_profit_and_loss(m_portfolio, currency);
+          get_total_profit_and_loss(m_portfolio, currency);
         auto converted_profit_and_loss = m_exchange_rates.convert(
           currency_profit_and_loss, currency, m_parameters.m_currency);
         profit_and_loss += converted_profit_and_loss;

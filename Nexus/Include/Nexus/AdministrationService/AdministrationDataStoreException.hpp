@@ -2,7 +2,7 @@
 #define NEXUS_ADMINISTRATION_DATA_STORE_EXCEPTION_HPP
 #include <Beam/IO/IOException.hpp>
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /**
    * Exception to indicate an operation on an AdministrationDataStore failed.

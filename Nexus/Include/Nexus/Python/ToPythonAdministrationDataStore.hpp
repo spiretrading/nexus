@@ -9,7 +9,7 @@
 #include <pybind11/pybind11.h>
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /**
    * Wraps an AdministrationDataStore for use with Python.

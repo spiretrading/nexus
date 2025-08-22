@@ -19,7 +19,7 @@
 #include "Nexus/RiskService/RiskParameters.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /** Used to push updates about an account's RiskState. */
   using RiskStateQueue = Beam::AbstractQueue<RiskService::RiskState>;

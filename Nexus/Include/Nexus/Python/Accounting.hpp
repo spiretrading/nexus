@@ -21,7 +21,7 @@ namespace Nexus::Python {
    * @param <B> The type of bookkeeper to export.
    * @param module The module to export to.
    */
-  template<Accounting::IsBookkeeper B>
+  template<IsBookkeeper B>
   auto export_bookkeeper(pybind11::module& module, std::string_view name) {
     auto bookkeeper = pybind11::class_<B>(module, name.data()).
       def("record", &B::record, pybind11::arg("index"),
@@ -32,8 +32,8 @@ namespace Nexus::Python {
       def("get_total", &B::get_total, pybind11::arg("currency")).
       def_property_readonly("inventories", &B::get_inventory_range).
       def_property_readonly("totals", &B::get_totals_range);
-    if constexpr(!std::is_same_v<B, Accounting::Bookkeeper>) {
-      pybind11::implicitly_convertible<B, Accounting::Bookkeeper>();
+    if constexpr(!std::is_same_v<B, Bookkeeper>) {
+      pybind11::implicitly_convertible<B, Bookkeeper>();
     }
     return bookkeeper;
   }
@@ -63,9 +63,9 @@ namespace Nexus::Python {
    * @param name The name used to export the class.
    * @return The exported class.
    */
-  template<Accounting::IsBookkeeper B>
+  template<IsBookkeeper B>
   auto export_portfolio(pybind11::module& module, std::string_view name) {
-    using Portfolio = Accounting::Portfolio<B>;
+    using Portfolio = Portfolio<B>;
     using Bookkeeper = typename Portfolio::Bookkeeper;
     auto portfolio = pybind11::class_<Portfolio>(module, name.data()).
       def(pybind11::init<const Bookkeeper&>()).
@@ -88,19 +88,18 @@ namespace Nexus::Python {
         pybind11::arg("security"), pybind11::arg("ask_value"),
         pybind11::arg("bid_value")).
       def("__iter__", [] (const Portfolio& portfolio) {
-        auto updates = std::vector<Accounting::PortfolioUpdateEntry>();
-        Accounting::for_each(
-          portfolio, [&] (const Accounting::PortfolioUpdateEntry& update) {
-            updates.push_back(update);
-          });
+        auto updates = std::vector<PortfolioUpdateEntry>();
+        for_each(portfolio, [&] (const PortfolioUpdateEntry& update) {
+          updates.push_back(update);
+        });
         return pybind11::make_iterator(updates.begin(), updates.end());
       }, pybind11::keep_alive<0, 1>());
-    if constexpr(std::is_same_v<Bookkeeper, Accounting::Bookkeeper>) {
+    if constexpr(std::is_same_v<Bookkeeper, Nexus::Bookkeeper>) {
       portfolio.def(pybind11::init([] {
-          return Portfolio(Bookkeeper(Accounting::TrueAverageBookkeeper()));
+          return Portfolio(Bookkeeper(TrueAverageBookkeeper()));
         })).
         def(pybind11::init([] (const VenueDatabase& venues) {
-          return Portfolio(Bookkeeper(Accounting::TrueAverageBookkeeper()), venues);
+          return Portfolio(Bookkeeper(TrueAverageBookkeeper()), venues);
         }));
     } else {
       portfolio.def(pybind11::init()).
@@ -112,19 +111,18 @@ namespace Nexus::Python {
       def_readwrite("valuation", &SecurityEntry::m_valuation).
       def_readwrite("unrealized", &SecurityEntry::m_unrealized);
     module.def("get_realized_profit_and_loss",
-      static_cast<Money (*)(const Accounting::Inventory&)>(
-        &Accounting::get_realized_profit_and_loss));
+      static_cast<Money (*)(const Inventory&)>(&get_realized_profit_and_loss));
     module.def("get_unrealized_profit_and_loss",
       static_cast<boost::optional<Money> (*)(
-        const Accounting::Inventory&, const Accounting::SecurityValuation&)>(
-          &Accounting::get_unrealized_profit_and_loss));
+        const Inventory&, const SecurityValuation&)>(
+          &get_unrealized_profit_and_loss));
     module.def("get_total_profit_and_loss",
       static_cast<boost::optional<Money> (*)(
-        const Accounting::Inventory&, const Accounting::SecurityValuation&)>(
-          &Accounting::get_total_profit_and_loss));
+        const Inventory&, const SecurityValuation&)>(
+          &get_total_profit_and_loss));
     module.def("get_total_profit_and_loss",
       static_cast<Money (*)(const Portfolio&, CurrencyId)>(
-        &Accounting::get_total_profit_and_loss<B>));
+        &get_total_profit_and_loss<B>));
     return portfolio;
   }
 

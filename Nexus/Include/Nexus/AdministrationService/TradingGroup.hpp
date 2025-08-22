@@ -6,7 +6,7 @@
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /** Represents a group of traders and their managers. */
   class TradingGroup {

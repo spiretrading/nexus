@@ -23,11 +23,10 @@ using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::AdministrationService::Tests;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::Python;
 using namespace Nexus::RiskService;
+using namespace Nexus::Tests;
 using namespace pybind11;
 
 void Nexus::Python::export_account_identity(module& module) {

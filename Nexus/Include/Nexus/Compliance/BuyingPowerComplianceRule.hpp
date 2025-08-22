@@ -58,7 +58,7 @@ namespace Nexus::Compliance {
       Money m_buying_power;
       ExchangeRateTable m_exchange_rates;
       Beam::GetOptionalLocalPtr<C> m_market_data_client;
-      Beam::Threading::Sync<Accounting::BuyingPowerModel> m_buying_power_model;
+      Beam::Threading::Sync<BuyingPowerModel> m_buying_power_model;
       Beam::MultiQueueWriter<OrderExecutionService::ExecutionReport>
         m_execution_report_queue;
       std::unordered_map<OrderExecutionService::OrderId, CurrencyId>

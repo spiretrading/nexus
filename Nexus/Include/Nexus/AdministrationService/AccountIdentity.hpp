@@ -8,7 +8,7 @@
 #include <boost/date_time/posix_time/ptime.hpp>
 #include "Nexus/Definitions/Country.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /** Stores identity related info about an account. */
   struct AccountIdentity {
@@ -72,10 +72,9 @@ namespace Nexus::AdministrationService {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::AdministrationService::AccountIdentity> {
+  struct Shuttle<Nexus::AccountIdentity> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::AdministrationService::AccountIdentity& value,
+    void operator ()(Shuttler& shuttle, Nexus::AccountIdentity& value,
         unsigned int version) const {
       shuttle.Shuttle("registration_time", value.m_registration_time);
       shuttle.Shuttle("last_login_time", value.m_last_login_time);

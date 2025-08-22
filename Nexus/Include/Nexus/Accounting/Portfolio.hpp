@@ -12,7 +12,7 @@
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
-namespace Nexus::Accounting {
+namespace Nexus {
 
   /** Stores an update to a Portfolio's snapshot. */
   struct PortfolioUpdateEntry {
@@ -450,10 +450,9 @@ namespace Nexus::Accounting {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::Accounting::PortfolioUpdateEntry> {
+  struct Shuttle<Nexus::PortfolioUpdateEntry> {
     template<typename Shuttler>
-    void operator ()(
-        Shuttler& shuttle, Nexus::Accounting::PortfolioUpdateEntry& value,
+    void operator ()(Shuttler& shuttle, Nexus::PortfolioUpdateEntry& value,
         unsigned int version) const {
       shuttle.Shuttle("security_inventory", value.m_security_inventory);
       shuttle.Shuttle("unrealized_security", value.m_unrealized_security);
@@ -463,10 +462,9 @@ namespace Beam::Serialization {
   };
 
   template<>
-  struct Shuttle<Nexus::Accounting::SecurityValuation> {
+  struct Shuttle<Nexus::SecurityValuation> {
     template<typename Shuttler>
-    void operator ()(
-        Shuttler& shuttle, Nexus::Accounting::SecurityValuation& value,
+    void operator ()(Shuttler& shuttle, Nexus::SecurityValuation& value,
         unsigned int version) const {
       shuttle.Shuttle("currency", value.m_currency);
       shuttle.Shuttle("ask_value", value.m_ask_value);

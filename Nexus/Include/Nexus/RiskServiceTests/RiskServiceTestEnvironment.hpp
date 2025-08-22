@@ -46,7 +46,7 @@ namespace Nexus::RiskService::Tests {
        */
       RiskServiceTestEnvironment(
         Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
-        AdministrationService::AdministrationClient administration_client,
+        AdministrationClient administration_client,
         MarketDataService::MarketDataClient market_data_client,
         OrderExecutionService::OrderExecutionClient order_execution_client,
         std::function<std::unique_ptr<Beam::Threading::TimerBox> ()>
@@ -75,7 +75,7 @@ namespace Nexus::RiskService::Tests {
       using ServiceProtocolServletContainer =
         Beam::Services::ServiceProtocolServletContainer<
           Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-            MetaRiskServlet<AdministrationService::AdministrationClient,
+            MetaRiskServlet<AdministrationClient,
               MarketDataService::MarketDataClient,
               OrderExecutionService::OrderExecutionClient,
               Beam::Threading::TimerBox,
@@ -102,7 +102,7 @@ namespace Nexus::RiskService::Tests {
 
   inline RiskServiceTestEnvironment::RiskServiceTestEnvironment(
       Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
-      AdministrationService::AdministrationClient administration_client,
+      AdministrationClient administration_client,
       MarketDataService::MarketDataClient market_data_client,
       OrderExecutionService::OrderExecutionClient order_execution_client,
       std::function<std::unique_ptr<Beam::Threading::TimerBox> ()>

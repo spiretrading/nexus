@@ -39,8 +39,7 @@ namespace Nexus {
       using RegistryClient = Beam::RegistryService::ToPythonRegistryClient<
         Beam::RegistryService::RegistryClientBox>;
       using AdministrationClient =
-        AdministrationService::ToPythonAdministrationClient<
-          AdministrationService::AdministrationClient>;
+        ToPythonAdministrationClient<AdministrationClient>;
       using DefinitionsClient = DefinitionsService::ToPythonDefinitionsClient<
         DefinitionsService::DefinitionsClient>;
       using MarketDataClient = MarketDataService::ToPythonMarketDataClient<

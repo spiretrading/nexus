@@ -4,7 +4,7 @@
 #include <boost/iterator/transform_iterator.hpp>
 #include "Nexus/Accounting/Bookkeeper.hpp"
 
-namespace Nexus::Accounting {
+namespace Nexus {
 namespace Details {
   template<typename T>
   struct ValueAccessor {

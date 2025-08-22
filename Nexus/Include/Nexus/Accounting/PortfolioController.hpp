@@ -16,7 +16,7 @@
 #include "Nexus/OrderExecutionService/ExecutionReportPublisher.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 
-namespace Nexus::Accounting {
+namespace Nexus {
 
   /**
    * Uses the BboQuote published by a MarketDataClient and the Orders published

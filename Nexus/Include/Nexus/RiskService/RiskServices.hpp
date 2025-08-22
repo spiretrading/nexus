@@ -12,9 +12,9 @@
 
 namespace Nexus::RiskService {
   BEAM_DEFINE_RECORD(SecurityValuationUpdate, Security, security,
-    Accounting::SecurityValuation, valuation);
+    SecurityValuation, valuation);
   BEAM_DEFINE_RECORD(InventoryUpdate, Beam::ServiceLocator::DirectoryEntry,
-    account, Accounting::Inventory, inventory);
+    account, Inventory, inventory);
   BEAM_DEFINE_RECORD(RiskStateUpdate, Beam::ServiceLocator::DirectoryEntry,
     account, RiskState, risk_state);
 

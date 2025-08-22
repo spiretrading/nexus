@@ -27,7 +27,6 @@ using namespace Beam::Python;
 using namespace Beam::Queries;
 using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::MarketDataService::Tests;
 using namespace pybind11;

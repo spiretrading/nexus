@@ -10,7 +10,7 @@
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
-namespace Nexus::Accounting {
+namespace Nexus {
 
   /** Tracks the amount of buying power used up by a series of Orders. */
   class BuyingPowerModel {

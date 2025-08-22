@@ -6,7 +6,7 @@
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Accounting/Position.hpp"
 
-namespace Nexus::Accounting {
+namespace Nexus {
 
   /** Stores bookkeeping info for a single inventory. */
   struct Inventory {
@@ -97,9 +97,9 @@ namespace Nexus::Accounting {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::Accounting::Inventory> {
+  struct Shuttle<Nexus::Inventory> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::Accounting::Inventory& value,
+    void operator ()(Shuttler& shuttle, Nexus::Inventory& value,
         unsigned int version) const {
       shuttle.Shuttle("position", value.m_position);
       shuttle.Shuttle("gross_profit_and_loss", value.m_gross_profit_and_loss);

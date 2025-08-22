@@ -27,16 +27,14 @@ namespace Nexus::RiskService {
   };
 
   /** The type of Portfolio used. */
-  using RiskPortfolio =
-    Accounting::Portfolio<Accounting::TrueAverageBookkeeper>;
+  using RiskPortfolio = Portfolio<TrueAverageBookkeeper>;
 
   /** Stores an Inventory update. */
-  using RiskInventoryEntry =
-    Beam::KeyValuePair<RiskPortfolioKey, Accounting::Inventory>;
+  using RiskInventoryEntry = Beam::KeyValuePair<RiskPortfolioKey, Inventory>;
 
   /** The Publisher used for portfolio events. */
-  using RiskPortfolioUpdatePublisher = Beam::Publisher<
-    Beam::KeyValuePair<RiskPortfolioKey, Accounting::Inventory>>;
+  using RiskPortfolioUpdatePublisher =
+    Beam::Publisher<Beam::KeyValuePair<RiskPortfolioKey, Inventory>>;
 
   inline std::ostream& operator <<(
       std::ostream& out, const RiskPortfolioKey& key) {

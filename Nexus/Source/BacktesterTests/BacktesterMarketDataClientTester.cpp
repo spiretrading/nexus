@@ -10,11 +10,10 @@ using namespace Beam::ServiceLocator::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::AdministrationService::Tests;
 using namespace Nexus::DefaultVenues;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::MarketDataService::Tests;
+using namespace Nexus::Tests;
 
 namespace {
   const auto TD = Security("TD", TSX);

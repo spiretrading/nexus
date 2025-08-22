@@ -20,7 +20,6 @@ using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
 using namespace Nexus::MarketDataService;
@@ -584,7 +583,7 @@ TEST_SUITE("ServiceAdministrationClient") {
     auto entitlements =
       std::vector{DirectoryEntry::MakeAccount(36, "entitlement")};
     auto modification = EntitlementModification(entitlements);
-    auto comment = AdministrationService::Message();
+    auto comment = Message();
     auto request_data = AccountModificationRequest(
       37, AccountModificationRequest::Type::ENTITLEMENTS, account,
       DirectoryEntry::MakeAccount(38, "sub_account"),
@@ -623,7 +622,7 @@ TEST_SUITE("ServiceAdministrationClient") {
     auto risk_parameters = RiskParameters(CAD, 500 * Money::ONE,
       RiskState::Type::ACTIVE, 50 * Money::ONE, seconds(60));
     auto modification = RiskModification(risk_parameters);
-    auto comment = AdministrationService::Message();
+    auto comment = Message();
     auto request_data = AccountModificationRequest(
       41, AccountModificationRequest::Type::RISK, account,
       DirectoryEntry::MakeAccount(42, "risk_sub_account"),
@@ -660,7 +659,7 @@ TEST_SUITE("ServiceAdministrationClient") {
   TEST_CASE("approve_account_modification_request") {
     auto fixture = Fixture();
     auto id = 45;
-    auto comment = AdministrationService::Message();
+    auto comment = Message();
     auto update = AccountModificationRequest::Update(
       AccountModificationRequest::Status::GRANTED,
       DirectoryEntry::MakeAccount(46, "approver_account"), 2,
@@ -678,7 +677,7 @@ TEST_SUITE("ServiceAdministrationClient") {
   TEST_CASE("reject_account_modification_request") {
     auto fixture = Fixture();
     auto id = 47;
-    auto comment = AdministrationService::Message();
+    auto comment = Message();
     auto update = AccountModificationRequest::Update(
       AccountModificationRequest::Status::REJECTED,
       DirectoryEntry::MakeAccount(48, "rejecter_account"), 3,
@@ -696,8 +695,7 @@ TEST_SUITE("ServiceAdministrationClient") {
   TEST_CASE("load_message") {
     auto fixture = Fixture();
     auto id = 49;
-    auto message = AdministrationService::Message(
-      id, DirectoryEntry::MakeAccount(50, "msg_account"),
+    auto message = Message(id, DirectoryEntry::MakeAccount(50, "msg_account"),
       ptime(gregorian::date(2024, 5, 26)), {});
     fixture.handle<LoadMessageService>([&] (auto& request, auto received_id) {
       REQUIRE(received_id == id);
@@ -711,7 +709,7 @@ TEST_SUITE("ServiceAdministrationClient") {
   TEST_CASE("load_message_ids") {
     auto fixture = Fixture();
     auto id = 51;
-    auto ids = std::vector<AdministrationService::Message::Id>{52, 53, 54};
+    auto ids = std::vector<Message::Id>{52, 53, 54};
     fixture.handle<LoadMessageIdsService>(
       [&] (auto& request, auto received_id) {
         REQUIRE(received_id == id);
@@ -725,8 +723,8 @@ TEST_SUITE("ServiceAdministrationClient") {
   TEST_CASE("send_account_modification_request_message") {
     auto fixture = Fixture();
     auto id = 55;
-    auto message = AdministrationService::Message();
-    auto appended_message = AdministrationService::Message(
+    auto message = Message();
+    auto appended_message = Message(
       56, DirectoryEntry::MakeAccount(57, "sender_account"),
       ptime(gregorian::date(2024, 5, 27)), {});
     fixture.handle<SendAccountModificationRequestMessageService>(

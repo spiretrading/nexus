@@ -43,7 +43,7 @@ namespace Nexus::OrderExecutionService::Tests {
       OrderExecutionServiceTestEnvironment(
         Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
         Beam::UidService::UidClientBox uid_client,
-        AdministrationService::AdministrationClient administration_client);
+        AdministrationClient administration_client);
 
       /**
        * Constructs an OrderExecutionServiceTestEnvironment using a
@@ -60,7 +60,7 @@ namespace Nexus::OrderExecutionService::Tests {
         DestinationDatabase destinations,
         Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
         Beam::UidService::UidClientBox uid_client,
-        AdministrationService::AdministrationClient administration_client);
+        AdministrationClient administration_client);
 
       /**
        * Constructs an OrderExecutionServiceTestEnvironment.
@@ -78,7 +78,7 @@ namespace Nexus::OrderExecutionService::Tests {
         DestinationDatabase destinations,
         Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
         Beam::UidService::UidClientBox uid_client,
-        AdministrationService::AdministrationClient administration_client,
+        AdministrationClient administration_client,
         Beam::TimeService::TimeClientBox time_client,
         OrderExecutionDriver driver);
 
@@ -113,8 +113,7 @@ namespace Nexus::OrderExecutionService::Tests {
           Beam::ServiceLocator::MetaAuthenticationServletAdapter<
             MetaOrderExecutionServlet<Beam::TimeService::TimeClientBox,
               Beam::ServiceLocator::ServiceLocatorClientBox,
-              Beam::UidService::UidClientBox,
-              AdministrationService::AdministrationClient,
+              Beam::UidService::UidClientBox, AdministrationClient,
               OrderExecutionDriver*, LocalOrderExecutionDataStore*>,
             Beam::ServiceLocator::ServiceLocatorClientBox>,
           ServerConnection*,
@@ -153,7 +152,7 @@ namespace Nexus::OrderExecutionService::Tests {
         Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
           service_locator_environment,
         Beam::UidService::Tests::UidServiceTestEnvironment& uid_environment,
-        AdministrationService::Tests::AdministrationServiceTestEnvironment&
+        Tests::AdministrationServiceTestEnvironment&
           administration_service_test_environment) {
     auto account = service_locator_environment.GetRoot().MakeAccount(
       "order_execution_service", "1234",
@@ -178,7 +177,7 @@ namespace Nexus::OrderExecutionService::Tests {
     OrderExecutionServiceTestEnvironment(
       Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
       Beam::UidService::UidClientBox uid_client,
-      AdministrationService::AdministrationClient administration_client)
+      AdministrationClient administration_client)
     : OrderExecutionServiceTestEnvironment(DEFAULT_VENUES, DEFAULT_DESTINATIONS,
         std::move(service_locator_client), std::move(uid_client),
         std::move(administration_client)) {}
@@ -188,7 +187,7 @@ namespace Nexus::OrderExecutionService::Tests {
       DestinationDatabase destinations,
       Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
       Beam::UidService::UidClientBox uid_client,
-      AdministrationService::AdministrationClient administration_client)
+      AdministrationClient administration_client)
     : OrderExecutionServiceTestEnvironment(std::move(venues),
         std::move(destinations), std::move(service_locator_client),
         std::move(uid_client), std::move(administration_client),
@@ -201,7 +200,7 @@ namespace Nexus::OrderExecutionService::Tests {
       DestinationDatabase destinations,
       Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
       Beam::UidService::UidClientBox uid_client,
-      AdministrationService::AdministrationClient administration_client,
+      AdministrationClient administration_client,
       Beam::TimeService::TimeClientBox time_client, OrderExecutionDriver driver)
     : m_driver(std::move(driver)),
       m_container(Beam::Initialize(service_locator_client, Beam::Initialize(

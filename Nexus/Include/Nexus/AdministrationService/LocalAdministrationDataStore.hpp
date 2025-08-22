@@ -5,7 +5,7 @@
 #include <boost/thread/mutex.hpp>
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /**
    * Implements the AdministrationDataStore interface using in-memory data

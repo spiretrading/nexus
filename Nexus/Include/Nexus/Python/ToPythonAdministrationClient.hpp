@@ -9,7 +9,7 @@
 #include <pybind11/pybind11.h>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /**
    * Wraps an AdministrationClient for use with Python.

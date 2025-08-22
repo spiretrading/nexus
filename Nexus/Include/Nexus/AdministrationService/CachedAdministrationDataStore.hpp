@@ -6,7 +6,7 @@
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /**
    * Caches an AdministratorDataStore in memory.

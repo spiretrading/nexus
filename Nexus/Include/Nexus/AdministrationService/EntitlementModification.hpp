@@ -5,7 +5,7 @@
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /** Stores a request to update an account's market data entitlements. */
   class EntitlementModification {
@@ -42,10 +42,9 @@ namespace Nexus::AdministrationService {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::AdministrationService::EntitlementModification> {
+  struct Shuttle<Nexus::EntitlementModification> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::AdministrationService::EntitlementModification& value,
+    void operator ()(Shuttler& shuttle, Nexus::EntitlementModification& value,
         unsigned int version) const {
       shuttle.Shuttle("entitlements", value.m_entitlements);
     }

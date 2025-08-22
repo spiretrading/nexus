@@ -3,7 +3,6 @@
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 
-using namespace Nexus::AdministrationService;
 using namespace Beam::ServiceLocator;
 
 TEST_SUITE("EntitlementModification") {

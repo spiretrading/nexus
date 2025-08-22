@@ -4,7 +4,6 @@
 #include "Nexus/Definitions/Security.hpp"
 
 using namespace Nexus;
-using namespace Nexus::Accounting;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
 

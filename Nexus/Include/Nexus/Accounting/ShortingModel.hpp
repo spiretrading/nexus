@@ -4,7 +4,7 @@
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
-namespace Nexus::Accounting {
+namespace Nexus {
 
   /** Tracks whether an Order should be submitted as a short sale. */
   class ShortingModel {

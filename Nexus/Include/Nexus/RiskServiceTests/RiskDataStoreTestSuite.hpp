@@ -10,7 +10,6 @@ namespace Nexus::RiskService::Tests {
     using namespace Beam::Queries;
     using namespace Beam::ServiceLocator;
     using namespace Nexus;
-    using namespace Nexus::Accounting;
     using namespace Nexus::DefaultCurrencies;
     using namespace Nexus::DefaultVenues;
     using namespace Nexus::OrderExecutionService;

@@ -15,7 +15,7 @@
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /** Standard name for the administration service. */
   inline const auto SERVICE_NAME = std::string("administration_service");

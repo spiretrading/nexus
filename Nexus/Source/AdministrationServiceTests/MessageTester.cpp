@@ -4,7 +4,6 @@
 #include "Nexus/AdministrationService/Message.hpp"
 
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
 using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;

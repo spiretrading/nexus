@@ -20,11 +20,11 @@
 #include "Nexus/AdministrationService/ServiceAdministrationClient.hpp"
 #include "Nexus/MarketDataService/EntitlementSet.hpp"
 
-namespace Nexus::AdministrationService::Tests {
+namespace Nexus::Tests {
 
   /**
-   * Wraps most components needed to run an instance of the
-   * AdministrationService with helper functions.
+   * Wraps most components needed to run an instance of the Administration
+   * service with helper functions.
    */
   class AdministrationServiceTestEnvironment {
     public:

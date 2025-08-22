@@ -3,8 +3,7 @@
 #include "Nexus/AdministrationServiceTests/AdministrationDataStoreTestSuite.hpp"
 
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::AdministrationService::Tests;
+using namespace Nexus::Tests;
 
 namespace {
   struct Builder {

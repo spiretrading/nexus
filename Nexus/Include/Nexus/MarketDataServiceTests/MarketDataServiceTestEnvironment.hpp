@@ -43,7 +43,7 @@ namespace Nexus::MarketDataService::Tests {
        */
       MarketDataServiceTestEnvironment(
         Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
-        AdministrationService::AdministrationClient administration_client);
+        AdministrationClient administration_client);
 
       /**
        * Constructs an MarketDataServiceTestEnvironment.
@@ -53,7 +53,7 @@ namespace Nexus::MarketDataService::Tests {
        */
       MarketDataServiceTestEnvironment(
         Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
-        AdministrationService::AdministrationClient administration_client,
+        AdministrationClient administration_client,
         HistoricalDataStore data_store);
 
       ~MarketDataServiceTestEnvironment();
@@ -114,7 +114,7 @@ namespace Nexus::MarketDataService::Tests {
         Beam::Services::ServiceProtocolServletContainer<
           Beam::ServiceLocator::MetaAuthenticationServletAdapter<
             MetaMarketDataRegistryServlet<MarketDataRegistry*,
-              HistoricalDataStore, AdministrationService::AdministrationClient>,
+              HistoricalDataStore, AdministrationClient>,
             Beam::ServiceLocator::ServiceLocatorClientBox,
             Beam::NativePointerPolicy>,
           ServerConnection*,
@@ -123,7 +123,7 @@ namespace Nexus::MarketDataService::Tests {
           std::shared_ptr<Beam::Threading::TriggerTimer>>;
       using BaseRegistryServlet = MarketDataRegistryServlet<
         ServiceProtocolServletContainer, MarketDataRegistry*,
-        HistoricalDataStore, AdministrationService::AdministrationClient>;
+        HistoricalDataStore, AdministrationClient>;
       using RegistryServlet =
         Beam::ServiceLocator::AuthenticationServletAdapter<
           ServiceProtocolServletContainer, BaseRegistryServlet*,
@@ -145,7 +145,7 @@ namespace Nexus::MarketDataService::Tests {
             Beam::Codecs::NullEncoder>,
           Beam::Threading::TriggerTimer>;
       Beam::ServiceLocator::ServiceLocatorClientBox m_service_locator_client;
-      AdministrationService::AdministrationClient m_administration_client;
+      AdministrationClient m_administration_client;
       MarketDataRegistry m_registry;
       ServerConnection m_server_connection;
       HistoricalDataStore m_data_store;
@@ -161,8 +161,7 @@ namespace Nexus::MarketDataService::Tests {
         make_market_data_service_test_environment(
       Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
         service_locator_environment,
-      AdministrationService::Tests::AdministrationServiceTestEnvironment&
-        administration_environment) {
+      Tests::AdministrationServiceTestEnvironment& administration_environment) {
     auto& root_client = service_locator_environment.GetRoot();
     auto services_root =
       Beam::ServiceLocator::LoadOrCreateDirectory(root_client, "services",
@@ -195,8 +194,7 @@ namespace Nexus::MarketDataService::Tests {
   inline MarketDataClient make_market_data_client(
       Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
         service_locator_environment,
-      AdministrationService::Tests::AdministrationServiceTestEnvironment&
-        administration_environment,
+      Tests::AdministrationServiceTestEnvironment& administration_environment,
       MarketDataServiceTestEnvironment& market_data_environment,
       const std::string& account_name) {
     service_locator_environment.GetRoot().MakeAccount(account_name, "",
@@ -210,15 +208,14 @@ namespace Nexus::MarketDataService::Tests {
 
   inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
     Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
-    AdministrationService::AdministrationClient administration_client)
+    AdministrationClient administration_client)
     : MarketDataServiceTestEnvironment(std::move(service_locator_client),
         std::move(administration_client),
         HistoricalDataStore(std::in_place_type<LocalHistoricalDataStore>)) {}
 
   inline MarketDataServiceTestEnvironment::MarketDataServiceTestEnvironment(
     Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
-    AdministrationService::AdministrationClient administration_client,
-    HistoricalDataStore data_store)
+    AdministrationClient administration_client, HistoricalDataStore data_store)
     : m_service_locator_client(std::move(service_locator_client)),
       m_administration_client(std::move(administration_client)),
       m_registry(DEFAULT_VENUES, get_default_time_zone_database()),

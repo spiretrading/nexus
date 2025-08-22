@@ -3,7 +3,7 @@
 #include <ostream>
 #include <Beam/Collections/Enum.hpp>
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /** Enumerates the roles of a Nexus account has. */
   BEAM_ENUM(AccountRole,

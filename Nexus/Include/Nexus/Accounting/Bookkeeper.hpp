@@ -9,7 +9,7 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 
-namespace Nexus::Accounting {
+namespace Nexus {
 
   /** Performs bookkeeping and cost management of inventories. */
   class Bookkeeper {

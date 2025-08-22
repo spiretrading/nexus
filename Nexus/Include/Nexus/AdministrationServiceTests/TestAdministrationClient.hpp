@@ -10,7 +10,7 @@
 #include <boost/throw_exception.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 
-namespace Nexus::AdministrationService::Tests {
+namespace Nexus::Tests {
 
   /**
    * Implements an AdministrationClient for testing by pushing all operations

@@ -11,7 +11,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
 
-namespace Nexus::Accounting {
+namespace Nexus {
 
   /** Stores information about a single position. */
   struct Position {
@@ -88,9 +88,9 @@ namespace Nexus::Accounting {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::Accounting::Position> {
+  struct Shuttle<Nexus::Position> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::Accounting::Position& value,
+    void operator ()(Shuttler& shuttle, Nexus::Position& value,
         unsigned int version) const {
       shuttle.Shuttle("security", value.m_security);
       shuttle.Shuttle("currency", value.m_currency);
@@ -100,9 +100,9 @@ namespace Beam::Serialization {
   };
 
   template<>
-  struct Shuttle<Nexus::Accounting::Position::Key> {
+  struct Shuttle<Nexus::Position::Key> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::Accounting::Position::Key& key,
+    void operator ()(Shuttler& shuttle, Nexus::Position::Key& key,
         unsigned int version) const {
       shuttle.Shuttle("security", key.m_security);
       shuttle.Shuttle("currency", key.m_currency);
@@ -112,8 +112,8 @@ namespace Beam::Serialization {
 
 namespace std {
   template<>
-  struct hash<Nexus::Accounting::Position::Key> {
-    size_t operator()(const Nexus::Accounting::Position::Key& value) const {
+  struct hash<Nexus::Position::Key> {
+    size_t operator()(const Nexus::Position::Key& value) const {
       auto seed = size_t(0);
       boost::hash_combine(seed, std::hash<Nexus::Security>()(value.m_security));
       boost::hash_combine(seed, value.m_currency);

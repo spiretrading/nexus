@@ -7,7 +7,6 @@
 using namespace Beam;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::Accounting;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
 

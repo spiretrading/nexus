@@ -12,7 +12,7 @@ namespace Nexus::MarketDataService {
     public:
 
       /** The session's roles. */
-      AdministrationService::AccountRoles m_roles;
+      AccountRoles m_roles;
 
       /** The entitlements granted to the session. */
       EntitlementSet m_entitlements;
@@ -27,9 +27,9 @@ namespace Nexus::MarketDataService {
    */
   inline bool has_entitlement(const MarketDataRegistrySession& session,
       const EntitlementKey& key, MarketDataType type) {
-    return session.m_roles.Test(AdministrationService::AccountRole::SERVICE) ||
-      session.m_roles.Test(AdministrationService::AccountRole::ADMINISTRATOR) ||
-      session.m_entitlements.contains(key, type);
+    return session.m_roles.Test(AccountRole::SERVICE) ||
+      session.m_roles.Test(AccountRole::ADMINISTRATOR) ||
+        session.m_entitlements.contains(key, type);
   }
 
   /**
@@ -41,9 +41,9 @@ namespace Nexus::MarketDataService {
   template<typename T>
   bool has_entitlement(const MarketDataRegistrySession& session,
       const SecurityMarketDataQuery& query) {
-    return session.m_roles.Test(AdministrationService::AccountRole::SERVICE) ||
-      session.m_roles.Test(AdministrationService::AccountRole::ADMINISTRATOR) ||
-      contains<T>(session.m_entitlements, query);
+    return session.m_roles.Test(AccountRole::SERVICE) ||
+      session.m_roles.Test(AccountRole::ADMINISTRATOR) ||
+        contains<T>(session.m_entitlements, query);
   }
 
   /**
@@ -55,9 +55,9 @@ namespace Nexus::MarketDataService {
   template<typename T>
   bool has_entitlement(const MarketDataRegistrySession& session,
       const VenueMarketDataQuery& query) {
-    return session.m_roles.Test(AdministrationService::AccountRole::SERVICE) ||
-      session.m_roles.Test(AdministrationService::AccountRole::ADMINISTRATOR) ||
-      contains<T>(session.m_entitlements, query);
+    return session.m_roles.Test(AccountRole::SERVICE) ||
+      session.m_roles.Test(AccountRole::ADMINISTRATOR) ||
+        contains<T>(session.m_entitlements, query);
   }
 }
 

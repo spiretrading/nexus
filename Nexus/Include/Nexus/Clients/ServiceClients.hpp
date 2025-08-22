@@ -25,8 +25,7 @@ namespace Nexus {
       using RegistryClient =
         Beam::RegistryService::ApplicationRegistryClient::Client;
 
-      using AdministrationClient =
-        AdministrationService::ApplicationAdministrationClient::Client;
+      using AdministrationClient = ApplicationAdministrationClient::Client;
 
       using DefinitionsClient =
         DefinitionsService::ApplicationDefinitionsClient::Client;
@@ -75,8 +74,7 @@ namespace Nexus {
       Beam::ServiceLocator::ApplicationServiceLocatorClient
         m_service_locator_client;
       Beam::RegistryService::ApplicationRegistryClient m_registry_client;
-      AdministrationService::ApplicationAdministrationClient
-        m_administration_client;
+      ApplicationAdministrationClient m_administration_client;
       DefinitionsService::ApplicationDefinitionsClient m_definitions_client;
       MarketDataService::ApplicationMarketDataClient m_market_data_client;
       ChartingService::ApplicationChartingClient m_charting_client;

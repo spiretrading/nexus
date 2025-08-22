@@ -3,7 +3,7 @@
 #include <Beam/Services/ApplicationDefinitions.hpp>
 #include "Nexus/AdministrationService/ServiceAdministrationClient.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /** Encapsulates a standard AdministrationClient used in an application. */
   using ApplicationAdministrationClient = Beam::Services::ApplicationClient<

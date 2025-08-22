@@ -9,7 +9,7 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /** Stores the details of a single message. */
   class Message {
@@ -133,10 +133,9 @@ namespace Nexus::AdministrationService {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::AdministrationService::Message::Body> {
+  struct Shuttle<Nexus::Message::Body> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::AdministrationService::Message::Body& value,
+    void operator ()(Shuttler& shuttle, Nexus::Message::Body& value,
         unsigned int version) const {
       shuttle.Shuttle("content_type", value.m_content_type);
       shuttle.Shuttle("message", value.m_message);
@@ -144,10 +143,9 @@ namespace Beam::Serialization {
   };
 
   template<>
-  struct Shuttle<Nexus::AdministrationService::Message> {
+  struct Shuttle<Nexus::Message> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::AdministrationService::Message& value,
+    void operator ()(Shuttler& shuttle, Nexus::Message& value,
         unsigned int version) const {
       shuttle.Shuttle("id", value.m_id);
       shuttle.Shuttle("account", value.m_account);
@@ -155,8 +153,7 @@ namespace Beam::Serialization {
       shuttle.Shuttle("bodies", value.m_bodies);
       if(Beam::Serialization::IsReceiver<Shuttler>::value) {
         if(value.m_bodies.empty()) {
-          value.m_bodies.push_back(
-            Nexus::AdministrationService::Message::Body::EMPTY);
+          value.m_bodies.push_back(Nexus::Message::Body::EMPTY);
         }
       }
     }

@@ -21,7 +21,7 @@ namespace Nexus::RiskService {
 
   /** Represents an entry in a RiskPortfolio table. */
   using RiskPortfolioEntry =
-    Beam::KeyValuePair<RiskPortfolioKey, Accounting::Inventory>;
+    Beam::KeyValuePair<RiskPortfolioKey, Inventory>;
 
   /**
    * Consolidates the RiskControllers for multiple accounts.
@@ -34,8 +34,7 @@ namespace Nexus::RiskService {
    * @param <T> The type of TimeClient to use.
    * @param <D> The type of RiskDataStore to use.
    */
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   class ConsolidatedRiskController {
@@ -114,8 +113,7 @@ namespace Nexus::RiskService {
       DestinationDatabase m_destinations;
       Beam::TablePublisher<Beam::ServiceLocator::DirectoryEntry, RiskState>
         m_state_publisher;
-      Beam::TablePublisher<RiskPortfolioKey, Accounting::Inventory>
-        m_portfolio_publisher;
+      Beam::TablePublisher<RiskPortfolioKey, Inventory> m_portfolio_publisher;
       std::vector<std::unique_ptr<RiskController>> m_controllers;
       Beam::RoutineTaskQueue m_tasks;
       Beam::QueuePipe<Beam::ServiceLocator::DirectoryEntry> m_accounts_pipe;
@@ -128,11 +126,10 @@ namespace Nexus::RiskService {
         const RiskState& state);
       void on_portfolio_entry(
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const Accounting::PortfolioUpdateEntry& entry);
+        const PortfolioUpdateEntry& entry);
   };
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   ConsolidatedRiskController(
@@ -144,8 +141,7 @@ namespace Nexus::RiskService {
       typename std::invoke_result_t<R>::element_type,
       std::remove_reference_t<T>, std::remove_reference_t<D>>;
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   template<Beam::Initializes<A> AF, Beam::Initializes<M> MF,
@@ -172,8 +168,7 @@ namespace Nexus::RiskService {
           std::bind_front(&ConsolidatedRiskController::on_account, this))) {}
   BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   const Beam::Publisher<RiskStateEntry>& ConsolidatedRiskController<
@@ -181,8 +176,7 @@ namespace Nexus::RiskService {
     return m_state_publisher;
   }
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   const Beam::Publisher<RiskPortfolioEntry>& ConsolidatedRiskController<
@@ -190,8 +184,7 @@ namespace Nexus::RiskService {
     return m_portfolio_publisher;
   }
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   void ConsolidatedRiskController<A, M, O, R, T, D>::on_account(
@@ -218,13 +211,12 @@ namespace Nexus::RiskService {
       m_tasks.GetSlot<RiskState>(std::bind_front(
         &ConsolidatedRiskController::on_risk_state, this, account)));
     controller->get_portfolio_publisher().Monitor(
-      m_tasks.GetSlot<Accounting::PortfolioUpdateEntry>(std::bind_front(
+      m_tasks.GetSlot<PortfolioUpdateEntry>(std::bind_front(
         &ConsolidatedRiskController::on_portfolio_entry, this, account)));
     m_controllers.push_back(std::move(controller));
   }
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   void ConsolidatedRiskController<A, M, O, R, T, D>::on_risk_state(
@@ -233,13 +225,12 @@ namespace Nexus::RiskService {
     m_state_publisher.Push(account, state);
   }
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   void ConsolidatedRiskController<A, M, O, R, T, D>::on_portfolio_entry(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const Accounting::PortfolioUpdateEntry& entry) {
+      const PortfolioUpdateEntry& entry) {
     auto key = RiskPortfolioKey(
       account, entry.m_security_inventory.m_position.m_security);
     m_portfolio_publisher.Push(std::move(key), entry.m_security_inventory);

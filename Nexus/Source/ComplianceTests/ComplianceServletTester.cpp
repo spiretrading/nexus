@@ -21,9 +21,8 @@ using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::AdministrationService::Tests;
 using namespace Nexus::Compliance;
+using namespace Nexus::Tests;
 
 namespace {
   struct Fixture {

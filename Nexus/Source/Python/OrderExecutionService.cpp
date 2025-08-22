@@ -28,7 +28,6 @@ using namespace Beam::ServiceLocator;
 using namespace Beam::TimeService;
 using namespace Beam::UidService;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::OrderExecutionService::Tests;
 using namespace pybind11;

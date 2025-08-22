@@ -4,7 +4,7 @@
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 
-namespace Nexus::AdministrationService::Tests {
+namespace Nexus::Tests {
   TEST_CASE_TEMPLATE_DEFINE(
       "AdministrationDataStore", T, AdministrationDataStoreTestSuite) {
     using namespace Beam;

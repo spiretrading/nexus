@@ -16,7 +16,7 @@
 #include "Nexus/AdministrationService/AdministrationServices.hpp"
 #include "Nexus/AdministrationService/AdministrationSession.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /**
    * Provides management and administration services for Nexus accounts.

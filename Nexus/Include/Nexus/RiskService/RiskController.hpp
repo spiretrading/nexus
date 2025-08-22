@@ -41,8 +41,7 @@ namespace Nexus::RiskService {
    * @param <T> The type of TimeClient to use.
    * @param <D> The type of RiskDataStore to use.
    */
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   class RiskController {
@@ -95,9 +94,8 @@ namespace Nexus::RiskService {
       const Beam::Publisher<RiskState>& get_risk_state_publisher() const;
 
       /** Returns a Publisher for the account's Portfolio. */
-      const Beam::SnapshotPublisher<
-        Accounting::PortfolioUpdateEntry, RiskPortfolio*>&
-          get_portfolio_publisher() const;
+      const Beam::SnapshotPublisher<PortfolioUpdateEntry, RiskPortfolio*>&
+        get_portfolio_publisher() const;
 
     private:
       mutable Beam::Threading::Mutex m_mutex;
@@ -107,7 +105,7 @@ namespace Nexus::RiskService {
       Beam::GetOptionalLocalPtr<R> m_transition_timer;
       Beam::GetOptionalLocalPtr<D> m_data_store;
       boost::optional<RiskStateModel<T>> m_state_model;
-      boost::optional<Accounting::PortfolioController<RiskPortfolio*, M>>
+      boost::optional<PortfolioController<RiskPortfolio*, M>>
         m_portfolio_controller;
       boost::optional<RiskTransitionModel<OrderExecutionClient*>>
         m_transition_model;
@@ -127,15 +125,14 @@ namespace Nexus::RiskService {
       void update(F&& f);
       void on_transition_timer(Beam::Threading::Timer::Result result);
       void on_risk_parameters_update(const RiskParameters& parameters);
-      void on_portfolio_update(const Accounting::PortfolioUpdateEntry& update);
+      void on_portfolio_update(const PortfolioUpdateEntry& update);
       void on_order_submission(
         const OrderExecutionService::SequencedOrder& order);
       void on_execution_report(const OrderExecutionService::Order& order,
         const OrderExecutionService::ExecutionReport& report);
   };
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   RiskController(const Beam::ServiceLocator::DirectoryEntry&, A&&, M&&, O&&,
@@ -145,8 +142,7 @@ namespace Nexus::RiskService {
       std::remove_reference_t<R>, std::remove_reference_t<T>,
       std::remove_reference_t<D>>;
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   template<Beam::Initializes<A> AF, Beam::Initializes<M> MF,
@@ -167,7 +163,7 @@ namespace Nexus::RiskService {
     auto lock = std::lock_guard(m_mutex);
     auto [portfolio, sequence, excluded_orders] =
       make_portfolio(std::move(venues));
-    auto inventories = std::vector<Accounting::Inventory>();
+    auto inventories = std::vector<Inventory>();
     for(auto& inventory : portfolio.get_bookkeeper().get_inventory_range()) {
       inventories.push_back(inventory);
     }
@@ -195,7 +191,7 @@ namespace Nexus::RiskService {
       m_tasks.GetSlot<OrderExecutionService::SequencedOrder>(
         std::bind_front(&RiskController::on_order_submission, this)));
     m_portfolio_controller->get_publisher().Monitor(
-      m_tasks.GetSlot<Accounting::PortfolioUpdateEntry>(
+      m_tasks.GetSlot<PortfolioUpdateEntry>(
         std::bind_front(&RiskController::on_portfolio_update, this)));
     m_administration_client->get_risk_parameters_publisher(m_account).Monitor(
       m_tasks.GetSlot<RiskParameters>(
@@ -207,8 +203,7 @@ namespace Nexus::RiskService {
     m_state_publisher.Push(m_state_model->get_risk_state());
   }
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   const Beam::Publisher<RiskState>&
@@ -216,18 +211,15 @@ namespace Nexus::RiskService {
     return m_state_publisher;
   }
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
-  const Beam::SnapshotPublisher<
-      Accounting::PortfolioUpdateEntry, RiskPortfolio*>&
-        RiskController<A, M, O, R, T, D>::get_portfolio_publisher() const {
+  const Beam::SnapshotPublisher<PortfolioUpdateEntry, RiskPortfolio*>&
+      RiskController<A, M, O, R, T, D>::get_portfolio_publisher() const {
     return m_portfolio_controller->get_publisher();
   }
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   void RiskController<A, M, O, R, T, D>::update_snapshot(
@@ -254,8 +246,7 @@ namespace Nexus::RiskService {
     }
   }
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   std::tuple<RiskPortfolio, Beam::Queries::Sequence,
@@ -280,8 +271,7 @@ namespace Nexus::RiskService {
       std::move(excluded_orders));
   }
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   template<typename F>
@@ -295,8 +285,7 @@ namespace Nexus::RiskService {
     }
   }
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   void RiskController<A, M, O, R, T, D>::on_transition_timer(
@@ -307,8 +296,7 @@ namespace Nexus::RiskService {
     m_transition_timer->Start();
   }
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   void RiskController<A, M, O, R, T, D>::on_risk_parameters_update(
@@ -318,12 +306,11 @@ namespace Nexus::RiskService {
     });
   }
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   void RiskController<A, M, O, R, T, D>::on_portfolio_update(
-      const Accounting::PortfolioUpdateEntry& update) {
+      const PortfolioUpdateEntry& update) {
     this->update([&] {
       m_portfolio_controller->get_publisher().With([&] {
         m_state_model->update_portfolio();
@@ -331,8 +318,7 @@ namespace Nexus::RiskService {
     });
   }
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   void RiskController<A, M, O, R, T, D>::on_order_submission(
@@ -345,8 +331,7 @@ namespace Nexus::RiskService {
         &RiskController::on_execution_report, this, std::cref(**order))));
   }
 
-  template<AdministrationService::IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
+  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
     OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
     IsRiskDataStore D>
   void RiskController<A, M, O, R, T, D>::on_execution_report(

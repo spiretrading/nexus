@@ -32,7 +32,7 @@ namespace Nexus::Python {
    * @param name The name of the class.
    * @return The exported AdministrationClient.
    */
-  template<AdministrationService::IsAdministrationClient C>
+  template<IsAdministrationClient C>
   auto export_administration_client(
       pybind11::module& module, std::string_view name) {
     auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
@@ -41,19 +41,16 @@ namespace Nexus::Python {
       def("load_services_root_entry", &C::load_services_root_entry).
       def("load_trading_groups_root_entry", &C::load_trading_groups_root_entry).
       def("check_administrator", &C::check_administrator).
-      def("load_account_roles",
-        static_cast<AdministrationService::AccountRoles (C::*)(
-          const Beam::ServiceLocator::DirectoryEntry&)>(
-            &C::load_account_roles)).
-      def("load_account_roles",
-        static_cast<AdministrationService::AccountRoles (C::*)(
-          const Beam::ServiceLocator::DirectoryEntry&,
-          const Beam::ServiceLocator::DirectoryEntry&)>(&C::load_account_roles)).
+      def("load_account_roles", static_cast<AccountRoles (C::*)(
+        const Beam::ServiceLocator::DirectoryEntry&)>(&C::load_account_roles)).
+      def("load_account_roles", static_cast<AccountRoles (C::*)(
+        const Beam::ServiceLocator::DirectoryEntry&,
+        const Beam::ServiceLocator::DirectoryEntry&)>(&C::load_account_roles)).
       def("load_parent_trading_group", &C::load_parent_trading_group).
       def("load_identity", &C::load_identity).
-      def("store",
-        static_cast<void (C::*)(const Beam::ServiceLocator::DirectoryEntry&,
-          const AdministrationService::AccountIdentity&)>(&C::store)).
+      def("store", static_cast<void (C::*)(
+        const Beam::ServiceLocator::DirectoryEntry&, const AccountIdentity&)>(
+          &C::store)).
       def("load_trading_group", &C::load_trading_group).
       def("load_managed_trading_groups", &C::load_managed_trading_groups).
       def("load_administrators", &C::load_administrators).
@@ -79,17 +76,13 @@ namespace Nexus::Python {
       def("load_managed_account_modification_request_ids",
         &C::load_managed_account_modification_request_ids).
       def("load_entitlement_modification", &C::load_entitlement_modification).
-      def("submit",
-        static_cast<AdministrationService::AccountModificationRequest (C::*)(
-          const Beam::ServiceLocator::DirectoryEntry&,
-          const AdministrationService::EntitlementModification&,
-          const AdministrationService::Message&)>(&C::submit)).
+      def("submit", static_cast<AccountModificationRequest (C::*)(
+        const Beam::ServiceLocator::DirectoryEntry&,
+        const EntitlementModification&, const Message&)>(&C::submit)).
       def("load_risk_modification", &C::load_risk_modification).
-      def("submit",
-        static_cast<AdministrationService::AccountModificationRequest (C::*)(
-          const Beam::ServiceLocator::DirectoryEntry&,
-          const AdministrationService::RiskModification&,
-          const AdministrationService::Message&)>(&C::submit)).
+      def("submit", static_cast<AccountModificationRequest (C::*)(
+        const Beam::ServiceLocator::DirectoryEntry&, const RiskModification&,
+        const Message&)>(&C::submit)).
       def("load_account_modification_request_status",
         &C::load_account_modification_request_status).
       def("approve_account_modification_request",
@@ -111,16 +104,16 @@ namespace Nexus::Python {
    * @param name The name of the class.
    * @return The exported AdministrationDataStore.
    */
-  template<AdministrationService::IsAdministrationDataStore D>
+  template<IsAdministrationDataStore D>
   auto export_administration_data_store(
       pybind11::module& module, std::string_view name) {
     auto data_store =
       pybind11::class_<D, std::shared_ptr<D>>(module, name.data()).
         def("load_all_account_identities", &D::load_all_account_identities).
         def("load_identity", &D::load_identity).
-        def("store",
-          static_cast<void (D::*)(const Beam::ServiceLocator::DirectoryEntry&,
-            const AdministrationService::AccountIdentity&)>(&D::store)).
+        def("store", static_cast<void (D::*)(
+          const Beam::ServiceLocator::DirectoryEntry&, const AccountIdentity&)>(
+            &D::store)).
         def("load_all_risk_parameters", &D::load_all_risk_parameters).
         def("load_risk_parameters", &D::load_risk_parameters).
         def("store",
@@ -134,33 +127,28 @@ namespace Nexus::Python {
         def("load_account_modification_request",
           &D::load_account_modification_request).
         def("load_account_modification_request_ids",
-          static_cast<std::vector<
-            AdministrationService::AccountModificationRequest::Id> (D::*)(
-              const Beam::ServiceLocator::DirectoryEntry&,
-              AdministrationService::AccountModificationRequest::Id, int)>(
-            &D::load_account_modification_request_ids)).
+          static_cast<std::vector<AccountModificationRequest::Id> (D::*)(
+            const Beam::ServiceLocator::DirectoryEntry&,
+            AccountModificationRequest::Id, int)>(
+              &D::load_account_modification_request_ids)).
         def("load_account_modification_request_ids",
-          static_cast<std::vector<
-            AdministrationService::AccountModificationRequest::Id> (D::*)(
-              AdministrationService::AccountModificationRequest::Id, int)>(
-            &D::load_account_modification_request_ids)).
+          static_cast<std::vector<AccountModificationRequest::Id> (D::*)(
+            AccountModificationRequest::Id, int)>(
+              &D::load_account_modification_request_ids)).
         def("load_entitlement_modification", &D::load_entitlement_modification).
         def("store", static_cast<void (D::*)(
-          const AdministrationService::AccountModificationRequest&,
-          const AdministrationService::EntitlementModification&)>(&D::store)).
+          const AccountModificationRequest&, const EntitlementModification&)>(
+            &D::store)).
         def("load_risk_modification", &D::load_risk_modification).
         def("store", static_cast<void (D::*)(
-          const AdministrationService::AccountModificationRequest&,
-          const AdministrationService::RiskModification&)>(&D::store)).
+          const AccountModificationRequest&, const RiskModification&)>(
+            &D::store)).
         def("store", static_cast<void (D::*)(
-          AdministrationService::AccountModificationRequest::Id,
-          const AdministrationService::Message&)>(&D::store)).
+          AccountModificationRequest::Id, const Message&)>(&D::store)).
         def("load_account_modification_request_status",
           &D::load_account_modification_request_status).
-        def("store", static_cast<void (D::*)(
-          AdministrationService::AccountModificationRequest::Id,
-          const AdministrationService::AccountModificationRequest::Update&)>(
-            &D::store)).
+        def("store", static_cast<void (D::*)(AccountModificationRequest::Id,
+          const AccountModificationRequest::Update&)>(&D::store)).
         def("load_last_message_id", &D::load_last_message_id).
         def("load_message", &D::load_message).
         def("load_message_ids", &D::load_message_ids).
@@ -176,7 +164,7 @@ namespace Nexus::Python {
   void export_administration_data_store_exception(pybind11::module& module);
 
   /**
-   * Exports the AdministrationService namespace.
+   * Exports all sdministration service functionality.
    * @param module The module to export to.
    */
   void export_administration_service(pybind11::module& module);

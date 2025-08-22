@@ -30,7 +30,7 @@ namespace Nexus {
       using RegistryClient = Beam::RegistryService::RegistryClientBox;
 
       /** The administration client interface. */
-      using AdministrationClient = AdministrationService::AdministrationClient;
+      using AdministrationClient = Nexus::AdministrationClient;
 
       /** The definitions client interface. */
       using DefinitionsClient = DefinitionsService::DefinitionsClient;

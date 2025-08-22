@@ -24,7 +24,6 @@ using namespace Beam::Python;
 using namespace Beam::ServiceLocator;
 using namespace Beam::TimeService;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
 using namespace Nexus::Compliance;
 using namespace Nexus::Compliance::Tests;
 using namespace Nexus::Python;

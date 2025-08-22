@@ -8,7 +8,7 @@
 #include "Nexus/AdministrationService/AdministrationDataStoreException.hpp"
 #include "Nexus/AdministrationService/SqlDefinitions.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /**
    * Stores account administration data in a MySQL database.

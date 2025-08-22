@@ -6,7 +6,7 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /** Stores a request to modify an account. */
   class AccountModificationRequest {
@@ -216,11 +216,10 @@ namespace Nexus::AdministrationService {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<
-      Nexus::AdministrationService::AccountModificationRequest::Update> {
+  struct Shuttle<Nexus::AccountModificationRequest::Update> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
-        Nexus::AdministrationService::AccountModificationRequest::Update& value,
+        Nexus::AccountModificationRequest::Update& value,
         unsigned int version) const {
       shuttle.Shuttle("status", value.m_status);
       shuttle.Shuttle("account", value.m_account);
@@ -230,11 +229,10 @@ namespace Beam::Serialization {
   };
 
   template<>
-  struct Shuttle<Nexus::AdministrationService::AccountModificationRequest> {
+  struct Shuttle<Nexus::AccountModificationRequest> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
-        Nexus::AdministrationService::AccountModificationRequest& value,
-        unsigned int version) const {
+        Nexus::AccountModificationRequest& value, unsigned int version) const {
       shuttle.Shuttle("id", value.m_id);
       shuttle.Shuttle("type", value.m_type);
       shuttle.Shuttle("account", value.m_account);

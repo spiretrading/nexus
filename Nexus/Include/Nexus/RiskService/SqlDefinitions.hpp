@@ -15,15 +15,15 @@ namespace Nexus::RiskService {
     std::uint32_t m_account;
 
     /** The inventory stored. */
-    Accounting::Inventory m_inventory;
+    Inventory m_inventory;
   };
 
   /** Returns a row representing a InventoryEntry. */
   inline const auto& get_inventory_entries_row() {
     static auto ROW = Viper::Row<InventoryEntry>().
       add_column("account", &InventoryEntry::m_account).
-        extend(Viper::Row<Accounting::Inventory>().
-          extend(Viper::Row<Accounting::Position>().
+        extend(Viper::Row<Inventory>().
+          extend(Viper::Row<Position>().
             extend(Viper::Row<Security>().
               add_column("symbol", Viper::varchar(16),
                 [] (auto& row) {
@@ -80,7 +80,7 @@ namespace Nexus::RiskService {
   /** Converts a RiskInventory into a InventoryEntry. */
   inline auto convert_inventory_snapshot_inventories(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    return [=] (const Accounting::Inventory& inventory) {
+    return [=] (const Inventory& inventory) {
       return InventoryEntry(account.m_id, inventory);
     };
   }

@@ -11,7 +11,7 @@
 #include "Nexus/Accounting/Inventory.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 
-namespace Nexus::Accounting {
+namespace Nexus {
 
   /**
    * Maintains an Order book for the purpose of keeping track of positions and

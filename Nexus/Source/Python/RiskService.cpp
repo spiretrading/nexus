@@ -21,8 +21,6 @@ using namespace Beam::ServiceLocator;
 using namespace Beam::Threading;
 using namespace Beam::TimeService;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::Accounting;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::RiskService;

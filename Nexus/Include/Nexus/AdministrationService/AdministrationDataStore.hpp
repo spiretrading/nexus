@@ -13,7 +13,7 @@
 #include "Nexus/RiskService/RiskParameters.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /** Provides a generic interface over an arbitrary AdministrationDataStore. */
   class AdministrationDataStore {

@@ -11,10 +11,9 @@ using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::AdministrationService::Tests;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::RiskService;
+using namespace Nexus::Tests;
 
 namespace {
   template<typename O, typename F, typename R, typename E>

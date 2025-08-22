@@ -69,7 +69,7 @@ namespace Nexus {
         get_definitions_environment();
 
       /** Returns the AdministrationServiceTestEnvironment. */
-      AdministrationService::Tests::AdministrationServiceTestEnvironment&
+      Tests::AdministrationServiceTestEnvironment&
         get_administration_environment();
 
       /** Returns the MarketDataServiceTestEnvironment. */
@@ -112,9 +112,8 @@ namespace Nexus {
         m_registry_environment;
       DefinitionsService::Tests::DefinitionsServiceTestEnvironment
         m_definitions_environment;
-      AdministrationService::Tests::AdministrationServiceTestEnvironment
-        m_administration_environment;
-      AdministrationService::AdministrationClient m_administration_client;
+      Tests::AdministrationServiceTestEnvironment m_administration_environment;
+      AdministrationClient m_administration_client;
       MarketDataService::Tests::MarketDataServiceTestEnvironment
         m_market_data_environment;
       BacktesterMarketDataService m_market_data_service;
@@ -240,7 +239,7 @@ namespace Nexus {
     return m_definitions_environment;
   }
 
-  inline AdministrationService::Tests::AdministrationServiceTestEnvironment&
+  inline Tests::AdministrationServiceTestEnvironment&
       BacktesterEnvironment::get_administration_environment() {
     return m_administration_environment;
   }

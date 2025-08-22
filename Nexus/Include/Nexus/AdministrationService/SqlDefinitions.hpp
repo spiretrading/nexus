@@ -6,7 +6,7 @@
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 #include "Nexus/Definitions/SqlDefinitions.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /** Returns a row representing an AccountIdentity. */
   inline const auto& get_account_identity_row() {

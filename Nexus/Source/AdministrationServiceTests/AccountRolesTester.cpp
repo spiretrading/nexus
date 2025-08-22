@@ -3,7 +3,6 @@
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
 
 TEST_SUITE("AccountRoles") {
   TEST_CASE("stream") {

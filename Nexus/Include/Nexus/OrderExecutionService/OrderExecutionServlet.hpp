@@ -42,8 +42,8 @@ namespace Nexus::OrderExecutionService {
    * @param <D> The type of OrderExecutionDataStore to use.
    */
   template<typename C, typename T, typename S, typename U,
-    AdministrationService::IsAdministrationClient A,
-    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
+    IsAdministrationClient A, IsOrderExecutionDriver O,
+    IsOrderExecutionDataStore D>
   class OrderExecutionServlet {
     public:
       using Container = C;
@@ -101,8 +101,7 @@ namespace Nexus::OrderExecutionService {
       void Close();
 
     private:
-      using SyncShortingModel =
-        Beam::Threading::Sync<Accounting::ShortingModel>;
+      using SyncShortingModel = Beam::Threading::Sync<ShortingModel>;
       boost::posix_time::ptime m_session_start_time;
       VenueDatabase m_venues;
       DestinationDatabase m_destinations;
@@ -153,8 +152,7 @@ namespace Nexus::OrderExecutionService {
       void on_cancel_order(ServiceProtocolClient& client, OrderId id);
   };
 
-  template<typename T, typename S, typename U,
-    AdministrationService::IsAdministrationClient A,
+  template<typename T, typename S, typename U, IsAdministrationClient A,
     IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
   struct MetaOrderExecutionServlet {
     using Session = OrderExecutionSession;
@@ -165,8 +163,8 @@ namespace Nexus::OrderExecutionService {
   };
 
   template<typename C, typename T, typename S, typename U,
-    AdministrationService::IsAdministrationClient A,
-    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
+    IsAdministrationClient A, IsOrderExecutionDriver O,
+    IsOrderExecutionDataStore D>
   template<Beam::Initializes<T> TF, Beam::Initializes<S> SF,
     Beam::Initializes<U> UF, Beam::Initializes<A> AF, Beam::Initializes<O> OF,
     Beam::Initializes<D> DF>
@@ -197,8 +195,8 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C, typename T, typename S, typename U,
-    AdministrationService::IsAdministrationClient A,
-    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
+    IsAdministrationClient A, IsOrderExecutionDriver O,
+    IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
@@ -219,8 +217,8 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C, typename T, typename S, typename U,
-    AdministrationService::IsAdministrationClient A,
-    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
+    IsAdministrationClient A, IsOrderExecutionDriver O,
+    IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::HandleClientAccepted(
       ServiceProtocolClient& client) {
     auto& session = client.GetSession();
@@ -243,8 +241,8 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C, typename T, typename S, typename U,
-    AdministrationService::IsAdministrationClient A,
-    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
+    IsAdministrationClient A, IsOrderExecutionDriver O,
+    IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::HandleClientClosed(
       ServiceProtocolClient& client) {
     m_execution_report_subscriptions.RemoveAll(client);
@@ -253,8 +251,8 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C, typename T, typename S, typename U,
-    AdministrationService::IsAdministrationClient A,
-    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
+    IsAdministrationClient A, IsOrderExecutionDriver O,
+    IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::Close() {
     if(m_open_state.SetClosing()) {
       return;
@@ -268,8 +266,8 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C, typename T, typename S, typename U,
-    AdministrationService::IsAdministrationClient A,
-    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
+    IsAdministrationClient A, IsOrderExecutionDriver O,
+    IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::recover(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto recovery_query = AccountQuery();
@@ -332,8 +330,8 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C, typename T, typename S, typename U,
-    AdministrationService::IsAdministrationClient A,
-    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
+    IsAdministrationClient A, IsOrderExecutionDriver O,
+    IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::recover_trading_session() {
     auto accounts = m_service_locator_client->LoadAllAccounts();
     auto routines = Beam::Routines::RoutineHandlerGroup();
@@ -346,8 +344,8 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C, typename T, typename S, typename U,
-    AdministrationService::IsAdministrationClient A,
-    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
+    IsAdministrationClient A, IsOrderExecutionDriver O,
+    IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::on_execution_report(
       const ExecutionReport& report,
       const Beam::ServiceLocator::DirectoryEntry& account,
@@ -385,8 +383,8 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C, typename T, typename S, typename U,
-    AdministrationService::IsAdministrationClient A,
-    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
+    IsAdministrationClient A, IsOrderExecutionDriver O,
+    IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::on_load_order_by_id_request(
       Beam::Services::RequestToken<ServiceProtocolClient, LoadOrderByIdService>&
         request, OrderId id) {
@@ -432,8 +430,8 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C, typename T, typename S, typename U,
-    AdministrationService::IsAdministrationClient A,
-    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
+    IsAdministrationClient A, IsOrderExecutionDriver O,
+    IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::
       on_query_order_submissions_request(Beam::Services::RequestToken<
         ServiceProtocolClient, QueryOrderSubmissionsService>& request,
@@ -493,8 +491,8 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C, typename T, typename S, typename U,
-    AdministrationService::IsAdministrationClient A,
-    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
+    IsAdministrationClient A, IsOrderExecutionDriver O,
+    IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::
       on_query_execution_reports_request(Beam::Services::RequestToken<
         ServiceProtocolClient, QueryExecutionReportsService>& request,
@@ -523,8 +521,8 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C, typename T, typename S, typename U,
-    AdministrationService::IsAdministrationClient A,
-    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
+    IsAdministrationClient A, IsOrderExecutionDriver O,
+    IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::on_new_order_single_request(
       Beam::Services::RequestToken<ServiceProtocolClient,
         NewOrderSingleService>& request, const OrderFields& fields) {
@@ -610,8 +608,8 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C, typename T, typename S, typename U,
-    AdministrationService::IsAdministrationClient A,
-    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
+    IsAdministrationClient A, IsOrderExecutionDriver O,
+    IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::on_update_order_request(
       ServiceProtocolClient& client, OrderId id,
       const ExecutionReport& report) {
@@ -629,8 +627,8 @@ namespace Nexus::OrderExecutionService {
   }
 
   template<typename C, typename T, typename S, typename U,
-    AdministrationService::IsAdministrationClient A,
-    IsOrderExecutionDriver O, IsOrderExecutionDataStore D>
+    IsAdministrationClient A, IsOrderExecutionDriver O,
+    IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::on_cancel_order(
       ServiceProtocolClient& client, OrderId id) {
     auto& session = client.GetSession();

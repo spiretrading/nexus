@@ -30,8 +30,7 @@ namespace Nexus::MarketDataService {
    *          market data queries.
    * @param A The type of AdministrationClient to use.
    */
-  template<typename C, IsMarketDataClient M,
-    AdministrationService::IsAdministrationClient A>
+  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
   class MarketDataRelayServlet {
     public:
       using Container = C;
@@ -145,8 +144,7 @@ namespace Nexus::MarketDataService {
           Subscriptions& subscriptions);
   };
 
-  template<IsMarketDataClient M,
-    AdministrationService::IsAdministrationClient A>
+  template<IsMarketDataClient M, IsAdministrationClient A>
   struct MetaMarketDataRelayServlet {
     using Session = MarketDataRegistrySession;
     static constexpr auto SupportsParallelism = true;
@@ -157,14 +155,12 @@ namespace Nexus::MarketDataService {
     };
   };
 
-  template<typename C, IsMarketDataClient M,
-    AdministrationService::IsAdministrationClient A>
+  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
   MarketDataRelayServlet<C, M, A>::RealTimeQueryEntry::RealTimeQueryEntry(
     std::unique_ptr<MarketDataClient> market_data_client)
     : m_market_data_client(std::move(market_data_client)) {}
 
-  template<typename C, IsMarketDataClient M,
-    AdministrationService::IsAdministrationClient A>
+  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
   template<Beam::Initializes<A> AF>
   MarketDataRelayServlet<C, M, A>::MarketDataRelayServlet(
       boost::posix_time::time_duration client_timeout,
@@ -182,8 +178,7 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename C, IsMarketDataClient M,
-    AdministrationService::IsAdministrationClient A>
+  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
   void MarketDataRelayServlet<C, M, A>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
@@ -235,8 +230,7 @@ namespace Nexus::MarketDataService {
       &MarketDataRelayServlet::on_load_security_info_from_prefix, this));
   }
 
-  template<typename C, IsMarketDataClient M,
-    AdministrationService::IsAdministrationClient A>
+  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
   void MarketDataRelayServlet<C, M, A>::HandleClientAccepted(
       ServiceProtocolClient& client) {
     auto& session = client.GetSession();
@@ -256,8 +250,7 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename C, IsMarketDataClient M,
-    AdministrationService::IsAdministrationClient A>
+  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
   void MarketDataRelayServlet<C, M, A>::HandleClientClosed(
       ServiceProtocolClient& client) {
     m_order_imbalance_subscriptions.RemoveAll(client);
@@ -266,8 +259,7 @@ namespace Nexus::MarketDataService {
     m_time_and_sale_subscriptions.RemoveAll(client);
   }
 
-  template<typename C, IsMarketDataClient M,
-    AdministrationService::IsAdministrationClient A>
+  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
   void MarketDataRelayServlet<C, M, A>::Close() {
     if(m_open_state.SetClosing()) {
       return;
@@ -294,8 +286,7 @@ namespace Nexus::MarketDataService {
     m_open_state.Close();
   }
 
-  template<typename C, IsMarketDataClient M,
-    AdministrationService::IsAdministrationClient A>
+  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
   template<typename T>
   typename MarketDataRelayServlet<C, M, A>::RealTimeQueryEntry&
       MarketDataRelayServlet<C, M, A>::get_real_time_query_entry(
@@ -304,8 +295,7 @@ namespace Nexus::MarketDataService {
     return *m_real_time_query_entries[i];
   }
 
-  template<typename C, IsMarketDataClient M,
-    AdministrationService::IsAdministrationClient A>
+  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
   template<typename Service, typename Query, typename Subscriptions,
     typename RealTimeSubscriptions>
   void MarketDataRelayServlet<C, M, A>::handle_query_request(
@@ -392,8 +382,7 @@ namespace Nexus::MarketDataService {
     }
   }
 
-  template<typename C, IsMarketDataClient M,
-    AdministrationService::IsAdministrationClient A>
+  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
   template<typename Subscriptions>
   void MarketDataRelayServlet<C, M, A>::on_end_query(
       ServiceProtocolClient& client, const typename Subscriptions::Index& index,
@@ -401,8 +390,7 @@ namespace Nexus::MarketDataService {
     subscriptions.End(index, id);
   }
 
-  template<typename C, IsMarketDataClient M,
-    AdministrationService::IsAdministrationClient A>
+  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
   SecuritySnapshot MarketDataRelayServlet<C, M, A>::on_load_security_snapshot(
       ServiceProtocolClient& client, const Security& security) {
     auto& session = client.GetSession();
@@ -433,8 +421,7 @@ namespace Nexus::MarketDataService {
     return snapshot;
   }
 
-  template<typename C, IsMarketDataClient M,
-    AdministrationService::IsAdministrationClient A>
+  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
   SecurityTechnicals MarketDataRelayServlet<C, M, A>::
       on_load_security_technicals(
         ServiceProtocolClient& client, const Security& security) {
@@ -442,8 +429,7 @@ namespace Nexus::MarketDataService {
     return market_data_client->load_technicals(security);
   }
 
-  template<typename C, IsMarketDataClient M,
-    AdministrationService::IsAdministrationClient A>
+  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
   std::vector<SecurityInfo> MarketDataRelayServlet<C, M, A>::
       on_query_security_info(
         ServiceProtocolClient& client, const SecurityInfoQuery& query) {
@@ -451,8 +437,7 @@ namespace Nexus::MarketDataService {
     return market_data_client->query(query);
   }
 
-  template<typename C, IsMarketDataClient M,
-    AdministrationService::IsAdministrationClient A>
+  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
   std::vector<SecurityInfo> MarketDataRelayServlet<C, M, A>::
       on_load_security_info_from_prefix(
         ServiceProtocolClient& client, const std::string& prefix) {
@@ -460,8 +445,7 @@ namespace Nexus::MarketDataService {
     return market_data_client->load_security_info_from_prefix(prefix);
   }
 
-  template<typename C, IsMarketDataClient M,
-    AdministrationService::IsAdministrationClient A>
+  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
   template<typename Index, typename Value, typename Subscriptions>
   std::enable_if_t<!std::is_same_v<Value, SequencedBookQuote>>
       MarketDataRelayServlet<C, M, A>::on_real_time_update(
@@ -475,8 +459,7 @@ namespace Nexus::MarketDataService {
     });
   }
 
-  template<typename C, IsMarketDataClient M,
-    AdministrationService::IsAdministrationClient A>
+  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
   template<typename Index, typename Value, typename Subscriptions>
   std::enable_if_t<std::is_same_v<Value, SequencedBookQuote>>
       MarketDataRelayServlet<C, M, A>::on_real_time_update(

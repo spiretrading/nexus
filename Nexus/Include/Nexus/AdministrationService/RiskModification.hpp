@@ -4,7 +4,7 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Nexus/RiskService/RiskParameters.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /** Stores a request to update an account's risk parameters. */
   class RiskModification {
@@ -39,10 +39,9 @@ namespace Nexus::AdministrationService {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::AdministrationService::RiskModification> {
+  struct Shuttle<Nexus::RiskModification> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::AdministrationService::RiskModification& value,
+    void operator ()(Shuttler& shuttle, Nexus::RiskModification& value,
         unsigned int version) const {
       shuttle.Shuttle("parameters", value.m_parameters);
     }

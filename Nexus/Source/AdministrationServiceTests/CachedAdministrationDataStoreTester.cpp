@@ -5,8 +5,7 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::AdministrationService::Tests;
+using namespace Nexus::Tests;
 
 namespace {
   struct Builder {

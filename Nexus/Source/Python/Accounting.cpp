@@ -13,27 +13,25 @@ using namespace Aspen;
 using namespace Beam;
 using namespace Beam::Python;
 using namespace Nexus;
-using namespace Nexus::Accounting;
 using namespace Nexus::MarketDataService;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Python;
 using namespace pybind11;
 
 void Nexus::Python::export_accounting(module& module) {
-  auto submodule = module.def_submodule("accounting");
-  export_bookkeeper<Bookkeeper>(submodule, "Bookkeeper");
-  export_bookkeeper<TrueAverageBookkeeper>(submodule, "TrueAverageBookkeeper");
-  export_bookkeeper_reactor(submodule);
-  export_buying_power_model(submodule);
-  export_inventory(submodule);
-  export_portfolio<Bookkeeper>(submodule, "Portfolio");
-  export_portfolio<TrueAverageBookkeeper>(submodule, "TrueAveragePortfolio");
-  export_portfolio_update_entry(submodule);
-  export_portfolio_controller(submodule);
-  export_position(submodule);
-  export_position_order_book(submodule);
-  export_security_valuation(submodule);
-  export_shorting_model(submodule);
+  export_bookkeeper<Bookkeeper>(module, "Bookkeeper");
+  export_bookkeeper<TrueAverageBookkeeper>(module, "TrueAverageBookkeeper");
+  export_bookkeeper_reactor(module);
+  export_buying_power_model(module);
+  export_inventory(module);
+  export_portfolio<Bookkeeper>(module, "Portfolio");
+  export_portfolio<TrueAverageBookkeeper>(module, "TrueAveragePortfolio");
+  export_portfolio_update_entry(module);
+  export_portfolio_controller(module);
+  export_position(module);
+  export_position_order_book(module);
+  export_security_valuation(module);
+  export_shorting_model(module);
 }
 
 void Nexus::Python::export_bookkeeper_reactor(module& module) {
@@ -77,12 +75,12 @@ void Nexus::Python::export_inventory(module& module) {
     def(self == self).
     def(self != self).
     def("__str__", &boost::lexical_cast<std::string, Inventory>);
-  module.def("is_empty", &Accounting::is_empty);
+  module.def("is_empty", &is_empty);
 }
 
 void Nexus::Python::export_portfolio_controller(module& module) {
   using PortfolioController =
-    Accounting::PortfolioController<Portfolio<Bookkeeper>*, MarketDataClient>;
+    Nexus::PortfolioController<Portfolio<Bookkeeper>*, MarketDataClient>;
   ExportSnapshotPublisher<PortfolioUpdateEntry, Portfolio<Bookkeeper>*>(
     module, "PortfolioUpdateEntry");
   class_<PortfolioController>(module, "PortfolioController").
@@ -137,8 +135,8 @@ void Nexus::Python::export_position(module& module) {
     def(self != self).
     def("__hash__", std::hash<Position::Key>());
   implicitly_convertible<tuple, Position::Key>();
-  module.def("average_price", &Accounting::get_average_price);
-  module.def("side", &Accounting::get_side);
+  module.def("average_price", &get_average_price);
+  module.def("side", static_cast<Side (*)(const Position&)>(&get_side));
 }
 
 void Nexus::Python::export_position_order_book(module& module) {

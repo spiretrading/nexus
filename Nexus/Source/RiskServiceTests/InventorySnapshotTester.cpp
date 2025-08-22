@@ -16,14 +16,12 @@ using namespace Beam::UidService::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::Accounting;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::AdministrationService::Tests;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
 using namespace Nexus::OrderExecutionService;
 using namespace Nexus::OrderExecutionService::Tests;
 using namespace Nexus::RiskService;
+using namespace Nexus::Tests;
 
 namespace {
   struct Fixture {
