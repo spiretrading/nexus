@@ -1,4 +1,5 @@
 #include "Spire/Ui/WindowHighlight.hpp"
+#include <algorithm>
 #include <QApplication>
 #include <QPainter>
 #include <QScreen>
@@ -44,19 +45,18 @@ namespace {
     return threshold;
   }
 
-  auto contains(const std::vector<Window*>& windows, HWND hwnd) {
-    auto i = std::find_if(windows.begin(), windows.end(), [&] (auto value) {
-      return reinterpret_cast<HWND>(value->winId()) == hwnd;
+  auto contains(const std::vector<Window*>& windows, WId wid) {
+    return std::ranges::any_of(windows, [&] (auto window) {
+      return window->winId() == wid;
     });
-    return i != windows.end();
   }
 
   auto get_z_order_windows() {
-    auto windows = std::vector<HWND>();
-    auto hwnd = GetTopWindow(NULL);
+    auto windows = std::vector<WId>();
+    auto hwnd = GetTopWindow(nullptr);
     while(hwnd) {
       if(IsWindowVisible(hwnd)) {
-        windows.push_back(hwnd);
+        windows.push_back(reinterpret_cast<WId>(hwnd));
       }
       hwnd = GetWindow(hwnd, GW_HWNDNEXT);
     }
@@ -64,11 +64,11 @@ namespace {
   }
 
   auto get_minimized_windows(const std::vector<Window*>& windows) {
-    auto minimized_windows = std::unordered_set<HWND>();
+    auto minimized_windows = std::unordered_set<WId>();
     for(auto window : windows) {
-      auto hwnd = reinterpret_cast<HWND>(window->winId());
-      if(IsIconic(hwnd)) {
-        minimized_windows.insert(hwnd);
+      auto wid = window->winId();
+      if(IsIconic(reinterpret_cast<HWND>(wid))) {
+        minimized_windows.insert(wid);
       }
     }
     return minimized_windows;
@@ -79,46 +79,47 @@ namespace {
       SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
   }
 
-  void raise_window(HWND hwnd) {
+  void raise_window(WId hwnd) {
     auto insert_after_window = [&] {
       if(auto activated_window = QApplication::activeWindow()) {
         return reinterpret_cast<HWND>(activated_window->winId());
       }
       return HWND_TOP;
     }();
-    reorder_window(hwnd, insert_after_window);
+    reorder_window(reinterpret_cast<HWND>(hwnd), insert_after_window);
   }
 
-  void raise(const std::vector<HWND>& z_order_windows,
+  void raise(const std::vector<WId>& z_order_windows,
       const std::vector<Window*>& targets) {
     if(targets.empty()) {
       return;
     }
     for(auto i = z_order_windows.rbegin(); i != z_order_windows.rend(); ++i) {
       if(contains(targets, *i)) {
-        if(IsIconic(*i)) {
-          ShowWindow(*i, SW_SHOWNOACTIVATE);
+        auto hwnd = reinterpret_cast<HWND>(*i);
+        if(IsIconic(hwnd)) {
+          ShowWindow(hwnd, SW_SHOWNOACTIVATE);
         }
         raise_window(*i);
       }
     }
   }
 
-  void restore(const std::vector<HWND>& z_order_windows,
+  void restore(const std::vector<WId>& z_order_windows,
       const std::vector<Window*>& targets,
-      const std::unordered_set<HWND>& minimized_windows) {
+      const std::unordered_set<WId>& minimized_windows) {
     for(auto i = z_order_windows.begin(); i != z_order_windows.end(); ++i) {
       if(contains(targets, *i)) {
         if(minimized_windows.contains(*i)) {
-          ShowWindow(*i, SW_SHOWMINNOACTIVE);
+          ShowWindow(reinterpret_cast<HWND>(*i), SW_SHOWMINNOACTIVE);
         } else {
           auto after_window = [&] {
             if(i == z_order_windows.begin()) {
               return HWND_TOP;
             }
-            return *(i - 1);
+            return reinterpret_cast<HWND>(*(i - 1));
           }();
-          reorder_window(*i, after_window);
+          reorder_window(reinterpret_cast<HWND>(*i), after_window);
         }
       }
     }
@@ -179,7 +180,7 @@ WindowHighlight::WindowHighlight(std::vector<Window*> windows)
   raise(m_z_order_windows, m_windows);
   update_geometry();
   for(auto& [_, overlay] : m_overlays) {
-    raise_window(reinterpret_cast<HWND>(overlay->winId()));
+    raise_window(overlay->winId());
   }
 }
 
