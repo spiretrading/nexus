@@ -77,9 +77,8 @@ TEST_SUITE("MarketDataRegistry") {
     auto registry =
       MarketDataRegistry(DEFAULT_VENUES, get_default_time_zone_database());
     auto security = Security("TST", TSX);
-    auto bbo_quote =
-      SecurityBboQuote(BboQuote(Quote(Money::CENT, 100, Side::BID),
-        Quote(2 * Money::CENT, 200, Side::ASK),
+    auto bbo_quote = SecurityBboQuote(
+      BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
         time_from_string("2024-07-12 13:00:00")), security);
     auto published = false;
     registry.publish(bbo_quote, 1, data_store,
@@ -96,7 +95,7 @@ TEST_SUITE("MarketDataRegistry") {
       MarketDataRegistry(DEFAULT_VENUES, get_default_time_zone_database());
     auto security = Security("TST", TSX);
     auto book_quote = SecurityBookQuote(
-      BookQuote("MP1", false, TSX, Quote(Money::CENT, 100, Side::BID),
+      BookQuote("MP1", false, TSX, make_bid(Money::CENT, 100),
         time_from_string("2024-07-12 13:00:00")), security);
     auto published = false;
     registry.publish(book_quote, 1, data_store,

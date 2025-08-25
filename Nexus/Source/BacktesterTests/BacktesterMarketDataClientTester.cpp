@@ -35,17 +35,14 @@ namespace {
       auto& data_store =
         m_source_environment.get_market_data_environment().get_data_store();
       data_store.store(SequencedValue(IndexedValue(BboQuote(
-        Quote(99 * Money::ONE, 100, Side::BID),
-        Quote(100 * Money::ONE, 100, Side::ASK), start_time), TD),
-        Beam::Queries::Sequence(10)));
+        make_bid(99 * Money::ONE, 100), make_ask(100 * Money::ONE, 100),
+        start_time), TD), Beam::Queries::Sequence(10)));
       data_store.store(SequencedValue(IndexedValue(BboQuote(
-        Quote(100 * Money::ONE, 100, Side::BID),
-        Quote(101 * Money::ONE, 100, Side::ASK), start_time + seconds(1)), TD),
-        Beam::Queries::Sequence(11)));
+        make_bid(100 * Money::ONE, 100), make_ask(101 * Money::ONE, 100),
+        start_time + seconds(1)), TD), Beam::Queries::Sequence(11)));
       data_store.store(SequencedValue(IndexedValue(BboQuote(
-        Quote(101 * Money::ONE, 100, Side::BID),
-        Quote(102 * Money::ONE, 100, Side::ASK), start_time + seconds(2)), TD),
-        Beam::Queries::Sequence(12)));
+        make_bid(101 * Money::ONE, 100), make_ask(102 * Money::ONE, 100),
+        start_time + seconds(2)), TD), Beam::Queries::Sequence(12)));
     }
   };
 }
@@ -75,8 +72,8 @@ TEST_SUITE("BacktesterMarketDataClient") {
     for(auto i = 0; i < count; ++i) {
       auto timestamp = start_time - seconds(count - i - 1);
       auto bbo_quote = SequencedValue(IndexedValue(BboQuote(
-        Quote(Money::ONE, 100, Side::BID), Quote(Money::ONE, 100, Side::ASK),
-        timestamp), TD), Beam::Queries::Sequence(i + 2));
+        make_bid(Money::ONE, 100), make_ask(Money::ONE, 100), timestamp), TD),
+        Beam::Queries::Sequence(i + 2));
       data_store.store(bbo_quote);
     }
     auto client = BacktesterMarketDataClient(Ref(fixture.m_market_data_service),

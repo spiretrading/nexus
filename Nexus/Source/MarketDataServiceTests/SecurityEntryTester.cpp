@@ -19,9 +19,9 @@ TEST_SUITE("SecurityEntry") {
     auto security = Security("TST", TSX);
     auto entry = SecurityEntry(security, DEFAULT_VENUES,
       get_default_time_zone_database(), Money::ONE, initial_sequences);
-    auto bbo_quote = BboQuote(Quote(Money::CENT, 100, Side::BID),
-      Quote(2 * Money::CENT, 200, Side::ASK),
-      time_from_string("2024-07-11 13:00:00"));
+    auto bbo_quote =
+      BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
+        time_from_string("2024-07-11 13:00:00"));
     auto result1 = entry.publish(bbo_quote, 1);
     REQUIRE(result1);
     REQUIRE(***result1 == bbo_quote);
@@ -29,9 +29,9 @@ TEST_SUITE("SecurityEntry") {
     REQUIRE(result1->GetSequence() == Beam::Queries::Sequence(20));
     REQUIRE(**entry.get_bbo_quote() == bbo_quote);
     REQUIRE(entry.get_bbo_quote().GetSequence() == Beam::Queries::Sequence(20));
-    auto bbo_quote2 = BboQuote(Quote(Money::CENT, 300, Side::BID),
-      Quote(2 * Money::CENT, 400, Side::ASK),
-      time_from_string("2024-07-11 13:00:01"));
+    auto bbo_quote2 =
+      BboQuote(make_bid(Money::CENT, 300), make_ask(2 * Money::CENT, 400),
+        time_from_string("2024-07-11 13:00:01"));
     auto result2 = entry.publish(bbo_quote2, 1);
     REQUIRE(result2);
     REQUIRE(***result2 == bbo_quote2);
@@ -47,25 +47,23 @@ TEST_SUITE("SecurityEntry") {
     auto security = Security("TST", TSX);
     auto entry = SecurityEntry(security, DEFAULT_VENUES,
       get_default_time_zone_database(), Money::ONE, initial_sequences);
-    auto bid1 = BookQuote("MP1", false, TSX, Quote(Money::CENT, 100, Side::BID),
+    auto bid1 = BookQuote("MP1", false, TSX, make_bid(Money::CENT, 100),
       time_from_string("2024-07-11 13:00:00"));
     auto result_bid1 = entry.publish(bid1, 1);
     REQUIRE(result_bid1);
     REQUIRE(result_bid1->GetSequence() == Beam::Queries::Sequence(50));
-    auto ask1 =
-      BookQuote("MP1", false, TSX, Quote(2 * Money::CENT, 200, Side::ASK),
-        time_from_string("2024-07-11 13:00:01"));
+    auto ask1 = BookQuote("MP1", false, TSX, make_ask(2 * Money::CENT, 200),
+      time_from_string("2024-07-11 13:00:01"));
     auto result_ask1 = entry.publish(ask1, 1);
     REQUIRE(result_ask1);
     REQUIRE(result_ask1->GetSequence() == Beam::Queries::Sequence(51));
-    auto bid2 = BookQuote("MP2", false, TSX, Quote(Money::CENT, 300, Side::BID),
+    auto bid2 = BookQuote("MP2", false, TSX, make_bid(Money::CENT, 300),
       time_from_string("2024-07-11 13:00:02"));
     auto result_bid2 = entry.publish(bid2, 1);
     REQUIRE(result_bid2);
     REQUIRE(result_bid2->GetSequence() == Beam::Queries::Sequence(52));
-    auto ask2 =
-      BookQuote("MP2", false, TSX, Quote(2 * Money::CENT, 400, Side::ASK),
-        time_from_string("2024-07-11 13:00:03"));
+    auto ask2 = BookQuote("MP2", false, TSX, make_ask(2 * Money::CENT, 400),
+      time_from_string("2024-07-11 13:00:03"));
     auto result_ask2 = entry.publish(ask2, 1);
     REQUIRE(result_ask2);
     REQUIRE(result_ask2->GetSequence() == Beam::Queries::Sequence(53));
@@ -104,16 +102,16 @@ TEST_SUITE("SecurityEntry") {
     auto entry = SecurityEntry(security, DEFAULT_VENUES,
       get_default_time_zone_database(), Money::ONE, initial_sequences);
     auto expected_snapshot = SecuritySnapshot(security);
-    auto bbo1 = BboQuote(Quote(10 * Money::CENT, 100, Side::BID),
-      Quote(11 * Money::CENT, 200, Side::ASK),
-      time_from_string("2024-07-11 13:00:00"));
+    auto bbo1 =
+      BboQuote(make_bid(10 * Money::CENT, 100), make_ask(11 * Money::CENT, 200),
+        time_from_string("2024-07-11 13:00:00"));
     expected_snapshot.m_bbo_quote = entry.publish(bbo1, 1).get();
     auto book_bid1 =
-      BookQuote("MP1", false, TSX, Quote(10 * Money::CENT, 100, Side::BID),
+      BookQuote("MP1", false, TSX, make_bid(10 * Money::CENT, 100),
         time_from_string("2024-07-11 13:00:00"));
     expected_snapshot.m_bids.push_back(entry.publish(book_bid1, 1).get());
     auto book_ask1 =
-      BookQuote("MP1", false, TSX, Quote(11 * Money::CENT, 200, Side::ASK),
+      BookQuote("MP1", false, TSX, make_ask(11 * Money::CENT, 200),
         time_from_string("2024-07-11 13:00:00"));
     expected_snapshot.m_asks.push_back(entry.publish(book_ask1, 1).get());
     auto ts1 = TimeAndSale(time_from_string("2024-07-11 13:00:00"),
@@ -121,28 +119,28 @@ TEST_SUITE("SecurityEntry") {
     expected_snapshot.m_time_and_sale = entry.publish(ts1, 1).get();
     REQUIRE((entry.load_snapshot() == expected_snapshot));
     REQUIRE(**entry.get_bbo_quote() == expected_snapshot.m_bbo_quote);
-    auto bbo2 = BboQuote(Quote(12 * Money::CENT, 300, Side::BID),
-      Quote(13 * Money::CENT, 400, Side::ASK),
-      time_from_string("2024-07-11 13:00:01"));
+    auto bbo2 =
+      BboQuote(make_bid(12 * Money::CENT, 300), make_ask(13 * Money::CENT, 400),
+        time_from_string("2024-07-11 13:00:01"));
     expected_snapshot.m_bbo_quote = entry.publish(bbo2, 1).get();
     REQUIRE((entry.load_snapshot() == expected_snapshot));
     REQUIRE(**entry.get_bbo_quote() == expected_snapshot.m_bbo_quote);
     auto book_bid2 =
-      BookQuote("MP2", false, TSX, Quote(9 * Money::CENT, 500, Side::BID),
+      BookQuote("MP2", false, TSX, make_bid(9 * Money::CENT, 500),
         time_from_string("2024-07-11 13:00:02"));
     expected_snapshot.m_bids.push_back(entry.publish(book_bid2, 1).get());
     auto book_ask2 =
-      BookQuote("MP2", false, TSX, Quote(14 * Money::CENT, 600, Side::ASK),
+      BookQuote("MP2", false, TSX, make_ask(14 * Money::CENT, 600),
         time_from_string("2024-07-11 13:00:02"));
     expected_snapshot.m_asks.push_back(entry.publish(book_ask2, 1).get());
     REQUIRE((entry.load_snapshot() == expected_snapshot));
     REQUIRE(**entry.get_bbo_quote() == expected_snapshot.m_bbo_quote);
     auto book_bid1_update =
-      BookQuote("MP1", false, TSX, Quote(10 * Money::CENT, 700, Side::BID),
+      BookQuote("MP1", false, TSX, make_bid(10 * Money::CENT, 700),
         time_from_string("2024-07-11 13:00:03"));
     expected_snapshot.m_bids[0] = entry.publish(book_bid1_update, 1).get();
     auto book_ask1_update =
-      BookQuote("MP1", false, TSX, Quote(11 * Money::CENT, 800, Side::ASK),
+      BookQuote("MP1", false, TSX, make_ask(11 * Money::CENT, 800),
         time_from_string("2024-07-11 13:00:03"));
     expected_snapshot.m_asks[0] = entry.publish(book_ask1_update, 1).get();
     REQUIRE((entry.load_snapshot() == expected_snapshot));
@@ -165,8 +163,8 @@ TEST_SUITE("SecurityEntry") {
     REQUIRE(technicals1.m_high == Money::ZERO);
     REQUIRE(technicals1.m_low == Money::ZERO);
     REQUIRE(technicals1.m_volume == 0);
-    entry.publish(BboQuote(Quote(Money::ONE, 100, Side::BID),
-      Quote(Money::ONE + Money::CENT, 100, Side::ASK),
+    entry.publish(BboQuote(
+      make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 100),
       time_from_string("2024-07-11 09:30:00")), 1);
     auto ts1 = TimeAndSale(time_from_string("2024-07-11 09:30:01"),
       Money::ONE + 5 * Money::CENT, 100, TimeAndSale::Condition(), "TSE", "",
@@ -200,8 +198,8 @@ TEST_SUITE("SecurityEntry") {
     auto technicals5 = entry.get_security_technicals();
     REQUIRE(technicals5.m_low == Money::ONE + 2 * Money::CENT);
     REQUIRE(technicals5.m_volume == 500);
-    entry.publish(BboQuote(Quote(Money::ONE, 100, Side::BID),
-      Quote(Money::ONE + Money::CENT, 100, Side::ASK),
+    entry.publish(BboQuote(
+      make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 100),
       time_from_string("2024-07-12 09:30:00")), 1);
     auto technicals6 = entry.get_security_technicals();
     REQUIRE(technicals6.m_close == Money::ONE + 2 * Money::CENT);

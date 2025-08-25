@@ -297,8 +297,8 @@ namespace Nexus {
   inline void TestEnvironment::update_bbo_price(
       const Security& security, Money bid_price, Money ask_price,
       boost::posix_time::ptime timestamp) {
-    auto quote = BboQuote(Quote(bid_price, 100, Side::BID),
-      Quote(ask_price, 100, Side::ASK), timestamp);
+    auto quote =
+      BboQuote(make_bid(bid_price, 100), make_ask(ask_price, 100), timestamp);
     publish(security, quote);
   }
 

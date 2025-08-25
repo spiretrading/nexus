@@ -20,8 +20,8 @@ TEST_SUITE("BboQuote") {
   }
 
   TEST_CASE("constructor") {
-    auto bid = Quote(Money(10), Quantity(1), Side::BID);
-    auto ask = Quote(Money(20), Quantity(2), Side::ASK);
+    auto bid = make_bid(Money(10), Quantity(1));
+    auto ask = make_ask(Money(20), Quantity(2));
     auto timestamp = time_from_string("2025-06-25 15:30:00.000");
     auto bbo = BboQuote(bid, ask, timestamp);
     REQUIRE(bbo.m_bid == bid);
@@ -30,8 +30,8 @@ TEST_SUITE("BboQuote") {
   }
 
   TEST_CASE("stream") {
-    auto bid = Quote(Money(5), Quantity(50), Side::BID);
-    auto ask = Quote(Money(6), Quantity(60), Side::ASK);
+    auto bid = make_bid(Money(5), Quantity(50));
+    auto ask = make_ask(Money(6), Quantity(60));
     auto timestamp = time_from_string("2025-06-24 09:15:42.123");
     auto bbo = BboQuote(bid, ask, timestamp);
     auto ss = std::ostringstream();
@@ -46,8 +46,8 @@ TEST_SUITE("BboQuote") {
   }
 
   TEST_CASE("shuttle") {
-    auto bid = Quote(Money(10), Quantity(1), Side::BID);
-    auto ask = Quote(Money(20), Quantity(2), Side::ASK);
+    auto bid = make_bid(Money(10), Quantity(1));
+    auto ask = make_ask(Money(20), Quantity(2));
     auto timestamp = time_from_string("2025-06-25 15:30:00.000");
     auto bbo = BboQuote(bid, ask, timestamp);
     Beam::Serialization::Tests::TestRoundTripShuttle(bbo);

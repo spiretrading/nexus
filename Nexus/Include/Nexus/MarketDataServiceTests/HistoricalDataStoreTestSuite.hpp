@@ -97,18 +97,18 @@ namespace Nexus::Tests {
 
     SUBCASE("bbo_quote") {
       auto security = Security("TST", NYSE);
-      auto bbo_a = BboQuote(Quote(Money::ONE, 100, Side::BID),
-        Quote(Money::ONE + Money::CENT, 100, Side::ASK),
+      auto bbo_a = BboQuote(
+        make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 100),
         time_from_string("2024-07-09 12:00:00"));
       auto sequenced_bbo_a = SequencedValue(bbo_a, Beam::Queries::Sequence(1));
       data_store.store(SequencedSecurityBboQuote(
         SecurityBboQuote(bbo_a, security), Beam::Queries::Sequence(1)));
-      auto bbo_b = BboQuote(Quote(Money::ONE, 200, Side::BID),
-        Quote(Money::ONE + Money::CENT, 200, Side::ASK),
+      auto bbo_b = BboQuote(
+        make_bid(Money::ONE, 200), make_ask(Money::ONE + Money::CENT, 200),
         time_from_string("2024-07-09 12:01:00"));
       auto sequenced_bbo_b = SequencedValue(bbo_b, Beam::Queries::Sequence(2));
-      auto bbo_c = BboQuote(Quote(2 * Money::ONE, 300, Side::BID),
-        Quote(2 * Money::ONE + Money::CENT, 300, Side::ASK),
+      auto bbo_c = BboQuote(make_bid(2 * Money::ONE, 300),
+        make_ask(2 * Money::ONE + Money::CENT, 300),
         time_from_string("2024-07-09 12:02:00"));
       auto sequenced_bbo_c = SequencedValue(bbo_c, Beam::Queries::Sequence(3));
       auto quotes = std::vector<SequencedSecurityBboQuote>();
@@ -118,8 +118,8 @@ namespace Nexus::Tests {
         SecurityBboQuote(bbo_c, security), Beam::Queries::Sequence(3)));
       data_store.store(quotes);
       auto other_security = Security("ABC", TSX);
-      auto other_bbo = BboQuote(Quote(10 * Money::ONE, 100, Side::BID),
-        Quote(10 * Money::ONE + Money::CENT, 100, Side::ASK),
+      auto other_bbo = BboQuote(make_bid(10 * Money::ONE, 100),
+        make_ask(10 * Money::ONE + Money::CENT, 100),
         time_from_string("2024-07-09 12:00:00"));
       data_store.store(SequencedSecurityBboQuote(SecurityBboQuote(
         other_bbo, other_security), Beam::Queries::Sequence(4)));
@@ -145,20 +145,18 @@ namespace Nexus::Tests {
     SUBCASE("book_quote") {
       auto security = Security("TST", NYSE);
       auto book_quote_a = BookQuote("MPID", true, NYSE,
-        Quote(Money::ONE, 100, Side::BID),
-        time_from_string("2024-07-09 12:00:00"));
+        make_bid(Money::ONE, 100), time_from_string("2024-07-09 12:00:00"));
       auto sequenced_book_quote_a =
         SequencedValue(book_quote_a, Beam::Queries::Sequence(1));
       data_store.store(SequencedSecurityBookQuote(
         SecurityBookQuote(book_quote_a, security), Beam::Queries::Sequence(1)));
-      auto book_quote_b =
-        BookQuote("MPID", true, NYSE, Quote(Money::ONE, 200, Side::BID),
-          time_from_string("2024-07-09 12:01:00"));
+      auto book_quote_b = BookQuote("MPID", true, NYSE,
+        make_bid(Money::ONE, 200), time_from_string("2024-07-09 12:01:00"));
       auto sequenced_book_quote_b =
         SequencedValue(book_quote_b, Beam::Queries::Sequence(2));
-      auto book_quote_c = BookQuote("MPID", true, NYSE,
-        Quote(Money::ONE + Money::CENT, 300, Side::ASK),
-        time_from_string("2024-07-09 12:02:00"));
+      auto book_quote_c =
+        BookQuote("MPID", true, NYSE, make_ask(Money::ONE + Money::CENT, 300),
+          time_from_string("2024-07-09 12:02:00"));
       auto sequenced_book_quote_c =
         SequencedValue(book_quote_c, Beam::Queries::Sequence(3));
       auto quotes = std::vector<SequencedSecurityBookQuote>();
@@ -171,7 +169,7 @@ namespace Nexus::Tests {
       data_store.store(quotes);
       auto other_security = Security("ABC", TSX);
       auto other_book_quote =
-        BookQuote("MPID", true, TSX, Quote(10 * Money::ONE, 100, Side::BID),
+        BookQuote("MPID", true, TSX, make_bid(10 * Money::ONE, 100),
           time_from_string("2024-07-09 12:00:00"));
       data_store.store(SequencedSecurityBookQuote(SecurityBookQuote(
         other_book_quote, other_security), Beam::Queries::Sequence(4)));

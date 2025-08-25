@@ -289,8 +289,8 @@ namespace Nexus::Tests {
 
   inline void MarketDataServiceTestEnvironment::update_bbo(
       const Security& security, Money bid, Money ask) {
-    get_feed_client().publish(SecurityBboQuote(
-      BboQuote(Quote(bid, 100, Side::BID), Quote(ask, 100, Side::ASK),
+    get_feed_client().publish(
+      SecurityBboQuote(BboQuote(make_bid(bid, 100), make_ask(ask, 100),
         boost::posix_time::ptime()), security));
   }
 

@@ -88,9 +88,8 @@ namespace {
       m_order_execution_environment.get_driver().as<MockOrderExecutionDriver>().
         get_publisher().Monitor(m_order_submissions);
       m_market_data_environment.get_feed_client().publish(
-        SecurityBboQuote(BboQuote(Quote(parse_money("1.00"), 100, Side::BID),
-          Quote(parse_money("1.01"), 100, Side::ASK), m_time_client.GetTime()),
-          TSLA));
+        SecurityBboQuote(BboQuote(make_bid(parse_money("1.00"), 100),
+          make_ask(parse_money("1.01"), 100), m_time_client.GetTime()), TSLA));
     }
   };
 }
@@ -117,8 +116,8 @@ TEST_SUITE("RiskController") {
     REQUIRE(update.m_unrealized_security == -Money::ONE);
     REQUIRE(update.m_unrealized_currency == -Money::ONE);
     fixture.m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(BboQuote(Quote(parse_money("0.99"), 100, Side::BID),
-        Quote(parse_money("1.00"), 100, Side::ASK),
+      SecurityBboQuote(BboQuote(
+        make_bid(parse_money("0.99"), 100), make_ask(parse_money("1.00"), 100),
         fixture.m_time_client.GetTime()), TSLA));
     REQUIRE((state->Pop().m_type == RiskState::Type::CLOSE_ORDERS));
     auto new_parameters = RiskParameters(USD, 100000 * Money::ONE,
@@ -159,8 +158,8 @@ TEST_SUITE("RiskController") {
     REQUIRE(update.m_security_inventory.m_position.m_security == TSLA);
     REQUIRE(update.m_security_inventory.m_position.m_quantity == 300);
     fixture.m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(BboQuote(Quote(parse_money("0.98"), 100, Side::BID),
-        Quote(parse_money("0.99"), 100, Side::ASK),
+      SecurityBboQuote(BboQuote(
+        make_bid(parse_money("0.98"), 100), make_ask(parse_money("0.99"), 100),
         fixture.m_time_client.GetTime()), TSLA));
     REQUIRE(state->Pop().m_type == RiskState::Type::CLOSE_ORDERS);
     fixture.m_time_client.SetTime(

@@ -38,9 +38,9 @@ namespace {
             m_service_locator_environment, m_administration_environment)),
         m_market_data_client(m_market_data_environment.get_registry_client()) {
     m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(BboQuote(Quote(Money::ONE, 100, Side::BID),
-        Quote(2 * Money::ONE, 100, Side::ASK),
-        time_from_string("2024-07-21 09:30:00.000")), TST));
+      SecurityBboQuote(
+        BboQuote(make_bid(Money::ONE, 100), make_ask(2 * Money::ONE, 100),
+          time_from_string("2024-07-21 09:30:00.000")), TST));
     }
   };
 }
@@ -94,11 +94,13 @@ TEST_SUITE("PortfolioController") {
     auto security1 = Security("AAA", TSX);
     auto security2 = Security("BBB", TSX);
     fixture.m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(BboQuote(Quote(Money::ONE, 100, Side::BID),
-        Quote(2 * Money::ONE, 100, Side::ASK), timestamp), security1));
+      SecurityBboQuote(BboQuote(
+        make_bid(Money::ONE, 100), make_ask(2 * Money::ONE, 100), timestamp),
+        security1));
     fixture.m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(BboQuote(Quote(Money::ONE, 100, Side::BID),
-        Quote(2 * Money::ONE, 100, Side::ASK), timestamp), security2));
+      SecurityBboQuote(BboQuote(
+        make_bid(Money::ONE, 100), make_ask(2 * Money::ONE, 100), timestamp),
+        security2));
     auto fields1 =
       make_limit_order_fields(security1, CAD, Side::BID, "TSX", 50, Money::ONE);
     auto info1 = OrderInfo(fields1, 1, false, timestamp);
@@ -144,9 +146,9 @@ TEST_SUITE("PortfolioController") {
     fill(*order, 100, timestamp + seconds(2));
     order_queue->Break();
     auto initial_update = updates->Pop();
-    auto new_bbo = BboQuote(Quote(2 * Money::ONE, 100, Side::BID),
-      Quote(3 * Money::ONE, 100, Side::ASK),
-      timestamp + seconds(3));
+    auto new_bbo =
+      BboQuote(make_bid(2 * Money::ONE, 100), make_ask(3 * Money::ONE, 100),
+        timestamp + seconds(3));
     fixture.m_market_data_environment.get_feed_client().publish(
       SecurityBboQuote(new_bbo, TST));
     auto bbo_update = updates->Pop();
@@ -176,12 +178,14 @@ TEST_SUITE("PortfolioController") {
     fill(*order, 100, timestamp + seconds(2));
     order_queue->Break();
     auto initial_update = updates->Pop();
-    auto unchanged_bbo = BboQuote(Quote(Money::ONE, 100, Side::BID),
-      Quote(2 * Money::ONE, 100, Side::ASK), timestamp + seconds(3));
+    auto unchanged_bbo =
+      BboQuote(make_bid(Money::ONE, 100), make_ask(2 * Money::ONE, 100),
+        timestamp + seconds(3));
     fixture.m_market_data_environment.get_feed_client().publish(
       SecurityBboQuote(unchanged_bbo, TST));
-    auto changed_bbo = BboQuote(Quote(2 * Money::ONE, 100, Side::BID),
-      Quote(3 * Money::ONE, 100, Side::ASK), timestamp + seconds(3));
+    auto changed_bbo =
+      BboQuote(make_bid(2 * Money::ONE, 100), make_ask(3 * Money::ONE, 100),
+        timestamp + seconds(3));
     fixture.m_market_data_environment.get_feed_client().publish(
       SecurityBboQuote(changed_bbo, TST));
     auto final_update = updates->Pop();
@@ -244,9 +248,9 @@ TEST_SUITE("PortfolioController") {
     fill(*order, 100, timestamp + seconds(2));
     order_queue->Break();
     auto initial_update = updates->Pop();
-    auto new_bbo = BboQuote(Quote(3 * Money::ONE, 100, Side::BID),
-      Quote(4 * Money::ONE, 100, Side::ASK),
-      timestamp + seconds(3));
+    auto new_bbo =
+      BboQuote(make_bid(3 * Money::ONE, 100), make_ask(4 * Money::ONE, 100),
+        timestamp + seconds(3));
     fixture.m_market_data_environment.get_feed_client().publish(
       SecurityBboQuote(new_bbo, TST));
     auto bbo_update = updates->Pop();
@@ -328,8 +332,9 @@ TEST_SUITE("PortfolioController") {
     auto update2 = updates->Pop();
     REQUIRE(update2.m_security_inventory.m_position.m_quantity == 0);
     REQUIRE(update2.m_unrealized_security == Money::ZERO);
-    auto new_bbo = BboQuote(Quote(2 * Money::ONE, 100, Side::BID),
-      Quote(2 * Money::ONE, 100, Side::ASK), timestamp + seconds(5));
+    auto new_bbo =
+      BboQuote(make_bid(2 * Money::ONE, 100), make_ask(2 * Money::ONE, 100),
+        timestamp + seconds(5));
     fixture.m_market_data_environment.get_feed_client().publish(
       SecurityBboQuote(new_bbo, Security("FOO", TSX)));
     REQUIRE(!updates->TryPop());
@@ -378,8 +383,9 @@ TEST_SUITE("PortfolioController") {
     auto update1 = updates->Pop();
     REQUIRE(update1.m_security_inventory.m_position.m_quantity == 100);
     REQUIRE(update1.m_unrealized_security == Money::ZERO);
-    auto new_bbo = BboQuote(Quote(2 * Money::ONE, 100, Side::BID),
-      Quote(2 * Money::ONE, 100, Side::ASK), timestamp + seconds(3));
+    auto new_bbo =
+      BboQuote(make_bid(2 * Money::ONE, 100), make_ask(2 * Money::ONE, 100),
+        timestamp + seconds(3));
     fixture.m_market_data_environment.get_feed_client().publish(
       SecurityBboQuote(new_bbo, TST));
     auto update2 = updates->Pop();

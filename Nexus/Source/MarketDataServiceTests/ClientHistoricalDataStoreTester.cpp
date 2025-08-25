@@ -87,8 +87,8 @@ TEST_SUITE("ClientHistoricalDataStore") {
         &*operation);
     REQUIRE(query_operation);
     REQUIRE(query_operation->m_query.GetIndex() == security);
-    auto quote = SequencedValue(BboQuote(Quote(Money::ONE, 100, Side::BID),
-      Quote(Money::ONE + Money::CENT, 100, Side::ASK),
+    auto quote = SequencedValue(BboQuote(
+      make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 100),
       time_from_string("2024-07-10 12:00:00")), Beam::Queries::Sequence(1));
     query_operation->m_queue.Push(quote);
     query_operation->m_queue.Break();
@@ -116,8 +116,8 @@ TEST_SUITE("ClientHistoricalDataStore") {
         &*operation);
     REQUIRE(query_operation);
     REQUIRE(query_operation->m_query.GetIndex() == security);
-    auto quote = SequencedValue(
-      BookQuote("MPID", true, TSX, Quote(Money::ONE, 100, Side::BID),
+    auto quote =
+      SequencedValue(BookQuote("MPID", true, TSX, make_bid(Money::ONE, 100),
         time_from_string("2024-07-10 12:00:00")), Beam::Queries::Sequence(1));
     query_operation->m_queue.Push(quote);
     query_operation->m_queue.Break();

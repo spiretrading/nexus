@@ -55,9 +55,9 @@ TEST_SUITE("BoardLotCheck") {
     SUBCASE("price_over_one_dollar") {
       auto fields = make_test_order_fields();
       auto security = fields.m_security;
-      auto bbo = BboQuote(Quote(Money::ONE, 100, Side::BID),
-        Quote(Money::ONE + Money::CENT, 100, Side::ASK),
-        time_from_string("2024-07-18 10:00:00"));
+      auto bbo = BboQuote(
+        make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 100),
+          time_from_string("2024-07-18 10:00:00"));
       feed_client.publish(SecurityBboQuote(bbo, security));
       fields.m_quantity = 200;
       auto order_info_valid =
@@ -73,8 +73,8 @@ TEST_SUITE("BoardLotCheck") {
     SUBCASE("price_under_one_dollar") {
       auto fields = make_test_order_fields();
       auto security = fields.m_security;
-      auto bbo = BboQuote(Quote(50 * Money::CENT, 100, Side::BID),
-        Quote(51 * Money::CENT, 100, Side::ASK),
+      auto bbo = BboQuote(
+        make_bid(50 * Money::CENT, 100), make_ask(51 * Money::CENT, 100),
         time_from_string("2024-07-18 10:00:00"));
       feed_client.publish(SecurityBboQuote(bbo, security));
       fields.m_quantity = 1500;
@@ -91,8 +91,8 @@ TEST_SUITE("BoardLotCheck") {
     SUBCASE("price_under_ten_cents") {
       auto fields = make_test_order_fields();
       auto security = fields.m_security;
-      auto bbo = BboQuote(Quote(9 * Money::CENT, 100, Side::BID),
-        Quote(10 * Money::CENT, 100, Side::ASK),
+      auto bbo = BboQuote(
+        make_bid(9 * Money::CENT, 100), make_ask(10 * Money::CENT, 100),
         time_from_string("2024-07-18 10:00:00"));
       feed_client.publish(SecurityBboQuote(bbo, security));
       fields.m_quantity = 2000;

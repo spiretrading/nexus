@@ -92,8 +92,8 @@ TEST_SUITE("MarketDataClient") {
     auto query_response = BboQuoteQueryResult();
     query_response.m_queryId = 123;
     request_token->SetResult(query_response);
-    auto bbo = BboQuote(Quote(Money::ONE, 100, Side::BID),
-      Quote(Money::ONE + Money::CENT, 200, Side::ASK),
+    auto bbo = BboQuote(
+      make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 200),
       time_from_string("2021-01-11 15:30:05.000"));
     SendRecordMessage<BboQuoteMessage>(request_token->GetClient(),
       SequencedValue(IndexedValue(bbo, SECURITY_A),

@@ -227,9 +227,9 @@ TEST_SUITE("MarketDataRegistryServlet") {
     fixture.m_registry.add(info);
     test_query_publish<QueryBboQuotesService, BboQuoteMessage>(
       fixture, security, [&] {
-        return SecurityBboQuote(BboQuote(Quote(Money::CENT, 100, Side::BID),
-          Quote(2 * Money::CENT, 200, Side::ASK),
-          fixture.m_time_client.GetTime()), security);
+        return SecurityBboQuote(
+          BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
+            fixture.m_time_client.GetTime()), security);
       }, [&] (const auto& query) {
         return fixture.m_data_store.load_bbo_quotes(query);
       }, [] (const auto& record) {
@@ -244,9 +244,9 @@ TEST_SUITE("MarketDataRegistryServlet") {
     fixture.m_registry.add(info);
     test_query_publish<QueryBookQuotesService, BookQuoteMessage>(
       fixture, security, [&] {
-        return SecurityBookQuote(BookQuote("MP1", false, TSX,
-          Quote(Money::CENT, 100, Side::BID),
-          fixture.m_time_client.GetTime()), security);
+        return SecurityBookQuote(
+          BookQuote("MP1", false, TSX, make_bid(Money::CENT, 100),
+            fixture.m_time_client.GetTime()), security);
       }, [&] (const auto& query) {
         return fixture.m_data_store.load_book_quotes(query);
       }, [] (const auto& record) {

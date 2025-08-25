@@ -76,8 +76,8 @@ TEST_SUITE("DataStoreMarketDataClient") {
   TEST_CASE("query_sequenced_bbo_quotes") {
     auto fixture = Fixture();
     auto security = Security("TST", TSX);
-    auto quote = SequencedValue(BboQuote(Quote(Money::ONE, 100, Side::BID),
-      Quote(Money::ONE + Money::CENT, 100, Side::ASK),
+    auto quote = SequencedValue(BboQuote(
+      make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 100),
       time_from_string("2024-07-10 12:00:00")), Beam::Queries::Sequence(1));
     fixture.m_data_store.store(SequencedSecurityBboQuote(
       SecurityBboQuote(quote.GetValue(), security), quote.GetSequence()));
@@ -94,8 +94,8 @@ TEST_SUITE("DataStoreMarketDataClient") {
   TEST_CASE("query_bbo_quotes") {
     auto fixture = Fixture();
     auto security = Security("TST", TSX);
-    auto quote = SequencedValue(BboQuote(Quote(Money::ONE, 100, Side::BID),
-      Quote(Money::ONE + Money::CENT, 100, Side::ASK),
+    auto quote = SequencedValue(BboQuote(
+      make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 100),
       time_from_string("2024-07-10 12:00:00")), Beam::Queries::Sequence(1));
     fixture.m_data_store.store(SequencedSecurityBboQuote(
       SecurityBboQuote(quote.GetValue(), security), quote.GetSequence()));
@@ -113,7 +113,7 @@ TEST_SUITE("DataStoreMarketDataClient") {
     auto fixture = Fixture();
     auto security = Security("TST", TSX);
     auto quote = SequencedValue(
-      BookQuote("MPID", true, TSX, Quote(Money::ONE, 100, Side::BID),
+      BookQuote("MPID", true, TSX, make_bid(Money::ONE, 100),
         time_from_string("2024-07-10 12:00:00")), Beam::Queries::Sequence(1));
     fixture.m_data_store.store(SequencedSecurityBookQuote(
       SecurityBookQuote(quote.GetValue(), security), quote.GetSequence()));
@@ -131,7 +131,7 @@ TEST_SUITE("DataStoreMarketDataClient") {
     auto fixture = Fixture();
     auto security = Security("TST", TSX);
     auto quote = SequencedValue(
-      BookQuote("MPID", true, TSX, Quote(Money::ONE, 100, Side::BID),
+      BookQuote("MPID", true, TSX, make_bid(Money::ONE, 100),
         time_from_string("2024-07-10 12:00:00")), Beam::Queries::Sequence(1));
     fixture.m_data_store.store(SequencedSecurityBookQuote(
       SecurityBookQuote(quote.GetValue(), security), quote.GetSequence()));

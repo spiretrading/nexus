@@ -89,9 +89,9 @@ TEST_SUITE("MarketDataFeedServlet") {
   TEST_CASE("send_bbo_quote") {
     auto fixture = Fixture();
     auto security = Security("A", TSX);
-    auto bbo_quote = SecurityBboQuote(BboQuote(Quote(
-      Money::CENT, 100, Side::BID), Quote(2 * Money::CENT, 200, Side::ASK),
-      time_from_string("2024-07-14 12:00:00")), security);
+    auto bbo_quote = SecurityBboQuote(
+      BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
+        time_from_string("2024-07-14 12:00:00")), security);
     auto completion_token = Async<void>();
     fixture.m_registry.m_bbo_quote_slot =
       [&] (const auto& received_quote, auto source_id) {
@@ -107,8 +107,8 @@ TEST_SUITE("MarketDataFeedServlet") {
     auto fixture = Fixture();
     auto security = Security("A", TSX);
     auto book_quote = SecurityBookQuote(
-      BookQuote("MP1", false, TSX, Quote(Money::CENT, 100, Side::BID),
-      time_from_string("2024-07-14 12:00:00")), security);
+      BookQuote("MP1", false, TSX, make_bid(Money::CENT, 100),
+        time_from_string("2024-07-14 12:00:00")), security);
     auto completion_token = Async<void>();
     fixture.m_registry.m_book_quote_slot =
       [&] (const auto& received_quote, auto source_id) {
@@ -157,12 +157,12 @@ TEST_SUITE("MarketDataFeedServlet") {
   TEST_CASE("send_multiple_messages") {
     auto fixture = Fixture();
     auto security = Security("A", TSX);
-    auto bbo_quote = SecurityBboQuote(BboQuote(Quote(
-      Money::CENT, 100, Side::BID), Quote(2 * Money::CENT, 200, Side::ASK),
-      time_from_string("2024-07-14 12:00:00")), security);
+    auto bbo_quote = SecurityBboQuote(
+      BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
+        time_from_string("2024-07-14 12:00:00")), security);
     auto book_quote = SecurityBookQuote(
-      BookQuote("MP1", false, TSX, Quote(Money::CENT, 100, Side::BID),
-      time_from_string("2024-07-14 12:00:00")), security);
+      BookQuote("MP1", false, TSX, make_bid(Money::CENT, 100),
+        time_from_string("2024-07-14 12:00:00")), security);
     auto order_imbalance = VenueOrderImbalance(OrderImbalance(security,
       Side::ASK, 100, Money::ONE, time_from_string("2024-07-14 12:00:00")),
       TSX);

@@ -1,6 +1,5 @@
 #ifndef NEXUS_SIDE_HPP
 #define NEXUS_SIDE_HPP
-#include <cassert>
 #include <ostream>
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Collections/EnumSet.hpp>

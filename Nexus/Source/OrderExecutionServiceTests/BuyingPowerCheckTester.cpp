@@ -62,8 +62,8 @@ TEST_SUITE("BuyingPowerCheck") {
     risk_parameters.m_buying_power = 1000 * Money::ONE;
     administration_client.store(fields.m_account, risk_parameters);
     auto& feed_client = fixture.m_market_data_environment.get_feed_client();
-    auto bbo = BboQuote(Quote(Money::ONE, 100, Side::BID),
-      Quote(Money::ONE + Money::CENT, 100, Side::ASK),
+    auto bbo = BboQuote(
+      make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 100),
       time_from_string("2024-07-18 10:00:00"));
     feed_client.publish(SecurityBboQuote(bbo, fields.m_security));
     auto order_info =

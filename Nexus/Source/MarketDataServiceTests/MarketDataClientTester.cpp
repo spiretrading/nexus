@@ -52,12 +52,12 @@ TEST_SUITE("MarketDataClient") {
         &*operation1);
     auto snapshot = SecuritySnapshot(security);
     snapshot.m_asks.push_back(SequencedBookQuote(
-      BookQuote("MP", false, CHIC, Quote(12 * Money::CENT, 222, Side::ASK),
+      BookQuote("MP", false, CHIC, make_ask(12 * Money::CENT, 222),
         time_from_string("2021-01-11 15:30:05.000")),
         Beam::Queries::Sequence(5)));
-    snapshot.m_bids.push_back(
-      SequencedBookQuote(BookQuote("MP", false, PURE, Quote(9 * Money::CENT, 44,
-        Side::BID), time_from_string("2021-01-11 15:30:05.000")),
+    snapshot.m_bids.push_back(SequencedBookQuote(
+      BookQuote("MP", false, PURE, make_bid(9 * Money::CENT, 44),
+        time_from_string("2021-01-11 15:30:05.000")),
         Beam::Queries::Sequence(7)));
     load_operation->m_result.set(snapshot);
     auto book_quote = book_queue->Pop();
@@ -91,8 +91,7 @@ TEST_SUITE("MarketDataClient") {
     REQUIRE(snapshot_operation);
     REQUIRE(snapshot_operation->m_query.GetIndex() == security);
     auto sequenced_quote = SequencedBboQuote(BboQuote(
-      Quote(50 * Money::CENT, 213, Side::BID),
-      Quote(55 * Money::CENT, 312, Side::ASK),
+      make_bid(50 * Money::CENT, 213), make_ask(55 * Money::CENT, 312),
       time_from_string("2021-02-25 15:30:05.000")), Beam::Queries::Sequence(3));
     snapshot_operation->m_queue.Push(sequenced_quote);
     auto quote = quote_queue->Pop();

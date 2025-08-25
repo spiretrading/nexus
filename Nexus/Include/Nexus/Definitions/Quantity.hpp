@@ -1,5 +1,6 @@
 #ifndef NEXUS_QUANTITY_HPP
 #define NEXUS_QUANTITY_HPP
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <functional>

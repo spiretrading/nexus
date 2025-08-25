@@ -22,6 +22,24 @@ TEST_SUITE("Quote") {
     REQUIRE(quote.m_side == side);
   }
 
+  TEST_CASE("make_bid") {
+    auto price = Money(5);
+    auto size = Quantity(250);
+    auto q = make_bid(price, size);
+    REQUIRE(q.m_price == price);
+    REQUIRE(q.m_size == size);
+    REQUIRE(q.m_side == Side::BID);
+  }
+
+  TEST_CASE("make_ask") {
+    auto price = Money(7);
+    auto size = Quantity(400);
+    auto q = make_ask(price, size);
+    REQUIRE(q.m_price == price);
+    REQUIRE(q.m_size == size);
+    REQUIRE(q.m_side == Side::ASK);
+  }
+
   TEST_CASE("equals") {
     auto q1 = Quote(Money(1), Quantity(100), Side::BID);
     auto q2 = Quote(Money(1), Quantity(100), Side::BID);

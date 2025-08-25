@@ -121,9 +121,9 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
   TEST_CASE("publish_bbo_quote") {
     auto fixture = Fixture();
     auto security = Security("GOOG", NASDAQ);
-    auto bbo_quote = SecurityBboQuote(BboQuote(Quote(
-      Money::CENT, 100, Side::BID), Quote(2 * Money::CENT, 200, Side::ASK),
-      time_from_string("2024-07-15 12:00:00")), security);
+    auto bbo_quote = SecurityBboQuote(
+      BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
+        time_from_string("2024-07-15 12:00:00")), security);
     auto completion_token = Async<void>();
     fixture.handle<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
@@ -144,24 +144,24 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     auto security_a = Security("A", NASDAQ);
     auto security_b = Security("B", NASDAQ);
     auto security_c = Security("C", NASDAQ);
-    auto bbo_a1 = SecurityBboQuote(BboQuote(Quote(
-      Money::CENT, 100, Side::BID), Quote(2 * Money::CENT, 200, Side::ASK),
-      time_from_string("2024-07-15 12:00:00")), security_a);
-    auto bbo_b1 = SecurityBboQuote(BboQuote(Quote(
-      Money::CENT, 100, Side::BID), Quote(2 * Money::CENT, 200, Side::ASK),
-      time_from_string("2024-07-15 12:00:01")), security_b);
-    auto bbo_b2 = SecurityBboQuote(BboQuote(Quote(
-      Money::CENT, 101, Side::BID), Quote(2 * Money::CENT, 201, Side::ASK),
-      time_from_string("2024-07-15 12:00:02")), security_b);
-    auto bbo_c1 = SecurityBboQuote(BboQuote(Quote(
-      Money::CENT, 100, Side::BID), Quote(2 * Money::CENT, 200, Side::ASK),
-      time_from_string("2024-07-15 12:00:03")), security_c);
-    auto bbo_c2 = SecurityBboQuote(BboQuote(Quote(
-      Money::CENT, 101, Side::BID), Quote(2 * Money::CENT, 201, Side::ASK),
-      time_from_string("2024-07-15 12:00:04")), security_c);
-    auto bbo_c3 = SecurityBboQuote(BboQuote(Quote(
-      Money::CENT, 102, Side::BID), Quote(2 * Money::CENT, 202, Side::ASK),
-      time_from_string("2024-07-15 12:00:05")), security_c);
+    auto bbo_a1 = SecurityBboQuote(
+      BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
+        time_from_string("2024-07-15 12:00:00")), security_a);
+    auto bbo_b1 = SecurityBboQuote(
+      BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
+        time_from_string("2024-07-15 12:00:01")), security_b);
+    auto bbo_b2 = SecurityBboQuote(
+      BboQuote(make_bid(Money::CENT, 101), make_ask(2 * Money::CENT, 201),
+        time_from_string("2024-07-15 12:00:02")), security_b);
+    auto bbo_c1 = SecurityBboQuote(
+      BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
+        time_from_string("2024-07-15 12:00:03")), security_c);
+    auto bbo_c2 = SecurityBboQuote(
+      BboQuote(make_bid(Money::CENT, 101), make_ask(2 * Money::CENT, 201),
+        time_from_string("2024-07-15 12:00:04")), security_c);
+    auto bbo_c3 = SecurityBboQuote(
+      BboQuote(make_bid(Money::CENT, 102), make_ask(2 * Money::CENT, 202),
+        time_from_string("2024-07-15 12:00:05")), security_c);
     auto completion_token = Async<void>();
     fixture.handle<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
@@ -192,7 +192,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     auto fixture = Fixture();
     auto security = Security("GOOG", NASDAQ);
     auto book_quote = SecurityBookQuote(
-      BookQuote("MP1", true, NASDAQ, Quote(10 * Money::ONE, 100, Side::BID),
+      BookQuote("MP1", true, NASDAQ, make_bid(10 * Money::ONE, 100),
         time_from_string("2024-07-15 12:00:00")), security);
     auto completion_token = Async<void>();
     fixture.handle<SendMarketDataFeedMessages>(
@@ -215,20 +215,20 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     auto security_b = Security("B", NASDAQ);
     auto security_c = Security("C", NASDAQ);
     auto book_a1 = SecurityBookQuote(
-      BookQuote("MP1", true, NASDAQ, Quote(10 * Money::ONE, 100, Side::BID),
+      BookQuote("MP1", true, NASDAQ, make_bid(10 * Money::ONE, 100),
         time_from_string("2024-07-15 12:00:00")), security_a);
     auto book_b1 = SecurityBookQuote(
-      BookQuote("MP1", true, NASDAQ, Quote(20 * Money::ONE, 200, Side::BID),
+      BookQuote("MP1", true, NASDAQ, make_bid(20 * Money::ONE, 200),
         time_from_string("2024-07-15 12:00:01")), security_b);
     auto book_b2 = SecurityBookQuote(
-      BookQuote("MP1", true, NASDAQ, Quote(20 * Money::ONE, 250, Side::BID),
+      BookQuote("MP1", true, NASDAQ, make_bid(20 * Money::ONE, 250),
         time_from_string("2024-07-15 12:00:02")), security_b);
     auto book_c1 = SecurityBookQuote(
-      BookQuote("MP2", false, NASDAQ, Quote(parse_money("30.01"), 300,
-        Side::ASK), time_from_string("2024-07-15 12:00:03")), security_c);
+      BookQuote("MP2", false, NASDAQ, make_ask(parse_money("30.01"), 300),
+        time_from_string("2024-07-15 12:00:03")), security_c);
     auto book_c2 = SecurityBookQuote(
-      BookQuote("MP2", false, NASDAQ, Quote(parse_money("30.02"), 350,
-        Side::ASK), time_from_string("2024-07-15 12:00:04")), security_c);
+      BookQuote("MP2", false, NASDAQ, make_ask(parse_money("30.02"), 350),
+        time_from_string("2024-07-15 12:00:04")), security_c);
     auto completion_token = Async<void>();
     fixture.handle<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
@@ -262,9 +262,9 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     auto fixture = Fixture();
     auto security = Security("GOOG", NASDAQ);
     auto order_id = "1";
-    auto bbo_quote = SecurityBboQuote(BboQuote(Quote(
-      Money::CENT, 100, Side::BID), Quote(2 * Money::CENT, 200, Side::ASK),
-      time_from_string("2024-07-15 12:00:02")), security);
+    auto bbo_quote = SecurityBboQuote(
+      BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
+        time_from_string("2024-07-15 12:00:02")), security);
     auto completion_token = Async<void>();
     fixture.handle<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
@@ -378,9 +378,9 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
   TEST_CASE("order_invalid_operations") {
     auto fixture = Fixture();
     auto security = Security("GOOG", NASDAQ);
-    auto bbo_quote = SecurityBboQuote(BboQuote(Quote(
-      Money::CENT, 100, Side::BID), Quote(2 * Money::CENT, 200, Side::ASK),
-      time_from_string("2024-07-15 12:00:01")), security);
+    auto bbo_quote = SecurityBboQuote(
+      BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
+        time_from_string("2024-07-15 12:00:01")), security);
     auto completion_token = Async<void>();
     fixture.handle<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
