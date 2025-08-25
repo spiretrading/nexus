@@ -89,7 +89,7 @@ if(UNIX)
     dl pthread rt)
 endif()
 if(WIN32)
-  target_link_libraries(AdministrationServer crypt32 Secur32 shlwapi)
+  target_link_libraries(AdministrationServer bcrypt crypt32 Secur32 shlwapi)
 endif()
 install(TARGETS AdministrationServer
   DESTINATION ${PROJECT_BINARY_DIR}/Application)

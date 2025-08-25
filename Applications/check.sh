@@ -12,7 +12,6 @@ services+=" SimulationOrderExecutionServer"
 services+=" RiskServer"
 services+=" WebPortal"
 services+=" SimulationMarketDataFeedClient"
-services+=" TelemetryServer"
 
 for directory in $services; do
   pushd $directory/Application > /dev/null

@@ -24,7 +24,6 @@ CALL:build Applications\Scratch %*
 CALL:build Applications\SimulationMarketDataFeedClient %*
 CALL:build Applications\SimulationOrderExecutionServer %*
 CALL:build Applications\Spire %*
-CALL:build Applications\TelemetryServer %*
 CALL:build Applications\WebPortal\WebApp %*
 CALL:build Applications\WebPortal %*
 ENDLOCAL

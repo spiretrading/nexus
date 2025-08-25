@@ -40,7 +40,6 @@ targets+=" Applications/RiskServer"
 targets+=" Applications/Scratch"
 targets+=" Applications/SimulationMarketDataFeedClient"
 targets+=" Applications/SimulationOrderExecutionServer"
-targets+=" Applications/TelemetryServer"
 targets+=" Applications/WebPortal/WebApp"
 targets+=" Applications/WebPortal"
 
