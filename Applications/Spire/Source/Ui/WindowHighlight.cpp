@@ -193,14 +193,6 @@ WindowHighlight::~WindowHighlight() {
   restore(m_z_order_windows, m_windows, m_minimized_windows);
 }
 
-WindowHighlight::Overlay* WindowHighlight::make_overlay(QScreen* screen) {
-  if(auto i = m_overlays.find(screen); i != m_overlays.end()) {
-    return i->second.get();
-  }
-  m_overlays[screen] = std::make_unique<Overlay>(*screen);
-  return m_overlays[screen].get();
-}
-
 QPainterPath WindowHighlight::make_overlay_path(const QScreen& screen,
     const std::vector<QRect>& rectangles, const QRegion& region) const {
   auto path = QPainterPath();
@@ -288,7 +280,8 @@ void WindowHighlight::update_geometry() {
       -HALF_HIGHLIGHT_WIDTH(), -HALF_HIGHLIGHT_HEIGHT(), HALF_HIGHLIGHT_WIDTH(),
       HALF_HIGHLIGHT_HEIGHT());
     rect = rect.intersected(screen->geometry());
-    auto overlay = make_overlay(screen);
+    auto& overlay = m_overlays.try_emplace(screen,
+      std::make_unique<Overlay>(*screen)).first->second;
     overlay->m_path = overlay_path.translated(-rect.topLeft());
     overlay->setGeometry(rect);
     overlay->show();

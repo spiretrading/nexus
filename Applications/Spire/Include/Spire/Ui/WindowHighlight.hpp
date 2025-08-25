@@ -32,7 +32,6 @@ namespace Spire {
       std::unordered_set<WId> m_minimized_windows;
       std::unordered_map<QScreen*, std::unique_ptr<Overlay>> m_overlays;
 
-      Overlay* make_overlay(QScreen* screen);
       QPainterPath make_overlay_path(const QScreen& screen,
         const std::vector<QRect>& rectangles, const QRegion& region) const;
       std::unordered_map<QScreen*, std::vector<QRect>>
