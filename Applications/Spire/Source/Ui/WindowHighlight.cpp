@@ -189,7 +189,6 @@ WindowHighlight::~WindowHighlight() {
     unmatch(*window, Highlighted());
     window->repaint();
   }
-  m_overlays.clear();
   restore(m_z_order_windows, m_windows, m_minimized_windows);
 }
 
