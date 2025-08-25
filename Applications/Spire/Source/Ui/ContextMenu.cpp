@@ -191,6 +191,11 @@ QWidget* ContextMenu::get_menu_item(int index) {
   return m_list_view->get_list_item(index);
 }
 
+connection ContextMenu::connect_current_signal(
+    const CurrentSignal::slot_type& slot) const {
+  return m_list_view->get_current()->connect_update_signal(slot);
+}
+
 connection ContextMenu::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
   return m_submit_signal.connect(slot);
