@@ -5,7 +5,7 @@ import nexus
 class PeggedOrder:
   def __init__(self, clients, order_fields, offset):
     self.clients = clients
-    self.order_fields = nexus.order_execution_service.OrderFields(order_fields)
+    self.order_fields = nexus.OrderFields(order_fields)
     self.submission_price = None
     self.offset = offset
     self.order = None
@@ -23,7 +23,7 @@ class PeggedOrder:
   def calculate_expected_price(self):
     return nexus.pick(self.order_fields.side,
       self.bbo_quote.ask.price, self.bbo_quote.bid.price) - \
-      nexus.direction(self.order_fields.side) * self.offset
+        nexus.direction(self.order_fields.side) * self.offset
 
   def s0(self):
     self.state = 0
@@ -34,7 +34,7 @@ class PeggedOrder:
   def s1(self):
     self.state = 1
     self.submission_price = self.calculate_expected_price()
-    order_fields = nexus.order_execution_service.OrderFields(self.order_fields)
+    order_fields = nexus.OrderFields(self.order_fields)
     order_fields.price = self.submission_price
     order_fields.quantity = self.order_fields.quantity - self.filled_quantity
     self.order = self.clients.order_execution_client.submit(order_fields)
