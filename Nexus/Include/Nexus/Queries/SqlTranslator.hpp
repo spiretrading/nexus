@@ -20,7 +20,7 @@
 #include "Nexus/Queries/ExpressionVisitor.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 
-namespace Nexus::Queries {
+namespace Nexus {
 
   /** Translates an Expression into an SQL query. */
   class SqlTranslator : public Beam::Queries::SqlTranslator,

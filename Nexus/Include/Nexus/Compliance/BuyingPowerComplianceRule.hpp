@@ -17,7 +17,7 @@
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Checks that an Order submission doesn't exceed the maximum allocated buying
@@ -25,7 +25,7 @@ namespace Nexus::Compliance {
    * @param <C> The type of MarketDataClient used to price Orders for buying
    *            power checks.
    */
-  template<MarketDataService::IsMarketDataClient C>
+  template<IsMarketDataClient C>
   class BuyingPowerComplianceRule : public ComplianceRule {
     public:
 
@@ -47,11 +47,9 @@ namespace Nexus::Compliance {
         const std::vector<ComplianceParameter>& parameters,
         const ExchangeRateTable& exchange_rates, CF&& market_data_client);
 
-      void submit(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
+      void submit(const std::shared_ptr<const Order>& order) override;
 
-      void add(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
+      void add(const std::shared_ptr<const Order>& order) override;
 
     private:
       CurrencyId m_currency;
@@ -59,16 +57,13 @@ namespace Nexus::Compliance {
       ExchangeRateTable m_exchange_rates;
       Beam::GetOptionalLocalPtr<C> m_market_data_client;
       Beam::Threading::Sync<BuyingPowerModel> m_buying_power_model;
-      Beam::MultiQueueWriter<OrderExecutionService::ExecutionReport>
-        m_execution_report_queue;
-      std::unordered_map<OrderExecutionService::OrderId, CurrencyId>
-        m_currencies;
+      Beam::MultiQueueWriter<ExecutionReport> m_execution_report_queue;
+      std::unordered_map<OrderId, CurrencyId> m_currencies;
       Beam::SynchronizedUnorderedMap<Security,
         std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bbo_quotes;
 
       BboQuote load_bbo_quote(const Security& security);
-      Money get_expected_price(
-        const OrderExecutionService::OrderFields& fields);
+      Money get_expected_price(const OrderFields& fields);
   };
 
   template<typename MarketDataClient>
@@ -86,7 +81,7 @@ namespace Nexus::Compliance {
     return ComplianceRuleSchema("buying_power", std::move(parameters));
   }
 
-  template<MarketDataService::IsMarketDataClient C>
+  template<IsMarketDataClient C>
   template<Beam::Initializes<C> CF>
   BuyingPowerComplianceRule<C>::BuyingPowerComplianceRule(
       const std::vector<ComplianceParameter>& parameters,
@@ -101,9 +96,9 @@ namespace Nexus::Compliance {
     }
   }
 
-  template<MarketDataService::IsMarketDataClient C>
+  template<IsMarketDataClient C>
   void BuyingPowerComplianceRule<C>::submit(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     auto& fields = order->get_info().m_fields;
     auto price = get_expected_price(fields);
     Beam::Threading::With(m_buying_power_model, [&] (auto& buying_power_model) {
@@ -135,7 +130,7 @@ namespace Nexus::Compliance {
       auto updated_buying_power = buying_power_model.submit(
         order->get_info().m_id, converted_fields, converted_price);
       if(updated_buying_power > m_buying_power) {
-        auto report = OrderExecutionService::ExecutionReport();
+        auto report = ExecutionReport();
         report.m_id = order->get_info().m_id;
         report.m_status = OrderStatus::REJECTED;
         buying_power_model.update(report);
@@ -147,9 +142,9 @@ namespace Nexus::Compliance {
     });
   }
 
-  template<MarketDataService::IsMarketDataClient C>
+  template<IsMarketDataClient C>
   void BuyingPowerComplianceRule<C>::add(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     auto& fields = order->get_info().m_fields;
     auto price = [&] {
       try {
@@ -180,12 +175,11 @@ namespace Nexus::Compliance {
     });
   }
 
-  template<MarketDataService::IsMarketDataClient C>
+  template<IsMarketDataClient C>
   BboQuote BuyingPowerComplianceRule<C>::load_bbo_quote(const Security& security) {
     auto publisher = m_bbo_quotes.GetOrInsert(security, [&] {
       auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
-      MarketDataService::query_real_time_with_snapshot(
-        *m_market_data_client, security, publisher);
+      query_real_time_with_snapshot(*m_market_data_client, security, publisher);
       return publisher;
     });
     try {
@@ -197,9 +191,9 @@ namespace Nexus::Compliance {
     }
   }
 
-  template<MarketDataService::IsMarketDataClient C>
+  template<IsMarketDataClient C>
   Money BuyingPowerComplianceRule<C>::get_expected_price(
-      const OrderExecutionService::OrderFields& fields) {
+      const OrderFields& fields) {
     auto bbo = load_bbo_quote(fields.m_security);
     if(fields.m_type == OrderType::LIMIT) {
       if(fields.m_price <= Money::ZERO) {

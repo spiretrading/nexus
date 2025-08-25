@@ -4,7 +4,6 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::SoupBinTcp;
 
 namespace {
   auto make_login_accepted_packet(

@@ -9,7 +9,7 @@
 #include "Nexus/RiskService/InventorySnapshot.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /** Provides a generic interface over an arbitrary RiskClient. */
   class RiskClient {

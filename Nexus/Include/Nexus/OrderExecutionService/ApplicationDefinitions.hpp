@@ -3,11 +3,12 @@
 #include <Beam/Services/ApplicationDefinitions.hpp>
 #include "Nexus/OrderExecutionService/ServiceOrderExecutionClient.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Encapsulates a standard OrderExecutionClient used in an application. */
   using ApplicationOrderExecutionClient = Beam::Services::ApplicationClient<
-    ServiceOrderExecutionClient, Beam::Services::ServiceName<SERVICE_NAME>>;
+    ServiceOrderExecutionClient,
+    Beam::Services::ServiceName<ORDER_EXECUTION_SERVICE_NAME>>;
 }
 
 #endif

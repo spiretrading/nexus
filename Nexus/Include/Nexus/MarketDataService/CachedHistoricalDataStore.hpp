@@ -8,7 +8,7 @@
 #include "Nexus/MarketDataService/HistoricalDataStoreQueryWrapper.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Caches historical market data.
@@ -56,7 +56,7 @@ namespace Nexus::MarketDataService {
       template<typename T>
       using DataStore = Beam::Queries::CachedDataStore<
         HistoricalDataStoreQueryWrapper<T, HistoricalDataStore*>,
-        Queries::EvaluatorTranslator>;
+        EvaluatorTranslator>;
       Beam::GetOptionalLocalPtr<D> m_data_store;
       DataStore<OrderImbalance> m_order_imbalance_data_store;
       DataStore<BboQuote> m_bbo_quote_data_store;

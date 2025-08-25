@@ -5,10 +5,8 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Nexus;
-using namespace Nexus::Compliance;
-using namespace Nexus::Compliance::Tests;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::OrderExecutionService;
+using namespace Nexus::Tests;
 
 TEST_SUITE("RegionFilterComplianceRule") {
   TEST_CASE("submit") {

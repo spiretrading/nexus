@@ -2,7 +2,7 @@
 #define NEXUS_ORDER_EXECUTION_DATA_STORE_EXCEPTION_HPP
 #include <Beam/IO/IOException.hpp>
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /**
    * Exception to indicate an operation on an OrderExecutionDataStore failed.

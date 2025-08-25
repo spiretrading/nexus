@@ -5,7 +5,6 @@
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::OrderExecutionService;
 
 TEST_SUITE("ShortingModel") {
   TEST_CASE("submit_bid_order_not_short") {

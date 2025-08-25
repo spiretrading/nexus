@@ -110,8 +110,7 @@ namespace Nexus::Tests {
 
       /** Records a call to load_entitlements(). */
       struct LoadEntitlementsOperation {
-        Beam::Services::Tests::ServiceResult<
-          MarketDataService::EntitlementDatabase> m_result;
+        Beam::Services::Tests::ServiceResult<EntitlementDatabase> m_result;
       };
 
       /** Records a call to load_entitlements(). */
@@ -131,27 +130,26 @@ namespace Nexus::Tests {
       /** Records a call to get_risk_parameters_publisher(). */
       struct MonitorRiskParametersOperation {
         Beam::ServiceLocator::DirectoryEntry m_account;
-        Beam::Services::Tests::ServiceResult<RiskService::RiskParameters>
-          m_result;
+        Beam::Services::Tests::ServiceResult<RiskParameters> m_result;
       };
 
       /** Records a call to store_risk_parameters(). */
       struct StoreRiskParametersOperation {
         Beam::ServiceLocator::DirectoryEntry m_account;
-        RiskService::RiskParameters m_parameters;
+        RiskParameters m_parameters;
         Beam::Services::Tests::ServiceResult<void> m_result;
       };
 
       /** Records a call to load_risk_state(). */
       struct LoadRiskStateOperation {
         Beam::ServiceLocator::DirectoryEntry m_account;
-        Beam::Services::Tests::ServiceResult<RiskService::RiskState> m_result;
+        Beam::Services::Tests::ServiceResult<RiskState> m_result;
       };
 
       /** Records a call to store_risk_state(). */
       struct StoreRiskStateOperation {
         Beam::ServiceLocator::DirectoryEntry m_account;
-        RiskService::RiskState m_state;
+        RiskState m_state;
         Beam::Services::Tests::ServiceResult<void> m_result;
       };
 
@@ -319,21 +317,20 @@ namespace Nexus::Tests {
           const Beam::ServiceLocator::DirectoryEntry& account);
       std::vector<Beam::ServiceLocator::DirectoryEntry> load_administrators();
       std::vector<Beam::ServiceLocator::DirectoryEntry> load_services();
-      MarketDataService::EntitlementDatabase load_entitlements();
+      EntitlementDatabase load_entitlements();
       std::vector<Beam::ServiceLocator::DirectoryEntry> load_entitlements(
         const Beam::ServiceLocator::DirectoryEntry& account);
       void store_entitlements(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements);
-      const Beam::Publisher<RiskService::RiskParameters>&
-        get_risk_parameters_publisher(
-          const Beam::ServiceLocator::DirectoryEntry& account);
-      void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& parameters);
-      const Beam::Publisher<RiskService::RiskState>& get_risk_state_publisher(
+      const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
         const Beam::ServiceLocator::DirectoryEntry& account);
       void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& state);
+        const RiskParameters& parameters);
+      const Beam::Publisher<RiskState>& get_risk_state_publisher(
+        const Beam::ServiceLocator::DirectoryEntry& account);
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const RiskState& state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest::Id>
@@ -472,10 +469,8 @@ namespace Nexus::Tests {
       std::vector<Beam::ServiceLocator::DirectoryEntry>>();
   }
 
-  inline MarketDataService::EntitlementDatabase
-      TestAdministrationClient::load_entitlements() {
-    return append_result<LoadEntitlementsOperation,
-      MarketDataService::EntitlementDatabase>();
+  inline EntitlementDatabase TestAdministrationClient::load_entitlements() {
+    return append_result<LoadEntitlementsOperation, EntitlementDatabase>();
   }
 
   inline std::vector<Beam::ServiceLocator::DirectoryEntry>
@@ -492,7 +487,7 @@ namespace Nexus::Tests {
       account, entitlements);
   }
 
-  inline const Beam::Publisher<RiskService::RiskParameters>&
+  inline const Beam::Publisher<RiskParameters>&
       TestAdministrationClient::get_risk_parameters_publisher(
         const Beam::ServiceLocator::DirectoryEntry& account) {
     throw std::runtime_error("Not supported.");
@@ -500,12 +495,12 @@ namespace Nexus::Tests {
 
   inline void TestAdministrationClient::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& parameters) {
+      const RiskParameters& parameters) {
     return append_result<StoreRiskParametersOperation, void>(
       account, parameters);
   }
 
-  inline const Beam::Publisher<RiskService::RiskState>&
+  inline const Beam::Publisher<RiskState>&
       TestAdministrationClient::get_risk_state_publisher(
         const Beam::ServiceLocator::DirectoryEntry& account) {
     throw std::runtime_error("Not supported.");
@@ -513,7 +508,7 @@ namespace Nexus::Tests {
 
   inline void TestAdministrationClient::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& state) {
+      const RiskState& state) {
     return append_result<StoreRiskStateOperation, void>(account, state);
   }
 

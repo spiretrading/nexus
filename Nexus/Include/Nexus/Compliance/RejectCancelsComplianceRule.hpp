@@ -3,7 +3,7 @@
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Rejects all cancels. */
   class RejectCancelsComplianceRule : public ComplianceRule {
@@ -19,8 +19,7 @@ namespace Nexus::Compliance {
        */
       explicit RejectCancelsComplianceRule(std::string reason);
 
-      void cancel(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
+      void cancel(const std::shared_ptr<const Order>& order) override;
 
     private:
       std::string m_reason;
@@ -33,8 +32,8 @@ namespace Nexus::Compliance {
     std::string reason)
     : m_reason(std::move(reason)) {}
 
-  inline void RejectCancelsComplianceRule::cancel(const std::shared_ptr<
-      const OrderExecutionService::Order>& order) {
+  inline void RejectCancelsComplianceRule::cancel(
+      const std::shared_ptr<const Order>& order) {
     throw ComplianceCheckException(m_reason);
   }
 }

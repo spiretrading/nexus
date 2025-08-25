@@ -11,8 +11,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::OrderExecutionService;
 
 TEST_SUITE("BacktesterEnvironment") {
   TEST_CASE("fill_limit_order") {

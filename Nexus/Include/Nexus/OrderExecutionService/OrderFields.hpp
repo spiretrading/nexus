@@ -17,7 +17,7 @@
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Contains the fields needed to represent an Order. */
   struct OrderFields {
@@ -370,10 +370,9 @@ namespace Nexus::OrderExecutionService {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::OrderExecutionService::OrderFields> {
+  struct Shuttle<Nexus::OrderFields> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::OrderExecutionService::OrderFields& value,
+    void operator ()(Shuttler& shuttle, Nexus::OrderFields& value,
         unsigned int version) const {
       shuttle.Shuttle("account", value.m_account);
       shuttle.Shuttle("security", value.m_security);

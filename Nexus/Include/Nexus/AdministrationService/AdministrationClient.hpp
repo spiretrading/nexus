@@ -22,10 +22,10 @@
 namespace Nexus {
 
   /** Used to push updates about an account's RiskState. */
-  using RiskStateQueue = Beam::AbstractQueue<RiskService::RiskState>;
+  using RiskStateQueue = Beam::AbstractQueue<RiskState>;
 
   /** Used to push updates about an account's RiskParameters. */
-  using RiskParametersQueue = Beam::AbstractQueue<RiskService::RiskParameters>;
+  using RiskParametersQueue = Beam::AbstractQueue<RiskParameters>;
 
   /** Provides a generic interface over an arbitrary AdministrationClient. */
   class AdministrationClient {
@@ -157,7 +157,7 @@ namespace Nexus {
        * Loads the EntitlementDatabase.
        * @return The EntitlementDatabase.
        */
-      MarketDataService::EntitlementDatabase load_entitlements();
+      EntitlementDatabase load_entitlements();
 
       /**
        * Loads the entitlements granted to an account.
@@ -182,9 +182,8 @@ namespace Nexus {
        * Returns the object publishing an account's RiskParameters.
        * @param account The account to monitor.
        */
-      const Beam::Publisher<RiskService::RiskParameters>&
-        get_risk_parameters_publisher(
-          const Beam::ServiceLocator::DirectoryEntry& account);
+      const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
+        const Beam::ServiceLocator::DirectoryEntry& account);
 
       /**
        * Sets an account's RiskParameters.
@@ -193,13 +192,13 @@ namespace Nexus {
        *        <i>account</i>.
        */
       void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& parameters);
+        const RiskParameters& parameters);
 
       /**
        * Returns the object publishing an account's RiskState.
        * @param account The account to monitor.
        */
-      const Beam::Publisher<RiskService::RiskState>& get_risk_state_publisher(
+      const Beam::Publisher<RiskState>& get_risk_state_publisher(
         const Beam::ServiceLocator::DirectoryEntry& account);
 
       /**
@@ -208,7 +207,7 @@ namespace Nexus {
        * @param state The <i>account</i>'s current RiskState.
        */
       void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& state);
+        const RiskState& state);
 
       /**
        * Loads an account modification request.
@@ -369,7 +368,7 @@ namespace Nexus {
           load_administrators() = 0;
         virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
           load_services() = 0;
-        virtual MarketDataService::EntitlementDatabase load_entitlements() = 0;
+        virtual EntitlementDatabase load_entitlements() = 0;
         virtual std::vector<Beam::ServiceLocator::DirectoryEntry>
           load_entitlements(
             const Beam::ServiceLocator::DirectoryEntry& account) = 0;
@@ -377,16 +376,15 @@ namespace Nexus {
           const Beam::ServiceLocator::DirectoryEntry& account,
           const std::vector<Beam::ServiceLocator::DirectoryEntry>&
             entitlements) = 0;
-        virtual const Beam::Publisher<RiskService::RiskParameters>&
+        virtual const Beam::Publisher<RiskParameters>&
           get_risk_parameters_publisher(
             const Beam::ServiceLocator::DirectoryEntry& account) = 0;
         virtual void store(const Beam::ServiceLocator::DirectoryEntry& account,
-          const RiskService::RiskParameters& risk_parameters) = 0;
-        virtual const Beam::Publisher<RiskService::RiskState>&
-          get_risk_state_publisher(
+          const RiskParameters& risk_parameters) = 0;
+        virtual const Beam::Publisher<RiskState>& get_risk_state_publisher(
             const Beam::ServiceLocator::DirectoryEntry& account) = 0;
         virtual void store(const Beam::ServiceLocator::DirectoryEntry& account,
-          const RiskService::RiskState& risk_state) = 0;
+          const RiskState& risk_state) = 0;
         virtual AccountModificationRequest load_account_modification_request(
           AccountModificationRequest::Id id) = 0;
         virtual std::vector<AccountModificationRequest::Id>
@@ -461,22 +459,21 @@ namespace Nexus {
           load_administrators() override;
         std::vector<Beam::ServiceLocator::DirectoryEntry>
           load_services() override;
-        MarketDataService::EntitlementDatabase load_entitlements() override;
+        EntitlementDatabase load_entitlements() override;
         std::vector<Beam::ServiceLocator::DirectoryEntry> load_entitlements(
           const Beam::ServiceLocator::DirectoryEntry& account) override;
         void store_entitlements(
           const Beam::ServiceLocator::DirectoryEntry& account,
           const std::vector<Beam::ServiceLocator::DirectoryEntry>&
             entitlements) override;
-        const Beam::Publisher<RiskService::RiskParameters>&
-          get_risk_parameters_publisher(
-            const Beam::ServiceLocator::DirectoryEntry& account) override;
-        void store(const Beam::ServiceLocator::DirectoryEntry& account,
-          const RiskService::RiskParameters& risk_parameters) override;
-        const Beam::Publisher<RiskService::RiskState>& get_risk_state_publisher(
+        const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
           const Beam::ServiceLocator::DirectoryEntry& account) override;
         void store(const Beam::ServiceLocator::DirectoryEntry& account,
-          const RiskService::RiskState& risk_state) override;
+          const RiskParameters& risk_parameters) override;
+        const Beam::Publisher<RiskState>& get_risk_state_publisher(
+          const Beam::ServiceLocator::DirectoryEntry& account) override;
+        void store(const Beam::ServiceLocator::DirectoryEntry& account,
+          const RiskState& risk_state) override;
         AccountModificationRequest load_account_modification_request(
           AccountModificationRequest::Id id) override;
         std::vector<AccountModificationRequest::Id>
@@ -527,11 +524,10 @@ namespace Nexus {
    * @param account The account whose parameters are to be loaded.
    * @return The <i>account</i>'s RiskParameters.
    */
-  RiskService::RiskParameters load_risk_parameters(
-      IsAdministrationClient auto& client,
+  RiskParameters load_risk_parameters(IsAdministrationClient auto& client,
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto queue =
-      std::make_shared<Beam::StateQueue<RiskService::RiskParameters>>();
+      std::make_shared<Beam::StateQueue<RiskParameters>>();
     client.get_risk_parameters_publisher(account).Monitor(queue);
     return queue->Pop();
   }
@@ -632,8 +628,7 @@ namespace Nexus {
     return m_client->load_services();
   }
 
-  inline MarketDataService::EntitlementDatabase
-      AdministrationClient::load_entitlements() {
+  inline EntitlementDatabase AdministrationClient::load_entitlements() {
     return m_client->load_entitlements();
   }
 
@@ -649,7 +644,7 @@ namespace Nexus {
     m_client->store_entitlements(account, entitlements);
   }
 
-  inline const Beam::Publisher<RiskService::RiskParameters>&
+  inline const Beam::Publisher<RiskParameters>&
       AdministrationClient::get_risk_parameters_publisher(
         const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_client->get_risk_parameters_publisher(account);
@@ -657,11 +652,11 @@ namespace Nexus {
 
   inline void AdministrationClient::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& parameters) {
+      const RiskParameters& parameters) {
     m_client->store(account, parameters);
   }
 
-  inline const Beam::Publisher<RiskService::RiskState>&
+  inline const Beam::Publisher<RiskState>&
       AdministrationClient::get_risk_state_publisher(
         const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_client->get_risk_state_publisher(account);
@@ -669,7 +664,7 @@ namespace Nexus {
 
   inline void AdministrationClient::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& state) {
+      const RiskState& state) {
     m_client->store(account, state);
   }
 
@@ -856,7 +851,7 @@ namespace Nexus {
   }
 
   template<typename C>
-  MarketDataService::EntitlementDatabase
+  EntitlementDatabase
       AdministrationClient::WrappedAdministrationClient<C>::
         load_entitlements() {
     return m_client->load_entitlements();
@@ -877,7 +872,7 @@ namespace Nexus {
   }
 
   template<typename C>
-  const Beam::Publisher<RiskService::RiskParameters>&
+  const Beam::Publisher<RiskParameters>&
       AdministrationClient::WrappedAdministrationClient<C>::
         get_risk_parameters_publisher(
           const Beam::ServiceLocator::DirectoryEntry& account) {
@@ -887,12 +882,12 @@ namespace Nexus {
   template<typename C>
   void AdministrationClient::WrappedAdministrationClient<C>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& parameters) {
+      const RiskParameters& parameters) {
     m_client->store(account, parameters);
   }
 
   template<typename C>
-  const Beam::Publisher<RiskService::RiskState>&
+  const Beam::Publisher<RiskState>&
       AdministrationClient::WrappedAdministrationClient<C>::
         get_risk_state_publisher(
           const Beam::ServiceLocator::DirectoryEntry& account) {
@@ -902,7 +897,7 @@ namespace Nexus {
   template<typename C>
   void AdministrationClient::WrappedAdministrationClient<C>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& state) {
+      const RiskState& state) {
     m_client->store(account, state);
   }
 

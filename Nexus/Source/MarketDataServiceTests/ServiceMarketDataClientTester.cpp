@@ -18,8 +18,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::Queries;
 
 namespace {
   using TestMarketDataClient =
@@ -44,8 +42,7 @@ namespace {
         m_server(m_server_connection, factory<std::unique_ptr<TriggerTimer>>(),
           NullSlot(), NullSlot()),
         m_request_queue(std::make_shared<Queue<std::vector<any>>>()) {
-      Nexus::Queries::RegisterQueryTypes(
-        Store(m_server.GetSlots().GetRegistry()));
+      Nexus::RegisterQueryTypes(Store(m_server.GetSlots().GetRegistry()));
       RegisterMarketDataRegistryServices(Store(m_server.GetSlots()));
       RegisterMarketDataRegistryMessages(Store(m_server.GetSlots()));
       QueryBboQuotesService::AddRequestSlot(Store(m_server.GetSlots()),

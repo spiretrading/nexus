@@ -4,7 +4,7 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/ServiceLocator/AuthenticatedSession.hpp>
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Stores session info for an OrderExecutionServlet client. */
   class OrderExecutionSession

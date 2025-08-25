@@ -1,7 +1,7 @@
 #ifndef NEXUS_EXPRESSION_VISITOR_HPP
 #define NEXUS_EXPRESSION_VISITOR_HPP
 
-namespace Nexus::Queries {
+namespace Nexus {
 
   /** Implements the visitor pattern for Expressions. */
   class ExpressionVisitor {

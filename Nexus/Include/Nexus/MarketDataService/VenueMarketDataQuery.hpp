@@ -14,11 +14,8 @@ namespace Nexus {
   using SequencedVenueOrderImbalance =
     Beam::Queries::SequencedValue<VenueOrderImbalance>;
 
-namespace MarketDataService {
-
   /** Defines the type of query used to receive a market data for a venue. */
   using VenueMarketDataQuery = Beam::Queries::BasicQuery<Venue>;
-}
 }
 
 #endif

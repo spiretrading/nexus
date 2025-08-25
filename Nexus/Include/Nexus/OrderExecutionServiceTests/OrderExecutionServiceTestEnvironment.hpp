@@ -22,7 +22,7 @@
 #include "Nexus/OrderExecutionService/ServiceOrderExecutionClient.hpp"
 #include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
 
-namespace Nexus::OrderExecutionService::Tests {
+namespace Nexus::Tests {
 
   /**
    * Wraps most components needed to run an instance of the

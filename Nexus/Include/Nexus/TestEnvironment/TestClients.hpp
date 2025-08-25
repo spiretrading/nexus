@@ -26,12 +26,12 @@ namespace Nexus {
         Beam::ServiceLocator::ServiceLocatorClientBox;
       using RegistryClient = Beam::RegistryService::RegistryClientBox;
       using AdministrationClient = Nexus::AdministrationClient;
-      using DefinitionsClient = DefinitionsService::DefinitionsClient;
-      using MarketDataClient = MarketDataService::MarketDataClient;
-      using ChartingClient = ChartingService::ChartingClient;
-      using ComplianceClient = Compliance::ComplianceClient;
-      using OrderExecutionClient = OrderExecutionService::OrderExecutionClient;
-      using RiskClient = RiskService::RiskClient;
+      using DefinitionsClient = Nexus::DefinitionsClient;
+      using MarketDataClient = Nexus::MarketDataClient;
+      using ChartingClient = Nexus::ChartingClient;
+      using ComplianceClient = Nexus::ComplianceClient;
+      using OrderExecutionClient = Nexus::OrderExecutionClient;
+      using RiskClient = Nexus::RiskClient;
       using TimeClient = Beam::TimeService::TimeClientBox;
       using Timer = Beam::Threading::TimerBox;
 

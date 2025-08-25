@@ -5,7 +5,6 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::MoldUdp64;
 
 TEST_SUITE("MoldUdp64Packet") {
   TEST_CASE("parse_valid_packet") {

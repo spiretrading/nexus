@@ -6,7 +6,7 @@
 #include "Nexus/Stamp/StampHeader.hpp"
 #include "Nexus/Stamp/StampParserException.hpp"
 
-namespace Nexus::Stamp {
+namespace Nexus {
 
   /** Stores a STAMP packet. */
   struct StampPacket {

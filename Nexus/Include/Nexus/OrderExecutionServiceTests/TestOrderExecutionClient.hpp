@@ -10,7 +10,7 @@
 #include <Beam/ServicesTests/ServiceResult.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 
-namespace Nexus::OrderExecutionService::Tests {
+namespace Nexus::Tests {
 
   /**
    * Implements an OrderExecutionClient for testing purposes by pushing all

@@ -14,7 +14,6 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::OrderExecutionService;
 
 namespace {
   auto make_test_order_fields() {

@@ -14,10 +14,11 @@
 #include "Nexus/Definitions/TradingSchedule.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 
-namespace Nexus::DefinitionsService {
+namespace Nexus {
 
   /** Standard name for the definitions service. */
-  inline const auto SERVICE_NAME = std::string("definitions_service");
+  inline const auto DEFINITIONS_SERVICE_NAME =
+    std::string("definitions_service");
 
   BEAM_DEFINE_SERVICES(DefinitionsServices,
 
@@ -87,7 +88,7 @@ namespace Nexus::DefinitionsService {
      */
     (LoadComplianceRuleSchemasService,
       "Nexus.DefinitionsServices.LoadComplianceRuleSchemasService",
-      std::vector<Compliance::ComplianceRuleSchema>),
+      std::vector<ComplianceRuleSchema>),
 
     /**
      * Loads a single day's trading schedule.

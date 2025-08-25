@@ -4,7 +4,7 @@
 #include <doctest/doctest.h>
 #include "Nexus/Compliance/ComplianceRuleDataStore.hpp"
 
-namespace Nexus::Compliance::Tests {
+namespace Nexus::Tests {
   TEST_CASE_TEMPLATE_DEFINE(
       "ComplianceRuleDataStore", T, ComplianceRuleDataStoreTestSuite) {
     using namespace Beam;
@@ -12,7 +12,6 @@ namespace Nexus::Compliance::Tests {
     using namespace boost;
     using namespace boost::posix_time;
     using namespace Nexus;
-    using namespace Nexus::Compliance;
 
     auto data_store = T()();
 

@@ -3,7 +3,7 @@
 #include <Beam/Queries/TraversalExpressionVisitor.hpp>
 #include "Nexus/Queries/ExpressionVisitor.hpp"
 
-namespace Nexus::Queries {
+namespace Nexus {
 
   /** An ExpressionVisitor that traverses all of its children. */
   class TraversalExpressionVisitor :

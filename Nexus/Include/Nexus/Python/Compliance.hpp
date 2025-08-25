@@ -26,7 +26,7 @@ namespace Nexus::Python {
    * @param name The name of the class.
    * @return The exported ComplianceClient.
    */
-  template<Compliance::IsComplianceClient C>
+  template<IsComplianceClient C>
   auto export_compliance_client(
       pybind11::module& module, std::string_view name) {
     auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
@@ -37,8 +37,8 @@ namespace Nexus::Python {
       def("report", &C::report).
       def("monitor_compliance_rule_entries", [] (C& self,
           const Beam::ServiceLocator::DirectoryEntry& directory_entry,
-          Beam::ScopedQueueWriter<Compliance::ComplianceRuleEntry> queue) {
-        auto snapshot = std::vector<Compliance::ComplianceRuleEntry>();
+          Beam::ScopedQueueWriter<ComplianceRuleEntry> queue) {
+        auto snapshot = std::vector<ComplianceRuleEntry>();
         self.monitor_compliance_rule_entries(directory_entry,
           std::move(queue), Beam::Store(snapshot));
         return snapshot;
@@ -60,7 +60,7 @@ namespace Nexus::Python {
    * @param name The name of the class.
    * @return The exported ComplianceRuleDataStore.
    */
-  template<Compliance::IsComplianceRuleDataStore D>
+  template<IsComplianceRuleDataStore D>
   auto export_compliance_rule_data_store(
       pybind11::module& module, std::string_view name) {
     auto data_store = pybind11::class_<D, std::shared_ptr<D>>(
@@ -73,10 +73,10 @@ namespace Nexus::Python {
           &D::load_compliance_rule_entry).
         def("load_compliance_rule_entries",
           &D::load_compliance_rule_entries).
+        def("store",
+          static_cast<void (D::*)(const ComplianceRuleEntry&)>(&D::store)).
         def("store", static_cast<void (D::*)(
-          const Compliance::ComplianceRuleEntry&)>(&D::store)).
-        def("store", static_cast<void (D::*)(
-          const Compliance::ComplianceRuleViolationRecord&)>(&D::store)).
+          const ComplianceRuleViolationRecord&)>(&D::store)).
         def("remove", &D::remove).
         def("close", &D::close);
     return data_store;

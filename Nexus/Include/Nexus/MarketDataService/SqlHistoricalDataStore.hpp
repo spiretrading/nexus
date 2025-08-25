@@ -12,7 +12,7 @@
 #include "Nexus/MarketDataService/SqlDefinitions.hpp"
 #include "Nexus/Queries/SqlTranslator.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Stores historical market data in an SQL database.
@@ -61,7 +61,7 @@ namespace Nexus::MarketDataService {
     private:
       template<typename V, typename I>
       using DataStore =
-        Beam::Queries::SqlDataStore<Connection, V, I, Queries::SqlTranslator>;
+        Beam::Queries::SqlDataStore<Connection, V, I, SqlTranslator>;
       VenueDatabase m_venues;
       Beam::DatabaseConnectionPool<Connection> m_reader_pool;
       Beam::DatabaseConnectionPool<Connection> m_writer_pool;
@@ -125,7 +125,7 @@ namespace Nexus::MarketDataService {
   std::vector<SecurityInfo> SqlHistoricalDataStore<C>::load_security_info(
       const SecurityInfoQuery& query) {
     auto matches = std::vector<SecurityInfo>();
-    auto filter = Beam::Queries::MakeSqlQuery<Queries::SqlTranslator>(
+    auto filter = Beam::Queries::MakeSqlQuery<SqlTranslator>(
       "security_info", query.GetFilter());
     auto anchor = [&] {
       if(auto anchor = query.GetAnchor()) {

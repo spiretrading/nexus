@@ -6,10 +6,8 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::Compliance;
-using namespace Nexus::Compliance::Tests;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::OrderExecutionService;
+using namespace Nexus::Tests;
 
 TEST_SUITE("MapComplianceRule") {
   TEST_CASE("submit") {

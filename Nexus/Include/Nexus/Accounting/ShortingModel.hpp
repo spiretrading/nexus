@@ -18,14 +18,13 @@ namespace Nexus {
        * @return <code>true</code> iff the submission should be marked as a
        *         short sale.
        */
-      bool submit(OrderExecutionService::OrderId id,
-        const OrderExecutionService::OrderFields& fields);
+      bool submit(OrderId id, const OrderFields& fields);
 
       /**
        * Updates this model with the contents of an ExecutionReport.
        * @param report The ExecutionReport to update this model with.
        */
-      void update(const OrderExecutionService::ExecutionReport& report);
+      void update(const ExecutionReport& report);
 
     private:
       struct PositionEntry {
@@ -40,8 +39,7 @@ namespace Nexus {
 
         OrderEntry() noexcept;
       };
-      std::unordered_map<OrderExecutionService::OrderId, OrderEntry>
-        m_order_entries;
+      std::unordered_map<OrderId, OrderEntry> m_order_entries;
       std::unordered_map<Security, PositionEntry> m_position_entries;
 
       PositionEntry& get_position(const Security& security);
@@ -50,8 +48,7 @@ namespace Nexus {
   inline ShortingModel::OrderEntry::OrderEntry() noexcept
     : m_side(Side::BID) {}
 
-  inline bool ShortingModel::submit(OrderExecutionService::OrderId id,
-      const OrderExecutionService::OrderFields& fields) {
+  inline bool ShortingModel::submit(OrderId id, const OrderFields& fields) {
     auto order_iterator = m_order_entries.find(id);
     if(order_iterator != m_order_entries.end()) {
       m_order_entries.erase(order_iterator);
@@ -70,8 +67,7 @@ namespace Nexus {
     return false;
   }
 
-  inline void ShortingModel::update(
-      const OrderExecutionService::ExecutionReport& report) {
+  inline void ShortingModel::update(const ExecutionReport& report) {
     auto order_iterator = m_order_entries.find(report.m_id);
     if(order_iterator == m_order_entries.end()) {
       return;

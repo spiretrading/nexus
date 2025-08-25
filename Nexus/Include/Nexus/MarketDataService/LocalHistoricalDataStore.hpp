@@ -6,7 +6,7 @@
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Implements an HistoricalDataStore in memory. */
   class LocalHistoricalDataStore {
@@ -52,7 +52,7 @@ namespace Nexus::MarketDataService {
     private:
       template<typename T, typename Query>
       using DataStore =
-        Beam::Queries::LocalDataStore<Query, T, Queries::EvaluatorTranslator>;
+        Beam::Queries::LocalDataStore<Query, T, EvaluatorTranslator>;
       Beam::SynchronizedVector<SecurityInfo> m_security_info;
       DataStore<OrderImbalance, VenueMarketDataQuery>
         m_order_imbalance_data_store;
@@ -89,8 +89,7 @@ namespace Nexus::MarketDataService {
   inline std::vector<SecurityInfo> LocalHistoricalDataStore::load_security_info(
       const SecurityInfoQuery& query) {
     auto evaluator =
-      Beam::Queries::Translate<Nexus::Queries::EvaluatorTranslator>(
-        query.GetFilter());
+      Beam::Queries::Translate<EvaluatorTranslator>(query.GetFilter());
     return m_security_info.With([&] (auto& security_info) {
       auto matches = std::vector<SecurityInfo>();
       auto [begin, end] = [&] {

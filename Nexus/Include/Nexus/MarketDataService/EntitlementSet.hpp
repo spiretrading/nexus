@@ -9,7 +9,7 @@
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Stores an index into a market data entitlement. */
   struct EntitlementKey {
@@ -61,15 +61,14 @@ namespace Nexus::MarketDataService {
 
 namespace std {
   template<>
-  struct hash<Nexus::MarketDataService::EntitlementKey> {
-    std::size_t operator ()(
-        const Nexus::MarketDataService::EntitlementKey& value) const {
-      return Nexus::MarketDataService::hash_value(value);
+  struct hash<Nexus::EntitlementKey> {
+    std::size_t operator ()(const Nexus::EntitlementKey& value) const {
+      return Nexus::hash_value(value);
     }
   };
 }
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Stores a set of market data entitlements. */
   class EntitlementSet {
@@ -150,10 +149,10 @@ namespace Nexus::MarketDataService {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::MarketDataService::EntitlementKey> {
+  struct Shuttle<Nexus::EntitlementKey> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::MarketDataService::EntitlementKey& value, unsigned int version) {
+    void operator ()(Shuttler& shuttle, Nexus::EntitlementKey& value,
+        unsigned int version) const {
       shuttle.Shuttle("venue", value.m_venue);
       shuttle.Shuttle("source", value.m_source);
     }

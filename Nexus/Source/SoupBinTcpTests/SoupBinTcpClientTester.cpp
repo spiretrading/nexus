@@ -10,7 +10,6 @@ using namespace Beam::IO;
 using namespace Beam::Threading;
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::SoupBinTcp;
 
 namespace {
   struct Fixture {

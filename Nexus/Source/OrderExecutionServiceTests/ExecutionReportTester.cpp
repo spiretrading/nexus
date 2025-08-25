@@ -10,7 +10,6 @@ using namespace Beam::Serialization::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 
 TEST_SUITE("ExecutionReport") {
   TEST_CASE("default_constructor") {

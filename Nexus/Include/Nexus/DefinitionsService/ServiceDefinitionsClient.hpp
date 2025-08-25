@@ -10,7 +10,7 @@
 #include "Nexus/DefinitionsService/DefinitionsClient.hpp"
 #include "Nexus/DefinitionsService/DefinitionsServices.hpp"
 
-namespace Nexus::DefinitionsService {
+namespace Nexus {
 
   /**
    * Implements a DefinitionsClient using Beam services.
@@ -40,8 +40,7 @@ namespace Nexus::DefinitionsService {
       DestinationDatabase load_destination_database();
       VenueDatabase load_venue_database();
       std::vector<ExchangeRate> load_exchange_rates();
-      std::vector<Compliance::ComplianceRuleSchema>
-        load_compliance_rule_schemas();
+      std::vector<ComplianceRuleSchema> load_compliance_rule_schemas();
       TradingSchedule load_trading_schedule();
       void close();
 
@@ -141,7 +140,7 @@ namespace Nexus::DefinitionsService {
   }
 
   template<typename B>
-  std::vector<Compliance::ComplianceRuleSchema>
+  std::vector<ComplianceRuleSchema>
       ServiceDefinitionsClient<B>::load_compliance_rule_schemas() {
     return Beam::Services::ServiceOrThrowWithNested([&] {
       auto client = m_client_handler.GetClient();

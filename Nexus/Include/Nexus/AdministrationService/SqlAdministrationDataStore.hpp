@@ -48,15 +48,15 @@ namespace Nexus {
       void store(const Beam::ServiceLocator::DirectoryEntry& account,
         const AccountIdentity& identity);
       std::vector<IndexedRiskParameters> load_all_risk_parameters();
-      RiskService::RiskParameters load_risk_parameters(
+      RiskParameters load_risk_parameters(
         const Beam::ServiceLocator::DirectoryEntry& account);
       void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& risk_parameters);
+        const RiskParameters& risk_parameters);
       std::vector<IndexedRiskState> load_all_risk_states();
-      RiskService::RiskState load_risk_state(
+      RiskState load_risk_state(
         const Beam::ServiceLocator::DirectoryEntry& account);
       void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& risk_state);
+        const RiskState& risk_state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest::Id>
@@ -198,10 +198,9 @@ namespace Nexus {
   }
 
   template<typename C>
-  RiskService::RiskParameters
-      SqlAdministrationDataStore<C>::load_risk_parameters(
-        const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto parameters = RiskService::RiskParameters();
+  RiskParameters SqlAdministrationDataStore<C>::load_risk_parameters(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
+    auto parameters = RiskParameters();
     try {
       m_connection->execute(Viper::select(get_risk_parameters_row(),
         "risk_parameters", Viper::sym("account") == account.m_id, &parameters));
@@ -214,7 +213,7 @@ namespace Nexus {
   template<typename C>
   void SqlAdministrationDataStore<C>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& risk_parameters) {
+      const RiskParameters& risk_parameters) {
     auto parameters = IndexedRiskParameters(account, risk_parameters);
     try {
       m_connection->execute(Viper::upsert(
@@ -241,9 +240,9 @@ namespace Nexus {
   }
 
   template<typename C>
-  RiskService::RiskState SqlAdministrationDataStore<C>::load_risk_state(
+  RiskState SqlAdministrationDataStore<C>::load_risk_state(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto state = RiskService::RiskState();
+    auto state = RiskState();
     try {
       m_connection->execute(Viper::select(get_risk_state_row(),
         "risk_states", Viper::sym("account") == account.m_id, &state));
@@ -256,7 +255,7 @@ namespace Nexus {
   template<typename C>
   void SqlAdministrationDataStore<C>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& risk_state) {
+      const RiskState& risk_state) {
     auto indexed_state = IndexedRiskState(account, risk_state);
     try {
       m_connection->execute(Viper::upsert(
@@ -369,7 +368,7 @@ namespace Nexus {
   template<typename C>
   RiskModification SqlAdministrationDataStore<C>::load_risk_modification(
       AccountModificationRequest::Id id) {
-    auto parameters = RiskService::RiskParameters();
+    auto parameters = RiskParameters();
     try {
       m_connection->execute(Viper::select(get_risk_parameters_row(),
         "risk_modifications", Viper::sym("id") == id, &parameters));

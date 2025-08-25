@@ -43,7 +43,7 @@ namespace Nexus::Tests {
        */
       AdministrationServiceTestEnvironment(
         Beam::ServiceLocator::ServiceLocatorClientBox client,
-        MarketDataService::EntitlementDatabase entitlements);
+        EntitlementDatabase entitlements);
 
       ~AdministrationServiceTestEnvironment();
 
@@ -97,7 +97,7 @@ namespace Nexus::Tests {
       ServiceProtocolServletContainer m_container;
       boost::optional<AdministrationClient> m_client;
 
-      static MarketDataService::EntitlementDatabase make_default_entitlements(
+      static EntitlementDatabase make_default_entitlements(
         Beam::ServiceLocator::ServiceLocatorClientBox& client);
       AdministrationServiceTestEnvironment(
         const AdministrationServiceTestEnvironment&) = delete;
@@ -171,7 +171,7 @@ namespace Nexus::Tests {
   inline AdministrationServiceTestEnvironment::
     AdministrationServiceTestEnvironment(
       Beam::ServiceLocator::ServiceLocatorClientBox client,
-      MarketDataService::EntitlementDatabase entitlements)
+      EntitlementDatabase entitlements)
       : m_service_locator_client(std::move(client)),
           m_container(Beam::Initialize(m_service_locator_client,
             Beam::Initialize(m_service_locator_client, std::move(entitlements),
@@ -215,7 +215,7 @@ namespace Nexus::Tests {
     m_container.Close();
   }
 
-  inline MarketDataService::EntitlementDatabase
+  inline EntitlementDatabase
       AdministrationServiceTestEnvironment::make_default_entitlements(
         Beam::ServiceLocator::ServiceLocatorClientBox& client) {
     auto entitlements_directory = client.MakeDirectory(
@@ -223,7 +223,7 @@ namespace Nexus::Tests {
     auto global_entitlement_group =
       client.MakeDirectory("global", entitlements_directory);
     client.Associate(client.GetAccount(), global_entitlement_group);
-    auto global_entitlement = MarketDataService::EntitlementDatabase::Entry();
+    auto global_entitlement = EntitlementDatabase::Entry();
     global_entitlement.m_name = "global";
     global_entitlement.m_group_entry = global_entitlement_group;
     auto venues = std::vector<Venue>();
@@ -231,20 +231,16 @@ namespace Nexus::Tests {
       venues.push_back(entry.m_venue);
     }
     for(auto& venue : venues) {
-      global_entitlement.m_applicability[
-        MarketDataService::EntitlementKey(venue)].Set(
-          MarketDataService::MarketDataType::TIME_AND_SALE);
-      global_entitlement.m_applicability[
-        MarketDataService::EntitlementKey(venue)].Set(
-          MarketDataService::MarketDataType::BOOK_QUOTE);
-      global_entitlement.m_applicability[
-        MarketDataService::EntitlementKey(venue)].Set(
-          MarketDataService::MarketDataType::BBO_QUOTE);
-      global_entitlement.m_applicability[
-        MarketDataService::EntitlementKey(venue)].Set(
-          MarketDataService::MarketDataType::ORDER_IMBALANCE);
+      global_entitlement.m_applicability[EntitlementKey(venue)].Set(
+        MarketDataType::TIME_AND_SALE);
+      global_entitlement.m_applicability[EntitlementKey(venue)].Set(
+        MarketDataType::BOOK_QUOTE);
+      global_entitlement.m_applicability[EntitlementKey(venue)].Set(
+        MarketDataType::BBO_QUOTE);
+      global_entitlement.m_applicability[EntitlementKey(venue)].Set(
+        MarketDataType::ORDER_IMBALANCE);
     }
-    auto entitlements = MarketDataService::EntitlementDatabase();
+    auto entitlements = EntitlementDatabase();
     entitlements.add(global_entitlement);
     return entitlements;
   }

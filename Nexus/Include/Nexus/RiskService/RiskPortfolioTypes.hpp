@@ -12,7 +12,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Money.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /** Used as a key into an account's Inventory. */
   struct RiskPortfolioKey {
@@ -51,10 +51,9 @@ namespace Nexus::RiskService {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::RiskService::RiskPortfolioKey> {
+  struct Shuttle<Nexus::RiskPortfolioKey> {
     template<typename Shuttler>
-    void operator ()(
-        Shuttler& shuttle, Nexus::RiskService::RiskPortfolioKey& value,
+    void operator ()(Shuttler& shuttle, Nexus::RiskPortfolioKey& value,
         unsigned int version) const {
       shuttle.Shuttle("account", value.m_account);
       shuttle.Shuttle("security", value.m_security);
@@ -64,9 +63,9 @@ namespace Beam::Serialization {
 
 namespace std {
   template <>
-  struct hash<Nexus::RiskService::RiskPortfolioKey> {
-    size_t operator()(const Nexus::RiskService::RiskPortfolioKey& value) const {
-      return Nexus::RiskService::hash_value(value);
+  struct hash<Nexus::RiskPortfolioKey> {
+    size_t operator()(const Nexus::RiskPortfolioKey& value) const {
+      return Nexus::hash_value(value);
     }
   };
 }

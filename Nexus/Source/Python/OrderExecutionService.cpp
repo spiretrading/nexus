@@ -28,8 +28,7 @@ using namespace Beam::ServiceLocator;
 using namespace Beam::TimeService;
 using namespace Beam::UidService;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::OrderExecutionService::Tests;
+using namespace Nexus::Tests;
 using namespace pybind11;
 
 void Nexus::Python::export_execution_report(module& module) {
@@ -157,28 +156,27 @@ void Nexus::Python::export_order_execution_data_store_exception(
 }
 
 void Nexus::Python::export_order_execution_service(module& module) {
-  auto submodule = module.def_submodule("order_execution_service");
-  export_execution_report(submodule);
-  export_execution_report_publisher(submodule);
-  export_local_order_execution_data_store(submodule);
-  export_my_sql_order_execution_data_store(submodule);
-  export_order(submodule);
-  export_order_cancellation_reactor(submodule);
+  export_execution_report(module);
+  export_execution_report_publisher(module);
+  export_local_order_execution_data_store(module);
+  export_my_sql_order_execution_data_store(module);
+  export_order(module);
+  export_order_cancellation_reactor(module);
   export_order_execution_client<ToPythonOrderExecutionClient<
-    OrderExecutionClient>>(submodule, "OrderExecutionClient");
+    OrderExecutionClient>>(module, "OrderExecutionClient");
   export_order_execution_data_store<ToPythonOrderExecutionDataStore<
-    OrderExecutionDataStore>>(submodule, "OrderExecutionDataStore");
-  export_order_execution_data_store_exception(submodule);
-  export_order_fields(submodule);
-  export_order_info(submodule);
-  export_order_reactor(submodule);
-  export_order_record(submodule);
-  export_order_wrapper_reactor(submodule);
-  export_primitive_order(submodule);
-  export_replicated_order_execution_data_store(submodule);
-  export_standard_queries(submodule);
-  export_sqlite_order_execution_data_store(submodule);
-  auto test_module = submodule.def_submodule("tests");
+    OrderExecutionDataStore>>(module, "OrderExecutionDataStore");
+  export_order_execution_data_store_exception(module);
+  export_order_fields(module);
+  export_order_info(module);
+  export_order_reactor(module);
+  export_order_record(module);
+  export_order_wrapper_reactor(module);
+  export_primitive_order(module);
+  export_replicated_order_execution_data_store(module);
+  export_standard_queries(module);
+  export_sqlite_order_execution_data_store(module);
+  auto test_module = module.def_submodule("tests");
   export_mock_order_execution_driver(test_module);
   export_order_execution_service_test_environment(test_module);
   test_module.def("cancel",

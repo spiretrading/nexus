@@ -6,7 +6,7 @@
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Provides a generic interface over an arbitrary OrderExecutionClient. */
   class OrderExecutionClient {

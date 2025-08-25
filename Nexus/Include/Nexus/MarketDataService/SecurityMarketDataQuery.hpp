@@ -26,8 +26,6 @@ namespace Nexus {
   using SequencedSecurityTimeAndSale =
     Beam::Queries::SequencedValue<SecurityTimeAndSale>;
 
-namespace MarketDataService {
-
   /** Defines the type of query used to receive a Security's market data. */
   using SecurityMarketDataQuery = Beam::Queries::BasicQuery<Security>;
 
@@ -45,7 +43,6 @@ namespace MarketDataService {
     query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
     return query;
   }
-}
 }
 
 #endif

@@ -11,7 +11,7 @@
 #include "Nexus/MarketDataService/ServiceMarketDataClient.hpp"
 #include "Nexus/MarketDataService/ServiceMarketDataFeedClient.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Encapsulates a standard MarketDataClient used in an application. */
   class ApplicationMarketDataClient {
@@ -132,7 +132,7 @@ namespace Nexus::MarketDataService {
   SessionBuilder make_basic_market_data_client_session_builder(
       typename SessionBuilder::ServiceLocatorClient service_locator_client,
       Predicate&& service_predicate,
-      const std::string& service = RELAY_SERVICE_NAME) {
+      const std::string& service = MARKET_DATA_RELAY_SERVICE_NAME) {
     auto client = Beam::ServiceLocator::ServiceLocatorClientBox(
       &Beam::FullyDereference(service_locator_client));
     return SessionBuilder(std::move(service_locator_client),
@@ -158,7 +158,7 @@ namespace Nexus::MarketDataService {
       make_market_data_client_session_builder(
         ApplicationMarketDataClient::SessionBuilder::ServiceLocatorClient
           service_locator_client,
-        const std::string& service = RELAY_SERVICE_NAME) {
+        const std::string& service = MARKET_DATA_RELAY_SERVICE_NAME) {
     auto client = Beam::ServiceLocator::ServiceLocatorClientBox(
       &Beam::FullyDereference(service_locator_client));
     return ApplicationMarketDataClient::SessionBuilder(
@@ -239,7 +239,8 @@ namespace Nexus::MarketDataService {
     ServiceLocatorClient service_locator_client,
     boost::posix_time::time_duration sampling_time)
     try : m_client([&] {
-            auto services = service_locator_client.Locate(FEED_SERVICE_NAME);
+            auto services =
+              service_locator_client.Locate(MARKET_DATA_FEED_SERVICE_NAME);
             if(services.empty()) {
               BOOST_THROW_EXCEPTION(Beam::IO::ConnectException(
                 "No market data services available."));

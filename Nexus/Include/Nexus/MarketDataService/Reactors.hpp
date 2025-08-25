@@ -7,7 +7,7 @@
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Returns a reactor that queries BboQuotes.

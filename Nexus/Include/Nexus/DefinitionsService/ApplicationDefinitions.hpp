@@ -3,11 +3,12 @@
 #include <Beam/Services/ApplicationDefinitions.hpp>
 #include "Nexus/DefinitionsService/ServiceDefinitionsClient.hpp"
 
-namespace Nexus::DefinitionsService {
+namespace Nexus {
 
   /** Encapsulates a standard DefinitionsClient used in an application. */
   using ApplicationDefinitionsClient = Beam::Services::ApplicationClient<
-    ServiceDefinitionsClient, Beam::Services::ServiceName<SERVICE_NAME>>;
+    ServiceDefinitionsClient,
+    Beam::Services::ServiceName<DEFINITIONS_SERVICE_NAME>>;
 }
 
 #endif

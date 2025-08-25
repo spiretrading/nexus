@@ -9,7 +9,7 @@
 #include <pybind11/pybind11.h>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Wraps a MarketDataClient for use with Python.

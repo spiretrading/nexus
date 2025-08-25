@@ -76,8 +76,7 @@ namespace Nexus::Python {
       def_property_readonly("unrealized_profit_and_losses",
         &Portfolio::get_unrealized_profit_and_losses).
       def("update", static_cast<bool (Portfolio::*)(
-        const OrderExecutionService::OrderFields&,
-        const OrderExecutionService::ExecutionReport&)>(&Portfolio::update),
+        const OrderFields&, const ExecutionReport&)>(&Portfolio::update),
         pybind11::arg("fields"), pybind11::arg("report")).
       def("update_ask", &Portfolio::update_ask, pybind11::arg("security"),
         pybind11::arg("value")).

@@ -7,7 +7,7 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 namespace Details {
   BEAM_ENUM(ComplianceRuleEntryStateDefinition,
 
@@ -142,10 +142,9 @@ namespace Details {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::Compliance::ComplianceRuleEntry> {
+  struct Shuttle<Nexus::ComplianceRuleEntry> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::Compliance::ComplianceRuleEntry& value,
+    void operator ()(Shuttler& shuttle, Nexus::ComplianceRuleEntry& value,
         unsigned int version) const {
       shuttle.Shuttle("id", value.m_id);
       shuttle.Shuttle("directory_entry", value.m_directory_entry);

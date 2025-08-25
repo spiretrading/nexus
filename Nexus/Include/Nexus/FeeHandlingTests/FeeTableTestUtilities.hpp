@@ -79,8 +79,8 @@ namespace Nexus::Tests {
   void test_fee_calculation(const FeeTable& table, Money price,
       Quantity quantity, LiquidityFlag flag, Money expected_fee,
       CalculateFeeType&& calculate_fee) {
-    auto report = OrderExecutionService::ExecutionReport(
-      0, boost::posix_time::second_clock::universal_time());
+    auto report =
+      ExecutionReport(0, boost::posix_time::second_clock::universal_time());
     report.m_last_price = price;
     report.m_last_quantity = quantity;
     report.m_liquidity_flag = boost::lexical_cast<std::string>(flag);
@@ -98,11 +98,11 @@ namespace Nexus::Tests {
    * @param calculate_fee The function used to calculate the fee.
    */
   template<typename FeeTable, typename CalculateFeeType>
-  void test_fee_calculation(const FeeTable& table,
-      const OrderExecutionService::OrderFields& fields, const std::string& flag,
-      Money expected_fee, CalculateFeeType&& calculate_fee) {
-    auto report = OrderExecutionService::ExecutionReport(
-      0, boost::posix_time::second_clock::universal_time());
+  void test_fee_calculation(const FeeTable& table, const OrderFields& fields,
+      const std::string& flag, Money expected_fee,
+      CalculateFeeType&& calculate_fee) {
+    auto report =
+      ExecutionReport(0, boost::posix_time::second_clock::universal_time());
     report.m_last_price = fields.m_price;
     report.m_last_quantity = fields.m_quantity;
     report.m_liquidity_flag = flag;
@@ -120,10 +120,10 @@ namespace Nexus::Tests {
    */
   template<typename FeeTable, typename CalculateFeeType>
   void test_notional_value_fee_calculation(const FeeTable& table,
-      const OrderExecutionService::OrderFields& fields,
-      boost::rational<int> expected_rate, CalculateFeeType&& calculate_fee) {
-    auto report = OrderExecutionService::ExecutionReport(
-      0, boost::posix_time::second_clock::universal_time());
+      const OrderFields& fields, boost::rational<int> expected_rate,
+      CalculateFeeType&& calculate_fee) {
+    auto report =
+      ExecutionReport(0, boost::posix_time::second_clock::universal_time());
     report.m_last_price = fields.m_price;
     report.m_last_quantity = fields.m_quantity;
     auto calculated_total =
@@ -144,10 +144,10 @@ namespace Nexus::Tests {
    */
   template<typename FeeTable, typename CalculateFeeType>
   void test_per_share_fee_calculation(const FeeTable& table,
-      const OrderExecutionService::OrderFields& fields, const std::string& flag,
+      const OrderFields& fields, const std::string& flag,
       Quantity quantity, Money expected_fee, CalculateFeeType&& calculate_fee) {
-    auto report = OrderExecutionService::ExecutionReport(
-      0, boost::posix_time::second_clock::universal_time());
+    auto report =
+      ExecutionReport(0, boost::posix_time::second_clock::universal_time());
     report.m_last_price = fields.m_price;
     report.m_last_quantity = quantity;
     report.m_liquidity_flag = flag;
@@ -167,8 +167,8 @@ namespace Nexus::Tests {
    * @param calculate_fee The function used to calculate the fee.
    */
   template<typename FeeTable, typename CalculateFeeType>
-  void test_per_share_fee_calculation(const FeeTable& table,
-      const OrderExecutionService::OrderFields& fields, LiquidityFlag flag,
+  void test_per_share_fee_calculation(
+      const FeeTable& table, const OrderFields& fields, LiquidityFlag flag,
       Quantity quantity, Money expected_fee, CalculateFeeType&& calculate_fee) {
     test_per_share_fee_calculation(
       table, fields, boost::lexical_cast<std::string>(flag), quantity,
@@ -184,8 +184,8 @@ namespace Nexus::Tests {
    * @param calculate_fee The function used to calculate the fee.
    */
   template<typename FeeTable, typename CalculateFeeType>
-  void test_per_share_fee_calculation(const FeeTable& table,
-      const OrderExecutionService::OrderFields& fields, const std::string& flag,
+  void test_per_share_fee_calculation(
+      const FeeTable& table, const OrderFields& fields, const std::string& flag,
       Money expected_fee, CalculateFeeType&& calculate_fee) {
     test_per_share_fee_calculation(table, fields, flag, fields.m_quantity,
       expected_fee, std::forward<CalculateFeeType>(calculate_fee));
@@ -200,8 +200,8 @@ namespace Nexus::Tests {
    * @param calculate_fee The function used to calculate the fee.
    */
   template<typename FeeTable, typename CalculateFeeType>
-  void test_per_share_fee_calculation(const FeeTable& table,
-      const OrderExecutionService::OrderFields& fields, LiquidityFlag flag,
+  void test_per_share_fee_calculation(
+      const FeeTable& table, const OrderFields& fields, LiquidityFlag flag,
       Money expected_fee, CalculateFeeType&& calculate_fee) {
     test_per_share_fee_calculation(
       table, fields, boost::lexical_cast<std::string>(flag), expected_fee,
@@ -221,8 +221,8 @@ namespace Nexus::Tests {
   void test_per_share_fee_calculation(const FeeTable& table, Money price,
       Quantity quantity, const std::string& flag, Money expected_fee,
       CalculateFeeType&& calculate_fee) {
-    auto report = OrderExecutionService::ExecutionReport(
-      0, boost::posix_time::second_clock::universal_time());
+    auto report =
+      ExecutionReport(0, boost::posix_time::second_clock::universal_time());
     report.m_last_price = price;
     report.m_last_quantity = quantity;
     report.m_liquidity_flag = flag;

@@ -9,7 +9,7 @@
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 
-namespace Nexus::FixUtilities {
+namespace Nexus {
 
   /** Converts a ptime into its FIX representation. */
   inline FIX::DateTime get_timestamp(const boost::posix_time::ptime& timestamp) {

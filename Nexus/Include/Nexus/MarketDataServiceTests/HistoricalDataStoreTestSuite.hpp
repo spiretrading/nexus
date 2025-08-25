@@ -4,7 +4,7 @@
 #include <doctest/doctest.h>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 
-namespace Nexus::MarketDataService::Tests {
+namespace Nexus::Tests {
   TEST_CASE_TEMPLATE_DEFINE(
       "HistoricalDataStore", T, HistoricalDataStoreTestSuite) {
     using namespace Beam;

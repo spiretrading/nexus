@@ -51,7 +51,7 @@ namespace Nexus::Python {
    * @param name The name of the class to export.
    * @return The exported class.
    */
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   auto export_historical_data_store(
       pybind11::module& module, std::string_view name) {
     auto data_store =
@@ -101,36 +101,36 @@ namespace Nexus::Python {
    * @param name The name of the class.
    * @return The exported MarketDataClient.
    */
-  template<MarketDataService::IsMarketDataClient C>
+  template<IsMarketDataClient C>
   auto export_market_data_client(
       pybind11::module& module, std::string_view name) {
     auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
       def("query_sequenced_order_imbalances",
-        static_cast<void (C::*)(const MarketDataService::VenueMarketDataQuery&,
+        static_cast<void (C::*)(const VenueMarketDataQuery&,
           Beam::ScopedQueueWriter<SequencedOrderImbalance>)>(&C::query)).
       def("query_order_imbalances",
-        static_cast<void (C::*)(const MarketDataService::VenueMarketDataQuery&,
+        static_cast<void (C::*)(const VenueMarketDataQuery&,
           Beam::ScopedQueueWriter<OrderImbalance>)>(&C::query)).
       def("query_sequenced_bbo_quotes", static_cast<void (C::*)(
-        const MarketDataService::SecurityMarketDataQuery&,
+        const SecurityMarketDataQuery&,
         Beam::ScopedQueueWriter<SequencedBboQuote>)>(&C::query)).
       def("query_bbo_quotes", static_cast<
-        void (C::*)(const MarketDataService::SecurityMarketDataQuery&,
+        void (C::*)(const SecurityMarketDataQuery&,
           Beam::ScopedQueueWriter<BboQuote>)>(&C::query)).
       def("query_sequenced_book_quotes", static_cast<
-        void (C::*)(const MarketDataService::SecurityMarketDataQuery&,
+        void (C::*)(const SecurityMarketDataQuery&,
           Beam::ScopedQueueWriter<SequencedBookQuote>)>(&C::query)).
       def("query_book_quotes", static_cast<
-        void (C::*)(const MarketDataService::SecurityMarketDataQuery&,
+        void (C::*)(const SecurityMarketDataQuery&,
           Beam::ScopedQueueWriter<BookQuote>)>(&C::query)).
       def("query_sequenced_time_and_sales", static_cast<
-        void (C::*)(const MarketDataService::SecurityMarketDataQuery&,
+        void (C::*)(const SecurityMarketDataQuery&,
           Beam::ScopedQueueWriter<SequencedTimeAndSale>)>(&C::query)).
       def("query_time_and_sales", static_cast<
-        void (C::*)(const MarketDataService::SecurityMarketDataQuery&,
+        void (C::*)(const SecurityMarketDataQuery&,
           Beam::ScopedQueueWriter<TimeAndSale>)>(&C::query)).
       def("query_security_info", static_cast<std::vector<SecurityInfo> (C::*)(
-        const MarketDataService::SecurityInfoQuery&)>(&C::query)).
+        const SecurityInfoQuery&)>(&C::query)).
       def("load_snapshot", &C::load_snapshot).
       def("load_technicals", &C::load_technicals).
       def("load_security_info_from_prefix", &C::load_security_info_from_prefix).
@@ -145,7 +145,7 @@ namespace Nexus::Python {
    * @param name The name of the class.
    * @return The exported MarketDataFeedClient.
    */
-  template<MarketDataService::IsMarketDataFeedClient C>
+  template<IsMarketDataFeedClient C>
   auto export_market_data_feed_client(
       pybind11::module& module, std::string_view name) {
     auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).

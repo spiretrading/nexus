@@ -8,7 +8,7 @@
 #include "Nexus/SoupBinTcp/DataTypes.hpp"
 #include "Nexus/SoupBinTcp/SoupBinTcpPacket.hpp"
 
-namespace Nexus::SoupBinTcp {
+namespace Nexus {
 
   /** Stores a Login Accepted Packet. */
   struct LoginAcceptedPacket {

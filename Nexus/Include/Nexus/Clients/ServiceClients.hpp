@@ -27,20 +27,17 @@ namespace Nexus {
 
       using AdministrationClient = ApplicationAdministrationClient::Client;
 
-      using DefinitionsClient =
-        DefinitionsService::ApplicationDefinitionsClient::Client;
+      using DefinitionsClient = ApplicationDefinitionsClient::Client;
 
-      using MarketDataClient =
-        MarketDataService::ApplicationMarketDataClient::Client;
+      using MarketDataClient = ApplicationMarketDataClient::Client;
 
-      using ChartingClient = ChartingService::ApplicationChartingClient::Client;
+      using ChartingClient = ApplicationChartingClient::Client;
 
-      using ComplianceClient = Compliance::ApplicationComplianceClient::Client;
+      using ComplianceClient = ApplicationComplianceClient::Client;
 
-      using OrderExecutionClient =
-        OrderExecutionService::ApplicationOrderExecutionClient::Client;
+      using OrderExecutionClient = ApplicationOrderExecutionClient::Client;
 
-      using RiskClient = RiskService::ApplicationRiskClient::Client;
+      using RiskClient = ApplicationRiskClient::Client;
 
       using TimeClient = Beam::TimeService::LiveNtpTimeClient;
 
@@ -75,13 +72,12 @@ namespace Nexus {
         m_service_locator_client;
       Beam::RegistryService::ApplicationRegistryClient m_registry_client;
       ApplicationAdministrationClient m_administration_client;
-      DefinitionsService::ApplicationDefinitionsClient m_definitions_client;
-      MarketDataService::ApplicationMarketDataClient m_market_data_client;
-      ChartingService::ApplicationChartingClient m_charting_client;
-      Compliance::ApplicationComplianceClient m_compliance_client;
-      OrderExecutionService::ApplicationOrderExecutionClient
-        m_order_execution_client;
-      RiskService::ApplicationRiskClient m_risk_client;
+      ApplicationDefinitionsClient m_definitions_client;
+      ApplicationMarketDataClient m_market_data_client;
+      ApplicationChartingClient m_charting_client;
+      ApplicationComplianceClient m_compliance_client;
+      ApplicationOrderExecutionClient m_order_execution_client;
+      ApplicationRiskClient m_risk_client;
       std::unique_ptr<TimeClient> m_time_client;
       Beam::IO::OpenState m_open_state;
 

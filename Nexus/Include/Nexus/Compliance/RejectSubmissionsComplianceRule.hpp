@@ -3,7 +3,7 @@
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Rejects all submissions. */
   class RejectSubmissionsComplianceRule : public ComplianceRule {
@@ -21,8 +21,7 @@ namespace Nexus::Compliance {
        */
       explicit RejectSubmissionsComplianceRule(std::string reason);
 
-      void submit(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
+      void submit(const std::shared_ptr<const Order>& order) override;
 
     private:
       std::string m_reason;
@@ -36,7 +35,7 @@ namespace Nexus::Compliance {
     : m_reason(std::move(reason)) {}
 
   inline void RejectSubmissionsComplianceRule::submit(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     throw ComplianceCheckException(m_reason);
   }
 }

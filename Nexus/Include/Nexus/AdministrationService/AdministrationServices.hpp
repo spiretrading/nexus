@@ -18,7 +18,8 @@
 namespace Nexus {
 
   /** Standard name for the administration service. */
-  inline const auto SERVICE_NAME = std::string("administration_service");
+  inline const auto ADMINISTRATION_SERVICE_NAME =
+    std::string("administration_service");
 
   BEAM_DEFINE_SERVICES(AdministrationServices,
 
@@ -145,7 +146,7 @@ namespace Nexus {
      */
     (LoadEntitlementsService,
       "Nexus.AdministrationServices.LoadEntitlementsService",
-      MarketDataService::EntitlementDatabase),
+      EntitlementDatabase),
 
     /**
      * Loads the entitlements granted to an account.
@@ -174,8 +175,7 @@ namespace Nexus {
      */
     (MonitorRiskParametersService,
       "Nexus.AdministrationServices.MonitorRiskParametersService",
-      RiskService::RiskParameters, Beam::ServiceLocator::DirectoryEntry,
-      account),
+      RiskParameters, Beam::ServiceLocator::DirectoryEntry, account),
 
     /**
      * Sets an account's RiskParameters.
@@ -185,7 +185,7 @@ namespace Nexus {
     (StoreRiskParametersService,
       "Nexus.AdministrationServices.StoreRiskParametersService", void,
       Beam::ServiceLocator::DirectoryEntry, account,
-      RiskService::RiskParameters, risk_parameters),
+      RiskParameters, risk_parameters),
 
     /**
      * Monitors an account's RiskState.
@@ -194,7 +194,7 @@ namespace Nexus {
      */
     (MonitorRiskStateService,
       "Nexus.AdministrationServices.MonitorRiskStateService",
-      RiskService::RiskState, Beam::ServiceLocator::DirectoryEntry, account),
+      RiskState, Beam::ServiceLocator::DirectoryEntry, account),
 
     /**
      * Sets an account's RiskState.
@@ -203,8 +203,7 @@ namespace Nexus {
      */
     (StoreRiskStateService,
       "Nexus.AdministrationServices.StoreRiskStateService", void,
-      Beam::ServiceLocator::DirectoryEntry, account, RiskService::RiskState,
-      risk_state),
+      Beam::ServiceLocator::DirectoryEntry, account, RiskState, risk_state),
 
     /**
      * Loads the DirectoryEntries of TradingGroups managed by an account.
@@ -364,7 +363,7 @@ namespace Nexus {
      */
     (RiskParametersMessage, "Nexus.AdministrationService.RiskParametersMessage",
       Beam::ServiceLocator::DirectoryEntry, account,
-      RiskService::RiskParameters, risk_parameters),
+      RiskParameters, risk_parameters),
 
     /**
      * Indicates a change in an account's RiskState.
@@ -372,8 +371,7 @@ namespace Nexus {
      * @param risk_state The <i>account</i>'s current RiskState.
      */
     (RiskStateMessage, "Nexus.AdministrationService.RiskStateMessage",
-      Beam::ServiceLocator::DirectoryEntry, account, RiskService::RiskState,
-      risk_state));
+      Beam::ServiceLocator::DirectoryEntry, account, RiskState, risk_state));
 }
 
 #endif

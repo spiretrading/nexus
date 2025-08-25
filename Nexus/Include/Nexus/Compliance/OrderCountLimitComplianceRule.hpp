@@ -7,7 +7,7 @@
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Restricts the number of Orders. */
   class OrderCountLimitComplianceRule : public ComplianceRule {
@@ -20,18 +20,15 @@ namespace Nexus::Compliance {
       explicit OrderCountLimitComplianceRule(
         const std::vector<ComplianceParameter>& parameters);
 
-      void submit(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
-      void add(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
+      void submit(const std::shared_ptr<const Order>& order) override;
+      void add(const std::shared_ptr<const Order>& order) override;
 
     private:
       int m_limit_count;
       std::atomic_int m_current_count;
       Beam::RoutineTaskQueue m_tasks;
 
-      void on_execution_report(
-        const OrderExecutionService::ExecutionReport& report);
+      void on_execution_report(const ExecutionReport& report);
   };
 
   /**
@@ -57,27 +54,27 @@ namespace Nexus::Compliance {
   }
 
   inline void OrderCountLimitComplianceRule::submit(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     auto current_count = ++m_current_count;
     if(current_count > m_limit_count) {
       --m_current_count;
       throw ComplianceCheckException("Order limit reached.");
     }
-    order->get_publisher().Monitor(
-      m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(std::bind_front(
+    order->get_publisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
+      std::bind_front(
         &OrderCountLimitComplianceRule::on_execution_report, this)));
   }
 
   inline void OrderCountLimitComplianceRule::add(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     ++m_current_count;
-    order->get_publisher().Monitor(
-      m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(std::bind_front(
+    order->get_publisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
+      std::bind_front(
         &OrderCountLimitComplianceRule::on_execution_report, this)));
   }
 
   inline void OrderCountLimitComplianceRule::on_execution_report(
-      const OrderExecutionService::ExecutionReport& report) {
+      const ExecutionReport& report) {
     if(!is_terminal(report.m_status)) {
       return;
     }

@@ -6,8 +6,6 @@ using namespace Beam;
 using namespace Beam::Queries;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::ChartingService;
 
 TEST_SUITE("SecurityChartingQuery") {
   TEST_CASE("get_set_market_data_type") {

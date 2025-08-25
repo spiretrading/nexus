@@ -6,7 +6,7 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/RiskService/InventorySnapshot.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /** Concept used to specify the data store used by the RiskServlet. */
   class RiskDataStore {

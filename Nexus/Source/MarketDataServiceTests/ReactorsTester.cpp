@@ -8,8 +8,7 @@ using namespace Beam;
 using namespace Beam::Queries;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::MarketDataService::Tests;
+using namespace Nexus::Tests;
 
 TEST_SUITE("Reactors") {
   TEST_CASE("make_bbo_quote_reactor") {

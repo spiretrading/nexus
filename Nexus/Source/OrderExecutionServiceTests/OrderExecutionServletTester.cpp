@@ -25,8 +25,6 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultDestinations;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::OrderExecutionService::Tests;
 using namespace Nexus::Tests;
 
 namespace {

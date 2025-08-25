@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <boost/exception/exception.hpp>
 
-namespace Nexus::FixUtilities {
+namespace Nexus {
 
   /** Indicates that a FIX Order submission should be rejected. */
   class FixOrderRejectedException :

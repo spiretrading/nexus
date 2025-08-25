@@ -7,7 +7,7 @@
 #include <Beam/Utilities/Streamable.hpp>
 #include "Nexus/Compliance/ComplianceParameter.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Provides a description for a single compliance rule. */
   class ComplianceRuleSchema {
@@ -61,10 +61,10 @@ namespace Nexus::Compliance {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::Compliance::ComplianceRuleSchema> {
+  struct Shuttle<Nexus::ComplianceRuleSchema> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::Compliance::ComplianceRuleSchema& value, unsigned int version) {
+    void operator ()(Shuttler& shuttle, Nexus::ComplianceRuleSchema& value,
+        unsigned int version) {
       shuttle.Shuttle("name", value.m_name);
       shuttle.Shuttle("parameters", value.m_parameters);
     }

@@ -11,7 +11,7 @@
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /**
    * Keeps track of an account's RiskState and performs the actions required to
@@ -19,7 +19,7 @@ namespace Nexus::RiskService {
    * @param <C> The type of OrderExecutionClient used to cancel Orders and
    *        flatten Positions.
    */
-  template<OrderExecutionService::IsOrderExecutionClient C>
+  template<IsOrderExecutionClient C>
   class RiskTransitionModel {
     public:
 
@@ -48,8 +48,7 @@ namespace Nexus::RiskService {
        * Adds an Order.
        * @param order The Order to add.
        */
-      void add(
-        const std::shared_ptr<const OrderExecutionService::Order>& order);
+      void add(const std::shared_ptr<const Order>& order);
 
       /**
        * Updates the RiskState.
@@ -61,7 +60,7 @@ namespace Nexus::RiskService {
        * Updates an Order with an ExecutionReport.
        * @param report The ExecutionReport containing the details of the update.
        */
-      void update(const OrderExecutionService::ExecutionReport& report);
+      void update(const ExecutionReport& report);
 
     private:
       Beam::ServiceLocator::DirectoryEntry m_account;
@@ -69,7 +68,7 @@ namespace Nexus::RiskService {
       Beam::GetOptionalLocalPtr<C> m_order_execution_client;
       DestinationDatabase m_destinations;
       PositionOrderBook m_book;
-      std::unordered_set<OrderExecutionService::OrderId> m_live_orders;
+      std::unordered_set<OrderId> m_live_orders;
       int m_state;
 
       bool c0();
@@ -90,7 +89,7 @@ namespace Nexus::RiskService {
     const std::vector<Inventory>&, RiskState, CF&&, DestinationDatabase) ->
       RiskTransitionModel<std::remove_reference_t<CF>>;
 
-  template<OrderExecutionService::IsOrderExecutionClient C>
+  template<IsOrderExecutionClient C>
   template<Beam::Initializes<C> CF>
   RiskTransitionModel<C>::RiskTransitionModel(
     Beam::ServiceLocator::DirectoryEntry account,
@@ -103,13 +102,12 @@ namespace Nexus::RiskService {
       m_book(inventory),
       m_state(0) {}
 
-  template<OrderExecutionService::IsOrderExecutionClient C>
-  void RiskTransitionModel<C>::add(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+  template<IsOrderExecutionClient C>
+  void RiskTransitionModel<C>::add(const std::shared_ptr<const Order>& order) {
     m_book.add(order);
   }
 
-  template<OrderExecutionService::IsOrderExecutionClient C>
+  template<IsOrderExecutionClient C>
   void RiskTransitionModel<C>::update(const RiskState& state) {
     m_risk_state = state;
     if(m_state == 0) {
@@ -123,9 +121,8 @@ namespace Nexus::RiskService {
     }
   }
 
-  template<OrderExecutionService::IsOrderExecutionClient C>
-  void RiskTransitionModel<C>::update(
-      const OrderExecutionService::ExecutionReport& report) {
+  template<IsOrderExecutionClient C>
+  void RiskTransitionModel<C>::update(const ExecutionReport& report) {
     m_book.update(report);
     if(is_terminal(report.m_status)) {
       m_live_orders.erase(report.m_id);
@@ -135,27 +132,27 @@ namespace Nexus::RiskService {
     }
   }
 
-  template<OrderExecutionService::IsOrderExecutionClient C>
+  template<IsOrderExecutionClient C>
   bool RiskTransitionModel<C>::c0() {
     return m_risk_state.m_type == RiskState::Type::CLOSE_ORDERS;
   }
 
-  template<OrderExecutionService::IsOrderExecutionClient C>
+  template<IsOrderExecutionClient C>
   bool RiskTransitionModel<C>::c1() {
     return m_risk_state.m_type == RiskState::Type::ACTIVE;
   }
 
-  template<OrderExecutionService::IsOrderExecutionClient C>
+  template<IsOrderExecutionClient C>
   bool RiskTransitionModel<C>::c2() {
     return m_risk_state.m_type == RiskState::Type::DISABLED;
   }
 
-  template<OrderExecutionService::IsOrderExecutionClient C>
+  template<IsOrderExecutionClient C>
   bool RiskTransitionModel<C>::c3() {
     return m_live_orders.empty();
   }
 
-  template<OrderExecutionService::IsOrderExecutionClient C>
+  template<IsOrderExecutionClient C>
   void RiskTransitionModel<C>::s0() {
     m_state = 0;
     if(c0()) {
@@ -163,7 +160,7 @@ namespace Nexus::RiskService {
     }
   }
 
-  template<OrderExecutionService::IsOrderExecutionClient C>
+  template<IsOrderExecutionClient C>
   void RiskTransitionModel<C>::s1() {
     m_state = 1;
     for(auto& order : m_book.get_opening_orders()) {
@@ -172,7 +169,7 @@ namespace Nexus::RiskService {
     return s2();
   }
 
-  template<OrderExecutionService::IsOrderExecutionClient C>
+  template<IsOrderExecutionClient C>
   void RiskTransitionModel<C>::s2() {
     m_state = 2;
     if(c1()) {
@@ -182,7 +179,7 @@ namespace Nexus::RiskService {
     }
   }
 
-  template<OrderExecutionService::IsOrderExecutionClient C>
+  template<IsOrderExecutionClient C>
   void RiskTransitionModel<C>::s3() {
     m_state = 3;
     auto& live_orders = m_book.get_live_orders();
@@ -194,7 +191,7 @@ namespace Nexus::RiskService {
     return s4();
   }
 
-  template<OrderExecutionService::IsOrderExecutionClient C>
+  template<IsOrderExecutionClient C>
   void RiskTransitionModel<C>::s4() {
     m_state = 4;
     if(c1()) {
@@ -204,14 +201,13 @@ namespace Nexus::RiskService {
     }
   }
 
-  template<OrderExecutionService::IsOrderExecutionClient C>
+  template<IsOrderExecutionClient C>
   void RiskTransitionModel<C>::s5() {
     m_state = 5;
     for(auto& position : m_book.get_positions()) {
       auto destination = m_destinations.get_preferred_destination(
         position.m_security.get_venue()).m_id;
-      auto fields = OrderExecutionService::make_market_order_fields(
-        m_account, position.m_security,
+      auto fields = make_market_order_fields(m_account, position.m_security,
         get_opposite(get_side(position.m_quantity)), destination,
         abs(position.m_quantity));
       try {
@@ -223,7 +219,7 @@ namespace Nexus::RiskService {
     return s6();
   }
 
-  template<OrderExecutionService::IsOrderExecutionClient C>
+  template<IsOrderExecutionClient C>
   void RiskTransitionModel<C>::s6() {
     m_state = 6;
     if(c1()) {

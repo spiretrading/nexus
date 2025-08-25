@@ -13,7 +13,7 @@
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /**
    * Handles simulating Orders submitted for a specific Security.
@@ -33,8 +33,7 @@ namespace Nexus::OrderExecutionService {
        * @param time_client The TimeClient used for Order timestamps.
        */
       template<Beam::Initializes<T> TF>
-      SecurityOrderSimulator(
-        MarketDataService::IsMarketDataClient auto& market_data_client,
+      SecurityOrderSimulator(IsMarketDataClient auto& market_data_client,
         const Security& security, TF&& time_client);
 
       /**
@@ -83,15 +82,15 @@ namespace Nexus::OrderExecutionService {
   };
 
   template<typename TimeClient>
-  SecurityOrderSimulator(MarketDataService::IsMarketDataClient auto&,
-    const Security&, TimeClient&&) ->
+  SecurityOrderSimulator(
+    IsMarketDataClient auto&, const Security&, TimeClient&&) ->
       SecurityOrderSimulator<std::remove_reference_t<TimeClient>>;
 
   template<typename T>
   template<Beam::Initializes<T> TF>
   SecurityOrderSimulator<T>::SecurityOrderSimulator(
-      MarketDataService::IsMarketDataClient auto& market_data_client,
-      const Security& security, TF&& time_client)
+      IsMarketDataClient auto& market_data_client, const Security& security,
+      TF&& time_client)
       : m_time_client(std::forward<TF>(time_client)) {
     set_session_timestamps(m_time_client->GetTime());
     auto snapshot = std::make_shared<Beam::Queue<BboQuote>>();

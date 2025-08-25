@@ -42,7 +42,7 @@ namespace Nexus {
         Beam::ServiceLocator::DirectoryEntry m_index;
 
         /** The risk parameters associated with the account. */
-        RiskService::RiskParameters m_parameters;
+        RiskParameters m_parameters;
       };
 
       /**
@@ -55,7 +55,7 @@ namespace Nexus {
         Beam::ServiceLocator::DirectoryEntry m_index;
 
         /** The risk state associated with the account. */
-        RiskService::RiskState m_state;
+        RiskState m_state;
       };
 
       /**
@@ -109,7 +109,7 @@ namespace Nexus {
        * @param account The account whose RiskParameters are to be loaded.
        * @return The account's RiskParameters.
        */
-      RiskService::RiskParameters load_risk_parameters(
+      RiskParameters load_risk_parameters(
         const Beam::ServiceLocator::DirectoryEntry& account);
 
       /**
@@ -118,7 +118,7 @@ namespace Nexus {
        * @param risk_parameters The RiskParameters to store for the account.
        */
       void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& risk_parameters);
+        const RiskParameters& risk_parameters);
 
       /** Loads all RiskStates. */
       std::vector<IndexedRiskState> load_all_risk_states();
@@ -128,7 +128,7 @@ namespace Nexus {
        * @param account The account whose RiskState is to be loaded.
        * @return The account's RiskState.
        */
-      RiskService::RiskState load_risk_state(
+      RiskState load_risk_state(
         const Beam::ServiceLocator::DirectoryEntry& account);
 
       /**
@@ -137,7 +137,7 @@ namespace Nexus {
        * @param risk_state The RiskState to store for the account.
        */
       void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& risk_state);
+        const RiskState& risk_state);
 
       /**
        * Loads an AccountModificationRequest.
@@ -271,15 +271,15 @@ namespace Nexus {
           const AccountIdentity& identity) = 0;
         virtual std::vector<IndexedRiskParameters>
           load_all_risk_parameters() = 0;
-        virtual RiskService::RiskParameters load_risk_parameters(
+        virtual RiskParameters load_risk_parameters(
           const Beam::ServiceLocator::DirectoryEntry& account) = 0;
         virtual void store(const Beam::ServiceLocator::DirectoryEntry& account,
-          const RiskService::RiskParameters& risk_parameters) = 0;
+          const RiskParameters& risk_parameters) = 0;
         virtual std::vector<IndexedRiskState> load_all_risk_states() = 0;
-        virtual RiskService::RiskState load_risk_state(
+        virtual RiskState load_risk_state(
           const Beam::ServiceLocator::DirectoryEntry& account) = 0;
         virtual void store(const Beam::ServiceLocator::DirectoryEntry& account,
-          const RiskService::RiskState& risk_state) = 0;
+          const RiskState& risk_state) = 0;
         virtual AccountModificationRequest load_account_modification_request(
           AccountModificationRequest::Id id) = 0;
         virtual std::vector<AccountModificationRequest::Id>
@@ -327,15 +327,15 @@ namespace Nexus {
         void store(const Beam::ServiceLocator::DirectoryEntry& account,
           const AccountIdentity& identity) override;
         std::vector<IndexedRiskParameters> load_all_risk_parameters() override;
-        RiskService::RiskParameters load_risk_parameters(
+        RiskParameters load_risk_parameters(
           const Beam::ServiceLocator::DirectoryEntry& account) override;
         void store(const Beam::ServiceLocator::DirectoryEntry& account,
-          const RiskService::RiskParameters& risk_parameters) override;
+          const RiskParameters& risk_parameters) override;
         std::vector<IndexedRiskState> load_all_risk_states() override;
-        RiskService::RiskState load_risk_state(
+        RiskState load_risk_state(
           const Beam::ServiceLocator::DirectoryEntry& account) override;
         void store(const Beam::ServiceLocator::DirectoryEntry& account,
-          const RiskService::RiskState& risk_state) override;
+          const RiskState& risk_state) override;
         AccountModificationRequest load_account_modification_request(
           AccountModificationRequest::Id id) override;
         std::vector<AccountModificationRequest::Id>
@@ -419,15 +419,14 @@ namespace Nexus {
     return m_data_store->load_all_risk_parameters();
   }
 
-  inline RiskService::RiskParameters
-      AdministrationDataStore::load_risk_parameters(
-        const Beam::ServiceLocator::DirectoryEntry& account) {
+  inline RiskParameters AdministrationDataStore::load_risk_parameters(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_data_store->load_risk_parameters(account);
   }
 
   inline void AdministrationDataStore::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& risk_parameters) {
+      const RiskParameters& risk_parameters) {
     m_data_store->store(account, risk_parameters);
   }
 
@@ -436,14 +435,14 @@ namespace Nexus {
     return m_data_store->load_all_risk_states();
   }
 
-  inline RiskService::RiskState AdministrationDataStore::load_risk_state(
+  inline RiskState AdministrationDataStore::load_risk_state(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_data_store->load_risk_state(account);
   }
 
   inline void AdministrationDataStore::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& risk_state) {
+      const RiskState& risk_state) {
     m_data_store->store(account, risk_state);
   }
 
@@ -564,7 +563,7 @@ namespace Nexus {
   }
 
   template<typename T>
-  RiskService::RiskParameters AdministrationDataStore::
+  RiskParameters AdministrationDataStore::
       WrappedAdministrationDataStore<T>::load_risk_parameters(
         const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_data_store->load_risk_parameters(account);
@@ -573,7 +572,7 @@ namespace Nexus {
   template<typename T>
   void AdministrationDataStore::WrappedAdministrationDataStore<T>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& risk_parameters) {
+      const RiskParameters& risk_parameters) {
     m_data_store->store(account, risk_parameters);
   }
 
@@ -585,7 +584,7 @@ namespace Nexus {
   }
 
   template<typename T>
-  RiskService::RiskState AdministrationDataStore::
+  RiskState AdministrationDataStore::
       WrappedAdministrationDataStore<T>::load_risk_state(
         const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_data_store->load_risk_state(account);
@@ -594,7 +593,7 @@ namespace Nexus {
   template<typename T>
   void AdministrationDataStore::WrappedAdministrationDataStore<T>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& risk_state) {
+      const RiskState& risk_state) {
     m_data_store->store_risk_state(account, risk_state);
   }
 

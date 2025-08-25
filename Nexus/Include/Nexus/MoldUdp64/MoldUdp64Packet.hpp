@@ -6,7 +6,7 @@
 #include <boost/throw_exception.hpp>
 #include "Nexus/MoldUdp64/MoldUdp64ParserException.hpp"
 
-namespace Nexus::MoldUdp64 {
+namespace Nexus {
 
   /** Stores a MoldUDP64 packet. */
   struct MoldUdp64Packet {

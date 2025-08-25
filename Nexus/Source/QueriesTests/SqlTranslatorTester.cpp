@@ -7,8 +7,6 @@ using namespace Beam;
 using namespace Beam::Queries;
 using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::Queries;
 
 TEST_SUITE("SqlTranslator") {
   TEST_CASE("query_order_fields") {
@@ -23,8 +21,7 @@ TEST_SUITE("SqlTranslator") {
     auto venue_expression = ConstantExpression(query_venue);
     auto equal_expression =
       MakeEqualsExpression(venue_expression, venue_access_expression);
-    auto translator =
-      Nexus::Queries::SqlTranslator("submissions", equal_expression);
+    auto translator = Nexus::SqlTranslator("submissions", equal_expression);
     auto translation = translator.Make();
     auto query = std::string();
     translation.append_query(query);
@@ -36,7 +33,7 @@ TEST_SUITE("SqlTranslator") {
     ids.push_back(13);
     ids.push_back(31);
     auto expression = make_order_id_filter(ids);
-    auto translator = Nexus::Queries::SqlTranslator("submissions", expression);
+    auto translator = Nexus::SqlTranslator("submissions", expression);
     auto translation = translator.Make();
     auto query = std::string();
     translation.append_query(query);

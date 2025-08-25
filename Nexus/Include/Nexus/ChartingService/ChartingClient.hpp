@@ -9,7 +9,7 @@
 #include "Nexus/ChartingService/ChartingServices.hpp"
 #include "Nexus/ChartingService/SecurityChartingQuery.hpp"
 
-namespace Nexus::ChartingService {
+namespace Nexus {
 
   /** Provides a generic interface over an arbitrary ChartingClient. */
   class ChartingClient {
@@ -43,7 +43,7 @@ namespace Nexus::ChartingService {
        * @param queue The queue that will store the result of the query.
        */
       void query(const SecurityChartingQuery& query,
-        Beam::ScopedQueueWriter<Queries::QueryVariant> queue);
+        Beam::ScopedQueueWriter<QueryVariant> queue);
 
       /**
        * Loads a Security's time/price series.
@@ -63,7 +63,7 @@ namespace Nexus::ChartingService {
       struct VirtualChartingClient {
         virtual ~VirtualChartingClient() = default;
         virtual void query(const SecurityChartingQuery& query,
-          Beam::ScopedQueueWriter<Queries::QueryVariant> queue) = 0;
+          Beam::ScopedQueueWriter<QueryVariant> queue) = 0;
         virtual TimePriceQueryResult load_time_price_series(
           const Security& security, boost::posix_time::ptime start,
           boost::posix_time::ptime end,
@@ -78,7 +78,7 @@ namespace Nexus::ChartingService {
         template<typename... Args>
         WrappedChartingClient(Args&&... args);
         void query(const SecurityChartingQuery& query,
-          Beam::ScopedQueueWriter<Queries::QueryVariant> queue) override;
+          Beam::ScopedQueueWriter<QueryVariant> queue) override;
         TimePriceQueryResult load_time_price_series(const Security& security,
           boost::posix_time::ptime start, boost::posix_time::ptime end,
           boost::posix_time::time_duration interval) override;
@@ -113,7 +113,7 @@ namespace Nexus::ChartingService {
     : ChartingClient(*client) {}
 
   inline void ChartingClient::query(const SecurityChartingQuery& query,
-      Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
+      Beam::ScopedQueueWriter<QueryVariant> queue) {
     m_client->query(query, std::move(queue));
   }
 
@@ -136,7 +136,7 @@ namespace Nexus::ChartingService {
   template<typename C>
   void ChartingClient::WrappedChartingClient<C>::query(
       const SecurityChartingQuery& query,
-      Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
+      Beam::ScopedQueueWriter<QueryVariant> queue) {
     m_client->query(query, std::move(queue));
   }
 

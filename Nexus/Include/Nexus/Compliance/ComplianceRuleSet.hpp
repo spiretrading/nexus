@@ -20,7 +20,7 @@
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Validates an Order operation against a set of ComplianceRuleEntries.
@@ -63,8 +63,7 @@ namespace Nexus::Compliance {
        * Performs a compliance check on an Order submission.
        * @param order The Order being submitted.
        */
-      void submit(
-        const std::shared_ptr<const OrderExecutionService::Order>& order);
+      void submit(const std::shared_ptr<const Order>& order);
 
       /**
        * Cancels a previously submitted Order.
@@ -72,14 +71,13 @@ namespace Nexus::Compliance {
        * @param order The Order being canceled.
        */
       void cancel(const Beam::ServiceLocator::DirectoryEntry& account,
-        const std::shared_ptr<const OrderExecutionService::Order>& order);
+        const std::shared_ptr<const Order>& order);
 
       /**
        * Adds an Order that successfully passed all compliance checks.
        * @param order The Order that was successfully submitted.
        */
-      void add(
-        const std::shared_ptr<const OrderExecutionService::Order>& order);
+      void add(const std::shared_ptr<const Order>& order);
 
     private:
       struct Rule {
@@ -90,8 +88,7 @@ namespace Nexus::Compliance {
         Beam::Threading::Mutex m_mutex;
         std::vector<Beam::ServiceLocator::DirectoryEntry> m_parents;
         std::vector<std::shared_ptr<Rule>> m_rules;
-        std::vector<std::shared_ptr<const OrderExecutionService::Order>>
-          m_orders;
+        std::vector<std::shared_ptr<const Order>> m_orders;
         Beam::Threading::CallOnce<Beam::Threading::Mutex> m_initializer;
       };
       Beam::GetOptionalLocalPtr<C> m_compliance_client;
@@ -124,7 +121,7 @@ namespace Nexus::Compliance {
 
   template<IsComplianceClient C,  typename S>
   void ComplianceRuleSet<C, S>::submit(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     auto exception = std::exception_ptr();
     auto entry = load(order->get_info().m_fields.m_account);
     {
@@ -179,7 +176,7 @@ namespace Nexus::Compliance {
   template<IsComplianceClient C,  typename S>
   void ComplianceRuleSet<C, S>::cancel(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     auto entry = load(order->get_info().m_fields.m_account);
     {
       auto lock = boost::lock_guard(entry->m_mutex);
@@ -223,8 +220,7 @@ namespace Nexus::Compliance {
   }
 
   template<IsComplianceClient C,  typename S>
-  void ComplianceRuleSet<C, S>::add(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+  void ComplianceRuleSet<C, S>::add(const std::shared_ptr<const Order>& order) {
     auto entry = load(order->get_info().m_fields.m_account);
     {
       auto lock = boost::lock_guard(entry->m_mutex);

@@ -6,7 +6,6 @@
 using namespace Beam;
 using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::Compliance;
 
 TEST_SUITE("compliance_rule_entry") {
   TEST_CASE("constructor") {

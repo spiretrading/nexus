@@ -103,7 +103,7 @@ namespace Nexus {
    * @return The trade's price class.
    */
   inline AsxTradeMatchFeeTable::PriceClass lookup_price_class(
-      const OrderExecutionService::ExecutionReport& report) {
+      const ExecutionReport& report) {
     if(report.m_last_price < 25 * Money::CENT) {
       return AsxTradeMatchFeeTable::PriceClass::TIER_ONE;
     } else if(report.m_last_price < Money::ONE) {
@@ -118,7 +118,7 @@ namespace Nexus {
    * @return The order's type class.
    */
   inline AsxTradeMatchFeeTable::OrderTypeClass lookup_order_type_class(
-      const OrderExecutionService::OrderFields& fields) {
+      const OrderFields& fields) {
     if(fields.m_type == OrderType::PEGGED) {
       return AsxTradeMatchFeeTable::OrderTypeClass::PEGGED;
     }
@@ -133,8 +133,7 @@ namespace Nexus {
    * @return The execution fee for the given trade.
    */
   inline Money calculate_clearing_fee(const AsxTradeMatchFeeTable& table,
-      const OrderExecutionService::OrderFields& fields,
-      const OrderExecutionService::ExecutionReport& report) {
+      const OrderFields& fields, const ExecutionReport& report) {
     auto price_class = lookup_price_class(report);
     auto order_type_class = lookup_order_type_class(fields);
     auto clearing_fee =
@@ -148,8 +147,8 @@ namespace Nexus {
    * @param report The ExecutionReport to calculate the fee for.
    * @return The execution fee for the given trade.
    */
-  inline Money calculate_execution_fee(const AsxTradeMatchFeeTable& table,
-      const OrderExecutionService::ExecutionReport& report) {
+  inline Money calculate_execution_fee(
+      const AsxTradeMatchFeeTable& table, const ExecutionReport& report) {
     if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }
@@ -172,10 +171,8 @@ namespace Nexus {
    * @param report The ExecutionReport to calculate the fee for.
    * @return An ExecutionReport containing the calculated fees.
    */
-  inline OrderExecutionService::ExecutionReport calculate_fee(
-      const AsxTradeMatchFeeTable& table,
-      const OrderExecutionService::OrderFields& fields,
-      const OrderExecutionService::ExecutionReport& report) {
+  inline ExecutionReport calculate_fee(const AsxTradeMatchFeeTable& table,
+      const OrderFields& fields, const ExecutionReport& report) {
     auto fees_report = report;
     fees_report.m_processing_fee +=
       calculate_clearing_fee(table, fields, report);

@@ -8,7 +8,7 @@
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderInfo.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** brief Stores information about a single Order. */
   struct OrderRecord {
@@ -31,10 +31,9 @@ namespace Nexus::OrderExecutionService {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::OrderExecutionService::OrderRecord> {
+  struct Shuttle<Nexus::OrderRecord> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::OrderExecutionService::OrderRecord& value,
+    void operator ()(Shuttler& shuttle, Nexus::OrderRecord& value,
         unsigned int version) const {
       shuttle.Shuttle("info", value.m_info);
       shuttle.Shuttle("execution_reports", value.m_execution_reports);

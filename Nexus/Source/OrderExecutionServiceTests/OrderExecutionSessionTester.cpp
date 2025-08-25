@@ -4,7 +4,6 @@
 using namespace Beam;
 using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 
 TEST_SUITE("OrderExecutionSession") {
   TEST_CASE("constructor") {

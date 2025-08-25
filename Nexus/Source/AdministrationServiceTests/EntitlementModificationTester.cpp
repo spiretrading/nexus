@@ -4,6 +4,7 @@
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 
 using namespace Beam::ServiceLocator;
+using namespace Nexus;
 
 TEST_SUITE("EntitlementModification") {
   TEST_CASE("stream") {

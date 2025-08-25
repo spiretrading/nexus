@@ -6,7 +6,7 @@
 #include "Nexus/MarketDataService/MarketDataType.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
-namespace Nexus::ChartingService {
+namespace Nexus {
 
   /** Queries for charting data over a particular Security. */
   class SecurityChartingQuery : public Beam::Queries::BasicQuery<Security>,
@@ -14,26 +14,24 @@ namespace Nexus::ChartingService {
     public:
 
       /** Returns the type of data to query. */
-      MarketDataService::MarketDataType get_market_data_type() const;
+      MarketDataType get_market_data_type() const;
 
       /** Sets the type of data to query. */
-      void set_market_data_type(MarketDataService::MarketDataType type);
+      void set_market_data_type(MarketDataType type);
 
     private:
       friend struct Beam::Serialization::DataShuttle;
-      MarketDataService::MarketDataType m_type;
+      MarketDataType m_type;
 
       template<typename Shuttler>
       void Shuttle(Shuttler& shuttle, unsigned int version);
   };
 
-  inline MarketDataService::MarketDataType
-      SecurityChartingQuery::get_market_data_type() const {
+  inline MarketDataType SecurityChartingQuery::get_market_data_type() const {
     return m_type;
   }
 
-  inline void SecurityChartingQuery::set_market_data_type(
-      MarketDataService::MarketDataType type) {
+  inline void SecurityChartingQuery::set_market_data_type(MarketDataType type) {
     m_type = type;
   }
 

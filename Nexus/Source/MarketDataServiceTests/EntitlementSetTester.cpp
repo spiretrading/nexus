@@ -6,7 +6,6 @@ using namespace Beam;
 using namespace Beam::IO;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
 
 TEST_SUITE("EntitlementSet") {
   TEST_CASE("construct_from_venue") {

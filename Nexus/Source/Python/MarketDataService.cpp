@@ -27,8 +27,7 @@ using namespace Beam::Python;
 using namespace Beam::Queries;
 using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::MarketDataService::Tests;
+using namespace Nexus::Tests;
 using namespace pybind11;
 
 void Nexus::Python::export_async_historical_data_store(module& module) {
@@ -183,25 +182,24 @@ void Nexus::Python::export_market_data_reactors(module& module) {
 }
 
 void Nexus::Python::export_market_data_service(module& module) {
-  auto submodule = module.def_submodule("market_data_service");
-  export_async_historical_data_store(submodule);
-  export_cached_historical_data_store(submodule);
-  export_client_historical_data_store(submodule);
-  export_data_store_market_data_client(submodule);
-  export_entitlement_database(submodule);
-  export_entitlement_set(submodule);
+  export_async_historical_data_store(module);
+  export_cached_historical_data_store(module);
+  export_client_historical_data_store(module);
+  export_data_store_market_data_client(module);
+  export_entitlement_database(module);
+  export_entitlement_set(module);
   export_historical_data_store<ToPythonHistoricalDataStore<
-    HistoricalDataStore>>(submodule, "HistoricalDataStore");
-  export_historical_data_store_exception(submodule);
-  export_local_historical_data_store(submodule);
+    HistoricalDataStore>>(module, "HistoricalDataStore");
+  export_historical_data_store_exception(module);
+  export_local_historical_data_store(module);
   export_market_data_client<ToPythonMarketDataClient<MarketDataClient>>(
-    submodule, "MarketDataClient");
-  export_market_data_reactors(submodule);
-  export_market_data_type(submodule);
-  export_mysql_historical_data_store(submodule);
-  export_security_snapshot(submodule);
-  export_sqlite_historical_data_store(submodule);
-  submodule.def("query_real_time_book_quotes_with_snapshot",
+    module, "MarketDataClient");
+  export_market_data_reactors(module);
+  export_market_data_type(module);
+  export_mysql_historical_data_store(module);
+  export_security_snapshot(module);
+  export_sqlite_historical_data_store(module);
+  module.def("query_real_time_book_quotes_with_snapshot",
     [] (MarketDataClient client, const Security& security,
         ScopedQueueWriter<BookQuote> queue,
         InterruptionPolicy interruption_policy) {
@@ -210,17 +208,17 @@ void Nexus::Python::export_market_data_service(module& module) {
     }, arg("client"), arg("security"), arg("queue"),
     arg("interruption_policy") =
       Beam::Queries::InterruptionPolicy::BREAK_QUERY);
-  submodule.def("query_real_time_bbo_quotes_with_snapshot",
+  module.def("query_real_time_bbo_quotes_with_snapshot",
     [] (MarketDataClient client, const Security& security,
         Beam::ScopedQueueWriter<BboQuote> queue) {
       return query_real_time_with_snapshot(
         std::move(client), security, std::move(queue));
     });
-  submodule.def("load_security_info",
+  module.def("load_security_info",
     [] (MarketDataClient& client, const Security& security) {
       return load_security_info(client, security);
     });
-  auto test_module = submodule.def_submodule("tests");
+  auto test_module = module.def_submodule("tests");
   export_market_data_service_test_environment(test_module);
 }
 

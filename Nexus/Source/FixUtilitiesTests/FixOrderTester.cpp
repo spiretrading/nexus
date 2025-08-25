@@ -5,8 +5,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::FixUtilities;
-using namespace Nexus::OrderExecutionService;
 
 namespace {
   auto make_order_info() {

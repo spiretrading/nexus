@@ -4,8 +4,7 @@
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionDataStoreTestSuite.hpp"
 
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::OrderExecutionService::Tests;
+using namespace Nexus::Tests;
 
 namespace {
   struct Builder {

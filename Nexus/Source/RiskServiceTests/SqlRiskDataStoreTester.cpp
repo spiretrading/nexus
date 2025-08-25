@@ -4,8 +4,7 @@
 #include "Nexus/RiskServiceTests/RiskDataStoreTestSuite.hpp"
 
 using namespace Nexus;
-using namespace Nexus::RiskService;
-using namespace Nexus::RiskService::Tests;
+using namespace Nexus::Tests;
 using namespace Viper;
 using namespace Viper::Sqlite3;
 

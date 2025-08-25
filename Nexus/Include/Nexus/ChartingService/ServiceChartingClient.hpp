@@ -18,7 +18,7 @@
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 #include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
 
-namespace Nexus::ChartingService {
+namespace Nexus {
 
   /**
    * Implements a ChartingClient using Beam services.
@@ -39,7 +39,7 @@ namespace Nexus::ChartingService {
       explicit ServiceChartingClient(BF&& client_builder);
       ~ServiceChartingClient();
       void query(const SecurityChartingQuery& query,
-        Beam::ScopedQueueWriter<Queries::QueryVariant> queue);
+        Beam::ScopedQueueWriter<QueryVariant> queue);
       TimePriceQueryResult load_time_price_series(const Security& security,
         boost::posix_time::ptime start, boost::posix_time::ptime end,
         boost::posix_time::time_duration interval);
@@ -49,7 +49,7 @@ namespace Nexus::ChartingService {
       using ServiceProtocolClient =
         typename ServiceProtocolClientBuilder::Client;
       using SecurityChartingPublisher = Beam::Queries::SequencedValuePublisher<
-        SecurityChartingQuery, Queries::QueryVariant>;
+        SecurityChartingQuery, QueryVariant>;
       boost::atomic_int m_next_query_id;
       Beam::SynchronizedUnorderedMap<
         int, std::shared_ptr<SecurityChartingPublisher>>
@@ -61,7 +61,7 @@ namespace Nexus::ChartingService {
       ServiceChartingClient(const ServiceChartingClient&) = delete;
       ServiceChartingClient& operator =(const ServiceChartingClient&) = delete;
       void on_security_query(ServiceProtocolClient& client, int query_id,
-        const Queries::SequencedQueryVariant& value);
+        const SequencedQueryVariant& value);
   };
 
   template<typename B>
@@ -69,8 +69,7 @@ namespace Nexus::ChartingService {
   ServiceChartingClient<B>::ServiceChartingClient(BF&& client_builder)
       try : m_next_query_id(0),
             m_client_handler(std::forward<BF>(client_builder)) {
-    Queries::RegisterQueryTypes(Beam::Store(
-      m_client_handler.GetSlots().GetRegistry()));
+    RegisterQueryTypes(Beam::Store(m_client_handler.GetSlots().GetRegistry()));
     RegisterChartingServices(Store(m_client_handler.GetSlots()));
     RegisterChartingMessages(Store(m_client_handler.GetSlots()));
     Beam::Services::AddMessageSlot<SecurityQueryMessage>(
@@ -88,13 +87,13 @@ namespace Nexus::ChartingService {
 
   template<typename B>
   void ServiceChartingClient<B>::query(const SecurityChartingQuery& query,
-      Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
+      Beam::ScopedQueueWriter<QueryVariant> queue) {
     if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
       m_query_routines.Spawn([=, this, queue = std::move(queue)] () mutable {
-        auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
-          query.GetFilter());
+        auto filter =
+          Beam::Queries::Translate<EvaluatorTranslator>(query.GetFilter());
         auto conversion_queue =
-          Beam::MakeConverterQueueWriter<Queries::SequencedQueryVariant>(
+          Beam::MakeConverterQueueWriter<SequencedQueryVariant>(
             std::move(queue), [] (const auto& value) {
               return *value;
             });
@@ -161,7 +160,7 @@ namespace Nexus::ChartingService {
   template<typename B>
   void ServiceChartingClient<B>::on_security_query(
       ServiceProtocolClient& client, int query_id,
-      const Queries::SequencedQueryVariant& value) {
+      const SequencedQueryVariant& value) {
     auto check_publisher = m_security_charting_publishers.FindValue(query_id);
     if(!check_publisher) {
       return;

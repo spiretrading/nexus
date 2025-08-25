@@ -7,7 +7,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
 
 TEST_SUITE("SecuritySnapshot") {
   TEST_CASE("shuttle") {

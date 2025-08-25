@@ -4,7 +4,6 @@
 #include "Nexus/Compliance/ComplianceParameter.hpp"
 
 using namespace Nexus;
-using namespace Nexus::Compliance;
 using namespace Nexus::DefaultVenues;
 
 TEST_SUITE("ComplianceParameter") {

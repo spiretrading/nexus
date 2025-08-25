@@ -22,7 +22,7 @@ namespace Nexus {
        * @return <code>true</code> iff the Order with the specified <i>id</i>
        *         has previously been accounted for.
        */
-      bool has_order(OrderExecutionService::OrderId id) const;
+      bool has_order(OrderId id) const;
 
       /**
        * Returns the buying power used in a particular Currency.
@@ -40,25 +40,22 @@ namespace Nexus {
        *        from the price that the Order is submitted for.
        * @return The updated buying power for the submission's Currency.
        */
-      Money submit(OrderExecutionService::OrderId id,
-        const OrderExecutionService::OrderFields& fields, Money expected_price);
+      Money submit(OrderId id, const OrderFields& fields, Money expected_price);
 
       /**
        * Updates this model with the contents of an ExecutionReport.
        * @param report The ExecutionReport to update this model with.
        */
-      void update(const OrderExecutionService::ExecutionReport& report);
+      void update(const ExecutionReport& report);
 
     private:
       struct OrderEntry {
-        OrderExecutionService::OrderId m_id;
-        OrderExecutionService::OrderFields m_fields;
+        OrderId m_id;
+        OrderFields m_fields;
         Money m_expected_price;
         Quantity m_remaining_quantity;
 
-        OrderEntry(OrderExecutionService::OrderId id,
-          const OrderExecutionService::OrderFields& fields,
-          Money expected_price);
+        OrderEntry(OrderId id, const OrderFields& fields, Money expected_price);
       };
       struct BuyingPowerEntry {
         std::vector<OrderEntry> m_asks;
@@ -66,8 +63,7 @@ namespace Nexus {
         Money m_expenditure;
         Quantity m_quantity;
       };
-      std::unordered_map<OrderExecutionService::OrderId,
-        OrderExecutionService::OrderFields> m_order_fields;
+      std::unordered_map<OrderId, OrderFields> m_order_fields;
       std::unordered_map<Security, BuyingPowerEntry> m_buying_power_entries;
       std::unordered_map<CurrencyId, Money> m_buying_power;
 
@@ -77,15 +73,13 @@ namespace Nexus {
   };
 
   inline BuyingPowerModel::OrderEntry::OrderEntry(
-    OrderExecutionService::OrderId id,
-    const OrderExecutionService::OrderFields& fields, Money expected_price)
+    OrderId id, const OrderFields& fields, Money expected_price)
     : m_id(id),
       m_fields(fields),
       m_expected_price(expected_price),
       m_remaining_quantity(fields.m_quantity) {}
 
-  inline bool BuyingPowerModel::has_order(
-      OrderExecutionService::OrderId id) const {
+  inline bool BuyingPowerModel::has_order(OrderId id) const {
     return m_order_fields.contains(id);
   }
 
@@ -97,8 +91,8 @@ namespace Nexus {
     return currency_iterator->second;
   }
 
-  inline Money BuyingPowerModel::submit(OrderExecutionService::OrderId id,
-      const OrderExecutionService::OrderFields& fields, Money expected_price) {
+  inline Money BuyingPowerModel::submit(
+      OrderId id, const OrderFields& fields, Money expected_price) {
     auto& entry = m_buying_power_entries[fields.m_security];
     auto& buying_power = m_buying_power[fields.m_currency];
     buying_power -= compute_buying_power(entry);
@@ -122,8 +116,7 @@ namespace Nexus {
     return buying_power;
   }
 
-  inline void BuyingPowerModel::update(
-      const OrderExecutionService::ExecutionReport& report) {
+  inline void BuyingPowerModel::update(const ExecutionReport& report) {
     if(report.m_status == OrderStatus::PENDING_NEW ||
         report.m_status == OrderStatus::SUSPENDED ||
         report.m_status == OrderStatus::PENDING_CANCEL ||

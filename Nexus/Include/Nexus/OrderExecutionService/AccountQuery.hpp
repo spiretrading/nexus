@@ -10,7 +10,7 @@
 #include "Nexus/OrderExecutionService/OrderInfo.hpp"
 #include "Nexus/OrderExecutionService/OrderRecord.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
   using SequencedOrder =
     Beam::Queries::SequencedValue<std::shared_ptr<const Order>>;
   using SequencedOrderInfo = Beam::Queries::SequencedValue<OrderInfo>;
@@ -37,14 +37,13 @@ namespace Nexus::OrderExecutionService {
 
 namespace Beam::Queries {
   template<>
-  struct TimestampAccessor<Nexus::OrderExecutionService::OrderRecord> {
+  struct TimestampAccessor<Nexus::OrderRecord> {
     const boost::posix_time::ptime& operator ()(
-        const Nexus::OrderExecutionService::OrderRecord& value) const {
+        const Nexus::OrderRecord& value) const {
       return value.m_info.m_timestamp;
     }
 
-    boost::posix_time::ptime& operator ()(
-        Nexus::OrderExecutionService::OrderRecord& value) const {
+    boost::posix_time::ptime& operator ()(Nexus::OrderRecord& value) const {
       return value.m_info.m_timestamp;
     }
   };

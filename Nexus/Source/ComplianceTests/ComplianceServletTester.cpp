@@ -21,7 +21,6 @@ using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::Compliance;
 using namespace Nexus::Tests;
 
 namespace {

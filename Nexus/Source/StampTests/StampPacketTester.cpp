@@ -2,7 +2,7 @@
 #include "Nexus/Stamp/StampPacket.hpp"
 
 using namespace Nexus;
-using namespace Nexus::Stamp;
+using namespace Nexus;
 
 namespace {
   auto make_packet_buffer(const std::string& length,

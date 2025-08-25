@@ -11,7 +11,7 @@
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
 
-namespace Nexus::OrderExecutionService::Tests {
+namespace Nexus::Tests {
 
   /**
    * Implements an OrderExecutionDriver for testing purposes.

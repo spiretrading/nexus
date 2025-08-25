@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <boost/exception/exception.hpp>
 
-namespace Nexus::MoldUdp64 {
+namespace Nexus {
 
   /** Indicates that parsing an MoldUDP64 message failed. */
   class MoldUdp64ParserException :

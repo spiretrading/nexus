@@ -10,7 +10,7 @@
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Prevents Orders on the opposite side of a fill from being canceled for a
@@ -37,16 +37,13 @@ namespace Nexus::Compliance {
       OpposingOrderCancellationComplianceRule(
         boost::posix_time::time_duration timeout, CF&& time_client);
 
-      void cancel(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
-      void add(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
+      void cancel(const std::shared_ptr<const Order>& order) override;
+      void add(const std::shared_ptr<const Order>& order) override;
 
     private:
       boost::posix_time::time_duration m_timeout;
       Beam::GetOptionalLocalPtr<C> m_time_client;
-      Beam::TaggedQueueReader<Side, OrderExecutionService::ExecutionReport>
-        m_reports;
+      Beam::TaggedQueueReader<Side, ExecutionReport> m_reports;
       boost::posix_time::ptime m_last_ask_fill_time;
       boost::posix_time::ptime m_last_bid_fill_time;
   };
@@ -69,7 +66,7 @@ namespace Nexus::Compliance {
 
   template<typename C>
   void OpposingOrderCancellationComplianceRule<C>::cancel(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     while(auto report = m_reports.TryPop()) {
       if(report->m_value.m_last_quantity != 0) {
         auto& last_fill_time =
@@ -89,7 +86,7 @@ namespace Nexus::Compliance {
 
   template<typename C>
   void OpposingOrderCancellationComplianceRule<C>::add(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     order->get_publisher().Monitor(
       m_reports.GetSlot(order->get_info().m_fields.m_side));
   }

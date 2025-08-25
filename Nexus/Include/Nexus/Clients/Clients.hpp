@@ -33,22 +33,22 @@ namespace Nexus {
       using AdministrationClient = Nexus::AdministrationClient;
 
       /** The definitions client interface. */
-      using DefinitionsClient = DefinitionsService::DefinitionsClient;
+      using DefinitionsClient = Nexus::DefinitionsClient;
 
       /** The market data client interface. */
-      using MarketDataClient = MarketDataService::MarketDataClient;
+      using MarketDataClient = Nexus::MarketDataClient;
 
       /** The charting client interface. */
-      using ChartingClient = ChartingService::ChartingClient;
+      using ChartingClient = Nexus::ChartingClient;
 
       /** The compliance client interface. */
-      using ComplianceClient = Compliance::ComplianceClient;
+      using ComplianceClient = Nexus::ComplianceClient;
 
       /** The order execution client interface. */
-      using OrderExecutionClient = OrderExecutionService::OrderExecutionClient;
+      using OrderExecutionClient = Nexus::OrderExecutionClient;
 
       /** The risk client interface. */
-      using RiskClient = RiskService::RiskClient;
+      using RiskClient = Nexus::RiskClient;
 
       /** The time client interface. */
       using TimeClient = Beam::TimeService::TimeClientBox;

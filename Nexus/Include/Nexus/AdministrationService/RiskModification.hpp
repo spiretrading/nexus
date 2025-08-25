@@ -17,22 +17,20 @@ namespace Nexus {
        * Constructs a RiskModification.
        * @param parameters The risk parameters being requested.
        */
-      RiskModification(RiskService::RiskParameters parameters) noexcept;
+      RiskModification(RiskParameters parameters) noexcept;
 
       /** Returns the requested risk parameters. */
-      const RiskService::RiskParameters& get_parameters() const;
+      const RiskParameters& get_parameters() const;
 
     private:
       friend struct Beam::Serialization::Shuttle<RiskModification>;
-      RiskService::RiskParameters m_parameters;
+      RiskParameters m_parameters;
   };
 
-  inline RiskModification::RiskModification(
-    RiskService::RiskParameters parameters) noexcept
+  inline RiskModification::RiskModification(RiskParameters parameters) noexcept
     : m_parameters(std::move(parameters)) {}
 
-  inline const RiskService::RiskParameters&
-      RiskModification::get_parameters() const {
+  inline const RiskParameters& RiskModification::get_parameters() const {
     return m_parameters;
   }
 }

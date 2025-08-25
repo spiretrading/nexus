@@ -9,7 +9,7 @@
 #include "Nexus/RiskService/RiskDataStore.hpp"
 #include "Nexus/RiskService/SqlDefinitions.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /**
    * Implements a RiskDataStore backed by an SQL database.

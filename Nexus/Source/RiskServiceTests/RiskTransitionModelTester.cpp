@@ -20,9 +20,7 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::OrderExecutionService::Tests;
-using namespace Nexus::RiskService;
+using namespace Nexus::Tests;
 
 namespace {
   auto ACCOUNT = DirectoryEntry::MakeAccount(153, "simba");

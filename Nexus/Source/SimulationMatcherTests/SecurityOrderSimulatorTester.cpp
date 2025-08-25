@@ -9,8 +9,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::OrderExecutionService;
 
 namespace {
   const auto ABX = Security("ABX", TSX);

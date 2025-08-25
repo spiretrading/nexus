@@ -12,7 +12,7 @@
 #include "Nexus/Queries/StandardDataTypes.hpp"
 #include "Nexus/Queries/TraversalExpressionVisitor.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
   inline const auto& get_account_row() {
     static auto ROW = Viper::Row<Beam::ServiceLocator::DirectoryEntry>().
       add_column("account", &Beam::ServiceLocator::DirectoryEntry::m_id);
@@ -129,16 +129,16 @@ namespace Nexus::OrderExecutionService {
   }
 
   inline auto has_live_check(const Beam::Queries::Expression& expression) {
-    struct IsLiveVisitor final : Queries::TraversalExpressionVisitor {
+    struct IsLiveVisitor final : TraversalExpressionVisitor {
       bool m_has_check = false;
 
       void Visit(
           const Beam::Queries::MemberAccessExpression& expression) override {
         if(expression.GetName() == "is_live" &&
-            expression.GetExpression()->GetType() == Queries::OrderInfoType()) {
+            expression.GetExpression()->GetType() == OrderInfoType()) {
           m_has_check = true;
         } else {
-          Queries::TraversalExpressionVisitor::Visit(expression);
+          TraversalExpressionVisitor::Visit(expression);
         }
       }
     };

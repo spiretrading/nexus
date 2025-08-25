@@ -13,7 +13,7 @@
 #include "Nexus/RiskService/RiskServices.hpp"
 #include "Nexus/RiskService/RiskSession.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /**
    * Monitors a trader's positions and orders for risk compliance.
@@ -26,10 +26,8 @@ namespace Nexus::RiskService {
    * @param <T> The type of TimeClient to use.
    * @param <D> The type of RiskDataStore to use.
    */
-  template<typename C, IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   class RiskServlet {
     public:
       using Container = C;
@@ -93,7 +91,7 @@ namespace Nexus::RiskService {
 
     private:
       using ConsolidatedRiskController =
-        RiskService::ConsolidatedRiskController<AdministrationClient*,
+        Nexus::ConsolidatedRiskController<AdministrationClient*,
           MarketDataClient*, OrderExecutionClient*, TransitionTimer,
           TimeClient*, RiskDataStore*>;
       Beam::GetOptionalLocalPtr<A> m_administration_client;
@@ -136,9 +134,8 @@ namespace Nexus::RiskService {
           SubscribeRiskPortfolioUpdatesService>& request);
   };
 
-  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   struct MetaRiskServlet {
     using Session = RiskSession;
     template<typename C>
@@ -147,10 +144,8 @@ namespace Nexus::RiskService {
     };
   };
 
-  template<typename C, IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   template<Beam::Initializes<A> AF, Beam::Initializes<M> MF,
     Beam::Initializes<O> OF, Beam::Initializes<T> TF, Beam::Initializes<D> DF>
   RiskServlet<C, A, M, O, R, T, D>::RiskServlet(
@@ -180,10 +175,8 @@ namespace Nexus::RiskService {
     }
   }
 
-  template<typename C, IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void RiskServlet<C, A, M, O, R, T, D>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
     RegisterRiskServices(Store(slots));
@@ -197,10 +190,8 @@ namespace Nexus::RiskService {
         &RiskServlet::on_subscribe_risk_portfolio_updates_request, this));
   }
 
-  template<typename C, IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void RiskServlet<C, A, M, O, R, T, D>::HandleClientAccepted(
       ServiceProtocolClient& client) {
     auto& session = client.GetSession();
@@ -215,19 +206,15 @@ namespace Nexus::RiskService {
     }
   }
 
-  template<typename C, IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void RiskServlet<C, A, M, O, R, T, D>::HandleClientClosed(
       ServiceProtocolClient& client) {
     m_portfolio_subscribers.Remove(&client);
   }
 
-  template<typename C, IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void RiskServlet<C, A, M, O, R, T, D>::Close() {
     if(m_open_state.SetClosing()) {
       return;
@@ -238,10 +225,8 @@ namespace Nexus::RiskService {
     m_open_state.Close();
   }
 
-  template<typename C, IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void RiskServlet<C, A, M, O, R, T, D>::make_controller() {
     auto accounts =
       std::make_shared<Beam::Queue<Beam::ServiceLocator::DirectoryEntry>>();
@@ -258,22 +243,20 @@ namespace Nexus::RiskService {
         std::bind_front(&RiskServlet::on_portfolio, this)));
   }
 
-  template<typename C, IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void RiskServlet<C, A, M, O, R, T, D>::reset(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const Region& region) {
     auto snapshot = m_data_store->load_inventory_snapshot(account);
     auto [portfolio, sequence, excluded_orders] = make_portfolio(
       snapshot, account, m_venues, *m_order_execution_client);
-    auto reports = std::vector<OrderExecutionService::ExecutionReportEntry>();
+    auto reports = std::vector<ExecutionReportEntry>();
     for(auto& order : excluded_orders) {
       if(auto order_snapshot = order->get_publisher().GetSnapshot()) {
         std::transform(order_snapshot->begin(), order_snapshot->end(),
           std::back_inserter(reports), [&] (const auto& report) {
-            return OrderExecutionService::ExecutionReportEntry(order, report);
+            return ExecutionReportEntry(order, report);
           });
       }
     }
@@ -339,10 +322,8 @@ namespace Nexus::RiskService {
     }
   }
 
-  template<typename C, IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   Beam::ServiceLocator::DirectoryEntry RiskServlet<C, A, M, O, R, T, D>::
       load_group(const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_account_to_group.GetOrInsert(account, [&] {
@@ -350,19 +331,15 @@ namespace Nexus::RiskService {
     });
   }
 
-  template<typename C, IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void RiskServlet<C, A, M, O, R, T, D>::on_risk_state(
       const RiskStateEntry& entry) {
     m_administration_client->store(entry.m_key, entry.m_value);
   }
 
-  template<typename C, IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void RiskServlet<C, A, M, O, R, T, D>::on_portfolio(
       const RiskInventoryEntry& entry) {
     auto& volume = m_volumes[entry.m_key];
@@ -388,10 +365,8 @@ namespace Nexus::RiskService {
     });
   }
 
-  template<typename C, IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   InventorySnapshot RiskServlet<C, A, M, O, R, T, D>::
       on_load_inventory_snapshot(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account) {
@@ -404,10 +379,8 @@ namespace Nexus::RiskService {
     return m_data_store->load_inventory_snapshot(account);
   }
 
-  template<typename C, IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void RiskServlet<C, A, M, O, R, T, D>::on_reset_region(
       ServiceProtocolClient& client, const Region& region) {
     auto& session = client.GetSession();
@@ -429,10 +402,8 @@ namespace Nexus::RiskService {
     make_controller();
   }
 
-  template<typename C, IsAdministrationClient A,
-    MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void RiskServlet<C, A, M, O, R, T, D>::
       on_subscribe_risk_portfolio_updates_request(Beam::Services::RequestToken<
         ServiceProtocolClient, SubscribeRiskPortfolioUpdatesService>& request) {

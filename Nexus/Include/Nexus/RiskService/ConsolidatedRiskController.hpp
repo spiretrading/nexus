@@ -13,7 +13,7 @@
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/RiskService/RiskController.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /** Represents an entry in a RiskState table. */
   using RiskStateEntry =
@@ -34,9 +34,8 @@ namespace Nexus::RiskService {
    * @param <T> The type of TimeClient to use.
    * @param <D> The type of RiskDataStore to use.
    */
-  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   class ConsolidatedRiskController {
     public:
 
@@ -99,7 +98,7 @@ namespace Nexus::RiskService {
         get_portfolio_publisher() const;
 
     private:
-      using RiskController = RiskService::RiskController<
+      using RiskController = Nexus::RiskController<
         AdministrationClient*, MarketDataClient*, OrderExecutionClient*,
         std::unique_ptr<TransitionTimer>, TimeClient*, RiskDataStore*>;
       Beam::GetOptionalLocalPtr<A> m_administration_client;
@@ -129,9 +128,8 @@ namespace Nexus::RiskService {
         const PortfolioUpdateEntry& entry);
   };
 
-  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   ConsolidatedRiskController(
     Beam::ScopedQueueReader<Beam::ServiceLocator::DirectoryEntry>, A&&, M&&,
     O&&, R&&, T&&, D&&, ExchangeRateTable, VenueDatabase,
@@ -141,9 +139,8 @@ namespace Nexus::RiskService {
       typename std::invoke_result_t<R>::element_type,
       std::remove_reference_t<T>, std::remove_reference_t<D>>;
 
-  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   template<Beam::Initializes<A> AF, Beam::Initializes<M> MF,
     Beam::Initializes<O> OF, Beam::Initializes<T> TF, Beam::Initializes<D> DF>
   ConsolidatedRiskController<A, M, O, R, T, D>::ConsolidatedRiskController(
@@ -168,25 +165,22 @@ namespace Nexus::RiskService {
           std::bind_front(&ConsolidatedRiskController::on_account, this))) {}
   BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
-  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   const Beam::Publisher<RiskStateEntry>& ConsolidatedRiskController<
       A, M, O, R, T, D>::get_risk_state_publisher() const {
     return m_state_publisher;
   }
 
-  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   const Beam::Publisher<RiskPortfolioEntry>& ConsolidatedRiskController<
       A, M, O, R, T, D>::get_portfolio_publisher() const {
     return m_portfolio_publisher;
   }
 
-  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void ConsolidatedRiskController<A, M, O, R, T, D>::on_account(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto controller = [&] {
@@ -216,18 +210,16 @@ namespace Nexus::RiskService {
     m_controllers.push_back(std::move(controller));
   }
 
-  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void ConsolidatedRiskController<A, M, O, R, T, D>::on_risk_state(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const RiskState& state) {
     m_state_publisher.Push(account, state);
   }
 
-  template<IsAdministrationClient A, MarketDataService::IsMarketDataClient M,
-    OrderExecutionService::IsOrderExecutionClient O, typename R, typename T,
-    IsRiskDataStore D>
+  template<IsAdministrationClient A, IsMarketDataClient M,
+    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void ConsolidatedRiskController<A, M, O, R, T, D>::on_portfolio_entry(
       const Beam::ServiceLocator::DirectoryEntry& account,
       const PortfolioUpdateEntry& entry) {

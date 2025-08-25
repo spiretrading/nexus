@@ -6,7 +6,7 @@
 #include "Nexus/Definitions/SqlDefinitions.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /** Stores an inventory and the account it belongs to. */
   struct InventoryEntry {
@@ -111,7 +111,7 @@ namespace Nexus::RiskService {
     std::uint32_t m_account;
 
     /** The excluded order id. */
-    OrderExecutionService::OrderId m_id;
+    OrderId m_id;
   };
 
   /** Returns a row representing a InventoryExcludedOrderId. */
@@ -126,7 +126,7 @@ namespace Nexus::RiskService {
   /** Converts an order id into a InventoryExcludedOrderId. */
   inline auto convert_inventory_excluded_orders(
       const Beam::ServiceLocator::DirectoryEntry& account) {
-    return [=] (OrderExecutionService::OrderId id) {
+    return [=] (OrderId id) {
       return InventoryExcludedOrderId(account.m_id, id);
     };
   }

@@ -4,7 +4,7 @@
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/MarketDataService/EntitlementSet.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Stores session info for a MarketDataRegistryServlet. */
   class MarketDataRegistrySession :

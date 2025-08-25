@@ -10,7 +10,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::OrderExecutionService;
 
 TEST_SUITE("StandardQueries") {
   TEST_CASE("make_daily_order_submission_query") {

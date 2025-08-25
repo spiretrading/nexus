@@ -8,7 +8,7 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 
-namespace Nexus::OrderExecutionService::Tests {
+namespace Nexus::Tests {
 
   /** An OrderExecutionDriver used for testing purposes. */
   class MockOrderExecutionDriver {

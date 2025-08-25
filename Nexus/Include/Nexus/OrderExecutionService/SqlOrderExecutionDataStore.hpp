@@ -15,7 +15,7 @@
 #include "Nexus/OrderExecutionService/SqlDefinitions.hpp"
 #include "Nexus/Queries/SqlTranslator.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /**
    * Stores Order execution data in an SQL database.
@@ -65,15 +65,15 @@ namespace Nexus::OrderExecutionService {
 
     private:
       template<bool IsLive>
-      struct Translator : Queries::SqlTranslator {
-        using Queries::SqlTranslator::SqlTranslator;
+      struct Translator : SqlTranslator {
+        using SqlTranslator::SqlTranslator;
 
         void Visit(
           const Beam::Queries::MemberAccessExpression& expression) override;
       };
       template<typename V, typename I>
       using DataStore =
-        Beam::Queries::SqlDataStore<Connection, V, I, Queries::SqlTranslator>;
+        Beam::Queries::SqlDataStore<Connection, V, I, SqlTranslator>;
       template<bool IsLive>
       using IsLiveDataStore = Beam::Queries::SqlDataStore<Connection,
         Viper::Row<OrderInfo>, Viper::Row<Beam::ServiceLocator::DirectoryEntry>,
@@ -327,11 +327,11 @@ namespace Nexus::OrderExecutionService {
   template<bool IsLive>
   void SqlOrderExecutionDataStore<C>::Translator<IsLive>::Visit(
       const Beam::Queries::MemberAccessExpression& expression) {
-    if(expression.GetExpression()->GetType() == Queries::OrderInfoType() &&
+    if(expression.GetExpression()->GetType() == OrderInfoType() &&
         expression.GetName() == "is_live") {
       GetTranslation() = Viper::literal(IsLive);
     } else {
-      Queries::SqlTranslator::Visit(expression);
+      SqlTranslator::Visit(expression);
     }
   }
 }

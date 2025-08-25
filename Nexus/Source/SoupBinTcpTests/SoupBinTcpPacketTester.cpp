@@ -6,7 +6,6 @@
 using namespace Beam;
 using namespace Beam::IO;
 using namespace Nexus;
-using namespace Nexus::SoupBinTcp;
 
 TEST_SUITE("SoupBinTcpPacket") {
   TEST_CASE("append_alphanumeric_exact_length") {

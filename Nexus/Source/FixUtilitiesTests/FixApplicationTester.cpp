@@ -4,8 +4,6 @@
 #include "Nexus/FixUtilities/FixApplication.hpp"
 
 using namespace Nexus;
-using namespace Nexus::FixUtilities;
-using namespace Nexus::OrderExecutionService;
 
 namespace {
   struct TestFixApplication : FixApplication {
@@ -18,8 +16,7 @@ namespace {
       return nullptr;
     }
 
-    void cancel(
-      const OrderExecutionSession&, OrderExecutionService::OrderId) override {}
+    void cancel(const OrderExecutionSession&, OrderId) override {}
 
     void update(
       const OrderExecutionSession&, OrderId, const ExecutionReport&) override {}

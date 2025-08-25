@@ -14,9 +14,6 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::MarketDataService::Tests;
-using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Tests;
 
 namespace {
@@ -60,7 +57,7 @@ TEST_SUITE("BuyingPowerCheck") {
       ExchangeRate(CurrencyPair(CAD, USD), rational<int>(3, 4)));
     auto check = make_buying_power_check(
       exchange_rates, administration_client, market_data_client);
-    auto risk_parameters = RiskService::RiskParameters();
+    auto risk_parameters = RiskParameters();
     risk_parameters.m_currency = CAD;
     risk_parameters.m_buying_power = 1000 * Money::ONE;
     administration_client.store(fields.m_account, risk_parameters);

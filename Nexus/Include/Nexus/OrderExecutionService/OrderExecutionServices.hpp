@@ -6,14 +6,15 @@
 #include <boost/optional/optional.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
   using ExecutionReportQueryResult =
     Beam::Queries::QueryResult<SequencedExecutionReport>;
   using OrderSubmissionQueryResult =
     Beam::Queries::QueryResult<SequencedOrderRecord>;
 
   /** Standard name for the order execution service. */
-  inline const auto SERVICE_NAME = std::string("order_execution_service");
+  inline const auto ORDER_EXECUTION_SERVICE_NAME =
+    std::string("order_execution_service");
 
   BEAM_DEFINE_SERVICES(OrderExecutionServices,
 

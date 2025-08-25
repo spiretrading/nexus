@@ -9,7 +9,7 @@
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /* Lists the types market data available to subscribe to. */
   BEAM_ENUM(MarketDataType,

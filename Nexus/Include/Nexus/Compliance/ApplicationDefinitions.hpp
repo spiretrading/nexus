@@ -3,11 +3,12 @@
 #include <Beam/Services/ApplicationDefinitions.hpp>
 #include "Nexus/Compliance/ServiceComplianceClient.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Encapsulates a standard ComplianceClient used in an application. */
   using ApplicationComplianceClient = Beam::Services::ApplicationClient<
-    ServiceComplianceClient, Beam::Services::ServiceName<SERVICE_NAME>>;
+    ServiceComplianceClient,
+    Beam::Services::ServiceName<COMPLIANCE_SERVICE_NAME>>;
 }
 
 #endif

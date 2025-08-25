@@ -14,7 +14,7 @@ namespace Nexus {
    * up to a certain date time.
    * @param <D> The underlying data store to wrap.
    */
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   class CutoffHistoricalDataStore {
     public:
 
@@ -31,22 +31,22 @@ namespace Nexus {
         DF&& data_store, boost::posix_time::ptime cutoff);
       ~CutoffHistoricalDataStore();
       std::vector<SecurityInfo> load_security_info(
-        const MarketDataService::SecurityInfoQuery& query);
+        const SecurityInfoQuery& query);
       void store(const SecurityInfo& info);
       std::vector<SequencedOrderImbalance> load_order_imbalances(
-        const MarketDataService::VenueMarketDataQuery& query);
+        const VenueMarketDataQuery& query);
       void store(const SequencedVenueOrderImbalance& imbalance);
       void store(const std::vector<SequencedVenueOrderImbalance>& imbalances);
       std::vector<SequencedBboQuote> load_bbo_quotes(
-        const MarketDataService::SecurityMarketDataQuery& query);
+        const SecurityMarketDataQuery& query);
       void store(const SequencedSecurityBboQuote& quote);
       void store(const std::vector<SequencedSecurityBboQuote>& quotes);
       std::vector<SequencedBookQuote> load_book_quotes(
-        const MarketDataService::SecurityMarketDataQuery& query);
+        const SecurityMarketDataQuery& query);
       void store(const SequencedSecurityBookQuote& quote);
       void store(const std::vector<SequencedSecurityBookQuote>& quotes);
       std::vector<SequencedTimeAndSale> load_time_and_sales(
-        const MarketDataService::SecurityMarketDataQuery& query);
+        const SecurityMarketDataQuery& query);
       void store(const SequencedSecurityTimeAndSale& time_and_sale);
       void store(
         const std::vector<SequencedSecurityTimeAndSale>& time_and_sales);
@@ -74,113 +74,113 @@ namespace Nexus {
           cutoffs, F loader);
   };
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   template<Beam::Initializes<D> DF>
   CutoffHistoricalDataStore<D>::CutoffHistoricalDataStore(
     DF&& data_store, boost::posix_time::ptime cutoff)
     : m_data_store(std::forward<DF>(data_store)),
       m_cutoff(cutoff) {}
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   CutoffHistoricalDataStore<D>::~CutoffHistoricalDataStore() {
     close();
   }
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   std::vector<SecurityInfo> CutoffHistoricalDataStore<D>::load_security_info(
-      const MarketDataService::SecurityInfoQuery& query) {
+      const SecurityInfoQuery& query) {
     return m_data_store->load_security_info(query);
   }
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   void CutoffHistoricalDataStore<D>::store(const SecurityInfo& info) {
     m_data_store->store(info);
   }
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   std::vector<SequencedOrderImbalance>
       CutoffHistoricalDataStore<D>::load_order_imbalances(
-        const MarketDataService::VenueMarketDataQuery& query) {
+        const VenueMarketDataQuery& query) {
     return load(query, m_order_imbalance_cutoffs, [&] (const auto& query) {
       return m_data_store->load_order_imbalances(query);
     });
   }
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   void CutoffHistoricalDataStore<D>::store(
       const SequencedVenueOrderImbalance& imbalance) {
     m_data_store->store(imbalance);
   }
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   void CutoffHistoricalDataStore<D>::store(
       const std::vector<SequencedVenueOrderImbalance>& imbalances) {
     m_data_store->store(imbalances);
   }
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   std::vector<SequencedBboQuote> CutoffHistoricalDataStore<D>::load_bbo_quotes(
-      const MarketDataService::SecurityMarketDataQuery& query) {
+      const SecurityMarketDataQuery& query) {
     return load(query, m_bbo_cutoffs, [&] (const auto& query) {
       return m_data_store->load_bbo_quotes(query);
     });
   }
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   void CutoffHistoricalDataStore<D>::store(
       const SequencedSecurityBboQuote& quote) {
     m_data_store->store(quote);
   }
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   void CutoffHistoricalDataStore<D>::store(
       const std::vector<SequencedSecurityBboQuote>& quotes) {
     m_data_store->store(quotes);
   }
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   std::vector<SequencedBookQuote>
       CutoffHistoricalDataStore<D>::load_book_quotes(
-        const MarketDataService::SecurityMarketDataQuery& query) {
+        const SecurityMarketDataQuery& query) {
     return load(query, m_book_quote_cutoffs, [&] (const auto& query) {
       return m_data_store->load_book_quotes(query);
     });
   }
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   void CutoffHistoricalDataStore<D>::store(
       const SequencedSecurityBookQuote& quote) {
     m_data_store->store(quote);
   }
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   void CutoffHistoricalDataStore<D>::store(
       const std::vector<SequencedSecurityBookQuote>& quotes) {
     m_data_store->store(quotes);
   }
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   std::vector<SequencedTimeAndSale>
       CutoffHistoricalDataStore<D>::load_time_and_sales(
-        const MarketDataService::SecurityMarketDataQuery& query) {
+        const SecurityMarketDataQuery& query) {
     return load(query, m_time_and_sales_cutoffs, [&] (const auto& query) {
       return m_data_store->load_time_and_sales(query);
     });
   }
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   void CutoffHistoricalDataStore<D>::store(
       const SequencedSecurityTimeAndSale& time_and_sale) {
     m_data_store->store(time_and_sale);
   }
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   void CutoffHistoricalDataStore<D>::store(
       const std::vector<SequencedSecurityTimeAndSale>& time_and_sales) {
     m_data_store->store(time_and_sales);
   }
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   void CutoffHistoricalDataStore<D>::close() {
     if(m_open_state.SetClosing()) {
       return;
@@ -189,7 +189,7 @@ namespace Nexus {
     m_open_state.Close();
   }
 
-  template<MarketDataService::IsHistoricalDataStore D>
+  template<IsHistoricalDataStore D>
   template<typename Query, typename F>
   std::invoke_result_t<F, const Query&> CutoffHistoricalDataStore<D>::load(
       const Query& query, std::unordered_map<

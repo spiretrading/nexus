@@ -49,8 +49,7 @@ namespace Nexus {
        */
       template<typename SF, Beam::Initializes<D> DF, typename RF>
       AdministrationServlet(SF&& service_locator_client,
-        MarketDataService::EntitlementDatabase entitlements, DF&& data_store,
-        RF&& time_client);
+        EntitlementDatabase entitlements, DF&& data_store, RF&& time_client);
 
       void RegisterServices(
         Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots);
@@ -61,7 +60,7 @@ namespace Nexus {
 
     private:
       struct RiskStateEntry {
-        RiskService::RiskState m_risk_state;
+        RiskState m_risk_state;
         std::vector<ServiceProtocolClient*> m_subscribers;
       };
       using RiskStateEntries = std::unordered_map<
@@ -75,7 +74,7 @@ namespace Nexus {
       using SyncAccountToSubscribers =
         Beam::Threading::Sync<AccountToRiskSubscribers>;
       Beam::GetOptionalLocalPtr<S> m_service_locator_client;
-      MarketDataService::EntitlementDatabase m_entitlements;
+      EntitlementDatabase m_entitlements;
       Beam::GetOptionalLocalPtr<D> m_data_store;
       Beam::GetOptionalLocalPtr<R> m_time_client;
       Beam::ServiceLocator::DirectoryEntry m_administrators_root;
@@ -110,7 +109,7 @@ namespace Nexus {
         const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements);
       void update_risk_parameters(
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& parameters);
+        const RiskParameters& parameters);
       void ensure_modification_read_permission(
         const Beam::ServiceLocator::DirectoryEntry& account,
         AccountModificationRequest::Id id);
@@ -153,7 +152,7 @@ namespace Nexus {
         on_load_administrators_request(ServiceProtocolClient& client);
       std::vector<Beam::ServiceLocator::DirectoryEntry>
         on_load_services_request(ServiceProtocolClient& client);
-      MarketDataService::EntitlementDatabase on_load_entitlements_request(
+      EntitlementDatabase on_load_entitlements_request(
         ServiceProtocolClient& client);
       std::vector<Beam::ServiceLocator::DirectoryEntry>
         on_load_account_entitlements_request(ServiceProtocolClient& client,
@@ -162,19 +161,18 @@ namespace Nexus {
         const Beam::ServiceLocator::DirectoryEntry& account,
         const std::vector<Beam::ServiceLocator::DirectoryEntry>&
           entitlements);
-      RiskService::RiskParameters on_monitor_risk_parameters_request(
+      RiskParameters on_monitor_risk_parameters_request(
         ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account);
       void on_store_risk_parameters_request(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& parameters);
-      RiskService::RiskState on_monitor_risk_state_request(
-        ServiceProtocolClient& client,
+        const RiskParameters& parameters);
+      RiskState on_monitor_risk_state_request(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account);
       void on_store_risk_state_request(Beam::Services::RequestToken<
         ServiceProtocolClient, StoreRiskStateService>& request,
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& risk_state);
+        const RiskState& risk_state);
       std::vector<Beam::ServiceLocator::DirectoryEntry>
         on_load_managed_trading_groups_request(ServiceProtocolClient& client,
           const Beam::ServiceLocator::DirectoryEntry& account);
@@ -230,9 +228,8 @@ namespace Nexus {
   template<typename C, typename S, IsAdministrationDataStore D, typename R>
   template<typename SF, Beam::Initializes<D> DF, typename RF>
   AdministrationServlet<C, S, D, R>::AdministrationServlet(
-      SF&& service_locator_client,
-      MarketDataService::EntitlementDatabase entitlements, DF&& data_store,
-      RF&& time_client)
+      SF&& service_locator_client, EntitlementDatabase entitlements,
+      DF&& data_store, RF&& time_client)
       : m_service_locator_client(std::forward<SF>(service_locator_client)),
         m_entitlements(std::move(entitlements)),
         m_data_store(std::forward<DF>(data_store)),
@@ -578,7 +575,7 @@ namespace Nexus {
   template<typename C, typename S, IsAdministrationDataStore D, typename R>
   void AdministrationServlet<C, S, D, R>::update_risk_parameters(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& parameters) {
+      const RiskParameters& parameters) {
     auto& subscribers = Beam::Threading::With(m_risk_parameters_subscribers,
       [&] (auto& risk_parameters_subscribers) -> decltype(auto) {
         return risk_parameters_subscribers[account];
@@ -878,7 +875,7 @@ namespace Nexus {
   }
 
   template<typename C, typename S, IsAdministrationDataStore D, typename R>
-  MarketDataService::EntitlementDatabase AdministrationServlet<C, S, D, R>::
+  EntitlementDatabase AdministrationServlet<C, S, D, R>::
       on_load_entitlements_request(ServiceProtocolClient& client) {
     return m_entitlements;
   }
@@ -910,7 +907,7 @@ namespace Nexus {
   }
 
   template<typename C, typename S, IsAdministrationDataStore D, typename R>
-  RiskService::RiskParameters AdministrationServlet<C, S, D, R>::
+  RiskParameters AdministrationServlet<C, S, D, R>::
       on_monitor_risk_parameters_request(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account) {
     auto& session = client.GetSession();
@@ -938,7 +935,7 @@ namespace Nexus {
   void AdministrationServlet<C, S, D, R>::on_store_risk_parameters_request(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& parameters) {
+      const RiskParameters& parameters) {
     auto& session = client.GetSession();
     if(!check_administrator(session.GetAccount())) {
       throw Beam::Services::ServiceRequestException(
@@ -948,9 +945,9 @@ namespace Nexus {
   }
 
   template<typename C, typename S, IsAdministrationDataStore D, typename R>
-  RiskService::RiskState AdministrationServlet<C, S, D, R>::
-      on_monitor_risk_state_request(ServiceProtocolClient& client,
-        const Beam::ServiceLocator::DirectoryEntry& account) {
+  RiskState AdministrationServlet<C, S, D, R>::on_monitor_risk_state_request(
+      ServiceProtocolClient& client,
+      const Beam::ServiceLocator::DirectoryEntry& account) {
     auto& session = client.GetSession();
     if(!check_read_permission(session.GetAccount(), account)) {
       throw Beam::Services::ServiceRequestException(
@@ -978,7 +975,7 @@ namespace Nexus {
       Beam::Services::RequestToken<ServiceProtocolClient,
       StoreRiskStateService>& request,
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& risk_state) {
+      const RiskState& risk_state) {
     auto& session = request.GetSession();
     if(!check_administrator(session.GetAccount())) {
       throw Beam::Services::ServiceRequestException(

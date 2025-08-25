@@ -54,8 +54,8 @@ namespace Nexus {
    *         fee for the specified <i>report</i>.
    */
   inline CseFeeTable::Section lookup_cse_fee_table_section(
-      const OrderExecutionService::ExecutionReport& report) {
-    if(report.m_liquidity_flag.size() >= 3 &&
+      const ExecutionReport& report) {
+    if(report.m_liquidity_flag.size() >= 3 && 
         report.m_liquidity_flag[2] == 'D') {
       return CseFeeTable::Section::DARK;
     } else if(report.m_last_price < Money::ONE) {
@@ -70,7 +70,7 @@ namespace Nexus {
    * @return The liquidity flag assigned to the <i>report</i>.
    */
   inline LiquidityFlag lookup_cse_liquidity_flag(
-      const OrderExecutionService::ExecutionReport& report) {
+      const ExecutionReport& report) {
     if(report.m_liquidity_flag.size() >= 1) {
       if(report.m_liquidity_flag[0] == 'P') {
         return LiquidityFlag::PASSIVE;
@@ -108,8 +108,8 @@ namespace Nexus {
    * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */
-  inline Money calculate_fee(const CseFeeTable& table,
-      const OrderExecutionService::ExecutionReport& report) {
+  inline Money calculate_fee(
+      const CseFeeTable& table, const ExecutionReport& report) {
     if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }

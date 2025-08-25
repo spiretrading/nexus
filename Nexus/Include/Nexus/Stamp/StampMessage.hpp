@@ -11,7 +11,7 @@
 #include "Nexus/Stamp/StampMessage.hpp"
 #include "Nexus/Stamp/StampPacket.hpp"
 
-namespace Nexus::Stamp {
+namespace Nexus {
 namespace Details {
   inline const char* memstr(
       const char* source, std::size_t size, const char* pattern) {

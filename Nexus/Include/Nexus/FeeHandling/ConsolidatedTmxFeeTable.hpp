@@ -31,12 +31,10 @@ namespace Nexus {
     struct State {
 
       /** Stores the fees charged per Order. */
-      Beam::SynchronizedUnorderedMap<OrderExecutionService::OrderId, Money>
-        m_per_order_charges;
+      Beam::SynchronizedUnorderedMap<OrderId, Money> m_per_order_charges;
 
       /** The number of times an Order has been filled. */
-      Beam::SynchronizedUnorderedMap<OrderExecutionService::OrderId, int>
-        m_fill_count;
+      Beam::SynchronizedUnorderedMap<OrderId, int> m_fill_count;
     };
 
     /** The fee charged by the software. */
@@ -260,11 +258,9 @@ namespace Nexus {
    * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */
-  inline OrderExecutionService::ExecutionReport calculate_fee(
-      const ConsolidatedTmxFeeTable& table,
-      ConsolidatedTmxFeeTable::State& state,
-      const OrderExecutionService::Order& order,
-      const OrderExecutionService::ExecutionReport& report) {
+  inline ExecutionReport calculate_fee(const ConsolidatedTmxFeeTable& table,
+      ConsolidatedTmxFeeTable::State& state, const Order& order,
+      const ExecutionReport& report) {
     auto fees_report = report;
     fees_report.m_processing_fee +=
       fees_report.m_last_quantity * table.m_clearing_fee;

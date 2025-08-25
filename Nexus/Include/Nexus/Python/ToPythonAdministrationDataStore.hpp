@@ -46,16 +46,16 @@ namespace Nexus {
         const AccountIdentity& identity);
       std::vector<AdministrationDataStore::IndexedRiskParameters>
         load_all_risk_parameters();
-      RiskService::RiskParameters load_risk_parameters(
+      RiskParameters load_risk_parameters(
         const Beam::ServiceLocator::DirectoryEntry& account);
       void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& risk_parameters);
+        const RiskParameters& risk_parameters);
       std::vector<AdministrationDataStore::IndexedRiskState>
         load_all_risk_states();
-      RiskService::RiskState load_risk_state(
+      RiskState load_risk_state(
         const Beam::ServiceLocator::DirectoryEntry& account);
       void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& risk_state);
+        const RiskState& risk_state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest::Id>
@@ -154,9 +154,8 @@ namespace Nexus {
   }
 
   template<IsAdministrationDataStore D>
-  RiskService::RiskParameters
-      ToPythonAdministrationDataStore<D>::load_risk_parameters(
-        const Beam::ServiceLocator::DirectoryEntry& account) {
+  RiskParameters ToPythonAdministrationDataStore<D>::load_risk_parameters(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_risk_parameters(account);
   }
@@ -164,7 +163,7 @@ namespace Nexus {
   template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& risk_parameters) {
+      const RiskParameters& risk_parameters) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(account, risk_parameters);
   }
@@ -177,7 +176,7 @@ namespace Nexus {
   }
 
   template<IsAdministrationDataStore D>
-  RiskService::RiskState ToPythonAdministrationDataStore<D>::load_risk_state(
+  RiskState ToPythonAdministrationDataStore<D>::load_risk_state(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_risk_state(account);
@@ -186,7 +185,7 @@ namespace Nexus {
   template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& risk_state) {
+      const RiskState& risk_state) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(account, risk_state);
   }

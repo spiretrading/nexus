@@ -11,7 +11,7 @@
 #include <Beam/ServicesTests/ServiceResult.hpp>
 #include "Nexus/Compliance/ComplianceClient.hpp"
 
-namespace Nexus::Compliance::Tests {
+namespace Nexus::Tests {
 
   /**
    * Implements a ComplianceClient for testing by pushing all operations

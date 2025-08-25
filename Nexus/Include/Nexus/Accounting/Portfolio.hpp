@@ -127,8 +127,7 @@ namespace Nexus {
        * @return <code>true</code> iff the update resulted in a change to
        *         the portfolio.
        */
-      bool update(const OrderExecutionService::OrderFields& fields,
-        const OrderExecutionService::ExecutionReport& report);
+      bool update(const OrderFields& fields, const ExecutionReport& report);
 
       /**
        * Updates the ask value of a Security.
@@ -357,8 +356,8 @@ namespace Nexus {
   }
 
   template<IsBookkeeper B>
-  bool Portfolio<B>::update(const OrderExecutionService::OrderFields& fields,
-      const OrderExecutionService::ExecutionReport& report) {
+  bool Portfolio<B>::update(
+      const OrderFields& fields, const ExecutionReport& report) {
     if(report.m_last_quantity == 0) {
       return false;
     }

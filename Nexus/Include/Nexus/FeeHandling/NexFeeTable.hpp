@@ -30,8 +30,8 @@ namespace Nexus {
    * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */
-  inline Money calculate_fee(const NexFeeTable& table,
-      const OrderExecutionService::ExecutionReport& report) {
+  inline Money calculate_fee(
+      const NexFeeTable& table, const ExecutionReport& report) {
     if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }

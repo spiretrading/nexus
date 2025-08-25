@@ -40,19 +40,13 @@ namespace Nexus {
         Beam::RegistryService::RegistryClientBox>;
       using AdministrationClient =
         ToPythonAdministrationClient<AdministrationClient>;
-      using DefinitionsClient = DefinitionsService::ToPythonDefinitionsClient<
-        DefinitionsService::DefinitionsClient>;
-      using MarketDataClient = MarketDataService::ToPythonMarketDataClient<
-        MarketDataService::MarketDataClient>;
-      using ChartingClient = ChartingService::ToPythonChartingClient<
-        ChartingService::ChartingClient>;
-      using ComplianceClient = Compliance::ToPythonComplianceClient<
-        Compliance::ComplianceClient>;
+      using DefinitionsClient = ToPythonDefinitionsClient<DefinitionsClient>;
+      using MarketDataClient = ToPythonMarketDataClient<MarketDataClient>;
+      using ChartingClient = ToPythonChartingClient<ChartingClient>;
+      using ComplianceClient = ToPythonComplianceClient<ComplianceClient>;
       using OrderExecutionClient =
-        OrderExecutionService::ToPythonOrderExecutionClient<
-          OrderExecutionService::OrderExecutionClient>;
-      using RiskClient =
-        RiskService::ToPythonRiskClient<RiskService::RiskClient>;
+        ToPythonOrderExecutionClient<OrderExecutionClient>;
+      using RiskClient = ToPythonRiskClient<RiskClient>;
       using TimeClient =
         Beam::TimeService::ToPythonTimeClient<Beam::TimeService::TimeClientBox>;
       using Timer = Beam::Threading::ToPythonTimer<Beam::Threading::TimerBox>;

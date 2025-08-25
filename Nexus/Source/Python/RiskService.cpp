@@ -21,10 +21,7 @@ using namespace Beam::ServiceLocator;
 using namespace Beam::Threading;
 using namespace Beam::TimeService;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::RiskService;
-using namespace Nexus::RiskService::Tests;
+using namespace Nexus::Tests;
 using namespace pybind11;
 
 void Nexus::Python::export_inventory_snapshot(module& module) {
@@ -81,19 +78,18 @@ void Nexus::Python::export_risk_parameters(module& module) {
 }
 
 void Nexus::Python::export_risk_service(module& module) {
-  auto submodule = module.def_submodule("risk_service");
-  export_inventory_snapshot(submodule);
-  export_local_risk_data_store(submodule);
-  export_mysql_risk_data_store(submodule);
-  export_risk_client<ToPythonRiskClient<RiskClient>>(submodule, "RiskClient");
+  export_inventory_snapshot(module);
+  export_local_risk_data_store(module);
+  export_mysql_risk_data_store(module);
+  export_risk_client<ToPythonRiskClient<RiskClient>>(module, "RiskClient");
   export_risk_data_store<ToPythonRiskDataStore<RiskDataStore>>(
-    submodule, "RiskDataStore");
-  export_risk_parameters(submodule);
-  export_risk_state(submodule);
-  export_sqlite_risk_data_store(submodule);
+    module, "RiskDataStore");
+  export_risk_parameters(module);
+  export_risk_state(module);
+  export_sqlite_risk_data_store(module);
   ExportQueueSuite<KeyValuePair<RiskPortfolioKey, Inventory>>(
     module, "RiskPortfolioUpdateEntry");
-  auto tests_submodule = submodule.def_submodule("tests");
+  auto tests_submodule = module.def_submodule("tests");
   export_risk_service_test_environment(tests_submodule);
 }
 

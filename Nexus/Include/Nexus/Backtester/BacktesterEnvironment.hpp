@@ -65,15 +65,14 @@ namespace Nexus {
         get_registry_environment();
 
       /** Returns the DefinitionsServiceTestEnvironment. */
-      DefinitionsService::Tests::DefinitionsServiceTestEnvironment&
-        get_definitions_environment();
+      Tests::DefinitionsServiceTestEnvironment& get_definitions_environment();
 
       /** Returns the AdministrationServiceTestEnvironment. */
       Tests::AdministrationServiceTestEnvironment&
         get_administration_environment();
 
       /** Returns the MarketDataServiceTestEnvironment. */
-      MarketDataService::Tests::MarketDataServiceTestEnvironment&
+      Tests::MarketDataServiceTestEnvironment&
         get_market_data_environment();
 
       /** Returns the BacktesterMarketDataService. */
@@ -83,19 +82,17 @@ namespace Nexus {
       const BacktesterMarketDataService& get_market_data_service() const;
 
       /** Returns the ChartingServiceTestEnvironment. */
-      ChartingService::Tests::ChartingServiceTestEnvironment&
-        get_charting_environment();
+      Tests::ChartingServiceTestEnvironment& get_charting_environment();
 
       /** Returns the ComplianceTestEnvironment. */
-      Compliance::Tests::ComplianceTestEnvironment&
-        get_compliance_environment();
+      Tests::ComplianceTestEnvironment& get_compliance_environment();
 
       /** Returns the OrderExecutionServiceTestEnvironment. */
-      OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment&
+      Tests::OrderExecutionServiceTestEnvironment&
         get_order_execution_environment();
 
       /** Returns the RiskServiceTestEnvironment. */
-      RiskService::Tests::RiskServiceTestEnvironment& get_risk_environment();
+      Tests::RiskServiceTestEnvironment& get_risk_environment();
 
       void close();
 
@@ -110,24 +107,18 @@ namespace Nexus {
       Beam::UidService::UidClientBox m_uid_client;
       Beam::RegistryService::Tests::RegistryServiceTestEnvironment
         m_registry_environment;
-      DefinitionsService::Tests::DefinitionsServiceTestEnvironment
-        m_definitions_environment;
+      Tests::DefinitionsServiceTestEnvironment m_definitions_environment;
       Tests::AdministrationServiceTestEnvironment m_administration_environment;
       AdministrationClient m_administration_client;
-      MarketDataService::Tests::MarketDataServiceTestEnvironment
-        m_market_data_environment;
+      Tests::MarketDataServiceTestEnvironment m_market_data_environment;
       BacktesterMarketDataService m_market_data_service;
-      MarketDataService::MarketDataClient m_market_data_client;
-      ChartingService::Tests::ChartingServiceTestEnvironment
-        m_charting_environment;
-      Compliance::Tests::ComplianceTestEnvironment m_compliance_environment;
-      boost::optional<
-        OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment>
+      MarketDataClient m_market_data_client;
+      Tests::ChartingServiceTestEnvironment m_charting_environment;
+      Tests::ComplianceTestEnvironment m_compliance_environment;
+      boost::optional<Tests::OrderExecutionServiceTestEnvironment>
         m_order_execution_environment;
-      boost::optional<OrderExecutionService::OrderExecutionClient>
-        m_order_execution_client;
-      boost::optional<RiskService::Tests::RiskServiceTestEnvironment>
-        m_risk_environment;
+      boost::optional<OrderExecutionClient> m_order_execution_client;
+      boost::optional<Tests::RiskServiceTestEnvironment> m_risk_environment;
       Beam::IO::OpenState m_open_state;
 
       BacktesterEnvironment(const BacktesterEnvironment&) = delete;
@@ -155,10 +146,8 @@ namespace Nexus {
           m_administration_environment.make_client(m_service_locator_client)),
         m_market_data_environment(
           m_service_locator_client, m_administration_client,
-          MarketDataService::HistoricalDataStore(
-            std::in_place_type<CutoffHistoricalDataStore<
-              MarketDataService::ClientHistoricalDataStore<
-                MarketDataService::MarketDataClient>>>,
+          HistoricalDataStore(std::in_place_type<CutoffHistoricalDataStore<
+            ClientHistoricalDataStore<MarketDataClient>>>,
             m_clients.get_market_data_client(),
             m_event_handler.get_start_time())),
         m_market_data_service(Beam::Ref(m_event_handler),
@@ -178,12 +167,10 @@ namespace Nexus {
         definitions_client.load_venue_database(),
         definitions_client.load_destination_database(),
         m_service_locator_client, m_uid_client, m_administration_client,
-        m_time_client, OrderExecutionService::OrderExecutionDriver(
-          std::in_place_type<
-            OrderExecutionService::SimulationOrderExecutionDriver<
-              MarketDataService::MarketDataClient,
-              Beam::TimeService::TimeClientBox>>, m_market_data_client,
-          m_time_client));
+        m_time_client, OrderExecutionDriver(
+          std::in_place_type<SimulationOrderExecutionDriver<
+            MarketDataClient, Beam::TimeService::TimeClientBox>>,
+          m_market_data_client, m_time_client));
       m_order_execution_client.emplace(
         m_order_execution_environment->make_client(m_service_locator_client));
       auto transition_timer_factory = std::bind_front(
@@ -234,7 +221,7 @@ namespace Nexus {
     return m_registry_environment;
   }
 
-  inline DefinitionsService::Tests::DefinitionsServiceTestEnvironment&
+  inline Tests::DefinitionsServiceTestEnvironment&
       BacktesterEnvironment::get_definitions_environment() {
     return m_definitions_environment;
   }
@@ -244,7 +231,7 @@ namespace Nexus {
     return m_administration_environment;
   }
 
-  inline MarketDataService::Tests::MarketDataServiceTestEnvironment&
+  inline Tests::MarketDataServiceTestEnvironment&
       BacktesterEnvironment::get_market_data_environment() {
     return m_market_data_environment;
   }
@@ -259,22 +246,22 @@ namespace Nexus {
     return m_market_data_service;
   }
 
-  inline ChartingService::Tests::ChartingServiceTestEnvironment&
+  inline Tests::ChartingServiceTestEnvironment&
       BacktesterEnvironment::get_charting_environment() {
     return m_charting_environment;
   }
 
-  inline Compliance::Tests::ComplianceTestEnvironment&
+  inline Tests::ComplianceTestEnvironment&
       BacktesterEnvironment::get_compliance_environment() {
     return m_compliance_environment;
   }
 
-  inline OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment&
+  inline Tests::OrderExecutionServiceTestEnvironment&
       BacktesterEnvironment::get_order_execution_environment() {
     return *m_order_execution_environment;
   }
 
-  inline RiskService::Tests::RiskServiceTestEnvironment&
+  inline Tests::RiskServiceTestEnvironment&
       BacktesterEnvironment::get_risk_environment() {
     return *m_risk_environment;
   }

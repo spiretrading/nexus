@@ -12,7 +12,7 @@
 #include "Nexus/MoldUdp64/MoldUdp64Message.hpp"
 #include "Nexus/MoldUdp64/MoldUdp64Packet.hpp"
 
-namespace Nexus::MoldUdp64 {
+namespace Nexus {
 
   /**
    * Implements a client using the MoldUdp64 protocol.

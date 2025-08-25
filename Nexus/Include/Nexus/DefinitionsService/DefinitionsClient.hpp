@@ -13,7 +13,7 @@
 #include "Nexus/Definitions/TradingSchedule.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 
-namespace Nexus::DefinitionsService {
+namespace Nexus {
 
   /** Provides a generic interface over an arbitrary DefinitionsClient. */
   class DefinitionsClient {
@@ -59,8 +59,7 @@ namespace Nexus::DefinitionsService {
 
       std::vector<ExchangeRate> load_exchange_rates();
 
-      std::vector<Compliance::ComplianceRuleSchema>
-        load_compliance_rule_schemas();
+      std::vector<ComplianceRuleSchema> load_compliance_rule_schemas();
 
       TradingSchedule load_trading_schedule();
 
@@ -77,7 +76,7 @@ namespace Nexus::DefinitionsService {
         virtual DestinationDatabase load_destination_database() = 0;
         virtual VenueDatabase load_venue_database() = 0;
         virtual std::vector<ExchangeRate> load_exchange_rates() = 0;
-        virtual std::vector<Compliance::ComplianceRuleSchema>
+        virtual std::vector<ComplianceRuleSchema>
           load_compliance_rule_schemas() = 0;
         virtual TradingSchedule load_trading_schedule() = 0;
         virtual void close() = 0;
@@ -97,7 +96,7 @@ namespace Nexus::DefinitionsService {
         DestinationDatabase load_destination_database() override;
         VenueDatabase load_venue_database() override;
         std::vector<ExchangeRate> load_exchange_rates() override;
-        std::vector<Compliance::ComplianceRuleSchema>
+        std::vector<ComplianceRuleSchema>
           load_compliance_rule_schemas() override;
         TradingSchedule load_trading_schedule() override;
         void close() override;
@@ -163,7 +162,7 @@ namespace Nexus::DefinitionsService {
     return m_client->load_exchange_rates();
   }
 
-  inline std::vector<Compliance::ComplianceRuleSchema>
+  inline std::vector<ComplianceRuleSchema>
       DefinitionsClient::load_compliance_rule_schemas() {
     return m_client->load_compliance_rule_schemas();
   }
@@ -231,7 +230,7 @@ namespace Nexus::DefinitionsService {
   }
 
   template<typename C>
-  std::vector<Compliance::ComplianceRuleSchema>
+  std::vector<ComplianceRuleSchema>
       DefinitionsClient::WrappedDefinitionsClient<C>::
         load_compliance_rule_schemas() {
     return m_client->load_compliance_rule_schemas();

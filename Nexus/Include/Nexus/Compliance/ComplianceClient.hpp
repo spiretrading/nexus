@@ -9,7 +9,7 @@
 #include "Nexus/Compliance/ComplianceRuleEntry.hpp"
 #include "Nexus/Compliance/ComplianceRuleViolationRecord.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Provides a generic interface over an arbitrary ComplianceClient. */
   class ComplianceClient {

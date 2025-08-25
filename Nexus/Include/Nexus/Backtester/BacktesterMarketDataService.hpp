@@ -29,48 +29,43 @@ namespace Nexus {
        */
       BacktesterMarketDataService(
         Beam::Ref<BacktesterEventHandler> event_handler,
-        Beam::Ref<MarketDataService::Tests::MarketDataServiceTestEnvironment>
+        Beam::Ref<Tests::MarketDataServiceTestEnvironment>
           market_data_environment,
-        MarketDataService::MarketDataClient market_data_client) noexcept;
+        MarketDataClient market_data_client) noexcept;
 
       /**
        * Submits a query for OrderImbalances.
        * @param query The venue market data query to submit.
        */
-      void query_order_imbalances(
-        const MarketDataService::VenueMarketDataQuery& query);
+      void query_order_imbalances(const VenueMarketDataQuery& query);
 
       /**
        * Submits a query for BboQuotes.
        * @param query The security market data query to submit.
        */
-      void query_bbo_quotes(
-        const MarketDataService::SecurityMarketDataQuery& query);
+      void query_bbo_quotes(const SecurityMarketDataQuery& query);
 
       /**
        * Submits a query for BookQuotes.
        * @param query The security market data query to submit.
        */
-      void query_book_quotes(
-        const MarketDataService::SecurityMarketDataQuery& query);
+      void query_book_quotes(const SecurityMarketDataQuery& query);
 
       /**
        * Submits a query for TimeAndSales.
        * @param query The security market data query to submit.
        */
-      void query_time_and_sales(
-        const MarketDataService::SecurityMarketDataQuery& query);
+      void query_time_and_sales(const SecurityMarketDataQuery& query);
 
     private:
       template<typename, typename> friend class MarketDataEvent;
       template<typename> friend class MarketDataLoadEvent;
       template<typename> friend class MarketDataQueryEvent;
       BacktesterEventHandler* m_event_handler;
-      MarketDataService::Tests::MarketDataServiceTestEnvironment*
-        m_market_data_environment;
-      MarketDataService::MarketDataClient m_market_data_client;
-      std::unordered_set<std::tuple<boost::variant<Security, Venue>,
-        MarketDataService::MarketDataType>> m_queries;
+      Tests::MarketDataServiceTestEnvironment* m_market_data_environment;
+      MarketDataClient m_market_data_client;
+      std::unordered_set<
+        std::tuple<boost::variant<Security, Venue>, MarketDataType>> m_queries;
 
       BacktesterMarketDataService(const BacktesterMarketDataService&) = delete;
       BacktesterMarketDataService& operator =(
@@ -90,8 +85,8 @@ namespace Nexus {
       using MarketDataType = T;
 
       /** The query type for the market data. */
-      using QueryType = MarketDataService::market_data_query_type_t<
-        Beam::Queries::SequencedValue<MarketDataType>>;
+      using QueryType =
+        market_data_query_type_t<Beam::Queries::SequencedValue<MarketDataType>>;
 
       /**
        * Constructs a MarketDataQueryEvent.
@@ -120,8 +115,8 @@ namespace Nexus {
       using MarketDataType = T;
 
       /** The query type for the market data. */
-      using QueryType = MarketDataService::market_data_query_type_t<
-        Beam::Queries::SequencedValue<MarketDataType>>;
+      using QueryType =
+        market_data_query_type_t<Beam::Queries::SequencedValue<MarketDataType>>;
 
       /**
        * Constructs a MarketDataLoadEvent.
@@ -178,36 +173,35 @@ namespace Nexus {
 
   inline BacktesterMarketDataService::BacktesterMarketDataService(
     Beam::Ref<BacktesterEventHandler> event_handler,
-    Beam::Ref<MarketDataService::Tests::MarketDataServiceTestEnvironment>
-      market_data_environment,
-    MarketDataService::MarketDataClient market_data_client) noexcept
+    Beam::Ref<Tests::MarketDataServiceTestEnvironment> market_data_environment,
+    MarketDataClient market_data_client) noexcept
     : m_event_handler(event_handler.Get()),
       m_market_data_environment(market_data_environment.Get()),
       m_market_data_client(std::move(market_data_client)) {}
 
   inline void BacktesterMarketDataService::query_order_imbalances(
-      const MarketDataService::VenueMarketDataQuery& query) {
+      const VenueMarketDataQuery& query) {
     auto event = std::make_shared<MarketDataQueryEvent<OrderImbalance>>(
       query, Beam::Ref(*this));
     m_event_handler->add(event);
   }
 
   inline void BacktesterMarketDataService::query_bbo_quotes(
-      const MarketDataService::SecurityMarketDataQuery& query) {
+      const SecurityMarketDataQuery& query) {
     auto event = std::make_shared<MarketDataQueryEvent<BboQuote>>(
       query, Beam::Ref(*this));
     m_event_handler->add(event);
   }
 
   inline void BacktesterMarketDataService::query_book_quotes(
-      const MarketDataService::SecurityMarketDataQuery& query) {
+      const SecurityMarketDataQuery& query) {
     auto event = std::make_shared<MarketDataQueryEvent<BookQuote>>(
       query, Beam::Ref(*this));
     m_event_handler->add(event);
   }
 
   inline void BacktesterMarketDataService::query_time_and_sales(
-      const MarketDataService::SecurityMarketDataQuery& query) {
+      const SecurityMarketDataQuery& query) {
     auto event = std::make_shared<MarketDataQueryEvent<TimeAndSale>>(
       query, Beam::Ref(*this));
     m_event_handler->add(event);
@@ -222,7 +216,7 @@ namespace Nexus {
 
   template<typename T>
   void MarketDataQueryEvent<T>::execute() {
-    auto type = MarketDataService::get_market_data_type<MarketDataType>();
+    auto type = get_market_data_type<MarketDataType>();
     auto key = std::tuple(m_query.GetIndex(), type);
     if(m_query.GetRange().GetEnd() != Beam::Queries::Sequence::Last() ||
         !m_service->m_queries.insert(key).second) {

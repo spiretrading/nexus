@@ -6,7 +6,6 @@ using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 
 TEST_SUITE("OrderSubmissionRegistry") {
   TEST_CASE("account_name") {

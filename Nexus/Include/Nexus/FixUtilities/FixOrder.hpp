@@ -8,7 +8,7 @@
 #include "Nexus/FixUtilities/FixConversions.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
-namespace Nexus::FixUtilities {
+namespace Nexus {
 namespace Details {
   template<bool Enabled>
   struct AddAdditionalFix42Tag {
@@ -33,7 +33,7 @@ namespace Details {
    * Extends a PrimitiveOrder to store information useful when transmitting
    * Orders via the FIX protocol.
    */
-  class FixOrder : public OrderExecutionService::PrimitiveOrder {
+  class FixOrder : public PrimitiveOrder {
     public:
 
       /**
@@ -41,14 +41,14 @@ namespace Details {
        * @param info The OrderInfo represented.
        * @param side The FIX Side used to execute this Order.
        */
-      FixOrder(OrderExecutionService::OrderInfo info, FIX::Side side);
+      FixOrder(OrderInfo info, FIX::Side side);
 
       /**
        * Constructs a FixOrder.
        * @param record The OrderRecord represented.
        * @param side The FIX Side used to execute this Order.
        */
-      FixOrder(OrderExecutionService::OrderRecord record, FIX::Side side);
+      FixOrder(OrderRecord record, FIX::Side side);
 
       /** Returns the FIX Symbol used to execute this Order. */
       const FIX::Symbol& get_symbol() const;
@@ -90,17 +90,15 @@ namespace Details {
     }
   }
 
-  inline FixOrder::FixOrder(
-      OrderExecutionService::OrderInfo info, FIX::Side side)
-      : OrderExecutionService::PrimitiveOrder(std::move(info)),
+  inline FixOrder::FixOrder(OrderInfo info, FIX::Side side)
+      : PrimitiveOrder(std::move(info)),
         m_side(side),
         m_cancel_id(0) {
     m_symbol = get_info().m_fields.m_security.get_symbol();
   }
 
-  inline FixOrder::FixOrder(
-      OrderExecutionService::OrderRecord record, FIX::Side side)
-      : OrderExecutionService::PrimitiveOrder(std::move(record)),
+  inline FixOrder::FixOrder(OrderRecord record, FIX::Side side)
+      : PrimitiveOrder(std::move(record)),
         m_side(side),
         m_cancel_id(0) {
     m_symbol = get_info().m_fields.m_security.get_symbol();

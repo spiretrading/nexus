@@ -28,15 +28,15 @@ namespace Nexus {
       void store(const Beam::ServiceLocator::DirectoryEntry& account,
         const AccountIdentity& identity);
       std::vector<IndexedRiskParameters> load_all_risk_parameters();
-      RiskService::RiskParameters load_risk_parameters(
+      RiskParameters load_risk_parameters(
         const Beam::ServiceLocator::DirectoryEntry& account);
       void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& risk_parameters);
+        const RiskParameters& risk_parameters);
       std::vector<IndexedRiskState> load_all_risk_states();
-      RiskService::RiskState load_risk_state(
+      RiskState load_risk_state(
         const Beam::ServiceLocator::DirectoryEntry& account);
       void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& risk_state);
+        const RiskState& risk_state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest::Id>
@@ -72,10 +72,10 @@ namespace Nexus {
       mutable boost::mutex m_mutex;
       std::unordered_map<Beam::ServiceLocator::DirectoryEntry, AccountIdentity>
         m_account_identities;
-      std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
-        RiskService::RiskParameters> m_risk_parameters;
-      std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
-        RiskService::RiskState> m_risk_states;
+      std::unordered_map<Beam::ServiceLocator::DirectoryEntry, RiskParameters>
+        m_risk_parameters;
+      std::unordered_map<Beam::ServiceLocator::DirectoryEntry, RiskState>
+        m_risk_states;
       std::unordered_map<AccountModificationRequest::Id,
         AccountModificationRequest> m_account_modification_requests;
       std::unordered_map<AccountModificationRequest::Id,
@@ -131,19 +131,18 @@ namespace Nexus {
     return result;
   }
 
-  inline RiskService::RiskParameters
-      LocalAdministrationDataStore::load_risk_parameters(
-        const Beam::ServiceLocator::DirectoryEntry& account) {
+  inline RiskParameters LocalAdministrationDataStore::load_risk_parameters(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
     auto i = m_risk_parameters.find(account);
     if(i == m_risk_parameters.end()) {
-      return RiskService::RiskParameters();
+      return RiskParameters();
     }
     return i->second;
   }
 
   inline void LocalAdministrationDataStore::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& risk_parameters) {
+      const RiskParameters& risk_parameters) {
     m_risk_parameters[account] = risk_parameters;
   }
 
@@ -157,18 +156,18 @@ namespace Nexus {
     return result;
   }
 
-  inline RiskService::RiskState LocalAdministrationDataStore::load_risk_state(
+  inline RiskState LocalAdministrationDataStore::load_risk_state(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     auto i = m_risk_states.find(account);
     if(i == m_risk_states.end()) {
-      return RiskService::RiskState();
+      return RiskState();
     }
     return i->second;
   }
 
   inline void LocalAdministrationDataStore::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& risk_state) {
+      const RiskState& risk_state) {
     m_risk_states[account] = risk_state;
   }
 

@@ -2,7 +2,7 @@
 #define NEXUS_COMPLIANCE_RULE_DATA_STORE_EXCEPTION_HPP
 #include <Beam/IO/IOException.hpp>
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Exception to indicate an operation on a ComplianceRuleDataStore failed. */
   class ComplianceRuleDataStoreException : public Beam::IO::IOException {

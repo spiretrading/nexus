@@ -23,9 +23,7 @@ using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
 using namespace Nexus::Python;
-using namespace Nexus::RiskService;
 using namespace Nexus::Tests;
 using namespace pybind11;
 
@@ -87,7 +85,8 @@ void Nexus::Python::export_account_modification_request(module& module) {
     def(self != self).
     def("__str__",
       &boost::lexical_cast<std::string, AccountModificationRequest::Update>);
-  module.def("is_terminal", &is_terminal);
+  module.def("is_terminal",
+    static_cast<bool (*)(AccountModificationRequest::Status)>(&is_terminal));
 }
 
 void Nexus::Python::export_account_roles(module& module) {
@@ -105,33 +104,32 @@ void Nexus::Python::export_administration_data_store_exception(module& module) {
 }
 
 void Nexus::Python::export_administration_service(module& module) {
-  auto submodule = module.def_submodule("administration_service");
-  export_account_identity(submodule);
-  export_account_modification_request(submodule);
-  export_account_roles(submodule);
+  export_account_identity(module);
+  export_account_modification_request(module);
+  export_account_roles(module);
   export_administration_client<ToPythonAdministrationClient<
-    AdministrationClient>>(submodule, "AdministrationClient");
-  submodule.def("load_risk_parameters",
+    AdministrationClient>>(module, "AdministrationClient");
+  module.def("load_risk_parameters",
     [] (AdministrationClient& client, const DirectoryEntry& account) {
       return load_risk_parameters(client, account);
     }, call_guard<GilRelease>());
   export_administration_data_store<ToPythonAdministrationDataStore<
-    AdministrationDataStore>>(submodule, "AdministrationDataStore");
-  export_administration_data_store_exception(submodule);
-  export_cached_administration_data_store(submodule);
-  export_entitlement_modification(submodule);
-  export_indexed_account_identity(submodule);
-  export_indexed_risk_parameters(submodule);
-  export_indexed_risk_state(submodule);
-  export_local_administration_data_store(submodule);
-  export_message(submodule);
-  export_mysql_administration_data_store(submodule);
-  export_risk_modification(submodule);
-  export_sqlite_administration_data_store(submodule);
-  export_trading_group(submodule);
-  ExportQueueSuite<RiskState>(submodule, "RiskState");
-  ExportQueueSuite<RiskParameters>(submodule, "RiskParameters");
-  auto test_module = submodule.def_submodule("tests");
+    AdministrationDataStore>>(module, "AdministrationDataStore");
+  export_administration_data_store_exception(module);
+  export_cached_administration_data_store(module);
+  export_entitlement_modification(module);
+  export_indexed_account_identity(module);
+  export_indexed_risk_parameters(module);
+  export_indexed_risk_state(module);
+  export_local_administration_data_store(module);
+  export_message(module);
+  export_mysql_administration_data_store(module);
+  export_risk_modification(module);
+  export_sqlite_administration_data_store(module);
+  export_trading_group(module);
+  ExportQueueSuite<RiskState>(module, "RiskState");
+  ExportQueueSuite<RiskParameters>(module, "RiskParameters");
+  auto test_module = module.def_submodule("tests");
   export_administration_service_test_environment(test_module);
 }
 

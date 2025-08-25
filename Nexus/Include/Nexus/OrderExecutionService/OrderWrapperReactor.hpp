@@ -6,7 +6,7 @@
 #include <Beam/Reactors/QueueReactor.hpp>
 #include "Nexus/OrderExecutionService/Order.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Implements a reactor that evaluates to an existing Order object. */
   class OrderWrapperReactor {

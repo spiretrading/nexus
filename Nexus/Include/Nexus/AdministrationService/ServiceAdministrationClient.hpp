@@ -61,21 +61,20 @@ namespace Nexus {
           const Beam::ServiceLocator::DirectoryEntry& account);
       std::vector<Beam::ServiceLocator::DirectoryEntry> load_administrators();
       std::vector<Beam::ServiceLocator::DirectoryEntry> load_services();
-      MarketDataService::EntitlementDatabase load_entitlements();
+      EntitlementDatabase load_entitlements();
       std::vector<Beam::ServiceLocator::DirectoryEntry> load_entitlements(
         const Beam::ServiceLocator::DirectoryEntry& account);
       void store_entitlements(
         const Beam::ServiceLocator::DirectoryEntry& account,
         const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements);
-      const Beam::Publisher<RiskService::RiskParameters>&
-        get_risk_parameters_publisher(
-          const Beam::ServiceLocator::DirectoryEntry& account);
-      void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& parameters);
-      const Beam::Publisher<RiskService::RiskState>& get_risk_state_publisher(
+      const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
         const Beam::ServiceLocator::DirectoryEntry& account);
       void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& state);
+        const RiskParameters& parameters);
+      const Beam::Publisher<RiskState>& get_risk_state_publisher(
+        const Beam::ServiceLocator::DirectoryEntry& account);
+      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const RiskState& state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest::Id>
@@ -113,9 +112,8 @@ namespace Nexus {
     private:
       using ServiceProtocolClient =
         typename ServiceProtocolClientBuilder::Client;
-      using RiskParameterPublisher =
-        Beam::StatePublisher<RiskService::RiskParameters>;
-      using RiskStatePublisher = Beam::StatePublisher<RiskService::RiskState>;
+      using RiskParameterPublisher = Beam::StatePublisher<RiskParameters>;
+      using RiskStatePublisher = Beam::StatePublisher<RiskState>;
       Beam::Services::ServiceProtocolClientHandler<B> m_client_handler;
       Beam::IO::OpenState m_open_state;
       Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
@@ -132,10 +130,10 @@ namespace Nexus {
       void recover_risk_state(ServiceProtocolClient& client);
       void on_risk_parameters_message(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& risk_parameters);
+        const RiskParameters& risk_parameters);
       void on_risk_state_message(ServiceProtocolClient& client,
         const Beam::ServiceLocator::DirectoryEntry& account,
-        RiskService::RiskState risk_state);
+        RiskState risk_state);
   };
 
   template<typename B>
@@ -309,8 +307,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
-  MarketDataService::EntitlementDatabase
-      ServiceAdministrationClient<B>::load_entitlements() {
+  EntitlementDatabase ServiceAdministrationClient<B>::load_entitlements() {
     return Beam::Services::ServiceOrThrowWithNested([&] {
       auto client = m_client_handler.GetClient();
       return client->template SendRequest<LoadEntitlementsService>();
@@ -343,7 +340,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
-  const Beam::Publisher<RiskService::RiskParameters>&
+  const Beam::Publisher<RiskParameters>&
       ServiceAdministrationClient<B>::get_risk_parameters_publisher(
         const Beam::ServiceLocator::DirectoryEntry& account) {
     return *m_risk_parameter_publishers.GetOrInsert(account, [&] {
@@ -367,7 +364,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   template<typename B>
   void ServiceAdministrationClient<B>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& parameters) {
+      const RiskParameters& parameters) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
       auto client = m_client_handler.GetClient();
       client->template SendRequest<StoreRiskParametersService>(
@@ -378,7 +375,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
-  const Beam::Publisher<RiskService::RiskState>&
+  const Beam::Publisher<RiskState>&
       ServiceAdministrationClient<B>::get_risk_state_publisher(
         const Beam::ServiceLocator::DirectoryEntry& account) {
     return *m_risk_state_publishers.GetOrInsert(account, [&] {
@@ -402,7 +399,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   template<typename B>
   void ServiceAdministrationClient<B>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& state) {
+      const RiskState& state) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
       auto client = m_client_handler.GetClient();
       client->template SendRequest<StoreRiskStateService>(account, state);
@@ -650,7 +647,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   void ServiceAdministrationClient<B>::on_risk_parameters_message(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& risk_parameters) {
+      const RiskParameters& risk_parameters) {
     m_tasks.Push([=, this] {
       if(auto publisher = m_risk_parameter_publishers.FindValue(account)) {
         try {
@@ -666,7 +663,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   void ServiceAdministrationClient<B>::on_risk_state_message(
       ServiceProtocolClient& client,
       const Beam::ServiceLocator::DirectoryEntry& account,
-      RiskService::RiskState risk_state) {
+      RiskState risk_state) {
     m_tasks.Push([=, this] {
       if(auto publisher = m_risk_state_publishers.FindValue(account)) {
         try {

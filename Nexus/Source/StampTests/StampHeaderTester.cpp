@@ -2,7 +2,6 @@
 #include "Nexus/Stamp/StampHeader.hpp"
 
 using namespace Nexus;
-using namespace Nexus::Stamp;
 
 namespace {
   auto make_header_string(const std::string& length,

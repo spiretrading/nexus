@@ -13,7 +13,7 @@
 #include "Nexus/DefinitionsService/DefinitionsClient.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Returns a ComplianceRule from a ComplianceRuleSchema.
@@ -23,8 +23,8 @@ namespace Nexus::Compliance {
    * @param time_client The TimeClient needed by various rules.
    * @return The ComplianceRule represented by the <i>schema</i>.
    */
-  template<typename MarketDataClient, typename DefinitionsClient,
-    typename TimeClient>
+  template<IsMarketDataClient MarketDataClient,
+    IsDefinitionsClient DefinitionsClient, typename TimeClient>
   std::unique_ptr<ComplianceRule> make_compliance_rule(
       const ComplianceRuleSchema& schema, MarketDataClient& market_data_client,
       DefinitionsClient& definitions_client, TimeClient& time_client) {

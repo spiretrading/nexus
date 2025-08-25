@@ -16,7 +16,7 @@
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Provides a generic interface over an arbitrary MarketDataClient. */
   class MarketDataClient {

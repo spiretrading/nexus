@@ -3,9 +3,7 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Nexus;
-using namespace Nexus::Compliance;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::OrderExecutionService;
 
 TEST_SUITE("OrderCountLimitComplianceRule") {
   TEST_CASE("submit") {

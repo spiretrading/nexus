@@ -10,7 +10,7 @@
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Applies a ComplianceRule only during a specified time period relative the
@@ -44,12 +44,9 @@ namespace Nexus::Compliance {
         boost::local_time::tz_database time_zones, VenueDatabase venues,
         CF&& time_client, std::unique_ptr<ComplianceRule> rule);
 
-      void submit(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
-      void cancel(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
-      void add(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
+      void submit(const std::shared_ptr<const Order>& order) override;
+      void cancel(const std::shared_ptr<const Order>& order) override;
+      void add(const std::shared_ptr<const Order>& order) override;
 
     private:
       boost::posix_time::time_duration m_start;
@@ -86,7 +83,7 @@ namespace Nexus::Compliance {
 
   template<typename C>
   void TimeFilterComplianceRule<C>::submit(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     if(is_within_period(order->get_info().m_fields.m_security.get_venue())) {
       m_rule->submit(order);
     } else {
@@ -96,7 +93,7 @@ namespace Nexus::Compliance {
 
   template<typename C>
   void TimeFilterComplianceRule<C>::cancel(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     if(is_within_period(order->get_info().m_fields.m_security.get_venue())) {
       m_rule->cancel(order);
     }
@@ -104,7 +101,7 @@ namespace Nexus::Compliance {
 
   template<typename C>
   void TimeFilterComplianceRule<C>::add(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     m_rule->add(order);
   }
 

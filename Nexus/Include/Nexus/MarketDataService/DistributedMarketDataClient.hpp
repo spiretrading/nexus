@@ -6,7 +6,7 @@
 #include "Nexus/Definitions/RegionMap.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Implements a MarketDataClient whose servers are distributed among multiple

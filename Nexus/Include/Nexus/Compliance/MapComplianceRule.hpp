@@ -6,7 +6,7 @@
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Maps a key to an independent set of ComplianceRules.
@@ -28,8 +28,7 @@ namespace Nexus::Compliance {
         std::unique_ptr<ComplianceRule> (const ComplianceRuleSchema& schema)>;
 
       /** The type of function used to compute the key. */
-      using KeyBuilder =
-        std::function<Key (const OrderExecutionService::Order& order)>;
+      using KeyBuilder = std::function<Key (const Order& order)>;
 
       /**
        * Constructs a MapComplianceRule.
@@ -40,12 +39,9 @@ namespace Nexus::Compliance {
       MapComplianceRule(ComplianceRuleSchema schema,
         ComplianceRuleBuilder rule_builder, KeyBuilder key_builder);
 
-      void submit(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
-      void cancel(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
-      void add(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
+      void submit(const std::shared_ptr<const Order>& order) override;
+      void cancel(const std::shared_ptr<const Order>& order) override;
+      void add(const std::shared_ptr<const Order>& order) override;
 
     private:
       ComplianceRuleSchema m_schema;
@@ -58,8 +54,7 @@ namespace Nexus::Compliance {
   template<typename K>
   MapComplianceRule(ComplianceRuleSchema,
     std::function<std::unique_ptr<ComplianceRule>(const ComplianceRuleSchema&)>,
-    K) -> MapComplianceRule<
-      std::invoke_result_t<K, const OrderExecutionService::Order&>>;
+    K) -> MapComplianceRule<std::invoke_result_t<K, const Order&>>;
 
   /**
    * Returns a MapComplianceRule that applies per Security.
@@ -83,8 +78,7 @@ namespace Nexus::Compliance {
       m_key_builder(std::move(key_builder)) {}
 
   template<typename K>
-  void MapComplianceRule<K>::submit(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+  void MapComplianceRule<K>::submit(const std::shared_ptr<const Order>& order) {
     auto& rule = *m_rules.GetOrInsert(m_key_builder(*order), [&] {
       return m_rule_builder(m_schema);
     });
@@ -92,8 +86,7 @@ namespace Nexus::Compliance {
   }
 
   template<typename K>
-  void MapComplianceRule<K>::cancel(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+  void MapComplianceRule<K>::cancel(const std::shared_ptr<const Order>& order) {
     auto rule = m_rules.Find(m_key_builder(*order));
     if(!rule) {
       return;
@@ -102,8 +95,7 @@ namespace Nexus::Compliance {
   }
 
   template<typename K>
-  void MapComplianceRule<K>::add(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+  void MapComplianceRule<K>::add(const std::shared_ptr<const Order>& order) {
     auto& rule = *m_rules.GetOrInsert(m_key_builder(*order), [&] {
       return m_rule_builder(m_schema);
     });

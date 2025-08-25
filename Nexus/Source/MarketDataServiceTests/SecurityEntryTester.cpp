@@ -11,7 +11,6 @@ using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
 
 TEST_SUITE("SecurityEntry") {
   TEST_CASE("publish_bbo_quote") {

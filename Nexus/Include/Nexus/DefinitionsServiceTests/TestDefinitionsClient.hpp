@@ -9,7 +9,7 @@
 #include <boost/throw_exception.hpp>
 #include "Nexus/DefinitionsService/DefinitionsClient.hpp"
 
-namespace Nexus::DefinitionsService::Tests {
+namespace Nexus::Tests {
 
   /**
    * Implements a DefinitionsClient for testing by pushing all operations
@@ -80,8 +80,8 @@ namespace Nexus::DefinitionsService::Tests {
       struct LoadComplianceRuleSchemasOperation {
 
         /** Used to return a value to the caller. */
-        Beam::Services::Tests::ServiceResult<
-          std::vector<Compliance::ComplianceRuleSchema>> m_result;
+        Beam::Services::Tests::ServiceResult<std::vector<ComplianceRuleSchema>>
+          m_result;
       };
 
       /** Records a call to load_trading_schedule(). */
@@ -119,8 +119,7 @@ namespace Nexus::DefinitionsService::Tests {
       DestinationDatabase load_destination_database();
       VenueDatabase load_venue_database();
       std::vector<ExchangeRate> load_exchange_rates();
-      std::vector<Compliance::ComplianceRuleSchema>
-        load_compliance_rule_schemas();
+      std::vector<ComplianceRuleSchema> load_compliance_rule_schemas();
       TradingSchedule load_trading_schedule();
       void close();
 
@@ -183,10 +182,10 @@ namespace Nexus::DefinitionsService::Tests {
       LoadExchangeRatesOperation, std::vector<ExchangeRate>>();
   }
 
-  inline std::vector<Compliance::ComplianceRuleSchema>
+  inline std::vector<ComplianceRuleSchema>
       TestDefinitionsClient::load_compliance_rule_schemas() {
-    return append_result<LoadComplianceRuleSchemasOperation,
-      std::vector<Compliance::ComplianceRuleSchema>>();
+    return append_result<
+      LoadComplianceRuleSchemasOperation, std::vector<ComplianceRuleSchema>>();
   }
 
   inline TradingSchedule TestDefinitionsClient::load_trading_schedule() {

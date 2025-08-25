@@ -6,7 +6,7 @@
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Wraps a HistoricalDataStore decomposing it into a query DataStore.

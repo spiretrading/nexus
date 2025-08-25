@@ -10,7 +10,7 @@
 #include "Nexus/Compliance/ComplianceRuleEntry.hpp"
 #include "Nexus/Compliance/ComplianceRuleViolationRecord.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Row used to store ComplianceRuleEntries. */
   struct ComplianceRuleEntriesRow {

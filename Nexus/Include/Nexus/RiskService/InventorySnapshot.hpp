@@ -10,7 +10,7 @@
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /** Stores a snapshot of inventories. */
   struct InventorySnapshot {
@@ -22,7 +22,7 @@ namespace Nexus::RiskService {
     Beam::Queries::Sequence m_sequence;
 
     /** The list of Order ids excluded from this snapshot. */
-    std::vector<OrderExecutionService::OrderId> m_excluded_orders;
+    std::vector<OrderId> m_excluded_orders;
 
     bool operator ==(const InventorySnapshot&) const = default;
   };
@@ -53,21 +53,20 @@ namespace Nexus::RiskService {
    *         <i>account</i>, and the list of Orders excluded from the portfolio.
    */
   std::tuple<RiskPortfolio, Beam::Queries::Sequence,
-      std::vector<std::shared_ptr<const OrderExecutionService::Order>>>
-        make_portfolio(const InventorySnapshot& snapshot,
-          const Beam::ServiceLocator::DirectoryEntry& account,
-          VenueDatabase venues,
-          OrderExecutionService::IsOrderExecutionClient auto& client) {
-    auto excluded_orders = OrderExecutionService::load_orders(
-      account, snapshot.m_excluded_orders, client);
-    auto trailing_order_query = OrderExecutionService::AccountQuery();
+      std::vector<std::shared_ptr<const Order>>> make_portfolio(
+        const InventorySnapshot& snapshot,
+        const Beam::ServiceLocator::DirectoryEntry& account,
+        VenueDatabase venues, IsOrderExecutionClient auto& client) {
+    auto excluded_orders =
+      load_orders(account, snapshot.m_excluded_orders, client);
+    auto trailing_order_query = AccountQuery();
     trailing_order_query.SetIndex(account);
     trailing_order_query.SetRange(Beam::Queries::Increment(snapshot.m_sequence),
       Beam::Queries::Sequence::Present());
     trailing_order_query.SetSnapshotLimit(
       Beam::Queries::SnapshotLimit::Unlimited());
     auto trailing_orders_queue = std::make_shared<
-      Beam::Queue<Nexus::OrderExecutionService::SequencedOrder>>();
+      Beam::Queue<Nexus::SequencedOrder>>();
     client.query(trailing_order_query, trailing_orders_queue);
     auto sequence = snapshot.m_sequence;
     Beam::ForEach(trailing_orders_queue, [&] (const auto& order) {
@@ -82,10 +81,9 @@ namespace Nexus::RiskService {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::RiskService::InventorySnapshot> {
+  struct Shuttle<Nexus::InventorySnapshot> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::RiskService::InventorySnapshot& value,
+    void operator ()(Shuttler& shuttle, Nexus::InventorySnapshot& value,
         unsigned int version) const {
       shuttle.Shuttle("inventories", value.m_inventories);
       shuttle.Shuttle("sequence", value.m_sequence);

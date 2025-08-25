@@ -15,7 +15,7 @@
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Implements a MarketDataClient using Beam services.
@@ -64,7 +64,7 @@ namespace Nexus::MarketDataService {
       template<typename Value, typename Query, typename QueryService,
         typename EndQueryMessage>
       using QueryClientPublisher = Beam::Queries::QueryClientPublisher<
-        Value, Query, Queries::EvaluatorTranslator,
+        Value, Query, EvaluatorTranslator,
         Beam::Services::ServiceProtocolClientHandler<B>, QueryService,
         EndQueryMessage>;
       using ServiceProtocolClient =
@@ -99,8 +99,7 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
             m_book_quote_publisher(Beam::Ref(m_client_handler)),
             m_time_and_sale_publisher(Beam::Ref(m_client_handler)) {
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
-    Queries::RegisterQueryTypes(
-      Beam::Store(m_client_handler.GetSlots().GetRegistry()));
+    RegisterQueryTypes(Beam::Store(m_client_handler.GetSlots().GetRegistry()));
     RegisterMarketDataRegistryServices(
       Beam::Store(m_client_handler.GetSlots()));
     RegisterMarketDataRegistryMessages(

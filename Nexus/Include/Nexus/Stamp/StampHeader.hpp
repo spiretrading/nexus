@@ -7,7 +7,7 @@
 #include <boost/throw_exception.hpp>
 #include "Nexus/Stamp/StampParserException.hpp"
 
-namespace Nexus::Stamp {
+namespace Nexus {
 
   /** Lists the types of STAMP packet transmissions. */
   enum class RetransmissionIdentifier : std::uint8_t {

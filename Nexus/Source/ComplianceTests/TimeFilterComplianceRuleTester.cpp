@@ -13,11 +13,9 @@ using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::Compliance;
-using namespace Nexus::Compliance::Tests;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::OrderExecutionService;
+using namespace Nexus::Tests;
 
 namespace {
   void require_check(auto& rule, auto& time_client, auto& operations) {

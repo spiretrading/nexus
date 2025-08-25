@@ -6,7 +6,7 @@
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 
-namespace Nexus::RiskService {
+namespace Nexus {
 namespace Details {
   BEAM_ENUM(RiskStateTypeDefinition,
 
@@ -97,9 +97,9 @@ namespace Details {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::RiskService::RiskState> {
+  struct Shuttle<Nexus::RiskState> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::RiskService::RiskState& value,
+    void operator ()(Shuttler& shuttle, Nexus::RiskState& value,
         unsigned int version) const {
       shuttle.Shuttle("type", value.m_type);
       shuttle.Shuttle("expiry", value.m_expiry);

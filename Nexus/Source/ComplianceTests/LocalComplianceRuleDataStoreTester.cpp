@@ -3,8 +3,7 @@
 #include "Nexus/ComplianceTests/ComplianceRuleDataStoreTestSuite.hpp"
 
 using namespace Nexus;
-using namespace Nexus::Compliance;
-using namespace Nexus::Compliance::Tests;
+using namespace Nexus::Tests;
 
 namespace {
   struct Builder {

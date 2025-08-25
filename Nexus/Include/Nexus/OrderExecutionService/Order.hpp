@@ -4,7 +4,7 @@
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderInfo.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Interface for keeping track of the state of an Order. */
   class Order {

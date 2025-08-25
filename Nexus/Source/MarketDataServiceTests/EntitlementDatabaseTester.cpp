@@ -6,7 +6,6 @@ using namespace Beam;
 using namespace Beam::Serialization;
 using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
 
 TEST_SUITE("EntitlementDatabase") {
   TEST_CASE("none") {

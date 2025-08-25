@@ -12,7 +12,7 @@
 #include "Nexus/Compliance/ComplianceServices.hpp"
 #include "Nexus/Compliance/ComplianceRuleViolationRecord.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Client used to access the Compliance service.

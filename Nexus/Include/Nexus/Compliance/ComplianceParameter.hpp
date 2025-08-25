@@ -15,7 +15,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Defines the set of types that can be used as a compliance parameter. */
   using ComplianceValue = boost::make_recursive_variant<bool, Quantity, double,
@@ -43,9 +43,8 @@ namespace Nexus::Compliance {
 
 namespace boost {
   inline std::ostream& operator <<(
-      std::ostream& out, const Nexus::Compliance::ComplianceValue& value) {
-    if(auto v =
-        boost::get<std::vector<Nexus::Compliance::ComplianceValue>>(&value)) {
+      std::ostream& out, const Nexus::ComplianceValue& value) {
+    if(auto v = boost::get<std::vector<Nexus::ComplianceValue>>(&value)) {
       return out << Beam::Stream(*v);
     }
     boost::apply_visitor([&] (const auto& value) {
@@ -57,10 +56,9 @@ namespace boost {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::Compliance::ComplianceParameter> {
+  struct Shuttle<Nexus::ComplianceParameter> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::Compliance::ComplianceParameter& value,
+    void operator ()(Shuttler& shuttle, Nexus::ComplianceParameter& value,
         unsigned int version) const {
       shuttle.Shuttle("name", value.m_name);
       shuttle.Shuttle("value", value.m_value);

@@ -13,7 +13,7 @@
 #include "Nexus/OrderExecutionService/OrderSubmissionCheckException.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /**
    * Performs a check on an account's RiskState.
@@ -41,8 +41,7 @@ namespace Nexus::OrderExecutionService {
     private:
       struct AccountEntry {
         Beam::Threading::Sync<PositionOrderBook> m_position_order_book;
-        std::shared_ptr<Beam::StateQueue<RiskService::RiskState>>
-          m_risk_state_queue;
+        std::shared_ptr<Beam::StateQueue<RiskState>> m_risk_state_queue;
         Beam::MultiQueueWriter<ExecutionReport> m_execution_report_queue;
 
         AccountEntry();
@@ -66,8 +65,7 @@ namespace Nexus::OrderExecutionService {
 
   template<IsAdministrationClient C>
   RiskStateCheck<C>::AccountEntry::AccountEntry()
-    : m_risk_state_queue(
-        std::make_shared<Beam::StateQueue<RiskService::RiskState>>()) {}
+    : m_risk_state_queue(std::make_shared<Beam::StateQueue<RiskState>>()) {}
 
   template<IsAdministrationClient C>
   template<Beam::Initializes<C> CF>
@@ -83,7 +81,7 @@ namespace Nexus::OrderExecutionService {
           position_order_book.update(std::move(*report));
         }
         if(account_entry.m_risk_state_queue->Peek().m_type !=
-            RiskService::RiskState::Type::ACTIVE) {
+            RiskState::Type::ACTIVE) {
           if(position_order_book.test_opening_order_submission(info.m_fields)) {
             BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
               "Only closing orders are permitted."));

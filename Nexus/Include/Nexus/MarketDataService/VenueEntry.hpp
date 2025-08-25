@@ -5,7 +5,7 @@
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Keeps track of the market data for a specific venue. */
   class VenueEntry {

@@ -7,7 +7,7 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/TechnicalAnalysis/Candlestick.hpp"
 
-namespace Nexus::TechnicalAnalysis {
+namespace Nexus {
 
   /** Defines a Candlestick representing a price at a point in time. */
   using TimePriceCandlestick = Candlestick<boost::posix_time::ptime, Money>;

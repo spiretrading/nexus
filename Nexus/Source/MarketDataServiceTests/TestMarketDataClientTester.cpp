@@ -8,8 +8,7 @@ using namespace Beam;
 using namespace Beam::Routines;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::MarketDataService::Tests;
+using namespace Nexus::Tests;
 
 TEST_SUITE("TestMarketDataClient") {
   TEST_CASE("query") {

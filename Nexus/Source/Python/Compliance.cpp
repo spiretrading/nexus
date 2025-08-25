@@ -24,9 +24,8 @@ using namespace Beam::Python;
 using namespace Beam::ServiceLocator;
 using namespace Beam::TimeService;
 using namespace Nexus;
-using namespace Nexus::Compliance;
-using namespace Nexus::Compliance::Tests;
 using namespace Nexus::Python;
+using namespace Nexus::Tests;
 using namespace pybind11;
 
 void Nexus::Python::export_cached_compliance_rule_data_store(module& module) {
@@ -38,22 +37,21 @@ void Nexus::Python::export_cached_compliance_rule_data_store(module& module) {
 }
 
 void Nexus::Python::export_compliance(module& module) {
-  auto submodule = module.def_submodule("compliance");
-  export_cached_compliance_rule_data_store(submodule);
+  export_cached_compliance_rule_data_store(module);
   export_compliance_client<ToPythonComplianceClient<ComplianceClient>>(
-    submodule, "ComplianceClient");
-  export_compliance_parameter(submodule);
+    module, "ComplianceClient");
+  export_compliance_parameter(module);
   export_compliance_rule_data_store<
     ToPythonComplianceRuleDataStore<ComplianceRuleDataStore>>(
-      submodule, "ComplianceRuleDataStore");
-  export_compliance_rule_data_store_exception(submodule);
-  export_compliance_rule_entry(submodule);
-  export_compliance_rule_schema(submodule);
-  export_compliance_rule_violation_record(submodule);
-  export_local_compliance_rule_data_store(submodule);
-  export_mysql_compliance_rule_data_store(submodule);
-  export_sqlite_compliance_rule_data_store(submodule);
-  auto tests_submodule = submodule.def_submodule("tests");
+      module, "ComplianceRuleDataStore");
+  export_compliance_rule_data_store_exception(module);
+  export_compliance_rule_entry(module);
+  export_compliance_rule_schema(module);
+  export_compliance_rule_violation_record(module);
+  export_local_compliance_rule_data_store(module);
+  export_mysql_compliance_rule_data_store(module);
+  export_sqlite_compliance_rule_data_store(module);
+  auto tests_submodule = module.def_submodule("tests");
   export_compliance_test_environment(tests_submodule);
 }
 

@@ -3,7 +3,7 @@
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include "Nexus/RiskService/RiskDataStore.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /** Implements a RiskDataStore in memory. */
   class LocalRiskDataStore {

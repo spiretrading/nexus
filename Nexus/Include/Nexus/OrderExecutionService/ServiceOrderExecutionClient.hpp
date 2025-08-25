@@ -21,7 +21,7 @@
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /**
    * Implements an OrderExecutionClient using Beam services.
@@ -64,7 +64,7 @@ namespace Nexus::OrderExecutionService {
       template<typename Value, typename Query, typename QueryService,
         typename EndQueryMessage>
       using QueryClientPublisher = Beam::Queries::QueryClientPublisher<
-        Value, Query, Queries::EvaluatorTranslator,
+        Value, Query, EvaluatorTranslator,
         Beam::Services::ServiceProtocolClientHandler<B>, QueryService,
         EndQueryMessage>;
       using ServiceProtocolClient =
@@ -102,8 +102,7 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
               &ServiceOrderExecutionClient::on_reconnect, this)),
             m_order_submission_publisher(Beam::Ref(m_client_handler)),
             m_execution_report_publisher(Beam::Ref(m_client_handler)) {
-    Queries::RegisterQueryTypes(
-      Beam::Store(m_client_handler.GetSlots().GetRegistry()));
+    RegisterQueryTypes(Beam::Store(m_client_handler.GetSlots().GetRegistry()));
     RegisterOrderExecutionServices(Beam::Store(m_client_handler.GetSlots()));
     RegisterOrderExecutionMessages(Beam::Store(m_client_handler.GetSlots()));
     m_order_submission_publisher.
@@ -295,7 +294,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       auto id_expressions = std::vector<Beam::Queries::Expression>();
       for(auto& id : entry.second) {
         auto parameter_expression =
-          Beam::Queries::ParameterExpression(0, Queries::OrderInfoType());
+          Beam::Queries::ParameterExpression(0, OrderInfoType());
         auto member_expression = Beam::Queries::MemberAccessExpression(
           "order_id", Beam::Queries::IdType(), parameter_expression);
         auto id_expression = Beam::Queries::ConstantExpression(id);

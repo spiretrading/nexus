@@ -7,7 +7,7 @@
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Stores an in memory database of Order execution data. */
   class LocalOrderExecutionDataStore {
@@ -38,7 +38,7 @@ namespace Nexus::OrderExecutionService {
     private:
       template<typename T>
       using DataStore = Beam::Queries::LocalDataStore<
-        AccountQuery, T, Queries::EvaluatorTranslator>;
+        AccountQuery, T, EvaluatorTranslator>;
       Beam::SynchronizedUnorderedSet<OrderId> m_live_orders;
       DataStore<OrderInfo> m_order_submission_data_store;
       DataStore<ExecutionReport> m_execution_report_data_store;

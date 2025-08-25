@@ -10,7 +10,7 @@
 #include "Nexus/RiskService/RiskClient.hpp"
 #include "Nexus/RiskService/RiskServices.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /**
    * Implements a RiskClient using Beam services.

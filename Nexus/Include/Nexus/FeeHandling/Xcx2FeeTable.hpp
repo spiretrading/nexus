@@ -109,9 +109,8 @@ namespace Nexus {
    * @return The fee corresponding to the specified <i>type</i> and
    *         <i>price_class</i>.
    */
-  inline Money lookup_fee(const Xcx2FeeTable& table,
-      const OrderExecutionService::OrderFields& fields, Xcx2FeeTable::Type type,
-      Xcx2FeeTable::PriceClass price_class) {
+  inline Money lookup_fee(const Xcx2FeeTable& table, const OrderFields& fields,
+      Xcx2FeeTable::Type type, Xcx2FeeTable::PriceClass price_class) {
     if(fields.m_security.get_venue() == DefaultVenues::TSX) {
       return table.m_tsx_table[static_cast<int>(price_class)][
         static_cast<int>(type)];
@@ -129,8 +128,7 @@ namespace Nexus {
    * @return The fee calculated for the specified trade.
    */
   inline Money calculate_fee(const Xcx2FeeTable& table,
-      const OrderExecutionService::OrderFields& fields,
-      const OrderExecutionService::ExecutionReport& report) {
+      const OrderFields& fields, const ExecutionReport& report) {
     if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }

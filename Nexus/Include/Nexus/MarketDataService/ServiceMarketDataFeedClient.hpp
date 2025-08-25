@@ -17,7 +17,7 @@
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedServices.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Implements a MarketDataFeedClient using Beam services.
@@ -131,7 +131,7 @@ namespace Nexus::MarketDataService {
       find_market_data_feed_service(
         CountryCode country, ServiceLocatorClient& client) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto services = client.Locate(FEED_SERVICE_NAME);
+      auto services = client.Locate(MARKET_DATA_FEED_SERVICE_NAME);
       for(auto& entry : services) {
         auto& properties = entry.GetProperties();
         auto countries_property = properties.Get("countries");

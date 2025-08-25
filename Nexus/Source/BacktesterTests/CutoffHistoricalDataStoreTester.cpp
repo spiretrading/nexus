@@ -7,8 +7,7 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::MarketDataService::Tests;
+using namespace Nexus::Tests;
 
 namespace {
   struct Builder {

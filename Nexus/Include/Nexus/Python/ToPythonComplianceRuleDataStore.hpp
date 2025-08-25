@@ -9,7 +9,7 @@
 #include <pybind11/pybind11.h>
 #include "Nexus/Compliance/ComplianceRuleDataStore.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Wraps a ComplianceRuleDataStore for use with Python.

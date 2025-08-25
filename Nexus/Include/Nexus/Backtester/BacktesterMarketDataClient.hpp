@@ -17,29 +17,27 @@ namespace Nexus {
        *        queries to.
        */
       BacktesterMarketDataClient(Beam::Ref<BacktesterMarketDataService> service,
-        MarketDataService::MarketDataClient market_data_client);
+        MarketDataClient market_data_client);
 
       ~BacktesterMarketDataClient();
-      void query(const MarketDataService::VenueMarketDataQuery& query,
+      void query(const VenueMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedOrderImbalance> queue);
-      void query(const MarketDataService::VenueMarketDataQuery& query,
+      void query(const VenueMarketDataQuery& query,
         Beam::ScopedQueueWriter<OrderImbalance> queue);
-      void query(const MarketDataService::SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedBboQuote> queue);
-      void query(const MarketDataService::SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<BboQuote> queue);
-      void query(const MarketDataService::SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedBookQuote> queue);
-      void query(const MarketDataService::SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<BookQuote> queue);
-      void query(const MarketDataService::SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
-      void query(const MarketDataService::SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<TimeAndSale> queue);
-      std::vector<SecurityInfo> query(
-        const MarketDataService::SecurityInfoQuery& query);
-      MarketDataService::SecuritySnapshot load_snapshot(
-        const Security& security);
+      std::vector<SecurityInfo> query(const SecurityInfoQuery& query);
+      SecuritySnapshot load_snapshot(const Security& security);
       SecurityTechnicals load_technicals(const Security& security);
       std::vector<SecurityInfo> load_security_info_from_prefix(
         const std::string& prefix);
@@ -47,7 +45,7 @@ namespace Nexus {
 
     private:
       BacktesterMarketDataService* m_service;
-      MarketDataService::MarketDataClient m_market_data_client;
+      MarketDataClient m_market_data_client;
       Beam::IO::OpenState m_open_state;
 
       BacktesterMarketDataClient(const BacktesterMarketDataClient&) = delete;
@@ -57,7 +55,7 @@ namespace Nexus {
 
   inline BacktesterMarketDataClient::BacktesterMarketDataClient(
     Beam::Ref<BacktesterMarketDataService> service,
-    MarketDataService::MarketDataClient market_data_client)
+    MarketDataClient market_data_client)
     : m_service(service.Get()),
       m_market_data_client(std::move(market_data_client)) {}
 
@@ -66,68 +64,68 @@ namespace Nexus {
   }
 
   inline void BacktesterMarketDataClient::query(
-      const MarketDataService::VenueMarketDataQuery& query,
+      const VenueMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) {
     m_service->query_order_imbalances(query);
     m_market_data_client.query(query, std::move(queue));
   }
 
   inline void BacktesterMarketDataClient::query(
-      const MarketDataService::VenueMarketDataQuery& query,
+      const VenueMarketDataQuery& query,
       Beam::ScopedQueueWriter<OrderImbalance> queue) {
     m_service->query_order_imbalances(query);
     m_market_data_client.query(query, std::move(queue));
   }
 
   inline void BacktesterMarketDataClient::query(
-      const MarketDataService::SecurityMarketDataQuery& query,
+      const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
     m_service->query_bbo_quotes(query);
     m_market_data_client.query(query, std::move(queue));
   }
 
   inline void BacktesterMarketDataClient::query(
-      const MarketDataService::SecurityMarketDataQuery& query,
+      const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<BboQuote> queue) {
     m_service->query_bbo_quotes(query);
     m_market_data_client.query(query, std::move(queue));
   }
 
   inline void BacktesterMarketDataClient::query(
-      const MarketDataService::SecurityMarketDataQuery& query,
+      const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
     m_service->query_book_quotes(query);
     m_market_data_client.query(query, std::move(queue));
   }
 
   inline void BacktesterMarketDataClient::query(
-      const MarketDataService::SecurityMarketDataQuery& query,
+      const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<BookQuote> queue) {
     m_service->query_book_quotes(query);
     m_market_data_client.query(query, std::move(queue));
   }
 
   inline void BacktesterMarketDataClient::query(
-      const MarketDataService::SecurityMarketDataQuery& query,
+      const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
     m_service->query_time_and_sales(query);
     m_market_data_client.query(query, std::move(queue));
   }
 
   inline void BacktesterMarketDataClient::query(
-      const MarketDataService::SecurityMarketDataQuery& query,
+      const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<TimeAndSale> queue) {
     m_service->query_time_and_sales(query);
     m_market_data_client.query(query, std::move(queue));
   }
 
   inline std::vector<SecurityInfo> BacktesterMarketDataClient::query(
-      const MarketDataService::SecurityInfoQuery& query) {
+      const SecurityInfoQuery& query) {
     return m_market_data_client.query(query);
   }
 
-  inline MarketDataService::SecuritySnapshot
-      BacktesterMarketDataClient::load_snapshot(const Security& security) {
+  inline SecuritySnapshot BacktesterMarketDataClient::load_snapshot(
+      const Security& security) {
     return m_market_data_client.load_snapshot(security);
   }
 

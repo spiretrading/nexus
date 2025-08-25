@@ -10,7 +10,7 @@
 #include <boost/thread/mutex.hpp>
 #include "Nexus/Compliance/ComplianceRuleDataStore.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Implements a ComplianceRuleDataStore in memory. */
   class LocalComplianceRuleDataStore {

@@ -57,16 +57,15 @@ namespace Nexus {
 
   /** Returns a row representing RiskParameters. */
   inline const auto& get_risk_parameters_row() {
-    static auto ROW = Viper::Row<RiskService::RiskParameters>().
-      add_column("currency", &RiskService::RiskParameters::m_currency).
-      add_column("buying_power", &RiskService::RiskParameters::m_buying_power).
-      add_column("net_loss", &RiskService::RiskParameters::m_net_loss).
+    static auto ROW = Viper::Row<RiskParameters>().
+      add_column("currency", &RiskParameters::m_currency).
+      add_column("buying_power", &RiskParameters::m_buying_power).
+      add_column("net_loss", &RiskParameters::m_net_loss).
       add_column("allowed_state",
         [] (auto& row) -> auto& {
           return row.m_allowed_state.m_type;
         }).
-      add_column("transition_time",
-        &RiskService::RiskParameters::m_transition_time);
+      add_column("transition_time", &RiskParameters::m_transition_time);
     return ROW;
   }
 
@@ -92,9 +91,9 @@ namespace Nexus {
 
   /** Returns a row representing a RiskState. */
   inline const auto& get_risk_state_row() {
-    static auto ROW = Viper::Row<RiskService::RiskState>().
-      add_column("state", &RiskService::RiskState::m_type).
-      add_column("expiry", &RiskService::RiskState::m_expiry);
+    static auto ROW = Viper::Row<RiskState>().
+      add_column("state", &RiskState::m_type).
+      add_column("expiry", &RiskState::m_expiry);
     return ROW;
   }
 
@@ -206,7 +205,7 @@ namespace Nexus {
     Beam::ServiceLocator::DirectoryEntry m_account;
 
     /** The requested parameters. */
-    RiskService::RiskParameters m_parameters;
+    RiskParameters m_parameters;
   };
 
   /** Returns a row representing a RiskModification. */

@@ -11,17 +11,13 @@ using namespace boost;
 using namespace boost::local_time;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::ChartingService;
-using namespace Nexus::MarketDataService;
 using namespace Nexus::Python;
-using namespace Nexus::TechnicalAnalysis;
 using namespace pybind11;
 
 void Nexus::Python::export_technical_analysis(module& module) {
-  auto submodule = module.def_submodule("technical_analysis");
-  export_candlestick<Candlestick<object, object>>(submodule, "Candlestick");
-  export_candlestick<TimePriceCandlestick>(submodule, "TimePriceCandlestick");
-  export_standard_security_queries(submodule);
+  export_candlestick<Candlestick<object, object>>(module, "Candlestick");
+  export_candlestick<TimePriceCandlestick>(module, "TimePriceCandlestick");
+  export_standard_security_queries(module);
 }
 
 void Nexus::Python::export_standard_security_queries(module& module) {

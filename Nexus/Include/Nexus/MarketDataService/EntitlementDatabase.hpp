@@ -12,7 +12,7 @@
 #include "Nexus/MarketDataService/EntitlementSet.hpp"
 #include "Nexus/MarketDataService/MarketDataType.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Stores the database of all market data entitlements. */
   class EntitlementDatabase {
@@ -150,11 +150,10 @@ namespace Nexus::MarketDataService {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::MarketDataService::EntitlementDatabase::Entry> {
+  struct Shuttle<Nexus::EntitlementDatabase::Entry> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
-        Nexus::MarketDataService::EntitlementDatabase::Entry& value,
-        unsigned int version) const {
+        Nexus::EntitlementDatabase::Entry& value, unsigned int version) const {
       shuttle.Shuttle("name", value.m_name);
       shuttle.Shuttle("price", value.m_price);
       shuttle.Shuttle("currency", value.m_currency);
@@ -164,18 +163,17 @@ namespace Beam::Serialization {
   };
 
   template<>
-  struct Shuttle<Nexus::MarketDataService::EntitlementDatabase> {
+  struct Shuttle<Nexus::EntitlementDatabase> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::MarketDataService::EntitlementDatabase& value,
+    void operator ()(Shuttler& shuttle, Nexus::EntitlementDatabase& value,
         unsigned int version) const {
       if constexpr(IsSender<Shuttler>::value) {
         if(auto entries = value.m_entries.load()) {
           shuttle.Send("entries", *entries);
         }
       } else {
-        auto entries = std::make_shared<std::vector<
-          Nexus::MarketDataService::EntitlementDatabase::Entry>>();
+        auto entries =
+          std::make_shared<std::vector<Nexus::EntitlementDatabase::Entry>>();
         shuttle.Shuttle("entries", *entries);
         value.m_entries.store(std::move(entries));
       }

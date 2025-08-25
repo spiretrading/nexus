@@ -18,7 +18,7 @@
 #include "Nexus/Compliance/ServiceComplianceClient.hpp"
 #include "Nexus/Compliance/LocalComplianceRuleDataStore.hpp"
 
-namespace Nexus::Compliance::Tests {
+namespace Nexus::Tests {
 
   /**
    * Wraps most components needed to run an instance of Compliance with

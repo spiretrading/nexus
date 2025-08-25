@@ -3,7 +3,7 @@
 #include <Beam/Queries/StandardValues.hpp>
 #include "Nexus/Queries/StandardDataTypes.hpp"
 
-namespace Nexus::Queries {
+namespace Nexus {
   using QuantityValue = Beam::Queries::NativeValue<QuantityType>;
   using MoneyValue = Beam::Queries::NativeValue<MoneyType>;
   using SecurityValue = Beam::Queries::NativeValue<SecurityType>;

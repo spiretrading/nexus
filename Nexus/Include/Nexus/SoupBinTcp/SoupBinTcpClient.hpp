@@ -17,7 +17,7 @@
 #include "Nexus/SoupBinTcp/LoginPackets.hpp"
 #include "Nexus/SoupBinTcp/SoupBinTcpPacket.hpp"
 
-namespace Nexus::SoupBinTcp {
+namespace Nexus {
 
   /**
    * Implements a client using the SoupBinTCP protocol.

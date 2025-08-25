@@ -11,7 +11,7 @@
 #include "Nexus/RiskService/RiskParameters.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /**
    * Monitors a Portfolio against a set of RiskParameters.

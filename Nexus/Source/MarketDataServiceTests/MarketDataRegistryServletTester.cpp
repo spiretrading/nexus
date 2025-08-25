@@ -26,7 +26,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
 using namespace Nexus::Tests;
 
 namespace {
@@ -58,7 +57,7 @@ namespace {
       auto authenticator = SessionAuthenticator(service_locator_client);
       auto protocol_client = std::make_unique<TestServiceProtocolClient>(
         Initialize(name, *m_server_connection), Initialize());
-      Nexus::Queries::RegisterQueryTypes(
+      Nexus::RegisterQueryTypes(
         Beam::Store(protocol_client->GetSlots().GetRegistry()));
       RegisterMarketDataRegistryServices(Store(protocol_client->GetSlots()));
       RegisterMarketDataRegistryMessages(Store(protocol_client->GetSlots()));

@@ -18,7 +18,7 @@
 #include "Nexus/DefinitionsService/DefinitionsServlet.hpp"
 #include "Nexus/DefinitionsService/ServiceDefinitionsClient.hpp"
 
-namespace Nexus::DefinitionsService::Tests {
+namespace Nexus::Tests {
 
   /** Provides DefinitionsService related classes for testing purposes. */
   class DefinitionsServiceTestEnvironment {
@@ -79,9 +79,8 @@ namespace Nexus::DefinitionsService::Tests {
         Beam::Initialize("1", "Spire Trading Inc.",
           Nexus::Details::get_base_time_zone_table(), DEFAULT_COUNTRIES,
           DEFAULT_CURRENCIES, DEFAULT_DESTINATIONS, DEFAULT_VENUES,
-          std::vector<ExchangeRate>(),
-          std::vector<Compliance::ComplianceRuleSchema>(), TradingSchedule())),
-        &m_server_connection,
+          std::vector<ExchangeRate>(), std::vector<ComplianceRuleSchema>(),
+          TradingSchedule())), &m_server_connection,
         boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
 
   inline DefinitionsServiceTestEnvironment::

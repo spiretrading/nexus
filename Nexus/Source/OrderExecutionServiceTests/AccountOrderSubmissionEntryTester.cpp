@@ -8,7 +8,6 @@ using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 
 TEST_SUITE("account_order_submission_entry") {
   TEST_CASE("construct_with_first_sequences") {

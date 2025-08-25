@@ -5,7 +5,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Stores a market data snapshot of a Security. */
   struct SecuritySnapshot {
@@ -43,11 +43,10 @@ namespace Nexus::MarketDataService {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::MarketDataService::SecuritySnapshot> {
+  struct Shuttle<Nexus::SecuritySnapshot> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::MarketDataService::SecuritySnapshot& value,
-        unsigned int version) {
+    void operator ()(Shuttler& shuttle, Nexus::SecuritySnapshot& value,
+        unsigned int version) const {
       shuttle.Shuttle("security", value.m_security);
       shuttle.Shuttle("bbo_quote", value.m_bbo_quote);
       shuttle.Shuttle("time_and_sale", value.m_time_and_sale);

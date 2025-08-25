@@ -10,7 +10,7 @@
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
   BEAM_DEFINE_RECORD(SecurityValuationUpdate, Security, security,
     SecurityValuation, valuation);
   BEAM_DEFINE_RECORD(InventoryUpdate, Beam::ServiceLocator::DirectoryEntry,
@@ -19,7 +19,7 @@ namespace Nexus::RiskService {
     account, RiskState, risk_state);
 
   /** Standard name for the risk service. */
-  inline const auto SERVICE_NAME = std::string("risk_service");
+  inline const auto RISK_SERVICE_NAME = std::string("risk_service");
 
   BEAM_DEFINE_SERVICES(RiskServices,
 

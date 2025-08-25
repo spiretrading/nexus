@@ -10,7 +10,6 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Tests;
 
 namespace {

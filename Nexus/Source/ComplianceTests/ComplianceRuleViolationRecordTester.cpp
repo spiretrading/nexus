@@ -7,8 +7,6 @@
 using namespace Beam;
 using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::Compliance;
-using namespace Nexus::OrderExecutionService;
 using namespace boost::posix_time;
 
 TEST_SUITE("ComplianceRuleViolationRecord") {

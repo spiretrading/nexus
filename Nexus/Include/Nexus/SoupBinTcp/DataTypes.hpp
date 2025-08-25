@@ -5,7 +5,7 @@
 #include <Beam/Pointers/Out.hpp>
 #include <boost/lexical_cast.hpp>
 
-namespace Nexus::SoupBinTcp {
+namespace Nexus {
 
   /**
    * Parses a left-padded alpha-numeric field.

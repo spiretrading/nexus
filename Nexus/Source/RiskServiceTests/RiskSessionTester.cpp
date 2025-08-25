@@ -4,7 +4,7 @@
 using namespace Beam;
 using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::RiskService;
+using namespace Nexus;
 
 TEST_SUITE("risk_session") {
   TEST_CASE("constructor") {

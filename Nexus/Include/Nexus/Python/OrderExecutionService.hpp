@@ -61,33 +61,24 @@ namespace Nexus::Python {
       std::string_view name) {
     auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
       def("load_order", &C::load_order).
-      def("query_sequenced_order_records",
-        static_cast<void (C::*)(const OrderExecutionService::AccountQuery&,
-          Beam::ScopedQueueWriter<
-            OrderExecutionService::SequencedOrderRecord>)>(&C::query)).
-      def("query_order_records",
-        static_cast<void (C::*)(const OrderExecutionService::AccountQuery&,
-          Beam::ScopedQueueWriter<OrderExecutionService::OrderRecord>)>(
-            &C::query)).
-      def("query_sequenced_orders",
-        static_cast<void (C::*)(const OrderExecutionService::AccountQuery&,
-          Beam::ScopedQueueWriter<OrderExecutionService::SequencedOrder>)>(
-            &C::query)).
-      def("query_orders",
-        static_cast<void (C::*)(const OrderExecutionService::AccountQuery&,
-          Beam::ScopedQueueWriter<
-            std::shared_ptr<const OrderExecutionService::Order>>)>(&C::query)).
+      def("query_sequenced_order_records", static_cast<void (C::*)(
+        const AccountQuery&, Beam::ScopedQueueWriter<SequencedOrderRecord>)>(
+          &C::query)).
+      def("query_order_records", static_cast<void (C::*)(
+        const AccountQuery&, Beam::ScopedQueueWriter<OrderRecord>)>(&C::query)).
+      def("query_sequenced_orders", static_cast<void (C::*)(
+        const AccountQuery&, Beam::ScopedQueueWriter<SequencedOrder>)>(
+          &C::query)).
+      def("query_orders", static_cast<void (C::*)(const AccountQuery&,
+          Beam::ScopedQueueWriter<std::shared_ptr<const Order>>)>(&C::query)).
       def("query_sequenced_execution_reports",
-        static_cast<void (C::*)(const OrderExecutionService::AccountQuery&,
-          Beam::ScopedQueueWriter<
-            OrderExecutionService::SequencedExecutionReport>)>(&C::query)).
-      def("query_execution_reports",
-        static_cast<void (C::*)(const OrderExecutionService::AccountQuery&,
-          Beam::ScopedQueueWriter<OrderExecutionService::ExecutionReport>)>(
-            &C::query)).
+        static_cast<void (C::*)(const AccountQuery&,
+          Beam::ScopedQueueWriter<SequencedExecutionReport>)>(&C::query)).
+      def("query_execution_reports", static_cast<void (C::*)(
+        const AccountQuery&, Beam::ScopedQueueWriter<ExecutionReport>)>(
+          &C::query)).
       def("submit", &C::submit).
-      def("cancel", static_cast<
-        void (C::*)(const OrderExecutionService::Order&)>(&C::cancel)).
+      def("cancel", static_cast<void (C::*)(const Order&)>(&C::cancel)).
       def("update", &C::update).
       def("close", &C::close);
     return client;
@@ -107,25 +98,19 @@ namespace Nexus::Python {
         module, name.data()).
       def("load_order_record", &D::load_order_record).
       def("load_order_records", static_cast<
-        std::vector<OrderExecutionService::SequencedOrderRecord> (D::*)(
-          const OrderExecutionService::AccountQuery&)>(
-            &D::load_order_records)).
-      def("store", static_cast<
-        void (D::*)(const OrderExecutionService::SequencedAccountOrderInfo&)>(
-          &D::store)).
+        std::vector<SequencedOrderRecord> (D::*)(const AccountQuery&)>(
+          &D::load_order_records)).
+      def("store", static_cast<void (D::*)(const SequencedAccountOrderInfo&)>(
+        &D::store)).
       def("store", static_cast<void (D::*)(
-        const std::vector<OrderExecutionService::SequencedAccountOrderInfo>&)>(
-          &D::store)).
+        const std::vector<SequencedAccountOrderInfo>&)>(&D::store)).
       def("load_execution_reports", static_cast<
-        std::vector<OrderExecutionService::SequencedExecutionReport> (D::*)(
-          const OrderExecutionService::AccountQuery&)>(
-            &D::load_execution_reports)).
+        std::vector<SequencedExecutionReport> (D::*)(const AccountQuery&)>(
+          &D::load_execution_reports)).
       def("store", static_cast<void (D::*)(
-        const OrderExecutionService::SequencedAccountExecutionReport&)>(
-          &D::store)).
-      def("store", static_cast<void (D::*)(const std::vector<
-        OrderExecutionService::SequencedAccountExecutionReport>&)>(
-          &D::store)).
+        const SequencedAccountExecutionReport&)>(&D::store)).
+      def("store", static_cast<void (D::*)(
+        const std::vector<SequencedAccountExecutionReport>&)>(&D::store)).
       def("close", &D::close);
     return data_store;
   }

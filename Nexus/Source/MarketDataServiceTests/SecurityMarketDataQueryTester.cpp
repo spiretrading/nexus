@@ -5,7 +5,6 @@ using namespace Beam;
 using namespace Beam::Queries;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
 
 TEST_SUITE("SecurityMarketDataQuery") {
   TEST_CASE("make_security_info_query") {

@@ -11,7 +11,7 @@
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/Definitions/Tag.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Type of integer used for order ids. */
   using OrderId = std::uint64_t;
@@ -135,10 +135,9 @@ namespace Nexus::OrderExecutionService {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::OrderExecutionService::ExecutionReport> {
+  struct Shuttle<Nexus::ExecutionReport> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::OrderExecutionService::ExecutionReport& value,
+    void operator ()(Shuttler& shuttle, Nexus::ExecutionReport& value,
         unsigned int version) const {
       shuttle.Shuttle("id", value.m_id);
       shuttle.Shuttle("timestamp", value.m_timestamp);

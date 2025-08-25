@@ -14,12 +14,10 @@ using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::Compliance;
 using namespace Nexus::DefaultCountries;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultDestinations;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::DefinitionsService;
 
 namespace {
   using TestServletContainer = TestServiceProtocolServletContainer<

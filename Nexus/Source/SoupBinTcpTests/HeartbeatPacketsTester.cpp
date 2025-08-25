@@ -4,7 +4,6 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::SoupBinTcp;
 
 TEST_SUITE("HeartbeatPackets") {
   TEST_CASE("make_client_heartbeat_packet_contents") {

@@ -9,7 +9,7 @@
 #include <pybind11/pybind11.h>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Wraps a HistoricalDataStore for use with Python.

@@ -5,7 +5,6 @@
 #include "Nexus/MarketDataService/MarketDataType.hpp"
 
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
 
 TEST_SUITE("MarketDataType") {
   TEST_CASE("stream") {

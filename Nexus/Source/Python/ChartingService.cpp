@@ -10,18 +10,15 @@ using namespace Beam::Python;
 using namespace Beam::Queries;
 using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::ChartingService;
-using namespace Nexus::ChartingService::Tests;
-using namespace Nexus::MarketDataService;
 using namespace Nexus::Python;
+using namespace Nexus::Tests;
 using namespace pybind11;
 
 void Nexus::Python::export_charting_service(module& module) {
-  auto submodule = module.def_submodule("charting_service");
   export_charting_client<ToPythonChartingClient<ChartingClient>>(
-    submodule, "ChartingClient");
-  export_security_charting_query(submodule);
-  auto tests_submodule = submodule.def_submodule("tests");
+    module, "ChartingClient");
+  export_security_charting_query(module);
+  auto tests_submodule = module.def_submodule("tests");
   export_charting_service_test_environment(tests_submodule);
 }
 

@@ -15,8 +15,7 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCountries;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::MarketDataService::Tests;
+using namespace Nexus::Tests;
 
 namespace {
   template<typename T>

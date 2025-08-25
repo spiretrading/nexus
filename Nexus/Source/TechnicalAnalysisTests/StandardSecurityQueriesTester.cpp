@@ -13,10 +13,7 @@ using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::MarketDataService::Tests;
-using namespace Nexus::Queries;
-using namespace Nexus::TechnicalAnalysis;
+using namespace Nexus::Tests;
 
 TEST_SUITE("StandardSecurityQueries") {
   TEST_CASE("load_open") {

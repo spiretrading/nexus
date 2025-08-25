@@ -11,7 +11,7 @@
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Returns a row representing a venue. */
   inline const auto& get_venue_row() {

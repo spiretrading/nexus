@@ -4,7 +4,7 @@
 #include <doctest/doctest.h>
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 
-namespace Nexus::OrderExecutionService::Tests {
+namespace Nexus::Tests {
   inline void clear_time_in_force_timestamp(TimeInForce& time_in_force) {
     time_in_force = TimeInForce(time_in_force.get_type());
   }
@@ -19,7 +19,6 @@ namespace Nexus::OrderExecutionService::Tests {
     using namespace Nexus;
     using namespace Nexus::DefaultCurrencies;
     using namespace Nexus::DefaultVenues;
-    using namespace Nexus::OrderExecutionService;
 
     auto data_store = T()();
     auto account_a = DirectoryEntry::MakeAccount(123, "user_a");

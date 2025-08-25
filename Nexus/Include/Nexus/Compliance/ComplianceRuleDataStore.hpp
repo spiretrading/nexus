@@ -7,7 +7,7 @@
 #include "Nexus/Compliance/ComplianceRuleEntry.hpp"
 #include "Nexus/Compliance/ComplianceRuleViolationRecord.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Provides a data store for all compliance rules and violations. */
   class ComplianceRuleDataStore {

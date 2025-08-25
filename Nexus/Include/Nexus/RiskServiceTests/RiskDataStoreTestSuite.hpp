@@ -4,7 +4,7 @@
 #include <doctest/doctest.h>
 #include "Nexus/RiskService/RiskDataStore.hpp"
 
-namespace Nexus::RiskService::Tests {
+namespace Nexus::Tests {
   TEST_CASE_TEMPLATE_DEFINE("RiskDataStore", T, RiskDataStoreTestSuite) {
     using namespace Beam;
     using namespace Beam::Queries;
@@ -12,8 +12,6 @@ namespace Nexus::RiskService::Tests {
     using namespace Nexus;
     using namespace Nexus::DefaultCurrencies;
     using namespace Nexus::DefaultVenues;
-    using namespace Nexus::OrderExecutionService;
-    using namespace Nexus::RiskService;
     auto data_store = T()();
 
     SUBCASE("load_empty_inventories") {

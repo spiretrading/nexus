@@ -9,7 +9,7 @@
 #include <pybind11/pybind11.h>
 #include "Nexus/DefinitionsService/DefinitionsClient.hpp"
 
-namespace Nexus::DefinitionsService {
+namespace Nexus {
 
   /**
    * Wraps a DefinitionsClient for use with Python.
@@ -45,8 +45,7 @@ namespace Nexus::DefinitionsService {
       DestinationDatabase load_destination_database();
       VenueDatabase load_venue_database();
       std::vector<ExchangeRate> load_exchange_rates();
-      std::vector<Compliance::ComplianceRuleSchema>
-        load_compliance_rule_schemas();
+      std::vector<ComplianceRuleSchema> load_compliance_rule_schemas();
       TradingSchedule load_trading_schedule();
       void close();
 
@@ -136,7 +135,7 @@ namespace Nexus::DefinitionsService {
   }
 
   template<IsDefinitionsClient C>
-  std::vector<Compliance::ComplianceRuleSchema>
+  std::vector<ComplianceRuleSchema>
       ToPythonDefinitionsClient<C>::load_compliance_rule_schemas() {
     auto release = Beam::Python::GilRelease();
     return m_client->load_compliance_rule_schemas();

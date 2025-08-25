@@ -10,7 +10,7 @@
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Prevents opposing orders from being submitted after a cancellation.
@@ -40,26 +40,21 @@ namespace Nexus::Compliance {
         boost::posix_time::time_duration timeout, Money offset,
         CF&& time_client);
 
-      void submit(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
-      void add(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
+      void submit(const std::shared_ptr<const Order>& order) override;
+      void add(const std::shared_ptr<const Order>& order) override;
 
     private:
       boost::posix_time::time_duration m_timeout;
       Money m_offset;
       Beam::GetOptionalLocalPtr<C> m_time_client;
-      Beam::TaggedQueueReader<OrderExecutionService::OrderFields,
-        OrderExecutionService::ExecutionReport> m_reports;
+      Beam::TaggedQueueReader<OrderFields, ExecutionReport> m_reports;
       boost::posix_time::ptime m_last_ask_cancel_time;
       Money m_ask_price;
       boost::posix_time::ptime m_last_bid_cancel_time;
       Money m_bid_price;
 
-      Money get_submission_price(
-        const OrderExecutionService::OrderFields& fields) const;
-      bool test_price_in_range(
-        const OrderExecutionService::OrderFields& fields) const;
+      Money get_submission_price(const OrderFields& fields) const;
+      bool test_price_in_range(const OrderFields& fields) const;
   };
 
   template<typename TimeClient>
@@ -83,7 +78,7 @@ namespace Nexus::Compliance {
 
   template<typename C>
   void OpposingOrderSubmissionComplianceRule<C>::submit(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     if(order->get_info().m_fields.m_type != OrderType::LIMIT &&
         order->get_info().m_fields.m_type != OrderType::MARKET) {
       return;
@@ -129,7 +124,7 @@ namespace Nexus::Compliance {
 
   template<typename C>
   void OpposingOrderSubmissionComplianceRule<C>::add(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     if(order->get_info().m_fields.m_type != OrderType::LIMIT &&
         order->get_info().m_fields.m_type != OrderType::MARKET) {
       return;
@@ -140,7 +135,7 @@ namespace Nexus::Compliance {
 
   template<typename C>
   Money OpposingOrderSubmissionComplianceRule<C>::get_submission_price(
-      const OrderExecutionService::OrderFields& fields) const {
+      const OrderFields& fields) const {
     if(fields.m_type == OrderType::LIMIT) {
       return fields.m_price;
     } else if(fields.m_side == Side::ASK) {
@@ -152,7 +147,7 @@ namespace Nexus::Compliance {
 
   template<typename C>
   bool OpposingOrderSubmissionComplianceRule<C>::test_price_in_range(
-      const OrderExecutionService::OrderFields& fields) const {
+      const OrderFields& fields) const {
     auto price = get_submission_price(fields);
     if(fields.m_side == Side::ASK) {
       return price <= m_bid_price + m_offset;

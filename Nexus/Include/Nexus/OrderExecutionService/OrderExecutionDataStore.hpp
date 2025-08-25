@@ -7,7 +7,7 @@
 #include <boost/optional/optional.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Provides a generic interface over an arbitrary OrderExecutionDataStore. */
   class OrderExecutionDataStore {

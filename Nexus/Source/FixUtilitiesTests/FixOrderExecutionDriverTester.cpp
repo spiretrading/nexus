@@ -4,8 +4,6 @@
 #include "Nexus/FixUtilities/FixOrderExecutionDriver.hpp"
 
 using namespace Nexus;
-using namespace Nexus::FixUtilities;
-using namespace Nexus::OrderExecutionService;
 
 namespace {
   struct DummyFixApplication : FixApplication {

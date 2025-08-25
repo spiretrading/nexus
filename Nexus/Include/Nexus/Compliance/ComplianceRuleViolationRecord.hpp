@@ -8,7 +8,7 @@
 #include "Nexus/Compliance/ComplianceRuleEntry.hpp"
 #include "Nexus/OrderExecutionService/OrderRecord.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Stores a single compliance rule violation. */
   struct ComplianceRuleViolationRecord {
@@ -17,7 +17,7 @@ namespace Nexus::Compliance {
     Beam::ServiceLocator::DirectoryEntry m_account;
 
     /** The OrderId the violation is attributed to. */
-    OrderExecutionService::OrderId m_order_id = 0;
+    OrderId m_order_id = 0;
 
     /** The ComplianceRuleId that was violated. */
     ComplianceRuleEntry::Id m_rule_id = 0;
@@ -44,10 +44,10 @@ namespace Nexus::Compliance {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::Compliance::ComplianceRuleViolationRecord> {
+  struct Shuttle<Nexus::ComplianceRuleViolationRecord> {
     template<typename Shuttler>
     void operator ()(Shuttler& shuttle,
-        Nexus::Compliance::ComplianceRuleViolationRecord& value,
+        Nexus::ComplianceRuleViolationRecord& value,
         unsigned int version) const {
       shuttle.Shuttle("account", value.m_account);
       shuttle.Shuttle("order_id", value.m_order_id);

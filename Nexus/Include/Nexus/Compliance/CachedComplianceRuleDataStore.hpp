@@ -7,7 +7,7 @@
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Compliance/LocalComplianceRuleDataStore.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Caches a ComplianceRuleDataStore.

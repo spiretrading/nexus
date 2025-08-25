@@ -28,7 +28,7 @@
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /**
    * Implements the servlet handling order submissions and cancellations.
@@ -199,7 +199,7 @@ namespace Nexus::OrderExecutionService {
     IsOrderExecutionDataStore D>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
-    Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
+    RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
     RegisterOrderExecutionServices(Store(slots));
     RegisterOrderExecutionMessages(Store(slots));
     LoadOrderByIdService::AddRequestSlot(Store(slots), std::bind_front(
@@ -446,7 +446,7 @@ namespace Nexus::OrderExecutionService {
       request.SetResult(OrderSubmissionQueryResult());
       return;
     }
-    auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
+    auto filter = Beam::Queries::Translate<EvaluatorTranslator>(
       revised_query.GetFilter(), Beam::Ref(m_live_orders));
     auto submission_result = OrderSubmissionQueryResult();
     submission_result.m_queryId = m_submission_subscriptions.Initialize(
@@ -507,8 +507,8 @@ namespace Nexus::OrderExecutionService {
       request.SetResult(ExecutionReportQueryResult());
       return;
     }
-    auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
-      revised_query.GetFilter());
+    auto filter =
+      Beam::Queries::Translate<EvaluatorTranslator>(revised_query.GetFilter());
     auto result = ExecutionReportQueryResult();
     result.m_queryId = m_execution_report_subscriptions.Initialize(
       revised_query.GetIndex(), request.GetClient(), revised_query.GetRange(),

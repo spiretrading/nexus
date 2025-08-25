@@ -3,7 +3,7 @@
 #include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Applies a ComplianceRule only within a specified region. */
   class RegionFilterComplianceRule : public ComplianceRule {
@@ -17,12 +17,9 @@ namespace Nexus::Compliance {
       RegionFilterComplianceRule(
         Region region, std::unique_ptr<ComplianceRule> rule);
 
-      void submit(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
-      void cancel(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
-      void add(const std::shared_ptr<
-        const OrderExecutionService::Order>& order) override;
+      void submit(const std::shared_ptr<const Order>& order) override;
+      void cancel(const std::shared_ptr<const Order>& order) override;
+      void add(const std::shared_ptr<const Order>& order) override;
 
     private:
       Region m_region;
@@ -35,7 +32,7 @@ namespace Nexus::Compliance {
       m_rule(std::move(rule)) {}
 
   inline void RegionFilterComplianceRule::submit(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     if(m_region.contains(order->get_info().m_fields.m_security)) {
       m_rule->submit(order);
     } else {
@@ -44,14 +41,14 @@ namespace Nexus::Compliance {
   }
 
   inline void RegionFilterComplianceRule::cancel(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     if(m_region.contains(order->get_info().m_fields.m_security)) {
       m_rule->cancel(order);
     }
   }
 
   inline void RegionFilterComplianceRule::add(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     m_rule->add(order);
   }
 }

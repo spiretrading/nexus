@@ -25,7 +25,7 @@
 #include "Nexus/FixUtilities/FixOrder.hpp"
 #include "Nexus/FixUtilities/FixOrderRejectedException.hpp"
 
-namespace Nexus::FixUtilities {
+namespace Nexus {
 namespace Details {
   template<typename T>
   struct GetOut {};
@@ -71,8 +71,7 @@ namespace Details {
        * @return The Order id represented by the <i>message</i>.
        */
       template<typename E>
-      static boost::optional<OrderExecutionService::OrderId>
-        get_order_id(const E& message);
+      static boost::optional<OrderId> get_order_id(const E& message);
 
       /**
        * Returns information about a trade/fill from a FIX ExecutionReport
@@ -94,16 +93,15 @@ namespace Details {
        * @return The Order with the specified <i>id</i> or
        *         <code>null</code> if no such Order exists.
        */
-      std::shared_ptr<OrderExecutionService::PrimitiveOrder>
-        find(OrderExecutionService::OrderId id) const;
+      std::shared_ptr<PrimitiveOrder> find(OrderId id) const;
 
       /**
        * Recovers a previously unlogged Order.
        * @param record The OrderRecord to recover.
        * @return The recovered Order.
        */
-      std::shared_ptr<const OrderExecutionService::Order> recover(
-        const OrderExecutionService::SequencedAccountOrderRecord& record);
+      std::shared_ptr<const Order> recover(
+        const SequencedAccountOrderRecord& record);
 
       /**
        * Submits a NewOrderSingle message.
@@ -114,8 +112,7 @@ namespace Details {
        * @return The Order that was submitted.
        */
       template<typename F>
-      std::shared_ptr<const OrderExecutionService::Order> submit(
-        const OrderExecutionService::OrderInfo& info,
+      std::shared_ptr<const Order> submit(const OrderInfo& info,
         const FIX::SenderCompID& sender_comp_id,
         const FIX::TargetCompID target_comp_id, F&& f);
 
@@ -129,8 +126,8 @@ namespace Details {
        * @param f Receives the OrderCancelRequest message to be submitted.
        */
       template<typename F>
-      void cancel(const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId id, boost::posix_time::ptime timestamp,
+      void cancel(const OrderExecutionSession& session,
+        OrderId id, boost::posix_time::ptime timestamp,
         const FIX::SenderCompID& sender_comp_id,
         const FIX::TargetCompID target_comp_id, F&& f);
 
@@ -153,10 +150,8 @@ namespace Details {
        * @param report The ExecutionReport containing the update.
        * @param timestamp The current timestamp.
        */
-      void update(const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId id,
-        const OrderExecutionService::ExecutionReport& report,
-        boost::posix_time::ptime timestamp);
+      void update(const OrderExecutionSession& session, OrderId id,
+        const ExecutionReport& report, boost::posix_time::ptime timestamp);
 
     private:
       using FixExecutionReport =
@@ -164,31 +159,29 @@ namespace Details {
       struct RecoveredExecutionReport {
         FixExecutionReport m_message;
         std::function<void (
-          const std::shared_ptr<const OrderExecutionService::Order>&,
-          Beam::Out<OrderExecutionService::ExecutionReport>)> m_callback;
+          const std::shared_ptr<const Order>&, Beam::Out<ExecutionReport>)>
+            m_callback;
 
         template<typename F>
         RecoveredExecutionReport(FixExecutionReport message, F&& callback);
       };
-      Beam::Threading::Sync<std::unordered_map<OrderExecutionService::OrderId,
-        std::shared_ptr<OrderExecutionService::PrimitiveOrder>>> m_orders;
-      Beam::SynchronizedUnorderedMap<OrderExecutionService::OrderId,
+      Beam::Threading::Sync<
+        std::unordered_map<OrderId, std::shared_ptr<PrimitiveOrder>>> m_orders;
+      Beam::SynchronizedUnorderedMap<OrderId,
         Beam::SynchronizedVector<RecoveredExecutionReport>>
           m_recovered_reports;
 
       FixOrderLog(const FixOrderLog&) = delete;
       FixOrderLog& operator =(const FixOrderLog&) = delete;
-      std::shared_ptr<OrderExecutionService::PrimitiveOrder> add(
-        const OrderExecutionService::OrderInfo& info, FIX::Side side);
-      std::shared_ptr<OrderExecutionService::PrimitiveOrder> add(
-        const OrderExecutionService::OrderRecord& record, FIX::Side side);
-      std::shared_ptr<OrderExecutionService::PrimitiveOrder> reject(
-        const OrderExecutionService::OrderInfo& info,
-        const std::string& reason);
+      std::shared_ptr<PrimitiveOrder> add(
+        const OrderInfo& info, FIX::Side side);
+      std::shared_ptr<PrimitiveOrder> add(
+        const OrderRecord& record, FIX::Side side);
+      std::shared_ptr<PrimitiveOrder> reject(
+        const OrderInfo& info, const std::string& reason);
       template<typename E, typename F>
       void update(const E& message, boost::posix_time::ptime timestamp,
-        const std::shared_ptr<OrderExecutionService::PrimitiveOrder>& order,
-        F&& f);
+        const std::shared_ptr<PrimitiveOrder>& order, F&& f);
   };
 
   template<typename F>
@@ -198,18 +191,16 @@ namespace Details {
       m_callback(std::forward<F>(callback)) {}
 
   template<typename E>
-  boost::optional<OrderExecutionService::OrderId>
-      FixOrderLog::get_order_id(const E& message) {
+  boost::optional<OrderId> FixOrderLog::get_order_id(const E& message) {
     auto client_order_id = FIX::ClOrdID();
     message.get(client_order_id);
     auto base_client_order_id = client_order_id.getString();
     auto delimiter = base_client_order_id.find('-');
     try {
       if(delimiter == std::string::npos) {
-        return boost::lexical_cast<OrderExecutionService::OrderId>(
-          base_client_order_id);
+        return boost::lexical_cast<OrderId>(base_client_order_id);
       }
-      return boost::lexical_cast<OrderExecutionService::OrderId>(
+      return boost::lexical_cast<OrderId>(
         base_client_order_id.substr(0, delimiter));
     } catch(const boost::bad_lexical_cast&) {
       return boost::none;
@@ -259,23 +250,21 @@ namespace Details {
     }
   }
 
-  inline std::shared_ptr<OrderExecutionService::PrimitiveOrder>
-      FixOrderLog::find(OrderExecutionService::OrderId id) const {
+  inline std::shared_ptr<PrimitiveOrder> FixOrderLog::find(OrderId id) const {
     return Beam::Threading::With(m_orders, [&] (const auto& orders) {
       auto i = orders.find(id);
       if(i == orders.end()) {
-        return std::shared_ptr<OrderExecutionService::PrimitiveOrder>();
+        return std::shared_ptr<PrimitiveOrder>();
       }
       return i->second;
     });
   }
 
-  inline std::shared_ptr<const OrderExecutionService::Order>
-      FixOrderLog::recover(
-        const OrderExecutionService::SequencedAccountOrderRecord& record) {
+  inline std::shared_ptr<const Order> FixOrderLog::recover(
+      const SequencedAccountOrderRecord& record) {
     if((*record)->m_execution_reports.empty()) {
-      auto initial_report = OrderExecutionService::ExecutionReport(
-        (*record)->m_info.m_id, (*record)->m_info.m_timestamp);
+      auto initial_report =
+        ExecutionReport((*record)->m_info.m_id, (*record)->m_info.m_timestamp);
       auto proper_record = record;
       (*proper_record)->m_execution_reports.push_back(initial_report);
       return recover(proper_record);
@@ -283,7 +272,7 @@ namespace Details {
     auto side = get_side(
       (*record)->m_info.m_fields.m_side, (*record)->m_info.m_shorting_flag);
     if(!side) {
-      BOOST_THROW_EXCEPTION(OrderExecutionService::OrderUnrecoverableException(
+      BOOST_THROW_EXCEPTION(OrderUnrecoverableException(
         "FIX order record missing a side: " + boost::lexical_cast<std::string>(
           (*record)->m_info.m_id)));
     }
@@ -311,8 +300,7 @@ namespace Details {
   }
 
   template<typename F>
-  std::shared_ptr<const OrderExecutionService::Order> FixOrderLog::submit(
-      const OrderExecutionService::OrderInfo& info,
+  std::shared_ptr<const Order> FixOrderLog::submit(const OrderInfo& info,
       const FIX::SenderCompID& sender_comp_id,
       const FIX::TargetCompID target_comp_id, F&& f) {
     auto order_type = get_order_type(info.m_fields.m_type);
@@ -362,9 +350,8 @@ namespace Details {
   }
 
   template<typename F>
-  void FixOrderLog::cancel(
-      const OrderExecutionService::OrderExecutionSession& session,
-      OrderExecutionService::OrderId id, boost::posix_time::ptime timestamp,
+  void FixOrderLog::cancel(const OrderExecutionSession& session, OrderId id,
+      boost::posix_time::ptime timestamp,
       const FIX::SenderCompID& sender_comp_id,
       const FIX::TargetCompID target_comp_id, F&& f) {
     auto order = std::dynamic_pointer_cast<FixOrder>(find(id));
@@ -422,9 +409,8 @@ namespace Details {
     }
   }
 
-  inline std::shared_ptr<OrderExecutionService::PrimitiveOrder>
-      FixOrderLog::add(
-        const OrderExecutionService::OrderInfo& info, FIX::Side side) {
+  inline std::shared_ptr<PrimitiveOrder> FixOrderLog::add(
+      const OrderInfo& info, FIX::Side side) {
     auto order = std::make_shared<FixOrder>(info, side);
     Beam::Threading::With(m_orders, [&] (auto& orders) {
       orders.insert(std::pair(info.m_id, order));
@@ -432,9 +418,8 @@ namespace Details {
     return order;
   }
 
-  inline std::shared_ptr<OrderExecutionService::PrimitiveOrder>
-      FixOrderLog::add(
-        const OrderExecutionService::OrderRecord& record, FIX::Side side) {
+  inline std::shared_ptr<PrimitiveOrder> FixOrderLog::add(
+      const OrderRecord& record, FIX::Side side) {
     auto order = std::make_shared<FixOrder>(record, side);
     Beam::Threading::With(m_orders, [&] (auto& orders) {
       orders.insert(std::pair(record.m_info.m_id, order));
@@ -442,9 +427,8 @@ namespace Details {
     return order;
   }
 
-  inline std::shared_ptr<OrderExecutionService::PrimitiveOrder>
-      FixOrderLog::reject(const OrderExecutionService::OrderInfo& info,
-        const std::string& reason) {
+  inline std::shared_ptr<PrimitiveOrder> FixOrderLog::reject(
+      const OrderInfo& info, const std::string& reason) {
     auto order = make_rejected_order(info, reason);
     Beam::Threading::With(m_orders, [&] (auto& orders) {
       orders.insert(std::pair(info.m_id, order));
@@ -454,8 +438,7 @@ namespace Details {
 
   template<typename E, typename F>
   void FixOrderLog::update(const E& message, boost::posix_time::ptime timestamp,
-      const std::shared_ptr<OrderExecutionService::PrimitiveOrder>& order,
-      F&& f) {
+      const std::shared_ptr<PrimitiveOrder>& order, F&& f) {
     if constexpr(std::is_same_v<E, FIX42::ExecutionReport>) {
       auto exec_trans_type = FIX::ExecTransType();
       message.get(exec_trans_type);
@@ -507,10 +490,8 @@ namespace Details {
     });
   }
 
-  inline void FixOrderLog::update(
-      const OrderExecutionService::OrderExecutionSession& session,
-      OrderExecutionService::OrderId id,
-      const OrderExecutionService::ExecutionReport& report,
+  inline void FixOrderLog::update(const OrderExecutionSession& session,
+      OrderId id, const ExecutionReport& report,
       boost::posix_time::ptime timestamp) {
     auto order = std::dynamic_pointer_cast<FixOrder>(find(id));
     if(!order) {

@@ -77,8 +77,7 @@ namespace Nexus {
    * Returns the row to use in a PureFeeTable based on an execution report.
    * @param report The execution report to get the row for.
    */
-  inline PureFeeTable::Row lookup_pure_row(
-      const OrderExecutionService::ExecutionReport& report) {
+  inline PureFeeTable::Row lookup_pure_row(const ExecutionReport& report) {
     if(report.m_liquidity_flag.size() >= 3 &&
         report.m_liquidity_flag[2] == 'D') {
       if(report.m_last_price < Money::ONE) {
@@ -96,7 +95,7 @@ namespace Nexus {
    * @param report The execution report to get the liquidity flag for.
    */
   inline LiquidityFlag lookup_pure_liquidity_flag(
-      const OrderExecutionService::ExecutionReport& report) {
+      const ExecutionReport& report) {
     if(!report.m_liquidity_flag.empty()) {
       if(report.m_liquidity_flag[0] == 'P') {
         return LiquidityFlag::PASSIVE;
@@ -132,9 +131,8 @@ namespace Nexus {
    * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */
-  inline Money calculate_fee(
-      const PureFeeTable& table, PureFeeTable::Section section,
-      const OrderExecutionService::ExecutionReport& report) {
+  inline Money calculate_fee(const PureFeeTable& table,
+      PureFeeTable::Section section, const ExecutionReport& report) {
     if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }

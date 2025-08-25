@@ -7,7 +7,7 @@
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Provides a generic interface over an arbitrary OrderExecutionDriver. */
   class OrderExecutionDriver {

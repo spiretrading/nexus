@@ -20,7 +20,6 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Python;
 using namespace pybind11;
 

@@ -103,8 +103,7 @@ namespace Nexus {
    *         fee for the specified <i>report</i>.
    */
   inline Cse2FeeTable::Section lookup_cse2_fee_table_section(
-      const OrderExecutionService::OrderFields& fields,
-      const OrderExecutionService::ExecutionReport& report) {
+      const OrderFields& fields, const ExecutionReport& report) {
     if(report.m_liquidity_flag.size() >= 3 &&
         report.m_liquidity_flag[2] == 'D') {
       return Cse2FeeTable::Section::DARK;
@@ -125,7 +124,7 @@ namespace Nexus {
    * @return The price class for the given <i>report</i>.
    */
   inline Cse2FeeTable::PriceClass lookup_cse2_price_class(
-      const OrderExecutionService::ExecutionReport& report) {
+      const ExecutionReport& report) {
     if(report.m_last_price < Money::ONE) {
       return Cse2FeeTable::PriceClass::SUBDOLLAR;
     }
@@ -138,7 +137,7 @@ namespace Nexus {
    * @return The <i>report</i>'s liquidity flag.
    */
   inline LiquidityFlag lookup_cse2_liquidity_flag(
-      const OrderExecutionService::ExecutionReport& report) {
+      const ExecutionReport& report) {
     if(report.m_liquidity_flag.empty() || report.m_liquidity_flag[0] == 'P') {
       return LiquidityFlag::PASSIVE;
     }
@@ -151,7 +150,7 @@ namespace Nexus {
    * @return The <i>report</i>'s listing market.
    */
   inline Cse2FeeTable::ListingMarket lookup_cse2_listing_market(
-      const OrderExecutionService::ExecutionReport& report) {
+      const ExecutionReport& report) {
     if(report.m_liquidity_flag.size() <= 1 ||
         report.m_liquidity_flag[1] == 'T' ||
         report.m_liquidity_flag[1] == 'V' ||
@@ -180,8 +179,8 @@ namespace Nexus {
    * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */
-  inline Money calculate_regular_fee(const Cse2FeeTable& table,
-      const OrderExecutionService::ExecutionReport& report) {
+  inline Money calculate_regular_fee(
+      const Cse2FeeTable& table, const ExecutionReport& report) {
     auto price_class = lookup_cse2_price_class(report);
     auto flag = lookup_cse2_liquidity_flag(report);
     auto fee = lookup_regular_fee(table, flag, price_class);
@@ -207,8 +206,8 @@ namespace Nexus {
    * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */
-  inline Money calculate_dark_fee(const Cse2FeeTable& table,
-      const OrderExecutionService::ExecutionReport& report) {
+  inline Money calculate_dark_fee(
+      const Cse2FeeTable& table, const ExecutionReport& report) {
     auto price_class = lookup_cse2_price_class(report);
     auto flag = lookup_cse2_liquidity_flag(report);
     auto fee = lookup_dark_fee(table, flag, price_class);
@@ -234,8 +233,8 @@ namespace Nexus {
    * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */
-  inline Money calculate_debentures_or_notes_fee(const Cse2FeeTable& table,
-      const OrderExecutionService::ExecutionReport& report) {
+  inline Money calculate_debentures_or_notes_fee(
+      const Cse2FeeTable& table, const ExecutionReport& report) {
     auto flag = lookup_cse2_liquidity_flag(report);
     auto market = lookup_cse2_listing_market(report);
     auto fee = lookup_debentures_or_notes_fee(table, flag, market);
@@ -260,8 +259,7 @@ namespace Nexus {
    * @return The fee calculated for the specified trade.
    */
   inline Money calculate_cse_listed_government_bonds_fee(
-      const Cse2FeeTable& table,
-      const OrderExecutionService::ExecutionReport& report) {
+      const Cse2FeeTable& table, const ExecutionReport& report) {
     auto flag = lookup_cse2_liquidity_flag(report);
     auto fee = lookup_cse_listed_government_bonds_fee(table, flag);
     return report.m_last_quantity * fee;
@@ -286,8 +284,8 @@ namespace Nexus {
    * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */
-  inline Money calculate_oddlot_fee(const Cse2FeeTable& table,
-      const OrderExecutionService::ExecutionReport& report) {
+  inline Money calculate_oddlot_fee(
+      const Cse2FeeTable& table, const ExecutionReport& report) {
     auto flag = lookup_cse2_liquidity_flag(report);
     auto price_class = lookup_cse2_price_class(report);
     auto fee = lookup_oddlot_fee(table, flag, price_class);
@@ -302,8 +300,7 @@ namespace Nexus {
    * @return The fee calculated for the specified trade.
    */
   inline Money calculate_fee(const Cse2FeeTable& table,
-      const OrderExecutionService::OrderFields& fields,
-      const OrderExecutionService::ExecutionReport& report) {
+      const OrderFields& fields, const ExecutionReport& report) {
     if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }

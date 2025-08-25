@@ -15,7 +15,7 @@
 #include "Nexus/Compliance/ComplianceServices.hpp"
 #include "Nexus/Compliance/ComplianceSession.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Updates compliance rules and monitors violations.

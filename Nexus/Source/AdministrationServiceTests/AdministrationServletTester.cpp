@@ -23,8 +23,6 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::RiskService;
 
 namespace {
   struct Fixture {
@@ -450,9 +448,9 @@ TEST_SUITE("AdministrationServlet") {
       entitlements.push_back(entry.m_group_entry);
     }
     auto modification = EntitlementModification(entitlements);
-    auto comment = Message(
+    auto comment = Nexus::Message(
       0, fixture.m_trader_account, fixture.m_time_client.GetTime(),
-      {Message::Body::make_plain_text("Test comment")});
+      {Nexus::Message::Body::make_plain_text("Test comment")});
     SUBCASE("admin") {
       auto request = fixture.m_admin_client->SendRequest<
         SubmitEntitlementModificationRequestService>(
@@ -491,9 +489,9 @@ TEST_SUITE("AdministrationServlet") {
       REQUIRE(
         initial_status.m_status == AccountModificationRequest::Status::PENDING);
       REQUIRE(initial_status.m_account == fixture.m_trader_account);
-      auto review_comment =
-        Message(0, fixture.m_manager_account, fixture.m_time_client.GetTime(),
-          {Message::Body::make_plain_text("Reviewed by manager")});
+      auto review_comment = Nexus::Message(
+        0, fixture.m_manager_account, fixture.m_time_client.GetTime(),
+          {Nexus::Message::Body::make_plain_text("Reviewed by manager")});
       auto review_update = fixture.m_manager_client->SendRequest<
         ApproveAccountModificationRequestService>(
           request.get_id(), review_comment);
@@ -503,9 +501,9 @@ TEST_SUITE("AdministrationServlet") {
         LoadAccountEntitlementsService>(fixture.m_trader_account);
       REQUIRE(review_entitlements.empty());
       SUBCASE("approve") {
-        auto comment =
-          Message(0, fixture.m_admin_account, fixture.m_time_client.GetTime(),
-            {Message::Body::make_plain_text("Approved by admin")});
+        auto comment = Nexus::Message(
+          0, fixture.m_admin_account, fixture.m_time_client.GetTime(),
+            {Nexus::Message::Body::make_plain_text("Approved by admin")});
         auto update = fixture.m_admin_client->SendRequest<
           ApproveAccountModificationRequestService>(request.get_id(), comment);
         REQUIRE(
@@ -526,9 +524,9 @@ TEST_SUITE("AdministrationServlet") {
         }
       }
       SUBCASE("reject") {
-        auto comment =
-          Message(0, fixture.m_admin_account, fixture.m_time_client.GetTime(),
-            {Message::Body::make_plain_text("Rejected by admin")});
+        auto comment = Nexus::Message(
+          0, fixture.m_admin_account, fixture.m_time_client.GetTime(),
+            {Nexus::Message::Body::make_plain_text("Rejected by admin")});
         auto update = fixture.m_admin_client->SendRequest<
           RejectAccountModificationRequestService>(request.get_id(), comment);
         REQUIRE(
@@ -551,9 +549,9 @@ TEST_SUITE("AdministrationServlet") {
     auto parameters = RiskParameters(
       USD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, seconds(1));
     auto modification = RiskModification(parameters);
-    auto comment =
-      Message(0, fixture.m_trader_account, fixture.m_time_client.GetTime(),
-        {Message::Body::make_plain_text("Test comment")});
+    auto comment = Nexus::Message(
+      0, fixture.m_trader_account, fixture.m_time_client.GetTime(),
+        {Nexus::Message::Body::make_plain_text("Test comment")});
     SUBCASE("admin") {
       auto request = fixture.m_admin_client->SendRequest<
         SubmitRiskModificationRequestService>(
@@ -586,9 +584,9 @@ TEST_SUITE("AdministrationServlet") {
       REQUIRE(
         initial_status.m_status == AccountModificationRequest::Status::PENDING);
       REQUIRE(initial_status.m_account == fixture.m_trader_account);
-      auto review_comment =
-        Message(0, fixture.m_manager_account, fixture.m_time_client.GetTime(),
-          {Message::Body::make_plain_text("Rejected by manager.")});
+      auto review_comment = Nexus::Message(
+        0, fixture.m_manager_account, fixture.m_time_client.GetTime(),
+          {Nexus::Message::Body::make_plain_text("Rejected by manager.")});
       auto review_update = fixture.m_manager_client->SendRequest<
         RejectAccountModificationRequestService>(
         request.get_id(), review_comment);

@@ -17,7 +17,7 @@
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /**
    * Returns a Query Expression to filter Orders by venue.
@@ -29,11 +29,11 @@ namespace Nexus::OrderExecutionService {
     auto query_venue = Beam::Queries::StringValue(venue.get_code().GetData());
     auto venue_expression = Beam::Queries::ConstantExpression(query_venue);
     auto info_parameter =
-      Beam::Queries::ParameterExpression(0, Nexus::Queries::OrderInfoType());
+      Beam::Queries::ParameterExpression(0, Nexus::OrderInfoType());
     auto fields_accessor = Beam::Queries::MemberAccessExpression(
-      "fields", Nexus::Queries::OrderFieldsType(), info_parameter);
+      "fields", Nexus::OrderFieldsType(), info_parameter);
     auto security_accessor = Beam::Queries::MemberAccessExpression(
-      "security", Nexus::Queries::SecurityType(), fields_accessor);
+      "security", Nexus::SecurityType(), fields_accessor);
     auto venue_accessor = Beam::Queries::MemberAccessExpression(
       "venue", Beam::Queries::StringType(), security_accessor);
     return Beam::Queries::MakeEqualsExpression(
@@ -132,8 +132,7 @@ namespace Nexus::OrderExecutionService {
 
   /** Returns a Query Expression to filter an account's live Orders. */
   inline auto make_live_orders_filter() {
-    auto info =
-      Beam::Queries::ParameterExpression(0, Nexus::Queries::OrderInfoType());
+    auto info = Beam::Queries::ParameterExpression(0, Nexus::OrderInfoType());
     return Beam::Queries::MemberAccessExpression(
       "is_live", Beam::Queries::NativeDataType<bool>(), info);
   }
@@ -184,8 +183,7 @@ namespace Nexus::OrderExecutionService {
    * @param ids The order ids to filter.
    */
   inline auto make_order_id_filter(const std::vector<OrderId>& ids) {
-    auto info =
-      Beam::Queries::ParameterExpression(0, Nexus::Queries::OrderInfoType());
+    auto info = Beam::Queries::ParameterExpression(0, Nexus::OrderInfoType());
     auto field = Beam::Queries::MemberAccessExpression(
       "order_id", Beam::Queries::NativeDataType<OrderId>(), info);
     auto clauses = std::vector<Beam::Queries::Expression>();

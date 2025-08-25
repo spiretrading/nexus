@@ -6,7 +6,6 @@
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::Stamp;
 
 namespace {
   auto make_message_buffer(

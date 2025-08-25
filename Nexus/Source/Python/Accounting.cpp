@@ -13,8 +13,6 @@ using namespace Aspen;
 using namespace Beam;
 using namespace Beam::Python;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Python;
 using namespace pybind11;
 

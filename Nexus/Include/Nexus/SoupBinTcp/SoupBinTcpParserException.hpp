@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <boost/exception/exception.hpp>
 
-namespace Nexus::SoupBinTcp {
+namespace Nexus {
 
   /** Indicates that parsing a SoupBinTcp packet failed. */
   class SoupBinTcpParserException :

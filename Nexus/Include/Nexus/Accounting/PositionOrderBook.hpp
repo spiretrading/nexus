@@ -42,15 +42,14 @@ namespace Nexus {
        */
       explicit PositionOrderBook(Beam::View<const Inventory> positions);
 
-      //! Returns all live Orders.
-      const std::vector<std::shared_ptr<const OrderExecutionService::Order>>&
-        get_live_orders() const;
+      /** Returns all live Orders. */
+      const std::vector<std::shared_ptr<const Order>>& get_live_orders() const;
 
       /**
        * Returns all opening Orders.
        * @return The list of all all opening Orders.
        */
-      const std::vector<std::shared_ptr<const OrderExecutionService::Order>>&
+      const std::vector<std::shared_ptr<const Order>>&
         get_opening_orders() const;
 
       /**
@@ -67,29 +66,28 @@ namespace Nexus {
        *         opening Order, otherwise the <i>fields</i> represent a closing
        *         Order.
        */
-      bool test_opening_order_submission(
-        const OrderExecutionService::OrderFields& fields) const;
+      bool test_opening_order_submission(const OrderFields& fields) const;
 
       /**
        * Adds an Order to this book.
        * @param order The Order to add.
        */
-      void add(std::shared_ptr<const OrderExecutionService::Order> order);
+      void add(std::shared_ptr<const Order> order);
 
       /**
        * Updates an Order with an ExecutionReport.
        * @param report The ExecutionReport with the details of the update.
        */
-      void update(const OrderExecutionService::ExecutionReport& report);
+      void update(const ExecutionReport& report);
 
     private:
       struct OrderEntry {
-        std::shared_ptr<const OrderExecutionService::Order> m_order;
+        std::shared_ptr<const Order> m_order;
         Quantity m_remaining_quantity;
         int m_sequence_number;
 
-        OrderEntry(std::shared_ptr<const OrderExecutionService::Order> order,
-          int sequence_number) noexcept;
+        OrderEntry(
+          std::shared_ptr<const Order> order, int sequence_number) noexcept;
       };
       struct SecurityEntry {
         std::vector<OrderEntry> m_asks;
@@ -99,15 +97,12 @@ namespace Nexus {
         Quantity m_bid_open_quantity;
       };
       std::unordered_map<Security, SecurityEntry> m_security_entries;
-      std::unordered_map<OrderExecutionService::OrderId,
-        OrderExecutionService::OrderFields> m_fields;
+      std::unordered_map<OrderId, OrderFields> m_fields;
       int m_order_sequence_number;
-      Beam::CachedValue<
-        std::vector<std::shared_ptr<const OrderExecutionService::Order>>>
-          m_live_orders;
-      Beam::CachedValue<
-        std::vector<std::shared_ptr<const OrderExecutionService::Order>>>
-          m_opening_orders;
+      Beam::CachedValue<std::vector<std::shared_ptr<const Order>>>
+        m_live_orders;
+      Beam::CachedValue<std::vector<std::shared_ptr<const Order>>>
+        m_opening_orders;
       Beam::CachedValue<std::vector<PositionEntry>> m_positions;
   };
 
@@ -117,8 +112,7 @@ namespace Nexus {
   }
 
   inline PositionOrderBook::OrderEntry::OrderEntry(
-    std::shared_ptr<const OrderExecutionService::Order> order,
-      int sequence_number) noexcept
+    std::shared_ptr<const Order> order, int sequence_number) noexcept
     : m_order(std::move(order)),
       m_remaining_quantity(m_order->get_info().m_fields.m_quantity),
       m_sequence_number(sequence_number) {}
@@ -126,8 +120,7 @@ namespace Nexus {
   inline PositionOrderBook::PositionOrderBook() noexcept
     : m_order_sequence_number(0) {
     m_live_orders.SetComputation([this] {
-      auto orders =
-        std::vector<std::shared_ptr<const OrderExecutionService::Order>>();
+      auto orders = std::vector<std::shared_ptr<const Order>>();
       for(auto& entry : m_security_entries | std::views::values) {
         for(auto& order_entry : entry.m_asks) {
           orders.push_back(order_entry.m_order);
@@ -139,8 +132,7 @@ namespace Nexus {
       return orders;
     });
     m_opening_orders.SetComputation([this] {
-      auto orders =
-        std::vector<std::shared_ptr<const OrderExecutionService::Order>>();
+      auto orders = std::vector<std::shared_ptr<const Order>>();
       for(auto& entry : m_security_entries | std::views::values) {
         if(entry.m_position == 0) {
           for(auto& order_entry : entry.m_asks) {
@@ -204,12 +196,12 @@ namespace Nexus {
     }
   }
 
-  inline const std::vector<std::shared_ptr<const OrderExecutionService::Order>>&
+  inline const std::vector<std::shared_ptr<const Order>>&
       PositionOrderBook::get_live_orders() const {
     return *m_live_orders;
   }
 
-  inline const std::vector<std::shared_ptr<const OrderExecutionService::Order>>&
+  inline const std::vector<std::shared_ptr<const Order>>&
       PositionOrderBook::get_opening_orders() const {
     return *m_opening_orders;
   }
@@ -220,7 +212,7 @@ namespace Nexus {
   }
 
   inline bool PositionOrderBook::test_opening_order_submission(
-      const OrderExecutionService::OrderFields& fields) const {
+      const OrderFields& fields) const {
     auto security_entry_iterator = m_security_entries.find(fields.m_security);
     if(security_entry_iterator == m_security_entries.end()) {
       return true;
@@ -240,8 +232,7 @@ namespace Nexus {
     return false;
   }
 
-  inline void PositionOrderBook::add(
-      std::shared_ptr<const OrderExecutionService::Order> order) {
+  inline void PositionOrderBook::add(std::shared_ptr<const Order> order) {
     auto& fields = order->get_info().m_fields;
     m_fields.emplace(order->get_info().m_id, fields);
     auto& security_entry = m_security_entries[fields.m_security];
@@ -263,8 +254,7 @@ namespace Nexus {
     m_opening_orders.Invalidate();
   }
 
-  inline void PositionOrderBook::update(
-      const OrderExecutionService::ExecutionReport& report) {
+  inline void PositionOrderBook::update(const ExecutionReport& report) {
     if(report.m_last_quantity == 0 && !is_terminal(report.m_status)) {
       return;
     }

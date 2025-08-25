@@ -16,7 +16,7 @@
 #include "Nexus/OrderExecutionService/OrderUnrecoverableException.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
-namespace Nexus::FixUtilities {
+namespace Nexus {
 
   /**
    * Stores the details of a single FIX Application used by a
@@ -47,17 +47,13 @@ namespace Nexus::FixUtilities {
         const std::vector<FixApplicationEntry>& entries);
 
       ~FixOrderExecutionDriver();
-      std::shared_ptr<const OrderExecutionService::Order> recover(
-        const OrderExecutionService::SequencedAccountOrderRecord& record);
-      void add(
-        const std::shared_ptr<const OrderExecutionService::Order>& order);
-      std::shared_ptr<const OrderExecutionService::Order>
-        submit(const OrderExecutionService::OrderInfo& info);
-      void cancel(const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId id);
-      void update(const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId id,
-        const OrderExecutionService::ExecutionReport& report);
+      std::shared_ptr<const Order> recover(
+        const SequencedAccountOrderRecord& record);
+      void add(const std::shared_ptr<const Order>& order);
+      std::shared_ptr<const Order> submit(const OrderInfo& info);
+      void cancel(const OrderExecutionSession& session, OrderId id);
+      void update(const OrderExecutionSession& session, OrderId id,
+        const ExecutionReport& report);
       void close();
 
     private:
@@ -74,8 +70,8 @@ namespace Nexus::FixUtilities {
       };
       std::unordered_map<std::string, std::shared_ptr<Application>>
         m_applications;
-      Beam::SynchronizedUnorderedMap<OrderExecutionService::OrderId,
-        std::shared_ptr<Application>> m_id_to_application;
+      Beam::SynchronizedUnorderedMap<OrderId, std::shared_ptr<Application>>
+        m_id_to_application;
       Beam::IO::OpenState m_open_state;
 
       FixOrderExecutionDriver(const FixOrderExecutionDriver&) = delete;
@@ -157,12 +153,11 @@ namespace Nexus::FixUtilities {
     close();
   }
 
-  inline std::shared_ptr<const OrderExecutionService::Order>
-      FixOrderExecutionDriver::recover(
-        const OrderExecutionService::SequencedAccountOrderRecord& record) {
+  inline std::shared_ptr<const Order> FixOrderExecutionDriver::recover(
+      const SequencedAccountOrderRecord& record) {
     auto i = m_applications.find((*record)->m_info.m_fields.m_destination);
     if(i == m_applications.end()) {
-      BOOST_THROW_EXCEPTION(OrderExecutionService::OrderUnrecoverableException(
+      BOOST_THROW_EXCEPTION(OrderUnrecoverableException(
         "FIX application for given destination not found: [" +
         (*record)->m_info.m_fields.m_destination + "], " +
         boost::lexical_cast<std::string>((*record)->m_info.m_id)));
@@ -174,14 +169,13 @@ namespace Nexus::FixUtilities {
   }
 
   inline void FixOrderExecutionDriver::add(
-    const std::shared_ptr<const OrderExecutionService::Order>& order) {}
+    const std::shared_ptr<const Order>& order) {}
 
-  inline std::shared_ptr<const OrderExecutionService::Order>
-      FixOrderExecutionDriver::submit(
-        const OrderExecutionService::OrderInfo& info) {
+  inline std::shared_ptr<const Order> FixOrderExecutionDriver::submit(
+      const OrderInfo& info) {
     auto i = m_applications.find(info.m_fields.m_destination);
     if(i == m_applications.end()) {
-      return OrderExecutionService::make_rejected_order(info,
+      return make_rejected_order(info,
         "Destination [" + info.m_fields.m_destination + "] not available");
     }
     auto entry = i->second;
@@ -191,17 +185,15 @@ namespace Nexus::FixUtilities {
   }
 
   inline void FixOrderExecutionDriver::cancel(
-      const OrderExecutionService::OrderExecutionSession& session,
-      OrderExecutionService::OrderId id) {
+      const OrderExecutionSession& session, OrderId id) {
     if(auto entry = m_id_to_application.Find(id)) {
       (*entry)->m_application->cancel(session, id);
     }
   }
 
   inline void FixOrderExecutionDriver::update(
-      const OrderExecutionService::OrderExecutionSession& session,
-      OrderExecutionService::OrderId id,
-      const OrderExecutionService::ExecutionReport& report) {
+      const OrderExecutionSession& session, OrderId id,
+      const ExecutionReport& report) {
     if(auto entry = m_id_to_application.Find(id)) {
       (*entry)->m_application->update(session, id, report);
     }

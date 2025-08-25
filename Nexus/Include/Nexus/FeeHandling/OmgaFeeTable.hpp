@@ -95,10 +95,9 @@ namespace Nexus {
    * @return <code>true</code> iff the <i>order</i> counts as a hidden liquidity
    *         provider.
    */
-  inline bool is_omga_hidden_liquidity_provider(
-      const OrderExecutionService::OrderFields& fields) {
+  inline bool is_omga_hidden_liquidity_provider(const OrderFields& fields) {
     return fields.m_type == OrderType::PEGGED &&
-      OrderExecutionService::has_field(fields, Tag{18, "M"});
+      has_field(fields, Tag{18, "M"});
   }
 
   /**
@@ -110,8 +109,7 @@ namespace Nexus {
    * @return The fee calculated for the specified trade.
    */
   inline Money calculate_fee(const OmgaFeeTable& table, bool is_etf,
-      const OrderExecutionService::OrderFields& fields,
-      const OrderExecutionService::ExecutionReport& report) {
+      const OrderFields& fields, const ExecutionReport& report) {
     if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }

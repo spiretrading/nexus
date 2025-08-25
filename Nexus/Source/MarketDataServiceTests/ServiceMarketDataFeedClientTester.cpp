@@ -24,14 +24,13 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
 
 namespace {
   struct Fixture {
-    using TestServiceMarketDataFeedClient =
-      ServiceMarketDataFeedClient<std::string, TriggerTimer*,
-      MessageProtocol<std::unique_ptr<TestClientChannel>,
-      BinarySender<SharedBuffer>, NullEncoder>, TriggerTimer>;
+    using TestServiceMarketDataFeedClient = ServiceMarketDataFeedClient<
+      std::string, TriggerTimer*, MessageProtocol<
+        std::unique_ptr<TestClientChannel>, BinarySender<SharedBuffer>,
+        NullEncoder>, TriggerTimer>;
     std::shared_ptr<TestServerConnection> m_server_connection;
     TestServiceProtocolServer m_server;
     TriggerTimer m_sampling_timer;

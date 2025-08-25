@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <boost/exception/exception.hpp>
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Exception to indicate that an operation failed a compliance check. */
   class ComplianceCheckException :

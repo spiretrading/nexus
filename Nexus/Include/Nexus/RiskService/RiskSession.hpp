@@ -6,7 +6,7 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <boost/thread/mutex.hpp>
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /** Stores session info for a RiskServlet client. */
   class RiskSession : public Beam::ServiceLocator::AuthenticatedSession {

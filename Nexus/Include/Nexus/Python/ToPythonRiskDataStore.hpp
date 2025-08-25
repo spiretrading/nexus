@@ -8,7 +8,7 @@
 #include <pybind11/pybind11.h>
 #include "Nexus/RiskService/RiskDataStore.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /**
    * Wraps a RiskDataStore for use with Python.

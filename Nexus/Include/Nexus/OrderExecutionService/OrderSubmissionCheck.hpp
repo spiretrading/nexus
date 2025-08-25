@@ -2,7 +2,7 @@
 #define NEXUS_ORDER_SUBMISSION_CHECK_HPP
 #include "Nexus/OrderExecutionService/Order.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Interface used to check if an Order submission is valid. */
   class OrderSubmissionCheck {

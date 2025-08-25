@@ -15,14 +15,14 @@
 #include "Nexus/OrderExecutionService/OrderSubmissionCheckException.hpp"
 #include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /**
    * Validates an Order's board lot size.
    * @param <C> The type of MarketDataClient used to determine the price of a
    *        Security.
    */
-  template<MarketDataService::IsMarketDataClient C>
+  template<IsMarketDataClient C>
   class BoardLotCheck : public OrderSubmissionCheck {
     public:
 
@@ -64,7 +64,7 @@ namespace Nexus::OrderExecutionService {
         const Security& security, boost::posix_time::ptime timestamp);
   };
 
-  template<MarketDataService::IsMarketDataClient C>
+  template<IsMarketDataClient C>
   auto make_board_lot_check(C&& market_data_client,
       VenueDatabase venues, boost::local_time::tz_database time_zones) {
     return std::make_unique<BoardLotCheck<std::remove_reference_t<C>>>(
@@ -72,11 +72,11 @@ namespace Nexus::OrderExecutionService {
       std::move(time_zones));
   }
 
-  template<MarketDataService::IsMarketDataClient C>
+  template<IsMarketDataClient C>
   BoardLotCheck<C>::ClosingEntry::ClosingEntry()
     : m_last_update(boost::posix_time::neg_infin) {}
 
-  template<MarketDataService::IsMarketDataClient C>
+  template<IsMarketDataClient C>
   template<Beam::Initializes<C> CF>
   BoardLotCheck<C>::BoardLotCheck(CF&& market_data_client, VenueDatabase venues,
     boost::local_time::tz_database time_zones)
@@ -84,7 +84,7 @@ namespace Nexus::OrderExecutionService {
       m_venues(std::move(venues)),
       m_time_zones(std::move(time_zones)) {}
 
-  template<MarketDataService::IsMarketDataClient C>
+  template<IsMarketDataClient C>
   void BoardLotCheck<C>::submit(const OrderInfo& info) {
     if(info.m_fields.m_security.get_venue() != DefaultVenues::TSX &&
         info.m_fields.m_security.get_venue() != DefaultVenues::TSXV &&
@@ -111,16 +111,15 @@ namespace Nexus::OrderExecutionService {
     }
   }
 
-  template<MarketDataService::IsMarketDataClient C>
+  template<IsMarketDataClient C>
   Money BoardLotCheck<C>::load_price(
       const Security& security, boost::posix_time::ptime timestamp) {
     auto& closing_entry = m_closing_entries.Get(security);
     auto closing_price = Beam::Threading::With(
       closing_entry, [&] (auto& entry) {
         if(timestamp - entry.m_last_update > boost::posix_time::hours(1)) {
-          if(auto close = TechnicalAnalysis::load_previous_close(
-              *m_market_data_client, security, timestamp, m_venues,
-              m_time_zones)) {
+          if(auto close = load_previous_close(*m_market_data_client, security,
+              timestamp, m_venues, m_time_zones)) {
             entry.m_closing_price = close->m_price;
             entry.m_last_update = timestamp;
           }
@@ -132,8 +131,7 @@ namespace Nexus::OrderExecutionService {
     }
     auto publisher = m_bbo_quotes.GetOrInsert(security, [&] {
       auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
-      MarketDataService::query_real_time_with_snapshot(
-        *m_market_data_client, security, publisher);
+      query_real_time_with_snapshot(*m_market_data_client, security, publisher);
       return publisher;
     });
     try {

@@ -3,7 +3,7 @@
 #include "Nexus/DefinitionsService/DefinitionsServices.hpp"
 #include "Nexus/DefinitionsService/DefinitionsSession.hpp"
 
-namespace Nexus::DefinitionsService {
+namespace Nexus {
 
   /**
    * Provides system wide definitions.
@@ -34,7 +34,7 @@ namespace Nexus::DefinitionsService {
         CountryDatabase country_database, CurrencyDatabase currency_database,
         DestinationDatabase destination_database, VenueDatabase venue_database,
         std::vector<ExchangeRate> exchange_rates,
-        std::vector<Compliance::ComplianceRuleSchema> compliance_rule_schemas,
+        std::vector<ComplianceRuleSchema> compliance_rule_schemas,
         TradingSchedule trading_schedule);
 
       void RegisterServices(
@@ -51,7 +51,7 @@ namespace Nexus::DefinitionsService {
       DestinationDatabase m_destination_database;
       VenueDatabase m_venue_database;
       std::vector<ExchangeRate> m_exchange_rates;
-      std::vector<Compliance::ComplianceRuleSchema> m_compliance_rule_schemas;
+      std::vector<ComplianceRuleSchema> m_compliance_rule_schemas;
       TradingSchedule m_trading_schedule;
       Beam::IO::OpenState m_open_state;
 
@@ -66,8 +66,8 @@ namespace Nexus::DefinitionsService {
       VenueDatabase on_load_venue_database(ServiceProtocolClient& client);
       std::vector<ExchangeRate> on_load_exchange_rates(
         ServiceProtocolClient& client);
-      std::vector<Compliance::ComplianceRuleSchema>
-        on_load_compliance_rule_schemas(ServiceProtocolClient& client);
+      std::vector<ComplianceRuleSchema> on_load_compliance_rule_schemas(
+        ServiceProtocolClient& client);
       TradingSchedule on_load_trading_schedule(ServiceProtocolClient& client);
   };
 
@@ -86,7 +86,7 @@ namespace Nexus::DefinitionsService {
     CurrencyDatabase currency_database,
     DestinationDatabase destination_database, VenueDatabase venue_database,
     std::vector<ExchangeRate> exchange_rates,
-    std::vector<Compliance::ComplianceRuleSchema> compliance_rule_schemas,
+    std::vector<ComplianceRuleSchema> compliance_rule_schemas,
     TradingSchedule trading_schedule)
     : m_minimum_spire_client_version(std::move(minimum_spire_client_version)),
       m_organization_name(std::move(organization_name)),
@@ -179,9 +179,9 @@ namespace Nexus::DefinitionsService {
   }
 
   template<typename C>
-  std::vector<Compliance::ComplianceRuleSchema>
+  std::vector<ComplianceRuleSchema>
       DefinitionsServlet<C>::on_load_compliance_rule_schemas(
-      ServiceProtocolClient& client) {
+        ServiceProtocolClient& client) {
     return m_compliance_rule_schemas;
   }
 

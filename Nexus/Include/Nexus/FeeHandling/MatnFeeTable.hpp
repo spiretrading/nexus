@@ -140,7 +140,7 @@ namespace Nexus {
    */
   inline Money calculate_fee(
       const MatnFeeTable& table, MatnFeeTable::Classification classification,
-      const OrderExecutionService::ExecutionReport& report) {
+      const ExecutionReport& report) {
     if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }

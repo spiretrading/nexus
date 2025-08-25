@@ -20,7 +20,7 @@
 #include "Nexus/MarketDataService/VenueEntry.hpp"
 #include "Nexus/Queries/StandardValues.hpp"
 
-namespace Nexus::MarketDataService::Details {
+namespace Nexus::Details {
   template<IsHistoricalDataStore D>
   Money load_close_price(const Security& security,
       std::string_view market_center, D& data_store) {
@@ -28,12 +28,12 @@ namespace Nexus::MarketDataService::Details {
     auto market_code_expression =
       Beam::Queries::ConstantExpression(query_market_code);
     auto parameter_expression =
-      Beam::Queries::ParameterExpression(0, Nexus::Queries::TimeAndSaleType());
+      Beam::Queries::ParameterExpression(0, TimeAndSaleType());
     auto access_expression = Beam::Queries::MemberAccessExpression(
       "market_center", Beam::Queries::StringType(), parameter_expression);
     auto equal_expression = Beam::Queries::MakeEqualsExpression(
       market_code_expression, access_expression);
-    auto previous_close_query = MarketDataService::SecurityMarketDataQuery();
+    auto previous_close_query = SecurityMarketDataQuery();
     previous_close_query.SetIndex(security);
     previous_close_query.SetRange(Beam::Queries::Range::Total());
     previous_close_query.SetSnapshotLimit(
@@ -55,9 +55,8 @@ namespace Nexus::MarketDataService::Details {
 
 namespace std {
   template<>
-  struct hash<Nexus::MarketDataService::Details::PrimaryListingKey> {
-    std::size_t operator()(
-        const Nexus::MarketDataService::Details::PrimaryListingKey& key) const {
+  struct hash<Nexus::Details::PrimaryListingKey> {
+    std::size_t operator()(const Nexus::Details::PrimaryListingKey& key) const {
       auto seed = std::size_t(0);
       boost::hash_combine(seed, key.m_symbol);
       boost::hash_combine(seed, key.m_region);
@@ -66,7 +65,7 @@ namespace std {
   };
 }
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Keeps and updates the registry of market data. */
   class MarketDataRegistry {
@@ -196,7 +195,7 @@ namespace Nexus::MarketDataService {
   };
 }
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
   inline MarketDataRegistry::MarketDataRegistry(
     VenueDatabase venues, boost::local_time::tz_database time_zones)
     : m_venues(std::move(venues)),

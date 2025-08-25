@@ -8,7 +8,7 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /** Stores the list of parameters used to measure an account's risk. */
   struct RiskParameters {
@@ -44,10 +44,10 @@ namespace Nexus::RiskService {
 
 namespace Beam::Serialization {
   template<>
-  struct Shuttle<Nexus::RiskService::RiskParameters> {
+  struct Shuttle<Nexus::RiskParameters> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::RiskService::RiskParameters& value, unsigned int version) const {
+    void operator ()(Shuttler& shuttle, Nexus::RiskParameters& value,
+        unsigned int version) const {
       shuttle.Shuttle("currency", value.m_currency);
       shuttle.Shuttle("buying_power", value.m_buying_power);
       shuttle.Shuttle("allowed_state", value.m_allowed_state);

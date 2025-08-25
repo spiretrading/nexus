@@ -3,8 +3,6 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Nexus;
-using namespace Nexus::Compliance;
-using namespace Nexus::OrderExecutionService;
 
 TEST_SUITE("RejectCancelsComplianceRule") {
   TEST_CASE("cancel_throws_with_default_message") {

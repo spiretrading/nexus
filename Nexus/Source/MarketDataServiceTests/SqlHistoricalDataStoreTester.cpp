@@ -5,8 +5,7 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::MarketDataService::Tests;
+using namespace Nexus::Tests;
 using namespace Viper;
 using namespace Viper::Sqlite3;
 

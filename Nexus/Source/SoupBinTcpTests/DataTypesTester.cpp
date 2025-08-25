@@ -4,7 +4,6 @@
 using namespace Beam;
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::SoupBinTcp;
 
 TEST_SUITE("DataTypes") {
   TEST_CASE("parse_left_padded_alpha_numeric_basic") {

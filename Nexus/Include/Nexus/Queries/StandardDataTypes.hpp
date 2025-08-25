@@ -15,7 +15,7 @@
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Nexus/OrderExecutionService/OrderInfo.hpp"
 
-namespace Nexus::Queries {
+namespace Nexus {
   using QuantityType = Beam::Queries::NativeDataType<Quantity>;
   using MoneyType = Beam::Queries::NativeDataType<Money>;
   using SecurityType = Beam::Queries::NativeDataType<Security>;
@@ -24,21 +24,18 @@ namespace Nexus::Queries {
   using BboQuoteType = Beam::Queries::NativeDataType<BboQuote>;
   using BookQuoteType = Beam::Queries::NativeDataType<BookQuote>;
   using TimeAndSaleType = Beam::Queries::NativeDataType<TimeAndSale>;
-  using OrderFieldsType =
-    Beam::Queries::NativeDataType<OrderExecutionService::OrderFields>;
-  using OrderInfoType =
-    Beam::Queries::NativeDataType<OrderExecutionService::OrderInfo>;
+  using OrderFieldsType = Beam::Queries::NativeDataType<OrderFields>;
+  using OrderInfoType = Beam::Queries::NativeDataType<OrderInfo>;
   using QueryVariant = boost::variant<bool, char, int, double, std::uint64_t,
     std::string, boost::posix_time::ptime, boost::posix_time::time_duration,
     Quantity, Money, Security, SecurityInfo, OrderImbalance, BboQuote,
-    BookQuote, TimeAndSale, OrderExecutionService::OrderFields,
-    OrderExecutionService::OrderInfo>;
+    BookQuote, TimeAndSale, OrderFields, OrderInfo>;
   using SequencedQueryVariant = Beam::Queries::SequencedValue<QueryVariant>;
 
   struct QueryTypes {
     using ExtendedNativeTypes = boost::mpl::list<Quantity, Money, Security,
       SecurityInfo, OrderImbalance, BboQuote, BookQuote, TimeAndSale,
-      OrderExecutionService::OrderFields, OrderExecutionService::OrderInfo>;
+      OrderFields, OrderInfo>;
     using NativeTypes =
       boost::mpl::insert_range<Beam::Queries::QueryTypes::NativeTypes,
         boost::mpl::end<Beam::Queries::QueryTypes::NativeTypes>::type,

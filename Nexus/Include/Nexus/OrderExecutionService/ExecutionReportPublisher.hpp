@@ -10,7 +10,7 @@
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Stores an ExecutionReport and the Order that published it. */
   struct ExecutionReportEntry {

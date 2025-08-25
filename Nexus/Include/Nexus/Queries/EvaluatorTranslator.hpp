@@ -12,7 +12,7 @@
 #include "Nexus/Queries/ExpressionVisitor.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 
-namespace Nexus::Queries {
+namespace Nexus {
 
   /** Translates an Expression into an EvaluatorNode. */
   class EvaluatorTranslator :
@@ -28,8 +28,7 @@ namespace Nexus::Queries {
        * @param live_orders The set of live Orders.
        */
       explicit EvaluatorTranslator(Beam::Ref<
-        const Beam::SynchronizedUnorderedSet<OrderExecutionService::OrderId>>
-          live_orders);
+        const Beam::SynchronizedUnorderedSet<OrderId>> live_orders);
 
       std::unique_ptr<Beam::Queries::EvaluatorTranslator<QueryTypes>>
         NewTranslator() const override;
@@ -39,8 +38,7 @@ namespace Nexus::Queries {
         const Beam::Queries::MemberAccessExpression& expression) override;
 
     private:
-      const Beam::SynchronizedUnorderedSet<OrderExecutionService::OrderId>*
-        m_live_orders;
+      const Beam::SynchronizedUnorderedSet<OrderId>* m_live_orders;
 
       void translate_security_member_access_expression(
         const Beam::Queries::MemberAccessExpression& expression);
@@ -57,9 +55,8 @@ namespace Nexus::Queries {
   inline EvaluatorTranslator::EvaluatorTranslator()
     : m_live_orders(nullptr) {}
 
-  inline EvaluatorTranslator::EvaluatorTranslator(Beam::Ref<
-    const Beam::SynchronizedUnorderedSet<OrderExecutionService::OrderId>>
-      live_orders)
+  inline EvaluatorTranslator::EvaluatorTranslator(
+    Beam::Ref<const Beam::SynchronizedUnorderedSet<OrderId>> live_orders)
     : m_live_orders(live_orders.Get()) {}
 
   inline std::unique_ptr<Beam::Queries::EvaluatorTranslator<QueryTypes>>
@@ -176,13 +173,11 @@ namespace Nexus::Queries {
         const Beam::Queries::MemberAccessExpression& expression) {
     expression.GetExpression()->Apply(*this);
     auto order_fields_expression = Beam::StaticCast<std::unique_ptr<
-      Beam::Queries::EvaluatorNode<OrderExecutionService::OrderFields>>>(
-        GetEvaluator());
+      Beam::Queries::EvaluatorNode<OrderFields>>>(GetEvaluator());
     if(expression.GetName() == "security") {
       SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
-        Security, OrderExecutionService::OrderFields>>(
-          std::move(order_fields_expression),
-          &OrderExecutionService::OrderFields::m_security));
+        Security, OrderFields>>(std::move(order_fields_expression),
+          &OrderFields::m_security));
     } else {
       Beam::Queries::EvaluatorTranslator<QueryTypes>::Visit(expression);
     }
@@ -193,32 +188,26 @@ namespace Nexus::Queries {
         const Beam::Queries::MemberAccessExpression& expression) {
     expression.GetExpression()->Apply(*this);
     auto order_info_expression = Beam::StaticCast<std::unique_ptr<
-      Beam::Queries::EvaluatorNode<OrderExecutionService::OrderInfo>>>(
-        GetEvaluator());
+      Beam::Queries::EvaluatorNode<OrderInfo>>>(GetEvaluator());
     if(expression.GetName() == "fields") {
       SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
-        OrderExecutionService::OrderFields, OrderExecutionService::OrderInfo>>(
-          std::move(order_info_expression),
-          &OrderExecutionService::OrderInfo::m_fields));
+        OrderFields, OrderInfo>>(std::move(order_info_expression),
+          &OrderInfo::m_fields));
     } else if(expression.GetName() == "order_id") {
       SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
-        OrderExecutionService::OrderId, OrderExecutionService::OrderInfo>>(
-          std::move(order_info_expression),
-          &OrderExecutionService::OrderInfo::m_id));
+        OrderId, OrderInfo>>(std::move(order_info_expression),
+          &OrderInfo::m_id));
     } else if(expression.GetName() == "shorting_flag") {
       SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
-        bool, OrderExecutionService::OrderInfo>>(
-          std::move(order_info_expression),
-          &OrderExecutionService::OrderInfo::m_shorting_flag));
+        bool, OrderInfo>>(std::move(order_info_expression),
+          &OrderInfo::m_shorting_flag));
     } else if(expression.GetName() == "timestamp") {
       SetEvaluator(std::make_unique<Beam::Queries::MemberAccessEvaluatorNode<
-        boost::posix_time::ptime, OrderExecutionService::OrderInfo>>(
-          std::move(order_info_expression),
-          &OrderExecutionService::OrderInfo::m_timestamp));
+        boost::posix_time::ptime, OrderInfo>>(std::move(order_info_expression),
+          &OrderInfo::m_timestamp));
     } else if(expression.GetName() == "is_live") {
       SetEvaluator(Beam::Queries::MakeFunctionEvaluatorNode(
-        [live_orders = m_live_orders] (
-            const OrderExecutionService::OrderInfo& info) {
+        [live_orders = m_live_orders] (const OrderInfo& info) {
           if(!live_orders) {
             return false;
           }

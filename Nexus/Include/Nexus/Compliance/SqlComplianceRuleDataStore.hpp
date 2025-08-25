@@ -8,7 +8,7 @@
 #include "Nexus/Compliance/ComplianceRuleDataStoreException.hpp"
 #include "Nexus/Compliance/SqlDefinitions.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Implements a ComplianceRuleDataStore backed by an SQL database.

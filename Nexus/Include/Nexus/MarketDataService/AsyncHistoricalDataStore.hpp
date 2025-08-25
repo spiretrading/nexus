@@ -10,7 +10,7 @@
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Implements a HistoricalDataStore using an AsyncDataStore as its backing.
@@ -57,7 +57,7 @@ namespace Nexus::MarketDataService {
       template<typename T>
       using DataStore = Beam::Queries::AsyncDataStore<
         HistoricalDataStoreQueryWrapper<T, HistoricalDataStore*>,
-        Queries::EvaluatorTranslator>;
+        EvaluatorTranslator>;
       Beam::GetOptionalLocalPtr<D> m_data_store;
       LocalHistoricalDataStore m_security_info;
       DataStore<OrderImbalance> m_order_imbalance_data_store;

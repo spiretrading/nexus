@@ -7,7 +7,6 @@ using namespace Beam;
 using namespace Beam::Python;
 using namespace Beam::Queries;
 using namespace Nexus;
-using namespace Nexus::Queries;
 using namespace pybind11;
 
 void Nexus::Python::export_data_type(module& module) {
@@ -24,15 +23,14 @@ void Nexus::Python::export_data_type(module& module) {
 }
 
 void Nexus::Python::export_queries(module& module) {
-  auto submodule = module.def_submodule("queries");
-  export_time_and_sale_accessor(submodule);
-  ExportIndexedQuery<Security>(submodule, "SecurityIndexedQuery");
-  ExportBasicQuery<Security>(submodule, "SecurityQuery");
-  ExportQueueSuite<Nexus::Queries::QueryVariant>(submodule, "QueryVariant");
-  ExportQueueSuite<Quantity>(submodule, "Quantity");
-  ExportQueueSuite<Money>(submodule, "Money");
-  ExportQueueSuite<Security>(submodule, "Security");
-  ExportQueueSuite<SecurityInfo>(submodule, "SecurityInfo");
+  export_time_and_sale_accessor(module);
+  ExportIndexedQuery<Security>(module, "SecurityIndexedQuery");
+  ExportBasicQuery<Security>(module, "SecurityQuery");
+  ExportQueueSuite<Nexus::QueryVariant>(module, "QueryVariant");
+  ExportQueueSuite<Quantity>(module, "Quantity");
+  ExportQueueSuite<Money>(module, "Money");
+  ExportQueueSuite<Security>(module, "Security");
+  ExportQueueSuite<SecurityInfo>(module, "SecurityInfo");
 }
 
 void Nexus::Python::export_time_and_sale_accessor(module& module) {

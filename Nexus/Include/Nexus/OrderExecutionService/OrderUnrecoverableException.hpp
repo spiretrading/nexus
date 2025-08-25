@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <boost/exception/exception.hpp>
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Exception to indicate that an Order can not be recovered. */
   class OrderUnrecoverableException :

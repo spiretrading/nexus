@@ -37,15 +37,15 @@ namespace Nexus {
       void store(const Beam::ServiceLocator::DirectoryEntry& account,
         const AccountIdentity& identity);
       std::vector<IndexedRiskParameters> load_all_risk_parameters();
-      RiskService::RiskParameters load_risk_parameters(
+      RiskParameters load_risk_parameters(
         const Beam::ServiceLocator::DirectoryEntry& account);
       void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& risk_parameters);
+        const RiskParameters& risk_parameters);
       std::vector<IndexedRiskState> load_all_risk_states();
-      RiskService::RiskState load_risk_state(
+      RiskState load_risk_state(
         const Beam::ServiceLocator::DirectoryEntry& account);
       void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& risk_state);
+        const RiskState& risk_state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest::Id>
@@ -138,16 +138,15 @@ namespace Nexus {
   }
 
   template<IsAdministrationDataStore D>
-  RiskService::RiskParameters CachedAdministrationDataStore<D>::
-      load_risk_parameters(
-        const Beam::ServiceLocator::DirectoryEntry& account) {
+  RiskParameters CachedAdministrationDataStore<D>::load_risk_parameters(
+      const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_cache.load_risk_parameters(account);
   }
 
   template<IsAdministrationDataStore D>
   void CachedAdministrationDataStore<D>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& risk_parameters) {
+      const RiskParameters& risk_parameters) {
     m_data_store->store(account, risk_parameters);
     m_cache.store(account, risk_parameters);
   }
@@ -159,7 +158,7 @@ namespace Nexus {
   }
 
   template<IsAdministrationDataStore D>
-  RiskService::RiskState CachedAdministrationDataStore<D>::load_risk_state(
+  RiskState CachedAdministrationDataStore<D>::load_risk_state(
       const Beam::ServiceLocator::DirectoryEntry& account) {
     return m_cache.load_risk_state(account);
   }
@@ -167,7 +166,7 @@ namespace Nexus {
   template<IsAdministrationDataStore D>
   void CachedAdministrationDataStore<D>::store(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& risk_state) {
+      const RiskState& risk_state) {
     m_data_store->store(account, risk_state);
     m_cache.store(account, risk_state);
   }

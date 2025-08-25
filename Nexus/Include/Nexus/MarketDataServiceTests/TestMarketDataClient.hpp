@@ -10,7 +10,7 @@
 #include <boost/throw_exception.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 
-namespace Nexus::MarketDataService::Tests {
+namespace Nexus::Tests {
 
   /**
    * Implements a MarketDataClient for testing purposes by pushing all

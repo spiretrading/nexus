@@ -23,7 +23,7 @@
 #include "Nexus/RiskService/RiskServlet.hpp"
 #include "Nexus/RiskService/ServiceRiskClient.hpp"
 
-namespace Nexus::RiskService::Tests {
+namespace Nexus::Tests {
 
   /**
    * Wraps most components needed to run an instance of the RiskService with
@@ -47,8 +47,8 @@ namespace Nexus::RiskService::Tests {
       RiskServiceTestEnvironment(
         Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
         AdministrationClient administration_client,
-        MarketDataService::MarketDataClient market_data_client,
-        OrderExecutionService::OrderExecutionClient order_execution_client,
+        MarketDataClient market_data_client,
+        OrderExecutionClient order_execution_client,
         std::function<std::unique_ptr<Beam::Threading::TimerBox> ()>
           transition_timer_factory,
         Beam::TimeService::TimeClientBox time_client,
@@ -75,10 +75,8 @@ namespace Nexus::RiskService::Tests {
       using ServiceProtocolServletContainer =
         Beam::Services::ServiceProtocolServletContainer<
           Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-            MetaRiskServlet<AdministrationClient,
-              MarketDataService::MarketDataClient,
-              OrderExecutionService::OrderExecutionClient,
-              Beam::Threading::TimerBox,
+            MetaRiskServlet<AdministrationClient, MarketDataClient,
+              OrderExecutionClient, Beam::Threading::TimerBox,
               Beam::TimeService::TimeClientBox, LocalRiskDataStore*>,
             Beam::ServiceLocator::ServiceLocatorClientBox>,
           ServerConnection*,
@@ -103,8 +101,8 @@ namespace Nexus::RiskService::Tests {
   inline RiskServiceTestEnvironment::RiskServiceTestEnvironment(
       Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
       AdministrationClient administration_client,
-      MarketDataService::MarketDataClient market_data_client,
-      OrderExecutionService::OrderExecutionClient order_execution_client,
+      MarketDataClient market_data_client,
+      OrderExecutionClient order_execution_client,
       std::function<std::unique_ptr<Beam::Threading::TimerBox> ()>
         transition_timer_factory, Beam::TimeService::TimeClientBox time_client,
       ExchangeRateTable exchange_rates, VenueDatabase venues,

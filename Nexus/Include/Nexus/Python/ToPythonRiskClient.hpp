@@ -9,7 +9,7 @@
 #include <pybind11/pybind11.h>
 #include "Nexus/RiskService/RiskClient.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /**
    * Wraps a RiskClient for use with Python.

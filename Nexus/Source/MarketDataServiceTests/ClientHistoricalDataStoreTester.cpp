@@ -9,8 +9,7 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::MarketDataService::Tests;
+using namespace Nexus::Tests;
 
 TEST_SUITE("ClientHistoricalDataStore") {
   TEST_CASE("load_security_info") {

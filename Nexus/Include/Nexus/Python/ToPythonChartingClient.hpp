@@ -9,7 +9,7 @@
 #include <pybind11/pybind11.h>
 #include "Nexus/ChartingService/ChartingClient.hpp"
 
-namespace Nexus::ChartingService {
+namespace Nexus {
 
   /**
    * Wraps an ChartingClient for use with Python.
@@ -38,7 +38,7 @@ namespace Nexus::ChartingService {
       /** Returns the wrapped client. */
       Client& get_client();
       void query(const SecurityChartingQuery& query,
-        Beam::ScopedQueueWriter<Queries::QueryVariant> queue);
+        Beam::ScopedQueueWriter<QueryVariant> queue);
       TimePriceQueryResult load_time_price_series(const Security& security,
         boost::posix_time::ptime start, boost::posix_time::ptime end,
         boost::posix_time::time_duration interval);
@@ -82,7 +82,7 @@ namespace Nexus::ChartingService {
 
   template<IsChartingClient C>
   void ToPythonChartingClient<C>::query(const SecurityChartingQuery& query,
-      Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
+      Beam::ScopedQueueWriter<QueryVariant> queue) {
     auto release = Beam::Python::GilRelease();
     m_client->query(query, std::move(queue));
   }

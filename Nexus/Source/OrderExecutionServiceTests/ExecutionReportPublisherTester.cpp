@@ -10,7 +10,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::OrderExecutionService;
 
 TEST_SUITE("ExecutionReportPublisher") {
   TEST_CASE("single_order_single_report") {

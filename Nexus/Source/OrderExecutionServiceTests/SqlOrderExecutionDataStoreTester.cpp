@@ -6,8 +6,7 @@
 using namespace Beam;
 using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::OrderExecutionService::Tests;
+using namespace Nexus::Tests;
 using namespace Viper;
 using namespace Viper::Sqlite3;
 

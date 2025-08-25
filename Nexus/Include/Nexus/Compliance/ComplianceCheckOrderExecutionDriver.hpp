@@ -12,7 +12,7 @@
 #include "Nexus/OrderExecutionService/OrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Performs a series of compliance checks on order execution operations.
@@ -21,7 +21,7 @@ namespace Nexus::Compliance {
    * @param <C> The type of TimeClient used for Order timestamps.
    * @param <S> The type of ComplianceRuleSet used to validate operations.
    */
-  template<OrderExecutionService::IsOrderExecutionDriver D, typename C,
+  template<IsOrderExecutionDriver D, typename C,
     Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   class ComplianceCheckOrderExecutionDriver {
     public:
@@ -52,25 +52,21 @@ namespace Nexus::Compliance {
         DF&& driver, CF&& time_client, SF&& compliance_rule_set);
 
       ~ComplianceCheckOrderExecutionDriver();
-      std::shared_ptr<const OrderExecutionService::Order> recover(
-        const OrderExecutionService::SequencedAccountOrderRecord& record);
-      void add(
-        const std::shared_ptr<const OrderExecutionService::Order>& order);
-      std::shared_ptr<const OrderExecutionService::Order>
-        submit(const OrderExecutionService::OrderInfo& info);
-      void cancel(const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId id);
-      void update(const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId id,
-        const OrderExecutionService::ExecutionReport& report);
+      std::shared_ptr<const Order> recover(
+        const SequencedAccountOrderRecord& record);
+      void add(const std::shared_ptr<const Order>& order);
+      std::shared_ptr<const Order> submit(const OrderInfo& info);
+      void cancel(const OrderExecutionSession& session, OrderId id);
+      void update(const OrderExecutionSession& session, OrderId id,
+        const ExecutionReport& report);
       void close();
 
     private:
       Beam::GetOptionalLocalPtr<D> m_driver;
       Beam::GetOptionalLocalPtr<C> m_time_client;
       Beam::GetOptionalLocalPtr<S> m_compliance_rule_set;
-      Beam::SynchronizedUnorderedMap<OrderExecutionService::OrderId,
-        std::shared_ptr<OrderExecutionService::PrimitiveOrder>> m_orders;
+      Beam::SynchronizedUnorderedMap<OrderId, std::shared_ptr<PrimitiveOrder>>
+        m_orders;
       Beam::IO::OpenState m_open_state;
       Beam::RoutineTaskQueue m_tasks;
 
@@ -78,11 +74,11 @@ namespace Nexus::Compliance {
         const ComplianceCheckOrderExecutionDriver&) = delete;
       ComplianceCheckOrderExecutionDriver& operator =(
         const ComplianceCheckOrderExecutionDriver&) = delete;
-      void on_execution_report(OrderExecutionService::PrimitiveOrder& order,
-        const OrderExecutionService::ExecutionReport& executionReport);
+      void on_execution_report(
+        PrimitiveOrder& order, const ExecutionReport& executionReport);
   };
 
-  template<OrderExecutionService::IsOrderExecutionDriver D, typename C,
+  template<IsOrderExecutionDriver D, typename C,
     Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   template<Beam::Initializes<D> DF, Beam::Initializes<C> CF,
     Beam::Initializes<S> SF>
@@ -93,37 +89,37 @@ namespace Nexus::Compliance {
       m_time_client(std::forward<CF>(time_client)),
       m_compliance_rule_set(std::forward<SF>(compliance_rule_set)) {}
 
-  template<OrderExecutionService::IsOrderExecutionDriver D, typename C,
+  template<IsOrderExecutionDriver D, typename C,
     Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   ComplianceCheckOrderExecutionDriver<D, C, S>::
       ~ComplianceCheckOrderExecutionDriver() {
     close();
   }
 
-  template<OrderExecutionService::IsOrderExecutionDriver D, typename C,
+  template<IsOrderExecutionDriver D, typename C,
     Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
-  std::shared_ptr<const OrderExecutionService::Order>
+  std::shared_ptr<const Order>
       ComplianceCheckOrderExecutionDriver<D, C, S>::recover(
-        const OrderExecutionService::SequencedAccountOrderRecord& record) {
+        const SequencedAccountOrderRecord& record) {
     auto order = m_driver->recover(record);
     m_compliance_rule_set->add(order);
     return order;
   }
 
-  template<OrderExecutionService::IsOrderExecutionDriver D, typename C,
+  template<IsOrderExecutionDriver D, typename C,
     Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   void ComplianceCheckOrderExecutionDriver<D, C, S>::add(
-      const std::shared_ptr<const OrderExecutionService::Order>& order) {
+      const std::shared_ptr<const Order>& order) {
     m_driver->add(order);
     m_compliance_rule_set->add(order);
   }
 
-  template<OrderExecutionService::IsOrderExecutionDriver D, typename C,
+  template<IsOrderExecutionDriver D, typename C,
     Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
-  std::shared_ptr<const OrderExecutionService::Order>
+  std::shared_ptr<const Order>
       ComplianceCheckOrderExecutionDriver<D, C, S>::submit(
-        const OrderExecutionService::OrderInfo& info) {
-    auto order = std::make_shared<OrderExecutionService::PrimitiveOrder>(info);
+        const OrderInfo& info) {
+    auto order = std::make_shared<PrimitiveOrder>(info);
     m_orders.Insert(info.m_id, order);
     try {
       m_compliance_rule_set->submit(order);
@@ -138,18 +134,16 @@ namespace Nexus::Compliance {
       return order;
     }
     auto driver_order = m_driver->submit(info);
-    driver_order->get_publisher().Monitor(
-      m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(std::bind_front(
-        &ComplianceCheckOrderExecutionDriver::on_execution_report, this,
-        std::ref(*order))));
+    driver_order->get_publisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
+      std::bind_front(&ComplianceCheckOrderExecutionDriver::on_execution_report,
+        this, std::ref(*order))));
     return order;
   }
 
-  template<OrderExecutionService::IsOrderExecutionDriver D, typename C,
+  template<IsOrderExecutionDriver D, typename C,
     Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   void ComplianceCheckOrderExecutionDriver<D, C, S>::cancel(
-      const OrderExecutionService::OrderExecutionSession& session,
-      OrderExecutionService::OrderId id) {
+      const OrderExecutionSession& session, OrderId id) {
     auto order = m_orders.Find(id);
     if(!order) {
       m_driver->cancel(session, id);
@@ -158,23 +152,21 @@ namespace Nexus::Compliance {
     try {
       m_compliance_rule_set->cancel(session.GetAccount(), *order);
     } catch(const std::exception& e) {
-      OrderExecutionService::reject_cancel_request(
-        **order, m_time_client->GetTime(), e.what());
+      reject_cancel_request(**order, m_time_client->GetTime(), e.what());
       return;
     }
     m_driver->cancel(session, id);
   }
 
-  template<OrderExecutionService::IsOrderExecutionDriver D, typename C,
+  template<IsOrderExecutionDriver D, typename C,
     Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   void ComplianceCheckOrderExecutionDriver<D, C, S>::update(
-      const OrderExecutionService::OrderExecutionSession& session,
-      OrderExecutionService::OrderId id,
-      const OrderExecutionService::ExecutionReport& report) {
+      const OrderExecutionSession& session, OrderId id,
+      const ExecutionReport& report) {
     m_driver->update(session, id, report);
   }
 
-  template<OrderExecutionService::IsOrderExecutionDriver D, typename C,
+  template<IsOrderExecutionDriver D, typename C,
     Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   void ComplianceCheckOrderExecutionDriver<D, C, S>::close() {
     if(m_open_state.SetClosing()) {
@@ -186,11 +178,10 @@ namespace Nexus::Compliance {
     m_open_state.Close();
   }
 
-  template<OrderExecutionService::IsOrderExecutionDriver D, typename C,
+  template<IsOrderExecutionDriver D, typename C,
     Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   void ComplianceCheckOrderExecutionDriver<D, C, S>::on_execution_report(
-      OrderExecutionService::PrimitiveOrder& order,
-      const OrderExecutionService::ExecutionReport& report) {
+      PrimitiveOrder& order, const ExecutionReport& report) {
     if(report.m_status == OrderStatus::PENDING_NEW) {
       return;
     }

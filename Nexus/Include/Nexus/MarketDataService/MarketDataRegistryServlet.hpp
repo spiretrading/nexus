@@ -15,7 +15,7 @@
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Maintains a registry of all Securities and data subscriptions.
@@ -244,7 +244,7 @@ namespace Nexus::MarketDataService {
     IsAdministrationClient A>
   void MarketDataRegistryServlet<C, R, D, A>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
-    Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
+    RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
     RegisterMarketDataRegistryServices(Store(slots));
     RegisterMarketDataRegistryMessages(Store(slots));
     QueryOrderImbalancesService::AddRequestSlot(Store(slots), std::bind_front(
@@ -363,7 +363,7 @@ namespace Nexus::MarketDataService {
       return;
     }
     auto filter =
-      Beam::Queries::Translate<Queries::EvaluatorTranslator>(query.GetFilter());
+      Beam::Queries::Translate<EvaluatorTranslator>(query.GetFilter());
     auto result = Result();
     result.m_queryId = subscriptions.Initialize(
       index, request.GetClient(), query.GetRange(), std::move(filter));

@@ -9,7 +9,7 @@
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Provides a generic interface over an arbitrary HistoricalDataStore. */
   class HistoricalDataStore {

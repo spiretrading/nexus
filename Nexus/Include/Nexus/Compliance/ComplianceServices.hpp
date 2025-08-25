@@ -9,8 +9,8 @@
 #include "Nexus/Compliance/ComplianceRuleEntry.hpp"
 #include "Nexus/Compliance/ComplianceRuleViolationRecord.hpp"
 
-namespace Nexus::Compliance {
-  inline const auto SERVICE_NAME = std::string("compliance_service");
+namespace Nexus {
+  inline const auto COMPLIANCE_SERVICE_NAME = std::string("compliance_service");
 
   BEAM_DEFINE_SERVICES(ComplianceServices,
 

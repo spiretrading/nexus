@@ -9,7 +9,7 @@
 #include <pybind11/pybind11.h>
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /**
    * Wraps an OrderExecutionDataStore for use with Python.

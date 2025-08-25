@@ -6,7 +6,7 @@
 #include <utility>
 #include <Beam/Serialization/DataShuttle.hpp>
 
-namespace Nexus::TechnicalAnalysis {
+namespace Nexus {
 
   /**
    * Represents a candlestick displayed on a chart.
@@ -198,11 +198,10 @@ namespace Nexus::TechnicalAnalysis {
 
 namespace Beam::Serialization {
   template<typename D, typename R>
-  struct Shuttle<Nexus::TechnicalAnalysis::Candlestick<D, R>> {
+  struct Shuttle<Nexus::Candlestick<D, R>> {
     template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::TechnicalAnalysis::Candlestick<D, R>& value,
-        unsigned int version) {
+    void operator ()(Shuttler& shuttle, Nexus::Candlestick<D, R>& value,
+        unsigned int version) const {
       shuttle.Shuttle("has_open", value.m_has_open);
       shuttle.Shuttle("start", value.m_start);
       shuttle.Shuttle("end", value.m_end);

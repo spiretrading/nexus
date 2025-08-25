@@ -13,7 +13,6 @@ namespace Nexus::Tests {
     using namespace boost;
     using namespace boost::posix_time;
     using namespace Nexus::DefaultCurrencies;
-    using namespace Nexus::RiskService;
     auto data_store = T()();
 
     SUBCASE("store_and_load_identity") {

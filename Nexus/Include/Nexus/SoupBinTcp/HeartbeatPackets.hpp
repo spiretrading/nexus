@@ -4,7 +4,7 @@
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Utilities/Endian.hpp>
 
-namespace Nexus::SoupBinTcp {
+namespace Nexus {
 
   /**
    * Returns a Client Heartbeat Packet.

@@ -5,7 +5,6 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::RiskService;
 using namespace boost::posix_time;
 
 TEST_SUITE("RiskState") {

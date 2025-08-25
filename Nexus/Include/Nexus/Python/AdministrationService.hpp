@@ -61,14 +61,14 @@ namespace Nexus::Python {
       def("store_entitlements", &C::store_entitlements).
       def("get_risk_parameters_publisher", &C::get_risk_parameters_publisher,
         pybind11::return_value_policy::reference_internal).
-      def("store",
-        static_cast<void (C::*)(const Beam::ServiceLocator::DirectoryEntry&,
-          const RiskService::RiskParameters&)>(&C::store)).
+      def("store", static_cast<void (C::*)(
+        const Beam::ServiceLocator::DirectoryEntry&, const RiskParameters&)>(
+          &C::store)).
       def("get_risk_state_publisher", &C::get_risk_state_publisher,
         pybind11::return_value_policy::reference_internal).
-      def("store",
-        static_cast<void (C::*)(const Beam::ServiceLocator::DirectoryEntry&,
-          const RiskService::RiskState&)>(&C::store)).
+      def("store", static_cast<void (C::*)(
+        const Beam::ServiceLocator::DirectoryEntry&, const RiskState&)>(
+          &C::store)).
       def("load_account_modification_request",
         &C::load_account_modification_request).
       def("load_account_modification_request_ids",
@@ -116,14 +116,14 @@ namespace Nexus::Python {
             &D::store)).
         def("load_all_risk_parameters", &D::load_all_risk_parameters).
         def("load_risk_parameters", &D::load_risk_parameters).
-        def("store",
-          static_cast<void (D::*)(const Beam::ServiceLocator::DirectoryEntry&,
-            const RiskService::RiskParameters&)>(&D::store)).
+        def("store", static_cast<void (D::*)(
+          const Beam::ServiceLocator::DirectoryEntry&, const RiskParameters&)>(
+            &D::store)).
         def("load_all_risk_states", &D::load_all_risk_states).
         def("load_risk_state", &D::load_risk_state).
-        def("store",
-          static_cast<void (D::*)(const Beam::ServiceLocator::DirectoryEntry&,
-            const RiskService::RiskState&)>(&D::store)).
+        def("store", static_cast<void (D::*)(
+          const Beam::ServiceLocator::DirectoryEntry&, const RiskState&)>(
+            &D::store)).
         def("load_account_modification_request",
           &D::load_account_modification_request).
         def("load_account_modification_request_ids",

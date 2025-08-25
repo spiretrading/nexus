@@ -4,7 +4,7 @@
 #include "Nexus/Queries/StandardDataTypes.hpp"
 #include "Nexus/Queries/StandardValues.hpp"
 
-namespace Nexus::Queries {
+namespace Nexus {
   BEAM_REGISTER_TYPES(RegisterDataTypes,
     (MoneyType, "Nexus.Queries.MoneyType"),
     (QuantityType, "Nexus.Queries.QuantityType"),

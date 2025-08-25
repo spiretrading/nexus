@@ -4,7 +4,7 @@
 #include <Beam/Threading/TriggerTimer.hpp>
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Implements a MarketDataFeedClient for use by the

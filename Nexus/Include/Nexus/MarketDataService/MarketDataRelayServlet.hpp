@@ -21,7 +21,7 @@
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Implements a relay servlet for querying market data.
@@ -181,7 +181,7 @@ namespace Nexus::MarketDataService {
   template<typename C, IsMarketDataClient M, IsAdministrationClient A>
   void MarketDataRelayServlet<C, M, A>::RegisterServices(
       Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
-    Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
+    RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
     RegisterMarketDataRegistryServices(Store(slots));
     RegisterMarketDataRegistryMessages(Store(slots));
     QueryOrderImbalancesService::AddRequestSlot(Store(slots),
@@ -329,8 +329,8 @@ namespace Nexus::MarketDataService {
       }
     }
     if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
-      auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
-        query.GetFilter());
+      auto filter =
+        Beam::Queries::Translate<EvaluatorTranslator>(query.GetFilter());
       result.m_queryId = subscriptions.Initialize(query.GetIndex(),
         request.GetClient(), Beam::Queries::Range::Total(), std::move(filter));
       real_time_subscriptions.TestAndSet(query.GetIndex(), [&] {

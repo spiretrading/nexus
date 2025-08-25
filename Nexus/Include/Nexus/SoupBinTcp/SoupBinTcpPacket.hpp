@@ -8,7 +8,7 @@
 #include <boost/throw_exception.hpp>
 #include "Nexus/SoupBinTcp/SoupBinTcpParserException.hpp"
 
-namespace Nexus::SoupBinTcp {
+namespace Nexus {
 
   /** Stores a logical SoupBinTCP packet. */
   struct SoupBinTcpPacket {

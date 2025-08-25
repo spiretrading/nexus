@@ -19,7 +19,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::OrderExecutionService;
 
 namespace {
   auto make_order_fields() {
@@ -39,8 +38,7 @@ namespace {
         : m_server_connection(std::make_shared<TestServerConnection>()),
           m_server(m_server_connection,
             factory<std::unique_ptr<TriggerTimer>>(), NullSlot(), NullSlot()) {
-      Nexus::Queries::RegisterQueryTypes(
-        Beam::Store(m_server.GetSlots().GetRegistry()));
+      Nexus::RegisterQueryTypes(Beam::Store(m_server.GetSlots().GetRegistry()));
       RegisterOrderExecutionServices(Store(m_server.GetSlots()));
       RegisterOrderExecutionMessages(Store(m_server.GetSlots()));
       auto builder = TestServiceProtocolClientBuilder([=, this] {

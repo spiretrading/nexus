@@ -9,7 +9,7 @@
 #include <pybind11/pybind11.h>
 #include "Nexus/Compliance/ComplianceClient.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Wraps a ComplianceClient for use with Python.

@@ -27,7 +27,7 @@
 #include "Nexus/MarketDataService/ServiceMarketDataFeedClient.hpp"
 #include "Nexus/MarketDataServiceTests/TestEnvironmentMarketDataFeedClient.hpp"
 
-namespace Nexus::MarketDataService::Tests {
+namespace Nexus::Tests {
 
   /**
    * Wraps most components needed to run an instance of the MarketDataService

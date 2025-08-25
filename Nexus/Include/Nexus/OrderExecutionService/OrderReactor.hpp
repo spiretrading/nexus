@@ -12,7 +12,7 @@
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /**
    * Implements a reactor that resubmits Orders when given an updated

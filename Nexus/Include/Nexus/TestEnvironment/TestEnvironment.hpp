@@ -45,8 +45,7 @@ namespace Nexus {
        * @param historical_data_store The data store to use for historical
        *        market data.
        */
-      explicit TestEnvironment(
-        MarketDataService::HistoricalDataStore historical_data_store);
+      explicit TestEnvironment(HistoricalDataStore historical_data_store);
 
       /**
        * Constructs a TestEnvironment.
@@ -54,8 +53,7 @@ namespace Nexus {
        *        market data.
        * @param time The time to set the environment to.
        */
-      TestEnvironment(
-        MarketDataService::HistoricalDataStore historical_data_store,
+      TestEnvironment(HistoricalDataStore historical_data_store,
         boost::posix_time::ptime time);
 
       ~TestEnvironment();
@@ -87,28 +85,26 @@ namespace Nexus {
         const Security& security, Money bid_price, Money ask_price);
 
       /** Monitors orders submitted to this environment. */
-      void monitor_order_submissions(Beam::ScopedQueueWriter<
-        std::shared_ptr<const OrderExecutionService::Order>> queue);
+      void monitor_order_submissions(
+        Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue);
 
       /** Updates a submitted order to OrderStatus NEW. */
-      void accept(const OrderExecutionService::Order& order);
+      void accept(const Order& order);
 
       /** Updates a submitted order to OrderStatus REJECTED. */
-      void reject(const OrderExecutionService::Order& order);
+      void reject(const Order& order);
 
       /** Updates a submitted order to OrderStatus CANCELED. */
-      void cancel(const OrderExecutionService::Order& order);
+      void cancel(const Order& order);
 
       /** Fills an order. */
-      void fill(const OrderExecutionService::Order& order, Money price,
-        Quantity quantity);
+      void fill(const Order& order, Money price, Quantity quantity);
 
       /** Fills an order. */
-      void fill(const OrderExecutionService::Order& order, Quantity quantity);
+      void fill(const Order& order, Quantity quantity);
 
       /** Updates an order. */
-      void update(const OrderExecutionService::Order& order,
-        const OrderExecutionService::ExecutionReport& report);
+      void update(const Order& order, const ExecutionReport& report);
 
       /** Returns the TimeServiceTestEnvironment. */
       Beam::TimeService::Tests::TimeServiceTestEnvironment&
@@ -126,31 +122,27 @@ namespace Nexus {
         get_registry_environment();
 
       /** Returns the DefinitionsServiceTestEnvironment. */
-      DefinitionsService::Tests::DefinitionsServiceTestEnvironment&
-        get_definitions_environment();
+      Tests::DefinitionsServiceTestEnvironment& get_definitions_environment();
 
       /** Returns the AdministrationServiceTestEnvironment. */
       Tests::AdministrationServiceTestEnvironment&
         get_administration_environment();
 
       /** Returns the MarketDataServiceTestEnvironment. */
-      MarketDataService::Tests::MarketDataServiceTestEnvironment&
-        get_market_data_environment();
+      Tests::MarketDataServiceTestEnvironment& get_market_data_environment();
 
       /** Returns the ChartingServiceTestEnvironment. */
-      ChartingService::Tests::ChartingServiceTestEnvironment&
-        get_charting_environment();
+      Tests::ChartingServiceTestEnvironment& get_charting_environment();
 
       /** Returns the ComplianceTestEnvironment. */
-      Compliance::Tests::ComplianceTestEnvironment&
-        get_compliance_environment();
+      Tests::ComplianceTestEnvironment& get_compliance_environment();
 
       /** Returns the OrderExecutionServiceTestEnvironment. */
-      OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment&
+      Tests::OrderExecutionServiceTestEnvironment&
         get_order_execution_environment();
 
       /** Returns the RiskServiceTestEnvironment. */
-      RiskService::Tests::RiskServiceTestEnvironment& get_risk_environment();
+      Tests::RiskServiceTestEnvironment& get_risk_environment();
 
       /** Closes the test environment. */
       void close();
@@ -165,25 +157,20 @@ namespace Nexus {
       Beam::UidService::UidClientBox m_uid_client;
       Beam::RegistryService::Tests::RegistryServiceTestEnvironment
         m_registry_environment;
-      DefinitionsService::Tests::DefinitionsServiceTestEnvironment
-        m_definitions_environment;
+      Tests::DefinitionsServiceTestEnvironment m_definitions_environment;
       Tests::AdministrationServiceTestEnvironment m_administration_environment;
       AdministrationClient m_administration_client;
-      boost::optional<
-        MarketDataService::Tests::MarketDataServiceTestEnvironment>
-          m_market_data_environment;
-      boost::optional<MarketDataService::MarketDataClient> m_market_data_client;
-      boost::optional<ChartingService::Tests::ChartingServiceTestEnvironment>
+      boost::optional<Tests::MarketDataServiceTestEnvironment>
+        m_market_data_environment;
+      boost::optional<MarketDataClient> m_market_data_client;
+      boost::optional<Tests::ChartingServiceTestEnvironment>
         m_charting_environment;
-      boost::optional<Compliance::Tests::ComplianceTestEnvironment>
+      boost::optional<Tests::ComplianceTestEnvironment>
         m_compliance_environment;
-      boost::optional<
-        OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment>
-          m_order_execution_environment;
-      boost::optional<OrderExecutionService::OrderExecutionClient>
-        m_order_execution_client;
-      boost::optional<RiskService::Tests::RiskServiceTestEnvironment>
-        m_risk_environment;
+      boost::optional<Tests::OrderExecutionServiceTestEnvironment>
+        m_order_execution_environment;
+      boost::optional<OrderExecutionClient> m_order_execution_client;
+      boost::optional<Tests::RiskServiceTestEnvironment> m_risk_environment;
       Beam::IO::OpenState m_open_state;
 
       TestEnvironment(const TestEnvironment&) = delete;
@@ -198,31 +185,29 @@ namespace Nexus {
    * @param environment The test environment to connect the MarketDataClient to.
    * @param account_name The name of the account.
    */
-  inline MarketDataService::MarketDataClient make_market_data_client(
+  inline MarketDataClient make_market_data_client(
       TestEnvironment& environment, const std::string& account_name) {
-    return MarketDataService::Tests::make_market_data_client(
+    return Tests::make_market_data_client(
       environment.get_service_locator_environment(),
       environment.get_administration_environment(),
       environment.get_market_data_environment(), account_name);
   }
 
   inline TestEnvironment::TestEnvironment()
-    : TestEnvironment(MarketDataService::HistoricalDataStore(
-        std::in_place_type<MarketDataService::LocalHistoricalDataStore>)) {}
+    : TestEnvironment(
+        HistoricalDataStore(std::in_place_type<LocalHistoricalDataStore>)) {}
 
   inline TestEnvironment::TestEnvironment(boost::posix_time::ptime time)
-    : TestEnvironment(MarketDataService::HistoricalDataStore(
-        std::in_place_type<MarketDataService::LocalHistoricalDataStore>),
-        time) {}
+    : TestEnvironment(HistoricalDataStore(
+        std::in_place_type<LocalHistoricalDataStore>), time) {}
 
   inline TestEnvironment::TestEnvironment(
-    MarketDataService::HistoricalDataStore historical_data_store)
+    HistoricalDataStore historical_data_store)
     : TestEnvironment(std::move(historical_data_store),
         boost::posix_time::second_clock::universal_time()) {}
 
   inline TestEnvironment::TestEnvironment(
-      MarketDataService::HistoricalDataStore historical_data_store,
-      boost::posix_time::ptime time)
+      HistoricalDataStore historical_data_store, boost::posix_time::ptime time)
     : m_time_environment(time),
       m_time_client(
         std::in_place_type<Beam::TimeService::Tests::TestTimeClient>,
@@ -324,23 +309,20 @@ namespace Nexus {
   }
 
   inline void TestEnvironment::monitor_order_submissions(
-      Beam::ScopedQueueWriter<
-        std::shared_ptr<const OrderExecutionService::Order>> queue) {
+      Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue) {
     auto primitive_order_queue = Beam::MakeConverterQueueWriter<
-      std::shared_ptr<OrderExecutionService::PrimitiveOrder>>(std::move(queue),
+      std::shared_ptr<PrimitiveOrder>>(std::move(queue),
       [] (const auto& order) {
-        return std::static_pointer_cast<const OrderExecutionService::Order>(
-          order);
+        return std::static_pointer_cast<const Order>(order);
       });
     auto& driver = get_order_execution_environment().get_driver().as<
-      OrderExecutionService::Tests::MockOrderExecutionDriver>();
+      Tests::MockOrderExecutionDriver>();
     driver.get_publisher().Monitor(std::move(primitive_order_queue));
   }
 
-  inline void TestEnvironment::accept(
-      const OrderExecutionService::Order& order) {
-    auto primitive_order = const_cast<OrderExecutionService::PrimitiveOrder*>(
-      dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
+  inline void TestEnvironment::accept(const Order& order) {
+    auto primitive_order =
+      const_cast<PrimitiveOrder*>(dynamic_cast<const PrimitiveOrder*>(&order));
     if(!primitive_order) {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException("Invalid Order specified."));
@@ -351,15 +333,14 @@ namespace Nexus {
           TestEnvironmentException("Order must be PENDING_NEW."));
       }
     });
-    OrderExecutionService::Tests::set_order_status(
+    Tests::set_order_status(
       *primitive_order, OrderStatus::NEW, m_time_environment.GetTime());
     Beam::Routines::FlushPendingRoutines();
   }
 
-  inline void TestEnvironment::reject(
-      const OrderExecutionService::Order& order) {
-    auto primitive_order = const_cast<OrderExecutionService::PrimitiveOrder*>(
-      dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
+  inline void TestEnvironment::reject(const Order& order) {
+    auto primitive_order =
+      const_cast<PrimitiveOrder*>(dynamic_cast<const PrimitiveOrder*>(&order));
     if(!primitive_order) {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException("Invalid Order specified."));
@@ -370,15 +351,14 @@ namespace Nexus {
           TestEnvironmentException("Order is already TERMINAL."));
       }
     });
-    OrderExecutionService::Tests::set_order_status(
+    Tests::set_order_status(
       *primitive_order, OrderStatus::REJECTED, m_time_environment.GetTime());
     Beam::Routines::FlushPendingRoutines();
   }
 
-  inline void TestEnvironment::cancel(
-      const OrderExecutionService::Order& order) {
-    auto primitive_order = const_cast<OrderExecutionService::PrimitiveOrder*>(
-      dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
+  inline void TestEnvironment::cancel(const Order& order) {
+    auto primitive_order =
+      const_cast<PrimitiveOrder*>(dynamic_cast<const PrimitiveOrder*>(&order));
     if(!primitive_order) {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException("Invalid Order specified."));
@@ -389,39 +369,37 @@ namespace Nexus {
           TestEnvironmentException("Order is already TERMINAL."));
       }
     });
-    OrderExecutionService::Tests::cancel(
-      *primitive_order, m_time_environment.GetTime());
-    Beam::Routines::FlushPendingRoutines();
-  }
-
-  inline void TestEnvironment::fill(const OrderExecutionService::Order& order,
-      Money price, Quantity quantity) {
-    auto primitive_order = const_cast<OrderExecutionService::PrimitiveOrder*>(
-      dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
-    if(!primitive_order) {
-      BOOST_THROW_EXCEPTION(
-        TestEnvironmentException("Invalid Order specified."));
-    }
-    primitive_order->with([&](auto status, const auto&) {
-      if(is_terminal(status)) {
-        BOOST_THROW_EXCEPTION(
-          TestEnvironmentException("Order is already TERMINAL."));
-      }
-    });
-    OrderExecutionService::Tests::fill(
-      *primitive_order, price, quantity, m_time_environment.GetTime());
+    Tests::cancel(*primitive_order, m_time_environment.GetTime());
     Beam::Routines::FlushPendingRoutines();
   }
 
   inline void TestEnvironment::fill(
-      const OrderExecutionService::Order& order, Quantity quantity) {
+      const Order& order, Money price, Quantity quantity) {
+    auto primitive_order =
+      const_cast<PrimitiveOrder*>(dynamic_cast<const PrimitiveOrder*>(&order));
+    if(!primitive_order) {
+      BOOST_THROW_EXCEPTION(
+        TestEnvironmentException("Invalid Order specified."));
+    }
+    primitive_order->with([&](auto status, const auto&) {
+      if(is_terminal(status)) {
+        BOOST_THROW_EXCEPTION(
+          TestEnvironmentException("Order is already TERMINAL."));
+      }
+    });
+    Tests::fill(
+      *primitive_order, price, quantity, m_time_environment.GetTime());
+    Beam::Routines::FlushPendingRoutines();
+  }
+
+  inline void TestEnvironment::fill(const Order& order, Quantity quantity) {
     fill(order, order.get_info().m_fields.m_price, quantity);
   }
 
-  inline void TestEnvironment::update(const OrderExecutionService::Order& order,
-      const OrderExecutionService::ExecutionReport& report) {
-    auto primitive_order = const_cast<OrderExecutionService::PrimitiveOrder*>(
-      dynamic_cast<const OrderExecutionService::PrimitiveOrder*>(&order));
+  inline void TestEnvironment::update(
+      const Order& order, const ExecutionReport& report) {
+    auto primitive_order =
+      const_cast<PrimitiveOrder*>(dynamic_cast<const PrimitiveOrder*>(&order));
     if(!primitive_order) {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException("Invalid Order specified."));
@@ -467,7 +445,7 @@ namespace Nexus {
     return m_registry_environment;
   }
 
-  inline DefinitionsService::Tests::DefinitionsServiceTestEnvironment&
+  inline Tests::DefinitionsServiceTestEnvironment&
       TestEnvironment::get_definitions_environment() {
     return m_definitions_environment;
   }
@@ -477,27 +455,27 @@ namespace Nexus {
     return m_administration_environment;
   }
 
-  inline MarketDataService::Tests::MarketDataServiceTestEnvironment&
+  inline Tests::MarketDataServiceTestEnvironment&
       TestEnvironment::get_market_data_environment() {
     return *m_market_data_environment;
   }
 
-  inline ChartingService::Tests::ChartingServiceTestEnvironment&
+  inline Tests::ChartingServiceTestEnvironment&
       TestEnvironment::get_charting_environment() {
     return *m_charting_environment;
   }
 
-  inline Compliance::Tests::ComplianceTestEnvironment&
+  inline Tests::ComplianceTestEnvironment&
       TestEnvironment::get_compliance_environment() {
     return *m_compliance_environment;
   }
 
-  inline OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment&
+  inline Tests::OrderExecutionServiceTestEnvironment&
       TestEnvironment::get_order_execution_environment() {
     return *m_order_execution_environment;
   }
 
-  inline RiskService::Tests::RiskServiceTestEnvironment&
+  inline Tests::RiskServiceTestEnvironment&
       TestEnvironment::get_risk_environment() {
     return *m_risk_environment;
   }

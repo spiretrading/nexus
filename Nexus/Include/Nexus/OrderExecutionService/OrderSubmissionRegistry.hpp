@@ -6,7 +6,7 @@
 #include <Beam/Threading/Sync.hpp>
 #include "Nexus/OrderExecutionService/AccountOrderSubmissionEntry.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Keeps and updates a registry of Order submissions. */
   class OrderSubmissionRegistry {

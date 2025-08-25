@@ -112,8 +112,7 @@ namespace Nexus {
    * @return The fee calculated for the specified trade.
    */
   inline Money calculate_fee(const ChicFeeTable& table,
-      const OrderExecutionService::OrderFields& fields,
-      const OrderExecutionService::ExecutionReport& report) {
+      const OrderFields& fields, const ExecutionReport& report) {
     if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }

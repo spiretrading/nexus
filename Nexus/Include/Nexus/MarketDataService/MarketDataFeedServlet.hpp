@@ -9,7 +9,7 @@
 #include <Beam/Utilities/VariantLambdaVisitor.hpp>
 #include "Nexus/MarketDataService/MarketDataFeedServices.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Processes market data feed messages.

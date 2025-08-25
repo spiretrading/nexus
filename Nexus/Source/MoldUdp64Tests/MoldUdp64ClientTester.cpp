@@ -8,7 +8,6 @@ using namespace Beam;
 using namespace Beam::IO;
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::MoldUdp64;
 
 namespace {
   struct Fixture {

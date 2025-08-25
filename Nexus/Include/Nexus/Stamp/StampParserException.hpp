@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <boost/exception/exception.hpp>
 
-namespace Nexus::Stamp {
+namespace Nexus {
 
   /** Exception used to indicate that a parsing operation failed. */
   class StampParserException :

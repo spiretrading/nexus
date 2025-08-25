@@ -12,14 +12,14 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/SimulationMatcher/SecurityOrderSimulator.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /**
    * An OrderExecutionDriver that simulates transactions.
    * @param <M> The type of MarketDataClient to use.
    * @param <T> The type of TimeClient used for Order timestamps.
    */
-  template<MarketDataService::IsMarketDataClient M, typename T>
+  template<IsMarketDataClient M, typename T>
   class SimulationOrderExecutionDriver {
     public:
 
@@ -48,8 +48,7 @@ namespace Nexus::OrderExecutionService {
       void close();
 
     private:
-      using SecurityOrderSimulator =
-        OrderExecutionService::SecurityOrderSimulator<TimeClient*>;
+      using SecurityOrderSimulator = Nexus::SecurityOrderSimulator<TimeClient*>;
       Beam::GetOptionalLocalPtr<M> m_market_data_client;
       Beam::GetOptionalLocalPtr<T> m_time_client;
       Beam::SynchronizedUnorderedMap<OrderId, std::shared_ptr<PrimitiveOrder>>
@@ -71,7 +70,7 @@ namespace Nexus::OrderExecutionService {
   SimulationOrderExecutionDriver(M&&, T&&) -> SimulationOrderExecutionDriver<
     std::remove_reference_t<M>, std::remove_reference_t<T>>;
 
-  template<MarketDataService::IsMarketDataClient M, typename T>
+  template<IsMarketDataClient M, typename T>
   template<Beam::Initializes<M> MF, Beam::Initializes<T> TF>
   SimulationOrderExecutionDriver<M, T>::SimulationOrderExecutionDriver(
     MF&& market_data_client, TF&& time_client)
@@ -79,12 +78,12 @@ namespace Nexus::OrderExecutionService {
       m_time_client(std::forward<TF>(time_client)),
       m_next_order_id(1) {}
 
-  template<MarketDataService::IsMarketDataClient M, typename T>
+  template<IsMarketDataClient M, typename T>
   SimulationOrderExecutionDriver<M, T>::~SimulationOrderExecutionDriver() {
     close();
   }
 
-  template<MarketDataService::IsMarketDataClient M, typename T>
+  template<IsMarketDataClient M, typename T>
   std::shared_ptr<const Order> SimulationOrderExecutionDriver<M, T>::recover(
       const SequencedAccountOrderRecord& record) {
     auto order = std::make_shared<PrimitiveOrder>(**record);
@@ -94,11 +93,11 @@ namespace Nexus::OrderExecutionService {
     return order;
   }
 
-  template<MarketDataService::IsMarketDataClient M, typename T>
+  template<IsMarketDataClient M, typename T>
   void SimulationOrderExecutionDriver<M, T>::add(
     const std::shared_ptr<const Order>& order) {}
 
-  template<MarketDataService::IsMarketDataClient M, typename T>
+  template<IsMarketDataClient M, typename T>
   std::shared_ptr<const Order> SimulationOrderExecutionDriver<M, T>::submit(
       const OrderInfo& info) {
     auto order = std::make_shared<PrimitiveOrder>(info);
@@ -108,7 +107,7 @@ namespace Nexus::OrderExecutionService {
     return order;
   }
 
-  template<MarketDataService::IsMarketDataClient M, typename T>
+  template<IsMarketDataClient M, typename T>
   void SimulationOrderExecutionDriver<M, T>::cancel(
       const OrderExecutionSession& session, OrderId id) {
     if(auto order = m_orders.Find(id)) {
@@ -117,7 +116,7 @@ namespace Nexus::OrderExecutionService {
     }
   }
 
-  template<MarketDataService::IsMarketDataClient M, typename T>
+  template<IsMarketDataClient M, typename T>
   void SimulationOrderExecutionDriver<M, T>::update(
       const OrderExecutionSession& session, OrderId id,
       const ExecutionReport& report) {
@@ -127,7 +126,7 @@ namespace Nexus::OrderExecutionService {
     }
   }
 
-  template<MarketDataService::IsMarketDataClient M, typename T>
+  template<IsMarketDataClient M, typename T>
   void SimulationOrderExecutionDriver<M, T>::close() {
     if(m_open_state.SetClosing()) {
       return;
@@ -136,7 +135,7 @@ namespace Nexus::OrderExecutionService {
     m_open_state.Close();
   }
 
-  template<MarketDataService::IsMarketDataClient M, typename T>
+  template<IsMarketDataClient M, typename T>
   typename SimulationOrderExecutionDriver<M, T>::SecurityOrderSimulator&
       SimulationOrderExecutionDriver<M, T>::load(const Security& security) {
     return *m_simulators.GetOrInsert(security, [&] {

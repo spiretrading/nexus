@@ -86,9 +86,8 @@ namespace Nexus {
    * @return <code>true</code> iff the <i>order</i> was submitted to the NEO
    *         book.
    */
-  inline bool is_neo_book_order(
-      const OrderExecutionService::OrderFields& fields) {
-    return OrderExecutionService::has_field(fields, Tag(100, "N"));
+  inline bool is_neo_book_order(const OrderFields& fields) {
+    return has_field(fields, Tag(100, "N"));
   }
 
   /**
@@ -156,8 +155,7 @@ namespace Nexus {
    */
   inline Money calculate_fee(
       const NeoeFeeTable& table, NeoeFeeTable::Classification classification,
-      const OrderExecutionService::OrderFields& fields,
-      const OrderExecutionService::ExecutionReport& report) {
+      const OrderFields& fields, const ExecutionReport& report) {
     if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }

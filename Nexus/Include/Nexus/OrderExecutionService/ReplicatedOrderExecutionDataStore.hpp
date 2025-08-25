@@ -3,7 +3,7 @@
 #include <atomic>
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Duplicates an OrderExecutionDataStore across multiple instances. */
   class ReplicatedOrderExecutionDataStore {

@@ -5,7 +5,7 @@
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Keeps and updates a registry of Order submissions. */
   class AccountOrderSubmissionEntry {

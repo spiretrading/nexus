@@ -4,7 +4,7 @@
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
 
-namespace Nexus::FixUtilities {
+namespace Nexus {
 
   /** Implements a FIX Application to be used by the FixOrderExecutionDriver. */
   class FixApplication : public FIX::Application {
@@ -16,20 +16,15 @@ namespace Nexus::FixUtilities {
       /** Returns the session settings. */
       const FIX::SessionSettings& get_session_settings() const;
 
-      virtual std::shared_ptr<const OrderExecutionService::Order> recover(
-        const OrderExecutionService::SequencedAccountOrderRecord& record) = 0;
+      virtual std::shared_ptr<const Order> recover(
+        const SequencedAccountOrderRecord& record) = 0;
 
-      virtual std::shared_ptr<const OrderExecutionService::Order> submit(
-        const OrderExecutionService::OrderInfo& info) = 0;
+      virtual std::shared_ptr<const Order> submit(const OrderInfo& info) = 0;
 
-      virtual void cancel(
-        const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId id) = 0;
+      virtual void cancel(const OrderExecutionSession& session, OrderId id) = 0;
 
-      virtual void update(
-        const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId id,
-        const OrderExecutionService::ExecutionReport& report) = 0;
+      virtual void update(const OrderExecutionSession& session, OrderId id,
+        const ExecutionReport& report) = 0;
 
     protected:
 

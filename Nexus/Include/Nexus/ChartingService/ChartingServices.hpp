@@ -8,14 +8,14 @@
 #include "Nexus/Queries/StandardDataTypes.hpp"
 #include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
 
-namespace Nexus::ChartingService {
+namespace Nexus {
   using SecurityChartingQueryResult =
-    Beam::Queries::QueryResult<Queries::SequencedQueryVariant>;
+    Beam::Queries::QueryResult<SequencedQueryVariant>;
   BEAM_DEFINE_RECORD(TimePriceQueryResult, Beam::Queries::Sequence, start,
-    Beam::Queries::Sequence, end, TechnicalAnalysis::TimePriceSeries, series);
+    Beam::Queries::Sequence, end, TimePriceSeries, series);
 
   /** Standard name for the charting service. */
-  inline const auto SERVICE_NAME = std::string("charting_service");
+  inline const auto CHARTING_SERVICE_NAME = std::string("charting_service");
 
   BEAM_DEFINE_SERVICES(ChartingServices,
 
@@ -51,7 +51,7 @@ namespace Nexus::ChartingService {
      * @param value The updated QueryValue.
      */
     (SecurityQueryMessage, "Nexus.ChartingService.SecurityQueryMessage", int,
-      query_id, Queries::SequencedQueryVariant, value),
+      query_id, SequencedQueryVariant, value),
 
     /**
      * Terminates a previous Security query.

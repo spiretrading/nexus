@@ -5,7 +5,7 @@
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderRecord.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Implements the Order interface using basic setters. */
   class PrimitiveOrder : public Order {

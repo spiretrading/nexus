@@ -184,8 +184,7 @@ namespace Nexus {
    * @return <code>true</code> iff the <i>order</i> is classified as a hidden
    *         TSX Order.
    */
-  inline bool is_tsx_hidden_order(
-      const OrderExecutionService::OrderFields& fields) {
+  inline bool is_tsx_hidden_order(const OrderFields& fields) {
     return fields.m_type == OrderType::PEGGED;
   }
 
@@ -198,9 +197,8 @@ namespace Nexus {
    * @return The fee calculated for the specified trade.
    */
   inline Money calculate_fee(const TsxFeeTable& table,
-      TsxFeeTable::Classification classification,
-      const OrderExecutionService::OrderFields& fields,
-      const OrderExecutionService::ExecutionReport& report) {
+      TsxFeeTable::Classification classification, const OrderFields& fields,
+      const ExecutionReport& report) {
     if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }

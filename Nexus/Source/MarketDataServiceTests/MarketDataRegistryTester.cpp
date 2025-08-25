@@ -9,7 +9,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::MarketDataService;
 
 TEST_SUITE("MarketDataRegistry") {
   TEST_CASE("search_security_info") {

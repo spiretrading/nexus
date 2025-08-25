@@ -11,7 +11,7 @@
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
   using OrderImbalanceQueryResult =
     Beam::Queries::QueryResult<SequencedOrderImbalance>;
   using BboQuoteQueryResult = Beam::Queries::QueryResult<SequencedBboQuote>;
@@ -20,11 +20,11 @@ namespace Nexus::MarketDataService {
     Beam::Queries::QueryResult<SequencedTimeAndSale>;
 
   /** Standard name for the market data registry service. */
-  inline const auto REGISTRY_SERVICE_NAME =
+  inline const auto MARKET_DATA_REGISTRY_SERVICE_NAME =
     std::string("market_data_registry_service");
 
   /** Standard name for the market data relay service. */
-  inline const auto RELAY_SERVICE_NAME =
+  inline const auto MARKET_DATA_RELAY_SERVICE_NAME =
     std::string("market_data_relay_service");
 
   BEAM_DEFINE_SERVICES(MarketDataRegistryServices,

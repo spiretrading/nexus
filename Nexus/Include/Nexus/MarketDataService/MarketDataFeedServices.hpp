@@ -10,12 +10,13 @@
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
   using MarketDataFeedMessage = boost::variant<SecurityBboQuote,
     SecurityBookQuote, SecurityTimeAndSale, VenueOrderImbalance>;
 
   /** Standard name for the market data feed service. */
-  inline const auto FEED_SERVICE_NAME = std::string("market_data_feed_service");
+  inline const auto MARKET_DATA_FEED_SERVICE_NAME =
+    std::string("market_data_feed_service");
 
   BEAM_DEFINE_MESSAGES(MarketDataFeedMessages,
 

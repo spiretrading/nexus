@@ -16,7 +16,7 @@
 #include "Nexus/ChartingService/ServiceChartingClient.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 
-namespace Nexus::ChartingService::Tests {
+namespace Nexus::Tests {
 
   /**
    * Wraps most components needed to run an instance of the ChartingService with
@@ -32,7 +32,7 @@ namespace Nexus::ChartingService::Tests {
        */
       ChartingServiceTestEnvironment(
         Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
-        MarketDataService::MarketDataClient market_data_client);
+        MarketDataClient market_data_client);
 
       ~ChartingServiceTestEnvironment();
 
@@ -54,7 +54,7 @@ namespace Nexus::ChartingService::Tests {
       using ServiceProtocolServletContainer =
         Beam::Services::ServiceProtocolServletContainer<
           Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-            MetaChartingServlet<MarketDataService::MarketDataClient>,
+            MetaChartingServlet<MarketDataClient>,
             Beam::ServiceLocator::ServiceLocatorClientBox>,
           ServerConnection*,
           Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
@@ -78,7 +78,7 @@ namespace Nexus::ChartingService::Tests {
 
   inline ChartingServiceTestEnvironment::ChartingServiceTestEnvironment(
     Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
-    MarketDataService::MarketDataClient market_data_client)
+    MarketDataClient market_data_client)
     : m_container(Beam::Initialize(std::move(service_locator_client),
         Beam::Initialize(std::move(market_data_client))), &m_server_connection,
         boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
