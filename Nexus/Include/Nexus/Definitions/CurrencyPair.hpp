@@ -10,7 +10,7 @@
 
 namespace Nexus {
 
-  /* Represents a pair of currencies. */
+  /** Represents a pair of currencies. */
   struct CurrencyPair {
 
     /** The base currency. */
@@ -65,7 +65,7 @@ namespace Nexus {
    * @return The CurrencyPair with the base and counter inverted.
    */
   inline CurrencyPair invert(CurrencyPair pair) {
-    return {pair.m_counter, pair.m_base};
+    return CurrencyPair(pair.m_counter, pair.m_base);
   }
 
   inline std::ostream& operator <<(std::ostream& out, CurrencyPair pair) {

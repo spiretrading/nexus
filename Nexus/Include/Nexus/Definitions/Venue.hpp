@@ -50,7 +50,7 @@ namespace Nexus {
       Beam::FixedString<4> m_mic;
   };
 
-  /** Stores a database of trading venues. **/
+  /** Stores a database of trading venues. */
   class VenueDatabase {
     public:
 
@@ -108,7 +108,7 @@ namespace Nexus {
 
       /**
        * Returns an Entry from its display name.
-       * @param display_name The market's display name.
+       * @param display_name The venue's display name.
        * @return The Entry with the specified display_name.
        */
       const Entry& from_display_name(std::string_view display_name) const;
@@ -155,9 +155,8 @@ namespace Nexus {
   }
 
   /**
-   * Parses an Entry from a string.
+   * Parses an Entry from a string using the default venue database.
    * @param source The string to parse.
-   * @param database The VenueDatabase containing the available Entry.
    * @return The Entry represented by the <i>source</i>.
    */
   inline const VenueDatabase::Entry& parse_venue_entry(
@@ -215,7 +214,7 @@ namespace Nexus {
       entry.m_description = Beam::Extract<std::string>(node, "description");
       entry.m_display_name = Beam::Extract<std::string>(node, "display_name");
       return entry;
-    }, std::runtime_error("Failed to parse market database entry."));
+    }, std::runtime_error("Failed to parse venue database entry."));
   }
 
   /**

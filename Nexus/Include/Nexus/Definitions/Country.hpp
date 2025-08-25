@@ -51,7 +51,7 @@ namespace Nexus {
 
   inline const CountryCode CountryCode::NONE(~0);
 
-  /** Stores the database of all countries. */
+  /** Stores a database of countries. */
   class CountryDatabase {
     public:
 

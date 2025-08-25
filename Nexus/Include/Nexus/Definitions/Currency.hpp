@@ -50,7 +50,7 @@ namespace Nexus {
 
   inline const CurrencyId CurrencyId::NONE(~0);
 
-  /** Stores the database of all Currency. */
+  /** Stores a database of currencies. */
   class CurrencyDatabase {
     public:
 

@@ -16,7 +16,7 @@ namespace Nexus {
     /** The quote's MPID. */
     std::string m_mpid;
 
-    /** Whether the MPID is the Market's primary participant. */
+    /** Whether the MPID is the venue's primary participant. */
     bool m_is_primary_mpid = false;
 
     /** The venue this quote comes from. */
@@ -32,8 +32,8 @@ namespace Nexus {
   };
 
   /**
-   * Tests if two BookQuote's represent the same listing, that is they share
-   * the same side, price and MPID.
+   * Tests if two BookQuotes represent the same listing, that is they share the
+   * same side, price and MPID.
    */
   inline bool is_same_listing(const BookQuote& lhs, const BookQuote& rhs) {
     return std::tie(lhs.m_quote.m_side, lhs.m_quote.m_price, lhs.m_mpid) ==

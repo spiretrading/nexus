@@ -43,7 +43,6 @@ namespace Nexus {
       /**
        * Constructs a Region consisting of a single venue.
        * @param venue The venue to represent.
-       * @param country The country the venue belongs to.
        */
       Region(Venue venue);
 
@@ -142,17 +141,37 @@ namespace Nexus {
   }
 
   inline std::size_t hash_value(const Region& region) {
-    auto seed = std::size_t(0);
-    for(auto& country : region.get_countries()) {
-      boost::hash_combine(seed, country);
+    if(region.is_global()) {
+      return std::size_t(0x9e3779b97f4a7c15);
     }
-    for(auto& venue : region.get_venues()) {
-      boost::hash_combine(seed, venue);
-    }
-    for(auto& security : region.get_securities()) {
-      boost::hash_combine(seed, security);
-    }
-    return seed;
+    const auto COUNTRY_SALT = std::size_t(0x1bd11bdaa9fc1a22);
+    const auto VENUE_SALT = std::size_t(0x3c79ac492ba7b653);
+    const auto SECURITY_SALT = std::size_t(0x1f123bb5dfcbb123);
+    auto mix = [] (auto x) {
+      x += 0x9e3779b97f4a7c15ull;
+      x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ull;
+      x = (x ^ (x >> 27)) * 0x94d049bb133111ebull;
+      return x ^ (x >> 31);
+    };
+    auto rotate_left = [] (auto x, auto r) {
+      return (x << r) | (x >> (64 - r));
+    };
+    auto set_hash = [&] (const auto& set, auto salt) {
+      auto sum = std::size_t(0);
+      auto xors = std::size_t(0);
+      for(auto& element : set) {
+        auto hv = mix(set.hash_function()(element) + salt);
+        sum += hv;
+        xors ^= rotate_left(hv, 23);
+      }
+      return mix(sum + rotate_left(xors, 17));
+    };
+    auto countries_hash = set_hash(region.get_countries(), COUNTRY_SALT);
+    auto venues_hash = set_hash(region.get_venues(), VENUE_SALT);
+    auto securities_hash = set_hash(region.get_securities(), SECURITY_SALT);
+    auto hash = countries_hash + rotate_left(venues_hash, 21) +
+      rotate_left(securities_hash, 42);
+    return mix(hash);
   }
 
   inline bool operator <(const Security& security, const Region& region) {
@@ -221,7 +240,8 @@ namespace Nexus {
   }
 
   inline bool Region::is_empty() const {
-    return m_countries.empty() && m_venues.empty() && m_securities.empty();
+    return m_countries.empty() && m_venues.empty() && m_securities.empty() &&
+      !is_global();
   }
 
   inline const std::unordered_set<CountryCode>& Region::get_countries() const {

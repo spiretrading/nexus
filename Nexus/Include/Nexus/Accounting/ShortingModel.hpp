@@ -36,17 +36,12 @@ namespace Nexus {
         Side m_side;
         Quantity m_quantity;
         Quantity m_remaining_quantity;
-
-        OrderEntry() noexcept;
       };
       std::unordered_map<OrderId, OrderEntry> m_order_entries;
       std::unordered_map<Security, PositionEntry> m_position_entries;
 
       PositionEntry& get_position(const Security& security);
   };
-
-  inline ShortingModel::OrderEntry::OrderEntry() noexcept
-    : m_side(Side::BID) {}
 
   inline bool ShortingModel::submit(OrderId id, const OrderFields& fields) {
     auto order_iterator = m_order_entries.find(id);
@@ -84,6 +79,9 @@ namespace Nexus {
       std::min(report.m_last_quantity, order_entry.m_remaining_quantity);
     if(order_entry.m_side == Side::ASK && is_terminal(report.m_status)) {
       position.m_ask_quantity_pending -= order_entry.m_remaining_quantity;
+    }
+    if(is_terminal(report.m_status)) {
+      m_order_entries.erase(report.m_id);
     }
   }
 

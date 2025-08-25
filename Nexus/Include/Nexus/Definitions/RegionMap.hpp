@@ -1,8 +1,11 @@
 #ifndef NEXUS_REGION_MAP_HPP
 #define NEXUS_REGION_MAP_HPP
+#include <algorithm>
 #include <deque>
 #include <iterator>
+#include <memory>
 #include <tuple>
+#include <vector>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <Beam/Serialization/ShuttleTuple.hpp>
@@ -80,13 +83,13 @@ namespace Details {
           Iterator operator ++(int);
 
           /** Tests if two Iterators refer to the same element. */
-          bool operator ==(const Iterator& rhs);
-
-          /** Tests if two Iterators refer to different elements. */
-          bool operator !=(const Iterator& rhs);
+          bool operator ==(const Iterator& rhs) const;
 
           /** Dereferences this Iterator. */
           std::tuple<const Region, Element>& operator *();
+
+          /** Dereferences this Iterator. */
+          std::tuple<const Region, Element>* operator ->();
 
         private:
           friend class RegionMap<Element>;
@@ -118,13 +121,13 @@ namespace Details {
           ConstIterator operator ++(int);
 
           /** Tests if two ConstIterators refer to the same element. */
-          bool operator ==(const ConstIterator& rhs);
-
-          /** Tests if two ConstIterators refer to different elements. */
-          bool operator !=(const ConstIterator& rhs);
+          bool operator ==(const ConstIterator& rhs) const;
 
           /** Dereferences this ConstIterator. */
           const std::tuple<const Region, Element>& operator *();
+
+          /** Dereferences this ConstIterator. */
+          const std::tuple<const Region, Element>* operator ->();
 
         private:
           friend class RegionMap<Element>;
@@ -242,22 +245,22 @@ namespace Details {
   }
 
   template<typename T>
-  bool RegionMap<T>::Iterator::operator ==(const Iterator& rhs) {
+  bool RegionMap<T>::Iterator::operator ==(const Iterator& rhs) const {
     return (m_nodes.empty() && rhs.m_nodes.empty()) ||
       (!m_nodes.empty() && !rhs.m_nodes.empty() &&
       m_nodes.front() == rhs.m_nodes.front());
   }
 
   template<typename T>
-  bool RegionMap<T>::Iterator::operator !=(const Iterator& rhs) {
-    return !(*this == rhs);
+  std::tuple<const Region, typename RegionMap<T>::Element>&
+      RegionMap<T>::Iterator::operator *() {
+    return m_nodes.front()->m_element;
   }
 
   template<typename T>
-  std::tuple<const Region, typename RegionMap<T>::Element>&
-      RegionMap<T>::Iterator::operator *() {
-    return static_cast<std::tuple<const Region, Element>&>(
-      m_nodes.front()->m_element);
+  std::tuple<const Region, typename RegionMap<T>::Element>*
+      RegionMap<T>::Iterator::operator ->() {
+    return &m_nodes.front()->m_element;
   }
 
   template<typename T>
@@ -286,21 +289,23 @@ namespace Details {
   }
 
   template<typename T>
-  bool RegionMap<T>::ConstIterator::operator ==(const ConstIterator& rhs) {
+  bool RegionMap<T>::ConstIterator::operator ==(
+      const ConstIterator& rhs) const {
     return (m_nodes.empty() && rhs.m_nodes.empty()) ||
       (!m_nodes.empty() && !rhs.m_nodes.empty() &&
       m_nodes.front() == rhs.m_nodes.front());
   }
 
   template<typename T>
-  bool RegionMap<T>::ConstIterator::operator !=(const ConstIterator& rhs) {
-    return !(*this == rhs);
-  }
-
-  template<typename T>
   const std::tuple<const Region, typename RegionMap<T>::Element>&
       RegionMap<T>::ConstIterator::operator *() {
     return m_nodes.front()->m_element;
+  }
+
+  template<typename T>
+  const std::tuple<const Region, typename RegionMap<T>::Element>*
+      RegionMap<T>::ConstIterator::operator ->() {
+    return &m_nodes.front()->m_element;
   }
 
   template<typename T>

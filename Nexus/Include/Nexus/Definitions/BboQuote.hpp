@@ -19,7 +19,7 @@ namespace Nexus {
     /** The best ask. */
     Quote m_ask;
 
-    /** The time of the transaction. */
+    /** The time of the update. */
     boost::posix_time::ptime m_timestamp;
 
     /** Constructs an uninitialized BboQuote. */

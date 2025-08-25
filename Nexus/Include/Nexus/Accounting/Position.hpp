@@ -77,12 +77,7 @@ namespace Nexus {
    * @return The Side corresponding to the <i>position</i>.
    */
   inline Side get_side(const Position& position) {
-    if(position.m_quantity == 0) {
-      return Side::NONE;
-    } else if(position.m_quantity > 0) {
-      return Side::BID;
-    }
-    return Side::ASK;
+    return get_side(position.m_quantity);
   }
 }
 

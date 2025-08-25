@@ -605,6 +605,8 @@ void Nexus::Python::export_quote(module& module) {
     def("__str__", &lexical_cast<std::string, Quote>).
     def(self == self).
     def(self != self);
+  module.def("make_ask", &make_ask);
+  module.def("make_bid", &make_bid);
   module.def("listing_comparator",
     static_cast<bool (*)(const Quote&, const Quote&)>(&listing_comparator));
   module.def("offer_comparator", &offer_comparator);
@@ -794,6 +796,7 @@ void Nexus::Python::export_time_in_force(module& module) {
     value("FOK", TimeInForce::Type::FOK).
     value("GTX", TimeInForce::Type::GTX).
     value("GTD", TimeInForce::Type::GTD);
+  module.def("make_gtd", &make_gtd);
 }
 
 void Nexus::Python::export_trading_schedule(module& module) {

@@ -43,8 +43,8 @@ namespace Nexus {
       /** The index of the date type. */
       static constexpr auto DATE_INDEX = 6;
 
-      /** The index of the time type. */
-      static constexpr auto TIME_INDEX = 7;
+      /** The index of the duration type. */
+      static constexpr auto DURATION_INDEX = 7;
 
       /** The index of the date-time type. */
       static constexpr auto DATE_TIME_INDEX = 8;

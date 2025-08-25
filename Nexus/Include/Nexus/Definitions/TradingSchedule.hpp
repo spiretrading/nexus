@@ -253,9 +253,9 @@ namespace Nexus {
   template<typename F>
   std::vector<TradingSchedule::Event> TradingSchedule::find(
       boost::gregorian::date date, Venue venue, F f) const {
+    auto events = std::vector<TradingSchedule::Event>();
     for(auto& rule : m_rules) {
       if(is_match(venue, date, rule)) {
-        auto events = std::vector<TradingSchedule::Event>();
         for(auto& event : rule.m_events) {
           if(f(event)) {
             events.push_back(event);
@@ -263,10 +263,9 @@ namespace Nexus {
               boost::posix_time::ptime(date, event.m_timestamp.time_of_day());
           }
         }
-        return events;
       }
     }
-    return {};
+    return events;
   }
 }
 

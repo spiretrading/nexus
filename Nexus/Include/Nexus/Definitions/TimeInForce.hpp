@@ -81,22 +81,30 @@ namespace Details {
       boost::posix_time::ptime m_expiry;
   };
 
+  /**
+   * Makes a TimeInForce whose type is GTD.
+   * @param expiry Specifies when the Order expires.
+   */
+  inline TimeInForce make_gtd(boost::posix_time::ptime expiry) {
+    return TimeInForce(TimeInForce::Type::GTD, expiry);
+  }
+
   inline std::ostream& operator <<(std::ostream& out, TimeInForce::Type value) {
-    if(value == Nexus::TimeInForce::Type::DAY) {
+    if(value == TimeInForce::Type::DAY) {
       return out << "DAY";
-    } else if(value == Nexus::TimeInForce::Type::GTC) {
+    } else if(value == TimeInForce::Type::GTC) {
       return out << "GTC";
-    } else if(value == Nexus::TimeInForce::Type::OPG) {
+    } else if(value == TimeInForce::Type::OPG) {
       return out << "OPG";
-    } else if(value == Nexus::TimeInForce::Type::MOC) {
+    } else if(value == TimeInForce::Type::MOC) {
       return out << "MOC";
-    } else if(value == Nexus::TimeInForce::Type::IOC) {
+    } else if(value == TimeInForce::Type::IOC) {
       return out << "IOC";
-    } else if(value == Nexus::TimeInForce::Type::FOK) {
+    } else if(value == TimeInForce::Type::FOK) {
       return out << "FOK";
-    } else if(value == Nexus::TimeInForce::Type::GTX) {
+    } else if(value == TimeInForce::Type::GTX) {
       return out << "GTX";
-    } else if(value == Nexus::TimeInForce::Type::GTD) {
+    } else if(value == TimeInForce::Type::GTD) {
       return out << "GTD";
     }
     return out << "NONE";

@@ -23,21 +23,21 @@ namespace Nexus {
   };
 
   /**
-   * Constructs a bid Quote.
-   * @param price The bid's price.
-   * @param size The size being bid.
-   */
-  inline Quote make_bid(Money price, Quantity size) {
-    return Quote(price, size, Side::BID);
-  }
-
-  /**
    * Constructs an ask Quote.
    * @param price The ask's price.
    * @param size The size being asked.
    */
   inline Quote make_ask(Money price, Quantity size) {
     return Quote(price, size, Side::ASK);
+  }
+
+  /**
+   * Constructs a bid Quote.
+   * @param price The bid's price.
+   * @param size The size being bid.
+   */
+  inline Quote make_bid(Money price, Quantity size) {
+    return Quote(price, size, Side::BID);
   }
 
   /**

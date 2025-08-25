@@ -32,7 +32,7 @@ TEST_SUITE("Tag") {
     require_tag(Tag::CHAR_INDEX, 3, 'x');
     require_tag(Tag::STRING_INDEX, 4, std::string("hello"));
     require_tag(Tag::DATE_INDEX, 5, date(2025, 6, 30));
-    require_tag(Tag::TIME_INDEX, 6, time_duration(1, 2, 3));
+    require_tag(Tag::DURATION_INDEX, 6, time_duration(1, 2, 3));
     require_tag(Tag::DATE_TIME_INDEX, 7,
       ptime(date(2025, 6, 30), time_duration(12, 34, 56)));
     require_tag(Tag::QUANTITY_INDEX, 8, Quantity(123));
