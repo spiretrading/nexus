@@ -15,6 +15,7 @@
 
 using namespace Beam;
 using namespace Beam::Queries;
+using namespace Beam::Routines;
 using namespace Beam::ServiceLocator;
 using namespace Beam::ServiceLocator::Tests;
 using namespace Beam::Services;
@@ -134,6 +135,7 @@ namespace {
     snapshot.m_sequence = Beam::Queries::Sequence(1);
     fixture.m_data_store.store(account, snapshot);
     fixture.m_accounts_queue->Push(account);
+    FlushPendingRoutines();
     auto [account_, client] = fixture.make_client(name);
     return std::tuple(account, std::move(client), inventories);
   }
@@ -280,6 +282,9 @@ TEST_SUITE("RiskServlet") {
         return std::tie(lhs.m_key.m_account.m_id, lhs.m_key.m_security) <
           std::tie(rhs.m_key.m_account.m_id, rhs.m_key.m_security);
       });
+    for(auto entry : admin_entries) {
+      std::cout << entry << std::endl;
+    }
     REQUIRE(admin_entries.size() == 4);
     REQUIRE(admin_entries[0].m_key.m_account == account1);
     REQUIRE(admin_entries[0].m_key.m_security == BAC);
