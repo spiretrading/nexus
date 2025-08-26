@@ -51,8 +51,8 @@ def main():
     order_id = tokens[0]
     sequence = tokens[1]
     execution_fee, processing_fee, commission = \
-      (nexus.Money.from_value(tokens[12]), nexus.Money.from_value(tokens[13]),
-       nexus.Money.from_value(tokens[14]))
+      (nexus.parse_money(tokens[12]), nexus.parse_money(tokens[13]),
+       nexus.parse_money(tokens[14]))
     query = 'UPDATE execution_reports SET ' \
       'execution_fee = %s, processing_fee = %s, commission = %s WHERE ' \
       'order_id = %s AND sequence = %s;' % \

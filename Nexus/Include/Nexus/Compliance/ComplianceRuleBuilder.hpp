@@ -3,13 +3,8 @@
 #include <Beam/TimeService/TimeClientBox.hpp>
 #include <boost/variant/get.hpp>
 #include "Nexus/Compliance/BuyingPowerComplianceRule.hpp"
-#include "Nexus/Compliance/CancelRestrictionPeriodComplianceRule.hpp"
 #include "Nexus/Compliance/OpposingOrderCancellationComplianceRule.hpp"
 #include "Nexus/Compliance/OpposingOrderSubmissionComplianceRule.hpp"
-#include "Nexus/Compliance/OrderCountPerSideComplianceRule.hpp"
-#include "Nexus/Compliance/PerAccountComplianceRule.hpp"
-#include "Nexus/Compliance/SubmissionRestrictionPeriodComplianceRule.hpp"
-#include "Nexus/Compliance/SymbolRestrictionComplianceRule.hpp"
 #include "Nexus/DefinitionsService/DefinitionsClient.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 

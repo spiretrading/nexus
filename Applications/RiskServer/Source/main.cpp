@@ -38,17 +38,11 @@ using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::Accounting;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::DefinitionsService;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::RiskService;
 using namespace Viper;
 
 namespace {
-  using ApplicationDataStore = SqlRiskDataStore<
-    SqlConnection<MySql::Connection>>;
+  using ApplicationDataStore =
+    SqlRiskDataStore<SqlConnection<MySql::Connection>>;
   using RiskServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<
       MetaRiskServlet<ApplicationAdministrationClient::Client*,
@@ -63,55 +57,57 @@ int main(int argc, const char** argv) {
   try {
     auto config = ParseCommandLine(argc, argv, "0.9-r" RISK_SERVER_VERSION
       "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto serviceConfig = TryOrNest([&] {
-      return ServiceConfiguration::Parse(GetNode(config, "server"),
-        RiskService::SERVICE_NAME);
+    auto service_config = TryOrNest([&] {
+      return ServiceConfiguration::Parse(
+        GetNode(config, "server"), RISK_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'server'."));
-    auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
-      GetNode(config, "service_locator"));
-    auto definitionsClient = ApplicationDefinitionsClient(
-      serviceLocatorClient.Get());
-    auto administrationClient = ApplicationAdministrationClient(
-      serviceLocatorClient.Get());
-    auto marketDataClient = ApplicationMarketDataClient(
-      serviceLocatorClient.Get());
-    auto orderExecutionClient = ApplicationOrderExecutionClient(
-      serviceLocatorClient.Get());
-    auto timeClient = MakeLiveNtpTimeClientFromServiceLocator(
-      *serviceLocatorClient);
-    auto mySqlConfig = TryOrNest([&] {
+    auto service_locator_client =
+      MakeApplicationServiceLocatorClient(GetNode(config, "service_locator"));
+    auto definitions_client =
+      ApplicationDefinitionsClient(service_locator_client.Get());
+    auto administration_client =
+      ApplicationAdministrationClient(service_locator_client.Get());
+    auto market_data_client =
+      ApplicationMarketDataClient(service_locator_client.Get());
+    auto order_execution_client =
+      ApplicationOrderExecutionClient(service_locator_client.Get());
+    auto time_client =
+      MakeLiveNtpTimeClientFromServiceLocator(*service_locator_client);
+    auto mysql_config = TryOrNest([&] {
       return MySqlConfig::Parse(GetNode(config, "data_store"));
     }, std::runtime_error("Error parsing section 'data_store'."));
-    auto dataStore = ApplicationDataStore(MakeSqlConnection(MySql::Connection(
-      mySqlConfig.m_address.GetHost(), mySqlConfig.m_address.GetPort(),
-      mySqlConfig.m_username, mySqlConfig.m_password, mySqlConfig.m_schema)));
-    auto exchangeRates = definitionsClient->LoadExchangeRates();
-    auto markets = definitionsClient->LoadMarketDatabase();
-    auto destinations = definitionsClient->LoadDestinationDatabase();
+    auto data_store = ApplicationDataStore(MakeSqlConnection(MySql::Connection(
+      mysql_config.m_address.GetHost(), mysql_config.m_address.GetPort(),
+      mysql_config.m_username, mysql_config.m_password,
+      mysql_config.m_schema)));
+    auto exchange_rates =
+      ExchangeRateTable(definitions_client->load_exchange_rates());
+    auto venues = definitions_client->load_venue_database();
+    auto destinations = definitions_client->load_destination_database();
     auto accounts = std::make_shared<Queue<AccountUpdate>>();
-    serviceLocatorClient->MonitorAccounts(accounts);
-    auto riskServer = RiskServletContainer(Initialize(
-      serviceLocatorClient.Get(), Initialize(
-        MakeConverterQueueReader(MakeFilteredQueueReader(std::move(accounts),
-          [] (const auto& update) {
+    service_locator_client->MonitorAccounts(accounts);
+    auto risk_server =
+      RiskServletContainer(Initialize(service_locator_client.Get(), Initialize(
+        MakeConverterQueueReader(
+          MakeFilteredQueueReader(std::move(accounts), [] (const auto& update) {
             return update.m_type == AccountUpdate::Type::ADDED;
           }),
           [] (const auto& update) {
             return update.m_account;
-          }), administrationClient.Get(), marketDataClient.Get(),
-        orderExecutionClient.Get(),
+          }), administration_client.Get(), market_data_client.Get(),
+        order_execution_client.Get(),
         [] {
           return std::make_unique<LiveTimer>(seconds(1));
-        }, std::move(timeClient), &dataStore, std::move(exchangeRates),
-        std::move(markets), std::move(destinations))),
-      Initialize(serviceConfig.m_interface),
+        }, std::move(time_client), &data_store, std::move(exchange_rates),
+        std::move(venues), std::move(destinations))),
+      Initialize(service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-    Register(*serviceLocatorClient, serviceConfig);
+    Register(*service_locator_client, service_config);
     WaitForKillEvent();
-    serviceLocatorClient->Close();
-    orderExecutionClient->Close();
-    marketDataClient->Close();
-    administrationClient->Close();
+    service_locator_client->Close();
+    order_execution_client->close();
+    market_data_client->close();
+    administration_client->close();
   } catch(...) {
     ReportCurrentException();
     return -1;
