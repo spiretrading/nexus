@@ -47,8 +47,7 @@ def main():
   service_locator_client = \
     beam.service_locator.ApplicationServiceLocatorClient(username, password,
       address)
-  feed_client = nexus.market_data_service.ApplicationMarketDataFeedClient(
-    service_locator_client)
+  feed_client = nexus.ApplicationMarketDataFeedClient(service_locator_client)
   security_info = nexus.SecurityInfo()
   security_info.security = nexus.parse_security('%s' % args.symbol)
   security_info.name = args.name

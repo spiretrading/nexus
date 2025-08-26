@@ -26,7 +26,8 @@ namespace Nexus {
    * @param <T> The type of TimeClient to use.
    * @param <R> The type of Timer to use.
    */
-  template<typename M, typename D, typename T, typename R>
+  template<IsMarketDataFeedClient M, IsHistoricalDataStore D, typename T,
+    typename R>
   class ReplayMarketDataFeedClient {
     public:
 
@@ -52,166 +53,157 @@ namespace Nexus {
       /**
        * Constructs a ReplayMarketDataFeedClient.
        * @param securities The list of Securities to replay.
-       * @param replayTime The timestamp to begin loading data to replay.
-       * @param feedClient Initializes the MarketDataFeedClient to send the
+       * @param replay_time The timestamp to begin loading data to replay.
+       * @param feed_client Initializes the MarketDataFeedClient to send the
        *        replayed data to.
-       * @param dataStore The HistoricalDataStore to load market data from.
-       * @param timeClient Initializes the TimeClient.
-       * @param timerBuilder The builder used to build Timer instances.
+       * @param data_store The HistoricalDataStore to load market data from.
+       * @param time_client Initializes the TimeClient.
+       * @param timer_builder The builder used to build Timer instances.
        */
-      template<typename MF, typename DF, typename TF>
+      template<Beam::Initializes<M> MF, Beam::Initializes<D> DF,
+        Beam::Initializes<T> TF>
       ReplayMarketDataFeedClient(std::vector<Security> securities,
-        boost::posix_time::ptime replayTime, MF&& feedClient, DF&& dataStore,
-        TF&& timeClient, TimerBuilder timerBuilder);
+        boost::posix_time::ptime replay_time, MF&& feed_client, DF&& data_store,
+        TF&& time_client, TimerBuilder timer_builder);
 
       ~ReplayMarketDataFeedClient();
 
-      void Open();
-
-      void Close();
+      void close();
 
     private:
       std::vector<Security> m_securities;
-      boost::posix_time::ptime m_replayTime;
-      Beam::GetOptionalLocalPtr<M> m_feedClient;
-      Beam::GetOptionalLocalPtr<D> m_dataStore;
-      Beam::GetOptionalLocalPtr<T> m_timeClient;
-      boost::posix_time::ptime m_openTime;
-      TimerBuilder m_timerBuilder;
-      Beam::Threading::Mutex m_pendingMutex;
-      std::size_t m_pendingLoadCount;
-      Beam::Threading::ConditionVariable m_isPendingLoad;
-      Beam::IO::OpenState m_openState;
+      boost::posix_time::ptime m_replay_time;
+      Beam::GetOptionalLocalPtr<M> m_feed_client;
+      Beam::GetOptionalLocalPtr<D> m_data_store;
+      Beam::GetOptionalLocalPtr<T> m_time_client;
+      boost::posix_time::ptime m_open_time;
+      TimerBuilder m_timer_builder;
+      Beam::Threading::Mutex m_pending_mutex;
+      std::size_t m_pending_load_count;
+      Beam::Threading::ConditionVariable m_is_pending_load;
+      Beam::IO::OpenState m_open_state;
       Beam::Routines::RoutineHandlerGroup m_routines;
 
       ReplayMarketDataFeedClient(const ReplayMarketDataFeedClient&) = delete;
       ReplayMarketDataFeedClient& operator =(
         const ReplayMarketDataFeedClient&) = delete;
       template<typename F, typename P>
-      void ReplayMarketData(const Security& security, F&& queryLoader,
-        P&& publisher);
+      void replay(const Security& security, F&& query_loader, P&& publisher);
   };
 
-  template<typename M, typename D, typename T, typename R>
-  template<typename MF, typename DF, typename TF>
+  template<IsMarketDataFeedClient M, IsHistoricalDataStore D, typename T,
+    typename R>
+  template<Beam::Initializes<M> MF, Beam::Initializes<D> DF,
+    Beam::Initializes<T> TF>
   ReplayMarketDataFeedClient<M, D, T, R>::ReplayMarketDataFeedClient(
-      std::vector<Security> securities, boost::posix_time::ptime replayTime,
-      MF&& feedClient, DF&& dataStore, TF&& timeClient,
-      TimerBuilder timerBuilder)
+      std::vector<Security> securities, boost::posix_time::ptime replay_time,
+      MF&& feed_client, DF&& data_store, TF&& time_client,
+      TimerBuilder timer_builder)
       : m_securities(std::move(securities)),
-        m_replayTime(replayTime),
-        m_feedClient(std::forward<MF>(feedClient)),
-        m_dataStore(std::forward<DF>(dataStore)),
-        m_timeClient(std::forward<TF>(timeClient)),
-        m_timerBuilder(std::move(timerBuilder)) {
+        m_replay_time(replay_time),
+        m_feed_client(std::forward<MF>(feed_client)),
+        m_data_store(std::forward<DF>(data_store)),
+        m_time_client(std::forward<TF>(time_client)),
+        m_timer_builder(std::move(timer_builder)) {
     try {
-      m_openTime = m_timeClient->GetTime();
-      m_pendingLoadCount = 4 * m_securities.size();
+      m_open_time = m_time_client->GetTime();
+      m_pending_load_count = 4 * m_securities.size();
       for(auto& security : m_securities) {
         m_routines.Spawn([=, this] {
-          ReplayMarketData(security,
-            [this] (const auto& query) {
-              return m_dataStore->LoadBboQuotes(query);
-            },
-            [this] (const auto& value) {
-              return m_feedClient->Publish(value);
-            });
+          replay(security, [this] (const auto& query) {
+            return m_data_store->load_bbo_quotes(query);
+          },
+          [this] (const auto& value) {
+            return m_feed_client->publish(value);
+          });
         });
         m_routines.Spawn([=, this] {
-          ReplayMarketData(security,
-            [this] (const auto& query) {
-              return m_dataStore->LoadMarketQuotes(query);
-            },
-            [this] (const auto& value) {
-              return m_feedClient->Publish(value);
-            });
+          replay(security, [this] (const auto& query) {
+            return m_data_store->load_book_quotes(query);
+          },
+          [this] (const auto& value) {
+            return m_feed_client->publish(value);
+          });
         });
         m_routines.Spawn([=, this] {
-          ReplayMarketData(security,
-            [this] (const auto& query) {
-              return m_dataStore->LoadBookQuotes(query);
-            },
-            [this] (const auto& value) {
-              return m_feedClient->Publish(value);
-            });
-        });
-        m_routines.Spawn([=, this] {
-          ReplayMarketData(security,
-            [this] (const auto& query) {
-              return m_dataStore->LoadTimeAndSales(query);
-            },
-            [this] (const auto& value) {
-              return m_feedClient->Publish(value);
-            });
+          replay(security, [this] (const auto& query) {
+            return m_data_store->load_time_and_sales(query);
+          },
+          [this] (const auto& value) {
+            return m_feed_client->publish(value);
+          });
         });
       }
     } catch(std::exception&) {
-      Close();
+      close();
       BOOST_RETHROW;
     }
   }
 
-  template<typename M, typename D, typename T, typename R>
+  template<IsMarketDataFeedClient M, IsHistoricalDataStore D, typename T,
+    typename R>
   ReplayMarketDataFeedClient<M, D, T, R>::~ReplayMarketDataFeedClient() {
-    Close();
+    close();
   }
 
-  template<typename M, typename D, typename T, typename R>
-  void ReplayMarketDataFeedClient<M, D, T, R>::Close() {
-    if(m_openState.SetClosing()) {
+  template<IsMarketDataFeedClient M, IsHistoricalDataStore D, typename T,
+    typename R>
+  void ReplayMarketDataFeedClient<M, D, T, R>::close() {
+    if(m_open_state.SetClosing()) {
       return;
     }
     m_routines.Wait();
-    m_openState.Close();
+    m_open_state.Close();
   }
 
-  template<typename M, typename D, typename T, typename R>
+  template<IsMarketDataFeedClient M, IsHistoricalDataStore D, typename T,
+    typename R>
   template<typename F, typename P>
-  void ReplayMarketDataFeedClient<M, D, T, R>::ReplayMarketData(
-      const Security& security, F&& queryLoader, P&& publisher) {
-    constexpr auto QUERY_SIZE = 1000;
-    const auto WAIT_QUANTUM = boost::posix_time::time_duration(
-      boost::posix_time::seconds(1));
-    auto query = MarketDataService::SecurityMarketDataQuery();
+  void ReplayMarketDataFeedClient<M, D, T, R>::replay(
+      const Security& security, F&& query_loader, P&& publisher) {
+    const auto QUERY_SIZE = 1000;
+    const auto WAIT_QUANTUM =
+      boost::posix_time::time_duration(boost::posix_time::seconds(1));
+    auto query = SecurityMarketDataQuery();
     query.SetIndex(security);
-    query.SetRange(m_replayTime, Beam::Queries::Sequence::Last());
+    query.SetRange(m_replay_time, Beam::Queries::Sequence::Last());
     query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(QUERY_SIZE));
-    auto data = queryLoader(query);
+    auto data = query_loader(query);
     {
-      auto lock = boost::unique_lock(m_pendingMutex);
-      --m_pendingLoadCount;
-      if(m_pendingLoadCount == 0) {
-        m_isPendingLoad.notify_all();
+      auto lock = std::unique_lock(m_pending_mutex);
+      --m_pending_load_count;
+      if(m_pending_load_count == 0) {
+        m_is_pending_load.notify_all();
       } else {
-        m_isPendingLoad.wait(lock);
+        m_is_pending_load.wait(lock);
       }
     }
-    auto currentTime = m_timeClient->GetTime();
-    auto replayTime = m_replayTime + (currentTime - m_openTime);
-    while(!data.empty() && m_openState.IsOpen()) {
+    auto current_time = m_time_client->GetTime();
+    auto replay_time = m_replay_time + (current_time - m_open_time);
+    while(!data.empty() && m_open_state.IsOpen()) {
       for(auto& item : data) {
-        auto wait = Beam::Queries::GetTimestamp(*item) - replayTime;
-        while(m_openState.IsOpen() && wait > boost::posix_time::seconds(0)) {
-          auto timer = m_timerBuilder(std::min(wait, WAIT_QUANTUM));
+        auto wait = Beam::Queries::GetTimestamp(*item) - replay_time;
+        while(m_open_state.IsOpen() && wait > boost::posix_time::seconds(0)) {
+          auto timer = m_timer_builder(std::min(wait, WAIT_QUANTUM));
           timer->Start();
           timer->Wait();
           wait -= WAIT_QUANTUM;
         }
-        if(!m_openState.IsOpen()) {
+        if(!m_open_state.IsOpen()) {
           return;
         }
-        Beam::Queries::GetTimestamp(*item) = m_timeClient->GetTime();
+        Beam::Queries::GetTimestamp(*item) = m_time_client->GetTime();
         publisher(Beam::Queries::IndexedValue(*item, security));
-        auto updatedTime = m_timeClient->GetTime();
-        replayTime += updatedTime - currentTime;
-        currentTime = updatedTime;
+        auto updated_time = m_time_client->GetTime();
+        replay_time += updated_time - current_time;
+        current_time = updated_time;
       }
       query.SetRange(Beam::Queries::Increment(data.back().GetSequence()),
         Beam::Queries::Sequence::Last());
-      data = queryLoader(query);
-      auto updatedTime = m_timeClient->GetTime();
-      replayTime += updatedTime - currentTime;
-      currentTime = updatedTime;
+      data = query_loader(query);
+      auto updated_time = m_time_client->GetTime();
+      replay_time += updated_time - current_time;
+      current_time = updated_time;
     }
   }
 }

@@ -41,9 +41,6 @@ using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::DefinitionsService;
-using namespace Nexus::MarketDataService;
 using namespace Viper;
 
 namespace {
@@ -67,23 +64,23 @@ namespace {
     BinarySender<SharedBuffer>, SizeDeclarativeEncoder<ZLibEncoder>,
     std::shared_ptr<LiveTimer>>;
 
-  JsonValue ParseCountries(const YAML::Node& config,
-      const CountryDatabase& countryDatabase) {
+  JsonValue parse_countries(
+      const YAML::Node& config, const CountryDatabase& countries) {
     return TryOrNest([&] {
-      auto countries = std::vector<JsonValue>();
+      auto country_nodes = std::vector<JsonValue>();
       for(auto item : config) {
         auto code = item.as<std::string>();
-        auto country = ParseCountryCode(code, countryDatabase);
-        if(country == CountryCode::NONE) {
+        auto country = parse_country_code(code, countries);
+        if(!country) {
           throw std::runtime_error("Country code not found: " + code);
         }
-        countries.push_back(static_cast<double>(
-          static_cast<std::uint16_t>(country)));
+        country_nodes.push_back(
+          static_cast<double>(static_cast<std::uint16_t>(country)));
       }
-      if(countries.empty()) {
+      if(country_nodes.empty()) {
         return JsonValue(JsonNull());
       }
-      return JsonValue(countries);
+      return JsonValue(country_nodes);
     }, std::runtime_error("Error parsing countries."));
   }
 }
@@ -93,58 +90,59 @@ int main(int argc, const char** argv) {
     auto config = ParseCommandLine(argc, argv,
       "0.9-r" MARKET_DATA_SERVER_VERSION
       "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
-      GetNode(config, "service_locator"));
-    auto definitionsClient = ApplicationDefinitionsClient(
-      serviceLocatorClient.Get());
-    auto administrationClient = ApplicationAdministrationClient(
-      serviceLocatorClient.Get());
-    auto countryDatabase = definitionsClient->LoadCountryDatabase();
-    auto registryServiceConfig = TryOrNest([&] {
-      return ServiceConfiguration::Parse(GetNode(config, "registry_server"),
-        MarketDataService::REGISTRY_SERVICE_NAME);
+    auto service_locator_client =
+      MakeApplicationServiceLocatorClient(GetNode(config, "service_locator"));
+    auto definitions_client =
+      ApplicationDefinitionsClient(service_locator_client.Get());
+    auto administration_client =
+      ApplicationAdministrationClient(service_locator_client.Get());
+    auto countries = definitions_client->load_country_database();
+    auto registry_service_config = TryOrNest([&] {
+      return ServiceConfiguration::Parse(
+        GetNode(config, "registry_server"), MARKET_DATA_REGISTRY_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'registry_server'."));
-    auto feedServiceConfig = TryOrNest([&] {
-      return ServiceConfiguration::Parse(GetNode(config, "feed_server"),
-        MarketDataService::FEED_SERVICE_NAME);
+    auto feed_service_config = TryOrNest([&] {
+      return ServiceConfiguration::Parse(
+        GetNode(config, "feed_server"), MARKET_DATA_FEED_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'feed_server'."));
-    auto countries = TryOrNest([&] {
-      if(auto countriesNode = config["countries"]) {
-        return ParseCountries(countriesNode,
-          definitionsClient->LoadCountryDatabase());
+    auto countries_node = TryOrNest([&] {
+      if(auto countries_node = config["countries"]) {
+        return parse_countries(
+          countries_node, definitions_client->load_country_database());
       }
       return JsonValue(JsonNull());
     }, std::runtime_error("Error parsing section 'countries'"));
-    if(countries != JsonNull()) {
-      registryServiceConfig.m_properties["countries"] = countries;
-      feedServiceConfig.m_properties["countries"] = countries;
+    if(countries_node != JsonNull()) {
+      registry_service_config.m_properties["countries"] = countries_node;
+      feed_service_config.m_properties["countries"] = countries_node;
     }
-    auto mySqlConfig = TryOrNest([&] {
+    auto mysql_config = TryOrNest([&] {
       return MySqlConfig::Parse(GetNode(config, "data_store"));
     }, std::runtime_error("Error parsing section 'data_store'."));
-    auto historicalDataStore = SqlDataStore([=] {
-      return SqlConnection(MySql::Connection(mySqlConfig.m_address.GetHost(),
-        mySqlConfig.m_address.GetPort(), mySqlConfig.m_username,
-        mySqlConfig.m_password, mySqlConfig.m_schema));
+    auto venues = definitions_client->load_venue_database();
+    auto historical_data_store = SqlDataStore(venues, [=] {
+      return SqlConnection(MySql::Connection(mysql_config.m_address.GetHost(),
+        mysql_config.m_address.GetPort(), mysql_config.m_username,
+        mysql_config.m_password, mysql_config.m_schema));
     });
-    auto asyncDataStore = AsyncHistoricalDataStore<SqlDataStore*>(
-      &historicalDataStore);
-    auto cacheBlockSize = Extract<int>(config, "cache_block_size", 1000);
-    auto marketDataRegistry = MarketDataRegistry();
-    auto baseRegistryServlet = BaseRegistryServlet(&*administrationClient,
-      &marketDataRegistry, Initialize(&asyncDataStore, cacheBlockSize));
-    auto registryServer = RegistryServletContainer(Initialize(
-      serviceLocatorClient.Get(), &baseRegistryServlet),
-      Initialize(registryServiceConfig.m_interface),
+    auto async_data_store = AsyncHistoricalDataStore(&historical_data_store);
+    auto cache_block_size = Extract<int>(config, "cache_block_size", 1000);
+    auto time_zone_database = definitions_client->load_time_zone_database();
+    auto market_data_registry = MarketDataRegistry(venues, time_zone_database);
+    auto base_registry_servlet = BaseRegistryServlet(&*administration_client,
+      &market_data_registry, Initialize(&async_data_store, cache_block_size));
+    auto registry_server = RegistryServletContainer(
+      Initialize(service_locator_client.Get(), &base_registry_servlet),
+      Initialize(registry_service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-    Register(*serviceLocatorClient, registryServiceConfig);
-    auto feedServer = FeedServletContainer(Initialize(
-      serviceLocatorClient.Get(), &baseRegistryServlet),
-      Initialize(feedServiceConfig.m_interface),
+    Register(*service_locator_client, registry_service_config);
+    auto feedServer = FeedServletContainer(
+      Initialize(service_locator_client.Get(), &base_registry_servlet),
+      Initialize(feed_service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-    Register(*serviceLocatorClient, feedServiceConfig);
+    Register(*service_locator_client, feed_service_config);
     WaitForKillEvent();
-    serviceLocatorClient->Close();
+    service_locator_client->Close();
   } catch(...) {
     ReportCurrentException();
     return -1;

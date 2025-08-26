@@ -72,6 +72,10 @@ namespace Nexus {
         const AsyncHistoricalDataStore&) = delete;
   };
 
+  template<typename DataStore>
+  AsyncHistoricalDataStore(DataStore&&) ->
+    AsyncHistoricalDataStore<std::remove_reference_t<DataStore>>;
+
   template<IsHistoricalDataStore D>
   template<Beam::Initializes<D> DF>
   AsyncHistoricalDataStore<D>::AsyncHistoricalDataStore(DF&& data_store)

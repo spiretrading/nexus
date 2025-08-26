@@ -42,14 +42,14 @@ def load_securities(source):
       nexus.Security(result[0], nexus.CountryCode(int(result[1]))))
   return securities
 
-def load_markets(source):
-  markets = []
+def load_venues(source):
+  venues = []
   cursor = source.cursor()
-  query = 'SELECT DISTINCT `market` FROM `order_imbalances`'
+  query = 'SELECT DISTINCT `venue` FROM `order_imbalances`'
   cursor.execute(query)
   for result in cursor.fetchall():
-    markets.append(result[0])
-  return markets
+    venues.append(result[0])
+  return venues
 
 def backup_security_info(source, destination):
   query = beam.queries.PagedQuery()
@@ -94,7 +94,6 @@ def backup_spawn(index, start, end, source, destination):
   backup(index, start, end, source.load_bbo_quotes, destination)
   backup(index, start, end, source.load_time_and_sales, destination)
   backup(index, start, end, source.load_book_quotes, destination)
-  backup(index, start, end, source.load_market_quotes, destination)
 
 def main():
   parser = argparse.ArgumentParser(
@@ -139,12 +138,11 @@ def main():
     sqlite_path = args.input
     connection = sqlite3.connect(sqlite_path)
   securities = load_securities(connection)
-  markets = load_markets(connection)
+  venues = load_venues(connection)
   connection.close()
-  mysql_data_store = nexus.market_data_service.MySqlHistoricalDataStore(
+  mysql_data_store = nexus.MySqlHistoricalDataStore(
     address.host, address.port, username, password, schema)
-  sqlite_data_store = nexus.market_data_service.SqliteHistoricalDataStore(
-    sqlite_path)
+  sqlite_data_store = nexus.SqliteHistoricalDataStore(sqlite_path)
   if args.output is not None:
     source = mysql_data_store
     destination = sqlite_data_store
@@ -162,8 +160,8 @@ def main():
   routines.wait()
   routines = beam.routines.RoutineHandlerGroup()
   count = 0
-  for market in markets:
-    routines.spawn(functools.partial(backup, market, args.start, args.end,
+  for venue in venues:
+    routines.spawn(functools.partial(backup, venue, args.start, args.end,
       source.load_order_imbalances, destination))
     count += 1
     if count % args.cores == 0:
