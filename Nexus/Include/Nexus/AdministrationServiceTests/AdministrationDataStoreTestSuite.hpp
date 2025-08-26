@@ -126,6 +126,10 @@ namespace Nexus::Tests {
       auto all_parameters = data_store.with_transaction([&] {
         return data_store.load_all_risk_parameters();
       });
+      std::sort(all_parameters.begin(), all_parameters.end(),
+        [] (const auto& left, const auto& right) {
+          return left.m_index.m_id < right.m_index.m_id;
+        });
       REQUIRE(all_parameters.size() == 2);
       auto first_parameters = all_parameters[0];
       REQUIRE(first_parameters.m_index == account_a);
@@ -183,6 +187,10 @@ namespace Nexus::Tests {
       auto all_states = data_store.with_transaction([&] {
         return data_store.load_all_risk_states();
       });
+      std::sort(all_states.begin(), all_states.end(),
+        [] (const auto& left, const auto& right) {
+          return left.m_index.m_id < right.m_index.m_id;
+        });
       REQUIRE(all_states.size() == 2);
       auto first_state = all_states[0];
       REQUIRE(first_state.m_index == account_a);

@@ -282,9 +282,6 @@ TEST_SUITE("RiskServlet") {
         return std::tie(lhs.m_key.m_account.m_id, lhs.m_key.m_security) <
           std::tie(rhs.m_key.m_account.m_id, rhs.m_key.m_security);
       });
-    for(auto entry : admin_entries) {
-      std::cout << entry << std::endl;
-    }
     REQUIRE(admin_entries.size() == 4);
     REQUIRE(admin_entries[0].m_key.m_account == account1);
     REQUIRE(admin_entries[0].m_key.m_security == BAC);
