@@ -1,5 +1,6 @@
 #ifndef NEXUS_WEB_PORTAL_SESSION_HPP
 #define NEXUS_WEB_PORTAL_SESSION_HPP
+#include <mutex>
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
 #include <Beam/WebServices/AuthenticatedSession.hpp>
@@ -7,10 +8,9 @@
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/thread/mutex.hpp>
-#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
-#include "WebPortal/WebPortal.hpp"
+#include "Nexus/Clients/Clients.hpp"
 
-namespace Nexus::WebPortal {
+namespace Nexus {
 
   /** Represents a session to the WebPortal. */
   class WebPortalSession : public Beam::WebServices::AuthenticatedSession {
@@ -22,16 +22,14 @@ namespace Nexus::WebPortal {
        */
       explicit WebPortalSession(std::string id);
 
-      /**
-       * Returns the ServiceClients used by this session.
-       */
-      ServiceClientsBox& GetServiceClients();
+      /** Returns the Clients used by this session. */
+      Clients& get_clients();
 
       /**
-       * Sets the ServiceClients to use for this session.
-       * @param serviceClients The ServiceClients to use.
+       * Sets the Clients to use for this session.
+       * @param clients The ServiceClients to use.
        */
-      void SetServiceClients(ServiceClientsBox serviceClients);
+      void set_clients(Clients clients);
 
       /**
        * Shuttles the parameters from this client.
@@ -39,7 +37,7 @@ namespace Nexus::WebPortal {
        * @return The deserialized value.
        */
       template<typename T>
-      auto ShuttleParameters(const Beam::WebServices::HttpRequest& request);
+      auto shuttle_parameters(const Beam::WebServices::HttpRequest& request);
 
       /**
        * Shuttles the response to this client.
@@ -47,18 +45,18 @@ namespace Nexus::WebPortal {
        * @param response Stores the response.
        */
       template<typename T>
-      void ShuttleResponse(const T& value,
-        Beam::Out<Beam::WebServices::HttpResponse> response);
+      void shuttle_response(
+        const T& value, Beam::Out<Beam::WebServices::HttpResponse> response);
 
     private:
       mutable boost::mutex m_mutex;
       Beam::Serialization::JsonReceiver<Beam::IO::SharedBuffer> m_receiver;
       Beam::Serialization::JsonSender<Beam::IO::SharedBuffer> m_sender;
-      boost::optional<ServiceClientsBox> m_serviceClients;
+      boost::optional<Clients> m_clients;
   };
 
   template<typename T>
-  auto WebPortalSession::ShuttleParameters(
+  auto WebPortalSession::shuttle_parameters(
       const Beam::WebServices::HttpRequest& request) {
     auto parameters = T();
     {
@@ -70,15 +68,14 @@ namespace Nexus::WebPortal {
   }
 
   template<typename T>
-  void WebPortalSession::ShuttleResponse(const T& value,
-      Beam::Out<Beam::WebServices::HttpResponse> response) {
+  void WebPortalSession::shuttle_response(
+      const T& value, Beam::Out<Beam::WebServices::HttpResponse> response) {
     response->SetHeader({"Content-Type", "application/json"});
-    auto buffer =
-      [&] {
-        auto lock = std::lock_guard(m_mutex);
-        return Beam::Serialization::Encode<Beam::IO::SharedBuffer>(m_sender,
-          value);
-      }();
+    auto buffer = [&] {
+      auto lock = std::lock_guard(m_mutex);
+      return Beam::Serialization::Encode<Beam::IO::SharedBuffer>(
+        m_sender, value);
+    }();
     response->SetBody(std::move(buffer));
   }
 }

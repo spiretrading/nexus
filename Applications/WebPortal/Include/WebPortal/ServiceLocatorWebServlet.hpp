@@ -4,62 +4,60 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
 #include <Beam/WebServices/SessionStore.hpp>
-#include "WebPortal/WebPortal.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 
-namespace Nexus::WebPortal {
+namespace Nexus {
 
   /** Provides a web interface to the ServiceLocator. */
   class ServiceLocatorWebServlet {
     public:
 
       /**
-       * Type of function used to build session ServiceClients.
+       * Type of function used to build session Clients.
        * @param username The username to login with.
        * @param password The username's password.
        */
-      using ServiceClientsBuilder = std::function<ServiceClientsBox (
+      using ClientsBuilder = std::function<Clients (
         const std::string& username, const std::string& password)>;
 
       /**
        * Constructs a ServiceLocatorWebServlet.
        * @param sessions The available web sessions.
-       * @param serviceClientsBuilder The function used to build session
-       *        ServiceClients.
+       * @param clients_builder The function used to build session Clients.
        */
-      ServiceLocatorWebServlet(Beam::Ref<
-        Beam::WebServices::SessionStore<WebPortalSession>> sessions,
-        ServiceClientsBuilder serviceClientsBuilder);
+      ServiceLocatorWebServlet(
+        Beam::Ref<Beam::WebServices::SessionStore<WebPortalSession>> sessions,
+        ClientsBuilder clients_builder);
 
       ~ServiceLocatorWebServlet();
 
-      std::vector<Beam::WebServices::HttpRequestSlot> GetSlots();
+      std::vector<Beam::WebServices::HttpRequestSlot> get_slots();
 
-      void Close();
+      void close();
 
     private:
       Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
-      ServiceClientsBuilder m_serviceClientsBuilder;
-      Beam::IO::OpenState m_openState;
+      ClientsBuilder m_clients_builder;
+      Beam::IO::OpenState m_open_state;
 
       ServiceLocatorWebServlet(const ServiceLocatorWebServlet&) = delete;
-      ServiceLocatorWebServlet& operator =(
+      ServiceLocatorWebServlet& operator=(
         const ServiceLocatorWebServlet&) = delete;
-      Beam::WebServices::HttpResponse OnLogin(
+      Beam::WebServices::HttpResponse on_login(
         const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLogout(
+      Beam::WebServices::HttpResponse on_logout(
         const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadCurrentAccount(
+      Beam::WebServices::HttpResponse on_load_current_account(
         const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadDirectoryEntryFromId(
+      Beam::WebServices::HttpResponse on_load_directory_entry_from_id(
         const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnStorePassword(
+      Beam::WebServices::HttpResponse on_store_password(
         const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnSearchDirectoryEntry(
+      Beam::WebServices::HttpResponse on_search_directory_entry(
         const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnCreateAccount(
+      Beam::WebServices::HttpResponse on_create_account(
         const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnCreateGroup(
+      Beam::WebServices::HttpResponse on_create_group(
         const Beam::WebServices::HttpRequest& request);
   };
 }

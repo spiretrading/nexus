@@ -241,16 +241,16 @@ namespace Nexus {
   template<typename... Args>
   Clients::WrappedClients<C>::WrappedClients(Args&&... args)
     : m_clients(std::forward<Args>(args)...),
-      m_service_locator_client(m_clients->get_service_locator_client()),
-      m_registry_client(m_clients->get_registry_client()),
-      m_administration_client(m_clients->get_administration_client()),
-      m_definitions_client(m_clients->get_definitions_client()),
-      m_market_data_client(m_clients->get_market_data_client()),
-      m_charting_client(m_clients->get_charting_client()),
-      m_compliance_client(m_clients->get_compliance_client()),
-      m_order_execution_client(m_clients->get_order_execution_client()),
-      m_risk_client(m_clients->get_risk_client()),
-      m_time_client(m_clients->get_time_client()) {}
+      m_service_locator_client(&m_clients->get_service_locator_client()),
+      m_registry_client(&m_clients->get_registry_client()),
+      m_administration_client(&m_clients->get_administration_client()),
+      m_definitions_client(&m_clients->get_definitions_client()),
+      m_market_data_client(&m_clients->get_market_data_client()),
+      m_charting_client(&m_clients->get_charting_client()),
+      m_compliance_client(&m_clients->get_compliance_client()),
+      m_order_execution_client(&m_clients->get_order_execution_client()),
+      m_risk_client(&m_clients->get_risk_client()),
+      m_time_client(&m_clients->get_time_client()) {}
 
   template<typename C>
   Clients::ServiceLocatorClient&
