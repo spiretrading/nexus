@@ -16,13 +16,6 @@
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/lexical_cast.hpp>
-#include "Nexus/Compliance/BuyingPowerComplianceRule.hpp"
-#include "Nexus/Compliance/CancelRestrictionPeriodComplianceRule.hpp"
-#include "Nexus/Compliance/OpposingOrderCancellationComplianceRule.hpp"
-#include "Nexus/Compliance/OpposingOrderSubmissionComplianceRule.hpp"
-#include "Nexus/Compliance/OrderCountPerSideComplianceRule.hpp"
-#include "Nexus/Compliance/SubmissionRestrictionPeriodComplianceRule.hpp"
-#include "Nexus/Compliance/SymbolRestrictionComplianceRule.hpp"
 #include "Nexus/DefinitionsService/DefinitionsServlet.hpp"
 #include "Version.hpp"
 
@@ -38,8 +31,6 @@ using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::Compliance;
-using namespace Nexus::DefinitionsService;
 
 namespace {
   using DefinitionsServletContainer = ServiceProtocolServletContainer<
@@ -47,17 +38,16 @@ namespace {
       ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
     BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
 
-  std::vector<ExchangeRate> ParseExchangeRates(const YAML::Node& config) {
+  std::vector<ExchangeRate> parse_exchange_rates(const YAML::Node& config) {
     return TryOrNest([&] {
-      auto exchangeRates = std::vector<ExchangeRate>();
+      auto rates = std::vector<ExchangeRate>();
       for(auto& entry : config) {
         auto symbol = Extract<std::string>(entry, "symbol");
-        auto pair = ParseCurrencyPair(symbol);
+        auto pair = parse_currency_pair(symbol);
         auto rate = Extract<rational<int>>(entry, "rate");
-        auto exchangeRate = ExchangeRate(pair, rate);
-        exchangeRates.push_back(exchangeRate);
+        rates.push_back(ExchangeRate(pair, rate));
       }
-      return exchangeRates;
+      return rates;
     }, std::runtime_error("Failed to parse exchange rates."));
   }
 }
@@ -66,31 +56,18 @@ int main(int argc, const char** argv) {
   try {
     auto config = ParseCommandLine(argc, argv, "1.0-r"
       DEFINITIONS_SERVER_VERSION "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto serviceConfig = TryOrNest([&] {
-      return ServiceConfiguration::Parse(GetNode(config, "server"),
-        DefinitionsService::SERVICE_NAME);
+    auto service_config = TryOrNest([&] {
+      return ServiceConfiguration::Parse(
+        GetNode(config, "server"), DEFINITIONS_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'server'."));
-    auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
-      GetNode(config, "service_locator"));
-    auto complianceRuleSchemas = std::vector<ComplianceRuleSchema>();
-    complianceRuleSchemas.push_back(MakeBuyingPowerComplianceRuleSchema());
-    complianceRuleSchemas.push_back(
-      MakeCancelRestrictionPeriodComplianceRuleSchema());
-    complianceRuleSchemas.push_back(
-      MakeOpposingOrderCancellationComplianceRuleSchema());
-    complianceRuleSchemas.push_back(
-      MakeOpposingOrderSubmissionComplianceRuleSchema());
-    complianceRuleSchemas.push_back(
-      MakeOrderCountPerSideComplianceRuleSchema());
-    complianceRuleSchemas.push_back(
-      MakeSubmissionRestrictionPeriodComplianceRuleSchema());
-    complianceRuleSchemas.push_back(
-      MakeSymbolRestrictionComplianceRuleSchema());
-    auto minimumSpireClientVersion = Extract<std::string>(config,
-      "minimum_spire_version");
-    auto organizationName = Extract<std::string>(config, "organization",
-      "Spire Trading Inc.");
-    auto timeZoneDatabase = [&] {
+    auto service_locator_client =
+      MakeApplicationServiceLocatorClient(GetNode(config, "service_locator"));
+    auto schemas = std::vector<ComplianceRuleSchema>();
+    auto minimum_client_version =
+      Extract<std::string>(config, "minimum_spire_version");
+    auto organization_name =
+      Extract<std::string>(config, "organization", "Spire Trading Inc.");
+    auto time_zone_database = [&] {
       auto file = std::ifstream(Extract<std::string>(config, "time_zones"));
       if(!file.good()) {
         throw std::runtime_error("Time zone database file not found.");
@@ -99,37 +76,37 @@ int main(int argc, const char** argv) {
       stream << file.rdbuf();
       return stream.str();
     }();
-    auto countryDatabase = ParseCountryDatabase(
-      GetNode(Require(LoadFile, Extract<std::string>(config, "countries",
-        "countries.yml")), "countries"));
-    auto currencyDatabase = ParseCurrencyDatabase(GetNode(
-      Require(LoadFile, Extract<std::string>(config, "currencies",
-        "currencies.yml")), "currencies"));
-    auto marketDatabase = ParseMarketDatabase(GetNode(
-      Require(LoadFile, Extract<std::string>(config, "markets", "markets.yml")),
-        "markets"), countryDatabase, currencyDatabase);
-    auto destinationDatabase = ParseDestinationDatabase(
-      Require(LoadFile, Extract<std::string>(config, "destinations",
-        "destinations.yml")), marketDatabase);
-    auto exchangeRates = ParseExchangeRates(GetNode(config, "exchange_rates"));
-    auto definitionsServer = DefinitionsServletContainer(Initialize(
-      serviceLocatorClient.Get(), Initialize(
-        std::move(minimumSpireClientVersion), std::move(organizationName),
-        std::move(timeZoneDatabase), std::move(countryDatabase),
-        std::move(currencyDatabase), std::move(marketDatabase),
-        std::move(destinationDatabase), std::move(exchangeRates),
-        std::move(complianceRuleSchemas))),
-      Initialize(serviceConfig.m_interface),
+    auto countries = parse_country_database(
+      GetNode(Require(LoadFile, Extract<std::string>(
+        config, "countries", "countries.yml")), "countries"));
+    auto currencies = parse_currency_database(
+      GetNode(Require(LoadFile, Extract<std::string>(
+        config, "currencies", "currencies.yml")), "currencies"));
+    auto venues = parse_venue_database(GetNode(
+      Require(LoadFile, Extract<std::string>(config, "venues", "venues.yml")),
+      "venues"), countries, currencies);
+    auto destinations = parse_destination_database(
+      Require(LoadFile, Extract<std::string>(
+        config, "destinations", "destinations.yml")), venues);
+    auto rates = parse_exchange_rates(GetNode(config, "exchange_rates"));
+    auto schedule = TradingSchedule();
+    auto definitions_server = DefinitionsServletContainer(
+      Initialize(service_locator_client.Get(), Initialize(
+        std::move(minimum_client_version), std::move(organization_name),
+        std::move(time_zone_database), std::move(countries),
+        std::move(currencies), std::move(destinations), std::move(venues),
+        std::move(rates), std::move(schemas), schedule)),
+      Initialize(service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     TryOrNest([&] {
-      auto ntpPool = Extract<std::vector<IpAddress>>(config, "ntp_pool");
-      auto ntpService = JsonObject();
-      ntpService["addresses"] = lexical_cast<std::string>(Stream(ntpPool));
-      serviceLocatorClient->Register(TimeService::SERVICE_NAME, ntpService);
+      auto ntp_pool = Extract<std::vector<IpAddress>>(config, "ntp_pool");
+      auto ntp_service = JsonObject();
+      ntp_service["addresses"] = lexical_cast<std::string>(Stream(ntp_pool));
+      service_locator_client->Register(TimeService::SERVICE_NAME, ntp_service);
     }, std::runtime_error("Error registering NTP services."));
-    Register(*serviceLocatorClient, serviceConfig);
+    Register(*service_locator_client, service_config);
     WaitForKillEvent();
-    serviceLocatorClient->Close();
+    service_locator_client->Close();
   } catch(...) {
     ReportCurrentException();
     return -1;

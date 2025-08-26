@@ -2,155 +2,155 @@
 destinations:
   - id: ASXT
     description: ASX TradeMatch
-    markets:
+    venues:
       - XASX
   - id: CXA
     description: CHI-X Australia
-    markets:
+    venues:
       - XASX
   - id: ALPHA
     description: Alpha ATS
-    markets:
+    venues:
       - XTSE
       - XTSX
   - id: CHIX
     description: Chi-X
-    markets:
+    venues:
       - NEOE
       - XCNQ
       - XTSE
       - XTSX
   - id: CSE
     description: Canadian Securities Exchange
-    markets:
+    venues:
       - XCNQ
   - id: CSE2
     description: Canadian Securities Exchange - CSE2
-    markets:
+    venues:
       - XTSE
       - XTSX
       - XCNQ
   - id: CX2
     description: Chi-X 2
-    markets:
+    venues:
       - NEOE
       - XCNQ
       - XTSE
       - XTSX
   - id: HKEX
     description: Hong Kong Stock Exchange
-    markets:
+    venues:
       - XHKG
   - id: LYNX
     description: LYNX ATS
-    markets:
+    venues:
       - NEOE
       - XCNQ
       - XTSE
       - XTSX
   - id: MATNLP
     description: MATCH Now Liquidity Provider
-    markets:
+    venues:
       - NEOE
       - XCNQ
       - XTSE
       - XTSX
   - id: MATNMF
     description: MATCH Now Market Flow
-    markets:
+    venues:
       - NEOE
       - XCNQ
       - XTSE
       - XTSX
   - id: NEOE
     description: Aequitas NEO Exchange
-    markets:
+    venues:
       - NEOE
       - XCNQ
       - XTSE
       - XTSX
   - id: OMEGA
     description: Omega ATS
-    markets:
+    venues:
       - NEOE
       - XCNQ
       - XTSE
       - XTSX
   - id: PURE
     description: Pure ATS
-    markets:
+    venues:
       - XTSE
       - XTSX
   - id: TSX
     description: Toronto Stock Exchange
-    markets:
+    venues:
       - XTSE
       - XTSX
   - id: AMEX
     description: NYSE MKT LLC
-    markets:
+    venues:
       - XASE
   - id: ARCA
     description: NYSE ARCA
-    markets:
+    venues:
       - ARCX
       - XASE
       - XNAS
       - XNYS
   - id: BATS
     description: BATS Exchange
-    markets:
+    venues:
       - ARCX
       - XASE
       - XNAS
       - XNYS
   - id: BATY
     description: BATS Y-Exchange
-    markets:
+    venues:
       - ARCX
       - XASE
       - XNAS
       - XNYS
   - id: CBSX
     description: CBOF Stock Exchange
-    markets:
+    venues:
       - ARCX
       - XASE
       - XNAS
       - XNYS
   - id: EDGA
     description: EDGA Exchange
-    markets:
+    venues:
       - ARCX
       - XASE
       - XNAS
       - XNYS
   - id: EDGX
     description: EDGX Exchange
-    markets:
+    venues:
       - ARCX
       - XASE
       - XNAS
       - XNYS
   - id: NYSE
     description: New York Stock Exchange
-    markets:
+    venues:
       - XASE
       - XNYS
   - id: NASDAQ
     description: NASDAQ
-    markets:
+    venues:
       - ARCX
       - XASE
       - XNAS
       - XNYS
   - id: OSE
     description: Osaka Exchange
-    markets:
+    venues:
       - XOSE
   - id: TSE
     description: Tokyo Stock Exchange
-    markets:
+    venues:
       - XTKS
 
 preferred_destinations:
@@ -180,7 +180,7 @@ preferred_destinations:
 manual_order_entry:
   id: MOE
   description: Manual Order Entry
-  markets:
+  venues:
     - ARCX
     - XASE
     - XASX

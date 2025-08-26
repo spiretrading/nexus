@@ -34,9 +34,6 @@ using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::DefinitionsService;
-using namespace Nexus::MarketDataService;
 
 namespace {
   using IncomingMarketDataClientSessionBuilder =
@@ -44,7 +41,7 @@ namespace {
       ApplicationServiceLocatorClient::Client*, MessageProtocol<
         std::unique_ptr<TcpSocketChannel>, BinarySender<SharedBuffer>,
         NullEncoder>, LiveTimer>;
-  using IncomingMarketDataClient = std::shared_ptr<MarketDataClientBox>;
+  using IncomingMarketDataClient = std::shared_ptr<MarketDataClient>;
   using MarketDataRelayServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<MetaMarketDataRelayServlet<
       IncomingMarketDataClient, ApplicationAdministrationClient::Client*>,
@@ -55,23 +52,21 @@ namespace {
     MarketDataRelayServletContainer, IncomingMarketDataClient,
     ApplicationAdministrationClient::Client*>;
 
-  std::unordered_set<CountryCode> ExtractCountries(const JsonObject& node,
-      const CountryDatabase& countryDatabase) {
-    auto countries = std::unordered_set<CountryCode>();
-    if(auto countriesNode = node.Get("countries")) {
-      if(auto countryList = get<std::vector<JsonValue>>(&*countriesNode)) {
-        for(auto& countryValue : *countryList) {
-          if(auto country = get<double>(&countryValue)) {
-            countries.insert(CountryCode(static_cast<std::uint16_t>(*country)));
+  Region parse_region(
+      const JsonObject& node, const CountryDatabase& countries) {
+    auto region = Region();
+    if(auto countries_node = node.Get("countries")) {
+      if(auto country_list = get<std::vector<JsonValue>>(&*countries_node)) {
+        for(auto& country_value : *country_list) {
+          if(auto country = get<double>(&country_value)) {
+            region += CountryCode(static_cast<std::uint16_t>(*country));
           }
         }
       }
     } else {
-      for(auto entry : countryDatabase.GetEntries()) {
-        countries.insert(entry.m_code);
-      }
+      region = Region::GLOBAL;
     }
-    return countries;
+    return region;
   }
 }
 
@@ -80,75 +75,57 @@ int main(int argc, const char** argv) {
     auto config = ParseCommandLine(argc, argv,
       "1.0-r" MARKET_DATA_RELAY_SERVER_VERSION
       "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto serviceConfig = TryOrNest([&] {
-      return ServiceConfiguration::Parse(GetNode(config, "server"),
-        MarketDataService::RELAY_SERVICE_NAME);
+    auto service_config = TryOrNest([&] {
+      return ServiceConfiguration::Parse(
+        GetNode(config, "server"), MARKET_DATA_RELAY_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'server'."));
-    auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
+    auto service_locator_client = MakeApplicationServiceLocatorClient(
       GetNode(config, "service_locator"));
-    auto definitionsClient = ApplicationDefinitionsClient(
-      serviceLocatorClient.Get());
-    auto administrationClient = ApplicationAdministrationClient(
-      serviceLocatorClient.Get());
-    auto countryDatabase = definitionsClient->LoadCountryDatabase();
-    auto marketDatabase = definitionsClient->LoadMarketDatabase();
-    auto marketDataClientBuilder = [&] {
-      auto entries = serviceLocatorClient->Locate(REGISTRY_SERVICE_NAME);
+    auto definitions_client =
+      ApplicationDefinitionsClient(service_locator_client.Get());
+    auto administration_client =
+      ApplicationAdministrationClient(service_locator_client.Get());
+    auto countries = definitions_client->load_country_database();
+    auto market_data_client_builder = [&] {
+      auto entries = service_locator_client->Locate(
+        MARKET_DATA_REGISTRY_SERVICE_NAME);
       if(entries.empty()) {
         BOOST_THROW_EXCEPTION(ConnectException(
-          "No " + REGISTRY_SERVICE_NAME + " services available."));
+          "No " + MARKET_DATA_REGISTRY_SERVICE_NAME + " services available."));
       }
-      auto countryToMarketDataClients = std::unordered_map<
-        CountryCode, std::shared_ptr<MarketDataClientBox>>();
-      auto marketToMarketDataClients = std::unordered_map<
-        MarketCode, std::shared_ptr<MarketDataClientBox>>();
+      auto clients = RegionMap<std::shared_ptr<MarketDataClient>>(nullptr);
       for(auto& entry : entries) {
-        auto countries = ExtractCountries(entry.GetProperties(),
-          countryDatabase);
-        auto marketDataClient = std::make_shared<MarketDataClientBox>(
-          std::in_place_type<
-            MarketDataClient<IncomingMarketDataClientSessionBuilder>>,
-          MakeBasicMarketDataClientSessionBuilder<
-            IncomingMarketDataClientSessionBuilder>(serviceLocatorClient.Get(),
-              [=] (const auto& candidateEntry) {
-                auto candidateCountries = ExtractCountries(
-                  candidateEntry.GetProperties(), countryDatabase);
-                return countries.size() <= candidateCountries.size() &&
-                  std::all_of(countries.begin(), countries.end(),
-                    [&] (auto country) {
-                      return candidateCountries.count(country) == 1;
-                    });
-              }, REGISTRY_SERVICE_NAME));
-        for(auto country : countries) {
-          countryToMarketDataClients.insert(std::pair(country,
-            marketDataClient));
-          for(auto& market : marketDatabase.FromCountry(country)) {
-            marketToMarketDataClients.insert(std::pair(market.m_code,
-              marketDataClient));
-          }
-        }
+        auto region = parse_region(entry.GetProperties(), countries);
+        auto market_data_client =
+          std::make_shared<MarketDataClient>(std::in_place_type<
+            ServiceMarketDataClient<IncomingMarketDataClientSessionBuilder>>,
+          make_basic_market_data_client_session_builder<
+            IncomingMarketDataClientSessionBuilder>(
+              service_locator_client.Get(), [=] (const auto& candidate_entry) {
+                auto candidate_region =
+                  parse_region(candidate_entry.GetProperties(), countries);
+                return region <= candidate_region;
+              }, MARKET_DATA_REGISTRY_SERVICE_NAME));
       }
-      return std::make_unique<MarketDataClientBox>(
-        std::in_place_type<DistributedMarketDataClient>,
-        std::move(countryToMarketDataClients),
-        std::move(marketToMarketDataClients));
+      return std::make_unique<MarketDataClient>(
+        std::in_place_type<DistributedMarketDataClient>, std::move(clients));
     };
-    auto clientTimeout = Extract<time_duration>(config, "connection_timeout",
-      milliseconds(500));
-    auto minConnections = static_cast<std::size_t>(Extract<int>(config,
-      "min_connections", thread::hardware_concurrency()));
-    auto maxConnections = static_cast<std::size_t>(Extract<int>(config,
-      "max_connections", 10 * minConnections));
-    auto baseRegistryServlet = BaseMarketDataRelayServlet(clientTimeout,
-      marketDataClientBuilder, minConnections, maxConnections,
-      administrationClient.Get());
-    auto server = MarketDataRelayServletContainer(Initialize(
-      serviceLocatorClient.Get(), &baseRegistryServlet),
-      Initialize(serviceConfig.m_interface),
+    auto client_timeout =
+      Extract<time_duration>(config, "connection_timeout", milliseconds(500));
+    auto min_connections = static_cast<std::size_t>(
+      Extract<int>(config, "min_connections", thread::hardware_concurrency()));
+    auto max_connections = static_cast<std::size_t>(
+      Extract<int>(config, "max_connections", 10 * min_connections));
+    auto base_registry_servlet = BaseMarketDataRelayServlet(client_timeout,
+      market_data_client_builder, min_connections, max_connections,
+      administration_client.Get());
+    auto server = MarketDataRelayServletContainer(
+      Initialize(service_locator_client.Get(), &base_registry_servlet),
+      Initialize(service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-    Register(*serviceLocatorClient, serviceConfig);
+    Register(*service_locator_client, service_config);
     WaitForKillEvent();
-    serviceLocatorClient->Close();
+    service_locator_client->Close();
   } catch(...) {
     ReportCurrentException();
     return -1;

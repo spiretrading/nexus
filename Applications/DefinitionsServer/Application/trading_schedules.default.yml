@@ -1,12 +1,12 @@
 ---
 trading_schedules:
-  - markets: [XASX, CHIA]
+  - venues: [XASX, CHIA]
     time:
       weekdays: [Sat, Sun]
-  - markets: [XASX, CHIA]
+  - venues: [XASX, CHIA]
     dates: [2020-01-01, 2020-01-27, 2020-04-10, 2020-04-13, 2020-04-25,
             2020-06-08, 2020-12-25, 2020-12-28]
-  - markets: XASX
+  - venues: XASX
     events:
       - type: PRE_OPEN
         time: 7:00
@@ -14,7 +14,7 @@ trading_schedules:
         time: 10:00
       - type: CLOSE
         time: 16:00
-  - markets: CHIA
+  - venues: CHIA
     events:
       - type: OPEN
         time: 10:00

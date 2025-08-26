@@ -30,37 +30,35 @@ using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::ChartingService;
-using namespace Nexus::MarketDataService;
 
 namespace {
-  using ChartingServletContainer = ServiceProtocolServletContainer<
-    MetaAuthenticationServletAdapter<MetaChartingServlet<
-      ApplicationMarketDataClient::Client*>,
-    ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
-    BinarySender<SharedBuffer>, SizeDeclarativeEncoder<ZLibEncoder>,
-    std::shared_ptr<LiveTimer>>;
+  using ChartingServletContainer =
+    ServiceProtocolServletContainer<MetaAuthenticationServletAdapter<
+      MetaChartingServlet<ApplicationMarketDataClient::Client*>,
+      ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
+      BinarySender<SharedBuffer>, SizeDeclarativeEncoder<ZLibEncoder>,
+      std::shared_ptr<LiveTimer>>;
 }
 
 int main(int argc, const char** argv) {
   try {
     auto config = ParseCommandLine(argc, argv, "1.0-r" CHARTING_SERVER_VERSION
       "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto serviceConfig = TryOrNest([&] {
-      return ServiceConfiguration::Parse(GetNode(config, "server"),
-        ChartingService::SERVICE_NAME);
+    auto service_config = TryOrNest([&] {
+      return ServiceConfiguration::Parse(
+        GetNode(config, "server"), CHARTING_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'server'."));
-    auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
-      GetNode(config, "service_locator"));
-    auto marketDataClient = ApplicationMarketDataClient(
-      serviceLocatorClient.Get());
-    auto chartingServer = ChartingServletContainer(Initialize(
-      serviceLocatorClient.Get(), Initialize(marketDataClient.Get())),
-      Initialize(serviceConfig.m_interface),
+    auto service_locator_client =
+      MakeApplicationServiceLocatorClient(GetNode(config, "service_locator"));
+    auto market_data_client =
+      ApplicationMarketDataClient(service_locator_client.Get());
+    auto charting_server = ChartingServletContainer(Initialize(
+      service_locator_client.Get(), Initialize(market_data_client.Get())),
+      Initialize(service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-    Register(*serviceLocatorClient, serviceConfig);
+    Register(*service_locator_client, service_config);
     WaitForKillEvent();
-    serviceLocatorClient->Close();
+    service_locator_client->Close();
   } catch(...) {
     ReportCurrentException();
     return -1;

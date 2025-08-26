@@ -33,8 +33,6 @@ using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::Compliance;
 using namespace Viper;
 
 namespace {
@@ -52,30 +50,30 @@ int main(int argc, const char** argv) {
   try {
     auto config = ParseCommandLine(argc, argv, "1.0-r" COMPLIANCE_SERVER_VERSION
       "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto serviceConfig = TryOrNest([&] {
-      return ServiceConfiguration::Parse(GetNode(config, "server"),
-        Compliance::SERVICE_NAME);
+    auto service_config = TryOrNest([&] {
+      return ServiceConfiguration::Parse(
+        GetNode(config, "server"), COMPLIANCE_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'server'."));
-    auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
-      GetNode(config, "service_locator"));
-    auto administrationClient = ApplicationAdministrationClient(
-      serviceLocatorClient.Get());
-    auto timeClient = MakeLiveNtpTimeClientFromServiceLocator(
-      *serviceLocatorClient);
-    auto mySqlConfig = TryOrNest([&] {
+    auto service_locator_client =
+      MakeApplicationServiceLocatorClient(GetNode(config, "service_locator"));
+    auto administration_client =
+      ApplicationAdministrationClient(service_locator_client.Get());
+    auto time_client =
+      MakeLiveNtpTimeClientFromServiceLocator(*service_locator_client);
+    auto mysql_config = TryOrNest([&] {
       return MySqlConfig::Parse(GetNode(config, "data_store"));
     }, std::runtime_error("Error parsing section 'data_store'."));
     auto server = ComplianceServletContainer(Initialize(
-      serviceLocatorClient.Get(), Initialize(serviceLocatorClient.Get(),
-        administrationClient.Get(), Initialize(Initialize(MakeSqlConnection(
-          MySql::Connection(mySqlConfig.m_address.GetHost(),
-            mySqlConfig.m_address.GetPort(), mySqlConfig.m_username,
-            mySqlConfig.m_password, mySqlConfig.m_schema)))),
-      timeClient.get())), Initialize(serviceConfig.m_interface),
+      service_locator_client.Get(), Initialize(service_locator_client.Get(),
+        administration_client.Get(), Initialize(Initialize(MakeSqlConnection(
+          MySql::Connection(mysql_config.m_address.GetHost(),
+            mysql_config.m_address.GetPort(), mysql_config.m_username,
+            mysql_config.m_password, mysql_config.m_schema)))),
+      time_client.get())), Initialize(service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-    Register(*serviceLocatorClient, serviceConfig);
+    Register(*service_locator_client, service_config);
     WaitForKillEvent();
-    serviceLocatorClient->Close();
+    service_locator_client->Close();
   } catch(...) {
     ReportCurrentException();
     return -1;
