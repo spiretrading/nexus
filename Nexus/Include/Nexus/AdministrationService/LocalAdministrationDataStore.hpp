@@ -187,14 +187,16 @@ namespace Nexus {
         AccountModificationRequest::Id start_id, int max_count) {
     auto ids = std::vector<AccountModificationRequest::Id>();
     auto i = m_account_modification_requests.begin();
-    while(i != m_account_modification_requests.end() &&
-        static_cast<int>(ids.size()) < max_count) {
+    while(i != m_account_modification_requests.end()) {
       if(i->second.get_id() > start_id && i->second.get_account() == account) {
         ids.push_back(i->first);
       }
       ++i;
     }
     std::sort(ids.begin(), ids.end());
+    while(ids.size() > max_count) {
+      ids.pop_back();
+    }
     return ids;
   }
 
@@ -203,14 +205,16 @@ namespace Nexus {
         AccountModificationRequest::Id start_id, int max_count) {
     auto ids = std::vector<AccountModificationRequest::Id>();
     auto i = m_account_modification_requests.begin();
-    while(i != m_account_modification_requests.end() &&
-        static_cast<int>(ids.size()) < max_count) {
+    while(i != m_account_modification_requests.end()) {
       if(i->second.get_id() > start_id) {
         ids.push_back(i->first);
       }
       ++i;
     }
     std::sort(ids.begin(), ids.end());
+    while(ids.size() > max_count) {
+      ids.pop_back();
+    }
     return ids;
   }
 
