@@ -7,14 +7,14 @@ export class RiskParameters {
 
   /** Represents an invalid value. */
   public static readonly INVALID = new RiskParameters(Currency.NONE,
-    Money.ZERO, RiskState.NONE, Money.ZERO, 0, Beam.Duration.ZERO);
+    Money.ZERO, RiskState.NONE, Money.ZERO, Beam.Duration.ZERO);
 
   /** Parses RiskParameters from JSON. */
   public static fromJson(value: any): RiskParameters {
     return new RiskParameters(Currency.fromJson(value.currency),
       Money.fromJson(value.buying_power),
       RiskState.fromJson(value.allowed_state), Money.fromJson(value.net_loss),
-      value.loss_from_top, Beam.Duration.fromJson(value.transition_time));
+      Beam.Duration.fromJson(value.transition_time));
   }
 
   /**
@@ -23,26 +23,22 @@ export class RiskParameters {
    * @param buyingPower - The maximum amount of buying power.
    * @param allowedState - The default risk state.
    * @param netLoss - The maximum net loss before entering closed orders mode.
-   * @param lossFromTop - The percentage lost from the top before entering
-   *        closed orders mode.
    * @param transitionTime - The amount of time allowed to transition from
    *        closed orders mode to disabled mode.
    */
   constructor(currency: Currency, buyingPower: Money, allowedState: RiskState,
-      netLoss: Money, lossFromTop: number, transitionTime: Beam.Duration) {
+      netLoss: Money, transitionTime: Beam.Duration) {
     this._currency = currency;
     this._buyingPower = buyingPower;
     this._allowedState = allowedState;
     this._netLoss = netLoss;
-    this._lossFromTop = lossFromTop;
     this._transitionTime = transitionTime;
   }
 
   /** Makes a copy of this object. */
   public clone(): RiskParameters {
     return new RiskParameters(this._currency, this._buyingPower,
-      this._allowedState, this._netLoss, this._lossFromTop,
-      this._transitionTime);
+      this._allowedState, this._netLoss, this._transitionTime);
   }
 
   /** Returns the currency used for risk calculations. */
@@ -81,15 +77,6 @@ export class RiskParameters {
     this._netLoss = value;
   }
 
-  /** The percentage lost from the top before entering closed orders mode. */
-  public get lossFromTop(): number {
-    return this._lossFromTop;
-  }
-
-  public set lossFromTop(value: number) {
-    this._lossFromTop = value;
-  }
-
   /**
    * The amount of time allowed to transition from closed orders mode to
    * disabled mode.
@@ -107,7 +94,6 @@ export class RiskParameters {
     return other && this._currency.equals(other.currency) &&
       this._buyingPower.equals(other.buyingPower) && this._allowedState.equals(
       other.allowedState) && this._netLoss.equals(other.netLoss) &&
-      this._lossFromTop === other.lossFromTop &&
       this._transitionTime.equals(other.transitionTime);
   }
 
@@ -118,7 +104,6 @@ export class RiskParameters {
       buying_power: this._buyingPower.toJson(),
       allowed_state: this._allowedState.toJson(),
       net_loss: this._netLoss.toJson(),
-      loss_from_top: this._lossFromTop,
       transition_time: this._transitionTime.toJson()
     };
   }
@@ -127,6 +112,5 @@ export class RiskParameters {
   private _buyingPower: Money;
   private _allowedState: RiskState;
   private _netLoss: Money;
-  private _lossFromTop: number;
   private _transitionTime: Beam.Duration;
 }
