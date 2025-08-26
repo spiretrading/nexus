@@ -112,7 +112,7 @@ export class DashboardController extends React.Component<Properties, State> {
         entitlements={this.props.model.entitlementDatabase}
         countryDatabase={this.props.model.countryDatabase}
         currencyDatabase={this.props.model.currencyDatabase}
-        marketDatabase={this.props.model.marketDatabase}
+        venueDatabase={this.props.model.venueDatabase}
         authenticatedAccount={this.props.model.account}
         roles={this.props.model.roles}
         model={model}

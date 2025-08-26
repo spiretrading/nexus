@@ -88,3 +88,87 @@ export class Security {
   private _symbol: string;
   private _venue: Venue;
 }
+
+/**
+ * Parses a string that potentially represents a wild card Security.
+ * @param source The string to parse.
+ * @param venueDatabase The database of venues to reference.
+ * @param countryDatabase The database of countries to reference.
+ * @return A Security potentially representing a wild card.
+ */
+export function parseWildCardSecurity(
+    source: string, venueDatabase?: VenueDatabase,
+    countryDatabase?: CountryDatabase): Security {
+  venueDatabase = venueDatabase || defaultVenueDatabase;
+  countryDatabase = countryDatabase || defaultCountryDatabase;
+  if(source === '*' || source === '*.*' || source === '*.*.*') {
+    return new Security('*', new Venue('*'));
+  }
+  const seperator = source.lastIndexOf('.');
+  if(seperator === -1) {
+    return Security.NONE;
+  }
+  const header = source.substring(0, seperator);
+  const trailer = source.substring(seperator + 1);
+  if(header === '*') {
+    const venue = VenueDatabase.Entry.parse(trailer, venueDatabase);
+    if(!venue.venue.equals(Venue.NONE)) {
+      return new Security(header, venue.venue);
+    }
+  }
+  const prefixSecurity =
+    parseWildCardSecurity(header, venueDatabase, countryDatabase);
+  if(!prefixSecurity.equals(Security.NONE)) {
+    if(trailer.length == 2) {
+      const code = countryDatabase.fromLetterCode(trailer);
+      if(!code.code.equals(CountryCode.NONE)) {
+        return new Security(prefixSecurity.symbol, prefixSecurity.venue);
+      } else {
+        return Security.NONE;
+      }
+    } else if(trailer === '*') {
+      return new Security(prefixSecurity.symbol, prefixSecurity.venue);
+    } else {
+      return Security.NONE;
+    }
+  }
+  let venue = null;
+  let country = null;
+  if(trailer === '*') {
+    [venue, country] = [new Venue('*'), CountryCode.NONE];
+  } else {
+    const venueEntry = VenueDatabase.Entry.parse(trailer, venueDatabase);
+    if(venueEntry.venue.equals(Venue.NONE)) {
+      return Security.NONE;
+    }
+    [venue, country] = [venueEntry.venue, venueEntry.countryCode];
+  }
+  return new Security(header, venue);
+}
+
+
+/**
+ * Returns the string representation of a Security, including wild-cards.
+ * @param security The Security to represent.
+ * @param venueDatabase The VenueDatabase used to represent the venue.
+ * @param countryDatabase The CountryDatabase used to represent the CountryCode.
+ * @return The string representation of the security.
+ */
+export function toWildCardString(security: Security,
+    venueDatabase?: VenueDatabase, countryDatabase?: CountryDatabase) {
+  venueDatabase = venueDatabase || defaultVenueDatabase;
+  countryDatabase = countryDatabase || defaultCountryDatabase;
+  if(security.symbol === '*' && security.venue.toString() === '*') {
+    return '*';
+  } else if(security.equals(Security.NONE)) {
+    return '';
+  }
+  const suffix = (() => {
+    if(security.venue.toString() === '*') {
+      return '*';
+    }
+    const venue = venueDatabase.fromVenue(security.venue);
+    return venue.displayName;
+  })();
+  return `${security.symbol}.${suffix}`;
+}

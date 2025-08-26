@@ -20,7 +20,7 @@ export class HttpDashboardModel extends DashboardModel {
     this.model = new LocalDashboardModel(Beam.DirectoryEntry.INVALID,
       new Nexus.AccountRoles(0), new Nexus.EntitlementDatabase(),
       new Nexus.CountryDatabase(), new Nexus.CurrencyDatabase(),
-      new Nexus.MarketDatabase(), new LocalAccountDirectoryModel(
+      new Nexus.VenueDatabase(), new LocalAccountDirectoryModel(
       new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>()));
   }
 
@@ -36,8 +36,8 @@ export class HttpDashboardModel extends DashboardModel {
     return this.model.currencyDatabase;
   }
 
-  public get marketDatabase(): Nexus.MarketDatabase {
-    return this.model.marketDatabase;
+  public get venueDatabase(): Nexus.VenueDatabase {
+    return this.model.venueDatabase;
   }
 
   public get account(): Beam.DirectoryEntry {
@@ -83,7 +83,7 @@ export class HttpDashboardModel extends DashboardModel {
       this.serviceClients.definitionsClient.entitlementDatabase,
       this.serviceClients.definitionsClient.countryDatabase,
       this.serviceClients.definitionsClient.currencyDatabase,
-      this.serviceClients.definitionsClient.marketDatabase,
+      this.serviceClients.definitionsClient.venueDatabase,
       new HttpAccountDirectoryModel(account, this.serviceClients));
     return this.model.load();
   }

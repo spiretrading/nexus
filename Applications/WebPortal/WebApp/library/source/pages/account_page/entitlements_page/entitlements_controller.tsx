@@ -19,8 +19,8 @@ interface Properties {
   /** The database of currencies */
   currencyDatabase: Nexus.CurrencyDatabase;
 
-  /** The set of markets. */
-  marketDatabase: Nexus.MarketDatabase;
+  /** The set of venues. */
+  venueDatabase: Nexus.VenueDatabase;
 
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
@@ -58,7 +58,7 @@ export class EntitlementsController extends React.Component<Properties, State> {
       checked={this.state.selectedEntitlements} canSubmit={this.state.canSubmit}
       isError={this.state.isError} status={this.state.status}
       currencyDatabase={this.props.currencyDatabase}
-      marketDatabase={this.props.marketDatabase}
+      venueDatabase={this.props.venueDatabase}
       displaySize={this.props.displaySize}
       onEntitlementClick={this.onEntitlementClick} onSubmit={this.onSubmit}/>;
   }

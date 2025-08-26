@@ -14,8 +14,8 @@ export abstract class DashboardModel {
   /** Returns the database of currencies. */
   public abstract get currencyDatabase(): Nexus.CurrencyDatabase;
 
-  /** Returns the database of markets. */
-  public abstract get marketDatabase(): Nexus.MarketDatabase;
+  /** Returns the database of venues. */
+  public abstract get venueDatabase(): Nexus.VenueDatabase;
 
   /** The account currently logged in. */
   public abstract get account(): Beam.DirectoryEntry;

@@ -155,47 +155,37 @@ function makeEntries() {
           Nexus.ComplianceValue.Type.LIST, [
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('AST.XASX',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.parseWildCardSecurity('AST.XASX')),
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('PST.CSE',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.parseWildCardSecurity('PST.CSE')),
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('NQR.YYYY',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.parseWildCardSecurity('NQR.YYYY')),
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('NQR.YYYY',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.parseWildCardSecurity('NQR.YYYY')),
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('NQR.YYYY',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.parseWildCardSecurity('NQR.YYYY')),
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('NQR.YYYY',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.parseWildCardSecurity('NQR.YYYY')),
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('NQR.YYYY',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.parseWildCardSecurity('NQR.YYYY')),
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('NQR.YYYY',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.parseWildCardSecurity('NQR.YYYY')),
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('AST.NYC',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA))
+              Nexus.parseWildCardSecurity('AST.NYC'))
           ])),
       new Nexus.ComplianceParameter(
         'Security',
         new Nexus.ComplianceValue(
           Nexus.ComplianceValue.Type.SECURITY,
-          new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE,
-            Nexus.DefaultCountries.CA)))
+          Nexus.parseWildCardSecurity('NQR.YYYY')))
     ])));
   return entries;
 }

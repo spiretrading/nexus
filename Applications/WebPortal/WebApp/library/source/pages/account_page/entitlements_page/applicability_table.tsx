@@ -4,8 +4,8 @@ import { DisplaySize } from '../../..';
 
 interface Properties {
 
-  /** The set of markets. */
-  marketDatabase: Nexus.MarketDatabase;
+  /** The set of venues. */
+  venueDatabase: Nexus.VenueDatabase;
 
   /** The entitlement the table belongs to. */
   entitlementEntry: Nexus.EntitlementDatabase.Entry;
@@ -47,7 +47,6 @@ export class ApplicabilityTable extends React.Component<Properties, {}> {
       const data = [];
       const MarketDataTypes = [
         Nexus.MarketDataType.BBO_QUOTE,
-        Nexus.MarketDataType.MARKET_QUOTE,
         Nexus.MarketDataType.BOOK_QUOTE,
         Nexus.MarketDataType.TIME_AND_SALE,
         Nexus.MarketDataType.ORDER_IMBALANCE];
@@ -84,7 +83,6 @@ export class ApplicabilityTable extends React.Component<Properties, {}> {
               Mkt
             </th>
             <th style={compactHeader}>BBO</th>
-            <th style={compactHeader}>MQ</th>
             <th style={compactHeader}>BQ</th>
             <th style={compactHeader}>T{'&'}S</th>
             <th style={compactHeader}>Imb</th>
@@ -92,7 +90,6 @@ export class ApplicabilityTable extends React.Component<Properties, {}> {
           <tr>
             <th style={expandedHeader}>Market</th>
             <th style={expandedHeader}>BBO</th>
-            <th style={expandedHeader}>Market Quotes</th>
             <th style={expandedHeader}>Book Quotes</th>
             <th style={expandedHeader}>Time {'&'} Sales</th>
             <th style={expandedHeader}>Imbalances</th>
@@ -104,9 +101,8 @@ export class ApplicabilityTable extends React.Component<Properties, {}> {
       </table>);
   }
 
-  private getDisplayName(code: Nexus.MarketCode) {
-    const market = this.props.marketDatabase.fromCode(code);
-    return market.displayName;
+  private getDisplayName(venue: Nexus.Venue) {
+    return this.props.venueDatabase.fromVenue(venue).displayName;
   }
 
   private static readonly STYLE = {

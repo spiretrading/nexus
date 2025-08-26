@@ -29,8 +29,8 @@ interface Properties {
   /** The database of currencies */
   currencyDatabase: Nexus.CurrencyDatabase;
 
-  /** The set of markets. */
-  marketDatabase: Nexus.MarketDatabase;
+  /** The set of venues. */
+  venueDatabase: Nexus.VenueDatabase;
 
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
@@ -90,7 +90,7 @@ export class EntitlementsPage extends React.Component<Properties, State> {
             isActive={this.props.checked.test(entry.group)}
             onClick={() => this.props.onEntitlementClick(entry.group)}
             displaySize={this.props.displaySize}
-            marketDatabase={this.props.marketDatabase}/>);
+            venueDatabase={this.props.venueDatabase}/>);
       }
       return <div>{rows}</div>;
     })();
