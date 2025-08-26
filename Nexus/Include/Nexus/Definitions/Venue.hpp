@@ -371,7 +371,7 @@ namespace Nexus {
   template<typename P>
   const VenueDatabase::Entry& VenueDatabase::select_first(P predicate) const {
     if(auto entries = m_entries.load()) {
-      for(auto& entry : entries) {
+      for(auto& entry : *entries) {
         if(predicate(entry)) {
           return entry;
         }
@@ -385,7 +385,7 @@ namespace Nexus {
       VenueDatabase::select_all(P predicate) const {
     auto result = std::vector<Entry>();
     if(auto entries = m_entries.load()) {
-      for(auto& entry : entries) {
+      for(auto& entry : *entries) {
         if(predicate(entry)) {
           result.push_back(entry);
         }

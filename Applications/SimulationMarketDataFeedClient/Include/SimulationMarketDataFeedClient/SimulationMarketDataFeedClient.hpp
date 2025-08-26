@@ -213,19 +213,19 @@ namespace Nexus {
       on_book_quote_timer_expired(Beam::Threading::Timer::Result result) {
     for(auto& snapshot : m_securities) {
       for(auto& ask : snapshot.m_asks) {
-        ask.m_size = 0;
+        ask->m_quote.m_size = 0;
         m_feed_client->publish(SecurityBookQuote(ask, snapshot.m_security));
-        ask.m_price = snapshot.m_bbo_quote->m_ask.m_price;
-        ask.m_size = 100 + (std::rand() % 1000);
-        ask.m_timestamp = m_time_client->GetTime();
+        ask->m_quote.m_price = snapshot.m_bbo_quote->m_ask.m_price;
+        ask->m_quote.m_size = 100 + (std::rand() % 1000);
+        ask->m_timestamp = m_time_client->GetTime();
         m_feed_client->publish(SecurityBookQuote(ask, snapshot.m_security));
       }
       for(auto& bid : snapshot.m_bids) {
-        bid.m_size = 0;
+        bid->m_quote.m_size = 0;
         m_feed_client->publish(SecurityBookQuote(bid, snapshot.m_security));
-        bid.m_price = snapshot.m_bbo_quote->m_ask.m_price;
-        bid.m_size = 100 + (std::rand() % 1000);
-        bid.m_timestamp = m_time_client->GetTime();
+        bid->m_quote.m_price = snapshot.m_bbo_quote->m_ask.m_price;
+        bid->m_quote.m_size = 100 + (std::rand() % 1000);
+        bid->m_timestamp = m_time_client->GetTime();
         m_feed_client->publish(SecurityBookQuote(bid, snapshot.m_security));
       }
     }
