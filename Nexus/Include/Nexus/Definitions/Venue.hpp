@@ -121,6 +121,20 @@ namespace Nexus {
       std::vector<Entry> from(CountryCode country) const;
 
       /**
+       * Returns the first Entry matching a predicate.
+       * @param predicate The predicate to match against.
+       */
+      template<typename P>
+      const Entry& select_first(P predicate) const;
+
+      /**
+       * Returns all Entries matching a predicate.
+       * @param predicate The predicate to match against.
+       */
+      template<typename P>
+      std::vector<Entry> select_all(P predicate) const;
+
+      /**
        * Adds an Entry.
        * @param entry The Entry to add.
        */
@@ -350,6 +364,32 @@ namespace Nexus {
         [&] (const auto& entry) {
           return entry.m_country_code == country;
         });
+    }
+    return result;
+  }
+
+  template<typename P>
+  const VenueDatabase::Entry& VenueDatabase::select_first(P predicate) const {
+    if(auto entries = m_entries.load()) {
+      for(auto& entry : entries) {
+        if(predicate(entry)) {
+          return entry;
+        }
+      }
+    }
+    return NONE;
+  }
+
+  template<typename P>
+  std::vector<VenueDatabase::Entry>
+      VenueDatabase::select_all(P predicate) const {
+    auto result = std::vector<Entry>();
+    if(auto entries = m_entries.load()) {
+      for(auto& entry : entries) {
+        if(predicate(entry)) {
+          result.push_back(entry);
+        }
+      }
     }
     return result;
   }

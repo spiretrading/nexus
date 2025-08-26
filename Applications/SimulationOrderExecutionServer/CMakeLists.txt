@@ -91,7 +91,8 @@ if(UNIX)
     dl pthread rt)
 endif()
 if(WIN32)
-  target_link_libraries(SimulationOrderExecutionServer crypt32 Secur32 shlwapi)
+  target_link_libraries(
+    SimulationOrderExecutionServer bcrypt crypt32 Secur32 shlwapi)
 endif()
 install(TARGETS SimulationOrderExecutionServer DESTINATION
   ${PROJECT_BINARY_DIR}/Application)

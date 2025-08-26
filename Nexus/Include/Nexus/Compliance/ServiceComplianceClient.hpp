@@ -7,6 +7,7 @@
 #include <Beam/Queues/QueueWriterPublisher.hpp>
 #include <Beam/Routines/Async.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/Compliance/ComplianceClient.hpp"
 #include "Nexus/Compliance/ComplianceServices.hpp"
@@ -72,8 +73,10 @@ namespace Nexus {
   template<typename B>
   template<typename CF>
   ServiceComplianceClient<B>::ServiceComplianceClient(CF&& client_builder)
+BEAM_SUPPRESS_THIS_INITIALIZER()
       try : m_client_handler(std::forward<CF>(client_builder),
               std::bind_front(&ServiceComplianceClient::on_reconnect, this)) {
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
     RegisterComplianceServices(Store(m_client_handler.GetSlots()));
     RegisterComplianceMessages(Store(m_client_handler.GetSlots()));
     Beam::Services::AddMessageSlot<ComplianceRuleEntryMessage>(
