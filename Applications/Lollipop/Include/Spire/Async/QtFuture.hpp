@@ -3,7 +3,6 @@
 #include <exception>
 #include <utility>
 #include <Beam/Routines/Async.hpp>
-#include "Spire/Async/Async.hpp"
 #include "Spire/Async/QtPromise.hpp"
 
 namespace Spire {

@@ -44,7 +44,7 @@ ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
   m_ui->m_chart->Initialize(
     Ref(*m_userProfile), ChartPlotView::Properties::GetDefault());
   auto currentTime =
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime();
+    m_userProfile->GetClients().get_time_client().GetTime();
   auto xAxisParameters = ChartPlotView::AxisParameters(
     DateTimeType::GetInstance(), ChartValue(currentTime - hours(1)),
     ChartValue(currentTime + hours(1)), ChartValue(minutes(1)));
@@ -132,7 +132,7 @@ void ChartWindow::DisplaySecurity(const Security& security) {
     setWindowTitle(tr("Chart - Spire"));
   } else {
     setWindowTitle(QString::fromStdString(
-      ToString(m_security, m_userProfile->GetMarketDatabase())) +
+      ToString(m_security, m_userProfile->GetVenueDatabase())) +
       tr(" - Chart"));
     OnIntervalChanged(
       m_intervalComboBox->GetType(), m_intervalComboBox->GetValue());

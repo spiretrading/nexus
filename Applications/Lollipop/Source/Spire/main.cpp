@@ -24,7 +24,7 @@
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/RiskTimer/RiskTimerMonitor.hpp"
-#include "Spire/Spire/SpireServiceClients.hpp"
+#include "Spire/Spire/SpireClients.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/LoginDialog.hpp"
@@ -248,7 +248,7 @@ int main(int argc, char* argv[]) {
       return -1;
     }
     try {
-      serviceClients.emplace(std::make_unique<SpireServiceClients>(
+      serviceClients.emplace(std::make_unique<SpireClients>(
         loginDialog.GetServiceLocatorClient()));
     } catch(const std::exception& e) {
       QMessageBox::critical(
@@ -276,7 +276,7 @@ int main(int argc, char* argv[]) {
           }
           throw;
         }
-        auto service_clients = std::make_unique<SpireServiceClients>(
+        auto service_clients = std::make_unique<SpireClients>(
           std::move(service_locator_client));
         return ServiceClientsBox(std::move(service_clients));
       }, LaunchPolicy::ASYNC);

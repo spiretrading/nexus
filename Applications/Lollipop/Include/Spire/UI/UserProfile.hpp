@@ -5,15 +5,14 @@
 #include <string>
 #include <vector>
 #include <boost/date_time/local_time/tz_database.hpp>
+#include "Nexus/Clients/Clients.hpp"
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/Definitions/Destination.hpp"
-#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/RegionMap.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
-#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
-#include "Nexus/TelemetryService/TelemetryClientBox.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
@@ -26,7 +25,6 @@
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/UI/UI.hpp"
 
@@ -46,23 +44,21 @@ namespace Spire {
        * @param timeZoneDatabase Stores the database of all time zones.
        * @param currencyDatabase Stores the database of all currencies.
        * @param exchangeRates The list of ExchangeRates to use.
-       * @param marketDatabase Stores the database of all markets.
+       * @param venueDatabase Stores the database of all venues.
        * @param destinationDatabase Stores the database of all destinations.
        * @param entitlementDatabase Stores the database of market data
        *        entitlements.
-       * @param serviceClients The set of clients connected to Spire services.
-       * @param telemetryClient The client used to submit telemetry data.
+       * @param clients The set of clients connected to Spire services.
        */
       UserProfile(const std::string& username, bool isAdministrator,
         bool isManager, const Nexus::CountryDatabase& countryDatabase,
         const boost::local_time::tz_database& timeZoneDatabase,
         const Nexus::CurrencyDatabase& currencyDatabase,
         const std::vector<Nexus::ExchangeRate>& exchangeRates,
-        const Nexus::MarketDatabase& marketDatabase,
+        const Nexus::VenueDatabase& venueDatabase,
         const Nexus::DestinationDatabase& destinationDatabase,
-        const Nexus::MarketDataService::EntitlementDatabase&
-          entitlementDatabase, Nexus::ServiceClientsBox serviceClients,
-        Nexus::TelemetryService::TelemetryClientBox telemetryClient);
+        const Nexus::EntitlementDatabase& entitlementDatabase,
+        Nexus::Clients clients);
 
       ~UserProfile();
 
@@ -90,21 +86,17 @@ namespace Spire {
       /** Returns the ExchangeRates. */
       const Nexus::ExchangeRateTable& GetExchangeRates() const;
 
-      /** Returns the MarketDatabase. */
-      const Nexus::MarketDatabase& GetMarketDatabase() const;
+      /** Returns the VenueDatabase. */
+      const Nexus::VenueDatabase& GetVenueDatabase() const;
 
       /** Returns the DestinationDatabase. */
       const Nexus::DestinationDatabase& GetDestinationDatabase() const;
 
       /** Returns the EntitlementDatabase. */
-      const Nexus::MarketDataService::EntitlementDatabase&
-        GetEntitlementDatabase() const;
+      const Nexus::EntitlementDatabase& GetEntitlementDatabase() const;
 
       /** Returns the set of clients connected to Spire services. */
-      Nexus::ServiceClientsBox& GetServiceClients() const;
-
-      /** Returns the telemetry client. */
-      Nexus::TelemetryService::TelemetryClientBox& GetTelemetryClient() const;
+      Nexus::Clients& GetClients() const;
 
       /** Creates the profile path. */
       void CreateProfilePath() const;
@@ -252,11 +244,10 @@ namespace Spire {
       boost::local_time::tz_database m_timeZoneDatabase;
       Nexus::CurrencyDatabase m_currencyDatabase;
       Nexus::ExchangeRateTable m_exchangeRates;
-      Nexus::MarketDatabase m_marketDatabase;
+      Nexus::VenueDatabase m_venueDatabase;
       Nexus::DestinationDatabase m_destinationDatabase;
-      Nexus::MarketDataService::EntitlementDatabase m_entitlementDatabase;
-      mutable Nexus::ServiceClientsBox m_serviceClients;
-      mutable Nexus::TelemetryService::TelemetryClientBox m_telemetryClient;
+      Nexus::EntitlementDatabase m_entitlementDatabase;
+      mutable Nexus::Clients m_clients;
       std::filesystem::path m_profilePath;
       std::vector<std::unique_ptr<UI::WindowSettings>> m_recentlyClosedWindows;
       BookViewProperties m_defaultBookViewProperties;

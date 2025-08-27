@@ -1,4 +1,4 @@
-#include "Spire/Spire/SpireServiceClients.hpp"
+#include "Spire/Spire/SpireClients.hpp"
 #include <stdexcept>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/RegistryService/ApplicationDefinitions.hpp>
@@ -23,48 +23,19 @@ using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::ChartingService;
-using namespace Nexus::Compliance;
-using namespace Nexus::DefinitionsService;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::RiskService;
 using namespace Spire;
 
-namespace {
-  template<typename T>
-  struct ByPassPtr {
-    using Type = GetDereferenceType<T>;
-
-    std::unique_ptr<T> m_value;
-
-    ByPassPtr(std::unique_ptr<T> value)
-      : m_value(std::move(value)) {}
-
-    ByPassPtr(ByPassPtr&& ptr)
-      : m_value(std::move(ptr.m_value)) {}
-
-    Type& operator *() const {
-      return **m_value;
-    }
-
-    Type* operator ->() const {
-      return &**m_value;
-    }
-  };
-}
-
-SpireServiceClients::SpireServiceClients(
+SpireClients::SpireClients(
   std::unique_ptr<ApplicationServiceLocatorClient> serviceLocatorClient)
 BEAM_SUPPRESS_THIS_INITIALIZER()
   : m_applicationServiceLocatorClient(std::move(serviceLocatorClient)),
     m_serviceLocatorClient(m_applicationServiceLocatorClient->Get()),
     m_definitionsClient([&] {
-      auto definitionsClient = DefinitionsClientBox(
+      auto definitionsClient = DefinitionsClient(
         std::in_place_type<ApplicationDefinitionsClient>,
         m_applicationServiceLocatorClient->Get());
-      auto minimumVersion = definitionsClient.LoadMinimumSpireClientVersion();
+      auto minimumVersion =
+        definitionsClient.load_minimum_spire_client_version();
       if(std::stoi(minimumVersion) > std::stoi(std::string(SPIRE_VERSION))) {
         BOOST_THROW_EXCEPTION(std::runtime_error(
           ("Spire version incompatible.\n"
@@ -91,63 +62,63 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
       m_serviceLocatorClient)) {}
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
-SpireServiceClients::~SpireServiceClients() {
-  Close();
+SpireClients::~SpireClients() {
+  close();
 }
 
-ServiceLocatorClientBox& SpireServiceClients::GetServiceLocatorClient() {
+ServiceLocatorClientBox& SpireClients::get_service_locator_client() {
   return m_serviceLocatorClient;
 }
 
-RegistryClientBox& SpireServiceClients::GetRegistryClient() {
+RegistryClientBox& SpireClients::get_registry_client() {
   return m_registryClient;
 }
 
-AdministrationClientBox& SpireServiceClients::GetAdministrationClient() {
+AdministrationClient& SpireClients::get_administration_client() {
   return m_administrationClient;
 }
 
-DefinitionsClientBox& SpireServiceClients::GetDefinitionsClient() {
+DefinitionsClient& SpireClients::get_definitions_client() {
   return m_definitionsClient;
 }
 
-ChartingClientBox& SpireServiceClients::GetChartingClient() {
+ChartingClient& SpireClients::get_charting_client() {
   return m_chartingClient;
 }
 
-ComplianceClientBox& SpireServiceClients::GetComplianceClient() {
+ComplianceClient& SpireClients::get_compliance_client() {
   return m_complianceClient;
 }
 
-MarketDataClientBox& SpireServiceClients::GetMarketDataClient() {
+MarketDataClient& SpireClients::get_market_data_client() {
   return m_marketDataClient;
 }
 
-OrderExecutionClientBox& SpireServiceClients::GetOrderExecutionClient() {
+OrderExecutionClient& SpireClients::get_order_execution_client() {
   return m_orderExecutionClient;
 }
 
-RiskClientBox& SpireServiceClients::GetRiskClient() {
+RiskClient& SpireClients::get_risk_client() {
   return m_riskClient;
 }
 
-TimeClientBox& SpireServiceClients::GetTimeClient() {
+TimeClientBox& SpireClients::get_time_client() {
   return m_timeClient;
 }
 
-std::unique_ptr<TimerBox> SpireServiceClients::MakeTimer(time_duration expiry) {
+std::unique_ptr<TimerBox> SpireClients::make_timer(time_duration expiry) {
   return std::make_unique<TimerBox>(std::make_unique<LiveTimer>(expiry));
 }
 
-void SpireServiceClients::Close() {
+void SpireClients::close() {
   m_timeClient.Close();
   m_serviceLocatorClient.Close();
-  m_riskClient.Close();
-  m_orderExecutionClient.Close();
-  m_marketDataClient.Close();
-  m_complianceClient.Close();
-  m_chartingClient.Close();
-  m_administrationClient.Close();
+  m_riskClient.close();
+  m_orderExecutionClient.close();
+  m_marketDataClient.close();
+  m_complianceClient.close();
+  m_chartingClient.close();
+  m_administrationClient.close();
   m_registryClient.Close();
-  m_definitionsClient.Close();
+  m_definitionsClient.close();
 }

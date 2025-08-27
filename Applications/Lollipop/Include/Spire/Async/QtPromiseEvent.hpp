@@ -3,7 +3,6 @@
 #include <utility>
 #include <Beam/Utilities/Expect.hpp>
 #include <QEvent>
-#include "Spire/Async/Async.hpp"
 
 namespace Spire {
 namespace details {

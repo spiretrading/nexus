@@ -30,16 +30,16 @@ namespace {
       const DirectoryEntry& account, ScopedQueueWriter<const Order*> queue) {
     return Spawn([&userProfile, account, queue = std::move(queue)] () mutable {
       auto currentTime =
-        userProfile.GetServiceClients().GetTimeClient().GetTime();
+        userProfile.GetClients().GetTimeClient().GetTime();
       auto lastSequence = Beam::Queries::Sequence::First();
       auto timeOfDay =
-        userProfile.GetServiceClients().GetTimeClient().GetTime();
+        userProfile.GetClients().GetTimeClient().GetTime();
       for(auto& market : userProfile.GetMarketDatabase().GetEntries()) {
         auto snapshotQuery = MakeDailyOrderSubmissionQuery(market.m_code,
           account, timeOfDay, timeOfDay, userProfile.GetMarketDatabase(),
           userProfile.GetTimeZoneDatabase());
         auto snapshotQueue = std::make_shared<Queue<SequencedOrder>>();
-        userProfile.GetServiceClients().GetOrderExecutionClient().
+        userProfile.GetClients().GetOrderExecutionClient().
           QueryOrderSubmissions(snapshotQuery, snapshotQueue);
         try {
           while(true) {
@@ -58,7 +58,7 @@ namespace {
         query.SetRange(Increment(lastSequence), pos_infin);
       }
       query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-      userProfile.GetServiceClients().GetOrderExecutionClient().
+      userProfile.GetClients().GetOrderExecutionClient().
         QueryOrderSubmissions(query, std::move(queue));
     });
   }

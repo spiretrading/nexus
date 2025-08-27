@@ -49,7 +49,7 @@ void BookViewHighlightPropertiesWidget::Initialize(
     Ref<UserProfile> userProfile, Ref<BookViewProperties> properties) {
   m_userProfile = userProfile.Get();
   m_properties = properties.Get();
-  auto marketEntries = m_userProfile->GetMarketDatabase().GetEntries();
+  auto marketEntries = m_userProfile->GetVenueDatabase().GetEntries();
   sort(marketEntries.begin(), marketEntries.end(),
     [] (const MarketDatabase::Entry& lhs, const MarketDatabase::Entry& rhs) {
       return lhs.m_displayName < rhs.m_displayName;
@@ -75,7 +75,7 @@ void BookViewHighlightPropertiesWidget::Initialize(
 void BookViewHighlightPropertiesWidget::Redisplay() {
   for(int i = 0; i < m_ui->m_marketsList->count(); ++i) {
     auto item = m_ui->m_marketsList->item(i);
-    auto& marketEntry = m_userProfile->GetMarketDatabase().FromDisplayName(
+    auto& marketEntry = m_userProfile->GetVenueDatabase().FromDisplayName(
       item->text().toStdString());
     QColor backgroundColor;
     auto highlight = m_properties->GetMarketHighlight(marketEntry.m_code);
@@ -95,7 +95,7 @@ void BookViewHighlightPropertiesWidget::Redisplay() {
 
 const MarketDatabase::Entry& BookViewHighlightPropertiesWidget::
     GetCurrentMarketHighlightEntry() const {
-  return m_userProfile->GetMarketDatabase().FromDisplayName(
+  return m_userProfile->GetVenueDatabase().FromDisplayName(
     m_ui->m_marketsList->currentItem()->text().toStdString());
 }
 

@@ -56,7 +56,7 @@ void InteractionsWidget::Initialize(Ref<UserProfile> userProfile) {
     AddRegion(region);
   }
   const vector<MarketDatabase::Entry>& markets =
-    m_userProfile->GetMarketDatabase().GetEntries();
+    m_userProfile->GetVenueDatabase().GetEntries();
   for(auto i = markets.begin(); i != markets.end(); ++i) {
     RegionEntry region;
     region.m_region = *i;
@@ -69,7 +69,7 @@ void InteractionsWidget::Initialize(Ref<UserProfile> userProfile) {
       Security security = *std::get<0>(*i).GetSecurities().begin();
       region.m_region = security;
       region.m_region.SetName(ToString(security,
-        m_userProfile->GetMarketDatabase()));
+        m_userProfile->GetVenueDatabase()));
       AddRegion(region);
     }
   }
@@ -84,7 +84,7 @@ void InteractionsWidget::Initialize(Ref<UserProfile> userProfile,
   RegionEntry region;
   region.m_region = security;
   region.m_region.SetName(ToString(security,
-    m_userProfile->GetMarketDatabase()));
+    m_userProfile->GetVenueDatabase()));
   AddRegion(region);
   Update();
 }

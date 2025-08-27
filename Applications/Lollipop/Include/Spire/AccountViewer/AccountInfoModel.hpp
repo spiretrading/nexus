@@ -4,7 +4,7 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 
@@ -33,15 +33,15 @@ namespace Spire {
       const Beam::ServiceLocator::DirectoryEntry& GetAccount() const;
 
       //! Returns the account's identity.
-      const Nexus::AdministrationService::AccountIdentity& GetIdentity() const;
+      const Nexus::AccountIdentity& GetIdentity() const;
 
       //! Returns the account's identity.
-      Nexus::AdministrationService::AccountIdentity& GetIdentity();
+      Nexus::AccountIdentity& GetIdentity();
 
     private:
       UserProfile* m_userProfile;
       Beam::ServiceLocator::DirectoryEntry m_account;
-      Nexus::AdministrationService::AccountIdentity m_identity;
+      Nexus::AccountIdentity m_identity;
   };
 }
 

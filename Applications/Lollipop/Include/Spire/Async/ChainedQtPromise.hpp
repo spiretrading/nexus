@@ -3,7 +3,6 @@
 #include <memory>
 #include <type_traits>
 #include <utility>
-#include "Spire/Async/Async.hpp"
 #include "Spire/Async/QtPromiseImp.hpp"
 
 namespace Spire {

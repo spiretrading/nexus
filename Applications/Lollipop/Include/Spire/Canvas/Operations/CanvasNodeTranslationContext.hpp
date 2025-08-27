@@ -6,8 +6,9 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/thread/mutex.hpp>
+#include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Canvas/Operations/Translation.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 
@@ -51,14 +52,14 @@ namespace Spire {
        * Returns the publisher for all orders submitted by the translated
        * node.
        */
-      const Beam::Publisher<const Nexus::OrderExecutionService::Order*>&
+      const Beam::Publisher<std::shared_ptr<const Nexus::Order>>&
         GetOrderPublisher() const;
 
       /**
        * Returns the publisher for all orders submitted by the translated
        * node.
        */
-      Beam::SequencePublisher<const Nexus::OrderExecutionService::Order*>&
+      Beam::SequencePublisher<std::shared_ptr<const Nexus::Order>>&
         GetOrderPublisher();
 
       /**
@@ -92,7 +93,7 @@ namespace Spire {
       Beam::ServiceLocator::DirectoryEntry m_executingAccount;
       Executor* m_executor;
       std::shared_ptr<Beam::SequencePublisher<
-        const Nexus::OrderExecutionService::Order*>> m_orderPublisher;
+        std::shared_ptr<const Nexus::Order>>> m_orderPublisher;
       std::unordered_map<const CanvasNode*, Translation> m_translations;
       std::unordered_map<const CanvasNode*, Translation> m_subTranslations;
 

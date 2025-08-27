@@ -24,8 +24,8 @@ RiskTimerMonitor::~RiskTimerMonitor() {
 
 void RiskTimerMonitor::Load() {
   auto account =
-    m_userProfile->GetServiceClients().GetServiceLocatorClient().GetAccount();
-  m_userProfile->GetServiceClients().GetAdministrationClient().
+    m_userProfile->GetClients().get_service_locator_client().GetAccount();
+  m_userProfile->GetClients().get_administration_client().
     GetRiskStatePublisher(account).Monitor(m_eventHandler.get_slot<RiskState>(
       std::bind_front(&RiskTimerMonitor::OnRiskState, this)));
 }
@@ -47,7 +47,7 @@ void RiskTimerMonitor::OnRiskState(const RiskState& riskState) {
         m_model->SetTimeRemaining(seconds(0));
       } else {
         auto currentTime =
-          m_userProfile->GetServiceClients().GetTimeClient().GetTime();
+          m_userProfile->GetClients().get_time_client().GetTime();
         m_model->SetTimeRemaining(std::max(time_duration(seconds(0)),
           riskState.m_expiry - currentTime));
       }

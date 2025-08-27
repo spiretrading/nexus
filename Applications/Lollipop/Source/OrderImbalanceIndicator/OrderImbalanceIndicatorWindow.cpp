@@ -77,7 +77,7 @@ void OrderImbalanceIndicatorWindow::SetModel(
   }();
   m_ui->m_marketSelectionWidget->Initialize(
     "Markets", new OrderImbalanceIndicatorMarketSelectionWidget(
-      m_userProfile->GetMarketDatabase(), Ref(*m_model)),
+      m_userProfile->GetVenueDatabase(), Ref(*m_model)),
     isMarketSelectionExpanded);
 }
 

@@ -29,19 +29,19 @@ BookViewModel::BookViewModel(Ref<UserProfile> userProfile,
     return;
   }
   QueryRealTimeBookQuotesWithSnapshot(
-    m_userProfile->GetServiceClients().GetMarketDataClient(), m_security,
+    m_userProfile->GetClients().GetMarketDataClient(), m_security,
     m_eventHandler.get_slot<BookQuote>(
       std::bind_front(&BookViewModel::OnBookQuote, this),
       std::bind_front(&BookViewModel::OnBookQuoteInterruption, this)),
     InterruptionPolicy::BREAK_QUERY);
   QueryRealTimeMarketQuotesWithSnapshot(
-    m_userProfile->GetServiceClients().GetMarketDataClient(), m_security,
+    m_userProfile->GetClients().GetMarketDataClient(), m_security,
     m_eventHandler.get_slot<MarketQuote>(
       std::bind_front(&BookViewModel::OnMarketQuote, this),
       std::bind_front(&BookViewModel::OnMarketQuoteInterruption, this)),
     InterruptionPolicy::BREAK_QUERY);
   m_userProfile->GetBlotterSettings().GetConsolidatedBlotter(
-    m_userProfile->GetServiceClients().GetServiceLocatorClient().GetAccount()).
+    m_userProfile->GetClients().get_service_locator_client().GetAccount()).
       GetTasksModel().GetOrderExecutionPublisher().Monitor(
         m_eventHandler.get_slot<const Order*>(
           std::bind_front(&BookViewModel::OnOrderExecuted, this)));
@@ -52,7 +52,7 @@ void BookViewModel::SetProperties(const BookViewProperties& properties) {
   for(auto& orderQuantity : m_orderQuantities) {
     auto bookQuote = BookQuote("@" + orderQuantity.first.m_destination, false,
       MarketCode(), Quote(orderQuantity.first.m_price, 0, m_side),
-      m_userProfile->GetServiceClients().GetTimeClient().GetTime());
+      m_userProfile->GetClients().get_time_client().GetTime());
     OnBookQuote(bookQuote);
   }
   if(m_properties.GetOrderHighlight() != BookViewProperties::HIDE_ORDERS) {
@@ -60,7 +60,7 @@ void BookViewModel::SetProperties(const BookViewProperties& properties) {
       auto bookQuote = BookQuote("@" + orderQuantity.first.m_destination,
         false, MarketCode(),
         Quote(orderQuantity.first.m_price, orderQuantity.second, m_side),
-        m_userProfile->GetServiceClients().GetTimeClient().GetTime());
+        m_userProfile->GetClients().get_time_client().GetTime());
       OnBookQuote(bookQuote);
     }
   }
@@ -272,7 +272,7 @@ void BookViewModel::RemoveQuote(int quoteIndex) {
 void BookViewModel::OnMarketQuote(const MarketQuote& quote) {
   auto& previousMarketQuote = m_marketQuotes[quote.m_market];
   auto mpid =
-    m_userProfile->GetMarketDatabase().FromCode(quote.m_market).m_displayName;
+    m_userProfile->GetVenueDatabase().FromCode(quote.m_market).m_displayName;
   if(!previousMarketQuote.m_market.IsEmpty()) {
     auto previousBookQuotes = ToBookQuotePair(previousMarketQuote);
     auto& previousBookQuote =
@@ -410,7 +410,7 @@ void BookViewModel::OnBookQuoteInterruption(const std::exception_ptr& e) {
   auto marketQuoteMpids = std::unordered_set<std::string>();
   for(auto& marketCode : m_marketQuotes | adaptors::map_keys) {
     auto mpid =
-      m_userProfile->GetMarketDatabase().FromCode(marketCode).m_displayName;
+      m_userProfile->GetVenueDatabase().FromCode(marketCode).m_displayName;
     marketQuoteMpids.insert(mpid);
   }
   for(auto& bookQuote : bookQuotes) {
@@ -422,7 +422,7 @@ void BookViewModel::OnBookQuoteInterruption(const std::exception_ptr& e) {
     }
   }
   QueryRealTimeBookQuotesWithSnapshot(
-    m_userProfile->GetServiceClients().GetMarketDataClient(), m_security,
+    m_userProfile->GetClients().GetMarketDataClient(), m_security,
     m_eventHandler.get_slot<BookQuote>(
       std::bind_front(&BookViewModel::OnBookQuote, this),
       std::bind_front(&BookViewModel::OnBookQuoteInterruption, this)),
@@ -438,7 +438,7 @@ void BookViewModel::OnMarketQuoteInterruption(const std::exception_ptr& e) {
     OnMarketQuote(clearQuote);
   }
   QueryRealTimeMarketQuotesWithSnapshot(
-    m_userProfile->GetServiceClients().GetMarketDataClient(), m_security,
+    m_userProfile->GetClients().GetMarketDataClient(), m_security,
     m_eventHandler.get_slot<MarketQuote>(
       std::bind_front(&BookViewModel::OnMarketQuote, this),
       std::bind_front(&BookViewModel::OnMarketQuoteInterruption, this)),

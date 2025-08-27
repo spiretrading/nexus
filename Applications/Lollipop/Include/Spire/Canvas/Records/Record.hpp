@@ -26,8 +26,8 @@ namespace Spire {
       /** Defines the types allowed for a member of a Record. */
       using Field = boost::variant<Record, bool, Nexus::Quantity, double,
         boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
-        Nexus::CurrencyId, Nexus::MarketCode, Nexus::Money, Nexus::OrderStatus,
-        Nexus::OrderType, Nexus::Security, Nexus::Side, Nexus::TimeInForce,
+        Nexus::CurrencyId, Nexus::Money, Nexus::OrderStatus, Nexus::OrderType,
+        Nexus::Security, Nexus::Side, Nexus::TimeInForce, Nexus::Venue,
         Beam::Queries::Range, Beam::Queries::Sequence>;
 
       /** Constructs an empty Record. */

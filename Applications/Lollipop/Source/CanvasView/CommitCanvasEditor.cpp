@@ -174,7 +174,7 @@ void CommitEditorCanvasNodeVisitor::Visit(const IntegerNode& node) {
 void CommitEditorCanvasNodeVisitor::Visit(const MarketNode& node) {
   auto previousValue = node.GetValue();
   auto comboEditor = qobject_cast<const QComboBox*>(m_editor);
-  auto& newValue = m_userProfile->GetMarketDatabase().FromCode(
+  auto& newValue = m_userProfile->GetVenueDatabase().FromCode(
     comboEditor->currentText().toStdString());
   if(previousValue == newValue.m_code) {
     return;

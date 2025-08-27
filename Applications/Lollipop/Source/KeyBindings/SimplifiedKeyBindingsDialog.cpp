@@ -4579,7 +4579,7 @@ SimplifiedKeyBindingsDialog::SimplifiedKeyBindingsDialog(
   m_ui->setupUi(this);
   m_ui->m_interactionsWidget->Initialize(Ref(*m_userProfile));
   m_orderTypes = SetupOrderTypes();
-  auto entries = m_userProfile->GetMarketDatabase().GetEntries();
+  auto entries = m_userProfile->GetVenueDatabase().GetEntries();
   std::sort(entries.begin(), entries.end(),
     [&] (const auto& left, const auto& right) {
       return left.m_displayName < right.m_displayName;
@@ -4841,7 +4841,7 @@ void SimplifiedKeyBindingsDialog::OnApplyButton() {
 }
 
 void SimplifiedKeyBindingsDialog::OnMarketChanged(int index) {
-  m_currentMarket = m_userProfile->GetMarketDatabase().FromDisplayName(
+  m_currentMarket = m_userProfile->GetVenueDatabase().FromDisplayName(
     m_ui->m_taskMarketComboBox->itemText(index).toStdString()).m_code;
   PopulateTaskTable();
   PopulateCancelTable();

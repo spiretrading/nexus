@@ -4,7 +4,6 @@
 #include <type_traits>
 #include <utility>
 #include <QApplication>
-#include "Spire/Async/Async.hpp"
 #include "Spire/Async/ChainedQtPromise.hpp"
 #include "Spire/Async/QtPromiseImp.hpp"
 

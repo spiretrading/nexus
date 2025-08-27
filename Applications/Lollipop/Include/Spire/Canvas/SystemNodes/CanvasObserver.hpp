@@ -11,7 +11,7 @@
 #include <QTimer>
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 

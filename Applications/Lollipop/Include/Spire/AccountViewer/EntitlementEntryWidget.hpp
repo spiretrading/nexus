@@ -4,7 +4,7 @@
 #include <QWidget>
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class Ui_EntitlementEntryWidget;
 
@@ -28,7 +28,7 @@ namespace Spire {
       */
       EntitlementEntryWidget(Beam::Ref<UserProfile> userProfile,
         bool isReadOnly,
-        const Nexus::MarketDataService::EntitlementDatabase::Entry& entitlement,
+        const Nexus::EntitlementDatabase::Entry& entitlement,
         std::shared_ptr<AccountEntitlementModel> model,
         QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
@@ -39,7 +39,7 @@ namespace Spire {
       UserProfile* m_userProfile;
       bool m_isReadOnly;
       bool m_isChecked;
-      Nexus::MarketDataService::EntitlementDatabase::Entry m_entitlement;
+      Nexus::EntitlementDatabase::Entry m_entitlement;
       std::shared_ptr<AccountEntitlementModel> m_model;
       Beam::SignalHandling::ConnectionGroup m_connections;
 

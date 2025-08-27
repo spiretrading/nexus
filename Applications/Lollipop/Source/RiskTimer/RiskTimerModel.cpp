@@ -25,7 +25,7 @@ time_duration RiskTimerModel::GetTimeRemaining() const {
 void RiskTimerModel::SetTimeRemaining(time_duration timeRemaining) {
   m_timeRemaining = timeRemaining;
   m_lastTimeCheck =
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime();
+    m_userProfile->GetClients().get_time_client().GetTime();
 }
 
 connection RiskTimerModel::ConnectTimeRemainingSignal(
@@ -36,7 +36,7 @@ connection RiskTimerModel::ConnectTimeRemainingSignal(
 void RiskTimerModel::OnTimeRemainingExpired(const Timer::Result& result) {
   if(m_timeRemaining != seconds(0)) {
     auto currentTime =
-      m_userProfile->GetServiceClients().GetTimeClient().GetTime();
+      m_userProfile->GetClients().get_time_client().GetTime();
     m_timeRemaining -= (currentTime - m_lastTimeCheck);
     m_lastTimeCheck = currentTime;
     if(m_timeRemaining < seconds(0)) {

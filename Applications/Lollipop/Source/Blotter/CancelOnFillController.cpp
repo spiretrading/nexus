@@ -67,7 +67,7 @@ void CancelOnFillController::OnExecutionReport(
         i = orderEntries.erase(i);
       } else if(!(*i)->m_cancelSubmitted) {
         (*i)->m_cancelSubmitted = true;
-        m_userProfile->GetServiceClients().GetOrderExecutionClient().Cancel(
+        m_userProfile->GetClients().get_order_execution_client().Cancel(
           *(*i)->m_order);
         ++i;
       } else {

@@ -8,10 +8,10 @@
 #include <Beam/Serialization/ShuttleUnorderedSet.hpp>
 #include <Beam/TimeService/TimeService.hpp>
 #include <boost/optional/optional.hpp>
-#include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/InputWidgets/TimeRangeInputWidget.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 
@@ -41,14 +41,14 @@ namespace Spire {
     //! The query's end time.
     TimeRangeParameter m_endTime;
 
-    //! The set of filtered markets.
-    std::unordered_set<Nexus::MarketCode> m_filteredMarkets;
+    //! The set of filtered venues.
+    std::unordered_set<Nexus::Venue> m_filteredVenues;
 
-    //! Returns <code>true</code> iff a market is filtered.
-    bool IsDisplayed(Nexus::MarketCode market) const;
+    //! Returns <code>true</code> iff a venue is filtered.
+    bool IsDisplayed(Nexus::Venue venue) const;
 
-    //! Returns <code>true</code> iff a market is filtered.
-    bool IsFiltered(Nexus::MarketCode market) const;
+    //! Returns <code>true</code> iff a venue is filtered.
+    bool IsFiltered(Nexus::Venue venue) const;
 
     //! Returns the time range to query.
     /*!
@@ -68,7 +68,7 @@ namespace Serialization {
         Spire::OrderImbalanceIndicatorProperties& value, unsigned int version) {
       shuttle.Shuttle("start_time", value.m_startTime);
       shuttle.Shuttle("end_time", value.m_endTime);
-      shuttle.Shuttle("filtered_markets", value.m_filteredMarkets);
+      shuttle.Shuttle("filtered_venues", value.m_filteredVenues);
     }
   };
 }

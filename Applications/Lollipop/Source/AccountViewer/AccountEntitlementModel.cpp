@@ -18,8 +18,9 @@ void AccountEntitlementModel::Load() {
     DirectoryEntry entry = *m_entitlementsGranted.begin();
     Revoke(entry);
   }
-  auto entitlements = m_userProfile->GetServiceClients().
-    GetAdministrationClient().LoadEntitlements(m_account);
+  auto entitlements =
+    m_userProfile->GetClients().get_administration_client().load_entitlements(
+      m_account);
   for(const DirectoryEntry& entitlement : entitlements) {
     Grant(entitlement);
   }
@@ -28,8 +29,8 @@ void AccountEntitlementModel::Load() {
 void AccountEntitlementModel::Commit() {
   vector<DirectoryEntry> entitlements(m_entitlementsGranted.begin(),
     m_entitlementsGranted.end());
-  m_userProfile->GetServiceClients().GetAdministrationClient().
-    StoreEntitlements(m_account, entitlements);
+  m_userProfile->GetClients().get_administration_client().store_entitlements(
+    m_account, entitlements);
 }
 
 bool AccountEntitlementModel::HasEntitlement(

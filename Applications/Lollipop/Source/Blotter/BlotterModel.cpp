@@ -25,7 +25,7 @@ BlotterModel::BlotterModel(const std::string& name,
       m_orderLogModel(orderLogProperties),
       m_profitAndLossModel(Ref(m_userProfile->GetCurrencyDatabase()),
         Ref(userProfile->GetExchangeRates()), true) {
-  m_userProfile->GetServiceClients().GetAdministrationClient().
+  m_userProfile->GetClients().get_administration_client().
     GetRiskParametersPublisher(m_executingAccount).Monitor(
       m_eventHandler.get_slot<RiskParameters>(
         std::bind_front(&BlotterModel::OnRiskParametersChanged, this)));
@@ -139,10 +139,10 @@ void BlotterModel::InitializeModels() {
   auto& orderExecutionPublisher = m_tasksModel.GetOrderExecutionPublisher();
   if(m_isConsolidated) {
     auto [portfolio, sequence, excludedOrders] = MakePortfolio(
-      m_userProfile->GetServiceClients().GetRiskClient().LoadInventorySnapshot(
+      m_userProfile->GetClients().GetRiskClient().LoadInventorySnapshot(
         m_executingAccount), m_executingAccount,
-      m_userProfile->GetMarketDatabase(),
-      m_userProfile->GetServiceClients().GetOrderExecutionClient());
+      m_userProfile->GetVenueDatabase(),
+      m_userProfile->GetClients().get_order_execution_client());
     auto orders = std::make_shared<Queue<const Order*>>();
     for(auto& order : excludedOrders) {
       orders->Push(order);
@@ -152,17 +152,17 @@ void BlotterModel::InitializeModels() {
     query.SetRange(Increment(sequence), Beam::Queries::Sequence::Last());
     query.SetSnapshotLimit(SnapshotLimit::Unlimited());
     query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-    m_userProfile->GetServiceClients().GetOrderExecutionClient().
+    m_userProfile->GetClients().get_order_execution_client().
       QueryOrderSubmissions(query, orders);
     m_portfolioController.emplace(std::move(portfolio),
-      &m_userProfile->GetServiceClients().GetMarketDataClient(),
+      &m_userProfile->GetClients().GetMarketDataClient(),
       std::move(orders));
   } else {
     auto orders = std::make_shared<Queue<const Order*>>();
     orderExecutionPublisher.Monitor(orders);
     m_portfolioController.emplace(
-      SpirePortfolio(m_userProfile->GetMarketDatabase()),
-      &m_userProfile->GetServiceClients().GetMarketDataClient(),
+      SpirePortfolio(m_userProfile->GetVenueDatabase()),
+      &m_userProfile->GetClients().GetMarketDataClient(),
       std::move(orders));
   }
   m_orderLogModel.SetOrderExecutionPublisher(Ref(orderExecutionPublisher));
@@ -170,7 +170,7 @@ void BlotterModel::InitializeModels() {
   m_profitAndLossModel.SetPortfolioController(Ref(*m_portfolioController));
   m_activityLogModel.SetOrderExecutionPublisher(Ref(orderExecutionPublisher));
   auto currentAccount =
-    m_userProfile->GetServiceClients().GetServiceLocatorClient().GetAccount();
+    m_userProfile->GetClients().get_service_locator_client().GetAccount();
   if(m_isConsolidated && m_executingAccount == currentAccount) {
     m_cancelOnFillController =
       std::make_unique<CancelOnFillController>(Ref(*m_userProfile));

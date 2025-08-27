@@ -20,9 +20,9 @@ PortfolioSelectionModel::PortfolioSelectionModel(
   for(size_t i = 0; i < SELECTION_TYPES_COUNT; ++i) {
     m_roots[i] = createIndex(i, 0, -1);
   }
-  m_groups = m_userProfile->GetServiceClients().
+  m_groups = m_userProfile->GetClients().
     GetAdministrationClient().LoadManagedTradingGroups(
-    m_userProfile->GetServiceClients().GetServiceLocatorClient().GetAccount());
+    m_userProfile->GetClients().get_service_locator_client().GetAccount());
   std::sort(m_groups.begin(), m_groups.end(), &DirectoryEntry::NameComparator);
   if(properties.IsSelectingAllGroups()) {
     for(auto i = m_groups.begin(); i != m_groups.end(); ++i) {
@@ -40,8 +40,8 @@ PortfolioSelectionModel::PortfolioSelectionModel(
     m_selectedCurrencies = properties.GetSelectedCurrencies();
   }
   if(properties.IsSelectingAllMarkets()) {
-    for(auto i = m_userProfile->GetMarketDatabase().GetEntries().begin();
-        i != m_userProfile->GetMarketDatabase().GetEntries().end(); ++i) {
+    for(auto i = m_userProfile->GetVenueDatabase().GetEntries().begin();
+        i != m_userProfile->GetVenueDatabase().GetEntries().end(); ++i) {
       m_selectedMarkets.insert(i->m_code);
     }
   } else {
@@ -69,7 +69,7 @@ void PortfolioSelectionModel::UpdateProperties(
   }
   properties->GetSelectedMarkets() = m_selectedMarkets;
   if(m_selectedMarkets.size() ==
-      m_userProfile->GetMarketDatabase().GetEntries().size()) {
+      m_userProfile->GetVenueDatabase().GetEntries().size()) {
     properties->SetSelectingAllMarkets(true);
   } else {
     properties->SetSelectingAllMarkets(false);
@@ -125,7 +125,7 @@ QModelIndex PortfolioSelectionModel::index(int row, int column,
     }
   } else if(parent == m_roots[MARKET_SELECTION]) {
     if(column == 0 && row >= 0 && row <= static_cast<int>(
-        m_userProfile->GetMarketDatabase().GetEntries().size())) {
+        m_userProfile->GetVenueDatabase().GetEntries().size())) {
       return createIndex(row, 0, MARKET_SELECTION);
     }
   } else if(parent == m_roots[SIDE_SELECTION]) {
@@ -154,7 +154,7 @@ int PortfolioSelectionModel::rowCount(const QModelIndex& parent) const {
       m_userProfile->GetCurrencyDatabase().GetEntries().size());
   } else if(parent == m_roots[MARKET_SELECTION]) {
     return static_cast<int>(
-      m_userProfile->GetMarketDatabase().GetEntries().size());
+      m_userProfile->GetVenueDatabase().GetEntries().size());
   } else if(parent == m_roots[SIDE_SELECTION]) {
     return Side::COUNT + 1;
   }
@@ -188,7 +188,7 @@ QVariant PortfolioSelectionModel::data(const QModelIndex& index,
         return Qt::Unchecked;
       }
     } else if(index == m_roots[MARKET_SELECTION]) {
-      const MarketDatabase& markets = m_userProfile->GetMarketDatabase();
+      const MarketDatabase& markets = m_userProfile->GetVenueDatabase();
       if(m_selectedMarkets.size() == markets.GetEntries().size()) {
         return Qt::Checked;
       } else {
@@ -298,7 +298,7 @@ bool PortfolioSelectionModel::setData(const QModelIndex& index,
       return true;
     } else if(index == m_roots[MARKET_SELECTION]) {
       vector<MarketDatabase::Entry> markets =
-        m_userProfile->GetMarketDatabase().GetEntries();
+        m_userProfile->GetVenueDatabase().GetEntries();
       if(state == Qt::Checked) {
         for(auto i = markets.begin(); i != markets.end(); ++i) {
           m_selectedMarkets.insert(i->m_code);
@@ -307,7 +307,7 @@ bool PortfolioSelectionModel::setData(const QModelIndex& index,
         m_selectedMarkets.clear();
       }
       dataChanged(this->index(0, 0, m_roots[MARKET_SELECTION]), this->index(
-        m_userProfile->GetMarketDatabase().GetEntries().size() - 1, 0,
+        m_userProfile->GetVenueDatabase().GetEntries().size() - 1, 0,
         m_roots[MARKET_SELECTION]));
       return true;
     } else if(index == m_roots[SIDE_SELECTION]) {
@@ -384,7 +384,7 @@ boost::optional<PortfolioSelectionModel::SelectionVariant>
       return SelectionVariant{currencies.GetEntries()[index.row()]};
     }
   } else if(index.parent() == m_roots[MARKET_SELECTION]) {
-    const MarketDatabase& markets = m_userProfile->GetMarketDatabase();
+    const MarketDatabase& markets = m_userProfile->GetVenueDatabase();
     if(index.column() == 0 && index.row() >= 0 && index.row() <
         static_cast<int>(markets.GetEntries().size())) {
       return SelectionVariant{markets.GetEntries()[index.row()]};

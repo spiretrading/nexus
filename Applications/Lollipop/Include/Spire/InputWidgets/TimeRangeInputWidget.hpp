@@ -7,7 +7,6 @@
 #include <boost/optional/optional.hpp>
 #include <boost/signals2/signal.hpp>
 #include <QWidget>
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/PersistentWindow.hpp"
 
 class QAbstractButton;

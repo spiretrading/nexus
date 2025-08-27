@@ -10,7 +10,6 @@
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardCell.hpp"
 #include "Spire/Dashboard/DashboardRowBuilder.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

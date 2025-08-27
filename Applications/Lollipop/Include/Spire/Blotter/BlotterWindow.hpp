@@ -6,7 +6,6 @@
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/PersistentWindow.hpp"
 
 class QAction;
@@ -86,8 +85,7 @@ namespace Spire {
       void OnTaskAdded(const BlotterTasksModel::TaskEntry& entry);
       void OnTaskRemoved(const BlotterTasksModel::TaskEntry& entry);
       void OnActiveBlotterChanged(BlotterModel& blotter);
-      void OnProfitAndLossUpdate(
-        const SpirePortfolioController::UpdateEntry& update);
+      void OnProfitAndLossUpdate(const Nexus::PortfolioUpdateEntry& update);
       void OnTaskState(const std::shared_ptr<Task>& task,
         const Task::StateEntry& update);
       void OnExecuteAction();

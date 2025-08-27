@@ -8,7 +8,7 @@
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
 #include "Spire/Canvas/Tasks/Executor.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 

@@ -309,7 +309,7 @@ void Toolbar::OnProfileAction() {
   auto profileWindow = new TraderProfileWindow(Ref(*m_userProfile));
   profileWindow->setAttribute(Qt::WA_DeleteOnClose);
   profileWindow->Load(
-    m_userProfile->GetServiceClients().GetServiceLocatorClient().GetAccount());
+    m_userProfile->GetClients().get_service_locator_client().GetAccount());
   profileWindow->show();
 }
 
@@ -383,7 +383,7 @@ void Toolbar::OnNewBlotterAction() {
     return;
   }
   auto blotter = std::make_unique<BlotterModel>(newBlotterDialog.GetInput(),
-    m_userProfile->GetServiceClients().GetServiceLocatorClient().GetAccount(),
+    m_userProfile->GetClients().get_service_locator_client().GetAccount(),
     false, Ref(*m_userProfile),
     m_userProfile->GetBlotterSettings().GetDefaultBlotterTaskProperties(),
     m_userProfile->GetBlotterSettings().GetDefaultOrderLogProperties());

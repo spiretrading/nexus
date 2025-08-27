@@ -2,7 +2,6 @@
 #define SPIRE_PORTFOLIOVIEWERWINDOWSETTINGS_HPP
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 #include "Spire/UI/UI.hpp"
 #include "Spire/UI/WindowSettings.hpp"

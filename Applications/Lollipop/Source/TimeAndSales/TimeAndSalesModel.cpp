@@ -21,19 +21,19 @@ TimeAndSalesModel::TimeAndSalesModel(Ref<UserProfile> userProfile,
     return;
   }
   auto marketStartOfDay = MarketDateToUtc(security.GetMarket(),
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime(),
-    m_userProfile->GetMarketDatabase(), m_userProfile->GetTimeZoneDatabase());
+    m_userProfile->GetClients().get_time_client().GetTime(),
+    m_userProfile->GetVenueDatabase(), m_userProfile->GetTimeZoneDatabase());
   auto query = SecurityMarketDataQuery();
   query.SetIndex(security);
   query.SetRange(marketStartOfDay, Beam::Queries::Sequence::Last());
   query.SetSnapshotLimit(SnapshotLimit::Type::TAIL, 50);
   query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-  m_userProfile->GetServiceClients().GetMarketDataClient().QueryTimeAndSales(
+  m_userProfile->GetClients().GetMarketDataClient().QueryTimeAndSales(
     query, m_eventHandler.get_slot<TimeAndSale>(
       std::bind_front(&TimeAndSalesModel::OnTimeAndSale, this)));
   auto bboQuery = MakeCurrentQuery(security);
   bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
-  m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
+  m_userProfile->GetClients().GetMarketDataClient().QueryBboQuotes(
     bboQuery, m_eventHandler.get_slot<BboQuote>(
       std::bind_front(&TimeAndSalesModel::OnBbo, this)));
 }

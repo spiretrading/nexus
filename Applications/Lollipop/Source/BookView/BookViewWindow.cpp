@@ -150,7 +150,7 @@ void BookViewWindow::SetProperties(const BookViewProperties& properties) {
 void BookViewWindow::DisplaySecurity(const Security& security) {
   m_security = security;
   setWindowTitle(QString::fromStdString(
-    ToString(security, m_userProfile->GetMarketDatabase())) +
+    ToString(security, m_userProfile->GetVenueDatabase())) +
     tr(" - Book View"));
   m_ui->m_askPanel->DisplaySecurity(m_security);
   m_ui->m_bidPanel->DisplaySecurity(m_security);
@@ -269,7 +269,7 @@ std::unique_ptr<CanvasNode>
         dynamic_cast<const SecurityNode*>(&*securityNode)) {
       auto builder = CanvasNodeBuilder(*taskNode);
       builder.Replace(*securityNode, securityValueNode->SetValue(m_security,
-        m_userProfile->GetMarketDatabase()));
+        m_userProfile->GetVenueDatabase()));
       builder.SetReadOnly(*securityNode, true);
       auto price = [&] {
         if(auto sideNode =
@@ -416,7 +416,7 @@ void BookViewWindow::HandleInteractionsPropertiesEvent() {
   auto& interactionsProperties =
     m_userProfile->GetInteractionProperties().Get(m_security);
   auto interactionsNode = std::make_unique<InteractionsNode>(
-    m_security, m_userProfile->GetMarketDatabase(), interactionsProperties);
+    m_security, m_userProfile->GetVenueDatabase(), interactionsProperties);
   m_taskEntryWidget =
     new CondensedCanvasWidget("Interactions", Ref(*m_userProfile), this);
   m_isTaskEntryWidgetForInteractionsProperties = true;

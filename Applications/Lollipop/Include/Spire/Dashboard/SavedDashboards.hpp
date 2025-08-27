@@ -9,7 +9,6 @@
 #include <boost/signals2/signal.hpp>
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardModelSchema.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 
 namespace Spire {

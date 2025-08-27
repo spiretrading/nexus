@@ -137,13 +137,13 @@ void OrderImbalanceIndicatorModel::Reset() {
 void OrderImbalanceIndicatorModel::InitializePublishers() {
   m_eventHandler.emplace();
   auto timeRange = m_properties.GetTimeRange(
-    m_userProfile->GetServiceClients().GetTimeClient());
-  for(auto& market : m_userProfile->GetMarketDatabase().GetEntries()) {
+    m_userProfile->GetClients().get_time_client());
+  for(auto& market : m_userProfile->GetVenueDatabase().GetEntries()) {
     auto orderImbalanceQuery = MarketWideDataQuery();
     orderImbalanceQuery.SetIndex(market.m_code);
     orderImbalanceQuery.SetRange(timeRange);
     orderImbalanceQuery.SetSnapshotLimit(SnapshotLimit::Unlimited());
-    m_userProfile->GetServiceClients().GetMarketDataClient().
+    m_userProfile->GetClients().GetMarketDataClient().
       QueryOrderImbalances(orderImbalanceQuery,
         m_eventHandler->get_slot<OrderImbalance>(
           std::bind_front(&OrderImbalanceIndicatorModel::OnOrderImbalance, this,

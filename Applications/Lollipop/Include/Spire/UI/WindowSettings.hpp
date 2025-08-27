@@ -5,7 +5,6 @@
 #include <vector>
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Pointers/Ref.hpp>
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/UI.hpp"
 
 class QWidget;

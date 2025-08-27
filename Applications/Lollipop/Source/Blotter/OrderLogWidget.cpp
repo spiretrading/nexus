@@ -121,7 +121,7 @@ bool OrderLogWidget::eventFilter(QObject* object, QEvent* event) {
         m_userProfile->GetKeyBindings().GetCancelFromBinding(key);
       if(cancelBinding) {
         KeyBindings::CancelBinding::HandleCancel(*cancelBinding,
-          m_userProfile->GetServiceClients().GetOrderExecutionClient(),
+          m_userProfile->GetClients().get_order_execution_client(),
           Store(m_orderEntries));
         return true;
       }
@@ -178,7 +178,7 @@ void OrderLogWidget::OnCancel() {
   for(auto& index : indexes) {
     auto& entry =
       m_model->GetOrderLogModel().GetEntry(m_proxyModel->mapToSource(index));
-    m_userProfile->GetServiceClients().GetOrderExecutionClient().Cancel(
+    m_userProfile->GetClients().get_order_execution_client().Cancel(
       *entry.m_order);
   }
 }

@@ -4,7 +4,7 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Spire/AccountViewer/AccountViewer.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 
@@ -32,15 +32,15 @@ namespace Spire {
       const Beam::ServiceLocator::DirectoryEntry& GetAccount() const;
 
       //! Returns the account's RiskParameters.
-      const Nexus::RiskService::RiskParameters& GetRiskParameters() const;
+      const Nexus::RiskParameters& GetRiskParameters() const;
 
       //! Returns the account's RiskParameters.
-      Nexus::RiskService::RiskParameters& GetRiskParameters();
+      Nexus::RiskParameters& GetRiskParameters();
 
     private:
       UserProfile* m_userProfile;
       Beam::ServiceLocator::DirectoryEntry m_account;
-      Nexus::RiskService::RiskParameters m_riskParameters;
+      Nexus::RiskParameters m_riskParameters;
   };
 }
 

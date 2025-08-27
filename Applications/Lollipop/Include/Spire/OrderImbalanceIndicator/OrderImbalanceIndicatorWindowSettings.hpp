@@ -4,7 +4,6 @@
 #include <QByteArray>
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorProperties.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 

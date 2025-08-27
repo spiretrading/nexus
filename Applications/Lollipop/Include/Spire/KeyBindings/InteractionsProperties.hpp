@@ -2,10 +2,9 @@
 #define SPIRE_INTERACTIONSPROPERTIES_HPP
 #include <array>
 #include <Beam/Serialization/DataShuttle.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 

@@ -26,9 +26,9 @@ void AccountViewModel::Load() {
   m_children.clear();
   m_parents.clear();
   auto& administrationClient =
-    m_userProfile->GetServiceClients().GetAdministrationClient();
+    m_userProfile->GetClients().get_administration_client();
   auto& serviceLocatorClient =
-    m_userProfile->GetServiceClients().GetServiceLocatorClient();
+    m_userProfile->GetClients().get_service_locator_client();
   if(m_userProfile->IsAdministrator()) {
     auto administratorsRoot = std::make_unique<RootItem>("Administrators");
     m_administratorsRoot = administratorsRoot.get();
@@ -36,7 +36,7 @@ void AccountViewModel::Load() {
     auto servicesRoot = std::make_unique<RootItem>("Services");
     m_servicesRoot = servicesRoot.get();
     Add(std::move(servicesRoot));
-    auto administrators = administrationClient.LoadAdministrators();
+    auto administrators = administrationClient.load_administrators();
     std::sort(administrators.begin(), administrators.end(),
       &DirectoryEntry::NameComparator);
     for(auto& administrator : administrators) {
@@ -44,7 +44,7 @@ void AccountViewModel::Load() {
         administrator);
       Add(std::move(administratorItem), m_administratorsRoot);
     }
-    auto services = administrationClient.LoadServices();
+    auto services = administrationClient.load_services();
     std::sort(services.begin(), services.end(),
       &DirectoryEntry::NameComparator);
     for(auto& service : services) {
@@ -55,7 +55,7 @@ void AccountViewModel::Load() {
   auto tradingGroupsRoot = std::make_unique<RootItem>("Trading Groups");
   m_tradingGroupsRoot = tradingGroupsRoot.get();
   Add(std::move(tradingGroupsRoot));
-  auto entries = administrationClient.LoadManagedTradingGroups(
+  auto entries = administrationClient.load_managed_trading_groups(
     serviceLocatorClient.GetAccount());
   std::sort(entries.begin(), entries.end(), &DirectoryEntry::NameComparator);
   for(auto& entry : entries) {

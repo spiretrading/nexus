@@ -427,7 +427,7 @@ void BlotterWindow::OnPositionsAdded(
       auto& position = positions[i];
       security["symbol"] = position.m_key.m_index.GetSymbol();
       security["market"] = ToString(position.m_key.m_index.GetMarket(),
-        m_userProfile->GetMarketDatabase());
+        m_userProfile->GetVenueDatabase());
       return security;
     }();
   }

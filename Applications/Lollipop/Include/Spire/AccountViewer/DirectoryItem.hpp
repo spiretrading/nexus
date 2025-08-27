@@ -2,7 +2,6 @@
 #define SPIRE_DIRECTORYITEM_HPP
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Spire/AccountViewer/AccountViewItem.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

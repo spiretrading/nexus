@@ -6,7 +6,6 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
 using namespace Spire;
 using namespace std;
 
@@ -44,12 +43,12 @@ void AccountEntitlementWidget::SetModel(
   m_model = model;
   const EntitlementDatabase& entitlements =
     m_userProfile->GetEntitlementDatabase();
-  for(auto i = entitlements.GetEntries().begin();
-      i != entitlements.GetEntries().end(); ++i) {
+  auto entries = entitlements.get_entries();
+  for(auto i = entries.begin(); i != entries.end(); ++i) {
     EntitlementEntryWidget* entitlementWidget = new EntitlementEntryWidget(
       Ref(*m_userProfile), m_isReadOnly, *i, m_model, this);
     layout->insertWidget(layout->count(), entitlementWidget);
-    if(i + 1 != entitlements.GetEntries().end()) {
+    if(i + 1 != entries.end()) {
       QFrame* line = new QFrame();
       line->setFrameShape(QFrame::HLine);
       line->setFrameShadow(QFrame::Sunken);

@@ -6,7 +6,6 @@
 #include <utility>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <QTimer>
-#include "Spire/Async/Async.hpp"
 
 namespace Spire {
 

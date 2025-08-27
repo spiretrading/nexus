@@ -8,7 +8,6 @@
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterTaskProperties.hpp"
 #include "Spire/Blotter/OrderLogProperties.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/UI.hpp"
 
 namespace Spire {

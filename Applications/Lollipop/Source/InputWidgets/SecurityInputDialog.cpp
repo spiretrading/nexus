@@ -65,7 +65,7 @@ SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
       m_ui(std::make_unique<Ui_SecurityInputDialog>()),
       m_userProfile(userProfile.Get()) {
   Initialize();
-  auto text = ToWildCardString(initial, m_userProfile->GetMarketDatabase(),
+  auto text = ToWildCardString(initial, m_userProfile->GetVenueDatabase(),
     m_userProfile->GetCountryDatabase());
   m_ui->m_input->setText(QString::fromStdString(text));
   if(parent) {
@@ -91,14 +91,14 @@ Security SecurityInputDialog::GetSecurity(bool supportWildCards) const {
   auto source = m_ui->m_input->text().toUpper().toStdString();
   if(supportWildCards) {
     auto optionalSecurity =
-      ParseWildCardSecurity(source, m_userProfile->GetMarketDatabase(),
+      ParseWildCardSecurity(source, m_userProfile->GetVenueDatabase(),
         m_userProfile->GetCountryDatabase());
     if(optionalSecurity) {
       return *optionalSecurity;
     }
     return Security();
   }
-  return ParseSecurity(source, m_userProfile->GetMarketDatabase());
+  return ParseSecurity(source, m_userProfile->GetVenueDatabase());
 }
 
 QLineEdit& SecurityInputDialog::GetSymbolInput() {

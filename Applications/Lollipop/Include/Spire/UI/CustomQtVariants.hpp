@@ -6,7 +6,6 @@
 #include <QStyledItemDelegate>
 #include <QVariant>
 #include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
@@ -14,29 +13,11 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/Canvas/Tasks/Task.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/UI.hpp"
 
 namespace Spire::UI {
-
-  /*! \struct MarketToken
-      \brief Wraps a MarketCode so that it can be displayed in a model.
-   */
-  struct MarketToken {
-
-    //! Wraps the MarketCode.
-    Nexus::MarketCode m_code;
-
-    //! Constructs a default MarketToken.
-    MarketToken();
-
-    //! Wraps a MarketCode.
-    /*!
-      \param code The MarketCode to wrap.
-    */
-    MarketToken(Nexus::MarketCode code);
-  };
 
   /*! \struct PositionSideToken
       \brief Wraps a Side so that it can be displayed within the context of a
@@ -73,7 +54,7 @@ Q_DECLARE_METATYPE(Nexus::Quantity);
 Q_DECLARE_METATYPE(Nexus::Security);
 Q_DECLARE_METATYPE(Nexus::Side);
 Q_DECLARE_METATYPE(Nexus::TimeInForce);
-Q_DECLARE_METATYPE(Spire::UI::MarketToken);
+Q_DECLARE_METATYPE(Nexus::Venue);
 Q_DECLARE_METATYPE(Spire::UI::PositionSideToken);
 
 namespace Spire::UI {
@@ -105,24 +86,24 @@ namespace Spire::UI {
   //! Returns the string representation of a Security, including wild-cards.
   /*!
     \param security The Security to represent.
-    \param marketDatabase The MarketDatabase used to represent the MarketCode.
+    \param venueDatabase The VenueDatabase used to represent the Venue.
     \param countryDatabase The CountryDatabase used to represent the
            CountryCode.
     \return The string representation of the <i>security</i>.
   */
   std::string ToWildCardString(const Nexus::Security& security,
-    const Nexus::MarketDatabase& marketDatabase,
+    const Nexus::VenueDatabase& venueDatabase,
     const Nexus::CountryDatabase& countryDatabase);
 
   //! Parses a Security containing wild cards.
   /*!
     \param source The string to parse.
-    \param marketDatabase The database containing all MarketCodes.
+    \param venueDatabase The database containing all Venues.
     \param countryDatabase The database containing all CountryCodes.
     \return The Security represented by the <i>source</i>.
   */
   boost::optional<Nexus::Security> ParseWildCardSecurity(
-    const std::string& source, const Nexus::MarketDatabase& marketDatabase,
+    const std::string& source, const Nexus::VenueDatabase& venueDatabase,
     const Nexus::CountryDatabase& countryDatabase);
 
   /*! \class CustomVariantItemDelegate

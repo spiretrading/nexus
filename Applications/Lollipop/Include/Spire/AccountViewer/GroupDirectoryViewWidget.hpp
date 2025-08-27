@@ -2,9 +2,10 @@
 #define SPIRE_GROUPDIRECTORYVIEWWIDGET_HPP
 #include <memory>
 #include <Beam/Pointers/Ref.hpp>
+#include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <QWidget>
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class Ui_GroupDirectoryViewWidget;
 

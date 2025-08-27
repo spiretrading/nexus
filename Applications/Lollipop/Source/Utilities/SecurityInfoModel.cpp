@@ -19,7 +19,7 @@ void SecurityInfoModel::Search(const std::string& prefix) {
     return;
   }
   m_queryPromise = QtPromise([=] {
-    return m_userProfile->GetServiceClients().
+    return m_userProfile->GetClients().
       GetMarketDataClient().LoadSecurityInfoFromPrefix(uppercasePrefix);
   }, LaunchPolicy::ASYNC).then(
     [=] (const std::vector<SecurityInfo>& securityInfoItems) {
@@ -45,7 +45,7 @@ QVariant SecurityInfoModel::data(const QModelIndex& index, int role) const {
   if(role == Qt::DisplayRole) {
     if(index.column() == SECURITY_COLUMN) {
       return QString::fromStdString(
-        ToString(item.m_security, m_userProfile->GetMarketDatabase()));
+        ToString(item.m_security, m_userProfile->GetVenueDatabase()));
     } else if(index.column() == NAME_COLUMN) {
       return QString::fromStdString(item.m_name);
     } else if(index.column() == SECTOR_COLUMN) {

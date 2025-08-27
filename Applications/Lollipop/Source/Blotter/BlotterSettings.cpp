@@ -244,12 +244,12 @@ void BlotterSettings::RemoveBlotter(const BlotterModel& blotter) {
 
 const BlotterModel& BlotterSettings::GetConsolidatedBlotter() const {
   return GetConsolidatedBlotter(
-    m_userProfile->GetServiceClients().GetServiceLocatorClient().GetAccount());
+    m_userProfile->GetClients().get_service_locator_client().GetAccount());
 }
 
 BlotterModel& BlotterSettings::GetConsolidatedBlotter() {
   return GetConsolidatedBlotter(
-    m_userProfile->GetServiceClients().GetServiceLocatorClient().GetAccount());
+    m_userProfile->GetClients().get_service_locator_client().GetAccount());
 }
 
 const BlotterModel& BlotterSettings::GetConsolidatedBlotter(
@@ -262,7 +262,7 @@ BlotterModel&
   auto blotterIterator = m_consolidatedBlotters.find(account);
   if(blotterIterator == m_consolidatedBlotters.end()) {
     auto isUserConsolidatedBlotter = account ==
-      m_userProfile->GetServiceClients().GetServiceLocatorClient().GetAccount();
+      m_userProfile->GetClients().get_service_locator_client().GetAccount();
     auto name = [&] {
       if(isUserConsolidatedBlotter) {
         return std::string("Global");

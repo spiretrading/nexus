@@ -8,7 +8,6 @@
 #include <QCoreApplication>
 #include <QEvent>
 #include <QObject>
-#include "Spire/Async/Async.hpp"
 #include "Spire/Async/QtPromiseEvent.hpp"
 
 namespace Spire {
@@ -22,6 +21,9 @@ namespace Spire {
     /** The executor should be invoked asynchronously. */
     ASYNC
   };
+
+  template<typename T>
+  class QtPromise;
 
   /** Type trait used to determine if a type represents a promise. */
   template<typename T>

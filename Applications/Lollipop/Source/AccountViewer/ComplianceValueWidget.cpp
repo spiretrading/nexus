@@ -10,7 +10,6 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::Compliance;
 using namespace Spire;
 using namespace std;
 

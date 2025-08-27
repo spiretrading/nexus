@@ -172,10 +172,9 @@ void AccountViewWindow::OnCurrentChanged(const QModelIndex& current,
     auto entry =
       [&] {
         auto& serviceLocatorClient =
-          m_userProfile->GetServiceClients().GetServiceLocatorClient();
-        auto groups = m_userProfile->GetServiceClients().
-          GetAdministrationClient().LoadManagedTradingGroups(
-          serviceLocatorClient.GetAccount());
+          m_userProfile->GetClients().get_service_locator_client();
+        auto groups = m_userProfile->GetClients().get_administration_client().
+          load_managed_trading_groups(serviceLocatorClient.GetAccount());
         if(groups.empty()) {
           QMessageBox::critical(nullptr, QObject::tr("Error"),
             QObject::tr("Unable to load root directory."));

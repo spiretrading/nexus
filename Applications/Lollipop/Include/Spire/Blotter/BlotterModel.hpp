@@ -3,8 +3,7 @@
 #include <optional>
 #include <string>
 #include <Beam/Pointers/Ref.hpp>
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
-#include "Nexus/RiskService/RiskService.hpp"
+#include "Nexus/RiskService/RiskParameters.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/ActivityLogModel.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
@@ -12,7 +11,7 @@
 #include "Spire/Blotter/OrderLogModel.hpp"
 #include "Spire/Blotter/OrderLogProperties.hpp"
 #include "Spire/Blotter/ProfitAndLossModel.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 
@@ -110,7 +109,8 @@ namespace Spire {
       UserProfile* m_userProfile;
       bool m_isPersistent;
       BlotterTasksModel m_tasksModel;
-      std::optional<SpirePortfolioController> m_portfolioController;
+      std::optional<ProfitAndLossModel::PortfolioController>
+        m_portfolioController;
       OrderLogModel m_orderLogModel;
       OpenPositionsModel m_openPositionsModel;
       ProfitAndLossModel m_profitAndLossModel;
@@ -123,8 +123,7 @@ namespace Spire {
       BlotterModel(const BlotterModel&) = delete;
       BlotterModel& operator =(const BlotterModel&) = delete;
       void InitializeModels();
-      void OnRiskParametersChanged(
-        const Nexus::RiskService::RiskParameters& riskParameters);
+      void OnRiskParametersChanged(const Nexus::RiskParameters& riskParameters);
   };
 }
 

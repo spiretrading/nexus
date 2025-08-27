@@ -299,7 +299,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const LuaScriptNode& node) {
 
 void OpenEditorCanvasNodeVisitor::Visit(const MarketNode& node) {
   auto editor = new QComboBox();
-  auto& markets = m_userProfile->GetMarketDatabase().GetEntries();
+  auto& markets = m_userProfile->GetVenueDatabase().GetEntries();
   for(auto i = std::size_t(0); i != markets.size(); ++i) {
     auto& entry = markets[i];
     editor->addItem(QString::fromStdString(entry.m_code.GetData()));
@@ -486,7 +486,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const SecurityNode& node) {
         return;
       }
       m_editVariant = new ReplaceNodeCommand(Ref(*m_model), coordinate,
-        *node.SetValue(newValue, m_userProfile->GetMarketDatabase()));
+        *node.SetValue(newValue, m_userProfile->GetVenueDatabase()));
     });
   dialog.show();
   while(dialog.isVisible()) {

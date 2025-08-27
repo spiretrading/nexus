@@ -279,7 +279,7 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     string a = to_simple_string(value.value<ptime>());
     string b = to_simple_string(timeValue);
     auto currentTime = ToLocalTime(
-      m_userProfile->GetServiceClients().GetTimeClient().GetTime());
+      m_userProfile->GetClients().get_time_client().GetTime());
     if(timeValue.date() == currentTime.date()) {
       return QString::fromStdString(to_simple_string(timeValue).substr(12));
     } else {
@@ -291,7 +291,7 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return QString::fromStdString(entry.m_code.GetData());
   } else if(value.canConvert<MarketToken>()) {
     const MarketDatabase::Entry& entry =
-      m_userProfile->GetMarketDatabase().FromCode(
+      m_userProfile->GetVenueDatabase().FromCode(
       value.value<MarketToken>().m_code);
     return QString::fromStdString(entry.m_displayName);
   } else if(value.canConvert<Money>()) {
@@ -310,7 +310,7 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return value.value<PositionSideToken>().ToString();
   } else if(value.canConvert<Security>()) {
     return QString::fromStdString(ToWildCardString(value.value<Security>(),
-      m_userProfile->GetMarketDatabase(), m_userProfile->GetCountryDatabase()));
+      m_userProfile->GetVenueDatabase(), m_userProfile->GetCountryDatabase()));
   } else if(value.canConvert<Side>()) {
     return Spire::UI::displayText(value.value<Side>());
   } else if(value.canConvert<TimeInForce>()) {
@@ -368,9 +368,9 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
       displayText(rightVariant.value<OrderType>()), left, right);
   } else if(leftVariant.canConvert<Security>()) {
     return Compare(ToString(leftVariant.value<Security>(),
-      m_userProfile->GetMarketDatabase()),
+      m_userProfile->GetVenueDatabase()),
       ToString(rightVariant.value<Security>(),
-      m_userProfile->GetMarketDatabase()), left, right);
+      m_userProfile->GetVenueDatabase()), left, right);
   } else if(leftVariant.canConvert<Side>()) {
     return Compare(displayText(leftVariant.value<Side>()),
       displayText(rightVariant.value<Side>()), left, right);
@@ -392,10 +392,10 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
       rightVariant.value<PositionSideToken>().ToString(), left, right);
   } else if(leftVariant.canConvert<MarketToken>()) {
     const MarketDatabase::Entry& leftEntry =
-      m_userProfile->GetMarketDatabase().FromCode(
+      m_userProfile->GetVenueDatabase().FromCode(
       leftVariant.value<MarketToken>().m_code);
     const MarketDatabase::Entry& rightEntry =
-      m_userProfile->GetMarketDatabase().FromCode(
+      m_userProfile->GetVenueDatabase().FromCode(
       rightVariant.value<MarketToken>().m_code);
     return leftEntry.m_displayName < rightEntry.m_displayName;
   }

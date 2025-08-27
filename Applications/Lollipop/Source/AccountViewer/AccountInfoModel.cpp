@@ -4,7 +4,6 @@
 using namespace Beam;
 using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
 using namespace Spire;
 
 AccountInfoModel::AccountInfoModel(Ref<UserProfile> userProfile,
@@ -13,12 +12,13 @@ AccountInfoModel::AccountInfoModel(Ref<UserProfile> userProfile,
       m_account(account) {}
 
 void AccountInfoModel::Load() {
-  m_identity = m_userProfile->GetServiceClients().GetAdministrationClient().
-    LoadIdentity(m_account);
+  m_identity =
+    m_userProfile->GetClients().get_administration_client().load_identity(
+      m_account);
 }
 
 void AccountInfoModel::Commit() {
-  m_userProfile->GetServiceClients().GetAdministrationClient().StoreIdentity(
+  m_userProfile->GetClients().get_administration_client().store(
     m_account, m_identity);
 }
 

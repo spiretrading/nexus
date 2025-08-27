@@ -40,7 +40,7 @@ TaskKeyBindingsDialog::TaskKeyBindingsDialog(Ref<UserProfile> userProfile,
   keyComboBoxView->setModel(m_ui->m_keyComboBox->model());
   m_ui->m_keyComboBox->setView(keyComboBoxView);
   m_ui->m_marketComboBox->addItem(tr("All"));
-  for(const auto& market : m_userProfile->GetMarketDatabase().GetEntries()) {
+  for(const auto& market : m_userProfile->GetVenueDatabase().GetEntries()) {
     m_markets.push_back(market.m_displayName);
     m_ui->m_marketComboBox->addItem(QString::fromStdString(
       market.m_displayName));

@@ -8,9 +8,8 @@
 #include <boost/optional/optional.hpp>
 #include <QColor>
 #include <QFont>
-#include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/BookView/BookView.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 
 namespace Spire {
@@ -95,25 +94,25 @@ namespace Spire {
 
       /**
        * Returns the MarketHighlight for a specified market.
-       * @param market The market to get the property for.
-       * @return The <i>market</i>'s highlight property.
+       * @param venue The venue to get the property for.
+       * @return The <i>venue</i>'s highlight property.
        */
       boost::optional<const MarketHighlight&> GetMarketHighlight(
-        Nexus::MarketCode market) const;
+        Nexus::Venue venue) const;
 
       /**
        * Sets the MarketHighlight for a specified market.
-       * @param market The market to apply the property to.
+       * @param venue The venue to apply the property to.
        * @param highlight The MarketHighlight to apply.
        */
       void SetMarketHighlight(
-        Nexus::MarketCode market, const MarketHighlight& highlight);
+        Nexus::Venue venue, const MarketHighlight& highlight);
 
       /**
-       * Removes the MarketHighlight for a specified market.
-       * @param market The market to remove the highlight from.
+       * Removes the MarketHighlight for a specified venue.
+       * @param venue The venue to remove the highlight from.
        */
-      void RemoveMarketHighlight(Nexus::MarketCode market);
+      void RemoveMarketHighlight(Nexus::Venue venue);
 
       /** Returns the OrderHighlight option. */
       OrderHighlight GetOrderHighlight() const;
@@ -145,7 +144,7 @@ namespace Spire {
       std::vector<QColor> m_bookQuoteBackgroundColors;
       QFont m_bboQuoteFont;
       QFont m_bookQuoteFont;
-      std::unordered_map<Nexus::MarketCode, MarketHighlight> m_marketHighlights;
+      std::unordered_map<Nexus::Venue, MarketHighlight> m_marketHighlights;
       OrderHighlight m_orderHighlight;
       QColor m_orderHighlightColor;
       bool m_showGrid;

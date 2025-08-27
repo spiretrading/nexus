@@ -30,7 +30,7 @@ TimeInputDialog::TimeInputDialog(Ref<UserProfile> userProfile,
       m_userProfile(userProfile.Get()) {
   m_ui->setupUi(this);
   auto currentTime = ToLocalTime(
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime());
+    m_userProfile->GetClients().get_time_client().GetTime());
   m_ui->m_currentTimeDisplay->setTime(PosixTimeToQTime(
     currentTime.time_of_day()));
   connect(m_ui->m_buttonBox, &QDialogButtonBox::accepted, this,
@@ -49,7 +49,7 @@ TimeInputDialog::TimeInputDialog(const time_duration& initialValue,
       m_userProfile(userProfile.Get()) {
   m_ui->setupUi(this);
   auto currentTime = ToLocalTime(
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime());
+    m_userProfile->GetClients().get_time_client().GetTime());
   m_ui->m_currentTimeDisplay->setTime(PosixTimeToQTime(
     currentTime.time_of_day()));
   if(!initialValue.is_special() && !initialValue.is_not_a_date_time()) {
@@ -77,7 +77,7 @@ time_duration TimeInputDialog::GetTime() const {
 
 void TimeInputDialog::OnCurrentTimer() {
   auto currentTime = ToLocalTime(
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime());
+    m_userProfile->GetClients().get_time_client().GetTime());
   m_ui->m_currentTimeDisplay->setTime(PosixTimeToQTime(
     currentTime.time_of_day()));
 }

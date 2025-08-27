@@ -3,7 +3,6 @@
 #include <Beam/Collections/View.hpp>
 #include <boost/mpl/list.hpp>
 #include <boost/optional/optional.hpp>
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Spire/Canvas/Records/Record.hpp"
 
 namespace Spire {
@@ -11,16 +10,16 @@ namespace Spire {
   /** Lists all native types. */
   using NativeTypes = boost::mpl::list<bool, Nexus::Quantity, double,
     boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
-    Nexus::CurrencyId, Nexus::MarketCode, Nexus::Money, Nexus::OrderStatus,
-    Nexus::OrderType, Nexus::Security, Nexus::Side, Nexus::TimeInForce,
+    Nexus::CurrencyId, Nexus::Money, Nexus::OrderStatus, Nexus::OrderType,
+    Nexus::Security, Nexus::Side, Nexus::TimeInForce, Nexus::Venue,
     Beam::Queries::Range, Beam::Queries::Sequence,
-    const Nexus::OrderExecutionService::Order*, Record>;
+    std::shared_ptr<const Nexus::Order>, Record>;
 
   /** Lists all value types. */
   using ValueTypes = boost::mpl::list<bool, Nexus::Quantity, double,
     boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
-    Nexus::CurrencyId, Nexus::MarketCode, Nexus::Money, Nexus::OrderStatus,
-    Nexus::OrderType, Nexus::Security, Nexus::Side, Nexus::TimeInForce,
+    Nexus::CurrencyId, Nexus::Money, Nexus::OrderStatus, Nexus::OrderType,
+    Nexus::Security, Nexus::Side, Nexus::TimeInForce, Nexus::Venue,
     Beam::Queries::Range, Beam::Queries::Sequence, Record>;
 
   /** Lists types that can be compared. */

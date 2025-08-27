@@ -6,7 +6,7 @@
 #include <QWidget>
 #include "Nexus/Compliance/ComplianceRuleEntry.hpp"
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class Ui_ComplianceRuleEntryWidget;
 
@@ -29,14 +29,14 @@ namespace Spire {
         \param flags Qt flags passed to the parent widget.
       */
       ComplianceRuleEntryWidget(Beam::Ref<UserProfile> userProfile,
-        bool isReadOnly, const Nexus::Compliance::ComplianceRuleEntry& entry,
+        bool isReadOnly, const Nexus::ComplianceRuleEntry& entry,
         std::shared_ptr<ComplianceModel> model, QWidget* parent = nullptr,
         Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~ComplianceRuleEntryWidget();
 
       //! Returns the ComplianceRuleEntry represented by this widget.
-      const Nexus::Compliance::ComplianceRuleEntry& GetEntry() const;
+      const Nexus::ComplianceRuleEntry& GetEntry() const;
 
       //! Returns <code>true</code> iff this widget's checkbox has been
       //! selected.
@@ -51,7 +51,7 @@ namespace Spire {
       bool m_hasModifications;
       bool m_isReadOnly;
       bool m_idUpdated;
-      Nexus::Compliance::ComplianceRuleEntry m_entry;
+      Nexus::ComplianceRuleEntry m_entry;
       std::string m_ruleName;
       std::vector<std::string> m_parameterNames;
       std::shared_ptr<ComplianceModel> m_model;
@@ -60,8 +60,8 @@ namespace Spire {
       void SetupParameters();
       void OnTableExpanded();
       void OnTableCollapsed();
-      void OnEntryIdChanged(Nexus::Compliance::ComplianceRuleId previousId,
-        Nexus::Compliance::ComplianceRuleId newId);
+      void OnEntryIdChanged(Nexus::ComplianceRuleEntry::Id previousId,
+        Nexus::ComplianceRuleEntry::Id newId);
   };
 }
 

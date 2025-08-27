@@ -45,7 +45,7 @@ SecurityTimePriceChartPlotSeries::SecurityTimePriceChartPlotSeries(
   query.SetRange(Beam::Queries::Range::RealTime());
   query.SetSnapshotLimit(SnapshotLimit::Unlimited());
   query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-  m_userProfile->GetServiceClients().GetMarketDataClient().QueryTimeAndSales(
+  m_userProfile->GetClients().GetMarketDataClient().QueryTimeAndSales(
     query, m_eventHandler.get_slot<TimeAndSale>(
       std::bind_front(&SecurityTimePriceChartPlotSeries::OnTimeAndSale, this)));
 }
@@ -56,7 +56,7 @@ void SecurityTimePriceChartPlotSeries::Query(ChartValue start, ChartValue end) {
       auto min = start.ToDateTime() - Normalize(start.ToDateTime(), m_interval);
       auto max = end.ToDateTime() +
         (m_interval - Normalize(end.ToDateTime(), m_interval));
-      auto result = m_userProfile->GetServiceClients().GetChartingClient().
+      auto result = m_userProfile->GetClients().GetChartingClient().
         LoadTimePriceSeries(m_security, min, max, m_interval);
       for(auto& candlestick : result.series) {
         auto chartCandlestick = Candlestick(
@@ -78,7 +78,7 @@ ChartValue SecurityTimePriceChartPlotSeries::LoadLastCurrentDomain() {
     Beam::Queries::Sequence::First(), Beam::Queries::Sequence::Present());
   query.SetSnapshotLimit(SnapshotLimit::Type::TAIL, 1);
   query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-  m_userProfile->GetServiceClients().GetMarketDataClient().QueryTimeAndSales(
+  m_userProfile->GetClients().GetMarketDataClient().QueryTimeAndSales(
     query, timeAndSalesQueue);
   try {
     return ChartValue(timeAndSalesQueue->Pop().m_timestamp);

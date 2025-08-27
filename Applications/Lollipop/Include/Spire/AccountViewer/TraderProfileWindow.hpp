@@ -5,7 +5,7 @@
 #include <Beam/ServiceLocator/ServiceLocator.hpp>
 #include <QFrame>
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class Ui_TraderProfileWindow;
 

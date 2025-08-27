@@ -37,8 +37,8 @@ QIcon DirectoryItem::GetIcon() const {
 
 vector<unique_ptr<AccountViewItem>> DirectoryItem::LoadChildren(
     const UserProfile& userProfile) const {
-  auto children = userProfile.GetServiceClients().GetServiceLocatorClient().
-    LoadChildren(m_entry);
+  auto children =
+    userProfile.GetClients().get_service_locator_client().LoadChildren(m_entry);
   std::sort(children.begin(), children.end(), DirectoryEntry::NameComparator);
   vector<unique_ptr<AccountViewItem>> childrenItems;
   for(auto& child : children) {

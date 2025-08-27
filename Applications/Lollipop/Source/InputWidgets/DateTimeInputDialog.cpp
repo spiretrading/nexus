@@ -25,7 +25,7 @@ DateTimeInputDialog::DateTimeInputDialog(Ref<UserProfile> userProfile,
       m_userProfile(userProfile.Get()) {
   m_ui->setupUi(this);
   m_ui->m_currentTimeDisplay->setTime(ToQTime(ToLocalTime(
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime()).
+    m_userProfile->GetClients().get_time_client().GetTime()).
     time_of_day()));
   connect(m_ui->m_okButton, &QPushButton::clicked, this,
     &DateTimeInputDialog::accept);
@@ -43,7 +43,7 @@ DateTimeInputDialog::DateTimeInputDialog(const ptime& initialValue,
       m_userProfile(userProfile.Get()) {
   m_ui->setupUi(this);
   m_ui->m_currentTimeDisplay->setTime(ToQTime(ToLocalTime(
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime()).
+    m_userProfile->GetClients().get_time_client().GetTime()).
     time_of_day()));
   if(!initialValue.is_special() && !initialValue.is_not_a_date_time()) {
     ptime localInitialvalue = ToLocalTime(initialValue);
@@ -80,6 +80,6 @@ ptime DateTimeInputDialog::GetDateTime() const {
 
 void DateTimeInputDialog::OnCurrentTimer() {
   m_ui->m_currentTimeDisplay->setTime(ToQTime(ToLocalTime(
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime()).
+    m_userProfile->GetClients().get_time_client().GetTime()).
     time_of_day()));
 }

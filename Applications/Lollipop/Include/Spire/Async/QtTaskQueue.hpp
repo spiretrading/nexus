@@ -4,7 +4,6 @@
 #include <exception>
 #include <functional>
 #include <Beam/Queues/CallbackQueue.hpp>
-#include "Spire/Async/Async.hpp"
 
 namespace Spire {
 

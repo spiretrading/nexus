@@ -97,7 +97,7 @@ void BookViewPanel::DisplaySecurity(const Security& security) {
   }
   auto bboQuery = MakeCurrentQuery(security);
   bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
-  m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
+  m_userProfile->GetClients().GetMarketDataClient().QueryBboQuotes(
     bboQuery, m_eventHandler->get_slot<BboQuote>(
       std::bind_front(&BookViewPanel::OnBbo, this, security)));
 }

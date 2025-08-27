@@ -125,7 +125,7 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
   }
   auto timeAndSaleQuery = MakeRealTimeQuery(security);
   timeAndSaleQuery.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-  m_userProfile->GetServiceClients().GetMarketDataClient().QueryTimeAndSales(
+  m_userProfile->GetClients().GetMarketDataClient().QueryTimeAndSales(
     timeAndSaleQuery, m_eventHandler.get_slot<TimeAndSale>(
       std::bind_front(&SecurityTechnicalsModel::OnTimeAndSale, this)));
   m_loadPromise = std::make_shared<QtPromise<void>>(QtPromise([=] {
