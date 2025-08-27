@@ -41,7 +41,7 @@ namespace Nexus {
       template<typename BF>
       explicit ServiceOrderExecutionClient(BF&& client_builder);
       ~ServiceOrderExecutionClient();
-      std::shared_ptr<const Order> load_order(OrderId id);
+      std::shared_ptr<Order> load_order(OrderId id);
       void query(const AccountQuery& query,
         Beam::ScopedQueueWriter<SequencedOrderRecord> queue);
       void query(const AccountQuery& query,
@@ -49,13 +49,13 @@ namespace Nexus {
       void query(const AccountQuery& query,
         Beam::ScopedQueueWriter<SequencedOrder> queue);
       void query(const AccountQuery& query,
-        Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue);
+        Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue);
       void query(const AccountQuery& query,
         Beam::ScopedQueueWriter<SequencedExecutionReport> queue);
       void query(const AccountQuery& query,
         Beam::ScopedQueueWriter<ExecutionReport> queue);
-      std::shared_ptr<const Order> submit(const OrderFields& fields);
-      void cancel(const std::shared_ptr<const Order>& order);
+      std::shared_ptr<Order> submit(const OrderFields& fields);
+      void cancel(const std::shared_ptr<Order>& order);
       void cancel(const Order& order);
       void update(OrderId id, const ExecutionReport& report);
       void close();
@@ -124,10 +124,10 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
-  std::shared_ptr<const Order>
+  std::shared_ptr<Order>
       ServiceOrderExecutionClient<B>::load_order(OrderId id) {
     return Beam::Services::ServiceOrThrowWithNested(
-      [&] () -> std::shared_ptr<const Order> {
+      [&] () -> std::shared_ptr<Order> {
         auto client = m_client_handler.GetClient();
         if(auto record =
             client->template SendRequest<LoadOrderByIdService>(id)) {
@@ -155,19 +155,18 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_order_submission_publisher.SubmitQuery(query,
       Beam::MakeConverterQueueWriter<SequencedOrderRecord>(std::move(queue),
         [this] (const auto& record) {
-          return Beam::Queries::SequencedValue(
-            std::static_pointer_cast<const Order>(load(record)),
-            record.GetSequence());
+          return Beam::Queries::SequencedValue(std::static_pointer_cast<Order>(
+            load(record)), record.GetSequence());
         }));
   }
 
   template<typename B>
   void ServiceOrderExecutionClient<B>::query(const AccountQuery& query,
-      Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue) {
+      Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) {
     m_order_submission_publisher.SubmitQuery(query,
       Beam::MakeConverterQueueWriter<SequencedOrderRecord>(std::move(queue),
         [this] (const auto& record) {
-          return std::static_pointer_cast<const Order>(load(record));
+          return std::static_pointer_cast<Order>(load(record));
         }));
   }
 
@@ -184,7 +183,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
-  std::shared_ptr<const Order>
+  std::shared_ptr<Order>
       ServiceOrderExecutionClient<B>::submit(const OrderFields& fields) {
     return Beam::Services::ServiceOrThrowWithNested([&] {
       auto client = m_client_handler.GetClient();
@@ -204,7 +203,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
   template<typename B>
   void ServiceOrderExecutionClient<B>::cancel(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     cancel(*order);
   }
 

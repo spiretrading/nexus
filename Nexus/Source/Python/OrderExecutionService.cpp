@@ -66,7 +66,7 @@ void Nexus::Python::export_execution_report_publisher(module& module) {
   class_<ExecutionReportEntry>(module, "OrderExecutionReport").
     def(init()).
     def(init<const ExecutionReportEntry&>()).
-    def(init<std::shared_ptr<const Order>, ExecutionReport>()).
+    def(init<std::shared_ptr<Order>, ExecutionReport>()).
     def_readwrite("order", &ExecutionReportEntry::m_order).
     def_readwrite("report", &ExecutionReportEntry::m_report);
   ExportSnapshotPublisher<
@@ -76,7 +76,7 @@ void Nexus::Python::export_execution_report_publisher(module& module) {
     SnapshotPublisher<ExecutionReportEntry, std::vector<ExecutionReportEntry>>,
     std::shared_ptr<ExecutionReportPublisher>>(
       module, "OrderExecutionReportPublisher").
-        def(init<ScopedQueueReader<std::shared_ptr<const Order>>>());
+        def(init<ScopedQueueReader<std::shared_ptr<Order>>>());
 }
 
 void Nexus::Python::export_local_order_execution_data_store(module& module) {
@@ -134,19 +134,18 @@ void Nexus::Python::export_order(module& module) {
     def_property_readonly("info", &Order::get_info).
     def_property_readonly("publisher", &Order::get_publisher,
       return_value_policy::reference_internal);
-  ExportQueueSuite<std::shared_ptr<const Order>>(module, "Order");
+  ExportQueueSuite<std::shared_ptr<Order>>(module, "Order");
   ExportQueueSuite<SequencedOrder>(module, "SequencedOrder");
-  ExportSnapshotPublisher<std::shared_ptr<const Order>,
-    std::vector<std::shared_ptr<const Order>>>(module, "Order");
+  ExportSnapshotPublisher<std::shared_ptr<Order>,
+    std::vector<std::shared_ptr<Order>>>(module, "Order");
 }
 
 void Nexus::Python::export_order_cancellation_reactor(module& module) {
   auto aspen_module = pybind11::module::import("aspen");
-  export_box<std::shared_ptr<const Order>>(aspen_module, "Order");
+  export_box<std::shared_ptr<Order>>(aspen_module, "Order");
   export_reactor<OrderCancellationReactor<OrderExecutionClient,
-    SharedBox<std::shared_ptr<const Order>>>>(
-      module, "OrderCancellationReactor").def(
-        init<OrderExecutionClient, SharedBox<std::shared_ptr<const Order>>>());
+    SharedBox<std::shared_ptr<Order>>>>(module, "OrderCancellationReactor").def(
+      init<OrderExecutionClient, SharedBox<std::shared_ptr<Order>>>());
 }
 
 void Nexus::Python::export_order_execution_data_store_exception(
@@ -429,7 +428,7 @@ void Nexus::Python::export_order_record(module& module) {
 
 void Nexus::Python::export_order_wrapper_reactor(module& module) {
   export_reactor<OrderWrapperReactor>(module, "OrderWrapperReactor").
-    def(init<std::shared_ptr<const Order>>());
+    def(init<std::shared_ptr<Order>>());
 }
 
 void Nexus::Python::export_primitive_order(module& module) {
@@ -470,7 +469,7 @@ void Nexus::Python::export_standard_queries(module& module) {
         boost::posix_time::ptime end, const VenueDatabase& venues,
         const boost::local_time::tz_database& time_zones,
         OrderExecutionClient client,
-        ScopedQueueWriter<std::shared_ptr<const Order>> queue) {
+        ScopedQueueWriter<std::shared_ptr<Order>> queue) {
       return query_daily_order_submissions(account, start, end, venues,
         time_zones, std::move(client), std::move(queue));
     }, arg("account"), arg("start"), arg("end"), arg("venues"),
@@ -480,7 +479,7 @@ void Nexus::Python::export_standard_queries(module& module) {
     "make_live_orders_query", &make_live_orders_query, arg("account"));
   module.def("query_live_orders",
     [] (const DirectoryEntry& account, OrderExecutionClient client,
-        ScopedQueueWriter<std::shared_ptr<const Order>> queue) {
+        ScopedQueueWriter<std::shared_ptr<Order>> queue) {
       return query_live_orders(account, client, std::move(queue));
     }, arg("account"), arg("client"), arg("queue"));
   module.def("load_live_orders",
@@ -493,7 +492,7 @@ void Nexus::Python::export_standard_queries(module& module) {
   module.def("query_order_ids",
     [] (const DirectoryEntry& account, const std::vector<OrderId>& ids,
         OrderExecutionClient client,
-        ScopedQueueWriter<std::shared_ptr<const Order>> queue) {
+        ScopedQueueWriter<std::shared_ptr<Order>> queue) {
       return query_order_ids(account, ids, client, std::move(queue));
     }, arg("account"), arg("ids"), arg("client"), arg("queue"));
   module.def("load_orders",

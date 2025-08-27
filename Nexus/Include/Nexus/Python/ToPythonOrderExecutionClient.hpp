@@ -38,7 +38,7 @@ namespace Nexus {
       /** Returns the wrapped client. */
       Client& get_client();
 
-      std::shared_ptr<const Order> load_order(OrderId id);
+      std::shared_ptr<Order> load_order(OrderId id);
       void query(const AccountQuery& query,
         Beam::ScopedQueueWriter<SequencedOrderRecord> queue);
       void query(const AccountQuery& query,
@@ -46,13 +46,13 @@ namespace Nexus {
       void query(const AccountQuery& query,
         Beam::ScopedQueueWriter<SequencedOrder> queue);
       void query(const AccountQuery& query,
-        Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue);
+        Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue);
       void query(const AccountQuery& query,
         Beam::ScopedQueueWriter<SequencedExecutionReport> queue);
       void query(const AccountQuery& query,
         Beam::ScopedQueueWriter<ExecutionReport> queue);
-      std::shared_ptr<const Order> submit(const OrderFields& fields);
-      void cancel(const std::shared_ptr<const Order>& order);
+      std::shared_ptr<Order> submit(const OrderFields& fields);
+      void cancel(const std::shared_ptr<Order>& order);
       void cancel(const Order& order);
       void update(OrderId id, const ExecutionReport& report);
       void close();
@@ -95,7 +95,7 @@ namespace Nexus {
   }
 
   template<IsOrderExecutionClient C>
-  std::shared_ptr<const Order>
+  std::shared_ptr<Order>
       ToPythonOrderExecutionClient<C>::load_order(OrderId id) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_order(id);
@@ -124,7 +124,7 @@ namespace Nexus {
 
   template<IsOrderExecutionClient C>
   void ToPythonOrderExecutionClient<C>::query(const AccountQuery& query,
-      Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue) {
+      Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) {
     auto release = Beam::Python::GilRelease();
     m_client->query(query, std::move(queue));
   }
@@ -144,7 +144,7 @@ namespace Nexus {
   }
 
   template<IsOrderExecutionClient C>
-  std::shared_ptr<const Order>
+  std::shared_ptr<Order>
       ToPythonOrderExecutionClient<C>::submit(const OrderFields& fields) {
     auto release = Beam::Python::GilRelease();
     return m_client->submit(fields);
@@ -152,7 +152,7 @@ namespace Nexus {
 
   template<IsOrderExecutionClient C>
   void ToPythonOrderExecutionClient<C>::cancel(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     auto release = Beam::Python::GilRelease();
     m_client->cancel(order);
   }

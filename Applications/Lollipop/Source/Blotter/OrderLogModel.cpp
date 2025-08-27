@@ -10,7 +10,7 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
 
-OrderLogModel::OrderEntry::OrderEntry(std::shared_ptr<const Order> order)
+OrderLogModel::OrderEntry::OrderEntry(std::shared_ptr<Order> order)
   : m_order(std::move(order)),
     m_status(OrderStatus::PENDING_NEW) {}
 
@@ -35,8 +35,8 @@ const OrderLogModel::OrderEntry& OrderLogModel::GetEntry(
   return m_entries[index.row()];
 }
 
-void OrderLogModel::SetOrderExecutionPublisher(Ref<
-    const Publisher<std::shared_ptr<const Order>>> orderExecutionPublisher) {
+void OrderLogModel::SetOrderExecutionPublisher(
+    Ref<const Publisher<std::shared_ptr<Order>>> orderExecutionPublisher) {
   if(!m_entries.empty()) {
     beginRemoveRows(QModelIndex(), 0, m_entries.size() - 1);
     auto entries = std::vector<OrderEntry>();
@@ -50,7 +50,7 @@ void OrderLogModel::SetOrderExecutionPublisher(Ref<
   m_eventHandler.emplace();
   m_orderExecutionPublisher = orderExecutionPublisher.Get();
   m_orderExecutionPublisher->Monitor(
-    m_eventHandler->get_slot<std::shared_ptr<const Order>>(
+    m_eventHandler->get_slot<std::shared_ptr<Order>>(
       std::bind_front(&OrderLogModel::OnOrderExecuted, this)));
 }
 
@@ -145,7 +145,7 @@ QVariant OrderLogModel::headerData(int section, Qt::Orientation orientation,
   return QVariant();
 }
 
-void OrderLogModel::OnOrderExecuted(const std::shared_ptr<const Order>& order) {
+void OrderLogModel::OnOrderExecuted(const std::shared_ptr<Order>& order) {
   auto index = m_entries.size();
   beginInsertRows(QModelIndex(), m_entries.size(), m_entries.size());
   order->get_publisher().Monitor(m_eventHandler->get_slot<ExecutionReport>(

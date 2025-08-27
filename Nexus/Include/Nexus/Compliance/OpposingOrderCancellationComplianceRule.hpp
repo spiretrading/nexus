@@ -37,8 +37,8 @@ namespace Nexus {
       OpposingOrderCancellationComplianceRule(
         boost::posix_time::time_duration timeout, CF&& time_client);
 
-      void cancel(const std::shared_ptr<const Order>& order) override;
-      void add(const std::shared_ptr<const Order>& order) override;
+      void cancel(const std::shared_ptr<Order>& order) override;
+      void add(const std::shared_ptr<Order>& order) override;
 
     private:
       boost::posix_time::time_duration m_timeout;
@@ -66,7 +66,7 @@ namespace Nexus {
 
   template<typename C>
   void OpposingOrderCancellationComplianceRule<C>::cancel(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     while(auto report = m_reports.TryPop()) {
       if(report->m_value.m_last_quantity != 0) {
         auto& last_fill_time =
@@ -86,7 +86,7 @@ namespace Nexus {
 
   template<typename C>
   void OpposingOrderCancellationComplianceRule<C>::add(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     order->get_publisher().Monitor(
       m_reports.GetSlot(order->get_info().m_fields.m_side));
   }

@@ -21,7 +21,7 @@ namespace Nexus {
        */
       explicit RejectSubmissionsComplianceRule(std::string reason);
 
-      void submit(const std::shared_ptr<const Order>& order) override;
+      void submit(const std::shared_ptr<Order>& order) override;
 
     private:
       std::string m_reason;
@@ -35,7 +35,7 @@ namespace Nexus {
     : m_reason(std::move(reason)) {}
 
   inline void RejectSubmissionsComplianceRule::submit(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     throw ComplianceCheckException(m_reason);
   }
 }

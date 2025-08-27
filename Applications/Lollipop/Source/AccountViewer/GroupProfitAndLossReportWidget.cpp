@@ -21,7 +21,7 @@ using namespace std;
 
 GroupProfitAndLossReportWidget::ReportModel::ReportModel(
     Ref<UserProfile> userProfile,
-    ScopedQueueReader<std::shared_ptr<const Order>> orders)
+    ScopedQueueReader<std::shared_ptr<Order>> orders)
     : m_profitAndLossModel(Ref(userProfile->GetCurrencyDatabase()),
         Ref(userProfile->GetExchangeRates()), false),
       m_portfolioController(Beam::Initialize(userProfile->GetVenueDatabase()),
@@ -73,9 +73,9 @@ void GroupProfitAndLossReportWidget::OnUpdate(bool checked) {
       return lhs.m_name < rhs.m_name;
     });
   auto orderQueues =
-    std::make_shared<MultiQueueWriter<std::shared_ptr<const Order>>>();
+    std::make_shared<MultiQueueWriter<std::shared_ptr<Order>>>();
   for(auto& trader : traders) {
-    auto orders = std::make_shared<Queue<std::shared_ptr<const Order>>>();
+    auto orders = std::make_shared<Queue<std::shared_ptr<Order>>>();
     query_daily_order_submissions(trader, startTime, endTime,
       m_userProfile->GetVenueDatabase(), m_userProfile->GetTimeZoneDatabase(),
       m_userProfile->GetClients().get_order_execution_client(), orders);

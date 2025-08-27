@@ -69,7 +69,7 @@ namespace Spire {
        * @param publisher Publishes the Orders to model.
        */
       void SetOrderExecutionPublisher(
-        Beam::Ref<const Beam::Publisher<std::shared_ptr<const Nexus::Order>>>
+        Beam::Ref<const Beam::Publisher<std::shared_ptr<Nexus::Order>>>
           publisher);
 
       int rowCount(const QModelIndex& parent) const override;
@@ -83,16 +83,16 @@ namespace Spire {
 
     private:
       struct UpdateEntry {
-        std::shared_ptr<const Nexus::Order> m_order;
+        std::shared_ptr<Nexus::Order> m_order;
         Nexus::ExecutionReport m_report;
       };
-      const Beam::Publisher<std::shared_ptr<const Nexus::Order>>*
+      const Beam::Publisher<std::shared_ptr<Nexus::Order>>*
         m_orderExecutionPublisher;
       std::vector<UpdateEntry> m_entries;
       std::optional<EventHandler> m_eventHandler;
 
-      void OnOrderExecuted(const std::shared_ptr<const Nexus::Order>& order);
-      void OnExecutionReport(const std::shared_ptr<const Nexus::Order>& order,
+      void OnOrderExecuted(const std::shared_ptr<Nexus::Order>& order);
+      void OnExecutionReport(const std::shared_ptr<Nexus::Order>& order,
         const Nexus::ExecutionReport& report);
   };
 }

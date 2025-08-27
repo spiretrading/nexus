@@ -18,7 +18,7 @@ namespace Spire {
         \param order The Order to wrap.
         \param userProfile The user's profile.
       */
-      OrderWrapperTaskNode(const std::shared_ptr<const Nexus::Order>& order,
+      OrderWrapperTaskNode(const std::shared_ptr<Nexus::Order>& order,
         const UserProfile& userProfile);
 
       //! Constructs an OrderWrapperTaskNode with a specified display text.
@@ -27,11 +27,11 @@ namespace Spire {
         \param userProfile The user's profile.
         \param text The display text to use.
       */
-      OrderWrapperTaskNode(const std::shared_ptr<const Nexus::Order>& order,
+      OrderWrapperTaskNode(const std::shared_ptr<Nexus::Order>& order,
         const UserProfile& userProfile, std::string text);
 
       //! Returns the Order to be wrapped.
-      const std::shared_ptr<const Nexus::Order>& GetOrder() const;
+      const std::shared_ptr<Nexus::Order>& GetOrder() const;
 
       //! Renames this CanvasNode.
       /*!
@@ -48,7 +48,7 @@ namespace Spire {
       virtual std::unique_ptr<CanvasNode> Clone() const;
 
     private:
-      std::shared_ptr<const Nexus::Order> m_order;
+      std::shared_ptr<Nexus::Order> m_order;
 
       void Initialize(std::string text, const UserProfile& userProfile);
   };

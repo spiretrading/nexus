@@ -38,10 +38,9 @@ namespace Nexus {
       OrderSubmissionCheckDriver(
         DF&& driver, std::vector<std::unique_ptr<OrderSubmissionCheck>> checks);
       ~OrderSubmissionCheckDriver();
-      std::shared_ptr<const Order> recover(
-        const SequencedAccountOrderRecord& record);
-      void add(const std::shared_ptr<const Order>& order);
-      std::shared_ptr<const Order> submit(const OrderInfo& info);
+      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
+      void add(const std::shared_ptr<Order>& order);
+      std::shared_ptr<Order> submit(const OrderInfo& info);
       void cancel(const OrderExecutionSession& session, OrderId id);
       void update(const OrderExecutionSession& session, OrderId id,
         const ExecutionReport& report);
@@ -75,7 +74,7 @@ namespace Nexus {
   }
 
   template<IsOrderExecutionDriver D>
-  std::shared_ptr<const Order> OrderSubmissionCheckDriver<D>::recover(
+  std::shared_ptr<Order> OrderSubmissionCheckDriver<D>::recover(
       const SequencedAccountOrderRecord& record) {
     auto order = m_driver->recover(record);
     for(auto& check : m_checks) {
@@ -85,8 +84,7 @@ namespace Nexus {
   }
 
   template<IsOrderExecutionDriver D>
-  void OrderSubmissionCheckDriver<D>::add(
-      const std::shared_ptr<const Order>& order) {
+  void OrderSubmissionCheckDriver<D>::add(const std::shared_ptr<Order>& order) {
     for(auto& check : m_checks) {
       check->add(order);
     }
@@ -94,7 +92,7 @@ namespace Nexus {
   }
 
   template<IsOrderExecutionDriver D>
-  std::shared_ptr<const Order> OrderSubmissionCheckDriver<D>::submit(
+  std::shared_ptr<Order> OrderSubmissionCheckDriver<D>::submit(
       const OrderInfo& info) {
     auto submission_iterator = m_checks.begin();
     try {

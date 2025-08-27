@@ -42,7 +42,7 @@ namespace Nexus {
        */
       template<Beam::Initializes<P> PF, Beam::Initializes<C> MC>
       PortfolioController(PF&& portfolio, MC&& market_data_client,
-        Beam::ScopedQueueReader<std::shared_ptr<const Order>> orders);
+        Beam::ScopedQueueReader<std::shared_ptr<Order>> orders);
 
       /** Returns the object publishing updates to the Portfolio. */
       const Beam::SnapshotPublisher<PortfolioUpdateEntry, Portfolio*>&
@@ -68,14 +68,14 @@ namespace Nexus {
 
   template<Beam::IsInstanceOrIndirect<Portfolio> P, IsMarketDataClient C>
   PortfolioController(
-    P&&, C&&, Beam::ScopedQueueReader<std::shared_ptr<const Order>>) ->
+    P&&, C&&, Beam::ScopedQueueReader<std::shared_ptr<Order>>) ->
       PortfolioController<std::decay_t<P>, std::remove_reference_t<C>>;
 
   template<Beam::IsInstanceOrIndirect<Portfolio> P, IsMarketDataClient C>
   template<Beam::Initializes<P> PF, Beam::Initializes<C> MC>
   PortfolioController<P, C>::PortfolioController(
       PF&& portfolio, MC&& market_data_client,
-      Beam::ScopedQueueReader<std::shared_ptr<const Order>> orders)
+      Beam::ScopedQueueReader<std::shared_ptr<Order>> orders)
     : m_portfolio(std::forward<PF>(portfolio)),
       m_market_data_client(
         std::forward<decltype(market_data_client)>(market_data_client)),

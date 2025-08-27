@@ -294,7 +294,7 @@ namespace Nexus {
         }
       });
       m_live_orders.Insert(order_record->m_info.m_id);
-      auto order = std::shared_ptr<const Order>();
+      auto order = std::shared_ptr<Order>();
       try {
         order = m_driver->recover(Beam::Queries::SequencedValue(
           Beam::Queries::IndexedValue(*order_record, account),
@@ -562,7 +562,7 @@ namespace Nexus {
       });
     auto order_info = OrderInfo(*order_fields, session.GetAccount(), order_id,
       shorting_flag, m_time_client->GetTime());
-    auto order = [&] () -> std::shared_ptr<const Order> {
+    auto order = [&] () -> std::shared_ptr<Order> {
       if(!session.has_permission(order_info.m_fields.m_account)) {
         auto order = make_rejected_order(
           order_info, "Insufficient permissions to execute order.");

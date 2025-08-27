@@ -38,10 +38,9 @@ namespace Nexus {
       SimulationOrderExecutionDriver(MF&& market_data_client, TF&& time_client);
 
       ~SimulationOrderExecutionDriver();
-      std::shared_ptr<const Order> recover(
-        const SequencedAccountOrderRecord& record);
-      void add(const std::shared_ptr<const Order>& order);
-      std::shared_ptr<const Order> submit(const OrderInfo& info);
+      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
+      void add(const std::shared_ptr<Order>& order);
+      std::shared_ptr<Order> submit(const OrderInfo& info);
       void cancel(const OrderExecutionSession& session, OrderId id);
       void update(const OrderExecutionSession& session, OrderId id,
         const ExecutionReport& report);
@@ -84,7 +83,7 @@ namespace Nexus {
   }
 
   template<IsMarketDataClient M, typename T>
-  std::shared_ptr<const Order> SimulationOrderExecutionDriver<M, T>::recover(
+  std::shared_ptr<Order> SimulationOrderExecutionDriver<M, T>::recover(
       const SequencedAccountOrderRecord& record) {
     auto order = std::make_shared<PrimitiveOrder>(**record);
     m_orders.Insert((*record)->m_info.m_id, order);
@@ -95,10 +94,10 @@ namespace Nexus {
 
   template<IsMarketDataClient M, typename T>
   void SimulationOrderExecutionDriver<M, T>::add(
-    const std::shared_ptr<const Order>& order) {}
+    const std::shared_ptr<Order>& order) {}
 
   template<IsMarketDataClient M, typename T>
-  std::shared_ptr<const Order> SimulationOrderExecutionDriver<M, T>::submit(
+  std::shared_ptr<Order> SimulationOrderExecutionDriver<M, T>::submit(
       const OrderInfo& info) {
     auto order = std::make_shared<PrimitiveOrder>(info);
     m_orders.Insert(info.m_id, order);

@@ -79,7 +79,7 @@ namespace Spire {
       std::unordered_map<Nexus::Venue, Nexus::BookQuote> m_topLevels;
       std::vector<std::unique_ptr<BookQuoteEntry>> m_bookQuotes;
       std::map<OrderKey, Nexus::Quantity> m_orderQuantities;
-      std::unordered_map<std::shared_ptr<const Nexus::Order>, Nexus::Quantity>
+      std::unordered_map<std::shared_ptr<Nexus::Order>, Nexus::Quantity>
         m_remainingOrderQuantities;
       EventHandler m_eventHandler;
 
@@ -89,8 +89,8 @@ namespace Spire {
       void AddQuote(const Nexus::BookQuote& quote, int quoteIndex);
       void RemoveQuote(int quoteIndex);
       void OnBookQuote(const Nexus::BookQuote& quote);
-      void OnOrderExecuted(const std::shared_ptr<const Nexus::Order>& order);
-      void OnExecutionReport(const std::shared_ptr<const Nexus::Order>& order,
+      void OnOrderExecuted(const std::shared_ptr<Nexus::Order>& order);
+      void OnExecutionReport(const std::shared_ptr<Nexus::Order>& order,
         const Nexus::ExecutionReport& executionReport);
       void OnBookQuoteInterruption(const std::exception_ptr& e);
   };

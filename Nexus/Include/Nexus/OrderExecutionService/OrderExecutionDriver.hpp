@@ -45,12 +45,11 @@ namespace Nexus {
       template<typename T>
       T& as();
 
-      std::shared_ptr<const Order> recover(
-        const SequencedAccountOrderRecord& record);
+      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
 
-      void add(const std::shared_ptr<const Order>& order);
+      void add(const std::shared_ptr<Order>& order);
 
-      std::shared_ptr<const Order> submit(const OrderInfo& info);
+      std::shared_ptr<Order> submit(const OrderInfo& info);
 
       void cancel(const OrderExecutionSession& session, OrderId id);
 
@@ -62,12 +61,12 @@ namespace Nexus {
     private:
       struct VirtualOrderExecutionDriver {
         virtual ~VirtualOrderExecutionDriver() = default;
-        virtual std::shared_ptr<const Order> recover(
+        virtual std::shared_ptr<Order> recover(
           const SequencedAccountOrderRecord& record) = 0;
-        virtual void add(const std::shared_ptr<const Order>& order) = 0;
-        virtual std::shared_ptr<const Order> submit(const OrderInfo& info) = 0;
-        virtual void cancel(const OrderExecutionSession& session,
-          OrderId id) = 0;
+        virtual void add(const std::shared_ptr<Order>& order) = 0;
+        virtual std::shared_ptr<Order> submit(const OrderInfo& info) = 0;
+        virtual void cancel(
+          const OrderExecutionSession& session, OrderId id) = 0;
         virtual void update(const OrderExecutionSession& session, OrderId id,
           const ExecutionReport& report) = 0;
         virtual void close() = 0;
@@ -79,10 +78,10 @@ namespace Nexus {
 
         template<typename... Args>
         WrappedOrderExecutionDriver(Args&&... args);
-        std::shared_ptr<const Order> recover(
+        std::shared_ptr<Order> recover(
           const SequencedAccountOrderRecord& record) override;
-        void add(const std::shared_ptr<const Order>& order) override;
-        std::shared_ptr<const Order> submit(const OrderInfo& info) override;
+        void add(const std::shared_ptr<Order>& order) override;
+        std::shared_ptr<Order> submit(const OrderInfo& info) override;
         void cancel(const OrderExecutionSession& session, OrderId id) override;
         void update(const OrderExecutionSession& session, OrderId id,
           const ExecutionReport& report) override;
@@ -129,17 +128,16 @@ namespace Nexus {
       *m_driver.get()).m_driver;
   }
 
-  inline std::shared_ptr<const Order> OrderExecutionDriver::recover(
+  inline std::shared_ptr<Order> OrderExecutionDriver::recover(
       const SequencedAccountOrderRecord& record) {
     return m_driver->recover(record);
   }
 
-  inline void OrderExecutionDriver::add(
-      const std::shared_ptr<const Order>& order) {
+  inline void OrderExecutionDriver::add(const std::shared_ptr<Order>& order) {
     return m_driver->add(order);
   }
 
-  inline std::shared_ptr<const Order> OrderExecutionDriver::submit(
+  inline std::shared_ptr<Order> OrderExecutionDriver::submit(
       const OrderInfo& info) {
     return m_driver->submit(info);
   }
@@ -166,7 +164,7 @@ namespace Nexus {
     : m_driver(std::forward<Args>(args)...) {}
 
   template<typename D>
-  std::shared_ptr<const Order>
+  std::shared_ptr<Order>
       OrderExecutionDriver::WrappedOrderExecutionDriver<D>::recover(
         const SequencedAccountOrderRecord& record) {
     return m_driver->recover(record);
@@ -174,12 +172,12 @@ namespace Nexus {
 
   template<typename D>
   void OrderExecutionDriver::WrappedOrderExecutionDriver<D>::add(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     m_driver->add(order);
   }
 
   template<typename D>
-  std::shared_ptr<const Order>
+  std::shared_ptr<Order>
       OrderExecutionDriver::WrappedOrderExecutionDriver<D>::submit(
         const OrderInfo& info) {
     return m_driver->submit(info);

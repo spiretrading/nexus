@@ -26,8 +26,7 @@ namespace Nexus::Tests {
         OrderFields m_fields;
 
         /** The result to return to the caller. */
-        Beam::Services::Tests::ServiceResult<std::shared_ptr<const Order>>
-          m_result;
+        Beam::Services::Tests::ServiceResult<std::shared_ptr<Order>> m_result;
       };
 
       /** Records a call to cancel(...). */
@@ -54,8 +53,7 @@ namespace Nexus::Tests {
         OrderId m_id;
 
         /** The result to return to the caller. */
-        Beam::Services::Tests::ServiceResult<std::shared_ptr<const Order>>
-          m_result;
+        Beam::Services::Tests::ServiceResult<std::shared_ptr<Order>> m_result;
       };
 
       /** Records a call to query(..., SequencedOrderRecord). */
@@ -95,7 +93,7 @@ namespace Nexus::Tests {
         AccountQuery m_query;
 
         /** The queue writer for Order. */
-        Beam::ScopedQueueWriter<std::shared_ptr<const Order>> m_queue;
+        Beam::ScopedQueueWriter<std::shared_ptr<Order>> m_queue;
       };
 
       /** Records a call to query(..., SequencedExecutionReport). */
@@ -143,11 +141,11 @@ namespace Nexus::Tests {
 
       ~TestOrderExecutionClient();
 
-      std::shared_ptr<const Order> submit(const OrderFields& fields);
-      void cancel(const std::shared_ptr<const Order>& order);
+      std::shared_ptr<Order> submit(const OrderFields& fields);
+      void cancel(const std::shared_ptr<Order>& order);
       void cancel(const Order& order);
       void update(OrderId id, const ExecutionReport& report);
-      std::shared_ptr<const Order> load_order(OrderId id);
+      std::shared_ptr<Order> load_order(OrderId id);
       void query(const AccountQuery& query,
         Beam::ScopedQueueWriter<SequencedOrderRecord> queue);
       void query(const AccountQuery& query,
@@ -155,7 +153,7 @@ namespace Nexus::Tests {
       void query(const AccountQuery& query,
         Beam::ScopedQueueWriter<SequencedOrder> queue);
       void query(const AccountQuery& query,
-        Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue);
+        Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue);
       void query(const AccountQuery& query,
         Beam::ScopedQueueWriter<SequencedExecutionReport> queue);
       void query(const AccountQuery& query,
@@ -187,13 +185,13 @@ namespace Nexus::Tests {
     close();
   }
 
-  inline std::shared_ptr<const Order>
+  inline std::shared_ptr<Order>
       TestOrderExecutionClient::submit(const OrderFields& fields) {
-    return append_result<SubmitOperation, std::shared_ptr<const Order>>(fields);
+    return append_result<SubmitOperation, std::shared_ptr<Order>>(fields);
   }
 
   inline void TestOrderExecutionClient::cancel(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     cancel(*order);
   }
 
@@ -209,9 +207,9 @@ namespace Nexus::Tests {
     m_operations.Push(operation);
   }
 
-  inline std::shared_ptr<const Order>
+  inline std::shared_ptr<Order>
       TestOrderExecutionClient::load_order(OrderId id) {
-    return append_result<LoadOrderOperation, std::shared_ptr<const Order>>(id);
+    return append_result<LoadOrderOperation, std::shared_ptr<Order>>(id);
   }
 
   inline void TestOrderExecutionClient::query(const AccountQuery& query,
@@ -234,7 +232,7 @@ namespace Nexus::Tests {
   }
 
   inline void TestOrderExecutionClient::query(const AccountQuery& query,
-      Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue) {
+      Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) {
     append_queue<QueryOrderOperation>(std::make_shared<Operation>(
       QueryOrderOperation(query, std::move(queue))));
   }

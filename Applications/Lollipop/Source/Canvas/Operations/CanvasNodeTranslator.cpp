@@ -13,8 +13,8 @@
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/Utilities/DateTime.hpp>
 #include <Beam/Utilities/Math.hpp>
-#include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderCancellationReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderWrapperReactor.hpp"
@@ -110,7 +110,6 @@
 #include "Spire/Canvas/ValueNodes/DestinationNode.hpp"
 #include "Spire/Canvas/ValueNodes/DurationNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
-#include "Spire/Canvas/ValueNodes/MarketNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
@@ -121,6 +120,7 @@
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeRangeNode.hpp"
 #include "Spire/Canvas/ValueNodes/ValueNode.hpp"
+#include "Spire/Canvas/ValueNodes/VenueNode.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
@@ -184,7 +184,6 @@ namespace {
       void Visit(const LesserNode& node) override;
       void Visit(const LesserOrEqualsNode& node) override;
       void Visit(const LuaScriptNode& node) override;
-      void Visit(const MarketNode& node) override;
       void Visit(const MaxFloorNode& node) override;
       void Visit(const MaxNode& node) override;
       void Visit(const MinNode& node) override;
@@ -216,6 +215,7 @@ namespace {
       void Visit(const TimerNode& node) override;
       void Visit(const UnequalNode& node) override;
       void Visit(const UntilNode& node) override;
+      void Visit(const VenueNode& node) override;
       void Visit(const WhenNode& node) override;
 
     private:
@@ -1424,10 +1424,6 @@ void CanvasNodeTranslationVisitor::Visit(const LuaScriptNode& node) {
     node.GetName(), std::move(parameters), *luaState);
 }
 
-void CanvasNodeTranslationVisitor::Visit(const MarketNode& node) {
-  m_translation = Aspen::constant(node.GetValue());
-}
-
 void CanvasNodeTranslationVisitor::Visit(const MaxFloorNode& node) {
   m_translation = Aspen::constant(node.GetValue());
 }
@@ -1707,6 +1703,10 @@ void CanvasNodeTranslationVisitor::Visit(const UntilNode& node) {
   auto series = InternalTranslation(node.GetChildren().back());
   m_translation = Instantiate<UntilTranslator>(series.GetTypeInfo())(
     std::move(condition), series, *m_context);
+}
+
+void CanvasNodeTranslationVisitor::Visit(const VenueNode& node) {
+  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const WhenNode& node) {

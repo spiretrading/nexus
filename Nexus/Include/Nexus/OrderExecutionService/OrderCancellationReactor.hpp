@@ -20,7 +20,7 @@ namespace Nexus {
   template<IsOrderExecutionClient C, typename S>
   class OrderCancellationReactor {
     public:
-      using Type = std::shared_ptr<const Order>;
+      using Type = std::shared_ptr<Order>;
 
       /** The type of OrderExecutionClient used to cancel the orders. */
       using OrderExecutionClient = Beam::GetTryDereferenceType<C>;
@@ -40,13 +40,13 @@ namespace Nexus {
 
       Aspen::State commit(int sequence) noexcept;
 
-      std::shared_ptr<const Order> eval() const noexcept(is_noexcept);
+      std::shared_ptr<Order> eval() const noexcept(is_noexcept);
 
     private:
       Beam::GetOptionalLocalPtr<C> m_client;
       Series m_series;
       bool m_is_series_complete;
-      std::vector<std::shared_ptr<const Order>> m_orders;
+      std::vector<std::shared_ptr<Order>> m_orders;
       std::unique_ptr<std::atomic_int> m_cancel_count;
       Aspen::Trigger* m_trigger;
       std::unique_ptr<Beam::RoutineTaskQueue> m_tasks;
@@ -107,7 +107,7 @@ namespace Nexus {
   }
 
   template<IsOrderExecutionClient C, typename S>
-  std::shared_ptr<const Order> OrderCancellationReactor<C, S>::eval()
+  std::shared_ptr<Order> OrderCancellationReactor<C, S>::eval()
       const noexcept(is_noexcept) {
     return m_series.eval();
   }

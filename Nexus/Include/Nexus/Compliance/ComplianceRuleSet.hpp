@@ -63,7 +63,7 @@ namespace Nexus {
        * Performs a compliance check on an Order submission.
        * @param order The Order being submitted.
        */
-      void submit(const std::shared_ptr<const Order>& order);
+      void submit(const std::shared_ptr<Order>& order);
 
       /**
        * Cancels a previously submitted Order.
@@ -71,13 +71,13 @@ namespace Nexus {
        * @param order The Order being canceled.
        */
       void cancel(const Beam::ServiceLocator::DirectoryEntry& account,
-        const std::shared_ptr<const Order>& order);
+        const std::shared_ptr<Order>& order);
 
       /**
        * Adds an Order that successfully passed all compliance checks.
        * @param order The Order that was successfully submitted.
        */
-      void add(const std::shared_ptr<const Order>& order);
+      void add(const std::shared_ptr<Order>& order);
 
     private:
       struct Rule {
@@ -88,7 +88,7 @@ namespace Nexus {
         Beam::Threading::Mutex m_mutex;
         std::vector<Beam::ServiceLocator::DirectoryEntry> m_parents;
         std::vector<std::shared_ptr<Rule>> m_rules;
-        std::vector<std::shared_ptr<const Order>> m_orders;
+        std::vector<std::shared_ptr<Order>> m_orders;
         Beam::Threading::CallOnce<Beam::Threading::Mutex> m_initializer;
       };
       Beam::GetOptionalLocalPtr<C> m_compliance_client;
@@ -120,8 +120,7 @@ namespace Nexus {
       m_builder(std::move(builder)) {}
 
   template<IsComplianceClient C,  typename S>
-  void ComplianceRuleSet<C, S>::submit(
-      const std::shared_ptr<const Order>& order) {
+  void ComplianceRuleSet<C, S>::submit(const std::shared_ptr<Order>& order) {
     auto exception = std::exception_ptr();
     auto entry = load(order->get_info().m_fields.m_account);
     {
@@ -176,7 +175,7 @@ namespace Nexus {
   template<IsComplianceClient C,  typename S>
   void ComplianceRuleSet<C, S>::cancel(
       const Beam::ServiceLocator::DirectoryEntry& account,
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     auto entry = load(order->get_info().m_fields.m_account);
     {
       auto lock = boost::lock_guard(entry->m_mutex);
@@ -220,7 +219,7 @@ namespace Nexus {
   }
 
   template<IsComplianceClient C,  typename S>
-  void ComplianceRuleSet<C, S>::add(const std::shared_ptr<const Order>& order) {
+  void ComplianceRuleSet<C, S>::add(const std::shared_ptr<Order>& order) {
     auto entry = load(order->get_info().m_fields.m_account);
     {
       auto lock = boost::lock_guard(entry->m_mutex);

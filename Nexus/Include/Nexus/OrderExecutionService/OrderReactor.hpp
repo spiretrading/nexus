@@ -35,7 +35,7 @@ namespace Nexus {
     typename FR, typename RR>
   class OrderReactor {
     public:
-      using Type = std::shared_ptr<const Order>;
+      using Type = std::shared_ptr<Order>;
 
       /** The type of OrderExecutionClient used to submit the order. */
       using OrderExecutionClient = Beam::GetTryDereferenceType<C>;
@@ -96,7 +96,7 @@ namespace Nexus {
 
       Aspen::State commit(int sequence) noexcept;
 
-      std::shared_ptr<const Order> eval() const;
+      std::shared_ptr<Order> eval() const;
 
     private:
       static constexpr auto NONE = std::uint8_t(0b00000000);
@@ -119,7 +119,7 @@ namespace Nexus {
         Aspen::Sync<TimeInForceReactor, TimeInForce>,
         Aspen::VectorSync<AdditionalFieldsReactor, std::vector<Tag>>>>
           m_order_fields;
-      Aspen::Maybe<std::shared_ptr<const Order>> m_order;
+      Aspen::Maybe<std::shared_ptr<Order>> m_order;
       std::uint8_t m_state;
       Quantity m_filled;
       std::shared_ptr<Beam::MultiQueueWriter<ExecutionReport>>
@@ -213,7 +213,7 @@ namespace Nexus {
           m_last_order_fields->m_time_in_force, std::move(time_in_force)),
         Aspen::VectorSync(m_last_order_fields->m_additional_fields,
           std::move(additional_fields))),
-      m_order(std::shared_ptr<const Order>()),
+      m_order(std::shared_ptr<Order>()),
       m_state(NONE),
       m_execution_reports(
         std::make_shared<Beam::MultiQueueWriter<ExecutionReport>>()),
@@ -301,7 +301,7 @@ namespace Nexus {
   template<IsOrderExecutionClient C, typename AR, typename SR, typename CR,
     typename OR, typename TR, typename DR, typename QR, typename PR,
     typename FR, typename RR>
-  std::shared_ptr<const Order>
+  std::shared_ptr<Order>
       OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR, FR, RR>::eval() const {
     return *m_order;
   }

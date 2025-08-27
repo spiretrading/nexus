@@ -19,7 +19,7 @@ TEST_SUITE("ExecutionReportPublisher") {
       "TSX", Quantity(100), Money::ONE);
     auto info = OrderInfo(fields, 1, false, timestamp);
     auto order = std::make_shared<PrimitiveOrder>(info);
-    auto order_queue = std::make_shared<Queue<std::shared_ptr<const Order>>>();
+    auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     order_queue->Push(order);
     order_queue->Break();
     auto publisher = ExecutionReportPublisher(order_queue);
@@ -45,7 +45,7 @@ TEST_SUITE("ExecutionReportPublisher") {
       report2, OrderStatus::PARTIALLY_FILLED, timestamp + seconds(2));
     order->update(report2);
     order->update(report3);
-    auto order_queue = std::make_shared<Queue<std::shared_ptr<const Order>>>();
+    auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     order_queue->Push(order);
     order_queue->Break();
     auto publisher = ExecutionReportPublisher(order_queue);
@@ -70,7 +70,7 @@ TEST_SUITE("ExecutionReportPublisher") {
     auto info2 = OrderInfo(fields2, 4, false, timestamp2);
     auto order1 = std::make_shared<PrimitiveOrder>(info1);
     auto order2 = std::make_shared<PrimitiveOrder>(info2);
-    auto order_queue = std::make_shared<Queue<std::shared_ptr<const Order>>>();
+    auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     order_queue->Push(order1);
     order_queue->Push(order2);
     order_queue->Break();

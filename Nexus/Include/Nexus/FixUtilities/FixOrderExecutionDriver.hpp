@@ -47,10 +47,9 @@ namespace Nexus {
         const std::vector<FixApplicationEntry>& entries);
 
       ~FixOrderExecutionDriver();
-      std::shared_ptr<const Order> recover(
-        const SequencedAccountOrderRecord& record);
-      void add(const std::shared_ptr<const Order>& order);
-      std::shared_ptr<const Order> submit(const OrderInfo& info);
+      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
+      void add(const std::shared_ptr<Order>& order);
+      std::shared_ptr<Order> submit(const OrderInfo& info);
       void cancel(const OrderExecutionSession& session, OrderId id);
       void update(const OrderExecutionSession& session, OrderId id,
         const ExecutionReport& report);
@@ -153,7 +152,7 @@ namespace Nexus {
     close();
   }
 
-  inline std::shared_ptr<const Order> FixOrderExecutionDriver::recover(
+  inline std::shared_ptr<Order> FixOrderExecutionDriver::recover(
       const SequencedAccountOrderRecord& record) {
     auto i = m_applications.find((*record)->m_info.m_fields.m_destination);
     if(i == m_applications.end()) {
@@ -169,9 +168,9 @@ namespace Nexus {
   }
 
   inline void FixOrderExecutionDriver::add(
-    const std::shared_ptr<const Order>& order) {}
+    const std::shared_ptr<Order>& order) {}
 
-  inline std::shared_ptr<const Order> FixOrderExecutionDriver::submit(
+  inline std::shared_ptr<Order> FixOrderExecutionDriver::submit(
       const OrderInfo& info) {
     auto i = m_applications.find(info.m_fields.m_destination);
     if(i == m_applications.end()) {

@@ -52,14 +52,14 @@ namespace Spire {
        * Returns the publisher for all orders submitted by the translated
        * node.
        */
-      const Beam::Publisher<std::shared_ptr<const Nexus::Order>>&
+      const Beam::Publisher<std::shared_ptr<Nexus::Order>>&
         GetOrderPublisher() const;
 
       /**
        * Returns the publisher for all orders submitted by the translated
        * node.
        */
-      Beam::SequencePublisher<std::shared_ptr<const Nexus::Order>>&
+      Beam::SequencePublisher<std::shared_ptr<Nexus::Order>>&
         GetOrderPublisher();
 
       /**
@@ -92,8 +92,8 @@ namespace Spire {
       UserProfile* m_userProfile;
       Beam::ServiceLocator::DirectoryEntry m_executingAccount;
       Executor* m_executor;
-      std::shared_ptr<Beam::SequencePublisher<
-        std::shared_ptr<const Nexus::Order>>> m_orderPublisher;
+      std::shared_ptr<Beam::SequencePublisher<std::shared_ptr<Nexus::Order>>>
+        m_orderPublisher;
       std::unordered_map<const CanvasNode*, Translation> m_translations;
       std::unordered_map<const CanvasNode*, Translation> m_subTranslations;
 

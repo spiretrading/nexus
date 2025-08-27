@@ -16,10 +16,10 @@ namespace Nexus {
       /** Returns the session settings. */
       const FIX::SessionSettings& get_session_settings() const;
 
-      virtual std::shared_ptr<const Order> recover(
+      virtual std::shared_ptr<Order> recover(
         const SequencedAccountOrderRecord& record) = 0;
 
-      virtual std::shared_ptr<const Order> submit(const OrderInfo& info) = 0;
+      virtual std::shared_ptr<Order> submit(const OrderInfo& info) = 0;
 
       virtual void cancel(const OrderExecutionSession& session, OrderId id) = 0;
 

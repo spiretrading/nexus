@@ -48,7 +48,7 @@ namespace Nexus {
        * Adds an Order.
        * @param order The Order to add.
        */
-      void add(const std::shared_ptr<const Order>& order);
+      void add(const std::shared_ptr<Order>& order);
 
       /**
        * Updates the RiskState.
@@ -103,7 +103,7 @@ namespace Nexus {
       m_state(0) {}
 
   template<IsOrderExecutionClient C>
-  void RiskTransitionModel<C>::add(const std::shared_ptr<const Order>& order) {
+  void RiskTransitionModel<C>::add(const std::shared_ptr<Order>& order) {
     m_book.add(order);
   }
 

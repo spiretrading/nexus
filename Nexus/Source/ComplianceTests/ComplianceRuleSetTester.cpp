@@ -40,9 +40,9 @@ TEST_SUITE("ComplianceRuleSet") {
       fixture.m_service_locator_environment.MakeClient("user", "pw"),
       [] (const ComplianceRuleEntry&) {
         struct DummyRule final : ComplianceRule {
-          void submit(const std::shared_ptr<const Order>&) override {}
-          void cancel(const std::shared_ptr<const Order>&) override {}
-          void add(const std::shared_ptr<const Order>&) override {}
+          void submit(const std::shared_ptr<Order>&) override {}
+          void cancel(const std::shared_ptr<Order>&) override {}
+          void add(const std::shared_ptr<Order>&) override {}
         };
         return std::make_unique<DummyRule>();
       });

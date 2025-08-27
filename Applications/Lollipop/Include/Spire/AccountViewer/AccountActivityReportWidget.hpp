@@ -42,7 +42,7 @@ namespace Spire {
         ProfitAndLossModel::PortfolioController m_portfolioController;
 
         ReportModel(Beam::Ref<UserProfile> userProfile,
-          Beam::ScopedQueueReader<std::shared_ptr<const Nexus::Order>> orders);
+          Beam::ScopedQueueReader<std::shared_ptr<Nexus::Order>> orders);
       };
       std::unique_ptr<Ui_AccountActivityReportWidget> m_ui;
       UserProfile* m_userProfile;

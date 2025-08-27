@@ -20,7 +20,7 @@ namespace Nexus {
   template<IsBookkeeper B, typename Orders>
   auto make_bookkeeper_reactor(B bookkeeper, Orders orders) {
     return Aspen::lift([bookkeeper = std::move(bookkeeper)] (
-        const std::tuple<std::shared_ptr<const Order>,
+        const std::tuple<std::shared_ptr<Order>,
           ExecutionReport>& update) mutable -> std::optional<Inventory> {
       auto& order = *std::get<0>(update);
       auto& report = std::get<1>(update);
@@ -34,11 +34,10 @@ namespace Nexus {
         report.m_last_quantity * report.m_last_price, get_fee_total(report));
       return bookkeeper.get_inventory(order.get_info().m_fields.m_security,
         order.get_info().m_fields.m_currency);
-    }, Aspen::concur(Aspen::lift(
-      [] (const std::shared_ptr<const Order>& order) {
-        return Aspen::Shared(Aspen::lift([=] (const ExecutionReport& report) {
-          return std::tuple(order, report);
-        }, Beam::Reactors::PublisherReactor(order->get_publisher())));
+    }, Aspen::concur(Aspen::lift([] (const std::shared_ptr<Order>& order) {
+      return Aspen::Shared(Aspen::lift([=] (const ExecutionReport& report) {
+        return std::tuple(order, report);
+      }, Beam::Reactors::PublisherReactor(order->get_publisher())));
     }, std::move(orders))));
   }
 

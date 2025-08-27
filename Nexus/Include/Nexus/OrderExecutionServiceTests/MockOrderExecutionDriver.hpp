@@ -37,10 +37,9 @@ namespace Nexus::Tests {
       const Beam::Publisher<std::shared_ptr<PrimitiveOrder>>&
         get_publisher() const;
 
-      std::shared_ptr<const Order> recover(
-        const SequencedAccountOrderRecord& record);
-      void add(const std::shared_ptr<const Order>& order);
-      std::shared_ptr<const Order> submit(const OrderInfo& info);
+      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
+      void add(const std::shared_ptr<Order>& order);
+      std::shared_ptr<Order> submit(const OrderInfo& info);
       void cancel(const OrderExecutionSession& session, OrderId id);
       void update(const OrderExecutionSession& session, OrderId id,
         const ExecutionReport& report);
@@ -80,7 +79,7 @@ namespace Nexus::Tests {
     return m_publisher;
   }
 
-  inline std::shared_ptr<const Order> MockOrderExecutionDriver::recover(
+  inline std::shared_ptr<Order> MockOrderExecutionDriver::recover(
       const SequencedAccountOrderRecord& record) {
     {
       auto i = m_orders.find((*record)->m_info.m_id);
@@ -100,9 +99,9 @@ namespace Nexus::Tests {
   }
 
   inline void MockOrderExecutionDriver::add(
-      const std::shared_ptr<const Order>& order) {}
+    const std::shared_ptr<Order>& order) {}
 
-  inline std::shared_ptr<const Order> MockOrderExecutionDriver::submit(
+  inline std::shared_ptr<Order> MockOrderExecutionDriver::submit(
       const OrderInfo& info) {
     auto order = m_orders.insert(std::pair(
       info.m_id, std::make_unique<PrimitiveOrder>(info))).first->second;

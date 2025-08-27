@@ -52,10 +52,9 @@ namespace Nexus {
         DF&& driver, CF&& time_client, SF&& compliance_rule_set);
 
       ~ComplianceCheckOrderExecutionDriver();
-      std::shared_ptr<const Order> recover(
-        const SequencedAccountOrderRecord& record);
-      void add(const std::shared_ptr<const Order>& order);
-      std::shared_ptr<const Order> submit(const OrderInfo& info);
+      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
+      void add(const std::shared_ptr<Order>& order);
+      std::shared_ptr<Order> submit(const OrderInfo& info);
       void cancel(const OrderExecutionSession& session, OrderId id);
       void update(const OrderExecutionSession& session, OrderId id,
         const ExecutionReport& report);
@@ -98,9 +97,8 @@ namespace Nexus {
 
   template<IsOrderExecutionDriver D, typename C,
     Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
-  std::shared_ptr<const Order>
-      ComplianceCheckOrderExecutionDriver<D, C, S>::recover(
-        const SequencedAccountOrderRecord& record) {
+  std::shared_ptr<Order> ComplianceCheckOrderExecutionDriver<D, C, S>::recover(
+      const SequencedAccountOrderRecord& record) {
     auto order = m_driver->recover(record);
     m_compliance_rule_set->add(order);
     return order;
@@ -109,16 +107,15 @@ namespace Nexus {
   template<IsOrderExecutionDriver D, typename C,
     Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
   void ComplianceCheckOrderExecutionDriver<D, C, S>::add(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     m_driver->add(order);
     m_compliance_rule_set->add(order);
   }
 
   template<IsOrderExecutionDriver D, typename C,
     Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
-  std::shared_ptr<const Order>
-      ComplianceCheckOrderExecutionDriver<D, C, S>::submit(
-        const OrderInfo& info) {
+  std::shared_ptr<Order> ComplianceCheckOrderExecutionDriver<D, C, S>::submit(
+      const OrderInfo& info) {
     auto order = std::make_shared<PrimitiveOrder>(info);
     m_orders.Insert(info.m_id, order);
     try {

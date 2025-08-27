@@ -8,7 +8,7 @@ using namespace Spire;
 using namespace std;
 
 CancelOnFillController::OrderEntry::OrderEntry(
-  const std::shared_ptr<const Order>& order)
+  const std::shared_ptr<Order>& order)
   : m_order(order),
     m_cancelSubmitted(false),
     m_status(OrderStatus::PENDING_NEW) {}
@@ -19,18 +19,18 @@ CancelOnFillController::CancelOnFillController(Ref<UserProfile> userProfile)
 }
 
 void CancelOnFillController::SetOrderExecutionPublisher(Ref<
-    const Publisher<std::shared_ptr<const Order>>> orderExecutionPublisher) {
+    const Publisher<std::shared_ptr<Order>>> orderExecutionPublisher) {
   m_slotHandler = std::nullopt;
   m_slotHandler.emplace();
   m_orderExecutionPublisher = orderExecutionPublisher.Get();
   m_orderExecutionPublisher->Monitor(
-    m_slotHandler->GetSlot<std::shared_ptr<const Order>>(
+    m_slotHandler->GetSlot<std::shared_ptr<Order>>(
       std::bind(&CancelOnFillController::OnOrderExecuted, this,
         std::placeholders::_1)));
 }
 
 void CancelOnFillController::OnOrderExecuted(
-    const std::shared_ptr<const Order>& order) {
+    const std::shared_ptr<Order>& order) {
   Side side = order->get_info().m_fields.m_side;
   if(side == Side::NONE) {
     return;

@@ -1,5 +1,6 @@
 #ifndef SPIRE_DIVISIONNODE_HPP
 #define SPIRE_DIVISIONNODE_HPP
+#include <boost/mpl/list.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
 

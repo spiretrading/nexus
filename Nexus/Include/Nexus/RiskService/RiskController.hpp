@@ -118,7 +118,7 @@ namespace Nexus {
       RiskController& operator =(const RiskController&) = delete;
       void update_snapshot(const Order& order);
       std::tuple<RiskPortfolio, Beam::Queries::Sequence,
-        std::vector<std::shared_ptr<const Order>>> make_portfolio(
+        std::vector<std::shared_ptr<Order>>> make_portfolio(
           VenueDatabase venues);
       template<typename F>
       void update(F&& f);
@@ -173,7 +173,7 @@ namespace Nexus {
     real_time_query.SetInterruptionPolicy(
       Beam::Queries::InterruptionPolicy::RECOVER_DATA);
     auto real_time_queue =
-      std::make_shared<Beam::Queue<std::shared_ptr<const Order>>>();
+      std::make_shared<Beam::Queue<std::shared_ptr<Order>>>();
     for(auto& order : excluded_orders) {
       real_time_queue->Push(order);
     }
@@ -241,7 +241,7 @@ namespace Nexus {
   template<IsAdministrationClient A, IsMarketDataClient M,
     IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   std::tuple<RiskPortfolio, Beam::Queries::Sequence,
-      std::vector<std::shared_ptr<const Order>>>
+      std::vector<std::shared_ptr<Order>>>
         RiskController<A, M, O, R, T, D>::make_portfolio(VenueDatabase venues) {
     auto [portfolio, sequence, excluded_orders] = Nexus::make_portfolio(
       m_data_store->load_inventory_snapshot(m_account), m_account,

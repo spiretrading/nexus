@@ -19,7 +19,7 @@ namespace Nexus {
        */
       explicit RejectCancelsComplianceRule(std::string reason);
 
-      void cancel(const std::shared_ptr<const Order>& order) override;
+      void cancel(const std::shared_ptr<Order>& order) override;
 
     private:
       std::string m_reason;
@@ -33,7 +33,7 @@ namespace Nexus {
     : m_reason(std::move(reason)) {}
 
   inline void RejectCancelsComplianceRule::cancel(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     throw ComplianceCheckException(m_reason);
   }
 }

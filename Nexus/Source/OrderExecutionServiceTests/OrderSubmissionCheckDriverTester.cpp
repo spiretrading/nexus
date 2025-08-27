@@ -22,7 +22,7 @@ namespace {
     };
 
     struct AddOperation {
-      std::shared_ptr<const Order> m_order;
+      std::shared_ptr<Order> m_order;
       Eval<void> m_result;
     };
 
@@ -48,7 +48,7 @@ namespace {
       async.Get();
     }
 
-    void add(const std::shared_ptr<const Order>& order) override {
+    void add(const std::shared_ptr<Order>& order) override {
       auto async = Async<void>();
       auto operation =
         std::make_shared<Operation>(AddOperation(order, async.GetEval()));

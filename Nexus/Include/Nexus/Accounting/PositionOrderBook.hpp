@@ -43,14 +43,13 @@ namespace Nexus {
       explicit PositionOrderBook(Beam::View<const Inventory> positions);
 
       /** Returns all live Orders. */
-      const std::vector<std::shared_ptr<const Order>>& get_live_orders() const;
+      const std::vector<std::shared_ptr<Order>>& get_live_orders() const;
 
       /**
        * Returns all opening Orders.
        * @return The list of all all opening Orders.
        */
-      const std::vector<std::shared_ptr<const Order>>&
-        get_opening_orders() const;
+      const std::vector<std::shared_ptr<Order>>& get_opening_orders() const;
 
       /**
        * Returns all Positions.
@@ -72,7 +71,7 @@ namespace Nexus {
        * Adds an Order to this book.
        * @param order The Order to add.
        */
-      void add(std::shared_ptr<const Order> order);
+      void add(std::shared_ptr<Order> order);
 
       /**
        * Updates an Order with an ExecutionReport.
@@ -82,12 +81,11 @@ namespace Nexus {
 
     private:
       struct OrderEntry {
-        std::shared_ptr<const Order> m_order;
+        std::shared_ptr<Order> m_order;
         Quantity m_remaining_quantity;
         int m_sequence_number;
 
-        OrderEntry(
-          std::shared_ptr<const Order> order, int sequence_number) noexcept;
+        OrderEntry(std::shared_ptr<Order> order, int sequence_number) noexcept;
       };
       struct SecurityEntry {
         std::vector<OrderEntry> m_asks;
@@ -99,10 +97,8 @@ namespace Nexus {
       std::unordered_map<Security, SecurityEntry> m_security_entries;
       std::unordered_map<OrderId, OrderFields> m_fields;
       int m_order_sequence_number;
-      Beam::CachedValue<std::vector<std::shared_ptr<const Order>>>
-        m_live_orders;
-      Beam::CachedValue<std::vector<std::shared_ptr<const Order>>>
-        m_opening_orders;
+      Beam::CachedValue<std::vector<std::shared_ptr<Order>>> m_live_orders;
+      Beam::CachedValue<std::vector<std::shared_ptr<Order>>> m_opening_orders;
       Beam::CachedValue<std::vector<PositionEntry>> m_positions;
   };
 
@@ -112,7 +108,7 @@ namespace Nexus {
   }
 
   inline PositionOrderBook::OrderEntry::OrderEntry(
-    std::shared_ptr<const Order> order, int sequence_number) noexcept
+    std::shared_ptr<Order> order, int sequence_number) noexcept
     : m_order(std::move(order)),
       m_remaining_quantity(m_order->get_info().m_fields.m_quantity),
       m_sequence_number(sequence_number) {}
@@ -120,7 +116,7 @@ namespace Nexus {
   inline PositionOrderBook::PositionOrderBook() noexcept
     : m_order_sequence_number(0) {
     m_live_orders.SetComputation([this] {
-      auto orders = std::vector<std::shared_ptr<const Order>>();
+      auto orders = std::vector<std::shared_ptr<Order>>();
       for(auto& entry : m_security_entries | std::views::values) {
         for(auto& order_entry : entry.m_asks) {
           orders.push_back(order_entry.m_order);
@@ -132,7 +128,7 @@ namespace Nexus {
       return orders;
     });
     m_opening_orders.SetComputation([this] {
-      auto orders = std::vector<std::shared_ptr<const Order>>();
+      auto orders = std::vector<std::shared_ptr<Order>>();
       for(auto& entry : m_security_entries | std::views::values) {
         if(entry.m_position == 0) {
           for(auto& order_entry : entry.m_asks) {
@@ -196,12 +192,12 @@ namespace Nexus {
     }
   }
 
-  inline const std::vector<std::shared_ptr<const Order>>&
+  inline const std::vector<std::shared_ptr<Order>>&
       PositionOrderBook::get_live_orders() const {
     return *m_live_orders;
   }
 
-  inline const std::vector<std::shared_ptr<const Order>>&
+  inline const std::vector<std::shared_ptr<Order>>&
       PositionOrderBook::get_opening_orders() const {
     return *m_opening_orders;
   }
@@ -232,7 +228,7 @@ namespace Nexus {
     return false;
   }
 
-  inline void PositionOrderBook::add(std::shared_ptr<const Order> order) {
+  inline void PositionOrderBook::add(std::shared_ptr<Order> order) {
     auto& fields = order->get_info().m_fields;
     m_fields.emplace(order->get_info().m_id, fields);
     auto& security_entry = m_security_entries[fields.m_security];

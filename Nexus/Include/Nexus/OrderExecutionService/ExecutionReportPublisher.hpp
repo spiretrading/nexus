@@ -16,7 +16,7 @@ namespace Nexus {
   struct ExecutionReportEntry {
 
     /** The Order that published the ExecutionReport. */
-    std::shared_ptr<const Order> m_order;
+    std::shared_ptr<Order> m_order;
 
     /** The ExecutionReport that was published. */
     ExecutionReport m_report;
@@ -30,7 +30,7 @@ namespace Nexus {
      * @param report The ExecutionReport that was published.
      */
     ExecutionReportEntry(
-      std::shared_ptr<const Order> order, ExecutionReport report) noexcept;
+      std::shared_ptr<Order> order, ExecutionReport report) noexcept;
   };
 
   /**
@@ -46,7 +46,7 @@ namespace Nexus {
        * @param orders The Orders whose ExecutionReports are to be published.
        */
       explicit ExecutionReportPublisher(
-        Beam::ScopedQueueReader<std::shared_ptr<const Order>> orders);
+        Beam::ScopedQueueReader<std::shared_ptr<Order>> orders);
 
       void With(const std::function<void (boost::optional<const Snapshot&>)>& f)
         const override;
@@ -61,19 +61,19 @@ namespace Nexus {
 
     private:
       Beam::SequencePublisher<ExecutionReportEntry> m_publisher;
-      boost::optional<Beam::QueuePipe<std::shared_ptr<const Order>>> m_pipe;
+      boost::optional<Beam::QueuePipe<std::shared_ptr<Order>>> m_pipe;
   };
 
   inline ExecutionReportEntry::ExecutionReportEntry() noexcept
     : m_order(nullptr) {}
 
   inline ExecutionReportEntry::ExecutionReportEntry(
-    std::shared_ptr<const Order> order, ExecutionReport report) noexcept
+    std::shared_ptr<Order> order, ExecutionReport report) noexcept
     : m_order(order),
       m_report(std::move(report)) {}
 
   inline ExecutionReportPublisher::ExecutionReportPublisher(
-      Beam::ScopedQueueReader<std::shared_ptr<const Order>> orders) {
+      Beam::ScopedQueueReader<std::shared_ptr<Order>> orders) {
     m_publisher.With([&] {
       auto snapshot = std::vector<ExecutionReportEntry>();
       while(auto order = orders.TryPop()) {
@@ -102,7 +102,7 @@ namespace Nexus {
       }
     });
     m_pipe.emplace(std::move(orders),
-      Beam::MakeCallbackQueueWriter<std::shared_ptr<const Order>>(
+      Beam::MakeCallbackQueueWriter<std::shared_ptr<Order>>(
         [this] (const auto& order) {
           order->get_publisher().Monitor(
             Beam::MakeCallbackQueueWriter<ExecutionReport>(

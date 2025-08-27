@@ -21,7 +21,7 @@ namespace Nexus::Tests {
       struct SubmitOperation {
 
         /** The Order being submitted. */
-        std::shared_ptr<const Order> m_order;
+        std::shared_ptr<Order> m_order;
 
         /** The value to return to the caller. */
         Beam::Routines::Eval<void> m_result;
@@ -31,7 +31,7 @@ namespace Nexus::Tests {
       struct CancelOperation {
 
         /** The Order being canceled. */
-        std::shared_ptr<const Order> m_order;
+        std::shared_ptr<Order> m_order;
 
         /** The value to return to the caller. */
         Beam::Routines::Eval<void> m_result;
@@ -41,7 +41,7 @@ namespace Nexus::Tests {
       struct AddOperation {
 
         /** The Order that was successfully submitted. */
-        std::shared_ptr<const Order> m_order;
+        std::shared_ptr<Order> m_order;
 
         /** The value to return to the caller. */
         Beam::Routines::Eval<void> m_result;
@@ -62,39 +62,35 @@ namespace Nexus::Tests {
         Beam::ScopedQueueWriter<std::shared_ptr<Operation>> operations)
           noexcept;
 
-      void submit(const std::shared_ptr<const Order>& order) override;
-      void cancel(const std::shared_ptr<const Order>& order) override;
-      void add(const std::shared_ptr<const Order>& order) override;
+      void submit(const std::shared_ptr<Order>& order) override;
+      void cancel(const std::shared_ptr<Order>& order) override;
+      void add(const std::shared_ptr<Order>& order) override;
 
     private:
       Beam::ScopedQueueWriter<std::shared_ptr<Operation>> m_operations;
 
       template<typename OperationType>
-      void push_and_wait(const std::shared_ptr<const Order>& order);
+      void push_and_wait(const std::shared_ptr<Order>& order);
   };
 
   inline TestComplianceRule::TestComplianceRule(
       Beam::ScopedQueueWriter<std::shared_ptr<Operation>> operations) noexcept
     : m_operations(std::move(operations)) {}
 
-  inline void TestComplianceRule::submit(
-      const std::shared_ptr<const Order>& order) {
+  inline void TestComplianceRule::submit(const std::shared_ptr<Order>& order) {
     push_and_wait<SubmitOperation>(order);
   }
 
-  inline void TestComplianceRule::cancel(
-      const std::shared_ptr<const Order>& order) {
+  inline void TestComplianceRule::cancel(const std::shared_ptr<Order>& order) {
     push_and_wait<CancelOperation>(order);
   }
 
-  inline void TestComplianceRule::add(
-      const std::shared_ptr<const Order>& order) {
+  inline void TestComplianceRule::add(const std::shared_ptr<Order>& order) {
     push_and_wait<AddOperation>(order);
   }
 
   template<typename OperationType>
-  void TestComplianceRule::push_and_wait(
-      const std::shared_ptr<const Order>& order) {
+  void TestComplianceRule::push_and_wait(const std::shared_ptr<Order>& order) {
     auto async = Beam::Routines::Async<void>();
     auto operation = std::make_shared<Operation>(
       std::in_place_type<OperationType>, order, async.GetEval());

@@ -2,6 +2,7 @@
 #define SPIRE_MATHSIGNATURES_HPP
 #include <boost/mpl/end.hpp>
 #include <boost/mpl/insert_range.hpp>
+#include <boost/mpl/list.hpp>
 #include <boost/mpl/placeholders.hpp>
 #include <boost/mpl/transform.hpp>
 #include "Spire/Canvas/Canvas.hpp"

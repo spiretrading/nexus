@@ -7,12 +7,12 @@ using namespace Nexus;
 
 namespace {
   struct DummyFixApplication : FixApplication {
-    std::shared_ptr<const Order> recover(
+    std::shared_ptr<Order> recover(
         const SequencedAccountOrderRecord&) override {
       return nullptr;
     }
 
-    std::shared_ptr<const Order> submit(const OrderInfo&) override {
+    std::shared_ptr<Order> submit(const OrderInfo&) override {
       return nullptr;
     }
 

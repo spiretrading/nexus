@@ -51,7 +51,7 @@ namespace Nexus {
         AF&& administration_client, MF&& market_data_client);
 
       void submit(const OrderInfo& info) override;
-      void add(const std::shared_ptr<const Order>& order) override;
+      void add(const std::shared_ptr<Order>& order) override;
       void reject(const OrderInfo& info) override;
 
     private:
@@ -157,7 +157,7 @@ namespace Nexus {
   }
 
   template<IsAdministrationClient A, IsMarketDataClient M>
-  void BuyingPowerCheck<A, M>::add(const std::shared_ptr<const Order>& order) {
+  void BuyingPowerCheck<A, M>::add(const std::shared_ptr<Order>& order) {
     auto& buying_power_entry =
       load_buying_power_entry(order->get_info().m_fields.m_account);
     auto price = [&] {

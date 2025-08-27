@@ -86,7 +86,7 @@ namespace Nexus {
 
       /** Monitors orders submitted to this environment. */
       void monitor_order_submissions(
-        Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue);
+        Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue);
 
       /** Updates a submitted order to OrderStatus NEW. */
       void accept(const Order& order);
@@ -309,11 +309,11 @@ namespace Nexus {
   }
 
   inline void TestEnvironment::monitor_order_submissions(
-      Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue) {
+      Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) {
     auto primitive_order_queue = Beam::MakeConverterQueueWriter<
       std::shared_ptr<PrimitiveOrder>>(std::move(queue),
       [] (const auto& order) {
-        return std::static_pointer_cast<const Order>(order);
+        return std::static_pointer_cast<Order>(order);
       });
     auto& driver = get_order_execution_environment().get_driver().as<
       Tests::MockOrderExecutionDriver>();

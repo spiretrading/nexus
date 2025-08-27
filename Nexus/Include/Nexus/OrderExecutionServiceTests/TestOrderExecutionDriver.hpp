@@ -26,7 +26,7 @@ namespace Nexus::Tests {
         SequencedAccountOrderRecord m_order_record;
 
         /** The value to return. */
-        Beam::Routines::Eval<std::shared_ptr<const Order>> m_result;
+        Beam::Routines::Eval<std::shared_ptr<Order>> m_result;
       };
 
       /** Records a call to submit. */
@@ -36,7 +36,7 @@ namespace Nexus::Tests {
         OrderInfo m_info;
 
         /** The value to return. */
-        Beam::Routines::Eval<std::shared_ptr<const Order>> m_result;
+        Beam::Routines::Eval<std::shared_ptr<Order>> m_result;
       };
 
       /** Records a call to cancel. */
@@ -84,10 +84,9 @@ namespace Nexus::Tests {
 
       ~TestOrderExecutionDriver();
 
-      std::shared_ptr<const Order> recover(
-        const SequencedAccountOrderRecord& record);
+      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
 
-      std::shared_ptr<const Order> submit(const OrderInfo& info);
+      std::shared_ptr<Order> submit(const OrderInfo& info);
 
       void cancel(const OrderExecutionSession& session, OrderId id);
 
@@ -112,15 +111,15 @@ namespace Nexus::Tests {
     close();
   }
 
-  inline std::shared_ptr<const Order> TestOrderExecutionDriver::recover(
+  inline std::shared_ptr<Order> TestOrderExecutionDriver::recover(
       const SequencedAccountOrderRecord& order_record) {
-    return append_result<RecoverOperation, std::shared_ptr<const Order>>(
+    return append_result<RecoverOperation, std::shared_ptr<Order>>(
       order_record);
   }
 
-  inline std::shared_ptr<const Order> TestOrderExecutionDriver::submit(
+  inline std::shared_ptr<Order> TestOrderExecutionDriver::submit(
       const OrderInfo& info) {
-    return append_result<SubmitOperation, std::shared_ptr<const Order>>(info);
+    return append_result<SubmitOperation, std::shared_ptr<Order>>(info);
   }
 
   inline void TestOrderExecutionDriver::cancel(

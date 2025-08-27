@@ -17,9 +17,9 @@ namespace Nexus {
       RegionFilterComplianceRule(
         Region region, std::unique_ptr<ComplianceRule> rule);
 
-      void submit(const std::shared_ptr<const Order>& order) override;
-      void cancel(const std::shared_ptr<const Order>& order) override;
-      void add(const std::shared_ptr<const Order>& order) override;
+      void submit(const std::shared_ptr<Order>& order) override;
+      void cancel(const std::shared_ptr<Order>& order) override;
+      void add(const std::shared_ptr<Order>& order) override;
 
     private:
       Region m_region;
@@ -32,7 +32,7 @@ namespace Nexus {
       m_rule(std::move(rule)) {}
 
   inline void RegionFilterComplianceRule::submit(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     if(m_region.contains(order->get_info().m_fields.m_security)) {
       m_rule->submit(order);
     } else {
@@ -41,14 +41,14 @@ namespace Nexus {
   }
 
   inline void RegionFilterComplianceRule::cancel(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     if(m_region.contains(order->get_info().m_fields.m_security)) {
       m_rule->cancel(order);
     }
   }
 
   inline void RegionFilterComplianceRule::add(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     m_rule->add(order);
   }
 }

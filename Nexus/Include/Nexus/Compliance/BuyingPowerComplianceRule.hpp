@@ -47,9 +47,9 @@ namespace Nexus {
         const std::vector<ComplianceParameter>& parameters,
         const ExchangeRateTable& exchange_rates, CF&& market_data_client);
 
-      void submit(const std::shared_ptr<const Order>& order) override;
+      void submit(const std::shared_ptr<Order>& order) override;
 
-      void add(const std::shared_ptr<const Order>& order) override;
+      void add(const std::shared_ptr<Order>& order) override;
 
     private:
       CurrencyId m_currency;
@@ -98,7 +98,7 @@ namespace Nexus {
 
   template<IsMarketDataClient C>
   void BuyingPowerComplianceRule<C>::submit(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     auto& fields = order->get_info().m_fields;
     auto price = get_expected_price(fields);
     Beam::Threading::With(m_buying_power_model, [&] (auto& buying_power_model) {
@@ -143,8 +143,7 @@ namespace Nexus {
   }
 
   template<IsMarketDataClient C>
-  void BuyingPowerComplianceRule<C>::add(
-      const std::shared_ptr<const Order>& order) {
+  void BuyingPowerComplianceRule<C>::add(const std::shared_ptr<Order>& order) {
     auto& fields = order->get_info().m_fields;
     auto price = [&] {
       try {

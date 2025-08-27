@@ -20,7 +20,7 @@ using namespace std;
 
 AccountActivityReportWidget::ReportModel::ReportModel(
     Ref<UserProfile> userProfile,
-    ScopedQueueReader<std::shared_ptr<const Order>> orders)
+    ScopedQueueReader<std::shared_ptr<Order>> orders)
     : m_profitAndLossModel(Ref(userProfile->GetCurrencyDatabase()),
         Ref(userProfile->GetExchangeRates()), false),
       m_portfolioController(Beam::Initialize(userProfile->GetVenueDatabase()),
@@ -55,7 +55,7 @@ void AccountActivityReportWidget::OnUpdate(bool checked) {
   auto startTime = ToUtcTime(
     ToPosixTime(m_ui->m_fromPeriodDateEdit->dateTime()));
   auto endTime = ToUtcTime(ToPosixTime(m_ui->m_toPeriodDateEdit->dateTime()));
-  auto orders = std::make_shared<Queue<std::shared_ptr<const Order>>>();
+  auto orders = std::make_shared<Queue<std::shared_ptr<Order>>>();
   query_daily_order_submissions(m_account, startTime, endTime,
     m_userProfile->GetVenueDatabase(), m_userProfile->GetTimeZoneDatabase(),
     m_userProfile->GetClients().get_order_execution_client(), orders);

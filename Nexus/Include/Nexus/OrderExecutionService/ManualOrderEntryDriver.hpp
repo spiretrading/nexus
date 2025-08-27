@@ -45,10 +45,9 @@ namespace Nexus {
       ManualOrderEntryDriver(std::string destination, DF&& driver,
         AF&& administration_client);
       ~ManualOrderEntryDriver();
-      std::shared_ptr<const Order> recover(
-        const SequencedAccountOrderRecord& record);
-      void add(const std::shared_ptr<const Order>& order);
-      std::shared_ptr<const Order> submit(const OrderInfo& info);
+      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
+      void add(const std::shared_ptr<Order>& order);
+      std::shared_ptr<Order> submit(const OrderInfo& info);
       void cancel(const OrderExecutionSession& session, OrderId id);
       void update(const OrderExecutionSession& session, OrderId id,
         const ExecutionReport& report);
@@ -84,7 +83,7 @@ namespace Nexus {
   }
 
   template<typename D, typename A>
-  std::shared_ptr<const Order> ManualOrderEntryDriver<D, A>::recover(
+  std::shared_ptr<Order> ManualOrderEntryDriver<D, A>::recover(
       const SequencedAccountOrderRecord& record) {
     if((*record)->m_info.m_fields.m_destination == m_destination) {
       auto order = std::make_shared<PrimitiveOrder>(**record);
@@ -96,13 +95,12 @@ namespace Nexus {
   }
 
   template<typename D, typename A>
-  void ManualOrderEntryDriver<D, A>::add(
-      const std::shared_ptr<const Order>& order) {
+  void ManualOrderEntryDriver<D, A>::add(const std::shared_ptr<Order>& order) {
     m_driver->add(order);
   }
 
   template<typename D, typename A>
-  std::shared_ptr<const Order> ManualOrderEntryDriver<D, A>::submit(
+  std::shared_ptr<Order> ManualOrderEntryDriver<D, A>::submit(
       const OrderInfo& info) {
     if(info.m_fields.m_destination != m_destination) {
       return m_driver->submit(info);

@@ -20,7 +20,7 @@ ActivityLogModel::ActivityLogModel()
 }
 
 void ActivityLogModel::SetOrderExecutionPublisher(Ref<
-    const Publisher<std::shared_ptr<const Order>>> orderExecutionPublisher) {
+    const Publisher<std::shared_ptr<Order>>> orderExecutionPublisher) {
   m_eventHandler = std::nullopt;
   m_eventHandler.emplace();
   if(!m_entries.empty()) {
@@ -30,7 +30,7 @@ void ActivityLogModel::SetOrderExecutionPublisher(Ref<
   }
   m_orderExecutionPublisher = orderExecutionPublisher.Get();
   m_orderExecutionPublisher->Monitor(
-    m_eventHandler->get_slot<std::shared_ptr<const Order>>(
+    m_eventHandler->get_slot<std::shared_ptr<Order>>(
       std::bind_front(&ActivityLogModel::OnOrderExecuted, this)));
 }
 
@@ -122,7 +122,7 @@ QVariant ActivityLogModel::headerData(
 }
 
 void ActivityLogModel::OnExecutionReport(
-    const std::shared_ptr<const Order>& order, const ExecutionReport& report) {
+    const std::shared_ptr<Order>& order, const ExecutionReport& report) {
   beginInsertRows(QModelIndex(), static_cast<int>(m_entries.size()),
     static_cast<int>(m_entries.size()));
   m_entries.push_back(UpdateEntry(order, report));
@@ -135,8 +135,7 @@ void ActivityLogModel::OnExecutionReport(
   }
 }
 
-void ActivityLogModel::OnOrderExecuted(
-    const std::shared_ptr<const Order>& order) {
+void ActivityLogModel::OnOrderExecuted(const std::shared_ptr<Order>& order) {
   order->get_publisher().Monitor(m_eventHandler->get_slot<ExecutionReport>(
     std::bind_front(&ActivityLogModel::OnExecutionReport, this, order)));
 }

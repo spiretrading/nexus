@@ -53,7 +53,7 @@ namespace Nexus {
    *         <i>account</i>, and the list of Orders excluded from the portfolio.
    */
   std::tuple<RiskPortfolio, Beam::Queries::Sequence,
-      std::vector<std::shared_ptr<const Order>>> make_portfolio(
+      std::vector<std::shared_ptr<Order>>> make_portfolio(
         const InventorySnapshot& snapshot,
         const Beam::ServiceLocator::DirectoryEntry& account,
         VenueDatabase venues, IsOrderExecutionClient auto& client) {

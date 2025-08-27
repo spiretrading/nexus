@@ -11,7 +11,7 @@ namespace Spire {
     public:
 
       //! Defines the native type being represented.
-      using Type = std::shared_ptr<const Nexus::Order>;
+      using Type = std::shared_ptr<Nexus::Order>;
 
       //! Returns an instance of this type.
       static const OrderReferenceType& GetInstance();

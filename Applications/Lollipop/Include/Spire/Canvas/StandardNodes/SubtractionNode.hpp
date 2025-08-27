@@ -1,5 +1,6 @@
 #ifndef SPIRE_SUBTRACTIONNODE_HPP
 #define SPIRE_SUBTRACTIONNODE_HPP
+#include <boost/mpl/list.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
 

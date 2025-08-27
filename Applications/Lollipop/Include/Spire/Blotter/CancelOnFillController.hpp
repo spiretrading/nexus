@@ -34,27 +34,27 @@ namespace Spire {
                are checked for fills.
       */
       void SetOrderExecutionPublisher(
-        Beam::Ref<const Beam::Publisher<std::shared_ptr<const Nexus::Order>>>
+        Beam::Ref<const Beam::Publisher<std::shared_ptr<Nexus::Order>>>
           orderExecutionPublisher);
 
     private:
       struct OrderEntry {
-        std::shared_ptr<const Nexus::Order> m_order;
+        std::shared_ptr<Nexus::Order> m_order;
         bool m_cancelSubmitted;
         Nexus::OrderStatus m_status;
 
-        OrderEntry(const std::shared_ptr<const Nexus::Order>& order);
+        OrderEntry(const std::shared_ptr<Nexus::Order>& order);
       };
       typedef std::array<std::deque<std::shared_ptr<OrderEntry>>,
         Nexus::Side::COUNT> SideToOrderEntryList;
       UserProfile* m_userProfile;
-      const Beam::Publisher<std::shared_ptr<const Nexus::Order>>*
+      const Beam::Publisher<std::shared_ptr<Nexus::Order>>*
         m_orderExecutionPublisher;
       std::unordered_map<Nexus::Security, SideToOrderEntryList>
         m_securityToOrderEntryList;
       std::optional<Beam::RoutineTaskQueue> m_slotHandler;
 
-      void OnOrderExecuted(const std::shared_ptr<const Nexus::Order>& order);
+      void OnOrderExecuted(const std::shared_ptr<Nexus::Order>& order);
       void OnExecutionReport(std::weak_ptr<OrderEntry> weakOrderEntry,
         const Nexus::ExecutionReport& report);
   };

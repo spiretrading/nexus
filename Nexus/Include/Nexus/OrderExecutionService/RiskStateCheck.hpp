@@ -36,7 +36,7 @@ namespace Nexus {
 
       void submit(const OrderInfo& info) override;
 
-      void add(const std::shared_ptr<const Order>& order) override;
+      void add(const std::shared_ptr<Order>& order) override;
 
     private:
       struct AccountEntry {
@@ -91,7 +91,7 @@ namespace Nexus {
   }
 
   template<IsAdministrationClient C>
-  void RiskStateCheck<C>::add(const std::shared_ptr<const Order>& order) {
+  void RiskStateCheck<C>::add(const std::shared_ptr<Order>& order) {
     auto& account_entry = load(order->get_info().m_fields.m_account);
     Beam::Threading::With(account_entry.m_position_order_book,
       [&] (auto& position_order_book) {

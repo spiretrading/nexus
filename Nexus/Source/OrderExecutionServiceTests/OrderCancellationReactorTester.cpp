@@ -20,7 +20,7 @@ TEST_SUITE("OrderCancellationReactor") {
     auto operations = std::make_shared<
       Beam::Queue<std::shared_ptr<TestOrderExecutionClient::Operation>>>();
     auto client = TestOrderExecutionClient(operations);
-    auto series = Aspen::none<std::shared_ptr<const Order>>();
+    auto series = Aspen::none<std::shared_ptr<Order>>();
     auto reactor = OrderCancellationReactor(&client, series);
     auto state = reactor.commit(0);
     REQUIRE(Aspen::is_complete(state));
@@ -35,7 +35,7 @@ TEST_SUITE("OrderCancellationReactor") {
       make_limit_order_fields(security, CAD, Side::BID, "TSX", 100, Money::ONE);
     auto order = std::make_shared<PrimitiveOrder>(OrderInfo(
       fields, 123, false, time_from_string("2024-07-21 10:00:00.000")));
-    auto series = Shared<Aspen::Queue<std::shared_ptr<const Order>>>();
+    auto series = Shared<Aspen::Queue<std::shared_ptr<Order>>>();
     auto reactor = OrderCancellationReactor(&client, series);
     series->push(order);
     auto state = reactor.commit(0);

@@ -40,8 +40,8 @@ namespace Nexus {
         boost::posix_time::time_duration timeout, Money offset,
         CF&& time_client);
 
-      void submit(const std::shared_ptr<const Order>& order) override;
-      void add(const std::shared_ptr<const Order>& order) override;
+      void submit(const std::shared_ptr<Order>& order) override;
+      void add(const std::shared_ptr<Order>& order) override;
 
     private:
       boost::posix_time::time_duration m_timeout;
@@ -78,7 +78,7 @@ namespace Nexus {
 
   template<typename C>
   void OpposingOrderSubmissionComplianceRule<C>::submit(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     if(order->get_info().m_fields.m_type != OrderType::LIMIT &&
         order->get_info().m_fields.m_type != OrderType::MARKET) {
       return;
@@ -124,7 +124,7 @@ namespace Nexus {
 
   template<typename C>
   void OpposingOrderSubmissionComplianceRule<C>::add(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     if(order->get_info().m_fields.m_type != OrderType::LIMIT &&
         order->get_info().m_fields.m_type != OrderType::MARKET) {
       return;

@@ -34,7 +34,7 @@ BookViewModel::BookViewModel(Ref<UserProfile> userProfile,
   m_userProfile->GetBlotterSettings().GetConsolidatedBlotter(
     m_userProfile->GetClients().get_service_locator_client().GetAccount()).
       GetTasksModel().GetOrderExecutionPublisher().Monitor(
-        m_eventHandler.get_slot<std::shared_ptr<const Order>>(
+        m_eventHandler.get_slot<std::shared_ptr<Order>>(
           std::bind_front(&BookViewModel::OnOrderExecuted, this)));
 }
 
@@ -328,7 +328,7 @@ void BookViewModel::OnBookQuote(const BookQuote& quote) {
   }
 }
 
-void BookViewModel::OnOrderExecuted(const std::shared_ptr<const Order>& order) {
+void BookViewModel::OnOrderExecuted(const std::shared_ptr<Order>& order) {
   if(order->get_info().m_fields.m_security != m_security ||
       order->get_info().m_fields.m_side != m_side ||
       order->get_info().m_fields.m_type != OrderType::LIMIT) {
@@ -338,7 +338,7 @@ void BookViewModel::OnOrderExecuted(const std::shared_ptr<const Order>& order) {
     std::bind_front(&BookViewModel::OnExecutionReport, this, order)));
 }
 
-void BookViewModel::OnExecutionReport(const std::shared_ptr<const Order>& order,
+void BookViewModel::OnExecutionReport(const std::shared_ptr<Order>& order,
     const ExecutionReport& executionReport) {
   auto key = OrderKey();
   key.m_price = order->get_info().m_fields.m_price;

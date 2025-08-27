@@ -27,7 +27,6 @@
 #include "Spire/Canvas/ValueNodes/DestinationNode.hpp"
 #include "Spire/Canvas/ValueNodes/DurationNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
-#include "Spire/Canvas/ValueNodes/MarketNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
@@ -36,6 +35,7 @@
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
+#include "Spire/Canvas/ValueNodes/VenueNode.hpp"
 #include "Spire/CanvasView/CustomNodeDialog.hpp"
 #include "Spire/CanvasView/FileReaderNodeDialog.hpp"
 #include "Spire/CanvasView/LuaScriptDialog.hpp"
@@ -78,7 +78,6 @@ namespace {
       void Visit(const FileReaderNode& node) override;
       void Visit(const IntegerNode& node) override;
       void Visit(const LuaScriptNode& node) override;
-      void Visit(const MarketNode& node) override;
       void Visit(const MaxFloorNode& node) override;
       void Visit(const MoneyNode& node) override;
       void Visit(const OptionalPriceNode& node) override;
@@ -92,6 +91,7 @@ namespace {
       void Visit(const TimeInForceNode& node) override;
       void Visit(const TimeNode& node) override;
       void Visit(const TimeRangeParameterNode& node) override;
+      void Visit(const VenueNode& node) override;
       void Visit(const CanvasNode& node) override;
 
     private:
@@ -295,22 +295,6 @@ void OpenEditorCanvasNodeVisitor::Visit(const LuaScriptNode& node) {
   auto coordinate = m_model->GetCoordinate(node);
   m_editVariant =
     new ReplaceNodeCommand(Ref(*m_model), coordinate, *dialog.GetNode());
-}
-
-void OpenEditorCanvasNodeVisitor::Visit(const MarketNode& node) {
-  auto editor = new QComboBox();
-  auto& markets = m_userProfile->GetVenueDatabase().GetEntries();
-  for(auto i = std::size_t(0); i != markets.size(); ++i) {
-    auto& entry = markets[i];
-    editor->addItem(QString::fromStdString(entry.m_code.GetData()));
-    if(!node.GetValue().IsEmpty() && entry.m_code == node.GetValue()) {
-      editor->setCurrentIndex(i);
-    }
-  }
-  if(m_event) {
-    QApplication::sendEvent(editor, m_event);
-  }
-  m_editVariant = editor;
 }
 
 void OpenEditorCanvasNodeVisitor::Visit(const MaxFloorNode& node) {
@@ -557,6 +541,22 @@ void OpenEditorCanvasNodeVisitor::Visit(const TimeRangeParameterNode& node) {
   auto coordinate = m_model->GetCoordinate(node);
   m_editVariant = new ReplaceNodeCommand(Ref(*m_model), coordinate,
     *node.SetTimeRange(dialog.GetStartTime(), dialog.GetEndTime()));
+}
+
+void OpenEditorCanvasNodeVisitor::Visit(const VenueNode& node) {
+  auto editor = new QComboBox();
+  auto entries = m_userProfile->GetVenueDatabase().get_entries();
+  for(auto i = std::size_t(0); i != entries.size(); ++i) {
+    auto& entry = entries[i];
+    editor->addItem(QString::fromStdString(entry.m_venue.get_code().GetData()));
+    if(node.GetValue() && entry.m_venue == node.GetValue()) {
+      editor->setCurrentIndex(i);
+    }
+  }
+  if(m_event) {
+    QApplication::sendEvent(editor, m_event);
+  }
+  m_editVariant = editor;
 }
 
 void OpenEditorCanvasNodeVisitor::Visit(const CanvasNode& node) {

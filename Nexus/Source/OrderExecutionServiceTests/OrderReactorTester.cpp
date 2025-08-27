@@ -20,7 +20,7 @@ namespace {
   struct Fixture {
     Beam::Queue<bool> m_commits;
     Trigger m_trigger;
-    optional<Aspen::Shared<Aspen::Box<std::shared_ptr<const Order>>>> m_order;
+    optional<Aspen::Shared<Aspen::Box<std::shared_ptr<Order>>>> m_order;
     int m_sequence;
     OrderId m_next_id;
     std::shared_ptr<Beam::Queue<
@@ -39,7 +39,7 @@ namespace {
       Trigger::set_trigger(m_trigger);
     }
 
-    void set(Aspen::Shared<Aspen::Box<std::shared_ptr<const Order>>> order) {
+    void set(Aspen::Shared<Aspen::Box<std::shared_ptr<Order>>> order) {
       m_order.emplace(std::move(order));
     }
 

@@ -73,7 +73,7 @@ namespace Spire {
       void OnProxyOrderAdded(const QModelIndex& parent, int first, int last);
       void OnProxyOrderRemoved(const QModelIndex& parent, int first, int last);
       void OnCancel();
-      void OnExecutionReport(const std::shared_ptr<const Nexus::Order>& order,
+      void OnExecutionReport(const std::shared_ptr<Nexus::Order>& order,
         const Nexus::ExecutionReport& executionReport);
       void OnContextMenu(const QPoint& point);
   };

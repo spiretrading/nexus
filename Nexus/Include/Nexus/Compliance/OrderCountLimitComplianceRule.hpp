@@ -20,8 +20,8 @@ namespace Nexus {
       explicit OrderCountLimitComplianceRule(
         const std::vector<ComplianceParameter>& parameters);
 
-      void submit(const std::shared_ptr<const Order>& order) override;
-      void add(const std::shared_ptr<const Order>& order) override;
+      void submit(const std::shared_ptr<Order>& order) override;
+      void add(const std::shared_ptr<Order>& order) override;
 
     private:
       int m_limit_count;
@@ -54,7 +54,7 @@ namespace Nexus {
   }
 
   inline void OrderCountLimitComplianceRule::submit(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     auto current_count = ++m_current_count;
     if(current_count > m_limit_count) {
       --m_current_count;
@@ -66,7 +66,7 @@ namespace Nexus {
   }
 
   inline void OrderCountLimitComplianceRule::add(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     ++m_current_count;
     order->get_publisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
       std::bind_front(

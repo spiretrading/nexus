@@ -44,9 +44,9 @@ namespace Nexus {
         boost::local_time::tz_database time_zones, VenueDatabase venues,
         CF&& time_client, std::unique_ptr<ComplianceRule> rule);
 
-      void submit(const std::shared_ptr<const Order>& order) override;
-      void cancel(const std::shared_ptr<const Order>& order) override;
-      void add(const std::shared_ptr<const Order>& order) override;
+      void submit(const std::shared_ptr<Order>& order) override;
+      void cancel(const std::shared_ptr<Order>& order) override;
+      void add(const std::shared_ptr<Order>& order) override;
 
     private:
       boost::posix_time::time_duration m_start;
@@ -83,7 +83,7 @@ namespace Nexus {
 
   template<typename C>
   void TimeFilterComplianceRule<C>::submit(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     if(is_within_period(order->get_info().m_fields.m_security.get_venue())) {
       m_rule->submit(order);
     } else {
@@ -93,15 +93,14 @@ namespace Nexus {
 
   template<typename C>
   void TimeFilterComplianceRule<C>::cancel(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     if(is_within_period(order->get_info().m_fields.m_security.get_venue())) {
       m_rule->cancel(order);
     }
   }
 
   template<typename C>
-  void TimeFilterComplianceRule<C>::add(
-      const std::shared_ptr<const Order>& order) {
+  void TimeFilterComplianceRule<C>::add(const std::shared_ptr<Order>& order) {
     m_rule->add(order);
   }
 

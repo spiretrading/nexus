@@ -100,8 +100,7 @@ namespace Details {
        * @param record The OrderRecord to recover.
        * @return The recovered Order.
        */
-      std::shared_ptr<const Order> recover(
-        const SequencedAccountOrderRecord& record);
+      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
 
       /**
        * Submits a NewOrderSingle message.
@@ -112,7 +111,7 @@ namespace Details {
        * @return The Order that was submitted.
        */
       template<typename F>
-      std::shared_ptr<const Order> submit(const OrderInfo& info,
+      std::shared_ptr<Order> submit(const OrderInfo& info,
         const FIX::SenderCompID& sender_comp_id,
         const FIX::TargetCompID target_comp_id, F&& f);
 
@@ -159,7 +158,7 @@ namespace Details {
       struct RecoveredExecutionReport {
         FixExecutionReport m_message;
         std::function<void (
-          const std::shared_ptr<const Order>&, Beam::Out<ExecutionReport>)>
+          const std::shared_ptr<Order>&, Beam::Out<ExecutionReport>)>
             m_callback;
 
         template<typename F>
@@ -260,7 +259,7 @@ namespace Details {
     });
   }
 
-  inline std::shared_ptr<const Order> FixOrderLog::recover(
+  inline std::shared_ptr<Order> FixOrderLog::recover(
       const SequencedAccountOrderRecord& record) {
     if((*record)->m_execution_reports.empty()) {
       auto initial_report =
@@ -300,7 +299,7 @@ namespace Details {
   }
 
   template<typename F>
-  std::shared_ptr<const Order> FixOrderLog::submit(const OrderInfo& info,
+  std::shared_ptr<Order> FixOrderLog::submit(const OrderInfo& info,
       const FIX::SenderCompID& sender_comp_id,
       const FIX::TargetCompID target_comp_id, F&& f) {
     auto order_type = get_order_type(info.m_fields.m_type);

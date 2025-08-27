@@ -31,7 +31,7 @@ TEST_SUITE("BookkeeperReactor") {
     fill(*order, 100, ptime(date(2019, 10, 3)));
     auto bookkeeper =
       make_bookkeeper_reactor<TrueAverageBookkeeper>(
-        constant(std::static_pointer_cast<const Order>(order)));
+        constant(std::static_pointer_cast<Order>(order)));
     for(auto i = 0; i < 10; ++i) {
       auto state = bookkeeper.commit(i);
       if(has_evaluation(state)) {

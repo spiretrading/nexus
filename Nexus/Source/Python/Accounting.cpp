@@ -34,12 +34,12 @@ void Nexus::Python::export_accounting(module& module) {
 
 void Nexus::Python::export_bookkeeper_reactor(module& module) {
   module.def("BookkeeperReactor",
-    [] (Bookkeeper bookkeeper, SharedBox<std::shared_ptr<const Order>> orders) {
+    [] (Bookkeeper bookkeeper, SharedBox<std::shared_ptr<Order>> orders) {
       return to_object(
         make_bookkeeper_reactor(std::move(bookkeeper), std::move(orders)));
     });
   module.def("BookkeeperReactor",
-    [] (SharedBox<std::shared_ptr<const Order>> orders) {
+    [] (SharedBox<std::shared_ptr<Order>> orders) {
       return to_object(
         make_bookkeeper_reactor<TrueAverageBookkeeper>(std::move(orders)));
     });
@@ -83,7 +83,7 @@ void Nexus::Python::export_portfolio_controller(module& module) {
     module, "PortfolioUpdateEntry");
   class_<PortfolioController>(module, "PortfolioController").
     def(init<Portfolio<Bookkeeper>*, MarketDataClient,
-      ScopedQueueReader<std::shared_ptr<const Order>>>(), keep_alive<1, 2>()).
+      ScopedQueueReader<std::shared_ptr<Order>>>(), keep_alive<1, 2>()).
     def_property_readonly("publisher", &PortfolioController::get_publisher,
       return_value_policy::reference_internal);
 }

@@ -70,7 +70,7 @@ namespace Nexus::Python {
         const AccountQuery&, Beam::ScopedQueueWriter<SequencedOrder>)>(
           &C::query)).
       def("query_orders", static_cast<void (C::*)(const AccountQuery&,
-          Beam::ScopedQueueWriter<std::shared_ptr<const Order>>)>(&C::query)).
+          Beam::ScopedQueueWriter<std::shared_ptr<Order>>)>(&C::query)).
       def("query_sequenced_execution_reports",
         static_cast<void (C::*)(const AccountQuery&,
           Beam::ScopedQueueWriter<SequencedExecutionReport>)>(&C::query)).

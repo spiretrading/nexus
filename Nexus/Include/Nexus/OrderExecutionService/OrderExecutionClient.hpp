@@ -39,7 +39,7 @@ namespace Nexus {
         const std::unique_ptr<OrderExecutionClient>& client);
 
       /** Loads an Order by its id. */
-      std::shared_ptr<const Order> load_order(OrderId id);
+      std::shared_ptr<Order> load_order(OrderId id);
 
       /**
        * Submits a query for SequencedOrderRecords.
@@ -71,7 +71,7 @@ namespace Nexus {
        * @param queue The queue that will store the result of the query.
        */
       void query(const AccountQuery& query,
-        Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue);
+        Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue);
 
       /**
        * Submits a query for SequencedExecutionReports.
@@ -94,13 +94,13 @@ namespace Nexus {
        * @param fields The OrderFields to submit.
        * @return The Order that was submitted.
        */
-      std::shared_ptr<const Order> submit(const OrderFields& fields);
+      std::shared_ptr<Order> submit(const OrderFields& fields);
 
       /**
        * Cancels an Order.
        * @param order The Order to cancel.
        */
-      void cancel(const std::shared_ptr<const Order>& order);
+      void cancel(const std::shared_ptr<Order>& order);
 
       /**
        * Cancels an Order.
@@ -120,7 +120,7 @@ namespace Nexus {
     private:
       struct VirtualOrderExecutionClient {
         virtual ~VirtualOrderExecutionClient() = default;
-        virtual std::shared_ptr<const Order> load_order(OrderId id) = 0;
+        virtual std::shared_ptr<Order> load_order(OrderId id) = 0;
         virtual void query(const AccountQuery& query,
           Beam::ScopedQueueWriter<SequencedOrderRecord> queue) = 0;
         virtual void query(const AccountQuery& query,
@@ -128,13 +128,12 @@ namespace Nexus {
         virtual void query(const AccountQuery& query,
           Beam::ScopedQueueWriter<SequencedOrder> queue) = 0;
         virtual void query(const AccountQuery& query,
-          Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue) = 0;
+          Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) = 0;
         virtual void query(const AccountQuery& query,
           Beam::ScopedQueueWriter<SequencedExecutionReport> queue) = 0;
         virtual void query(const AccountQuery& query,
           Beam::ScopedQueueWriter<ExecutionReport> queue) = 0;
-        virtual std::shared_ptr<const Order>
-          submit(const OrderFields& fields) = 0;
+        virtual std::shared_ptr<Order> submit(const OrderFields& fields) = 0;
         virtual void cancel(const Order& order) = 0;
         virtual void update(OrderId id, const ExecutionReport& report) = 0;
         virtual void close() = 0;
@@ -146,7 +145,7 @@ namespace Nexus {
 
         template<typename... Args>
         WrappedOrderExecutionClient(Args&&... args);
-        std::shared_ptr<const Order> load_order(OrderId id) override;
+        std::shared_ptr<Order> load_order(OrderId id) override;
         void query(const AccountQuery& query,
           Beam::ScopedQueueWriter<SequencedOrderRecord> queue) override;
         void query(const AccountQuery& query,
@@ -154,12 +153,12 @@ namespace Nexus {
         void query(const AccountQuery& query,
           Beam::ScopedQueueWriter<SequencedOrder> queue) override;
         void query(const AccountQuery& query,
-          Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue) override;
+          Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) override;
         void query(const AccountQuery& query,
           Beam::ScopedQueueWriter<SequencedExecutionReport> queue) override;
         void query(const AccountQuery& query,
           Beam::ScopedQueueWriter<ExecutionReport> queue) override;
-        std::shared_ptr<const Order> submit(const OrderFields& fields) override;
+        std::shared_ptr<Order> submit(const OrderFields& fields) override;
         void cancel(const Order& order) override;
         void update(OrderId id, const ExecutionReport& report) override;
         void close() override;
@@ -194,8 +193,7 @@ namespace Nexus {
     const std::unique_ptr<OrderExecutionClient>& client)
     : OrderExecutionClient(*client) {}
 
-  inline std::shared_ptr<const Order>
-      OrderExecutionClient::load_order(OrderId id) {
+  inline std::shared_ptr<Order> OrderExecutionClient::load_order(OrderId id) {
     return m_client->load_order(id);
   }
 
@@ -215,7 +213,7 @@ namespace Nexus {
   }
 
   inline void OrderExecutionClient::query(const AccountQuery& query,
-      Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue) {
+      Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) {
     m_client->query(query, std::move(queue));
   }
 
@@ -229,13 +227,13 @@ namespace Nexus {
     m_client->query(query, std::move(queue));
   }
 
-  inline std::shared_ptr<const Order>
+  inline std::shared_ptr<Order>
       OrderExecutionClient::submit(const OrderFields& fields) {
     return m_client->submit(fields);
   }
 
   inline void OrderExecutionClient::cancel(
-      const std::shared_ptr<const Order>& order) {
+      const std::shared_ptr<Order>& order) {
     m_client->cancel(*order);
   }
 
@@ -259,7 +257,7 @@ namespace Nexus {
     : m_client(std::forward<Args>(args)...) {}
 
   template<typename C>
-  std::shared_ptr<const Order>
+  std::shared_ptr<Order>
       OrderExecutionClient::WrappedOrderExecutionClient<C>::load_order(
         OrderId id) {
     return m_client->load_order(id);
@@ -288,7 +286,7 @@ namespace Nexus {
   template<typename C>
   void OrderExecutionClient::WrappedOrderExecutionClient<C>::query(
       const AccountQuery& query,
-      Beam::ScopedQueueWriter<std::shared_ptr<const Order>> queue) {
+      Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) {
     m_client->query(query, std::move(queue));
   }
 
@@ -307,7 +305,7 @@ namespace Nexus {
   }
 
   template<typename C>
-  std::shared_ptr<const Order>
+  std::shared_ptr<Order>
       OrderExecutionClient::WrappedOrderExecutionClient<C>::submit(
         const OrderFields& fields) {
     return m_client->submit(fields);

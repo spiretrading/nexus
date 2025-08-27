@@ -4,6 +4,7 @@
 #include <boost/mpl/insert_range.hpp>
 #include <boost/mpl/placeholders.hpp>
 #include <boost/mpl/transform.hpp>
+#include <boost/mpl/vector.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 

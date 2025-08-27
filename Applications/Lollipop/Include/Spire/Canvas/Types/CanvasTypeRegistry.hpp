@@ -13,7 +13,7 @@ namespace Spire {
     Nexus::CurrencyId, Nexus::Money, Nexus::OrderStatus, Nexus::OrderType,
     Nexus::Security, Nexus::Side, Nexus::TimeInForce, Nexus::Venue,
     Beam::Queries::Range, Beam::Queries::Sequence,
-    std::shared_ptr<const Nexus::Order>, Record>;
+    std::shared_ptr<Nexus::Order>, Record>;
 
   /** Lists all value types. */
   using ValueTypes = boost::mpl::list<bool, Nexus::Quantity, double,

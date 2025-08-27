@@ -11,8 +11,7 @@
 #include "Nexus/OrderExecutionService/OrderRecord.hpp"
 
 namespace Nexus {
-  using SequencedOrder =
-    Beam::Queries::SequencedValue<std::shared_ptr<const Order>>;
+  using SequencedOrder = Beam::Queries::SequencedValue<std::shared_ptr<Order>>;
   using SequencedOrderInfo = Beam::Queries::SequencedValue<OrderInfo>;
   using SequencedOrderRecord = Beam::Queries::SequencedValue<OrderRecord>;
   using SequencedExecutionReport =

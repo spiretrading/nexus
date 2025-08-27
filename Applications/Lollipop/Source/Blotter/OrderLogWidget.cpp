@@ -183,8 +183,7 @@ void OrderLogWidget::OnCancel() {
   }
 }
 
-void OrderLogWidget::OnExecutionReport(
-    const std::shared_ptr<const Order>& order,
+void OrderLogWidget::OnExecutionReport(const std::shared_ptr<Order>& order,
     const ExecutionReport& executionReport) {
   auto orderIterator = std::find_if(m_orderEntries.begin(),
     m_orderEntries.end(), [&] (const auto& entry) {

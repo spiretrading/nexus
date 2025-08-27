@@ -141,7 +141,7 @@ void BlotterModel::InitializeModels() {
         m_executingAccount), m_executingAccount,
       m_userProfile->GetVenueDatabase(),
       m_userProfile->GetClients().get_order_execution_client());
-    auto orders = std::make_shared<Queue<std::shared_ptr<const Order>>>();
+    auto orders = std::make_shared<Queue<std::shared_ptr<Order>>>();
     for(auto& order : excludedOrders) {
       orders->Push(order);
     }
@@ -156,7 +156,7 @@ void BlotterModel::InitializeModels() {
       &m_userProfile->GetClients().get_market_data_client(),
       std::move(orders));
   } else {
-    auto orders = std::make_shared<Queue<std::shared_ptr<const Order>>>();
+    auto orders = std::make_shared<Queue<std::shared_ptr<Order>>>();
     orderExecutionPublisher.Monitor(orders);
     m_portfolioController.emplace(
       Portfolio<TrueAverageBookkeeper>(m_userProfile->GetVenueDatabase()),
