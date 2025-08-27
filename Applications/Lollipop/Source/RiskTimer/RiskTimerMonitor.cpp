@@ -8,8 +8,6 @@ using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::RiskService;
 using namespace Spire;
 
 RiskTimerMonitor::RiskTimerMonitor(Ref<UserProfile> userProfile)
@@ -26,8 +24,9 @@ void RiskTimerMonitor::Load() {
   auto account =
     m_userProfile->GetClients().get_service_locator_client().GetAccount();
   m_userProfile->GetClients().get_administration_client().
-    GetRiskStatePublisher(account).Monitor(m_eventHandler.get_slot<RiskState>(
-      std::bind_front(&RiskTimerMonitor::OnRiskState, this)));
+    get_risk_state_publisher(account).Monitor(
+      m_eventHandler.get_slot<RiskState>(
+        std::bind_front(&RiskTimerMonitor::OnRiskState, this)));
 }
 
 void RiskTimerMonitor::OnRiskState(const RiskState& riskState) {

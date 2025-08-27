@@ -119,12 +119,7 @@ namespace Spire {
   }
 }
 
-namespace Beam {
-namespace Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::SingleOrderTaskNode> :
-    std::false_type {};
-
+namespace Beam::Serialization {
   template<>
   struct Shuttle<Spire::SingleOrderTaskNode::FieldEntry> {
     template<typename Shuttler>
@@ -135,7 +130,6 @@ namespace Serialization {
       shuttle.Shuttle("key", value.m_key);
     }
   };
-}
 }
 
 #endif

@@ -36,12 +36,4 @@ namespace Spire {
   }
 }
 
-namespace Beam {
-namespace Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::SecurityPortfolioNode> :
-    std::false_type {};
-}
-}
-
 #endif

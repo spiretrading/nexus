@@ -11,7 +11,6 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::UI;
 
@@ -37,9 +36,10 @@ namespace {
         auto& properties = m_sourceModel->GetProperties();
         if(properties.m_orderStatusFilterType ==
             OrderLogProperties::OrderStatusFilterType::LIVE_ORDERS &&
-            IsTerminal(entry.m_status) || properties.m_orderStatusFilterType ==
+            is_terminal(entry.m_status) || properties.m_orderStatusFilterType ==
             OrderLogProperties::OrderStatusFilterType::TERMINAL_ORDERS &&
-            !IsTerminal(entry.m_status) || properties.m_orderStatusFilterType ==
+            !is_terminal(entry.m_status) ||
+              properties.m_orderStatusFilterType ==
             OrderLogProperties::OrderStatusFilterType::CUSTOM &&
             !properties.m_orderStatusFilter.Test(entry.m_status)) {
           return false;
@@ -132,7 +132,7 @@ bool OrderLogWidget::eventFilter(QObject* object, QEvent* event) {
 
 void OrderLogWidget::OnOrderAdded(const OrderLogModel::OrderEntry& entry) {
   m_orderEntries.push_back(entry);
-  entry.m_order->GetPublisher().Monitor(
+  entry.m_order->get_publisher().Monitor(
     m_eventHandler.get_slot<ExecutionReport>(
       std::bind_front(
         &OrderLogWidget::OnExecutionReport, this, entry.m_order)));
@@ -157,7 +157,7 @@ void OrderLogWidget::OnProxyOrderAdded(
     auto orderData = JsonObject();
     orderData["blotter_id"] = reinterpret_cast<std::intptr_t>(parentWidget());
     orderData["order_id"] =
-      static_cast<double>(entry.m_order->GetInfo().m_orderId);
+      static_cast<double>(entry.m_order->get_info().m_id);
   }
 }
 
@@ -169,7 +169,7 @@ void OrderLogWidget::OnProxyOrderRemoved(
     auto orderData = JsonObject();
     orderData["blotter_id"] = reinterpret_cast<std::intptr_t>(parentWidget());
     orderData["order_id"] =
-      static_cast<double>(entry.m_order->GetInfo().m_orderId);
+      static_cast<double>(entry.m_order->get_info().m_id);
   }
 }
 
@@ -178,13 +178,14 @@ void OrderLogWidget::OnCancel() {
   for(auto& index : indexes) {
     auto& entry =
       m_model->GetOrderLogModel().GetEntry(m_proxyModel->mapToSource(index));
-    m_userProfile->GetClients().get_order_execution_client().Cancel(
+    m_userProfile->GetClients().get_order_execution_client().cancel(
       *entry.m_order);
   }
 }
 
 void OrderLogWidget::OnExecutionReport(
-    const Order* order, const ExecutionReport& executionReport) {
+    const std::shared_ptr<const Order>& order,
+    const ExecutionReport& executionReport) {
   auto orderIterator = std::find_if(m_orderEntries.begin(),
     m_orderEntries.end(), [&] (const auto& entry) {
       return entry.m_order == order;
@@ -193,7 +194,7 @@ void OrderLogWidget::OnExecutionReport(
     return;
   }
   orderIterator->m_status = executionReport.m_status;
-  if(!IsTerminal(executionReport.m_status)) {
+  if(!is_terminal(executionReport.m_status)) {
     return;
   }
   m_orderEntries.erase(orderIterator);

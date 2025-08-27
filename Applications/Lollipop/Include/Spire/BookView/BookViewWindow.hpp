@@ -14,7 +14,6 @@
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/PersistentWindow.hpp"
 #include "Spire/UI/SecurityContext.hpp"
 #include "Spire/UI/SecurityViewStack.hpp"

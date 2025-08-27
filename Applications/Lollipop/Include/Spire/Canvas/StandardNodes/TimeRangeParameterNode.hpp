@@ -5,7 +5,7 @@
 #include "Spire/InputWidgets/TimeRangeInputWidget.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 

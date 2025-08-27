@@ -8,7 +8,6 @@
 #include "Spire/Canvas/Types/DestinationType.hpp"
 #include "Spire/Canvas/Types/DurationType.hpp"
 #include "Spire/Canvas/Types/IntegerType.hpp"
-#include "Spire/Canvas/Types/MarketType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/Canvas/Types/OrderStatusType.hpp"
@@ -21,13 +20,13 @@
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
 #include "Spire/Canvas/Types/UnionType.hpp"
+#include "Spire/Canvas/Types/VenueType.hpp"
 
 using namespace Beam;
 using namespace Beam::Queries;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 TEST_SUITE("ValueType") {
@@ -39,7 +38,6 @@ TEST_SUITE("ValueType") {
     REQUIRE(DestinationType::GetInstance().GetName() == "Destination");
     REQUIRE(DurationType::GetInstance().GetName() == "Duration");
     REQUIRE(IntegerType::GetInstance().GetName() == "Integer");
-    REQUIRE(MarketType::GetInstance().GetName() == "Market");
     REQUIRE(MoneyType::GetInstance().GetName() == "Money");
     REQUIRE(OrderReferenceType::GetInstance().GetName() == "Order");
     REQUIRE(OrderStatusType::GetInstance().GetName() == "Order Status");
@@ -50,6 +48,7 @@ TEST_SUITE("ValueType") {
     REQUIRE(TextType::GetInstance().GetName() == "Text");
     REQUIRE(TimeInForceType::GetInstance().GetName() == "Time In Force");
     REQUIRE(TimeRangeType::GetInstance().GetName() == "Time Range");
+    REQUIRE(VenueType::GetInstance().GetName() == "Venue");
   }
 
   TEST_CASE("native_types") {
@@ -64,8 +63,6 @@ TEST_SUITE("ValueType") {
       typeid(time_duration));
     REQUIRE(IntegerType::GetInstance().GetNativeType() ==
       typeid(Quantity));
-    REQUIRE(MarketType::GetInstance().GetNativeType() ==
-      typeid(MarketCode));
     REQUIRE(MoneyType::GetInstance().GetNativeType() == typeid(Money));
     REQUIRE(OrderReferenceType::GetInstance().GetNativeType() ==
       typeid(const Order*));
@@ -83,6 +80,7 @@ TEST_SUITE("ValueType") {
       typeid(TimeInForce));
     REQUIRE(TimeRangeType::GetInstance().GetNativeType() ==
       typeid(Queries::Range));
+    REQUIRE(VenueType::GetInstance().GetNativeType() == typeid(Venue));
   }
 
   TEST_CASE("compatibility") {

@@ -143,7 +143,7 @@ void OrderImbalanceIndicatorModel::InitializePublishers() {
     orderImbalanceQuery.SetIndex(market.m_code);
     orderImbalanceQuery.SetRange(timeRange);
     orderImbalanceQuery.SetSnapshotLimit(SnapshotLimit::Unlimited());
-    m_userProfile->GetClients().GetMarketDataClient().
+    m_userProfile->GetClients().get_market_data_client().
       QueryOrderImbalances(orderImbalanceQuery,
         m_eventHandler->get_slot<OrderImbalance>(
           std::bind_front(&OrderImbalanceIndicatorModel::OnOrderImbalance, this,

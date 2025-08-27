@@ -4,7 +4,6 @@
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
 #include <QAction>
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/UI.hpp"
 
 namespace Spire {

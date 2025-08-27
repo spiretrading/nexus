@@ -1,22 +1,22 @@
-#ifndef SPIRE_MARKETTYPE_HPP
-#define SPIRE_MARKETTYPE_HPP
-#include "Nexus/Definitions/Market.hpp"
+#ifndef SPIRE_VENUETYPE_HPP
+#define SPIRE_VENUETYPE_HPP
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Types/NativeType.hpp"
 
 namespace Spire {
 
-  /*! \class MarketType
-      \brief Represents the type used to identify a market.
+  /*! \class VenueType
+      \brief Represents the type used to identify a venue.
    */
-  class MarketType : public NativeType {
+  class VenueType : public NativeType {
     public:
 
       //! Defines the native type being represented.
-      typedef Nexus::MarketCode Type;
+      typedef Nexus::Venue Type;
 
       //! Returns an instance of this type.
-      static const MarketType& GetInstance();
+      static const VenueType& GetInstance();
 
       virtual std::string GetName() const;
 
@@ -29,13 +29,13 @@ namespace Spire {
     private:
       friend struct Beam::Serialization::DataShuttle;
 
-      MarketType() = default;
+      VenueType() = default;
       template<typename Shuttler>
       void Shuttle(Shuttler& shuttle, unsigned int version);
   };
 
   template<typename Shuttler>
-  void MarketType::Shuttle(Shuttler& shuttle, unsigned int version) {
+  void VenueType::Shuttle(Shuttler& shuttle, unsigned int version) {
     NativeType::Shuttle(shuttle, version);
   }
 }

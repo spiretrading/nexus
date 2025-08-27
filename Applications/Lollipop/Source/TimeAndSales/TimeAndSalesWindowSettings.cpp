@@ -26,8 +26,9 @@ TimeAndSalesWindowSettings::TimeAndSalesWindowSettings(
   if(m_security == Security()) {
     m_name = "Time And Sales";
   } else {
-    m_name = "Time And Sales - " +
-      ToString(m_security, userProfile->GetMarketDatabase());
+    auto ss = std::stringstream();
+    ss << userProfile->GetVenueDatabase() << m_security;
+    m_name = "Time And Sales - " + ss.str();
   }
 }
 

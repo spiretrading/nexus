@@ -12,7 +12,6 @@
 #include <QRect>
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardRowRenderer.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

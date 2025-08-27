@@ -5,7 +5,6 @@
 #include <QByteArray>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasNodeModel.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 

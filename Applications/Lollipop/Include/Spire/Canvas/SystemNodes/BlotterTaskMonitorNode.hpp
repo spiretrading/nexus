@@ -38,12 +38,4 @@ namespace Spire {
   }
 }
 
-namespace Beam {
-namespace Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::BlotterTaskMonitorNode> :
-      std::false_type {};
-}
-}
-
 #endif

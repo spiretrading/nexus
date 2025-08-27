@@ -1,26 +1,26 @@
-#ifndef SPIRE_MARKETNODE_HPP
-#define SPIRE_MARKETNODE_HPP
+#ifndef SPIRE_VENUENODE_HPP
+#define SPIRE_VENUENODE_HPP
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/Canvas/Types/MarketType.hpp"
+#include "Spire/Canvas/Types/VenueType.hpp"
 #include "Spire/Canvas/ValueNodes/ValueNode.hpp"
 
 namespace Spire {
 
-  /*! \class MarketNode
-      \brief Implements the CanvasNode for the MarketType.
+  /*! \class VenueNode
+      \brief Implements the CanvasNode for the VenueType.
    */
-  class MarketNode : public ValueNode<MarketType> {
+  class VenueNode : public ValueNode<VenueType> {
     public:
 
-      //! Constructs a MarketNode.
-      MarketNode();
+      //! Constructs a VenueNode.
+      VenueNode();
 
       //! Clones this CanvasNode with a new value.
       /*!
         \param value The new value.
         \return A clone of this CanvasNode with the specified <i>value</i>.
       */
-      std::unique_ptr<MarketNode> SetValue(Nexus::MarketCode value) const;
+      std::unique_ptr<VenueNode> SetValue(Nexus::Venue value) const;
 
       virtual void Apply(CanvasNodeVisitor& visitor) const;
 
@@ -37,8 +37,8 @@ namespace Spire {
   };
 
   template<typename Shuttler>
-  void MarketNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    ValueNode<MarketType>::Shuttle(shuttle, version);
+  void VenueNode::Shuttle(Shuttler& shuttle, unsigned int version) {
+    ValueNode<VenueType>::Shuttle(shuttle, version);
   }
 }
 

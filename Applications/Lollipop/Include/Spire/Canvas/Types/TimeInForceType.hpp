@@ -1,6 +1,6 @@
 #ifndef SPIRE_TIMEINFORCETYPE_HPP
 #define SPIRE_TIMEINFORCETYPE_HPP
-#include "Nexus/Definitions/Definitions.hpp"
+#include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Types/NativeType.hpp"
 

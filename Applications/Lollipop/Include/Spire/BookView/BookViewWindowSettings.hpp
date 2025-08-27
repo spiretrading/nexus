@@ -3,7 +3,6 @@
 #include <QByteArray>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/SecurityViewStack.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 #include "Spire/UI/WindowSettings.hpp"

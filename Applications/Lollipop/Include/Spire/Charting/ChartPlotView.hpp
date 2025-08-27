@@ -11,7 +11,6 @@
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartValue.hpp"
 #include "Spire/Charting/ChartInteractions.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/PersistentWindow.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 

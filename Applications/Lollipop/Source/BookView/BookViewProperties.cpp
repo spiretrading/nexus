@@ -114,22 +114,22 @@ void BookViewProperties::SetBookQuoteFont(const QFont& font) {
   m_bookQuoteFont = font;
 }
 
-optional<const BookViewProperties::MarketHighlight&>
-    BookViewProperties::GetMarketHighlight(MarketCode market) const {
-  auto marketIterator = m_marketHighlights.find(market);
-  if(marketIterator == m_marketHighlights.end()) {
+optional<const BookViewProperties::VenueHighlight&>
+    BookViewProperties::GetVenueHighlight(Venue venue) const {
+  auto venueIterator = m_venueHighlights.find(venue);
+  if(venueIterator == m_venueHighlights.end()) {
     return none;
   }
-  return marketIterator->second;
+  return venueIterator->second;
 }
 
-void BookViewProperties::SetMarketHighlight(
-    MarketCode market, const MarketHighlight& highlight) {
-  m_marketHighlights[market] = highlight;
+void BookViewProperties::SetVenueHighlight(
+    Venue venue, const VenueHighlight& highlight) {
+  m_venueHighlights[venue] = highlight;
 }
 
-void BookViewProperties::RemoveMarketHighlight(MarketCode market) {
-  m_marketHighlights.erase(market);
+void BookViewProperties::RemoveVenueHighlight(Venue venue) {
+  m_venueHighlights.erase(venue);
 }
 
 BookViewProperties::OrderHighlight

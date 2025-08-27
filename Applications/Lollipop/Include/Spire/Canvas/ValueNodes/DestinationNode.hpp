@@ -29,8 +29,8 @@ namespace Spire {
       */
       std::unique_ptr<DestinationNode> SetValue(std::string value) const;
 
-      //! Returns the market being referred to.
-      Nexus::MarketCode GetMarket() const;
+      //! Returns the venue being referred to.
+      Nexus::Venue GetVenue() const;
 
       virtual void Apply(CanvasNodeVisitor& visitor) const;
 
@@ -58,13 +58,6 @@ namespace Spire {
     ValueNode<DestinationType>::Shuttle(shuttle, version);
     shuttle.Shuttle("referent", m_referent);
   }
-}
-
-namespace Beam {
-namespace Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::DestinationNode> : std::false_type {};
-}
 }
 
 #endif

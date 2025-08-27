@@ -10,7 +10,6 @@
 #include "Spire/Canvas/Types/DestinationType.hpp"
 #include "Spire/Canvas/Types/DurationType.hpp"
 #include "Spire/Canvas/Types/IntegerType.hpp"
-#include "Spire/Canvas/Types/MarketType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/Canvas/Types/OrderStatusType.hpp"
@@ -22,6 +21,7 @@
 #include "Spire/Canvas/Types/TextType.hpp"
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
+#include "Spire/Canvas/Types/VenueType.hpp"
 
 using namespace Beam;
 using namespace Spire;
@@ -37,7 +37,6 @@ namespace {
     types.push_back(DestinationType::GetInstance());
     types.push_back(DurationType::GetInstance());
     types.push_back(IntegerType::GetInstance());
-    types.push_back(MarketType::GetInstance());
     types.push_back(MoneyType::GetInstance());
     types.push_back(OrderReferenceType::GetInstance());
     types.push_back(OrderStatusType::GetInstance());
@@ -49,6 +48,7 @@ namespace {
     types.push_back(TextType::GetInstance());
     types.push_back(TimeInForceType::GetInstance());
     types.push_back(TimeRangeType::GetInstance());
+    types.push_back(VenueType::GetInstance());
     return std::static_pointer_cast<UnionType>(UnionType::Create(
       MakeDereferenceView(types), "Any"));
   }
@@ -62,7 +62,6 @@ namespace {
     types.push_back(DestinationType::GetInstance());
     types.push_back(DurationType::GetInstance());
     types.push_back(IntegerType::GetInstance());
-    types.push_back(MarketType::GetInstance());
     types.push_back(MoneyType::GetInstance());
     types.push_back(OrderStatusType::GetInstance());
     types.push_back(OrderTypeType::GetInstance());
@@ -73,6 +72,7 @@ namespace {
     types.push_back(TextType::GetInstance());
     types.push_back(TimeInForceType::GetInstance());
     types.push_back(TimeRangeType::GetInstance());
+    types.push_back(VenueType::GetInstance());
     return std::static_pointer_cast<UnionType>(UnionType::Create(
       MakeDereferenceView(types), "Any Value"));
   }

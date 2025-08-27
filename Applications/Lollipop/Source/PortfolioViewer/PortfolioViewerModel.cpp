@@ -32,7 +32,7 @@ PortfolioViewerModel::PortfolioViewerModel(Ref<UserProfile> userProfile,
       m_exchangeRates(&m_userProfile->GetExchangeRates()),
       m_selectionModel(selectionModel.Get()),
       m_displayCount(0) {
-  m_userProfile->GetClients().GetRiskClient().
+  m_userProfile->GetClients().get_risk_client().
     GetRiskPortfolioUpdatePublisher().Monitor(
       m_eventHandler.get_slot<RiskInventoryEntry>(std::bind_front(
         &PortfolioViewerModel::OnRiskPortfolioInventoryUpdate, this)));
@@ -268,7 +268,7 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
       security, SecurityValuation(entry.m_value.m_position.m_key.m_currency)));
     auto bboQuery = MakeCurrentQuery(security);
     bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
-    m_userProfile->GetClients().GetMarketDataClient().QueryBboQuotes(
+    m_userProfile->GetClients().get_market_data_client().QueryBboQuotes(
       bboQuery, m_eventHandler.get_slot<BboQuote>(
         std::bind_front(&PortfolioViewerModel::OnBboQuote, this, security)));
   }

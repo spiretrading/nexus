@@ -45,9 +45,4 @@ namespace Spire {
   }
 }
 
-namespace Beam::Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::SpawnNode> : std::false_type {};
-}
-
 #endif

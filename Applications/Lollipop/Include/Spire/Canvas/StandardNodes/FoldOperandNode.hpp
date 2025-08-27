@@ -58,11 +58,4 @@ namespace Spire {
   }
 }
 
-namespace Beam {
-namespace Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::FoldOperandNode> : std::false_type {};
-}
-}
-
 #endif

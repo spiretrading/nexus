@@ -4,7 +4,7 @@
 #include "Nexus/RiskService/RiskState.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/RiskTimer/RiskTimer.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 
@@ -34,7 +34,7 @@ namespace Spire {
 
       RiskTimerMonitor(const RiskTimerMonitor&) = delete;
       RiskTimerMonitor& operator =(const RiskTimerMonitor&) = delete;
-      void OnRiskState(const Nexus::RiskService::RiskState& riskState);
+      void OnRiskState(const Nexus::RiskState& riskState);
   };
 }
 

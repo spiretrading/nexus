@@ -10,7 +10,6 @@
 #include "Spire/Canvas/Types/DurationType.hpp"
 #include "Spire/Canvas/Types/ExecutionReportRecordType.hpp"
 #include "Spire/Canvas/Types/IntegerType.hpp"
-#include "Spire/Canvas/Types/MarketType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/Canvas/Types/OrderFieldsRecordType.hpp"
 #include "Spire/Canvas/Types/OrderReferenceType.hpp"
@@ -25,6 +24,7 @@
 #include "Spire/Canvas/Types/TextType.hpp"
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
+#include "Spire/Canvas/Types/VenueType.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -43,7 +43,6 @@ CanvasTypeRegistry::CanvasTypeRegistry() {
   Register(GetExecutionReportRecordType());
   Register(RecordType::GetEmptyRecordType());
   Register(IntegerType::GetInstance());
-  Register(MarketType::GetInstance());
   Register(MoneyType::GetInstance());
   Register(GetOrderFieldsRecordType());
   Register(OrderReferenceType::GetInstance());
@@ -57,6 +56,7 @@ CanvasTypeRegistry::CanvasTypeRegistry() {
   Register(TextType::GetInstance());
   Register(TimeInForceType::GetInstance());
   Register(TimeRangeType::GetInstance());
+  Register(VenueType::GetInstance());
 }
 
 boost::optional<const CanvasType&> CanvasTypeRegistry::Find(

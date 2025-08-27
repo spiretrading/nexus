@@ -2,6 +2,7 @@
 #define SPIRE_RECORD_HPP
 #include <tuple>
 #include <vector>
+#include <Beam/Queries/Range.hpp>
 #include <boost/fusion/adapted/boost_tuple.hpp>
 #include <boost/fusion/algorithm/iteration/for_each.hpp>
 #include <boost/fusion/include/boost_tuple.hpp>

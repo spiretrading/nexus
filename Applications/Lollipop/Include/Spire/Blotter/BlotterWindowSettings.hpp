@@ -5,7 +5,6 @@
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/OpenPositionsWidget.hpp"
 #include "Spire/Blotter/OrderLogWidget.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 

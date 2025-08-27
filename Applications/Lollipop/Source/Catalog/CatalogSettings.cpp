@@ -208,14 +208,14 @@ void CatalogSettings::Load(Out<UserProfile> userProfile) {
   if(!std::filesystem::exists(catalogDirectoryPath)) {
     std::filesystem::create_directory(catalogDirectoryPath);
     CreateDefaultCatalog(
-      settings, userProfile->GetServiceClients().GetRegistryClient());
+      settings, userProfile->GetClients().GetRegistryClient());
     return;
   }
   LoadCatalogEntries(catalogDirectoryPath, settings);
   LoadRemoteCatalogEntries(
-    userProfile->GetServiceClients().GetRegistryClient(), settings);
+    userProfile->GetClients().GetRegistryClient(), settings);
   LoadCatalogTabs(catalogDirectoryPath, settings,
-    userProfile->GetServiceClients().GetRegistryClient());
+    userProfile->GetClients().GetRegistryClient());
 }
 
 void CatalogSettings::Save(const UserProfile& userProfile) {

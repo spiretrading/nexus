@@ -45,7 +45,7 @@ SecurityTimePriceChartPlotSeries::SecurityTimePriceChartPlotSeries(
   query.SetRange(Beam::Queries::Range::RealTime());
   query.SetSnapshotLimit(SnapshotLimit::Unlimited());
   query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-  m_userProfile->GetClients().GetMarketDataClient().QueryTimeAndSales(
+  m_userProfile->GetClients().get_market_data_client().QueryTimeAndSales(
     query, m_eventHandler.get_slot<TimeAndSale>(
       std::bind_front(&SecurityTimePriceChartPlotSeries::OnTimeAndSale, this)));
 }
@@ -78,7 +78,7 @@ ChartValue SecurityTimePriceChartPlotSeries::LoadLastCurrentDomain() {
     Beam::Queries::Sequence::First(), Beam::Queries::Sequence::Present());
   query.SetSnapshotLimit(SnapshotLimit::Type::TAIL, 1);
   query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-  m_userProfile->GetClients().GetMarketDataClient().QueryTimeAndSales(
+  m_userProfile->GetClients().get_market_data_client().QueryTimeAndSales(
     query, timeAndSalesQueue);
   try {
     return ChartValue(timeAndSalesQueue->Pop().m_timestamp);

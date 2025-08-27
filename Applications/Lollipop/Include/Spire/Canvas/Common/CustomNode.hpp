@@ -87,11 +87,4 @@ namespace Spire {
   }
 }
 
-namespace Beam {
-namespace Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::CustomNode> : std::false_type {};
-}
-}
-
 #endif

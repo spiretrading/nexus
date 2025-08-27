@@ -6,7 +6,6 @@
 #include <QMetaObject>
 #include <QWidget>
 #include "Spire/Blotter/Blotter.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/UI.hpp"
 
 class QItemSelection;
@@ -40,8 +39,8 @@ namespace Spire {
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      OpenPositionsWidget(QWidget* parent = nullptr,
-        Qt::WindowFlags flags = Qt::WindowFlags());
+      OpenPositionsWidget(
+        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
       ~OpenPositionsWidget() = default;
 

@@ -25,7 +25,7 @@ std::unique_ptr<DashboardCell> CloseDashboardCellBuilder::Make(
   auto selfUserProfile = userProfile.Get();
   Spawn(
     [=] {
-      auto& serviceClients = selfUserProfile->GetServiceClients();
+      auto& serviceClients = selfUserProfile->GetClients();
       auto close = LoadPreviousClose(serviceClients.GetMarketDataClient(),
         security, serviceClients.GetTimeClient().GetTime(),
         selfUserProfile->GetMarketDatabase(),

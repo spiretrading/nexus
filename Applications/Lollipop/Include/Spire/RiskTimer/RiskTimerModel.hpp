@@ -6,7 +6,7 @@
 #include <boost/signals2/signal.hpp>
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/RiskTimer/RiskTimer.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 

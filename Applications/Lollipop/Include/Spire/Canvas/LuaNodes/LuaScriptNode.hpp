@@ -96,11 +96,4 @@ namespace Spire {
   }
 }
 
-namespace Beam {
-namespace Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::LuaScriptNode> : std::false_type {};
-}
-}
-
 #endif

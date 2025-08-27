@@ -1,7 +1,6 @@
 #ifndef SPIRE_COLLAPSIBLEWIDGETWINDOWSETTINGS_HPP
 #define SPIRE_COLLAPSIBLEWIDGETWINDOWSETTINGS_HPP
 #include <QByteArray>
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 #include "Spire/UI/UI.hpp"
 #include "Spire/UI/WindowSettings.hpp"

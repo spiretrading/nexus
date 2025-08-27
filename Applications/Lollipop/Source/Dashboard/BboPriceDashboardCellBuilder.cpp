@@ -18,7 +18,7 @@ std::unique_ptr<DashboardCell> BboPriceDashboardCellBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
   auto& security = boost::get<Security>(index);
   auto& marketDataClient =
-    userProfile.Get()->GetServiceClients().GetMarketDataClient();
+    userProfile.Get()->GetClients().GetMarketDataClient();
   auto baseQueue = std::make_shared<Queue<BboQuote>>();
   auto side = m_side;
   std::shared_ptr<QueueReader<Money>> queue =

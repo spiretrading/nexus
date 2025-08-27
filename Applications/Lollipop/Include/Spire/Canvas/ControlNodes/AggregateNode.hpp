@@ -44,9 +44,4 @@ namespace Spire {
   }
 }
 
-namespace Beam::Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::AggregateNode> : std::false_type {};
-}
-
 #endif

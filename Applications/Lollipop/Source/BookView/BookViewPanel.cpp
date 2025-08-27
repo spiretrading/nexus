@@ -8,7 +8,6 @@ using namespace Beam;
 using namespace Beam::Queries;
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
 using namespace Spire;
 using namespace Spire::UI;
 
@@ -97,7 +96,7 @@ void BookViewPanel::DisplaySecurity(const Security& security) {
   }
   auto bboQuery = MakeCurrentQuery(security);
   bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
-  m_userProfile->GetClients().GetMarketDataClient().QueryBboQuotes(
+  m_userProfile->GetClients().get_market_data_client().query(
     bboQuery, m_eventHandler->get_slot<BboQuote>(
       std::bind_front(&BookViewPanel::OnBbo, this, security)));
 }
@@ -154,7 +153,7 @@ void BookViewPanel::OnBbo(const Security& security, const BboQuote& bbo) {
   if(m_bestQuote.m_size == 0) {
     quantity = 0;
   } else {
-    quantity = std::max<Quantity>(1, Floor(m_bestQuote.m_size / 100, 0));
+    quantity = std::max<Quantity>(1, floor(m_bestQuote.m_size / 100, 0));
   }
   m_ui->m_bboQuantityLabel->setText(
     QString::number(static_cast<int>(quantity)));

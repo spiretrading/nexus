@@ -6,7 +6,6 @@
 #include "Nexus/Queries/StandardDataTypes.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Async/QtPromise.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/Utilities/Utilities.hpp"
 
 namespace Spire {

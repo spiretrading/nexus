@@ -15,8 +15,6 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::Accounting;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
@@ -25,13 +23,13 @@ namespace {
   void FlattenPosition(BlotterModel& blotterModel,
       const OpenPositionsModel::Entry& position,
       const UserProfile& userProfile) {
-    auto orderFields = OrderFields::MakeMarketOrder(
-      blotterModel.GetExecutingAccount(), position.m_key.m_index,
+    auto orderFields = make_market_order_fields(
+      blotterModel.GetExecutingAccount(), position.m_key.m_security,
       position.m_key.m_currency,
-      GetOpposite(GetSide(position.m_inventory.m_position)),
-      userProfile.GetDestinationDatabase().GetPreferredDestination(
-      position.m_key.m_index.GetMarket()).m_id,
-      Abs(position.m_inventory.m_position.m_quantity));
+      get_opposite(get_side(position.m_inventory.m_position)),
+      userProfile.GetDestinationDatabase().get_preferred_destination(
+      position.m_key.m_security.get_venue()).m_id,
+      abs(position.m_inventory.m_position.m_quantity));
     auto orderNode = MakeOrderTaskNodeFromOrderFields(orderFields,
       userProfile);
     auto& entry = blotterModel.GetTasksModel().Add(*orderNode);

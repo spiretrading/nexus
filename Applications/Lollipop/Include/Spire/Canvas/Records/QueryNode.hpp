@@ -52,11 +52,4 @@ namespace Spire {
   }
 }
 
-namespace Beam {
-namespace Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::QueryNode> : std::false_type {};
-}
-}
-
 #endif

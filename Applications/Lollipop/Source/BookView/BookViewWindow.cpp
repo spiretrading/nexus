@@ -38,7 +38,6 @@
 using namespace Beam;
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
 using namespace Spire;
 using namespace Spire::UI;
 
@@ -149,9 +148,9 @@ void BookViewWindow::SetProperties(const BookViewProperties& properties) {
 
 void BookViewWindow::DisplaySecurity(const Security& security) {
   m_security = security;
-  setWindowTitle(QString::fromStdString(
-    ToString(security, m_userProfile->GetVenueDatabase())) +
-    tr(" - Book View"));
+  auto ss = std::stringstream();
+  ss << m_userProfile->GetVenueDatabase() << security;
+  setWindowTitle(QString::fromStdString(ss.str()) + tr(" - Book View"));
   m_ui->m_askPanel->DisplaySecurity(m_security);
   m_ui->m_bidPanel->DisplaySecurity(m_security);
   SetupSecurityTechnicalsModel();
@@ -205,7 +204,7 @@ void BookViewWindow::keyPressEvent(QKeyEvent* event) {
       HandleInteractionsPropertiesEvent();
     } else {
       auto taskBinding = m_userProfile->GetKeyBindings().GetTaskFromBinding(
-        m_security.GetMarket(), key);
+        m_security.get_venue(), key);
       if(taskBinding) {
         HandleKeyBindingEvent(*taskBinding);
         return;
@@ -307,11 +306,11 @@ std::unique_ptr<CanvasNode>
                 return m_userProfile->GetDefaultQuantity(
                   m_security, sideValueNode->GetValue());
               } else {
-                return m_userProfile->GetInteractionProperties().Get(
+                return m_userProfile->GetInteractionProperties().get(
                   m_security).m_defaultQuantity;
               }
             } else {
-              return m_userProfile->GetInteractionProperties().Get(
+              return m_userProfile->GetInteractionProperties().get(
                 m_security).m_defaultQuantity;
             }
           }();
@@ -414,7 +413,7 @@ void BookViewWindow::HandleKeyBindingEvent(
 
 void BookViewWindow::HandleInteractionsPropertiesEvent() {
   auto& interactionsProperties =
-    m_userProfile->GetInteractionProperties().Get(m_security);
+    m_userProfile->GetInteractionProperties().get(m_security);
   auto interactionsNode = std::make_unique<InteractionsNode>(
     m_security, m_userProfile->GetVenueDatabase(), interactionsProperties);
   m_taskEntryWidget =
@@ -441,7 +440,7 @@ void BookViewWindow::HandleTaskInputEvent(QKeyEvent* event) {
     if(m_isTaskEntryWidgetForInteractionsProperties) {
       auto& interactionsNode = static_cast<const InteractionsNode&>(
         *m_taskEntryWidget->GetRoots().front());
-      m_userProfile->GetInteractionProperties().Set(
+      m_userProfile->GetInteractionProperties().set(
         m_security, interactionsNode.GetProperties());
       RemoveTaskEntry();
     } else {
@@ -456,7 +455,7 @@ void BookViewWindow::HandleTaskInputEvent(QKeyEvent* event) {
     auto key =
       QKeySequence(static_cast<int>(event->modifiers() + event->key()));
     auto taskBinding = m_userProfile->GetKeyBindings().GetTaskFromBinding(
-      m_security.GetMarket(), key);
+      m_security.get_venue(), key);
     if(taskBinding) {
       RemoveTaskEntry();
       HandleKeyBindingEvent(*taskBinding);

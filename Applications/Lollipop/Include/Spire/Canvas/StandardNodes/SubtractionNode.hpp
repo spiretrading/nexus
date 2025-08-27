@@ -49,11 +49,4 @@ namespace Spire {
   }
 }
 
-namespace Beam {
-namespace Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::SubtractionNode> : std::false_type {};
-}
-}
-
 #endif

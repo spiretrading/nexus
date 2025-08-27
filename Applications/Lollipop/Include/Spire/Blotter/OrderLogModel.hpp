@@ -148,7 +148,7 @@ namespace Spire {
       mutable OrderRemovedSignal m_orderRemovedSignal;
       std::optional<EventHandler> m_eventHandler;
 
-      void OnOrderExecuted(const std::shared_ptr<const Nexus::Order> order);
+      void OnOrderExecuted(const std::shared_ptr<const Nexus::Order>& order);
       void OnExecutionReport(
         std::size_t entryIndex, const Nexus::ExecutionReport& report);
   };

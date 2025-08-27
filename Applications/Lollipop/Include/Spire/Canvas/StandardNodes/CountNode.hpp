@@ -33,9 +33,4 @@ namespace Spire {
   }
 }
 
-namespace Beam::Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::CountNode> : std::false_type {};
-}
-
 #endif

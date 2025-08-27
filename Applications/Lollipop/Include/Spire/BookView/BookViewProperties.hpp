@@ -18,10 +18,10 @@ namespace Spire {
   class BookViewProperties {
     public:
 
-      /** Stores a market's highlight properties. */
-      struct MarketHighlight {
+      /** Stores a venue's highlight properties. */
+      struct VenueHighlight {
 
-        /** The color to highlight the market with. */
+        /** The color to highlight the venue with. */
         QColor m_color;
 
         /** Whether to highlight all levels. */
@@ -93,26 +93,26 @@ namespace Spire {
       void SetBookQuoteFont(const QFont& font);
 
       /**
-       * Returns the MarketHighlight for a specified market.
+       * Returns the VenueHighlight for a specified venue.
        * @param venue The venue to get the property for.
        * @return The <i>venue</i>'s highlight property.
        */
-      boost::optional<const MarketHighlight&> GetMarketHighlight(
+      boost::optional<const VenueHighlight&> GetVenueHighlight(
         Nexus::Venue venue) const;
 
       /**
-       * Sets the MarketHighlight for a specified market.
+       * Sets the VenueHighlight for a specified venue.
        * @param venue The venue to apply the property to.
-       * @param highlight The MarketHighlight to apply.
+       * @param highlight The VenueHighlight to apply.
        */
-      void SetMarketHighlight(
-        Nexus::Venue venue, const MarketHighlight& highlight);
+      void SetVenueHighlight(
+        Nexus::Venue venue, const VenueHighlight& highlight);
 
       /**
-       * Removes the MarketHighlight for a specified venue.
+       * Removes the VenueHighlight for a specified venue.
        * @param venue The venue to remove the highlight from.
        */
-      void RemoveMarketHighlight(Nexus::Venue venue);
+      void RemoveVenueHighlight(Nexus::Venue venue);
 
       /** Returns the OrderHighlight option. */
       OrderHighlight GetOrderHighlight() const;
@@ -144,7 +144,7 @@ namespace Spire {
       std::vector<QColor> m_bookQuoteBackgroundColors;
       QFont m_bboQuoteFont;
       QFont m_bookQuoteFont;
-      std::unordered_map<Nexus::Venue, MarketHighlight> m_marketHighlights;
+      std::unordered_map<Nexus::Venue, VenueHighlight> m_venueHighlights;
       OrderHighlight m_orderHighlight;
       QColor m_orderHighlightColor;
       bool m_showGrid;
@@ -155,7 +155,7 @@ namespace Spire {
   };
 
   template<typename Shuttler>
-  void BookViewProperties::MarketHighlight::Shuttle(
+  void BookViewProperties::VenueHighlight::Shuttle(
       Shuttler& shuttle, unsigned int version) {
     shuttle.Shuttle("color", m_color);
     shuttle.Shuttle("highlight_all_levels", m_highlightAllLevels);
@@ -168,7 +168,7 @@ namespace Spire {
       "book_quote_background_colors", m_bookQuoteBackgroundColors);
     shuttle.Shuttle("bbo_quote_font", m_bboQuoteFont);
     shuttle.Shuttle("book_quote_font", m_bookQuoteFont);
-    shuttle.Shuttle("market_highlights", m_marketHighlights);
+    shuttle.Shuttle("venue_highlights", m_venueHighlights);
     shuttle.Shuttle("order_highlight", m_orderHighlight);
     shuttle.Shuttle("order_highlight_color", m_orderHighlightColor);
     shuttle.Shuttle("show_grid", m_showGrid);

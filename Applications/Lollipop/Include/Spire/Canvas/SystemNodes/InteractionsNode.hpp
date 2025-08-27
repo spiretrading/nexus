@@ -18,12 +18,12 @@ namespace Spire {
       //! Constructs an InteractionsNode.
       /*!
         \param security The Security whose interactions are represented.
-        \param marketDatabase The MarketDatabase containing the
-               <i>security</i>'s market.
+        \param venueDatabase The VenueDatabase containing the
+               <i>security</i>'s venue.
         \param properties The InteractionsProperties to represent.
       */
       InteractionsNode(Nexus::Security security,
-        const Nexus::MarketDatabase& marketDatabase,
+        const Nexus::VenueDatabase& venueDatabase,
         const InteractionsProperties& properties);
 
       //! Returns the InteractionsProperties represented.
@@ -43,7 +43,7 @@ namespace Spire {
       InteractionsProperties m_properties;
 
       void Setup(Nexus::Security security,
-        const Nexus::MarketDatabase& marketDatabase,
+        const Nexus::VenueDatabase& venueDatabase,
         const InteractionsProperties& properties);
       template<typename Shuttler>
       void Shuttle(Shuttler& shuttle, unsigned int version);

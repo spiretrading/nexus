@@ -138,9 +138,9 @@ void TimeAndSalesWindow::SetProperties(
 
 void TimeAndSalesWindow::DisplaySecurity(const Security& security) {
   m_security = security;
-  setWindowTitle(QString::fromStdString(
-    ToString(m_security, m_userProfile->GetVenueDatabase())) +
-    tr(" - Time and Sales"));
+  auto ss = std::stringstream();
+  ss << m_userProfile->GetVenueDatabase() << m_security;
+  setWindowTitle(QString::fromStdString(ss.str()) + tr(" - Time and Sales"));
   auto widths = std::vector<int>();
   for(auto i = 0; i < TimeAndSalesProperties::COLUMN_COUNT; ++i) {
     widths.push_back(m_ui->m_timeAndSalesView->columnWidth(i));

@@ -7,8 +7,6 @@ using namespace Beam;
 using namespace Beam::Queries;
 using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::RiskService;
 using namespace Spire;
 
 BlotterModel::BlotterModel(const std::string& name,
@@ -26,7 +24,7 @@ BlotterModel::BlotterModel(const std::string& name,
       m_profitAndLossModel(Ref(m_userProfile->GetCurrencyDatabase()),
         Ref(userProfile->GetExchangeRates()), true) {
   m_userProfile->GetClients().get_administration_client().
-    GetRiskParametersPublisher(m_executingAccount).Monitor(
+    get_risk_parameters_publisher(m_executingAccount).Monitor(
       m_eventHandler.get_slot<RiskParameters>(
         std::bind_front(&BlotterModel::OnRiskParametersChanged, this)));
   InitializeModels();
@@ -138,12 +136,12 @@ void BlotterModel::Unlink(BlotterModel& blotter) {
 void BlotterModel::InitializeModels() {
   auto& orderExecutionPublisher = m_tasksModel.GetOrderExecutionPublisher();
   if(m_isConsolidated) {
-    auto [portfolio, sequence, excludedOrders] = MakePortfolio(
-      m_userProfile->GetClients().GetRiskClient().LoadInventorySnapshot(
+    auto [portfolio, sequence, excludedOrders] = make_portfolio(
+      m_userProfile->GetClients().get_risk_client().load_inventory_snapshot(
         m_executingAccount), m_executingAccount,
       m_userProfile->GetVenueDatabase(),
       m_userProfile->GetClients().get_order_execution_client());
-    auto orders = std::make_shared<Queue<const Order*>>();
+    auto orders = std::make_shared<Queue<std::shared_ptr<const Order>>>();
     for(auto& order : excludedOrders) {
       orders->Push(order);
     }
@@ -152,18 +150,17 @@ void BlotterModel::InitializeModels() {
     query.SetRange(Increment(sequence), Beam::Queries::Sequence::Last());
     query.SetSnapshotLimit(SnapshotLimit::Unlimited());
     query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-    m_userProfile->GetClients().get_order_execution_client().
-      QueryOrderSubmissions(query, orders);
+    m_userProfile->GetClients().get_order_execution_client().query(
+      query, orders);
     m_portfolioController.emplace(std::move(portfolio),
-      &m_userProfile->GetClients().GetMarketDataClient(),
+      &m_userProfile->GetClients().get_market_data_client(),
       std::move(orders));
   } else {
-    auto orders = std::make_shared<Queue<const Order*>>();
+    auto orders = std::make_shared<Queue<std::shared_ptr<const Order>>>();
     orderExecutionPublisher.Monitor(orders);
     m_portfolioController.emplace(
-      SpirePortfolio(m_userProfile->GetVenueDatabase()),
-      &m_userProfile->GetClients().GetMarketDataClient(),
-      std::move(orders));
+      Portfolio<TrueAverageBookkeeper>(m_userProfile->GetVenueDatabase()),
+      &m_userProfile->GetClients().get_market_data_client(), std::move(orders));
   }
   m_orderLogModel.SetOrderExecutionPublisher(Ref(orderExecutionPublisher));
   m_openPositionsModel.SetPortfolioController(Ref(*m_portfolioController));

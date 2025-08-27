@@ -2,7 +2,6 @@
 #define SPIRE_TOOLBARWINDOWSETTINGS_HPP
 #include <Beam/Serialization/Serialization.hpp>
 #include <QPoint>
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 

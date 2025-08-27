@@ -1,5 +1,6 @@
 #ifndef SPIRE_UNTIL_NODE_HPP
 #define SPIRE_UNTIL_NODE_HPP
+#include <boost/mpl/vector.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
 
@@ -40,11 +41,6 @@ namespace Spire {
   void UntilNode::Shuttle(Shuttler& shuttle, unsigned int version) {
     FunctionNode::Shuttle(shuttle, version);
   }
-}
-
-namespace Beam::Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::UntilNode> : std::false_type {};
 }
 
 #endif

@@ -4,7 +4,6 @@
 #include <QByteArray>
 #include "Spire/Charting/ChartPlotView.hpp"
 #include "Spire/Charting/Charting.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 

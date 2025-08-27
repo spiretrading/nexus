@@ -6,7 +6,6 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartInteractions.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/SecurityViewStack.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 #include "Spire/UI/WindowSettings.hpp"

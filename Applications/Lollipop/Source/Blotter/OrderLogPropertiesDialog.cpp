@@ -79,7 +79,7 @@ void OrderLogPropertiesDialog::OnLiveOrdersClicked(bool checked) {
   for(auto i = m_orderStatusCheckBoxes.begin();
       i != m_orderStatusCheckBoxes.end(); ++i) {
     i->second->setEnabled(false);
-    i->second->setChecked(!IsTerminal(i->first));
+    i->second->setChecked(!is_terminal(i->first));
   }
 }
 
@@ -92,7 +92,7 @@ void OrderLogPropertiesDialog::OnTerminalOrdersClicked(bool checked) {
   for(auto i = m_orderStatusCheckBoxes.begin();
       i != m_orderStatusCheckBoxes.end(); ++i) {
     i->second->setEnabled(false);
-    i->second->setChecked(IsTerminal(i->first));
+    i->second->setChecked(is_terminal(i->first));
   }
 }
 

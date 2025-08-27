@@ -37,12 +37,4 @@ namespace Spire {
   }
 }
 
-namespace Beam {
-namespace Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::ExecutionReportMonitorNode> :
-    std::false_type {};
-}
-}
-
 #endif

@@ -20,27 +20,26 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 namespace {
   const auto EXPIRY_INTERVAL = 500;
 
   RoutineHandler QueryDailyOrderSubmissions(const UserProfile& userProfile,
-      const DirectoryEntry& account, ScopedQueueWriter<const Order*> queue) {
+      const DirectoryEntry& account,
+      ScopedQueueWriter<std::shared_ptr<const Order>> queue) {
     return Spawn([&userProfile, account, queue = std::move(queue)] () mutable {
       auto currentTime =
-        userProfile.GetClients().GetTimeClient().GetTime();
+        userProfile.GetClients().get_time_client().GetTime();
       auto lastSequence = Beam::Queries::Sequence::First();
-      auto timeOfDay =
-        userProfile.GetClients().GetTimeClient().GetTime();
-      for(auto& market : userProfile.GetMarketDatabase().GetEntries()) {
-        auto snapshotQuery = MakeDailyOrderSubmissionQuery(market.m_code,
-          account, timeOfDay, timeOfDay, userProfile.GetMarketDatabase(),
+      auto timeOfDay = userProfile.GetClients().get_time_client().GetTime();
+      for(auto& venue : userProfile.GetVenueDatabase().get_entries()) {
+        auto snapshotQuery = make_daily_order_submission_query(venue.m_venue,
+          account, timeOfDay, timeOfDay, userProfile.GetVenueDatabase(),
           userProfile.GetTimeZoneDatabase());
         auto snapshotQueue = std::make_shared<Queue<SequencedOrder>>();
-        userProfile.GetClients().GetOrderExecutionClient().
-          QueryOrderSubmissions(snapshotQuery, snapshotQueue);
+        userProfile.GetClients().get_order_execution_client().query(
+          snapshotQuery, snapshotQueue);
         try {
           while(true) {
             auto value = snapshotQueue->Pop();
@@ -58,15 +57,15 @@ namespace {
         query.SetRange(Increment(lastSequence), pos_infin);
       }
       query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-      userProfile.GetClients().GetOrderExecutionClient().
-        QueryOrderSubmissions(query, std::move(queue));
+      userProfile.GetClients().get_order_execution_client().query(
+        query, std::move(queue));
     });
   }
 
   struct UniqueFilter {
-    std::unordered_set<const Order*> m_orders;
+    std::unordered_set<std::shared_ptr<const Order>> m_orders;
 
-    bool operator ()(const Order* order) {
+    bool operator ()(const std::shared_ptr<const Order>& order) {
       return m_orders.insert(order).second;
     }
   };
@@ -86,17 +85,19 @@ BlotterTasksModel::BlotterTasksModel(Ref<UserProfile> userProfile,
       m_isRefreshing(false) {
   m_taskEventHandler.emplace();
   if(isConsolidated) {
-    auto orderQueue = std::make_shared<Queue<const Order*>>();
+    auto orderQueue = std::make_shared<Queue<std::shared_ptr<const Order>>>();
     m_pendingRoutines.Add(QueryDailyOrderSubmissions(*m_userProfile,
       m_executingAccount, orderQueue));
     m_accountOrderPublisher = MakeSequencePublisherAdaptor(
-      std::make_shared<QueueReaderPublisher<const Order*>>(orderQueue));
+      std::make_shared<QueueReaderPublisher<std::shared_ptr<const Order>>>(
+        orderQueue));
   } else {
     m_accountOrderPublisher =
-      std::make_shared<SequencePublisher<const Order*>>();
+      std::make_shared<SequencePublisher<std::shared_ptr<const Order>>>();
   }
-  m_accountOrderPublisher->Monitor(m_orderEventHandler.get_slot<const Order*>(
-    std::bind_front(&BlotterTasksModel::OnOrderSubmitted, this)));
+  m_accountOrderPublisher->Monitor(
+    m_orderEventHandler.get_slot<std::shared_ptr<const Order>>(
+      std::bind_front(&BlotterTasksModel::OnOrderSubmitted, this)));
   SetupLinkedOrderExecutionMonitor();
   connect(&m_expiryTimer, &QTimer::timeout, this,
     &BlotterTasksModel::OnExpiryTimer);
@@ -119,7 +120,7 @@ void BlotterTasksModel::SetProperties(const BlotterTaskProperties& properties) {
   Refresh();
 }
 
-const OrderExecutionPublisher&
+const Publisher<std::shared_ptr<const Order>>&
     BlotterTasksModel::GetOrderExecutionPublisher() const {
   return *m_linkedOrderExecutionPublisher;
 }
@@ -171,7 +172,7 @@ const BlotterTasksModel::TaskEntry& BlotterTasksModel::Add(
   entryReference.m_task->GetContext().GetOrderPublisher().Monitor(
     m_orders->GetWriter());
   entryReference.m_task->GetContext().GetOrderPublisher().Monitor(
-    m_orderEventHandler.get_slot<const Order*>(
+    m_orderEventHandler.get_slot<std::shared_ptr<const Order>>(
       std::bind_front(&BlotterTasksModel::OnTaskOrderSubmitted, this)));
   return entryReference;
 }
@@ -335,9 +336,9 @@ bool BlotterTasksModel::setData(
 }
 
 void BlotterTasksModel::SetupLinkedOrderExecutionMonitor() {
-  m_orders = std::make_shared<MultiQueueWriter<const Order*>>();
+  m_orders = std::make_shared<MultiQueueWriter<std::shared_ptr<const Order>>>();
   m_linkedOrderExecutionPublisher = MakeSequencePublisherAdaptor(
-    std::make_shared<QueueReaderPublisher<const Order*>>(
+    std::make_shared<QueueReaderPublisher<std::shared_ptr<const Order>>>(
       MakeFilteredQueueReader(m_orders, UniqueFilter())));
   m_accountOrderPublisher->Monitor(m_orders->GetWriter());
 }
@@ -358,7 +359,8 @@ void BlotterTasksModel::OnTaskState(TaskEntry& entry,
   }
 }
 
-void BlotterTasksModel::OnOrderSubmitted(const Order* order) {
+void BlotterTasksModel::OnOrderSubmitted(
+    const std::shared_ptr<const Order>& order) {
   if(m_taskOrders.count(order) != 0) {
     m_taskOrders.erase(order);
     return;
@@ -370,16 +372,17 @@ void BlotterTasksModel::OnOrderSubmitted(const Order* order) {
   }
   m_submittedOrders.erase(order);
   auto reportQueue = std::make_shared<StateQueue<ExecutionReport>>();
-  order->GetPublisher().Monitor(reportQueue);
-  if(auto report = reportQueue->Peek(); IsTerminal(report.m_status)) {
+  order->get_publisher().Monitor(reportQueue);
+  if(auto report = reportQueue->Peek(); is_terminal(report.m_status)) {
     m_orders->Push(order);
     return;
   }
-  auto& entry = Add(OrderWrapperTaskNode(*order, *m_userProfile));
+  auto& entry = Add(OrderWrapperTaskNode(order, *m_userProfile));
   entry.m_task->Execute();
 }
 
-void BlotterTasksModel::OnTaskOrderSubmitted(const Order* order) {
+void BlotterTasksModel::OnTaskOrderSubmitted(
+    const std::shared_ptr<const Order>& order) {
   m_taskOrders.insert(order);
 }
 

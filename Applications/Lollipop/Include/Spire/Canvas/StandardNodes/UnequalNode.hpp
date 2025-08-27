@@ -33,11 +33,4 @@ namespace Spire {
   }
 }
 
-namespace Beam {
-namespace Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::UnequalNode> : std::false_type {};
-}
-}
-
 #endif

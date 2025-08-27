@@ -117,7 +117,7 @@ void BlotterSettings::Load(Out<UserProfile> userProfile) {
       continue;
     }
     auto account =
-      userProfile->GetServiceClients().GetServiceLocatorClient().FindAccount(
+      userProfile->GetClients().get_service_locator_client().FindAccount(
         setting.m_account.m_name);
     if(!account) {
 

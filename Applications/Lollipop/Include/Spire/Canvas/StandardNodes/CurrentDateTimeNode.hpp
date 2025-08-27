@@ -33,12 +33,4 @@ namespace Spire {
   }
 }
 
-namespace Beam {
-namespace Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::CurrentDateTimeNode> :
-    std::false_type {};
-}
-}
-
 #endif

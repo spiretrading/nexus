@@ -7,7 +7,6 @@
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/OrderLogModel.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/UI.hpp"
 
 class Ui_OrderLogWidget;
@@ -74,8 +73,8 @@ namespace Spire {
       void OnProxyOrderAdded(const QModelIndex& parent, int first, int last);
       void OnProxyOrderRemoved(const QModelIndex& parent, int first, int last);
       void OnCancel();
-      void OnExecutionReport(const Nexus::OrderExecutionService::Order* order,
-        const Nexus::OrderExecutionService::ExecutionReport& executionReport);
+      void OnExecutionReport(const std::shared_ptr<const Nexus::Order>& order,
+        const Nexus::ExecutionReport& executionReport);
       void OnContextMenu(const QPoint& point);
   };
 

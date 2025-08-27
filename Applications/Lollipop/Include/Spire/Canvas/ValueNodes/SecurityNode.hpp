@@ -18,19 +18,19 @@ namespace Spire {
       //! Constructs a SecurityNode with an initial value.
       /*!
         \param value The node's initial value.
-        \param marketDatabase The database of all available markets.
+        \param venueDatabase The database of all available venues.
       */
       SecurityNode(const Nexus::Security& value,
-        const Nexus::MarketDatabase& marketDatabase);
+        const Nexus::VenueDatabase& venueDatabase);
 
       //! Clones this CanvasNode with a new value.
       /*!
         \param value The new value.
-        \param marketDatabase The database of all available markets.
+        \param venueDatabase The database of all available venues.
         \return A clone of this CanvasNode with the specified <i>value</i>.
       */
       std::unique_ptr<SecurityNode> SetValue(const Nexus::Security& value,
-        const Nexus::MarketDatabase& marketDatabase) const;
+        const Nexus::VenueDatabase& venueDatabase) const;
 
       virtual void Apply(CanvasNodeVisitor& visitor) const;
 

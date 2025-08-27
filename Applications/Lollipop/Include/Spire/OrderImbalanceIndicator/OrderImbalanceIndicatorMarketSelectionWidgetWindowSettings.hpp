@@ -2,7 +2,6 @@
 #define SPIRE_ORDERIMBALANCEINDICATORMARKETSELECTIONWIDGETWINDOWSETTINGS_HPP
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 
 namespace Spire {

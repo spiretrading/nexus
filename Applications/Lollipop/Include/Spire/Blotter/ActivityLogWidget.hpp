@@ -5,7 +5,7 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <QWidget>
 #include "Spire/Blotter/Blotter.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class Ui_ActivityLogWidget;
 

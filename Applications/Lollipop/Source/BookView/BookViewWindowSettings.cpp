@@ -25,8 +25,9 @@ BookViewWindowSettings::BookViewWindowSettings(const BookViewWindow& window,
       m_askPanelHeader(window.m_ui->m_askPanel->m_ui->m_bookView->
         horizontalHeader()->saveState()) {
   if(m_security != Security()) {
-    m_name = "Book View - " +
-      ToString(m_security, userProfile->GetMarketDatabase());
+    auto ss = std::stringstream();
+    ss << userProfile->GetVenueDatabase() << m_security;
+    m_name = "Book View - " + ss.str();
   } else {
     m_name = "Book View";
   }

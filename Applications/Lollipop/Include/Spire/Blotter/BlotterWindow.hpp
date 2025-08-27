@@ -2,6 +2,7 @@
 #define SPIRE_BLOTTER_WINDOW_HPP
 #include <boost/signals2/signal.hpp>
 #include <QFrame>
+#include "Nexus/Accounting/Portfolio.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"

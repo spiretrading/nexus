@@ -3,6 +3,7 @@
 #include <array>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/RegionMap.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/UI/UI.hpp"
 

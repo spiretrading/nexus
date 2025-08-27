@@ -36,9 +36,4 @@ namespace Spire {
   }
 }
 
-namespace Beam::Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::PreviousNode> : std::false_type {};
-}
-
 #endif

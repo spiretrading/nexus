@@ -302,19 +302,19 @@ void BlotterWindow::OnActiveBlotterChanged(BlotterModel& blotter) {
   SetActive(m_model == &blotter);
 }
 
-void BlotterWindow::OnProfitAndLossUpdate(
-    const SpirePortfolioController::UpdateEntry& update) {
+void BlotterWindow::OnProfitAndLossUpdate(const PortfolioUpdateEntry& update) {
   m_totalProfitAndLossLabel->SetValue(QVariant::fromValue(
-    update.m_currencyInventory.m_grossProfitAndLoss -
-    update.m_currencyInventory.m_fees + update.m_unrealizedCurrency));
+    update.m_currency_inventory.m_gross_profit_and_loss -
+    update.m_currency_inventory.m_fees + update.m_unrealized_currency));
   m_realizedProfitAndLossLabel->SetValue(QVariant::fromValue(
-    update.m_currencyInventory.m_grossProfitAndLoss -
-    update.m_currencyInventory.m_fees));
+    update.m_currency_inventory.m_gross_profit_and_loss -
+    update.m_currency_inventory.m_fees));
   m_unrealizedProfitAndLossLabel->SetValue(QVariant::fromValue(
-    update.m_unrealizedCurrency));
-  m_feesLabel->SetValue(QVariant::fromValue(update.m_currencyInventory.m_fees));
+    update.m_unrealized_currency));
+  m_feesLabel->SetValue(
+    QVariant::fromValue(update.m_currency_inventory.m_fees));
   m_costBasisLabel->SetValue(QVariant::fromValue(
-    update.m_currencyInventory.m_position.m_costBasis));
+    update.m_currency_inventory.m_position.m_cost_basis));
 }
 
 void BlotterWindow::OnTaskState(
@@ -425,9 +425,11 @@ void BlotterWindow::OnPositionsAdded(
     positionData["security"] = [&] {
       auto security = JsonObject();
       auto& position = positions[i];
-      security["symbol"] = position.m_key.m_index.GetSymbol();
-      security["market"] = ToString(position.m_key.m_index.GetMarket(),
-        m_userProfile->GetVenueDatabase());
+      security["symbol"] = position.m_key.m_security.get_symbol();
+      auto ss = std::stringstream();
+      ss << m_userProfile->GetVenueDatabase() <<
+        position.m_key.m_security.get_venue();
+      security["venue"] = ss.str();
       return security;
     }();
   }
