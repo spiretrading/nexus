@@ -5,8 +5,8 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Spire/Async/EventHandler.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 

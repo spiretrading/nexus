@@ -2,7 +2,6 @@
 #define SPIRE_TIMEANDSALESWINDOWSETTINGS_HPP
 #include <QByteArray>
 #include "Nexus/Definitions/Security.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/UI/SecurityViewStack.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
