@@ -6,7 +6,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 namespace UI {

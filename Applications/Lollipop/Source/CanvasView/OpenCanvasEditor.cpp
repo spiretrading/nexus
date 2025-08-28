@@ -141,7 +141,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const BooleanNode& node) {
 
 void OpenEditorCanvasNodeVisitor::Visit(const CurrencyNode& node) {
   auto editor = new QComboBox();
-  auto& currencies = m_userProfile->GetCurrencyDatabase().GetEntries();
+  auto currencies = m_userProfile->GetCurrencyDatabase().get_entries();
   for(auto i = std::size_t(0); i != currencies.size(); ++i) {
     auto& entry = currencies[i];
     editor->addItem(QString::fromStdString(entry.m_code.GetData()));
@@ -202,20 +202,20 @@ void OpenEditorCanvasNodeVisitor::Visit(const DecimalNode& node) {
 
 void OpenEditorCanvasNodeVisitor::Visit(const DestinationNode& node) {
   auto editor = new QComboBox();
-  auto marketCode = node.GetMarket();
+  auto venue = node.GetVenue();
   auto& destinationDatabase = m_userProfile->GetDestinationDatabase();
-  auto destinations = destinationDatabase.SelectEntries(
+  auto destinations = destinationDatabase.select_all(
     [=] (const auto& entry) {
-      if(marketCode.IsEmpty()) {
+      if(!venue) {
         return true;
       }
-      return find(entry.m_markets.begin(), entry.m_markets.end(), marketCode) !=
-        entry.m_markets.end();
+      return find(entry.m_venues.begin(), entry.m_venues.end(), venue) !=
+        entry.m_venues.end();
     });
   if(m_userProfile->IsAdministrator() &&
-      destinationDatabase.GetManualOrderEntryDestination().is_initialized()) {
+      destinationDatabase.get_manual_order_entry_destination()) {
     destinations.push_back(
-      *destinationDatabase.GetManualOrderEntryDestination());
+      *destinationDatabase.get_manual_order_entry_destination());
   }
   for(auto i = destinations.begin(); i != destinations.end(); ++i) {
     editor->addItem(QString::fromStdString(i->m_id));

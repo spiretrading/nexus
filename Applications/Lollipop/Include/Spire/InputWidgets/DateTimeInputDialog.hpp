@@ -4,7 +4,7 @@
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <QDialog>
 #include <QTimer>
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class Ui_DateTimeInputDialog;
 

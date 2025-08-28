@@ -96,7 +96,7 @@ namespace Nexus {
 
       Aspen::State commit(int sequence) noexcept;
 
-      std::shared_ptr<Order> eval() const;
+      const std::shared_ptr<Order>& eval() const;
 
     private:
       static constexpr auto NONE = std::uint8_t(0b00000000);
@@ -301,7 +301,7 @@ namespace Nexus {
   template<IsOrderExecutionClient C, typename AR, typename SR, typename CR,
     typename OR, typename TR, typename DR, typename QR, typename PR,
     typename FR, typename RR>
-  std::shared_ptr<Order>
+  const std::shared_ptr<Order>&
       OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR, FR, RR>::eval() const {
     return *m_order;
   }

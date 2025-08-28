@@ -49,7 +49,7 @@ bool OrderTaskView::HandleKeyPressEvent(const QKeyEvent& event,
     return HandleTaskInputEvent(event);
   } else if(security != Security{}) {
     auto taskBinding = m_userProfile->GetKeyBindings().GetTaskFromBinding(
-      security.GetMarket(), event.key());
+      security.get_venue(), event.key());
     if(taskBinding.is_initialized()) {
       return HandleKeyBindingEvent(*taskBinding);
     }
@@ -147,11 +147,11 @@ unique_ptr<CanvasNode> OrderTaskView::InitializeTaskNode(
                 return m_userProfile->GetDefaultQuantity(*m_state->m_security,
                   sideValueNode->GetValue());
               } else {
-                return m_userProfile->GetInteractionProperties().Get(
+                return m_userProfile->GetInteractionProperties().get(
                   *m_state->m_security).m_defaultQuantity;
               }
             } else {
-              return m_userProfile->GetInteractionProperties().Get(
+              return m_userProfile->GetInteractionProperties().get(
                 *m_state->m_security).m_defaultQuantity;
             }
           }();
@@ -201,7 +201,7 @@ bool OrderTaskView::HandleTaskInputEvent(const QKeyEvent& event) {
     if(m_isTaskEntryWidgetForInteractionsProperties) {
       auto& interactionsNode = static_cast<const InteractionsNode&>(
         *m_taskEntryWidget->GetRoots().front());
-      m_userProfile->GetInteractionProperties().Set(*m_state->m_security,
+      m_userProfile->GetInteractionProperties().set(*m_state->m_security,
         interactionsNode.GetProperties());
       RemoveTaskEntry();
       return true;
@@ -218,7 +218,7 @@ bool OrderTaskView::HandleTaskInputEvent(const QKeyEvent& event) {
   } else {
     auto key = QKeySequence{static_cast<int>(event.modifiers() + event.key())};
     auto taskBinding = m_userProfile->GetKeyBindings().GetTaskFromBinding(
-      m_state->m_security->GetMarket(), key);
+      m_state->m_security->get_venue(), key);
     if(taskBinding.is_initialized()) {
       RemoveTaskEntry();
       return HandleKeyBindingEvent(*taskBinding);
@@ -229,7 +229,7 @@ bool OrderTaskView::HandleTaskInputEvent(const QKeyEvent& event) {
 
 void OrderTaskView::HandleInteractionsPropertiesEvent() {
   auto& interactionsProperties =
-    m_userProfile->GetInteractionProperties().Get(*m_state->m_security);
+    m_userProfile->GetInteractionProperties().get(*m_state->m_security);
   auto interactionsNode = std::make_unique<InteractionsNode>(
     *m_state->m_security, m_userProfile->GetVenueDatabase(),
     interactionsProperties);
