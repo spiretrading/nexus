@@ -1,5 +1,6 @@
 #ifndef SPIRE_MONEYTYPE_HPP
 #define SPIRE_MONEYTYPE_HPP
+#include "Nexus/Definitions/Money.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Types/NativeType.hpp"
 

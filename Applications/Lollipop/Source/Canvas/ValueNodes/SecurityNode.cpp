@@ -11,16 +11,20 @@ SecurityNode::SecurityNode() {
 }
 
 SecurityNode::SecurityNode(const Security& value,
-    const MarketDatabase& marketDatabase)
+    const VenueDatabase& venueDatabase)
     : ValueNode(value) {
-  SetText(ToString(value, marketDatabase));
+  auto ss = std::stringstream();
+  ss << venueDatabase << value;
+  SetText(ss.str());
 }
 
 unique_ptr<SecurityNode> SecurityNode::SetValue(const Security& value,
-    const MarketDatabase& marketDatabase) const {
+    const VenueDatabase& venueDatabase) const {
   auto clone = CanvasNode::Clone(*this);
   clone->SetInternalValue(value);
-  clone->SetText(ToString(clone->GetValue(), marketDatabase));
+  auto ss = std::stringstream();
+  ss << venueDatabase << clone->GetValue();
+  clone->SetText(ss.str());
   return clone;
 }
 

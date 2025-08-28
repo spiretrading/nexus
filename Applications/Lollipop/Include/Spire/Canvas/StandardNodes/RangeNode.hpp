@@ -1,5 +1,6 @@
 #ifndef SPIRE_RANGENODE_HPP
 #define SPIRE_RANGENODE_HPP
+#include <boost/mpl/vector.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
 

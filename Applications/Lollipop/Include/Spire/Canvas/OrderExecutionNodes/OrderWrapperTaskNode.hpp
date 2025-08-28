@@ -1,5 +1,6 @@
 #ifndef SPIRE_ORDERWRAPPERTASKNODE_HPP
 #define SPIRE_ORDERWRAPPERTASKNODE_HPP
+#include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/Types/NativeType.hpp"

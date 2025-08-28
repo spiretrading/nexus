@@ -1,5 +1,7 @@
 #ifndef SPIRE_NOTNODE_HPP
 #define SPIRE_NOTNODE_HPP
+#include <boost/mpl/vector.hpp>
+#include "Nexus/Definitions/Side.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
 

@@ -13,6 +13,7 @@
 #include "Spire/Blotter/OrderLogModel.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/UI/HashQtTypes.hpp"
+#include "Spire/UI/UI.hpp"
 
 class QKeyEvent;
 

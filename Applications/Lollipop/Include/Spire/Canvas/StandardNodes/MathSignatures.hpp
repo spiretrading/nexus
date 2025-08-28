@@ -5,6 +5,9 @@
 #include <boost/mpl/list.hpp>
 #include <boost/mpl/placeholders.hpp>
 #include <boost/mpl/transform.hpp>
+#include <boost/mpl/vector.hpp>
+#include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 

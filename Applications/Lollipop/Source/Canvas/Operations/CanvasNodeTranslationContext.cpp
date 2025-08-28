@@ -5,7 +5,6 @@ using namespace Beam;
 using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 CanvasNodeTranslationContext::CanvasNodeTranslationContext(
@@ -15,7 +14,8 @@ CanvasNodeTranslationContext::CanvasNodeTranslationContext(
     m_userProfile(userProfile.Get()),
     m_executingAccount(std::move(executingAccount)),
     m_executor(executor.Get()),
-    m_orderPublisher(std::make_shared<SequencePublisher<const Order*>>()) {}
+    m_orderPublisher(
+      std::make_shared<SequencePublisher<std::shared_ptr<Order>>>()) {}
 
 CanvasNodeTranslationContext::CanvasNodeTranslationContext(
   Ref<CanvasNodeTranslationContext> parent)
@@ -46,12 +46,12 @@ const DirectoryEntry&
   return m_executingAccount;
 }
 
-const Publisher<const Order*>&
+const Publisher<std::shared_ptr<Order>>&
     CanvasNodeTranslationContext::GetOrderPublisher() const {
   return *m_orderPublisher;
 }
 
-SequencePublisher<const Order*>&
+SequencePublisher<std::shared_ptr<Order>>&
     CanvasNodeTranslationContext::GetOrderPublisher() {
   return *m_orderPublisher;
 }

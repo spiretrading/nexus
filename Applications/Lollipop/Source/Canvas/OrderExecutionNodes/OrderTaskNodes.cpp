@@ -15,7 +15,6 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace std;
 
@@ -170,7 +169,7 @@ unique_ptr<SingleOrderTaskNode> Spire::MakeOrderTaskNodeFromOrderFields(
     const OrderFields& orderFields, const UserProfile& userProfile) {
   auto node = SingleOrderTaskNode().Replace(
     SingleOrderTaskNode::SECURITY_PROPERTY, make_unique<SecurityNode>(
-      orderFields.m_security, userProfile.GetMarketDatabase()))->Replace(
+      orderFields.m_security, userProfile.GetVenueDatabase()))->Replace(
       SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
       make_unique<OrderTypeNode>(orderFields.m_type))->Replace(
       SingleOrderTaskNode::SIDE_PROPERTY,
@@ -183,9 +182,9 @@ unique_ptr<SingleOrderTaskNode> Spire::MakeOrderTaskNodeFromOrderFields(
       make_unique<MoneyNode>(orderFields.m_price))->Replace(
       SingleOrderTaskNode::CURRENCY_PROPERTY,
       make_unique<CurrencyNode>(orderFields.m_currency,
-      userProfile.GetCurrencyDatabase().FromId(
+      userProfile.GetCurrencyDatabase().from(
       orderFields.m_currency).m_code.GetData()))->Replace(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
-      make_unique<TimeInForceNode>(orderFields.m_timeInForce));
+      make_unique<TimeInForceNode>(orderFields.m_time_in_force));
   return StaticCast<std::unique_ptr<SingleOrderTaskNode>>(std::move(node));
 }

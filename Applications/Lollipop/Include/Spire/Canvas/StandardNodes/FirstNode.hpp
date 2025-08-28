@@ -1,5 +1,6 @@
 #ifndef SPIRE_FIRST_NODE_HPP
 #define SPIRE_FIRST_NODE_HPP
+#include <boost/mpl/vector.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
 

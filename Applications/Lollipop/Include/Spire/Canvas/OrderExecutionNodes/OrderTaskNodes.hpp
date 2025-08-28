@@ -1,6 +1,7 @@
 #ifndef SPIRE_ORDERTASKNODES_HPP
 #define SPIRE_ORDERTASKNODES_HPP
 #include <memory>
+#include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/UI/UI.hpp"
 

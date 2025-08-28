@@ -9,19 +9,19 @@ using namespace std;
 
 TimeInForceNode::TimeInForceNode()
     : ValueNode(TimeInForce(TimeInForce::Type::DAY)) {
-  SetText(lexical_cast<string>(GetValue().GetType()));
+  SetText(lexical_cast<string>(GetValue().get_type()));
 }
 
 TimeInForceNode::TimeInForceNode(const TimeInForce& value)
     : ValueNode(value) {
-  SetText(lexical_cast<string>(GetValue().GetType()));
+  SetText(lexical_cast<string>(GetValue().get_type()));
 }
 
 unique_ptr<TimeInForceNode> TimeInForceNode::SetValue(
     const TimeInForce& value) const {
   auto clone = CanvasNode::Clone(*this);
   clone->SetInternalValue(value);
-  clone->SetText(lexical_cast<string>(clone->GetValue().GetType()));
+  clone->SetText(lexical_cast<string>(clone->GetValue().get_type()));
   return clone;
 }
 

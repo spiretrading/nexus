@@ -2,7 +2,7 @@
 #define BEAM_RECORDPARSER_HPP
 #include <Beam/Pointers/Ref.hpp>
 #include "Spire/Canvas/Records/Record.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 

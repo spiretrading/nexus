@@ -6,6 +6,7 @@
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/Serialization/ShuttleVariant.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
+#include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Utilities/Streamable.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/variant/recursive_variant.hpp>
@@ -20,8 +21,8 @@ namespace Nexus {
   /** Defines the set of types that can be used as a compliance parameter. */
   using ComplianceValue = boost::make_recursive_variant<bool, Quantity, double,
     std::string, boost::posix_time::ptime, boost::posix_time::time_duration,
-    CurrencyId, Money, Security, Venue, Region,
-    std::vector<boost::recursive_variant_>>::type;
+    Beam::ServiceLocator::DirectoryEntry, CurrencyId, Money, Security, Venue,
+    Region, std::vector<boost::recursive_variant_>>::type;
 
   /** Stores a single parameter used by a compliance rule. */
   struct ComplianceParameter {

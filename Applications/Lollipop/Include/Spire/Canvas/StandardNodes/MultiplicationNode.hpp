@@ -1,5 +1,8 @@
 #ifndef SPIRE_MULTIPLICATIONNODE_HPP
 #define SPIRE_MULTIPLICATIONNODE_HPP
+#include <boost/mpl/vector.hpp>
+#include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
 

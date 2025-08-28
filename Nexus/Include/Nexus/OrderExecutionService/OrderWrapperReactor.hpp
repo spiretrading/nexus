@@ -21,7 +21,7 @@ namespace Nexus {
 
       Aspen::State commit(int sequence) noexcept;
 
-      std::shared_ptr<Order> eval() const;
+      const std::shared_ptr<Order>& eval() const;
 
     private:
       std::shared_ptr<Order> m_order;
@@ -40,7 +40,7 @@ namespace Nexus {
     return m_queue.commit(sequence);
   }
 
-  inline std::shared_ptr<Order> OrderWrapperReactor::eval() const {
+  inline const std::shared_ptr<Order>& OrderWrapperReactor::eval() const {
     return m_order;
   }
 }

@@ -30,7 +30,7 @@ namespace Spire {
   template<>
   struct PopLuaValue<Nexus::Money> {
     Nexus::Money operator ()(lua_State& state) const {
-      return Nexus::Money{Nexus::Quantity::FromRepresentation(
+      return Nexus::Money{Nexus::Quantity::from_representation(
         lua_tonumber(&state, -1))};
     }
   };
@@ -39,14 +39,14 @@ namespace Spire {
   struct PushLuaValue<Nexus::Money> {
     void operator ()(lua_State& state, Nexus::Money value) const {
       lua_pushnumber(&state,
-        static_cast<Nexus::Quantity>(value).GetRepresentation());
+        static_cast<Nexus::Quantity>(value).get_representation());
     }
   };
 
   template<>
   struct PopLuaValue<Nexus::Quantity> {
     Nexus::Quantity operator ()(lua_State& state) const {
-      return Nexus::Quantity::FromRepresentation(lua_tonumber(&state, -1));
+      return Nexus::Quantity::from_representation(lua_tonumber(&state, -1));
     }
   };
 
@@ -54,7 +54,7 @@ namespace Spire {
   struct PushLuaValue<Nexus::Quantity> {
     void operator ()(lua_State& state, Nexus::Quantity value) const {
       lua_pushnumber(&state,
-        static_cast<Nexus::Quantity>(value).GetRepresentation());
+        static_cast<Nexus::Quantity>(value).get_representation());
     }
   };
 

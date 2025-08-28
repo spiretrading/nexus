@@ -1,6 +1,9 @@
 #ifndef SPIRE_DIVISIONNODE_HPP
 #define SPIRE_DIVISIONNODE_HPP
 #include <boost/mpl/list.hpp>
+#include <boost/mpl/vector.hpp>
+#include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
 

@@ -11,7 +11,6 @@ using namespace Beam;
 using namespace Beam::Reactors;
 using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 namespace {
@@ -99,10 +98,9 @@ void Task::Execute() {
         m_context.GetOrderPublisher().Break();
       }),
       Aspen::until(!m_cancelToken,
-        Aspen::Box<void>(OrderCancellationReactor(
-          Ref(m_context.GetUserProfile().GetServiceClients().
-          GetOrderExecutionClient()), PublisherReactor(
-          m_context.GetOrderPublisher())))),
+        Aspen::Box<void>(OrderCancellationReactor(Ref(
+          m_context.GetUserProfile().GetClients().get_order_execution_client()),
+          PublisherReactor(m_context.GetOrderPublisher())))),
       Aspen::lift([=] {
         if(m_isFailed) {
           m_state = State::FAILED;
