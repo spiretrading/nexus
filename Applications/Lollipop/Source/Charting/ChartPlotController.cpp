@@ -17,7 +17,7 @@ namespace {
   ChartValue GetTopViewPoint(const ChartPlot& plot) {
     if(auto candlestickPlot =
         dynamic_cast<const CandlestickChartPlot*>(&plot)) {
-      return candlestickPlot->GetValue().GetHigh();
+      return candlestickPlot->GetValue().get_high();
     }
     if(auto pointPlot = dynamic_cast<const PointChartPlot*>(&plot)) {
       return pointPlot->GetY();
@@ -28,7 +28,7 @@ namespace {
   ChartValue GetBottomViewPoint(const ChartPlot& plot) {
     if(auto candlestickPlot =
         dynamic_cast<const CandlestickChartPlot*>(&plot)) {
-      return candlestickPlot->GetValue().GetLow();
+      return candlestickPlot->GetValue().get_low();
     }
     if(auto pointPlot = dynamic_cast<const PointChartPlot*>(&plot)) {
       return pointPlot->GetY();
@@ -39,7 +39,7 @@ namespace {
   ChartValue GetLeftViewPoint(const ChartPlot& plot) {
     if(auto candlestickPlot =
         dynamic_cast<const CandlestickChartPlot*>(&plot)) {
-      return candlestickPlot->GetValue().GetStart();
+      return candlestickPlot->GetValue().get_start();
     }
     if(auto pointPlot = dynamic_cast<const PointChartPlot*>(&plot)) {
       return pointPlot->GetX();
@@ -50,7 +50,7 @@ namespace {
   ChartValue GetRightViewPoint(const ChartPlot& plot) {
     if(auto candlestickPlot =
         dynamic_cast<const CandlestickChartPlot*>(&plot)) {
-      return candlestickPlot->GetValue().GetEnd();
+      return candlestickPlot->GetValue().get_end();
     }
     if(auto pointPlot = dynamic_cast<const PointChartPlot*>(&plot)) {
       return pointPlot->GetX();

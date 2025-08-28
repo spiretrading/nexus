@@ -22,7 +22,7 @@ using namespace std;
 
 namespace {
   ChartValue GetScale(const ChartPlotView::AxisParameters& parameters) {
-    if(parameters.m_type->GetCompatibility(MoneyType::GetInstance()) ==
+    if(parameters.m_type->GetCompatibility(Spire::MoneyType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
       return ChartValue(Money::CENT);
     } else if(parameters.m_type->GetCompatibility(
@@ -326,18 +326,18 @@ void ChartPlotView::PaintCrossHairs() {
 
 void ChartPlotView::PaintCandlestickChartPlot(
     const CandlestickChartPlot& plot) {
-  auto bodyTop = std::max(plot.GetValue().GetOpen(),
-    plot.GetValue().GetClose());
-  auto bodyBottom = std::min(plot.GetValue().GetOpen(),
-    plot.GetValue().GetClose());
-  auto bodyTopLeft = ComputeScreenPoint(plot.GetValue().GetStart(), bodyTop);
+  auto bodyTop = std::max(plot.GetValue().get_open(),
+    plot.GetValue().get_close());
+  auto bodyBottom = std::min(plot.GetValue().get_open(),
+    plot.GetValue().get_close());
+  auto bodyTopLeft = ComputeScreenPoint(plot.GetValue().get_start(), bodyTop);
   bodyTopLeft.rx() += 1;
-  auto bodyBottomRight = ComputeScreenPoint(plot.GetValue().GetEnd(),
+  auto bodyBottomRight = ComputeScreenPoint(plot.GetValue().get_end(),
     bodyBottom);
   bodyBottomRight.rx() -= 1;
   QRect body(bodyTopLeft, bodyBottomRight);
   QBrush bodyBrush(Qt::SolidPattern);
-  if(plot.GetValue().GetOpen() >= plot.GetValue().GetClose()) {
+  if(plot.GetValue().get_open() >= plot.GetValue().get_close()) {
     bodyBrush.setColor(m_properties.m_downtickColor);
   } else {
     bodyBrush.setColor(m_properties.m_uptickColor);
@@ -359,10 +359,10 @@ void ChartPlotView::PaintCandlestickChartPlot(
   QPen shadowPen(m_properties.m_outlineColor);
   painter.setBrush(shadowBrush);
   painter.setPen(shadowPen);
-  auto barWidth = plot.GetValue().GetEnd() - plot.GetValue().GetStart();
-  auto shadowLeft = plot.GetValue().GetStart() + (4 * barWidth) / 9;
-  auto shadowRight = plot.GetValue().GetStart() + (5 * barWidth) / 9;
-  auto highShadowTop = plot.GetValue().GetHigh();
+  auto barWidth = plot.GetValue().get_end() - plot.GetValue().get_start();
+  auto shadowLeft = plot.GetValue().get_start() + (4 * barWidth) / 9;
+  auto shadowRight = plot.GetValue().get_start() + (5 * barWidth) / 9;
+  auto highShadowTop = plot.GetValue().get_high();
   auto highShadowBottom = bodyTop;
   auto highShadowTopLeft = ComputeScreenPoint(shadowLeft, highShadowTop);
   auto highShadowBottomRight =
@@ -383,7 +383,7 @@ void ChartPlotView::PaintCandlestickChartPlot(
     painter.drawRect(highShadow);
   }
   auto lowShadowTop = bodyBottom;
-  auto lowShadowBottom = plot.GetValue().GetLow();
+  auto lowShadowBottom = plot.GetValue().get_low();
   auto lowShadowTopLeft = ComputeScreenPoint(shadowLeft, lowShadowTop);
   auto lowShadowBottomRight = ComputeScreenPoint(shadowRight, lowShadowBottom);
   lowShadowTopLeft.ry() += 1;
@@ -490,9 +490,9 @@ QString ChartPlotView::LoadLabel(ChartValue value,
       CanvasType::Compatibility::EQUAL) {
     auto v = value.ToMoney();
     if(v >= Money::ONE) {
-      v = Floor(v, 3);
+      v = floor(v, 3);
     } else {
-      v = Floor(v, 4);
+      v = floor(v, 4);
     }
     return QString::fromStdString(lexical_cast<string>(v));
   } else if(type.GetCompatibility(DateTimeType::GetInstance()) ==

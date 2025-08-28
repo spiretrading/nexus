@@ -2,8 +2,6 @@
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QToolButton>
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Spire/Canvas/Types/DateTimeType.hpp"
 #include "Spire/Canvas/Types/DurationType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
@@ -21,7 +19,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::TechnicalAnalysis;
 using namespace Spire;
 using namespace Spire::UI;
 
@@ -131,9 +128,9 @@ void ChartWindow::DisplaySecurity(const Security& security) {
   if(m_security == Security()) {
     setWindowTitle(tr("Chart - Spire"));
   } else {
-    setWindowTitle(QString::fromStdString(
-      ToString(m_security, m_userProfile->GetVenueDatabase())) +
-      tr(" - Chart"));
+    auto ss = std::stringstream();
+    ss << m_userProfile->GetVenueDatabase() << m_security;
+    setWindowTitle(QString::fromStdString(ss.str()) + tr(" - Chart"));
     OnIntervalChanged(
       m_intervalComboBox->GetType(), m_intervalComboBox->GetValue());
   }

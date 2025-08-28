@@ -10,9 +10,6 @@ using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::ChartingService;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::TechnicalAnalysis;
 using namespace Spire;
 
 namespace {
@@ -45,7 +42,7 @@ SecurityTimePriceChartPlotSeries::SecurityTimePriceChartPlotSeries(
   query.SetRange(Beam::Queries::Range::RealTime());
   query.SetSnapshotLimit(SnapshotLimit::Unlimited());
   query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-  m_userProfile->GetClients().get_market_data_client().QueryTimeAndSales(
+  m_userProfile->GetClients().get_market_data_client().query(
     query, m_eventHandler.get_slot<TimeAndSale>(
       std::bind_front(&SecurityTimePriceChartPlotSeries::OnTimeAndSale, this)));
 }
@@ -56,13 +53,16 @@ void SecurityTimePriceChartPlotSeries::Query(ChartValue start, ChartValue end) {
       auto min = start.ToDateTime() - Normalize(start.ToDateTime(), m_interval);
       auto max = end.ToDateTime() +
         (m_interval - Normalize(end.ToDateTime(), m_interval));
-      auto result = m_userProfile->GetClients().GetChartingClient().
-        LoadTimePriceSeries(m_security, min, max, m_interval);
+      auto result = m_userProfile->GetClients().get_charting_client().
+        load_time_price_series(m_security, min, max, m_interval);
       for(auto& candlestick : result.series) {
         auto chartCandlestick = Candlestick(
-          ChartValue(candlestick.GetStart()), ChartValue(candlestick.GetEnd()),
-          ChartValue(candlestick.GetOpen()), ChartValue(candlestick.GetClose()),
-          ChartValue(candlestick.GetHigh()), ChartValue(candlestick.GetLow()));
+          ChartValue(candlestick.get_start()),
+          ChartValue(candlestick.get_end()),
+          ChartValue(candlestick.get_open()),
+          ChartValue(candlestick.get_close()),
+          ChartValue(candlestick.get_high()),
+          ChartValue(candlestick.get_low()));
         m_eventHandler.push(std::bind_front(
           &SecurityTimePriceChartPlotSeries::OnCandlestickLoaded, this,
           chartCandlestick));
@@ -78,7 +78,7 @@ ChartValue SecurityTimePriceChartPlotSeries::LoadLastCurrentDomain() {
     Beam::Queries::Sequence::First(), Beam::Queries::Sequence::Present());
   query.SetSnapshotLimit(SnapshotLimit::Type::TAIL, 1);
   query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-  m_userProfile->GetClients().get_market_data_client().QueryTimeAndSales(
+  m_userProfile->GetClients().get_market_data_client().query(
     query, timeAndSalesQueue);
   try {
     return ChartValue(timeAndSalesQueue->Pop().m_timestamp);
@@ -108,17 +108,17 @@ SecurityTimePriceChartPlotSeries::CandlestickEntry&
 
 void SecurityTimePriceChartPlotSeries::OnCandlestickLoaded(
     const Candlestick<ChartValue, ChartValue>& candlestick) {
-  auto& entry = LoadCandlestick(candlestick.GetStart().ToDateTime());
+  auto& entry = LoadCandlestick(candlestick.get_start().ToDateTime());
   auto isFirstUpdate = entry.m_lastTimestamp.is_not_a_date_time();
   if(!isFirstUpdate && entry.m_lastTimestamp >=
-      candlestick.GetEnd().ToDateTime()) {
+      candlestick.get_end().ToDateTime()) {
     return;
   }
-  entry.m_lastTimestamp = candlestick.GetStart().ToDateTime();
-  entry.m_plot->Update(candlestick.GetOpen());
-  entry.m_plot->Update(candlestick.GetHigh());
-  entry.m_plot->Update(candlestick.GetLow());
-  entry.m_plot->Update(candlestick.GetClose());
+  entry.m_lastTimestamp = candlestick.get_start().ToDateTime();
+  entry.m_plot->Update(candlestick.get_open());
+  entry.m_plot->Update(candlestick.get_high());
+  entry.m_plot->Update(candlestick.get_low());
+  entry.m_plot->Update(candlestick.get_close());
   if(isFirstUpdate) {
     m_chartPlotAddedSignal(entry.m_plot);
   }

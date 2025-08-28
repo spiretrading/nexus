@@ -27,8 +27,9 @@ ChartWindowSettings::ChartWindowSettings(const ChartWindow& window,
   if(m_security == Security()) {
     m_name = "Chart";
   } else {
-    m_name = "Chart - " +
-      ToString(m_security, userProfile->GetMarketDatabase());
+    auto ss = std::stringstream();
+    ss << userProfile->GetVenueDatabase() << m_security;
+    m_name = "Chart - " + ss.str();
   }
 }
 
