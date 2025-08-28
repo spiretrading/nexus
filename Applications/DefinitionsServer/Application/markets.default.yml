@@ -42,6 +42,12 @@ markets:
     currency: CAD
     description: CX2
     display_name: CX2
+  - code: XCXD
+    country_code: CA
+    time_zone: Eastern_Time
+    currency: CAD
+    description: NASDAQ CXD
+    display_name: CXD
   - code: LYNX
     country_code: CA
     time_zone: Eastern_Time
