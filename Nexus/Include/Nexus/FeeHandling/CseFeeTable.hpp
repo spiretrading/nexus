@@ -2,38 +2,55 @@
 #define NEXUS_CSE_FEE_TABLE_HPP
 #include <array>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include "Nexus/Definitions/Money.hpp"
 #include "Nexus/FeeHandling/FeeHandling.hpp"
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 
 namespace Nexus {
 
-  /** Stores the table of fees used by the Canadian Securities Exchange. */
+  /** Stores the table of fees used by the CSE. */
   struct CseFeeTable {
 
-    /** Enumerates the types of fees that can be applied. */
-    enum class Section {
+    /** Enumerates the price classes. */
+    enum class PriceClass {
 
-      /** Unknown. */
-      NONE = -1,
-
-      /** Lit order with price greater than or equal to $1.00. */
+      /** Trade with a price greater than or equal to $1.00. */
       DEFAULT,
 
-      /** Lit order with price less than $1.00. */
-      SUBDOLLAR,
-
-      /** Dark order. */
-      DARK
+      /** Trade with a price less than $1.00. */
+      SUBDOLLAR
     };
 
     /** The number of price classes enumerated. */
-    static constexpr auto SECTION_COUNT = std::size_t(3);
+    static constexpr auto PRICE_CLASS_COUNT = std::size_t(2);
 
-    /** The fee table. */
+    /** Enumerates the sessions used for fee calculations. */
+    enum class Session {
+
+      /** Continuous trading session. */
+      DEFAULT,
+
+      /** Opening trade. */
+      OPEN,
+
+      /** Closing trade. */
+      CLOSE
+    };
+
+    /** The number of sessions enumerated. */
+    static constexpr auto SESSION_COUNT = std::size_t(3);
+
+    /** The fee table for continuous trading. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, SECTION_COUNT>
       m_feeTable;
+
+    /** The fee table for dark trading. */
+    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, SECTION_COUNT>
+      m_darkFeeTable;
+
+    /** The fee table for opening/closing auctions. */
+    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>,
+      (SESSION_COUNT - 1) * PRICE_CLASS_COUNT> m_auctionFeeTable;
   };
 
   /**
@@ -45,23 +62,6 @@ namespace Nexus {
     auto feeTable = CseFeeTable();
     ParseFeeTable(config, "fee_table", Beam::Store(feeTable.m_feeTable));
     return feeTable;
-  }
-
-  /**
-   * Determines what section of the CSE fee table is needed to calculate a fee.
-   * @param executionReport The ExecutionReport to calculate the fee for.
-   * @return The section within the <i>CseFeeTable</i> needed to calculate the
-   *         fee for the specified <i>executionReport</i>.
-   */
-  inline CseFeeTable::Section LookupCseFeeTableSection(
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    if(executionReport.m_liquidityFlag.size() >= 3 &&
-        executionReport.m_liquidityFlag[2] == 'D') {
-      return CseFeeTable::Section::DARK;
-    } else if(executionReport.m_lastPrice < Money::ONE) {
-      return CseFeeTable::Section::SUBDOLLAR;
-    }
-    return CseFeeTable::Section::DEFAULT;
   }
 
   /**
@@ -86,6 +86,39 @@ namespace Nexus {
         executionReport.m_liquidityFlag << "\"\n";
       return LiquidityFlag::ACTIVE;
     }
+  }
+
+  /**
+   * Determines what section of the CSE fee table is needed to calculate a fee.
+   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @return The section within the <i>CseFeeTable</i> needed to calculate the
+   *         fee for the specified <i>executionReport</i>.
+   */
+  inline CseFeeTable::Section LookupCseFeeTableSection(
+      const OrderExecutionService::ExecutionReport& executionReport) {
+    if(executionReport.m_liquidityFlag.size() >= 3 &&
+        executionReport.m_liquidityFlag[2] == 'D') {
+      return CseFeeTable::Section::DARK;
+    } else if(executionReport.m_lastPrice < Money::ONE) {
+      return CseFeeTable::Section::SUBDOLLAR;
+    }
+    return CseFeeTable::Section::DEFAULT;
+  }
+
+  /**
+   * Returns the Session for a given CSE liquidity flag string.
+   * @param liquidityFlag The liquidity flag string.
+   */
+  inline CseFeeTable::Session LookupCseSession(
+      const std::string& liquidityFlag) {
+    if(liquidityFlag.size() > 3) {
+      if(liquidityFlag[3] == 'O') {
+        return CseFeeTable::Session::OPEN;
+      } else if(liquidityFlag[3] == 'M') {
+        return CseFeeTable::Session::CLOSE;
+      }
+    }
+    return CseFeeTable::Session::DEFAULT;
   }
 
   /**
