@@ -48,6 +48,8 @@ namespace Spire {
        *        display.
        */
       explicit OrderFieldInfoTip(Model model, QWidget* parent = nullptr);
+
+      QSize sizeHint() const override;
   };
 }
 

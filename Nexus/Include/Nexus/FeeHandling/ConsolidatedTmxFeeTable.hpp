@@ -12,6 +12,7 @@
 #include "Nexus/FeeHandling/ChicFeeTable.hpp"
 #include "Nexus/FeeHandling/CseFeeTable.hpp"
 #include "Nexus/FeeHandling/Cse2FeeTable.hpp"
+#include "Nexus/FeeHandling/CxdFeeTable.hpp"
 #include "Nexus/FeeHandling/FeeHandling.hpp"
 #include "Nexus/FeeHandling/LynxFeeTable.hpp"
 #include "Nexus/FeeHandling/MatnFeeTable.hpp"
@@ -71,6 +72,9 @@ namespace Nexus {
 
     /** Fee table used by CSE2. */
     Cse2FeeTable m_cse2FeeTable;
+
+    /** Fee table used by CXD. */
+    CxdFeeTable m_cxdFeeTable;
 
     /** Fee table used by LYNX. */
     LynxFeeTable m_lynxFeeTable;
@@ -213,6 +217,11 @@ namespace Nexus {
     } else {
       BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for XCX2 missing."));
     }
+    if(auto cxdConfig = config["cxd"]) {
+      feeTable.m_cxdFeeTable = ParseCxdFeeTable(cxdConfig);
+    } else {
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for CXD missing."));
+    }
     if(auto lynxConfig = config["lynx"]) {
       feeTable.m_lynxFeeTable = ParseLynxFeeTable(
         lynxConfig, feeTable.m_etfs, feeTable.m_interlisted);
@@ -334,13 +343,35 @@ namespace Nexus {
         return CalculateFee(feeTable.m_chicFeeTable, order.GetInfo().m_fields,
           executionReport);
       } else if(lastMarket == DefaultMarkets::CSE()) {
-        return CalculateFee(feeTable.m_cseFeeTable, executionReport);
+        auto& security = order.GetInfo().m_fields.m_security;
+        auto listing = [&] {
+          if(Beam::Contains(feeTable.m_etfs, security)) {
+            return CseFeeTable::CseListing::ETF;
+          } else if(Beam::Contains(feeTable.m_interlisted, security)) {
+            return CseFeeTable::CseListing::INTERLISTED;
+          } else if(security.GetMarket() == DefaultMarkets::CSE()) {
+            return CseFeeTable::CseListing::CSE_LISTED;
+          }
+          return CseFeeTable::CseListing::DEFAULT;
+        }();
+        return CalculateFee(feeTable.m_cseFeeTable, listing, executionReport);
       } else if(lastMarket == DefaultMarkets::CSE2()) {
         return CalculateFee(
           feeTable.m_cse2FeeTable, order.GetInfo().m_fields, executionReport);
       } else if(lastMarket == DefaultMarkets::XCX2()) {
         return CalculateFee(feeTable.m_xcx2FeeTable, order.GetInfo().m_fields,
           executionReport);
+      } else if(lastMarket == DefaultMarkets::CXD()) {
+        auto securityClass = [&] {
+          if(Beam::Contains(feeTable.m_etfs,
+              order.GetInfo().m_fields.m_security)) {
+            return CxdFeeTable::SecurityClass::ETF;
+          } else {
+            return CxdFeeTable::SecurityClass::DEFAULT;
+          }
+        }();
+        return CalculateFee(
+          feeTable.m_cxdFeeTable, securityClass, executionReport);
       } else if(lastMarket == DefaultMarkets::LYNX()) {
         return CalculateFee(
           feeTable.m_lynxFeeTable, order.GetInfo().m_fields, executionReport);

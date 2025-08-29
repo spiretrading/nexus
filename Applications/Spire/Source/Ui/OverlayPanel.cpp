@@ -126,6 +126,9 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
       if(mouse_event.buttons() & Qt::LeftButton) {
         move(pos() + (mouse_event.pos() - m_mouse_pressed_position));
       }
+    } else if(event->type() == QEvent::LayoutRequest) {
+      setFixedSize(layout()->itemAt(0)->widget()->sizeHint().grownBy(
+        layout()->contentsMargins()));
     }
   } else if(watched == parentWidget() && event->type() == QEvent::Resize) {
     if(isVisible()) {

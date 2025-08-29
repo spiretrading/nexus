@@ -55,9 +55,9 @@ namespace {
 }
 
 InfoTip::InfoTip(QWidget* body, QWidget* parent)
-    : QWidget(parent, Qt::FramelessWindowHint | Qt::Tool |
+    : QWidget(nullptr, Qt::FramelessWindowHint | Qt::ToolTip |
         Qt::NoDropShadowWindowHint | Qt::WindowDoesNotAcceptFocus),
-      m_body(body),
+      m_parent(parent),
       m_is_interactive(false),
       m_hover_observer(*parent),
       m_fade_state(FadeState::NONE),
@@ -69,7 +69,7 @@ InfoTip::InfoTip(QWidget* body, QWidget* parent)
   layout->setContentsMargins(get_margins());
   layout->addWidget(m_container);
   auto container_layout = make_hbox_layout(m_container);
-  container_layout->addWidget(m_body);
+  container_layout->addWidget(body);
   const auto DEFAULT_SHOW_DELAY_MS = 500;
   m_show_timer.setInterval(DEFAULT_SHOW_DELAY_MS);
   m_show_timer.setSingleShot(true);
@@ -79,14 +79,14 @@ InfoTip::InfoTip(QWidget* body, QWidget* parent)
   connect(&m_interactive_timer, &QTimer::timeout, this,
     &InfoTip::on_interactive_timeout);
   parent->installEventFilter(this);
-  match(*m_body, Body());
-  link(*this, *m_body);
+  match(*body, Body());
+  link(*this, *body);
   m_hover_observer.connect_state_signal(
     std::bind_front(&InfoTip::on_hover, this));
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&InfoTip::on_style, this));
   set_style(*this, DEFAULT_STYLE());
-  connect(m_body, &QObject::destroyed, this, [=] {
+  connect(body, &QObject::destroyed, this, [=] {
     deleteLater();
   });
 }
@@ -95,6 +95,9 @@ bool InfoTip::eventFilter(QObject* watched, QEvent* event) {
   switch(event->type()) {
     case QEvent::ToolTip:
       return true;
+    case QEvent::Destroy:
+      deleteLater();
+      break;
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -185,8 +188,7 @@ QPainterPath InfoTip::get_arrow_path() const {
 }
 
 InfoTip::BodyOrientation InfoTip::get_body_orientation() const {
-  auto parent_position =
-    parentWidget()->mapToGlobal(parentWidget()->rect().bottomLeft());
+  auto parent_position = m_parent->mapToGlobal(m_parent->rect().bottomLeft());
   auto screen_geometry =
     get_current_screen(parent_position)->availableGeometry();
   if(parent_position.x() + width() >
@@ -200,7 +202,7 @@ QScreen* InfoTip::get_current_screen(const QPoint& point) const {
   if(auto screen = QGuiApplication::screenAt(point)) {
     return screen;
   }
-  return parentWidget()->screen();
+  return m_parent->screen();
 }
 
 QMargins InfoTip::get_margins() const {
@@ -215,8 +217,7 @@ QMargins InfoTip::get_margins() const {
 }
 
 InfoTip::Orientation InfoTip::get_orientation() const {
-  auto parent_position = parentWidget()->mapToGlobal(
-    parentWidget()->rect().bottomLeft());
+  auto parent_position = m_parent->mapToGlobal(m_parent->rect().bottomLeft());
   auto screen_geometry =
     get_current_screen(parent_position)->availableGeometry();
   if(parent_position.y() + height() >
@@ -232,21 +233,20 @@ InfoTip::Orientation InfoTip::get_orientation() const {
 }
 
 QPoint InfoTip::get_position() const {
-  auto parent_position =
-    parentWidget()->mapToGlobal(parentWidget()->rect().bottomLeft());
+  auto parent_position = m_parent->mapToGlobal(m_parent->rect().bottomLeft());
   auto orientation = get_orientation();
   auto x = [&] {
     if(orientation == Orientation::BOTTOM_LEFT ||
         orientation == Orientation::TOP_LEFT) {
       return parent_position.x() - DROP_SHADOW_WIDTH();
     }
-    return parent_position.x() + parentWidget()->width() -
+    return parent_position.x() + m_parent->width() -
       2 * ARROW_X_POSITION() - ARROW_SIZE().width() - DROP_SHADOW_WIDTH();
   }();
   auto y = [&] {
     if(orientation == Orientation::TOP_LEFT ||
         orientation == Orientation::TOP_RIGHT) {
-      return parent_position.y() - parentWidget()->height() - height() -
+      return parent_position.y() - m_parent->height() - height() -
         scale_height(1);
     }
     return parent_position.y() + scale_height(1);

@@ -219,43 +219,52 @@ namespace Nexus {
       auto fee = LookupOddLotFee(feeTable, priceClass);
       return executionReport.m_lastQuantity * fee;
     } else if(executionReport.m_liquidityFlag.size() == 1) {
-      auto priceClass = [&] {
-        if(executionReport.m_lastPrice < 10 * Money::CENT) {
-          return TsxFeeTable::PriceClass::SUBDIME;
-        } else if(executionReport.m_lastPrice < Money::ONE) {
-          return TsxFeeTable::PriceClass::SUBDOLLAR;
-        } else if(classification == TsxFeeTable::Classification::DEFAULT) {
-          return TsxFeeTable::PriceClass::DEFAULT;
-        } else if(classification == TsxFeeTable::Classification::ETF) {
-          return TsxFeeTable::PriceClass::DEFAULT_ETF;
-        } else if(classification == TsxFeeTable::Classification::INTERLISTED) {
-          return TsxFeeTable::PriceClass::DEFAULT_INTERLISTED;
-        } else {
-          std::cout << "Unknown classification [TSX].\n";
-          return TsxFeeTable::PriceClass::DEFAULT;
-        }
-      }();
-      auto type = [&] {
-        if(executionReport.m_liquidityFlag[0] == 'P') {
-          if(IsTsxHiddenOrder(fields)) {
-            return TsxFeeTable::Type::HIDDEN_PASSIVE;
+      if(executionReport.m_liquidityFlag == "O") {
+        auto fee = LookupAuctionFee(feeTable, TsxFeeTable::AuctionIndex::FEE,
+          TsxFeeTable::AuctionType::OPEN);
+        auto maxFee = LookupAuctionFee(
+          feeTable, TsxFeeTable::AuctionIndex::MAX_CHARGE,
+          TsxFeeTable::AuctionType::OPEN);
+        return std::min(executionReport.m_lastQuantity * fee, maxFee);
+      } else {
+        auto priceClass = [&] {
+          if(executionReport.m_lastPrice < 10 * Money::CENT) {
+            return TsxFeeTable::PriceClass::SUBDIME;
+          } else if(executionReport.m_lastPrice < Money::ONE) {
+            return TsxFeeTable::PriceClass::SUBDOLLAR;
+          } else if(classification == TsxFeeTable::Classification::DEFAULT) {
+            return TsxFeeTable::PriceClass::DEFAULT;
+          } else if(classification == TsxFeeTable::Classification::ETF) {
+            return TsxFeeTable::PriceClass::DEFAULT_ETF;
+          } else if(classification == TsxFeeTable::Classification::INTERLISTED) {
+            return TsxFeeTable::PriceClass::DEFAULT_INTERLISTED;
           } else {
-            return TsxFeeTable::Type::PASSIVE;
+            std::cout << "Unknown classification [TSX].\n";
+            return TsxFeeTable::PriceClass::DEFAULT;
           }
-        } else if(executionReport.m_liquidityFlag[0] == 'A') {
-          if(IsTsxHiddenOrder(fields)) {
-            return TsxFeeTable::Type::HIDDEN_ACTIVE;
+        }();
+        auto type = [&] {
+          if(executionReport.m_liquidityFlag[0] == 'P') {
+            if(IsTsxHiddenOrder(fields)) {
+              return TsxFeeTable::Type::HIDDEN_PASSIVE;
+            } else {
+              return TsxFeeTable::Type::PASSIVE;
+            }
+          } else if(executionReport.m_liquidityFlag[0] == 'A') {
+            if(IsTsxHiddenOrder(fields)) {
+              return TsxFeeTable::Type::HIDDEN_ACTIVE;
+            } else {
+              return TsxFeeTable::Type::ACTIVE;
+            }
           } else {
+            std::cout << "Unknown liquidity flag [TSX]: \"" <<
+              executionReport.m_liquidityFlag << "\".\n";
             return TsxFeeTable::Type::ACTIVE;
           }
-        } else {
-          std::cout << "Unknown liquidity flag [TSX]: \"" <<
-            executionReport.m_liquidityFlag << "\".\n";
-          return TsxFeeTable::Type::ACTIVE;
-        }
-      }();
-      auto fee = LookupContinuousFee(feeTable, priceClass, type);
-      return executionReport.m_lastQuantity * fee;
+        }();
+        auto fee = LookupContinuousFee(feeTable, priceClass, type);
+        return executionReport.m_lastQuantity * fee;
+      }
     } else if(executionReport.m_liquidityFlag.size() == 2) {
       auto type = [&] {
         if(executionReport.m_liquidityFlag == "AO" ||

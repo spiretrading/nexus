@@ -11,6 +11,7 @@
 #include "Nexus/FeeHandling/ConsolidatedUsFeeTable.hpp"
 #include "Nexus/FeeHandling/CseFeeTable.hpp"
 #include "Nexus/FeeHandling/Cse2FeeTable.hpp"
+#include "Nexus/FeeHandling/CxdFeeTable.hpp"
 #include "Nexus/FeeHandling/EdgaFeeTable.hpp"
 #include "Nexus/FeeHandling/EdgxFeeTable.hpp"
 #include "Nexus/FeeHandling/HkexFeeTable.hpp"
@@ -189,6 +190,7 @@ void Nexus::Python::ExportConsolidatedTmxFeeTable(module& module) {
     .def_readwrite("chic_fee_table", &ConsolidatedTmxFeeTable::m_chicFeeTable)
     .def_readwrite("cse_fee_table", &ConsolidatedTmxFeeTable::m_cseFeeTable)
     .def_readwrite("cse2_fee_table", &ConsolidatedTmxFeeTable::m_cse2FeeTable)
+    .def_readwrite("cxd_fee_table", &ConsolidatedTmxFeeTable::m_cxdFeeTable)
     .def_readwrite("lynx_fee_table", &ConsolidatedTmxFeeTable::m_lynxFeeTable)
     .def_readwrite("matn_fee_table", &ConsolidatedTmxFeeTable::m_matnFeeTable)
     .def_readwrite("neoe_fee_table", &ConsolidatedTmxFeeTable::m_neoeFeeTable)
@@ -302,6 +304,38 @@ void Nexus::Python::ExportCse2FeeTable(module& module) {
     const OrderFields&, const ExecutionReport&)>(&CalculateFee));
 }
 
+void Nexus::Python::ExportCxdFeeTable(module& module) {
+  auto outer = class_<CxdFeeTable>(module, "CxdFeeTable")
+    .def(init())
+    .def(init<const CxdFeeTable&>())
+    .def_readwrite("fee_table", &CxdFeeTable::m_feeTable)
+    .def_readwrite("max_fee_table", &CxdFeeTable::m_maxFeeTable)
+    .def_readwrite("etf_fee_table", &CxdFeeTable::m_etfFeeTable);
+  enum_<CxdFeeTable::SecurityClass>(outer, "SecurityClass")
+    .value("DEFAULT", CxdFeeTable::SecurityClass::DEFAULT)
+    .value("ETF", CxdFeeTable::SecurityClass::ETF);
+  enum_<CxdFeeTable::PriceClass>(outer, "PriceClass")
+    .value("SUBDOLLAR", CxdFeeTable::PriceClass::SUBDOLLAR)
+    .value("SUBFIVE", CxdFeeTable::PriceClass::SUBFIVE)
+    .value("DEFAULT", CxdFeeTable::PriceClass::DEFAULT);
+  enum_<CxdFeeTable::BboType>(outer, "BboType")
+    .value("NONE", CxdFeeTable::BboType::NONE)
+    .value("AT_BBO", CxdFeeTable::BboType::AT_BBO)
+    .value("INSIDE_BBO", CxdFeeTable::BboType::INSIDE_BBO);
+  module.def("parse_cxd_fee_table", &ParseCxdFeeTable);
+  module.def("get_cxd_bbo_type", &GetCxdBboType);
+  module.def("get_cxd_liquidity_flag", &GetCxdLiquidityFlag);
+  module.def("get_cxd_price_class", &GetCxdPriceClass);
+  module.def("lookup_fee", static_cast<Money (*)(const CxdFeeTable&,
+    LiquidityFlag, CxdFeeTable::SecurityClass, CxdFeeTable::PriceClass,
+    CxdFeeTable::BboType)>(&LookupFee));
+  module.def("lookup_max_fee", static_cast<Money (*)(const CxdFeeTable&,
+    LiquidityFlag, CxdFeeTable::PriceClass, CxdFeeTable::BboType)>(
+      &LookupMaxFee));
+  module.def("calculate_fee", static_cast<Money (*)(const CxdFeeTable&,
+    CxdFeeTable::SecurityClass, const ExecutionReport&)>(&CalculateFee));
+}
+
 void Nexus::Python::ExportEdgaFeeTable(module& module) {
   class_<EdgaFeeTable>(module, "EdgaFeeTable")
     .def(init())
@@ -339,6 +373,7 @@ void Nexus::Python::ExportFeeHandling(module& module) {
   ExportConsolidatedUsFeeTable(module);
   ExportCseFeeTable(module);
   ExportCse2FeeTable(module);
+  ExportCxdFeeTable(module);
   ExportEdgaFeeTable(module);
   ExportEdgxFeeTable(module);
   ExportHkexFeeTable(module);

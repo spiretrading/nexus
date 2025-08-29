@@ -224,6 +224,16 @@ namespace Nexus {
       }
       {
         auto entry = MarketDatabase::Entry();
+        entry.m_code = "XCXD";
+        entry.m_countryCode = DefaultCountries::CA();
+        entry.m_timeZone = "Eastern_Time";
+        entry.m_currency = DefaultCurrencies::CAD();
+        entry.m_description = "NASDAQ CXD";
+        entry.m_displayName = "CXD";
+        database.Add(entry);
+      }
+      {
+        auto entry = MarketDatabase::Entry();
         entry.m_code = "LYNX";
         entry.m_countryCode = DefaultCountries::CA();
         entry.m_timeZone = "Eastern_Time";
@@ -464,6 +474,11 @@ namespace Nexus {
 
     inline MarketCode CHIC() {
       static auto value = GetDefaultMarketDatabase().FromCode("CHIC").m_code;
+      return value;
+    }
+
+    inline MarketCode CXD() {
+      static auto value = GetDefaultMarketDatabase().FromCode("XCXD").m_code;
       return value;
     }
 

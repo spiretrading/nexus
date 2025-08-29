@@ -41,8 +41,8 @@ namespace Styles {
     private:
       mutable ClickSignal m_click_signal;
       QWidget* m_body;
-      PressObserver m_press_observer;
       ClickObserver m_click_observer;
+      PressObserver m_press_observer;
 
       void on_press_start(PressObserver::Reason reason);
       void on_press_end(PressObserver::Reason reason);

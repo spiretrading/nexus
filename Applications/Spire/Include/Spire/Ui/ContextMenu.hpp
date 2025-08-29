@@ -42,6 +42,12 @@ namespace Spire {
         std::variant<ContextMenu*, Action, std::shared_ptr<BooleanModel>>;
 
       /**
+       * Signals a change to the current navigation index.
+       * @param current The index of the current navigation index.
+       */
+      using CurrentSignal = Signal<void (const boost::optional<int>& current)>;
+
+      /**
        * Signals that a menu item was submitted.
        * @param menu The ContextMenu where the submission is triggered.
        * @param label The label of the submitted the menu item.
@@ -121,11 +127,18 @@ namespace Spire {
       /** Resets the menu, removing all actions. */
       void reset();
 
+      /** Returns the number of menu items. */
+      int get_count() const;
+
       /**
        * Returns the menu item at a specified index, or <code>nullptr</code> iff
        * the index is out of range.
        */
       QWidget* get_menu_item(int index);
+
+      /** Connects a slot to the Current signal.  */
+      boost::signals2::connection connect_current_signal(
+        const CurrentSignal::slot_type& slot) const;
 
       /** Connects a slot to the Submit signal. */
       boost::signals2::connection connect_submit_signal(
@@ -154,6 +167,7 @@ namespace Spire {
       OverlayPanel* m_visible_submenu;
       int m_pending_submenu_index;
       int m_hide_count;
+      int m_last_show_items;
       QRect m_active_item_geometry;
       int m_block_move;
       MouseMoveObserver m_mouse_observer;

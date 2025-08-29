@@ -1,6 +1,7 @@
 #ifndef NEXUS_FEE_TABLE_TEST_UTILITIES_HPP
 #define NEXUS_FEE_TABLE_TEST_UTILITIES_HPP
 #include <array>
+#include <concepts>
 #include <cstdlib>
 #include <Beam/Pointers/Out.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -109,13 +110,43 @@ namespace Nexus::Tests {
   void TestFeeCalculation(const FeeTable& feeTable,
       const OrderExecutionService::OrderFields& fields,
       std::string liquidityFlag, CalculateFeeType&& calculateFee,
-      Money expectedFee) {
+      Money expectedFee) requires std::invocable<CalculateFeeType,
+        const FeeTable&, const OrderExecutionService::ExecutionReport&> &&
+        std::same_as<std::invoke_result_t<CalculateFeeType, const FeeTable&,
+          const OrderExecutionService::ExecutionReport&>, Money> {
     auto executionReport = OrderExecutionService::ExecutionReport::
       MakeInitialReport(0, boost::posix_time::second_clock::universal_time());
     executionReport.m_lastPrice = fields.m_price;
     executionReport.m_lastQuantity = fields.m_quantity;
     executionReport.m_liquidityFlag = std::move(liquidityFlag);
     auto calculatedTotal = calculateFee(feeTable, executionReport);
+    REQUIRE(calculatedTotal == expectedFee);
+  }
+
+  /**
+   * Tests a fee calculation.
+   * @param feeTable The fee table to test.
+   * @param fields The OrderFields that were submitted.
+   * @param liquidityFlag The trade's liquidity flag.
+   * @param calculateFee The function used to calculate the fee.
+   * @param expectedFee The expected fee.
+   */
+  template<typename FeeTable, typename CalculateFeeType>
+  void TestFeeCalculation(const FeeTable& feeTable,
+      const OrderExecutionService::OrderFields& fields,
+      std::string liquidityFlag, CalculateFeeType&& calculateFee,
+      Money expectedFee) requires std::invocable<CalculateFeeType,
+        const FeeTable&, const OrderExecutionService::OrderFields&,
+        const OrderExecutionService::ExecutionReport&> &&
+        std::same_as<std::invoke_result_t<CalculateFeeType, const FeeTable&,
+          const OrderExecutionService::OrderFields&,
+          const OrderExecutionService::ExecutionReport&>, Money> {
+    auto executionReport = OrderExecutionService::ExecutionReport::
+      MakeInitialReport(0, boost::posix_time::second_clock::universal_time());
+    executionReport.m_lastPrice = fields.m_price;
+    executionReport.m_lastQuantity = fields.m_quantity;
+    executionReport.m_liquidityFlag = std::move(liquidityFlag);
+    auto calculatedTotal = calculateFee(feeTable, fields, executionReport);
     REQUIRE(calculatedTotal == expectedFee);
   }
 

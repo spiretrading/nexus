@@ -57,9 +57,15 @@ Window::Window(QWidget* parent)
   box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   proxy_style(*this, *box);
   update_style(*this, [] (auto& style) {
-    style.get(Any()).set(BackgroundColor(QColor(0xF5F5F5)));
+    style.get(Any()).
+      set(BackgroundColor(QColor(0xF5F5F5))).
+      set(border(scale_width(1), QColor(0xA0A0A0)));
+    style.get(Highlighted()).
+      set(border_color(QColor(0x7F5EEC)));
   });
   enclose(*this, *box);
+  find_stylist(*this).connect_match_signal(Highlighted(),
+    std::bind_front(&Window::on_highlighted, this));
 }
 
 void Window::set_icon(const QImage& icon) {
@@ -81,15 +87,6 @@ bool Window::event(QEvent* event) {
       &Window::on_screen_changed);
   }
   return QWidget::event(event);
-}
-
-bool Window::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::Resize) {
-    if(watched == m_body && !isMaximized()) {
-      resize(adjusted_window_size(m_body->size()));
-    }
-  }
-  return QWidget::eventFilter(watched, event);
 }
 
 bool Window::nativeEvent(const QByteArray& eventType, void* message,
@@ -216,16 +213,17 @@ void Window::set_body(QWidget* body) {
   m_body = body;
   if(body->maximumSize() != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
     set_window_attributes(false);
-  } else {
-    resize(adjusted_window_size(body->size()));
   }
   auto& box = *static_cast<Box*>(layout()->itemAt(0)->widget());
   box.get_body()->layout()->addWidget(m_body);
-  m_body->installEventFilter(this);
 }
 
-QSize Window::adjusted_window_size(const QSize& body_size) {
-  return {body_size.width(), body_size.height() + m_title_bar->height()};
+void Window::on_highlighted(bool is_match) {
+  if(is_match) {
+    match(*m_title_bar, Highlighted());
+  } else {
+    unmatch(*m_title_bar, Highlighted());
+  }
 }
 
 void Window::on_screen_changed(QScreen* screen) {
