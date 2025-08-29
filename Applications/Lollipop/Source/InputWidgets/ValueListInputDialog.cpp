@@ -5,7 +5,7 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QMouseEvent>
-#include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
@@ -47,8 +47,8 @@ namespace {
     template<>
     static ValueListInputDialog::Value Template<Security>(
         const std::string& line, const UserProfile& userProfile) {
-      auto security = ParseSecurity(line, userProfile.GetMarketDatabase());
-      if(security == Security()) {
+      auto security = parse_security(line, userProfile.GetVenueDatabase());
+      if(!security) {
         BOOST_THROW_EXCEPTION(std::runtime_error("Invalid symbol specified."));
       }
       return security;

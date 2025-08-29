@@ -9,10 +9,6 @@ using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::ChartingService;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::Queries;
-using namespace Nexus::TechnicalAnalysis;
 using namespace Spire;
 using namespace std;
 
@@ -20,17 +16,17 @@ std::unique_ptr<DashboardCell> LowDashboardCellBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
   auto& security = boost::get<Security>(index);
   auto& serviceClients = userProfile.Get()->GetClients();
-  auto query = MakeDailyLowQuery(security,
-    serviceClients.GetTimeClient().GetTime(), pos_infin,
-    userProfile.Get()->GetMarketDatabase(),
+  auto query = make_daily_low_query(security,
+    serviceClients.get_time_client().GetTime(), pos_infin,
+    userProfile.Get()->GetVenueDatabase(),
     userProfile.Get()->GetTimeZoneDatabase());
-  auto baseQueue = std::make_shared<Queue<Nexus::Queries::QueryVariant>>();
+  auto baseQueue = std::make_shared<Queue<Nexus::QueryVariant>>();
   std::shared_ptr<QueueReader<Money>> queue =
     MakeConverterQueueReader(baseQueue,
-      [] (const Nexus::Queries::QueryVariant& value) {
+      [] (const Nexus::QueryVariant& value) {
         return boost::get<Money>(value);
       });
-  serviceClients.GetChartingClient().QuerySecurity(query, baseQueue);
+  serviceClients.get_charting_client().query(query, baseQueue);
   auto cell = std::make_unique<QueueDashboardCell>(queue);
   return cell;
 }

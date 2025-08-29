@@ -1,5 +1,6 @@
 #ifndef SPIRE_BBOPRICEDASHBOARDCELLBUILDER_HPP
 #define SPIRE_BBOPRICEDASHBOARDCELLBUILDER_HPP
+#include "Nexus/Definitions/Side.hpp"
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardCellBuilder.hpp"
 

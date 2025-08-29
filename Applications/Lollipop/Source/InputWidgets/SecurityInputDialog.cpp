@@ -98,7 +98,7 @@ Security SecurityInputDialog::GetSecurity(bool supportWildCards) const {
     }
     return Security();
   }
-  return ParseSecurity(source, m_userProfile->GetVenueDatabase());
+  return parse_security(source, m_userProfile->GetVenueDatabase());
 }
 
 QLineEdit& SecurityInputDialog::GetSymbolInput() {

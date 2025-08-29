@@ -129,7 +129,7 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
     timeAndSaleQuery, m_eventHandler.get_slot<TimeAndSale>(
       std::bind_front(&SecurityTechnicalsModel::OnTimeAndSale, this)));
   m_loadPromise = std::make_shared<QtPromise<void>>(QtPromise([=] {
-    return userProfile->GetClients().GetMarketDataClient().
+    return userProfile->GetClients().get_market_data_client().
       LoadSecurityTechnicals(security);
   }, LaunchPolicy::ASYNC).then([=] (const SecurityTechnicals& technicals) {
     if(technicals.m_open != Money::ZERO) {

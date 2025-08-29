@@ -1,10 +1,10 @@
-#ifndef SPIRE_ORDERIMBALANCEINDICATORMARKETSELECTIONWIDGET_HPP
-#define SPIRE_ORDERIMBALANCEINDICATORMARKETSELECTIONWIDGET_HPP
+#ifndef SPIRE_ORDERIMBALANCEINDICATORVENUESELECTIONWIDGET_HPP
+#define SPIRE_ORDERIMBALANCEINDICATORVENUESELECTIONWIDGET_HPP
 #include <unordered_map>
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
 #include <QWidget>
-#include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
 #include "Spire/UI/PersistentWindow.hpp"
 
@@ -12,37 +12,37 @@ class QCheckBox;
 
 namespace Spire {
 
-  /*! \class OrderImbalanceIndicatorMarketSelectionWidget
-      \brief Displays the list of available markets to display OrderImbalances
+  /*! \class OrderImbalanceIndicatorVenueSelectionWidget
+      \brief Displays the list of available venues to display OrderImbalances
              for.
    */
-  class OrderImbalanceIndicatorMarketSelectionWidget : public QWidget,
+  class OrderImbalanceIndicatorVenueSelectionWidget : public QWidget,
       public UI::PersistentWindow {
     public:
 
-      //! Constructs an OrderImbalanceIndicatorMarketSelectionWidget.
+      //! Constructs an OrderImbalanceIndicatorVenueSelectionWidget.
       /*!
         \param parent The parent widget.
       */
-      OrderImbalanceIndicatorMarketSelectionWidget(QWidget* parent = nullptr);
+      OrderImbalanceIndicatorVenueSelectionWidget(QWidget* parent = nullptr);
 
-      //! Constructs an OrderImbalanceIndicatorMarketSelectionWidget.
+      //! Constructs an OrderImbalanceIndicatorVenueSelectionWidget.
       /*!
-        \param marketDatabase The database of markets to display.
+        \param venueDatabase The database of venues to display.
         \param model The model to update.
         \param parent The parent widget.
       */
-      OrderImbalanceIndicatorMarketSelectionWidget(
-        const Nexus::MarketDatabase& marketDatabase,
+      OrderImbalanceIndicatorVenueSelectionWidget(
+        const Nexus::VenueDatabase& venueDatabase,
         Beam::Ref<OrderImbalanceIndicatorModel> model,
         QWidget* parent = nullptr);
 
       //! Initializes this widget.
       /*!
-        \param marketDatabase The database of markets to display.
+        \param venueDatabase The database of venues to display.
         \param model The model to update.
       */
-      void Initialize(const Nexus::MarketDatabase& marketDatabase,
+      void Initialize(const Nexus::VenueDatabase& venueDatabase,
         Beam::Ref<OrderImbalanceIndicatorModel> model);
 
       virtual std::unique_ptr<UI::WindowSettings> GetWindowSettings() const;
@@ -50,7 +50,7 @@ namespace Spire {
     private:
       OrderImbalanceIndicatorModel* m_model;
       std::vector<std::unique_ptr<QCheckBox>> m_checkBoxes;
-      std::unordered_map<QCheckBox*, Nexus::MarketCode> m_markets;
+      std::unordered_map<QCheckBox*, Nexus::Venue> m_venues;
 
       void OnCheckBoxStateChanged(int state);
   };

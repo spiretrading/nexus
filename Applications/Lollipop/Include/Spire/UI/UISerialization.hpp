@@ -114,7 +114,7 @@
 #include "Spire/Dashboard/LowDashboardCellBuilder.hpp"
 #include "Spire/Dashboard/ValueDashboardCellBuilder.hpp"
 #include "Spire/Dashboard/VolumeDashboardCellBuilder.hpp"
-#include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings.hpp"
+#include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
 #include "Spire/InputWidgets/TimeRangeInputWidgetWindowSettings.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
@@ -269,8 +269,8 @@ namespace Spire {
       "Spire.UI.CollapsibleWidgetWindowSettings"),
     (OrderImbalanceIndicatorWindowSettings,
       "Spire.OrderImbalanceIndicatorWindowSettings"),
-    (OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings,
-      "Spire.OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings"),
+    (OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings,
+      "Spire.OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings"),
     (PortfolioViewerWindowSettings, "Spire.PortfolioViewerWindowSettings"),
     (TimeAndSalesWindowSettings, "Spire.TimeAndSalesWindowSettings"),
     (TimeRangeInputWidgetWindowSettings,

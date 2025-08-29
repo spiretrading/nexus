@@ -103,12 +103,12 @@ void OrderImbalanceIndicatorProperties::Save(const UserProfile& userProfile) {
   }
 }
 
-bool OrderImbalanceIndicatorProperties::IsDisplayed(MarketCode market) const {
-  return m_filteredMarkets.find(market) == m_filteredMarkets.end();
+bool OrderImbalanceIndicatorProperties::IsDisplayed(Venue venue) const {
+  return m_filteredVenues.find(venue) == m_filteredVenues.end();
 }
 
-bool OrderImbalanceIndicatorProperties::IsFiltered(MarketCode market) const {
-  return !IsDisplayed(market);
+bool OrderImbalanceIndicatorProperties::IsFiltered(Venue venue) const {
+  return !IsDisplayed(venue);
 }
 
 Beam::Queries::Range OrderImbalanceIndicatorProperties::GetTimeRange(

@@ -6,7 +6,7 @@
 #include <QAbstractTableModel>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Spire/Async/QtPromise.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 

@@ -1,26 +1,26 @@
-#ifndef SPIRE_ORDERIMBALANCEINDICATORMARKETSELECTIONWIDGETWINDOWSETTINGS_HPP
-#define SPIRE_ORDERIMBALANCEINDICATORMARKETSELECTIONWIDGETWINDOWSETTINGS_HPP
+#ifndef SPIRE_ORDERIMBALANCEINDICATORVENUESELECTIONWIDGETWINDOWSETTINGS_HPP
+#define SPIRE_ORDERIMBALANCEINDICATORVENUESELECTIONWIDGETWINDOWSETTINGS_HPP
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 
 namespace Spire {
 
-  /*! \class OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings
+  /*! \class OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings
       \brief Stores the window settings for an
-             OrderImbalanceIndicatorMarketSelectionWidget.
+             OrderImbalanceIndicatorVenueSelectionWidget.
    */
-  class OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings :
+  class OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings :
       public UI::WindowSettings {
     public:
 
       //! Constructs an
-      //! OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings.
+      //! OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings.
       /*!
         \param widget The widget to represent.
       */
-      OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings(
-        const OrderImbalanceIndicatorMarketSelectionWidget& widget);
+      OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings(
+        const OrderImbalanceIndicatorVenueSelectionWidget& widget);
 
       virtual QWidget* Reopen(Beam::Ref<UserProfile> userProfile) const;
 
@@ -30,13 +30,13 @@ namespace Spire {
     private:
       friend struct Beam::Serialization::DataShuttle;
 
-      OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings();
+      OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings();
       template<typename Shuttler>
       void Shuttle(Shuttler& shuttle, unsigned int version);
   };
 
   template<typename Shuttler>
-  void OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings::Shuttle(
+  void OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings::Shuttle(
     Shuttler& shuttle, unsigned int version) {}
 }
 

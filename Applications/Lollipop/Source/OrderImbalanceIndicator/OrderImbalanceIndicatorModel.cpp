@@ -1,5 +1,5 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
-#include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
@@ -8,7 +8,6 @@ using namespace Beam::Queries;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
 using namespace Spire;
 using namespace Spire::UI;
 
@@ -25,16 +24,15 @@ const OrderImbalanceIndicatorProperties&
   return m_properties;
 }
 
-void OrderImbalanceIndicatorModel::SetMarketFilter(
-    MarketCode market, bool filter) {
-  if(m_properties.IsFiltered(market) == filter) {
+void OrderImbalanceIndicatorModel::SetVenueFilter(Venue venue, bool filter) {
+  if(m_properties.IsFiltered(venue) == filter) {
     return;
   }
   beginResetModel();
   if(filter) {
-    m_properties.m_filteredMarkets.insert(market);
+    m_properties.m_filteredVenues.insert(venue);
   } else {
-    m_properties.m_filteredMarkets.erase(market);
+    m_properties.m_filteredVenues.erase(venue);
   }
   m_displayedIndicies.clear();
   m_displayedOrderImbalances.clear();
@@ -74,8 +72,8 @@ QVariant OrderImbalanceIndicatorModel::data(
   if(role == Qt::TextAlignmentRole) {
     return static_cast<int>(Qt::AlignLeft | Qt::AlignVCenter);
   } else if(role == Qt::DisplayRole) {
-    if(index.column() == MARKET_COLUMN) {
-      return QVariant::fromValue(MarketToken(orderImbalance.GetIndex()));
+    if(index.column() == VENUE_COLUMN) {
+      return QVariant::fromValue(orderImbalance.GetIndex());
     } else if(index.column() == SECURITY_COLUMN) {
       return QVariant::fromValue(orderImbalance->m_security);
     } else if(index.column() == SIDE_COLUMN) {
@@ -83,10 +81,10 @@ QVariant OrderImbalanceIndicatorModel::data(
     } else if(index.column() == SIZE_COLUMN) {
       return QVariant::fromValue(orderImbalance->m_size);
     } else if(index.column() == REFERENCE_PRICE_COLUMN) {
-      return QVariant::fromValue(orderImbalance->m_referencePrice);
+      return QVariant::fromValue(orderImbalance->m_reference_price);
     } else if(index.column() == NOTIONAL_VALUE_COLUMN) {
       return QVariant::fromValue(
-        orderImbalance->m_size * orderImbalance->m_referencePrice);
+        orderImbalance->m_size * orderImbalance->m_reference_price);
     } else if(index.column() == TIMESTAMP_COLUMN) {
       return QVariant::fromValue(orderImbalance->m_timestamp);
     }
@@ -99,8 +97,8 @@ QVariant OrderImbalanceIndicatorModel::headerData(int section,
   if(role == Qt::TextAlignmentRole) {
     return static_cast<int>(Qt::AlignLeft | Qt::AlignVCenter);
   } else if(role == Qt::DisplayRole) {
-    if(section == MARKET_COLUMN) {
-      return tr("Market");
+    if(section == VENUE_COLUMN) {
+      return tr("Venue");
     } else if(section == SECURITY_COLUMN) {
       return tr("Security");
     } else if(section == SIDE_COLUMN) {
@@ -119,7 +117,7 @@ QVariant OrderImbalanceIndicatorModel::headerData(int section,
 }
 
 bool OrderImbalanceIndicatorModel::IsDisplayed(
-    const MarketOrderImbalance& orderImbalance) const {
+    const VenueOrderImbalance& orderImbalance) const {
   return m_properties.IsDisplayed(orderImbalance.GetIndex());
 }
 
@@ -138,52 +136,51 @@ void OrderImbalanceIndicatorModel::InitializePublishers() {
   m_eventHandler.emplace();
   auto timeRange = m_properties.GetTimeRange(
     m_userProfile->GetClients().get_time_client());
-  for(auto& market : m_userProfile->GetVenueDatabase().GetEntries()) {
-    auto orderImbalanceQuery = MarketWideDataQuery();
-    orderImbalanceQuery.SetIndex(market.m_code);
+  for(auto& venue : m_userProfile->GetVenueDatabase().get_entries()) {
+    auto orderImbalanceQuery = VenueMarketDataQuery();
+    orderImbalanceQuery.SetIndex(venue.m_venue);
     orderImbalanceQuery.SetRange(timeRange);
     orderImbalanceQuery.SetSnapshotLimit(SnapshotLimit::Unlimited());
-    m_userProfile->GetClients().get_market_data_client().
-      QueryOrderImbalances(orderImbalanceQuery,
-        m_eventHandler->get_slot<OrderImbalance>(
-          std::bind_front(&OrderImbalanceIndicatorModel::OnOrderImbalance, this,
-            market.m_code)));
+    m_userProfile->GetClients().get_market_data_client().query(
+      orderImbalanceQuery, m_eventHandler->get_slot<OrderImbalance>(
+        std::bind_front(&OrderImbalanceIndicatorModel::OnOrderImbalance, this,
+          venue.m_venue)));
   }
 }
 
 void OrderImbalanceIndicatorModel::OnOrderImbalance(
-    MarketCode market, const OrderImbalance& orderImbalance) {
-  auto marketOrderImbalance = MarketOrderImbalance(orderImbalance, market);
-  auto key = std::pair(market, orderImbalance.m_security);
+    Venue venue, const OrderImbalance& orderImbalance) {
+  auto venueOrderImbalance = VenueOrderImbalance(orderImbalance, venue);
+  auto key = std::pair(venue, orderImbalance.m_security);
   auto i = m_imbalanceIndicies.find(key);
   auto isReplacing = false;
   if(i != m_imbalanceIndicies.end()) {
     auto& imbalance = m_orderImbalances[i->second];
     if(orderImbalance.m_timestamp - imbalance->m_timestamp <= minutes(20)) {
-      imbalance = marketOrderImbalance;
+      imbalance = venueOrderImbalance;
       isReplacing = true;
     } else {
       m_imbalanceIndicies[key] = static_cast<int>(m_orderImbalances.size());
-      m_orderImbalances.push_back(marketOrderImbalance);
+      m_orderImbalances.push_back(venueOrderImbalance);
     }
   } else {
     m_imbalanceIndicies.insert(
       std::pair(key, static_cast<int>(m_orderImbalances.size())));
-    m_orderImbalances.push_back(marketOrderImbalance);
+    m_orderImbalances.push_back(venueOrderImbalance);
   }
   auto j = m_displayedIndicies.find(key);
   if(!isReplacing || j == m_displayedIndicies.end()) {
-    if(IsDisplayed(marketOrderImbalance)) {
+    if(IsDisplayed(venueOrderImbalance)) {
       beginInsertRows(QModelIndex(),
         static_cast<int>(m_displayedOrderImbalances.size()),
         static_cast<int>(m_displayedOrderImbalances.size()));
       m_displayedIndicies.insert(
         std::pair(key, static_cast<int>(m_displayedOrderImbalances.size())));
-      m_displayedOrderImbalances.push_back(marketOrderImbalance);
+      m_displayedOrderImbalances.push_back(venueOrderImbalance);
       endInsertRows();
     }
   } else {
-    m_displayedOrderImbalances[j->second] = marketOrderImbalance;
+    m_displayedOrderImbalances[j->second] = venueOrderImbalance;
     dataChanged(index(j->second, 0), index(j->second, COLUMN_COUNT - 1));
   }
 }

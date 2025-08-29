@@ -10,10 +10,6 @@ using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::ChartingService;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::Queries;
-using namespace Nexus::TechnicalAnalysis;
 using namespace Spire;
 using namespace std;
 
@@ -32,22 +28,22 @@ std::unique_ptr<DashboardCell> ChangeDashboardCellBuilder::Make(
   Spawn(
     [=] {
       auto& serviceClients = selfUserProfile->GetClients();
-      auto close = LoadPreviousClose(serviceClients.GetMarketDataClient(),
-        security, serviceClients.GetTimeClient().GetTime(),
-        selfUserProfile->GetMarketDatabase(),
+      auto close = load_previous_close(serviceClients.get_market_data_client(),
+        security, serviceClients.get_time_client().GetTime(),
+        selfUserProfile->GetVenueDatabase(),
         selfUserProfile->GetTimeZoneDatabase());
       if(!close.is_initialized()) {
         baseQueue->Break();
         return;
       }
       *closePrice = close->m_price;
-      auto& marketDataClient = serviceClients.GetMarketDataClient();
-      auto marketStartOfDay = MarketDateToUtc(security.GetMarket(),
-        serviceClients.GetTimeClient().GetTime(),
-        selfUserProfile->GetMarketDatabase(),
+      auto& marketDataClient = serviceClients.get_market_data_client();
+      auto venueStartOfDay = venue_date_to_utc(security.get_venue(),
+        serviceClients.get_time_client().GetTime(),
+        selfUserProfile->GetVenueDatabase(),
         selfUserProfile->GetTimeZoneDatabase());
       auto query = MakeCurrentQuery(security);
-      marketDataClient.QueryTimeAndSales(query, baseQueue);
+      marketDataClient.query(query, baseQueue);
     });
   return std::move(cell);
 }

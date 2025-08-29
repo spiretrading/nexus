@@ -44,7 +44,7 @@ namespace Spire {
       QByteArray m_tableHeaderGeometry;
       QByteArray m_tableHeaderState;
       std::shared_ptr<UI::WindowSettings> m_timeRangeSettings;
-      std::shared_ptr<UI::WindowSettings> m_marketsSettings;
+      std::shared_ptr<UI::WindowSettings> m_venuesSettings;
 
       template<typename Shuttler>
       void Shuttle(Shuttler& shuttle, unsigned int version);
@@ -58,7 +58,7 @@ namespace Spire {
     shuttle.Shuttle("table_header_geometry", m_tableHeaderGeometry);
     shuttle.Shuttle("table_header_state", m_tableHeaderState);
     shuttle.Shuttle("time_range_settings", m_timeRangeSettings);
-    shuttle.Shuttle("markets_settings", m_marketsSettings);
+    shuttle.Shuttle("venues_settings", m_venuesSettings);
   }
 }
 

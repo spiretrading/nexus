@@ -24,8 +24,8 @@ OrderImbalanceIndicatorWindowSettings::OrderImbalanceIndicatorWindowSettings(
         horizontalHeader()->saveState()),
       m_timeRangeSettings(
         window.m_ui->m_timeRangeParametersWidget->GetWindowSettings()),
-      m_marketsSettings(
-        window.m_ui->m_marketSelectionWidget->GetWindowSettings()) {}
+      m_venuesSettings(
+        window.m_ui->m_venueSelectionWidget->GetWindowSettings()) {}
 
 OrderImbalanceIndicatorWindowSettings::
     ~OrderImbalanceIndicatorWindowSettings() {}
@@ -57,6 +57,6 @@ void OrderImbalanceIndicatorWindowSettings::Apply(
     restoreState(m_tableHeaderState);
   m_timeRangeSettings->Apply(Ref(userProfile),
     Store(*window.m_ui->m_timeRangeParametersWidget));
-  m_marketsSettings->Apply(Ref(userProfile),
-    Store(*window.m_ui->m_marketSelectionWidget));
+  m_venuesSettings->Apply(Ref(userProfile),
+    Store(*window.m_ui->m_venueSelectionWidget));
 }

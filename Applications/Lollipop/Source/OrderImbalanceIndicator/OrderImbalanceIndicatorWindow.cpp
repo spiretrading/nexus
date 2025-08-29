@@ -1,7 +1,7 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindow.hpp"
 #include "Spire/InputWidgets/TimeRangeInputWidget.hpp"
-#include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorMarketSelectionWidget.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
+#include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorVenueSelectionWidget.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
@@ -68,17 +68,17 @@ void OrderImbalanceIndicatorWindow::SetModel(
     std::bind_front(&OrderImbalanceIndicatorWindow::OnTimeRangeUpdated, this));
   m_ui->m_timeRangeParametersWidget->Initialize(
     "Time Range", timeRangeInputWidget, isTimeRangeExpanded);
-  auto isMarketSelectionExpanded = [&] {
+  auto isVenueSelectionExpanded = [&] {
     if(!previousModel) {
       return false;
     } else {
-      return m_ui->m_marketSelectionWidget->IsExpanded();
+      return m_ui->m_venueSelectionWidget->IsExpanded();
     }
   }();
-  m_ui->m_marketSelectionWidget->Initialize(
-    "Markets", new OrderImbalanceIndicatorMarketSelectionWidget(
+  m_ui->m_venueSelectionWidget->Initialize(
+    "Venues", new OrderImbalanceIndicatorVenueSelectionWidget(
       m_userProfile->GetVenueDatabase(), Ref(*m_model)),
-    isMarketSelectionExpanded);
+    isVenueSelectionExpanded);
 }
 
 std::unique_ptr<WindowSettings>

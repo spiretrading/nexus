@@ -10,10 +10,6 @@ using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::ChartingService;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::Queries;
-using namespace Nexus::TechnicalAnalysis;
 using namespace Spire;
 using namespace std;
 
@@ -26,9 +22,9 @@ std::unique_ptr<DashboardCell> CloseDashboardCellBuilder::Make(
   Spawn(
     [=] {
       auto& serviceClients = selfUserProfile->GetClients();
-      auto close = LoadPreviousClose(serviceClients.GetMarketDataClient(),
-        security, serviceClients.GetTimeClient().GetTime(),
-        selfUserProfile->GetMarketDatabase(),
+      auto close = load_previous_close(serviceClients.get_market_data_client(),
+        security, serviceClients.get_time_client().GetTime(),
+        selfUserProfile->GetVenueDatabase(),
         selfUserProfile->GetTimeZoneDatabase());
       if(close.is_initialized()) {
         queue->Push(close->m_price);

@@ -23,7 +23,6 @@ using namespace Beam;
 using namespace Beam::Queries;
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
@@ -191,7 +190,7 @@ void DashboardWindow::OnRowAdded(const DashboardRow& row) {
     bboQuoteEntry.m_bboQuote = std::make_shared<StateQueue<BboQuote>>();
     bboQuoteEntry.m_bboQuote->Push(BboQuote());
     auto query = MakeCurrentQuery(*security);
-    m_userProfile->GetClients().get_market_data_client().QueryBboQuotes(
+    m_userProfile->GetClients().get_market_data_client().query(
       query, bboQuoteEntry.m_bboQuote);
   }
   ++bboQuoteEntry.m_counter;
