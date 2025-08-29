@@ -23,7 +23,6 @@
 using namespace Beam;
 using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
@@ -33,14 +32,13 @@ namespace {
       UserProfile& userProfile) {
     auto& blotter = userProfile.GetBlotterSettings().GetConsolidatedBlotter(
       entry.m_account);
-    auto orderFields = OrderFields::MakeMarketOrder(
-      blotter.GetExecutingAccount(),
-      entry.m_inventory.m_position.m_key.m_index,
-      entry.m_inventory.m_position.m_key.m_currency,
-      GetOpposite(GetSide(entry.m_inventory.m_position)),
-      userProfile.GetDestinationDatabase().GetPreferredDestination(
-      entry.m_inventory.m_position.m_key.m_index.GetMarket()).m_id,
-      Abs(entry.m_inventory.m_position.m_quantity));
+    auto orderFields = make_market_order_fields(blotter.GetExecutingAccount(),
+      entry.m_inventory.m_position.m_security,
+      entry.m_inventory.m_position.m_currency,
+      get_opposite(get_side(entry.m_inventory.m_position)),
+      userProfile.GetDestinationDatabase().get_preferred_destination(
+      entry.m_inventory.m_position.m_security.get_venue()).m_id,
+      abs(entry.m_inventory.m_position.m_quantity));
     auto orderNode = MakeOrderTaskNodeFromOrderFields(orderFields,
       userProfile);
     auto& taskEntry = blotter.GetTasksModel().Add(*orderNode);

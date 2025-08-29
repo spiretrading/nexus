@@ -20,9 +20,9 @@ PortfolioSelectionModel::PortfolioSelectionModel(
   for(size_t i = 0; i < SELECTION_TYPES_COUNT; ++i) {
     m_roots[i] = createIndex(i, 0, -1);
   }
-  m_groups = m_userProfile->GetClients().
-    GetAdministrationClient().LoadManagedTradingGroups(
-    m_userProfile->GetClients().get_service_locator_client().GetAccount());
+  m_groups = m_userProfile->GetClients().get_administration_client().
+    load_managed_trading_groups(
+      m_userProfile->GetClients().get_service_locator_client().GetAccount());
   std::sort(m_groups.begin(), m_groups.end(), &DirectoryEntry::NameComparator);
   if(properties.IsSelectingAllGroups()) {
     for(auto i = m_groups.begin(); i != m_groups.end(); ++i) {
@@ -32,20 +32,20 @@ PortfolioSelectionModel::PortfolioSelectionModel(
     m_selectedGroups = properties.GetSelectedGroups();
   }
   if(properties.IsSelectingAllCurrencies()) {
-    for(auto i = m_userProfile->GetCurrencyDatabase().GetEntries().begin();
-        i != m_userProfile->GetCurrencyDatabase().GetEntries().end(); ++i) {
+    for(auto i = m_userProfile->GetCurrencyDatabase().get_entries().begin();
+        i != m_userProfile->GetCurrencyDatabase().get_entries().end(); ++i) {
       m_selectedCurrencies.insert(i->m_id);
     }
   } else {
     m_selectedCurrencies = properties.GetSelectedCurrencies();
   }
-  if(properties.IsSelectingAllMarkets()) {
-    for(auto i = m_userProfile->GetVenueDatabase().GetEntries().begin();
-        i != m_userProfile->GetVenueDatabase().GetEntries().end(); ++i) {
-      m_selectedMarkets.insert(i->m_code);
+  if(properties.IsSelectingAllVenues()) {
+    for(auto i = m_userProfile->GetVenueDatabase().get_entries().begin();
+        i != m_userProfile->GetVenueDatabase().get_entries().end(); ++i) {
+      m_selectedVenues.insert(i->m_venue);
     }
   } else {
-    m_selectedMarkets = properties.GetSelectedMarkets();
+    m_selectedVenues = properties.GetSelectedVenues();
   }
   m_selectedSides = properties.GetSelectedSides();
 }
@@ -62,17 +62,17 @@ void PortfolioSelectionModel::UpdateProperties(
   }
   properties->GetSelectedCurrencies() = m_selectedCurrencies;
   if(m_selectedCurrencies.size() ==
-      m_userProfile->GetCurrencyDatabase().GetEntries().size()) {
+      m_userProfile->GetCurrencyDatabase().get_entries().size()) {
     properties->SetSelectingAllCurrencies(true);
   } else {
     properties->SetSelectingAllCurrencies(false);
   }
-  properties->GetSelectedMarkets() = m_selectedMarkets;
-  if(m_selectedMarkets.size() ==
-      m_userProfile->GetVenueDatabase().GetEntries().size()) {
-    properties->SetSelectingAllMarkets(true);
+  properties->GetSelectedVenues() = m_selectedVenues;
+  if(m_selectedVenues.size() ==
+      m_userProfile->GetVenueDatabase().get_entries().size()) {
+    properties->SetSelectingAllVenues(true);
   } else {
-    properties->SetSelectingAllMarkets(false);
+    properties->SetSelectingAllVenues(false);
   }
   properties->GetSelectedSides() = m_selectedSides;
 }
@@ -82,16 +82,16 @@ bool PortfolioSelectionModel::TestSelectionAcceptsEntry(
   if(m_selectedGroups.find(entry.m_group) == m_selectedGroups.end()) {
     return false;
   }
-  if(m_selectedCurrencies.find(entry.m_inventory.m_position.m_key.m_currency) ==
+  if(m_selectedCurrencies.find(entry.m_inventory.m_position.m_currency) ==
       m_selectedCurrencies.end()) {
     return false;
   }
-  if(m_selectedMarkets.find(
-      entry.m_inventory.m_position.m_key.m_index.GetMarket()) ==
-      m_selectedMarkets.end()) {
+  if(m_selectedVenues.find(
+      entry.m_inventory.m_position.m_security.get_venue()) ==
+      m_selectedVenues.end()) {
     return false;
   }
-  if(m_selectedSides.find(GetSide(entry.m_inventory.m_position)) ==
+  if(m_selectedSides.find(get_side(entry.m_inventory.m_position)) ==
       m_selectedSides.end()) {
     return false;
   }
@@ -120,13 +120,13 @@ QModelIndex PortfolioSelectionModel::index(int row, int column,
     }
   } else if(parent == m_roots[CURRENCY_SELECTION]) {
     if(column == 0 && row >= 0 && row <= static_cast<int>(
-        m_userProfile->GetCurrencyDatabase().GetEntries().size())) {
+        m_userProfile->GetCurrencyDatabase().get_entries().size())) {
       return createIndex(row, 0, CURRENCY_SELECTION);
     }
-  } else if(parent == m_roots[MARKET_SELECTION]) {
+  } else if(parent == m_roots[VENUE_SELECTION]) {
     if(column == 0 && row >= 0 && row <= static_cast<int>(
-        m_userProfile->GetVenueDatabase().GetEntries().size())) {
-      return createIndex(row, 0, MARKET_SELECTION);
+        m_userProfile->GetVenueDatabase().get_entries().size())) {
+      return createIndex(row, 0, VENUE_SELECTION);
     }
   } else if(parent == m_roots[SIDE_SELECTION]) {
     if(column == 0 && row >= 0 && row <= Side::COUNT) {
@@ -151,10 +151,10 @@ int PortfolioSelectionModel::rowCount(const QModelIndex& parent) const {
     return static_cast<int>(m_groups.size());
   } else if(parent == m_roots[CURRENCY_SELECTION]) {
     return static_cast<int>(
-      m_userProfile->GetCurrencyDatabase().GetEntries().size());
-  } else if(parent == m_roots[MARKET_SELECTION]) {
+      m_userProfile->GetCurrencyDatabase().get_entries().size());
+  } else if(parent == m_roots[VENUE_SELECTION]) {
     return static_cast<int>(
-      m_userProfile->GetVenueDatabase().GetEntries().size());
+      m_userProfile->GetVenueDatabase().get_entries().size());
   } else if(parent == m_roots[SIDE_SELECTION]) {
     return Side::COUNT + 1;
   }
@@ -182,14 +182,14 @@ QVariant PortfolioSelectionModel::data(const QModelIndex& index,
       }
     } else if(index == m_roots[CURRENCY_SELECTION]) {
       const CurrencyDatabase& currencies = m_userProfile->GetCurrencyDatabase();
-      if(m_selectedCurrencies.size() == currencies.GetEntries().size()) {
+      if(m_selectedCurrencies.size() == currencies.get_entries().size()) {
         return Qt::Checked;
       } else {
         return Qt::Unchecked;
       }
-    } else if(index == m_roots[MARKET_SELECTION]) {
-      const MarketDatabase& markets = m_userProfile->GetVenueDatabase();
-      if(m_selectedMarkets.size() == markets.GetEntries().size()) {
+    } else if(index == m_roots[VENUE_SELECTION]) {
+      auto& venues = m_userProfile->GetVenueDatabase();
+      if(m_selectedVenues.size() == venues.get_entries().size()) {
         return Qt::Checked;
       } else {
         return Qt::Unchecked;
@@ -219,9 +219,8 @@ QVariant PortfolioSelectionModel::data(const QModelIndex& index,
               return Qt::Unchecked;
             }
           },
-          [&] (const MarketDatabase::Entry& market) -> QVariant {
-            if(m_selectedMarkets.find(market.m_code) !=
-                m_selectedMarkets.end()) {
+          [&] (const VenueDatabase::Entry& venue) -> QVariant {
+            if(m_selectedVenues.find(venue.m_venue) != m_selectedVenues.end()) {
               return Qt::Checked;
             } else {
               return Qt::Unchecked;
@@ -241,8 +240,8 @@ QVariant PortfolioSelectionModel::data(const QModelIndex& index,
       return tr("Groups");
     } else if(index == m_roots[CURRENCY_SELECTION]) {
       return tr("Currency");
-    } else if(index == m_roots[MARKET_SELECTION]) {
-      return tr("Market");
+    } else if(index == m_roots[VENUE_SELECTION]) {
+      return tr("Venue");
     } else if(index == m_roots[SIDE_SELECTION]) {
       return tr("Side");
     } else {
@@ -255,8 +254,8 @@ QVariant PortfolioSelectionModel::data(const QModelIndex& index,
           [] (const CurrencyDatabase::Entry& currency) {
             return QVariant::fromValue(currency.m_id);
           },
-          [] (const MarketDatabase::Entry& market) {
-            return QString::fromStdString(market.m_displayName);
+          [] (const VenueDatabase::Entry& venue) {
+            return QString::fromStdString(venue.m_display_name);
           },
           [] (Side side) {
             return QVariant::fromValue(PositionSideToken(side));
@@ -283,8 +282,7 @@ bool PortfolioSelectionModel::setData(const QModelIndex& index,
         m_groups.size() - 1, 0, m_roots[GROUP_SELECTION]));
       return true;
     } else if(index == m_roots[CURRENCY_SELECTION]) {
-      vector<CurrencyDatabase::Entry> currencies =
-        m_userProfile->GetCurrencyDatabase().GetEntries();
+      auto currencies = m_userProfile->GetCurrencyDatabase().get_entries();
       if(state == Qt::Checked) {
         for(auto i = currencies.begin(); i != currencies.end(); ++i) {
           m_selectedCurrencies.insert(i->m_id);
@@ -293,22 +291,20 @@ bool PortfolioSelectionModel::setData(const QModelIndex& index,
         m_selectedCurrencies.clear();
       }
       dataChanged(this->index(0, 0, m_roots[CURRENCY_SELECTION]), this->index(
-        m_userProfile->GetCurrencyDatabase().GetEntries().size() - 1, 0,
+        currencies.size() - 1, 0,
         m_roots[CURRENCY_SELECTION]));
       return true;
-    } else if(index == m_roots[MARKET_SELECTION]) {
-      vector<MarketDatabase::Entry> markets =
-        m_userProfile->GetVenueDatabase().GetEntries();
+    } else if(index == m_roots[VENUE_SELECTION]) {
+      auto venues = m_userProfile->GetVenueDatabase().get_entries();
       if(state == Qt::Checked) {
-        for(auto i = markets.begin(); i != markets.end(); ++i) {
-          m_selectedMarkets.insert(i->m_code);
+        for(auto i = venues.begin(); i != venues.end(); ++i) {
+          m_selectedVenues.insert(i->m_venue);
         }
       } else {
-        m_selectedMarkets.clear();
+        m_selectedVenues.clear();
       }
-      dataChanged(this->index(0, 0, m_roots[MARKET_SELECTION]), this->index(
-        m_userProfile->GetVenueDatabase().GetEntries().size() - 1, 0,
-        m_roots[MARKET_SELECTION]));
+      dataChanged(this->index(0, 0, m_roots[VENUE_SELECTION]), this->index(
+        venues.size() - 1, 0, m_roots[VENUE_SELECTION]));
       return true;
     } else if(index == m_roots[SIDE_SELECTION]) {
       if(state == Qt::Checked) {
@@ -339,11 +335,11 @@ bool PortfolioSelectionModel::setData(const QModelIndex& index,
               m_selectedCurrencies.erase(currency.m_id);
             }
           },
-          [&] (const MarketDatabase::Entry& market) {
+          [&] (const VenueDatabase::Entry& venue) {
             if(state == Qt::Checked) {
-              m_selectedMarkets.insert(market.m_code);
+              m_selectedVenues.insert(venue.m_venue);
             } else {
-              m_selectedMarkets.erase(market.m_code);
+              m_selectedVenues.erase(venue.m_venue);
             }
           },
           [&] (Side side) {
@@ -380,14 +376,14 @@ boost::optional<PortfolioSelectionModel::SelectionVariant>
   } else if(index.parent() == m_roots[CURRENCY_SELECTION]) {
     const CurrencyDatabase& currencies = m_userProfile->GetCurrencyDatabase();
     if(index.column() == 0 && index.row() >= 0 && index.row() <
-        static_cast<int>(currencies.GetEntries().size())) {
-      return SelectionVariant{currencies.GetEntries()[index.row()]};
+        static_cast<int>(currencies.get_entries().size())) {
+      return SelectionVariant{currencies.get_entries()[index.row()]};
     }
-  } else if(index.parent() == m_roots[MARKET_SELECTION]) {
-    const MarketDatabase& markets = m_userProfile->GetVenueDatabase();
+  } else if(index.parent() == m_roots[VENUE_SELECTION]) {
+    const auto& venues = m_userProfile->GetVenueDatabase();
     if(index.column() == 0 && index.row() >= 0 && index.row() <
-        static_cast<int>(markets.GetEntries().size())) {
-      return SelectionVariant{markets.GetEntries()[index.row()]};
+        static_cast<int>(venues.get_entries().size())) {
+      return SelectionVariant{venues.get_entries()[index.row()]};
     }
   } else if(index.parent() == m_roots[SIDE_SELECTION]) {
     if(index.column() == 0 && index.row() >= 0 && index.row() <=

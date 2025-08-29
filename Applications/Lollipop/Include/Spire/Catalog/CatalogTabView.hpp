@@ -9,7 +9,7 @@
 #include <QWidget>
 #include "Spire/Catalog/Catalog.hpp"
 #include "Spire/Catalog/CatalogSearchBarModel.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class QModelIndex;
 class QSortFilterProxyModel;

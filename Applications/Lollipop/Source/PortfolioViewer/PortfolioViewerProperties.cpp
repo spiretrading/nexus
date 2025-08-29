@@ -39,7 +39,7 @@ PortfolioViewerProperties PortfolioViewerProperties::GetDefault() {
   PortfolioViewerProperties properties;
   properties.SetSelectingAllGroups(true);
   properties.SetSelectingAllCurrencies(true);
-  properties.SetSelectingAllMarkets(true);
+  properties.SetSelectingAllVenues(true);
   properties.GetSelectedSides().insert(Side::NONE);
   properties.GetSelectedSides().insert(Side::ASK);
   properties.GetSelectedSides().insert(Side::BID);
@@ -137,21 +137,21 @@ void PortfolioViewerProperties::SetSelectingAllCurrencies(bool value) {
   m_selectAllCurrencies = value;
 }
 
-const unordered_set<MarketCode>& PortfolioViewerProperties::
-    GetSelectedMarkets() const {
-  return m_selectedMarkets;
+const unordered_set<Venue>& PortfolioViewerProperties::
+    GetSelectedVenues() const {
+  return m_selectedVenues;
 }
 
-unordered_set<MarketCode>& PortfolioViewerProperties::GetSelectedMarkets() {
-  return m_selectedMarkets;
+unordered_set<Venue>& PortfolioViewerProperties::GetSelectedVenues() {
+  return m_selectedVenues;
 }
 
-bool PortfolioViewerProperties::IsSelectingAllMarkets() const {
-  return m_selectAllMarkets;
+bool PortfolioViewerProperties::IsSelectingAllVenues() const {
+  return m_selectAllVenues;
 }
 
-void PortfolioViewerProperties::SetSelectingAllMarkets(bool value) {
-  m_selectAllMarkets = value;
+void PortfolioViewerProperties::SetSelectingAllVenues(bool value) {
+  m_selectAllVenues = value;
 }
 
 const unordered_set<Side>& PortfolioViewerProperties::GetSelectedSides() const {
