@@ -73,24 +73,28 @@ ca_equities:
   cse:
 
     # The tables are structured as follows:
-    #                  Active, Passive
-    # >= $1.00            X       X
-    #  < $1.00            X       X
-    # Dark                X       X
+    #                           Active, Passive
+    # >= $1.00                     X       X
+    #  < $1.00                     X       X
+    # Dark >= $1.00                X       X
+    # Dark  < $1.00                X       X
     fee_table:
       [[0.0012, -0.0008],
        [0.0003, -0.0001],
-       [0.0012, -0.0006]]
+       [0.0012, -0.0006],
+       [0.0003, -0.0001]]
 
     interlisted_fee_table:
       [[0.0025, -0.0021],
        [0.0003, -0.0001],
-       [0.0025, -0.0016]]
+       [0.0025, -0.0016],
+       [0.0003, -0.0001]]
 
     etf_fee_table:
       [[0.0016, -0.0012],
        [0.0003, -0.0001],
-       [0.0016, -0.0006]]
+       [0.0016, -0.0006],
+       [0.0003, -0.0001]]
 
     # The tables are structured as follows:
     #                  Active, Passive
