@@ -343,7 +343,18 @@ namespace Nexus {
         return CalculateFee(feeTable.m_chicFeeTable, order.GetInfo().m_fields,
           executionReport);
       } else if(lastMarket == DefaultMarkets::CSE()) {
-        return CalculateFee(feeTable.m_cseFeeTable, executionReport);
+        auto& security = order.GetInfo().m_fields.m_security;
+        auto listing = [&] {
+          if(Beam::Contains(feeTable.m_etfs, security)) {
+            return CseFeeTable::CseListing::ETF;
+          } else if(Beam::Contains(feeTable.m_interlisted, security)) {
+            return CseFeeTable::CseListing::INTERLISTED;
+          } else if(security.GetMarket() == DefaultMarkets::CSE()) {
+            return CseFeeTable::CseListing::CSE_LISTED;
+          }
+          return CseFeeTable::CseListing::DEFAULT;
+        }();
+        return CalculateFee(feeTable.m_cseFeeTable, listing, executionReport);
       } else if(lastMarket == DefaultMarkets::CSE2()) {
         return CalculateFee(
           feeTable.m_cse2FeeTable, order.GetInfo().m_fields, executionReport);
