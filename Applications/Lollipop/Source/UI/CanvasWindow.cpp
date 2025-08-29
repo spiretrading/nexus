@@ -626,7 +626,7 @@ void CanvasWindow::OnSaveToRegistryAction() {
     newEntry = std::make_unique<RegistryCatalogEntry>(entryName,
       ":/icons/scroll2.png", "", saveNode,
       CatalogSettings::GetCatalogLibraryRegistryPath(),
-      m_userProfile->GetClients().GetRegistryClient());
+      m_userProfile->GetClients().get_registry_client());
   } else {
     if(oldEntry->IsReadOnly()) {
       QMessageBox::warning(nullptr, QObject::tr("Warning"),

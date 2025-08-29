@@ -8,10 +8,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::ChartingService;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::Queries;
-using namespace Nexus::TechnicalAnalysis;
 using namespace Spire;
 
 namespace {
@@ -125,12 +121,12 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
   }
   auto timeAndSaleQuery = MakeRealTimeQuery(security);
   timeAndSaleQuery.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-  m_userProfile->GetClients().get_market_data_client().QueryTimeAndSales(
+  m_userProfile->GetClients().get_market_data_client().query(
     timeAndSaleQuery, m_eventHandler.get_slot<TimeAndSale>(
       std::bind_front(&SecurityTechnicalsModel::OnTimeAndSale, this)));
   m_loadPromise = std::make_shared<QtPromise<void>>(QtPromise([=] {
-    return userProfile->GetClients().get_market_data_client().
-      LoadSecurityTechnicals(security);
+    return userProfile->GetClients().get_market_data_client().load_technicals(
+      security);
   }, LaunchPolicy::ASYNC).then([=] (const SecurityTechnicals& technicals) {
     if(technicals.m_open != Money::ZERO) {
       m_open = technicals.m_open;
