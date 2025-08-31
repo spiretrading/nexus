@@ -56,7 +56,7 @@ void QuantitySpinBox::AdjustIncrement(KeyModifiers modifier) {
   if(!m_security.is_initialized()) {
     return;
   }
-  auto quantityIncrement = m_userProfile->GetInteractionProperties().Get(
+  auto quantityIncrement = m_userProfile->GetInteractionProperties().get(
     *m_security).m_quantityIncrements[static_cast<int>(modifier)];
   if(quantityIncrement != singleStep()) {
     setSingleStep(static_cast<int>(quantityIncrement));

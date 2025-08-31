@@ -32,10 +32,13 @@ vector<unique_ptr<LinkSecurityContextAction>>
   std::sort(linkActions.begin(), linkActions.end(),
     [&] (const unique_ptr<LinkSecurityContextAction>& lhs,
         const unique_ptr<LinkSecurityContextAction>& rhs) -> bool {
-      return ToString(lhs->GetSecurityContext().GetDisplayedSecurity(),
-        userProfile.GetMarketDatabase()) <
-        ToString(rhs->GetSecurityContext().GetDisplayedSecurity(),
-        userProfile.GetMarketDatabase());
+      auto lss = std::stringstream();
+      lss << userProfile.GetVenueDatabase() <<
+        lhs->GetSecurityContext().GetDisplayedSecurity();
+      auto rss = std::stringstream();
+      rss << userProfile.GetVenueDatabase() <<
+        rhs->GetSecurityContext().GetDisplayedSecurity();
+      return lss.str() < rss.str();
     });
   return linkActions;
 }
