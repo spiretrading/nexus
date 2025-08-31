@@ -12,6 +12,7 @@ namespace Nexus {
         auto entry = DestinationDatabase::Entry();
         entry.m_id = "MOE";
         entry.m_description = "Manual Order Entry";
+        entry.m_markets.push_back("NEOE");
         entry.m_markets.push_back("XASE");
         entry.m_markets.push_back("XASX");
         entry.m_markets.push_back("XCNQ");
@@ -245,6 +246,7 @@ namespace Nexus {
         entry.m_markets.push_back("XTKS");
         database.Add(entry);
       }
+      database.SetPreferredDesintation("NEOE", "NEOE");
       database.SetPreferredDesintation("XASE", "NASDAQ");
       database.SetPreferredDesintation("XASX", "ASXT");
       database.SetPreferredDesintation("XCNQ", "CSE");
