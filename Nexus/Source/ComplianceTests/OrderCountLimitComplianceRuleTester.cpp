@@ -7,9 +7,7 @@ using namespace Nexus::DefaultVenues;
 
 TEST_SUITE("OrderCountLimitComplianceRule") {
   TEST_CASE("submit") {
-    auto parameters = std::vector<ComplianceParameter>();
-    parameters.emplace_back("count", Quantity(2));
-    auto rule = OrderCountLimitComplianceRule(parameters);
+    auto rule = OrderCountLimitComplianceRule(2);
     auto info1 = OrderInfo();
     info1.m_id = 1;
     info1.m_fields.m_security = Security("FOO", TSX);
@@ -41,9 +39,7 @@ TEST_SUITE("OrderCountLimitComplianceRule") {
   }
 
   TEST_CASE("add_submit") {
-    auto parameters = std::vector<ComplianceParameter>();
-    parameters.emplace_back("count", Quantity(2));
-    auto rule = OrderCountLimitComplianceRule(parameters);
+    auto rule = OrderCountLimitComplianceRule(2);
     auto info1 = OrderInfo();
     info1.m_id = 1;
     info1.m_fields.m_security = Security("BAZ", TSX);

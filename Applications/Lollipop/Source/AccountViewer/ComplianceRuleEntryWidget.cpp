@@ -1,5 +1,4 @@
 #include "Spire/AccountViewer/ComplianceRuleEntryWidget.hpp"
-#include "Nexus/Compliance/PerAccountComplianceRule.hpp"
 #include "Spire/AccountViewer/ComplianceModel.hpp"
 #include "Spire/AccountViewer/ComplianceValueWidget.hpp"
 #include "Spire/UI/ReadOnlyCheckBox.hpp"
@@ -10,7 +9,6 @@ using namespace Beam;
 using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::Compliance;
 using namespace Spire;
 using namespace std;
 
@@ -28,31 +26,33 @@ ComplianceRuleEntryWidget::ComplianceRuleEntryWidget(
       m_model{std::move(model)} {
   m_ui->setupUi(this);
   m_ui->m_parametersWidget->hide();
-  if(m_entry.GetSchema().GetName() == PerAccountComplianceRule::GetName()) {
-    for(auto& parameter : m_entry.GetSchema().GetParameters()) {
+  if(m_entry.get_schema().get_name() == PerAccountComplianceRule::GetName()) {
+    for(auto& parameter : m_entry.get_schema().get_parameters()) {
       if(parameter.m_name == "name") {
         m_ruleName = boost::get<string>(parameter.m_value);
         break;
       }
     }
   } else {
-    m_ruleName = entry.GetSchema().GetName();
+    m_ruleName = entry.get_schema().get_name();
   }
   m_ui->m_ruleLabel->setText(QString::fromStdString(m_ruleName));
-  if(m_entry.GetDirectoryEntry().m_type == DirectoryEntry::Type::DIRECTORY) {
+  if(m_entry.get_directory_entry().m_type == DirectoryEntry::Type::DIRECTORY) {
     m_ui->m_stateComboBox->addItem(tr("Active Per Account"));
     m_ui->m_stateComboBox->addItem(tr("Active Consolidated"));
     m_ui->m_stateComboBox->addItem(tr("Passive Per Account"));
     m_ui->m_stateComboBox->addItem(tr("Passive Consolidated"));
     m_ui->m_stateComboBox->addItem(tr("Disabled"));
-    if(entry.GetState() == ComplianceRuleEntry::State::ACTIVE) {
-      if(m_entry.GetSchema().GetName() == PerAccountComplianceRule::GetName()) {
+    if(entry.get_state() == ComplianceRuleEntry::State::ACTIVE) {
+      if(m_entry.get_schema().get_name() ==
+          PerAccountComplianceRule::GetName()) {
         m_ui->m_stateComboBox->setCurrentIndex(0);
       } else {
         m_ui->m_stateComboBox->setCurrentIndex(1);
       }
-    } else if(entry.GetState() == ComplianceRuleEntry::State::PASSIVE) {
-      if(m_entry.GetSchema().GetName() == PerAccountComplianceRule::GetName()) {
+    } else if(entry.get_state() == ComplianceRuleEntry::State::PASSIVE) {
+      if(m_entry.get_schema().get_name() ==
+          PerAccountComplianceRule::GetName()) {
         m_ui->m_stateComboBox->setCurrentIndex(2);
       } else {
         m_ui->m_stateComboBox->setCurrentIndex(3);
@@ -64,9 +64,9 @@ ComplianceRuleEntryWidget::ComplianceRuleEntryWidget(
     m_ui->m_stateComboBox->addItem(tr("Active"));
     m_ui->m_stateComboBox->addItem(tr("Passive"));
     m_ui->m_stateComboBox->addItem(tr("Disabled"));
-    if(entry.GetState() == ComplianceRuleEntry::State::ACTIVE) {
+    if(entry.get_state() == ComplianceRuleEntry::State::ACTIVE) {
       m_ui->m_stateComboBox->setCurrentIndex(0);
-    } else if(entry.GetState() == ComplianceRuleEntry::State::PASSIVE) {
+    } else if(entry.get_state() == ComplianceRuleEntry::State::PASSIVE) {
       m_ui->m_stateComboBox->setCurrentIndex(1);
     } else {
       m_ui->m_stateComboBox->setCurrentIndex(2);
@@ -98,7 +98,7 @@ bool ComplianceRuleEntryWidget::IsSelected() const {
 void ComplianceRuleEntryWidget::Commit() {
   auto state =
     [&] {
-      if(m_entry.GetDirectoryEntry().m_type ==
+      if(m_entry.get_directory_entry().m_type ==
           DirectoryEntry::Type::DIRECTORY) {
         if(m_ui->m_stateComboBox->currentIndex() == 0 ||
             m_ui->m_stateComboBox->currentIndex() == 1) {
@@ -121,7 +121,7 @@ void ComplianceRuleEntryWidget::Commit() {
     }();
   auto isConsolidated =
     [&] {
-      if(m_entry.GetDirectoryEntry().m_type ==
+      if(m_entry.get_directory_entry().m_type ==
           DirectoryEntry::Type::DIRECTORY) {
         if(m_ui->m_stateComboBox->currentIndex() == 1 ||
             m_ui->m_stateComboBox->currentIndex() == 3 ||
@@ -135,7 +135,7 @@ void ComplianceRuleEntryWidget::Commit() {
       }
     }();
   auto hasUpdate = false;
-  if(state != m_entry.GetState()) {
+  if(state != m_entry.get_state()) {
     hasUpdate = true;
   }
   vector<ComplianceParameter> parameters;
@@ -148,12 +148,12 @@ void ComplianceRuleEntryWidget::Commit() {
   }
   if(isConsolidated) {
     ComplianceRuleSchema schema{m_ruleName, std::move(parameters)};
-    if(m_entry.GetSchema().GetName() == PerAccountComplianceRule::GetName() ||
-        schema.GetParameters() != m_entry.GetSchema().GetParameters()) {
+    if(m_entry.get_schema().get_name() == PerAccountComplianceRule::GetName() ||
+        schema.get_parameters() != m_entry.get_schema().get_parameters()) {
       hasUpdate = true;
     }
-    m_entry = ComplianceRuleEntry{m_entry.GetId(), m_entry.GetDirectoryEntry(),
-      state, std::move(schema)};
+    m_entry = ComplianceRuleEntry{m_entry.get_id(),
+      m_entry.get_directory_entry(), state, std::move(schema)};
   } else {
     for(auto& parameter : parameters) {
       parameter.m_name = "\\" + parameter.m_name;
@@ -161,12 +161,12 @@ void ComplianceRuleEntryWidget::Commit() {
     parameters.emplace_back("name", m_ruleName);
     ComplianceRuleSchema schema{PerAccountComplianceRule::GetName(),
       std::move(parameters)};
-    if(m_entry.GetSchema().GetName() != PerAccountComplianceRule::GetName() ||
-        schema.GetParameters() != m_entry.GetSchema().GetParameters()) {
+    if(m_entry.get_schema().get_name() != PerAccountComplianceRule::GetName() ||
+        schema.get_parameters() != m_entry.get_schema().get_parameters()) {
       hasUpdate = true;
     }
-    m_entry = ComplianceRuleEntry{m_entry.GetId(), m_entry.GetDirectoryEntry(),
-      state, std::move(schema)};
+    m_entry = ComplianceRuleEntry{m_entry.get_id(),
+      m_entry.get_directory_entry(), state, std::move(schema)};
   }
   if(hasUpdate) {
     m_model->Update(m_entry);
@@ -176,7 +176,7 @@ void ComplianceRuleEntryWidget::Commit() {
 void ComplianceRuleEntryWidget::SetupParameters() {
   boost::optional<ComplianceRuleSchema> schema;
   for(auto& modelSchema : m_model->GetSchemas()) {
-    if(modelSchema.GetName() == m_ruleName) {
+    if(modelSchema.get_name() == m_ruleName) {
       schema = modelSchema;
       break;
     }
@@ -184,21 +184,21 @@ void ComplianceRuleEntryWidget::SetupParameters() {
   if(!schema.is_initialized()) {
     return;
   }
-  for(auto& parameter : m_entry.GetSchema().GetParameters()) {
-    if(m_entry.GetSchema().GetName() == PerAccountComplianceRule::GetName() &&
+  for(auto& parameter : m_entry.get_schema().get_parameters()) {
+    if(m_entry.get_schema().get_name() == PerAccountComplianceRule::GetName() &&
         parameter.m_name == "name") {
       continue;
     }
     auto name =
       [&] () -> string {
-        if(m_entry.GetSchema().GetName() ==
+        if(m_entry.get_schema().get_name() ==
             PerAccountComplianceRule::GetName()) {
           return parameter.m_name.substr(1);
         }
         return parameter.m_name;
       }();
     boost::optional<ComplianceValue> parameterValue;
-    for(auto& schemaParameter : schema->GetParameters()) {
+    for(auto& schemaParameter : schema->get_parameters()) {
       if(schemaParameter.m_name == name) {
         parameterValue = schemaParameter.m_value;
         break;
@@ -224,10 +224,11 @@ void ComplianceRuleEntryWidget::OnTableCollapsed() {
   m_ui->m_parametersWidget->hide();
 }
 
-void ComplianceRuleEntryWidget::OnEntryIdChanged(ComplianceRuleId previousId,
-    ComplianceRuleId newId) {
-  if(!m_idUpdated && previousId == m_entry.GetId()) {
+void ComplianceRuleEntryWidget::OnEntryIdChanged(
+    ComplianceRuleEntry::Id previousId, ComplianceRuleEntry::Id newId) {
+  if(!m_idUpdated && previousId == m_entry.get_id()) {
     m_idUpdated = true;
-    m_entry.SetId(newId);
+    m_entry = ComplianceRuleEntry(newId, m_entry.get_directory_entry(),
+      m_entry.get_state(), m_entry.get_schema());
   }
 }

@@ -48,7 +48,9 @@ void ComplianceModel::Commit() {
       newEntry.get_schema());
     for(auto& previousEntry : m_entries) {
       if(previousEntry.get_id() == newEntry.get_id()) {
-        previousEntry.SetId(id);
+        previousEntry = ComplianceRuleEntry(id,
+          previousEntry.get_directory_entry(), previousEntry.get_state(),
+          previousEntry.get_schema());
         m_complianceRuleEntryIdUpdatedSignal(newEntry.get_id(), id);
       }
     }

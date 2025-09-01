@@ -9,6 +9,7 @@
 #include <boost/throw_exception.hpp>
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
+#include "Nexus/Compliance/ComplianceRuleSchema.hpp"
 
 namespace Nexus {
 
@@ -62,6 +63,19 @@ namespace Nexus {
     boost::posix_time::time_duration, Money, TimeClient&&) ->
       OpposingOrderSubmissionComplianceRule<
         std::remove_reference_t<TimeClient>>;
+
+  /**
+   * Returns a ComplianceRuleSchema representing an
+   * OpposingOrderSubmissionComplianceRule.
+   */
+  inline ComplianceRuleSchema
+      make_opposing_order_submission_compliance_rule_schema() {
+    auto parameters = std::vector<ComplianceParameter>();
+    parameters.emplace_back("timeout", Quantity(0));
+    parameters.emplace_back("offset", Money::ZERO);
+    auto schema = ComplianceRuleSchema("opposing_order_submission", parameters);
+    return schema;
+  }
 
   template<typename C>
   template<Beam::Initializes<C> CF>

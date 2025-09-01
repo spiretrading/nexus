@@ -15,10 +15,9 @@ namespace Nexus {
 
       /**
        * Constructs an OrderCountLimitComplianceRule.
-       * @param parameters The list of parameters used by this rule.
+       * @param limit_count The maximum number of open orders at a time.
        */
-      explicit OrderCountLimitComplianceRule(
-        const std::vector<ComplianceParameter>& parameters);
+      explicit OrderCountLimitComplianceRule(int limit_count);
 
       void submit(const std::shared_ptr<Order>& order) override;
       void add(const std::shared_ptr<Order>& order) override;
@@ -38,20 +37,13 @@ namespace Nexus {
   inline ComplianceRuleSchema make_order_count_limit_compliance_rule_schema() {
     auto parameters = std::vector<ComplianceParameter>();
     parameters.emplace_back("count", Quantity(0));
-    return ComplianceRuleSchema("orders_count_limit", parameters);
+    return ComplianceRuleSchema("order_count_limit", parameters);
   }
 
   inline OrderCountLimitComplianceRule::OrderCountLimitComplianceRule(
-      const std::vector<ComplianceParameter>& parameters)
-      : m_limit_count(0),
-        m_current_count(0) {
-    for(auto& parameter : parameters) {
-      if(parameter.m_name == "count") {
-        m_limit_count =
-          static_cast<int>(boost::get<Quantity>(parameter.m_value));
-      }
-    }
-  }
+    int limit_count)
+    : m_limit_count(limit_count),
+      m_current_count(0) {}
 
   inline void OrderCountLimitComplianceRule::submit(
       const std::shared_ptr<Order>& order) {

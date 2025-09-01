@@ -37,14 +37,14 @@ namespace Nexus {
 
       /**
        * Constructs a BuyingPowerComplianceRule.
-       * @param parameters The list of buying power parameters.
+       * @param buying_power The total buying power available.
+       * @param currency The buying power's currency.
        * @param exchange_rates Used to convert currencies.
        * @param market_data_client Initializes the MarketDataClient used to
        *        price Orders.
        */
       template<Beam::Initializes<C> CF>
-      BuyingPowerComplianceRule(
-        const std::vector<ComplianceParameter>& parameters,
+      BuyingPowerComplianceRule(Money buying_power, CurrencyId currency,
         const ExchangeRateTable& exchange_rates, CF&& market_data_client);
 
       void submit(const std::shared_ptr<Order>& order) override;
@@ -52,8 +52,8 @@ namespace Nexus {
       void add(const std::shared_ptr<Order>& order) override;
 
     private:
-      CurrencyId m_currency;
       Money m_buying_power;
+      CurrencyId m_currency;
       ExchangeRateTable m_exchange_rates;
       Beam::GetOptionalLocalPtr<C> m_market_data_client;
       Beam::Threading::Sync<BuyingPowerModel> m_buying_power_model;
@@ -67,8 +67,8 @@ namespace Nexus {
   };
 
   template<typename MarketDataClient>
-  BuyingPowerComplianceRule(const std::vector<ComplianceParameter>&,
-    const ExchangeRateTable&, MarketDataClient&&) ->
+  BuyingPowerComplianceRule(
+    Money, CurrencyId, const ExchangeRateTable&, MarketDataClient&&) ->
       BuyingPowerComplianceRule<std::remove_reference_t<MarketDataClient>>;
 
   /**
@@ -76,25 +76,19 @@ namespace Nexus {
    */
   inline ComplianceRuleSchema make_buying_power_compliance_rule_schema() {
     auto parameters = std::vector<ComplianceParameter>();
-    parameters.emplace_back("currency", DefaultCurrencies::USD);
     parameters.emplace_back("buying_power", Money::ZERO);
+    parameters.emplace_back("currency", DefaultCurrencies::USD);
     return ComplianceRuleSchema("buying_power", std::move(parameters));
   }
 
   template<IsMarketDataClient C>
   template<Beam::Initializes<C> CF>
-  BuyingPowerComplianceRule<C>::BuyingPowerComplianceRule(
-      const std::vector<ComplianceParameter>& parameters,
-      const ExchangeRateTable& exchange_rates, CF&& market_data_client)
-      : m_market_data_client(std::forward<CF>(market_data_client)) {
-    for(auto& parameter : parameters) {
-      if(parameter.m_name == "currency") {
-        m_currency = boost::get<CurrencyId>(parameter.m_value);
-      } else if(parameter.m_name == "buying_power") {
-        m_buying_power = boost::get<Money>(parameter.m_value);
-      }
-    }
-  }
+  BuyingPowerComplianceRule<C>::BuyingPowerComplianceRule(Money buying_power,
+    CurrencyId currency, const ExchangeRateTable& exchange_rates,
+    CF&& market_data_client)
+    : m_buying_power(buying_power),
+      m_currency(currency),
+      m_market_data_client(std::forward<CF>(market_data_client)) {}
 
   template<IsMarketDataClient C>
   void BuyingPowerComplianceRule<C>::submit(

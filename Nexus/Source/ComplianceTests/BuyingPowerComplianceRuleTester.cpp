@@ -36,12 +36,9 @@ namespace {
 TEST_SUITE("BuyingPowerComplianceRule") {
   TEST_CASE("submit_within_buying_power") {
     auto fixture = Fixture();
-    auto parameters = std::vector<ComplianceParameter>();
-    parameters.emplace_back("currency", USD);
-    parameters.emplace_back("buying_power", 1000 * Money::ONE);
     auto exchange_rates = ExchangeRateTable();
-    auto rule = BuyingPowerComplianceRule(parameters, exchange_rates,
-      fixture.m_market_data_environment.get_registry_client());
+    auto rule = BuyingPowerComplianceRule(1000 * Money::ONE, USD,
+      exchange_rates, fixture.m_market_data_environment.get_registry_client());
     auto security = Security("TST", NYSE);
     fixture.m_market_data_environment.update_bbo(security, Money::ONE);
     auto fields = make_limit_order_fields(
@@ -55,11 +52,8 @@ TEST_SUITE("BuyingPowerComplianceRule") {
 
   TEST_CASE("submit_exceeds_buying_power") {
     auto fixture = Fixture();
-    auto parameters = std::vector<ComplianceParameter>();
-    parameters.emplace_back("currency", USD);
-    parameters.emplace_back("buying_power", 100 * Money::ONE);
     auto exchange_rates = ExchangeRateTable();
-    auto rule = BuyingPowerComplianceRule(parameters, exchange_rates,
+    auto rule = BuyingPowerComplianceRule(100 * Money::ONE, USD, exchange_rates,
       fixture.m_market_data_environment.get_registry_client());
     auto security = Security("TST", NYSE);
     fixture.m_market_data_environment.update_bbo(security, Money::ONE);
