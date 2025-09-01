@@ -156,6 +156,8 @@ destinations:
 preferred_destinations:
   - market: ARCX
     destination: NASDAQ
+  - market: NEOE
+    destination: NEOE
   - market: XASE
     destination: NASDAQ
   - market: XASX
@@ -182,6 +184,7 @@ manual_order_entry:
   description: Manual Order Entry
   markets:
     - ARCX
+    - NEOE
     - XASE
     - XASX
     - XCNQ
