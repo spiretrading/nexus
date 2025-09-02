@@ -1,11 +1,13 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
 #include "ui_TimeAndSalesWindow.h"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::UI;
 using namespace std;
 
 TimeAndSalesWindowSettings::TimeAndSalesWindowSettings() {}
@@ -26,9 +28,7 @@ TimeAndSalesWindowSettings::TimeAndSalesWindowSettings(
   if(m_security == Security()) {
     m_name = "Time And Sales";
   } else {
-    auto ss = std::stringstream();
-    ss << userProfile->GetVenueDatabase() << m_security;
-    m_name = "Time And Sales - " + ss.str();
+    m_name = "Time And Sales - " + displayText(m_security).toStdString();
   }
 }
 

@@ -148,9 +148,7 @@ void BookViewWindow::SetProperties(const BookViewProperties& properties) {
 
 void BookViewWindow::DisplaySecurity(const Security& security) {
   m_security = security;
-  auto ss = std::stringstream();
-  ss << m_userProfile->GetVenueDatabase() << security;
-  setWindowTitle(QString::fromStdString(ss.str()) + tr(" - Book View"));
+  setWindowTitle(displayText(security) + tr(" - Book View"));
   m_ui->m_askPanel->DisplaySecurity(m_security);
   m_ui->m_bidPanel->DisplaySecurity(m_security);
   SetupSecurityTechnicalsModel();

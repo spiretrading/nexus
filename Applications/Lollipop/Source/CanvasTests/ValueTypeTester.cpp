@@ -65,7 +65,7 @@ TEST_SUITE("ValueType") {
       typeid(Quantity));
     REQUIRE(MoneyType::GetInstance().GetNativeType() == typeid(Money));
     REQUIRE(OrderReferenceType::GetInstance().GetNativeType() ==
-      typeid(const Order*));
+      typeid(std::shared_ptr<Order>));
     REQUIRE(OrderStatusType::GetInstance().GetNativeType() ==
       typeid(OrderStatus));
     REQUIRE(OrderTypeType::GetInstance().GetNativeType() ==

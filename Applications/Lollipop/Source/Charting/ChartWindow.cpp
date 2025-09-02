@@ -10,6 +10,7 @@
 #include "Spire/Charting/ChartWindowSettings.hpp"
 #include "Spire/Charting/SecurityTimePriceChartPlotSeries.hpp"
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
+#include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/LinkSecurityContextAction.hpp"
 #include "Spire/UI/UserProfile.hpp"
 #include "ui_ChartWindow.h"
@@ -128,9 +129,7 @@ void ChartWindow::DisplaySecurity(const Security& security) {
   if(m_security == Security()) {
     setWindowTitle(tr("Chart - Spire"));
   } else {
-    auto ss = std::stringstream();
-    ss << m_userProfile->GetVenueDatabase() << m_security;
-    setWindowTitle(QString::fromStdString(ss.str()) + tr(" - Chart"));
+    setWindowTitle(displayText(m_security) + tr(" - Chart"));
     OnIntervalChanged(
       m_intervalComboBox->GetType(), m_intervalComboBox->GetValue());
   }

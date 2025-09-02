@@ -41,8 +41,7 @@ const Security& SecurityInputWidget::GetSecurity() const {
 
 void SecurityInputWidget::SetSecurity(Security security) {
   m_security = std::move(security);
-  m_lineEdit->setText(QString::fromStdString(ToWildCardString(security,
-    m_userProfile->GetVenueDatabase(), m_userProfile->GetCountryDatabase())));
+  m_lineEdit->setText(displayText(m_security));
   m_securityUpdatedSignal(m_security);
 }
 

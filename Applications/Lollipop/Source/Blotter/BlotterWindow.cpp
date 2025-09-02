@@ -426,10 +426,8 @@ void BlotterWindow::OnPositionsAdded(
       auto security = JsonObject();
       auto& position = positions[i];
       security["symbol"] = position.m_key.m_security.get_symbol();
-      auto ss = std::stringstream();
-      ss << m_userProfile->GetVenueDatabase() <<
-        position.m_key.m_security.get_venue();
-      security["venue"] = ss.str();
+      security["venue"] =
+        displayText(position.m_key.m_security.get_venue()).toStdString();
       return security;
     }();
   }

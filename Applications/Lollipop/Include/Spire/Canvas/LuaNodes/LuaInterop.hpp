@@ -7,6 +7,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/Canvas/Records/Record.hpp"
 #include "Spire/Canvas/LuaNodes/LuaReactor.hpp"
 #include "Spire/Canvas/LuaNodes/NativeLuaReactorParameter.hpp"
@@ -134,6 +135,23 @@ namespace Spire {
 
       // TODO
       return Spire::Record();
+    }
+  };
+
+  template<>
+  struct PopLuaValue<Nexus::Venue> {
+    Nexus::Venue operator ()(lua_State& state) const {
+
+      // TODO
+      return Nexus::Venue();
+    }
+  };
+
+  template<>
+  struct PushLuaValue<Nexus::Venue> {
+    void operator ()(lua_State& state, Nexus::Venue value) const {
+
+      // TODO
     }
   };
 

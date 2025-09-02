@@ -1,11 +1,13 @@
 #include "Spire/Utilities/SecurityInfoModel.hpp"
 #include <boost/algorithm/string/case_conv.hpp>
+#include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::UI;
 
 SecurityInfoModel::SecurityInfoModel(Ref<UserProfile> userProfile)
   : m_userProfile(userProfile.Get()) {}
@@ -44,9 +46,7 @@ QVariant SecurityInfoModel::data(const QModelIndex& index, int role) const {
   auto& item = m_securityInfoItems[index.row()];
   if(role == Qt::DisplayRole) {
     if(index.column() == SECURITY_COLUMN) {
-      auto ss = std::stringstream();
-      ss << m_userProfile->GetVenueDatabase() << item.m_security;
-      return QString::fromStdString(ss.str());
+      return displayText(item.m_security);
     } else if(index.column() == NAME_COLUMN) {
       return QString::fromStdString(item.m_name);
     } else if(index.column() == SECTOR_COLUMN) {

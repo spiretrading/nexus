@@ -2,6 +2,7 @@
 #define NEXUS_MAP_COMPLIANCE_RULE_HPP
 #include <functional>
 #include <Beam/Collections/SynchronizedMap.hpp>
+#include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
@@ -57,13 +58,22 @@ namespace Nexus {
     K) -> MapComplianceRule<std::invoke_result_t<K, const Order&>>;
 
   /**
+   * Defines a MapComplianceRule that applies on an account by account basis.
+   */
+  using PerAccountComplianceRule =
+    MapComplianceRule<Beam::ServiceLocator::DirectoryEntry>;
+
+  /** The name of a PerAccountComplianceRuleSchema. */
+  inline const auto PER_ACCOUNT_COMPLIANCE_RULE_NAME = "per_account";
+
+  /**
    * Returns a MapComplianceRule that applies per Security.
    * @param schema The ComplianceRuleSchema to apply.
    * @param rule_builder Returns the compliance rule.
    */
   inline std::unique_ptr<MapComplianceRule<Security>>
       make_map_security_compliance_rule(ComplianceRuleSchema schema,
-      MapComplianceRule<Security>::ComplianceRuleBuilder rule_builder) {
+        MapComplianceRule<Security>::ComplianceRuleBuilder rule_builder) {
     return std::make_unique<MapComplianceRule<Security>>(
       std::move(schema), std::move(rule_builder), [] (const auto& order) {
         return order.get_info().m_fields.m_security;

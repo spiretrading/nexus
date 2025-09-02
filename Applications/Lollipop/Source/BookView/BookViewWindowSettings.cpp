@@ -1,5 +1,6 @@
 #include "Spire/BookView/BookViewWindowSettings.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
+#include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
 #include "ui_BookViewPanel.h"
 #include "ui_BookViewWindow.h"
@@ -8,6 +9,7 @@ using namespace Beam;
 using namespace Beam::Serialization;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::UI;
 using namespace std;
 
 BookViewWindowSettings::BookViewWindowSettings() {}
@@ -24,10 +26,8 @@ BookViewWindowSettings::BookViewWindowSettings(const BookViewWindow& window,
         horizontalHeader()->saveState()),
       m_askPanelHeader(window.m_ui->m_askPanel->m_ui->m_bookView->
         horizontalHeader()->saveState()) {
-  if(m_security != Security()) {
-    auto ss = std::stringstream();
-    ss << userProfile->GetVenueDatabase() << m_security;
-    m_name = "Book View - " + ss.str();
+  if(m_security) {
+    m_name = "Book View - " + displayText(m_security).toStdString();
   } else {
     m_name = "Book View";
   }

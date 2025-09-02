@@ -1,6 +1,7 @@
 #include "Spire/UI/LinkSecurityContextAction.hpp"
 #include <QApplication>
 #include <QWidget>
+#include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/SecurityContext.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
@@ -32,13 +33,8 @@ vector<unique_ptr<LinkSecurityContextAction>>
   std::sort(linkActions.begin(), linkActions.end(),
     [&] (const unique_ptr<LinkSecurityContextAction>& lhs,
         const unique_ptr<LinkSecurityContextAction>& rhs) -> bool {
-      auto lss = std::stringstream();
-      lss << userProfile.GetVenueDatabase() <<
-        lhs->GetSecurityContext().GetDisplayedSecurity();
-      auto rss = std::stringstream();
-      rss << userProfile.GetVenueDatabase() <<
-        rhs->GetSecurityContext().GetDisplayedSecurity();
-      return lss.str() < rss.str();
+      return displayText(lhs->GetSecurityContext().GetDisplayedSecurity()) <
+        displayText(rhs->GetSecurityContext().GetDisplayedSecurity());
     });
   return linkActions;
 }

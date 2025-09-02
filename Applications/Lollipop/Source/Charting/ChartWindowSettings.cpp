@@ -1,12 +1,14 @@
 #include "Spire/Charting/ChartWindowSettings.hpp"
 #include "Spire/Charting/ChartIntervalComboBox.hpp"
 #include "Spire/Charting/ChartWindow.hpp"
+#include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
 #include "ui_ChartWindow.h"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::UI;
 using namespace std;
 
 ChartWindowSettings::ChartWindowSettings() {}
@@ -24,12 +26,10 @@ ChartWindowSettings::ChartWindowSettings(const ChartWindow& window,
       m_chartPlotViewWindowSettings(window.m_ui->m_chart->GetWindowSettings()),
       m_chartIntervalComboBoxWindowSettings(
         window.m_intervalComboBox->GetWindowSettings()) {
-  if(m_security == Security()) {
+  if(!m_security) {
     m_name = "Chart";
   } else {
-    auto ss = std::stringstream();
-    ss << userProfile->GetVenueDatabase() << m_security;
-    m_name = "Chart - " + ss.str();
+    m_name = "Chart - " + displayText(m_security).toStdString();
   }
 }
 

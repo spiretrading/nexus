@@ -108,6 +108,14 @@ posix_time::ptime Spire::UI::ToPosixTime(const QDateTime& time) {
 
 void Spire::UI::RegisterCustomQtVariants() {}
 
+QString Spire::UI::displayText(Venue venue) {
+  return QString::fromStdString(lexical_cast<std::string>(venue));
+}
+
+QString Spire::UI::displayText(const Security& security) {
+  return QString::fromStdString(lexical_cast<std::string>(security));
+}
+
 const QString& Spire::UI::displayText(Side side) {
   if(side == Side::ASK) {
     static const auto value = QObject::tr("Ask");
@@ -225,9 +233,10 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return Spire::UI::displayText(value.value<OrderType>());
   } else if(value.canConvert<PositionSideToken>()) {
     return value.value<PositionSideToken>().ToString();
+  } else if(value.canConvert<Venue>()) {
+    return ::displayText(value.value<Venue>());
   } else if(value.canConvert<Security>()) {
-    return QString::fromStdString(ToWildCardString(value.value<Security>(),
-      m_userProfile->GetVenueDatabase(), m_userProfile->GetCountryDatabase()));
+    return ::displayText(value.value<Security>());
   } else if(value.canConvert<Side>()) {
     return Spire::UI::displayText(value.value<Side>());
   } else if(value.canConvert<TimeInForce>()) {
@@ -284,11 +293,8 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
     return Compare(displayText(leftVariant.value<OrderType>()),
       displayText(rightVariant.value<OrderType>()), left, right);
   } else if(leftVariant.canConvert<Security>()) {
-    auto ssl = std::stringstream();
-    ssl << m_userProfile->GetVenueDatabase() << leftVariant.value<Security>();
-    auto ssr = std::stringstream();
-    ssr << m_userProfile->GetVenueDatabase() << rightVariant.value<Security>();
-    return Compare(ssl.str(), ssr.str(), left, right);
+    return Compare(::displayText(leftVariant.value<Security>()),
+      ::displayText(rightVariant.value<Security>()), left, right);
   } else if(leftVariant.canConvert<Side>()) {
     return Compare(displayText(leftVariant.value<Side>()),
       displayText(rightVariant.value<Side>()), left, right);

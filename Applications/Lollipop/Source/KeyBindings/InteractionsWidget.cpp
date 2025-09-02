@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/InteractionsWidget.hpp"
+#include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/MoneySpinBox.hpp"
 #include "Spire/UI/UserProfile.hpp"
 #include "ui_InteractionsWidget.h"
@@ -6,6 +7,7 @@
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::UI;
 using namespace std;
 
 InteractionsWidget::InteractionsWidget(QWidget* parent, Qt::WindowFlags flags)
@@ -65,9 +67,7 @@ void InteractionsWidget::Initialize(Ref<UserProfile> userProfile) {
     if(!std::get<0>(*i).get_securities().empty()) {
       RegionEntry region;
       Security security = *std::get<0>(*i).get_securities().begin();
-      auto ss = std::stringstream();
-      ss << m_userProfile->GetVenueDatabase() << security;
-      region.m_region = Region(ss.str());
+      region.m_region = Region(displayText(security).toStdString());
       region.m_region += security;
       AddRegion(region);
     }
@@ -81,9 +81,7 @@ void InteractionsWidget::Initialize(Ref<UserProfile> userProfile,
   m_properties = m_userProfile->GetInteractionProperties();
   m_ui->m_regionComboBox->clear();
   RegionEntry region;
-  auto ss = std::stringstream();
-  ss << m_userProfile->GetVenueDatabase() << security;
-  region.m_region = Region(ss.str());
+  region.m_region = Region(displayText(security).toStdString());
   region.m_region += security;
   AddRegion(region);
   Update();

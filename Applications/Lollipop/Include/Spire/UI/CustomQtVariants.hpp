@@ -74,37 +74,20 @@ namespace Spire::UI {
   //! Registers the custom QVariant types.
   void RegisterCustomQtVariants();
 
-  //! Returns the test representation of a Side.
+  //! Returns the text representation of a Venue.
+  QString displayText(Nexus::Venue venue);
+
+  //! Returns the text representation of a Security.
+  QString displayText(const Nexus::Security& security);
+
+  //! Returns the text representation of a Side.
   const QString& displayText(Nexus::Side side);
 
-  //! Returns the test representation of an OrderStatus.
+  //! Returns the text representation of an OrderStatus.
   const QString& displayText(Nexus::OrderStatus status);
 
-  //! Returns the test representation of an OrderType.
+  //! Returns the text representation of an OrderType.
   const QString& displayText(Nexus::OrderType type);
-
-  //! Returns the string representation of a Security, including wild-cards.
-  /*!
-    \param security The Security to represent.
-    \param venueDatabase The VenueDatabase used to represent the Venue.
-    \param countryDatabase The CountryDatabase used to represent the
-           CountryCode.
-    \return The string representation of the <i>security</i>.
-  */
-  std::string ToWildCardString(const Nexus::Security& security,
-    const Nexus::VenueDatabase& venueDatabase,
-    const Nexus::CountryDatabase& countryDatabase);
-
-  //! Parses a Security containing wild cards.
-  /*!
-    \param source The string to parse.
-    \param venueDatabase The database containing all Venues.
-    \param countryDatabase The database containing all CountryCodes.
-    \return The Security represented by the <i>source</i>.
-  */
-  boost::optional<Nexus::Security> ParseWildCardSecurity(
-    const std::string& source, const Nexus::VenueDatabase& venueDatabase,
-    const Nexus::CountryDatabase& countryDatabase);
 
   /*! \class CustomVariantItemDelegate
       \brief Extends Qt's item delegate to support the custom QVariant types.
