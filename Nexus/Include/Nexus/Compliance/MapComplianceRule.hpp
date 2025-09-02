@@ -63,8 +63,9 @@ namespace Nexus {
   using PerAccountComplianceRule =
     MapComplianceRule<Beam::ServiceLocator::DirectoryEntry>;
 
-  /** The name of a PerAccountComplianceRuleSchema. */
-  inline const auto PER_ACCOUNT_COMPLIANCE_RULE_NAME = "per_account";
+  /** The standard name used to identify the PerAccountComplianceRule. */
+  inline const auto PER_ACCOUNT_COMPLIANCE_RULE_NAME =
+    std::string("per_account");
 
   /**
    * Returns a MapComplianceRule that applies per Security.

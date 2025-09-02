@@ -56,6 +56,13 @@ namespace Nexus {
         std::remove_reference_t<TimeClient>>;
 
   /**
+   * The standard name used to identify the
+   * OpposingOrderCancellationComplianceRule.
+   */
+  inline auto OPPOSING_ORDER_CANCELLATION_RULE_NAME =
+    std::string("opposing_order_cancellation");
+
+  /**
    * Returns a ComplianceRuleSchema representing an
    * OpposingOrderCancellationComplianceRule.
    */
@@ -64,8 +71,29 @@ namespace Nexus {
     auto parameters = std::vector<ComplianceParameter>();
     parameters.emplace_back("timeout", Quantity(0));
     auto schema =
-      ComplianceRuleSchema("opposing_order_cancellation", parameters);
+      ComplianceRuleSchema(OPPOSING_ORDER_CANCELLATION_RULE_NAME, parameters);
     return schema;
+  }
+
+  /**
+   * Makes a new OpposingOrderCancellationComplianceRule from a list of
+   * ComplianceParameters.
+   * @param parameters The parameters to construct the rule from.
+   * @param time_client Initializes the TimeClient.
+   */
+  inline auto make_opposing_order_cancellation_compliance_rule(
+      const std::vector<ComplianceParameter>& parameters, auto& time_client) {
+    auto timeout =
+      boost::posix_time::time_duration(boost::posix_time::seconds(0));
+    for(auto& parameter : parameters) {
+      if(parameter.m_name == "timeout") {
+        timeout = boost::posix_time::seconds(
+          static_cast<int>(boost::get<Quantity>(parameter.m_value)));
+      }
+    }
+    using Rule = OpposingOrderCancellationComplianceRule<
+      std::remove_reference_t<decltype(time_client)>*>;
+    return std::make_unique<Rule>(timeout, &time_client);
   }
 
   template<typename C>

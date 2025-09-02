@@ -1,7 +1,11 @@
 #ifndef NEXUS_COMPLIANCE_RULE_BUILDER_HPP
 #define NEXUS_COMPLIANCE_RULE_BUILDER_HPP
+#include <memory>
 #include <Beam/TimeService/TimeClientBox.hpp>
 #include <boost/variant/get.hpp>
+#include "Nexus/Compliance/BuyingPowerComplianceRule.hpp"
+#include "Nexus/Compliance/ComplianceRuleSchema.hpp"
+#include "Nexus/Compliance/OpposingOrderCancellationComplianceRule.hpp"
 #include "Nexus/DefinitionsService/DefinitionsClient.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 
@@ -20,6 +24,14 @@ namespace Nexus {
   std::unique_ptr<ComplianceRule> make_compliance_rule(
       const ComplianceRuleSchema& schema, MarketDataClient& market_data_client,
       DefinitionsClient& definitions_client, TimeClient& time_client) {
+    if(schema.get_name() == BUYING_POWER_COMPLIANCE_RULE_NAME) {
+      return make_buying_power_compliance_rule(schema.get_parameters(),
+        ExchangeRateTable(definitions_client.load_exchange_rates()),
+        market_data_client);
+    } else if(schema.get_name() == OPPOSING_ORDER_CANCELLATION_RULE_NAME) {
+      return make_opposing_order_cancellation_compliance_rule(
+        schema.get_parameters(), time_client);
+    }
     return nullptr;
   }
 }

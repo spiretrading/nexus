@@ -71,6 +71,9 @@ namespace Nexus {
     Money, CurrencyId, const ExchangeRateTable&, MarketDataClient&&) ->
       BuyingPowerComplianceRule<std::remove_reference_t<MarketDataClient>>;
 
+  /** The standard name used to identify the BuyingPowerComplianceRule. */
+  inline auto BUYING_POWER_COMPLIANCE_RULE_NAME = std::string("buying_power");
+
   /**
    * Returns a ComplianceRuleSchema representing a BuyingPowerComplianceRule.
    */
@@ -78,7 +81,34 @@ namespace Nexus {
     auto parameters = std::vector<ComplianceParameter>();
     parameters.emplace_back("buying_power", Money::ZERO);
     parameters.emplace_back("currency", DefaultCurrencies::USD);
-    return ComplianceRuleSchema("buying_power", std::move(parameters));
+    return ComplianceRuleSchema(
+      BUYING_POWER_COMPLIANCE_RULE_NAME, std::move(parameters));
+  }
+
+  /**
+   * Makes a new BuyingPowerComplianceRule from a list of ComplianceParameters.
+   * @param parameters The parameters to construct the rule from.
+   * @param exchange_rates Used to convert currencies.
+   * @param market_data_client Initializes the MarketDataClient used to
+   *        price Orders.
+   */
+  inline auto make_buying_power_compliance_rule(
+      const std::vector<ComplianceParameter>& parameters,
+      const ExchangeRateTable& exchange_rates,
+      IsMarketDataClient auto& market_data_client) {
+    auto buying_power = Money::ZERO;
+    auto currency = DefaultCurrencies::USD;
+    for(auto& parameter : parameters) {
+      if(parameter.m_name == "buying_power") {
+        buying_power = boost::get<Money>(parameter.m_value);
+      } else if(parameter.m_name == "currency") {
+        currency = boost::get<CurrencyId>(parameter.m_value);
+      }
+    }
+    using Rule = BuyingPowerComplianceRule<
+      std::remove_reference_t<decltype(market_data_client)>*>;
+    return std::make_unique<Rule>(
+      buying_power, currency, exchange_rates, &market_data_client);
   }
 
   template<IsMarketDataClient C>
