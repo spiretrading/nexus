@@ -1,7 +1,7 @@
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Compliance/ComplianceRuleBuilder.hpp"
-#include "Nexus/DefinitionsServiceTests/TestDefinitionsClient.hpp"
+#include "Nexus/DefinitionsService/DefaultDefinitionsClient.hpp"
 #include "Nexus/MarketDataServiceTests/TestMarketDataClient.hpp"
 
 using namespace Beam;
@@ -16,8 +16,7 @@ TEST_SUITE("ComplianceRuleBuilder") {
   TEST_CASE("expected_types") {
     auto market_data_client =
       TestMarketDataClient(std::make_shared<TestMarketDataClient::Queue>());
-    auto definitions_client = TestDefinitionsClient(
-      std::make_shared<TestDefinitionsClient::Queue>());
+    auto definitions_client = DefaultDefinitionsClient();
     auto time_client = FixedTimeClient(time_from_string("2024-07-29 10:00:00"));
     {
       auto rule = make_compliance_rule(
