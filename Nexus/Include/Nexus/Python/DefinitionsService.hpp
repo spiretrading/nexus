@@ -7,6 +7,12 @@
 namespace Nexus::Python {
 
   /**
+   * Exports the DefaultDefinitionsClient class.
+   * @param module The module to export to.
+   */
+  void export_default_definitions_client(pybind11::module& module);
+
+  /**
    * Exports the DefinitionsService namespace.
    * @param module The module to export to.
    */

@@ -1,5 +1,6 @@
 #include "Nexus/Python/DefinitionsService.hpp"
 #include <Beam/Python/Beam.hpp>
+#include "Nexus/DefinitionsService/DefaultDefinitionsClient.hpp"
 #include "Nexus/DefinitionsServiceTests/DefinitionsServiceTestEnvironment.hpp"
 #include "Nexus/Python/ToPythonDefinitionsClient.hpp"
 
@@ -11,9 +12,15 @@ using namespace Nexus::Python;
 using namespace Nexus::Tests;
 using namespace pybind11;
 
+void Nexus::Python::export_default_definitions_client(module& module) {
+  export_definitions_client<ToPythonDefinitionsClient<
+    DefaultDefinitionsClient>>(module, "DefaultDefinitionsClient");
+}
+
 void Nexus::Python::export_definitions_service(module& module) {
   export_definitions_client<ToPythonDefinitionsClient<DefinitionsClient>>(
     module, "DefinitionsClient");
+  export_default_definitions_client(module);
   auto test_module = module.def_submodule("tests");
   export_definitions_service_test_environment(test_module);
 }
