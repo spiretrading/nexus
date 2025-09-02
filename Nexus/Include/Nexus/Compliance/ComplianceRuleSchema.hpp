@@ -38,6 +38,68 @@ namespace Nexus {
       std::vector<ComplianceParameter> m_parameters;
   };
 
+  /**
+   * Wraps a ComplianceRuleSchema for use by a higher-order
+   * ComplianceRuleSchema.
+   * @param name The name of the higher order ComplianceRuleSchema.
+   * @param parameters The parameters used by the higher-order
+   *        ComplianceRuleSchema.
+   * @param schema The ComplianceRuleSchema to wrap.
+   * @return A higher-order ComplianceRuleSchema.
+   */
+  inline ComplianceRuleSchema wrap(
+      std::string name, std::vector<ComplianceParameter> parameters,
+      const ComplianceRuleSchema& schema) {
+    parameters.emplace_back("name", schema.get_name());
+    auto arguments = std::vector<ComplianceValue>();
+    for(auto& parameter : schema.get_parameters()) {
+      arguments.push_back(
+        std::vector<ComplianceValue>{parameter.m_name, parameter.m_value});
+    }
+    parameters.emplace_back("arguments", std::move(arguments));
+    return ComplianceRuleSchema(std::move(name), std::move(parameters));
+  }
+
+  /**
+   * Wraps a ComplianceRuleSchema for use by a higher-order
+   * ComplianceRuleSchema.
+   * @param name The name of the higher order ComplianceRuleSchema.
+   * @param schema The ComplianceRuleSchema to wrap.
+   * @return A higher-order ComplianceRuleSchema.
+   */
+  inline ComplianceRuleSchema wrap(
+      std::string name, const ComplianceRuleSchema& schema) {
+    return wrap(std::move(name), {}, schema);
+  }
+
+  /**
+   * Unwraps a higher-order ComplianceRuleSchema, returning the wrapped
+   * schema.
+   * @param schema The higher-order ComplianceRuleSchema to unwrap.
+   * @return The ComplianceRuleSchema that was wrapped.
+   */
+  inline ComplianceRuleSchema unwrap(const ComplianceRuleSchema& schema) {
+    auto name = std::string();
+    auto arguments = std::vector<ComplianceValue>();
+    for(auto& parameter : schema.get_parameters()) {
+      if(parameter.m_name == "name") {
+        name = boost::get<std::string>(parameter.m_value);
+      } else if(parameter.m_name == "arguments") {
+        arguments = boost::get<std::vector<ComplianceValue>>(parameter.m_value);
+      }
+    }
+    auto parameters = std::vector<ComplianceParameter>();
+    for(auto& argument : arguments) {
+      auto& parameter = boost::get<std::vector<ComplianceValue>>(argument);
+      if(parameter.size() != 2) {
+        throw std::runtime_error("Invalid ComplianceParameter specified.");
+      }
+      parameters.push_back(ComplianceParameter(
+        boost::get<std::string>(parameter[0]), parameter[1]));
+    }
+    return ComplianceRuleSchema(std::move(name), std::move(parameters));
+  }
+
   inline std::ostream& operator <<(
       std::ostream& out, const ComplianceRuleSchema& rule) {
     return out << '(' << rule.get_name() << ' ' <<

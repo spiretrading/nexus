@@ -6,6 +6,7 @@
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
+#include "Nexus/Compliance/MapComplianceRule.hpp"
 
 namespace Nexus {
 
@@ -31,13 +32,69 @@ namespace Nexus {
   };
 
   /**
+   * The standard name used to identify the OrderCountLimitComplianceRule.
+   */
+  inline auto ORDER_COUNT_LIMIT_RULE_NAME = std::string("order_count_limit");
+
+  /**
    * Returns a ComplianceRuleSchema representing an
    * OrderCountLimitComplianceRule.
    */
   inline ComplianceRuleSchema make_order_count_limit_compliance_rule_schema() {
     auto parameters = std::vector<ComplianceParameter>();
     parameters.emplace_back("count", Quantity(0));
-    return ComplianceRuleSchema("order_count_limit", parameters);
+    return ComplianceRuleSchema(
+      ORDER_COUNT_LIMIT_RULE_NAME, std::move(parameters));
+  }
+
+  /**
+   * Makes a new OrderCountLimitComplianceRule from a list of
+   * ComplianceParameters.
+   * @param parameters The parameters to construct the rule from.
+   */
+  inline auto make_order_count_limit_compliance_rule(
+      const std::vector<ComplianceParameter>& parameters) {
+    auto count = Quantity(0);
+    for(auto& parameter : parameters) {
+      if(parameter.m_name == "count") {
+        count = boost::get<Quantity>(parameter.m_value);
+      }
+    }
+    return std::make_unique<OrderCountLimitComplianceRule>(
+      static_cast<int>(count));
+  }
+
+  /**
+   * The standard name used to identify the
+   * OrderCountLimitPerSideComplianceRule.
+   */
+  inline auto ORDER_COUNT_LIMIT_PER_SIDE_RULE_NAME =
+    std::string("order_count_limit_per_side");
+
+  /**
+   * Returns a ComplianceRuleSchema representing an
+   * OrderCountLimitPerSideComplianceRule.
+   */
+  inline ComplianceRuleSchema
+      make_order_count_limit_per_side_compliance_rule_schema() {
+    auto parameters = std::vector<ComplianceParameter>();
+    parameters.emplace_back("count", Quantity(0));
+    return ComplianceRuleSchema(
+      ORDER_COUNT_LIMIT_PER_SIDE_RULE_NAME, parameters);
+  }
+
+  /**
+   * Makes a new OrderCountLimitPerSideComplianceRule from a list of
+   * ComplianceParameters.
+   * @param parameters The parameters to construct the rule from.
+   */
+  inline auto make_order_count_limit_per_side_compliance_rule(
+      const std::vector<ComplianceParameter>& parameters) {
+    auto schema = ComplianceRuleSchema(ORDER_COUNT_LIMIT_RULE_NAME, parameters);
+    return make_per_side_compliance_rule(std::move(schema),
+      [] (const auto& schema) {
+        return make_order_count_limit_compliance_rule(schema.get_parameters());
+      });
   }
 
   inline OrderCountLimitComplianceRule::OrderCountLimitComplianceRule(

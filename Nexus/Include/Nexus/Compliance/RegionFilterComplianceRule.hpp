@@ -2,6 +2,7 @@
 #define NEXUS_REGION_FILTER_COMPLIANCE_RULE_HPP
 #include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
+#include "Nexus/Compliance/ComplianceRuleSchema.hpp"
 
 namespace Nexus {
 
@@ -25,6 +26,38 @@ namespace Nexus {
       Region m_region;
       std::unique_ptr<ComplianceRule> m_rule;
   };
+
+  /** The standard name used to identify the RegionFilterComplianceRule. */
+  inline const auto REGION_FILTER_RULE_NAME = std::string("region_filter");
+
+  /**
+   * Returns a ComplianceRuleSchema representing a RegionFilterComplianceRule.
+   * @param schema The ComplianceRuleSchema to apply to the filtered region.
+   */
+  inline ComplianceRuleSchema make_region_filter_compliance_rule_schema(
+      const ComplianceRuleSchema& schema) {
+    auto parameters = std::vector<ComplianceParameter>();
+    parameters.emplace_back("region", Region::GLOBAL);
+    return wrap(REGION_FILTER_RULE_NAME, std::move(parameters), schema);
+  }
+
+  /**
+   * Makes a new RegionFilterComplianceRule.
+   * @param parameters The parameters used to construct the rule.
+   * @param rule The rule to apply within the time period.
+   */
+  inline auto make_region_filter_compliance_rule(
+      const std::vector<ComplianceParameter>& parameters,
+      std::unique_ptr<ComplianceRule> rule) {
+    auto region = Region::GLOBAL;
+    for(auto& parameter : parameters) {
+      if(parameter.m_name == "region") {
+        region = boost::get<Region>(parameter.m_value);
+      }
+    }
+    return std::make_unique<RegionFilterComplianceRule>(
+      std::move(region), std::move(rule));
+  }
 
   inline RegionFilterComplianceRule::RegionFilterComplianceRule(
     Region region, std::unique_ptr<ComplianceRule> rule)

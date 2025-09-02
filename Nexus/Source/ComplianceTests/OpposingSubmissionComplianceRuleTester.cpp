@@ -1,6 +1,6 @@
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Compliance/OpposingOrderSubmissionComplianceRule.hpp"
+#include "Nexus/Compliance/OpposingSubmissionComplianceRule.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;
@@ -10,11 +10,11 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
 
-TEST_SUITE("OpposingOrderSubmissionComplianceRule") {
+TEST_SUITE("OpposingSubmissionComplianceRule") {
   TEST_CASE("submit_without_cancel") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-29 10:00:00"));
-    auto rule = OpposingOrderSubmissionComplianceRule(
-      seconds(10), Money::ZERO, &time_client);
+    auto rule =
+      OpposingSubmissionComplianceRule(seconds(10), Money::ZERO, &time_client);
     auto fields =
       make_limit_order_fields(Security("ABX", TSX), Side::BID, 100, Money::ONE);
     auto info = OrderInfo(fields, 3, time_from_string("2024-07-29 10:00:00"));
@@ -24,8 +24,8 @@ TEST_SUITE("OpposingOrderSubmissionComplianceRule") {
 
   TEST_CASE("submit_after_cancel_within_and_outside_timeout") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-29 09:59:50"));
-    auto rule = OpposingOrderSubmissionComplianceRule(
-      seconds(10), Money::ZERO, &time_client);
+    auto rule =
+      OpposingSubmissionComplianceRule(seconds(10), Money::ZERO, &time_client);
     auto ask_fields =
       make_limit_order_fields(Security("ABX", TSX), Side::ASK, 100, Money::ONE);
     auto ask_info =
@@ -51,7 +51,7 @@ TEST_SUITE("OpposingOrderSubmissionComplianceRule") {
 
   TEST_CASE("submit_outside_price_range") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-29 09:59:50"));
-    auto rule = OpposingOrderSubmissionComplianceRule(
+    auto rule = OpposingSubmissionComplianceRule(
       seconds(10), 5 * Money::CENT, &time_client);
     auto ask_fields =
       make_limit_order_fields(Security("ABX", TSX), Side::ASK, 100, Money::ONE);
@@ -76,8 +76,8 @@ TEST_SUITE("OpposingOrderSubmissionComplianceRule") {
 
   TEST_CASE("multiple_cancels_updates_last_cancel_time") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-29 09:59:50"));
-    auto rule = OpposingOrderSubmissionComplianceRule(
-      seconds(10), Money::ZERO, &time_client);
+    auto rule =
+      OpposingSubmissionComplianceRule(seconds(10), Money::ZERO, &time_client);
     auto ask_fields =
       make_limit_order_fields(Security("ABX", TSX), Side::ASK, 100, Money::ONE);
     auto ask_info1 =
@@ -114,8 +114,8 @@ TEST_SUITE("OpposingOrderSubmissionComplianceRule") {
 
   TEST_CASE("submit_on_same_side_as_cancel") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-29 09:59:50"));
-    auto rule = OpposingOrderSubmissionComplianceRule(
-      seconds(10), Money::ZERO, &time_client);
+    auto rule =
+      OpposingSubmissionComplianceRule(seconds(10), Money::ZERO, &time_client);
     auto bid_fields =
       make_limit_order_fields(Security("ABX", TSX), Side::BID, 100, Money::ONE);
     auto bid_info =

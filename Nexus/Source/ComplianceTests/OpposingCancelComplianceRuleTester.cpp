@@ -1,6 +1,6 @@
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Compliance/OpposingOrderCancellationComplianceRule.hpp"
+#include "Nexus/Compliance/OpposingCancelComplianceRule.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;
@@ -10,11 +10,10 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
 
-TEST_SUITE("OpposingOrderCancellationComplianceRule") {
+TEST_SUITE("OpposingCancelComplianceRule") {
   TEST_CASE("cancel_without_fill") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-29 10:00:00"));
-    auto rule =
-      OpposingOrderCancellationComplianceRule(seconds(10), &time_client);
+    auto rule = OpposingCancelComplianceRule(seconds(10), &time_client);
     auto fields =
       make_limit_order_fields(Security("ABX", TSX), Side::BID, 100, Money::ONE);
     auto info = OrderInfo(fields, 3, time_from_string("2024-07-29 10:00:00"));
@@ -24,8 +23,7 @@ TEST_SUITE("OpposingOrderCancellationComplianceRule") {
 
   TEST_CASE("cancel_after_fill_within_timeout") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-29 09:59:50"));
-    auto rule =
-      OpposingOrderCancellationComplianceRule(seconds(10), &time_client);
+    auto rule = OpposingCancelComplianceRule(seconds(10), &time_client);
     auto ask_fields =
       make_limit_order_fields(Security("ABX", TSX), Side::ASK, 100, Money::ONE);
     auto ask_info =
@@ -53,8 +51,7 @@ TEST_SUITE("OpposingOrderCancellationComplianceRule") {
 
   TEST_CASE("multiple_fills_updates_last_fill_time") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-29 09:59:50"));
-    auto rule =
-      OpposingOrderCancellationComplianceRule(seconds(10), &time_client);
+    auto rule = OpposingCancelComplianceRule(seconds(10), &time_client);
     auto ask_fields =
       make_limit_order_fields(Security("ABX", TSX), Side::ASK, 100, Money::ONE);
     auto ask_info =

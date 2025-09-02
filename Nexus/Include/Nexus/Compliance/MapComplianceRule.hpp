@@ -64,20 +64,86 @@ namespace Nexus {
     MapComplianceRule<Beam::ServiceLocator::DirectoryEntry>;
 
   /** The standard name used to identify the PerAccountComplianceRule. */
-  inline const auto PER_ACCOUNT_COMPLIANCE_RULE_NAME =
-    std::string("per_account");
+  inline const auto PER_ACCOUNT_RULE_NAME = std::string("per_account");
 
   /**
-   * Returns a MapComplianceRule that applies per Security.
-   * @param schema The ComplianceRuleSchema to apply.
-   * @param rule_builder Returns the compliance rule.
+   * Returns a ComplianceRuleSchema representing a PerAccountComplianceRule.
+   * @param schema The ComplianceRuleSchema to apply per account.
    */
-  inline std::unique_ptr<MapComplianceRule<Security>>
-      make_map_security_compliance_rule(ComplianceRuleSchema schema,
-        MapComplianceRule<Security>::ComplianceRuleBuilder rule_builder) {
-    return std::make_unique<MapComplianceRule<Security>>(
+  inline ComplianceRuleSchema make_per_account_compliance_rule_schema(
+      const ComplianceRuleSchema& schema) {
+    return wrap(PER_ACCOUNT_RULE_NAME, schema);
+  }
+
+  /**
+   * Makes a new PerSecurityComplianceRule.
+   * @param schema The ComplianceRuleSchema to apply.
+   * @param rule_builder Builds an instance of the compliance rule per account.
+   */
+  inline std::unique_ptr<PerAccountComplianceRule>
+      make_per_account_compliance_rule(ComplianceRuleSchema schema,
+        PerAccountComplianceRule::ComplianceRuleBuilder rule_builder) {
+    return std::make_unique<PerAccountComplianceRule>(
+      std::move(schema), std::move(rule_builder), [] (const auto& order) {
+        return order.get_info().m_fields.m_account;
+      });
+  }
+
+  /** Defines a MapComplianceRule that applies to each security individually. */
+  using PerSecurityComplianceRule = MapComplianceRule<Security>;
+
+  /** The standard name used to identify the PerSecurityComplianceRule. */
+  inline const auto PER_SECURITY_RULE_NAME = std::string("per_security");
+
+  /**
+   * Returns a ComplianceRuleSchema representing a PerSecurityComplianceRule.
+   * @param schema The ComplianceRuleSchema to apply per security.
+   */
+  inline ComplianceRuleSchema make_per_security_compliance_rule_schema(
+      const ComplianceRuleSchema& schema) {
+    return wrap(PER_SECURITY_RULE_NAME, schema);
+  }
+
+  /**
+   * Makes a new PerSecurityComplianceRule.
+   * @param schema The ComplianceRuleSchema to apply.
+   * @param rule_builder Builds an instance of the compliance rule per security.
+   */
+  inline std::unique_ptr<PerSecurityComplianceRule>
+      make_per_security_compliance_rule(ComplianceRuleSchema schema,
+        PerSecurityComplianceRule::ComplianceRuleBuilder rule_builder) {
+    return std::make_unique<PerSecurityComplianceRule>(
       std::move(schema), std::move(rule_builder), [] (const auto& order) {
         return order.get_info().m_fields.m_security;
+      });
+  }
+
+  /** Defines a MapComplianceRule that applies to each Side individually. */
+  using PerSideComplianceRule = MapComplianceRule<Side>;
+
+  /** The standard name used to identify the PerSideComplianceRule. */
+  inline const auto PER_SIDE_RULE_NAME = std::string("per_side");
+
+  /**
+   * Returns a ComplianceRuleSchema representing a PerSideComplianceRule.
+   * @param schema The ComplianceRuleSchema to apply per side.
+   */
+  inline ComplianceRuleSchema make_per_side_compliance_rule_schema(
+      const ComplianceRuleSchema& schema) {
+    return wrap(PER_SIDE_RULE_NAME, schema);
+  }
+
+  /**
+   * Makes a new PerSideComplianceRule.
+   * @param schema The ComplianceRuleSchema to apply.
+   * @param rule_builder Builds an instance of the compliance rule per Side.
+   */
+  inline std::unique_ptr<PerSideComplianceRule>
+      make_per_side_compliance_rule(ComplianceRuleSchema schema,
+        PerSecurityComplianceRule::ComplianceRuleBuilder rule_builder) {
+    return std::make_unique<PerSideComplianceRule>(
+      std::move(schema), std::move(rule_builder), [] (const auto& order) {
+        return order.get_info().m_fields.m_side;
       });
   }
 

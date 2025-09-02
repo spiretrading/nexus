@@ -1,5 +1,5 @@
-#ifndef NEXUS_OPPOSING_ORDER_SUBMISSION_COMPLIANCE_RULE_HPP
-#define NEXUS_OPPOSING_ORDER_SUBMISSION_COMPLIANCE_RULE_HPP
+#ifndef NEXUS_OPPOSING_SUBMISSION_COMPLIANCE_RULE_HPP
+#define NEXUS_OPPOSING_SUBMISSION_COMPLIANCE_RULE_HPP
 #include <vector>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -19,7 +19,7 @@ namespace Nexus {
    *        elapsed since the last cancellation.
    */
   template<typename C>
-  class OpposingOrderSubmissionComplianceRule : public ComplianceRule {
+  class OpposingSubmissionComplianceRule : public ComplianceRule {
     public:
 
       /**
@@ -29,7 +29,7 @@ namespace Nexus {
       using TimeClient = Beam::GetTryDereferenceType<C>;
 
       /**
-       * Constructs an OpposingOrderSubmissionComplianceRule.
+       * Constructs an OpposingSubmissionComplianceRule.
        * @param timeout The amount of time to restrict submissions after a
        *        cancel.
        * @param offset The offset from the submission price to restrict
@@ -37,7 +37,7 @@ namespace Nexus {
        * @param time_client Initializes the TimeClient.
        */
       template<Beam::Initializes<C> CF>
-      OpposingOrderSubmissionComplianceRule(
+      OpposingSubmissionComplianceRule(
         boost::posix_time::time_duration timeout, Money offset,
         CF&& time_client);
 
@@ -59,29 +59,58 @@ namespace Nexus {
   };
 
   template<typename TimeClient>
-  OpposingOrderSubmissionComplianceRule(
+  OpposingSubmissionComplianceRule(
     boost::posix_time::time_duration, Money, TimeClient&&) ->
-      OpposingOrderSubmissionComplianceRule<
-        std::remove_reference_t<TimeClient>>;
+      OpposingSubmissionComplianceRule<std::remove_reference_t<TimeClient>>;
+
+  /**
+   * The standard name used to identify the
+   * OpposingSubmissionComplianceRule.
+   */
+  inline auto OPPOSING_SUBMISSION_RULE_NAME =
+    std::string("opposing_submission");
 
   /**
    * Returns a ComplianceRuleSchema representing an
-   * OpposingOrderSubmissionComplianceRule.
+   * OpposingSubmissionComplianceRule.
    */
   inline ComplianceRuleSchema
-      make_opposing_order_submission_compliance_rule_schema() {
+      make_opposing_submission_compliance_rule_schema() {
     auto parameters = std::vector<ComplianceParameter>();
     parameters.emplace_back("timeout", Quantity(0));
     parameters.emplace_back("offset", Money::ZERO);
-    auto schema = ComplianceRuleSchema("opposing_order_submission", parameters);
-    return schema;
+    return ComplianceRuleSchema(
+      OPPOSING_SUBMISSION_RULE_NAME, std::move(parameters));
+  }
+
+  /**
+   * Makes a new OpposingSubmissionComplianceRule from a list of
+   * ComplianceParameters.
+   * @param parameters The parameters to construct the rule from.
+   * @param time_client Initializes the TimeClient.
+   */
+  inline auto make_opposing_submission_compliance_rule(
+      const std::vector<ComplianceParameter>& parameters, auto& time_client) {
+    auto timeout =
+      boost::posix_time::time_duration(boost::posix_time::seconds(0));
+    auto offset = Money::ZERO;
+    for(auto& parameter : parameters) {
+      if(parameter.m_name == "timeout") {
+        timeout = boost::posix_time::seconds(
+          static_cast<int>(boost::get<Quantity>(parameter.m_value)));
+      } else if(parameter.m_name == "offset") {
+        offset = boost::get<Money>(parameter.m_value);
+      }
+    }
+    using Rule = OpposingSubmissionComplianceRule<
+      std::remove_reference_t<decltype(time_client)>*>;
+    return std::make_unique<Rule>(timeout, offset, &time_client);
   }
 
   template<typename C>
   template<Beam::Initializes<C> CF>
-  OpposingOrderSubmissionComplianceRule<C>::
-    OpposingOrderSubmissionComplianceRule(
-      boost::posix_time::time_duration timeout, Money offset, CF&& time_client)
+  OpposingSubmissionComplianceRule<C>::OpposingSubmissionComplianceRule(
+    boost::posix_time::time_duration timeout, Money offset, CF&& time_client)
     : m_timeout(timeout),
       m_offset(offset),
       m_time_client(std::forward<CF>(time_client)),
@@ -91,7 +120,7 @@ namespace Nexus {
       m_bid_price(Money::ZERO) {}
 
   template<typename C>
-  void OpposingOrderSubmissionComplianceRule<C>::submit(
+  void OpposingSubmissionComplianceRule<C>::submit(
       const std::shared_ptr<Order>& order) {
     if(order->get_info().m_fields.m_type != OrderType::LIMIT &&
         order->get_info().m_fields.m_type != OrderType::MARKET) {
@@ -137,7 +166,7 @@ namespace Nexus {
   }
 
   template<typename C>
-  void OpposingOrderSubmissionComplianceRule<C>::add(
+  void OpposingSubmissionComplianceRule<C>::add(
       const std::shared_ptr<Order>& order) {
     if(order->get_info().m_fields.m_type != OrderType::LIMIT &&
         order->get_info().m_fields.m_type != OrderType::MARKET) {
@@ -148,7 +177,7 @@ namespace Nexus {
   }
 
   template<typename C>
-  Money OpposingOrderSubmissionComplianceRule<C>::get_submission_price(
+  Money OpposingSubmissionComplianceRule<C>::get_submission_price(
       const OrderFields& fields) const {
     if(fields.m_type == OrderType::LIMIT) {
       return fields.m_price;
@@ -160,7 +189,7 @@ namespace Nexus {
   }
 
   template<typename C>
-  bool OpposingOrderSubmissionComplianceRule<C>::test_price_in_range(
+  bool OpposingSubmissionComplianceRule<C>::test_price_in_range(
       const OrderFields& fields) const {
     auto price = get_submission_price(fields);
     if(fields.m_side == Side::ASK) {

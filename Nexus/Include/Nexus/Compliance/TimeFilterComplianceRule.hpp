@@ -8,6 +8,7 @@
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
+#include "Nexus/Compliance/ComplianceRuleSchema.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 
 namespace Nexus {
@@ -34,8 +35,7 @@ namespace Nexus {
        * @param end The end of the period to apply the rule.
        * @param time_zones The available time zones.
        * @param venues The venues available.
-       * @param time_client Initializes the TimeClient used to check order
-       *        cancel requests.
+       * @param time_client Initializes the TimeClient used to test the period.
        * @param rule The rule to apply within the time period.
        */
       template<Beam::Initializes<C> CF>
@@ -66,6 +66,51 @@ namespace Nexus {
     boost::posix_time::time_duration, boost::local_time::tz_database,
     VenueDatabase, TimeClient&&, std::unique_ptr<ComplianceRule>) ->
       TimeFilterComplianceRule<std::remove_reference_t<TimeClient>>;
+
+  /** The standard name used to identify the TimeFilterComplianceRule. */
+  inline const auto TIME_FILTER_RULE_NAME = std::string("time_filter");
+
+  /**
+   * Returns a ComplianceRuleSchema representing a TimeFilterComplianceRule.
+   * @param schema The ComplianceRuleSchema to apply within the time period.
+   */
+  inline ComplianceRuleSchema make_time_filter_compliance_rule_schema(
+      const ComplianceRuleSchema& schema) {
+    auto parameters = std::vector<ComplianceParameter>();
+    parameters.emplace_back(
+      "start", boost::posix_time::time_duration(boost::posix_time::seconds(0)));
+    parameters.emplace_back(
+      "end", boost::posix_time::time_duration(boost::posix_time::seconds(0)));
+    return wrap(TIME_FILTER_RULE_NAME, std::move(parameters), schema);
+  }
+
+  /**
+   * Makes a new TimeFilterComplianceRule.
+   * @param parameters The parameters used to construct the rule.
+   * @param time_zones The available time zones.
+   * @param venues The venues available.
+   * @param time_client The TimeClient used to test the period.
+   * @param rule The rule to apply within the time period.
+   */
+  inline auto make_time_filter_compliance_rule(
+      const std::vector<ComplianceParameter>& parameters,
+      boost::local_time::tz_database time_zones, VenueDatabase venues,
+      auto& time_client, std::unique_ptr<ComplianceRule> rule) {
+    auto start =
+      boost::posix_time::time_duration(boost::posix_time::seconds(0));
+    auto end = boost::posix_time::time_duration(boost::posix_time::seconds(0));
+    for(auto& parameter : parameters) {
+      if(parameter.m_name == "start") {
+        start = boost::get<boost::posix_time::time_duration>(parameter.m_value);
+      } else if(parameter.m_name == "end") {
+        end = boost::get<boost::posix_time::time_duration>(parameter.m_value);
+      }
+    }
+    using Rule = TimeFilterComplianceRule<
+      std::remove_reference_t<decltype(time_client)>*>;
+    return std::make_unique<Rule>(start, end, std::move(time_zones),
+      std::move(venues), &time_client, std::move(rule));
+  }
 
   template<typename C>
   template<Beam::Initializes<C> CF>

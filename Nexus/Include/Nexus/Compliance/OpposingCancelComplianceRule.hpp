@@ -1,5 +1,5 @@
-#ifndef NEXUS_OPPOSING_ORDER_CANCELLATION_COMPLIANCE_RULE_HPP
-#define NEXUS_OPPOSING_ORDER_CANCELLATION_COMPLIANCE_RULE_HPP
+#ifndef NEXUS_OPPOSING_CANCEL_COMPLIANCE_RULE_HPP
+#define NEXUS_OPPOSING_CANCEL_COMPLIANCE_RULE_HPP
 #include <type_traits>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -20,7 +20,7 @@ namespace Nexus {
    *        since the last fill.
    */
   template<typename C>
-  class OpposingOrderCancellationComplianceRule : public ComplianceRule {
+  class OpposingCancelComplianceRule : public ComplianceRule {
     public:
 
       /**
@@ -30,12 +30,12 @@ namespace Nexus {
       using TimeClient = Beam::GetTryDereferenceType<C>;
 
       /**
-       * Constructs an OpposingOrderCancellationComplianceRule.
+       * Constructs an OpposingCancelComplianceRule.
        * @param timeout The amount of time to restrict cancels after a fill.
        * @param time_client Initializes the TimeClient.
        */
       template<Beam::Initializes<C> CF>
-      OpposingOrderCancellationComplianceRule(
+      OpposingCancelComplianceRule(
         boost::posix_time::time_duration timeout, CF&& time_client);
 
       void cancel(const std::shared_ptr<Order>& order) override;
@@ -50,38 +50,33 @@ namespace Nexus {
   };
 
   template<typename TimeClient>
-  OpposingOrderCancellationComplianceRule(
+  OpposingCancelComplianceRule(
     boost::posix_time::time_duration, TimeClient&&) ->
-      OpposingOrderCancellationComplianceRule<
-        std::remove_reference_t<TimeClient>>;
+      OpposingCancelComplianceRule<std::remove_reference_t<TimeClient>>;
 
   /**
-   * The standard name used to identify the
-   * OpposingOrderCancellationComplianceRule.
+   * The standard name used to identify the OpposingCancelComplianceRule.
    */
-  inline auto OPPOSING_ORDER_CANCELLATION_RULE_NAME =
-    std::string("opposing_order_cancellation");
+  inline auto OPPOSING_CANCEL_RULE_NAME = std::string("opposing_cancel");
 
   /**
    * Returns a ComplianceRuleSchema representing an
-   * OpposingOrderCancellationComplianceRule.
+   * OpposingCancelComplianceRule.
    */
-  inline ComplianceRuleSchema
-      make_opposing_order_cancellation_compliance_rule_schema() {
+  inline ComplianceRuleSchema make_opposing_cancel_compliance_rule_schema() {
     auto parameters = std::vector<ComplianceParameter>();
     parameters.emplace_back("timeout", Quantity(0));
-    auto schema =
-      ComplianceRuleSchema(OPPOSING_ORDER_CANCELLATION_RULE_NAME, parameters);
-    return schema;
+    return ComplianceRuleSchema(
+      OPPOSING_CANCEL_RULE_NAME, std::move(parameters));
   }
 
   /**
-   * Makes a new OpposingOrderCancellationComplianceRule from a list of
+   * Makes a new OpposingCancelComplianceRule from a list of
    * ComplianceParameters.
    * @param parameters The parameters to construct the rule from.
    * @param time_client Initializes the TimeClient.
    */
-  inline auto make_opposing_order_cancellation_compliance_rule(
+  inline auto make_opposing_cancel_compliance_rule(
       const std::vector<ComplianceParameter>& parameters, auto& time_client) {
     auto timeout =
       boost::posix_time::time_duration(boost::posix_time::seconds(0));
@@ -91,15 +86,14 @@ namespace Nexus {
           static_cast<int>(boost::get<Quantity>(parameter.m_value)));
       }
     }
-    using Rule = OpposingOrderCancellationComplianceRule<
+    using Rule = OpposingCancelComplianceRule<
       std::remove_reference_t<decltype(time_client)>*>;
     return std::make_unique<Rule>(timeout, &time_client);
   }
 
   template<typename C>
   template<Beam::Initializes<C> CF>
-  OpposingOrderCancellationComplianceRule<C>::
-      OpposingOrderCancellationComplianceRule(
+  OpposingCancelComplianceRule<C>::OpposingCancelComplianceRule(
         boost::posix_time::time_duration timeout, CF&& time_client)
     : m_timeout(timeout),
       m_time_client(std::forward<CF>(time_client)),
@@ -107,7 +101,7 @@ namespace Nexus {
       m_last_bid_fill_time(boost::posix_time::not_a_date_time) {}
 
   template<typename C>
-  void OpposingOrderCancellationComplianceRule<C>::cancel(
+  void OpposingCancelComplianceRule<C>::cancel(
       const std::shared_ptr<Order>& order) {
     while(auto report = m_reports.TryPop()) {
       if(report->m_value.m_last_quantity != 0) {
@@ -127,7 +121,7 @@ namespace Nexus {
   }
 
   template<typename C>
-  void OpposingOrderCancellationComplianceRule<C>::add(
+  void OpposingCancelComplianceRule<C>::add(
       const std::shared_ptr<Order>& order) {
     order->get_publisher().Monitor(
       m_reports.GetSlot(order->get_info().m_fields.m_side));

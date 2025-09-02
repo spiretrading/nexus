@@ -16,6 +16,14 @@
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/lexical_cast.hpp>
+#include "Nexus/Compliance/BuyingPowerComplianceRule.hpp"
+#include "Nexus/Compliance/OpposingCancelComplianceRule.hpp"
+#include "Nexus/Compliance/OpposingSubmissionComplianceRule.hpp"
+#include "Nexus/Compliance/OrderCountLimitComplianceRule.hpp"
+#include "Nexus/Compliance/RegionFilterComplianceRule.hpp"
+#include "Nexus/Compliance/RejectCancelsComplianceRule.hpp"
+#include "Nexus/Compliance/RejectSubmissionsComplianceRule.hpp"
+#include "Nexus/Compliance/TimeFilterComplianceRule.hpp"
 #include "Nexus/DefinitionsService/DefinitionsServlet.hpp"
 #include "Version.hpp"
 
@@ -50,6 +58,30 @@ namespace {
       return rates;
     }, std::runtime_error("Failed to parse exchange rates."));
   }
+
+  std::vector<ComplianceRuleSchema> make_compliance_rule_schemas() {
+    auto schemas = std::vector<ComplianceRuleSchema>();
+    schemas.push_back(make_region_filter_compliance_rule_schema(
+      make_time_filter_compliance_rule_schema(
+        make_reject_cancels_compliance_rule_schema())));
+    schemas.push_back(make_region_filter_compliance_rule_schema(
+      make_time_filter_compliance_rule_schema(
+        make_reject_submissions_compliance_rule_schema())));
+    schemas.push_back(make_region_filter_compliance_rule_schema(
+      make_buying_power_compliance_rule_schema()));
+    schemas.push_back(make_region_filter_compliance_rule_schema(
+      make_time_filter_compliance_rule_schema(
+        make_per_security_compliance_rule_schema(
+          make_opposing_cancel_compliance_rule_schema()))));
+    schemas.push_back(make_region_filter_compliance_rule_schema(
+      make_time_filter_compliance_rule_schema(
+        make_per_security_compliance_rule_schema(
+          make_opposing_submission_compliance_rule_schema()))));
+    schemas.push_back(make_region_filter_compliance_rule_schema(
+      make_per_security_compliance_rule_schema(
+        make_order_count_limit_per_side_compliance_rule_schema())));
+    return schemas;
+  }
 }
 
 int main(int argc, const char** argv) {
@@ -62,7 +94,6 @@ int main(int argc, const char** argv) {
     }, std::runtime_error("Error parsing section 'server'."));
     auto service_locator_client =
       MakeApplicationServiceLocatorClient(GetNode(config, "service_locator"));
-    auto schemas = std::vector<ComplianceRuleSchema>();
     auto minimum_client_version =
       Extract<std::string>(config, "minimum_spire_version");
     auto organization_name =
@@ -89,6 +120,7 @@ int main(int argc, const char** argv) {
       Require(LoadFile, Extract<std::string>(
         config, "destinations", "destinations.yml")), venues);
     auto rates = parse_exchange_rates(GetNode(config, "exchange_rates"));
+    auto schemas = make_compliance_rule_schemas();
     auto schedule = TradingSchedule();
     auto definitions_server = DefinitionsServletContainer(
       Initialize(service_locator_client.Get(), Initialize(
