@@ -1,4 +1,6 @@
 #include "Spire/Ui/Window.hpp"
+#include <QApplication>
+#include <QDesktopWidget>
 #include <QEvent>
 #include <QGuiApplication>
 #include <QPainter>
@@ -8,6 +10,7 @@
 #include <dwmapi.h>
 #include <qt_windows.h>
 #include <windowsx.h>
+#include <windows.h>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -28,11 +31,25 @@ namespace {
     return scale(26, 26);
   }
 
-  auto SYSTEM_BORDER_SIZE() {
-    static auto size = QSize(
-      GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER),
-      GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER));
-    return size;
+  auto get_system_border_padding_size(int dpi) {
+    return 4 * dpi / DPI;
+  }
+
+  auto get_system_frame_size(int dpi) {
+    if(dpi < 144) {
+      return 4;
+    } else if(dpi < 240) {
+      return 5;
+    } else if(dpi < 336) {
+      return 6;
+    }
+    return 7;
+  }
+
+  auto get_system_border_size(int x_dpi, int y_dpi) {
+    return QSize(
+      get_system_frame_size(x_dpi) + get_system_border_padding_size(x_dpi),
+      get_system_frame_size(y_dpi) + get_system_border_padding_size(y_dpi));
   }
 
   auto make_svg_window_icon(const QString& icon_path) {
@@ -85,6 +102,8 @@ bool Window::event(QEvent* event) {
     set_window_attributes(m_is_resizable);
     connect(windowHandle(), &QWindow::screenChanged, this,
       &Window::on_screen_changed);
+    connect(screen(), &QScreen::logicalDotsPerInchChanged, this,
+      &Window::on_logical_dots_per_inch_changed);
   }
   return QWidget::event(event);
 }
@@ -116,18 +135,26 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
             }
           }
         } else {
-          auto width = SYSTEM_BORDER_SIZE().width();
+          auto current_screen = screen();
+          auto size = get_system_border_size(
+            current_screen->logicalDotsPerInchX(),
+            current_screen->logicalDotsPerInchY());
           if(!isVisible()) {
-            move(pos() + QPoint(width, 0));
+            move(pos() + QPoint(size.width(), 0));
           }
-          rect.right -= width;
-          rect.left += width;
-          rect.bottom -= SYSTEM_BORDER_SIZE().height();
+          rect.right -= size.width();
+          rect.left += size.width();
+          rect.bottom -= size.height();
         }
       }
       *result = 0;
       return true;
     }
+  } else if(msg->message == WM_WINDOWPOSCHANGING) {
+    auto wp = reinterpret_cast<WINDOWPOS*>(msg->lParam);
+    wp->flags |= SWP_NOCOPYBITS;
+    *result = 0;
+    return true;
   } else if(msg->message == WM_NCHITTEST) {
     auto window_rect = RECT();
     GetWindowRect(reinterpret_cast<HWND>(effectiveWinId()), &window_rect);
@@ -188,19 +215,19 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     return true;
   } else if(msg->message == WM_GETMINMAXINFO) {
     auto mmi = reinterpret_cast<MINMAXINFO*>(msg->lParam);
+    auto current_screen = screen();
+    auto border_size = get_system_border_size(
+      current_screen->logicalDotsPerInchX(),
+      current_screen->logicalDotsPerInchY());
     if(maximumSize() != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
-      mmi->ptMaxTrackSize.x = maximumSize().width() +
-        2 * SYSTEM_BORDER_SIZE().width();
-      mmi->ptMaxTrackSize.y = maximumSize().height() +
-        SYSTEM_BORDER_SIZE().height();
+      mmi->ptMaxTrackSize.x = maximumSize().width() + 2 * border_size.width();
+      mmi->ptMaxTrackSize.y = maximumSize().height() + border_size.height();
     } else {
       mmi->ptMaxTrackSize.x = maximumSize().width();
       mmi->ptMaxTrackSize.y = maximumSize().height();
     }
-    mmi->ptMinTrackSize.x = minimumSize().width() +
-      2 * SYSTEM_BORDER_SIZE().width();
-    mmi->ptMinTrackSize.y = minimumSize().height() +
-      SYSTEM_BORDER_SIZE().height();
+    mmi->ptMinTrackSize.x = minimumSize().width() + 2 * border_size.width();
+    mmi->ptMinTrackSize.y = minimumSize().height() + border_size.height();
     return true;
   }
   return QWidget::nativeEvent(eventType, message, result);
@@ -233,6 +260,13 @@ void Window::on_screen_changed(QScreen* screen) {
   auto rect = RECT();
   GetWindowRect(hwnd, &rect);
   SendMessage(hwnd, WM_NCCALCSIZE, TRUE, reinterpret_cast<LPARAM>(&rect));
+  connect(screen, &QScreen::logicalDotsPerInchChanged, this,
+    &Window::on_logical_dots_per_inch_changed);
+}
+
+void Window::on_logical_dots_per_inch_changed() {
+  SetWindowPos(reinterpret_cast<HWND>(effectiveWinId()), nullptr, 0, 0, 0, 0,
+    SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
 void Window::set_window_attributes(bool is_resizeable) {

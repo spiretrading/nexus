@@ -60,6 +60,7 @@ namespace Styles {
 
       void on_highlighted(bool is_match);
       void on_screen_changed(QScreen* screen);
+      void on_logical_dots_per_inch_changed();
       void set_window_attributes(bool is_resizeable);
   };
 }
