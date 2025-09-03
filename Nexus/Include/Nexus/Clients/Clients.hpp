@@ -177,7 +177,7 @@ namespace Nexus {
 
   template<typename C>
   Clients::Clients(C clients)
-    : Clients(std::in_place_type<Clients>, std::move(clients)) {}
+    : Clients(std::in_place_type<C>, std::move(clients)) {}
 
   inline Clients::Clients(Clients* clients)
     : Clients(*clients) {}

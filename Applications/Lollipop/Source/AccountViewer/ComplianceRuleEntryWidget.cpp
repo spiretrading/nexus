@@ -27,7 +27,7 @@ ComplianceRuleEntryWidget::ComplianceRuleEntryWidget(
       m_model{std::move(model)} {
   m_ui->setupUi(this);
   m_ui->m_parametersWidget->hide();
-  if(m_entry.get_schema().get_name() == PER_ACCOUNT_COMPLIANCE_RULE_NAME) {
+  if(m_entry.get_schema().get_name() == PER_ACCOUNT_RULE_NAME) {
     for(auto& parameter : m_entry.get_schema().get_parameters()) {
       if(parameter.m_name == "name") {
         m_ruleName = boost::get<string>(parameter.m_value);
@@ -45,13 +45,13 @@ ComplianceRuleEntryWidget::ComplianceRuleEntryWidget(
     m_ui->m_stateComboBox->addItem(tr("Passive Consolidated"));
     m_ui->m_stateComboBox->addItem(tr("Disabled"));
     if(entry.get_state() == ComplianceRuleEntry::State::ACTIVE) {
-      if(m_entry.get_schema().get_name() == PER_ACCOUNT_COMPLIANCE_RULE_NAME) {
+      if(m_entry.get_schema().get_name() == PER_ACCOUNT_RULE_NAME) {
         m_ui->m_stateComboBox->setCurrentIndex(0);
       } else {
         m_ui->m_stateComboBox->setCurrentIndex(1);
       }
     } else if(entry.get_state() == ComplianceRuleEntry::State::PASSIVE) {
-      if(m_entry.get_schema().get_name() == PER_ACCOUNT_COMPLIANCE_RULE_NAME) {
+      if(m_entry.get_schema().get_name() == PER_ACCOUNT_RULE_NAME) {
         m_ui->m_stateComboBox->setCurrentIndex(2);
       } else {
         m_ui->m_stateComboBox->setCurrentIndex(3);
@@ -147,7 +147,7 @@ void ComplianceRuleEntryWidget::Commit() {
   }
   if(isConsolidated) {
     ComplianceRuleSchema schema{m_ruleName, std::move(parameters)};
-    if(m_entry.get_schema().get_name() == PER_ACCOUNT_COMPLIANCE_RULE_NAME ||
+    if(m_entry.get_schema().get_name() == PER_ACCOUNT_RULE_NAME ||
         schema.get_parameters() != m_entry.get_schema().get_parameters()) {
       hasUpdate = true;
     }
@@ -158,9 +158,9 @@ void ComplianceRuleEntryWidget::Commit() {
       parameter.m_name = "\\" + parameter.m_name;
     }
     parameters.emplace_back("name", m_ruleName);
-    ComplianceRuleSchema schema{PER_ACCOUNT_COMPLIANCE_RULE_NAME,
+    ComplianceRuleSchema schema{PER_ACCOUNT_RULE_NAME,
       std::move(parameters)};
-    if(m_entry.get_schema().get_name() != PER_ACCOUNT_COMPLIANCE_RULE_NAME ||
+    if(m_entry.get_schema().get_name() != PER_ACCOUNT_RULE_NAME ||
         schema.get_parameters() != m_entry.get_schema().get_parameters()) {
       hasUpdate = true;
     }
@@ -184,14 +184,14 @@ void ComplianceRuleEntryWidget::SetupParameters() {
     return;
   }
   for(auto& parameter : m_entry.get_schema().get_parameters()) {
-    if(m_entry.get_schema().get_name() == PER_ACCOUNT_COMPLIANCE_RULE_NAME &&
+    if(m_entry.get_schema().get_name() == PER_ACCOUNT_RULE_NAME &&
         parameter.m_name == "name") {
       continue;
     }
     auto name =
       [&] () -> string {
         if(m_entry.get_schema().get_name() ==
-            PER_ACCOUNT_COMPLIANCE_RULE_NAME) {
+            PER_ACCOUNT_RULE_NAME) {
           return parameter.m_name.substr(1);
         }
         return parameter.m_name;

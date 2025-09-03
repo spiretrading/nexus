@@ -217,7 +217,6 @@ namespace Nexus {
         BOOST_THROW_EXCEPTION(
           Beam::MakeYamlParserException("Invalid country code.", node.Mark()));
       }
-      entry.m_market_center = Beam::Extract<std::string>(node, "market_center");
       entry.m_time_zone = Beam::Extract<std::string>(node, "time_zone");
       entry.m_currency = parse_currency(
         Beam::Extract<std::string>(node, "currency"), currency_database);
@@ -227,6 +226,8 @@ namespace Nexus {
       }
       entry.m_description = Beam::Extract<std::string>(node, "description");
       entry.m_display_name = Beam::Extract<std::string>(node, "display_name");
+      entry.m_market_center = Beam::Extract<std::string>(node, "market_center",
+        entry.m_display_name);
       return entry;
     }, std::runtime_error("Failed to parse venue database entry."));
   }
