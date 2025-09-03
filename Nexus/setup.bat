@@ -65,8 +65,9 @@ IF NOT EXIST qt-5.15.13 (
     PUSHD qt-5.15.13
     perl init-repository --module-subset=qtbase,qtsvg,qttools,qttranslations
     CALL configure -prefix %cd% -opensource -static -mp -make libs ^
-      -make tools -nomake examples -nomake tests -opengl desktop -no-icu ^
-      -qt-freetype -qt-harfbuzz -qt-libpng -qt-pcre -qt-zlib -confirm-license
+      -make tools -nomake examples -nomake tests -opengl desktop ^
+      -no-feature-vulkan -no-icu -qt-freetype -qt-harfbuzz -qt-libpng ^
+      -qt-pcre -qt-zlib -confirm-license
     SET CL=/MP
     nmake
     DEL qtbase\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake

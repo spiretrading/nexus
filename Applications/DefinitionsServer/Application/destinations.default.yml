@@ -37,10 +37,6 @@ destinations:
       - XCNQ
       - XTSE
       - XTSX
-  - id: HKEX
-    description: Hong Kong Stock Exchange
-    venues:
-      - XHKG
   - id: LYNX
     description: LYNX ATS
     venues:
@@ -86,80 +82,16 @@ destinations:
     venues:
       - XTSE
       - XTSX
-  - id: AMEX
-    description: NYSE MKT LLC
-    venues:
-      - XASE
-  - id: ARCA
-    description: NYSE ARCA
-    venues:
-      - ARCX
-      - XASE
-      - XNAS
-      - XNYS
-  - id: BATS
-    description: BATS Exchange
-    venues:
-      - ARCX
-      - XASE
-      - XNAS
-      - XNYS
-  - id: BATY
-    description: BATS Y-Exchange
-    venues:
-      - ARCX
-      - XASE
-      - XNAS
-      - XNYS
-  - id: CBSX
-    description: CBOF Stock Exchange
-    venues:
-      - ARCX
-      - XASE
-      - XNAS
-      - XNYS
-  - id: EDGA
-    description: EDGA Exchange
-    venues:
-      - ARCX
-      - XASE
-      - XNAS
-      - XNYS
-  - id: EDGX
-    description: EDGX Exchange
-    venues:
-      - ARCX
-      - XASE
-      - XNAS
-      - XNYS
-  - id: NYSE
-    description: New York Stock Exchange
-    venues:
-      - XASE
-      - XNYS
-  - id: NASDAQ
-    description: NASDAQ
-    venues:
-      - ARCX
-      - XASE
-      - XNAS
-      - XNYS
-  - id: OSE
-    description: Osaka Exchange
-    venues:
-      - XOSE
-  - id: TSE
-    description: Tokyo Stock Exchange
-    venues:
-      - XTKS
 
 preferred_destinations:
+  - venue: CSE2
+    destination: CSE2
+  - venue: NEOE
+    destination: NEOE
   - venue: XASX
     destination: ASXT
   - venue: XCNQ
     destination: CSE
-  - venue: NEOE
-    destination: NEOE
   - venue: XTSE
     destination: TSX
   - venue: XTSX
@@ -169,15 +101,9 @@ manual_order_entry:
   id: MOE
   description: Manual Order Entry
   venues:
-    - ARCX
-    - XASE
+    - NEOE
     - XASX
     - XCNQ
-    - XHKG
-    - XNAS
-    - XNYS
     - XTSE
     - XTSX
-    - XOSE
-    - XTKS
 ...
