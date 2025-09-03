@@ -13,12 +13,9 @@ namespace Details {
         auto entry = DestinationDatabase::Entry();
         entry.m_id = "MOE";
         entry.m_description = "Manual Order Entry";
-        entry.m_venues.push_back(Venue("XASE"));
+        entry.m_venues.push_back(Venue("NEOE"));
         entry.m_venues.push_back(Venue("XASX"));
         entry.m_venues.push_back(Venue("XCNQ"));
-        entry.m_venues.push_back(Venue("XHKG"));
-        entry.m_venues.push_back(Venue("XNAS"));
-        entry.m_venues.push_back(Venue("XNYS"));
         entry.m_venues.push_back(Venue("XTSE"));
         entry.m_venues.push_back(Venue("XTSX"));
         database.set_manual_order_entry_destination(entry);
@@ -32,94 +29,9 @@ namespace Details {
       }
       {
         auto entry = DestinationDatabase::Entry();
-        entry.m_id = "AMEX";
-        entry.m_description = "NYSE MKT LLC";
-        entry.m_venues.push_back(Venue("XASE"));
-        database.add(entry);
-      }
-      {
-        auto entry = DestinationDatabase::Entry();
-        entry.m_id = "ARCA";
-        entry.m_description = "NYSE ARCA";
-        entry.m_venues.push_back(Venue("XASE"));
-        entry.m_venues.push_back(Venue("XNYS"));
-        entry.m_venues.push_back(Venue("XNAS"));
-        database.add(entry);
-      }
-      {
-        auto entry = DestinationDatabase::Entry();
-        entry.m_id = "BATS";
-        entry.m_description = "BATS Exchange";
-        entry.m_venues.push_back(Venue("XASE"));
-        entry.m_venues.push_back(Venue("XNYS"));
-        entry.m_venues.push_back(Venue("XNAS"));
-        database.add(entry);
-      }
-      {
-        auto entry = DestinationDatabase::Entry();
-        entry.m_id = "BATY";
-        entry.m_description = "BATS Y-Exchange";
-        entry.m_venues.push_back(Venue("XASE"));
-        entry.m_venues.push_back(Venue("XNYS"));
-        entry.m_venues.push_back(Venue("XNAS"));
-        database.add(entry);
-      }
-      {
-        auto entry = DestinationDatabase::Entry();
-        entry.m_id = "CBSX";
-        entry.m_description = "CBOF Stock Exchange";
-        entry.m_venues.push_back(Venue("XASE"));
-        entry.m_venues.push_back(Venue("XNYS"));
-        entry.m_venues.push_back(Venue("XNAS"));
-        database.add(entry);
-      }
-      {
-        auto entry = DestinationDatabase::Entry();
         entry.m_id = "CXA";
         entry.m_description = "CHI-X Australia";
         entry.m_venues.push_back(Venue("XASX"));
-        database.add(entry);
-      }
-      {
-        auto entry = DestinationDatabase::Entry();
-        entry.m_id = "EDGA";
-        entry.m_description = "EDGA Exchange";
-        entry.m_venues.push_back(Venue("XASE"));
-        entry.m_venues.push_back(Venue("XNYS"));
-        entry.m_venues.push_back(Venue("XNAS"));
-        database.add(entry);
-      }
-      {
-        auto entry = DestinationDatabase::Entry();
-        entry.m_id = "EDGX";
-        entry.m_description = "EDGX Exchange";
-        entry.m_venues.push_back(Venue("XASE"));
-        entry.m_venues.push_back(Venue("XNYS"));
-        entry.m_venues.push_back(Venue("XNAS"));
-        database.add(entry);
-      }
-      {
-        auto entry = DestinationDatabase::Entry();
-        entry.m_id = "HKEX";
-        entry.m_description = "Hong Kong Stock Exchange";
-        entry.m_venues.push_back(Venue("XHKG"));
-        database.add(entry);
-      }
-      {
-        auto entry = DestinationDatabase::Entry();
-        entry.m_id = "NYSE";
-        entry.m_description = "NYSE";
-        entry.m_venues.push_back(Venue("XASE"));
-        entry.m_venues.push_back(Venue("XNYS"));
-        database.add(entry);
-      }
-      {
-        auto entry = DestinationDatabase::Entry();
-        entry.m_id = "NASDAQ";
-        entry.m_description = "NASDAQ";
-        entry.m_venues.push_back(Venue("XASE"));
-        entry.m_venues.push_back(Venue("XNYS"));
-        entry.m_venues.push_back(Venue("XNAS"));
         database.add(entry);
       }
       {
@@ -232,30 +144,12 @@ namespace Details {
         entry.m_venues.push_back(Venue("XTSX"));
         database.add(entry);
       }
-      {
-        auto entry = DestinationDatabase::Entry();
-        entry.m_id = "OSE";
-        entry.m_description = "Osaka Exchange";
-        entry.m_venues.push_back(Venue("XOSE"));
-        database.add(entry);
-      }
-      {
-        auto entry = DestinationDatabase::Entry();
-        entry.m_id = "TSE";
-        entry.m_description = "Tokyo Stock Exchange";
-        entry.m_venues.push_back(Venue("XTKS"));
-        database.add(entry);
-      }
-      database.set_preferred_destination(Venue("XASE"), "NASDAQ");
+      database.set_preferred_destination(Venue("CSE2"), "CSE");
+      database.set_preferred_destination(Venue("NEOE"), "NEOE");
       database.set_preferred_destination(Venue("XASX"), "ASXT");
       database.set_preferred_destination(Venue("XCNQ"), "CSE");
-      database.set_preferred_destination(Venue("CSE2"), "CSE");
-      database.set_preferred_destination(Venue("XNYS"), "NASDAQ");
-      database.set_preferred_destination(Venue("XNAS"), "NASDAQ");
       database.set_preferred_destination(Venue("XTSE"), "TSX");
       database.set_preferred_destination(Venue("XTSX"), "TSX");
-      database.set_preferred_destination(Venue("XOSE"), "OSE");
-      database.set_preferred_destination(Venue("XTKS"), "TSE");
       return database;
     }();
     return database;
@@ -275,17 +169,7 @@ namespace Details {
   namespace DefaultDestinations {
     inline const auto MOE = std::string("MOE");
     inline const auto ASXT = std::string("ASXT");
-    inline const auto AMEX = std::string("AMEX");
-    inline const auto CBSX = std::string("CBSX");
     inline const auto CXA = std::string("CXA");
-    inline const auto ARCA = std::string("ARCA");
-    inline const auto BATS = std::string("BATS");
-    inline const auto BATY = std::string("BATY");
-    inline const auto EDGA = std::string("EDGA");
-    inline const auto EDGX = std::string("EDGX");
-    inline const auto HKEX = std::string("HKEX");
-    inline const auto NYSE = std::string("NYSE");
-    inline const auto NASDAQ = std::string("NASDAQ");
     inline const auto ALPHA = std::string("ALPHA");
     inline const auto CHIX = std::string("CHIX");
     inline const auto CSE = std::string("CSE");
@@ -298,8 +182,6 @@ namespace Details {
     inline const auto OMEGA = std::string("OMEGA");
     inline const auto PURE = std::string("PURE");
     inline const auto TSX = std::string("TSX");
-    inline const auto OSE = std::string("OSE");
-    inline const auto TSE = std::string("TSE");
   }
 }
 

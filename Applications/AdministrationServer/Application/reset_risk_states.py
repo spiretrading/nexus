@@ -40,14 +40,13 @@ def main():
   address = parse_ip_address(section['address'])
   username = section['username']
   password = section['password']
-  service_locator_client = beam.service_locator.ApplicationServiceLocatorClient(
-    username, password, address)
-  administration_client = \
-    nexus.administration_service.ApplicationAdministrationClient(
+  service_locator_client = \
+    beam.service_locator.ApplicationServiceLocatorClient(
+      username, password, address)
+  administration_client = nexus.ServiceAdministrationClient(
     service_locator_client)
   for account in service_locator_client.load_all_accounts():
-    administration_client.store_risk_state(account,
-      nexus.risk_service.RiskState())
+    administration_client.store(account, nexus.RiskState())
 
 if __name__ == '__main__':
   main()
