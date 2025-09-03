@@ -25,7 +25,7 @@ FOR /F "usebackq delims=" %%i IN (` ^
   )
 )
 SET BUILD_BEAM=
-SET BEAM_COMMIT="25f1f42eab4e5b617d98db93f4cb754656633044"
+SET BEAM_COMMIT="1fafea916542900399bd321059ad2c42a99eb0f1"
 IF NOT EXIST Beam (
   git clone https://www.github.com/spiretrading/beam Beam
   IF !ERRORLEVEL! EQU 0 (
