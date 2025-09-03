@@ -154,28 +154,16 @@ destinations:
       - XTKS
 
 preferred_destinations:
-  - market: ARCX
-    destination: NASDAQ
-  - market: XASE
-    destination: NASDAQ
-  - market: XASX
+  - venue: XASX
     destination: ASXT
-  - market: XCNQ
+  - venue: XCNQ
     destination: CSE
-  - market: XHKG
-    destination: HKEX
-  - market: XNAS
-    destination: NASDAQ
-  - market: XNYSE
-    destination: NYSE
-  - market: XTSE
+  - venue: NEOE
+    destination: NEOE
+  - venue: XTSE
     destination: TSX
-  - market: XTSX
+  - venue: XTSX
     destination: TSX
-  - market: XOSE
-    destination: OSE
-  - market: XTKS
-    destination: TSE
 
 manual_order_entry:
   id: MOE
