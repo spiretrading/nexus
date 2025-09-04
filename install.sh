@@ -136,17 +136,17 @@ mkdir administrators
 mkdir services
 mkdir trading_groups
 cd services
-mkacc uid_service $spire_password
-mkacc market_data_service $spire_password
-mkacc market_data_relay_service $spire_password
-mkacc market_data_feed $spire_password
+mkacc administration_service $spire_password
 mkacc charting_service $spire_password
 mkacc compliance_service $spire_password
-mkacc order_execution_service $spire_password
-mkacc risk_service $spire_password
-mkacc administration_service $spire_password
 mkacc definitions_service $spire_password
+mkacc market_data_feed $spire_password
+mkacc market_data_relay_service $spire_password
+mkacc market_data_service $spire_password
+mkacc order_execution_service $spire_password
 mkacc registry_service $spire_password
+mkacc risk_service $spire_password
+mkacc uid_service $spire_password
 mkacc web_portal_service $spire_password
 chmod administration_service @0 7
 chmod charting_service @0 1
@@ -159,9 +159,11 @@ chmod web_portal_service @0 7
 cd @0
 cd administrators
 associate administration_service
-associate risk_service
-associate order_execution_service
 associate compliance_service
+associate market_data_relay_service
+associate market_data_service
+associate order_execution_service
+associate risk_service
 associate web_portal_service
 del @1
 exit
