@@ -99,8 +99,8 @@ TEST_SUITE("Region") {
 
   TEST_CASE("distinct_venues") {
     auto asx = Region(ASX);
-    auto nyse = Region(NYSE);
-    require_distinct_regions(asx, nyse);
+    auto tsx = Region(TSX);
+    require_distinct_regions(asx, tsx);
   }
 
   TEST_CASE("empty_subset_of_non_empty") {

@@ -8,7 +8,7 @@ using namespace Nexus::DefaultVenues;
 
 TEST_SUITE("SecurityMarketDataQuery") {
   TEST_CASE("make_security_info_query") {
-    auto security = Security("ABC", NYSE);
+    auto security = Security("ABC", TSX);
     auto query = make_security_info_query(security);
     REQUIRE(query.GetIndex() == security);
     auto limit = query.GetSnapshotLimit();

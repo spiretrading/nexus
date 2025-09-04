@@ -32,8 +32,8 @@ using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
-  auto TSLA = Security("TSLA", NASDAQ);
-  auto BAC = Security("BAC", NYSE);
+  auto S32 = Security("S32", ASX);
+  auto SHOP = Security("SHOP", TSX);
 
   struct Fixture {
     using ServletContainer = TestAuthenticatedServiceProtocolServletContainer<
@@ -196,19 +196,19 @@ TEST_SUITE("RiskServlet") {
     auto [admin_entry, admin_client] = fixture.make_client("admin");
     auto [account1, client1, inventories1] = setup_account(fixture, "account1",
       {
-        Inventory(Position(BAC, USD, 100, 100 * Money::ONE),
-          Money::ZERO, 5 * Money::ONE, 100, 1),
-        Inventory(Position(TSLA, USD, 200, 200 * Money::ONE),
-          Money::ZERO, 7 * Money::ONE, 200, 2)
+        Inventory(Position(S32, AUD, 200, 200 * Money::ONE),
+          Money::ZERO, 7 * Money::ONE, 200, 2),
+        Inventory(Position(SHOP, CAD, 100, 100 * Money::ONE),
+          Money::ZERO, 5 * Money::ONE, 100, 1)
       });
     auto [account2, client2, inventories2] = setup_account(fixture, "account2",
       {
-        Inventory(Position(BAC, USD, 300, 300 * Money::ONE),
-          Money::ZERO, 10 * Money::ONE, 300, 1),
-        Inventory(Position(TSLA, USD, 400, 300 * Money::ONE),
-          Money::ZERO, 14 * Money::ONE, 300, 6)
+        Inventory(Position(S32, AUD, 400, 300 * Money::ONE),
+          Money::ZERO, 14 * Money::ONE, 300, 6),
+        Inventory(Position(SHOP, CAD, 300, 300 * Money::ONE),
+          Money::ZERO, 10 * Money::ONE, 300, 1)
       });
-    auto region = Region(BAC);
+    auto region = Region(SHOP);
     admin_client->SendRequest<ResetRegionService>(region);
     auto reset_inventories1 = admin_client->SendRequest<
       LoadInventorySnapshotService>(account1).m_inventories;
@@ -217,12 +217,12 @@ TEST_SUITE("RiskServlet") {
         return lhs.m_position.m_security < rhs.m_position.m_security;
       });
     REQUIRE(reset_inventories1.size() == 2);
-    REQUIRE(reset_inventories1[0].m_position == inventories1[0].m_position);
-    REQUIRE(reset_inventories1[0].m_gross_profit_and_loss == Money::ZERO);
-    REQUIRE(reset_inventories1[0].m_fees == Money::ZERO);
-    REQUIRE(reset_inventories1[0].m_volume == 0);
-    REQUIRE(reset_inventories1[0].m_transaction_count == 0);
-    REQUIRE(reset_inventories1[1] == inventories1[1]);
+    REQUIRE(reset_inventories1[0] == inventories1[0]);
+    REQUIRE(reset_inventories1[1].m_position == inventories1[1].m_position);
+    REQUIRE(reset_inventories1[1].m_gross_profit_and_loss == Money::ZERO);
+    REQUIRE(reset_inventories1[1].m_fees == Money::ZERO);
+    REQUIRE(reset_inventories1[1].m_volume == 0);
+    REQUIRE(reset_inventories1[1].m_transaction_count == 0);
     auto reset_inventories2 = admin_client->SendRequest<
       LoadInventorySnapshotService>(account2).m_inventories;
     std::sort(reset_inventories2.begin(), reset_inventories2.end(),
@@ -230,12 +230,12 @@ TEST_SUITE("RiskServlet") {
         return lhs.m_position.m_security < rhs.m_position.m_security;
       });
     REQUIRE(reset_inventories2.size() == 2);
-    REQUIRE(reset_inventories2[0].m_position == inventories2[0].m_position);
-    REQUIRE(reset_inventories2[0].m_gross_profit_and_loss == Money::ZERO);
-    REQUIRE(reset_inventories2[0].m_fees == Money::ZERO);
-    REQUIRE(reset_inventories2[0].m_volume == 0);
-    REQUIRE(reset_inventories2[0].m_transaction_count == 0);
-    REQUIRE(reset_inventories2[1] == inventories2[1]);
+    REQUIRE(reset_inventories2[0] == inventories2[0]);
+    REQUIRE(reset_inventories2[1].m_position == inventories2[1].m_position);
+    REQUIRE(reset_inventories2[1].m_gross_profit_and_loss == Money::ZERO);
+    REQUIRE(reset_inventories2[1].m_fees == Money::ZERO);
+    REQUIRE(reset_inventories2[1].m_volume == 0);
+    REQUIRE(reset_inventories2[1].m_transaction_count == 0);
     REQUIRE_THROWS_AS(client1->SendRequest<ResetRegionService>(region),
       ServiceRequestException);
   }
@@ -249,17 +249,17 @@ TEST_SUITE("RiskServlet") {
     auto [admin_account_, admin_client] = fixture.make_client("admin");
     auto [account1, client1, inventories1] = setup_account(fixture, "account1",
       {
-        Inventory(Position(BAC, USD, 100, 100 * Money::ONE),
-          Money::ZERO, 5 * Money::ONE, 100, 1),
-        Inventory(Position(TSLA, USD, 200, 200 * Money::ONE),
-          Money::ZERO, 7 * Money::ONE, 200, 2)
+        Inventory(Position(S32, AUD, 200, 200 * Money::ONE),
+          Money::ZERO, 7 * Money::ONE, 200, 2),
+        Inventory(Position(SHOP, CAD, 100, 100 * Money::ONE),
+          Money::ZERO, 5 * Money::ONE, 100, 1)
       });
     auto [account2, client2, inventories2] = setup_account(fixture, "account2",
       {
-        Inventory(Position(BAC, USD, 300, 300 * Money::ONE),
-          Money::ZERO, 10 * Money::ONE, 300, 1),
-        Inventory(Position(TSLA, USD, 400, 300 * Money::ONE),
-          Money::ZERO, 14 * Money::ONE, 300, 6)
+        Inventory(Position(S32, AUD, 400, 300 * Money::ONE),
+          Money::ZERO, 14 * Money::ONE, 300, 6),
+        Inventory(Position(SHOP, CAD, 300, 300 * Money::ONE),
+          Money::ZERO, 10 * Money::ONE, 300, 1)
       });
     auto entries1 =
       client1->SendRequest<SubscribeRiskPortfolioUpdatesService>();
@@ -270,10 +270,10 @@ TEST_SUITE("RiskServlet") {
       });
     REQUIRE(entries1.size() == 2);
     REQUIRE(entries1[0].m_key.m_account == account1);
-    REQUIRE(entries1[0].m_key.m_security == BAC);
+    REQUIRE(entries1[0].m_key.m_security == S32);
     REQUIRE(entries1[0].m_value == inventories1[0]);
     REQUIRE(entries1[1].m_key.m_account == account1);
-    REQUIRE(entries1[1].m_key.m_security == TSLA);
+    REQUIRE(entries1[1].m_key.m_security == SHOP);
     REQUIRE(entries1[1].m_value == inventories1[1]);
     auto admin_entries =
       admin_client->SendRequest<SubscribeRiskPortfolioUpdatesService>();
@@ -284,23 +284,23 @@ TEST_SUITE("RiskServlet") {
       });
     REQUIRE(admin_entries.size() == 4);
     REQUIRE(admin_entries[0].m_key.m_account == account1);
-    REQUIRE(admin_entries[0].m_key.m_security == BAC);
+    REQUIRE(admin_entries[0].m_key.m_security == S32);
     REQUIRE(admin_entries[0].m_value == inventories1[0]);
     REQUIRE(admin_entries[1].m_key.m_account == account1);
-    REQUIRE(admin_entries[1].m_key.m_security == TSLA);
+    REQUIRE(admin_entries[1].m_key.m_security == SHOP);
     REQUIRE(admin_entries[1].m_value == inventories1[1]);
     REQUIRE(admin_entries[2].m_key.m_account == account2);
-    REQUIRE(admin_entries[2].m_key.m_security == BAC);
+    REQUIRE(admin_entries[2].m_key.m_security == S32);
     REQUIRE(admin_entries[2].m_value == inventories2[0]);
     REQUIRE(admin_entries[3].m_key.m_account == account2);
-    REQUIRE(admin_entries[3].m_key.m_security == TSLA);
+    REQUIRE(admin_entries[3].m_key.m_security == SHOP);
     REQUIRE(admin_entries[3].m_value == inventories2[1]);
-    submit_and_fill(fixture, account2, TSLA, Side::BID, 300, Money::ONE);
+    submit_and_fill(fixture, account2, S32, Side::BID, 300, Money::ONE);
     require_inventory_message(
-      *admin_client, account2, TSLA, 700, 600 * Money::ONE);
-    submit_and_fill(fixture, account1, BAC, Side::BID, 100, Money::ONE);
+      *admin_client, account2, S32, 700, 600 * Money::ONE);
+    submit_and_fill(fixture, account1, SHOP, Side::BID, 100, Money::ONE);
     require_inventory_message(
-      *admin_client, account1, BAC, 200, 200 * Money::ONE);
-    require_inventory_message(*client1, account1, BAC, 200, 200 * Money::ONE);
+      *admin_client, account1, SHOP, 200, 200 * Money::ONE);
+    require_inventory_message(*client1, account1, SHOP, 200, 200 * Money::ONE);
   }
 }

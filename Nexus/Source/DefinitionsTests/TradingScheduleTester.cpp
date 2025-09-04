@@ -14,23 +14,23 @@ TEST_SUITE("TradingSchedule") {
   }
 
   TEST_CASE("match_all_dates") {
-    auto rule = TradingSchedule::Rule{{NYSE}, {}, {}, {}, {}, {}};
-    REQUIRE(is_match(NYSE, date(1984, 5, 7), rule));
-    REQUIRE(!is_match(NASDAQ, date(1984, 5, 7), rule));
+    auto rule = TradingSchedule::Rule{{TSX}, {}, {}, {}, {}, {}};
+    REQUIRE(is_match(TSX, date(1984, 5, 7), rule));
+    REQUIRE(!is_match(ASX, date(1984, 5, 7), rule));
   }
 
   TEST_CASE("match_day_of_week") {
     auto rule = TradingSchedule::Rule{
-      {NYSE}, {greg_weekday::weekday_enum::Monday}, {}, {}, {}, {}};
-    REQUIRE(is_match(NYSE, date(2020, 7, 20), rule));
-    REQUIRE(!is_match(NYSE, date(2020, 7, 21), rule));
-    REQUIRE(!is_match(NYSE, date(2020, 7, 22), rule));
-    REQUIRE(!is_match(NYSE, date(2020, 7, 23), rule));
-    REQUIRE(!is_match(NYSE, date(2020, 7, 24), rule));
-    REQUIRE(!is_match(NYSE, date(2020, 7, 25), rule));
-    REQUIRE(!is_match(NYSE, date(2020, 7, 26), rule));
-    REQUIRE(is_match(NYSE, date(2020, 7, 27), rule));
-    REQUIRE(!is_match(NASDAQ, date(2020, 7, 27), rule));
+      {ASX}, {greg_weekday::weekday_enum::Monday}, {}, {}, {}, {}};
+    REQUIRE(is_match(ASX, date(2020, 7, 20), rule));
+    REQUIRE(!is_match(ASX, date(2020, 7, 21), rule));
+    REQUIRE(!is_match(ASX, date(2020, 7, 22), rule));
+    REQUIRE(!is_match(ASX, date(2020, 7, 23), rule));
+    REQUIRE(!is_match(ASX, date(2020, 7, 24), rule));
+    REQUIRE(!is_match(ASX, date(2020, 7, 25), rule));
+    REQUIRE(!is_match(ASX, date(2020, 7, 26), rule));
+    REQUIRE(is_match(ASX, date(2020, 7, 27), rule));
+    REQUIRE(!is_match(TSX, date(2020, 7, 27), rule));
   }
 
   TEST_CASE("match_day") {
@@ -84,8 +84,8 @@ TEST_SUITE("TradingSchedule") {
 
   TEST_CASE("match_date") {
     auto rule = TradingSchedule::Rule{
-      {NYSE}, {}, {6}, {greg_month::month_enum::May}, {1990}, {}};
-    REQUIRE(is_match(NYSE, date(1990, 5, 6), rule));
+      {ASX}, {}, {6}, {greg_month::month_enum::May}, {1990}, {}};
+    REQUIRE(is_match(ASX, date(1990, 5, 6), rule));
     REQUIRE(!is_match(TSX, date(1990, 5, 6), rule));
     REQUIRE(!is_match(TSX, date(2020, 7, 13), rule));
     REQUIRE(!is_match(TSX, date(2020, 8, 11), rule));
@@ -97,17 +97,17 @@ TEST_SUITE("TradingSchedule") {
   }
 
   TEST_CASE("match_weekends_2020") {
-    auto rule = TradingSchedule::Rule{{NYSE},
+    auto rule = TradingSchedule::Rule{{ASX},
       {greg_weekday::weekday_enum::Saturday,
       greg_weekday::weekday_enum::Sunday}, {}, {}, {2020}, {}};
-    REQUIRE(is_match(NYSE, date(2020, 7, 4), rule));
-    REQUIRE(is_match(NYSE, date(2020, 7, 5), rule));
-    REQUIRE(!is_match(NYSE, date(2020, 7, 3), rule));
-    REQUIRE(!is_match(NYSE, date(2020, 7, 7), rule));
-    REQUIRE(is_match(NYSE, date(2020, 9, 26), rule));
-    REQUIRE(is_match(NYSE, date(2020, 9, 27), rule));
-    REQUIRE(!is_match(NYSE, date(2020, 9, 23), rule));
-    REQUIRE(!is_match(NYSE, date(2020, 9, 24), rule));
+    REQUIRE(is_match(ASX, date(2020, 7, 4), rule));
+    REQUIRE(is_match(ASX, date(2020, 7, 5), rule));
+    REQUIRE(!is_match(ASX, date(2020, 7, 3), rule));
+    REQUIRE(!is_match(ASX, date(2020, 7, 7), rule));
+    REQUIRE(is_match(ASX, date(2020, 9, 26), rule));
+    REQUIRE(is_match(ASX, date(2020, 9, 27), rule));
+    REQUIRE(!is_match(ASX, date(2020, 9, 23), rule));
+    REQUIRE(!is_match(ASX, date(2020, 9, 24), rule));
   }
 
   TEST_CASE("find_type") {
@@ -117,9 +117,9 @@ TEST_SUITE("TradingSchedule") {
     events.push_back(
       {"C", ptime(date(1984, 5, 7), time_duration(4, 30, 0, 0))});
     auto rules = std::vector<TradingSchedule::Rule>();
-    rules.push_back(TradingSchedule::Rule{{NYSE}, {}, {}, {}, {}, events});
+    rules.push_back(TradingSchedule::Rule{{TSXV}, {}, {}, {}, {}, events});
     auto schedule = TradingSchedule(rules);
-    auto found_events = schedule.find(date(1984, 5, 7), NYSE,
+    auto found_events = schedule.find(date(1984, 5, 7), TSXV,
       [] (const auto& event) {
         return event.m_code == "O";
       });
@@ -129,7 +129,7 @@ TEST_SUITE("TradingSchedule") {
 
   TEST_CASE("parse_schedule") {
     auto ss = std::stringstream();
-    ss << "- market: NSDQ\n"
+    ss << "- venue: TSXV\n"
           "  time:\n"
           "    weekdays: [Sat, Sun]\n"
           "  events:\n"
@@ -137,9 +137,9 @@ TEST_SUITE("TradingSchedule") {
           "      time: 9:30:00";
     auto node = YAML::Load(ss);
     auto schedule = parse_trading_schedule(node, DEFAULT_VENUES);
-    auto empty_events = schedule.find(date(2020, 1, 15), NASDAQ);
+    auto empty_events = schedule.find(date(2020, 1, 15), TSXV);
     REQUIRE(empty_events.empty());
-    auto event = schedule.find(date(2020, 7, 18), NASDAQ);
+    auto event = schedule.find(date(2020, 7, 18), TSXV);
     REQUIRE(event.size() == 1);
     REQUIRE(event.front().m_code == "OPEN");
   }
@@ -158,11 +158,11 @@ TEST_SUITE("TradingSchedule") {
       {"O", ptime(date(2025, 7, 1), time_duration(1, 30, 0, 0))});
     auto rules = std::vector<TradingSchedule::Rule>();
     rules.push_back(TradingSchedule::Rule(
-      {NYSE}, {Tuesday}, {1}, {7}, {2025}, events));
+      {TSXV}, {Tuesday}, {1}, {7}, {2025}, events));
     auto schedule = TradingSchedule(rules);
     Beam::Serialization::Tests::TestRoundTripShuttle(schedule,
       [&] (const auto& schedule) {
-        auto e1 = schedule.find(date(2025, 7, 1), NYSE);
+        auto e1 = schedule.find(date(2025, 7, 1), TSXV);
         REQUIRE(e1 == events);
       });
   }

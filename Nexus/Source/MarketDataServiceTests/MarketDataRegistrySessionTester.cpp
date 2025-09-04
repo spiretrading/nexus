@@ -21,7 +21,7 @@ TEST_SUITE("MarketDataRegistrySession") {
       key, MarketDataTypeSet(MarketDataType::BBO_QUOTE));
     REQUIRE(has_entitlement(session, key, MarketDataType::BBO_QUOTE));
     REQUIRE(!has_entitlement(session, key, MarketDataType::BOOK_QUOTE));
-    auto other_key = EntitlementKey(NYSE);
+    auto other_key = EntitlementKey(ASX);
     REQUIRE(!has_entitlement(session, other_key, MarketDataType::BBO_QUOTE));
   }
 
@@ -42,7 +42,7 @@ TEST_SUITE("MarketDataRegistrySession") {
       EntitlementKey(TSX), MarketDataTypeSet(MarketDataType::BBO_QUOTE));
     REQUIRE(has_entitlement<BboQuote>(session, query));
     REQUIRE(!has_entitlement<BookQuote>(session, query));
-    auto other_security = Security("MSFT", NYSE);
+    auto other_security = Security("S32", ASX);
     auto other_query = SecurityMarketDataQuery();
     other_query.SetIndex(other_security);
     other_query.SetRange(Range::RealTime());
@@ -65,7 +65,7 @@ TEST_SUITE("MarketDataRegistrySession") {
       EntitlementKey(TSX), MarketDataTypeSet(MarketDataType::ORDER_IMBALANCE));
     REQUIRE(has_entitlement<OrderImbalance>(session, query));
     auto other_query = VenueMarketDataQuery();
-    other_query.SetIndex(NYSE);
+    other_query.SetIndex(ASX);
     other_query.SetRange(Range::RealTime());
     REQUIRE(!has_entitlement<OrderImbalance>(session, other_query));
   }

@@ -19,10 +19,10 @@ using namespace Nexus::Tests;
 
 namespace {
   void require_check(auto& rule, auto& time_client, auto& operations) {
-    auto security = Security("TST", ASX);
+    auto security = Security("TST", TSX);
     auto order_info = OrderInfo();
     order_info.m_fields = make_limit_order_fields(
-      DirectoryEntry::MakeAccount(1, "alice"), security, AUD, Side::BID, "ASX",
+      DirectoryEntry::MakeAccount(1, "alice"), security, CAD, Side::BID, "TSX",
       100, Money::ONE);
     order_info.m_timestamp = time_client.GetTime();
     order_info.m_id = 1;
@@ -50,10 +50,10 @@ namespace {
   }
 
   void require_passthrough(auto& rule, auto& time_client, auto& operations) {
-    auto security = Security("TST", ASX);
+    auto security = Security("TST", TSX);
     auto order_info = OrderInfo();
     order_info.m_fields = make_limit_order_fields(
-      DirectoryEntry::MakeAccount(1, "alice"), security, AUD, Side::BID, "ASX",
+      DirectoryEntry::MakeAccount(1, "alice"), security, CAD, Side::BID, "TSX",
       100, Money::ONE);
     order_info.m_timestamp = time_client.GetTime();
     order_info.m_id = 1;
@@ -139,7 +139,7 @@ TEST_SUITE("TimeFilterComplianceRule") {
     auto security = Security("TST", unknown_venue);
     auto order_info = OrderInfo();
     order_info.m_fields = make_limit_order_fields(
-      DirectoryEntry::MakeAccount(1, "alice"), security, AUD, Side::BID, "XXXX",
+      DirectoryEntry::MakeAccount(1, "alice"), security, CAD, Side::BID, "XXXX",
       100, Money::ONE);
     order_info.m_timestamp = time_client.GetTime();
     order_info.m_id = 6;

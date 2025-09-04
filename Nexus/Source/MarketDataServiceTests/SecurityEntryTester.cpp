@@ -212,7 +212,7 @@ TEST_SUITE("SecurityEntry") {
   TEST_CASE("load_initial_sequences") {
     auto data_store = LocalHistoricalDataStore();
     auto security1 = Security("TST", TSX);
-    auto security2 = Security("MSFT", NASDAQ);
+    auto security2 = Security("S32", ASX);
     auto security3 = Security("RY", TSX);
     data_store.store(SequencedSecurityBboQuote(
       SecurityBboQuote(BboQuote(), security1), Beam::Queries::Sequence(5)));

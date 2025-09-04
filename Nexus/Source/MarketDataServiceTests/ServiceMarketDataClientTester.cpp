@@ -23,7 +23,7 @@ namespace {
   using TestMarketDataClient =
     ServiceMarketDataClient<TestServiceProtocolClientBuilder>;
 
-  const auto SECURITY_A = Security("TST", NYSE);
+  const auto SECURITY_A = Security("TST", TSX);
 
   struct ClientEntry {
     TestMarketDataClient m_client;

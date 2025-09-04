@@ -9,7 +9,7 @@ using namespace Nexus::DefaultVenues;
 TEST_SUITE("SecurityInfo") {
   TEST_CASE("stream") {
     auto info =
-      SecurityInfo(Security("ABC", NYSE), "Test Company", "Technology", 100);
+      SecurityInfo(Security("ABC", TSX), "Test Company", "Technology", 100);
     auto ss = std::ostringstream();
     ss << info;
     auto expected = std::ostringstream();
@@ -20,6 +20,6 @@ TEST_SUITE("SecurityInfo") {
 
   TEST_CASE("shuttle") {
     Beam::Serialization::Tests::TestRoundTripShuttle(
-      SecurityInfo(Security("ABC", NYSE), "Test Company", "Technology", 100));
+      SecurityInfo(Security("ABC", TSX), "Test Company", "Technology", 100));
   }
 }

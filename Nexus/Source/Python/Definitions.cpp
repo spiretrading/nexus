@@ -233,17 +233,7 @@ void Nexus::Python::export_default_destinations(module& module) {
   auto submodule = module.def_submodule("default_destinations");
   submodule.add_object("MOE", cast(DefaultDestinations::MOE));
   submodule.add_object("ASXT", cast(DefaultDestinations::ASXT));
-  submodule.add_object("AMEX", cast(DefaultDestinations::AMEX));
-  submodule.add_object("CBSX", cast(DefaultDestinations::CBSX));
   submodule.add_object("CXA", cast(DefaultDestinations::CXA));
-  submodule.add_object("ARCA", cast(DefaultDestinations::ARCA));
-  submodule.add_object("BATS", cast(DefaultDestinations::BATS));
-  submodule.add_object("BATY", cast(DefaultDestinations::BATY));
-  submodule.add_object("EDGA", cast(DefaultDestinations::EDGA));
-  submodule.add_object("EDGX", cast(DefaultDestinations::EDGX));
-  submodule.add_object("HKEX", cast(DefaultDestinations::HKEX));
-  submodule.add_object("NYSE", cast(DefaultDestinations::NYSE));
-  submodule.add_object("NASDAQ", cast(DefaultDestinations::NASDAQ));
   submodule.add_object("ALPHA", cast(DefaultDestinations::ALPHA));
   submodule.add_object("CHIX", cast(DefaultDestinations::CHIX));
   submodule.add_object("CSE", cast(DefaultDestinations::CSE));
@@ -256,8 +246,6 @@ void Nexus::Python::export_default_destinations(module& module) {
   submodule.add_object("OMEGA", cast(DefaultDestinations::OMEGA));
   submodule.add_object("PURE", cast(DefaultDestinations::PURE));
   submodule.add_object("TSX", cast(DefaultDestinations::TSX));
-  submodule.add_object("OSE", cast(DefaultDestinations::OSE));
-  submodule.add_object("TSE", cast(DefaultDestinations::TSE));
 }
 
 void Nexus::Python::export_default_venues(module& module) {
@@ -265,27 +253,12 @@ void Nexus::Python::export_default_venues(module& module) {
     cast(DEFAULT_VENUES, return_value_policy::reference);
   module.def("set_default_venues", &set_default_venues);
   auto submodule = module.def_submodule("default_venues");
-  submodule.add_object("HKEX", cast(DefaultVenues::HKEX));
   submodule.add_object("ASX", cast(DefaultVenues::ASX));
   submodule.add_object("CXA", cast(DefaultVenues::CXA));
-  submodule.add_object("ASEX", cast(DefaultVenues::ASEX));
-  submodule.add_object("ARCX", cast(DefaultVenues::ARCX));
-  submodule.add_object("BATS", cast(DefaultVenues::BATS));
-  submodule.add_object("BATY", cast(DefaultVenues::BATY));
-  submodule.add_object("BOSX", cast(DefaultVenues::BOSX));
-  submodule.add_object("CBOE", cast(DefaultVenues::CBOE));
   submodule.add_object("CSE", cast(DefaultVenues::CSE));
   submodule.add_object("CSE2", cast(DefaultVenues::CSE2));
-  submodule.add_object("NSEX", cast(DefaultVenues::NSEX));
-  submodule.add_object("ADFX", cast(DefaultVenues::ADFX));
-  submodule.add_object("ISE", cast(DefaultVenues::ISE));
-  submodule.add_object("EDGA", cast(DefaultVenues::EDGA));
-  submodule.add_object("EDGX", cast(DefaultVenues::EDGX));
-  submodule.add_object("PHLX", cast(DefaultVenues::PHLX));
   submodule.add_object("CHIC", cast(DefaultVenues::CHIC));
   submodule.add_object("LYNX", cast(DefaultVenues::LYNX));
-  submodule.add_object("NASDAQ", cast(DefaultVenues::NASDAQ));
-  submodule.add_object("NYSE", cast(DefaultVenues::NYSE));
   submodule.add_object("MATN", cast(DefaultVenues::MATN));
   submodule.add_object("NEOE", cast(DefaultVenues::NEOE));
   submodule.add_object("OMGA", cast(DefaultVenues::OMGA));
@@ -294,12 +267,6 @@ void Nexus::Python::export_default_venues(module& module) {
   submodule.add_object("TSXV", cast(DefaultVenues::TSXV));
   submodule.add_object("XATS", cast(DefaultVenues::XATS));
   submodule.add_object("XCX2", cast(DefaultVenues::XCX2));
-  submodule.add_object("XFKA", cast(DefaultVenues::XFKA));
-  submodule.add_object("TSE", cast(DefaultVenues::TSE));
-  submodule.add_object("OSE", cast(DefaultVenues::OSE));
-  submodule.add_object("NSE", cast(DefaultVenues::NSE));
-  submodule.add_object("SSE", cast(DefaultVenues::SSE));
-  submodule.add_object("CHIJ", cast(DefaultVenues::CHIJ));
 }
 
 void Nexus::Python::export_definitions(module& module) {

@@ -108,7 +108,7 @@ TEST_SUITE("BoardLotCheck") {
 
     SUBCASE("unsupported_venue") {
       auto fields = make_test_order_fields();
-      fields.m_security = Security("USA", NYSE);
+      fields.m_security = Security("S32", ASX);
       auto order_info =
         OrderInfo(fields, 1, time_from_string("2024-07-18 10:01:00"));
       REQUIRE_NOTHROW(check->submit(order_info));

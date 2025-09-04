@@ -68,11 +68,11 @@ namespace {
   auto make_order_info(const DirectoryEntry& account) {
     auto fields = OrderFields();
     fields.m_account = account;
-    fields.m_security = Security("TST", NYSE);
-    fields.m_currency = USD;
+    fields.m_security = Security("TST", TSX);
+    fields.m_currency = CAD;
     fields.m_type = OrderType::LIMIT;
     fields.m_side = Side::BID;
-    fields.m_destination = "NYSE";
+    fields.m_destination = "TSX";
     fields.m_quantity = 100;
     fields.m_price = Money::ONE;
     return OrderInfo(fields, 1, false, ptime(not_a_date_time));

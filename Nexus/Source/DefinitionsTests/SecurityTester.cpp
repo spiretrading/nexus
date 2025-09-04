@@ -13,19 +13,19 @@ TEST_SUITE("Security") {
   }
 
   TEST_CASE("constructor") {
-    auto security = Security("AAPL", NASDAQ);
-    REQUIRE(security.get_symbol() == "AAPL");
-    REQUIRE(security.get_venue() == NASDAQ);
+    auto security = Security("S32", ASX);
+    REQUIRE(security.get_symbol() == "S32");
+    REQUIRE(security.get_venue() == ASX);
   }
 
   TEST_CASE("empty") {
     REQUIRE_FALSE(static_cast<bool>(Security()));
-    REQUIRE(static_cast<bool>(Security("AAPL", NASDAQ)));
+    REQUIRE(static_cast<bool>(Security("S32", ASX)));
   }
 
   TEST_CASE("hash") {
-    auto x = Security("IBM", NYSE);
-    auto y = Security("IBM", NYSE);
+    auto x = Security("SHOP", TSX);
+    auto y = Security("SHOP", TSX);
     auto hasher = std::hash<Security>();
     REQUIRE(hasher(x) == hasher(y));
   }
@@ -33,19 +33,19 @@ TEST_SUITE("Security") {
   TEST_CASE("parse") {
     auto invalid = parse_security("XYZ", DEFAULT_VENUES);
     REQUIRE(!invalid);
-    auto valid = parse_security("TSLA.NSDQ", DEFAULT_VENUES);
-    REQUIRE(valid.get_symbol() == "TSLA");
-    REQUIRE(valid.get_venue() == NASDAQ);
+    auto valid = parse_security("TD.TSX", DEFAULT_VENUES);
+    REQUIRE(valid.get_symbol() == "TD");
+    REQUIRE(valid.get_venue() == TSX);
     auto compound = parse_security("A.B.C.TSX", DEFAULT_VENUES);
     REQUIRE(compound.get_symbol() == "A.B.C");
     REQUIRE(compound.get_venue() == TSX);
   }
 
   TEST_CASE("stream") {
-    auto security = Security("IBM", NYSE);
+    auto security = Security("ARQ", TSXV);
     auto ss = std::ostringstream();
     ss << security;
-    REQUIRE(ss.str() == "IBM.NYSE");
+    REQUIRE(ss.str() == "ARQ.TSXV");
     auto empty = Security();
     ss = std::ostringstream();
     ss << empty;
@@ -53,10 +53,10 @@ TEST_SUITE("Security") {
   }
 
   TEST_CASE("stream_input") {
-    auto ss = std::istringstream("AAPL.NSDQ");
+    auto ss = std::istringstream("ETHC.NEOE");
     auto parsed_security = Security();
     ss >> parsed_security;
-    REQUIRE(parsed_security == Security("AAPL", NASDAQ));
+    REQUIRE(parsed_security == Security("ETHC", NEOE));
     ss = std::istringstream("INVALID");
     auto invalid_security = Security();
     ss >> invalid_security;
@@ -67,14 +67,14 @@ TEST_SUITE("Security") {
     auto yaml = R"(
       - ABX.TSX
       - RY.TSX
-      - MSFT.NSDQ
+      - ETHC.NEOE
     )";
     auto node = YAML::Load(yaml);
     auto securities = parse_security_set(node);
     REQUIRE(securities.size() == 3);
     REQUIRE(securities.contains(Security("ABX", TSX)));
     REQUIRE(securities.contains(Security("RY", TSX)));
-    REQUIRE(securities.contains(Security("MSFT", NASDAQ)));
+    REQUIRE(securities.contains(Security("ETHC", NEOE)));
   }
 
   TEST_CASE("parse_security_set_with_invalid") {

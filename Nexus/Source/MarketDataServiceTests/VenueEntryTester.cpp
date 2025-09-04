@@ -49,25 +49,25 @@ TEST_SUITE("VenueEntry") {
         time_from_string("2024-07-10 12:00:02")), TSX),
       Beam::Queries::Sequence(7)));
     data_store.store(SequencedValue(IndexedValue(
-      OrderImbalance(Security("D", NYSE), Side::BID, 300, Money::ONE,
-        time_from_string("2024-07-10 12:00:00")), NYSE),
+      OrderImbalance(Security("D", ASX), Side::BID, 300, Money::ONE,
+        time_from_string("2024-07-10 12:00:00")), ASX),
       Beam::Queries::Sequence(15)));
     data_store.store(SequencedValue(IndexedValue(
-      OrderImbalance(Security("E", NYSE), Side::ASK, 400, Money::ONE,
-        time_from_string("2024-07-10 12:00:01")), NYSE),
+      OrderImbalance(Security("E", ASX), Side::ASK, 400, Money::ONE,
+        time_from_string("2024-07-10 12:00:01")), ASX),
       Beam::Queries::Sequence(18)));
     data_store.store(SequencedValue(IndexedValue(
-      OrderImbalance(Security("F", NYSE), Side::BID, 500, Money::ONE,
-        time_from_string("2024-07-10 12:00:02")), NYSE),
+      OrderImbalance(Security("F", ASX), Side::BID, 500, Money::ONE,
+        time_from_string("2024-07-10 12:00:02")), ASX),
       Beam::Queries::Sequence(12)));
     auto tsx_sequences = load_initial_sequences(data_store, TSX);
     REQUIRE(tsx_sequences.m_next_order_imbalance_sequence ==
       Beam::Queries::Sequence(8));
-    auto nyse_sequences = load_initial_sequences(data_store, NYSE);
-    REQUIRE(nyse_sequences.m_next_order_imbalance_sequence ==
-      Beam::Queries::Sequence(19));
     auto asx_sequences = load_initial_sequences(data_store, ASX);
     REQUIRE(asx_sequences.m_next_order_imbalance_sequence ==
+      Beam::Queries::Sequence(19));
+    auto tsxv_sequences = load_initial_sequences(data_store, TSXV);
+    REQUIRE(tsxv_sequences.m_next_order_imbalance_sequence ==
       Beam::Queries::Sequence::First());
   }
 }

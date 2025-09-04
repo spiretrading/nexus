@@ -76,7 +76,7 @@ namespace {
 TEST_SUITE("ServiceMarketDataFeedClient") {
   TEST_CASE("add_security_info") {
     auto fixture = Fixture();
-    auto info = SecurityInfo(Security("GOOG", NASDAQ), "Google Inc.", "", 100);
+    auto info = SecurityInfo(Security("S32", ASX), "S32 Inc.", "", 100);
     auto completion_token = Async<void>();
     fixture.handle<SetSecurityInfoMessage>(
       [&] (auto& client, const auto& received_info) {
@@ -89,13 +89,13 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
 
   TEST_CASE("publish_order_imbalance") {
     auto fixture = Fixture();
-    auto security = Security("GOOG", NASDAQ);
+    auto security = Security("S32", ASX);
     auto imbalance1 = VenueOrderImbalance(OrderImbalance(security, Side::ASK,
-      100, Money::ONE, time_from_string("2024-07-15 12:00:00")), NASDAQ);
+      100, Money::ONE, time_from_string("2024-07-15 12:00:00")), ASX);
     auto imbalance2 = VenueOrderImbalance(OrderImbalance(security, Side::BID,
-      200, 2 * Money::ONE, time_from_string("2024-07-15 12:00:01")), NASDAQ);
+      200, 2 * Money::ONE, time_from_string("2024-07-15 12:00:01")), ASX);
     auto imbalance3 = VenueOrderImbalance(OrderImbalance(security, Side::ASK,
-      300, 3 * Money::ONE, time_from_string("2024-07-15 12:00:02")), NASDAQ);
+      300, 3 * Money::ONE, time_from_string("2024-07-15 12:00:02")), ASX);
     auto completion_token = Async<void>();
     fixture.handle<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
@@ -120,7 +120,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
 
   TEST_CASE("publish_bbo_quote") {
     auto fixture = Fixture();
-    auto security = Security("GOOG", NASDAQ);
+    auto security = Security("S32", ASX);
     auto bbo_quote = SecurityBboQuote(
       BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
         time_from_string("2024-07-15 12:00:00")), security);
@@ -141,9 +141,9 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
 
   TEST_CASE("publish_bbo_quote_sampling") {
     auto fixture = Fixture();
-    auto security_a = Security("A", NASDAQ);
-    auto security_b = Security("B", NASDAQ);
-    auto security_c = Security("C", NASDAQ);
+    auto security_a = Security("A", TSX);
+    auto security_b = Security("B", TSX);
+    auto security_c = Security("C", TSX);
     auto bbo_a1 = SecurityBboQuote(
       BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
         time_from_string("2024-07-15 12:00:00")), security_a);
@@ -190,9 +190,9 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
 
   TEST_CASE("publish_book_quote") {
     auto fixture = Fixture();
-    auto security = Security("GOOG", NASDAQ);
+    auto security = Security("TD", TSX);
     auto book_quote = SecurityBookQuote(
-      BookQuote("MP1", true, NASDAQ, make_bid(10 * Money::ONE, 100),
+      BookQuote("MP1", true, TSX, make_bid(10 * Money::ONE, 100),
         time_from_string("2024-07-15 12:00:00")), security);
     auto completion_token = Async<void>();
     fixture.handle<SendMarketDataFeedMessages>(
@@ -211,23 +211,23 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
 
   TEST_CASE("publish_book_quote_aggregation") {
     auto fixture = Fixture();
-    auto security_a = Security("A", NASDAQ);
-    auto security_b = Security("B", NASDAQ);
-    auto security_c = Security("C", NASDAQ);
+    auto security_a = Security("A", TSX);
+    auto security_b = Security("B", TSX);
+    auto security_c = Security("C", TSX);
     auto book_a1 = SecurityBookQuote(
-      BookQuote("MP1", true, NASDAQ, make_bid(10 * Money::ONE, 100),
+      BookQuote("MP1", true, TSX, make_bid(10 * Money::ONE, 100),
         time_from_string("2024-07-15 12:00:00")), security_a);
     auto book_b1 = SecurityBookQuote(
-      BookQuote("MP1", true, NASDAQ, make_bid(20 * Money::ONE, 200),
+      BookQuote("MP1", true, TSX, make_bid(20 * Money::ONE, 200),
         time_from_string("2024-07-15 12:00:01")), security_b);
     auto book_b2 = SecurityBookQuote(
-      BookQuote("MP1", true, NASDAQ, make_bid(20 * Money::ONE, 250),
+      BookQuote("MP1", true, TSX, make_bid(20 * Money::ONE, 250),
         time_from_string("2024-07-15 12:00:02")), security_b);
     auto book_c1 = SecurityBookQuote(
-      BookQuote("MP2", false, NASDAQ, make_ask(parse_money("30.01"), 300),
+      BookQuote("MP2", false, TSX, make_ask(parse_money("30.01"), 300),
         time_from_string("2024-07-15 12:00:03")), security_c);
     auto book_c2 = SecurityBookQuote(
-      BookQuote("MP2", false, NASDAQ, make_ask(parse_money("30.02"), 350),
+      BookQuote("MP2", false, TSX, make_ask(parse_money("30.02"), 350),
         time_from_string("2024-07-15 12:00:04")), security_c);
     auto completion_token = Async<void>();
     fixture.handle<SendMarketDataFeedMessages>(
@@ -260,7 +260,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
 
   TEST_CASE("order_add_and_remove") {
     auto fixture = Fixture();
-    auto security = Security("GOOG", NASDAQ);
+    auto security = Security("TD", TSX);
     auto order_id = "1";
     auto bbo_quote = SecurityBboQuote(
       BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
@@ -275,7 +275,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
         REQUIRE(*received_quote == bbo_quote);
         completion_token.GetEval().SetResult();
       });
-    fixture.m_client->add_order(security, NASDAQ, "MP1", true, order_id,
+    fixture.m_client->add_order(security, TSX, "MP1", true, order_id,
       Side::BID, Money::ONE, 100, time_from_string("2024-07-15 12:00:00"));
     fixture.m_client->remove_order(order_id,
       time_from_string("2024-07-15 12:00:01"));
@@ -286,7 +286,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
 
   TEST_CASE("order_aggregation") {
     auto fixture = Fixture();
-    auto security = Security("GOOG", NASDAQ);
+    auto security = Security("TD", TSX);
     auto price = Money::ONE;
     auto mpid = "MP1";
     auto timestamp1 = time_from_string("2024-07-15 12:00:00");
@@ -307,16 +307,16 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
         completion_token.GetEval().SetResult();
       });
     fixture.m_client->add_order(
-      security, NASDAQ, mpid, true, "1", Side::BID, price, 100, timestamp1);
+      security, TSX, mpid, true, "1", Side::BID, price, 100, timestamp1);
     fixture.m_client->add_order(
-      security, NASDAQ, mpid, true, "2", Side::BID, price, 200, timestamp2);
+      security, TSX, mpid, true, "2", Side::BID, price, 200, timestamp2);
     fixture.m_sampling_timer.Trigger();
     completion_token.Get();
   }
 
   TEST_CASE("order_modify_size") {
     auto fixture = Fixture();
-    auto security = Security("GOOG", NASDAQ);
+    auto security = Security("S32", ASX);
     auto price = Money::ONE;
     auto mpid = "MP1";
     auto order_id = "1";
@@ -337,7 +337,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
         REQUIRE((*received_quote)->m_timestamp == timestamp2);
         completion_token.GetEval().SetResult();
       });
-    fixture.m_client->add_order(security, NASDAQ, mpid, true, order_id,
+    fixture.m_client->add_order(security, ASX, mpid, true, order_id,
       Side::BID, price, 100, timestamp1);
     fixture.m_client->modify_order_size(order_id, 150, timestamp2);
     fixture.m_sampling_timer.Trigger();
@@ -346,7 +346,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
 
   TEST_CASE("order_modify_price") {
     auto fixture = Fixture();
-    auto security = Security("GOOG", NASDAQ);
+    auto security = Security("S32", ASX);
     auto mpid = "MP1";
     auto order_id = "1";
     auto price1 = Money::ONE;
@@ -368,7 +368,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
         REQUIRE((*received_quote)->m_timestamp == timestamp2);
         completion_token.GetEval().SetResult();
       });
-    fixture.m_client->add_order(security, NASDAQ, mpid, true, order_id,
+    fixture.m_client->add_order(security, ASX, mpid, true, order_id,
       Side::BID, price1, 100, timestamp1);
     fixture.m_client->modify_order_price(order_id, price2, timestamp2);
     fixture.m_sampling_timer.Trigger();
@@ -377,7 +377,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
 
   TEST_CASE("order_invalid_operations") {
     auto fixture = Fixture();
-    auto security = Security("GOOG", NASDAQ);
+    auto security = Security("TD", TSX);
     auto bbo_quote = SecurityBboQuote(
       BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
         time_from_string("2024-07-15 12:00:01")), security);
@@ -406,7 +406,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
 
   TEST_CASE("order_complex_sequence") {
     auto fixture = Fixture();
-    auto security = Security("GOOG", NASDAQ);
+    auto security = Security("TD", TSX);
     auto mpid = "MP1";
     auto price1 = Money::ONE;
     auto price2 = 2 * Money::ONE;
@@ -451,20 +451,20 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
         completion_token.GetEval().SetResult();
       });
     fixture.m_client->add_order(
-      security, NASDAQ, mpid, true, "A", Side::BID, price1, 100, timestamp1);
+      security, TSX, mpid, true, "A", Side::BID, price1, 100, timestamp1);
     fixture.m_client->add_order(
-      security, NASDAQ, mpid, true, "B", Side::BID, price1, 50, timestamp2);
+      security, TSX, mpid, true, "B", Side::BID, price1, 50, timestamp2);
     fixture.m_client->offset_order_size("A", 25, timestamp3);
     fixture.m_client->remove_order("B", timestamp4);
     fixture.m_client->add_order(
-      security, NASDAQ, mpid, true, "C", Side::BID, price2, 75, timestamp5);
+      security, TSX, mpid, true, "C", Side::BID, price2, 75, timestamp5);
     fixture.m_sampling_timer.Trigger();
     completion_token.Get();
   }
 
   TEST_CASE("publish_time_and_sale") {
     auto fixture = Fixture();
-    auto security = Security("GOOG", NASDAQ);
+    auto security = Security("TD", TSX);
     auto time_and_sale1 = SecurityTimeAndSale(
       TimeAndSale(time_from_string("2024-07-15 12:00:00"), Money::ONE, 100,
         TimeAndSale::Condition(), "TSX", "", ""), security);

@@ -52,22 +52,22 @@ TEST_SUITE("MarketDataRegistry") {
     auto info_ry_tsx =
       SecurityInfo(security_ry_tsx, "Royal Bank", "Financial", 100);
     registry.add(info_ry_tsx);
-    auto security_ry_nyse = Security("RY", NYSE);
-    auto info_ry_nyse =
-      SecurityInfo(security_ry_nyse, "Royal Bank", "Financial", 100);
-    registry.add(info_ry_nyse);
+    auto security_ry_asx = Security("RY", ASX);
+    auto info_ry_asx =
+      SecurityInfo(security_ry_asx, "Royal Bank", "Financial", 100);
+    registry.add(info_ry_asx);
     auto security_bmo_tsx = Security("BMO", TSX);
     auto info_bmo_tsx =
       SecurityInfo(security_bmo_tsx, "Bank of Montreal", "Financial", 100);
     registry.add(info_bmo_tsx);
-    auto security_bmo_nyse = Security("BMO", NYSE);
-    auto info_bmo_nyse =
-      SecurityInfo(security_bmo_nyse, "Bank of Montreal", "Financial", 100);
-    registry.add(info_bmo_nyse);
+    auto security_bmo_asx = Security("BMO", ASX);
+    auto info_bmo_asx =
+      SecurityInfo(security_bmo_asx, "Bank of Montreal", "Financial", 100);
+    registry.add(info_bmo_asx);
     auto primary_listing1 = registry.get_primary_listing(Security("RY", CHIC));
     REQUIRE(primary_listing1 == security_ry_tsx);
-    auto primary_listing2 = registry.get_primary_listing(Security("BMO", ARCX));
-    REQUIRE(primary_listing2 == security_bmo_nyse);
+    auto primary_listing2 = registry.get_primary_listing(Security("BMO", CXA));
+    REQUIRE(primary_listing2 == security_bmo_asx);
     auto primary_listing3 = registry.get_primary_listing(Security("NA", TSX));
     REQUIRE(primary_listing3 == Security("NA", TSX));
   }

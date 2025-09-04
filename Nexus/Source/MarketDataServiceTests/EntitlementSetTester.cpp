@@ -9,9 +9,9 @@ using namespace Nexus::DefaultVenues;
 
 TEST_SUITE("EntitlementSet") {
   TEST_CASE("construct_from_venue") {
-    auto key = EntitlementKey(NYSE);
-    REQUIRE(key.m_venue == NYSE);
-    REQUIRE(key.m_source == NYSE);
+    auto key = EntitlementKey(ASX);
+    REQUIRE(key.m_venue == ASX);
+    REQUIRE(key.m_source == ASX);
   }
 
   TEST_CASE("stream_key") {

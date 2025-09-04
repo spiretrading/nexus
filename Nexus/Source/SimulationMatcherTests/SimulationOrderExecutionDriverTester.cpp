@@ -11,8 +11,8 @@ using namespace Nexus;
 using namespace Nexus::DefaultVenues;
 
 namespace {
-  const auto AAPL = Security("AAPL", NASDAQ);
-  const auto GOOG = Security("GOOG", NASDAQ);
+  const auto SHOP = Security("SHOP", TSX);
+  const auto TD = Security("TD", TSX);
 
   struct Fixture {
     TestEnvironment m_environment;
@@ -29,27 +29,27 @@ namespace {
 TEST_SUITE("SimulationOrderExecutionDriver") {
   TEST_CASE("submit") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(AAPL, Money::ONE, 2 * Money::ONE);
+    fixture.m_environment.update_bbo_price(SHOP, Money::ONE, 2 * Money::ONE);
     fixture.m_environment.update_bbo_price(
-      GOOG, 10 * Money::ONE, 20 * Money::ONE);
+      TD, 10 * Money::ONE, 20 * Money::ONE);
     auto driver = SimulationOrderExecutionDriver(fixture.m_market_data_client,
       std::make_unique<TestTimeClient>(
         Ref(fixture.m_environment.get_time_environment())));
     auto info1 = OrderInfo();
-    info1.m_fields = make_limit_order_fields(AAPL, Side::BID, 100, Money::ONE);
+    info1.m_fields = make_limit_order_fields(SHOP, Side::BID, 100, Money::ONE);
     info1.m_id = 1;
     info1.m_timestamp = fixture.m_environment.get_time_environment().GetTime();
     auto info2 = OrderInfo();
     info2.m_fields =
-      make_limit_order_fields(GOOG, Side::ASK, 200, 30 * Money::ONE);
+      make_limit_order_fields(TD, Side::ASK, 200, 30 * Money::ONE);
     info2.m_id = 2;
     info2.m_timestamp = fixture.m_environment.get_time_environment().GetTime();
     auto order1 = driver.submit(info1);
     auto order2 = driver.submit(info2);
     REQUIRE(order1);
     REQUIRE(order2);
-    REQUIRE(order1->get_info().m_fields.m_security == AAPL);
-    REQUIRE(order2->get_info().m_fields.m_security == GOOG);
+    REQUIRE(order1->get_info().m_fields.m_security == SHOP);
+    REQUIRE(order2->get_info().m_fields.m_security == TD);
     auto reports1 = std::make_shared<Queue<ExecutionReport>>();
     auto reports2 = std::make_shared<Queue<ExecutionReport>>();
     order1->get_publisher().Monitor(reports1);

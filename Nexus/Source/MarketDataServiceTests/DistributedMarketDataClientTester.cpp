@@ -31,7 +31,7 @@ namespace {
       Queue<std::shared_ptr<TestMarketDataClient::Operation>>>>(nullptr);
     operations.set(TSX, std::make_shared<
       Queue<std::shared_ptr<TestMarketDataClient::Operation>>>());
-    operations.set(US, std::make_shared<
+    operations.set(AU, std::make_shared<
       Queue<std::shared_ptr<TestMarketDataClient::Operation>>>());
     return operations;
   }
@@ -41,8 +41,8 @@ namespace {
     auto clients = RegionMap<std::shared_ptr<MarketDataClient>>(nullptr);
     clients.set(TSX, std::make_shared<MarketDataClient>(
       std::in_place_type<TestMarketDataClient>, operations.get(TSX)));
-    clients.set(US, std::make_shared<MarketDataClient>(
-      std::in_place_type<TestMarketDataClient>, operations.get(US)));
+    clients.set(AU, std::make_shared<MarketDataClient>(
+      std::in_place_type<TestMarketDataClient>, operations.get(AU)));
     return clients;
   }
 
@@ -79,15 +79,15 @@ TEST_SUITE("DistributedMarketDataClient") {
       REQUIRE(received_imbalance == test_imbalance);
     }
     SUBCASE("parent") {
-      query.SetIndex(NYSE);
+      query.SetIndex(ASX);
       query.SetRange(Range::RealTime());
       fixture.m_client.query(query, imbalances);
-      auto operations = fixture.m_operations.get(NYSE);
+      auto operations = fixture.m_operations.get(ASX);
       auto received_query = require_operation<
         TestMarketDataClient::QuerySequencedOrderImbalanceOperation>(
           operations->Pop());
       auto test_imbalance = SequencedValue(
-        OrderImbalance(Security("IBM", NYSE), Side::ASK, 200, 3 * Money::ONE,
+        OrderImbalance(Security("S32", ASX), Side::ASK, 200, 3 * Money::ONE,
           time_from_string("2025-02-18 17:23:30:12")),
         Beam::Queries::Sequence(200));
       received_query->m_queue.Push(test_imbalance);
@@ -95,7 +95,7 @@ TEST_SUITE("DistributedMarketDataClient") {
       REQUIRE(received_imbalance == test_imbalance);
     }
     SUBCASE("unavailable") {
-      query.SetIndex(ASX);
+      query.SetIndex(TSXV);
       query.SetRange(Range::RealTime());
       fixture.m_client.query(query, imbalances);
       REQUIRE_THROWS_AS(imbalances->Pop(), PipeBrokenException);
@@ -120,20 +120,20 @@ TEST_SUITE("DistributedMarketDataClient") {
       REQUIRE(received_imbalance == test_imbalance);
     }
     SUBCASE("parent") {
-      query.SetIndex(NYSE);
+      query.SetIndex(ASX);
       query.SetRange(Range::RealTime());
       fixture.m_client.query(query, imbalances);
-      auto operations = fixture.m_operations.get(NYSE);
+      auto operations = fixture.m_operations.get(ASX);
       auto received_query = require_operation<
         TestMarketDataClient::QueryOrderImbalanceOperation>(operations->Pop());
-      auto test_imbalance = OrderImbalance(Security("IBM", NYSE), Side::ASK,
+      auto test_imbalance = OrderImbalance(Security("S32", ASX), Side::ASK,
         200, 3 * Money::ONE, time_from_string("2025-02-18 17:23:30:12"));
       received_query->m_queue.Push(test_imbalance);
       auto received_imbalance = imbalances->Pop();
       REQUIRE(received_imbalance == test_imbalance);
     }
     SUBCASE("unavailable") {
-      query.SetIndex(ASX);
+      query.SetIndex(TSXV);
       query.SetRange(Range::RealTime());
       fixture.m_client.query(query, imbalances);
       REQUIRE_THROWS_AS(imbalances->Pop(), PipeBrokenException);
@@ -161,10 +161,10 @@ TEST_SUITE("DistributedMarketDataClient") {
       REQUIRE(received_bbo == test_bbo);
     }
     SUBCASE("parent") {
-      query.SetIndex(Security("IBM", NYSE));
+      query.SetIndex(Security("S32", ASX));
       query.SetRange(Range::RealTime());
       fixture.m_client.query(query, bbo_quotes);
-      auto operations = fixture.m_operations.get(NYSE);
+      auto operations = fixture.m_operations.get(ASX);
       auto received_query = require_operation<
         TestMarketDataClient::QuerySequencedBboQuoteOperation>(
           operations->Pop());
@@ -177,7 +177,7 @@ TEST_SUITE("DistributedMarketDataClient") {
       REQUIRE(received_bbo == test_bbo);
     }
     SUBCASE("unavailable") {
-      query.SetIndex(Security("BHP", ASX));
+      query.SetIndex(Security("BHP", TSXV));
       query.SetRange(Range::RealTime());
       fixture.m_client.query(query, bbo_quotes);
       REQUIRE_THROWS_AS(bbo_quotes->Pop(), PipeBrokenException);
@@ -203,10 +203,10 @@ TEST_SUITE("DistributedMarketDataClient") {
       REQUIRE(received_bbo == test_bbo);
     }
     SUBCASE("parent") {
-      query.SetIndex(Security("IBM", NYSE));
+      query.SetIndex(Security("S32", ASX));
       query.SetRange(Range::RealTime());
       fixture.m_client.query(query, bbo_quotes);
-      auto operations = fixture.m_operations.get(NYSE);
+      auto operations = fixture.m_operations.get(ASX);
       auto received_query = require_operation<
         TestMarketDataClient::QueryBboQuoteOperation>(operations->Pop());
       auto test_bbo =
@@ -217,7 +217,7 @@ TEST_SUITE("DistributedMarketDataClient") {
       REQUIRE(received_bbo == test_bbo);
     }
     SUBCASE("unavailable") {
-      query.SetIndex(Security("BHP", ASX));
+      query.SetIndex(Security("BHP", TSXV));
       query.SetRange(Range::RealTime());
       fixture.m_client.query(query, bbo_quotes);
       REQUIRE_THROWS_AS(bbo_quotes->Pop(), PipeBrokenException);
@@ -245,15 +245,15 @@ TEST_SUITE("DistributedMarketDataClient") {
       REQUIRE(received_book_quote == test_book_quote);
     }
     SUBCASE("parent") {
-      query.SetIndex(Security("IBM", NYSE));
+      query.SetIndex(Security("S32", ASX));
       query.SetRange(Range::RealTime());
       fixture.m_client.query(query, book_quotes);
-      auto operations = fixture.m_operations.get(NYSE);
+      auto operations = fixture.m_operations.get(ASX);
       auto received_query = require_operation<
         TestMarketDataClient::QuerySequencedBookQuoteOperation>(
           operations->Pop());
       auto test_book_quote = SequencedValue(
-        BookQuote("MMID5", false, NYSE, make_ask(20 * Money::ONE, 200),
+        BookQuote("MMID5", false, ASX, make_ask(20 * Money::ONE, 200),
           time_from_string("2025-02-18 17:23:30:12")),
           Beam::Queries::Sequence(200));
       received_query->m_queue.Push(test_book_quote);
@@ -261,7 +261,7 @@ TEST_SUITE("DistributedMarketDataClient") {
       REQUIRE(received_book_quote == test_book_quote);
     }
     SUBCASE("unavailable") {
-      query.SetIndex(Security("BHP", ASX));
+      query.SetIndex(Security("BHP", TSXV));
       query.SetRange(Range::RealTime());
       fixture.m_client.query(query, book_quotes);
       REQUIRE_THROWS_AS(book_quotes->Pop(), PipeBrokenException);
@@ -288,14 +288,14 @@ TEST_SUITE("DistributedMarketDataClient") {
       REQUIRE(received_book_quote == test_book_quote);
     }
     SUBCASE("parent") {
-      query.SetIndex(Security("IBM", NYSE));
+      query.SetIndex(Security("S32", ASX));
       query.SetRange(Range::RealTime());
       fixture.m_client.query(query, book_quotes);
-      auto operations = fixture.m_operations.get(NYSE);
+      auto operations = fixture.m_operations.get(ASX);
       auto received_query = require_operation<
         TestMarketDataClient::QueryBookQuoteOperation>(operations->Pop());
       auto test_book_quote = SequencedValue(BookQuote(
-        "MMID5", false, NYSE, make_ask(20 * Money::ONE, 200),
+        "MMID5", false, ASX, make_ask(20 * Money::ONE, 200),
         time_from_string("2025-02-18 17:23:30:12")),
         Beam::Queries::Sequence(200));
       received_query->m_queue.Push(test_book_quote);
@@ -303,7 +303,7 @@ TEST_SUITE("DistributedMarketDataClient") {
       REQUIRE(received_book_quote == test_book_quote);
     }
     SUBCASE("unavailable") {
-      query.SetIndex(Security("BHP", ASX));
+      query.SetIndex(Security("BHP", TSXV));
       query.SetRange(Range::RealTime());
       fixture.m_client.query(query, book_quotes);
       REQUIRE_THROWS_AS(book_quotes->Pop(), PipeBrokenException);
@@ -331,23 +331,23 @@ TEST_SUITE("DistributedMarketDataClient") {
       REQUIRE(received_time_and_sale == test_time_and_sale);
     }
     SUBCASE("parent") {
-      query.SetIndex(Security("IBM", NYSE));
+      query.SetIndex(Security("S32", ASX));
       query.SetRange(Range::RealTime());
       fixture.m_client.query(query, time_and_sales);
-      auto operations = fixture.m_operations.get(NYSE);
+      auto operations = fixture.m_operations.get(ASX);
       auto received_query = require_operation<
         TestMarketDataClient::QuerySequencedTimeAndSaleOperation>(
           operations->Pop());
       auto test_time_and_sale = SequencedValue(TimeAndSale(
         time_from_string("2025-02-18 17:23:30.12"), 150 * Money::ONE, 200,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-        "NYSE", "B52", "S46"), Beam::Queries::Sequence(200));
+        "ASX", "B52", "S46"), Beam::Queries::Sequence(200));
       received_query->m_queue.Push(test_time_and_sale);
       auto received_time_and_sale = time_and_sales->Pop();
       REQUIRE(received_time_and_sale == test_time_and_sale);
     }
     SUBCASE("unavailable") {
-      query.SetIndex(Security("BHP", ASX));
+      query.SetIndex(Security("BHP", TSXV));
       query.SetRange(Range::RealTime());
       fixture.m_client.query(query, time_and_sales);
       REQUIRE_THROWS_AS(time_and_sales->Pop(), PipeBrokenException);
@@ -374,22 +374,22 @@ TEST_SUITE("DistributedMarketDataClient") {
       REQUIRE(received_time_and_sale == test_time_and_sale);
     }
     SUBCASE("parent") {
-      query.SetIndex(Security("IBM", NYSE));
+      query.SetIndex(Security("S32", ASX));
       query.SetRange(Range::RealTime());
       fixture.m_client.query(query, time_and_sales);
-      auto operations = fixture.m_operations.get(NYSE);
+      auto operations = fixture.m_operations.get(ASX);
       auto received_query = require_operation<
         TestMarketDataClient::QueryTimeAndSaleOperation>(operations->Pop());
       auto test_time_and_sale = TimeAndSale(
         time_from_string("2025-02-18 17:23:30.12"), 150 * Money::ONE, 200,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-        "NYSE", "B4", "S99");
+        "ASX", "B4", "S99");
       received_query->m_queue.Push(test_time_and_sale);
       auto received_time_and_sale = time_and_sales->Pop();
       REQUIRE(received_time_and_sale == test_time_and_sale);
     }
     SUBCASE("unavailable") {
-      query.SetIndex(Security("BHP", ASX));
+      query.SetIndex(Security("BHP", TSXV));
       query.SetRange(Range::RealTime());
       fixture.m_client.query(query, time_and_sales);
       REQUIRE_THROWS_AS(time_and_sales->Pop(), PipeBrokenException);
@@ -439,8 +439,8 @@ TEST_SUITE("DistributedMarketDataClient") {
       REQUIRE(received_snapshot.m_bbo_quote == test_snapshot.m_bbo_quote);
     }
     SUBCASE("parent") {
-      auto security = Security("IBM", NYSE);
-      auto operations = fixture.m_operations.get(NYSE);
+      auto security = Security("S32", ASX);
+      auto operations = fixture.m_operations.get(ASX);
       auto result = std::async(std::launch::async, [&] {
         return fixture.m_client.load_snapshot(security);
       });
@@ -457,7 +457,7 @@ TEST_SUITE("DistributedMarketDataClient") {
       REQUIRE(received_snapshot.m_bbo_quote == test_snapshot.m_bbo_quote);
     }
     SUBCASE("unavailable") {
-      auto security = Security("BHP", ASX);
+      auto security = Security("BHP", TSXV);
       auto snapshot = fixture.m_client.load_snapshot(security);
       REQUIRE(snapshot.m_bbo_quote == SequencedBboQuote());
       REQUIRE(snapshot.m_asks.empty());
@@ -488,8 +488,8 @@ TEST_SUITE("DistributedMarketDataClient") {
       TestJsonEquality(received_technicals, test_technicals);
     }
     SUBCASE("parent") {
-      auto security = Security("IBM", NYSE);
-      auto operations = fixture.m_operations.get(NYSE);
+      auto security = Security("S32", ASX);
+      auto operations = fixture.m_operations.get(ASX);
       auto result = std::async(std::launch::async, [&] {
         return fixture.m_client.load_technicals(security);
       });
@@ -508,7 +508,7 @@ TEST_SUITE("DistributedMarketDataClient") {
       TestJsonEquality(received_technicals, test_technicals);
     }
     SUBCASE("unavailable") {
-      auto security = Security("BHP", ASX);
+      auto security = Security("BHP", TSXV);
       auto technicals = fixture.m_client.load_technicals(security);
       TestJsonEquality(technicals, SecurityTechnicals());
     }
@@ -520,9 +520,9 @@ TEST_SUITE("DistributedMarketDataClient") {
     auto tsx_security_info = SecurityInfo();
     tsx_security_info.m_security = Security("ABC", TSX);
     tsx_security_info.m_name = "Alphabet Inc. Class C";
-    auto us_security_info = SecurityInfo();
-    us_security_info.m_security = Security("AAPL", NYSE);
-    us_security_info.m_name = "Apple Inc.";
+    auto au_security_info = SecurityInfo();
+    au_security_info.m_security = Security("S32", ASX);
+    au_security_info.m_name = "S32 Inc.";
     auto tsx_handler = std::thread([&] {
       auto operations = fixture.m_operations.get(TSX);
       auto received_operation = require_operation<
@@ -531,24 +531,24 @@ TEST_SUITE("DistributedMarketDataClient") {
       REQUIRE(received_operation->m_prefix == prefix);
       received_operation->m_result.set({tsx_security_info});
     });
-    auto us_handler = std::thread([&] {
-      auto operations = fixture.m_operations.get(US);
+    auto au_handler = std::thread([&] {
+      auto operations = fixture.m_operations.get(AU);
       auto received_operation = require_operation<
         TestMarketDataClient::LoadSecurityInfoFromPrefixOperation>(
           operations->Pop());
       REQUIRE(received_operation->m_prefix == prefix);
-      received_operation->m_result.set({us_security_info});
+      received_operation->m_result.set({au_security_info});
     });
     auto received_infos =
       fixture.m_client.load_security_info_from_prefix(prefix);
     tsx_handler.join();
-    us_handler.join();
+    au_handler.join();
     REQUIRE(received_infos.size() == 2);
     std::sort(received_infos.begin(), received_infos.end(),
       [] (const auto& lhs, const auto& rhs) {
         return lhs.m_security < rhs.m_security;
       });
-    REQUIRE(received_infos[0] == us_security_info);
-    REQUIRE(received_infos[1] == tsx_security_info);
+    REQUIRE(received_infos[0] == tsx_security_info);
+    REQUIRE(received_infos[1] == au_security_info);
   }
 }

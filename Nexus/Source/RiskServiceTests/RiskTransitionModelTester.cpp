@@ -24,7 +24,7 @@ using namespace Nexus::Tests;
 
 namespace {
   auto ACCOUNT = DirectoryEntry::MakeAccount(153, "simba");
-  auto TSLA = Security("TSLA", NASDAQ);
+  auto S32 = Security("S32", ASX);
   auto XIU = Security("XIU", TSX);
 }
 
@@ -35,8 +35,8 @@ TEST_SUITE("RiskTransitionModel") {
     auto model = RiskTransitionModel(
       ACCOUNT, {}, RiskState::Type::ACTIVE, &client, DEFAULT_DESTINATIONS);
     auto bid_order = std::make_shared<PrimitiveOrder>(
-      OrderInfo(make_limit_order_fields(TSLA, USD, Side::BID, 100, Money::ONE),
-      112, time_from_string("2020-11-17 12:22:06")));
+      OrderInfo(make_limit_order_fields(S32, AUD, Side::BID, 100, Money::ONE),
+        112, time_from_string("2020-11-17 12:22:06")));
     model.add(bid_order);
     auto bid_report = ExecutionReport();
     bid_order->with([&] (auto state, const auto& reports) {
@@ -46,9 +46,9 @@ TEST_SUITE("RiskTransitionModel") {
     bid_report =
       make_update(bid_report, OrderStatus::NEW, bid_report.m_timestamp);
     model.update(bid_report);
-    auto ask_order = std::make_shared<PrimitiveOrder>(OrderInfo(
-      make_limit_order_fields(
-        TSLA, USD, Side::ASK, 100, Money::ONE + Money::CENT),
+    auto ask_order = std::make_shared<PrimitiveOrder>(
+      OrderInfo(make_limit_order_fields(
+        S32, AUD, Side::ASK, 100, Money::ONE + Money::CENT),
       113, time_from_string("2020-11-17 12:22:06")));
     model.add(ask_order);
     auto ask_report = ExecutionReport();
@@ -82,7 +82,7 @@ TEST_SUITE("RiskTransitionModel") {
     auto model = RiskTransitionModel(
       ACCOUNT, {}, RiskState::Type::ACTIVE, &client, DEFAULT_DESTINATIONS);
     auto bid_order = std::make_shared<PrimitiveOrder>(
-      OrderInfo(make_limit_order_fields(TSLA, USD, Side::BID, 100, Money::ONE),
+      OrderInfo(make_limit_order_fields(S32, AUD, Side::BID, 100, Money::ONE),
         112, time_from_string("2020-11-17 12:22:06")));
     model.add(bid_order);
     auto bid_report = ExecutionReport();
@@ -99,7 +99,7 @@ TEST_SUITE("RiskTransitionModel") {
     bid_report.m_last_quantity = 100;
     model.update(bid_report);
     auto bid_order2 = std::make_shared<PrimitiveOrder>(
-      OrderInfo(make_limit_order_fields(TSLA, USD, Side::BID, 100, Money::ONE),
+      OrderInfo(make_limit_order_fields(S32, AUD, Side::BID, 100, Money::ONE),
         127, time_from_string("2020-11-17 12:22:06")));
     model.add(bid_order2);
     auto bid_report2 = ExecutionReport();
@@ -111,7 +111,7 @@ TEST_SUITE("RiskTransitionModel") {
       make_update(bid_report2, OrderStatus::NEW, bid_report2.m_timestamp);
     model.update(bid_report2);
     auto ask_order = std::make_shared<PrimitiveOrder>(
-      OrderInfo(make_limit_order_fields(TSLA, USD, Side::ASK, 100,
+      OrderInfo(make_limit_order_fields(S32, AUD, Side::ASK, 100,
         Money::ONE + Money::CENT),
       143, time_from_string("2020-11-17 12:22:06")));
     model.add(ask_order);
@@ -148,11 +148,11 @@ TEST_SUITE("RiskTransitionModel") {
     auto submit_operation =
       std::get_if<TestOrderExecutionClient::SubmitOperation>(&*operation);
     REQUIRE(submit_operation);
-    REQUIRE(submit_operation->m_fields.m_security == TSLA);
+    REQUIRE(submit_operation->m_fields.m_security == S32);
     REQUIRE(submit_operation->m_fields.m_side == Side::ASK);
     REQUIRE(submit_operation->m_fields.m_quantity == 100);
     REQUIRE(submit_operation->m_fields.m_type == OrderType::MARKET);
-    REQUIRE(submit_operation->m_fields.m_destination == "NASDAQ");
+    REQUIRE(submit_operation->m_fields.m_destination == "ASXT");
     submit_operation->m_result.set(std::make_shared<PrimitiveOrder>(
       OrderInfo(submit_operation->m_fields, 100,
         time_from_string("2020-11-17 12:22:06"))));

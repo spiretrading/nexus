@@ -138,12 +138,12 @@ TEST_SUITE("Destination") {
   TEST_CASE("parse_destination_database_entry") {
     auto node = YAML::Load(R"(
       id: "X1"
-      venues: ['NYSE','TSX']
+      venues: ['ASX','TSX']
       description: "one")");
     auto entry = parse_destination_database_entry(node, DEFAULT_VENUES);
     REQUIRE(entry.m_id == "X1");
     REQUIRE(entry.m_venues.size() == 2);
-    REQUIRE(entry.m_venues[0] == Venue("XNYS"));
+    REQUIRE(entry.m_venues[0] == Venue("XASX"));
     REQUIRE(entry.m_venues[1] == Venue("XTSE"));
     REQUIRE(entry.m_description == "one");
   }
@@ -152,13 +152,13 @@ TEST_SUITE("Destination") {
     auto yaml = R"(
       destinations:
         - id: "A1"
-          venues: ['NYSE']
+          venues: ['ASX']
           description: "first"
         - id: "B2"
-          venues: ['NSDQ','TSX']
+          venues: ['TSXV','TSX']
           description: "second"
       preferred_destinations:
-        - venue: 'NYSE'
+        - venue: 'ASX'
           destination: 'A1'
       manual_order_entry:
         id: 'M0'
@@ -179,9 +179,9 @@ TEST_SUITE("Destination") {
     auto b2 = database.from("B2");
     REQUIRE(b2.m_venues.size() == 2);
     REQUIRE(b2.m_description == "second");
-    REQUIRE(database.get_preferred_destination(Venue("XNYS")) !=
+    REQUIRE(database.get_preferred_destination(Venue("XASX")) !=
       DestinationDatabase::NONE);
-    REQUIRE(database.get_preferred_destination(Venue("XNYS")).m_id == "A1");
+    REQUIRE(database.get_preferred_destination(Venue("XASX")).m_id == "A1");
     auto moe = database.get_manual_order_entry_destination();
     REQUIRE(moe.has_value());
     REQUIRE(moe->m_id == "M0");

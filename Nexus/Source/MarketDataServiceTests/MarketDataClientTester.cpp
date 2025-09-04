@@ -19,7 +19,7 @@ TEST_SUITE("MarketDataClient") {
       Queue<std::shared_ptr<TestMarketDataClient::Operation>>>();
     auto client = TestMarketDataClient(operations);
     auto book_queue = std::make_shared<Queue<BookQuote>>();
-    auto security = Security("SYM", NASDAQ);
+    auto security = Security("SYM", TSX);
     query_real_time_with_snapshot(client, security, book_queue);
     auto operation1 = operations->Pop();
     auto load_operation =
@@ -44,7 +44,7 @@ TEST_SUITE("MarketDataClient") {
       Queue<std::shared_ptr<TestMarketDataClient::Operation>>>();
     auto client = TestMarketDataClient(operations);
     auto book_queue = std::make_shared<Queue<BookQuote>>();
-    auto security = Security("SYM", NASDAQ);
+    auto security = Security("SYM", TSX);
     query_real_time_with_snapshot(client, security, book_queue);
     auto operation1 = operations->Pop();
     auto load_operation =
@@ -82,7 +82,7 @@ TEST_SUITE("MarketDataClient") {
       Queue<std::shared_ptr<TestMarketDataClient::Operation>>>();
     auto client = TestMarketDataClient(operations);
     auto quote_queue = std::make_shared<Queue<BboQuote>>();
-    auto security = Security("SYM", NASDAQ);
+    auto security = Security("SYM", TSX);
     query_real_time_with_snapshot(client, security, quote_queue);
     auto operation1 = operations->Pop();
     auto* snapshot_operation =
@@ -111,7 +111,7 @@ TEST_SUITE("MarketDataClient") {
     auto operations = std::make_shared<
       Queue<std::shared_ptr<TestMarketDataClient::Operation>>>();
     auto client = TestMarketDataClient(operations);
-    auto security = Security("SYM", NASDAQ);
+    auto security = Security("SYM", TSX);
     auto queue = Queue<optional<SecurityInfo>>();
     Spawn([&] {
       queue.Push(load_security_info(client, security));
@@ -136,7 +136,7 @@ TEST_SUITE("MarketDataClient") {
     SUBCASE("multiple_result") {
       auto info_result = SecurityInfo(security, "SYMBOL", "Tech", 100);
       auto info_result2 =
-        SecurityInfo(Security("FOO", NYSE), "LOBMYS", "Hcet", 200);
+        SecurityInfo(Security("FOO", ASX), "LOBMYS", "Hcet", 200);
       info_operation->m_result.set({info_result, info_result2});
       auto received_info = queue.Pop();
       REQUIRE(received_info == info_result);

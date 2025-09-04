@@ -46,7 +46,7 @@ namespace Nexus::Tests {
       auto results_c = data_store.load_security_info(query_c);
       REQUIRE(results_c.empty());
       auto query_all = SecurityInfoQuery();
-      query_all.SetIndex(US);
+      query_all.SetIndex(AU);
       query_all.SetSnapshotLimit(SnapshotLimit::Unlimited());
       auto results_all = data_store.load_security_info(query_all);
       REQUIRE(results_all.size() == 1);
@@ -55,16 +55,16 @@ namespace Nexus::Tests {
 
     SUBCASE("order_imbalance") {
       auto imbalance_a = SequencedValue(VenueOrderImbalance(
-        OrderImbalance(Security("TST", ASX), Side::BID, 100, 100 * Money::ONE,
-          time_from_string("2024-07-09 10:00:00")), ASX),
+        OrderImbalance(Security("TST", TSX), Side::BID, 100, 100 * Money::ONE,
+          time_from_string("2024-07-09 10:00:00")), TSX),
         Beam::Queries::Sequence(1));
       auto imbalance_b = SequencedValue(VenueOrderImbalance(
-        OrderImbalance(Security("ABC", TSX), Side::ASK, 200, 200 * Money::ONE,
-          time_from_string("2024-07-09 10:05:00")), TSX),
+        OrderImbalance(Security("ABC", TSXV), Side::ASK, 200, 200 * Money::ONE,
+          time_from_string("2024-07-09 10:05:00")), TSXV),
         Beam::Queries::Sequence(2));
       auto imbalance_c = SequencedValue(VenueOrderImbalance(
-        OrderImbalance(Security("XYZ", TSXV), Side::BID, 300,
-          300 * Money::ONE, time_from_string("2024-07-09 10:10:00")), TSXV),
+        OrderImbalance(Security("XYZ", TSX), Side::BID, 300,
+          300 * Money::ONE, time_from_string("2024-07-09 10:10:00")), TSX),
         Beam::Queries::Sequence(3));
       data_store.store(imbalance_a);
       auto imbalances = std::vector<SequencedVenueOrderImbalance>();
@@ -72,21 +72,21 @@ namespace Nexus::Tests {
       imbalances.push_back(imbalance_c);
       data_store.store(imbalances);
       auto query_a = VenueMarketDataQuery();
-      query_a.SetIndex(ASX);
+      query_a.SetIndex(TSX);
       query_a.SetRange(Beam::Queries::Sequence(1), Beam::Queries::Sequence(1));
       query_a.SetSnapshotLimit(SnapshotLimit::Unlimited());
       auto results_a = data_store.load_order_imbalances(query_a);
       REQUIRE(results_a.size() == 1);
       REQUIRE(*results_a[0] == *imbalance_a);
       auto query_b = VenueMarketDataQuery();
-      query_b.SetIndex(TSX);
+      query_b.SetIndex(TSXV);
       query_b.SetRange(Beam::Queries::Sequence(2), Beam::Queries::Sequence(2));
       query_b.SetSnapshotLimit(SnapshotLimit::Unlimited());
       auto results_b = data_store.load_order_imbalances(query_b);
       REQUIRE(results_b.size() == 1);
       REQUIRE(*results_b[0] == *imbalance_b);
       auto query_all = VenueMarketDataQuery();
-      query_all.SetIndex(ASX);
+      query_all.SetIndex(TSX);
       query_all.SetRange(Range::Total());
       query_all.SetSnapshotLimit(SnapshotLimit::Unlimited());
       auto results_all = data_store.load_order_imbalances(query_all);
