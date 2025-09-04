@@ -286,7 +286,7 @@ namespace Nexus {
     session.m_roles =
       m_administration_client->load_account_roles(session.GetAccount());
     auto account_entitlements =
-      m_administration_client->load_entitlements( session.GetAccount());
+      m_administration_client->load_entitlements(session.GetAccount());
     for(auto& entitlement : m_entitlement_database.get_entries()) {
       auto i = std::find(account_entitlements.begin(),
         account_entitlements.end(), entitlement.m_group_entry);

@@ -99,13 +99,14 @@ int main(int argc, const char** argv) {
         auto market_data_client =
           std::make_shared<MarketDataClient>(std::in_place_type<
             ServiceMarketDataClient<IncomingMarketDataClientSessionBuilder>>,
-          make_basic_market_data_client_session_builder<
-            IncomingMarketDataClientSessionBuilder>(
-              service_locator_client.Get(), [=] (const auto& candidate_entry) {
-                auto candidate_region =
-                  parse_region(candidate_entry.GetProperties(), countries);
-                return region <= candidate_region;
-              }, MARKET_DATA_REGISTRY_SERVICE_NAME));
+            make_basic_market_data_client_session_builder<
+              IncomingMarketDataClientSessionBuilder>(
+                service_locator_client.Get(),
+                [=] (const auto& candidate_entry) {
+                  auto candidate_region =
+                    parse_region(candidate_entry.GetProperties(), countries);
+                  return region <= candidate_region;
+                }, MARKET_DATA_REGISTRY_SERVICE_NAME));
       }
       return std::make_unique<MarketDataClient>(
         std::in_place_type<DistributedMarketDataClient>, std::move(clients));
