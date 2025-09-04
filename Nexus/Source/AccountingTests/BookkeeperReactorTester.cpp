@@ -14,7 +14,7 @@ using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
-  const auto TST = Security("TST", NYSE);
+  const auto TST = Security("TST", TSX);
 }
 
 TEST_SUITE("BookkeeperReactor") {
@@ -25,7 +25,7 @@ TEST_SUITE("BookkeeperReactor") {
     });
     Trigger::set_trigger(trigger);
     auto order = std::make_shared<PrimitiveOrder>(
-      OrderInfo(make_limit_order_fields(TST, USD, Side::BID, "NYSE", 1000,
+      OrderInfo(make_limit_order_fields(TST, CAD, Side::BID, "TSX", 1000,
         Money::ONE), 10, ptime(date(2019, 10, 3))));
     set_order_status(*order, OrderStatus::NEW, ptime(date(2019, 10, 3)));
     fill(*order, 100, ptime(date(2019, 10, 3)));
@@ -47,7 +47,7 @@ TEST_SUITE("BookkeeperReactor") {
     REQUIRE(inventory.m_transaction_count == 1);
     REQUIRE(inventory.m_fees == Money::ZERO);
     REQUIRE(inventory.m_position.m_security == TST);
-    REQUIRE(inventory.m_position.m_currency == USD);
+    REQUIRE(inventory.m_position.m_currency == CAD);
     REQUIRE(inventory.m_position.m_quantity == 100);
     REQUIRE(inventory.m_position.m_cost_basis == 100 * Money::ONE);
   }

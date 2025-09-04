@@ -17,24 +17,24 @@ TEST_SUITE("ComplianceParameter") {
   TEST_CASE("compliance_value_vector_stream") {
     auto vector = std::vector<ComplianceValue>();
     vector.push_back(Security("TST", TSX));
-    vector.push_back(Security("ABC", NYSE));
+    vector.push_back(Security("ABC", ASX));
     auto value = ComplianceValue(vector);
     auto stream = std::ostringstream();
     stream << value;
-    REQUIRE(stream.str() == "[TST.TSX, ABC.NYSE]");
+    REQUIRE(stream.str() == "[TST.TSX, ABC.ASX]");
   }
 
   TEST_CASE("compliance_value_nested_vector_stream") {
     auto inner_vector = std::vector<ComplianceValue>();
     inner_vector.push_back(Security("TST", TSX));
-    inner_vector.push_back(Security("ABC", NYSE));
+    inner_vector.push_back(Security("ABC", ASX));
     auto outer_vector = std::vector<ComplianceValue>();
     outer_vector.push_back(inner_vector);
-    outer_vector.push_back(Security("XYZ", NASDAQ));
+    outer_vector.push_back(Security("XYZ", TSXV));
     auto value = ComplianceValue(outer_vector);
     auto stream = std::ostringstream();
     stream << value;
-    REQUIRE(stream.str() == "[[TST.TSX, ABC.NYSE], XYZ.NSDQ]");
+    REQUIRE(stream.str() == "[[TST.TSX, ABC.ASX], XYZ.TSXV]");
   }
 
   TEST_CASE("stream") {
@@ -49,10 +49,10 @@ TEST_SUITE("ComplianceParameter") {
   TEST_CASE("shuttle") {
     auto inner_vector = std::vector<ComplianceValue>();
     inner_vector.push_back(Security("TST", TSX));
-    inner_vector.push_back(Security("ABC", NYSE));
+    inner_vector.push_back(Security("ABC", ASX));
     auto outer_vector = std::vector<ComplianceValue>();
     outer_vector.push_back(inner_vector);
-    outer_vector.push_back(Security("XYZ", NASDAQ));
+    outer_vector.push_back(Security("XYZ", TSXV));
     auto value = ComplianceValue(outer_vector);
     Beam::Serialization::Tests::TestRoundTripShuttle(value);
   }

@@ -82,8 +82,8 @@ namespace {
         "entitlement1", DirectoryEntry::GetStarDirectory());
       auto entitlement2 = m_service_locator_environment.GetRoot().MakeDirectory(
         "entitlement2", DirectoryEntry::GetStarDirectory());
-      m_entitlements.add({"Entitlement1", Money(100), USD, entitlement1,
-        {{EntitlementKey(NYSE),
+      m_entitlements.add({"Entitlement1", Money(100), AUD, entitlement1,
+        {{EntitlementKey(ASX),
           MarketDataTypeSet({MarketDataType::BBO_QUOTE})}}});
       m_entitlements.add({"Entitlement2", Money(200), CAD, entitlement2,
         {{EntitlementKey(TSX),
@@ -547,7 +547,7 @@ TEST_SUITE("AdministrationServlet") {
   TEST_CASE("submit_and_load_risk_modification") {
     auto fixture = Fixture();
     auto parameters = RiskParameters(
-      USD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, seconds(1));
+      AUD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, seconds(1));
     auto modification = RiskModification(parameters);
     auto comment = Nexus::Message(
       0, fixture.m_trader_account, fixture.m_time_client.GetTime(),

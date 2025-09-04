@@ -12,7 +12,6 @@ namespace {
   using TestPortfolio = Portfolio<TrueAverageBookkeeper>;
 
   auto TST = Security("TST", TSX);
-  auto MSFT = Security("MSFT", NASDAQ);
 
   auto make_order_fields(
       Security security, CurrencyId currency, Side side, Quantity quantity) {

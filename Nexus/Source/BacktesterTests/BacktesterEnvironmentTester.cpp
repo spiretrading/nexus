@@ -16,7 +16,7 @@ TEST_SUITE("BacktesterEnvironment") {
   TEST_CASE("fill_limit_order") {
     auto start_time = time_from_string("2020-12-11 00:00:10");
     auto data_store = LocalHistoricalDataStore();
-    auto security = Security("TST", NYSE);
+    auto security = Security("TST", TSXV);
     auto timestamp = start_time - seconds(1);
     auto bbo = SequencedValue(IndexedValue(BboQuote(
       make_bid(99 * Money::CENT, 100), make_ask(Money::ONE, 100), timestamp),

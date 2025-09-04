@@ -16,7 +16,7 @@ namespace Nexus::Tests {
     auto data_store = T()();
 
     SUBCASE("security_info") {
-      auto security_a = Security("TST", NYSE);
+      auto security_a = Security("TST", ASX);
       auto info_a = SecurityInfo();
       info_a.m_security = security_a;
       info_a.m_name = "Test Inc.";
@@ -41,7 +41,7 @@ namespace Nexus::Tests {
       REQUIRE(results_b.size() == 1);
       REQUIRE(results_b[0] == info_b);
       auto query_c = SecurityInfoQuery();
-      query_c.SetIndex(Security("XYZ", NASDAQ));
+      query_c.SetIndex(Security("XYZ", TSXV));
       query_c.SetSnapshotLimit(SnapshotLimit::Unlimited());
       auto results_c = data_store.load_security_info(query_c);
       REQUIRE(results_c.empty());
@@ -55,16 +55,16 @@ namespace Nexus::Tests {
 
     SUBCASE("order_imbalance") {
       auto imbalance_a = SequencedValue(VenueOrderImbalance(
-        OrderImbalance(Security("TST", NYSE), Side::BID, 100, 100 * Money::ONE,
-          time_from_string("2024-07-09 10:00:00")), NYSE),
+        OrderImbalance(Security("TST", ASX), Side::BID, 100, 100 * Money::ONE,
+          time_from_string("2024-07-09 10:00:00")), ASX),
         Beam::Queries::Sequence(1));
       auto imbalance_b = SequencedValue(VenueOrderImbalance(
         OrderImbalance(Security("ABC", TSX), Side::ASK, 200, 200 * Money::ONE,
           time_from_string("2024-07-09 10:05:00")), TSX),
         Beam::Queries::Sequence(2));
       auto imbalance_c = SequencedValue(VenueOrderImbalance(
-        OrderImbalance(Security("XYZ", NASDAQ), Side::BID, 300,
-          300 * Money::ONE, time_from_string("2024-07-09 10:10:00")), NYSE),
+        OrderImbalance(Security("XYZ", TSXV), Side::BID, 300,
+          300 * Money::ONE, time_from_string("2024-07-09 10:10:00")), TSXV),
         Beam::Queries::Sequence(3));
       data_store.store(imbalance_a);
       auto imbalances = std::vector<SequencedVenueOrderImbalance>();
@@ -72,7 +72,7 @@ namespace Nexus::Tests {
       imbalances.push_back(imbalance_c);
       data_store.store(imbalances);
       auto query_a = VenueMarketDataQuery();
-      query_a.SetIndex(NYSE);
+      query_a.SetIndex(ASX);
       query_a.SetRange(Beam::Queries::Sequence(1), Beam::Queries::Sequence(1));
       query_a.SetSnapshotLimit(SnapshotLimit::Unlimited());
       auto results_a = data_store.load_order_imbalances(query_a);
@@ -86,7 +86,7 @@ namespace Nexus::Tests {
       REQUIRE(results_b.size() == 1);
       REQUIRE(*results_b[0] == *imbalance_b);
       auto query_all = VenueMarketDataQuery();
-      query_all.SetIndex(NYSE);
+      query_all.SetIndex(ASX);
       query_all.SetRange(Range::Total());
       query_all.SetSnapshotLimit(SnapshotLimit::Unlimited());
       auto results_all = data_store.load_order_imbalances(query_all);
@@ -96,7 +96,7 @@ namespace Nexus::Tests {
     }
 
     SUBCASE("bbo_quote") {
-      auto security = Security("TST", NYSE);
+      auto security = Security("TST", ASX);
       auto bbo_a = BboQuote(
         make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 100),
         time_from_string("2024-07-09 12:00:00"));
@@ -143,19 +143,19 @@ namespace Nexus::Tests {
     }
 
     SUBCASE("book_quote") {
-      auto security = Security("TST", NYSE);
-      auto book_quote_a = BookQuote("MPID", true, NYSE,
+      auto security = Security("TST", ASX);
+      auto book_quote_a = BookQuote("MPID", true, ASX,
         make_bid(Money::ONE, 100), time_from_string("2024-07-09 12:00:00"));
       auto sequenced_book_quote_a =
         SequencedValue(book_quote_a, Beam::Queries::Sequence(1));
       data_store.store(SequencedSecurityBookQuote(
         SecurityBookQuote(book_quote_a, security), Beam::Queries::Sequence(1)));
-      auto book_quote_b = BookQuote("MPID", true, NYSE,
+      auto book_quote_b = BookQuote("MPID", true, ASX,
         make_bid(Money::ONE, 200), time_from_string("2024-07-09 12:01:00"));
       auto sequenced_book_quote_b =
         SequencedValue(book_quote_b, Beam::Queries::Sequence(2));
       auto book_quote_c =
-        BookQuote("MPID", true, NYSE, make_ask(Money::ONE + Money::CENT, 300),
+        BookQuote("MPID", true, ASX, make_ask(Money::ONE + Money::CENT, 300),
           time_from_string("2024-07-09 12:02:00"));
       auto sequenced_book_quote_c =
         SequencedValue(book_quote_c, Beam::Queries::Sequence(3));
@@ -193,11 +193,11 @@ namespace Nexus::Tests {
     }
 
     SUBCASE("time_and_sale") {
-      auto security = Security("TST", NYSE);
+      auto security = Security("TST", ASX);
       auto time_and_sale_a =
         TimeAndSale(time_from_string("2024-07-09 12:00:00"), Money::ONE, 100,
           TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, ""),
-          "NYSE", "B1", "S2");
+          "ASX", "B1", "S2");
       auto sequenced_time_and_sale_a =
         SequencedValue(time_and_sale_a, Beam::Queries::Sequence(1));
       data_store.store(SequencedSecurityTimeAndSale(
@@ -206,13 +206,13 @@ namespace Nexus::Tests {
       auto time_and_sale_b =
         TimeAndSale(time_from_string("2024-07-09 12:01:00"), Money::ONE, 200,
           TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, ""),
-          "NYSE", "B5", "S12");
+          "ASX", "B5", "S12");
       auto sequenced_time_and_sale_b =
         SequencedValue(time_and_sale_b, Beam::Queries::Sequence(2));
       auto time_and_sale_c = TimeAndSale(
         time_from_string("2024-07-09 12:02:00"), Money::ONE + Money::CENT, 300,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, ""),
-        "NYSE", "B52", "S11");
+        "ASX", "B52", "S11");
       auto sequenced_time_and_sale_c =
         SequencedValue(time_and_sale_c, Beam::Queries::Sequence(3));
       auto time_and_sales = std::vector<SequencedSecurityTimeAndSale>();

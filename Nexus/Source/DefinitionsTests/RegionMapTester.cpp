@@ -9,15 +9,15 @@ using namespace Nexus::DefaultVenues;
 TEST_SUITE("RegionMap") {
   TEST_CASE("venue_region_subset_of_country_region") {
     auto map = RegionMap(-1);
-    map.set(US, 1);
+    map.set(AU, 1);
     map.set(CA, 2);
-    auto us = map.get(US);
-    REQUIRE(us == 1);
+    auto au = map.get(AU);
+    REQUIRE(au == 1);
     auto ca = map.get(CA);
     REQUIRE(ca == 2);
     auto br = map.get(BR);
     REQUIRE(br == -1);
-    REQUIRE(map.get(NASDAQ) == 1);
+    REQUIRE(map.get(ASX) == 1);
     REQUIRE(map.get(TSX) == 2);
   }
 
@@ -35,17 +35,17 @@ TEST_SUITE("RegionMap") {
 
   TEST_CASE("region_map_iterator") {
     auto map = RegionMap(-1);
-    map.set(US, 1);
+    map.set(AU, 1);
     map.set(CA, 2);
     auto i = map.begin();
     REQUIRE(std::get<0>(*i) == Region::GLOBAL);
     ++i;
-    REQUIRE(std::get<0>(*i) == US);
+    REQUIRE(std::get<0>(*i) == AU);
   }
 
   TEST_CASE("shuttle") {
     auto map = Nexus::RegionMap(0);
-    map.set(US, 1);
+    map.set(AU, 1);
     map.set(CA, 2);
     map.set(GB, 3);
     map.set(Region(std::string("CustomRegion")), 4);

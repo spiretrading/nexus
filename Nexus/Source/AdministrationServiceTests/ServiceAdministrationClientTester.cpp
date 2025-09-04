@@ -286,8 +286,8 @@ TEST_SUITE("ServiceAdministrationClient") {
   TEST_CASE("load_entitlements") {
     auto fixture = Fixture();
     auto entitlements = EntitlementDatabase();
-    entitlements.add({"Entitlement1", Money(100), USD,
-      DirectoryEntry::MakeAccount(1, "group1"), {{EntitlementKey(NYSE),
+    entitlements.add({"Entitlement1", Money(100), AUD,
+      DirectoryEntry::MakeAccount(1, "group1"), {{EntitlementKey(ASX),
         MarketDataTypeSet({MarketDataType::BBO_QUOTE})}}});
     entitlements.add({"Entitlement2", Money(200), CAD,
       DirectoryEntry::MakeAccount(2, "group2"), {{EntitlementKey(TSX),
@@ -337,7 +337,7 @@ TEST_SUITE("ServiceAdministrationClient") {
     auto fixture = Fixture();
     auto account_a = DirectoryEntry::MakeAccount(55, "Alexis");
     auto parameters_a = std::make_shared<Queue<RiskParameters>>();
-    auto account_a_parameters = RiskParameters(USD, 100 * Money::ONE,
+    auto account_a_parameters = RiskParameters(AUD, 100 * Money::ONE,
       RiskState::Type::ACTIVE, 10 * Money::ONE, seconds(10));
     fixture.handle<MonitorRiskParametersService>(
       [&] (auto& request, const auto& received_account) {
@@ -405,7 +405,7 @@ TEST_SUITE("ServiceAdministrationClient") {
   TEST_CASE("store_risk_parameters") {
     auto fixture = Fixture();
     auto account = DirectoryEntry::MakeAccount(19, "risk_account");
-    auto parameters = RiskParameters(USD, 100 * Money::ONE,
+    auto parameters = RiskParameters(AUD, 100 * Money::ONE,
       RiskState::Type::ACTIVE, 10 * Money::ONE, seconds(10));
     fixture.handle<StoreRiskParametersService>(
       [&] (auto& request, const auto& received_account,
@@ -601,7 +601,7 @@ TEST_SUITE("ServiceAdministrationClient") {
   TEST_CASE("load_risk_modification") {
     auto fixture = Fixture();
     auto id = 39;
-    auto risk_parameters = RiskParameters(USD, 1000 * Money::ONE,
+    auto risk_parameters = RiskParameters(AUD, 1000 * Money::ONE,
       RiskState::Type::ACTIVE, 100 * Money::ONE, seconds(30));
     auto modification = RiskModification(risk_parameters);
     fixture.handle<LoadRiskModificationService>(

@@ -8,7 +8,7 @@ using namespace Nexus::DefaultVenues;
 
 namespace {
   auto TST = Security("TST", TSX);
-  auto MSFT = Security("MSFT", NASDAQ);
+  auto S32 = Security("S32", ASX);
 
   auto make_order_fields(Security security, CurrencyId currency, Side side,
       Quantity quantity, Money price) {
@@ -36,7 +36,7 @@ TEST_SUITE("BuyingPowerModel") {
   TEST_CASE("empty_model") {
     auto model = BuyingPowerModel();
     REQUIRE(model.get_buying_power(CAD) == Money::ZERO);
-    REQUIRE(model.get_buying_power(USD) == Money::ZERO);
+    REQUIRE(model.get_buying_power(AUD) == Money::ZERO);
     REQUIRE(!model.has_order(1));
   }
 
@@ -176,11 +176,11 @@ TEST_SUITE("BuyingPowerModel") {
     auto tst_fields =
       make_order_fields(TST, CAD, Side::BID, 100, 10 * Money::ONE);
     model.submit(1, tst_fields, 10 * Money::ONE);
-    auto msft_fields =
-      make_order_fields(MSFT, USD, Side::BID, 50, 150 * Money::ONE);
-    model.submit(2, msft_fields, 150 * Money::ONE);
+    auto S32_fields =
+      make_order_fields(S32, AUD, Side::BID, 50, 150 * Money::ONE);
+    model.submit(2, S32_fields, 150 * Money::ONE);
     REQUIRE(model.get_buying_power(CAD) == 1000 * Money::ONE);
-    REQUIRE(model.get_buying_power(USD) == 7500 * Money::ONE);
+    REQUIRE(model.get_buying_power(AUD) == 7500 * Money::ONE);
   }
 
   TEST_CASE("flipping_from_long_to_short") {

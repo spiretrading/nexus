@@ -37,12 +37,12 @@ TEST_SUITE("BuyingPowerComplianceRule") {
   TEST_CASE("submit_within_buying_power") {
     auto fixture = Fixture();
     auto exchange_rates = ExchangeRateTable();
-    auto rule = BuyingPowerComplianceRule(1000 * Money::ONE, USD,
+    auto rule = BuyingPowerComplianceRule(1000 * Money::ONE, AUD,
       exchange_rates, fixture.m_market_data_environment.get_registry_client());
-    auto security = Security("TST", NYSE);
+    auto security = Security("TST", ASX);
     fixture.m_market_data_environment.update_bbo(security, Money::ONE);
     auto fields = make_limit_order_fields(
-      DirectoryEntry::MakeAccount(1, "test"), security, USD, Side::BID, "NYSE",
+      DirectoryEntry::MakeAccount(1, "test"), security, AUD, Side::BID, "ASX",
       10, 10 * Money::ONE);
     auto order_info =
       OrderInfo(fields, 1, time_from_string("2024-07-25 10:00:00"));
@@ -53,12 +53,12 @@ TEST_SUITE("BuyingPowerComplianceRule") {
   TEST_CASE("submit_exceeds_buying_power") {
     auto fixture = Fixture();
     auto exchange_rates = ExchangeRateTable();
-    auto rule = BuyingPowerComplianceRule(100 * Money::ONE, USD, exchange_rates,
+    auto rule = BuyingPowerComplianceRule(100 * Money::ONE, AUD, exchange_rates,
       fixture.m_market_data_environment.get_registry_client());
-    auto security = Security("TST", NYSE);
+    auto security = Security("TST", ASX);
     fixture.m_market_data_environment.update_bbo(security, Money::ONE);
     auto fields = make_limit_order_fields(
-      DirectoryEntry::MakeAccount(1, "test"), security, USD, Side::BID, "NYSE",
+      DirectoryEntry::MakeAccount(1, "test"), security, AUD, Side::BID, "ASX",
       101, 2 * Money::ONE);
     auto order_info =
       OrderInfo(fields, 1, time_from_string("2024-07-25 10:00:00"));
