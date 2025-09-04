@@ -107,6 +107,7 @@ int main(int argc, const char** argv) {
                     parse_region(candidate_entry.GetProperties(), countries);
                   return region <= candidate_region;
                 }, MARKET_DATA_REGISTRY_SERVICE_NAME));
+        clients.set(region, std::move(market_data_client));
       }
       return std::make_unique<MarketDataClient>(
         std::in_place_type<DistributedMarketDataClient>, std::move(clients));
