@@ -1,3 +1,4 @@
+import * as Beam from 'beam';
 import { CountryCode } from './country';
 import { Security } from './security';
 import { Venue } from './venue';
@@ -10,7 +11,15 @@ export class Region {
 
   /** Makes a value from a JSON object. */
   public static fromJson(value: any): Region {
-    return null;
+    const region = new Region();
+    region._name = value.name;
+    region._isGlobal = value.is_global;
+    region._countries =
+      Beam.Set.fromJson<CountryCode>(CountryCode, value.countries);
+    region._venues = Beam.Set.fromJson<Venue>(Venue, value.venues);
+    region._securities =
+      Beam.Set.fromJson<Security>(Security, value.securities);
+    return region;
   }
 
   /**
@@ -19,8 +28,8 @@ export class Region {
    */
   public static makeGlobal(name: string): Region {
     const region = new Region();
-    region.m_isGlobal = true;
-    region.m_name = name;
+    region._isGlobal = true;
+    region._name = name;
     return region;
   }
 
@@ -51,44 +60,46 @@ export class Region {
    */
   constructor(security: Security);
 
-  constructor(arg?: string | CountryCode | Venue | Security) {}
+  constructor(arg?: string | CountryCode | Venue | Security) {
+    this._name = '';
+    this._isGlobal = false;
+    this._countries = new Beam.Set<CountryCode>();
+    this._venues = new Beam.Set<Venue>();
+    this._securities = new Beam.Set<Security>();
+    if(typeof arg === 'string') {
+      this._name = arg;
+    } else if(arg instanceof CountryCode) {
+      this._countries.add(arg);
+    } else if(arg instanceof Venue) {
+      this._venues.add(arg);
+    } else if(arg instanceof Security) {
+      this._securities.add(arg);
+    }    
+  }
 
   /** Returns the name of this Region. */
   public get name(): string {
-    return null as any;
+    return this._name;
   }
 
   /** Returns true iff this is the global Region. */
   public get isGlobal(): boolean {
-    return null as any;
-  }
-
-  /** Returns true iff this Region is empty. */
-  public get isEmpty(): boolean {
-    return null as any;
+    return this._isGlobal;
   }
 
   /** Returns the countries in this Region. */
-  public get countries(): Set<CountryCode> {
-    return null as any;
+  public get countries(): Beam.Set<CountryCode> {
+    return this._countries.clone();
   }
 
   /** Returns the venues in this Region. */
-  public get venues(): Set<Venue> {
-    return null as any;
+  public get venues(): Beam.Set<Venue> {
+    return this._venues.clone();
   }
 
   /** Returns the Securities in this Region. */
-  public get securities(): Set<Security> {
-    return null as any;
-  }
-
-  /**
-   * Returns true iff `region` is a subset of this.
-   * @param region The Region to test.
-   */
-  public contains(region: Region): boolean {
-    return null as any;
+  public get securities(): Beam.Set<Security> {
+    return this._securities.clone();
   }
 
   /**
@@ -97,57 +108,82 @@ export class Region {
    * @returns The combined Region (this).
    */
   public add(region: Region): Region {
-    return null as any;
-  }
-
-  /** Returns true iff this Region is a strict subset of another. */
-  public lessThan(region: Region): boolean {
-    return null as any;
-  }
-
-  /** Returns true iff this Region is a subset of another. */
-  public lessThanOrEqual(region: Region): boolean {
-    return null as any;
-  }
-
-  /** Returns true iff this Region is equal to another. */
-  public equals(region: Region): boolean {
-    return null as any;
-  }
-
-  /** Returns true iff this Region is not equal to another. */
-  public notEquals(region: Region): boolean {
-    return null as any;
-  }
-
-  /** Returns true iff this Region is a superset of another. */
-  public greaterThanOrEqual(region: Region): boolean {
-    return null as any;
-  }
-
-  /** Returns true iff this Region is a strict superset of another. */
-  public greaterThan(region: Region): boolean {
-    return null as any;
+    if(region.isGlobal) {
+      this._isGlobal = true;
+      this._countries = new Beam.Set<CountryCode>();
+      this._venues = new Beam.Set<Venue>();
+      this._securities = new Beam.Set<Security>();
+    } else if(!this.isGlobal) {
+      for(const country of region._countries) {
+        this._countries.add(country);
+      }
+      for(const venue of region._venues) {
+        this._venues.add(venue);
+      }
+      for(const security of region._securities) {
+        this._securities.add(security);
+      }
+    }
+    return this;
   }
 
   /** Converts this object to JSON. */
   public toJson(): any {
-    return null;
+    return {
+      name: this._name,
+      is_global: this._isGlobal,
+      countries: this._countries.toJson(),
+      venues: this._venues.toJson(),
+      securities: this._securities.toJson()
+    };
   }
 
   /** Returns a hash of this value. */
   public hash(): number {
-    return null;
+    if(this.isGlobal) {
+      return 0x9e3779b9;
+    }
+    const COUNTRY_SALT = 0x1bd11bda;
+    const VENUE_SALT = 0x3c79ac49;
+    const SECURITY_SALT = 0x1f123bb5;
+    const mix = (x: number): number => {
+      let y = (x + 0x9e3779b9) | 0;
+      y = ((y ^ (y >>> 30)) * 0xbf58476d) | 0;
+      y = ((y ^ (y >>> 27)) * 0x94d049bb) | 0;
+      return (y ^ (y >>> 31)) | 0;
+    };
+    const rotate_left = (x: number, r: number): number => {
+      return ((x << r) | (x >>> (32 - r))) | 0;
+    };
+    const set_hash = (set: Beam.Set<any>, salt: number): number => {
+      let sum = 0;
+      let xors = 0;
+      for(const element of set) {
+        const hv = mix((element.hash() + salt) | 0);
+        sum = (sum + hv) | 0;
+        xors ^= rotate_left(hv, 23);
+      }
+      return mix((sum + rotate_left(xors, 17)) | 0);
+    };
+    const countries_hash = set_hash(this._countries, COUNTRY_SALT);
+    const venues_hash = set_hash(this._venues, VENUE_SALT);
+    const securities_hash = set_hash(this._securities, SECURITY_SALT);
+    const hash = (countries_hash + rotate_left(venues_hash, 21) +
+      rotate_left(securities_hash, 42)) | 0;
+    return mix(hash);
   }
 
   /** Returns the string representation */
   public toString(): string {
-    return null as any;
+    if(this.name.length != 0) {
+      return this.name;
+    }
+    return '';
   }
 
-  private m_name: string;
-  private m_isGlobal: boolean;
-  private m_countries: Set<CountryCode>;
-  private m_venues: Set<Venue>;
-  private m_securities: Set<Security>;
+  private _name: string;
+  private _isGlobal: boolean;
+  private _countries: Beam.Set<CountryCode>;
+  private _venues: Beam.Set<Venue>;
+  private _securities: Beam.Set<Security>;
 }
