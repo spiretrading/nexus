@@ -4,6 +4,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <boost/signals2/signal.hpp>
+#include <QString>
 #include "Nexus/Compliance/ComplianceRuleEntry.hpp"
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
 #include "Spire/AccountViewer/AccountViewer.hpp"
@@ -120,6 +121,12 @@ namespace Spire {
       mutable ComplianceRuleEntryIdUpdatedSignal
         m_complianceRuleEntryIdUpdatedSignal;
   };
+
+  /** Returns <code>true</code> iff a schema is wrapped. */
+  bool IsWrapped(const Nexus::ComplianceRuleSchema& schema);
+
+  /** Returns the name of the fully unwrapped schema. */
+  QString GetUnwrappedName(const Nexus::ComplianceRuleSchema& schema);
 }
 
 #endif

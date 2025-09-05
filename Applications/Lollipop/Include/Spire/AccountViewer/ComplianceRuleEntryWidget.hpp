@@ -12,37 +12,37 @@ class Ui_ComplianceRuleEntryWidget;
 
 namespace Spire {
 
-  /*! \class ComplianceRuleEntryWidget
-      \brief Displays a single ComplianceRuleEntry.
-   */
+  /** Displays a single ComplianceRuleEntry. */
   class ComplianceRuleEntryWidget : public QWidget {
     public:
 
-      //! Constructs a ComplianceRuleEntryWidget.
-      /*!
-        \param userProfile The user's profile.
-        \param isReadOnly Whether the entitlement is strictly for display
-               purposes.
-        \param complianceRuleEntry The ComplianceRuleEntry to display.
-        \param model The model the entry belongs to.
-        \param parent The parent widget.
-        \param flags Qt flags passed to the parent widget.
-      */
+      /**
+       * Constructs a ComplianceRuleEntryWidget.
+       * @param userProfile The user's profile.
+       * @param isReadOnly Whether the entitlement is strictly for display
+       *        purposes.
+       * @param complianceRuleEntry The ComplianceRuleEntry to display.
+       * @param model The model the entry belongs to.
+       * @param parent The parent widget.
+       * @param flags Qt flags passed to the parent widget.
+       */
       ComplianceRuleEntryWidget(Beam::Ref<UserProfile> userProfile,
         bool isReadOnly, const Nexus::ComplianceRuleEntry& entry,
         std::shared_ptr<ComplianceModel> model, QWidget* parent = nullptr,
         Qt::WindowFlags flags = Qt::WindowFlags());
 
-      virtual ~ComplianceRuleEntryWidget();
+      ~ComplianceRuleEntryWidget() override = default;
 
-      //! Returns the ComplianceRuleEntry represented by this widget.
+      /** Returns the ComplianceRuleEntry represented by this widget. */
       const Nexus::ComplianceRuleEntry& GetEntry() const;
 
-      //! Returns <code>true</code> iff this widget's checkbox has been
-      //! selected.
+      /**
+       * Returns <code>true</code> iff this widget's checkbox has been
+       * selected.
+       */
       bool IsSelected() const;
 
-      //! Commits changes to the model.
+      /** Commits changes to the model. */
       void Commit();
 
     private:
@@ -52,8 +52,7 @@ namespace Spire {
       bool m_isReadOnly;
       bool m_idUpdated;
       Nexus::ComplianceRuleEntry m_entry;
-      std::string m_ruleName;
-      std::vector<std::string> m_parameterNames;
+      Nexus::ComplianceRuleEntry m_flattenedEntry;
       std::shared_ptr<ComplianceModel> m_model;
       Beam::SignalHandling::ConnectionGroup m_connections;
 

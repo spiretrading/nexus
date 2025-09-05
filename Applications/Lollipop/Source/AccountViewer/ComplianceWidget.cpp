@@ -58,8 +58,8 @@ void ComplianceWidget::SetModel(const std::shared_ptr<ComplianceModel>& model) {
     font.setItalic(true);
     m_ui->m_newRuleComboBox->lineEdit()->setFont(font);
     for(auto& schema : m_model->GetSchemas()) {
-      m_ui->m_newRuleComboBox->addItem(
-        QString::fromStdString(schema.get_name()));
+      auto name = GetUnwrappedName(schema);
+      m_ui->m_newRuleComboBox->addItem(name);
     }
     m_ui->m_newRuleComboBox->lineEdit()->setText(tr("Assign New Rule"));
   }

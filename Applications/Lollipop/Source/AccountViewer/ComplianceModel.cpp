@@ -149,3 +149,22 @@ connection ComplianceModel::ConnectComplianceRuleEntryIdUpdatedSignal(
     const ComplianceRuleEntryIdUpdatedSignal::slot_type& slot) const {
   return m_complianceRuleEntryIdUpdatedSignal.connect(slot);
 }
+
+bool Spire::IsWrapped(const ComplianceRuleSchema& schema) {
+  if(schema.get_parameters().size() < 2) {
+    return false;
+  }
+  auto& name = *(schema.get_parameters().rbegin() + 1);
+  auto& arguments = *schema.get_parameters().rbegin();
+  return name.m_name == "name" &&
+    name.m_value.type() == typeid(std::string) &&
+    arguments.m_name == "arguments" && arguments.m_value.which() ==
+      mpl::size<ComplianceValue::types>::value - 1;
+}
+
+QString Spire::GetUnwrappedName(const ComplianceRuleSchema& schema) {
+  if(IsWrapped(schema)) {
+    return GetUnwrappedName(unwrap(schema));
+  }
+  return QString::fromStdString(schema.get_name());
+}
