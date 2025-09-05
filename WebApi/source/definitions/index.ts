@@ -1,6 +1,7 @@
 export * from './country';
 export * from './currency';
 export * from './money';
+export * from './region';
 export * from './security';
 export * from './venue';
 export * from './default_country_database';
