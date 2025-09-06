@@ -227,10 +227,13 @@ void ComplianceRuleEntryWidget::Commit() {
     auto value = GetComplianceValue(widget);
     parameters.push_back(ComplianceParameter(name, std::move(value)));
   }
-  m_flattenedEntry = ComplianceRuleEntry(m_flattenedEntry.get_id(),
-    m_flattenedEntry.get_directory_entry(), m_flattenedEntry.get_state(),
-    ComplianceRuleSchema(
-      m_flattenedEntry.get_schema().get_name(), std::move(parameters)));
+  if(parameters != m_flattenedEntry.get_schema().get_parameters()) {
+    hasUpdate = true;
+    m_flattenedEntry = ComplianceRuleEntry(m_flattenedEntry.get_id(),
+      m_flattenedEntry.get_directory_entry(), m_flattenedEntry.get_state(),
+      ComplianceRuleSchema(
+        m_flattenedEntry.get_schema().get_name(), std::move(parameters)));
+  }
   auto schema = [&] {
     if(isConsolidated) {
       return Renest(m_flattenedEntry.get_schema(), m_entry.get_schema());
@@ -238,8 +241,8 @@ void ComplianceRuleEntryWidget::Commit() {
     return make_per_account_compliance_rule_schema(
       Renest(m_flattenedEntry.get_schema(), m_entry.get_schema()));
   }();
-  m_entry = ComplianceRuleEntry(m_entry.get_id(),
-    m_entry.get_directory_entry(), state, std::move(schema));
+  m_entry = ComplianceRuleEntry(
+    m_entry.get_id(), m_entry.get_directory_entry(), state, std::move(schema));
   m_flattenedEntry = Flatten(m_entry);
   if(hasUpdate) {
     m_model->Update(m_entry);

@@ -64,19 +64,19 @@ namespace {
 
     QWidget* operator ()(Quantity value) const {
       auto widget = new QSpinBox{m_parent};
-      widget->setReadOnly(!m_isReadOnly);
+      widget->setReadOnly(m_isReadOnly);
       return widget;
     }
 
     QWidget* operator ()(double value) const {
       auto widget = new QDoubleSpinBox{m_parent};
-      widget->setReadOnly(!m_isReadOnly);
+      widget->setReadOnly(m_isReadOnly);
       return widget;
     }
 
     QWidget* operator ()(const std::string& value) const {
       auto widget = new QLineEdit{QString::fromStdString(value), m_parent};
-      widget->setReadOnly(!m_isReadOnly);
+      widget->setReadOnly(m_isReadOnly);
       return widget;
     }
 
