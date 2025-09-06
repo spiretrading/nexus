@@ -141,7 +141,7 @@ void ValueListInputDialog::ActivateRow(int row, QKeyEvent* event) {
       }
       return text.toStdString();
     }();
-    ShowWildCardSecurityInputDialog(
+    ShowSecurityInputDialog(
       Ref(*m_userProfile), initialValue, m_ui->m_valueListWidget,
       [=] (auto security) {
         if(!security || security == Security()) {

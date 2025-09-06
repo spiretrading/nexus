@@ -5,11 +5,13 @@
 #include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
 #include <QVariant>
+#include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
+#include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
@@ -46,11 +48,13 @@ Q_DECLARE_METATYPE(Spire::Task::State);
 Q_DECLARE_METATYPE(boost::any);
 Q_DECLARE_METATYPE(boost::posix_time::ptime);
 Q_DECLARE_METATYPE(boost::posix_time::time_duration);
+Q_DECLARE_METATYPE(Nexus::CountryCode);
 Q_DECLARE_METATYPE(Nexus::CurrencyId);
 Q_DECLARE_METATYPE(Nexus::Money);
 Q_DECLARE_METATYPE(Nexus::OrderStatus);
 Q_DECLARE_METATYPE(Nexus::OrderType);
 Q_DECLARE_METATYPE(Nexus::Quantity);
+Q_DECLARE_METATYPE(Nexus::Region);
 Q_DECLARE_METATYPE(Nexus::Security);
 Q_DECLARE_METATYPE(Nexus::Side);
 Q_DECLARE_METATYPE(Nexus::TimeInForce);
@@ -74,8 +78,11 @@ namespace Spire::UI {
   //! Registers the custom QVariant types.
   void RegisterCustomQtVariants();
 
-  //! Returns the text representation of a Venue.
-  QString displayText(Nexus::Venue venue);
+  //! Returns the text representation of a CountryCode.
+  QString displayText(Nexus::CountryCode country);
+
+  //! Returns the text representation of a Region.
+  QString displayText(const Nexus::Region& region);
 
   //! Returns the text representation of a Security.
   QString displayText(const Nexus::Security& security);
@@ -88,6 +95,9 @@ namespace Spire::UI {
 
   //! Returns the text representation of an OrderType.
   const QString& displayText(Nexus::OrderType type);
+
+  //! Returns the text representation of a Venue.
+  QString displayText(Nexus::Venue venue);
 
   /*! \class CustomVariantItemDelegate
       \brief Extends Qt's item delegate to support the custom QVariant types.

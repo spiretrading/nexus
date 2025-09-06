@@ -37,28 +37,6 @@ void Spire::ShowSecurityInputDialog(Ref<UserProfile> userProfile,
   dialog->show();
 }
 
-void Spire::ShowWildCardSecurityInputDialog(Ref<UserProfile> userProfile,
-    const variant<std::string, Security>& initialValue, QWidget* parent,
-    std::function<void (optional<Security>)> onResult) {
-  auto dialog = [&] {
-    if(auto text = get<std::string>(&initialValue)) {
-      return new SecurityInputDialog(Ref(userProfile), *text, parent);
-    }
-    return new SecurityInputDialog(
-      Ref(userProfile), get<Security>(initialValue), parent);
-  }();
-  dialog->setAttribute(Qt::WA_DeleteOnClose);
-  QObject::connect(dialog, &SecurityInputDialog::finished, parent,
-    [=] (auto result) {
-      if(result == QDialog::Rejected) {
-        onResult(none);
-      } else {
-        onResult(dialog->GetSecurity(true));
-      }
-    });
-  dialog->show();
-}
-
 SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
     const Security& initial, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
@@ -85,7 +63,7 @@ SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
 
 SecurityInputDialog::~SecurityInputDialog() = default;
 
-Security SecurityInputDialog::GetSecurity(bool supportWildCards) const {
+Security SecurityInputDialog::GetSecurity() const {
   auto source = m_ui->m_input->text().toUpper().toStdString();
   return parse_security(source, m_userProfile->GetVenueDatabase());
 }

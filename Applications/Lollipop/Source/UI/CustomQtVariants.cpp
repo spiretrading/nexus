@@ -27,8 +27,10 @@ namespace {
     } else if(value.type() == typeid(posix_time::time_duration)) {
       return QVariant::fromValue(any_cast<posix_time::time_duration>(value));
     } else if(value.type() == typeid(string)) {
-      return QVariant::fromValue(QString::fromStdString(
-        any_cast<string>(value)));
+      return QVariant::fromValue(
+        QString::fromStdString(any_cast<string>(value)));
+    } else if(value.type() == typeid(CountryCode)) {
+      return QVariant::fromValue(any_cast<CountryCode>(value));
     } else if(value.type() == typeid(CurrencyId)) {
       return QVariant::fromValue(any_cast<CurrencyId>(value));
     } else if(value.type() == typeid(Money)) {
@@ -43,6 +45,8 @@ namespace {
       return QVariant::fromValue(any_cast<OrderType>(value));
     } else if(value.type() == typeid(PositionSideToken)) {
       return QVariant::fromValue(any_cast<PositionSideToken>(value));
+    } else if(value.type() == typeid(Region)) {
+      return QVariant::fromValue(any_cast<Region>(value));
     } else if(value.type() == typeid(Security)) {
       return QVariant::fromValue(any_cast<Security>(value));
     } else if(value.type() == typeid(Side)) {
@@ -108,8 +112,16 @@ posix_time::ptime Spire::UI::ToPosixTime(const QDateTime& time) {
 
 void Spire::UI::RegisterCustomQtVariants() {}
 
-QString Spire::UI::displayText(Venue venue) {
-  return QString::fromStdString(lexical_cast<std::string>(venue));
+QString Spire::UI::displayText(CountryCode country) {
+  auto& entry = DEFAULT_COUNTRIES.from(country);
+  return QString::fromStdString(entry.m_three_letter_code.GetData());
+}
+
+QString Spire::UI::displayText(const Region& region) {
+  if(region.is_global()) {
+    return "*";
+  }
+  return QString::fromStdString(lexical_cast<std::string>(region));
 }
 
 QString Spire::UI::displayText(const Security& security) {
@@ -191,6 +203,10 @@ const QString& Spire::UI::displayText(OrderType type) {
   }
 }
 
+QString Spire::UI::displayText(Venue venue) {
+  return QString::fromStdString(lexical_cast<std::string>(venue));
+}
+
 CustomVariantItemDelegate::CustomVariantItemDelegate(
     Ref<UserProfile> userProfile, QObject* parent)
     : QStyledItemDelegate(parent),
@@ -211,14 +227,12 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     } else {
       return QString::fromStdString(to_simple_string(timeValue));
     }
+  } else if(value.canConvert<CountryCode>()) {
+    return ::displayText(value.value<CountryCode>());
   } else if(value.canConvert<CurrencyId>()) {
     const CurrencyDatabase::Entry& entry =
       m_userProfile->GetCurrencyDatabase().from(value.value<CurrencyId>());
     return QString::fromStdString(entry.m_code.GetData());
-  } else if(value.canConvert<Venue>()) {
-    const VenueDatabase::Entry& entry =
-      m_userProfile->GetVenueDatabase().from(value.value<Venue>());
-    return QString::fromStdString(entry.m_display_name);
   } else if(value.canConvert<Money>()) {
     return QString::fromStdString(lexical_cast<string>(value.value<Money>()));
   } else if(value.canConvert<Quantity>()) {
@@ -233,8 +247,8 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return Spire::UI::displayText(value.value<OrderType>());
   } else if(value.canConvert<PositionSideToken>()) {
     return value.value<PositionSideToken>().ToString();
-  } else if(value.canConvert<Venue>()) {
-    return ::displayText(value.value<Venue>());
+  } else if(value.canConvert<Region>()) {
+    return ::displayText(value.value<Region>());
   } else if(value.canConvert<Security>()) {
     return ::displayText(value.value<Security>());
   } else if(value.canConvert<Side>()) {
@@ -242,6 +256,8 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
   } else if(value.canConvert<TimeInForce>()) {
     return QString::fromStdString(
       lexical_cast<string>(value.value<TimeInForce>().get_type()));
+  } else if(value.canConvert<Venue>()) {
+    return ::displayText(value.value<Venue>());
   } else if(value.canConvert<any>()) {
     QVariant translatedValue = AnyToVariant(value.value<any>());
     return displayText(translatedValue, locale);
@@ -280,6 +296,9 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
   } else if(leftVariant.canConvert<posix_time::time_duration>()) {
     return Compare(leftVariant.value<posix_time::time_duration>(),
       rightVariant.value<posix_time::time_duration>(), left, right);
+  } else if(leftVariant.canConvert<CountryCode>()) {
+    return Compare(leftVariant.value<CountryCode>(),
+      rightVariant.value<CountryCode>(), left, right);
   } else if(leftVariant.canConvert<Money>()) {
     return Compare(leftVariant.value<Money>(), rightVariant.value<Money>(),
       left, right);
