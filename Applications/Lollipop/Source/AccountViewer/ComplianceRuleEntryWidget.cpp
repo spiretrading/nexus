@@ -124,6 +124,7 @@ ComplianceRuleEntryWidget::ComplianceRuleEntryWidget(
       m_entry(entry),
       m_flattenedEntry(Flatten(m_entry)),
       m_model(std::move(model)) {
+  std::cout << entry << std::endl;
   m_ui->setupUi(this);
   m_ui->m_parametersWidget->hide();
   m_ui->m_ruleLabel->setText(
@@ -236,8 +237,17 @@ void ComplianceRuleEntryWidget::Commit() {
   }
   auto schema = [&] {
     if(isConsolidated) {
+      if(m_entry.get_schema().get_name() == PER_ACCOUNT_RULE_NAME) {
+        hasUpdate = true;
+        return Renest(
+          m_flattenedEntry.get_schema(), unwrap(m_entry.get_schema()));
+      }
       return Renest(m_flattenedEntry.get_schema(), m_entry.get_schema());
     }
+    if(m_entry.get_schema().get_name() == PER_ACCOUNT_RULE_NAME) {
+      return Renest(m_flattenedEntry.get_schema(), m_entry.get_schema());
+    }
+    hasUpdate = true;
     return make_per_account_compliance_rule_schema(
       Renest(m_flattenedEntry.get_schema(), m_entry.get_schema()));
   }();
