@@ -31,25 +31,55 @@ namespace {
     return scale(26, 26);
   }
 
-  auto get_system_border_padding_size(int dpi) {
-    return 4 * dpi / DPI;
-  }
-
-  auto get_system_frame_size(int dpi) {
-    if(dpi < 144) {
-      return 4;
-    } else if(dpi < 240) {
-      return 5;
-    } else if(dpi < 336) {
-      return 6;
+  auto get_dpi_for_window(const QWidget& widget) {
+    using GetDpiForWindowProc = int(WINAPI*)(HWND);
+    static auto function = [] () -> GetDpiForWindowProc {
+      if(auto handle = GetModuleHandle("user32.dll")) {
+        return reinterpret_cast<GetDpiForWindowProc>(
+          GetProcAddress(handle, "GetDpiForWindow"));
+      }
+      return nullptr;
+    }();
+    if(function) {
+      return function(reinterpret_cast<HWND>(widget.effectiveWinId()));
     }
-    return 7;
+    return static_cast<int>(widget.screen()->logicalDotsPerInch());
   }
 
-  auto get_system_border_size(int x_dpi, int y_dpi) {
-    return QSize(
-      get_system_frame_size(x_dpi) + get_system_border_padding_size(x_dpi),
-      get_system_frame_size(y_dpi) + get_system_border_padding_size(y_dpi));
+  auto get_system_metrics_for_dpi(int index, UINT dpi) {
+    using GetSystemMetricsForDpiProc = int(WINAPI*)(int, UINT);
+    static auto function = [] () -> GetSystemMetricsForDpiProc {
+      if(auto handle = GetModuleHandle("user32.dll")) {
+        return reinterpret_cast<GetSystemMetricsForDpiProc>(
+          GetProcAddress(handle, "GetSystemMetricsForDpi"));
+      }
+      return nullptr;
+    }();
+    if(function) {
+      return function(index, dpi);
+    }
+    return GetSystemMetrics(index);
+  }
+
+  auto get_system_border_size(int dpi) {
+    auto padding = get_system_metrics_for_dpi(SM_CXPADDEDBORDER, dpi);
+    return QSize(get_system_metrics_for_dpi(SM_CXFRAME, dpi) + padding,
+      get_system_metrics_for_dpi(SM_CYFRAME, dpi) + padding);
+  }
+
+  int get_bottom_border_offset(HWND hwnd, int bottom_border) {
+    auto offset = 0;
+    auto window_rect = RECT{0};
+    auto extended_bounds = RECT{0};
+    if(GetWindowRect(hwnd, &window_rect) &&
+        SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS,
+        &extended_bounds, sizeof(extended_bounds)))) {
+      if(auto bottom = window_rect.bottom - extended_bounds.bottom;
+          bottom != 0) {
+        offset = bottom_border - 1 - bottom;
+      }
+    }
+    return offset;
   }
 
   auto make_svg_window_icon(const QString& icon_path) {
@@ -113,6 +143,17 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
   auto msg = reinterpret_cast<MSG*>(message);
   if(msg->message == WM_NCACTIVATE) {
     RedrawWindow(msg->hwnd, NULL, NULL, RDW_UPDATENOW);
+    if(!m_bottom_border_offset) {
+      auto offset = get_bottom_border_offset(msg->hwnd,
+        get_system_border_size(get_dpi_for_window(*this)).height());
+      if(std::abs(offset) > 0) {
+        m_bottom_border_offset = offset;
+      } else {
+        m_bottom_border_offset = 0;
+      }
+      SetWindowPos(msg->hwnd, nullptr, 0, 0, 0, 0,
+        SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
+    }
     *result = -1;
     return true;
   } else if(msg->message == WM_NCCALCSIZE) {
@@ -135,16 +176,17 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
             }
           }
         } else {
-          auto current_screen = screen();
-          auto size = get_system_border_size(
-            current_screen->logicalDotsPerInchX(),
-            current_screen->logicalDotsPerInchY());
+          auto border_size = get_system_border_size(get_dpi_for_window(*this));
           if(!isVisible()) {
-            move(pos() + QPoint(size.width(), 0));
+            move(pos() + QPoint(border_size.width(), 0));
           }
-          rect.right -= size.width();
-          rect.left += size.width();
-          rect.bottom -= size.height();
+          rect.left += border_size.width();
+          rect.right -= border_size.width();
+          if(m_bottom_border_offset && *m_bottom_border_offset > 0) {
+            rect.bottom -= 1;
+          } else {
+            rect.bottom -= border_size.height();
+          }
         }
       }
       *result = 0;
@@ -215,10 +257,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     return true;
   } else if(msg->message == WM_GETMINMAXINFO) {
     auto mmi = reinterpret_cast<MINMAXINFO*>(msg->lParam);
-    auto current_screen = screen();
-    auto border_size = get_system_border_size(
-      current_screen->logicalDotsPerInchX(),
-      current_screen->logicalDotsPerInchY());
+    auto border_size = get_system_border_size(get_dpi_for_window(*this));
     if(maximumSize() != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
       mmi->ptMaxTrackSize.x = maximumSize().width() + 2 * border_size.width();
       mmi->ptMaxTrackSize.y = maximumSize().height() + border_size.height();
@@ -304,13 +343,11 @@ void Window::set_window_attributes(bool is_resizeable) {
     m_frame_size = none;
   }
   auto window_geometry = frameGeometry();
-  auto borderWidth = GetSystemMetrics(SM_CXFRAME) +
-    GetSystemMetrics(SM_CXPADDEDBORDER);
-  auto borderHeight = GetSystemMetrics(SM_CYFRAME) +
-    GetSystemMetrics(SM_CXPADDEDBORDER);
+  auto border_size = get_system_border_size(get_dpi_for_window(*this));
   auto internal_height = layout()->contentsRect().height();
-  MoveWindow(hwnd, window_geometry.x() - borderWidth + 1,
-    window_geometry.y() + borderHeight + m_title_bar->height() -
+  MoveWindow(hwnd, window_geometry.x() - border_size.width() + 1,
+    window_geometry.y() + border_size.height() + m_title_bar->height() -
       scale_height(3),
-    width() + 2 * borderWidth, internal_height + borderHeight, true);
+    width() + 2 * border_size.width(), internal_height + border_size.height(),
+    true);
 }
