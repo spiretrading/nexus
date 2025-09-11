@@ -209,9 +209,19 @@ std::unordered_map<QScreen*, std::vector<QRect>>
     if(!window || window->isHidden()) {
       continue;
     }
-    auto window_geometry = window->frameGeometry().adjusted(
+    auto frame_geometry = window->frameGeometry();
+    auto geometry = window->geometry();
+    auto bottom_offset = [&] {
+      auto offset = VERTICAL_HIGHLIGHT_OFFSET();
+      if(auto border_height = frame_geometry.bottom() - geometry.bottom();
+          border_height < 0) {
+        offset -= border_height;
+      }
+      return offset;
+    }();
+    auto window_geometry = frame_geometry.adjusted(
       -HORIZONTAL_HIGHLIGHT_OFFSET(), -VERTICAL_HIGHLIGHT_OFFSET(),
-      HORIZONTAL_HIGHLIGHT_OFFSET(), VERTICAL_HIGHLIGHT_OFFSET());
+      HORIZONTAL_HIGHLIGHT_OFFSET(), bottom_offset);
     for(auto screen : QGuiApplication::screens()) {
       if(auto intersection = window_geometry.intersected(screen->geometry());
           !intersection.isEmpty()) {
