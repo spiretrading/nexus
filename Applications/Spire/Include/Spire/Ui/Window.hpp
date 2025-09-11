@@ -55,7 +55,7 @@ namespace Styles {
       TitleBar* m_title_bar;
       QWidget* m_body;
       bool m_is_resizable;
-      boost::optional<int> m_bottom_border_offset;
+      boost::optional<bool> m_is_bottom_border_mismatched;
       boost::optional<bool> m_has_maximize_attribute;
       boost::optional<QSize> m_frame_size;
 

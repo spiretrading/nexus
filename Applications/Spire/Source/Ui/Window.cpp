@@ -1,6 +1,4 @@
 #include "Spire/Ui/Window.hpp"
-#include <QApplication>
-#include <QDesktopWidget>
 #include <QEvent>
 #include <QGuiApplication>
 #include <QPainter>
@@ -10,7 +8,6 @@
 #include <dwmapi.h>
 #include <qt_windows.h>
 #include <windowsx.h>
-#include <windows.h>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -31,7 +28,7 @@ namespace {
     return scale(26, 26);
   }
 
-  auto get_dpi_for_window(const QWidget& widget) {
+  int get_dpi(const QWidget& widget) {
     using GetDpiForWindowProc = int(WINAPI*)(HWND);
     static auto function = [] () -> GetDpiForWindowProc {
       if(auto handle = GetModuleHandle("user32.dll")) {
@@ -43,10 +40,10 @@ namespace {
     if(function) {
       return function(reinterpret_cast<HWND>(widget.effectiveWinId()));
     }
-    return static_cast<int>(widget.screen()->logicalDotsPerInch());
+    return widget.screen()->logicalDotsPerInch();
   }
 
-  auto get_system_metrics_for_dpi(int index, UINT dpi) {
+  auto get_system_metrics_for_dpi(int index, int dpi) {
     using GetSystemMetricsForDpiProc = int(WINAPI*)(int, UINT);
     static auto function = [] () -> GetSystemMetricsForDpiProc {
       if(auto handle = GetModuleHandle("user32.dll")) {
@@ -73,7 +70,7 @@ namespace {
     auto extended_bounds = RECT{0};
     if(GetWindowRect(hwnd, &window_rect) &&
         SUCCEEDED(DwmGetWindowAttribute(hwnd, DWMWA_EXTENDED_FRAME_BOUNDS,
-        &extended_bounds, sizeof(extended_bounds)))) {
+          &extended_bounds, sizeof(extended_bounds)))) {
       if(auto bottom = window_rect.bottom - extended_bounds.bottom;
           bottom != 0) {
         offset = bottom_border - 1 - bottom;
@@ -143,14 +140,10 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
   auto msg = reinterpret_cast<MSG*>(message);
   if(msg->message == WM_NCACTIVATE) {
     RedrawWindow(msg->hwnd, NULL, NULL, RDW_UPDATENOW);
-    if(!m_bottom_border_offset) {
+    if(!m_is_bottom_border_mismatched) {
       auto offset = get_bottom_border_offset(msg->hwnd,
-        get_system_border_size(get_dpi_for_window(*this)).height());
-      if(std::abs(offset) > 0) {
-        m_bottom_border_offset = offset;
-      } else {
-        m_bottom_border_offset = 0;
-      }
+        get_system_border_size(get_dpi(*this)).height());
+      m_is_bottom_border_mismatched = std::abs(offset) > 0;
       SetWindowPos(msg->hwnd, nullptr, 0, 0, 0, 0,
         SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
     }
@@ -176,13 +169,13 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
             }
           }
         } else {
-          auto border_size = get_system_border_size(get_dpi_for_window(*this));
+          auto border_size = get_system_border_size(get_dpi(*this));
           if(!isVisible()) {
             move(pos() + QPoint(border_size.width(), 0));
           }
           rect.left += border_size.width();
           rect.right -= border_size.width();
-          if(m_bottom_border_offset && *m_bottom_border_offset > 0) {
+          if(m_is_bottom_border_mismatched && *m_is_bottom_border_mismatched) {
             rect.bottom -= 1;
           } else {
             rect.bottom -= border_size.height();
@@ -257,7 +250,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     return true;
   } else if(msg->message == WM_GETMINMAXINFO) {
     auto mmi = reinterpret_cast<MINMAXINFO*>(msg->lParam);
-    auto border_size = get_system_border_size(get_dpi_for_window(*this));
+    auto border_size = get_system_border_size(get_dpi(*this));
     if(maximumSize() != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
       mmi->ptMaxTrackSize.x = maximumSize().width() + 2 * border_size.width();
       mmi->ptMaxTrackSize.y = maximumSize().height() + border_size.height();
@@ -343,7 +336,7 @@ void Window::set_window_attributes(bool is_resizeable) {
     m_frame_size = none;
   }
   auto window_geometry = frameGeometry();
-  auto border_size = get_system_border_size(get_dpi_for_window(*this));
+  auto border_size = get_system_border_size(get_dpi(*this));
   auto internal_height = layout()->contentsRect().height();
   MoveWindow(hwnd, window_geometry.x() - border_size.width() + 1,
     window_geometry.y() + border_size.height() + m_title_bar->height() -
