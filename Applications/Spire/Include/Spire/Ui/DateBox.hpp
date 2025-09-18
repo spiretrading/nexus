@@ -101,6 +101,7 @@ namespace Styles {
       Button* m_calendar_button;
       Box* m_input_box;
       OverlayPanel* m_date_picker_panel;
+      bool m_date_picker_showing;
       boost::signals2::scoped_connection m_style_connection;
 
       void set_rejected(bool rejected);

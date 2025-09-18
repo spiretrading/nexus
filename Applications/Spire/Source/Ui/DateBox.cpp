@@ -250,7 +250,8 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> current, QWidget* parent)
       m_is_read_only(false),
       m_is_rejected(false),
       m_focus_observer(*this),
-      m_date_picker_panel(nullptr) {
+      m_date_picker_panel(nullptr),
+      m_date_picker_showing(false) {
   m_model->connect_update_signal(std::bind_front(&DateBox::on_current, this));
   m_date_components = new QWidget();
   m_date_components->setSizePolicy(QSizePolicy::Expanding,
@@ -523,7 +524,9 @@ void DateBox::show_date_picker() {
       Qt::Popup | (m_date_picker_panel->windowFlags() & ~Qt::Tool));
     m_date_picker_panel->installEventFilter(this);
   }
+  m_date_picker_showing = true;
   m_date_picker_panel->show();
+  m_date_picker_showing = false;
   m_date_picker_panel->setFocus();
 }
 
@@ -577,7 +580,7 @@ void DateBox::on_submit() {
     m_reject_signal(m_model->get());
     m_model->m_source->set(m_submission);
     set_rejected(true);
-  } else {
+  } else if(!m_date_picker_showing) {
     if(m_date_picker_panel) {
       m_date_picker_panel->hide();
     }
