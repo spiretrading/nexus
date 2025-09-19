@@ -9,7 +9,7 @@
 namespace Spire {
 namespace Styles {
 
-  /** Sets whether the DateBox will display the year field. */
+  /** Sets whether the DateBox displays the year field. */
   using YearField = BasicProperty<bool, struct YearFieldTag>;
 }
 
@@ -80,13 +80,14 @@ namespace Styles {
 
     private:
       struct DateComposerModel;
+      struct Field {
+        IntegerBox* m_box;
+        QLineEdit* m_editor;
+      };
       struct Fields {
-        IntegerBox* m_year_box;
-        QLineEdit* m_year_editor;
-        IntegerBox* m_month_box;
-        QLineEdit* m_month_editor;
-        IntegerBox* m_day_box;
-        QLineEdit* m_day_editor;
+        Field m_year;
+        Field m_month;
+        Field m_day;
       };
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
@@ -105,12 +106,14 @@ namespace Styles {
       boost::signals2::scoped_connection m_style_connection;
 
       void set_rejected(bool rejected);
+      void focus_and_select_all(const Field& field);
       void show_date_picker();
       void on_year_edited(const QString& text);
       void on_month_edited(const QString& text);
       void on_day_edited(const QString& text);
       void on_button_click();
-      void on_field_submit(IntegerBox* field, boost::optional<int> submission);
+      void on_field_submit(const IntegerBox& field,
+        boost::optional<int> submission);
       void on_field_reject(boost::optional<int> value);
       void on_current(const boost::optional<boost::gregorian::date>& current);
       void on_submit();
