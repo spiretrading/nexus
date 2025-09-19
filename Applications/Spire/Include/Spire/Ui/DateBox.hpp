@@ -112,8 +112,6 @@ namespace Styles {
       void on_month_edited(const QString& text);
       void on_day_edited(const QString& text);
       void on_button_click();
-      void on_field_submit(const IntegerBox& field,
-        boost::optional<int> submission);
       void on_field_reject(boost::optional<int> value);
       void on_current(const boost::optional<boost::gregorian::date>& current);
       void on_submit();

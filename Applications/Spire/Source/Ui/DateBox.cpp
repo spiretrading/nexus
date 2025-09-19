@@ -278,22 +278,22 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> current, QWidget* parent)
   layout->addWidget(month_dash);
   m_fields.m_day.m_box = make_day_box(m_model->m_day);
   layout->addWidget(m_fields.m_day.m_box);
-  auto setup_editor = [=] (const IntegerBox& field, auto slot) {
-    auto editor = field.findChild<QLineEdit*>();
-    editor->installEventFilter(this);
-    field.connect_submit_signal(
-      std::bind_front(&DateBox::on_field_submit, this, std::ref(field)));
-    field.connect_reject_signal(
+  auto setup_field = [&] (Field& field, auto slot) {
+    field.m_box->connect_submit_signal([=, box = field.m_box] (auto) {
+      if(box->hasFocus()) {
+        on_submit();
+      }
+    });
+    field.m_box->connect_reject_signal(
       std::bind_front(&DateBox::on_field_reject, this));
-    connect(editor, &QLineEdit::textEdited, std::bind_front(slot, this));
-    return editor;
+    field.m_editor = field.m_box->findChild<QLineEdit*>();
+    field.m_editor->installEventFilter(this);
+    connect(field.m_editor, &QLineEdit::textEdited,
+      std::bind_front(slot, this));
   };
-  m_fields.m_year.m_editor =
-    setup_editor(*m_fields.m_year.m_box, &DateBox::on_year_edited);
-  m_fields.m_month.m_editor =
-    setup_editor(*m_fields.m_month.m_box, &DateBox::on_month_edited);
-  m_fields.m_day.m_editor =
-    setup_editor(*m_fields.m_day.m_box, &DateBox::on_day_edited);
+  setup_field(m_fields.m_year, &DateBox::on_year_edited);
+  setup_field(m_fields.m_month, &DateBox::on_month_edited);
+  setup_field(m_fields.m_day, &DateBox::on_day_edited);
   auto body = new QWidget();
   body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto body_layout = make_hbox_layout(body);
@@ -363,7 +363,7 @@ bool DateBox::eventFilter(QObject* watched, QEvent* event) {
     if(m_is_read_only) {
       return QWidget::eventFilter(watched, event);
     }
-    auto key_event = *static_cast<QKeyEvent*>(event);
+    auto& key_event = *static_cast<QKeyEvent*>(event);
     if(watched == m_date_picker_panel && key_event.key() == Qt::Key_Escape) {
       QCoreApplication::sendEvent(this, event);
     } else if(key_event.key() == Qt::Key_Space) {
@@ -434,17 +434,17 @@ void DateBox::mousePressEvent(QMouseEvent* event) {
     auto half_dash_width = dash_width / 2;
     auto box_height = height();
     if(m_fields.m_year.m_box->isVisible()) {
-      auto left_padding = QRect(mapToGlobal(QPoint(0, 0)),
+      auto year_left_padding = QRect(mapToGlobal(QPoint(0, 0)),
         QSize(m_date_components->mapTo(this, m_fields.m_year.m_box->pos()).x(),
           box_height));
-      if(left_padding.contains(global_pos)) {
+      if(year_left_padding.contains(global_pos)) {
         focus_field(m_fields.m_year, true);
         return;
       }
-      auto right_padding =
+      auto year_right_padding =
         QRect(m_date_components->mapToGlobal(QPoint(m_year_dash->x(), 0)),
           QSize(half_dash_width, box_height));
-      if(right_padding.contains(global_pos)) {
+      if(year_right_padding.contains(global_pos)) {
         focus_field(m_fields.m_year, false);
         return;
       }
@@ -549,13 +549,6 @@ void DateBox::on_day_edited(const QString& text) {
 void DateBox::on_button_click() {
   if(!m_is_read_only) {
     show_date_picker();
-  }
-}
-
-void DateBox::on_field_submit(const IntegerBox& field,
-    optional<int> submission) {
-  if(field.hasFocus()) {
-    on_submit();
   }
 }
 
