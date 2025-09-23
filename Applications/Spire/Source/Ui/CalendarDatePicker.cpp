@@ -1,5 +1,6 @@
 #include "Spire/Ui/CalendarDatePicker.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
+#include <QApplication>
 #include <QCoreApplication>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
@@ -22,6 +23,20 @@ using namespace Spire::Styles;
 
 namespace {
   const auto CALENDAR_DAY_COUNT = 42;
+
+  auto clamp(date value, const optional<date>& min, const optional<date>& max) {
+    if(min) {
+      value = std::max(*min, value);
+    }
+    if(max) {
+      value = std::min(*max, value);
+    }
+    return value;
+  };
+
+  auto get_start_of_month(const date& day) {
+    return date(day.year(), day.month(), 1);
+  }
 
   std::array<date, CALENDAR_DAY_COUNT> get_calendar_dates(date day) {
     day = date(day.year(), day.month(), 1);
@@ -134,6 +149,10 @@ class RequiredDateModel : public DateModel {
       return QValidator::State::Acceptable;
     }
 
+    date get_limit_value(const date& value) {
+      return clamp(value, m_model->get_minimum(), m_model->get_maximum());
+    }
+
     connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override {
       return m_update_signal.connect(slot);
@@ -155,14 +174,14 @@ class RequiredDateModel : public DateModel {
 class CalendarDatePicker::MonthSpinner : public QWidget {
   public:
     explicit MonthSpinner(
-        std::shared_ptr<DateModel> current, QWidget* parent = nullptr)
+        std::shared_ptr<RequiredDateModel> current, QWidget* parent = nullptr)
         : QWidget(parent),
           m_current(std::move(current)) {
       const auto BUTTON_SIZE = scale(16, 16);
       m_previous_button = make_icon_button(
         imageFromSvg(":Icons/calendar-arrow-left.svg", BUTTON_SIZE));
       m_previous_button->setFixedSize(BUTTON_SIZE);
-      m_previous_button->connect_click_signal([=] { decrement(); });
+      m_previous_button->connect_click_signal([=] { update_current(-1); });
       auto layout = make_hbox_layout(this);
       layout->setContentsMargins({scale_width(4), 0, scale_width(4), 0});
       layout->setSpacing(scale_width(8));
@@ -180,26 +199,42 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
       m_next_button = make_icon_button(
         imageFromSvg(":Icons/calendar-arrow-right.svg", BUTTON_SIZE));
       m_next_button->setFixedSize(BUTTON_SIZE);
-      m_next_button->connect_click_signal([=] { increment(); });
+      m_next_button->connect_click_signal([=] { update_current(1); });
       layout->addWidget(m_next_button);
     }
 
-    const std::shared_ptr<DateModel>& get() const {
+    const std::shared_ptr<RequiredDateModel>& get() const {
       return m_current;
     }
 
+    Button& get_previous_button() {
+      return *m_previous_button;
+    }
+
+    Button& get_next_button() {
+      return *m_next_button;
+    }
+
   private:
-    std::shared_ptr<DateModel> m_current;
+    std::shared_ptr<RequiredDateModel> m_current;
     TextBox* m_label;
     Button* m_previous_button;
     Button* m_next_button;
 
-    void decrement() {
-      m_current->set(m_current->get() - months(1));
-    }
-
-    void increment() {
-      m_current->set(m_current->get() + months(1));
+    void update_current(int direction) {
+      auto modifiers = QApplication::keyboardModifiers();
+      auto step = [&] {
+        if(modifiers & Qt::AltModifier) {
+          return months(3);
+        } else if(modifiers & Qt::ControlModifier) {
+          return months(6);
+        } else if(modifiers & Qt::ShiftModifier) {
+          return months(12);
+        }
+        return months(1);
+      }();
+      m_current->set(
+        m_current->get_limit_value(m_current->get() + step * direction));
     }
 };
 
@@ -340,22 +375,66 @@ connection CalendarDatePicker::connect_submit_signal(
 
 bool CalendarDatePicker::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
-    auto e = static_cast<QKeyEvent*>(event);
-    if(watched == m_month_spinner &&
-        (e->key() == Qt::Key_Up || e->key() == Qt::Key_Down)) {
-      QCoreApplication::sendEvent(m_calendar_view, e);
-    } else {
-      auto current_index = m_calendar_view->get_current()->get();
-      if(current_index) {
-        if(*current_index == 0 && e->key() == Qt::Key_Left) {
-          m_current->set(*m_current->get() - days(1));
-          return true;
-        } else if(*current_index == m_calendar_model->get_size() - 1 &&
-            e->key() == Qt::Key_Right) {
-          m_current->set(*m_current->get() + days(1));
-          return true;
+    auto& key_event = *static_cast<QKeyEvent*>(event);
+    auto& current_date = m_current->get();
+    if(current_date) {
+      auto new_date = *current_date;
+      if(key_event.key() == Qt::Key_Left || key_event.key() == Qt::Key_Right ||
+          key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_Down) {
+        auto direction = [&] {
+          if(key_event.key() == Qt::Key_Left || key_event.key() == Qt::Key_Up) {
+            return -1;
+          }
+          return 1;
+        }();
+        auto step = [&] () -> date_duration {
+          if(key_event.key() == Qt::Key_Left ||
+              key_event.key() == Qt::Key_Right) {
+            return days(1);
+          }
+          return weeks(1);
+        }();
+        if(!get_index(*current_date)) {
+          if(direction > 0) {
+            new_date = get_start_of_month(m_month_spinner->get()->get());
+          } else {
+            new_date = m_month_spinner->get()->get().end_of_month();
+          }
+        } else if(direction > 0) {
+          new_date += step;
+        } else {
+          new_date -= step;
         }
+      } else if(key_event.key() == Qt::Key_PageUp) {
+        if(key_event.modifiers().testFlag(Qt::AltModifier)) {
+          new_date -= years(1);
+        } else {
+          new_date -= months(1);
+        }
+      } else if(key_event.key() == Qt::Key_PageDown) {
+        if(key_event.modifiers().testFlag(Qt::AltModifier)) {
+          new_date += years(1);
+        } else {
+          new_date += months(1);
+        }
+      } else if(key_event.key() == Qt::Key_Home) {
+        if(current_date->day() == 1) {
+          new_date -= months(1);
+        } else {
+          new_date = get_start_of_month(new_date);
+        }
+      } else if(key_event.key() == Qt::Key_End) {
+        if(current_date->day() == current_date->end_of_month().day()) {
+          new_date += months(1);
+        } else {
+          new_date = current_date->end_of_month();
+        }
+      } else {
+        return QWidget::eventFilter(watched, event);
       }
+      m_current->set(
+        clamp(new_date, m_current->get_minimum(), m_current->get_maximum()));
+      return true;
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -412,6 +491,10 @@ void CalendarDatePicker::on_current_month(date month) {
   if(list_has_focus) {
     m_calendar_view->setFocus();
   }
+  m_month_spinner->get_previous_button().setDisabled(minimum &&
+    get_start_of_month(month) <= get_start_of_month(*minimum));
+  m_month_spinner->get_next_button().setDisabled(maximum &&
+    get_start_of_month(month) >= get_start_of_month(*maximum));
 }
 
 void CalendarDatePicker::on_list_current(const optional<int>& index) {
