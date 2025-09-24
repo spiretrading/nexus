@@ -52,23 +52,22 @@ namespace {
 
   auto make_header_label(QString text, QWidget* parent) {
     auto font = QFont("Roboto");
-    font.setWeight(60);
+    font.setWeight(QFont::Medium);
     font.setPixelSize(scale_width(12));
     auto label = make_label(std::move(text), parent);
     label->setFixedSize(scale(24, 24));
     update_style(*label, [&] (auto& style) {
-      style.get(Disabled() && ReadOnly()).
-        set(Font(font)).
-        set(TextAlign(Qt::AlignCenter)).
-        set(TextColor(QColor(0x4B23A0)));
+      style.get(Any()).
+        set(text_style(font, QColor(QColor(0x808080)))).
+        set(TextAlign(Qt::AlignCenter));
     });
     return label;
   }
 
   auto make_day_header(QWidget* parent) {
     auto header = new QWidget(parent);
+    header->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     header->setFocusPolicy(Qt::NoFocus);
-    header->setFixedSize(scale(168, 26));
     auto layout = make_hbox_layout(header);
     auto locale = QLocale();
     layout->addWidget(make_header_label(locale.dayName(7).at(0), header));
@@ -183,27 +182,27 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
           m_current(std::move(current)),
           m_connection(m_current->connect_update_signal(
             std::bind_front(&MonthSpinner::on_current, this))) {
-      const auto BUTTON_SIZE = scale(16, 16);
+      const auto ICON_SIZE = scale(16, 16);
+      const auto BUTTON_SIZE = scale(26, 26);
       m_previous_button = make_icon_button(
-        imageFromSvg(":Icons/calendar-arrow-left.svg", BUTTON_SIZE));
+        imageFromSvg(":Icons/calendar-arrow-left.svg", ICON_SIZE));
       m_previous_button->setFixedSize(BUTTON_SIZE);
       m_previous_button->connect_click_signal([=] { update_current(-1); });
       auto layout = make_hbox_layout(this);
-      layout->setContentsMargins({scale_width(4), 0, scale_width(4), 0});
-      layout->setSpacing(scale_width(8));
       layout->addWidget(m_previous_button);
       m_label = make_label(std::make_shared<ToTextModel<date>>(m_current,
         [] (const date& current) {
           return QString("%1 %2").
             arg(current.month().as_long_string()).arg(current.year());
         }), this);
+      m_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
       update_style(*m_label, [&] (auto& style) {
-        style.get(Disabled() && ReadOnly()).
+        style.get(Any()).
           set(TextAlign(Qt::AlignCenter));
       });
       layout->addWidget(m_label);
       m_next_button = make_icon_button(
-        imageFromSvg(":Icons/calendar-arrow-right.svg", BUTTON_SIZE));
+        imageFromSvg(":Icons/calendar-arrow-right.svg", ICON_SIZE));
       m_next_button->setFixedSize(BUTTON_SIZE);
       m_next_button->connect_click_signal([=] { update_current(1); });
       layout->addWidget(m_next_button);
@@ -261,27 +260,22 @@ class CalendarDayLabel : public QWidget {
       m_label = make_label("", this);
       enclose(*this, *m_label);
       proxy_style(*this, *m_label);
+      auto font = QFont("Roboto");
+      font.setWeight(QFont::Medium);
+      font.setPixelSize(scale_width(12));
       update_style(*this, [&] (auto& style) {
         style.get(Any()).
-          set(BackgroundColor(QColor(Qt::transparent))).
           set(border(scale_width(1), QColor(Qt::transparent))).
-          set(border_radius(scale_width(3))).
           set(TextAlign(Qt::AlignCenter)).
-          set(TextColor(QColor(Qt::black))).
-          set(padding(0));
-        style.get(+OutOfMonth() < !Disabled()).
+          set(TextColor(QColor(Qt::black)));
+        style.get(OutOfMonth()).
           set(TextColor(QColor(0xA0A0A0)));
-        style.get(+Today() < !Disabled()).
-          set(BackgroundColor(QColor(0xFFF2AB))).
-          set(TextColor(QColor(0xDB8700)));
-        style.get(Hover() || Press()).
-          set(BackgroundColor(QColor(0xF2F2FF))).
-          set(border_color(QColor(Qt::transparent)));
-        style.get(Focus()).
-          set(border_color(QColor(Qt::transparent)));
-        style.get(+Any() < Disabled()).
-          set(BackgroundColor(QColor(0xFFFFFF))).
-          set(border_color(QColor(Qt::transparent))).
+        style.get(Today()).
+          set(border_color(QColor(0x4B23A0))).
+          set(text_style(font, QColor(QColor(0x4B23A0))));
+        style.get(Hover()).
+          set(BackgroundColor(QColor(0xF2F2FF)));
+        style.get(Disabled()).
           set(TextColor(QColor(0xC8C8C8)));
       });
       on_current(m_current->get());
@@ -325,8 +319,6 @@ CalendarDatePicker::CalendarDatePicker(
     on_current(current);
   });
   auto layout = make_vbox_layout(this);
-  layout->setContentsMargins(
-    scale_width(4), scale_height(8), scale_width(4), scale_height(4));
   layout->setSpacing(scale_height(4));
   m_month_spinner =
     new MonthSpinner(std::make_shared<RequiredDateModel>(m_current), this);
@@ -343,7 +335,8 @@ CalendarDatePicker::CalendarDatePicker(
   m_month_spinner->get()->connect_update_signal([=] (auto current) {
     on_current_month(current);
   });
-  m_calendar_view->setFixedSize(scale(168, 144));
+  m_calendar_view->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  m_calendar_view->setFixedWidth(scale_width(168));
   m_month_spinner->setFocusProxy(m_calendar_view);
   m_calendar_view->installEventFilter(this);
   layout->addWidget(m_calendar_view);
@@ -356,17 +349,14 @@ CalendarDatePicker::CalendarDatePicker(
   auto calendar_style = StyleSheet();
   calendar_style.get(Any()).
     set(Qt::Horizontal).
-    set(EdgeNavigation(EdgeNavigation::CONTAIN)).
     set(Overflow(Overflow::WRAP));
   calendar_style.get(Any() > is_a<ListItem>()).
+    set(BackgroundColor(QColor(Qt::transparent))).
     set(border_size(0)).
     set(padding(0));
-  calendar_style.get(Any() > (is_a<ListItem>() && Hover())).
-    set(BackgroundColor(QColor(0xFFFFFF)));
   calendar_style.get(Any() >
-      (is_a<ListItem>() && Selected()) > Body() > is_a<CalendarDayLabel>()).
+      (is_a<ListItem>() && Current()) > Body() > is_a<CalendarDayLabel>()).
     set(BackgroundColor(QColor(0x4B23A0))).
-    set(border(0, QColor(Qt::transparent))).
     set(TextColor(QColor(0xFFFFFF)));
   set_style(*m_calendar_view, std::move(calendar_style));
   setFocusProxy(m_calendar_view);

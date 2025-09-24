@@ -103,6 +103,12 @@ namespace {
       const std::shared_ptr<OptionalDateModel>& current, QWidget* parent) {
     auto date_picker = new CalendarDatePicker(current);
     auto panel = new OverlayPanel(*date_picker, *parent);
+    update_style(*panel, [] (auto& style) {
+      style.get(Any()).
+        set(horizontal_padding(scale_width(4))).
+        set(PaddingBottom(scale_height(4))).
+        set(PaddingTop(scale_height(8)));
+    });
     return panel;
   }
 }
