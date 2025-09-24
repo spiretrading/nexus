@@ -149,8 +149,12 @@ class RequiredDateModel : public DateModel {
       return QValidator::State::Acceptable;
     }
 
-    date get_limit_value(const date& value) {
-      return clamp(value, m_model->get_minimum(), m_model->get_maximum());
+    optional<date> get_minimum() const {
+      return m_model->get_minimum();
+    }
+
+    optional<date> get_maximum() const {
+      return m_model->get_maximum();
     }
 
     connection connect_update_signal(
@@ -176,7 +180,9 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
     explicit MonthSpinner(
         std::shared_ptr<RequiredDateModel> current, QWidget* parent = nullptr)
         : QWidget(parent),
-          m_current(std::move(current)) {
+          m_current(std::move(current)),
+          m_connection(m_current->connect_update_signal(
+            std::bind_front(&MonthSpinner::on_current, this))) {
       const auto BUTTON_SIZE = scale(16, 16);
       m_previous_button = make_icon_button(
         imageFromSvg(":Icons/calendar-arrow-left.svg", BUTTON_SIZE));
@@ -201,18 +207,11 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
       m_next_button->setFixedSize(BUTTON_SIZE);
       m_next_button->connect_click_signal([=] { update_current(1); });
       layout->addWidget(m_next_button);
+      on_current(m_current->get());
     }
 
     const std::shared_ptr<RequiredDateModel>& get() const {
       return m_current;
-    }
-
-    Button& get_previous_button() {
-      return *m_previous_button;
-    }
-
-    Button& get_next_button() {
-      return *m_next_button;
     }
 
   private:
@@ -220,6 +219,7 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
     TextBox* m_label;
     Button* m_previous_button;
     Button* m_next_button;
+    scoped_connection m_connection;
 
     void update_current(int direction) {
       auto modifiers = QApplication::keyboardModifiers();
@@ -234,7 +234,17 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
         return months(1);
       }();
       m_current->set(
-        m_current->get_limit_value(m_current->get() + step * direction));
+        clamp(m_current->get() + step * direction, *m_current->get_minimum(),
+          *m_current->get_maximum()));
+    }
+
+    void on_current(const date& current) {
+      auto minimum = m_current->get_minimum();
+      m_previous_button->setDisabled(minimum &&
+        get_start_of_month(current) <= get_start_of_month(*minimum));
+      auto maximum = m_current->get_maximum();
+      m_next_button->setDisabled(maximum &&
+        get_start_of_month(current) >= get_start_of_month(*maximum));
     }
 };
 
@@ -361,6 +371,7 @@ CalendarDatePicker::CalendarDatePicker(
   set_style(*m_calendar_view, std::move(calendar_style));
   setFocusProxy(m_calendar_view);
   on_current(m_current->get());
+  on_current_month(m_month_spinner->get()->get());
 }
 
 const std::shared_ptr<OptionalDateModel>&
@@ -491,10 +502,6 @@ void CalendarDatePicker::on_current_month(date month) {
   if(list_has_focus) {
     m_calendar_view->setFocus();
   }
-  m_month_spinner->get_previous_button().setDisabled(minimum &&
-    get_start_of_month(month) <= get_start_of_month(*minimum));
-  m_month_spinner->get_next_button().setDisabled(maximum &&
-    get_start_of_month(month) >= get_start_of_month(*maximum));
 }
 
 void CalendarDatePicker::on_list_current(const optional<int>& index) {
