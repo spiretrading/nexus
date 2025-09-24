@@ -60,11 +60,15 @@ void Button::mousePressEvent(QMouseEvent* event) {
 }
 
 void Button::on_press_start(PressObserver::Reason reason) {
-  match(*this, Press());
+  QTimer::singleShot(0, this, [=] {
+    match(*this, Press());
+  });
 }
 
 void Button::on_press_end(PressObserver::Reason reason) {
-  unmatch(*this, Press());
+  QTimer::singleShot(0, this, [=] {
+    unmatch(*this, Press());
+  });
 }
 
 Button* Spire::make_icon_button(QImage icon, QWidget* parent) {
