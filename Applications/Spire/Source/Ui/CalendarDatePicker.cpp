@@ -314,12 +314,14 @@ CalendarDatePicker::CalendarDatePicker(
     set(EdgeNavigation(EdgeNavigation::CONTAIN)).
     set(Overflow(Overflow::WRAP));
   calendar_style.get(Any() > is_a<ListItem>()).
-    set(BackgroundColor(QColor(Qt::transparent))).
     set(border_size(0)).
     set(padding(0));
+  calendar_style.get(Any() > (is_a<ListItem>() && Hover())).
+    set(BackgroundColor(QColor(0xFFFFFF)));
   calendar_style.get(Any() >
-      (is_a<ListItem>() && Current()) > Body() > is_a<CalendarDayLabel>()).
+      (is_a<ListItem>() && Selected()) > Body() > is_a<CalendarDayLabel>()).
     set(BackgroundColor(QColor(0x4B23A0))).
+    set(border(0, QColor(Qt::transparent))).
     set(TextColor(QColor(0xFFFFFF)));
   set_style(*m_calendar_view, std::move(calendar_style));
   setFocusProxy(m_calendar_view);
