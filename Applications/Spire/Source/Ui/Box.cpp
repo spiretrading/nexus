@@ -2,10 +2,15 @@
 #include <QPainter>
 #include <QResizeEvent>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Styles/ChainExpression.hpp"
+#include "Spire/Styles/LinearExpression.hpp"
+#include "Spire/Styles/RevertExpression.hpp"
+#include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace boost;
+using namespace boost::posix_time;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -200,6 +205,11 @@ Box* Spire::make_input_box(QWidget* body, QWidget* parent) {
     set(BackgroundColor(QColor(Qt::transparent))).
     set(border_color(QColor(Qt::transparent))).
     set(horizontal_padding(0));
+  style.get(Rejected()).
+    set(BackgroundColor(chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
+      linear(QColor(0xFFF1F1), revert, milliseconds(300))))).
+    set(border_color(
+      chain(timeout(QColor(0xB71C1C), milliseconds(550)), revert)));
   set_style(*box, std::move(style));
   return box;
 }

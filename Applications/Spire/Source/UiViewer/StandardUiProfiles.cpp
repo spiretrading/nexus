@@ -1514,10 +1514,17 @@ UiProfile Spire::make_context_menu_profile() {
 UiProfile Spire::make_date_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  auto default_style = R"(
+    any {
+      text_align: left;
+      year_field: true;
+    }
+  )";
+  properties.push_back(make_style_property("style_sheet",
+    std::move(default_style)));
   auto current_date = day_clock::local_day();
   properties.push_back(
     make_standard_property("current", to_text(current_date)));
-  properties.push_back(make_standard_property("format", DateFormat::YYYYMMDD));
   properties.push_back(make_standard_property("read_only", false));
   properties.push_back(
     make_standard_property("min", to_text(current_date - months(2))));
@@ -1559,16 +1566,15 @@ UiProfile Spire::make_date_box_profile() {
     });
     auto date_box = new DateBox(model);
     apply_widget_properties(date_box, profile.get_properties());
+    auto& style_sheet =
+      get<optional<StyleSheet>>("style_sheet", profile.get_properties());
+    style_sheet.connect_changed_signal([=] (const auto& styles) {
+      update_widget_style(*date_box, styles);
+    });
     date_box->connect_submit_signal(
       profile.make_event_slot<optional<date>>("Submit"));
     date_box->connect_reject_signal(
       profile.make_event_slot<optional<date>>("Reject"));
-    auto& format = get<DateFormat>("format", profile.get_properties());
-    format.connect_changed_signal([=] (auto format) {
-      update_style(*date_box, [&] (auto& style) {
-        style.get(Any()).set(format);
-      });
-    });
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal([=] (auto value) {
       date_box->set_read_only(value);
