@@ -1,49 +1,51 @@
 #include "Spire/Ui/DateBox.hpp"
+#include <QCoreApplication>
 #include <QMouseEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ScalarValueModelDecorator.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
-#include "Spire/Styles/ChainExpression.hpp"
-#include "Spire/Styles/LinearExpression.hpp"
-#include "Spire/Styles/RevertExpression.hpp"
-#include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 
 using namespace boost;
 using namespace boost::gregorian;
-using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  auto DEFAULT_STYLE() {
-    auto style = StyleSheet();
-    style.get(Any()).set(DateFormat::YYYYMMDD);
-    style.get(Rejected()).
-      set(BackgroundColor(chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
-        linear(QColor(0xFFF1F1), revert, milliseconds(300))))).
-      set(border_color(
-        chain(timeout(QColor(0xB71C1C), milliseconds(550)), revert)));
-    return style;
-  }
+  using Separator = StateSelector<void, struct SeparatorTag>;
+  using InvalidCurrent = StateSelector<void, struct InvalidCurrentTag>;
 
   void apply_integer_box_style(StyleSheet& style) {
     style.get(Any()).
-      set(TextAlign(Qt::AlignCenter)).
+      set(BackgroundColor(Qt::transparent)).
       set(border_size(0)).
-      set(padding(0));
+      set(horizontal_padding(0));
     style.get(Any() > (DownButton() || UpButton())).set(Visibility::NONE);
+    style.get(Any() > is_a<TextBox>()).set(TextAlign(Qt::AlignCenter));
+  }
+
+  void apply_date_box_style(StyleSheet& style) {
+    style.get(Any()).
+      set(PaddingRight(0)).
+      set(vertical_padding(0));
+    style.get(ReadOnly() > is_a<Button>()).set(Visibility::NONE);
+    style.get((InvalidCurrent() || Disabled()) > Separator()).
+      set(TextColor(0xC8C8C8));
   }
 
   auto make_year_box(const std::shared_ptr<OptionalIntegerModel>& current) {
-    auto box = new IntegerBox(current);
+    auto modifiers = QHash<Qt::KeyboardModifier, int>(
+      {{Qt::NoModifier, 1}, {Qt::AltModifier, 5}, {Qt::ControlModifier, 10}});
+    auto box = new IntegerBox(current, std::move(modifiers));
+    box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     box->set_placeholder("YYYY");
-    box->setFixedSize(scale(29, 26));
-    update_style(*box, [&] (auto& style) {
+    box->setFixedWidth(scale_width(32));
+    update_style(*box, [] (auto& style) {
       apply_integer_box_style(style);
       style.get(Any()).set(LeadingZeros(4));
     });
@@ -51,10 +53,13 @@ namespace {
   }
 
   auto make_month_box(const std::shared_ptr<OptionalIntegerModel>& current) {
-    auto box = new IntegerBox(current);
+    auto modifiers = QHash<Qt::KeyboardModifier, int>(
+      {{Qt::NoModifier, 1}, {Qt::AltModifier, 3}, {Qt::ControlModifier, 6}});
+    auto box = new IntegerBox(current, std::move(modifiers));
+    box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     box->set_placeholder("MM");
-    box->setFixedSize(scale(21, 26));
-    update_style(*box, [&] (auto& style) {
+    box->setFixedWidth(scale_width(22));
+    update_style(*box, [] (auto& style) {
       apply_integer_box_style(style);
       style.get(Any()).set(LeadingZeros(2));
     });
@@ -62,10 +67,13 @@ namespace {
   }
 
   auto make_day_box(const std::shared_ptr<OptionalIntegerModel>& current) {
-    auto box = new IntegerBox(current);
+    auto modifiers = QHash<Qt::KeyboardModifier, int>(
+      {{Qt::NoModifier, 1}, {Qt::AltModifier, 7}, {Qt::ControlModifier, 14}});
+    auto box = new IntegerBox(current, std::move(modifiers));
+    box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     box->set_placeholder("DD");
-    box->setFixedSize(scale(21, 26));
-    update_style(*box, [&] (auto& style) {
+    box->setFixedWidth(scale_width(20));
+    update_style(*box, [] (auto& style) {
       apply_integer_box_style(style);
       style.get(Any()).set(LeadingZeros(2));
     });
@@ -74,42 +82,25 @@ namespace {
 
   auto make_dash() {
     auto label = make_label("-");
-    label->setFixedSize(scale(4, 26));
+    label->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+    update_style(*label, [] (auto& style) {
+      style.get(Any()).set(TextAlign(Qt::AlignCenter));
+    });
     return label;
   }
 
-  auto make_body(const std::shared_ptr<OptionalIntegerModel>& year,
-      const std::shared_ptr<OptionalIntegerModel>& month,
-      const std::shared_ptr<OptionalIntegerModel>& day) {
-    auto body = new QWidget();
-    auto layout = make_hbox_layout(body);
-    layout->addSpacerItem(
-      new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Fixed));
-    auto year_box = make_year_box(year);
-    layout->addWidget(year_box);
-    auto year_dash = make_dash();
-    layout->addWidget(year_dash);
-    auto month_box = make_month_box(month);
-    layout->addWidget(month_box);
-    layout->addWidget(make_dash());
-    auto day_box = make_day_box(day);
-    layout->addWidget(day_box);
-    layout->addSpacerItem(
-      new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Fixed));
-    return std::tuple(year_box, year_dash, month_box, day_box, body);
-  }
-
-  auto make_date_picker(
-      const std::shared_ptr<OptionalDateModel>& current, QWidget* parent) {
-    auto date_picker = new CalendarDatePicker(current);
-    auto panel = new OverlayPanel(*date_picker, *parent);
-    update_style(*panel, [] (auto& style) {
-      style.get(Any()).
-        set(horizontal_padding(scale_width(4))).
-        set(PaddingBottom(scale_height(4))).
-        set(PaddingTop(scale_height(8)));
+  auto make_calendar_button() {
+    auto button = make_icon_button(imageFromSvg(":/Icons/calendar.svg",
+      scale(20, 20)));
+    button->setFixedSize(scale(20, 20));
+    update_style(*button, [] (auto& style) {
+      style.get(Any() > is_a<Icon>()).set(Fill(QColor(0x333333)));
+      style.get(FocusVisible() > Body()).
+        set(BackgroundColor(QColor(0xE0E0E0))).
+        set(border_color(QColor(Qt::transparent)));
+      style.get(FocusVisible() > is_a<Icon>()).set(Fill(QColor(0x4B23A0)));
     });
-    return panel;
+    return button;
   }
 }
 
@@ -143,7 +134,7 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
     if(m_source->get_minimum()) {
       m_year->set_minimum(static_cast<int>(m_source->get_minimum()->year()));
     } else {
-      m_year->set_minimum(1400);
+      m_year->set_minimum(0);
     }
     if(m_source->get_maximum()) {
       m_year->set_maximum(static_cast<int>(m_source->get_maximum()->year()));
@@ -254,6 +245,9 @@ struct DateBox::DateComposerModel : ValueModel<optional<date>> {
   }
 };
 
+DateBox::DateBox(QWidget* parent)
+  : DateBox(day_clock::local_day()) {}
+
 DateBox::DateBox(const optional<date>& current, QWidget* parent)
   : DateBox(std::make_shared<LocalOptionalDateModel>(current), parent) {}
 
@@ -264,28 +258,63 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> current, QWidget* parent)
       m_is_read_only(false),
       m_is_rejected(false),
       m_focus_observer(*this),
-      m_format(DateFormat::YYYYMMDD) {
-  setCursor(Qt::IBeamCursor);
+      m_date_picker_panel(nullptr),
+      m_date_picker_showing(false) {
   m_model->connect_update_signal(std::bind_front(&DateBox::on_current, this));
-  std::tie(m_year_box, m_year_dash, m_month_box, m_day_box, m_body) =
-    make_body(m_model->m_year, m_model->m_month, m_model->m_day);
-  for(auto box : {m_year_box, m_month_box, m_day_box}) {
-    box->connect_submit_signal([=] (const auto& submission) {
+  m_date_components = new QWidget();
+  m_date_components->setSizePolicy(QSizePolicy::Expanding,
+    QSizePolicy::Expanding);
+  m_date_components->setCursor(Qt::IBeamCursor);
+  auto layout = make_hbox_layout(m_date_components);
+  m_fields.m_year.m_box = make_year_box(m_model->m_year);
+  layout->addWidget(m_fields.m_year.m_box);
+  m_year_dash = make_dash();
+  match(*m_year_dash, Separator());
+  layout->addWidget(m_year_dash);
+  m_fields.m_month.m_box = make_month_box(m_model->m_month);
+  layout->addWidget(m_fields.m_month.m_box);
+  auto month_dash = make_dash();
+  match(*month_dash, Separator());
+  layout->addWidget(month_dash);
+  m_fields.m_day.m_box = make_day_box(m_model->m_day);
+  layout->addWidget(m_fields.m_day.m_box);
+  auto setup_field = [&] (Field& field, auto slot) {
+    field.m_box->connect_submit_signal([=, box = field.m_box] (auto) {
       if(box->hasFocus()) {
         on_submit();
       }
     });
-  }
-  auto input_box = make_input_box(m_body);
-  proxy_style(*this, *input_box);
-  update_style(*input_box, [&] (auto& style) {
-    style.get(Any()).set(padding(0));
-  });
-  enclose(*this, *input_box);
-  set_style(*this, DEFAULT_STYLE());
-  m_date_picker = make_date_picker(m_model->m_source, this);
-  m_style_connection = connect_style_signal(*this, [=] { on_style(); });
-  m_focus_observer.connect_state_signal([=] (auto state) { on_focus(state); });
+    field.m_box->connect_reject_signal(
+      std::bind_front(&DateBox::on_field_reject, this));
+    field.m_editor = field.m_box->findChild<QLineEdit*>();
+    field.m_editor->installEventFilter(this);
+    connect(field.m_editor, &QLineEdit::textEdited,
+      std::bind_front(slot, this));
+  };
+  setup_field(m_fields.m_year, &DateBox::on_year_edited);
+  setup_field(m_fields.m_month, &DateBox::on_month_edited);
+  setup_field(m_fields.m_day, &DateBox::on_day_edited);
+  auto body = new QWidget();
+  body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  auto body_layout = make_hbox_layout(body);
+  body_layout->addWidget(m_date_components);
+  m_calendar_button = make_calendar_button();
+  m_calendar_button->connect_click_signal(
+    std::bind_front(&DateBox::on_button_click, this));
+  body_layout->addSpacing(scale_width(2));
+  body_layout->addWidget(m_calendar_button);
+  body_layout->addSpacing(scale_width(2));
+  m_input_box = make_input_box(body);
+  enclose(*this, *m_input_box);
+  proxy_style(*this, *m_input_box);
+  link(*this, *m_calendar_button);
+  link(*this, *m_year_dash);
+  link(*this, *month_dash);
+  update_style(*this, apply_date_box_style);
+  m_style_connection = connect_style_signal(*this,
+    std::bind_front(&DateBox::on_style, this));
+  m_focus_observer.connect_state_signal(
+    std::bind_front(&DateBox::on_focus, this));
 }
 
 const std::shared_ptr<OptionalDateModel>& DateBox::get_current() const {
@@ -305,16 +334,16 @@ void DateBox::set_read_only(bool read_only) {
     return;
   }
   m_is_read_only = read_only;
-  m_year_box->set_read_only(m_is_read_only);
-  m_month_box->set_read_only(m_is_read_only);
-  m_day_box->set_read_only(m_is_read_only);
-  auto& layout = *static_cast<QBoxLayout*>(m_body->layout());
+  m_fields.m_year.m_box->set_read_only(m_is_read_only);
+  m_fields.m_month.m_box->set_read_only(m_is_read_only);
+  m_fields.m_day.m_box->set_read_only(m_is_read_only);
   if(m_is_read_only) {
-    layout.removeItem(layout.itemAt(0));
+    m_date_components->setCursor(Qt::ArrowCursor);
+    match(*m_input_box, ReadOnly());
     match(*this, ReadOnly());
   } else {
-    layout.insertItem(
-      0, new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Fixed));
+    m_date_components->setCursor(Qt::IBeamCursor);
+    unmatch(*m_input_box, ReadOnly());
     unmatch(*this, ReadOnly());
   }
 }
@@ -329,6 +358,58 @@ connection DateBox::connect_reject_signal(
   return m_reject_signal.connect(slot);
 }
 
+bool DateBox::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::KeyPress) {
+    if(m_is_read_only) {
+      return QWidget::eventFilter(watched, event);
+    }
+    auto& key_event = *static_cast<QKeyEvent*>(event);
+    if(watched == m_date_picker_panel && key_event.key() == Qt::Key_Escape) {
+      QCoreApplication::sendEvent(this, event);
+    } else if(key_event.key() == Qt::Key_Space) {
+      show_date_picker();
+      return true;
+    } else if(watched == m_fields.m_year.m_editor) {
+      if(key_event.key() == Qt::Key_Right &&
+          m_fields.m_year.m_editor->cursorPosition() == 4) {
+        focus_and_select_all(m_fields.m_month);
+        return true;
+      }
+    } else if(watched == m_fields.m_month.m_editor) {
+      if(key_event.key() == Qt::Key_Right &&
+          m_fields.m_month.m_editor->cursorPosition() == 2) {
+        focus_and_select_all(m_fields.m_day);
+        return true;
+      } else if(key_event.key() == Qt::Key_Left &&
+          m_fields.m_month.m_editor->cursorPosition() == 0 &&
+          m_fields.m_year.m_box->isVisible()) {
+        focus_and_select_all(m_fields.m_year);
+        return true;
+      } else if(key_event.key() == Qt::Key_Backspace &&
+          m_fields.m_month.m_editor->selectionLength() == 0 &&
+          m_fields.m_month.m_editor->cursorPosition() == 0 &&
+          m_fields.m_year.m_box->isVisible()) {
+        focus_and_select_all(m_fields.m_year);
+        QCoreApplication::sendEvent(m_fields.m_year.m_editor, event);
+        return true;
+      }
+    } else if(watched == m_fields.m_day.m_editor) {
+      if(key_event.key() == Qt::Key_Left &&
+          m_fields.m_day.m_editor->cursorPosition() == 0) {
+        focus_and_select_all(m_fields.m_month);
+        return true;
+      } else if(key_event.key() == Qt::Key_Backspace &&
+          m_fields.m_day.m_editor->selectionLength() == 0 &&
+          m_fields.m_day.m_editor->cursorPosition() == 0) {
+        focus_and_select_all(m_fields.m_month);
+        QCoreApplication::sendEvent(m_fields.m_month.m_editor, event);
+        return true;
+      }
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
 void DateBox::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
     if(m_model->get() != m_submission) {
@@ -339,81 +420,183 @@ void DateBox::keyPressEvent(QKeyEvent* event) {
 }
 
 void DateBox::mousePressEvent(QMouseEvent* event) {
+  auto focus_field = [] (const Field& field, bool to_home) {
+    field.m_box->setFocus();
+    if(to_home) {
+      field.m_editor->home(false);
+    } else {
+      field.m_editor->end(false);
+    }
+  };
   if(event->button() == Qt::MouseButton::LeftButton) {
-    auto right_padding =
-      m_body->layout()->itemAt(m_body->layout()->count() - 1)->geometry();
-    right_padding =
-      QRect(m_body->mapToGlobal(right_padding.topLeft()), right_padding.size());
-    if(right_padding.contains(event->globalPos())) {
-      auto box = [&] () -> IntegerBox* {
-        if(m_day_box->isVisible()) {
-          return m_day_box;
-        } else if(m_month_box->isVisible()) {
-          return m_month_box;
-        } else if(m_year_box->isVisible()) {
-          return m_year_box;
-        }
-        return nullptr;
-      }();
-      if(box) {
-        box->setFocus();
+    auto global_pos = event->globalPos();
+    auto dash_width = m_year_dash->width();
+    auto half_dash_width = dash_width / 2;
+    auto box_height = height();
+    if(m_fields.m_year.m_box->isVisible()) {
+      auto year_left_padding = QRect(mapToGlobal(QPoint(0, 0)),
+        QSize(m_date_components->mapTo(this, m_fields.m_year.m_box->pos()).x(),
+          box_height));
+      if(year_left_padding.contains(global_pos)) {
+        focus_field(m_fields.m_year, true);
+        return;
       }
-    } else if(!m_is_read_only) {
-      auto left_padding = m_body->layout()->itemAt(0)->geometry();
-      left_padding =
-        QRect(m_body->mapToGlobal(left_padding.topLeft()), left_padding.size());
-      if(left_padding.contains(event->globalPos())) {
-        auto box = [&] () -> IntegerBox* {
-          if(m_year_box->isVisible()) {
-            return m_year_box;
-          } else if(m_month_box->isVisible()) {
-            return m_month_box;
-          } else if(m_day_box->isVisible()) {
-            return m_day_box;
-          }
-          return nullptr;
-        }();
-        if(box) {
-          box->setFocus();
-          auto editor = box->findChild<QLineEdit*>();
-          editor->setCursorPosition(0);
-        }
+      auto year_right_padding =
+        QRect(m_date_components->mapToGlobal(QPoint(m_year_dash->x(), 0)),
+          QSize(half_dash_width, box_height));
+      if(year_right_padding.contains(global_pos)) {
+        focus_field(m_fields.m_year, false);
+        return;
       }
+    }
+    auto month_left_padding = [&] {
+      if(m_fields.m_year.m_box->isVisible()) {
+        return QRect(m_date_components->mapToGlobal(
+            QPoint(m_year_dash->x() + half_dash_width, 0)),
+          QSize(dash_width - half_dash_width, box_height));
+      }
+      return QRect(mapToGlobal(QPoint(0, 0)),
+        QSize(m_date_components->mapTo(this, m_fields.m_month.m_box->pos()).x(),
+          box_height));
+    }();
+    if(month_left_padding.contains(global_pos)) {
+      focus_field(m_fields.m_month, true);
+      return;
+    }
+    auto month_right =
+      m_fields.m_month.m_box->x() + m_fields.m_month.m_box->width();
+    auto month_right_padding = QRect(
+      m_date_components->mapToGlobal(QPoint(month_right, 0)),
+      QSize(half_dash_width, box_height));
+    if(month_right_padding.contains(global_pos)) {
+      focus_field(m_fields.m_month, false);
+      return;
+    }
+    auto day_left_padding = QRect(
+      m_date_components->mapToGlobal(QPoint(month_right + half_dash_width, 0)),
+      QSize(dash_width - half_dash_width, height()));
+    if(day_left_padding.contains(global_pos)) {
+      focus_field(m_fields.m_day, true);
+      return;
+    }
+    auto day_right = m_fields.m_day.m_box->x() + m_fields.m_day.m_box->width();
+    auto day_right_padding = QRect(
+      m_date_components->mapToGlobal(QPoint(day_right, 0)),
+      QSize(m_date_components->width() - day_right, height()));
+    if(day_right_padding.contains(global_pos)) {
+      focus_field(m_fields.m_day, false);
     }
   }
 }
 
+void DateBox::set_rejected(bool rejected) {
+  if(m_is_rejected == rejected) {
+    return;
+  }
+  m_is_rejected = rejected;
+  auto apply = [&] (auto& f) {
+    f(*this, Rejected());
+    f(*m_input_box, Rejected());
+  };
+  if(rejected) {
+    apply(match);
+  } else {
+    apply(unmatch);
+  }
+}
+
+void DateBox::focus_and_select_all(const Field& field) {
+  field.m_box->setFocus();
+  field.m_editor->selectAll();
+}
+
+void DateBox::show_date_picker() {
+  if(!m_date_picker_panel) {
+    auto date_picker = new CalendarDatePicker(m_model->m_source);
+    date_picker->connect_submit_signal([=] (auto date) {
+      on_submit();
+    });
+    m_date_picker_panel = new OverlayPanel(*date_picker, *this);
+    m_date_picker_panel->setWindowFlags(
+      Qt::Popup | (m_date_picker_panel->windowFlags() & ~Qt::Tool));
+    m_date_picker_panel->installEventFilter(this);
+    update_style(*m_date_picker_panel, [] (auto& style) {
+      style.get(Any()).
+        set(horizontal_padding(scale_width(4))).
+        set(PaddingBottom(scale_height(4))).
+        set(PaddingTop(scale_height(8)));
+    });
+  }
+  m_date_picker_showing = true;
+  m_date_picker_panel->show();
+  m_date_picker_showing = false;
+  m_date_picker_panel->setFocus();
+}
+
+void DateBox::on_year_edited(const QString& text) {
+  set_rejected(false);
+  if(text.size() >= 4) {
+    focus_and_select_all(m_fields.m_month);
+  }
+}
+
+void DateBox::on_month_edited(const QString& text) {
+  set_rejected(false);
+  if((text.size() == 1 && text[0] >= '2' && text[0] <= '9' &&
+      m_fields.m_month.m_editor->cursorPosition() == 1) || text.size() >= 2) {
+    focus_and_select_all(m_fields.m_day);
+  }
+}
+
+void DateBox::on_day_edited(const QString& text) {
+  set_rejected(false);
+}
+
+void DateBox::on_button_click() {
+  if(!m_is_read_only) {
+    show_date_picker();
+  }
+}
+
+void DateBox::on_field_reject(optional<int> value) {
+  set_rejected(true);
+}
+
 void DateBox::on_current(const optional<date>& current) {
-  if(m_is_rejected) {
-    m_is_rejected = false;
-    unmatch(*this, Rejected());
+  if(current) {
+    unmatch(*this, InvalidCurrent());
+  } else {
+    match(*this, InvalidCurrent());
   }
 }
 
 void DateBox::on_submit() {
   if(m_model->get_state() != QValidator::State::Acceptable) {
-    auto current = m_model->get();
-    auto submission = m_submission;
-    m_reject_signal(current);
+    m_reject_signal(m_model->get());
     m_model->m_source->set(m_submission);
-    if(!m_is_rejected) {
-      m_is_rejected = true;
-      match(*this, Rejected());
+    set_rejected(true);
+  } else if(!m_date_picker_showing) {
+    if(m_date_picker_panel) {
+      m_date_picker_panel->hide();
     }
-  } else {
     m_submission = m_model->get();
     m_submit_signal(m_submission);
   }
 }
 
 void DateBox::on_focus(FocusObserver::State state) {
-  if(is_set(state, FocusObserver::State::FOCUS_IN)) {
-    m_date_picker->show();
-  } else {
-    m_date_picker->hide();
-    if(m_submission != m_model->m_source->get()) {
+  if(is_read_only()) {
+    return;
+  }
+  if(state == FocusObserver::State::NONE) {
+    unmatch(*m_input_box, FocusIn());
+    if(m_date_picker_panel && m_date_picker_panel->isVisible()) {
+      m_date_picker_panel->hide();
+    } else if(m_submission != m_model->m_source->get()) {
       on_submit();
     }
+  } else {
+    match(*m_input_box, FocusIn());
   }
 }
 
@@ -422,14 +605,16 @@ void DateBox::on_style() {
   auto& block = stylist.get_computed_block();
   for(auto& property : block) {
     property.visit(
-      [&] (const EnumProperty<DateFormat>& format) {
-        stylist.evaluate(format, [=] (auto format) {
-          if(format == m_format) {
-            return;
-          }
-          m_format = format;
-          m_year_box->setVisible(m_format == DateFormat::YYYYMMDD);
-          m_year_dash->setVisible(m_format == DateFormat::YYYYMMDD);
+      [&] (const TextAlign& alignment) {
+        stylist.evaluate(alignment, [=] (auto alignment) {
+          m_date_components->layout()->setAlignment(alignment);
+          m_date_components->layout()->update();
+        });
+      },
+      [&] (const YearField& year_field) {
+        stylist.evaluate(year_field, [=] (auto is_year_visible) {
+          m_fields.m_year.m_box->setVisible(is_year_visible);
+          m_year_dash->setVisible(is_year_visible);
         });
       });
   }
