@@ -520,6 +520,12 @@ void DateBox::show_date_picker() {
     m_date_picker_panel->setWindowFlags(
       Qt::Popup | (m_date_picker_panel->windowFlags() & ~Qt::Tool));
     m_date_picker_panel->installEventFilter(this);
+    update_style(*m_date_picker_panel, [] (auto& style) {
+      style.get(Any()).
+        set(horizontal_padding(scale_width(4))).
+        set(PaddingBottom(scale_height(4))).
+        set(PaddingTop(scale_height(8)));
+    });
   }
   m_date_picker_showing = true;
   m_date_picker_panel->show();
