@@ -57,21 +57,22 @@ OverlayPanel::OverlayPanel(QWidget& body, QWidget& parent)
       m_parent_position_observer(parent) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
-  auto box = new Box(m_body);
-  box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-  setFocusProxy(box);
+  m_box = new Box(m_body);
+  m_box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  m_box->installEventFilter(this);
+  setFocusProxy(m_box);
   auto layout = make_vbox_layout(this);
   layout->setContentsMargins(DROP_SHADOW_MARGINS());
-  layout->addWidget(box);
+  layout->addWidget(m_box);
   layout->addSpacerItem(
     new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding));
-  proxy_style(*this, *box);
+  proxy_style(*this, *m_box);
   set_style(*this, DEFAULT_STYLE());
   auto shadow = new QGraphicsDropShadowEffect();
   shadow->setColor(DROP_SHADOW_COLOR);
   shadow->setOffset(translate(DROP_SHADOW_OFFSET));
   shadow->setBlurRadius(scale_width(DROP_SHADOW_RADIUS));
-  box->setGraphicsEffect(shadow);
+  m_box->setGraphicsEffect(shadow);
   m_focus_connection = m_focus_observer.connect_state_signal(
     std::bind_front(&OverlayPanel::on_focus, this));
   m_parent_focus_connection = m_parent_focus_observer.connect_state_signal(
@@ -126,10 +127,9 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
       if(mouse_event.buttons() & Qt::LeftButton) {
         move(pos() + (mouse_event.pos() - m_mouse_pressed_position));
       }
-    } else if(event->type() == QEvent::LayoutRequest) {
-      setFixedSize(layout()->itemAt(0)->widget()->sizeHint().grownBy(
-        layout()->contentsMargins()));
     }
+  } else if(watched == m_box && event->type() == QEvent::Resize) {
+    setFixedSize(m_box->size().grownBy(layout()->contentsMargins()));
   } else if(watched == parentWidget() && event->type() == QEvent::Resize) {
     if(isVisible()) {
       position();
