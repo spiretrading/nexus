@@ -78,6 +78,7 @@ namespace Spire {
 
     private:
       QWidget* m_body;
+      Box* m_box;
       bool m_is_closed_on_focus_out;
       bool m_is_draggable;
       bool m_was_activated;
