@@ -355,7 +355,7 @@ CalendarDatePicker::CalendarDatePicker(
     set(border_size(0)).
     set(padding(0));
   calendar_style.get(Any() >
-      (is_a<ListItem>() && Current()) > Body() > is_a<CalendarDayLabel>()).
+      (is_a<ListItem>() && Current()) > is_a<CalendarDayLabel>()).
     set(BackgroundColor(QColor(0x4B23A0))).
     set(TextColor(QColor(0xFFFFFF)));
   set_style(*m_calendar_view, std::move(calendar_style));

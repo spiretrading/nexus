@@ -2970,10 +2970,20 @@ UiProfile Spire::make_list_view_profile() {
       });
     list_view->get_current()->connect_update_signal(
       profile.make_event_slot<optional<int>>("Current"));
-    list_view->get_selection()->connect_operation_signal(
-      profile.make_event_slot<AnyListModel::Operation>("Selection"));
     list_view->connect_submit_signal(
       profile.make_event_slot<optional<std::any>>("Submit"));
+    auto selection_slot = profile.make_event_slot<QString>("Selection");
+    list_view->get_selection()->connect_operation_signal([=] (auto& operation) {
+      visit(operation,
+        [&] (const ListView::SelectionModel::AddOperation& operation) {
+          selection_slot(QString("Add:%1").arg(
+            list_view->get_selection()->get(operation.m_index)));
+        },
+        [&] (const ListView::SelectionModel::PreRemoveOperation& operation) {
+          selection_slot(QString("Remove:%1").arg(
+            list_view->get_selection()->get(operation.m_index)));
+        });
+    });
     if(get<bool>("delete_submission", profile.get_properties()).get()) {
       list_view->connect_submit_signal([=] (auto& value) {
         if(auto index = list_view->get_current()->get()) {
