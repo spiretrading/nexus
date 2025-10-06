@@ -96,29 +96,19 @@ void ListItem::mount(QSpacerItem& body) {
 }
 
 void ListItem::mount(QWidget& body) {
+  m_click_observer.emplace(*this);
+  m_click_observer->connect_click_signal(m_submit_signal);
   m_box.emplace(&body, Box::Fit::BOTH);
   body.setAttribute(Qt::WA_DontShowOnScreen, false);
-  m_button.emplace(&*m_box, this);
-  m_button->layout()->setSizeConstraint(QLayout::SetMinAndMaxSize);
-  m_button->setFocusPolicy(Qt::ClickFocus);
-  m_button->connect_click_signal(m_submit_signal);
-  m_box->setFocusProxy(nullptr);
-  if(body.isEnabled()) {
-    setTabOrder(this, &body);
-    setFocusProxy(&body);
-  } else {
-    setTabOrder(this, &*m_button);
-    setFocusProxy(&*m_button);
-  }
+  setFocusProxy(&*m_box);
   setFocusPolicy(focusPolicy());
   if(auto item = layout()->takeAt(0)) {
     delete item;
   }
-  layout()->addWidget(&*m_button);
+  layout()->addWidget(&*m_box);
   link(*this, body);
   match(body, Body());
-  proxy_style(*m_button, *m_box);
-  proxy_style(*this, *m_button);
+  proxy_style(*this, *m_box);
   updateGeometry();
 }
 
@@ -137,7 +127,7 @@ QWidget* ListItem::unmount() {
     return body;
   }();
   m_box = none;
-  m_button = none;
+  m_click_observer = none;
   static_cast<QBoxLayout&>(*layout()).addSpacerItem(
     new QSpacerItem(size_hint.width(), size_hint.height(),
       size_policy.horizontalPolicy(), size_policy.verticalPolicy()));
