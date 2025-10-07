@@ -83,6 +83,46 @@ namespace {
     return imageFromSvg(icon_path, scale(26, 26), QRect(translate(8, 8),
       scale(10, 10)));
   }
+
+  void show_system_menu(HWND hwnd, int x, int y) {
+    auto menu = GetSystemMenu(hwnd, FALSE);
+    if(!menu) {
+      return;
+    }
+    auto placement = WINDOWPLACEMENT{sizeof(WINDOWPLACEMENT)};
+    GetWindowPlacement(hwnd, &placement);
+    auto style = GetWindowLong(hwnd, GWL_STYLE);
+    auto minimize_enabled = [&] {
+      if(style & WS_MINIMIZEBOX) {
+        return MF_ENABLED;
+      }
+      return MF_GRAYED;
+    }();
+    auto maximize_enabled = [&] {
+      if(style & WS_MAXIMIZEBOX) {
+        return MF_ENABLED;
+      }
+      return MF_GRAYED;
+    }();
+    if(placement.showCmd == SW_SHOWMAXIMIZED) {
+      EnableMenuItem(menu, SC_RESTORE, MF_ENABLED);
+      EnableMenuItem(menu, SC_MAXIMIZE, MF_GRAYED);
+      EnableMenuItem(menu, SC_MINIMIZE, minimize_enabled);
+    } else if(placement.showCmd == SW_SHOWMINIMIZED) {
+      EnableMenuItem(menu, SC_RESTORE, MF_ENABLED);
+      EnableMenuItem(menu, SC_MAXIMIZE, maximize_enabled);
+      EnableMenuItem(menu, SC_MINIMIZE, MF_GRAYED);
+    } else {
+      EnableMenuItem(menu, SC_RESTORE, MF_GRAYED);
+      EnableMenuItem(menu, SC_MAXIMIZE, maximize_enabled);
+      EnableMenuItem(menu, SC_MINIMIZE, minimize_enabled);
+    }
+    if(auto cmd = TrackPopupMenu(menu,
+        TPM_RETURNCMD | TPM_TOPALIGN | TPM_LEFTALIGN, x, y, 0, hwnd, nullptr);
+        cmd != 0) {
+      SendMessage(hwnd, WM_SYSCOMMAND, cmd, 0);
+    }
+  }
 }
 
 Window::Window(QWidget* parent)
@@ -255,8 +295,9 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
         *result = HTSYSMENU;
         return true;
       }
-      auto tile_bar_rect = icon_rect.adjusted(0, 0, title_label.width(), 0);
-      if(tile_bar_rect.contains(QPoint(x, y))) {
+      auto title_label_rect = QRect(title_label_pos,
+        QSize(title_label.width(), m_title_bar->height()));
+      if(title_label_rect.contains(QPoint(x, y))) {
         *result = HTCAPTION;
         return true;
       }
@@ -278,8 +319,8 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     return true;
   } else if (msg->message == WM_NCRBUTTONUP &&
       (msg->wParam == HTCAPTION || msg->wParam == HTSYSMENU)) {
-    show_system_menu(QPoint(GET_X_LPARAM(msg->lParam),
-      GET_Y_LPARAM(msg->lParam)));
+    show_system_menu(msg->hwnd, GET_X_LPARAM(msg->lParam),
+      GET_Y_LPARAM(msg->lParam));
     *result = 0;
     return true;
   }
@@ -296,33 +337,6 @@ void Window::set_body(QWidget* body) {
   }
   auto& box = *static_cast<Box*>(layout()->itemAt(0)->widget());
   box.get_body()->layout()->addWidget(m_body);
-}
-
-void Window::show_system_menu(const QPoint& position) {
-  auto hwnd = reinterpret_cast<HWND>(effectiveWinId());
-  if(auto menu = GetSystemMenu(hwnd, FALSE)) {
-    auto flags = MF_BYCOMMAND;
-    if(isMaximized()) {
-      flags = flags | MF_GRAYED;
-    } else {
-      flags = flags | MF_ENABLED;
-    }
-    EnableMenuItem(menu, SC_MAXIMIZE, flags);
-    EnableMenuItem(menu, SC_MOVE, flags);
-    EnableMenuItem(menu, SC_SIZE, flags);
-    flags = MF_BYCOMMAND;
-    if(isMinimized() || isMaximized()) {
-      flags = flags | MF_ENABLED;
-    } else {
-      flags = flags | MF_GRAYED;
-    }
-    EnableMenuItem(menu, SC_RESTORE, flags);
-    if(auto cmd = TrackPopupMenu(menu,
-        TPM_RETURNCMD | TPM_TOPALIGN | TPM_LEFTALIGN,
-        position.x(), position.y(), 0, hwnd, nullptr); cmd != 0) {
-      SendMessage(hwnd, WM_SYSCOMMAND, cmd, 0);
-    }
-  }
 }
 
 void Window::on_highlighted(bool is_match) {
