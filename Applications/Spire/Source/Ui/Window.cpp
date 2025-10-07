@@ -247,11 +247,15 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
       }
       static auto top_left = QPoint(0, 0);
       auto title_bar_pos = m_title_bar->mapToGlobal(top_left);
-      auto title_label_pos =
-        m_title_bar->get_title_label().mapToGlobal(top_left);
-      auto tile_bar_rect = QRect(title_bar_pos.x(), title_bar_pos.y(),
-        title_label_pos.x() + m_title_bar->get_title_label().width() -
-          title_bar_pos.x(), m_title_bar->height());
+      auto& title_label = m_title_bar->get_title_label();
+      auto title_label_pos = title_label.mapToGlobal(top_left);
+      auto icon_rect = QRect(title_bar_pos.x(), title_bar_pos.y(),
+        title_label_pos.x() - title_bar_pos.x(), m_title_bar->height());
+      if(icon_rect.contains(QPoint(x, y))) {
+        *result = HTSYSMENU;
+        return true;
+      }
+      auto tile_bar_rect = icon_rect.adjusted(0, 0, title_label.width(), 0);
       if(tile_bar_rect.contains(QPoint(x, y))) {
         *result = HTCAPTION;
         return true;
@@ -272,7 +276,8 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     mmi->ptMinTrackSize.x = minimumSize().width() + 2 * border_size.width();
     mmi->ptMinTrackSize.y = minimumSize().height() + border_size.height();
     return true;
-  } else if (msg->message == WM_NCRBUTTONUP && msg->wParam == HTCAPTION) {
+  } else if (msg->message == WM_NCRBUTTONUP &&
+      (msg->wParam == HTCAPTION || msg->wParam == HTSYSMENU)) {
     show_system_menu(QPoint(GET_X_LPARAM(msg->lParam),
       GET_Y_LPARAM(msg->lParam)));
     *result = 0;
