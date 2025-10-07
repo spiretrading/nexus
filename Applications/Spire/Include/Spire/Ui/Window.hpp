@@ -59,6 +59,7 @@ namespace Styles {
       boost::optional<bool> m_has_maximize_attribute;
       boost::optional<QSize> m_frame_size;
 
+      void show_system_menu(const QPoint& position);
       void on_highlighted(bool is_match);
       void on_screen_changed(QScreen* screen);
       void on_logical_dots_per_inch_changed();
