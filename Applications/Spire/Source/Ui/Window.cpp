@@ -83,6 +83,46 @@ namespace {
     return imageFromSvg(icon_path, scale(26, 26), QRect(translate(8, 8),
       scale(10, 10)));
   }
+
+  void show_system_menu(HWND hwnd, int x, int y) {
+    auto menu = GetSystemMenu(hwnd, FALSE);
+    if(!menu) {
+      return;
+    }
+    auto placement = WINDOWPLACEMENT{sizeof(WINDOWPLACEMENT)};
+    GetWindowPlacement(hwnd, &placement);
+    auto style = GetWindowLong(hwnd, GWL_STYLE);
+    auto minimize_enabled = [&] {
+      if(style & WS_MINIMIZEBOX) {
+        return MF_ENABLED;
+      }
+      return MF_GRAYED;
+    }();
+    auto maximize_enabled = [&] {
+      if(style & WS_MAXIMIZEBOX) {
+        return MF_ENABLED;
+      }
+      return MF_GRAYED;
+    }();
+    if(placement.showCmd == SW_SHOWMAXIMIZED) {
+      EnableMenuItem(menu, SC_RESTORE, MF_ENABLED);
+      EnableMenuItem(menu, SC_MAXIMIZE, MF_GRAYED);
+      EnableMenuItem(menu, SC_MINIMIZE, minimize_enabled);
+    } else if(placement.showCmd == SW_SHOWMINIMIZED) {
+      EnableMenuItem(menu, SC_RESTORE, MF_ENABLED);
+      EnableMenuItem(menu, SC_MAXIMIZE, maximize_enabled);
+      EnableMenuItem(menu, SC_MINIMIZE, MF_GRAYED);
+    } else {
+      EnableMenuItem(menu, SC_RESTORE, MF_GRAYED);
+      EnableMenuItem(menu, SC_MAXIMIZE, maximize_enabled);
+      EnableMenuItem(menu, SC_MINIMIZE, minimize_enabled);
+    }
+    if(auto cmd = TrackPopupMenu(menu,
+        TPM_RETURNCMD | TPM_TOPALIGN | TPM_LEFTALIGN, x, y, 0, hwnd, nullptr);
+        cmd != 0) {
+      SendMessage(hwnd, WM_SYSCOMMAND, cmd, 0);
+    }
+  }
 }
 
 Window::Window(QWidget* parent)
@@ -245,6 +285,22 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
         *result = HTTOP;
         return true;
       }
+      static auto top_left = QPoint(0, 0);
+      auto title_bar_pos = m_title_bar->mapToGlobal(top_left);
+      auto& title_label = m_title_bar->get_title_label();
+      auto title_label_pos = title_label.mapToGlobal(top_left);
+      auto icon_rect = QRect(title_bar_pos.x(), title_bar_pos.y(),
+        title_label_pos.x() - title_bar_pos.x(), m_title_bar->height());
+      if(icon_rect.contains(QPoint(x, y))) {
+        *result = HTSYSMENU;
+        return true;
+      }
+      auto title_label_rect = QRect(title_label_pos,
+        QSize(title_label.width(), m_title_bar->height()));
+      if(title_label_rect.contains(QPoint(x, y))) {
+        *result = HTCAPTION;
+        return true;
+      }
     }
     *result = HTCLIENT;
     return true;
@@ -260,6 +316,12 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     }
     mmi->ptMinTrackSize.x = minimumSize().width() + 2 * border_size.width();
     mmi->ptMinTrackSize.y = minimumSize().height() + border_size.height();
+    return true;
+  } else if (msg->message == WM_NCRBUTTONUP &&
+      (msg->wParam == HTCAPTION || msg->wParam == HTSYSMENU)) {
+    show_system_menu(msg->hwnd, GET_X_LPARAM(msg->lParam),
+      GET_Y_LPARAM(msg->lParam));
+    *result = 0;
     return true;
   }
   return QWidget::nativeEvent(eventType, message, result);
