@@ -190,8 +190,6 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     std::bind_front(&TagBox::on_text_box_current, this));
   m_list_view = new ListView(m_model, std::bind_front(&TagBox::make_tag, this));
   m_list_view->get_current()->set(m_model->get_size() - 1);
-  m_list_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_list_view->set_item_size_policy(QSizePolicy::Fixed, QSizePolicy::Preferred);
   update_style(*m_list_view, [] (auto& style) {
     style = LIST_VIEW_STYLE(style);
   });
@@ -249,8 +247,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
       update_tooltip();
     }
   });
-  update_tag_size_policy();
-  update_size_constraint();
+  update_overflow();
 }
 
 const std::shared_ptr<AnyListModel>& TagBox::get_tags() const {
@@ -367,8 +364,14 @@ void TagBox::changeEvent(QEvent* event) {
   QWidget::changeEvent(event);
 }
 
+bool TagBox::focusNextPrevChild(bool next) {
+  if(next) {
+    m_text_box->setFocus(Qt::TabFocusReason);
+  }
+  return QWidget::focusNextPrevChild(next);
+}
+
 void TagBox::resizeEvent(QResizeEvent* event) {
-  update_size_constraint();
   update_overflow();
   update_tooltip();
   update_vertical_scroll_bar_visible();
@@ -386,18 +389,13 @@ QWidget* TagBox::make_tag(
     auto box = new QWidget();
     enclose(*box, *m_text_box);
     connect(box, &QObject::destroyed, this, [=] {
-      m_text_box->setParent(nullptr);
+      m_text_box->setParent(this);
     });
     return box;
   }
   auto label = make_read_only_to_text_model(
     std::make_shared<AnyListValueModel>(model, index));
   auto tag = new Tag(label, this);
-  if(m_list_view_overflow == Overflow::WRAP) {
-    tag->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  } else {
-    tag->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
-  }
   tag->set_read_only(m_is_read_only || !isEnabled());
   tag->connect_delete_signal([=] {
     QTimer::singleShot(0, this, [=] {
@@ -412,12 +410,8 @@ QWidget* TagBox::make_tag(
       if(tag_index >= 0) {
         get_tags()->remove(tag_index);
       }
-    });
-  });
-  connect(tag, &QWidget::destroyed, [=] {
-    if(find_focus_state(*this) != FocusObserver::State::NONE) {
       setFocus();
-    }
+    });
   });
   return tag;
 }
@@ -437,7 +431,6 @@ void TagBox::scroll_to_text_box() {
 }
 
 void TagBox::update_placeholder() {
-  update_tag_size_policy();
   if(m_model->m_source->get_size() == 0) {
     m_text_box->set_placeholder(m_placeholder);
   } else {
@@ -454,27 +447,11 @@ void TagBox::update_scroll_bar_end_range(ScrollBar& scroll_bar,
 }
 
 void TagBox::update_tag_size_policy() {
-  if(m_model->m_source->get_size() == 0) {
-    m_list_view->set_direction_size_policy(QSizePolicy::Expanding);
+  if(m_list_view_overflow == Overflow::WRAP) {
+    m_list_view->set_item_size_policy(QSizePolicy::Preferred,
+      QSizePolicy::Minimum);
   } else {
-    auto set_tag_text_size_policy = [&] (QSizePolicy::Policy horizontal) {
-      for(auto i = 0; i < m_list_view->get_list()->get_size() - 1; ++i) {
-        auto& item = *m_list_view->get_list_item(i);
-        if(item.is_mounted()) {
-          auto& box =
-            *static_cast<Box*>(item.get_body().layout()->itemAt(0)->widget());
-          auto& label = *box.get_body()->layout()->itemAt(0)->widget();
-          label.setSizePolicy(horizontal, QSizePolicy::Expanding);
-        }
-      }
-    };
-    if(m_list_view_overflow == Overflow::WRAP) {
-      set_tag_text_size_policy(QSizePolicy::Expanding);
-      m_list_view->set_direction_size_policy(QSizePolicy::Preferred);
-    } else {
-      set_tag_text_size_policy(QSizePolicy::Fixed);
-      m_list_view->set_direction_size_policy(QSizePolicy::Fixed);
-    }
+    m_list_view->set_item_size_policy(QSizePolicy::Fixed, QSizePolicy::Minimum);
   }
 }
 
@@ -563,6 +540,7 @@ void TagBox::update_overflow() {
           set(PaddingRight(0));
         style.get(Any()).set(PaddingRight(scale_width(8)));
       });
+      m_list_view->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
     } else {
       update_style(*this, [] (auto& style) {
         style.get(Any() > is_a<ListView>()).
@@ -570,6 +548,7 @@ void TagBox::update_overflow() {
           set(PaddingRight(scale_width(8)));
         style.get(Any()).set(PaddingRight(0));
       });
+      m_list_view->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
     }
     update_tag_size_policy();
   }
@@ -587,26 +566,6 @@ void TagBox::update_vertical_scroll_bar_visible() {
   }
 }
 
-void TagBox::update_size_constraint() {
-  auto& list_view_body =
-    *static_cast<Box*>(m_list_view->layout()->itemAt(0)->widget())->get_body();
-  auto max_width = get_maximum_width(*this);
-  if(height() <= m_min_scroll_height && max_width != QWIDGETSIZE_MAX &&
-      width() < max_width) {
-    list_view_body.layout()->setSizeConstraint(QLayout::SetFixedSize);
-    m_scrollable_list_box->layout()->setSizeConstraint(QLayout::SetFixedSize);
-  } else if(m_scrollable_list_box->layout()->sizeConstraint() !=
-      QLayout::SetDefaultConstraint) {
-    list_view_body.layout()->setSizeConstraint(QLayout::SetDefaultConstraint);
-    list_view_body.setMinimumSize(0, 0);
-    list_view_body.setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
-    m_scrollable_list_box->layout()->setSizeConstraint(
-      QLayout::SetDefaultConstraint);
-    m_scrollable_list_box->setMinimumSize(0, 0);
-    m_scrollable_list_box->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
-  }
-}
-
 void TagBox::on_focus(FocusObserver::State state) {
   if(state == FocusObserver::State::NONE) {
     scroll_to_start(*m_horizontal_scroll_bar);
@@ -614,8 +573,9 @@ void TagBox::on_focus(FocusObserver::State state) {
     m_text_box->setFocusPolicy(focusPolicy());
     setFocus();
     if(!is_read_only()) {
-      update_size_constraint();
-      scroll_to_text_box();
+      QTimer::singleShot(0, this, [=] {
+        m_list_view->get_current()->set(m_model->get_size() - 1);
+      });
     }
   }
 }
