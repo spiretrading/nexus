@@ -618,10 +618,8 @@ void TagBox::on_text_box_current(const QString& current) {
 }
 
 void TagBox::on_list_view_current(const optional<int>& current) {
-  if(!m_is_read_only) {
-    if(current != m_model->get_size() - 1) {
-      m_list_view->get_current()->set(m_model->get_size() - 1);
-    }
+  if(current != m_model->get_size() - 1) {
+    m_list_view->get_current()->set(m_model->get_size() - 1);
   }
 }
 
