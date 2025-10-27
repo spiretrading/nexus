@@ -60,19 +60,6 @@ QWidget& TableItem::get_body() {
   return *this;
 }
 
-connection TableItem::connect_active_signal(
-    const ActiveSignal::slot_type& slot) const {
-  return m_active_signal.connect(slot);
-}
-
-QSize TableItem::sizeHint() const {
-  auto& body = get_body();
-  if(&body == this) {
-    return layout()->sizeHint();
-  }
-  return body.sizeHint();
-}
-
 void TableItem::mount(QWidget& body) {
   setFocusProxy(&body);
   setFocusPolicy(focusPolicy());
@@ -87,6 +74,19 @@ QWidget* TableItem::unmount() {
   body->setAttribute(Qt::WA_DontShowOnScreen);
   delete item;
   return body;
+}
+
+connection TableItem::connect_active_signal(
+    const ActiveSignal::slot_type& slot) const {
+  return m_active_signal.connect(slot);
+}
+
+QSize TableItem::sizeHint() const {
+  auto& body = get_body();
+  if(&body == this) {
+    return layout()->sizeHint();
+  }
+  return body.sizeHint();
 }
 
 void TableItem::on_focus(FocusObserver::State state) {

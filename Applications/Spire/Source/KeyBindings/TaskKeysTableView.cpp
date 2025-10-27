@@ -10,6 +10,7 @@
 #include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ValidatedValueModel.hpp"
 #include "Spire/Ui/AnyInputBox.hpp"
+#include "Spire/Ui/BreakoutBox.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
 #include "Spire/Ui/EditableBox.hpp"
@@ -33,6 +34,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  using Breakout = StateSelector<void, struct BreakoutSelectorTag>;
+
   bool comparator(const AnyRef& left, int left_row, const AnyRef& right,
       int right_row, int column) {
     if(left.get_type() == typeid(QuantitySetting) &&
@@ -223,6 +226,40 @@ namespace {
         m_region(std::move(region)) {}
   };
 
+  struct RegionBoxBreakout {
+    RegionBox* m_region_box;
+    EditableBox* m_editable_box;
+    QPointer<TableItem> m_table_item;
+    QPointer<BreakoutBox> m_breakout_box;
+
+    RegionBoxBreakout(RegionBox* region_box, EditableBox* editable_box)
+      : m_region_box(region_box),
+        m_editable_box(editable_box) {}
+
+    void breakout() {
+      if(m_table_item =
+          static_cast<TableItem*>(m_editable_box->parentWidget())) {
+        auto body = m_table_item->unmount();
+        m_region_box->setFixedHeight(QWIDGETSIZE_MAX);
+        m_breakout_box =
+          new BreakoutBox(*body, *m_table_item, *m_table_item->window());
+        m_breakout_box->show();
+        m_breakout_box->setFocus();
+        match(*m_table_item, Breakout());
+      }
+    }
+
+    void restore() {
+      if(m_table_item) {
+        m_region_box->setFixedHeight(m_region_box->minimumSizeHint().height());
+        m_editable_box->resize(m_table_item->size());
+        m_table_item->mount(*m_editable_box);
+        m_breakout_box->deleteLater();
+        unmatch(*m_table_item, Breakout());
+      }
+    }
+  };
+
   struct TaskKeysTableViewItemBuilder {
     std::shared_ptr<RegionQueryModel> m_regions;
     DestinationDatabase m_destinations;
@@ -247,8 +284,17 @@ namespace {
             auto current = make_proxy.operator ()<Region>();
             auto region_box = new RegionBox(m_regions, current);
             region_box->setFixedHeight(region_box->minimumSizeHint().height());
-            return {new EditableBox(*region_box),
-              std::make_shared<ItemState>(current)};
+            auto editable_box = new EditableBox(*region_box);
+            editable_box->connect_read_only_signal(
+              [region_breakout = RegionBoxBreakout(region_box, editable_box)]
+                  (auto read_only) mutable {
+                if(!read_only) {
+                  region_breakout.breakout();
+                } else {
+                  region_breakout.restore();
+                }
+            });
+            return {editable_box, std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::DESTINATION) {
             auto region = make_proxy_value_model(
               make_table_value_model<Region>(table, row,
@@ -377,6 +423,8 @@ TableView* Spire::make_task_keys_table_view(
     style.get(Any() > is_a<TableBody>() >
         Row() > is_a<TableItem>() > is_a<EditableBox>() > is_a<DecimalBox>()).
       set(TextAlign(Qt::Alignment(Qt::AlignRight)));
+    style.get(Any() > is_a<TableBody>() > CurrentRow() > Breakout() < Row()).
+      set(BackgroundColor(QColor(0xE2E0FF)));
   });
   return table_view;
 }

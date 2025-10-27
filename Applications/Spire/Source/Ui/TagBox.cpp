@@ -407,10 +407,10 @@ QWidget* TagBox::make_tag(
         }
         return -1;
       }();
+      setFocus();
       if(tag_index >= 0) {
         get_tags()->remove(tag_index);
       }
-      setFocus();
     });
   });
   return tag;
