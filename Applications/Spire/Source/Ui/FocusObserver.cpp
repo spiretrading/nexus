@@ -2,6 +2,7 @@
 #include <vector>
 #include <QApplication>
 #include <QFocusEvent>
+#include <QPointer>
 #include "Spire/Spire/ExtensionCache.hpp"
 #include "Spire/Spire/Utility.hpp"
 
@@ -51,6 +52,7 @@ struct FocusObserver::ApplicationFocusFilter : QObject {
       m_entries.erase(std::remove_if(m_entries.begin(), m_entries.end(),
         [&] (auto& entry) {
           if(entry->m_is_removed) {
+            m_filter_to_entry.erase(entry->m_filter);
             return true;
           }
           if(is_ancestor(
@@ -69,7 +71,7 @@ struct FocusObserver::ApplicationFocusFilter : QObject {
 
 struct FocusObserver::FocusEventFilter {
   mutable StateSignal m_state_signal;
-  const QWidget* m_widget;
+  QPointer<const QWidget> m_widget;
   Qt::FocusReason m_focus_reason;
   State m_state;
   State m_old_state;
@@ -104,6 +106,7 @@ void FocusObserver::ApplicationFocusFilter::on_focus_changed(
   auto signaling_entries = std::vector<Entry*>();
   std::erase_if(m_entries, [&] (const auto& entry) {
     if(entry->m_is_removed) {
+      m_filter_to_entry.erase(entry->m_filter);
       return true;
     }
     auto state = entry->m_filter->m_state;
@@ -147,7 +150,7 @@ void FocusObserver::ApplicationFocusFilter::on_focus_changed(
     return false;
   });
   for(auto& signaling_entry : signaling_entries) {
-    if(!signaling_entry->m_is_removed && signaling_entry->m_filter) {
+    if(m_filter_to_entry.contains(signaling_entry->m_filter)) {
       signaling_entry->m_filter->m_state_signal(
         signaling_entry->m_filter->m_state);
     }
