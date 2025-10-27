@@ -15,9 +15,8 @@ namespace Spire {
        * Constructs a BreakoutBox.
        * @param body The component that can extend beyond its layout.
        * @param source The component that used to own the body.
-       * @param parent The parent widget.
        */
-      BreakoutBox(QWidget& body, QWidget& source, QWidget& parent);
+      BreakoutBox(QWidget& body, QWidget& source);
 
       /** Returns the body. */
       const QWidget& get_body() const;

@@ -19,8 +19,8 @@ namespace {
   bool focus_next(QWidget& widget, bool next);
 }
 
-BreakoutBox::BreakoutBox(QWidget& body, QWidget& source, QWidget& parent)
-    : QWidget(&parent),
+BreakoutBox::BreakoutBox(QWidget& body, QWidget& source)
+    : QWidget(source.window()),
       m_body(&body),
       m_source(&source) {
   auto pos = m_body->mapToGlobal(QPoint(0, 0));
@@ -28,7 +28,8 @@ BreakoutBox::BreakoutBox(QWidget& body, QWidget& source, QWidget& parent)
   setFocusProxy(m_body);
   setMinimumSize(body.size());
   resize(m_body->sizeHint());
-  move(parent.mapFromGlobal(pos));
+  move(parentWidget()->mapFromGlobal(pos));
+  m_source->installEventFilter(this);
   qApp->installEventFilter(this);
 }
 
@@ -49,7 +50,11 @@ bool BreakoutBox::event(QEvent* event) {
 }
 
 bool BreakoutBox::eventFilter(QObject* watched, QEvent* event) {
-  if(event->type() == QEvent::Wheel && isVisible()) {
+  if(watched == m_source && event->type() == QEvent::Resize) {
+    auto& resize_event = *static_cast<QResizeEvent*>(event);
+    setMinimumSize(resize_event.size());
+    adjustSize();
+  } else if(event->type() == QEvent::Wheel && isVisible()) {
     auto& wheel_event = *static_cast<QWheelEvent*>(event);
     auto parent_window = window();
     if(parent_window->rect().contains(
