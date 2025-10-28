@@ -241,8 +241,7 @@ namespace {
           static_cast<TableItem*>(m_editable_box->parentWidget())) {
         auto body = m_table_item->unmount();
         m_region_box->setFixedHeight(QWIDGETSIZE_MAX);
-        m_breakout_box =
-          new BreakoutBox(*body, *m_table_item, *m_table_item->window());
+        m_breakout_box = new BreakoutBox(*body, *m_table_item);
         m_breakout_box->show();
         m_breakout_box->setFocus();
         match(*m_table_item, Breakout());

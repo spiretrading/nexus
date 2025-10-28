@@ -23,13 +23,14 @@ BreakoutBox::BreakoutBox(QWidget& body, QWidget& source)
     : QWidget(source.window()),
       m_body(&body),
       m_source(&source) {
-  auto pos = m_body->mapToGlobal(QPoint(0, 0));
   enclose(*this, *m_body);
   setFocusProxy(m_body);
-  setMinimumSize(body.size());
+  move(parentWidget()->mapFromGlobal(m_source->mapToGlobal(QPoint(0, 0))));
+  setMinimumSize(m_source->size());
+  setMaximumWidth(parentWidget()->width() - x());
   resize(m_body->sizeHint());
-  move(parentWidget()->mapFromGlobal(pos));
   m_source->installEventFilter(this);
+  parentWidget()->installEventFilter(this);
   qApp->installEventFilter(this);
 }
 
@@ -50,15 +51,23 @@ bool BreakoutBox::event(QEvent* event) {
 }
 
 bool BreakoutBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_source && event->type() == QEvent::Resize) {
+  if(watched == m_source) {
+    if(event->type() == QEvent::Move) {
+      move(parentWidget()->mapFromGlobal(m_source->mapToGlobal(QPoint(0, 0))));
+      setMaximumWidth(parentWidget()->width() - x());
+    } else if(event->type() == QEvent::Resize) {
+      auto& resize_event = *static_cast<QResizeEvent*>(event);
+      setMinimumSize(resize_event.size());
+      adjustSize();
+    }
+  } else if(watched == parentWidget() && event->type() == QEvent::Resize) {
     auto& resize_event = *static_cast<QResizeEvent*>(event);
-    setMinimumSize(resize_event.size());
-    adjustSize();
+    setMaximumWidth(resize_event.size().width() - x());
   } else if(event->type() == QEvent::Wheel && isVisible()) {
     auto& wheel_event = *static_cast<QWheelEvent*>(event);
-    auto parent_window = window();
-    if(parent_window->rect().contains(
-        parent_window->mapFromGlobal(wheel_event.globalPos()))) {
+    auto parent = parentWidget();
+    if(parent->rect().contains(
+        parent->mapFromGlobal(wheel_event.globalPos()))) {
       return true;
     }
   }
@@ -66,5 +75,12 @@ bool BreakoutBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 bool BreakoutBox::focusNextPrevChild(bool next) {
+  auto focus_reason = [&] {
+    if(next) {
+      return Qt::FocusReason::TabFocusReason;
+    }
+    return Qt::FocusReason::BacktabFocusReason;
+  }();
+  m_source->setFocus(focus_reason);
   return focus_next(*m_source, next);
 }
