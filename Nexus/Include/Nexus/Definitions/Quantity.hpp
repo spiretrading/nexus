@@ -11,7 +11,6 @@
 #include <type_traits>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
-#include <Beam/Utilities/Math.hpp>
 #include <boost/cstdfloat.hpp>
 #include <boost/functional/hash.hpp>
 #include <boost/io/ios_state.hpp>
@@ -353,62 +352,104 @@ namespace Nexus {
   /**
    * Returns the floor.
    * @param value The value to floor.
-   * @param decimal_places The decimal place to floor to.
    */
-  inline Quantity floor(Quantity value, int decimal_places) {
-    if(decimal_places > 0) {
-      auto multiplier = Beam::PowerOfTen(decimal_places);
-      auto remainder = value % (Quantity(1) / multiplier);
-      if(value > 0 || remainder == 0) {
-        return value - remainder;
-      } else {
-        return value - ((Quantity(1) / multiplier) + remainder);
-      }
-    } else {
-      auto multiplier = Beam::PowerOfTen(-decimal_places);
-      auto remainder = value % multiplier;
-      if(value > 0 || remainder == 0) {
-        return value - remainder;
-      } else {
-        return value - (multiplier + remainder);
-      }
+  inline Quantity floor(Quantity value) {
+    return Quantity::from_representation(
+      std::floor(value.get_representation() / Quantity::MULTIPLIER) *
+        Quantity::MULTIPLIER);
+  }
+
+  /**
+   * Returns the greatest multiple of a given value less than or equal to the
+   * specified value.
+   * @param value The value to floor.
+   * @param multiple The multiple to floor to.
+   * @return The greatest multiple of <i>multiple</i> less than or equal to
+   *         <i>value</i>.
+   */
+  inline Quantity floor_to(Quantity value, Quantity multiple) {
+    if(multiple == 0) {
+      return Quantity(0);
     }
+    return Quantity::from_representation(
+      std::floor(value.get_representation() / multiple.get_representation()) *
+        multiple.get_representation());
   }
 
   /**
    * Returns the ceiling.
    * @param value The value to ceil.
-   * @param decimal_laces The decimal place to ceil to.
    */
-  inline Quantity ceil(Quantity value, int decimal_places) {
-    return -floor(-value, decimal_places);
+  inline Quantity ceil(Quantity value) {
+    return Quantity::from_representation(
+      std::ceil(value.get_representation() / Quantity::MULTIPLIER) *
+        Quantity::MULTIPLIER);
   }
 
   /**
-   * Returns the truncated value.
-   * @param value The value to truncate.
-   * @param decimal_places The decimal place to truncate.
+   * Returns the smallest multiple of a given value greater than or equal to the
+   * specified value.
+   * @param value The value to ceil.
+   * @param multiple The multiple to ceil to.
+   * @return The smallest multiple of <i>multiple</i> greater than or equal to
+   *         <i>value</i>.
    */
-  inline Quantity truncate(Quantity value, int decimal_places) {
-    if(value < 0) {
-      return ceil(value, decimal_places);
-    } else {
-      return floor(value, decimal_places);
+  inline Quantity ceil_to(Quantity value, Quantity multiple) {
+    if(multiple == 0) {
+      return Quantity(0);
     }
+    return Quantity::from_representation(
+      std::ceil(value.get_representation() / multiple.get_representation()) *
+        multiple.get_representation());
   }
 
   /**
    * Returns the rounded value.
    * @param value The value to round.
-   * @param decimal_places The decimal place to round to.
    */
-  inline Quantity round(Quantity value, int decimal_places) {
-    if(decimal_places >= 0) {
-      auto multiplier = Beam::PowerOfTen(decimal_places + 1);
-      return floor(value + Quantity(5) / multiplier, decimal_places);
+  inline Quantity round(Quantity value) {
+    return Quantity::from_representation(
+      std::round(value.get_representation() / Quantity::MULTIPLIER) *
+        Quantity::MULTIPLIER);
+  }
+
+  /**
+   * Returns the multiple of a given value nearest to the specified value.
+   * @param value The value to round.
+   * @param multiple The multiple to round to.
+   * @return The multiple of <i>multiple</i> nearest to <i>value</i>.
+   */
+  inline Quantity round_to(Quantity value, Quantity multiple) {
+    if(multiple == 0) {
+      return Quantity(0);
+    }
+    return Quantity::from_representation(
+      std::round(value.get_representation() / multiple.get_representation()) *
+        multiple.get_representation());
+  }
+
+  /**
+   * Returns the truncated value.
+   * @param value The value to truncate.
+   */
+  inline Quantity truncate(Quantity value) {
+    return Quantity::from_representation(
+      std::trunc(value.get_representation() / Quantity::MULTIPLIER) *
+        Quantity::MULTIPLIER);
+  }
+
+  /**
+   * Returns the multiple of a given value closest to zero from the specified
+   * value.
+   * @param value The value to truncate.
+   * @param multiple The multiple to truncate to.
+   * @return The multiple of <i>multiple</i> closest to zero from <i>value</i>.
+   */
+  inline Quantity truncate_to(Quantity value, Quantity multiple) {
+    if(value < 0) {
+      return ceil_to(value, multiple);
     } else {
-      auto multiplier = Beam::PowerOfTen(-(decimal_places + 1));
-      return floor(value + Quantity(5) * multiplier, decimal_places);
+      return floor_to(value, multiple);
     }
   }
 
@@ -537,27 +578,26 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
-  struct IsStructure<Nexus::Quantity> : std::false_type {};
+  constexpr auto is_structure<Nexus::Quantity> = false;
 
   template<>
   struct Send<Nexus::Quantity> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        const Nexus::Quantity& value) const {
-      shuttle.Send(name, value.get_representation());
+    template<IsSender S>
+    void operator ()(
+        S& sender, const char* name, const Nexus::Quantity& value) const {
+      sender.send(name, value.get_representation());
     }
   };
 
   template<>
   struct Receive<Nexus::Quantity> {
-    template<typename Shuttler>
+    template<IsReceiver R>
     void operator ()(
-        Shuttler& shuttle, const char* name, Nexus::Quantity& value) const {
-      auto representation = boost::float64_t();
-      shuttle.Shuttle(name, representation);
-      value = Nexus::Quantity::from_representation(representation);
+        R& receiver, const char* name, Nexus::Quantity& value) const {
+      value = Nexus::Quantity::from_representation(
+        receive<boost::float64_t>(receiver, name));
     }
   };
 }
