@@ -258,6 +258,7 @@ void Nexus::Python::export_default_venues(module& module) {
   submodule.add_object("CSE", cast(DefaultVenues::CSE));
   submodule.add_object("CSE2", cast(DefaultVenues::CSE2));
   submodule.add_object("CHIC", cast(DefaultVenues::CHIC));
+  submodule.add_object("CXD", cast(DefaultVenues::CXD));
   submodule.add_object("LYNX", cast(DefaultVenues::LYNX));
   submodule.add_object("MATN", cast(DefaultVenues::MATN));
   submodule.add_object("NEOE", cast(DefaultVenues::NEOE));

@@ -396,20 +396,6 @@ std::shared_ptr<TypedUiProperty<QString>>
     });
 }
 
-template<>
-std::shared_ptr<TypedUiProperty<DateFormat>>
-    Spire::make_standard_property<DateFormat>(QString name, DateFormat value) {
-  auto formats = define_enum<DateFormat>(
-    {{"YYYYMMDD", DateFormat::YYYYMMDD}, {"MMDD", DateFormat::MMDD}});
-  return make_standard_enum_property(std::move(name), value, formats);
-}
-
-template<>
-std::shared_ptr<TypedUiProperty<DateFormat>>
-    Spire::make_standard_property<DateFormat>(QString name) {
-  return make_standard_property(std::move(name), DateFormat::YYYYMMDD);
-}
-
 std::shared_ptr<TypedUiProperty<optional<StyleSheet>>>
     Spire::make_style_property(QString name, QString style_text) {
   auto style_text_model =

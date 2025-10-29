@@ -10,6 +10,8 @@
 #include "Nexus/FeeHandling/ChicFeeTable.hpp"
 #include "Nexus/FeeHandling/CseFeeTable.hpp"
 #include "Nexus/FeeHandling/Cse2FeeTable.hpp"
+#include "Nexus/FeeHandling/CxdFeeTable.hpp"
+#include "Nexus/FeeHandling/FeeHandling.hpp"
 #include "Nexus/FeeHandling/LynxFeeTable.hpp"
 #include "Nexus/FeeHandling/MatnFeeTable.hpp"
 #include "Nexus/FeeHandling/NeoeFeeTable.hpp"
@@ -66,6 +68,9 @@ namespace Nexus {
 
     /** Fee table used by CSE2. */
     Cse2FeeTable m_cse2_fee_table;
+
+    /** Fee table used by CXD. */
+    CxdFeeTable m_cxdFeeTable;
 
     /** Fee table used by LYNX. */
     LynxFeeTable m_lynx_fee_table;
@@ -206,6 +211,11 @@ namespace Nexus {
     } else {
       BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for XCX2 missing."));
     }
+    if(auto cxdConfig = config["cxd"]) {
+      feeTable.m_cxdFeeTable = ParseCxdFeeTable(cxdConfig);
+    } else {
+      BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for CXD missing."));
+    }
     if(auto lynx_config = config["lynx"]) {
       table.m_lynx_fee_table =
         parse_lynx_fee_table(lynx_config, table.m_etfs, table.m_interlisted);
@@ -316,6 +326,7 @@ namespace Nexus {
           }
         }
       }();
+<<<<<<< HEAD
       if(last_market == DefaultVenues::XATS) {
         auto is_etf =
           Beam::Contains(table.m_etfs, order.get_info().m_fields.m_security);
@@ -323,14 +334,35 @@ namespace Nexus {
       } else if(last_market == DefaultVenues::CHIC) {
         return calculate_fee(
           table.m_chic_fee_table, order.get_info().m_fields, report);
-      } else if(last_market == DefaultVenues::CSE) {
-        return calculate_fee(table.m_cse_fee_table, report);
+      } else if(last_market == DefaultMarkets::CSE()) {
+        auto& security = order.get_info().m_fields.m_security;
+        auto listing = [&] {
+          if(Beam::Contains(table.m_etfs, security)) {
+            return CseFeeTable::CseListing::ETF;
+          } else if(Beam::Contains(table.m_interlisted, security)) {
+            return CseFeeTable::CseListing::INTERLISTED;
+          } else if(security.get_venue() == DefaultVenues::CSE()) {
+            return CseFeeTable::CseListing::CSE_LISTED;
+          }
+          return CseFeeTable::CseListing::DEFAULT;
+        }();
+        return calculate_fee(table.m_cse_fee_table, listing, report);
       } else if(last_market == DefaultVenues::CSE2) {
         return calculate_fee(
           table.m_cse2_fee_table, order.get_info().m_fields, report);
       } else if(last_market == DefaultVenues::XCX2) {
         return calculate_fee(
           table.m_xcx2_fee_table, order.get_info().m_fields, report);
+      } else if(last_market == DefaultMarkets::CXD()) {
+        auto security_class = [&] {
+          if(Beam::Contains(
+              table.m_etfs, order.get_info().m_fields.m_security)) {
+            return CxdFeeTable::SecurityClass::ETF;
+          } else {
+            return CxdFeeTable::SecurityClass::DEFAULT;
+          }
+        }();
+        return calculate_fee(feeTable.m_cxd_fee_table, security_class, report);
       } else if(last_market == DefaultVenues::LYNX) {
         return calculate_fee(
           table.m_lynx_fee_table, order.get_info().m_fields, report);

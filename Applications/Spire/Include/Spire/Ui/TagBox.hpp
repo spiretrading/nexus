@@ -58,6 +58,7 @@ namespace Spire {
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
       void changeEvent(QEvent* event) override;
+      bool focusNextPrevChild(bool next) override;
       void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
 
@@ -100,7 +101,6 @@ namespace Spire {
       void update_tooltip();
       void update_overflow();
       void update_vertical_scroll_bar_visible();
-      void update_size_constraint();
       void on_focus(FocusObserver::State state);
       void on_operation(const AnyListModel::Operation& operation);
       void on_text_box_current(const QString& current);

@@ -85,6 +85,7 @@ ToggleButton* Spire::make_icon_toggle_button(QImage icon,
     new ToggleButton(new Box(button_icon), std::move(current), parent);
   add_tooltip(std::move(tooltip), *button);
   link(*button, *button_icon);
+  link(*button, button->get_body());
   auto style = StyleSheet();
   style.get(Any() > Body()).
     set(BackgroundColor(QColor(Qt::transparent))).

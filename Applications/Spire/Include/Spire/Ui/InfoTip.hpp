@@ -50,7 +50,7 @@ namespace Spire {
         FADING_IN,
         FADING_OUT
       };
-      QWidget* m_body;
+      QWidget* m_parent;
       QWidget* m_container;
       bool m_is_interactive;
       HoverObserver m_hover_observer;

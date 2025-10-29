@@ -14,8 +14,8 @@ using namespace Spire::Styles;
 Button::Button(QWidget* body, QWidget* parent)
     : QWidget(parent),
       m_body(body),
-      m_press_observer(*this),
-      m_click_observer(*this) {
+      m_click_observer(*this),
+      m_press_observer(*this) {
   setFocusPolicy(Qt::StrongFocus);
   match(*m_body, Body());
   enclose(*this, *m_body);
@@ -44,6 +44,9 @@ void Button::keyPressEvent(QKeyEvent* event) {
       event->modifiers() == Qt::NoModifier && !event->isAutoRepeat()) {
     m_click_signal();
     return;
+  } else if(event->key() == Qt::Key_Space && !event->isAutoRepeat()) {
+    event->accept();
+    return;
   }
   QWidget::keyPressEvent(event);
 }
@@ -57,11 +60,15 @@ void Button::mousePressEvent(QMouseEvent* event) {
 }
 
 void Button::on_press_start(PressObserver::Reason reason) {
-  match(*this, Press());
+  QTimer::singleShot(0, this, [=] {
+    match(*this, Press());
+  });
 }
 
 void Button::on_press_end(PressObserver::Reason reason) {
-  unmatch(*this, Press());
+  QTimer::singleShot(0, this, [=] {
+    unmatch(*this, Press());
+  });
 }
 
 Button* Spire::make_icon_button(QImage icon, QWidget* parent) {

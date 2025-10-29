@@ -75,6 +75,17 @@ namespace {
     return current.size() + 1;
   }
 
+  void preload_password_mask_glyph(const QLineEdit& line_edit) {
+    auto opt = QStyleOptionFrame();
+    opt.initFrom(&line_edit);
+    auto character = line_edit.style()->styleHint(
+      QStyle::SH_LineEdit_PasswordCharacter, &opt, &line_edit);
+    if(character == 0) {
+      character = 0x2022;
+    }
+    QFontMetrics(line_edit.font()).horizontalAdvance(character);
+  }
+
   struct TextBoxHighlightModel : HighlightModel {
     TextBox* m_text_box;
     LocalValueModel<Highlight> m_model;
@@ -229,6 +240,9 @@ class TextBox::LineEdit : public QLineEdit {
       setFont(text_style.m_font);
       if(text_style.m_echo_mode != echoMode()) {
         setEchoMode(text_style.m_echo_mode);
+        if(text_style.m_echo_mode == QLineEdit::Password) {
+          preload_password_mask_glyph(*this);
+        }
       }
       if(stylesheet != styleSheet()) {
         setStyleSheet(stylesheet);

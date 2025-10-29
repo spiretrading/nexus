@@ -9,15 +9,8 @@
 namespace Spire {
 namespace Styles {
 
-  /** Specifies the accepted date format. */
-  enum class DateFormat {
-
-    /** The year, month, and day can be input in a YYYY-MM-DD format. */
-    YYYYMMDD,
-
-    /** The month and day can be input in a MM-DD format. */
-    MMDD
-  };
+  /** Sets whether the DateBox displays the year field. */
+  using YearField = BasicProperty<bool, struct YearFieldTag>;
 }
 
   /** Displays an input field for a date. */
@@ -81,11 +74,21 @@ namespace Styles {
         const RejectSignal::slot_type& slot) const;
 
     protected:
-      void mousePressEvent(QMouseEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
 
     private:
       struct DateComposerModel;
+      struct Field {
+        IntegerBox* m_box;
+        QLineEdit* m_editor;
+      };
+      struct Fields {
+        Field m_year;
+        Field m_month;
+        Field m_day;
+      };
       mutable SubmitSignal m_submit_signal;
       mutable RejectSignal m_reject_signal;
       std::shared_ptr<DateComposerModel> m_model;
@@ -93,15 +96,23 @@ namespace Styles {
       bool m_is_read_only;
       bool m_is_rejected;
       FocusObserver m_focus_observer;
-      IntegerBox* m_year_box;
+      Fields m_fields;
       QWidget* m_year_dash;
-      IntegerBox* m_month_box;
-      IntegerBox* m_day_box;
-      QWidget* m_body;
-      OverlayPanel* m_date_picker;
-      Styles::DateFormat m_format;
+      QWidget* m_date_components;
+      Button* m_calendar_button;
+      Box* m_input_box;
+      OverlayPanel* m_date_picker_panel;
+      bool m_date_picker_showing;
       boost::signals2::scoped_connection m_style_connection;
 
+      void set_rejected(bool rejected);
+      void focus_and_select_all(const Field& field);
+      void show_date_picker();
+      void on_year_edited(const QString& text);
+      void on_month_edited(const QString& text);
+      void on_day_edited(const QString& text);
+      void on_button_click();
+      void on_field_reject(boost::optional<int> value);
       void on_current(const boost::optional<boost::gregorian::date>& current);
       void on_submit();
       void on_focus(FocusObserver::State state);

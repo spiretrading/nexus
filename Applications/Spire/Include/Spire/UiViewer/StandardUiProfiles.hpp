@@ -298,6 +298,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the TransitionView. */
   UiProfile make_transition_view_profile();
+
+  /** Returns a UiProfile for the WindowHighlight. */
+  UiProfile make_window_highlight_profile();
 }
 
 #endif

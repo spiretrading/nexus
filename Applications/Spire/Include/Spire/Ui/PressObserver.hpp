@@ -50,7 +50,7 @@ namespace Spire {
 
       /** Connects a slot to the press end signal. */
       boost::signals2::connection connect_press_end_signal(
-        const PressStartSignal::slot_type& slot) const;
+        const PressEndSignal::slot_type& slot) const;
 
     private:
       struct PressEventFilter;

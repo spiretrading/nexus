@@ -71,6 +71,16 @@ namespace Details {
       }
       {
         auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("XCXD");
+        entry.m_country_code = DefaultCountries::CA;
+        entry.m_time_zone = "Eastern_Time";
+        entry.m_currency = DefaultCurrencies::CAD;
+        entry.m_description = "NASDAQ CXD";
+        entry.m_display_name = "CXD";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("XCX2");
         entry.m_country_code = DefaultCountries::CA;
         entry.m_time_zone = "Eastern_Time";
@@ -174,6 +184,7 @@ namespace Details {
     inline const auto CSE = DEFAULT_VENUES.from("XCNQ").m_venue;
     inline const auto CSE2 = DEFAULT_VENUES.from("CSE2").m_venue;
     inline const auto CHIC = DEFAULT_VENUES.from("CHIC").m_venue;
+    inline const auto CXD = DEFAULT_VENUES.from("CXD").m_venue;
     inline const auto LYNX = DEFAULT_VENUES.from("LYNX").m_venue;
     inline const auto MATN = DEFAULT_VENUES.from("MATN").m_venue;
     inline const auto NEOE = DEFAULT_VENUES.from("NEOE").m_venue;

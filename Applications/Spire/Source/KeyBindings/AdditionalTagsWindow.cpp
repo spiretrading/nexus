@@ -8,6 +8,7 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/EditableTableView.hpp"
