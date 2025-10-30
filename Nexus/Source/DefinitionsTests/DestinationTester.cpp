@@ -2,6 +2,8 @@
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Destination.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace Nexus;
 
 TEST_SUITE("Destination") {
@@ -13,8 +15,8 @@ TEST_SUITE("Destination") {
     }
     REQUIRE(count == 0);
     REQUIRE(database.from("nope") == DestinationDatabase::NONE);
-    REQUIRE(database.get_preferred_destination(Venue()) ==
-      DestinationDatabase::NONE);
+    REQUIRE(
+      database.get_preferred_destination(Venue()) == DestinationDatabase::NONE);
     REQUIRE_FALSE(database.get_manual_order_entry_destination().has_value());
   }
 
@@ -118,8 +120,8 @@ TEST_SUITE("Destination") {
   }
 
   TEST_CASE("shuttle") {
-    Beam::Serialization::Tests::TestRoundTripShuttle(DEFAULT_DESTINATIONS,
-      [] (const auto& destinations) {
+    test_round_trip_shuttle(
+      DEFAULT_DESTINATIONS, [] (const auto& destinations) {
         auto expected_entries = DEFAULT_DESTINATIONS.get_entries();
         auto entries = destinations.get_entries();
         REQUIRE(expected_entries.size() == entries.size());

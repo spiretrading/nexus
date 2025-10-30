@@ -38,7 +38,7 @@ namespace Nexus {
       auto operator <=>(const Security&) const = default;
 
     private:
-      friend struct Beam::Serialization::Shuttle<Security>;
+      friend struct Beam::Shuttle<Security>;
       std::string m_symbol;
       Venue m_venue;
   };
@@ -116,14 +116,14 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::Security> {
-    template<typename Shuttler>
+    template<IsShuttle S>
     void operator ()(
-        Shuttler& shuttle, Nexus::Security& value, unsigned int version) const {
-      shuttle.Shuttle("symbol", value.m_symbol);
-      shuttle.Shuttle("venue", value.m_venue);
+        S& shuttle, Nexus::Security& value, unsigned int version) const {
+      shuttle.shuttle("symbol", value.m_symbol);
+      shuttle.shuttle("venue", value.m_venue);
     }
   };
 }

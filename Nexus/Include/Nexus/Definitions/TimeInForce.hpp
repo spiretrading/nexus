@@ -5,7 +5,7 @@
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
-#include <Beam/Utilities/HashPtime.hpp>
+#include <Beam/Utilities/HashPosixTimeTypes.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/functional/hash.hpp>
 
@@ -76,7 +76,7 @@ namespace Details {
       bool operator ==(const TimeInForce&) const = default;
 
     private:
-      friend struct Beam::Serialization::Shuttle<TimeInForce>;
+      friend struct Beam::Shuttle<TimeInForce>;
       Type m_type;
       boost::posix_time::ptime m_expiry;
   };
@@ -87,32 +87,6 @@ namespace Details {
    */
   inline TimeInForce make_gtd(boost::posix_time::ptime expiry) {
     return TimeInForce(TimeInForce::Type::GTD, expiry);
-  }
-
-  inline std::ostream& operator <<(std::ostream& out, TimeInForce::Type value) {
-    if(value == TimeInForce::Type::DAY) {
-      return out << "DAY";
-    } else if(value == TimeInForce::Type::GTC) {
-      return out << "GTC";
-    } else if(value == TimeInForce::Type::OPG) {
-      return out << "OPG";
-    } else if(value == TimeInForce::Type::MOC) {
-      return out << "MOC";
-    } else if(value == TimeInForce::Type::IOC) {
-      return out << "IOC";
-    } else if(value == TimeInForce::Type::FOK) {
-      return out << "FOK";
-    } else if(value == TimeInForce::Type::GTX) {
-      return out << "GTX";
-    } else if(value == TimeInForce::Type::GTD) {
-      return out << "GTD";
-    }
-    return out << "NONE";
-  }
-
-  inline std::ostream& operator <<(
-      std::ostream& out, TimeInForce::Type::Type value) {
-    return out << TimeInForce::Type(value);
   }
 
   inline std::ostream& operator <<(
@@ -150,14 +124,14 @@ namespace Details {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::TimeInForce> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::TimeInForce& value,
-        unsigned int version) const {
-      shuttle.Shuttle("type", value.m_type);
-      shuttle.Shuttle("expiry", value.m_expiry);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::TimeInForce& value, unsigned int version) const {
+      shuttle.shuttle("type", value.m_type);
+      shuttle.shuttle("expiry", value.m_expiry);
     }
   };
 }

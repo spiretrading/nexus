@@ -56,15 +56,15 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::BboQuote> {
-    template<typename Shuttler>
+    template<IsShuttle S>
     void operator ()(
-        Shuttler& shuttle, Nexus::BboQuote& value, unsigned int version) const {
-      shuttle.Shuttle("bid", value.m_bid);
-      shuttle.Shuttle("ask", value.m_ask);
-      shuttle.Shuttle("timestamp", value.m_timestamp);
+        S& shuttle, Nexus::BboQuote& value, unsigned int version) const {
+      shuttle.shuttle("bid", value.m_bid);
+      shuttle.shuttle("ask", value.m_ask);
+      shuttle.shuttle("timestamp", value.m_timestamp);
     }
   };
 }

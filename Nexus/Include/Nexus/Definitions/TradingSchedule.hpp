@@ -96,7 +96,7 @@ namespace Nexus {
         boost::gregorian::date date, Venue venue, F f) const;
 
     private:
-      friend struct Beam::Serialization::Shuttle<TradingSchedule>;
+      friend struct Beam::Shuttle<TradingSchedule>;
       std::vector<Rule> m_rules;
   };
 
@@ -156,15 +156,15 @@ namespace Nexus {
     rules.emplace_back();
     for(auto& venue : node["venues"]) {
       rules.back().m_venues.push_back(
-        parse_venue(Beam::Extract<std::string>(venue), database));
+        parse_venue(Beam::extract<std::string>(venue), database));
     }
     for(auto& event_node : node["events"]) {
       auto event = TradingSchedule::Event();
-      auto time = Beam::Parsers::Parse<boost::posix_time::time_duration>(
-        Beam::Extract<std::string>(event_node, "time"));
+      auto time = Beam::parse<boost::posix_time::time_duration>(
+        Beam::extract<std::string>(event_node, "time"));
       event.m_timestamp =
         boost::posix_time::ptime(boost::gregorian::date(1900, 1, 1), time);
-      event.m_code = Beam::Extract<std::string>(event_node, "code");
+      event.m_code = Beam::extract<std::string>(event_node, "code");
       rules.back().m_events.push_back(event);
     }
     std::sort(rules.back().m_events.begin(), rules.back().m_events.end(),
@@ -178,28 +178,28 @@ namespace Nexus {
       if(weekdays_node.IsDefined()) {
         for(auto& weekday_node : weekdays_node) {
           rules.back().m_weekdays.push_back(
-            Beam::Extract<boost::gregorian::greg_weekday>(weekday_node));
+            Beam::extract<boost::gregorian::greg_weekday>(weekday_node));
         }
       }
       auto& days_node = time_node["days"];
       if(days_node.IsDefined()) {
         for(auto& day_node : days_node) {
           rules.back().m_days.push_back(
-            Beam::Extract<boost::gregorian::greg_day>(day_node));
+            Beam::extract<boost::gregorian::greg_day>(day_node));
         }
       }
       auto& months_node = time_node["months"];
       if(months_node.IsDefined()) {
         for(auto& month_node : months_node) {
           rules.back().m_months.push_back(
-            Beam::Extract<boost::gregorian::greg_month>(month_node));
+            Beam::extract<boost::gregorian::greg_month>(month_node));
         }
       }
       auto& years_node = time_node["years"];
       if(years_node.IsDefined()) {
         for(auto& year_node : years_node) {
           rules.back().m_years.push_back(
-            Beam::Extract<boost::gregorian::greg_year>(year_node));
+            Beam::extract<boost::gregorian::greg_year>(year_node));
         }
       }
     } else {
@@ -208,7 +208,7 @@ namespace Nexus {
         auto rule = rules.back();
         rules.pop_back();
         for(auto& date_node : dates_node) {
-          auto date = Beam::Extract<boost::gregorian::date>(date_node);
+          auto date = Beam::extract<boost::gregorian::date>(date_node);
           auto date_rule = rule;
           date_rule.m_days.push_back(date.day());
           date_rule.m_months.push_back(date.month());
@@ -269,37 +269,37 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::TradingSchedule::Event> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::TradingSchedule::Event& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::TradingSchedule::Event& value,
         unsigned int version) const {
-      shuttle.Shuttle("code", value.m_code);
-      shuttle.Shuttle("timestamp", value.m_timestamp);
+      shuttle.shuttle("code", value.m_code);
+      shuttle.shuttle("timestamp", value.m_timestamp);
     }
   };
 
   template<>
   struct Shuttle<Nexus::TradingSchedule::Rule> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::TradingSchedule::Rule& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::TradingSchedule::Rule& value,
         unsigned int version) const {
-      shuttle.Shuttle("venues", value.m_venues);
-      shuttle.Shuttle("weekdays", value.m_weekdays);
-      shuttle.Shuttle("days", value.m_days);
-      shuttle.Shuttle("months", value.m_months);
-      shuttle.Shuttle("years", value.m_years);
-      shuttle.Shuttle("events", value.m_events);
+      shuttle.shuttle("venues", value.m_venues);
+      shuttle.shuttle("weekdays", value.m_weekdays);
+      shuttle.shuttle("days", value.m_days);
+      shuttle.shuttle("months", value.m_months);
+      shuttle.shuttle("years", value.m_years);
+      shuttle.shuttle("events", value.m_events);
     }
   };
 
   template<>
   struct Shuttle<Nexus::TradingSchedule> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::TradingSchedule& value,
-        unsigned int version) const {
-      shuttle.Shuttle("rules", value.m_rules);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::TradingSchedule& value, unsigned int version) const {
+      shuttle.shuttle("rules", value.m_rules);
     }
   };
 }

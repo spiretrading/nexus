@@ -68,7 +68,7 @@ namespace Nexus {
       bool operator ==(const Tag&) const = default;
 
     private:
-      friend struct Beam::Serialization::Shuttle<Tag>;
+      friend struct Beam::Shuttle<Tag>;
       int m_key;
       Type m_value;
   };
@@ -90,14 +90,14 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::Tag> {
-    template<typename Shuttler>
+    template<IsShuttle S>
     void operator ()(
-        Shuttler& shuttle, Nexus::Tag& value, unsigned int version) const {
-      shuttle.Shuttle("key", value.m_key);
-      shuttle.Shuttle("value", value.m_value);
+        S& shuttle, Nexus::Tag& value, unsigned int version) const {
+      shuttle.shuttle("key", value.m_key);
+      shuttle.shuttle("value", value.m_value);
     }
   };
 }

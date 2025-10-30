@@ -3,6 +3,8 @@
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
@@ -111,14 +113,13 @@ TEST_SUITE("ExchangeRateTable") {
     table.add(ExchangeRate(CurrencyPair(USD, CAD), rational<int>(2, 1)));
     table.add(ExchangeRate(CurrencyPair(CAD, EUR), rational<int>(3, 1)));
     table.add(ExchangeRate(CurrencyPair(EUR, GBP), rational<int>(5, 1)));
-    Beam::Serialization::Tests::TestRoundTripShuttle(table,
-      [&] (const auto& received) {
-        REQUIRE(received.find(CurrencyPair(USD, CAD)) == 
-          ExchangeRate(CurrencyPair(USD, CAD), rational<int>(2, 1)));
-        REQUIRE(received.find(CurrencyPair(CAD, EUR)) == 
-          ExchangeRate(CurrencyPair(CAD, EUR), rational<int>(3, 1)));
-        REQUIRE(received.find(CurrencyPair(EUR, GBP)) == 
-          ExchangeRate(CurrencyPair(EUR, GBP), rational<int>(5, 1)));
-      });
+    test_round_trip_shuttle(table, [&] (const auto& received) {
+      REQUIRE(received.find(CurrencyPair(USD, CAD)) == 
+        ExchangeRate(CurrencyPair(USD, CAD), rational<int>(2, 1)));
+      REQUIRE(received.find(CurrencyPair(CAD, EUR)) == 
+        ExchangeRate(CurrencyPair(CAD, EUR), rational<int>(3, 1)));
+      REQUIRE(received.find(CurrencyPair(EUR, GBP)) == 
+        ExchangeRate(CurrencyPair(EUR, GBP), rational<int>(5, 1)));
+    });
   }
 }

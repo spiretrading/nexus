@@ -114,7 +114,7 @@ namespace Nexus {
       CurrencyDatabase& operator =(const CurrencyDatabase& database) noexcept;
 
     private:
-      friend struct Beam::Serialization::Shuttle<CurrencyDatabase>;
+      friend struct Beam::Shuttle<CurrencyDatabase>;
       std::atomic<std::shared_ptr<std::vector<Entry>>> m_entries;
   };
 
@@ -146,11 +146,11 @@ namespace Nexus {
    */
   inline CurrencyDatabase::Entry parse_currency_database_entry(
       const YAML::Node& node) {
-    return Beam::TryOrNest([&] {
+    return Beam::try_or_nest([&] {
       auto entry = CurrencyDatabase::Entry();
-      entry.m_id = CurrencyId(Beam::Extract<std::uint16_t>(node, "id"));
-      entry.m_code = Beam::Extract<std::string>(node, "code");
-      entry.m_sign = Beam::Extract<std::string>(node, "sign");
+      entry.m_id = CurrencyId(Beam::extract<std::uint16_t>(node, "id"));
+      entry.m_code = Beam::extract<std::string>(node, "code");
+      entry.m_sign = Beam::extract<std::string>(node, "sign");
       return entry;
     }, std::runtime_error("Failed to parse currency database entry."));
   }
@@ -161,7 +161,7 @@ namespace Nexus {
    * @return The CurrencyDatabase represented by the <i>node</i>.
    */
   inline CurrencyDatabase parse_currency_database(const YAML::Node& node) {
-    return Beam::TryOrNest([&] {
+    return Beam::try_or_nest([&] {
       auto database = CurrencyDatabase();
       for(auto& entry : node) {
         database.add(parse_currency_database_entry(entry));
@@ -312,54 +312,52 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
-  struct IsStructure<Nexus::CurrencyId> : std::false_type {};
+  constexpr auto is_structure<Nexus::CurrencyId> = false;
 
   template<>
   struct Send<Nexus::CurrencyId> {
-    template<typename Shuttler>
+    template<IsSender S>
     void operator ()(
-        Shuttler& shuttle, const char* name, Nexus::CurrencyId value) const {
-      shuttle.Send(name, static_cast<std::uint16_t>(value));
+        S& sender, const char* name, Nexus::CurrencyId value) const {
+      sender.send(name, static_cast<std::uint16_t>(value));
     }
   };
 
   template<>
   struct Receive<Nexus::CurrencyId> {
-    template<typename Shuttler>
+    template<IsReceiver R>
     void operator ()(
-        Shuttler& shuttle, const char* name, Nexus::CurrencyId& value) const {
-      auto representation = std::uint16_t();
-      shuttle.Shuttle(name, representation);
-      value = Nexus::CurrencyId(representation);
+        R& receiver, const char* name, Nexus::CurrencyId& value) const {
+      value = Nexus::CurrencyId(receive<std::uint16_t>(receiver, name));
     }
   };
 
   template<>
   struct Shuttle<Nexus::CurrencyDatabase::Entry> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::CurrencyDatabase::Entry& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::CurrencyDatabase::Entry& value,
         unsigned int version) const {
-      shuttle.Shuttle("id", value.m_id);
-      shuttle.Shuttle("code", value.m_code);
-      shuttle.Shuttle("sign", value.m_sign);
+      shuttle.shuttle("id", value.m_id);
+      shuttle.shuttle("code", value.m_code);
+      shuttle.shuttle("sign", value.m_sign);
     }
   };
 
   template<>
   struct Shuttle<Nexus::CurrencyDatabase> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::CurrencyDatabase& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::CurrencyDatabase& value,
         unsigned int version) const {
-      if constexpr(IsSender<Shuttler>::value) {
+      if constexpr(IsSender<S>) {
         if(auto entries = value.m_entries.load()) {
-          shuttle.Send("entries", *entries);
+          shuttle.send("entries", *entries);
         }
       } else {
         auto entries =
           std::make_shared<std::vector<Nexus::CurrencyDatabase::Entry>>();
-        shuttle.Shuttle("entries", *entries);
+        shuttle.shuttle("entries", *entries);
         value.m_entries.store(std::move(entries));
       }
     }

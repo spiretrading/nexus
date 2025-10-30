@@ -121,7 +121,7 @@ namespace Nexus {
 
     private:
       struct GlobalTag {};
-      friend struct Beam::Serialization::Shuttle<Region>;
+      friend struct Beam::Shuttle<Region>;
       std::string m_name;
       bool m_is_global;
       std::unordered_set<CountryCode> m_countries;
@@ -343,17 +343,17 @@ namespace Nexus {
       m_name(std::move(name)) {}
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::Region> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::Region& value,
-        unsigned int version) {
-      shuttle.Shuttle("name", value.m_name);
-      shuttle.Shuttle("is_global", value.m_is_global);
-      shuttle.Shuttle("countries", value.m_countries);
-      shuttle.Shuttle("venues", value.m_venues);
-      shuttle.Shuttle("securities", value.m_securities);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::Region& value, unsigned int version) const {
+      shuttle.shuttle("name", value.m_name);
+      shuttle.shuttle("is_global", value.m_is_global);
+      shuttle.shuttle("countries", value.m_countries);
+      shuttle.shuttle("venues", value.m_venues);
+      shuttle.shuttle("securities", value.m_securities);
     }
   };
 }

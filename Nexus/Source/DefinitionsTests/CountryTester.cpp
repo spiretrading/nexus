@@ -1,7 +1,10 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Country.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace Nexus;
 
 TEST_SUITE("Country") {
@@ -22,15 +25,13 @@ TEST_SUITE("Country") {
   }
 
   TEST_CASE("stream") {
-    auto ss = std::stringstream();
-    ss << CountryCode(156);
-    REQUIRE(ss.str() == "CN");
+    auto code = CountryCode(156);
+    REQUIRE(to_string(code) == "CN");
+    test_round_trip_shuttle(code);
   }
 
   TEST_CASE("stream_unknown") {
-    auto ss = std::stringstream();
-    ss << CountryCode(9999);
-    REQUIRE(ss.str() == "9999");
+    REQUIRE(to_string(CountryCode(9999)) == "9999");
   }
 
   TEST_CASE("context_stream") {
@@ -44,10 +45,6 @@ TEST_SUITE("Country") {
     auto ss = std::stringstream();
     ss << database << entry1.m_code;
     REQUIRE(ss.str() == "CA");
-  }
-
-  TEST_CASE("shuttle_code") {
-    Beam::Serialization::Tests::TestRoundTripShuttle(CountryCode(42));
   }
 
   TEST_CASE("none") {
@@ -108,15 +105,14 @@ TEST_SUITE("Country") {
   }
 
   TEST_CASE("shuttle") {
-    Beam::Serialization::Tests::TestRoundTripShuttle(DEFAULT_COUNTRIES,
-      [] (const auto& countries) {
-        auto expected_entries = DEFAULT_COUNTRIES.get_entries();
-        auto entries = countries.get_entries();
-        REQUIRE(expected_entries.size() == entries.size());
-        for(auto i = std::size_t(0); i != entries.size(); ++i) {
-          REQUIRE(expected_entries[i] == entries[i]);
-        }
-      });
+    test_round_trip_shuttle(DEFAULT_COUNTRIES, [] (const auto& countries) {
+      auto expected_entries = DEFAULT_COUNTRIES.get_entries();
+      auto entries = countries.get_entries();
+      REQUIRE(expected_entries.size() == entries.size());
+      for(auto i = std::size_t(0); i != entries.size(); ++i) {
+        REQUIRE(expected_entries[i] == entries[i]);
+      }
+    });
   }
 
   TEST_CASE("parse") {

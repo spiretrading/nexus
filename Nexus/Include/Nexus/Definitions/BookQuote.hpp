@@ -61,17 +61,17 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::BookQuote> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::BookQuote& value,
-        unsigned int version) const {
-      shuttle.Shuttle("mpid", value.m_mpid);
-      shuttle.Shuttle("is_primary_mpid", value.m_is_primary_mpid);
-      shuttle.Shuttle("venue", value.m_venue);
-      shuttle.Shuttle("quote", value.m_quote);
-      shuttle.Shuttle("timestamp", value.m_timestamp);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::BookQuote& value, unsigned int version) const {
+      shuttle.shuttle("mpid", value.m_mpid);
+      shuttle.shuttle("is_primary_mpid", value.m_is_primary_mpid);
+      shuttle.shuttle("venue", value.m_venue);
+      shuttle.shuttle("quote", value.m_quote);
+      shuttle.shuttle("timestamp", value.m_timestamp);
     }
   };
 }

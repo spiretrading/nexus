@@ -2,6 +2,8 @@
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Region.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace Nexus;
 using namespace Nexus::DefaultCountries;
 using namespace Nexus::DefaultVenues;
@@ -135,6 +137,6 @@ TEST_SUITE("Region") {
     auto region = Region(AU);
     region += TSX;
     region += Security("TST", ASX);
-    Beam::Serialization::Tests::TestRoundTripShuttle(region);
+    test_round_trip_shuttle(region);
   }
 }

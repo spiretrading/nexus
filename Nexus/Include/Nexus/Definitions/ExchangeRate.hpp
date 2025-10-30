@@ -66,14 +66,14 @@ namespace Nexus {
       m_rate(rate) {}
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::ExchangeRate> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::ExchangeRate& value,
-        unsigned int version) const {
-      shuttle.Shuttle("pair", value.m_pair);
-      shuttle.Shuttle("rate", value.m_rate);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::ExchangeRate& value, unsigned int version) const {
+      shuttle.shuttle("pair", value.m_pair);
+      shuttle.shuttle("rate", value.m_rate);
     }
   };
 }

@@ -64,7 +64,7 @@ namespace Nexus {
       void add(const ExchangeRate& rate);
 
     private:
-      friend struct Beam::Serialization::Shuttle<ExchangeRateTable>;
+      friend struct Beam::Shuttle<ExchangeRateTable>;
       mutable boost::mutex m_mutex;
       std::unordered_map<CurrencyPair, ExchangeRate> m_direct_rates;
       mutable std::unordered_map<CurrencyPair, ExchangeRate> m_derived_rates;
@@ -160,15 +160,15 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::ExchangeRateTable> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::ExchangeRateTable& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::ExchangeRateTable& value,
         unsigned int version) const {
       auto lock = boost::lock_guard(value.m_mutex);
-      shuttle.Shuttle("direct_rates", value.m_direct_rates);
-      if constexpr(IsReceiver<Shuttler>::value) {
+      shuttle.shuttle("direct_rates", value.m_direct_rates);
+      if constexpr(IsReceiver<S>) {
         value.m_derived_rates.clear();
       }
     }

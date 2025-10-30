@@ -1,8 +1,10 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Venue.hpp"
 
 using namespace Beam;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
@@ -239,24 +241,20 @@ TEST_SUITE("Venue") {
     auto database = VenueDatabase();
     database.add(entry);
     auto venue = parse_venue("LmnVenue", database);
-    auto ss = std::ostringstream();
-    ss << venue;
-    REQUIRE(ss.str() == "LMN");
-    ss.str(std::string());
+    REQUIRE(to_string(venue) == "LMN");
     auto parsed_entry = parse_venue_entry("LmnVenue", database);
-    ss << parsed_entry;
-    REQUIRE(ss.str() == "(LMN CA LMN America/Toronto CAD Desc3 LmnVenue)");
+    REQUIRE(to_string(parsed_entry) ==
+      "(LMN CA LMN America/Toronto CAD Desc3 LmnVenue)");
   }
 
   TEST_CASE("shuttle") {
-    Beam::Serialization::Tests::TestRoundTripShuttle(DEFAULT_VENUES,
-      [] (const auto& venues) {
-        auto expected_entries = DEFAULT_VENUES.get_entries();
-        auto entries = venues.get_entries();
-        REQUIRE(expected_entries.size() == entries.size());
-        for(auto i = std::size_t(0); i != entries.size(); ++i) {
-          REQUIRE(expected_entries[i] == entries[i]);
-        }
-      });
+    test_round_trip_shuttle(DEFAULT_VENUES, [] (const auto& venues) {
+      auto expected_entries = DEFAULT_VENUES.get_entries();
+      auto entries = venues.get_entries();
+      REQUIRE(expected_entries.size() == entries.size());
+      for(auto i = std::size_t(0); i != entries.size(); ++i) {
+        REQUIRE(expected_entries[i] == entries[i]);
+      }
+    });
   }
 }

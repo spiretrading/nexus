@@ -86,19 +86,6 @@ namespace Nexus {
     }
     return '?';
   }
-
-  inline std::ostream& operator <<(std::ostream& out, Side side) {
-    if(side == Side::ASK) {
-      return out << "ASK";
-    } else if(side == Side::BID) {
-      return out << "BID";
-    }
-    return out << "NONE";
-  }
-
-  inline std::ostream& operator <<(std::ostream& out, Side::Type side) {
-    return out << Side(side);
-  }
 }
 
 #endif

@@ -57,35 +57,6 @@ namespace Nexus {
       status == OrderStatus::CANCELED || status == OrderStatus::FILLED ||
       status == OrderStatus::DONE_FOR_DAY;
   }
-
-  inline std::ostream& operator <<(std::ostream& out, OrderStatus value) {
-    if(value == OrderStatus::PENDING_NEW) {
-      return out << "PENDING_NEW";
-    } else if(value ==  OrderStatus::REJECTED) {
-      return out << "REJECTED";
-    } else if(value ==  OrderStatus::NEW) {
-      return out << "NEW";
-    } else if(value ==  OrderStatus::PARTIALLY_FILLED) {
-      return out << "PARTIALLY_FILLED";
-    } else if(value ==  OrderStatus::EXPIRED) {
-      return out << "EXPIRED";
-    } else if(value ==  OrderStatus::CANCELED) {
-      return out << "CANCELED";
-    } else if(value ==  OrderStatus::SUSPENDED) {
-      return out << "SUSPENDED";
-    } else if(value ==  OrderStatus::STOPPED) {
-      return out << "STOPPED";
-    } else if(value ==  OrderStatus::FILLED) {
-      return out << "FILLED";
-    } else if(value ==  OrderStatus::DONE_FOR_DAY) {
-      return out << "DONE_FOR_DAY";
-    } else if(value ==  OrderStatus::PENDING_CANCEL) {
-      return out << "PENDING_CANCEL";
-    } else if(value == OrderStatus::CANCEL_REJECT) {
-      return out << "CANCEL_REJECT";
-    }
-    return out << "NONE";
-  }
 }
 
 #endif

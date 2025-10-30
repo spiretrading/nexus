@@ -1,8 +1,10 @@
-#include <sstream>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/BboQuote.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace Nexus;
 using namespace boost;
 using namespace boost::posix_time;
@@ -34,22 +36,11 @@ TEST_SUITE("BboQuote") {
     auto ask = make_ask(Money(6), Quantity(60));
     auto timestamp = time_from_string("2025-06-24 09:15:42.123");
     auto bbo = BboQuote(bid, ask, timestamp);
-    auto ss = std::ostringstream();
-    ss << bbo;
-    auto expected = "(" + std::string("(") +
-      lexical_cast<std::string>(bid.m_price) + " " +
-      lexical_cast<std::string>(bid.m_size) + " BID) " +
-      std::string("(") + lexical_cast<std::string>(ask.m_price) + " " +
-      lexical_cast<std::string>(ask.m_size) + " ASK) " +
-      lexical_cast<std::string>(timestamp) + ")";
-    REQUIRE(ss.str() == expected);
-  }
-
-  TEST_CASE("shuttle") {
-    auto bid = make_bid(Money(10), Quantity(1));
-    auto ask = make_ask(Money(20), Quantity(2));
-    auto timestamp = time_from_string("2025-06-25 15:30:00.000");
-    auto bbo = BboQuote(bid, ask, timestamp);
-    Beam::Serialization::Tests::TestRoundTripShuttle(bbo);
+    auto expected = "(" + std::string("(") + to_string(bid.m_price) + " " +
+      to_string(bid.m_size) + " BID) " + std::string("(") +
+      to_string(ask.m_price) + " " + to_string(ask.m_size) + " ASK) " +
+      to_string(timestamp) + ")";
+    REQUIRE(to_string(bbo) == expected);
+    test_round_trip_shuttle(bbo);
   }
 }

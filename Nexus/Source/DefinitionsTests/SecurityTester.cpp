@@ -1,7 +1,10 @@
-#include <sstream>
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Security.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
 
@@ -43,13 +46,10 @@ TEST_SUITE("Security") {
 
   TEST_CASE("stream") {
     auto security = Security("ARQ", TSXV);
-    auto ss = std::ostringstream();
-    ss << security;
-    REQUIRE(ss.str() == "ARQ.TSXV");
+    REQUIRE(to_string(security) == "ARQ.TSXV");
     auto empty = Security();
-    ss = std::ostringstream();
-    ss << empty;
-    REQUIRE(ss.str() == "");
+    REQUIRE(to_string(empty) == "");
+    test_round_trip_shuttle(security);
   }
 
   TEST_CASE("stream_input") {

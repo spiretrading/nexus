@@ -119,7 +119,7 @@ namespace Nexus {
       DestinationDatabase& operator =(const DestinationDatabase&) noexcept;
 
     private:
-      friend struct Beam::Serialization::Shuttle<DestinationDatabase>;
+      friend struct Beam::Shuttle<DestinationDatabase>;
       struct Data {
         std::vector<Entry> m_entries;
         std::unordered_map<Venue, Destination> m_preferred_destinations;
@@ -136,19 +136,19 @@ namespace Nexus {
    */
   inline DestinationDatabase::Entry parse_destination_database_entry(
       const YAML::Node& node, const VenueDatabase& database) {
-    return Beam::TryOrNest([&] {
+    return Beam::try_or_nest([&] {
       auto entry = DestinationDatabase::Entry();
-      entry.m_id = Beam::Extract<std::string>(node, "id");
-      auto names = Beam::Extract<std::vector<std::string>>(node, "venues");
+      entry.m_id = Beam::extract<std::string>(node, "id");
+      auto names = Beam::extract<std::vector<std::string>>(node, "venues");
       for(auto& name : names) {
         auto venue = parse_venue(name, database);
         if(!venue) {
           BOOST_THROW_EXCEPTION(
-            Beam::MakeYamlParserException("Invalid venue.", node.Mark()));
+            Beam::make_yaml_parser_exception("Invalid venue.", node.Mark()));
         }
         entry.m_venues.push_back(venue);
       }
-      entry.m_description = Beam::Extract<std::string>(node, "description");
+      entry.m_description = Beam::extract<std::string>(node, "description");
       return entry;
     }, std::runtime_error("Failed to parse destination database entry."));
   }
@@ -161,28 +161,28 @@ namespace Nexus {
    */
   inline DestinationDatabase parse_destination_database(
       const YAML::Node& node, const VenueDatabase& database) {
-    return Beam::TryOrNest([&] {
+    return Beam::try_or_nest([&] {
       auto destination_database = DestinationDatabase();
-      for(auto node : Beam::GetNode(node, "destinations")) {
+      for(auto node : Beam::get_node(node, "destinations")) {
         auto entry = parse_destination_database_entry(node, database);
         destination_database.add(entry);
       }
-      for(auto node : Beam::GetNode(node, "preferred_destinations")) {
+      for(auto node : Beam::get_node(node, "preferred_destinations")) {
         auto venue =
-          parse_venue(Beam::Extract<std::string>(node, "venue"), database);
+          parse_venue(Beam::extract<std::string>(node, "venue"), database);
         if(!venue) {
           BOOST_THROW_EXCEPTION(
-            Beam::MakeYamlParserException("Invalid venue.", node.Mark()));
+            Beam::make_yaml_parser_exception("Invalid venue.", node.Mark()));
         }
-        auto destination = Beam::Extract<std::string>(node, "destination");
+        auto destination = Beam::extract<std::string>(node, "destination");
         if(destination_database.from(destination).m_id.empty()) {
-          BOOST_THROW_EXCEPTION(
-            Beam::MakeYamlParserException("Invalid destination.", node.Mark()));
+          BOOST_THROW_EXCEPTION(Beam::make_yaml_parser_exception(
+            "Invalid destination.", node.Mark()));
         }
         destination_database.set_preferred_destination(venue, destination);
       }
       auto manual_order_entry = parse_destination_database_entry(
-        Beam::GetNode(node, "manual_order_entry"), database);
+        Beam::get_node(node, "manual_order_entry"), database);
       destination_database.set_manual_order_entry_destination(
         manual_order_entry);
       return destination_database;
@@ -387,37 +387,37 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::DestinationDatabase::Entry> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::DestinationDatabase::Entry& value, unsigned int version) const {
-      shuttle.Shuttle("id", value.m_id);
-      shuttle.Shuttle("venues", value.m_venues);
-      shuttle.Shuttle("description", value.m_description);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::DestinationDatabase::Entry& value,
+        unsigned int version) const {
+      shuttle.shuttle("id", value.m_id);
+      shuttle.shuttle("venues", value.m_venues);
+      shuttle.shuttle("description", value.m_description);
     }
   };
 
   template<>
   struct Shuttle<Nexus::DestinationDatabase> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::DestinationDatabase& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::DestinationDatabase& value,
         unsigned int version) const {
-      if constexpr(IsSender<Shuttler>::value) {
+      if constexpr(IsSender<S>) {
         if(auto data = value.m_data.load()) {
-          shuttle.Send("entries", data->m_entries);
-          shuttle.Send(
+          shuttle.send("entries", data->m_entries);
+          shuttle.send(
             "preferred_destinations", data->m_preferred_destinations);
-          shuttle.Send("manual_order_entry_destination",
+          shuttle.send("manual_order_entry_destination",
             data->m_manual_order_entry_destination);
         }
       } else {
         auto data = std::make_shared<Nexus::DestinationDatabase::Data>();
-        shuttle.Shuttle("entries", data->m_entries);
-        shuttle.Shuttle(
+        shuttle.shuttle("entries", data->m_entries);
+        shuttle.shuttle(
           "preferred_destinations", data->m_preferred_destinations);
-        shuttle.Shuttle("manual_order_entry_destination",
+        shuttle.shuttle("manual_order_entry_destination",
           data->m_manual_order_entry_destination);
         value.m_data.store(std::move(data));
       }

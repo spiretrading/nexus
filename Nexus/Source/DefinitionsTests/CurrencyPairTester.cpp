@@ -1,7 +1,10 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/CurrencyPair.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace Nexus;
 
 TEST_SUITE("CurrencyPair") {
@@ -31,13 +34,7 @@ TEST_SUITE("CurrencyPair") {
 
   TEST_CASE("stream") {
     auto pair = CurrencyPair(DefaultCurrencies::CAD, DefaultCurrencies::USD);
-    auto ss = std::stringstream();
-    ss << pair;
-    REQUIRE(ss.str() == "CAD/USD");
-  }
-
-  TEST_CASE("shuttle") {
-    Beam::Serialization::Tests::TestRoundTripShuttle(
-      CurrencyPair(DefaultCurrencies::CAD, DefaultCurrencies::USD));
+    REQUIRE(to_string(pair) == "CAD/USD");
+    test_round_trip_shuttle(pair);
   }
 }

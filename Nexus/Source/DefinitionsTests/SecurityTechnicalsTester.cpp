@@ -1,8 +1,10 @@
-#include <sstream>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace Nexus;
 
 TEST_SUITE("SecurityTechnicals") {
@@ -13,23 +15,16 @@ TEST_SUITE("SecurityTechnicals") {
     auto open = Money(7);
     auto close = Money(8);
     auto technicals = SecurityTechnicals(volume, high, low, open, close);
-    auto ss = std::stringstream();
-    ss << technicals;
     auto expected = std::stringstream();
     expected << '(' << volume << ' ' << high << ' ' << low << ' ' << open <<
       ' ' << close  << ')';
-    CHECK(ss.str() == expected.str());
-  }
-
-  TEST_CASE("shuttle") {
-    Beam::Serialization::Tests::TestRoundTripShuttle(
-      SecurityTechnicals(100, Money(10), Money(5), Money(7), Money(8)),
-      [] (const auto& technicals) {
-        REQUIRE(technicals.m_volume == 100);
-        REQUIRE(technicals.m_high == Money(10));
-        REQUIRE(technicals.m_low == Money(5));
-        REQUIRE(technicals.m_open == Money(7));
-        REQUIRE(technicals.m_close == Money(8));
-      });
+    CHECK(to_string(technicals) == expected.str());
+    test_round_trip_shuttle(technicals, [] (const auto& technicals) {
+      REQUIRE(technicals.m_volume == 100);
+      REQUIRE(technicals.m_high == Money(10));
+      REQUIRE(technicals.m_low == Money(5));
+      REQUIRE(technicals.m_open == Money(7));
+      REQUIRE(technicals.m_close == Money(8));
+    });
   }
 }

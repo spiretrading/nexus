@@ -254,57 +254,57 @@ namespace Nexus {
     return in;
   }
 
-  template<typename T, typename U>
-  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
-      std::is_same<U, Quantity>::value, bool> operator <(T lhs, U rhs) {
+  template<typename T, typename U> requires
+    std::is_convertible_v<T, Quantity> && std::is_same_v<U, Quantity>
+  constexpr bool operator <(T lhs, U rhs) {
     return Quantity(lhs) < rhs;
   }
 
-  template<typename T, typename U>
-  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
-      std::is_same<U, Quantity>::value, bool> operator <=(T lhs, U rhs) {
+  template<typename T, typename U> requires
+    std::is_convertible_v<T, Quantity> && std::is_same_v<U, Quantity>
+  constexpr bool operator <=(T lhs, U rhs) {
     return Quantity(lhs) <= rhs;
   }
 
-  template<typename T, typename U>
-  constexpr std::enable_if_t<std::is_convertible_v<T, Quantity>, bool>
-      operator ==(T lhs, Quantity rhs) {
+  template<typename T, typename U> requires
+    std::is_convertible_v<T, Quantity>
+  constexpr bool operator ==(T lhs, Quantity rhs) {
     return Quantity(lhs) == rhs;
   }
 
-  template<typename T, typename U>
-  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
-      std::is_same<U, Quantity>::value, bool> operator !=(T lhs, U rhs) {
+  template<typename T, typename U> requires
+    std::is_convertible_v<T, Quantity> && std::is_same_v<U, Quantity>
+  constexpr bool operator !=(T lhs, U rhs) {
     return Quantity(lhs) != rhs;
   }
 
-  template<typename T, typename U>
-  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
-      std::is_same<U, Quantity>::value, bool> operator >(T lhs, U rhs) {
+  template<typename T, typename U> requires
+    std::is_convertible_v<T, Quantity> && std::is_same_v<U, Quantity>
+  constexpr bool operator >(T lhs, U rhs) {
     return Quantity(lhs) > rhs;
   }
 
-  template<typename T, typename U>
-  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
-      std::is_same<U, Quantity>::value, bool> operator >=(T lhs, U rhs) {
+  template<typename T, typename U> requires
+    std::is_convertible_v<T, Quantity> && std::is_same_v<U, Quantity>
+  constexpr bool operator >=(T lhs, U rhs) {
     return Quantity(lhs) >= rhs;
   }
 
-  template<typename T, typename U>
-  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
-      std::is_same<U, Quantity>::value, Quantity> operator +(T lhs, U rhs) {
+  template<typename T, typename U> requires
+    std::is_convertible_v<T, Quantity> && std::is_same_v<U, Quantity>
+  constexpr Quantity operator +(T lhs, U rhs) {
     return Quantity(lhs) + rhs;
   }
 
-  template<typename T, typename U>
-  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
-      std::is_same<U, Quantity>::value, Quantity> operator -(T lhs, U rhs) {
+  template<typename T, typename U> requires
+    std::is_convertible_v<T, Quantity> && std::is_same_v<U, Quantity>
+  constexpr Quantity operator -(T lhs, U rhs) {
     return Quantity(lhs) - rhs;
   }
 
-  template<typename T, typename U>
-  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
-      std::is_same<U, Quantity>::value, Quantity> operator *(T lhs, U rhs) {
+  template<typename T, typename U> requires
+    std::is_convertible_v<T, Quantity> && std::is_same_v<U, Quantity>
+  constexpr Quantity operator *(T lhs, U rhs) {
     return Quantity(lhs) * rhs;
   }
 
@@ -313,9 +313,9 @@ namespace Nexus {
     return (lhs.numerator() * rhs) / lhs.denominator();
   }
 
-  template<typename T, typename U>
-  constexpr std::enable_if_t<std::is_convertible<T, Quantity>::value &&
-      std::is_same<U, Quantity>::value, Quantity> operator /(T lhs, U rhs) {
+  template<typename T, typename U> requires
+    std::is_convertible_v<T, Quantity> && std::is_same_v<U, Quantity>
+  constexpr Quantity operator /(T lhs, U rhs) {
     return Quantity(lhs) / rhs;
   }
 

@@ -149,7 +149,7 @@ namespace Nexus {
       VenueDatabase& operator =(const VenueDatabase&) noexcept;
 
     private:
-      friend struct Beam::Serialization::Shuttle<VenueDatabase>;
+      friend struct Beam::Shuttle<VenueDatabase>;
       std::atomic<std::shared_ptr<std::vector<Entry>>> m_entries;
   };
 
@@ -208,26 +208,26 @@ namespace Nexus {
   inline VenueDatabase::Entry parse_venue_database_entry(
       const YAML::Node& node, const CountryDatabase& country_database,
       const CurrencyDatabase& currency_database) {
-    return Beam::TryOrNest([&] {
+    return Beam::try_or_nest([&] {
       auto entry = VenueDatabase::Entry();
-      entry.m_venue = Venue(Beam::Extract<std::string>(node, "venue"));
+      entry.m_venue = Venue(Beam::extract<std::string>(node, "venue"));
       entry.m_country_code = parse_country_code(
-        Beam::Extract<std::string>(node, "country_code"), country_database);
+        Beam::extract<std::string>(node, "country_code"), country_database);
       if(!entry.m_country_code) {
-        BOOST_THROW_EXCEPTION(
-          Beam::MakeYamlParserException("Invalid country code.", node.Mark()));
+        BOOST_THROW_EXCEPTION(Beam::make_yaml_parser_exception(
+          "Invalid country code.", node.Mark()));
       }
-      entry.m_time_zone = Beam::Extract<std::string>(node, "time_zone");
+      entry.m_time_zone = Beam::extract<std::string>(node, "time_zone");
       entry.m_currency = parse_currency(
-        Beam::Extract<std::string>(node, "currency"), currency_database);
+        Beam::extract<std::string>(node, "currency"), currency_database);
       if(!entry.m_currency) {
         BOOST_THROW_EXCEPTION(
-          Beam::MakeYamlParserException("Invalid currency.", node.Mark()));
+          Beam::make_yaml_parser_exception("Invalid currency.", node.Mark()));
       }
-      entry.m_description = Beam::Extract<std::string>(node, "description");
-      entry.m_display_name = Beam::Extract<std::string>(node, "display_name");
-      entry.m_market_center = Beam::Extract<std::string>(node, "market_center",
-        entry.m_display_name);
+      entry.m_description = Beam::extract<std::string>(node, "description");
+      entry.m_display_name = Beam::extract<std::string>(node, "display_name");
+      entry.m_market_center =
+        Beam::extract<std::string>(node, "market_center", entry.m_display_name);
       return entry;
     }, std::runtime_error("Failed to parse venue database entry."));
   }
@@ -242,7 +242,7 @@ namespace Nexus {
   inline VenueDatabase parse_venue_database(
       const YAML::Node& node, const CountryDatabase& country_database,
       const CurrencyDatabase& currency_database) {
-    return Beam::TryOrNest([&] {
+    return Beam::try_or_nest([&] {
       auto database = VenueDatabase();
       for(auto& node : node) {
         database.add(parse_venue_database_entry(
@@ -310,7 +310,7 @@ namespace Nexus {
   }
 
   inline Venue::operator bool() const {
-    return !m_mic.IsEmpty();
+    return !m_mic.is_empty();
   }
 
   inline VenueDatabase::VenueDatabase(const VenueDatabase& database) noexcept
@@ -457,58 +457,54 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
-  struct IsStructure<Nexus::Venue> : std::false_type {};
+  constexpr auto is_structure<Nexus::Venue> = false;
 
   template<>
   struct Send<Nexus::Venue> {
-    template<typename Shuttler>
-    void operator ()(
-        Shuttler& shuttle, const char* name, Nexus::Venue value) const {
-      shuttle.Send(name, value.get_code());
+    template<IsSender S>
+    void operator ()(S& sender, const char* name, Nexus::Venue value) const {
+      sender.send(name, value.get_code());
     }
   };
 
   template<>
   struct Receive<Nexus::Venue> {
-    template<typename Shuttler>
-    void operator ()(
-        Shuttler& shuttle, const char* name, Nexus::Venue& value) const {
-      auto code = Nexus::Venue::Code();
-      shuttle.Shuttle(name, code);
-      value = Nexus::Venue(code);
+    template<IsReceiver R>
+    void operator ()(R& receiver, const char* name, Nexus::Venue& value) const {
+      value = Nexus::Venue(receive<Nexus::Venue::Code>(receiver, name));
     }
   };
 
   template<>
   struct Shuttle<Nexus::VenueDatabase::Entry> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::VenueDatabase::Entry& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::VenueDatabase::Entry& value,
         unsigned int version) const {
-      shuttle.Shuttle("venue", value.m_venue);
-      shuttle.Shuttle("country_code", value.m_country_code);
-      shuttle.Shuttle("market_center", value.m_market_center);
-      shuttle.Shuttle("time_zone", value.m_time_zone);
-      shuttle.Shuttle("currency", value.m_currency);
-      shuttle.Shuttle("description", value.m_description);
-      shuttle.Shuttle("display_name", value.m_display_name);
+      shuttle.shuttle("venue", value.m_venue);
+      shuttle.shuttle("country_code", value.m_country_code);
+      shuttle.shuttle("market_center", value.m_market_center);
+      shuttle.shuttle("time_zone", value.m_time_zone);
+      shuttle.shuttle("currency", value.m_currency);
+      shuttle.shuttle("description", value.m_description);
+      shuttle.shuttle("display_name", value.m_display_name);
     }
   };
 
   template<>
   struct Shuttle<Nexus::VenueDatabase> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::VenueDatabase& value,
-        unsigned int version) const {
-      if constexpr(IsSender<Shuttler>::value) {
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::VenueDatabase& value, unsigned int version) const {
+      if constexpr(IsSender<S>) {
         if(auto entries = value.m_entries.load()) {
-          shuttle.Send("entries", *entries);
+          shuttle.send("entries", *entries);
         }
       } else {
         auto entries =
           std::make_shared<std::vector<Nexus::VenueDatabase::Entry>>();
-        shuttle.Shuttle("entries", *entries);
+        shuttle.shuttle("entries", *entries);
         value.m_entries.store(std::move(entries));
       }
     }

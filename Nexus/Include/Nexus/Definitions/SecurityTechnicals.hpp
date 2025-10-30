@@ -33,17 +33,17 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::SecurityTechnicals> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::SecurityTechnicals& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::SecurityTechnicals& value,
         unsigned int version) const {
-      shuttle.Shuttle("volume", value.m_volume);
-      shuttle.Shuttle("high", value.m_high);
-      shuttle.Shuttle("low", value.m_low);
-      shuttle.Shuttle("open", value.m_open);
-      shuttle.Shuttle("close", value.m_close);
+      shuttle.shuttle("volume", value.m_volume);
+      shuttle.shuttle("high", value.m_high);
+      shuttle.shuttle("low", value.m_low);
+      shuttle.shuttle("open", value.m_open);
+      shuttle.shuttle("close", value.m_close);
     }
   };
 }

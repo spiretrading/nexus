@@ -16,7 +16,7 @@ namespace Nexus {
   };
 
   inline CurrencyPairNotFoundException::CurrencyPairNotFoundException()
-    : std::runtime_error("Currency pair not found.") {}
+    : CurrencyPairNotFoundException("Currency pair not found.") {}
 }
 
 #endif

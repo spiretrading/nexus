@@ -1,6 +1,5 @@
 #ifndef NEXUS_ORDER_TYPE_HPP
 #define NEXUS_ORDER_TYPE_HPP
-#include <ostream>
 #include <stdexcept>
 #include <string>
 #include <Beam/Collections/Enum.hpp>
@@ -35,21 +34,8 @@ namespace Nexus {
     } else if(value == OrderType::STOP) {
       return '3';
     }
-    BOOST_THROW_EXCEPTION(std::runtime_error("OrderType not found: " +
-      std::to_string(static_cast<int>(value))));
-  }
-
-  inline std::ostream& operator <<(std::ostream& out, OrderType value) {
-    if(value == OrderType::MARKET) {
-      return out << "MARKET";
-    } else if(value == OrderType::LIMIT) {
-      return out << "LIMIT";
-    } else if(value == OrderType::PEGGED) {
-      return out << "PEGGED";
-    } else if(value == OrderType::STOP) {
-      return out << "STOP";
-    }
-    return out << "NONE";
+    BOOST_THROW_EXCEPTION(std::runtime_error(
+      "OrderType not found: " + std::to_string(static_cast<int>(value))));
   }
 }
 

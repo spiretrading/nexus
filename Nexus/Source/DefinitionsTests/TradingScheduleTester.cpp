@@ -2,6 +2,8 @@
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/TradingSchedule.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
@@ -112,10 +114,8 @@ TEST_SUITE("TradingSchedule") {
 
   TEST_CASE("find_type") {
     auto events = std::vector<TradingSchedule::Event>();
-    events.push_back(
-      {"O", ptime(date(1984, 5, 7), time_duration(1, 30, 0, 0))});
-    events.push_back(
-      {"C", ptime(date(1984, 5, 7), time_duration(4, 30, 0, 0))});
+    events.push_back({"O", time_from_string("1984-05-07 01:30:00")});
+    events.push_back({"C", time_from_string("1984-05-07 04:30:00")});
     auto rules = std::vector<TradingSchedule::Rule>();
     rules.push_back(TradingSchedule::Rule{{TSXV}, {}, {}, {}, {}, events});
     auto schedule = TradingSchedule(rules);
@@ -146,7 +146,7 @@ TEST_SUITE("TradingSchedule") {
 
   TEST_CASE("stream") {
     auto event = TradingSchedule::Event(
-      "EV", ptime(date(1900, 1, 1), hours(9) + minutes(30)));
+      "EV", time_from_string("1900-01-01 09:30:00"));
     auto ss = std::ostringstream();
     ss << event;
     REQUIRE(ss.str() == "(EV 1900-Jan-01 09:30:00)");
@@ -154,16 +154,14 @@ TEST_SUITE("TradingSchedule") {
 
   TEST_CASE("shuttle") {
     auto events = std::vector<TradingSchedule::Event>();
-    events.push_back(
-      {"O", ptime(date(2025, 7, 1), time_duration(1, 30, 0, 0))});
+    events.push_back({"O", time_from_string("2025-07-01 01:30:00")});
     auto rules = std::vector<TradingSchedule::Rule>();
     rules.push_back(TradingSchedule::Rule(
       {TSXV}, {Tuesday}, {1}, {7}, {2025}, events));
     auto schedule = TradingSchedule(rules);
-    Beam::Serialization::Tests::TestRoundTripShuttle(schedule,
-      [&] (const auto& schedule) {
-        auto e1 = schedule.find(date(2025, 7, 1), TSXV);
-        REQUIRE(e1 == events);
-      });
+    test_round_trip_shuttle(schedule, [&] (const auto& schedule) {
+      auto e1 = schedule.find(date(2025, 7, 1), TSXV);
+      REQUIRE(e1 == events);
+    });
   }
 }

@@ -3,6 +3,8 @@
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/OrderImbalance.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -36,11 +38,6 @@ TEST_SUITE("OrderImbalance") {
       " " + expected_size + " " + expected_price + " " + expected_timestamp +
       ")";
     REQUIRE(ss.str() == expected_output);
-  }
-
-  TEST_CASE("shuttle") {
-    Beam::Serialization::Tests::TestRoundTripShuttle(OrderImbalance(
-      Security("ABC", DefaultVenues::TSX), Side::BID, 42, Money(12345),
-      time_from_string("2020-01-02 03:04:05")));
+    test_round_trip_shuttle(imbalance);
   }
 }

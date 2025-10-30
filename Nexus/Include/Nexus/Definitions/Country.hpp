@@ -130,7 +130,7 @@ namespace Nexus {
       CountryDatabase& operator =(const CountryDatabase& database) noexcept;
 
     private:
-      friend struct Beam::Serialization::Shuttle<CountryDatabase>;
+      friend struct Beam::Shuttle<CountryDatabase>;
       std::atomic<std::shared_ptr<std::vector<Entry>>> m_entries;
   };
 
@@ -174,14 +174,14 @@ namespace Nexus {
    */
   inline CountryDatabase::Entry parse_country_database_entry(
       const YAML::Node& node) {
-    return Beam::TryOrNest([&] {
+    return Beam::try_or_nest([&] {
       auto entry = CountryDatabase::Entry();
-      entry.m_name = Beam::Extract<std::string>(node, "name");
+      entry.m_name = Beam::extract<std::string>(node, "name");
       entry.m_two_letter_code =
-        Beam::Extract<std::string>(node, "two_letter_code");
+        Beam::extract<std::string>(node, "two_letter_code");
       entry.m_three_letter_code =
-        Beam::Extract<std::string>(node, "three_letter_code");
-      entry.m_code = Beam::Extract<CountryCode>(node, "code");
+        Beam::extract<std::string>(node, "three_letter_code");
+      entry.m_code = Beam::extract<CountryCode>(node, "code");
       return entry;
     }, std::runtime_error("Failed to parse country database entry."));
   }
@@ -192,7 +192,7 @@ namespace Nexus {
    * @return The CountryDatabase represented by the <i>node</i>.
    */
   inline CountryDatabase parse_country_database(const YAML::Node& node) {
-    return Beam::TryOrNest([&] {
+    return Beam::try_or_nest([&] {
       auto database = CountryDatabase();
       for(auto& entry : node) {
         database.add(parse_country_database_entry(entry));
@@ -387,55 +387,53 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
-  struct IsStructure<Nexus::CountryCode> : std::false_type {};
+  constexpr auto is_structure<Nexus::CountryCode> = false;
 
   template<>
   struct Send<Nexus::CountryCode> {
-    template<typename Shuttler>
+    template<IsSender S>
     void operator ()(
-        Shuttler& shuttle, const char* name, Nexus::CountryCode value) const {
-      shuttle.Send(name, static_cast<std::uint16_t>(value));
+        S& sender, const char* name, Nexus::CountryCode value) const {
+      sender.send(name, static_cast<std::uint16_t>(value));
     }
   };
 
   template<>
   struct Receive<Nexus::CountryCode> {
-    template<typename Shuttler>
+    template<IsReceiver R>
     void operator ()(
-        Shuttler& shuttle, const char* name, Nexus::CountryCode& value) const {
-      auto representation = std::uint16_t();
-      shuttle.Shuttle(name, representation);
-      value = Nexus::CountryCode(representation);
+        R& receiver, const char* name, Nexus::CountryCode& value) const {
+      value = Nexus::CountryCode(receive<std::uint16_t>(receiver, name));
     }
   };
 
   template<>
   struct Shuttle<Nexus::CountryDatabase::Entry> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::CountryDatabase::Entry& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::CountryDatabase::Entry& value,
         unsigned int version) const {
-      shuttle.Shuttle("code", value.m_code);
-      shuttle.Shuttle("name", value.m_name);
-      shuttle.Shuttle("two_letter_code", value.m_two_letter_code);
-      shuttle.Shuttle("three_letter_code", value.m_three_letter_code);
+      shuttle.shuttle("code", value.m_code);
+      shuttle.shuttle("name", value.m_name);
+      shuttle.shuttle("two_letter_code", value.m_two_letter_code);
+      shuttle.shuttle("three_letter_code", value.m_three_letter_code);
     }
   };
 
   template<>
   struct Shuttle<Nexus::CountryDatabase> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::CountryDatabase& value,
-        unsigned int version) const {
-      if constexpr(IsSender<Shuttler>::value) {
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::CountryDatabase& value, unsigned int version) const {
+      if constexpr(IsSender<S>) {
         if(auto entries = value.m_entries.load()) {
-          shuttle.Send("entries", *entries);
+          shuttle.send("entries", *entries);
         }
       } else {
         auto entries =
           std::make_shared<std::vector<Nexus::CountryDatabase::Entry>>();
-        shuttle.Shuttle("entries", *entries);
+        shuttle.shuttle("entries", *entries);
         value.m_entries.store(std::move(entries));
       }
     }

@@ -1,7 +1,10 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/ExchangeRate.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
@@ -61,14 +64,7 @@ TEST_SUITE("ExchangeRate") {
   TEST_CASE("stream") {
     auto pair = CurrencyPair(EUR, USD);
     auto rate = ExchangeRate(pair, rational<int>(3, 2));
-    auto ss = std::ostringstream();
-    ss << rate;
-    CHECK(ss.str() == "(EUR/USD 3/2)");
-  }
-
-  TEST_CASE("shuttle") {
-    auto pair = CurrencyPair(EUR, USD);
-    auto rate = ExchangeRate(pair, rational<int>(3, 2));
-    Beam::Serialization::Tests::TestRoundTripShuttle(rate);
+    CHECK(to_string(rate) == "(EUR/USD 3/2)");
+    test_round_trip_shuttle(rate);
   }
 }

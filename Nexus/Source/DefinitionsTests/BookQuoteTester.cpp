@@ -1,8 +1,10 @@
-#include <sstream>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/BookQuote.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -30,20 +32,12 @@ TEST_SUITE("BookQuote") {
     auto quote =
       BookQuote("MPX", true, Venue("TEST"), make_ask(500 * Money::ONE, 25),
         time_from_string("2025-06-25 15:30:00.000"));
-    auto ss = std::stringstream();
-    ss << quote;
     auto expected = std::stringstream();
     expected << "(" << quote.m_mpid << " " << quote.m_is_primary_mpid << " " <<
       quote.m_venue << " " << "(" << quote.m_quote.m_price << " " <<
       quote.m_quote.m_size << " " << quote.m_quote.m_side << ") " <<
       quote.m_timestamp << ")";
-    REQUIRE(ss.str() == expected.str());
-  }
-
-  TEST_CASE("shuttle") {
-    auto quote =
-      BookQuote("MPX", true, Venue("TEST"), make_ask(500 * Money::ONE, 25),
-        time_from_string("2025-06-25 15:30:00.000"));
-    Beam::Serialization::Tests::TestRoundTripShuttle(quote);
+    REQUIRE(to_string(quote) == expected.str());
+    test_round_trip_shuttle(quote);
   }
 }

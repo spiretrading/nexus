@@ -1,8 +1,10 @@
-#include <sstream>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/TimeInForce.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -27,30 +29,15 @@ TEST_SUITE("TimeInForce") {
     REQUIRE(tif.get_expiry() == expiry);
   }
 
-  TEST_CASE("stream_type") {
-    auto ss = std::ostringstream();
-    ss << TimeInForce::Type::OPG;
-    REQUIRE(ss.str() == "OPG");
-  }
-
   TEST_CASE("stream") {
     auto tif = TimeInForce(TimeInForce::Type::MOC);
-    auto ss = std::ostringstream();
-    ss << tif;
-    REQUIRE(ss.str() == "MOC");
+    REQUIRE(to_string(tif) == "MOC");
   }
 
-  TEST_CASE("steam_expiry") {
+  TEST_CASE("stream_expiry") {
     auto expiry = time_from_string("2025-06-30 08:45:00");
     auto tif = TimeInForce(TimeInForce::Type::GTX, expiry);
-    auto ss = std::ostringstream();
-    ss << tif;
-    auto output = ss.str();
-    REQUIRE(output == "(GTX " + lexical_cast<std::string>(expiry) + ")");
-  }
-
-  TEST_CASE("shuttle") {
-    Beam::Serialization::Tests::TestRoundTripShuttle(TimeInForce(
-      TimeInForce::Type::GTX, time_from_string("2025-06-30 08:45:00")));
+    REQUIRE(to_string(tif) == "(GTX " + to_string(expiry) + ")");
+    test_round_trip_shuttle(tif);
   }
 }

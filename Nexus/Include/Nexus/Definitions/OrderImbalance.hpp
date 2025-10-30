@@ -40,17 +40,17 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::OrderImbalance> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::OrderImbalance& value,
-        unsigned int version) const {
-      shuttle.Shuttle("security", value.m_security);
-      shuttle.Shuttle("side", value.m_side);
-      shuttle.Shuttle("size", value.m_size);
-      shuttle.Shuttle("reference_price", value.m_reference_price);
-      shuttle.Shuttle("timestamp", value.m_timestamp);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::OrderImbalance& value, unsigned int version) const {
+      shuttle.shuttle("security", value.m_security);
+      shuttle.shuttle("side", value.m_side);
+      shuttle.shuttle("size", value.m_size);
+      shuttle.shuttle("reference_price", value.m_reference_price);
+      shuttle.shuttle("timestamp", value.m_timestamp);
     }
   };
 }

@@ -1,9 +1,11 @@
-#include <sstream>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Tag.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
@@ -17,11 +19,9 @@ namespace {
     REQUIRE(tag.get_key() == key);
     REQUIRE(get<T>(tag.get_value()) == value);
     REQUIRE(tag.get_value().which() == type_id);
-    auto ss = std::stringstream();
-    ss << tag;
-    REQUIRE(ss.str() == "(" + lexical_cast<std::string>(key) + " " +
-      lexical_cast<std::string>(value) + ")");
-    Beam::Serialization::Tests::TestRoundTripShuttle(tag);
+    REQUIRE(
+      to_string(tag) == "(" + to_string(key) + " " + to_string(value) + ")");
+    test_round_trip_shuttle(tag);
   }
 }
 
@@ -33,8 +33,8 @@ TEST_SUITE("Tag") {
     require_tag(Tag::STRING_INDEX, 4, std::string("hello"));
     require_tag(Tag::DATE_INDEX, 5, date(2025, 6, 30));
     require_tag(Tag::DURATION_INDEX, 6, time_duration(1, 2, 3));
-    require_tag(Tag::DATE_TIME_INDEX, 7,
-      ptime(date(2025, 6, 30), time_duration(12, 34, 56)));
+    require_tag(
+      Tag::DATE_TIME_INDEX, 7, time_from_string("2025-06-30 12:34:56"));
     require_tag(Tag::QUANTITY_INDEX, 8, Quantity(123));
     require_tag(Tag::MONEY_INDEX, 9, Money(567));
   }

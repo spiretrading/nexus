@@ -1,6 +1,5 @@
-#include <sstream>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
-#include <boost/lexical_cast.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Quantity.hpp"
@@ -12,9 +11,9 @@ using namespace Nexus;
 
 TEST_SUITE("Quantity") {
   TEST_CASE("to_string") {
-    REQUIRE(lexical_cast<std::string>(Quantity(0)) == "0");
-    REQUIRE(lexical_cast<std::string>(Quantity(1)) == "1");
-    REQUIRE(lexical_cast<std::string>(Quantity(1.1)) == "1.100000");
+    REQUIRE(to_string(Quantity(0)) == "0");
+    REQUIRE(to_string(Quantity(1)) == "1");
+    REQUIRE(to_string(Quantity(1.1)) == "1.100000");
   }
 
   TEST_CASE("from_string") {

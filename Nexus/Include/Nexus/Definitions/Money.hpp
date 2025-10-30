@@ -159,10 +159,9 @@ namespace Nexus {
    * @param rhs The Money instance to be multiplied.
    * @return <i>lhs</i> * <i>rhs</i>.
    */
-  template<typename T>
-  constexpr std::enable_if_t<
-    std::is_same_v<decltype(std::declval<T>() * std::declval<Quantity>()),
-      Quantity>, Money> operator *(T lhs, Money rhs) {
+  template<typename T> requires std::is_same_v<
+    decltype(std::declval<T>() * std::declval<Quantity>()), Quantity>
+  constexpr Money operator *(T lhs, Money rhs) {
     return Money(lhs * static_cast<Quantity>(rhs));
   }
 
@@ -172,10 +171,9 @@ namespace Nexus {
    * @param rhs The scalar quantity.
    * @return <i>lhs</i> / <i>rhs</i>.
    */
-  template<typename T>
-  constexpr std::enable_if_t<
-    std::is_same_v<decltype(std::declval<Quantity>() / std::declval<T>()),
-      Quantity>, Money> operator /(Money lhs, T rhs) {
+  template<typename T> requires std::is_same_v<
+    decltype(std::declval<Quantity>() / std::declval<T>()), Quantity>
+  constexpr Money operator /(Money lhs, T rhs) {
     return Money(static_cast<Quantity>(lhs) / rhs);
   }
 
@@ -190,37 +188,82 @@ namespace Nexus {
   /**
    * Returns the floor.
    * @param value The value to floor.
-   * @param decimal_places The decimal place to floor to.
    */
-  inline Money floor(Money value, int decimal_places) {
-    return Money(floor(static_cast<Quantity>(value), decimal_places));
+  inline Money floor(Money value) {
+    return Money(floor(static_cast<Quantity>(value)));
+  }
+
+  /**
+   * Returns the greatest multiple of a given value less than or equal to the
+   * specified value.
+   * @param value The value to floor.
+   * @param multiple The multiple to floor to.
+   * @return The greatest multiple of <i>multiple</i> less than or equal to
+   *         <i>value</i>.
+   */
+  inline Money floor_to(Money value, Money multiple) {
+    return Money(
+      floor_to(static_cast<Quantity>(value), static_cast<Quantity>(multiple)));
   }
 
   /**
    * Returns the ceiling.
    * @param value The value to ceil.
-   * @param decimal_places The decimal place to ceil to.
    */
-  inline Money ceil(Money value, int decimal_places) {
-    return Money(ceil(static_cast<Quantity>(value), decimal_places));
+  inline Money ceil(Money value) {
+    return Money(ceil(static_cast<Quantity>(value)));
   }
 
   /**
-   * Returns the truncated value.
-   * @param value The value to truncate.
-   * @param decimal_places The decimal place to truncate.
+   * Returns the smallest multiple of a given value greater than or equal to the
+   * specified value.
+   * @param value The value to ceil.
+   * @param multiple The multiple to ceil to.
+   * @return The smallest multiple of <i>multiple</i> greater than or equal to
+   *         <i>value</i>.
    */
-  inline Money truncate(Money value, int decimal_places) {
-    return Money(truncate(static_cast<Quantity>(value), decimal_places));
+  inline Money ceil_to(Money value, Money multiple) {
+    return Money(
+      ceil_to(static_cast<Quantity>(value), static_cast<Quantity>(multiple)));
   }
 
   /**
    * Returns the rounded value.
    * @param value The value to round.
-   * @param decimal_places The decimal place to round to.
    */
-  inline Money round(Money value, int decimal_places) {
-    return Money(round(static_cast<Quantity>(value), decimal_places));
+  inline Money round(Money value) {
+    return Money(round(static_cast<Quantity>(value)));
+  }
+
+  /**
+   * Returns the multiple of a given value nearest to the specified value.
+   * @param value The value to round.
+   * @param multiple The multiple to round to.
+   * @return The multiple of <i>multiple</i> nearest to <i>value</i>.
+   */
+  inline Money round_to(Money value, Money multiple) {
+    return Money(
+      round_to(static_cast<Quantity>(value), static_cast<Quantity>(multiple)));
+  }
+
+  /**
+   * Returns the truncated value.
+   * @param value The value to truncate.
+   */
+  inline Money truncate(Money value) {
+    return Money(truncate(static_cast<Quantity>(value)));
+  }
+
+  /**
+   * Returns the multiple of a given value closest to zero from the specified
+   * value.
+   * @param value The value to truncate.
+   * @param multiple The multiple to truncate to.
+   * @return The multiple of <i>multiple</i> closest to zero from <i>value</i>.
+   */
+  inline Money truncate_to(Money value, Money multiple) {
+    return Money(truncate_to(
+      static_cast<Quantity>(value), static_cast<Quantity>(multiple)));
   }
 
   inline std::size_t hash_value(Money money) noexcept {
@@ -229,7 +272,7 @@ namespace Nexus {
 
   inline std::ostream& operator <<(std::ostream& out, Money value) {
     auto fraction =
-      static_cast<Quantity>(value) - floor(static_cast<Quantity>(value), 0);
+      static_cast<Quantity>(value) - floor(static_cast<Quantity>(value));
     if(fraction == 0) {
       return out << static_cast<Quantity>(value) << ".00";
     }
@@ -316,27 +359,23 @@ namespace Nexus {
   inline const Money Money::BIP(Money(1) / 10000);
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
-  struct IsStructure<Nexus::Money> : std::false_type {};
+  constexpr auto is_structure<Nexus::Money> = false;
 
   template<>
   struct Send<Nexus::Money> {
-    template<typename Shuttler>
-    void operator ()(
-        Shuttler& shuttle, const char* name, Nexus::Money value) const {
-      shuttle.Send(name, static_cast<Nexus::Quantity>(value));
+    template<IsSender S>
+    void operator ()(S& sender, const char* name, Nexus::Money value) const {
+      sender.send(name, static_cast<Nexus::Quantity>(value));
     }
   };
 
   template<>
   struct Receive<Nexus::Money> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        Nexus::Money& value) const {
-      auto representation = Nexus::Quantity();
-      shuttle.Shuttle(name, representation);
-      value = Nexus::Money(representation);
+    template<IsReceiver R>
+    void operator ()(R& receiver, const char* name, Nexus::Money& value) const {
+      value = Nexus::Money(receive<Nexus::Quantity>(receiver, name));
     }
   };
 }

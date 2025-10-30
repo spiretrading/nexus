@@ -11,7 +11,7 @@
 
 namespace Nexus {
 namespace Details {
-  BEAM_ENUM(ConditionTypeDefinition,
+  BEAM_BASIC_ENUM(ConditionTypeDefinition,
 
     /** A regular trade. */
     REGULAR,
@@ -21,6 +21,18 @@ namespace Details {
 
     /** A closing print. */
     CLOSE);
+
+  inline std::ostream& operator <<(
+      std::ostream& out, ConditionTypeDefinition::Type value) {
+    if(value == ConditionTypeDefinition::REGULAR) {
+      return out << "@";
+    } else if(value == ConditionTypeDefinition::OPEN) {
+      return out << "OPEN";
+    } else if(value == ConditionTypeDefinition::CLOSE) {
+      return out << "CLOSE";
+    }
+    return out << "NONE";
+  }
 }
 
   /** Stores a record of a transaction on a Security. */
@@ -67,19 +79,7 @@ namespace Details {
 
   inline std::ostream& operator <<(
       std::ostream& out, TimeAndSale::Condition::Type value) {
-    if(value == TimeAndSale::Condition::Type::REGULAR) {
-      return out << "@";
-    } else if(value == TimeAndSale::Condition::Type::OPEN) {
-      return out << "OPEN";
-    } else if(value == TimeAndSale::Condition::Type::CLOSE) {
-      return out << "CLOSE";
-    }
-    return out << "NONE";
-  }
-
-  inline std::ostream& operator <<(
-      std::ostream& out, TimeAndSale::Condition::Type::Type value) {
-    return out << TimeAndSale::Condition::Type(value);
+    return out << TimeAndSale::Condition::Type::Type(value);
   }
 
   inline std::ostream& operator <<(std::ostream& out,
@@ -96,29 +96,29 @@ namespace Details {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::TimeAndSale::Condition> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::TimeAndSale::Condition& value,
-        unsigned int version) {
-      shuttle.Shuttle("type", value.m_type);
-      shuttle.Shuttle("code", value.m_code);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::TimeAndSale::Condition& value,
+        unsigned int version) const {
+      shuttle.shuttle("type", value.m_type);
+      shuttle.shuttle("code", value.m_code);
     }
   };
 
   template<>
   struct Shuttle<Nexus::TimeAndSale> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::TimeAndSale& value,
-        unsigned int version) {
-      shuttle.Shuttle("timestamp", value.m_timestamp);
-      shuttle.Shuttle("price", value.m_price);
-      shuttle.Shuttle("size", value.m_size);
-      shuttle.Shuttle("condition", value.m_condition);
-      shuttle.Shuttle("market_center", value.m_market_center);
-      shuttle.Shuttle("buyer_mpid", value.m_buyer_mpid);
-      shuttle.Shuttle("seller_mpid", value.m_seller_mpid);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::TimeAndSale& value, unsigned int version) const {
+      shuttle.shuttle("timestamp", value.m_timestamp);
+      shuttle.shuttle("price", value.m_price);
+      shuttle.shuttle("size", value.m_size);
+      shuttle.shuttle("condition", value.m_condition);
+      shuttle.shuttle("market_center", value.m_market_center);
+      shuttle.shuttle("buyer_mpid", value.m_buyer_mpid);
+      shuttle.shuttle("seller_mpid", value.m_seller_mpid);
     }
   };
 }

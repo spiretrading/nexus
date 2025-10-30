@@ -2,6 +2,8 @@
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/RegionMap.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace Nexus;
 using namespace Nexus::DefaultCountries;
 using namespace Nexus::DefaultVenues;
@@ -44,19 +46,18 @@ TEST_SUITE("RegionMap") {
   }
 
   TEST_CASE("shuttle") {
-    auto map = Nexus::RegionMap(0);
+    auto map = RegionMap(0);
     map.set(AU, 1);
     map.set(CA, 2);
     map.set(GB, 3);
     map.set(Region(std::string("CustomRegion")), 4);
-    Beam::Serialization::Tests::TestRoundTripShuttle(map,
-      [&] (const auto& result) {
-        for(auto& region : map) {
-          REQUIRE(result.get(std::get<0>(region)) == std::get<1>(region));
-        }
-        for(auto& region : result) {
-          REQUIRE(map.get(std::get<0>(region)) == std::get<1>(region));
-        }
-      });
+    test_round_trip_shuttle(map, [&] (const auto& result) {
+      for(auto& region : map) {
+        REQUIRE(result.get(std::get<0>(region)) == std::get<1>(region));
+      }
+      for(auto& region : result) {
+        REQUIRE(map.get(std::get<0>(region)) == std::get<1>(region));
+      }
+    });
   }
 }

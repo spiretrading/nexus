@@ -1,7 +1,5 @@
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Side.hpp"
-#include <sstream>
-#include <string>
 
 using namespace Nexus;
 
@@ -39,17 +37,5 @@ TEST_SUITE("Side") {
     REQUIRE(to_char(Side::ASK) == 'A');
     REQUIRE(to_char(Side::BID) == 'B');
     REQUIRE(to_char(Side::NONE) == '?');
-  }
-
-  TEST_CASE("stream") {
-    auto ss = std::ostringstream();
-    ss << Side::ASK;
-    REQUIRE(ss.str() == "ASK");
-    ss.str(std::string());
-    ss << Side::BID;
-    REQUIRE(ss.str() == "BID");
-    ss.str(std::string());
-    ss << Side::NONE;
-    REQUIRE(ss.str() == "NONE");
   }
 }

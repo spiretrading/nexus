@@ -210,12 +210,12 @@ namespace Details {
       ConstIterator end() const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
-      friend struct Beam::Serialization::Shuttle<RegionMap>;
+      friend struct Beam::DataShuttle;
+      friend struct Beam::Shuttle<RegionMap>;
       Details::Node<Element> m_root;
       std::size_t m_size;
 
-      RegionMap(Beam::Serialization::ReceiveBuilder);
+      RegionMap();
       void insert(Details::Node<Element>& root, Region region, Element value);
       static Details::Node<Element>& find(
         Details::Node<Element>& root, const Region& region);
@@ -405,7 +405,7 @@ namespace Details {
   }
 
   template<typename T>
-  RegionMap<T>::RegionMap(Beam::Serialization::ReceiveBuilder)
+  RegionMap<T>::RegionMap()
     : m_root(Region::GLOBAL, {}),
       m_size(1) {}
 
@@ -466,37 +466,37 @@ namespace Details {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<typename T>
-  struct IsStructure<Nexus::RegionMap<T>> : std::false_type {};
+  constexpr auto is_structure<Nexus::RegionMap<T>> = false;
 
   template<typename T>
   struct Send<Nexus::RegionMap<T>> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
+    template<IsSender S>
+    void operator ()(S& sender, const char* name,
         const Nexus::RegionMap<T>& value) const {
-      shuttle.StartSequence(name, static_cast<int>(value.get_size()));
+      sender.start_sequence(name, static_cast<int>(value.get_size()));
       for(auto i = value.begin(); i != value.end(); ++i) {
-        shuttle.Shuttle(*i);
+        sender.send(*i);
       }
-      shuttle.EndSequence();
+      sender.end_sequence();
     }
   };
 
   template<typename T>
   struct Receive<Nexus::RegionMap<T>> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        Nexus::RegionMap<T>& value) const {
+    template<IsReceiver R>
+    void operator ()(
+        R& receiver, const char* name, Nexus::RegionMap<T>& value) const {
       auto size = 0;
-      shuttle.StartSequence(name, size);
+      receiver.start_sequence(name, size);
       for(auto i = 0; i < size; ++i) {
         auto entry = std::tuple<Nexus::Region, T>();
-        shuttle.Shuttle(entry);
+        receiver.shuttle(entry);
         value.set(
           std::move(std::get<0>(entry)), std::move(std::get<1>(entry)));
       }
-      shuttle.EndSequence();
+      receiver.end_sequence();
     }
   };
 }

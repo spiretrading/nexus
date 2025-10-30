@@ -73,14 +73,14 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::CurrencyPair> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::CurrencyPair& value,
-        unsigned int version) const {
-      shuttle.Shuttle("base", value.m_base);
-      shuttle.Shuttle("counter", value.m_counter);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::CurrencyPair& value, unsigned int version) const {
+      shuttle.shuttle("base", value.m_base);
+      shuttle.shuttle("counter", value.m_counter);
     }
   };
 }

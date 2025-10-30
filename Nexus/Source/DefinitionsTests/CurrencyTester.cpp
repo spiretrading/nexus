@@ -2,6 +2,8 @@
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Currency.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
 
@@ -28,10 +30,7 @@ TEST_SUITE("Currency") {
     auto read_id = CurrencyId();
     ss >> read_id;
     REQUIRE(read_id == CurrencyId(256));
-  }
-
-  TEST_CASE("shuttle_id") {
-    Beam::Serialization::Tests::TestRoundTripShuttle(CurrencyId(42));
+    test_round_trip_shuttle(CurrencyId(42));
   }
 
   TEST_CASE("none") {
@@ -100,7 +99,7 @@ TEST_SUITE("Currency") {
   }
 
   TEST_CASE("shuttle") {
-    Beam::Serialization::Tests::TestRoundTripShuttle(DEFAULT_CURRENCIES,
+    test_round_trip_shuttle(DEFAULT_CURRENCIES,
       [] (const auto& currencies) {
         auto expected_entries = DEFAULT_CURRENCIES.get_entries();
         auto entries = currencies.get_entries();
