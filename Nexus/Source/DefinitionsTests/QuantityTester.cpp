@@ -1127,9 +1127,7 @@ TEST_SUITE("Quantity") {
 
   TEST_CASE("stream") {
     auto quantity = parse_quantity("12345.678");
-    auto ss = std::stringstream();
-    ss << quantity;
-    REQUIRE(ss.str() == "12345.678000");
+    REQUIRE(to_string(quantity) == "12345.678000");
     test_round_trip_shuttle(quantity);
   }
 }

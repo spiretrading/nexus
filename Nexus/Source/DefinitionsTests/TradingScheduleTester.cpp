@@ -1,4 +1,5 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/TradingSchedule.hpp"
 
@@ -147,9 +148,7 @@ TEST_SUITE("TradingSchedule") {
   TEST_CASE("stream") {
     auto event = TradingSchedule::Event(
       "EV", time_from_string("1900-01-01 09:30:00"));
-    auto ss = std::ostringstream();
-    ss << event;
-    REQUIRE(ss.str() == "(EV 1900-Jan-01 09:30:00)");
+    REQUIRE(to_string(event) == "(EV 1900-Jan-01 09:30:00)");
   }
 
   TEST_CASE("shuttle") {

@@ -1,5 +1,5 @@
-#include <sstream>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/OrderImbalance.hpp"
 
@@ -13,31 +13,15 @@ TEST_SUITE("OrderImbalance") {
   TEST_CASE("stream") {
     auto imbalance = OrderImbalance(Security("ABC", DefaultVenues::TSX),
       Side::BID, 42, Money(12345), time_from_string("2020-01-02 03:04:05"));
-    auto ss = std::ostringstream();
-    ss << imbalance.m_security;
-    auto expected_security = ss.str();
-    ss.str("");
-    ss.clear();
-    ss << imbalance.m_side;
-    auto expected_side = ss.str();
-    ss.str("");
-    ss.clear();
-    ss << imbalance.m_size;
-    auto expected_size = ss.str();
-    ss.str("");
-    ss.clear();
-    ss << imbalance.m_reference_price;
-    auto expected_price = ss.str();
-    ss.str("");
-    ss.clear();
-    ss << imbalance.m_timestamp;
-    auto expected_timestamp = ss.str();
-    ss = std::ostringstream();
-    ss << imbalance;
+    auto expected_security = to_string(imbalance.m_security);
+    auto expected_side = to_string(imbalance.m_side);
+    auto expected_size = to_string(imbalance.m_size);
+    auto expected_price = to_string(imbalance.m_reference_price);
+    auto expected_timestamp = to_string(imbalance.m_timestamp);
     auto expected_output = "(" + expected_security + " " + expected_side +
       " " + expected_size + " " + expected_price + " " + expected_timestamp +
       ")";
-    REQUIRE(ss.str() == expected_output);
+    REQUIRE(to_string(imbalance) == expected_output);
     test_round_trip_shuttle(imbalance);
   }
 }
