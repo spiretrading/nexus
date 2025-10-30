@@ -21,8 +21,8 @@ namespace Nexus {
   /** Defines the set of types that can be used as a compliance parameter. */
   using ComplianceValue = boost::make_recursive_variant<bool, Quantity, double,
     std::string, boost::posix_time::ptime, boost::posix_time::time_duration,
-    Beam::ServiceLocator::DirectoryEntry, CurrencyId, Money, Security, Venue,
-    Region, std::vector<boost::recursive_variant_>>::type;
+    Beam::DirectoryEntry, CurrencyId, Money, Security, Venue, Region,
+    std::vector<boost::recursive_variant_>>::type;
 
   /** Stores a single parameter used by a compliance rule. */
   struct ComplianceParameter {
@@ -55,14 +55,14 @@ namespace boost {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::ComplianceParameter> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::ComplianceParameter& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::ComplianceParameter& value,
         unsigned int version) const {
-      shuttle.Shuttle("name", value.m_name);
-      shuttle.Shuttle("value", value.m_value);
+      shuttle.shuttle("name", value.m_name);
+      shuttle.shuttle("value", value.m_value);
     }
   };
 }

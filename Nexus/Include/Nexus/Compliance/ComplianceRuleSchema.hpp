@@ -22,7 +22,7 @@ namespace Nexus {
        * @param parameters The list of parameters.
        */
       ComplianceRuleSchema(
-        std::string name, std::vector<ComplianceParameter> parameters);
+        std::string name, std::vector<ComplianceParameter> parameters) noexcept;
 
       /** Returns the name of the rule. */
       const std::string& get_name() const;
@@ -33,7 +33,7 @@ namespace Nexus {
       bool operator ==(const ComplianceRuleSchema&) const = default;
 
     private:
-      friend struct Beam::Serialization::Shuttle<ComplianceRuleSchema>;
+      friend struct Beam::Shuttle<ComplianceRuleSchema>;
       std::string m_name;
       std::vector<ComplianceParameter> m_parameters;
   };
@@ -107,7 +107,7 @@ namespace Nexus {
   }
 
   inline ComplianceRuleSchema::ComplianceRuleSchema(
-    std::string name, std::vector<ComplianceParameter> parameters)
+    std::string name, std::vector<ComplianceParameter> parameters) noexcept
     : m_name(std::move(name)),
       m_parameters(std::move(parameters)) {}
 
@@ -121,14 +121,14 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::ComplianceRuleSchema> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::ComplianceRuleSchema& value,
-        unsigned int version) {
-      shuttle.Shuttle("name", value.m_name);
-      shuttle.Shuttle("parameters", value.m_parameters);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::ComplianceRuleSchema& value,
+        unsigned int version) const {
+      shuttle.shuttle("name", value.m_name);
+      shuttle.shuttle("parameters", value.m_parameters);
     }
   };
 }
