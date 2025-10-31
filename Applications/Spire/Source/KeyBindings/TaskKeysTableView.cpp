@@ -240,7 +240,8 @@ namespace {
       if(m_table_item =
           static_cast<TableItem*>(m_editable_box->parentWidget())) {
         auto body = m_table_item->unmount();
-        m_region_box->setFixedHeight(QWIDGETSIZE_MAX);
+        m_region_box->setMinimumHeight(0);
+        m_region_box->setMaximumHeight(QWIDGETSIZE_MAX);
         m_breakout_box = new BreakoutBox(*body, *m_table_item);
         m_breakout_box->show();
         m_breakout_box->setFocus();

@@ -56,7 +56,6 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      bool event(QEvent* event) override;
       void changeEvent(QEvent* event) override;
       bool focusNextPrevChild(bool next) override;
       void resizeEvent(QResizeEvent* event) override;
@@ -82,6 +81,7 @@ namespace Spire {
       QMargins m_input_box_padding;
       QMargins m_list_view_padding;
       int m_list_item_gap;
+      int m_list_overflow_gap;
       int m_min_scroll_height;
       int m_horizontal_scroll_bar_end_range;
       int m_vertical_scroll_bar_end_range;
@@ -91,6 +91,8 @@ namespace Spire {
       mutable boost::optional<QSize> m_size_hint;
 
       QWidget* make_tag(const std::shared_ptr<AnyListModel>& model, int index);
+      int get_available_width() const;
+      int get_height_for_width(int width) const;
       void install_text_proxy_event_filter();
       void scroll_to_text_box();
       void update_placeholder();

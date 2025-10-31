@@ -28,7 +28,6 @@ BreakoutBox::BreakoutBox(QWidget& body, QWidget& source)
   move(parentWidget()->mapFromGlobal(m_source->mapToGlobal(QPoint(0, 0))));
   setMinimumSize(m_source->size());
   setMaximumWidth(parentWidget()->width() - x());
-  resize(m_body->sizeHint());
   m_source->installEventFilter(this);
   parentWidget()->installEventFilter(this);
   qApp->installEventFilter(this);
