@@ -7,7 +7,6 @@
 #include "Nexus/DefinitionsServiceTests/TestDefinitionsClient.hpp"
 
 using namespace Beam;
-using namespace Beam::Routines;
 using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
@@ -27,7 +26,7 @@ namespace {
     auto future = std::async(std::launch::async, [&] {
       return std::forward<F>(f)(client);
     });
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto specific = std::get_if<O>(&*operation);
     REQUIRE(specific);
     specific->m_result.set(expected);

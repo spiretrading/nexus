@@ -21,7 +21,7 @@ namespace Nexus {
     public:
 
       /** The type used to build ServiceProtocolClients to the server. */
-      using ServiceProtocolClientBuilder = Beam::GetTryDereferenceType<B>;
+      using ServiceProtocolClientBuilder = Beam::dereference_t<B>;
 
       /**
        * Constructs a DefinitionsClient.
@@ -45,8 +45,8 @@ namespace Nexus {
       void close();
 
     private:
-      Beam::Services::ServiceProtocolClientHandler<B> m_client_handler;
-      Beam::IO::OpenState m_open_state;
+      Beam::ServiceProtocolClientHandler<B> m_client_handler;
+      Beam::OpenState m_open_state;
 
       ServiceDefinitionsClient(const ServiceDefinitionsClient&) = delete;
       ServiceDefinitionsClient& operator =(
@@ -57,9 +57,9 @@ namespace Nexus {
   template<typename BF>
   ServiceDefinitionsClient<B>::ServiceDefinitionsClient(BF&& client_builder)
       try : m_client_handler(std::forward<BF>(client_builder)) {
-    RegisterDefinitionsServices(Beam::Store(m_client_handler.GetSlots()));
+    register_definitions_services(Beam::out(m_client_handler.get_slots()));
   } catch(const std::exception&) {
-    std::throw_with_nested(Beam::IO::ConnectException(
+    std::throw_with_nested(Beam::ConnectException(
       "Failed to connect to the definitions server."));
   }
 
@@ -70,36 +70,36 @@ namespace Nexus {
 
   template<typename B>
   std::string ServiceDefinitionsClient<B>::load_minimum_spire_client_version() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_client_handler.GetClient();
-      return client->template SendRequest<
+    return Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
+      return client->template send_request<
         LoadMinimumSpireClientVersionService>();
     }, "Failed to load minimum Spire client version.");
   }
 
   template<typename B>
   std::string ServiceDefinitionsClient<B>::load_organization_name() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_client_handler.GetClient();
-      return client->template SendRequest<LoadOrganizationNameService>();
+    return Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
+      return client->template send_request<LoadOrganizationNameService>();
     }, "Failed to load organization name.");
   }
 
   template<typename B>
   CountryDatabase ServiceDefinitionsClient<B>::load_country_database() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_client_handler.GetClient();
-      return client->template SendRequest<LoadCountryDatabaseService>();
+    return Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
+      return client->template send_request<LoadCountryDatabaseService>();
     }, "Failed to load country database.");
   }
 
   template<typename B>
   boost::local_time::tz_database
       ServiceDefinitionsClient<B>::load_time_zone_database() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_client_handler.GetClient();
+    return Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
       auto time_zones =
-        client->template SendRequest<LoadTimeZoneDatabaseService>();
+        client->template send_request<LoadTimeZoneDatabaseService>();
       auto database = boost::local_time::tz_database();
       auto stream = std::stringstream(time_zones);
       database.load_from_stream(stream);
@@ -109,60 +109,60 @@ namespace Nexus {
 
   template<typename B>
   CurrencyDatabase ServiceDefinitionsClient<B>::load_currency_database() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_client_handler.GetClient();
-      return client->template SendRequest<LoadCurrencyDatabaseService>();
+    return Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
+      return client->template send_request<LoadCurrencyDatabaseService>();
     }, "Failed to load currency database.");
   }
 
   template<typename B>
   DestinationDatabase ServiceDefinitionsClient<B>::load_destination_database() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_client_handler.GetClient();
-      return client->template SendRequest<LoadDestinationDatabaseService>();
+    return Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
+      return client->template send_request<LoadDestinationDatabaseService>();
     }, "Failed to load destination database.");
   }
 
   template<typename B>
   VenueDatabase ServiceDefinitionsClient<B>::load_venue_database() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_client_handler.GetClient();
-      return client->template SendRequest<LoadVenueDatabaseService>();
+    return Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
+      return client->template send_request<LoadVenueDatabaseService>();
     }, "Failed to load venue database.");
   }
 
   template<typename B>
   std::vector<ExchangeRate> ServiceDefinitionsClient<B>::load_exchange_rates() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_client_handler.GetClient();
-      return client->template SendRequest<LoadExchangeRatesService>();
+    return Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
+      return client->template send_request<LoadExchangeRatesService>();
     }, "Failed to load exchange rates.");
   }
 
   template<typename B>
   std::vector<ComplianceRuleSchema>
       ServiceDefinitionsClient<B>::load_compliance_rule_schemas() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_client_handler.GetClient();
-      return client->template SendRequest<LoadComplianceRuleSchemasService>();
+    return Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
+      return client->template send_request<LoadComplianceRuleSchemasService>();
     }, "Failed to load compliance rule schemas.");
   }
 
   template<typename B>
   TradingSchedule ServiceDefinitionsClient<B>::load_trading_schedule() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_client_handler.GetClient();
-      return client->template SendRequest<LoadTradingScheduleService>();
+    return Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
+      return client->template send_request<LoadTradingScheduleService>();
     }, "Failed to load trading schedule.");
   }
 
   template<typename B>
   void ServiceDefinitionsClient<B>::close() {
-    if(m_open_state.SetClosing()) {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_client_handler.Close();
-    m_open_state.Close();
+    m_client_handler.close();
+    m_open_state.close();
   }
 }
 

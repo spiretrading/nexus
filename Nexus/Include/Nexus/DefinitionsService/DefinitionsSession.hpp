@@ -5,8 +5,7 @@
 namespace Nexus {
 
   /** Stores session info for a DefinitionsServlet client. */
-  class DefinitionsSession :
-    public Beam::ServiceLocator::AuthenticatedSession {};
+  class DefinitionsSession : public Beam::AuthenticatedSession {};
 }
 
 #endif

@@ -20,7 +20,7 @@ namespace Nexus {
   inline const auto DEFINITIONS_SERVICE_NAME =
     std::string("definitions_service");
 
-  BEAM_DEFINE_SERVICES(DefinitionsServices,
+  BEAM_DEFINE_SERVICES(definitions_services,
 
     /**
      * Loads the minimum version of the Spire client needed to login.

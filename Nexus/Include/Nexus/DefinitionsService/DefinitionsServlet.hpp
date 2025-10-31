@@ -37,10 +37,9 @@ namespace Nexus {
         std::vector<ComplianceRuleSchema> compliance_rule_schemas,
         TradingSchedule trading_schedule);
 
-      void RegisterServices(
-        Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots);
-
-      void Close();
+      void register_services(
+        Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots);
+      void close();
 
     private:
       std::string m_minimum_spire_client_version;
@@ -53,7 +52,7 @@ namespace Nexus {
       std::vector<ExchangeRate> m_exchange_rates;
       std::vector<ComplianceRuleSchema> m_compliance_rule_schemas;
       TradingSchedule m_trading_schedule;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       std::string on_load_minimum_spire_client_version(
         ServiceProtocolClient& client);
@@ -100,34 +99,34 @@ namespace Nexus {
       m_trading_schedule(std::move(trading_schedule)) {}
 
   template<typename C>
-  void DefinitionsServlet<C>::RegisterServices(
-      Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
-    RegisterDefinitionsServices(Store(slots));
-    LoadMinimumSpireClientVersionService::AddSlot(Store(slots), std::bind_front(
+  void DefinitionsServlet<C>::register_services(
+      Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots) {
+    register_definitions_services(out(slots));
+    LoadMinimumSpireClientVersionService::add_slot(out(slots), std::bind_front(
       &DefinitionsServlet::on_load_minimum_spire_client_version, this));
-    LoadOrganizationNameService::AddSlot(Store(slots), std::bind_front(
+    LoadOrganizationNameService::add_slot(out(slots), std::bind_front(
       &DefinitionsServlet::on_load_organization_name, this));
-    LoadCountryDatabaseService::AddSlot(Store(slots),
+    LoadCountryDatabaseService::add_slot(out(slots),
       std::bind_front(&DefinitionsServlet::on_load_country_database, this));
-    LoadTimeZoneDatabaseService::AddSlot(Store(slots),
+    LoadTimeZoneDatabaseService::add_slot(out(slots),
       std::bind_front(&DefinitionsServlet::on_load_time_zone_database, this));
-    LoadCurrencyDatabaseService::AddSlot(Store(slots),
+    LoadCurrencyDatabaseService::add_slot(out(slots),
       std::bind_front(&DefinitionsServlet::on_load_currency_database, this));
-    LoadDestinationDatabaseService::AddSlot(Store(slots),
+    LoadDestinationDatabaseService::add_slot(out(slots),
       std::bind_front(&DefinitionsServlet::on_load_destination_database, this));
-    LoadVenueDatabaseService::AddSlot(Store(slots),
+    LoadVenueDatabaseService::add_slot(out(slots),
       std::bind_front(&DefinitionsServlet::on_load_venue_database, this));
-    LoadExchangeRatesService::AddSlot(Store(slots),
+    LoadExchangeRatesService::add_slot(out(slots),
       std::bind_front(&DefinitionsServlet::on_load_exchange_rates, this));
-    LoadComplianceRuleSchemasService::AddSlot(Store(slots), std::bind_front(
+    LoadComplianceRuleSchemasService::add_slot(out(slots), std::bind_front(
       &DefinitionsServlet::on_load_compliance_rule_schemas, this));
-    LoadTradingScheduleService::AddSlot(Store(slots),
+    LoadTradingScheduleService::add_slot(out(slots),
       std::bind_front(&DefinitionsServlet::on_load_trading_schedule, this));
   }
 
   template<typename C>
-  void DefinitionsServlet<C>::Close() {
-    m_open_state.Close();
+  void DefinitionsServlet<C>::close() {
+    m_open_state.close();
   }
 
   template<typename C>
