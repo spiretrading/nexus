@@ -49,14 +49,14 @@ namespace Nexus {
        * @param timestamp The timestamp when the message was received.
        * @param bodies The list of message bodies.
        */
-      Message(Id id, Beam::ServiceLocator::DirectoryEntry account,
+      Message(Id id, Beam::DirectoryEntry account,
         boost::posix_time::ptime timestamp, std::vector<Body> bodies);
 
       /** Returns this message's unique id. */
       Id get_id() const;
 
       /** Returns the account that sent the message. */
-      const Beam::ServiceLocator::DirectoryEntry& get_account() const;
+      const Beam::DirectoryEntry& get_account() const;
 
       /** Returns the timestamp when the message was received. */
       boost::posix_time::ptime get_timestamp() const;
@@ -70,9 +70,9 @@ namespace Nexus {
       bool operator ==(const Message&) const = default;
 
     private:
-      friend struct Beam::Serialization::Shuttle<Message>;
+      friend struct Beam::Shuttle<Message>;
       Id m_id;
-      Beam::ServiceLocator::DirectoryEntry m_account;
+      Beam::DirectoryEntry m_account;
       boost::posix_time::ptime m_timestamp;
       std::vector<Body> m_bodies;
   };
@@ -96,7 +96,7 @@ namespace Nexus {
     m_bodies.push_back(Body::EMPTY);
   }
 
-  inline Message::Message(Id id, Beam::ServiceLocator::DirectoryEntry account,
+  inline Message::Message(Id id, Beam::DirectoryEntry account,
       boost::posix_time::ptime timestamp, std::vector<Body> bodies)
       : m_id(id),
         m_account(std::move(account)),
@@ -113,8 +113,7 @@ namespace Nexus {
     return m_id;
   }
 
-  inline const Beam::ServiceLocator::DirectoryEntry&
-      Message::get_account() const {
+  inline const Beam::DirectoryEntry& Message::get_account() const {
     return m_account;
   }
 
@@ -131,27 +130,27 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::Message::Body> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::Message::Body& value,
-        unsigned int version) const {
-      shuttle.Shuttle("content_type", value.m_content_type);
-      shuttle.Shuttle("message", value.m_message);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::Message::Body& value, unsigned int version) const {
+      shuttle.shuttle("content_type", value.m_content_type);
+      shuttle.shuttle("message", value.m_message);
     }
   };
 
   template<>
   struct Shuttle<Nexus::Message> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::Message& value,
-        unsigned int version) const {
-      shuttle.Shuttle("id", value.m_id);
-      shuttle.Shuttle("account", value.m_account);
-      shuttle.Shuttle("timestamp", value.m_timestamp);
-      shuttle.Shuttle("bodies", value.m_bodies);
-      if(Beam::Serialization::IsReceiver<Shuttler>::value) {
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::Message& value, unsigned int version) const {
+      shuttle.shuttle("id", value.m_id);
+      shuttle.shuttle("account", value.m_account);
+      shuttle.shuttle("timestamp", value.m_timestamp);
+      shuttle.shuttle("bodies", value.m_bodies);
+      if(Beam::IsReceiver<S>) {
         if(value.m_bodies.empty()) {
           value.m_bodies.push_back(Nexus::Message::Body::EMPTY);
         }

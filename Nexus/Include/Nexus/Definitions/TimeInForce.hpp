@@ -94,7 +94,7 @@ namespace Details {
     if(value.get_expiry() == boost::posix_time::not_a_date_time) {
       return out << value.get_type();
     }
-    return out << "(" << value.get_type() << " " << value.get_expiry() << ")";
+    return out << '(' << value.get_type() << ' ' << value.get_expiry() << ')';
   }
 
   inline std::size_t hash_value(const TimeInForce& value) noexcept {

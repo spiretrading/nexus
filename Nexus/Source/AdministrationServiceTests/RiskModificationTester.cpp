@@ -2,6 +2,8 @@
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationService/RiskModification.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -16,9 +18,8 @@ TEST_SUITE("risk_modification") {
     parameters.m_net_loss = Money(200);
     parameters.m_transition_time = seconds(100);
     auto modification = RiskModification(parameters);
-    Beam::Serialization::Tests::TestRoundTripShuttle(modification,
-      [&](const auto& received) {
-        REQUIRE(received.get_parameters() == parameters);
-      });
+    test_round_trip_shuttle(modification, [&] (const auto& received) {
+      REQUIRE(received.get_parameters() == parameters);
+    });
   }
 }

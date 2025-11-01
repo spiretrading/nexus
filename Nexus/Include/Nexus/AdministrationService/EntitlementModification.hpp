@@ -18,35 +18,34 @@ namespace Nexus {
        * Constructs an EntitlementModification.
        * @param entitlements The list of entitlements to grant to the account.
        */
-      EntitlementModification(std::vector<Beam::ServiceLocator::DirectoryEntry>
-        entitlements) noexcept;
+      EntitlementModification(
+        std::vector<Beam::DirectoryEntry> entitlements) noexcept;
 
       /** Returns the list of entitlements to grant. */
-      const std::vector<Beam::ServiceLocator::DirectoryEntry>&
-        get_entitlements() const;
+      const std::vector<Beam::DirectoryEntry>& get_entitlements() const;
 
     private:
-      friend struct Beam::Serialization::Shuttle<EntitlementModification>;
-      std::vector<Beam::ServiceLocator::DirectoryEntry> m_entitlements;
+      friend struct Beam::Shuttle<EntitlementModification>;
+      std::vector<Beam::DirectoryEntry> m_entitlements;
   };
 
   inline EntitlementModification::EntitlementModification(
-    std::vector<Beam::ServiceLocator::DirectoryEntry> entitlements) noexcept
+    std::vector<Beam::DirectoryEntry> entitlements) noexcept
     : m_entitlements(std::move(entitlements)) {}
 
-  inline const std::vector<Beam::ServiceLocator::DirectoryEntry>&
+  inline const std::vector<Beam::DirectoryEntry>&
       EntitlementModification::get_entitlements() const {
     return m_entitlements;
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::EntitlementModification> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::EntitlementModification& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::EntitlementModification& value,
         unsigned int version) const {
-      shuttle.Shuttle("entitlements", value.m_entitlements);
+      shuttle.shuttle("entitlements", value.m_entitlements);
     }
   };
 }

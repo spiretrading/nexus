@@ -8,8 +8,7 @@ namespace Nexus::Tests {
   TEST_CASE_TEMPLATE_DEFINE(
       "AdministrationDataStore", T, AdministrationDataStoreTestSuite) {
     using namespace Beam;
-    using namespace Beam::Serialization::Tests;
-    using namespace Beam::ServiceLocator;
+    using namespace Beam::Tests;
     using namespace boost;
     using namespace boost::posix_time;
     using namespace Nexus::DefaultCurrencies;

@@ -8,14 +8,13 @@
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
 namespace Nexus {
-  using SequencedOrderImbalance = Beam::Queries::SequencedValue<OrderImbalance>;
-  using VenueOrderImbalance =
-    Beam::Queries::IndexedValue<OrderImbalance, Venue>;
+  using SequencedOrderImbalance = Beam::SequencedValue<OrderImbalance>;
+  using VenueOrderImbalance = Beam::IndexedValue<OrderImbalance, Venue>;
   using SequencedVenueOrderImbalance =
-    Beam::Queries::SequencedValue<VenueOrderImbalance>;
+    Beam::SequencedValue<VenueOrderImbalance>;
 
   /** Defines the type of query used to receive a market data for a venue. */
-  using VenueMarketDataQuery = Beam::Queries::BasicQuery<Venue>;
+  using VenueMarketDataQuery = Beam::BasicQuery<Venue>;
 }
 
 #endif

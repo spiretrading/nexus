@@ -23,7 +23,7 @@ namespace Nexus {
   struct OrderFields {
 
     /** The account to assign the Order to. */
-    Beam::ServiceLocator::DirectoryEntry m_account;
+    Beam::DirectoryEntry m_account;
 
     /** The Security the Order was submitted for. */
     Security m_security;
@@ -68,7 +68,7 @@ namespace Nexus {
      * @param time_in_force The Order's time in force.
      * @param additional_fields Carries any additional fields to submit.
      */
-    OrderFields(Beam::ServiceLocator::DirectoryEntry account, Security security,
+    OrderFields(Beam::DirectoryEntry account, Security security,
       CurrencyId currency, OrderType type, Side side, Destination destination,
       Quantity quantity, Money price, TimeInForce time_in_force,
       std::vector<Tag> additional_fields) noexcept;
@@ -93,10 +93,9 @@ namespace Nexus {
    * @param quantity The quantity to order.
    * @param price The price of the Order.
    */
-  inline OrderFields make_limit_order_fields(
-      Beam::ServiceLocator::DirectoryEntry account, Security security,
-      CurrencyId currency, Side side, Destination destination,
-      Quantity quantity, Money price) {
+  inline OrderFields make_limit_order_fields(Beam::DirectoryEntry account,
+      Security security, CurrencyId currency, Side side,
+      Destination destination, Quantity quantity, Money price) {
     return OrderFields(std::move(account), std::move(security), currency,
       OrderType::LIMIT, side, std::move(destination), quantity, price,
       TimeInForce(TimeInForce::Type::DAY), {});
@@ -114,9 +113,8 @@ namespace Nexus {
   inline OrderFields make_limit_order_fields(Security security,
       CurrencyId currency, Side side, Destination destination,
       Quantity quantity, Money price) {
-    return make_limit_order_fields(Beam::ServiceLocator::DirectoryEntry(),
-      std::move(security), currency, side, std::move(destination), quantity,
-      price);
+    return make_limit_order_fields(Beam::DirectoryEntry(), std::move(security),
+      currency, side, std::move(destination), quantity, price);
   }
 
   /**
@@ -128,9 +126,9 @@ namespace Nexus {
    * @param quantity The quantity to order.
    * @param price The price of the Order.
    */
-  inline OrderFields make_limit_order_fields(
-      Beam::ServiceLocator::DirectoryEntry account, Security security,
-      Side side, Destination destination, Quantity quantity, Money price) {
+  inline OrderFields make_limit_order_fields(Beam::DirectoryEntry account,
+      Security security, Side side, Destination destination, Quantity quantity,
+      Money price) {
     return make_limit_order_fields(std::move(account), std::move(security),
       CurrencyId::NONE, side, std::move(destination), quantity, price);
   }
@@ -145,9 +143,8 @@ namespace Nexus {
    */
   inline OrderFields make_limit_order_fields(Security security, Side side,
       Destination destination, Quantity quantity, Money price) {
-    return make_limit_order_fields(Beam::ServiceLocator::DirectoryEntry(),
-      std::move(security), CurrencyId::NONE, side, std::move(destination),
-      quantity, price);
+    return make_limit_order_fields(Beam::DirectoryEntry(), std::move(security),
+      CurrencyId::NONE, side, std::move(destination), quantity, price);
   }
 
   /**
@@ -160,8 +157,8 @@ namespace Nexus {
    */
   inline OrderFields make_limit_order_fields(Security security,
       CurrencyId currency, Side side, Quantity quantity, Money price) {
-    return make_limit_order_fields(Beam::ServiceLocator::DirectoryEntry(),
-      std::move(security), currency, side, {}, quantity, price);
+    return make_limit_order_fields(Beam::DirectoryEntry(), std::move(security),
+      currency, side, {}, quantity, price);
   }
 
   /**
@@ -172,9 +169,8 @@ namespace Nexus {
    * @param quantity The quantity to order.
    * @param price The price of the Order.
    */
-  inline OrderFields make_limit_order_fields(
-      Beam::ServiceLocator::DirectoryEntry account, Security security,
-      Side side, Quantity quantity, Money price) {
+  inline OrderFields make_limit_order_fields(Beam::DirectoryEntry account,
+      Security security, Side side, Quantity quantity, Money price) {
     return make_limit_order_fields(std::move(account), std::move(security),
       CurrencyId::NONE, side, {}, quantity, price);
   }
@@ -189,8 +185,8 @@ namespace Nexus {
    */
   inline OrderFields make_limit_order_fields(Security security, Side side,
       Quantity quantity, Money price) {
-    return make_limit_order_fields(Beam::ServiceLocator::DirectoryEntry(),
-      std::move(security), CurrencyId::NONE, side, {}, quantity, price);
+    return make_limit_order_fields(Beam::DirectoryEntry(), std::move(security),
+      CurrencyId::NONE, side, {}, quantity, price);
   }
 
   /**
@@ -203,10 +199,9 @@ namespace Nexus {
    * @param destination The destination to submit the Order to.
    * @param quantity The quantity to order.
    */
-  inline OrderFields make_market_order_fields(
-      Beam::ServiceLocator::DirectoryEntry account, Security security,
-      CurrencyId currency, Side side, Destination destination,
-      Quantity quantity) {
+  inline OrderFields make_market_order_fields(Beam::DirectoryEntry account,
+      Security security, CurrencyId currency, Side side,
+      Destination destination, Quantity quantity) {
     return OrderFields(std::move(account), std::move(security), currency,
       OrderType::MARKET, side, std::move(destination), quantity, Money::ZERO,
       TimeInForce(TimeInForce::Type::DAY), {});
@@ -224,8 +219,8 @@ namespace Nexus {
   inline OrderFields make_market_order_fields(Security security,
       CurrencyId currency, Side side, Destination destination,
       Quantity quantity) {
-    return make_market_order_fields(Beam::ServiceLocator::DirectoryEntry(),
-      std::move(security), currency, side, std::move(destination), quantity);
+    return make_market_order_fields(Beam::DirectoryEntry(), std::move(security),
+      currency, side, std::move(destination), quantity);
   }
 
   /**
@@ -237,9 +232,9 @@ namespace Nexus {
    * @param destination The destination to submit the Order to.
    * @param quantity The quantity to order.
    */
-  inline OrderFields make_market_order_fields(
-      Beam::ServiceLocator::DirectoryEntry account, Security security,
-      Side side, Destination destination, Quantity quantity) {
+  inline OrderFields make_market_order_fields(Beam::DirectoryEntry account,
+      Security security, Side side, Destination destination,
+      Quantity quantity) {
     return make_market_order_fields(std::move(account), std::move(security),
       CurrencyId::NONE, side, std::move(destination), quantity);
   }
@@ -254,9 +249,8 @@ namespace Nexus {
    */
   inline OrderFields make_market_order_fields(Security security, Side side,
       Destination destination, Quantity quantity) {
-    return make_market_order_fields(Beam::ServiceLocator::DirectoryEntry(),
-      std::move(security), CurrencyId::NONE, side, std::move(destination),
-      quantity);
+    return make_market_order_fields(Beam::DirectoryEntry(), std::move(security),
+      CurrencyId::NONE, side, std::move(destination), quantity);
   }
 
   /**
@@ -269,8 +263,8 @@ namespace Nexus {
    */
   inline OrderFields make_market_order_fields(Security security,
       CurrencyId currency, Side side, Quantity quantity) {
-    return make_market_order_fields(Beam::ServiceLocator::DirectoryEntry(),
-      std::move(security), currency, side, {}, quantity);
+    return make_market_order_fields(Beam::DirectoryEntry(), std::move(security),
+      currency, side, {}, quantity);
   }
 
   /**
@@ -281,9 +275,8 @@ namespace Nexus {
    * @param side The Side of the Order.
    * @param quantity The quantity to order.
    */
-  inline OrderFields make_market_order_fields(
-      Beam::ServiceLocator::DirectoryEntry account, Security security,
-      Side side, Quantity quantity) {
+  inline OrderFields make_market_order_fields(Beam::DirectoryEntry account,
+      Security security, Side side, Quantity quantity) {
     return make_market_order_fields(std::move(account), std::move(security),
       CurrencyId::NONE, side, {}, quantity);
   }
@@ -297,8 +290,8 @@ namespace Nexus {
    */
   inline OrderFields make_market_order_fields(Security security, Side side,
       Quantity quantity) {
-    return make_market_order_fields(Beam::ServiceLocator::DirectoryEntry(),
-      std::move(security), CurrencyId::NONE, side, {}, quantity);
+    return make_market_order_fields(Beam::DirectoryEntry(), std::move(security),
+      CurrencyId::NONE, side, {}, quantity);
   }
 
   /**
@@ -346,7 +339,7 @@ namespace Nexus {
       m_price(Money::ZERO),
       m_time_in_force(TimeInForce::Type::GTC) {}
 
-  inline OrderFields::OrderFields(Beam::ServiceLocator::DirectoryEntry account,
+  inline OrderFields::OrderFields(Beam::DirectoryEntry account,
     Security security, CurrencyId currency, OrderType type, Side side,
     Destination destination, Quantity quantity, Money price,
     TimeInForce time_in_force, std::vector<Tag> additional_fields) noexcept
@@ -368,22 +361,22 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::OrderFields> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::OrderFields& value,
-        unsigned int version) const {
-      shuttle.Shuttle("account", value.m_account);
-      shuttle.Shuttle("security", value.m_security);
-      shuttle.Shuttle("currency", value.m_currency);
-      shuttle.Shuttle("type", value.m_type);
-      shuttle.Shuttle("side", value.m_side);
-      shuttle.Shuttle("destination", value.m_destination);
-      shuttle.Shuttle("quantity", value.m_quantity);
-      shuttle.Shuttle("price", value.m_price);
-      shuttle.Shuttle("time_in_force", value.m_time_in_force);
-      shuttle.Shuttle("additional_fields", value.m_additional_fields);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::OrderFields& value, unsigned int version) const {
+      shuttle.shuttle("account", value.m_account);
+      shuttle.shuttle("security", value.m_security);
+      shuttle.shuttle("currency", value.m_currency);
+      shuttle.shuttle("type", value.m_type);
+      shuttle.shuttle("side", value.m_side);
+      shuttle.shuttle("destination", value.m_destination);
+      shuttle.shuttle("quantity", value.m_quantity);
+      shuttle.shuttle("price", value.m_price);
+      shuttle.shuttle("time_in_force", value.m_time_in_force);
+      shuttle.shuttle("additional_fields", value.m_additional_fields);
     }
   };
 }

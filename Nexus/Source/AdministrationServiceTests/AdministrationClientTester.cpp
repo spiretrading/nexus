@@ -2,12 +2,9 @@
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
 
 using namespace Beam;
-using namespace Beam::Routines;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -23,7 +20,7 @@ namespace {
     auto future = std::async(std::launch::async, [&] {
       return std::forward<F>(f)(client);
     });
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto specific = std::get_if<O>(&*operation);
     REQUIRE(specific);
     specific->m_result.set(expected);
@@ -38,7 +35,7 @@ namespace {
     auto future = std::async(std::launch::async, [&] {
       return std::forward<F>(f)(client);
     });
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto specific = std::get_if<O>(&*operation);
     REQUIRE(specific);
     specific->m_result.set();
@@ -69,9 +66,9 @@ namespace {
 TEST_SUITE("AdministrationClient") {
   TEST_CASE("load_accounts_by_roles") {
     auto roles = AccountRoles();
-    roles.Set(AccountRole::TRADER);
-    auto accounts = std::vector{DirectoryEntry::MakeAccount(1, "trader1"),
-      DirectoryEntry::MakeAccount(2, "trader2")};
+    roles.set(AccountRole::TRADER);
+    auto accounts = std::vector{DirectoryEntry::make_account(1, "trader1"),
+      DirectoryEntry::make_account(2, "trader2")};
     require_operation<TestAdministrationClient::LoadAccountsByRolesOperation>(
       [&] (auto& client) {
         return client.load_accounts_by_roles(roles);
@@ -79,7 +76,7 @@ TEST_SUITE("AdministrationClient") {
   }
 
   TEST_CASE("load_administrators_root_entry") {
-    auto entry = DirectoryEntry::MakeAccount(1, "admin_root");
+    auto entry = DirectoryEntry::make_account(1, "admin_root");
     require_operation<
       TestAdministrationClient::LoadAdministratorsRootEntryOperation>(
         [&] (auto& client) {
@@ -88,7 +85,7 @@ TEST_SUITE("AdministrationClient") {
   }
 
   TEST_CASE("load_services_root_entry") {
-    auto entry = DirectoryEntry::MakeAccount(2, "services_root");
+    auto entry = DirectoryEntry::make_account(2, "services_root");
     require_operation<TestAdministrationClient::LoadServicesRootEntryOperation>(
       [&] (auto& client) {
         return client.load_services_root_entry();
@@ -96,7 +93,7 @@ TEST_SUITE("AdministrationClient") {
   }
 
   TEST_CASE("load_trading_groups_root_entry") {
-    auto entry = DirectoryEntry::MakeAccount(3, "trading_groups_root");
+    auto entry = DirectoryEntry::make_account(3, "trading_groups_root");
     require_operation<
       TestAdministrationClient::LoadTradingGroupsRootEntryOperation>(
         [&] (auto& client) {
@@ -105,7 +102,7 @@ TEST_SUITE("AdministrationClient") {
   }
 
   TEST_CASE("check_administrator") {
-    auto account = DirectoryEntry::MakeAccount(4, "admin_account");
+    auto account = DirectoryEntry::make_account(4, "admin_account");
     require_operation<TestAdministrationClient::CheckAdministratorOperation>(
       [&] (auto& client) {
         return client.check_administrator(account);
@@ -113,9 +110,9 @@ TEST_SUITE("AdministrationClient") {
   }
 
   TEST_CASE("load_account_roles") {
-    auto account = DirectoryEntry::MakeAccount(5, "account");
+    auto account = DirectoryEntry::make_account(5, "account");
     auto roles = AccountRoles();
-    roles.Set(AccountRole::MANAGER);
+    roles.set(AccountRole::MANAGER);
     require_operation<TestAdministrationClient::LoadAccountRolesOperation>(
       [&] (auto& client) {
         return client.load_account_roles(account);
@@ -123,8 +120,8 @@ TEST_SUITE("AdministrationClient") {
   }
 
   TEST_CASE("load_parent_trading_group") {
-    auto account = DirectoryEntry::MakeAccount(6, "trader_account");
-    auto parent_group = DirectoryEntry::MakeAccount(7, "parent_group");
+    auto account = DirectoryEntry::make_account(6, "trader_account");
+    auto parent_group = DirectoryEntry::make_account(7, "parent_group");
     require_operation<
       TestAdministrationClient::LoadParentTradingGroupOperation>(
         [&] (auto& client) {
@@ -133,7 +130,7 @@ TEST_SUITE("AdministrationClient") {
   }
 
   TEST_CASE("load_identity") {
-    auto account = DirectoryEntry::MakeAccount(8, "identity_account");
+    auto account = DirectoryEntry::make_account(8, "identity_account");
     auto identity = AccountIdentity();
     identity.m_first_name = "John";
     identity.m_last_name = "Doe";
@@ -148,7 +145,7 @@ TEST_SUITE("AdministrationClient") {
   }
 
   TEST_CASE("store_identity") {
-    auto account = DirectoryEntry::MakeAccount(9, "identity_account");
+    auto account = DirectoryEntry::make_account(9, "identity_account");
     auto identity = AccountIdentity();
     identity.m_first_name = "Jane";
     identity.m_last_name = "Smith";
@@ -159,7 +156,7 @@ TEST_SUITE("AdministrationClient") {
   }
 
   TEST_CASE("store_risk_parameters") {
-    auto account = DirectoryEntry::MakeAccount(10, "risk_account");
+    auto account = DirectoryEntry::make_account(10, "risk_account");
     auto risk_parameters = RiskParameters(USD, Money(1000),
       RiskState(RiskState::Type::ACTIVE, ptime()), Money(500), seconds(60));
     require_operation<TestAdministrationClient::StoreRiskParametersOperation>(
@@ -169,7 +166,7 @@ TEST_SUITE("AdministrationClient") {
   }
 
   TEST_CASE("store_risk_state") {
-    auto account = DirectoryEntry::MakeAccount(11, "risk_state_account");
+    auto account = DirectoryEntry::make_account(11, "risk_state_account");
     auto risk_state = RiskState(RiskState::Type::DISABLED, ptime());
     require_operation<TestAdministrationClient::StoreRiskStateOperation>(
       [&] (auto& client) {
@@ -181,8 +178,8 @@ TEST_SUITE("AdministrationClient") {
     auto id = AccountModificationRequest::Id(1);
     auto request = AccountModificationRequest(
       id, AccountModificationRequest::Type::ENTITLEMENTS,
-      DirectoryEntry::MakeAccount(12, "mod_account"),
-      DirectoryEntry::MakeAccount(13, "submitter_account"), ptime());
+      DirectoryEntry::make_account(12, "mod_account"),
+      DirectoryEntry::make_account(13, "submitter_account"), ptime());
     require_operation<
       TestAdministrationClient::LoadAccountModificationRequestOperation>(
         [&] (auto& client) {
@@ -194,7 +191,7 @@ TEST_SUITE("AdministrationClient") {
   }
 
   TEST_CASE("load_account_modification_request_ids") {
-    auto account = DirectoryEntry::MakeAccount(14, "mod_ids_account");
+    auto account = DirectoryEntry::make_account(14, "mod_ids_account");
     auto ids = std::vector<AccountModificationRequest::Id>{1, 2, 3};
     require_operation<
       TestAdministrationClient::LoadAccountModificationRequestIdsOperation>(
@@ -204,7 +201,7 @@ TEST_SUITE("AdministrationClient") {
   }
 
   TEST_CASE("load_managed_account_modification_request_ids") {
-    auto account = DirectoryEntry::MakeAccount(15, "managed_mod_ids_account");
+    auto account = DirectoryEntry::make_account(15, "managed_mod_ids_account");
     auto ids = std::vector<AccountModificationRequest::Id>{4, 5, 6};
     require_operation<TestAdministrationClient::
       LoadManagedAccountModificationRequestIdsOperation>([&] (auto& client) {
@@ -216,8 +213,8 @@ TEST_SUITE("AdministrationClient") {
   TEST_CASE("load_entitlement_modification") {
     auto id = AccountModificationRequest::Id(2);
     auto entitlements = std::vector<DirectoryEntry>();
-    entitlements.push_back(DirectoryEntry::MakeAccount(1, "alpha"));
-    entitlements.push_back(DirectoryEntry::MakeAccount(2, "beta"));
+    entitlements.push_back(DirectoryEntry::make_account(1, "alpha"));
+    entitlements.push_back(DirectoryEntry::make_account(2, "beta"));
     auto modification = EntitlementModification(entitlements);
     require_operation<
       TestAdministrationClient::LoadEntitlementModificationOperation>(
@@ -231,7 +228,7 @@ TEST_SUITE("AdministrationClient") {
 
   TEST_CASE("submit_account_modification_request_entitlement") {
     auto account =
-      DirectoryEntry::MakeAccount(16, "submit_entitlement_account");
+      DirectoryEntry::make_account(16, "submit_entitlement_account");
     auto modification = EntitlementModification();
     auto comment = Message(Message::Id(1), account, ptime(), {});
     auto request = AccountModificationRequest(AccountModificationRequest::Id(3),
@@ -260,7 +257,7 @@ TEST_SUITE("AdministrationClient") {
   }
 
   TEST_CASE("submit_account_modification_request_risk") {
-    auto account = DirectoryEntry::MakeAccount(17, "submit_risk_account");
+    auto account = DirectoryEntry::make_account(17, "submit_risk_account");
     auto modification = RiskModification(get_test_risk_parameters());
     auto comment = Message(Message::Id(2), account, ptime(), {});
     auto request = AccountModificationRequest(AccountModificationRequest::Id(5),
@@ -279,7 +276,7 @@ TEST_SUITE("AdministrationClient") {
     auto id = AccountModificationRequest::Id(6);
     auto status = AccountModificationRequest::Update(
       AccountModificationRequest::Status::GRANTED,
-        DirectoryEntry::MakeAccount(18, "approver_account"), 1, ptime());
+        DirectoryEntry::make_account(18, "approver_account"), 1, ptime());
     require_operation<
       TestAdministrationClient::LoadAccountModificationRequestStatusOperation>(
         [&] (auto& client) {
@@ -290,10 +287,10 @@ TEST_SUITE("AdministrationClient") {
   TEST_CASE("approve_account_modification_request") {
     auto id = AccountModificationRequest::Id(7);
     auto comment = Message(Message::Id(3),
-      DirectoryEntry::MakeAccount(19, "approver_account"), ptime(), {});
+      DirectoryEntry::make_account(19, "approver_account"), ptime(), {});
     auto update = AccountModificationRequest::Update(
       AccountModificationRequest::Status::GRANTED,
-      DirectoryEntry::MakeAccount(19, "approver_account"), 2, ptime());
+      DirectoryEntry::make_account(19, "approver_account"), 2, ptime());
     require_operation<
       TestAdministrationClient::ApproveAccountModificationRequestOperation>(
         [&] (auto& client) {
@@ -304,10 +301,10 @@ TEST_SUITE("AdministrationClient") {
   TEST_CASE("reject_account_modification_request") {
     auto id = AccountModificationRequest::Id(8);
     auto comment = Message(Message::Id(4),
-      DirectoryEntry::MakeAccount(20, "rejector_account"), ptime(), {});
+      DirectoryEntry::make_account(20, "rejector_account"), ptime(), {});
     auto update = AccountModificationRequest::Update(
       AccountModificationRequest::Status::REJECTED,
-      DirectoryEntry::MakeAccount(20, "rejector_account"), 3, ptime());
+      DirectoryEntry::make_account(20, "rejector_account"), 3, ptime());
     require_operation<
       TestAdministrationClient::RejectAccountModificationRequestOperation>(
         [&] (auto& client) {
@@ -318,7 +315,7 @@ TEST_SUITE("AdministrationClient") {
   TEST_CASE("load_message") {
     auto id = Message::Id(5);
     auto message = Message(
-      id, DirectoryEntry::MakeAccount(21, "message_account"), ptime(), {});
+      id, DirectoryEntry::make_account(21, "message_account"), ptime(), {});
     require_operation<TestAdministrationClient::LoadMessageOperation>(
       [&] (auto& client) {
         return client.load_message(id);
@@ -337,7 +334,7 @@ TEST_SUITE("AdministrationClient") {
   TEST_CASE("send_account_modification_request_message") {
     auto id = AccountModificationRequest::Id(10);
     auto message = Message(Message::Id(9),
-      DirectoryEntry::MakeAccount(22, "sender_account"), ptime(), {});
+      DirectoryEntry::make_account(22, "sender_account"), ptime(), {});
     require_operation<
       TestAdministrationClient::SendAccountModificationRequestMessageOperation>(
         [&] (auto& client) {

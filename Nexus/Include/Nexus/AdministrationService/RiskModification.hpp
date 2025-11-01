@@ -23,7 +23,7 @@ namespace Nexus {
       const RiskParameters& get_parameters() const;
 
     private:
-      friend struct Beam::Serialization::Shuttle<RiskModification>;
+      friend struct Beam::Shuttle<RiskModification>;
       RiskParameters m_parameters;
   };
 
@@ -35,13 +35,13 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::RiskModification> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::RiskModification& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::RiskModification& value,
         unsigned int version) const {
-      shuttle.Shuttle("parameters", value.m_parameters);
+      shuttle.shuttle("parameters", value.m_parameters);
     }
   };
 }

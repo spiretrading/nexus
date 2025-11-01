@@ -47,7 +47,7 @@ namespace Nexus {
     CountryCode m_country;
 
     /** The photo ID in JPG format. */
-    Beam::IO::SharedBuffer m_photo_id;
+    Beam::SharedBuffer m_photo_id;
 
     /** Some additional/misc. user notes. */
     std::string m_user_notes;
@@ -70,25 +70,25 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::AccountIdentity> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::AccountIdentity& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::AccountIdentity& value,
         unsigned int version) const {
-      shuttle.Shuttle("registration_time", value.m_registration_time);
-      shuttle.Shuttle("last_login_time", value.m_last_login_time);
-      shuttle.Shuttle("first_name", value.m_first_name);
-      shuttle.Shuttle("last_name", value.m_last_name);
-      shuttle.Shuttle("e_mail", value.m_email_address);
-      shuttle.Shuttle("address_line_one", value.m_address_line_one);
-      shuttle.Shuttle("address_line_two", value.m_address_line_two);
-      shuttle.Shuttle("address_line_three", value.m_address_line_three);
-      shuttle.Shuttle("city", value.m_city);
-      shuttle.Shuttle("province", value.m_province);
-      shuttle.Shuttle("country", value.m_country);
-      shuttle.Shuttle("photo_id", value.m_photo_id);
-      shuttle.Shuttle("user_notes", value.m_user_notes);
+      shuttle.shuttle("registration_time", value.m_registration_time);
+      shuttle.shuttle("last_login_time", value.m_last_login_time);
+      shuttle.shuttle("first_name", value.m_first_name);
+      shuttle.shuttle("last_name", value.m_last_name);
+      shuttle.shuttle("e_mail", value.m_email_address);
+      shuttle.shuttle("address_line_one", value.m_address_line_one);
+      shuttle.shuttle("address_line_two", value.m_address_line_two);
+      shuttle.shuttle("address_line_three", value.m_address_line_three);
+      shuttle.shuttle("city", value.m_city);
+      shuttle.shuttle("province", value.m_province);
+      shuttle.shuttle("country", value.m_country);
+      shuttle.shuttle("photo_id", value.m_photo_id);
+      shuttle.shuttle("user_notes", value.m_user_notes);
     }
   };
 }

@@ -4,16 +4,16 @@
 #include "Nexus/Queries/StandardDataTypes.hpp"
 
 namespace Nexus {
-  using QuantityValue = Beam::Queries::NativeValue<QuantityType>;
-  using MoneyValue = Beam::Queries::NativeValue<MoneyType>;
-  using SecurityValue = Beam::Queries::NativeValue<SecurityType>;
-  using SecurityInfoValue = Beam::Queries::NativeValue<SecurityInfoType>;
-  using OrderImbalanceValue = Beam::Queries::NativeValue<OrderImbalanceType>;
-  using BboQuoteValue = Beam::Queries::NativeValue<BboQuoteType>;
-  using BookQuoteValue = Beam::Queries::NativeValue<BookQuoteType>;
-  using TimeAndSaleValue = Beam::Queries::NativeValue<TimeAndSaleType>;
-  using OrderFieldsValue = Beam::Queries::NativeValue<OrderFieldsType>;
-  using OrderInfoValue = Beam::Queries::NativeValue<OrderInfoType>;
+  using QuantityValue = Beam::NativeValue<Quantity>;
+  using MoneyValue = Beam::NativeValue<Money>;
+  using SecurityValue = Beam::NativeValue<Security>;
+  using SecurityInfoValue = Beam::NativeValue<SecurityInfo>;
+  using OrderImbalanceValue = Beam::NativeValue<OrderImbalance>;
+  using BboQuoteValue = Beam::NativeValue<BboQuote>;
+  using BookQuoteValue = Beam::NativeValue<BookQuote>;
+  using TimeAndSaleValue = Beam::NativeValue<TimeAndSale>;
+  using OrderFieldsValue = Beam::NativeValue<OrderFields>;
+  using OrderInfoValue = Beam::NativeValue<OrderInfo>;
 }
 
 #endif

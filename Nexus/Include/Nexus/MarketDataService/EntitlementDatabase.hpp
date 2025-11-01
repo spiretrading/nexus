@@ -34,7 +34,7 @@ namespace Nexus {
          * The entitlement's group entry, basically it's the directory all
          * accounts with this entitlement are located under.
          */
-        Beam::ServiceLocator::DirectoryEntry m_group_entry;
+        Beam::DirectoryEntry m_group_entry;
 
         /**
          * Stores the entitlement's applicability.  Each market this entitlement
@@ -66,13 +66,13 @@ namespace Nexus {
        * Removes an Entry.
        * @param group The Entry's group to delete.
        */
-      void remove(const Beam::ServiceLocator::DirectoryEntry& group);
+      void remove(const Beam::DirectoryEntry& group);
 
       EntitlementDatabase& operator =(
         const EntitlementDatabase& database) noexcept;
 
     private:
-      friend struct Beam::Serialization::Shuttle<EntitlementDatabase>;
+      friend struct Beam::Shuttle<EntitlementDatabase>;
       std::atomic<std::shared_ptr<std::vector<Entry>>> m_entries;
   };
 
@@ -117,8 +117,7 @@ namespace Nexus {
     }
   }
 
-  inline void EntitlementDatabase::remove(
-      const Beam::ServiceLocator::DirectoryEntry& group) {
+  inline void EntitlementDatabase::remove(const Beam::DirectoryEntry& group) {
     while(true) {
       auto entries = m_entries.load();
       if(!entries) {
@@ -148,33 +147,33 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::EntitlementDatabase::Entry> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::EntitlementDatabase::Entry& value, unsigned int version) const {
-      shuttle.Shuttle("name", value.m_name);
-      shuttle.Shuttle("price", value.m_price);
-      shuttle.Shuttle("currency", value.m_currency);
-      shuttle.Shuttle("group_entry", value.m_group_entry);
-      shuttle.Shuttle("applicability", value.m_applicability);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::EntitlementDatabase::Entry& value,
+        unsigned int version) const {
+      shuttle.shuttle("name", value.m_name);
+      shuttle.shuttle("price", value.m_price);
+      shuttle.shuttle("currency", value.m_currency);
+      shuttle.shuttle("group_entry", value.m_group_entry);
+      shuttle.shuttle("applicability", value.m_applicability);
     }
   };
 
   template<>
   struct Shuttle<Nexus::EntitlementDatabase> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::EntitlementDatabase& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::EntitlementDatabase& value,
         unsigned int version) const {
-      if constexpr(IsSender<Shuttler>::value) {
+      if constexpr(IsSender<S>) {
         if(auto entries = value.m_entries.load()) {
-          shuttle.Send("entries", *entries);
+          shuttle.send("entries", *entries);
         }
       } else {
         auto entries =
           std::make_shared<std::vector<Nexus::EntitlementDatabase::Entry>>();
-        shuttle.Shuttle("entries", *entries);
+        shuttle.shuttle("entries", *entries);
         value.m_entries.store(std::move(entries));
       }
     }

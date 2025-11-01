@@ -112,7 +112,7 @@ namespace Nexus {
   bool contains(const EntitlementSet& entitlements,
       const SecurityMarketDataQuery& query) {
     return entitlements.contains(
-      query.GetIndex().get_venue(), get_market_data_type<T>());
+      query.get_index().get_venue(), get_market_data_type<T>());
   }
 
   /**
@@ -126,7 +126,7 @@ namespace Nexus {
   template<typename T>
   bool contains(
       const EntitlementSet& entitlements, const VenueMarketDataQuery& query) {
-    return entitlements.contains(query.GetIndex(), get_market_data_type<T>());
+    return entitlements.contains(query.get_index(), get_market_data_type<T>());
   }
 
   inline bool EntitlementSet::contains(
@@ -138,23 +138,23 @@ namespace Nexus {
         return false;
       }
     }
-    return i->second.Test(type);
+    return i->second.test(type);
   }
 
   inline void EntitlementSet::grant(
       const EntitlementKey& key, MarketDataTypeSet messages) {
-    m_entitlements[key].SetAll(messages);
+    m_entitlements[key].set(messages);
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::EntitlementKey> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::EntitlementKey& value,
-        unsigned int version) const {
-      shuttle.Shuttle("venue", value.m_venue);
-      shuttle.Shuttle("source", value.m_source);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::EntitlementKey& value, unsigned int version) const {
+      shuttle.shuttle("venue", value.m_venue);
+      shuttle.shuttle("source", value.m_source);
     }
   };
 }

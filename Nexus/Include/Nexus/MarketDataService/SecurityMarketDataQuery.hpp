@@ -12,25 +12,22 @@
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
 namespace Nexus {
-  using SequencedBboQuote = Beam::Queries::SequencedValue<BboQuote>;
-  using SequencedBookQuote = Beam::Queries::SequencedValue<BookQuote>;
-  using SequencedTimeAndSale = Beam::Queries::SequencedValue<TimeAndSale>;
-  using SecurityBboQuote = Beam::Queries::IndexedValue<BboQuote, Security>;
-  using SecurityBookQuote = Beam::Queries::IndexedValue<BookQuote, Security>;
-  using SecurityTimeAndSale =
-    Beam::Queries::IndexedValue<TimeAndSale, Security>;
-  using SequencedSecurityBboQuote =
-    Beam::Queries::SequencedValue<SecurityBboQuote>;
-  using SequencedSecurityBookQuote =
-    Beam::Queries::SequencedValue<SecurityBookQuote>;
+  using SequencedBboQuote = Beam::SequencedValue<BboQuote>;
+  using SequencedBookQuote = Beam::SequencedValue<BookQuote>;
+  using SequencedTimeAndSale = Beam::SequencedValue<TimeAndSale>;
+  using SecurityBboQuote = Beam::IndexedValue<BboQuote, Security>;
+  using SecurityBookQuote = Beam::IndexedValue<BookQuote, Security>;
+  using SecurityTimeAndSale = Beam::IndexedValue<TimeAndSale, Security>;
+  using SequencedSecurityBboQuote = Beam::SequencedValue<SecurityBboQuote>;
+  using SequencedSecurityBookQuote = Beam::SequencedValue<SecurityBookQuote>;
   using SequencedSecurityTimeAndSale =
-    Beam::Queries::SequencedValue<SecurityTimeAndSale>;
+    Beam::SequencedValue<SecurityTimeAndSale>;
 
   /** Defines the type of query used to receive a Security's market data. */
-  using SecurityMarketDataQuery = Beam::Queries::BasicQuery<Security>;
+  using SecurityMarketDataQuery = Beam::BasicQuery<Security>;
 
   /** Defines the type of query used to load SecurityInfo objects. */
-  using SecurityInfoQuery = Beam::Queries::PagedQuery<Region, Security>;
+  using SecurityInfoQuery = Beam::PagedQuery<Region, Security>;
 
   /**
    * Returns a query to retrieve the SecurityInfo for a single security.
@@ -39,8 +36,8 @@ namespace Nexus {
    */
   inline SecurityInfoQuery make_security_info_query(const Security& security) {
     auto query = SecurityInfoQuery();
-    query.SetIndex(security);
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
+    query.set_index(security);
+    query.set_snapshot_limit(Beam::SnapshotLimit::from_head(1));
     return query;
   }
 }

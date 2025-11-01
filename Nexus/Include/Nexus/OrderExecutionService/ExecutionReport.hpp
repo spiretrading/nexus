@@ -133,25 +133,25 @@ namespace Nexus {
       m_last_quantity(0) {}
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::ExecutionReport> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::ExecutionReport& value,
-        unsigned int version) const {
-      shuttle.Shuttle("id", value.m_id);
-      shuttle.Shuttle("timestamp", value.m_timestamp);
-      shuttle.Shuttle("sequence", value.m_sequence);
-      shuttle.Shuttle("status", value.m_status);
-      shuttle.Shuttle("last_quantity", value.m_last_quantity);
-      shuttle.Shuttle("last_price", value.m_last_price);
-      shuttle.Shuttle("liquidity_flag", value.m_liquidity_flag);
-      shuttle.Shuttle("last_market", value.m_last_market);
-      shuttle.Shuttle("execution_fee", value.m_execution_fee);
-      shuttle.Shuttle("processing_fee", value.m_processing_fee);
-      shuttle.Shuttle("commission", value.m_commission);
-      shuttle.Shuttle("text", value.m_text);
-      shuttle.Shuttle("additional_tags", value.m_additional_tags);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::ExecutionReport& value, unsigned int version) const {
+      shuttle.shuttle("id", value.m_id);
+      shuttle.shuttle("timestamp", value.m_timestamp);
+      shuttle.shuttle("sequence", value.m_sequence);
+      shuttle.shuttle("status", value.m_status);
+      shuttle.shuttle("last_quantity", value.m_last_quantity);
+      shuttle.shuttle("last_price", value.m_last_price);
+      shuttle.shuttle("liquidity_flag", value.m_liquidity_flag);
+      shuttle.shuttle("last_market", value.m_last_market);
+      shuttle.shuttle("execution_fee", value.m_execution_fee);
+      shuttle.shuttle("processing_fee", value.m_processing_fee);
+      shuttle.shuttle("commission", value.m_commission);
+      shuttle.shuttle("text", value.m_text);
+      shuttle.shuttle("additional_tags", value.m_additional_tags);
     }
   };
 }

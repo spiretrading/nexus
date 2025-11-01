@@ -5,6 +5,7 @@
 #include "Nexus/RiskService/RiskParameters.hpp"
 
 using namespace Beam;
+using namespace Beam::Tests;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
 using namespace boost;
@@ -20,12 +21,8 @@ TEST_SUITE("RiskParameters") {
     auto transition_time = hours(1) + minutes(15);
     auto parameters = RiskParameters(
       currency, buying_power, allowed_state, net_loss, transition_time);
-    auto out = std::ostringstream();
-    out << parameters;
-    REQUIRE(out.str() ==
+    REQUIRE(to_string(parameters) ==
       "(USD 20000.00 (ACTIVE 2025-Aug-15 09:30:00) 1000.00 01:15:00)");
-    SUBCASE("shuttle") {
-      Beam::Serialization::Tests::TestRoundTripShuttle(parameters);
-    }
+    test_round_trip_shuttle(parameters);
   }
 }

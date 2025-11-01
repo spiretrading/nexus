@@ -17,7 +17,7 @@ namespace Nexus {
     OrderFields m_fields;
 
     /** The account that submitted the Order. */
-    Beam::ServiceLocator::DirectoryEntry m_submission_account;
+    Beam::DirectoryEntry m_submission_account;
 
     /** The Order's id. */
     OrderId m_id;
@@ -39,9 +39,9 @@ namespace Nexus {
      * @param shorting_flag Whether the Order is a short sale.
      * @param timestamp The Order's timestamp.
      */
-    OrderInfo(OrderFields fields,
-      Beam::ServiceLocator::DirectoryEntry submission_account, OrderId id,
-      bool shorting_flag, boost::posix_time::ptime timestamp) noexcept;
+    OrderInfo(OrderFields fields, Beam::DirectoryEntry submission_account,
+      OrderId id, bool shorting_flag,
+      boost::posix_time::ptime timestamp) noexcept;
 
     /**
      * Constructs an OrderInfo whose submission account is the same as the
@@ -78,8 +78,8 @@ namespace Nexus {
       m_shorting_flag(false) {}
 
   inline OrderInfo::OrderInfo(OrderFields fields,
-    Beam::ServiceLocator::DirectoryEntry submission_account, OrderId id,
-    bool shorting_flag, boost::posix_time::ptime timestamp) noexcept
+    Beam::DirectoryEntry submission_account, OrderId id, bool shorting_flag,
+    boost::posix_time::ptime timestamp) noexcept
     : m_fields(std::move(fields)),
       m_submission_account(std::move(submission_account)),
       m_id(id),
@@ -99,17 +99,17 @@ namespace Nexus {
     : OrderInfo(fields, id, false, timestamp) {}
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::OrderInfo> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::OrderInfo& value,
-        unsigned int version) const {
-      shuttle.Shuttle("fields", value.m_fields);
-      shuttle.Shuttle("submission_account", value.m_submission_account);
-      shuttle.Shuttle("order_id", value.m_id);
-      shuttle.Shuttle("shorting_flag", value.m_shorting_flag);
-      shuttle.Shuttle("timestamp", value.m_timestamp);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::OrderInfo& value, unsigned int version) const {
+      shuttle.shuttle("fields", value.m_fields);
+      shuttle.shuttle("submission_account", value.m_submission_account);
+      shuttle.shuttle("order_id", value.m_id);
+      shuttle.shuttle("shorting_flag", value.m_shorting_flag);
+      shuttle.shuttle("timestamp", value.m_timestamp);
     }
   };
 }

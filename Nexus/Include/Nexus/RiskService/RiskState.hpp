@@ -18,19 +18,6 @@ namespace Details {
 
     /** The account may no longer submit Orders. */
     DISABLED);
-
-  inline std::ostream& operator <<(
-      std::ostream& out, RiskStateTypeDefinition::Type type) {
-    if(type == RiskStateTypeDefinition::ACTIVE) {
-      return out << "ACTIVE";
-    } else if(type == RiskStateTypeDefinition::CLOSE_ORDERS) {
-      return out << "CLOSE_ORDERS";
-    } else if(type == RiskStateTypeDefinition::DISABLED) {
-      return out << "DISABLED";
-    } else {
-      return out << "NONE";
-    }
-  }
 }
 
   /** Stores the risk monitoring state of an account. */
@@ -48,26 +35,26 @@ namespace Details {
     boost::posix_time::ptime m_expiry;
 
     /** Constructs an uninitialized RiskState. */
-    RiskState();
+    RiskState() noexcept;
 
     /**
      * Constructs a RiskState with an indefinite expiry.
      * @param type The state's type.
      */
-    RiskState(Type type);
+    RiskState(Type type) noexcept;
 
     /**
      * Constructs a RiskState with an indefinite expiry.
      * @param type The state's type.
      */
-    RiskState(Type::Type type);
+    RiskState(Type::Type type) noexcept;
 
     /**
      * Constructs a RiskState.
      * @param type The state's type.
      * @param expiry When this state is expected to expire.
      */
-    RiskState(Type type, boost::posix_time::ptime expiry);
+    RiskState(Type type, boost::posix_time::ptime expiry) noexcept;
 
     bool operator ==(const RiskState&) const = default;
   };
@@ -81,28 +68,29 @@ namespace Details {
     return out << '(' << state.m_type << ' ' << state.m_expiry << ')';
   }
 
-  inline RiskState::RiskState()
+  inline RiskState::RiskState() noexcept
     : RiskState(Type::ACTIVE) {}
 
-  inline RiskState::RiskState(Type type)
+  inline RiskState::RiskState(Type type) noexcept
     : RiskState(type, boost::posix_time::pos_infin) {}
 
-  inline RiskState::RiskState(Type::Type type)
+  inline RiskState::RiskState(Type::Type type) noexcept
     : RiskState(Type(type)) {}
 
-  inline RiskState::RiskState(Type type, boost::posix_time::ptime expiry)
+  inline RiskState::RiskState(
+    Type type, boost::posix_time::ptime expiry) noexcept
     : m_type(type),
       m_expiry(expiry) {}
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::RiskState> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::RiskState& value,
-        unsigned int version) const {
-      shuttle.Shuttle("type", value.m_type);
-      shuttle.Shuttle("expiry", value.m_expiry);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::RiskState& value, unsigned int version) const {
+      shuttle.shuttle("type", value.m_type);
+      shuttle.shuttle("expiry", value.m_expiry);
     }
   };
 }

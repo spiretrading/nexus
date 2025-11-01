@@ -54,7 +54,7 @@ namespace Nexus {
         Status m_status;
 
         /** The account that updated the status. */
-        Beam::ServiceLocator::DirectoryEntry m_account;
+        Beam::DirectoryEntry m_account;
 
         /** The update sequence number. */
         int m_sequence_number;
@@ -72,8 +72,8 @@ namespace Nexus {
          * @param sequence_number The update sequence number.
          * @param timestamp The timestamp when the update occurred.
          */
-        Update(Status status, Beam::ServiceLocator::DirectoryEntry account,
-          int sequence_number, boost::posix_time::ptime timestamp) noexcept;
+        Update(Status status, Beam::DirectoryEntry account, int sequence_number,
+          boost::posix_time::ptime timestamp) noexcept;
 
         bool operator ==(const Update&) const = default;
       };
@@ -89,9 +89,8 @@ namespace Nexus {
        * @param submission_account The account that submitted the request.
        * @param timestamp The timestamp when the request was received.
        */
-      AccountModificationRequest(Id id, Type type,
-        Beam::ServiceLocator::DirectoryEntry account,
-        Beam::ServiceLocator::DirectoryEntry submission_account,
+      AccountModificationRequest(Id id, Type type, Beam::DirectoryEntry account,
+        Beam::DirectoryEntry submission_account,
         boost::posix_time::ptime timestamp) noexcept;
 
       /** Returns the id that uniquely identifies this request. */
@@ -101,21 +100,20 @@ namespace Nexus {
       Type get_type() const;
 
       /** Returns the account to modify. */
-      const Beam::ServiceLocator::DirectoryEntry& get_account() const;
+      const Beam::DirectoryEntry& get_account() const;
 
       /** Returns the account that submitted the request. */
-      const Beam::ServiceLocator::DirectoryEntry&
-        get_submission_account() const;
+      const Beam::DirectoryEntry& get_submission_account() const;
 
       /** Returns the timestamp when the request was received. */
       boost::posix_time::ptime get_timestamp() const;
 
     private:
-      friend struct Beam::Serialization::Shuttle<AccountModificationRequest>;
+      friend struct Beam::Shuttle<AccountModificationRequest>;
       Id m_id;
       Type m_type;
-      Beam::ServiceLocator::DirectoryEntry m_account;
-      Beam::ServiceLocator::DirectoryEntry m_submission_account;
+      Beam::DirectoryEntry m_account;
+      Beam::DirectoryEntry m_submission_account;
       boost::posix_time::ptime m_timestamp;
   };
 
@@ -162,12 +160,11 @@ namespace Nexus {
   }
 
   inline AccountModificationRequest::Update::Update() noexcept
-    : Update(AccountModificationRequest::Status::NONE,
-        Beam::ServiceLocator::DirectoryEntry(), -1,
-        boost::posix_time::not_a_date_time) {}
+    : Update(AccountModificationRequest::Status::NONE, Beam::DirectoryEntry(),
+        -1, boost::posix_time::not_a_date_time) {}
 
-  inline AccountModificationRequest::Update::Update(Status status,
-    Beam::ServiceLocator::DirectoryEntry account, int sequence_number,
+  inline AccountModificationRequest::Update::Update(
+    Status status, Beam::DirectoryEntry account, int sequence_number,
     boost::posix_time::ptime timestamp) noexcept
     : m_status(status),
       m_account(std::move(account)),
@@ -178,9 +175,9 @@ namespace Nexus {
     : m_id(-1),
       m_type(Type::ENTITLEMENTS) {}
 
-  inline AccountModificationRequest::AccountModificationRequest(Id id,
-    Type type, Beam::ServiceLocator::DirectoryEntry account,
-    Beam::ServiceLocator::DirectoryEntry submission_account,
+  inline AccountModificationRequest::AccountModificationRequest(
+    Id id, Type type, Beam::DirectoryEntry account,
+    Beam::DirectoryEntry submission_account,
     boost::posix_time::ptime timestamp) noexcept
     : m_id(id),
       m_type(type),
@@ -198,12 +195,12 @@ namespace Nexus {
     return m_type;
   }
 
-  inline const Beam::ServiceLocator::DirectoryEntry&
+  inline const Beam::DirectoryEntry&
       AccountModificationRequest::get_account() const {
     return m_account;
   }
 
-  inline const Beam::ServiceLocator::DirectoryEntry&
+  inline const Beam::DirectoryEntry&
       AccountModificationRequest::get_submission_account() const {
     return m_submission_account;
   }
@@ -214,30 +211,30 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::AccountModificationRequest::Update> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::AccountModificationRequest::Update& value,
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::AccountModificationRequest::Update& value,
         unsigned int version) const {
-      shuttle.Shuttle("status", value.m_status);
-      shuttle.Shuttle("account", value.m_account);
-      shuttle.Shuttle("sequence_number", value.m_sequence_number);
-      shuttle.Shuttle("timestamp", value.m_timestamp);
+      shuttle.shuttle("status", value.m_status);
+      shuttle.shuttle("account", value.m_account);
+      shuttle.shuttle("sequence_number", value.m_sequence_number);
+      shuttle.shuttle("timestamp", value.m_timestamp);
     }
   };
 
   template<>
   struct Shuttle<Nexus::AccountModificationRequest> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::AccountModificationRequest& value, unsigned int version) const {
-      shuttle.Shuttle("id", value.m_id);
-      shuttle.Shuttle("type", value.m_type);
-      shuttle.Shuttle("account", value.m_account);
-      shuttle.Shuttle("submission_account", value.m_submission_account);
-      shuttle.Shuttle("timestamp", value.m_timestamp);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::AccountModificationRequest& value,
+        unsigned int version) const {
+      shuttle.shuttle("id", value.m_id);
+      shuttle.shuttle("type", value.m_type);
+      shuttle.shuttle("account", value.m_account);
+      shuttle.shuttle("submission_account", value.m_submission_account);
+      shuttle.shuttle("timestamp", value.m_timestamp);
     }
   };
 }

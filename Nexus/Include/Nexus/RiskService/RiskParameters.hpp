@@ -42,17 +42,17 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::RiskParameters> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::RiskParameters& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::RiskParameters& value,
         unsigned int version) const {
-      shuttle.Shuttle("currency", value.m_currency);
-      shuttle.Shuttle("buying_power", value.m_buying_power);
-      shuttle.Shuttle("allowed_state", value.m_allowed_state);
-      shuttle.Shuttle("net_loss", value.m_net_loss);
-      shuttle.Shuttle("transition_time", value.m_transition_time);
+      shuttle.shuttle("currency", value.m_currency);
+      shuttle.shuttle("buying_power", value.m_buying_power);
+      shuttle.shuttle("allowed_state", value.m_allowed_state);
+      shuttle.shuttle("net_loss", value.m_net_loss);
+      shuttle.shuttle("transition_time", value.m_transition_time);
     }
   };
 }

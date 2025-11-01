@@ -41,17 +41,17 @@ namespace Nexus {
     : m_security(std::move(security)) {}
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::SecuritySnapshot> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::SecuritySnapshot& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::SecuritySnapshot& value,
         unsigned int version) const {
-      shuttle.Shuttle("security", value.m_security);
-      shuttle.Shuttle("bbo_quote", value.m_bbo_quote);
-      shuttle.Shuttle("time_and_sale", value.m_time_and_sale);
-      shuttle.Shuttle("asks", value.m_asks);
-      shuttle.Shuttle("bids", value.m_bids);
+      shuttle.shuttle("security", value.m_security);
+      shuttle.shuttle("bbo_quote", value.m_bbo_quote);
+      shuttle.shuttle("time_and_sale", value.m_time_and_sale);
+      shuttle.shuttle("asks", value.m_asks);
+      shuttle.shuttle("bids", value.m_bids);
     }
   };
 }
