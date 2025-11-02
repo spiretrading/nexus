@@ -2,6 +2,7 @@
 #define NEXUS_MARKET_DATA_VENUE_ENTRY_HPP
 #include <Beam/Queries/Sequencer.hpp>
 #include <boost/optional/optional.hpp>
+#include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
@@ -15,7 +16,7 @@ namespace Nexus {
       struct InitialSequences {
 
         /** The next Sequence to use for an OrderImbalance. */
-        Beam::Queries::Sequence m_next_order_imbalance_sequence;
+        Beam::Sequence m_next_order_imbalance_sequence;
       };
 
       /**
@@ -42,7 +43,7 @@ namespace Nexus {
 
     private:
       Venue m_venue;
-      Beam::Queries::Sequencer m_order_imbalance_sequencer;
+      Beam::Sequencer m_order_imbalance_sequencer;
   };
 
   /**
@@ -54,17 +55,16 @@ namespace Nexus {
   VenueEntry::InitialSequences load_initial_sequences(
       IsHistoricalDataStore auto& data_store, Venue venue) {
     auto query = VenueMarketDataQuery();
-    query.SetIndex(venue);
-    query.SetRange(Beam::Queries::Range::Total());
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::TAIL, 1);
+    query.set_index(venue);
+    query.set_range(Beam::Range::TOTAL);
+    query.set_snapshot_limit(Beam::SnapshotLimit::Type::TAIL, 1);
     auto initial_sequences = VenueEntry::InitialSequences();
     auto results = data_store.load_order_imbalances(query);
     if(results.empty()) {
-      initial_sequences.m_next_order_imbalance_sequence =
-        Beam::Queries::Sequence::First();
+      initial_sequences.m_next_order_imbalance_sequence = Beam::Sequence::FIRST;
     } else {
       initial_sequences.m_next_order_imbalance_sequence =
-        Beam::Queries::Increment(results.back().GetSequence());
+        Beam::increment(results.back().get_sequence());
     }
     return initial_sequences;
   }
@@ -79,7 +79,7 @@ namespace Nexus {
 
   inline boost::optional<SequencedVenueOrderImbalance> VenueEntry::publish(
       const OrderImbalance& imbalance, int source_id) {
-    return m_order_imbalance_sequencer.MakeSequencedValue(imbalance, m_venue);
+    return m_order_imbalance_sequencer.make_sequenced_value(imbalance, m_venue);
   }
 }
 

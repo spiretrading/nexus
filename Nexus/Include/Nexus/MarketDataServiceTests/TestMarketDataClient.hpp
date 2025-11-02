@@ -1,13 +1,9 @@
 #ifndef NEXUS_TEST_MARKET_DATA_CLIENT_HPP
 #define NEXUS_TEST_MARKET_DATA_CLIENT_HPP
 #include <variant>
-#include <Beam/Collections/SynchronizedList.hpp>
-#include <Beam/Collections/SynchronizedSet.hpp>
-#include <Beam/IO/EndOfFileException.hpp>
-#include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/ServicesTests/ServiceResult.hpp>
-#include <boost/throw_exception.hpp>
+#include <Beam/ServicesTests/TestServiceClientOperationQueue.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 
 namespace Nexus::Tests {
@@ -106,8 +102,7 @@ namespace Nexus::Tests {
         SecurityInfoQuery m_query;
 
         /** Used to return a value to the caller. */
-        Beam::Services::Tests::ServiceResult<std::vector<SecurityInfo>>
-          m_result;
+        Beam::Tests::ServiceResult<std::vector<SecurityInfo>> m_result;
       };
 
       /** Records a call to load_snapshot(...). */
@@ -117,7 +112,7 @@ namespace Nexus::Tests {
         Security m_security;
 
         /** Used to return a value to the caller. */
-        Beam::Services::Tests::ServiceResult<SecuritySnapshot> m_result;
+        Beam::Tests::ServiceResult<SecuritySnapshot> m_result;
       };
 
       /** Records a call to load_technicals(...). */
@@ -127,7 +122,7 @@ namespace Nexus::Tests {
         Security m_security;
 
         /** Used to return a value to the caller. */
-        Beam::Services::Tests::ServiceResult<SecurityTechnicals> m_result;
+        Beam::Tests::ServiceResult<SecurityTechnicals> m_result;
       };
 
       /** Records a call to load_security_info_from_prefix(...). */
@@ -137,8 +132,7 @@ namespace Nexus::Tests {
         std::string m_prefix;
 
         /** Used to return a value to the caller. */
-        Beam::Services::Tests::ServiceResult<std::vector<SecurityInfo>>
-          m_result;
+        Beam::Tests::ServiceResult<std::vector<SecurityInfo>> m_result;
       };
 
       /** A variant covering all possible TestMarketDataClient operations. */
@@ -186,23 +180,15 @@ namespace Nexus::Tests {
       void close();
 
     private:
-      Beam::ScopedQueueWriter<std::shared_ptr<Operation>> m_operations;
-      Beam::SynchronizedVector<std::weak_ptr<Beam::BaseQueue>> m_queues;
-      Beam::SynchronizedUnorderedSet<Beam::Services::Tests::BaseServiceResult*>
-        m_pending_results;
-      Beam::IO::OpenState m_open_state;
+      Beam::Tests::TestServiceClientOperationQueue<Operation> m_queue;
 
       TestMarketDataClient(const TestMarketDataClient&) = delete;
       TestMarketDataClient& operator =(const TestMarketDataClient&) = delete;
-      template<typename T>
-      void append_queue(std::shared_ptr<Operation> operation);
-      template<typename T, typename R, typename... Args>
-      R append_result(Args&&... args);
   };
 
   inline TestMarketDataClient::TestMarketDataClient(
     Beam::ScopedQueueWriter<std::shared_ptr<Operation>> operations) noexcept
-    : m_operations(std::move(operations)) {}
+    : m_queue(std::move(operations)) {}
 
   inline TestMarketDataClient::~TestMarketDataClient() {
     close();
@@ -210,133 +196,100 @@ namespace Nexus::Tests {
 
   inline void TestMarketDataClient::query(const VenueMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) {
-    append_queue<QuerySequencedOrderImbalanceOperation>(
-      std::make_shared<Operation>(QuerySequencedOrderImbalanceOperation(
-        query, std::move(queue))));
+    auto operation = std::make_shared<Operation>(
+      std::in_place_type<QuerySequencedOrderImbalanceOperation>,
+      query, std::move(queue));
+    m_queue.append_queue<QuerySequencedOrderImbalanceOperation>(operation);
   }
 
   inline void TestMarketDataClient::query(const VenueMarketDataQuery& query,
       Beam::ScopedQueueWriter<OrderImbalance> queue) {
-    append_queue<QueryOrderImbalanceOperation>(std::make_shared<Operation>(
-      QueryOrderImbalanceOperation(query, std::move(queue))));
+    auto operation = std::make_shared<Operation>(
+      std::in_place_type<QueryOrderImbalanceOperation>,
+      query, std::move(queue));
+    m_queue.append_queue<QueryOrderImbalanceOperation>(operation);
   }
 
   inline void TestMarketDataClient::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
-    append_queue<QuerySequencedBboQuoteOperation>(std::make_shared<Operation>(
-      QuerySequencedBboQuoteOperation(query, std::move(queue))));
+    auto operation = std::make_shared<Operation>(
+      std::in_place_type<QuerySequencedBboQuoteOperation>,
+      query, std::move(queue));
+    m_queue.append_queue<QuerySequencedBboQuoteOperation>(operation);
   }
 
   inline void TestMarketDataClient::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<BboQuote> queue) {
-    append_queue<QueryBboQuoteOperation>(std::make_shared<Operation>(
-      QueryBboQuoteOperation(query, std::move(queue))));
+    auto operation = std::make_shared<Operation>(
+      std::in_place_type<QueryBboQuoteOperation>,
+      query, std::move(queue));
+    m_queue.append_queue<QueryBboQuoteOperation>(operation);
   }
 
   inline void TestMarketDataClient::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
-    append_queue<QuerySequencedBookQuoteOperation>(std::make_shared<Operation>(
-      QuerySequencedBookQuoteOperation(query, std::move(queue))));
+    auto operation = std::make_shared<Operation>(
+      std::in_place_type<QuerySequencedBookQuoteOperation>,
+      query, std::move(queue));
+    m_queue.append_queue<QuerySequencedBookQuoteOperation>(operation);
   }
 
   inline void TestMarketDataClient::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<BookQuote> queue) {
-    append_queue<QueryBookQuoteOperation>(std::make_shared<Operation>(
-      QueryBookQuoteOperation(query, std::move(queue))));
+    auto operation = std::make_shared<Operation>(
+      std::in_place_type<QueryBookQuoteOperation>,
+      query, std::move(queue));
+    m_queue.append_queue<QueryBookQuoteOperation>(operation);
   }
 
   inline void TestMarketDataClient::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
-    append_queue<QuerySequencedTimeAndSaleOperation>(
-      std::make_shared<Operation>(
-        QuerySequencedTimeAndSaleOperation(query, std::move(queue))));
+    auto operation = std::make_shared<Operation>(
+      std::in_place_type<QuerySequencedTimeAndSaleOperation>,
+      query, std::move(queue));
+    m_queue.append_queue<QuerySequencedTimeAndSaleOperation>(operation);
   }
 
   inline void TestMarketDataClient::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<TimeAndSale> queue) {
-    append_queue<QueryTimeAndSaleOperation>(std::make_shared<Operation>(
-      QueryTimeAndSaleOperation(query, std::move(queue))));
+    auto operation = std::make_shared<Operation>(
+      std::in_place_type<QueryTimeAndSaleOperation>,
+      query, std::move(queue));
+    m_queue.append_queue<QueryTimeAndSaleOperation>(operation);
   }
 
   inline std::vector<SecurityInfo> TestMarketDataClient::query(
       const SecurityInfoQuery& query) {
-    return append_result<SecurityInfoQueryOperation, std::vector<SecurityInfo>>(
-      query);
+    return m_queue.append_result<
+      SecurityInfoQueryOperation, std::vector<SecurityInfo>>(query);
   }
 
   inline SecuritySnapshot TestMarketDataClient::load_snapshot(
       const Security& security) {
-    return append_result<LoadSecuritySnapshotOperation, SecuritySnapshot>(
-      security);
+    return m_queue.append_result<
+      LoadSecuritySnapshotOperation, SecuritySnapshot>(security);
   }
 
   inline SecurityTechnicals TestMarketDataClient::load_technicals(
       const Security& security) {
-    return append_result<LoadSecurityTechnicalsOperation, SecurityTechnicals>(
-      security);
+    return m_queue.append_result<
+      LoadSecurityTechnicalsOperation, SecurityTechnicals>(security);
   }
 
   inline std::vector<SecurityInfo> TestMarketDataClient::
       load_security_info_from_prefix(const std::string& prefix) {
-    return append_result<
+    return m_queue.append_result<
       LoadSecurityInfoFromPrefixOperation, std::vector<SecurityInfo>>(prefix);
   }
 
   inline void TestMarketDataClient::close() {
-    if(m_open_state.SetClosing()) {
-      m_queues.ForEach([] (const auto& q) {
-        if(auto queue = q.lock()) {
-          queue->Break();
-        }
-      });
-      m_queues.Clear();
-      m_pending_results.With([] (auto& results) {
-        for(auto& result : results) {
-          result->set(std::make_exception_ptr(Beam::IO::EndOfFileException()));
-        }
-      });
-      m_pending_results.Clear();
-    }
-    m_open_state.Close();
-  }
-
-  template<typename T>
-  void TestMarketDataClient::append_queue(
-      std::shared_ptr<Operation> operation) {
-    auto queue = std::shared_ptr<Beam::BaseQueue>(
-      operation, &std::get<T>(*operation).m_queue);
-    m_queues.PushBack(queue);
-    if(!m_open_state.IsOpen()) {
-      m_queues.RemoveIf([&] (const auto& weak_queue) {
-        auto q = weak_queue.lock();
-        return !q || q == queue;
-      });
-      queue->Break();
-      return;
-    }
-    m_operations.Push(operation);
-  }
-
-  template<typename T, typename R, typename... Args>
-  R TestMarketDataClient::append_result(Args&&... args) {
-    auto async = Beam::Routines::Async<R>();
-    auto operation = std::make_shared<Operation>(
-      std::in_place_type<T>, std::forward<Args>(args)..., async.GetEval());
-    m_pending_results.Insert(&std::get<T>(*operation).m_result);
-    if(!m_open_state.IsOpen()) {
-      m_pending_results.Erase(&std::get<T>(*operation).m_result);
-      BOOST_THROW_EXCEPTION(Beam::IO::EndOfFileException());
-    }
-    m_operations.Push(operation);
-    auto result = std::move(async.Get());
-    m_pending_results.Erase(&std::get<T>(*operation).m_result);
-    return result;
+    m_queue.close();
   }
 }
 

@@ -10,12 +10,13 @@ using namespace Viper;
 using namespace Viper::Sqlite3;
 
 namespace {
-  using TestSqlHistoricalDataStore = SqlHistoricalDataStore<Connection>;
+  using TestSqlHistoricalDataStore =
+    SqlHistoricalDataStore<Viper::Sqlite3::Connection>;
 
   struct Builder {
     auto operator ()() const {
       return TestSqlHistoricalDataStore(DEFAULT_VENUES, [] {
-        return Connection("file::memory:?cache=shared");
+        return Viper::Sqlite3::Connection("file::memory:?cache=shared");
       });
     }
   };

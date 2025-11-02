@@ -11,7 +11,7 @@ namespace {
   struct Builder {
     auto operator ()() const {
       return SessionCachedHistoricalDataStore<LocalHistoricalDataStore>(
-        Initialize(), 1000);
+        init(), 1000);
     }
   };
 }

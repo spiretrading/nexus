@@ -3,8 +3,7 @@
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
-using namespace Beam::ServiceLocator;
+using namespace Beam::Tests;
 using namespace Nexus;
 
 TEST_SUITE("EntitlementDatabase") {
@@ -23,7 +22,7 @@ TEST_SUITE("EntitlementDatabase") {
     entry.m_name = "Test";
     entry.m_price = Money::ONE;
     entry.m_currency = CurrencyId(840);
-    entry.m_group_entry = DirectoryEntry::MakeAccount(123);
+    entry.m_group_entry = DirectoryEntry::make_account(123);
     entry.m_applicability[EntitlementKey(Venue("XNYS"))] =
       {MarketDataType::BBO_QUOTE};
     database.add(entry);
@@ -38,12 +37,12 @@ TEST_SUITE("EntitlementDatabase") {
     entry.m_name = "Test";
     entry.m_price = Money::ONE;
     entry.m_currency = CurrencyId(840);
-    entry.m_group_entry = DirectoryEntry::MakeAccount(123);
+    entry.m_group_entry = DirectoryEntry::make_account(123);
     entry.m_applicability[EntitlementKey(Venue("XNYS"))] =
       {MarketDataType::BBO_QUOTE};
     database.add(entry);
     REQUIRE(database.get_entries().size() == 1);
-    database.remove(DirectoryEntry::MakeAccount(123));
+    database.remove(DirectoryEntry::make_account(123));
     auto entries = database.get_entries();
     REQUIRE(database.get_entries().size() == 0);
   }
@@ -54,11 +53,11 @@ TEST_SUITE("EntitlementDatabase") {
     entry.m_name = "Test";
     entry.m_price = Money::ONE;
     entry.m_currency = CurrencyId(840);
-    entry.m_group_entry = DirectoryEntry::MakeAccount(123);
+    entry.m_group_entry = DirectoryEntry::make_account(123);
     entry.m_applicability[EntitlementKey(Venue("XNYS"))] =
       {MarketDataType::BBO_QUOTE};
     database.add(entry);
-    Tests::TestRoundTripShuttle(database, [&] (const auto& destination) {
+    test_round_trip_shuttle(database, [&] (const auto& destination) {
       auto source_entries = database.get_entries();
       auto destination_entries = destination.get_entries();
       REQUIRE(source_entries.size() == destination_entries.size());

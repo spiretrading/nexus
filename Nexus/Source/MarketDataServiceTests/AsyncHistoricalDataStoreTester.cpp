@@ -10,7 +10,7 @@ using namespace Nexus::Tests;
 namespace {
   struct Builder {
     auto operator ()() const {
-      return AsyncHistoricalDataStore<LocalHistoricalDataStore>(Initialize());
+      return AsyncHistoricalDataStore<LocalHistoricalDataStore>(init());
     }
   };
 }

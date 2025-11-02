@@ -10,8 +10,7 @@ using namespace Nexus::Tests;
 namespace {
   struct Builder {
     auto operator ()() const {
-      return CachedHistoricalDataStore<LocalHistoricalDataStore>(
-        Initialize(), 1000);
+      return CachedHistoricalDataStore<LocalHistoricalDataStore>(init(), 1000);
     }
   };
 }

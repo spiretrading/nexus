@@ -43,19 +43,6 @@ namespace Nexus {
     }
     return MarketDataType::NONE;
   }
-
-  inline std::ostream& operator<<(std::ostream& out, MarketDataType type) {
-    if(type == MarketDataType::TIME_AND_SALE) {
-      return out << "TIME_AND_SALE";
-    } else if(type == MarketDataType::BOOK_QUOTE) {
-      return out << "BOOK_QUOTE";
-    } else if(type == MarketDataType::BBO_QUOTE) {
-      return out << "BBO_QUOTE";
-    } else if(type == MarketDataType::ORDER_IMBALANCE) {
-      return out << "ORDER_IMBALANCE";
-    }
-    return out << "NONE";
-  }
 }
 
 #endif

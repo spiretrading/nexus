@@ -19,13 +19,13 @@ namespace Nexus {
       struct InitialSequences {
 
         /** The next Sequence to use for a BboQuote. */
-        Beam::Queries::Sequence m_next_bbo_quote_sequence;
+        Beam::Sequence m_next_bbo_quote_sequence;
 
         /** The next Sequence to use for a BookQuote. */
-        Beam::Queries::Sequence m_next_book_quote_sequence;
+        Beam::Sequence m_next_book_quote_sequence;
 
         /** The next Sequence to use for a TimeAndSale. */
-        Beam::Queries::Sequence m_next_time_and_sale_sequence;
+        Beam::Sequence m_next_time_and_sale_sequence;
       };
 
       /**
@@ -101,9 +101,9 @@ namespace Nexus {
       Security m_security;
       VenueDatabase m_venues;
       boost::local_time::tz_database m_time_zones;
-      Beam::Queries::Sequencer m_bbo_sequencer;
-      Beam::Queries::Sequencer m_book_quote_sequencer;
-      Beam::Queries::Sequencer m_time_and_sale_sequencer;
+      Beam::Sequencer m_bbo_sequencer;
+      Beam::Sequencer m_book_quote_sequencer;
+      Beam::Sequencer m_time_and_sale_sequencer;
       SecurityTechnicals m_technicals;
       std::string m_market_center;
       Money m_next_close;
@@ -126,38 +126,35 @@ namespace Nexus {
   SecurityEntry::InitialSequences load_initial_sequences(
       IsHistoricalDataStore auto& data_store, const Security& security) {
     auto query = SecurityMarketDataQuery();
-    query.SetIndex(security);
-    query.SetRange(Beam::Queries::Range::Total());
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromTail(1));
+    query.set_index(security);
+    query.set_range(Beam::Range::TOTAL);
+    query.set_snapshot_limit(Beam::SnapshotLimit::from_tail(1));
     auto initial_sequences = SecurityEntry::InitialSequences();
     {
       auto results = data_store.load_bbo_quotes(query);
       if(results.empty()) {
-        initial_sequences.m_next_bbo_quote_sequence =
-          Beam::Queries::Sequence::First();
+        initial_sequences.m_next_bbo_quote_sequence = Beam::Sequence::FIRST;
       } else {
         initial_sequences.m_next_bbo_quote_sequence =
-          Beam::Queries::Increment(results.back().GetSequence());
+          Beam::increment(results.back().get_sequence());
       }
     }
     {
       auto results = data_store.load_book_quotes(query);
       if(results.empty()) {
-        initial_sequences.m_next_book_quote_sequence =
-          Beam::Queries::Sequence::First();
+        initial_sequences.m_next_book_quote_sequence = Beam::Sequence::FIRST;
       } else {
         initial_sequences.m_next_book_quote_sequence =
-          Beam::Queries::Increment(results.back().GetSequence());
+          Beam::increment(results.back().get_sequence());
       }
     }
     {
       auto results = data_store.load_time_and_sales(query);
       if(results.empty()) {
-        initial_sequences.m_next_time_and_sale_sequence =
-          Beam::Queries::Sequence::First();
+        initial_sequences.m_next_time_and_sale_sequence = Beam::Sequence::FIRST;
       } else {
         initial_sequences.m_next_time_and_sale_sequence =
-          Beam::Queries::Increment(results.back().GetSequence());
+          Beam::increment(results.back().get_sequence());
       }
     }
     return initial_sequences;
@@ -180,7 +177,7 @@ namespace Nexus {
           initial_sequences.m_next_time_and_sale_sequence) {
     m_market_center = m_venues.from(m_security.get_venue()).m_market_center;
     if(m_market_center.empty()) {
-      m_market_center = m_security.get_venue().get_code().GetData();
+      m_market_center = m_security.get_venue().get_code().get_data();
     }
     m_technicals.m_close = close;
   }
@@ -228,8 +225,8 @@ namespace Nexus {
     if(m_technicals_reset_time == boost::posix_time::not_a_date_time) {
       auto& venue_entry = m_venues.from(m_security.get_venue());
       if(venue_entry.m_venue) {
-        auto time_zone = m_time_zones.time_zone_from_region(
-          venue_entry.m_time_zone);
+        auto time_zone =
+          m_time_zones.time_zone_from_region(venue_entry.m_time_zone);
         auto reset_time = boost::local_time::local_date_time(
           bbo_quote.m_timestamp, time_zone) + boost::gregorian::days(1);
         reset_time -= reset_time.local_time().time_of_day();
@@ -251,7 +248,7 @@ namespace Nexus {
         m_technicals_reset_time += boost::gregorian::days(1);
       }
     }
-    auto value = m_bbo_sequencer.MakeSequencedValue(bbo_quote, m_security);
+    auto value = m_bbo_sequencer.make_sequenced_value(bbo_quote, m_security);
     m_bbo_quote = value;
     return value;
   }
@@ -269,7 +266,7 @@ namespace Nexus {
         return boost::none;
       }
       auto sequenced_quote =
-        m_book_quote_sequencer.MakeSequencedValue(quote, m_security);
+        m_book_quote_sequencer.make_sequenced_value(quote, m_security);
       i->m_quote = sequenced_quote;
       i->m_source_id = source_id;
       return sequenced_quote;
@@ -278,7 +275,7 @@ namespace Nexus {
       return boost::none;
     }
     auto sequenced_quote =
-      m_book_quote_sequencer.MakeSequencedValue(quote, m_security);
+      m_book_quote_sequencer.make_sequenced_value(quote, m_security);
     book.emplace(i, sequenced_quote, source_id);
     return sequenced_quote;
   }
@@ -301,7 +298,7 @@ namespace Nexus {
       m_next_close = time_and_sale.m_price;
     }
     auto value =
-      m_time_and_sale_sequencer.MakeSequencedValue(time_and_sale, m_security);
+      m_time_and_sale_sequencer.make_sequenced_value(time_and_sale, m_security);
     m_time_and_sale = value;
     return value;
   }

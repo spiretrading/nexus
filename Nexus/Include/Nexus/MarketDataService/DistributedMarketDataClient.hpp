@@ -50,7 +50,7 @@ namespace Nexus {
 
     private:
       RegionMap<std::shared_ptr<MarketDataClient>> m_market_data_clients;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       DistributedMarketDataClient(const DistributedMarketDataClient&) = delete;
       DistributedMarketDataClient& operator =(
@@ -68,80 +68,80 @@ namespace Nexus {
   inline void DistributedMarketDataClient::query(
       const VenueMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) {
-    if(auto client = m_market_data_clients.get(query.GetIndex())) {
+    if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
     } else {
-      queue.Break();
+      queue.close();
     }
   }
 
   inline void DistributedMarketDataClient::query(
       const VenueMarketDataQuery& query,
       Beam::ScopedQueueWriter<OrderImbalance> queue) {
-    if(auto client = m_market_data_clients.get(query.GetIndex())) {
+    if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
     } else {
-      queue.Break();
+      queue.close();
     }
   }
 
   inline void DistributedMarketDataClient::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
-    if(auto client = m_market_data_clients.get(query.GetIndex())) {
+    if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
     } else {
-      queue.Break();
+      queue.close();
     }
   }
 
   inline void DistributedMarketDataClient::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<BboQuote> queue) {
-    if(auto client = m_market_data_clients.get(query.GetIndex())) {
+    if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
     } else {
-      queue.Break();
+      queue.close();
     }
   }
 
   inline void DistributedMarketDataClient::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
-    if(auto client = m_market_data_clients.get(query.GetIndex())) {
+    if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
     } else {
-      queue.Break();
+      queue.close();
     }
   }
 
   inline void DistributedMarketDataClient::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<BookQuote> queue) {
-    if(auto client = m_market_data_clients.get(query.GetIndex())) {
+    if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
     } else {
-      queue.Break();
+      queue.close();
     }
   }
 
   inline void DistributedMarketDataClient::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
-    if(auto client = m_market_data_clients.get(query.GetIndex())) {
+    if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
     } else {
-      queue.Break();
+      queue.close();
     }
   }
 
   inline void DistributedMarketDataClient::query(
       const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<TimeAndSale> queue) {
-    if(auto client = m_market_data_clients.get(query.GetIndex())) {
+    if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
     } else {
-      queue.Break();
+      queue.close();
     }
   }
 
@@ -191,13 +191,13 @@ namespace Nexus {
   }
 
   inline void DistributedMarketDataClient::close() {
-    if(m_open_state.SetClosing()) {
+    if(m_open_state.set_closing()) {
       return;
     }
     for(auto& client : m_market_data_clients) {
       std::get<1>(*m_market_data_clients.begin()) = nullptr;
     }
-    m_open_state.Close();
+    m_open_state.close();
   }
 }
 

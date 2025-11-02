@@ -32,7 +32,7 @@ namespace Nexus {
      * Constructs a SecuritySnapshot.
      * @param security The Security represented.
      */
-    SecuritySnapshot(Security security) noexcept;
+    explicit SecuritySnapshot(Security security) noexcept;
 
     bool operator ==(const SecuritySnapshot&) const = default;
   };

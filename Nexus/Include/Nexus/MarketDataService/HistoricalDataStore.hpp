@@ -1,15 +1,48 @@
 #ifndef NEXUS_HISTORICAL_DATA_STORE_HPP
 #define NEXUS_HISTORICAL_DATA_STORE_HPP
+#include <concepts>
 #include <memory>
 #include <type_traits>
 #include <utility>
+#include <Beam/IO/Connection.hpp>
+#include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Pointers/VirtualPtr.hpp>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
 namespace Nexus {
+
+  /** Concept for types that can be used as a historical data store. */
+  template<typename T>
+  concept IsHistoricalDataStore = Beam::IsConnection<T> && requires(T& store) {
+    { store.load_security_info(std::declval<const SecurityInfoQuery&>()) } ->
+        std::same_as<std::vector<SecurityInfo>>;
+    store.store(std::declval<const SecurityInfo&>());
+    { store.load_order_imbalances(
+        std::declval<const VenueMarketDataQuery&>()) } ->
+          std::same_as<std::vector<SequencedOrderImbalance>>;
+    store.store(std::declval<const SequencedVenueOrderImbalance&>());
+    store.store(
+      std::declval<const std::vector<SequencedVenueOrderImbalance>&>());
+    { store.load_bbo_quotes(std::declval<const SecurityMarketDataQuery&>()) } ->
+        std::same_as<std::vector<SequencedBboQuote>>;
+    store.store(std::declval<const SequencedSecurityBboQuote&>());
+    store.store(std::declval<const std::vector<SequencedSecurityBboQuote>&>());
+    { store.load_book_quotes(
+        std::declval<const SecurityMarketDataQuery&>()) } ->
+          std::same_as<std::vector<SequencedBookQuote>>;
+    store.store(std::declval<const SequencedSecurityBookQuote&>());
+    store.store(std::declval<const std::vector<SequencedSecurityBookQuote>&>());
+    { store.load_time_and_sales(
+        std::declval<const SecurityMarketDataQuery&>()) } ->
+          std::same_as<std::vector<SequencedTimeAndSale>>;
+    store.store(std::declval<const SequencedSecurityTimeAndSale&>());
+    store.store(
+      std::declval<const std::vector<SequencedSecurityTimeAndSale>&>());
+  };
 
   /** Provides a generic interface over an arbitrary HistoricalDataStore. */
   class HistoricalDataStore {
@@ -18,26 +51,22 @@ namespace Nexus {
       /**
        * Constructs an HistoricalDataStore of a specified type using
        * emplacement.
-       * @param <T> The type of data store to emplace.
+       * @tparam T The type of data store to emplace.
        * @param args The arguments to pass to the emplaced data store.
        */
-      template<typename T, typename... Args>
+      template<IsHistoricalDataStore T, typename... Args>
       explicit HistoricalDataStore(std::in_place_type_t<T>, Args&&... args);
 
       /**
-       * Constructs an HistoricalDataStore by copying an existing data store.
-       * @param data_store The data store to copy.
+       * Constructs an HistoricalDataStore by referencing an existing data
+       * store.
+       * @param data_store The data store to reference.
        */
-      template<typename DataStore>
-      explicit HistoricalDataStore(DataStore data_store);
+      template<Beam::DisableCopy<HistoricalDataStore> T> requires
+        IsHistoricalDataStore<Beam::dereference_t<T>>
+      HistoricalDataStore(T&& data_store);
 
-      explicit HistoricalDataStore(HistoricalDataStore* data_store);
-
-      explicit HistoricalDataStore(
-        const std::shared_ptr<HistoricalDataStore>& data_store);
-
-      explicit HistoricalDataStore(
-        const std::unique_ptr<HistoricalDataStore>& data_store);
+      HistoricalDataStore(const HistoricalDataStore&) = default;
 
       /**
        * Loads SecurityInfo objects that match a query.
@@ -143,6 +172,7 @@ namespace Nexus {
     private:
       struct VirtualHistoricalDataStore {
         virtual ~VirtualHistoricalDataStore() = default;
+
         virtual std::vector<SecurityInfo> load_security_info(
           const SecurityInfoQuery& query) = 0;
         virtual void store(const SecurityInfo& info) = 0;
@@ -172,10 +202,11 @@ namespace Nexus {
       template<typename D>
       struct WrappedHistoricalDataStore final : VirtualHistoricalDataStore {
         using DataStore = D;
-        Beam::GetOptionalLocalPtr<DataStore> m_data_store;
+        Beam::local_ptr_t<DataStore> m_data_store;
 
         template<typename... Args>
         WrappedHistoricalDataStore(Args&&... args);
+
         std::vector<SecurityInfo> load_security_info(
           const SecurityInfoQuery& query) override;
         void store(const SecurityInfo& info) override;
@@ -201,17 +232,12 @@ namespace Nexus {
           time_and_sales) override;
         void close() override;
       };
-      std::shared_ptr<VirtualHistoricalDataStore> m_data_store;
+      Beam::VirtualPtr<VirtualHistoricalDataStore> m_data_store;
   };
-
-  /** Checks if a type implements an HistoricalDataStore. */
-  template<typename T>
-  concept IsHistoricalDataStore = std::constructible_from<
-    HistoricalDataStore, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
 
   /**
    * Provides a generic means of loading data from a HistoricalDataStore.
-   * @param <T> The type of market data to query.
+   * @tparam T The type of market data to query.
    * @param data_store The HistoricalDataStore to load from.
    * @param query The search query to execute.
    * @return The list of values that satisfy the search <i>query</i>.
@@ -228,7 +254,7 @@ namespace Nexus {
 
   /**
    * Provides a generic means of loading data from a HistoricalDataStore.
-   * @param <T> The type of market data to query.
+   * @tparam T The type of market data to query.
    * @param data_store The HistoricalDataStore to load from.
    * @param query The search query to execute.
    * @return The list of values that satisfy the search <i>query</i>.
@@ -249,28 +275,17 @@ namespace Nexus {
     }
   }
 
-  template<typename T, typename... Args>
+  template<IsHistoricalDataStore T, typename... Args>
   HistoricalDataStore::HistoricalDataStore(
     std::in_place_type_t<T>, Args&&... args)
-    : m_data_store(std::make_shared<WrappedHistoricalDataStore<T>>(
+    : m_data_store(Beam::make_virtual_ptr<WrappedHistoricalDataStore<T>>(
         std::forward<Args>(args)...)) {}
 
-  template<typename DataStore>
-  HistoricalDataStore::HistoricalDataStore(DataStore data_store)
-    : HistoricalDataStore(
-        std::in_place_type<DataStore>, std::move(data_store)) {}
-
-  inline HistoricalDataStore::HistoricalDataStore(
-    HistoricalDataStore* data_store)
-    : HistoricalDataStore(*data_store) {}
-
-  inline HistoricalDataStore::HistoricalDataStore(
-    const std::shared_ptr<HistoricalDataStore>& data_store)
-    : HistoricalDataStore(*data_store) {}
-
-  inline HistoricalDataStore::HistoricalDataStore(
-    const std::unique_ptr<HistoricalDataStore>& data_store)
-    : HistoricalDataStore(*data_store) {}
+  template<Beam::DisableCopy<HistoricalDataStore> T> requires
+    IsHistoricalDataStore<Beam::dereference_t<T>>
+  HistoricalDataStore::HistoricalDataStore(T&& data_store)
+    : HistoricalDataStore(std::in_place_type<Beam::dereference_t<T>>,
+        std::forward<T>(data_store)) {}
 
   inline std::vector<SecurityInfo> HistoricalDataStore::load_security_info(
       const SecurityInfoQuery& query) {

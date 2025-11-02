@@ -51,8 +51,7 @@ namespace Nexus {
 
     private:
       template<typename T, typename Query>
-      using DataStore =
-        Beam::Queries::LocalDataStore<Query, T, EvaluatorTranslator>;
+      using DataStore = Beam::LocalDataStore<Query, T, EvaluatorTranslator>;
       Beam::SynchronizedVector<SecurityInfo> m_security_info;
       DataStore<OrderImbalance, VenueMarketDataQuery>
         m_order_imbalance_data_store;
@@ -68,40 +67,39 @@ namespace Nexus {
 
   inline std::vector<SequencedVenueOrderImbalance>
       LocalHistoricalDataStore::load_order_imbalances() {
-    return m_order_imbalance_data_store.LoadAll();
+    return m_order_imbalance_data_store.load_all();
   }
 
   inline std::vector<SequencedSecurityBboQuote>
       LocalHistoricalDataStore::load_bbo_quotes() {
-    return m_bbo_quote_data_store.LoadAll();
+    return m_bbo_quote_data_store.load_all();
   }
 
   inline std::vector<SequencedSecurityBookQuote>
       LocalHistoricalDataStore::load_book_quotes() {
-    return m_book_quote_data_store.LoadAll();
+    return m_book_quote_data_store.load_all();
   }
 
   inline std::vector<SequencedSecurityTimeAndSale>
       LocalHistoricalDataStore::load_time_and_sales() {
-    return m_time_and_sale_data_store.LoadAll();
+    return m_time_and_sale_data_store.load_all();
   }
 
   inline std::vector<SecurityInfo> LocalHistoricalDataStore::load_security_info(
       const SecurityInfoQuery& query) {
-    auto evaluator =
-      Beam::Queries::Translate<EvaluatorTranslator>(query.GetFilter());
-    return m_security_info.With([&] (auto& security_info) {
+    auto evaluator = Beam::translate<EvaluatorTranslator>(query.get_filter());
+    return m_security_info.with([&] (auto& security_info) {
       auto matches = std::vector<SecurityInfo>();
       auto [begin, end] = [&] {
-        if(query.GetSnapshotLimit().GetType() ==
-            Beam::Queries::SnapshotLimit::Type::HEAD) {
+        if(query.get_snapshot_limit().get_type() ==
+            Beam::SnapshotLimit::Type::HEAD) {
           return std::tuple(Beam::AnyIterator(security_info.begin()),
             Beam::AnyIterator(security_info.end()));
         }
         return std::tuple(Beam::AnyIterator(security_info.rbegin()),
           Beam::AnyIterator(security_info.rend()));
       }();
-      if(auto anchor = query.GetAnchor()) {
+      if(auto anchor = query.get_anchor()) {
         while(begin != end && begin->m_security != *anchor) {
           ++begin;
         }
@@ -110,16 +108,16 @@ namespace Nexus {
         }
       }
       while(begin != end && static_cast<int>(matches.size()) <
-          query.GetSnapshotLimit().GetSize()) {
+          query.get_snapshot_limit().get_size()) {
         auto& info = *begin;
-        if(info.m_security <= query.GetIndex() &&
-            Beam::Queries::TestFilter(*evaluator, info)) {
+        if(info.m_security <= query.get_index() &&
+            Beam::test_filter(*evaluator, info)) {
           matches.push_back(info);
         }
         ++begin;
       }
-      if(query.GetSnapshotLimit().GetType() ==
-          Beam::Queries::SnapshotLimit::Type::TAIL) {
+      if(query.get_snapshot_limit().get_type() ==
+          Beam::SnapshotLimit::Type::TAIL) {
         std::reverse(matches.begin(), matches.end());
       }
       return matches;
@@ -127,7 +125,7 @@ namespace Nexus {
   }
 
   inline void LocalHistoricalDataStore::store(const SecurityInfo& info) {
-    m_security_info.With([&] (auto& security_info) {
+    m_security_info.with([&] (auto& security_info) {
       auto i = std::lower_bound(
         security_info.begin(), security_info.end(), info,
         [&] (const auto& left, const auto& right) {
@@ -143,65 +141,65 @@ namespace Nexus {
 
   inline std::vector<SequencedOrderImbalance> LocalHistoricalDataStore::
       load_order_imbalances(const VenueMarketDataQuery& query) {
-    return m_order_imbalance_data_store.Load(query);
+    return m_order_imbalance_data_store.load(query);
   }
 
   inline void LocalHistoricalDataStore::store(
       const SequencedVenueOrderImbalance& imbalance) {
-    m_order_imbalance_data_store.Store(imbalance);
+    m_order_imbalance_data_store.store(imbalance);
   }
 
   inline void LocalHistoricalDataStore::store(
       const std::vector<SequencedVenueOrderImbalance>& imbalances) {
-    m_order_imbalance_data_store.Store(imbalances);
+    m_order_imbalance_data_store.store(imbalances);
   }
 
   inline std::vector<SequencedBboQuote>
       LocalHistoricalDataStore::load_bbo_quotes(
         const SecurityMarketDataQuery& query) {
-    return m_bbo_quote_data_store.Load(query);
+    return m_bbo_quote_data_store.load(query);
   }
 
   inline void LocalHistoricalDataStore::store(
       const SequencedSecurityBboQuote& quote) {
-    m_bbo_quote_data_store.Store(quote);
+    m_bbo_quote_data_store.store(quote);
   }
 
   inline void LocalHistoricalDataStore::store(
       const std::vector<SequencedSecurityBboQuote>& quotes) {
-    m_bbo_quote_data_store.Store(quotes);
+    m_bbo_quote_data_store.store(quotes);
   }
 
   inline std::vector<SequencedBookQuote>
       LocalHistoricalDataStore::load_book_quotes(
         const SecurityMarketDataQuery& query) {
-    return m_book_quote_data_store.Load(query);
+    return m_book_quote_data_store.load(query);
   }
 
   inline void LocalHistoricalDataStore::store(
       const SequencedSecurityBookQuote& quote) {
-    m_book_quote_data_store.Store(quote);
+    m_book_quote_data_store.store(quote);
   }
 
   inline void LocalHistoricalDataStore::store(
       const std::vector<SequencedSecurityBookQuote>& quotes) {
-    m_book_quote_data_store.Store(quotes);
+    m_book_quote_data_store.store(quotes);
   }
 
   inline std::vector<SequencedTimeAndSale>
       LocalHistoricalDataStore::load_time_and_sales(
         const SecurityMarketDataQuery& query) {
-    return m_time_and_sale_data_store.Load(query);
+    return m_time_and_sale_data_store.load(query);
   }
 
   inline void LocalHistoricalDataStore::store(
       const SequencedSecurityTimeAndSale& time_and_sale) {
-    m_time_and_sale_data_store.Store(time_and_sale);
+    m_time_and_sale_data_store.store(time_and_sale);
   }
 
   inline void LocalHistoricalDataStore::store(
       const std::vector<SequencedSecurityTimeAndSale>& time_and_sales) {
-    m_time_and_sale_data_store.Store(time_and_sales);
+    m_time_and_sale_data_store.store(time_and_sales);
   }
 
   inline void LocalHistoricalDataStore::close() {}
