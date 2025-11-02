@@ -5,7 +5,7 @@
 #include <Beam/Parsers/Parse.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Services/ApplicationDefinitions.hpp>
-#include <Beam/Threading/LiveTimer.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/MarketDataService/ServiceMarketDataClient.hpp"

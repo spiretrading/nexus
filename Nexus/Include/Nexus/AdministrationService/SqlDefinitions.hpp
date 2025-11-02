@@ -39,8 +39,7 @@ namespace Nexus {
           return row.m_index.m_id;
         },
         [] (auto& row, auto column) {
-          row.m_index =
-            Beam::ServiceLocator::DirectoryEntry::MakeAccount(column);
+          row.m_index = Beam::DirectoryEntry::make_account(column);
         }).
       extend(get_account_identity_row(),
         [] (auto& row) -> auto& {
@@ -78,8 +77,7 @@ namespace Nexus {
           return row.m_index.m_id;
         },
         [] (auto& row, auto column) {
-          row.m_index =
-            Beam::ServiceLocator::DirectoryEntry::MakeAccount(column);
+          row.m_index = Beam::DirectoryEntry::make_account(column);
         }).
       extend(get_risk_parameters_row(),
         [] (auto& row) -> auto& {
@@ -105,8 +103,7 @@ namespace Nexus {
           return row.m_index.m_id;
         },
         [] (auto& row, auto column) {
-          row.m_index =
-            Beam::ServiceLocator::DirectoryEntry::MakeAccount(column);
+          row.m_index = Beam::DirectoryEntry::make_account(column);
         }).
       extend(get_risk_state_row(),
         [] (auto& row) -> auto& {
@@ -143,7 +140,7 @@ namespace Nexus {
         },
         [] (auto& row, auto column) {
           row = AccountModificationRequest(row.get_id(), row.get_type(),
-            Beam::ServiceLocator::DirectoryEntry::MakeAccount(column),
+            Beam::DirectoryEntry::make_account(column),
             row.get_submission_account(), row.get_timestamp());
         }).
       add_column("submission_account",
@@ -152,8 +149,7 @@ namespace Nexus {
         },
         [] (auto& row, auto column) {
           row = AccountModificationRequest(row.get_id(), row.get_type(),
-            row.get_account(),
-            Beam::ServiceLocator::DirectoryEntry::MakeAccount(column),
+            row.get_account(), Beam::DirectoryEntry::make_account(column),
             row.get_timestamp());
         }).
       add_column("timestamp",
@@ -176,7 +172,7 @@ namespace Nexus {
     int m_id;
 
     /** The entitlement to grant. */
-    Beam::ServiceLocator::DirectoryEntry m_entitlement;
+    Beam::DirectoryEntry m_entitlement;
   };
 
   /** Returns a row representing a single entitlement modification. */
@@ -188,8 +184,7 @@ namespace Nexus {
           return row.m_entitlement.m_id;
         },
         [] (auto& row, auto column) {
-          row.m_entitlement =
-            Beam::ServiceLocator::DirectoryEntry::MakeDirectory(column);
+          row.m_entitlement = Beam::DirectoryEntry::make_directory(column);
         }).
       add_index("id_index", "id");
     return ROW;
@@ -202,7 +197,7 @@ namespace Nexus {
     int m_id;
 
     /** The account being modified. */
-    Beam::ServiceLocator::DirectoryEntry m_account;
+    Beam::DirectoryEntry m_account;
 
     /** The requested parameters. */
     RiskParameters m_parameters;
@@ -217,8 +212,7 @@ namespace Nexus {
           return row.m_account.m_id;
         },
         [] (auto& row, auto column) {
-          row.m_account =
-            Beam::ServiceLocator::DirectoryEntry::MakeAccount(column);
+          row.m_account = Beam::DirectoryEntry::make_account(column);
         }).
       extend(get_risk_parameters_row(), &IndexedRiskModification::m_parameters).
       set_primary_key("id");
@@ -234,8 +228,7 @@ namespace Nexus {
           return row.m_account.m_id;
         },
         [] (auto& row, auto column) {
-          row.m_account =
-            Beam::ServiceLocator::DirectoryEntry::MakeAccount(column);
+          row.m_account = Beam::DirectoryEntry::make_account(column);
         }).
       add_column("sequence_number",
         &AccountModificationRequest::Update::m_sequence_number).
@@ -271,7 +264,7 @@ namespace Nexus {
     int m_id;
 
     /** The account that sent the message. */
-    Beam::ServiceLocator::DirectoryEntry m_account;
+    Beam::DirectoryEntry m_account;
 
     /** The message's timestamp. */
     boost::posix_time::ptime m_timestamp;
@@ -286,8 +279,7 @@ namespace Nexus {
           return row.m_account.m_id;
         },
         [] (auto& row, auto column) {
-          row.m_account =
-            Beam::ServiceLocator::DirectoryEntry::MakeAccount(column);
+          row.m_account = Beam::DirectoryEntry::make_account(column);
         }).
       add_column("timestamp", &AdministrationMessageIndex::m_timestamp).
       set_primary_key("id");

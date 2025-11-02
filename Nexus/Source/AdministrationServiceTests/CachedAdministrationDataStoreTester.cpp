@@ -11,7 +11,7 @@ namespace {
   struct Builder {
     auto operator ()() const {
       return CachedAdministrationDataStore<LocalAdministrationDataStore>(
-        Initialize());
+        init());
     }
   };
 }

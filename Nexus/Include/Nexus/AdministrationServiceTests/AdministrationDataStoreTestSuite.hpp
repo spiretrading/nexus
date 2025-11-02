@@ -15,7 +15,7 @@ namespace Nexus::Tests {
     auto data_store = T()();
 
     SUBCASE("store_and_load_identity") {
-      auto account = DirectoryEntry::MakeAccount(123, "user1");
+      auto account = DirectoryEntry::make_account(123, "user1");
       auto identity = AccountIdentity();
       identity.m_first_name = "John";
       identity.m_last_name = "Doe";
@@ -25,7 +25,7 @@ namespace Nexus::Tests {
       auto loaded_identity = data_store.with_transaction([&] {
         return data_store.load_identity(account);
       });
-      TestJsonEquality(loaded_identity, identity);
+      test_json_equality(loaded_identity, identity);
       auto updated_identity = AccountIdentity();
       updated_identity.m_first_name = "Riley";
       updated_identity.m_last_name = "Miller";
@@ -35,15 +35,15 @@ namespace Nexus::Tests {
       auto updated_loaded_identity = data_store.with_transaction([&] {
         return data_store.load_identity(account);
       });
-      TestJsonEquality(updated_loaded_identity, updated_identity);
+      test_json_equality(updated_loaded_identity, updated_identity);
     }
 
     SUBCASE("load_non_existent_identity") {
-      auto account = DirectoryEntry::MakeAccount(123, "user1");
+      auto account = DirectoryEntry::make_account(123, "user1");
       auto identity = data_store.with_transaction([&] {
         return data_store.load_identity(account);
       });
-      TestJsonEquality(AccountIdentity(), identity);
+      test_json_equality(AccountIdentity(), identity);
     }
 
     SUBCASE("load_all_identities") {
@@ -51,11 +51,11 @@ namespace Nexus::Tests {
         return data_store.load_all_account_identities();
       });
       REQUIRE(empty_identities.empty());
-      auto account_a = DirectoryEntry::MakeAccount(123, "user1");
+      auto account_a = DirectoryEntry::make_account(123, "user1");
       auto identity_a = AccountIdentity();
       identity_a.m_first_name = "Jane";
       identity_a.m_last_name = "Murphy";
-      auto account_b = DirectoryEntry::MakeAccount(345, "user2");
+      auto account_b = DirectoryEntry::make_account(345, "user2");
       auto identity_b = AccountIdentity();
       identity_b.m_first_name = "Riley";
       identity_b.m_last_name = "Miller";
@@ -72,13 +72,13 @@ namespace Nexus::Tests {
         });
       REQUIRE(all_identities.size() == 2);
       REQUIRE(all_identities[0].m_index == account_a);
-      TestJsonEquality(all_identities[0].m_identity, identity_a);
+      test_json_equality(all_identities[0].m_identity, identity_a);
       REQUIRE(all_identities[1].m_index == account_b);
-      TestJsonEquality(all_identities[1].m_identity, identity_b);
+      test_json_equality(all_identities[1].m_identity, identity_b);
     }
 
     SUBCASE("store_and_load_risk_parameters") {
-      auto account = DirectoryEntry::MakeAccount(123, "user1");
+      auto account = DirectoryEntry::make_account(123, "user1");
       auto parameters = RiskParameters(
         CAD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, seconds(5));
       data_store.with_transaction([&] {
@@ -100,7 +100,7 @@ namespace Nexus::Tests {
     }
 
     SUBCASE("load_non_existent_risk_parameters") {
-      auto account = DirectoryEntry::MakeAccount(123, "user1");
+      auto account = DirectoryEntry::make_account(123, "user1");
       auto parameters = data_store.with_transaction([&] {
         return data_store.load_risk_parameters(account);
       });
@@ -112,10 +112,10 @@ namespace Nexus::Tests {
         return data_store.load_all_risk_parameters();
       });
       REQUIRE(empty_parameters.empty());
-      auto account_a = DirectoryEntry::MakeAccount(123, "user1");
+      auto account_a = DirectoryEntry::make_account(123, "user1");
       auto parameters_a = RiskParameters(USD, 100 * Money::ONE,
         RiskState::Type::ACTIVE, 10 * Money::ONE, seconds(10));
-      auto account_b = DirectoryEntry::MakeAccount(345, "user2");
+      auto account_b = DirectoryEntry::make_account(345, "user2");
       auto parameters_b = RiskParameters(EUR, 200 * Money::ONE,
         RiskState::Type::DISABLED, 20 * Money::ONE, seconds(20));
       data_store.with_transaction([&] {
@@ -139,7 +139,7 @@ namespace Nexus::Tests {
     }
 
     SUBCASE("store_and_load_risk_state") {
-      auto account = DirectoryEntry::MakeAccount(123, "user1");
+      auto account = DirectoryEntry::make_account(123, "user1");
       auto state = RiskState(
         RiskState::Type::ACTIVE, time_from_string("2024-05-20 10:00:00"));
       data_store.with_transaction([&] {
@@ -161,7 +161,7 @@ namespace Nexus::Tests {
     }
 
     SUBCASE("load_non_existent_risk_state") {
-      auto account = DirectoryEntry::MakeAccount(123, "user1");
+      auto account = DirectoryEntry::make_account(123, "user1");
       auto state = data_store.with_transaction([&] {
         return data_store.load_risk_state(account);
       });
@@ -173,10 +173,10 @@ namespace Nexus::Tests {
         return data_store.load_all_risk_states();
       });
       REQUIRE(empty_states.empty());
-      auto account_a = DirectoryEntry::MakeAccount(123, "user1");
+      auto account_a = DirectoryEntry::make_account(123, "user1");
       auto state_a = RiskState(
         RiskState::Type::CLOSE_ORDERS, time_from_string("2024-06-06 10:00:00"));
-      auto account_b = DirectoryEntry::MakeAccount(345, "user2");
+      auto account_b = DirectoryEntry::make_account(345, "user2");
       auto state_b = RiskState(
         RiskState::Type::DISABLED, time_from_string("2024-02-01 13:45:00"));
       data_store.with_transaction([&] {
@@ -200,14 +200,14 @@ namespace Nexus::Tests {
     }
 
     SUBCASE("store_and_load_entitlement_modification") {
-      auto account = DirectoryEntry::MakeAccount(123, "user1");
-      auto submission_account = DirectoryEntry::MakeAccount(456, "admin");
+      auto account = DirectoryEntry::make_account(123, "user1");
+      auto submission_account = DirectoryEntry::make_account(456, "admin");
       auto submission_time = time_from_string("2024-07-05 10:00:00");
       auto request = AccountModificationRequest(
         1, AccountModificationRequest::Type::ENTITLEMENTS, account,
         submission_account, submission_time);
       auto entitlements = std::vector<DirectoryEntry>();
-      entitlements.push_back(DirectoryEntry::MakeDirectory(23, "TSX"));
+      entitlements.push_back(DirectoryEntry::make_directory(23, "TSX"));
       auto modification = EntitlementModification(entitlements);
       data_store.with_transaction([&] {
         data_store.store(request, modification);
@@ -215,23 +215,23 @@ namespace Nexus::Tests {
       auto loaded_request = data_store.with_transaction([&] {
         return data_store.load_account_modification_request(request.get_id());
       });
-      TestJsonEquality(loaded_request, request);
+      test_json_equality(loaded_request, request);
       auto loaded_modification = data_store.with_transaction([&] {
         return data_store.load_entitlement_modification(request.get_id());
       });
-      TestJsonEquality(loaded_modification, modification);
+      test_json_equality(loaded_modification, modification);
     }
 
     SUBCASE("load_non_existent_entitlement_modification") {
       auto modification = data_store.with_transaction([&] {
         return data_store.load_entitlement_modification(123);
       });
-      TestJsonEquality(modification, EntitlementModification());
+      test_json_equality(modification, EntitlementModification());
     }
 
     SUBCASE("store_and_load_risk_modification") {
-      auto account = DirectoryEntry::MakeAccount(123, "user1");
-      auto submission_account = DirectoryEntry::MakeAccount(456, "admin");
+      auto account = DirectoryEntry::make_account(123, "user1");
+      auto submission_account = DirectoryEntry::make_account(456, "admin");
       auto submission_time = time_from_string("2024-07-05 11:00:00");
       auto request = AccountModificationRequest(
         2, AccountModificationRequest::Type::RISK, account, submission_account,
@@ -245,24 +245,24 @@ namespace Nexus::Tests {
       auto loaded_request = data_store.with_transaction([&] {
         return data_store.load_account_modification_request(request.get_id());
       });
-      TestJsonEquality(loaded_request, request);
+      test_json_equality(loaded_request, request);
       auto loaded_modification = data_store.with_transaction([&] {
         return data_store.load_risk_modification(request.get_id());
       });
-      TestJsonEquality(loaded_modification, modification);
+      test_json_equality(loaded_modification, modification);
     }
 
     SUBCASE("load_non_existent_risk_modification") {
       auto modification = data_store.with_transaction([&] {
         return data_store.load_risk_modification(456);
       });
-      TestJsonEquality(modification, RiskModification());
+      test_json_equality(modification, RiskModification());
     }
 
     SUBCASE("store_and_load_status") {
       auto request_id = 1;
-      auto admin_account = DirectoryEntry::MakeAccount(123, "admin");
-      auto manager_account = DirectoryEntry::MakeAccount(456, "manager");
+      auto admin_account = DirectoryEntry::make_account(123, "admin");
+      auto manager_account = DirectoryEntry::make_account(456, "manager");
       auto first_update = AccountModificationRequest::Update(
         AccountModificationRequest::Status::PENDING, admin_account, 1,
         time_from_string("2024-07-05 14:00:00"));
@@ -294,7 +294,7 @@ namespace Nexus::Tests {
 
     SUBCASE("store_and_load_message") {
       auto request_id = 1;
-      auto account = DirectoryEntry::MakeAccount(123, "user1");
+      auto account = DirectoryEntry::make_account(123, "user1");
       auto timestamp = time_from_string("2024-07-05 15:00:00");
       auto message = Message(10, account, timestamp,
         {Message::Body::make_plain_text("Hello world")});
@@ -323,7 +323,7 @@ namespace Nexus::Tests {
       REQUIRE(last_id == 0);
       auto request_a = 1;
       auto request_b = 2;
-      auto account = DirectoryEntry::MakeAccount(123, "user1");
+      auto account = DirectoryEntry::make_account(123, "user1");
       auto message_a1 =
         Message(100, account, time_from_string("2024-07-05 16:00:00"), {});
       auto message_a2 =
@@ -374,7 +374,7 @@ namespace Nexus::Tests {
     }
 
     SUBCASE("load_account_modification_request_ids_out_of_order") {
-      auto account = DirectoryEntry::MakeAccount(100, "user_a");
+      auto account = DirectoryEntry::make_account(100, "user_a");
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
         data_store.store(AccountModificationRequest(
@@ -401,7 +401,7 @@ namespace Nexus::Tests {
     }
 
     SUBCASE("load_account_modification_request_ids_with_start_id") {
-      auto account = DirectoryEntry::MakeAccount(100, "user_a");
+      auto account = DirectoryEntry::make_account(100, "user_a");
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
         data_store.store(AccountModificationRequest(
@@ -426,7 +426,7 @@ namespace Nexus::Tests {
     }
 
     SUBCASE("load_account_modification_request_ids_with_max_count") {
-      auto account = DirectoryEntry::MakeAccount(100, "user_a");
+      auto account = DirectoryEntry::make_account(100, "user_a");
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
         data_store.store(AccountModificationRequest(
@@ -451,8 +451,8 @@ namespace Nexus::Tests {
     }
 
     SUBCASE("load_account_modification_request_ids_by_account") {
-      auto account_a = DirectoryEntry::MakeAccount(100, "user_a");
-      auto account_b = DirectoryEntry::MakeAccount(200, "user_b");
+      auto account_a = DirectoryEntry::make_account(100, "user_a");
+      auto account_b = DirectoryEntry::make_account(200, "user_b");
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
         data_store.store(AccountModificationRequest(
@@ -475,8 +475,8 @@ namespace Nexus::Tests {
     }
 
     SUBCASE("load_account_modification_request_ids_by_account_with_start_id") {
-      auto account_a = DirectoryEntry::MakeAccount(100, "user_a");
-      auto account_b = DirectoryEntry::MakeAccount(200, "user_b");
+      auto account_a = DirectoryEntry::make_account(100, "user_a");
+      auto account_b = DirectoryEntry::make_account(200, "user_b");
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
         data_store.store(AccountModificationRequest(1,

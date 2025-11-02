@@ -7,25 +7,16 @@ namespace Nexus {
   /**
    * Exception to indicate an operation on an AdministrationDataStore failed.
    */
-  class AdministrationDataStoreException : public Beam::IO::IOException {
+  class AdministrationDataStoreException : public Beam::IOException {
     public:
+      using Beam::IOException::IOException;
 
       /** Constructs an AdministrationDataStoreException. */
       AdministrationDataStoreException();
-
-      /**
-       * Constructs a AdministrationDataStoreException.
-       * @param message A message describing the error.
-       */
-      explicit AdministrationDataStoreException(const std::string& message);
   };
 
   inline AdministrationDataStoreException::AdministrationDataStoreException()
-    : Beam::IO::IOException("Operation failed") {}
-
-  inline AdministrationDataStoreException::AdministrationDataStoreException(
-    const std::string& message)
-    : Beam::IO::IOException(message) {}
+    : AdministrationDataStoreException("Operation failed") {}
 }
 
 #endif

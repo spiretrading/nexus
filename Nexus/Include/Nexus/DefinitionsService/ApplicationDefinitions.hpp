@@ -6,9 +6,8 @@
 namespace Nexus {
 
   /** Encapsulates a standard DefinitionsClient used in an application. */
-  using ApplicationDefinitionsClient = Beam::Services::ApplicationClient<
-    ServiceDefinitionsClient,
-    Beam::Services::ServiceName<DEFINITIONS_SERVICE_NAME>>;
+  using ApplicationDefinitionsClient = Beam::ApplicationClient<
+    ServiceDefinitionsClient, Beam::ServiceName<DEFINITIONS_SERVICE_NAME>>;
 }
 
 #endif

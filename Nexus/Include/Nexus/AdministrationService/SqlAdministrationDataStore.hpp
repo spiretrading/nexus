@@ -27,41 +27,37 @@ namespace Nexus {
       using Connection = C;
 
       /** The function used to load DirectoryEntries. */
-      using DirectoryEntrySourceFunction = Beam::KeyValueCache<unsigned int,
-        Beam::ServiceLocator::DirectoryEntry,
-        Beam::Threading::Mutex>::SourceFunction;
+      using DirectoryEntrySource = Beam::KeyValueCache<
+        unsigned int, Beam::DirectoryEntry, Beam::Mutex>::Source;
 
       /**
        * Constructs an SqlAdministrationDataStore.
        * @param connection The connection to the SQL database.
-       * @param directory_entry_source_function The function used to load
+       * @param directory_entry_source The function used to load
        *        DirectoryEntries.
        */
       SqlAdministrationDataStore(std::unique_ptr<Connection> connection,
-        DirectoryEntrySourceFunction directory_entry_source_function);
+        DirectoryEntrySource directory_entry_source);
 
       ~SqlAdministrationDataStore();
 
       std::vector<IndexedAccountIdentity> load_all_account_identities();
-      AccountIdentity load_identity(
-        const Beam::ServiceLocator::DirectoryEntry& account);
-      void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const AccountIdentity& identity);
+      AccountIdentity load_identity(const Beam::DirectoryEntry& account);
+      void store(
+        const Beam::DirectoryEntry& account, const AccountIdentity& identity);
       std::vector<IndexedRiskParameters> load_all_risk_parameters();
-      RiskParameters load_risk_parameters(
-        const Beam::ServiceLocator::DirectoryEntry& account);
-      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+      RiskParameters load_risk_parameters(const Beam::DirectoryEntry& account);
+      void store(const Beam::DirectoryEntry& account,
         const RiskParameters& risk_parameters);
       std::vector<IndexedRiskState> load_all_risk_states();
-      RiskState load_risk_state(
-        const Beam::ServiceLocator::DirectoryEntry& account);
-      void store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskState& risk_state);
+      RiskState load_risk_state(const Beam::DirectoryEntry& account);
+      void store(
+        const Beam::DirectoryEntry& account, const RiskState& risk_state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest::Id>
         load_account_modification_request_ids(
-          const Beam::ServiceLocator::DirectoryEntry& account,
+          const Beam::DirectoryEntry& account,
           AccountModificationRequest::Id start_id, int max_count);
       std::vector<AccountModificationRequest::Id>
         load_account_modification_request_ids(
@@ -89,19 +85,19 @@ namespace Nexus {
       void close();
 
     private:
-      mutable Beam::Threading::Mutex m_mutex;
+      mutable Beam::Mutex m_mutex;
       std::unique_ptr<Connection> m_connection;
-      Beam::KeyValueCache<unsigned int, Beam::ServiceLocator::DirectoryEntry,
-        Beam::Threading::Mutex> m_directory_entries;
-      Beam::IO::OpenState m_open_state;
+      Beam::KeyValueCache<unsigned int, Beam::DirectoryEntry, Beam::Mutex>
+        m_directory_entries;
+      Beam::OpenState m_open_state;
   };
 
   template<typename C>
   SqlAdministrationDataStore<C>::SqlAdministrationDataStore(
       std::unique_ptr<Connection> connection,
-      DirectoryEntrySourceFunction directory_entry_source_function)
+      DirectoryEntrySource directory_entry_source)
       : m_connection(std::move(connection)),
-        m_directory_entries(std::move(directory_entry_source_function)) {
+        m_directory_entries(std::move(directory_entry_source)) {
     try {
       m_connection->open();
       m_connection->execute(Viper::create_if_not_exists(
@@ -146,7 +142,7 @@ namespace Nexus {
       m_connection->execute(Viper::select(get_indexed_account_identity_row(),
         "account_identities", std::back_inserter(identities)));
       for(auto& identity : identities) {
-        identity.m_index = m_directory_entries.Load(identity.m_index.m_id);
+        identity.m_index = m_directory_entries.load(identity.m_index.m_id);
       }
     } catch(const std::exception& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
@@ -156,7 +152,7 @@ namespace Nexus {
 
   template<typename C>
   AccountIdentity SqlAdministrationDataStore<C>::load_identity(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     auto identity = AccountIdentity();
     try {
       m_connection->execute(Viper::select(get_account_identity_row(),
@@ -169,8 +165,7 @@ namespace Nexus {
   }
 
   template<typename C>
-  void SqlAdministrationDataStore<C>::store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+  void SqlAdministrationDataStore<C>::store(const Beam::DirectoryEntry& account,
       const AccountIdentity& identity) {
     auto row = IndexedAccountIdentity(account, identity);
     try {
@@ -189,7 +184,7 @@ namespace Nexus {
       m_connection->execute(Viper::select(get_indexed_risk_parameters_row(),
         "risk_parameters", std::back_inserter(parameters)));
       for(auto& parameter : parameters) {
-        parameter.m_index = m_directory_entries.Load(parameter.m_index.m_id);
+        parameter.m_index = m_directory_entries.load(parameter.m_index.m_id);
       }
     } catch(const std::exception& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
@@ -199,7 +194,7 @@ namespace Nexus {
 
   template<typename C>
   RiskParameters SqlAdministrationDataStore<C>::load_risk_parameters(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     auto parameters = RiskParameters();
     try {
       m_connection->execute(Viper::select(get_risk_parameters_row(),
@@ -211,8 +206,7 @@ namespace Nexus {
   }
 
   template<typename C>
-  void SqlAdministrationDataStore<C>::store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+  void SqlAdministrationDataStore<C>::store(const Beam::DirectoryEntry& account,
       const RiskParameters& risk_parameters) {
     auto parameters = IndexedRiskParameters(account, risk_parameters);
     try {
@@ -231,7 +225,7 @@ namespace Nexus {
       m_connection->execute(Viper::select(get_indexed_risk_state_row(),
         "risk_states", std::back_inserter(states)));
       for(auto& state : states) {
-        state.m_index = m_directory_entries.Load(state.m_index.m_id);
+        state.m_index = m_directory_entries.load(state.m_index.m_id);
       }
     } catch(const std::exception& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
@@ -241,7 +235,7 @@ namespace Nexus {
 
   template<typename C>
   RiskState SqlAdministrationDataStore<C>::load_risk_state(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     auto state = RiskState();
     try {
       m_connection->execute(Viper::select(get_risk_state_row(),
@@ -253,8 +247,7 @@ namespace Nexus {
   }
 
   template<typename C>
-  void SqlAdministrationDataStore<C>::store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+  void SqlAdministrationDataStore<C>::store(const Beam::DirectoryEntry& account,
       const RiskState& risk_state) {
     auto indexed_state = IndexedRiskState(account, risk_state);
     try {
@@ -274,9 +267,9 @@ namespace Nexus {
         get_account_modification_request_row(), "account_modification_requests",
         Viper::sym("id") == id, &request));
       request = AccountModificationRequest(request.get_id(), request.get_type(),
-        m_directory_entries.Load(request.get_account().m_id),
-        m_directory_entries.Load(request.get_submission_account().m_id),
-        request.get_timestamp());
+        m_directory_entries.load(request.get_account().m_id),
+        m_directory_entries.load(request.get_submission_account().m_id),
+          request.get_timestamp());
     } catch(const std::exception& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
@@ -286,7 +279,7 @@ namespace Nexus {
   template<typename C>
   std::vector<AccountModificationRequest::Id>
       SqlAdministrationDataStore<C>::load_account_modification_request_ids(
-        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::DirectoryEntry& account,
         AccountModificationRequest::Id start_id, int max_count) {
     if(start_id == -1) {
       start_id = std::numeric_limits<AccountModificationRequest::Id>::max();
@@ -297,7 +290,7 @@ namespace Nexus {
       m_connection->execute(Viper::select(
         Viper::Row<AccountModificationRequest::Id>("id"),
         "account_modification_requests", Viper::sym("id") > start_id &&
-        Viper::sym("account") == account.m_id,
+          Viper::sym("account") == account.m_id,
         Viper::order_by("id", Viper::Order::ASC), Viper::limit(max_count),
         std::back_inserter(ids)));
     } catch(const Viper::ExecuteException& e) {
@@ -331,14 +324,14 @@ namespace Nexus {
   EntitlementModification
       SqlAdministrationDataStore<C>::load_entitlement_modification(
         AccountModificationRequest::Id id) {
-    auto entitlements = std::vector<Beam::ServiceLocator::DirectoryEntry>();
+    auto entitlements = std::vector<Beam::DirectoryEntry>();
     try {
       auto ids = std::vector<unsigned int>();
       m_connection->execute(Viper::select(
         Viper::Row<unsigned int>("entitlement"), "entitlement_modifications",
         Viper::sym("id") == id, std::back_inserter(ids)));
       for(auto& id : ids) {
-        entitlements.push_back(m_directory_entries.Load(id));
+        entitlements.push_back(m_directory_entries.load(id));
       }
     } catch(const std::exception& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
@@ -431,7 +424,7 @@ namespace Nexus {
         "account_modification_request_status", Viper::sym("id") == id,
         Viper::order_by("sequence_number", Viper::Order::DESC), Viper::limit(1),
         &status));
-      status.m_account = m_directory_entries.Load(status.m_account.m_id);
+      status.m_account = m_directory_entries.load(status.m_account.m_id);
     } catch(const std::exception& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
     }
@@ -475,7 +468,7 @@ namespace Nexus {
         get_administration_message_index_row(), "administration_messages",
         Viper::sym("id") == id, &index));
       if(index) {
-        index->m_account = m_directory_entries.Load(index->m_account.m_id);
+        index->m_account = m_directory_entries.load(index->m_account.m_id);
       }
     } catch(const std::exception& e) {
       BOOST_THROW_EXCEPTION(AdministrationDataStoreException(e.what()));
@@ -514,30 +507,17 @@ namespace Nexus {
   template<typename F>
   decltype(auto) SqlAdministrationDataStore<C>::with_transaction(
       F&& transaction) {
-    using Result = std::remove_reference_t<
-      decltype(std::forward<F>(transaction)())>;
-    if constexpr(std::is_same_v<Result, void>) {
-      auto lock = std::lock_guard(m_mutex);
-      Viper::transaction(*m_connection, std::forward<F>(transaction));
-    } else {
-      auto result = boost::optional<Result>();
-      {
-        auto lock = std::lock_guard(m_mutex);
-        Viper::transaction(*m_connection, [&] {
-          result.emplace(std::forward<F>(transaction)());
-        });
-      }
-      return Result(std::move(*result));
-    }
+    auto lock = std::lock_guard(m_mutex);
+    return Viper::transaction(*m_connection, std::forward<F>(transaction));
   }
 
   template<typename C>
   void SqlAdministrationDataStore<C>::close() {
-    if(m_open_state.SetClosing()) {
+    if(m_open_state.set_closing()) {
       return;
     }
     m_connection->close();
-    m_open_state.Close();
+    m_open_state.close();
   }
 }
 
