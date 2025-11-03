@@ -27,7 +27,7 @@ BreakoutBox::BreakoutBox(QWidget& body, QWidget& source)
   setFocusProxy(m_body);
   move(parentWidget()->mapFromGlobal(m_source->mapToGlobal(QPoint(0, 0))));
   setMinimumSize(m_source->size());
-  setMaximumWidth(parentWidget()->width() - x());
+  update_maximum_size();
   m_source->installEventFilter(this);
   parentWidget()->installEventFilter(this);
   qApp->installEventFilter(this);
@@ -53,20 +53,20 @@ bool BreakoutBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_source) {
     if(event->type() == QEvent::Move) {
       move(parentWidget()->mapFromGlobal(m_source->mapToGlobal(QPoint(0, 0))));
-      setMaximumWidth(parentWidget()->width() - x());
+      update_maximum_size();
     } else if(event->type() == QEvent::Resize) {
       auto& resize_event = *static_cast<QResizeEvent*>(event);
       setMinimumSize(resize_event.size());
       adjustSize();
     }
   } else if(watched == parentWidget() && event->type() == QEvent::Resize) {
-    auto& resize_event = *static_cast<QResizeEvent*>(event);
-    setMaximumWidth(resize_event.size().width() - x());
+    update_maximum_size();
   } else if(event->type() == QEvent::Wheel && isVisible()) {
     auto& wheel_event = *static_cast<QWheelEvent*>(event);
     auto parent = parentWidget();
-    if(parent->rect().contains(
-        parent->mapFromGlobal(wheel_event.globalPos()))) {
+    auto global_pos = wheel_event.globalPos();
+    if(parent->rect().contains(parent->mapFromGlobal(global_pos)) &&
+        !rect().contains(mapFromGlobal(global_pos))) {
       return true;
     }
   }
@@ -82,4 +82,10 @@ bool BreakoutBox::focusNextPrevChild(bool next) {
   }();
   m_source->setFocus(focus_reason);
   return focus_next(*m_source, next);
+}
+
+void BreakoutBox::update_maximum_size() {
+  auto parent = parentWidget();
+  setMaximumWidth(parent->width() - x());
+  setMaximumHeight(parent->height() - y());
 }

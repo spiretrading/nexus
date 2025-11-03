@@ -32,6 +32,8 @@ namespace Spire {
     private:
       QWidget* m_body;
       QWidget* m_source;
+
+      void update_maximum_size();
   };
 }
 
