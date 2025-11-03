@@ -6,19 +6,6 @@
 
 using namespace Spire;
 
-namespace {
-  template<bool (QWidget::* method)(bool)>
-  struct FocusNext {
-    friend bool focus_next(QWidget& widget, bool next) {
-      return (widget.*method)(next);
-    }
-  };
-
-  template struct FocusNext<&QWidget::focusNextPrevChild>;
-
-  bool focus_next(QWidget& widget, bool next);
-}
-
 BreakoutBox::BreakoutBox(QWidget& body, QWidget& source)
     : QWidget(source.window()),
       m_body(&body),
