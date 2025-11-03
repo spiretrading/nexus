@@ -30,24 +30,27 @@ namespace Nexus {
    *          market data queries.
    * @param A The type of AdministrationClient to use.
    */
-  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
+  template<typename C, typename M, typename A> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   class MarketDataRelayServlet {
     public:
-      using Container = C;
-      using ServiceProtocolClient = typename Container::ServiceProtocolClient;
 
       /**
        * The type of MarketDataClient connected to the source providing market
        * data queries.
        */
-      using MarketDataClient = Beam::GetTryDereferenceType<M>;
+      using MarketDataClient = Beam::dereference_t<M>;
 
       /** The type of AdministrationClient to use. */
-      using AdministrationClient = Beam::GetTryDereferenceType<A>;
+      using AdministrationClient = Beam::dereference_t<A>;
 
       /** The type of function used to builds MarketDataClients. */
       using MarketDataClientBuilder =
         std::function<std::unique_ptr<MarketDataClient> ()>;
+
+      using Container = C;
+      using ServiceProtocolClient = typename Container::ServiceProtocolClient;
 
       /**
        * Constructs a MarketDataRelayServlet.
@@ -67,14 +70,11 @@ namespace Nexus {
         std::size_t min_market_data_clients,
         std::size_t max_market_data_clients, AF&& administrationClient);
 
-      void RegisterServices(
-        Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots);
-
-      void HandleClientAccepted(ServiceProtocolClient& client);
-
-      void HandleClientClosed(ServiceProtocolClient& client);
-
-      void Close();
+      void register_services(
+        Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots);
+      void handle_accept(ServiceProtocolClient& client);
+      void handle_close(ServiceProtocolClient& client);
+      void close();
 
     private:
       struct RealTimeQueryEntry {
@@ -86,14 +86,14 @@ namespace Nexus {
       };
       template<typename T>
       using VenueSubscriptions =
-        Beam::Queries::IndexedSubscriptions<T, Venue, ServiceProtocolClient>;
+        Beam::IndexedSubscriptions<T, Venue, ServiceProtocolClient>;
       template<typename T>
       using SecuritySubscriptions =
-        Beam::Queries::IndexedSubscriptions<T, Security, ServiceProtocolClient>;
+        Beam::IndexedSubscriptions<T, Security, ServiceProtocolClient>;
       using RealTimeVenueSubscriptionSet =
-        Beam::SynchronizedUnorderedSet<Venue, Beam::Threading::Mutex>;
+        Beam::SynchronizedUnorderedSet<Venue, Beam::Mutex>;
       using RealTimeSecuritySubscriptionSet =
-        Beam::SynchronizedUnorderedSet<Security, Beam::Threading::Mutex>;
+        Beam::SynchronizedUnorderedSet<Security, Beam::Mutex>;
       VenueSubscriptions<OrderImbalance> m_order_imbalance_subscriptions;
       SecuritySubscriptions<BboQuote> m_bbo_quote_subscriptions;
       SecuritySubscriptions<BookQuote> m_book_quote_subscriptions;
@@ -105,9 +105,9 @@ namespace Nexus {
       Beam::SynchronizedUnorderedSet<Security> m_securities;
       Beam::ResourcePool<MarketDataClient, MarketDataClientBuilder>
         m_market_data_clients;
-      Beam::GetOptionalLocalPtr<A> m_administration_client;
+      Beam::local_ptr_t<A> m_administration_client;
       EntitlementDatabase m_entitlement_database;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
       std::vector<std::unique_ptr<RealTimeQueryEntry>>
         m_real_time_query_entries;
 
@@ -119,15 +119,15 @@ namespace Nexus {
       template<typename Service, typename Query, typename Subscriptions,
         typename RealTimeSubscriptions>
       void handle_query_request(
-        Beam::Services::RequestToken<ServiceProtocolClient, Service>& request,
+        Beam::RequestToken<ServiceProtocolClient, Service>& request,
         const Query& query, Subscriptions& subscriptions,
         RealTimeSubscriptions& real_time_subscriptions);
       template<typename Subscriptions>
       void on_end_query(ServiceProtocolClient& client,
         const typename Subscriptions::Index& index, int id,
         Subscriptions& subscriptions);
-      SecuritySnapshot on_load_security_snapshot(ServiceProtocolClient& client,
-        const Security& security);
+      SecuritySnapshot on_load_security_snapshot(
+        ServiceProtocolClient& client, const Security& security);
       SecurityTechnicals on_load_security_technicals(
         ServiceProtocolClient& client, const Security& security);
       std::vector<SecurityInfo> on_query_security_info(
@@ -144,10 +144,10 @@ namespace Nexus {
           Subscriptions& subscriptions);
   };
 
-  template<IsMarketDataClient M, IsAdministrationClient A>
+  template<typename M, typename A>
   struct MetaMarketDataRelayServlet {
     using Session = MarketDataRegistrySession;
-    static constexpr auto SupportsParallelism = true;
+    static constexpr auto SUPPORTS_PARALLELISM = true;
 
     template<typename C>
     struct apply {
@@ -155,12 +155,16 @@ namespace Nexus {
     };
   };
 
-  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
+  template<typename C, typename M, typename A> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   MarketDataRelayServlet<C, M, A>::RealTimeQueryEntry::RealTimeQueryEntry(
     std::unique_ptr<MarketDataClient> market_data_client)
     : m_market_data_client(std::move(market_data_client)) {}
 
-  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
+  template<typename C, typename M, typename A> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   template<Beam::Initializes<A> AF>
   MarketDataRelayServlet<C, M, A>::MarketDataRelayServlet(
       boost::posix_time::time_duration client_timeout,
@@ -178,66 +182,70 @@ namespace Nexus {
     }
   }
 
-  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
-  void MarketDataRelayServlet<C, M, A>::RegisterServices(
-      Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
-    RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
-    RegisterMarketDataRegistryServices(Store(slots));
-    RegisterMarketDataRegistryMessages(Store(slots));
-    QueryOrderImbalancesService::AddRequestSlot(Store(slots),
+  template<typename C, typename M, typename A> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRelayServlet<C, M, A>::register_services(
+      Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots) {
+    Nexus::register_query_types(Beam::out(slots->get_registry()));
+    register_market_data_registry_services(out(slots));
+    register_market_data_registry_messages(out(slots));
+    QueryOrderImbalancesService::add_request_slot(out(slots),
       [=, this] (auto& request, const auto& query) {
         handle_query_request(request, query, m_order_imbalance_subscriptions,
           m_order_imbalance_real_time_subscriptions);
       });
-    Beam::Services::AddMessageSlot<EndOrderImbalanceQueryMessage>(Store(slots),
+    Beam::add_message_slot<EndOrderImbalanceQueryMessage>(out(slots),
       [=, this] (auto& client, const auto& index, auto id) {
         on_end_query(client, index, id, m_order_imbalance_subscriptions);
       });
-    QueryBboQuotesService::AddRequestSlot(Store(slots),
+    QueryBboQuotesService::add_request_slot(out(slots),
       [=, this] (auto& request, const auto& query) {
         handle_query_request(request, query, m_bbo_quote_subscriptions,
           m_bbo_quote_real_time_subscriptions);
       });
-    Beam::Services::AddMessageSlot<EndBboQuoteQueryMessage>(Store(slots),
+    Beam::add_message_slot<EndBboQuoteQueryMessage>(out(slots),
       [=, this] (auto& client, const auto& index, auto id) {
         on_end_query(client, index, id, m_bbo_quote_subscriptions);
       });
-    QueryBookQuotesService::AddRequestSlot(Store(slots),
+    QueryBookQuotesService::add_request_slot(out(slots),
       [=, this] (auto& request, const auto& query) {
         handle_query_request(request, query, m_book_quote_subscriptions,
           m_book_quote_real_time_subscriptions);
       });
-    Beam::Services::AddMessageSlot<EndBookQuoteQueryMessage>(Store(slots),
+    Beam::add_message_slot<EndBookQuoteQueryMessage>(out(slots),
       [=, this] (auto& client, const auto& index, auto id) {
         on_end_query(client, index, id, m_book_quote_subscriptions);
       });
-    QueryTimeAndSalesService::AddRequestSlot(Store(slots),
+    QueryTimeAndSalesService::add_request_slot(out(slots),
       [=, this] (auto& request, const auto& query) {
         handle_query_request(request, query, m_time_and_sale_subscriptions,
           m_time_and_sale_real_time_subscriptions);
       });
-    Beam::Services::AddMessageSlot<EndTimeAndSaleQueryMessage>(Store(slots),
+    Beam::add_message_slot<EndTimeAndSaleQueryMessage>(out(slots),
       [=, this] (auto& client, const auto& index, auto id) {
         on_end_query(client, index, id, m_time_and_sale_subscriptions);
       });
-    LoadSecuritySnapshotService::AddSlot(Store(slots), std::bind_front(
+    LoadSecuritySnapshotService::add_slot(out(slots), std::bind_front(
       &MarketDataRelayServlet::on_load_security_snapshot, this));
-    LoadSecurityTechnicalsService::AddSlot(Store(slots), std::bind_front(
+    LoadSecurityTechnicalsService::add_slot(out(slots), std::bind_front(
       &MarketDataRelayServlet::on_load_security_technicals, this));
-    QuerySecurityInfoService::AddSlot(Store(slots),
+    QuerySecurityInfoService::add_slot(out(slots),
       std::bind_front(&MarketDataRelayServlet::on_query_security_info, this));
-    LoadSecurityInfoFromPrefixService::AddSlot(Store(slots), std::bind_front(
+    LoadSecurityInfoFromPrefixService::add_slot(out(slots), std::bind_front(
       &MarketDataRelayServlet::on_load_security_info_from_prefix, this));
   }
 
-  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
-  void MarketDataRelayServlet<C, M, A>::HandleClientAccepted(
+  template<typename C, typename M, typename A> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRelayServlet<C, M, A>::handle_accept(
       ServiceProtocolClient& client) {
-    auto& session = client.GetSession();
+    auto& session = client.get_session();
     session.m_roles =
-      m_administration_client->load_account_roles(session.GetAccount());
+      m_administration_client->load_account_roles(session.get_account());
     auto account_entitlements =
-      m_administration_client->load_entitlements(session.GetAccount());
+      m_administration_client->load_entitlements(session.get_account());
     for(auto& entitlement : m_entitlement_database.get_entries()) {
       auto i = std::find(account_entitlements.begin(),
         account_entitlements.end(), entitlement.m_group_entry);
@@ -250,151 +258,160 @@ namespace Nexus {
     }
   }
 
-  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
-  void MarketDataRelayServlet<C, M, A>::HandleClientClosed(
+  template<typename C, typename M, typename A> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRelayServlet<C, M, A>::handle_close(
       ServiceProtocolClient& client) {
-    m_order_imbalance_subscriptions.RemoveAll(client);
-    m_bbo_quote_subscriptions.RemoveAll(client);
-    m_book_quote_subscriptions.RemoveAll(client);
-    m_time_and_sale_subscriptions.RemoveAll(client);
+    m_order_imbalance_subscriptions.remove_all(client);
+    m_bbo_quote_subscriptions.remove_all(client);
+    m_book_quote_subscriptions.remove_all(client);
+    m_time_and_sale_subscriptions.remove_all(client);
   }
 
-  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
-  void MarketDataRelayServlet<C, M, A>::Close() {
-    if(m_open_state.SetClosing()) {
+  template<typename C, typename M, typename A> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRelayServlet<C, M, A>::close() {
+    if(m_open_state.set_closing()) {
       return;
     }
-    auto close_group = Beam::Routines::RoutineHandlerGroup();
+    auto close_group = Beam::RoutineHandlerGroup();
     for(auto& entry : m_real_time_query_entries) {
-      close_group.Spawn([&] {
-        entry->m_tasks.Break();
-        entry->m_tasks.Wait();
+      close_group.spawn([&] {
+        entry->m_tasks.close();
+        entry->m_tasks.wait();
         entry->m_market_data_client->close();
       });
     }
     auto pooled_clients = std::vector<
       Beam::ScopedResource<MarketDataClient, MarketDataClientBuilder>>();
-    while(auto client = m_market_data_clients.TryAcquire()) {
+    while(auto client = m_market_data_clients.try_load()) {
       pooled_clients.push_back(std::move(*client));
     }
     for(auto& client : pooled_clients) {
-      close_group.Spawn([&] {
+      close_group.spawn([&] {
         client->close();
       });
     }
-    close_group.Wait();
-    m_open_state.Close();
+    close_group.wait();
+    m_open_state.close();
   }
 
-  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
+  template<typename C, typename M, typename A> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   template<typename T>
   typename MarketDataRelayServlet<C, M, A>::RealTimeQueryEntry&
       MarketDataRelayServlet<C, M, A>::get_real_time_query_entry(
-      const T& index) {
+        const T& index) {
     auto i = std::hash<T>()(index) % m_real_time_query_entries.size();
     return *m_real_time_query_entries[i];
   }
 
-  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
+  template<typename C, typename M, typename A> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   template<typename Service, typename Query, typename Subscriptions,
     typename RealTimeSubscriptions>
   void MarketDataRelayServlet<C, M, A>::handle_query_request(
-      Beam::Services::RequestToken<ServiceProtocolClient, Service>& request,
+      Beam::RequestToken<ServiceProtocolClient, Service>& request,
       const Query& query, Subscriptions& subscriptions,
       RealTimeSubscriptions& real_time_subscriptions) {
     using Result = typename Service::Return;
     using MarketDataType = typename Result::Type;
-    auto& session = request.GetSession();
+    auto& session = request.get_session();
     auto result = Result();
     if(!has_entitlement<typename MarketDataType::Value>(session, query)) {
-      request.SetResult(result);
+      request.set(result);
       return;
     }
     if constexpr(std::is_same_v<typename Query::Index, Security>) {
-      if(!query.GetIndex().get_venue()) {
-        request.SetResult(result);
+      if(!query.get_index().get_venue()) {
+        request.set(result);
         return;
       }
-      if(!m_securities.FindValue(query.GetIndex())) {
-        auto client = m_market_data_clients.Acquire();
-        auto info = load_security_info(*client, query.GetIndex());
+      if(!m_securities.try_load(query.get_index())) {
+        auto client = m_market_data_clients.load();
+        auto info = load_security_info(*client, query.get_index());
         if(info) {
-          m_securities.Update(info->m_security);
+          m_securities.update(info->m_security);
         }
         if(!info ||
-            info->m_security.get_venue() != query.GetIndex().get_venue()) {
-          request.SetResult(result);
+            info->m_security.get_venue() != query.get_index().get_venue()) {
+          request.set(result);
           return;
         }
       }
     }
-    if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
+    if(query.get_range().get_end() == Beam::Sequence::LAST) {
       auto filter =
-        Beam::Queries::Translate<EvaluatorTranslator>(query.GetFilter());
-      result.m_queryId = subscriptions.Initialize(query.GetIndex(),
-        request.GetClient(), Beam::Queries::Range::Total(), std::move(filter));
-      real_time_subscriptions.TestAndSet(query.GetIndex(), [&] {
-        auto& query_entry = get_real_time_query_entry(query.GetIndex());
+        Beam::translate<EvaluatorTranslator>(query.get_filter());
+      result.m_id = subscriptions.init(query.get_index(), request.get_client(),
+        Beam::Range::TOTAL, std::move(filter));
+      real_time_subscriptions.test_and_set(query.get_index(), [&] {
+        auto& query_entry = get_real_time_query_entry(query.get_index());
         auto initial_value_queue =
           std::make_shared<Beam::Queue<MarketDataType>>();
         query_entry.m_market_data_client->query(
-          Beam::Queries::MakeLatestQuery(query.GetIndex()),
-          initial_value_queue);
+          Beam::make_latest_query(query.get_index()), initial_value_queue);
         auto initial_values = std::vector<MarketDataType>();
-        Beam::Flush(initial_value_queue, std::back_inserter(initial_values));
+        Beam::flush(initial_value_queue, std::back_inserter(initial_values));
         auto initial_sequence = [&] {
           if(initial_values.empty()) {
-            return Beam::Queries::Sequence::First();
+            return Beam::Sequence::FIRST;
           } else {
-            return Beam::Queries::Increment(
-              initial_values.back().GetSequence());
+            return Beam::increment(initial_values.back().get_sequence());
           }
         }();
         auto real_time_query = Query();
-        real_time_query.SetIndex(query.GetIndex());
-        real_time_query.SetInterruptionPolicy(
-          Beam::Queries::InterruptionPolicy::RECOVER_DATA);
-        real_time_query.SetRange(
-          initial_sequence, Beam::Queries::Sequence::Last());
+        real_time_query.set_index(query.get_index());
+        real_time_query.set_interruption_policy(
+          Beam::InterruptionPolicy::RECOVER_DATA);
+        real_time_query.set_range(initial_sequence, Beam::Sequence::LAST);
         query_entry.m_market_data_client->query(real_time_query,
-          query_entry.m_tasks.template GetSlot<MarketDataType>(
+          query_entry.m_tasks.template get_slot<MarketDataType>(
             [=, this, &subscriptions] (const auto& value) {
-              on_real_time_update(query.GetIndex(), value, subscriptions);
+              on_real_time_update(query.get_index(), value, subscriptions);
             }));
       });
       auto queue = std::make_shared<Beam::Queue<MarketDataType>>();
-      auto client = m_market_data_clients.Acquire();
+      auto client = m_market_data_clients.load();
       auto snapshot_query = query;
-      snapshot_query.SetRange(
-        query.GetRange().GetStart(), Beam::Queries::Sequence::Present());
+      snapshot_query.set_range(
+        query.get_range().get_start(), Beam::Sequence::PRESENT);
       client->query(snapshot_query, queue);
-      Beam::Flush(queue, std::back_inserter(result.m_snapshot));
-      subscriptions.Commit(query.GetIndex(), std::move(result),
+      Beam::flush(queue, std::back_inserter(result.m_snapshot));
+      subscriptions.commit(query.get_index(), std::move(result),
         [&] (auto&& result) {
-          request.SetResult(std::forward<decltype(result)>(result));
+          request.set(std::forward<decltype(result)>(result));
         });
     } else {
       auto queue = std::make_shared<Beam::Queue<MarketDataType>>();
-      auto client = m_market_data_clients.Acquire();
+      auto client = m_market_data_clients.load();
       client->query(query, queue);
-      Beam::Flush(queue, std::back_inserter(result.m_snapshot));
-      request.SetResult(result);
+      Beam::flush(queue, std::back_inserter(result.m_snapshot));
+      request.set(result);
     }
   }
 
-  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
+  template<typename C, typename M, typename A> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   template<typename Subscriptions>
   void MarketDataRelayServlet<C, M, A>::on_end_query(
       ServiceProtocolClient& client, const typename Subscriptions::Index& index,
       int id, Subscriptions& subscriptions) {
-    subscriptions.End(index, id);
+    subscriptions.end(index, id);
   }
 
-  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
+  template<typename C, typename M, typename A> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   SecuritySnapshot MarketDataRelayServlet<C, M, A>::on_load_security_snapshot(
       ServiceProtocolClient& client, const Security& security) {
-    auto& session = client.GetSession();
-    auto market_data_client = m_market_data_clients.Acquire();
+    auto& session = client.get_session();
+    auto market_data_client = m_market_data_clients.load();
     auto snapshot = market_data_client->load_snapshot(security);
     if(!has_entitlement(
         session, security.get_venue(), MarketDataType::BBO_QUOTE)) {
@@ -421,59 +438,69 @@ namespace Nexus {
     return snapshot;
   }
 
-  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
+  template<typename C, typename M, typename A> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   SecurityTechnicals MarketDataRelayServlet<C, M, A>::
       on_load_security_technicals(
         ServiceProtocolClient& client, const Security& security) {
-    auto market_data_client = m_market_data_clients.Acquire();
+    auto market_data_client = m_market_data_clients.load();
     return market_data_client->load_technicals(security);
   }
 
-  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
+  template<typename C, typename M, typename A> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   std::vector<SecurityInfo> MarketDataRelayServlet<C, M, A>::
       on_query_security_info(
         ServiceProtocolClient& client, const SecurityInfoQuery& query) {
-    auto market_data_client = m_market_data_clients.Acquire();
+    auto market_data_client = m_market_data_clients.load();
     return market_data_client->query(query);
   }
 
-  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
+  template<typename C, typename M, typename A> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   std::vector<SecurityInfo> MarketDataRelayServlet<C, M, A>::
       on_load_security_info_from_prefix(
         ServiceProtocolClient& client, const std::string& prefix) {
-    auto market_data_client = m_market_data_clients.Acquire();
+    auto market_data_client = m_market_data_clients.load();
     return market_data_client->load_security_info_from_prefix(prefix);
   }
 
-  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
+  template<typename C, typename M, typename A> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   template<typename Index, typename Value, typename Subscriptions>
   std::enable_if_t<!std::is_same_v<Value, SequencedBookQuote>>
       MarketDataRelayServlet<C, M, A>::on_real_time_update(
         const Index& index, const Value& value, Subscriptions& subscriptions) {
-    auto indexed_value = Beam::Queries::SequencedValue(
-      Beam::Queries::IndexedValue(*value, index), value.GetSequence());
-    subscriptions.Publish(indexed_value, [&] (auto& clients) {
-      Beam::Services::BroadcastRecordMessage<
-        GetMarketDataMessageType<typename Value::Value>>(
+    auto indexed_value = Beam::SequencedValue(
+      Beam::IndexedValue(*value, index), value.get_sequence());
+    subscriptions.publish(indexed_value, [&] (auto& clients) {
+      Beam::broadcast_record_message<
+        market_data_message_type_t<typename Value::Value>>(
           clients, indexed_value);
     });
   }
 
-  template<typename C, IsMarketDataClient M, IsAdministrationClient A>
+  template<typename C, typename M, typename A> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   template<typename Index, typename Value, typename Subscriptions>
   std::enable_if_t<std::is_same_v<Value, SequencedBookQuote>>
       MarketDataRelayServlet<C, M, A>::on_real_time_update(
         const Index& index, const Value& value, Subscriptions& subscriptions) {
     auto key = EntitlementKey(index.get_venue(), value->m_venue);
-    auto indexed_value = Beam::Queries::SequencedValue(
-      Beam::Queries::IndexedValue(*value, index), value.GetSequence());
-    subscriptions.Publish(indexed_value, [&] (auto& client) {
+    auto indexed_value = Beam::SequencedValue(
+      Beam::IndexedValue(*value, index), value.get_sequence());
+    subscriptions.publish(indexed_value, [&] (auto& client) {
       return has_entitlement(
-        client.GetSession(), key, MarketDataType::BOOK_QUOTE);
+        client.get_session(), key, MarketDataType::BOOK_QUOTE);
     },
     [&] (auto& clients) {
-      Beam::Services::BroadcastRecordMessage<
-        GetMarketDataMessageType<typename Value::Value>>(
+      Beam::broadcast_record_message<
+        market_data_message_type_t<typename Value::Value>>(
           clients, indexed_value);
     });
   }

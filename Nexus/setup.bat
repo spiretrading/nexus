@@ -117,6 +117,8 @@ IF %BUILD_NEEDED%==1 (
   xcopy /s src\C++\* include\quickfix
   POPD
 )
+CALL :DownloadAndExtract "hat-trie-0.7.0" ^
+  "https://github.com/Tessil/hat-trie/archive/refs/tags/v0.7.0.zip"
 ECHO timestamp > cache_files\nexus.txt
 ENDLOCAL
 EXIT /B !EXIT_STATUS!

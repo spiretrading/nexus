@@ -1,13 +1,37 @@
 #ifndef NEXUS_ORDER_EXECUTION_DATA_STORE_HPP
 #define NEXUS_ORDER_EXECUTION_DATA_STORE_HPP
+#include <concepts>
 #include <memory>
 #include <type_traits>
 #include <utility>
+#include <vector>
+#include <Beam/IO/Connection.hpp>
+#include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Pointers/VirtualPtr.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 
 namespace Nexus {
+
+  /** Checks if a type implements an OrderExecutionDataStore. */
+  template<typename T>
+  concept IsOrderExecutionDataStore =
+    Beam::IsConnection<T> && requires(T& data_store) {
+      { data_store.load_order_record(std::declval<OrderId>()) } ->
+          std::same_as<boost::optional<SequencedAccountOrderRecord>>;
+      { data_store.load_order_records(std::declval<const AccountQuery&>()) } ->
+          std::same_as<std::vector<SequencedOrderRecord>>;
+      data_store.store(std::declval<const SequencedAccountOrderInfo&>());
+      data_store.store(
+        std::declval<const std::vector<SequencedAccountOrderInfo>&>());
+      { data_store.load_execution_reports(
+          std::declval<const AccountQuery&>()) } ->
+            std::same_as<std::vector<SequencedExecutionReport>>;
+      data_store.store(std::declval<const SequencedAccountExecutionReport&>());
+      data_store.store(
+        std::declval<const std::vector<SequencedAccountExecutionReport>&>());
+    };
 
   /** Provides a generic interface over an arbitrary OrderExecutionDataStore. */
   class OrderExecutionDataStore {
@@ -16,28 +40,22 @@ namespace Nexus {
       /**
        * Constructs an OrderExecutionDataStore of a specified type using
        * emplacement.
-       * @param <T> The type of data store to emplace.
+       * @tparam T The type of data store to emplace.
        * @param args The arguments to pass to the emplaced data store.
        */
-      template<typename T, typename... Args>
+      template<IsOrderExecutionDataStore T, typename... Args>
       explicit OrderExecutionDataStore(std::in_place_type_t<T>, Args&&... args);
 
       /**
-       * Constructs an OrderExecutionDataStore by copying an existing data
+       * Constructs an OrderExecutionDataStore by referencing an existing data
        * store.
-       * @param data_store The data store to copy.
+       * @param data_store The data store to reference.
        */
-      template<typename DataStore>
-      explicit OrderExecutionDataStore(DataStore data_store);
+      template<Beam::DisableCopy<OrderExecutionDataStore> T> requires
+        IsOrderExecutionDataStore<Beam::dereference_t<T>>
+      OrderExecutionDataStore(T&& data_store);
 
-      explicit OrderExecutionDataStore(
-        OrderExecutionDataStore* data_store);
-
-      explicit OrderExecutionDataStore(
-        const std::shared_ptr<OrderExecutionDataStore>& data_store);
-
-      explicit OrderExecutionDataStore(
-        const std::unique_ptr<OrderExecutionDataStore>& data_store);
+      OrderExecutionDataStore(const OrderExecutionDataStore&) = default;
 
       /**
        * Loads an OrderRecord from its id.
@@ -93,6 +111,7 @@ namespace Nexus {
     private:
       struct VirtualOrderExecutionDataStore {
         virtual ~VirtualOrderExecutionDataStore() = default;
+
         virtual boost::optional<SequencedAccountOrderRecord>
           load_order_record(OrderId) = 0;
         virtual std::vector<SequencedOrderRecord>
@@ -110,10 +129,11 @@ namespace Nexus {
       struct WrappedOrderExecutionDataStore final :
           VirtualOrderExecutionDataStore {
         using OrderExecutionDataStore = D;
-        Beam::GetOptionalLocalPtr<OrderExecutionDataStore> m_data_store;
+        Beam::local_ptr_t<OrderExecutionDataStore> m_data_store;
 
         template<typename... Args>
         WrappedOrderExecutionDataStore(Args&&... args);
+
         boost::optional<SequencedAccountOrderRecord>
           load_order_record(OrderId) override;
         std::vector<SequencedOrderRecord>
@@ -127,36 +147,20 @@ namespace Nexus {
           const std::vector<SequencedAccountExecutionReport>&) override;
         void close() override;
       };
-      std::shared_ptr<VirtualOrderExecutionDataStore> m_data_store;
+      Beam::VirtualPtr<VirtualOrderExecutionDataStore> m_data_store;
   };
 
-  /** Checks if a type implements an OrderExecutionDataStore. */
-  template<typename T>
-  concept IsOrderExecutionDataStore = std::constructible_from<
-    OrderExecutionDataStore, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
-
-  template<typename T, typename... Args>
+  template<IsOrderExecutionDataStore T, typename... Args>
   OrderExecutionDataStore::OrderExecutionDataStore(
     std::in_place_type_t<T>, Args&&... args)
-    : m_data_store(std::make_shared<WrappedOrderExecutionDataStore<T>>(
+    : m_data_store(Beam::make_virtual_ptr<WrappedOrderExecutionDataStore<T>>(
         std::forward<Args>(args)...)) {}
 
-  template<typename DataStore>
-  OrderExecutionDataStore::OrderExecutionDataStore(DataStore dataStore)
-    : OrderExecutionDataStore(
-        std::in_place_type<DataStore>, std::move(dataStore)) {}
-
-  inline OrderExecutionDataStore::OrderExecutionDataStore(
-    OrderExecutionDataStore* dataStore)
-    : OrderExecutionDataStore(*dataStore) {}
-
-  inline OrderExecutionDataStore::OrderExecutionDataStore(
-    const std::shared_ptr<OrderExecutionDataStore>& dataStore)
-    : OrderExecutionDataStore(*dataStore) {}
-
-  inline OrderExecutionDataStore::OrderExecutionDataStore(
-    const std::unique_ptr<OrderExecutionDataStore>& dataStore)
-    : OrderExecutionDataStore(*dataStore) {}
+  template<Beam::DisableCopy<OrderExecutionDataStore> T> requires
+    IsOrderExecutionDataStore<Beam::dereference_t<T>>
+  OrderExecutionDataStore::OrderExecutionDataStore(T&& data_store)
+    : OrderExecutionDataStore(std::in_place_type<Beam::dereference_t<T>>,
+        std::forward<T>(data_store)) {}
 
   inline boost::optional<SequencedAccountOrderRecord>
       OrderExecutionDataStore::load_order_record(OrderId id) {
@@ -164,8 +168,7 @@ namespace Nexus {
   }
 
   inline std::vector<SequencedOrderRecord>
-      OrderExecutionDataStore::load_order_records(
-        const AccountQuery& query) {
+      OrderExecutionDataStore::load_order_records(const AccountQuery& query) {
     return m_data_store->load_order_records(query);
   }
 

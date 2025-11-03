@@ -4,7 +4,6 @@
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -29,15 +28,9 @@ TEST_SUITE("MarketDataRegistry") {
     REQUIRE(search_result1.front() == info_a);
     auto search_result2 = registry.search_security_info("sec");
     REQUIRE(search_result2.size() == 3);
-    auto find_a1 =
-      std::find(search_result2.begin(), search_result2.end(), info_a);
-    REQUIRE(find_a1 != search_result2.end());
-    auto find_b1 =
-      std::find(search_result2.begin(), search_result2.end(), info_b);
-    REQUIRE(find_b1 != search_result2.end());
-    auto find_c1 =
-      std::find(search_result2.begin(), search_result2.end(), info_c);
-    REQUIRE(find_c1 != search_result2.end());
+    REQUIRE(std::ranges::contains(search_result2, info_a));
+    REQUIRE(std::ranges::contains(search_result2, info_b));
+    REQUIRE(std::ranges::contains(search_result2, info_c));
     auto search_result3 = registry.search_security_info("D");
     REQUIRE(search_result3.empty());
     auto search_result4 = registry.search_security_info("b.TSX");
@@ -83,7 +76,7 @@ TEST_SUITE("MarketDataRegistry") {
     auto published = false;
     registry.publish(bbo_quote, 1, data_store,
       [&] (const auto& sequenced_quote) {
-        REQUIRE(sequenced_quote.GetValue() == bbo_quote);
+        REQUIRE(*sequenced_quote == bbo_quote);
         published = true;
       });
     REQUIRE(published);
@@ -100,7 +93,7 @@ TEST_SUITE("MarketDataRegistry") {
     auto published = false;
     registry.publish(book_quote, 1, data_store,
       [&] (const auto& sequenced_quote) {
-        REQUIRE(sequenced_quote.GetValue() == book_quote);
+        REQUIRE(*sequenced_quote == book_quote);
         published = true;
       });
     REQUIRE(published);
@@ -117,7 +110,7 @@ TEST_SUITE("MarketDataRegistry") {
     auto published = false;
     registry.publish(time_and_sale, 1, data_store,
       [&] (const auto& sequenced_time_and_sale) {
-        REQUIRE(sequenced_time_and_sale.GetValue() == time_and_sale);
+        REQUIRE(*sequenced_time_and_sale == time_and_sale);
         published = true;
       });
     REQUIRE(published);

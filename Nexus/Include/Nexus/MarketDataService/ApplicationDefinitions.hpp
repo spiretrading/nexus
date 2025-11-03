@@ -13,14 +13,15 @@
 
 namespace Nexus {
 
-  /** Encapsulates a standard MarketDataClient used in an application. */
-  class ApplicationMarketDataClient {
+  /** A standard MarketDataClient used in an application. */
+  class ApplicationMarketDataClient :
+      public ServiceMarketDataClient<Beam::ZLibSessionBuilder<>> {
     public:
 
-      /** The type used to build client sessions. */
-      using SessionBuilder = Beam::Services::ZLibSessionBuilder<>;
+      /** The type of SessionBuilder used. */
+      using SessionBuilder = Beam::ZLibSessionBuilder<>;
 
-      /** Defines the standard MarketDataClient used for applications. */
+      /** The type of client being encapsulated. */
       using Client = ServiceMarketDataClient<SessionBuilder>;
 
       /**
@@ -29,45 +30,22 @@ namespace Nexus {
        *        authenticate sessions.
        */
       explicit ApplicationMarketDataClient(
-        SessionBuilder::ServiceLocatorClient service_locator_client);
-
-      /** Returns a reference to the Client. */
-      Client& operator *();
-
-      /** Returns a reference to the Client. */
-      const Client& operator *() const;
-
-      /** Returns a pointer to the Client. */
-      Client* operator ->();
-
-      /** Returns a pointer to the Client. */
-      const Client* operator ->() const;
-
-      /** Returns a pointer to the Client. */
-      Client* Get();
-
-      /** Returns a pointer to the Client. */
-      const Client* Get() const;
-
-    private:
-      Client m_client;
-
-      ApplicationMarketDataClient(const ApplicationMarketDataClient&) = delete;
-      ApplicationMarketDataClient& operator =(
-        const ApplicationMarketDataClient&) = delete;
+        Beam::Ref<SessionBuilder::ServiceLocatorClient> service_locator_client);
   };
 
   /** Encapsulates a standard MarketDataFeedClient. */
-  class ApplicationMarketDataFeedClient {
+  class ApplicationMarketDataFeedClient :
+      public ServiceMarketDataFeedClient<std::string, Beam::LiveTimer,
+        Beam::MessageProtocol<Beam::TcpSocketChannel,
+          Beam::BinarySender<Beam::SharedBuffer>,
+          Beam::SizeDeclarativeEncoder<Beam::ZLibEncoder>>, Beam::LiveTimer> {
     public:
 
       /** Defines the standard MarketDataFeedClient used for applications. */
       using Client = ServiceMarketDataFeedClient<std::string,
-        Beam::Threading::LiveTimer, Beam::Services::MessageProtocol<
-          Beam::Network::TcpSocketChannel,
-          Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-          Beam::Codecs::SizeDeclarativeEncoder<Beam::Codecs::ZLibEncoder>>,
-        Beam::Threading::LiveTimer>;
+        Beam::LiveTimer, Beam::MessageProtocol<Beam::TcpSocketChannel,
+          Beam::BinarySender<Beam::SharedBuffer>,
+          Beam::SizeDeclarativeEncoder<Beam::ZLibEncoder>>, Beam::LiveTimer>;
 
       /**
        * Constructs an ApplicationMarketDataFeedClient.
@@ -92,32 +70,6 @@ namespace Nexus {
       ApplicationMarketDataFeedClient(
         ServiceLocatorClient service_locator_client,
         boost::posix_time::time_duration sampling_time);
-
-      /** Returns a reference to the Client. */
-      Client& operator *();
-
-      /** Returns a reference to the Client. */
-      const Client& operator *() const;
-
-      /** Returns a pointer to the Client. */
-      Client* operator ->();
-
-      /** Returns a pointer to the Client. */
-      const Client* operator ->() const;
-
-      /** Returns a pointer to the Client. */
-      Client* Get();
-
-      /** Returns a pointer to the Client. */
-      const Client* Get() const;
-
-    private:
-      Client m_client;
-
-      ApplicationMarketDataFeedClient(
-        const ApplicationMarketDataFeedClient&) = delete;
-      ApplicationMarketDataFeedClient& operator =(
-        const ApplicationMarketDataFeedClient&) = delete;
   };
 
   /**
@@ -178,36 +130,6 @@ namespace Nexus {
     : m_client(
         make_market_data_client_session_builder(service_locator_client)) {}
 
-  inline ApplicationMarketDataClient::Client&
-      ApplicationMarketDataClient::operator *() {
-    return m_client;
-  }
-
-  inline const ApplicationMarketDataClient::Client&
-      ApplicationMarketDataClient::operator *() const {
-    return m_client;
-  }
-
-  inline ApplicationMarketDataClient::Client*
-      ApplicationMarketDataClient::operator ->() {
-    return &m_client;
-  }
-
-  inline const ApplicationMarketDataClient::Client*
-      ApplicationMarketDataClient::operator ->() const {
-    return &m_client;
-  }
-
-  inline ApplicationMarketDataClient::Client*
-      ApplicationMarketDataClient::Get() {
-    return &m_client;
-  }
-
-  inline const ApplicationMarketDataClient::Client*
-      ApplicationMarketDataClient::Get() const {
-    return &m_client;
-  }
-
   template<typename ServiceLocatorClient>
   inline ApplicationMarketDataFeedClient::ApplicationMarketDataFeedClient(
     ServiceLocatorClient service_locator_client,
@@ -259,36 +181,6 @@ namespace Nexus {
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::IO::ConnectException(
       "Unable to initialize the market data feed client."));
-  }
-
-  inline ApplicationMarketDataFeedClient::Client&
-      ApplicationMarketDataFeedClient::operator *() {
-    return m_client;
-  }
-
-  inline const ApplicationMarketDataFeedClient::Client&
-      ApplicationMarketDataFeedClient::operator *() const {
-    return m_client;
-  }
-
-  inline ApplicationMarketDataFeedClient::Client*
-      ApplicationMarketDataFeedClient::operator ->() {
-    return &m_client;
-  }
-
-  inline const ApplicationMarketDataFeedClient::Client*
-      ApplicationMarketDataFeedClient::operator ->() const {
-    return &m_client;
-  }
-
-  inline ApplicationMarketDataFeedClient::Client*
-      ApplicationMarketDataFeedClient::Get() {
-    return &m_client;
-  }
-
-  inline const ApplicationMarketDataFeedClient::Client*
-      ApplicationMarketDataFeedClient::Get() const {
-    return &m_client;
   }
 }
 

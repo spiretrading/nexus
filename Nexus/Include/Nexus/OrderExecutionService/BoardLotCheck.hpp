@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Queues/StateQueue.hpp>
+#include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
@@ -22,7 +23,7 @@ namespace Nexus {
    * @param <C> The type of MarketDataClient used to determine the price of a
    *        Security.
    */
-  template<IsMarketDataClient C>
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   class BoardLotCheck : public OrderSubmissionCheck {
     public:
 
@@ -30,7 +31,7 @@ namespace Nexus {
        * The type of MarketDataClient used to price Orders for buying power
        * checks.
        */
-      using MarketDataClient = Beam::GetTryDereferenceType<C>;
+      using MarketDataClient = Beam::dereference_t<C>;
 
       /**
        * Constructs a BoardLotCheck.
@@ -51,12 +52,11 @@ namespace Nexus {
 
         ClosingEntry();
       };
-      Beam::GetOptionalLocalPtr<C> m_market_data_client;
+      Beam::local_ptr_t<C> m_market_data_client;
       VenueDatabase m_venues;
       boost::local_time::tz_database m_time_zones;
       Beam::SynchronizedUnorderedMap<
-        Security, Beam::Threading::Sync<ClosingEntry, Beam::Threading::Mutex>>
-          m_closing_entries;
+        Security, Beam::Sync<ClosingEntry, Beam::Mutex>> m_closing_entries;
       Beam::SynchronizedUnorderedMap<
         Security, std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bbo_quotes;
 
@@ -72,11 +72,11 @@ namespace Nexus {
       std::move(time_zones));
   }
 
-  template<IsMarketDataClient C>
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   BoardLotCheck<C>::ClosingEntry::ClosingEntry()
     : m_last_update(boost::posix_time::neg_infin) {}
 
-  template<IsMarketDataClient C>
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   template<Beam::Initializes<C> CF>
   BoardLotCheck<C>::BoardLotCheck(CF&& market_data_client, VenueDatabase venues,
     boost::local_time::tz_database time_zones)
@@ -84,7 +84,7 @@ namespace Nexus {
       m_venues(std::move(venues)),
       m_time_zones(std::move(time_zones)) {}
 
-  template<IsMarketDataClient C>
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   void BoardLotCheck<C>::submit(const OrderInfo& info) {
     if(info.m_fields.m_security.get_venue() != DefaultVenues::TSX &&
         info.m_fields.m_security.get_venue() != DefaultVenues::TSXV &&
@@ -111,38 +111,37 @@ namespace Nexus {
     }
   }
 
-  template<IsMarketDataClient C>
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   Money BoardLotCheck<C>::load_price(
       const Security& security, boost::posix_time::ptime timestamp) {
     auto& closing_entry = m_closing_entries.Get(security);
-    auto closing_price = Beam::Threading::With(
-      closing_entry, [&] (auto& entry) {
-        if(timestamp - entry.m_last_update > boost::posix_time::hours(1)) {
-          if(auto close = load_previous_close(*m_market_data_client, security,
-              timestamp, m_venues, m_time_zones)) {
-            entry.m_closing_price = close->m_price;
-            entry.m_last_update = timestamp;
-          }
+    auto closing_price = Beam::with(closing_entry, [&] (auto& entry) {
+      if(timestamp - entry.m_last_update > boost::posix_time::hours(1)) {
+        if(auto close = load_previous_close(*m_market_data_client, security,
+            timestamp, m_venues, m_time_zones)) {
+          entry.m_closing_price = close->m_price;
+          entry.m_last_update = timestamp;
         }
-        return entry.m_closing_price;
-      });
+      }
+      return entry.m_closing_price;
+    });
     if(closing_price) {
       return *closing_price;
     }
-    auto publisher = m_bbo_quotes.GetOrInsert(security, [&] {
+    auto publisher = m_bbo_quotes.get_or_insert(security, [&] {
       auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
       query_real_time_with_snapshot(*m_market_data_client, security, publisher);
       return publisher;
     });
     try {
       auto effective_closing_price = publisher->Peek().m_bid.m_price;
-      return Beam::Threading::With(closing_entry, [&] (auto& entry) {
+      return Beam::with(closing_entry, [&] (auto& entry) {
         entry.m_closing_price = effective_closing_price;
         entry.m_last_update = timestamp;
         return effective_closing_price;
       });
     } catch(const Beam::PipeBrokenException&) {
-      m_bbo_quotes.Erase(security);
+      m_bbo_quotes.erase(security);
       BOOST_THROW_EXCEPTION(
         OrderSubmissionCheckException("No BBO quote available."));
     }

@@ -85,6 +85,12 @@ if [ ! -d "quickfix-v.1.15.1" ]; then
   fi
   rm -rf quickfix-v.1.15.1.zip
 fi
+if [ ! -d "hat-trie-0.7.0" ]; then
+  wget https://github.com/Tessil/hat-trie/archive/refs/tags/v0.7.0.zip --no-check-certificate
+  if [ "$?" == "0" ]; then
+    unzip v0.7.0.zip
+  fi
+fi
 python3 -c "import git"
 if [ "$?" != "0" ]; then
   pip3 install --user --break-system-packages GitPython

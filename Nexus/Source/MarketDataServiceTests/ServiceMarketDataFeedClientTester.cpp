@@ -1,74 +1,29 @@
-#include <memory>
-#include <Beam/Codecs/NullEncoder.hpp>
-#include "Beam/Serialization/BinaryReceiver.hpp"
-#include "Beam/Serialization/BinarySender.hpp"
 #include <Beam/ServiceLocator/NullAuthenticator.hpp>
-#include <Beam/ServicesTests/ServicesTests.hpp>
-#include <Beam/SignalHandling/NullSlot.hpp>
-#include <Beam/Threading/TriggerTimer.hpp>
-#include <boost/functional/factory.hpp>
+#include <Beam/ServicesTests/ServiceClientFixture.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/MarketDataService/ServiceMarketDataFeedClient.hpp"
 
 using namespace Beam;
-using namespace Beam::Codecs;
-using namespace Beam::IO;
-using namespace Beam::Routines;
-using namespace Beam::Serialization;
-using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
-using namespace Beam::Services::Tests;
-using namespace Beam::SignalHandling;
-using namespace Beam::Threading;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
 
 namespace {
-  struct Fixture {
+  struct Fixture : ServiceClientFixture {
     using TestServiceMarketDataFeedClient = ServiceMarketDataFeedClient<
-      std::string, TriggerTimer*, MessageProtocol<
-        std::unique_ptr<TestClientChannel>, BinarySender<SharedBuffer>,
-        NullEncoder>, TriggerTimer>;
-    std::shared_ptr<TestServerConnection> m_server_connection;
-    TestServiceProtocolServer m_server;
+      std::string, TriggerTimer*,
+      TestServiceProtocolClientBuilder::MessageProtocol, TriggerTimer>;
     TriggerTimer m_sampling_timer;
     std::unique_ptr<TestServiceMarketDataFeedClient> m_client;
-    std::unordered_map<std::type_index, std::shared_ptr<void>> m_handlers;
 
-    Fixture()
-        : m_server_connection(std::make_shared<TestServerConnection>()),
-          m_server(m_server_connection,
-            factory<std::unique_ptr<TriggerTimer>>(), NullSlot(), NullSlot()) {
-      RegisterMarketDataFeedMessages(Store(m_server.GetSlots()));
+    Fixture() {
+      register_market_data_feed_messages(out(m_server.get_slots()));
       m_client = std::make_unique<TestServiceMarketDataFeedClient>(
         std::make_unique<TestServiceProtocolClientBuilder::Channel>(
           "test", *m_server_connection), NullAuthenticator(), &m_sampling_timer,
-        Initialize());
-    }
-
-    template<typename T, typename F>
-    void handle(F&& handler) {
-      using Slot = typename Beam::Services::Details::RecordMessageSlot<
-        RecordMessage<
-          T, TestServiceProtocolServer::ServiceProtocolClient>>::Slot;
-      auto& stored_handler = m_handlers[typeid(T)];
-      if(stored_handler) {
-        *std::static_pointer_cast<Slot>(stored_handler) =
-          std::forward<F>(handler);
-      } else {
-        auto shared_handler = std::make_shared<Slot>(std::forward<F>(handler));
-        stored_handler = shared_handler;
-        AddMessageSlot<T>(Store(m_server.GetSlots()),
-          [handler = std::move(shared_handler)] (auto&&... args) {
-            try {
-              (*handler)(std::forward<decltype(args)>(args)...);
-            } catch(...) {
-              throw ServiceRequestException("Test failed.");
-            }
-          });
-      }
+        init());
     }
   };
 }
@@ -78,13 +33,13 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     auto fixture = Fixture();
     auto info = SecurityInfo(Security("S32", ASX), "S32 Inc.", "", 100);
     auto completion_token = Async<void>();
-    fixture.handle<SetSecurityInfoMessage>(
+    fixture.on_message<SetSecurityInfoMessage>(
       [&] (auto& client, const auto& received_info) {
         REQUIRE(received_info == info);
-        completion_token.GetEval().SetResult();
+        completion_token.get_eval().set();
       });
     fixture.m_client->add(info);
-    completion_token.Get();
+    completion_token.get();
   }
 
   TEST_CASE("publish_order_imbalance") {
@@ -97,7 +52,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     auto imbalance3 = VenueOrderImbalance(OrderImbalance(security, Side::ASK,
       300, 3 * Money::ONE, time_from_string("2024-07-15 12:00:02")), ASX);
     auto completion_token = Async<void>();
-    fixture.handle<SendMarketDataFeedMessages>(
+    fixture.on_message<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 3);
         auto received_imbalance1 = get<VenueOrderImbalance>(&messages[0]);
@@ -109,13 +64,13 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
         auto received_imbalance3 = get<VenueOrderImbalance>(&messages[2]);
         REQUIRE(received_imbalance3);
         REQUIRE(*received_imbalance3 == imbalance3);
-        completion_token.GetEval().SetResult();
+        completion_token.get_eval().set();
       });
     fixture.m_client->publish(imbalance1);
     fixture.m_client->publish(imbalance2);
     fixture.m_client->publish(imbalance3);
-    fixture.m_sampling_timer.Trigger();
-    completion_token.Get();
+    fixture.m_sampling_timer.trigger();
+    completion_token.get();
   }
 
   TEST_CASE("publish_bbo_quote") {
@@ -125,18 +80,18 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
       BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
         time_from_string("2024-07-15 12:00:00")), security);
     auto completion_token = Async<void>();
-    fixture.handle<SendMarketDataFeedMessages>(
+    fixture.on_message<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 1);
         auto& message = messages.front();
         auto received_quote = get<SecurityBboQuote>(&message);
         REQUIRE(received_quote);
         REQUIRE(*received_quote == bbo_quote);
-        completion_token.GetEval().SetResult();
+        completion_token.get_eval().set();
       });
     fixture.m_client->publish(bbo_quote);
-    fixture.m_sampling_timer.Trigger();
-    completion_token.Get();
+    fixture.m_sampling_timer.trigger();
+    completion_token.get();
   }
 
   TEST_CASE("publish_bbo_quote_sampling") {
@@ -163,7 +118,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
       BboQuote(make_bid(Money::CENT, 102), make_ask(2 * Money::CENT, 202),
         time_from_string("2024-07-15 12:00:05")), security_c);
     auto completion_token = Async<void>();
-    fixture.handle<SendMarketDataFeedMessages>(
+    fixture.on_message<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 3);
         auto received_quotes =
@@ -171,12 +126,12 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
         for(auto& message : messages) {
           auto quote = get<SecurityBboQuote>(&message);
           REQUIRE(quote);
-          received_quotes.emplace(quote->GetIndex(), *quote);
+          received_quotes.emplace(quote->get_index(), *quote);
         }
         REQUIRE(received_quotes.at(security_a) == bbo_a1);
         REQUIRE(received_quotes.at(security_b) == bbo_b2);
         REQUIRE(received_quotes.at(security_c) == bbo_c3);
-        completion_token.GetEval().SetResult();
+        completion_token.get_eval().set();
       });
     fixture.m_client->publish(bbo_a1);
     fixture.m_client->publish(bbo_c1);
@@ -184,8 +139,8 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     fixture.m_client->publish(bbo_c2);
     fixture.m_client->publish(bbo_b2);
     fixture.m_client->publish(bbo_c3);
-    fixture.m_sampling_timer.Trigger();
-    completion_token.Get();
+    fixture.m_sampling_timer.trigger();
+    completion_token.get();
   }
 
   TEST_CASE("publish_book_quote") {
@@ -195,18 +150,18 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
       BookQuote("MP1", true, TSX, make_bid(10 * Money::ONE, 100),
         time_from_string("2024-07-15 12:00:00")), security);
     auto completion_token = Async<void>();
-    fixture.handle<SendMarketDataFeedMessages>(
+    fixture.on_message<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 1);
         auto& message = messages.front();
         auto received_quote = get<SecurityBookQuote>(&message);
         REQUIRE(received_quote);
         REQUIRE(*received_quote == book_quote);
-        completion_token.GetEval().SetResult();
+        completion_token.get_eval().set();
       });
     fixture.m_client->publish(book_quote);
-    fixture.m_sampling_timer.Trigger();
-    completion_token.Get();
+    fixture.m_sampling_timer.trigger();
+    completion_token.get();
   }
 
   TEST_CASE("publish_book_quote_aggregation") {
@@ -230,7 +185,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
       BookQuote("MP2", false, TSX, make_ask(parse_money("30.02"), 350),
         time_from_string("2024-07-15 12:00:04")), security_c);
     auto completion_token = Async<void>();
-    fixture.handle<SendMarketDataFeedMessages>(
+    fixture.on_message<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
         auto received_quotes = std::vector<SecurityBookQuote>();
         for(auto& message : messages) {
@@ -239,23 +194,19 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
           }
         }
         REQUIRE(received_quotes.size() == 4);
-        REQUIRE(std::find(received_quotes.begin(), received_quotes.end(),
-          book_a1) != received_quotes.end());
-        REQUIRE(std::find(received_quotes.begin(), received_quotes.end(),
-          book_b2) != received_quotes.end());
-        REQUIRE(std::find(received_quotes.begin(), received_quotes.end(),
-          book_c1) != received_quotes.end());
-        REQUIRE(std::find(received_quotes.begin(), received_quotes.end(),
-          book_c2) != received_quotes.end());
-        completion_token.GetEval().SetResult();
+        REQUIRE(std::ranges::contains(received_quotes, book_a1));
+        REQUIRE(std::ranges::contains(received_quotes, book_b2));
+        REQUIRE(std::ranges::contains(received_quotes, book_c1));
+        REQUIRE(std::ranges::contains(received_quotes, book_c2));
+        completion_token.get_eval().set();
       });
     fixture.m_client->publish(book_a1);
     fixture.m_client->publish(book_b1);
     fixture.m_client->publish(book_b2);
     fixture.m_client->publish(book_c1);
     fixture.m_client->publish(book_c2);
-    fixture.m_sampling_timer.Trigger();
-    completion_token.Get();
+    fixture.m_sampling_timer.trigger();
+    completion_token.get();
   }
 
   TEST_CASE("order_add_and_remove") {
@@ -266,22 +217,22 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
       BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
         time_from_string("2024-07-15 12:00:02")), security);
     auto completion_token = Async<void>();
-    fixture.handle<SendMarketDataFeedMessages>(
+    fixture.on_message<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 1);
         auto& message = messages.front();
         auto received_quote = get<SecurityBboQuote>(&message);
         REQUIRE(received_quote);
         REQUIRE(*received_quote == bbo_quote);
-        completion_token.GetEval().SetResult();
+        completion_token.get_eval().set();
       });
     fixture.m_client->add_order(security, TSX, "MP1", true, order_id,
       Side::BID, Money::ONE, 100, time_from_string("2024-07-15 12:00:00"));
     fixture.m_client->remove_order(order_id,
       time_from_string("2024-07-15 12:00:01"));
     fixture.m_client->publish(bbo_quote);
-    fixture.m_sampling_timer.Trigger();
-    completion_token.Get();
+    fixture.m_sampling_timer.trigger();
+    completion_token.get();
   }
 
   TEST_CASE("order_aggregation") {
@@ -292,26 +243,26 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     auto timestamp1 = time_from_string("2024-07-15 12:00:00");
     auto timestamp2 = time_from_string("2024-07-15 12:00:01");
     auto completion_token = Async<void>();
-    fixture.handle<SendMarketDataFeedMessages>(
+    fixture.on_message<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 1);
         auto& message = messages.front();
         auto received_quote = get<SecurityBookQuote>(&message);
         REQUIRE(received_quote);
-        REQUIRE(received_quote->GetIndex() == security);
+        REQUIRE(received_quote->get_index() == security);
         REQUIRE((*received_quote)->m_mpid == mpid);
         REQUIRE((*received_quote)->m_quote.m_price == price);
         REQUIRE((*received_quote)->m_quote.m_side == Side::BID);
         REQUIRE((*received_quote)->m_quote.m_size == 300);
         REQUIRE((*received_quote)->m_timestamp == timestamp2);
-        completion_token.GetEval().SetResult();
+        completion_token.get_eval().set();
       });
     fixture.m_client->add_order(
       security, TSX, mpid, true, "1", Side::BID, price, 100, timestamp1);
     fixture.m_client->add_order(
       security, TSX, mpid, true, "2", Side::BID, price, 200, timestamp2);
-    fixture.m_sampling_timer.Trigger();
-    completion_token.Get();
+    fixture.m_sampling_timer.trigger();
+    completion_token.get();
   }
 
   TEST_CASE("order_modify_size") {
@@ -323,25 +274,25 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     auto timestamp1 = time_from_string("2024-07-15 12:00:00");
     auto timestamp2 = time_from_string("2024-07-15 12:00:01");
     auto completion_token = Async<void>();
-    fixture.handle<SendMarketDataFeedMessages>(
+    fixture.on_message<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 1);
         auto& message = messages.front();
         auto received_quote = get<SecurityBookQuote>(&message);
         REQUIRE(received_quote);
-        REQUIRE(received_quote->GetIndex() == security);
+        REQUIRE(received_quote->get_index() == security);
         REQUIRE((*received_quote)->m_mpid == mpid);
         REQUIRE((*received_quote)->m_quote.m_price == price);
         REQUIRE((*received_quote)->m_quote.m_side == Side::BID);
         REQUIRE((*received_quote)->m_quote.m_size == 150);
         REQUIRE((*received_quote)->m_timestamp == timestamp2);
-        completion_token.GetEval().SetResult();
+        completion_token.get_eval().set();
       });
     fixture.m_client->add_order(security, ASX, mpid, true, order_id,
       Side::BID, price, 100, timestamp1);
     fixture.m_client->modify_order_size(order_id, 150, timestamp2);
-    fixture.m_sampling_timer.Trigger();
-    completion_token.Get();
+    fixture.m_sampling_timer.trigger();
+    completion_token.get();
   }
 
   TEST_CASE("order_modify_price") {
@@ -354,25 +305,25 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     auto timestamp1 = time_from_string("2024-07-15 12:00:00");
     auto timestamp2 = time_from_string("2024-07-15 12:00:01");
     auto completion_token = Async<void>();
-    fixture.handle<SendMarketDataFeedMessages>(
+    fixture.on_message<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 1);
         auto& message = messages.front();
         auto received_quote = get<SecurityBookQuote>(&message);
         REQUIRE(received_quote);
-        REQUIRE(received_quote->GetIndex() == security);
+        REQUIRE(received_quote->get_index() == security);
         REQUIRE((*received_quote)->m_mpid == mpid);
         REQUIRE((*received_quote)->m_quote.m_price == price2);
         REQUIRE((*received_quote)->m_quote.m_side == Side::BID);
         REQUIRE((*received_quote)->m_quote.m_size == 100);
         REQUIRE((*received_quote)->m_timestamp == timestamp2);
-        completion_token.GetEval().SetResult();
+        completion_token.get_eval().set();
       });
     fixture.m_client->add_order(security, ASX, mpid, true, order_id,
       Side::BID, price1, 100, timestamp1);
     fixture.m_client->modify_order_price(order_id, price2, timestamp2);
-    fixture.m_sampling_timer.Trigger();
-    completion_token.Get();
+    fixture.m_sampling_timer.trigger();
+    completion_token.get();
   }
 
   TEST_CASE("order_invalid_operations") {
@@ -382,14 +333,14 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
       BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
         time_from_string("2024-07-15 12:00:01")), security);
     auto completion_token = Async<void>();
-    fixture.handle<SendMarketDataFeedMessages>(
+    fixture.on_message<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 1);
         auto& message = messages.front();
         auto received_quote = get<SecurityBboQuote>(&message);
         REQUIRE(received_quote);
         REQUIRE(*received_quote == bbo_quote);
-        completion_token.GetEval().SetResult();
+        completion_token.get_eval().set();
       });
     fixture.m_client->modify_order_size(
       "1", 150, time_from_string("2024-07-15 12:00:00"));
@@ -400,8 +351,8 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     fixture.m_client->remove_order(
       "4", time_from_string("2024-07-15 12:00:00"));
     fixture.m_client->publish(bbo_quote);
-    fixture.m_sampling_timer.Trigger();
-    completion_token.Get();
+    fixture.m_sampling_timer.trigger();
+    completion_token.get();
   }
 
   TEST_CASE("order_complex_sequence") {
@@ -416,7 +367,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     auto timestamp4 = time_from_string("2024-07-15 12:00:03");
     auto timestamp5 = time_from_string("2024-07-15 12:00:04");
     auto completion_token = Async<void>();
-    fixture.handle<SendMarketDataFeedMessages>(
+    fixture.on_message<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 2);
         auto received_quotes = std::vector<SecurityBookQuote>();
@@ -426,29 +377,27 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
           }
         }
         REQUIRE(received_quotes.size() == 2);
-        auto quote1 =
-          std::find_if(received_quotes.begin(), received_quotes.end(),
-            [&] (const auto& quote) {
-              return quote->m_quote.m_price == price1;
-            });
+        auto quote1 = std::ranges::find_if(received_quotes,
+          [&] (const auto& quote) {
+            return quote->m_quote.m_price == price1;
+          });
         REQUIRE(quote1 != received_quotes.end());
-        REQUIRE(quote1->GetIndex() == security);
+        REQUIRE(quote1->get_index() == security);
         REQUIRE((*quote1)->m_mpid == mpid);
         REQUIRE((*quote1)->m_quote.m_side == Side::BID);
         REQUIRE((*quote1)->m_quote.m_size == 125);
         REQUIRE((*quote1)->m_timestamp == timestamp4);
-        auto quote2 =
-          std::find_if(received_quotes.begin(), received_quotes.end(),
-            [&] (const auto& quote) {
-              return quote->m_quote.m_price == price2;
-            });
+        auto quote2 = std::ranges::find_if(received_quotes,
+          [&] (const auto& quote) {
+            return quote->m_quote.m_price == price2;
+          });
         REQUIRE(quote2 != received_quotes.end());
-        REQUIRE(quote2->GetIndex() == security);
+        REQUIRE(quote2->get_index() == security);
         REQUIRE((*quote2)->m_mpid == mpid);
         REQUIRE((*quote2)->m_quote.m_side == Side::BID);
         REQUIRE((*quote2)->m_quote.m_size == 75);
         REQUIRE((*quote2)->m_timestamp == timestamp5);
-        completion_token.GetEval().SetResult();
+        completion_token.get_eval().set();
       });
     fixture.m_client->add_order(
       security, TSX, mpid, true, "A", Side::BID, price1, 100, timestamp1);
@@ -458,8 +407,8 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     fixture.m_client->remove_order("B", timestamp4);
     fixture.m_client->add_order(
       security, TSX, mpid, true, "C", Side::BID, price2, 75, timestamp5);
-    fixture.m_sampling_timer.Trigger();
-    completion_token.Get();
+    fixture.m_sampling_timer.trigger();
+    completion_token.get();
   }
 
   TEST_CASE("publish_time_and_sale") {
@@ -475,7 +424,7 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
       TimeAndSale(time_from_string("2024-07-15 12:00:02"), 3 * Money::ONE, 300,
         TimeAndSale::Condition(), "TSX", "", ""), security);
     auto completion_token = Async<void>();
-    fixture.handle<SendMarketDataFeedMessages>(
+    fixture.on_message<SendMarketDataFeedMessages>(
       [&] (auto& client, const auto& messages) {
         REQUIRE(messages.size() == 3);
         auto received_time_and_sale1 = get<SecurityTimeAndSale>(&messages[0]);
@@ -487,12 +436,12 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
         auto received_time_and_sale3 = get<SecurityTimeAndSale>(&messages[2]);
         REQUIRE(received_time_and_sale3);
         REQUIRE(*received_time_and_sale3 == time_and_sale3);
-        completion_token.GetEval().SetResult();
+        completion_token.get_eval().set();
       });
     fixture.m_client->publish(time_and_sale1);
     fixture.m_client->publish(time_and_sale2);
     fixture.m_client->publish(time_and_sale3);
-    fixture.m_sampling_timer.Trigger();
-    completion_token.Get();
+    fixture.m_sampling_timer.trigger();
+    completion_token.get();
   }
 }

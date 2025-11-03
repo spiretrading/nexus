@@ -5,9 +5,9 @@
 namespace Nexus {
 
   /** Exception to indicate that an Order submission is invalid. */
-  class OrderSubmissionCheckException : public Beam::IO::IOException {
+  class OrderSubmissionCheckException : public Beam::IOException {
     public:
-      using Beam::IO::IOException::IOException;
+      using Beam::IOException::IOException;
   };
 }
 

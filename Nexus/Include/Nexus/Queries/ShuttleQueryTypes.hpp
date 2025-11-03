@@ -19,6 +19,7 @@ namespace Nexus {
 
   template<Beam::IsSender S>
   void register_query_types(Beam::Out<Beam::TypeRegistry<S>> registry) {
+    Beam::register_query_types(out(registry));
     registry->add(typeid(Money), "Nexus.Money");
     registry->add(typeid(Quantity), "Nexus.Quantity");
     registry->add(typeid(Security), "Nexus.Securty");
@@ -29,7 +30,7 @@ namespace Nexus {
     registry->add(typeid(TimeAndSale), "Nexus.TimeAndSale");
     registry->add(typeid(OrderFields), "Nexus.OrderFields");
     registry->add(typeid(OrderInfo), "Nexus.OrderInfo");
-    register_value_types(Beam::out(registry));
+    Nexus::register_value_types(out(registry));
   }
 }
 

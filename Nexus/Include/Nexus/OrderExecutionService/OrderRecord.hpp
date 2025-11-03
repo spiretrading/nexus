@@ -29,14 +29,14 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::OrderRecord> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::OrderRecord& value,
-        unsigned int version) const {
-      shuttle.Shuttle("info", value.m_info);
-      shuttle.Shuttle("execution_reports", value.m_execution_reports);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::OrderRecord& value, unsigned int version) const {
+      shuttle.shuttle("info", value.m_info);
+      shuttle.shuttle("execution_reports", value.m_execution_reports);
     }
   };
 }

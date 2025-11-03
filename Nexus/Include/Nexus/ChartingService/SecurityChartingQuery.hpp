@@ -9,8 +9,8 @@
 namespace Nexus {
 
   /** Queries for charting data over a particular Security. */
-  class SecurityChartingQuery : public Beam::Queries::BasicQuery<Security>,
-      public Beam::Queries::ExpressionQuery {
+  class SecurityChartingQuery :
+      public Beam::BasicQuery<Security>, public Beam::ExpressionQuery {
     public:
 
       /** Returns the type of data to query. */
@@ -20,11 +20,11 @@ namespace Nexus {
       void set_market_data_type(MarketDataType type);
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       MarketDataType m_type;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
   inline MarketDataType SecurityChartingQuery::get_market_data_type() const {
@@ -35,12 +35,11 @@ namespace Nexus {
     m_type = type;
   }
 
-  template<typename Shuttler>
-  void SecurityChartingQuery::Shuttle(Shuttler& shuttle, unsigned int version) {
-    Beam::Queries::BasicQuery<Security>::Shuttle(shuttle, version);
-    Beam::Serialization::Shuttle<Beam::Queries::ExpressionQuery>()(
-      shuttle, *this, version);
-    shuttle.Shuttle("type", m_type);
+  template<Beam::IsShuttle S>
+  void SecurityChartingQuery::shuttle(S& shuttle, unsigned int version) {
+    Beam::BasicQuery<Security>::shuttle(shuttle, version);
+    Beam::Shuttle<Beam::ExpressionQuery>()(shuttle, *this, version);
+    shuttle.shuttle("type", m_type);
   }
 }
 

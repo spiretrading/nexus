@@ -37,8 +37,8 @@ namespace Nexus {
 
     private:
       template<typename T>
-      using DataStore = Beam::Queries::LocalDataStore<
-        AccountQuery, T, EvaluatorTranslator>;
+      using DataStore =
+        Beam::LocalDataStore<AccountQuery, T, EvaluatorTranslator>;
       Beam::SynchronizedUnorderedSet<OrderId> m_live_orders;
       DataStore<OrderInfo> m_order_submission_data_store;
       DataStore<ExecutionReport> m_execution_report_data_store;
@@ -53,82 +53,78 @@ namespace Nexus {
 
   inline std::vector<SequencedAccountOrderRecord>
       LocalOrderExecutionDataStore::load_order_submissions() const {
-    auto submissions = m_order_submission_data_store.LoadAll();
+    auto submissions = m_order_submission_data_store.load_all();
     auto records = std::vector<SequencedAccountOrderRecord>();
     for(auto& submission : submissions) {
-      auto record = OrderRecord(**submission,
-        m_execution_reports.Get((*submission)->m_id).With(
-          [] (const auto& reports) {
-            return reports;
-          }));
-      records.emplace_back(
-        Beam::Queries::IndexedValue(record, submission->GetIndex()),
-        submission.GetSequence());
+      auto record = OrderRecord(
+        **submission, m_execution_reports.get((*submission)->m_id).load());
+      records.emplace_back(Beam::IndexedValue(record, submission->get_index()),
+        submission.get_sequence());
     }
     return records;
   }
 
   inline std::vector<SequencedAccountExecutionReport>
       LocalOrderExecutionDataStore::load_execution_reports() const {
-    return m_execution_report_data_store.LoadAll();
+    return m_execution_report_data_store.load_all();
   }
 
   inline boost::optional<SequencedAccountOrderRecord>
       LocalOrderExecutionDataStore::load_order_record(OrderId id) {
-    auto info = m_orders.FindValue(id);
+    auto info = m_orders.try_load(id);
     if(!info) {
       return boost::none;
     }
-    return Beam::Queries::SequencedValue(Beam::Queries::IndexedValue(
-      OrderRecord(***info, m_execution_reports.Get(id).Acquire()),
-      (*info)->GetIndex()), info->GetSequence());
+    return Beam::SequencedValue(Beam::IndexedValue(
+      OrderRecord(***info, m_execution_reports.get(id).load()),
+      (*info)->get_index()), info->get_sequence());
   }
 
   inline std::vector<SequencedOrderRecord>
       LocalOrderExecutionDataStore::load_order_records(
         const AccountQuery& query) {
-    auto submissions = m_order_submission_data_store.Load(query);
+    auto submissions = m_order_submission_data_store.load(query);
     auto records = std::vector<SequencedOrderRecord>();
     for(auto& submission : submissions) {
       auto record = OrderRecord(
-        *submission, m_execution_reports.Get(submission->m_id).Acquire());
-      records.emplace_back(record, submission.GetSequence());
+        *submission, m_execution_reports.get(submission->m_id).load());
+      records.emplace_back(record, submission.get_sequence());
     }
     return records;
   }
 
   inline void LocalOrderExecutionDataStore::store(
       const SequencedAccountOrderInfo& info) {
-    m_order_submission_data_store.Store(info);
-    m_orders.Insert((*info)->m_id, info);
-    m_live_orders.Insert((*info)->m_id);
+    m_order_submission_data_store.store(info);
+    m_orders.insert((*info)->m_id, info);
+    m_live_orders.insert((*info)->m_id);
   }
 
   inline void LocalOrderExecutionDataStore::store(
       const std::vector<SequencedAccountOrderInfo>& info) {
-    m_order_submission_data_store.Store(info);
+    m_order_submission_data_store.store(info);
     for(auto& i : info) {
-      m_live_orders.Insert((*i)->m_id);
-      m_orders.Insert((*i)->m_id, i);
+      m_live_orders.insert((*i)->m_id);
+      m_orders.insert((*i)->m_id, i);
     }
   }
 
   inline std::vector<SequencedExecutionReport>
       LocalOrderExecutionDataStore::load_execution_reports(
         const AccountQuery& query) {
-    return m_execution_report_data_store.Load(query);
+    return m_execution_report_data_store.load(query);
   }
 
   inline void LocalOrderExecutionDataStore::store(
       const SequencedAccountExecutionReport& report) {
-    m_execution_report_data_store.Store(report);
-    m_execution_reports.Get((*report)->m_id).With([&] (auto& reports) {
+    m_execution_report_data_store.store(report);
+    m_execution_reports.get((*report)->m_id).with([&] (auto& reports) {
       if(reports.empty() || (*report)->m_sequence > reports.back().m_sequence) {
         reports.push_back(**report);
         return;
       }
       auto insertion_point =
-        Beam::LinearLowerBound(reports.begin(), reports.end(), **report,
+        std::lower_bound(reports.begin(), reports.end(), **report,
           [] (const auto& lhs, const auto& rhs) {
             return lhs.m_sequence < rhs.m_sequence;
           });
@@ -138,7 +134,7 @@ namespace Nexus {
       reports.insert(insertion_point, **report);
     });
     if(is_terminal((*report)->m_status)) {
-      m_live_orders.Erase((*report)->m_id);
+      m_live_orders.erase((*report)->m_id);
     }
   }
 

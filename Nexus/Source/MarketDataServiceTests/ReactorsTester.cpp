@@ -5,7 +5,6 @@
 
 using namespace Aspen;
 using namespace Beam;
-using namespace Beam::Queries;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
@@ -15,15 +14,15 @@ TEST_SUITE("Reactors") {
     auto operations = std::make_shared<
       Beam::Queue<std::shared_ptr<TestMarketDataClient::Operation>>>();
     auto client = TestMarketDataClient(operations);
-    auto query = MakeRealTimeQuery(Security("FOO", TSX));
+    auto query = make_real_time_query(Security("FOO", TSX));
     auto reactor = make_bbo_quote_reactor(client, query);
     REQUIRE(reactor.commit(0) == State::NONE);
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryBboQuoteOperation>(&*operation);
     REQUIRE(received_query != nullptr);
-    REQUIRE(received_query->m_query.GetIndex() == query.GetIndex());
-    REQUIRE(received_query->m_query.GetRange() == Range::RealTime());
+    REQUIRE(received_query->m_query.get_index() == query.get_index());
+    REQUIRE(received_query->m_query.get_range() == Range::REAL_TIME);
   }
 
   TEST_CASE("make_current_bbo_quote_reactor") {
@@ -33,15 +32,15 @@ TEST_SUITE("Reactors") {
     auto security = Security("FOO", TSX);
     auto reactor = make_current_bbo_quote_reactor(client, security);
     REQUIRE(reactor.commit(0) == State::NONE);
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryBboQuoteOperation>(&*operation);
     REQUIRE(received_query != nullptr);
-    REQUIRE(received_query->m_query.GetIndex() == security);
-    REQUIRE(received_query->m_query.GetRange() == Range::Total());
-    REQUIRE(
-      received_query->m_query.GetSnapshotLimit() == SnapshotLimit::FromTail(1));
-    REQUIRE(received_query->m_query.GetInterruptionPolicy() ==
+    REQUIRE(received_query->m_query.get_index() == security);
+    REQUIRE(received_query->m_query.get_range() == Range::TOTAL);
+    REQUIRE(received_query->m_query.get_snapshot_limit() ==
+      SnapshotLimit::from_tail(1));
+    REQUIRE(received_query->m_query.get_interruption_policy() ==
       InterruptionPolicy::IGNORE_CONTINUE);
   }
 
@@ -52,13 +51,13 @@ TEST_SUITE("Reactors") {
     auto security = Security("FOO", TSX);
     auto reactor = make_real_time_bbo_quote_reactor(client, security);
     REQUIRE(reactor.commit(0) == State::NONE);
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryBboQuoteOperation>(&*operation);
     REQUIRE(received_query != nullptr);
-    REQUIRE(received_query->m_query.GetIndex() == security);
-    REQUIRE(received_query->m_query.GetRange() == Range::RealTime());
-    REQUIRE(received_query->m_query.GetInterruptionPolicy() ==
+    REQUIRE(received_query->m_query.get_index() == security);
+    REQUIRE(received_query->m_query.get_range() == Range::REAL_TIME);
+    REQUIRE(received_query->m_query.get_interruption_policy() ==
       InterruptionPolicy::IGNORE_CONTINUE);
   }
 
@@ -66,15 +65,15 @@ TEST_SUITE("Reactors") {
     auto operations = std::make_shared<
       Beam::Queue<std::shared_ptr<TestMarketDataClient::Operation>>>();
     auto client = TestMarketDataClient(operations);
-    auto query = MakeRealTimeQuery(Security("FOO", TSX));
+    auto query = make_real_time_query(Security("FOO", TSX));
     auto reactor = make_book_quote_reactor(client, query);
     REQUIRE(reactor.commit(0) == State::NONE);
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryBookQuoteOperation>(&*operation);
     REQUIRE(received_query != nullptr);
-    REQUIRE(received_query->m_query.GetIndex() == query.GetIndex());
-    REQUIRE(received_query->m_query.GetRange() == Range::RealTime());
+    REQUIRE(received_query->m_query.get_index() == query.get_index());
+    REQUIRE(received_query->m_query.get_range() == Range::REAL_TIME);
   }
 
   TEST_CASE("make_current_book_quote_reactor") {
@@ -84,15 +83,15 @@ TEST_SUITE("Reactors") {
     auto security = Security("FOO", TSX);
     auto reactor = make_current_book_quote_reactor(client, security);
     REQUIRE(reactor.commit(0) == State::NONE);
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryBookQuoteOperation>(&*operation);
     REQUIRE(received_query != nullptr);
-    REQUIRE(received_query->m_query.GetIndex() == security);
-    REQUIRE(received_query->m_query.GetRange() == Range::Total());
-    REQUIRE(
-      received_query->m_query.GetSnapshotLimit() == SnapshotLimit::FromTail(1));
-    REQUIRE(received_query->m_query.GetInterruptionPolicy() ==
+    REQUIRE(received_query->m_query.get_index() == security);
+    REQUIRE(received_query->m_query.get_range() == Range::TOTAL);
+    REQUIRE(received_query->m_query.get_snapshot_limit() ==
+      SnapshotLimit::from_tail(1));
+    REQUIRE(received_query->m_query.get_interruption_policy() ==
       InterruptionPolicy::IGNORE_CONTINUE);
   }
 
@@ -103,13 +102,13 @@ TEST_SUITE("Reactors") {
     auto security = Security("FOO", TSX);
     auto reactor = make_real_time_book_quote_reactor(client, security);
     REQUIRE(reactor.commit(0) == State::NONE);
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryBookQuoteOperation>(&*operation);
     REQUIRE(received_query != nullptr);
-    REQUIRE(received_query->m_query.GetIndex() == security);
-    REQUIRE(received_query->m_query.GetRange() == Range::RealTime());
-    REQUIRE(received_query->m_query.GetInterruptionPolicy() ==
+    REQUIRE(received_query->m_query.get_index() == security);
+    REQUIRE(received_query->m_query.get_range() == Range::REAL_TIME);
+    REQUIRE(received_query->m_query.get_interruption_policy() ==
       InterruptionPolicy::IGNORE_CONTINUE);
   }
 
@@ -117,15 +116,15 @@ TEST_SUITE("Reactors") {
     auto operations = std::make_shared<
       Beam::Queue<std::shared_ptr<TestMarketDataClient::Operation>>>();
     auto client = TestMarketDataClient(operations);
-    auto query = MakeRealTimeQuery(Security("FOO", TSX));
+    auto query = make_real_time_query(Security("FOO", TSX));
     auto reactor = make_time_and_sales_reactor(client, query);
     REQUIRE(reactor.commit(0) == State::NONE);
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryTimeAndSaleOperation>(&*operation);
     REQUIRE(received_query != nullptr);
-    REQUIRE(received_query->m_query.GetIndex() == query.GetIndex());
-    REQUIRE(received_query->m_query.GetRange() == Range::RealTime());
+    REQUIRE(received_query->m_query.get_index() == query.get_index());
+    REQUIRE(received_query->m_query.get_range() == Range::REAL_TIME);
   }
 
   TEST_CASE("make_current_time_and_sales_reactor") {
@@ -135,15 +134,15 @@ TEST_SUITE("Reactors") {
     auto security = Security("FOO", TSX);
     auto reactor = make_current_time_and_sales_reactor(client, security);
     REQUIRE(reactor.commit(0) == State::NONE);
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryTimeAndSaleOperation>(&*operation);
     REQUIRE(received_query != nullptr);
-    REQUIRE(received_query->m_query.GetIndex() == security);
-    REQUIRE(received_query->m_query.GetRange() == Range::Total());
-    REQUIRE(
-      received_query->m_query.GetSnapshotLimit() == SnapshotLimit::FromTail(1));
-    REQUIRE(received_query->m_query.GetInterruptionPolicy() ==
+    REQUIRE(received_query->m_query.get_index() == security);
+    REQUIRE(received_query->m_query.get_range() == Range::TOTAL);
+    REQUIRE(received_query->m_query.get_snapshot_limit() ==
+      SnapshotLimit::from_tail(1));
+    REQUIRE(received_query->m_query.get_interruption_policy() ==
       InterruptionPolicy::IGNORE_CONTINUE);
   }
 
@@ -154,13 +153,13 @@ TEST_SUITE("Reactors") {
     auto security = Security("FOO", TSX);
     auto reactor = make_real_time_time_and_sales_reactor(client, security);
     REQUIRE(reactor.commit(0) == State::NONE);
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryTimeAndSaleOperation>(&*operation);
     REQUIRE(received_query != nullptr);
-    REQUIRE(received_query->m_query.GetIndex() == security);
-    REQUIRE(received_query->m_query.GetRange() == Range::RealTime());
-    REQUIRE(received_query->m_query.GetInterruptionPolicy() ==
+    REQUIRE(received_query->m_query.get_index() == security);
+    REQUIRE(received_query->m_query.get_range() == Range::REAL_TIME);
+    REQUIRE(received_query->m_query.get_interruption_policy() ==
       InterruptionPolicy::IGNORE_CONTINUE);
   }
 }

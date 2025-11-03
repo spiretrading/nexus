@@ -6,9 +6,9 @@
 namespace Nexus {
 
   /** Encapsulates a standard ChartingClient used in an application. */
-  using ApplicationChartingClient = Beam::Services::ApplicationClient<
-    ServiceChartingClient, Beam::Services::ServiceName<CHARTING_SERVICE_NAME>,
-    Beam::Services::ZLibSessionBuilder<>>;
+  using ApplicationChartingClient = Beam::ApplicationClient<
+    ServiceChartingClient, Beam::ServiceName<CHARTING_SERVICE_NAME>,
+    Beam::ZLibSessionBuilder<>>;
 }
 
 #endif

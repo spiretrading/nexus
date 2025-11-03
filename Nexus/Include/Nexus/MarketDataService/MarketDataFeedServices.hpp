@@ -18,14 +18,14 @@ namespace Nexus {
   inline const auto MARKET_DATA_FEED_SERVICE_NAME =
     std::string("market_data_feed_service");
 
-  BEAM_DEFINE_MESSAGES(MarketDataFeedMessages,
+  BEAM_DEFINE_MESSAGES(market_data_feed_messages,
 
     /**
      * Sets or updates a SecurityInfo.
      * @param security_info The updated SecurityInfo.
      */
     (SetSecurityInfoMessage, "Nexus.MarketDataService.SetSecurityInfoMessage",
-      SecurityInfo, security_info),
+      (SecurityInfo, security_info)),
 
     /**
      * Sends a list of MarketDataFeedMessages for processing.
@@ -33,7 +33,7 @@ namespace Nexus {
      */
     (SendMarketDataFeedMessages,
       "Nexus.MarketDataService.SendMarketDataFeedMessages",
-      std::vector<MarketDataFeedMessage>, messages));
+      (std::vector<MarketDataFeedMessage>, messages)));
 }
 
 #endif

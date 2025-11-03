@@ -3,7 +3,6 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -12,7 +11,7 @@ using namespace Nexus::DefaultVenues;
 
 namespace {
   auto make_test_order_fields() {
-    auto account = DirectoryEntry::MakeAccount(123, "test");
+    auto account = DirectoryEntry::make_account(123, "test");
     auto security = Security("TST", TSX);
     auto currency = CAD;
     auto side = Side::BID;

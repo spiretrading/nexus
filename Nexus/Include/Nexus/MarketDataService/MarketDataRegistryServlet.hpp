@@ -25,21 +25,23 @@ namespace Nexus {
    * @param <D> The type of data store storing historical market data.
    * @param <A> The type of AdministrationClient to use.
    */
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   class MarketDataRegistryServlet {
     public:
 
       /** The registry storing all market data sent to this servlet. */
-      using MarketDataRegistry = Beam::GetTryDereferenceType<R>;
+      using MarketDataRegistry = Beam::dereference_t<R>;
 
       /** The type of data store storing historical market data. */
-      using HistoricalDataStore = Beam::GetTryDereferenceType<D>;
-      using Container = C;
-      using ServiceProtocolClient = typename Container::ServiceProtocolClient;
+      using HistoricalDataStore = Beam::dereference_t<D>;
 
       /** The type of AdministrationClient to use. */
-      using AdministrationClient = Beam::GetTryDereferenceType<A>;
+      using AdministrationClient = Beam::dereference_t<A>;
+
+      using Container = C;
+      using ServiceProtocolClient = typename Container::ServiceProtocolClient;
 
       /**
        * Constructs a MarketDataRegistryServlet.
@@ -59,32 +61,28 @@ namespace Nexus {
       void publish(const SecurityBookQuote& delta, int source_id);
       void publish(const SecurityTimeAndSale& time_and_sale, int source_id);
       void clear(int source_id);
-
-      void RegisterServices(
-        Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots);
-
-      void HandleClientAccepted(ServiceProtocolClient& client);
-
-      void HandleClientClosed(ServiceProtocolClient& client);
-
-      void Close();
+      void register_services(
+        Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots);
+      void handle_accept(ServiceProtocolClient& client);
+      void handle_close(ServiceProtocolClient& client);
+      void close();
 
     private:
       template<typename T>
       using VenueSubscriptions =
-        Beam::Queries::IndexedSubscriptions<T, Venue, ServiceProtocolClient>;
+        Beam::IndexedSubscriptions<T, Venue, ServiceProtocolClient>;
       template<typename T>
       using SecuritySubscriptions =
-        Beam::Queries::IndexedSubscriptions<T, Security, ServiceProtocolClient>;
+        Beam::IndexedSubscriptions<T, Security, ServiceProtocolClient>;
       EntitlementDatabase m_entitlement_database;
-      Beam::GetOptionalLocalPtr<A> m_administration_client;
-      Beam::GetOptionalLocalPtr<R> m_registry;
-      Beam::GetOptionalLocalPtr<D> m_data_store;
+      Beam::local_ptr_t<A> m_administration_client;
+      Beam::local_ptr_t<R> m_registry;
+      Beam::local_ptr_t<D> m_data_store;
       VenueSubscriptions<OrderImbalance> m_order_imbalance_subscriptions;
       SecuritySubscriptions<BboQuote> m_bbo_quote_subscriptions;
       SecuritySubscriptions<BookQuote> m_book_quote_subscriptions;
       SecuritySubscriptions<TimeAndSale> m_time_and_sale_subscriptions;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       MarketDataRegistryServlet(const MarketDataRegistryServlet&) = delete;
       MarketDataRegistryServlet& operator =(
@@ -93,25 +91,24 @@ namespace Nexus {
       Venue normalize(Venue venue);
       template<typename Type, typename Service, typename Query,
         typename Subscriptions>
-      void on_query(
-          Beam::Services::RequestToken<ServiceProtocolClient, Service>& request,
-          const Query& query, Subscriptions& subscriptions);
-      void on_query_order_imbalance(Beam::Services::RequestToken<
+      void on_query(Beam::RequestToken<ServiceProtocolClient, Service>& request,
+        const Query& query, Subscriptions& subscriptions);
+      void on_query_order_imbalance(Beam::RequestToken<
         ServiceProtocolClient, QueryOrderImbalancesService>& request,
         const VenueMarketDataQuery& query);
       void on_end_order_imbalance_query(
         ServiceProtocolClient& client, Venue venue, int id);
-      void on_query_bbo_quotes(Beam::Services::RequestToken<
+      void on_query_bbo_quotes(Beam::RequestToken<
         ServiceProtocolClient, QueryBboQuotesService>& request,
         const SecurityMarketDataQuery& query);
       void on_end_bbo_quote_query(
         ServiceProtocolClient& client, const Security& security, int id);
-      void on_query_book_quotes(Beam::Services::RequestToken<
+      void on_query_book_quotes(Beam::RequestToken<
         ServiceProtocolClient, QueryBookQuotesService>& request,
         const SecurityMarketDataQuery& query);
       void on_end_book_quote_query(
         ServiceProtocolClient& client, const Security& security, int id);
-      void on_query_time_and_sales(Beam::Services::RequestToken<
+      void on_query_time_and_sales(Beam::RequestToken<
         ServiceProtocolClient, QueryTimeAndSalesService>& request,
         const SecurityMarketDataQuery& query);
       void on_end_time_and_sale_query(
@@ -126,17 +123,19 @@ namespace Nexus {
         ServiceProtocolClient& client, const std::string& prefix);
   };
 
-  template<typename R, IsHistoricalDataStore D, IsAdministrationClient A>
+  template<typename R, typename D, typename A>
   struct MetaMarketDataRegistryServlet {
     using Session = MarketDataRegistrySession;
+
     template<typename C>
     struct apply {
       using type = MarketDataRegistryServlet<C, R, D, A>;
     };
   };
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   template<Beam::Initializes<A> AF, Beam::Initializes<R> RF,
     Beam::Initializes<D> DF>
   MarketDataRegistryServlet<C, R, D, A>::MarketDataRegistryServlet(
@@ -146,147 +145,153 @@ namespace Nexus {
         m_data_store(std::forward<DF>(data_store)) {
     try {
       auto query = SecurityInfoQuery();
-      query.SetIndex(Region::GLOBAL);
-      query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
+      query.set_index(Region::GLOBAL);
+      query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
       auto info = m_data_store->load_security_info(query);
       for(auto& entry : info) {
         m_registry->add(entry);
       }
       m_entitlement_database = m_administration_client->load_entitlements();
     } catch(const std::exception&) {
-      Close();
+      close();
       BOOST_RETHROW;
     }
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::add(const SecurityInfo& info) {
     m_data_store->store(info);
     m_registry->add(info);
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::publish(
       const VenueOrderImbalance& imbalance, int source_id) {
     m_registry->publish(imbalance, source_id, *m_data_store,
       [&] (const auto& imbalance) {
         m_data_store->store(imbalance);
-        m_order_imbalance_subscriptions.Publish(imbalance,
+        m_order_imbalance_subscriptions.publish(imbalance,
           [&] (const auto& clients) {
-            Beam::Services::BroadcastRecordMessage<OrderImbalanceMessage>(
+            Beam::broadcast_record_message<OrderImbalanceMessage>(
               clients, imbalance);
           });
       });
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::publish(
       const SecurityBboQuote& quote, int source_id) {
     m_registry->publish(quote, source_id, *m_data_store,
       [&] (const auto& quote) {
         m_data_store->store(quote);
-        m_bbo_quote_subscriptions.Publish(quote,
+        m_bbo_quote_subscriptions.publish(quote,
           [&] (const auto& clients) {
-            Beam::Services::BroadcastRecordMessage<BboQuoteMessage>(
-              clients, quote);
+            Beam::broadcast_record_message<BboQuoteMessage>(clients, quote);
           });
       });
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::publish(
       const SecurityBookQuote& delta, int source_id) {
-    auto security = m_registry->get_primary_listing(delta.GetIndex());
-    auto key = EntitlementKey(security.get_venue(), delta.GetValue().m_venue);
+    auto security = m_registry->get_primary_listing(delta.get_index());
+    auto key = EntitlementKey(security.get_venue(), delta.get_value().m_venue);
     m_registry->publish(delta, source_id, *m_data_store,
       [&] (const auto& quote) {
         m_data_store->store(quote);
         if(!security.get_venue()) {
           return;
         }
-        m_book_quote_subscriptions.Publish(quote, [&] (const auto& client) {
+        m_book_quote_subscriptions.publish(quote, [&] (const auto& client) {
           return has_entitlement(
-            client.GetSession(), key, MarketDataType::BOOK_QUOTE);
+            client.get_session(), key, MarketDataType::BOOK_QUOTE);
         },
         [&] (const auto& clients) {
-          Beam::Services::BroadcastRecordMessage<BookQuoteMessage>(
-            clients, quote);
+          Beam::broadcast_record_message<BookQuoteMessage>(clients, quote);
         });
       });
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::publish(
       const SecurityTimeAndSale& time_and_sale, int source_id) {
     m_registry->publish(time_and_sale, source_id, *m_data_store,
       [&] (const auto& time_and_sale) {
         m_data_store->store(time_and_sale);
-        m_time_and_sale_subscriptions.Publish(time_and_sale,
+        m_time_and_sale_subscriptions.publish(time_and_sale,
           [&] (const auto& clients) {
-            Beam::Services::BroadcastRecordMessage<TimeAndSaleMessage>(
+            Beam::broadcast_record_message<TimeAndSaleMessage>(
               clients, time_and_sale);
           });
       });
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::clear(int source_id) {
     m_registry->clear(source_id);
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
-  void MarketDataRegistryServlet<C, R, D, A>::RegisterServices(
-      Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
-    RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
-    RegisterMarketDataRegistryServices(Store(slots));
-    RegisterMarketDataRegistryMessages(Store(slots));
-    QueryOrderImbalancesService::AddRequestSlot(Store(slots), std::bind_front(
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::register_services(
+      Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots) {
+    Nexus::register_query_types(Beam::out(slots->get_registry()));
+    register_market_data_registry_services(out(slots));
+    register_market_data_registry_messages(out(slots));
+    QueryOrderImbalancesService::add_request_slot(out(slots), std::bind_front(
       &MarketDataRegistryServlet::on_query_order_imbalance, this));
-    Beam::Services::AddMessageSlot<EndOrderImbalanceQueryMessage>(
-      Store(slots), std::bind_front(
+    Beam::add_message_slot<EndOrderImbalanceQueryMessage>(
+      out(slots), std::bind_front(
         &MarketDataRegistryServlet::on_end_order_imbalance_query, this));
-    QueryBboQuotesService::AddRequestSlot(Store(slots),
+    QueryBboQuotesService::add_request_slot(out(slots),
       std::bind_front(&MarketDataRegistryServlet::on_query_bbo_quotes, this));
-    Beam::Services::AddMessageSlot<EndBboQuoteQueryMessage>(
-      Store(slots), std::bind_front(
+    Beam::add_message_slot<EndBboQuoteQueryMessage>(
+      out(slots), std::bind_front(
         &MarketDataRegistryServlet::on_end_bbo_quote_query, this));
-    QueryBookQuotesService::AddRequestSlot(Store(slots),
+    QueryBookQuotesService::add_request_slot(out(slots),
       std::bind_front(&MarketDataRegistryServlet::on_query_book_quotes, this));
-    Beam::Services::AddMessageSlot<EndBookQuoteQueryMessage>(
-      Store(slots), std::bind_front(
+    Beam::add_message_slot<EndBookQuoteQueryMessage>(
+      out(slots), std::bind_front(
         &MarketDataRegistryServlet::on_end_book_quote_query, this));
-    QueryTimeAndSalesService::AddRequestSlot(Store(slots),
+    QueryTimeAndSalesService::add_request_slot(out(slots),
       std::bind_front(&MarketDataRegistryServlet::on_query_time_and_sales,
         this));
-    Beam::Services::AddMessageSlot<EndTimeAndSaleQueryMessage>(
-      Store(slots), std::bind_front(
+    Beam::add_message_slot<EndTimeAndSaleQueryMessage>(
+      out(slots), std::bind_front(
         &MarketDataRegistryServlet::on_end_time_and_sale_query, this));
-    LoadSecuritySnapshotService::AddSlot(Store(slots), std::bind_front(
+    LoadSecuritySnapshotService::add_slot(out(slots), std::bind_front(
       &MarketDataRegistryServlet::on_load_security_snapshot, this));
-    LoadSecurityTechnicalsService::AddSlot(Store(slots), std::bind_front(
+    LoadSecurityTechnicalsService::add_slot(out(slots), std::bind_front(
       &MarketDataRegistryServlet::on_load_security_technicals, this));
-    QuerySecurityInfoService::AddSlot(Store(slots), std::bind_front(
+    QuerySecurityInfoService::add_slot(out(slots), std::bind_front(
       &MarketDataRegistryServlet::on_query_security_info, this));
-    LoadSecurityInfoFromPrefixService::AddSlot(Store(slots), std::bind_front(
+    LoadSecurityInfoFromPrefixService::add_slot(out(slots), std::bind_front(
       &MarketDataRegistryServlet::on_load_security_info_from_prefix, this));
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
-  void MarketDataRegistryServlet<C, R, D, A>::HandleClientAccepted(
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::handle_accept(
       ServiceProtocolClient& client) {
-    auto& session = client.GetSession();
+    auto& session = client.get_session();
     session.m_roles =
-      m_administration_client->load_account_roles(session.GetAccount());
+      m_administration_client->load_account_roles(session.get_account());
     auto account_entitlements =
-      m_administration_client->load_entitlements(session.GetAccount());
+      m_administration_client->load_entitlements(session.get_account());
     for(auto& entitlement : m_entitlement_database.get_entries()) {
       auto i = std::find(account_entitlements.begin(),
         account_entitlements.end(), entitlement.m_group_entry);
@@ -299,28 +304,31 @@ namespace Nexus {
     }
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
-  void MarketDataRegistryServlet<C, R, D, A>::HandleClientClosed(
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::handle_close(
       ServiceProtocolClient& client) {
-    m_order_imbalance_subscriptions.RemoveAll(client);
-    m_bbo_quote_subscriptions.RemoveAll(client);
-    m_book_quote_subscriptions.RemoveAll(client);
-    m_time_and_sale_subscriptions.RemoveAll(client);
+    m_order_imbalance_subscriptions.remove_all(client);
+    m_bbo_quote_subscriptions.remove_all(client);
+    m_book_quote_subscriptions.remove_all(client);
+    m_time_and_sale_subscriptions.remove_all(client);
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
-  void MarketDataRegistryServlet<C, R, D, A>::Close() {
-    if(m_open_state.SetClosing()) {
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::close() {
+    if(m_open_state.set_closing()) {
       return;
     }
     m_data_store->close();
-    m_open_state.Close();
+    m_open_state.close();
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   Security MarketDataRegistryServlet<C, R, D, A>::normalize(
       const Security& security) {
     if(!security.get_venue()) {
@@ -337,111 +345,117 @@ namespace Nexus {
     return {};
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   Venue MarketDataRegistryServlet<C, R, D, A>::normalize(Venue venue) {
     return venue;
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   template<typename Type, typename Service, typename Query,
     typename Subscriptions>
   void MarketDataRegistryServlet<C, R, D, A>::on_query(
-      Beam::Services::RequestToken<ServiceProtocolClient, Service>& request,
+      Beam::RequestToken<ServiceProtocolClient, Service>& request,
       const Query& query, Subscriptions& subscriptions) {
-    using Result =
-      Beam::Queries::QueryResult<Beam::Queries::SequencedValue<Type>>;
-    auto& session = request.GetSession();
+    using Result = Beam::QueryResult<Beam::SequencedValue<Type>>;
+    auto& session = request.get_session();
     if(!has_entitlement<Type>(session, query)) {
-      request.SetResult(Result());
+      request.set(Result());
       return;
     }
-    auto index = normalize(query.GetIndex());
+    auto index = normalize(query.get_index());
     if(index == typename Query::Index()) {
-      request.SetResult(Result());
+      request.set(Result());
       return;
     }
-    auto filter =
-      Beam::Queries::Translate<EvaluatorTranslator>(query.GetFilter());
+    auto filter = Beam::translate<EvaluatorTranslator>(query.get_filter());
     auto result = Result();
-    result.m_queryId = subscriptions.Initialize(
-      index, request.GetClient(), query.GetRange(), std::move(filter));
+    result.m_id = subscriptions.init(
+      index, request.get_client(), query.get_range(), std::move(filter));
     result.m_snapshot = load<Type>(*m_data_store, query);
-    subscriptions.Commit(index, std::move(result), [&] (const auto& result) {
-      request.SetResult(result);
+    subscriptions.commit(index, std::move(result), [&] (const auto& result) {
+      request.set(result);
     });
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::on_query_order_imbalance(
-      Beam::Services::RequestToken<ServiceProtocolClient,
-        QueryOrderImbalancesService>& request,
-      const VenueMarketDataQuery& query) {
+      Beam::RequestToken<ServiceProtocolClient, QueryOrderImbalancesService>&
+        request, const VenueMarketDataQuery& query) {
     on_query<OrderImbalance>(request, query, m_order_imbalance_subscriptions);
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::on_end_order_imbalance_query(
       ServiceProtocolClient& client, Venue venue, int id) {
-    m_order_imbalance_subscriptions.End(venue, id);
+    m_order_imbalance_subscriptions.end(venue, id);
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::on_query_bbo_quotes(
-      Beam::Services::RequestToken<ServiceProtocolClient,
-        QueryBboQuotesService>& request, const SecurityMarketDataQuery& query) {
+      Beam::RequestToken<ServiceProtocolClient, QueryBboQuotesService>& request,
+      const SecurityMarketDataQuery& query) {
     on_query<BboQuote>(request, query, m_bbo_quote_subscriptions);
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::on_end_bbo_quote_query(
       ServiceProtocolClient& client, const Security& security, int id) {
-    m_bbo_quote_subscriptions.End(security, id);
+    m_bbo_quote_subscriptions.end(security, id);
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::on_query_book_quotes(
-      Beam::Services::RequestToken<
-        ServiceProtocolClient, QueryBookQuotesService>& request,
-      const SecurityMarketDataQuery& query) {
+      Beam::RequestToken<ServiceProtocolClient, QueryBookQuotesService>&
+        request, const SecurityMarketDataQuery& query) {
     on_query<BookQuote>(request, query, m_book_quote_subscriptions);
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::on_end_book_quote_query(
       ServiceProtocolClient& client, const Security& security, int id) {
-    m_book_quote_subscriptions.End(security, id);
+    m_book_quote_subscriptions.end(security, id);
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::on_query_time_and_sales(
-      Beam::Services::RequestToken<
-        ServiceProtocolClient, QueryTimeAndSalesService>& request,
-      const SecurityMarketDataQuery& query) {
+      Beam::RequestToken<ServiceProtocolClient, QueryTimeAndSalesService>&
+        request, const SecurityMarketDataQuery& query) {
     on_query<TimeAndSale>(request, query, m_time_and_sale_subscriptions);
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::on_end_time_and_sale_query(
       ServiceProtocolClient& client, const Security& security, int id) {
-    m_time_and_sale_subscriptions.End(security, id);
+    m_time_and_sale_subscriptions.end(security, id);
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   SecuritySnapshot MarketDataRegistryServlet<C, R, D, A>::
       on_load_security_snapshot(
         ServiceProtocolClient& client, Security security) {
-    auto& session = client.GetSession();
+    auto& session = client.get_session();
     security = normalize(security);
     if(!security) {
       return {};
@@ -475,8 +489,9 @@ namespace Nexus {
     return *snapshot;
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   SecurityTechnicals MarketDataRegistryServlet<C, R, D, A>::
       on_load_security_technicals(
         ServiceProtocolClient& client, Security security) {
@@ -487,16 +502,18 @@ namespace Nexus {
     return {};
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   std::vector<SecurityInfo> MarketDataRegistryServlet<C, R, D, A>::
       on_query_security_info(
         ServiceProtocolClient& client, const SecurityInfoQuery& query) {
     return m_data_store->load_security_info(query);
   }
 
-  template<typename C, typename R, IsHistoricalDataStore D,
-    IsAdministrationClient A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   std::vector<SecurityInfo> MarketDataRegistryServlet<C, R, D, A>::
       on_load_security_info_from_prefix(
         ServiceProtocolClient& client, const std::string& prefix) {

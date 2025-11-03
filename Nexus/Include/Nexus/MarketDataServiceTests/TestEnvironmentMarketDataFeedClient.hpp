@@ -1,7 +1,7 @@
 #ifndef NEXUS_TEST_ENVIRONMENT_MARKET_DATA_FEED_CLIENT_HPP
 #define NEXUS_TEST_ENVIRONMENT_MARKET_DATA_FEED_CLIENT_HPP
 #include <memory>
-#include <Beam/Threading/TriggerTimer.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 
 namespace Nexus {
@@ -21,8 +21,10 @@ namespace Nexus {
        *        sampling data publications.
        */
       TestEnvironmentMarketDataFeedClient(MarketDataFeedClient client,
-        std::shared_ptr<Beam::Threading::TriggerTimer> sampling_timer);
+        std::shared_ptr<Beam::TriggerTimer> sampling_timer);
+
       ~TestEnvironmentMarketDataFeedClient();
+
       void add(const SecurityInfo& info);
       void publish(const VenueOrderImbalance& imbalance);
       void publish(const SecurityBboQuote& quote);
@@ -44,7 +46,7 @@ namespace Nexus {
 
     private:
       MarketDataFeedClient m_client;
-      std::shared_ptr<Beam::Threading::TriggerTimer> m_sampling_timer;
+      std::shared_ptr<Beam::TriggerTimer> m_sampling_timer;
 
       TestEnvironmentMarketDataFeedClient(
         const TestEnvironmentMarketDataFeedClient&) = delete;
@@ -54,7 +56,7 @@ namespace Nexus {
 
   inline TestEnvironmentMarketDataFeedClient::
     TestEnvironmentMarketDataFeedClient(MarketDataFeedClient client,
-      std::shared_ptr<Beam::Threading::TriggerTimer> sampling_timer)
+      std::shared_ptr<Beam::TriggerTimer> sampling_timer)
     : m_client(std::move(client)),
       m_sampling_timer(std::move(sampling_timer)) {}
 
@@ -66,36 +68,36 @@ namespace Nexus {
   inline void TestEnvironmentMarketDataFeedClient::add(
       const SecurityInfo& info) {
     m_client.add(info);
-    m_sampling_timer->Trigger();
-    Beam::Routines::FlushPendingRoutines();
+    m_sampling_timer->trigger();
+    Beam::flush_pending_routines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::publish(
       const VenueOrderImbalance& imbalance) {
     m_client.publish(imbalance);
-    m_sampling_timer->Trigger();
-    Beam::Routines::FlushPendingRoutines();
+    m_sampling_timer->trigger();
+    Beam::flush_pending_routines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::publish(
       const SecurityBboQuote& quote) {
     m_client.publish(quote);
-    m_sampling_timer->Trigger();
-    Beam::Routines::FlushPendingRoutines();
+    m_sampling_timer->trigger();
+    Beam::flush_pending_routines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::publish(
       const SecurityBookQuote& quote) {
     m_client.publish(quote);
-    m_sampling_timer->Trigger();
-    Beam::Routines::FlushPendingRoutines();
+    m_sampling_timer->trigger();
+    Beam::flush_pending_routines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::publish(
       const SecurityTimeAndSale& time_and_sale) {
     m_client.publish(time_and_sale);
-    m_sampling_timer->Trigger();
-    Beam::Routines::FlushPendingRoutines();
+    m_sampling_timer->trigger();
+    Beam::flush_pending_routines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::add_order(
@@ -104,43 +106,43 @@ namespace Nexus {
       Quantity size, boost::posix_time::ptime timestamp) {
     m_client.add_order(
       security, venue, mpid, is_primary_mpid, id, side, price, size, timestamp);
-    m_sampling_timer->Trigger();
-    Beam::Routines::FlushPendingRoutines();
+    m_sampling_timer->trigger();
+    Beam::flush_pending_routines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::modify_order_size(
       const std::string& id, Quantity size,
       boost::posix_time::ptime timestamp) {
     m_client.modify_order_size(id, size, timestamp);
-    m_sampling_timer->Trigger();
-    Beam::Routines::FlushPendingRoutines();
+    m_sampling_timer->trigger();
+    Beam::flush_pending_routines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::offset_order_size(
       const std::string& id, Quantity delta,
       boost::posix_time::ptime timestamp) {
     m_client.offset_order_size(id, delta, timestamp);
-    m_sampling_timer->Trigger();
-    Beam::Routines::FlushPendingRoutines();
+    m_sampling_timer->trigger();
+    Beam::flush_pending_routines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::modify_order_price(
       const std::string& id, Money price, boost::posix_time::ptime timestamp) {
     m_client.modify_order_price(id, price, timestamp);
-    m_sampling_timer->Trigger();
-    Beam::Routines::FlushPendingRoutines();
+    m_sampling_timer->trigger();
+    Beam::flush_pending_routines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::remove_order(
       const std::string& id, boost::posix_time::ptime timestamp) {
     m_client.remove_order(id, timestamp);
-    m_sampling_timer->Trigger();
-    Beam::Routines::FlushPendingRoutines();
+    m_sampling_timer->trigger();
+    Beam::flush_pending_routines();
   }
 
   inline void TestEnvironmentMarketDataFeedClient::close() {
     m_client.close();
-    Beam::Routines::FlushPendingRoutines();
+    Beam::flush_pending_routines();
   }
 }
 

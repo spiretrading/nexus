@@ -6,8 +6,7 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
-using namespace Beam::ServiceLocator::Tests;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
@@ -18,7 +17,7 @@ using namespace Nexus::Tests;
 
 namespace {
   auto make_test_order_fields() {
-    auto account = DirectoryEntry::MakeAccount(123, "test");
+    auto account = DirectoryEntry::make_account(123, "test");
     auto security = Security("TST", TSX);
     auto currency = CAD;
     auto side = Side::BID;
@@ -122,8 +121,7 @@ TEST_SUITE("BoardLotCheck") {
         DEFAULT_VENUES.from(TSX).m_market_center);
       fixture.m_market_data_environment.get_data_store().store(
         SequencedSecurityTimeAndSale(
-          SecurityTimeAndSale(previous_close, security),
-          Beam::Queries::Sequence(1)));
+          SecurityTimeAndSale(previous_close, security), Beam::Sequence(1)));
       fields.m_quantity = 300;
       auto order_info_valid =
         OrderInfo(fields, 1, time_from_string("2024-07-18 10:01:00"));
@@ -138,7 +136,7 @@ TEST_SUITE("BoardLotCheck") {
         {}, DEFAULT_VENUES.from(TSX).m_market_center);
       fixture.m_market_data_environment.get_data_store().store(
         SequencedSecurityTimeAndSale(SecurityTimeAndSale(new_close, security),
-        Beam::Queries::Sequence(2)));
+        Beam::Sequence(2)));
       auto next_day_timestamp = new_close_timestamp + days(1);
       fields.m_quantity = 500;
       auto next_day_valid_order = OrderInfo(fields, 3, next_day_timestamp);

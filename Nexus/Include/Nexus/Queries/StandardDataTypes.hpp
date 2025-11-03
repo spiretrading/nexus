@@ -41,6 +41,13 @@ namespace Nexus {
     public:
 
       /**
+       * Constructs a TimeAndSaleAccessor from a parameter.
+       * @param index The index of the parameter.
+       * @return The constructed TimeAndSaleAccessor.
+       */
+      static TimeAndSaleAccessor from_parameter(int index);
+
+      /**
        * Constructs a TimeAndSaleAccessor.
        * @param expression The expression whose members are to be accessed.
        */
@@ -67,6 +74,11 @@ namespace Nexus {
     private:
       Beam::Expression m_expression;
   };
+
+  inline TimeAndSaleAccessor TimeAndSaleAccessor::from_parameter(int index) {
+    return TimeAndSaleAccessor(
+      Beam::ParameterExpression(index, typeid(TimeAndSale)));
+  }
 
   inline TimeAndSaleAccessor::TimeAndSaleAccessor(
     Beam::Expression expression) noexcept

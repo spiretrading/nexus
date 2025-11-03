@@ -62,13 +62,13 @@ namespace Nexus {
   }
 
   inline void PrimitiveOrder::update(const ExecutionReport& report) {
-    m_publisher.With([&] {
+    m_publisher.with([&] {
       if(report.m_status != OrderStatus::PARTIALLY_FILLED) {
         m_status = report.m_status;
       }
-      m_publisher.Push(report);
+      m_publisher.push(report);
       if(is_terminal(report.m_status)) {
-        m_publisher.Break();
+        m_publisher.close();
       }
     });
   }
@@ -79,14 +79,14 @@ namespace Nexus {
 
   template<typename F>
   decltype(auto) PrimitiveOrder::with(F&& f) {
-    return m_publisher.With([&] (auto reports) {
+    return m_publisher.with([&] (auto reports) {
       return std::forward<F>(f)(m_status, *reports);
     });
   }
 
   template<typename F>
   decltype(auto) PrimitiveOrder::with(F&& f) const {
-    return m_publisher.With([&] (auto reports) {
+    return m_publisher.with([&] (auto reports) {
       return std::forward<F>(f)(m_status, *reports);
     });
   }

@@ -11,30 +11,25 @@
 #include "Nexus/OrderExecutionService/OrderRecord.hpp"
 
 namespace Nexus {
-  using SequencedOrder = Beam::Queries::SequencedValue<std::shared_ptr<Order>>;
-  using SequencedOrderInfo = Beam::Queries::SequencedValue<OrderInfo>;
-  using SequencedOrderRecord = Beam::Queries::SequencedValue<OrderRecord>;
-  using SequencedExecutionReport =
-    Beam::Queries::SequencedValue<ExecutionReport>;
-  using AccountOrderInfo = Beam::Queries::IndexedValue<OrderInfo,
-    Beam::ServiceLocator::DirectoryEntry>;
-  using AccountOrderRecord = Beam::Queries::IndexedValue<OrderRecord,
-    Beam::ServiceLocator::DirectoryEntry>;
-  using AccountExecutionReport = Beam::Queries::IndexedValue<ExecutionReport,
-    Beam::ServiceLocator::DirectoryEntry>;
-  using SequencedAccountOrderInfo =
-    Beam::Queries::SequencedValue<AccountOrderInfo>;
-  using SequencedAccountOrderRecord =
-    Beam::Queries::SequencedValue<AccountOrderRecord>;
-  using SequencedAccountExecutionReport = Beam::Queries::SequencedValue<
-    AccountExecutionReport>;
+  using SequencedOrder = Beam::SequencedValue<std::shared_ptr<Order>>;
+  using SequencedOrderInfo = Beam::SequencedValue<OrderInfo>;
+  using SequencedOrderRecord = Beam::SequencedValue<OrderRecord>;
+  using SequencedExecutionReport = Beam::SequencedValue<ExecutionReport>;
+  using AccountOrderInfo = Beam::IndexedValue<OrderInfo, Beam::DirectoryEntry>;
+  using AccountOrderRecord =
+    Beam::IndexedValue<OrderRecord, Beam::DirectoryEntry>;
+  using AccountExecutionReport =
+    Beam::IndexedValue<ExecutionReport, Beam::DirectoryEntry>;
+  using SequencedAccountOrderInfo = Beam::SequencedValue<AccountOrderInfo>;
+  using SequencedAccountOrderRecord = Beam::SequencedValue<AccountOrderRecord>;
+  using SequencedAccountExecutionReport =
+    Beam::SequencedValue<AccountExecutionReport>;
 
   /** Defines the type of query used to receive Order submissions. */
-  using AccountQuery =
-    Beam::Queries::BasicQuery<Beam::ServiceLocator::DirectoryEntry>;
+  using AccountQuery = Beam::BasicQuery<Beam::DirectoryEntry>;
 }
 
-namespace Beam::Queries {
+namespace Beam {
   template<>
   struct TimestampAccessor<Nexus::OrderRecord> {
     const boost::posix_time::ptime& operator ()(

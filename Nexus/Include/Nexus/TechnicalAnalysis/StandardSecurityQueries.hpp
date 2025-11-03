@@ -42,16 +42,11 @@ namespace Nexus {
     auto start_of_day =
       venue_date_to_utc(security.get_venue(), date, venues, time_zones);
     auto query = SecurityMarketDataQuery();
-    query.SetIndex(security);
-    query.SetRange(
-      start_of_day, Beam::Queries::Decrement(Beam::Queries::Sequence::Last()));
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
-    auto parameter =
-      Beam::Queries::ParameterExpression(0, TimeAndSaleType());
-    auto market_center = venues.from(security.get_venue()).m_market_center;
-    query.SetFilter(
-      Beam::Queries::ConstantExpression(std::move(market_center)) ==
-        TimeAndSaleAccessor(parameter).get_market_center());
+    query.set_index(security);
+    query.set_range(start_of_day, Beam::decrement(Beam::Sequence::LAST));
+    query.set_snapshot_limit(Beam::SnapshotLimit::from_head(1));
+    query.set_filter(venues.from(security.get_venue()).m_market_center ==
+      TimeAndSaleAccessor::from_parameter(0).get_market_center());
     return query;
   }
 
@@ -73,7 +68,7 @@ namespace Nexus {
     client.query(query, queue);
     auto open = boost::optional<TimeAndSale>();
     try {
-      open = queue->Pop();
+      open = queue->pop();
     } catch(const std::exception&) {}
     return open;
   }
@@ -87,28 +82,25 @@ namespace Nexus {
    * @param time_zones The database of timezones.
    * @param queue The Queue to store the opening trade in.
    */
-  template<IsMarketDataClient C>
-  void query_open(C&& client, const Security& security,
+  void query_open(IsMarketDataClient auto& client, const Security& security,
       boost::posix_time::ptime date, const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones,
       Beam::ScopedQueueWriter<TimeAndSale> queue) {
-    Beam::Routines::Spawn([=, client = Beam::CapturePtr<C>(client),
-        queue = std::move(queue)] () mutable {
+    Beam::spawn([=, &client, queue = std::move(queue)] () mutable {
       if(auto open = load_open(*client, security, date, venues, time_zones)) {
-        queue.Push(*open);
+        queue.push(*open);
         return;
       }
       auto query = make_open_query(security, date, venues, time_zones);
-      query.SetRange(
-        query.GetRange().GetStart(), Beam::Queries::Sequence::Last());
-      query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
+      query.set_range(query.get_range().get_start(), Beam::Sequence::LAST);
+      query.set_snapshot_limit(Beam::SnapshotLimit::from_head(1));
       auto local_queue = std::make_shared<Beam::Queue<TimeAndSale>>();
       client->query(query, local_queue);
       try {
-        auto time_and_sale = local_queue->Pop();
-        queue.Push(std::move(time_and_sale));
+        auto time_and_sale = local_queue->pop();
+        queue.push(std::move(time_and_sale));
       } catch(const std::exception&) {}
-      local_queue->Break();
+      local_queue->close();
     });
   }
 
@@ -129,14 +121,12 @@ namespace Nexus {
     auto start_of_day =
       venue_date_to_utc(security.get_venue(), date, venues, time_zones);
     auto query = SecurityMarketDataQuery();
-    query.SetIndex(security);
-    query.SetRange(Beam::Queries::Sequence::First(), start_of_day);
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromTail(1));
-    auto parameter = Beam::Queries::ParameterExpression(0, TimeAndSaleType());
+    query.set_index(security);
+    query.set_range(Beam::Sequence::FIRST, start_of_day);
+    query.set_snapshot_limit(Beam::SnapshotLimit::from_tail(1));
     auto market_center = venues.from(security.get_venue()).m_market_center;
-    query.SetFilter(
-      Beam::Queries::ConstantExpression(std::move(market_center)) ==
-        TimeAndSaleAccessor(parameter).get_market_center());
+    query.set_filter(venues.from(security.get_venue()).m_market_center ==
+      TimeAndSaleAccessor::from_parameter(0).get_market_center());
     return query;
   }
 
@@ -160,7 +150,7 @@ namespace Nexus {
     client.query(query, queue);
     auto previous_close = boost::optional<TimeAndSale>();
     try {
-      previous_close = queue->Pop();
+      previous_close = queue->pop();
     } catch(const std::exception&) {}
     return previous_close;
   }
@@ -174,7 +164,7 @@ namespace Nexus {
    * @param time_zones The database of timezones.
    * @return A Range object for the daily query.
    */
-  inline Beam::Queries::Range make_daily_query_range(
+  inline Beam::Range make_daily_query_range(
       const Security& security, boost::posix_time::ptime start,
       boost::posix_time::ptime end, const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones) {
@@ -184,10 +174,10 @@ namespace Nexus {
       if(end == boost::posix_time::pos_infin) {
         return boost::posix_time::pos_infin;
       }
-      return venue_date_to_utc(security.get_venue(), end, venues,
-        time_zones) + boost::gregorian::days(1);
+      return venue_date_to_utc(security.get_venue(), end, venues, time_zones) +
+        boost::gregorian::days(1);
     }();
-    return Beam::Queries::Range(start_of_day, end_of_day);
+    return Beam::Range(start_of_day, end_of_day);
   }
 
   /**
@@ -204,44 +194,43 @@ namespace Nexus {
       const Security& security, boost::posix_time::ptime start,
       boost::posix_time::ptime end, const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones,
-      const Beam::Queries::Expression& expression) {
+      const Beam::Expression& expression) {
     auto query = SecurityChartingQuery();
-    query.SetIndex(security);
+    query.set_index(security);
     struct MarketDataTypeFinder : TraversalExpressionVisitor {
       MarketDataType m_type;
 
       MarketDataTypeFinder()
         : m_type(MarketDataType::NONE) {}
 
-      void Visit(
-          const Beam::Queries::ParameterExpression& expression) override {
+      void visit(const Beam::ParameterExpression& expression) override {
         if(m_type != MarketDataType::NONE) {
           return;
         }
-        if(expression.GetType() == TimeAndSaleType()) {
+        if(expression.get_type() == typeid(TimeAndSale)) {
           m_type = MarketDataType::TIME_AND_SALE;
-        } else if(expression.GetType() == BookQuoteType()) {
+        } else if(expression.get_type() == typeid(BookQuote)) {
           m_type = MarketDataType::BOOK_QUOTE;
-        } else if(expression.GetType() == BboQuoteType()) {
+        } else if(expression.get_type() == typeid(BboQuote)) {
           m_type = MarketDataType::BBO_QUOTE;
         }
       }
 
-      MarketDataType GetType() const {
+      MarketDataType get_type() const {
         return m_type;
       }
     };
     auto type = [&] {
       auto visitor = MarketDataTypeFinder();
-      expression->Apply(visitor);
-      return visitor.GetType();
+      expression.apply(visitor);
+      return visitor.get_type();
     }();
     query.set_market_data_type(type);
-    query.SetRange(
-      make_daily_query_range(query.GetIndex(), start, end, venues, time_zones));
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromTail(1));
-    query.SetUpdatePolicy(Beam::Queries::ExpressionQuery::UpdatePolicy::CHANGE);
-    query.SetExpression(expression);
+    query.set_range(make_daily_query_range(
+      query.get_index(), start, end, venues, time_zones));
+    query.set_snapshot_limit(Beam::SnapshotLimit::from_tail(1));
+    query.set_update_policy(Beam::ExpressionQuery::UpdatePolicy::CHANGE);
+    query.set_expression(expression);
     return query;
   }
 
@@ -259,12 +248,11 @@ namespace Nexus {
       const Security& security, boost::posix_time::ptime start,
       boost::posix_time::ptime end, const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones) {
-    auto max = Beam::Queries::MakeMaxExpression(
-      Beam::Queries::ParameterExpression(0, MoneyType()),
-      Beam::Queries::ParameterExpression(1, MoneyType()));
-    auto high = Beam::Queries::ReduceExpression(
-      max, TimeAndSaleAccessor(Beam::Queries::ParameterExpression(
-        0, TimeAndSaleType())).get_price(), MoneyValue(Money::ZERO));
+    auto max = Beam::max(Beam::ParameterExpression(0, typeid(Money)),
+      Beam::ParameterExpression(1, typeid(Money)));
+    auto high = Beam::ReduceExpression(
+      max, TimeAndSaleAccessor::from_parameter(0).get_price(),
+      MoneyValue(Money::ZERO));
     return make_query(security, start, end, venues, time_zones, high);
   }
 
@@ -285,7 +273,7 @@ namespace Nexus {
       Beam::ScopedQueueWriter<Money> queue) {
     client.query(
       make_daily_high_query(security, start, end, venues, time_zones),
-      Beam::MakeConverterQueueWriter<QueryVariant>(std::move(queue),
+      Beam::convert<QueryVariant>(std::move(queue),
         [] (const QueryVariant& value) {
           return boost::get<Money>(value);
         }));
@@ -305,12 +293,11 @@ namespace Nexus {
       const Security& security, boost::posix_time::ptime start,
       boost::posix_time::ptime end, const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones) {
-    auto min = Beam::Queries::MakeMinExpression(
-      Beam::Queries::ParameterExpression(0, MoneyType()),
-      Beam::Queries::ParameterExpression(1, MoneyType()));
-    auto low = Beam::Queries::ReduceExpression(
-      min, TimeAndSaleAccessor(Beam::Queries::ParameterExpression(
-        0, TimeAndSaleType())).get_price(), MoneyValue(99999999 * Money::ONE));
+    auto min = Beam::min(Beam::ParameterExpression(0, typeid(Money)),
+      Beam::ParameterExpression(1, typeid(Money)));
+    auto low = Beam::ReduceExpression(
+      min, TimeAndSaleAccessor::from_parameter(0).get_price(),
+      MoneyValue(99999999 * Money::ONE));
     return make_query(security, start, end, venues, time_zones, low);
   }
 
@@ -330,7 +317,7 @@ namespace Nexus {
       const boost::local_time::tz_database& time_zones,
       Beam::ScopedQueueWriter<Money> queue) {
     client.query(make_daily_low_query(security, start, end, venues, time_zones),
-      Beam::MakeConverterQueueWriter<QueryVariant>(std::move(queue),
+      Beam::convert<QueryVariant>(std::move(queue),
         [] (const QueryVariant& value) {
           return boost::get<Money>(value);
         }));
@@ -350,11 +337,10 @@ namespace Nexus {
       const Security& security, boost::posix_time::ptime start,
       boost::posix_time::ptime end, const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones) {
-    auto sum = Beam::Queries::ParameterExpression(0, QuantityType()) +
-      Beam::Queries::ParameterExpression(1, QuantityType());
-    auto volume = Beam::Queries::ReduceExpression(
-      sum, TimeAndSaleAccessor(Beam::Queries::ParameterExpression(
-        0, TimeAndSaleType())).get_size(), QuantityValue(0));
+    auto sum = Beam::ParameterExpression(0, typeid(Quantity)) +
+      Beam::ParameterExpression(1, typeid(Quantity));
+    auto volume = Beam::ReduceExpression(
+      sum, TimeAndSaleAccessor::from_parameter(0).get_size(), QuantityValue(0));
     return make_query(security, start, end, venues, time_zones, volume);
   }
 
@@ -373,9 +359,9 @@ namespace Nexus {
       const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones,
       Beam::ScopedQueueWriter<Quantity> queue) {
-    client.query(make_daily_volume_query(
-        security, start, end, venues, time_zones),
-      Beam::MakeConverterQueueWriter<QueryVariant>(std::move(queue),
+    client.query(
+      make_daily_volume_query(security, start, end, venues, time_zones),
+      Beam::convert<QueryVariant>(std::move(queue),
         [] (const QueryVariant& value) {
           return boost::get<Quantity>(value);
         }));

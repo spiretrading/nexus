@@ -1,9 +1,13 @@
 #ifndef NEXUS_CHARTING_CLIENT_HPP
 #define NEXUS_CHARTING_CLIENT_HPP
+#include <concepts>
 #include <memory>
 #include <type_traits>
 #include <utility>
+#include <Beam/IO/Connection.hpp>
+#include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Pointers/VirtualPtr.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/ChartingService/ChartingServices.hpp"
@@ -11,31 +15,40 @@
 
 namespace Nexus {
 
+  /** Checks if a type implements a ChartingClient. */
+  template<typename T>
+  concept IsChartingClient = Beam::IsConnection<T> && requires(T& client) {
+    client.query(std::declval<const SecurityChartingQuery&>(),
+      std::declval<Beam::ScopedQueueWriter<QueryVariant>>());
+    { client.load_time_price_series(std::declval<const Security&>(),
+        std::declval<boost::posix_time::ptime>(),
+        std::declval<boost::posix_time::ptime>(),
+        std::declval<boost::posix_time::time_duration>()) } ->
+          std::same_as<TimePriceQueryResult>;
+  };
+
   /** Provides a generic interface over an arbitrary ChartingClient. */
   class ChartingClient {
     public:
 
       /**
        * Constructs a ChartingClient of a specified type using emplacement.
-       * @param <T> The type of charting client to emplace.
+       * @tparam T The type of charting client to emplace.
        * @param args The arguments to pass to the emplaced charting client.
        */
-      template<typename T, typename... Args>
+      template<IsChartingClient T, typename... Args>
       explicit ChartingClient(std::in_place_type_t<T>, Args&&... args);
 
       /**
-       * Constructs a ChartingClient by copying an existing charting client.
-       * @param client The client to copy.
+       * Constructs a ChartingClient by referencing an existing charting
+       * client.
+       * @param client The client to reference.
        */
-      template<typename C>
-      explicit ChartingClient(C client);
+      template<Beam::DisableCopy<ChartingClient> T> requires
+        IsChartingClient<Beam::dereference_t<T>>
+      ChartingClient(T&& client);
 
-      explicit ChartingClient(ChartingClient* client);
-
-      explicit ChartingClient(
-        const std::shared_ptr<ChartingClient>& client);
-
-      explicit ChartingClient(const std::unique_ptr<ChartingClient>& client);
+      ChartingClient(const ChartingClient&) = default;
 
       /**
        * Submits a query for a Security's technical info.
@@ -62,6 +75,7 @@ namespace Nexus {
     private:
       struct VirtualChartingClient {
         virtual ~VirtualChartingClient() = default;
+
         virtual void query(const SecurityChartingQuery& query,
           Beam::ScopedQueueWriter<QueryVariant> queue) = 0;
         virtual TimePriceQueryResult load_time_price_series(
@@ -73,10 +87,11 @@ namespace Nexus {
       template<typename C>
       struct WrappedChartingClient final : VirtualChartingClient {
         using ChartingClient = C;
-        Beam::GetOptionalLocalPtr<ChartingClient> m_client;
+        Beam::local_ptr_t<ChartingClient> m_client;
 
         template<typename... Args>
         WrappedChartingClient(Args&&... args);
+
         void query(const SecurityChartingQuery& query,
           Beam::ScopedQueueWriter<QueryVariant> queue) override;
         TimePriceQueryResult load_time_price_series(const Security& security,
@@ -84,33 +99,19 @@ namespace Nexus {
           boost::posix_time::time_duration interval) override;
         void close() override;
       };
-      std::shared_ptr<VirtualChartingClient> m_client;
+      Beam::VirtualPtr<VirtualChartingClient> m_client;
   };
 
-  /** Checks if a type implements a ChartingClient. */
-  template<typename T>
-  concept IsChartingClient = std::constructible_from<
-    ChartingClient, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
-
-  template<typename T, typename... Args>
+  template<IsChartingClient T, typename... Args>
   ChartingClient::ChartingClient(std::in_place_type_t<T>, Args&&... args)
-    : m_client(std::make_shared<WrappedChartingClient<T>>(
+    : m_client(Beam::make_virtual_ptr<WrappedChartingClient<T>>(
         std::forward<Args>(args)...)) {}
 
-  template<typename C>
-  ChartingClient::ChartingClient(C client)
-    : ChartingClient(std::in_place_type<C>, std::move(client)) {}
-
-  inline ChartingClient::ChartingClient(ChartingClient* client)
-    : ChartingClient(*client) {}
-
-  inline ChartingClient::ChartingClient(
-    const std::shared_ptr<ChartingClient>& client)
-    : ChartingClient(*client) {}
-
-  inline ChartingClient::ChartingClient(
-    const std::unique_ptr<ChartingClient>& client)
-    : ChartingClient(*client) {}
+  template<Beam::DisableCopy<ChartingClient> T> requires
+    IsChartingClient<Beam::dereference_t<T>>
+  ChartingClient::ChartingClient(T&& client)
+    : ChartingClient(
+        std::in_place_type<Beam::dereference_t<T>>, std::forward<T>(client)) {}
 
   inline void ChartingClient::query(const SecurityChartingQuery& query,
       Beam::ScopedQueueWriter<QueryVariant> queue) {

@@ -84,7 +84,7 @@ namespace Nexus {
     private:
       template<typename U, typename V>
       friend std::ostream& operator <<(std::ostream&, const Candlestick<U, V>&);
-      friend struct Beam::Serialization::Shuttle<Candlestick>;
+      friend struct Beam::Shuttle<Candlestick>;
       bool m_has_open;
       Domain m_start;
       Domain m_end;
@@ -196,19 +196,19 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<typename D, typename R>
   struct Shuttle<Nexus::Candlestick<D, R>> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::Candlestick<D, R>& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::Candlestick<D, R>& value,
         unsigned int version) const {
-      shuttle.Shuttle("has_open", value.m_has_open);
-      shuttle.Shuttle("start", value.m_start);
-      shuttle.Shuttle("end", value.m_end);
-      shuttle.Shuttle("open", value.m_open);
-      shuttle.Shuttle("close", value.m_close);
-      shuttle.Shuttle("high", value.m_high);
-      shuttle.Shuttle("low", value.m_low);
+      shuttle.shuttle("has_open", value.m_has_open);
+      shuttle.shuttle("start", value.m_start);
+      shuttle.shuttle("end", value.m_end);
+      shuttle.shuttle("open", value.m_open);
+      shuttle.shuttle("close", value.m_close);
+      shuttle.shuttle("high", value.m_high);
+      shuttle.shuttle("low", value.m_low);
     }
   };
 }

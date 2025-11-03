@@ -6,8 +6,7 @@
 namespace Nexus {
 
   /** An ExpressionVisitor that traverses all of its children. */
-  class TraversalExpressionVisitor :
-    public Beam::Queries::TraversalExpressionVisitor,
+  class TraversalExpressionVisitor : public Beam::TraversalExpressionVisitor,
     public ExpressionVisitor {};
 }
 

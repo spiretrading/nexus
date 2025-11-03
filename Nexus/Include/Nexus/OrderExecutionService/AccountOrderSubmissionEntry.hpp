@@ -15,10 +15,10 @@ namespace Nexus {
       struct InitialSequences {
 
         /** The next Sequence to use for an OrderInfo. */
-        Beam::Queries::Sequence m_next_order_info_sequence;
+        Beam::Sequence m_next_order_info_sequence;
 
         /** The next Sequence to use for an ExecutionReport. */
-        Beam::Queries::Sequence m_next_execution_report_sequence;
+        Beam::Sequence m_next_execution_report_sequence;
       };
 
       /**
@@ -26,7 +26,7 @@ namespace Nexus {
        * @param account The account.
        * @param initial_sequences The initial Sequences to use.
        */
-      AccountOrderSubmissionEntry(Beam::ServiceLocator::DirectoryEntry account,
+      AccountOrderSubmissionEntry(Beam::DirectoryEntry account,
         InitialSequences initial_sequences) noexcept;
 
       /**
@@ -42,9 +42,9 @@ namespace Nexus {
       SequencedAccountExecutionReport publish(const ExecutionReport& report);
 
     private:
-      Beam::ServiceLocator::DirectoryEntry m_account;
-      std::atomic<Beam::Queries::Sequence::Ordinal> m_order_sequence;
-      std::atomic<Beam::Queries::Sequence::Ordinal> m_execution_report_sequence;
+      Beam::DirectoryEntry m_account;
+      std::atomic<Beam::Sequence::Ordinal> m_order_sequence;
+      std::atomic<Beam::Sequence::Ordinal> m_execution_report_sequence;
 
       AccountOrderSubmissionEntry(const AccountOrderSubmissionEntry&) = delete;
       AccountOrderSubmissionEntry& operator =(
@@ -59,56 +59,52 @@ namespace Nexus {
    */
   AccountOrderSubmissionEntry::InitialSequences load_initial_sequences(
       IsOrderExecutionDataStore auto& data_store,
-      const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto query = Beam::Queries::MakeLatestQuery(account);
+      const Beam::DirectoryEntry& account) {
+    auto query = Beam::make_latest_query(account);
     auto initial_sequences = AccountOrderSubmissionEntry::InitialSequences();
     {
       auto results = data_store.load_order_records(query);
       if(results.empty()) {
-        initial_sequences.m_next_order_info_sequence =
-          Beam::Queries::Sequence::First();
+        initial_sequences.m_next_order_info_sequence = Beam::Sequence::FIRST;
       } else {
         initial_sequences.m_next_order_info_sequence =
-          Beam::Queries::Increment(results.back().GetSequence());
+          Beam::increment(results.back().get_sequence());
       }
     }
     {
       auto results = data_store.load_execution_reports(query);
       if(results.empty()) {
         initial_sequences.m_next_execution_report_sequence =
-          Beam::Queries::Sequence::First();
+          Beam::Sequence::FIRST;
       } else {
         initial_sequences.m_next_execution_report_sequence =
-          Beam::Queries::Increment(results.back().GetSequence());
+          Beam::increment(results.back().get_sequence());
       }
     }
     return initial_sequences;
   }
 
   inline AccountOrderSubmissionEntry::AccountOrderSubmissionEntry(
-    Beam::ServiceLocator::DirectoryEntry account,
-    InitialSequences initial_sequences) noexcept
+    Beam::DirectoryEntry account, InitialSequences initial_sequences) noexcept
     : m_account(std::move(account)),
       m_order_sequence(
-        initial_sequences.m_next_order_info_sequence.GetOrdinal()),
+        initial_sequences.m_next_order_info_sequence.get_ordinal()),
       m_execution_report_sequence(
-        initial_sequences.m_next_execution_report_sequence.GetOrdinal()) {}
+        initial_sequences.m_next_execution_report_sequence.get_ordinal()) {}
 
   inline SequencedAccountOrderInfo
       AccountOrderSubmissionEntry::publish(const OrderInfo& info) {
     auto sequence = ++m_order_sequence;
-    auto sequenced_order_info = Beam::Queries::SequencedValue(
-      Beam::Queries::IndexedValue(info, m_account),
-      Beam::Queries::Sequence(sequence));
+    auto sequenced_order_info = Beam::SequencedValue(
+      Beam::IndexedValue(info, m_account), Beam::Sequence(sequence));
     return sequenced_order_info;
   }
 
   inline SequencedAccountExecutionReport
       AccountOrderSubmissionEntry::publish(const ExecutionReport& report) {
     auto sequence = ++m_execution_report_sequence;
-    auto sequenced_execution_report = Beam::Queries::SequencedValue(
-      Beam::Queries::IndexedValue(report, m_account),
-      Beam::Queries::Sequence(sequence));
+    auto sequenced_execution_report = Beam::SequencedValue(
+      Beam::IndexedValue(report, m_account), Beam::Sequence(sequence));
     return sequenced_execution_report;
   }
 }

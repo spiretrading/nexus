@@ -1,15 +1,12 @@
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
-#include <Beam/ServicesTests/ServicesTests.hpp>
+#include <Beam/ServicesTests/TestServices.hpp>
 #include <boost/functional/factory.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/MarketDataService/MarketDataFeedServlet.hpp"
 
 using namespace Beam;
-using namespace Beam::Routines;
-using namespace Beam::Services;
-using namespace Beam::Services::Tests;
-using namespace Beam::Threading;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -58,17 +55,18 @@ namespace {
     using ServletContainer = TestServiceProtocolServletContainer<
       MetaMarketDataFeedServlet<TestRegistry*>>;
     TestRegistry m_registry;
-    std::shared_ptr<TestServerConnection> m_server_connection;
+    std::shared_ptr<LocalServerConnection> m_server_connection;
     optional<ServletContainer> m_container;
     std::unique_ptr<TestServiceProtocolClient> m_client;
 
     Fixture()
-        : m_server_connection(std::make_shared<TestServerConnection>()) {
-      m_container.emplace(Initialize(&m_registry),
-        m_server_connection, factory<std::unique_ptr<TriggerTimer>>());
+        : m_server_connection(std::make_shared<LocalServerConnection>()) {
+      m_container.emplace(init(&m_registry), m_server_connection,
+        factory<std::unique_ptr<TriggerTimer>>());
       m_client = std::make_unique<TestServiceProtocolClient>(
-        Initialize("test", *m_server_connection), Initialize());
-      RegisterMarketDataFeedMessages(Store(m_client->GetSlots()));
+        std::make_unique<LocalClientChannel>("test", *m_server_connection),
+        init());
+      register_market_data_feed_messages(out(m_client->get_slots()));
     }
   };
 }
@@ -80,10 +78,10 @@ TEST_SUITE("MarketDataFeedServlet") {
     auto completion_token = Async<void>();
     fixture.m_registry.m_add_slot = [&] (const auto& received_info) {
       REQUIRE(received_info == info);
-      completion_token.GetEval().SetResult();
+      completion_token.get_eval().set();
     };
-    SendRecordMessage<SetSecurityInfoMessage>(*fixture.m_client, info);
-    completion_token.Get();
+    send_record_message<SetSecurityInfoMessage>(*fixture.m_client, info);
+    completion_token.get();
   }
 
   TEST_CASE("send_bbo_quote") {
@@ -96,11 +94,11 @@ TEST_SUITE("MarketDataFeedServlet") {
     fixture.m_registry.m_bbo_quote_slot =
       [&] (const auto& received_quote, auto source_id) {
         REQUIRE(received_quote == bbo_quote);
-        completion_token.GetEval().SetResult();
+        completion_token.get_eval().set();
       };
-    SendRecordMessage<SendMarketDataFeedMessages>(
-      *fixture.m_client, std::vector<MarketDataFeedMessage>({bbo_quote}));
-    completion_token.Get();
+    send_record_message<SendMarketDataFeedMessages>(
+      *fixture.m_client, std::vector<MarketDataFeedMessage>{bbo_quote});
+    completion_token.get();
   }
 
   TEST_CASE("send_book_quote") {
@@ -113,11 +111,11 @@ TEST_SUITE("MarketDataFeedServlet") {
     fixture.m_registry.m_book_quote_slot =
       [&] (const auto& received_quote, auto source_id) {
         REQUIRE(received_quote == book_quote);
-        completion_token.GetEval().SetResult();
+        completion_token.get_eval().set();
       };
-    SendRecordMessage<SendMarketDataFeedMessages>(
-      *fixture.m_client, std::vector<MarketDataFeedMessage>({book_quote}));
-    completion_token.Get();
+    send_record_message<SendMarketDataFeedMessages>(
+      *fixture.m_client, std::vector<MarketDataFeedMessage>{book_quote});
+    completion_token.get();
   }
 
   TEST_CASE("send_order_imbalance") {
@@ -130,11 +128,11 @@ TEST_SUITE("MarketDataFeedServlet") {
     fixture.m_registry.m_order_imbalance_slot =
       [&] (const auto& received_imbalance, auto source_id) {
         REQUIRE(received_imbalance == order_imbalance);
-        completion_token.GetEval().SetResult();
+        completion_token.get_eval().set();
       };
-    SendRecordMessage<SendMarketDataFeedMessages>(
-      *fixture.m_client, std::vector<MarketDataFeedMessage>({order_imbalance}));
-    completion_token.Get();
+    send_record_message<SendMarketDataFeedMessages>(
+      *fixture.m_client, std::vector<MarketDataFeedMessage>{order_imbalance});
+    completion_token.get();
   }
 
   TEST_CASE("send_time_and_sale") {
@@ -147,11 +145,11 @@ TEST_SUITE("MarketDataFeedServlet") {
     fixture.m_registry.m_time_and_sale_slot =
       [&] (const auto& received_time_and_sale, auto source_id) {
         REQUIRE(received_time_and_sale == time_and_sale);
-        completion_token.GetEval().SetResult();
+        completion_token.get_eval().set();
       };
-    SendRecordMessage<SendMarketDataFeedMessages>(
-      *fixture.m_client, std::vector<MarketDataFeedMessage>({time_and_sale}));
-    completion_token.Get();
+    send_record_message<SendMarketDataFeedMessages>(
+      *fixture.m_client, std::vector<MarketDataFeedMessage>{time_and_sale});
+    completion_token.get();
   }
 
   TEST_CASE("send_multiple_messages") {
@@ -176,39 +174,40 @@ TEST_SUITE("MarketDataFeedServlet") {
     fixture.m_registry.m_bbo_quote_slot =
       [&] (const auto& received_quote, auto source_id) {
         REQUIRE(received_quote == bbo_quote);
-        bbo_quote_completion.GetEval().SetResult();
+        bbo_quote_completion.get_eval().set();
       };
     fixture.m_registry.m_book_quote_slot =
       [&] (const auto& received_quote, auto source_id) {
         REQUIRE(received_quote == book_quote);
-        book_quote_completion.GetEval().SetResult();
+        book_quote_completion.get_eval().set();
       };
     fixture.m_registry.m_order_imbalance_slot =
       [&] (const auto& received_imbalance, auto source_id) {
         REQUIRE(received_imbalance == order_imbalance);
-        order_imbalance_completion.GetEval().SetResult();
+        order_imbalance_completion.get_eval().set();
       };
     fixture.m_registry.m_time_and_sale_slot =
       [&] (const auto& received_time_and_sale, auto source_id) {
         REQUIRE(received_time_and_sale == time_and_sale);
-        time_and_sale_completion.GetEval().SetResult();
+        time_and_sale_completion.get_eval().set();
       };
     auto messages = std::vector<MarketDataFeedMessage>{
       bbo_quote, book_quote, order_imbalance, time_and_sale};
-    SendRecordMessage<SendMarketDataFeedMessages>(*fixture.m_client, messages);
-    bbo_quote_completion.Get();
-    book_quote_completion.Get();
-    order_imbalance_completion.Get();
-    time_and_sale_completion.Get();
+    send_record_message<SendMarketDataFeedMessages>(
+      *fixture.m_client, messages);
+    bbo_quote_completion.get();
+    book_quote_completion.get();
+    order_imbalance_completion.get();
+    time_and_sale_completion.get();
   }
 
   TEST_CASE("client_closed") {
     auto fixture = Fixture();
     auto completion_token = Async<void>();
     fixture.m_registry.m_clear_slot = [&] (auto source_id) {
-      completion_token.GetEval().SetResult();
+      completion_token.get_eval().set();
     };
-    fixture.m_client->Close();
-    completion_token.Get();
+    fixture.m_client->close();
+    completion_token.get();
   }
 }

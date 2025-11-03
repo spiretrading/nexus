@@ -1,15 +1,43 @@
 #ifndef NEXUS_MARKET_DATA_FEED_CLIENT_HPP
 #define NEXUS_MARKET_DATA_FEED_CLIENT_HPP
+#include <concepts>
 #include <memory>
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <Beam/IO/Connection.hpp>
+#include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Pointers/VirtualPtr.hpp>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
 namespace Nexus {
+
+  /** Checks if a type implements a MarketDataFeedClient. */
+  template<typename T>
+  concept IsMarketDataFeedClient = Beam::IsConnection<T> &&
+    requires(T& client) {
+      client.add(std::declval<const SecurityInfo&>());
+      client.publish(std::declval<const VenueOrderImbalance&>());
+      client.publish(std::declval<const SecurityBboQuote&>());
+      client.publish(std::declval<const SecurityBookQuote&>());
+      client.publish(std::declval<const SecurityTimeAndSale&>());
+      client.add_order(std::declval<const Security&>(), std::declval<Venue>(),
+        std::declval<const std::string&>(), std::declval<bool>(),
+        std::declval<const std::string&>(), std::declval<Side>(),
+        std::declval<Money>(), std::declval<Quantity>(),
+        std::declval<boost::posix_time::ptime>());
+      client.modify_order_size(std::declval<const std::string&>(),
+        std::declval<Quantity>(), std::declval<boost::posix_time::ptime>());
+      client.offset_order_size(std::declval<const std::string&>(),
+        std::declval<Quantity>(), std::declval<boost::posix_time::ptime>());
+      client.modify_order_price(std::declval<const std::string&>(),
+        std::declval<Money>(), std::declval<boost::posix_time::ptime>());
+      client.remove_order(std::declval<const std::string&>(),
+        std::declval<boost::posix_time::ptime>());
+    };
 
   /** Provides a generic interface over an arbitrary MarketDataFeedClient. */
   class MarketDataFeedClient {
@@ -18,28 +46,23 @@ namespace Nexus {
       /**
        * Constructs a MarketDataFeedClient of a specified type using
        * emplacement.
-       * @param <T> The type of market data feed client to emplace.
+       * @tparam T The type of market data feed client to emplace.
        * @param args The arguments to pass to the emplaced market data feed
        *        client.
        */
-      template<typename T, typename... Args>
+      template<IsMarketDataFeedClient T, typename... Args>
       explicit MarketDataFeedClient(std::in_place_type_t<T>, Args&&... args);
 
       /**
-       * Constructs a MarketDataFeedClient by copying an existing market data
-       * feed client.
-       * @param client The client to copy.
+       * Constructs a MarketDataFeedClient by referencing an existing market
+       * data feed client.
+       * @param client The client to reference.
        */
-      template<typename C>
-      explicit MarketDataFeedClient(C client);
+      template<Beam::DisableCopy<MarketDataFeedClient> T> requires
+        IsMarketDataFeedClient<Beam::dereference_t<T>>
+      MarketDataFeedClient(T&& client);
 
-      explicit MarketDataFeedClient(MarketDataFeedClient* client);
-
-      explicit MarketDataFeedClient(
-        const std::shared_ptr<MarketDataFeedClient>& client);
-
-      explicit MarketDataFeedClient(
-        const std::unique_ptr<MarketDataFeedClient>& client);
+      MarketDataFeedClient(const MarketDataFeedClient&) = default;
 
       /**
        * Adds or updates a SecurityInfo.
@@ -129,6 +152,7 @@ namespace Nexus {
     private:
       struct VirtualMarketDataFeedClient {
         virtual ~VirtualMarketDataFeedClient() = default;
+
         virtual void add(const SecurityInfo& info) = 0;
         virtual void publish(const VenueOrderImbalance& imbalance) = 0;
         virtual void publish(const SecurityBboQuote& quote) = 0;
@@ -151,10 +175,11 @@ namespace Nexus {
       template<typename C>
       struct WrappedMarketDataFeedClient final : VirtualMarketDataFeedClient {
         using MarketDataFeedClient = C;
-        Beam::GetOptionalLocalPtr<MarketDataFeedClient> m_client;
+        Beam::local_ptr_t<MarketDataFeedClient> m_client;
 
         template<typename... Args>
         WrappedMarketDataFeedClient(Args&&... args);
+
         void add(const SecurityInfo& info) override;
         void publish(const VenueOrderImbalance& imbalance) override;
         void publish(const SecurityBboQuote& quote) override;
@@ -174,34 +199,20 @@ namespace Nexus {
           const std::string& id, boost::posix_time::ptime timestamp) override;
         void close() override;
       };
-      std::shared_ptr<VirtualMarketDataFeedClient> m_client;
+      Beam::VirtualPtr<VirtualMarketDataFeedClient> m_client;
   };
 
-  template<typename T>
-  concept IsMarketDataFeedClient = std::constructible_from<
-    MarketDataFeedClient, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
-
-  template<typename T, typename... Args>
+  template<IsMarketDataFeedClient T, typename... Args>
   MarketDataFeedClient::MarketDataFeedClient(
     std::in_place_type_t<T>, Args&&... args)
-    : m_client(std::make_shared<WrappedMarketDataFeedClient<T>>(
+    : m_client(Beam::make_virtual_ptr<WrappedMarketDataFeedClient<T>>(
         std::forward<Args>(args)...)) {}
 
-  template<typename C>
-  MarketDataFeedClient::MarketDataFeedClient(C client)
-    : MarketDataFeedClient(std::in_place_type<C>, std::move(client)) {}
-
-  inline MarketDataFeedClient::MarketDataFeedClient(
-    MarketDataFeedClient* client)
-    : MarketDataFeedClient(*client) {}
-
-  inline MarketDataFeedClient::MarketDataFeedClient(
-    const std::shared_ptr<MarketDataFeedClient>& client)
-    : MarketDataFeedClient(*client) {}
-
-  inline MarketDataFeedClient::MarketDataFeedClient(
-    const std::unique_ptr<MarketDataFeedClient>& client)
-    : MarketDataFeedClient(*client) {}
+  template<Beam::DisableCopy<MarketDataFeedClient> T> requires
+    IsMarketDataFeedClient<Beam::dereference_t<T>>
+  MarketDataFeedClient::MarketDataFeedClient(T&& client)
+    : MarketDataFeedClient(
+        std::in_place_type<Beam::dereference_t<T>>, std::forward<T>(client)) {}
 
   inline void MarketDataFeedClient::add(const SecurityInfo& info) {
     m_client->add(info);

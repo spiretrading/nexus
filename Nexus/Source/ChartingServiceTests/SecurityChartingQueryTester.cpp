@@ -3,7 +3,6 @@
 #include "Nexus/ChartingService/SecurityChartingQuery.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
 

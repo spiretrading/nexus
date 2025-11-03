@@ -9,15 +9,14 @@
 #include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
 
 namespace Nexus {
-  using SecurityChartingQueryResult =
-    Beam::Queries::QueryResult<SequencedQueryVariant>;
-  BEAM_DEFINE_RECORD(TimePriceQueryResult, Beam::Queries::Sequence, start,
-    Beam::Queries::Sequence, end, TimePriceSeries, series);
+  using SecurityChartingQueryResult = Beam::QueryResult<SequencedQueryVariant>;
+  BEAM_DEFINE_RECORD(TimePriceQueryResult, (Beam::Sequence, start),
+    (Beam::Sequence, end), (TimePriceSeries, series));
 
   /** Standard name for the charting service. */
   inline const auto CHARTING_SERVICE_NAME = std::string("charting_service");
 
-  BEAM_DEFINE_SERVICES(ChartingServices,
+  BEAM_DEFINE_SERVICES(charting_services,
 
     /**
      * Queries a Security over a time range.
@@ -26,7 +25,8 @@ namespace Nexus {
      * @return A snapshot of the query and its unique id.
      */
     (QuerySecurityService, "Nexus.ChartingServices.QuerySecurityService",
-      SecurityChartingQueryResult, SecurityChartingQuery, query, int, query_id),
+      SecurityChartingQueryResult, (SecurityChartingQuery, query),
+      (int, query_id)),
 
     /**
      * Loads a time/price series for a Security.
@@ -38,11 +38,12 @@ namespace Nexus {
      */
     (LoadSecurityTimePriceSeriesService,
       "Nexus.ChartingServices.LoadSecurityTimePriceSeriesService",
-      TimePriceQueryResult, Security, security,
-      boost::posix_time::ptime, start_time, boost::posix_time::ptime, end_time,
-      boost::posix_time::time_duration, interval));
+      TimePriceQueryResult, (Security, security),
+      (boost::posix_time::ptime, start_time),
+      (boost::posix_time::ptime, end_time),
+      (boost::posix_time::time_duration, interval)));
 
-  BEAM_DEFINE_MESSAGES(ChartingMessages,
+  BEAM_DEFINE_MESSAGES(charting_messages,
 
     /**
      * Sends an update to a Security query.
@@ -50,15 +51,15 @@ namespace Nexus {
      * @param timestamp The value's Timestamp.
      * @param value The updated QueryValue.
      */
-    (SecurityQueryMessage, "Nexus.ChartingService.SecurityQueryMessage", int,
-      query_id, SequencedQueryVariant, value),
+    (SecurityQueryMessage, "Nexus.ChartingService.SecurityQueryMessage",
+      (int, query_id), (SequencedQueryVariant, value)),
 
     /**
      * Terminates a previous Security query.
      * @param query_id The id of query to end.
      */
     (EndSecurityQueryMessage, "Nexus.ChartingService.EndSecurityQueryMessage",
-      int, query_id));
+      (int, query_id)));
 }
 
 #endif
