@@ -260,7 +260,7 @@ namespace Nexus::Tests {
         Beam::Ref<Beam::ServiceLocatorClient> service_locator_client) {
     using Client = ServiceMarketDataFeedClient<
       std::string, std::shared_ptr<Beam::TriggerTimer>,
-      Beam::MessageProtocol<Beam::LocalClientChannel,
+      Beam::MessageProtocol<std::unique_ptr<Beam::LocalClientChannel>,
         Beam::BinarySender<Beam::SharedBuffer>, Beam::NullEncoder>,
         Beam::TriggerTimer>;
     auto sampling_timer = std::make_shared<Beam::TriggerTimer>();
