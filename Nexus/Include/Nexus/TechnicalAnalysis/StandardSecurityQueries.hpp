@@ -251,8 +251,7 @@ namespace Nexus {
     auto max = Beam::max(Beam::ParameterExpression(0, typeid(Money)),
       Beam::ParameterExpression(1, typeid(Money)));
     auto high = Beam::ReduceExpression(
-      max, TimeAndSaleAccessor::from_parameter(0).get_price(),
-      MoneyValue(Money::ZERO));
+      max, TimeAndSaleAccessor::from_parameter(0).get_price(), Money::ZERO);
     return make_query(security, start, end, venues, time_zones, high);
   }
 
@@ -297,7 +296,7 @@ namespace Nexus {
       Beam::ParameterExpression(1, typeid(Money)));
     auto low = Beam::ReduceExpression(
       min, TimeAndSaleAccessor::from_parameter(0).get_price(),
-      MoneyValue(99999999 * Money::ONE));
+      99999999 * Money::ONE);
     return make_query(security, start, end, venues, time_zones, low);
   }
 
@@ -340,7 +339,7 @@ namespace Nexus {
     auto sum = Beam::ParameterExpression(0, typeid(Quantity)) +
       Beam::ParameterExpression(1, typeid(Quantity));
     auto volume = Beam::ReduceExpression(
-      sum, TimeAndSaleAccessor::from_parameter(0).get_size(), QuantityValue(0));
+      sum, TimeAndSaleAccessor::from_parameter(0).get_size(), Quantity(0));
     return make_query(security, start, end, venues, time_zones, volume);
   }
 

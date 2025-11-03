@@ -114,7 +114,7 @@ namespace Nexus {
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   Money BoardLotCheck<C>::load_price(
       const Security& security, boost::posix_time::ptime timestamp) {
-    auto& closing_entry = m_closing_entries.Get(security);
+    auto& closing_entry = m_closing_entries.get(security);
     auto closing_price = Beam::with(closing_entry, [&] (auto& entry) {
       if(timestamp - entry.m_last_update > boost::posix_time::hours(1)) {
         if(auto close = load_previous_close(*m_market_data_client, security,
@@ -134,7 +134,7 @@ namespace Nexus {
       return publisher;
     });
     try {
-      auto effective_closing_price = publisher->Peek().m_bid.m_price;
+      auto effective_closing_price = publisher->peek().m_bid.m_price;
       return Beam::with(closing_entry, [&] (auto& entry) {
         entry.m_closing_price = effective_closing_price;
         entry.m_last_update = timestamp;
