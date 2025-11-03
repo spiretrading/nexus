@@ -446,6 +446,9 @@ void AnyComboBox::on_query(
     }
   }();
   {
+    if(m_data->m_matches->get_size() > 0) {
+      m_data->m_drop_down_list->hide();
+    }
     auto blocker =
       shared_connection_block(m_data->m_drop_down_current_connection);
     while(m_data->m_matches->get_size() != 0) {
