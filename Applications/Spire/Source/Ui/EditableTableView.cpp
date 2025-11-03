@@ -40,8 +40,6 @@ namespace {
       set(border_color(QColor(0xA0A0A0)));
     style.get(FocusIn() > is_a<TableBody>() > Row() > Current()).
       set(border_color(QColor(0x4B23A0)));
-    style.get(body_selector > CurrentRow()).
-      set(BackgroundColor(Qt::transparent));
     style.get(body_selector > Selected()).
       set(BackgroundColor(QColor(0xE0E0E0)));
     style.get(FocusIn() > is_a<TableBody>() > Selected()).

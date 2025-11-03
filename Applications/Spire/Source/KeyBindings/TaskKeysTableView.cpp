@@ -34,8 +34,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  using Breakout = StateSelector<void, struct BreakoutSelectorTag>;
-
   bool comparator(const AnyRef& left, int left_row, const AnyRef& right,
       int right_row, int column) {
     if(left.get_type() == typeid(QuantitySetting) &&
@@ -245,7 +243,6 @@ namespace {
         m_breakout_box = new BreakoutBox(*body, *m_table_item);
         m_breakout_box->show();
         m_breakout_box->setFocus();
-        match(*m_table_item, Breakout());
       }
     }
 
@@ -255,7 +252,6 @@ namespace {
         m_editable_box->resize(m_table_item->size());
         m_table_item->mount(*m_editable_box);
         m_breakout_box->deleteLater();
-        unmatch(*m_table_item, Breakout());
       }
     }
   };
@@ -423,8 +419,6 @@ TableView* Spire::make_task_keys_table_view(
     style.get(Any() > is_a<TableBody>() >
         Row() > is_a<TableItem>() > is_a<EditableBox>() > is_a<DecimalBox>()).
       set(TextAlign(Qt::Alignment(Qt::AlignRight)));
-    style.get(Any() > is_a<TableBody>() > CurrentRow() > Breakout() < Row()).
-      set(BackgroundColor(QColor(0xE2E0FF)));
   });
   return table_view;
 }
