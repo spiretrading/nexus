@@ -82,7 +82,7 @@ namespace {
       return value;
     }
     auto parent = widget.parentWidget();
-    while(parent && parent->layout()->count() == 1 &&
+    while(parent && parent->layout() && parent->layout()->count() == 1 &&
         parent->layout()->contentsMargins().isNull()) {
       value = (parent->*Getter)();
       if(value != QWIDGETSIZE_MAX) {
@@ -609,9 +609,11 @@ void TagBox::on_operation(const AnyListModel::Operation& operation) {
   visit(operation,
     [&] (const AnyListModel::AddOperation&) {
       update_all();
+      m_size_hint = none;
     },
     [&] (const AnyListModel::RemoveOperation&) {
       update_all();
+      m_size_hint = none;
     },
     [&] (const AnyListModel::MoveOperation&) {
       update_tip();
