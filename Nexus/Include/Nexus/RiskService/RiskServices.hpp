@@ -11,17 +11,17 @@
 #include "Nexus/RiskService/RiskState.hpp"
 
 namespace Nexus {
-  BEAM_DEFINE_RECORD(SecurityValuationUpdate, Security, security,
-    SecurityValuation, valuation);
-  BEAM_DEFINE_RECORD(InventoryUpdate, Beam::DirectoryEntry,
-    account, Inventory, inventory);
-  BEAM_DEFINE_RECORD(RiskStateUpdate, Beam::DirectoryEntry,
-    account, RiskState, risk_state);
+  BEAM_DEFINE_RECORD(SecurityValuationUpdate, (Security, security),
+    (SecurityValuation, valuation));
+  BEAM_DEFINE_RECORD(InventoryUpdate,
+    (Beam::DirectoryEntry, account), (Inventory, inventory));
+  BEAM_DEFINE_RECORD(RiskStateUpdate, (Beam::DirectoryEntry, account),
+    (RiskState, risk_state));
 
   /** Standard name for the risk service. */
   inline const auto RISK_SERVICE_NAME = std::string("risk_service");
 
-  BEAM_DEFINE_SERVICES(RiskServices,
+  BEAM_DEFINE_SERVICES(risk_services,
 
     /**
      * Loads the InventorySnapshot of a given account.
@@ -30,14 +30,14 @@ namespace Nexus {
      */
     (LoadInventorySnapshotService,
       "Nexus.RiskService.LoadInventorySnapshotService", InventorySnapshot,
-      Beam::DirectoryEntry, account),
+      (Beam::DirectoryEntry, account)),
 
     /**
      * Resets all inventories whose Security is within a Region.
      * @param region The Region to reset.
      */
-    (ResetRegionService, "Nexus.RiskService.ResetRegionService", void, Region,
-      region),
+    (ResetRegionService, "Nexus.RiskService.ResetRegionService", void,
+      (Region, region)),
 
     /**
      * Subscribes to the RiskPortfolioUpdates permissioned by the session's
@@ -47,14 +47,14 @@ namespace Nexus {
       "Nexus.RiskService.SubscribeRiskPortfolioUpdatesService",
       std::vector<RiskInventoryEntry>));
 
-  BEAM_DEFINE_MESSAGES(RiskMessages,
+  BEAM_DEFINE_MESSAGES(risk_messages,
 
     /**
      * Indicates a list of updates to an account's Inventory.
      * @param inventories The list of updated Inventories.
      */
     (InventoryMessage, "Nexus.RiskService.InventoryMessage",
-      std::vector<InventoryUpdate>, inventories));
+      (std::vector<InventoryUpdate>, inventories)));
 }
 
 #endif

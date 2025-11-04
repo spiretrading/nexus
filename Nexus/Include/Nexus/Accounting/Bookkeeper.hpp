@@ -52,6 +52,7 @@ namespace Nexus {
       Bookkeeper(T&& bookkeeper);
 
       Bookkeeper(const Bookkeeper&) = default;
+      Bookkeeper(Bookkeeper&&) = default;
 
       /**
        * Records a transaction.

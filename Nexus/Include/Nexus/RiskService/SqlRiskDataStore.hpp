@@ -125,11 +125,11 @@ namespace Nexus {
 
   template<typename C>
   void SqlRiskDataStore<C>::close() {
-    if(m_open_state.SetClosing()) {
+    if(m_open_state.set_closing()) {
       return;
     }
     m_connection->close();
-    m_open_state.Close();
+    m_open_state.close();
   }
 }
 

@@ -59,6 +59,7 @@ namespace Nexus {
       DefinitionsClient(T&& client);
 
       DefinitionsClient(const DefinitionsClient&) = default;
+      DefinitionsClient(DefinitionsClient&&) = default;
 
       /** Returns the minimum Spire client version. */
       std::string load_minimum_spire_client_version();

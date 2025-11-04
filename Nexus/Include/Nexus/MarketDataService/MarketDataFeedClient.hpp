@@ -63,6 +63,7 @@ namespace Nexus {
       MarketDataFeedClient(T&& client);
 
       MarketDataFeedClient(const MarketDataFeedClient&) = default;
+      MarketDataFeedClient(MarketDataFeedClient&&) = default;
 
       /**
        * Adds or updates a SecurityInfo.

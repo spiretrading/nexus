@@ -1,42 +1,54 @@
 #ifndef NEXUS_RISK_DATA_STORE_HPP
 #define NEXUS_RISK_DATA_STORE_HPP
+#include <concepts>
 #include <memory>
 #include <type_traits>
 #include <utility>
+#include <Beam/Pointers/Dereference.hpp>
+#include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Pointers/VirtualPtr.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/RiskService/InventorySnapshot.hpp"
 
 namespace Nexus {
 
-  /** Concept used to specify the data store used by the RiskServlet. */
+  /** Concept for types that can be used as a risk data store. */
+  template<typename T>
+  concept IsRiskDataStore = Beam::IsConnection<T> && requires(T& store) {
+    { store.load_inventory_snapshot(
+        std::declval<const Beam::DirectoryEntry&>()) } ->
+          std::same_as<InventorySnapshot>;
+    store.store(std::declval<const Beam::DirectoryEntry&>(),
+      std::declval<const InventorySnapshot&>());
+  };
+
+  /** Provides a generic interface over an arbitrary RiskDataStore. */
   class RiskDataStore {
     public:
 
       /**
        * Constructs a RiskDataStore of a specified type using emplacement.
-       * @param <T> The type of data store to emplace.
+       * @tparam T The type of data store to emplace.
        * @param args The arguments to pass to the emplaced data store.
        */
-      template<typename T, typename... Args>
+      template<IsRiskDataStore T, typename... Args>
       explicit RiskDataStore(std::in_place_type_t<T>, Args&&... args);
 
       /**
-       * Constructs a RiskDataStore by copying an existing data store.
-       * @param data_store The data store to copy.
+       * Constructs a RiskDataStore by referencing an existing data store.
+       * @param data_store The data store to reference.
        */
-      template<typename D>
-      explicit RiskDataStore(D data_store);
+      template<Beam::DisableCopy<RiskDataStore> T> requires
+        IsRiskDataStore<Beam::dereference_t<T>>
+      RiskDataStore(T&& data_store);
 
-      explicit RiskDataStore(RiskDataStore* data_store);
-
-      explicit RiskDataStore(const std::shared_ptr<RiskDataStore>& data_store);
-
-      explicit RiskDataStore(const std::unique_ptr<RiskDataStore>& data_store);
+      RiskDataStore(const RiskDataStore&) = default;
+      RiskDataStore(RiskDataStore&&) = default;
 
       /**
        * Loads an account's InventorySnapshot.
        * @param account The account whose snapshot is to be loaded.
-       * @return The <i>account</i>'s InventorySnapshot.
+       * @return The account's InventorySnapshot.
        */
       InventorySnapshot load_inventory_snapshot(
         const Beam::DirectoryEntry& account);
@@ -49,57 +61,46 @@ namespace Nexus {
       void store(const Beam::DirectoryEntry& account,
         const InventorySnapshot& snapshot);
 
+      /** Closes the data store. */
       void close();
 
     private:
       struct VirtualRiskDataStore {
         virtual ~VirtualRiskDataStore() = default;
+
         virtual InventorySnapshot load_inventory_snapshot(
-          const Beam::DirectoryEntry&) = 0;
+          const Beam::DirectoryEntry& account) = 0;
         virtual void store(const Beam::DirectoryEntry& account,
-          const InventorySnapshot&) = 0;
+          const InventorySnapshot& snapshot) = 0;
         virtual void close() = 0;
       };
       template<typename D>
       struct WrappedRiskDataStore final : VirtualRiskDataStore {
-        using RiskDataStoreType = D;
-        Beam::local_ptr_t<RiskDataStoreType> m_data_store;
+        using DataStore = D;
+        Beam::local_ptr_t<DataStore> m_data_store;
 
         template<typename... Args>
         WrappedRiskDataStore(Args&&... args);
+
         InventorySnapshot load_inventory_snapshot(
           const Beam::DirectoryEntry& account) override;
         void store(const Beam::DirectoryEntry& account,
           const InventorySnapshot& snapshot) override;
         void close() override;
       };
-      std::shared_ptr<VirtualRiskDataStore> m_data_store;
+      Beam::VirtualPtr<VirtualRiskDataStore> m_data_store;
   };
 
-  /** Checks if a type implements a RiskDataStore. */
-  template<typename T>
-  concept IsRiskDataStore = std::constructible_from<
-    RiskDataStore, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
-
-  template<typename T, typename... Args>
+  template<IsRiskDataStore T, typename... Args>
   RiskDataStore::RiskDataStore(std::in_place_type_t<T>, Args&&... args)
-    : m_data_store(std::make_shared<WrappedRiskDataStore<T>>(
+    : m_data_store(Beam::make_virtual_ptr<WrappedRiskDataStore<T>>(
         std::forward<Args>(args)...)) {}
 
-  template<typename D>
-  RiskDataStore::RiskDataStore(D data_store)
-    : RiskDataStore(std::in_place_type<D>, std::move(data_store)) {}
-
-  inline RiskDataStore::RiskDataStore(RiskDataStore* data_store)
-    : RiskDataStore(*data_store) {}
-
-  inline RiskDataStore::RiskDataStore(
-    const std::shared_ptr<RiskDataStore>& data_store)
-    : RiskDataStore(*data_store) {}
-
-  inline RiskDataStore::RiskDataStore(
-    const std::unique_ptr<RiskDataStore>& data_store)
-    : RiskDataStore(*data_store) {}
+  template<Beam::DisableCopy<RiskDataStore> T> requires
+    IsRiskDataStore<Beam::dereference_t<T>>
+  RiskDataStore::RiskDataStore(T&& data_store)
+    : RiskDataStore(std::in_place_type<Beam::dereference_t<T>>,
+        std::forward<T>(data_store)) {}
 
   inline InventorySnapshot RiskDataStore::load_inventory_snapshot(
       const Beam::DirectoryEntry& account) {
@@ -107,8 +108,7 @@ namespace Nexus {
   }
 
   inline void RiskDataStore::store(
-      const Beam::DirectoryEntry& account,
-      const InventorySnapshot& snapshot) {
+      const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot) {
     m_data_store->store(account, snapshot);
   }
 
@@ -123,15 +123,13 @@ namespace Nexus {
 
   template<typename D>
   InventorySnapshot RiskDataStore::WrappedRiskDataStore<D>::
-      load_inventory_snapshot(
-        const Beam::DirectoryEntry& account) {
+      load_inventory_snapshot(const Beam::DirectoryEntry& account) {
     return m_data_store->load_inventory_snapshot(account);
   }
 
   template<typename D>
   void RiskDataStore::WrappedRiskDataStore<D>::store(
-      const Beam::DirectoryEntry& account,
-      const InventorySnapshot& snapshot) {
+      const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot) {
     m_data_store->store(account, snapshot);
   }
 

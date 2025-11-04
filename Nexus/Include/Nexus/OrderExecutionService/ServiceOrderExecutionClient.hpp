@@ -142,19 +142,19 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   template<typename B>
   void ServiceOrderExecutionClient<B>::query(const AccountQuery& query,
       Beam::ScopedQueueWriter<SequencedOrderRecord> queue) {
-    m_order_submission_publisher.submit_query(query, std::move(queue));
+    m_order_submission_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
   void ServiceOrderExecutionClient<B>::query(
       const AccountQuery& query, Beam::ScopedQueueWriter<OrderRecord> queue) {
-    m_order_submission_publisher.submit_query(query, std::move(queue));
+    m_order_submission_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
   void ServiceOrderExecutionClient<B>::query(const AccountQuery& query,
       Beam::ScopedQueueWriter<SequencedOrder> queue) {
-    m_order_submission_publisher.submit_query(query,
+    m_order_submission_publisher.submit(query,
       Beam::convert<SequencedOrderRecord>(std::move(queue),
         [this] (const auto& record) {
           return Beam::SequencedValue(std::static_pointer_cast<Order>(
@@ -165,7 +165,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   template<typename B>
   void ServiceOrderExecutionClient<B>::query(const AccountQuery& query,
       Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) {
-    m_order_submission_publisher.submit_query(query,
+    m_order_submission_publisher.submit(query,
       Beam::convert<SequencedOrderRecord>(std::move(queue),
         [this] (const auto& record) {
           return std::static_pointer_cast<Order>(load(record));
@@ -175,13 +175,13 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   template<typename B>
   void ServiceOrderExecutionClient<B>::query(const AccountQuery& query,
       Beam::ScopedQueueWriter<SequencedExecutionReport> queue) {
-    m_execution_report_publisher.submit_query(query, std::move(queue));
+    m_execution_report_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
   void ServiceOrderExecutionClient<B>::query(const AccountQuery& query,
       Beam::ScopedQueueWriter<ExecutionReport> queue) {
-    m_execution_report_publisher.submit_query(query, std::move(queue));
+    m_execution_report_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
@@ -297,7 +297,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
           OrderInfoAccessor::from_parameter(0).get_order_id() == id);
       }
       query.set_filter(
-        Beam::conjunction(id_expressions.begin(), id_expressions.end()));
+        Beam::disjunction(id_expressions.begin(), id_expressions.end()));
       auto result =
         client.template send_request<QueryOrderSubmissionsService>(query);
       for(auto& record : result.m_snapshot) {

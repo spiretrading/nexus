@@ -61,6 +61,7 @@ namespace Nexus {
       OrderExecutionClient(T&& client);
 
       OrderExecutionClient(const OrderExecutionClient&) = default;
+      OrderExecutionClient(OrderExecutionClient&&) = default;
 
       /** Loads an Order by its id. */
       std::shared_ptr<Order> load_order(OrderId id);

@@ -7,8 +7,6 @@
 namespace Nexus::Tests {
   TEST_CASE_TEMPLATE_DEFINE("RiskDataStore", T, RiskDataStoreTestSuite) {
     using namespace Beam;
-    using namespace Beam::Queries;
-    using namespace Beam::ServiceLocator;
     using namespace Nexus;
     using namespace Nexus::DefaultCurrencies;
     using namespace Nexus::DefaultVenues;
@@ -17,7 +15,7 @@ namespace Nexus::Tests {
     SUBCASE("load_empty_inventories") {
       auto snapshot = data_store.load_inventory_snapshot(
         DirectoryEntry::make_account(123, "test"));
-      REQUIRE(snapshot.m_sequence == Sequence::First());
+      REQUIRE(snapshot.m_sequence == Sequence::FIRST);
       REQUIRE(snapshot.m_inventories.empty());
       REQUIRE(snapshot.m_excluded_orders.empty());
     }

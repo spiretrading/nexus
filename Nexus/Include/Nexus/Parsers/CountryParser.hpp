@@ -1,7 +1,7 @@
 #ifndef NEXUS_COUNTRY_PARSER_HPP
 #define NEXUS_COUNTRY_PARSER_HPP
+#include <Beam/Parsers/DefaultParser.hpp>
 #include <Beam/Parsers/EnumeratorParser.hpp>
-#include <Beam/Parsers/Types.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/Definitions/Country.hpp"
@@ -16,7 +16,7 @@ namespace Nexus {
     auto code = [] (const auto& entry) {
       return entry.m_code;
     };
-    return Beam::Parsers::EnumeratorParser(
+    return Beam::EnumeratorParser(
       boost::make_transform_iterator(countries.get_entries().cbegin(), code),
       boost::make_transform_iterator(countries.get_entries().cend(), code),
       [=] (auto code) {
@@ -32,7 +32,7 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Parsers {
+namespace Beam {
   template<>
   const auto default_parser<Nexus::CountryCode> = Nexus::country_parser();
 }

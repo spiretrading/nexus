@@ -56,6 +56,7 @@ namespace Nexus {
       OrderExecutionDataStore(T&& data_store);
 
       OrderExecutionDataStore(const OrderExecutionDataStore&) = default;
+      OrderExecutionDataStore(OrderExecutionDataStore&&) = default;
 
       /**
        * Loads an OrderRecord from its id.

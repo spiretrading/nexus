@@ -22,8 +22,7 @@ namespace Nexus {
        * Tests if a group's portfolio is being subscribed to by this session.
        * @param group The group to test for the subscription.
        */
-      bool has_subscription(
-        const Beam::DirectoryEntry& group) const;
+      bool has_subscription(const Beam::DirectoryEntry& group) const;
 
       /**
        * Adds a group as part of a session's risk portfolio subscription.

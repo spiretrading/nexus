@@ -11,9 +11,8 @@
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
-#include <Beam/Threading/TriggerTimer.hpp>
-#include <Beam/TimeService/IncrementalTimeClient.hpp>
-#include <Beam/TimeService/TimeClientBox.hpp>
+#include <Beam/TimeService/LocalTimeClient.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <boost/functional/factory.hpp>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
@@ -41,9 +40,8 @@ namespace Nexus::Tests {
        *        servlet.
        */
       OrderExecutionServiceTestEnvironment(
-        Beam::ServiceLocatorClientBox service_locator_client,
-        Beam::UidService::UidClientBox uid_client,
-        AdministrationClient administration_client);
+        Beam::ServiceLocatorClient service_locator_client,
+        Beam::UidClient uid_client, AdministrationClient administration_client);
 
       /**
        * Constructs an OrderExecutionServiceTestEnvironment using a
@@ -58,9 +56,8 @@ namespace Nexus::Tests {
        */
       OrderExecutionServiceTestEnvironment(VenueDatabase venues,
         DestinationDatabase destinations,
-        Beam::ServiceLocatorClientBox service_locator_client,
-        Beam::UidService::UidClientBox uid_client,
-        AdministrationClient administration_client);
+        Beam::ServiceLocatorClient service_locator_client,
+        Beam::UidClient uid_client, AdministrationClient administration_client);
 
       /**
        * Constructs an OrderExecutionServiceTestEnvironment.
@@ -76,11 +73,9 @@ namespace Nexus::Tests {
        */
       OrderExecutionServiceTestEnvironment(VenueDatabase venues,
         DestinationDatabase destinations,
-        Beam::ServiceLocatorClientBox service_locator_client,
-        Beam::UidService::UidClientBox uid_client,
-        AdministrationClient administration_client,
-        Beam::TimeService::TimeClientBox time_client,
-        OrderExecutionDriver driver);
+        Beam::ServiceLocatorClient service_locator_client,
+        Beam::UidClient uid_client, AdministrationClient administration_client,
+        Beam::TimeClient time_client, OrderExecutionDriver driver);
 
       ~OrderExecutionServiceTestEnvironment();
 
@@ -95,41 +90,33 @@ namespace Nexus::Tests {
 
       /**
        * Returns a new OrderExecutionClient.
-       * @param service_locator_client The ServiceLocatorClient used to
-       *        authenticate the OrderExecutionClient.
+       * @param client The ServiceLocatorClient used to authenticate the
+       *        OrderExecutionClient.
        */
       OrderExecutionClient make_client(
-        Beam::ServiceLocatorClientBox service_locator_client);
+        Beam::Ref<Beam::ServiceLocatorClient> client);
 
       void close();
 
     private:
-      using ServerConnection =
-        Beam::LocalServerConnection<Beam::SharedBuffer>;
-      using ClientChannel =
-        Beam::LocalClientChannel<Beam::SharedBuffer>;
       using ServiceProtocolServletContainer =
         Beam::ServiceProtocolServletContainer<
           Beam::MetaAuthenticationServletAdapter<
-            MetaOrderExecutionServlet<Beam::TimeService::TimeClientBox,
-              Beam::ServiceLocatorClientBox,
-              Beam::UidService::UidClientBox, AdministrationClient,
+            MetaOrderExecutionServlet<Beam::TimeClient,
+              Beam::ServiceLocatorClient, Beam::UidClient, AdministrationClient,
               OrderExecutionDriver*, LocalOrderExecutionDataStore*>,
-            Beam::ServiceLocatorClientBox>,
-          ServerConnection*,
-          Beam::BinarySender<Beam::SharedBuffer>,
-          Beam::Codecs::NullEncoder,
-          std::shared_ptr<Beam::TriggerTimer>>;
+            Beam::ServiceLocatorClient>,
+          Beam::LocalServerConnection*, Beam::BinarySender<Beam::SharedBuffer>,
+          Beam::NullEncoder, std::shared_ptr<Beam::TriggerTimer>>;
       using ServiceProtocolClientBuilder =
         Beam::AuthenticatedServiceProtocolClientBuilder<
-          Beam::ServiceLocatorClientBox,
-          Beam::MessageProtocol<std::unique_ptr<ClientChannel>,
-            Beam::BinarySender<Beam::SharedBuffer>,
-            Beam::Codecs::NullEncoder>,
+          Beam::ServiceLocatorClient,
+          Beam::MessageProtocol<std::unique_ptr<Beam::LocalClientChannel>,
+            Beam::BinarySender<Beam::SharedBuffer>, Beam::NullEncoder>,
           Beam::TriggerTimer>;
       LocalOrderExecutionDataStore m_data_store;
       OrderExecutionDriver m_driver;
-      ServerConnection m_server_connection;
+      Beam::LocalServerConnection m_server_connection;
       ServiceProtocolServletContainer m_container;
 
       OrderExecutionServiceTestEnvironment(
@@ -149,34 +136,32 @@ namespace Nexus::Tests {
    */
   inline OrderExecutionServiceTestEnvironment
       make_order_execution_service_test_environment(
-        Beam::Tests::ServiceLocatorTestEnvironment&
-          service_locator_environment,
-        Beam::UidService::Tests::UidServiceTestEnvironment& uid_environment,
-        Tests::AdministrationServiceTestEnvironment&
+        Beam::Tests::ServiceLocatorTestEnvironment& service_locator_environment,
+        Beam::Tests::UidServiceTestEnvironment& uid_environment,
+        AdministrationServiceTestEnvironment&
           administration_service_test_environment) {
-    auto account = service_locator_environment.GetRoot().make_account(
-      "order_execution_service", "1234",
-      Beam::DirectoryEntry::STAR_DIRECTORY);
-    service_locator_environment.GetRoot().StorePermissions(account,
-      Beam::DirectoryEntry::STAR_DIRECTORY,
-      Beam::Permissions().Set(
-        Beam::Permission::READ).Set(
-        Beam::Permission::MOVE).Set(
+    auto account = service_locator_environment.get_root().make_account(
+      "order_execution_service", "1234", Beam::DirectoryEntry::STAR_DIRECTORY);
+    service_locator_environment.get_root().store(
+      account, Beam::DirectoryEntry::STAR_DIRECTORY,
+      Beam::Permissions().set(
+        Beam::Permission::READ).set(
+        Beam::Permission::MOVE).set(
         Beam::Permission::ADMINISTRATE));
     administration_service_test_environment.make_administrator(account);
-    auto service_locator_client =
-      service_locator_environment.MakeClient("order_execution_service", "1234");
+    auto service_locator_client = service_locator_environment.make_client(
+      "order_execution_service", "1234");
     auto administration_client =
       administration_service_test_environment.make_client(
-        service_locator_client);
+        Beam::Ref(service_locator_client));
     return OrderExecutionServiceTestEnvironment(service_locator_client,
-      uid_environment.MakeClient(), administration_client);
+      uid_environment.make_client(), administration_client);
   }
 
   inline OrderExecutionServiceTestEnvironment::
     OrderExecutionServiceTestEnvironment(
-      Beam::ServiceLocatorClientBox service_locator_client,
-      Beam::UidService::UidClientBox uid_client,
+      Beam::ServiceLocatorClient service_locator_client,
+      Beam::UidClient uid_client,
       AdministrationClient administration_client)
     : OrderExecutionServiceTestEnvironment(DEFAULT_VENUES, DEFAULT_DESTINATIONS,
         std::move(service_locator_client), std::move(uid_client),
@@ -185,30 +170,27 @@ namespace Nexus::Tests {
   inline OrderExecutionServiceTestEnvironment::
     OrderExecutionServiceTestEnvironment(VenueDatabase venues,
       DestinationDatabase destinations,
-      Beam::ServiceLocatorClientBox service_locator_client,
-      Beam::UidService::UidClientBox uid_client,
+      Beam::ServiceLocatorClient service_locator_client,
+      Beam::UidClient uid_client,
       AdministrationClient administration_client)
     : OrderExecutionServiceTestEnvironment(std::move(venues),
         std::move(destinations), std::move(service_locator_client),
         std::move(uid_client), std::move(administration_client),
-        Beam::TimeService::TimeClientBox(
-          std::in_place_type<Beam::TimeService::IncrementalTimeClient>),
+        Beam::TimeClient(std::in_place_type<Beam::LocalTimeClient>),
         OrderExecutionDriver(std::in_place_type<MockOrderExecutionDriver>)) {}
 
   inline OrderExecutionServiceTestEnvironment::
     OrderExecutionServiceTestEnvironment(VenueDatabase venues,
       DestinationDatabase destinations,
-      Beam::ServiceLocatorClientBox service_locator_client,
-      Beam::UidService::UidClientBox uid_client,
-      AdministrationClient administration_client,
-      Beam::TimeService::TimeClientBox time_client, OrderExecutionDriver driver)
+      Beam::ServiceLocatorClient service_locator_client,
+      Beam::UidClient uid_client, AdministrationClient administration_client,
+      Beam::TimeClient time_client, OrderExecutionDriver driver)
     : m_driver(std::move(driver)),
-      m_container(Beam::Initialize(service_locator_client, Beam::Initialize(
+      m_container(Beam::init(service_locator_client, Beam::init(
         boost::posix_time::pos_infin, std::move(venues),
-        std::move(destinations), std::move(time_client),
-        service_locator_client, std::move(uid_client),
-        std::move(administration_client), &m_driver, &m_data_store)),
-        &m_server_connection,
+        std::move(destinations), std::move(time_client), service_locator_client,
+        std::move(uid_client), std::move(administration_client), &m_driver,
+        &m_data_store)), &m_server_connection,
         boost::factory<std::shared_ptr<Beam::TriggerTimer>>()) {}
 
   inline OrderExecutionServiceTestEnvironment::
@@ -232,11 +214,11 @@ namespace Nexus::Tests {
   }
 
   inline OrderExecutionClient OrderExecutionServiceTestEnvironment::make_client(
-      Beam::ServiceLocatorClientBox serviceLocatorClient) {
+      Beam::Ref<Beam::ServiceLocatorClient> client) {
     return OrderExecutionClient(std::in_place_type<
       ServiceOrderExecutionClient<ServiceProtocolClientBuilder>>,
-      ServiceProtocolClientBuilder(serviceLocatorClient,
-        std::bind_front(boost::factory<
+      ServiceProtocolClientBuilder(
+        Beam::Ref(client), std::bind_front(boost::factory<
           std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
           "test_order_execution_client", std::ref(m_server_connection)),
         boost::factory<
@@ -244,7 +226,7 @@ namespace Nexus::Tests {
   }
 
   inline void OrderExecutionServiceTestEnvironment::close() {
-    m_container.Close();
+    m_container.close();
   }
 }
 

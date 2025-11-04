@@ -5,6 +5,7 @@
 #include <utility>
 #include <vector>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/TimeService/TimeClient.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
@@ -17,7 +18,7 @@ namespace Nexus {
    * Monitors a Portfolio against a set of RiskParameters.
    * @param <T> The type of TimeClient used.
    */
-  template<typename T>
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   class RiskStateModel {
     public:
 
@@ -67,11 +68,11 @@ namespace Nexus {
       RiskState m_risk_state;
   };
 
-  template<typename TimeClient>
+  template<typename C>
   RiskStateModel(RiskPortfolio, const RiskParameters&, const ExchangeRateTable&,
-    TimeClient&&) -> RiskStateModel<std::remove_reference_t<TimeClient>>;
+    C&&) -> RiskStateModel<std::remove_cvref_t<C>>;
 
-  template<typename T>
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   template<Beam::Initializes<T> TF>
   RiskStateModel<T>::RiskStateModel(RiskPortfolio portfolio,
       const RiskParameters& parameters,
@@ -83,27 +84,27 @@ namespace Nexus {
     update(parameters);
   }
 
-  template<typename T>
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   const RiskParameters& RiskStateModel<T>::get_parameters() const {
     return m_parameters;
   }
 
-  template<typename T>
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   const RiskPortfolio& RiskStateModel<T>::get_portfolio() const {
     return m_portfolio;
   }
 
-  template<typename T>
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   RiskPortfolio& RiskStateModel<T>::get_portfolio() {
     return m_portfolio;
   }
 
-  template<typename T>
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   const RiskState& RiskStateModel<T>::get_risk_state() const {
     return m_risk_state;
   }
 
-  template<typename T>
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   void RiskStateModel<T>::update(const RiskParameters& parameters) {
     m_parameters = parameters;
     if(m_risk_state.m_type == RiskState::Type::ACTIVE) {
@@ -113,15 +114,15 @@ namespace Nexus {
     update_portfolio();
   }
 
-  template<typename T>
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   void RiskStateModel<T>::update_time() {
     if(m_risk_state.m_type == RiskState::Type::CLOSE_ORDERS &&
-        m_time_client->GetTime() >= m_risk_state.m_expiry) {
+        m_time_client->get_time() >= m_risk_state.m_expiry) {
       m_risk_state = RiskState::Type::DISABLED;
     }
   }
 
-  template<typename T>
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   void RiskStateModel<T>::update_portfolio() {
     if(!m_parameters.m_currency) {
       return;
@@ -141,7 +142,7 @@ namespace Nexus {
         if(m_risk_state.m_type == RiskState::Type::ACTIVE) {
           m_risk_state.m_type = RiskState::Type::CLOSE_ORDERS;
           m_risk_state.m_expiry =
-            m_time_client->GetTime() + m_parameters.m_transition_time;
+            m_time_client->get_time() + m_parameters.m_transition_time;
         }
         return;
       }
@@ -150,7 +151,7 @@ namespace Nexus {
       if(profit_and_loss <= -m_parameters.m_net_loss) {
         m_risk_state.m_type = RiskState::Type::CLOSE_ORDERS;
         m_risk_state.m_expiry =
-          m_time_client->GetTime() + m_parameters.m_transition_time;
+          m_time_client->get_time() + m_parameters.m_transition_time;
       }
     } else {
       if(profit_and_loss > -m_parameters.m_net_loss) {

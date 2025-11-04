@@ -21,16 +21,14 @@ namespace Nexus {
 
   inline InventorySnapshot LocalRiskDataStore::load_inventory_snapshot(
       const Beam::DirectoryEntry& account) {
-    if(auto snapshot = m_snapshots.Find(account)) {
-      return *snapshot;
-    }
-    return InventorySnapshot();
+    return m_snapshots.try_load(account).value_or_eval([] {
+      return InventorySnapshot();
+    });
   }
 
   inline void LocalRiskDataStore::store(
-      const Beam::DirectoryEntry& account,
-      const InventorySnapshot& snapshot) {
-    m_snapshots.Update(account, strip(snapshot));
+      const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot) {
+    m_snapshots.update(account, strip(snapshot));
   }
 
   inline void LocalRiskDataStore::close() {}

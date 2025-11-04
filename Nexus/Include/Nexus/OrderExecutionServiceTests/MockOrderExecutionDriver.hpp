@@ -108,7 +108,7 @@ namespace Nexus::Tests {
     if(m_set_order_status_new_on_submission) {
       set_order_status(*order, OrderStatus::NEW, info.m_timestamp);
     }
-    m_publisher.Push(order);
+    m_publisher.push(order);
     return order;
   }
 

@@ -3,6 +3,8 @@
 #include <iostream>
 #include <unordered_set>
 #include <vector>
+#include <Beam/Pointers/Dereference.hpp>
+#include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Utilities/ReportException.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Accounting/PositionOrderBook.hpp"
@@ -19,7 +21,7 @@ namespace Nexus {
    * @param <C> The type of OrderExecutionClient used to cancel Orders and
    *        flatten Positions.
    */
-  template<IsOrderExecutionClient C>
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   class RiskTransitionModel {
     public:
 
@@ -84,12 +86,12 @@ namespace Nexus {
       void s6();
   };
 
-  template<typename CF>
+  template<typename C>
   RiskTransitionModel(Beam::DirectoryEntry,
-    const std::vector<Inventory>&, RiskState, CF&&, DestinationDatabase) ->
-      RiskTransitionModel<std::remove_reference_t<CF>>;
+    const std::vector<Inventory>&, RiskState, C&&, DestinationDatabase) ->
+      RiskTransitionModel<std::remove_cvref_t<C>>;
 
-  template<IsOrderExecutionClient C>
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   template<Beam::Initializes<C> CF>
   RiskTransitionModel<C>::RiskTransitionModel(
     Beam::DirectoryEntry account,
@@ -102,12 +104,12 @@ namespace Nexus {
       m_book(inventory),
       m_state(0) {}
 
-  template<IsOrderExecutionClient C>
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   void RiskTransitionModel<C>::add(const std::shared_ptr<Order>& order) {
     m_book.add(order);
   }
 
-  template<IsOrderExecutionClient C>
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   void RiskTransitionModel<C>::update(const RiskState& state) {
     m_risk_state = state;
     if(m_state == 0) {
@@ -121,7 +123,7 @@ namespace Nexus {
     }
   }
 
-  template<IsOrderExecutionClient C>
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   void RiskTransitionModel<C>::update(const ExecutionReport& report) {
     m_book.update(report);
     if(is_terminal(report.m_status)) {
@@ -132,27 +134,27 @@ namespace Nexus {
     }
   }
 
-  template<IsOrderExecutionClient C>
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   bool RiskTransitionModel<C>::c0() {
     return m_risk_state.m_type == RiskState::Type::CLOSE_ORDERS;
   }
 
-  template<IsOrderExecutionClient C>
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   bool RiskTransitionModel<C>::c1() {
     return m_risk_state.m_type == RiskState::Type::ACTIVE;
   }
 
-  template<IsOrderExecutionClient C>
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   bool RiskTransitionModel<C>::c2() {
     return m_risk_state.m_type == RiskState::Type::DISABLED;
   }
 
-  template<IsOrderExecutionClient C>
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   bool RiskTransitionModel<C>::c3() {
     return m_live_orders.empty();
   }
 
-  template<IsOrderExecutionClient C>
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   void RiskTransitionModel<C>::s0() {
     m_state = 0;
     if(c0()) {
@@ -160,7 +162,7 @@ namespace Nexus {
     }
   }
 
-  template<IsOrderExecutionClient C>
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   void RiskTransitionModel<C>::s1() {
     m_state = 1;
     for(auto& order : m_book.get_opening_orders()) {
@@ -169,7 +171,7 @@ namespace Nexus {
     return s2();
   }
 
-  template<IsOrderExecutionClient C>
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   void RiskTransitionModel<C>::s2() {
     m_state = 2;
     if(c1()) {
@@ -179,7 +181,7 @@ namespace Nexus {
     }
   }
 
-  template<IsOrderExecutionClient C>
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   void RiskTransitionModel<C>::s3() {
     m_state = 3;
     auto& live_orders = m_book.get_live_orders();
@@ -191,7 +193,7 @@ namespace Nexus {
     return s4();
   }
 
-  template<IsOrderExecutionClient C>
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   void RiskTransitionModel<C>::s4() {
     m_state = 4;
     if(c1()) {
@@ -201,7 +203,7 @@ namespace Nexus {
     }
   }
 
-  template<IsOrderExecutionClient C>
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   void RiskTransitionModel<C>::s5() {
     m_state = 5;
     for(auto& position : m_book.get_positions()) {
@@ -219,7 +221,7 @@ namespace Nexus {
     return s6();
   }
 
-  template<IsOrderExecutionClient C>
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   void RiskTransitionModel<C>::s6() {
     m_state = 6;
     if(c1()) {

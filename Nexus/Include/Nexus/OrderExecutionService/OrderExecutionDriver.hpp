@@ -48,6 +48,7 @@ namespace Nexus {
       OrderExecutionDriver(T&& driver);
 
       OrderExecutionDriver(const OrderExecutionDriver&) = default;
+      OrderExecutionDriver(OrderExecutionDriver&&) = default;
 
       /** Returns a reference to the concrete implementation. */
       template<typename T>

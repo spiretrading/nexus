@@ -89,8 +89,8 @@ namespace {
         make_account("administration_service", DirectoryEntry::STAR_DIRECTORY);
       m_service_locator_environment.get_root().store(
         servlet_account, DirectoryEntry::STAR_DIRECTORY, Permissions(~0));
-      m_servlet_service_locator_client =
-        m_service_locator_environment.make_client(servlet_account.m_name, "");
+      m_servlet_service_locator_client.emplace(
+        m_service_locator_environment.make_client(servlet_account.m_name, ""));
       m_container.emplace(init(*m_servlet_service_locator_client,
         init(&m_service_locator_environment.get_root(), m_entitlements,
           &m_data_store, &m_time_client)), m_server_connection,

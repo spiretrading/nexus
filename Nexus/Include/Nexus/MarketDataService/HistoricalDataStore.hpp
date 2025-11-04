@@ -67,6 +67,7 @@ namespace Nexus {
       HistoricalDataStore(T&& data_store);
 
       HistoricalDataStore(const HistoricalDataStore&) = default;
+      HistoricalDataStore(HistoricalDataStore&&) = default;
 
       /**
        * Loads SecurityInfo objects that match a query.

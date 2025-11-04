@@ -34,8 +34,12 @@ namespace Nexus {
    * @param <T> The type of TimeClient to use.
    * @param <D> The type of RiskDataStore to use.
    */
-  template<IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename A, typename M, typename O, Beam::IsTimer R, typename T,
+    typename D> requires IsAdministrationClient<Beam::dereference_t<A>> &&
+      IsMarketDataClient<Beam::dereference_t<M>> &&
+        IsOrderExecutionClient<Beam::dereference_t<O>> &&
+          Beam::IsTimeClient<Beam::dereference_t<T>> &&
+            IsRiskDataStore<Beam::dereference_t<D>>
   class ConsolidatedRiskController {
     public:
 
@@ -128,19 +132,21 @@ namespace Nexus {
         const PortfolioUpdateEntry& entry);
   };
 
-  template<IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
-  ConsolidatedRiskController(
-    Beam::ScopedQueueReader<Beam::DirectoryEntry>, A&&, M&&,
-    O&&, R&&, T&&, D&&, ExchangeRateTable, VenueDatabase,
-    DestinationDatabase) -> ConsolidatedRiskController<
-      std::remove_reference_t<A>, std::remove_reference_t<M>,
-      std::remove_reference_t<O>,
-      typename std::invoke_result_t<R>::element_type,
-      std::remove_reference_t<T>, std::remove_reference_t<D>>;
+  template<typename A, typename M, typename O, typename R, typename T,
+    typename D>
+  ConsolidatedRiskController(Beam::ScopedQueueReader<Beam::DirectoryEntry>, A&&,
+    M&&, O&&, R&&, T&&, D&&, ExchangeRateTable, VenueDatabase,
+    DestinationDatabase) -> ConsolidatedRiskController<std::remove_cvref_t<A>,
+      std::remove_cvref_t<M>, std::remove_cvref_t<O>,
+      typename std::invoke_result_t<R>::element_type, std::remove_cvref_t<T>,
+      std::remove_cvref_t<D>>;
 
-  template<IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename A, typename M, typename O, Beam::IsTimer R, typename T,
+    typename D> requires IsAdministrationClient<Beam::dereference_t<A>> &&
+      IsMarketDataClient<Beam::dereference_t<M>> &&
+        IsOrderExecutionClient<Beam::dereference_t<O>> &&
+          Beam::IsTimeClient<Beam::dereference_t<T>> &&
+            IsRiskDataStore<Beam::dereference_t<D>>
   template<Beam::Initializes<A> AF, Beam::Initializes<M> MF,
     Beam::Initializes<O> OF, Beam::Initializes<T> TF, Beam::Initializes<D> DF>
   ConsolidatedRiskController<A, M, O, R, T, D>::ConsolidatedRiskController(
@@ -161,26 +167,38 @@ namespace Nexus {
       m_venues(std::move(venues)),
       m_destinations(std::move(destinations)),
       m_accounts_pipe(std::move(accounts),
-        m_tasks.GetSlot<Beam::DirectoryEntry>(
+        m_tasks.get_slot<Beam::DirectoryEntry>(
           std::bind_front(&ConsolidatedRiskController::on_account, this))) {}
   BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
-  template<IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename A, typename M, typename O, Beam::IsTimer R, typename T,
+    typename D> requires IsAdministrationClient<Beam::dereference_t<A>> &&
+      IsMarketDataClient<Beam::dereference_t<M>> &&
+        IsOrderExecutionClient<Beam::dereference_t<O>> &&
+          Beam::IsTimeClient<Beam::dereference_t<T>> &&
+            IsRiskDataStore<Beam::dereference_t<D>>
   const Beam::Publisher<RiskStateEntry>& ConsolidatedRiskController<
       A, M, O, R, T, D>::get_risk_state_publisher() const {
     return m_state_publisher;
   }
 
-  template<IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename A, typename M, typename O, Beam::IsTimer R, typename T,
+    typename D> requires IsAdministrationClient<Beam::dereference_t<A>> &&
+      IsMarketDataClient<Beam::dereference_t<M>> &&
+        IsOrderExecutionClient<Beam::dereference_t<O>> &&
+          Beam::IsTimeClient<Beam::dereference_t<T>> &&
+            IsRiskDataStore<Beam::dereference_t<D>>
   const Beam::Publisher<RiskPortfolioEntry>& ConsolidatedRiskController<
       A, M, O, R, T, D>::get_portfolio_publisher() const {
     return m_portfolio_publisher;
   }
 
-  template<IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename A, typename M, typename O, Beam::IsTimer R, typename T,
+    typename D> requires IsAdministrationClient<Beam::dereference_t<A>> &&
+      IsMarketDataClient<Beam::dereference_t<M>> &&
+        IsOrderExecutionClient<Beam::dereference_t<O>> &&
+          Beam::IsTimeClient<Beam::dereference_t<T>> &&
+            IsRiskDataStore<Beam::dereference_t<D>>
   void ConsolidatedRiskController<A, M, O, R, T, D>::on_account(
       const Beam::DirectoryEntry& account) {
     auto controller = [&] {
@@ -198,34 +216,40 @@ namespace Nexus {
       }
     }();
     if(!controller) {
-      m_state_publisher.Push(account, RiskState::Type::DISABLED);
+      m_state_publisher.push(account, RiskState::Type::DISABLED);
       return;
     }
-    controller->get_risk_state_publisher().Monitor(
-      m_tasks.GetSlot<RiskState>(std::bind_front(
+    controller->get_risk_state_publisher().monitor(
+      m_tasks.get_slot<RiskState>(std::bind_front(
         &ConsolidatedRiskController::on_risk_state, this, account)));
-    controller->get_portfolio_publisher().Monitor(
-      m_tasks.GetSlot<PortfolioUpdateEntry>(std::bind_front(
+    controller->get_portfolio_publisher().monitor(
+      m_tasks.get_slot<PortfolioUpdateEntry>(std::bind_front(
         &ConsolidatedRiskController::on_portfolio_entry, this, account)));
     m_controllers.push_back(std::move(controller));
   }
 
-  template<IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename A, typename M, typename O, Beam::IsTimer R, typename T,
+    typename D> requires IsAdministrationClient<Beam::dereference_t<A>> &&
+      IsMarketDataClient<Beam::dereference_t<M>> &&
+        IsOrderExecutionClient<Beam::dereference_t<O>> &&
+          Beam::IsTimeClient<Beam::dereference_t<T>> &&
+            IsRiskDataStore<Beam::dereference_t<D>>
   void ConsolidatedRiskController<A, M, O, R, T, D>::on_risk_state(
-      const Beam::DirectoryEntry& account,
-      const RiskState& state) {
-    m_state_publisher.Push(account, state);
+      const Beam::DirectoryEntry& account, const RiskState& state) {
+    m_state_publisher.push(account, state);
   }
 
-  template<IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename A, typename M, typename O, Beam::IsTimer R, typename T,
+    typename D> requires IsAdministrationClient<Beam::dereference_t<A>> &&
+      IsMarketDataClient<Beam::dereference_t<M>> &&
+        IsOrderExecutionClient<Beam::dereference_t<O>> &&
+          Beam::IsTimeClient<Beam::dereference_t<T>> &&
+            IsRiskDataStore<Beam::dereference_t<D>>
   void ConsolidatedRiskController<A, M, O, R, T, D>::on_portfolio_entry(
-      const Beam::DirectoryEntry& account,
-      const PortfolioUpdateEntry& entry) {
+      const Beam::DirectoryEntry& account, const PortfolioUpdateEntry& entry) {
     auto key = RiskPortfolioKey(
       account, entry.m_security_inventory.m_position.m_security);
-    m_portfolio_publisher.Push(std::move(key), entry.m_security_inventory);
+    m_portfolio_publisher.push(std::move(key), entry.m_security_inventory);
   }
 }
 

@@ -8,11 +8,7 @@
 #include "Nexus/RiskService/InventorySnapshot.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::ServiceLocator;
 using namespace Beam::Tests;
-using namespace Beam::UidService;
-using namespace Beam::UidService::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -27,7 +23,7 @@ namespace {
     AdministrationServiceTestEnvironment m_administration_environment;
     OrderExecutionServiceTestEnvironment m_order_execution_environment;
     DirectoryEntry m_client_account;
-    optional<ServiceLocatorClientBox> m_client_service_locator;
+    optional<ServiceLocatorClient> m_client_service_locator;
     optional<OrderExecutionClient> m_order_execution_client;
 
     Fixture()
@@ -38,12 +34,13 @@ namespace {
             make_order_execution_service_test_environment(
               m_service_locator_environment, m_uid_environment,
                 m_administration_environment)) {
-      m_client_account = m_service_locator_environment.GetRoot().make_account(
+      m_client_account = m_service_locator_environment.get_root().make_account(
         "client", "1234", DirectoryEntry::STAR_DIRECTORY);
-      m_client_service_locator =
-        m_service_locator_environment.MakeClient("client", "1234");
-      m_order_execution_client = m_order_execution_environment.make_client(
-        *m_client_service_locator);
+      m_client_service_locator.emplace(
+        m_service_locator_environment.make_client("client", "1234"));
+      m_order_execution_client.emplace(
+        m_order_execution_environment.make_client(
+          Ref(*m_client_service_locator)));
     }
   };
 }
@@ -134,6 +131,6 @@ TEST_SUITE("InventorySnapshot") {
     auto snapshot = InventorySnapshot();
     snapshot.m_inventories.push_back(abc_inventory);
     snapshot.m_inventories.push_back(xyz_inventory);
-    Beam::Tests::TestRoundTripShuttle(snapshot);
+    test_round_trip_shuttle(snapshot);
   }
 }

@@ -57,6 +57,7 @@ namespace Nexus {
       ComplianceRuleDataStore(T&& data_store);
 
       ComplianceRuleDataStore(const ComplianceRuleDataStore&) = default;
+      ComplianceRuleDataStore(ComplianceRuleDataStore&&) = default;
 
       /** Returns all ComplianceRuleEntry records. */
       std::vector<ComplianceRuleEntry> load_all_compliance_rule_entries();

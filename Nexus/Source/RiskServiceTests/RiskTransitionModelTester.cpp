@@ -1,7 +1,4 @@
 #include <future>
-#include <Beam/ServicesTests/ServicesTests.hpp>
-#include <Beam/SignalHandling/NullSlot.hpp>
-#include <Beam/Threading/TriggerTimer.hpp>
 #include <doctest/doctest.h>
 #include <boost/functional/factory.hpp>
 #include "Nexus/OrderExecutionServiceTests/TestOrderExecutionClient.hpp"
@@ -9,12 +6,7 @@
 #include "Nexus/RiskService/RiskTransitionModel.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
 using namespace Beam::Tests;
-using namespace Beam::SignalHandling;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -46,8 +38,8 @@ TEST_SUITE("RiskTransitionModel") {
     bid_report =
       make_update(bid_report, OrderStatus::NEW, bid_report.m_timestamp);
     model.update(bid_report);
-    auto ask_order = std::make_shared<PrimitiveOrder>(
-      OrderInfo(make_limit_order_fields(
+    auto ask_order =
+      std::make_shared<PrimitiveOrder>(OrderInfo(make_limit_order_fields(
         S32, AUD, Side::ASK, 100, Money::ONE + Money::CENT),
       113, time_from_string("2020-11-17 12:22:06")));
     model.add(ask_order);
@@ -61,12 +53,12 @@ TEST_SUITE("RiskTransitionModel") {
     model.update(ask_report);
     model.update(RiskState::Type::CLOSE_ORDERS);
     auto cancel_ids = std::vector<OrderId>();
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto cancel_operation =
       std::get_if<TestOrderExecutionClient::CancelOperation>(&*operation);
     REQUIRE(cancel_operation);
     cancel_ids.push_back(cancel_operation->m_id);
-    operation = operations->Pop();
+    operation = operations->pop();
     cancel_operation =
       std::get_if<TestOrderExecutionClient::CancelOperation>(&*operation);
     REQUIRE(cancel_operation);
@@ -124,7 +116,7 @@ TEST_SUITE("RiskTransitionModel") {
       make_update(ask_report, OrderStatus::NEW, ask_report.m_timestamp);
     model.update(ask_report);
     model.update(RiskState::Type::CLOSE_ORDERS);
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto cancel_operation =
       std::get_if<TestOrderExecutionClient::CancelOperation>(&*operation);
     REQUIRE(cancel_operation);
@@ -134,7 +126,7 @@ TEST_SUITE("RiskTransitionModel") {
     bid_report2.m_id = 127;
     model.update(bid_report2);
     model.update(RiskState::Type::DISABLED);
-    operation = operations->Pop();
+    operation = operations->pop();
     cancel_operation =
       std::get_if<TestOrderExecutionClient::CancelOperation>(&*operation);
     REQUIRE(cancel_operation);
@@ -144,7 +136,7 @@ TEST_SUITE("RiskTransitionModel") {
     auto submit_async = std::async(std::launch::async, [&] {
       model.update(ask_report);
     });
-    operation = operations->Pop();
+    operation = operations->pop();
     auto submit_operation =
       std::get_if<TestOrderExecutionClient::SubmitOperation>(&*operation);
     REQUIRE(submit_operation);
@@ -192,7 +184,7 @@ TEST_SUITE("RiskTransitionModel") {
       make_update(bid_report2, OrderStatus::NEW, bid_report2.m_timestamp);
     model.update(bid_report2);
     model.update(RiskState::Type::CLOSE_ORDERS);
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto cancel_operation =
       std::get_if<TestOrderExecutionClient::CancelOperation>(&*operation);
     REQUIRE(cancel_operation);
@@ -205,13 +197,13 @@ TEST_SUITE("RiskTransitionModel") {
         XIU, CAD, Side::ASK, 100, Money::ONE + Money::CENT),
       1000, time_from_string("2020-11-17 12:22:06")));
     client.cancel(*sync_order);
-    operation = operations->Pop();
+    operation = operations->pop();
     cancel_operation =
       std::get_if<TestOrderExecutionClient::CancelOperation>(&*operation);
     REQUIRE(cancel_operation);
     REQUIRE(cancel_operation->m_id == 1000);
     model.update(RiskState::Type::DISABLED);
-    operation = operations->Pop();
+    operation = operations->pop();
     cancel_operation =
       std::get_if<TestOrderExecutionClient::CancelOperation>(&*operation);
     REQUIRE(cancel_operation);
@@ -221,7 +213,7 @@ TEST_SUITE("RiskTransitionModel") {
     auto submit_async = std::async(std::launch::async, [&] {
       model.update(bid_report);
     });
-    operation = operations->Pop();
+    operation = operations->pop();
     auto submit_operation =
       std::get_if<TestOrderExecutionClient::SubmitOperation>(&*operation);
     REQUIRE(submit_operation);

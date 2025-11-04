@@ -49,14 +49,14 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::RiskPortfolioKey> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::RiskPortfolioKey& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::RiskPortfolioKey& value,
         unsigned int version) const {
-      shuttle.Shuttle("account", value.m_account);
-      shuttle.Shuttle("security", value.m_security);
+      shuttle.shuttle("account", value.m_account);
+      shuttle.shuttle("security", value.m_security);
     }
   };
 }

@@ -39,37 +39,6 @@ namespace {
     DirectoryEntry m_client_account;
     std::unique_ptr<TestServiceProtocolClient> m_client;
 
-    Fixture()
-        : m_time_client(time_from_string("2024-07-04 12:00:00")),
-          m_server_connection(std::make_shared<LocalServerConnection>()),
-          m_administration_environment(
-            make_administration_service_test_environment(
-              m_service_locator_environment)),
-          m_registry(DEFAULT_VENUES, get_default_time_zone_database()) {
-      auto servlet_account = make_account(
-        "market_data_service", DirectoryEntry::STAR_DIRECTORY);
-      m_administration_environment.make_administrator(servlet_account);
-      m_service_locator_environment.get_root().store(
-        servlet_account, DirectoryEntry::STAR_DIRECTORY, Permissions(~0));
-      m_servlet_service_locator_client =
-        m_service_locator_environment.make_client(servlet_account.m_name, "");
-      m_servlet_administration_client =
-        m_administration_environment.make_client(
-          Ref(*m_servlet_service_locator_client));
-      m_servlet.emplace(
-        *m_servlet_administration_client, &m_registry, &m_data_store);
-      m_container.emplace(init(
-        *m_servlet_service_locator_client, &*m_servlet),
-        m_server_connection, factory<std::unique_ptr<TriggerTimer>>());
-      m_client_account =
-        make_account("client", DirectoryEntry::STAR_DIRECTORY);
-      auto global_entitlement = m_servlet_administration_client->
-        load_entitlements().get_entries().front().m_group_entry;
-      m_servlet_administration_client->store_entitlements(
-        m_client_account, {global_entitlement});
-      std::tie(m_client_account, m_client) = make_client("client");
-    }
-
     auto make_account(const std::string& name, const DirectoryEntry& parent) {
       return m_service_locator_environment.get_root().make_account(
         name, "", parent);
@@ -89,6 +58,37 @@ namespace {
       authenticator(*protocol_client);
       return std::tuple(
         service_locator_client.get_account(), std::move(protocol_client));
+    }
+
+    Fixture()
+        : m_time_client(time_from_string("2024-07-04 12:00:00")),
+          m_server_connection(std::make_shared<LocalServerConnection>()),
+          m_administration_environment(
+            make_administration_service_test_environment(
+              m_service_locator_environment)),
+          m_registry(DEFAULT_VENUES, get_default_time_zone_database()) {
+      auto servlet_account = make_account(
+        "market_data_service", DirectoryEntry::STAR_DIRECTORY);
+      m_administration_environment.make_administrator(servlet_account);
+      m_service_locator_environment.get_root().store(
+        servlet_account, DirectoryEntry::STAR_DIRECTORY, Permissions(~0));
+      m_servlet_service_locator_client.emplace(
+        m_service_locator_environment.make_client(servlet_account.m_name, ""));
+      m_servlet_administration_client.emplace(
+        m_administration_environment.make_client(
+          Ref(*m_servlet_service_locator_client)));
+      m_servlet.emplace(
+        *m_servlet_administration_client, &m_registry, &m_data_store);
+      m_container.emplace(init(
+        *m_servlet_service_locator_client, &*m_servlet),
+        m_server_connection, factory<std::unique_ptr<TriggerTimer>>());
+      m_client_account =
+        make_account("client", DirectoryEntry::STAR_DIRECTORY);
+      auto global_entitlement = m_servlet_administration_client->
+        load_entitlements().get_entries().front().m_group_entry;
+      m_servlet_administration_client->store_entitlements(
+        m_client_account, {global_entitlement});
+      std::tie(m_client_account, m_client) = make_client("client");
     }
   };
 

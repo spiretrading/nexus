@@ -98,7 +98,7 @@ namespace Nexus {
           venue_expressions.push_back(make_venue_filter(venue));
         }
         auto venue_filter =
-          Beam::conjunction(venue_expressions.begin(), venue_expressions.end());
+          Beam::disjunction(venue_expressions.begin(), venue_expressions.end());
         auto query = AccountQuery();
         query.set_index(account);
         query.set_range(venue_start, venue_end);
@@ -174,7 +174,7 @@ namespace Nexus {
       [&] (auto id) {
         return OrderInfoAccessor::from_parameter(0).get_order_id() == id;
       });
-    return Beam::conjunction(clauses.begin(), clauses.end());
+    return Beam::disjunction(clauses.begin(), clauses.end());
   }
 
   /**

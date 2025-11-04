@@ -64,11 +64,11 @@ namespace {
         make_account("compliance_service", DirectoryEntry::STAR_DIRECTORY);
       m_service_locator_environment.get_root().store(
         servlet_account, DirectoryEntry::STAR_DIRECTORY, Permissions(~0));
-      m_servlet_service_locator_client =
-        m_service_locator_environment.make_client(servlet_account.m_name, "");
-      m_servlet_administration_client =
+      m_servlet_service_locator_client.emplace(
+        m_service_locator_environment.make_client(servlet_account.m_name, ""));
+      m_servlet_administration_client.emplace(
         m_administration_environment.make_client(
-          Ref(*m_servlet_service_locator_client));
+          Ref(*m_servlet_service_locator_client)));
       m_container.emplace(init(*m_servlet_service_locator_client,
         init(&m_service_locator_environment.get_root(),
           *m_servlet_administration_client, &m_data_store, &m_time_client)),

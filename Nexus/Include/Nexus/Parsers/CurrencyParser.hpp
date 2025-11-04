@@ -1,7 +1,7 @@
 #ifndef NEXUS_CURRENCY_PARSER_HPP
 #define NEXUS_CURRENCY_PARSER_HPP
+#include <Beam/Parsers/DefaultParser.hpp>
 #include <Beam/Parsers/EnumeratorParser.hpp>
-#include <Beam/Parsers/Types.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/Definitions/Currency.hpp"
@@ -16,7 +16,7 @@ namespace Nexus {
     auto id = [] (const auto& value) {
       return value.m_id;
     };
-    return Beam::Parsers::EnumeratorParser(
+    return Beam::EnumeratorParser(
       boost::make_transform_iterator(currencies.get_entries().cbegin(), id),
       boost::make_transform_iterator(currencies.get_entries().cend(), id),
       [=] (auto id) {
@@ -31,7 +31,7 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Parsers {
+namespace Beam {
   template<>
   const auto default_parser<Nexus::CurrencyId> = Nexus::currency_parser();
 }

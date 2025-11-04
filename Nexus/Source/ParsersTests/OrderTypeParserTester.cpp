@@ -5,8 +5,6 @@
 #include "Nexus/Parsers/OrderTypeParser.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Parsers;
 using namespace Nexus;
 
 TEST_SUITE("OrderTypeParser") {
@@ -18,41 +16,41 @@ TEST_SUITE("OrderTypeParser") {
       std::tuple("PEGGED", OrderType::PEGGED),
       std::tuple("STOP", OrderType::STOP)};
     for(auto& entry : cases) {
-      auto stream = ParserStreamFromString(std::get<0>(entry));
+      auto stream = to_parser_stream(std::get<0>(entry));
       auto type = OrderType();
-      REQUIRE(parser.Read(stream, type));
+      REQUIRE(parser.read(stream, type));
       REQUIRE(type == std::get<1>(entry));
     }
   }
 
   TEST_CASE("invalid_order_type") {
     auto parser = order_type_parser();
-    auto stream = ParserStreamFromString("INVALID_TYPE");
+    auto stream = to_parser_stream("INVALID_TYPE");
     auto type = OrderType();
-    REQUIRE_FALSE(parser.Read(stream, type));
+    REQUIRE_FALSE(parser.read(stream, type));
   }
 
   TEST_CASE("lowercase_order_type") {
     auto parser = order_type_parser();
-    auto stream = ParserStreamFromString("market");
+    auto stream = to_parser_stream("market");
     auto type = OrderType();
-    REQUIRE_FALSE(parser.Read(stream, type));
+    REQUIRE_FALSE(parser.read(stream, type));
   }
 
   TEST_CASE("partial_order_type") {
     auto parser = order_type_parser();
-    auto stream = ParserStreamFromString("MAR");
+    auto stream = to_parser_stream("MAR");
     auto type = OrderType();
-    REQUIRE_FALSE(parser.Read(stream, type));
+    REQUIRE_FALSE(parser.read(stream, type));
   }
 
   TEST_CASE("multiple_order_types") {
     auto parser = order_type_parser();
-    auto stream = ParserStreamFromString("MARKETLIMIT");
+    auto stream = to_parser_stream("MARKETLIMIT");
     auto type = OrderType();
-    REQUIRE(parser.Read(stream, type));
+    REQUIRE(parser.read(stream, type));
     REQUIRE(type == OrderType::MARKET);
-    REQUIRE(parser.Read(stream, type));
+    REQUIRE(parser.read(stream, type));
     REQUIRE(type == OrderType::LIMIT);
   }
 }

@@ -60,18 +60,17 @@ namespace Nexus {
     auto excluded_orders =
       load_orders(account, snapshot.m_excluded_orders, client);
     auto trailing_order_query = AccountQuery();
-    trailing_order_query.SetIndex(account);
-    trailing_order_query.SetRange(Beam::Increment(snapshot.m_sequence),
-      Beam::Sequence::Present());
-    trailing_order_query.set_snapshot_limit(
-      Beam::SnapshotLimit::Unlimited());
-    auto trailing_orders_queue = std::make_shared<
-      Beam::Queue<Nexus::SequencedOrder>>();
+    trailing_order_query.set_index(account);
+    trailing_order_query.set_range(
+      Beam::increment(snapshot.m_sequence), Beam::Sequence::PRESENT);
+    trailing_order_query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
+    auto trailing_orders_queue =
+      std::make_shared<Beam::Queue<Nexus::SequencedOrder>>();
     client.query(trailing_order_query, trailing_orders_queue);
     auto sequence = snapshot.m_sequence;
-    Beam::ForEach(trailing_orders_queue, [&] (const auto& order) {
-      excluded_orders.push_back(order.GetValue());
-      sequence = std::max(sequence, order.GetSequence());
+    Beam::for_each(trailing_orders_queue, [&] (const auto& order) {
+      excluded_orders.push_back(order.get_value());
+      sequence = std::max(sequence, order.get_sequence());
     });
     auto portfolio = RiskPortfolio(
       RiskPortfolio::Bookkeeper(snapshot.m_inventories), std::move(venues));
@@ -79,15 +78,15 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::InventorySnapshot> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::InventorySnapshot& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::InventorySnapshot& value,
         unsigned int version) const {
-      shuttle.Shuttle("inventories", value.m_inventories);
-      shuttle.Shuttle("sequence", value.m_sequence);
-      shuttle.Shuttle("excluded_orders", value.m_excluded_orders);
+      shuttle.shuttle("inventories", value.m_inventories);
+      shuttle.shuttle("sequence", value.m_sequence);
+      shuttle.shuttle("excluded_orders", value.m_excluded_orders);
     }
   };
 }

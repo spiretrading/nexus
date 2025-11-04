@@ -4,12 +4,26 @@
 #include <type_traits>
 #include <utility>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Pointers/VirtualPtr.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Definitions/Region.hpp"
 #include "Nexus/RiskService/InventorySnapshot.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 
 namespace Nexus {
+
+  /** Checks if a type implements a RiskClient. */
+  template<typename T>
+  concept IsRiskClient = requires(T& client,
+      const Beam::DirectoryEntry& account, const Region& region) {
+    { client.load_inventory_snapshot(account) } ->
+      std::same_as<InventorySnapshot>;
+    client.reset(region);
+    { client.get_risk_portfolio_update_publisher() } ->
+      std::same_as<const RiskPortfolioUpdatePublisher&>;
+    client.close();
+  };
 
   /** Provides a generic interface over an arbitrary RiskClient. */
   class RiskClient {
@@ -17,24 +31,22 @@ namespace Nexus {
 
       /**
        * Constructs a RiskClient of a specified type using emplacement.
-       * @param <T> The type of risk client to emplace.
+       * @tparam T The type of risk client to emplace.
        * @param args The arguments to pass to the emplaced risk client.
        */
-      template<typename T, typename... Args>
+      template<IsRiskClient T, typename... Args>
       explicit RiskClient(std::in_place_type_t<T>, Args&&... args);
 
       /**
-       * Constructs a RiskClient by copying an existing risk client.
-       * @param client The client to copy.
+       * Constructs a RiskClient by referencing an existing risk client.
+       * @param client The client to reference.
        */
-      template<typename C>
-      explicit RiskClient(C client);
+      template<Beam::DisableCopy<RiskClient> T> requires
+        IsRiskClient<Beam::dereference_t<T>>
+      RiskClient(T&& client);
 
-      explicit RiskClient(RiskClient* client);
-
-      explicit RiskClient(const std::shared_ptr<RiskClient>& client);
-
-      explicit RiskClient(const std::unique_ptr<RiskClient>& client);
+      RiskClient(const RiskClient&) = default;
+      RiskClient(RiskClient&&) = default;
 
       /**
        * Loads the InventorySnapshot of a given account.
@@ -58,9 +70,10 @@ namespace Nexus {
     private:
       struct VirtualRiskClient {
         virtual ~VirtualRiskClient() = default;
+
         virtual InventorySnapshot load_inventory_snapshot(
-          const Beam::DirectoryEntry&) = 0;
-        virtual void reset(const Region&) = 0;
+          const Beam::DirectoryEntry& account) = 0;
+        virtual void reset(const Region& region) = 0;
         virtual const RiskPortfolioUpdatePublisher&
           get_risk_portfolio_update_publisher() = 0;
         virtual void close() = 0;
@@ -72,6 +85,7 @@ namespace Nexus {
 
         template<typename... Args>
         WrappedRiskClient(Args&&... args);
+
         InventorySnapshot load_inventory_snapshot(
           const Beam::DirectoryEntry& account) override;
         void reset(const Region& region) override;
@@ -79,31 +93,19 @@ namespace Nexus {
           get_risk_portfolio_update_publisher() override;
         void close() override;
       };
-      std::shared_ptr<VirtualRiskClient> m_client;
+      Beam::VirtualPtr<VirtualRiskClient> m_client;
   };
 
-  /** Checks if a type implements a RiskClient. */
-  template<typename T>
-  concept IsRiskClient = std::constructible_from<
-    RiskClient, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
-
-  template<typename T, typename... Args>
+  template<IsRiskClient T, typename... Args>
   RiskClient::RiskClient(std::in_place_type_t<T>, Args&&... args)
-    : m_client(std::make_shared<WrappedRiskClient<T>>(
+    : m_client(Beam::make_virtual_ptr<WrappedRiskClient<T>>(
         std::forward<Args>(args)...)) {}
 
-  template<typename C>
-  RiskClient::RiskClient(C client)
-    : RiskClient(std::in_place_type<C>, std::move(client)) {}
-
-  inline RiskClient::RiskClient(RiskClient* client)
-    : RiskClient(*client) {}
-
-  inline RiskClient::RiskClient(const std::shared_ptr<RiskClient>& client)
-    : RiskClient(*client) {}
-
-  inline RiskClient::RiskClient(const std::unique_ptr<RiskClient>& client)
-    : RiskClient(*client) {}
+  template<Beam::DisableCopy<RiskClient> T> requires
+    IsRiskClient<Beam::dereference_t<T>>
+  RiskClient::RiskClient(T&& client)
+    : RiskClient(std::in_place_type<Beam::dereference_t<T>>,
+        std::forward<T>(client)) {}
 
   inline InventorySnapshot RiskClient::load_inventory_snapshot(
       const Beam::DirectoryEntry& account) {
@@ -111,7 +113,7 @@ namespace Nexus {
   }
 
   inline void RiskClient::reset(const Region& region) {
-    return m_client->reset(region);
+    m_client->reset(region);
   }
 
   inline const RiskPortfolioUpdatePublisher&
@@ -120,7 +122,7 @@ namespace Nexus {
   }
 
   inline void RiskClient::close() {
-    return m_client->close();
+    m_client->close();
   }
 
   template<typename C>
@@ -136,7 +138,7 @@ namespace Nexus {
 
   template<typename C>
   void RiskClient::WrappedRiskClient<C>::reset(const Region& region) {
-    return m_client->reset(region);
+    m_client->reset(region);
   }
 
   template<typename C>
@@ -147,7 +149,7 @@ namespace Nexus {
 
   template<typename C>
   void RiskClient::WrappedRiskClient<C>::close() {
-    return m_client->close();
+    m_client->close();
   }
 }
 

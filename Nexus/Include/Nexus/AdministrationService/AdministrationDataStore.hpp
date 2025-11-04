@@ -142,6 +142,7 @@ namespace Nexus {
       AdministrationDataStore(T&& data_store);
 
       AdministrationDataStore(const AdministrationDataStore&) = default;
+      AdministrationDataStore(AdministrationDataStore&&) = default;
 
       /** Loads all AccountIdentities. */
       std::vector<IndexedAccountIdentity> load_all_account_identities();

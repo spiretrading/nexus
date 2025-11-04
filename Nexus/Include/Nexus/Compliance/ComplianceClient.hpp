@@ -55,6 +55,7 @@ namespace Nexus {
       ComplianceClient(T&& client);
 
       ComplianceClient(const ComplianceClient&) = default;
+      ComplianceClient(ComplianceClient&&) = default;
 
       /**
        * Loads all ComplianceRuleEntries for a specified DirectoryEntry.

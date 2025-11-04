@@ -154,6 +154,7 @@ namespace Nexus {
       AdministrationClient(T&& client);
 
       AdministrationClient(const AdministrationClient&) = default;
+      AdministrationClient(AdministrationClient&&) = default;
 
       /**
        * Loads the list of accounts that match a set of roles.
@@ -593,7 +594,7 @@ namespace Nexus {
   RiskParameters load_risk_parameters(IsAdministrationClient auto& client,
       const Beam::DirectoryEntry& account) {
     auto queue = std::make_shared<Beam::StateQueue<RiskParameters>>();
-    client.get_risk_parameters_publisher(account).Monitor(queue);
+    client.get_risk_parameters_publisher(account).monitor(queue);
     return queue->pop();
   }
 

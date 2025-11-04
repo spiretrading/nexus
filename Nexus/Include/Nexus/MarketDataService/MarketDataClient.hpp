@@ -73,6 +73,7 @@ namespace Nexus {
       MarketDataClient(T&& client);
 
       MarketDataClient(const MarketDataClient&) = default;
+      MarketDataClient(MarketDataClient&&) = default;
 
       /**
        * Submits a query for a Venue's OrderImbalances.

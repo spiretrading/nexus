@@ -49,6 +49,7 @@ namespace Nexus {
       ChartingClient(T&& client);
 
       ChartingClient(const ChartingClient&) = default;
+      ChartingClient(ChartingClient&&) = default;
 
       /**
        * Submits a query for a Security's technical info.

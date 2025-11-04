@@ -3,7 +3,6 @@
 #include "Nexus/RiskService/RiskStateModel.hpp"
 
 using namespace Beam;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -45,12 +44,12 @@ TEST_SUITE("RiskStateModel") {
     REQUIRE(model.get_risk_state() == RiskState::Type::ACTIVE);
     auto fields =
       make_limit_order_fields(S32, AUD, Side::BID, 100, Money::ONE);
-    auto report = ExecutionReport(1, time_client.GetTime());
+    auto report = ExecutionReport(1, time_client.get_time());
     model.get_portfolio().update(fields, report);
     model.update_portfolio();
     REQUIRE(model.get_risk_state().m_type == RiskState::Type::ACTIVE);
     auto fill_report =
-      make_update(report, OrderStatus::FILLED, time_client.GetTime());
+      make_update(report, OrderStatus::FILLED, time_client.get_time());
     fill_report.m_last_quantity = 100;
     fill_report.m_last_price = Money::ONE;
     model.get_portfolio().update(fields, fill_report);
@@ -63,17 +62,17 @@ TEST_SUITE("RiskStateModel") {
     model.get_portfolio().update(S32, Money::ONE + Money::CENT, Money::ONE);
     model.update_portfolio();
     REQUIRE(model.get_risk_state().m_type == RiskState::Type::ACTIVE);
-    time_client.SetTime(time_from_string("2020-03-20 13:13:00"));
+    time_client.set(time_from_string("2020-03-20 13:13:00"));
     model.update_time();
     model.get_portfolio().update(S32, Money::ONE, 99 * Money::CENT);
     model.update_portfolio();
     REQUIRE(model.get_risk_state() == RiskState(
       RiskState::Type::CLOSE_ORDERS, time_from_string("2020-03-20 13:14:00")));
-    time_client.SetTime(time_from_string("2020-03-20 13:13:30"));
+    time_client.set(time_from_string("2020-03-20 13:13:30"));
     model.update_time();
     REQUIRE(model.get_risk_state() == RiskState(
       RiskState::Type::CLOSE_ORDERS, time_from_string("2020-03-20 13:14:00")));
-    time_client.SetTime(time_from_string("2020-03-20 13:14:00"));
+    time_client.set(time_from_string("2020-03-20 13:14:00"));
     model.update_time();
     REQUIRE(model.get_risk_state() == RiskState::Type::DISABLED);
     model.get_portfolio().update(S32, Money::ONE + Money::CENT, Money::ONE);
@@ -91,10 +90,10 @@ TEST_SUITE("RiskStateModel") {
     portfolio.update(S32, Money::ONE, 99 * Money::CENT);
     auto fields =
       make_limit_order_fields(S32, AUD, Side::BID, 100, Money::ONE);
-    auto report = ExecutionReport(1, time_client.GetTime());
+    auto report = ExecutionReport(1, time_client.get_time());
     portfolio.update(fields, report);
     auto fill_report =
-      make_update(report, OrderStatus::FILLED, time_client.GetTime());
+      make_update(report, OrderStatus::FILLED, time_client.get_time());
     fill_report.m_last_quantity = 100;
     fill_report.m_last_price = Money::ONE;
     portfolio.update(fields, fill_report);
@@ -120,22 +119,22 @@ TEST_SUITE("RiskStateModel") {
       XIU, 2 * Money::ONE, Money::ONE + 99 * Money::CENT);
     auto s32_fields =
       make_limit_order_fields(S32, AUD, Side::BID, 100, Money::ONE);
-    auto s32_report = ExecutionReport(1, time_client.GetTime());
+    auto s32_report = ExecutionReport(1, time_client.get_time());
     model.get_portfolio().update(s32_fields, s32_report);
     model.update_portfolio();
     auto s32_fill_report =
-      make_update(s32_report, OrderStatus::FILLED, time_client.GetTime());
+      make_update(s32_report, OrderStatus::FILLED, time_client.get_time());
     s32_fill_report.m_last_quantity = 100;
     s32_fill_report.m_last_price = Money::ONE;
     model.get_portfolio().update(s32_fields, s32_fill_report);
     model.update_portfolio();
     auto xiu_fields =
       make_limit_order_fields(XIU, CAD, Side::ASK, 100, 2 * Money::ONE);
-    auto xiu_report = ExecutionReport(2, time_client.GetTime());
+    auto xiu_report = ExecutionReport(2, time_client.get_time());
     model.get_portfolio().update(xiu_fields, xiu_report);
     model.update_portfolio();
     auto xiu_fill_report =
-      make_update(xiu_report, OrderStatus::FILLED, time_client.GetTime());
+      make_update(xiu_report, OrderStatus::FILLED, time_client.get_time());
     xiu_fill_report.m_last_quantity = 100;
     xiu_fill_report.m_last_price = 2 * Money::ONE;
     model.get_portfolio().update(xiu_fields, xiu_fill_report);
@@ -160,11 +159,11 @@ TEST_SUITE("RiskStateModel") {
     model.get_portfolio().update(S32, Money::ONE, 99 * Money::CENT);
     auto fields =
       make_limit_order_fields(S32, AUD, Side::BID, 100, Money::ONE);
-    auto report = ExecutionReport(1, time_client.GetTime());
+    auto report = ExecutionReport(1, time_client.get_time());
     model.get_portfolio().update(fields, report);
     model.update_portfolio();
     auto fill_report =
-      make_update(report, OrderStatus::FILLED, time_client.GetTime());
+      make_update(report, OrderStatus::FILLED, time_client.get_time());
     fill_report.m_last_quantity = 100;
     fill_report.m_last_price = Money::ONE;
     model.get_portfolio().update(fields, fill_report);

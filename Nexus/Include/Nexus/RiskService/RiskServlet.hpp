@@ -7,6 +7,8 @@
 #include <Beam/Queues/QueueReaderPublisher.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/SnapshotPublisher.hpp>
+#include <Beam/TimeService/TimeClient.hpp>
+#include <Beam/TimeService/Timer.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/RiskService/ConsolidatedRiskController.hpp"
@@ -26,12 +28,15 @@ namespace Nexus {
    * @param <T> The type of TimeClient to use.
    * @param <D> The type of RiskDataStore to use.
    */
-  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename C, typename A, typename M, typename O, Beam::IsTimer R,
+    typename T, typename D> requires
+      IsAdministrationClient<Beam::dereference_t<A>> &&
+        IsMarketDataClient<Beam::dereference_t<M>> &&
+          IsOrderExecutionClient<Beam::dereference_t<O>> &&
+            Beam::IsTimeClient<Beam::dereference_t<T>> &&
+              IsRiskDataStore<Beam::dereference_t<D>>
   class RiskServlet {
     public:
-      using Container = C;
-      using ServiceProtocolClient = typename Container::ServiceProtocolClient;
 
       /** The type of AdministrationClient to use used. */
       using AdministrationClient = Beam::dereference_t<A>;
@@ -55,6 +60,9 @@ namespace Nexus {
       using TransitionTimerFactory =
         std::function<std::unique_ptr<TransitionTimer> ()>;
 
+      using Container = C;
+      using ServiceProtocolClient = typename Container::ServiceProtocolClient;
+
       /**
        * Constructs a RiskServlet.
        * @param accounts Publishes the accounts whose risk is to be managed.
@@ -72,22 +80,18 @@ namespace Nexus {
       template<Beam::Initializes<A> AF, Beam::Initializes<M> MF,
         Beam::Initializes<O> OF, Beam::Initializes<T> TF,
         Beam::Initializes<D> DF>
-      RiskServlet(
-        Beam::ScopedQueueReader<Beam::DirectoryEntry> accounts,
+      RiskServlet(Beam::ScopedQueueReader<Beam::DirectoryEntry> accounts,
         AF&& administration_client, MF&& market_data_client,
         OF&& order_execution_client,
         TransitionTimerFactory transition_timer_factory, TF&& time_client,
         DF&& data_store, ExchangeRateTable exchange_rates, VenueDatabase venues,
         DestinationDatabase destinations);
 
-      void RegisterServices(
+      void register_services(
         Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots);
-
-      void HandleClientAccepted(ServiceProtocolClient& client);
-
-      void HandleClientClosed(ServiceProtocolClient& client);
-
-      void Close();
+      void handle_accept(ServiceProtocolClient& client);
+      void handle_close(ServiceProtocolClient& client);
+      void close();
 
     private:
       using ConsolidatedRiskController =
@@ -103,14 +107,12 @@ namespace Nexus {
       ExchangeRateTable m_exchange_rates;
       VenueDatabase m_venues;
       DestinationDatabase m_destinations;
-      std::shared_ptr<
-        Beam::SnapshotPublisher<Beam::DirectoryEntry,
+      std::shared_ptr<Beam::SnapshotPublisher<Beam::DirectoryEntry,
         std::vector<Beam::DirectoryEntry>>> m_account_publisher;
       std::unordered_map<RiskPortfolioKey, Quantity> m_volumes;
       boost::optional<ConsolidatedRiskController> m_controller;
-      Beam::SynchronizedUnorderedMap<Beam::DirectoryEntry,
-        Beam::DirectoryEntry, Beam::Mutex>
-        m_account_to_group;
+      Beam::SynchronizedUnorderedMap<Beam::DirectoryEntry, Beam::DirectoryEntry,
+        Beam::Mutex> m_account_to_group;
       Beam::SynchronizedVector<ServiceProtocolClient*, Beam::Mutex>
         m_portfolio_subscribers;
       Beam::OpenState m_open_state;
@@ -119,33 +121,36 @@ namespace Nexus {
       RiskServlet(const RiskServlet&) = delete;
       RiskServlet& operator =(const RiskServlet&) = delete;
       void make_controller();
-      void reset(const Beam::DirectoryEntry& account,
-        const Region& region);
-      Beam::DirectoryEntry load_group(
-        const Beam::DirectoryEntry& account);
+      void reset(const Beam::DirectoryEntry& account, const Region& region);
+      Beam::DirectoryEntry load_group(const Beam::DirectoryEntry& account);
       void on_risk_state(const RiskStateEntry& entry);
       void on_portfolio(const RiskInventoryEntry& entry);
       InventorySnapshot on_load_inventory_snapshot(
-        ServiceProtocolClient& client,
-        const Beam::DirectoryEntry& account);
+        ServiceProtocolClient& client, const Beam::DirectoryEntry& account);
       void on_reset_region(ServiceProtocolClient& client, const Region& region);
       void on_subscribe_risk_portfolio_updates_request(
         Beam::RequestToken<ServiceProtocolClient,
           SubscribeRiskPortfolioUpdatesService>& request);
   };
 
-  template<IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename A, typename M, typename O, typename R, typename T,
+    typename D>
   struct MetaRiskServlet {
     using Session = RiskSession;
+
     template<typename C>
     struct apply {
       using type = RiskServlet<C, A, M, O, R, T, D>;
     };
   };
 
-  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename C, typename A, typename M, typename O, Beam::IsTimer R,
+    typename T, typename D> requires
+      IsAdministrationClient<Beam::dereference_t<A>> &&
+        IsMarketDataClient<Beam::dereference_t<M>> &&
+          IsOrderExecutionClient<Beam::dereference_t<O>> &&
+            Beam::IsTimeClient<Beam::dereference_t<T>> &&
+              IsRiskDataStore<Beam::dereference_t<D>>
   template<Beam::Initializes<A> AF, Beam::Initializes<M> MF,
     Beam::Initializes<O> OF, Beam::Initializes<T> TF, Beam::Initializes<D> DF>
   RiskServlet<C, A, M, O, R, T, D>::RiskServlet(
@@ -164,96 +169,124 @@ namespace Nexus {
       m_exchange_rates(std::move(exchange_rates)),
       m_venues(std::move(venues)),
       m_destinations(std::move(destinations)),
-      m_account_publisher(Beam::MakeSequencePublisherAdaptor(std::make_unique<
-        Beam::QueueReaderPublisher<Beam::DirectoryEntry>>(
+      m_account_publisher(Beam::make_sequence_publisher_adaptor(
+        std::make_unique<Beam::QueueReaderPublisher<Beam::DirectoryEntry>>(
           std::move(accounts)))) {
     try {
       make_controller();
     } catch(const std::exception&) {
-      Close();
+      close();
       BOOST_RETHROW;
     }
   }
 
-  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
-  void RiskServlet<C, A, M, O, R, T, D>::RegisterServices(
+  template<typename C, typename A, typename M, typename O, Beam::IsTimer R,
+    typename T, typename D> requires
+      IsAdministrationClient<Beam::dereference_t<A>> &&
+        IsMarketDataClient<Beam::dereference_t<M>> &&
+          IsOrderExecutionClient<Beam::dereference_t<O>> &&
+            Beam::IsTimeClient<Beam::dereference_t<T>> &&
+              IsRiskDataStore<Beam::dereference_t<D>>
+  void RiskServlet<C, A, M, O, R, T, D>::register_services(
       Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots) {
-    RegisterRiskServices(Store(slots));
-    RegisterRiskMessages(Store(slots));
-    LoadInventorySnapshotService::AddSlot(Store(slots),
+    register_risk_services(out(slots));
+    register_risk_messages(out(slots));
+    LoadInventorySnapshotService::add_slot(out(slots),
       std::bind_front(&RiskServlet::on_load_inventory_snapshot, this));
-    ResetRegionService::AddSlot(
-      Store(slots), std::bind_front(&RiskServlet::on_reset_region, this));
-    SubscribeRiskPortfolioUpdatesService::AddRequestSlot(
-      Store(slots), std::bind_front(
+    ResetRegionService::add_slot(
+      out(slots), std::bind_front(&RiskServlet::on_reset_region, this));
+    SubscribeRiskPortfolioUpdatesService::add_request_slot(
+      out(slots), std::bind_front(
         &RiskServlet::on_subscribe_risk_portfolio_updates_request, this));
   }
 
-  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
-  void RiskServlet<C, A, M, O, R, T, D>::HandleClientAccepted(
+  template<typename C, typename A, typename M, typename O, Beam::IsTimer R,
+    typename T, typename D> requires
+      IsAdministrationClient<Beam::dereference_t<A>> &&
+        IsMarketDataClient<Beam::dereference_t<M>> &&
+          IsOrderExecutionClient<Beam::dereference_t<O>> &&
+            Beam::IsTimeClient<Beam::dereference_t<T>> &&
+              IsRiskDataStore<Beam::dereference_t<D>>
+  void RiskServlet<C, A, M, O, R, T, D>::handle_accept(
       ServiceProtocolClient& client) {
-    auto& session = client.GetSession();
-    if(m_administration_client->check_administrator(session.GetAccount())) {
+    auto& session = client.get_session();
+    if(m_administration_client->check_administrator(session.get_account())) {
       session.add_all();
     } else {
       auto groups = m_administration_client->load_managed_trading_groups(
-        session.GetAccount());
+        session.get_account());
       for(auto& group : groups) {
         session.add(group);
       }
     }
   }
 
-  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
-  void RiskServlet<C, A, M, O, R, T, D>::HandleClientClosed(
+  template<typename C, typename A, typename M, typename O, Beam::IsTimer R,
+    typename T, typename D> requires
+      IsAdministrationClient<Beam::dereference_t<A>> &&
+        IsMarketDataClient<Beam::dereference_t<M>> &&
+          IsOrderExecutionClient<Beam::dereference_t<O>> &&
+            Beam::IsTimeClient<Beam::dereference_t<T>> &&
+              IsRiskDataStore<Beam::dereference_t<D>>
+  void RiskServlet<C, A, M, O, R, T, D>::handle_close(
       ServiceProtocolClient& client) {
-    m_portfolio_subscribers.Remove(&client);
+    m_portfolio_subscribers.erase(&client);
   }
 
-  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
-  void RiskServlet<C, A, M, O, R, T, D>::Close() {
-    if(m_open_state.SetClosing()) {
+  template<typename C, typename A, typename M, typename O, Beam::IsTimer R,
+    typename T, typename D> requires
+      IsAdministrationClient<Beam::dereference_t<A>> &&
+        IsMarketDataClient<Beam::dereference_t<M>> &&
+          IsOrderExecutionClient<Beam::dereference_t<O>> &&
+            Beam::IsTimeClient<Beam::dereference_t<T>> &&
+              IsRiskDataStore<Beam::dereference_t<D>>
+  void RiskServlet<C, A, M, O, R, T, D>::close() {
+    if(m_open_state.set_closing()) {
       return;
     }
     m_controller = boost::none;
-    m_tasks.Break();
-    m_tasks.Wait();
-    m_open_state.Close();
+    m_tasks.close();
+    m_tasks.wait();
+    m_open_state.close();
   }
 
-  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename C, typename A, typename M, typename O, Beam::IsTimer R,
+    typename T, typename D> requires
+      IsAdministrationClient<Beam::dereference_t<A>> &&
+        IsMarketDataClient<Beam::dereference_t<M>> &&
+          IsOrderExecutionClient<Beam::dereference_t<O>> &&
+            Beam::IsTimeClient<Beam::dereference_t<T>> &&
+              IsRiskDataStore<Beam::dereference_t<D>>
   void RiskServlet<C, A, M, O, R, T, D>::make_controller() {
-    auto accounts =
-      std::make_shared<Beam::Queue<Beam::DirectoryEntry>>();
-    m_account_publisher->Monitor(accounts);
+    auto accounts = std::make_shared<Beam::Queue<Beam::DirectoryEntry>>();
+    m_account_publisher->monitor(accounts);
     m_controller.emplace(std::move(accounts), &*m_administration_client,
       &*m_market_data_client, &*m_order_execution_client,
       m_transition_timer_factory, &*m_time_client, &*m_data_store,
       m_exchange_rates, m_venues, m_destinations);
-    m_controller->get_risk_state_publisher().Monitor(
-      m_tasks.GetSlot<RiskStateEntry>(
+    m_controller->get_risk_state_publisher().monitor(
+      m_tasks.get_slot<RiskStateEntry>(
         std::bind_front(&RiskServlet::on_risk_state, this)));
-    m_controller->get_portfolio_publisher().Monitor(
-      m_tasks.GetSlot<RiskInventoryEntry>(
+    m_controller->get_portfolio_publisher().monitor(
+      m_tasks.get_slot<RiskInventoryEntry>(
         std::bind_front(&RiskServlet::on_portfolio, this)));
   }
 
-  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename C, typename A, typename M, typename O, Beam::IsTimer R,
+    typename T, typename D> requires
+      IsAdministrationClient<Beam::dereference_t<A>> &&
+        IsMarketDataClient<Beam::dereference_t<M>> &&
+          IsOrderExecutionClient<Beam::dereference_t<O>> &&
+            Beam::IsTimeClient<Beam::dereference_t<T>> &&
+              IsRiskDataStore<Beam::dereference_t<D>>
   void RiskServlet<C, A, M, O, R, T, D>::reset(
-      const Beam::DirectoryEntry& account,
-      const Region& region) {
+      const Beam::DirectoryEntry& account, const Region& region) {
     auto snapshot = m_data_store->load_inventory_snapshot(account);
     auto [portfolio, sequence, excluded_orders] = make_portfolio(
       snapshot, account, m_venues, *m_order_execution_client);
     auto reports = std::vector<ExecutionReportEntry>();
     for(auto& order : excluded_orders) {
-      if(auto order_snapshot = order->get_publisher().GetSnapshot()) {
+      if(auto order_snapshot = order->get_publisher().get_snapshot()) {
         std::transform(order_snapshot->begin(), order_snapshot->end(),
           std::back_inserter(reports), [&] (const auto& report) {
             return ExecutionReportEntry(order, report);
@@ -293,7 +326,7 @@ namespace Nexus {
         inventory.m_transaction_count = base_inventory.m_transaction_count -
           inventory.m_transaction_count;
         updated_snapshot.m_inventories.push_back(inventory);
-        m_tasks.Push([this,
+        m_tasks.push([this,
             key = RiskPortfolioKey(account, inventory.m_position.m_security)] {
           m_volumes[key] = -1;
         });
@@ -310,11 +343,11 @@ namespace Nexus {
     m_data_store->store(account, updated_snapshot);
     if(!reset_inventories.empty()) {
       auto group = load_group(account);
-      m_portfolio_subscribers.With([&] (auto& subscribers) {
+      m_portfolio_subscribers.with([&] (auto& subscribers) {
         for(auto& subscriber : subscribers) {
-          auto& session = subscriber->GetSession();
+          auto& session = subscriber->get_session();
           if(session.has_subscription(group)) {
-            Beam::SendRecordMessage<InventoryMessage>(
+            Beam::send_record_message<InventoryMessage>(
               *subscriber, reset_inventories);
           }
         }
@@ -322,24 +355,39 @@ namespace Nexus {
     }
   }
 
-  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename C, typename A, typename M, typename O, Beam::IsTimer R,
+    typename T, typename D> requires
+      IsAdministrationClient<Beam::dereference_t<A>> &&
+        IsMarketDataClient<Beam::dereference_t<M>> &&
+          IsOrderExecutionClient<Beam::dereference_t<O>> &&
+            Beam::IsTimeClient<Beam::dereference_t<T>> &&
+              IsRiskDataStore<Beam::dereference_t<D>>
   Beam::DirectoryEntry RiskServlet<C, A, M, O, R, T, D>::
       load_group(const Beam::DirectoryEntry& account) {
-    return m_account_to_group.GetOrInsert(account, [&] {
+    return m_account_to_group.get_or_insert(account, [&] {
       return m_administration_client->load_parent_trading_group(account);
     });
   }
 
-  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename C, typename A, typename M, typename O, Beam::IsTimer R,
+    typename T, typename D> requires
+      IsAdministrationClient<Beam::dereference_t<A>> &&
+        IsMarketDataClient<Beam::dereference_t<M>> &&
+          IsOrderExecutionClient<Beam::dereference_t<O>> &&
+            Beam::IsTimeClient<Beam::dereference_t<T>> &&
+              IsRiskDataStore<Beam::dereference_t<D>>
   void RiskServlet<C, A, M, O, R, T, D>::on_risk_state(
       const RiskStateEntry& entry) {
     m_administration_client->store(entry.m_key, entry.m_value);
   }
 
-  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename C, typename A, typename M, typename O, Beam::IsTimer R,
+    typename T, typename D> requires
+      IsAdministrationClient<Beam::dereference_t<A>> &&
+        IsMarketDataClient<Beam::dereference_t<M>> &&
+          IsOrderExecutionClient<Beam::dereference_t<O>> &&
+            Beam::IsTimeClient<Beam::dereference_t<T>> &&
+              IsRiskDataStore<Beam::dereference_t<D>>
   void RiskServlet<C, A, M, O, R, T, D>::on_portfolio(
       const RiskInventoryEntry& entry) {
     auto& volume = m_volumes[entry.m_key];
@@ -353,43 +401,48 @@ namespace Nexus {
     update.inventory = entry.m_value;
     inventories.push_back(update);
     auto group = load_group(entry.m_key.m_account);
-    m_portfolio_subscribers.With([&] (auto& subscribers) {
-      for(auto& subscriber : subscribers) {
-        auto& session = subscriber->GetSession();
-        if(session.GetAccount() == entry.m_key.m_account ||
-            session.has_subscription(group)) {
-          Beam::SendRecordMessage<InventoryMessage>(
-            *subscriber, inventories);
-        }
+    m_portfolio_subscribers.for_each([&] (auto& subscriber) {
+      auto& session = subscriber->get_session();
+      if(session.get_account() == entry.m_key.m_account ||
+          session.has_subscription(group)) {
+        Beam::send_record_message<InventoryMessage>(*subscriber, inventories);
       }
     });
   }
 
-  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename C, typename A, typename M, typename O, Beam::IsTimer R,
+    typename T, typename D> requires
+      IsAdministrationClient<Beam::dereference_t<A>> &&
+        IsMarketDataClient<Beam::dereference_t<M>> &&
+          IsOrderExecutionClient<Beam::dereference_t<O>> &&
+            Beam::IsTimeClient<Beam::dereference_t<T>> &&
+              IsRiskDataStore<Beam::dereference_t<D>>
   InventorySnapshot RiskServlet<C, A, M, O, R, T, D>::
       on_load_inventory_snapshot(ServiceProtocolClient& client,
         const Beam::DirectoryEntry& account) {
-    auto& session = client.GetSession();
-    if(account != session.GetAccount() &&
+    auto& session = client.get_session();
+    if(account != session.get_account() &&
         !session.has_subscription(load_group(account))) {
-      throw Beam::ServiceRequestException(
-        "Insufficient permissions.");
+      throw Beam::ServiceRequestException("Insufficient permissions.");
     }
     return m_data_store->load_inventory_snapshot(account);
   }
 
-  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename C, typename A, typename M, typename O, Beam::IsTimer R,
+    typename T, typename D> requires
+      IsAdministrationClient<Beam::dereference_t<A>> &&
+        IsMarketDataClient<Beam::dereference_t<M>> &&
+          IsOrderExecutionClient<Beam::dereference_t<O>> &&
+            Beam::IsTimeClient<Beam::dereference_t<T>> &&
+              IsRiskDataStore<Beam::dereference_t<D>>
   void RiskServlet<C, A, M, O, R, T, D>::on_reset_region(
       ServiceProtocolClient& client, const Region& region) {
-    auto& session = client.GetSession();
-    if(!m_administration_client->check_administrator(session.GetAccount())) {
-      throw Beam::ServiceRequestException(
-        "Insufficient permissions.");
+    auto& session = client.get_session();
+    if(!m_administration_client->check_administrator(session.get_account())) {
+      throw Beam::ServiceRequestException("Insufficient permissions.");
     }
     m_controller = boost::none;
-    if(auto accounts = m_account_publisher->GetSnapshot()) {
+    if(auto accounts = m_account_publisher->get_snapshot()) {
       for(auto& account : *accounts) {
         try {
           reset(account, region);
@@ -402,24 +455,29 @@ namespace Nexus {
     make_controller();
   }
 
-  template<typename C, IsAdministrationClient A, IsMarketDataClient M,
-    IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
+  template<typename C, typename A, typename M, typename O, Beam::IsTimer R,
+    typename T, typename D> requires
+      IsAdministrationClient<Beam::dereference_t<A>> &&
+        IsMarketDataClient<Beam::dereference_t<M>> &&
+          IsOrderExecutionClient<Beam::dereference_t<O>> &&
+            Beam::IsTimeClient<Beam::dereference_t<T>> &&
+              IsRiskDataStore<Beam::dereference_t<D>>
   void RiskServlet<C, A, M, O, R, T, D>::
       on_subscribe_risk_portfolio_updates_request(Beam::RequestToken<
         ServiceProtocolClient, SubscribeRiskPortfolioUpdatesService>& request) {
-    auto& session = request.GetSession();
-    m_portfolio_subscribers.With([&] (auto& subscribers) {
+    auto& session = request.get_session();
+    m_portfolio_subscribers.with([&] (auto& subscribers) {
       auto entries = std::vector<RiskInventoryEntry>();
-      subscribers.push_back(&request.GetClient());
+      subscribers.push_back(&request.get_client());
       auto queue = std::make_shared<Beam::Queue<RiskInventoryEntry>>();
-      m_controller->get_portfolio_publisher().Monitor(queue);
+      m_controller->get_portfolio_publisher().monitor(queue);
       while(auto entry = queue->try_pop()) {
-        if(session.GetAccount() == entry->m_key.m_account ||
+        if(session.get_account() == entry->m_key.m_account ||
             session.has_subscription(load_group(entry->m_key.m_account))) {
           entries.push_back(std::move(*entry));
         }
       }
-      request.SetResult(std::move(entries));
+      request.set(std::move(entries));
     });
   }
 }
