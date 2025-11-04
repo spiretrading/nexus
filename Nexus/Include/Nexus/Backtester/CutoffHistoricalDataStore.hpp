@@ -19,7 +19,7 @@ namespace Nexus {
     public:
 
       /** The type of underlying data store to wrap. */
-      using HistoricalDataStore = Beam::GetTryDereferenceType<D>;
+      using HistoricalDataStore = Beam::dereference_t<D>;
 
       /**
        * Constructs a CutoffHistoricalDataStore.
@@ -53,24 +53,24 @@ namespace Nexus {
       void close();
 
     private:
-      mutable Beam::Threading::Mutex m_mutex;
-      Beam::GetOptionalLocalPtr<D> m_data_store;
+      mutable Beam::Mutex m_mutex;
+      Beam::local_ptr_t<D> m_data_store;
       boost::posix_time::ptime m_cutoff;
-      std::unordered_map<Venue, Beam::Queries::Sequence>
+      std::unordered_map<Venue, Beam::Sequence>
         m_order_imbalance_cutoffs;
-      std::unordered_map<Security, Beam::Queries::Sequence> m_bbo_cutoffs;
-      std::unordered_map<Security, Beam::Queries::Sequence>
+      std::unordered_map<Security, Beam::Sequence> m_bbo_cutoffs;
+      std::unordered_map<Security, Beam::Sequence>
         m_book_quote_cutoffs;
-      std::unordered_map<Security, Beam::Queries::Sequence>
+      std::unordered_map<Security, Beam::Sequence>
         m_time_and_sales_cutoffs;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       CutoffHistoricalDataStore(const CutoffHistoricalDataStore&) = delete;
       CutoffHistoricalDataStore& operator =(
         const CutoffHistoricalDataStore&) = delete;
       template<typename Query, typename F>
       std::invoke_result_t<F, const Query&> load(const Query& query,
-        std::unordered_map<typename Query::Index, Beam::Queries::Sequence>&
+        std::unordered_map<typename Query::Index, Beam::Sequence>&
           cutoffs, F loader);
   };
 
@@ -193,7 +193,7 @@ namespace Nexus {
   template<typename Query, typename F>
   std::invoke_result_t<F, const Query&> CutoffHistoricalDataStore<D>::load(
       const Query& query, std::unordered_map<
-        typename Query::Index, Beam::Queries::Sequence>& cutoffs,
+        typename Query::Index, Beam::Sequence>& cutoffs,
       F loader) {
     if(auto start_timestamp =
         boost::get<boost::posix_time::ptime>(&query.GetRange().GetStart())) {
@@ -204,18 +204,18 @@ namespace Nexus {
     auto cutoff_sequence = [&] {
       auto lock = std::lock_guard(m_mutex);
       auto cutoff = cutoffs.find(query.GetIndex());
-      auto range_end = Beam::Queries::Range::Point(m_cutoff);
+      auto range_end = Beam::Range::Point(m_cutoff);
       while(cutoff == cutoffs.end()) {
         auto cutoff_query = Query();
         cutoff_query.SetIndex(query.GetIndex());
         cutoff_query.SetRange(
-          Beam::Queries::Range(Beam::Queries::Sequence::First(), range_end));
-        cutoff_query.SetSnapshotLimit(
-          Beam::Queries::SnapshotLimit::FromTail(100));
+          Beam::Range(Beam::Sequence::First(), range_end));
+        cutoff_query.set_snapshot_limit(
+          Beam::SnapshotLimit::FromTail(100));
         auto sequences = loader(cutoff_query);
         if(sequences.empty()) {
           cutoff = cutoffs.insert(std::pair(
-            query.GetIndex(), Beam::Queries::Sequence::First())).first;
+            query.GetIndex(), Beam::Sequence::First())).first;
         } else {
           for(auto i = sequences.rbegin(); i != sequences.rend(); ++i) {
             if((*i)->m_timestamp < m_cutoff) {
@@ -228,19 +228,19 @@ namespace Nexus {
             break;
           }
           if(sequences.front().GetSequence() ==
-              Beam::Queries::Sequence::First()) {
+              Beam::Sequence::First()) {
             cutoff = cutoffs.insert(std::pair(
-              query.GetIndex(), Beam::Queries::Sequence::First())).first;
+              query.GetIndex(), Beam::Sequence::First())).first;
           } else {
             range_end =
-              Beam::Queries::Decrement(sequences.front().GetSequence());
+              Beam::Decrement(sequences.front().GetSequence());
           }
         }
       }
       return cutoff->second;
     }();
     if(auto start_sequence =
-        boost::get<Beam::Queries::Sequence>(&query.GetRange().GetStart())) {
+        boost::get<Beam::Sequence>(&query.GetRange().GetStart())) {
       if(*start_sequence > cutoff_sequence) {
         return {};
       }
@@ -252,7 +252,7 @@ namespace Nexus {
         query.GetRange().GetStart(), std::min(*end_timestamp, m_cutoff));
     } else {
       cutoff_query.SetRange(query.GetRange().GetStart(),
-        std::min(boost::get<Beam::Queries::Sequence>(query.GetRange().GetEnd()),
+        std::min(boost::get<Beam::Sequence>(query.GetRange().GetEnd()),
           cutoff_sequence));
     }
     return loader(cutoff_query);

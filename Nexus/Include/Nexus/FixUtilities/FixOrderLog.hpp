@@ -164,7 +164,7 @@ namespace Details {
         template<typename F>
         RecoveredExecutionReport(FixExecutionReport message, F&& callback);
       };
-      Beam::Threading::Sync<
+      Beam::Sync<
         std::unordered_map<OrderId, std::shared_ptr<PrimitiveOrder>>> m_orders;
       Beam::SynchronizedUnorderedMap<OrderId,
         Beam::SynchronizedVector<RecoveredExecutionReport>>
@@ -250,7 +250,7 @@ namespace Details {
   }
 
   inline std::shared_ptr<PrimitiveOrder> FixOrderLog::find(OrderId id) const {
-    return Beam::Threading::With(m_orders, [&] (const auto& orders) {
+    return Beam::With(m_orders, [&] (const auto& orders) {
       auto i = orders.find(id);
       if(i == orders.end()) {
         return std::shared_ptr<PrimitiveOrder>();
@@ -411,7 +411,7 @@ namespace Details {
   inline std::shared_ptr<PrimitiveOrder> FixOrderLog::add(
       const OrderInfo& info, FIX::Side side) {
     auto order = std::make_shared<FixOrder>(info, side);
-    Beam::Threading::With(m_orders, [&] (auto& orders) {
+    Beam::With(m_orders, [&] (auto& orders) {
       orders.insert(std::pair(info.m_id, order));
     });
     return order;
@@ -420,7 +420,7 @@ namespace Details {
   inline std::shared_ptr<PrimitiveOrder> FixOrderLog::add(
       const OrderRecord& record, FIX::Side side) {
     auto order = std::make_shared<FixOrder>(record, side);
-    Beam::Threading::With(m_orders, [&] (auto& orders) {
+    Beam::With(m_orders, [&] (auto& orders) {
       orders.insert(std::pair(record.m_info.m_id, order));
     });
     return order;
@@ -429,7 +429,7 @@ namespace Details {
   inline std::shared_ptr<PrimitiveOrder> FixOrderLog::reject(
       const OrderInfo& info, const std::string& reason) {
     auto order = make_rejected_order(info, reason);
-    Beam::Threading::With(m_orders, [&] (auto& orders) {
+    Beam::With(m_orders, [&] (auto& orders) {
       orders.insert(std::pair(info.m_id, order));
     });
     return order;

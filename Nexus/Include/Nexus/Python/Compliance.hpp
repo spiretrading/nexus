@@ -36,7 +36,7 @@ namespace Nexus::Python {
       def("remove", &C::remove).
       def("report", &C::report).
       def("monitor_compliance_rule_entries", [] (C& self,
-          const Beam::ServiceLocator::DirectoryEntry& directory_entry,
+          const Beam::DirectoryEntry& directory_entry,
           Beam::ScopedQueueWriter<ComplianceRuleEntry> queue) {
         auto snapshot = std::vector<ComplianceRuleEntry>();
         self.monitor_compliance_rule_entries(directory_entry,

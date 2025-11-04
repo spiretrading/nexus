@@ -17,16 +17,18 @@ namespace Nexus {
    * @param <C> The type of OrderExecutionClient used to cancel the orders.
    * @param <S> The type series producing the orders to cancel.
    */
-  template<IsOrderExecutionClient C, typename S>
+  template<typename C, typename S> requires
+    IsOrderExecutionClient<Beam::dereference_t<C>>
   class OrderCancellationReactor {
     public:
-      using Type = std::shared_ptr<Order>;
 
       /** The type of OrderExecutionClient used to cancel the orders. */
-      using OrderExecutionClient = Beam::GetTryDereferenceType<C>;
+      using OrderExecutionClient = Beam::dereference_t<C>;
 
       /** The type series producing the orders to cancel. */
       using Series = S;
+
+      using Type = std::shared_ptr<Order>;
 
       static constexpr auto is_noexcept = Aspen::is_noexcept_reactor_v<Series>;
 
@@ -39,11 +41,10 @@ namespace Nexus {
       OrderCancellationReactor(CF&& client, Series series);
 
       Aspen::State commit(int sequence) noexcept;
-
       std::shared_ptr<Order> eval() const noexcept(is_noexcept);
 
     private:
-      Beam::GetOptionalLocalPtr<C> m_client;
+      Beam::local_ptr_t<C> m_client;
       Series m_series;
       bool m_is_series_complete;
       std::vector<std::shared_ptr<Order>> m_orders;
@@ -54,19 +55,21 @@ namespace Nexus {
 
   template<typename C, typename S>
   OrderCancellationReactor(C&&, S) ->
-    OrderCancellationReactor<std::decay_t<C>, S>;
+    OrderCancellationReactor<std::remove_cvref_t<C>, S>;
 
-  template<IsOrderExecutionClient C, typename S>
+  template<typename C, typename S> requires
+    IsOrderExecutionClient<Beam::dereference_t<C>>
   template<Beam::Initializes<C> CF>
-  OrderCancellationReactor<C, S>::OrderCancellationReactor(CF&& client,
-    Series series)
+  OrderCancellationReactor<C, S>::OrderCancellationReactor(
+    CF&& client, Series series)
     : m_client(std::forward<CF>(client)),
       m_series(std::move(series)),
       m_is_series_complete(false),
       m_cancel_count(std::make_unique<std::atomic_int>(0)),
       m_tasks(std::make_unique<Beam::RoutineTaskQueue>()) {}
 
-  template<IsOrderExecutionClient C, typename S>
+  template<typename C, typename S> requires
+    IsOrderExecutionClient<Beam::dereference_t<C>>
   Aspen::State OrderCancellationReactor<C, S>::commit(int sequence) noexcept {
     if(!m_is_series_complete) {
       auto state = m_series.commit(sequence);
@@ -84,7 +87,7 @@ namespace Nexus {
         m_trigger = Aspen::Trigger::get_trigger();
         for(auto& order : m_orders) {
           m_client->cancel(order);
-          order->get_publisher().Monitor(m_tasks->GetSlot<ExecutionReport>(
+          order->get_publisher().monitor(m_tasks->get_slot<ExecutionReport>(
             [cancel_count = m_cancel_count.get(), trigger = m_trigger] (
                 const ExecutionReport& report) {
               if(is_terminal(report.m_status)) {
@@ -106,7 +109,8 @@ namespace Nexus {
     return Aspen::State::NONE;
   }
 
-  template<IsOrderExecutionClient C, typename S>
+  template<typename C, typename S> requires
+    IsOrderExecutionClient<Beam::dereference_t<C>>
   std::shared_ptr<Order> OrderCancellationReactor<C, S>::eval()
       const noexcept(is_noexcept) {
     return m_series.eval();

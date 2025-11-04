@@ -447,27 +447,27 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::PortfolioUpdateEntry> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::PortfolioUpdateEntry& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::PortfolioUpdateEntry& value,
         unsigned int version) const {
-      shuttle.Shuttle("security_inventory", value.m_security_inventory);
-      shuttle.Shuttle("unrealized_security", value.m_unrealized_security);
-      shuttle.Shuttle("currency_inventory", value.m_currency_inventory);
-      shuttle.Shuttle("unrealized_currency", value.m_unrealized_currency);
+      shuttle.shuttle("security_inventory", value.m_security_inventory);
+      shuttle.shuttle("unrealized_security", value.m_unrealized_security);
+      shuttle.shuttle("currency_inventory", value.m_currency_inventory);
+      shuttle.shuttle("unrealized_currency", value.m_unrealized_currency);
     }
   };
 
   template<>
   struct Shuttle<Nexus::SecurityValuation> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::SecurityValuation& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::SecurityValuation& value,
         unsigned int version) const {
-      shuttle.Shuttle("currency", value.m_currency);
-      shuttle.Shuttle("ask_value", value.m_ask_value);
-      shuttle.Shuttle("bid_value", value.m_bid_value);
+      shuttle.shuttle("currency", value.m_currency);
+      shuttle.shuttle("ask_value", value.m_ask_value);
+      shuttle.shuttle("bid_value", value.m_bid_value);
     }
   };
 }

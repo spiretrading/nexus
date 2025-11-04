@@ -1,14 +1,10 @@
-#include <sstream>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/OrderExecutionService/OrderInfo.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
-using namespace Beam::Serialization::Tests;
-using namespace Beam::ServiceLocator;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -17,7 +13,7 @@ using namespace Nexus::DefaultVenues;
 
 namespace {
   auto make_test_order_fields() {
-    auto account = DirectoryEntry::MakeAccount(123, "test");
+    auto account = DirectoryEntry::make_account(123, "test");
     auto security = Security("TST", TSX);
     auto currency = CAD;
     auto side = Side::BID;
@@ -41,7 +37,7 @@ TEST_SUITE("OrderInfo") {
 
   TEST_CASE("constructor") {
     auto fields = make_test_order_fields();
-    auto submission_account = DirectoryEntry::MakeAccount(456, "submit");
+    auto submission_account = DirectoryEntry::make_account(456, "submit");
     auto id = OrderId(123);
     auto shorting_flag = true;
     auto timestamp = time_from_string("2024-05-21 01:02:03");
@@ -81,26 +77,15 @@ TEST_SUITE("OrderInfo") {
 
   TEST_CASE("stream") {
     auto fields = make_test_order_fields();
-    auto submission_account = DirectoryEntry::MakeAccount(456, "submit");
+    auto submission_account = DirectoryEntry::make_account(456, "submit");
     auto id = OrderId(123);
     auto shorting_flag = true;
     auto timestamp = time_from_string("2024-05-21 01:02:03");
     auto info =
       OrderInfo(fields, submission_account, id, shorting_flag, timestamp);
-    auto stream = std::stringstream();
-    stream << info;
-    REQUIRE(stream.str() == "(((ACCOUNT 123 test) TST.TSX CAD LIMIT BID TSX 100"
+    REQUIRE(to_string(info) ==
+      "(((ACCOUNT 123 test) TST.TSX CAD LIMIT BID TSX 100"
       " 1.00 DAY []) (ACCOUNT 456 submit) 123 1 2024-May-21 01:02:03)");
-  }
-
-  TEST_CASE("shuttle") {
-    auto fields = make_test_order_fields();
-    auto submission_account = DirectoryEntry::MakeAccount(456, "submit");
-    auto id = OrderId(123);
-    auto shorting_flag = true;
-    auto timestamp = time_from_string("2024-05-21 01:02:03");
-    auto info =
-      OrderInfo(fields, submission_account, id, shorting_flag, timestamp);
-    TestRoundTripShuttle(info);
+    test_round_trip_shuttle(info);
   }
 }

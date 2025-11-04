@@ -115,7 +115,7 @@ namespace Nexus {
 
   inline PositionOrderBook::PositionOrderBook() noexcept
     : m_order_sequence_number(0) {
-    m_live_orders.SetComputation([this] {
+    m_live_orders.set_computation([this] {
       auto orders = std::vector<std::shared_ptr<Order>>();
       for(auto& entry : m_security_entries | std::views::values) {
         for(auto& order_entry : entry.m_asks) {
@@ -127,7 +127,7 @@ namespace Nexus {
       }
       return orders;
     });
-    m_opening_orders.SetComputation([this] {
+    m_opening_orders.set_computation([this] {
       auto orders = std::vector<std::shared_ptr<Order>>();
       for(auto& entry : m_security_entries | std::views::values) {
         if(entry.m_position == 0) {
@@ -171,7 +171,7 @@ namespace Nexus {
       }
       return orders;
     });
-    m_positions.SetComputation([this] {
+    m_positions.set_computation([this] {
       auto positions = std::vector<PositionEntry>();
       for(auto& security_entry_pair : m_security_entries) {
         if(security_entry_pair.second.m_position != 0) {
@@ -246,8 +246,8 @@ namespace Nexus {
             std::tie(rhs.m_order->get_info().m_fields, rhs.m_sequence_number);
       });
     orders.insert(insert_iterator, entry);
-    m_live_orders.Invalidate();
-    m_opening_orders.Invalidate();
+    m_live_orders.invalidate();
+    m_opening_orders.invalidate();
   }
 
   inline void PositionOrderBook::update(const ExecutionReport& report) {
@@ -274,11 +274,11 @@ namespace Nexus {
       return;
     }
     if(is_terminal(report.m_status)) {
-      m_live_orders.Invalidate();
+      m_live_orders.invalidate();
     }
-    m_opening_orders.Invalidate();
+    m_opening_orders.invalidate();
     if(report.m_last_quantity != 0) {
-      m_positions.Invalidate();
+      m_positions.invalidate();
     }
     security_entry.m_position +=
       get_direction(fields.m_side) * report.m_last_quantity;

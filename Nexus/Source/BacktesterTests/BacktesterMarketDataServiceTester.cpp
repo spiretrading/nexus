@@ -6,7 +6,7 @@
 using namespace Beam;
 using namespace Beam::Queries;
 using namespace Beam::ServiceLocator;
-using namespace Beam::ServiceLocator::Tests;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -18,7 +18,7 @@ namespace {
 
   MarketDataClient make_market_data_client(TestEnvironment& environment) {
     environment.get_service_locator_environment().GetRoot().
-      MakeAccount("backtester", "", DirectoryEntry::GetStarDirectory());
+      make_account("backtester", "", DirectoryEntry::STAR_DIRECTORY);
     auto service_locator =
       environment.get_service_locator_environment().MakeClient(
         "backtester", "");
@@ -77,15 +77,15 @@ TEST_SUITE("BacktesterMarketDataService") {
     auto bbo_before = BboQuote(make_bid(Money(99), 100), make_ask(Money(101),
       100), start_time - minutes(10));
     data_store.store(SequencedValue(
-      IndexedValue(bbo_before, TD), Beam::Queries::Sequence(10)));
+      IndexedValue(bbo_before, TD), Beam::Sequence(10)));
     auto bbo_at_start = BboQuote(
       make_bid(Money(100), 100), make_ask(Money(102), 100), start_time);
     data_store.store(SequencedValue(
-      IndexedValue(bbo_at_start, TD), Beam::Queries::Sequence(11)));
+      IndexedValue(bbo_at_start, TD), Beam::Sequence(11)));
     auto bbo_after = BboQuote(make_bid(Money(101), 100), make_ask(Money(103),
       100), start_time + minutes(10));
     data_store.store(
-      SequencedValue(IndexedValue(bbo_after, TD), Beam::Queries::Sequence(12)));
+      SequencedValue(IndexedValue(bbo_after, TD), Beam::Sequence(12)));
     auto event_handler = BacktesterEventHandler(start_time);
     auto service = BacktesterMarketDataService(Ref(event_handler),
       Ref(fixture.m_event_handler_environment.get_market_data_environment()),

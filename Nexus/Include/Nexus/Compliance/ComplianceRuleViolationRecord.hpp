@@ -14,7 +14,7 @@ namespace Nexus {
   struct ComplianceRuleViolationRecord {
 
     /** The account that produced the violation. */
-    Beam::ServiceLocator::DirectoryEntry m_account;
+    Beam::DirectoryEntry m_account;
 
     /** The OrderId the violation is attributed to. */
     OrderId m_order_id = 0;
@@ -42,19 +42,18 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::ComplianceRuleViolationRecord> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::ComplianceRuleViolationRecord& value,
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::ComplianceRuleViolationRecord& value,
         unsigned int version) const {
-      shuttle.Shuttle("account", value.m_account);
-      shuttle.Shuttle("order_id", value.m_order_id);
-      shuttle.Shuttle("rule_id", value.m_rule_id);
-      shuttle.Shuttle("schema_name", value.m_schema_name);
-      shuttle.Shuttle("reason", value.m_reason);
-      shuttle.Shuttle("timestamp", value.m_timestamp);
+      shuttle.shuttle("account", value.m_account);
+      shuttle.shuttle("order_id", value.m_order_id);
+      shuttle.shuttle("rule_id", value.m_rule_id);
+      shuttle.shuttle("schema_name", value.m_schema_name);
+      shuttle.shuttle("reason", value.m_reason);
+      shuttle.shuttle("timestamp", value.m_timestamp);
     }
   };
 }

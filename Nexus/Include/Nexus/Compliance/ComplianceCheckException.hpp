@@ -16,7 +16,7 @@ namespace Nexus {
   };
 
   inline ComplianceCheckException::ComplianceCheckException()
-    : std::runtime_error("Compliance check failed.") {}
+    : ComplianceCheckException("Compliance check failed.") {}
 }
 
 #endif

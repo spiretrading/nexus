@@ -9,7 +9,7 @@
 namespace Nexus {
 
   /** Stores session info for a RiskServlet client. */
-  class RiskSession : public Beam::ServiceLocator::AuthenticatedSession {
+  class RiskSession : public Beam::AuthenticatedSession {
     public:
 
       /** Constructs a RiskSession. */
@@ -23,13 +23,13 @@ namespace Nexus {
        * @param group The group to test for the subscription.
        */
       bool has_subscription(
-        const Beam::ServiceLocator::DirectoryEntry& group) const;
+        const Beam::DirectoryEntry& group) const;
 
       /**
        * Adds a group as part of a session's risk portfolio subscription.
        * @param group The group to add.
        */
-      void add(const Beam::ServiceLocator::DirectoryEntry& group);
+      void add(const Beam::DirectoryEntry& group);
 
       /** Sets the session as being permissioned to view all portfolios. */
       void add_all();
@@ -37,7 +37,7 @@ namespace Nexus {
     private:
       mutable boost::mutex m_mutex;
       bool m_has_all_subscriptions;
-      std::unordered_set<Beam::ServiceLocator::DirectoryEntry> m_subscriptions;
+      std::unordered_set<Beam::DirectoryEntry> m_subscriptions;
   };
 
   inline RiskSession::RiskSession() noexcept
@@ -50,13 +50,13 @@ namespace Nexus {
   }
 
   inline bool RiskSession::has_subscription(
-      const Beam::ServiceLocator::DirectoryEntry& group) const {
+      const Beam::DirectoryEntry& group) const {
     auto lock = std::lock_guard(m_mutex);
     return m_has_all_subscriptions || m_subscriptions.contains(group);
   }
 
   inline void RiskSession::add(
-      const Beam::ServiceLocator::DirectoryEntry& group) {
+      const Beam::DirectoryEntry& group) {
     auto lock = boost::lock_guard(m_mutex);
     m_subscriptions.insert(group);
   }

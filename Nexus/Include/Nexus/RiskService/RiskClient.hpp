@@ -42,7 +42,7 @@ namespace Nexus {
        * @return The <i>account</i>'s InventorySnapshot.
        */
       InventorySnapshot load_inventory_snapshot(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::DirectoryEntry& account);
 
       /**
        * Resets the inventories belonging to a region for all accounts.
@@ -59,7 +59,7 @@ namespace Nexus {
       struct VirtualRiskClient {
         virtual ~VirtualRiskClient() = default;
         virtual InventorySnapshot load_inventory_snapshot(
-          const Beam::ServiceLocator::DirectoryEntry&) = 0;
+          const Beam::DirectoryEntry&) = 0;
         virtual void reset(const Region&) = 0;
         virtual const RiskPortfolioUpdatePublisher&
           get_risk_portfolio_update_publisher() = 0;
@@ -68,12 +68,12 @@ namespace Nexus {
       template<typename C>
       struct WrappedRiskClient final : VirtualRiskClient {
         using RiskClient = C;
-        Beam::GetOptionalLocalPtr<RiskClient> m_client;
+        Beam::local_ptr_t<RiskClient> m_client;
 
         template<typename... Args>
         WrappedRiskClient(Args&&... args);
         InventorySnapshot load_inventory_snapshot(
-          const Beam::ServiceLocator::DirectoryEntry& account) override;
+          const Beam::DirectoryEntry& account) override;
         void reset(const Region& region) override;
         const RiskPortfolioUpdatePublisher&
           get_risk_portfolio_update_publisher() override;
@@ -106,7 +106,7 @@ namespace Nexus {
     : RiskClient(*client) {}
 
   inline InventorySnapshot RiskClient::load_inventory_snapshot(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     return m_client->load_inventory_snapshot(account);
   }
 
@@ -130,7 +130,7 @@ namespace Nexus {
 
   template<typename C>
   InventorySnapshot RiskClient::WrappedRiskClient<C>::load_inventory_snapshot(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     return m_client->load_inventory_snapshot(account);
   }
 

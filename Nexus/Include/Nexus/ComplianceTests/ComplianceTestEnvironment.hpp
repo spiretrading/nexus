@@ -34,7 +34,7 @@ namespace Nexus::Tests {
        * @param time_client The TimeClient to use.
        */
       ComplianceTestEnvironment(
-        Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
+        Beam::ServiceLocatorClientBox service_locator_client,
         AdministrationClient administration_client,
         Beam::TimeService::TimeClientBox time_client);
 
@@ -46,33 +46,33 @@ namespace Nexus::Tests {
        *        authenticate the ComplianceClient.
        */
       ComplianceClient make_client(
-        Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client);
+        Beam::ServiceLocatorClientBox service_locator_client);
 
       void close();
 
     private:
       using ServerConnection =
-        Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
+        Beam::LocalServerConnection<Beam::SharedBuffer>;
       using ClientChannel =
-        Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
+        Beam::LocalClientChannel<Beam::SharedBuffer>;
       using ServiceProtocolServletContainer =
-        Beam::Services::ServiceProtocolServletContainer<
-          Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-            MetaComplianceServlet<Beam::ServiceLocator::ServiceLocatorClientBox,
+        Beam::ServiceProtocolServletContainer<
+          Beam::MetaAuthenticationServletAdapter<
+            MetaComplianceServlet<Beam::ServiceLocatorClientBox,
               AdministrationClient, LocalComplianceRuleDataStore*,
               Beam::TimeService::TimeClientBox>,
-            Beam::ServiceLocator::ServiceLocatorClientBox>,
+            Beam::ServiceLocatorClientBox>,
           ServerConnection*,
-          Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+          Beam::BinarySender<Beam::SharedBuffer>,
           Beam::Codecs::NullEncoder,
-          std::shared_ptr<Beam::Threading::TriggerTimer>>;
+          std::shared_ptr<Beam::TriggerTimer>>;
       using ServiceProtocolClientBuilder =
-        Beam::Services::AuthenticatedServiceProtocolClientBuilder<
-          Beam::ServiceLocator::ServiceLocatorClientBox,
-          Beam::Services::MessageProtocol<std::unique_ptr<ClientChannel>,
-            Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+        Beam::AuthenticatedServiceProtocolClientBuilder<
+          Beam::ServiceLocatorClientBox,
+          Beam::MessageProtocol<std::unique_ptr<ClientChannel>,
+            Beam::BinarySender<Beam::SharedBuffer>,
             Beam::Codecs::NullEncoder>,
-          Beam::Threading::TriggerTimer>;
+          Beam::TriggerTimer>;
       ServerConnection m_server_connection;
       LocalComplianceRuleDataStore m_data_store;
       ServiceProtocolServletContainer m_container;
@@ -83,20 +83,20 @@ namespace Nexus::Tests {
   };
 
   inline ComplianceTestEnvironment::ComplianceTestEnvironment(
-    Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
+    Beam::ServiceLocatorClientBox service_locator_client,
     AdministrationClient administration_client,
     Beam::TimeService::TimeClientBox time_client)
     : m_container(Beam::Initialize(service_locator_client, Beam::Initialize(
         service_locator_client, std::move(administration_client), &m_data_store,
         std::move(time_client))), &m_server_connection,
-        boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
+        boost::factory<std::shared_ptr<Beam::TriggerTimer>>()) {}
 
   inline ComplianceTestEnvironment::~ComplianceTestEnvironment() {
     close();
   }
 
   inline ComplianceClient ComplianceTestEnvironment::make_client(
-      Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client) {
+      Beam::ServiceLocatorClientBox service_locator_client) {
     return ComplianceClient(
       std::in_place_type<ServiceComplianceClient<ServiceProtocolClientBuilder>>,
       ServiceProtocolClientBuilder(std::move(service_locator_client),

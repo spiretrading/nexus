@@ -207,7 +207,7 @@ void Nexus::Python::export_market_data_service(module& module) {
         client, security, std::move(queue), interruption_policy);
     }, arg("client"), arg("security"), arg("queue"),
     arg("interruption_policy") =
-      Beam::Queries::InterruptionPolicy::BREAK_QUERY);
+      Beam::InterruptionPolicy::BREAK_QUERY);
   module.def("query_real_time_bbo_quotes_with_snapshot",
     [] (MarketDataClient client, const Security& security,
         Beam::ScopedQueueWriter<BboQuote> queue) {

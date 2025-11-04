@@ -12,7 +12,7 @@
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;
-using namespace Beam::ServiceLocator::Tests;
+using namespace Beam::Tests;
 using namespace Beam::Threading;
 using namespace Beam::TimeService;
 using namespace Beam::UidService;
@@ -53,8 +53,8 @@ namespace {
           m_time_client(time_from_string("2025-07-14 6:23:00:00")),
           m_accounts_queue(std::make_shared<Queue<DirectoryEntry>>()) {
       auto servlet_account =
-        m_service_locator_environment.GetRoot().MakeAccount("risk_service", "",
-          DirectoryEntry::GetStarDirectory());
+        m_service_locator_environment.GetRoot().make_account("risk_service", "",
+          DirectoryEntry::STAR_DIRECTORY);
       m_administration_environment.make_administrator(servlet_account);
       m_service_locator =
         m_service_locator_environment.MakeClient("risk_service", "");
@@ -84,8 +84,8 @@ TEST_SUITE("ConsolidatedRiskController") {
       DEFAULT_VENUES, DEFAULT_DESTINATIONS);
     auto state_updates = std::make_shared<Queue<RiskStateEntry>>();
     consolidated_controller.get_risk_state_publisher().Monitor(state_updates);
-    auto account1 = fixture.m_service_locator_environment.GetRoot().MakeAccount(
-      "trader", "", DirectoryEntry::GetStarDirectory());
+    auto account1 = fixture.m_service_locator_environment.GetRoot().make_account(
+      "trader", "", DirectoryEntry::STAR_DIRECTORY);
     fixture.m_administration_environment.get_client().store(account1,
       RiskParameters(USD, 100000 * Money::ONE, RiskState::Type::ACTIVE,
         2 * Money::ONE, minutes(10)));
@@ -95,8 +95,8 @@ TEST_SUITE("ConsolidatedRiskController") {
     auto state_entry = state_updates->Pop();
     REQUIRE(state_entry.m_key == account1);
     REQUIRE(state_entry.m_value == RiskState::Type::ACTIVE);
-    auto account2 = fixture.m_service_locator_environment.GetRoot().MakeAccount(
-      "trader2", "", DirectoryEntry::GetStarDirectory());
+    auto account2 = fixture.m_service_locator_environment.GetRoot().make_account(
+      "trader2", "", DirectoryEntry::STAR_DIRECTORY);
     fixture.m_administration_environment.get_client().store(account2,
       RiskParameters(USD, 50000 * Money::ONE, RiskState::Type::ACTIVE,
         1 * Money::ONE, minutes(5)));

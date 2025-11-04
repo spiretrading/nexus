@@ -19,7 +19,7 @@ namespace Nexus {
     std::vector<Inventory> m_inventories;
 
     /** The sequence that this snapshot is valid for (inclusive). */
-    Beam::Queries::Sequence m_sequence;
+    Beam::Sequence m_sequence;
 
     /** The list of Order ids excluded from this snapshot. */
     std::vector<OrderId> m_excluded_orders;
@@ -52,19 +52,19 @@ namespace Nexus {
    *         query sequence that the portfolio is valid up to for the specified
    *         <i>account</i>, and the list of Orders excluded from the portfolio.
    */
-  std::tuple<RiskPortfolio, Beam::Queries::Sequence,
+  std::tuple<RiskPortfolio, Beam::Sequence,
       std::vector<std::shared_ptr<Order>>> make_portfolio(
         const InventorySnapshot& snapshot,
-        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::DirectoryEntry& account,
         VenueDatabase venues, IsOrderExecutionClient auto& client) {
     auto excluded_orders =
       load_orders(account, snapshot.m_excluded_orders, client);
     auto trailing_order_query = AccountQuery();
     trailing_order_query.SetIndex(account);
-    trailing_order_query.SetRange(Beam::Queries::Increment(snapshot.m_sequence),
-      Beam::Queries::Sequence::Present());
-    trailing_order_query.SetSnapshotLimit(
-      Beam::Queries::SnapshotLimit::Unlimited());
+    trailing_order_query.SetRange(Beam::Increment(snapshot.m_sequence),
+      Beam::Sequence::Present());
+    trailing_order_query.set_snapshot_limit(
+      Beam::SnapshotLimit::Unlimited());
     auto trailing_orders_queue = std::make_shared<
       Beam::Queue<Nexus::SequencedOrder>>();
     client.query(trailing_order_query, trailing_orders_queue);

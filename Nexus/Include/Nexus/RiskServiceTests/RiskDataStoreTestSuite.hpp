@@ -16,7 +16,7 @@ namespace Nexus::Tests {
 
     SUBCASE("load_empty_inventories") {
       auto snapshot = data_store.load_inventory_snapshot(
-        DirectoryEntry::MakeAccount(123, "test"));
+        DirectoryEntry::make_account(123, "test"));
       REQUIRE(snapshot.m_sequence == Sequence::First());
       REQUIRE(snapshot.m_inventories.empty());
       REQUIRE(snapshot.m_excluded_orders.empty());
@@ -34,7 +34,7 @@ namespace Nexus::Tests {
       excluded_orders.push_back(100);
       excluded_orders.push_back(102);
       excluded_orders.push_back(110);
-      auto account = DirectoryEntry::MakeAccount(123, "test");
+      auto account = DirectoryEntry::make_account(123, "test");
       auto snapshot =
         InventorySnapshot(inventories, Sequence(200), excluded_orders);
       data_store.store(account, snapshot);
@@ -51,7 +51,7 @@ namespace Nexus::Tests {
       inventories.back().m_transaction_count = 332;
       inventories.back().m_volume = 433;
       inventories.emplace_back(Position::Key(Security("B", ASX), AUD));
-      auto account = DirectoryEntry::MakeAccount(123, "test");
+      auto account = DirectoryEntry::make_account(123, "test");
       auto snapshot = InventorySnapshot(inventories, Sequence(200), {});
       data_store.store(account, snapshot);
       auto stored_snapshot = data_store.load_inventory_snapshot(account);

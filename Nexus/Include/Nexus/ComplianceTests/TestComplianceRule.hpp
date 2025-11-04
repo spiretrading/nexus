@@ -4,7 +4,8 @@
 #include <variant>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
-#include <Beam/Routines/Async.hpp>
+#include <Beam/ServicesTests/ServiceResult.hpp>
+#include <Beam/ServicesTests/TestServiceClientOperationQueue.hpp>
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
@@ -24,7 +25,7 @@ namespace Nexus::Tests {
         std::shared_ptr<Order> m_order;
 
         /** The value to return to the caller. */
-        Beam::Routines::Eval<void> m_result;
+        Beam::Tests::ServiceResult<void> m_result;
       };
 
       /** Records a call to cancel(). */
@@ -34,7 +35,7 @@ namespace Nexus::Tests {
         std::shared_ptr<Order> m_order;
 
         /** The value to return to the caller. */
-        Beam::Routines::Eval<void> m_result;
+        Beam::Tests::ServiceResult<void> m_result;
       };
 
       /** Records a call to add(). */
@@ -44,7 +45,7 @@ namespace Nexus::Tests {
         std::shared_ptr<Order> m_order;
 
         /** The value to return to the caller. */
-        Beam::Routines::Eval<void> m_result;
+        Beam::Tests::ServiceResult<void> m_result;
       };
 
       /** A variant covering all possible TestComplianceRule operations. */
@@ -67,35 +68,23 @@ namespace Nexus::Tests {
       void add(const std::shared_ptr<Order>& order) override;
 
     private:
-      Beam::ScopedQueueWriter<std::shared_ptr<Operation>> m_operations;
-
-      template<typename OperationType>
-      void push_and_wait(const std::shared_ptr<Order>& order);
+      Beam::Tests::TestServiceClientOperationQueue<Operation> m_queue;
   };
 
   inline TestComplianceRule::TestComplianceRule(
-      Beam::ScopedQueueWriter<std::shared_ptr<Operation>> operations) noexcept
-    : m_operations(std::move(operations)) {}
+    Beam::ScopedQueueWriter<std::shared_ptr<Operation>> operations) noexcept
+    : m_queue(std::move(operations)) {}
 
   inline void TestComplianceRule::submit(const std::shared_ptr<Order>& order) {
-    push_and_wait<SubmitOperation>(order);
+    m_queue.append_result<SubmitOperation, void>(order);
   }
 
   inline void TestComplianceRule::cancel(const std::shared_ptr<Order>& order) {
-    push_and_wait<CancelOperation>(order);
+    m_queue.append_result<CancelOperation, void>(order);
   }
 
   inline void TestComplianceRule::add(const std::shared_ptr<Order>& order) {
-    push_and_wait<AddOperation>(order);
-  }
-
-  template<typename OperationType>
-  void TestComplianceRule::push_and_wait(const std::shared_ptr<Order>& order) {
-    auto async = Beam::Routines::Async<void>();
-    auto operation = std::make_shared<Operation>(
-      std::in_place_type<OperationType>, order, async.GetEval());
-    m_operations.Push(operation);
-    async.Get();
+    m_queue.append_result<AddOperation, void>(order);
   }
 }
 

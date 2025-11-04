@@ -85,17 +85,17 @@ namespace Nexus {
       typename SessionBuilder::ServiceLocatorClient service_locator_client,
       Predicate&& service_predicate,
       const std::string& service = MARKET_DATA_RELAY_SERVICE_NAME) {
-    auto client = Beam::ServiceLocator::ServiceLocatorClientBox(
+    auto client = Beam::ServiceLocatorClientBox(
       &Beam::FullyDereference(service_locator_client));
     return SessionBuilder(std::move(service_locator_client),
       [=, service_predicate = std::forward<Predicate>(service_predicate)]
           () mutable {
         return std::make_unique<Beam::Network::TcpSocketChannel>(
-          Beam::ServiceLocator::LocateServiceAddresses(
+          Beam::LocateServiceAddresses(
             client, service, service_predicate));
       },
       [] {
-        return std::make_unique<Beam::Threading::LiveTimer>(
+        return std::make_unique<Beam::LiveTimer>(
           boost::posix_time::seconds(10));
       });
   }
@@ -111,16 +111,16 @@ namespace Nexus {
         ApplicationMarketDataClient::SessionBuilder::ServiceLocatorClient
           service_locator_client,
         const std::string& service = MARKET_DATA_RELAY_SERVICE_NAME) {
-    auto client = Beam::ServiceLocator::ServiceLocatorClientBox(
+    auto client = Beam::ServiceLocatorClientBox(
       &Beam::FullyDereference(service_locator_client));
     return ApplicationMarketDataClient::SessionBuilder(
       std::move(service_locator_client),
       [=] () mutable {
         return std::make_unique<Beam::Network::TcpSocketChannel>(
-          Beam::ServiceLocator::LocateServiceAddresses(client, service));
+          Beam::LocateServiceAddresses(client, service));
       },
       [] {
-        return std::make_unique<Beam::Threading::LiveTimer>(
+        return std::make_unique<Beam::LiveTimer>(
           boost::posix_time::seconds(10));
       });
   }
@@ -138,7 +138,7 @@ namespace Nexus {
             auto service = find_market_data_feed_service(
               country, Beam::FullyDereference(service_locator_client));
             if(!service) {
-              BOOST_THROW_EXCEPTION(Beam::IO::ConnectException(
+              BOOST_THROW_EXCEPTION(Beam::ConnectException(
                 "No market data services available."));
             }
             auto addresses =
@@ -146,13 +146,13 @@ namespace Nexus {
                 boost::get<std::string>(service->GetProperties().At(
                   "addresses")));
             return Client(Beam::Initialize(addresses),
-              Beam::ServiceLocator::SessionAuthenticator(
+              Beam::SessionAuthenticator(
                 std::move(service_locator_client)),
               Beam::Initialize(sampling_time),
               Beam::Initialize(boost::posix_time::seconds(10)));
           }()) {
   } catch(const std::exception&) {
-    std::throw_with_nested(Beam::IO::ConnectException(
+    std::throw_with_nested(Beam::ConnectException(
       "Unable to initialize the market data feed client."));
   }
 
@@ -164,7 +164,7 @@ namespace Nexus {
             auto services =
               service_locator_client.Locate(MARKET_DATA_FEED_SERVICE_NAME);
             if(services.empty()) {
-              BOOST_THROW_EXCEPTION(Beam::IO::ConnectException(
+              BOOST_THROW_EXCEPTION(Beam::ConnectException(
                 "No market data services available."));
             }
             auto& service = services.front();
@@ -173,13 +173,13 @@ namespace Nexus {
                 boost::get<std::string>(service.GetProperties().At(
                   "addresses")));
             return Client(Beam::Initialize(addresses),
-              Beam::ServiceLocator::SessionAuthenticator(
+              Beam::SessionAuthenticator(
                 std::move(service_locator_client)),
               Beam::Initialize(sampling_time),
               Beam::Initialize(boost::posix_time::seconds(10)));
           }()) {
   } catch(const std::exception&) {
-    std::throw_with_nested(Beam::IO::ConnectException(
+    std::throw_with_nested(Beam::ConnectException(
       "Unable to initialize the market data feed client."));
   }
 }

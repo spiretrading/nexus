@@ -1,8 +1,11 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/Inventory.hpp"
 #include "Nexus/Definitions/Security.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
@@ -67,18 +70,8 @@ TEST_SUITE("Inventory") {
     auto volume = 200;
     auto transaction_count = 2;
     auto inventory = Inventory(position, pnl, fees, volume, transaction_count);
-    Beam::Serialization::Tests::TestRoundTripShuttle(inventory);
-  }
-
-  TEST_CASE("output_stream") {
-    auto position = Position(TST, CAD, 100, 1000 * Money::ONE);
-    auto pnl = 50 * Money::ONE;
-    auto fees = Money::CENT;
-    auto volume = 200;
-    auto transaction_count = 2;
-    auto inventory = Inventory(position, pnl, fees, volume, transaction_count);
-    auto stream = std::stringstream();
-    stream << inventory;
-    REQUIRE(stream.str() == "((TST.TSX CAD 100 1000.00) 50.00 0.01 200 2)");
+    test_round_trip_shuttle(inventory);
+    REQUIRE(
+      to_string(inventory) == "((TST.TSX CAD 100 1000.00) 50.00 0.01 200 2)");
   }
 }

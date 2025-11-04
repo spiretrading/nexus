@@ -17,7 +17,7 @@ namespace Nexus {
 
   /** Represents an entry in a RiskState table. */
   using RiskStateEntry =
-    Beam::KeyValuePair<Beam::ServiceLocator::DirectoryEntry, RiskState>;
+    Beam::KeyValuePair<Beam::DirectoryEntry, RiskState>;
 
   /** Represents an entry in a RiskPortfolio table. */
   using RiskPortfolioEntry =
@@ -43,22 +43,22 @@ namespace Nexus {
        * The type of AdministrationClient used to load an account's
        * RiskParameters.
        */
-      using AdministrationClient = Beam::GetTryDereferenceType<A>;
+      using AdministrationClient = Beam::dereference_t<A>;
 
       /** The type of MarketDataClient to use. */
-      using MarketDataClient = Beam::GetTryDereferenceType<M>;
+      using MarketDataClient = Beam::dereference_t<M>;
 
       /** The type of OrderExecutionClient to use. */
-      using OrderExecutionClient = Beam::GetTryDereferenceType<O>;
+      using OrderExecutionClient = Beam::dereference_t<O>;
 
       /** The type of TransitionTimer to use. */
       using TransitionTimer = R;
 
       /** The type of TimeClient to use. */
-      using TimeClient = Beam::GetTryDereferenceType<T>;
+      using TimeClient = Beam::dereference_t<T>;
 
       /** The type of RiskDataStore to use. */
-      using RiskDataStore = Beam::GetTryDereferenceType<D>;
+      using RiskDataStore = Beam::dereference_t<D>;
 
       /** Type of function used to make a unique TransitionTimer. */
       using TransitionTimerFactory =
@@ -83,7 +83,7 @@ namespace Nexus {
         Beam::Initializes<O> OF, Beam::Initializes<T> TF,
         Beam::Initializes<D> DF>
       ConsolidatedRiskController(
-        Beam::ScopedQueueReader<Beam::ServiceLocator::DirectoryEntry> accounts,
+        Beam::ScopedQueueReader<Beam::DirectoryEntry> accounts,
         AF&& administration_client, MF&& market_data_client,
         OF&& order_execution_client,
         TransitionTimerFactory transition_timer_factory, TF&& time_client,
@@ -101,37 +101,37 @@ namespace Nexus {
       using RiskController = Nexus::RiskController<
         AdministrationClient*, MarketDataClient*, OrderExecutionClient*,
         std::unique_ptr<TransitionTimer>, TimeClient*, RiskDataStore*>;
-      Beam::GetOptionalLocalPtr<A> m_administration_client;
-      Beam::GetOptionalLocalPtr<M> m_market_data_client;
-      Beam::GetOptionalLocalPtr<O> m_order_execution_client;
+      Beam::local_ptr_t<A> m_administration_client;
+      Beam::local_ptr_t<M> m_market_data_client;
+      Beam::local_ptr_t<O> m_order_execution_client;
       TransitionTimerFactory m_transition_timer_factory;
-      Beam::GetOptionalLocalPtr<T> m_time_client;
-      Beam::GetOptionalLocalPtr<D> m_data_store;
+      Beam::local_ptr_t<T> m_time_client;
+      Beam::local_ptr_t<D> m_data_store;
       ExchangeRateTable m_exchange_rates;
       VenueDatabase m_venues;
       DestinationDatabase m_destinations;
-      Beam::TablePublisher<Beam::ServiceLocator::DirectoryEntry, RiskState>
+      Beam::TablePublisher<Beam::DirectoryEntry, RiskState>
         m_state_publisher;
       Beam::TablePublisher<RiskPortfolioKey, Inventory> m_portfolio_publisher;
       std::vector<std::unique_ptr<RiskController>> m_controllers;
       Beam::RoutineTaskQueue m_tasks;
-      Beam::QueuePipe<Beam::ServiceLocator::DirectoryEntry> m_accounts_pipe;
+      Beam::QueuePipe<Beam::DirectoryEntry> m_accounts_pipe;
 
       ConsolidatedRiskController(const ConsolidatedRiskController&) = delete;
       ConsolidatedRiskController& operator =(
         const ConsolidatedRiskController&) = delete;
-      void on_account(const Beam::ServiceLocator::DirectoryEntry& account);
-      void on_risk_state(const Beam::ServiceLocator::DirectoryEntry& account,
+      void on_account(const Beam::DirectoryEntry& account);
+      void on_risk_state(const Beam::DirectoryEntry& account,
         const RiskState& state);
       void on_portfolio_entry(
-        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::DirectoryEntry& account,
         const PortfolioUpdateEntry& entry);
   };
 
   template<IsAdministrationClient A, IsMarketDataClient M,
     IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   ConsolidatedRiskController(
-    Beam::ScopedQueueReader<Beam::ServiceLocator::DirectoryEntry>, A&&, M&&,
+    Beam::ScopedQueueReader<Beam::DirectoryEntry>, A&&, M&&,
     O&&, R&&, T&&, D&&, ExchangeRateTable, VenueDatabase,
     DestinationDatabase) -> ConsolidatedRiskController<
       std::remove_reference_t<A>, std::remove_reference_t<M>,
@@ -144,7 +144,7 @@ namespace Nexus {
   template<Beam::Initializes<A> AF, Beam::Initializes<M> MF,
     Beam::Initializes<O> OF, Beam::Initializes<T> TF, Beam::Initializes<D> DF>
   ConsolidatedRiskController<A, M, O, R, T, D>::ConsolidatedRiskController(
-    Beam::ScopedQueueReader<Beam::ServiceLocator::DirectoryEntry> accounts,
+    Beam::ScopedQueueReader<Beam::DirectoryEntry> accounts,
     AF&& administration_client, MF&& market_data_client,
     OF&& order_execution_client,
     TransitionTimerFactory transition_timer_factory, TF&& time_client,
@@ -161,7 +161,7 @@ namespace Nexus {
       m_venues(std::move(venues)),
       m_destinations(std::move(destinations)),
       m_accounts_pipe(std::move(accounts),
-        m_tasks.GetSlot<Beam::ServiceLocator::DirectoryEntry>(
+        m_tasks.GetSlot<Beam::DirectoryEntry>(
           std::bind_front(&ConsolidatedRiskController::on_account, this))) {}
   BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
@@ -182,7 +182,7 @@ namespace Nexus {
   template<IsAdministrationClient A, IsMarketDataClient M,
     IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void ConsolidatedRiskController<A, M, O, R, T, D>::on_account(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     auto controller = [&] {
       try {
         return std::make_unique<RiskController>(
@@ -213,7 +213,7 @@ namespace Nexus {
   template<IsAdministrationClient A, IsMarketDataClient M,
     IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void ConsolidatedRiskController<A, M, O, R, T, D>::on_risk_state(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       const RiskState& state) {
     m_state_publisher.Push(account, state);
   }
@@ -221,7 +221,7 @@ namespace Nexus {
   template<IsAdministrationClient A, IsMarketDataClient M,
     IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void ConsolidatedRiskController<A, M, O, R, T, D>::on_portfolio_entry(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       const PortfolioUpdateEntry& entry) {
     auto key = RiskPortfolioKey(
       account, entry.m_security_inventory.m_position.m_security);

@@ -6,9 +6,9 @@
 namespace Nexus {
 
   /** Encapsulates a standard AdministrationClient used in an application. */
-  using ApplicationAdministrationClient = Beam::Services::ApplicationClient<
+  using ApplicationAdministrationClient = Beam::ApplicationClient<
     ServiceAdministrationClient,
-    Beam::Services::ServiceName<ADMINISTRATION_SERVICE_NAME>>;
+    Beam::ServiceName<ADMINISTRATION_SERVICE_NAME>>;
 }
 
 #endif

@@ -21,8 +21,9 @@ namespace Nexus {
    * @param <C> The type of TimeClient used for Order timestamps.
    * @param <S> The type of ComplianceRuleSet used to validate operations.
    */
-  template<IsOrderExecutionDriver D, typename C,
-    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+    Beam::IsTimeClient<Beam::dereference_t<C>>
   class ComplianceCheckOrderExecutionDriver {
     public:
 
@@ -30,13 +31,13 @@ namespace Nexus {
        * The type of OrderExecutionDriver to send operations to if all checks
        * pass.
        */
-      using OrderExecutionDriver = Beam::GetTryDereferenceType<D>;
+      using OrderExecutionDriver = Beam::dereference_t<D>;
 
       /** The type of TimeClient used for Order timestamps. */
-      using TimeClient = Beam::GetTryDereferenceType<C>;
+      using TimeClient = Beam::dereference_t<C>;
 
       /** The type of ComplianceRuleSet used to validate operations. */
-      using ComplianceRuleSet = Beam::GetTryDereferenceType<S>;
+      using ComplianceRuleSet = Beam::dereference_t<S>;
 
       /**
        * Constructs a ComplianceCheckOrderExecutionDriver.
@@ -52,6 +53,7 @@ namespace Nexus {
         DF&& driver, CF&& time_client, SF&& compliance_rule_set);
 
       ~ComplianceCheckOrderExecutionDriver();
+
       std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
       void add(const std::shared_ptr<Order>& order);
       std::shared_ptr<Order> submit(const OrderInfo& info);
@@ -61,12 +63,12 @@ namespace Nexus {
       void close();
 
     private:
-      Beam::GetOptionalLocalPtr<D> m_driver;
-      Beam::GetOptionalLocalPtr<C> m_time_client;
-      Beam::GetOptionalLocalPtr<S> m_compliance_rule_set;
+      Beam::local_ptr_t<D> m_driver;
+      Beam::local_ptr_t<C> m_time_client;
+      Beam::local_ptr_t<S> m_compliance_rule_set;
       Beam::SynchronizedUnorderedMap<OrderId, std::shared_ptr<PrimitiveOrder>>
         m_orders;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
       Beam::RoutineTaskQueue m_tasks;
 
       ComplianceCheckOrderExecutionDriver(
@@ -77,8 +79,9 @@ namespace Nexus {
         PrimitiveOrder& order, const ExecutionReport& executionReport);
   };
 
-  template<IsOrderExecutionDriver D, typename C,
-    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
   template<Beam::Initializes<D> DF, Beam::Initializes<C> CF,
     Beam::Initializes<S> SF>
   ComplianceCheckOrderExecutionDriver<D, C, S>::
@@ -88,15 +91,17 @@ namespace Nexus {
       m_time_client(std::forward<CF>(time_client)),
       m_compliance_rule_set(std::forward<SF>(compliance_rule_set)) {}
 
-  template<IsOrderExecutionDriver D, typename C,
-    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
   ComplianceCheckOrderExecutionDriver<D, C, S>::
       ~ComplianceCheckOrderExecutionDriver() {
     close();
   }
 
-  template<IsOrderExecutionDriver D, typename C,
-    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
   std::shared_ptr<Order> ComplianceCheckOrderExecutionDriver<D, C, S>::recover(
       const SequencedAccountOrderRecord& record) {
     auto order = m_driver->recover(record);
@@ -104,79 +109,85 @@ namespace Nexus {
     return order;
   }
 
-  template<IsOrderExecutionDriver D, typename C,
-    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
   void ComplianceCheckOrderExecutionDriver<D, C, S>::add(
       const std::shared_ptr<Order>& order) {
     m_driver->add(order);
     m_compliance_rule_set->add(order);
   }
 
-  template<IsOrderExecutionDriver D, typename C,
-    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
   std::shared_ptr<Order> ComplianceCheckOrderExecutionDriver<D, C, S>::submit(
       const OrderInfo& info) {
     auto order = std::make_shared<PrimitiveOrder>(info);
-    m_orders.Insert(info.m_id, order);
+    m_orders.insert(info.m_id, order);
     try {
       m_compliance_rule_set->submit(order);
     } catch(const std::exception& e) {
       order->with([&] (auto status, const auto& reports) {
         auto& last_report = reports.back();
         auto update = make_update(
-          last_report, OrderStatus::REJECTED, m_time_client->GetTime());
+          last_report, OrderStatus::REJECTED, m_time_client->get_time());
         update.m_text = e.what();
         order->update(update);
       });
       return order;
     }
     auto driver_order = m_driver->submit(info);
-    driver_order->get_publisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
+    driver_order->get_publisher().monitor(m_tasks.get_slot<ExecutionReport>(
       std::bind_front(&ComplianceCheckOrderExecutionDriver::on_execution_report,
         this, std::ref(*order))));
     return order;
   }
 
-  template<IsOrderExecutionDriver D, typename C,
-    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
   void ComplianceCheckOrderExecutionDriver<D, C, S>::cancel(
       const OrderExecutionSession& session, OrderId id) {
-    auto order = m_orders.Find(id);
+    auto order = m_orders.find(id);
     if(!order) {
       m_driver->cancel(session, id);
       return;
     }
     try {
-      m_compliance_rule_set->cancel(session.GetAccount(), *order);
+      m_compliance_rule_set->cancel(session.get_account(), *order);
     } catch(const std::exception& e) {
-      reject_cancel_request(**order, m_time_client->GetTime(), e.what());
+      reject_cancel_request(**order, m_time_client->get_time(), e.what());
       return;
     }
     m_driver->cancel(session, id);
   }
 
-  template<IsOrderExecutionDriver D, typename C,
-    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
   void ComplianceCheckOrderExecutionDriver<D, C, S>::update(
       const OrderExecutionSession& session, OrderId id,
       const ExecutionReport& report) {
     m_driver->update(session, id, report);
   }
 
-  template<IsOrderExecutionDriver D, typename C,
-    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
   void ComplianceCheckOrderExecutionDriver<D, C, S>::close() {
-    if(m_open_state.SetClosing()) {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_tasks.Break();
-    m_tasks.Wait();
+    m_tasks.close();
+    m_tasks.wait();
     m_driver->close();
-    m_open_state.Close();
+    m_open_state.close();
   }
 
-  template<IsOrderExecutionDriver D, typename C,
-    Beam::IsInstanceOrIndirect<ComplianceRuleSet> S>
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
   void ComplianceCheckOrderExecutionDriver<D, C, S>::on_execution_report(
       PrimitiveOrder& order, const ExecutionReport& report) {
     if(report.m_status == OrderStatus::PENDING_NEW) {

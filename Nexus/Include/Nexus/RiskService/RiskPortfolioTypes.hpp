@@ -18,7 +18,7 @@ namespace Nexus {
   struct RiskPortfolioKey {
 
     /** The portfolio's account. */
-    Beam::ServiceLocator::DirectoryEntry m_account;
+    Beam::DirectoryEntry m_account;
 
     /** The Security being indexed. */
     Security m_security;

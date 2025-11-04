@@ -1,6 +1,5 @@
 #include <future>
 #include <Beam/TimeService/FixedTimeClient.hpp>
-#include <Beam/TimeService/TimeClientBox.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Compliance/TimeFilterComplianceRule.hpp"
 #include "Nexus/ComplianceTests/TestComplianceRule.hpp"
@@ -8,8 +7,6 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -22,30 +19,30 @@ namespace {
     auto security = Security("TST", TSX);
     auto order_info = OrderInfo();
     order_info.m_fields = make_limit_order_fields(
-      DirectoryEntry::MakeAccount(1, "alice"), security, CAD, Side::BID, "TSX",
+      DirectoryEntry::make_account(1, "alice"), security, CAD, Side::BID, "TSX",
       100, Money::ONE);
-    order_info.m_timestamp = time_client.GetTime();
+    order_info.m_timestamp = time_client.get_time();
     order_info.m_id = 1;
     auto order = std::make_shared<PrimitiveOrder>(order_info);
     auto async_submit = std::async(std::launch::async, [&] {
       rule.submit(order);
     });
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto submit_operation =
       std::get_if<TestComplianceRule::SubmitOperation>(&*operation);
     REQUIRE(submit_operation);
     REQUIRE(submit_operation->m_order == order);
-    submit_operation->m_result.SetResult();
+    submit_operation->m_result.set();
     async_submit.get();
     auto async_cancel = std::async(std::launch::async, [&] {
       rule.cancel(order);
     });
-    operation = operations->Pop();
+    operation = operations->pop();
     auto cancel_operation =
       std::get_if<TestComplianceRule::CancelOperation>(&*operation);
     REQUIRE(cancel_operation);
     REQUIRE(cancel_operation->m_order == order);
-    cancel_operation->m_result.SetResult();
+    cancel_operation->m_result.set();
     async_cancel.get();
   }
 
@@ -53,26 +50,26 @@ namespace {
     auto security = Security("TST", TSX);
     auto order_info = OrderInfo();
     order_info.m_fields = make_limit_order_fields(
-      DirectoryEntry::MakeAccount(1, "alice"), security, CAD, Side::BID, "TSX",
+      DirectoryEntry::make_account(1, "alice"), security, CAD, Side::BID, "TSX",
       100, Money::ONE);
-    order_info.m_timestamp = time_client.GetTime();
+    order_info.m_timestamp = time_client.get_time();
     order_info.m_id = 1;
     auto order = std::make_shared<PrimitiveOrder>(order_info);
     auto async_submit = std::async(std::launch::async, [&] {
       rule.submit(order);
     });
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto add_operation =
       std::get_if<TestComplianceRule::AddOperation>(&*operation);
     REQUIRE(add_operation);
     REQUIRE(add_operation->m_order == order);
-    add_operation->m_result.SetResult();
+    add_operation->m_result.set();
     async_submit.get();
     auto async_cancel = std::async(std::launch::async, [&] {
       rule.cancel(order);
     });
     async_cancel.get();
-    REQUIRE(!operations->TryPop());
+    REQUIRE(!operations->try_pop());
   }
 }
 
@@ -87,7 +84,7 @@ TEST_SUITE("TimeFilterComplianceRule") {
       require_check(rule, time_client, operations);
     }
     SUBCASE("outside") {
-      time_client.SetTime(time_from_string("2024-07-25 13:59:00"));
+      time_client.set(time_from_string("2024-07-25 13:59:00"));
       require_passthrough(rule, time_client, operations);
     }
   }
@@ -102,7 +99,7 @@ TEST_SUITE("TimeFilterComplianceRule") {
       require_check(rule, time_client, operations);
     }
     SUBCASE("outside") {
-      time_client.SetTime(time_from_string("2024-07-25 07:00:00"));
+      time_client.set(time_from_string("2024-07-25 07:00:00"));
       require_passthrough(rule, time_client, operations);
     }
   }
@@ -114,7 +111,7 @@ TEST_SUITE("TimeFilterComplianceRule") {
       get_default_time_zone_database(), DEFAULT_VENUES, &time_client,
       std::make_unique<TestComplianceRule>(operations));
     require_check(rule, time_client, operations);
-    time_client.SetTime(time_from_string("2024-07-25 13:00:00"));
+    time_client.set(time_from_string("2024-07-25 13:00:00"));
     require_passthrough(rule, time_client, operations);
   }
 
@@ -125,7 +122,7 @@ TEST_SUITE("TimeFilterComplianceRule") {
       get_default_time_zone_database(), DEFAULT_VENUES, &time_client,
       std::make_unique<TestComplianceRule>(operations));
     require_check(rule, time_client, operations);
-    time_client.SetTime(time_from_string("2024-07-25 14:01:00"));
+    time_client.set(time_from_string("2024-07-25 14:01:00"));
     require_passthrough(rule, time_client, operations);
   }
 
@@ -139,9 +136,9 @@ TEST_SUITE("TimeFilterComplianceRule") {
     auto security = Security("TST", unknown_venue);
     auto order_info = OrderInfo();
     order_info.m_fields = make_limit_order_fields(
-      DirectoryEntry::MakeAccount(1, "alice"), security, CAD, Side::BID, "XXXX",
-      100, Money::ONE);
-    order_info.m_timestamp = time_client.GetTime();
+      DirectoryEntry::make_account(1, "alice"), security, CAD, Side::BID,
+      "XXXX", 100, Money::ONE);
+    order_info.m_timestamp = time_client.get_time();
     order_info.m_id = 6;
     auto order = std::make_shared<PrimitiveOrder>(order_info);
     REQUIRE_THROWS_AS(rule.submit(order), ComplianceCheckException);

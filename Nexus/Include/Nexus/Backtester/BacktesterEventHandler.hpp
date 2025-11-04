@@ -60,15 +60,15 @@ namespace Nexus {
       void close();
 
     private:
-      mutable Beam::Threading::Mutex m_mutex;
+      mutable Beam::Mutex m_mutex;
       boost::posix_time::ptime m_start_time;
       boost::posix_time::ptime m_end_time;
       Beam::TimeService::Tests::TimeServiceTestEnvironment m_time_environment;
       std::deque<std::shared_ptr<BacktesterEvent>> m_events;
       std::size_t m_active_count;
-      Beam::Threading::ConditionVariable m_event_available_condition;
-      Beam::Routines::RoutineHandler m_event_loop_routine;
-      Beam::IO::OpenState m_open_state;
+      Beam::ConditionVariable m_event_available_condition;
+      Beam::RoutineHandler m_event_loop_routine;
+      Beam::OpenState m_open_state;
 
       BacktesterEventHandler(const BacktesterEventHandler&) = delete;
       BacktesterEventHandler& operator =(
@@ -87,7 +87,7 @@ namespace Nexus {
         m_active_count(0),
         m_time_environment(m_start_time) {
     try {
-      m_event_loop_routine = Beam::Routines::Spawn(
+      m_event_loop_routine = Beam::Spawn(
         std::bind_front(&BacktesterEventHandler::event_loop, this));
     } catch(const std::exception&) {
       close();
@@ -164,7 +164,7 @@ namespace Nexus {
     m_event_loop_routine.Wait();
     m_time_environment.Close();
     m_open_state.Close();
-    Beam::Routines::FlushPendingRoutines();
+    Beam::FlushPendingRoutines();
   }
 
   inline void BacktesterEventHandler::event_loop() {
@@ -189,7 +189,7 @@ namespace Nexus {
       }
       event->execute();
       event->complete();
-      Beam::Routines::FlushPendingRoutines();
+      Beam::FlushPendingRoutines();
     }
   }
 }

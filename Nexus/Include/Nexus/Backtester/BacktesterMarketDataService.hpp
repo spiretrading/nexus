@@ -86,7 +86,7 @@ namespace Nexus {
 
       /** The query type for the market data. */
       using QueryType =
-        market_data_query_type_t<Beam::Queries::SequencedValue<MarketDataType>>;
+        market_data_query_type_t<Beam::SequencedValue<MarketDataType>>;
 
       /**
        * Constructs a MarketDataQueryEvent.
@@ -116,7 +116,7 @@ namespace Nexus {
 
       /** The query type for the market data. */
       using QueryType =
-        market_data_query_type_t<Beam::Queries::SequencedValue<MarketDataType>>;
+        market_data_query_type_t<Beam::SequencedValue<MarketDataType>>;
 
       /**
        * Constructs a MarketDataLoadEvent.
@@ -126,14 +126,14 @@ namespace Nexus {
        * @param service The market data service to use.
        */
       MarketDataLoadEvent(typename QueryType::Index index,
-        Beam::Queries::Range::Point start, boost::posix_time::ptime timestamp,
+        Beam::Range::Point start, boost::posix_time::ptime timestamp,
         Beam::Ref<BacktesterMarketDataService> service) noexcept;
 
       void execute() override;
 
     private:
       typename QueryType::Index m_index;
-      Beam::Queries::Range::Point m_start;
+      Beam::Range::Point m_start;
       BacktesterMarketDataService* m_service;
   };
 
@@ -218,7 +218,7 @@ namespace Nexus {
   void MarketDataQueryEvent<T>::execute() {
     auto type = get_market_data_type<MarketDataType>();
     auto key = std::tuple(m_query.GetIndex(), type);
-    if(m_query.GetRange().GetEnd() != Beam::Queries::Sequence::Last() ||
+    if(m_query.GetRange().GetEnd() != Beam::Sequence::Last() ||
         !m_service->m_queries.insert(key).second) {
       return;
     }
@@ -231,7 +231,7 @@ namespace Nexus {
 
   template<typename T>
   MarketDataLoadEvent<T>::MarketDataLoadEvent(typename QueryType::Index index,
-    Beam::Queries::Range::Point start, boost::posix_time::ptime timestamp,
+    Beam::Range::Point start, boost::posix_time::ptime timestamp,
     Beam::Ref<BacktesterMarketDataService> service) noexcept
     : BacktesterEvent(timestamp),
       m_index(std::move(index)),
@@ -241,22 +241,22 @@ namespace Nexus {
   template<typename T>
   void MarketDataLoadEvent<T>::execute() {
     const auto QUERY_SIZE = 1000;
-    auto end = [&] () -> Beam::Queries::Range::Point {
+    auto end = [&] () -> Beam::Range::Point {
       if(m_service->m_event_handler->get_end_time() ==
           boost::posix_time::pos_infin) {
-        return Beam::Queries::Sequence::Present();
+        return Beam::Sequence::Present();
       }
       return m_service->m_event_handler->get_end_time();
     }();
     auto query = QueryType();
     query.SetIndex(m_index);
     query.SetRange(m_start, end);
-    query.SetSnapshotLimit(
-      Beam::Queries::SnapshotLimit::Type::HEAD, QUERY_SIZE);
+    query.set_snapshot_limit(
+      Beam::SnapshotLimit::Type::HEAD, QUERY_SIZE);
     auto queue = std::make_shared<
-      Beam::Queue<Beam::Queries::SequencedValue<MarketDataType>>>();
+      Beam::Queue<Beam::SequencedValue<MarketDataType>>>();
     m_service->m_market_data_client.query(query, queue);
-    auto data = std::vector<Beam::Queries::SequencedValue<MarketDataType>>();
+    auto data = std::vector<Beam::SequencedValue<MarketDataType>>();
     Beam::Flush(queue, std::back_inserter(data));
     if(data.empty()) {
       return;
@@ -265,13 +265,13 @@ namespace Nexus {
     auto timestamp = m_service->m_event_handler->get_time();
     for(auto& value : data) {
       timestamp =
-        std::max(timestamp, Beam::Queries::GetTimestamp(value.GetValue()));
+        std::max(timestamp, Beam::GetTimestamp(value.GetValue()));
       events.push_back(std::make_shared<MarketDataEvent<
         typename QueryType::Index, MarketDataType>>(query.GetIndex(),
           std::move(value), timestamp, Beam::Ref(*m_service)));
     }
     auto reload_event = std::make_shared<MarketDataLoadEvent>(m_index,
-      Beam::Queries::Increment(data.back().GetSequence()),
+      Beam::Increment(data.back().GetSequence()),
       events.back()->get_timestamp(), Beam::Ref(*m_service));
     events.push_back(reload_event);
     m_service->m_event_handler->add(events);
@@ -289,7 +289,7 @@ namespace Nexus {
   template<typename I, typename T>
   void MarketDataEvent<I, T>::execute() {
     m_service->m_market_data_environment->get_feed_client().publish(
-      Beam::Queries::IndexedValue(m_value, m_index));
+      Beam::IndexedValue(m_value, m_index));
   }
 }
 

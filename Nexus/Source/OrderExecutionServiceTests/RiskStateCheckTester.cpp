@@ -5,8 +5,7 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
-using namespace Beam::ServiceLocator::Tests;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
@@ -17,7 +16,7 @@ using namespace Nexus::Tests;
 
 namespace {
   auto make_test_order_fields() {
-    auto account = DirectoryEntry::MakeAccount(123, "test");
+    auto account = DirectoryEntry::make_account(123, "test");
     auto security = Security("TST", TSX);
     auto currency = CAD;
     auto side = Side::BID;
@@ -45,8 +44,8 @@ TEST_SUITE("RiskStateCheck") {
     auto& administration_client =
       fixture.m_administration_environment.get_client();
     auto check = make_risk_state_check(administration_client);
-    auto account = DirectoryEntry::MakeAccount(123);
-    administration_client.store(account, RiskState(RiskState::Type::DISABLED));
+    auto account = DirectoryEntry::make_account(123);
+    administration_client.store(account, RiskState::Type::DISABLED);
     auto fields = make_test_order_fields();
     auto info = OrderInfo(fields, 1, time_from_string("2024-07-18 10:01:00"));
     REQUIRE_THROWS_AS(check->submit(info), OrderSubmissionCheckException);

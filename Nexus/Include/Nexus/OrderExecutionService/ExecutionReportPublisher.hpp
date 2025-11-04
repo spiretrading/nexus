@@ -20,17 +20,6 @@ namespace Nexus {
 
     /** The ExecutionReport that was published. */
     ExecutionReport m_report;
-
-    /** Constructs an empty ExecutionReportEntry. */
-    ExecutionReportEntry() noexcept;
-
-    /**
-     * Constructs an ExecutionReportEntry.
-     * @param order The Order that published the ExecutionReport.
-     * @param report The ExecutionReport that was published.
-     */
-    ExecutionReportEntry(
-      std::shared_ptr<Order> order, ExecutionReport report) noexcept;
   };
 
   /**
@@ -48,15 +37,12 @@ namespace Nexus {
       explicit ExecutionReportPublisher(
         Beam::ScopedQueueReader<std::shared_ptr<Order>> orders);
 
-      void With(const std::function<void (boost::optional<const Snapshot&>)>& f)
+      void with(const std::function<void (boost::optional<const Snapshot&>)>& f)
         const override;
-
-      void Monitor(Beam::ScopedQueueWriter<Type> monitor,
+      void monitor(Beam::ScopedQueueWriter<Type> monitor,
         Beam::Out<boost::optional<Snapshot>> snapshot) const override;
-
-      void With(const std::function<void ()>& f) const override;
-
-      void Monitor(Beam::ScopedQueueWriter<ExecutionReportEntry> monitor)
+      void with(const std::function<void ()>& f) const override;
+      void monitor(Beam::ScopedQueueWriter<ExecutionReportEntry> monitor)
         const override;
 
     private:
@@ -64,25 +50,16 @@ namespace Nexus {
       boost::optional<Beam::QueuePipe<std::shared_ptr<Order>>> m_pipe;
   };
 
-  inline ExecutionReportEntry::ExecutionReportEntry() noexcept
-    : m_order(nullptr) {}
-
-  inline ExecutionReportEntry::ExecutionReportEntry(
-    std::shared_ptr<Order> order, ExecutionReport report) noexcept
-    : m_order(order),
-      m_report(std::move(report)) {}
-
   inline ExecutionReportPublisher::ExecutionReportPublisher(
       Beam::ScopedQueueReader<std::shared_ptr<Order>> orders) {
-    m_publisher.With([&] {
+    m_publisher.with([&] {
       auto snapshot = std::vector<ExecutionReportEntry>();
-      while(auto order = orders.TryPop()) {
+      while(auto order = orders.try_pop()) {
         auto reports = boost::optional<std::vector<ExecutionReport>>();
-        (*order)->get_publisher().Monitor(
-          Beam::MakeCallbackQueueWriter<ExecutionReport>(
-            [=, this] (const auto& report) {
-              m_publisher.Push(ExecutionReportEntry(*order, report));
-            }), Beam::Store(reports));
+        (*order)->get_publisher().monitor(
+          Beam::callback<ExecutionReport>([=, this] (const auto& report) {
+            m_publisher.push(ExecutionReportEntry(*order, report));
+          }), Beam::out(reports));
         if(reports) {
           std::transform(
             reports->begin(), reports->end(), std::back_inserter(snapshot),
@@ -98,39 +75,37 @@ namespace Nexus {
               rhs.m_report.m_id, rhs.m_report.m_status);
         });
       for(auto& entry : snapshot) {
-        m_publisher.Push(std::move(entry));
+        m_publisher.push(std::move(entry));
       }
     });
     m_pipe.emplace(std::move(orders),
-      Beam::MakeCallbackQueueWriter<std::shared_ptr<Order>>(
-        [this] (const auto& order) {
-          order->get_publisher().Monitor(
-            Beam::MakeCallbackQueueWriter<ExecutionReport>(
-              [=, this] (const auto& report) {
-                m_publisher.Push(ExecutionReportEntry(order, report));
-              }));
-        }));
+      Beam::callback<std::shared_ptr<Order>>([this] (const auto& order) {
+        order->get_publisher().monitor(Beam::callback<ExecutionReport>(
+          [=, this] (const auto& report) {
+            m_publisher.push(ExecutionReportEntry(order, report));
+          }));
+      }));
   }
 
-  inline void ExecutionReportPublisher::With(
+  inline void ExecutionReportPublisher::with(
       const std::function<void (boost::optional<const Snapshot&>)>& f) const {
-    m_publisher.With(f);
+    m_publisher.with(f);
   }
 
-  inline void ExecutionReportPublisher::Monitor(
+  inline void ExecutionReportPublisher::monitor(
       Beam::ScopedQueueWriter<Type> monitor,
       Beam::Out<boost::optional<Snapshot>> snapshot) const {
-    m_publisher.Monitor(std::move(monitor), Beam::Store(snapshot));
+    m_publisher.monitor(std::move(monitor), Beam::out(snapshot));
   }
 
-  inline void ExecutionReportPublisher::With(
+  inline void ExecutionReportPublisher::with(
       const std::function<void ()>& f) const {
-    m_publisher.With(f);
+    m_publisher.with(f);
   }
 
-  inline void ExecutionReportPublisher::Monitor(
+  inline void ExecutionReportPublisher::monitor(
       Beam::ScopedQueueWriter<ExecutionReportEntry> monitor) const {
-    m_publisher.Monitor(std::move(monitor));
+    m_publisher.monitor(std::move(monitor));
   }
 }
 

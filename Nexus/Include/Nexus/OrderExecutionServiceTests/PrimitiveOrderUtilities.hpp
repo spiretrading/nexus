@@ -14,15 +14,15 @@ namespace Nexus::Tests {
   inline ExecutionReport cancel(
       PrimitiveOrder& order, boost::posix_time::ptime timestamp) {
     auto monitor = std::make_shared<Beam::Queue<ExecutionReport>>();
-    order.get_publisher().Monitor(monitor);
+    order.get_publisher().monitor(monitor);
     auto last_report = ExecutionReport();
     while(true) {
-      last_report = monitor->Pop();
+      last_report = monitor->pop();
       if(last_report.m_status == OrderStatus::PENDING_CANCEL) {
         break;
       }
     }
-    while(auto report = monitor->TryPop()) {
+    while(auto report = monitor->try_pop()) {
       last_report = std::move(*report);
     }
     auto updated_report =
@@ -37,7 +37,7 @@ namespace Nexus::Tests {
    */
   inline ExecutionReport cancel(PrimitiveOrder& order) {
     return cancel(
-      order, order.get_publisher().GetSnapshot()->back().m_timestamp);
+      order, order.get_publisher().get_snapshot()->back().m_timestamp);
   }
 
   /**
@@ -65,7 +65,7 @@ namespace Nexus::Tests {
   inline ExecutionReport set_order_status(
       PrimitiveOrder& order, OrderStatus new_status) {
     return set_order_status(order, new_status,
-      order.get_publisher().GetSnapshot()->back().m_timestamp);
+      order.get_publisher().get_snapshot()->back().m_timestamp);
   }
 
   /**
@@ -147,7 +147,7 @@ namespace Nexus::Tests {
   inline ExecutionReport fill(
       PrimitiveOrder& order, Money price, Quantity quantity) {
     return fill(order, price, quantity,
-      order.get_publisher().GetSnapshot()->back().m_timestamp);
+      order.get_publisher().get_snapshot()->back().m_timestamp);
   }
 
   /**

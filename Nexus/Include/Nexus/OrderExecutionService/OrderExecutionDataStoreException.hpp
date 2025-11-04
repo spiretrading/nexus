@@ -7,16 +7,16 @@ namespace Nexus {
   /**
    * Exception to indicate an operation on an OrderExecutionDataStore failed.
    */
-  class OrderExecutionDataStoreException : public Beam::IO::IOException {
+  class OrderExecutionDataStoreException : public Beam::IOException {
     public:
-      using Beam::IO::IOException::IOException;
+      using Beam::IOException::IOException;
 
       /** Constructs an OrderExecutionDataStoreException. */
       OrderExecutionDataStoreException();
   };
 
   inline OrderExecutionDataStoreException::OrderExecutionDataStoreException()
-    : Beam::IO::IOException("Operation failed.") {}
+    : OrderExecutionDataStoreException("Operation failed.") {}
 }
 
 #endif

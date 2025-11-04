@@ -29,21 +29,22 @@ namespace Nexus {
         std::unique_ptr<Connection> connection);
 
       ~SqlComplianceRuleDataStore();
+
       std::vector<ComplianceRuleEntry> load_all_compliance_rule_entries();
       ComplianceRuleEntry::Id load_next_compliance_rule_entry_id();
       boost::optional<ComplianceRuleEntry>
         load_compliance_rule_entry(ComplianceRuleEntry::Id id);
       std::vector<ComplianceRuleEntry> load_compliance_rule_entries(
-        const Beam::ServiceLocator::DirectoryEntry& directory_entry);
+        const Beam::DirectoryEntry& directory_entry);
       void store(const ComplianceRuleEntry& entry);
       void remove(ComplianceRuleEntry::Id id);
       void store(const ComplianceRuleViolationRecord& record);
       void close();
 
     private:
-      mutable Beam::Threading::Mutex m_mutex;
+      mutable Beam::Mutex m_mutex;
       std::unique_ptr<Connection> m_connection;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
   };
 
   template<typename C>
@@ -128,7 +129,7 @@ namespace Nexus {
   template<typename C>
   std::vector<ComplianceRuleEntry>
       SqlComplianceRuleDataStore<C>::load_compliance_rule_entries(
-        const Beam::ServiceLocator::DirectoryEntry& directory_entry) {
+        const Beam::DirectoryEntry& directory_entry) {
     auto rows = std::vector<ComplianceRuleEntriesRow>();
     {
       auto lock = std::lock_guard(m_mutex);
@@ -149,12 +150,12 @@ namespace Nexus {
 
   template<typename C>
   void SqlComplianceRuleDataStore<C>::store(const ComplianceRuleEntry& entry) {
-    auto parameter_buffer = Beam::IO::SharedBuffer();
-    auto sender = Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>();
-    sender.SetSink(Beam::Ref(parameter_buffer));
+    auto parameter_buffer = Beam::SharedBuffer();
+    auto sender = Beam::BinarySender<Beam::SharedBuffer>();
+    sender.set(Beam::Ref(parameter_buffer));
     try {
-      sender.Shuttle(entry.get_schema().get_parameters());
-    } catch(const Beam::Serialization::SerializationException&) {
+      sender.shuttle(entry.get_schema().get_parameters());
+    } catch(const Beam::SerializationException&) {
       BOOST_THROW_EXCEPTION(
         ComplianceRuleDataStoreException("Unable to store schema parameters."));
     }
@@ -196,11 +197,11 @@ namespace Nexus {
 
   template<typename C>
   void SqlComplianceRuleDataStore<C>::close() {
-    if(m_open_state.SetClosing()) {
+    if(m_open_state.set_closing()) {
       return;
     }
     m_connection->close();
-    m_open_state.Close();
+    m_open_state.close();
   }
 }
 

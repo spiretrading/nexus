@@ -26,18 +26,9 @@ namespace Nexus {
    *         specified <i>venue</i>.
    */
   inline auto make_venue_filter(Venue venue) {
-    auto query_venue = Beam::Queries::StringValue(venue.get_code().GetData());
-    auto venue_expression = Beam::Queries::ConstantExpression(query_venue);
-    auto info_parameter =
-      Beam::Queries::ParameterExpression(0, Nexus::OrderInfoType());
-    auto fields_accessor = Beam::Queries::MemberAccessExpression(
-      "fields", Nexus::OrderFieldsType(), info_parameter);
-    auto security_accessor = Beam::Queries::MemberAccessExpression(
-      "security", Nexus::SecurityType(), fields_accessor);
-    auto venue_accessor = Beam::Queries::MemberAccessExpression(
-      "venue", Beam::Queries::StringType(), security_accessor);
-    return Beam::Queries::MakeEqualsExpression(
-      venue_expression, venue_accessor);
+    return std::string(venue.get_code().get_data()) ==
+      SecurityAccessor(OrderFieldsAccessor(OrderInfoAccessor::from_parameter(0).
+        get_fields()).get_security()).get_venue();
   }
 
   /**
@@ -54,9 +45,8 @@ namespace Nexus {
    *         <i>venue</i>.
    */
   inline AccountQuery make_daily_order_submission_query(Venue venue,
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      boost::posix_time::ptime start, boost::posix_time::ptime end,
-      const VenueDatabase& venues,
+      const Beam::DirectoryEntry& account, boost::posix_time::ptime start,
+      boost::posix_time::ptime end, const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones) {
     auto venue_start = venue_date_to_utc(venue, start, venues, time_zones);
     auto venue_end = [&] {
@@ -69,10 +59,10 @@ namespace Nexus {
     }();
     auto venue_filter = make_venue_filter(venue);
     auto query = AccountQuery();
-    query.SetIndex(account);
-    query.SetRange(venue_start, venue_end);
-    query.SetFilter(venue_filter);
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
+    query.set_index(account);
+    query.set_range(venue_start, venue_end);
+    query.set_filter(venue_filter);
+    query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
     return query;
   }
 
@@ -86,15 +76,13 @@ namespace Nexus {
    * @param client The OrderExecutionClient to query.
    * @param queue The Queue to write to.
    */
-  template<IsOrderExecutionClient C>
-  Beam::Routines::Routine::Id query_daily_order_submissions(
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      boost::posix_time::ptime start, boost::posix_time::ptime end,
-      const VenueDatabase& venues,
-      const boost::local_time::tz_database& time_zones, C&& client,
+  Beam::Routine::Id query_daily_order_submissions(
+      const Beam::DirectoryEntry& account, boost::posix_time::ptime start,
+      boost::posix_time::ptime end, const VenueDatabase& venues,
+      const boost::local_time::tz_database& time_zones,
+      IsOrderExecutionClient auto& client,
       Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) {
-    return Beam::Routines::Spawn([=, queue = std::move(queue),
-        client = Beam::CapturePtr<C>(client)] () mutable {
+    return Beam::spawn([=, queue = std::move(queue), &client] () mutable {
       auto venue_time_zones =
         std::unordered_map<std::string, std::vector<Venue>>();
       for(auto& venue : venues.get_entries()) {
@@ -105,24 +93,24 @@ namespace Nexus {
           venue_time_zone.second.front(), start, venues, time_zones);
         auto venue_end = venue_date_to_utc(venue_time_zone.second.front(),
           end, venues, time_zones) + boost::gregorian::days(1);
-        auto venue_expressions = std::vector<Beam::Queries::Expression>();
+        auto venue_expressions = std::vector<Beam::Expression>();
         for(auto& venue : venue_time_zone.second) {
           venue_expressions.push_back(make_venue_filter(venue));
         }
-        auto venue_filter = Beam::Queries::MakeOrExpression(
-          venue_expressions.begin(), venue_expressions.end());
+        auto venue_filter =
+          Beam::conjunction(venue_expressions.begin(), venue_expressions.end());
         auto query = AccountQuery();
-        query.SetIndex(account);
-        query.SetRange(venue_start, venue_end);
-        query.SetFilter(venue_filter);
-        query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
+        query.set_index(account);
+        query.set_range(venue_start, venue_end);
+        query.set_filter(venue_filter);
+        query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
         auto snapshot_queue = std::make_shared<Beam::Queue<SequencedOrder>>();
         client->query(query, snapshot_queue);
         try {
           while(true) {
-            auto value = snapshot_queue->Pop();
-            if(value.GetValue()->get_info().m_timestamp < venue_end) {
-              queue.Push(std::move(value.GetValue()));
+            auto value = snapshot_queue->pop();
+            if(value.get_value()->get_info().m_timestamp < venue_end) {
+              queue.push(std::move(value.get_value()));
             }
           }
         } catch(const std::exception&) {}
@@ -132,9 +120,7 @@ namespace Nexus {
 
   /** Returns a Query Expression to filter an account's live Orders. */
   inline auto make_live_orders_filter() {
-    auto info = Beam::Queries::ParameterExpression(0, Nexus::OrderInfoType());
-    return Beam::Queries::MemberAccessExpression(
-      "is_live", Beam::Queries::NativeDataType<bool>(), info);
+    return OrderInfoAccessor::from_parameter(0).is_live();
   }
 
   /**
@@ -142,12 +128,12 @@ namespace Nexus {
    * @param account The account to query.
    */
   inline AccountQuery make_live_orders_query(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     auto query = AccountQuery();
-    query.SetIndex(account);
-    query.SetRange(Beam::Queries::Range::Historical());
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
-    query.SetFilter(make_live_orders_filter());
+    query.set_index(account);
+    query.set_range(Beam::Range::HISTORICAL);
+    query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
+    query.set_filter(make_live_orders_filter());
     return query;
   }
 
@@ -157,7 +143,7 @@ namespace Nexus {
    * @param client The OrderExecutionClient to query.
    * @param queue The Queue to write to.
    */
-  void query_live_orders(const Beam::ServiceLocator::DirectoryEntry& account,
+  void query_live_orders(const Beam::DirectoryEntry& account,
       IsOrderExecutionClient auto& client,
       Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) {
     client.query(make_live_orders_query(account), std::move(queue));
@@ -169,12 +155,12 @@ namespace Nexus {
    * @param client The OrderExecutionClient to query.
    */
   std::vector<std::shared_ptr<Order>> load_live_orders(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       IsOrderExecutionClient auto& client) {
     auto queue = std::make_shared<Beam::Queue<std::shared_ptr<Order>>>();
     query_live_orders(account, client, queue);
     auto orders = std::vector<std::shared_ptr<Order>>();
-    Beam::Flush(queue, std::back_inserter(orders));
+    Beam::flush(queue, std::back_inserter(orders));
     return orders;
   }
 
@@ -183,16 +169,12 @@ namespace Nexus {
    * @param ids The order ids to filter.
    */
   inline auto make_order_id_filter(const std::vector<OrderId>& ids) {
-    auto info = Beam::Queries::ParameterExpression(0, Nexus::OrderInfoType());
-    auto field = Beam::Queries::MemberAccessExpression(
-      "order_id", Beam::Queries::NativeDataType<OrderId>(), info);
-    auto clauses = std::vector<Beam::Queries::Expression>();
+    auto clauses = std::vector<Beam::Expression>();
     std::transform(ids.begin(), ids.end(), std::back_inserter(clauses),
       [&] (auto id) {
-        return Beam::Queries::MakeEqualsExpression(field,
-          Beam::Queries::ConstantExpression(Beam::Queries::NativeValue(id)));
+        return OrderInfoAccessor::from_parameter(0).get_order_id() == id;
       });
-    return Beam::Queries::MakeOrExpression(clauses.begin(), clauses.end());
+    return Beam::conjunction(clauses.begin(), clauses.end());
   }
 
   /**
@@ -200,14 +182,13 @@ namespace Nexus {
    * @param account The account to query.
    * @param ids The order ids to query.
    */
-  inline AccountQuery make_order_id_query(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+  inline AccountQuery make_order_id_query(const Beam::DirectoryEntry& account,
       const std::vector<OrderId>& ids) {
     auto query = AccountQuery();
-    query.SetIndex(account);
-    query.SetRange(Beam::Queries::Range::Historical());
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
-    query.SetFilter(make_order_id_filter(ids));
+    query.set_index(account);
+    query.set_range(Beam::Range::HISTORICAL);
+    query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
+    query.set_filter(make_order_id_filter(ids));
     return query;
   }
 
@@ -218,7 +199,7 @@ namespace Nexus {
    * @param client The OrderExecutionClient to query.
    * @param queue The Queue to write to.
    */
-  void query_order_ids(const Beam::ServiceLocator::DirectoryEntry& account,
+  void query_order_ids(const Beam::DirectoryEntry& account,
       const std::vector<OrderId>& ids, IsOrderExecutionClient auto& client,
       Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) {
     client.query(make_order_id_query(account, ids), std::move(queue));
@@ -231,12 +212,12 @@ namespace Nexus {
    * @param client The OrderExecutionClient to query.
    */
   std::vector<std::shared_ptr<Order>> load_orders(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       const std::vector<OrderId>& ids, IsOrderExecutionClient auto& client) {
     auto queue = std::make_shared<Beam::Queue<std::shared_ptr<Order>>>();
     query_order_ids(account, ids, client, queue);
     auto orders = std::vector<std::shared_ptr<Order>>();
-    Beam::Flush(queue, std::back_inserter(orders));
+    Beam::flush(queue, std::back_inserter(orders));
     return orders;
   }
 }

@@ -100,6 +100,6 @@ TEST_SUITE("Candlestick") {
     auto high = 15 * Money::ONE;
     auto low = 9 * Money::ONE;
     auto candlestick = TestCandlestick(start, end, open, close, high, low);
-    Beam::Serialization::Tests::TestRoundTripShuttle(candlestick);
+    Beam::Tests::TestRoundTripShuttle(candlestick);
   }
 }

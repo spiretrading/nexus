@@ -3,7 +3,6 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;
-using namespace Beam::Routines;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
 
@@ -32,7 +31,7 @@ TEST_SUITE("OrderCountLimitComplianceRule") {
     report.m_id = 1;
     report.m_status = OrderStatus::FILLED;
     order1->update(report);
-    FlushPendingRoutines();
+    flush_pending_routines();
     auto info4 = OrderInfo();
     info4.m_id = 4;
     info4.m_fields.m_security = Security("FOO", TSX);

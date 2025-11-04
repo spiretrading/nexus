@@ -12,7 +12,7 @@ namespace {
   struct Builder {
     auto operator ()() const {
       return SqlComplianceRuleDataStore(
-        std::make_unique<Connection>(":memory:"));
+        std::make_unique<Viper::Sqlite3::Connection>(":memory:"));
     }
   };
 }

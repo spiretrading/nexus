@@ -41,7 +41,7 @@ namespace Nexus::Tests {
        *        servlet.
        */
       OrderExecutionServiceTestEnvironment(
-        Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
+        Beam::ServiceLocatorClientBox service_locator_client,
         Beam::UidService::UidClientBox uid_client,
         AdministrationClient administration_client);
 
@@ -58,7 +58,7 @@ namespace Nexus::Tests {
        */
       OrderExecutionServiceTestEnvironment(VenueDatabase venues,
         DestinationDatabase destinations,
-        Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
+        Beam::ServiceLocatorClientBox service_locator_client,
         Beam::UidService::UidClientBox uid_client,
         AdministrationClient administration_client);
 
@@ -76,7 +76,7 @@ namespace Nexus::Tests {
        */
       OrderExecutionServiceTestEnvironment(VenueDatabase venues,
         DestinationDatabase destinations,
-        Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
+        Beam::ServiceLocatorClientBox service_locator_client,
         Beam::UidService::UidClientBox uid_client,
         AdministrationClient administration_client,
         Beam::TimeService::TimeClientBox time_client,
@@ -99,34 +99,34 @@ namespace Nexus::Tests {
        *        authenticate the OrderExecutionClient.
        */
       OrderExecutionClient make_client(
-        Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client);
+        Beam::ServiceLocatorClientBox service_locator_client);
 
       void close();
 
     private:
       using ServerConnection =
-        Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
+        Beam::LocalServerConnection<Beam::SharedBuffer>;
       using ClientChannel =
-        Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
+        Beam::LocalClientChannel<Beam::SharedBuffer>;
       using ServiceProtocolServletContainer =
-        Beam::Services::ServiceProtocolServletContainer<
-          Beam::ServiceLocator::MetaAuthenticationServletAdapter<
+        Beam::ServiceProtocolServletContainer<
+          Beam::MetaAuthenticationServletAdapter<
             MetaOrderExecutionServlet<Beam::TimeService::TimeClientBox,
-              Beam::ServiceLocator::ServiceLocatorClientBox,
+              Beam::ServiceLocatorClientBox,
               Beam::UidService::UidClientBox, AdministrationClient,
               OrderExecutionDriver*, LocalOrderExecutionDataStore*>,
-            Beam::ServiceLocator::ServiceLocatorClientBox>,
+            Beam::ServiceLocatorClientBox>,
           ServerConnection*,
-          Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+          Beam::BinarySender<Beam::SharedBuffer>,
           Beam::Codecs::NullEncoder,
-          std::shared_ptr<Beam::Threading::TriggerTimer>>;
+          std::shared_ptr<Beam::TriggerTimer>>;
       using ServiceProtocolClientBuilder =
-        Beam::Services::AuthenticatedServiceProtocolClientBuilder<
-          Beam::ServiceLocator::ServiceLocatorClientBox,
-          Beam::Services::MessageProtocol<std::unique_ptr<ClientChannel>,
-            Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+        Beam::AuthenticatedServiceProtocolClientBuilder<
+          Beam::ServiceLocatorClientBox,
+          Beam::MessageProtocol<std::unique_ptr<ClientChannel>,
+            Beam::BinarySender<Beam::SharedBuffer>,
             Beam::Codecs::NullEncoder>,
-          Beam::Threading::TriggerTimer>;
+          Beam::TriggerTimer>;
       LocalOrderExecutionDataStore m_data_store;
       OrderExecutionDriver m_driver;
       ServerConnection m_server_connection;
@@ -149,20 +149,20 @@ namespace Nexus::Tests {
    */
   inline OrderExecutionServiceTestEnvironment
       make_order_execution_service_test_environment(
-        Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
+        Beam::Tests::ServiceLocatorTestEnvironment&
           service_locator_environment,
         Beam::UidService::Tests::UidServiceTestEnvironment& uid_environment,
         Tests::AdministrationServiceTestEnvironment&
           administration_service_test_environment) {
-    auto account = service_locator_environment.GetRoot().MakeAccount(
+    auto account = service_locator_environment.GetRoot().make_account(
       "order_execution_service", "1234",
-      Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
+      Beam::DirectoryEntry::STAR_DIRECTORY);
     service_locator_environment.GetRoot().StorePermissions(account,
-      Beam::ServiceLocator::DirectoryEntry::GetStarDirectory(),
-      Beam::ServiceLocator::Permissions().Set(
-        Beam::ServiceLocator::Permission::READ).Set(
-        Beam::ServiceLocator::Permission::MOVE).Set(
-        Beam::ServiceLocator::Permission::ADMINISTRATE));
+      Beam::DirectoryEntry::STAR_DIRECTORY,
+      Beam::Permissions().Set(
+        Beam::Permission::READ).Set(
+        Beam::Permission::MOVE).Set(
+        Beam::Permission::ADMINISTRATE));
     administration_service_test_environment.make_administrator(account);
     auto service_locator_client =
       service_locator_environment.MakeClient("order_execution_service", "1234");
@@ -175,7 +175,7 @@ namespace Nexus::Tests {
 
   inline OrderExecutionServiceTestEnvironment::
     OrderExecutionServiceTestEnvironment(
-      Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
+      Beam::ServiceLocatorClientBox service_locator_client,
       Beam::UidService::UidClientBox uid_client,
       AdministrationClient administration_client)
     : OrderExecutionServiceTestEnvironment(DEFAULT_VENUES, DEFAULT_DESTINATIONS,
@@ -185,7 +185,7 @@ namespace Nexus::Tests {
   inline OrderExecutionServiceTestEnvironment::
     OrderExecutionServiceTestEnvironment(VenueDatabase venues,
       DestinationDatabase destinations,
-      Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
+      Beam::ServiceLocatorClientBox service_locator_client,
       Beam::UidService::UidClientBox uid_client,
       AdministrationClient administration_client)
     : OrderExecutionServiceTestEnvironment(std::move(venues),
@@ -198,7 +198,7 @@ namespace Nexus::Tests {
   inline OrderExecutionServiceTestEnvironment::
     OrderExecutionServiceTestEnvironment(VenueDatabase venues,
       DestinationDatabase destinations,
-      Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client,
+      Beam::ServiceLocatorClientBox service_locator_client,
       Beam::UidService::UidClientBox uid_client,
       AdministrationClient administration_client,
       Beam::TimeService::TimeClientBox time_client, OrderExecutionDriver driver)
@@ -209,7 +209,7 @@ namespace Nexus::Tests {
         service_locator_client, std::move(uid_client),
         std::move(administration_client), &m_driver, &m_data_store)),
         &m_server_connection,
-        boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
+        boost::factory<std::shared_ptr<Beam::TriggerTimer>>()) {}
 
   inline OrderExecutionServiceTestEnvironment::
       ~OrderExecutionServiceTestEnvironment() {
@@ -232,7 +232,7 @@ namespace Nexus::Tests {
   }
 
   inline OrderExecutionClient OrderExecutionServiceTestEnvironment::make_client(
-      Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
+      Beam::ServiceLocatorClientBox serviceLocatorClient) {
     return OrderExecutionClient(std::in_place_type<
       ServiceOrderExecutionClient<ServiceProtocolClientBuilder>>,
       ServiceProtocolClientBuilder(serviceLocatorClient,

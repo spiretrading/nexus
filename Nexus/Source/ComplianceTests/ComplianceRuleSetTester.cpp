@@ -7,8 +7,7 @@
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
-using namespace Beam::ServiceLocator::Tests;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -18,7 +17,7 @@ using namespace Nexus::Tests;
 
 namespace {
   using TestComplianceRuleSet =
-    ComplianceRuleSet<TestComplianceClient*, ServiceLocatorClientBox>;
+    ComplianceRuleSet<TestComplianceClient*, ServiceLocatorClient>;
 
   struct Fixture {
     ServiceLocatorTestEnvironment m_service_locator_environment;
@@ -34,10 +33,11 @@ namespace {
 TEST_SUITE("ComplianceRuleSet") {
   TEST_CASE("load_rules_for_account_on_first_use") {
     auto fixture = Fixture();
-    auto account = fixture.m_service_locator_environment.GetRoot().MakeAccount(
-      "user", "pw", DirectoryEntry::GetStarDirectory());
+    auto account =
+      fixture.m_service_locator_environment.get_root().make_account(
+        "user", "pw", DirectoryEntry::STAR_DIRECTORY);
     auto rule_set = TestComplianceRuleSet(&fixture.m_client,
-      fixture.m_service_locator_environment.MakeClient("user", "pw"),
+      fixture.m_service_locator_environment.make_client("user", "pw"),
       [] (const ComplianceRuleEntry&) {
         struct DummyRule final : ComplianceRule {
           void submit(const std::shared_ptr<Order>&) override {}
@@ -53,7 +53,7 @@ TEST_SUITE("ComplianceRuleSet") {
     auto submission = std::async(std::launch::async, [&] {
       rule_set.submit(order);
     });
-    auto operation = fixture.m_operations->Pop();
+    auto operation = fixture.m_operations->pop();
     auto monitor_operation =
       std::get_if<TestComplianceClient::MonitorComplianceRuleEntriesOperation>(
         &*operation);

@@ -19,7 +19,7 @@ namespace Nexus {
        * Adds an account that is able to submit Orders.
        * @param account The account to add.
        */
-      void add(const Beam::ServiceLocator::DirectoryEntry& account);
+      void add(const Beam::DirectoryEntry& account);
 
       /**
        * Publishes an OrderInfo.
@@ -44,13 +44,12 @@ namespace Nexus {
         const InitialSequenceLoader& initial_sequence_loader, F&& f);
 
     private:
-      using SyncAccountOrderSubmissionEntry = Beam::Threading::Sync<
-        AccountOrderSubmissionEntry, Beam::Threading::Mutex>;
-      Beam::SynchronizedUnorderedSet<Beam::ServiceLocator::DirectoryEntry>
-        m_accounts;
-      Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
-        std::shared_ptr<SyncAccountOrderSubmissionEntry>,
-        Beam::Threading::Mutex> m_submission_entries;
+      using SyncAccountOrderSubmissionEntry =
+        Beam::Sync<AccountOrderSubmissionEntry, Beam::Mutex>;
+      Beam::SynchronizedUnorderedSet<Beam::DirectoryEntry> m_accounts;
+      Beam::SynchronizedUnorderedMap<Beam::DirectoryEntry,
+        std::shared_ptr<SyncAccountOrderSubmissionEntry>, Beam::Mutex>
+          m_submission_entries;
 
       OrderSubmissionRegistry(const OrderSubmissionRegistry&) = delete;
       OrderSubmissionRegistry& operator =(
@@ -58,20 +57,21 @@ namespace Nexus {
   };
 
   inline void OrderSubmissionRegistry::add(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
-    m_accounts.Update(account);
+      const Beam::DirectoryEntry& account) {
+    m_accounts.update(account);
   }
 
   template<typename InitialSequenceLoader, typename F>
   void OrderSubmissionRegistry::publish(const OrderInfo& info,
       const InitialSequenceLoader& initial_sequence_loader, F&& f) {
-    auto entry = m_submission_entries.GetOrInsert(info.m_fields.m_account, [&] {
-      auto sequences = initial_sequence_loader();
-      auto account = m_accounts.Get(info.m_fields.m_account);
-      return std::make_shared<SyncAccountOrderSubmissionEntry>(
-        std::move(account), sequences);
-    });
-    Beam::Threading::With(*entry, [&] (auto& entry) {
+    auto entry = m_submission_entries.get_or_insert(info.m_fields.m_account,
+      [&] {
+        auto sequences = initial_sequence_loader();
+        auto account = m_accounts.get(info.m_fields.m_account);
+        return std::make_shared<SyncAccountOrderSubmissionEntry>(
+          std::move(account), sequences);
+      });
+    Beam::with(*entry, [&] (auto& entry) {
       auto sequenced_order_info = entry.publish(info);
       std::forward<F>(f)(sequenced_order_info);
     });
@@ -80,13 +80,13 @@ namespace Nexus {
   template<typename InitialSequenceLoader, typename F>
   void OrderSubmissionRegistry::publish(const AccountExecutionReport& report,
       const InitialSequenceLoader& initial_sequence_loader, F&& f) {
-    auto entry = m_submission_entries.GetOrInsert(report.GetIndex(), [&] {
+    auto entry = m_submission_entries.get_or_insert(report.get_index(), [&] {
       auto sequences = initial_sequence_loader();
-      auto account = m_accounts.Get(report.GetIndex());
+      auto account = m_accounts.get(report.get_index());
       return std::make_shared<SyncAccountOrderSubmissionEntry>(
         std::move(account), sequences);
     });
-    Beam::Threading::With(*entry, [&] (auto& entry) {
+    Beam::with(*entry, [&] (auto& entry) {
       auto sequenced_execution_report = entry.publish(report);
       std::forward<F>(f)(sequenced_execution_report);
     });

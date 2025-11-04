@@ -9,7 +9,7 @@ using namespace Nexus::DefaultVenues;
 
 TEST_SUITE("RiskPortfolioKey") {
   TEST_CASE("stream") {
-    auto account = DirectoryEntry::MakeAccount(123, "test_account");
+    auto account = DirectoryEntry::make_account(123, "test_account");
     auto security = Security("ABC", TSX);
     auto key = RiskPortfolioKey(account, security);
     auto out = std::ostringstream();
@@ -17,7 +17,7 @@ TEST_SUITE("RiskPortfolioKey") {
     REQUIRE(out.str() == "((ACCOUNT 123 test_account) ABC.TSX)");
 
     SUBCASE("shuttle") {
-      Beam::Serialization::Tests::TestRoundTripShuttle(key);
+      Beam::Tests::TestRoundTripShuttle(key);
     }
   }
 }

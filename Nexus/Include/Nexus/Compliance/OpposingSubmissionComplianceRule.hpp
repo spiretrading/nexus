@@ -1,10 +1,11 @@
 #ifndef NEXUS_OPPOSING_SUBMISSION_COMPLIANCE_RULE_HPP
 #define NEXUS_OPPOSING_SUBMISSION_COMPLIANCE_RULE_HPP
+#include <limits>
 #include <vector>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/TaggedQueueReader.hpp>
-#include <Beam/TimeService/TimeClientBox.hpp>
+#include <Beam/TimeService/TimeClient.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
@@ -18,7 +19,7 @@ namespace Nexus {
    * @param <C> The type of TimeClient used to determine how much time has
    *        elapsed since the last cancellation.
    */
-  template<typename C>
+  template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   class OpposingSubmissionComplianceRule : public ComplianceRule {
     public:
 
@@ -26,7 +27,7 @@ namespace Nexus {
        * The type of TimeClient used to determine how much time has elapsed
        * since the last cancellation.
        */
-      using TimeClient = Beam::GetTryDereferenceType<C>;
+      using TimeClient = Beam::dereference_t<C>;
 
       /**
        * Constructs an OpposingSubmissionComplianceRule.
@@ -37,9 +38,8 @@ namespace Nexus {
        * @param time_client Initializes the TimeClient.
        */
       template<Beam::Initializes<C> CF>
-      OpposingSubmissionComplianceRule(
-        boost::posix_time::time_duration timeout, Money offset,
-        CF&& time_client);
+      OpposingSubmissionComplianceRule(boost::posix_time::time_duration timeout,
+        Money offset, CF&& time_client);
 
       void submit(const std::shared_ptr<Order>& order) override;
       void add(const std::shared_ptr<Order>& order) override;
@@ -47,7 +47,7 @@ namespace Nexus {
     private:
       boost::posix_time::time_duration m_timeout;
       Money m_offset;
-      Beam::GetOptionalLocalPtr<C> m_time_client;
+      Beam::local_ptr_t<C> m_time_client;
       Beam::TaggedQueueReader<OrderFields, ExecutionReport> m_reports;
       boost::posix_time::ptime m_last_ask_cancel_time;
       Money m_ask_price;
@@ -61,7 +61,7 @@ namespace Nexus {
   template<typename TimeClient>
   OpposingSubmissionComplianceRule(
     boost::posix_time::time_duration, Money, TimeClient&&) ->
-      OpposingSubmissionComplianceRule<std::remove_reference_t<TimeClient>>;
+      OpposingSubmissionComplianceRule<std::remove_cvref_t<TimeClient>>;
 
   /**
    * The standard name used to identify the
@@ -103,11 +103,11 @@ namespace Nexus {
       }
     }
     using Rule = OpposingSubmissionComplianceRule<
-      std::remove_reference_t<decltype(time_client)>*>;
+      std::remove_cvref_t<decltype(time_client)>*>;
     return std::make_unique<Rule>(timeout, offset, &time_client);
   }
 
-  template<typename C>
+  template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   template<Beam::Initializes<C> CF>
   OpposingSubmissionComplianceRule<C>::OpposingSubmissionComplianceRule(
     boost::posix_time::time_duration timeout, Money offset, CF&& time_client)
@@ -119,15 +119,15 @@ namespace Nexus {
       m_last_bid_cancel_time(boost::posix_time::min_date_time),
       m_bid_price(Money::ZERO) {}
 
-  template<typename C>
+  template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   void OpposingSubmissionComplianceRule<C>::submit(
       const std::shared_ptr<Order>& order) {
     if(order->get_info().m_fields.m_type != OrderType::LIMIT &&
         order->get_info().m_fields.m_type != OrderType::MARKET) {
       return;
     }
-    auto time = m_time_client->GetTime();
-    while(auto report = m_reports.TryPop()) {
+    auto time = m_time_client->get_time();
+    while(auto report = m_reports.try_pop()) {
       if(report->m_value.m_status == OrderStatus::CANCELED) {
         auto side = report->m_key.m_side;
         auto price = get_submission_price(report->m_key);
@@ -161,22 +161,22 @@ namespace Nexus {
       BOOST_THROW_EXCEPTION(
         ComplianceCheckException("Opposing order can not be submitted yet."));
     }
-    order->get_publisher().Monitor(
-      m_reports.GetSlot(order->get_info().m_fields));
+    order->get_publisher().monitor(
+      m_reports.get_slot(order->get_info().m_fields));
   }
 
-  template<typename C>
+  template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   void OpposingSubmissionComplianceRule<C>::add(
       const std::shared_ptr<Order>& order) {
     if(order->get_info().m_fields.m_type != OrderType::LIMIT &&
         order->get_info().m_fields.m_type != OrderType::MARKET) {
       return;
     }
-    order->get_publisher().Monitor(
-      m_reports.GetSlot(order->get_info().m_fields));
+    order->get_publisher().monitor(
+      m_reports.get_slot(order->get_info().m_fields));
   }
 
-  template<typename C>
+  template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   Money OpposingSubmissionComplianceRule<C>::get_submission_price(
       const OrderFields& fields) const {
     if(fields.m_type == OrderType::LIMIT) {
@@ -188,7 +188,7 @@ namespace Nexus {
     }
   }
 
-  template<typename C>
+  template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   bool OpposingSubmissionComplianceRule<C>::test_price_in_range(
       const OrderFields& fields) const {
     auto price = get_submission_price(fields);

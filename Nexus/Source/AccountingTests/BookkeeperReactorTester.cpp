@@ -21,7 +21,7 @@ TEST_SUITE("BookkeeperReactor") {
   TEST_CASE("single_order") {
     auto commits = Beam::Queue<bool>();
     auto trigger = Trigger([&] {
-      commits.Push(true);
+      commits.push(true);
     });
     Trigger::set_trigger(trigger);
     auto order = std::make_shared<PrimitiveOrder>(
@@ -29,9 +29,8 @@ TEST_SUITE("BookkeeperReactor") {
         Money::ONE), 10, ptime(date(2019, 10, 3))));
     set_order_status(*order, OrderStatus::NEW, ptime(date(2019, 10, 3)));
     fill(*order, 100, ptime(date(2019, 10, 3)));
-    auto bookkeeper =
-      make_bookkeeper_reactor<TrueAverageBookkeeper>(
-        constant(std::static_pointer_cast<Order>(order)));
+    auto bookkeeper = make_bookkeeper_reactor<TrueAverageBookkeeper>(
+      constant(std::static_pointer_cast<Order>(order)));
     for(auto i = 0; i < 10; ++i) {
       auto state = bookkeeper.commit(i);
       if(has_evaluation(state)) {
@@ -39,7 +38,7 @@ TEST_SUITE("BookkeeperReactor") {
       } else if(has_continuation(state)) {
         continue;
       } else {
-        commits.Pop();
+        commits.pop();
       }
     }
     auto inventory = bookkeeper.eval();

@@ -12,7 +12,7 @@
 
 using namespace Beam;
 using namespace Beam::ServiceLocator;
-using namespace Beam::ServiceLocator::Tests;
+using namespace Beam::Tests;
 using namespace Beam::Threading;
 using namespace Beam::TimeService;
 using namespace Beam::UidService;
@@ -58,8 +58,8 @@ namespace {
               m_administration_environment)),
           m_time_client(time_from_string("2025-07-14 6:23:00:00")) {
       auto servlet_account =
-        m_service_locator_environment.GetRoot().MakeAccount("risk_service", "",
-          DirectoryEntry::GetStarDirectory());
+        m_service_locator_environment.GetRoot().make_account("risk_service", "",
+          DirectoryEntry::STAR_DIRECTORY);
       m_administration_environment.make_administrator(servlet_account);
       m_service_locator =
         m_service_locator_environment.MakeClient("risk_service", "");
@@ -68,8 +68,8 @@ namespace {
       m_administration_client =
         m_administration_environment.make_client(*m_service_locator);
       m_trader_account =
-        m_service_locator_environment.GetRoot().MakeAccount("trader", "",
-          DirectoryEntry::GetStarDirectory());
+        m_service_locator_environment.GetRoot().make_account("trader", "",
+          DirectoryEntry::STAR_DIRECTORY);
       m_administration_environment.get_client().store(m_trader_account,
         RiskParameters(AUD, 100000 * Money::ONE, RiskState::Type::ACTIVE,
           2 * Money::ONE, minutes(10)));

@@ -20,7 +20,7 @@ namespace Nexus {
   class ServiceClients {
     public:
       using ServiceLocatorClient =
-        Beam::ServiceLocator::ApplicationServiceLocatorClient::Client;
+        Beam::ApplicationServiceLocatorClient::Client;
 
       using RegistryClient =
         Beam::RegistryService::ApplicationRegistryClient::Client;
@@ -41,7 +41,7 @@ namespace Nexus {
 
       using TimeClient = Beam::TimeService::LiveNtpTimeClient;
 
-      using Timer = Beam::Threading::LiveTimer;
+      using Timer = Beam::LiveTimer;
 
       /**
        * Constructs a ServiceClients.
@@ -68,7 +68,7 @@ namespace Nexus {
       void close();
 
     private:
-      Beam::ServiceLocator::ApplicationServiceLocatorClient
+      Beam::ApplicationServiceLocatorClient
         m_service_locator_client;
       Beam::RegistryService::ApplicationRegistryClient m_registry_client;
       ApplicationAdministrationClient m_administration_client;
@@ -79,7 +79,7 @@ namespace Nexus {
       ApplicationOrderExecutionClient m_order_execution_client;
       ApplicationRiskClient m_risk_client;
       std::unique_ptr<TimeClient> m_time_client;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       ServiceClients(const ServiceClients&) = delete;
       ServiceClients& operator =(const ServiceClients&) = delete;

@@ -41,26 +41,26 @@ namespace Nexus {
       std::vector<AdministrationDataStore::IndexedAccountIdentity>
         load_all_account_identities();
       AccountIdentity load_identity(
-        const Beam::ServiceLocator::DirectoryEntry& account);
-      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::DirectoryEntry& account);
+      void store(const Beam::DirectoryEntry& account,
         const AccountIdentity& identity);
       std::vector<AdministrationDataStore::IndexedRiskParameters>
         load_all_risk_parameters();
       RiskParameters load_risk_parameters(
-        const Beam::ServiceLocator::DirectoryEntry& account);
-      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::DirectoryEntry& account);
+      void store(const Beam::DirectoryEntry& account,
         const RiskParameters& risk_parameters);
       std::vector<AdministrationDataStore::IndexedRiskState>
         load_all_risk_states();
       RiskState load_risk_state(
-        const Beam::ServiceLocator::DirectoryEntry& account);
-      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::DirectoryEntry& account);
+      void store(const Beam::DirectoryEntry& account,
         const RiskState& risk_state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest::Id>
         load_account_modification_request_ids(
-          const Beam::ServiceLocator::DirectoryEntry& account,
+          const Beam::DirectoryEntry& account,
           AccountModificationRequest::Id start_id, int max_count);
       std::vector<AccountModificationRequest::Id>
         load_account_modification_request_ids(
@@ -133,14 +133,14 @@ namespace Nexus {
 
   template<IsAdministrationDataStore D>
   AccountIdentity ToPythonAdministrationDataStore<D>::load_identity(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_identity(account);
   }
 
   template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       const AccountIdentity& identity) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(account, identity);
@@ -155,14 +155,14 @@ namespace Nexus {
 
   template<IsAdministrationDataStore D>
   RiskParameters ToPythonAdministrationDataStore<D>::load_risk_parameters(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_risk_parameters(account);
   }
 
   template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       const RiskParameters& risk_parameters) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(account, risk_parameters);
@@ -177,14 +177,14 @@ namespace Nexus {
 
   template<IsAdministrationDataStore D>
   RiskState ToPythonAdministrationDataStore<D>::load_risk_state(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_risk_state(account);
   }
 
   template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       const RiskState& risk_state) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(account, risk_state);
@@ -201,7 +201,7 @@ namespace Nexus {
   template<IsAdministrationDataStore D>
   std::vector<AccountModificationRequest::Id>
       ToPythonAdministrationDataStore<D>::load_account_modification_request_ids(
-        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::DirectoryEntry& account,
         AccountModificationRequest::Id start_id, int max_count) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_account_modification_request_ids(

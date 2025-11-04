@@ -7,8 +7,7 @@
 namespace Nexus {
 
   /** Stores session info for an OrderExecutionServlet client. */
-  class OrderExecutionSession
-      : public Beam::ServiceLocator::AuthenticatedSession {
+  class OrderExecutionSession : public Beam::AuthenticatedSession {
     public:
 
       /** Constructs an OrderExecutionSession. */
@@ -21,15 +20,13 @@ namespace Nexus {
        * @return <code>true</code> iff this session is authorized to execute
        *         Orders for the specified <i>account</i>.
        */
-      bool has_permission(
-        const Beam::ServiceLocator::DirectoryEntry& account) const;
+      bool has_permission(const Beam::DirectoryEntry& account) const;
 
       /**
        * Grants Order execution permission to an account.
        * @param account The account to grant Order execution permissions to.
        */
-      void grant_permission(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+      void grant_permission(const Beam::DirectoryEntry& account);
 
       /**
        * Returns <code>true</code> iff this session belongs to an administrator.
@@ -55,7 +52,7 @@ namespace Nexus {
     private:
       bool m_is_administrator;
       bool m_is_globally_subscribed;
-      std::unordered_set<Beam::ServiceLocator::DirectoryEntry> m_accounts;
+      std::unordered_set<Beam::DirectoryEntry> m_accounts;
   };
 
   inline OrderExecutionSession::OrderExecutionSession() noexcept
@@ -63,12 +60,12 @@ namespace Nexus {
       m_is_globally_subscribed(false) {}
 
   inline bool OrderExecutionSession::has_permission(
-      const Beam::ServiceLocator::DirectoryEntry& account) const {
+      const Beam::DirectoryEntry& account) const {
     return m_is_administrator || m_accounts.find(account) != m_accounts.end();
   }
 
   inline void OrderExecutionSession::grant_permission(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     m_accounts.insert(account);
   }
 

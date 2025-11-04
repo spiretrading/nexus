@@ -20,12 +20,13 @@ namespace Nexus {
       LocalComplianceRuleDataStore() = default;
 
       ~LocalComplianceRuleDataStore();
+
       std::vector<ComplianceRuleEntry> load_all_compliance_rule_entries();
       ComplianceRuleEntry::Id load_next_compliance_rule_entry_id();
       boost::optional<ComplianceRuleEntry>
         load_compliance_rule_entry(ComplianceRuleEntry::Id id);
       std::vector<ComplianceRuleEntry> load_compliance_rule_entries(
-        const Beam::ServiceLocator::DirectoryEntry& directory_entry);
+        const Beam::DirectoryEntry& directory_entry);
       void store(const ComplianceRuleEntry& entry);
       void remove(ComplianceRuleEntry::Id id);
       void store(const ComplianceRuleViolationRecord& record);
@@ -35,10 +36,10 @@ namespace Nexus {
       mutable boost::mutex m_mutex;
       std::unordered_map<ComplianceRuleEntry::Id,
         std::shared_ptr<ComplianceRuleEntry>> m_entries_by_id;
-      std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
+      std::unordered_map<Beam::DirectoryEntry,
         std::vector<std::shared_ptr<ComplianceRuleEntry>>>
           m_entries_by_directory_entry;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       LocalComplianceRuleDataStore(
         const LocalComplianceRuleDataStore&) = delete;
@@ -76,25 +77,25 @@ namespace Nexus {
       LocalComplianceRuleDataStore::load_compliance_rule_entry(
         ComplianceRuleEntry::Id id) {
     auto lock = boost::lock_guard(m_mutex);
-    auto entry = Beam::Retrieve(m_entries_by_id, id);
-    if(!entry) {
+    auto i = m_entries_by_id.find(id);
+    if(i == m_entries_by_id.end()) {
       return boost::none;
     }
-    return **entry;
+    return *i->second;
   }
 
   inline std::vector<ComplianceRuleEntry>
       LocalComplianceRuleDataStore::load_compliance_rule_entries(
-        const Beam::ServiceLocator::DirectoryEntry& directory_entry) {
+        const Beam::DirectoryEntry& directory_entry) {
     auto lock = boost::lock_guard(m_mutex);
-    auto entries =
-      Beam::Retrieve(m_entries_by_directory_entry, directory_entry);
-    if(!entries) {
+    auto i = m_entries_by_directory_entry.find(directory_entry);
+    if(i == m_entries_by_directory_entry.end()) {
       return {};
     }
+    auto& entries = i->second;
     auto result = std::vector<ComplianceRuleEntry>();
-    result.reserve(entries->size());
-    std::transform(entries->begin(), entries->end(), std::back_inserter(result),
+    result.reserve(entries.size());
+    std::transform(entries.begin(), entries.end(), std::back_inserter(result),
       [] (const auto& entry) {
         return *entry;
       });
@@ -141,7 +142,7 @@ namespace Nexus {
     const ComplianceRuleViolationRecord& record) {}
 
   inline void LocalComplianceRuleDataStore::close() {
-    m_open_state.Close();
+    m_open_state.close();
   }
 }
 

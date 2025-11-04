@@ -19,20 +19,22 @@ namespace Nexus {
    * @param <A> The type of AdministrationClient used to authorize the use of a
    *        manual order entry.
    */
-  template<typename D, typename A>
+  template<typename D, typename A> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   class ManualOrderEntryDriver {
     public:
 
       /**
        * The type of OrderExecutionDriver to send non-manual Order entries to.
        */
-      using OrderExecutionDriver = Beam::GetTryDereferenceType<D>;
+      using OrderExecutionDriver = Beam::dereference_t<D>;
 
       /**
        * The type of AdministrationClient used to authorize the use of a manual
        * order entry.
        */
-      using AdministrationClient = Beam::GetTryDereferenceType<A>;
+      using AdministrationClient = Beam::dereference_t<A>;
 
       /**
        * Constructs a ManualOrderEntryDriver.
@@ -41,10 +43,12 @@ namespace Nexus {
        *        to.
        * @param administration_client Initializes the AdministrationClient.
        */
-      template<typename DF, typename AF>
-      ManualOrderEntryDriver(std::string destination, DF&& driver,
-        AF&& administration_client);
+      template<Beam::Initializes<D> DF, Beam::Initializes<A> AF>
+      ManualOrderEntryDriver(
+        std::string destination, DF&& driver, AF&& administration_client);
+
       ~ManualOrderEntryDriver();
+
       std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
       void add(const std::shared_ptr<Order>& order);
       std::shared_ptr<Order> submit(const OrderInfo& info);
@@ -55,51 +59,61 @@ namespace Nexus {
 
     private:
       std::string m_destination;
-      Beam::GetOptionalLocalPtr<D> m_driver;
-      Beam::GetOptionalLocalPtr<A> m_administration_client;
+      Beam::local_ptr_t<D> m_driver;
+      Beam::local_ptr_t<A> m_administration_client;
       Beam::SynchronizedUnorderedSet<OrderId> m_ids;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       ManualOrderEntryDriver(const ManualOrderEntryDriver&) = delete;
       ManualOrderEntryDriver& operator =(
         const ManualOrderEntryDriver&) = delete;
   };
 
-  template<typename DF, typename AF>
-  ManualOrderEntryDriver(std::string, DF&&, AF&&) ->
-    ManualOrderEntryDriver<std::decay_t<DF>, std::decay_t<AF>>;
-
   template<typename D, typename A>
-  template<typename DF, typename AF>
+  ManualOrderEntryDriver(std::string, D&&, A&&) ->
+    ManualOrderEntryDriver<std::remove_cvref_t<D>, std::remove_cvref_t<A>>;
+
+  template<typename D, typename A> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  template<Beam::Initializes<D> DF, Beam::Initializes<A> AF>
   ManualOrderEntryDriver<D, A>::ManualOrderEntryDriver(
     std::string destination, DF&& driver, AF&& administration_client)
     : m_destination(std::move(destination)),
       m_driver(std::forward<DF>(driver)),
       m_administration_client(std::forward<AF>(administration_client)) {}
 
-  template<typename D, typename A>
+  template<typename D, typename A> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   ManualOrderEntryDriver<D, A>::~ManualOrderEntryDriver() {
     close();
   }
 
-  template<typename D, typename A>
+  template<typename D, typename A> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   std::shared_ptr<Order> ManualOrderEntryDriver<D, A>::recover(
       const SequencedAccountOrderRecord& record) {
     if((*record)->m_info.m_fields.m_destination == m_destination) {
       auto order = std::make_shared<PrimitiveOrder>(**record);
-      m_ids.Insert(order->get_info().m_id);
+      m_ids.insert(order->get_info().m_id);
       return order;
     } else {
       return m_driver->recover(record);
     }
   }
 
-  template<typename D, typename A>
+  template<typename D, typename A> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void ManualOrderEntryDriver<D, A>::add(const std::shared_ptr<Order>& order) {
     m_driver->add(order);
   }
 
-  template<typename D, typename A>
+  template<typename D, typename A> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   std::shared_ptr<Order> ManualOrderEntryDriver<D, A>::submit(
       const OrderInfo& info) {
     if(info.m_fields.m_destination != m_destination) {
@@ -110,7 +124,7 @@ namespace Nexus {
     if(!is_administrator) {
       auto order = make_rejected_order(
         info, "Insufficient permissions to execute a manual order.");
-      m_ids.Insert(order->get_info().m_id);
+      m_ids.insert(order->get_info().m_id);
       return order;
     }
     auto order = std::make_shared<PrimitiveOrder>(info);
@@ -129,32 +143,38 @@ namespace Nexus {
       updated_report.m_last_market = m_destination;
       order->update(updated_report);
     });
-    m_ids.Insert(order->get_info().m_id);
+    m_ids.insert(order->get_info().m_id);
     return order;
   }
 
-  template<typename D, typename A>
+  template<typename D, typename A> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void ManualOrderEntryDriver<D, A>::cancel(
       const OrderExecutionSession& session, OrderId id) {
-    if(m_ids.Contains(id)) {
+    if(m_ids.contains(id)) {
       return;
     }
     return m_driver->cancel(session, id);
   }
 
-  template<typename D, typename A>
+  template<typename D, typename A> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void ManualOrderEntryDriver<D, A>::update(
       const OrderExecutionSession& session, OrderId id,
       const ExecutionReport& report) {
-    if(m_ids.Contains(id)) {
+    if(m_ids.contains(id)) {
       return;
     }
-    return m_driver->Update(session, id, report);
+    return m_driver->update(session, id, report);
   }
 
-  template<typename D, typename A>
+  template<typename D, typename A> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   void ManualOrderEntryDriver<D, A>::close() {
-    m_open_state.Close();
+    m_open_state.close();
   }
 }
 

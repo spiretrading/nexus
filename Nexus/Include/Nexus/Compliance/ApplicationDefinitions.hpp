@@ -6,9 +6,8 @@
 namespace Nexus {
 
   /** Encapsulates a standard ComplianceClient used in an application. */
-  using ApplicationComplianceClient = Beam::Services::ApplicationClient<
-    ServiceComplianceClient,
-    Beam::Services::ServiceName<COMPLIANCE_SERVICE_NAME>>;
+  using ApplicationComplianceClient = Beam::ApplicationClient<
+    ServiceComplianceClient, Beam::ServiceName<COMPLIANCE_SERVICE_NAME>>;
 }
 
 #endif

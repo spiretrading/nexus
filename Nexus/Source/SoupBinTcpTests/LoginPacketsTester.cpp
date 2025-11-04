@@ -8,7 +8,7 @@ using namespace Nexus;
 namespace {
   auto make_login_accepted_packet(
       const std::string& session, std::uint64_t sequence_number) {
-    auto buffer = IO::SharedBuffer();
+    auto buffer = SharedBuffer();
     for(auto i = session.size(); i < 10; ++i) {
       buffer.Append(' ');
     }
@@ -22,7 +22,7 @@ namespace {
   }
 
   auto make_login_rejected_packet(const std::string& reason) {
-    auto buffer = IO::SharedBuffer();
+    auto buffer = SharedBuffer();
     if(reason.empty()) {
       buffer.Append(' ');
     } else {

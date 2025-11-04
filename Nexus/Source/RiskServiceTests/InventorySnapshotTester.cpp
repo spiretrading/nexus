@@ -10,7 +10,7 @@
 using namespace Beam;
 using namespace Beam::Queries;
 using namespace Beam::ServiceLocator;
-using namespace Beam::ServiceLocator::Tests;
+using namespace Beam::Tests;
 using namespace Beam::UidService;
 using namespace Beam::UidService::Tests;
 using namespace boost;
@@ -38,8 +38,8 @@ namespace {
             make_order_execution_service_test_environment(
               m_service_locator_environment, m_uid_environment,
                 m_administration_environment)) {
-      m_client_account = m_service_locator_environment.GetRoot().MakeAccount(
-        "client", "1234", DirectoryEntry::GetStarDirectory());
+      m_client_account = m_service_locator_environment.GetRoot().make_account(
+        "client", "1234", DirectoryEntry::STAR_DIRECTORY);
       m_client_service_locator =
         m_service_locator_environment.MakeClient("client", "1234");
       m_order_execution_client = m_order_execution_environment.make_client(
@@ -72,7 +72,7 @@ TEST_SUITE("InventorySnapshot") {
       Position(abc, CAD, 10, Money::ONE), Money::ZERO, Money::ZERO, 2, 2);
     auto xyz_inventory = Inventory(
       Position(xyz, CAD, 5, Money::ONE), Money::ZERO, Money::ZERO, 1, 1);
-    auto snapshot_sequence = Beam::Queries::Sequence(100);
+    auto snapshot_sequence = Beam::Sequence(100);
     auto excluded_order_ids = std::vector<OrderId>{1, 2};
     auto snapshot = InventorySnapshot();
     snapshot.m_inventories = {abc_inventory, xyz_inventory};
@@ -85,7 +85,7 @@ TEST_SUITE("InventorySnapshot") {
       auto info = OrderInfo(fields, fixture.m_client_account, id, false, now);
       fixture.m_order_execution_environment.get_data_store().store(
         SequencedValue(IndexedValue(info, fixture.m_client_account),
-          Beam::Queries::Sequence(id)));
+          Beam::Sequence(id)));
     }
     auto trailing_order_ids = std::vector<OrderId>{101, 102};
     for(auto id : trailing_order_ids) {
@@ -94,12 +94,12 @@ TEST_SUITE("InventorySnapshot") {
       auto info = OrderInfo(fields, fixture.m_client_account, id, false, now);
       fixture.m_order_execution_environment.get_data_store().store(
         SequencedValue(IndexedValue(info, fixture.m_client_account),
-          Beam::Queries::Sequence(id)));
+          Beam::Sequence(id)));
     }
     auto [portfolio, sequence, excluded_orders] =
       make_portfolio(snapshot, fixture.m_client_account, DEFAULT_VENUES,
         *fixture.m_order_execution_client);
-    REQUIRE(sequence == Beam::Queries::Sequence(102));
+    REQUIRE(sequence == Beam::Sequence(102));
     auto expected_excluded_ids = excluded_order_ids;
     expected_excluded_ids.insert(expected_excluded_ids.end(),
       trailing_order_ids.begin(), trailing_order_ids.end());
@@ -134,6 +134,6 @@ TEST_SUITE("InventorySnapshot") {
     auto snapshot = InventorySnapshot();
     snapshot.m_inventories.push_back(abc_inventory);
     snapshot.m_inventories.push_back(xyz_inventory);
-    Beam::Serialization::Tests::TestRoundTripShuttle(snapshot);
+    Beam::Tests::TestRoundTripShuttle(snapshot);
   }
 }

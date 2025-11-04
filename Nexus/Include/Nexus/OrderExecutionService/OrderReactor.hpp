@@ -8,7 +8,7 @@
 #include <Aspen/VectorSync.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/MultiQueueWriter.hpp>
-#include <Beam/Reactors/QueueReactor.hpp>
+#include <Beam/Queues/QueueReactor.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 
@@ -30,15 +30,16 @@ namespace Nexus {
    * @param <FR> The type of reactor producing the order's time in force.
    * @param <RR> The type of reactor producing the order's additional fields.
    */
-  template<IsOrderExecutionClient C, typename AR, typename SR, typename CR,
+  template<typename C, typename AR, typename SR, typename CR,
     typename OR, typename TR, typename DR, typename QR, typename PR,
-    typename FR, typename RR>
+    typename FR, typename RR> requires
+      IsOrderExecutionClient<Beam::dereference_t<C>>
   class OrderReactor {
     public:
       using Type = std::shared_ptr<Order>;
 
       /** The type of OrderExecutionClient used to submit the order. */
-      using OrderExecutionClient = Beam::GetTryDereferenceType<C>;
+      using OrderExecutionClient = Beam::dereference_t<C>;
 
       /** The type of reactor producing the account submitting the order. */
       using AccountReactor = AR;
@@ -95,7 +96,6 @@ namespace Nexus {
         std::vector<AdditionalFieldsReactor> additional_fields);
 
       Aspen::State commit(int sequence) noexcept;
-
       const std::shared_ptr<Order>& eval() const;
 
     private:
@@ -104,11 +104,11 @@ namespace Nexus {
       static constexpr auto FIELDS_AVAILABLE = std::uint8_t(0b00000010);
       static constexpr auto CANCELLING_ORDER = std::uint8_t(0b00000100);
       static constexpr auto WAITING = std::uint8_t(0b00001000);
-      Beam::GetOptionalLocalPtr<C> m_client;
+      Beam::local_ptr_t<C> m_client;
       std::unique_ptr<OrderFields> m_last_order_fields;
       std::optional<Aspen::Shared<QuantityReactor>> m_quantity;
       std::optional<Aspen::MultiSync<OrderFields,
-        Aspen::Sync<AccountReactor, Beam::ServiceLocator::DirectoryEntry>,
+        Aspen::Sync<AccountReactor, Beam::DirectoryEntry>,
         Aspen::Sync<SecurityReactor, Security>,
         Aspen::Sync<CurrencyReactor, CurrencyId>,
         Aspen::Sync<OrderTypeReactor, OrderType>,
@@ -124,17 +124,19 @@ namespace Nexus {
       Quantity m_filled;
       std::shared_ptr<Beam::MultiQueueWriter<ExecutionReport>>
         m_execution_reports;
-      Beam::Reactors::QueueReactor<ExecutionReport> m_queue;
+      Beam::QueueReactor<ExecutionReport> m_queue;
   };
 
   template<typename C, typename AR, typename SR, typename CR, typename OR,
     typename TR, typename DR, typename QR, typename PR, typename FR,
     typename RR>
   OrderReactor(C&&, AR, SR, CR, OR, TR, DR, QR, PR, FR, std::vector<RR>) ->
-    OrderReactor<std::decay_t<C>, AR, SR, CR, OR, TR, DR, QR, PR, FR, RR>;
+    OrderReactor<std::remove_cvref_t<C>, AR, SR, CR, OR, TR, DR, QR, PR, FR,
+      RR>;
 
-  template<IsOrderExecutionClient C, typename A, typename S, typename R,
-    typename T, typename D, typename Q, typename M, typename F>
+  template<typename C, typename A, typename S, typename R,
+    typename T, typename D, typename Q, typename M, typename F> requires
+      IsOrderExecutionClient<Beam::dereference_t<C>>
   auto make_limit_order_reactor(C&& client, A account, S security, R currency,
       T side, D destination, Q quantity, M price, F time_in_force) {
     return OrderReactor(std::forward<C>(client), std::move(account),
@@ -144,8 +146,9 @@ namespace Nexus {
       std::move(time_in_force), std::vector<Aspen::Constant<Tag>>());
   }
 
-  template<IsOrderExecutionClient C, typename A, typename S, typename R,
-    typename T, typename D, typename Q, typename M>
+  template<typename C, typename A, typename S, typename R,
+    typename T, typename D, typename Q, typename M, typename F> requires
+      IsOrderExecutionClient<Beam::dereference_t<C>>
   auto make_limit_order_reactor(C&& client, A account, S security, R currency,
       T side, D destination, Q quantity, M price) {
     return make_limit_order_reactor(std::forward<C>(client), std::move(account),
@@ -154,31 +157,35 @@ namespace Nexus {
       Aspen::constant(TimeInForce(TimeInForce::Type::DAY)));
   }
 
-  template<IsOrderExecutionClient C, typename S, typename T, typename Q,
-    typename M>
+  template<typename C, typename A, typename S, typename R,
+    typename T, typename D, typename Q, typename M, typename F> requires
+      IsOrderExecutionClient<Beam::dereference_t<C>>
   auto make_limit_order_reactor(
       C&& client, S security, T side, Q quantity, M price) {
     return make_limit_order_reactor(std::forward<C>(client),
-      Aspen::constant(Beam::ServiceLocator::DirectoryEntry()),
+      Aspen::constant(Beam::DirectoryEntry()),
       std::move(security), Aspen::constant(CurrencyId::NONE), std::move(side),
       Aspen::constant(std::string()), std::move(quantity), std::move(price));
   }
 
-  template<IsOrderExecutionClient C, typename S, typename T, typename Q,
-    typename M, typename F>
+  template<typename C, typename A, typename S, typename R,
+    typename T, typename D, typename Q, typename M, typename F> requires
+      IsOrderExecutionClient<Beam::dereference_t<C>>
   auto make_limit_order_reactor(
       C&& client, S security, T side, Q quantity, M price, F time_in_force) {
     return make_limit_order_reactor(std::forward<C>(client),
-      Aspen::constant(Beam::ServiceLocator::DirectoryEntry()),
+      Aspen::constant(Beam::DirectoryEntry()),
       std::move(security), Aspen::constant(CurrencyId::NONE), std::move(side),
       Aspen::constant(std::string()), std::move(quantity), std::move(price),
       std::move(time_in_force));
   }
 
-  template<IsOrderExecutionClient C, typename S, typename T, typename Q>
+  template<typename C, typename A, typename S, typename R,
+    typename T, typename D, typename Q, typename M, typename F> requires
+      IsOrderExecutionClient<Beam::dereference_t<C>>
   auto make_market_order_reactor(C&& client, S security, T side, Q quantity) {
     return OrderReactor(std::forward<C>(client),
-      Aspen::constant(Beam::ServiceLocator::DirectoryEntry()),
+      Aspen::constant(Beam::DirectoryEntry()),
       std::move(security), Aspen::constant(CurrencyId::NONE),
       Aspen::constant(OrderType::MARKET), std::move(side),
       Aspen::constant(std::string()), std::move(quantity),
@@ -187,9 +194,10 @@ namespace Nexus {
       std::vector<Aspen::Constant<Tag>>());
   }
 
-  template<IsOrderExecutionClient C, typename AR, typename SR, typename CR,
+  template<typename C, typename AR, typename SR, typename CR,
     typename OR, typename TR, typename DR, typename QR, typename PR,
-    typename FR, typename RR>
+    typename FR, typename RR> requires
+      IsOrderExecutionClient<Beam::dereference_t<C>>
   template<Beam::Initializes<C> CF>
   OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR, FR, RR>::OrderReactor(
     CF&& client, AccountReactor account, SecurityReactor security,
@@ -219,9 +227,10 @@ namespace Nexus {
         std::make_shared<Beam::MultiQueueWriter<ExecutionReport>>()),
       m_queue(m_execution_reports) {}
 
-  template<IsOrderExecutionClient C, typename AR, typename SR, typename CR,
+  template<typename C, typename AR, typename SR, typename CR,
     typename OR, typename TR, typename DR, typename QR, typename PR,
-    typename FR, typename RR>
+    typename FR, typename RR> requires
+      IsOrderExecutionClient<Beam::dereference_t<C>>
   Aspen::State OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR, FR, RR>::commit(
       int sequence) noexcept {
     if(m_state & WAITING) {
@@ -278,8 +287,8 @@ namespace Nexus {
           }
           if(fields.m_quantity != 0) {
             m_order = m_client->submit(fields);
-            (*m_order)->get_publisher().Monitor(
-              m_execution_reports->GetWriter());
+            (*m_order)->get_publisher().monitor(
+              m_execution_reports->get_writer());
             m_state |= WAITING;
             return Aspen::State::EVALUATED;
           } else if(m_state & FIELDS_COMPLETE && !(m_state & WAITING)) {
@@ -298,9 +307,10 @@ namespace Nexus {
     return Aspen::State::NONE;
   }
 
-  template<IsOrderExecutionClient C, typename AR, typename SR, typename CR,
+  template<typename C, typename AR, typename SR, typename CR,
     typename OR, typename TR, typename DR, typename QR, typename PR,
-    typename FR, typename RR>
+    typename FR, typename RR> requires
+      IsOrderExecutionClient<Beam::dereference_t<C>>
   const std::shared_ptr<Order>&
       OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR, FR, RR>::eval() const {
     return *m_order;

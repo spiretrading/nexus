@@ -22,7 +22,7 @@ namespace Nexus {
     public:
 
       /** The type of TimeClient used. */
-      using TimeClient = Beam::GetTryDereferenceType<T>;
+      using TimeClient = Beam::dereference_t<T>;
 
       /**
        * Constructs a RiskStateModel.
@@ -63,7 +63,7 @@ namespace Nexus {
       RiskPortfolio m_portfolio;
       RiskParameters m_parameters;
       ExchangeRateTable m_exchange_rates;
-      Beam::GetOptionalLocalPtr<T> m_time_client;
+      Beam::local_ptr_t<T> m_time_client;
       RiskState m_risk_state;
   };
 

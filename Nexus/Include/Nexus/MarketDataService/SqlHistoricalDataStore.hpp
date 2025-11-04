@@ -108,7 +108,7 @@ namespace Nexus {
           get_security_row(), Beam::Ref(m_reader_pool),
           Beam::Ref(m_writer_pool)) {
     try {
-      auto connection = m_writer_pool.acquire();
+      auto connection = m_writer_pool.load();
       connection->execute(
         Viper::create_if_not_exists(get_security_info_row(), "security_info"));
     } catch(const std::exception&) {
@@ -173,7 +173,7 @@ namespace Nexus {
         Viper::sym("venue") == security.get_venue();
     }
     {
-      auto reader = m_reader_pool.acquire();
+      auto reader = m_reader_pool.load();
       reader->execute(Viper::select(get_security_info_row(), "security_info",
         filter && anchor && region_filter,
         Viper::order_by({{"symbol", order}, {"venue", order}}),
@@ -189,7 +189,7 @@ namespace Nexus {
 
   template<typename C>
   void SqlHistoricalDataStore<C>::store(const SecurityInfo& info) {
-    auto writer = m_writer_pool.acquire();
+    auto writer = m_writer_pool.load();
     writer->execute(
       Viper::upsert(get_security_info_row(), "security_info", &info));
   }

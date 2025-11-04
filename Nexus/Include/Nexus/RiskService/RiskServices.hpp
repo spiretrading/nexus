@@ -13,9 +13,9 @@
 namespace Nexus {
   BEAM_DEFINE_RECORD(SecurityValuationUpdate, Security, security,
     SecurityValuation, valuation);
-  BEAM_DEFINE_RECORD(InventoryUpdate, Beam::ServiceLocator::DirectoryEntry,
+  BEAM_DEFINE_RECORD(InventoryUpdate, Beam::DirectoryEntry,
     account, Inventory, inventory);
-  BEAM_DEFINE_RECORD(RiskStateUpdate, Beam::ServiceLocator::DirectoryEntry,
+  BEAM_DEFINE_RECORD(RiskStateUpdate, Beam::DirectoryEntry,
     account, RiskState, risk_state);
 
   /** Standard name for the risk service. */
@@ -30,7 +30,7 @@ namespace Nexus {
      */
     (LoadInventorySnapshotService,
       "Nexus.RiskService.LoadInventorySnapshotService", InventorySnapshot,
-      Beam::ServiceLocator::DirectoryEntry, account),
+      Beam::DirectoryEntry, account),
 
     /**
      * Resets all inventories whose Security is within a Region.

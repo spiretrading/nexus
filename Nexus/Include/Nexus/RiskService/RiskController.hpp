@@ -50,22 +50,22 @@ namespace Nexus {
        * The type of AdministrationClient used to load an account's
        * RiskParameters.
        */
-      using AdministrationClient = Beam::GetTryDereferenceType<A>;
+      using AdministrationClient = Beam::dereference_t<A>;
 
       /** The type of MarketDataClient to use. */
-      using MarketDataClient = Beam::GetTryDereferenceType<M>;
+      using MarketDataClient = Beam::dereference_t<M>;
 
       /** The type of OrderExecutionClient to use. */
-      using OrderExecutionClient = Beam::GetTryDereferenceType<O>;
+      using OrderExecutionClient = Beam::dereference_t<O>;
 
       /** The type of TransitionTimer to use. */
-      using TransitionTimer = Beam::GetTryDereferenceType<R>;
+      using TransitionTimer = Beam::dereference_t<R>;
 
       /** The type of TimeClient to use. */
-      using TimeClient = Beam::GetTryDereferenceType<T>;
+      using TimeClient = Beam::dereference_t<T>;
 
       /** The type of RiskDataStore to use. */
-      using RiskDataStore = Beam::GetTryDereferenceType<D>;
+      using RiskDataStore = Beam::dereference_t<D>;
 
       /**
        * Constructs a RiskController.
@@ -83,7 +83,7 @@ namespace Nexus {
       template<Beam::Initializes<A> AF, Beam::Initializes<M> MF,
         Beam::Initializes<O> OF, Beam::Initializes<R> RF,
         Beam::Initializes<T> TF, Beam::Initializes<D> DF>
-      RiskController(Beam::ServiceLocator::DirectoryEntry account,
+      RiskController(Beam::DirectoryEntry account,
         AF&& administration_client, MF&& market_data_client,
         OF&& order_execution_client, RF&& transition_timer, TF&& time_client,
         DF&& data_store, const ExchangeRateTable& exchange_rates,
@@ -97,12 +97,12 @@ namespace Nexus {
         get_portfolio_publisher() const;
 
     private:
-      mutable Beam::Threading::Mutex m_mutex;
-      Beam::ServiceLocator::DirectoryEntry m_account;
-      Beam::GetOptionalLocalPtr<A> m_administration_client;
-      Beam::GetOptionalLocalPtr<O> m_order_execution_client;
-      Beam::GetOptionalLocalPtr<R> m_transition_timer;
-      Beam::GetOptionalLocalPtr<D> m_data_store;
+      mutable Beam::Mutex m_mutex;
+      Beam::DirectoryEntry m_account;
+      Beam::local_ptr_t<A> m_administration_client;
+      Beam::local_ptr_t<O> m_order_execution_client;
+      Beam::local_ptr_t<R> m_transition_timer;
+      Beam::local_ptr_t<D> m_data_store;
       boost::optional<RiskStateModel<T>> m_state_model;
       boost::optional<PortfolioController<RiskPortfolio*, M>>
         m_portfolio_controller;
@@ -110,19 +110,19 @@ namespace Nexus {
         m_transition_model;
       Beam::StatePublisher<RiskState> m_state_publisher;
       RiskPortfolio m_snapshot_portfolio;
-      Beam::Queries::Sequence m_snapshot_sequence;
+      Beam::Sequence m_snapshot_sequence;
       std::unordered_set<OrderId> m_excluded_orders;
       Beam::RoutineTaskQueue m_tasks;
 
       RiskController(const RiskController&) = delete;
       RiskController& operator =(const RiskController&) = delete;
       void update_snapshot(const Order& order);
-      std::tuple<RiskPortfolio, Beam::Queries::Sequence,
+      std::tuple<RiskPortfolio, Beam::Sequence,
         std::vector<std::shared_ptr<Order>>> make_portfolio(
           VenueDatabase venues);
       template<typename F>
       void update(F&& f);
-      void on_transition_timer(Beam::Threading::Timer::Result result);
+      void on_transition_timer(Beam::Timer::Result result);
       void on_risk_parameters_update(const RiskParameters& parameters);
       void on_portfolio_update(const PortfolioUpdateEntry& update);
       void on_order_submission(const SequencedOrder& order);
@@ -132,7 +132,7 @@ namespace Nexus {
 
   template<IsAdministrationClient A, IsMarketDataClient M,
     IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
-  RiskController(const Beam::ServiceLocator::DirectoryEntry&, A&&, M&&, O&&,
+  RiskController(const Beam::DirectoryEntry&, A&&, M&&, O&&,
     R&&, T&&, D&&, const ExchangeRateTable&, VenueDatabase,
     DestinationDatabase) -> RiskController<std::remove_reference_t<A>,
       std::remove_reference_t<M>, std::remove_reference_t<O>,
@@ -145,7 +145,7 @@ namespace Nexus {
     Beam::Initializes<O> OF, Beam::Initializes<R> RF,
     Beam::Initializes<T> TF, Beam::Initializes<D> DF>
   RiskController<A, M, O, R, T, D>::RiskController(
-      Beam::ServiceLocator::DirectoryEntry account,
+      Beam::DirectoryEntry account,
       AF&& administration_client, MF&& market_data_client,
       OF&& order_execution_client, RF&& transition_timer, TF&& time_client,
       DF&& data_store, const ExchangeRateTable& exchange_rates,
@@ -168,10 +168,10 @@ namespace Nexus {
       std::forward<TF>(time_client));
     auto real_time_query = AccountQuery();
     real_time_query.SetIndex(m_account);
-    real_time_query.SetRange(sequence, Beam::Queries::Sequence::Last());
-    real_time_query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
+    real_time_query.SetRange(sequence, Beam::Sequence::Last());
+    real_time_query.set_snapshot_limit(Beam::SnapshotLimit::Unlimited());
     real_time_query.SetInterruptionPolicy(
-      Beam::Queries::InterruptionPolicy::RECOVER_DATA);
+      Beam::InterruptionPolicy::RECOVER_DATA);
     auto real_time_queue =
       std::make_shared<Beam::Queue<std::shared_ptr<Order>>>();
     for(auto& order : excluded_orders) {
@@ -193,7 +193,7 @@ namespace Nexus {
       m_tasks.GetSlot<RiskParameters>(
         std::bind_front(&RiskController::on_risk_parameters_update, this)));
     m_transition_timer->GetPublisher().Monitor(
-      m_tasks.GetSlot<Beam::Threading::Timer::Result>(
+      m_tasks.GetSlot<Beam::Timer::Result>(
         std::bind_front(&RiskController::on_transition_timer, this)));
     m_transition_timer->Start();
     m_state_publisher.Push(m_state_model->get_risk_state());
@@ -240,7 +240,7 @@ namespace Nexus {
 
   template<IsAdministrationClient A, IsMarketDataClient M,
     IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
-  std::tuple<RiskPortfolio, Beam::Queries::Sequence,
+  std::tuple<RiskPortfolio, Beam::Sequence,
       std::vector<std::shared_ptr<Order>>>
         RiskController<A, M, O, R, T, D>::make_portfolio(VenueDatabase venues) {
     auto [portfolio, sequence, excluded_orders] = Nexus::make_portfolio(
@@ -258,7 +258,7 @@ namespace Nexus {
         std::bind_front(
           &RiskController::on_execution_report, this, std::cref(*order))));
     }
-    return std::tuple(std::move(portfolio), Beam::Queries::Increment(sequence),
+    return std::tuple(std::move(portfolio), Beam::Increment(sequence),
       std::move(excluded_orders));
   }
 
@@ -278,7 +278,7 @@ namespace Nexus {
   template<IsAdministrationClient A, IsMarketDataClient M,
     IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void RiskController<A, M, O, R, T, D>::on_transition_timer(
-      Beam::Threading::Timer::Result result) {
+      Beam::Timer::Result result) {
     update([&] {
       m_state_model->update_time();
     });

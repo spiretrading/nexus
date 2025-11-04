@@ -12,7 +12,7 @@ using namespace Beam;
 using namespace Beam::Queries;
 using namespace Beam::ServiceLocator;
 using namespace Beam::Services;
-using namespace Beam::Services::Tests;
+using namespace Beam::Tests;
 using namespace Beam::SignalHandling;
 using namespace Beam::Threading;
 using namespace boost;
@@ -23,7 +23,7 @@ using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
-  auto ACCOUNT = DirectoryEntry::MakeAccount(153, "simba");
+  auto ACCOUNT = DirectoryEntry::make_account(153, "simba");
   auto S32 = Security("S32", ASX);
   auto XIU = Security("XIU", TSX);
 }

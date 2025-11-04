@@ -19,7 +19,7 @@ namespace Nexus {
    * @param <C> The type of TimeClient used to determine whether the
    *        ComplianceRule applies.
    */
-  template<typename C>
+  template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   class TimeFilterComplianceRule : public ComplianceRule {
     public:
 
@@ -27,7 +27,7 @@ namespace Nexus {
        * The type of TimeClient used to determine whether the ComplianceRule
        * applies.
        */
-      using TimeClient = Beam::GetTryDereferenceType<C>;
+      using TimeClient = Beam::dereference_t<C>;
 
       /**
        * Constructs a TimeFilterComplianceRule.
@@ -53,7 +53,7 @@ namespace Nexus {
       boost::posix_time::time_duration m_end;
       boost::local_time::tz_database m_time_zones;
       VenueDatabase m_venues;
-      Beam::GetOptionalLocalPtr<C> m_time_client;
+      Beam::local_ptr_t<C> m_time_client;
       Beam::SynchronizedUnorderedMap<Venue, boost::local_time::time_zone_ptr>
         m_venue_time_zones;
       std::unique_ptr<ComplianceRule> m_rule;
@@ -61,11 +61,11 @@ namespace Nexus {
       bool is_within_period(Venue venue);
   };
 
-  template<typename TimeClient>
+  template<typename C>
   TimeFilterComplianceRule(boost::posix_time::time_duration,
     boost::posix_time::time_duration, boost::local_time::tz_database,
-    VenueDatabase, TimeClient&&, std::unique_ptr<ComplianceRule>) ->
-      TimeFilterComplianceRule<std::remove_reference_t<TimeClient>>;
+    VenueDatabase, C&&, std::unique_ptr<ComplianceRule>) ->
+      TimeFilterComplianceRule<std::remove_cvref_t<C>>;
 
   /** The standard name used to identify the TimeFilterComplianceRule. */
   inline const auto TIME_FILTER_RULE_NAME = std::string("time_filter");
@@ -107,12 +107,12 @@ namespace Nexus {
       }
     }
     using Rule = TimeFilterComplianceRule<
-      std::remove_reference_t<decltype(time_client)>*>;
+      std::remove_cvref_t<decltype(time_client)>*>;
     return std::make_unique<Rule>(start, end, std::move(time_zones),
       std::move(venues), &time_client, std::move(rule));
   }
 
-  template<typename C>
+  template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   template<Beam::Initializes<C> CF>
   TimeFilterComplianceRule<C>::TimeFilterComplianceRule(
     boost::posix_time::time_duration start,
@@ -126,7 +126,7 @@ namespace Nexus {
       m_time_client(std::forward<CF>(time_client)),
       m_rule(std::move(rule)) {}
 
-  template<typename C>
+  template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   void TimeFilterComplianceRule<C>::submit(
       const std::shared_ptr<Order>& order) {
     if(is_within_period(order->get_info().m_fields.m_security.get_venue())) {
@@ -136,7 +136,7 @@ namespace Nexus {
     }
   }
 
-  template<typename C>
+  template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   void TimeFilterComplianceRule<C>::cancel(
       const std::shared_ptr<Order>& order) {
     if(is_within_period(order->get_info().m_fields.m_security.get_venue())) {
@@ -144,14 +144,14 @@ namespace Nexus {
     }
   }
 
-  template<typename C>
+  template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   void TimeFilterComplianceRule<C>::add(const std::shared_ptr<Order>& order) {
     m_rule->add(order);
   }
 
-  template<typename C>
+  template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   bool TimeFilterComplianceRule<C>::is_within_period(Venue venue) {
-    auto time_zone = m_venue_time_zones.GetOrInsert(venue, [&] {
+    auto time_zone = m_venue_time_zones.get_or_insert(venue, [&] {
       auto& venue_entry = m_venues.from(venue);
       auto time_zone =
         m_time_zones.time_zone_from_region(venue_entry.m_time_zone);
@@ -161,7 +161,7 @@ namespace Nexus {
       return time_zone;
     });
     auto local_timestamp =
-      boost::local_time::local_date_time(m_time_client->GetTime(), time_zone);
+      boost::local_time::local_date_time(m_time_client->get_time(), time_zone);
     auto local_time_of_day = local_timestamp.local_time().time_of_day();
     if(m_start > m_end) {
       if(local_time_of_day >= m_start || local_time_of_day <= m_end) {

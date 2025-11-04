@@ -16,7 +16,7 @@ namespace Nexus {
   };
 
   inline OrderUnrecoverableException::OrderUnrecoverableException()
-    : std::runtime_error("Order can not be recovered.") {}
+    : OrderUnrecoverableException("Order can not be recovered.") {}
 }
 
 #endif

@@ -6,8 +6,7 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
-using namespace Beam::ServiceLocator::Tests;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -42,7 +41,7 @@ TEST_SUITE("BuyingPowerComplianceRule") {
     auto security = Security("TST", ASX);
     fixture.m_market_data_environment.update_bbo(security, Money::ONE);
     auto fields = make_limit_order_fields(
-      DirectoryEntry::MakeAccount(1, "test"), security, AUD, Side::BID, "ASX",
+      DirectoryEntry::make_account(1, "test"), security, AUD, Side::BID, "ASX",
       10, 10 * Money::ONE);
     auto order_info =
       OrderInfo(fields, 1, time_from_string("2024-07-25 10:00:00"));
@@ -58,7 +57,7 @@ TEST_SUITE("BuyingPowerComplianceRule") {
     auto security = Security("TST", ASX);
     fixture.m_market_data_environment.update_bbo(security, Money::ONE);
     auto fields = make_limit_order_fields(
-      DirectoryEntry::MakeAccount(1, "test"), security, AUD, Side::BID, "ASX",
+      DirectoryEntry::make_account(1, "test"), security, AUD, Side::BID, "ASX",
       101, 2 * Money::ONE);
     auto order_info =
       OrderInfo(fields, 1, time_from_string("2024-07-25 10:00:00"));

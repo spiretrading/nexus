@@ -103,7 +103,7 @@ namespace Nexus {
         return (lhs.m_fields.m_side == Side::ASK &&
           lhs.m_expected_price < rhs.m_expected_price) ||
           (lhs.m_fields.m_side == Side::BID &&
-          lhs.m_expected_price > rhs.m_expected_price);
+            lhs.m_expected_price > rhs.m_expected_price);
       });
     if(insert_iterator != order_entries.end() &&
         insert_iterator->m_remaining_quantity == 0) {
@@ -145,7 +145,7 @@ namespace Nexus {
     if((order_fields.m_side == Side::BID &&
         buying_power_entry.m_quantity < 0) ||
         (order_fields.m_side == Side::ASK &&
-        buying_power_entry.m_quantity > 0)) {
+          buying_power_entry.m_quantity > 0)) {
       auto delta =
         std::min(abs(buying_power_entry.m_quantity), last_quantity);
       buying_power_entry.m_expenditure -=

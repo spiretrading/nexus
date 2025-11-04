@@ -71,7 +71,7 @@ namespace Nexus {
         m_applications;
       Beam::SynchronizedUnorderedMap<OrderId, std::shared_ptr<Application>>
         m_id_to_application;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       FixOrderExecutionDriver(const FixOrderExecutionDriver&) = delete;
       FixOrderExecutionDriver& operator =(

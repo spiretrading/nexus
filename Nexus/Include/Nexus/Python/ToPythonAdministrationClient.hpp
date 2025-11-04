@@ -38,64 +38,64 @@ namespace Nexus {
       /** Returns the wrapped client. */
       Client& get_client();
 
-      std::vector<Beam::ServiceLocator::DirectoryEntry>
+      std::vector<Beam::DirectoryEntry>
         load_accounts_by_roles(AccountRoles roles);
-      Beam::ServiceLocator::DirectoryEntry load_administrators_root_entry();
-      Beam::ServiceLocator::DirectoryEntry load_services_root_entry();
-      Beam::ServiceLocator::DirectoryEntry load_trading_groups_root_entry();
+      Beam::DirectoryEntry load_administrators_root_entry();
+      Beam::DirectoryEntry load_services_root_entry();
+      Beam::DirectoryEntry load_trading_groups_root_entry();
       bool check_administrator(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::DirectoryEntry& account);
       AccountRoles load_account_roles(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::DirectoryEntry& account);
       AccountRoles load_account_roles(
-        const Beam::ServiceLocator::DirectoryEntry& parent,
-        const Beam::ServiceLocator::DirectoryEntry& child);
-      Beam::ServiceLocator::DirectoryEntry load_parent_trading_group(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::DirectoryEntry& parent,
+        const Beam::DirectoryEntry& child);
+      Beam::DirectoryEntry load_parent_trading_group(
+        const Beam::DirectoryEntry& account);
       AccountIdentity load_identity(
-        const Beam::ServiceLocator::DirectoryEntry& account);
-      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::DirectoryEntry& account);
+      void store(const Beam::DirectoryEntry& account,
         const AccountIdentity& identity);
       TradingGroup load_trading_group(
-        const Beam::ServiceLocator::DirectoryEntry& directory);
-      std::vector<Beam::ServiceLocator::DirectoryEntry>
+        const Beam::DirectoryEntry& directory);
+      std::vector<Beam::DirectoryEntry>
         load_managed_trading_groups(
-          const Beam::ServiceLocator::DirectoryEntry& account);
-      std::vector<Beam::ServiceLocator::DirectoryEntry> load_administrators();
-      std::vector<Beam::ServiceLocator::DirectoryEntry> load_services();
+          const Beam::DirectoryEntry& account);
+      std::vector<Beam::DirectoryEntry> load_administrators();
+      std::vector<Beam::DirectoryEntry> load_services();
       EntitlementDatabase load_entitlements();
-      std::vector<Beam::ServiceLocator::DirectoryEntry> load_entitlements(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+      std::vector<Beam::DirectoryEntry> load_entitlements(
+        const Beam::DirectoryEntry& account);
       void store_entitlements(
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements);
+        const Beam::DirectoryEntry& account,
+        const std::vector<Beam::DirectoryEntry>& entitlements);
       const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
-        const Beam::ServiceLocator::DirectoryEntry& account);
-      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::DirectoryEntry& account);
+      void store(const Beam::DirectoryEntry& account,
         const RiskParameters& parameters);
       const Beam::Publisher<RiskState>& get_risk_state_publisher(
-        const Beam::ServiceLocator::DirectoryEntry& account);
-      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::DirectoryEntry& account);
+      void store(const Beam::DirectoryEntry& account,
         const RiskState& state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest::Id>
         load_account_modification_request_ids(
-          const Beam::ServiceLocator::DirectoryEntry& account,
+          const Beam::DirectoryEntry& account,
           AccountModificationRequest::Id start_id, int max_count);
       std::vector<AccountModificationRequest::Id>
         load_managed_account_modification_request_ids(
-          const Beam::ServiceLocator::DirectoryEntry& account,
+          const Beam::DirectoryEntry& account,
           AccountModificationRequest::Id start_id, int max_count);
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
       AccountModificationRequest submit(
-        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::DirectoryEntry& account,
         const EntitlementModification& modification, const Message& comment);
       RiskModification load_risk_modification(
         AccountModificationRequest::Id id);
       AccountModificationRequest submit(
-        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::DirectoryEntry& account,
         const RiskModification& modification, const Message& comment);
       AccountModificationRequest::Update
         load_account_modification_request_status(
@@ -149,7 +149,7 @@ namespace Nexus {
   }
 
   template<IsAdministrationClient C>
-  std::vector<Beam::ServiceLocator::DirectoryEntry>
+  std::vector<Beam::DirectoryEntry>
       ToPythonAdministrationClient<C>::load_accounts_by_roles(
         AccountRoles roles) {
     auto release = Beam::Python::GilRelease();
@@ -157,21 +157,21 @@ namespace Nexus {
   }
 
   template<IsAdministrationClient C>
-  Beam::ServiceLocator::DirectoryEntry
+  Beam::DirectoryEntry
       ToPythonAdministrationClient<C>::load_administrators_root_entry() {
     auto release = Beam::Python::GilRelease();
     return m_client->load_administrators_root_entry();
   }
 
   template<IsAdministrationClient C>
-  Beam::ServiceLocator::DirectoryEntry
+  Beam::DirectoryEntry
       ToPythonAdministrationClient<C>::load_services_root_entry() {
     auto release = Beam::Python::GilRelease();
     return m_client->load_services_root_entry();
   }
 
   template<IsAdministrationClient C>
-  Beam::ServiceLocator::DirectoryEntry
+  Beam::DirectoryEntry
       ToPythonAdministrationClient<C>::load_trading_groups_root_entry() {
     auto release = Beam::Python::GilRelease();
     return m_client->load_trading_groups_root_entry();
@@ -179,44 +179,44 @@ namespace Nexus {
 
   template<IsAdministrationClient C>
   bool ToPythonAdministrationClient<C>::check_administrator(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_client->check_administrator(account);
   }
 
   template<IsAdministrationClient C>
   AccountRoles ToPythonAdministrationClient<C>::load_account_roles(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_account_roles(account);
   }
 
   template<IsAdministrationClient C>
   AccountRoles ToPythonAdministrationClient<C>::load_account_roles(
-      const Beam::ServiceLocator::DirectoryEntry& parent,
-      const Beam::ServiceLocator::DirectoryEntry& child) {
+      const Beam::DirectoryEntry& parent,
+      const Beam::DirectoryEntry& child) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_account_roles(parent, child);
   }
 
   template<IsAdministrationClient C>
-  Beam::ServiceLocator::DirectoryEntry
+  Beam::DirectoryEntry
       ToPythonAdministrationClient<C>::load_parent_trading_group(
-        const Beam::ServiceLocator::DirectoryEntry& account) {
+        const Beam::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_parent_trading_group(account);
   }
 
   template<IsAdministrationClient C>
   AccountIdentity ToPythonAdministrationClient<C>::load_identity(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_identity(account);
   }
 
   template<IsAdministrationClient C>
   void ToPythonAdministrationClient<C>::store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       const AccountIdentity& identity) {
     auto release = Beam::Python::GilRelease();
     m_client->store(account, identity);
@@ -224,28 +224,28 @@ namespace Nexus {
 
   template<IsAdministrationClient C>
   TradingGroup ToPythonAdministrationClient<C>::load_trading_group(
-      const Beam::ServiceLocator::DirectoryEntry& directory) {
+      const Beam::DirectoryEntry& directory) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_trading_group(directory);
   }
 
   template<IsAdministrationClient C>
-  std::vector<Beam::ServiceLocator::DirectoryEntry>
+  std::vector<Beam::DirectoryEntry>
       ToPythonAdministrationClient<C>::load_managed_trading_groups(
-        const Beam::ServiceLocator::DirectoryEntry& account) {
+        const Beam::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_managed_trading_groups(account);
   }
 
   template<IsAdministrationClient C>
-  std::vector<Beam::ServiceLocator::DirectoryEntry>
+  std::vector<Beam::DirectoryEntry>
       ToPythonAdministrationClient<C>::load_administrators() {
     auto release = Beam::Python::GilRelease();
     return m_client->load_administrators();
   }
 
   template<IsAdministrationClient C>
-  std::vector<Beam::ServiceLocator::DirectoryEntry>
+  std::vector<Beam::DirectoryEntry>
       ToPythonAdministrationClient<C>::load_services() {
     auto release = Beam::Python::GilRelease();
     return m_client->load_services();
@@ -258,17 +258,17 @@ namespace Nexus {
   }
 
   template<IsAdministrationClient C>
-  std::vector<Beam::ServiceLocator::DirectoryEntry>
+  std::vector<Beam::DirectoryEntry>
       ToPythonAdministrationClient<C>::load_entitlements(
-        const Beam::ServiceLocator::DirectoryEntry& account) {
+        const Beam::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_entitlements(account);
   }
 
   template<IsAdministrationClient C>
   void ToPythonAdministrationClient<C>::store_entitlements(
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements) {
+      const Beam::DirectoryEntry& account,
+      const std::vector<Beam::DirectoryEntry>& entitlements) {
     auto release = Beam::Python::GilRelease();
     m_client->store_entitlements(account, entitlements);
   }
@@ -276,14 +276,14 @@ namespace Nexus {
   template<IsAdministrationClient C>
   const Beam::Publisher<RiskParameters>&
       ToPythonAdministrationClient<C>::get_risk_parameters_publisher(
-        const Beam::ServiceLocator::DirectoryEntry& account) {
+        const Beam::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_client->get_risk_parameters_publisher(account);
   }
 
   template<IsAdministrationClient C>
   void ToPythonAdministrationClient<C>::store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       const RiskParameters& parameters) {
     auto release = Beam::Python::GilRelease();
     m_client->store(account, parameters);
@@ -292,14 +292,14 @@ namespace Nexus {
   template<IsAdministrationClient C>
   const Beam::Publisher<RiskState>&
       ToPythonAdministrationClient<C>::get_risk_state_publisher(
-        const Beam::ServiceLocator::DirectoryEntry& account) {
+        const Beam::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_client->get_risk_state_publisher(account);
   }
 
   template<IsAdministrationClient C>
   void ToPythonAdministrationClient<C>::store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       const RiskState& state) {
     auto release = Beam::Python::GilRelease();
     m_client->store(account, state);
@@ -316,7 +316,7 @@ namespace Nexus {
   template<IsAdministrationClient C>
   std::vector<AccountModificationRequest::Id>
       ToPythonAdministrationClient<C>::load_account_modification_request_ids(
-        const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::DirectoryEntry& account,
         AccountModificationRequest::Id start_id, int max_count) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_account_modification_request_ids(
@@ -327,7 +327,7 @@ namespace Nexus {
   std::vector<AccountModificationRequest::Id>
       ToPythonAdministrationClient<C>::
         load_managed_account_modification_request_ids(
-          const Beam::ServiceLocator::DirectoryEntry& account,
+          const Beam::DirectoryEntry& account,
           AccountModificationRequest::Id start_id, int max_count) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_managed_account_modification_request_ids(
@@ -344,7 +344,7 @@ namespace Nexus {
 
   template<IsAdministrationClient C>
   AccountModificationRequest ToPythonAdministrationClient<C>::submit(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       const EntitlementModification& modification, const Message& comment) {
     auto release = Beam::Python::GilRelease();
     return m_client->submit(account, modification, comment);
@@ -359,7 +359,7 @@ namespace Nexus {
 
   template<IsAdministrationClient C>
   AccountModificationRequest ToPythonAdministrationClient<C>::submit(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       const RiskModification& modification, const Message& comment) {
     auto release = Beam::Python::GilRelease();
     return m_client->submit(account, modification, comment);

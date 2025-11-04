@@ -24,7 +24,7 @@ namespace Nexus {
 
       /** The service locator client interface. */
       using ServiceLocatorClient =
-        Beam::ServiceLocator::ServiceLocatorClientBox;
+        Beam::ServiceLocatorClientBox;
 
       /** The registry client interface. */
       using RegistryClient = Beam::RegistryService::RegistryClientBox;
@@ -54,7 +54,7 @@ namespace Nexus {
       using TimeClient = Beam::TimeService::TimeClientBox;
 
       /** The timer interface. */
-      using Timer = Beam::Threading::TimerBox;
+      using Timer = Beam::TimerBox;
 
       /**
        * Constructs Clients of a specified type using emplacement.
@@ -134,7 +134,7 @@ namespace Nexus {
       template<typename C>
       struct WrappedClients final : VirtualClients {
         using Clients = C;
-        Beam::GetOptionalLocalPtr<Clients> m_clients;
+        Beam::local_ptr_t<Clients> m_clients;
         ServiceLocatorClient m_service_locator_client;
         RegistryClient m_registry_client;
         AdministrationClient m_administration_client;

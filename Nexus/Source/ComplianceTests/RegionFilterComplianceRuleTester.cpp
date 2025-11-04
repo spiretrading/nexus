@@ -22,12 +22,12 @@ TEST_SUITE("RegionFilterComplianceRule") {
     auto async_submit = std::async(std::launch::async, [&] {
       region_rule.submit(order);
     });
-    auto operation = rule_queue->Pop();
+    auto operation = rule_queue->pop();
     auto submit_operation =
       std::get_if<TestComplianceRule::SubmitOperation>(&*operation);
     REQUIRE(submit_operation);
     REQUIRE(submit_operation->m_order == order);
-    submit_operation->m_result.SetResult();
+    submit_operation->m_result.set();
     async_submit.get();
     auto info2 = OrderInfo();
     info2.m_id = 2;
@@ -36,12 +36,12 @@ TEST_SUITE("RegionFilterComplianceRule") {
     auto async_submit2 = std::async(std::launch::async, [&] {
       region_rule.submit(order2);
     });
-    auto operation2 = rule_queue->Pop();
+    auto operation2 = rule_queue->pop();
     auto add_operation =
       std::get_if<TestComplianceRule::AddOperation>(&*operation2);
     REQUIRE(add_operation);
     REQUIRE(add_operation->m_order == order2);
-    add_operation->m_result.SetResult();
+    add_operation->m_result.set();
     async_submit2.get();
   }
 
@@ -58,19 +58,19 @@ TEST_SUITE("RegionFilterComplianceRule") {
     auto async_cancel = std::async(std::launch::async, [&] {
       region_rule.cancel(order);
     });
-    auto operation = rule_queue->Pop();
+    auto operation = rule_queue->pop();
     auto cancel_operation =
       std::get_if<TestComplianceRule::CancelOperation>(&*operation);
     REQUIRE(cancel_operation);
     REQUIRE(cancel_operation->m_order == order);
-    cancel_operation->m_result.SetResult();
+    cancel_operation->m_result.set();
     async_cancel.get();
     auto info2 = OrderInfo();
     info2.m_id = 4;
     info2.m_fields.m_security = Security("BAR", TSX);
     auto order2 = std::make_shared<PrimitiveOrder>(info2);
     region_rule.cancel(order2);
-    REQUIRE(!rule_queue->TryPop());
+    REQUIRE(!rule_queue->try_pop());
   }
 
   TEST_CASE("add") {
@@ -87,12 +87,12 @@ TEST_SUITE("RegionFilterComplianceRule") {
     auto async_add = std::async(std::launch::async, [&] {
       region_rule.add(order1);
     });
-    auto operation1 = rule_queue->Pop();
+    auto operation1 = rule_queue->pop();
     auto add_operation1 =
       std::get_if<TestComplianceRule::AddOperation>(&*operation1);
     REQUIRE(add_operation1);
     REQUIRE(add_operation1->m_order == order1);
-    add_operation1->m_result.SetResult();
+    add_operation1->m_result.set();
     async_add.get();
     auto info2 = OrderInfo();
     info2.m_id = 6;
@@ -101,13 +101,13 @@ TEST_SUITE("RegionFilterComplianceRule") {
     auto async_add2 = std::async(std::launch::async, [&] {
       region_rule.add(order2);
     });
-    auto operation2 = rule_queue->Pop();
+    auto operation2 = rule_queue->pop();
     auto add_operation2 =
       std::get_if<TestComplianceRule::AddOperation>(&*operation2);
     REQUIRE(add_operation2);
     REQUIRE(add_operation2->m_order == order2);
-    add_operation2->m_result.SetResult();
+    add_operation2->m_result.set();
     async_add2.get();
-    REQUIRE(!rule_queue->TryPop());
+    REQUIRE(!rule_queue->try_pop());
   }
 }

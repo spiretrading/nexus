@@ -18,7 +18,9 @@ namespace Nexus {
       ReplicatedOrderExecutionDataStore(
         OrderExecutionDataStore primary_data_store,
         std::vector<OrderExecutionDataStore> duplicate_data_stores);
+
       ~ReplicatedOrderExecutionDataStore();
+
       boost::optional<SequencedAccountOrderRecord>
         load_order_record(OrderId id);
       std::vector<SequencedOrderRecord>

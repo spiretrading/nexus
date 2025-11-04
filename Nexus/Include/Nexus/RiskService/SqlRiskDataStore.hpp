@@ -30,15 +30,15 @@ namespace Nexus {
 
       ~SqlRiskDataStore();
       InventorySnapshot load_inventory_snapshot(
-        const Beam::ServiceLocator::DirectoryEntry& account);
-      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::DirectoryEntry& account);
+      void store(const Beam::DirectoryEntry& account,
         const InventorySnapshot& snapshot);
       void close();
 
     private:
-      mutable Beam::Threading::Mutex m_mutex;
+      mutable Beam::Mutex m_mutex;
       std::unique_ptr<Connection> m_connection;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       SqlRiskDataStore(const SqlRiskDataStore&) = delete;
       SqlRiskDataStore& operator =(const SqlRiskDataStore&) = delete;
@@ -68,7 +68,7 @@ namespace Nexus {
 
   template<typename C>
   InventorySnapshot SqlRiskDataStore<C>::load_inventory_snapshot(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     auto snapshot = InventorySnapshot();
     auto lock = std::lock_guard(m_mutex);
     Viper::transaction(*m_connection, [&] {
@@ -78,7 +78,7 @@ namespace Nexus {
           snapshot.m_inventories.push_back(std::move(row.m_inventory));
         })));
       m_connection->execute(Viper::select(
-        Viper::Row<Beam::Queries::Sequence>("sequence"), "inventory_sequences",
+        Viper::Row<Beam::Sequence>("sequence"), "inventory_sequences",
         Viper::sym("account") == account.m_id, &snapshot.m_sequence));
       m_connection->execute(Viper::select(get_inventory_excluded_orders_row(),
         "inventory_excluded_orders", Viper::sym("account") == account.m_id,
@@ -91,7 +91,7 @@ namespace Nexus {
 
   template<typename C>
   void SqlRiskDataStore<C>::store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       const InventorySnapshot& snapshot) {
     auto stripped_snapshot = strip(snapshot);
     auto lock = std::lock_guard(m_mutex);

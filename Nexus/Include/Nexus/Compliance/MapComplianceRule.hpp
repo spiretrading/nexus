@@ -53,15 +53,14 @@ namespace Nexus {
   };
 
   template<typename K>
-  MapComplianceRule(ComplianceRuleSchema,
-    std::function<std::unique_ptr<ComplianceRule>(const ComplianceRuleSchema&)>,
-    K) -> MapComplianceRule<std::invoke_result_t<K, const Order&>>;
+  MapComplianceRule(ComplianceRuleSchema, std::function<
+    std::unique_ptr<ComplianceRule> (const ComplianceRuleSchema&)>, K) ->
+      MapComplianceRule<std::invoke_result_t<K, const Order&>>;
 
   /**
    * Defines a MapComplianceRule that applies on an account by account basis.
    */
-  using PerAccountComplianceRule =
-    MapComplianceRule<Beam::ServiceLocator::DirectoryEntry>;
+  using PerAccountComplianceRule = MapComplianceRule<Beam::DirectoryEntry>;
 
   /** The standard name used to identify the PerAccountComplianceRule. */
   inline const auto PER_ACCOUNT_RULE_NAME = std::string("per_account");
@@ -149,14 +148,14 @@ namespace Nexus {
 
   template<typename K>
   MapComplianceRule<K>::MapComplianceRule(ComplianceRuleSchema schema,
-      ComplianceRuleBuilder rule_builder, KeyBuilder key_builder)
+    ComplianceRuleBuilder rule_builder, KeyBuilder key_builder)
     : m_schema(std::move(schema)),
       m_rule_builder(std::move(rule_builder)),
       m_key_builder(std::move(key_builder)) {}
 
   template<typename K>
   void MapComplianceRule<K>::submit(const std::shared_ptr<Order>& order) {
-    auto& rule = *m_rules.GetOrInsert(m_key_builder(*order), [&] {
+    auto& rule = *m_rules.get_or_insert(m_key_builder(*order), [&] {
       return m_rule_builder(m_schema);
     });
     rule.submit(order);
@@ -164,16 +163,14 @@ namespace Nexus {
 
   template<typename K>
   void MapComplianceRule<K>::cancel(const std::shared_ptr<Order>& order) {
-    auto rule = m_rules.Find(m_key_builder(*order));
-    if(!rule) {
-      return;
+    if(auto rule = m_rules.find(m_key_builder(*order))) {
+      (*rule)->cancel(order);
     }
-    (*rule)->cancel(order);
   }
 
   template<typename K>
   void MapComplianceRule<K>::add(const std::shared_ptr<Order>& order) {
-    auto& rule = *m_rules.GetOrInsert(m_key_builder(*order), [&] {
+    auto& rule = *m_rules.get_or_insert(m_key_builder(*order), [&] {
       return m_rule_builder(m_schema);
     });
     rule.add(order);

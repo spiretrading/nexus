@@ -42,7 +42,7 @@ namespace Nexus {
       boost::optional<ComplianceRuleEntry> load_compliance_rule_entry(
         ComplianceRuleEntry::Id id);
       std::vector<ComplianceRuleEntry> load_compliance_rule_entries(
-        const Beam::ServiceLocator::DirectoryEntry& directory_entry);
+        const Beam::DirectoryEntry& directory_entry);
       void store(const ComplianceRuleEntry& entry);
       void remove(ComplianceRuleEntry::Id id);
       void store(const ComplianceRuleViolationRecord& record);
@@ -110,7 +110,7 @@ namespace Nexus {
   template<IsComplianceRuleDataStore D>
   std::vector<ComplianceRuleEntry>
       ToPythonComplianceRuleDataStore<D>::load_compliance_rule_entries(
-        const Beam::ServiceLocator::DirectoryEntry& directory_entry) {
+        const Beam::DirectoryEntry& directory_entry) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_compliance_rule_entries(directory_entry);
   }

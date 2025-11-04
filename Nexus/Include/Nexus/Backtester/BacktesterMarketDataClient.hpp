@@ -46,7 +46,7 @@ namespace Nexus {
     private:
       BacktesterMarketDataService* m_service;
       MarketDataClient m_market_data_client;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       BacktesterMarketDataClient(const BacktesterMarketDataClient&) = delete;
       BacktesterMarketDataClient& operator =(

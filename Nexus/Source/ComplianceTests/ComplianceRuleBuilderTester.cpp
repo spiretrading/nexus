@@ -5,7 +5,6 @@
 #include "Nexus/MarketDataServiceTests/TestMarketDataClient.hpp"
 
 using namespace Beam;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;

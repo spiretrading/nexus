@@ -1,7 +1,7 @@
 #ifndef NEXUS_COMPLIANCE_RULE_BUILDER_HPP
 #define NEXUS_COMPLIANCE_RULE_BUILDER_HPP
 #include <memory>
-#include <Beam/TimeService/TimeClientBox.hpp>
+#include <Beam/TimeService/TimeClient.hpp>
 #include <boost/variant/get.hpp>
 #include "Nexus/Compliance/BuyingPowerComplianceRule.hpp"
 #include "Nexus/Compliance/MapComplianceRule.hpp"
@@ -25,11 +25,11 @@ namespace Nexus {
    * @param time_client The TimeClient needed by various rules.
    * @return The ComplianceRule represented by the <i>schema</i>.
    */
-  template<IsMarketDataClient MarketDataClient,
-    IsDefinitionsClient DefinitionsClient, typename TimeClient>
   std::unique_ptr<ComplianceRule> make_compliance_rule(
-      const ComplianceRuleSchema& schema, MarketDataClient& market_data_client,
-      DefinitionsClient& definitions_client, TimeClient& time_client) {
+      const ComplianceRuleSchema& schema,
+      IsMarketDataClient auto& market_data_client,
+      IsDefinitionsClient auto& definitions_client,
+      Beam::IsTimeClient auto& time_client) {
     if(schema.get_name() == BUYING_POWER_COMPLIANCE_RULE_NAME) {
       return make_buying_power_compliance_rule(schema.get_parameters(),
         ExchangeRateTable(definitions_client.load_exchange_rates()),

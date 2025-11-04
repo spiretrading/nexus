@@ -39,14 +39,14 @@ namespace Nexus {
        * @return The <i>account</i>'s InventorySnapshot.
        */
       InventorySnapshot load_inventory_snapshot(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::DirectoryEntry& account);
 
       /**
        * Stores an account's InventorySnapshot.
        * @param account The account whose snapshot is being stored.
        * @param snapshot The snapshot to store.
        */
-      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+      void store(const Beam::DirectoryEntry& account,
         const InventorySnapshot& snapshot);
 
       void close();
@@ -55,21 +55,21 @@ namespace Nexus {
       struct VirtualRiskDataStore {
         virtual ~VirtualRiskDataStore() = default;
         virtual InventorySnapshot load_inventory_snapshot(
-          const Beam::ServiceLocator::DirectoryEntry&) = 0;
-        virtual void store(const Beam::ServiceLocator::DirectoryEntry& account,
+          const Beam::DirectoryEntry&) = 0;
+        virtual void store(const Beam::DirectoryEntry& account,
           const InventorySnapshot&) = 0;
         virtual void close() = 0;
       };
       template<typename D>
       struct WrappedRiskDataStore final : VirtualRiskDataStore {
         using RiskDataStoreType = D;
-        Beam::GetOptionalLocalPtr<RiskDataStoreType> m_data_store;
+        Beam::local_ptr_t<RiskDataStoreType> m_data_store;
 
         template<typename... Args>
         WrappedRiskDataStore(Args&&... args);
         InventorySnapshot load_inventory_snapshot(
-          const Beam::ServiceLocator::DirectoryEntry& account) override;
-        void store(const Beam::ServiceLocator::DirectoryEntry& account,
+          const Beam::DirectoryEntry& account) override;
+        void store(const Beam::DirectoryEntry& account,
           const InventorySnapshot& snapshot) override;
         void close() override;
       };
@@ -102,12 +102,12 @@ namespace Nexus {
     : RiskDataStore(*data_store) {}
 
   inline InventorySnapshot RiskDataStore::load_inventory_snapshot(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     return m_data_store->load_inventory_snapshot(account);
   }
 
   inline void RiskDataStore::store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       const InventorySnapshot& snapshot) {
     m_data_store->store(account, snapshot);
   }
@@ -124,13 +124,13 @@ namespace Nexus {
   template<typename D>
   InventorySnapshot RiskDataStore::WrappedRiskDataStore<D>::
       load_inventory_snapshot(
-        const Beam::ServiceLocator::DirectoryEntry& account) {
+        const Beam::DirectoryEntry& account) {
     return m_data_store->load_inventory_snapshot(account);
   }
 
   template<typename D>
   void RiskDataStore::WrappedRiskDataStore<D>::store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       const InventorySnapshot& snapshot) {
     m_data_store->store(account, snapshot);
   }

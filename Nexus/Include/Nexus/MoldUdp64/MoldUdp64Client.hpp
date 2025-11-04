@@ -23,7 +23,7 @@ namespace Nexus {
     public:
 
       /** The type of Channel connected to the MoldUdp64 server. */
-      using Channel = Beam::GetTryDereferenceType<C>;
+      using Channel = Beam::dereference_t<C>;
 
       /**
        * Constructs a MoldUdp64Client.
@@ -46,13 +46,13 @@ namespace Nexus {
       void close();
 
     private:
-      Beam::GetOptionalLocalPtr<C> m_channel;
-      Beam::IO::SharedBuffer m_buffer;
+      Beam::local_ptr_t<C> m_channel;
+      Beam::SharedBuffer m_buffer;
       MoldUdp64Packet m_packet;
       const char* m_source;
       std::size_t m_remaining_size;
       std::uint64_t m_sequence_number;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       MoldUdp64Client(const MoldUdp64Client&) = delete;
       MoldUdp64Client& operator =(const MoldUdp64Client&) = delete;
@@ -68,7 +68,7 @@ namespace Nexus {
           m_sequence_number(-1) {
     } catch(const std::exception&) {
       std::throw_with_nested(
-        Beam::IO::ConnectException("MoldUDP64 client failed to connect."));
+        Beam::ConnectException("MoldUDP64 client failed to connect."));
     }
 
   template<typename C>
@@ -93,7 +93,7 @@ namespace Nexus {
           m_channel->GetReader().Read(Beam::Store(m_buffer));
           m_packet =
             MoldUdp64Packet::parse(m_buffer.GetData(), m_buffer.GetSize());
-        }, Beam::IO::IOException("Failed to read MoldUDP64 packet."));
+        }, Beam::IOException("Failed to read MoldUDP64 packet."));
         if(m_packet.m_count != 0) {
           m_sequence_number = m_packet.m_sequence_number;
           m_source = m_packet.m_payload;
@@ -105,7 +105,7 @@ namespace Nexus {
     }
     auto message = Beam::TryOrNest([&] {
       return MoldUdp64Message::parse(m_source, m_remaining_size);
-    }, Beam::IO::IOException("Failed to read MoldUDP64 packet."));
+    }, Beam::IOException("Failed to read MoldUDP64 packet."));
     auto message_size = message.m_length + sizeof(message.m_length);
     m_remaining_size -= message_size;
     m_source += message_size;

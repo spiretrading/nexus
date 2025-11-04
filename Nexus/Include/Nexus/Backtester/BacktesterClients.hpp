@@ -14,7 +14,7 @@ namespace Nexus {
   class BacktesterClients {
     public:
       using ServiceLocatorClient =
-        Beam::ServiceLocator::ServiceLocatorClientBox;
+        Beam::ServiceLocatorClientBox;
       using RegistryClient = Beam::RegistryService::RegistryClientBox;
       using AdministrationClient = Nexus::AdministrationClient;
       using DefinitionsClient = Nexus::DefinitionsClient;
@@ -24,7 +24,7 @@ namespace Nexus {
       using OrderExecutionClient = Nexus::OrderExecutionClient;
       using RiskClient = Nexus::RiskClient;
       using TimeClient = Beam::TimeService::TimeClientBox;
-      using Timer = Beam::Threading::TimerBox;
+      using Timer = Beam::TimerBox;
 
       /**
        * Constructs BacktesterClients.
@@ -59,7 +59,7 @@ namespace Nexus {
       OrderExecutionClient m_order_execution_client;
       RiskClient m_risk_client;
       TimeClient m_time_client;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       BacktesterClients(const BacktesterClients&) = delete;
       BacktesterClients& operator =(const BacktesterClients&) = delete;

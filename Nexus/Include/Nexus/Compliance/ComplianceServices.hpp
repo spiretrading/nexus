@@ -12,7 +12,7 @@
 namespace Nexus {
   inline const auto COMPLIANCE_SERVICE_NAME = std::string("compliance_service");
 
-  BEAM_DEFINE_SERVICES(ComplianceServices,
+  BEAM_DEFINE_SERVICES(compliance_services,
 
     /**
      * Loads all of a DirectoryEntry's ComplianceRuleEntries.
@@ -22,8 +22,8 @@ namespace Nexus {
      */
     (LoadDirectoryEntryComplianceRuleEntryService,
       "Nexus.Compliance.LoadDirectoryEntryComplianceRuleEntryService",
-      std::vector<ComplianceRuleEntry>, Beam::ServiceLocator::DirectoryEntry,
-      directory_entry),
+      std::vector<ComplianceRuleEntry>, (Beam::DirectoryEntry,
+      directory_entry)),
 
     /**
      * Monitors changes to a DirectoryEntry's ComplianceRuleEntries.
@@ -34,7 +34,7 @@ namespace Nexus {
     (MonitorComplianceRuleEntryService,
       "Nexus.Compliance.MonitorComplianceRuleEntryService",
       std::vector<ComplianceRuleEntry>,
-      Beam::ServiceLocator::DirectoryEntry, directory_entry),
+      (Beam::DirectoryEntry, directory_entry)),
 
     /**
      * Adds a ComplianceRuleEntry.
@@ -45,8 +45,8 @@ namespace Nexus {
      */
     (AddComplianceRuleEntryService,
       "Nexus.Compliance.AddComplianceRuleEntryService", ComplianceRuleEntry::Id,
-      Beam::ServiceLocator::DirectoryEntry, directory_entry,
-      ComplianceRuleEntry::State, state, ComplianceRuleSchema, schema),
+      (Beam::DirectoryEntry, directory_entry),
+      (ComplianceRuleEntry::State, state), (ComplianceRuleSchema, schema)),
 
     /**
      * Updates a ComplianceRuleEntry.
@@ -54,7 +54,7 @@ namespace Nexus {
      */
     (UpdateComplianceRuleEntryService,
       "Nexus.Compliance.UpdateComplianceRuleEntryService", void,
-      ComplianceRuleEntry, entry),
+      (ComplianceRuleEntry, entry)),
 
     /**
      * Deletes a ComplianceRuleEntry.
@@ -62,16 +62,16 @@ namespace Nexus {
      */
     (DeleteComplianceRuleEntryService,
       "Nexus.Compliance.DeleteComplianceRuleEntryService", void,
-      ComplianceRuleEntry::Id, id));
+      (ComplianceRuleEntry::Id, id)));
 
-  BEAM_DEFINE_MESSAGES(ComplianceMessages,
+  BEAM_DEFINE_MESSAGES(compliance_messages,
 
     /**
      * Signals a change to a ComplianceRuleEntry.
      * @param compliance_rule_entry The new or updated ComplianceRuleEntry.
      */
     (ComplianceRuleEntryMessage, "Nexus.Compliance.ComplianceRuleEntryMessage",
-      ComplianceRuleEntry, compliance_rule_entry),
+      (ComplianceRuleEntry, compliance_rule_entry)),
 
     /**
      * Reports a compliance violation.
@@ -79,7 +79,7 @@ namespace Nexus {
      */
     (ReportComplianceRuleViolationMessage,
       "Nexus.Compliance.ReportComplianceRuleViolationMessage",
-      ComplianceRuleViolationRecord, violation_record));
+      (ComplianceRuleViolationRecord, violation_record)));
 }
 
 #endif

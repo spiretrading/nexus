@@ -25,7 +25,7 @@ namespace Nexus {
 
     private:
       BacktesterEventHandler* m_event_handler;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       BacktesterTimeClient(const BacktesterTimeClient&) = delete;
       BacktesterTimeClient& operator =(const BacktesterTimeClient&) = delete;

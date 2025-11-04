@@ -5,25 +5,16 @@
 namespace Nexus {
 
   /** Exception to indicate an operation on a ComplianceRuleDataStore failed. */
-  class ComplianceRuleDataStoreException : public Beam::IO::IOException {
+  class ComplianceRuleDataStoreException : public Beam::IOException {
     public:
+      using Beam::IOException::IOException;
 
       /** Constructs a ComplianceRuleDataStoreException. */
       ComplianceRuleDataStoreException();
-
-      /**
-       * Constructs a ComplianceRuleDataStoreException.
-       * @param message A message describing the error.
-       */
-      explicit ComplianceRuleDataStoreException(const std::string& message);
   };
 
   inline ComplianceRuleDataStoreException::ComplianceRuleDataStoreException()
-    : Beam::IO::IOException("Operation failed.") {}
-
-  inline ComplianceRuleDataStoreException::ComplianceRuleDataStoreException(
-    const std::string& message)
-    : Beam::IO::IOException(message) {}
+    : ComplianceRuleDataStoreException("Operation failed.") {}
 }
 
 #endif

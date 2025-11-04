@@ -1,9 +1,13 @@
 #ifndef NEXUS_BOOKKEEPER_HPP
 #define NEXUS_BOOKKEEPER_HPP
+#include <concepts>
 #include <memory>
 #include <type_traits>
 #include <utility>
 #include <Beam/Collections/View.hpp>
+#include <Beam/Pointers/Dereference.hpp>
+#include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Pointers/VirtualPtr.hpp>
 #include "Nexus/Accounting/Inventory.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
@@ -11,28 +15,43 @@
 
 namespace Nexus {
 
+  /** Checks if a type implements a Bookkeeper. */
+  template<typename T>
+  concept IsBookkeeper = requires(T& bookkeeper) {
+    bookkeeper.record(std::declval<const Security&>(),
+      std::declval<CurrencyId>(), std::declval<Quantity>(),
+      std::declval<Money>(), std::declval<Money>());
+    { bookkeeper.get_inventory(std::declval<const Security&>(),
+        std::declval<CurrencyId>()) } -> std::same_as<const Inventory&>;
+    { bookkeeper.get_total(std::declval<CurrencyId>()) } ->
+        std::same_as<const Inventory&>;
+    { bookkeeper.get_inventory_range() } ->
+        std::same_as<Beam::View<const Inventory>>;
+    { bookkeeper.get_totals_range() } ->
+        std::same_as<Beam::View<const Inventory>>;
+  };
+
   /** Performs bookkeeping and cost management of inventories. */
   class Bookkeeper {
     public:
 
       /**
        * Constructs a Bookkeeper of a specified type using emplacement.
-       * @param <T> The type of bookkeeper to emplace.
+       * @tparam T The type of bookkeeper to emplace.
        * @param args The arguments to pass to the emplaced bookkeeper.
        */
-      template<typename T, typename... Args>
+      template<IsBookkeeper T, typename... Args>
       explicit Bookkeeper(std::in_place_type_t<T>, Args&&... args);
 
       /**
-       * Constructs a Bookkeeper by copying an existing bookkeeper.
-       * @param bookkeeper The bookkeeper to copy.
+       * Constructs a Bookkeeper by referencing an existing bookkeeper.
+       * @param bookkeeper The bookkeeper to reference.
        */
-      template<typename B,
-        typename = std::enable_if_t<
-          !std::is_same_v<std::remove_cvref_t<B>, Bookkeeper>>>
-      explicit Bookkeeper(B&& bookkeeper);
+      template<Beam::DisableCopy<Bookkeeper> T> requires
+        IsBookkeeper<Beam::dereference_t<T>>
+      Bookkeeper(T&& bookkeeper);
 
-      Bookkeeper(const Bookkeeper& bookkeeper);
+      Bookkeeper(const Bookkeeper&) = default;
 
       /**
        * Records a transaction.
@@ -72,7 +91,7 @@ namespace Nexus {
     private:
       struct VirtualBookkeeper {
         virtual ~VirtualBookkeeper() = default;
-        virtual std::unique_ptr<VirtualBookkeeper> clone() const = 0;
+
         virtual void record(
           const Security&, CurrencyId, Quantity, Money, Money) = 0;
         virtual const Inventory& get_inventory(
@@ -84,11 +103,11 @@ namespace Nexus {
       template<typename B>
       struct WrappedBookkeeper final : VirtualBookkeeper {
         using Bookkeeper = B;
-        Beam::GetOptionalLocalPtr<Bookkeeper> m_bookkeeper;
+        Beam::local_ptr_t<Bookkeeper> m_bookkeeper;
 
         template<typename... Args>
         WrappedBookkeeper(Args&&... args);
-        std::unique_ptr<VirtualBookkeeper> clone() const override;
+
         void record(const Security& security, CurrencyId currency,
           Quantity quantity, Money cost_basis, Money fees) override;
         const Inventory& get_inventory(
@@ -97,29 +116,19 @@ namespace Nexus {
         Beam::View<const Inventory> get_inventory_range() const override;
         Beam::View<const Inventory> get_totals_range() const override;
       };
-      std::unique_ptr<VirtualBookkeeper> m_bookkeeper;
+      Beam::VirtualPtr<VirtualBookkeeper> m_bookkeeper;
   };
 
-  /**
-   * Concept that evaluates to true if a type is a Bookkeeper instantiation.
-   * @param <T> The type to test.
-   */
-  template<typename T>
-  concept IsBookkeeper = std::constructible_from<
-    Bookkeeper, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
-
-  template<typename T, typename... Args>
+  template<IsBookkeeper T, typename... Args>
   Bookkeeper::Bookkeeper(std::in_place_type_t<T>, Args&&... args)
-    : m_bookkeeper(
-        std::make_unique<WrappedBookkeeper<T>>(std::forward<Args>(args)...)) {}
+    : m_bookkeeper(Beam::make_virtual_ptr<WrappedBookkeeper<T>>(
+        std::forward<Args>(args)...)) {}
 
-  template<typename B, typename>
-  Bookkeeper::Bookkeeper(B&& bookkeeper)
-    : Bookkeeper(
-        std::in_place_type<std::decay_t<B>>, std::forward<B>(bookkeeper)) {}
-
-  inline Bookkeeper::Bookkeeper(const Bookkeeper& bookkeeper)
-    : m_bookkeeper(bookkeeper.m_bookkeeper->clone()) {}
+  template<Beam::DisableCopy<Bookkeeper> T> requires
+    IsBookkeeper<Beam::dereference_t<T>>
+  Bookkeeper::Bookkeeper(T&& bookkeeper)
+    : Bookkeeper(std::in_place_type<Beam::dereference_t<T>>,
+        std::forward<T>(bookkeeper)) {}
 
   inline void Bookkeeper::record(const Security& security, CurrencyId currency,
       Quantity quantity, Money cost_basis, Money fees) {
@@ -147,12 +156,6 @@ namespace Nexus {
   template<typename... Args>
   Bookkeeper::WrappedBookkeeper<B>::WrappedBookkeeper(Args&&... args)
     : m_bookkeeper(std::forward<Args>(args)...) {}
-
-  template<typename B>
-  std::unique_ptr<typename Bookkeeper::VirtualBookkeeper>
-      Bookkeeper::WrappedBookkeeper<B>::clone() const {
-    return std::make_unique<WrappedBookkeeper<B>>(*m_bookkeeper);
-  }
 
   template<typename B>
   void Bookkeeper::WrappedBookkeeper<B>::record(const Security& security,

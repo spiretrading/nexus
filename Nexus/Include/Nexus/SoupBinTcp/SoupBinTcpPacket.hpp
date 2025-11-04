@@ -51,13 +51,13 @@ namespace Nexus {
   template<typename Reader, typename Buffer>
   SoupBinTcpPacket read_packet(Reader& reader, Beam::Out<Buffer> payload) {
     auto packet = SoupBinTcpPacket();
-    Beam::IO::ReadExactSize(reader, reinterpret_cast<char*>(&packet.m_length),
+    Beam::ReadExactSize(reader, reinterpret_cast<char*>(&packet.m_length),
       sizeof(packet.m_length));
     packet.m_length = Beam::FromBigEndian(packet.m_length);
-    Beam::IO::ReadExactSize(
+    Beam::ReadExactSize(
       reader, reinterpret_cast<char*>(&packet.m_type), sizeof(packet.m_type));
     packet.m_type = Beam::FromBigEndian(packet.m_type);
-    Beam::IO::ReadExactSize(reader, Beam::Store(payload), packet.m_length - 1);
+    Beam::ReadExactSize(reader, Beam::Store(payload), packet.m_length - 1);
     packet.m_payload = payload->GetData();
     return packet;
   }

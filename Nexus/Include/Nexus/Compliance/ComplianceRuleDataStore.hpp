@@ -1,13 +1,38 @@
 #ifndef NEXUS_COMPLIANCE_RULE_DATA_STORE_HPP
 #define NEXUS_COMPLIANCE_RULE_DATA_STORE_HPP
+#include <concepts>
+#include <memory>
 #include <type_traits>
 #include <utility>
 #include <vector>
+#include <Beam/IO/Connection.hpp>
+#include <Beam/Pointers/Dereference.hpp>
+#include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Pointers/VirtualPtr.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Compliance/ComplianceRuleEntry.hpp"
 #include "Nexus/Compliance/ComplianceRuleViolationRecord.hpp"
 
 namespace Nexus {
+
+  /** Checks if a type implements a ComplianceRuleDataStore. */
+  template<typename T>
+  concept IsComplianceRuleDataStore =
+    Beam::IsConnection<T> && requires(T& data_store) {
+      { data_store.load_all_compliance_rule_entries() } ->
+          std::same_as<std::vector<ComplianceRuleEntry>>;
+      { data_store.load_next_compliance_rule_entry_id() } ->
+          std::same_as<ComplianceRuleEntry::Id>;
+      { data_store.load_compliance_rule_entry(
+          std::declval<ComplianceRuleEntry::Id>()) } ->
+            std::same_as<boost::optional<ComplianceRuleEntry>>;
+      { data_store.load_compliance_rule_entries(
+          std::declval<const Beam::DirectoryEntry&>()) } ->
+            std::same_as<std::vector<ComplianceRuleEntry>>;
+      data_store.store(std::declval<const ComplianceRuleEntry&>());
+      data_store.remove(std::declval<ComplianceRuleEntry::Id>());
+      data_store.store(std::declval<const ComplianceRuleViolationRecord&>());
+    };
 
   /** Provides a data store for all compliance rules and violations. */
   class ComplianceRuleDataStore {
@@ -16,27 +41,22 @@ namespace Nexus {
       /**
        * Constructs a ComplianceRuleDataStore of a specified type using
        * emplacement.
-       * @param <T> The type of data store to emplace.
+       * @tparam T The type of data store to emplace.
        * @param args The arguments to pass to the emplaced data store.
        */
-      template<typename T, typename... Args>
+      template<IsComplianceRuleDataStore T, typename... Args>
       explicit ComplianceRuleDataStore(std::in_place_type_t<T>, Args&&... args);
 
       /**
-       * Constructs a ComplianceRuleDataStore by copying an existing data store.
-       * @param data_store The data store to copy.
+       * Constructs a ComplianceRuleDataStore by referencing an existing data
+       * store.
+       * @param data_store The data store to reference.
        */
-      template<typename DataStore>
-      explicit ComplianceRuleDataStore(DataStore data_store);
+      template<Beam::DisableCopy<ComplianceRuleDataStore> T> requires
+        IsComplianceRuleDataStore<Beam::dereference_t<T>>
+      ComplianceRuleDataStore(T&& data_store);
 
-      explicit ComplianceRuleDataStore(
-        ComplianceRuleDataStore* data_store);
-
-      explicit ComplianceRuleDataStore(
-        const std::shared_ptr<ComplianceRuleDataStore>& data_store);
-
-      explicit ComplianceRuleDataStore(
-        const std::unique_ptr<ComplianceRuleDataStore>& data_store);
+      ComplianceRuleDataStore(const ComplianceRuleDataStore&) = default;
 
       /** Returns all ComplianceRuleEntry records. */
       std::vector<ComplianceRuleEntry> load_all_compliance_rule_entries();
@@ -60,7 +80,7 @@ namespace Nexus {
        *         specified directory_entry.
        */
       std::vector<ComplianceRuleEntry> load_compliance_rule_entries(
-        const Beam::ServiceLocator::DirectoryEntry& directory_entry);
+        const Beam::DirectoryEntry& directory_entry);
 
       /**
        * Stores a ComplianceRuleEntry.
@@ -86,6 +106,7 @@ namespace Nexus {
     private:
       struct VirtualComplianceRuleDataStore {
         virtual ~VirtualComplianceRuleDataStore() = default;
+
         virtual std::vector<ComplianceRuleEntry>
           load_all_compliance_rule_entries() = 0;
         virtual ComplianceRuleEntry::Id
@@ -93,7 +114,7 @@ namespace Nexus {
         virtual boost::optional<ComplianceRuleEntry>
           load_compliance_rule_entry(ComplianceRuleEntry::Id id) = 0;
         virtual std::vector<ComplianceRuleEntry> load_compliance_rule_entries(
-          const Beam::ServiceLocator::DirectoryEntry& directory_entry) = 0;
+          const Beam::DirectoryEntry& directory_entry) = 0;
         virtual void store(const ComplianceRuleEntry& entry) = 0;
         virtual void remove(ComplianceRuleEntry::Id id) = 0;
         virtual void store(const ComplianceRuleViolationRecord& record) = 0;
@@ -103,51 +124,37 @@ namespace Nexus {
       struct WrappedComplianceRuleDataStore final :
           VirtualComplianceRuleDataStore {
         using DataStore = D;
-        Beam::GetOptionalLocalPtr<DataStore> m_data_store;
+        Beam::local_ptr_t<DataStore> m_data_store;
+
         template<typename... Args>
         WrappedComplianceRuleDataStore(Args&&... args);
+
         std::vector<ComplianceRuleEntry>
           load_all_compliance_rule_entries() override;
         ComplianceRuleEntry::Id load_next_compliance_rule_entry_id() override;
         boost::optional<ComplianceRuleEntry>
           load_compliance_rule_entry(ComplianceRuleEntry::Id id) override;
         std::vector<ComplianceRuleEntry> load_compliance_rule_entries(
-          const Beam::ServiceLocator::DirectoryEntry& directory_entry) override;
+          const Beam::DirectoryEntry& directory_entry) override;
         void store(const ComplianceRuleEntry& entry) override;
         void remove(ComplianceRuleEntry::Id id) override;
         void store(const ComplianceRuleViolationRecord& record) override;
         void close() override;
       };
-      std::shared_ptr<VirtualComplianceRuleDataStore> m_data_store;
+      Beam::VirtualPtr<VirtualComplianceRuleDataStore> m_data_store;
   };
 
-  /** Checks if a type implements a ComplianceRuleDataStore. */
-  template<typename T>
-  concept IsComplianceRuleDataStore = std::constructible_from<
-    ComplianceRuleDataStore, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
-
-  template<typename T, typename... Args>
+  template<IsComplianceRuleDataStore T, typename... Args>
   ComplianceRuleDataStore::ComplianceRuleDataStore(
-    std::in_place_type_t<T>, Args&&... args)
-    : m_data_store(std::make_shared<WrappedComplianceRuleDataStore<T>>(
+      std::in_place_type_t<T>, Args&&... args)
+    : m_data_store(Beam::make_virtual_ptr<WrappedComplianceRuleDataStore<T>>(
         std::forward<Args>(args)...)) {}
 
-  template<typename DataStore>
-  ComplianceRuleDataStore::ComplianceRuleDataStore(DataStore data_store)
-    : ComplianceRuleDataStore(
-        std::in_place_type<DataStore>, std::move(data_store)) {}
-
-  inline ComplianceRuleDataStore::ComplianceRuleDataStore(
-    ComplianceRuleDataStore* data_store)
-    : ComplianceRuleDataStore(*data_store) {}
-
-  inline ComplianceRuleDataStore::ComplianceRuleDataStore(
-      const std::shared_ptr<ComplianceRuleDataStore>& data_store)
-    : ComplianceRuleDataStore(*data_store) {}
-
-  inline ComplianceRuleDataStore::ComplianceRuleDataStore(
-      const std::unique_ptr<ComplianceRuleDataStore>& data_store)
-    : ComplianceRuleDataStore(*data_store) {}
+  template<Beam::DisableCopy<ComplianceRuleDataStore> T> requires
+    IsComplianceRuleDataStore<Beam::dereference_t<T>>
+  ComplianceRuleDataStore::ComplianceRuleDataStore(T&& data_store)
+    : ComplianceRuleDataStore(std::in_place_type<Beam::dereference_t<T>>,
+        std::forward<T>(data_store)) {}
 
   inline std::vector<ComplianceRuleEntry>
       ComplianceRuleDataStore::load_all_compliance_rule_entries() {
@@ -167,7 +174,7 @@ namespace Nexus {
 
   inline std::vector<ComplianceRuleEntry>
       ComplianceRuleDataStore::load_compliance_rule_entries(
-        const Beam::ServiceLocator::DirectoryEntry& directory_entry) {
+        const Beam::DirectoryEntry& directory_entry) {
     return m_data_store->load_compliance_rule_entries(directory_entry);
   }
 
@@ -191,8 +198,8 @@ namespace Nexus {
   template<typename D>
   template<typename... Args>
   ComplianceRuleDataStore::WrappedComplianceRuleDataStore<D>::
-    WrappedComplianceRuleDataStore(Args&&... args)
-      : m_data_store(std::forward<Args>(args)...) {}
+      WrappedComplianceRuleDataStore(Args&&... args)
+    : m_data_store(std::forward<Args>(args)...) {}
 
   template<typename D>
   std::vector<ComplianceRuleEntry> ComplianceRuleDataStore::
@@ -216,7 +223,7 @@ namespace Nexus {
   template<typename D>
   std::vector<ComplianceRuleEntry> ComplianceRuleDataStore::
       WrappedComplianceRuleDataStore<D>::load_compliance_rule_entries(
-        const Beam::ServiceLocator::DirectoryEntry& directory_entry) {
+        const Beam::DirectoryEntry& directory_entry) {
     return m_data_store->load_compliance_rule_entries(directory_entry);
   }
 

@@ -39,6 +39,7 @@ namespace Details {
       const Inventory& get_total(CurrencyId currency) const;
       Beam::View<const Inventory> get_inventory_range() const;
       Beam::View<const Inventory> get_totals_range() const;
+
     private:
       std::unordered_map<Position::Key, Inventory> m_inventories;
       std::unordered_map<CurrencyId, Inventory> m_totals;
@@ -132,7 +133,7 @@ namespace Details {
     if(inventory_iterator == m_inventories.end()) {
       static auto empty_inventories =
         Beam::SynchronizedUnorderedMap<Position::Key, Inventory>();
-      return empty_inventories.GetOrInsert(key, [&] {
+      return empty_inventories.get_or_insert(key, [&] {
         return Inventory(key);
       });
     }
@@ -145,7 +146,7 @@ namespace Details {
     if(totals_iterator == m_totals.end()) {
       static auto empty_totals =
         Beam::SynchronizedUnorderedMap<CurrencyId, Inventory>();
-      return empty_totals.GetOrInsert(currency, [&] {
+      return empty_totals.get_or_insert(currency, [&] {
         auto totals = Inventory();
         totals.m_position.m_currency = currency;
         return totals;

@@ -24,10 +24,10 @@ namespace Nexus {
     public:
 
       /** The type of MarketDataClient to use. */
-      using MarketDataClient = Beam::GetTryDereferenceType<M>;
+      using MarketDataClient = Beam::dereference_t<M>;
 
       /** The type of TimeClient to use. */
-      using TimeClient = Beam::GetTryDereferenceType<T>;
+      using TimeClient = Beam::dereference_t<T>;
 
       /**
        * Constructs a SimulationOrderExecutionDriver.
@@ -48,15 +48,15 @@ namespace Nexus {
 
     private:
       using SecurityOrderSimulator = Nexus::SecurityOrderSimulator<TimeClient*>;
-      Beam::GetOptionalLocalPtr<M> m_market_data_client;
-      Beam::GetOptionalLocalPtr<T> m_time_client;
+      Beam::local_ptr_t<M> m_market_data_client;
+      Beam::local_ptr_t<T> m_time_client;
       Beam::SynchronizedUnorderedMap<OrderId, std::shared_ptr<PrimitiveOrder>>
         m_orders;
       OrderId m_next_order_id;
       Beam::SynchronizedUnorderedMap<Security,
-        std::unique_ptr<SecurityOrderSimulator>, Beam::Threading::Mutex>
+        std::unique_ptr<SecurityOrderSimulator>, Beam::Mutex>
           m_simulators;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       SimulationOrderExecutionDriver(
         const SimulationOrderExecutionDriver&) = delete;

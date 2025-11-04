@@ -6,8 +6,8 @@
 namespace Nexus {
 
   /** Encapsulates a standard RiskClient used in an application. */
-  using ApplicationRiskClient = Beam::Services::ApplicationClient<
-    ServiceRiskClient, Beam::Services::ServiceName<RISK_SERVICE_NAME>>;
+  using ApplicationRiskClient = Beam::ApplicationClient<
+    ServiceRiskClient, Beam::ServiceName<RISK_SERVICE_NAME>>;
 }
 
 #endif

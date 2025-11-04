@@ -9,18 +9,18 @@ namespace Nexus {
   class LocalRiskDataStore {
     public:
       InventorySnapshot load_inventory_snapshot(
-        const Beam::ServiceLocator::DirectoryEntry& account);
-      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::DirectoryEntry& account);
+      void store(const Beam::DirectoryEntry& account,
         const InventorySnapshot& snapshot);
       void close();
 
     private:
       Beam::SynchronizedUnorderedMap<
-        Beam::ServiceLocator::DirectoryEntry, InventorySnapshot> m_snapshots;
+        Beam::DirectoryEntry, InventorySnapshot> m_snapshots;
   };
 
   inline InventorySnapshot LocalRiskDataStore::load_inventory_snapshot(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     if(auto snapshot = m_snapshots.Find(account)) {
       return *snapshot;
     }
@@ -28,7 +28,7 @@ namespace Nexus {
   }
 
   inline void LocalRiskDataStore::store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       const InventorySnapshot& snapshot) {
     m_snapshots.Update(account, strip(snapshot));
   }

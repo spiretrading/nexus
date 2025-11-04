@@ -38,8 +38,8 @@ namespace Nexus {
       DataStore& get_data_store();
 
       InventorySnapshot load_inventory_snapshot(
-        const Beam::ServiceLocator::DirectoryEntry& account);
-      void store(const Beam::ServiceLocator::DirectoryEntry& account,
+        const Beam::DirectoryEntry& account);
+      void store(const Beam::DirectoryEntry& account,
         const InventorySnapshot& snapshot);
       void close();
 
@@ -73,14 +73,14 @@ namespace Nexus {
 
   template<IsRiskDataStore D>
   InventorySnapshot ToPythonRiskDataStore<D>::load_inventory_snapshot(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_inventory_snapshot(account);
   }
 
   template<IsRiskDataStore D>
   void ToPythonRiskDataStore<D>::store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       const InventorySnapshot& snapshot) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(account, snapshot);

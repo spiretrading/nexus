@@ -8,7 +8,6 @@ namespace Nexus::Tests {
   TEST_CASE_TEMPLATE_DEFINE(
       "ComplianceRuleDataStore", T, ComplianceRuleDataStoreTestSuite) {
     using namespace Beam;
-    using namespace Beam::ServiceLocator;
     using namespace boost;
     using namespace boost::posix_time;
     using namespace Nexus;
@@ -16,7 +15,7 @@ namespace Nexus::Tests {
     auto data_store = T()();
 
     SUBCASE("store_and_load_single_entry") {
-      auto directory_entry = DirectoryEntry::MakeAccount(1, "alice");
+      auto directory_entry = DirectoryEntry::make_account(1, "alice");
       auto schema = ComplianceRuleSchema("test_rule", {});
       auto entry = ComplianceRuleEntry(
         100, directory_entry, ComplianceRuleEntry::State::ACTIVE, schema);
@@ -33,8 +32,8 @@ namespace Nexus::Tests {
     }
 
     SUBCASE("store_and_load_multiple_entries") {
-      auto directory_entry1 = DirectoryEntry::MakeAccount(1, "alice");
-      auto directory_entry2 = DirectoryEntry::MakeAccount(2, "bob");
+      auto directory_entry1 = DirectoryEntry::make_account(1, "alice");
+      auto directory_entry2 = DirectoryEntry::make_account(2, "bob");
       auto schema1 = ComplianceRuleSchema("rule1", {});
       auto schema2 = ComplianceRuleSchema("rule2", {});
       auto entry1 = ComplianceRuleEntry(
@@ -58,8 +57,8 @@ namespace Nexus::Tests {
     }
 
     SUBCASE("load_compliance_rule_entries_by_directory_entry") {
-      auto directory_entry1 = DirectoryEntry::MakeAccount(1, "alice");
-      auto directory_entry2 = DirectoryEntry::MakeAccount(2, "bob");
+      auto directory_entry1 = DirectoryEntry::make_account(1, "alice");
+      auto directory_entry2 = DirectoryEntry::make_account(2, "bob");
       auto schema1 = ComplianceRuleSchema("rule1", {});
       auto schema2 = ComplianceRuleSchema("rule2", {});
       auto entry1 = ComplianceRuleEntry(
@@ -85,7 +84,7 @@ namespace Nexus::Tests {
     }
 
     SUBCASE("update_existing_entry") {
-      auto directory_entry = DirectoryEntry::MakeAccount(1, "alice");
+      auto directory_entry = DirectoryEntry::make_account(1, "alice");
       auto schema1 = ComplianceRuleSchema("rule1", {});
       auto schema2 = ComplianceRuleSchema("rule2", {});
       auto entry = ComplianceRuleEntry(
@@ -108,7 +107,7 @@ namespace Nexus::Tests {
     }
 
     SUBCASE("remove_entry") {
-      auto directory_entry = DirectoryEntry::MakeAccount(1, "alice");
+      auto directory_entry = DirectoryEntry::make_account(1, "alice");
       auto schema = ComplianceRuleSchema("rule1", {});
       auto entry = ComplianceRuleEntry(
         401, directory_entry, ComplianceRuleEntry::State::ACTIVE, schema);
@@ -127,7 +126,7 @@ namespace Nexus::Tests {
 
     SUBCASE("load_next_compliance_rule_entry_id") {
       REQUIRE(data_store.load_next_compliance_rule_entry_id() == 1);
-      auto directory_entry = DirectoryEntry::MakeAccount(1, "alice");
+      auto directory_entry = DirectoryEntry::make_account(1, "alice");
       auto schema = ComplianceRuleSchema("rule", {});
       data_store.store(ComplianceRuleEntry(
         10, directory_entry, ComplianceRuleEntry::State::ACTIVE, schema));
@@ -139,7 +138,7 @@ namespace Nexus::Tests {
     }
 
     SUBCASE("store_and_ignore_violation_record") {
-      auto directory_entry = DirectoryEntry::MakeAccount(1, "alice");
+      auto directory_entry = DirectoryEntry::make_account(1, "alice");
       auto schema = ComplianceRuleSchema("rule", {});
       auto entry = ComplianceRuleEntry(
         1, directory_entry, ComplianceRuleEntry::State::ACTIVE, schema);
@@ -162,7 +161,7 @@ namespace Nexus::Tests {
     SUBCASE("load_nonexistent_entry") {
       auto loaded_entry = data_store.load_compliance_rule_entry(999);
       REQUIRE(!loaded_entry);
-      auto directory_entry = DirectoryEntry::MakeAccount(1, "alice");
+      auto directory_entry = DirectoryEntry::make_account(1, "alice");
       auto schema = ComplianceRuleSchema("rule", {});
       data_store.store(ComplianceRuleEntry(
         2, directory_entry, ComplianceRuleEntry::State::ACTIVE, schema));

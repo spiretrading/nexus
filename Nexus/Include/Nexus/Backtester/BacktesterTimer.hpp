@@ -28,17 +28,17 @@ namespace Nexus {
 
       void Wait();
 
-      const Beam::Publisher<Beam::Threading::Timer::Result>&
+      const Beam::Publisher<Beam::Timer::Result>&
         GetPublisher() const;
 
     private:
       friend class TimerBacktesterEvent;
-      mutable Beam::Threading::Mutex m_mutex;
+      mutable Beam::Mutex m_mutex;
       boost::posix_time::time_duration m_interval;
       BacktesterEventHandler* m_event_handler;
       std::shared_ptr<TimerBacktesterEvent> m_expire_event;
       std::shared_ptr<TimerBacktesterEvent> m_cancel_event;
-      Beam::QueueWriterPublisher<Beam::Threading::Timer::Result> m_publisher;
+      Beam::QueueWriterPublisher<Beam::Timer::Result> m_publisher;
 
       BacktesterTimer(const BacktesterTimer&) = delete;
       BacktesterTimer& operator =(const BacktesterTimer&) = delete;
@@ -56,15 +56,15 @@ namespace Nexus {
        */
       TimerBacktesterEvent(BacktesterTimer& timer,
         boost::posix_time::ptime timestamp,
-        Beam::Threading::Timer::Result result) noexcept;
+        Beam::Timer::Result result) noexcept;
       void cancel();
       bool is_passive() const override;
       void execute() override;
 
     private:
-      mutable Beam::Threading::Mutex m_mutex;
+      mutable Beam::Mutex m_mutex;
       BacktesterTimer* m_timer;
-      Beam::Threading::Timer::Result m_result;
+      Beam::Timer::Result m_result;
   };
 
   inline BacktesterTimer::BacktesterTimer(
@@ -84,7 +84,7 @@ namespace Nexus {
     }
     m_expire_event = std::make_shared<TimerBacktesterEvent>(
       *this, m_event_handler->get_time() + m_interval,
-      Beam::Threading::Timer::Result::EXPIRED);
+      Beam::Timer::Result::EXPIRED);
     m_event_handler->add(m_expire_event);
   }
 
@@ -96,7 +96,7 @@ namespace Nexus {
         m_expire_event = nullptr;
         m_cancel_event = std::make_shared<TimerBacktesterEvent>(
           *this, boost::posix_time::neg_infin,
-          Beam::Threading::Timer::Result::CANCELED);
+          Beam::Timer::Result::CANCELED);
         m_event_handler->add(m_cancel_event);
       }
       return m_cancel_event;
@@ -121,21 +121,21 @@ namespace Nexus {
     }
   }
 
-  inline const Beam::Publisher<Beam::Threading::Timer::Result>&
+  inline const Beam::Publisher<Beam::Timer::Result>&
       BacktesterTimer::GetPublisher() const {
     return m_publisher;
   }
 
   inline TimerBacktesterEvent::TimerBacktesterEvent(BacktesterTimer& timer,
     boost::posix_time::ptime timestamp,
-    Beam::Threading::Timer::Result result) noexcept
+    Beam::Timer::Result result) noexcept
     : BacktesterEvent(timestamp),
       m_timer(&timer),
       m_result(result) {}
 
   inline void TimerBacktesterEvent::cancel() {
     auto lock = std::lock_guard(m_mutex);
-    m_result = Beam::Threading::Timer::Result::NONE;
+    m_result = Beam::Timer::Result::NONE;
   }
 
   inline bool TimerBacktesterEvent::is_passive() const {
@@ -144,7 +144,7 @@ namespace Nexus {
 
   inline void TimerBacktesterEvent::execute() {
     auto lock = std::lock_guard(m_mutex);
-    if(m_result != Beam::Threading::Timer::Result::NONE) {
+    if(m_result != Beam::Timer::Result::NONE) {
       auto lock = std::lock_guard(m_timer->m_mutex);
       m_timer->m_expire_event = nullptr;
       m_timer->m_cancel_event = nullptr;
@@ -155,7 +155,7 @@ namespace Nexus {
 
 namespace Beam {
   template<>
-  struct ImplementsConcept<Nexus::BacktesterTimer, Threading::Timer> :
+  struct ImplementsConcept<Nexus::BacktesterTimer, Timer> :
     std::true_type {};
 }
 

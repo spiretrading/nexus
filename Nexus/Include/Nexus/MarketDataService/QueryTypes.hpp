@@ -37,7 +37,7 @@ namespace Nexus {
   };
 
   template<typename T>
-  struct market_data_query_type<Beam::Queries::SequencedValue<T>> {
+  struct market_data_query_type<Beam::SequencedValue<T>> {
     using type = market_data_query_type_t<T>;
   };
 }

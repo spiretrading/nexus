@@ -79,7 +79,7 @@ namespace Nexus {
 
   /** Converts a RiskInventory into a InventoryEntry. */
   inline auto convert_inventory_snapshot_inventories(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     return [=] (const Inventory& inventory) {
       return InventoryEntry(account.m_id, inventory);
     };
@@ -92,7 +92,7 @@ namespace Nexus {
     std::uint32_t m_account;
 
     /** The sequence stored. */
-    Beam::Queries::Sequence m_sequence;
+    Beam::Sequence m_sequence;
   };
 
   /** Returns a row representing a SequenceEntry. */
@@ -125,7 +125,7 @@ namespace Nexus {
 
   /** Converts an order id into a InventoryExcludedOrderId. */
   inline auto convert_inventory_excluded_orders(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     return [=] (OrderId id) {
       return InventoryExcludedOrderId(account.m_id, id);
     };

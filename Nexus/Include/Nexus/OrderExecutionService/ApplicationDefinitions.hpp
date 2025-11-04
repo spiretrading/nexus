@@ -6,9 +6,9 @@
 namespace Nexus {
 
   /** Encapsulates a standard OrderExecutionClient used in an application. */
-  using ApplicationOrderExecutionClient = Beam::Services::ApplicationClient<
+  using ApplicationOrderExecutionClient = Beam::ApplicationClient<
     ServiceOrderExecutionClient,
-    Beam::Services::ServiceName<ORDER_EXECUTION_SERVICE_NAME>>;
+    Beam::ServiceName<ORDER_EXECUTION_SERVICE_NAME>>;
 }
 
 #endif

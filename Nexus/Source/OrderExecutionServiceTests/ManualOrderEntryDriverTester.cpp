@@ -6,7 +6,6 @@
 #include "Nexus/OrderExecutionServiceTests/TestOrderExecutionDriver.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -53,11 +52,11 @@ namespace {
 TEST_SUITE("ManualOrderEntryDriver") {
   TEST_CASE("successful_submission") {
     auto fixture = Fixture();
-    auto info = make_order_info(DirectoryEntry::MakeAccount(123), "MANUAL");
+    auto info = make_order_info(DirectoryEntry::make_account(123), "MANUAL");
     auto future_order = std::async(std::launch::async, [&] {
       return fixture.m_driver.submit(info);
     });
-    auto admin_operation = fixture.m_admin_operations->Pop();
+    auto admin_operation = fixture.m_admin_operations->pop();
     auto& check_admin_operation =
       std::get<TestAdministrationClient::CheckAdministratorOperation>(
         *admin_operation);
@@ -65,7 +64,7 @@ TEST_SUITE("ManualOrderEntryDriver") {
     check_admin_operation.m_result.set(true);
     auto submitted_order = future_order.get();
     REQUIRE(submitted_order->get_info() == info);
-    auto reports = *submitted_order->get_publisher().GetSnapshot();
+    auto reports = *submitted_order->get_publisher().get_snapshot();
     REQUIRE(reports.size() == 3);
     REQUIRE(reports[0].m_status == OrderStatus::PENDING_NEW);
     REQUIRE(reports[1].m_status == OrderStatus::NEW);
@@ -77,11 +76,11 @@ TEST_SUITE("ManualOrderEntryDriver") {
 
   TEST_CASE("insufficient_permissions") {
     auto fixture = Fixture();
-    auto info = make_order_info(DirectoryEntry::MakeAccount(123), "MANUAL");
+    auto info = make_order_info(DirectoryEntry::make_account(123), "MANUAL");
     auto future_order = std::async(std::launch::async, [&] {
       return fixture.m_driver.submit(info);
     });
-    auto admin_operation = fixture.m_admin_operations->Pop();
+    auto admin_operation = fixture.m_admin_operations->pop();
     auto& check_admin_operation =
       std::get<TestAdministrationClient::CheckAdministratorOperation>(
         *admin_operation);
@@ -89,7 +88,7 @@ TEST_SUITE("ManualOrderEntryDriver") {
     check_admin_operation.m_result.set(false);
     auto submitted_order = future_order.get();
     REQUIRE(submitted_order->get_info() == info);
-    auto reports = *submitted_order->get_publisher().GetSnapshot();
+    auto reports = *submitted_order->get_publisher().get_snapshot();
     REQUIRE(reports.size() == 2);
     REQUIRE(reports[0].m_status == OrderStatus::PENDING_NEW);
     REQUIRE(reports[1].m_status == OrderStatus::REJECTED);
@@ -99,16 +98,16 @@ TEST_SUITE("ManualOrderEntryDriver") {
 
   TEST_CASE("forward_submission") {
     auto fixture = Fixture();
-    auto info = make_order_info(DirectoryEntry::MakeAccount(123), "FORWARD");
+    auto info = make_order_info(DirectoryEntry::make_account(123), "FORWARD");
     auto future_order = std::async(std::launch::async, [&] {
       return fixture.m_driver.submit(info);
     });
-    auto driver_operation = fixture.m_driver_operations->Pop();
+    auto driver_operation = fixture.m_driver_operations->pop();
     auto& submit_operation =
       std::get<TestOrderExecutionDriver::SubmitOperation>(*driver_operation);
     REQUIRE(submit_operation.m_info == info);
     auto order = std::make_shared<PrimitiveOrder>(info);
-    submit_operation.m_result.SetResult(order);
+    submit_operation.m_result.set(order);
     auto submitted_order = future_order.get();
     REQUIRE(submitted_order == order);
   }

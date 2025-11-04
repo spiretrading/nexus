@@ -34,8 +34,8 @@ namespace Nexus {
   class ToPythonClients {
     public:
       using ServiceLocatorClient =
-        Beam::ServiceLocator::ToPythonServiceLocatorClient<
-          Beam::ServiceLocator::ServiceLocatorClientBox>;
+        Beam::ToPythonServiceLocatorClient<
+          Beam::ServiceLocatorClientBox>;
       using RegistryClient = Beam::RegistryService::ToPythonRegistryClient<
         Beam::RegistryService::RegistryClientBox>;
       using AdministrationClient =
@@ -52,7 +52,7 @@ namespace Nexus {
       using RiskClient = ToPythonRiskClient<Nexus::RiskClient>;
       using TimeClient =
         Beam::TimeService::ToPythonTimeClient<Beam::TimeService::TimeClientBox>;
-      using Timer = Beam::Threading::ToPythonTimer<Beam::Threading::TimerBox>;
+      using Timer = Beam::ToPythonTimer<Beam::TimerBox>;
 
       /** The type of clients to wrap. */
       using Clients = C;
@@ -99,7 +99,7 @@ namespace Nexus {
       boost::optional<OrderExecutionClient> m_order_execution_client;
       boost::optional<RiskClient> m_risk_client;
       boost::optional<TimeClient> m_time_client;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       ToPythonClients(const ToPythonClients&) = delete;
       ToPythonClients& operator =(const ToPythonClients&) = delete;
@@ -218,7 +218,7 @@ namespace Nexus {
       ToPythonClients<C>::make_timer(boost::posix_time::time_duration expiry) {
     auto release = Beam::Python::GilRelease();
     return std::make_unique<Timer>(
-      Beam::Threading::TimerBox(m_clients->make_timer(expiry)));
+      Beam::TimerBox(m_clients->make_timer(expiry)));
   }
 
   template<IsClients C>

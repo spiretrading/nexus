@@ -81,26 +81,26 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::Position> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::Position& value,
-        unsigned int version) const {
-      shuttle.Shuttle("security", value.m_security);
-      shuttle.Shuttle("currency", value.m_currency);
-      shuttle.Shuttle("quantity", value.m_quantity);
-      shuttle.Shuttle("cost_basis", value.m_cost_basis);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::Position& value, unsigned int version) const {
+      shuttle.shuttle("security", value.m_security);
+      shuttle.shuttle("currency", value.m_currency);
+      shuttle.shuttle("quantity", value.m_quantity);
+      shuttle.shuttle("cost_basis", value.m_cost_basis);
     }
   };
 
   template<>
   struct Shuttle<Nexus::Position::Key> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::Position::Key& key,
-        unsigned int version) const {
-      shuttle.Shuttle("security", key.m_security);
-      shuttle.Shuttle("currency", key.m_currency);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::Position::Key& key, unsigned int version) const {
+      shuttle.shuttle("security", key.m_security);
+      shuttle.shuttle("currency", key.m_currency);
     }
   };
 }

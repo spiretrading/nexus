@@ -14,8 +14,8 @@
 
 namespace Nexus {
   inline const auto& get_account_row() {
-    static auto ROW = Viper::Row<Beam::ServiceLocator::DirectoryEntry>().
-      add_column("account", &Beam::ServiceLocator::DirectoryEntry::m_id);
+    static auto ROW = Viper::Row<Beam::DirectoryEntry>().
+      add_column("account", &Beam::DirectoryEntry::m_id);
     return ROW;
   }
 
@@ -33,7 +33,7 @@ namespace Nexus {
         [] (auto& row, auto column) {
           row.m_submission_account.m_id = column;
           row.m_submission_account.m_type =
-            Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT;
+            Beam::DirectoryEntry::Type::ACCOUNT;
         }).
       extend(Viper::Row<OrderFields>().
         add_column("symbol", Viper::varchar(16),
@@ -68,37 +68,35 @@ namespace Nexus {
           }).
         add_column("time_in_force_expiry",
           [] (auto& row) {
-            return Beam::ToSqlTimestamp(row.m_time_in_force.get_expiry());
+            return Beam::to_sql_timestamp(row.m_time_in_force.get_expiry());
           },
           [] (auto& row, auto column) {
             row.m_time_in_force = TimeInForce(
-              row.m_time_in_force.get_type(), Beam::FromSqlTimestamp(column));
+              row.m_time_in_force.get_type(), Beam::from_sql_timestamp(column));
           }).
         add_column("additional_fields",
           [] (auto& row) {
-            auto buffer = Beam::IO::SharedBuffer();
+            auto buffer = Beam::SharedBuffer();
             if(row.m_additional_fields.empty()) {
               return buffer;
             }
-            auto sender =
-              Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>();
-            sender.SetSink(Beam::Ref(buffer));
+            auto sender = Beam::BinarySender<Beam::SharedBuffer>();
+            sender.set(Beam::Ref(buffer));
             try {
-              sender.Shuttle(row.m_additional_fields);
-            } catch(const Beam::Serialization::SerializationException&) {
+              sender.shuttle(row.m_additional_fields);
+            } catch(const Beam::SerializationException&) {
               BOOST_THROW_EXCEPTION(OrderExecutionDataStoreException(
                 "Unable to store additional fields."));
             }
             return buffer;
           },
           [] (auto& row, const auto& column) {
-            if(!column.IsEmpty()) {
-              auto receiver =
-                Beam::Serialization::BinaryReceiver<Beam::IO::SharedBuffer>();
-              receiver.SetSource(Beam::Ref(column));
+            if(!is_empty(column)) {
+              auto receiver = Beam::BinaryReceiver<Beam::SharedBuffer>();
+              receiver.set(Beam::Ref(column));
               try {
-                receiver.Shuttle(row.m_additional_fields);
-              } catch(const Beam::Serialization::SerializationException&) {
+                receiver.shuttle(row.m_additional_fields);
+              } catch(const Beam::SerializationException&) {
                 BOOST_THROW_EXCEPTION(OrderExecutionDataStoreException(
                   "Unable to load additional fields."));
               }
@@ -128,22 +126,21 @@ namespace Nexus {
     return ROW;
   }
 
-  inline auto has_live_check(const Beam::Queries::Expression& expression) {
+  inline auto has_live_check(const Beam::Expression& expression) {
     struct IsLiveVisitor final : TraversalExpressionVisitor {
       bool m_has_check = false;
 
-      void Visit(
-          const Beam::Queries::MemberAccessExpression& expression) override {
-        if(expression.GetName() == "is_live" &&
-            expression.GetExpression()->GetType() == OrderInfoType()) {
+      void visit(const Beam::MemberAccessExpression& expression) override {
+        if(expression.get_name() == "is_live" &&
+            expression.get_expression().get_type() == typeid(OrderInfo)) {
           m_has_check = true;
         } else {
-          TraversalExpressionVisitor::Visit(expression);
+          TraversalExpressionVisitor::visit(expression);
         }
       }
     };
     auto visitor = IsLiveVisitor();
-    expression->Apply(visitor);
+    expression.apply(visitor);
     return visitor.m_has_check;
   }
 }

@@ -29,7 +29,7 @@ namespace {
 
     Fixture()
       : m_trigger([&] {
-          m_commits.Push(true);
+          m_commits.push(true);
         }),
         m_sequence(0),
         m_next_id(123),
@@ -45,7 +45,7 @@ namespace {
 
     void require_state(Aspen::State expected_state) {
       if(m_sequence != 0) {
-        m_commits.Pop();
+        m_commits.pop();
       }
       REQUIRE(m_order->commit(m_sequence) == expected_state);
       ++m_sequence;
@@ -54,7 +54,7 @@ namespace {
     template<typename F>
     std::shared_ptr<PrimitiveOrder> require_submit(F&& expect) {
       auto submit = std::async(std::launch::async, [&] {
-        auto operation = m_operations->Pop();
+        auto operation = m_operations->pop();
         auto submit = std::get_if<TestOrderExecutionClient::SubmitOperation>(
           operation.get());
         REQUIRE(submit);
@@ -75,7 +75,7 @@ namespace {
 
     void require_cancel(PrimitiveOrder& order) {
       auto cancel_async = std::async(std::launch::async, [&] {
-        auto operation = m_operations->Pop();
+        auto operation = m_operations->pop();
         auto cancel = std::get_if<TestOrderExecutionClient::CancelOperation>(
           operation.get());
         REQUIRE(cancel);

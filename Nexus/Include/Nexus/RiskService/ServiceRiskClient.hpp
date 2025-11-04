@@ -21,7 +21,7 @@ namespace Nexus {
     public:
 
       /** The type used to build ServiceProtocolClients to the server. */
-      using ServiceProtocolClientBuilder = Beam::GetTryDereferenceType<B>;
+      using ServiceProtocolClientBuilder = Beam::dereference_t<B>;
 
       /**
        * Constructs an RiskClient.
@@ -32,7 +32,7 @@ namespace Nexus {
 
       ~ServiceRiskClient();
       InventorySnapshot load_inventory_snapshot(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::DirectoryEntry& account);
       void reset(const Region& region);
       const RiskPortfolioUpdatePublisher& get_risk_portfolio_update_publisher();
       void close();
@@ -42,8 +42,8 @@ namespace Nexus {
         typename ServiceProtocolClientBuilder::Client;
       Beam::Remote<Beam::TablePublisher<RiskPortfolioKey, Inventory>>
         m_publisher;
-      Beam::Services::ServiceProtocolClientHandler<B> m_client_handler;
-      Beam::IO::OpenState m_open_state;
+      Beam::ServiceProtocolClientHandler<B> m_client_handler;
+      Beam::OpenState m_open_state;
       Beam::RoutineTaskQueue m_tasks;
 
       ServiceRiskClient(const ServiceRiskClient&) = delete;
@@ -62,7 +62,7 @@ namespace Nexus {
     BEAM_UNSUPPRESS_THIS_INITIALIZER()
     RegisterRiskServices(Beam::Store(m_client_handler.GetSlots()));
     RegisterRiskMessages(Beam::Store(m_client_handler.GetSlots()));
-    Beam::Services::AddMessageSlot<InventoryMessage>(
+    Beam::AddMessageSlot<InventoryMessage>(
       Beam::Store(m_client_handler.GetSlots()),
       std::bind_front(&ServiceRiskClient::on_inventory_update, this));
     m_publisher.SetInitializationFunction([this] (auto& publisher) {
@@ -74,7 +74,7 @@ namespace Nexus {
           entries = client->template SendRequest<
             SubscribeRiskPortfolioUpdatesService>();
         } catch(const std::exception&) {
-          m_publisher->Break(Beam::Services::MakeNestedServiceException(
+          m_publisher->Break(Beam::MakeNestedServiceException(
             "Failed to subscribe to portfolio updates."));
           return;
         }
@@ -96,8 +96,8 @@ namespace Nexus {
 
   template<typename B>
   InventorySnapshot ServiceRiskClient<B>::load_inventory_snapshot(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
+      const Beam::DirectoryEntry& account) {
+    return Beam::ServiceOrThrowWithNested([&] {
       auto client = m_client_handler.GetClient();
       return client->template SendRequest<LoadInventorySnapshotService>(
         account);
@@ -107,7 +107,7 @@ namespace Nexus {
 
   template<typename B>
   void ServiceRiskClient<B>::reset(const Region& region) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
+    return Beam::ServiceOrThrowWithNested([&] {
       auto client = m_client_handler.GetClient();
       client->template SendRequest<ResetRegionService>(region);
     }, "Failed to reset region.");
@@ -145,7 +145,7 @@ namespace Nexus {
         entries = client->template SendRequest<
           SubscribeRiskPortfolioUpdatesService>();
       } catch(const std::exception&) {
-        m_publisher->Break(Beam::Services::MakeNestedServiceException(
+        m_publisher->Break(Beam::MakeNestedServiceException(
           "Unable to recover risk portfolio updates."));
         return;
       }

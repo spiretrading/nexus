@@ -17,9 +17,9 @@ using namespace Beam;
 using namespace Beam::Queries;
 using namespace Beam::Routines;
 using namespace Beam::ServiceLocator;
-using namespace Beam::ServiceLocator::Tests;
+using namespace Beam::Tests;
 using namespace Beam::Services;
-using namespace Beam::Services::Tests;
+using namespace Beam::Tests;
 using namespace Beam::Threading;
 using namespace Beam::TimeService;
 using namespace Beam::UidService;
@@ -73,8 +73,8 @@ namespace {
           m_order_submissions(
             std::make_shared<Queue<std::shared_ptr<PrimitiveOrder>>>()) {
       auto servlet_account =
-        m_service_locator_environment.GetRoot().MakeAccount("risk_service", "",
-          DirectoryEntry::GetStarDirectory());
+        m_service_locator_environment.GetRoot().make_account("risk_service", "",
+          DirectoryEntry::STAR_DIRECTORY);
       m_administration_environment.make_administrator(servlet_account);
       m_service_locator =
         m_service_locator_environment.MakeClient("risk_service", "");
@@ -100,8 +100,8 @@ namespace {
 
     auto make_client(const std::string& name) {
       if(!m_service_locator_environment.GetRoot().FindAccount(name)) {
-        m_service_locator_environment.GetRoot().MakeAccount(
-          name, "", DirectoryEntry::GetStarDirectory());
+        m_service_locator_environment.GetRoot().make_account(
+          name, "", DirectoryEntry::STAR_DIRECTORY);
       }
       auto service_locator_client =
         m_service_locator_environment.MakeClient(name, "");
@@ -128,11 +128,11 @@ namespace {
 
   auto setup_account(Fixture& fixture, const std::string& name,
       const std::vector<Inventory>& inventories) {
-    auto account = fixture.m_service_locator_environment.GetRoot().MakeAccount(
-      name, "", DirectoryEntry::GetStarDirectory());
+    auto account = fixture.m_service_locator_environment.GetRoot().make_account(
+      name, "", DirectoryEntry::STAR_DIRECTORY);
     auto snapshot = InventorySnapshot();
     snapshot.m_inventories = inventories;
-    snapshot.m_sequence = Beam::Queries::Sequence(1);
+    snapshot.m_sequence = Beam::Sequence(1);
     fixture.m_data_store.store(account, snapshot);
     fixture.m_accounts_queue->Push(account);
     FlushPendingRoutines();
@@ -158,40 +158,40 @@ namespace {
 TEST_SUITE("RiskServlet") {
   TEST_CASE("load_inventory") {
     auto fixture = Fixture();
-    auto account1 = fixture.m_service_locator_environment.GetRoot().MakeAccount(
-      "account1", "", DirectoryEntry::GetStarDirectory());
+    auto account1 = fixture.m_service_locator_environment.GetRoot().make_account(
+      "account1", "", DirectoryEntry::STAR_DIRECTORY);
     auto snapshot1 = InventorySnapshot();
-    snapshot1.m_sequence = Beam::Queries::Sequence(123);
+    snapshot1.m_sequence = Beam::Sequence(123);
     fixture.m_data_store.store(account1, snapshot1);
-    auto account2 = fixture.m_service_locator_environment.GetRoot().MakeAccount(
-      "account2", "", DirectoryEntry::GetStarDirectory());
+    auto account2 = fixture.m_service_locator_environment.GetRoot().make_account(
+      "account2", "", DirectoryEntry::STAR_DIRECTORY);
     auto snapshot2 = InventorySnapshot();
-    snapshot2.m_sequence = Beam::Queries::Sequence(456);
+    snapshot2.m_sequence = Beam::Sequence(456);
     fixture.m_data_store.store(account2, snapshot2);
     auto [account1_, client] = fixture.make_client("account1");
     auto loaded_snapshot =
       client->SendRequest<LoadInventorySnapshotService>(account1);
-    REQUIRE(loaded_snapshot.m_sequence == Beam::Queries::Sequence(123));
+    REQUIRE(loaded_snapshot.m_sequence == Beam::Sequence(123));
     REQUIRE_THROWS_AS(client->SendRequest<LoadInventorySnapshotService>(
       account2), ServiceRequestException);
     auto admin_account =
-      fixture.m_service_locator_environment.GetRoot().MakeAccount(
-        "admin", "", DirectoryEntry::GetStarDirectory());
+      fixture.m_service_locator_environment.GetRoot().make_account(
+        "admin", "", DirectoryEntry::STAR_DIRECTORY);
     fixture.m_administration_environment.make_administrator(admin_account);
     auto [admin_account_, admin_client] = fixture.make_client("admin");
     auto admin_loaded_snapshot1 =
       admin_client->SendRequest<LoadInventorySnapshotService>(account1);
-    REQUIRE(admin_loaded_snapshot1.m_sequence == Beam::Queries::Sequence(123));
+    REQUIRE(admin_loaded_snapshot1.m_sequence == Beam::Sequence(123));
     auto admin_loaded_snapshot2 =
       admin_client->SendRequest<LoadInventorySnapshotService>(account2);
-    REQUIRE(admin_loaded_snapshot2.m_sequence == Beam::Queries::Sequence(456));
+    REQUIRE(admin_loaded_snapshot2.m_sequence == Beam::Sequence(456));
   }
 
   TEST_CASE("reset") {
     auto fixture = Fixture();
     auto admin_account =
-      fixture.m_service_locator_environment.GetRoot().MakeAccount(
-        "admin", "", DirectoryEntry::GetStarDirectory());
+      fixture.m_service_locator_environment.GetRoot().make_account(
+        "admin", "", DirectoryEntry::STAR_DIRECTORY);
     fixture.m_administration_environment.make_administrator(admin_account);
     auto [admin_entry, admin_client] = fixture.make_client("admin");
     auto [account1, client1, inventories1] = setup_account(fixture, "account1",
@@ -243,8 +243,8 @@ TEST_SUITE("RiskServlet") {
   TEST_CASE("subscribe") {
     auto fixture = Fixture();
     auto admin_account =
-      fixture.m_service_locator_environment.GetRoot().MakeAccount(
-        "admin", "", DirectoryEntry::GetStarDirectory());
+      fixture.m_service_locator_environment.GetRoot().make_account(
+        "admin", "", DirectoryEntry::STAR_DIRECTORY);
     fixture.m_administration_environment.make_administrator(admin_account);
     auto [admin_account_, admin_client] = fixture.make_client("admin");
     auto [account1, client1, inventories1] = setup_account(fixture, "account1",

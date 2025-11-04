@@ -1,17 +1,17 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
-#include <sstream>
+#include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Compliance/ComplianceParameter.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
 
 TEST_SUITE("ComplianceParameter") {
   TEST_CASE("compliance_value_stream") {
     auto value = ComplianceValue(Security("TST", TSX));
-    auto stream = std::ostringstream();
-    stream << value;
-    REQUIRE(stream.str() == "TST.TSX");
+    REQUIRE(to_string(value) == "TST.TSX");
   }
 
   TEST_CASE("compliance_value_vector_stream") {
@@ -19,9 +19,7 @@ TEST_SUITE("ComplianceParameter") {
     vector.push_back(Security("TST", TSX));
     vector.push_back(Security("ABC", ASX));
     auto value = ComplianceValue(vector);
-    auto stream = std::ostringstream();
-    stream << value;
-    REQUIRE(stream.str() == "[TST.TSX, ABC.ASX]");
+    REQUIRE(to_string(value) == "[TST.TSX, ABC.ASX]");
   }
 
   TEST_CASE("compliance_value_nested_vector_stream") {
@@ -32,18 +30,14 @@ TEST_SUITE("ComplianceParameter") {
     outer_vector.push_back(inner_vector);
     outer_vector.push_back(Security("XYZ", TSXV));
     auto value = ComplianceValue(outer_vector);
-    auto stream = std::ostringstream();
-    stream << value;
-    REQUIRE(stream.str() == "[[TST.TSX, ABC.ASX], XYZ.TSXV]");
+    REQUIRE(to_string(value) == "[[TST.TSX, ABC.ASX], XYZ.TSXV]");
   }
 
   TEST_CASE("stream") {
     auto parameter = ComplianceParameter();
     parameter.m_name = "security";
     parameter.m_value = ComplianceValue(Security("TST", TSX));
-    auto stream = std::ostringstream();
-    stream << parameter;
-    REQUIRE(stream.str() == "(security TST.TSX)");
+    REQUIRE(to_string(parameter) == "(security TST.TSX)");
   }
 
   TEST_CASE("shuttle") {
@@ -54,6 +48,6 @@ TEST_SUITE("ComplianceParameter") {
     outer_vector.push_back(inner_vector);
     outer_vector.push_back(Security("XYZ", TSXV));
     auto value = ComplianceValue(outer_vector);
-    Beam::Serialization::Tests::TestRoundTripShuttle(value);
+    test_round_trip_shuttle(value);
   }
 }

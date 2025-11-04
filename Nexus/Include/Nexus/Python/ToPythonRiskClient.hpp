@@ -39,7 +39,7 @@ namespace Nexus {
       Client& get_client();
 
       InventorySnapshot load_inventory_snapshot(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::DirectoryEntry& account);
       void reset(const Region& region);
       const RiskPortfolioUpdatePublisher& get_risk_portfolio_update_publisher();
       void close();
@@ -80,7 +80,7 @@ namespace Nexus {
 
   template<IsRiskClient C>
   InventorySnapshot ToPythonRiskClient<C>::load_inventory_snapshot(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
+      const Beam::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_inventory_snapshot(account);
   }

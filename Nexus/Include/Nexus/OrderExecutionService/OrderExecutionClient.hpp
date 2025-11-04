@@ -1,12 +1,41 @@
 #ifndef NEXUS_ORDER_EXECUTION_CLIENT_HPP
 #define NEXUS_ORDER_EXECUTION_CLIENT_HPP
+#include <concepts>
 #include <memory>
 #include <utility>
+#include <Beam/IO/Connection.hpp>
+#include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Pointers/VirtualPtr.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 
 namespace Nexus {
+
+  /** Checks if a type implements an OrderExecutionClient. */
+  template<typename T>
+  concept IsOrderExecutionClient =
+    Beam::IsConnection<T> && requires(T& client) {
+      { client.load_order(std::declval<OrderId>()) } ->
+          std::same_as<std::shared_ptr<Order>>;
+      client.query(std::declval<const AccountQuery&>(),
+        std::declval<Beam::ScopedQueueWriter<SequencedOrderRecord>>());
+      client.query(std::declval<const AccountQuery&>(),
+        std::declval<Beam::ScopedQueueWriter<OrderRecord>>());
+      client.query(std::declval<const AccountQuery&>(),
+        std::declval<Beam::ScopedQueueWriter<SequencedOrder>>());
+      client.query(std::declval<const AccountQuery&>(),
+        std::declval<Beam::ScopedQueueWriter<std::shared_ptr<Order>>>());
+      client.query(std::declval<const AccountQuery&>(),
+        std::declval<Beam::ScopedQueueWriter<SequencedExecutionReport>>());
+      client.query(std::declval<const AccountQuery&>(),
+        std::declval<Beam::ScopedQueueWriter<ExecutionReport>>());
+      { client.submit(std::declval<const OrderFields&>()) } ->
+          std::same_as<std::shared_ptr<Order>>;
+      client.cancel(std::declval<const Order&>());
+      client.update(std::declval<OrderId>(),
+        std::declval<const ExecutionReport&>());
+    };
 
   /** Provides a generic interface over an arbitrary OrderExecutionClient. */
   class OrderExecutionClient {
@@ -15,28 +44,23 @@ namespace Nexus {
       /**
        * Constructs an OrderExecutionClient of a specified type using
        * emplacement.
-       * @param <T> The type of order execution client to emplace.
+       * @tparam T The type of order execution client to emplace.
        * @param args The arguments to pass to the emplaced order execution
        *        client.
        */
-      template<typename T, typename... Args>
+      template<IsOrderExecutionClient T, typename... Args>
       explicit OrderExecutionClient(std::in_place_type_t<T>, Args&&... args);
 
       /**
-       * Constructs an OrderExecutionClientBox by copying an existing order
+       * Constructs an OrderExecutionClient by referencing an existing order
        * execution client.
-       * @param client The client to copy.
+       * @param client The client to reference.
        */
-      template<typename C>
-      explicit OrderExecutionClient(C client);
+      template<Beam::DisableCopy<OrderExecutionClient> T> requires
+        IsOrderExecutionClient<Beam::dereference_t<T>>
+      OrderExecutionClient(T&& client);
 
-      explicit OrderExecutionClient(OrderExecutionClient* client);
-
-      explicit OrderExecutionClient(
-        const std::shared_ptr<OrderExecutionClient>& client);
-
-      explicit OrderExecutionClient(
-        const std::unique_ptr<OrderExecutionClient>& client);
+      OrderExecutionClient(const OrderExecutionClient&) = default;
 
       /** Loads an Order by its id. */
       std::shared_ptr<Order> load_order(OrderId id);
@@ -120,6 +144,7 @@ namespace Nexus {
     private:
       struct VirtualOrderExecutionClient {
         virtual ~VirtualOrderExecutionClient() = default;
+
         virtual std::shared_ptr<Order> load_order(OrderId id) = 0;
         virtual void query(const AccountQuery& query,
           Beam::ScopedQueueWriter<SequencedOrderRecord> queue) = 0;
@@ -140,11 +165,12 @@ namespace Nexus {
       };
       template<typename C>
       struct WrappedOrderExecutionClient final : VirtualOrderExecutionClient {
-        using OrderExecutionClient = C;
-        Beam::GetOptionalLocalPtr<OrderExecutionClient> m_client;
+        using Client = C;
+        Beam::local_ptr_t<Client> m_client;
 
         template<typename... Args>
         WrappedOrderExecutionClient(Args&&... args);
+
         std::shared_ptr<Order> load_order(OrderId id) override;
         void query(const AccountQuery& query,
           Beam::ScopedQueueWriter<SequencedOrderRecord> queue) override;
@@ -163,35 +189,20 @@ namespace Nexus {
         void update(OrderId id, const ExecutionReport& report) override;
         void close() override;
       };
-      std::shared_ptr<VirtualOrderExecutionClient> m_client;
+      Beam::VirtualPtr<VirtualOrderExecutionClient> m_client;
   };
 
-  /** Checks if a type implements an OrderExecutionClient. */
-  template<typename T>
-  concept IsOrderExecutionClient = std::constructible_from<
-    OrderExecutionClient, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
-
-  template<typename T, typename... Args>
+  template<IsOrderExecutionClient T, typename... Args>
   OrderExecutionClient::OrderExecutionClient(
     std::in_place_type_t<T>, Args&&... args)
-    : m_client(std::make_shared<WrappedOrderExecutionClient<T>>(
+    : m_client(Beam::make_virtual_ptr<WrappedOrderExecutionClient<T>>(
         std::forward<Args>(args)...)) {}
 
-  template<typename C>
-  OrderExecutionClient::OrderExecutionClient(C client)
-    : OrderExecutionClient(std::in_place_type<C>, std::move(client)) {}
-
-  inline OrderExecutionClient::OrderExecutionClient(
-    OrderExecutionClient* client)
-    : OrderExecutionClient(*client) {}
-
-  inline OrderExecutionClient::OrderExecutionClient(
-    const std::shared_ptr<OrderExecutionClient>& client)
-    : OrderExecutionClient(*client) {}
-
-  inline OrderExecutionClient::OrderExecutionClient(
-    const std::unique_ptr<OrderExecutionClient>& client)
-    : OrderExecutionClient(*client) {}
+  template<Beam::DisableCopy<OrderExecutionClient> T> requires
+    IsOrderExecutionClient<Beam::dereference_t<T>>
+  OrderExecutionClient::OrderExecutionClient(T&& client)
+    : OrderExecutionClient(
+        std::in_place_type<Beam::dereference_t<T>>, std::forward<T>(client)) {}
 
   inline std::shared_ptr<Order> OrderExecutionClient::load_order(OrderId id) {
     return m_client->load_order(id);

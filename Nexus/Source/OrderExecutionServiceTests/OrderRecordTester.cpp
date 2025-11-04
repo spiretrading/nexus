@@ -1,13 +1,9 @@
-#include <sstream>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/OrderExecutionService/OrderRecord.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
-using namespace Beam::Serialization::Tests;
-using namespace Beam::ServiceLocator;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -17,9 +13,9 @@ using namespace Nexus::DefaultVenues;
 namespace {
   auto make_test_order_info() {
     auto fields = make_limit_order_fields(
-      DirectoryEntry::MakeAccount(123, "test"), Security("TST", TSX),
-      CAD, Side::BID, DefaultDestinations::TSX, 100, Money::ONE);
-    auto submission_account = DirectoryEntry::MakeAccount(456, "submit");
+      DirectoryEntry::make_account(123, "test"), Security("TST", TSX), CAD,
+      Side::BID, DefaultDestinations::TSX, 100, Money::ONE);
+    auto submission_account = DirectoryEntry::make_account(456, "submit");
     return OrderInfo(fields, submission_account, 123, true,
       time_from_string("2024-05-21 01:02:03"));
   }
@@ -67,14 +63,6 @@ TEST_SUITE("OrderRecord") {
       "[(123 2024-May-21 01:02:04 1 NEW 0 0.00   0.00 0.00 0.00  []), "
       "(123 2024-May-21 01:02:05 2 PARTIALLY_FILLED 50 1.00 A  0.00 0.00 0.00  "
       "[])])");
-  }
-
-  TEST_CASE("shuttle") {
-    auto info = make_test_order_info();
-    auto reports = std::vector<ExecutionReport>();
-    reports.push_back(
-      ExecutionReport(info.m_id, time_from_string("2024-05-21 01:02:04")));
-    auto record = OrderRecord(info, reports);
-    TestRoundTripShuttle(record);
+    test_round_trip_shuttle(record);
   }
 }

@@ -4,7 +4,7 @@
 #include <tuple>
 #include <utility>
 #include <Aspen/Aspen.hpp>
-#include <Beam/Reactors/PublisherReactor.hpp>
+#include <Beam/Queues/PublisherReactor.hpp>
 #include "Nexus/Accounting/Bookkeeper.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 
@@ -17,8 +17,8 @@ namespace Nexus {
    * @param orders The reactor producing the orders to monitor for execution
    *        reports.
    */
-  template<IsBookkeeper B, typename Orders>
-  auto make_bookkeeper_reactor(B bookkeeper, Orders orders) {
+  template<typename Orders>
+  auto make_bookkeeper_reactor(IsBookkeeper auto bookkeeper, Orders orders) {
     return Aspen::lift([bookkeeper = std::move(bookkeeper)] (
         const std::tuple<std::shared_ptr<Order>,
           ExecutionReport>& update) mutable -> std::optional<Inventory> {
@@ -37,7 +37,7 @@ namespace Nexus {
     }, Aspen::concur(Aspen::lift([] (const std::shared_ptr<Order>& order) {
       return Aspen::Shared(Aspen::lift([=] (const ExecutionReport& report) {
         return std::tuple(order, report);
-      }, Beam::Reactors::PublisherReactor(order->get_publisher())));
+      }, Beam::publisher_reactor(order->get_publisher())));
     }, std::move(orders))));
   }
 

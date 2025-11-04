@@ -20,12 +20,12 @@ TEST_SUITE("BacktesterEnvironment") {
     auto timestamp = start_time - seconds(1);
     auto bbo = SequencedValue(IndexedValue(BboQuote(
       make_bid(99 * Money::CENT, 100), make_ask(Money::ONE, 100), timestamp),
-      security), EncodeTimestamp(timestamp, Beam::Queries::Sequence(1)));
+      security), EncodeTimestamp(timestamp, Beam::Sequence(1)));
     data_store.store(bbo);
     timestamp = start_time + seconds(1);
     bbo = SequencedValue(IndexedValue(BboQuote(make_bid(98 * Money::CENT, 100),
       make_ask(99 * Money::CENT, 100), timestamp), security),
-      EncodeTimestamp(timestamp, Beam::Queries::Sequence(2)));
+      EncodeTimestamp(timestamp, Beam::Sequence(2)));
     data_store.store(bbo);
     auto test_environment = TestEnvironment(HistoricalDataStore(&data_store));
     auto backtester = BacktesterEnvironment(start_time,

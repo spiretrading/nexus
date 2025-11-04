@@ -30,12 +30,8 @@ namespace Nexus {
       void update(const ExecutionReport& report);
 
       /** Provides synchronized access to this Order. */
-      template<typename F>
-      decltype(auto) with(F&& f);
-
-      /** Provides synchronized access to this Order. */
-      template<typename F>
-      decltype(auto) with(F&& f) const;
+      template<typename Self, typename F>
+      decltype(auto) with(this Self&& self, F&& f);
 
       const OrderInfo& get_info() const override;
 
@@ -77,17 +73,10 @@ namespace Nexus {
     return m_info;
   }
 
-  template<typename F>
-  decltype(auto) PrimitiveOrder::with(F&& f) {
-    return m_publisher.with([&] (auto reports) {
-      return std::forward<F>(f)(m_status, *reports);
-    });
-  }
-
-  template<typename F>
-  decltype(auto) PrimitiveOrder::with(F&& f) const {
-    return m_publisher.with([&] (auto reports) {
-      return std::forward<F>(f)(m_status, *reports);
+  template<typename Self, typename F>
+  decltype(auto) PrimitiveOrder::with(this Self&& self, F&& f) {
+    return std::forward<Self>(self).m_publisher.with([&] (auto reports) {
+      return std::forward<F>(f)(std::forward<Self>(self).m_status, *reports);
     });
   }
 

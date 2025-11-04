@@ -1,20 +1,9 @@
-#include <memory>
-#include <Beam/ServicesTests/ServicesTests.hpp>
-#include <Beam/SignalHandling/NullSlot.hpp>
-#include <Beam/Threading/TriggerTimer.hpp>
-#include <boost/functional/factory.hpp>
+#include <Beam/ServicesTests/ServiceClientFixture.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/OrderExecutionService/ServiceOrderExecutionClient.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::Routines;
-using namespace Beam::Serialization;
-using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
-using namespace Beam::Services::Tests;
-using namespace Beam::SignalHandling;
-using namespace Beam::Threading;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -26,80 +15,19 @@ namespace {
       Security("TST", TSX), Side::BID, "TSX", Quantity(100), Money::ONE);
   }
 
-  struct Fixture {
+  struct Fixture : ServiceClientFixture {
     using TestServiceOrderExecutionClient =
       ServiceOrderExecutionClient<TestServiceProtocolClientBuilder>;
-    std::shared_ptr<TestServerConnection> m_server_connection;
-    TestServiceProtocolServer m_server;
     std::unique_ptr<TestServiceOrderExecutionClient> m_client;
-    std::unordered_map<std::type_index, std::shared_ptr<void>> m_handlers;
 
-    Fixture()
-        : m_server_connection(std::make_shared<TestServerConnection>()),
-          m_server(m_server_connection,
-            factory<std::unique_ptr<TriggerTimer>>(), NullSlot(), NullSlot()) {
-      Nexus::RegisterQueryTypes(Beam::Store(m_server.GetSlots().GetRegistry()));
-      RegisterOrderExecutionServices(Store(m_server.GetSlots()));
-      RegisterOrderExecutionMessages(Store(m_server.GetSlots()));
-      auto builder = TestServiceProtocolClientBuilder([=, this] {
-        return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
-          "test", *m_server_connection);
-      }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
-      m_client = std::make_unique<TestServiceOrderExecutionClient>(builder);
-    }
-
-    template<typename T, typename F>
-    void on_request(F&& handler) {
-      using Slot = typename Services::Details::GetSlotType<RequestToken<
-        TestServiceProtocolServer::ServiceProtocolClient, T>>::type;
-      auto& stored_handler = m_handlers[typeid(T)];
-      if(stored_handler) {
-        *std::static_pointer_cast<Slot>(stored_handler) =
-          std::forward<F>(handler);
-      } else {
-        auto shared_handler = std::make_shared<Slot>(std::forward<F>(handler));
-        stored_handler = shared_handler;
-        T::AddRequestSlot(Store(m_server.GetSlots()),
-          [handler = std::move(shared_handler)] (auto&&... args) {
-            try {
-              (*handler)(std::forward<decltype(args)>(args)...);
-            } catch(...) {
-              throw ServiceRequestException("Test failed.");
-            }
-          });
-      }
-    }
-
-    template<typename T, typename F>
-    void on_message(F&& handler) {
-      using Slot = typename Beam::Services::Details::RecordMessageSlot<
-        RecordMessage<
-          T, TestServiceProtocolServer::ServiceProtocolClient>>::Slot;
-      auto& stored_handler = m_handlers[typeid(T)];
-      if(stored_handler) {
-        *std::static_pointer_cast<Slot>(stored_handler) =
-          std::forward<F>(handler);
-      } else {
-        auto shared_handler = std::make_shared<Slot>(std::forward<F>(handler));
-        stored_handler = shared_handler;
-        AddMessageSlot<T>(Store(m_server.GetSlots()),
-          [handler = std::move(shared_handler)] (auto&&... args) {
-            try {
-              (*handler)(std::forward<decltype(args)>(args)...);
-            } catch(...) {
-              throw ServiceRequestException("Test failed.");
-            }
-          });
-      }
+    Fixture() {
+      Nexus::register_query_types(out(m_server.get_slots().get_registry()));
+      register_order_execution_services(out(m_server.get_slots()));
+      register_order_execution_messages(out(m_server.get_slots()));
+      m_client = make_client<TestServiceOrderExecutionClient>();
     }
   };
 }
-
-#define REQUIRE_NO_THROW(expression) \
-  [&] { \
-    REQUIRE_NOTHROW(return (expression)); \
-    throw 0; \
-  }()
 
 TEST_SUITE("ServiceOrderExecutionClient") {
   TEST_CASE("load_order") {
@@ -119,14 +47,13 @@ TEST_SUITE("ServiceOrderExecutionClient") {
     fixture.on_request<LoadOrderByIdService>(
       [&] (auto& request, auto received_id) {
         REQUIRE(received_id == id);
-        request.SetResult(make_optional(SequencedValue(
-          IndexedValue(record, DirectoryEntry::MakeAccount(123, "user")),
-          Beam::Queries::Sequence(555))));
+        request.set(make_optional(SequencedValue(IndexedValue(record,
+          DirectoryEntry::make_account(123, "user")), Beam::Sequence(555))));
       });
     auto received_order = REQUIRE_NO_THROW(fixture.m_client->load_order(id));
     REQUIRE(received_order);
     REQUIRE(received_order->get_info() == info);
-    auto execution_reports = *received_order->get_publisher().GetSnapshot();
+    auto execution_reports = *received_order->get_publisher().get_snapshot();
     REQUIRE(execution_reports == record.m_execution_reports);
     auto duplicate_order = REQUIRE_NO_THROW(fixture.m_client->load_order(id));
     REQUIRE(duplicate_order == received_order);
@@ -141,20 +68,19 @@ TEST_SUITE("ServiceOrderExecutionClient") {
     fixture.on_request<NewOrderSingleService>(
       [&] (auto& request, const auto& received_fields) {
         REQUIRE(received_fields == fields);
-        request.SetResult(SequencedValue(
-          IndexedValue(info, DirectoryEntry::MakeAccount(123, "user")),
-          Beam::Queries::Sequence(556)));
+        request.set(SequencedValue(IndexedValue(info,
+          DirectoryEntry::make_account(123, "user")), Beam::Sequence(556)));
       });
     fixture.on_request<QueryOrderSubmissionsService>(
       [&] (auto& request, const auto& query) {
         auto result = OrderSubmissionQueryResult();
-        result.m_queryId = 123;
-        request.SetResult(result);
+        result.m_id = 123;
+        request.set(result);
       });
     auto received_order = REQUIRE_NO_THROW(fixture.m_client->submit(fields));
     REQUIRE(received_order);
     REQUIRE(received_order->get_info() == info);
-    auto execution_reports = *received_order->get_publisher().GetSnapshot();
+    auto execution_reports = *received_order->get_publisher().get_snapshot();
     REQUIRE(execution_reports.empty());
   }
 
@@ -171,9 +97,9 @@ TEST_SUITE("ServiceOrderExecutionClient") {
       [&] (auto& client, auto received_id) {
         REQUIRE(received_id == id);
         received_cancel = true;
-        completion_token.GetEval().SetResult();
+        completion_token.get_eval().set();
       });
     REQUIRE_NOTHROW(fixture.m_client->cancel(order));
-    completion_token.Get();
+    completion_token.get();
   }
 }

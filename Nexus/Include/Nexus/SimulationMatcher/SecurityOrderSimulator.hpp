@@ -24,7 +24,7 @@ namespace Nexus {
     public:
 
       /** The type of TimeClient used for Order timestamps. */
-      using TimeClient = Beam::GetTryDereferenceType<T>;
+      using TimeClient = Beam::dereference_t<T>;
 
       /**
        * Constructs a SecurityOrderSimulator.
@@ -63,7 +63,7 @@ namespace Nexus {
         const ExecutionReport& report);
 
     private:
-      Beam::GetOptionalLocalPtr<T> m_time_client;
+      Beam::local_ptr_t<T> m_time_client;
       boost::gregorian::date m_date;
       boost::posix_time::ptime m_market_close_time;
       bool m_is_moc_pending;
@@ -95,13 +95,13 @@ namespace Nexus {
     set_session_timestamps(m_time_client->GetTime());
     auto snapshot = std::make_shared<Beam::Queue<BboQuote>>();
     market_data_client.query(
-      Beam::Queries::MakeLatestQuery(security), snapshot);
+      Beam::MakeLatestQuery(security), snapshot);
     try {
       m_bbo = snapshot->Pop();
     } catch(const std::exception&) {
       return;
     }
-    auto query = Beam::Queries::MakeCurrentQuery(security);
+    auto query = Beam::MakeCurrentQuery(security);
     market_data_client.query(query, m_tasks.GetSlot<BboQuote>(
       std::bind_front(&SecurityOrderSimulator::on_bbo, this)));
     market_data_client.query(query, m_tasks.GetSlot<TimeAndSale>(

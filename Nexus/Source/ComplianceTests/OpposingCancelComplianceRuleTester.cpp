@@ -4,7 +4,6 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -42,10 +41,10 @@ TEST_SUITE("OpposingCancelComplianceRule") {
       OrderInfo(bid_fields, 3, time_from_string("2024-07-29 09:59:55"));
     auto bid_order = std::make_shared<PrimitiveOrder>(bid_info);
     rule.add(bid_order);
-    time_client.SetTime(time_from_string("2024-07-29 10:00:00"));
+    time_client.set(time_from_string("2024-07-29 10:00:00"));
     REQUIRE_THROWS_AS(rule.cancel(bid_order), ComplianceCheckException);
     REQUIRE_NOTHROW(rule.cancel(ask_order));
-    time_client.SetTime(time_from_string("2024-07-29 10:00:10"));
+    time_client.set(time_from_string("2024-07-29 10:00:10"));
     REQUIRE_NOTHROW(rule.cancel(bid_order));
   }
 
@@ -74,11 +73,11 @@ TEST_SUITE("OpposingCancelComplianceRule") {
       OrderInfo(bid_fields, 3, time_from_string("2024-07-29 09:59:55"));
     auto bid_order = std::make_shared<PrimitiveOrder>(bid_info);
     rule.add(bid_order);
-    time_client.SetTime(time_from_string("2024-07-29 10:00:05"));
+    time_client.set(time_from_string("2024-07-29 10:00:05"));
     REQUIRE_THROWS_AS(rule.cancel(bid_order), ComplianceCheckException);
-    time_client.SetTime(time_from_string("2024-07-29 10:00:08"));
+    time_client.set(time_from_string("2024-07-29 10:00:08"));
     REQUIRE_THROWS_AS(rule.cancel(bid_order), ComplianceCheckException);
-    time_client.SetTime(time_from_string("2024-07-29 10:00:10"));
+    time_client.set(time_from_string("2024-07-29 10:00:10"));
     REQUIRE_NOTHROW(rule.cancel(bid_order));
   }
 }

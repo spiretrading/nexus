@@ -1,9 +1,11 @@
-#include <sstream>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
 #include "Nexus/Compliance/ComplianceParameter.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
@@ -85,17 +87,7 @@ TEST_SUITE("ComplianceRuleSchema") {
     parameter.m_value = ComplianceValue(Security("TST", TSX));
     auto rule = ComplianceRuleSchema(
       "test_rule", std::vector<ComplianceParameter>(1, parameter));
-    auto stream = std::ostringstream();
-    stream << rule;
-    REQUIRE(stream.str() == "(test_rule [(security TST.TSX)])");
-  }
-
-  TEST_CASE("shuttle") {
-    auto parameter = ComplianceParameter();
-    parameter.m_name = "security";
-    parameter.m_value = ComplianceValue(Security("TST", TSX));
-    auto rule = ComplianceRuleSchema(
-      "test_rule", std::vector<ComplianceParameter>(1, parameter));
-    Beam::Serialization::Tests::TestRoundTripShuttle(rule);
+    REQUIRE(to_string(rule) == "(test_rule [(security TST.TSX)])");
+    test_round_trip_shuttle(rule);
   }
 }

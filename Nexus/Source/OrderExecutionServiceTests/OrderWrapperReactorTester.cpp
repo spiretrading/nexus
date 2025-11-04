@@ -5,7 +5,6 @@
 
 using namespace Aspen;
 using namespace Beam;
-using namespace Beam::Routines;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -18,7 +17,7 @@ TEST_SUITE("OrderWrapperReactor") {
     auto commits = Beam::Queue<bool>();
     auto trigger = Trigger(
       [&] {
-        commits.Push(true);
+        commits.push(true);
       });
     auto security = Security("TST", TSX);
     auto fields =

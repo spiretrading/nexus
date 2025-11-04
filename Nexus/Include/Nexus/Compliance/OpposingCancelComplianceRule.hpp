@@ -4,7 +4,7 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/TaggedQueueReader.hpp>
-#include <Beam/TimeService/TimeClientBox.hpp>
+#include <Beam/TimeService/TimeClient.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
@@ -19,7 +19,7 @@ namespace Nexus {
    * @param C The type of TimeClient used to determine how much time has elapsed
    *        since the last fill.
    */
-  template<typename C>
+  template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   class OpposingCancelComplianceRule : public ComplianceRule {
     public:
 
@@ -27,7 +27,7 @@ namespace Nexus {
        * The type of TimeClient used to determine how much time has elapsed
        * since the last fill.
        */
-      using TimeClient = Beam::GetTryDereferenceType<C>;
+      using TimeClient = Beam::dereference_t<C>;
 
       /**
        * Constructs an OpposingCancelComplianceRule.
@@ -43,16 +43,16 @@ namespace Nexus {
 
     private:
       boost::posix_time::time_duration m_timeout;
-      Beam::GetOptionalLocalPtr<C> m_time_client;
+      Beam::local_ptr_t<C> m_time_client;
       Beam::TaggedQueueReader<Side, ExecutionReport> m_reports;
       boost::posix_time::ptime m_last_ask_fill_time;
       boost::posix_time::ptime m_last_bid_fill_time;
   };
 
-  template<typename TimeClient>
+  template<typename C>
   OpposingCancelComplianceRule(
-    boost::posix_time::time_duration, TimeClient&&) ->
-      OpposingCancelComplianceRule<std::remove_reference_t<TimeClient>>;
+    boost::posix_time::time_duration, C&&) ->
+      OpposingCancelComplianceRule<std::remove_cvref_t<C>>;
 
   /**
    * The standard name used to identify the OpposingCancelComplianceRule.
@@ -91,7 +91,7 @@ namespace Nexus {
     return std::make_unique<Rule>(timeout, &time_client);
   }
 
-  template<typename C>
+  template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   template<Beam::Initializes<C> CF>
   OpposingCancelComplianceRule<C>::OpposingCancelComplianceRule(
         boost::posix_time::time_duration timeout, CF&& time_client)
@@ -100,17 +100,17 @@ namespace Nexus {
       m_last_ask_fill_time(boost::posix_time::not_a_date_time),
       m_last_bid_fill_time(boost::posix_time::not_a_date_time) {}
 
-  template<typename C>
+  template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   void OpposingCancelComplianceRule<C>::cancel(
       const std::shared_ptr<Order>& order) {
-    while(auto report = m_reports.TryPop()) {
+    while(auto report = m_reports.try_pop()) {
       if(report->m_value.m_last_quantity != 0) {
         auto& last_fill_time =
           pick(report->m_key, m_last_ask_fill_time, m_last_bid_fill_time);
         last_fill_time = report->m_value.m_timestamp;
       }
     }
-    auto time = m_time_client->GetTime();
+    auto time = m_time_client->get_time();
     auto& last_fill_time = pick(order->get_info().m_fields.m_side,
       m_last_bid_fill_time, m_last_ask_fill_time);
     if(last_fill_time != boost::posix_time::not_a_date_time &&
@@ -120,11 +120,11 @@ namespace Nexus {
     }
   }
 
-  template<typename C>
+  template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   void OpposingCancelComplianceRule<C>::add(
       const std::shared_ptr<Order>& order) {
-    order->get_publisher().Monitor(
-      m_reports.GetSlot(order->get_info().m_fields.m_side));
+    order->get_publisher().monitor(
+      m_reports.get_slot(order->get_info().m_fields.m_side));
   }
 }
 

@@ -95,17 +95,17 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::Inventory> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::Inventory& value,
-        unsigned int version) const {
-      shuttle.Shuttle("position", value.m_position);
-      shuttle.Shuttle("gross_profit_and_loss", value.m_gross_profit_and_loss);
-      shuttle.Shuttle("fees", value.m_fees);
-      shuttle.Shuttle("volume", value.m_volume);
-      shuttle.Shuttle("transaction_count", value.m_transaction_count);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::Inventory& value, unsigned int version) const {
+      shuttle.shuttle("position", value.m_position);
+      shuttle.shuttle("gross_profit_and_loss", value.m_gross_profit_and_loss);
+      shuttle.shuttle("fees", value.m_fees);
+      shuttle.shuttle("volume", value.m_volume);
+      shuttle.shuttle("transaction_count", value.m_transaction_count);
     }
   };
 }

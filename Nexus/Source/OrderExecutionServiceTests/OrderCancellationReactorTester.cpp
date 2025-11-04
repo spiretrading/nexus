@@ -42,7 +42,7 @@ TEST_SUITE("OrderCancellationReactor") {
     series->set_complete();
     state = reactor.commit(1);
     bool found_cancel = false;
-    auto operation = operations->Pop();
+    auto operation = operations->pop();
     auto cancel =
       std::get_if<TestOrderExecutionClient::CancelOperation>(operation.get());
     REQUIRE(cancel);

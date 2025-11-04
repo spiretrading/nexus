@@ -54,7 +54,7 @@ namespace Nexus {
       BacktesterEventHandler& get_event_handler();
 
       /** Returns the ServiceLocatorTestEnvironment. */
-      Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
+      Beam::Tests::ServiceLocatorTestEnvironment&
         get_service_locator_environment();
 
       /** Returns the UidServiceTestEnvironment. */
@@ -100,9 +100,9 @@ namespace Nexus {
       Clients m_clients;
       BacktesterEventHandler m_event_handler;
       Beam::TimeService::TimeClientBox m_time_client;
-      Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment
+      Beam::Tests::ServiceLocatorTestEnvironment
         m_service_locator_environment;
-      Beam::ServiceLocator::ServiceLocatorClientBox m_service_locator_client;
+      Beam::ServiceLocatorClientBox m_service_locator_client;
       Beam::UidService::Tests::UidServiceTestEnvironment m_uid_environment;
       Beam::UidService::UidClientBox m_uid_client;
       Beam::RegistryService::Tests::RegistryServiceTestEnvironment
@@ -119,7 +119,7 @@ namespace Nexus {
         m_order_execution_environment;
       boost::optional<OrderExecutionClient> m_order_execution_client;
       boost::optional<Tests::RiskServiceTestEnvironment> m_risk_environment;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       BacktesterEnvironment(const BacktesterEnvironment&) = delete;
       BacktesterEnvironment& operator =(const BacktesterEnvironment&) = delete;
@@ -174,8 +174,8 @@ namespace Nexus {
       m_order_execution_client.emplace(
         m_order_execution_environment->make_client(m_service_locator_client));
       auto transition_timer_factory = std::bind_front(
-        boost::factory<std::unique_ptr<Beam::Threading::TimerBox>>(),
-        std::in_place_type<Beam::Threading::TriggerTimer>);
+        boost::factory<std::unique_ptr<Beam::TimerBox>>(),
+        std::in_place_type<Beam::TriggerTimer>);
       m_risk_environment.emplace(m_service_locator_client,
         m_administration_client, m_market_data_client,
         *m_order_execution_client, transition_timer_factory, m_time_client,
@@ -206,7 +206,7 @@ namespace Nexus {
     return m_event_handler;
   }
 
-  inline Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
+  inline Beam::Tests::ServiceLocatorTestEnvironment&
       BacktesterEnvironment::get_service_locator_environment() {
     return m_service_locator_environment;
   }

@@ -27,7 +27,7 @@ namespace Nexus {
        * The type of OrderExecutionClient used to cancel Orders and flatten
        * Positions.
        */
-      using OrderExecutionClient = Beam::GetTryDereferenceType<C>;
+      using OrderExecutionClient = Beam::dereference_t<C>;
 
       /**
        * Constructs a RiskTransitionModel.
@@ -40,7 +40,7 @@ namespace Nexus {
        *        Orders.
        */
       template<Beam::Initializes<C> CF>
-      RiskTransitionModel(Beam::ServiceLocator::DirectoryEntry account,
+      RiskTransitionModel(Beam::DirectoryEntry account,
         const std::vector<Inventory>& inventory, RiskState risk_state,
         CF&& order_execution_client, DestinationDatabase destinations) noexcept;
 
@@ -63,9 +63,9 @@ namespace Nexus {
       void update(const ExecutionReport& report);
 
     private:
-      Beam::ServiceLocator::DirectoryEntry m_account;
+      Beam::DirectoryEntry m_account;
       RiskState m_risk_state;
-      Beam::GetOptionalLocalPtr<C> m_order_execution_client;
+      Beam::local_ptr_t<C> m_order_execution_client;
       DestinationDatabase m_destinations;
       PositionOrderBook m_book;
       std::unordered_set<OrderId> m_live_orders;
@@ -85,14 +85,14 @@ namespace Nexus {
   };
 
   template<typename CF>
-  RiskTransitionModel(Beam::ServiceLocator::DirectoryEntry,
+  RiskTransitionModel(Beam::DirectoryEntry,
     const std::vector<Inventory>&, RiskState, CF&&, DestinationDatabase) ->
       RiskTransitionModel<std::remove_reference_t<CF>>;
 
   template<IsOrderExecutionClient C>
   template<Beam::Initializes<C> CF>
   RiskTransitionModel<C>::RiskTransitionModel(
-    Beam::ServiceLocator::DirectoryEntry account,
+    Beam::DirectoryEntry account,
     const std::vector<Inventory>& inventory, RiskState risk_state,
     CF&& order_execution_client, DestinationDatabase destinations) noexcept
     : m_account(std::move(account)),

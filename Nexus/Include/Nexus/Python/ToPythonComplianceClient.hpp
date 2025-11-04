@@ -38,15 +38,15 @@ namespace Nexus {
       /** Returns the wrapped client. */
       Client& get_client();
       std::vector<ComplianceRuleEntry> load(
-        const Beam::ServiceLocator::DirectoryEntry& directory_entry);
+        const Beam::DirectoryEntry& directory_entry);
       ComplianceRuleEntry::Id add(
-        const Beam::ServiceLocator::DirectoryEntry& directory_entry,
+        const Beam::DirectoryEntry& directory_entry,
         ComplianceRuleEntry::State state, const ComplianceRuleSchema& schema);
       void update(const ComplianceRuleEntry& entry);
       void remove(ComplianceRuleEntry::Id id);
       void report(const ComplianceRuleViolationRecord& record);
       void monitor_compliance_rule_entries(
-        const Beam::ServiceLocator::DirectoryEntry& directory_entry,
+        const Beam::DirectoryEntry& directory_entry,
         Beam::ScopedQueueWriter<ComplianceRuleEntry> queue,
         Beam::Out<std::vector<ComplianceRuleEntry>> snapshot);
       void close();
@@ -89,14 +89,14 @@ namespace Nexus {
 
   template<IsComplianceClient C>
   std::vector<ComplianceRuleEntry> ToPythonComplianceClient<C>::load(
-      const Beam::ServiceLocator::DirectoryEntry& directory_entry) {
+      const Beam::DirectoryEntry& directory_entry) {
     auto release = Beam::Python::GilRelease();
     return m_client->load(directory_entry);
   }
 
   template<IsComplianceClient C>
   ComplianceRuleEntry::Id ToPythonComplianceClient<C>::add(
-      const Beam::ServiceLocator::DirectoryEntry& directory_entry,
+      const Beam::DirectoryEntry& directory_entry,
       ComplianceRuleEntry::State state, const ComplianceRuleSchema& schema) {
     auto release = Beam::Python::GilRelease();
     return m_client->add(directory_entry, state, schema);
@@ -123,7 +123,7 @@ namespace Nexus {
 
   template<IsComplianceClient C>
   void ToPythonComplianceClient<C>::monitor_compliance_rule_entries(
-      const Beam::ServiceLocator::DirectoryEntry& directory_entry,
+      const Beam::DirectoryEntry& directory_entry,
       Beam::ScopedQueueWriter<ComplianceRuleEntry> queue,
       Beam::Out<std::vector<ComplianceRuleEntry>> snapshot) {
     auto release = Beam::Python::GilRelease();

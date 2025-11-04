@@ -18,7 +18,7 @@ namespace Nexus {
    * @param <D> The type of OrderExecutionDriver to send the submission to if
    *        all checks pass.
    */
-  template<IsOrderExecutionDriver D>
+  template<typename D> requires IsOrderExecutionDriver<Beam::dereference_t<D>>
   class OrderSubmissionCheckDriver {
     public:
 
@@ -26,7 +26,7 @@ namespace Nexus {
        * The type of OrderExecutionDriver to send the submission to if all
        * checks pass.
        */
-      using OrderExecutionDriver = Beam::GetTryDereferenceType<D>;
+      using OrderExecutionDriver = Beam::dereference_t<D>;
 
       /**
        * Constructs an OrderSubmissionCheckDriver.
@@ -37,7 +37,9 @@ namespace Nexus {
       template<Beam::Initializes<D> DF>
       OrderSubmissionCheckDriver(
         DF&& driver, std::vector<std::unique_ptr<OrderSubmissionCheck>> checks);
+
       ~OrderSubmissionCheckDriver();
+
       std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
       void add(const std::shared_ptr<Order>& order);
       std::shared_ptr<Order> submit(const OrderInfo& info);
@@ -47,33 +49,33 @@ namespace Nexus {
       void close();
 
     private:
-      Beam::GetOptionalLocalPtr<D> m_driver;
+      Beam::local_ptr_t<D> m_driver;
       std::vector<std::unique_ptr<OrderSubmissionCheck>> m_checks;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       OrderSubmissionCheckDriver(const OrderSubmissionCheckDriver&) = delete;
       OrderSubmissionCheckDriver& operator =(
         const OrderSubmissionCheckDriver&) = delete;
   };
 
-  template<typename DF>
+  template<typename D>
   OrderSubmissionCheckDriver(
-    DF&&, std::vector<std::unique_ptr<OrderSubmissionCheck>>) ->
-      OrderSubmissionCheckDriver<std::remove_reference_t<DF>>;
+    D&&, std::vector<std::unique_ptr<OrderSubmissionCheck>>) ->
+      OrderSubmissionCheckDriver<std::remove_cvref_t<D>>;
 
-  template<IsOrderExecutionDriver D>
+  template<typename D> requires IsOrderExecutionDriver<Beam::dereference_t<D>>
   template<Beam::Initializes<D> DF>
   OrderSubmissionCheckDriver<D>::OrderSubmissionCheckDriver(
     DF&& driver, std::vector<std::unique_ptr<OrderSubmissionCheck>> checks)
     : m_driver(std::forward<DF>(driver)),
       m_checks(std::move(checks)) {}
 
-  template<IsOrderExecutionDriver D>
+  template<typename D> requires IsOrderExecutionDriver<Beam::dereference_t<D>>
   OrderSubmissionCheckDriver<D>::~OrderSubmissionCheckDriver() {
     close();
   }
 
-  template<IsOrderExecutionDriver D>
+  template<typename D> requires IsOrderExecutionDriver<Beam::dereference_t<D>>
   std::shared_ptr<Order> OrderSubmissionCheckDriver<D>::recover(
       const SequencedAccountOrderRecord& record) {
     auto order = m_driver->recover(record);
@@ -83,7 +85,7 @@ namespace Nexus {
     return order;
   }
 
-  template<IsOrderExecutionDriver D>
+  template<typename D> requires IsOrderExecutionDriver<Beam::dereference_t<D>>
   void OrderSubmissionCheckDriver<D>::add(const std::shared_ptr<Order>& order) {
     for(auto& check : m_checks) {
       check->add(order);
@@ -91,7 +93,7 @@ namespace Nexus {
     m_driver->add(order);
   }
 
-  template<IsOrderExecutionDriver D>
+  template<typename D> requires IsOrderExecutionDriver<Beam::dereference_t<D>>
   std::shared_ptr<Order> OrderSubmissionCheckDriver<D>::submit(
       const OrderInfo& info) {
     auto submission_iterator = m_checks.begin();
@@ -113,22 +115,22 @@ namespace Nexus {
     return order;
   }
 
-  template<IsOrderExecutionDriver D>
+  template<typename D> requires IsOrderExecutionDriver<Beam::dereference_t<D>>
   void OrderSubmissionCheckDriver<D>::cancel(
       const OrderExecutionSession& session, OrderId id) {
     m_driver->cancel(session, id);
   }
 
-  template<IsOrderExecutionDriver D>
+  template<typename D> requires IsOrderExecutionDriver<Beam::dereference_t<D>>
   void OrderSubmissionCheckDriver<D>::update(
       const OrderExecutionSession& session, OrderId id,
       const ExecutionReport& report) {
     return m_driver->update(session, id, report);
   }
 
-  template<IsOrderExecutionDriver D>
+  template<typename D> requires IsOrderExecutionDriver<Beam::dereference_t<D>>
   void OrderSubmissionCheckDriver<D>::close() {
-    m_open_state.Close();
+    m_open_state.close();
   }
 }
 

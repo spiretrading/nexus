@@ -1,13 +1,30 @@
 #ifndef NEXUS_ORDER_EXECUTION_DRIVER_HPP
 #define NEXUS_ORDER_EXECUTION_DRIVER_HPP
+#include <concepts>
 #include <memory>
 #include <utility>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Pointers/VirtualPtr.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
 
 namespace Nexus {
+
+  /** Checks if a type implements an OrderExecutionDriver. */
+  template<typename T>
+  concept IsOrderExecutionDriver = requires(T& driver) {
+    { driver.recover(std::declval<const SequencedAccountOrderRecord&>()) } ->
+        std::same_as<std::shared_ptr<Order>>;
+    driver.add(std::declval<const std::shared_ptr<Order>&>());
+    { driver.submit(std::declval<const OrderInfo&>()) } ->
+        std::same_as<std::shared_ptr<Order>>;
+    driver.cancel(std::declval<const OrderExecutionSession&>(),
+      std::declval<OrderId>());
+    driver.update(std::declval<const OrderExecutionSession&>(),
+      std::declval<OrderId>(), std::declval<const ExecutionReport&>());
+    driver.close();
+  };
 
   /** Provides a generic interface over an arbitrary OrderExecutionDriver. */
   class OrderExecutionDriver {
@@ -16,26 +33,21 @@ namespace Nexus {
       /**
        * Constructs an OrderExecutionDriver of a specified type using
        * emplacement.
-       * @param <T> The type of data store to emplace.
-       * @param args The arguments to pass to the emplaced data store.
+       * @tparam T The type of driver to emplace.
+       * @param args The arguments to pass to the emplaced driver.
        */
-      template<typename T, typename... Args>
+      template<IsOrderExecutionDriver T, typename... Args>
       explicit OrderExecutionDriver(std::in_place_type_t<T>, Args&&... args);
 
       /**
-       * Constructs an OrderExecutionDriver by copying an existing driver.
-       * @param driver The driver to copy.
+       * Constructs an OrderExecutionDriver by referencing an existing driver.
+       * @param driver The driver to reference.
        */
-      template<typename Driver>
-      explicit OrderExecutionDriver(Driver driver);
+      template<Beam::DisableCopy<OrderExecutionDriver> T> requires
+        IsOrderExecutionDriver<Beam::dereference_t<T>>
+      OrderExecutionDriver(T&& driver);
 
-      explicit OrderExecutionDriver(OrderExecutionDriver* driver);
-
-      explicit OrderExecutionDriver(
-        const std::shared_ptr<OrderExecutionDriver>& driver);
-
-      explicit OrderExecutionDriver(
-        const std::unique_ptr<OrderExecutionDriver>& driver);
+      OrderExecutionDriver(const OrderExecutionDriver&) = default;
 
       /** Returns a reference to the concrete implementation. */
       template<typename T>
@@ -61,6 +73,7 @@ namespace Nexus {
     private:
       struct VirtualOrderExecutionDriver {
         virtual ~VirtualOrderExecutionDriver() = default;
+
         virtual std::shared_ptr<Order> recover(
           const SequencedAccountOrderRecord& record) = 0;
         virtual void add(const std::shared_ptr<Order>& order) = 0;
@@ -74,10 +87,11 @@ namespace Nexus {
       template<typename D>
       struct WrappedOrderExecutionDriver final : VirtualOrderExecutionDriver {
         using Driver = D;
-        Beam::GetOptionalLocalPtr<Driver> m_driver;
+        Beam::local_ptr_t<Driver> m_driver;
 
         template<typename... Args>
         WrappedOrderExecutionDriver(Args&&... args);
+
         std::shared_ptr<Order> recover(
           const SequencedAccountOrderRecord& record) override;
         void add(const std::shared_ptr<Order>& order) override;
@@ -87,35 +101,20 @@ namespace Nexus {
           const ExecutionReport& report) override;
         void close() override;
       };
-      std::shared_ptr<VirtualOrderExecutionDriver> m_driver;
+      Beam::VirtualPtr<VirtualOrderExecutionDriver> m_driver;
   };
 
-  /** Checks if a type implements an OrderExecutionDriver. */
-  template<typename T>
-  concept IsOrderExecutionDriver = std::constructible_from<
-    OrderExecutionDriver, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
-
-  template<typename T, typename... Args>
+  template<IsOrderExecutionDriver T, typename... Args>
   OrderExecutionDriver::OrderExecutionDriver(
     std::in_place_type_t<T>, Args&&... args)
-    : m_driver(std::make_shared<WrappedOrderExecutionDriver<T>>(
+    : m_driver(Beam::make_virtual_ptr<WrappedOrderExecutionDriver<T>>(
         std::forward<Args>(args)...)) {}
 
-  template<typename Driver>
-  OrderExecutionDriver::OrderExecutionDriver(Driver driver)
-    : OrderExecutionDriver(std::in_place_type<Driver>, std::move(driver)) {}
-
-  inline OrderExecutionDriver::OrderExecutionDriver(
-    OrderExecutionDriver* driver)
-    : OrderExecutionDriver(*driver) {}
-
-  inline OrderExecutionDriver::OrderExecutionDriver(
-    const std::shared_ptr<OrderExecutionDriver>& driver)
-    : OrderExecutionDriver(*driver) {}
-
-  inline OrderExecutionDriver::OrderExecutionDriver(
-    const std::unique_ptr<OrderExecutionDriver>& driver)
-    : OrderExecutionDriver(*driver) {}
+  template<Beam::DisableCopy<OrderExecutionDriver> T> requires
+    IsOrderExecutionDriver<Beam::dereference_t<T>>
+  OrderExecutionDriver::OrderExecutionDriver(T&& driver)
+    : OrderExecutionDriver(std::in_place_type<Beam::dereference_t<T>>,
+        std::forward<T>(driver)) {}
 
   template<typename T>
   const T& OrderExecutionDriver::as() const {
@@ -124,8 +123,7 @@ namespace Nexus {
 
   template<typename T>
   T& OrderExecutionDriver::as() {
-    return *dynamic_cast<WrappedOrderExecutionDriver<T>&>(
-      *m_driver.get()).m_driver;
+    return *static_cast<WrappedOrderExecutionDriver<T>&>(*m_driver).m_driver;
   }
 
   inline std::shared_ptr<Order> OrderExecutionDriver::recover(
@@ -147,9 +145,8 @@ namespace Nexus {
     m_driver->cancel(session, id);
   }
 
-  inline void OrderExecutionDriver::update(
-      const OrderExecutionSession& session, OrderId id,
-      const ExecutionReport& report) {
+  inline void OrderExecutionDriver::update(const OrderExecutionSession& session,
+      OrderId id, const ExecutionReport& report) {
     m_driver->update(session, id, report);
   }
 

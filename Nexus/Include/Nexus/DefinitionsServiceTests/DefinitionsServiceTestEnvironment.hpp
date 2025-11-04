@@ -29,7 +29,7 @@ namespace Nexus::Tests {
        * @param service_locator_client The ServiceLocatorClient to use.
        */
       DefinitionsServiceTestEnvironment(
-        Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client);
+        Beam::ServiceLocatorClientBox service_locator_client);
 
       ~DefinitionsServiceTestEnvironment();
 
@@ -39,31 +39,31 @@ namespace Nexus::Tests {
        *        authenticate the DefinitionsClient.
        */
       DefinitionsClient make_client(
-        Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client);
+        Beam::ServiceLocatorClientBox service_locator_client);
 
       void close();
 
     private:
       using ServerConnection =
-        Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
+        Beam::LocalServerConnection<Beam::SharedBuffer>;
       using ClientChannel =
-        Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
+        Beam::LocalClientChannel<Beam::SharedBuffer>;
       using ServiceProtocolServletContainer =
-        Beam::Services::ServiceProtocolServletContainer<
-          Beam::ServiceLocator::MetaAuthenticationServletAdapter<
+        Beam::ServiceProtocolServletContainer<
+          Beam::MetaAuthenticationServletAdapter<
             MetaDefinitionsServlet,
-            Beam::ServiceLocator::ServiceLocatorClientBox>,
+            Beam::ServiceLocatorClientBox>,
           ServerConnection*,
-          Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+          Beam::BinarySender<Beam::SharedBuffer>,
           Beam::Codecs::NullEncoder,
-          std::shared_ptr<Beam::Threading::TriggerTimer>>;
+          std::shared_ptr<Beam::TriggerTimer>>;
       using ServiceProtocolClientBuilder =
-        Beam::Services::AuthenticatedServiceProtocolClientBuilder<
-          Beam::ServiceLocator::ServiceLocatorClientBox,
-          Beam::Services::MessageProtocol<std::unique_ptr<ClientChannel>,
-            Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
+        Beam::AuthenticatedServiceProtocolClientBuilder<
+          Beam::ServiceLocatorClientBox,
+          Beam::MessageProtocol<std::unique_ptr<ClientChannel>,
+            Beam::BinarySender<Beam::SharedBuffer>,
             Beam::Codecs::NullEncoder>,
-          Beam::Threading::TriggerTimer>;
+          Beam::TriggerTimer>;
       ServerConnection m_server_connection;
       ServiceProtocolServletContainer m_container;
 
@@ -74,14 +74,14 @@ namespace Nexus::Tests {
   };
 
   inline DefinitionsServiceTestEnvironment::DefinitionsServiceTestEnvironment(
-    Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client)
+    Beam::ServiceLocatorClientBox service_locator_client)
     : m_container(Beam::Initialize(std::move(service_locator_client),
         Beam::Initialize("1", "Spire Trading Inc.",
           Nexus::Details::get_base_time_zone_table(), DEFAULT_COUNTRIES,
           DEFAULT_CURRENCIES, DEFAULT_DESTINATIONS, DEFAULT_VENUES,
           std::vector<ExchangeRate>(), std::vector<ComplianceRuleSchema>(),
           TradingSchedule())), &m_server_connection,
-        boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
+        boost::factory<std::shared_ptr<Beam::TriggerTimer>>()) {}
 
   inline DefinitionsServiceTestEnvironment::
       ~DefinitionsServiceTestEnvironment() {
@@ -89,7 +89,7 @@ namespace Nexus::Tests {
   }
 
   inline DefinitionsClient DefinitionsServiceTestEnvironment::make_client(
-      Beam::ServiceLocator::ServiceLocatorClientBox service_locator_client) {
+      Beam::ServiceLocatorClientBox service_locator_client) {
     return DefinitionsClient(std::in_place_type<ServiceDefinitionsClient<
       ServiceProtocolClientBuilder>>, ServiceProtocolClientBuilder(
         service_locator_client, std::bind_front(boost::factory<

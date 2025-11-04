@@ -7,7 +7,7 @@ using namespace Nexus;
 
 TEST_SUITE("HeartbeatPackets") {
   TEST_CASE("make_client_heartbeat_packet_contents") {
-    auto buffer = IO::SharedBuffer();
+    auto buffer = SharedBuffer();
     make_client_heartbeat_packet(Store(buffer));
     REQUIRE(buffer.GetSize() == 3);
     auto length = std::uint16_t();
@@ -18,7 +18,7 @@ TEST_SUITE("HeartbeatPackets") {
   }
 
   TEST_CASE("make_client_heartbeat_packet_multiple_calls") {
-    auto buffer = IO::SharedBuffer();
+    auto buffer = SharedBuffer();
     make_client_heartbeat_packet(Store(buffer));
     make_client_heartbeat_packet(Store(buffer));
     REQUIRE(buffer.GetSize() == 6);

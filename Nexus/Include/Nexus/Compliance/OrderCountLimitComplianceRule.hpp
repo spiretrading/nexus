@@ -109,7 +109,7 @@ namespace Nexus {
       --m_current_count;
       throw ComplianceCheckException("Order limit reached.");
     }
-    order->get_publisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
+    order->get_publisher().monitor(m_tasks.get_slot<ExecutionReport>(
       std::bind_front(
         &OrderCountLimitComplianceRule::on_execution_report, this)));
   }
@@ -117,7 +117,7 @@ namespace Nexus {
   inline void OrderCountLimitComplianceRule::add(
       const std::shared_ptr<Order>& order) {
     ++m_current_count;
-    order->get_publisher().Monitor(m_tasks.GetSlot<ExecutionReport>(
+    order->get_publisher().monitor(m_tasks.get_slot<ExecutionReport>(
       std::bind_front(
         &OrderCountLimitComplianceRule::on_execution_report, this)));
   }

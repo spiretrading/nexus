@@ -36,9 +36,9 @@ namespace Nexus {
 
     private:
       friend class BacktesterEventHandler;
-      mutable Beam::Threading::Mutex m_mutex;
+      mutable Beam::Mutex m_mutex;
       bool m_is_complete;
-      Beam::Threading::ConditionVariable m_is_complete_condition;
+      Beam::ConditionVariable m_is_complete_condition;
       boost::posix_time::ptime m_timestamp;
 
       BacktesterEvent(const BacktesterEvent&) = delete;

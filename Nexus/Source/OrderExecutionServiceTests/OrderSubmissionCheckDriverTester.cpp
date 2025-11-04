@@ -5,8 +5,6 @@
 #include "Nexus/OrderExecutionServiceTests/TestOrderExecutionDriver.hpp"
 
 using namespace Beam;
-using namespace Beam::Routines;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -43,25 +41,25 @@ namespace {
     void submit(const OrderInfo& info) override {
       auto async = Async<void>();
       auto operation =
-        std::make_shared<Operation>(SubmitOperation(info, async.GetEval()));
-      m_operations.Push(operation);
-      async.Get();
+        std::make_shared<Operation>(SubmitOperation(info, async.get_eval()));
+      m_operations.push(operation);
+      async.get();
     }
 
     void add(const std::shared_ptr<Order>& order) override {
       auto async = Async<void>();
       auto operation =
-        std::make_shared<Operation>(AddOperation(order, async.GetEval()));
-      m_operations.Push(operation);
-      async.Get();
+        std::make_shared<Operation>(AddOperation(order, async.get_eval()));
+      m_operations.push(operation);
+      async.get();
     }
 
     void reject(const OrderInfo& info) override {
       auto async = Async<void>();
       auto operation =
-        std::make_shared<Operation>(RejectOperation(info, async.GetEval()));
-      m_operations.Push(operation);
-      async.Get();
+        std::make_shared<Operation>(RejectOperation(info, async.get_eval()));
+      m_operations.push(operation);
+      async.get();
     }
   };
 
@@ -90,26 +88,26 @@ TEST_SUITE("OrderSubmissionCheckDriver") {
     checks.push_back(
       std::make_unique<TestOrderSubmissionCheck>(check_operations));
     auto driver = OrderSubmissionCheckDriver(&test_driver, std::move(checks));
-    auto info = make_order_info(DirectoryEntry::MakeAccount(123));
+    auto info = make_order_info(DirectoryEntry::make_account(123));
     auto future_order = std::async(std::launch::async, [&] {
       return driver.submit(info);
     });
-    auto check_operation = check_operations->Pop();
+    auto check_operation = check_operations->pop();
     auto& check_submit_operation =
       std::get<TestOrderSubmissionCheck::SubmitOperation>(*check_operation);
     REQUIRE(check_submit_operation.m_info == info);
-    check_submit_operation.m_result.SetResult();
-    auto driver_operation = driver_operations->Pop();
+    check_submit_operation.m_result.set();
+    auto driver_operation = driver_operations->pop();
     auto& driver_submit_operation =
       std::get<TestOrderExecutionDriver::SubmitOperation>(*driver_operation);
     REQUIRE(driver_submit_operation.m_info == info);
     auto order = std::make_shared<PrimitiveOrder>(info);
-    driver_submit_operation.m_result.SetResult(order);
-    check_operation = check_operations->Pop();
+    driver_submit_operation.m_result.set(order);
+    check_operation = check_operations->pop();
     auto& check_add_operation =
       std::get<TestOrderSubmissionCheck::AddOperation>(*check_operation);
     REQUIRE(check_add_operation.m_order == order);
-    check_add_operation.m_result.SetResult();
+    check_add_operation.m_result.set();
     auto submitted_order = future_order.get();
     REQUIRE(submitted_order == order);
   }

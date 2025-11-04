@@ -34,22 +34,22 @@ namespace Nexus {
       using ServiceProtocolClient = typename Container::ServiceProtocolClient;
 
       /** The type of AdministrationClient to use used. */
-      using AdministrationClient = Beam::GetTryDereferenceType<A>;
+      using AdministrationClient = Beam::dereference_t<A>;
 
       /** The type of MarketDataClient to use. */
-      using MarketDataClient = Beam::GetTryDereferenceType<M>;
+      using MarketDataClient = Beam::dereference_t<M>;
 
       /** The type of OrderExecutionClient to use. */
-      using OrderExecutionClient = Beam::GetTryDereferenceType<O>;
+      using OrderExecutionClient = Beam::dereference_t<O>;
 
       /** The type of TransitionTimer to use. */
       using TransitionTimer = R;
 
       /** The type of TimeClient to use. */
-      using TimeClient = Beam::GetTryDereferenceType<T>;
+      using TimeClient = Beam::dereference_t<T>;
 
       /** The type of RiskDataStore to use. */
-      using RiskDataStore = Beam::GetTryDereferenceType<D>;
+      using RiskDataStore = Beam::dereference_t<D>;
 
       /** Type of function used to make a unique TransitionTimer. */
       using TransitionTimerFactory =
@@ -73,7 +73,7 @@ namespace Nexus {
         Beam::Initializes<O> OF, Beam::Initializes<T> TF,
         Beam::Initializes<D> DF>
       RiskServlet(
-        Beam::ScopedQueueReader<Beam::ServiceLocator::DirectoryEntry> accounts,
+        Beam::ScopedQueueReader<Beam::DirectoryEntry> accounts,
         AF&& administration_client, MF&& market_data_client,
         OF&& order_execution_client,
         TransitionTimerFactory transition_timer_factory, TF&& time_client,
@@ -81,7 +81,7 @@ namespace Nexus {
         DestinationDatabase destinations);
 
       void RegisterServices(
-        Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots);
+        Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots);
 
       void HandleClientAccepted(ServiceProtocolClient& client);
 
@@ -94,43 +94,43 @@ namespace Nexus {
         Nexus::ConsolidatedRiskController<AdministrationClient*,
           MarketDataClient*, OrderExecutionClient*, TransitionTimer,
           TimeClient*, RiskDataStore*>;
-      Beam::GetOptionalLocalPtr<A> m_administration_client;
-      Beam::GetOptionalLocalPtr<M> m_market_data_client;
-      Beam::GetOptionalLocalPtr<O> m_order_execution_client;
+      Beam::local_ptr_t<A> m_administration_client;
+      Beam::local_ptr_t<M> m_market_data_client;
+      Beam::local_ptr_t<O> m_order_execution_client;
       TransitionTimerFactory m_transition_timer_factory;
-      Beam::GetOptionalLocalPtr<T> m_time_client;
-      Beam::GetOptionalLocalPtr<D> m_data_store;
+      Beam::local_ptr_t<T> m_time_client;
+      Beam::local_ptr_t<D> m_data_store;
       ExchangeRateTable m_exchange_rates;
       VenueDatabase m_venues;
       DestinationDatabase m_destinations;
       std::shared_ptr<
-        Beam::SnapshotPublisher<Beam::ServiceLocator::DirectoryEntry,
-        std::vector<Beam::ServiceLocator::DirectoryEntry>>> m_account_publisher;
+        Beam::SnapshotPublisher<Beam::DirectoryEntry,
+        std::vector<Beam::DirectoryEntry>>> m_account_publisher;
       std::unordered_map<RiskPortfolioKey, Quantity> m_volumes;
       boost::optional<ConsolidatedRiskController> m_controller;
-      Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
-        Beam::ServiceLocator::DirectoryEntry, Beam::Threading::Mutex>
+      Beam::SynchronizedUnorderedMap<Beam::DirectoryEntry,
+        Beam::DirectoryEntry, Beam::Mutex>
         m_account_to_group;
-      Beam::SynchronizedVector<ServiceProtocolClient*, Beam::Threading::Mutex>
+      Beam::SynchronizedVector<ServiceProtocolClient*, Beam::Mutex>
         m_portfolio_subscribers;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
       Beam::RoutineTaskQueue m_tasks;
 
       RiskServlet(const RiskServlet&) = delete;
       RiskServlet& operator =(const RiskServlet&) = delete;
       void make_controller();
-      void reset(const Beam::ServiceLocator::DirectoryEntry& account,
+      void reset(const Beam::DirectoryEntry& account,
         const Region& region);
-      Beam::ServiceLocator::DirectoryEntry load_group(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+      Beam::DirectoryEntry load_group(
+        const Beam::DirectoryEntry& account);
       void on_risk_state(const RiskStateEntry& entry);
       void on_portfolio(const RiskInventoryEntry& entry);
       InventorySnapshot on_load_inventory_snapshot(
         ServiceProtocolClient& client,
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::DirectoryEntry& account);
       void on_reset_region(ServiceProtocolClient& client, const Region& region);
       void on_subscribe_risk_portfolio_updates_request(
-        Beam::Services::RequestToken<ServiceProtocolClient,
+        Beam::RequestToken<ServiceProtocolClient,
           SubscribeRiskPortfolioUpdatesService>& request);
   };
 
@@ -149,7 +149,7 @@ namespace Nexus {
   template<Beam::Initializes<A> AF, Beam::Initializes<M> MF,
     Beam::Initializes<O> OF, Beam::Initializes<T> TF, Beam::Initializes<D> DF>
   RiskServlet<C, A, M, O, R, T, D>::RiskServlet(
-      Beam::ScopedQueueReader<Beam::ServiceLocator::DirectoryEntry> accounts,
+      Beam::ScopedQueueReader<Beam::DirectoryEntry> accounts,
       AF&& administration_client, MF&& market_data_client,
       OF&& order_execution_client,
       TransitionTimerFactory transition_timer_factory, TF&& time_client,
@@ -165,7 +165,7 @@ namespace Nexus {
       m_venues(std::move(venues)),
       m_destinations(std::move(destinations)),
       m_account_publisher(Beam::MakeSequencePublisherAdaptor(std::make_unique<
-        Beam::QueueReaderPublisher<Beam::ServiceLocator::DirectoryEntry>>(
+        Beam::QueueReaderPublisher<Beam::DirectoryEntry>>(
           std::move(accounts)))) {
     try {
       make_controller();
@@ -178,7 +178,7 @@ namespace Nexus {
   template<typename C, IsAdministrationClient A, IsMarketDataClient M,
     IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void RiskServlet<C, A, M, O, R, T, D>::RegisterServices(
-      Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
+      Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots) {
     RegisterRiskServices(Store(slots));
     RegisterRiskMessages(Store(slots));
     LoadInventorySnapshotService::AddSlot(Store(slots),
@@ -229,7 +229,7 @@ namespace Nexus {
     IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void RiskServlet<C, A, M, O, R, T, D>::make_controller() {
     auto accounts =
-      std::make_shared<Beam::Queue<Beam::ServiceLocator::DirectoryEntry>>();
+      std::make_shared<Beam::Queue<Beam::DirectoryEntry>>();
     m_account_publisher->Monitor(accounts);
     m_controller.emplace(std::move(accounts), &*m_administration_client,
       &*m_market_data_client, &*m_order_execution_client,
@@ -246,7 +246,7 @@ namespace Nexus {
   template<typename C, IsAdministrationClient A, IsMarketDataClient M,
     IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void RiskServlet<C, A, M, O, R, T, D>::reset(
-      const Beam::ServiceLocator::DirectoryEntry& account,
+      const Beam::DirectoryEntry& account,
       const Region& region) {
     auto snapshot = m_data_store->load_inventory_snapshot(account);
     auto [portfolio, sequence, excluded_orders] = make_portfolio(
@@ -314,7 +314,7 @@ namespace Nexus {
         for(auto& subscriber : subscribers) {
           auto& session = subscriber->GetSession();
           if(session.has_subscription(group)) {
-            Beam::Services::SendRecordMessage<InventoryMessage>(
+            Beam::SendRecordMessage<InventoryMessage>(
               *subscriber, reset_inventories);
           }
         }
@@ -324,8 +324,8 @@ namespace Nexus {
 
   template<typename C, IsAdministrationClient A, IsMarketDataClient M,
     IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
-  Beam::ServiceLocator::DirectoryEntry RiskServlet<C, A, M, O, R, T, D>::
-      load_group(const Beam::ServiceLocator::DirectoryEntry& account) {
+  Beam::DirectoryEntry RiskServlet<C, A, M, O, R, T, D>::
+      load_group(const Beam::DirectoryEntry& account) {
     return m_account_to_group.GetOrInsert(account, [&] {
       return m_administration_client->load_parent_trading_group(account);
     });
@@ -358,7 +358,7 @@ namespace Nexus {
         auto& session = subscriber->GetSession();
         if(session.GetAccount() == entry.m_key.m_account ||
             session.has_subscription(group)) {
-          Beam::Services::SendRecordMessage<InventoryMessage>(
+          Beam::SendRecordMessage<InventoryMessage>(
             *subscriber, inventories);
         }
       }
@@ -369,11 +369,11 @@ namespace Nexus {
     IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   InventorySnapshot RiskServlet<C, A, M, O, R, T, D>::
       on_load_inventory_snapshot(ServiceProtocolClient& client,
-        const Beam::ServiceLocator::DirectoryEntry& account) {
+        const Beam::DirectoryEntry& account) {
     auto& session = client.GetSession();
     if(account != session.GetAccount() &&
         !session.has_subscription(load_group(account))) {
-      throw Beam::Services::ServiceRequestException(
+      throw Beam::ServiceRequestException(
         "Insufficient permissions.");
     }
     return m_data_store->load_inventory_snapshot(account);
@@ -385,7 +385,7 @@ namespace Nexus {
       ServiceProtocolClient& client, const Region& region) {
     auto& session = client.GetSession();
     if(!m_administration_client->check_administrator(session.GetAccount())) {
-      throw Beam::Services::ServiceRequestException(
+      throw Beam::ServiceRequestException(
         "Insufficient permissions.");
     }
     m_controller = boost::none;
@@ -405,7 +405,7 @@ namespace Nexus {
   template<typename C, IsAdministrationClient A, IsMarketDataClient M,
     IsOrderExecutionClient O, typename R, typename T, IsRiskDataStore D>
   void RiskServlet<C, A, M, O, R, T, D>::
-      on_subscribe_risk_portfolio_updates_request(Beam::Services::RequestToken<
+      on_subscribe_risk_portfolio_updates_request(Beam::RequestToken<
         ServiceProtocolClient, SubscribeRiskPortfolioUpdatesService>& request) {
     auto& session = request.GetSession();
     m_portfolio_subscribers.With([&] (auto& subscribers) {
@@ -413,7 +413,7 @@ namespace Nexus {
       subscribers.push_back(&request.GetClient());
       auto queue = std::make_shared<Beam::Queue<RiskInventoryEntry>>();
       m_controller->get_portfolio_publisher().Monitor(queue);
-      while(auto entry = queue->TryPop()) {
+      while(auto entry = queue->try_pop()) {
         if(session.GetAccount() == entry->m_key.m_account ||
             session.has_subscription(load_group(entry->m_key.m_account))) {
           entries.push_back(std::move(*entry));

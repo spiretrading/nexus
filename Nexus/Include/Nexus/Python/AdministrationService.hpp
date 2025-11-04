@@ -42,32 +42,32 @@ namespace Nexus::Python {
       def("load_trading_groups_root_entry", &C::load_trading_groups_root_entry).
       def("check_administrator", &C::check_administrator).
       def("load_account_roles", static_cast<AccountRoles (C::*)(
-        const Beam::ServiceLocator::DirectoryEntry&)>(&C::load_account_roles)).
+        const Beam::DirectoryEntry&)>(&C::load_account_roles)).
       def("load_account_roles", static_cast<AccountRoles (C::*)(
-        const Beam::ServiceLocator::DirectoryEntry&,
-        const Beam::ServiceLocator::DirectoryEntry&)>(&C::load_account_roles)).
+        const Beam::DirectoryEntry&,
+        const Beam::DirectoryEntry&)>(&C::load_account_roles)).
       def("load_parent_trading_group", &C::load_parent_trading_group).
       def("load_identity", &C::load_identity).
       def("store", static_cast<void (C::*)(
-        const Beam::ServiceLocator::DirectoryEntry&, const AccountIdentity&)>(
+        const Beam::DirectoryEntry&, const AccountIdentity&)>(
           &C::store)).
       def("load_trading_group", &C::load_trading_group).
       def("load_managed_trading_groups", &C::load_managed_trading_groups).
       def("load_administrators", &C::load_administrators).
       def("load_services", &C::load_services).
       def("load_entitlements",
-        static_cast<std::vector<Beam::ServiceLocator::DirectoryEntry> (C::*)(
-          const Beam::ServiceLocator::DirectoryEntry&)>(&C::load_entitlements)).
+        static_cast<std::vector<Beam::DirectoryEntry> (C::*)(
+          const Beam::DirectoryEntry&)>(&C::load_entitlements)).
       def("store_entitlements", &C::store_entitlements).
       def("get_risk_parameters_publisher", &C::get_risk_parameters_publisher,
         pybind11::return_value_policy::reference_internal).
       def("store", static_cast<void (C::*)(
-        const Beam::ServiceLocator::DirectoryEntry&, const RiskParameters&)>(
+        const Beam::DirectoryEntry&, const RiskParameters&)>(
           &C::store)).
       def("get_risk_state_publisher", &C::get_risk_state_publisher,
         pybind11::return_value_policy::reference_internal).
       def("store", static_cast<void (C::*)(
-        const Beam::ServiceLocator::DirectoryEntry&, const RiskState&)>(
+        const Beam::DirectoryEntry&, const RiskState&)>(
           &C::store)).
       def("load_account_modification_request",
         &C::load_account_modification_request).
@@ -77,11 +77,11 @@ namespace Nexus::Python {
         &C::load_managed_account_modification_request_ids).
       def("load_entitlement_modification", &C::load_entitlement_modification).
       def("submit", static_cast<AccountModificationRequest (C::*)(
-        const Beam::ServiceLocator::DirectoryEntry&,
+        const Beam::DirectoryEntry&,
         const EntitlementModification&, const Message&)>(&C::submit)).
       def("load_risk_modification", &C::load_risk_modification).
       def("submit", static_cast<AccountModificationRequest (C::*)(
-        const Beam::ServiceLocator::DirectoryEntry&, const RiskModification&,
+        const Beam::DirectoryEntry&, const RiskModification&,
         const Message&)>(&C::submit)).
       def("load_account_modification_request_status",
         &C::load_account_modification_request_status).
@@ -112,23 +112,23 @@ namespace Nexus::Python {
         def("load_all_account_identities", &D::load_all_account_identities).
         def("load_identity", &D::load_identity).
         def("store", static_cast<void (D::*)(
-          const Beam::ServiceLocator::DirectoryEntry&, const AccountIdentity&)>(
+          const Beam::DirectoryEntry&, const AccountIdentity&)>(
             &D::store)).
         def("load_all_risk_parameters", &D::load_all_risk_parameters).
         def("load_risk_parameters", &D::load_risk_parameters).
         def("store", static_cast<void (D::*)(
-          const Beam::ServiceLocator::DirectoryEntry&, const RiskParameters&)>(
+          const Beam::DirectoryEntry&, const RiskParameters&)>(
             &D::store)).
         def("load_all_risk_states", &D::load_all_risk_states).
         def("load_risk_state", &D::load_risk_state).
         def("store", static_cast<void (D::*)(
-          const Beam::ServiceLocator::DirectoryEntry&, const RiskState&)>(
+          const Beam::DirectoryEntry&, const RiskState&)>(
             &D::store)).
         def("load_account_modification_request",
           &D::load_account_modification_request).
         def("load_account_modification_request_ids",
           static_cast<std::vector<AccountModificationRequest::Id> (D::*)(
-            const Beam::ServiceLocator::DirectoryEntry&,
+            const Beam::DirectoryEntry&,
             AccountModificationRequest::Id, int)>(
               &D::load_account_modification_request_ids)).
         def("load_account_modification_request_ids",
