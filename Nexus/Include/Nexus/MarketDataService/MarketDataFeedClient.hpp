@@ -212,8 +212,8 @@ namespace Nexus {
   template<Beam::DisableCopy<MarketDataFeedClient> T> requires
     IsMarketDataFeedClient<Beam::dereference_t<T>>
   MarketDataFeedClient::MarketDataFeedClient(T&& client)
-    : MarketDataFeedClient(
-        std::in_place_type<Beam::dereference_t<T>>, std::forward<T>(client)) {}
+    : m_client(Beam::make_virtual_ptr<WrappedMarketDataFeedClient<
+        std::remove_cvref_t<T>>>(std::forward<T>(client))) {}
 
   inline void MarketDataFeedClient::add(const SecurityInfo& info) {
     m_client->add(info);

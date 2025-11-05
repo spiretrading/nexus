@@ -6,7 +6,6 @@
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -20,12 +19,12 @@ TEST_SUITE("BacktesterEnvironment") {
     auto timestamp = start_time - seconds(1);
     auto bbo = SequencedValue(IndexedValue(BboQuote(
       make_bid(99 * Money::CENT, 100), make_ask(Money::ONE, 100), timestamp),
-      security), EncodeTimestamp(timestamp, Beam::Sequence(1)));
+      security), encode(timestamp, Beam::Sequence(1)));
     data_store.store(bbo);
     timestamp = start_time + seconds(1);
     bbo = SequencedValue(IndexedValue(BboQuote(make_bid(98 * Money::CENT, 100),
       make_ask(99 * Money::CENT, 100), timestamp), security),
-      EncodeTimestamp(timestamp, Beam::Sequence(2)));
+      encode(timestamp, Beam::Sequence(2)));
     data_store.store(bbo);
     auto test_environment = TestEnvironment(HistoricalDataStore(&data_store));
     auto backtester = BacktesterEnvironment(start_time,
@@ -35,10 +34,10 @@ TEST_SUITE("BacktesterEnvironment") {
     auto order = order_execution_client.submit(
       make_limit_order_fields(security, Side::BID, 100, 99 * Money::CENT));
     auto reports = std::make_shared<Queue<ExecutionReport>>();
-    order->get_publisher().Monitor(reports);
-    REQUIRE(reports->Pop().m_status == OrderStatus::PENDING_NEW);
-    REQUIRE(reports->Pop().m_status == OrderStatus::NEW);
-    auto fill = reports->Pop();
+    order->get_publisher().monitor(reports);
+    REQUIRE(reports->pop().m_status == OrderStatus::PENDING_NEW);
+    REQUIRE(reports->pop().m_status == OrderStatus::NEW);
+    auto fill = reports->pop();
     REQUIRE(fill.m_status == OrderStatus::FILLED);
     REQUIRE(fill.m_last_price == 99 * Money::CENT);
     REQUIRE(fill.m_last_quantity == 100);

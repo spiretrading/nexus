@@ -14,7 +14,7 @@ namespace Nexus {
    * up to a certain date time.
    * @param <D> The underlying data store to wrap.
    */
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   class CutoffHistoricalDataStore {
     public:
 
@@ -29,7 +29,9 @@ namespace Nexus {
       template<Beam::Initializes<D> DF>
       CutoffHistoricalDataStore(
         DF&& data_store, boost::posix_time::ptime cutoff);
+
       ~CutoffHistoricalDataStore();
+
       std::vector<SecurityInfo> load_security_info(
         const SecurityInfoQuery& query);
       void store(const SecurityInfo& info);
@@ -56,13 +58,10 @@ namespace Nexus {
       mutable Beam::Mutex m_mutex;
       Beam::local_ptr_t<D> m_data_store;
       boost::posix_time::ptime m_cutoff;
-      std::unordered_map<Venue, Beam::Sequence>
-        m_order_imbalance_cutoffs;
+      std::unordered_map<Venue, Beam::Sequence> m_order_imbalance_cutoffs;
       std::unordered_map<Security, Beam::Sequence> m_bbo_cutoffs;
-      std::unordered_map<Security, Beam::Sequence>
-        m_book_quote_cutoffs;
-      std::unordered_map<Security, Beam::Sequence>
-        m_time_and_sales_cutoffs;
+      std::unordered_map<Security, Beam::Sequence> m_book_quote_cutoffs;
+      std::unordered_map<Security, Beam::Sequence> m_time_and_sales_cutoffs;
       Beam::OpenState m_open_state;
 
       CutoffHistoricalDataStore(const CutoffHistoricalDataStore&) = delete;
@@ -70,34 +69,34 @@ namespace Nexus {
         const CutoffHistoricalDataStore&) = delete;
       template<typename Query, typename F>
       std::invoke_result_t<F, const Query&> load(const Query& query,
-        std::unordered_map<typename Query::Index, Beam::Sequence>&
-          cutoffs, F loader);
+        std::unordered_map<typename Query::Index, Beam::Sequence>& cutoffs,
+        F loader);
   };
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   template<Beam::Initializes<D> DF>
   CutoffHistoricalDataStore<D>::CutoffHistoricalDataStore(
     DF&& data_store, boost::posix_time::ptime cutoff)
     : m_data_store(std::forward<DF>(data_store)),
       m_cutoff(cutoff) {}
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   CutoffHistoricalDataStore<D>::~CutoffHistoricalDataStore() {
     close();
   }
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   std::vector<SecurityInfo> CutoffHistoricalDataStore<D>::load_security_info(
       const SecurityInfoQuery& query) {
     return m_data_store->load_security_info(query);
   }
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void CutoffHistoricalDataStore<D>::store(const SecurityInfo& info) {
     m_data_store->store(info);
   }
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   std::vector<SequencedOrderImbalance>
       CutoffHistoricalDataStore<D>::load_order_imbalances(
         const VenueMarketDataQuery& query) {
@@ -106,19 +105,19 @@ namespace Nexus {
     });
   }
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void CutoffHistoricalDataStore<D>::store(
       const SequencedVenueOrderImbalance& imbalance) {
     m_data_store->store(imbalance);
   }
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void CutoffHistoricalDataStore<D>::store(
       const std::vector<SequencedVenueOrderImbalance>& imbalances) {
     m_data_store->store(imbalances);
   }
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   std::vector<SequencedBboQuote> CutoffHistoricalDataStore<D>::load_bbo_quotes(
       const SecurityMarketDataQuery& query) {
     return load(query, m_bbo_cutoffs, [&] (const auto& query) {
@@ -126,19 +125,19 @@ namespace Nexus {
     });
   }
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void CutoffHistoricalDataStore<D>::store(
       const SequencedSecurityBboQuote& quote) {
     m_data_store->store(quote);
   }
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void CutoffHistoricalDataStore<D>::store(
       const std::vector<SequencedSecurityBboQuote>& quotes) {
     m_data_store->store(quotes);
   }
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   std::vector<SequencedBookQuote>
       CutoffHistoricalDataStore<D>::load_book_quotes(
         const SecurityMarketDataQuery& query) {
@@ -147,19 +146,19 @@ namespace Nexus {
     });
   }
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void CutoffHistoricalDataStore<D>::store(
       const SequencedSecurityBookQuote& quote) {
     m_data_store->store(quote);
   }
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void CutoffHistoricalDataStore<D>::store(
       const std::vector<SequencedSecurityBookQuote>& quotes) {
     m_data_store->store(quotes);
   }
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   std::vector<SequencedTimeAndSale>
       CutoffHistoricalDataStore<D>::load_time_and_sales(
         const SecurityMarketDataQuery& query) {
@@ -168,91 +167,87 @@ namespace Nexus {
     });
   }
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void CutoffHistoricalDataStore<D>::store(
       const SequencedSecurityTimeAndSale& time_and_sale) {
     m_data_store->store(time_and_sale);
   }
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void CutoffHistoricalDataStore<D>::store(
       const std::vector<SequencedSecurityTimeAndSale>& time_and_sales) {
     m_data_store->store(time_and_sales);
   }
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void CutoffHistoricalDataStore<D>::close() {
-    if(m_open_state.SetClosing()) {
+    if(m_open_state.set_closing()) {
       return;
     }
     m_data_store->close();
-    m_open_state.Close();
+    m_open_state.close();
   }
 
-  template<IsHistoricalDataStore D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   template<typename Query, typename F>
   std::invoke_result_t<F, const Query&> CutoffHistoricalDataStore<D>::load(
-      const Query& query, std::unordered_map<
-        typename Query::Index, Beam::Sequence>& cutoffs,
+      const Query& query,
+      std::unordered_map<typename Query::Index, Beam::Sequence>& cutoffs,
       F loader) {
     if(auto start_timestamp =
-        boost::get<boost::posix_time::ptime>(&query.GetRange().GetStart())) {
+        boost::get<boost::posix_time::ptime>(&query.get_range().get_start())) {
       if(*start_timestamp >= m_cutoff) {
         return {};
       }
     }
     auto cutoff_sequence = [&] {
       auto lock = std::lock_guard(m_mutex);
-      auto cutoff = cutoffs.find(query.GetIndex());
+      auto cutoff = cutoffs.find(query.get_index());
       auto range_end = Beam::Range::Point(m_cutoff);
       while(cutoff == cutoffs.end()) {
         auto cutoff_query = Query();
-        cutoff_query.SetIndex(query.GetIndex());
-        cutoff_query.SetRange(
-          Beam::Range(Beam::Sequence::First(), range_end));
-        cutoff_query.set_snapshot_limit(
-          Beam::SnapshotLimit::FromTail(100));
+        cutoff_query.set_index(query.get_index());
+        cutoff_query.set_range(Beam::Range(Beam::Sequence::FIRST, range_end));
+        cutoff_query.set_snapshot_limit(Beam::SnapshotLimit::from_tail(100));
         auto sequences = loader(cutoff_query);
         if(sequences.empty()) {
-          cutoff = cutoffs.insert(std::pair(
-            query.GetIndex(), Beam::Sequence::First())).first;
+          cutoff = cutoffs.insert(
+            std::pair(query.get_index(), Beam::Sequence::FIRST)).first;
         } else {
           for(auto i = sequences.rbegin(); i != sequences.rend(); ++i) {
             if((*i)->m_timestamp < m_cutoff) {
               cutoff = cutoffs.insert(
-                std::pair(query.GetIndex(), i->GetSequence())).first;
+                std::pair(query.get_index(), i->get_sequence())).first;
               break;
             }
           }
           if(cutoff != cutoffs.end()) {
             break;
           }
-          if(sequences.front().GetSequence() ==
-              Beam::Sequence::First()) {
-            cutoff = cutoffs.insert(std::pair(
-              query.GetIndex(), Beam::Sequence::First())).first;
+          if(sequences.front().get_sequence() == Beam::Sequence::FIRST) {
+            cutoff = cutoffs.insert(
+              std::pair(query.get_index(), Beam::Sequence::FIRST)).first;
           } else {
-            range_end =
-              Beam::Decrement(sequences.front().GetSequence());
+            range_end = Beam::decrement(sequences.front().get_sequence());
           }
         }
       }
       return cutoff->second;
     }();
     if(auto start_sequence =
-        boost::get<Beam::Sequence>(&query.GetRange().GetStart())) {
+        boost::get<Beam::Sequence>(&query.get_range().get_start())) {
       if(*start_sequence > cutoff_sequence) {
         return {};
       }
     }
     auto cutoff_query = query;
     if(auto end_timestamp =
-        boost::get<boost::posix_time::ptime>(&query.GetRange().GetEnd())) {
-      cutoff_query.SetRange(
-        query.GetRange().GetStart(), std::min(*end_timestamp, m_cutoff));
+        boost::get<boost::posix_time::ptime>(&query.get_range().get_end())) {
+      cutoff_query.set_range(
+        query.get_range().get_start(), std::min(*end_timestamp, m_cutoff));
     } else {
-      cutoff_query.SetRange(query.GetRange().GetStart(),
-        std::min(boost::get<Beam::Sequence>(query.GetRange().GetEnd()),
+      cutoff_query.set_range(query.get_range().get_start(),
+        std::min(boost::get<Beam::Sequence>(query.get_range().get_end()),
           cutoff_sequence));
     }
     return loader(cutoff_query);

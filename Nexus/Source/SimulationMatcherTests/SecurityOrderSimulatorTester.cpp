@@ -3,8 +3,7 @@
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 
 using namespace Beam;
-using namespace Beam::TimeService;
-using namespace Beam::TimeService::Tests;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -35,36 +34,38 @@ TEST_SUITE("SecurityOrderSimulator") {
     auto info = OrderInfo();
     info.m_fields =
       make_limit_order_fields(ABX, Side::BID, 100, 99 * Money::CENT);
-    info.m_timestamp = fixture.m_environment.get_time_environment().GetTime();
+    info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order = std::make_shared<PrimitiveOrder>(info);
     simulator.submit(order);
     auto reports = std::make_shared<Queue<ExecutionReport>>();
-    order->get_publisher().Monitor(reports);
-    auto report = reports->Pop();
+    order->get_publisher().monitor(reports);
+    auto report = reports->pop();
     REQUIRE(report.m_status == OrderStatus::PENDING_NEW);
-    report = reports->Pop();
+    report = reports->pop();
     REQUIRE(report.m_status == OrderStatus::NEW);
     REQUIRE(report.m_timestamp ==
-      fixture.m_environment.get_time_environment().GetTime());
+      fixture.m_environment.get_time_environment().get_time());
     fixture.m_environment.advance(minutes(1));
+
     SUBCASE("fill") {
       fixture.m_environment.update_bbo_price(
         ABX, 98 * Money::CENT, 99 * Money::CENT);
-      report = reports->Pop();
+      report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_timestamp ==
-        fixture.m_environment.get_time_environment().GetTime());
+        fixture.m_environment.get_time_environment().get_time());
     }
+
     SUBCASE("cancel") {
       simulator.cancel(order);
-      report = reports->Pop();
+      report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::PENDING_CANCEL);
       REQUIRE(report.m_timestamp ==
-        fixture.m_environment.get_time_environment().GetTime());
-      report = reports->Pop();
+        fixture.m_environment.get_time_environment().get_time());
+      report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::CANCELED);
       REQUIRE(report.m_timestamp ==
-        fixture.m_environment.get_time_environment().GetTime());
+        fixture.m_environment.get_time_environment().get_time());
     }
   }
 }

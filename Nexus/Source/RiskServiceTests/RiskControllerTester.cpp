@@ -60,8 +60,8 @@ namespace {
         m_service_locator_environment.make_client("risk_service", ""));
       grant_all_entitlements(
         m_administration_environment, m_service_locator->get_account());
-      m_administration_client =
-        m_administration_environment.make_client(Ref(*m_service_locator));
+      m_administration_client.emplace(
+        m_administration_environment.make_client(Ref(*m_service_locator)));
       m_trader_account =
         m_service_locator_environment.get_root().make_account("trader", "",
           DirectoryEntry::STAR_DIRECTORY);

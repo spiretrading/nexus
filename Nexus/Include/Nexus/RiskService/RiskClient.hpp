@@ -104,8 +104,8 @@ namespace Nexus {
   template<Beam::DisableCopy<RiskClient> T> requires
     IsRiskClient<Beam::dereference_t<T>>
   RiskClient::RiskClient(T&& client)
-    : RiskClient(std::in_place_type<Beam::dereference_t<T>>,
-        std::forward<T>(client)) {}
+    : m_client(Beam::make_virtual_ptr<
+        WrappedRiskClient<std::remove_cvref_t<T>>>(std::forward<T>(client))) {}
 
   inline InventorySnapshot RiskClient::load_inventory_snapshot(
       const Beam::DirectoryEntry& account) {

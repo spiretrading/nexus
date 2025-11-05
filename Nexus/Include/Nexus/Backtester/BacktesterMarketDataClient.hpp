@@ -56,7 +56,7 @@ namespace Nexus {
   inline BacktesterMarketDataClient::BacktesterMarketDataClient(
     Beam::Ref<BacktesterMarketDataService> service,
     MarketDataClient market_data_client)
-    : m_service(service.Get()),
+    : m_service(service.get()),
       m_market_data_client(std::move(market_data_client)) {}
 
   inline BacktesterMarketDataClient::~BacktesterMarketDataClient() {
@@ -140,11 +140,11 @@ namespace Nexus {
   }
 
   inline void BacktesterMarketDataClient::close() {
-    if(m_open_state.SetClosing()) {
+    if(m_open_state.set_closing()) {
       return;
     }
     m_market_data_client.close();
-    m_open_state.Close();
+    m_open_state.close();
   }
 }
 

@@ -109,7 +109,7 @@ namespace Nexus {
             client->template send_request<QuerySecurityService>(query, id);
           publisher->push_snapshot(
             query_result.m_snapshot.begin(), query_result.m_snapshot.end());
-          publisher->end_snapshot(query_result.m_queryId);
+          publisher->end_snapshot(query_result.m_id);
         } catch(const std::exception&) {
           publisher->close();
           m_security_charting_publishers.erase(id);

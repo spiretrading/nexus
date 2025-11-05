@@ -441,8 +441,8 @@ namespace Nexus {
   template<Beam::DisableCopy<AdministrationDataStore> T> requires
     IsAdministrationDataStore<Beam::dereference_t<T>>
   AdministrationDataStore::AdministrationDataStore(T&& data_store)
-    : AdministrationDataStore(std::in_place_type<Beam::dereference_t<T>>,
-        std::forward<T>(data_store)) {}
+    : m_data_store(Beam::make_virtual_ptr<WrappedAdministrationDataStore<
+        std::remove_cvref_t<T>>>(std::forward<T>(data_store))) {}
 
   inline std::vector<AdministrationDataStore::IndexedAccountIdentity>
       AdministrationDataStore::load_all_account_identities() {

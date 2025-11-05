@@ -2,9 +2,8 @@
 #define NEXUS_BACKTESTER_ENVIRONMENT_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/RegistryServiceTests/RegistryServiceTestEnvironment.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
-#include <Beam/Threading/TriggerTimer.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
@@ -58,11 +57,7 @@ namespace Nexus {
         get_service_locator_environment();
 
       /** Returns the UidServiceTestEnvironment. */
-      Beam::UidService::Tests::UidServiceTestEnvironment& get_uid_environment();
-
-      /** Returns the RegistryServiceTestEnvironment. */
-      Beam::RegistryService::Tests::RegistryServiceTestEnvironment&
-        get_registry_environment();
+      Beam::Tests::UidServiceTestEnvironment& get_uid_environment();
 
       /** Returns the DefinitionsServiceTestEnvironment. */
       Tests::DefinitionsServiceTestEnvironment& get_definitions_environment();
@@ -72,8 +67,7 @@ namespace Nexus {
         get_administration_environment();
 
       /** Returns the MarketDataServiceTestEnvironment. */
-      Tests::MarketDataServiceTestEnvironment&
-        get_market_data_environment();
+      Tests::MarketDataServiceTestEnvironment& get_market_data_environment();
 
       /** Returns the BacktesterMarketDataService. */
       BacktesterMarketDataService& get_market_data_service();
@@ -99,14 +93,11 @@ namespace Nexus {
     private:
       Clients m_clients;
       BacktesterEventHandler m_event_handler;
-      Beam::TimeService::TimeClientBox m_time_client;
-      Beam::Tests::ServiceLocatorTestEnvironment
-        m_service_locator_environment;
-      Beam::ServiceLocatorClientBox m_service_locator_client;
-      Beam::UidService::Tests::UidServiceTestEnvironment m_uid_environment;
-      Beam::UidService::UidClientBox m_uid_client;
-      Beam::RegistryService::Tests::RegistryServiceTestEnvironment
-        m_registry_environment;
+      Beam::TimeClient m_time_client;
+      Beam::Tests::ServiceLocatorTestEnvironment m_service_locator_environment;
+      Beam::ServiceLocatorClient m_service_locator_client;
+      Beam::Tests::UidServiceTestEnvironment m_uid_environment;
+      Beam::UidClient m_uid_client;
       Tests::DefinitionsServiceTestEnvironment m_definitions_environment;
       Tests::AdministrationServiceTestEnvironment m_administration_environment;
       AdministrationClient m_administration_client;
@@ -137,55 +128,55 @@ namespace Nexus {
         m_event_handler(start, end),
         m_time_client(
           std::in_place_type<BacktesterTimeClient>, Beam::Ref(m_event_handler)),
-        m_service_locator_client(m_service_locator_environment.MakeClient()),
-        m_uid_client(m_uid_environment.MakeClient()),
-        m_registry_environment(m_service_locator_client),
+        m_service_locator_client(m_service_locator_environment.make_client()),
+        m_uid_client(m_uid_environment.make_client()),
         m_definitions_environment(m_service_locator_client),
         m_administration_environment(m_service_locator_client),
-        m_administration_client(
-          m_administration_environment.make_client(m_service_locator_client)),
+        m_administration_client(m_administration_environment.make_client(
+          Beam::Ref(m_service_locator_client))),
         m_market_data_environment(
           m_service_locator_client, m_administration_client,
           HistoricalDataStore(std::in_place_type<CutoffHistoricalDataStore<
             ClientHistoricalDataStore<MarketDataClient>>>,
             m_clients.get_market_data_client(),
             m_event_handler.get_start_time())),
-        m_market_data_service(Beam::Ref(m_event_handler),
-          Beam::Ref(m_market_data_environment),
+        m_market_data_service(
+          Beam::Ref(m_event_handler), Beam::Ref(m_market_data_environment),
           m_clients.get_market_data_client()),
         m_market_data_client(std::in_place_type<BacktesterMarketDataClient>,
           Beam::Ref(m_market_data_service),
           m_market_data_environment.make_registry_client(
-            m_service_locator_client)),
+            Beam::Ref(m_service_locator_client))),
         m_charting_environment(m_service_locator_client, m_market_data_client),
         m_compliance_environment(
           m_service_locator_client, m_administration_client, m_time_client) {
     try {
-      auto definitions_client =
-        m_definitions_environment.make_client(m_service_locator_client);
+      auto definitions_client = m_definitions_environment.make_client(
+        Beam::Ref(m_service_locator_client));
       m_order_execution_environment.emplace(
         definitions_client.load_venue_database(),
         definitions_client.load_destination_database(),
         m_service_locator_client, m_uid_client, m_administration_client,
         m_time_client, OrderExecutionDriver(
           std::in_place_type<SimulationOrderExecutionDriver<
-            MarketDataClient, Beam::TimeService::TimeClientBox>>,
+            MarketDataClient, Beam::TimeClient>>,
           m_market_data_client, m_time_client));
       m_order_execution_client.emplace(
-        m_order_execution_environment->make_client(m_service_locator_client));
-      auto transition_timer_factory = std::bind_front(
-        boost::factory<std::unique_ptr<Beam::TimerBox>>(),
-        std::in_place_type<Beam::TriggerTimer>);
+        m_order_execution_environment->make_client(
+          Beam::Ref(m_service_locator_client)));
+      auto transition_timer_factory =
+        std::bind_front(boost::factory<std::unique_ptr<Beam::Timer>>(),
+          std::in_place_type<Beam::TriggerTimer>);
       m_risk_environment.emplace(m_service_locator_client,
         m_administration_client, m_market_data_client,
         *m_order_execution_client, transition_timer_factory, m_time_client,
         ExchangeRateTable(definitions_client.load_exchange_rates()),
         definitions_client.load_venue_database(),
         definitions_client.load_destination_database());
-      auto root_account = m_service_locator_client.GetAccount();
-      m_service_locator_client.Associate(root_account,
+      auto root_account = m_service_locator_client.get_account();
+      m_service_locator_client.associate(root_account,
         m_administration_client.load_administrators_root_entry());
-      m_service_locator_client.Associate(root_account,
+      m_service_locator_client.associate(root_account,
         m_administration_client.load_services_root_entry());
     } catch(const std::exception&) {
       close();
@@ -211,14 +202,9 @@ namespace Nexus {
     return m_service_locator_environment;
   }
 
-  inline Beam::UidService::Tests::UidServiceTestEnvironment&
+  inline Beam::Tests::UidServiceTestEnvironment&
       BacktesterEnvironment::get_uid_environment() {
     return m_uid_environment;
-  }
-
-  inline Beam::RegistryService::Tests::RegistryServiceTestEnvironment&
-      BacktesterEnvironment::get_registry_environment() {
-    return m_registry_environment;
   }
 
   inline Tests::DefinitionsServiceTestEnvironment&
@@ -267,7 +253,7 @@ namespace Nexus {
   }
 
   inline void BacktesterEnvironment::close() {
-    if(m_open_state.SetClosing()) {
+    if(m_open_state.set_closing()) {
       return;
     }
     m_risk_environment->close();
@@ -280,14 +266,13 @@ namespace Nexus {
     m_administration_client.close();
     m_administration_environment.close();
     m_definitions_environment.close();
-    m_registry_environment.Close();
-    m_uid_client.Close();
-    m_uid_environment.Close();
-    m_service_locator_client.Close();
-    m_service_locator_environment.Close();
-    m_time_client.Close();
+    m_uid_client.close();
+    m_uid_environment.close();
+    m_service_locator_client.close();
+    m_service_locator_environment.close();
+    m_time_client.close();
     m_event_handler.close();
-    m_open_state.Close();
+    m_open_state.close();
   }
 }
 

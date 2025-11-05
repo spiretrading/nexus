@@ -285,8 +285,8 @@ namespace Nexus {
   template<Beam::DisableCopy<HistoricalDataStore> T> requires
     IsHistoricalDataStore<Beam::dereference_t<T>>
   HistoricalDataStore::HistoricalDataStore(T&& data_store)
-    : HistoricalDataStore(std::in_place_type<Beam::dereference_t<T>>,
-        std::forward<T>(data_store)) {}
+    : m_data_store(Beam::make_virtual_ptr<WrappedHistoricalDataStore<
+        std::remove_cvref_t<T>>>(std::forward<T>(data_store))) {}
 
   inline std::vector<SecurityInfo> HistoricalDataStore::load_security_info(
       const SecurityInfoQuery& query) {

@@ -163,8 +163,8 @@ namespace Nexus {
   template<Beam::DisableCopy<ComplianceClient> T> requires
     IsComplianceClient<Beam::dereference_t<T>>
   ComplianceClient::ComplianceClient(T&& client)
-    : ComplianceClient(
-        std::in_place_type<Beam::dereference_t<T>>, std::forward<T>(client)) {}
+    : m_client(Beam::make_virtual_ptr<WrappedComplianceClient<
+        std::remove_cvref_t<T>>>(std::forward<T>(client))) {}
 
   inline std::vector<ComplianceRuleEntry> ComplianceClient::load(
       const Beam::DirectoryEntry& directory_entry) {

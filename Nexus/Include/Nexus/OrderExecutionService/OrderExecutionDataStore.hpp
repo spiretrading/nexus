@@ -160,8 +160,8 @@ namespace Nexus {
   template<Beam::DisableCopy<OrderExecutionDataStore> T> requires
     IsOrderExecutionDataStore<Beam::dereference_t<T>>
   OrderExecutionDataStore::OrderExecutionDataStore(T&& data_store)
-    : OrderExecutionDataStore(std::in_place_type<Beam::dereference_t<T>>,
-        std::forward<T>(data_store)) {}
+    : m_data_store(Beam::make_virtual_ptr<WrappedOrderExecutionDataStore<
+        std::remove_cvref_t<T>>>(std::forward<T>(data_store))) {}
 
   inline boost::optional<SequencedAccountOrderRecord>
       OrderExecutionDataStore::load_order_record(OrderId id) {

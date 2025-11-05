@@ -13,7 +13,7 @@ namespace {
   struct Builder {
     auto operator ()() const {
       return CutoffHistoricalDataStore<LocalHistoricalDataStore>(
-        Initialize(), pos_infin);
+        init(), pos_infin);
     }
   };
 }

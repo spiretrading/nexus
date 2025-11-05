@@ -13,9 +13,7 @@ namespace Nexus {
   /** Implements the Clients interface for the purpose of backtesting. */
   class BacktesterClients {
     public:
-      using ServiceLocatorClient =
-        Beam::ServiceLocatorClientBox;
-      using RegistryClient = Beam::RegistryService::RegistryClientBox;
+      using ServiceLocatorClient = Beam::ServiceLocatorClient;
       using AdministrationClient = Nexus::AdministrationClient;
       using DefinitionsClient = Nexus::DefinitionsClient;
       using MarketDataClient = Nexus::MarketDataClient;
@@ -23,8 +21,8 @@ namespace Nexus {
       using ComplianceClient = Nexus::ComplianceClient;
       using OrderExecutionClient = Nexus::OrderExecutionClient;
       using RiskClient = Nexus::RiskClient;
-      using TimeClient = Beam::TimeService::TimeClientBox;
-      using Timer = Beam::TimerBox;
+      using TimeClient = Beam::TimeClient;
+      using Timer = Beam::Timer;
 
       /**
        * Constructs BacktesterClients.
@@ -34,7 +32,6 @@ namespace Nexus {
 
       ~BacktesterClients();
       ServiceLocatorClient& get_service_locator_client();
-      RegistryClient& get_registry_client();
       AdministrationClient& get_administration_client();
       DefinitionsClient& get_definitions_client();
       MarketDataClient& get_market_data_client();
@@ -50,7 +47,6 @@ namespace Nexus {
     private:
       BacktesterEnvironment* m_environment;
       ServiceLocatorClient m_service_locator_client;
-      RegistryClient m_registry_client;
       DefinitionsClient m_definitions_client;
       AdministrationClient m_administration_client;
       MarketDataClient m_market_data_client;
@@ -67,31 +63,29 @@ namespace Nexus {
 
   inline BacktesterClients::BacktesterClients(
     Beam::Ref<BacktesterEnvironment> environment)
-    : m_environment(environment.Get()),
+    : m_environment(environment.get()),
       m_service_locator_client(
-        m_environment->get_service_locator_environment().MakeClient()),
-      m_registry_client(m_environment->get_registry_environment().MakeClient(
-        m_service_locator_client)),
+        m_environment->get_service_locator_environment().make_client()),
       m_definitions_client(
         m_environment->get_definitions_environment().make_client(
-          m_service_locator_client)),
+          Beam::Ref(m_service_locator_client))),
       m_administration_client(
         m_environment->get_administration_environment().make_client(
-          m_service_locator_client)),
+          Beam::Ref(m_service_locator_client))),
       m_market_data_client(std::in_place_type<BacktesterMarketDataClient>,
         Beam::Ref(m_environment->get_market_data_service()),
         m_environment->get_market_data_environment().make_registry_client(
-          m_service_locator_client)),
+          Beam::Ref(m_service_locator_client))),
       m_charting_client(m_environment->get_charting_environment().make_client(
-        m_service_locator_client)),
+        Beam::Ref(m_service_locator_client))),
       m_compliance_client(
         m_environment->get_compliance_environment().make_client(
-          m_service_locator_client)),
+          Beam::Ref(m_service_locator_client))),
       m_order_execution_client(
         m_environment->get_order_execution_environment().make_client(
-          m_service_locator_client)),
+          Beam::Ref(m_service_locator_client))),
       m_risk_client(m_environment->get_risk_environment().make_client(
-        m_service_locator_client)),
+        Beam::Ref(m_service_locator_client))),
       m_time_client(std::in_place_type<BacktesterTimeClient>,
         Beam::Ref(m_environment->get_event_handler())) {}
 
@@ -102,11 +96,6 @@ namespace Nexus {
   inline BacktesterClients::ServiceLocatorClient&
       BacktesterClients::get_service_locator_client() {
     return m_service_locator_client;
-  }
-
-  inline BacktesterClients::RegistryClient&
-      BacktesterClients::get_registry_client() {
-    return m_registry_client;
   }
 
   inline BacktesterClients::AdministrationClient&
@@ -156,10 +145,10 @@ namespace Nexus {
   }
 
   inline void BacktesterClients::close() {
-    if(m_open_state.SetClosing()) {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_time_client.Close();
+    m_time_client.close();
     m_risk_client.close();
     m_order_execution_client.close();
     m_compliance_client.close();
@@ -167,9 +156,8 @@ namespace Nexus {
     m_market_data_client.close();
     m_administration_client.close();
     m_definitions_client.close();
-    m_registry_client.Close();
-    m_service_locator_client.Close();
-    m_open_state.Close();
+    m_service_locator_client.close();
+    m_open_state.close();
   }
 }
 

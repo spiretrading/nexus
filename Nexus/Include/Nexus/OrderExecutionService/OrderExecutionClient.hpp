@@ -202,8 +202,8 @@ namespace Nexus {
   template<Beam::DisableCopy<OrderExecutionClient> T> requires
     IsOrderExecutionClient<Beam::dereference_t<T>>
   OrderExecutionClient::OrderExecutionClient(T&& client)
-    : OrderExecutionClient(
-        std::in_place_type<Beam::dereference_t<T>>, std::forward<T>(client)) {}
+    : m_client(Beam::make_virtual_ptr<WrappedOrderExecutionClient<
+        std::remove_cvref_t<T>>>(std::forward<T>(client))) {}
 
   inline std::shared_ptr<Order> OrderExecutionClient::load_order(OrderId id) {
     return m_client->load_order(id);

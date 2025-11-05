@@ -21,7 +21,7 @@
 namespace Nexus {
 namespace Details {
   struct ExpressionConverter {
-    using SupportedTypes = QueryTypes::NativeTypes;
+    using type = QueryTypes::NativeTypes;
 
     template<typename T>
     std::unique_ptr<Beam::BaseEvaluatorNode> operator ()(
@@ -119,7 +119,7 @@ namespace Details {
     IsMarketDataClient<Beam::dereference_t<M>>
   void ChartingServlet<C, M>::register_services(
       Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots) {
-    register_query_types(Beam::out(slots->get_registry()));
+    Nexus::register_query_types(Beam::out(slots->get_registry()));
     register_charting_services(out(slots));
     register_charting_messages(out(slots));
     QuerySecurityService::add_request_slot(out(slots),
@@ -244,7 +244,7 @@ namespace Details {
     translator.translate(query.get_expression());
     auto base_expression = translator.get_evaluator();
     auto expression = Beam::instantiate<Details::ExpressionConverter>(
-      base_expression->get_result_type())(std::move(base_expression));
+      base_expression->get_type())(std::move(base_expression));
     auto evaluator = std::make_unique<Beam::Evaluator>(
       std::move(expression), translator.get_parameters());
     query_entry.m_queries.init(query.get_index(), request.get_client(),
@@ -253,7 +253,7 @@ namespace Details {
     auto snapshot_query = query;
     snapshot_query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
     auto snapshot = load<MarketDataType>(m_data_store, snapshot_query);
-    query_entry.m_queries.Commit(query.get_index(), request.get_client(),
+    query_entry.m_queries.commit(query.get_index(), request.get_client(),
       query.get_snapshot_limit(), std::move(result), std::move(snapshot),
       [&] (auto&& result) {
         request.set(std::forward<decltype(result)>(result));

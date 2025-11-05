@@ -128,8 +128,8 @@ namespace Nexus {
   template<Beam::DisableCopy<Bookkeeper> T> requires
     IsBookkeeper<Beam::dereference_t<T>>
   Bookkeeper::Bookkeeper(T&& bookkeeper)
-    : Bookkeeper(std::in_place_type<Beam::dereference_t<T>>,
-        std::forward<T>(bookkeeper)) {}
+    : m_bookkeeper(Beam::make_virtual_ptr<WrappedBookkeeper<
+        std::remove_cvref_t<T>>>(std::forward<T>(bookkeeper))) {}
 
   inline void Bookkeeper::record(const Security& security, CurrencyId currency,
       Quantity quantity, Money cost_basis, Money fees) {

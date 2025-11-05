@@ -4,7 +4,6 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/ConverterQueueWriter.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
-#include <Beam/RegistryServiceTests/RegistryServiceTestEnvironment.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include <Beam/TimeServiceTests/TestTimeClient.hpp>
@@ -107,19 +106,14 @@ namespace Nexus {
       void update(const Order& order, const ExecutionReport& report);
 
       /** Returns the TimeServiceTestEnvironment. */
-      Beam::TimeService::Tests::TimeServiceTestEnvironment&
-        get_time_environment();
+      Beam::Tests::TimeServiceTestEnvironment& get_time_environment();
 
       /** Returns the ServiceLocatorTestEnvironment. */
       Beam::Tests::ServiceLocatorTestEnvironment&
         get_service_locator_environment();
 
       /** Returns the UidServiceTestEnvironment. */
-      Beam::UidService::Tests::UidServiceTestEnvironment& get_uid_environment();
-
-      /** Returns the RegistryServiceTestEnvironment. */
-      Beam::RegistryService::Tests::RegistryServiceTestEnvironment&
-        get_registry_environment();
+      Beam::Tests::UidServiceTestEnvironment& get_uid_environment();
 
       /** Returns the DefinitionsServiceTestEnvironment. */
       Tests::DefinitionsServiceTestEnvironment& get_definitions_environment();
@@ -148,15 +142,12 @@ namespace Nexus {
       void close();
 
     private:
-      Beam::TimeService::Tests::TimeServiceTestEnvironment m_time_environment;
-      Beam::TimeService::TimeClientBox m_time_client;
-      Beam::Tests::ServiceLocatorTestEnvironment
-        m_service_locator_environment;
-      Beam::ServiceLocatorClientBox m_service_locator_client;
-      Beam::UidService::Tests::UidServiceTestEnvironment m_uid_environment;
-      Beam::UidService::UidClientBox m_uid_client;
-      Beam::RegistryService::Tests::RegistryServiceTestEnvironment
-        m_registry_environment;
+      Beam::Tests::TimeServiceTestEnvironment m_time_environment;
+      Beam::TimeClient m_time_client;
+      Beam::Tests::ServiceLocatorTestEnvironment m_service_locator_environment;
+      Beam::ServiceLocatorClient m_service_locator_client;
+      Beam::Tests::UidServiceTestEnvironment m_uid_environment;
+      Beam::UidClient m_uid_client;
       Tests::DefinitionsServiceTestEnvironment m_definitions_environment;
       Tests::AdministrationServiceTestEnvironment m_administration_environment;
       AdministrationClient m_administration_client;
@@ -209,42 +200,41 @@ namespace Nexus {
   inline TestEnvironment::TestEnvironment(
       HistoricalDataStore historical_data_store, boost::posix_time::ptime time)
     : m_time_environment(time),
-      m_time_client(
-        std::in_place_type<Beam::TimeService::Tests::TestTimeClient>,
+      m_time_client(std::in_place_type<Beam::Tests::TestTimeClient>,
         Beam::Ref(m_time_environment)),
-      m_service_locator_client(m_service_locator_environment.MakeClient()),
-      m_uid_client(m_uid_environment.MakeClient()),
-      m_registry_environment(m_service_locator_client),
+      m_service_locator_client(m_service_locator_environment.make_client()),
+      m_uid_client(m_uid_environment.make_client()),
       m_definitions_environment(m_service_locator_client),
       m_administration_environment(m_service_locator_client),
-      m_administration_client(
-        m_administration_environment.make_client(m_service_locator_client)) {
+      m_administration_client(m_administration_environment.make_client(
+        Beam::Ref(m_service_locator_client))) {
     try {
-      auto account = m_service_locator_client.GetAccount();
-      m_service_locator_client.Associate(
+      auto account = m_service_locator_client.get_account();
+      m_service_locator_client.associate(
         account, m_administration_client.load_administrators_root_entry());
-      m_service_locator_client.Associate(
+      m_service_locator_client.associate(
         account, m_administration_client.load_services_root_entry());
       m_market_data_environment.emplace(m_service_locator_client,
         m_administration_client, std::move(historical_data_store));
       m_market_data_client.emplace(
         m_market_data_environment->make_registry_client(
-          m_service_locator_client));
+          Beam::Ref(m_service_locator_client)));
       m_charting_environment.emplace(
         m_service_locator_client, *m_market_data_client);
       m_compliance_environment.emplace(
         m_service_locator_client, m_administration_client, m_time_client);
-      auto definitions_client =
-        m_definitions_environment.make_client(m_service_locator_client);
+      auto definitions_client = m_definitions_environment.make_client(
+        Beam::Ref(m_service_locator_client));
       m_order_execution_environment.emplace(
         definitions_client.load_venue_database(),
         definitions_client.load_destination_database(),
         m_service_locator_client, m_uid_client, m_administration_client);
       m_order_execution_client.emplace(
-        m_order_execution_environment->make_client(m_service_locator_client));
+        m_order_execution_environment->make_client(
+          Beam::Ref(m_service_locator_client)));
       auto transition_timer_factory = [this] {
-        return std::make_unique<Beam::TimerBox>(
-          std::make_unique<Beam::TimeService::Tests::TestTimer>(
+        return std::make_unique<Beam::Timer>(
+          std::make_unique<Beam::Tests::TestTimer>(
             boost::posix_time::seconds(1), Beam::Ref(m_time_environment)));
       };
       m_risk_environment.emplace(m_service_locator_client,
@@ -264,14 +254,14 @@ namespace Nexus {
   }
 
   inline void TestEnvironment::set(boost::posix_time::ptime time) {
-    m_time_environment.SetTime(time);
-    Beam::FlushPendingRoutines();
+    m_time_environment.set(time);
+    Beam::flush_pending_routines();
   }
 
   inline void TestEnvironment::advance(
       boost::posix_time::time_duration duration) {
-    m_time_environment.AdvanceTime(duration);
-    Beam::FlushPendingRoutines();
+    m_time_environment.advance(duration);
+    Beam::flush_pending_routines();
   }
 
   inline void TestEnvironment::publish(
@@ -310,14 +300,14 @@ namespace Nexus {
 
   inline void TestEnvironment::monitor_order_submissions(
       Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) {
-    auto primitive_order_queue = Beam::MakeConverterQueueWriter<
-      std::shared_ptr<PrimitiveOrder>>(std::move(queue),
-      [] (const auto& order) {
-        return std::static_pointer_cast<Order>(order);
-      });
+    auto primitive_order_queue =
+      Beam::convert<std::shared_ptr<PrimitiveOrder>>(std::move(queue),
+        [] (const auto& order) {
+          return std::static_pointer_cast<Order>(order);
+        });
     auto& driver = get_order_execution_environment().get_driver().as<
       Tests::MockOrderExecutionDriver>();
-    driver.get_publisher().Monitor(std::move(primitive_order_queue));
+    driver.get_publisher().monitor(std::move(primitive_order_queue));
   }
 
   inline void TestEnvironment::accept(const Order& order) {
@@ -327,15 +317,15 @@ namespace Nexus {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException("Invalid Order specified."));
     }
-    primitive_order->with([&](auto status, const auto&) {
+    primitive_order->with([&] (auto status, const auto&) {
       if(status != OrderStatus::PENDING_NEW) {
         BOOST_THROW_EXCEPTION(
           TestEnvironmentException("Order must be PENDING_NEW."));
       }
     });
     Tests::set_order_status(
-      *primitive_order, OrderStatus::NEW, m_time_environment.GetTime());
-    Beam::FlushPendingRoutines();
+      *primitive_order, OrderStatus::NEW, m_time_environment.get_time());
+    Beam::flush_pending_routines();
   }
 
   inline void TestEnvironment::reject(const Order& order) {
@@ -345,15 +335,15 @@ namespace Nexus {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException("Invalid Order specified."));
     }
-    primitive_order->with([&](auto status, const auto&) {
+    primitive_order->with([&] (auto status, const auto&) {
       if(is_terminal(status)) {
         BOOST_THROW_EXCEPTION(
           TestEnvironmentException("Order is already TERMINAL."));
       }
     });
     Tests::set_order_status(
-      *primitive_order, OrderStatus::REJECTED, m_time_environment.GetTime());
-    Beam::FlushPendingRoutines();
+      *primitive_order, OrderStatus::REJECTED, m_time_environment.get_time());
+    Beam::flush_pending_routines();
   }
 
   inline void TestEnvironment::cancel(const Order& order) {
@@ -363,14 +353,14 @@ namespace Nexus {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException("Invalid Order specified."));
     }
-    primitive_order->with([&](auto status, const auto&) {
+    primitive_order->with([&] (auto status, const auto&) {
       if(is_terminal(status)) {
         BOOST_THROW_EXCEPTION(
           TestEnvironmentException("Order is already TERMINAL."));
       }
     });
-    Tests::cancel(*primitive_order, m_time_environment.GetTime());
-    Beam::FlushPendingRoutines();
+    Tests::cancel(*primitive_order, m_time_environment.get_time());
+    Beam::flush_pending_routines();
   }
 
   inline void TestEnvironment::fill(
@@ -388,8 +378,8 @@ namespace Nexus {
       }
     });
     Tests::fill(
-      *primitive_order, price, quantity, m_time_environment.GetTime());
-    Beam::FlushPendingRoutines();
+      *primitive_order, price, quantity, m_time_environment.get_time());
+    Beam::flush_pending_routines();
   }
 
   inline void TestEnvironment::fill(const Order& order, Quantity quantity) {
@@ -404,7 +394,7 @@ namespace Nexus {
       BOOST_THROW_EXCEPTION(
         TestEnvironmentException("Invalid Order specified."));
     }
-    primitive_order->with([&](auto status, const auto&) {
+    primitive_order->with([&] (auto status, const auto&) {
       if(is_terminal(status)) {
         BOOST_THROW_EXCEPTION(
           TestEnvironmentException("Order is already TERMINAL."));
@@ -412,20 +402,20 @@ namespace Nexus {
     });
     auto revised_report = report;
     if(revised_report.m_timestamp != boost::posix_time::not_a_date_time) {
-      m_time_environment.SetTime(revised_report.m_timestamp);
+      m_time_environment.set(revised_report.m_timestamp);
     } else {
-      revised_report.m_timestamp = m_time_environment.GetTime();
+      revised_report.m_timestamp = m_time_environment.get_time();
     }
-    primitive_order->with([&](auto, const auto& reports) {
+    primitive_order->with([&] (auto, const auto& reports) {
       auto& last_report = reports.back();
       revised_report.m_id = last_report.m_id;
       revised_report.m_sequence = last_report.m_sequence + 1;
       primitive_order->update(revised_report);
     });
-    Beam::FlushPendingRoutines();
+    Beam::flush_pending_routines();
   }
 
-  inline Beam::TimeService::Tests::TimeServiceTestEnvironment&
+  inline Beam::Tests::TimeServiceTestEnvironment&
       TestEnvironment::get_time_environment() {
     return m_time_environment;
   }
@@ -435,14 +425,9 @@ namespace Nexus {
     return m_service_locator_environment;
   }
 
-  inline Beam::UidService::Tests::UidServiceTestEnvironment&
+  inline Beam::Tests::UidServiceTestEnvironment&
       TestEnvironment::get_uid_environment() {
     return m_uid_environment;
-  }
-
-  inline Beam::RegistryService::Tests::RegistryServiceTestEnvironment&
-      TestEnvironment::get_registry_environment() {
-    return m_registry_environment;
   }
 
   inline Tests::DefinitionsServiceTestEnvironment&
@@ -481,7 +466,7 @@ namespace Nexus {
   }
 
   inline void TestEnvironment::close() {
-    if(m_open_state.SetClosing()) {
+    if(m_open_state.set_closing()) {
       return;
     }
     m_risk_environment->close();
@@ -494,27 +479,25 @@ namespace Nexus {
     m_administration_client.close();
     m_administration_environment.close();
     m_definitions_environment.close();
-    m_registry_environment.Close();
-    m_uid_client.Close();
-    m_uid_environment.Close();
-    m_service_locator_client.Close();
-    m_service_locator_environment.Close();
-    m_time_client.Close();
-    m_time_environment.Close();
-    m_open_state.Close();
+    m_uid_client.close();
+    m_uid_environment.close();
+    m_service_locator_client.close();
+    m_service_locator_environment.close();
+    m_time_client.close();
+    m_time_environment.close();
+    m_open_state.close();
   }
 
   template<typename Index, typename Value>
   void TestEnvironment::publish_market_data(
       const Index& index, const Value& value) {
-    if(Beam::GetTimestamp(value) !=
-        boost::posix_time::not_a_date_time) {
-      m_time_environment.SetTime(Beam::GetTimestamp(value));
+    if(Beam::get_timestamp(value) != boost::posix_time::not_a_date_time) {
+      m_time_environment.set(Beam::get_timestamp(value));
       get_market_data_environment().get_feed_client().publish(
         Beam::IndexedValue(value, index));
     } else {
       auto revised_value = value;
-      Beam::GetTimestamp(revised_value) = m_time_environment.GetTime();
+      Beam::get_timestamp(revised_value) = m_time_environment.get_time();
       get_market_data_environment().get_feed_client().publish(
         Beam::IndexedValue(revised_value, index));
     }

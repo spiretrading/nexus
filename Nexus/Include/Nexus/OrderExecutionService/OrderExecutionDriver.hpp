@@ -114,8 +114,8 @@ namespace Nexus {
   template<Beam::DisableCopy<OrderExecutionDriver> T> requires
     IsOrderExecutionDriver<Beam::dereference_t<T>>
   OrderExecutionDriver::OrderExecutionDriver(T&& driver)
-    : OrderExecutionDriver(std::in_place_type<Beam::dereference_t<T>>,
-        std::forward<T>(driver)) {}
+    : m_driver(Beam::make_virtual_ptr<WrappedOrderExecutionDriver<
+        std::remove_cvref_t<T>>>(std::forward<T>(driver))) {}
 
   template<typename T>
   const T& OrderExecutionDriver::as() const {

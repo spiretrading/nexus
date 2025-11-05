@@ -63,7 +63,7 @@ namespace Nexus {
       mutable Beam::Mutex m_mutex;
       boost::posix_time::ptime m_start_time;
       boost::posix_time::ptime m_end_time;
-      Beam::TimeService::Tests::TimeServiceTestEnvironment m_time_environment;
+      Beam::Tests::TimeServiceTestEnvironment m_time_environment;
       std::deque<std::shared_ptr<BacktesterEvent>> m_events;
       std::size_t m_active_count;
       Beam::ConditionVariable m_event_available_condition;
@@ -87,7 +87,7 @@ namespace Nexus {
         m_active_count(0),
         m_time_environment(m_start_time) {
     try {
-      m_event_loop_routine = Beam::Spawn(
+      m_event_loop_routine = Beam::spawn(
         std::bind_front(&BacktesterEventHandler::event_loop, this));
     } catch(const std::exception&) {
       close();
@@ -109,7 +109,7 @@ namespace Nexus {
   }
 
   inline boost::posix_time::ptime BacktesterEventHandler::get_time() const {
-    return m_time_environment.GetTime();
+    return m_time_environment.get_time();
   }
 
   inline void BacktesterEventHandler::add(
@@ -157,14 +157,14 @@ namespace Nexus {
   }
 
   inline void BacktesterEventHandler::close() {
-    if(m_open_state.SetClosing()) {
+    if(m_open_state.set_closing()) {
       return;
     }
     m_event_available_condition.notify_one();
-    m_event_loop_routine.Wait();
-    m_time_environment.Close();
-    m_open_state.Close();
-    Beam::FlushPendingRoutines();
+    m_event_loop_routine.wait();
+    m_time_environment.close();
+    m_open_state.close();
+    Beam::flush_pending_routines();
   }
 
   inline void BacktesterEventHandler::event_loop() {
@@ -172,10 +172,10 @@ namespace Nexus {
       auto event = std::shared_ptr<BacktesterEvent>();
       {
         auto lock = std::unique_lock(m_mutex);
-        while(m_open_state.IsOpen() && m_active_count == 0) {
+        while(m_open_state.is_open() && m_active_count == 0) {
           m_event_available_condition.wait(lock);
         }
-        if(!m_open_state.IsOpen()) {
+        if(!m_open_state.is_open()) {
           return;
         }
         event = std::move(m_events.front());
@@ -185,11 +185,11 @@ namespace Nexus {
         }
       }
       if(event->get_timestamp() != boost::posix_time::neg_infin) {
-        m_time_environment.SetTime(event->get_timestamp());
+        m_time_environment.set(event->get_timestamp());
       }
       event->execute();
       event->complete();
-      Beam::FlushPendingRoutines();
+      Beam::flush_pending_routines();
     }
   }
 }

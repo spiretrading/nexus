@@ -12,7 +12,7 @@
 #include <Beam/Services/AuthenticatedServiceProtocolClientBuilder.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
-#include <Beam/Threading/TriggerTimer.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 #include "Nexus/DefinitionsService/DefinitionsServlet.hpp"
@@ -28,8 +28,8 @@ namespace Nexus::Tests {
        * Constructs a DefinitionsServiceTestEnvironment.
        * @param service_locator_client The ServiceLocatorClient to use.
        */
-      DefinitionsServiceTestEnvironment(
-        Beam::ServiceLocatorClientBox service_locator_client);
+      explicit DefinitionsServiceTestEnvironment(
+        Beam::ServiceLocatorClient service_locator_client);
 
       ~DefinitionsServiceTestEnvironment();
 
@@ -39,32 +39,24 @@ namespace Nexus::Tests {
        *        authenticate the DefinitionsClient.
        */
       DefinitionsClient make_client(
-        Beam::ServiceLocatorClientBox service_locator_client);
+        Beam::Ref<Beam::ServiceLocatorClient> service_locator_client);
 
       void close();
 
     private:
-      using ServerConnection =
-        Beam::LocalServerConnection<Beam::SharedBuffer>;
-      using ClientChannel =
-        Beam::LocalClientChannel<Beam::SharedBuffer>;
       using ServiceProtocolServletContainer =
         Beam::ServiceProtocolServletContainer<
           Beam::MetaAuthenticationServletAdapter<
-            MetaDefinitionsServlet,
-            Beam::ServiceLocatorClientBox>,
-          ServerConnection*,
-          Beam::BinarySender<Beam::SharedBuffer>,
-          Beam::Codecs::NullEncoder,
-          std::shared_ptr<Beam::TriggerTimer>>;
+            MetaDefinitionsServlet, Beam::ServiceLocatorClient>,
+          Beam::LocalServerConnection*, Beam::BinarySender<Beam::SharedBuffer>,
+          Beam::NullEncoder, std::shared_ptr<Beam::TriggerTimer>>;
       using ServiceProtocolClientBuilder =
         Beam::AuthenticatedServiceProtocolClientBuilder<
-          Beam::ServiceLocatorClientBox,
-          Beam::MessageProtocol<std::unique_ptr<ClientChannel>,
-            Beam::BinarySender<Beam::SharedBuffer>,
-            Beam::Codecs::NullEncoder>,
+          Beam::ServiceLocatorClient,
+          Beam::MessageProtocol<std::unique_ptr<Beam::LocalClientChannel>,
+            Beam::BinarySender<Beam::SharedBuffer>, Beam::NullEncoder>,
           Beam::TriggerTimer>;
-      ServerConnection m_server_connection;
+      Beam::LocalServerConnection m_server_connection;
       ServiceProtocolServletContainer m_container;
 
       DefinitionsServiceTestEnvironment(
@@ -74,9 +66,9 @@ namespace Nexus::Tests {
   };
 
   inline DefinitionsServiceTestEnvironment::DefinitionsServiceTestEnvironment(
-    Beam::ServiceLocatorClientBox service_locator_client)
-    : m_container(Beam::Initialize(std::move(service_locator_client),
-        Beam::Initialize("1", "Spire Trading Inc.",
+    Beam::ServiceLocatorClient service_locator_client)
+    : m_container(Beam::init(std::move(service_locator_client),
+        Beam::init("1", "Spire Trading Inc.",
           Nexus::Details::get_base_time_zone_table(), DEFAULT_COUNTRIES,
           DEFAULT_CURRENCIES, DEFAULT_DESTINATIONS, DEFAULT_VENUES,
           std::vector<ExchangeRate>(), std::vector<ComplianceRuleSchema>(),
@@ -89,10 +81,10 @@ namespace Nexus::Tests {
   }
 
   inline DefinitionsClient DefinitionsServiceTestEnvironment::make_client(
-      Beam::ServiceLocatorClientBox service_locator_client) {
+      Beam::Ref<Beam::ServiceLocatorClient> service_locator_client) {
     return DefinitionsClient(std::in_place_type<ServiceDefinitionsClient<
       ServiceProtocolClientBuilder>>, ServiceProtocolClientBuilder(
-        service_locator_client, std::bind_front(boost::factory<
+        Beam::Ref(service_locator_client), std::bind_front(boost::factory<
           std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
           "test_definitions_client", std::ref(m_server_connection)),
         boost::factory<
@@ -100,7 +92,7 @@ namespace Nexus::Tests {
   }
 
   inline void DefinitionsServiceTestEnvironment::close() {
-    m_container.Close();
+    m_container.close();
   }
 }
 

@@ -154,8 +154,8 @@ namespace Nexus {
   template<Beam::DisableCopy<ComplianceRuleDataStore> T> requires
     IsComplianceRuleDataStore<Beam::dereference_t<T>>
   ComplianceRuleDataStore::ComplianceRuleDataStore(T&& data_store)
-    : ComplianceRuleDataStore(std::in_place_type<Beam::dereference_t<T>>,
-        std::forward<T>(data_store)) {}
+    : m_data_store(Beam::make_virtual_ptr<WrappedComplianceRuleDataStore<
+        std::remove_cvref_t<T>>>(std::forward<T>(data_store))) {}
 
   inline std::vector<ComplianceRuleEntry>
       ComplianceRuleDataStore::load_all_compliance_rule_entries() {

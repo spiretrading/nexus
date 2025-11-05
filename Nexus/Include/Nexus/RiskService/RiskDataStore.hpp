@@ -99,8 +99,8 @@ namespace Nexus {
   template<Beam::DisableCopy<RiskDataStore> T> requires
     IsRiskDataStore<Beam::dereference_t<T>>
   RiskDataStore::RiskDataStore(T&& data_store)
-    : RiskDataStore(std::in_place_type<Beam::dereference_t<T>>,
-        std::forward<T>(data_store)) {}
+    : m_data_store(Beam::make_virtual_ptr<WrappedRiskDataStore<
+        std::remove_cvref_t<T>>>(std::forward<T>(data_store))) {}
 
   inline InventorySnapshot RiskDataStore::load_inventory_snapshot(
       const Beam::DirectoryEntry& account) {

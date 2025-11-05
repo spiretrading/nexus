@@ -607,8 +607,8 @@ namespace Nexus {
   template<Beam::DisableCopy<AdministrationClient> T> requires
     IsAdministrationClient<Beam::dereference_t<T>>
   AdministrationClient::AdministrationClient(T&& client)
-    : AdministrationClient(
-        std::in_place_type<Beam::dereference_t<T>>, std::forward<T>(client)) {}
+    : m_client(make_virtual_ptr<WrappedAdministrationClient<
+        std::remove_cvref_t<T>>>(std::forward<T>(client))) {}
 
   inline std::vector<Beam::DirectoryEntry>
       AdministrationClient::load_accounts_by_roles(AccountRoles roles) {

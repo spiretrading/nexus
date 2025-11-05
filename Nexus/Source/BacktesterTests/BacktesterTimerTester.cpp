@@ -6,7 +6,6 @@
 #include "Nexus/Backtester/BacktesterTimer.hpp"
 
 using namespace Beam;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
@@ -22,15 +21,15 @@ TEST_SUITE("BacktesterTimer") {
     auto query_complete_mutex = Mutex();
     auto test_complete_condition = ConditionVariable();
     auto test_succeeded = optional<bool>();
-    timer.GetPublisher().Monitor(
-      routines.GetSlot<Timer::Result>([&] (Timer::Result result) {
+    timer.get_publisher().monitor(
+      routines.get_slot<Timer::Result>([&] (auto result) {
         auto lock = std::lock_guard(query_complete_mutex);
         auto timestamp = event_handler.get_time();
         test_succeeded = timestamp == expected_timestamp &&
           result == Timer::Result::EXPIRED;
         test_complete_condition.notify_one();
       }));
-    timer.Start();
+    timer.start();
     event_handler.add(std::make_shared<ActiveBacktesterEvent>(
       time_from_string("2016-05-07 00:00:00")));
     auto lock = std::unique_lock(query_complete_mutex);
@@ -50,15 +49,15 @@ TEST_SUITE("BacktesterTimer") {
     auto query_complete_mutex = Mutex();
     auto test_complete_condition = ConditionVariable();
     auto test_succeeded = optional<bool>();
-    timer_a.GetPublisher().Monitor(
-      routines.GetSlot<Timer::Result>([&] (Timer::Result result) {
+    timer_a.get_publisher().monitor(
+      routines.get_slot<Timer::Result>([&] (Timer::Result result) {
         auto timestamp = event_handler.get_time();
         REQUIRE(timestamp == expected_timestamp);
         REQUIRE(result == Timer::Result::EXPIRED);
-        timer_b.Cancel();
+        timer_b.cancel();
       }));
-    timer_b.GetPublisher().Monitor(
-      routines.GetSlot<Timer::Result>([&] (Timer::Result result) {
+    timer_b.get_publisher().monitor(
+      routines.get_slot<Timer::Result>([&] (auto result) {
         auto timestamp = event_handler.get_time();
         REQUIRE(timestamp == expected_timestamp);
         REQUIRE(result == Timer::Result::CANCELED);
@@ -66,9 +65,9 @@ TEST_SUITE("BacktesterTimer") {
         test_succeeded = true;
         test_complete_condition.notify_one();
       }));
-    routines.Push([&] {
-      timer_b.Start();
-      timer_a.Start();
+    routines.push([&] {
+      timer_b.start();
+      timer_a.start();
       event_handler.add(std::make_shared<ActiveBacktesterEvent>(
         time_from_string("2016-05-07 00:00:00")));
     });

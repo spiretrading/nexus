@@ -111,8 +111,8 @@ namespace Nexus {
   template<Beam::DisableCopy<ChartingClient> T> requires
     IsChartingClient<Beam::dereference_t<T>>
   ChartingClient::ChartingClient(T&& client)
-    : ChartingClient(
-        std::in_place_type<Beam::dereference_t<T>>, std::forward<T>(client)) {}
+    : m_client(Beam::make_virtual_ptr<WrappedChartingClient<
+        std::remove_cvref_t<T>>>(std::forward<T>(client))) {}
 
   inline void ChartingClient::query(const SecurityChartingQuery& query,
       Beam::ScopedQueueWriter<QueryVariant> queue) {

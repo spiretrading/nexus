@@ -342,8 +342,8 @@ namespace Nexus {
   template<Beam::DisableCopy<MarketDataClient> T> requires
     IsMarketDataClient<Beam::dereference_t<T>>
   MarketDataClient::MarketDataClient(T&& client)
-    : MarketDataClient(
-        std::in_place_type<Beam::dereference_t<T>>, std::forward<T>(client)) {}
+    : m_client(Beam::make_virtual_ptr<WrappedMarketDataClient<
+        std::remove_cvref_t<T>>>(std::forward<T>(client))) {}
 
   inline void MarketDataClient::query(const VenueMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) {

@@ -1,4 +1,3 @@
-#include <sstream>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -6,6 +5,8 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/TechnicalAnalysis/Candlestick.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -82,24 +83,11 @@ TEST_SUITE("Candlestick") {
     auto high = 15 * Money::ONE;
     auto low = 9 * Money::ONE;
     auto candlestick = TestCandlestick(start, end, open, close, high, low);
-    auto stream = std::stringstream();
-    stream << candlestick;
-    REQUIRE(stream.str() == "(2024-Jan-31 10:00:00, 2024-Jan-31 11:00:00, "
-      "10.00, 15.00, 9.00, 12.00)");
+    REQUIRE(to_string(candlestick) == "(2024-Jan-31 10:00:00, 2024-Jan-31 "
+      "11:00:00, 10.00, 15.00, 9.00, 12.00)");
     auto empty_candlestick = TestCandlestick(start, end);
-    stream.str("");
-    stream << empty_candlestick;
-    REQUIRE(stream.str() == "(2024-Jan-31 10:00:00, 2024-Jan-31 11:00:00)");
-  }
-
-  TEST_CASE("shuttle") {
-    auto start = from_iso_string("20240131T100000");
-    auto end = from_iso_string("20240131T110000");
-    auto open = 10 * Money::ONE;
-    auto close = 12 * Money::ONE;
-    auto high = 15 * Money::ONE;
-    auto low = 9 * Money::ONE;
-    auto candlestick = TestCandlestick(start, end, open, close, high, low);
-    Beam::Tests::TestRoundTripShuttle(candlestick);
+    REQUIRE(to_string(empty_candlestick) ==
+      "(2024-Jan-31 10:00:00, 2024-Jan-31 11:00:00)");
+    test_round_trip_shuttle(candlestick);
   }
 }

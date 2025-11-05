@@ -3,11 +3,13 @@
 #include <memory>
 #include <type_traits>
 #include <utility>
+#include <Beam/IO/Connection.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/RegistryService/RegistryClientBox.hpp>
-#include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
-#include <Beam/Threading/TimerBox.hpp>
-#include <Beam/TimeService/TimeClientBox.hpp>
+#include <Beam/Pointers/VirtualPtr.hpp>
+#include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
+#include <Beam/TimeService/TimeClient.hpp>
+#include <Beam/TimeService/Timer.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/ChartingService/ChartingClient.hpp"
 #include "Nexus/Compliance/ComplianceClient.hpp"
@@ -18,16 +20,35 @@
 
 namespace Nexus {
 
+  /** Checks if a type implements the Clients interface. */
+  template<typename T>
+  concept IsClients = Beam::IsConnection<T> && requires(T& clients) {
+    { clients.get_service_locator_client() } ->
+      std::convertible_to<Beam::ServiceLocatorClient&>;
+    { clients.get_administration_client() } ->
+      std::convertible_to<AdministrationClient&>;
+    { clients.get_definitions_client() } ->
+      std::convertible_to<DefinitionsClient&>;
+    { clients.get_market_data_client() } ->
+      std::convertible_to<MarketDataClient&>;
+    { clients.get_charting_client() } -> std::convertible_to<ChartingClient&>;
+    { clients.get_compliance_client() } ->
+      std::convertible_to<ComplianceClient&>;
+    { clients.get_order_execution_client() } ->
+      std::convertible_to<OrderExecutionClient&>;
+    { clients.get_risk_client() } -> std::convertible_to<RiskClient&>;
+    { clients.get_time_client() } -> std::convertible_to<Beam::TimeClient&>;
+    { clients.make_timer(std::declval<boost::posix_time::time_duration>()) } ->
+      std::convertible_to<std::unique_ptr<Beam::Timer>>;
+    clients.close();
+  };
+
   /** Consolidates the clients used for Nexus services. */
   class Clients {
     public:
 
       /** The service locator client interface. */
-      using ServiceLocatorClient =
-        Beam::ServiceLocatorClientBox;
-
-      /** The registry client interface. */
-      using RegistryClient = Beam::RegistryService::RegistryClientBox;
+      using ServiceLocatorClient = Beam::ServiceLocatorClient;
 
       /** The administration client interface. */
       using AdministrationClient = Nexus::AdministrationClient;
@@ -51,37 +72,32 @@ namespace Nexus {
       using RiskClient = Nexus::RiskClient;
 
       /** The time client interface. */
-      using TimeClient = Beam::TimeService::TimeClientBox;
+      using TimeClient = Beam::TimeClient;
 
       /** The timer interface. */
-      using Timer = Beam::TimerBox;
+      using Timer = Beam::Timer;
 
       /**
        * Constructs Clients of a specified type using emplacement.
-       * @param <T> The type of clients to emplace.
+       * @tparam T The type of clients to emplace.
        * @param args The arguments to pass to the emplaced clients.
        */
-      template<typename T, typename... Args>
+      template<IsClients T, typename... Args>
       explicit Clients(std::in_place_type_t<T>, Args&&... args);
 
       /**
-       * Constructs Clients by copying existing clients.
-       * @param clients The clients to copy.
+       * Constructs Clients by referencing existing clients.
+       * @param clients The clients to reference.
        */
-      template<typename C>
-      explicit Clients(C clients);
+      template<Beam::DisableCopy<Clients> C> requires
+        IsClients<Beam::dereference_t<C>>
+      Clients(C&& clients);
 
-      explicit Clients(Clients* clients);
-
-      explicit Clients(const std::shared_ptr<Clients>& clients);
-
-      explicit Clients(const std::unique_ptr<Clients>& clients);
+      Clients(const Clients&) = default;
+      Clients(Clients&&) = default;
 
       /** Returns the service locator client. */
       ServiceLocatorClient& get_service_locator_client();
-
-      /** Returns the registry client. */
-      RegistryClient& get_registry_client();
 
       /** Returns the administration client. */
       AdministrationClient& get_administration_client();
@@ -117,8 +133,8 @@ namespace Nexus {
     private:
       struct VirtualClients {
         virtual ~VirtualClients() = default;
+
         virtual ServiceLocatorClient& get_service_locator_client() = 0;
-        virtual RegistryClient& get_registry_client() = 0;
         virtual AdministrationClient& get_administration_client() = 0;
         virtual DefinitionsClient& get_definitions_client() = 0;
         virtual MarketDataClient& get_market_data_client() = 0;
@@ -136,7 +152,6 @@ namespace Nexus {
         using Clients = C;
         Beam::local_ptr_t<Clients> m_clients;
         ServiceLocatorClient m_service_locator_client;
-        RegistryClient m_registry_client;
         AdministrationClient m_administration_client;
         DefinitionsClient m_definitions_client;
         MarketDataClient m_market_data_client;
@@ -148,8 +163,8 @@ namespace Nexus {
 
         template<typename... Args>
         WrappedClients(Args&&... args);
+
         ServiceLocatorClient& get_service_locator_client() override;
-        RegistryClient& get_registry_client() override;
         AdministrationClient& get_administration_client() override;
         DefinitionsClient& get_definitions_client() override;
         MarketDataClient& get_market_data_client() override;
@@ -162,38 +177,22 @@ namespace Nexus {
           boost::posix_time::time_duration expiry) override;
         void close() override;
       };
-      std::shared_ptr<VirtualClients> m_clients;
+      Beam::VirtualPtr<VirtualClients> m_clients;
   };
 
-  /** Checks if a type implements the Clients interface. */
-  template<typename T>
-  concept IsClients = std::constructible_from<
-    Clients, std::remove_pointer_t<std::remove_cvref_t<T>>*>;
-
-  template<typename T, typename... Args>
+  template<IsClients T, typename... Args>
   Clients::Clients(std::in_place_type_t<T>, Args&&... args)
-    : m_clients(std::make_shared<WrappedClients<T>>(
+    : m_clients(Beam::make_virtual_ptr<WrappedClients<T>>(
         std::forward<Args>(args)...)) {}
 
-  template<typename C>
-  Clients::Clients(C clients)
-    : Clients(std::in_place_type<C>, std::move(clients)) {}
-
-  inline Clients::Clients(Clients* clients)
-    : Clients(*clients) {}
-
-  inline Clients::Clients(const std::shared_ptr<Clients>& clients)
-    : Clients(*clients) {}
-
-  inline Clients::Clients(const std::unique_ptr<Clients>& clients)
-    : Clients(*clients) {}
+  template<Beam::DisableCopy<Clients> C> requires
+    IsClients<Beam::dereference_t<C>>
+  Clients::Clients(C&& clients)
+    : m_clients(Beam::make_virtual_ptr<WrappedClients<std::remove_cvref_t<C>>>(
+        std::forward<C>(clients))) {}
 
   inline Clients::ServiceLocatorClient& Clients::get_service_locator_client() {
     return m_clients->get_service_locator_client();
-  }
-
-  inline Clients::RegistryClient& Clients::get_registry_client() {
-    return m_clients->get_registry_client();
   }
 
   inline Clients::AdministrationClient& Clients::get_administration_client() {
@@ -242,7 +241,6 @@ namespace Nexus {
   Clients::WrappedClients<C>::WrappedClients(Args&&... args)
     : m_clients(std::forward<Args>(args)...),
       m_service_locator_client(&m_clients->get_service_locator_client()),
-      m_registry_client(&m_clients->get_registry_client()),
       m_administration_client(&m_clients->get_administration_client()),
       m_definitions_client(&m_clients->get_definitions_client()),
       m_market_data_client(&m_clients->get_market_data_client()),
@@ -256,11 +254,6 @@ namespace Nexus {
   Clients::ServiceLocatorClient&
       Clients::WrappedClients<C>::get_service_locator_client() {
     return m_service_locator_client;
-  }
-
-  template<typename C>
-  Clients::RegistryClient& Clients::WrappedClients<C>::get_registry_client() {
-    return m_registry_client;
   }
 
   template<typename C>

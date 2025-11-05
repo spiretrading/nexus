@@ -4,8 +4,6 @@
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::ServiceLocator;
 using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
@@ -31,7 +29,7 @@ namespace {
           Ref(m_event_handler_environment.get_market_data_environment()),
           make_market_data_client(m_source_environment, "back_tester")) {
       auto start_time =
-        m_event_handler_environment.get_time_environment().GetTime();
+        m_event_handler_environment.get_time_environment().get_time();
       auto& data_store =
         m_source_environment.get_market_data_environment().get_data_store();
       data_store.store(SequencedValue(IndexedValue(BboQuote(
@@ -52,14 +50,14 @@ TEST_SUITE("BacktesterMarketDataClient") {
     auto fixture = Fixture();
     auto client = BacktesterMarketDataClient(Ref(fixture.m_market_data_service),
       make_market_data_client(fixture.m_event_handler_environment, "client1"));
-    auto query = MakeRealTimeQuery(TD);
+    auto query = make_real_time_query(TD);
     auto queue = std::make_shared<Queue<BboQuote>>();
     client.query(query, queue);
-    auto bbo = queue->Pop();
+    auto bbo = queue->pop();
     REQUIRE(bbo.m_bid.m_price == 99 * Money::ONE);
-    bbo = queue->Pop();
+    bbo = queue->pop();
     REQUIRE(bbo.m_bid.m_price == 100 * Money::ONE);
-    bbo = queue->Pop();
+    bbo = queue->pop();
     REQUIRE(bbo.m_bid.m_price == 101 * Money::ONE);
   }
 
@@ -79,13 +77,13 @@ TEST_SUITE("BacktesterMarketDataClient") {
     auto client = BacktesterMarketDataClient(Ref(fixture.m_market_data_service),
       make_market_data_client(fixture.m_event_handler_environment, "handler1"));
     auto query = SecurityMarketDataQuery();
-    query.SetIndex(TD);
-    query.SetRange(Range::Historical());
-    query.set_snapshot_limit(SnapshotLimit::Unlimited());
+    query.set_index(TD);
+    query.set_range(Range::HISTORICAL);
+    query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     auto queue = std::make_shared<Queue<SequencedBboQuote>>();
     client.query(query, queue);
     auto received = std::vector<SequencedBboQuote>();
-    Flush(queue, std::back_inserter(received));
+    flush(queue, std::back_inserter(received));
     REQUIRE(received.size() == 6);
     REQUIRE(received[0]->m_timestamp == start_time - seconds(5));
     REQUIRE(received[1]->m_timestamp == start_time - seconds(4));

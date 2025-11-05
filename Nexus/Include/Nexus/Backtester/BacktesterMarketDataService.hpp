@@ -175,8 +175,8 @@ namespace Nexus {
     Beam::Ref<BacktesterEventHandler> event_handler,
     Beam::Ref<Tests::MarketDataServiceTestEnvironment> market_data_environment,
     MarketDataClient market_data_client) noexcept
-    : m_event_handler(event_handler.Get()),
-      m_market_data_environment(market_data_environment.Get()),
+    : m_event_handler(event_handler.get()),
+      m_market_data_environment(market_data_environment.get()),
       m_market_data_client(std::move(market_data_client)) {}
 
   inline void BacktesterMarketDataService::query_order_imbalances(
@@ -212,19 +212,19 @@ namespace Nexus {
     Beam::Ref<BacktesterMarketDataService> service) noexcept
     : BacktesterEvent(boost::posix_time::neg_infin),
       m_query(std::move(query)),
-      m_service(service.Get()) {}
+      m_service(service.get()) {}
 
   template<typename T>
   void MarketDataQueryEvent<T>::execute() {
     auto type = get_market_data_type<MarketDataType>();
-    auto key = std::tuple(m_query.GetIndex(), type);
-    if(m_query.GetRange().GetEnd() != Beam::Sequence::Last() ||
+    auto key = std::tuple(m_query.get_index(), type);
+    if(m_query.get_range().get_end() != Beam::Sequence::LAST ||
         !m_service->m_queries.insert(key).second) {
       return;
     }
     auto time = m_service->m_event_handler->get_time();
     auto event = std::make_shared<MarketDataLoadEvent<MarketDataType>>(
-      m_query.GetIndex(), time, boost::posix_time::neg_infin,
+      m_query.get_index(), time, boost::posix_time::neg_infin,
       Beam::Ref(*m_service));
     m_service->m_event_handler->add(event);
   }
@@ -236,7 +236,7 @@ namespace Nexus {
     : BacktesterEvent(timestamp),
       m_index(std::move(index)),
       m_start(start),
-      m_service(service.Get()) {}
+      m_service(service.get()) {}
 
   template<typename T>
   void MarketDataLoadEvent<T>::execute() {
@@ -244,34 +244,32 @@ namespace Nexus {
     auto end = [&] () -> Beam::Range::Point {
       if(m_service->m_event_handler->get_end_time() ==
           boost::posix_time::pos_infin) {
-        return Beam::Sequence::Present();
+        return Beam::Sequence::PRESENT;
       }
       return m_service->m_event_handler->get_end_time();
     }();
     auto query = QueryType();
-    query.SetIndex(m_index);
-    query.SetRange(m_start, end);
-    query.set_snapshot_limit(
-      Beam::SnapshotLimit::Type::HEAD, QUERY_SIZE);
-    auto queue = std::make_shared<
-      Beam::Queue<Beam::SequencedValue<MarketDataType>>>();
+    query.set_index(m_index);
+    query.set_range(m_start, end);
+    query.set_snapshot_limit(Beam::SnapshotLimit::Type::HEAD, QUERY_SIZE);
+    auto queue =
+      std::make_shared<Beam::Queue<Beam::SequencedValue<MarketDataType>>>();
     m_service->m_market_data_client.query(query, queue);
     auto data = std::vector<Beam::SequencedValue<MarketDataType>>();
-    Beam::Flush(queue, std::back_inserter(data));
+    Beam::flush(queue, std::back_inserter(data));
     if(data.empty()) {
       return;
     }
     auto events = std::vector<std::shared_ptr<BacktesterEvent>>();
     auto timestamp = m_service->m_event_handler->get_time();
     for(auto& value : data) {
-      timestamp =
-        std::max(timestamp, Beam::GetTimestamp(value.GetValue()));
+      timestamp = std::max(timestamp, Beam::get_timestamp(value.get_value()));
       events.push_back(std::make_shared<MarketDataEvent<
-        typename QueryType::Index, MarketDataType>>(query.GetIndex(),
+        typename QueryType::Index, MarketDataType>>(query.get_index(),
           std::move(value), timestamp, Beam::Ref(*m_service)));
     }
     auto reload_event = std::make_shared<MarketDataLoadEvent>(m_index,
-      Beam::Increment(data.back().GetSequence()),
+      Beam::increment(data.back().get_sequence()),
       events.back()->get_timestamp(), Beam::Ref(*m_service));
     events.push_back(reload_event);
     m_service->m_event_handler->add(events);
@@ -284,7 +282,7 @@ namespace Nexus {
     : BacktesterEvent(timestamp),
       m_index(std::move(index)),
       m_value(std::move(value)),
-      m_service(service.Get()) {}
+      m_service(service.get()) {}
 
   template<typename I, typename T>
   void MarketDataEvent<I, T>::execute() {
