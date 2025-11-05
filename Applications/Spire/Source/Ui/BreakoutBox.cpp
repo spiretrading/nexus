@@ -1,6 +1,5 @@
 #include "Spire/Ui/BreakoutBox.hpp"
 #include <QApplication>
-#include <QKeyEvent>
 #include <QWheelEvent>
 #include "Spire/Ui/Layouts.hpp"
 
@@ -13,8 +12,7 @@ BreakoutBox::BreakoutBox(QWidget& body, QWidget& source)
   enclose(*this, *m_body);
   setFocusProxy(m_body);
   move(parentWidget()->mapFromGlobal(m_source->mapToGlobal(QPoint(0, 0))));
-  setMinimumSize(m_source->size());
-  update_maximum_size();
+  update_size_constraints();
   m_source->installEventFilter(this);
   parentWidget()->installEventFilter(this);
   qApp->installEventFilter(this);
@@ -39,14 +37,12 @@ bool BreakoutBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_source) {
     if(event->type() == QEvent::Move) {
       move(parentWidget()->mapFromGlobal(m_source->mapToGlobal(QPoint(0, 0))));
-      update_maximum_size();
+      update_size();
     } else if(event->type() == QEvent::Resize) {
-      auto& resize_event = *static_cast<QResizeEvent*>(event);
-      setMinimumSize(resize_event.size());
-      adjustSize();
+      update_size();
     }
   } else if(watched == parentWidget() && event->type() == QEvent::Resize) {
-    update_maximum_size();
+    update_size();
   } else if(event->type() == QEvent::Wheel && isVisible()) {
     auto& wheel_event = *static_cast<QWheelEvent*>(event);
     auto parent = parentWidget();
@@ -70,8 +66,24 @@ bool BreakoutBox::focusNextPrevChild(bool next) {
   return focus_next(*m_source, next);
 }
 
-void BreakoutBox::update_maximum_size() {
+void BreakoutBox::update_size_constraints() {
   auto parent = parentWidget();
-  setMaximumWidth(parent->width() - x());
-  setMaximumHeight(parent->height() - y());
+  auto maximum_width = parent->width() - x();
+  auto minimum_width = m_source->width();
+  if(maximum_width <= minimum_width) {
+    minimum_width = maximum_width;
+  }
+  auto maximum_height = parent->height() - y();
+  auto minimum_height = m_source->height();
+  if(maximum_height <= minimum_height) {
+    minimum_height = maximum_height;
+  }
+  setMinimumSize(minimum_width, minimum_height);
+  setMaximumSize(maximum_width, maximum_height);
+}
+
+void BreakoutBox::update_size() {
+  update_size_constraints();
+  invalidate_descendant_layouts(*this);
+  adjustSize();
 }
