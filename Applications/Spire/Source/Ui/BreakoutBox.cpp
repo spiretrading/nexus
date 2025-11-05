@@ -31,7 +31,6 @@ QWidget& BreakoutBox::get_body() {
 bool BreakoutBox::event(QEvent* event) {
   if(event->type() == QEvent::LayoutRequest) {
     adjustSize();
-    return true;
   }
   return QWidget::event(event);
 }

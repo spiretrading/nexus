@@ -291,7 +291,6 @@ connection ListView::connect_submit_signal(
 bool ListView::eventFilter(QObject* watched, QEvent* event) {
   if(watched == parentWidget()) {
     if(event->type() == QEvent::Resize) {
-      update_visible_region();
       update_layout();
     }
   } else if(event->type() == QEvent::Resize) {

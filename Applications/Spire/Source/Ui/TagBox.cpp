@@ -288,6 +288,13 @@ QSize TagBox::sizeHint() const {
   return *m_size_hint;
 }
 
+bool TagBox::event(QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    m_size_hint = none;
+  }
+  return QWidget::event(event);
+}
+
 bool TagBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
@@ -408,11 +415,15 @@ int TagBox::get_height_for_width(int width) const {
       m_list_view->get_list()->get_size() == 0) {
     return m_min_scroll_height;
   }
-  auto vertical_space = vertical_length(m_list_view_padding) +
-    vertical_length(m_input_box_border) + vertical_length(m_input_box_padding);
+  auto horizontal_scroll_space = [&] {
+    if(m_vertical_scroll_bar->isVisible()) {
+      return m_vertical_scroll_bar->width();
+    }
+    return 0;
+  }();
   auto horizontal_space = horizontal_length(m_list_view_padding) +
     horizontal_length(m_input_box_padding) +
-    horizontal_length(m_input_box_border);
+    horizontal_length(m_input_box_border) + horizontal_scroll_space;
   auto content_width = width - horizontal_space;
   auto remaining_width = content_width;
   auto line_height = 0;
@@ -433,6 +444,8 @@ int TagBox::get_height_for_width(int width) const {
     remaining_width -= item_space;
     line_height = std::max(line_height, item_size.height());
   }
+  auto vertical_space = vertical_length(m_list_view_padding) +
+    vertical_length(m_input_box_border) + vertical_length(m_input_box_padding);
   total_height += line_height + vertical_space;
   return total_height;
 }
@@ -464,15 +477,6 @@ void TagBox::update_scroll_bar_end_range(ScrollBar& scroll_bar,
   if(scroll_bar.get_range().m_end != end_range) {
     scroll_to_end(scroll_bar);
     end_range = scroll_bar.get_range().m_end;
-  }
-}
-
-void TagBox::update_tag_size_policy() {
-  if(m_list_view_overflow == Overflow::WRAP) {
-    m_list_view->set_item_size_policy(QSizePolicy::Preferred,
-      QSizePolicy::Minimum);
-  } else {
-    m_list_view->set_item_size_policy(QSizePolicy::Fixed, QSizePolicy::Minimum);
   }
 }
 
@@ -557,6 +561,8 @@ void TagBox::update_overflow() {
         style.get(Any()).set(PaddingRight(scale_width(8)));
       });
       m_list_view->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Minimum);
+      m_list_view->set_item_size_policy(QSizePolicy::Fixed,
+        QSizePolicy::Minimum);
     } else {
       update_style(*this, [] (auto& style) {
         style.get(Any() > is_a<ListView>()).
@@ -565,9 +571,10 @@ void TagBox::update_overflow() {
         style.get(Any()).set(PaddingRight(0));
       });
       m_list_view->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+      m_list_view->set_item_size_policy(QSizePolicy::Preferred,
+        QSizePolicy::Minimum);
     }
-    update_tag_size_policy();
-    updateGeometry();
+    m_list_view->updateGeometry();
   }
 }
 
@@ -633,10 +640,7 @@ void TagBox::on_operation(const AnyListModel::Operation& operation) {
 }
 
 void TagBox::on_text_box_current(const QString& current) {
-  m_size_hint = none;
   m_list_view->updateGeometry();
-  updateGeometry();
-  update();
   scroll_to_text_box();
 }
 

@@ -55,6 +55,7 @@ namespace Spire {
       QSize sizeHint() const override;
 
     protected:
+      bool event(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void changeEvent(QEvent* event) override;
       bool focusNextPrevChild(bool next) override;
@@ -97,7 +98,6 @@ namespace Spire {
       void scroll_to_text_box();
       void update_placeholder();
       void update_scroll_bar_end_range(ScrollBar& scroll_bar, int& end_range);
-      void update_tag_size_policy();
       void update_tags_read_only();
       void update_tip();
       void update_tooltip();
