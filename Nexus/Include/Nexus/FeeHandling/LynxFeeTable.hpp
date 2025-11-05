@@ -65,7 +65,7 @@ namespace Nexus {
       std::unordered_set<Security> etfs,
       std::unordered_set<Security> interlisted) {
     auto table = LynxFeeTable();
-    parse_fee_table(config, "fee_table", Beam::Store(table.m_fee_table));
+    parse_fee_table(config, "fee_table", Beam::out(table.m_fee_table));
     table.m_interlisted = std::move(interlisted);
     table.m_etfs = std::move(etfs);
     return table;

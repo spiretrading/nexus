@@ -7,7 +7,7 @@
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Threading/Sync.hpp>
-#include <Beam/Utilities/Functional.hpp>
+#include <boost/callable_traits/args.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/throw_exception.hpp>
@@ -28,36 +28,23 @@
 namespace Nexus {
 namespace Details {
   template<typename T>
-  struct GetOut {};
-
-  template<typename T1, typename T2, typename... T>
-  struct GetOut<Beam::TypeSequence<T1, T2, T...>> {
-    using type = typename GetOut<T2>::type;
-  };
+  struct ExtractOutParameter;
 
   template<typename T>
-  struct GetOut<Beam::Out<T>> {
+  struct ExtractOutParameter<Beam::Out<T>> {
     using type = T;
   };
 
   template<typename F>
   struct FixNewOrderSingle {
-    using type = typename GetOut<
-      Beam::GetFunctionParameters<std::decay_t<F>>>::type;
-  };
-
-  template<typename T>
-  struct GetOut2 {};
-
-  template<typename T1, typename T2, typename T3, typename... T>
-  struct GetOut2<Beam::TypeSequence<T1, T2, T3, T...>> {
-    using type = typename GetOut<T3>::type;
+    using type = typename ExtractOutParameter<std::tuple_element_t<
+      0, boost::callable_traits::args_t<std::remove_cvref_t<F>>>>::type;
   };
 
   template<typename F>
   struct FixCancelOrderRequest {
-    using type = typename GetOut2<
-      Beam::GetFunctionParameters<std::decay_t<F>>>::type;
+    using type = typename ExtractOutParameter<std::tuple_element_t<
+      1, boost::callable_traits::args_t<std::remove_cvref_t<F>>>>::type;
   };
 }
 
@@ -250,7 +237,7 @@ namespace Details {
   }
 
   inline std::shared_ptr<PrimitiveOrder> FixOrderLog::find(OrderId id) const {
-    return Beam::With(m_orders, [&] (const auto& orders) {
+    return Beam::with(m_orders, [&] (const auto& orders) {
       auto i = orders.find(id);
       if(i == orders.end()) {
         return std::shared_ptr<PrimitiveOrder>();
@@ -276,9 +263,9 @@ namespace Details {
           (*record)->m_info.m_id)));
     }
     auto order = add(**record, *side);
-    auto recovered_reports = m_recovered_reports.Find((*record)->m_info.m_id);
-    if(recovered_reports) {
-      recovered_reports->ForEach([&] (const auto& recovered_report) {
+    if(auto recovered_reports =
+        m_recovered_reports.find((*record)->m_info.m_id)) {
+      recovered_reports->for_each([&] (const auto& recovered_report) {
         auto fix_timestamp = FIX::UtcTimeStamp();
         std::visit([&] (auto& message) {
           if(message.isSetField(FIX::FIELD::TransactTime)) {
@@ -336,9 +323,9 @@ namespace Details {
         FIX::Price(static_cast<double>(info.m_fields.m_price)));
     }
     add_additional_tags(
-      info.m_fields.m_additional_fields, Beam::Store(new_order_single));
+      info.m_fields.m_additional_fields, Beam::out(new_order_single));
     try {
-      std::forward<F>(f)(Beam::Store(new_order_single));
+      std::forward<F>(f)(Beam::out(new_order_single));
     } catch(const std::exception& e) {
       return reject(info, e.what());
     }
@@ -374,7 +361,7 @@ namespace Details {
     auto order_quantity = FIX::OrderQty(
       static_cast<FIX::QTY>(order->get_info().m_fields.m_quantity));
     order_cancel_request.set(order_quantity);
-    std::forward<F>(f)(order, Beam::Store(order_cancel_request));
+    std::forward<F>(f)(order, Beam::out(order_cancel_request));
     auto send_message = order->with([&] (auto status, const auto& reports) {
       if(is_terminal(status) || reports.empty()) {
         return false;
@@ -404,14 +391,14 @@ namespace Details {
     } else {
       auto recovered_report =
         RecoveredExecutionReport(message, std::forward<F>(f));
-      m_recovered_reports.Get(*id).PushBack(recovered_report);
+      m_recovered_reports.get(*id).push_back(recovered_report);
     }
   }
 
   inline std::shared_ptr<PrimitiveOrder> FixOrderLog::add(
       const OrderInfo& info, FIX::Side side) {
     auto order = std::make_shared<FixOrder>(info, side);
-    Beam::With(m_orders, [&] (auto& orders) {
+    Beam::with(m_orders, [&] (auto& orders) {
       orders.insert(std::pair(info.m_id, order));
     });
     return order;
@@ -420,7 +407,7 @@ namespace Details {
   inline std::shared_ptr<PrimitiveOrder> FixOrderLog::add(
       const OrderRecord& record, FIX::Side side) {
     auto order = std::make_shared<FixOrder>(record, side);
-    Beam::With(m_orders, [&] (auto& orders) {
+    Beam::with(m_orders, [&] (auto& orders) {
       orders.insert(std::pair(record.m_info.m_id, order));
     });
     return order;
@@ -429,7 +416,7 @@ namespace Details {
   inline std::shared_ptr<PrimitiveOrder> FixOrderLog::reject(
       const OrderInfo& info, const std::string& reason) {
     auto order = make_rejected_order(info, reason);
-    Beam::With(m_orders, [&] (auto& orders) {
+    Beam::with(m_orders, [&] (auto& orders) {
       orders.insert(std::pair(info.m_id, order));
     });
     return order;
@@ -455,7 +442,7 @@ namespace Details {
     auto is_pending_cancel = *order_status == OrderStatus::PENDING_CANCEL;
     auto last_quantity = Quantity();
     auto last_price = Money();
-    get_fill_info(message, Beam::Store(last_quantity), Beam::Store(last_price));
+    get_fill_info(message, Beam::out(last_quantity), Beam::out(last_price));
     if(is_pending_cancel && last_quantity == 0) {
       return;
     }
@@ -484,7 +471,7 @@ namespace Details {
       updated_report.m_last_quantity = last_quantity;
       updated_report.m_last_price = last_price;
       updated_report.m_text = text.getString();
-      std::forward<F>(f)(order, Beam::Store(updated_report));
+      std::forward<F>(f)(order, Beam::out(updated_report));
       order->update(updated_report);
     });
   }

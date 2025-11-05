@@ -47,6 +47,7 @@ namespace Nexus {
         const std::vector<FixApplicationEntry>& entries);
 
       ~FixOrderExecutionDriver();
+
       std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
       void add(const std::shared_ptr<Order>& order);
       std::shared_ptr<Order> submit(const OrderInfo& info);
@@ -163,7 +164,7 @@ namespace Nexus {
     }
     auto entry = i->second;
     auto order = entry->m_application->recover(record);
-    m_id_to_application.Insert((*record)->m_info.m_id, entry);
+    m_id_to_application.insert((*record)->m_info.m_id, entry);
     return order;
   }
 
@@ -179,13 +180,13 @@ namespace Nexus {
     }
     auto entry = i->second;
     auto order = entry->m_application->submit(info);
-    m_id_to_application.Insert(info.m_id, entry);
+    m_id_to_application.insert(info.m_id, entry);
     return order;
   }
 
   inline void FixOrderExecutionDriver::cancel(
       const OrderExecutionSession& session, OrderId id) {
-    if(auto entry = m_id_to_application.Find(id)) {
+    if(auto entry = m_id_to_application.find(id)) {
       (*entry)->m_application->cancel(session, id);
     }
   }
@@ -193,13 +194,13 @@ namespace Nexus {
   inline void FixOrderExecutionDriver::update(
       const OrderExecutionSession& session, OrderId id,
       const ExecutionReport& report) {
-    if(auto entry = m_id_to_application.Find(id)) {
+    if(auto entry = m_id_to_application.find(id)) {
       (*entry)->m_application->update(session, id, report);
     }
   }
 
   inline void FixOrderExecutionDriver::close() {
-    if(m_open_state.SetClosing()) {
+    if(m_open_state.set_closing()) {
       return;
     }
     for(auto& application : m_applications) {
@@ -207,7 +208,7 @@ namespace Nexus {
       entry.m_initiator->stop();
       entry.m_is_connected = false;
     }
-    m_open_state.Close();
+    m_open_state.close();
   }
 }
 

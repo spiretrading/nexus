@@ -71,7 +71,7 @@ namespace Details {
    * @param message The FIX Message to add the tags to.
    */
   template<typename NewMessageType>
-  inline void add_additional_tags(const std::vector<Tag>& additional_tags,
+  void add_additional_tags(const std::vector<Tag>& additional_tags,
       Beam::Out<NewMessageType> message) {
     for(auto& tag : additional_tags) {
       if(tag.get_key() == FIX::FIELD::MaxFloor) {
@@ -85,7 +85,7 @@ namespace Details {
       } else {
         Details::AddAdditionalFix42Tag<
           std::is_base_of_v<FIX42::Message, NewMessageType>>()(
-            tag, Beam::Store(message));
+            tag, Beam::out(message));
       }
     }
   }

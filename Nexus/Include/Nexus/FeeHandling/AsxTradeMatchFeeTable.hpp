@@ -72,14 +72,13 @@ namespace Nexus {
   inline AsxTradeMatchFeeTable
       parse_asx_trade_match_fee_table(const YAML::Node& config) {
     auto table = AsxTradeMatchFeeTable();
-    table.m_spire_fee = Beam::Extract<Money>(config, "spire_fee");
+    table.m_spire_fee = Beam::extract<Money>(config, "spire_fee");
     parse_fee_table(
-      config, "clearing_rate_table", Beam::Store(table.m_clearing_rate_table));
+      config, "clearing_rate_table", Beam::out(table.m_clearing_rate_table));
     table.m_trade_rate =
-      Beam::Extract<boost::rational<int>>(config, "trade_rate");
-    table.m_gst_rate =
-      Beam::Extract<boost::rational<int>>(config, "gst_rate");
-    table.m_trade_fee_cap = Beam::Extract<Money>(config, "trade_fee_cap");
+      Beam::extract<boost::rational<int>>(config, "trade_rate");
+    table.m_gst_rate = Beam::extract<boost::rational<int>>(config, "gst_rate");
+    table.m_trade_fee_cap = Beam::extract<Money>(config, "trade_fee_cap");
     return table;
   }
 

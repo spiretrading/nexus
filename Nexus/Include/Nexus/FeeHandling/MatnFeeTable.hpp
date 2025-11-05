@@ -96,9 +96,9 @@ namespace Nexus {
   inline MatnFeeTable parse_matn_fee_table(const YAML::Node& config) {
     auto table = MatnFeeTable();
     parse_fee_table(
-      config, "general_table", Beam::Store(table.m_general_fee_table));
+      config, "general_table", Beam::out(table.m_general_fee_table));
     parse_fee_table(
-      config, "alternative_table", Beam::Store(table.m_alternative_fee_table));
+      config, "alternative_table", Beam::out(table.m_alternative_fee_table));
     return table;
   }
 

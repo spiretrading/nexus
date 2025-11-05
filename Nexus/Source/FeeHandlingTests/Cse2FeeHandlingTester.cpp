@@ -3,7 +3,6 @@
 #include "Nexus/FeeHandlingTests/FeeTableTestUtilities.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -14,17 +13,17 @@ using namespace Nexus::Tests;
 namespace {
   auto make_fee_table() {
     auto table = Cse2FeeTable();
-    populate_fee_table(Store(table.m_regular_table));
-    populate_fee_table(Store(table.m_dark_table));
-    populate_fee_table(Store(table.m_debentures_or_notes_table));
-    populate_fee_table(Store(table.m_cse_listed_government_bonds_table));
-    populate_fee_table(Store(table.m_oddlot_table));
+    populate_fee_table(out(table.m_regular_table));
+    populate_fee_table(out(table.m_dark_table));
+    populate_fee_table(out(table.m_debentures_or_notes_table));
+    populate_fee_table(out(table.m_cse_listed_government_bonds_table));
+    populate_fee_table(out(table.m_oddlot_table));
     return table;
   }
 
   auto make_order_fields(
       std::string symbol, Money price, Quantity quantity, Venue venue) {
-    return make_limit_order_fields(DirectoryEntry::GetRootAccount(),
+    return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
       Security(symbol, venue), CAD, Side::BID, DefaultDestinations::CSE2,
       quantity, price);
   }
@@ -40,7 +39,7 @@ namespace {
   auto make_execution_report(Money price, Quantity quantity, std::string flag) {
     auto report = ExecutionReport();
     report.m_id = 123;
-    report.m_last_market = TSX.get_code().GetData();
+    report.m_last_market = TSX.get_code().get_data();
     report.m_last_price = price;
     report.m_last_quantity = quantity;
     report.m_liquidity_flag = flag;

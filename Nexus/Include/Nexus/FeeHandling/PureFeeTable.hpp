@@ -64,11 +64,11 @@ namespace Nexus {
    */
   inline PureFeeTable parse_pure_fee_table(const YAML::Node& config) {
     auto table = PureFeeTable();
-    parse_fee_table(config, "fee_table", Beam::Store(
+    parse_fee_table(config, "fee_table", Beam::out(
       table.m_fee_table[static_cast<int>(PureFeeTable::Section::DEFAULT)]));
-    parse_fee_table(config, "interlisted_table", Beam::Store(
+    parse_fee_table(config, "interlisted_table", Beam::out(
       table.m_fee_table[static_cast<int>(PureFeeTable::Section::INTERLISTED)]));
-    parse_fee_table(config, "etf_table", Beam::Store(
+    parse_fee_table(config, "etf_table", Beam::out(
       table.m_fee_table[static_cast<int>(PureFeeTable::Section::ETF)]));
     return table;
   }

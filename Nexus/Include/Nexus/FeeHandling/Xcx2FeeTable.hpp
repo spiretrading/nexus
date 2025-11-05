@@ -92,10 +92,10 @@ namespace Nexus {
       const YAML::Node& config, std::unordered_set<Security> etfs) {
     auto table = Xcx2FeeTable();
     parse_fee_table(
-      config, "default_table", Beam::Store(table.m_default_table));
-    parse_fee_table(config, "tsx_table", Beam::Store(table.m_tsx_table));
+      config, "default_table", Beam::out(table.m_default_table));
+    parse_fee_table(config, "tsx_table", Beam::out(table.m_tsx_table));
     table.m_large_trade_size =
-      Beam::Extract<Quantity>(config, "large_trade_size");
+      Beam::extract<Quantity>(config, "large_trade_size");
     table.m_etfs = std::move(etfs);
     return table;
   }

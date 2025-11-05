@@ -3,7 +3,6 @@
 #include "Nexus/FeeHandlingTests/FeeTableTestUtilities.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -13,7 +12,7 @@ using namespace Nexus::Tests;
 
 namespace {
   auto make_order_fields(Money price, Quantity quantity) {
-    return make_limit_order_fields(DirectoryEntry::GetRootAccount(),
+    return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
       Security("TST", TSX), CAD, Side::BID, DefaultDestinations::OMEGA,
       quantity, price);
   }
@@ -37,14 +36,14 @@ namespace {
 TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("fee_table_calculations") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     test_fee_table_index(table, table.m_fee_table, lookup_fee,
       OmgaFeeTable::TYPE_COUNT, OmgaFeeTable::PRICE_CLASS_COUNT);
   }
 
   TEST_CASE("zero_quantity") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_order_fields(Money::ONE);
     fields.m_quantity = 0;
     test_per_share_fee_calculation(
@@ -56,7 +55,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("default_active") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ACTIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
@@ -69,7 +68,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("default_passive") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::PASSIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
@@ -82,7 +81,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("default_hidden_passive") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_hidden_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::HIDDEN_PASSIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
@@ -95,7 +94,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("default_hidden_active") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_hidden_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::HIDDEN_ACTIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
@@ -108,7 +107,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("etf_active") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ETF_ACTIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
@@ -121,7 +120,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("etf_passive") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ETF_PASSIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
@@ -134,7 +133,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("odd_lot_active") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_order_fields(Money::ONE, 50);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
@@ -147,7 +146,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("odd_lot_passive") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_order_fields(Money::ONE, 50);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
@@ -160,7 +159,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("subdollar_active") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ACTIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
@@ -173,7 +172,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("subdollar_passive") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::PASSIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
@@ -186,7 +185,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("subdollar_hidden_passive") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_hidden_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::HIDDEN_PASSIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
@@ -199,7 +198,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("subdollar_hidden_active") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_hidden_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::HIDDEN_ACTIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
@@ -212,7 +211,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("subdollar_etf_active") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ETF_ACTIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
@@ -225,7 +224,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("subdollar_etf_passive") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ETF_PASSIVE,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
@@ -238,7 +237,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("subdollar_odd_lot_active") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_order_fields(Money::CENT, 50);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
@@ -251,7 +250,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("subdollar_odd_lot_passive") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_order_fields(Money::CENT, 50);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::SUBDOLLAR);
@@ -264,7 +263,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("hidden_etf_active") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_hidden_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::HIDDEN_ACTIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
@@ -277,7 +276,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("hidden_etf_passive") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_hidden_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::HIDDEN_PASSIVE,
       OmgaFeeTable::PriceClass::DEFAULT);
@@ -290,7 +289,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("odd_lot_etf_active") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_order_fields(Money::ONE, 50);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
@@ -303,7 +302,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("odd_lot_etf_passive") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_order_fields(Money::ONE, 50);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
@@ -316,7 +315,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("odd_lot_hidden_etf_active") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_hidden_order_fields(Money::ONE, 50);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
@@ -329,7 +328,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("odd_lot_hidden_etf_passive") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_hidden_order_fields(Money::ONE, 50);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::ODD_LOT,
       OmgaFeeTable::PriceClass::DEFAULT);
@@ -342,7 +341,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("unknown_liquidity_flag") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_order_fields(Money::ONE);
     {
       auto report = ExecutionReport(0, second_clock::universal_time());
@@ -378,7 +377,7 @@ TEST_SUITE("OmgaFeeHandling") {
 
   TEST_CASE("empty_liquidity_flag") {
     auto table = OmgaFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, OmgaFeeTable::Type::PASSIVE,
       OmgaFeeTable::PriceClass::DEFAULT);

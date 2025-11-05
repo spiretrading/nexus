@@ -20,7 +20,7 @@ namespace Nexus {
    */
   inline NexFeeTable parse_nex_fee_table(const YAML::Node& config) {
     auto table = NexFeeTable();
-    table.m_fee = Beam::Extract<Money>(config, "fee");
+    table.m_fee = Beam::extract<Money>(config, "fee");
     return table;
   }
 

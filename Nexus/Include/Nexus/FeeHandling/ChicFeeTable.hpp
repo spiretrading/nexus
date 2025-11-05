@@ -86,7 +86,7 @@ namespace Nexus {
     table.m_etfs = std::move(etfs);
     table.m_interlisted = std::move(interlisted);
     parse_fee_table(
-      config, "security_table", Beam::Store(table.m_security_table));
+      config, "security_table", Beam::out(table.m_security_table));
     return table;
   }
 

@@ -9,8 +9,8 @@ using namespace Nexus::Tests;
 namespace {
   auto make_fee_table() {
     auto table = XatsFeeTable();
-    populate_fee_table(Store(table.m_general_fee_table));
-    populate_fee_table(Store(table.m_etf_fee_table));
+    populate_fee_table(out(table.m_general_fee_table));
+    populate_fee_table(out(table.m_etf_fee_table));
     table.m_intraspread_dark_to_dark_max_fee = 1000 * Money::CENT;
     table.m_intraspread_dark_to_dark_subdollar_max_fee = 2000 * Money::CENT;
     return table;

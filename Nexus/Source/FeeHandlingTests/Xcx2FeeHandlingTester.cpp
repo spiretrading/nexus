@@ -3,7 +3,6 @@
 #include "Nexus/FeeHandlingTests/FeeTableTestUtilities.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -18,15 +17,15 @@ namespace {
 
   auto make_fee_table() {
     auto table = Xcx2FeeTable();
-    populate_fee_table(Store(table.m_default_table));
-    populate_fee_table(Store(table.m_tsx_table));
+    populate_fee_table(out(table.m_default_table));
+    populate_fee_table(out(table.m_tsx_table));
     table.m_large_trade_size = 1000;
     table.m_etfs.insert(ETF);
     return table;
   }
 
   auto make_order_fields(Security security, Money price) {
-    auto fields = make_limit_order_fields(DirectoryEntry::GetRootAccount(),
+    auto fields = make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
       std::move(security), CAD, Side::BID, DefaultDestinations::CX2, 100,
       price);
     return fields;
@@ -36,11 +35,11 @@ namespace {
     return make_order_fields(TST2, price);
   }
 
-  auto MakeTsxOrderFields(Money price) {
+  auto make_tsx_order_fields(Money price) {
     return make_order_fields(TST, price);
   }
 
-  auto MakeEtfOrderFields(Money price) {
+  auto make_etf_order_fields(Money price) {
     return make_order_fields(ETF, price);
   }
 }
@@ -133,7 +132,7 @@ TEST_SUITE("Xcx2FeeHandling") {
 
   TEST_CASE("active_etf") {
     auto table = make_fee_table();
-    auto fields = MakeEtfOrderFields(Money::ONE);
+    auto fields = make_etf_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(
       table, fields, Xcx2FeeTable::Type::ACTIVE, Xcx2FeeTable::PriceClass::ETF);
     test_per_share_fee_calculation(
@@ -142,7 +141,7 @@ TEST_SUITE("Xcx2FeeHandling") {
 
   TEST_CASE("passive_etf") {
     auto table = make_fee_table();
-    auto fields = MakeEtfOrderFields(Money::CENT);
+    auto fields = make_etf_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, fields, Xcx2FeeTable::Type::PASSIVE,
       Xcx2FeeTable::PriceClass::ETF);
     test_per_share_fee_calculation(
@@ -205,7 +204,7 @@ TEST_SUITE("Xcx2FeeHandling") {
 
   TEST_CASE("large_active_etf") {
     auto table = make_fee_table();
-    auto fields = MakeEtfOrderFields(Money::ONE);
+    auto fields = make_etf_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, fields,
       Xcx2FeeTable::Type::LARGE_ACTIVE, Xcx2FeeTable::PriceClass::ETF);
     fields.m_quantity = table.m_large_trade_size;
@@ -215,7 +214,7 @@ TEST_SUITE("Xcx2FeeHandling") {
 
   TEST_CASE("large_passive_etf") {
     auto table = make_fee_table();
-    auto fields = MakeEtfOrderFields(5 * Money::ONE);
+    auto fields = make_etf_order_fields(5 * Money::ONE);
     auto expected_fee = lookup_fee(table, fields,
       Xcx2FeeTable::Type::LARGE_PASSIVE, Xcx2FeeTable::PriceClass::ETF);
     fields.m_quantity = table.m_large_trade_size;
@@ -287,7 +286,7 @@ TEST_SUITE("Xcx2FeeHandling") {
 
   TEST_CASE("hidden_active_etf") {
     auto table = make_fee_table();
-    auto fields = MakeEtfOrderFields(Money::ONE);
+    auto fields = make_etf_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, fields,
       Xcx2FeeTable::Type::HIDDEN_ACTIVE, Xcx2FeeTable::PriceClass::ETF);
     test_per_share_fee_calculation(
@@ -296,7 +295,7 @@ TEST_SUITE("Xcx2FeeHandling") {
 
   TEST_CASE("hidden_passive_etf") {
     auto table = make_fee_table();
-    auto fields = MakeEtfOrderFields(5 * Money::ONE);
+    auto fields = make_etf_order_fields(5 * Money::ONE);
     auto expected_fee = lookup_fee(table, fields,
       Xcx2FeeTable::Type::HIDDEN_PASSIVE, Xcx2FeeTable::PriceClass::ETF);
     test_per_share_fee_calculation(
@@ -361,7 +360,7 @@ TEST_SUITE("Xcx2FeeHandling") {
 
   TEST_CASE("active_odd_lot_etf") {
     auto table = make_fee_table();
-    auto fields = MakeEtfOrderFields(5 * Money::ONE);
+    auto fields = make_etf_order_fields(5 * Money::ONE);
     auto expected_fee = lookup_fee(table, fields, Xcx2FeeTable::Type::ODD_LOT,
       Xcx2FeeTable::PriceClass::ETF);
     fields.m_quantity = 50;
@@ -371,7 +370,7 @@ TEST_SUITE("Xcx2FeeHandling") {
 
   TEST_CASE("passive_odd_lot_etf") {
     auto table = make_fee_table();
-    auto fields = MakeEtfOrderFields(Money::ONE);
+    auto fields = make_etf_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, fields, Xcx2FeeTable::Type::ODD_LOT,
       Xcx2FeeTable::PriceClass::ETF);
     fields.m_quantity = 50;

@@ -2,8 +2,8 @@
 #define NEXUS_CXD_FEE_TABLE_HPP
 #include <array>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include "Nexus/FeeHandling/FeeHandling.hpp"
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
+#include "Nexus/FeeHandling/ParseFeeTable.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 
 namespace Nexus {
@@ -62,15 +62,15 @@ namespace Nexus {
 
     /** The fee table for default securities. */
     std::array<std::array<Money, BBO_PRICE_PAIR_COUNT>, LIQUIDITY_FLAG_COUNT>
-      m_feeTable;
+      m_fee_table;
 
     /** The max fee table for default securities. */
     std::array<std::array<Money, BBO_PRICE_PAIR_COUNT>, LIQUIDITY_FLAG_COUNT>
-      m_maxFeeTable;
+      m_max_fee_table;
 
     /** The fee table for ETF securities. */
     std::array<std::array<Money, BBO_PRICE_PAIR_COUNT>, LIQUIDITY_FLAG_COUNT>
-      m_etfFeeTable;
+      m_etf_fee_table;
   };
 
   /**
@@ -78,23 +78,23 @@ namespace Nexus {
    * @param config The configuration to parse the CxdFeeTable from.
    * @return The CxdFeeTable represented by the <i>config</i>.
    */
-  inline CxdFeeTable ParseCxdFeeTable(const YAML::Node& config) {
-    auto feeTable = CxdFeeTable();
-    ParseFeeTable(config, "fee_table", Beam::Store(feeTable.m_feeTable));
-    ParseFeeTable(config, "max_fee_table", Beam::Store(feeTable.m_maxFeeTable));
-    ParseFeeTable(config, "etf_fee_table", Beam::Store(feeTable.m_etfFeeTable));
-    return feeTable;
+  inline CxdFeeTable parse_cxd_fee_table(const YAML::Node& config) {
+    auto table = CxdFeeTable();
+    parse_fee_table(config, "fee_table", Beam::out(table.m_fee_table));
+    parse_fee_table(config, "max_fee_table", Beam::out(table.m_max_fee_table));
+    parse_fee_table(config, "etf_fee_table", Beam::out(table.m_etf_fee_table));
+    return table;
   }
 
   /**
    * Returns the BboType for a given liquidity flag character.
-   * @param liquidityFlag The liquidity flag field.
+   * @param flag The liquidity flag field.
    * @return The corresponding BboType.
    */
-  inline CxdFeeTable::BboType GetCxdBboType(const std::string& liquidityFlag) {
-    if(liquidityFlag == "a" || liquidityFlag == "r") {
+  inline CxdFeeTable::BboType get_cxd_bbo_type(const std::string& flag) {
+    if(flag == "a" || flag == "r") {
       return CxdFeeTable::BboType::INSIDE_BBO;
-    } else if(liquidityFlag == "d" || liquidityFlag == "D") {
+    } else if(flag == "d" || flag == "D") {
       return CxdFeeTable::BboType::AT_BBO;
     }
     return CxdFeeTable::BboType::NONE;
@@ -102,13 +102,13 @@ namespace Nexus {
 
   /**
    * Returns the LiquidityFlag for a given liquidity flag character.
-   * @param liquidityFlag The liquidity flag character.
+   * @param flag The liquidity flag character.
    * @return The corresponding LiquidityFlag.
    */
-  inline LiquidityFlag GetCxdLiquidityFlag(const std::string& liquidityFlag) {
-    if(liquidityFlag == "a" || liquidityFlag == "d") {
+  inline LiquidityFlag get_cxd_liquidity_flag(const std::string& flag) {
+    if(flag == "a" || flag == "d") {
       return LiquidityFlag::PASSIVE;
-    } else if(liquidityFlag == "r" || liquidityFlag == "D") {
+    } else if(flag == "r" || flag == "D") {
       return LiquidityFlag::ACTIVE;
     }
     return LiquidityFlag::NONE;
@@ -119,7 +119,7 @@ namespace Nexus {
    * @param price The price of the trade to classify.
    * @return The corresponding PriceClass.
    */
-  inline CxdFeeTable::PriceClass GetCxdPriceClass(Money price) {
+  inline CxdFeeTable::PriceClass get_cxd_price_class(Money price) {
     if(price < Money::ONE) {
       return CxdFeeTable::PriceClass::SUBDOLLAR;
     } else if(price < 5 * Money::ONE) {
@@ -130,74 +130,74 @@ namespace Nexus {
 
   /**
    * Looks up the fee in the CXD fee table.
-   * @param feeTable The CxdFeeTable to use.
-   * @param liquidityFlag The LiquidityFlag (ACTIVE or PASSIVE).
-   * @param securityClass The SecurityClass (DEFAULT or ETF).
-   * @param priceClass The PriceClass (SUBDOLLAR, SUBFIVE, DEFAULT).
-   * @param bboType The BboType (AT_BBO or INSIDE_BBO).
+   * @param table The CxdFeeTable to use.
+   * @param flag The LiquidityFlag (ACTIVE or PASSIVE).
+   * @param security_class The SecurityClass (DEFAULT or ETF).
+   * @param price_class The PriceClass (SUBDOLLAR, SUBFIVE, DEFAULT).
+   * @param bbo_type The BboType (AT_BBO or INSIDE_BBO).
    * @return The fee for the specified parameters.
    */
-  inline Money LookupFee(const CxdFeeTable& feeTable,
-      LiquidityFlag liquidityFlag, CxdFeeTable::SecurityClass securityClass,
-      CxdFeeTable::PriceClass priceClass, CxdFeeTable::BboType bboType) {
-    auto bboIndex = static_cast<std::size_t>(bboType);
-    auto priceIndex = static_cast<std::size_t>(priceClass);
-    auto liquidityIndex = static_cast<std::size_t>(liquidityFlag);
-    auto columnIndex = bboIndex * CxdFeeTable::PRICE_CLASS_COUNT + priceIndex;
-    if(securityClass == CxdFeeTable::SecurityClass::ETF) {
-      return feeTable.m_etfFeeTable[liquidityIndex][columnIndex];
+  inline Money lookup_fee(const CxdFeeTable& table, LiquidityFlag flag,
+      CxdFeeTable::SecurityClass security_class,
+      CxdFeeTable::PriceClass price_class, CxdFeeTable::BboType bbo_type) {
+    auto bbo_index = static_cast<std::size_t>(bbo_type);
+    auto price_index = static_cast<std::size_t>(price_class);
+    auto liquidity_index = static_cast<std::size_t>(flag);
+    auto column_index =
+      bbo_index * CxdFeeTable::PRICE_CLASS_COUNT + price_index;
+    if(security_class == CxdFeeTable::SecurityClass::ETF) {
+      return table.m_etf_fee_table[liquidity_index][column_index];
     }
-    return feeTable.m_feeTable[liquidityIndex][columnIndex];
+    return table.m_fee_table[liquidity_index][column_index];
   }
 
   /**
    * Looks up the max fee in the CXD fee table.
-   * @param feeTable The CxdFeeTable to use.
-   * @param liquidityFlag The LiquidityFlag (ACTIVE or PASSIVE).
-   * @param priceClass The PriceClass (SUBDOLLAR, SUBFIVE, DEFAULT).
-   * @param bboType The BboType (AT_BBO or INSIDE_BBO).
+   * @param table The CxdFeeTable to use.
+   * @param flag The LiquidityFlag (ACTIVE or PASSIVE).
+   * @param price_class The PriceClass (SUBDOLLAR, SUBFIVE, DEFAULT).
+   * @param bbo_type The BboType (AT_BBO or INSIDE_BBO).
    * @return The max fee for the specified parameters.
    */
-  inline Money LookupMaxFee(const CxdFeeTable& feeTable,
-      LiquidityFlag liquidityFlag, CxdFeeTable::PriceClass priceClass,
-      CxdFeeTable::BboType bboType) {
-    auto bboIndex = static_cast<std::size_t>(bboType);
-    auto priceIndex = static_cast<std::size_t>(priceClass);
-    auto liquidityIndex = static_cast<std::size_t>(liquidityFlag);
-    auto columnIndex = bboIndex * CxdFeeTable::PRICE_CLASS_COUNT + priceIndex;
-    return feeTable.m_maxFeeTable[liquidityIndex][columnIndex];
+  inline Money lookup_max_fee(const CxdFeeTable& table, LiquidityFlag flag,
+      CxdFeeTable::PriceClass price_class, CxdFeeTable::BboType bbo_type) {
+    auto bbo_index = static_cast<std::size_t>(bbo_type);
+    auto price_index = static_cast<std::size_t>(price_class);
+    auto liquidity_index = static_cast<std::size_t>(flag);
+    auto column_index =
+      bbo_index * CxdFeeTable::PRICE_CLASS_COUNT + price_index;
+    return table.m_max_fee_table[liquidity_index][column_index];
   }
 
   /**
    * Calculates the fee for a trade executed on CXD.
-   * @param feeTable The CxdFeeTable to use.
-   * @param securityClass The SecurityClass (DEFAULT or ETF).
-   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @param table The CxdFeeTable to use.
+   * @param security_class The SecurityClass (DEFAULT or ETF).
+   * @param report The ExecutionReport to calculate the fee for.
    * @return The fee for the specified trade.
    */
-  inline Money CalculateFee(const CxdFeeTable& feeTable,
-      CxdFeeTable::SecurityClass securityClass,
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    if(executionReport.m_lastQuantity == 0) {
+  inline Money calculate_fee(
+      const CxdFeeTable& table, CxdFeeTable::SecurityClass security_class,
+      const ExecutionReport& report) {
+    if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }
-    auto bboType = GetCxdBboType(executionReport.m_liquidityFlag);
-    auto liquidityFlag = GetCxdLiquidityFlag(executionReport.m_liquidityFlag);
-    if(bboType == CxdFeeTable::BboType::NONE ||
-        liquidityFlag == LiquidityFlag::NONE) {
+    auto bbo_type = get_cxd_bbo_type(report.m_liquidity_flag);
+    auto flag = get_cxd_liquidity_flag(report.m_liquidity_flag);
+    if(bbo_type == CxdFeeTable::BboType::NONE || flag == LiquidityFlag::NONE) {
       std::cout << "Unknown liquidity flag [CXD]: \"" <<
-        executionReport.m_liquidityFlag << "\"\n";
-      bboType = CxdFeeTable::BboType::AT_BBO;
-      liquidityFlag = LiquidityFlag::ACTIVE;
+        report.m_liquidity_flag << "\"\n";
+      bbo_type = CxdFeeTable::BboType::AT_BBO;
+      flag = LiquidityFlag::ACTIVE;
     }
-    auto priceClass = GetCxdPriceClass(executionReport.m_lastPrice);
-    auto perShareFee =
-      LookupFee(feeTable, liquidityFlag, securityClass, priceClass, bboType);
-    if(securityClass == CxdFeeTable::SecurityClass::ETF) {
-      return executionReport.m_lastQuantity * perShareFee;
+    auto price_class = get_cxd_price_class(report.m_last_price);
+    auto per_share_fee =
+      lookup_fee(table, flag, security_class, price_class, bbo_type);
+    if(security_class == CxdFeeTable::SecurityClass::ETF) {
+      return report.m_last_quantity * per_share_fee;
     } else {
-      auto maxFee = LookupMaxFee(feeTable, liquidityFlag, priceClass, bboType);
-      return std::min(executionReport.m_lastQuantity * perShareFee, maxFee);
+      auto max_fee = lookup_max_fee(table, flag, price_class, bbo_type);
+      return std::min(report.m_last_quantity * per_share_fee, max_fee);
     }
   }
 }

@@ -4,7 +4,6 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -19,7 +18,7 @@ namespace {
 
   auto make_order_fields(
       Security security, Money price, Quantity quantity = 100) {
-    return make_limit_order_fields(DirectoryEntry::GetRootAccount(), security,
+    return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT, security,
       CAD, Side::BID, DefaultDestinations::TSX, quantity, price);
   }
 
@@ -49,41 +48,39 @@ namespace {
     table.m_clearing_fee = Money(4);
     table.m_per_order_fee = Money(5);
     table.m_per_order_cap = Money(20);
-    populate_fee_table(Store(table.m_tsx_fee_table.m_continuous_fee_table));
-    populate_fee_table(Store(table.m_tsx_fee_table.m_auction_fee_table));
-    populate_fee_table(Store(table.m_tsx_fee_table.m_odd_lot_fee_list));
-    populate_fee_table(Store(table.m_tsxv_fee_table.m_continuous_fee_table));
-    populate_fee_table(Store(table.m_tsxv_fee_table.m_auction_fee_table));
-    populate_fee_table(Store(table.m_tsxv_fee_table.m_odd_lot_fee_list));
-    populate_fee_table(Store(table.m_xats_fee_table.m_general_fee_table));
-    populate_fee_table(Store(table.m_xats_fee_table.m_etf_fee_table));
-    table.m_xats_fee_table.m_intraspread_dark_to_dark_max_fee =
-      Money(10);
+    populate_fee_table(out(table.m_tsx_fee_table.m_continuous_fee_table));
+    populate_fee_table(out(table.m_tsx_fee_table.m_auction_fee_table));
+    populate_fee_table(out(table.m_tsx_fee_table.m_odd_lot_fee_list));
+    populate_fee_table(out(table.m_tsxv_fee_table.m_continuous_fee_table));
+    populate_fee_table(out(table.m_tsxv_fee_table.m_auction_fee_table));
+    populate_fee_table(out(table.m_tsxv_fee_table.m_odd_lot_fee_list));
+    populate_fee_table(out(table.m_xats_fee_table.m_general_fee_table));
+    populate_fee_table(out(table.m_xats_fee_table.m_etf_fee_table));
+    table.m_xats_fee_table.m_intraspread_dark_to_dark_max_fee = Money(10);
     table.m_xats_fee_table.m_intraspread_dark_to_dark_subdollar_max_fee =
       Money(20);
-    populate_fee_table(Store(table.m_chic_fee_table.m_security_table));
-    populate_fee_table(Store(table.m_cse_fee_table.m_fee_table));
-    populate_fee_table(Store(table.m_cse2_fee_table.m_regular_table));
-    populate_fee_table(Store(table.m_cse2_fee_table.m_dark_table));
+    populate_fee_table(out(table.m_chic_fee_table.m_security_table));
+    populate_fee_table(out(table.m_cse_fee_table.m_fee_table));
+    populate_fee_table(out(table.m_cse2_fee_table.m_regular_table));
+    populate_fee_table(out(table.m_cse2_fee_table.m_dark_table));
+    populate_fee_table(out(table.m_cse2_fee_table.m_debentures_or_notes_table));
     populate_fee_table(
-      Store(table.m_cse2_fee_table.m_debentures_or_notes_table));
-    populate_fee_table(
-      Store(table.m_cse2_fee_table.m_cse_listed_government_bonds_table));
-    populate_fee_table(Store(table.m_cse2_fee_table.m_oddlot_table));
-    populate_fee_table(Store(table.m_lynx_fee_table.m_fee_table));
-    populate_fee_table(Store(table.m_matn_fee_table.m_general_fee_table));
-    populate_fee_table(Store(table.m_matn_fee_table.m_alternative_fee_table));
-    populate_fee_table(Store(table.m_neoe_fee_table.m_general_fee_table));
-    populate_fee_table(Store(table.m_neoe_fee_table.m_interlisted_fee_table));
-    populate_fee_table(Store(table.m_neoe_fee_table.m_etf_table_fee));
-    populate_fee_table(Store(table.m_neoe_fee_table.m_neo_book_fee_table));
+      out(table.m_cse2_fee_table.m_cse_listed_government_bonds_table));
+    populate_fee_table(out(table.m_cse2_fee_table.m_oddlot_table));
+    populate_fee_table(out(table.m_lynx_fee_table.m_fee_table));
+    populate_fee_table(out(table.m_matn_fee_table.m_general_fee_table));
+    populate_fee_table(out(table.m_matn_fee_table.m_alternative_fee_table));
+    populate_fee_table(out(table.m_neoe_fee_table.m_general_fee_table));
+    populate_fee_table(out(table.m_neoe_fee_table.m_interlisted_fee_table));
+    populate_fee_table(out(table.m_neoe_fee_table.m_etf_table_fee));
+    populate_fee_table(out(table.m_neoe_fee_table.m_neo_book_fee_table));
     table.m_nex_fee_table.m_fee = Money(7);
-    populate_fee_table(Store(table.m_omga_fee_table.m_fee_table));
+    populate_fee_table(out(table.m_omga_fee_table.m_fee_table));
     for(auto i = 0; i != PureFeeTable::SECTION_COUNT; ++i) {
-      populate_fee_table(Store(table.m_pure_fee_table.m_fee_table[i]));
+      populate_fee_table(out(table.m_pure_fee_table.m_fee_table[i]));
     }
-    populate_fee_table(Store(table.m_xcx2_fee_table.m_default_table));
-    populate_fee_table(Store(table.m_xcx2_fee_table.m_tsx_table));
+    populate_fee_table(out(table.m_xcx2_fee_table.m_default_table));
+    populate_fee_table(out(table.m_xcx2_fee_table.m_tsx_table));
     table.m_etfs.insert(make_security("ETF", TSX));
     table.m_interlisted.insert(make_security("INT", TSX));
     table.m_nex_listed.insert(make_security("NEX", TSXV));
@@ -113,7 +110,7 @@ TEST_SUITE("consolidated_tmx_fee_table") {
     auto result1 = calculate_fee(table, state, *order, report);
     auto result2 = calculate_fee(table, state, *order, report);
     auto per_order_total =
-      state.m_per_order_charges.Get(order->get_info().m_id);
+      state.m_per_order_charges.get(order->get_info().m_id);
     REQUIRE(per_order_total <= table.m_per_order_cap);
   }
 

@@ -3,7 +3,6 @@
 #include "Nexus/FeeHandlingTests/FeeTableTestUtilities.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
@@ -13,7 +12,7 @@ namespace {
   auto TST = Security("TST", TSXV);
 
   auto make_order_fields(Money price) {
-    return make_limit_order_fields(DirectoryEntry::GetRootAccount(), TST, CAD,
+    return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT, TST, CAD,
       Side::BID, DefaultDestinations::TSX, 100, price);
   }
 

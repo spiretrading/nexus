@@ -84,14 +84,13 @@ namespace Nexus {
    */
   inline Cse2FeeTable parse_cse2_fee_table(const YAML::Node& config) {
     auto table = Cse2FeeTable();
-    parse_fee_table(
-      config, "regular_table", Beam::Store(table.m_regular_table));
-    parse_fee_table(config, "dark_table", Beam::Store(table.m_dark_table));
+    parse_fee_table(config, "regular_table", Beam::out(table.m_regular_table));
+    parse_fee_table(config, "dark_table", Beam::out(table.m_dark_table));
     parse_fee_table(config, "debentures_or_notes_table",
-      Beam::Store(table.m_debentures_or_notes_table));
+      Beam::out(table.m_debentures_or_notes_table));
     parse_fee_table(config, "cse_listed_government_bonds_table",
-      Beam::Store(table.m_cse_listed_government_bonds_table));
-    parse_fee_table(config, "oddlot_table", Beam::Store(table.m_oddlot_table));
+      Beam::out(table.m_cse_listed_government_bonds_table));
+    parse_fee_table(config, "oddlot_table", Beam::out(table.m_oddlot_table));
     return table;
   }
 

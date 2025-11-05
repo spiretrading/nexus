@@ -16,7 +16,7 @@ namespace Nexus {
   };
 
   inline FixOrderRejectedException::FixOrderRejectedException()
-    : std::runtime_error("Invalid order.") {}
+    : FixOrderRejectedException("Invalid order.") {}
 }
 
 #endif

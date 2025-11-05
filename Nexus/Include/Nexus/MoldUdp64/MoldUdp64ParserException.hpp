@@ -16,7 +16,7 @@ namespace Nexus {
   };
 
   inline MoldUdp64ParserException::MoldUdp64ParserException()
-    : std::runtime_error("Operation failed") {}
+    : MoldUdp64ParserException("Operation failed") {}
 }
 
 #endif

@@ -70,13 +70,13 @@ namespace Nexus {
   inline NeoeFeeTable parse_neoe_fee_table(const YAML::Node& config) {
     auto table = NeoeFeeTable();
     parse_fee_table(
-      config, "general_table", Beam::Store(table.m_general_fee_table));
+      config, "general_table", Beam::out(table.m_general_fee_table));
     parse_fee_table(
-      config, "interlisted_table", Beam::Store(table.m_interlisted_fee_table));
+      config, "interlisted_table", Beam::out(table.m_interlisted_fee_table));
     parse_fee_table(
-      config, "etf_table", Beam::Store(table.m_interlisted_fee_table));
+      config, "etf_table", Beam::out(table.m_interlisted_fee_table));
     parse_fee_table(
-      config, "neo_book_table", Beam::Store(table.m_neo_book_fee_table));
+      config, "neo_book_table", Beam::out(table.m_neo_book_fee_table));
     return table;
   }
 

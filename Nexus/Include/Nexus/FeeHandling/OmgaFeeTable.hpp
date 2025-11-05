@@ -23,7 +23,7 @@ namespace Nexus {
       DEFAULT = 0,
 
       /** Price < $1.00. */
-      SUBDOLLAR,
+      SUBDOLLAR
     };
 
     /** The number of price classes enumerated. */
@@ -71,7 +71,7 @@ namespace Nexus {
    */
   inline OmgaFeeTable parse_omga_fee_table(const YAML::Node& config) {
     auto table = OmgaFeeTable();
-    parse_fee_table(config, "fee_table", Beam::Store(table.m_fee_table));
+    parse_fee_table(config, "fee_table", Beam::out(table.m_fee_table));
     return table;
   }
 

@@ -79,7 +79,10 @@ namespace Nexus::Tests {
   template<typename FeeTable, typename CalculateFeeType>
   void test_fee_calculation(const FeeTable& table, Money price,
       Quantity quantity, LiquidityFlag flag, Money expected_fee,
-      CalculateFeeType&& calculate_fee) {
+      CalculateFeeType&& calculate_fee) requires std::invocable<
+        CalculateFeeType, const FeeTable&, const ExecutionReport&> &&
+          std::same_as<std::invoke_result_t<
+            CalculateFeeType, const FeeTable&, const ExecutionReport&>, Money> {
     auto report =
       ExecutionReport(0, boost::posix_time::second_clock::universal_time());
     report.m_last_price = price;
@@ -103,8 +106,8 @@ namespace Nexus::Tests {
       const std::string& flag, Money expected_fee,
       CalculateFeeType&& calculate_fee) requires std::invocable<
         CalculateFeeType, const FeeTable&, const ExecutionReport&> &&
-          std::same_as<std::invoke_result_t<CalculateFeeType, const FeeTable&,
-            const ExecutionReport&>, Money> {
+          std::same_as<std::invoke_result_t<
+            CalculateFeeType, const FeeTable&, const ExecutionReport&>, Money> {
     auto report =
       ExecutionReport(0, boost::posix_time::second_clock::universal_time());
     report.m_last_price = fields.m_price;
@@ -117,29 +120,27 @@ namespace Nexus::Tests {
 
   /**
    * Tests a fee calculation.
-   * @param feeTable The fee table to test.
+   * @param table The fee table to test.
    * @param fields The OrderFields that were submitted.
-   * @param liquidityFlag The trade's liquidity flag.
+   * @param flag The trade's liquidity flag.
    * @param calculateFee The function used to calculate the fee.
    * @param expectedFee The expected fee.
    */
   template<typename FeeTable, typename CalculateFeeType>
-  void test_fee_calculation(const FeeTable& feeTable,
-      const OrderExecutionService::OrderFields& fields,
-      std::string liquidityFlag, CalculateFeeType&& calculateFee,
-      Money expectedFee) requires std::invocable<CalculateFeeType,
-        const FeeTable&, const OrderExecutionService::OrderFields&,
-        const OrderExecutionService::ExecutionReport&> &&
-        std::same_as<std::invoke_result_t<CalculateFeeType, const FeeTable&,
-          const OrderExecutionService::OrderFields&,
-          const OrderExecutionService::ExecutionReport&>, Money> {
-    auto executionReport = OrderExecutionService::ExecutionReport::
-      MakeInitialReport(0, boost::posix_time::second_clock::universal_time());
-    executionReport.m_lastPrice = fields.m_price;
-    executionReport.m_lastQuantity = fields.m_quantity;
-    executionReport.m_liquidityFlag = std::move(liquidityFlag);
-    auto calculatedTotal = calculateFee(feeTable, fields, executionReport);
-    REQUIRE(calculatedTotal == expectedFee);
+  void test_fee_calculation(const FeeTable& table, const OrderFields& fields,
+      std::string flag, Money expected_fee,
+      CalculateFeeType&& calculate_fee) requires
+        std::invocable<CalculateFeeType, const FeeTable&, const OrderFields&,
+          const ExecutionReport&> &&
+            std::same_as<std::invoke_result_t<CalculateFeeType, const FeeTable&,
+              const OrderFields&, const ExecutionReport&>, Money> {
+    auto report =
+      ExecutionReport(0, boost::posix_time::second_clock::universal_time());
+    report.m_last_price = fields.m_price;
+    report.m_last_quantity = fields.m_quantity;
+    report.m_liquidity_flag = std::move(flag);
+    auto calculated_total = calculate_fee(table, fields, report);
+    REQUIRE(calculated_total == expected_fee);
   }
 
   /**

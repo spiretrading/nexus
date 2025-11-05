@@ -12,7 +12,7 @@
 namespace Nexus {
 
   /** Converts a ptime into its FIX representation. */
-  inline FIX::DateTime get_timestamp(const boost::posix_time::ptime& timestamp) {
+  inline FIX::DateTime get_timestamp(boost::posix_time::ptime timestamp) {
     return FIX::DateTime(timestamp.date().year(), timestamp.date().month(),
       timestamp.date().day(), static_cast<int>(timestamp.time_of_day().hours()),
       static_cast<int>(timestamp.time_of_day().minutes()),
@@ -23,7 +23,8 @@ namespace Nexus {
   }
 
   /** Converts a ptime from its FIX representation. */
-  inline boost::posix_time::ptime get_timestamp(const FIX::DateTime& timestamp) {
+  inline boost::posix_time::ptime get_timestamp(
+      const FIX::DateTime& timestamp) {
     return boost::posix_time::ptime(boost::gregorian::date(
       static_cast<unsigned short>(timestamp.getYear()),
       static_cast<unsigned short>(timestamp.getMonth()),
@@ -103,8 +104,7 @@ namespace Nexus {
   }
 
   /** Converts an OrderStatus from its FIX representation. */
-  inline boost::optional<FIX::OrdStatus> get_order_status(
-      OrderStatus status) {
+  inline boost::optional<FIX::OrdStatus> get_order_status(OrderStatus status) {
     if(status == OrderStatus::PENDING_NEW) {
       return FIX::OrdStatus(FIX::OrdStatus_PENDING_NEW);
     } else if(status == OrderStatus::REJECTED) {

@@ -12,7 +12,7 @@ namespace {
   auto make_fee_table() {
     auto table = PureFeeTable();
     for(auto i = 0; i != PureFeeTable::SECTION_COUNT; ++i) {
-      populate_fee_table(Store(table.m_fee_table[i]));
+      populate_fee_table(out(table.m_fee_table[i]));
     }
     return table;
   }

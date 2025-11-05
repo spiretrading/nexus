@@ -11,7 +11,6 @@
 #include "Nexus/FeeHandling/CseFeeTable.hpp"
 #include "Nexus/FeeHandling/Cse2FeeTable.hpp"
 #include "Nexus/FeeHandling/CxdFeeTable.hpp"
-#include "Nexus/FeeHandling/FeeHandling.hpp"
 #include "Nexus/FeeHandling/LynxFeeTable.hpp"
 #include "Nexus/FeeHandling/MatnFeeTable.hpp"
 #include "Nexus/FeeHandling/NeoeFeeTable.hpp"
@@ -70,7 +69,7 @@ namespace Nexus {
     Cse2FeeTable m_cse2_fee_table;
 
     /** Fee table used by CXD. */
-    CxdFeeTable m_cxdFeeTable;
+    CxdFeeTable m_cxd_fee_table;
 
     /** Fee table used by LYNX. */
     LynxFeeTable m_lynx_fee_table;
@@ -120,7 +119,7 @@ namespace Nexus {
    */
   inline std::unordered_set<Security> parse_tmx_interlisted_securities(
       const std::string& path, const VenueDatabase& venues) {
-    auto config = Beam::LoadFile(path);
+    auto config = Beam::load_file(path);
     auto symbols = config["symbols"];
     if(!symbols) {
       BOOST_THROW_EXCEPTION(
@@ -137,7 +136,7 @@ namespace Nexus {
    */
   inline std::unordered_set<Security> parse_tmx_etf_securities(
       const std::string& path, const VenueDatabase& venues) {
-    auto config = Beam::LoadFile(path);
+    auto config = Beam::load_file(path);
     auto symbols = config["symbols"];
     if(!symbols) {
       BOOST_THROW_EXCEPTION(std::runtime_error("ETF symbols not found."));
@@ -153,7 +152,7 @@ namespace Nexus {
    */
   inline std::unordered_set<Security> parse_nex_listed_securities(
       const std::string& path, const VenueDatabase& venues) {
-    auto config = Beam::LoadFile(path);
+    auto config = Beam::load_file(path);
     auto symbols = config["symbols"];
     if(!symbols) {
       BOOST_THROW_EXCEPTION(std::runtime_error("NEX symbols not found."));
@@ -170,21 +169,21 @@ namespace Nexus {
   inline ConsolidatedTmxFeeTable parse_consolidated_tmx_fee_table(
       const YAML::Node& config, const VenueDatabase& venues) {
     auto table = ConsolidatedTmxFeeTable();
-    auto etf_path = Beam::Extract<std::string>(config, "etf_path");
+    auto etf_path = Beam::extract<std::string>(config, "etf_path");
     table.m_etfs = parse_tmx_etf_securities(etf_path, venues);
     auto interlisted_path =
-      Beam::Extract<std::string>(config, "interlisted_path");
+      Beam::extract<std::string>(config, "interlisted_path");
     table.m_interlisted =
       parse_tmx_interlisted_securities(interlisted_path, venues);
-    auto nex_path = Beam::Extract<std::string>(config, "nex_path");
+    auto nex_path = Beam::extract<std::string>(config, "nex_path");
     table.m_nex_listed = parse_nex_listed_securities(nex_path, venues);
-    table.m_spire_fee = Beam::Extract<Money>(config, "spire_fee");
-    table.m_iiroc_fee = Beam::Extract<Money>(config, "iiroc_fee");
-    table.m_cds_fee = Beam::Extract<Money>(config, "cds_fee");
-    table.m_cds_cap = Beam::Extract<int>(config, "cds_cap");
-    table.m_clearing_fee = Beam::Extract<Money>(config, "clearing_fee");
-    table.m_per_order_fee = Beam::Extract<Money>(config, "per_order_fee");
-    table.m_per_order_cap = Beam::Extract<Money>(config, "per_order_cap");
+    table.m_spire_fee = Beam::extract<Money>(config, "spire_fee");
+    table.m_iiroc_fee = Beam::extract<Money>(config, "iiroc_fee");
+    table.m_cds_fee = Beam::extract<Money>(config, "cds_fee");
+    table.m_cds_cap = Beam::extract<int>(config, "cds_cap");
+    table.m_clearing_fee = Beam::extract<Money>(config, "clearing_fee");
+    table.m_per_order_fee = Beam::extract<Money>(config, "per_order_fee");
+    table.m_per_order_cap = Beam::extract<Money>(config, "per_order_cap");
     if(auto xats_config = config["xats"]) {
       table.m_xats_fee_table = parse_xats_fee_table(xats_config);
     } else {
@@ -211,8 +210,8 @@ namespace Nexus {
     } else {
       BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for XCX2 missing."));
     }
-    if(auto cxdConfig = config["cxd"]) {
-      feeTable.m_cxdFeeTable = ParseCxdFeeTable(cxdConfig);
+    if(auto cxd_config = config["cxd"]) {
+      table.m_cxd_fee_table = parse_cxd_fee_table(cxd_config);
     } else {
       BOOST_THROW_EXCEPTION(std::runtime_error("Fee table for CXD missing."));
     }
@@ -275,7 +274,7 @@ namespace Nexus {
     fees_report.m_processing_fee +=
       fees_report.m_last_quantity * table.m_clearing_fee;
     if(fees_report.m_last_quantity != 0) {
-      auto& fill_count = state.m_fill_count.Get(order.get_info().m_id);
+      auto& fill_count = state.m_fill_count.get(order.get_info().m_id);
       ++fill_count;
       fees_report.m_processing_fee += table.m_iiroc_fee;
       if(fill_count <= table.m_cds_cap) {
@@ -284,7 +283,7 @@ namespace Nexus {
     }
     fees_report.m_commission += fees_report.m_last_quantity * table.m_spire_fee;
     auto& per_order_charge =
-      state.m_per_order_charges.Get(order.get_info().m_id);
+      state.m_per_order_charges.get(order.get_info().m_id);
     auto per_order_delta = report.m_last_quantity * table.m_per_order_fee;
     if(per_order_charge + per_order_delta > table.m_per_order_cap) {
       per_order_delta = table.m_per_order_cap - per_order_charge;
@@ -326,22 +325,21 @@ namespace Nexus {
           }
         }
       }();
-<<<<<<< HEAD
       if(last_market == DefaultVenues::XATS) {
         auto is_etf =
-          Beam::Contains(table.m_etfs, order.get_info().m_fields.m_security);
+          table.m_etfs.contains(order.get_info().m_fields.m_security);
         return calculate_fee(table.m_xats_fee_table, is_etf, report);
       } else if(last_market == DefaultVenues::CHIC) {
         return calculate_fee(
           table.m_chic_fee_table, order.get_info().m_fields, report);
-      } else if(last_market == DefaultMarkets::CSE()) {
+      } else if(last_market == DefaultVenues::CSE) {
         auto& security = order.get_info().m_fields.m_security;
         auto listing = [&] {
-          if(Beam::Contains(table.m_etfs, security)) {
+          if(table.m_etfs.contains(security)) {
             return CseFeeTable::CseListing::ETF;
-          } else if(Beam::Contains(table.m_interlisted, security)) {
+          } else if(table.m_interlisted.contains(security)) {
             return CseFeeTable::CseListing::INTERLISTED;
-          } else if(security.get_venue() == DefaultVenues::CSE()) {
+          } else if(security.get_venue() == DefaultVenues::CSE) {
             return CseFeeTable::CseListing::CSE_LISTED;
           }
           return CseFeeTable::CseListing::DEFAULT;
@@ -353,23 +351,21 @@ namespace Nexus {
       } else if(last_market == DefaultVenues::XCX2) {
         return calculate_fee(
           table.m_xcx2_fee_table, order.get_info().m_fields, report);
-      } else if(last_market == DefaultMarkets::CXD()) {
+      } else if(last_market == DefaultVenues::CXD) {
         auto security_class = [&] {
-          if(Beam::Contains(
-              table.m_etfs, order.get_info().m_fields.m_security)) {
+          if(table.m_etfs.contains(order.get_info().m_fields.m_security)) {
             return CxdFeeTable::SecurityClass::ETF;
           } else {
             return CxdFeeTable::SecurityClass::DEFAULT;
           }
         }();
-        return calculate_fee(feeTable.m_cxd_fee_table, security_class, report);
+        return calculate_fee(table.m_cxd_fee_table, security_class, report);
       } else if(last_market == DefaultVenues::LYNX) {
         return calculate_fee(
           table.m_lynx_fee_table, order.get_info().m_fields, report);
       } else if(last_market == DefaultVenues::MATN) {
         auto classification = [&] {
-          if(Beam::Contains(
-              table.m_etfs, order.get_info().m_fields.m_security)) {
+          if(table.m_etfs.contains(order.get_info().m_fields.m_security)) {
             return MatnFeeTable::Classification::ETF;
           } else {
             return MatnFeeTable::Classification::DEFAULT;
@@ -378,11 +374,11 @@ namespace Nexus {
         return calculate_fee(table.m_matn_fee_table, classification, report);
       } else if(last_market == DefaultVenues::NEOE) {
         auto classification = [&] {
-          if(Beam::Contains(
-              table.m_interlisted, order.get_info().m_fields.m_security)) {
+          if(table.m_interlisted.contains(
+              order.get_info().m_fields.m_security)) {
             return NeoeFeeTable::Classification::INTERLISTED;
-          } else if(Beam::Contains(
-              table.m_etfs, order.get_info().m_fields.m_security)) {
+          } else if(table.m_etfs.contains(
+              order.get_info().m_fields.m_security)) {
             return NeoeFeeTable::Classification::ETF;
           } else {
             return NeoeFeeTable::Classification::GENERAL;
@@ -392,16 +388,15 @@ namespace Nexus {
           order.get_info().m_fields, report);
       } else if(last_market == DefaultVenues::OMGA) {
         auto is_etf =
-          Beam::Contains(table.m_etfs, order.get_info().m_fields.m_security);
+          table.m_etfs.contains(order.get_info().m_fields.m_security);
         return calculate_fee(
           table.m_omga_fee_table, is_etf, order.get_info().m_fields, report);
       } else if(last_market == DefaultVenues::PURE) {
         auto section = [&] {
-          if(Beam::Contains(
-              table.m_etfs, order.get_info().m_fields.m_security)) {
+          if(table.m_etfs.contains(order.get_info().m_fields.m_security)) {
             return PureFeeTable::Section::ETF;
-          } else if(Beam::Contains(
-              table.m_interlisted, order.get_info().m_fields.m_security)) {
+          } else if(table.m_interlisted.contains(
+              order.get_info().m_fields.m_security)) {
             return PureFeeTable::Section::INTERLISTED;
           } else {
             return PureFeeTable::Section::DEFAULT;
@@ -415,11 +410,10 @@ namespace Nexus {
           return calculate_fee(table.m_nex_fee_table, report);
         }
         auto classification = [&] {
-          if(Beam::Contains(
-              table.m_etfs, order.get_info().m_fields.m_security)) {
+          if(table.m_etfs.contains(order.get_info().m_fields.m_security)) {
             return TsxFeeTable::Classification::ETF;
-          } else if(Beam::Contains(
-              table.m_interlisted, order.get_info().m_fields.m_security)) {
+          } else if(table.m_interlisted.contains(
+              order.get_info().m_fields.m_security)) {
             return TsxFeeTable::Classification::INTERLISTED;
           } else {
             return TsxFeeTable::Classification::DEFAULT;

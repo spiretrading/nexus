@@ -11,8 +11,8 @@ using namespace Nexus::Tests;
 namespace {
   auto make_fee_table() {
     auto table = MatnFeeTable();
-    populate_fee_table(Store(table.m_general_fee_table));
-    populate_fee_table(Store(table.m_alternative_fee_table));
+    populate_fee_table(out(table.m_general_fee_table));
+    populate_fee_table(out(table.m_alternative_fee_table));
     for(auto i = 0; i < MatnFeeTable::PRICE_CLASS_COUNT; ++i) {
       table.m_general_fee_table[i][
         static_cast<int>(MatnFeeTable::GeneralIndex::MAX_CHARGE)] *= 10000;

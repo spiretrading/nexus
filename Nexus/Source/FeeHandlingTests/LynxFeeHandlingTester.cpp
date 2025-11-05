@@ -3,7 +3,6 @@
 #include "Nexus/FeeHandlingTests/FeeTableTestUtilities.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -23,14 +22,14 @@ namespace {
 
   auto make_fee_table() {
     auto table = LynxFeeTable();
-    populate_fee_table(Store(table.m_fee_table));
+    populate_fee_table(out(table.m_fee_table));
     table.m_etfs.insert(ETF);
     table.m_interlisted.insert(USA);
     return table;
   }
 
   auto make_order_fields(Security security, Money price, Quantity quantity) {
-    return make_limit_order_fields(DirectoryEntry::GetRootAccount(),
+    return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
       std::move(security), CAD, Side::BID, DefaultDestinations::LYNX, quantity,
       price);
   }

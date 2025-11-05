@@ -89,12 +89,12 @@ namespace Nexus {
   inline XatsFeeTable parse_xats_fee_table(const YAML::Node& config) {
     auto table = XatsFeeTable();
     parse_fee_table(
-      config, "general_table", Beam::Store(table.m_general_fee_table));
-    parse_fee_table(config, "etf_table", Beam::Store(table.m_etf_fee_table));
+      config, "general_table", Beam::out(table.m_general_fee_table));
+    parse_fee_table(config, "etf_table", Beam::out(table.m_etf_fee_table));
     table.m_intraspread_dark_to_dark_subdollar_max_fee =
-      Beam::Extract<Money>(config, "intraspread_dark_to_dark_subdollar_max");
+      Beam::extract<Money>(config, "intraspread_dark_to_dark_subdollar_max");
     table.m_intraspread_dark_to_dark_max_fee =
-      Beam::Extract<Money>(config, "intraspread_dark_to_dark_max");
+      Beam::extract<Money>(config, "intraspread_dark_to_dark_max");
     return table;
   }
 
