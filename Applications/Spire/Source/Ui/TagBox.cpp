@@ -345,9 +345,6 @@ bool TagBox::focusNextPrevChild(bool next) {
 }
 
 void TagBox::resizeEvent(QResizeEvent* event) {
-  if(event->size().width() != event->oldSize().width()) {
-    m_size_hint = none;
-  }
   update_overflow();
   update_tooltip();
   update_vertical_scroll_bar_visible();

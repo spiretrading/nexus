@@ -69,17 +69,17 @@ bool BreakoutBox::focusNextPrevChild(bool next) {
 void BreakoutBox::update_size_constraints() {
   auto parent = parentWidget();
   auto maximum_width = parent->width() - x();
+  auto maximum_height = parent->height() - y();
+  setMaximumSize(maximum_width, maximum_height);
   auto minimum_width = m_source->width();
   if(maximum_width <= minimum_width) {
     minimum_width = maximum_width;
   }
-  auto maximum_height = parent->height() - y();
   auto minimum_height = m_source->height();
   if(maximum_height <= minimum_height) {
     minimum_height = maximum_height;
   }
   setMinimumSize(minimum_width, minimum_height);
-  setMaximumSize(maximum_width, maximum_height);
 }
 
 void BreakoutBox::update_size() {
