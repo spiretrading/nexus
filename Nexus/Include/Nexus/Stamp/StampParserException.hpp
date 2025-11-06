@@ -16,7 +16,7 @@ namespace Nexus {
   };
 
   inline StampParserException::StampParserException()
-    : std::runtime_error("Operation failed") {}
+    : StampParserException("Operation failed") {}
 }
 
 #endif

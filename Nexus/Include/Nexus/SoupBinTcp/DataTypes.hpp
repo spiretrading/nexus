@@ -34,7 +34,7 @@ namespace Nexus {
   template<typename T>
   T parse_left_padded_numeric(
       std::size_t length, Beam::Out<const char*> cursor) {
-    auto value = parse_left_padded_alpha_numeric(length, Beam::Store(cursor));
+    auto value = parse_left_padded_alpha_numeric(length, Beam::out(cursor));
     return boost::lexical_cast<T>(value);
   }
 }

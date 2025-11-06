@@ -1,6 +1,7 @@
 #include <doctest/doctest.h>
 #include "Nexus/Stamp/StampHeader.hpp"
 
+using namespace Beam;
 using namespace Nexus;
 
 namespace {
@@ -25,7 +26,7 @@ TEST_SUITE("StampHeader") {
     auto header_source =
       make_header_string("0025", "000000123", "ABC", '0', '0', "MT", "EX");
     auto cursor = header_source.c_str();
-    auto header = StampHeader::parse(Beam::Store(cursor), header_source.size());
+    auto header = StampHeader::parse(out(cursor), header_source.size());
     REQUIRE(header.m_length == 25);
     REQUIRE(header.m_sequence_number == 123);
     REQUIRE(header.m_service_id == "ABC");
@@ -41,7 +42,7 @@ TEST_SUITE("StampHeader") {
     auto header_source =
       make_header_string("0100", "000000001", "DEF", '1', '1', "XY", "YZ");
     auto cursor = header_source.c_str();
-    auto header = StampHeader::parse(Beam::Store(cursor), header_source.size());
+    auto header = StampHeader::parse(out(cursor), header_source.size());
     REQUIRE(header.m_length == 100);
     REQUIRE(header.m_sequence_number == 1);
     REQUIRE(header.m_service_id == "DEF");
@@ -56,7 +57,7 @@ TEST_SUITE("StampHeader") {
     auto header_source =
       make_header_string("0005", "         ", "GHI", ' ', '2', "ZZ", "AA");
     auto cursor = header_source.c_str();
-    auto header = StampHeader::parse(Beam::Store(cursor), header_source.size());
+    auto header = StampHeader::parse(out(cursor), header_source.size());
     REQUIRE(header.m_length == 5);
     REQUIRE(header.m_sequence_number == 0);
     REQUIRE(header.m_service_id == "GHI");
@@ -72,7 +73,7 @@ TEST_SUITE("StampHeader") {
     auto header_source =
       make_header_string("0010", "000000010", "JKL", '0', '3', "AA", "BB");
     auto cursor = header_source.c_str();
-    auto header = StampHeader::parse(Beam::Store(cursor), header_source.size());
+    auto header = StampHeader::parse(out(cursor), header_source.size());
     REQUIRE(header.m_length == 10);
     REQUIRE(header.m_sequence_number == 10);
     REQUIRE(header.m_service_id == "JKL");
@@ -89,7 +90,7 @@ TEST_SUITE("StampHeader") {
       make_header_string("0A25", "000000123", "ABC", '0', '0', "MT", "EX");
     auto cursor = header_source.c_str();
     REQUIRE_THROWS_AS(StampHeader::parse(
-      Beam::Store(cursor), header_source.size()), StampParserException);
+      out(cursor), header_source.size()), StampParserException);
   }
 
   TEST_CASE("parse_invalid_sequence_field") {
@@ -97,7 +98,7 @@ TEST_SUITE("StampHeader") {
       make_header_string("0025", "00000A123", "ABC", '0', '0', "MT", "EX");
     auto cursor = header_source.c_str();
     REQUIRE_THROWS_AS(StampHeader::parse(
-      Beam::Store(cursor), header_source.size()), StampParserException);
+      out(cursor), header_source.size()), StampParserException);
   }
 
   TEST_CASE("parse_invalid_retransmission_field") {
@@ -105,7 +106,7 @@ TEST_SUITE("StampHeader") {
       make_header_string("0025", "000000123", "ABC", 'X', '0', "MT", "EX");
     auto cursor = header_source.c_str();
     REQUIRE_THROWS_AS(StampHeader::parse(
-      Beam::Store(cursor), header_source.size()), StampParserException);
+      out(cursor), header_source.size()), StampParserException);
   }
 
   TEST_CASE("parse_invalid_continuation_field") {
@@ -113,14 +114,14 @@ TEST_SUITE("StampHeader") {
       make_header_string("0025", "000000123", "ABC", '0', 'X', "MT", "EX");
     auto cursor = header_source.c_str();
     REQUIRE_THROWS_AS(StampHeader::parse(
-      Beam::Store(cursor), header_source.size()), StampParserException);
+      out(cursor), header_source.size()), StampParserException);
   }
 
   TEST_CASE("parse_header_too_short") {
     auto header_source =
       make_header_string("0025", "000000123", "ABC", '0', '0', "M", "E");
     auto cursor = header_source.c_str();
-    REQUIRE_THROWS_AS(StampHeader::parse(
-      Beam::Store(cursor), 10), StampParserException);
+    REQUIRE_THROWS_AS(
+      StampHeader::parse(out(cursor), 10), StampParserException);
   }
 }

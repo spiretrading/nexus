@@ -16,7 +16,7 @@ namespace Nexus {
   };
 
   inline SoupBinTcpParserException::SoupBinTcpParserException()
-    : std::runtime_error("Operation failed") {}
+    : SoupBinTcpParserException("Operation failed") {}
 }
 
 #endif

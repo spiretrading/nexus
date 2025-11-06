@@ -1,7 +1,7 @@
 #ifndef NEXUS_SOUP_BIN_TCP_CLIENT_HPP
 #define NEXUS_SOUP_BIN_TCP_CLIENT_HPP
 #include <cstdint>
-#include <string>
+#include <string_view>
 #include <Beam/IO/Channel.hpp>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -10,7 +10,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
-#include <Beam/Threading/Timer.hpp>
+#include <Beam/TimeService/Timer.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/SoupBinTcp/HeartbeatPackets.hpp"
@@ -24,7 +24,9 @@ namespace Nexus {
    * @param <C> The Channel connected to the SoupBinTCP server.
    * @param <T> The type of Timer used for heartbeats.
    */
-  template<typename C, typename T>
+  template<typename C, typename T> requires
+    Beam::IsChannel<Beam::dereference_t<C>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
   class SoupBinTcpClient {
     public:
 
@@ -42,7 +44,7 @@ namespace Nexus {
        * @param timer The Timer used for heartbeats.
        */
       template<Beam::Initializes<C> CF, Beam::Initializes<T> TF>
-      SoupBinTcpClient(const std::string& username, const std::string& password,
+      SoupBinTcpClient(std::string_view username, std::string_view password,
         CF&& channel, TF&& timer);
 
       /**
@@ -56,8 +58,8 @@ namespace Nexus {
        * @param timer The Timer used for heartbeats.
        */
       template<Beam::Initializes<C> CF, Beam::Initializes<T> TF>
-      SoupBinTcpClient(const std::string& username, const std::string& password,
-        const std::string& session, std::uint64_t sequence_number, CF&& channel,
+      SoupBinTcpClient(std::string_view username, std::string_view password,
+        std::string_view session, std::uint64_t sequence_number, CF&& channel,
         TF&& timer);
 
       ~SoupBinTcpClient();
@@ -75,8 +77,7 @@ namespace Nexus {
       std::string m_session;
       std::uint64_t m_sequence_number;
       Beam::RoutineHandler m_heartbeat_loop;
-      std::shared_ptr<Beam::Queue<Beam::Timer::Result>>
-        m_timer_queue;
+      std::shared_ptr<Beam::Queue<Beam::Timer::Result>> m_timer_queue;
       Beam::OpenState m_open_state;
 
       SoupBinTcpClient(const SoupBinTcpClient&) = delete;
@@ -85,40 +86,44 @@ namespace Nexus {
   };
 
   template<typename C, typename T>
-  SoupBinTcpClient(const std::string&, const std::string&, C&&, T&&) ->
-    SoupBinTcpClient<std::remove_reference_t<C>, std::remove_reference_t<T>>;
+  SoupBinTcpClient(std::string_view, std::string_view, C&&, T&&) ->
+    SoupBinTcpClient<std::remove_cvref_t<C>, std::remove_cvref_t<T>>;
 
   template<typename C, typename T>
-  SoupBinTcpClient(const std::string&, const std::string&, const std::string&,
+  SoupBinTcpClient(std::string_view, std::string_view, std::string_view,
     std::uint64_t, C&&, T&&) ->
-      SoupBinTcpClient<std::remove_reference_t<C>, std::remove_reference_t<T>>;
+      SoupBinTcpClient<std::remove_cvref_t<C>, std::remove_cvref_t<T>>;
 
-  template<typename C, typename T>
+  template<typename C, typename T> requires
+    Beam::IsChannel<Beam::dereference_t<C>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
   template<Beam::Initializes<C> CF, Beam::Initializes<T> TF>
-  SoupBinTcpClient<C, T>::SoupBinTcpClient(const std::string& username,
-    const std::string& password, CF&& channel, TF&& timer)
+  SoupBinTcpClient<C, T>::SoupBinTcpClient(std::string_view username,
+    std::string_view password, CF&& channel, TF&& timer)
     : SoupBinTcpClient(username, password, {}, 1, std::forward<CF>(channel),
         std::forward<TF>(timer)) {}
 
-  template<typename C, typename T>
+  template<typename C, typename T> requires
+    Beam::IsChannel<Beam::dereference_t<C>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
   template<Beam::Initializes<C> CF, Beam::Initializes<T> TF>
-  SoupBinTcpClient<C, T>::SoupBinTcpClient(const std::string& username,
-      const std::string& password, const std::string& session,
+  SoupBinTcpClient<C, T>::SoupBinTcpClient(std::string_view username,
+      std::string_view password, std::string_view session,
       std::uint64_t sequence_number, CF&& channel, TF&& timer)
       try : m_channel(std::forward<CF>(channel)),
             m_timer(std::forward<TF>(timer)),
             m_timer_queue(
               std::make_shared<Beam::Queue<Beam::Timer::Result>>()) {
-    m_timer->GetPublisher().Monitor(m_timer_queue);
+    m_timer->get_publisher().monitor(m_timer_queue);
     try {
       make_login_request_packet(
-        username, password, session, sequence_number, Beam::Store(m_buffer));
-      m_channel->GetWriter().Write(m_buffer);
+        username, password, session, sequence_number, Beam::out(m_buffer));
+      m_channel->get_writer().write(m_buffer);
       auto login_response = SoupBinTcpPacket();
       while(true)  {
-        m_buffer.Reset();
+        reset(m_buffer);
         login_response =
-          read_packet(m_channel->GetReader(), Beam::Store(m_buffer));
+          read_packet(m_channel->get_reader(), Beam::out(m_buffer));
         if(login_response.m_type != '+') {
           break;
         }
@@ -129,8 +134,7 @@ namespace Nexus {
         if(login_rejected_packet.m_reason == "A") {
           BOOST_THROW_EXCEPTION(Beam::ConnectException("Not authorized."));
         } else if(login_rejected_packet.m_reason == "S") {
-          BOOST_THROW_EXCEPTION(
-            Beam::ConnectException("Session unavailable."));
+          BOOST_THROW_EXCEPTION(Beam::ConnectException("Session unavailable."));
         } else {
           BOOST_THROW_EXCEPTION(Beam::ConnectException("Unable to login."));
         }
@@ -141,8 +145,8 @@ namespace Nexus {
       auto login_accepted_packet = parse_login_accepted_packet(login_response);
       m_session = login_accepted_packet.m_session;
       m_sequence_number = login_accepted_packet.m_sequence_number;
-      m_timer->Start();
-      m_heartbeat_loop = Beam::Spawn(
+      m_timer->start();
+      m_heartbeat_loop = Beam::spawn(
         std::bind_front(&SoupBinTcpClient::heartbeat_loop, this));
     } catch(const std::exception&) {
       close();
@@ -153,44 +157,52 @@ namespace Nexus {
       "SoupBinTCP client failed to connect."));
   }
 
-  template<typename C, typename T>
+  template<typename C, typename T> requires
+    Beam::IsChannel<Beam::dereference_t<C>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
   SoupBinTcpClient<C, T>::~SoupBinTcpClient() {
     close();
   }
 
-  template<typename C, typename T>
+  template<typename C, typename T> requires
+    Beam::IsChannel<Beam::dereference_t<C>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
   SoupBinTcpPacket SoupBinTcpClient<C, T>::read() {
-    m_buffer.Reset();
-    return Beam::TryOrNest([&] {
-      return read_packet(m_channel->GetReader(), Beam::Store(m_buffer));
+    reset(m_buffer);
+    return Beam::try_or_nest([&] {
+      return read_packet(m_channel->get_reader(), Beam::out(m_buffer));
     }, Beam::IOException("Failed to read SoupBinTCP packet."));
   }
 
-  template<typename C, typename T>
+  template<typename C, typename T> requires
+    Beam::IsChannel<Beam::dereference_t<C>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
   void SoupBinTcpClient<C, T>::close() {
-    if(m_open_state.SetClosing()) {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_channel->GetConnection().Close();
-    m_timer->Cancel();
-    m_timer_queue->Break();
-    m_heartbeat_loop.Wait();
-    m_open_state.Close();
+    m_channel->get_connection().close();
+    m_timer->cancel();
+    m_timer_queue->close();
+    m_heartbeat_loop.wait();
+    m_open_state.close();
   }
 
-  template<typename C, typename T>
+  template<typename C, typename T> requires
+    Beam::IsChannel<Beam::dereference_t<C>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
   void SoupBinTcpClient<C, T>::heartbeat_loop() {
-    auto heartbeat_buffer = typename Channel::Writer::Buffer();
-    make_client_heartbeat_packet(Beam::Store(heartbeat_buffer));
+    auto heartbeat_buffer = Beam::SharedBuffer();
+    make_client_heartbeat_packet(Beam::out(heartbeat_buffer));
     try {
-      while(m_open_state.IsOpen()) {
-        auto result = m_timer_queue->Pop();
+      while(m_open_state.is_open()) {
+        auto result = m_timer_queue->pop();
         if(result == Beam::Timer::Result::EXPIRED) {
-          m_channel->GetWriter().Write(heartbeat_buffer);
+          m_channel->get_writer().write(heartbeat_buffer);
         } else {
           break;
         }
-        m_timer->Start();
+        m_timer->start();
       }
     } catch(const Beam::PipeBrokenException&) {
       return;

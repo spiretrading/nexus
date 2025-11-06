@@ -2,8 +2,9 @@
 #define NEXUS_SOUP_BIN_TCP_LOGIN_PACKETS_HPP
 #include <cstdint>
 #include <string>
+#include <Beam/IO/Buffer.hpp>
 #include <Beam/Pointers/Out.hpp>
-#include <Beam/Utilities/Endian.hpp>
+#include <boost/endian.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/SoupBinTcp/DataTypes.hpp"
 #include "Nexus/SoupBinTcp/SoupBinTcpPacket.hpp"
@@ -37,9 +38,9 @@ namespace Nexus {
     auto login_packet = LoginAcceptedPacket();
     auto cursor = packet.m_payload;
     login_packet.m_session =
-      parse_left_padded_alpha_numeric(10, Beam::Store(cursor));
+      parse_left_padded_alpha_numeric(10, Beam::out(cursor));
     login_packet.m_sequence_number =
-      parse_left_padded_numeric<std::uint64_t>(20, Beam::Store(cursor));
+      parse_left_padded_numeric<std::uint64_t>(20, Beam::out(cursor));
     return login_packet;
   }
 
@@ -53,7 +54,7 @@ namespace Nexus {
     auto login_packet = LoginRejectedPacket();
     auto cursor = packet.m_payload;
     login_packet.m_reason =
-      parse_left_padded_alpha_numeric(1, Beam::Store(cursor));
+      parse_left_padded_alpha_numeric(1, Beam::out(cursor));
     return login_packet;
   }
 
@@ -67,17 +68,17 @@ namespace Nexus {
    *        to start receiving the most recently generated message.
    * @param buffer The Buffer to store the packet in.
    */
-  template<typename Buffer>
-  void make_login_request_packet(const std::string& username,
-      const std::string& password, const std::string& session,
-      std::uint64_t sequence_number, Beam::Out<Buffer> buffer) {
-    buffer->Append(Beam::ToBigEndian(std::uint16_t(47)));
-    buffer->Append('L');
-    append(username, 6, Beam::Store(buffer));
-    append(password, 10, Beam::Store(buffer));
-    append(session, 10, Beam::Store(buffer));
-    append(boost::lexical_cast<std::string>(sequence_number), 20,
-      Beam::Store(buffer));
+  template<Beam::IsBuffer B>
+  void make_login_request_packet(std::string_view username,
+      std::string_view password, std::string_view session,
+      std::uint64_t sequence_number, Beam::Out<B> buffer) {
+    append(*buffer, boost::endian::native_to_big(std::uint16_t(47)));
+    append(*buffer, 'L');
+    append(username, 6, Beam::out(buffer));
+    append(password, 10, Beam::out(buffer));
+    append(session, 10, Beam::out(buffer));
+    append(
+      boost::lexical_cast<std::string>(sequence_number), 20, Beam::out(buffer));
   }
 }
 

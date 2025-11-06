@@ -2,6 +2,7 @@
 #define NEXUS_STAMP_MESSAGE_HPP
 #include <array>
 #include <Beam/Pointers/Ref.hpp>
+#include <Beam/Pointers/Out.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
@@ -62,8 +63,8 @@ namespace Details {
       int index, int order, const char* source, std::size_t source_size) {
     auto value_start = static_cast<const char*>(nullptr);
     auto value_end = static_cast<const char*>(nullptr);
-    if(!find_value(source, source_size, index, order, Beam::Store(value_start),
-        Beam::Store(value_end))) {
+    if(!find_value(source, source_size, index, order, Beam::out(value_start),
+        Beam::out(value_end))) {
       return boost::none;
     }
     return std::string(value_start, value_end - value_start);
@@ -82,9 +83,9 @@ namespace Details {
 
   template<>
   boost::optional<Side> get_business_field_helper<Side>(
-      int index, int order, const char* source, std::size_t sourceSize) {
+      int index, int order, const char* source, std::size_t source_size) {
     auto value =
-      get_business_field_helper<std::string>(index, order, source, sourceSize);
+      get_business_field_helper<std::string>(index, order, source, source_size);
     if(!value) {
       return boost::none;
     }

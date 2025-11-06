@@ -48,7 +48,7 @@ namespace Nexus {
     }
     ++token;
     const char* header_token = token;
-    packet.m_header = StampHeader::parse(Beam::Store(header_token), size - 1);
+    packet.m_header = StampHeader::parse(Beam::out(header_token), size - 1);
     if(size < packet.m_header.m_length - 2U) {
       BOOST_THROW_EXCEPTION(StampParserException("STAMP packet too short."));
     }

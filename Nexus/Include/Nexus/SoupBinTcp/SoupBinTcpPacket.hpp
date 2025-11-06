@@ -2,9 +2,10 @@
 #define NEXUS_SOUP_BIN_TCP_PACKET_HPP
 #include <cstdint>
 #include <string>
+#include <Beam/IO/Buffer.hpp>
 #include <Beam/IO/Reader.hpp>
 #include <Beam/Pointers/Out.hpp>
-#include <Beam/Utilities/Endian.hpp>
+#include <boost/endian.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/SoupBinTcp/SoupBinTcpParserException.hpp"
 
@@ -29,16 +30,15 @@ namespace Nexus {
    * @param length The length of the field.
    * @param buffer The Buffer to append the <i>value</i> to.
    */
-  template<typename Buffer>
-  void append(const std::string& value, std::size_t length,
-      Beam::Out<Buffer> buffer) {
+  template<Beam::IsBuffer B>
+  void append(std::string_view value, std::size_t length, Beam::Out<B> buffer) {
     if(value.size() > length) {
       BOOST_THROW_EXCEPTION(
         SoupBinTcpParserException("Alphanumeric value too long."));
     }
-    buffer->Append(value.data(), value.size());
+    append(*buffer, value);
     for(auto i = value.size(); i < length; ++i) {
-      buffer->Append(' ');
+      append(*buffer, ' ');
     }
   }
 
@@ -48,17 +48,15 @@ namespace Nexus {
    * @param payload The Buffer used to store the payload.
    * @return The logical packet read from the <i>reader</i>.
    */
-  template<typename Reader, typename Buffer>
-  SoupBinTcpPacket read_packet(Reader& reader, Beam::Out<Buffer> payload) {
+  template<Beam::IsReader R, Beam::IsBuffer B>
+  SoupBinTcpPacket read_packet(R& reader, Beam::Out<B> payload) {
     auto packet = SoupBinTcpPacket();
-    Beam::ReadExactSize(reader, reinterpret_cast<char*>(&packet.m_length),
-      sizeof(packet.m_length));
-    packet.m_length = Beam::FromBigEndian(packet.m_length);
-    Beam::ReadExactSize(
-      reader, reinterpret_cast<char*>(&packet.m_type), sizeof(packet.m_type));
-    packet.m_type = Beam::FromBigEndian(packet.m_type);
-    Beam::ReadExactSize(reader, Beam::Store(payload), packet.m_length - 1);
-    packet.m_payload = payload->GetData();
+    read(reader, Beam::out(packet.m_length));
+    packet.m_length = boost::endian::big_to_native(packet.m_length);
+    read(reader, Beam::out(packet.m_type));
+    packet.m_type = boost::endian::big_to_native(packet.m_type);
+    read_exact(reader, Beam::out(payload), packet.m_length - 1);
+    packet.m_payload = payload->get_data();
     return packet;
   }
 }

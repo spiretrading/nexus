@@ -10,23 +10,23 @@ namespace {
       const std::string& session, std::uint64_t sequence_number) {
     auto buffer = SharedBuffer();
     for(auto i = session.size(); i < 10; ++i) {
-      buffer.Append(' ');
+      append(buffer, ' ');
     }
-    buffer.Append(session.c_str(), session.size());
+    append(buffer, session.c_str(), session.size());
     auto seq_str = std::to_string(sequence_number);
     for(auto i = seq_str.size(); i < 20; ++i) {
-      buffer.Append(' ');
+      append(buffer, ' ');
     }
-    buffer.Append(seq_str.c_str(), seq_str.size());
+    append(buffer, seq_str.c_str(), seq_str.size());
     return buffer;
   }
 
   auto make_login_rejected_packet(const std::string& reason) {
     auto buffer = SharedBuffer();
     if(reason.empty()) {
-      buffer.Append(' ');
+      append(buffer, ' ');
     } else {
-      buffer.Append(reason[0]);
+      append(buffer, reason[0]);
     }
     return buffer;
   }
@@ -38,7 +38,7 @@ TEST_SUITE("LoginPackets") {
     auto sequence_number = std::uint64_t(123456);
     auto buffer = make_login_accepted_packet(session, sequence_number);
     auto packet = SoupBinTcpPacket();
-    packet.m_payload = static_cast<const char*>(buffer.GetData());
+    packet.m_payload = static_cast<const char*>(buffer.get_data());
     auto result = parse_login_accepted_packet(packet);
     REQUIRE(result.m_session == session);
     REQUIRE(result.m_sequence_number == sequence_number);
@@ -49,7 +49,7 @@ TEST_SUITE("LoginPackets") {
     auto sequence_number = std::uint64_t(0);
     auto buffer = make_login_accepted_packet(session, sequence_number);
     auto packet = SoupBinTcpPacket();
-    packet.m_payload = static_cast<const char*>(buffer.GetData());
+    packet.m_payload = static_cast<const char*>(buffer.get_data());
     auto result = parse_login_accepted_packet(packet);
     REQUIRE(result.m_session == "");
     REQUIRE(result.m_sequence_number == 0);
@@ -60,7 +60,7 @@ TEST_SUITE("LoginPackets") {
     auto sequence_number = std::numeric_limits<std::uint64_t>::max();
     auto buffer = make_login_accepted_packet(session, sequence_number);
     auto packet = SoupBinTcpPacket();
-    packet.m_payload = static_cast<const char*>(buffer.GetData());
+    packet.m_payload = static_cast<const char*>(buffer.get_data());
     auto result = parse_login_accepted_packet(packet);
     REQUIRE(result.m_session == session);
     REQUIRE(result.m_sequence_number == sequence_number);
@@ -70,7 +70,7 @@ TEST_SUITE("LoginPackets") {
     auto reason = "X";
     auto buffer = make_login_rejected_packet(reason);
     auto packet = SoupBinTcpPacket();
-    packet.m_payload = static_cast<const char*>(buffer.GetData());
+    packet.m_payload = static_cast<const char*>(buffer.get_data());
     auto result = parse_login_rejected_packet(packet);
     REQUIRE(result.m_reason == "X");
   }
@@ -79,7 +79,7 @@ TEST_SUITE("LoginPackets") {
     auto reason = "";
     auto buffer = make_login_rejected_packet(reason);
     auto packet = SoupBinTcpPacket();
-    packet.m_payload = static_cast<const char*>(buffer.GetData());
+    packet.m_payload = static_cast<const char*>(buffer.get_data());
     auto result = parse_login_rejected_packet(packet);
     REQUIRE(result.m_reason == "");
   }
