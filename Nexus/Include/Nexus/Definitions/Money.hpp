@@ -1,10 +1,12 @@
 #ifndef NEXUS_MONEY_HPP
 #define NEXUS_MONEY_HPP
+#include <concepts>
 #include <functional>
 #include <istream>
 #include <ostream>
 #include <stdexcept>
 #include <string_view>
+#include <type_traits>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <boost/functional/hash.hpp>
@@ -85,7 +87,10 @@ namespace Nexus {
        * @param rhs The right hand side of the operation.
        * @return <i>this</i>.
        */
-      template<typename T>
+      template<typename T> requires requires {
+        { std::declval<Money>() * std::declval<T>() } ->
+          std::convertible_to<Money>;
+      }
       constexpr Money& operator *=(T rhs);
 
       /**
@@ -93,7 +98,10 @@ namespace Nexus {
        * @param rhs The right hand side of the operation.
        * @return <i>this</i>.
        */
-      template<typename T>
+      template<typename T> requires requires {
+        { std::declval<Money>() / std::declval<T>() } ->
+          std::convertible_to<Money>;
+      }
       constexpr Money& operator /=(T rhs);
 
       /**
@@ -337,15 +345,19 @@ namespace Nexus {
     return static_cast<double>(m_value / rhs.m_value);
   }
 
-  template<typename T>
+  template<typename T> requires requires {
+    { std::declval<Money>() * std::declval<T>() } -> std::convertible_to<Money>;
+  }
   constexpr Money& Money::operator *=(T rhs) {
-    m_value *= rhs;
+    *this = rhs * *this;
     return *this;
   }
 
-  template<typename T>
+  template<typename T> requires requires {
+    { std::declval<Money>() / std::declval<T>() } -> std::convertible_to<Money>;
+  }
   constexpr Money& Money::operator /=(T rhs) {
-    m_value /= rhs;
+    *this = *this / rhs;
     return *this;
   }
 
