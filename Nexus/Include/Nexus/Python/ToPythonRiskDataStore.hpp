@@ -1,11 +1,9 @@
 #ifndef NEXUS_PYTHON_RISK_DATA_STORE_HPP
 #define NEXUS_PYTHON_RISK_DATA_STORE_HPP
-#include <memory>
 #include <type_traits>
+#include <utility>
 #include <Beam/Python/GilRelease.hpp>
-#include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
-#include <pybind11/pybind11.h>
 #include "Nexus/RiskService/RiskDataStore.hpp"
 
 namespace Nexus {
@@ -22,20 +20,31 @@ namespace Nexus {
       using DataStore = D;
 
       /**
-       * Constructs a ToPythonRiskDataStore.
-       * @param args The arguments to forward to the DataStore's constructor.
+       * Constructs a ToPythonRiskDataStore in-place.
+       * @param args The arguments to forward to the constructor.
        */
-      template<typename... Args, typename =
-        Beam::disable_copy_constructor_t<ToPythonRiskDataStore, Args...>>
-      ToPythonRiskDataStore(Args&&... args);
+      template<typename... Args>
+      explicit ToPythonRiskDataStore(Args&&... args);
 
       ~ToPythonRiskDataStore();
 
-      /** Returns the wrapped data store. */
-      const DataStore& get_data_store() const;
+      /** Returns a reference to the underlying data store. */
+      DataStore& get();
 
-      /** Returns the wrapped data store. */
-      DataStore& get_data_store();
+      /** Returns a reference to the underlying data store. */
+      const DataStore& get() const;
+
+      /** Returns a reference to the underlying data store. */
+      DataStore& operator *();
+
+      /** Returns a reference to the underlying data store. */
+      const DataStore& operator *() const;
+
+      /** Returns a pointer to the underlying data store. */
+      DataStore* operator ->();
+
+      /** Returns a pointer to the underlying data store. */
+      const DataStore* operator ->() const;
 
       InventorySnapshot load_inventory_snapshot(
         const Beam::DirectoryEntry& account);
@@ -47,8 +56,12 @@ namespace Nexus {
       boost::optional<DataStore> m_data_store;
   };
 
+  template<typename DataStore>
+  ToPythonRiskDataStore(DataStore&&) ->
+    ToPythonRiskDataStore<std::remove_cvref_t<DataStore>>;
+
   template<IsRiskDataStore D>
-  template<typename... Args, typename>
+  template<typename... Args>
   ToPythonRiskDataStore<D>::ToPythonRiskDataStore(Args&&... args)
     : m_data_store((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
@@ -60,15 +73,39 @@ namespace Nexus {
   }
 
   template<IsRiskDataStore D>
+  typename ToPythonRiskDataStore<D>::DataStore&
+      ToPythonRiskDataStore<D>::get() {
+    return *m_data_store;
+  }
+
+  template<IsRiskDataStore D>
   const typename ToPythonRiskDataStore<D>::DataStore&
-      ToPythonRiskDataStore<D>::get_data_store() const {
+      ToPythonRiskDataStore<D>::get() const {
     return *m_data_store;
   }
 
   template<IsRiskDataStore D>
   typename ToPythonRiskDataStore<D>::DataStore&
-      ToPythonRiskDataStore<D>::get_data_store() {
+      ToPythonRiskDataStore<D>::operator *() {
     return *m_data_store;
+  }
+
+  template<IsRiskDataStore D>
+  const typename ToPythonRiskDataStore<D>::DataStore&
+      ToPythonRiskDataStore<D>::operator *() const {
+    return *m_data_store;
+  }
+
+  template<IsRiskDataStore D>
+  typename ToPythonRiskDataStore<D>::DataStore*
+      ToPythonRiskDataStore<D>::operator ->() {
+    return m_data_store.get_ptr();
+  }
+
+  template<IsRiskDataStore D>
+  const typename ToPythonRiskDataStore<D>::DataStore*
+      ToPythonRiskDataStore<D>::operator ->() const {
+    return m_data_store.get_ptr();
   }
 
   template<IsRiskDataStore D>

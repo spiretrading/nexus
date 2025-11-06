@@ -19,7 +19,6 @@
 
 using namespace Beam;
 using namespace Beam::Python;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -27,10 +26,24 @@ using namespace Nexus::Python;
 using namespace Nexus::Tests;
 using namespace pybind11;
 
+namespace {
+  auto administration_client = std::unique_ptr<class_<AdministrationClient>>();
+  auto administration_data_store =
+    std::unique_ptr<class_<AdministrationDataStore>>();
+}
+
+class_<AdministrationClient>& Nexus::Python::
+    get_exported_administration_client() {
+  return *administration_client;
+}
+
+class_<AdministrationDataStore>& Nexus::Python::
+    get_exported_administration_data_store() {
+  return *administration_data_store;
+}
+
 void Nexus::Python::export_account_identity(module& module) {
-  class_<AccountIdentity>(module, "AccountIdentity").
-    def(init()).
-    def(init<const AccountIdentity&>()).
+  export_default_methods(class_<AccountIdentity>(module, "AccountIdentity")).
     def_readwrite("registration_time", &AccountIdentity::m_registration_time).
     def_readwrite("last_login_time", &AccountIdentity::m_last_login_time).
     def_readwrite("first_name", &AccountIdentity::m_first_name).
@@ -43,24 +56,24 @@ void Nexus::Python::export_account_identity(module& module) {
     def_readwrite("province", &AccountIdentity::m_province).
     def_readwrite("country", &AccountIdentity::m_country).
     def_readwrite("photo_id", &AccountIdentity::m_photo_id).
-    def_readwrite("user_notes", &AccountIdentity::m_user_notes).
-    def("__str__", &boost::lexical_cast<std::string, AccountIdentity>);
+    def_readwrite("user_notes", &AccountIdentity::m_user_notes);
 }
 
 void Nexus::Python::export_account_modification_request(module& module) {
   auto request =
-    class_<AccountModificationRequest>(module, "AccountModificationRequest").
-      def(init<const AccountModificationRequest&>()).
-      def(init<AccountModificationRequest::Id, AccountModificationRequest::Type,
-        DirectoryEntry, DirectoryEntry, ptime>()).
-      def_property_readonly("id", &AccountModificationRequest::get_id).
-      def_property_readonly("type", &AccountModificationRequest::get_type).
-      def_property_readonly(
-        "account", &AccountModificationRequest::get_account).
-      def_property_readonly("submission_account",
-        &AccountModificationRequest::get_submission_account).
-      def_property_readonly("timestamp",
-        &AccountModificationRequest::get_timestamp);
+    export_default_methods(
+      class_<AccountModificationRequest>(module, "AccountModificationRequest")).
+        def(init<AccountModificationRequest::Id,
+          AccountModificationRequest::Type, DirectoryEntry, DirectoryEntry,
+          ptime>()).
+        def_property_readonly("id", &AccountModificationRequest::get_id).
+        def_property_readonly("type", &AccountModificationRequest::get_type).
+        def_property_readonly(
+          "account", &AccountModificationRequest::get_account).
+        def_property_readonly("submission_account",
+          &AccountModificationRequest::get_submission_account).
+        def_property_readonly("timestamp",
+          &AccountModificationRequest::get_timestamp);
   enum_<AccountModificationRequest::Type>(request, "Type").
     value("ENTITLEMENTS", AccountModificationRequest::Type::ENTITLEMENTS).
     value("RISK", AccountModificationRequest::Type::RISK);
@@ -71,22 +84,18 @@ void Nexus::Python::export_account_modification_request(module& module) {
     value("SCHEDULED", AccountModificationRequest::Status::SCHEDULED).
     value("GRANTED", AccountModificationRequest::Status::GRANTED).
     value("REJECTED", AccountModificationRequest::Status::REJECTED);
-  class_<AccountModificationRequest::Update>(request, "Update").
-    def(init()).
-    def(init<const AccountModificationRequest::Update&>()).
+  export_default_methods(class_<AccountModificationRequest::Update>(
+      request, "Update")).
     def(init<AccountModificationRequest::Status, DirectoryEntry, int, ptime>()).
     def_readwrite("status", &AccountModificationRequest::Update::m_status).
     def_readwrite("account", &AccountModificationRequest::Update::m_account).
     def_readwrite("sequence_number",
       &AccountModificationRequest::Update::m_sequence_number).
     def_readwrite("timestamp",
-      &AccountModificationRequest::Update::m_timestamp).
-    def(self == self).
-    def(self != self).
-    def("__str__",
-      &boost::lexical_cast<std::string, AccountModificationRequest::Update>);
-  module.def("is_terminal",
-    static_cast<bool (*)(AccountModificationRequest::Status)>(&is_terminal));
+      &AccountModificationRequest::Update::m_timestamp);
+  module.def("is_terminal", [] (AccountModificationRequest::Status status) {
+    return is_terminal(status);
+  });
 }
 
 void Nexus::Python::export_account_roles(module& module) {
@@ -95,26 +104,28 @@ void Nexus::Python::export_account_roles(module& module) {
     value("MANAGER", AccountRole::MANAGER).
     value("SERVICE", AccountRole::SERVICE).
     value("ADMINISTRATOR", AccountRole::ADMINISTRATOR);
-  ExportEnumSet<AccountRoles>(module, "AccountRoles");
+  export_enum_set<AccountRoles>(module, "AccountRoles");
 }
 
 void Nexus::Python::export_administration_data_store_exception(module& module) {
   register_exception<AdministrationDataStoreException>(
-    module, "AdministrationDataStoreException", GetIOException());
+    module, "AdministrationDataStoreException", get_io_exception());
 }
 
 void Nexus::Python::export_administration_service(module& module) {
+  administration_client = std::make_unique<class_<AdministrationClient>>(
+    export_administration_client<AdministrationClient>(
+      module, "AdministrationClient"));
+  administration_data_store = std::make_unique<class_<AdministrationDataStore>>(
+    export_administration_data_store<AdministrationDataStore>(
+      module, "AdministrationDataStore"));
   export_account_identity(module);
   export_account_modification_request(module);
   export_account_roles(module);
-  export_administration_client<ToPythonAdministrationClient<
-    AdministrationClient>>(module, "AdministrationClient");
   module.def("load_risk_parameters",
     [] (AdministrationClient& client, const DirectoryEntry& account) {
       return load_risk_parameters(client, account);
     }, call_guard<GilRelease>());
-  export_administration_data_store<ToPythonAdministrationDataStore<
-    AdministrationDataStore>>(module, "AdministrationDataStore");
   export_administration_data_store_exception(module);
   export_cached_administration_data_store(module);
   export_entitlement_modification(module);
@@ -127,8 +138,8 @@ void Nexus::Python::export_administration_service(module& module) {
   export_risk_modification(module);
   export_sqlite_administration_data_store(module);
   export_trading_group(module);
-  ExportQueueSuite<RiskState>(module, "RiskState");
-  ExportQueueSuite<RiskParameters>(module, "RiskParameters");
+  export_queue_suite<RiskState>(module, "RiskState");
+  export_queue_suite<RiskParameters>(module, "RiskParameters");
   auto test_module = module.def_submodule("tests");
   export_administration_service_test_environment(test_module);
 }
@@ -136,26 +147,25 @@ void Nexus::Python::export_administration_service(module& module) {
 void Nexus::Python::export_administration_service_test_environment(
     module& module) {
   using TestEnvironment = AdministrationServiceTestEnvironment;
-  class_<TestEnvironment>(module, "AdministrationServiceTestEnvironment").
-    def(init<ServiceLocatorClientBox>(), call_guard<GilRelease>()).
-    def(init<ServiceLocatorClientBox, EntitlementDatabase>(),
-      call_guard<GilRelease>()).
-    def("__del__", [] (AdministrationServiceTestEnvironment& self) {
-      self.close();
-    }, call_guard<GilRelease>()).
+  class_<TestEnvironment, std::shared_ptr<TestEnvironment>>(
+      module, "AdministrationServiceTestEnvironment").
+    def(pybind11::init(
+      &make_python_shared<TestEnvironment, ServiceLocatorClient&>),
+      keep_alive<1, 2>()).
+    def(pybind11::init(&make_python_shared<TestEnvironment,
+      ServiceLocatorClient&, const EntitlementDatabase&>), keep_alive<1, 2>()).
     def_property_readonly("client", [] (TestEnvironment& self) {
       return ToPythonAdministrationClient(self.get_client());
     }).
     def("make_administrator", &TestEnvironment::make_administrator,
       call_guard<GilRelease>()).
-    def("make_client", [] (TestEnvironment& self,
-        ServiceLocatorClientBox service_locator_client) {
-      return ToPythonAdministrationClient(
-        self.make_client(std::move(service_locator_client)));
-    }, call_guard<GilRelease>()).
+    def("make_client",
+      [] (TestEnvironment& self, ServiceLocatorClient& client) {
+        return ToPythonAdministrationClient(self.make_client(Ref(client)));
+      }, call_guard<GilRelease>(), keep_alive<0, 2>()).
     def("close", &TestEnvironment::close, call_guard<GilRelease>());
   module.def("make_administrator_account",
-    &make_administrator_account<ServiceLocatorClientBox>,
+    &make_administrator_account<ServiceLocatorClient>,
     call_guard<GilRelease>());
   module.def("make_administration_service_test_environment",
     &make_administration_service_test_environment, call_guard<GilRelease>());
@@ -165,46 +175,41 @@ void Nexus::Python::export_administration_service_test_environment(
 void Nexus::Python::export_cached_administration_data_store(module& module) {
   using DataStore = ToPythonAdministrationDataStore<
     CachedAdministrationDataStore<AdministrationDataStore>>;
-  auto data_store = export_administration_data_store<DataStore>(
-    module, "CachedAdministrationDataStore");
-  data_store.def(init<AdministrationDataStore>());
+  export_administration_data_store<DataStore>(
+      module, "CachedAdministrationDataStore").
+    def(init<AdministrationDataStore>());
 }
 
 void Nexus::Python::export_entitlement_modification(module& module) {
-  class_<EntitlementModification>(module, "EntitlementModification").
-    def(init()).
-    def(init<const EntitlementModification&>()).
+  export_default_methods(class_<EntitlementModification>(
+      module, "EntitlementModification")).
     def(init<const std::vector<DirectoryEntry>&>()).
     def_property_readonly(
       "entitlements", &EntitlementModification::get_entitlements);
 }
 
 void Nexus::Python::export_indexed_account_identity(module& module) {
-  class_<AdministrationDataStore::IndexedAccountIdentity>(
-    module, "IndexedAccountIdentity").
-      def(init()).
-      def(init<const AdministrationDataStore::IndexedAccountIdentity&>()).
-      def_readwrite("index",
-        &AdministrationDataStore::IndexedAccountIdentity::m_index).
-      def_readwrite("identity",
-        &AdministrationDataStore::IndexedAccountIdentity::m_identity);
+  export_default_methods(
+    class_<AdministrationDataStore::IndexedAccountIdentity>(
+      module, "IndexedAccountIdentity")).
+    def_readwrite("index",
+      &AdministrationDataStore::IndexedAccountIdentity::m_index).
+    def_readwrite("identity",
+      &AdministrationDataStore::IndexedAccountIdentity::m_identity);
 }
 
 void Nexus::Python::export_indexed_risk_parameters(module& module) {
-  class_<AdministrationDataStore::IndexedRiskParameters>(
-    module, "IndexedRiskParameters").
-      def(init()).
-      def(init<const AdministrationDataStore::IndexedRiskParameters&>()).
-      def_readwrite("index",
-        &AdministrationDataStore::IndexedRiskParameters::m_index).
-      def_readwrite("parameters",
-        &AdministrationDataStore::IndexedRiskParameters::m_parameters);
+  export_default_methods(class_<AdministrationDataStore::IndexedRiskParameters>(
+      module, "IndexedRiskParameters")).
+    def_readwrite("index",
+      &AdministrationDataStore::IndexedRiskParameters::m_index).
+    def_readwrite("parameters",
+      &AdministrationDataStore::IndexedRiskParameters::m_parameters);
 }
 
 void Nexus::Python::export_indexed_risk_state(module& module) {
-  class_<AdministrationDataStore::IndexedRiskState>(module, "IndexedRiskState").
-    def(init()).
-    def(init<const AdministrationDataStore::IndexedRiskState&>()).
+  export_default_methods(class_<AdministrationDataStore::IndexedRiskState>(
+      module, "IndexedRiskState")).
     def_readwrite("index", &AdministrationDataStore::IndexedRiskState::m_index).
     def_readwrite("state", &AdministrationDataStore::IndexedRiskState::m_state);
 }
@@ -212,56 +217,45 @@ void Nexus::Python::export_indexed_risk_state(module& module) {
 void Nexus::Python::export_local_administration_data_store(module& module) {
   using DataStore =
     ToPythonAdministrationDataStore<LocalAdministrationDataStore>;
-  auto data_store = export_administration_data_store<DataStore>(
-    module, "LocalAdministrationDataStore");
-  data_store.def(init());
+  export_administration_data_store<DataStore>(
+      module, "LocalAdministrationDataStore").
+    def(init());
 }
 
 void Nexus::Python::export_message(module& module) {
-  auto message = class_<Message>(module, "Message").
-    def(init()).
-    def(init<const Message&>()).
+  auto message = export_default_methods(class_<Message>(module, "Message")).
     def(init<
       Message::Id, DirectoryEntry, ptime, const std::vector<Message::Body>&>()).
     def_property_readonly("id", &Message::get_id).
     def_property_readonly("account", &Message::get_account).
     def_property_readonly("timestamp", &Message::get_timestamp).
     def_property_readonly("body", &Message::get_body).
-    def_property_readonly("bodies", &Message::get_bodies).
-    def(self == self).
-    def(self != self);
-  class_<Message::Body>(message, "Body").
-    def(init()).
-    def(init<const Message::Body&>()).
+    def_property_readonly("bodies", &Message::get_bodies);
+  export_default_methods(class_<Message::Body>(message, "Body")).
     def_readwrite("content_type", &Message::Body::m_content_type).
     def_readwrite("message", &Message::Body::m_message).
     def_readonly_static("NONE", &Message::Body::EMPTY).
-    def_static("make_plain_text", &Message::Body::make_plain_text).
-    def(self == self).
-    def(self != self).
-    def("__str__", &boost::lexical_cast<std::string, Message::Body>);
+    def_static("make_plain_text", &Message::Body::make_plain_text);
 }
 
 void Nexus::Python::export_mysql_administration_data_store(module& module) {
   using DataStore = ToPythonAdministrationDataStore<
     SqlAdministrationDataStore<SqlConnection<Viper::MySql::Connection>>>;
-  auto data_store = export_administration_data_store<DataStore>(
-    module, "MySqlAdministrationDataStore");
-  data_store.def(init([] (std::string host, unsigned int port,
-      std::string username, std::string password, std::string database,
-      const SqlAdministrationDataStore<SqlConnection<
-        Viper::MySql::Connection>>::DirectoryEntrySourceFunction& source) {
-    return std::make_shared<DataStore>(
-      std::make_unique<SqlConnection<Viper::MySql::Connection>>(
-        Viper::MySql::Connection(host, port, username, password, database)),
-        source);
-  }), call_guard<GilRelease>());
+  export_administration_data_store<DataStore>(
+      module, "MySqlAdministrationDataStore").
+    def(init([] (std::string host, unsigned int port,
+        std::string username, std::string password, std::string database,
+        const SqlAdministrationDataStore<SqlConnection<
+          Viper::MySql::Connection>>::DirectoryEntrySource& source) {
+      return std::make_shared<DataStore>(
+        std::make_unique<SqlConnection<Viper::MySql::Connection>>(
+          Viper::MySql::Connection(host, port, username, password, database)),
+          source);
+    }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::export_risk_modification(module& module) {
-  class_<RiskModification>(module, "RiskModification").
-    def(init()).
-    def(init<const RiskModification&>()).
+  export_default_methods(class_<RiskModification>(module, "RiskModification")).
     def(init<RiskParameters>()).
     def_property_readonly("parameters", &RiskModification::get_parameters);
 }
@@ -269,21 +263,19 @@ void Nexus::Python::export_risk_modification(module& module) {
 void Nexus::Python::export_sqlite_administration_data_store(module& module) {
   using DataStore = ToPythonAdministrationDataStore<
     SqlAdministrationDataStore<SqlConnection<Viper::Sqlite3::Connection>>>;
-  auto data_store = export_administration_data_store<DataStore>(
-    module, "SqliteAdministrationDataStore");
-  data_store.def(init([] (std::string path, const SqlAdministrationDataStore<
-      SqlConnection<Viper::Sqlite3::Connection>>::DirectoryEntrySourceFunction&
+  export_administration_data_store<DataStore>(
+      module, "SqliteAdministrationDataStore").
+    def(init([] (std::string path, const SqlAdministrationDataStore<
+      SqlConnection<Viper::Sqlite3::Connection>>::DirectoryEntrySource&
         source) {
-    return std::make_shared<DataStore>(
-      std::make_unique<SqlConnection<Viper::Sqlite3::Connection>>(path),
-      source);
-  }), call_guard<GilRelease>());
+      return std::make_shared<DataStore>(
+        std::make_unique<SqlConnection<Viper::Sqlite3::Connection>>(path),
+        source);
+    }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::export_trading_group(module& module) {
-  class_<TradingGroup>(module, "TradingGroup").
-    def(init()).
-    def(init<const TradingGroup&>()).
+  export_default_methods(class_<TradingGroup>(module, "TradingGroup")).
     def(init<DirectoryEntry, DirectoryEntry, std::vector<DirectoryEntry>,
       DirectoryEntry, std::vector<DirectoryEntry>>()).
     def_property_readonly("entry", &TradingGroup::get_entry).

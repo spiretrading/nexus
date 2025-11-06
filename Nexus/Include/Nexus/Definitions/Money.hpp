@@ -88,7 +88,7 @@ namespace Nexus {
        * @return <i>this</i>.
        */
       template<typename T> requires requires {
-        { std::declval<Money>() * std::declval<T>() } ->
+        { std::declval<T>() * std::declval<Money>() } ->
           std::convertible_to<Money>;
       }
       constexpr Money& operator *=(T rhs);
@@ -346,7 +346,7 @@ namespace Nexus {
   }
 
   template<typename T> requires requires {
-    { std::declval<Money>() * std::declval<T>() } -> std::convertible_to<Money>;
+    { std::declval<T>() * std::declval<Money>() } -> std::convertible_to<Money>;
   }
   constexpr Money& Money::operator *=(T rhs) {
     *this = rhs * *this;

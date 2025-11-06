@@ -1,12 +1,9 @@
 #ifndef NEXUS_TO_PYTHON_CHARTING_CLIENT_HPP
 #define NEXUS_TO_PYTHON_CHARTING_CLIENT_HPP
-#include <memory>
 #include <type_traits>
 #include <utility>
 #include <Beam/Python/GilRelease.hpp>
-#include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
-#include <pybind11/pybind11.h>
 #include "Nexus/ChartingService/ChartingClient.hpp"
 
 namespace Nexus {
@@ -23,20 +20,32 @@ namespace Nexus {
       using Client = C;
 
       /**
-       * Constructs a ToPythonChartingClient.
-       * @param args The arguments to forward to the Client's constructor.
+       * Constructs a ToPythonChartingClient in-place.
+       * @param args The arguments to forward to the constructor.
        */
-      template<typename... Args, typename =
-        Beam::disable_copy_constructor_t<ToPythonChartingClient, Args...>>
-      ToPythonChartingClient(Args&&... args);
+      template<typename... Args>
+      explicit ToPythonChartingClient(Args&&... args);
 
       ~ToPythonChartingClient();
 
-      /** Returns the wrapped client. */
-      const Client& get_client() const;
+      /** Returns a reference to the underlying client. */
+      Client& get();
 
-      /** Returns the wrapped client. */
-      Client& get_client();
+      /** Returns a reference to the underlying client. */
+      const Client& get() const;
+
+      /** Returns a reference to the underlying client. */
+      Client& operator *();
+
+      /** Returns a reference to the underlying client. */
+      const Client& operator *() const;
+
+      /** Returns a pointer to the underlying client. */
+      Client* operator ->();
+
+      /** Returns a pointer to the underlying client. */
+      const Client* operator ->() const;
+
       void query(const SecurityChartingQuery& query,
         Beam::ScopedQueueWriter<QueryVariant> queue);
       TimePriceQueryResult load_time_price_series(const Security& security,
@@ -54,10 +63,10 @@ namespace Nexus {
 
   template<typename Client>
   ToPythonChartingClient(Client&&) ->
-    ToPythonChartingClient<std::remove_reference_t<Client>>;
+    ToPythonChartingClient<std::remove_cvref_t<Client>>;
 
   template<IsChartingClient C>
-  template<typename... Args, typename>
+  template<typename... Args>
   ToPythonChartingClient<C>::ToPythonChartingClient(Args&&... args)
     : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
@@ -69,15 +78,39 @@ namespace Nexus {
   }
 
   template<IsChartingClient C>
+  typename ToPythonChartingClient<C>::Client&
+      ToPythonChartingClient<C>::get() {
+    return *m_client;
+  }
+
+  template<IsChartingClient C>
   const typename ToPythonChartingClient<C>::Client&
-      ToPythonChartingClient<C>::get_client() const {
+      ToPythonChartingClient<C>::get() const {
     return *m_client;
   }
 
   template<IsChartingClient C>
   typename ToPythonChartingClient<C>::Client&
-      ToPythonChartingClient<C>::get_client() {
+      ToPythonChartingClient<C>::operator *() {
     return *m_client;
+  }
+
+  template<IsChartingClient C>
+  const typename ToPythonChartingClient<C>::Client&
+      ToPythonChartingClient<C>::operator *() const {
+    return *m_client;
+  }
+
+  template<IsChartingClient C>
+  typename ToPythonChartingClient<C>::Client*
+      ToPythonChartingClient<C>::operator ->() {
+    return m_client.get_ptr();
+  }
+
+  template<IsChartingClient C>
+  const typename ToPythonChartingClient<C>::Client*
+      ToPythonChartingClient<C>::operator ->() const {
+    return m_client.get_ptr();
   }
 
   template<IsChartingClient C>

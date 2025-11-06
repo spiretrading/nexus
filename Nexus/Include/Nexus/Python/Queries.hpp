@@ -5,16 +5,28 @@
 namespace Nexus::Python {
 
   /**
-   * Exports the DataType classes.
+   * Exports the OrderFieldsAccessor class.
    * @param module The module to export to.
    */
-  void export_data_type(pybind11::module& module);
+  void export_order_fields_accessor(pybind11::module& module);
+
+  /**
+   * Exports the OrderInfoAccessor class.
+   * @param module The module to export to.
+   */
+  void export_order_info_accessor(pybind11::module& module);
 
   /**
    * Exports the Queries namespace.
    * @param module The module to export to.
    */
   void export_queries(pybind11::module& module);
+
+  /**
+   * Exports the SecurityAccessor class.
+   * @param module The module to export to.
+   */
+  void export_security_accessor(pybind11::module& module);
 
   /**
    * Exports the TimeAndSaleAccessor class.

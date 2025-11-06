@@ -358,6 +358,33 @@ void Nexus::Python::export_order_imbalance(module& module) {
   export_queue_suite<SequencedOrderImbalance>(module, "SequencedOrderImbalance");
 }
 
+void Nexus::Python::export_order_status(module& module) {
+  enum_<OrderStatus::Type>(module, "OrderStatus").
+    value("NONE", OrderStatus::NONE).
+    value("PENDING_NEW", OrderStatus::PENDING_NEW).
+    value("REJECTED", OrderStatus::REJECTED).
+    value("NEW", OrderStatus::NEW).
+    value("PARTIALLY_FILLED", OrderStatus::PARTIALLY_FILLED).
+    value("EXPIRED", OrderStatus::EXPIRED).
+    value("CANCELED", OrderStatus::CANCELED).
+    value("SUSPENDED", OrderStatus::SUSPENDED).
+    value("STOPPED", OrderStatus::STOPPED).
+    value("FILLED", OrderStatus::FILLED).
+    value("DONE_FOR_DAY", OrderStatus::DONE_FOR_DAY).
+    value("PENDING_CANCEL", OrderStatus::PENDING_CANCEL).
+    value("CANCEL_REJECT", OrderStatus::CANCEL_REJECT);
+  module.def("is_terminal", &is_terminal);
+}
+
+void Nexus::Python::export_order_type(module& module) {
+  enum_<OrderType::Type>(module, "OrderType").
+    value("NONE", OrderType::NONE).
+    value("MARKET", OrderType::MARKET).
+    value("LIMIT", OrderType::LIMIT).
+    value("PEGGED", OrderType::PEGGED).
+    value("STOP", OrderType::STOP);
+}
+
 void Nexus::Python::export_quantity(module& module) {
   auto quantity = export_default_methods(class_<Quantity>(module, "Quantity")).
     def(init<int>()).
@@ -450,6 +477,29 @@ void Nexus::Python::export_region(module& module) {
     def("contains", &Region::contains);
 }
 
+void Nexus::Python::export_region_map(module& module) {
+  using PythonRegionMap = RegionMap<object>;
+  class_<PythonRegionMap>(module, "RegionMap").
+    def(init<object>()).
+    def(init<std::string, object>()).
+    def_property_readonly("size", &PythonRegionMap::get_size).
+    def("get", static_cast<
+      const object& (PythonRegionMap::*)(const Region&) const>(
+        &PythonRegionMap::get), return_value_policy::reference_internal).
+    def("get", static_cast<object& (PythonRegionMap::*)(const Region&)>(
+      &PythonRegionMap::get), return_value_policy::reference_internal).
+    def("set", &PythonRegionMap::set).
+    def("erase", &PythonRegionMap::erase).
+    def("__getitem__", static_cast<const object& (PythonRegionMap::*)(
+      const Region&) const>(&PythonRegionMap::get),
+      return_value_policy::reference_internal).
+    def("__setitem__", &PythonRegionMap::set).
+    def("__delitem__", &PythonRegionMap::erase).
+    def("__iter__", [] (const PythonRegionMap& p) {
+      return make_iterator(p.begin(), p.end());
+    }, keep_alive<0, 1>());
+}
+
 void Nexus::Python::export_security(module& module) {
   export_default_methods(class_<Security>(module, "Security")).
     def(init<std::string, Venue>()).
@@ -481,6 +531,19 @@ void Nexus::Python::export_security_technicals(module& module) {
     def_readwrite("low", &SecurityTechnicals::m_low).
     def_readwrite("open", &SecurityTechnicals::m_open).
     def_readwrite("close", &SecurityTechnicals::m_close);
+}
+
+void Nexus::Python::export_side(module& module) {
+  enum_<Side::Type>(module, "Side").
+    value("NONE", Side::NONE).
+    value("ASK", Side::ASK).
+    value("BID", Side::BID);
+  module.def("pick", static_cast<
+    const object& (*)(Side, const object&, const object&)>(&pick<object>));
+  module.def("direction", &get_direction);
+  module.def("side", &get_side);
+  module.def("opposite", &get_opposite);
+  module.def("to_char", static_cast<char (*)(Side)>(&to_char));
 }
 
 void Nexus::Python::export_tag(module& module) {

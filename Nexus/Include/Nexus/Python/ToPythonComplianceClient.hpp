@@ -1,12 +1,9 @@
 #ifndef NEXUS_PYTHON_COMPLIANCE_CLIENT_HPP
 #define NEXUS_PYTHON_COMPLIANCE_CLIENT_HPP
-#include <memory>
 #include <type_traits>
 #include <utility>
 #include <Beam/Python/GilRelease.hpp>
-#include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
-#include <pybind11/pybind11.h>
 #include "Nexus/Compliance/ComplianceClient.hpp"
 
 namespace Nexus {
@@ -23,20 +20,32 @@ namespace Nexus {
       using Client = C;
 
       /**
-       * Constructs a ToPythonComplianceClient.
-       * @param args The arguments to forward to the Client's constructor.
+       * Constructs a ToPythonComplianceClient in-place.
+       * @param args The arguments to forward to the constructor.
        */
-      template<typename... Args, typename =
-        Beam::disable_copy_constructor_t<ToPythonComplianceClient, Args...>>
-      ToPythonComplianceClient(Args&&... args);
+      template<typename... Args>
+      explicit ToPythonComplianceClient(Args&&... args);
 
       ~ToPythonComplianceClient();
 
-      /** Returns the wrapped client. */
-      const Client& get_client() const;
+      /** Returns a reference to the underlying client. */
+      Client& get();
 
-      /** Returns the wrapped client. */
-      Client& get_client();
+      /** Returns a reference to the underlying client. */
+      const Client& get() const;
+
+      /** Returns a reference to the underlying client. */
+      Client& operator *();
+
+      /** Returns a reference to the underlying client. */
+      const Client& operator *() const;
+
+      /** Returns a pointer to the underlying client. */
+      Client* operator ->();
+
+      /** Returns a pointer to the underlying client. */
+      const Client* operator ->() const;
+
       std::vector<ComplianceRuleEntry> load(
         const Beam::DirectoryEntry& directory_entry);
       ComplianceRuleEntry::Id add(
@@ -61,10 +70,10 @@ namespace Nexus {
 
   template<typename Client>
   ToPythonComplianceClient(Client&&) ->
-    ToPythonComplianceClient<std::remove_reference_t<Client>>;
+    ToPythonComplianceClient<std::remove_cvref_t<Client>>;
 
   template<IsComplianceClient C>
-  template<typename... Args, typename>
+  template<typename... Args>
   ToPythonComplianceClient<C>::ToPythonComplianceClient(Args&&... args)
     : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
@@ -76,15 +85,39 @@ namespace Nexus {
   }
 
   template<IsComplianceClient C>
+  typename ToPythonComplianceClient<C>::Client&
+      ToPythonComplianceClient<C>::get() {
+    return *m_client;
+  }
+
+  template<IsComplianceClient C>
   const typename ToPythonComplianceClient<C>::Client&
-      ToPythonComplianceClient<C>::get_client() const {
+      ToPythonComplianceClient<C>::get() const {
     return *m_client;
   }
 
   template<IsComplianceClient C>
   typename ToPythonComplianceClient<C>::Client&
-      ToPythonComplianceClient<C>::get_client() {
+      ToPythonComplianceClient<C>::operator *() {
     return *m_client;
+  }
+
+  template<IsComplianceClient C>
+  const typename ToPythonComplianceClient<C>::Client&
+      ToPythonComplianceClient<C>::operator *() const {
+    return *m_client;
+  }
+
+  template<IsComplianceClient C>
+  typename ToPythonComplianceClient<C>::Client*
+      ToPythonComplianceClient<C>::operator ->() {
+    return m_client.get_ptr();
+  }
+
+  template<IsComplianceClient C>
+  const typename ToPythonComplianceClient<C>::Client*
+      ToPythonComplianceClient<C>::operator ->() const {
+    return m_client.get_ptr();
   }
 
   template<IsComplianceClient C>

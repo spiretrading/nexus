@@ -40,7 +40,7 @@ namespace Nexus::Python {
           Beam::ScopedQueueWriter<ComplianceRuleEntry> queue) {
         auto snapshot = std::vector<ComplianceRuleEntry>();
         self.monitor_compliance_rule_entries(directory_entry,
-          std::move(queue), Beam::Store(snapshot));
+          std::move(queue), Beam::out(snapshot));
         return snapshot;
       }).
       def("close", &C::close);

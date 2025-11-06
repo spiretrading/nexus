@@ -7,8 +7,16 @@
 #include "Nexus/Accounting/Bookkeeper.hpp"
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
+#include "Nexus/Python/DllExport.hpp"
 
 namespace Nexus::Python {
+
+  /** Returns the exported Bookkeeper. */
+  NEXUS_EXPORT_DLL pybind11::class_<Bookkeeper>& get_exported_bookkeeper();
+
+  /** Returns the exported Portfolio. */
+  NEXUS_EXPORT_DLL pybind11::class_<Portfolio<Bookkeeper>>&
+    get_exported_portfolio();
 
   /**
    * Exports the Accounting namespace.
@@ -34,6 +42,8 @@ namespace Nexus::Python {
       def_property_readonly("totals", &B::get_totals_range);
     if constexpr(!std::is_same_v<B, Bookkeeper>) {
       pybind11::implicitly_convertible<B, Bookkeeper>();
+      get_exported_bookkeeper().
+        def(pybind11::init<B*>(), pybind11::keep_alive<1, 2>());
     }
     return bookkeeper;
   }
@@ -75,17 +85,16 @@ namespace Nexus::Python {
         &Portfolio::get_security_entries).
       def_property_readonly("unrealized_profit_and_losses",
         &Portfolio::get_unrealized_profit_and_losses).
-      def("update", static_cast<bool (Portfolio::*)(
-        const OrderFields&, const ExecutionReport&)>(&Portfolio::update),
+      def("update", pybind11::overload_cast<
+        const OrderFields&, const ExecutionReport&>(&Portfolio::update),
         pybind11::arg("fields"), pybind11::arg("report")).
       def("update_ask", &Portfolio::update_ask, pybind11::arg("security"),
         pybind11::arg("value")).
       def("update_bid", &Portfolio::update_bid, pybind11::arg("security"),
         pybind11::arg("value")).
-      def("update", static_cast<bool (Portfolio::*)(
-          const Security&, Money, Money)>(&Portfolio::update),
-        pybind11::arg("security"), pybind11::arg("ask_value"),
-        pybind11::arg("bid_value")).
+      def("update", pybind11::overload_cast<const Security&, Money, Money>(
+        &Portfolio::update), pybind11::arg("security"),
+        pybind11::arg("ask_value"), pybind11::arg("bid_value")).
       def("__iter__", [] (const Portfolio& portfolio) {
         auto updates = std::vector<PortfolioUpdateEntry>();
         for_each(portfolio, [&] (const PortfolioUpdateEntry& update) {
@@ -110,18 +119,19 @@ namespace Nexus::Python {
       def_readwrite("valuation", &SecurityEntry::m_valuation).
       def_readwrite("unrealized", &SecurityEntry::m_unrealized);
     module.def("get_realized_profit_and_loss",
-      static_cast<Money (*)(const Inventory&)>(&get_realized_profit_and_loss));
+      pybind11::overload_cast<const Inventory&>(&get_realized_profit_and_loss));
     module.def("get_unrealized_profit_and_loss",
-      static_cast<boost::optional<Money> (*)(
-        const Inventory&, const SecurityValuation&)>(
-          &get_unrealized_profit_and_loss));
+      [] (const Inventory& inventory, const SecurityValuation& valuation) {
+        return get_unrealized_profit_and_loss(inventory, valuation);
+      });
     module.def("get_total_profit_and_loss",
-      static_cast<boost::optional<Money> (*)(
-        const Inventory&, const SecurityValuation&)>(
-          &get_total_profit_and_loss));
+      [] (const Inventory& inventory, const SecurityValuation& valuation) {
+        return get_total_profit_and_loss(inventory, valuation);
+      });
     module.def("get_total_profit_and_loss",
-      static_cast<Money (*)(const Portfolio&, CurrencyId)>(
-        &get_total_profit_and_loss<B>));
+      [] (const Portfolio& portfolio, CurrencyId currency) {
+        return get_total_profit_and_loss(portfolio, currency);
+      });
     return portfolio;
   }
 

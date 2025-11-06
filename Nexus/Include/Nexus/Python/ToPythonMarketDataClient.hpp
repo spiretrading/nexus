@@ -1,12 +1,9 @@
 #ifndef NEXUS_PYTHON_MARKET_DATA_CLIENT_HPP
 #define NEXUS_PYTHON_MARKET_DATA_CLIENT_HPP
-#include <memory>
 #include <type_traits>
 #include <utility>
 #include <Beam/Python/GilRelease.hpp>
-#include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
-#include <pybind11/pybind11.h>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 
 namespace Nexus {
@@ -23,20 +20,31 @@ namespace Nexus {
       using Client = C;
 
       /**
-       * Constructs a ToPythonMarketDataClient.
-       * @param args The arguments to forward to the Client's constructor.
+       * Constructs a ToPythonMarketDataClient in-place.
+       * @param args The arguments to forward to the constructor.
        */
-      template<typename... Args, typename =
-        Beam::disable_copy_constructor_t<ToPythonMarketDataClient, Args...>>
-      ToPythonMarketDataClient(Args&&... args);
+      template<typename... Args>
+      explicit ToPythonMarketDataClient(Args&&... args);
 
       ~ToPythonMarketDataClient();
 
-      /** Returns the wrapped client. */
-      const Client& get_client() const;
+      /** Returns a reference to the underlying client. */
+      Client& get();
 
-      /** Returns the wrapped client. */
-      Client& get_client();
+      /** Returns a reference to the underlying client. */
+      const Client& get() const;
+
+      /** Returns a reference to the underlying client. */
+      Client& operator *();
+
+      /** Returns a reference to the underlying client. */
+      const Client& operator *() const;
+
+      /** Returns a pointer to the underlying client. */
+      Client* operator ->();
+
+      /** Returns a pointer to the underlying client. */
+      const Client* operator ->() const;
 
       void query(const VenueMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedOrderImbalance> queue);
@@ -71,10 +79,10 @@ namespace Nexus {
 
   template<typename Client>
   ToPythonMarketDataClient(Client&&) ->
-    ToPythonMarketDataClient<std::remove_reference_t<Client>>;
+    ToPythonMarketDataClient<std::remove_cvref_t<Client>>;
 
   template<IsMarketDataClient C>
-  template<typename... Args, typename>
+  template<typename... Args>
   ToPythonMarketDataClient<C>::ToPythonMarketDataClient(Args&&... args)
     : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
@@ -86,15 +94,39 @@ namespace Nexus {
   }
 
   template<IsMarketDataClient C>
+  typename ToPythonMarketDataClient<C>::Client&
+      ToPythonMarketDataClient<C>::get() {
+    return *m_client;
+  }
+
+  template<IsMarketDataClient C>
   const typename ToPythonMarketDataClient<C>::Client&
-      ToPythonMarketDataClient<C>::get_client() const {
+      ToPythonMarketDataClient<C>::get() const {
     return *m_client;
   }
 
   template<IsMarketDataClient C>
   typename ToPythonMarketDataClient<C>::Client&
-      ToPythonMarketDataClient<C>::get_client() {
+      ToPythonMarketDataClient<C>::operator *() {
     return *m_client;
+  }
+
+  template<IsMarketDataClient C>
+  const typename ToPythonMarketDataClient<C>::Client&
+      ToPythonMarketDataClient<C>::operator *() const {
+    return *m_client;
+  }
+
+  template<IsMarketDataClient C>
+  typename ToPythonMarketDataClient<C>::Client*
+      ToPythonMarketDataClient<C>::operator ->() {
+    return m_client.get_ptr();
+  }
+
+  template<IsMarketDataClient C>
+  const typename ToPythonMarketDataClient<C>::Client*
+      ToPythonMarketDataClient<C>::operator ->() const {
+    return m_client.get_ptr();
   }
 
   template<IsMarketDataClient C>

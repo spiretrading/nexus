@@ -1,12 +1,9 @@
 #ifndef NEXUS_PYTHON_ORDER_EXECUTION_CLIENT_HPP
 #define NEXUS_PYTHON_ORDER_EXECUTION_CLIENT_HPP
-#include <memory>
 #include <type_traits>
 #include <utility>
 #include <Beam/Python/GilRelease.hpp>
-#include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
-#include <pybind11/pybind11.h>
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 
 namespace Nexus {
@@ -23,20 +20,31 @@ namespace Nexus {
       using Client = C;
 
       /**
-       * Constructs a ToPythonOrderExecutionClient.
-       * @param args The arguments to forward to the Client's constructor.
+       * Constructs a ToPythonOrderExecutionClient in-place.
+       * @param args The arguments to forward to the constructor.
        */
-      template<typename... Args, typename =
-        Beam::disable_copy_constructor_t<ToPythonOrderExecutionClient, Args...>>
-      ToPythonOrderExecutionClient(Args&&... args);
+      template<typename... Args>
+      explicit ToPythonOrderExecutionClient(Args&&... args);
 
       ~ToPythonOrderExecutionClient();
 
-      /** Returns the wrapped client. */
-      const Client& get_client() const;
+      /** Returns a reference to the underlying client. */
+      Client& get();
 
-      /** Returns the wrapped client. */
-      Client& get_client();
+      /** Returns a reference to the underlying client. */
+      const Client& get() const;
+
+      /** Returns a reference to the underlying client. */
+      Client& operator *();
+
+      /** Returns a reference to the underlying client. */
+      const Client& operator *() const;
+
+      /** Returns a pointer to the underlying client. */
+      Client* operator ->();
+
+      /** Returns a pointer to the underlying client. */
+      const Client* operator ->() const;
 
       std::shared_ptr<Order> load_order(OrderId id);
       void query(const AccountQuery& query,
@@ -68,10 +76,10 @@ namespace Nexus {
 
   template<typename Client>
   ToPythonOrderExecutionClient(Client&&) ->
-    ToPythonOrderExecutionClient<std::remove_reference_t<Client>>;
+    ToPythonOrderExecutionClient<std::remove_cvref_t<Client>>;
 
   template<IsOrderExecutionClient C>
-  template<typename... Args, typename>
+  template<typename... Args>
   ToPythonOrderExecutionClient<C>::ToPythonOrderExecutionClient(Args&&... args)
     : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
@@ -83,15 +91,39 @@ namespace Nexus {
   }
 
   template<IsOrderExecutionClient C>
+  typename ToPythonOrderExecutionClient<C>::Client&
+      ToPythonOrderExecutionClient<C>::get() {
+    return *m_client;
+  }
+
+  template<IsOrderExecutionClient C>
   const typename ToPythonOrderExecutionClient<C>::Client&
-      ToPythonOrderExecutionClient<C>::get_client() const {
+      ToPythonOrderExecutionClient<C>::get() const {
     return *m_client;
   }
 
   template<IsOrderExecutionClient C>
   typename ToPythonOrderExecutionClient<C>::Client&
-      ToPythonOrderExecutionClient<C>::get_client() {
+      ToPythonOrderExecutionClient<C>::operator *() {
     return *m_client;
+  }
+
+  template<IsOrderExecutionClient C>
+  const typename ToPythonOrderExecutionClient<C>::Client&
+      ToPythonOrderExecutionClient<C>::operator *() const {
+    return *m_client;
+  }
+
+  template<IsOrderExecutionClient C>
+  typename ToPythonOrderExecutionClient<C>::Client*
+      ToPythonOrderExecutionClient<C>::operator ->() {
+    return m_client.get_ptr();
+  }
+
+  template<IsOrderExecutionClient C>
+  const typename ToPythonOrderExecutionClient<C>::Client*
+      ToPythonOrderExecutionClient<C>::operator ->() const {
+    return m_client.get_ptr();
   }
 
   template<IsOrderExecutionClient C>

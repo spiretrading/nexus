@@ -1,12 +1,9 @@
 #ifndef NEXUS_PYTHON_RISK_CLIENT_HPP
 #define NEXUS_PYTHON_RISK_CLIENT_HPP
-#include <memory>
 #include <type_traits>
 #include <utility>
 #include <Beam/Python/GilRelease.hpp>
-#include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
-#include <pybind11/pybind11.h>
 #include "Nexus/RiskService/RiskClient.hpp"
 
 namespace Nexus {
@@ -23,20 +20,31 @@ namespace Nexus {
       using Client = C;
 
       /**
-       * Constructs a ToPythonRiskClient.
-       * @param args The arguments to forward to the Client's constructor.
+       * Constructs a ToPythonRiskClient in-place.
+       * @param args The arguments to forward to the constructor.
        */
-      template<typename... Args, typename =
-        Beam::disable_copy_constructor_t<ToPythonRiskClient, Args...>>
-      ToPythonRiskClient(Args&&... args);
+      template<typename... Args>
+      explicit ToPythonRiskClient(Args&&... args);
 
       ~ToPythonRiskClient();
 
-      /** Returns the wrapped client. */
-      const Client& get_client() const;
+      /** Returns a reference to the underlying client. */
+      Client& get();
 
-      /** Returns the wrapped client. */
-      Client& get_client();
+      /** Returns a reference to the underlying client. */
+      const Client& get() const;
+
+      /** Returns a reference to the underlying client. */
+      Client& operator *();
+
+      /** Returns a reference to the underlying client. */
+      const Client& operator *() const;
+
+      /** Returns a pointer to the underlying client. */
+      Client* operator ->();
+
+      /** Returns a pointer to the underlying client. */
+      const Client* operator ->() const;
 
       InventorySnapshot load_inventory_snapshot(
         const Beam::DirectoryEntry& account);
@@ -53,10 +61,10 @@ namespace Nexus {
 
   template<typename Client>
   ToPythonRiskClient(Client&&) ->
-    ToPythonRiskClient<std::remove_reference_t<Client>>;
+    ToPythonRiskClient<std::remove_cvref_t<Client>>;
 
   template<IsRiskClient C>
-  template<typename... Args, typename>
+  template<typename... Args>
   ToPythonRiskClient<C>::ToPythonRiskClient(Args&&... args)
     : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
@@ -68,14 +76,36 @@ namespace Nexus {
   }
 
   template<IsRiskClient C>
-  const typename ToPythonRiskClient<C>::Client&
-      ToPythonRiskClient<C>::get_client() const {
+  typename ToPythonRiskClient<C>::Client& ToPythonRiskClient<C>::get() {
     return *m_client;
   }
 
   template<IsRiskClient C>
-  typename ToPythonRiskClient<C>::Client& ToPythonRiskClient<C>::get_client() {
+  const typename ToPythonRiskClient<C>::Client&
+      ToPythonRiskClient<C>::get() const {
     return *m_client;
+  }
+
+  template<IsRiskClient C>
+  typename ToPythonRiskClient<C>::Client& ToPythonRiskClient<C>::operator *() {
+    return *m_client;
+  }
+
+  template<IsRiskClient C>
+  const typename ToPythonRiskClient<C>::Client&
+      ToPythonRiskClient<C>::operator *() const {
+    return *m_client;
+  }
+
+  template<IsRiskClient C>
+  typename ToPythonRiskClient<C>::Client* ToPythonRiskClient<C>::operator ->() {
+    return m_client.get_ptr();
+  }
+
+  template<IsRiskClient C>
+  const typename ToPythonRiskClient<C>::Client*
+      ToPythonRiskClient<C>::operator ->() const {
+    return m_client.get_ptr();
   }
 
   template<IsRiskClient C>

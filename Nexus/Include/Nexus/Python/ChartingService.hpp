@@ -3,8 +3,13 @@
 #include <string_view>
 #include <pybind11/pybind11.h>
 #include "Nexus/ChartingService/ChartingClient.hpp"
+#include "Nexus/Python/DllExport.hpp"
 
 namespace Nexus::Python {
+
+  /** Returns the exported ChartingClient. */
+  NEXUS_EXPORT_DLL pybind11::class_<ChartingClient>&
+    get_exported_charting_client();
 
   /**
    * Exports a ChartingClient class.
@@ -15,10 +20,15 @@ namespace Nexus::Python {
    */
   template<IsChartingClient C>
   auto export_charting_client(pybind11::module& module, std::string_view name) {
-    auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
+    auto client = pybind11::class_<C>(module, name.data()).
       def("query", &C::query).
       def("load_time_price_series", &C::load_time_price_series).
       def("close", &C::close);
+    if constexpr(!std::is_same_v<C, ChartingClient>) {
+      pybind11::implicitly_convertible<C, ChartingClient>();
+      get_exported_charting_client().
+        def(pybind11::init<C*>(), pybind11::keep_alive<1, 2>());
+    }
     return client;
   }
 

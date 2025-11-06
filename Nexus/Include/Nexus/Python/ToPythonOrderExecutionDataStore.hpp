@@ -1,12 +1,9 @@
 #ifndef NEXUS_PYTHON_ORDER_EXECUTION_DATA_STORE_HPP
 #define NEXUS_PYTHON_ORDER_EXECUTION_DATA_STORE_HPP
-#include <memory>
 #include <type_traits>
 #include <utility>
 #include <Beam/Python/GilRelease.hpp>
-#include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
-#include <pybind11/pybind11.h>
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 
 namespace Nexus {
@@ -23,21 +20,32 @@ namespace Nexus {
       using DataStore = D;
 
       /**
-       * Constructs a ToPythonOrderExecutionDataStore.
-       * @param args The arguments to forward to the DataStore's constructor.
+       * Constructs a ToPythonOrderExecutionDataStore in-place.
+       * @param args The arguments to forward to the constructor.
        */
-      template<typename... Args, typename =
-        Beam::disable_copy_constructor_t<ToPythonOrderExecutionDataStore,
-          Args...>>
-      ToPythonOrderExecutionDataStore(Args&&... args);
+      template<typename... Args>
+      explicit ToPythonOrderExecutionDataStore(Args&&... args);
 
       ~ToPythonOrderExecutionDataStore();
 
-      /** Returns the wrapped data store. */
-      const DataStore& get_data_store() const;
+      /** Returns a reference to the underlying data store. */
+      DataStore& get();
 
-      /** Returns the wrapped data store. */
-      DataStore& get_data_store();
+      /** Returns a reference to the underlying data store. */
+      const DataStore& get() const;
+
+      /** Returns a reference to the underlying data store. */
+      DataStore& operator *();
+
+      /** Returns a reference to the underlying data store. */
+      const DataStore& operator *() const;
+
+      /** Returns a pointer to the underlying data store. */
+      DataStore* operator ->();
+
+      /** Returns a pointer to the underlying data store. */
+      const DataStore* operator ->() const;
+
       boost::optional<SequencedAccountOrderRecord>
         load_order_record(OrderId id);
       std::vector<SequencedOrderRecord>
@@ -61,10 +69,10 @@ namespace Nexus {
 
   template<typename DataStore>
   ToPythonOrderExecutionDataStore(DataStore&&) ->
-    ToPythonOrderExecutionDataStore<std::remove_reference_t<DataStore>>;
+    ToPythonOrderExecutionDataStore<std::remove_cvref_t<DataStore>>;
 
   template<IsOrderExecutionDataStore D>
-  template<typename... Args, typename>
+  template<typename... Args>
   ToPythonOrderExecutionDataStore<D>::ToPythonOrderExecutionDataStore(
     Args&&... args)
     : m_data_store((Beam::Python::GilRelease(), boost::in_place_init),
@@ -77,15 +85,39 @@ namespace Nexus {
   }
 
   template<IsOrderExecutionDataStore D>
+  typename ToPythonOrderExecutionDataStore<D>::DataStore&
+      ToPythonOrderExecutionDataStore<D>::get() {
+    return *m_data_store;
+  }
+
+  template<IsOrderExecutionDataStore D>
   const typename ToPythonOrderExecutionDataStore<D>::DataStore&
-      ToPythonOrderExecutionDataStore<D>::get_data_store() const {
+      ToPythonOrderExecutionDataStore<D>::get() const {
     return *m_data_store;
   }
 
   template<IsOrderExecutionDataStore D>
   typename ToPythonOrderExecutionDataStore<D>::DataStore&
-      ToPythonOrderExecutionDataStore<D>::get_data_store() {
+      ToPythonOrderExecutionDataStore<D>::operator *() {
     return *m_data_store;
+  }
+
+  template<IsOrderExecutionDataStore D>
+  const typename ToPythonOrderExecutionDataStore<D>::DataStore&
+      ToPythonOrderExecutionDataStore<D>::operator *() const {
+    return *m_data_store;
+  }
+
+  template<IsOrderExecutionDataStore D>
+  typename ToPythonOrderExecutionDataStore<D>::DataStore*
+      ToPythonOrderExecutionDataStore<D>::operator ->() {
+    return m_data_store.get_ptr();
+  }
+
+  template<IsOrderExecutionDataStore D>
+  const typename ToPythonOrderExecutionDataStore<D>::DataStore*
+      ToPythonOrderExecutionDataStore<D>::operator ->() const {
+    return m_data_store.get_ptr();
   }
 
   template<IsOrderExecutionDataStore D>

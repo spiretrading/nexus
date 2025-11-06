@@ -1,12 +1,9 @@
 #ifndef NEXUS_TO_PYTHON_ADMINISTRATION_DATA_STORE_HPP
 #define NEXUS_TO_PYTHON_ADMINISTRATION_DATA_STORE_HPP
-#include <memory>
 #include <type_traits>
 #include <utility>
 #include <Beam/Python/GilRelease.hpp>
-#include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
-#include <pybind11/pybind11.h>
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 
 namespace Nexus {
@@ -23,39 +20,47 @@ namespace Nexus {
       using DataStore = D;
 
       /**
-       * Constructs a ToPythonAdministrationDataStore.
-       * @param args The arguments to forward to the DataStore's constructor.
+       * Constructs a ToPythonAdministrationDataStore in-place.
+       * @param args The arguments to forward to the constructor.
        */
-      template<typename... Args, typename = Beam::disable_copy_constructor_t<
-        ToPythonAdministrationDataStore, Args...>>
-      ToPythonAdministrationDataStore(Args&&... args);
+      template<typename... Args>
+      explicit ToPythonAdministrationDataStore(Args&&... args);
 
       ~ToPythonAdministrationDataStore();
 
-      /** Returns the wrapped data store. */
-      const DataStore& get_data_store() const;
+      /** Returns a reference to the underlying data store. */
+      DataStore& get();
 
-      /** Returns the wrapped data store. */
-      DataStore& get_data_store();
+      /** Returns a reference to the underlying data store. */
+      const DataStore& get() const;
+
+      /** Returns a reference to the underlying data store. */
+      DataStore& operator *();
+
+      /** Returns a reference to the underlying data store. */
+      const DataStore& operator *() const;
+
+      /** Returns a pointer to the underlying data store. */
+      DataStore* operator ->();
+
+      /** Returns a pointer to the underlying data store. */
+      const DataStore* operator ->() const;
 
       std::vector<AdministrationDataStore::IndexedAccountIdentity>
         load_all_account_identities();
-      AccountIdentity load_identity(
-        const Beam::DirectoryEntry& account);
-      void store(const Beam::DirectoryEntry& account,
-        const AccountIdentity& identity);
+      AccountIdentity load_identity(const Beam::DirectoryEntry& account);
+      void store(
+        const Beam::DirectoryEntry& account, const AccountIdentity& identity);
       std::vector<AdministrationDataStore::IndexedRiskParameters>
         load_all_risk_parameters();
-      RiskParameters load_risk_parameters(
-        const Beam::DirectoryEntry& account);
+      RiskParameters load_risk_parameters(const Beam::DirectoryEntry& account);
       void store(const Beam::DirectoryEntry& account,
         const RiskParameters& risk_parameters);
       std::vector<AdministrationDataStore::IndexedRiskState>
         load_all_risk_states();
-      RiskState load_risk_state(
-        const Beam::DirectoryEntry& account);
-      void store(const Beam::DirectoryEntry& account,
-        const RiskState& risk_state);
+      RiskState load_risk_state(const Beam::DirectoryEntry& account);
+      void store(
+        const Beam::DirectoryEntry& account, const RiskState& risk_state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest::Id>
@@ -97,10 +102,10 @@ namespace Nexus {
 
   template<typename DataStore>
   ToPythonAdministrationDataStore(DataStore&&) ->
-    ToPythonAdministrationDataStore<std::remove_reference_t<DataStore>>;
+    ToPythonAdministrationDataStore<std::remove_cvref_t<DataStore>>;
 
   template<IsAdministrationDataStore D>
-  template<typename... Args, typename>
+  template<typename... Args>
   ToPythonAdministrationDataStore<D>::ToPythonAdministrationDataStore(
     Args&&... args)
     : m_data_store((Beam::Python::GilRelease(), boost::in_place_init),
@@ -113,15 +118,39 @@ namespace Nexus {
   }
 
   template<IsAdministrationDataStore D>
+  typename ToPythonAdministrationDataStore<D>::DataStore&
+      ToPythonAdministrationDataStore<D>::get() {
+    return *m_data_store;
+  }
+
+  template<IsAdministrationDataStore D>
   const typename ToPythonAdministrationDataStore<D>::DataStore&
-      ToPythonAdministrationDataStore<D>::get_data_store() const {
+      ToPythonAdministrationDataStore<D>::get() const {
     return *m_data_store;
   }
 
   template<IsAdministrationDataStore D>
   typename ToPythonAdministrationDataStore<D>::DataStore&
-      ToPythonAdministrationDataStore<D>::get_data_store() {
+      ToPythonAdministrationDataStore<D>::operator *() {
     return *m_data_store;
+  }
+
+  template<IsAdministrationDataStore D>
+  const typename ToPythonAdministrationDataStore<D>::DataStore&
+      ToPythonAdministrationDataStore<D>::operator *() const {
+    return *m_data_store;
+  }
+
+  template<IsAdministrationDataStore D>
+  typename ToPythonAdministrationDataStore<D>::DataStore*
+      ToPythonAdministrationDataStore<D>::operator ->() {
+    return m_data_store.get_ptr();
+  }
+
+  template<IsAdministrationDataStore D>
+  const typename ToPythonAdministrationDataStore<D>::DataStore*
+      ToPythonAdministrationDataStore<D>::operator ->() const {
+    return m_data_store.get_ptr();
   }
 
   template<IsAdministrationDataStore D>
@@ -140,8 +169,7 @@ namespace Nexus {
 
   template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::store(
-      const Beam::DirectoryEntry& account,
-      const AccountIdentity& identity) {
+      const Beam::DirectoryEntry& account, const AccountIdentity& identity) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(account, identity);
   }
@@ -184,8 +212,7 @@ namespace Nexus {
 
   template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::store(
-      const Beam::DirectoryEntry& account,
-      const RiskState& risk_state) {
+      const Beam::DirectoryEntry& account, const RiskState& risk_state) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(account, risk_state);
   }
