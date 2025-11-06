@@ -60,6 +60,15 @@ namespace Spire {
       /** Returns the body of this item. */
       QWidget& get_body();
 
+      /**
+       * Mounts the body to the item.
+       * @param body The body to mount.
+       */
+      void mount(QWidget& body);
+
+      /** Unmounts the body from the item and returns the body. */
+      QWidget* unmount();
+
       /** Connects a slot to the ActiveSignal. */
       boost::signals2::connection connect_active_signal(
         const ActiveSignal::slot_type& slot) const;
@@ -67,7 +76,6 @@ namespace Spire {
       QSize sizeHint() const override;
 
     private:
-      friend class TableBody;
       mutable ActiveSignal m_active_signal;
       Styles m_styles;
       ClickObserver m_click_observer;
@@ -75,8 +83,6 @@ namespace Spire {
       MouseObserver m_mouse_observer;
       boost::signals2::scoped_connection m_style_connection;
 
-      void mount(QWidget& body);
-      QWidget* unmount();
       void on_focus(FocusObserver::State state);
       void on_mouse(QWidget& target, const QMouseEvent& event);
       void on_style();
