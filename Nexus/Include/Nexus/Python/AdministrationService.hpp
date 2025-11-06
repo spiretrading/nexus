@@ -189,6 +189,13 @@ namespace Nexus::Python {
   void export_administration_service(pybind11::module& module);
 
   /**
+   * Exports the application definitions.
+   * @param module The module to export to.
+   */
+  void export_administration_service_application_definitions(
+    pybind11::module& module);
+
+  /**
    * Exports the AdministrationServiceTestEnvironment class.
    * @param module The module to export to.
    */

@@ -8,6 +8,7 @@
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStoreException.hpp"
+#include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
 #include "Nexus/AdministrationService/CachedAdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
@@ -119,6 +120,7 @@ void Nexus::Python::export_administration_service(module& module) {
   administration_data_store = std::make_unique<class_<AdministrationDataStore>>(
     export_administration_data_store<AdministrationDataStore>(
       module, "AdministrationDataStore"));
+  export_administration_service_application_definitions(module);
   export_account_identity(module);
   export_account_modification_request(module);
   export_account_roles(module);
@@ -142,6 +144,19 @@ void Nexus::Python::export_administration_service(module& module) {
   export_queue_suite<RiskParameters>(module, "RiskParameters");
   auto test_module = module.def_submodule("tests");
   export_administration_service_test_environment(test_module);
+}
+
+void Nexus::Python::export_administration_service_application_definitions(
+    module& module) {
+  export_administration_client<
+    ToPythonAdministrationClient<ApplicationAdministrationClient>>(
+      module, "ApplicationAdministrationClient").
+    def(pybind11::init(
+      [] (ToPythonServiceLocatorClient<ApplicationServiceLocatorClient>&
+          client) {
+        return std::make_unique<ToPythonAdministrationClient<
+          ApplicationAdministrationClient>>(Ref(*client));
+      }), keep_alive<1, 2>());
 }
 
 void Nexus::Python::export_administration_service_test_environment(
@@ -243,11 +258,11 @@ void Nexus::Python::export_mysql_administration_data_store(module& module) {
     SqlAdministrationDataStore<SqlConnection<Viper::MySql::Connection>>>;
   export_administration_data_store<DataStore>(
       module, "MySqlAdministrationDataStore").
-    def(init([] (std::string host, unsigned int port,
-        std::string username, std::string password, std::string database,
+    def(init([] (std::string host, unsigned int port, std::string username,
+        std::string password, std::string database,
         const SqlAdministrationDataStore<SqlConnection<
           Viper::MySql::Connection>>::DirectoryEntrySource& source) {
-      return std::make_shared<DataStore>(
+      return std::make_unique<DataStore>(
         std::make_unique<SqlConnection<Viper::MySql::Connection>>(
           Viper::MySql::Connection(host, port, username, password, database)),
           source);
@@ -268,7 +283,7 @@ void Nexus::Python::export_sqlite_administration_data_store(module& module) {
     def(init([] (std::string path, const SqlAdministrationDataStore<
       SqlConnection<Viper::Sqlite3::Connection>>::DirectoryEntrySource&
         source) {
-      return std::make_shared<DataStore>(
+      return std::make_unique<DataStore>(
         std::make_unique<SqlConnection<Viper::Sqlite3::Connection>>(path),
         source);
     }), call_guard<GilRelease>());

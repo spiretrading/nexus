@@ -1,5 +1,6 @@
 #include "Nexus/Python/ChartingService.hpp"
 #include <Beam/Python/Beam.hpp>
+#include "Nexus/ChartingService/ApplicationDefinitions.hpp"
 #include "Nexus/ChartingService/SecurityChartingQuery.hpp"
 #include "Nexus/ChartingServiceTests/ChartingServiceTestEnvironment.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
@@ -24,17 +25,31 @@ void Nexus::Python::export_charting_service(module& module) {
   charting_client = std::make_unique<class_<ChartingClient>>(
     export_charting_client<ToPythonChartingClient<ChartingClient>>(
       module, "ChartingClient"));
+  export_charting_service_application_definitions(module);
   export_security_charting_query(module);
   auto tests_submodule = module.def_submodule("tests");
   export_charting_service_test_environment(tests_submodule);
 }
 
-void Nexus::Python::export_charting_service_test_environment(module& module) {
-  class_<ChartingServiceTestEnvironment>(
-      module, "ChartingServiceTestEnvironment").
+void Nexus::Python::export_charting_service_application_definitions(
+    module& module) {
+  export_charting_client<ToPythonChartingClient<ApplicationChartingClient>>(
+    module, "ApplicationChartingClient").
     def(pybind11::init(
-      &make_python_shared<ServiceLocatorClient, MarketDataClient>),
-      keep_alive<1, 2>()).
+      [] (ToPythonServiceLocatorClient<ApplicationServiceLocatorClient>&
+          client) {
+        return std::make_unique<ToPythonChartingClient<
+          ApplicationChartingClient>>(Ref(*client));
+      }), keep_alive<1, 2>());
+}
+
+void Nexus::Python::export_charting_service_test_environment(module& module) {
+  class_<ChartingServiceTestEnvironment,
+      std::shared_ptr<ChartingServiceTestEnvironment>>(module,
+        "ChartingServiceTestEnvironment").
+    def(pybind11::init(&make_python_shared<ChartingServiceTestEnvironment,
+      ServiceLocatorClient&, MarketDataClient&>), keep_alive<1, 2>(),
+      keep_alive<1, 3>()).
     def("make_client",
       [] (ChartingServiceTestEnvironment& self, ServiceLocatorClient& client) {
         return ToPythonChartingClient(self.make_client(Ref(client)));

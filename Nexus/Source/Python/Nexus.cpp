@@ -11,7 +11,7 @@ PYBIND11_MODULE(nexus, m) {
   export_accounting(m);
   export_administration_service(m);
   export_charting_service(m);
-//  export_compliance(m);
+  export_compliance(m);
   export_definitions(m);
   export_definitions_service(m);
 /*

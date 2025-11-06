@@ -39,6 +39,13 @@ namespace Nexus::Python {
   void export_charting_service(pybind11::module& module);
 
   /**
+   * Exports the application definitions.
+   * @param module The module to export to.
+   */
+  void export_charting_service_application_definitions(
+    pybind11::module& module);
+
+  /**
    * Exports the ChartingServiceTestEnvironment class.
    * @param module The module to export to.
    */
