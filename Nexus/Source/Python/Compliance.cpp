@@ -140,7 +140,8 @@ void Nexus::Python::export_compliance_rule_violation_record(module& module) {
 }
 
 void Nexus::Python::export_compliance_test_environment(module& module) {
-  class_<ComplianceTestEnvironment>(module, "ComplianceTestEnvironment")
+  class_<ComplianceTestEnvironment, std::shared_ptr<ComplianceTestEnvironment>>(
+      module, "ComplianceTestEnvironment")
     .def(init(&make_python_shared<ComplianceTestEnvironment,
       ServiceLocatorClient&, AdministrationClient&, TimeClient&>),
       keep_alive<1, 2>(), keep_alive<1, 3>()).

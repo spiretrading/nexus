@@ -161,7 +161,7 @@ namespace Nexus {
       Beam::Out<std::vector<ComplianceRuleEntry>> snapshot) {
     auto release = Beam::Python::GilRelease();
     m_client->monitor_compliance_rule_entries(directory_entry, std::move(queue),
-      Beam::Store(snapshot));
+      Beam::out(snapshot));
   }
 
   template<IsComplianceClient C>
