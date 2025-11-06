@@ -1,12 +1,9 @@
 #ifndef NEXUS_PYTHON_DEFINITIONS_CLIENT_HPP
 #define NEXUS_PYTHON_DEFINITIONS_CLIENT_HPP
-#include <memory>
 #include <type_traits>
 #include <utility>
 #include <Beam/Python/GilRelease.hpp>
-#include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
-#include <pybind11/pybind11.h>
 #include "Nexus/DefinitionsService/DefinitionsClient.hpp"
 
 namespace Nexus {
@@ -23,20 +20,32 @@ namespace Nexus {
       using Client = C;
 
       /**
-       * Constructs a ToPythonDefinitionsClient.
-       * @param args The arguments to forward to the Client's constructor.
+       * Constructs a ToPythonDefinitionsClient in-place.
+       * @param args The arguments to forward to the constructor.
        */
-      template<typename... Args, typename =
-        Beam::disable_copy_constructor_t<ToPythonDefinitionsClient, Args...>>
-      ToPythonDefinitionsClient(Args&&... args);
+      template<typename... Args>
+      explicit ToPythonDefinitionsClient(Args&&... args);
 
       ~ToPythonDefinitionsClient();
 
-      /** Returns the wrapped client. */
-      const Client& get_client() const;
+      /** Returns a reference to the underlying client. */
+      Client& get();
 
-      /** Returns the wrapped client. */
-      Client& get_client();
+      /** Returns a reference to the underlying client. */
+      const Client& get() const;
+
+      /** Returns a reference to the underlying client. */
+      Client& operator *();
+
+      /** Returns a reference to the underlying client. */
+      const Client& operator *() const;
+
+      /** Returns a pointer to the underlying client. */
+      Client* operator ->();
+
+      /** Returns a pointer to the underlying client. */
+      const Client* operator ->() const;
+
       std::string load_minimum_spire_client_version();
       std::string load_organization_name();
       CountryDatabase load_country_database();
@@ -59,10 +68,10 @@ namespace Nexus {
 
   template<typename Client>
   ToPythonDefinitionsClient(Client&&) ->
-    ToPythonDefinitionsClient<std::remove_reference_t<Client>>;
+    ToPythonDefinitionsClient<std::remove_cvref_t<Client>>;
 
   template<IsDefinitionsClient C>
-  template<typename... Args, typename>
+  template<typename... Args>
   ToPythonDefinitionsClient<C>::ToPythonDefinitionsClient(Args&&... args)
     : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
@@ -74,19 +83,44 @@ namespace Nexus {
   }
 
   template<IsDefinitionsClient C>
+  typename ToPythonDefinitionsClient<C>::Client&
+      ToPythonDefinitionsClient<C>::get() {
+    return *m_client;
+  }
+
+  template<IsDefinitionsClient C>
   const typename ToPythonDefinitionsClient<C>::Client&
-      ToPythonDefinitionsClient<C>::get_client() const {
+      ToPythonDefinitionsClient<C>::get() const {
     return *m_client;
   }
 
   template<IsDefinitionsClient C>
   typename ToPythonDefinitionsClient<C>::Client&
-      ToPythonDefinitionsClient<C>::get_client() {
+      ToPythonDefinitionsClient<C>::operator *() {
     return *m_client;
   }
 
   template<IsDefinitionsClient C>
-  std::string ToPythonDefinitionsClient<C>::load_minimum_spire_client_version() {
+  const typename ToPythonDefinitionsClient<C>::Client&
+      ToPythonDefinitionsClient<C>::operator *() const {
+    return *m_client;
+  }
+
+  template<IsDefinitionsClient C>
+  typename ToPythonDefinitionsClient<C>::Client*
+      ToPythonDefinitionsClient<C>::operator ->() {
+    return m_client.get_ptr();
+  }
+
+  template<IsDefinitionsClient C>
+  const typename ToPythonDefinitionsClient<C>::Client*
+      ToPythonDefinitionsClient<C>::operator ->() const {
+    return m_client.get_ptr();
+  }
+
+  template<IsDefinitionsClient C>
+  std::string ToPythonDefinitionsClient<C>::
+      load_minimum_spire_client_version() {
     auto release = Beam::Python::GilRelease();
     return m_client->load_minimum_spire_client_version();
   }
@@ -117,7 +151,8 @@ namespace Nexus {
   }
 
   template<IsDefinitionsClient C>
-  DestinationDatabase ToPythonDefinitionsClient<C>::load_destination_database() {
+  DestinationDatabase
+      ToPythonDefinitionsClient<C>::load_destination_database() {
     auto release = Beam::Python::GilRelease();
     return m_client->load_destination_database();
   }
@@ -129,7 +164,8 @@ namespace Nexus {
   }
 
   template<IsDefinitionsClient C>
-  std::vector<ExchangeRate> ToPythonDefinitionsClient<C>::load_exchange_rates() {
+  std::vector<ExchangeRate>
+      ToPythonDefinitionsClient<C>::load_exchange_rates() {
     auto release = Beam::Python::GilRelease();
     return m_client->load_exchange_rates();
   }
