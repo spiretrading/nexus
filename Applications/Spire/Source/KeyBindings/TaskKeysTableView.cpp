@@ -230,16 +230,16 @@ namespace {
     QPointer<TableItem> m_table_item;
     QPointer<BreakoutBox> m_breakout_box;
 
-    RegionBoxBreakout(RegionBox* region_box, EditableBox* editable_box)
-      : m_region_box(region_box),
-        m_editable_box(editable_box) {}
+    RegionBoxBreakout(RegionBox& region_box, EditableBox& editable_box)
+      : m_region_box(&region_box),
+        m_editable_box(&editable_box) {}
 
-    void breakout() {
+    void break_out() {
       if(m_table_item =
           static_cast<TableItem*>(m_editable_box->parentWidget())) {
-        auto body = m_table_item->unmount();
         m_region_box->setMinimumHeight(0);
         m_region_box->setMaximumHeight(QWIDGETSIZE_MAX);
+        auto body = m_table_item->unmount();
         m_breakout_box = new BreakoutBox(*body, *m_table_item);
         m_breakout_box->show();
         m_breakout_box->setFocus();
@@ -282,10 +282,10 @@ namespace {
             region_box->setFixedHeight(region_box->minimumSizeHint().height());
             auto editable_box = new EditableBox(*region_box);
             editable_box->connect_read_only_signal(
-              [region_breakout = RegionBoxBreakout(region_box, editable_box)]
+              [region_breakout = RegionBoxBreakout(*region_box, *editable_box)]
                   (auto read_only) mutable {
                 if(!read_only) {
-                  region_breakout.breakout();
+                  region_breakout.break_out();
                 } else {
                   region_breakout.restore();
                 }

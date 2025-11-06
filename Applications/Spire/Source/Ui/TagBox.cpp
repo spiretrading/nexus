@@ -288,13 +288,6 @@ QSize TagBox::sizeHint() const {
   return *m_size_hint;
 }
 
-bool TagBox::event(QEvent* event) {
-  if(event->type() == QEvent::LayoutRequest) {
-    m_size_hint = none;
-  }
-  return QWidget::event(event);
-}
-
 bool TagBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
@@ -326,6 +319,13 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
     return true;
   }
   return QWidget::eventFilter(watched, event);
+}
+
+bool TagBox::event(QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    m_size_hint = none;
+  }
+  return QWidget::event(event);
 }
 
 void TagBox::changeEvent(QEvent* event) {
@@ -392,12 +392,7 @@ QWidget* TagBox::make_tag(
 int TagBox::get_available_width() const {
   auto width = 0;
   for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
-    auto item_size = [&] {
-      if(i == m_list_view->get_list()->get_size() - 1) {
-        return m_text_box->sizeHint();
-      }
-      return m_list_view->get_list_item(i)->sizeHint();
-    }();
+    auto item_size = m_list_view->get_list_item(i)->sizeHint();
     width += item_size.width() + m_list_item_gap;
   }
   auto horizontal_space = horizontal_length(m_list_view_padding) +
@@ -426,12 +421,7 @@ int TagBox::get_height_for_width(int width) const {
   auto line_height = 0;
   auto total_height = 0;
   for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
-    auto item_size = [&] {
-      if(i == m_list_view->get_list()->get_size() - 1) {
-        return m_text_box->sizeHint();
-      }
-      return m_list_view->get_list_item(i)->sizeHint();
-    }();
+    auto item_size = m_list_view->get_list_item(i)->sizeHint();
     if(item_size.width() > remaining_width) {
       total_height += line_height + m_list_overflow_gap;
       remaining_width = content_width;

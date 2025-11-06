@@ -55,8 +55,8 @@ namespace Spire {
       QSize sizeHint() const override;
 
     protected:
-      bool event(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
+      bool event(QEvent* event) override;
       void changeEvent(QEvent* event) override;
       bool focusNextPrevChild(bool next) override;
       void resizeEvent(QResizeEvent* event) override;

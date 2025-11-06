@@ -76,7 +76,6 @@ namespace Spire {
       QSize sizeHint() const override;
 
     private:
-      friend class TableBody;
       mutable ActiveSignal m_active_signal;
       Styles m_styles;
       ClickObserver m_click_observer;

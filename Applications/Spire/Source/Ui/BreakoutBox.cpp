@@ -37,12 +37,12 @@ bool BreakoutBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_source) {
     if(event->type() == QEvent::Move) {
       move(parentWidget()->mapFromGlobal(m_source->mapToGlobal(QPoint(0, 0))));
-      update_size();
+      adjust_size();
     } else if(event->type() == QEvent::Resize) {
-      update_size();
+      adjust_size();
     }
   } else if(watched == parentWidget() && event->type() == QEvent::Resize) {
-    update_size();
+    adjust_size();
   } else if(event->type() == QEvent::Wheel && isVisible()) {
     auto& wheel_event = *static_cast<QWheelEvent*>(event);
     auto parent = parentWidget();
@@ -66,6 +66,12 @@ bool BreakoutBox::focusNextPrevChild(bool next) {
   return focus_next(*m_source, next);
 }
 
+void BreakoutBox::adjust_size() {
+  update_size_constraints();
+  invalidate_descendant_layouts(*this);
+  adjustSize();
+}
+
 void BreakoutBox::update_size_constraints() {
   auto parent = parentWidget();
   auto maximum_width = parent->width() - x();
@@ -80,10 +86,4 @@ void BreakoutBox::update_size_constraints() {
     minimum_height = maximum_height;
   }
   setMinimumSize(minimum_width, minimum_height);
-}
-
-void BreakoutBox::update_size() {
-  update_size_constraints();
-  invalidate_descendant_layouts(*this);
-  adjustSize();
 }

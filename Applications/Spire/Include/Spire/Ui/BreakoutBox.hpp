@@ -13,7 +13,7 @@ namespace Spire {
 
       /**
        * Constructs a BreakoutBox.
-       * @param body The component that can extend beyond its layout.
+       * @param body The component that can extend beyond the layout.
        * @param source The component that used to own the body.
        */
       BreakoutBox(QWidget& body, QWidget& source);
@@ -33,8 +33,8 @@ namespace Spire {
       QWidget* m_body;
       QWidget* m_source;
 
+      void adjust_size();
       void update_size_constraints();
-      void update_size();
   };
 }
 
