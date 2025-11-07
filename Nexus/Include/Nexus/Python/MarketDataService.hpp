@@ -5,8 +5,21 @@
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
+#include "Nexus/Python/DllExport.hpp"
 
 namespace Nexus::Python {
+
+  /** Returns the exported HistoricalDataStore. */
+  NEXUS_EXPORT_DLL pybind11::class_<HistoricalDataStore>&
+    get_exported_historical_data_store();
+
+  /** Returns the exported MarketDataClient. */
+  NEXUS_EXPORT_DLL pybind11::class_<MarketDataClient>&
+    get_exported_market_data_client();
+
+  /** Returns the exported MarketDataFeedClient. */
+  NEXUS_EXPORT_DLL pybind11::class_<MarketDataFeedClient>&
+    get_exported_market_data_feed_client();
 
   /**
    * Exports the AsyncHistoricalDataStore class.
@@ -54,31 +67,35 @@ namespace Nexus::Python {
   template<IsHistoricalDataStore D>
   auto export_historical_data_store(
       pybind11::module& module, std::string_view name) {
-    auto data_store =
-      pybind11::class_<D, std::shared_ptr<D>>(module, name.data()).
-        def("load_security_info", &D::load_security_info).
-        def("store", static_cast<void (D::*)(const SecurityInfo&)>(&D::store)).
-        def("load_order_imbalances", &D::load_order_imbalances).
-        def("store", static_cast<
-          void (D::*)(const SequencedVenueOrderImbalance&)>(&D::store)).
-        def("store", static_cast<void (D::*)(
-          const std::vector<SequencedVenueOrderImbalance>&)>(&D::store)).
-        def("load_bbo_quotes", &D::load_bbo_quotes).
-        def("store", static_cast<
-          void (D::*)(const SequencedSecurityBboQuote&)>(&D::store)).
-        def("store", static_cast<void (D::*)(
-          const std::vector<SequencedSecurityBboQuote>&)>(&D::store)).
-        def("load_book_quotes", &D::load_book_quotes).
-        def("store", static_cast<
-          void (D::*)(const SequencedSecurityBookQuote&)>(&D::store)).
-        def("store", static_cast<void (D::*)(
-          const std::vector<SequencedSecurityBookQuote>&)>(&D::store)).
-        def("load_time_and_sales", &D::load_time_and_sales).
-        def("store", static_cast<
-          void (D::*)(const SequencedSecurityTimeAndSale&)>(&D::store)).
-        def("store", static_cast<void (D::*)(
-          const std::vector<SequencedSecurityTimeAndSale>&)>(&D::store)).
-        def("close", &D::close);
+    auto data_store = pybind11::class_<D>(module, name.data()).
+      def("load_security_info", &D::load_security_info).
+      def("store", pybind11::overload_cast<const SecurityInfo&>(&D::store)).
+      def("load_order_imbalances", &D::load_order_imbalances).
+      def("store", pybind11::overload_cast<
+        const SequencedVenueOrderImbalance&>(&D::store)).
+      def("store", pybind11::overload_cast<
+        const std::vector<SequencedVenueOrderImbalance>&>(&D::store)).
+      def("load_bbo_quotes", &D::load_bbo_quotes).
+      def("store",
+        pybind11::overload_cast<const SequencedSecurityBboQuote&>(&D::store)).
+      def("store", pybind11::overload_cast<
+        const std::vector<SequencedSecurityBboQuote>&>(&D::store)).
+      def("load_book_quotes", &D::load_book_quotes).
+      def("store",
+        pybind11::overload_cast<const SequencedSecurityBookQuote&>(&D::store)).
+      def("store", pybind11::overload_cast<
+        const std::vector<SequencedSecurityBookQuote>&>(&D::store)).
+      def("load_time_and_sales", &D::load_time_and_sales).
+      def("store", pybind11::overload_cast<
+        const SequencedSecurityTimeAndSale&>(&D::store)).
+      def("store", pybind11::overload_cast<
+        const std::vector<SequencedSecurityTimeAndSale>&>(&D::store)).
+      def("close", &D::close);
+    if constexpr(!std::is_same_v<D, HistoricalDataStore>) {
+      pybind11::implicitly_convertible<D, HistoricalDataStore>();
+      get_exported_historical_data_store().
+        def(pybind11::init<D*>(), pybind11::keep_alive<1, 2>());
+    }
     return data_store;
   }
 
@@ -106,35 +123,40 @@ namespace Nexus::Python {
       pybind11::module& module, std::string_view name) {
     auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
       def("query_sequenced_order_imbalances",
-        static_cast<void (C::*)(const VenueMarketDataQuery&,
-          Beam::ScopedQueueWriter<SequencedOrderImbalance>)>(&C::query)).
+        pybind11::overload_cast<const VenueMarketDataQuery&,
+          Beam::ScopedQueueWriter<SequencedOrderImbalance>>(&C::query)).
       def("query_order_imbalances",
-        static_cast<void (C::*)(const VenueMarketDataQuery&,
-          Beam::ScopedQueueWriter<OrderImbalance>)>(&C::query)).
-      def("query_sequenced_bbo_quotes", static_cast<void (C::*)(
-        const SecurityMarketDataQuery&,
-        Beam::ScopedQueueWriter<SequencedBboQuote>)>(&C::query)).
-      def("query_bbo_quotes", static_cast<
-        void (C::*)(const SecurityMarketDataQuery&,
-          Beam::ScopedQueueWriter<BboQuote>)>(&C::query)).
-      def("query_sequenced_book_quotes", static_cast<
-        void (C::*)(const SecurityMarketDataQuery&,
-          Beam::ScopedQueueWriter<SequencedBookQuote>)>(&C::query)).
-      def("query_book_quotes", static_cast<
-        void (C::*)(const SecurityMarketDataQuery&,
-          Beam::ScopedQueueWriter<BookQuote>)>(&C::query)).
-      def("query_sequenced_time_and_sales", static_cast<
-        void (C::*)(const SecurityMarketDataQuery&,
-          Beam::ScopedQueueWriter<SequencedTimeAndSale>)>(&C::query)).
-      def("query_time_and_sales", static_cast<
-        void (C::*)(const SecurityMarketDataQuery&,
-          Beam::ScopedQueueWriter<TimeAndSale>)>(&C::query)).
-      def("query_security_info", static_cast<std::vector<SecurityInfo> (C::*)(
-        const SecurityInfoQuery&)>(&C::query)).
+        pybind11::overload_cast<const VenueMarketDataQuery&,
+          Beam::ScopedQueueWriter<OrderImbalance>>(&C::query)).
+      def("query_sequenced_bbo_quotes",
+        pybind11::overload_cast<const SecurityMarketDataQuery&,
+          Beam::ScopedQueueWriter<SequencedBboQuote>>(&C::query)).
+      def("query_bbo_quotes",
+        pybind11::overload_cast<const SecurityMarketDataQuery&,
+          Beam::ScopedQueueWriter<BboQuote>>(&C::query)).
+      def("query_sequenced_book_quotes",
+        pybind11::overload_cast<const SecurityMarketDataQuery&,
+          Beam::ScopedQueueWriter<SequencedBookQuote>>(&C::query)).
+      def("query_book_quotes",
+        pybind11::overload_cast<const SecurityMarketDataQuery&,
+          Beam::ScopedQueueWriter<BookQuote>>(&C::query)).
+      def("query_sequenced_time_and_sales",
+        pybind11::overload_cast<const SecurityMarketDataQuery&,
+          Beam::ScopedQueueWriter<SequencedTimeAndSale>>(&C::query)).
+      def("query_time_and_sales",
+        pybind11::overload_cast<const SecurityMarketDataQuery&,
+          Beam::ScopedQueueWriter<TimeAndSale>>(&C::query)).
+      def("query_security_info",
+        pybind11::overload_cast<const SecurityInfoQuery&>(&C::query)).
       def("load_snapshot", &C::load_snapshot).
       def("load_technicals", &C::load_technicals).
       def("load_security_info_from_prefix", &C::load_security_info_from_prefix).
       def("close", &C::close);
+    if constexpr(!std::is_same_v<C, MarketDataClient>) {
+      pybind11::implicitly_convertible<C, MarketDataClient>();
+      get_exported_market_data_client().
+        def(pybind11::init<C*>(), pybind11::keep_alive<1, 2>());
+    }
     return client;
   }
 
@@ -151,19 +173,24 @@ namespace Nexus::Python {
     auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
       def("add", &C::add).
       def("publish",
-        static_cast<void (C::*)(const VenueOrderImbalance&)>(&C::publish)).
+        pybind11::overload_cast<const VenueOrderImbalance&>(&C::publish)).
       def("publish",
-        static_cast<void (C::*)(const SecurityBboQuote&)>(&C::publish)).
+        pybind11::overload_cast<const SecurityBboQuote&>(&C::publish)).
       def("publish",
-        static_cast<void (C::*)(const SecurityBookQuote&)>(&C::publish)).
+        pybind11::overload_cast<const SecurityBookQuote&>(&C::publish)).
       def("publish",
-        static_cast<void (C::*)(const SecurityTimeAndSale&)>(&C::publish)).
+        pybind11::overload_cast<const SecurityTimeAndSale&>(&C::publish)).
       def("add_order", &C::add_order).
       def("modify_order_size", &C::modify_order_size).
       def("offset_order_size", &C::offset_order_size).
       def("modify_order_price", &C::modify_order_price).
       def("remove_order", &C::remove_order).
       def("close", &C::close);
+    if constexpr(!std::is_same_v<C, MarketDataFeedClient>) {
+      pybind11::implicitly_convertible<C, MarketDataFeedClient>();
+      get_exported_market_data_feed_client().
+        def(pybind11::init<C*>(), pybind11::keep_alive<1, 2>());
+    }
     return client;
   }
 
@@ -180,11 +207,17 @@ namespace Nexus::Python {
   void export_market_data_service(pybind11::module& module);
 
   /**
+   * Exports the application definitions.
+   * @param module The module to export to.
+   */
+  void export_market_data_service_application_definitions(
+    pybind11::module& module);
+
+  /**
    * Exports the MarketDataServiceTestEnvironment class.
    * @param module The module to export to.
    */
-  void export_market_data_service_test_environment(
-    pybind11::module& module);
+  void export_market_data_service_test_environment(pybind11::module& module);
 
   /**
    * Exports the MarketDataType enum.

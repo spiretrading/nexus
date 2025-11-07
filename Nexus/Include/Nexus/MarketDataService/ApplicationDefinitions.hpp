@@ -55,9 +55,8 @@ namespace Nexus {
        * @param country The country to publish market data for, used to
        *        determine which market data registry server to connect to.
        */
-      template<typename ServiceLocatorClient>
-      ApplicationMarketDataFeedClient(
-        ServiceLocatorClient service_locator_client,
+      template<Beam::IsServiceLocatorClient C>
+      ApplicationMarketDataFeedClient(Beam::Ref<C> service_locator_client,
         boost::posix_time::time_duration sampling_time, CountryCode country);
 
       /**
@@ -66,9 +65,8 @@ namespace Nexus {
        *        authenticate sessions.
        * @param sampling_time The duration used for message sampling.
        */
-      template<typename ServiceLocatorClient>
-      ApplicationMarketDataFeedClient(
-        ServiceLocatorClient service_locator_client,
+      template<Beam::IsServiceLocatorClient C>
+      ApplicationMarketDataFeedClient(Beam::Ref<C> service_locator_client,
         boost::posix_time::time_duration sampling_time);
   };
 
@@ -82,17 +80,16 @@ namespace Nexus {
    */
   template<typename SessionBuilder, typename Predicate>
   SessionBuilder make_basic_market_data_client_session_builder(
-      typename SessionBuilder::ServiceLocatorClient service_locator_client,
-      Predicate&& service_predicate,
+      Beam::Ref<typename SessionBuilder::ServiceLocatorClient>
+        service_locator_client, Predicate&& service_predicate,
       const std::string& service = MARKET_DATA_RELAY_SERVICE_NAME) {
-    auto client = Beam::ServiceLocatorClientBox(
-      &Beam::FullyDereference(service_locator_client));
-    return SessionBuilder(std::move(service_locator_client),
+    auto client = Beam::ServiceLocatorClient(
+      &Beam::fully_dereference(service_locator_client));
+    return SessionBuilder(Beam::Ref(service_locator_client),
       [=, service_predicate = std::forward<Predicate>(service_predicate)]
           () mutable {
-        return std::make_unique<Beam::Network::TcpSocketChannel>(
-          Beam::LocateServiceAddresses(
-            client, service, service_predicate));
+        return std::make_unique<Beam::TcpSocketChannel>(
+          Beam::locate_service_addresses(client, service, service_predicate));
       },
       [] {
         return std::make_unique<Beam::LiveTimer>(
@@ -107,17 +104,15 @@ namespace Nexus {
    * @param service The name of the service to connect to.
    */
   inline ApplicationMarketDataClient::SessionBuilder
-      make_market_data_client_session_builder(
-        ApplicationMarketDataClient::SessionBuilder::ServiceLocatorClient
+      make_market_data_client_session_builder(Beam::Ref<
+        ApplicationMarketDataClient::SessionBuilder::ServiceLocatorClient>
           service_locator_client,
         const std::string& service = MARKET_DATA_RELAY_SERVICE_NAME) {
-    auto client = Beam::ServiceLocatorClientBox(
-      &Beam::FullyDereference(service_locator_client));
     return ApplicationMarketDataClient::SessionBuilder(
-      std::move(service_locator_client),
-      [=] () mutable {
-        return std::make_unique<Beam::Network::TcpSocketChannel>(
-          Beam::LocateServiceAddresses(client, service));
+      Beam::Ref(service_locator_client),
+      [=, client = service_locator_client.get()] () mutable {
+        return std::make_unique<Beam::TcpSocketChannel>(
+          Beam::locate_service_addresses(*client, service));
       },
       [] {
         return std::make_unique<Beam::LiveTimer>(
@@ -126,62 +121,59 @@ namespace Nexus {
   }
 
   inline ApplicationMarketDataClient::ApplicationMarketDataClient(
-    SessionBuilder::ServiceLocatorClient service_locator_client)
-    : m_client(
-        make_market_data_client_session_builder(service_locator_client)) {}
+    Beam::Ref<SessionBuilder::ServiceLocatorClient> service_locator_client)
+    : ServiceMarketDataClient<Beam::ZLibSessionBuilder<>>(
+        make_market_data_client_session_builder(
+          Beam::Ref(service_locator_client))) {}
 
-  template<typename ServiceLocatorClient>
+  template<Beam::IsServiceLocatorClient C>
   inline ApplicationMarketDataFeedClient::ApplicationMarketDataFeedClient(
-    ServiceLocatorClient service_locator_client,
+    Beam::Ref<C> service_locator_client,
     boost::posix_time::time_duration sampling_time, CountryCode country)
-    try : m_client([&] {
-            auto service = find_market_data_feed_service(
-              country, Beam::FullyDereference(service_locator_client));
-            if(!service) {
-              BOOST_THROW_EXCEPTION(Beam::ConnectException(
-                "No market data services available."));
-            }
-            auto addresses =
-              Beam::Parsers::Parse<std::vector<Beam::Network::IpAddress>>(
-                boost::get<std::string>(service->GetProperties().At(
-                  "addresses")));
-            return Client(Beam::Initialize(addresses),
-              Beam::SessionAuthenticator(
-                std::move(service_locator_client)),
-              Beam::Initialize(sampling_time),
-              Beam::Initialize(boost::posix_time::seconds(10)));
-          }()) {
-  } catch(const std::exception&) {
-    std::throw_with_nested(Beam::ConnectException(
-      "Unable to initialize the market data feed client."));
-  }
+    : ServiceMarketDataFeedClient<std::string, Beam::LiveTimer,
+        Beam::MessageProtocol<Beam::TcpSocketChannel,
+          Beam::BinarySender<Beam::SharedBuffer>,
+          Beam::SizeDeclarativeEncoder<Beam::ZLibEncoder>>, Beam::LiveTimer>(
+            [&] {
+              auto service =
+                find_market_data_feed_service(country, *service_locator_client);
+              if(!service) {
+                BOOST_THROW_EXCEPTION(Beam::ConnectException(
+                  "No market data services available."));
+              }
+              auto addresses = Beam::parse<std::vector<Beam::IpAddress>>(
+                boost::get<std::string>(
+                  service->get_properties().at("addresses")));
+              return Beam::init(addresses);
+            }(),
+            Beam::SessionAuthenticator(Beam::Ref(service_locator_client)),
+            Beam::init(sampling_time),
+            Beam::init(boost::posix_time::seconds(10))) {}
 
-  template<typename ServiceLocatorClient>
+  template<Beam::IsServiceLocatorClient C>
   inline ApplicationMarketDataFeedClient::ApplicationMarketDataFeedClient(
-    ServiceLocatorClient service_locator_client,
+    Beam::Ref<C> service_locator_client,
     boost::posix_time::time_duration sampling_time)
-    try : m_client([&] {
-            auto services =
-              service_locator_client.Locate(MARKET_DATA_FEED_SERVICE_NAME);
-            if(services.empty()) {
-              BOOST_THROW_EXCEPTION(Beam::ConnectException(
-                "No market data services available."));
-            }
-            auto& service = services.front();
-            auto addresses =
-              Beam::Parsers::Parse<std::vector<Beam::Network::IpAddress>>(
-                boost::get<std::string>(service.GetProperties().At(
-                  "addresses")));
-            return Client(Beam::Initialize(addresses),
-              Beam::SessionAuthenticator(
-                std::move(service_locator_client)),
-              Beam::Initialize(sampling_time),
-              Beam::Initialize(boost::posix_time::seconds(10)));
-          }()) {
-  } catch(const std::exception&) {
-    std::throw_with_nested(Beam::ConnectException(
-      "Unable to initialize the market data feed client."));
-  }
+    : ServiceMarketDataFeedClient<std::string, Beam::LiveTimer,
+        Beam::MessageProtocol<Beam::TcpSocketChannel,
+          Beam::BinarySender<Beam::SharedBuffer>,
+          Beam::SizeDeclarativeEncoder<Beam::ZLibEncoder>>, Beam::LiveTimer>(
+            [&] {
+              auto services =
+                service_locator_client->locate(MARKET_DATA_FEED_SERVICE_NAME);
+              if(services.empty()) {
+                BOOST_THROW_EXCEPTION(Beam::ConnectException(
+                  "No market data services available."));
+              }
+              auto& service = services.front();
+              auto addresses = Beam::parse<std::vector<Beam::IpAddress>>(
+                boost::get<std::string>(
+                  service.get_properties().at("addresses")));
+              return Beam::init(addresses);
+            }(),
+            Beam::SessionAuthenticator(Beam::Ref(service_locator_client)),
+            Beam::init(sampling_time),
+            Beam::init(boost::posix_time::seconds(10))) {}
 }
 
 #endif

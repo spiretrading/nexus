@@ -135,14 +135,14 @@ namespace Nexus {
         auto& properties = entry.get_properties();
         auto countries_property = properties.get("countries");
         if(!countries_property) {
-          return boost::optional(entry);
+          return boost::make_optional(entry);
         } else if(auto countries =
             boost::get<std::vector<Beam::JsonValue>>(&*countries_property)) {
           for(auto country : *countries) {
             if(auto value = boost::get<double>(&country)) {
               if(static_cast<CountryCode>(
                   static_cast<std::uint16_t>(*value)) == country) {
-                return boost::optional(entry);
+                return boost::make_optional(entry);
               }
             }
           }
