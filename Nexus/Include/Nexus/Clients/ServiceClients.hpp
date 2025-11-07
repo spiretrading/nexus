@@ -1,9 +1,8 @@
 #ifndef NEXUS_SERVICE_CLIENTS_HPP
 #define NEXUS_SERVICE_CLIENTS_HPP
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/RegistryService/ApplicationDefinitions.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
-#include <Beam/Threading/LiveTimer.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
 #include "Nexus/ChartingService/ApplicationDefinitions.hpp"
@@ -19,28 +18,15 @@ namespace Nexus {
   /** Implements the Clients interface using the respective service client. */
   class ServiceClients {
     public:
-      using ServiceLocatorClient =
-        Beam::ApplicationServiceLocatorClient::Client;
-
-      using RegistryClient =
-        Beam::RegistryService::ApplicationRegistryClient::Client;
-
-      using AdministrationClient = ApplicationAdministrationClient::Client;
-
-      using DefinitionsClient = ApplicationDefinitionsClient::Client;
-
-      using MarketDataClient = ApplicationMarketDataClient::Client;
-
-      using ChartingClient = ApplicationChartingClient::Client;
-
-      using ComplianceClient = ApplicationComplianceClient::Client;
-
-      using OrderExecutionClient = ApplicationOrderExecutionClient::Client;
-
-      using RiskClient = ApplicationRiskClient::Client;
-
-      using TimeClient = Beam::TimeService::LiveNtpTimeClient;
-
+      using ServiceLocatorClient = Beam::ApplicationServiceLocatorClient;
+      using AdministrationClient = ApplicationAdministrationClient;
+      using DefinitionsClient = ApplicationDefinitionsClient;
+      using MarketDataClient = ApplicationMarketDataClient;
+      using ChartingClient = ApplicationChartingClient;
+      using ComplianceClient = ApplicationComplianceClient;
+      using OrderExecutionClient = ApplicationOrderExecutionClient;
+      using RiskClient = ApplicationRiskClient;
+      using TimeClient = Beam::LiveNtpTimeClient;
       using Timer = Beam::LiveTimer;
 
       /**
@@ -49,12 +35,12 @@ namespace Nexus {
        * @param password The client's password.
        * @param address The IpAddress to connect to.
        */
-      ServiceClients(std::string username, std::string password,
-        const Beam::Network::IpAddress& address);
+      ServiceClients(const std::string& username, const std::string& password,
+        const Beam::IpAddress& address);
 
       ~ServiceClients();
+
       ServiceLocatorClient& get_service_locator_client();
-      RegistryClient& get_registry_client();
       AdministrationClient& get_administration_client();
       DefinitionsClient& get_definitions_client();
       MarketDataClient& get_market_data_client();
@@ -68,9 +54,7 @@ namespace Nexus {
       void close();
 
     private:
-      Beam::ApplicationServiceLocatorClient
-        m_service_locator_client;
-      Beam::RegistryService::ApplicationRegistryClient m_registry_client;
+      Beam::ApplicationServiceLocatorClient m_service_locator_client;
       ApplicationAdministrationClient m_administration_client;
       ApplicationDefinitionsClient m_definitions_client;
       ApplicationMarketDataClient m_market_data_client;
@@ -85,20 +69,18 @@ namespace Nexus {
       ServiceClients& operator =(const ServiceClients&) = delete;
   };
 
-  inline ServiceClients::ServiceClients(std::string username,
-      std::string password, const Beam::Network::IpAddress& address)
-    : m_service_locator_client(
-        std::move(username), std::move(password), address),
-      m_registry_client(m_service_locator_client.Get()),
-      m_administration_client(m_service_locator_client.Get()),
-      m_definitions_client(m_service_locator_client.Get()),
-      m_market_data_client(m_service_locator_client.Get()),
-      m_charting_client(m_service_locator_client.Get()),
-      m_compliance_client(m_service_locator_client.Get()),
-      m_order_execution_client(m_service_locator_client.Get()),
-      m_risk_client(m_service_locator_client.Get()),
-      m_time_client(Beam::TimeService::MakeLiveNtpTimeClientFromServiceLocator(
-        *m_service_locator_client)) {}
+  inline ServiceClients::ServiceClients(const std::string& username,
+      const std::string& password, const Beam::IpAddress& address)
+    : m_service_locator_client(username, password, address),
+      m_administration_client(Beam::Ref(m_service_locator_client)),
+      m_definitions_client(Beam::Ref(m_service_locator_client)),
+      m_market_data_client(Beam::Ref(m_service_locator_client)),
+      m_charting_client(Beam::Ref(m_service_locator_client)),
+      m_compliance_client(Beam::Ref(m_service_locator_client)),
+      m_order_execution_client(Beam::Ref(m_service_locator_client)),
+      m_risk_client(Beam::Ref(m_service_locator_client)),
+      m_time_client(
+        Beam::make_live_ntp_time_client(m_service_locator_client)) {}
 
   inline ServiceClients::~ServiceClients() {
     close();
@@ -106,51 +88,43 @@ namespace Nexus {
 
   inline ServiceClients::ServiceLocatorClient&
       ServiceClients::get_service_locator_client() {
-    return *m_service_locator_client;
-  }
-
-  inline ServiceClients::RegistryClient&
-      ServiceClients::get_registry_client() {
-    return *m_registry_client;
+    return m_service_locator_client;
   }
 
   inline ServiceClients::AdministrationClient&
       ServiceClients::get_administration_client() {
-    return *m_administration_client;
+    return m_administration_client;
   }
 
   inline ServiceClients::DefinitionsClient&
       ServiceClients::get_definitions_client() {
-    return *m_definitions_client;
+    return m_definitions_client;
   }
 
   inline ServiceClients::MarketDataClient&
       ServiceClients::get_market_data_client() {
-    return *m_market_data_client;
+    return m_market_data_client;
   }
 
-  inline ServiceClients::ChartingClient&
-      ServiceClients::get_charting_client() {
-    return *m_charting_client;
+  inline ServiceClients::ChartingClient& ServiceClients::get_charting_client() {
+    return m_charting_client;
   }
 
   inline ServiceClients::ComplianceClient&
       ServiceClients::get_compliance_client() {
-    return *m_compliance_client;
+    return m_compliance_client;
   }
 
   inline ServiceClients::OrderExecutionClient&
       ServiceClients::get_order_execution_client() {
-    return *m_order_execution_client;
+    return m_order_execution_client;
   }
 
-  inline ServiceClients::RiskClient&
-      ServiceClients::get_risk_client() {
-    return *m_risk_client;
+  inline ServiceClients::RiskClient& ServiceClients::get_risk_client() {
+    return m_risk_client;
   }
 
-  inline ServiceClients::TimeClient&
-      ServiceClients::get_time_client() {
+  inline ServiceClients::TimeClient& ServiceClients::get_time_client() {
     return *m_time_client;
   }
 
@@ -160,20 +134,19 @@ namespace Nexus {
   }
 
   inline void ServiceClients::close() {
-    if(m_open_state.SetClosing()) {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_time_client->Close();
-    m_service_locator_client->Close();
-    m_risk_client->close();
-    m_order_execution_client->close();
-    m_compliance_client->close();
-    m_charting_client->close();
-    m_market_data_client->close();
-    m_definitions_client->close();
-    m_administration_client->close();
-    m_registry_client->Close();
-    m_open_state.Close();
+    m_time_client->close();
+    m_service_locator_client.close();
+    m_risk_client.close();
+    m_order_execution_client.close();
+    m_compliance_client.close();
+    m_charting_client.close();
+    m_market_data_client.close();
+    m_definitions_client.close();
+    m_administration_client.close();
+    m_open_state.close();
   }
 }
 

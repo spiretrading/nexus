@@ -24,22 +24,22 @@ namespace Nexus {
   template<typename T>
   concept IsClients = Beam::IsConnection<T> && requires(T& clients) {
     { clients.get_service_locator_client() } ->
-      std::convertible_to<Beam::ServiceLocatorClient&>;
+      std::convertible_to<Beam::ServiceLocatorClient>;
     { clients.get_administration_client() } ->
-      std::convertible_to<AdministrationClient&>;
+      std::convertible_to<AdministrationClient>;
     { clients.get_definitions_client() } ->
-      std::convertible_to<DefinitionsClient&>;
+      std::convertible_to<DefinitionsClient>;
     { clients.get_market_data_client() } ->
-      std::convertible_to<MarketDataClient&>;
-    { clients.get_charting_client() } -> std::convertible_to<ChartingClient&>;
+      std::convertible_to<MarketDataClient>;
+    { clients.get_charting_client() } -> std::convertible_to<ChartingClient>;
     { clients.get_compliance_client() } ->
-      std::convertible_to<ComplianceClient&>;
+      std::convertible_to<ComplianceClient>;
     { clients.get_order_execution_client() } ->
-      std::convertible_to<OrderExecutionClient&>;
-    { clients.get_risk_client() } -> std::convertible_to<RiskClient&>;
-    { clients.get_time_client() } -> std::convertible_to<Beam::TimeClient&>;
+      std::convertible_to<OrderExecutionClient>;
+    { clients.get_risk_client() } -> std::convertible_to<RiskClient>;
+    { clients.get_time_client() } -> std::convertible_to<Beam::TimeClient>;
     { clients.make_timer(std::declval<boost::posix_time::time_duration>()) } ->
-      std::convertible_to<std::unique_ptr<Beam::Timer>>;
+      std::convertible_to<Beam::Timer>;
     clients.close();
   };
 

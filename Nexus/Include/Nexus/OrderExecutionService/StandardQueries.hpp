@@ -105,7 +105,7 @@ namespace Nexus {
         query.set_filter(venue_filter);
         query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
         auto snapshot_queue = std::make_shared<Beam::Queue<SequencedOrder>>();
-        client->query(query, snapshot_queue);
+        client.query(query, snapshot_queue);
         try {
           while(true) {
             auto value = snapshot_queue->pop();

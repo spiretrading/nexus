@@ -147,7 +147,7 @@ namespace Nexus {
   }
 
   template<typename C, typename A, typename S, typename R,
-    typename T, typename D, typename Q, typename M, typename F> requires
+    typename T, typename D, typename Q, typename M> requires
       IsOrderExecutionClient<Beam::dereference_t<C>>
   auto make_limit_order_reactor(C&& client, A account, S security, R currency,
       T side, D destination, Q quantity, M price) {
@@ -157,38 +157,34 @@ namespace Nexus {
       Aspen::constant(TimeInForce(TimeInForce::Type::DAY)));
   }
 
-  template<typename C, typename A, typename S, typename R,
-    typename T, typename D, typename Q, typename M, typename F> requires
+  template<typename C, typename S, typename T, typename Q, typename M> requires
       IsOrderExecutionClient<Beam::dereference_t<C>>
   auto make_limit_order_reactor(
       C&& client, S security, T side, Q quantity, M price) {
     return make_limit_order_reactor(std::forward<C>(client),
-      Aspen::constant(Beam::DirectoryEntry()),
-      std::move(security), Aspen::constant(CurrencyId::NONE), std::move(side),
+      Aspen::constant(Beam::DirectoryEntry()), std::move(security),
+      Aspen::constant(CurrencyId::NONE), std::move(side),
       Aspen::constant(std::string()), std::move(quantity), std::move(price));
   }
 
-  template<typename C, typename A, typename S, typename R,
-    typename T, typename D, typename Q, typename M, typename F> requires
-      IsOrderExecutionClient<Beam::dereference_t<C>>
+  template<typename C, typename S, typename T, typename Q, typename M,
+    typename F> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   auto make_limit_order_reactor(
       C&& client, S security, T side, Q quantity, M price, F time_in_force) {
     return make_limit_order_reactor(std::forward<C>(client),
-      Aspen::constant(Beam::DirectoryEntry()),
-      std::move(security), Aspen::constant(CurrencyId::NONE), std::move(side),
+      Aspen::constant(Beam::DirectoryEntry()), std::move(security),
+      Aspen::constant(CurrencyId::NONE), std::move(side),
       Aspen::constant(std::string()), std::move(quantity), std::move(price),
       std::move(time_in_force));
   }
 
-  template<typename C, typename A, typename S, typename R,
-    typename T, typename D, typename Q, typename M, typename F> requires
-      IsOrderExecutionClient<Beam::dereference_t<C>>
+  template<typename C, typename S, typename T, typename Q> requires
+    IsOrderExecutionClient<Beam::dereference_t<C>>
   auto make_market_order_reactor(C&& client, S security, T side, Q quantity) {
     return OrderReactor(std::forward<C>(client),
-      Aspen::constant(Beam::DirectoryEntry()),
-      std::move(security), Aspen::constant(CurrencyId::NONE),
-      Aspen::constant(OrderType::MARKET), std::move(side),
-      Aspen::constant(std::string()), std::move(quantity),
+      Aspen::constant(Beam::DirectoryEntry()), std::move(security),
+      Aspen::constant(CurrencyId::NONE), Aspen::constant(OrderType::MARKET),
+      std::move(side), Aspen::constant(std::string()), std::move(quantity),
       Aspen::constant(Money::ZERO),
       Aspen::constant(TimeInForce(TimeInForce::Type::DAY)),
       std::vector<Aspen::Constant<Tag>>());

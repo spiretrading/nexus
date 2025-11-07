@@ -23,8 +23,7 @@ class_<ChartingClient>& Nexus::Python::get_exported_charting_client() {
 
 void Nexus::Python::export_charting_service(module& module) {
   charting_client = std::make_unique<class_<ChartingClient>>(
-    export_charting_client<ToPythonChartingClient<ChartingClient>>(
-      module, "ChartingClient"));
+    export_charting_client<ChartingClient>(module, "ChartingClient"));
   export_charting_service_application_definitions(module);
   export_security_charting_query(module);
   auto tests_submodule = module.def_submodule("tests");

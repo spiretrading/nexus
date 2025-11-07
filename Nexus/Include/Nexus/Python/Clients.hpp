@@ -3,8 +3,12 @@
 #include <string_view>
 #include <pybind11/pybind11.h>
 #include "Nexus/Clients/Clients.hpp"
+#include "Nexus/Python/DllExport.hpp"
 
 namespace Nexus::Python {
+
+  /** Returns the exported Clients. */
+  NEXUS_EXPORT_DLL pybind11::class_<Clients>& get_exported_clients();
 
   /**
    * Exports a Clients class.
@@ -15,11 +19,9 @@ namespace Nexus::Python {
    */
   template<typename C>
   auto export_clients(pybind11::module& module, std::string_view name) {
-    auto clients = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
+    auto clients = pybind11::class_<C>(module, name.data()).
       def_property_readonly(
         "service_locator_client", &C::get_service_locator_client,
-        pybind11::return_value_policy::reference).
-      def_property_readonly("registry_client", &C::get_registry_client,
         pybind11::return_value_policy::reference).
       def_property_readonly(
         "administration_client", &C::get_administration_client,
@@ -41,6 +43,11 @@ namespace Nexus::Python {
         pybind11::return_value_policy::reference).
       def("make_timer", &C::make_timer).
       def("close", &C::close);
+    if constexpr(!std::is_same_v<C, Clients>) {
+      pybind11::implicitly_convertible<C, Clients>();
+      get_exported_clients().
+        def(pybind11::init<C*>(), pybind11::keep_alive<1, 2>());
+    }
     return clients;
   }
 

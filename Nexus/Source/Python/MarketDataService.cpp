@@ -183,14 +183,13 @@ void Nexus::Python::export_market_data_reactors(module& module) {
 
 void Nexus::Python::export_market_data_service(module& module) {
   historical_data_store = std::make_unique<class_<HistoricalDataStore>>(
-    export_historical_data_store<ToPythonHistoricalDataStore<
-      HistoricalDataStore>>(module, "HistoricalDataStore"));
+    export_historical_data_store<HistoricalDataStore>(
+      module, "HistoricalDataStore"));
   market_data_client = std::make_unique<class_<MarketDataClient>>(
-    export_market_data_client<ToPythonMarketDataClient<MarketDataClient>>(
-      module, "MarketDataClient"));
+    export_market_data_client<MarketDataClient>(module, "MarketDataClient"));
   market_data_feed_client = std::make_unique<class_<MarketDataFeedClient>>(
-    export_market_data_feed_client<ToPythonMarketDataFeedClient<
-      MarketDataFeedClient>>(module, "MarketDataFeedClient"));
+    export_market_data_feed_client<MarketDataFeedClient>(
+      module, "MarketDataFeedClient"));
   export_market_data_service_application_definitions(module);
   export_async_historical_data_store(module);
   export_cached_historical_data_store(module);

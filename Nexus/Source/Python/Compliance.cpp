@@ -52,13 +52,11 @@ void Nexus::Python::export_cached_compliance_rule_data_store(module& module) {
 
 void Nexus::Python::export_compliance(module& module) {
   compliance_client = std::make_unique<class_<ComplianceClient>>(
-    export_compliance_client<ToPythonComplianceClient<ComplianceClient>>(
-      module, "ComplianceClient"));
+    export_compliance_client<ComplianceClient>(module, "ComplianceClient"));
   compliance_rule_data_store =
     std::make_unique<class_<ComplianceRuleDataStore>>(
-      export_compliance_rule_data_store<
-        ToPythonComplianceRuleDataStore<ComplianceRuleDataStore>>(
-          module, "ComplianceRuleDataStore"));
+      export_compliance_rule_data_store<ComplianceRuleDataStore>(
+        module, "ComplianceRuleDataStore"));
   export_compliance_application_definitions(module);
   export_cached_compliance_rule_data_store(module);
   export_compliance_parameter(module);

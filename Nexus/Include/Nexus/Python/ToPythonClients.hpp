@@ -5,15 +5,12 @@
 #include <utility>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Python/GilRelease.hpp>
-#include <Beam/Python/ToPythonRegistryClient.hpp>
 #include <Beam/Python/ToPythonServiceLocatorClient.hpp>
 #include <Beam/Python/ToPythonTimeClient.hpp>
 #include <Beam/Python/ToPythonTimer.hpp>
-#include <Beam/RegistryService/RegistryClientBox.hpp>
-#include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
-#include <Beam/Threading/TimerBox.hpp>
-#include <Beam/TimeService/TimeClientBox.hpp>
-#include <Beam/Utilities/TypeList.hpp>
+#include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
+#include <Beam/TimeService/TimeClient.hpp>
+#include <Beam/TimeService/Timer.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Clients/Clients.hpp"
 #include "Nexus/Python/ToPythonAdministrationClient.hpp"
@@ -34,10 +31,7 @@ namespace Nexus {
   class ToPythonClients {
     public:
       using ServiceLocatorClient =
-        Beam::ToPythonServiceLocatorClient<
-          Beam::ServiceLocatorClientBox>;
-      using RegistryClient = Beam::RegistryService::ToPythonRegistryClient<
-        Beam::RegistryService::RegistryClientBox>;
+        Beam::Python::ToPythonServiceLocatorClient<Beam::ServiceLocatorClient>;
       using AdministrationClient =
         ToPythonAdministrationClient<Nexus::AdministrationClient>;
       using DefinitionsClient =
@@ -50,9 +44,8 @@ namespace Nexus {
       using OrderExecutionClient =
         ToPythonOrderExecutionClient<Nexus::OrderExecutionClient>;
       using RiskClient = ToPythonRiskClient<Nexus::RiskClient>;
-      using TimeClient =
-        Beam::TimeService::ToPythonTimeClient<Beam::TimeService::TimeClientBox>;
-      using Timer = Beam::ToPythonTimer<Beam::TimerBox>;
+      using TimeClient = Beam::Python::ToPythonTimeClient<Beam::TimeClient>;
+      using Timer = Beam::Python::ToPythonTimer<Beam::Timer>;
 
       /** The type of clients to wrap. */
       using Clients = C;
@@ -61,20 +54,30 @@ namespace Nexus {
        * Constructs a ToPythonClients.
        * @param args The arguments to forward to the Clients constructor.
        */
-      template<typename... Args, typename =
-        Beam::disable_copy_constructor_t<ToPythonClients, Args...>>
+      template<typename... Args>
       ToPythonClients(Args&&... args);
 
       ~ToPythonClients();
 
-      /** Returns the wrapped clients. */
-      const Clients& get_clients() const;
+      /** Returns a reference to the underlying clients. */
+      Clients& get();
 
-      /** Returns the wrapped clients. */
-      Clients& get_clients();
+      /** Returns a reference to the underlying clients. */
+      const Clients& get() const;
+
+      /** Returns a reference to the underlying clients. */
+      Clients& operator *();
+
+      /** Returns a reference to the underlying clients. */
+      const Clients& operator *() const;
+
+      /** Returns a pointer to the underlying clients. */
+      Clients* operator ->();
+
+      /** Returns a pointer to the underlying clients. */
+      const Clients* operator ->() const;
 
       ServiceLocatorClient& get_service_locator_client();
-      RegistryClient& get_registry_client();
       AdministrationClient& get_administration_client();
       DefinitionsClient& get_definitions_client();
       MarketDataClient& get_market_data_client();
@@ -90,7 +93,6 @@ namespace Nexus {
     private:
       boost::optional<Clients> m_clients;
       boost::optional<ServiceLocatorClient> m_service_locator_client;
-      boost::optional<RegistryClient> m_registry_client;
       boost::optional<AdministrationClient> m_administration_client;
       boost::optional<DefinitionsClient> m_definitions_client;
       boost::optional<MarketDataClient> m_market_data_client;
@@ -106,16 +108,14 @@ namespace Nexus {
   };
 
   template<typename Clients>
-  ToPythonClients(Clients&&) ->
-    ToPythonClients<std::remove_reference_t<Clients>>;
+  ToPythonClients(Clients&&) -> ToPythonClients<std::remove_cvref_t<Clients>>;
 
   template<IsClients C>
-  template<typename... Args, typename>
+  template<typename... Args>
   ToPythonClients<C>::ToPythonClients(Args&&... args)
     : m_clients((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...),
       m_service_locator_client(&m_clients->get_service_locator_client()),
-      m_registry_client(&m_clients->get_registry_client()),
       m_administration_client(&m_clients->get_administration_client()),
       m_definitions_client(&m_clients->get_definitions_client()),
       m_market_data_client(&m_clients->get_market_data_client()),
@@ -136,33 +136,15 @@ namespace Nexus {
     m_market_data_client.reset();
     m_definitions_client.reset();
     m_administration_client.reset();
-    m_registry_client.reset();
     m_service_locator_client.reset();
     m_clients.reset();
-    m_open_state.Close();
-  }
-
-  template<IsClients C>
-  const typename ToPythonClients<C>::Clients&
-      ToPythonClients<C>::get_clients() const {
-    return *m_clients;
-  }
-
-  template<IsClients C>
-  typename ToPythonClients<C>::Clients& ToPythonClients<C>::get_clients() {
-    return *m_clients;
+    m_open_state.close();
   }
 
   template<IsClients C>
   typename ToPythonClients<C>::ServiceLocatorClient&
       ToPythonClients<C>::get_service_locator_client() {
     return *m_service_locator_client;
-  }
-
-  template<IsClients C>
-  typename ToPythonClients<C>::RegistryClient&
-      ToPythonClients<C>::get_registry_client() {
-    return *m_registry_client;
   }
 
   template<IsClients C>
@@ -217,17 +199,16 @@ namespace Nexus {
   std::unique_ptr<typename ToPythonClients<C>::Timer>
       ToPythonClients<C>::make_timer(boost::posix_time::time_duration expiry) {
     auto release = Beam::Python::GilRelease();
-    return std::make_unique<Timer>(
-      Beam::TimerBox(m_clients->make_timer(expiry)));
+    return std::make_unique<Timer>(Beam::Timer(m_clients->make_timer(expiry)));
   }
 
   template<IsClients C>
   void ToPythonClients<C>::close() {
-    if(m_open_state.SetClosing()) {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_time_client->Close();
-    m_service_locator_client->Close();
+    m_time_client->close();
+    m_service_locator_client->close();
     m_risk_client->close();
     m_order_execution_client->close();
     m_compliance_client->close();
@@ -235,9 +216,8 @@ namespace Nexus {
     m_market_data_client->close();
     m_definitions_client->close();
     m_administration_client->close();
-    m_registry_client->Close();
     m_clients->close();
-    m_open_state.Close();
+    m_open_state.close();
   }
 }
 

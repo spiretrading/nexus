@@ -135,16 +135,21 @@ namespace Nexus {
           Beam::BinarySender<Beam::SharedBuffer>,
           Beam::SizeDeclarativeEncoder<Beam::ZLibEncoder>>, Beam::LiveTimer>(
             [&] {
-              auto service =
-                find_market_data_feed_service(country, *service_locator_client);
-              if(!service) {
-                BOOST_THROW_EXCEPTION(Beam::ConnectException(
-                  "No market data services available."));
+              try {
+                auto service =
+                  find_market_data_feed_service(country, *service_locator_client);
+                if(!service) {
+                  BOOST_THROW_EXCEPTION(Beam::ConnectException(
+                    "No market data services available."));
+                }
+                auto addresses = Beam::parse<std::vector<Beam::IpAddress>>(
+                  boost::get<std::string>(
+                    service->get_properties().at("addresses")));
+                return Beam::init(addresses);
+              } catch(const std::exception&) {
+                std::throw_with_nested(Beam::ConnectException(
+                  "Failed to connect to the market data server."));
               }
-              auto addresses = Beam::parse<std::vector<Beam::IpAddress>>(
-                boost::get<std::string>(
-                  service->get_properties().at("addresses")));
-              return Beam::init(addresses);
             }(),
             Beam::SessionAuthenticator(Beam::Ref(service_locator_client)),
             Beam::init(sampling_time),
@@ -159,17 +164,22 @@ namespace Nexus {
           Beam::BinarySender<Beam::SharedBuffer>,
           Beam::SizeDeclarativeEncoder<Beam::ZLibEncoder>>, Beam::LiveTimer>(
             [&] {
-              auto services =
-                service_locator_client->locate(MARKET_DATA_FEED_SERVICE_NAME);
-              if(services.empty()) {
-                BOOST_THROW_EXCEPTION(Beam::ConnectException(
-                  "No market data services available."));
+              try {
+                auto services =
+                  service_locator_client->locate(MARKET_DATA_FEED_SERVICE_NAME);
+                if(services.empty()) {
+                  BOOST_THROW_EXCEPTION(Beam::ConnectException(
+                    "No market data services available."));
+                }
+                auto& service = services.front();
+                auto addresses = Beam::parse<std::vector<Beam::IpAddress>>(
+                  boost::get<std::string>(
+                    service.get_properties().at("addresses")));
+                return Beam::init(addresses);
+              } catch(const std::exception&) {
+                std::throw_with_nested(Beam::ConnectException(
+                  "Failed to connect to the market data server."));
               }
-              auto& service = services.front();
-              auto addresses = Beam::parse<std::vector<Beam::IpAddress>>(
-                boost::get<std::string>(
-                  service.get_properties().at("addresses")));
-              return Beam::init(addresses);
             }(),
             Beam::SessionAuthenticator(Beam::Ref(service_locator_client)),
             Beam::init(sampling_time),

@@ -4,8 +4,17 @@
 #include <pybind11/pybind11.h>
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
+#include "Nexus/Python/DllExport.hpp"
 
 namespace Nexus::Python {
+
+  /** Returns the exported OrderExecutionClient. */
+  NEXUS_EXPORT_DLL pybind11::class_<OrderExecutionClient>&
+    get_exported_order_execution_client();
+
+  /** Returns the exported OrderExecutionDataStore. */
+  NEXUS_EXPORT_DLL pybind11::class_<OrderExecutionDataStore>&
+    get_exported_order_execution_data_store();
 
   /**
    * Exports the ExecutionReport struct.
@@ -56,31 +65,36 @@ namespace Nexus::Python {
    * @param name The name of the class.
    * @return The exported OrderExecutionClient.
    */
-  template<typename C>
-  auto export_order_execution_client(pybind11::module& module,
-      std::string_view name) {
-    auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
+  template<IsOrderExecutionClient C>
+  auto export_order_execution_client(
+      pybind11::module& module, std::string_view name) {
+    auto client = pybind11::class_<C>(module, name.data()).
       def("load_order", &C::load_order).
-      def("query_sequenced_order_records", static_cast<void (C::*)(
-        const AccountQuery&, Beam::ScopedQueueWriter<SequencedOrderRecord>)>(
+      def("query_sequenced_order_records", pybind11::overload_cast<
+        const AccountQuery&, Beam::ScopedQueueWriter<SequencedOrderRecord>>(
           &C::query)).
-      def("query_order_records", static_cast<void (C::*)(
-        const AccountQuery&, Beam::ScopedQueueWriter<OrderRecord>)>(&C::query)).
-      def("query_sequenced_orders", static_cast<void (C::*)(
-        const AccountQuery&, Beam::ScopedQueueWriter<SequencedOrder>)>(
+      def("query_order_records", pybind11::overload_cast<
+        const AccountQuery&, Beam::ScopedQueueWriter<OrderRecord>>(&C::query)).
+      def("query_sequenced_orders", pybind11::overload_cast<
+        const AccountQuery&, Beam::ScopedQueueWriter<SequencedOrder>>(
           &C::query)).
-      def("query_orders", static_cast<void (C::*)(const AccountQuery&,
-          Beam::ScopedQueueWriter<std::shared_ptr<Order>>)>(&C::query)).
-      def("query_sequenced_execution_reports",
-        static_cast<void (C::*)(const AccountQuery&,
-          Beam::ScopedQueueWriter<SequencedExecutionReport>)>(&C::query)).
-      def("query_execution_reports", static_cast<void (C::*)(
-        const AccountQuery&, Beam::ScopedQueueWriter<ExecutionReport>)>(
+      def("query_orders", pybind11::overload_cast<const AccountQuery&,
+        Beam::ScopedQueueWriter<std::shared_ptr<Order>>>(&C::query)).
+      def("query_sequenced_execution_reports", pybind11::overload_cast<
+        const AccountQuery&, Beam::ScopedQueueWriter<SequencedExecutionReport>>(
+          &C::query)).
+      def("query_execution_reports", pybind11::overload_cast<
+        const AccountQuery&, Beam::ScopedQueueWriter<ExecutionReport>>(
           &C::query)).
       def("submit", &C::submit).
-      def("cancel", static_cast<void (C::*)(const Order&)>(&C::cancel)).
+      def("cancel", pybind11::overload_cast<const Order&>(&C::cancel)).
       def("update", &C::update).
       def("close", &C::close);
+    if constexpr(!std::is_same_v<C, OrderExecutionClient>) {
+      pybind11::implicitly_convertible<C, OrderExecutionClient>();
+      get_exported_order_execution_client().
+        def(pybind11::init<C*>(), pybind11::keep_alive<1, 2>());
+    }
     return client;
   }
 
@@ -91,27 +105,31 @@ namespace Nexus::Python {
    * @param name The name of the class.
    * @return The exported OrderExecutionDataStore.
    */
-  template<typename D>
-  auto export_order_execution_data_store(pybind11::module& module,
-      std::string_view name) {
-    auto data_store = pybind11::class_<D, std::shared_ptr<D>>(
-        module, name.data()).
+  template<IsOrderExecutionDataStore D>
+  auto export_order_execution_data_store(
+      pybind11::module& module, std::string_view name) {
+    auto data_store = pybind11::class_<D>(module, name.data()).
       def("load_order_record", &D::load_order_record).
-      def("load_order_records", static_cast<
-        std::vector<SequencedOrderRecord> (D::*)(const AccountQuery&)>(
-          &D::load_order_records)).
-      def("store", static_cast<void (D::*)(const SequencedAccountOrderInfo&)>(
+      def("load_order_records", pybind11::overload_cast<const AccountQuery&>(
+        &D::load_order_records)).
+      def("store", pybind11::overload_cast<const SequencedAccountOrderInfo&>(
         &D::store)).
-      def("store", static_cast<void (D::*)(
-        const std::vector<SequencedAccountOrderInfo>&)>(&D::store)).
-      def("load_execution_reports", static_cast<
-        std::vector<SequencedExecutionReport> (D::*)(const AccountQuery&)>(
+      def("store", pybind11::overload_cast<
+        const std::vector<SequencedAccountOrderInfo>&>(&D::store)).
+      def("load_execution_reports",
+        pybind11::overload_cast<const AccountQuery&>(
           &D::load_execution_reports)).
-      def("store", static_cast<void (D::*)(
-        const SequencedAccountExecutionReport&)>(&D::store)).
-      def("store", static_cast<void (D::*)(
-        const std::vector<SequencedAccountExecutionReport>&)>(&D::store)).
+      def("store",
+        pybind11::overload_cast<const SequencedAccountExecutionReport&>(
+          &D::store)).
+      def("store", pybind11::overload_cast<
+        const std::vector<SequencedAccountExecutionReport>&>(&D::store)).
       def("close", &D::close);
+    if constexpr(!std::is_same_v<D, OrderExecutionDataStore>) {
+      pybind11::implicitly_convertible<D, OrderExecutionDataStore>();
+      get_exported_order_execution_data_store().
+        def(pybind11::init<D*>(), pybind11::keep_alive<1, 2>());
+    }
     return data_store;
   }
 
@@ -126,6 +144,13 @@ namespace Nexus::Python {
    * @param module The module to export to.
    */
   void export_order_execution_service(pybind11::module& module);
+
+  /**
+   * Exports the application definitions.
+   * @param module The module to export to.
+   */
+  void export_order_execution_service_application_definitions(
+    pybind11::module& module);
 
   /**
    * Exports the OrderExecutionServiceTestEnvironment class.
