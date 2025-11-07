@@ -4,6 +4,7 @@
 #include <boost/lexical_cast.hpp>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
+#include "Beam/Python/Utilities.hpp"
 #include "Nexus/TechnicalAnalysis/Candlestick.hpp"
 
 namespace Nexus::Python {
@@ -19,9 +20,8 @@ namespace Nexus::Python {
   auto export_candlestick(pybind11::module& module, std::string_view name) {
     using DomainType = typename C::Domain;
     using RangeType = typename C::Range;
-    auto candlestick = pybind11::class_<C>(module, name.data()).
-      def(pybind11::init()).
-      def(pybind11::init<const C&>()).
+    auto candlestick = Beam::Python::export_default_methods(
+        pybind11::class_<C>(module, name.data())).
       def(pybind11::init<DomainType, DomainType>()).
       def(pybind11::init<
         DomainType, DomainType, RangeType, RangeType, RangeType, RangeType>()).
@@ -31,9 +31,7 @@ namespace Nexus::Python {
       def_property_readonly("close", &C::get_close).
       def_property_readonly("high", &C::get_high).
       def_property_readonly("low", &C::get_low).
-      def("update", &C::update).
-      def(pybind11::self == pybind11::self).
-      def(pybind11::self != pybind11::self);
+      def("update", &C::update);
     return candlestick;
   }
 

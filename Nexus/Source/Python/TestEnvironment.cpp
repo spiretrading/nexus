@@ -9,42 +9,28 @@
 
 using namespace Beam;
 using namespace Beam::Python;
+using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Python;
 using namespace pybind11;
 
-namespace {
-  struct PythonTestClients : ToPythonClients<TestClients> {
-    std::shared_ptr<TestEnvironment> m_environment;
-
-    PythonTestClients(std::shared_ptr<TestEnvironment> environment)
-      : ToPythonClients<TestClients>(Ref(*environment)),
-        m_environment(std::move(environment)) {}
-
-    ~PythonTestClients() {
-      auto release = GilRelease();
-      close();
-      m_environment.reset();
-    }
-  };
-}
-
 void Nexus::Python::export_test_clients(module& module) {
-  export_clients<PythonTestClients>(module, "TestClients").
-    def(init<std::shared_ptr<TestEnvironment>>());
+  export_clients<ToPythonClients<TestClients>>(module, "TestClients").
+    def(init([] (TestEnvironment& environment) {
+      return std::make_unique<ToPythonClients<TestClients>>(Ref(environment));
+  }), call_guard<GilRelease>(), keep_alive<1, 2>());
 }
 
 void Nexus::Python::export_test_environment(module& module) {
   class_<TestEnvironment, std::shared_ptr<TestEnvironment>>(
     module, "TestEnvironment").
-      def(init(), call_guard<GilRelease>()).
-      def(init<boost::posix_time::ptime>(), call_guard<GilRelease>()).
-      def(init<HistoricalDataStore>(), call_guard<GilRelease>()).
-      def(init<HistoricalDataStore, boost::posix_time::ptime>(),
-        call_guard<GilRelease>()).
-      def("__del__", [] (TestEnvironment& self) {
-        self.close();
-      }, call_guard<GilRelease>()).
+      def(init(&make_python_shared<TestEnvironment>)).
+      def(init(&make_python_shared<TestEnvironment, ptime>)).
+      def(init(&make_python_shared<TestEnvironment, HistoricalDataStore&>),
+        keep_alive<1, 2>()).
+      def(init(&make_python_shared<
+        TestEnvironment, HistoricalDataStore&, ptime>), keep_alive<1, 2>()).
       def("set_time", &TestEnvironment::set, call_guard<GilRelease>()).
       def("advance_time", &TestEnvironment::advance, call_guard<GilRelease>()).
       def("publish", overload_cast<Venue, const OrderImbalance&>(
@@ -56,8 +42,7 @@ void Nexus::Python::export_test_environment(module& module) {
       def("publish", overload_cast<const Security&, const TimeAndSale&>(
         &TestEnvironment::publish), call_guard<GilRelease>()).
       def("update_bbo_price", overload_cast<const Security&, Money, Money,
-        boost::posix_time::ptime>(&TestEnvironment::update_bbo_price),
-          call_guard<GilRelease>()).
+        ptime>(&TestEnvironment::update_bbo_price), call_guard<GilRelease>()).
       def("update_bbo_price", overload_cast<const Security&, Money, Money>(
         &TestEnvironment::update_bbo_price), call_guard<GilRelease>()).
       def("monitor_order_submissions",
@@ -76,9 +61,6 @@ void Nexus::Python::export_test_environment(module& module) {
         &TestEnvironment::get_service_locator_environment,
         return_value_policy::reference_internal).
       def("get_uid_environment", &TestEnvironment::get_uid_environment,
-        return_value_policy::reference_internal).
-      def("get_registry_environment",
-        &TestEnvironment::get_registry_environment,
         return_value_policy::reference_internal).
       def("get_definitions_environment",
         &TestEnvironment::get_definitions_environment,

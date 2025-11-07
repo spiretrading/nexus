@@ -87,7 +87,7 @@ namespace Nexus {
       const boost::local_time::tz_database& time_zones,
       Beam::ScopedQueueWriter<TimeAndSale> queue) {
     Beam::spawn([=, &client, queue = std::move(queue)] () mutable {
-      if(auto open = load_open(*client, security, date, venues, time_zones)) {
+      if(auto open = load_open(client, security, date, venues, time_zones)) {
         queue.push(*open);
         return;
       }
@@ -95,7 +95,7 @@ namespace Nexus {
       query.set_range(query.get_range().get_start(), Beam::Sequence::LAST);
       query.set_snapshot_limit(Beam::SnapshotLimit::from_head(1));
       auto local_queue = std::make_shared<Beam::Queue<TimeAndSale>>();
-      client->query(query, local_queue);
+      client.query(query, local_queue);
       try {
         auto time_and_sale = local_queue->pop();
         queue.push(std::move(time_and_sale));
