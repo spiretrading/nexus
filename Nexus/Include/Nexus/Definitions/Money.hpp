@@ -172,7 +172,7 @@ namespace Nexus {
       { std::declval<T>() * std::declval<Quantity>() } ->
           std::convertible_to<Quantity>;
     }
-  constexpr Money operator*(T&& lhs, U&& rhs) {
+  constexpr Money operator *(T&& lhs, U&& rhs) {
     return Money(std::forward<T>(lhs) * static_cast<Quantity>(rhs));
   }
 
@@ -187,7 +187,7 @@ namespace Nexus {
       { std::declval<Quantity>() / std::declval<U>() } ->
           std::convertible_to<Quantity>;
     }
-  constexpr Money operator/(T&& lhs, U rhs) {
+  constexpr Money operator /(T&& lhs, U rhs) {
     return Money(static_cast<Quantity>(lhs) / rhs);
   }
 
