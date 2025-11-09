@@ -27,7 +27,7 @@ class PeggedOrder:
 
   def s0(self):
     self.state = 0
-    query = beam.queries.make_current_query(self.order_fields.security)
+    query = beam.make_current_query(self.order_fields.security)
     self.clients.market_data_client.query_bbo_quotes(
       query, self.tasks.get_slot(self.on_bbo_quote))
 

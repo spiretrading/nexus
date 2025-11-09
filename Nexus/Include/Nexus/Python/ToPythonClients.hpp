@@ -30,22 +30,16 @@ namespace Nexus {
   template<IsClients C>
   class ToPythonClients {
     public:
-      using ServiceLocatorClient =
-        Beam::Python::ToPythonServiceLocatorClient<Beam::ServiceLocatorClient>;
-      using AdministrationClient =
-        ToPythonAdministrationClient<Nexus::AdministrationClient>;
-      using DefinitionsClient =
-        ToPythonDefinitionsClient<Nexus::DefinitionsClient>;
-      using MarketDataClient =
-        ToPythonMarketDataClient<Nexus::MarketDataClient>;
-      using ChartingClient = ToPythonChartingClient<Nexus::ChartingClient>;
-      using ComplianceClient =
-        ToPythonComplianceClient<Nexus::ComplianceClient>;
-      using OrderExecutionClient =
-        ToPythonOrderExecutionClient<Nexus::OrderExecutionClient>;
-      using RiskClient = ToPythonRiskClient<Nexus::RiskClient>;
-      using TimeClient = Beam::Python::ToPythonTimeClient<Beam::TimeClient>;
-      using Timer = Beam::Python::ToPythonTimer<Beam::Timer>;
+      using ServiceLocatorClient = Beam::ServiceLocatorClient;
+      using AdministrationClient = Nexus::AdministrationClient;
+      using DefinitionsClient = Nexus::DefinitionsClient;
+      using MarketDataClient = Nexus::MarketDataClient;
+      using ChartingClient = Nexus::ChartingClient;
+      using ComplianceClient = Nexus::ComplianceClient;
+      using OrderExecutionClient = Nexus::OrderExecutionClient;
+      using RiskClient = Nexus::RiskClient;
+      using TimeClient = Beam::TimeClient;
+      using Timer = Beam::Timer;
 
       /** The type of clients to wrap. */
       using Clients = C;
@@ -115,15 +109,33 @@ namespace Nexus {
   ToPythonClients<C>::ToPythonClients(Args&&... args)
     : m_clients((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...),
-      m_service_locator_client(&m_clients->get_service_locator_client()),
-      m_administration_client(&m_clients->get_administration_client()),
-      m_definitions_client(&m_clients->get_definitions_client()),
-      m_market_data_client(&m_clients->get_market_data_client()),
-      m_charting_client(&m_clients->get_charting_client()),
-      m_compliance_client(&m_clients->get_compliance_client()),
-      m_order_execution_client(&m_clients->get_order_execution_client()),
-      m_risk_client(&m_clients->get_risk_client()),
-      m_time_client(&m_clients->get_time_client()) {}
+      m_service_locator_client(boost::in_place_init, std::in_place_type<
+        Beam::Python::ToPythonServiceLocatorClient<ServiceLocatorClient>>,
+        ServiceLocatorClient(&m_clients->get_service_locator_client())),
+      m_administration_client(boost::in_place_init, std::in_place_type<
+        ToPythonAdministrationClient<AdministrationClient>>,
+        AdministrationClient(&m_clients->get_administration_client())),
+      m_definitions_client(boost::in_place_init, std::in_place_type<
+        ToPythonDefinitionsClient<DefinitionsClient>>,
+        DefinitionsClient(&m_clients->get_definitions_client())),
+      m_market_data_client(boost::in_place_init, std::in_place_type<
+        ToPythonMarketDataClient<MarketDataClient>>,
+        MarketDataClient(&m_clients->get_market_data_client())),
+      m_charting_client(boost::in_place_init, std::in_place_type<
+        ToPythonChartingClient<ChartingClient>>,
+        ChartingClient(&m_clients->get_charting_client())),
+      m_compliance_client(boost::in_place_init, std::in_place_type<
+        ToPythonComplianceClient<ComplianceClient>>,
+        ComplianceClient(&m_clients->get_compliance_client())),
+      m_order_execution_client(boost::in_place_init, std::in_place_type<
+        ToPythonOrderExecutionClient<OrderExecutionClient>>,
+        OrderExecutionClient(&m_clients->get_order_execution_client())),
+      m_risk_client(boost::in_place_init,
+        std::in_place_type<ToPythonRiskClient<RiskClient>>,
+        RiskClient(&m_clients->get_risk_client())),
+      m_time_client(boost::in_place_init, std::in_place_type<
+        Beam::Python::ToPythonTimeClient<TimeClient>>,
+        TimeClient(&m_clients->get_time_client())) {}
 
   template<IsClients C>
   ToPythonClients<C>::~ToPythonClients() {
