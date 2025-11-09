@@ -167,10 +167,13 @@ namespace Nexus {
    * @param rhs The Money instance to be multiplied.
    * @return <i>lhs</i> * <i>rhs</i>.
    */
-  template<typename T> requires std::is_same_v<
-    decltype(std::declval<T>() * std::declval<Quantity>()), Quantity>
-  constexpr Money operator *(T lhs, Money rhs) {
-    return Money(lhs * static_cast<Quantity>(rhs));
+  template<typename T, typename U> requires
+    std::same_as<std::remove_cvref_t<U>, Money> && requires {
+      { std::declval<T>() * std::declval<Quantity>() } ->
+          std::convertible_to<Quantity>;
+    }
+  constexpr Money operator *(T&& lhs, U&& rhs) {
+    return Money(std::forward<T>(lhs) * static_cast<Quantity>(rhs));
   }
 
   /**
@@ -179,9 +182,12 @@ namespace Nexus {
    * @param rhs The scalar quantity.
    * @return <i>lhs</i> / <i>rhs</i>.
    */
-  template<typename T> requires std::is_same_v<
-    decltype(std::declval<Quantity>() / std::declval<T>()), Quantity>
-  constexpr Money operator /(Money lhs, T rhs) {
+  template<class T, class U> requires
+    std::same_as<std::remove_cvref_t<T>, Money> && requires {
+      { std::declval<Quantity>() / std::declval<U>() } ->
+          std::convertible_to<Quantity>;
+    }
+  constexpr Money operator /(T&& lhs, U rhs) {
     return Money(static_cast<Quantity>(lhs) / rhs);
   }
 
