@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 project(Scratch LANGUAGES CXX)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 set(D "${CMAKE_BINARY_DIR}/Dependencies" CACHE STRING
@@ -42,7 +42,7 @@ link_directories(${BOOST_DEBUG_PATH})
 link_directories(${BOOST_OPTIMIZED_PATH})
 if(MSVC)
   add_compile_options(/bigobj /external:anglebrackets /external:W0
-    $<$<CONFIG:Release>:/GL> /MP /WX)
+    $<$<CONFIG:Release>:/GL> /MP /WX /Zc:__cplusplus /Zc:preprocessor)
   add_compile_definitions(_CRT_SECURE_NO_DEPRECATE NOMINMAX
     _SCL_SECURE_NO_WARNINGS WIN32_LEAN_AND_MEAN _WIN32_WINNT=0x0501)
   add_link_options($<$<CONFIG:Release>:/LTCG> /SAFESEH:NO)
