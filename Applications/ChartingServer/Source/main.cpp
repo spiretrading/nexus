@@ -9,7 +9,7 @@
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
-#include <Beam/Threading/LiveTimer.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
@@ -19,14 +19,6 @@
 #include "Version.hpp"
 
 using namespace Beam;
-using namespace Beam::Codecs;
-using namespace Beam::IO;
-using namespace Beam::Network;
-using namespace Beam::Routines;
-using namespace Beam::Serialization;
-using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -34,33 +26,33 @@ using namespace Nexus;
 namespace {
   using ChartingServletContainer =
     ServiceProtocolServletContainer<MetaAuthenticationServletAdapter<
-      MetaChartingServlet<ApplicationMarketDataClient::Client*>,
-      ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
+      MetaChartingServlet<ApplicationMarketDataClient*>,
+      ApplicationServiceLocatorClient*>, TcpServerSocket,
       BinarySender<SharedBuffer>, SizeDeclarativeEncoder<ZLibEncoder>,
       std::shared_ptr<LiveTimer>>;
 }
 
 int main(int argc, const char** argv) {
   try {
-    auto config = ParseCommandLine(argc, argv, "1.0-r" CHARTING_SERVER_VERSION
-      "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto service_config = TryOrNest([&] {
-      return ServiceConfiguration::Parse(
-        GetNode(config, "server"), CHARTING_SERVICE_NAME);
+    auto config = parse_command_line(argc, argv, "1.0-r" CHARTING_SERVER_VERSION
+      "\nCopyright (C) 2026 Spire Trading Inc.");
+    auto service_config = try_or_nest([&] {
+      return ServiceConfiguration::parse(
+        get_node(config, "server"), CHARTING_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'server'."));
-    auto service_locator_client =
-      MakeApplicationServiceLocatorClient(GetNode(config, "service_locator"));
+    auto service_locator_client = ApplicationServiceLocatorClient(
+      ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto market_data_client =
-      ApplicationMarketDataClient(service_locator_client.Get());
-    auto charting_server = ChartingServletContainer(Initialize(
-      service_locator_client.Get(), Initialize(market_data_client.Get())),
-      Initialize(service_config.m_interface),
+      ApplicationMarketDataClient(Ref(service_locator_client));
+    auto charting_server = ChartingServletContainer(
+      init(&service_locator_client, init(&market_data_client)),
+      init(service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-    Register(*service_locator_client, service_config);
-    WaitForKillEvent();
-    service_locator_client->Close();
+    add(service_locator_client, service_config);
+    wait_for_kill_event();
+    service_locator_client.close();
   } catch(...) {
-    ReportCurrentException();
+    report_current_exception();
     return -1;
   }
   return 0;
