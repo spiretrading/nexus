@@ -5,16 +5,12 @@
 #include "WebPortal/WebPortalSession.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
-using namespace Beam::ServiceLocator;
-using namespace Beam::WebServices;
 using namespace boost;
 using namespace Nexus;
 
 MarketDataWebServlet::MarketDataWebServlet(
-  Ref<SessionStore<WebPortalSession>> sessions)
-  : m_sessions(sessions.Get()) {}
+  Ref<WebSessionStore<WebPortalSession>> sessions)
+  : m_sessions(sessions.get()) {}
 
 MarketDataWebServlet::~MarketDataWebServlet() {
   close();
@@ -22,14 +18,14 @@ MarketDataWebServlet::~MarketDataWebServlet() {
 
 std::vector<HttpRequestSlot> MarketDataWebServlet::get_slots() {
   auto slots = std::vector<HttpRequestSlot>();
-  slots.emplace_back(MatchesPath(HttpMethod::POST,
+  slots.emplace_back(matches_path(HttpMethod::POST,
     "/api/market_data_service/load_security_info_from_prefix"), std::bind_front(
       &MarketDataWebServlet::on_load_security_info_from_prefix, this));
   return slots;
 }
 
 void MarketDataWebServlet::close() {
-  m_open_state.Close();
+  m_open_state.close();
 }
 
 HttpResponse MarketDataWebServlet::on_load_security_info_from_prefix(
@@ -37,14 +33,14 @@ HttpResponse MarketDataWebServlet::on_load_security_info_from_prefix(
   struct Parameters {
     std::string m_prefix;
 
-    void Shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.Shuttle("prefix", m_prefix);
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("prefix", m_prefix);
     }
   };
   auto response = HttpResponse();
-  auto session = m_sessions->Find(request);
+  auto session = m_sessions->find(request);
   if(!session) {
-    response.SetStatusCode(HttpStatusCode::UNAUTHORIZED);
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
   auto parameters = session->shuttle_parameters<Parameters>(request);
@@ -52,6 +48,6 @@ HttpResponse MarketDataWebServlet::on_load_security_info_from_prefix(
   auto security_infos =
     clients.get_market_data_client().load_security_info_from_prefix(
       parameters.m_prefix);
-  session->shuttle_response(security_infos, Store(response));
+  session->shuttle_response(security_infos, out(response));
   return response;
 }

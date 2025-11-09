@@ -3,13 +3,11 @@
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace Nexus;
 
-PortfolioModel::Entry::Entry(Beam::ServiceLocator::DirectoryEntry m_account,
-  Security security, CurrencyId currency)
+PortfolioModel::Entry::Entry(
+  Beam::DirectoryEntry m_account, Security security, CurrencyId currency)
   : m_account(std::move(m_account)),
     m_inventory(std::move(security), currency) {}
 
@@ -22,8 +20,8 @@ bool PortfolioModel::Entry::operator ==(const Entry& rhs) const {
 
 PortfolioModel::PortfolioModel(Clients clients)
   : m_clients(std::move(clients)) {
-  m_clients.get_risk_client().get_risk_portfolio_update_publisher().Monitor(
-    m_tasks.GetSlot<RiskInventoryEntry>(std::bind_front(
+  m_clients.get_risk_client().get_risk_portfolio_update_publisher().monitor(
+    m_tasks.get_slot<RiskInventoryEntry>(std::bind_front(
       &PortfolioModel::on_risk_portfolio_inventory_update, this)));
 }
 
@@ -51,12 +49,13 @@ void PortfolioModel::on_risk_portfolio_inventory_update(
   auto& valuation = [&] () -> SecurityValuation& {
     auto valuation_iterator = m_valuations.find(security);
     if(valuation_iterator == m_valuations.end()) {
-      auto query = MakeCurrentQuery(security);
+      auto query = make_current_query(security);
       valuation_iterator = m_valuations.insert(std::pair(security,
         SecurityValuation(m_inventory.m_value.m_position.m_currency))).first;
       m_clients.get_market_data_client().query(query,
-        m_tasks.GetSlot<BboQuote>(std::bind_front(&PortfolioModel::on_bbo_quote,
-          this, security, std::ref(valuation_iterator->second))));
+        m_tasks.get_slot<BboQuote>(
+          std::bind_front(&PortfolioModel::on_bbo_quote,
+            this, security, std::ref(valuation_iterator->second))));
     }
     return valuation_iterator->second;
   }();
@@ -64,7 +63,7 @@ void PortfolioModel::on_risk_portfolio_inventory_update(
   entry->m_inventory = m_inventory.m_value;
   entry->m_unrealized_profit_and_loss =
     get_unrealized_profit_and_loss(entry->m_inventory, valuation);
-  m_publisher.Push(*entry);
+  m_publisher.push(*entry);
 }
 
 void PortfolioModel::on_bbo_quote(const Security& security,
@@ -78,7 +77,7 @@ void PortfolioModel::on_bbo_quote(const Security& security,
   for(auto& entry : m_security_to_entries[security]) {
     entry->m_unrealized_profit_and_loss =
       get_unrealized_profit_and_loss(entry->m_inventory, valuation);
-    m_publisher.Push(*entry);
+    m_publisher.push(*entry);
   }
 }
 

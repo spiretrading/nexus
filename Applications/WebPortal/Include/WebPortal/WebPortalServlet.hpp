@@ -9,7 +9,7 @@
 #include <Beam/WebServices/FileStore.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
 #include <Beam/WebServices/HttpUpgradeSlot.hpp>
-#include <Beam/WebServices/SessionStore.hpp>
+#include <Beam/WebServices/WebSessionStore.hpp>
 #include <Beam/WebServices/WebSocketChannel.hpp>
 #include "WebPortal/AdministrationWebServlet.hpp"
 #include "WebPortal/ComplianceWebServlet.hpp"
@@ -26,8 +26,8 @@ namespace Nexus {
     public:
 
       /** The type of WebSocketChannel used. */
-      using WebSocketChannel = Beam::WebServices::WebSocketChannel<
-        std::shared_ptr<Beam::Network::TcpSocketChannel>>;
+      using WebSocketChannel = Beam::WebSocketChannel<
+        std::shared_ptr<Beam::TcpSocketChannel>>;
 
       /**
        * Constructs a WebPortalServlet.
@@ -40,32 +40,30 @@ namespace Nexus {
       ~WebPortalServlet();
 
       /** Returns the HTTP request slots. */
-      std::vector<Beam::WebServices::HttpRequestSlot> GetSlots();
+      std::vector<Beam::HttpRequestSlot> get_slots();
 
       /** Returns the WebSocket upgrade slots. */
-      std::vector<Beam::WebServices::HttpUpgradeSlot<WebSocketChannel>>
-        GetWebSocketSlots();
+      std::vector<Beam::HttpUpgradeSlot<WebSocketChannel>>
+        get_web_socket_slots();
 
-      void Close();
+      void close();
 
     private:
-      Beam::WebServices::FileStore m_file_store;
-      Beam::WebServices::SessionStore<WebPortalSession> m_sessions;
+      Beam::FileStore m_file_store;
+      Beam::WebSessionStore<WebPortalSession> m_sessions;
       ServiceLocatorWebServlet m_service_locator_servlet;
       DefinitionsWebServlet m_definitions_servlet;
       AdministrationWebServlet m_administration_servlet;
       MarketDataWebServlet m_market_data_servlet;
       ComplianceWebServlet m_compliance_servlet;
       RiskWebServlet m_risk_servlet;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
       Beam::RoutineTaskQueue m_tasks;
 
       WebPortalServlet(const WebPortalServlet&) = delete;
       WebPortalServlet& operator=(const WebPortalServlet&) = delete;
-      Beam::WebServices::HttpResponse on_index(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse on_serve_file(
-        const Beam::WebServices::HttpRequest& request);
+      Beam::HttpResponse on_index(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_serve_file(const Beam::HttpRequest& request);
   };
 }
 

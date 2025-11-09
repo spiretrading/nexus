@@ -64,7 +64,7 @@ namespace Nexus {
         const Security& security, boost::posix_time::ptime timestamp);
   };
 
-  template<IsMarketDataClient C>
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   auto make_board_lot_check(C&& market_data_client,
       VenueDatabase venues, boost::local_time::tz_database time_zones) {
     return std::make_unique<BoardLotCheck<std::remove_reference_t<C>>>(

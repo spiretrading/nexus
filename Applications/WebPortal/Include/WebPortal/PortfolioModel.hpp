@@ -22,7 +22,7 @@ namespace Nexus {
       struct Entry {
 
         /** The account holding the position. */
-        Beam::ServiceLocator::DirectoryEntry m_account;
+        Beam::DirectoryEntry m_account;
 
         /** The Entry's Inventory. */
         Inventory m_inventory;
@@ -36,7 +36,7 @@ namespace Nexus {
          * @param security The position's Security.
          * @param currency The position's currency.
          */
-        Entry(Beam::ServiceLocator::DirectoryEntry account, Security security,
+        Entry(Beam::DirectoryEntry account, Security security,
           CurrencyId currency);
 
         /**
@@ -79,16 +79,16 @@ namespace Nexus {
   };
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::PortfolioModel::Entry> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::PortfolioModel::Entry& entry,
-        unsigned int version) {
-      shuttle.Shuttle("account", entry.m_account);
-      shuttle.Shuttle("inventory", entry.m_inventory);
-      shuttle.Shuttle("unrealized_profit_and_loss",
-        entry.m_unrealized_profit_and_loss);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::PortfolioModel::Entry& entry,
+        unsigned int version) const {
+      shuttle.shuttle("account", entry.m_account);
+      shuttle.shuttle("inventory", entry.m_inventory);
+      shuttle.shuttle(
+        "unrealized_profit_and_loss", entry.m_unrealized_profit_and_loss);
     }
   };
 }

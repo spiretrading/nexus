@@ -3,7 +3,7 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
-#include <Beam/WebServices/SessionStore.hpp>
+#include <Beam/WebServices/WebSessionStore.hpp>
 #include "WebPortal/WebPortalSession.hpp"
 
 namespace Nexus {
@@ -17,29 +17,27 @@ namespace Nexus {
        * @param sessions The available web sessions.
        */
       explicit ComplianceWebServlet(
-        Beam::Ref<Beam::WebServices::SessionStore<WebPortalSession>> sessions);
+        Beam::Ref<Beam::WebSessionStore<WebPortalSession>> sessions);
 
       ~ComplianceWebServlet();
 
-      std::vector<Beam::WebServices::HttpRequestSlot> get_slots();
-
+      std::vector<Beam::HttpRequestSlot> get_slots();
       void close();
 
     private:
-      Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
-      Beam::IO::OpenState m_open_state;
+      Beam::WebSessionStore<WebPortalSession>* m_sessions;
+      Beam::OpenState m_open_state;
 
       ComplianceWebServlet(const ComplianceWebServlet&) = delete;
       ComplianceWebServlet& operator=(const ComplianceWebServlet&) = delete;
-      Beam::WebServices::HttpResponse
-        on_load_directory_entry_compliance_rule_entry(
-          const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse on_add_compliance_rule_entry(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse on_update_compliance_rule_entry(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse on_delete_compliance_rule_entry(
-        const Beam::WebServices::HttpRequest& request);
+      Beam::HttpResponse on_load_directory_entry_compliance_rule_entry(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_add_compliance_rule_entry(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_update_compliance_rule_entry(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_delete_compliance_rule_entry(
+        const Beam::HttpRequest& request);
   };
 }
 

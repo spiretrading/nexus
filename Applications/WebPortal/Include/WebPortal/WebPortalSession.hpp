@@ -3,7 +3,7 @@
 #include <mutex>
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
-#include <Beam/WebServices/AuthenticatedSession.hpp>
+#include <Beam/WebServices/AuthenticatedWebSession.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <boost/optional/optional.hpp>
@@ -13,7 +13,7 @@
 namespace Nexus {
 
   /** Represents a session to the WebPortal. */
-  class WebPortalSession : public Beam::WebServices::AuthenticatedSession {
+  class WebPortalSession : public Beam::AuthenticatedWebSession {
     public:
 
       /**
@@ -37,7 +37,7 @@ namespace Nexus {
        * @return The deserialized value.
        */
       template<typename T>
-      auto shuttle_parameters(const Beam::WebServices::HttpRequest& request);
+      auto shuttle_parameters(const Beam::HttpRequest& request);
 
       /**
        * Shuttles the response to this client.
@@ -46,37 +46,36 @@ namespace Nexus {
        */
       template<typename T>
       void shuttle_response(
-        const T& value, Beam::Out<Beam::WebServices::HttpResponse> response);
+        const T& value, Beam::Out<Beam::HttpResponse> response);
 
     private:
       mutable boost::mutex m_mutex;
-      Beam::Serialization::JsonReceiver<Beam::IO::SharedBuffer> m_receiver;
-      Beam::Serialization::JsonSender<Beam::IO::SharedBuffer> m_sender;
+      Beam::JsonReceiver<Beam::SharedBuffer> m_receiver;
+      Beam::JsonSender<Beam::SharedBuffer> m_sender;
       boost::optional<Clients> m_clients;
   };
 
   template<typename T>
   auto WebPortalSession::shuttle_parameters(
-      const Beam::WebServices::HttpRequest& request) {
+      const Beam::HttpRequest& request) {
     auto parameters = T();
     {
       auto lock = std::lock_guard(m_mutex);
-      m_receiver.SetSource(Beam::Ref(request.GetBody()));
-      m_receiver.Shuttle(parameters);
+      m_receiver.set(Beam::Ref(request.get_body()));
+      m_receiver.shuttle(parameters);
     }
     return parameters;
   }
 
   template<typename T>
   void WebPortalSession::shuttle_response(
-      const T& value, Beam::Out<Beam::WebServices::HttpResponse> response) {
-    response->SetHeader({"Content-Type", "application/json"});
+      const T& value, Beam::Out<Beam::HttpResponse> response) {
+    response->set_header({"Content-Type", "application/json"});
     auto buffer = [&] {
       auto lock = std::lock_guard(m_mutex);
-      return Beam::Serialization::Encode<Beam::IO::SharedBuffer>(
-        m_sender, value);
+      return Beam::encode<Beam::SharedBuffer>(m_sender, value);
     }();
-    response->SetBody(std::move(buffer));
+    response->set_body(std::move(buffer));
   }
 }
 

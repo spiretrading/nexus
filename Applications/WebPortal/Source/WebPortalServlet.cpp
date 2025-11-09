@@ -8,13 +8,6 @@
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Network;
-using namespace Beam::Serialization;
-using namespace Beam::ServiceLocator;
-using namespace Beam::Stomp;
-using namespace Beam::Threading;
-using namespace Beam::WebServices;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -30,18 +23,18 @@ WebPortalServlet::WebPortalServlet(
     m_risk_servlet(Ref(m_sessions), std::move(clients)) {}
 
 WebPortalServlet::~WebPortalServlet() {
-  Close();
+  close();
 }
 
-std::vector<HttpRequestSlot> WebPortalServlet::GetSlots() {
+std::vector<HttpRequestSlot> WebPortalServlet::get_slots() {
   auto slots = std::vector<HttpRequestSlot>();
-  slots.emplace_back(MatchesPath(HttpMethod::GET, "/"),
+  slots.emplace_back(matches_path(HttpMethod::GET, "/"),
     std::bind_front(&WebPortalServlet::on_index, this));
-  slots.emplace_back(MatchesPath(HttpMethod::GET, ""),
+  slots.emplace_back(matches_path(HttpMethod::GET, ""),
     std::bind_front(&WebPortalServlet::on_index, this));
-  slots.emplace_back(MatchesPath(HttpMethod::GET, "/index.html"),
+  slots.emplace_back(matches_path(HttpMethod::GET, "/index.html"),
     std::bind_front(&WebPortalServlet::on_index, this));
-  slots.emplace_back(MatchAny(HttpMethod::GET),
+  slots.emplace_back(match_any(HttpMethod::GET),
     std::bind_front(&WebPortalServlet::on_serve_file, this));
   auto service_locator_slots = m_service_locator_servlet.get_slots();
   slots.insert(
@@ -61,15 +54,15 @@ std::vector<HttpRequestSlot> WebPortalServlet::GetSlots() {
 }
 
 std::vector<HttpUpgradeSlot<WebPortalServlet::WebSocketChannel>>
-    WebPortalServlet::GetWebSocketSlots() {
+    WebPortalServlet::get_web_socket_slots() {
   auto slots = std::vector<HttpUpgradeSlot<WebSocketChannel>>();
   auto risk_slots = m_risk_servlet.get_web_socket_slots();
   slots.insert(slots.end(), risk_slots.begin(), risk_slots.end());
   return slots;
 }
 
-void WebPortalServlet::Close() {
-  if(m_open_state.SetClosing()) {
+void WebPortalServlet::close() {
+  if(m_open_state.set_closing()) {
     return;
   }
   m_risk_servlet.close();
@@ -78,18 +71,18 @@ void WebPortalServlet::Close() {
   m_administration_servlet.close();
   m_definitions_servlet.close();
   m_service_locator_servlet.close();
-  m_open_state.Close();
+  m_open_state.close();
 }
 
 HttpResponse WebPortalServlet::on_index(const HttpRequest& request) {
   auto response = HttpResponse();
-  m_file_store.Serve("index.html", Store(response));
+  m_file_store.serve("index.html", out(response));
   return response;
 }
 
 HttpResponse WebPortalServlet::on_serve_file(const HttpRequest& request) {
-  auto response = m_file_store.Serve(request);
-  if(response.GetStatusCode() == HttpStatusCode::NOT_FOUND) {
+  auto response = m_file_store.serve(request);
+  if(response.get_status_code() == HttpStatusCode::NOT_FOUND) {
     return on_index(request);
   }
   return response;

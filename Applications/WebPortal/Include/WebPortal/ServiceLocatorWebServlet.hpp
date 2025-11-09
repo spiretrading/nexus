@@ -3,7 +3,7 @@
 #include <functional>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
-#include <Beam/WebServices/SessionStore.hpp>
+#include <Beam/WebServices/WebSessionStore.hpp>
 #include "WebPortal/WebPortalSession.hpp"
 
 namespace Nexus {
@@ -26,39 +26,33 @@ namespace Nexus {
        * @param clients_builder The function used to build session Clients.
        */
       ServiceLocatorWebServlet(
-        Beam::Ref<Beam::WebServices::SessionStore<WebPortalSession>> sessions,
+        Beam::Ref<Beam::WebSessionStore<WebPortalSession>> sessions,
         ClientsBuilder clients_builder);
 
       ~ServiceLocatorWebServlet();
 
-      std::vector<Beam::WebServices::HttpRequestSlot> get_slots();
-
+      std::vector<Beam::HttpRequestSlot> get_slots();
       void close();
 
     private:
-      Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
+      Beam::WebSessionStore<WebPortalSession>* m_sessions;
       ClientsBuilder m_clients_builder;
-      Beam::IO::OpenState m_open_state;
+      Beam::OpenState m_open_state;
 
       ServiceLocatorWebServlet(const ServiceLocatorWebServlet&) = delete;
       ServiceLocatorWebServlet& operator=(
         const ServiceLocatorWebServlet&) = delete;
-      Beam::WebServices::HttpResponse on_login(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse on_logout(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse on_load_current_account(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse on_load_directory_entry_from_id(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse on_store_password(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse on_search_directory_entry(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse on_create_account(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse on_create_group(
-        const Beam::WebServices::HttpRequest& request);
+      Beam::HttpResponse on_login(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_logout(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_current_account(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_directory_entry_from_id(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_store_password(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_search_directory_entry(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_create_account(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_create_group(const Beam::HttpRequest& request);
   };
 }
 
