@@ -6,11 +6,11 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Network/UdpSocketChannel.hpp>
-#include <Beam/Parsers/Parse.hpp>
+#include <Beam/Parsers/parse.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
-#include <Beam/Threading/LiveTimer.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
@@ -24,16 +24,6 @@
 #include "Version.hpp"
 
 using namespace Beam;
-using namespace Beam::Codecs;
-using namespace Beam::IO;
-using namespace Beam::Network;
-using namespace Beam::Parsers;
-using namespace Beam::Routines;
-using namespace Beam::Serialization;
-using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
-using namespace Beam::Threading;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -49,7 +39,7 @@ namespace {
 
   std::vector<Security> parse_securities(
       const YAML::Node& config, const VenueDatabase& venues) {
-    return TryOrNest([&] {
+    return try_or_nest([&] {
       auto securities = std::vector<Security>();
       for(auto& item : config) {
         auto symbol = item.as<std::string>();
@@ -70,20 +60,19 @@ namespace {
         ApplicationMarketDataClient& market_data_client,
         ApplicationServiceLocatorClient& service_locator_client,
         LiveNtpTimeClient& time_client) {
-    return TryOrNest([&] {
+    return try_or_nest([&] {
       auto feed_clients =
         std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>();
-      auto securities =
-        parse_securities(GetNode(config, "symbols"), venues);
+      auto securities = parse_securities(get_node(config, "symbols"), venues);
       auto feed_count =
-        std::min<int>(Extract<int>(config, "feeds"), securities.size());
+        std::min<int>(extract<int>(config, "feeds"), securities.size());
       auto securities_per_feed = securities.size() / feed_count;
-      auto bbo_period = Extract<time_duration>(config, "bbo_period");
+      auto bbo_period = extract<time_duration>(config, "bbo_period");
       auto book_quote_period =
-        Extract<time_duration>(config, "book_quote_period");
+        extract<time_duration>(config, "book_quote_period");
       auto time_and_sales_period =
-        Extract<time_duration>(config, "time_and_sales_period");
-      auto sampling = Extract<time_duration>(config, "sampling");
+        extract<time_duration>(config, "time_and_sales_period");
+      auto sampling = extract<time_duration>(config, "sampling");
       for(auto i = 0; i < feed_count; ++i) {
         auto feed_securities = std::vector<Security>();
         if(i < feed_count - 1) {
@@ -96,11 +85,11 @@ namespace {
         }
         auto application_market_data_feed =
           std::make_unique<ApplicationMarketDataFeedClient>(feed_securities,
-            venues, *market_data_client, Initialize(Initialize(addresses),
-              SessionAuthenticator(service_locator_client.Get()),
-              Initialize(sampling), Initialize(seconds(10))), &time_client,
-            Initialize(bbo_period), Initialize(book_quote_period),
-            Initialize(time_and_sales_period));
+            venues, market_data_client, init(init(addresses),
+              SessionAuthenticator(Ref(service_locator_client)),
+              init(sampling), init(seconds(10))), &time_client,
+            init(bbo_period), init(book_quote_period),
+            init(time_and_sales_period));
         feed_clients.push_back(std::move(application_market_data_feed));
       }
       return feed_clients;
@@ -110,33 +99,32 @@ namespace {
 
 int main(int argc, const char** argv) {
   try {
-    auto config = ParseCommandLine(argc, argv,
+    auto config = parse_command_line(argc, argv,
       "1.0-r" SIMULATION_MARKET_DATA_FEED_CLIENT_VERSION
-      "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto service_locator_client =
-      MakeApplicationServiceLocatorClient(GetNode(config, "service_locator"));
+      "\nCopyright (C) 2026 Spire Trading Inc.");
+    auto service_locator_client = ApplicationServiceLocatorClient(
+      ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
-      ApplicationDefinitionsClient(service_locator_client.Get());
-    auto time_client =
-      MakeLiveNtpTimeClientFromServiceLocator(*service_locator_client);
+      ApplicationDefinitionsClient(Ref(service_locator_client));
+    auto time_client = make_live_ntp_time_client(service_locator_client);
     auto market_data_services =
-      service_locator_client->Locate(MARKET_DATA_FEED_SERVICE_NAME);
+      service_locator_client.locate(MARKET_DATA_FEED_SERVICE_NAME);
     if(market_data_services.empty()) {
       throw std::runtime_error("No market data services available.");
     }
     auto& market_data_service = market_data_services.front();
-    auto market_data_addresses = Parse<std::vector<IpAddress>>(
-      get<std::string>(market_data_service.GetProperties().At("addresses")));
+    auto market_data_addresses = parse<std::vector<IpAddress>>(
+      get<std::string>(market_data_service.get_properties().at("addresses")));
     auto market_data_client =
-      ApplicationMarketDataClient(service_locator_client.Get());
+      ApplicationMarketDataClient(Ref(service_locator_client));
     auto feed_clients =
-      build_mock_feed_clients(config, definitions_client->load_venue_database(),
+      build_mock_feed_clients(config, definitions_client.load_venue_database(),
         market_data_addresses, market_data_client, service_locator_client,
         *time_client);
-    WaitForKillEvent();
-    service_locator_client->Close();
+    wait_for_kill_event();
+    service_locator_client.close();
   } catch(...) {
-    ReportCurrentException();
+    report_current_exception();
     return -1;
   }
   return 0;

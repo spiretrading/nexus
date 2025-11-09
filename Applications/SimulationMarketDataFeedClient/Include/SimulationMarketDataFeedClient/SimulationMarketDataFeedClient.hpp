@@ -4,8 +4,8 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
-#include <Beam/Threading/Timer.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
+#include <Beam/TimeService/Timer.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderImbalance.hpp"
@@ -25,8 +25,12 @@ namespace Nexus {
    * @param <M> Controls the frequency of BookQuote updates.
    * @param <S> Controls the frequency of TimeAndSale prints.
    */
-  template<IsMarketDataFeedClient F, typename T, typename B, typename M,
-    typename S>
+  template<typename F, typename T, typename B, typename M, typename S> requires
+    IsMarketDataFeedClient<Beam::dereference_t<F>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+        Beam::IsTimer<Beam::dereference_t<B>> &&
+          Beam::IsTimer<Beam::dereference_t<M>> &&
+            Beam::IsTimer<Beam::dereference_t<S>>
   class SimulationMarketDataFeedClient {
     public:
 
@@ -34,19 +38,19 @@ namespace Nexus {
        * The type of MarketDataFeedClient connected to the
        * MarketDataFeedServer.
        */
-      using MarketDataFeedClient = Beam::GetTryDereferenceType<F>;
+      using MarketDataFeedClient = Beam::dereference_t<F>;
 
       /** The type of TimeClient used for timestamps. */
-      using TimeClient = Beam::GetTryDereferenceType<T>;
+      using TimeClient = Beam::dereference_t<T>;
 
       /** Controls the frequency of BboQuote updates. */
-      using BboTimer = Beam::GetTryDereferenceType<B>;
+      using BboTimer = Beam::dereference_t<B>;
 
       /** Controls the frequency of BookQuote updates. */
-      using BookQuoteTimer = Beam::GetTryDereferenceType<M>;
+      using BookQuoteTimer = Beam::dereference_t<M>;
 
       /** Controls the frequency of TimeAndSale prints. */
-      using TimeAndSaleTimer = Beam::GetTryDereferenceType<S>;
+      using TimeAndSaleTimer = Beam::dereference_t<S>;
 
       /**
        * Constructs a SimulationMarketDataFeedClient.
@@ -63,11 +67,12 @@ namespace Nexus {
        * @param time_and_sale_timer Initializes the Timer used to update the
        *        TimeAndSales.
        */
-      template<IsMarketDataClient MarketDataClient, Beam::Initializes<F> FF,
-        Beam::Initializes<T> TF, Beam::Initializes<B> BF,
-        Beam::Initializes<M> MF, Beam::Initializes<S> SF>
+      template<Beam::Initializes<F> FF, Beam::Initializes<T> TF,
+        Beam::Initializes<B> BF, Beam::Initializes<M> MF,
+        Beam::Initializes<S> SF>
       SimulationMarketDataFeedClient(const std::vector<Security>& securities,
-        const VenueDatabase& venues, MarketDataClient& market_data_client,
+        const VenueDatabase& venues,
+        IsMarketDataClient auto& market_data_client,
         FF&& market_data_feed_client, TF&& time_client, BF&& bbo_timer,
         MF&& book_quote_timer, SF&& time_and_sale_timer);
 
@@ -78,28 +83,30 @@ namespace Nexus {
     private:
       std::vector<SecuritySnapshot> m_securities;
       VenueDatabase m_venues;
-      Beam::GetOptionalLocalPtr<F> m_feed_client;
-      Beam::GetOptionalLocalPtr<T> m_time_client;
-      Beam::GetOptionalLocalPtr<B> m_bbo_timer;
-      Beam::GetOptionalLocalPtr<M> m_book_quote_timer;
-      Beam::GetOptionalLocalPtr<S> m_time_and_sale_timer;
-      Beam::IO::OpenState m_open_state;
+      Beam::local_ptr_t<F> m_feed_client;
+      Beam::local_ptr_t<T> m_time_client;
+      Beam::local_ptr_t<B> m_bbo_timer;
+      Beam::local_ptr_t<M> m_book_quote_timer;
+      Beam::local_ptr_t<S> m_time_and_sale_timer;
+      Beam::OpenState m_open_state;
       Beam::RoutineTaskQueue m_tasks;
 
-      void on_bbo_timer_expired(Beam::Threading::Timer::Result result);
-      void on_book_quote_timer_expired(Beam::Threading::Timer::Result result);
-      void on_time_and_sale_timer_expired(
-        Beam::Threading::Timer::Result result);
+      void on_bbo_timer_expired(Beam::Timer::Result result);
+      void on_book_quote_timer_expired(Beam::Timer::Result result);
+      void on_time_and_sale_timer_expired(Beam::Timer::Result result);
   };
 
-  template<IsMarketDataFeedClient F, typename T, typename B, typename M,
-    typename S>
-  template<IsMarketDataClient MarketDataClient, Beam::Initializes<F> FF,
-    Beam::Initializes<T> TF, Beam::Initializes<B> BF, Beam::Initializes<M> MF,
-    Beam::Initializes<S> SF>
+  template<typename F, typename T, typename B, typename M, typename S> requires
+    IsMarketDataFeedClient<Beam::dereference_t<F>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+        Beam::IsTimer<Beam::dereference_t<B>> &&
+          Beam::IsTimer<Beam::dereference_t<M>> &&
+            Beam::IsTimer<Beam::dereference_t<S>>
+  template<Beam::Initializes<F> FF, Beam::Initializes<T> TF,
+    Beam::Initializes<B> BF, Beam::Initializes<M> MF, Beam::Initializes<S> SF>
   SimulationMarketDataFeedClient<F, T, B, M, S>::SimulationMarketDataFeedClient(
       const std::vector<Security>& securities, const VenueDatabase& venues,
-      MarketDataClient& market_data_client, FF&& market_data_feed_client,
+      IsMarketDataClient auto& market_data_client, FF&& market_data_feed_client,
       TF&& time_client, BF&& bbo_timer, MF&& book_quote_timer,
       SF&& time_and_sale_timer)
       : m_venues(venues),
@@ -126,7 +133,7 @@ namespace Nexus {
         snapshot.m_bbo_quote->m_ask.m_side = Side::ASK;
         snapshot.m_bbo_quote->m_ask.m_price =
           snapshot.m_bbo_quote->m_bid.m_price + Money::CENT;
-        snapshot.m_bbo_quote->m_timestamp = m_time_client->GetTime();
+        snapshot.m_bbo_quote->m_timestamp = m_time_client->get_time();
         auto country =
           m_venues.from(snapshot.m_security.get_venue()).m_country_code;
         auto venues = m_venues.select_all([&] (const auto& entry) {
@@ -134,65 +141,77 @@ namespace Nexus {
         });
         for(auto& venue : venues) {
           auto ask = BookQuote(venue.m_display_name, false, venue.m_venue,
-            make_ask(2 * Money::CENT, 100), m_time_client->GetTime());
+            make_ask(2 * Money::CENT, 100), m_time_client->get_time());
           snapshot.m_asks.push_back(SequencedSecurityBookQuote(
             SecurityBookQuote(ask, snapshot.m_security),
-            Beam::Queries::Sequence::First()));
+            Beam::Sequence::FIRST));
           auto bid = BookQuote(venue.m_display_name, false, venue.m_venue,
-            make_bid(Money::CENT, 100), m_time_client->GetTime());
+            make_bid(Money::CENT, 100), m_time_client->get_time());
           snapshot.m_bids.push_back(SequencedSecurityBookQuote(
             SecurityBookQuote(bid, snapshot.m_security),
-            Beam::Queries::Sequence::First()));
+            Beam::Sequence::FIRST));
         }
       }
-      m_bbo_timer->GetPublisher().Monitor(
-        m_tasks.GetSlot<Beam::Threading::Timer::Result>(std::bind_front(
+      m_bbo_timer->get_publisher().monitor(
+        m_tasks.get_slot<Beam::Timer::Result>(std::bind_front(
           &SimulationMarketDataFeedClient::on_bbo_timer_expired, this)));
-      m_book_quote_timer->GetPublisher().Monitor(
-        m_tasks.GetSlot<Beam::Threading::Timer::Result>(std::bind_front(
+      m_book_quote_timer->get_publisher().monitor(
+        m_tasks.get_slot<Beam::Timer::Result>(std::bind_front(
           &SimulationMarketDataFeedClient::on_book_quote_timer_expired, this)));
-      m_time_and_sale_timer->GetPublisher().Monitor(
-        m_tasks.GetSlot<Beam::Threading::Timer::Result>(std::bind_front(
+      m_time_and_sale_timer->get_publisher().monitor(
+        m_tasks.get_slot<Beam::Timer::Result>(std::bind_front(
           &SimulationMarketDataFeedClient::on_time_and_sale_timer_expired,
           this)));
-      m_bbo_timer->Start();
-      m_book_quote_timer->Start();
-      m_time_and_sale_timer->Start();
+      m_bbo_timer->start();
+      m_book_quote_timer->start();
+      m_time_and_sale_timer->start();
     } catch(std::exception&) {
       close();
       BOOST_RETHROW;
     }
   }
 
-  template<IsMarketDataFeedClient F, typename T, typename B, typename M,
-    typename S>
+  template<typename F, typename T, typename B, typename M, typename S> requires
+    IsMarketDataFeedClient<Beam::dereference_t<F>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+        Beam::IsTimer<Beam::dereference_t<B>> &&
+          Beam::IsTimer<Beam::dereference_t<M>> &&
+            Beam::IsTimer<Beam::dereference_t<S>>
   SimulationMarketDataFeedClient<F, T, B, M, S>::
       ~SimulationMarketDataFeedClient() {
     close();
   }
 
-  template<IsMarketDataFeedClient F, typename T, typename B, typename M,
-    typename S>
+  template<typename F, typename T, typename B, typename M, typename S> requires
+    IsMarketDataFeedClient<Beam::dereference_t<F>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+        Beam::IsTimer<Beam::dereference_t<B>> &&
+          Beam::IsTimer<Beam::dereference_t<M>> &&
+            Beam::IsTimer<Beam::dereference_t<S>>
   void SimulationMarketDataFeedClient<F, T, B, M, S>::close() {
-    if(m_open_state.SetClosing()) {
+    if(m_open_state.set_closing()) {
       return;
     }
     m_feed_client->close();
-    m_bbo_timer->Cancel();
-    m_book_quote_timer->Cancel();
-    m_time_and_sale_timer->Cancel();
-    m_tasks.Break();
-    m_open_state.Close();
+    m_bbo_timer->cancel();
+    m_book_quote_timer->cancel();
+    m_time_and_sale_timer->cancel();
+    m_tasks.close();
+    m_open_state.close();
   }
 
-  template<IsMarketDataFeedClient F, typename T, typename B, typename M,
-    typename S>
+  template<typename F, typename T, typename B, typename M, typename S> requires
+    IsMarketDataFeedClient<Beam::dereference_t<F>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+        Beam::IsTimer<Beam::dereference_t<B>> &&
+          Beam::IsTimer<Beam::dereference_t<M>> &&
+            Beam::IsTimer<Beam::dereference_t<S>>
   void SimulationMarketDataFeedClient<F, T, B, M, S>::on_bbo_timer_expired(
-      Beam::Threading::Timer::Result result) {
+      Beam::Timer::Result result) {
     for(auto& snapshot : m_securities) {
       snapshot.m_bbo_quote->m_bid.m_size = 100 + (std::rand() % 1000);
       snapshot.m_bbo_quote->m_ask.m_size = 100 + (std::rand() % 1000);
-      snapshot.m_bbo_quote->m_timestamp = m_time_client->GetTime();
+      snapshot.m_bbo_quote->m_timestamp = m_time_client->get_time();
       auto direction = std::rand() % 2;
       if(direction == 1) {
         snapshot.m_bbo_quote->m_bid.m_price += Money::CENT;
@@ -204,20 +223,24 @@ namespace Nexus {
       m_feed_client->publish(
         SecurityBboQuote(snapshot.m_bbo_quote, snapshot.m_security));
     }
-    m_bbo_timer->Start();
+    m_bbo_timer->start();
   }
 
-  template<IsMarketDataFeedClient F, typename T, typename B, typename M,
-    typename S>
+  template<typename F, typename T, typename B, typename M, typename S> requires
+    IsMarketDataFeedClient<Beam::dereference_t<F>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+        Beam::IsTimer<Beam::dereference_t<B>> &&
+          Beam::IsTimer<Beam::dereference_t<M>> &&
+            Beam::IsTimer<Beam::dereference_t<S>>
   void SimulationMarketDataFeedClient<F, T, B, M, S>::
-      on_book_quote_timer_expired(Beam::Threading::Timer::Result result) {
+      on_book_quote_timer_expired(Beam::Timer::Result result) {
     for(auto& snapshot : m_securities) {
       for(auto& ask : snapshot.m_asks) {
         ask->m_quote.m_size = 0;
         m_feed_client->publish(SecurityBookQuote(ask, snapshot.m_security));
         ask->m_quote.m_price = snapshot.m_bbo_quote->m_ask.m_price;
         ask->m_quote.m_size = 100 + (std::rand() % 1000);
-        ask->m_timestamp = m_time_client->GetTime();
+        ask->m_timestamp = m_time_client->get_time();
         m_feed_client->publish(SecurityBookQuote(ask, snapshot.m_security));
       }
       for(auto& bid : snapshot.m_bids) {
@@ -225,17 +248,21 @@ namespace Nexus {
         m_feed_client->publish(SecurityBookQuote(bid, snapshot.m_security));
         bid->m_quote.m_price = snapshot.m_bbo_quote->m_ask.m_price;
         bid->m_quote.m_size = 100 + (std::rand() % 1000);
-        bid->m_timestamp = m_time_client->GetTime();
+        bid->m_timestamp = m_time_client->get_time();
         m_feed_client->publish(SecurityBookQuote(bid, snapshot.m_security));
       }
     }
-    m_book_quote_timer->Start();
+    m_book_quote_timer->start();
   }
 
-  template<IsMarketDataFeedClient F, typename T, typename B, typename M,
-    typename S>
+  template<typename F, typename T, typename B, typename M, typename S> requires
+    IsMarketDataFeedClient<Beam::dereference_t<F>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+        Beam::IsTimer<Beam::dereference_t<B>> &&
+          Beam::IsTimer<Beam::dereference_t<M>> &&
+            Beam::IsTimer<Beam::dereference_t<S>>
   void SimulationMarketDataFeedClient<F, T, B, M, S>::
-      on_time_and_sale_timer_expired(Beam::Threading::Timer::Result result) {
+      on_time_and_sale_timer_expired(Beam::Timer::Result result) {
     for(auto& snapshot : m_securities) {
       auto condition =
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@");
@@ -245,13 +272,13 @@ namespace Nexus {
         }
         return snapshot.m_bbo_quote->m_ask.m_price;
       }();
-      auto time_and_sale = TimeAndSale(m_time_client->GetTime(), price, 100,
-        condition, snapshot.m_security.get_venue().get_code().GetData(), "M1",
+      auto time_and_sale = TimeAndSale(m_time_client->get_time(), price, 100,
+        condition, snapshot.m_security.get_venue().get_code().get_data(), "M1",
         "M2");
       m_feed_client->publish(
         SecurityTimeAndSale(time_and_sale, snapshot.m_security));
     }
-    m_time_and_sale_timer->Start();
+    m_time_and_sale_timer->start();
   }
 }
 

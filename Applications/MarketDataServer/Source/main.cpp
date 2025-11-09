@@ -11,7 +11,7 @@
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
-#include <Beam/Threading/LiveTimer.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/Streamable.hpp>
@@ -30,43 +30,34 @@
 #include "Version.hpp"
 
 using namespace Beam;
-using namespace Beam::Codecs;
-using namespace Beam::IO;
-using namespace Beam::Network;
-using namespace Beam::Routines;
-using namespace Beam::Serialization;
-using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Viper;
 
 namespace {
-  using SqlDataStore = SqlHistoricalDataStore<SqlConnection<MySql::Connection>>;
+  using DataStore = SqlHistoricalDataStore<SqlConnection<MySql::Connection>>;
   using RegistryServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<MetaMarketDataRegistryServlet<
       MarketDataRegistry*, SessionCachedHistoricalDataStore<
-        AsyncHistoricalDataStore<SqlDataStore*>*>,
-      ApplicationAdministrationClient::Client*>,
-      ApplicationServiceLocatorClient::Client*, NativePointerPolicy>,
-    TcpServerSocket, BinarySender<SharedBuffer>, NullEncoder,
-    std::shared_ptr<LiveTimer>>;
+        AsyncHistoricalDataStore<DataStore*>*>,
+      ApplicationAdministrationClient*>,
+      ApplicationServiceLocatorClient*, NativePointerPolicy>, TcpServerSocket,
+    BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
   using BaseRegistryServlet = MarketDataRegistryServlet<
     RegistryServletContainer, MarketDataRegistry*,
-    SessionCachedHistoricalDataStore<AsyncHistoricalDataStore<SqlDataStore*>*>,
-    ApplicationAdministrationClient::Client*>;
+    SessionCachedHistoricalDataStore<AsyncHistoricalDataStore<DataStore*>*>,
+    ApplicationAdministrationClient*>;
   using FeedServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<
       MetaMarketDataFeedServlet<BaseRegistryServlet*>,
-      ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
+      ApplicationServiceLocatorClient*>, TcpServerSocket,
     BinarySender<SharedBuffer>, SizeDeclarativeEncoder<ZLibEncoder>,
     std::shared_ptr<LiveTimer>>;
 
   JsonValue parse_countries(
       const YAML::Node& config, const CountryDatabase& countries) {
-    return TryOrNest([&] {
+    return try_or_nest([&] {
       auto country_nodes = std::vector<JsonValue>();
       for(auto item : config) {
         auto code = item.as<std::string>();
@@ -87,28 +78,28 @@ namespace {
 
 int main(int argc, const char** argv) {
   try {
-    auto config = ParseCommandLine(argc, argv,
-      "0.9-r" MARKET_DATA_SERVER_VERSION
-      "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto service_locator_client =
-      MakeApplicationServiceLocatorClient(GetNode(config, "service_locator"));
+    auto config = parse_command_line(argc, argv,
+      "1.0-r" MARKET_DATA_SERVER_VERSION
+      "\nCopyright (C) 2026 Spire Trading Inc.");
+    auto service_locator_client = ApplicationServiceLocatorClient(
+      ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
-      ApplicationDefinitionsClient(service_locator_client.Get());
+      ApplicationDefinitionsClient(Ref(service_locator_client));
     auto administration_client =
-      ApplicationAdministrationClient(service_locator_client.Get());
-    auto countries = definitions_client->load_country_database();
-    auto registry_service_config = TryOrNest([&] {
-      return ServiceConfiguration::Parse(
-        GetNode(config, "registry_server"), MARKET_DATA_REGISTRY_SERVICE_NAME);
+      ApplicationAdministrationClient(Ref(service_locator_client));
+    auto countries = definitions_client.load_country_database();
+    auto registry_service_config = try_or_nest([&] {
+      return ServiceConfiguration::parse(
+        get_node(config, "registry_server"), MARKET_DATA_REGISTRY_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'registry_server'."));
-    auto feed_service_config = TryOrNest([&] {
-      return ServiceConfiguration::Parse(
-        GetNode(config, "feed_server"), MARKET_DATA_FEED_SERVICE_NAME);
+    auto feed_service_config = try_or_nest([&] {
+      return ServiceConfiguration::parse(
+        get_node(config, "feed_server"), MARKET_DATA_FEED_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'feed_server'."));
-    auto countries_node = TryOrNest([&] {
+    auto countries_node = try_or_nest([&] {
       if(auto countries_node = config["countries"]) {
         return parse_countries(
-          countries_node, definitions_client->load_country_database());
+          countries_node, definitions_client.load_country_database());
       }
       return JsonValue(JsonNull());
     }, std::runtime_error("Error parsing section 'countries'"));
@@ -116,35 +107,35 @@ int main(int argc, const char** argv) {
       registry_service_config.m_properties["countries"] = countries_node;
       feed_service_config.m_properties["countries"] = countries_node;
     }
-    auto mysql_config = TryOrNest([&] {
-      return MySqlConfig::Parse(GetNode(config, "data_store"));
+    auto mysql_config = try_or_nest([&] {
+      return MySqlConfig::parse(get_node(config, "data_store"));
     }, std::runtime_error("Error parsing section 'data_store'."));
-    auto venues = definitions_client->load_venue_database();
-    auto historical_data_store = SqlDataStore(venues, [=] {
-      return SqlConnection(MySql::Connection(mysql_config.m_address.GetHost(),
-        mysql_config.m_address.GetPort(), mysql_config.m_username,
+    auto venues = definitions_client.load_venue_database();
+    auto historical_data_store = DataStore(venues, [=] {
+      return SqlConnection(MySql::Connection(mysql_config.m_address.get_host(),
+        mysql_config.m_address.get_port(), mysql_config.m_username,
         mysql_config.m_password, mysql_config.m_schema));
     });
     auto async_data_store = AsyncHistoricalDataStore(&historical_data_store);
-    auto cache_block_size = Extract<int>(config, "cache_block_size", 1000);
-    auto time_zone_database = definitions_client->load_time_zone_database();
+    auto cache_block_size = extract<int>(config, "cache_block_size", 1000);
+    auto time_zone_database = definitions_client.load_time_zone_database();
     auto market_data_registry = MarketDataRegistry(venues, time_zone_database);
-    auto base_registry_servlet = BaseRegistryServlet(&*administration_client,
-      &market_data_registry, Initialize(&async_data_store, cache_block_size));
+    auto base_registry_servlet = BaseRegistryServlet(&administration_client,
+      &market_data_registry, init(&async_data_store, cache_block_size));
     auto registry_server = RegistryServletContainer(
-      Initialize(service_locator_client.Get(), &base_registry_servlet),
-      Initialize(registry_service_config.m_interface),
+      init(&service_locator_client, &base_registry_servlet),
+      init(registry_service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-    Register(*service_locator_client, registry_service_config);
-    auto feedServer = FeedServletContainer(
-      Initialize(service_locator_client.Get(), &base_registry_servlet),
-      Initialize(feed_service_config.m_interface),
+    add(service_locator_client, registry_service_config);
+    auto feed_server = FeedServletContainer(
+      init(&service_locator_client, &base_registry_servlet),
+      init(feed_service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-    Register(*service_locator_client, feed_service_config);
-    WaitForKillEvent();
-    service_locator_client->Close();
+    add(service_locator_client, feed_service_config);
+    wait_for_kill_event();
+    service_locator_client.close();
   } catch(...) {
-    ReportCurrentException();
+    report_current_exception();
     return -1;
   }
   return 0;
