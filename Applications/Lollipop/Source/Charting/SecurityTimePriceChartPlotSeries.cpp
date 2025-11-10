@@ -31,7 +31,7 @@ std::size_t SecurityTimePriceChartPlotSeries::TimestampHash::operator ()(
 SecurityTimePriceChartPlotSeries::SecurityTimePriceChartPlotSeries(
     Ref<UserProfile> userProfile, const Security& security,
     time_duration interval)
-    : m_userProfile(userProfile.Get()),
+    : m_userProfile(userProfile.get()),
       m_security(security),
       m_interval(interval) {
   if(security == Security()) {
@@ -39,7 +39,7 @@ SecurityTimePriceChartPlotSeries::SecurityTimePriceChartPlotSeries(
   }
   auto query = SecurityMarketDataQuery();
   query.SetIndex(security);
-  query.SetRange(Beam::Queries::Range::RealTime());
+  query.SetRange(Beam::Range::RealTime());
   query.SetSnapshotLimit(SnapshotLimit::Unlimited());
   query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
   m_userProfile->GetClients().get_market_data_client().query(
@@ -75,7 +75,7 @@ ChartValue SecurityTimePriceChartPlotSeries::LoadLastCurrentDomain() {
   auto query = SecurityMarketDataQuery();
   query.SetIndex(m_security);
   query.SetRange(
-    Beam::Queries::Sequence::First(), Beam::Queries::Sequence::Present());
+    Beam::Sequence::First(), Beam::Sequence::Present());
   query.SetSnapshotLimit(SnapshotLimit::Type::TAIL, 1);
   query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
   m_userProfile->GetClients().get_market_data_client().query(

@@ -26,17 +26,17 @@ CurrencyInputWidget::CurrencyInputWidget(QWidget* parent, Qt::WindowFlags flags)
 CurrencyInputWidget::CurrencyInputWidget(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : CurrencyInputWidget{parent, flags} {
-  Initialize(Ref(userProfile));
+  init(Ref(userProfile));
 }
 
 CurrencyInputWidget::~CurrencyInputWidget() {}
 
 void CurrencyInputWidget::Initialize(Ref<UserProfile> userProfile) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   auto& currencies = m_userProfile->GetCurrencyDatabase();
   for(auto& currency : currencies.get_entries()) {
     m_currencyComboBox->addItem(QString::fromStdString(
-      currency.m_code.GetData()));
+      currency.m_code.get_data()));
   }
 }
 

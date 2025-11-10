@@ -3,7 +3,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
@@ -12,7 +11,7 @@ using namespace std;
 
 ComplianceModel::ComplianceModel(Ref<UserProfile> userProfile,
     const DirectoryEntry& account)
-    : m_userProfile{userProfile.Get()},
+    : m_userProfile{userProfile.get()},
       m_account{account},
       m_newComplianceEntryId{1},
       m_nextComplianceEntryId{1} {}

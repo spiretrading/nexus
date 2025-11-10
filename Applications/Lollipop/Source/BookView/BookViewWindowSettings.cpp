@@ -6,7 +6,6 @@
 #include "ui_BookViewWindow.h"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
@@ -42,7 +41,7 @@ QWidget* BookViewWindowSettings::Reopen(
   BookViewWindow* window = new BookViewWindow(Ref(userProfile), m_properties,
     m_identifier);
   window->setAttribute(Qt::WA_DeleteOnClose);
-  Apply(Ref(userProfile), Store(*window));
+  Apply(Ref(userProfile), out(*window));
   return window;
 }
 

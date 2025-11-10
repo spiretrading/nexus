@@ -17,7 +17,7 @@ using namespace std;
 CutNodeCommand::CutNodeCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& coordinate)
     : m_isInitialRedo(true),
-      m_view(view.Get()),
+      m_view(view.get()),
       m_coordinate(coordinate),
       m_deleteCommand(Ref(view), coordinate) {}
 

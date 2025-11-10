@@ -23,13 +23,13 @@ OrderImbalanceIndicatorVenueSelectionWidget::
     const VenueDatabase& venueDatabase,
     Ref<OrderImbalanceIndicatorModel> model, QWidget* parent)
     : QWidget(parent) {
-  Initialize(venueDatabase, Ref(model));
+  init(venueDatabase, Ref(model));
 }
 
 void OrderImbalanceIndicatorVenueSelectionWidget::Initialize(
     const VenueDatabase& venueDatabase,
     Ref<OrderImbalanceIndicatorModel> model) {
-  m_model = model.Get();
+  m_model = model.get();
   QGridLayout* layout = new QGridLayout();
   setLayout(layout);
   int count = 0;

@@ -277,23 +277,22 @@ namespace Spire {
       "Spire.TimeRangeInputWidgetWindowSettings"),
     (UI::ToolbarWindowSettings, "Spire.UI.ToolbarWindowSettings"));
 
-  template<typename SenderType>
-  void RegisterSpireTypes(
-      Beam::Out<Beam::Serialization::TypeRegistry<SenderType>> registry) {
-    RegisterCanvasCommonTypes(Beam::Store(registry));
-    RegisterCanvasControlNodeTypes(Beam::Store(registry));
-    RegisterCanvasIONodeTypes(Beam::Store(registry));
-    RegisterCanvasLuaNodeTypes(Beam::Store(registry));
-    RegisterCanvasMarketDataNodeTypes(Beam::Store(registry));
-    RegisterCanvasOrderExecutionNodeTypes(Beam::Store(registry));
-    RegisterCanvasRecordTypes(Beam::Store(registry));
-    RegisterCanvasReferenceTypes(Beam::Store(registry));
-    RegisterCanvasStandardTypes(Beam::Store(registry));
-    RegisterCanvasSystemNodeTypes(Beam::Store(registry));
-    RegisterCanvasTypeTypes(Beam::Store(registry));
-    RegisterCanvasValueNodeTypes(Beam::Store(registry));
-    RegisterDashboardTypes(Beam::Store(registry));
-    RegisterWindowSettingsTypes(Beam::Store(registry));
+  template<Beam::IsSender S>
+  void RegisterSpireTypes(Beam::Out<Beam::TypeRegistry<S>> registry) {
+    RegisterCanvasCommonTypes(Beam::out(registry));
+    RegisterCanvasControlNodeTypes(Beam::out(registry));
+    RegisterCanvasIONodeTypes(Beam::out(registry));
+    RegisterCanvasLuaNodeTypes(Beam::out(registry));
+    RegisterCanvasMarketDataNodeTypes(Beam::out(registry));
+    RegisterCanvasOrderExecutionNodeTypes(Beam::out(registry));
+    RegisterCanvasRecordTypes(Beam::out(registry));
+    RegisterCanvasReferenceTypes(Beam::out(registry));
+    RegisterCanvasStandardTypes(Beam::out(registry));
+    RegisterCanvasSystemNodeTypes(Beam::out(registry));
+    RegisterCanvasTypeTypes(Beam::out(registry));
+    RegisterCanvasValueNodeTypes(Beam::out(registry));
+    RegisterDashboardTypes(Beam::out(registry));
+    RegisterWindowSettingsTypes(Beam::out(registry));
   }
 }
 

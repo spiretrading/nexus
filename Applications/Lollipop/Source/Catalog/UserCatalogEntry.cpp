@@ -68,7 +68,7 @@ void UserCatalogEntry::Save() const {
     sender.SetSink(Ref(buffer));
     sender.Shuttle(*this);
     auto writer = BasicOStreamWriter<std::ofstream>(
-      Initialize(entryPath, std::ios::binary));
+      init(entryPath, std::ios::binary));
     writer.Write(buffer);
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),

@@ -39,7 +39,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(Ref<UserProfile> userProfile,
     : QFrame(parent, flags),
       SecurityContext(identifier),
       m_ui(std::make_unique<Ui_TimeAndSalesWindow>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
   m_ui->m_timeAndSalesView->setItemDelegate(
     new CustomVariantItemDelegate(Ref(*m_userProfile)));

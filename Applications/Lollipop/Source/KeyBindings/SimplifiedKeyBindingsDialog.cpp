@@ -2650,7 +2650,7 @@ SimplifiedKeyBindingsDialog::SimplifiedKeyBindingsDialog(
     Ref<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_SimplifiedKeyBindingsDialog>()),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_keyBindings(m_userProfile->GetKeyBindings()) {
   m_ui->setupUi(this);
   m_ui->m_interactionsWidget->Initialize(Ref(*m_userProfile));

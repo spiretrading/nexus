@@ -67,8 +67,8 @@ CatalogWindow::CatalogWindow(Ref<UserProfile> userProfile, QWidget* parent,
       m_filter(DisplayAllFilter),
       m_ui(std::make_unique<Ui_CatalogWindow>()),
       m_mode(LOADING),
-      m_userProfile(userProfile.Get()) {
-  Initialize();
+      m_userProfile(userProfile.get()) {
+  init();
 }
 
 CatalogWindow::CatalogWindow(Ref<UserProfile> userProfile,
@@ -77,13 +77,13 @@ CatalogWindow::CatalogWindow(Ref<UserProfile> userProfile,
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_CatalogWindow>()),
       m_mode(saveToRegistry ? REGISTRY : SAVING),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   if(m_mode == SAVING) {
     m_filter = DisplayAllFilter;
   } else {
     m_filter = DisplayRegistryCatalogEntryFilter;
   }
-  Initialize();
+  init();
   SetDefaultSearchName(node);
 }
 
@@ -93,8 +93,8 @@ CatalogWindow::CatalogWindow(Ref<UserProfile> userProfile,
       m_filter(filter),
       m_ui(std::make_unique<Ui_CatalogWindow>()),
       m_mode(LOADING),
-      m_userProfile(userProfile.Get()) {
-  Initialize();
+      m_userProfile(userProfile.get()) {
+  init();
 }
 
 CatalogWindow::CatalogWindow(Ref<UserProfile> userProfile,
@@ -104,8 +104,8 @@ CatalogWindow::CatalogWindow(Ref<UserProfile> userProfile,
       m_filter(filter),
       m_ui(std::make_unique<Ui_CatalogWindow>()),
       m_mode(saveToRegistry ? REGISTRY : SAVING),
-      m_userProfile(userProfile.Get()) {
-  Initialize();
+      m_userProfile(userProfile.get()) {
+  init();
   SetDefaultSearchName(node);
 }
 

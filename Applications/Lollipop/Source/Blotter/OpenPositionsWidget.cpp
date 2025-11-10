@@ -73,8 +73,8 @@ void OpenPositionsWidget::SetModel(Ref<UserProfile> userProfile,
     disconnect(m_selectionChangedConnection);
   }
   m_ui->m_openPositionsTable->reset();
-  m_userProfile = userProfile.Get();
-  m_model = model.Get();
+  m_userProfile = userProfile.get();
+  m_model = model.get();
   m_proxyModel = std::make_unique<CustomVariantSortFilterProxyModel>(
     Ref(userProfile));
   m_proxyModel->setSourceModel(&m_model->GetOpenPositionsModel());

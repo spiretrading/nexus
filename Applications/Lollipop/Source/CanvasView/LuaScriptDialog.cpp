@@ -25,7 +25,7 @@ LuaScriptDialog::LuaScriptDialog(const LuaScriptNode& node,
     Ref<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_LuaScriptDialog>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   Setup(node);
 }
 
@@ -33,7 +33,7 @@ LuaScriptDialog::LuaScriptDialog(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_LuaScriptDialog>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   LuaScriptNode luaScriptNode;
   Setup(luaScriptNode);
 }

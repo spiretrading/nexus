@@ -2,13 +2,12 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace Nexus;
 using namespace Spire;
 
 AccountInfoModel::AccountInfoModel(Ref<UserProfile> userProfile,
     const DirectoryEntry& account)
-    : m_userProfile(userProfile.Get()),
+    : m_userProfile(userProfile.get()),
       m_account(account) {}
 
 void AccountInfoModel::Load() {

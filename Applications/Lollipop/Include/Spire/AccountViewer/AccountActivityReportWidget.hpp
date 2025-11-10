@@ -34,7 +34,7 @@ namespace Spire {
         \param account The account to display.
       */
       void Initialize(Beam::Ref<UserProfile> userProfile,
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::DirectoryEntry& account);
 
     private:
       struct ReportModel {
@@ -46,7 +46,7 @@ namespace Spire {
       };
       std::unique_ptr<Ui_AccountActivityReportWidget> m_ui;
       UserProfile* m_userProfile;
-      Beam::ServiceLocator::DirectoryEntry m_account;
+      Beam::DirectoryEntry m_account;
       std::optional<ReportModel> m_model;
 
       void OnUpdate(bool checked);

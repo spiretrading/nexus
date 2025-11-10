@@ -226,11 +226,11 @@ namespace Spire {
       //! Returns a reset instance of this CanvasNode.
       virtual std::unique_ptr<CanvasNode> Reset() const;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       friend class CanvasNodeBuilder;
       CanvasNode* m_parent;
       std::vector<std::unique_ptr<CanvasNode>> m_children;
@@ -244,24 +244,24 @@ namespace Spire {
 
   template<typename T>
   std::unique_ptr<T> CanvasNode::Clone(const T& node) {
-    return Beam::StaticCast<std::unique_ptr<T>>(
+    return Beam::static_pointer_cast<T>(
       static_cast<const CanvasNode&>(node).Clone());
   }
 
-  template<typename Shuttler>
-  void CanvasNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("children", m_children);
-    if(Beam::Serialization::IsReceiver<Shuttler>::value) {
+  template<Beam::IsShuttle S>
+  void CanvasNode::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("children", m_children);
+    if(Beam::IsReceiver<S>) {
       for(auto& child : m_children) {
         child->m_parent = this;
       }
     }
-    shuttle.Shuttle("type", m_type);
-    shuttle.Shuttle("text", m_text);
-    shuttle.Shuttle("name", m_name);
-    shuttle.Shuttle("is_visible", m_isVisible);
-    shuttle.Shuttle("is_read_only", m_isReadOnly);
-    shuttle.Shuttle("meta_data", m_metaData);
+    shuttle.shuttle("type", m_type);
+    shuttle.shuttle("text", m_text);
+    shuttle.shuttle("name", m_name);
+    shuttle.shuttle("is_visible", m_isVisible);
+    shuttle.shuttle("is_read_only", m_isReadOnly);
+    shuttle.shuttle("meta_data", m_metaData);
   }
 }
 

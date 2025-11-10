@@ -38,7 +38,7 @@ RegionInputDialog::RegionInputDialog(
     Region region, Ref<UserProfile> userProfile, QWidget* parent)
     : QDialog(parent),
       m_ui(std::make_unique<Ui_ValueListInputDialog>()),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_region(std::move(region)) {
   m_ui->setupUi(this);
   setWindowTitle(tr("Region Editor"));

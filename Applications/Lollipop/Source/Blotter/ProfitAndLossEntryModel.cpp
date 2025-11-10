@@ -55,7 +55,8 @@ void ProfitAndLossEntryModel::OnPortfolioUpdate(
   entry.m_fees = update.m_security_inventory.m_fees;
   entry.m_volume = update.m_security_inventory.m_volume;
   entry.m_previousQuantity = update.m_security_inventory.m_position.m_quantity;
-  int entryIndex = static_cast<int>(Find(m_entries, entry) - m_entries.begin());
+  int entryIndex =
+    static_cast<int>(Beam::find(m_entries, entry) - m_entries.begin());
   m_volume += entry.m_volume;
   m_volumeSignal(m_volume);
   Q_EMIT dataChanged(index(entryIndex, 0), index(entryIndex, COLUMN_COUNT - 1));

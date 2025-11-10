@@ -14,7 +14,7 @@ using namespace Spire::UI;
 
 TimeAndSalesModel::TimeAndSalesModel(Ref<UserProfile> userProfile,
     const TimeAndSalesProperties& properties, const Security& security)
-    : m_userProfile(userProfile.Get()),
+    : m_userProfile(userProfile.get()),
       m_properties(properties) {
   if(security == Security()) {
     return;
@@ -24,7 +24,7 @@ TimeAndSalesModel::TimeAndSalesModel(Ref<UserProfile> userProfile,
     m_userProfile->GetVenueDatabase(), m_userProfile->GetTimeZoneDatabase());
   auto query = SecurityMarketDataQuery();
   query.SetIndex(security);
-  query.SetRange(marketStartOfDay, Beam::Queries::Sequence::Last());
+  query.SetRange(marketStartOfDay, Beam::Sequence::Last());
   query.SetSnapshotLimit(SnapshotLimit::Type::TAIL, 50);
   query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
   m_userProfile->GetClients().get_market_data_client().query(

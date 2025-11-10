@@ -15,11 +15,11 @@ using namespace std;
 std::unique_ptr<DashboardCell> HighDashboardCellBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
   auto& security = boost::get<Security>(index);
-  auto& serviceClients = userProfile.Get()->GetClients();
+  auto& serviceClients = userProfile.get()->GetClients();
   auto query = make_daily_high_query(security,
     serviceClients.get_time_client().GetTime(), pos_infin,
-    userProfile.Get()->GetVenueDatabase(),
-    userProfile.Get()->GetTimeZoneDatabase());
+    userProfile.get()->GetVenueDatabase(),
+    userProfile.get()->GetTimeZoneDatabase());
   auto baseQueue = std::make_shared<Queue<Nexus::QueryVariant>>();
   std::shared_ptr<QueueReader<Money>> queue =
     MakeConverterQueueReader(baseQueue,

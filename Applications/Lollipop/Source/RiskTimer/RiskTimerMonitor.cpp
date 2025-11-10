@@ -11,7 +11,7 @@ using namespace Nexus;
 using namespace Spire;
 
 RiskTimerMonitor::RiskTimerMonitor(Ref<UserProfile> userProfile)
-  : m_userProfile(userProfile.Get()) {}
+  : m_userProfile(userProfile.get()) {}
 
 RiskTimerMonitor::~RiskTimerMonitor() {
   if(m_dialog) {
@@ -24,7 +24,7 @@ void RiskTimerMonitor::Load() {
   auto account =
     m_userProfile->GetClients().get_service_locator_client().GetAccount();
   m_userProfile->GetClients().get_administration_client().
-    get_risk_state_publisher(account).Monitor(
+    get_risk_state_publisher(account).monitor(
       m_eventHandler.get_slot<RiskState>(
         std::bind_front(&RiskTimerMonitor::OnRiskState, this)));
 }

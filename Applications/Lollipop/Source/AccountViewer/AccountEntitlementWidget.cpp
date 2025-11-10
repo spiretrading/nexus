@@ -20,7 +20,7 @@ AccountEntitlementWidget::~AccountEntitlementWidget() {}
 
 void AccountEntitlementWidget::Initialize(
     Ref<UserProfile> userProfile, bool isReadOnly) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_isReadOnly = isReadOnly;
 }
 

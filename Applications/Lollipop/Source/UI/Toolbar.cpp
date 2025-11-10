@@ -64,7 +64,7 @@ Toolbar::Toolbar(Ref<UserProfile> userProfile, QWidget* parent,
     Qt::WindowFlags flags)
     : QWidget(parent, flags),
       m_ui(std::make_unique<Ui_Toolbar>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
   if(!m_userProfile->IsManager()) {
     m_ui->m_administrationGroup->hide();

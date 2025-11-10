@@ -82,10 +82,10 @@ QUndoCommand* Spire::CommitCanvasEditor(const CanvasNode& node,
 CommitEditorCanvasNodeVisitor::CommitEditorCanvasNodeVisitor(
     Ref<const CanvasNode> node, Ref<const QWidget> editor,
     Ref<CanvasNodeModel> model, Ref<const UserProfile> userProfile)
-    : m_node(node.Get()),
-      m_editor(editor.Get()),
-      m_model(model.Get()),
-      m_userProfile(userProfile.Get()) {}
+    : m_node(node.get()),
+      m_editor(editor.get()),
+      m_model(model.get()),
+      m_userProfile(userProfile.get()) {}
 
 QUndoCommand* CommitEditorCanvasNodeVisitor::GetCommand() {
   m_command = nullptr;
@@ -120,7 +120,7 @@ void CommitEditorCanvasNodeVisitor::Visit(const CurrencyNode& node) {
   }
   auto coordinate = m_model->GetCoordinate(node);
   m_command = new ReplaceNodeCommand(Ref(*m_model), coordinate,
-    *node.SetValue(newValue.m_id, newValue.m_code.GetData()));
+    *node.SetValue(newValue.m_id, newValue.m_code.get_data()));
 }
 
 void CommitEditorCanvasNodeVisitor::Visit(const DecimalNode& node) {

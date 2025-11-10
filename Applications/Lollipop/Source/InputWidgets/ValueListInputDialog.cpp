@@ -62,7 +62,7 @@ ValueListInputDialog::ValueListInputDialog(Ref<UserProfile> userProfile,
     const std::type_info& type, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_ValueListInputDialog>()),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_type(&type) {
   m_ui->setupUi(this);
   connect(m_ui->m_addToolButton, &QToolButton::clicked, this,

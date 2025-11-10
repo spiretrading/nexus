@@ -18,10 +18,10 @@ using namespace std;
 
 CondensedCanvasCell::CondensedCanvasCell(Ref<UserProfile> userProfile,
     Ref<CondensedCanvasWidget> parent, Ref<const CanvasNode> node)
-    : QWidget{parent.Get()},
-      m_userProfile{userProfile.Get()},
-      m_parent{parent.Get()},
-      m_node{node.Get()},
+    : QWidget{parent.get()},
+      m_userProfile{userProfile.get()},
+      m_parent{parent.get()},
+      m_node{node.get()},
       m_editor{nullptr} {
   auto layout = new QVBoxLayout(this);
   m_valueWidget = new QLineEdit(this);

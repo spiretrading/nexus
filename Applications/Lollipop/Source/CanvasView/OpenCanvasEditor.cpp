@@ -113,9 +113,9 @@ CanvasNodeEditor::EditVariant Spire::OpenCanvasEditor(const CanvasNode& node,
 OpenEditorCanvasNodeVisitor::OpenEditorCanvasNodeVisitor(
   Ref<const CanvasNode> node, Ref<CanvasNodeModel> model,
   Ref<UserProfile> userProfile, QEvent* event)
-  : m_node(node.Get()),
-    m_model(model.Get()),
-    m_userProfile(userProfile.Get()),
+  : m_node(node.get()),
+    m_model(model.get()),
+    m_userProfile(userProfile.get()),
     m_event(event) {}
 
 CanvasNodeEditor::EditVariant OpenEditorCanvasNodeVisitor::GetEditor() {
@@ -144,7 +144,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const CurrencyNode& node) {
   auto currencies = m_userProfile->GetCurrencyDatabase().get_entries();
   for(auto i = std::size_t(0); i != currencies.size(); ++i) {
     auto& entry = currencies[i];
-    editor->addItem(QString::fromStdString(entry.m_code.GetData()));
+    editor->addItem(QString::fromStdString(entry.m_code.get_data()));
     if(node.GetValue() != CurrencyId::NONE && entry.m_id == node.GetValue()) {
       editor->setCurrentIndex(i);
     }

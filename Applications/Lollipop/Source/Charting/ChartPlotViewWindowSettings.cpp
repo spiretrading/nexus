@@ -26,7 +26,7 @@ void ChartPlotViewWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   ChartPlotView& view = dynamic_cast<ChartPlotView&>(*widget);
   view.restoreGeometry(m_geometry);
-  view.Initialize(Ref(userProfile), m_properties);
+  view.init(Ref(userProfile), m_properties);
   view.SetXAxisParameters(m_xAxisParameters);
   view.SetYAxisParameters(m_yAxisParameters);
 }

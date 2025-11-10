@@ -73,13 +73,13 @@ TEST_SUITE("ValueType") {
     REQUIRE(SecurityType::GetInstance().GetNativeType() ==
       typeid(Security));
     REQUIRE(SequenceType::GetInstance().GetNativeType() ==
-      typeid(Beam::Queries::Sequence));
+      typeid(Beam::Sequence));
     REQUIRE(SideType::GetInstance().GetNativeType() == typeid(Side));
     REQUIRE(TextType::GetInstance().GetNativeType() == typeid(std::string));
     REQUIRE(TimeInForceType::GetInstance().GetNativeType() ==
       typeid(TimeInForce));
     REQUIRE(TimeRangeType::GetInstance().GetNativeType() ==
-      typeid(Queries::Range));
+      typeid(Range));
     REQUIRE(VenueType::GetInstance().GetNativeType() == typeid(Venue));
   }
 

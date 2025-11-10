@@ -11,14 +11,13 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 
 BookViewModel::BookViewModel(Ref<UserProfile> userProfile,
     const BookViewProperties& properties, const Security& security, Side side)
-    : m_userProfile(userProfile.Get()),
+    : m_userProfile(userProfile.get()),
       m_properties(properties),
       m_security(security),
       m_side(side) {
@@ -32,8 +31,8 @@ BookViewModel::BookViewModel(Ref<UserProfile> userProfile,
       std::bind_front(&BookViewModel::OnBookQuoteInterruption, this)),
     InterruptionPolicy::BREAK_QUERY);
   m_userProfile->GetBlotterSettings().GetConsolidatedBlotter(
-    m_userProfile->GetClients().get_service_locator_client().GetAccount()).
-      GetTasksModel().GetOrderExecutionPublisher().Monitor(
+    m_userProfile->GetClients().get_service_locator_client().get_account()).
+      GetTasksModel().GetOrderExecutionPublisher().monitor(
         m_eventHandler.get_slot<std::shared_ptr<Order>>(
           std::bind_front(&BookViewModel::OnOrderExecuted, this)));
 }
@@ -43,7 +42,7 @@ void BookViewModel::SetProperties(const BookViewProperties& properties) {
   for(auto& orderQuantity : m_orderQuantities) {
     auto bookQuote = BookQuote("@" + orderQuantity.first.m_destination, false,
       Venue(), Quote(orderQuantity.first.m_price, 0, m_side),
-      m_userProfile->GetClients().get_time_client().GetTime());
+      m_userProfile->GetClients().get_time_client().get_time());
     OnBookQuote(bookQuote);
   }
   if(m_properties.GetOrderHighlight() != BookViewProperties::HIDE_ORDERS) {
@@ -51,7 +50,7 @@ void BookViewModel::SetProperties(const BookViewProperties& properties) {
       auto bookQuote = BookQuote("@" + orderQuantity.first.m_destination,
         false, Venue(),
         Quote(orderQuantity.first.m_price, orderQuantity.second, m_side),
-        m_userProfile->GetClients().get_time_client().GetTime());
+        m_userProfile->GetClients().get_time_client().get_time());
       OnBookQuote(bookQuote);
     }
   }
@@ -111,7 +110,7 @@ QVariant BookViewModel::data(const QModelIndex& index, int role) const {
     if(index.column() == PRICE_COLUMN) {
       return QVariant::fromValue(entry.m_quote.m_quote.m_price);
     } else if(index.column() == SIZE_COLUMN) {
-      return QVariant::fromValue(floor(entry.m_quote.m_quote.m_size / 100, 0));
+      return QVariant::fromValue(floor(entry.m_quote.m_quote.m_size / 100));
     } else if(index.column() == MPID_COLUMN) {
       return QString::fromStdString(entry.m_quote.m_mpid);
     }
@@ -334,7 +333,7 @@ void BookViewModel::OnOrderExecuted(const std::shared_ptr<Order>& order) {
       order->get_info().m_fields.m_type != OrderType::LIMIT) {
     return;
   }
-  order->get_publisher().Monitor(m_eventHandler.get_slot<ExecutionReport>(
+  order->get_publisher().monitor(m_eventHandler.get_slot<ExecutionReport>(
     std::bind_front(&BookViewModel::OnExecutionReport, this, order)));
 }
 

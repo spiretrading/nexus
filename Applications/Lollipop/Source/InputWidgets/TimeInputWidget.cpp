@@ -1,5 +1,5 @@
 #include "Spire/InputWidgets/TimeInputWidget.hpp"
-#include <Beam/TimeService/ToLocalTime.hpp>
+#include <Beam/TimeService/to_local_time.hpp>
 #include <QApplication>
 #include <QKeyEvent>
 #include <QLineEdit>
@@ -30,13 +30,13 @@ TimeInputWidget::TimeInputWidget(QWidget* parent, Qt::WindowFlags flags)
 TimeInputWidget::TimeInputWidget(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : TimeInputWidget{parent, flags} {
-  Initialize(Ref(userProfile));
+  init(Ref(userProfile));
 }
 
 TimeInputWidget::~TimeInputWidget() {}
 
 void TimeInputWidget::Initialize(Ref<UserProfile> userProfile) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
 }
 
 const time_duration& TimeInputWidget::GetTime() const {
@@ -46,7 +46,7 @@ const time_duration& TimeInputWidget::GetTime() const {
 void TimeInputWidget::SetTime(time_duration time) {
   m_time = std::move(time);
   QTime timeDisplay{0, 0, 0, 0};
-  auto localTime = ToLocalTime(m_time);
+  auto localTime = to_local_time(m_time);
   timeDisplay = timeDisplay.addMSecs(
     static_cast<int>(localTime.total_milliseconds()));
   m_lineEdit->setText(timeDisplay.toString("hh:mm:ss.zzz"));

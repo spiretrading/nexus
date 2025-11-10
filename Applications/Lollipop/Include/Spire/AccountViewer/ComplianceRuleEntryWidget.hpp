@@ -54,7 +54,7 @@ namespace Spire {
       Nexus::ComplianceRuleEntry m_entry;
       Nexus::ComplianceRuleEntry m_flattenedEntry;
       std::shared_ptr<ComplianceModel> m_model;
-      Beam::SignalHandling::ConnectionGroup m_connections;
+      Beam::ConnectionGroup m_connections;
 
       void SetupParameters();
       void OnTableExpanded();

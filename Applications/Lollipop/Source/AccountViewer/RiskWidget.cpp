@@ -27,13 +27,13 @@ RiskWidget::~RiskWidget() {}
 void RiskWidget::Initialize(Ref<UserProfile> userProfile,
     bool isReadOnly) {
   m_isReadOnly = isReadOnly;
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_ui->m_currencyInput->clear();
   if(!m_isReadOnly) {
     auto currencies = m_userProfile->GetCurrencyDatabase().get_entries();
     for(auto& currency : currencies) {
       m_ui->m_currencyInput->addItem(QString::fromStdString(
-        currency.m_code.GetData()));
+        currency.m_code.get_data()));
     }
   }
   m_ui->m_buyingPowerInput->setReadOnly(isReadOnly);
@@ -56,7 +56,7 @@ void RiskWidget::SetModel(const std::shared_ptr<RiskModel>& model) {
   if(m_isReadOnly) {
     m_ui->m_currencyInput->clear();
     m_ui->m_currencyInput->addItem(QString::fromStdString(
-      currency.m_code.GetData()));
+      currency.m_code.get_data()));
   } else {
     for(int i = 0; i < m_ui->m_currencyInput->count(); ++i) {
       if(m_ui->m_currencyInput->itemText(i).toStdString() == currency.m_code) {
@@ -69,12 +69,12 @@ void RiskWidget::SetModel(const std::shared_ptr<RiskModel>& model) {
   m_ui->m_buyingPowerInput->setValue(
     static_cast<double>(m_model->GetRiskParameters().m_buying_power));
   m_ui->m_buyingPowerInput->setSuffix(QString::fromStdString(
-    string{" "} + currency.m_code.GetData()));
+    string{" "} + currency.m_code.get_data()));
   m_ui->m_netLossInput->setPrefix(QString::fromStdString(currency.m_sign));
   m_ui->m_netLossInput->setValue(
     static_cast<double>(m_model->GetRiskParameters().m_net_loss));
   m_ui->m_netLossInput->setSuffix(QString::fromStdString(
-    string{" "} + currency.m_code.GetData()));
+    string{" "} + currency.m_code.get_data()));
   QTime timeDisplay(0, 0, 0, 0);
   timeDisplay = timeDisplay.addMSecs(static_cast<int>(
     m_model->GetRiskParameters().m_transition_time.total_milliseconds()));
@@ -105,8 +105,8 @@ void RiskWidget::OnCurrencyIndexChanged(int index) {
   auto currency = m_userProfile->GetCurrencyDatabase().get_entries()[index];
   m_ui->m_buyingPowerInput->setPrefix(QString::fromStdString(currency.m_sign));
   m_ui->m_buyingPowerInput->setSuffix(QString::fromStdString(
-    string{" "} + currency.m_code.GetData()));
+    string{" "} + currency.m_code.get_data()));
   m_ui->m_netLossInput->setPrefix(QString::fromStdString(currency.m_sign));
   m_ui->m_netLossInput->setSuffix(QString::fromStdString(
-    string{" "} + currency.m_code.GetData()));
+    string{" "} + currency.m_code.get_data()));
 }

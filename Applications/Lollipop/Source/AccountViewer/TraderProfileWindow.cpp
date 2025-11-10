@@ -9,14 +9,13 @@
 #include "ui_TraderProfileWindow.h"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace Spire;
 
 TraderProfileWindow::TraderProfileWindow(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QFrame{parent, flags},
       m_ui{std::make_unique<Ui_TraderProfileWindow>()},
-      m_userProfile{userProfile.Get()} {
+      m_userProfile{userProfile.get()} {
   m_ui->setupUi(this);
 }
 

@@ -23,9 +23,8 @@ namespace Spire {
       const std::vector<Signature>& GetSignatures() const override;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
-      PreviousNode(Beam::Serialization::ReceiveBuilder);
       template<typename Shuttler>
       void Shuttle(Shuttler& shuttle, unsigned int version);
   };

@@ -10,7 +10,7 @@ using namespace Spire;
 using namespace Spire::UI;
 
 RegionQueryModel::RegionQueryModel(Ref<UserProfile> userProfile)
-    : m_userProfile(userProfile.Get()) {
+    : m_userProfile(userProfile.get()) {
   auto items = std::vector<Item>();
   items.push_back(Region::GLOBAL);
   for(auto& country : m_userProfile->GetCountryDatabase().get_entries()) {

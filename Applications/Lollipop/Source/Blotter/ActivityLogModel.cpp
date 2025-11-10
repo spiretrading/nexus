@@ -28,8 +28,8 @@ void ActivityLogModel::SetOrderExecutionPublisher(Ref<
     m_entries.clear();
     endRemoveRows();
   }
-  m_orderExecutionPublisher = orderExecutionPublisher.Get();
-  m_orderExecutionPublisher->Monitor(
+  m_orderExecutionPublisher = orderExecutionPublisher.get();
+  m_orderExecutionPublisher->monitor(
     m_eventHandler->get_slot<std::shared_ptr<Order>>(
       std::bind_front(&ActivityLogModel::OnOrderExecuted, this)));
 }
@@ -136,6 +136,6 @@ void ActivityLogModel::OnExecutionReport(
 }
 
 void ActivityLogModel::OnOrderExecuted(const std::shared_ptr<Order>& order) {
-  order->get_publisher().Monitor(m_eventHandler->get_slot<ExecutionReport>(
+  order->get_publisher().monitor(m_eventHandler->get_slot<ExecutionReport>(
     std::bind_front(&ActivityLogModel::OnExecutionReport, this, order)));
 }

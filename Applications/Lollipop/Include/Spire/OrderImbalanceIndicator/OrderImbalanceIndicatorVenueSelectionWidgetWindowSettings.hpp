@@ -28,16 +28,16 @@ namespace Spire {
         Beam::Out<QWidget> widget) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
       OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings();
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings::Shuttle(
-    Shuttler& shuttle, unsigned int version) {}
+  template<Beam::IsShuttle S>
+  void OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings::shuttle(
+    S& shuttle, unsigned int version) {}
 }
 
 #endif

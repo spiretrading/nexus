@@ -34,19 +34,19 @@ namespace Spire {
         Beam::Out<QWidget> widget) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::vector<DashboardWidget::SortOrder> m_sortOrder;
       DashboardRendererSettings m_rendererSettings;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void DashboardWidgetWindowSettings::Shuttle(Shuttler& shuttle,
+  template<Beam::IsShuttle S>
+  void DashboardWidgetWindowSettings::shuttle(S& shuttle,
       unsigned int version) {
-    shuttle.Shuttle("sort_order", m_sortOrder);
-    shuttle.Shuttle("renderer_settings", m_rendererSettings);
+    shuttle.shuttle("sort_order", m_sortOrder);
+    shuttle.shuttle("renderer_settings", m_rendererSettings);
   }
 }
 

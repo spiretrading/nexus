@@ -29,7 +29,7 @@ ComplianceWidget::~ComplianceWidget() {}
 void ComplianceWidget::Initialize(Ref<UserProfile> userProfile,
     bool isReadOnly) {
   m_isReadOnly = isReadOnly;
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   if(m_isReadOnly) {
     m_ui->m_toolbarWidget->hide();
   }

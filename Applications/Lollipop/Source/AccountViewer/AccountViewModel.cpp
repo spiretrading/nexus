@@ -9,14 +9,13 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace Spire;
 using namespace std;
 
 AccountViewModel::AccountViewModel(Ref<UserProfile> userProfile,
     QObject* parent)
     : QAbstractItemModel(parent),
-      m_userProfile(userProfile.Get()) {}
+      m_userProfile(userProfile.get()) {}
 
 AccountViewModel::~AccountViewModel() {}
 
@@ -38,7 +37,7 @@ void AccountViewModel::Load() {
     Add(std::move(servicesRoot));
     auto administrators = administrationClient.load_administrators();
     std::sort(administrators.begin(), administrators.end(),
-      &DirectoryEntry::NameComparator);
+      &DirectoryEntry::name_comparator);
     for(auto& administrator : administrators) {
       auto administratorItem = std::make_unique<AdministratorItem>(
         administrator);
@@ -46,7 +45,7 @@ void AccountViewModel::Load() {
     }
     auto services = administrationClient.load_services();
     std::sort(services.begin(), services.end(),
-      &DirectoryEntry::NameComparator);
+      &DirectoryEntry::name_comparator);
     for(auto& service : services) {
       auto serviceItem = std::make_unique<ServiceItem>(service);
       Add(std::move(serviceItem), m_servicesRoot);
@@ -56,8 +55,8 @@ void AccountViewModel::Load() {
   m_tradingGroupsRoot = tradingGroupsRoot.get();
   Add(std::move(tradingGroupsRoot));
   auto entries = administrationClient.load_managed_trading_groups(
-    serviceLocatorClient.GetAccount());
-  std::sort(entries.begin(), entries.end(), &DirectoryEntry::NameComparator);
+    serviceLocatorClient.get_account());
+  std::sort(entries.begin(), entries.end(), &DirectoryEntry::name_comparator);
   for(auto& entry : entries) {
     auto group = std::make_unique<DirectoryItem>(entry,
       DirectoryItem::DirectoryType::GROUP);

@@ -27,8 +27,8 @@ void OpenPositionsModel::SetPortfolioController(
   }
   m_eventHandler = std::nullopt;
   m_eventHandler.emplace();
-  m_portfolioController = portfolioController.Get();
-  m_portfolioController->get_publisher().Monitor(
+  m_portfolioController = portfolioController.get();
+  m_portfolioController->get_publisher().monitor(
     m_eventHandler->get_slot<PortfolioUpdateEntry>(
       std::bind_front(&OpenPositionsModel::OnPortfolioUpdate, this)));
 }

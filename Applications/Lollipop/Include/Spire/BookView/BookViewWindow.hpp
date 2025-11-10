@@ -77,7 +77,7 @@ namespace Spire {
       CondensedCanvasWidget* m_taskEntryWidget;
       bool m_isTaskEntryWidgetForInteractionsProperties;
       std::shared_ptr<SecurityTechnicalsModel> m_securityTechnicalsModel;
-      Beam::SignalHandling::ConnectionGroup m_securityTechnicalsConnections;
+      Beam::ConnectionGroup m_securityTechnicalsConnections;
       std::unordered_map<Nexus::Security, std::vector<std::shared_ptr<Task>>>
         m_tasksExecuted;
       bool m_bidPanelGuard;

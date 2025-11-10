@@ -42,7 +42,7 @@ namespace {
 LinkBlotterAction::LinkBlotterAction(
   Ref<BlotterModel> blotterModel, QObject* parent)
   : QAction(parent),
-    m_blotterModel(blotterModel.Get()) {}
+    m_blotterModel(blotterModel.get()) {}
 
 BlotterModel& LinkBlotterAction::GetBlotterModel() {
   return *m_blotterModel;
@@ -55,13 +55,13 @@ BlotterWindow& BlotterWindow::GetBlotterWindow(
 
 BlotterWindow& BlotterWindow::GetBlotterWindow(Ref<UserProfile> userProfile,
     Ref<BlotterModel> model, QWidget* parent, Qt::WindowFlags flags) {
-  auto windowIterator = blotterWindows.find(model.Get());
+  auto windowIterator = blotterWindows.find(model.get());
   if(windowIterator == blotterWindows.end()) {
     auto window =
-      new BlotterWindow(userProfile.Get(), model.Get(), parent, flags);
+      new BlotterWindow(userProfile.get(), model.get(), parent, flags);
     window->setAttribute(Qt::WA_DeleteOnClose);
     windowIterator =
-      blotterWindows.insert(std::pair(model.Get(), window)).first;
+      blotterWindows.insert(std::pair(model.get(), window)).first;
   }
   return *windowIterator->second;
 }
@@ -248,7 +248,7 @@ bool BlotterWindow::eventFilter(QObject* object, QEvent* event) {
         m_userProfile->GetKeyBindings().GetCancelFromBinding(key);
       if(cancelBinding) {
         KeyBindings::CancelBinding::HandleCancel(
-          *cancelBinding, Store(m_tasksExecuted));
+          *cancelBinding, out(m_tasksExecuted));
         return true;
       }
     }
@@ -269,7 +269,7 @@ void BlotterWindow::OnTaskAdded(const BlotterTasksModel::TaskEntry& entry) {
       editorTimer.reset();
     });
   editorTimer->start(0);
-  entry.m_task->GetPublisher().Monitor(
+  entry.m_task->GetPublisher().monitor(
     m_eventHandler.get_slot<Task::StateEntry>(
       [=, task = entry.m_task] (const Task::StateEntry& update) {
         OnTaskState(task, update);
@@ -277,7 +277,7 @@ void BlotterWindow::OnTaskAdded(const BlotterTasksModel::TaskEntry& entry) {
 }
 
 void BlotterWindow::OnTaskRemoved(const BlotterTasksModel::TaskEntry& entry) {
-  RemoveFirst(m_tasksExecuted, entry.m_task);
+  remove_first(m_tasksExecuted, entry.m_task);
 }
 
 void BlotterWindow::SetActive(bool isActive) {
@@ -320,7 +320,7 @@ void BlotterWindow::OnProfitAndLossUpdate(const PortfolioUpdateEntry& update) {
 void BlotterWindow::OnTaskState(
     const std::shared_ptr<Task>& task, const Task::StateEntry& update) {
   if(IsTerminal(update.m_state)) {
-    RemoveFirst(m_tasksExecuted, task);
+    remove_first(m_tasksExecuted, task);
   }
 }
 

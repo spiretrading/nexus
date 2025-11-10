@@ -114,7 +114,7 @@ connection SecurityTechnicalsModel::ConnectVolumeSignal(
 
 SecurityTechnicalsModel::SecurityTechnicalsModel(
     Ref<UserProfile> userProfile, const Security& security)
-    : m_userProfile(userProfile.Get()),
+    : m_userProfile(userProfile.get()),
       m_volume(0) {
   if(security == Security()) {
     return;

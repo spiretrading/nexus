@@ -1,5 +1,5 @@
 #include "Spire/UI/CustomQtVariants.hpp"
-#include <Beam/TimeService/ToLocalTime.hpp>
+#include <Beam/TimeService/to_local_time.hpp>
 #include <boost/lexical_cast.hpp>
 #include <QDateTime>
 #include "Spire/UI/UserProfile.hpp"
@@ -210,17 +210,17 @@ QString Spire::UI::displayText(Venue venue) {
 CustomVariantItemDelegate::CustomVariantItemDelegate(
     Ref<UserProfile> userProfile, QObject* parent)
     : QStyledItemDelegate(parent),
-      m_userProfile(userProfile.Get()) {}
+      m_userProfile(userProfile.get()) {}
 
 CustomVariantItemDelegate::~CustomVariantItemDelegate() {}
 
 QString CustomVariantItemDelegate::displayText(const QVariant& value,
     const QLocale& locale) const {
   if(value.canConvert<ptime>()) {
-    ptime timeValue = ToLocalTime(value.value<ptime>());
+    ptime timeValue = to_local_time(value.value<ptime>());
     string a = to_simple_string(value.value<ptime>());
     string b = to_simple_string(timeValue);
-    auto currentTime = ToLocalTime(
+    auto currentTime = to_local_time(
       m_userProfile->GetClients().get_time_client().GetTime());
     if(timeValue.date() == currentTime.date()) {
       return QString::fromStdString(to_simple_string(timeValue).substr(12));
@@ -232,7 +232,7 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
   } else if(value.canConvert<CurrencyId>()) {
     const CurrencyDatabase::Entry& entry =
       m_userProfile->GetCurrencyDatabase().from(value.value<CurrencyId>());
-    return QString::fromStdString(entry.m_code.GetData());
+    return QString::fromStdString(entry.m_code.get_data());
   } else if(value.canConvert<Money>()) {
     return QString::fromStdString(lexical_cast<string>(value.value<Money>()));
   } else if(value.canConvert<Quantity>()) {
@@ -268,7 +268,7 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
 CustomVariantSortFilterProxyModel::CustomVariantSortFilterProxyModel(
     Ref<UserProfile> userProfile, QObject* parent)
     : QSortFilterProxyModel(parent),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   setDynamicSortFilter(true);
 }
 

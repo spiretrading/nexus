@@ -44,7 +44,7 @@ namespace {
     ComplianceWidgetVisitor(bool isReadOnly, Ref<UserProfile> userProfile,
         QWidget* parent, Qt::WindowFlags flags)
         : m_isReadOnly{isReadOnly},
-          m_userProfile{userProfile.Get()},
+          m_userProfile{userProfile.get()},
           m_parent{parent},
           m_flags(flags) {}
 

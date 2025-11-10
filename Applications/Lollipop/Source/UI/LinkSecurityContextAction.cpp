@@ -41,9 +41,9 @@ vector<unique_ptr<LinkSecurityContextAction>>
 
 LinkSecurityContextAction::LinkSecurityContextAction(
     Ref<SecurityContext> securityContext, QObject* parent)
-    : QAction(dynamic_cast<QWidget*>(securityContext.Get())->windowTitle(),
+    : QAction(dynamic_cast<QWidget*>(securityContext.get())->windowTitle(),
         parent),
-      m_securityContext(securityContext.Get()) {}
+      m_securityContext(securityContext.get()) {}
 
 LinkSecurityContextAction::~LinkSecurityContextAction() {}
 

@@ -20,7 +20,7 @@ namespace {
       OrderLogFilterProxyModel(Ref<UserProfile> userProfile,
           Ref<OrderLogModel> sourceModel)
           : CustomVariantSortFilterProxyModel(Ref(userProfile)),
-            m_sourceModel(sourceModel.Get()) {
+            m_sourceModel(sourceModel.get()) {
         setSourceModel(m_sourceModel);
       }
 
@@ -41,7 +41,7 @@ namespace {
             !is_terminal(entry.m_status) ||
               properties.m_orderStatusFilterType ==
             OrderLogProperties::OrderStatusFilterType::CUSTOM &&
-            !properties.m_orderStatusFilter.Test(entry.m_status)) {
+            !properties.m_orderStatusFilter.test(entry.m_status)) {
           return false;
         }
         return CustomVariantSortFilterProxyModel::filterAcceptsRow(
@@ -79,10 +79,10 @@ void OrderLogWidget::SetUIState(const UIState& state) {
 
 void OrderLogWidget::SetModel(
     Ref<UserProfile> userProfile, Ref<BlotterModel> model) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_orderEntries.clear();
   m_ui->m_orderLogTable->reset();
-  m_model = model.Get();
+  m_model = model.get();
   m_proxyModel = std::make_unique<OrderLogFilterProxyModel>(
     Ref(userProfile), Ref(m_model->GetOrderLogModel()));
   m_ui->m_orderLogTable->setModel(m_proxyModel.get());
@@ -122,7 +122,7 @@ bool OrderLogWidget::eventFilter(QObject* object, QEvent* event) {
       if(cancelBinding) {
         KeyBindings::CancelBinding::HandleCancel(*cancelBinding,
           m_userProfile->GetClients().get_order_execution_client(),
-          Store(m_orderEntries));
+          out(m_orderEntries));
         return true;
       }
     }
@@ -132,7 +132,7 @@ bool OrderLogWidget::eventFilter(QObject* object, QEvent* event) {
 
 void OrderLogWidget::OnOrderAdded(const OrderLogModel::OrderEntry& entry) {
   m_orderEntries.push_back(entry);
-  entry.m_order->get_publisher().Monitor(
+  entry.m_order->get_publisher().monitor(
     m_eventHandler.get_slot<ExecutionReport>(
       std::bind_front(
         &OrderLogWidget::OnExecutionReport, this, entry.m_order)));

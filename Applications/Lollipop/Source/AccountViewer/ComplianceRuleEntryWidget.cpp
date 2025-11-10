@@ -7,7 +7,6 @@
 #include "ui_ComplianceRuleEntryWidget.h"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
@@ -117,7 +116,7 @@ ComplianceRuleEntryWidget::ComplianceRuleEntryWidget(
     QWidget* parent, Qt::WindowFlags flags)
     : QWidget(parent, flags),
       m_ui(std::make_unique<Ui_ComplianceRuleEntryWidget>()),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_hasModifications(false),
       m_isReadOnly(isReadOnly),
       m_idUpdated(false),
@@ -164,12 +163,12 @@ ComplianceRuleEntryWidget::ComplianceRuleEntryWidget(
   }
   m_ui->m_stateComboBox->setEnabled(!m_isReadOnly);
   m_ui->m_ruleLabel->setCheckable(!m_isReadOnly);
-  m_connections.AddConnection(
+  m_connections.add(
     m_model->ConnectComplianceRuleEntryIdUpdatedSignal(
       std::bind_front(&ComplianceRuleEntryWidget::OnEntryIdChanged, this)));
-  m_connections.AddConnection(m_ui->m_expandButton->ConnectExpandedSignal(
+  m_connections.add(m_ui->m_expandButton->ConnectExpandedSignal(
     std::bind_front(&ComplianceRuleEntryWidget::OnTableExpanded, this)));
-  m_connections.AddConnection(m_ui->m_expandButton->ConnectCollapsedSignal(
+  m_connections.add(m_ui->m_expandButton->ConnectCollapsedSignal(
     std::bind_front(&ComplianceRuleEntryWidget::OnTableCollapsed, this)));
   SetupParameters();
 }

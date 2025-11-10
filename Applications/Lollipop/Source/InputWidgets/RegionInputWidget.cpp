@@ -19,7 +19,7 @@ RegionInputWidget::RegionInputWidget(
 
 RegionInputWidget::RegionInputWidget(
     Region region, Ref<UserProfile> userProfile, QWidget* parent)
-    : m_userProfile(userProfile.Get()),
+    : m_userProfile(userProfile.get()),
       m_isReadOnly(false) {
   auto layout = new QVBoxLayout(this);
   layout->setContentsMargins(0, 0, 0, 0);

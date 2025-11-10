@@ -12,7 +12,7 @@ namespace {
 }
 
 ValueCell::ValueCell(Ref<const CanvasNode> node)
-    : m_node(node.Get()) {
+    : m_node(node.get()) {
   setFlags((flags() | Qt::ItemIsDragEnabled) & ~Qt::ItemIsDropEnabled);
 }
 

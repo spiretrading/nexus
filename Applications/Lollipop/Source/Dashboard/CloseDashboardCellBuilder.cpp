@@ -18,7 +18,7 @@ std::unique_ptr<DashboardCell> CloseDashboardCellBuilder::Make(
   auto& security = boost::get<Security>(index);
   auto queue = std::make_shared<Queue<DashboardCell::Value>>();
   auto cell = std::make_unique<QueueDashboardCell>(queue);
-  auto selfUserProfile = userProfile.Get();
+  auto selfUserProfile = userProfile.get();
   Spawn(
     [=] {
       auto& serviceClients = selfUserProfile->GetClients();
@@ -27,7 +27,7 @@ std::unique_ptr<DashboardCell> CloseDashboardCellBuilder::Make(
         selfUserProfile->GetVenueDatabase(),
         selfUserProfile->GetTimeZoneDatabase());
       if(close.is_initialized()) {
-        queue->Push(close->m_price);
+        queue->push(close->m_price);
       }
       queue->Break();
     });

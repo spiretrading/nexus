@@ -10,7 +10,7 @@ using namespace std;
 
 SetNodeReadOnlyCommand::SetNodeReadOnlyCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& node, bool readOnly)
-    : m_view(view.Get()),
+    : m_view(view.get()),
       m_node(node),
       m_readOnly(readOnly) {}
 

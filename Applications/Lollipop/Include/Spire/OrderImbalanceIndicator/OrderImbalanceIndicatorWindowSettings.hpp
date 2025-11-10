@@ -38,7 +38,7 @@ namespace Spire {
         Beam::Out<QWidget> widget) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       OrderImbalanceIndicatorProperties m_properties;
       QByteArray m_geometry;
       QByteArray m_tableHeaderGeometry;
@@ -46,19 +46,19 @@ namespace Spire {
       std::shared_ptr<UI::WindowSettings> m_timeRangeSettings;
       std::shared_ptr<UI::WindowSettings> m_venuesSettings;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void OrderImbalanceIndicatorWindowSettings::Shuttle(Shuttler& shuttle,
+  template<Beam::IsShuttle S>
+  void OrderImbalanceIndicatorWindowSettings::shuttle(S& shuttle,
       unsigned int version) {
-    shuttle.Shuttle("properties", m_properties);
-    shuttle.Shuttle("geometry", m_geometry);
-    shuttle.Shuttle("table_header_geometry", m_tableHeaderGeometry);
-    shuttle.Shuttle("table_header_state", m_tableHeaderState);
-    shuttle.Shuttle("time_range_settings", m_timeRangeSettings);
-    shuttle.Shuttle("venues_settings", m_venuesSettings);
+    shuttle.shuttle("properties", m_properties);
+    shuttle.shuttle("geometry", m_geometry);
+    shuttle.shuttle("table_header_geometry", m_tableHeaderGeometry);
+    shuttle.shuttle("table_header_state", m_tableHeaderState);
+    shuttle.shuttle("time_range_settings", m_timeRangeSettings);
+    shuttle.shuttle("venues_settings", m_venuesSettings);
   }
 }
 

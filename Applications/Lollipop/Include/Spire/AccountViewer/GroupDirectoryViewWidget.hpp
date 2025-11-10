@@ -36,7 +36,7 @@ namespace Spire {
         \param complianceModel The ComplianceModel to display.
       */
       void Initialize(Beam::Ref<UserProfile> userProfile, bool isReadOnly,
-        const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
+        const Beam::DirectoryEntry& directoryEntry,
         std::shared_ptr<ComplianceModel> complianceModel);
 
       //! Removes the tab displaying the profit and loss.

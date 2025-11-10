@@ -28,11 +28,11 @@ SecurityInputWidget::SecurityInputWidget(QWidget* parent, Qt::WindowFlags flags)
 SecurityInputWidget::SecurityInputWidget(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : SecurityInputWidget{parent, flags} {
-  Initialize(Ref(userProfile));
+  init(Ref(userProfile));
 }
 
 void SecurityInputWidget::Initialize(Ref<UserProfile> userProfile) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
 }
 
 const Security& SecurityInputWidget::GetSecurity() const {

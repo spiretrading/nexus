@@ -23,13 +23,13 @@ using namespace std;
 OrderWrapperTaskNode::OrderWrapperTaskNode(const std::shared_ptr<Order>& order,
     const UserProfile& userProfile)
     : m_order(order) {
-  Initialize("Single Order", userProfile);
+  init("Single Order", userProfile);
 }
 
 OrderWrapperTaskNode::OrderWrapperTaskNode(const std::shared_ptr<Order>& order,
     const UserProfile& userProfile, string text)
     : m_order(order) {
-  Initialize(std::move(text), userProfile);
+  init(std::move(text), userProfile);
 }
 
 const std::shared_ptr<Order>& OrderWrapperTaskNode::GetOrder() const {
@@ -75,7 +75,7 @@ void OrderWrapperTaskNode::Initialize(string text,
   AddChild(SingleOrderTaskNode::CURRENCY_PROPERTY,
     make_unique<CurrencyNode>(m_order->get_info().m_fields.m_currency,
     userProfile.GetCurrencyDatabase().from(
-    m_order->get_info().m_fields.m_currency).m_code.GetData()));
+    m_order->get_info().m_fields.m_currency).m_code.get_data()));
   AddChild(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
     make_unique<TimeInForceNode>(m_order->get_info().m_fields.m_time_in_force));
 }

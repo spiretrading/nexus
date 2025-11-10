@@ -45,7 +45,7 @@ RegionItemInputDialog::RegionItemInputDialog(
     const std::string& text, Ref<UserProfile> userProfile, QWidget* parent)
     : QDialog(parent),
       m_ui(std::make_unique<Ui_SecurityInputDialog>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
   setWindowTitle("Region");
   m_ui->m_label->setText(tr("Region"));

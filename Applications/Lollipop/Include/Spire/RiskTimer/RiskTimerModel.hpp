@@ -44,13 +44,13 @@ namespace Spire {
     private:
       UserProfile* m_userProfile;
       boost::posix_time::time_duration m_timeRemaining;
-      Beam::Threading::LiveTimer m_timeRemainingTimer;
+      Beam::LiveTimer m_timeRemainingTimer;
       boost::signals2::scoped_connection m_timeRemainingConnection;
       boost::posix_time::ptime m_lastTimeCheck;
       mutable TimeRemainingSignal m_timeRemainingSignal;
       EventHandler m_eventHandler;
 
-      void OnTimeRemainingExpired(const Beam::Threading::Timer::Result& result);
+      void OnTimeRemainingExpired(const Beam::Timer::Result& result);
   };
 }
 

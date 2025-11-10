@@ -134,7 +134,7 @@ CanvasWindow::CanvasWindow(Ref<UserProfile> userProfile, QWidget* parent,
     Qt::WindowFlags flags)
     : QFrame(parent, flags),
       m_ui(make_unique<Ui_CanvasWindow>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   m_state = READY;
   m_ui->setupUi(this);
   m_ui->m_canvasTable->SetUserProfile(Ref(*m_userProfile));

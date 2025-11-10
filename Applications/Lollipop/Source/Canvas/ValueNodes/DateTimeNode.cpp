@@ -1,5 +1,5 @@
 #include "Spire/Canvas/ValueNodes/DateTimeNode.hpp"
-#include <Beam/TimeService/ToLocalTime.hpp>
+#include <Beam/TimeService/to_local_time.hpp>
 #include <boost/date_time/posix_time/time_formatters.hpp>
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 
@@ -16,7 +16,7 @@ namespace {
     if(value.is_special() || value.is_not_a_date_time()) {
       return to_simple_string(value);
     } else {
-      return to_simple_string(ToLocalTime(value));
+      return to_simple_string(to_local_time(value));
     }
   }
 }

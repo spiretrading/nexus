@@ -9,9 +9,6 @@
 #include "ui_GroupProfitAndLossReportWidget.h"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::ServiceLocator;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -24,7 +21,7 @@ GroupProfitAndLossReportWidget::ReportModel::ReportModel(
     ScopedQueueReader<std::shared_ptr<Order>> orders)
     : m_profitAndLossModel(Ref(userProfile->GetCurrencyDatabase()),
         Ref(userProfile->GetExchangeRates()), false),
-      m_portfolioController(Beam::Initialize(userProfile->GetVenueDatabase()),
+      m_portfolioController(Beam::init(userProfile->GetVenueDatabase()),
         &userProfile->GetClients().get_market_data_client(),
         std::move(orders)) {
   m_profitAndLossModel.SetPortfolioController(Ref(m_portfolioController));
@@ -44,12 +41,12 @@ GroupProfitAndLossReportWidget::~GroupProfitAndLossReportWidget() {}
 
 void GroupProfitAndLossReportWidget::Initialize(
     Ref<UserProfile> userProfile, const DirectoryEntry& group) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_group = group;
-  m_ui->m_fromPeriodDateEdit->setDate(ToQDateTime(ToLocalTime(
-    m_userProfile->GetClients().get_time_client().GetTime())).date());
-  m_ui->m_toPeriodDateEdit->setDate(ToQDateTime(ToLocalTime(
-    m_userProfile->GetClients().get_time_client().GetTime())).date());
+  m_ui->m_fromPeriodDateEdit->setDate(ToQDateTime(to_local_time(
+    m_userProfile->GetClients().get_time_client().get_time())).date());
+  m_ui->m_toPeriodDateEdit->setDate(ToQDateTime(to_local_time(
+    m_userProfile->GetClients().get_time_client().get_time())).date());
 }
 
 void GroupProfitAndLossReportWidget::OnUpdate(bool checked) {
@@ -60,14 +57,13 @@ void GroupProfitAndLossReportWidget::OnUpdate(bool checked) {
   }
   repaint();
   m_groupModels.clear();
-  auto startTime = ToUtcTime(
+  auto startTime = to_utc_time(
     ToPosixTime(m_ui->m_fromPeriodDateEdit->dateTime()));
-  auto endTime = ToUtcTime(ToPosixTime(m_ui->m_toPeriodDateEdit->dateTime()));
-  auto traderDirectory =
-    m_userProfile->GetClients().get_service_locator_client().LoadDirectoryEntry(
-      m_group, "traders");
+  auto endTime = to_utc_time(ToPosixTime(m_ui->m_toPeriodDateEdit->dateTime()));
+  auto traderDirectory = m_userProfile->GetClients().
+    get_service_locator_client().load_directory_entry(m_group, "traders");
   auto traders = m_userProfile->GetClients().get_service_locator_client().
-    LoadChildren(traderDirectory);
+    load_children(traderDirectory);
   sort(traders.begin(), traders.end(),
     [] (const DirectoryEntry& lhs, const DirectoryEntry& rhs) {
       return lhs.m_name < rhs.m_name;
@@ -85,7 +81,7 @@ void GroupProfitAndLossReportWidget::OnUpdate(bool checked) {
     query_daily_order_submissions(trader, startTime, endTime,
       m_userProfile->GetVenueDatabase(), m_userProfile->GetTimeZoneDatabase(),
       m_userProfile->GetClients().get_order_execution_client(),
-      orderQueues->GetWriter());
+      orderQueues->get_writer());
   }
   m_totalsModel = std::nullopt;
   m_totalsModel.emplace(Ref(*m_userProfile), std::move(orderQueues));

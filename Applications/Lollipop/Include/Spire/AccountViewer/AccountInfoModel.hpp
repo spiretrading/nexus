@@ -21,7 +21,7 @@ namespace Spire {
                model.
       */
       AccountInfoModel(Beam::Ref<UserProfile> userProfile,
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::DirectoryEntry& account);
 
       //! Loads the account's info.
       void Load();
@@ -30,7 +30,7 @@ namespace Spire {
       void Commit();
 
       //! Returns the represented account's entry.
-      const Beam::ServiceLocator::DirectoryEntry& GetAccount() const;
+      const Beam::DirectoryEntry& GetAccount() const;
 
       //! Returns the account's identity.
       const Nexus::AccountIdentity& GetIdentity() const;
@@ -40,7 +40,7 @@ namespace Spire {
 
     private:
       UserProfile* m_userProfile;
-      Beam::ServiceLocator::DirectoryEntry m_account;
+      Beam::DirectoryEntry m_account;
       Nexus::AccountIdentity m_identity;
   };
 }

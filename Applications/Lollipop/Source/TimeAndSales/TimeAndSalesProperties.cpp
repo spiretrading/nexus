@@ -68,7 +68,7 @@ void TimeAndSalesProperties::Load(Out<UserProfile> userProfile) {
   TimeAndSalesProperties properties;
   try {
     BasicIStreamReader<ifstream> reader(
-      Initialize(timeAndSalesFilePath, ios::binary));
+      init(timeAndSalesFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
@@ -95,7 +95,7 @@ void TimeAndSalesProperties::Save(const UserProfile& userProfile) {
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetDefaultTimeAndSalesProperties());
     BasicOStreamWriter<ofstream> writer(
-      Initialize(timeAndSalesFilePath, ios::binary));
+      init(timeAndSalesFilePath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),

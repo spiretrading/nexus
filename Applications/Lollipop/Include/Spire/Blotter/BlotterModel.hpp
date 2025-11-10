@@ -30,7 +30,7 @@ namespace Spire {
        * @param orderLogProperties The Order log's display properties.
        */
       BlotterModel(const std::string& name,
-        const Beam::ServiceLocator::DirectoryEntry& executingAccount,
+        const Beam::DirectoryEntry& executingAccount,
         bool isConsolidated, Beam::Ref<UserProfile> userProfile,
         const BlotterTaskProperties& taskProperties,
         const OrderLogProperties& orderLogProperties);
@@ -41,7 +41,7 @@ namespace Spire {
       const std::string& GetName() const;
 
       /** Returns the account used to execute new Orders. */
-      const Beam::ServiceLocator::DirectoryEntry& GetExecutingAccount() const;
+      const Beam::DirectoryEntry& GetExecutingAccount() const;
 
       /**
        * Returns <code>true</code> iff this is the executing account's
@@ -104,7 +104,7 @@ namespace Spire {
 
     private:
       std::string m_name;
-      Beam::ServiceLocator::DirectoryEntry m_executingAccount;
+      Beam::DirectoryEntry m_executingAccount;
       bool m_isConsolidated;
       UserProfile* m_userProfile;
       bool m_isPersistent;

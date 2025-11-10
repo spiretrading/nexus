@@ -26,7 +26,7 @@ OrderImbalanceIndicatorWindow::OrderImbalanceIndicatorWindow(
     Qt::WindowFlags flags)
     : QFrame(parent, flags),
       m_ui(std::make_unique<Ui_OrderImbalanceIndicatorWindow>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
   m_ui->m_orderImbalanceIndicatorTableView->setItemDelegate(
     new CustomVariantItemDelegate(Ref(*m_userProfile)));

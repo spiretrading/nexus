@@ -11,8 +11,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
@@ -43,14 +41,14 @@ void BookViewProperties::Load(Out<UserProfile> userProfile) {
   auto properties = BookViewProperties();
   try {
     auto reader = BasicIStreamReader<std::ifstream>(
-      Initialize(bookFilePath, std::ios::binary));
+      init(bookFilePath, std::ios::binary));
     auto buffer = SharedBuffer();
-    reader.Read(Store(buffer));
+    reader.read(out(buffer));
     auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-    receiver.SetSource(Ref(buffer));
-    receiver.Shuttle(properties);
+    receiver.set(Ref(buffer));
+    receiver.shuttle(properties);
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to load book view properties, using defaults."));
@@ -63,14 +61,14 @@ void BookViewProperties::Save(const UserProfile& userProfile) {
   auto bookFilePath = userProfile.GetProfilePath() / "book_view.dat";
   try {
     auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
     auto buffer = SharedBuffer();
-    sender.SetSink(Ref(buffer));
-    sender.Shuttle(userProfile.GetDefaultBookViewProperties());
+    sender.set(Ref(buffer));
+    sender.shuttle(userProfile.GetDefaultBookViewProperties());
     auto writer = BasicOStreamWriter<std::ofstream>(
-      Initialize(bookFilePath, std::ios::binary));
-    writer.Write(buffer);
+      init(bookFilePath, std::ios::binary));
+    writer.write(buffer);
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to save book view properties."));

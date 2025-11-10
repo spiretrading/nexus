@@ -50,7 +50,7 @@ namespace Spire {
     auto state = m_producer.commit(sequence);
     if(Aspen::has_evaluation(state)) {
       try {
-        m_queue->Push(m_producer.eval());
+        m_queue->push(m_producer.eval());
       } catch(...) {
       }
     }

@@ -13,7 +13,7 @@ using namespace std;
 
 DeleteNodeCommand::DeleteNodeCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& coordinate)
-    : m_view(view.Get()),
+    : m_view(view.get()),
       m_coordinate(coordinate) {}
 
 void DeleteNodeCommand::undo() {

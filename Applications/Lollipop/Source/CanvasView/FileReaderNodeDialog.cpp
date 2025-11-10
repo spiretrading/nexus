@@ -23,14 +23,14 @@ namespace {
 FileReaderNodeDialog::FileReaderNodeDialog(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : m_ui(std::make_unique<Ui_FileReaderNodeDialog>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   Setup(FileReaderNode());
 }
 
 FileReaderNodeDialog::FileReaderNodeDialog(const FileReaderNode& node,
     Ref<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
     : m_ui(std::make_unique<Ui_FileReaderNodeDialog>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   Setup(node);
 }
 

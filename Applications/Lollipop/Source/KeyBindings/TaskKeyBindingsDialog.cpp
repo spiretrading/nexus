@@ -24,7 +24,7 @@ TaskKeyBindingsDialog::TaskKeyBindingsDialog(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_TaskKeyBindingsDialog>()),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_keyBindings(m_userProfile->GetKeyBindings()) {
   m_ui->setupUi(this);
   auto keyComboBoxView = new QTableView(m_ui->m_keyComboBox);

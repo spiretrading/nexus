@@ -17,7 +17,7 @@ std::unique_ptr<DashboardCell> BboSizeDashboardCellBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
   auto& security = boost::get<Security>(index);
   auto& marketDataClient =
-    userProfile.Get()->GetClients().get_market_data_client();
+    userProfile.get()->GetClients().get_market_data_client();
   auto baseQueue = std::make_shared<Queue<BboQuote>>();
   auto side = m_side;
   std::shared_ptr<QueueReader<Quantity>> queue =

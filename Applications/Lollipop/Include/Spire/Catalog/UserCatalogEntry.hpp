@@ -73,7 +73,7 @@ namespace Spire {
       bool IsReadOnly() const override;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::string m_name;
       std::unique_ptr<CanvasNode> m_node;
       std::string m_iconPath;
@@ -93,7 +93,7 @@ namespace Spire {
     shuttle.Shuttle("description", m_description);
     shuttle.Shuttle("icon_path", m_iconPath);
     shuttle.Shuttle("node", m_node);
-    if(Beam::Serialization::IsReceiver<Shuttler>::value) {
+    if(Beam::IsReceiver<Shuttler>::value) {
       m_icon = QIcon(QString::fromStdString(m_iconPath));
       Validate();
     }

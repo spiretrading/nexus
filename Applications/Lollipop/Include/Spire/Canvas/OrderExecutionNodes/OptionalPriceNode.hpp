@@ -54,19 +54,19 @@ namespace Spire {
       virtual std::unique_ptr<CanvasNode> Reset() const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::string m_referent;
       Nexus::Money m_referencePrice;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void OptionalPriceNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    ValueNode<MoneyType>::Shuttle(shuttle, version);
-    shuttle.Shuttle("referent", m_referent);
-    shuttle.Shuttle("reference_price", m_referencePrice);
+  template<Beam::IsShuttle S>
+  void OptionalPriceNode::shuttle(S& shuttle, unsigned int version) {
+    ValueNode<MoneyType>::shuttle(shuttle, version);
+    shuttle.shuttle("referent", m_referent);
+    shuttle.shuttle("reference_price", m_referencePrice);
   }
 }
 

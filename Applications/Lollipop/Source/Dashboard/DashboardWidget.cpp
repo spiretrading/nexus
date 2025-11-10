@@ -99,9 +99,9 @@ DashboardWidget::DashboardWidget(QWidget* parent, Qt::WindowFlags flags)
 
 void DashboardWidget::Initialize(Ref<DashboardModel> model,
     const DashboardRowBuilder& rowBuilder, Ref<UserProfile> userProfile) {
-  m_model = model.Get();
+  m_model = model.get();
   m_rowBuilder = rowBuilder.Clone();
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   auto rowRenderer = [=] (const DashboardRow& row) {
     auto renderer = std::make_unique<DashboardRowRenderer>(Ref(row),
       [=, &row] (const DashboardCell& cell) ->

@@ -45,7 +45,7 @@ void RiskTimerProperties::Load(Out<UserProfile> userProfile) {
   auto properties = RiskTimerProperties();
   try {
     auto reader =
-      BasicIStreamReader<std::ifstream>(Initialize(filePath, std::ios::binary));
+      BasicIStreamReader<std::ifstream>(init(filePath, std::ios::binary));
     auto buffer = SharedBuffer();
     reader.Read(Store(buffer));
     auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
@@ -72,7 +72,7 @@ void RiskTimerProperties::Save(const UserProfile& userProfile) {
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetRiskTimerProperties());
     auto writer =
-      BasicOStreamWriter<std::ofstream>(Initialize(filePath, std::ios::binary));
+      BasicOStreamWriter<std::ofstream>(init(filePath, std::ios::binary));
     writer.Write(buffer);
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),

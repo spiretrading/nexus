@@ -1,6 +1,6 @@
 #include "Spire/Canvas/ValueNodes/TimeRangeNode.hpp"
 #include <Beam/Queries/Sequence.hpp>
-#include <Beam/TimeService/ToLocalTime.hpp>
+#include <Beam/TimeService/to_local_time.hpp>
 #include <boost/date_time/posix_time/time_formatters.hpp>
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 
@@ -20,17 +20,17 @@ namespace {
       return "Real-Time";
     }
     string startingPoint;
-    if(value.GetStart() == Queries::Sequence::Present()) {
+    if(value.GetStart() == Sequence::Present()) {
       startingPoint = "Present";
     } else {
-      startingPoint = to_simple_string(ToLocalTime(boost::get<ptime>(
+      startingPoint = to_simple_string(to_local_time(boost::get<ptime>(
         value.GetStart())));
     }
     string endingPoint;
-    if(value.GetStart() == Queries::Sequence::Present()) {
+    if(value.GetStart() == Sequence::Present()) {
       endingPoint = "Present";
     } else {
-      endingPoint = to_simple_string(ToLocalTime(boost::get<ptime>(
+      endingPoint = to_simple_string(to_local_time(boost::get<ptime>(
         value.GetEnd())));
     }
     return startingPoint + " -> " + endingPoint;

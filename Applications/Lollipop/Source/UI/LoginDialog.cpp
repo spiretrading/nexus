@@ -139,7 +139,7 @@ void LoginDialog::OnLoginButtonClicked() {
     m_ui->m_loginButton->setEnabled(true);
     m_state = State::READY;
     try {
-      m_serviceLocatorClient = std::move(serviceLocatorClient.Get());
+      m_serviceLocatorClient = std::move(serviceLocatorClient.get());
       Q_EMIT accept();
     } catch(const AuthenticationException&) {
       m_ui->m_resultLabel->setText(tr("Invalid username or password."));

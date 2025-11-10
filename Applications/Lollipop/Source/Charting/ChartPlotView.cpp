@@ -1,5 +1,5 @@
 #include "Spire/Charting/ChartPlotView.hpp"
-#include <Beam/TimeService/ToLocalTime.hpp>
+#include <Beam/TimeService/to_local_time.hpp>
 #include <QMouseEvent>
 #include <QPainter>
 #include "Spire/Canvas/Types/DateTimeType.hpp"
@@ -66,7 +66,7 @@ ChartPlotView::ChartPlotView(QWidget* parent)
 
 void ChartPlotView::Initialize(Ref<UserProfile> userProfile,
     const Properties& properties) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_properties = properties;
   QPalette p(palette());
   p.setColor(QPalette::Window, m_properties.m_backgroundColor);
@@ -497,7 +497,7 @@ QString ChartPlotView::LoadLabel(ChartValue value,
     return QString::fromStdString(lexical_cast<string>(v));
   } else if(type.GetCompatibility(DateTimeType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
-    auto v = ToLocalTime(value.ToDateTime());
+    auto v = to_local_time(value.ToDateTime());
     auto s = to_simple_string(v).substr(12, 8);
     if(v.time_of_day().seconds() == 0) {
       s = s.substr(0, 5);

@@ -29,7 +29,7 @@ namespace Spire {
         boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
         Nexus::CurrencyId, Nexus::Money, Nexus::OrderStatus, Nexus::OrderType,
         Nexus::Security, Nexus::Side, Nexus::TimeInForce, Nexus::Venue,
-        Beam::Queries::Range, Beam::Queries::Sequence>;
+        Beam::Range, Beam::Sequence>;
 
       /** Constructs an empty Record. */
       Record() = default;

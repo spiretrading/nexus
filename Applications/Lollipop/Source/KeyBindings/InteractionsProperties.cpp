@@ -46,7 +46,7 @@ void InteractionsProperties::Load(Out<UserProfile> userProfile) {
   }
   try {
     BasicIStreamReader<ifstream> reader(
-      Initialize(interactionsFilePath, ios::binary));
+      init(interactionsFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
@@ -72,7 +72,7 @@ void InteractionsProperties::Save(const UserProfile& userProfile) {
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetInteractionProperties());
     BasicOStreamWriter<ofstream> writer(
-      Initialize(keyBindingsFilePath, ios::binary));
+      init(keyBindingsFilePath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),

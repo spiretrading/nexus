@@ -6,7 +6,7 @@
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/Serialization/ShuttleOptional.hpp>
 #include <Beam/Serialization/ShuttleUnorderedSet.hpp>
-#include <Beam/TimeService/TimeService.hpp>
+#include <Beam/TimeService/TimeClient.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/Venue.hpp"
 #include "Spire/InputWidgets/TimeRangeInputWidget.hpp"
@@ -54,24 +54,22 @@ namespace Spire {
     /*!
       \param timeClient The time client used to compute times from offsets.
     */
-    Beam::Queries::Range GetTimeRange(
-      Beam::TimeService::TimeClientBox& timeClient) const;
+    Beam::Range GetTimeRange(Beam::TimeClient& timeClient) const;
   };
 }
 
 namespace Beam {
-namespace Serialization {
   template<>
   struct Shuttle<Spire::OrderImbalanceIndicatorProperties> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Spire::OrderImbalanceIndicatorProperties& value, unsigned int version) {
-      shuttle.Shuttle("start_time", value.m_startTime);
-      shuttle.Shuttle("end_time", value.m_endTime);
-      shuttle.Shuttle("filtered_venues", value.m_filteredVenues);
+    template<IsShuttle S>
+    void operator ()(S& shuttle,
+        Spire::OrderImbalanceIndicatorProperties& value,
+        unsigned int version) const {
+      shuttle.shuttle("start_time", value.m_startTime);
+      shuttle.shuttle("end_time", value.m_endTime);
+      shuttle.shuttle("filtered_venues", value.m_filteredVenues);
     }
   };
-}
 }
 
 #endif

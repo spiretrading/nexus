@@ -29,11 +29,11 @@ SpireClients::SpireClients(
   std::unique_ptr<ApplicationServiceLocatorClient> serviceLocatorClient)
 BEAM_SUPPRESS_THIS_INITIALIZER()
   : m_applicationServiceLocatorClient(std::move(serviceLocatorClient)),
-    m_serviceLocatorClient(m_applicationServiceLocatorClient->Get()),
+    m_serviceLocatorClient(m_applicationServiceLocatorClient->get()),
     m_definitionsClient([&] {
       auto definitionsClient = DefinitionsClient(
         std::in_place_type<ApplicationDefinitionsClient>,
-        m_applicationServiceLocatorClient->Get());
+        m_applicationServiceLocatorClient->get());
       auto minimumVersion =
         definitionsClient.load_minimum_spire_client_version();
       if(std::stoi(minimumVersion) > std::stoi(std::string(SPIRE_VERSION))) {
@@ -45,19 +45,19 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
       return definitionsClient;
     }()),
     m_registryClient(std::in_place_type<ApplicationRegistryClient>,
-      m_applicationServiceLocatorClient->Get()),
+      m_applicationServiceLocatorClient->get()),
     m_administrationClient(std::in_place_type<ApplicationAdministrationClient>,
-     m_applicationServiceLocatorClient->Get()),
+     m_applicationServiceLocatorClient->get()),
     m_marketDataClient(std::in_place_type<ApplicationMarketDataClient>,
-      m_applicationServiceLocatorClient->Get()),
+      m_applicationServiceLocatorClient->get()),
     m_chartingClient(std::in_place_type<ApplicationChartingClient>,
-      m_applicationServiceLocatorClient->Get()),
+      m_applicationServiceLocatorClient->get()),
     m_complianceClient(std::in_place_type<ApplicationComplianceClient>,
-      m_applicationServiceLocatorClient->Get()),
+      m_applicationServiceLocatorClient->get()),
     m_orderExecutionClient(std::in_place_type<ApplicationOrderExecutionClient>,
-      m_applicationServiceLocatorClient->Get()),
+      m_applicationServiceLocatorClient->get()),
     m_riskClient(std::in_place_type<ApplicationRiskClient>,
-      m_applicationServiceLocatorClient->Get()),
+      m_applicationServiceLocatorClient->get()),
     m_timeClient(MakeLiveNtpTimeClientFromServiceLocator(
       m_serviceLocatorClient)) {}
 BEAM_UNSUPPRESS_THIS_INITIALIZER()

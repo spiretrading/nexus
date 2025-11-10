@@ -48,8 +48,8 @@ BookViewHighlightPropertiesWidget::~BookViewHighlightPropertiesWidget() {}
 
 void BookViewHighlightPropertiesWidget::Initialize(
     Ref<UserProfile> userProfile, Ref<BookViewProperties> properties) {
-  m_userProfile = userProfile.Get();
-  m_properties = properties.Get();
+  m_userProfile = userProfile.get();
+  m_properties = properties.get();
   auto venueView = m_userProfile->GetVenueDatabase().get_entries();
   auto venueEntries = std::vector(venueView.begin(), venueView.end());
   sort(venueEntries.begin(), venueEntries.end(),

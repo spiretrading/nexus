@@ -51,7 +51,7 @@ PortfolioViewerWindow::PortfolioViewerWindow(Ref<UserProfile> userProfile,
     Qt::WindowFlags flags)
     : QFrame(parent, flags),
       m_ui(std::make_unique<Ui_PortfolioViewerWindow>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
   m_statusBar = new QStatusBar(this);
   m_statusBar->setStyleSheet("QStatusBar::item { border: 0px solid black };");

@@ -20,8 +20,8 @@ namespace {
 }
 
 TimeRangeParameterNode::TimeRangeParameterNode() {
-  m_startTime.m_specialValue = Queries::Sequence::Present();
-  m_endTime.m_specialValue = Queries::Sequence::Last();
+  m_startTime.m_specialValue = Sequence::Present();
+  m_endTime.m_specialValue = Sequence::Last();
   SetText(GetDisplayText(*this));
   SetType(TimeRangeType::GetInstance());
 }
@@ -61,7 +61,7 @@ Range TimeRangeParameterNode::GetTimeRangeQuery(
     start = ptime(gregorian::day_clock::universal_day(),
       *m_startTime.m_timeOfDay);
   } else {
-    start = Beam::Queries::Sequence::Present();
+    start = Beam::Sequence::Present();
   }
   Range::Point end;
   if(m_endTime.m_offset.is_initialized()) {
@@ -69,7 +69,7 @@ Range TimeRangeParameterNode::GetTimeRangeQuery(
   } else if(m_endTime.m_timeOfDay.is_initialized()) {
     end = ptime(gregorian::day_clock::universal_day(), *m_endTime.m_timeOfDay);
   } else {
-    end = Beam::Queries::Sequence::Last();
+    end = Beam::Sequence::Last();
   }
   Range timeRange(start, end);
   return timeRange;

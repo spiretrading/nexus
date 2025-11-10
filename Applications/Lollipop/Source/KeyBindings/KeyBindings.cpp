@@ -529,7 +529,7 @@ void KeyBindings::Load(Out<UserProfile> userProfile) {
   KeyBindings keyBindings;
   try {
     BasicIStreamReader<ifstream> reader(
-      Initialize(keyBindingsFilePath, ios::binary));
+      init(keyBindingsFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
@@ -555,7 +555,7 @@ void KeyBindings::Save(const UserProfile& userProfile) {
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetKeyBindings());
     BasicOStreamWriter<ofstream> writer(
-      Initialize(keyBindingsFilePath, ios::binary));
+      init(keyBindingsFilePath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),

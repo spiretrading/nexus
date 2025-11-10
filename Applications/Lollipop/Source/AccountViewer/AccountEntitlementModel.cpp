@@ -2,16 +2,15 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace std;
 
 AccountEntitlementModel::AccountEntitlementModel(
-    Ref<UserProfile> userProfile, const DirectoryEntry& account)
-    : m_userProfile(userProfile.Get()),
-      m_account(account) {}
+  Ref<UserProfile> userProfile, const DirectoryEntry& account)
+  : m_userProfile(userProfile.get()),
+    m_account(account) {}
 
 void AccountEntitlementModel::Load() {
   while(!m_entitlementsGranted.empty()) {

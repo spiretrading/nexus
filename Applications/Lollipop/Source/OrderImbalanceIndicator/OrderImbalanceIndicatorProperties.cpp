@@ -42,7 +42,7 @@ OrderImbalanceIndicatorProperties OrderImbalanceIndicatorProperties::
     GetDefault() {
   OrderImbalanceIndicatorProperties properties;
   properties.m_startTime.m_offset = hours(1);
-  properties.m_endTime.m_specialValue = Beam::Queries::Sequence::Last();
+  properties.m_endTime.m_specialValue = Beam::Sequence::Last();
   return properties;
 }
 
@@ -56,7 +56,7 @@ void OrderImbalanceIndicatorProperties::Load(Out<UserProfile> userProfile) {
   OrderImbalanceIndicatorFileSettings settings;
   try {
     BasicIStreamReader<ifstream> reader(
-      Initialize(orderImbalanceIndicatorFilePath, ios::binary));
+      init(orderImbalanceIndicatorFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
@@ -95,7 +95,7 @@ void OrderImbalanceIndicatorProperties::Save(const UserProfile& userProfile) {
       userProfile.GetInitialOrderImbalanceIndicatorWindowSettings();
     sender.Shuttle(settings);
     BasicOStreamWriter<ofstream> writer(
-      Initialize(orderImbalanceIndicatorFilePath, ios::binary));
+      init(orderImbalanceIndicatorFilePath, ios::binary));
     writer.Write(buffer);
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
@@ -111,25 +111,25 @@ bool OrderImbalanceIndicatorProperties::IsFiltered(Venue venue) const {
   return !IsDisplayed(venue);
 }
 
-Beam::Queries::Range OrderImbalanceIndicatorProperties::GetTimeRange(
+Beam::Range OrderImbalanceIndicatorProperties::GetTimeRange(
     TimeClientBox& timeClient) const {
-  Beam::Queries::Range::Point start;
+  Beam::Range::Point start;
   if(m_startTime.m_offset.is_initialized()) {
     start = timeClient.GetTime() - *m_startTime.m_offset;
   } else if(m_startTime.m_timeOfDay.is_initialized()) {
     start = ptime(gregorian::day_clock::universal_day(),
       *m_startTime.m_timeOfDay);
   } else {
-    start = Beam::Queries::Sequence::Present();
+    start = Beam::Sequence::Present();
   }
-  Beam::Queries::Range::Point end;
+  Beam::Range::Point end;
   if(m_endTime.m_offset.is_initialized()) {
     end = timeClient.GetTime() - *m_endTime.m_offset;
   } else if(m_endTime.m_timeOfDay.is_initialized()) {
     end = ptime(gregorian::day_clock::universal_day(), *m_endTime.m_timeOfDay);
   } else {
-    end = Beam::Queries::Sequence::Last();
+    end = Beam::Sequence::Last();
   }
-  Beam::Queries::Range timeRange(start, end);
+  Beam::Range timeRange(start, end);
   return timeRange;
 }

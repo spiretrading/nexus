@@ -24,7 +24,7 @@ std::unique_ptr<DashboardCell> ChangeDashboardCellBuilder::Make(
         return (timeAndSale.m_price - *closePrice) / *closePrice;
       });
   auto cell = std::make_unique<QueueDashboardCell>(queue);
-  auto selfUserProfile = userProfile.Get();
+  auto selfUserProfile = userProfile.get();
   Spawn(
     [=] {
       auto& serviceClients = selfUserProfile->GetClients();

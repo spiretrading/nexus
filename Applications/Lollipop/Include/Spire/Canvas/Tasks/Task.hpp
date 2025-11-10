@@ -76,7 +76,7 @@ namespace Spire {
        * @param userProfile The user's profile.
        */
       Task(const CanvasNode& node,
-        Beam::ServiceLocator::DirectoryEntry executingAccount,
+        Beam::DirectoryEntry executingAccount,
         Beam::Ref<UserProfile> userProfile);
 
       /** Returns the CanvasNode used to execute this task. */

@@ -28,7 +28,7 @@ ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
     : QMainWindow(parent, flags),
       SecurityContext(identifier),
       m_ui(std::make_unique<Ui_ChartWindow>()),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_interactionMode(ChartInteractionMode::NONE) {
   m_ui->setupUi(this);
   m_intervalComboBox = new ChartIntervalComboBox(this);

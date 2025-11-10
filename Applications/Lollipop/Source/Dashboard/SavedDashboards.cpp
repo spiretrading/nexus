@@ -33,7 +33,7 @@ void SavedDashboards::Load(Out<UserProfile> userProfile) {
   }
   try {
     auto reader =
-      BasicIStreamReader<std::ifstream>(Initialize(filePath, std::ios::binary));
+      BasicIStreamReader<std::ifstream>(init(filePath, std::ios::binary));
     auto buffer = SharedBuffer();
     reader.Read(Store(buffer));
     auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
@@ -59,7 +59,7 @@ void SavedDashboards::Save(const UserProfile& userProfile) {
     sender.SetSink(Ref(buffer));
     sender.Shuttle(userProfile.GetSavedDashboards());
     auto writer =
-      BasicOStreamWriter<std::ofstream>(Initialize(filePath, std::ios::binary));
+      BasicOStreamWriter<std::ofstream>(init(filePath, std::ios::binary));
     writer.Write(buffer);
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),

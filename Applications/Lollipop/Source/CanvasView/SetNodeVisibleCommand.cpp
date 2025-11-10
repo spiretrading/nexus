@@ -11,7 +11,7 @@ using namespace std;
 SetNodeVisibleCommand::SetNodeVisibleCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& parent, const string& node,
     bool isVisible)
-    : m_view(view.Get()),
+    : m_view(view.get()),
       m_parent(parent),
       m_node(node),
       m_isVisible(isVisible) {}

@@ -28,7 +28,7 @@ std::vector<std::unique_ptr<WindowSettings>>
   }
   try {
     auto reader = BasicIStreamReader<std::ifstream>(
-      Initialize(windowSettingsPath, std::ios::binary));
+      init(windowSettingsPath, std::ios::binary));
     auto buffer = SharedBuffer();
     reader.Read(Store(buffer));
     auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
@@ -66,7 +66,7 @@ void WindowSettings::Save(const UserProfile& userProfile) {
     sender.SetSink(Ref(buffer));
     sender.Shuttle(windowSettings);
     auto writer = BasicOStreamWriter<std::ofstream>(
-      Initialize(windowSettingsPath, std::ios::binary));
+      init(windowSettingsPath, std::ios::binary));
     writer.Write(buffer);
   } catch(const std::exception&) {
     QMessageBox::warning(

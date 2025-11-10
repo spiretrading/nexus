@@ -11,15 +11,15 @@ CanvasNodeTranslationContext::CanvasNodeTranslationContext(
   Ref<UserProfile> userProfile, Ref<Executor> executor,
   DirectoryEntry executingAccount)
   : m_parent(nullptr),
-    m_userProfile(userProfile.Get()),
+    m_userProfile(userProfile.get()),
     m_executingAccount(std::move(executingAccount)),
-    m_executor(executor.Get()),
+    m_executor(executor.get()),
     m_orderPublisher(
       std::make_shared<SequencePublisher<std::shared_ptr<Order>>>()) {}
 
 CanvasNodeTranslationContext::CanvasNodeTranslationContext(
   Ref<CanvasNodeTranslationContext> parent)
-  : m_parent(parent.Get()),
+  : m_parent(parent.get()),
     m_userProfile(m_parent->m_userProfile),
     m_executingAccount(m_parent->m_executingAccount),
     m_executor(m_parent->m_executor),
@@ -59,7 +59,7 @@ SequencePublisher<std::shared_ptr<Order>>&
 void CanvasNodeTranslationContext::Add(
     Ref<const CanvasNode> node, const Translation& translation) {
   auto lock = lock_guard(m_mutex);
-  m_translations.insert(std::make_pair(node.Get(), translation));
+  m_translations.insert(std::make_pair(node.get(), translation));
   if(m_parent) {
     m_parent->AddSubtranslation(Ref(node), translation);
   }
@@ -98,7 +98,7 @@ optional<Translation> CanvasNodeTranslationContext::FindSubTranslation(
 void CanvasNodeTranslationContext::AddSubtranslation(
     Beam::Ref<const CanvasNode> node, const Translation& translation) {
   auto lock = lock_guard(m_mutex);
-  m_subTranslations.insert(std::pair(node.Get(), translation));
+  m_subTranslations.insert(std::pair(node.get(), translation));
   if(m_parent) {
     m_parent->AddSubtranslation(Ref(node), translation);
   }

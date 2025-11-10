@@ -1,5 +1,5 @@
 #include "Spire/InputWidgets/DateTimeInputDialog.hpp"
-#include <Beam/TimeService/ToLocalTime.hpp>
+#include <Beam/TimeService/to_local_time.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
@@ -22,9 +22,9 @@ DateTimeInputDialog::DateTimeInputDialog(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_DateTimeInputDialog>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
-  m_ui->m_currentTimeDisplay->setTime(ToQTime(ToLocalTime(
+  m_ui->m_currentTimeDisplay->setTime(ToQTime(to_local_time(
     m_userProfile->GetClients().get_time_client().GetTime()).
     time_of_day()));
   connect(m_ui->m_okButton, &QPushButton::clicked, this,
@@ -40,13 +40,13 @@ DateTimeInputDialog::DateTimeInputDialog(const ptime& initialValue,
     Ref<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_DateTimeInputDialog>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
-  m_ui->m_currentTimeDisplay->setTime(ToQTime(ToLocalTime(
+  m_ui->m_currentTimeDisplay->setTime(ToQTime(to_local_time(
     m_userProfile->GetClients().get_time_client().GetTime()).
     time_of_day()));
   if(!initialValue.is_special() && !initialValue.is_not_a_date_time()) {
-    ptime localInitialvalue = ToLocalTime(initialValue);
+    ptime localInitialvalue = to_local_time(initialValue);
     date initialDate = localInitialvalue.date();
     if(!initialDate.is_special() && !initialDate.is_not_a_date()) {
       QDate displayDate(initialDate.year(), initialDate.month(),
@@ -79,7 +79,7 @@ ptime DateTimeInputDialog::GetDateTime() const {
 }
 
 void DateTimeInputDialog::OnCurrentTimer() {
-  m_ui->m_currentTimeDisplay->setTime(ToQTime(ToLocalTime(
+  m_ui->m_currentTimeDisplay->setTime(ToQTime(to_local_time(
     m_userProfile->GetClients().get_time_client().GetTime()).
     time_of_day()));
 }

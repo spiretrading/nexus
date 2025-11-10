@@ -48,8 +48,8 @@ void OrderLogModel::SetOrderExecutionPublisher(
   }
   m_eventHandler = std::nullopt;
   m_eventHandler.emplace();
-  m_orderExecutionPublisher = orderExecutionPublisher.Get();
-  m_orderExecutionPublisher->Monitor(
+  m_orderExecutionPublisher = orderExecutionPublisher.get();
+  m_orderExecutionPublisher->monitor(
     m_eventHandler->get_slot<std::shared_ptr<Order>>(
       std::bind_front(&OrderLogModel::OnOrderExecuted, this)));
 }
@@ -148,7 +148,7 @@ QVariant OrderLogModel::headerData(int section, Qt::Orientation orientation,
 void OrderLogModel::OnOrderExecuted(const std::shared_ptr<Order>& order) {
   auto index = m_entries.size();
   beginInsertRows(QModelIndex(), m_entries.size(), m_entries.size());
-  order->get_publisher().Monitor(m_eventHandler->get_slot<ExecutionReport>(
+  order->get_publisher().monitor(m_eventHandler->get_slot<ExecutionReport>(
     std::bind_front(&OrderLogModel::OnExecutionReport, this, index)));
   auto entry = OrderEntry(order);
   m_entries.push_back(entry);

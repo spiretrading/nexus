@@ -38,7 +38,7 @@ namespace details {
 
   template<typename T>
   QtPromiseEvent<T>::QtPromiseEvent(Beam::Expect<T> result)
-      : m_result(std::move(result)) {}
+    : m_result(std::move(result)) {}
 
   template<typename T>
   Beam::Expect<T>& QtPromiseEvent<T>::get_result() {

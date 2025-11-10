@@ -107,7 +107,7 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> userProfile,
     : QFrame(parent, flags),
       SecurityContext(identifier),
       m_ui(std::make_unique<Ui_BookViewWindow>()),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_properties(properties),
       m_taskEntryWidget(nullptr),
       m_isTaskEntryWidgetForInteractionsProperties(false),
@@ -231,7 +231,7 @@ void BookViewWindow::HandleUnlink() {
 }
 
 void BookViewWindow::SetupSecurityTechnicalsModel() {
-  m_securityTechnicalsConnections.DisconnectAll();
+  m_securityTechnicalsConnections.disconnect();
   m_ui->m_openValue->Reset();
   m_ui->m_closeValue->Reset();
   m_ui->m_highValue->Reset();
@@ -239,19 +239,19 @@ void BookViewWindow::SetupSecurityTechnicalsModel() {
   m_ui->m_volumeValue->Reset();
   m_securityTechnicalsModel =
     SecurityTechnicalsModel::GetModel(Ref(*m_userProfile), m_security);
-  m_securityTechnicalsConnections.AddConnection(
+  m_securityTechnicalsConnections.add(
     m_securityTechnicalsModel->ConnectOpenSignal(
       std::bind_front(&BookViewWindow::OnOpenUpdate, this)));
-  m_securityTechnicalsConnections.AddConnection(
+  m_securityTechnicalsConnections.add(
     m_securityTechnicalsModel->ConnectCloseSignal(
       std::bind_front(&BookViewWindow::OnCloseUpdate, this)));
-  m_securityTechnicalsConnections.AddConnection(
+  m_securityTechnicalsConnections.add(
     m_securityTechnicalsModel->ConnectHighSignal(
       std::bind_front(&BookViewWindow::OnHighUpdate, this)));
-  m_securityTechnicalsConnections.AddConnection(
+  m_securityTechnicalsConnections.add(
     m_securityTechnicalsModel->ConnectLowSignal(
       std::bind_front(&BookViewWindow::OnLowUpdate, this)));
-  m_securityTechnicalsConnections.AddConnection(
+  m_securityTechnicalsConnections.add(
     m_securityTechnicalsModel->ConnectVolumeSignal(
       std::bind_front(&BookViewWindow::OnVolumeUpdate, this)));
 }
@@ -348,7 +348,7 @@ void BookViewWindow::ExecuteTask(const CanvasNode& node) {
   }
   auto& entry = activeBlotter.GetTasksModel().Add(node);
   m_tasksExecuted[m_security].push_back(entry.m_task);
-  entry.m_task->GetPublisher().Monitor(
+  entry.m_task->GetPublisher().monitor(
     m_eventHandler.get_slot<Task::StateEntry>(
       [=, task = entry.m_task] (const auto& update) {
         OnTaskState(task, update);
@@ -427,7 +427,7 @@ void BookViewWindow::HandleInteractionsPropertiesEvent() {
 void BookViewWindow::HandleCancelBindingEvent(
     const KeyBindings::CancelBinding& cancelBinding) {
   KeyBindings::CancelBinding::HandleCancel(
-    cancelBinding, Store(m_tasksExecuted[m_security]));
+    cancelBinding, out(m_tasksExecuted[m_security]));
 }
 
 void BookViewWindow::HandleTaskInputEvent(QKeyEvent* event) {
@@ -494,7 +494,7 @@ void BookViewWindow::OnVolumeUpdate(Quantity volume) {
 void BookViewWindow::OnTaskState(const std::shared_ptr<Task>& task,
     const Task::StateEntry& update) {
   if(IsTerminal(update.m_state)) {
-    RemoveFirst(m_tasksExecuted[m_security], task);
+    remove_first(m_tasksExecuted[m_security], task);
   }
 }
 
@@ -524,7 +524,7 @@ void BookViewWindow::OnContextMenu(const QPoint& position) {
     SetProperties(propertiesWidget.GetProperties());
   } else if(auto linkAction =
       dynamic_cast<LinkSecurityContextAction*>(selectedAction)) {
-    linkAction->Execute(Store(*this));
+    linkAction->Execute(out(*this));
   }
 }
 

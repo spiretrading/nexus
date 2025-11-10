@@ -35,7 +35,7 @@ namespace Spire {
         \param group The group to display.
       */
       void Initialize(Beam::Ref<UserProfile> userProfile,
-        const Beam::ServiceLocator::DirectoryEntry& group);
+        const Beam::DirectoryEntry& group);
 
     private:
       struct ReportModel {
@@ -47,7 +47,7 @@ namespace Spire {
       };
       std::unique_ptr<Ui_GroupProfitAndLossReportWidget> m_ui;
       UserProfile* m_userProfile;
-      Beam::ServiceLocator::DirectoryEntry m_group;
+      Beam::DirectoryEntry m_group;
       std::optional<ReportModel> m_totalsModel;
       std::vector<std::unique_ptr<ReportModel>> m_groupModels;
 

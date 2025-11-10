@@ -37,11 +37,11 @@ MoneySpinBox::MoneySpinBox(QWidget* parent, Qt::WindowFlags flags)
 MoneySpinBox::MoneySpinBox(Ref<UserProfile> userProfile, QWidget* parent,
     Qt::WindowFlags flags)
     : MoneySpinBox{parent, flags} {
-  Initialize(Ref(userProfile));
+  init(Ref(userProfile));
 }
 
 void MoneySpinBox::Initialize(Ref<UserProfile> userProfile) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   AdjustIncrement(KeyModifiers::PLAIN);
 }
 

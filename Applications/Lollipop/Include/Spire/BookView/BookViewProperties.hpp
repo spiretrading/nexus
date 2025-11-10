@@ -27,8 +27,8 @@ namespace Spire {
         /** Whether to highlight all levels. */
         bool m_highlightAllLevels;
 
-        template<typename Shuttler>
-        void Shuttle(Shuttler& shuttle, unsigned int version);
+        template<Beam::IsShuttle S>
+        void shuttle(S& shuttle, unsigned int version);
       };
 
       /** Stores options available to highlight Orders. */
@@ -139,7 +139,7 @@ namespace Spire {
       void SetShowBbo(bool value);
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       QColor m_bookQuoteForegroundColor;
       std::vector<QColor> m_bookQuoteBackgroundColors;
       QFont m_bboQuoteFont;
@@ -150,40 +150,39 @@ namespace Spire {
       bool m_showGrid;
       bool m_showBbo;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void BookViewProperties::VenueHighlight::Shuttle(
-      Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("color", m_color);
-    shuttle.Shuttle("highlight_all_levels", m_highlightAllLevels);
+  template<Beam::IsShuttle S>
+  void BookViewProperties::VenueHighlight::shuttle(
+      S& shuttle, unsigned int version) {
+    shuttle.shuttle("color", m_color);
+    shuttle.shuttle("highlight_all_levels", m_highlightAllLevels);
   }
 
-  template<typename Shuttler>
-  void BookViewProperties::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("book_quote_foreground_color", m_bookQuoteForegroundColor);
-    shuttle.Shuttle(
+  template<Beam::IsShuttle S>
+  void BookViewProperties::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("book_quote_foreground_color", m_bookQuoteForegroundColor);
+    shuttle.shuttle(
       "book_quote_background_colors", m_bookQuoteBackgroundColors);
-    shuttle.Shuttle("bbo_quote_font", m_bboQuoteFont);
-    shuttle.Shuttle("book_quote_font", m_bookQuoteFont);
-    shuttle.Shuttle("venue_highlights", m_venueHighlights);
-    shuttle.Shuttle("order_highlight", m_orderHighlight);
-    shuttle.Shuttle("order_highlight_color", m_orderHighlightColor);
-    shuttle.Shuttle("show_grid", m_showGrid);
+    shuttle.shuttle("bbo_quote_font", m_bboQuoteFont);
+    shuttle.shuttle("book_quote_font", m_bookQuoteFont);
+    shuttle.shuttle("venue_highlights", m_venueHighlights);
+    shuttle.shuttle("order_highlight", m_orderHighlight);
+    shuttle.shuttle("order_highlight_color", m_orderHighlightColor);
+    shuttle.shuttle("show_grid", m_showGrid);
     if(version >= 2) {
-      shuttle.Shuttle("show_bbo", m_showBbo);
+      shuttle.shuttle("show_bbo", m_showBbo);
     } else {
       m_showBbo = false;
     }
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
-  struct Version<Spire::BookViewProperties> :
-    std::integral_constant<unsigned int, 2> {};
+  constexpr unsigned int shuttle_version<Spire::BookViewProperties> = 2;
 }
 
 #endif

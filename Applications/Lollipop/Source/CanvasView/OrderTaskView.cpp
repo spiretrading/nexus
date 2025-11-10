@@ -31,8 +31,8 @@ using namespace std;
 OrderTaskView::OrderTaskView(const DisplayWidgetSlot& displayWidgetSlot,
     const RemoveWidgetSlot& removeWidgetSlot,  Ref<QWidget> parent,
     Ref<UserProfile> userProfile)
-    : m_parent{parent.Get()},
-      m_userProfile{userProfile.Get()},
+    : m_parent{parent.get()},
+      m_userProfile{userProfile.get()},
       m_isTaskEntryWidgetForInteractionsProperties{false},
       m_taskEntryWidget{nullptr},
       m_displayWidgetSlot{displayWidgetSlot},
@@ -88,7 +88,7 @@ void OrderTaskView::ExecuteTask(const CanvasNode& node) {
   }
   auto& entry = activeBlotter.GetTasksModel().Add(node);
   m_tasksExecuted[*m_state->m_security].push_back(entry.m_task);
-  entry.m_task->GetPublisher().Monitor(m_slotHandler.GetSlot<Task::StateEntry>(
+  entry.m_task->GetPublisher().monitor(m_slotHandler.GetSlot<Task::StateEntry>(
     [=, security = *m_state->m_security, task = entry.m_task] (
         const Task::StateEntry& update) {
       OnTaskState(task, security, update);

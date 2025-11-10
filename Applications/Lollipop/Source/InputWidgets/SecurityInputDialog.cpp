@@ -41,8 +41,8 @@ SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
     const Security& initial, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_SecurityInputDialog>()),
-      m_userProfile(userProfile.Get()) {
-  Initialize();
+      m_userProfile(userProfile.get()) {
+  init();
   m_ui->m_input->setText(displayText(initial));
   if(parent) {
     parent->installEventFilter(this);
@@ -53,8 +53,8 @@ SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
     const std::string& text, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_SecurityInputDialog>()),
-      m_userProfile(userProfile.Get()) {
-  Initialize();
+      m_userProfile(userProfile.get()) {
+  init();
   m_ui->m_input->setText(QString::fromStdString(text));
   if(parent) {
     parent->installEventFilter(this);

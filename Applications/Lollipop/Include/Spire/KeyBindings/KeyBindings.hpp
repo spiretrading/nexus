@@ -239,7 +239,7 @@ namespace Details {
       void SetDefaultQuantity(Nexus::Venue venue, Nexus::Quantity quantity);
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::unordered_map<Nexus::Venue,
         std::unordered_map<QKeySequence, TaskBinding>> m_taskBindings;
       std::unordered_map<QKeySequence, CancelBinding> m_cancelBindings;
@@ -265,27 +265,25 @@ namespace Details {
 }
 
 namespace Beam {
-namespace Serialization {
   template<>
   struct Shuttle<Spire::KeyBindings::TaskBinding> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Spire::KeyBindings::TaskBinding& value,
-        unsigned int version) {
-      shuttle.Shuttle("name", value.m_name);
-      shuttle.Shuttle("node", value.m_node);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::KeyBindings::TaskBinding& value,
+        unsigned int version) const {
+      shuttle.shuttle("name", value.m_name);
+      shuttle.shuttle("node", value.m_node);
     }
   };
 
   template<>
   struct Shuttle<Spire::KeyBindings::CancelBinding> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Spire::KeyBindings::CancelBinding& value, unsigned int version) {
-      shuttle.Shuttle("description", value.m_description);
-      shuttle.Shuttle("type", value.m_type);
+    template<IsShuttle S>
+    void operator ()(S& shuttle,
+        Spire::KeyBindings::CancelBinding& value, unsigned int version) const {
+      shuttle.shuttle("description", value.m_description);
+      shuttle.shuttle("type", value.m_type);
     }
   };
-}
 }
 
 #endif

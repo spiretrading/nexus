@@ -14,7 +14,7 @@ CancelOnFillController::OrderEntry::OrderEntry(
     m_status(OrderStatus::PENDING_NEW) {}
 
 CancelOnFillController::CancelOnFillController(Ref<UserProfile> userProfile)
-    : m_userProfile(userProfile.Get()) {
+    : m_userProfile(userProfile.get()) {
   m_slotHandler.emplace();
 }
 
@@ -22,9 +22,9 @@ void CancelOnFillController::SetOrderExecutionPublisher(Ref<
     const Publisher<std::shared_ptr<Order>>> orderExecutionPublisher) {
   m_slotHandler = std::nullopt;
   m_slotHandler.emplace();
-  m_orderExecutionPublisher = orderExecutionPublisher.Get();
-  m_orderExecutionPublisher->Monitor(
-    m_slotHandler->GetSlot<std::shared_ptr<Order>>(
+  m_orderExecutionPublisher = orderExecutionPublisher.get();
+  m_orderExecutionPublisher->monitor(
+    m_slotHandler->get_slot<std::shared_ptr<Order>>(
       std::bind(&CancelOnFillController::OnOrderExecuted, this,
         std::placeholders::_1)));
 }
@@ -40,7 +40,7 @@ void CancelOnFillController::OnOrderExecuted(
     m_securityToOrderEntryList[order->get_info().m_fields.m_security][
     static_cast<int>(side)];
   orderEntries.push_back(orderEntry);
-  order->get_publisher().Monitor(m_slotHandler->GetSlot<ExecutionReport>(
+  order->get_publisher().monitor(m_slotHandler->get_slot<ExecutionReport>(
     std::bind(&CancelOnFillController::OnExecutionReport, this,
     weak_ptr<OrderEntry>(orderEntry), std::placeholders::_1)));
 }

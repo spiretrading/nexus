@@ -36,7 +36,7 @@ DashboardWindow::DashboardWindow(const string& name,
     QWidget* parent, Qt::WindowFlags flags)
     : QWidget{parent, flags},
       m_ui{std::make_unique<Ui_DashboardWindow>()},
-      m_userProfile{userProfile.Get()} {
+      m_userProfile{userProfile.get()} {
   m_ui->setupUi(this);
   auto displayTaskSlot = [=] (CondensedCanvasWidget& widget) {
     m_ui->verticalLayout->insertWidget(2, &widget);
@@ -108,7 +108,7 @@ void DashboardWindow::keyPressEvent(QKeyEvent* event) {
     if(bboQuoteIterator == m_bboQuotes.end()) {
       return BboQuote();
     }
-    return bboQuoteIterator->second.m_bboQuote->Peek();
+    return bboQuoteIterator->second.m_bboQuote->peek();
   }();
   if(m_orderTaskView->HandleKeyPressEvent(*event, *security,
       bboQuote.m_ask.m_price, bboQuote.m_bid.m_price)) {
@@ -188,7 +188,7 @@ void DashboardWindow::OnRowAdded(const DashboardRow& row) {
   auto& bboQuoteEntry = GetOrInsert(m_bboQuotes, *security);
   if(bboQuoteEntry.m_counter == 0) {
     bboQuoteEntry.m_bboQuote = std::make_shared<StateQueue<BboQuote>>();
-    bboQuoteEntry.m_bboQuote->Push(BboQuote());
+    bboQuoteEntry.m_bboQuote->push(BboQuote());
     auto query = MakeCurrentQuery(*security);
     m_userProfile->GetClients().get_market_data_client().query(
       query, bboQuoteEntry.m_bboQuote);

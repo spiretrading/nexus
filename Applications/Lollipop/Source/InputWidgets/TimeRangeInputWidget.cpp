@@ -1,6 +1,6 @@
 #include "Spire/InputWidgets/TimeRangeInputWidget.hpp"
 #include <Beam/Queries/Sequence.hpp>
-#include <Beam/TimeService/ToLocalTime.hpp>
+#include <Beam/TimeService/to_local_time.hpp>
 #include "Spire/InputWidgets/TimeRangeInputWidgetWindowSettings.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "ui_TimeRangeInputWidget.h"
@@ -73,7 +73,7 @@ TimeRangeParameter TimeRangeInputWidget::GetStartTime() const {
     timeParameter.m_timeOfDay = ToPosixTimeDuration(
       m_ui->m_startTimeOfDayInput->dateTime().toUTC().time());
   } else {
-    timeParameter.m_specialValue = Beam::Queries::Sequence::Present();
+    timeParameter.m_specialValue = Beam::Sequence::Present();
   }
   return timeParameter;
 }
@@ -110,7 +110,7 @@ void TimeRangeInputWidget::SetTimeRange(const TimeRangeParameter& startTime,
     m_ui->m_startTimeOfDayButton->setChecked(true);
     ptime timeOfDay(gregorian::day_clock::universal_day(),
       *startTime.m_timeOfDay);
-    ptime localTime = ToLocalTime(timeOfDay);
+    ptime localTime = to_local_time(timeOfDay);
     m_ui->m_startTimeOfDayInput->setDateTime(ToQDateTime(localTime));
   } else {
     m_ui->m_presentButton->setChecked(true);
@@ -131,7 +131,7 @@ void TimeRangeInputWidget::SetTimeRange(const TimeRangeParameter& startTime,
     m_ui->m_endTimeOfDayButton->setChecked(true);
     ptime timeOfDay(gregorian::day_clock::universal_day(),
       *endTime.m_timeOfDay);
-    ptime localTime = ToLocalTime(timeOfDay);
+    ptime localTime = to_local_time(timeOfDay);
     m_ui->m_endTimeOfDayInput->setDateTime(ToQDateTime(localTime));
   } else {
     m_ui->m_realTimeButton->setChecked(true);

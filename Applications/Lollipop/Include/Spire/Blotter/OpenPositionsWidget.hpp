@@ -30,8 +30,8 @@ namespace Spire {
         //! The state of the open positions table header.
         QByteArray m_tableState;
 
-        template<typename Shuttler>
-        void Shuttle(Shuttler& shuttle, unsigned int version);
+        template<Beam::IsShuttle S>
+        void shuttle(S& shuttle, unsigned int version);
       };
 
       //! Constructs a OpenPositionsWidget.
@@ -75,11 +75,11 @@ namespace Spire {
         const QItemSelection& deselected);
   };
 
-  template<typename Shuttler>
-  void OpenPositionsWidget::UIState::Shuttle(Shuttler& shuttle,
+  template<Beam::IsShuttle S>
+  void OpenPositionsWidget::UIState::shuttle(S& shuttle,
       unsigned int version) {
-    shuttle.Shuttle("table_geometry", m_tableGeometry);
-    shuttle.Shuttle("table_state", m_tableState);
+    shuttle.shuttle("table_geometry", m_tableGeometry);
+    shuttle.shuttle("table_state", m_tableState);
   }
 }
 

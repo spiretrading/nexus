@@ -47,7 +47,7 @@ namespace Spire {
         \param account The account being represented.
       */
       ComplianceModel(Beam::Ref<UserProfile> userProfile,
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::DirectoryEntry& account);
 
       //! Loads the account's compliance model.
       void Load();
@@ -56,7 +56,7 @@ namespace Spire {
       void Commit();
 
       //! Returns the account being represented.
-      const Beam::ServiceLocator::DirectoryEntry& GetAccount() const;
+      const Beam::DirectoryEntry& GetAccount() const;
 
       //! Returns the list of schemas available.
       const std::vector<Nexus::ComplianceRuleSchema>& GetSchemas() const;
@@ -108,7 +108,7 @@ namespace Spire {
 
     private:
       UserProfile* m_userProfile;
-      Beam::ServiceLocator::DirectoryEntry m_account;
+      Beam::DirectoryEntry m_account;
       std::vector<Nexus::ComplianceRuleSchema> m_schemas;
       std::vector<Nexus::ComplianceRuleEntry> m_entries;
       Nexus::ComplianceRuleEntry::Id m_newComplianceEntryId;

@@ -107,7 +107,7 @@ namespace Spire {
        * @param properties The properties used to display Tasks.
        */
       BlotterTasksModel(Beam::Ref<UserProfile> userProfile,
-        const Beam::ServiceLocator::DirectoryEntry& executingAccount,
+        const Beam::DirectoryEntry& executingAccount,
         bool isConsolidated, const BlotterTaskProperties& properties);
 
       ~BlotterTasksModel() = default;
@@ -194,7 +194,7 @@ namespace Spire {
 
     private:
       UserProfile* m_userProfile;
-      Beam::ServiceLocator::DirectoryEntry m_executingAccount;
+      Beam::DirectoryEntry m_executingAccount;
       BlotterTaskProperties m_properties;
       QTimer m_expiryTimer;
       bool m_isRefreshing;
@@ -217,7 +217,7 @@ namespace Spire {
       mutable TaskRemovedSignal m_taskRemovedSignal;
       EventHandler m_orderEventHandler;
       std::optional<EventHandler> m_taskEventHandler;
-      Beam::Routines::RoutineHandlerGroup m_pendingRoutines;
+      Beam::RoutineHandlerGroup m_pendingRoutines;
 
       void SetupLinkedOrderExecutionMonitor();
       void OnMonitorUpdate(TaskEntry& entry, const std::string& property,

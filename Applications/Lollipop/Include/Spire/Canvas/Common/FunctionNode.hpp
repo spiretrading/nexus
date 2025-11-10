@@ -30,7 +30,7 @@ namespace Spire {
 
       using SignatureNode::Replace;
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::string m_name;
       std::vector<Signature> m_signatures;
   };

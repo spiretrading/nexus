@@ -14,7 +14,7 @@ using namespace Spire::UI;
 OrderImbalanceIndicatorModel::OrderImbalanceIndicatorModel(
     Ref<UserProfile> userProfile,
     const OrderImbalanceIndicatorProperties& properties)
-    : m_userProfile(userProfile.Get()),
+    : m_userProfile(userProfile.get()),
       m_properties(properties) {
   InitializePublishers();
 }

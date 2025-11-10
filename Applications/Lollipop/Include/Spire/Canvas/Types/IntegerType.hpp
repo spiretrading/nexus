@@ -27,16 +27,16 @@ namespace Spire {
       virtual void Apply(CanvasTypeVisitor& visitor) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
       IntegerType() = default;
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void IntegerType::Shuttle(Shuttler& shuttle, unsigned int version) {
-    NativeType::Shuttle(shuttle, version);
+  template<Beam::IsShuttle S>
+  void IntegerType::shuttle(S& shuttle, unsigned int version) {
+    NativeType::shuttle(shuttle, version);
   }
 }
 

@@ -15,7 +15,7 @@ using namespace std;
 QuantitySpinBox::QuantitySpinBox(Ref<UserProfile> userProfile,
     const IntegerNode& node, QWidget* parent)
     : QSpinBox(parent),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   setMaximum(numeric_limits<int>::max());
   setMinimum(numeric_limits<int>::min());
   setCorrectionMode(QAbstractSpinBox::CorrectToPreviousValue);

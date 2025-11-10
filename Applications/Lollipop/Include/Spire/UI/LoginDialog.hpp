@@ -40,7 +40,7 @@ namespace Spire::UI {
       ~LoginDialog() override;
 
       /** Returns the ServiceLocatorClient that logged in. */
-      std::unique_ptr<Beam::ServiceLocator::ApplicationServiceLocatorClient>
+      std::unique_ptr<Beam::ApplicationServiceLocatorClient>
         GetServiceLocatorClient();
 
       /** Returns the username. */
@@ -59,7 +59,7 @@ namespace Spire::UI {
       };
       std::unique_ptr<Ui_LoginDialog> m_ui;
       std::vector<ServerEntry> m_servers;
-      std::unique_ptr<Beam::ServiceLocator::ApplicationServiceLocatorClient>
+      std::unique_ptr<Beam::ApplicationServiceLocatorClient>
         m_serviceLocatorClient;
       State m_state;
       std::optional<QtPromise<void>> m_loginPromise;

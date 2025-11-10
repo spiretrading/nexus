@@ -12,8 +12,8 @@ using namespace Spire;
 ProfitAndLossModel::ProfitAndLossModel(
     Ref<const CurrencyDatabase> currencyDatabase,
     Ref<const ExchangeRateTable> exchangeRates, bool showUnrealized)
-    : m_currencyDatabase(currencyDatabase.Get()),
-      m_exchangeRates(exchangeRates.Get()),
+    : m_currencyDatabase(currencyDatabase.get()),
+      m_exchangeRates(exchangeRates.get()),
       m_showUnrealized{showUnrealized},
       m_portfolioController(nullptr) {
   m_eventHandler.emplace();
@@ -33,8 +33,8 @@ void ProfitAndLossModel::SetPortfolioController(
   m_update.m_security_inventory.m_position.m_currency = m_currency;
   m_eventHandler = std::nullopt;
   m_eventHandler.emplace();
-  m_portfolioController = portfolioController.Get();
-  m_portfolioController->get_publisher().Monitor(
+  m_portfolioController = portfolioController.get();
+  m_portfolioController->get_publisher().monitor(
     m_eventHandler->get_slot<PortfolioUpdateEntry>(
       std::bind_front(&ProfitAndLossModel::OnPortfolioUpdate, this)));
   m_profitAndLossUpdateSignal(m_update);

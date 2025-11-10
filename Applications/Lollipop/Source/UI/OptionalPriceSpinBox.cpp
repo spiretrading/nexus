@@ -15,7 +15,7 @@ using namespace std;
 OptionalPriceSpinBox::OptionalPriceSpinBox(Ref<UserProfile> userProfile,
     const OptionalPriceNode& node, QWidget* parent)
     : QDoubleSpinBox(parent),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_referencePrice(node.GetReferencePrice()) {
   setMaximum(numeric_limits<double>::max());
   setMinimum(0);

@@ -14,7 +14,7 @@ namespace Spire {
   class SpireClients {
     public:
       using ServiceLocatorClient =
-        Beam::ServiceLocator::ServiceLocatorClientBox;
+        Beam::ServiceLocatorClientBox;
       using RegistryClient = Beam::RegistryService::RegistryClientBox;
       using AdministrationClient = Nexus::AdministrationClient;
       using DefinitionsClient = Nexus::DefinitionsClient;
@@ -24,7 +24,7 @@ namespace Spire {
       using OrderExecutionClient = Nexus::OrderExecutionClient;
       using RiskClient = Nexus::RiskClient;
       using TimeClient = Beam::TimeService::TimeClientBox;
-      using Timer = Beam::Threading::TimerBox;
+      using Timer = Beam::TimerBox;
 
       /**
        * Constructs a SpireClients instance.
@@ -32,7 +32,7 @@ namespace Spire {
        *        Spire services.
        */
       explicit SpireClients(
-        std::unique_ptr<Beam::ServiceLocator::ApplicationServiceLocatorClient>
+        std::unique_ptr<Beam::ApplicationServiceLocatorClient>
           serviceLocatorClient);
 
       ~SpireClients();
@@ -51,9 +51,9 @@ namespace Spire {
       void close();
 
     private:
-      std::unique_ptr<Beam::ServiceLocator::ApplicationServiceLocatorClient>
+      std::unique_ptr<Beam::ApplicationServiceLocatorClient>
         m_applicationServiceLocatorClient;
-      Beam::ServiceLocator::ServiceLocatorClientBox m_serviceLocatorClient;
+      Beam::ServiceLocatorClientBox m_serviceLocatorClient;
       Nexus::DefinitionsClient m_definitionsClient;
       Beam::RegistryService::RegistryClientBox m_registryClient;
       Nexus::AdministrationClient m_administrationClient;

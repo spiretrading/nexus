@@ -30,7 +30,7 @@ namespace {
 MoveNodeCommand::MoveNodeCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& source,
     const CanvasNodeModel::Coordinate& destination)
-    : m_view(view.Get()),
+    : m_view(view.get()),
       m_source(source),
       m_destination(destination) {}
 

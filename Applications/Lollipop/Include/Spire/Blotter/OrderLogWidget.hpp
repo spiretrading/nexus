@@ -26,8 +26,8 @@ namespace Spire {
         /** The state of the order log table header. */
         QByteArray m_tableState;
 
-        template<typename Shuttler>
-        void Shuttle(Shuttler& shuttle, unsigned int version);
+        template<Beam::IsShuttle S>
+        void shuttle(S& shuttle, unsigned int version);
       };
 
       /**
@@ -78,11 +78,11 @@ namespace Spire {
       void OnContextMenu(const QPoint& point);
   };
 
-  template<typename Shuttler>
-  void OrderLogWidget::UIState::Shuttle(Shuttler& shuttle,
+  template<Beam::IsShuttle S>
+  void OrderLogWidget::UIState::shuttle(S& shuttle,
       unsigned int version) {
-    shuttle.Shuttle("table_geometry", m_tableGeometry);
-    shuttle.Shuttle("table_state", m_tableState);
+    shuttle.shuttle("table_geometry", m_tableGeometry);
+    shuttle.shuttle("table_state", m_tableState);
   }
 }
 

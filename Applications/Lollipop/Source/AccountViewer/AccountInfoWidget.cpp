@@ -24,7 +24,7 @@ AccountInfoWidget::~AccountInfoWidget() {}
 
 void AccountInfoWidget::Initialize(Ref<UserProfile> userProfile,
     bool isReadOnly, bool isPasswordReadOnly) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_isReadOnly = isReadOnly;
   m_ui->m_countryInput->clear();
   if(!m_isReadOnly) {
@@ -145,7 +145,7 @@ void AccountInfoWidget::OnUpdatePasswordButton() {
   }
   string password = m_ui->m_newPasswordInput->text().toStdString();
   try {
-    m_userProfile->GetClients().get_service_locator_client().StorePassword(
+    m_userProfile->GetClients().get_service_locator_client().store_password(
       m_model->GetAccount(), password);
     QMessageBox::information(this, QObject::tr("Spire"),
       QObject::tr("Password has been updated successfully."));

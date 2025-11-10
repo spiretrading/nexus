@@ -17,7 +17,7 @@ namespace Spire {
   class InteractionsWidget : public QWidget {
     public:
 
-      //! Constructs an InteractionsWidget, call Initialize after construction.
+      //! Constructs an InteractionsWidget, call init after construction.
       /*!
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.

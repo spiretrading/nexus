@@ -40,16 +40,15 @@ namespace Spire {
       virtual std::unique_ptr<CanvasNode> Clone() const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
-      DivisionNode(Beam::Serialization::ReceiveBuilder);
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void DivisionNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    FunctionNode::Shuttle(shuttle, version);
+  template<Beam::IsShuttle S>
+  void DivisionNode::shuttle(S& shuttle, unsigned int version) {
+    FunctionNode::shuttle(shuttle, version);
   }
 }
 

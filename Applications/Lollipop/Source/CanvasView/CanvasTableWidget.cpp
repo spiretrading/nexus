@@ -88,7 +88,7 @@ CanvasTableWidget::CanvasTableWidget(QWidget* parent)
 }
 
 void CanvasTableWidget::SetUserProfile(Ref<UserProfile> userProfile) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
 }
 
 void CanvasTableWidget::NavigateForward() {

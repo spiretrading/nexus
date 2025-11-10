@@ -144,7 +144,6 @@ mkacc market_data_feed $spire_password
 mkacc market_data_relay_service $spire_password
 mkacc market_data_service $spire_password
 mkacc order_execution_service $spire_password
-mkacc registry_service $spire_password
 mkacc risk_service $spire_password
 mkacc uid_service $spire_password
 mkacc web_portal_service $spire_password

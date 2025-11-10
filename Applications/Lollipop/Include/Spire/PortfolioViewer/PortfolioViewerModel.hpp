@@ -21,10 +21,10 @@ namespace Spire {
       struct Entry {
 
         /** The Entry's account. */
-        Beam::ServiceLocator::DirectoryEntry m_account;
+        Beam::DirectoryEntry m_account;
 
         /** The Entry's group. */
-        Beam::ServiceLocator::DirectoryEntry m_group;
+        Beam::DirectoryEntry m_group;
 
         /** A single Inventory item held by the <i>account</i>. */
         Nexus::Inventory m_inventory;
@@ -36,7 +36,7 @@ namespace Spire {
          * Constructs an Entry.
          * @param account The Entry's account.
          */
-        explicit Entry(const Beam::ServiceLocator::DirectoryEntry& account);
+        explicit Entry(const Beam::DirectoryEntry& account);
       };
 
       /** Stores the totals among all displayed Entries. */
@@ -182,11 +182,11 @@ namespace Spire {
       std::vector<IndexedEntry> m_entries;
       int m_displayCount;
       TotalEntry m_totals;
-      std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
-        Beam::ServiceLocator::DirectoryEntry> m_groups;
+      std::unordered_map<Beam::DirectoryEntry,
+        Beam::DirectoryEntry> m_groups;
       std::unordered_map<Nexus::Security, Nexus::SecurityValuation>
         m_valuations;
-      std::unordered_map<Beam::ServiceLocator::DirectoryEntry, AccountTotals>
+      std::unordered_map<Beam::DirectoryEntry, AccountTotals>
         m_accountTotals;
       std::unordered_map<Nexus::Security, std::vector<int>> m_securityToIndexes;
       std::unordered_map<Nexus::RiskPortfolioKey, int>

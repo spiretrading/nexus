@@ -6,7 +6,6 @@
 #include "ui_EntitlementEntryWidget.h"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
@@ -49,7 +48,7 @@ EntitlementEntryWidget::EntitlementEntryWidget(Ref<UserProfile> userProfile,
     Qt::WindowFlags flags)
     : QWidget(parent, flags),
       m_ui(std::make_unique<Ui_EntitlementEntryWidget>()),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_isReadOnly(isReadOnly),
       m_entitlement(entitlement),
       m_model(model) {
@@ -62,17 +61,15 @@ EntitlementEntryWidget::EntitlementEntryWidget(Ref<UserProfile> userProfile,
     const CurrencyDatabase::Entry& currency =
       m_userProfile->GetCurrencyDatabase().from(m_entitlement.m_currency);
     string price = currency.m_sign + lexical_cast<string>(entitlement.m_price) +
-      " " + currency.m_code.GetData();
+      " " + currency.m_code.get_data();
     m_ui->m_priceLabel->setText(QString::fromStdString(price));
   }
   m_ui->m_entitlementLabel->setChecked(
     m_model->HasEntitlement(m_entitlement.m_group_entry));
-  m_connections.AddConnection(
-    m_model->ConnectEntitlementGrantedSignal(
+  m_connections.add(m_model->ConnectEntitlementGrantedSignal(
       std::bind(&EntitlementEntryWidget::OnEntitlementGranted, this,
       std::placeholders::_1)));
-  m_connections.AddConnection(
-    m_model->ConnectEntitlementRevokedSignal(
+  m_connections.add(m_model->ConnectEntitlementRevokedSignal(
       std::bind(&EntitlementEntryWidget::OnEntitlementRevoked, this,
       std::placeholders::_1)));
   if(m_isReadOnly) {
@@ -83,9 +80,9 @@ EntitlementEntryWidget::EntitlementEntryWidget(Ref<UserProfile> userProfile,
     connect(m_ui->m_entitlementLabel, &QCheckBox::stateChanged, this,
       &EntitlementEntryWidget::OnEntitlementChecked);
   }
-  m_connections.AddConnection(m_ui->m_expandButton->ConnectExpandedSignal(
+  m_connections.add(m_ui->m_expandButton->ConnectExpandedSignal(
     std::bind(&EntitlementEntryWidget::OnTableExpanded, this)));
-  m_connections.AddConnection(m_ui->m_expandButton->ConnectCollapsedSignal(
+  m_connections.add(m_ui->m_expandButton->ConnectCollapsedSignal(
     std::bind(&EntitlementEntryWidget::OnTableCollapsed, this)));
   int row = 1;
   for(const pair<EntitlementKey, MarketDataTypeSet>& entitlement :
@@ -103,19 +100,19 @@ EntitlementEntryWidget::EntitlementEntryWidget(Ref<UserProfile> userProfile,
       MARKET_COLUMN);
     MarketDataTypeSet applicability = entitlement.second;
     QHBoxLayout* bboCheckBox = MakeCheckboxLayout(
-      applicability.Test(MarketDataType::BBO_QUOTE));
+      applicability.test(MarketDataType::BBO_QUOTE));
     m_ui->m_applicabilityTableLayout->addLayout(bboCheckBox, row,
       BBO_COLUMN);
     QHBoxLayout* bookQuoteCheckBox = MakeCheckboxLayout(
-      applicability.Test(MarketDataType::BOOK_QUOTE));
+      applicability.test(MarketDataType::BOOK_QUOTE));
     m_ui->m_applicabilityTableLayout->addLayout(bookQuoteCheckBox, row,
       BOOK_QUOTES_COLUMN);
     QHBoxLayout* timeAndSalesCheckBox = MakeCheckboxLayout(
-      applicability.Test(MarketDataType::TIME_AND_SALE));
+      applicability.test(MarketDataType::TIME_AND_SALE));
     m_ui->m_applicabilityTableLayout->addLayout(timeAndSalesCheckBox, row,
       TIME_AND_SALES_COLUMN);
     QHBoxLayout* imbalancesCheckBox = MakeCheckboxLayout(
-      applicability.Test(MarketDataType::ORDER_IMBALANCE));
+      applicability.test(MarketDataType::ORDER_IMBALANCE));
     m_ui->m_applicabilityTableLayout->addLayout(imbalancesCheckBox, row,
       IMBALANCES_COLUMN);
     ++row;

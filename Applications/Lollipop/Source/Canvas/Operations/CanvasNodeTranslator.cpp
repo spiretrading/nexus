@@ -10,7 +10,7 @@
 #include <Beam/Reactors/QueueReactor.hpp>
 #include <Beam/Reactors/TimerReactor.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
-#include <Beam/TimeService/ToLocalTime.hpp>
+#include <Beam/TimeService/to_local_time.hpp>
 #include <Beam/Utilities/DateTime.hpp>
 #include <Beam/Utilities/Math.hpp>
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
@@ -502,8 +502,8 @@ namespace {
         const std::string& path) {
 
       // TODO
-      if constexpr(std::is_same_v<T, Beam::Queries::Sequence> ||
-          std::is_same_v<T, Beam::Queries::Range> ||
+      if constexpr(std::is_same_v<T, Beam::Sequence> ||
+          std::is_same_v<T, Beam::Range> ||
           std::is_same_v<T, TimeInForce>) {
         return Aspen::none<T>();
       } else {
@@ -1146,8 +1146,8 @@ Translation Spire::Translate(
 
 CanvasNodeTranslationVisitor::CanvasNodeTranslationVisitor(
   Ref<CanvasNodeTranslationContext> context, Ref<const CanvasNode> node)
-  : m_context(context.Get()),
-    m_node(node.Get()) {}
+  : m_context(context.get()),
+    m_node(node.get()) {}
 
 Translation CanvasNodeTranslationVisitor::Translate() {
   return InternalTranslation(*m_node);
@@ -1190,7 +1190,7 @@ void CanvasNodeTranslationVisitor::Visit(const BboQuoteQueryNode& node) {
   auto side =
     InternalTranslation(node.GetChildren()[1]).Extract<Aspen::Box<Side>>();
   auto range = InternalTranslation(
-    node.GetChildren()[2]).Extract<Aspen::Box<Beam::Queries::Range>>();
+    node.GetChildren()[2]).Extract<Aspen::Box<Beam::Range>>();
   auto marketDataClient =
     &m_context->GetUserProfile().GetClients().get_market_data_client();
   m_translation = Aspen::lift(QuoteToRecordConverter{},
@@ -1198,7 +1198,7 @@ void CanvasNodeTranslationVisitor::Visit(const BboQuoteQueryNode& node) {
       [] (Side side, const SequencedBboQuote& quote) {
         return pick(side, quote->m_ask, quote->m_bid);
       }, std::move(side), Aspen::override(Aspen::lift(
-      [=] (const Security& security, const Beam::Queries::Range& range) {
+      [=] (const Security& security, const Beam::Range& range) {
         auto query = SecurityMarketDataQuery();
         query.SetIndex(security);
         query.SetRange(range);
@@ -1459,12 +1459,12 @@ void CanvasNodeTranslationVisitor::Visit(const OrderImbalanceQueryNode& node) {
   auto market = InternalTranslation(
     node.GetChildren()[0]).Extract<Aspen::Box<Venue>>();
   auto range = InternalTranslation(
-    node.GetChildren()[1]).Extract<Aspen::Box<Beam::Queries::Range>>();
+    node.GetChildren()[1]).Extract<Aspen::Box<Beam::Range>>();
   auto marketDataClient =
     &m_context->GetUserProfile().GetClients().get_market_data_client();
   m_translation = Aspen::lift(OrderImbalanceToRecordConverter{},
     Aspen::override(Aspen::lift(
-    [=] (Venue venue, const Beam::Queries::Range& range) {
+    [=] (Venue venue, const Beam::Range& range) {
       auto query = VenueMarketDataQuery();
       query.SetIndex(venue);
       query.SetRange(range);
@@ -1649,12 +1649,12 @@ void CanvasNodeTranslationVisitor::Visit(const TimeAndSaleQueryNode& node) {
   auto security =
     InternalTranslation(node.GetChildren()[0]).Extract<Aspen::Box<Security>>();
   auto range = InternalTranslation(
-    node.GetChildren()[1]).Extract<Aspen::Box<Beam::Queries::Range>>();
+    node.GetChildren()[1]).Extract<Aspen::Box<Beam::Range>>();
   auto marketDataClient =
     &m_context->GetUserProfile().GetClients().get_market_data_client();
   m_translation = Aspen::lift(TimeAndSaleToRecordConverter{}, Aspen::override(
     Aspen::lift(
-    [=] (const Security& security, const Beam::Queries::Range& range) {
+    [=] (const Security& security, const Beam::Range& range) {
       auto query = SecurityMarketDataQuery();
       query.SetIndex(security);
       query.SetRange(range);

@@ -73,7 +73,7 @@ namespace {
       }
       try {
         auto reader = BasicIStreamReader<std::ifstream>(
-          Initialize(i->path(), std::ios::binary));
+          init(i->path(), std::ios::binary));
         auto buffer = SharedBuffer();
         reader.Read(Store(buffer));
         auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
@@ -140,7 +140,7 @@ namespace {
     auto warnings = QString();
     try {
       auto reader = BasicIStreamReader<std::ifstream>(
-        Initialize(catalogTabPath, std::ios::binary));
+        init(catalogTabPath, std::ios::binary));
       auto buffer = SharedBuffer();
       reader.Read(Store(buffer));
       auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
@@ -189,7 +189,7 @@ namespace {
       sender.SetSink(Ref(buffer));
       sender.Shuttle(tabs);
       auto writer = BasicOStreamWriter<std::ofstream>(
-        Initialize(catalogTabPath, std::ios::binary));
+        init(catalogTabPath, std::ios::binary));
       writer.Write(buffer);
     } catch(const std::exception&) {
       QMessageBox::warning(nullptr, QObject::tr("Warning"),

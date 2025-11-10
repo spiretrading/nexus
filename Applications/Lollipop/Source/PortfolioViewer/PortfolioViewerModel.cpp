@@ -24,13 +24,13 @@ PortfolioViewerModel::TotalEntry::TotalEntry()
 
 PortfolioViewerModel::PortfolioViewerModel(Ref<UserProfile> userProfile,
     Ref<PortfolioSelectionModel> selectionModel)
-    : m_userProfile(userProfile.Get()),
+    : m_userProfile(userProfile.get()),
       m_totalCurrency(DefaultCurrencies::CAD),
       m_exchangeRates(&m_userProfile->GetExchangeRates()),
-      m_selectionModel(selectionModel.Get()),
+      m_selectionModel(selectionModel.get()),
       m_displayCount(0) {
   m_userProfile->GetClients().get_risk_client().
-    get_risk_portfolio_update_publisher().Monitor(
+    get_risk_portfolio_update_publisher().monitor(
       m_eventHandler.get_slot<RiskInventoryEntry>(std::bind_front(
         &PortfolioViewerModel::OnRiskPortfolioInventoryUpdate, this)));
   connect(m_selectionModel, &PortfolioSelectionModel::dataChanged, this,

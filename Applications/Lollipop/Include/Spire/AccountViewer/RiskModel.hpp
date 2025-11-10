@@ -20,7 +20,7 @@ namespace Spire {
         \param account The account whose risk is represented by this model.
       */
       RiskModel(Beam::Ref<UserProfile> userProfile,
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::DirectoryEntry& account);
 
       //! Loads the account's risk model.
       void Load();
@@ -29,7 +29,7 @@ namespace Spire {
       void Commit();
 
       //! Returns the represented account's entry.
-      const Beam::ServiceLocator::DirectoryEntry& GetAccount() const;
+      const Beam::DirectoryEntry& GetAccount() const;
 
       //! Returns the account's RiskParameters.
       const Nexus::RiskParameters& GetRiskParameters() const;
@@ -39,7 +39,7 @@ namespace Spire {
 
     private:
       UserProfile* m_userProfile;
-      Beam::ServiceLocator::DirectoryEntry m_account;
+      Beam::DirectoryEntry m_account;
       Nexus::RiskParameters m_riskParameters;
   };
 }

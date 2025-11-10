@@ -148,9 +148,9 @@ TEST_SUITE("Translation") {
     auto task = std::make_shared<Task>(*orderNode, DirectoryEntry(),
       Ref(environment.m_userProfile));
     auto submittedOrders = std::make_shared<Queue<std::shared_ptr<Order>>>();
-    task->GetContext().GetOrderPublisher().Monitor(submittedOrders);
+    task->GetContext().GetOrderPublisher().monitor(submittedOrders);
     auto taskState = std::make_shared<Queue<Task::StateEntry>>();
-    task->GetPublisher().Monitor(taskState);
+    task->GetPublisher().monitor(taskState);
     task->Execute();
     REQUIRE(taskState->Pop().m_state == Task::State::INITIALIZING);
     auto submittedOrder1 = submittedOrders->Pop();
@@ -166,7 +166,7 @@ TEST_SUITE("Translation") {
     auto receivedOrder1 = receivedOrders->Pop();
     environment.m_environment.accept(*receivedOrder1);
     auto executionReports = std::make_shared<Queue<ExecutionReport>>();
-    submittedOrder1->get_publisher().Monitor(executionReports);
+    submittedOrder1->get_publisher().monitor(executionReports);
     REQUIRE(executionReports->Pop().m_status == OrderStatus::PENDING_NEW);
     REQUIRE(executionReports->Pop().m_status == OrderStatus::NEW);
     task->Cancel();
@@ -184,7 +184,7 @@ TEST_SUITE("Translation") {
     auto task = std::make_shared<Task>(
       *spawnNode, DirectoryEntry(), Ref(environment.m_userProfile));
     auto taskState = std::make_shared<Queue<Task::StateEntry>>();
-    task->GetPublisher().Monitor(taskState);
+    task->GetPublisher().monitor(taskState);
     task->Execute();
     REQUIRE(taskState->Pop().m_state == Task::State::INITIALIZING);
     REQUIRE(taskState->Pop().m_state == Task::State::ACTIVE);

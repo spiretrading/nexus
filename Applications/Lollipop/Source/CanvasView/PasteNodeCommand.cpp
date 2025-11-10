@@ -16,7 +16,7 @@ using namespace std;
 
 PasteNodeCommand::PasteNodeCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& coordinate)
-    : m_view(view.Get()),
+    : m_view(view.get()),
       m_coordinate(coordinate) {}
 
 PasteNodeCommand::~PasteNodeCommand() {}

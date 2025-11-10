@@ -24,7 +24,7 @@ namespace Spire {
        */
       CanvasNodeTranslationContext(Beam::Ref<UserProfile> userProfile,
         Beam::Ref<Executor> executor,
-        Beam::ServiceLocator::DirectoryEntry executingAccount);
+        Beam::DirectoryEntry executingAccount);
 
       /**
        * Constructs a CanvasNodeTranslationContext from a parent context.
@@ -46,7 +46,7 @@ namespace Spire {
       Executor& GetExecutor();
 
       /** Returns the executing account. */
-      const Beam::ServiceLocator::DirectoryEntry& GetExecutingAccount() const;
+      const Beam::DirectoryEntry& GetExecutingAccount() const;
 
       /**
        * Returns the publisher for all orders submitted by the translated
@@ -90,7 +90,7 @@ namespace Spire {
       mutable boost::mutex m_mutex;
       CanvasNodeTranslationContext* m_parent;
       UserProfile* m_userProfile;
-      Beam::ServiceLocator::DirectoryEntry m_executingAccount;
+      Beam::DirectoryEntry m_executingAccount;
       Executor* m_executor;
       std::shared_ptr<Beam::SequencePublisher<std::shared_ptr<Nexus::Order>>>
         m_orderPublisher;

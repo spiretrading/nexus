@@ -45,18 +45,15 @@ namespace Spire {
       virtual std::unique_ptr<CanvasNode> Reset() const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
-      std::string m_referent;
+      friend struct Beam::DataShuttle;
 
-      DestinationNode(Beam::Serialization::ReceiveBuilder);
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void DestinationNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    ValueNode<DestinationType>::Shuttle(shuttle, version);
-    shuttle.Shuttle("referent", m_referent);
+  template<Beam::IsShuttle S>
+  void DestinationNode::shuttle(S& shuttle, unsigned int version) {
+    ValueNode<DestinationType>::shuttle(shuttle, version);
   }
 }
 

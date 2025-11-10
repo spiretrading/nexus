@@ -26,7 +26,7 @@ namespace Spire {
         \param flags Qt flags passed to the parent widget.
       */
       GroupDirectoryItemWidget(Beam::Ref<UserProfile> userProfile,
-        const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
+        const Beam::DirectoryEntry& directoryEntry,
         std::shared_ptr<ComplianceModel> complianceModel,
         QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 

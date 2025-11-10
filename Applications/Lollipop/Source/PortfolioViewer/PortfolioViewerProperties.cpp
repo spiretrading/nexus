@@ -56,7 +56,7 @@ void PortfolioViewerProperties::Load(Out<UserProfile> userProfile) {
   PortfolioViewerFileSettings settings;
   try {
     BasicIStreamReader<ifstream> reader(
-      Initialize(portfolioViewerFilePath, ios::binary));
+      init(portfolioViewerFilePath, ios::binary));
     SharedBuffer buffer;
     reader.Read(Store(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
@@ -93,7 +93,7 @@ void PortfolioViewerProperties::Save(const UserProfile& userProfile) {
       userProfile.GetInitialPortfolioViewerWindowSettings();
     sender.Shuttle(settings);
     BasicOStreamWriter<ofstream> writer(
-      Initialize(portfolioViewerFilePath, ios::binary));
+      init(portfolioViewerFilePath, ios::binary));
     writer.Write(buffer);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),

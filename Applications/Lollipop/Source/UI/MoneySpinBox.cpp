@@ -27,7 +27,7 @@ MoneySpinBox::MoneySpinBox(QWidget* parent)
 MoneySpinBox::MoneySpinBox(Ref<UserProfile> userProfile,
     const MoneyNode& node, QWidget* parent)
     : QDoubleSpinBox(parent),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   setMaximum(numeric_limits<double>::max());
   setMinimum(numeric_limits<double>::lowest());
   setCorrectionMode(QAbstractSpinBox::CorrectToPreviousValue);

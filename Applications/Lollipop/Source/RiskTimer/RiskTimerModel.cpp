@@ -9,10 +9,10 @@ using namespace boost::signals2;
 using namespace Spire;
 
 RiskTimerModel::RiskTimerModel(Ref<UserProfile> userProfile)
-    : m_userProfile(userProfile.Get()),
+    : m_userProfile(userProfile.get()),
       m_timeRemaining(seconds(0)),
       m_timeRemainingTimer(seconds(1)) {
-  m_timeRemainingTimer.GetPublisher().Monitor(
+  m_timeRemainingTimer.GetPublisher().monitor(
     m_eventHandler.get_slot<Timer::Result>(
       std::bind_front(&RiskTimerModel::OnTimeRemainingExpired, this)));
   m_timeRemainingTimer.Start();

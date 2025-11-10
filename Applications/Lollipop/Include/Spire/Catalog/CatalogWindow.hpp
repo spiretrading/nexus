@@ -135,8 +135,8 @@ namespace Spire {
       QWidget* m_newTab;
       boost::signals2::scoped_connection m_tabAddedConnection;
       boost::signals2::scoped_connection m_tabRemovedConnection;
-      Beam::SignalHandling::ConnectionGroup m_viewConnections;
-      Beam::SignalHandling::ConnectionGroup m_modelConnections;
+      Beam::ConnectionGroup m_viewConnections;
+      Beam::ConnectionGroup m_modelConnections;
 
       void Initialize();
       void SetDefaultSearchName(const CanvasNode& node);

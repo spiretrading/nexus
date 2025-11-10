@@ -41,14 +41,14 @@ ValueListInputWidget::ValueListInputWidget(QWidget* parent,
 ValueListInputWidget::ValueListInputWidget(Ref<UserProfile> userProfile,
     const type_info& type, QWidget* parent, Qt::WindowFlags flags)
     : ValueListInputWidget{parent, flags} {
-  Initialize(Ref(userProfile), type);
+  init(Ref(userProfile), type);
 }
 
 ValueListInputWidget::~ValueListInputWidget() {}
 
 void ValueListInputWidget::Initialize(Ref<UserProfile> userProfile,
     const type_info& type) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_type = &type;
   m_itemDelegate = std::make_unique<CustomVariantItemDelegate>(
     Ref(*m_userProfile));

@@ -16,7 +16,7 @@ PortfolioSelectionModel::PortfolioSelectionModel(
     Ref<UserProfile> userProfile,
     const PortfolioViewerProperties& properties, QObject* parent)
     : QAbstractItemModel(parent),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   for(size_t i = 0; i < SELECTION_TYPES_COUNT; ++i) {
     m_roots[i] = createIndex(i, 0, -1);
   }

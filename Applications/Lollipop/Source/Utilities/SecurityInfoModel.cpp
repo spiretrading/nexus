@@ -10,7 +10,7 @@ using namespace Spire;
 using namespace Spire::UI;
 
 SecurityInfoModel::SecurityInfoModel(Ref<UserProfile> userProfile)
-  : m_userProfile(userProfile.Get()) {}
+  : m_userProfile(userProfile.get()) {}
 
 void SecurityInfoModel::Search(const std::string& prefix) {
   if(prefix.empty()) {
