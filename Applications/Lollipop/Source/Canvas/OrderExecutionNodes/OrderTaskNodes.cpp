@@ -26,7 +26,7 @@ unique_ptr<SingleOrderTaskNode> Spire::GetAskOrderTaskNode() {
   builder.SetReadOnly(*baseNode.FindChild("side"), true);
   builder.SetVisible(*baseNode.FindChild("side"), false);
   auto askOrderTaskNode =
-    StaticCast<std::unique_ptr<SingleOrderTaskNode>>(builder.Make());
+    static_pointer_cast<SingleOrderTaskNode>(builder.Make());
   return askOrderTaskNode;
 }
 
@@ -38,7 +38,7 @@ unique_ptr<SingleOrderTaskNode> Spire::GetBidOrderTaskNode() {
   builder.SetReadOnly(*baseNode.FindChild("side"), true);
   builder.SetVisible(*baseNode.FindChild("side"), false);
   auto bidOrderTaskNode =
-    StaticCast<std::unique_ptr<SingleOrderTaskNode>>(builder.Make());
+    static_pointer_cast<SingleOrderTaskNode>(builder.Make());
   return bidOrderTaskNode;
 }
 
@@ -50,7 +50,7 @@ unique_ptr<SingleOrderTaskNode> Spire::GetLimitOrderTaskNode() {
   builder.SetReadOnly(*baseNode.FindChild("type"), true);
   builder.SetVisible(*baseNode.FindChild("type"), false);
   auto limitOrderTaskNode =
-    StaticCast<std::unique_ptr<SingleOrderTaskNode>>(builder.Make());
+    static_pointer_cast<SingleOrderTaskNode>(builder.Make());
   return limitOrderTaskNode;
 }
 
@@ -63,7 +63,7 @@ unique_ptr<SingleOrderTaskNode> Spire::GetLimitAskOrderTaskNode() {
   builder.SetReadOnly(*baseNode->FindChild("side"), true);
   builder.SetVisible(*baseNode->FindChild("side"), false);
   auto limitAskOrderTaskNode =
-    StaticCast<std::unique_ptr<SingleOrderTaskNode>>(builder.Make());
+    static_pointer_cast<SingleOrderTaskNode>(builder.Make());
   return limitAskOrderTaskNode;
 }
 
@@ -76,7 +76,7 @@ unique_ptr<SingleOrderTaskNode> Spire::GetLimitBidOrderTaskNode() {
   builder.SetReadOnly(*baseNode->FindChild("side"), true);
   builder.SetVisible(*baseNode->FindChild("side"), false);
   auto limitBidOrderTaskNode =
-    StaticCast<std::unique_ptr<SingleOrderTaskNode>>(builder.Make());
+    static_pointer_cast<SingleOrderTaskNode>(builder.Make());
   return limitBidOrderTaskNode;
 }
 
@@ -90,7 +90,7 @@ unique_ptr<SingleOrderTaskNode> Spire::GetMarketOrderTaskNode() {
   builder.SetReadOnly(*baseNode.FindChild("price"), true);
   builder.SetVisible(*baseNode.FindChild("price"), false);
   auto marketOrderTaskNode =
-    StaticCast<std::unique_ptr<SingleOrderTaskNode>>(builder.Make());
+    static_pointer_cast<SingleOrderTaskNode>(builder.Make());
   return marketOrderTaskNode;
 }
 
@@ -103,7 +103,7 @@ unique_ptr<SingleOrderTaskNode> Spire::GetMarketAskOrderTaskNode() {
   builder.SetReadOnly(*baseNode->FindChild("side"), true);
   builder.SetVisible(*baseNode->FindChild("side"), false);
   auto marketAskOrderTaskNode =
-    StaticCast<std::unique_ptr<SingleOrderTaskNode>>(builder.Make());
+    static_pointer_cast<SingleOrderTaskNode>(builder.Make());
   return marketAskOrderTaskNode;
 }
 
@@ -116,7 +116,7 @@ unique_ptr<SingleOrderTaskNode> Spire::GetMarketBidOrderTaskNode() {
   builder.SetReadOnly(*baseNode->FindChild("side"), true);
   builder.SetVisible(*baseNode->FindChild("side"), false);
   auto marketBidOrderTaskNode =
-    StaticCast<std::unique_ptr<SingleOrderTaskNode>>(builder.Make());
+    static_pointer_cast<SingleOrderTaskNode>(builder.Make());
   return marketBidOrderTaskNode;
 }
 
@@ -133,7 +133,7 @@ unique_ptr<SingleOrderTaskNode> Spire::GetPeggedOrderTaskNode(
       LinkedNode::SetReferent(OptionalPriceNode(), "security"));
   }
   auto peggedOrderTaskNode =
-    StaticCast<std::unique_ptr<SingleOrderTaskNode>>(builder.Make());
+    static_pointer_cast<SingleOrderTaskNode>(builder.Make());
   return peggedOrderTaskNode;
 }
 
@@ -147,7 +147,7 @@ unique_ptr<SingleOrderTaskNode> Spire::GetPeggedAskOrderTaskNode(
   builder.SetReadOnly(*baseNode->FindChild("side"), true);
   builder.SetVisible(*baseNode->FindChild("side"), false);
   auto peggedAskOrderTaskNode =
-    StaticCast<std::unique_ptr<SingleOrderTaskNode>>(builder.Make());
+    static_pointer_cast<SingleOrderTaskNode>(builder.Make());
   return peggedAskOrderTaskNode;
 }
 
@@ -161,7 +161,7 @@ unique_ptr<SingleOrderTaskNode> Spire::GetPeggedBidOrderTaskNode(
   builder.SetReadOnly(*baseNode->FindChild("side"), true);
   builder.SetVisible(*baseNode->FindChild("side"), false);
   auto peggedBidOrderTaskNode =
-    StaticCast<std::unique_ptr<SingleOrderTaskNode>>(builder.Make());
+    static_pointer_cast<SingleOrderTaskNode>(builder.Make());
   return peggedBidOrderTaskNode;
 }
 
@@ -171,20 +171,20 @@ unique_ptr<SingleOrderTaskNode> Spire::MakeOrderTaskNodeFromOrderFields(
     SingleOrderTaskNode::SECURITY_PROPERTY, make_unique<SecurityNode>(
       orderFields.m_security, userProfile.GetVenueDatabase()))->Replace(
       SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
-      make_unique<OrderTypeNode>(orderFields.m_type))->Replace(
+      std::make_unique<OrderTypeNode>(orderFields.m_type))->Replace(
       SingleOrderTaskNode::SIDE_PROPERTY,
-      make_unique<SideNode>(orderFields.m_side))->Replace(
+      std::make_unique<SideNode>(orderFields.m_side))->Replace(
       SingleOrderTaskNode::DESTINATION_PROPERTY,
-      make_unique<DestinationNode>(orderFields.m_destination))->Replace(
+      std::make_unique<DestinationNode>(orderFields.m_destination))->Replace(
       SingleOrderTaskNode::QUANTITY_PROPERTY,
-      make_unique<IntegerNode>(orderFields.m_quantity))->Replace(
+      std::make_unique<IntegerNode>(orderFields.m_quantity))->Replace(
       SingleOrderTaskNode::PRICE_PROPERTY,
-      make_unique<MoneyNode>(orderFields.m_price))->Replace(
+      std::make_unique<MoneyNode>(orderFields.m_price))->Replace(
       SingleOrderTaskNode::CURRENCY_PROPERTY,
-      make_unique<CurrencyNode>(orderFields.m_currency,
+      std::make_unique<CurrencyNode>(orderFields.m_currency,
       userProfile.GetCurrencyDatabase().from(
       orderFields.m_currency).m_code.get_data()))->Replace(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
-      make_unique<TimeInForceNode>(orderFields.m_time_in_force));
-  return StaticCast<std::unique_ptr<SingleOrderTaskNode>>(std::move(node));
+      std::make_unique<TimeInForceNode>(orderFields.m_time_in_force));
+  return static_pointer_cast<SingleOrderTaskNode>(std::move(node));
 }

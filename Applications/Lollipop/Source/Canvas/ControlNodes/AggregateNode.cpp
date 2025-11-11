@@ -85,5 +85,3 @@ void AggregateNode::Apply(CanvasNodeVisitor& visitor) const {
 std::unique_ptr<CanvasNode> AggregateNode::Clone() const {
   return std::make_unique<AggregateNode>(*this);
 }
-
-AggregateNode::AggregateNode() {}

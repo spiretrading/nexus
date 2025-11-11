@@ -551,7 +551,7 @@ void CanvasWindow::OnSaveAction() {
 
 void CanvasWindow::OnSaveAsAction() {
   const CanvasNode& saveNode = *m_ui->m_canvasTable->GetCurrentNode();
-  CatalogWindow catalog(Ref(*m_userProfile), saveNode, false, this);
+  CatalogWindow catalog(Ref(*m_userProfile), saveNode, this);
   if(catalog.exec() == QDialog::Rejected) {
     return;
   }

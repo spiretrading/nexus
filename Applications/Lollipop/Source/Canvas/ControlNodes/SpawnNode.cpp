@@ -45,5 +45,3 @@ void SpawnNode::Apply(CanvasNodeVisitor& visitor) const {
 std::unique_ptr<CanvasNode> SpawnNode::Clone() const {
   return std::make_unique<SpawnNode>(*this);
 }
-
-SpawnNode::SpawnNode() {}

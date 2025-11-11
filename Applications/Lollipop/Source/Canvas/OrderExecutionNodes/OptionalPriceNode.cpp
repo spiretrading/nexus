@@ -61,9 +61,9 @@ unique_ptr<CanvasNode> OptionalPriceNode::SetReferent(
 }
 
 unique_ptr<CanvasNode> OptionalPriceNode::Clone() const {
-  return make_unique<OptionalPriceNode>(*this);
+  return std::make_unique<OptionalPriceNode>(*this);
 }
 
 unique_ptr<CanvasNode> OptionalPriceNode::Reset() const {
-  return make_unique<OptionalPriceNode>();
+  return std::make_unique<OptionalPriceNode>();
 }

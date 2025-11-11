@@ -23,5 +23,3 @@ void OrderImbalanceQueryNode::Apply(CanvasNodeVisitor& visitor) const {
 unique_ptr<CanvasNode> OrderImbalanceQueryNode::Clone() const {
   return make_unique<OrderImbalanceQueryNode>(*this);
 }
-
-OrderImbalanceQueryNode::OrderImbalanceQueryNode() {}

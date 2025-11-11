@@ -25,5 +25,3 @@ void BboQuoteQueryNode::Apply(CanvasNodeVisitor& visitor) const {
 unique_ptr<CanvasNode> BboQuoteQueryNode::Clone() const {
   return make_unique<BboQuoteQueryNode>(*this);
 }
-
-BboQuoteQueryNode::BboQuoteQueryNode() {}

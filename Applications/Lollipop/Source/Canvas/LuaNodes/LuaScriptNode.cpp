@@ -53,5 +53,3 @@ void LuaScriptNode::Apply(CanvasNodeVisitor& visitor) const {
 std::unique_ptr<CanvasNode> LuaScriptNode::Clone() const {
   return std::make_unique<LuaScriptNode>(*this);
 }
-
-LuaScriptNode::LuaScriptNode() {}

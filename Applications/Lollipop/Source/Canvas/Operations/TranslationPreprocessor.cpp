@@ -46,8 +46,7 @@ void TranslationPreprocessor::Visit(const CanvasNode& node) {
 }
 
 void TranslationPreprocessor::Visit(const FoldNode& node) {
-  auto translatedNode = StaticCast<std::unique_ptr<FoldNode>>(
-    DefaultTranslation(node));
+  auto translatedNode = static_pointer_cast<FoldNode>(DefaultTranslation(node));
   if(translatedNode == nullptr) {
     translatedNode = CanvasNode::Clone(node);
   }

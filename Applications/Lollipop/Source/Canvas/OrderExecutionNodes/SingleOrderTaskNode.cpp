@@ -113,5 +113,3 @@ void SingleOrderTaskNode::Apply(CanvasNodeVisitor& visitor) const {
 unique_ptr<CanvasNode> SingleOrderTaskNode::Clone() const {
   return make_unique<SingleOrderTaskNode>(*this);
 }
-
-SingleOrderTaskNode::SingleOrderTaskNode(ReceiveBuilder) {}

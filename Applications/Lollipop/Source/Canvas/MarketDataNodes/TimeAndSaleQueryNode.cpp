@@ -23,5 +23,3 @@ void TimeAndSaleQueryNode::Apply(CanvasNodeVisitor& visitor) const {
 unique_ptr<CanvasNode> TimeAndSaleQueryNode::Clone() const {
   return make_unique<TimeAndSaleQueryNode>(*this);
 }
-
-TimeAndSaleQueryNode::TimeAndSaleQueryNode() {}
