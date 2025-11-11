@@ -21,7 +21,6 @@
 #include "ui_PortfolioViewerWindow.h"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
@@ -121,7 +120,7 @@ void PortfolioViewerWindow::SetProperties(
 }
 
 unique_ptr<WindowSettings> PortfolioViewerWindow::GetWindowSettings() const {
-  m_selectionModel->UpdateProperties(Store(m_properties));
+  m_selectionModel->UpdateProperties(out(m_properties));
   auto settings = std::make_unique<PortfolioViewerWindowSettings>(*this);
   return std::move(settings);
 }
@@ -132,7 +131,7 @@ void PortfolioViewerWindow::showEvent(QShowEvent* event) {
 }
 
 void PortfolioViewerWindow::closeEvent(QCloseEvent* event) {
-  m_selectionModel->UpdateProperties(Store(m_properties));
+  m_selectionModel->UpdateProperties(out(m_properties));
   auto settings = std::make_unique<PortfolioViewerWindowSettings>(*this);
   m_userProfile->SetInitialPortfolioViewerWindowSettings(*settings);
   m_userProfile->SetDefaultPortfolioViewerProperties(m_properties);

@@ -1,5 +1,5 @@
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
-#include <Beam/TimeService/to_local_time.hpp>
+#include <Beam/TimeService/ToLocalTime.hpp>
 #include <QTimeEdit>
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 

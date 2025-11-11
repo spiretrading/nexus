@@ -10,7 +10,7 @@
 #include <Beam/Reactors/QueueReactor.hpp>
 #include <Beam/Reactors/TimerReactor.hpp>
 #include <Beam/Threading/LiveTimer.hpp>
-#include <Beam/TimeService/to_local_time.hpp>
+#include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/Utilities/DateTime.hpp>
 #include <Beam/Utilities/Math.hpp>
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
@@ -1200,9 +1200,9 @@ void CanvasNodeTranslationVisitor::Visit(const BboQuoteQueryNode& node) {
       }, std::move(side), Aspen::override(Aspen::lift(
       [=] (const Security& security, const Beam::Range& range) {
         auto query = SecurityMarketDataQuery();
-        query.SetIndex(security);
-        query.SetRange(range);
-        query.SetSnapshotLimit(SnapshotLimit::Unlimited());
+        query.set_index(security);
+        query.set_range(range);
+        query.set_snapshot_limit(SnapshotLimit::Unlimited());
         auto queue = std::make_shared<Queue<SequencedBboQuote>>();
         marketDataClient->query(query, queue);
         return Aspen::Shared(QueueReactor(queue));
@@ -1466,9 +1466,9 @@ void CanvasNodeTranslationVisitor::Visit(const OrderImbalanceQueryNode& node) {
     Aspen::override(Aspen::lift(
     [=] (Venue venue, const Beam::Range& range) {
       auto query = VenueMarketDataQuery();
-      query.SetIndex(venue);
-      query.SetRange(range);
-      query.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      query.set_index(venue);
+      query.set_range(range);
+      query.set_snapshot_limit(SnapshotLimit::Unlimited());
       auto queue = std::make_shared<Queue<SequencedOrderImbalance>>();
       marketDataClient->query(query, queue);
       return Aspen::Shared(QueueReactor(queue));
@@ -1656,9 +1656,9 @@ void CanvasNodeTranslationVisitor::Visit(const TimeAndSaleQueryNode& node) {
     Aspen::lift(
     [=] (const Security& security, const Beam::Range& range) {
       auto query = SecurityMarketDataQuery();
-      query.SetIndex(security);
-      query.SetRange(range);
-      query.SetSnapshotLimit(SnapshotLimit::Unlimited());
+      query.set_index(security);
+      query.set_range(range);
+      query.set_snapshot_limit(SnapshotLimit::Unlimited());
       auto queue = std::make_shared<Queue<SequencedTimeAndSale>>();
       marketDataClient->query(query, queue);
       return Aspen::Shared(QueueReactor(queue));

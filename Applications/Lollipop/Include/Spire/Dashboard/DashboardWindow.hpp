@@ -3,7 +3,7 @@
 #include <memory>
 #include <unordered_map>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Queues/Queues.hpp>
+#include <Beam/Queues/StateQueue.hpp>
 #include <boost/optional/optional.hpp>
 #include <QWidget>
 #include "Nexus/Definitions/BboQuote.hpp"

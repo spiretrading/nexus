@@ -42,7 +42,7 @@ ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
   m_ui->m_chart->Initialize(
     Ref(*m_userProfile), ChartPlotView::Properties::GetDefault());
   auto currentTime =
-    m_userProfile->GetClients().get_time_client().GetTime();
+    m_userProfile->GetClients().get_time_client().get_time();
   auto xAxisParameters = ChartPlotView::AxisParameters(
     DateTimeType::GetInstance(), ChartValue(currentTime - hours(1)),
     ChartValue(currentTime + hours(1)), ChartValue(minutes(1)));
@@ -382,5 +382,5 @@ void ChartWindow::OnLinkActionTriggered(QAction* action) {
   if(!linkAction) {
     return;
   }
-  linkAction->Execute(Store(*this));
+  linkAction->Execute(out(*this));
 }

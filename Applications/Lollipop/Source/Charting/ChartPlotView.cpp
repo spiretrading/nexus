@@ -1,5 +1,5 @@
 #include "Spire/Charting/ChartPlotView.hpp"
-#include <Beam/TimeService/to_local_time.hpp>
+#include <Beam/TimeService/ToLocalTime.hpp>
 #include <QMouseEvent>
 #include <QPainter>
 #include "Spire/Canvas/Types/DateTimeType.hpp"
@@ -11,7 +11,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -122,14 +121,14 @@ void ChartPlotView::SetYAxisParameters(const AxisParameters& parameters) {
 
 void ChartPlotView::Plot(const std::shared_ptr<ChartPlot>& plot) {
   m_plots.push_back(plot);
-  m_plotConnections.AddConnection(plot->ConnectUpdateSignal(
+  m_plotConnections.add(plot->ConnectUpdateSignal(
     std::bind(&ChartPlotView::OnPlotUpdate, this)));
   update();
 }
 
 void ChartPlotView::Clear() {
   m_plots.clear();
-  m_plotConnections.DisconnectAll();
+  m_plotConnections.disconnect();
   update();
 }
 
@@ -490,9 +489,9 @@ QString ChartPlotView::LoadLabel(ChartValue value,
       CanvasType::Compatibility::EQUAL) {
     auto v = value.ToMoney();
     if(v >= Money::ONE) {
-      v = floor(v, 3);
+      v = floor_to(v, Money::CENT / 1000);
     } else {
-      v = floor(v, 4);
+      v = floor_to(v, Money::CENT / 10000);
     }
     return QString::fromStdString(lexical_cast<string>(v));
   } else if(type.GetCompatibility(DateTimeType::GetInstance()) ==

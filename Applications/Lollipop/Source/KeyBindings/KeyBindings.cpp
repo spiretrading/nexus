@@ -14,8 +14,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace boost::uuids;
 using namespace Nexus;
@@ -531,12 +529,12 @@ void KeyBindings::Load(Out<UserProfile> userProfile) {
     BasicIStreamReader<ifstream> reader(
       init(keyBindingsFilePath, ios::binary));
     SharedBuffer buffer;
-    reader.Read(Store(buffer));
+    reader.read(out(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-    receiver.SetSource(Ref(buffer));
-    receiver.Shuttle(keyBindings);
+    receiver.set(Ref(buffer));
+    receiver.shuttle(keyBindings);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to load key bindings, using defaults."));
@@ -549,14 +547,14 @@ void KeyBindings::Save(const UserProfile& userProfile) {
   path keyBindingsFilePath = userProfile.GetProfilePath() / "key_bindings.dat";
   try {
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
     SharedBuffer buffer;
-    sender.SetSink(Ref(buffer));
-    sender.Shuttle(userProfile.GetKeyBindings());
+    sender.set(Ref(buffer));
+    sender.shuttle(userProfile.GetKeyBindings());
     BasicOStreamWriter<ofstream> writer(
       init(keyBindingsFilePath, ios::binary));
-    writer.Write(buffer);
+    writer.write(buffer);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to save key bindings."));

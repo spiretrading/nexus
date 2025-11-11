@@ -4,7 +4,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -39,7 +38,7 @@ void OrderImbalanceIndicatorModel::SetVenueFilter(Venue venue, bool filter) {
   for(auto& orderImbalance : m_orderImbalances) {
     if(IsDisplayed(orderImbalance)) {
       m_displayedIndicies.insert(std::pair(
-        std::pair(orderImbalance.GetIndex(), orderImbalance->m_security),
+        std::pair(orderImbalance.get_index(), orderImbalance->m_security),
         static_cast<int>(m_displayedOrderImbalances.size())));
       m_displayedOrderImbalances.push_back(orderImbalance);
     }
@@ -73,7 +72,7 @@ QVariant OrderImbalanceIndicatorModel::data(
     return static_cast<int>(Qt::AlignLeft | Qt::AlignVCenter);
   } else if(role == Qt::DisplayRole) {
     if(index.column() == VENUE_COLUMN) {
-      return QVariant::fromValue(orderImbalance.GetIndex());
+      return QVariant::fromValue(orderImbalance.get_index());
     } else if(index.column() == SECURITY_COLUMN) {
       return QVariant::fromValue(orderImbalance->m_security);
     } else if(index.column() == SIDE_COLUMN) {
@@ -118,7 +117,7 @@ QVariant OrderImbalanceIndicatorModel::headerData(int section,
 
 bool OrderImbalanceIndicatorModel::IsDisplayed(
     const VenueOrderImbalance& orderImbalance) const {
-  return m_properties.IsDisplayed(orderImbalance.GetIndex());
+  return m_properties.IsDisplayed(orderImbalance.get_index());
 }
 
 void OrderImbalanceIndicatorModel::Reset() {
@@ -138,9 +137,9 @@ void OrderImbalanceIndicatorModel::InitializePublishers() {
     m_userProfile->GetClients().get_time_client());
   for(auto& venue : m_userProfile->GetVenueDatabase().get_entries()) {
     auto orderImbalanceQuery = VenueMarketDataQuery();
-    orderImbalanceQuery.SetIndex(venue.m_venue);
-    orderImbalanceQuery.SetRange(timeRange);
-    orderImbalanceQuery.SetSnapshotLimit(SnapshotLimit::Unlimited());
+    orderImbalanceQuery.set_index(venue.m_venue);
+    orderImbalanceQuery.set_range(timeRange);
+    orderImbalanceQuery.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     m_userProfile->GetClients().get_market_data_client().query(
       orderImbalanceQuery, m_eventHandler->get_slot<OrderImbalance>(
         std::bind_front(&OrderImbalanceIndicatorModel::OnOrderImbalance, this,

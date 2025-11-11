@@ -474,7 +474,7 @@ void DashboardWidget::MoveColumn(const QMouseEvent& event) {
 
 void DashboardWidget::OnRowAddedSignal(const DashboardRow& row) {
   for(auto i = 0; i < row.GetSize(); ++i) {
-    m_cellUpdateConnections.AddConnection(
+    m_cellUpdateConnections.add(
       row.GetCell(i).ConnectUpdateSignal(std::bind_front(
         &DashboardWidget::OnCellUpdatedSignal, this, std::ref(row))));
   }

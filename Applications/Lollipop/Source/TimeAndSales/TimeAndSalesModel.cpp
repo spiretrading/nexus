@@ -4,8 +4,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -20,18 +18,18 @@ TimeAndSalesModel::TimeAndSalesModel(Ref<UserProfile> userProfile,
     return;
   }
   auto marketStartOfDay = venue_date_to_utc(security.get_venue(),
-    m_userProfile->GetClients().get_time_client().GetTime(),
+    m_userProfile->GetClients().get_time_client().get_time(),
     m_userProfile->GetVenueDatabase(), m_userProfile->GetTimeZoneDatabase());
   auto query = SecurityMarketDataQuery();
-  query.SetIndex(security);
-  query.SetRange(marketStartOfDay, Beam::Sequence::Last());
-  query.SetSnapshotLimit(SnapshotLimit::Type::TAIL, 50);
-  query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
+  query.set_index(security);
+  query.set_range(marketStartOfDay, Beam::Sequence::LAST);
+  query.set_snapshot_limit(SnapshotLimit::Type::TAIL, 50);
+  query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
   m_userProfile->GetClients().get_market_data_client().query(
     query, m_eventHandler.get_slot<TimeAndSale>(
       std::bind_front(&TimeAndSalesModel::OnTimeAndSale, this)));
-  auto bboQuery = MakeCurrentQuery(security);
-  bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
+  auto bboQuery = make_current_query(security);
+  bboQuery.set_interruption_policy(InterruptionPolicy::IGNORE_CONTINUE);
   m_userProfile->GetClients().get_market_data_client().query(
     bboQuery, m_eventHandler.get_slot<BboQuote>(
       std::bind_front(&TimeAndSalesModel::OnBbo, this)));

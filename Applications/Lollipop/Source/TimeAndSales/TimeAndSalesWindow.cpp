@@ -274,7 +274,7 @@ void TimeAndSalesWindow::OnContextMenu(const QPoint& position) {
     ExportModelAsCsv(*m_userProfile, *m_model, exportFile);
   } else if(auto linkAction =
       dynamic_cast<LinkSecurityContextAction*>(selectedAction)) {
-    linkAction->Execute(Store(*this));
+    linkAction->Execute(out(*this));
   }
 }
 

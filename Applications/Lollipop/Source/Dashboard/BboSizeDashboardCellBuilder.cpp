@@ -4,14 +4,13 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 
 BboSizeDashboardCellBuilder::BboSizeDashboardCellBuilder(Side side)
-    : m_side{side} {}
+  : m_side{side} {}
 
 std::unique_ptr<DashboardCell> BboSizeDashboardCellBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
@@ -20,15 +19,13 @@ std::unique_ptr<DashboardCell> BboSizeDashboardCellBuilder::Make(
     userProfile.get()->GetClients().get_market_data_client();
   auto baseQueue = std::make_shared<Queue<BboQuote>>();
   auto side = m_side;
-  std::shared_ptr<QueueReader<Quantity>> queue =
-    MakeConverterQueueReader(baseQueue,
-      [=] (const BboQuote& quote) {
-        return pick(side, quote.m_ask.m_size, quote.m_bid.m_size);
-      });
-  auto query = MakeCurrentQuery(security);
+  auto queue = std::static_pointer_cast<QueueReader<Quantity>>(
+    convert(baseQueue, [=] (const BboQuote& quote) {
+      return pick(side, quote.m_ask.m_size, quote.m_bid.m_size);
+    }));
+  auto query = make_current_query(security);
   marketDataClient.query(query, baseQueue);
-  auto last = std::make_unique<QueueDashboardCell>(queue);
-  return std::move(last);
+  return std::make_unique<QueueDashboardCell>(queue);
 }
 
 std::unique_ptr<DashboardCellBuilder> BboSizeDashboardCellBuilder::

@@ -75,7 +75,7 @@ void InteractionsWidget::Initialize(Ref<UserProfile> userProfile) {
   Update();
 }
 
-void InteractionsWidget::init(Ref<UserProfile> userProfile,
+void InteractionsWidget::Initialize(Ref<UserProfile> userProfile,
     const Security& security) {
   m_userProfile = userProfile.get();
   m_properties = m_userProfile->GetInteractionProperties();

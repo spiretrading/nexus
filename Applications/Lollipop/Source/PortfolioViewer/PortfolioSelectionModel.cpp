@@ -5,7 +5,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
@@ -22,8 +21,8 @@ PortfolioSelectionModel::PortfolioSelectionModel(
   }
   m_groups = m_userProfile->GetClients().get_administration_client().
     load_managed_trading_groups(
-      m_userProfile->GetClients().get_service_locator_client().GetAccount());
-  std::sort(m_groups.begin(), m_groups.end(), &DirectoryEntry::NameComparator);
+      m_userProfile->GetClients().get_service_locator_client().get_account());
+  std::sort(m_groups.begin(), m_groups.end(), &DirectoryEntry::name_comparator);
   if(properties.IsSelectingAllGroups()) {
     for(auto i = m_groups.begin(); i != m_groups.end(); ++i) {
       m_selectedGroups.insert(*i);
@@ -203,7 +202,7 @@ QVariant PortfolioSelectionModel::data(const QModelIndex& index,
     } else {
       boost::optional<SelectionVariant> selection = Find(index);
       if(selection.is_initialized()) {
-        return ApplyVariantLambdaVisitor<QVariant>(*selection,
+        return apply_variant_lambda_visitor(*selection,
           [&] (const DirectoryEntry& group) -> QVariant {
             if(m_selectedGroups.find(group) != m_selectedGroups.end()) {
               return Qt::Checked;
@@ -247,15 +246,15 @@ QVariant PortfolioSelectionModel::data(const QModelIndex& index,
     } else {
       auto selection = Find(index);
       if(selection.is_initialized()) {
-        return ApplyVariantLambdaVisitor<QVariant>(*selection,
+        return apply_variant_lambda_visitor(*selection,
           [] (const DirectoryEntry& group) {
-            return QString::fromStdString(group.m_name);
+            return QVariant(QString::fromStdString(group.m_name));
           },
           [] (const CurrencyDatabase::Entry& currency) {
             return QVariant::fromValue(currency.m_id);
           },
           [] (const VenueDatabase::Entry& venue) {
-            return QString::fromStdString(venue.m_display_name);
+            return QVariant(QString::fromStdString(venue.m_display_name));
           },
           [] (Side side) {
             return QVariant::fromValue(PositionSideToken(side));
@@ -320,7 +319,7 @@ bool PortfolioSelectionModel::setData(const QModelIndex& index,
     } else {
       auto selection = Find(index);
       if(selection.is_initialized()) {
-        ApplyVariantLambdaVisitor<void>(*selection,
+        apply_variant_lambda_visitor(*selection,
           [&] (const DirectoryEntry& group) {
             if(state == Qt::Checked) {
               m_selectedGroups.insert(group);

@@ -1,5 +1,6 @@
 #ifndef SPIRE_TIMEANDSALESCHARTPOINTSERIES_HPP
 #define SPIRE_TIMEANDSALESCHARTPOINTSERIES_HPP
+#include <Beam/Queues/Publisher.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Spire/Charting/Charting.hpp"

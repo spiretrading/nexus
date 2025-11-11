@@ -4,7 +4,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -22,7 +21,7 @@ RiskTimerMonitor::~RiskTimerMonitor() {
 
 void RiskTimerMonitor::Load() {
   auto account =
-    m_userProfile->GetClients().get_service_locator_client().GetAccount();
+    m_userProfile->GetClients().get_service_locator_client().get_account();
   m_userProfile->GetClients().get_administration_client().
     get_risk_state_publisher(account).monitor(
       m_eventHandler.get_slot<RiskState>(
@@ -46,7 +45,7 @@ void RiskTimerMonitor::OnRiskState(const RiskState& riskState) {
         m_model->SetTimeRemaining(seconds(0));
       } else {
         auto currentTime =
-          m_userProfile->GetClients().get_time_client().GetTime();
+          m_userProfile->GetClients().get_time_client().get_time();
         m_model->SetTimeRemaining(std::max(time_duration(seconds(0)),
           riskState.m_expiry - currentTime));
       }

@@ -1,5 +1,5 @@
 #include "Spire/InputWidgets/TimeInputWidget.hpp"
-#include <Beam/TimeService/to_local_time.hpp>
+#include <Beam/TimeService/ToLocalTime.hpp>
 #include <QApplication>
 #include <QKeyEvent>
 #include <QLineEdit>
@@ -9,7 +9,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;

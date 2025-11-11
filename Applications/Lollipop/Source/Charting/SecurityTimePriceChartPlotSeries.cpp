@@ -4,7 +4,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
 using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
@@ -38,17 +37,17 @@ SecurityTimePriceChartPlotSeries::SecurityTimePriceChartPlotSeries(
     return;
   }
   auto query = SecurityMarketDataQuery();
-  query.SetIndex(security);
-  query.SetRange(Beam::Range::RealTime());
-  query.SetSnapshotLimit(SnapshotLimit::Unlimited());
-  query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
+  query.set_index(security);
+  query.set_range(Beam::Range::REAL_TIME);
+  query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+  query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
   m_userProfile->GetClients().get_market_data_client().query(
     query, m_eventHandler.get_slot<TimeAndSale>(
       std::bind_front(&SecurityTimePriceChartPlotSeries::OnTimeAndSale, this)));
 }
 
 void SecurityTimePriceChartPlotSeries::Query(ChartValue start, ChartValue end) {
-  m_taskQueue.Push(
+  m_taskQueue.push(
     [=] {
       auto min = start.ToDateTime() - Normalize(start.ToDateTime(), m_interval);
       auto max = end.ToDateTime() +
@@ -73,15 +72,14 @@ void SecurityTimePriceChartPlotSeries::Query(ChartValue start, ChartValue end) {
 ChartValue SecurityTimePriceChartPlotSeries::LoadLastCurrentDomain() {
   auto timeAndSalesQueue = std::make_shared<Queue<TimeAndSale>>();
   auto query = SecurityMarketDataQuery();
-  query.SetIndex(m_security);
-  query.SetRange(
-    Beam::Sequence::First(), Beam::Sequence::Present());
-  query.SetSnapshotLimit(SnapshotLimit::Type::TAIL, 1);
-  query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
+  query.set_index(m_security);
+  query.set_range(Beam::Sequence::FIRST, Beam::Sequence::PRESENT);
+  query.set_snapshot_limit(SnapshotLimit::Type::TAIL, 1);
+  query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
   m_userProfile->GetClients().get_market_data_client().query(
     query, timeAndSalesQueue);
   try {
-    return ChartValue(timeAndSalesQueue->Pop().m_timestamp);
+    return ChartValue(timeAndSalesQueue->pop().m_timestamp);
   } catch(const std::exception&) {
     BOOST_THROW_EXCEPTION(std::runtime_error("Unable to load last point."));
   }

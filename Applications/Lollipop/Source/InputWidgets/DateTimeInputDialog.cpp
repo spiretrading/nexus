@@ -1,12 +1,11 @@
 #include "Spire/InputWidgets/DateTimeInputDialog.hpp"
-#include <Beam/TimeService/to_local_time.hpp>
+#include <Beam/TimeService/ToLocalTime.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
 #include "ui_DateTimeInputDialog.h"
 
 using namespace Beam;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
@@ -25,8 +24,7 @@ DateTimeInputDialog::DateTimeInputDialog(Ref<UserProfile> userProfile,
       m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
   m_ui->m_currentTimeDisplay->setTime(ToQTime(to_local_time(
-    m_userProfile->GetClients().get_time_client().GetTime()).
-    time_of_day()));
+    m_userProfile->GetClients().get_time_client().get_time()).time_of_day()));
   connect(m_ui->m_okButton, &QPushButton::clicked, this,
     &DateTimeInputDialog::accept);
   connect(m_ui->m_cancelButton, &QPushButton::clicked, this,
@@ -43,7 +41,7 @@ DateTimeInputDialog::DateTimeInputDialog(const ptime& initialValue,
       m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
   m_ui->m_currentTimeDisplay->setTime(ToQTime(to_local_time(
-    m_userProfile->GetClients().get_time_client().GetTime()).
+    m_userProfile->GetClients().get_time_client().get_time()).
     time_of_day()));
   if(!initialValue.is_special() && !initialValue.is_not_a_date_time()) {
     ptime localInitialvalue = to_local_time(initialValue);
@@ -80,6 +78,5 @@ ptime DateTimeInputDialog::GetDateTime() const {
 
 void DateTimeInputDialog::OnCurrentTimer() {
   m_ui->m_currentTimeDisplay->setTime(ToQTime(to_local_time(
-    m_userProfile->GetClients().get_time_client().GetTime()).
-    time_of_day()));
+    m_userProfile->GetClients().get_time_client().get_time()).time_of_day()));
 }

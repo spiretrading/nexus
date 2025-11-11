@@ -1,7 +1,7 @@
 #ifndef SPIRE_RISK_TIMER_MODEL_HPP
 #define SPIRE_RISK_TIMER_MODEL_HPP
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Threading/LiveTimer.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <boost/signals2/signal.hpp>
 #include "Spire/Async/EventHandler.hpp"

@@ -1,13 +1,11 @@
 #include "Spire/InputWidgets/TimeRangeInputWidget.hpp"
 #include <Beam/Queries/Sequence.hpp>
-#include <Beam/TimeService/to_local_time.hpp>
+#include <Beam/TimeService/ToLocalTime.hpp>
 #include "Spire/InputWidgets/TimeRangeInputWidgetWindowSettings.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "ui_TimeRangeInputWidget.h"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -73,7 +71,7 @@ TimeRangeParameter TimeRangeInputWidget::GetStartTime() const {
     timeParameter.m_timeOfDay = ToPosixTimeDuration(
       m_ui->m_startTimeOfDayInput->dateTime().toUTC().time());
   } else {
-    timeParameter.m_specialValue = Beam::Sequence::Present();
+    timeParameter.m_specialValue = Beam::Sequence::PRESENT;
   }
   return timeParameter;
 }

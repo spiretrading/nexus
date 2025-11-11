@@ -43,7 +43,7 @@ QWidget* TimeAndSalesWindowSettings::Reopen(
   TimeAndSalesWindow* window = new TimeAndSalesWindow(Ref(userProfile),
     m_properties, m_identifier);
   window->setAttribute(Qt::WA_DeleteOnClose);
-  Apply(Ref(userProfile), Store(*window));
+  Apply(Ref(userProfile), out(*window));
   return window;
 }
 

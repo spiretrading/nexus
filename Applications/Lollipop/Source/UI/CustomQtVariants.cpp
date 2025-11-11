@@ -1,5 +1,5 @@
 #include "Spire/UI/CustomQtVariants.hpp"
-#include <Beam/TimeService/to_local_time.hpp>
+#include <Beam/TimeService/ToLocalTime.hpp>
 #include <boost/lexical_cast.hpp>
 #include <QDateTime>
 #include "Spire/UI/UserProfile.hpp"

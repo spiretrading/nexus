@@ -57,7 +57,7 @@ void RegionInputWidget::SetRegion(const Region& region) {
       if(!text.isEmpty()) {
         text += ", ";
       }
-      text += code.GetData();
+      text += code.get_data();
     }
     auto venues =
       std::vector(m_region.get_venues().begin(), m_region.get_venues().end());

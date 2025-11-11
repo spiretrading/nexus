@@ -4,8 +4,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -17,18 +15,16 @@ std::unique_ptr<DashboardCell> LowDashboardCellBuilder::Make(
   auto& security = boost::get<Security>(index);
   auto& serviceClients = userProfile.get()->GetClients();
   auto query = make_daily_low_query(security,
-    serviceClients.get_time_client().GetTime(), pos_infin,
+    serviceClients.get_time_client().get_time(), pos_infin,
     userProfile.get()->GetVenueDatabase(),
     userProfile.get()->GetTimeZoneDatabase());
   auto baseQueue = std::make_shared<Queue<Nexus::QueryVariant>>();
-  std::shared_ptr<QueueReader<Money>> queue =
-    MakeConverterQueueReader(baseQueue,
-      [] (const Nexus::QueryVariant& value) {
-        return boost::get<Money>(value);
-      });
+  auto queue = std::static_pointer_cast<QueueReader<Money>>(
+    convert(baseQueue, [] (const Nexus::QueryVariant& value) {
+      return boost::get<Money>(value);
+    }));
   serviceClients.get_charting_client().query(query, baseQueue);
-  auto cell = std::make_unique<QueueDashboardCell>(queue);
-  return cell;
+  return std::make_unique<QueueDashboardCell>(queue);
 }
 
 std::unique_ptr<DashboardCellBuilder> LowDashboardCellBuilder::Clone() const {

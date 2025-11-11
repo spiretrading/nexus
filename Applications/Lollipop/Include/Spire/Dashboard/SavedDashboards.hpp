@@ -137,9 +137,9 @@ namespace Beam {
   template<>
   struct Shuttle<Spire::SavedDashboards> {
     template<IsShuttle S>
-    void operator ()(S& shuttle, Spire::SavedDashboards& value,
-        unsigned int version) const {
-      shuttle.Shuttle("dashboards", value.m_dashboards);
+    void operator ()(
+        S& shuttle, Spire::SavedDashboards& value, unsigned int version) const {
+      shuttle.shuttle("dashboards", value.m_dashboards);
     }
   };
 }

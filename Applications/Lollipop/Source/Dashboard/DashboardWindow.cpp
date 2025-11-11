@@ -20,7 +20,6 @@
 #include "ui_DashboardWindow.h"
 
 using namespace Beam;
-using namespace Beam::Queries;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
@@ -185,11 +184,11 @@ void DashboardWindow::OnRowAdded(const DashboardRow& row) {
   if(security == nullptr) {
     return;
   }
-  auto& bboQuoteEntry = GetOrInsert(m_bboQuotes, *security);
+  auto& bboQuoteEntry = get_or_insert(m_bboQuotes, *security);
   if(bboQuoteEntry.m_counter == 0) {
     bboQuoteEntry.m_bboQuote = std::make_shared<StateQueue<BboQuote>>();
     bboQuoteEntry.m_bboQuote->push(BboQuote());
-    auto query = MakeCurrentQuery(*security);
+    auto query = make_current_query(*security);
     m_userProfile->GetClients().get_market_data_client().query(
       query, bboQuoteEntry.m_bboQuote);
   }
@@ -243,7 +242,7 @@ void DashboardWindow::OnDashboardActivated(const QString& text) {
       Save();
       Apply(savedDashboard.m_schema, savedDashboard.m_name);
       savedDashboard.m_settings->Apply(Ref(*m_userProfile),
-        Store(*m_ui->m_dashboard));
+        out(*m_ui->m_dashboard));
       break;
     }
   }

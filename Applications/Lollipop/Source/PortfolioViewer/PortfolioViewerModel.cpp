@@ -7,8 +7,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
@@ -264,8 +262,8 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
   if(m_valuations.find(security) == m_valuations.end()) {
     m_valuations.insert(std::pair(
       security, SecurityValuation(entry.m_value.m_position.m_currency)));
-    auto bboQuery = MakeCurrentQuery(security);
-    bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
+    auto bboQuery = make_current_query(security);
+    bboQuery.set_interruption_policy(InterruptionPolicy::IGNORE_CONTINUE);
     m_userProfile->GetClients().get_market_data_client().query(
       bboQuery, m_eventHandler.get_slot<BboQuote>(
         std::bind_front(&PortfolioViewerModel::OnBboQuote, this, security)));

@@ -245,15 +245,15 @@ namespace Details {
       std::unordered_map<QKeySequence, CancelBinding> m_cancelBindings;
       std::unordered_map<Nexus::Venue, Nexus::Quantity> m_defaultQuantities;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void KeyBindings::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("task_bindings", m_taskBindings);
-    shuttle.Shuttle("cancel_bindings", m_cancelBindings);
-    shuttle.Shuttle("default_quantities", m_defaultQuantities);
+  template<Beam::IsShuttle S>
+  void KeyBindings::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("task_bindings", m_taskBindings);
+    shuttle.shuttle("cancel_bindings", m_cancelBindings);
+    shuttle.shuttle("default_quantities", m_defaultQuantities);
   }
 
   //! Returns the set of key modifiers represented by a key event.

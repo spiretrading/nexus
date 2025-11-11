@@ -42,7 +42,7 @@ string ChartWindowSettings::GetName() const {
 QWidget* ChartWindowSettings::Reopen(Ref<UserProfile> userProfile) const {
   ChartWindow* window = new ChartWindow(Ref(userProfile), m_identifier);
   window->setAttribute(Qt::WA_DeleteOnClose);
-  Apply(Ref(userProfile), Store(*window));
+  Apply(Ref(userProfile), out(*window));
   return window;
 }
 
@@ -52,7 +52,7 @@ void ChartWindowSettings::Apply(Ref<UserProfile> userProfile,
   window.restoreGeometry(m_geometry);
   if(window.m_ui->m_chart != nullptr) {
     m_chartPlotViewWindowSettings->Apply(Ref(userProfile),
-      Store(*window.m_ui->m_chart));
+      out(*window.m_ui->m_chart));
   }
   window.SetInteractionMode(m_interactionMode);
   window.SetAutoScale(m_isAutoScaleEnabled);
@@ -64,6 +64,6 @@ void ChartWindowSettings::Apply(Ref<UserProfile> userProfile,
   window.m_securityViewStack = m_securityViewStack;
   if(window.m_intervalComboBox != nullptr) {
     m_chartIntervalComboBoxWindowSettings->Apply(Ref(userProfile),
-      Store(*window.m_intervalComboBox));
+      out(*window.m_intervalComboBox));
   }
 }

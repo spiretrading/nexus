@@ -4,9 +4,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::Routines;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -19,18 +16,17 @@ std::unique_ptr<DashboardCell> CloseDashboardCellBuilder::Make(
   auto queue = std::make_shared<Queue<DashboardCell::Value>>();
   auto cell = std::make_unique<QueueDashboardCell>(queue);
   auto selfUserProfile = userProfile.get();
-  Spawn(
-    [=] {
-      auto& serviceClients = selfUserProfile->GetClients();
-      auto close = load_previous_close(serviceClients.get_market_data_client(),
-        security, serviceClients.get_time_client().GetTime(),
-        selfUserProfile->GetVenueDatabase(),
-        selfUserProfile->GetTimeZoneDatabase());
-      if(close.is_initialized()) {
-        queue->push(close->m_price);
-      }
-      queue->Break();
-    });
+  spawn([=] {
+    auto& serviceClients = selfUserProfile->GetClients();
+    auto close = load_previous_close(serviceClients.get_market_data_client(),
+      security, serviceClients.get_time_client().get_time(),
+      selfUserProfile->GetVenueDatabase(),
+      selfUserProfile->GetTimeZoneDatabase());
+    if(close) {
+      queue->push(close->m_price);
+    }
+    queue->close();
+  });
   return std::move(cell);
 }
 

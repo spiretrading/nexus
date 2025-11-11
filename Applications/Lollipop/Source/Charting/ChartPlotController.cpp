@@ -118,7 +118,7 @@ void ChartPlotController::SetView(Ref<ChartPlotView> view) {
 
 void ChartPlotController::Add(const std::shared_ptr<ChartPlotSeries>& series) {
   m_series.push_back(series);
-  m_seriesConnections.AddConnection(series.get(),
+  m_seriesConnections.add(series.get(),
     series->ConnectChartPointAddedSignal(std::bind(
     &ChartPlotController::OnChartPlotAdded, this, std::placeholders::_1)));
   if(m_view != nullptr) {
@@ -133,17 +133,17 @@ void ChartPlotController::Clear() {
   ++m_lastValueIndex;
   m_view->Clear();
   m_series.clear();
-  m_seriesConnections.DisconnectAll();
+  m_seriesConnections.disconnect();
   m_ranges.clear();
   m_plots.clear();
-  m_plotConnections.DisconnectAll();
+  m_plotConnections.disconnect();
 }
 
 boost::optional<ChartValue> ChartPlotController::LoadLastValue() {
   if(m_lastValue.has_value()) {
     return *m_lastValue;
   }
-  m_taskQueue.Push(
+  m_taskQueue.push(
     [=, series = m_series, lastValueIndex = m_lastValueIndex] {
       auto lastValue = ChartValue(std::numeric_limits<Quantity>::min());
       for(auto& s : series) {
@@ -153,7 +153,7 @@ boost::optional<ChartValue> ChartPlotController::LoadLastValue() {
         } catch(const std::exception&) {}
       }
       if(lastValue != ChartValue(std::numeric_limits<Quantity>().min())) {
-        m_lastValuesLoaded.PushBack(std::tuple(lastValueIndex, lastValue));
+        m_lastValuesLoaded.push_back(std::tuple(lastValueIndex, lastValue));
       }
     });
   return none;
@@ -245,7 +245,7 @@ void ChartPlotController::OnChartPlotAdded(
     m_view->Plot(plot);
   }
   m_plots.insert(plot);
-  m_plotConnections.AddConnection(plot.get(), plot->ConnectUpdateSignal(
+  m_plotConnections.add(plot.get(), plot->ConnectUpdateSignal(
     std::bind(&ChartPlotController::OnPlotUpdated, this,
     std::weak_ptr<ChartPlot>(plot))));
   UpdateAutoScale();
@@ -292,7 +292,7 @@ void ChartPlotController::OnXAxisParametersChanged(
 
 void ChartPlotController::OnUpdateTimer() {
   vector<std::tuple<uint64_t, ChartValue>> lastValuesLoaded;
-  m_lastValuesLoaded.Swap(lastValuesLoaded);
+  m_lastValuesLoaded.swap(lastValuesLoaded);
   bool update = false;
   for(const std::tuple<uint64_t, ChartValue>& lastValueLoaded :
       lastValuesLoaded) {

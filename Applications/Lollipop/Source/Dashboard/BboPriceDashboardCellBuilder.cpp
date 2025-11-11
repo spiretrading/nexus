@@ -4,7 +4,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -20,15 +19,13 @@ std::unique_ptr<DashboardCell> BboPriceDashboardCellBuilder::Make(
     userProfile.get()->GetClients().get_market_data_client();
   auto baseQueue = std::make_shared<Queue<BboQuote>>();
   auto side = m_side;
-  std::shared_ptr<QueueReader<Money>> queue =
-    MakeConverterQueueReader(baseQueue,
-      [=] (const BboQuote& quote) {
-        return pick(side, quote.m_ask.m_price, quote.m_bid.m_price);
-      });
-  auto query = MakeCurrentQuery(security);
+  auto queue = std::static_pointer_cast<QueueReader<Money>>(
+    convert(baseQueue, [=] (const BboQuote& quote) {
+      return pick(side, quote.m_ask.m_price, quote.m_bid.m_price);
+    }));
+  auto query = make_current_query(security);
   marketDataClient.query(query, baseQueue);
-  auto last = std::make_unique<QueueDashboardCell>(queue);
-  return std::move(last);
+  return std::make_unique<QueueDashboardCell>(queue);
 }
 
 std::unique_ptr<DashboardCellBuilder> BboPriceDashboardCellBuilder::
