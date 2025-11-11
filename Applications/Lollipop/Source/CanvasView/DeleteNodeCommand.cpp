@@ -17,7 +17,7 @@ DeleteNodeCommand::DeleteNodeCommand(Ref<CanvasNodeModel> view,
       m_coordinate(coordinate) {}
 
 void DeleteNodeCommand::undo() {
-  m_snapshot.Restore(Store(*m_view));
+  m_snapshot.Restore(out(*m_view));
 }
 
 void DeleteNodeCommand::redo() {
@@ -39,7 +39,7 @@ void DeleteNodeCommand::redo() {
       builder.Reset(node);
       replacement = builder.Make();
     } catch(std::exception&) {
-      m_snapshot.Restore(Store(*m_view));
+      m_snapshot.Restore(out(*m_view));
       BOOST_THROW_EXCEPTION(IgnoreCommandException());
     }
     auto rootCoordinate = m_view->GetCoordinate(root);

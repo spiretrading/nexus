@@ -27,7 +27,6 @@
 #include "Spire/Catalog/CatalogEntry.hpp"
 #include "Spire/Catalog/CatalogWindow.hpp"
 #include "Spire/Catalog/CatalogTabModel.hpp"
-#include "Spire/Catalog/RegistryCatalogEntry.hpp"
 #include "Spire/Catalog/UserCatalogEntry.hpp"
 #include "Spire/UI/CanvasWindowSettings.hpp"
 #include "Spire/UI/IgnoreCommandException.hpp"
@@ -196,18 +195,6 @@ CanvasWindow::CanvasWindow(Ref<UserProfile> userProfile, QWidget* parent,
   m_toolbar->addAction(m_saveAsAction);
   connect(m_saveAsAction, &QAction::triggered, this,
     &CanvasWindow::OnSaveAsAction);
-  if(m_userProfile->GetCatalogSettings().HasRegistryAccess()) {
-    m_saveToRegistryAction = new QAction(this);
-    m_saveToRegistryAction->setText(tr("Save To Registry"));
-    m_saveToRegistryAction->setToolTip(tr("Save To Registry"));
-    m_saveToRegistryAction->setIcon(QIcon(":/icons/server_from_client.png"));
-    addAction(m_saveToRegistryAction);
-    m_toolbar->addAction(m_saveToRegistryAction);
-    connect(m_saveToRegistryAction, &QAction::triggered, this,
-      &CanvasWindow::OnSaveToRegistryAction);
-  } else {
-    m_saveToRegistryAction = nullptr;
-  }
   m_editAction = new QAction(this);
   m_editAction->setText(tr("Edit"));
   m_editAction->setToolTip(tr("Edit"));
@@ -374,9 +361,6 @@ vector<QAction*> CanvasWindow::GetActions() const {
   actions.push_back(m_openAction);
   actions.push_back(m_saveAction);
   actions.push_back(m_saveAsAction);
-  if(m_saveToRegistryAction != nullptr) {
-    actions.push_back(m_saveToRegistryAction);
-  }
   actions.push_back(m_editAction);
   actions.push_back(m_protectionAction);
   actions.push_back(m_deleteAction);
@@ -605,48 +589,6 @@ void CanvasWindow::OnSaveAsAction() {
   }
 }
 
-void CanvasWindow::OnSaveToRegistryAction() {
-  const CanvasNode& saveNode = *m_ui->m_canvasTable->GetCurrentNode();
-  CatalogWindow catalog(Ref(*m_userProfile), saveNode, true, this);
-  if(catalog.exec() == QDialog::Rejected) {
-    return;
-  }
-  string entryName = catalog.GetEntryNames().front();
-  CatalogEntry* oldEntry = nullptr;
-  CatalogSettings& catalogSettings = m_userProfile->GetCatalogSettings();
-  for(auto i = catalogSettings.GetCatalogEntries().begin();
-      i != catalogSettings.GetCatalogEntries().end(); ++i) {
-    if((*i)->GetName() == entryName) {
-      oldEntry = i->get();
-      break;
-    }
-  }
-  unique_ptr<CatalogEntry> newEntry;
-  if(oldEntry == nullptr) {
-    newEntry = std::make_unique<RegistryCatalogEntry>(entryName,
-      ":/icons/scroll2.png", "", saveNode,
-      CatalogSettings::GetCatalogLibraryRegistryPath(),
-      m_userProfile->GetClients().get_registry_client());
-  } else {
-    if(oldEntry->IsReadOnly()) {
-      QMessageBox::warning(nullptr, QObject::tr("Warning"),
-        QObject::tr("Unable to save to a read-only catalog entry."));
-      return OnSaveAction();
-    }
-    newEntry = oldEntry->SetNode(saveNode);
-  }
-  try {
-    if(oldEntry == nullptr) {
-      catalogSettings.Add(std::move(newEntry));
-    } else {
-      catalogSettings.Replace(*oldEntry, std::move(newEntry));
-    }
-  } catch(std::exception& e) {
-    QMessageBox::warning(nullptr, QObject::tr("Warning"), e.what());
-    return OnSaveAction();
-  }
-}
-
 void CanvasWindow::OnEditAction() {
   m_ui->m_canvasTable->Edit(*m_ui->m_canvasTable->GetCurrentNode());
 }
@@ -807,13 +749,9 @@ void CanvasWindow::OnItemSelectionChanged() {
 void CanvasWindow::OnCurrentItemChanged(QTableWidgetItem* current,
     QTableWidgetItem* previous) {
   bool currentLive = (current != nullptr);
-  bool isRoot = currentLive && IsRoot(
-    *m_ui->m_canvasTable->GetCurrentNode());
+  bool isRoot = currentLive && IsRoot(*m_ui->m_canvasTable->GetCurrentNode());
   m_saveAction->setEnabled(isRoot);
   m_saveAsAction->setEnabled(isRoot);
-  if(m_saveToRegistryAction != nullptr) {
-    m_saveToRegistryAction->setEnabled(isRoot);
-  }
   m_editAction->setEnabled(currentLive);
   m_protectionAction->setEnabled(currentLive);
   m_deleteAction->setEnabled(currentLive);

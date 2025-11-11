@@ -24,7 +24,7 @@ void VenueNode::Apply(CanvasNodeVisitor& visitor) const {
 }
 
 unique_ptr<CanvasNode> VenueNode::Clone() const {
-  return make_unique<VenueNode>(*this);
+  return std::make_unique<VenueNode>(*this);
 }
 
 unique_ptr<CanvasNode> VenueNode::Reset() const {

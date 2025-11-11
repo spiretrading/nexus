@@ -6,7 +6,6 @@
 #include "ui_FileReaderNodeDialog.h"
 
 using namespace Beam;
-using namespace Beam::Parsers;
 using namespace boost;
 using namespace Spire;
 using namespace std;
@@ -40,7 +39,7 @@ unique_ptr<FileReaderNode> FileReaderNodeDialog::GetNode() {
   std::shared_ptr<NativeType> readType;
   if(m_fields.empty()) {
     FileReaderNode baseNode;
-    auto emptyFileReader = StaticCast<std::unique_ptr<FileReaderNode>>(
+    auto emptyFileReader = static_pointer_cast<FileReaderNode>(
       baseNode.Replace(baseNode.GetChildren().front(),
       CanvasNode::Clone(m_originalNode->GetChildren().front())));
     return emptyFileReader;

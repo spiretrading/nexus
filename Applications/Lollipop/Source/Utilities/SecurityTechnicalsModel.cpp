@@ -2,8 +2,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -119,8 +117,8 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
   if(security == Security()) {
     return;
   }
-  auto timeAndSaleQuery = MakeRealTimeQuery(security);
-  timeAndSaleQuery.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
+  auto timeAndSaleQuery = make_real_time_query(security);
+  timeAndSaleQuery.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
   m_userProfile->GetClients().get_market_data_client().query(
     timeAndSaleQuery, m_eventHandler.get_slot<TimeAndSale>(
       std::bind_front(&SecurityTechnicalsModel::OnTimeAndSale, this)));

@@ -1,5 +1,6 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
@@ -368,13 +369,13 @@ TEST_SUITE("OrderFields") {
     fields.m_additional_fields.emplace_back(12, "abc");
     fields.m_additional_fields.emplace_back(13, 123.456);
     auto tag1 = find_field(fields, 12);
-    REQUIRE(tag1.is_initialized());
+    REQUIRE(tag1);
     REQUIRE(*tag1 == Tag(12, "abc"));
     auto tag2 = find_field(fields, 13);
-    REQUIRE(tag2.is_initialized());
+    REQUIRE(tag2);
     REQUIRE(*tag2 == Tag(13, 123.456));
     auto tag3 = find_field(fields, 14);
-    REQUIRE(!tag3.is_initialized());
+    REQUIRE(!tag3);
   }
 
   TEST_CASE("stream") {

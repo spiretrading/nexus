@@ -21,7 +21,7 @@ TEST_SUITE("TestMarketDataClient") {
     auto received_query =
       std::get_if<TestMarketDataClient::QueryOrderImbalanceOperation>(
         &*operation);
-    REQUIRE(received_query != nullptr);
+    REQUIRE(received_query);
     REQUIRE(received_query->m_query.get_index() == TSX);
   }
 

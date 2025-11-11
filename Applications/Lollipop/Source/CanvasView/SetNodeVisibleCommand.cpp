@@ -17,7 +17,7 @@ SetNodeVisibleCommand::SetNodeVisibleCommand(Ref<CanvasNodeModel> view,
       m_isVisible(isVisible) {}
 
 void SetNodeVisibleCommand::undo() {
-  m_snapshot.Restore(Store(*m_view));
+  m_snapshot.Restore(out(*m_view));
 }
 
 void SetNodeVisibleCommand::redo() {
@@ -31,7 +31,7 @@ void SetNodeVisibleCommand::redo() {
   if(IsRoot(*parent)) {
     m_view->Remove(*parent);
   }
-  auto& newNode = PlaceNodeCommand::PlaceNode(Store(*m_view), m_parent,
+  auto& newNode = PlaceNodeCommand::PlaceNode(out(*m_view), m_parent,
     *replacement, true);
   m_view->SetCurrent(newNode);
 }

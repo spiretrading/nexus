@@ -273,7 +273,7 @@ namespace Nexus {
         try {
           auto fields = m_order_fields->eval();
           fields.m_quantity -= m_filled;
-          if(m_order.has_value() && *m_order == nullptr) {
+          if(m_order.has_value() && !*m_order) {
             m_queue.commit(sequence);
           }
           m_state &= ~FIELDS_AVAILABLE;

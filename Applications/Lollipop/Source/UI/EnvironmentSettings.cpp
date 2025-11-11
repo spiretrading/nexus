@@ -18,8 +18,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
 using namespace Spire::UI;
@@ -37,13 +35,13 @@ bool Spire::UI::Export(const EnvironmentSettings& environmentSettings,
   }
   try {
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
     SharedBuffer buffer;
-    sender.SetSink(Ref(buffer));
-    sender.Shuttle(environmentSettings);
+    sender.set(Ref(buffer));
+    sender.shuttle(environmentSettings);
     BasicOStreamWriter<ofstream*> writer(&writerStream);
-    writer.Write(buffer);
+    writer.write(buffer);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to export settings."));
@@ -66,18 +64,18 @@ bool Spire::UI::Import(const path& environmentPath,
   try {
     BasicIStreamReader<ifstream*> reader(&readerStream);
     SharedBuffer buffer;
-    reader.Read(Store(buffer));
+    reader.read(out(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-    receiver.SetSource(Ref(buffer));
-    receiver.Shuttle(environmentSettings);
+    receiver.set(Ref(buffer));
+    receiver.shuttle(environmentSettings);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Error"),
       QObject::tr("Unable to read from the specified path."));
     return false;
   }
-  if(settings.Test(EnvironmentSettings::Type::WINDOW_LAYOUTS) &&
+  if(settings.test(EnvironmentSettings::Type::WINDOW_LAYOUTS) &&
       environmentSettings.m_windowLayouts.is_initialized()) {
     for(auto widget : QApplication::topLevelWidgets()) {
       if(dynamic_cast<PersistentWindow*>(widget) != nullptr &&
@@ -94,36 +92,36 @@ bool Spire::UI::Import(const path& environmentPath,
       window->show();
     }
   }
-  if(settings.Test(EnvironmentSettings::Type::BOOK_VIEW) &&
+  if(settings.test(EnvironmentSettings::Type::BOOK_VIEW) &&
       environmentSettings.m_bookViewProperties.is_initialized()) {
     userProfile->SetDefaultBookViewProperties(
       *environmentSettings.m_bookViewProperties);
   }
-  if(settings.Test(EnvironmentSettings::Type::DASHBOARDS) &&
+  if(settings.test(EnvironmentSettings::Type::DASHBOARDS) &&
       environmentSettings.m_dashboards.is_initialized()) {
     userProfile->GetSavedDashboards() = *environmentSettings.m_dashboards;
   }
-  if(settings.Test(EnvironmentSettings::Type::ORDER_IMBALANCE_INDICATOR) &&
+  if(settings.test(EnvironmentSettings::Type::ORDER_IMBALANCE_INDICATOR) &&
       environmentSettings.m_orderImbalanceIndicatorProperties.
       is_initialized()) {
     userProfile->SetDefaultOrderImbalanceIndicatorProperties(
       *environmentSettings.m_orderImbalanceIndicatorProperties);
   }
-  if(settings.Test(EnvironmentSettings::Type::INTERACTIONS) &&
+  if(settings.test(EnvironmentSettings::Type::INTERACTIONS) &&
       environmentSettings.m_interactionsProperties.is_initialized()) {
     userProfile->GetInteractionProperties() =
       *environmentSettings.m_interactionsProperties;
   }
-  if(settings.Test(EnvironmentSettings::Type::KEY_BINDINGS) &&
+  if(settings.test(EnvironmentSettings::Type::KEY_BINDINGS) &&
       environmentSettings.m_keyBindings.is_initialized()) {
     userProfile->SetKeyBindings(*environmentSettings.m_keyBindings);
   }
-  if(settings.Test(EnvironmentSettings::Type::PORTFOLIO_VIEWER) &&
+  if(settings.test(EnvironmentSettings::Type::PORTFOLIO_VIEWER) &&
       environmentSettings.m_portfolioViewerProperties.is_initialized()) {
     userProfile->SetDefaultPortfolioViewerProperties(
       *environmentSettings.m_portfolioViewerProperties);
   }
-  if(settings.Test(EnvironmentSettings::Type::TIME_AND_SALES) &&
+  if(settings.test(EnvironmentSettings::Type::TIME_AND_SALES) &&
       environmentSettings.m_timeAndSalesProperties.is_initialized()) {
     userProfile->SetDefaultTimeAndSalesProperties(
       *environmentSettings.m_timeAndSalesProperties);

@@ -21,7 +21,7 @@ namespace Details {
     while(true) {
       auto result = static_cast<const char*>(
         std::memchr(token, *pattern, size - (token - source)));
-      if(result == nullptr || std::memcmp(result, pattern, length) == 0) {
+      if(!result || std::memcmp(result, pattern, length) == 0) {
         return result;
       }
       token = result + 1;

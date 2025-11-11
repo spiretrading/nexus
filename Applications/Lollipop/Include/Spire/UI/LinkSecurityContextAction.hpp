@@ -2,6 +2,7 @@
 #define SPIRE_LINKSECURITYCONTEXTACTION_HPP
 #include <memory>
 #include <vector>
+#include <Beam/Pointers/Out.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <QAction>
 #include "Spire/UI/UI.hpp"

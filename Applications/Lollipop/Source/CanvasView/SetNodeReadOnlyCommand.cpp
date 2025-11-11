@@ -15,7 +15,7 @@ SetNodeReadOnlyCommand::SetNodeReadOnlyCommand(Ref<CanvasNodeModel> view,
       m_readOnly(readOnly) {}
 
 void SetNodeReadOnlyCommand::undo() {
-  m_snapshot.Restore(Store(*m_view));
+  m_snapshot.Restore(out(*m_view));
 }
 
 void SetNodeReadOnlyCommand::redo() {
@@ -26,7 +26,7 @@ void SetNodeReadOnlyCommand::redo() {
   if(IsRoot(*node)) {
     m_view->Remove(*node);
   }
-  auto& newNode = PlaceNodeCommand::PlaceNode(Store(*m_view), m_node,
+  auto& newNode = PlaceNodeCommand::PlaceNode(out(*m_view), m_node,
     *replacement, true);
   m_view->SetCurrent(newNode);
 }

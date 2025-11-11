@@ -88,7 +88,7 @@ void OrderTaskView::ExecuteTask(const CanvasNode& node) {
   }
   auto& entry = activeBlotter.GetTasksModel().Add(node);
   m_tasksExecuted[*m_state->m_security].push_back(entry.m_task);
-  entry.m_task->GetPublisher().monitor(m_slotHandler.GetSlot<Task::StateEntry>(
+  entry.m_task->GetPublisher().monitor(m_slotHandler.get_slot<Task::StateEntry>(
     [=, security = *m_state->m_security, task = entry.m_task] (
         const Task::StateEntry& update) {
       OnTaskState(task, security, update);
@@ -244,15 +244,15 @@ void OrderTaskView::HandleInteractionsPropertiesEvent() {
 
 bool OrderTaskView::HandleCancelBindingEvent(
     const KeyBindings::CancelBinding& keyBinding) {
-  HandleTasks(m_slotHandler);
+  flush(m_slotHandler);
   KeyBindings::CancelBinding::HandleCancel(keyBinding,
-    Store(m_tasksExecuted[*m_state->m_security]));
+    out(m_tasksExecuted[*m_state->m_security]));
   return true;
 }
 
 void OrderTaskView::OnTaskState(const std::shared_ptr<Task>& task,
     const Security& security, const Task::StateEntry& update) {
   if(IsTerminal(update.m_state)) {
-    RemoveFirst(m_tasksExecuted[security], task);
+    remove_first(m_tasksExecuted[security], task);
   }
 }

@@ -35,10 +35,6 @@
 Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
 
 using namespace Beam;
-using namespace Beam::Network;
-using namespace Beam::Services;
-using namespace Beam::ServiceLocator;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
@@ -69,10 +65,10 @@ namespace {
       }
       return ParseServers(YAML::Load(configStream), configPath);
     }
-    auto serverList = GetNode(config, "servers");
+    auto serverList = get_node(config, "servers");
     for(auto server : serverList) {
-      auto name = Extract<std::string>(server, "name");
-      auto address = Extract<IpAddress>(server, "address");
+      auto name = extract<std::string>(server, "name");
+      auto address = extract<IpAddress>(server, "address");
       servers.push_back({name, address});
     }
     return servers;
@@ -280,12 +276,12 @@ int main(int argc, char* argv[]) {
   }
   auto isAdministrator =
     serviceClients->get_administration_client().check_administrator(
-      serviceClients->get_service_locator_client().GetAccount());
+      serviceClients->get_service_locator_client().get_account());
   auto isManager = isAdministrator ||
     !serviceClients->get_administration_client().load_managed_trading_groups(
-      serviceClients->get_service_locator_client().GetAccount()).empty();
+      serviceClients->get_service_locator_client().get_account()).empty();
   auto userProfile = UserProfile(
-    serviceClients->get_service_locator_client().GetAccount().m_name,
+    serviceClients->get_service_locator_client().get_account().m_name,
     isAdministrator, isManager,
     serviceClients->get_definitions_client().load_country_database(),
     serviceClients->get_definitions_client().load_time_zone_database(),
@@ -304,16 +300,16 @@ int main(int argc, char* argv[]) {
       QObject::tr("Error creating profile path."));
     return -1;
   }
-  BlotterSettings::Load(Store(userProfile));
-  CatalogSettings::Load(Store(userProfile));
-  BookViewProperties::Load(Store(userProfile));
-  RiskTimerProperties::Load(Store(userProfile));
-  TimeAndSalesProperties::Load(Store(userProfile));
-  PortfolioViewerProperties::Load(Store(userProfile));
-  KeyBindings::Load(Store(userProfile));
-  InteractionsProperties::Load(Store(userProfile));
-  OrderImbalanceIndicatorProperties::Load(Store(userProfile));
-  SavedDashboards::Load(Store(userProfile));
+  BlotterSettings::Load(out(userProfile));
+  CatalogSettings::Load(out(userProfile));
+  BookViewProperties::Load(out(userProfile));
+  RiskTimerProperties::Load(out(userProfile));
+  TimeAndSalesProperties::Load(out(userProfile));
+  PortfolioViewerProperties::Load(out(userProfile));
+  KeyBindings::Load(out(userProfile));
+  InteractionsProperties::Load(out(userProfile));
+  OrderImbalanceIndicatorProperties::Load(out(userProfile));
+  SavedDashboards::Load(out(userProfile));
   auto windowSettings = WindowSettings::Load(userProfile);
   auto windows = std::vector<QWidget*>();
   auto hotkeyOverride = HotkeyOverride();

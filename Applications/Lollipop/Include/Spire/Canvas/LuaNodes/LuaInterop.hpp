@@ -98,7 +98,7 @@ namespace Spire {
     Beam::Range operator ()(lua_State& state) const {
 
       // TODO
-      return Beam::Range::Empty();
+      return Beam::Range::EMPTY;
     }
   };
 

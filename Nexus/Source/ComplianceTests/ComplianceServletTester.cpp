@@ -262,7 +262,7 @@ TEST_SUITE("ComplianceServlet") {
       auto received_message = std::dynamic_pointer_cast<
         RecordMessage<ComplianceRuleEntryMessage, TestServiceProtocolClient>>(
           message);
-      REQUIRE(received_message != nullptr);
+      REQUIRE(received_message);
       REQUIRE(
         received_message->get_record().compliance_rule_entry.get_id() == id);
       REQUIRE(received_message->get_record().
@@ -278,7 +278,7 @@ TEST_SUITE("ComplianceServlet") {
       received_message = std::dynamic_pointer_cast<
         RecordMessage<ComplianceRuleEntryMessage, TestServiceProtocolClient>>(
           message);
-      REQUIRE(received_message != nullptr);
+      REQUIRE(received_message);
       REQUIRE(
         received_message->get_record().compliance_rule_entry.get_id() == id);
       REQUIRE(
@@ -292,7 +292,7 @@ TEST_SUITE("ComplianceServlet") {
       received_message = std::dynamic_pointer_cast<
         RecordMessage<ComplianceRuleEntryMessage, TestServiceProtocolClient>>(
           message);
-      REQUIRE(received_message != nullptr);
+      REQUIRE(received_message);
       REQUIRE(
         received_message->get_record().compliance_rule_entry.get_id() == id);
       REQUIRE(

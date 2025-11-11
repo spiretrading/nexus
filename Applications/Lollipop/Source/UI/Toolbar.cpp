@@ -34,7 +34,6 @@
 #include "ui_Toolbar.h"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
@@ -309,7 +308,7 @@ void Toolbar::OnProfileAction() {
   auto profileWindow = new TraderProfileWindow(Ref(*m_userProfile));
   profileWindow->setAttribute(Qt::WA_DeleteOnClose);
   profileWindow->Load(
-    m_userProfile->GetClients().get_service_locator_client().GetAccount());
+    m_userProfile->GetClients().get_service_locator_client().get_account());
   profileWindow->show();
 }
 
@@ -383,7 +382,7 @@ void Toolbar::OnNewBlotterAction() {
     return;
   }
   auto blotter = std::make_unique<BlotterModel>(newBlotterDialog.GetInput(),
-    m_userProfile->GetClients().get_service_locator_client().GetAccount(),
+    m_userProfile->GetClients().get_service_locator_client().get_account(),
     false, Ref(*m_userProfile),
     m_userProfile->GetBlotterSettings().GetDefaultBlotterTaskProperties(),
     m_userProfile->GetBlotterSettings().GetDefaultOrderLogProperties());

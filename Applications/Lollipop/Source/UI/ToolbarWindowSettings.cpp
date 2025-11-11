@@ -20,7 +20,7 @@ string ToolbarWindowSettings::GetName() const {
 
 QWidget* ToolbarWindowSettings::Reopen(Ref<UserProfile> profile) const {
   Toolbar* toolbar = new Toolbar(Ref(profile));
-  Apply(Ref(profile), Store(*toolbar));
+  Apply(Ref(profile), out(*toolbar));
   return toolbar;
 }
 

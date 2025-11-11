@@ -101,7 +101,7 @@ bool CondensedCanvasCell::eventFilter(QObject* object, QEvent* event) {
         CanvasNodeEditor editor;
         auto editVariant = editor.GetEditor(Ref(*m_node), Ref(*m_parent),
           Ref(*m_userProfile), event);
-        ApplyVariantLambdaVisitor<void>(editVariant,
+        apply_variant_lambda_visitor(editVariant,
           [&] (QWidget* widget) {
             m_editor = widget;
             m_editor->setSizePolicy(m_valueWidget->sizePolicy());

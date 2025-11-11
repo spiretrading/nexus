@@ -26,7 +26,7 @@ TEST_SUITE("StampMessage") {
     auto control = "CTRL";
     auto buffer = make_message_buffer(control, "");
     auto message = StampMessage(header, buffer.data(), buffer.size());
-    REQUIRE(message.get_business_content_data() == nullptr);
+    REQUIRE(!message.get_business_content_data());
     REQUIRE(message.get_business_content_size() == 0);
   }
 

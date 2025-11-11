@@ -63,7 +63,7 @@ QVariant RegionQueryModel::data(const QModelIndex& index, int role) const {
     if(column == Column::REGION) {
       if(auto country = get<CountryCode>(&item)) {
         return QString::fromStdString(m_userProfile->GetCountryDatabase().from(
-          *country).m_three_letter_code.GetData());
+          *country).m_three_letter_code.get_data());
       } else if(auto venue = get<Venue>(&item)) {
         return QString::fromStdString(
           m_userProfile->GetVenueDatabase().from(*venue).m_display_name);

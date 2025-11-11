@@ -20,7 +20,7 @@ TEST_SUITE("Reactors") {
     auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryBboQuoteOperation>(&*operation);
-    REQUIRE(received_query != nullptr);
+    REQUIRE(received_query);
     REQUIRE(received_query->m_query.get_index() == query.get_index());
     REQUIRE(received_query->m_query.get_range() == Range::REAL_TIME);
   }
@@ -35,7 +35,7 @@ TEST_SUITE("Reactors") {
     auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryBboQuoteOperation>(&*operation);
-    REQUIRE(received_query != nullptr);
+    REQUIRE(received_query);
     REQUIRE(received_query->m_query.get_index() == security);
     REQUIRE(received_query->m_query.get_range() == Range::TOTAL);
     REQUIRE(received_query->m_query.get_snapshot_limit() ==
@@ -54,7 +54,7 @@ TEST_SUITE("Reactors") {
     auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryBboQuoteOperation>(&*operation);
-    REQUIRE(received_query != nullptr);
+    REQUIRE(received_query);
     REQUIRE(received_query->m_query.get_index() == security);
     REQUIRE(received_query->m_query.get_range() == Range::REAL_TIME);
     REQUIRE(received_query->m_query.get_interruption_policy() ==
@@ -71,7 +71,7 @@ TEST_SUITE("Reactors") {
     auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryBookQuoteOperation>(&*operation);
-    REQUIRE(received_query != nullptr);
+    REQUIRE(received_query);
     REQUIRE(received_query->m_query.get_index() == query.get_index());
     REQUIRE(received_query->m_query.get_range() == Range::REAL_TIME);
   }
@@ -86,7 +86,7 @@ TEST_SUITE("Reactors") {
     auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryBookQuoteOperation>(&*operation);
-    REQUIRE(received_query != nullptr);
+    REQUIRE(received_query);
     REQUIRE(received_query->m_query.get_index() == security);
     REQUIRE(received_query->m_query.get_range() == Range::TOTAL);
     REQUIRE(received_query->m_query.get_snapshot_limit() ==
@@ -105,7 +105,7 @@ TEST_SUITE("Reactors") {
     auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryBookQuoteOperation>(&*operation);
-    REQUIRE(received_query != nullptr);
+    REQUIRE(received_query);
     REQUIRE(received_query->m_query.get_index() == security);
     REQUIRE(received_query->m_query.get_range() == Range::REAL_TIME);
     REQUIRE(received_query->m_query.get_interruption_policy() ==
@@ -122,7 +122,7 @@ TEST_SUITE("Reactors") {
     auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryTimeAndSaleOperation>(&*operation);
-    REQUIRE(received_query != nullptr);
+    REQUIRE(received_query);
     REQUIRE(received_query->m_query.get_index() == query.get_index());
     REQUIRE(received_query->m_query.get_range() == Range::REAL_TIME);
   }
@@ -137,7 +137,7 @@ TEST_SUITE("Reactors") {
     auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryTimeAndSaleOperation>(&*operation);
-    REQUIRE(received_query != nullptr);
+    REQUIRE(received_query);
     REQUIRE(received_query->m_query.get_index() == security);
     REQUIRE(received_query->m_query.get_range() == Range::TOTAL);
     REQUIRE(received_query->m_query.get_snapshot_limit() ==
@@ -156,7 +156,7 @@ TEST_SUITE("Reactors") {
     auto operation = operations->pop();
     auto received_query =
       std::get_if<TestMarketDataClient::QueryTimeAndSaleOperation>(&*operation);
-    REQUIRE(received_query != nullptr);
+    REQUIRE(received_query);
     REQUIRE(received_query->m_query.get_index() == security);
     REQUIRE(received_query->m_query.get_range() == Range::REAL_TIME);
     REQUIRE(received_query->m_query.get_interruption_policy() ==

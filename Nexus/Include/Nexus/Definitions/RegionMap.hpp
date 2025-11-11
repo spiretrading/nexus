@@ -355,7 +355,7 @@ namespace Details {
     if(std::get<0>(node.second->m_element) != region) {
       return;
     }
-    if(node.first == nullptr) {
+    if(!node.first) {
       return;
     }
     std::move(node.second->m_sub_regions.begin(),

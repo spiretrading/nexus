@@ -11,7 +11,7 @@ AddRootCommand::AddRootCommand(Ref<CanvasNodeModel> view,
     m_node(CanvasNode::Clone(node)) {}
 
 void AddRootCommand::undo() {
-  m_snapshot.Restore(Store(*m_view));
+  m_snapshot.Restore(out(*m_view));
 }
 
 void AddRootCommand::redo() {

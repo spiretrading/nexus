@@ -5,7 +5,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::date_time;
 using namespace boost::posix_time;
@@ -114,7 +113,7 @@ void Spire::UI::RegisterCustomQtVariants() {}
 
 QString Spire::UI::displayText(CountryCode country) {
   auto& entry = DEFAULT_COUNTRIES.from(country);
-  return QString::fromStdString(entry.m_three_letter_code.GetData());
+  return QString::fromStdString(entry.m_three_letter_code.get_data());
 }
 
 QString Spire::UI::displayText(const Region& region) {
@@ -221,7 +220,7 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     string a = to_simple_string(value.value<ptime>());
     string b = to_simple_string(timeValue);
     auto currentTime = to_local_time(
-      m_userProfile->GetClients().get_time_client().GetTime());
+      m_userProfile->GetClients().get_time_client().get_time());
     if(timeValue.date() == currentTime.date()) {
       return QString::fromStdString(to_simple_string(timeValue).substr(12));
     } else {

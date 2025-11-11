@@ -57,7 +57,7 @@ TEST_SUITE("ComplianceRuleSet") {
     auto monitor_operation =
       std::get_if<TestComplianceClient::MonitorComplianceRuleEntriesOperation>(
         &*operation);
-    REQUIRE(monitor_operation != nullptr);
+    REQUIRE(monitor_operation);
     REQUIRE(monitor_operation->m_directory_entry == account);
     monitor_operation->m_result.set(std::vector<ComplianceRuleEntry>());
     submission.get();

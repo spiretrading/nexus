@@ -1,6 +1,5 @@
 #include "Spire/Canvas/Common/SignatureNode.hpp"
-#include <Beam/Collections/DereferenceIterator.hpp>
-#include <Beam/Collections/IndexIterator.hpp>
+#include <ranges>
 #include <boost/throw_exception.hpp>
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
 #include "Spire/Canvas/Operations/CanvasTypeCompatibilityException.hpp"
@@ -18,7 +17,7 @@ namespace {
     for(auto& signature : signatures) {
       types.push_back(signature[index]);
     }
-    return UnionType::Create(MakeDereferenceView(types));
+    return UnionType::Create(make_dereference_view(types));
   }
 }
 
@@ -78,9 +77,9 @@ std::unique_ptr<CanvasNode> SignatureNode::Replace(
     return clone;
   }
   auto replacementIndex = [&] {
-    for(auto& selfChild : MakeIndexView(GetChildren())) {
-      if(&selfChild.GetValue() == &child) {
-        return selfChild.GetIndex();
+    for(auto& [index, value] : GetChildren() | std::views::enumerate) {
+      if(&value == &child) {
+        return index;
       }
     }
     BOOST_THROW_EXCEPTION(CanvasOperationException("Child not found."));

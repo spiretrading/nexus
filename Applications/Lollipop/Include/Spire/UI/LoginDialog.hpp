@@ -5,10 +5,8 @@
 #include <string>
 #include <vector>
 #include <Beam/Network/IpAddress.hpp>
-#include <Beam/Network/Network.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
-#include <Beam/ServiceLocator/ServiceLocator.hpp>
 #include <QDialog>
 #include "Spire/Async/QtPromise.hpp"
 #include "Spire/UI/UI.hpp"
@@ -28,7 +26,7 @@ namespace Spire::UI {
         std::string m_name;
 
         /** The server's address. */
-        Beam::Network::IpAddress m_address;
+        Beam::IpAddress m_address;
       };
 
       /**

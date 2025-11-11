@@ -548,7 +548,8 @@ void OpenEditorCanvasNodeVisitor::Visit(const VenueNode& node) {
   auto entries = m_userProfile->GetVenueDatabase().get_entries();
   for(auto i = std::size_t(0); i != entries.size(); ++i) {
     auto& entry = entries[i];
-    editor->addItem(QString::fromStdString(entry.m_venue.get_code().GetData()));
+    editor->addItem(
+      QString::fromStdString(entry.m_venue.get_code().get_data()));
     if(node.GetValue() && entry.m_venue == node.GetValue()) {
       editor->setCurrentIndex(i);
     }

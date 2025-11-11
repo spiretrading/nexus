@@ -6,8 +6,6 @@
 #include "Spire/Canvas/Types/UnionType.hpp"
 
 using namespace Beam;
-using namespace Beam::Parsers;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
 using namespace std;
@@ -93,4 +91,4 @@ unique_ptr<CanvasNode> FileReaderNode::Clone() const {
   return std::make_unique<FileReaderNode>(*this);
 }
 
-FileReaderNode::FileReaderNode(ReceiveBuilder) {}
+FileReaderNode::FileReaderNode() {}

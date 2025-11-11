@@ -6,7 +6,6 @@
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 using namespace std;
 
@@ -25,4 +24,4 @@ unique_ptr<CanvasNode> TimeAndSaleQueryNode::Clone() const {
   return make_unique<TimeAndSaleQueryNode>(*this);
 }
 
-TimeAndSaleQueryNode::TimeAndSaleQueryNode(ReceiveBuilder) {}
+TimeAndSaleQueryNode::TimeAndSaleQueryNode() {}

@@ -6,7 +6,6 @@
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 using namespace std;
 
@@ -25,4 +24,4 @@ unique_ptr<CanvasNode> OrderImbalanceQueryNode::Clone() const {
   return make_unique<OrderImbalanceQueryNode>(*this);
 }
 
-OrderImbalanceQueryNode::OrderImbalanceQueryNode(ReceiveBuilder) {}
+OrderImbalanceQueryNode::OrderImbalanceQueryNode() {}

@@ -140,7 +140,7 @@ namespace {
     auto message = client.read_message();
     auto update_message = std::dynamic_pointer_cast<
       RecordMessage<InventoryMessage, TestServiceProtocolClient>>(message);
-    REQUIRE(update_message != nullptr);
+    REQUIRE(update_message);
     REQUIRE(update_message->get_record().inventories.size() == 1);
     auto& inventory = update_message->get_record().inventories[0].inventory;
     REQUIRE(inventory.m_position.m_security == expected_security);
