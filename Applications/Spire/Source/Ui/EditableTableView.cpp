@@ -53,8 +53,11 @@ namespace {
     style.get(item_selector > Any() >
         (ReadOnly() && !(+Any() << is_a<ListItem>()) && !Prompt())).
       set(horizontal_padding(scale_width(8)));
-    style.get(item_selector > Any() > ReadOnly() >
-        (is_a<TextBox>() && !(+Any() << is_a<ListItem>()) && !Prompt())).
+    style.get(item_selector >
+        (ReadOnly() && !(+Any() < is_a<ListItem>()) && !Prompt())).
+      set(horizontal_padding(scale_width(8)));
+    style.get(item_selector > ReadOnly() >
+        (is_a<TextBox>() && !(+Any() < is_a<ListItem>()) && !Prompt())).
       set(horizontal_padding(scale_width(8)));
     style.get((body_selector > Row() > Current() >
         (!ReadOnly() && !DeleteButton())) < is_a<TableItem>()).
