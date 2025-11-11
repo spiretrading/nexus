@@ -97,6 +97,7 @@ void BreakoutBox::resizeEvent(QResizeEvent* event) {
   if(is_broken_out()) {
     adjust_size();
   }
+  QWidget::resizeEvent(event);
 }
 
 bool BreakoutBox::eventFilter(QObject* watched, QEvent* event) {
