@@ -2,7 +2,6 @@
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 using namespace std;
 
@@ -18,5 +17,3 @@ void DivisionNode::Apply(CanvasNodeVisitor& visitor) const {
 unique_ptr<CanvasNode> DivisionNode::Clone() const {
   return make_unique<DivisionNode>(*this);
 }
-
-DivisionNode::DivisionNode(ReceiveBuilder) {}

@@ -86,7 +86,7 @@ namespace Spire {
       void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<Beam::IsShuttle s>
+  template<Beam::IsShuttle S>
   void UserCatalogEntry::shuttle(S& shuttle, unsigned int version) {
     CatalogEntry::shuttle(shuttle, version);
     shuttle.shuttle("name", m_name);

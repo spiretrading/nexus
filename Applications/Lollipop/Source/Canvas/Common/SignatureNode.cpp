@@ -77,9 +77,11 @@ std::unique_ptr<CanvasNode> SignatureNode::Replace(
     return clone;
   }
   auto replacementIndex = [&] {
-    for(auto& [index, value] : GetChildren() | std::views::enumerate) {
+    auto children = GetChildren();
+    for(auto i = std::size_t(0); i != children.size(); ++i) {
+      auto& value = children[i];
       if(&value == &child) {
-        return index;
+        return i;
       }
     }
     BOOST_THROW_EXCEPTION(CanvasOperationException("Child not found."));

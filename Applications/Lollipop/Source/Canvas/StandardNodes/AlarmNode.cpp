@@ -5,7 +5,6 @@
 #include "Spire/Canvas/Types/DateTimeType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 using namespace std;
 
@@ -22,5 +21,3 @@ void AlarmNode::Apply(CanvasNodeVisitor& visitor) const {
 unique_ptr<CanvasNode> AlarmNode::Clone() const {
   return make_unique<AlarmNode>(*this);
 }
-
-AlarmNode::AlarmNode(ReceiveBuilder) {}

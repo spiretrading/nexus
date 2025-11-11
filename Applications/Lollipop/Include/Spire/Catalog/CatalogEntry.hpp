@@ -108,16 +108,16 @@ namespace Spire {
       */
       CatalogEntry(const boost::uuids::uuid& uid);
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
 
     private:
       boost::uuids::uuid m_uuid;
   };
 
-  template<typename Shuttler>
-  void CatalogEntry::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("uuid", m_uuid);
+  template<Beam::IsShuttle S>
+  void CatalogEntry::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("uuid", m_uuid);
   }
 }
 

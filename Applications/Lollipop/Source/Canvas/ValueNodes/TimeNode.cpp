@@ -4,7 +4,6 @@
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 
 using namespace Beam;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Spire;
@@ -41,10 +40,10 @@ void TimeNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> TimeNode::Clone() const {
-  return make_unique<TimeNode>(*this);
+std::unique_ptr<CanvasNode> TimeNode::Clone() const {
+  return std::make_unique<TimeNode>(*this);
 }
 
-unique_ptr<CanvasNode> TimeNode::Reset() const {
-  return make_unique<TimeNode>();
+std::unique_ptr<CanvasNode> TimeNode::Reset() const {
+  return std::make_unique<TimeNode>();
 }

@@ -29,10 +29,10 @@ void TimeInForceNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> TimeInForceNode::Clone() const {
-  return make_unique<TimeInForceNode>(*this);
+std::unique_ptr<CanvasNode> TimeInForceNode::Clone() const {
+  return std::make_unique<TimeInForceNode>(*this);
 }
 
-unique_ptr<CanvasNode> TimeInForceNode::Reset() const {
-  return make_unique<TimeInForceNode>();
+std::unique_ptr<CanvasNode> TimeInForceNode::Reset() const {
+  return std::make_unique<TimeInForceNode>();
 }

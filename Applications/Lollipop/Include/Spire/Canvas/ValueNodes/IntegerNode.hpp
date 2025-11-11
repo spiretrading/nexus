@@ -41,6 +41,7 @@ namespace Spire {
 
     private:
       friend struct Beam::DataShuttle;
+      std::string m_referent;
 
       template<Beam::IsShuttle S>
       void shuttle(S& shuttle, unsigned int version);
@@ -49,6 +50,7 @@ namespace Spire {
   template<Beam::IsShuttle S>
   void IntegerNode::shuttle(S& shuttle, unsigned int version) {
     ValueNode<IntegerType>::shuttle(shuttle, version);
+    shuttle.shuttle("referent", m_referent);
   }
 }
 

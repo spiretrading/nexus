@@ -1,7 +1,6 @@
 #include "Spire/Canvas/Tasks/Executor.hpp"
 
 using namespace Beam;
-using namespace Beam::Routines;
 using namespace Spire;
 
 Executor::Executor()
@@ -17,23 +16,23 @@ void Executor::Add(Aspen::Box<void> reactor) {
 }
 
 void Executor::Open() {
-  m_reactorLoop = Spawn([=] {
+  m_reactorLoop = spawn([=] {
     RunLoop();
   });
 }
 
 void Executor::Close() {
-  if(m_openState.SetClosing()) {
+  if(m_openState.set_closing()) {
     return;
   }
   m_updateCondition.notify_all();
-  m_openState.Close();
+  m_openState.close();
 }
 
 void Executor::RunLoop() {
   m_has_update = false;
   auto sequence = 0;
-  while(m_openState.IsOpen()) {
+  while(m_openState.is_open()) {
     Aspen::Trigger::set_trigger(m_trigger);
     auto state = m_reactor.commit(sequence);
     ++sequence;
@@ -41,7 +40,7 @@ void Executor::RunLoop() {
       break;
     } else if(!Aspen::has_continuation(state)) {
       auto lock = std::unique_lock(m_mutex);
-      while(!m_has_update && m_openState.IsOpen()) {
+      while(!m_has_update && m_openState.is_open()) {
         m_updateCondition.wait(lock);
       }
       m_has_update = false;

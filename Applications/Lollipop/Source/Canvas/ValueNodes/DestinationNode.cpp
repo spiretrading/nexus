@@ -5,7 +5,6 @@
 #include "Spire/Canvas/Types/VenueType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
@@ -85,11 +84,9 @@ unique_ptr<CanvasNode> DestinationNode::SetReferent(
 }
 
 unique_ptr<CanvasNode> DestinationNode::Clone() const {
-  return make_unique<DestinationNode>(*this);
+  return std::make_unique<DestinationNode>(*this);
 }
 
 unique_ptr<CanvasNode> DestinationNode::Reset() const {
   return make_unique<DestinationNode>();
 }
-
-DestinationNode::DestinationNode(ReceiveBuilder) {}

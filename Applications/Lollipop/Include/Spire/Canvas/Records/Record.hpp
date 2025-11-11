@@ -15,7 +15,6 @@
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/Canvas/Records/Record.hpp"
 #include "Spire/Canvas/Tasks/Task.hpp"
 
 namespace Spire {

@@ -28,7 +28,7 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
     m_definitionsClient([&] {
       auto definitionsClient = DefinitionsClient(
         std::in_place_type<ApplicationDefinitionsClient>,
-        m_applicationServiceLocatorClient->get());
+        Ref(*m_applicationServiceLocatorClient));
       auto minimumVersion =
         definitionsClient.load_minimum_spire_client_version();
       if(std::stoi(minimumVersion) > std::stoi(std::string(SPIRE_VERSION))) {

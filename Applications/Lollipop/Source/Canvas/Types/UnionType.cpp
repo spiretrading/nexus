@@ -1,7 +1,5 @@
 #include "Spire/Canvas/Types/UnionType.hpp"
 #include <algorithm>
-#include <Beam/Collections/DereferenceIterator.hpp>
-#include <Beam/Utilities/Comparators.hpp>
 #include "Spire/Canvas/Types/BooleanType.hpp"
 #include "Spire/Canvas/Types/CanvasTypeVisitor.hpp"
 #include "Spire/Canvas/Types/CurrencyType.hpp"
@@ -50,7 +48,7 @@ namespace {
     types.push_back(TimeRangeType::GetInstance());
     types.push_back(VenueType::GetInstance());
     return std::static_pointer_cast<UnionType>(UnionType::Create(
-      MakeDereferenceView(types), "Any"));
+      make_dereference_view(types), "Any"));
   }
 
   std::shared_ptr<UnionType> MakeAnyValueType() {
@@ -74,13 +72,13 @@ namespace {
     types.push_back(TimeRangeType::GetInstance());
     types.push_back(VenueType::GetInstance());
     return std::static_pointer_cast<UnionType>(UnionType::Create(
-      MakeDereferenceView(types), "Any Value"));
+      make_dereference_view(types), "Any Value"));
   }
 }
 
 const UnionType& UnionType::GetEmptyType() {
-  static auto type = std::static_pointer_cast<UnionType>(UnionType::Create(
-    MakeDereferenceView(vector<std::shared_ptr<NativeType>>())));
+  static auto type = std::static_pointer_cast<UnionType>(
+    UnionType::Create(std::vector<NativeType>()));
   return *type;
 }
 
@@ -114,7 +112,9 @@ std::shared_ptr<CanvasType> UnionType::Create(
     return filteredTypes.front();
   }
   sort(filteredTypes.begin(), filteredTypes.end(),
-    PropertyComparator(&CanvasType::GetName));
+    [] (const auto& left, const auto& right) {
+      return left->GetName() < right->GetName();
+    });
   string name;
   if(filteredTypes.empty()) {
     name = "None";
@@ -125,7 +125,7 @@ std::shared_ptr<CanvasType> UnionType::Create(
     }
     name += filteredTypes.back()->GetName();
   }
-  return Create(MakeDereferenceView(filteredTypes), std::move(name));
+  return Create(make_dereference_view(filteredTypes), std::move(name));
 }
 
 std::shared_ptr<CanvasType> UnionType::Create(
@@ -151,7 +151,7 @@ std::shared_ptr<CanvasType> UnionType::Create(
 }
 
 View<NativeType> UnionType::GetCompatibleTypes() const {
-  return MakeDereferenceView(m_compatibleTypes);
+  return make_dereference_view(m_compatibleTypes);
 }
 
 string UnionType::GetName() const {

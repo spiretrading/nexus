@@ -5,7 +5,6 @@
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 
 CountNode::CountNode() {
@@ -35,5 +34,3 @@ const std::vector<CountNode::Signature>& CountNode::GetSignatures() const {
   }();
   return signatures;
 }
-
-CountNode::CountNode(ReceiveBuilder) {}

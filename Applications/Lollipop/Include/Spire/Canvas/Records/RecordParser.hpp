@@ -11,7 +11,7 @@ namespace Spire {
     \param recordType The type of Record to parse.
     \param userProfile The user's profile.
   */
-  Beam::RuleParser<Record> RecordParser(const RecordType& recordType,
+  Beam::Parser<Record> RecordParser(const RecordType& recordType,
     Beam::Ref<UserProfile> userProfile);
 }
 

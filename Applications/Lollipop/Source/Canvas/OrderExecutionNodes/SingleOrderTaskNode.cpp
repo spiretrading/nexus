@@ -15,7 +15,6 @@
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Nexus;
 using namespace Spire;
 using namespace std;

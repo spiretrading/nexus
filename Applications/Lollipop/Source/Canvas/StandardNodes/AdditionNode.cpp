@@ -2,7 +2,6 @@
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 
 AdditionNode::AdditionNode() {
@@ -17,5 +16,3 @@ void AdditionNode::Apply(CanvasNodeVisitor& visitor) const {
 std::unique_ptr<CanvasNode> AdditionNode::Clone() const {
   return std::make_unique<AdditionNode>(*this);
 }
-
-AdditionNode::AdditionNode(ReceiveBuilder) {}
