@@ -158,7 +158,7 @@ bool Spire::IsWrapped(const ComplianceRuleSchema& schema) {
   return name.m_name == "name" &&
     name.m_value.type() == typeid(std::string) &&
     arguments.m_name == "arguments" && arguments.m_value.which() ==
-      mpl::size<ComplianceValue::types>::value - 1;
+      mp_size<ComplianceValue::types>::value - 1;
 }
 
 QString Spire::GetUnwrappedName(const ComplianceRuleSchema& schema) {
