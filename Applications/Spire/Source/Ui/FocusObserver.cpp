@@ -25,10 +25,8 @@ struct FocusObserver::ApplicationFocusFilter : QObject {
   };
   std::vector<std::unique_ptr<Entry>> m_entries;
   std::unordered_map<FocusEventFilter*, Entry*> m_filter_to_entry;
-  bool m_is_focus_changing;
 
-  ApplicationFocusFilter()
-      : m_is_focus_changing(false) {
+  ApplicationFocusFilter() {
     qApp->installEventFilter(this);
     connect(qApp, &QApplication::focusChanged, this,
       &ApplicationFocusFilter::on_focus_changed);
@@ -49,8 +47,7 @@ struct FocusObserver::ApplicationFocusFilter : QObject {
   }
 
   bool eventFilter(QObject* watched, QEvent* event) override {
-    if(event->type() == QEvent::FocusIn && watched->isWidgetType() &&
-        !m_is_focus_changing) {
+    if(event->type() == QEvent::FocusIn && watched->isWidgetType()) {
       m_entries.erase(std::remove_if(m_entries.begin(), m_entries.end(),
         [&] (auto& entry) {
           if(entry->m_is_removed) {
@@ -100,10 +97,6 @@ void FocusObserver::ApplicationFocusFilter::on_focus_changed(
     QWidget* old, QWidget* now) {
   static auto widget_focus_visible = std::pair<QWidget*, bool>();
   static auto previous_widget_focus_visible = widget_focus_visible;
-  if(m_is_focus_changing) {
-    return;
-  }
-  m_is_focus_changing = true;
   if(widget_focus_visible.first != now &&
       previous_widget_focus_visible != widget_focus_visible) {
     previous_widget_focus_visible = widget_focus_visible;
@@ -159,7 +152,6 @@ void FocusObserver::ApplicationFocusFilter::on_focus_changed(
         signaling_entry->m_filter->m_state);
     }
   }
-  m_is_focus_changing = false;
 }
 
 FocusObserver::FocusObserver(const QWidget& widget) {
