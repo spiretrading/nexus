@@ -1,7 +1,6 @@
 #ifndef SPIRE_FOLDNODE_HPP
 #define SPIRE_FOLDNODE_HPP
-#include <boost/mpl/transform.hpp>
-#include <boost/mpl/vector.hpp>
+#include <boost/mp11.hpp>
 #include <boost/optional/optional.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
@@ -13,11 +12,10 @@ namespace Spire {
   struct FoldSignatures {
     template<typename T>
     struct MakeSignature {
-      using type = typename boost::mpl::vector<T, T, T>::type;
+      using type = boost::mp11::mp_list<T, T, T>;
     };
 
-    using type = boost::mpl::transform<ValueTypes,
-      MakeSignature<boost::mpl::placeholders::_1>>::type;
+    using type = boost::mp11::mp_transform<MakeSignature, ValueTypes>;
   };
 
   /*! \class FoldNode

@@ -1,6 +1,6 @@
 #ifndef SPIRE_IFNODE_HPP
 #define SPIRE_IFNODE_HPP
-#include <boost/mpl/vector.hpp>
+#include <boost/mp11.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
 
@@ -10,11 +10,10 @@ namespace Spire {
   struct IfNodeSignatures {
     template<typename T>
     struct MakeSignature {
-      typedef typename boost::mpl::vector<bool, T, T, T>::type type;
+      using type = boost::mp11::mp_list<bool, T, T, T>;
     };
 
-    typedef boost::mpl::transform<NativeTypes,
-      MakeSignature<boost::mpl::placeholders::_1>>::type type;
+    using type = boost::mp11::mp_transform<MakeSignature, NativeTypes>;
   };
 
   /*! \class IfNode

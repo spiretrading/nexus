@@ -1,6 +1,6 @@
 #ifndef SPIRE_LAST_NODE_HPP
 #define SPIRE_LAST_NODE_HPP
-#include <boost/mpl/vector.hpp>
+#include <boost/mp11.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
 
@@ -10,11 +10,10 @@ namespace Spire {
   struct LastNodeSignatures {
     template<typename T>
     struct MakeSignature {
-      typedef typename boost::mpl::vector<T, T>::type type;
+      using type = boost::mp11::mp_list<T, T>;
     };
 
-    typedef boost::mpl::transform<NativeTypes,
-      MakeSignature<boost::mpl::placeholders::_1>>::type type;
+    using type = boost::mp11::mp_transform<MakeSignature, NativeTypes>;
   };
 
   /*! \class LastNode

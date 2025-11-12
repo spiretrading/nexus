@@ -1,6 +1,6 @@
 #ifndef SPIRE_ADDITION_NODE_HPP
 #define SPIRE_ADDITION_NODE_HPP
-#include <boost/mpl/vector.hpp>
+#include <boost/mp11.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Canvas/Canvas.hpp"
@@ -10,16 +10,16 @@ namespace Spire {
 
   /** Specifies an AdditionNode's signatures. */
   struct AdditionNodeSignatures {
-    using type = boost::mpl::list<
-      boost::mpl::vector<Nexus::Quantity, Nexus::Quantity, Nexus::Quantity>,
-      boost::mpl::vector<double, double, double>,
-      boost::mpl::vector<boost::posix_time::time_duration,
+    using type = boost::mp11::mp_list<
+      boost::mp11::mp_list<Nexus::Quantity, Nexus::Quantity, Nexus::Quantity>,
+      boost::mp11::mp_list<double, double, double>,
+      boost::mp11::mp_list<boost::posix_time::time_duration,
         boost::posix_time::time_duration, boost::posix_time::time_duration>,
-      boost::mpl::vector<boost::posix_time::ptime,
+      boost::mp11::mp_list<boost::posix_time::ptime,
         boost::posix_time::time_duration, boost::posix_time::ptime>,
-      boost::mpl::vector<Nexus::Money, Nexus::Money, Nexus::Money>,
-      boost::mpl::vector<Nexus::Quantity, double, double>,
-      boost::mpl::vector<double, Nexus::Quantity, double>>;
+      boost::mp11::mp_list<Nexus::Money, Nexus::Money, Nexus::Money>,
+      boost::mp11::mp_list<Nexus::Quantity, double, double>,
+      boost::mp11::mp_list<double, Nexus::Quantity, double>>;
   };
 
   /** Adds two CanvasNodes together. */

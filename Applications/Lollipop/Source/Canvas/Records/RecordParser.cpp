@@ -17,32 +17,34 @@
 
 using namespace Beam;
 using namespace boost;
+using namespace boost::mp11;
 using namespace Nexus;
 using namespace Spire;
 
 namespace {
   struct ParserBuilder {
+    using type =
+      mp_list<bool, Quantity, double, std::string, Security, Side, Record>;
+
     template<typename T>
     Parser<Record::Field> operator ()(const NativeType& type,
         Ref<UserProfile> userProfile) const {
-      return default_parser<T>;
+      return cast<Record::Field>(default_parser<T>);
     }
 
     template<>
     Parser<Record::Field> operator ()<Security>(const NativeType& type,
         Ref<UserProfile> userProfile) const {
-      return SecurityParser(userProfile->GetVenueDatabase());
+      return cast<Record::Field>(
+        SecurityParser(userProfile->GetVenueDatabase()));
     }
 
     template<>
     Parser<Record::Field> operator ()<Record>(const NativeType& type,
         Ref<UserProfile> userProfile) const {
-      return RecordParser(
-        static_cast<const RecordType&>(type), Ref(userProfile));
+      return cast<Record::Field>(RecordParser(
+        static_cast<const RecordType&>(type), Ref(userProfile)));
     }
-
-    typedef boost::mpl::list<bool, Quantity, double, std::string, Security,
-      Side, Record> SupportedTypes;
   };
 }
 
@@ -54,5 +56,5 @@ Parser<Record> Spire::RecordParser(const RecordType& recordType,
       field.m_type->GetNativeType())(*field.m_type, Ref(userProfile)));
   }
   auto fieldParser = sequence(fieldParserList, ',');
-  return tokenize('(', fieldParser, ')', ('\n' | eps_p));
+  return cast<Record>(tokenize('(', fieldParser, ')', ('\n' | eps_p)));
 }

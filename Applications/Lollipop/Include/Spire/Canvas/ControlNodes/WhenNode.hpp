@@ -1,6 +1,6 @@
 #ifndef SPIRE_WHEN_NODE_HPP
 #define SPIRE_WHEN_NODE_HPP
-#include <boost/mpl/vector.hpp>
+#include <boost/mp11.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
 
@@ -14,11 +14,10 @@ namespace Spire {
       struct Signatures {
         template<typename T>
         struct MakeSignature {
-          using type = typename boost::mpl::vector<bool, T, T>::type;
+          using type = boost::mp11::mp_list<bool, T, T>;
         };
 
-        using type = boost::mpl::transform<NativeTypes,
-          MakeSignature<boost::mpl::placeholders::_1>>::type;
+        using type = boost::mp11::mp_transform<MakeSignature, NativeTypes>;
       };
 
       /** Constructs a WhenNode. */

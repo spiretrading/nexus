@@ -1,6 +1,6 @@
 #ifndef SPIRE_NOTNODE_HPP
 #define SPIRE_NOTNODE_HPP
-#include <boost/mpl/vector.hpp>
+#include <boost/mp11.hpp>
 #include "Nexus/Definitions/Side.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
@@ -9,9 +9,9 @@ namespace Spire {
 
   //! Specifies an NotNode's signatures.
   struct NotNodeSignatures {
-    typedef boost::mpl::list<
-      boost::mpl::vector<bool, bool>,
-      boost::mpl::vector<Nexus::Side, Nexus::Side>> type;
+    using type = boost::mp11::mp_list<
+      boost::mp11::mp_list<bool, bool>,
+      boost::mp11::mp_list<Nexus::Side, Nexus::Side>>;
   };
 
   /*! \class NotNode

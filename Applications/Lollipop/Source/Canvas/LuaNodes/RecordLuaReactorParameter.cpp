@@ -19,7 +19,7 @@ namespace {
     using type = mp_remove<ValueTypes, Record>;
 
     template<typename T>
-    static void Template(lua_State& luaState, const Record::Field& value) {
+    void operator ()(lua_State& luaState, const Record::Field& value) const {
       PushLuaValue<T>()(luaState, boost::get<T>(value));
     }
   };

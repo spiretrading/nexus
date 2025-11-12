@@ -10,10 +10,10 @@ namespace Spire {
 
   //! Specifies an AbsNode's signatures.
   struct AbsNodeSignatures {
-    typedef boost::mpl::list<
-      boost::mpl::vector<Nexus::Quantity, Nexus::Quantity>,
-      boost::mpl::vector<double, double>,
-      boost::mpl::vector<Nexus::Money, Nexus::Money>> type;
+    typedef boost::mp11::mp_list<
+      boost::mp11::mp_list<Nexus::Quantity, Nexus::Quantity>,
+      boost::mp11::mp_list<double, double>,
+      boost::mp11::mp_list<Nexus::Money, Nexus::Money>> type;
   };
 
   /*! \class AbsNode
