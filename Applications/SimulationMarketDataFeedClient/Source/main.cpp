@@ -6,7 +6,7 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Network/UdpSocketChannel.hpp>
-#include <Beam/Parsers/parse.hpp>
+#include <Beam/Parsers/Parse.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
