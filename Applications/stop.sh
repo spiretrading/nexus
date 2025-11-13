@@ -9,7 +9,6 @@ services+=" MarketDataRelayServer"
 services+=" MarketDataServer"
 services+=" AdministrationServer"
 services+=" DefinitionsServer"
-services+=" RegistryServer"
 services+=" UidServer"
 services+=" ServiceLocator"
 

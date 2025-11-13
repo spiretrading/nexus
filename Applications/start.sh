@@ -1,7 +1,6 @@
 #!/bin/bash
 services="ServiceLocator"
 services+=" UidServer"
-services+=" RegistryServer"
 services+=" DefinitionsServer"
 services+=" AdministrationServer"
 services+=" MarketDataServer"

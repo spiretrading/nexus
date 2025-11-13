@@ -70,12 +70,10 @@ def setup_service_locator(arg_vars):
 
 
 def setup_beam(arg_vars):
-  for beam_service in ['RegistryServer', 'ServiceLocator', 'UidServer']:
+  for beam_service in ['ServiceLocator', 'UidServer']:
     if not os.path.exists(beam_service):
       create_symlink(beam_service, os.path.join('..', 'Nexus', 'Dependencies',
       'Beam', 'Applications', beam_service))
-  setup_application('RegistryServer', arg_vars, 'local', 'world', 'address',
-    'password')
   setup_service_locator(arg_vars)
   setup_server_with_mysql('UidServer', arg_vars)
 
