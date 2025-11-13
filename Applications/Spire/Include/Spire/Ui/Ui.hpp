@@ -167,23 +167,6 @@ namespace Spire {
    * @param widget The widget whose descendants' layout will be invalidated.
    */
   void invalidate_descendant_layouts(QWidget& widget);
-
-  template<bool (QWidget::* method)(bool)>
-  struct FocusNext {
-    friend bool focus_next(QWidget& widget, bool next) {
-      return (widget.*method)(next);
-    }
-  };
-
-  template struct FocusNext<&QWidget::focusNextPrevChild>;
-
-  /**
-   * Focuses the next or previous focusable child of the given widget by using
-   * the protected QWidget::focusNextPrevChild method.
-   * @param widget The widget whose child will be focused.
-   * @param next True to focus the next child, false to focus the previous.
-  */
-  bool focus_next(QWidget& widget, bool next);
 }
 
 #endif
