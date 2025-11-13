@@ -18,41 +18,36 @@ namespace {
   template struct FocusNext<&QWidget::focusNextPrevChild>;
 
   bool focus_next(QWidget& widget, bool next);
-}
 
-struct BreakoutBox::BreakoutBody : QWidget {
-  BreakoutBox* m_breakout_box;
+  struct BreakoutBody : QWidget {
+    QWidget* m_source_parent;
 
-  BreakoutBody(QWidget& body, BreakoutBox& breakout_box)
-      : QWidget(&breakout_box),
-        m_breakout_box(&breakout_box) {
-    enclose(*this, body);
-    setFocusProxy(&body);
-    proxy_style(*this, body);
-  }
-
-  bool focusNextPrevChild(bool next) override {
-    if(!m_breakout_box->is_broken_out() || m_breakout_box->m_is_transitioning) {
-      return false;
+    BreakoutBody(QWidget& body, QWidget& source_parent)
+        : QWidget(&source_parent),
+          m_source_parent(&source_parent) {
+      enclose(*this, body);
+      setFocusProxy(&body);
+      proxy_style(*this, body);
     }
-    auto focus_reason = [&] {
-      if(next) {
-        return Qt::FocusReason::TabFocusReason;
-      }
-      return Qt::FocusReason::BacktabFocusReason;
-    }();
-    m_breakout_box->setFocus(focus_reason);
-    return focus_next(*m_breakout_box, next);
-  }
 
-  QWidget& get_body() {
-    return *layout()->itemAt(0)->widget();
-  }
-};
+    bool focusNextPrevChild(bool next) override {
+      if(parentWidget() == m_source_parent || !isVisible()) {
+        return false;
+      }
+      auto focus_reason = [&] {
+        if(next) {
+          return Qt::FocusReason::TabFocusReason;
+        }
+        return Qt::FocusReason::BacktabFocusReason;
+      }();
+      m_source_parent->setFocus(focus_reason);
+      return focus_next(*m_source_parent, next);
+    }
+  };
+}
 
 BreakoutBox::BreakoutBox(QWidget& body, QWidget* parent)
     : QWidget(parent),
-      m_is_transitioning(false),
       m_position_observer(*this) {
   m_body = new BreakoutBody(body, *this);
   enclose(*this, *m_body);
@@ -63,7 +58,7 @@ BreakoutBox::BreakoutBox(QWidget& body, QWidget* parent)
 }
 
 QWidget& BreakoutBox::get_body() {
-  return m_body->get_body();
+  return *m_body->layout()->itemAt(0)->widget();
 }
 
 bool BreakoutBox::is_broken_out() const {
@@ -74,7 +69,6 @@ void BreakoutBox::breakout() {
   if(is_broken_out()) {
     return;
   }
-  m_is_transitioning = true;
   auto window = this->window();
   setFocusProxy(nullptr);
   layout()->removeWidget(m_body);
@@ -87,14 +81,12 @@ void BreakoutBox::breakout() {
   window->installEventFilter(this);
   m_body->installEventFilter(this);
   qApp->installEventFilter(this);
-  m_is_transitioning = false;
 }
 
 void BreakoutBox::restore() {
   if(!is_broken_out()) {
     return;
   }
-  m_is_transitioning = true;
   window()->removeEventFilter(this);
   qApp->removeEventFilter(this);
   m_body->removeEventFilter(this);
@@ -103,7 +95,6 @@ void BreakoutBox::restore() {
   layout()->addWidget(m_body);
   setFocusProxy(m_body);
   updateGeometry();
-  m_is_transitioning = false;
 }
 
 void BreakoutBox::resizeEvent(QResizeEvent* event) {

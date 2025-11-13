@@ -36,10 +36,8 @@ namespace Spire {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
-      struct BreakoutBody;
-      BreakoutBody* m_body;
+      QWidget* m_body;
       GlobalPositionObserver m_position_observer;
-      bool m_is_transitioning;
 
       void adjust_size();
       void update_size_constraints();
