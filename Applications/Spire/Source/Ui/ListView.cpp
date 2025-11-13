@@ -289,11 +289,7 @@ connection ListView::connect_submit_signal(
 }
 
 bool ListView::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == parentWidget()) {
-    if(event->type() == QEvent::Resize) {
-      update_visible_region();
-    }
-  } else if(event->type() == QEvent::Resize) {
+  if(event->type() == QEvent::Resize) {
     update_layout();
   }
   return QWidget::eventFilter(watched, event);
@@ -895,26 +891,31 @@ void ListView::on_style() {
     property.visit(
       [&] (const ListItemGap& gap) {
         stylist.evaluate(gap, [=] (auto gap) {
-          m_item_gap = gap;
-          *has_update = true;
+          if(m_item_gap != gap) {
+            m_item_gap = gap;
+            *has_update = true;
+          }
         });
       },
       [&] (const ListOverflowGap& gap) {
         stylist.evaluate(gap, [=] (auto gap) {
-          m_overflow_gap = gap;
-          *has_update = true;
+          if(m_overflow_gap != gap) {
+            m_overflow_gap = gap;
+            *has_update = true;
+          }
         });
       },
       [&] (EnumProperty<Qt::Orientation> direction) {
         stylist.evaluate(direction, [=] (auto direction) {
-          m_direction = direction;
-          *has_update = true;
+          if(m_direction != direction) {
+            m_direction = direction;
+            *has_update = true;
+          }
         });
       },
       [&] (EnumProperty<EdgeNavigation> edge_navigation) {
         stylist.evaluate(edge_navigation, [=] (auto edge_navigation) {
           m_current_controller.set_edge_navigation(edge_navigation);
-          *has_update = true;
         });
       },
       [&] (EnumProperty<Overflow> overflow) {
