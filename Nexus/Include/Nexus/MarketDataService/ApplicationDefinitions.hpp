@@ -83,13 +83,12 @@ namespace Nexus {
       Beam::Ref<typename SessionBuilder::ServiceLocatorClient>
         service_locator_client, Predicate&& service_predicate,
       const std::string& service = MARKET_DATA_RELAY_SERVICE_NAME) {
-    auto client = Beam::ServiceLocatorClient(
-      &Beam::fully_dereference(service_locator_client));
     return SessionBuilder(Beam::Ref(service_locator_client),
-      [=, service_predicate = std::forward<Predicate>(service_predicate)]
-          () mutable {
+      [=, client = service_locator_client.get(),
+          service_predicate = std::forward<Predicate>(service_predicate)] ()
+            mutable {
         return std::make_unique<Beam::TcpSocketChannel>(
-          Beam::locate_service_addresses(client, service, service_predicate));
+          Beam::locate_service_addresses(*client, service, service_predicate));
       },
       [] {
         return std::make_unique<Beam::LiveTimer>(
