@@ -229,28 +229,27 @@ namespace {
       explicit BreakoutInputBox(AnyInputBox& input_box,
           QWidget* parent = nullptr)
           : QWidget(parent),
-            m_input_box(&input_box),
             m_is_setting_read_only(false) {
-        m_breakout_box = new BreakoutBox(*m_input_box, this);
+        m_breakout_box = new BreakoutBox(input_box, this);
         enclose(*this, *m_breakout_box);
         setFocusProxy(m_breakout_box);
         proxy_style(*this, *m_breakout_box);
       }
 
       const std::shared_ptr<AnyValueModel>& get_current() const {
-        return m_input_box->get_current();
+        return get_input_box().get_current();
       }
 
       const AnyRef& get_submission() const {
-        return m_input_box->get_submission();
+        return get_input_box().get_submission();
       }
 
       void set_placeholder(const QString& placeholder) {
-        m_input_box->set_placeholder(placeholder);
+        get_input_box().set_placeholder(placeholder);
       }
 
       bool is_read_only() const {
-        return m_input_box->is_read_only();
+        return get_input_box().is_read_only();
       }
 
       void set_read_only(bool read_only) {
@@ -261,14 +260,14 @@ namespace {
         if(read_only == is_read_only()) {
           return;
         }
-        m_input_box->set_read_only(read_only);
+        get_input_box().set_read_only(read_only);
         if(read_only) {
-          m_input_box->setFixedHeight(
-            m_input_box->minimumSizeHint().height());
+          get_input_box().setFixedHeight(
+            get_input_box().minimumSizeHint().height());
           restore();
         } else {
-          m_input_box->setMinimumHeight(0);
-          m_input_box->setMaximumHeight(QWIDGETSIZE_MAX);
+          get_input_box().setMinimumHeight(0);
+          get_input_box().setMaximumHeight(QWIDGETSIZE_MAX);
           breakout();
         }
         m_is_setting_read_only = false;
@@ -276,17 +275,17 @@ namespace {
 
       connection connect_submit_signal(
           const AnyInputBox::SubmitSignal::slot_type& slot) const {
-        return m_input_box->connect_submit_signal(slot);
+        return get_input_box().connect_submit_signal(slot);
       }
 
       connection connect_reject_signal(
           const AnyInputBox::RejectSignal::slot_type& slot) const {
-        return m_input_box->connect_reject_signal(slot);
+        return get_input_box().connect_reject_signal(slot);
       }
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) {
-        if(watched == m_input_box && event->type() == QEvent::KeyPress) {
+        if(watched == &get_input_box() && event->type() == QEvent::KeyPress) {
           auto& key_event = *static_cast<QKeyEvent*>(event);
           if(key_event.key() == Qt::Key_Escape) {
             if(auto parent = parentWidget()) {
@@ -296,9 +295,9 @@ namespace {
         } else if(watched == m_breakout_box &&
             m_breakout_box->is_broken_out()) {
           if(event->type() == QEvent::FocusIn) {
-            m_input_box->setFocus();
+            get_input_box().setFocus();
           } else if(event->type() == QEvent::KeyPress) {
-            if(auto focus_proxy = find_focus_proxy(*m_input_box)) {
+            if(auto focus_proxy = find_focus_proxy(get_input_box())) {
               QCoreApplication::sendEvent(focus_proxy, event);
               return true;
             }
@@ -309,16 +308,19 @@ namespace {
 
     private:
       BreakoutBox* m_breakout_box;
-      AnyInputBox* m_input_box;
       optional<FocusObserver> m_input_box_focus_observer;
       bool m_is_setting_read_only;
+
+      AnyInputBox& get_input_box() const {
+        return static_cast<AnyInputBox&>(m_breakout_box->get_body());
+      }
 
       void breakout() {
         m_breakout_box->breakout();
         match(*this, PopUp());
-        m_input_box->installEventFilter(this);
+        get_input_box().installEventFilter(this);
         m_breakout_box->installEventFilter(this);
-        m_input_box_focus_observer.emplace(*m_input_box);
+        m_input_box_focus_observer.emplace(get_input_box());
         m_input_box_focus_observer->connect_state_signal(
           std::bind_front(&BreakoutInputBox::on_input_box_focus, this));
       }
@@ -327,7 +329,7 @@ namespace {
         m_breakout_box->restore();
         unmatch(*this, PopUp());
         m_input_box_focus_observer = none;
-        m_input_box->removeEventFilter(this);
+        get_input_box().removeEventFilter(this);
         m_breakout_box->removeEventFilter(this);
       }
 
