@@ -37,7 +37,7 @@ MoneySpinBox::MoneySpinBox(QWidget* parent, Qt::WindowFlags flags)
 MoneySpinBox::MoneySpinBox(Ref<UserProfile> userProfile, QWidget* parent,
     Qt::WindowFlags flags)
     : MoneySpinBox{parent, flags} {
-  init(Ref(userProfile));
+  Initialize(Ref(userProfile));
 }
 
 void MoneySpinBox::Initialize(Ref<UserProfile> userProfile) {

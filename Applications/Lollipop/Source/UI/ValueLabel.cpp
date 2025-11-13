@@ -9,7 +9,7 @@ ValueLabel::ValueLabel(QWidget* parent, Qt::WindowFlags flags)
     : QLabel(parent, flags) {}
 
 ValueLabel::ValueLabel(const string& label, Ref<UserProfile> userProfile) {
-  init(label, Ref(userProfile));
+  Initialize(label, Ref(userProfile));
 }
 
 void ValueLabel::Initialize(const string& label,

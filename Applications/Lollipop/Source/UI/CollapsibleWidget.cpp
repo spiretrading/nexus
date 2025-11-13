@@ -24,7 +24,7 @@ CollapsibleWidget::CollapsibleWidget(const QString& label, QWidget* widget,
     : QWidget(parent),
       m_widget(nullptr) {
   SetupLayouts(expanded);
-  init(label, widget, expanded);
+  Initialize(label, widget, expanded);
 }
 
 void CollapsibleWidget::Initialize(const QString& label, QWidget* widget,

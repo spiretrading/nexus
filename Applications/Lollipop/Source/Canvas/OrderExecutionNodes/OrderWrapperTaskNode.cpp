@@ -23,13 +23,13 @@ using namespace std;
 OrderWrapperTaskNode::OrderWrapperTaskNode(const std::shared_ptr<Order>& order,
     const UserProfile& userProfile)
     : m_order(order) {
-  init("Single Order", userProfile);
+  Initialize("Single Order", userProfile);
 }
 
 OrderWrapperTaskNode::OrderWrapperTaskNode(const std::shared_ptr<Order>& order,
     const UserProfile& userProfile, string text)
     : m_order(order) {
-  init(std::move(text), userProfile);
+  Initialize(std::move(text), userProfile);
 }
 
 const std::shared_ptr<Order>& OrderWrapperTaskNode::GetOrder() const {

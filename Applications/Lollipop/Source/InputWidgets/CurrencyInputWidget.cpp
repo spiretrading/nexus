@@ -26,7 +26,7 @@ CurrencyInputWidget::CurrencyInputWidget(QWidget* parent, Qt::WindowFlags flags)
 CurrencyInputWidget::CurrencyInputWidget(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : CurrencyInputWidget{parent, flags} {
-  init(Ref(userProfile));
+  Initialize(Ref(userProfile));
 }
 
 CurrencyInputWidget::~CurrencyInputWidget() {}

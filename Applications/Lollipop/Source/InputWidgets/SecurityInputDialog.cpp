@@ -42,7 +42,7 @@ SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_SecurityInputDialog>()),
       m_userProfile(userProfile.get()) {
-  init();
+  Initialize();
   m_ui->m_input->setText(displayText(initial));
   if(parent) {
     parent->installEventFilter(this);
@@ -54,7 +54,7 @@ SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_SecurityInputDialog>()),
       m_userProfile(userProfile.get()) {
-  init();
+  Initialize();
   m_ui->m_input->setText(QString::fromStdString(text));
   if(parent) {
     parent->installEventFilter(this);

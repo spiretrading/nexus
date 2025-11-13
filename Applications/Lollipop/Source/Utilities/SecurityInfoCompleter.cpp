@@ -8,13 +8,13 @@ using namespace Spire;
 
 SecurityInfoCompleter::SecurityInfoCompleter(QObject* parent)
     : QCompleter(parent) {
-  init();
+  Initialize();
 }
 
 SecurityInfoCompleter::SecurityInfoCompleter(SecurityInfoModel* model,
     QObject* parent)
     : QCompleter(parent) {
-  init();
+  Initialize();
   setSourceModel(model);
 }
 

@@ -41,7 +41,7 @@ ValueListInputWidget::ValueListInputWidget(QWidget* parent,
 ValueListInputWidget::ValueListInputWidget(Ref<UserProfile> userProfile,
     const type_info& type, QWidget* parent, Qt::WindowFlags flags)
     : ValueListInputWidget{parent, flags} {
-  init(Ref(userProfile), type);
+  Initialize(Ref(userProfile), type);
 }
 
 ValueListInputWidget::~ValueListInputWidget() {}

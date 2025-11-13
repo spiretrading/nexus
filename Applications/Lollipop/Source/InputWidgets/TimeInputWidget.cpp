@@ -29,7 +29,7 @@ TimeInputWidget::TimeInputWidget(QWidget* parent, Qt::WindowFlags flags)
 TimeInputWidget::TimeInputWidget(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : TimeInputWidget{parent, flags} {
-  init(Ref(userProfile));
+  Initialize(Ref(userProfile));
 }
 
 TimeInputWidget::~TimeInputWidget() {}

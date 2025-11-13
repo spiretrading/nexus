@@ -28,7 +28,7 @@ SecurityInputWidget::SecurityInputWidget(QWidget* parent, Qt::WindowFlags flags)
 SecurityInputWidget::SecurityInputWidget(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : SecurityInputWidget{parent, flags} {
-  init(Ref(userProfile));
+  Initialize(Ref(userProfile));
 }
 
 void SecurityInputWidget::Initialize(Ref<UserProfile> userProfile) {

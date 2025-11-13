@@ -23,7 +23,7 @@ OrderImbalanceIndicatorVenueSelectionWidget::
     const VenueDatabase& venueDatabase,
     Ref<OrderImbalanceIndicatorModel> model, QWidget* parent)
     : QWidget(parent) {
-  init(venueDatabase, Ref(model));
+  Initialize(venueDatabase, Ref(model));
 }
 
 void OrderImbalanceIndicatorVenueSelectionWidget::Initialize(
