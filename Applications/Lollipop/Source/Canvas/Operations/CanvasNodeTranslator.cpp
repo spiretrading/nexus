@@ -349,6 +349,16 @@ namespace {
       }
     };
 
+    template<>
+    struct Operation<double, double, double> {
+      double operator ()(const double& value, const double& multiple) const {
+        if(multiple == 0) {
+          return 0;
+        }
+        return std::ceil(value / multiple) * multiple;
+      }
+    };
+
     template<typename T0, typename T1, typename R>
     Translation operator ()(const Translation& left,
         const Translation& right, CanvasNodeTranslationContext& context) const {
@@ -572,6 +582,16 @@ namespace {
     struct Operation {
       R operator ()(const T0& value, const T1& multiple) const {
         return floor_to(value, multiple);
+      }
+    };
+
+    template<>
+    struct Operation<double, double, double> {
+      double operator ()(const double& value, const double& multiple) const {
+        if(multiple == 0) {
+          return 0;
+        }
+        return std::floor(value / multiple) * multiple;
       }
     };
 
@@ -953,6 +973,16 @@ namespace {
     struct Operation {
       R operator()(const T0& value, const T1& multiple) const {
         return round_to(value, multiple);
+      }
+    };
+
+    template<>
+    struct Operation<double, double, double> {
+      double operator ()(const double& value, const double& multiple) const {
+        if(multiple == 0) {
+          return 0;
+        }
+        return std::round(value / multiple) * multiple;
       }
     };
 

@@ -18,7 +18,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace Nexus;
 using namespace Spire;
 
@@ -152,9 +151,9 @@ TEST_SUITE("Translation") {
     auto taskState = std::make_shared<Queue<Task::StateEntry>>();
     task->GetPublisher().monitor(taskState);
     task->Execute();
-    REQUIRE(taskState->Pop().m_state == Task::State::INITIALIZING);
-    auto submittedOrder1 = submittedOrders->Pop();
-    REQUIRE(taskState->Pop().m_state == Task::State::ACTIVE);
+    REQUIRE(taskState->pop().m_state == Task::State::INITIALIZING);
+    auto submittedOrder1 = submittedOrders->pop();
+    REQUIRE(taskState->pop().m_state == Task::State::ACTIVE);
     REQUIRE(submittedOrder1->get_info().m_fields.m_security ==
       TEST_SECURITY);
     REQUIRE(submittedOrder1->get_info().m_fields.m_quantity == 100);
@@ -163,17 +162,17 @@ TEST_SUITE("Translation") {
     REQUIRE(submittedOrder1->get_info().m_fields.m_type == OrderType::LIMIT);
     auto receivedOrders = std::make_shared<Queue<std::shared_ptr<Order>>>();
     environment.m_environment.monitor_order_submissions(receivedOrders);
-    auto receivedOrder1 = receivedOrders->Pop();
+    auto receivedOrder1 = receivedOrders->pop();
     environment.m_environment.accept(*receivedOrder1);
     auto executionReports = std::make_shared<Queue<ExecutionReport>>();
     submittedOrder1->get_publisher().monitor(executionReports);
-    REQUIRE(executionReports->Pop().m_status == OrderStatus::PENDING_NEW);
-    REQUIRE(executionReports->Pop().m_status == OrderStatus::NEW);
+    REQUIRE(executionReports->pop().m_status == OrderStatus::PENDING_NEW);
+    REQUIRE(executionReports->pop().m_status == OrderStatus::NEW);
     task->Cancel();
-    REQUIRE(taskState->Pop().m_state == Task::State::PENDING_CANCEL);
-    REQUIRE(executionReports->Pop().m_status == OrderStatus::PENDING_CANCEL);
+    REQUIRE(taskState->pop().m_state == Task::State::PENDING_CANCEL);
+    REQUIRE(executionReports->pop().m_status == OrderStatus::PENDING_CANCEL);
     environment.m_environment.cancel(*receivedOrder1);
-    REQUIRE(taskState->Pop().m_state == Task::State::CANCELED);
+    REQUIRE(taskState->pop().m_state == Task::State::CANCELED);
   }
 
   TEST_CASE("translating_spawn") {
@@ -186,8 +185,8 @@ TEST_SUITE("Translation") {
     auto taskState = std::make_shared<Queue<Task::StateEntry>>();
     task->GetPublisher().monitor(taskState);
     task->Execute();
-    REQUIRE(taskState->Pop().m_state == Task::State::INITIALIZING);
-    REQUIRE(taskState->Pop().m_state == Task::State::ACTIVE);
-    REQUIRE(taskState->Pop().m_state == Task::State::COMPLETE);
+    REQUIRE(taskState->pop().m_state == Task::State::INITIALIZING);
+    REQUIRE(taskState->pop().m_state == Task::State::ACTIVE);
+    REQUIRE(taskState->pop().m_state == Task::State::COMPLETE);
   }
 }

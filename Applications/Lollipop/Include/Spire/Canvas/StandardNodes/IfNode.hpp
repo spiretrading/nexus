@@ -9,9 +9,7 @@ namespace Spire {
   //! Specifies an IfNode's signatures.
   struct IfNodeSignatures {
     template<typename T>
-    struct MakeSignature {
-      using type = boost::mp11::mp_list<bool, T, T, T>;
-    };
+    using MakeSignature = boost::mp11::mp_list<bool, T, T, T>;
 
     using type = boost::mp11::mp_transform<MakeSignature, NativeTypes>;
   };

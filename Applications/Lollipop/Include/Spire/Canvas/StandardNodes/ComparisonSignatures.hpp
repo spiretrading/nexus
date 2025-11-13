@@ -9,9 +9,7 @@ namespace Spire {
   //! Specifies the signatures used to test two values for equality.
   struct EqualitySignatures {
     template<typename T>
-    struct MakeSignature {
-      using type = boost::mp11::mp_list<T, T, bool>;
-    };
+    using MakeSignature = boost::mp11::mp_list<T, T, bool>;
 
     using UniformTypes = boost::mp11::mp_transform<MakeSignature, NativeTypes>;
 
@@ -25,12 +23,10 @@ namespace Spire {
   //! Specifies the signatures used to compare two values.
   struct ComparisonSignatures {
     template<typename T>
-    struct MakeSignature {
-      using type = boost::mp11::mp_list<T, T, bool>;
-    };
+    using MakeSignature = boost::mp11::mp_list<T, T, bool>;
 
-    using UniformTypes = boost::mp11::mp_transform<MakeSignature,
-      ComparableTypes>;
+    using UniformTypes =
+      boost::mp11::mp_transform<MakeSignature, ComparableTypes>;
 
     using MixedTypes = boost::mp11::mp_list<
       boost::mp11::mp_list<Nexus::Quantity, double, bool>,

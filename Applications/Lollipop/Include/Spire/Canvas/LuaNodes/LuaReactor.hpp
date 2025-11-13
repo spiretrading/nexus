@@ -94,7 +94,7 @@ namespace Spire {
     for(auto i = std::size_t(0); i != m_parameters.size(); ++i) {
       auto& parameter = m_parameters.get(i);
       try {
-        parameter->push(*m_luaState);
+        parameter->Push(*m_luaState);
       } catch(...) {
         lua_pop(m_luaState, parameterCount + 1);
         m_value = std::current_exception();

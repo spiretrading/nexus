@@ -9,9 +9,7 @@ namespace Spire {
   //! Specifies a RangeNode's signatures.
   struct RangeNodeSignatures {
     template<typename T>
-    struct MakeSignature {
-      using type = boost::mp11::mp_list<T, T, T>;
-    };
+    using MakeSignature = boost::mp11::mp_list<T, T, T>;
 
     using type = boost::mp11::mp_transform<MakeSignature,
       boost::mp11::mp_list<Nexus::Quantity>>;

@@ -13,9 +13,7 @@ namespace Spire {
       /** Specifies a WhenNode's signatures. */
       struct Signatures {
         template<typename T>
-        struct MakeSignature {
-          using type = boost::mp11::mp_list<bool, T, T>;
-        };
+        using MakeSignature = boost::mp11::mp_list<bool, T, T>;
 
         using type = boost::mp11::mp_transform<MakeSignature, NativeTypes>;
       };

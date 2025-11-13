@@ -9,9 +9,7 @@ namespace Spire {
   //! Specifies a LastNode's signatures.
   struct LastNodeSignatures {
     template<typename T>
-    struct MakeSignature {
-      using type = boost::mp11::mp_list<T, T>;
-    };
+    using MakeSignature = boost::mp11::mp_list<T, T>;
 
     using type = boost::mp11::mp_transform<MakeSignature, NativeTypes>;
   };

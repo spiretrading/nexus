@@ -12,16 +12,14 @@ namespace Spire {
   struct RoundingNodeSignatures {
     using type = boost::mp11::mp_list<
       boost::mp11::mp_list<Nexus::Quantity, Nexus::Quantity, Nexus::Quantity>,
-      boost::mp11::mp_list<double, Nexus::Quantity, double>,
-      boost::mp11::mp_list<Nexus::Money, Nexus::Quantity, Nexus::Money>>;
+      boost::mp11::mp_list<double, double, double>,
+      boost::mp11::mp_list<Nexus::Money, Nexus::Money, Nexus::Money>>;
   };
 
   //! Specifies the signatures used to get a type's extreme values.
   struct ExtremaNodeSignatures {
     template<typename T>
-    struct MakeSignature {
-      using type = boost::mp11::mp_list<T, T, T>;
-    };
+    using MakeSignature = boost::mp11::mp_list<T, T, T>;
 
     using type = boost::mp11::mp_transform<MakeSignature, ComparableTypes>;
   };

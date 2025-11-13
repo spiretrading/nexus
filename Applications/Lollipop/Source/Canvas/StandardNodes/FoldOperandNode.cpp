@@ -33,3 +33,5 @@ void FoldOperandNode::Apply(CanvasNodeVisitor& visitor) const {
 std::unique_ptr<CanvasNode> FoldOperandNode::Clone() const {
   return std::make_unique<FoldOperandNode>(*this);
 }
+
+FoldOperandNode::FoldOperandNode() = default;

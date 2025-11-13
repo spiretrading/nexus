@@ -11,9 +11,7 @@ namespace Spire {
   //! Specifies a FoldNode's signatures.
   struct FoldSignatures {
     template<typename T>
-    struct MakeSignature {
-      using type = boost::mp11::mp_list<T, T, T>;
-    };
+    using MakeSignature = boost::mp11::mp_list<T, T, T>;
 
     using type = boost::mp11::mp_transform<MakeSignature, ValueTypes>;
   };

@@ -4,6 +4,7 @@
 
 using namespace Beam;
 using namespace boost;
+using namespace boost::mp11;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;

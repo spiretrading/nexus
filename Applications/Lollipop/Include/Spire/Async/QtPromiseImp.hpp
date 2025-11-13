@@ -189,7 +189,7 @@ namespace details {
         (*m_continuation)(std::move(result));
         m_continuation = boost::none;
       } else {
-        m_value = std::move(result);
+        m_value.emplace(std::move(result));
       }
       return true;
     } else if(event->type() == QtBasePromiseEvent::EVENT_TYPE) {
@@ -204,7 +204,7 @@ namespace details {
         (*m_continuation)(std::move(promise_event.get_result()));
         m_continuation = boost::none;
       } else {
-        m_value = std::move(promise_event.get_result());
+        m_value.emplace(std::move(promise_event.get_result()));
       }
       return true;
     } else {
