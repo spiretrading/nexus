@@ -113,6 +113,7 @@ void ListItem::mount(QWidget& body) {
 }
 
 QWidget* ListItem::unmount() {
+  setFocusProxy(nullptr);
   auto size_hint = sizeHint();
   auto size_policy = get_body().sizePolicy();
   auto item = layout()->takeAt(0);
