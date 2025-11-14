@@ -5,7 +5,6 @@
 #include <utility>
 #include <Beam/Utilities/HashTuple.hpp>
 #include "Spire/Styles/Expression.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
@@ -59,7 +58,7 @@ namespace std {
   struct hash<Spire::Styles::FunctionDefinitionExpression<I, T, A...>> {
     std::size_t operator ()(
         const Spire::Styles::FunctionDefinitionExpression<I, T, A...>&
-          expression) const {
+          expression) const noexcept {
       return std::hash<
         Spire::Styles::FunctionDefinitionExpression<I, T, A...>::Arguments>()(
           expression.get_arguments());

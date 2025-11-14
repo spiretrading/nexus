@@ -3,9 +3,9 @@
 #include <functional>
 #include "Spire/Spire/Hash.hpp"
 #include "Spire/Styles/Evaluator.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
+  class Stylist;
 
   /**
    * Expresses a constant value.
@@ -37,7 +37,8 @@ namespace Spire::Styles {
   };
 
   template<typename T>
-  auto make_evaluator(ConstantExpression<T> expression, const Stylist& stylist) {
+  auto make_evaluator(
+      ConstantExpression<T> expression, const Stylist& stylist) {
     return [constant = std::move(expression).get_constant()] (
         boost::posix_time::time_duration) {
       return Evaluation(constant);
@@ -65,7 +66,7 @@ namespace std {
   template<typename T>
   struct hash<Spire::Styles::ConstantExpression<T>> {
     std::size_t operator ()(
-        const Spire::Styles::ConstantExpression<T>& expression) const {
+        const Spire::Styles::ConstantExpression<T>& expression) const noexcept {
       return std::hash<T>()(expression.get_constant());
     }
   };

@@ -40,7 +40,7 @@ Rule& Rule::set(Property property) {
   return *this;
 }
 
-std::size_t std::hash<Rule>::operator ()(const Rule& rule) const {
+std::size_t std::hash<Rule>::operator ()(const Rule& rule) const noexcept {
   auto seed = std::size_t(0);
   hash_combine(seed, std::hash<Selector>()(rule.get_selector()));
   hash_combine(seed, std::hash<Block>()(rule.get_block()));

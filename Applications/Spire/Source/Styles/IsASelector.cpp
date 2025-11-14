@@ -83,6 +83,6 @@ SelectConnection Spire::Styles::select(const IsASelector& selector,
 }
 
 std::size_t std::hash<IsASelector>::operator ()(
-    const IsASelector& selector) const {
+    const IsASelector& selector) const noexcept {
   return std::hash<std::type_index>()(selector.get_type());
 }

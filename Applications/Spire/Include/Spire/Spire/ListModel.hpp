@@ -926,38 +926,36 @@ namespace Spire {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<typename T>
-  struct IsStructure<Spire::ListModel<T>> : std::false_type {};
+  constexpr auto is_structure<Spire::ListModel<T>> = false;
 
   template<typename T>
   struct Send<Spire::ListModel<T>> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        const Spire::ListModel<T>& value) const {
-      shuttle.StartSequence(name, value.get_size());
-      for(const auto& i : value) {
-        shuttle.Shuttle(i);
+    template<IsSender S>
+    void operator ()(
+        S& sender, const char* name, const Spire::ListModel<T>& value) const {
+      sender.start_sequence(name, value.get_size());
+      for(auto& i : value) {
+        sender.send(i);
       }
-      shuttle.EndSequence();
+      sender.end_sequence();
     }
   };
 
   template<typename T>
   struct Receive<Spire::ListModel<T>> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        Spire::ListModel<T>& value) const {
+    template<IsReceiver R>
+    void operator ()(
+        R& receiver, const char* name, Spire::ListModel<T>& value) const {
       value.transact([&] {
         Spire::clear(value);
         auto size = int();
-        shuttle.StartSequence(name, size);
+        receiver.start_sequence(name, size);
         for(auto i = 0; i < size; ++i) {
-          auto element = T();
-          shuttle.Shuttle(element);
-          value.push(element);
+          value.push(receive<T>(receiver));
         }
-        shuttle.EndSequence();
+        receiver.end_sequence();
       });
     }
   };

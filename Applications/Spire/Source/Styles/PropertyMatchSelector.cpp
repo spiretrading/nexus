@@ -64,6 +64,6 @@ SelectConnection Spire::Styles::select(const PropertyMatchSelector& selector,
 }
 
 std::size_t std::hash<PropertyMatchSelector>::operator ()(
-    const PropertyMatchSelector& selector) const {
+    const PropertyMatchSelector& selector) const noexcept {
   return std::hash<Property>()(selector.get_property());
 }

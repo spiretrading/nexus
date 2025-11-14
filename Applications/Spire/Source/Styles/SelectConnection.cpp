@@ -9,6 +9,14 @@ SelectConnection::SelectConnection(SelectConnection&& connection) {
   }
 }
 
+bool SelectConnection::is_connected() const {
+  return m_executor != nullptr && m_executor->is_connected();
+}
+
+void SelectConnection::disconnect() {
+  m_executor = nullptr;
+}
+
 SelectConnection& SelectConnection::operator =(SelectConnection&& connection) {
   if(connection.is_connected()) {
     m_executor = std::move(connection.m_executor);
@@ -16,12 +24,4 @@ SelectConnection& SelectConnection::operator =(SelectConnection&& connection) {
     m_executor = nullptr;
   }
   return *this;
-}
-
-bool SelectConnection::is_connected() const {
-  return m_executor != nullptr && m_executor->is_connected();
-}
-
-void SelectConnection::disconnect() {
-  m_executor = nullptr;
 }

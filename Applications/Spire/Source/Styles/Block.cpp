@@ -53,7 +53,7 @@ void Spire::Styles::merge(Block& block, Block other) {
   }
 }
 
-std::size_t std::hash<Block>::operator ()(const Block& block) const {
+std::size_t std::hash<Block>::operator ()(const Block& block) const noexcept {
   auto seed = std::size_t(std::distance(block.begin(), block.end()));
   for(auto& property : block) {
     hash_combine(seed, std::hash<Property>()(property));

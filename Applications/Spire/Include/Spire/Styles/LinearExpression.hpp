@@ -5,7 +5,6 @@
 #include <Beam/Utilities/HashPtime.hpp>
 #include <boost/functional/hash.hpp>
 #include "Spire/Styles/Expression.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
@@ -135,7 +134,7 @@ namespace std {
   template<typename T>
   struct hash<Spire::Styles::LinearExpression<T>> {
     std::size_t operator ()(
-        const Spire::Styles::LinearExpression<T>& expression) const {
+        const Spire::Styles::LinearExpression<T>& expression) const noexcept {
       auto seed = std::size_t(0);
       boost::hash_combine(seed,
         std::hash<Spire::Styles::Expression<T>>()(expression.get_initial()));

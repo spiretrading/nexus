@@ -3,7 +3,6 @@
 #include <functional>
 #include <boost/optional/optional.hpp>
 #include "Spire/Styles/Rule.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
@@ -42,7 +41,8 @@ namespace Spire::Styles {
 namespace std {
   template<>
   struct hash<Spire::Styles::StyleSheet> {
-    std::size_t operator ()(const Spire::Styles::StyleSheet& styles) const;
+    std::size_t operator ()(
+      const Spire::Styles::StyleSheet& styles) const noexcept;
   };
 }
 

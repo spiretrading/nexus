@@ -4,10 +4,9 @@
 #include <memory>
 #include <typeindex>
 #include <type_traits>
-#include <Beam/Utilities/Functional.hpp>
+#include <boost/callable_traits/args.hpp>
 #include "Spire/Styles/ConstantExpression.hpp"
 #include "Spire/Styles/Property.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
@@ -54,29 +53,16 @@ namespace Spire::Styles {
 
       template<typename F, typename... G>
       decltype(auto) visit(F&& f, G&&... g) const;
-
-      bool operator ==(const EvaluatedProperty& property) const;
-
-      bool operator !=(const EvaluatedProperty& property) const;
+      bool operator ==(const EvaluatedProperty& property) const noexcept;
 
     private:
-      template<typename T>
-      struct TypeExtractor {};
-      template<typename T, typename U>
-      struct TypeExtractor<Beam::TypeSequence<std::in_place_type_t<T>, U>> {
-        using type = T;
-      };
-      template<typename T, typename U, typename V>
-      struct TypeExtractor<Beam::TypeSequence<T, std::in_place_type_t<U>, V>> {
-        using type = U;
-      };
       struct BaseEntry {
         virtual ~BaseEntry() = default;
+
         virtual std::type_index get_property_type() const = 0;
         virtual Property as_property() const = 0;
         virtual const void* as(std::type_index type) const = 0;
-        virtual bool operator ==(const BaseEntry& entry) const = 0;
-        bool operator !=(const BaseEntry& entry) const;
+        virtual bool operator ==(const BaseEntry& entry) const noexcept = 0;
       };
       template<typename P>
       struct Entry final : BaseEntry {
@@ -84,10 +70,11 @@ namespace Spire::Styles {
         typename BasicProperty::Type m_evaluation;
 
         Entry(typename BasicProperty::Type evaluation);
+
         std::type_index get_property_type() const override;
         Property as_property() const override;
         const void* as(std::type_index type) const override;
-        bool operator ==(const BaseEntry& entry) const override;
+        bool operator ==(const BaseEntry& entry) const noexcept override;
       };
       std::shared_ptr<BaseEntry> m_entry;
   };
@@ -110,20 +97,24 @@ namespace Spire::Styles {
 
   template<typename F>
   decltype(auto) EvaluatedProperty::visit(F&& f) const {
-    using Parameter = typename TypeExtractor<
-      Beam::GetFunctionParameters<std::decay_t<F>>>::type;
-    if constexpr(std::is_invocable_v<std::decay_t<F>>) {
+    if constexpr(std::is_invocable_v<std::remove_cvref_t<F>>) {
       return std::forward<F>(f)();
-    } else if(m_entry->get_property_type() == typeid(Parameter)) {
-      return std::forward<F>(f)(
-        std::in_place_type<Parameter>, as<typename Parameter::Type>());
+    } else {
+      using Args = boost::callable_traits::args_t<std::remove_cvref_t<F>>;
+      using Parameter = std::remove_cvref_t<
+        std::tuple_element_t<std::tuple_size_v<Args> - 1, Args>>;
+      if(m_entry->get_property_type() == typeid(Parameter)) {
+        return std::forward<F>(f)(
+          std::in_place_type<Parameter>, as<typename Parameter::Type>());
+      }
     }
   }
 
   template<typename F, typename... G>
   decltype(auto) EvaluatedProperty::visit(F&& f, G&&... g) const {
-    using Parameter = typename TypeExtractor<
-      Beam::GetFunctionParameters<std::decay_t<F>>>::type;
+    using Args = boost::callable_traits::args_t<std::remove_cvref_t<F>>;
+    using Parameter = std::remove_cvref_t<
+      std::tuple_element_t<std::tuple_size_v<Args> - 1, Args>>;
     if(m_entry->get_property_type() == typeid(Parameter)) {
       return std::forward<F>(f)(
         std::in_place_type<Parameter>, as<typename Parameter::Type>());
@@ -142,7 +133,7 @@ namespace Spire::Styles {
 
   template<typename P>
   Property EvaluatedProperty::Entry<P>::as_property() const {
-    return Property(BasicProperty(ConstantExpression(m_evaluation)));
+    return BasicProperty(ConstantExpression(m_evaluation));
   }
 
   template<typename P>
@@ -154,7 +145,8 @@ namespace Spire::Styles {
   }
 
   template<typename P>
-  bool EvaluatedProperty::Entry<P>::operator ==(const BaseEntry& entry) const {
+  bool EvaluatedProperty::Entry<P>::operator ==(
+      const BaseEntry& entry) const noexcept {
     return get_property_type() == entry.get_property_type() &&
       m_evaluation ==
         static_cast<const Entry<BasicProperty>&>(entry).m_evaluation;

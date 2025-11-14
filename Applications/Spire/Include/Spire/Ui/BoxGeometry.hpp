@@ -1,7 +1,7 @@
 #ifndef SPIRE_BOX_GEOMETRY_HPP
 #define SPIRE_BOX_GEOMETRY_HPP
 #include <QRect>
-#include "Spire/Styles/Styles.hpp"
+#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {

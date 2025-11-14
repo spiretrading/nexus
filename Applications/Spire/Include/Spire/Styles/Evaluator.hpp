@@ -2,7 +2,6 @@
 #define SPIRE_STYLES_EVALUATOR_HPP
 #include <functional>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
@@ -31,14 +30,15 @@ namespace Spire::Styles {
      * Constructs an Evaluation that has no further frame.
      * @param value The value to evaluate to.
      */
-    explicit Evaluation(Type value);
+    explicit Evaluation(Type value) noexcept;
 
     /**
      * Constructs an Evaluation that has no further frame.
      * @param value The value to evaluate to.
      * @param next_frame The lower bound on the next frame in the evaluation.
      */
-    Evaluation(Type value, boost::posix_time::time_duration next_frame);
+    Evaluation(
+      Type value, boost::posix_time::time_duration next_frame) noexcept;
   };
 
   template<typename T>
@@ -46,12 +46,12 @@ namespace Spire::Styles {
     std::function<Evaluation<T> (boost::posix_time::time_duration)>;
 
   template<typename T>
-  Evaluation<T>::Evaluation(Type value)
+  Evaluation<T>::Evaluation(Type value) noexcept
     : Evaluation(std::move(value), boost::posix_time::pos_infin) {}
 
   template<typename T>
   Evaluation<T>::Evaluation(Type value,
-      boost::posix_time::time_duration next_frame)
+    boost::posix_time::time_duration next_frame) noexcept
     : m_value(std::move(value)),
       m_next_frame(next_frame) {}
 }

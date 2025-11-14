@@ -5,7 +5,6 @@
 #include <utility>
 #include <QColor>
 #include <QString>
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
