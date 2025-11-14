@@ -16,7 +16,6 @@ namespace Spire {
   class ConstantValueModel : public ValueModel<T> {
     public:
       using Type = typename ValueModel<T>::Type;
-
       using UpdateSignal = typename ValueModel<T>::UpdateSignal;
 
       /** Constructs a model using a default constructed value. */
@@ -29,7 +28,6 @@ namespace Spire {
       ConstantValueModel(Type value);
 
       const Type& get() const override;
-
       boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 
@@ -43,7 +41,7 @@ namespace Spire {
    */
   template<typename T>
   auto make_constant_value_model(T&& value) {
-    using Type = std::decay_t<T>;
+    using Type = std::remove_cvref_t<T>;
     return std::make_shared<ConstantValueModel<Type>>(std::forward<T>(value));
   }
 

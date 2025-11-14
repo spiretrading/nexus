@@ -20,7 +20,6 @@ namespace Spire {
   class StagingValueModel : public ValueModel<T> {
     public:
       using Type = typename ValueModel<T>::Type;
-
       using UpdateSignal = typename ValueModel<T>::UpdateSignal;
 
       /**
@@ -38,13 +37,9 @@ namespace Spire {
       QValidator::State commit();
 
       QValidator::State get_state() const override;
-
       const Type& get() const override;
-
       QValidator::State test(const Type& value) const override;
-
       QValidator::State set(const Type& value) override;
-
       boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 

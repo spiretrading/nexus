@@ -6,18 +6,18 @@
 
 namespace Spire {
 
-  //! The generic type used to specify a bounded value.
+  /** The generic type used to specify a bounded value. */
   template<typename T>
   using Bound = boost::icl::bounded_value<T>;
 
-  //! The generic type used to specify an interval.
+  /** The generic type used to specify an interval. */
   template<typename T>
   using Interval = boost::icl::continuous_interval<T>;
 
-  //! Specifies a time boundary.
+  /** Specifies a time boundary. */
   using TimeBound = Bound<boost::posix_time::ptime>;
 
-  //! Specifies a time interval.
+  /** Specifies a time interval. */
   using TimeInterval = Interval<boost::posix_time::ptime>;
 }
 

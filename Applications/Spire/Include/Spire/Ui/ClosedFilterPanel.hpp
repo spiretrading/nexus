@@ -5,6 +5,7 @@
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  template<typename T> class ArrayListModel;
 
   /** Displays a FilterPanel over a closed list of values. */
   class ClosedFilterPanel : public QWidget {

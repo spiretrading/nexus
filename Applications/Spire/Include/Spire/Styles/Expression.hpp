@@ -13,15 +13,25 @@
 
 namespace Spire::Styles {
   class Stylist;
+  template<typename> class Expression;
+
+  template<typename T, typename = void>
+  struct is_expression_t : std::false_type {};
+
+  template<typename T>
+  struct is_expression_t<Expression<T>> : std::true_type {};
+
+  template<typename T>
+  struct is_expression_t<T, std::void_t<decltype(
+    make_evaluator(std::declval<T>(), std::declval<const Stylist&>()))>> :
+      std::true_type {};
 
   /**
    * Determines whether a type can be evaluated as an expression via the
    * make_evaluator function.
    */
   template<typename T>
-  concept IsExpression = requires(T expression, const Stylist& stylist) {
-    { make_evaluator(expression, stylist) };
-  };
+  concept IsExpression = is_expression_t<T>::value;
 
   /** Returns the type that an expression evaluates to. */
   template<typename T>
@@ -57,6 +67,8 @@ namespace Spire::Styles {
 
       template<IsExpression E>
       Expression(E expression);
+      Expression(const Expression&) = default;
+      Expression(Expression&&) = default;
 
       /** Returns the type of the underlying expression. */
       const std::type_info& get_type() const;
@@ -83,6 +95,8 @@ namespace Spire::Styles {
       std::any m_expression;
 
       Evaluator<Type> make_evaluator(const Stylist& stylist) const;
+      Expression& operator =(const Expression&) = delete;
+      Expression& operator =(Expression&&) = delete;
   };
 
   /**
@@ -95,6 +109,12 @@ namespace Spire::Styles {
   Evaluator<typename Expression<T>::Type> make_evaluator(
       const Expression<T>& expression, const Stylist& stylist) {
     return expression.make_evaluator(stylist);
+  }
+
+  template<typename E, typename = std::enable_if_t<is_expression_t<E>::value>>
+  Evaluator<expression_type_t<E>> make_evaluator(
+      const E& expression, const Stylist& stylist) {
+    return make_evaluator(expression, stylist);
   }
 
   template<typename T>

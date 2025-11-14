@@ -23,7 +23,6 @@ namespace Spire {
         Nexus::MarketDataClient market_data_client);
 
       boost::optional<Nexus::SecurityInfo> parse(const QString& query) override;
-
       QtPromise<std::vector<Nexus::SecurityInfo>>
         submit(const QString& query) override;
 

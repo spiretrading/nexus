@@ -56,11 +56,8 @@ namespace Spire {
       AnyRef(const volatile T& ref) noexcept;
 
       AnyRef(const AnyRef& any);
-
       AnyRef(AnyRef& any);
-
       AnyRef(AnyRef&& any) noexcept;
-
       ~AnyRef();
 
       /** Returns <code>true</code> iff this object is not empty. */
@@ -85,17 +82,16 @@ namespace Spire {
       bool is_const_volatile() const noexcept;
 
       AnyRef& assign(const std::any& value);
-
       AnyRef& operator =(const AnyRef& any) = default;
-
       AnyRef& operator =(AnyRef& any) = default;
-
       AnyRef& operator =(AnyRef&& any) noexcept;
-
       template<typename T>
       AnyRef& operator =(const T& rhs) = delete;
 
     private:
+      template<typename T>
+      friend T* any_cast(AnyRef* any) noexcept;
+      friend std::any to_any(const AnyRef& any) noexcept;
       enum class Qualifiers : std::uint8_t {
         NONE = 0,
         CONSTANT = 1,
@@ -112,44 +108,12 @@ namespace Spire {
       };
       template<typename T>
       struct TypeInfo : BaseTypeInfo {
-        static const TypeInfo& get() {
-          static auto instance = TypeInfo();
-          return instance;
-        }
-
-        const std::type_info& get_type(void* ptr) const noexcept override {
-          return typeid(T);
-        }
-
-        std::any to_any(void* ptr) const noexcept override {
-          if constexpr(std::is_same_v<T, void>) {
-            return {};
-          } else {
-            return *static_cast<T*>(ptr);
-          }
-        }
-
-        void assign(void* ptr, const std::any& value) const override {
-          if constexpr(!std::is_same_v<T, void>) {
-            *static_cast<T*>(ptr) = std::any_cast<const T&>(value);
-          }
-        }
-
-        void* copy(const void* ptr) const override {
-          if constexpr(std::is_same_v<T, void>) {
-            return nullptr;
-          } else {
-            return new T(*static_cast<const T*>(ptr));
-          }
-        }
-
-        void drop(const void* ptr) const noexcept {
-          if constexpr(std::is_same_v<T, void>) {
-            return;
-          } else {
-            delete static_cast<const T*>(ptr);
-          }
-        }
+        static const TypeInfo& get();
+        const std::type_info& get_type(void* ptr) const noexcept override;
+        std::any to_any(void* ptr) const noexcept override;
+        void assign(void* ptr, const std::any& value) const override;
+        void* copy(const void* ptr) const override;
+        void drop(const void* ptr) const noexcept override;
       };
       struct AnyTypeInfo : BaseTypeInfo {
         static const AnyTypeInfo& get();
@@ -163,9 +127,6 @@ namespace Spire {
       const BaseTypeInfo* m_type;
       Qualifiers m_qualifiers;
 
-      template<typename T>
-      friend T* any_cast(AnyRef* any) noexcept;
-      friend std::any to_any(const AnyRef& any) noexcept;
       static bool is_set(Qualifiers a, Qualifiers b);
       AnyRef(
         void* ptr, const BaseTypeInfo& type, Qualifiers qualifiers) noexcept;
@@ -268,6 +229,53 @@ namespace Spire {
   AnyRef::AnyRef(const volatile T& ref) noexcept
     : AnyRef(
         const_cast<T*>(&ref), TypeInfo<T>::get(), Qualifiers::CONST_VOLATILE) {}
+
+  template<typename T>
+  const AnyRef::TypeInfo<T>& AnyRef::TypeInfo<T>::get() {
+    static auto instance = TypeInfo();
+    return instance;
+  }
+
+  template<typename T>
+  const std::type_info& AnyRef::TypeInfo<T>::get_type(
+      void* ptr) const noexcept {
+    return typeid(T);
+  }
+
+  template<typename T>
+  std::any AnyRef::TypeInfo<T>::to_any(void* ptr) const noexcept {
+    if constexpr(std::is_same_v<T, void>) {
+      return {};
+    } else {
+      return *static_cast<T*>(ptr);
+    }
+  }
+
+  template<typename T>
+  void AnyRef::TypeInfo<T>::assign(
+      void* ptr, const std::any& value) const {
+    if constexpr(!std::is_same_v<T, void>) {
+      *static_cast<T*>(ptr) = std::any_cast<const T&>(value);
+    }
+  }
+
+  template<typename T>
+  void* AnyRef::TypeInfo<T>::copy(const void* ptr) const {
+    if constexpr(std::is_same_v<T, void>) {
+      return nullptr;
+    } else {
+      return new T(*static_cast<const T*>(ptr));
+    }
+  }
+
+  template<typename T>
+  void AnyRef::TypeInfo<T>::drop(const void* ptr) const noexcept {
+    if constexpr(std::is_same_v<T, void>) {
+      return;
+    } else {
+      delete static_cast<const T*>(ptr);
+    }
+  }
 }
 
 #endif

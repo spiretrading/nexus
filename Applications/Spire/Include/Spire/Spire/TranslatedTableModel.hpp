@@ -55,16 +55,11 @@ namespace Spire {
       int index_from_source(int index) const;
 
       int get_row_size() const override;
-
       int get_column_size() const override;
-
       AnyRef at(int row, int column) const override;
-
       QValidator::State set(
         int row, int column, const std::any& value) override;
-
       QValidator::State remove(int row) override;
-
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
 

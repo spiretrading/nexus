@@ -44,21 +44,13 @@ namespace Spire {
       explicit TableToListModel(std::shared_ptr<TableModel> table);
 
       const TableModel::UpdateOperation& get_update() const;
-
       int get_size() const override;
-
       const Type& get(int index) const override;
-
       QValidator::State set(int index, const Type& value) override;
-
       QValidator::State push(const Type& value) override;
-
       QValidator::State insert(const Type& value, int index) override;
-
       QValidator::State move(int source, int destination) override;
-
       QValidator::State remove(int index) override;
-
       boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const override;
 

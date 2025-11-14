@@ -8,6 +8,7 @@
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class FilteredTableModel;
 
   /**
    * Displays a table of values represented by TableItems arranged along a grid.

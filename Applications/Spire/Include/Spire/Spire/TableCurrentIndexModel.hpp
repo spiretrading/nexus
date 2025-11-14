@@ -31,11 +31,8 @@ namespace Spire {
         std::shared_ptr<TableModel> table, boost::optional<TableIndex> index);
 
       const Type& get() const override;
-
       QValidator::State test(const Type& value) const override;
-
       QValidator::State set(const Type& value) override;
-
       boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 

@@ -34,7 +34,6 @@ namespace Spire {
       void add(const QString& id, const Type& value);
 
       boost::optional<Type> parse(const QString& query) override;
-
       QtPromise<std::vector<Type>> submit(const QString& query) override;
 
     private:

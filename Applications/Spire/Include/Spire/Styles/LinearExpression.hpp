@@ -2,7 +2,7 @@
 #define SPIRE_STYLES_LINEAR_EXPRESSION_HPP
 #include <memory>
 #include <utility>
-#include <Beam/Utilities/HashPtime.hpp>
+#include <Beam/Utilities/HashPosixTimeTypes.hpp>
 #include <boost/functional/hash.hpp>
 #include "Spire/Styles/Expression.hpp"
 

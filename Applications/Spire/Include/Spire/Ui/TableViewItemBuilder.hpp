@@ -3,6 +3,7 @@
 #include <concepts>
 #include <functional>
 #include <memory>
+#include <Beam/Pointers/LocalPtr.hpp>
 #include <QWidget>
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -72,7 +73,7 @@ namespace Spire {
       template<typename B>
       struct WrappedTableViewItemBuilder final : VirtualTableViewItemBuilder {
         using Builder = B;
-        Beam::GetOptionalLocalPtr<Builder> m_builder;
+        Beam::local_ptr_t<Builder> m_builder;
 
         template<typename... Args>
         WrappedTableViewItemBuilder(Args&&... args);

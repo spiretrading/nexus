@@ -4,6 +4,7 @@
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class TableModel;
 
   /** Base class used to filter rows from a TableView. */
   class TableFilter {

@@ -3,6 +3,7 @@
 #include <functional>
 #include <memory>
 #include <utility>
+#include <Beam/Utilities/HashPosixTimeTypes.hpp>
 #include <boost/functional/hash.hpp>
 #include "Spire/Styles/Expression.hpp"
 

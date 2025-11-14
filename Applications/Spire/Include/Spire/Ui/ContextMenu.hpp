@@ -10,6 +10,7 @@
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  template<typename> class ArrayListModel;
 
   /** Represents a pop-up context menu. */
   class ContextMenu : public QWidget {

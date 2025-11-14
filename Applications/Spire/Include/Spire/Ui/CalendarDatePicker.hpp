@@ -16,6 +16,8 @@ namespace Styles {
   using OutOfMonth = StateSelector<void, struct OutOfMonthTag>;
 }
 
+  template<typename> class ListModel;
+
   /** A ValueModel over a date. */
   using DateModel = ValueModel<boost::gregorian::date>;
 
