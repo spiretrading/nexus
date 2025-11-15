@@ -1,9 +1,10 @@
 #ifndef SPIRE_DROP_DOWN_LIST_HPP
 #define SPIRE_DROP_DOWN_LIST_HPP
 #include <QWidget>
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class OverlayPanel;
+  class ScrollableListBox;
 
   /** Represents a pop-up drop down list. */
   class DropDownList : public QWidget {

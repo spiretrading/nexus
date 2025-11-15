@@ -7,7 +7,6 @@
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/SingleSelectionModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -15,6 +14,10 @@ namespace Styles {
   /** Selects a widget displaying a pop-up, ie. the DropDownBox's list. */
   using PopUp = StateSelector<void, struct PopUpSelectorTag>;
 }
+
+  class DropDownList;
+  class EmptyState;
+  class TextBox;
 
   /**
    * Represents a widget which allows the user to choose one value from

@@ -4,7 +4,6 @@
 #include <QWidget>
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Styles/StateSelector.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -17,6 +16,7 @@ namespace Styles {
 }
 
   template<typename> class ListModel;
+  class ListView;
 
   /** A ValueModel over a date. */
   using DateModel = ValueModel<boost::gregorian::date>;

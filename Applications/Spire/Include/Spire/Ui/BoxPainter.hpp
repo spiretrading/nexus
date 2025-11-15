@@ -2,7 +2,6 @@
 #define SPIRE_BOX_PAINTER_HPP
 #include <QColor>
 #include "Spire/Styles/Selectors.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {

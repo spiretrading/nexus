@@ -440,7 +440,7 @@ void AnyComboBox::on_query(
   m_data->m_is_querying = true;
   auto selection = [&] {
     try {
-      return result.Get();
+      return result.get();
     } catch(const std::exception&) {
       return std::vector<std::any>();
     }

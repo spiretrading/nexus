@@ -4,7 +4,6 @@
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -12,6 +11,9 @@ namespace Styles {
   /** Selects a checked CheckBox. */
   using Checked = StateSelector<void, struct CheckedSelectorTag>;
 }
+
+  class Icon;
+  class TextBox;
 
   /** A ValueModel over a bool. */
   using BooleanModel = ValueModel<bool>;

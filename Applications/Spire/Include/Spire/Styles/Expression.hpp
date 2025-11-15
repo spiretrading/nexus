@@ -15,6 +15,7 @@ namespace Spire::Styles {
   class Stylist;
   template<typename> class Expression;
 
+namespace Details {
   template<typename T, typename = void>
   struct is_expression_t : std::false_type {};
 
@@ -26,22 +27,20 @@ namespace Spire::Styles {
     make_evaluator(std::declval<T>(), std::declval<const Stylist&>()))>> :
       std::true_type {};
 
-  /**
-   * Determines whether a type can be evaluated as an expression via the
-   * make_evaluator function.
-   */
   template<typename T>
-  concept IsExpression = is_expression_t<T>::value;
+  constexpr auto is_expression_v = is_expression_t<T>::value;
+}
 
   /** Returns the type that an expression evaluates to. */
-  template<typename T>
+  template<typename T, typename = void>
   struct expression_type {
     using type = T;
   };
 
-  template<IsExpression T>
-  struct expression_type<T> {
-    using type = typename std::remove_cvref_t<T>::Type;
+  template<typename T>
+  struct expression_type<
+      T, std::enable_if_t<Details::is_expression_v<std::remove_cvref_t<T>>>> {
+    using type = typename T::Type;
   };
 
   template<typename T>
@@ -65,8 +64,14 @@ namespace Spire::Styles {
        */
       Expression(Type constant);
 
-      template<IsExpression E>
+      /*
+       * Constructs an Expression from another expression.
+       * @param expression The expression to represent.
+       */
+      template<typename E,
+        typename = std::enable_if_t<Details::is_expression_v<E>>>
       Expression(E expression);
+
       Expression(const Expression&) = default;
       Expression(Expression&&) = default;
 
@@ -111,7 +116,7 @@ namespace Spire::Styles {
     return expression.make_evaluator(stylist);
   }
 
-  template<typename E, typename = std::enable_if_t<is_expression_t<E>::value>>
+  template<typename E, typename = std::enable_if_t<Details::is_expression_v<E>>>
   Evaluator<expression_type_t<E>> make_evaluator(
       const E& expression, const Stylist& stylist) {
     return make_evaluator(expression, stylist);
@@ -122,7 +127,7 @@ namespace Spire::Styles {
     : Expression(ConstantExpression(std::move(value))) {}
 
   template<typename T>
-  template<IsExpression E>
+  template<typename E, typename>
   Expression<T>::Expression(E expression)
       : m_expression(std::move(expression)) {
     auto operations = m_operations.find(typeid(E));
