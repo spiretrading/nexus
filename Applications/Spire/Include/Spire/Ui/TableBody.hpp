@@ -17,9 +17,9 @@
 #include "Spire/Ui/KeyObserver.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/TableCurrentController.hpp"
+#include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TableSelectionController.hpp"
 #include "Spire/Ui/TableViewItemBuilder.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -69,9 +69,7 @@ namespace Styles {
   class TableBody : public QWidget {
     public:
       using CurrentModel = TableCurrentController::CurrentModel;
-
       using SelectionModel = TableSelectionController::SelectionModel;
-
       using Index = TableIndex;
 
       /**

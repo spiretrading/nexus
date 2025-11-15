@@ -1,9 +1,9 @@
 #ifndef SPIRE_TOGGLE_BUTTON_HPP
 #define SPIRE_TOGGLE_BUTTON_HPP
 #include "Spire/Ui/CheckBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Button;
 
   /** Displays a button that toggles between two states. */
   class ToggleButton : public QWidget {
@@ -15,7 +15,7 @@ namespace Spire {
        * @param body The widget displayed inside of the button.
        * @param parent The parent widget.
        */
-      ToggleButton(QWidget* body, QWidget* parent = nullptr);
+      explicit ToggleButton(QWidget* body, QWidget* parent = nullptr);
 
       /**
        * Constructs a ToggleButton.

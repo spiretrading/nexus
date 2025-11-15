@@ -4,7 +4,6 @@
 #include <typeindex>
 #include <vector>
 #include "Spire/Ui/TableFilter.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -24,11 +23,8 @@ namespace Spire {
       ~StandardTableFilter();
 
       Filter get_filter(int column) override;
-
       QWidget* make_filter_widget(int column, QWidget& parent) override;
-
       bool is_filtered(const TableModel& model, int row) const override;
-
       boost::signals2::connection connect_filter_signal(
         const FilterSignal::slot_type& slot) const override;
 

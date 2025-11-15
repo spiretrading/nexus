@@ -15,12 +15,12 @@ using namespace Spire::Styles;
 
 namespace {
   const auto& CHECK_ICON() {
-    static auto icon = imageFromSvg(":/Icons/check.svg", scale(16, 16));
+    static auto icon = image_from_svg(":/Icons/check.svg", scale(16, 16));
     return icon;
   }
 
   const auto& RADIO_CHECK_ICON() {
-    static auto icon = imageFromSvg(":/Icons/radio-check.svg", scale(16, 16));
+    static auto icon = image_from_svg(":/Icons/radio-check.svg", scale(16, 16));
     return icon;
   }
 

@@ -6,7 +6,6 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <QWidget>
 #include "Spire/Spire/TableModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -36,11 +35,9 @@ namespace Spire {
         const std::shared_ptr<TableModel>&, int, int> auto builder);
 
       template<TableViewItemBuilderConcept B>
-      TableViewItemBuilder(B&& builder) requires
-        !std::is_same_v<std::remove_cvref_t<B>, TableViewItemBuilder>;
-
+      TableViewItemBuilder(B&& builder) requires(
+        !std::is_same_v<std::remove_cvref_t<B>, TableViewItemBuilder>);
       TableViewItemBuilder(const TableViewItemBuilder&) = default;
-
       TableViewItemBuilder(TableViewItemBuilder&&) = default;
 
       /**
@@ -60,12 +57,12 @@ namespace Spire {
       void unmount(QWidget* widget);
 
       TableViewItemBuilder& operator =(const TableViewItemBuilder&) = default;
-
       TableViewItemBuilder& operator =(TableViewItemBuilder&&) = default;
 
     private:
       struct VirtualTableViewItemBuilder {
         virtual ~VirtualTableViewItemBuilder() = default;
+
         virtual QWidget* mount(
           const std::shared_ptr<TableModel>& table, int row, int column) = 0;
         virtual void unmount(QWidget* widget) = 0;
@@ -77,6 +74,7 @@ namespace Spire {
 
         template<typename... Args>
         WrappedTableViewItemBuilder(Args&&... args);
+
         QWidget* mount(const std::shared_ptr<TableModel>& table, int row,
           int column) override;
         void unmount(QWidget* widget) override;
@@ -101,7 +99,6 @@ namespace Spire {
 
       QWidget* mount(
         const std::shared_ptr<TableModel>& table, int row, int column);
-
       void unmount(QWidget* widget);
 
     private:
@@ -115,8 +112,8 @@ namespace Spire {
         std::move(builder))) {}
 
   template<TableViewItemBuilderConcept B>
-  TableViewItemBuilder::TableViewItemBuilder(B&& builder) requires
-    !std::is_same_v<std::remove_cvref_t<B>, TableViewItemBuilder>
+  TableViewItemBuilder::TableViewItemBuilder(B&& builder) requires(
+    !std::is_same_v<std::remove_cvref_t<B>, TableViewItemBuilder>)
     : m_builder(std::make_shared<WrappedTableViewItemBuilder<
         std::remove_cvref_t<B>>>(std::forward<B>(builder))) {}
 

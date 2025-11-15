@@ -6,6 +6,8 @@
 #include <QWindow>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Window.hpp"
+#include <qt_windows.h>
+#include <windowsx.h>
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -150,25 +152,29 @@ namespace {
   }
 }
 
-WindowHighlight::Overlay::Overlay(QScreen& screen)
-    : QWidget(nullptr) {
-  setWindowFlags(
-    Qt::Tool | Qt::FramelessWindowHint | Qt::WindowDoesNotAcceptFocus);
-  setAttribute(Qt::WA_TransparentForMouseEvents);
-  setAttribute(Qt::WA_TranslucentBackground);
-  setAttribute(Qt::WA_NativeWindow);
-  windowHandle()->setScreen(&screen);
-}
+struct WindowHighlight::Overlay : QWidget {
+  QPainterPath m_path;
 
-void WindowHighlight::Overlay::paintEvent(QPaintEvent*) {
-  auto painter = QPainter(this);
-  painter.setRenderHint(QPainter::Antialiasing);
-  auto pen = QPen(QColor(0x7F5EEC), scale_width(HIGHLIGHT_SIZE));
-  pen.setJoinStyle(Qt::MiterJoin);
-  painter.setPen(pen);
-  painter.setBrush(Qt::NoBrush);
-  painter.drawPath(m_path);
-}
+  Overlay(QScreen& screen)
+      : QWidget(nullptr) {
+    setWindowFlags(
+      Qt::Tool | Qt::FramelessWindowHint | Qt::WindowDoesNotAcceptFocus);
+    setAttribute(Qt::WA_TransparentForMouseEvents);
+    setAttribute(Qt::WA_TranslucentBackground);
+    setAttribute(Qt::WA_NativeWindow);
+    windowHandle()->setScreen(&screen);
+  }
+
+  void paintEvent(QPaintEvent*) override {
+    auto painter = QPainter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
+    auto pen = QPen(QColor(0x7F5EEC), scale_width(HIGHLIGHT_SIZE));
+    pen.setJoinStyle(Qt::MiterJoin);
+    painter.setPen(pen);
+    painter.setBrush(Qt::NoBrush);
+    painter.drawPath(m_path);
+  }
+};
 
 WindowHighlight::WindowHighlight(std::vector<Window*> windows)
     : m_windows(std::move(windows)),

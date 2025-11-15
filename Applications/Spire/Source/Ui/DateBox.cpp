@@ -90,7 +90,7 @@ namespace {
   }
 
   auto make_calendar_button() {
-    auto button = make_icon_button(imageFromSvg(":/Icons/calendar.svg",
+    auto button = make_icon_button(image_from_svg(":/Icons/calendar.svg",
       scale(20, 20)));
     button->setFixedSize(scale(20, 20));
     update_style(*button, [] (auto& style) {

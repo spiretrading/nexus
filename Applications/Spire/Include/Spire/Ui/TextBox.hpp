@@ -7,7 +7,6 @@
 #include "Spire/Ui/BoxGeometry.hpp"
 #include "Spire/Ui/BoxPainter.hpp"
 #include "Spire/Ui/CheckBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {

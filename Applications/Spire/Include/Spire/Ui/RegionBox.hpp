@@ -1,5 +1,6 @@
 #ifndef SPIRE_REGION_BOX_HPP
 #define SPIRE_REGION_BOX_HPP
+#include <QWidget>
 #include "Nexus/Definitions/Region.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"

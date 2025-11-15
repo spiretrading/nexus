@@ -1,7 +1,7 @@
 #ifndef SPIRE_ENABLED_OBSERVER_HPP
 #define SPIRE_ENABLED_OBSERVER_HPP
 #include <memory>
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

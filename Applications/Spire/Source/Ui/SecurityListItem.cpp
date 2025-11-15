@@ -4,6 +4,7 @@
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace Nexus;
@@ -47,17 +48,18 @@ SecurityListItem::SecurityListItem(SecurityInfo security_info, QWidget* parent)
     : QWidget(parent),
       m_security_info(std::move(security_info)) {
   auto value_label = make_label(
-    QString::fromStdString(ToString(m_security_info.m_security)));
+    QString::fromStdString(to_string(m_security_info.m_security)));
   value_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   update_style(*value_label, [&] (auto& style) {
     style = VALUE_LABEL_STYLE(style);
   });
   auto value_container_layout = make_hbox_layout();
   value_container_layout->addWidget(value_label);
-  auto country_code = QString(GetDefaultCountryDatabase().
-    FromCode(m_security_info.m_security.GetCountry()).
-    m_threeLetterCode.GetData()).toLower();
-  auto flag_icon = new Icon(imageFromSvg(QString(":/Icons/flag_icons/%1.svg").
+  auto& country_entry = DEFAULT_COUNTRIES.from(
+    DEFAULT_VENUES.from(m_security_info.m_security.get_venue()).m_country_code);
+  auto country_code =
+    QString(country_entry.m_three_letter_code.get_data()).toLower();
+  auto flag_icon = new Icon(image_from_svg(QString(":/Icons/flag_icons/%1.svg").
     arg(country_code), FLAG_SIZE()), this);
   flag_icon->setFixedSize(FLAG_SIZE());
   set_style(*flag_icon, FLAG_ICON_STYLE());

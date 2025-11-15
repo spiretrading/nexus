@@ -174,7 +174,7 @@ DropDownBox::DropDownBox(std::shared_ptr<AnyListModel> list,
   icon_layer->setFocusPolicy(Qt::StrongFocus);
   icon_layer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto drop_down_icon =
-    new Icon(imageFromSvg(":/Icons/dropdown-arrow.svg", scale(6, 4)));
+    new Icon(image_from_svg(":/Icons/dropdown-arrow.svg", scale(6, 4)));
   drop_down_icon->setFixedSize(scale(6, 4));
   auto icon_layer_layout = make_hbox_layout(icon_layer);
   icon_layer_layout->addStretch();

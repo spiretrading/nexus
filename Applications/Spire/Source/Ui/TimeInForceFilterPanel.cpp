@@ -38,7 +38,7 @@ TimeInForceFilterPanel* Spire::make_time_in_force_filter_panel(
     model->push({TimeInForce(value.first), false});
   }
   for(auto i = 0; i < selected_model->get_size(); ++i) {
-    auto type = selected_model->get(i).GetType();
+    auto type = selected_model->get(i).get_type();
     if(values.contains(type)) {
       model->set(values[type], 1, true);
     }

@@ -2,7 +2,8 @@
 #define SPIRE_MOUSE_MOVE_OBSERVER_HPP
 #include <memory>
 #include <QMouseEvent>
-#include "Spire/Ui/Ui.hpp"
+#include <QWidget>
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

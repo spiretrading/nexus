@@ -3,7 +3,6 @@
 #include <vector>
 #include <boost/optional/optional.hpp>
 #include <QWidget>
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

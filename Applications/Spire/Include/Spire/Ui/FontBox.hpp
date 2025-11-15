@@ -3,7 +3,6 @@
 #include "Spire/Ui/FontFamilyBox.hpp"
 #include "Spire/Ui/FontStyleBox.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

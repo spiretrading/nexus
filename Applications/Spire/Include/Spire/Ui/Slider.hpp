@@ -6,9 +6,10 @@
 #include "Spire/Spire/Decimal.hpp"
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Box;
+
 namespace Styles {
 
   /** Selects the track. */

@@ -1,8 +1,8 @@
 #ifndef SPIRE_HIGHLIGHT_SWATCH_HPP
 #define SPIRE_HIGHLIGHT_SWATCH_HPP
+#include <QWidget>
 #include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/ValueModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -47,14 +47,14 @@ namespace Spire {
   };
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Spire::HighlightSwatch::Highlight> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Spire::HighlightSwatch::Highlight& value, unsigned int version) {
-      shuttle.Shuttle("background_color", value.m_background_color);
-      shuttle.Shuttle("text_color", value.m_text_color);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::HighlightSwatch::Highlight& value,
+        unsigned int version) const {
+      shuttle.shuttle("background_color", value.m_background_color);
+      shuttle.shuttle("text_color", value.m_text_color);
     }
   };
 }

@@ -13,6 +13,7 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TitleBar.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -80,7 +81,7 @@ namespace {
   }
 
   auto make_svg_window_icon(const QString& icon_path) {
-    return imageFromSvg(icon_path, scale(26, 26), QRect(translate(8, 8),
+    return image_from_svg(icon_path, scale(26, 26), QRect(translate(8, 8),
       scale(10, 10)));
   }
 

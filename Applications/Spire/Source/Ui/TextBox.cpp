@@ -2,6 +2,7 @@
 #include <QCoreApplication>
 #include <QKeyEvent>
 #include <QPainter>
+#include <QStyleOptionFrame>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Styles/ChainExpression.hpp"

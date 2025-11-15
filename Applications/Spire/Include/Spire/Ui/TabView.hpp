@@ -4,10 +4,11 @@
 #include <vector>
 #include <boost/optional/optional.hpp>
 #include <QWidget>
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Styles/StateSelector.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class ListView;
 
   /**
    * Displays a tab bar that can be used to display one of multiple components.

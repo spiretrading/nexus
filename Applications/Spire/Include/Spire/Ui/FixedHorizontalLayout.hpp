@@ -4,7 +4,6 @@
 #include <vector>
 #include <boost/optional/optional.hpp>
 #include <QLayout>
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -19,17 +18,11 @@ namespace Spire {
       explicit FixedHorizontalLayout(QWidget* parent = nullptr);
 
       void addItem(QLayoutItem* item) override;
-
       QSize sizeHint() const override;
-
       void setGeometry(const QRect& rect) override;
-
       QLayoutItem* itemAt(int index) const override;
-
       QLayoutItem* takeAt(int index) override;
-
       int count() const override;
-
       void invalidate() override;
 
     private:

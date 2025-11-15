@@ -3,6 +3,7 @@
 #include <QWheelEvent>
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;

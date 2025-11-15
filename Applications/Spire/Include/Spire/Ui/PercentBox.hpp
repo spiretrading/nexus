@@ -1,7 +1,6 @@
 #ifndef SPIRE_PERCENT_BOX_HPP
 #define SPIRE_PERCENT_BOX_HPP
 #include "Spire/Ui/DecimalBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

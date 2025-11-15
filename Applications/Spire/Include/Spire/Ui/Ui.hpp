@@ -36,7 +36,7 @@ namespace Spire {
    * @param size The size of the image to render.
    * @return An image rendered from the SVG resource to the specified size.
    */
-  QImage imageFromSvg(const QString& path, const QSize& size);
+  QImage image_from_svg(const QString& path, const QSize& size);
 
   /**
    * Builds a QImage from an SVG resource where the size of the SVG is embedded
@@ -47,7 +47,8 @@ namespace Spire {
    * @return An image rendered from the SVG resource to the specified
    *         dimensions.
    */
-  QImage imageFromSvg(const QString& path, const QSize& size, const QRect& box);
+  QImage image_from_svg(
+    const QString& path, const QSize& size, const QRect& box);
 
   /**
    * Invalidates the layout of all descendants of the widget.

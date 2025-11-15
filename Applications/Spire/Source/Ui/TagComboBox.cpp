@@ -85,7 +85,7 @@ namespace {
       return m_source->submit(query).then([=] (auto&& source_result) {
         auto& matches = [&] () -> auto& {
           try {
-            return source_result.Get();
+            return source_result.get();
           } catch(const std::exception&) {
             static auto empty_matches = std::vector<std::any>();
             return empty_matches;

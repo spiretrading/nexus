@@ -2,7 +2,6 @@
 #define SPIRE_POPUP_BOX_HPP
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/GlobalPositionObserver.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

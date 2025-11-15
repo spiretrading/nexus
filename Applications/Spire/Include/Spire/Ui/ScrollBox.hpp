@@ -1,5 +1,6 @@
 #ifndef SPIRE_SCROLL_BOX_HPP
 #define SPIRE_SCROLL_BOX_HPP
+#include <QPropertyAnimation>
 #include <QWidget>
 #include "Spire/Styles/StyleSheetMap.hpp"
 #include "Spire/Ui/FocusObserver.hpp"

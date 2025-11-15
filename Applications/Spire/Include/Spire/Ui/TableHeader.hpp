@@ -3,7 +3,6 @@
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

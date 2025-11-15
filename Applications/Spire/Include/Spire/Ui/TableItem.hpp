@@ -4,7 +4,6 @@
 #include "Spire/Ui/ClickObserver.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/MouseObserver.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 class QSpacerItem;
 

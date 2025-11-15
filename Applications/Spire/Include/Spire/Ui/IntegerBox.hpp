@@ -1,7 +1,6 @@
 #ifndef SPIRE_INTEGER_BOX_HPP
 #define SPIRE_INTEGER_BOX_HPP
 #include "Spire/Ui/DecimalBoxAdaptor.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

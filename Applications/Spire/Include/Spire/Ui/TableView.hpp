@@ -3,9 +3,9 @@
 #include <memory>
 #include <QWidget>
 #include "Spire/Spire/SortedTableModel.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableBody.hpp"
 #include "Spire/Ui/TableHeader.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
   class FilteredTableModel;
@@ -20,15 +20,10 @@ namespace Spire {
       using HeaderModel = ListModel<TableHeaderItem::Model>;
 
       using Index = TableBody::Index;
-
       using CurrentModel = TableBody::CurrentModel;
-
       using SelectionModel = TableBody::SelectionModel;
-
       using SortSignal = TableHeader::SortSignal;
-
       using Comparator = SortedTableModel::Comparator;
-
       using ValueComparator = SortedTableModel::ValueComparator;
 
       /**

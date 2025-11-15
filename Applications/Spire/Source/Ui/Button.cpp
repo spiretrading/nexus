@@ -6,6 +6,7 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -99,8 +100,8 @@ Button* Spire::make_icon_button(QImage icon, QString tooltip, QWidget* parent) {
 }
 
 Button* Spire::make_delete_icon_button(QWidget* parent) {
-  auto button =
-    make_icon_button(imageFromSvg(":/Icons/delete.svg", scale(16, 16)), parent);
+  auto button = make_icon_button(
+    image_from_svg(":/Icons/delete.svg", scale(16, 16)), parent);
   update_style(*button, [&] (auto& style) {
     style.get(Any() > is_a<Box>()).
       set(BackgroundColor(QColor(Qt::transparent)));

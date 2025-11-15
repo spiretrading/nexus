@@ -1,6 +1,7 @@
 #include "Spire/Ui/EditableBox.hpp"
 #include <QApplication>
 #include <QKeyEvent>
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
