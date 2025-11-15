@@ -112,9 +112,7 @@ namespace Spire {
     TransformListModel<std::invoke_result_t<F, typename T::Type>,
       typename T::Type, std::remove_reference_t<F>, std::remove_reference_t<G>>;
 
-  template<typename T, std::invocable<typename T::Type> F> requires
-    std::convertible_to<
-      std::invoke_result_t<F, typename T::Type>, typename T::Type>
+  template<typename T, std::invocable<typename T::Type> F>
   auto make_transform_list_model(std::shared_ptr<T> source, F&& f) {
     using Model =
       decltype(TransformListModel(std::move(source), std::forward<F>(f)));
@@ -123,12 +121,12 @@ namespace Spire {
 
   template<typename T, std::invocable<typename T::Type> F,
     std::invocable<typename T::Type,
-    std::invoke_result_t<F, typename T::Type>> G> requires
-      std::convertible_to<std::invoke_result_t<F, typename T::Type>,
-        std::invoke_result_t<F, typename T::Type>> &&
-          std::convertible_to<std::invoke_result_t<
-            G, typename T::Type, std::invoke_result_t<F, typename T::Type>>,
-            typename T::Type>
+      std::invoke_result_t<F, typename T::Type>> G> requires
+        std::convertible_to<std::invoke_result_t<F, typename T::Type>,
+          std::invoke_result_t<F, typename T::Type>> &&
+            std::convertible_to<std::invoke_result_t<
+              G, typename T::Type, std::invoke_result_t<F, typename T::Type>>,
+              typename T::Type>
   auto make_transform_list_model(std::shared_ptr<T> source, F&& f, G&& g) {
     using Model = decltype(TransformListModel(
       std::move(source), std::forward<F>(f), std::forward<G>(g)));

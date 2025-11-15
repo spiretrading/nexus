@@ -1,6 +1,7 @@
 #ifndef SPIRE_DROP_DOWN_LIST_HPP
 #define SPIRE_DROP_DOWN_LIST_HPP
 #include <QWidget>
+#include "Spire/Ui/ListView.hpp"
 
 namespace Spire {
   class OverlayPanel;

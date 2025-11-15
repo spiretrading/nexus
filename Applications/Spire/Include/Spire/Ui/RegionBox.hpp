@@ -4,9 +4,9 @@
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/QueryModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  template<typename> class TagComboBox;
 
   /** Defines a model over a Region. */
   using RegionModel = ValueModel<Nexus::Region>;

@@ -4,6 +4,7 @@
 #include "Spire/Styles/StyleSheetMap.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
+#include "Spire/Ui/ScrollBar.hpp"
 
 namespace Spire {
   class ScrollableLayer;

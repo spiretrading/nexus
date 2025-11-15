@@ -6,6 +6,9 @@
 #include "Spire/Styles/StateSelector.hpp"
 
 namespace Spire {
+  template<typename> class ListModel;
+  class ListView;
+
 namespace Styles {
 
   /** Selects today. */
@@ -14,9 +17,6 @@ namespace Styles {
   /** Selects a day outside of the current month. */
   using OutOfMonth = StateSelector<void, struct OutOfMonthTag>;
 }
-
-  template<typename> class ListModel;
-  class ListView;
 
   /** A ValueModel over a date. */
   using DateModel = ValueModel<boost::gregorian::date>;

@@ -6,14 +6,14 @@
 #include "Spire/Styles/Stylist.hpp"
 
 namespace Spire {
+  class Icon;
+  class TextBox;
+
 namespace Styles {
 
   /** Selects a checked CheckBox. */
   using Checked = StateSelector<void, struct CheckedSelectorTag>;
 }
-
-  class Icon;
-  class TextBox;
 
   /** A ValueModel over a bool. */
   using BooleanModel = ValueModel<bool>;

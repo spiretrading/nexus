@@ -3,9 +3,10 @@
 #include <QWidget>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/optional.hpp>
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 
 namespace Spire {
+  class FilterPanel;
 
   /** Displays a FilterPanel to filter by a date range. */
   class DateFilterPanel : public QWidget {

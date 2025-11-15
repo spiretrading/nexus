@@ -4,9 +4,12 @@
 #include "Spire/Ui/CalendarDatePicker.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Box;
+  class Button;
+  class OverlayPanel;
+
 namespace Styles {
 
   /** Sets whether the DateBox displays the year field. */
