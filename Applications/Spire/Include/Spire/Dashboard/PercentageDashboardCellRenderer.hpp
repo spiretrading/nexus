@@ -5,8 +5,7 @@
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardCell.hpp"
 #include "Spire/Dashboard/DashboardCellRenderer.hpp"
-#include "Spire/Spire/Spire.hpp"
-#include "Spire/LegacyUI/CustomQtVariants.hpp"
+#include "Spire/UI/CustomQtVariants.hpp"
 
 namespace Spire {
 
@@ -58,7 +57,7 @@ namespace Spire {
       QFont m_font;
       QPen m_pen;
       QFlags<Qt::AlignmentFlag> m_alignment;
-      std::unique_ptr<LegacyUI::CustomVariantItemDelegate> m_delegate;
+      std::unique_ptr<UI::CustomVariantItemDelegate> m_delegate;
       boost::signals2::scoped_connection m_cellUpdateConnection;
       mutable DrawSignal m_drawSignal;
 

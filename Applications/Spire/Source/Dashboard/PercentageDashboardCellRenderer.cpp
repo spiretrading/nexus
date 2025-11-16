@@ -6,13 +6,13 @@ using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::LegacyUI;
+using namespace Spire::UI;
 using namespace std;
 
 PercentageDashboardCellRenderer::PercentageDashboardCellRenderer(
     Ref<const DashboardCell> cell, Ref<UserProfile> userProfile)
     : DashboardCellRenderer{Ref(cell)},
-      m_userProfile{userProfile.Get()},
+      m_userProfile{userProfile.get()},
       m_pen{QColor{255, 255, 255}},
       m_alignment(Qt::AlignRight | Qt::AlignBottom),
       m_delegate{std::make_unique<CustomVariantItemDelegate>(

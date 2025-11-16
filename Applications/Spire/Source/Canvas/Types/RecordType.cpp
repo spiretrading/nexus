@@ -82,10 +82,9 @@ void RecordType::Apply(CanvasTypeVisitor& visitor) const {
 
 boost::optional<const RecordType::Field&> Spire::FindField(
     const RecordType& type, const string& name) {
-  return FindIf(type.GetFields(),
-    [&] (const RecordType::Field& field) {
-      return field.m_name == name;
-    });
+  return find_if(type.GetFields(), [&] (const RecordType::Field& field) {
+    return field.m_name == name;
+  });
 }
 
 std::shared_ptr<RecordType> Spire::MakeRecordType(

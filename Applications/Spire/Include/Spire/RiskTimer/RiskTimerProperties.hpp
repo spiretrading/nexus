@@ -40,16 +40,16 @@ namespace Spire {
       void SetRiskTimerDialogInitialPosition(const QPoint& position);
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       QPoint m_riskTimerDialogInitialPosition;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void RiskTimerProperties::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("risk_timer_dialog_initial_position",
+  template<Beam::IsShuttle S>
+  void RiskTimerProperties::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("risk_timer_dialog_initial_position",
       m_riskTimerDialogInitialPosition);
   }
 }

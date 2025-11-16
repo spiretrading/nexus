@@ -7,7 +7,7 @@ namespace Spire {
 namespace Details {
   template<typename Shuttler>
   void Shuttle(Shuttler& shuttle, Nexus::Quantity& value) {
-    if(Beam::Serialization::IsReceiver<Shuttler>::value) {
+    if(Beam::IsReceiver<Shuttler>::value) {
       std::int64_t v;
       shuttle.Shuttle("value", v);
       value = v;
@@ -19,7 +19,7 @@ namespace Details {
 
   template<typename Shuttler>
   void Shuttle(Shuttler& shuttle, Nexus::Money& value) {
-    if(Beam::Serialization::IsReceiver<Shuttler>::value) {
+    if(Beam::IsReceiver<Shuttler>::value) {
       std::int64_t v;
       shuttle.Shuttle("value", v);
       value = Nexus::Money{Nexus::Quantity{v} / Nexus::Quantity::MULTIPLIER};
@@ -64,7 +64,7 @@ namespace Details {
       const typename Type::Type& GetValue() const;
 
     protected:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
       //! Copes a ValueNode.
       /*!

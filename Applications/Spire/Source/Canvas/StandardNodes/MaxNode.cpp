@@ -3,7 +3,6 @@
 #include "Spire/Canvas/StandardNodes/MathSignatures.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 using namespace std;
 
@@ -18,5 +17,3 @@ void MaxNode::Apply(CanvasNodeVisitor& visitor) const {
 unique_ptr<CanvasNode> MaxNode::Clone() const {
   return make_unique<MaxNode>(*this);
 }
-
-MaxNode::MaxNode(ReceiveBuilder) {}

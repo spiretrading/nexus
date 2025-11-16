@@ -18,14 +18,14 @@ namespace Spire {
   };
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Spire::AdditionalTag> {
-    template<typename Shuttler>
+    template<IsShuttle S>
     void operator ()(
-        Shuttler& shuttle, Spire::AdditionalTag& value, unsigned int version) {
-      shuttle.Shuttle("key", value.m_key);
-      shuttle.Shuttle("value", value.m_value);
+        S& shuttle, Spire::AdditionalTag& value, unsigned int version) const {
+      shuttle.shuttle("key", value.m_key);
+      shuttle.shuttle("value", value.m_value);
     }
   };
 }

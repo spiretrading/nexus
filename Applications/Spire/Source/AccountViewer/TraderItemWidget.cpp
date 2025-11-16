@@ -19,7 +19,7 @@ TraderItemWidget::TraderItemWidget(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QWidget{parent, flags},
       m_ui{std::make_unique<Ui_TraderItemWidget>()},
-      m_userProfile{userProfile.Get()},
+      m_userProfile{userProfile.get()},
       m_infoModel{std::move(infoModel)},
       m_entitlementModel{std::move(entitlementModel)},
       m_riskModel{std::move(riskModel)},

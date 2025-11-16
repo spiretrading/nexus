@@ -1,5 +1,8 @@
 #ifndef SPIRE_ABSNODE_HPP
 #define SPIRE_ABSNODE_HPP
+#include <boost/mpl/vector.hpp>
+#include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
 
@@ -7,10 +10,10 @@ namespace Spire {
 
   //! Specifies an AbsNode's signatures.
   struct AbsNodeSignatures {
-    typedef boost::mpl::list<
-      boost::mpl::vector<Nexus::Quantity, Nexus::Quantity>,
-      boost::mpl::vector<double, double>,
-      boost::mpl::vector<Nexus::Money, Nexus::Money>> type;
+    typedef boost::mp11::mp_list<
+      boost::mp11::mp_list<Nexus::Quantity, Nexus::Quantity>,
+      boost::mp11::mp_list<double, double>,
+      boost::mp11::mp_list<Nexus::Money, Nexus::Money>> type;
   };
 
   /*! \class AbsNode
@@ -28,24 +31,16 @@ namespace Spire {
       virtual std::unique_ptr<CanvasNode> Clone() const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
-      AbsNode(Beam::Serialization::ReceiveBuilder);
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void AbsNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    FunctionNode::Shuttle(shuttle, version);
+  template<Beam::IsShuttle S>
+  void AbsNode::shuttle(S& shuttle, unsigned int version) {
+    FunctionNode::shuttle(shuttle, version);
   }
-}
-
-namespace Beam {
-namespace Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::AbsNode> : std::false_type {};
-}
 }
 
 #endif

@@ -104,38 +104,31 @@ namespace Spire {
       virtual std::unique_ptr<CanvasNode> Clone() const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::vector<FieldEntry> m_fields;
 
-      SingleOrderTaskNode(Beam::Serialization::ReceiveBuilder);
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void SingleOrderTaskNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    CanvasNode::Shuttle(shuttle, version);
-    shuttle.Shuttle("fields", m_fields);
+  template<Beam::IsShuttle S>
+  void SingleOrderTaskNode::shuttle(S& shuttle, unsigned int version) {
+    CanvasNode::shuttle(shuttle, version);
+    shuttle.shuttle("fields", m_fields);
   }
 }
 
 namespace Beam {
-namespace Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::SingleOrderTaskNode> :
-    std::false_type {};
-
   template<>
   struct Shuttle<Spire::SingleOrderTaskNode::FieldEntry> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Spire::SingleOrderTaskNode::FieldEntry& value, unsigned int version) {
-      shuttle.Shuttle("name", value.m_name);
-      shuttle.Shuttle("type", value.m_type);
-      shuttle.Shuttle("key", value.m_key);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::SingleOrderTaskNode::FieldEntry& value,
+        unsigned int version) const {
+      shuttle.shuttle("name", value.m_name);
+      shuttle.shuttle("type", value.m_type);
+      shuttle.shuttle("key", value.m_key);
     }
   };
-}
 }
 
 #endif

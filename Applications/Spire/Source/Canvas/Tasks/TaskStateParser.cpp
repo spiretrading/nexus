@@ -3,7 +3,6 @@
 #include <boost/lexical_cast.hpp>
 
 using namespace Beam;
-using namespace Beam::Parsers;
 using namespace boost;
 using namespace Spire;
 

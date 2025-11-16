@@ -2,29 +2,26 @@
 #include <Beam/Queues/QueueReaderPublisher.hpp>
 #include <Beam/Queues/SequencePublisher.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
+#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_AccountActivityReportWidget.h"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::ServiceLocator;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 using namespace std;
 
 AccountActivityReportWidget::ReportModel::ReportModel(
-    Ref<UserProfile> userProfile, ScopedQueueReader<const Order*> orders)
-    : m_profitAndLossModel(Ref(userProfile->GetCurrencyDatabase()),
-        Ref(userProfile->GetExchangeRates()), false),
-      m_portfolioController(Beam::Initialize(userProfile->GetMarketDatabase()),
-        &userProfile->GetServiceClients().GetMarketDataClient(),
+    Ref<UserProfile> userProfile,
+    ScopedQueueReader<std::shared_ptr<Order>> orders)
+    : m_profitAndLossModel(Ref(userProfile->GetExchangeRates()), false),
+      m_portfolioController(
+        Beam::init(), &userProfile->GetClients().get_market_data_client(),
         std::move(orders)) {
   m_profitAndLossModel.SetPortfolioController(Ref(m_portfolioController));
 }
@@ -43,22 +40,22 @@ AccountActivityReportWidget::~AccountActivityReportWidget() {}
 
 void AccountActivityReportWidget::Initialize(Ref<UserProfile> userProfile,
     const DirectoryEntry& account) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_account = account;
-  m_ui->m_fromPeriodDateEdit->setDate(ToQDateTime(ToLocalTime(
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime())).date());
-  m_ui->m_toPeriodDateEdit->setDate(ToQDateTime(ToLocalTime(
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime())).date());
+  m_ui->m_fromPeriodDateEdit->setDate(ToQDateTime(to_local_time(
+    m_userProfile->GetClients().get_time_client().get_time())).date());
+  m_ui->m_toPeriodDateEdit->setDate(ToQDateTime(to_local_time(
+    m_userProfile->GetClients().get_time_client().get_time())).date());
 }
 
 void AccountActivityReportWidget::OnUpdate(bool checked) {
-  auto startTime = ToUtcTime(
+  auto startTime = to_utc_time(
     ToPosixTime(m_ui->m_fromPeriodDateEdit->dateTime()));
-  auto endTime = ToUtcTime(ToPosixTime(m_ui->m_toPeriodDateEdit->dateTime()));
-  auto orders = std::make_shared<Queue<const Order*>>();
-  QueryDailyOrderSubmissions(m_account, startTime, endTime,
-    m_userProfile->GetMarketDatabase(), m_userProfile->GetTimeZoneDatabase(),
-    m_userProfile->GetServiceClients().GetOrderExecutionClient(), orders);
+  auto endTime = to_utc_time(ToPosixTime(m_ui->m_toPeriodDateEdit->dateTime()));
+  auto orders = std::make_shared<Queue<std::shared_ptr<Order>>>();
+  query_daily_order_submissions(m_account, startTime, endTime,
+    DEFAULT_VENUES, get_default_time_zone_database(),
+    m_userProfile->GetClients().get_order_execution_client(), orders);
   m_model.emplace(Ref(*m_userProfile), orders);
   m_ui->m_profitAndLossWidget->SetModel(Ref(*m_userProfile),
     Ref(m_model->m_profitAndLossModel));
