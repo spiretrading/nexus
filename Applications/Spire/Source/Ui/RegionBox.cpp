@@ -154,6 +154,7 @@ void RegionBox::on_current(const Region& region) {
   auto regions = to_tag_list(region, *m_regions);
   auto blocker = shared_connection_block(m_tag_operation_connection);
   auto current = m_tag_combo_box->get_current();
+  setUpdatesEnabled(false);
   current->transact([&] {
     while(current->get_size() > regions.size()) {
       current->remove(current->get_size() - 1);
@@ -171,6 +172,9 @@ void RegionBox::on_current(const Region& region) {
     }
     sort(*current);
   });
+  invalidate_descendant_layouts(*this);
+  adjustSize();
+  setUpdatesEnabled(true);
 }
 
 void RegionBox::on_submit(
