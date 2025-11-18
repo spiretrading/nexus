@@ -252,6 +252,7 @@ void AnyTagComboBox::install_text_proxy_event_filter() {
 
 void AnyTagComboBox::push_combo_box() {
   if(m_tag_box->get_current()->get().isEmpty()) {
+    submit();
     return;
   }
   auto value =
