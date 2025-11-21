@@ -163,7 +163,8 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
       m_list_overflow_gap(0),
       m_min_scroll_height(0),
       m_horizontal_scroll_bar_end_range(0),
-      m_vertical_scroll_bar_end_range(0) {
+      m_vertical_scroll_bar_end_range(0),
+      m_is_transaction(false) {
   m_text_box = new TextBox(std::move(current));
   update_style(*m_text_box, [] (auto& style) {
     style = TEXT_BOX_STYLE(style);
@@ -263,6 +264,7 @@ void TagBox::set_read_only(bool is_read_only) {
   if(m_is_read_only) {
     match(*this, ReadOnly());
   } else {
+    m_list_view->setMinimumWidth(0);
     install_text_proxy_event_filter();
     unmatch(*this, ReadOnly());
   }
@@ -389,6 +391,7 @@ QWidget* TagBox::make_tag(
     if(auto parent = tag->parentWidget()) {
       if(auto box = parent->parentWidget()) {
         box->resize(0, 0);
+        tag->adjustSize();
       }
     }
   });
@@ -468,6 +471,7 @@ void TagBox::set_overflow(Overflow overflow) {
     m_list_view->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
     m_list_view->set_item_size_policy(QSizePolicy::Preferred,
       QSizePolicy::Minimum);
+    m_list_view->setMinimumWidth(0);
   }
   m_list_view->updateGeometry();
 }
@@ -604,37 +608,37 @@ void TagBox::on_focus(FocusObserver::State state) {
 }
 
 void TagBox::on_operation(const AnyListModel::Operation& operation) {
-  auto update_all = [=] {
+  visit(operation,
+    [&] (AnyListModel::StartTransaction) {
+      m_is_transaction = true;
+    },
+    [&] (AnyListModel::EndTransaction) {
+      m_is_transaction = false;
+    });
+  if(m_is_transaction) {
+    m_list_view->setUpdatesEnabled(false);
+  } else {
     m_list_view->setFocusPolicy(Qt::NoFocus);
     m_text_box->setFocusPolicy(focusPolicy());
+    if(m_list_view_overflow == Overflow::NONE && is_read_only()) {
+      m_list_view->setMinimumWidth(get_available_width() -
+        horizontal_length(m_input_box_padding) -
+        horizontal_length(m_input_box_border));
+    }
     update_placeholder();
     update_tip();
     update_tooltip();
-  };
-  visit(operation,
-    [&] (const AnyListModel::AddOperation&) {
-      update_all();
-      m_size_hint = none;
-    },
-    [&] (const AnyListModel::RemoveOperation&) {
-      update_all();
-      m_size_hint = none;
-    },
-    [&] (const AnyListModel::MoveOperation&) {
-      update_tip();
-      update_tooltip();
-    },
-    [&] (const AnyListModel::UpdateOperation&) {
-      update_all();
+    m_size_hint = none;
+    QTimer::singleShot(0, this, [=] {
+      if(m_list_view->get_current()->get() != m_model->get_size() - 1) {
+        m_list_view->get_current()->set(m_model->get_size() - 1);
+      }
+      if(m_is_read_only) {
+        scroll_to_start(*m_horizontal_scroll_bar);
+      }
+      m_list_view->setUpdatesEnabled(true);
     });
-  QTimer::singleShot(0, this, [=] {
-    if(m_list_view->get_current()->get() != m_model->get_size() - 1) {
-      m_list_view->get_current()->set(m_model->get_size() - 1);
-    }
-    if(m_is_read_only) {
-      scroll_to_start(*m_horizontal_scroll_bar);
-    }
-  });
+  }
 }
 
 void TagBox::on_text_box_current(const QString& current) {

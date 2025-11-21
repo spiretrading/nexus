@@ -86,6 +86,7 @@ namespace Spire {
       int m_min_scroll_height;
       int m_horizontal_scroll_bar_end_range;
       int m_vertical_scroll_bar_end_range;
+      bool m_is_transaction;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_view_style_connection;
       boost::signals2::scoped_connection m_text_area_box_style_connection;
