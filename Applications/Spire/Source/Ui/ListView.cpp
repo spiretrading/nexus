@@ -204,7 +204,6 @@ ListView::ListView(
       m_item_gap(DEFAULT_GAP),
       m_overflow_gap(DEFAULT_OVERFLOW_GAP),
       m_query_timer(this),
-      m_initialize_count(0),
       m_is_transaction(false),
       m_is_tab_focus_in(false) {
   for(auto i : std::ranges::views::iota(0, m_list->get_size())) {
@@ -685,64 +684,54 @@ void ListView::initialize_visible_region() {
   if(!parentWidget() || m_top_index != -1 || !isVisible()) {
     return;
   }
-  ++m_initialize_count;
-  QTimer::singleShot(0, this, [=] {
-    --m_initialize_count;
-    if(m_initialize_count != 0) {
-      return;
-    }
-    if(!parentWidget()) {
-      return;
-    }
-    m_visible_count = 0;
-    if(m_items.empty()) {
-      m_top_index = 0;
-      return;
-    }
-    m_top_index = std::numeric_limits<int>::max();
-    auto& front_item = *m_items.front();
-    if(!front_item.m_item.is_mounted()) {
-      front_item.m_item.mount(*m_item_builder.mount(m_list, 0));
-    }
-    auto top_geometry =
-      QRect(QPoint(0, 0), front_item.m_item.sizeHint());
-    if(test_visibility(*this, top_geometry, m_direction)) {
-      m_top_index = 0;
-      m_visible_count = 1;
-    }
-    auto position =
-      get_directed_size(top_geometry.size(), m_direction) + m_item_gap;
-    for(auto& item : m_items | std::views::drop(1)) {
-      auto geometry = [&] {
-        if(item->m_item.is_mounted()) {
-          return QRect(make_directed_point(position, m_direction),
-            item->m_item.sizeHint());
-        }
+  m_visible_count = 0;
+  if(m_items.empty()) {
+    m_top_index = 0;
+    return;
+  }
+  m_top_index = std::numeric_limits<int>::max();
+  auto& front_item = *m_items.front();
+  if(!front_item.m_item.is_mounted()) {
+    front_item.m_item.mount(*m_item_builder.mount(m_list, 0));
+  }
+  auto top_geometry =
+    QRect(QPoint(0, 0), front_item.m_item.sizeHint());
+  if(test_visibility(*this, top_geometry, m_direction)) {
+    m_top_index = 0;
+    m_visible_count = 1;
+  }
+  auto position =
+    get_directed_size(top_geometry.size(), m_direction) + m_item_gap;
+  for(auto& item : m_items | std::views::drop(1)) {
+    auto geometry = [&] {
+      if(item->m_item.is_mounted()) {
         return QRect(make_directed_point(position, m_direction),
-          front_item.m_item.sizeHint());
-      }();
-      auto is_visible = test_visibility(*this, geometry, m_direction);
-      if(is_visible || item->m_item.is_current()) {
-        if(!item->m_item.is_mounted()) {
-          item->m_item.mount(*m_item_builder.mount(m_list, item->m_index));
-        }
-        if(is_visible) {
-          m_top_index = std::min(m_top_index, item->m_index);
-          ++m_visible_count;
-        }
-      } else if(item->m_item.is_mounted() && !item->m_item.is_current()) {
-        if(auto widget = item->m_item.unmount()) {
-          m_item_builder.unmount(widget, item->m_index);
-        }
-      } else if(item->m_item.sizeHint().isEmpty()) {
-        auto size = front_item.m_item.sizeHint();
-        auto size_policy = front_item.m_item.get_body().sizePolicy();
-        item->m_item.mount(*new QSpacerItem(size.width(), size.height(),
-          size_policy.horizontalPolicy(), size_policy.verticalPolicy()));
+          item->m_item.sizeHint());
       }
-      position += get_directed_size(geometry.size(), m_direction) + m_item_gap;
+      return QRect(make_directed_point(position, m_direction),
+        front_item.m_item.sizeHint());
+    }();
+    auto is_visible = test_visibility(*this, geometry, m_direction);
+    if(is_visible || item->m_item.is_current()) {
+      if(!item->m_item.is_mounted()) {
+        item->m_item.mount(*m_item_builder.mount(m_list, item->m_index));
+      }
+      if(is_visible) {
+        m_top_index = std::min(m_top_index, item->m_index);
+        ++m_visible_count;
+      }
+    } else if(item->m_item.is_mounted() && !item->m_item.is_current()) {
+      if(auto widget = item->m_item.unmount()) {
+        m_item_builder.unmount(widget, item->m_index);
+      }
+    } else if(item->m_item.sizeHint().isEmpty()) {
+      auto size = front_item.m_item.sizeHint();
+      auto size_policy = front_item.m_item.get_body().sizePolicy();
+      item->m_item.mount(*new QSpacerItem(size.width(), size.height(),
+        size_policy.horizontalPolicy(), size_policy.verticalPolicy()));
     }
-  });
+    position += get_directed_size(geometry.size(), m_direction) + m_item_gap;
+  }
 }
 
 void ListView::update_visible_region() {

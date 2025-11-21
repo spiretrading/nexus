@@ -286,7 +286,6 @@ namespace Details {
       Styles::Overflow m_overflow;
       QString m_query;
       QTimer m_query_timer;
-      int m_initialize_count;
       bool m_is_transaction;
       bool m_is_tab_focus_in;
       Beam::Threading::TaskRunner m_operation_queue;
