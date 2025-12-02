@@ -11,10 +11,7 @@ Property EvaluatedProperty::as_property() const {
   return m_entry->as_property();
 }
 
-bool EvaluatedProperty::operator ==(const EvaluatedProperty& property) const {
+bool EvaluatedProperty::operator ==(
+    const EvaluatedProperty& property) const noexcept {
   return *m_entry == *property.m_entry;
-}
-
-bool EvaluatedProperty::operator !=(const EvaluatedProperty& property) const {
-  return !(*this == property);
 }

@@ -7,10 +7,9 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/Side.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
@@ -53,11 +52,8 @@ namespace Spire {
       void SetProperties(const BookViewProperties& properties);
 
       int rowCount(const QModelIndex& parent) const override;
-
       int columnCount(const QModelIndex& parent) const override;
-
       QVariant data(const QModelIndex& index, int role) const override;
-
       QVariant headerData(
         int section, Qt::Orientation orientation, int role) const override;
 
@@ -77,26 +73,23 @@ namespace Spire {
       Nexus::Security m_security;
       Nexus::Side m_side;
       Nexus::SecurityInfo m_securityInfo;
-      std::unordered_map<Nexus::MarketCode, Nexus::MarketQuote> m_marketQuotes;
-      std::unordered_map<Nexus::MarketCode, Nexus::BookQuote> m_topLevels;
+      std::unordered_map<Nexus::Venue, Nexus::BookQuote> m_topLevels;
       std::vector<std::unique_ptr<BookQuoteEntry>> m_bookQuotes;
       std::map<OrderKey, Nexus::Quantity> m_orderQuantities;
-      std::unordered_map<const Nexus::OrderExecutionService::Order*,
-        Nexus::Quantity> m_remainingOrderQuantities;
+      std::unordered_map<std::shared_ptr<Nexus::Order>, Nexus::Quantity>
+        m_remainingOrderQuantities;
       EventHandler m_eventHandler;
 
-      bool TestHighlight(const BookViewProperties::MarketHighlight& highlight,
+      bool TestHighlight(const BookViewProperties::VenueHighlight& highlight,
         const Nexus::BookQuote& quote) const;
       void HighlightQuote(const Nexus::BookQuote& quote);
       void AddQuote(const Nexus::BookQuote& quote, int quoteIndex);
       void RemoveQuote(int quoteIndex);
-      void OnMarketQuote(const Nexus::MarketQuote& quote);
       void OnBookQuote(const Nexus::BookQuote& quote);
-      void OnOrderExecuted(const Nexus::OrderExecutionService::Order* order);
-      void OnExecutionReport(const Nexus::OrderExecutionService::Order* order,
-        const Nexus::OrderExecutionService::ExecutionReport& executionReport);
+      void OnOrderExecuted(const std::shared_ptr<Nexus::Order>& order);
+      void OnExecutionReport(const std::shared_ptr<Nexus::Order>& order,
+        const Nexus::ExecutionReport& executionReport);
       void OnBookQuoteInterruption(const std::exception_ptr& e);
-      void OnMarketQuoteInterruption(const std::exception_ptr& e);
   };
 }
 

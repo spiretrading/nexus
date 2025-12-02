@@ -2,10 +2,9 @@
 #define SPIRE_STYLES_CUBIC_BEZIER_EXPRESSION_HPP
 #include <memory>
 #include <utility>
-#include <Beam/Utilities/HashPtime.hpp>
+#include <Beam/Utilities/HashPosixTimeTypes.hpp>
 #include <boost/functional/hash.hpp>
 #include "Spire/Styles/Expression.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
@@ -220,7 +219,8 @@ namespace std {
   template<typename T>
   struct hash<Spire::Styles::CubicBezierExpression<T>> {
     std::size_t operator ()(
-        const Spire::Styles::CubicBezierExpression<T>& expression) const {
+        const Spire::Styles::CubicBezierExpression<T>& expression)
+          const noexcept {
       auto seed = std::size_t(0);
       boost::hash_combine(seed,
         std::hash<Spire::Styles::Expression<T>>()(expression.get_start()));

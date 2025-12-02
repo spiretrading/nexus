@@ -70,8 +70,8 @@ void EventHandler::start_timer() {
 void EventHandler::on_expired() {
   auto start = microsec_clock::universal_time();
   auto tasks = m_tasks;
-  for(auto task = tasks->TryPop(); task && tasks.use_count() != 1;
-      task = tasks->TryPop()) {
+  for(auto task = tasks->try_pop(); task && tasks.use_count() != 1;
+      task = tasks->try_pop()) {
     (*task)();
     auto duration = microsec_clock::universal_time();
     if(duration - start > seconds(1) / 10) {

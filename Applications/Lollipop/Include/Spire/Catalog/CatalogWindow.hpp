@@ -9,7 +9,7 @@
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Catalog/Catalog.hpp"
 #include "Spire/Catalog/CatalogSearchBarModel.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class Ui_CatalogWindow;
 
@@ -30,10 +30,6 @@ namespace Spire {
 
       //! A filter that accepts all CatalogEntries.
       static bool DisplayAllFilter(const CatalogEntry& entry);
-
-      //! A filter that displays all the RegistryCatalogEntries.
-      static bool DisplayRegistryCatalogEntryFilter(
-        const CatalogEntry& entry);
 
       //! Returns a filter that tests a node's type for equality.
       /*!
@@ -64,13 +60,11 @@ namespace Spire {
       /*!
         \param userProfile The UserProfile.
         \param node The CanvasNode to save.
-        \param saveToRegistry Whether to save the <i>node</i> to the registry.
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
-      CatalogWindow(Beam::Ref<UserProfile> userProfile,
-        const CanvasNode& node, bool saveToRegistry, QWidget* parent = nullptr,
-        Qt::WindowFlags flags = Qt::WindowFlags());
+      CatalogWindow(Beam::Ref<UserProfile> userProfile, const CanvasNode& node,
+        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
       //! Constructs a CatalogWindow for the purpose of loading CatalogEntries.
       /*!
@@ -87,14 +81,13 @@ namespace Spire {
       /*!
         \param userProfile The UserProfile.
         \param node The CanvasNode to save.
-        \param saveToRegistry Whether to save the <i>node</i> to the registry.
         \param filter A function used to filter out CatalogEntries.
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
       CatalogWindow(Beam::Ref<UserProfile> userProfile,
-        const Filter& filter, const CanvasNode& node, bool saveToRegistry,
-        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
+        const Filter& filter, const CanvasNode& node, QWidget* parent = nullptr,
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~CatalogWindow();
 
@@ -122,8 +115,7 @@ namespace Spire {
     private:
       enum Mode {
         LOADING,
-        SAVING,
-        REGISTRY,
+        SAVING
       };
       friend class CatalogTabWidget;
       class CatalogModel;
@@ -135,8 +127,8 @@ namespace Spire {
       QWidget* m_newTab;
       boost::signals2::scoped_connection m_tabAddedConnection;
       boost::signals2::scoped_connection m_tabRemovedConnection;
-      Beam::SignalHandling::ConnectionGroup m_viewConnections;
-      Beam::SignalHandling::ConnectionGroup m_modelConnections;
+      Beam::ConnectionGroup m_viewConnections;
+      Beam::ConnectionGroup m_modelConnections;
 
       void Initialize();
       void SetDefaultSearchName(const CanvasNode& node);

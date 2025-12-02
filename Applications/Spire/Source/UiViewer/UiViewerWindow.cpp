@@ -175,7 +175,6 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_label_profile());
   add(make_list_item_profile());
   add(make_list_view_profile());
-  add(make_market_box_profile());
   add(make_menu_button_profile());
   add(make_menu_icon_button_profile());
   add(make_menu_label_button_profile());
@@ -225,6 +224,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_title_bar_profile());
   add(make_tooltip_profile());
   add(make_transition_view_profile());
+  add(make_venue_box_profile());
   add(make_window_highlight_profile());
   m_widget_list->setCurrentRow(0);
 }

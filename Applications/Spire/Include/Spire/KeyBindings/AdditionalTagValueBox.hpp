@@ -3,9 +3,7 @@
 #include <QWidget>
 #include "Spire/KeyBindings/AdditionalTagsBox.hpp"
 #include "Spire/KeyBindings/AdditionalTagSchema.hpp"
-#include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/ValueModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

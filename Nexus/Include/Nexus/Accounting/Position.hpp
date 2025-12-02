@@ -2,71 +2,61 @@
 #define NEXUS_POSITION_HPP
 #include <cstdint>
 #include <ostream>
+#include <utility>
 #include <Beam/Serialization/DataShuttle.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/functional/hash.hpp>
-#include "Nexus/Accounting/Accounting.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
 
-namespace Nexus::Accounting {
-namespace Details {
+namespace Nexus {
 
-  /**
-   * Identifies an inventory managed in a specific Currency.
-   * @param I The type of index used.
-   */
-  template<typename I>
-  struct Key {
-
-    /** The type of index used. */
-    using Index = I;
-
-    /** The inventory's index. */
-    Index m_index;
-
-    /** The Currency used to value the inventory. */
-    CurrencyId m_currency;
-
-    bool operator ==(const Key& key) const = default;
-  };
-
-  template<typename Index>
-  std::ostream& operator <<(std::ostream& out, const Key<Index>& key) {
-    return out << '(' << key.m_index << ' ' << key.m_currency << ')';
-  }
-}
-
-  /**
-   * Stores information about a single Inventory position.
-   * @param I Used to identify the Position.
-   */
-  template<typename I>
+  /** Stores information about a single position. */
   struct Position {
 
-    /** Used to identify the Position. */
-    using Index = I;
+    /** Stores a key that can be used to identify a position. */
+    struct Key {
 
-    /** The type used to uniquely identifier this Position. */
-    using Key = Details::Key<Index>;
+      /** The position's security. */
+      Security m_security;
 
-    /** Uniquely identifies this Position. */
-    Key m_key;
+      /** The currency used to trade the position. */
+      CurrencyId m_currency;
+
+      bool operator ==(const Key&) const = default;
+    };
+
+    /** The security held. */
+    Security m_security;
+
+    /** The position's currency. */
+    CurrencyId m_currency;
 
     /** The quantity of inventory held. */
     Quantity m_quantity;
 
     /** The total cost of the currently held inventory. */
-    Money m_costBasis;
+    Money m_cost_basis;
 
-    bool operator ==(const Position& position) const = default;
+    bool operator ==(const Position&) const = default;
   };
 
-  template<typename Index>
-  std::ostream& operator <<(std::ostream& out,
-      const Position<Index>& position) {
-    return out << '(' << position.m_key << ' ' << position.m_quantity << ' ' <<
-      position.m_costBasis << ')';
+  inline std::ostream& operator <<(
+      std::ostream& out, const Position& position) {
+    return out << '(' << position.m_security << ' ' << position.m_currency <<
+      ' ' << position.m_quantity << ' ' << position.m_cost_basis << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const Position::Key& key) {
+    return out << '(' << key.m_security << ' ' << key.m_currency << ')';
+  }
+
+  /** Returns a Position's key. */
+  inline Position::Key get_key(const Position& position) {
+    return Position::Key(position.m_security, position.m_currency);
   }
 
   /**
@@ -74,12 +64,11 @@ namespace Details {
    * @param position The Position to measure.
    * @return The average price of the <i>position</i>.
    */
-  template<typename I>
-  Money GetAveragePrice(const Position<I>& position) {
+  inline Money get_average_price(const Position& position) {
     if(position.m_quantity == 0) {
       return Money::ZERO;
     }
-    return position.m_costBasis / position.m_quantity;
+    return position.m_cost_basis / position.m_quantity;
   }
 
   /**
@@ -87,46 +76,41 @@ namespace Details {
    * @param position The Position to measure.
    * @return The Side corresponding to the <i>position</i>.
    */
-  template<typename I>
-  Side GetSide(const Position<I>& position) {
-    if(position.m_quantity == 0) {
-      return Side::NONE;
-    } else if(position.m_quantity > 0) {
-      return Side::BID;
-    }
-    return Side::ASK;
+  inline Side get_side(const Position& position) {
+    return get_side(position.m_quantity);
   }
 }
 
-namespace Beam::Serialization {
-  template<typename I>
-  struct Shuttle<Nexus::Accounting::Details::Key<I>> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::Accounting::Details::Key<I>& value, unsigned int version) {
-      shuttle.Shuttle("index", value.m_index);
-      shuttle.Shuttle("currency", value.m_currency);
+namespace Beam {
+  template<>
+  struct Shuttle<Nexus::Position> {
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::Position& value, unsigned int version) const {
+      shuttle.shuttle("security", value.m_security);
+      shuttle.shuttle("currency", value.m_currency);
+      shuttle.shuttle("quantity", value.m_quantity);
+      shuttle.shuttle("cost_basis", value.m_cost_basis);
     }
   };
 
-  template<typename I>
-  struct Shuttle<Nexus::Accounting::Position<I>> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::Accounting::Position<I>& value, unsigned int version) {
-      shuttle.Shuttle("key", value.m_key);
-      shuttle.Shuttle("quantity", value.m_quantity);
-      shuttle.Shuttle("cost_basis", value.m_costBasis);
+  template<>
+  struct Shuttle<Nexus::Position::Key> {
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::Position::Key& key, unsigned int version) const {
+      shuttle.shuttle("security", key.m_security);
+      shuttle.shuttle("currency", key.m_currency);
     }
   };
 }
 
 namespace std {
-  template <typename I>
-  struct hash<Nexus::Accounting::Details::Key<I>> {
-    size_t operator()(const Nexus::Accounting::Details::Key<I>& value) const {
-      std::size_t seed = 0;
-      boost::hash_combine(seed, value.m_index);
+  template<>
+  struct hash<Nexus::Position::Key> {
+    size_t operator()(const Nexus::Position::Key& value) const {
+      auto seed = size_t(0);
+      boost::hash_combine(seed, std::hash<Nexus::Security>()(value.m_security));
       boost::hash_combine(seed, value.m_currency);
       return seed;
     }

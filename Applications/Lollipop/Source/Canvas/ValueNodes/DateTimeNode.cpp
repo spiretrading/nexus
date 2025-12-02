@@ -4,7 +4,6 @@
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 
 using namespace Beam;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::date_time;
 using namespace boost::posix_time;
@@ -16,7 +15,7 @@ namespace {
     if(value.is_special() || value.is_not_a_date_time()) {
       return to_simple_string(value);
     } else {
-      return to_simple_string(ToLocalTime(value));
+      return to_simple_string(to_local_time(value));
     }
   }
 }
@@ -30,7 +29,7 @@ DateTimeNode::DateTimeNode(const ptime& value)
   SetText(GetDisplayText(GetValue()));
 }
 
-unique_ptr<DateTimeNode> DateTimeNode::SetValue(const ptime& value) const {
+std::unique_ptr<DateTimeNode> DateTimeNode::SetValue(const ptime& value) const {
   auto clone = CanvasNode::Clone(*this);
   clone->SetInternalValue(value);
   clone->SetText(GetDisplayText(clone->GetValue()));
@@ -41,10 +40,10 @@ void DateTimeNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> DateTimeNode::Clone() const {
-  return make_unique<DateTimeNode>(*this);
+std::unique_ptr<CanvasNode> DateTimeNode::Clone() const {
+  return std::make_unique<DateTimeNode>(*this);
 }
 
 unique_ptr<CanvasNode> DateTimeNode::Reset() const {
-  return make_unique<DateTimeNode>();
+  return std::make_unique<DateTimeNode>();
 }

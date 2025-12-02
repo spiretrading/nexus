@@ -4,9 +4,9 @@
 #include <memory>
 #include <unordered_set>
 #include <utility>
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
+  class Stylist;
 
   /**
    * The type of callable used to signal a change in the selected Stylists.
@@ -33,12 +33,7 @@ namespace Spire::Styles {
       explicit SelectConnection(std::unique_ptr<T> executor);
 
       SelectConnection(const SelectConnection&) = delete;
-
       SelectConnection(SelectConnection&& connection);
-
-      SelectConnection& operator =(const SelectConnection&) = delete;
-
-      SelectConnection& operator =(SelectConnection&& connection);
 
       /** Returns <code>true</code> iff there is a connection. */
       bool is_connected() const;
@@ -46,15 +41,21 @@ namespace Spire::Styles {
       /** Disconnects this connection. */
       void disconnect();
 
+      SelectConnection& operator =(const SelectConnection&) = delete;
+      SelectConnection& operator =(SelectConnection&& connection);
+
     private:
       struct BaseExecutor {
         virtual ~BaseExecutor() = default;
+
         virtual bool is_connected() const = 0;
       };
       template<typename T>
       struct Executor final : BaseExecutor {
         std::unique_ptr<T> m_executor;
+
         explicit Executor(std::unique_ptr<T> executor);
+
         bool is_connected() const override;
       };
       std::unique_ptr<BaseExecutor> m_executor;

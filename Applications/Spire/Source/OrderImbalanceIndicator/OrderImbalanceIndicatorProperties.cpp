@@ -13,11 +13,6 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Queries;
-using namespace Beam::Serialization;
-using namespace Beam::ServiceLocator;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -30,10 +25,10 @@ namespace {
     OrderImbalanceIndicatorProperties m_properties;
     boost::optional<OrderImbalanceIndicatorWindowSettings> m_windowSettings;
 
-    template<typename Shuttler>
-    void Shuttle(Shuttler& shuttle, unsigned int version) {
-      shuttle.Shuttle("properties", m_properties);
-      shuttle.Shuttle("window_settings", m_windowSettings);
+    template<IsShuttle S>
+    void shuttle(S& shuttle, unsigned int version) {
+      shuttle.shuttle("properties", m_properties);
+      shuttle.shuttle("window_settings", m_windowSettings);
     }
   };
 }
@@ -42,7 +37,7 @@ OrderImbalanceIndicatorProperties OrderImbalanceIndicatorProperties::
     GetDefault() {
   OrderImbalanceIndicatorProperties properties;
   properties.m_startTime.m_offset = hours(1);
-  properties.m_endTime.m_specialValue = Beam::Queries::Sequence::Last();
+  properties.m_endTime.m_specialValue = Beam::Sequence::LAST;
   return properties;
 }
 
@@ -56,14 +51,14 @@ void OrderImbalanceIndicatorProperties::Load(Out<UserProfile> userProfile) {
   OrderImbalanceIndicatorFileSettings settings;
   try {
     BasicIStreamReader<ifstream> reader(
-      Initialize(orderImbalanceIndicatorFilePath, ios::binary));
+      init(orderImbalanceIndicatorFilePath, ios::binary));
     SharedBuffer buffer;
-    reader.Read(Store(buffer));
+    reader.read(out(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-    receiver.SetSource(Ref(buffer));
-    receiver.Shuttle(settings);
+    receiver.set(Ref(buffer));
+    receiver.shuttle(settings);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to load the order imbalance indicator properties,"
@@ -84,52 +79,52 @@ void OrderImbalanceIndicatorProperties::Save(const UserProfile& userProfile) {
     "order_imbalance_indicator.dat";
   try {
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
     SharedBuffer buffer;
-    sender.SetSink(Ref(buffer));
+    sender.set(Ref(buffer));
     OrderImbalanceIndicatorFileSettings settings;
     settings.m_properties =
       userProfile.GetDefaultOrderImbalanceIndicatorProperties();
     settings.m_windowSettings =
       userProfile.GetInitialOrderImbalanceIndicatorWindowSettings();
-    sender.Shuttle(settings);
+    sender.shuttle(settings);
     BasicOStreamWriter<ofstream> writer(
-      Initialize(orderImbalanceIndicatorFilePath, ios::binary));
-    writer.Write(buffer);
+      init(orderImbalanceIndicatorFilePath, ios::binary));
+    writer.write(buffer);
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to save the order imbalance indicator properties."));
   }
 }
 
-bool OrderImbalanceIndicatorProperties::IsDisplayed(MarketCode market) const {
-  return m_filteredMarkets.find(market) == m_filteredMarkets.end();
+bool OrderImbalanceIndicatorProperties::IsDisplayed(Venue venue) const {
+  return m_filteredVenues.find(venue) == m_filteredVenues.end();
 }
 
-bool OrderImbalanceIndicatorProperties::IsFiltered(MarketCode market) const {
-  return !IsDisplayed(market);
+bool OrderImbalanceIndicatorProperties::IsFiltered(Venue venue) const {
+  return !IsDisplayed(venue);
 }
 
-Beam::Queries::Range OrderImbalanceIndicatorProperties::GetTimeRange(
-    TimeClientBox& timeClient) const {
-  Beam::Queries::Range::Point start;
+Beam::Range OrderImbalanceIndicatorProperties::GetTimeRange(
+    TimeClient& timeClient) const {
+  Beam::Range::Point start;
   if(m_startTime.m_offset.is_initialized()) {
-    start = timeClient.GetTime() - *m_startTime.m_offset;
+    start = timeClient.get_time() - *m_startTime.m_offset;
   } else if(m_startTime.m_timeOfDay.is_initialized()) {
     start = ptime(gregorian::day_clock::universal_day(),
       *m_startTime.m_timeOfDay);
   } else {
-    start = Beam::Queries::Sequence::Present();
+    start = Beam::Sequence::PRESENT;
   }
-  Beam::Queries::Range::Point end;
+  Beam::Range::Point end;
   if(m_endTime.m_offset.is_initialized()) {
-    end = timeClient.GetTime() - *m_endTime.m_offset;
+    end = timeClient.get_time() - *m_endTime.m_offset;
   } else if(m_endTime.m_timeOfDay.is_initialized()) {
     end = ptime(gregorian::day_clock::universal_day(), *m_endTime.m_timeOfDay);
   } else {
-    end = Beam::Queries::Sequence::Last();
+    end = Beam::Sequence::LAST;
   }
-  Beam::Queries::Range timeRange(start, end);
+  Beam::Range timeRange(start, end);
   return timeRange;
 }

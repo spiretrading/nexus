@@ -1,17 +1,15 @@
 #include "WebPortal/WebPortalSession.hpp"
 
 using namespace Beam;
-using namespace Beam::WebServices;
 using namespace Nexus;
-using namespace Nexus::WebPortal;
 
 WebPortalSession::WebPortalSession(std::string id)
-  : AuthenticatedSession(std::move(id)) {}
+  : AuthenticatedWebSession(std::move(id)) {}
 
-ServiceClientsBox& WebPortalSession::GetServiceClients() {
-  return *m_serviceClients;
+Clients& WebPortalSession::get_clients() {
+  return *m_clients;
 }
 
-void WebPortalSession::SetServiceClients(ServiceClientsBox serviceClients) {
-  m_serviceClients.emplace(std::move(serviceClients));
+void WebPortalSession::set_clients(Clients clients) {
+  m_clients.emplace(std::move(clients));
 }

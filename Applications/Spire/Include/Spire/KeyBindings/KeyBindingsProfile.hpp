@@ -3,10 +3,7 @@
 #include <filesystem>
 #include <memory>
 #include <vector>
-#include "Nexus/Definitions/Destination.hpp"
-#include "Nexus/Definitions/Market.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
-#include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 
 namespace Spire {
@@ -59,23 +56,16 @@ namespace Spire {
   /**
    * Resets the order task arguments to their defaults.
    * @param order_task_arguments The list of order task arguments to reset.
-   * @param markets The database of market definitions.
-   * @param destinations The database of destinations.
    */
   void reset_order_task_arguments(
-    OrderTaskArgumentsListModel& order_task_arguments,
-    const Nexus::MarketDatabase& markets,
-    const Nexus::DestinationDatabase& destinations);
+    OrderTaskArgumentsListModel& order_task_arguments);
 
   /**
    * Loads the key bindings profile found at a given path.
    * @param path The path to the directory containing the key bindings profile.
-   * @param markets The database of market definitions.
-   * @param destinations The database of destinations.
    */
   std::shared_ptr<KeyBindingsModel> load_key_bindings_profile(
-    const std::filesystem::path& path, const Nexus::MarketDatabase& markets,
-    const Nexus::DestinationDatabase& destinations);
+    const std::filesystem::path& path);
 
   /**
    * Saves the key bindings profile to a given path.

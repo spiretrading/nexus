@@ -6,7 +6,6 @@ service_locator:
 
 feeds: 1
 bbo_period: 1s
-market_quote_period: 1s
 time_and_sales_period: 1s
 sampling: 100ms
 symbols: [A.TSX, B.TSX, C.TSX]

@@ -28,8 +28,8 @@ def parse_date(source):
 def parse_ip_address(source):
   separator = source.find(':')
   if separator == -1:
-    return beam.network.IpAddress(source, 0)
-  return beam.network.IpAddress(source[0:separator],
+    return beam.IpAddress(source, 0)
+  return beam.IpAddress(source[0:separator],
     int(source[separator + 1 :]))
 
 def parse_region(service_clients, region):
@@ -50,17 +50,15 @@ def parse_region(service_clients, region):
 def cancel_order(service_clients, order, message):
   execution_reports = order.get_publisher().get_snapshot()
   if len(execution_reports) == 0:
-    pending_new_report = \
-      nexus.order_execution_service.ExecutionReport.make_initial_report(
-        order.info.order_id, service_clients.get_time_client().get_time())
+    pending_new_report = nexus.ExecutionReport(
+      order.info.order_id, service_clients.get_time_client().get_time())
     service_clients.get_order_execution_client().update(
       order.info.order_id, pending_new_report)
     execution_reports = [pending_new_report]
   if not nexus.is_terminal(execution_reports[-1].status):
-    cancel_report = \
-      nexus.order_execution_service.ExecutionReport.make_updated_report(
-        execution_reports[-1], nexus.OrderStatus.CANCELED,
-        service_clients.get_time_client().get_time())
+    cancel_report = nexus.make_update(
+      execution_reports[-1], nexus.OrderStatus.CANCELED,
+      service_clients.get_time_client().get_time())
     cancel_report.text = message
     service_clients.get_order_execution_client().update(
       order.info.order_id, cancel_report)
@@ -75,9 +73,8 @@ def cancel_account(service_clients, account, region, begin, end, message):
   time_zone_database = \
     service_clients.get_definitions_client().load_time_zone_database()
   queue = beam.Queue()
-  nexus.order_execution_service.query_daily_order_submissions(account, begin,
-    end, market_database, time_zone_database,
-    service_clients.get_order_execution_client(), queue)
+  nexus.query_daily_order_submissions(account, begin, end, market_database,
+    time_zone_database, service_clients.get_order_execution_client(), queue)
   orders = []
   beam.flush(queue, orders)
   for order in orders:
@@ -86,7 +83,7 @@ def cancel_account(service_clients, account, region, begin, end, message):
 
 def cancel_region(service_clients, region, begin, end, message):
   count = 0
-  routines = beam.routines.RoutineHandlerGroup()
+  routines = beam.RoutineHandlerGroup()
   for account in \
       service_clients[0].get_service_locator_client().load_all_accounts():
     if count == len(service_clients):
@@ -127,8 +124,7 @@ def main():
   password = section['password']
   service_clients = []
   for i in range(args.connections):
-    service_clients.append(
-      nexus.ApplicationServiceClients(username, password, address))
+    service_clients.append(nexus.ServiceClients(username, password, address))
   if args.order:
     cancel_order_by_id(service_clients[0], args.order, args.message)
   elif args.account:

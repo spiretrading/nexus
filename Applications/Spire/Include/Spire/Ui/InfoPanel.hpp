@@ -1,13 +1,14 @@
 #ifndef SPIRE_INFO_PANEL_HPP
 #define SPIRE_INFO_PANEL_HPP
 #include <QWidget>
-#include "Spire/Ui/Ui.hpp"
 
 #ifdef ERROR
   #undef ERROR
 #endif
 
 namespace Spire {
+  class OverlayPanel;
+  class TextAreaBox;
 
   /** Displays visible status messages to the user. */
   class InfoPanel : public QWidget {

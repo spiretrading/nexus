@@ -14,7 +14,7 @@ BookViewPropertiesDialog::BookViewPropertiesDialog(
     Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_BookViewPropertiesDialog>()),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_security(security),
       m_properties(properties) {
   m_ui->setupUi(this);

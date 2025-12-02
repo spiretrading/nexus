@@ -5,7 +5,6 @@
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Charting/Charting.hpp"
@@ -204,30 +203,26 @@ namespace Spire {
 }
 
 namespace Beam {
-namespace Serialization {
   template<>
-  struct IsStructure<Spire::ChartValue> : std::false_type {};
+  constexpr auto is_structure<Spire::ChartValue> = false;
 
   template<>
   struct Send<Spire::ChartValue> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        Spire::ChartValue value) const {
-      shuttle.Send(name, value.ToQuantity());
+    template<IsSender S>
+    void operator ()(
+        S& sender, const char* name, Spire::ChartValue value) const {
+      sender.send(name, value.ToQuantity());
     }
   };
 
   template<>
   struct Receive<Spire::ChartValue> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        Spire::ChartValue& value) const {
-      Nexus::Quantity representation;
-      shuttle.Shuttle(name, representation);
-      value = Spire::ChartValue{representation};
+    template<IsReceiver R>
+    void operator ()(
+        R& receiver, const char* name, Spire::ChartValue& value) const {
+      value = Spire::ChartValue{receive<Nexus::Quantity>(receiver, name)};
     }
   };
-}
 }
 
 namespace std {

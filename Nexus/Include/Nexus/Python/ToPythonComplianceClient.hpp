@@ -1,21 +1,18 @@
 #ifndef NEXUS_PYTHON_COMPLIANCE_CLIENT_HPP
 #define NEXUS_PYTHON_COMPLIANCE_CLIENT_HPP
-#include <memory>
 #include <type_traits>
 #include <utility>
 #include <Beam/Python/GilRelease.hpp>
-#include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
-#include <pybind11/pybind11.h>
-#include "Nexus/Compliance/ComplianceClientBox.hpp"
+#include "Nexus/Compliance/ComplianceClient.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Wraps a ComplianceClient for use with Python.
    * @param <C> The type of ComplianceClient to wrap.
    */
-  template<typename C>
+  template<IsComplianceClient C>
   class ToPythonComplianceClient {
     public:
 
@@ -23,40 +20,45 @@ namespace Nexus::Compliance {
       using Client = C;
 
       /**
-       * Constructs a ToPythonComplianceClient.
-       * @param args The arguments to forward to the Client's constructor.
+       * Constructs a ToPythonComplianceClient in-place.
+       * @param args The arguments to forward to the constructor.
        */
-      template<typename... Args, typename =
-        Beam::disable_copy_constructor_t<ToPythonComplianceClient, Args...>>
-      ToPythonComplianceClient(Args&&... args);
+      template<typename... Args>
+      explicit ToPythonComplianceClient(Args&&... args);
 
       ~ToPythonComplianceClient();
 
-      /** Returns the wrapped client. */
-      const Client& GetClient() const;
+      /** Returns a reference to the underlying client. */
+      Client& get();
 
-      /** Returns the wrapped client. */
-      Client& GetClient();
+      /** Returns a reference to the underlying client. */
+      const Client& get() const;
 
-      std::vector<ComplianceRuleEntry> Load(
-        const Beam::ServiceLocator::DirectoryEntry& directoryEntry);
+      /** Returns a reference to the underlying client. */
+      Client& operator *();
 
-      ComplianceRuleId Add(
-        const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
+      /** Returns a reference to the underlying client. */
+      const Client& operator *() const;
+
+      /** Returns a pointer to the underlying client. */
+      Client* operator ->();
+
+      /** Returns a pointer to the underlying client. */
+      const Client* operator ->() const;
+
+      std::vector<ComplianceRuleEntry> load(
+        const Beam::DirectoryEntry& directory_entry);
+      ComplianceRuleEntry::Id add(
+        const Beam::DirectoryEntry& directory_entry,
         ComplianceRuleEntry::State state, const ComplianceRuleSchema& schema);
-
-      void Update(const ComplianceRuleEntry& entry);
-
-      void Delete(ComplianceRuleId id);
-
-      void Report(const ComplianceRuleViolationRecord& violationRecord);
-
-      void MonitorComplianceRuleEntries(
-        const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
+      void update(const ComplianceRuleEntry& entry);
+      void remove(ComplianceRuleEntry::Id id);
+      void report(const ComplianceRuleViolationRecord& record);
+      void monitor_compliance_rule_entries(
+        const Beam::DirectoryEntry& directory_entry,
         Beam::ScopedQueueWriter<ComplianceRuleEntry> queue,
         Beam::Out<std::vector<ComplianceRuleEntry>> snapshot);
-
-      void Close();
+      void close();
 
     private:
       boost::optional<Client> m_client;
@@ -68,80 +70,104 @@ namespace Nexus::Compliance {
 
   template<typename Client>
   ToPythonComplianceClient(Client&&) ->
-    ToPythonComplianceClient<std::decay_t<Client>>;
+    ToPythonComplianceClient<std::remove_cvref_t<Client>>;
 
-  template<typename C>
-  template<typename... Args, typename>
+  template<IsComplianceClient C>
+  template<typename... Args>
   ToPythonComplianceClient<C>::ToPythonComplianceClient(Args&&... args)
     : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
-  template<typename C>
+  template<IsComplianceClient C>
   ToPythonComplianceClient<C>::~ToPythonComplianceClient() {
     auto release = Beam::Python::GilRelease();
     m_client.reset();
   }
 
-  template<typename C>
-  const typename ToPythonComplianceClient<C>::Client&
-      ToPythonComplianceClient<C>::GetClient() const {
-    return *m_client;
-  }
-
-  template<typename C>
+  template<IsComplianceClient C>
   typename ToPythonComplianceClient<C>::Client&
-      ToPythonComplianceClient<C>::GetClient() {
+      ToPythonComplianceClient<C>::get() {
     return *m_client;
   }
 
-  template<typename C>
-  std::vector<ComplianceRuleEntry> ToPythonComplianceClient<C>::Load(
-      const Beam::ServiceLocator::DirectoryEntry& directoryEntry) {
-    auto release = Beam::Python::GilRelease();
-    return m_client->Load(directoryEntry);
+  template<IsComplianceClient C>
+  const typename ToPythonComplianceClient<C>::Client&
+      ToPythonComplianceClient<C>::get() const {
+    return *m_client;
   }
 
-  template<typename C>
-  ComplianceRuleId ToPythonComplianceClient<C>::Add(
-      const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
+  template<IsComplianceClient C>
+  typename ToPythonComplianceClient<C>::Client&
+      ToPythonComplianceClient<C>::operator *() {
+    return *m_client;
+  }
+
+  template<IsComplianceClient C>
+  const typename ToPythonComplianceClient<C>::Client&
+      ToPythonComplianceClient<C>::operator *() const {
+    return *m_client;
+  }
+
+  template<IsComplianceClient C>
+  typename ToPythonComplianceClient<C>::Client*
+      ToPythonComplianceClient<C>::operator ->() {
+    return m_client.get_ptr();
+  }
+
+  template<IsComplianceClient C>
+  const typename ToPythonComplianceClient<C>::Client*
+      ToPythonComplianceClient<C>::operator ->() const {
+    return m_client.get_ptr();
+  }
+
+  template<IsComplianceClient C>
+  std::vector<ComplianceRuleEntry> ToPythonComplianceClient<C>::load(
+      const Beam::DirectoryEntry& directory_entry) {
+    auto release = Beam::Python::GilRelease();
+    return m_client->load(directory_entry);
+  }
+
+  template<IsComplianceClient C>
+  ComplianceRuleEntry::Id ToPythonComplianceClient<C>::add(
+      const Beam::DirectoryEntry& directory_entry,
       ComplianceRuleEntry::State state, const ComplianceRuleSchema& schema) {
     auto release = Beam::Python::GilRelease();
-    return m_client->Add(directoryEntry, state, schema);
+    return m_client->add(directory_entry, state, schema);
   }
 
-  template<typename C>
-  void ToPythonComplianceClient<C>::Update(const ComplianceRuleEntry& entry) {
+  template<IsComplianceClient C>
+  void ToPythonComplianceClient<C>::update(const ComplianceRuleEntry& entry) {
     auto release = Beam::Python::GilRelease();
-    return m_client->Update(entry);
+    m_client->update(entry);
   }
 
-  template<typename C>
-  void ToPythonComplianceClient<C>::Delete(ComplianceRuleId id) {
+  template<IsComplianceClient C>
+  void ToPythonComplianceClient<C>::remove(ComplianceRuleEntry::Id id) {
     auto release = Beam::Python::GilRelease();
-    return m_client->Delete(id);
+    m_client->remove(id);
   }
 
-  template<typename C>
-  void ToPythonComplianceClient<C>::Report(
-      const ComplianceRuleViolationRecord& violationRecord) {
+  template<IsComplianceClient C>
+  void ToPythonComplianceClient<C>::report(
+      const ComplianceRuleViolationRecord& record) {
     auto release = Beam::Python::GilRelease();
-    return m_client->Report(violationRecord);
+    m_client->report(record);
   }
 
-  template<typename C>
-  void ToPythonComplianceClient<C>::MonitorComplianceRuleEntries(
-      const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
+  template<IsComplianceClient C>
+  void ToPythonComplianceClient<C>::monitor_compliance_rule_entries(
+      const Beam::DirectoryEntry& directory_entry,
       Beam::ScopedQueueWriter<ComplianceRuleEntry> queue,
       Beam::Out<std::vector<ComplianceRuleEntry>> snapshot) {
     auto release = Beam::Python::GilRelease();
-    return m_client->MonitorComplianceRuleEntries(directoryEntry,
-      std::move(queue), Beam::Store(snapshot));
+    m_client->monitor_compliance_rule_entries(directory_entry, std::move(queue),
+      Beam::out(snapshot));
   }
 
-  template<typename C>
-  void ToPythonComplianceClient<C>::Close() {
+  template<IsComplianceClient C>
+  void ToPythonComplianceClient<C>::close() {
     auto release = Beam::Python::GilRelease();
-    m_client->Close();
+    m_client->close();
   }
 }
 

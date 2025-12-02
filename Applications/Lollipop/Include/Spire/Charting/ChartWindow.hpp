@@ -10,7 +10,6 @@
 #include "Spire/Charting/ChartInteractions.hpp"
 #include "Spire/Charting/ChartPlotController.hpp"
 #include "Spire/Charting/ChartValue.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/PersistentWindow.hpp"
 #include "Spire/UI/SecurityContext.hpp"
 #include "Spire/UI/SecurityViewStack.hpp"

@@ -14,8 +14,6 @@
 #include "Spire/LegacyUI/SecurityContext.hpp"
 #include "Spire/LegacyUI/SecurityViewStack.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
-#include "Spire/LegacyUI/LegacyUI.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 class QMenu;
 class Ui_ChartWindow;

@@ -3,7 +3,7 @@
 #include <functional>
 #include <memory>
 #include <QKeyEvent>
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

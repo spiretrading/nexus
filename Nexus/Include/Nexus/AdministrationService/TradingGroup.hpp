@@ -1,11 +1,12 @@
 #ifndef NEXUS_TRADING_GROUP_HPP
 #define NEXUS_TRADING_GROUP_HPP
+#include <utility>
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
+#include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include "Nexus/AdministrationService/AdministrationService.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /** Represents a group of traders and their managers. */
   class TradingGroup {
@@ -17,90 +18,86 @@ namespace Nexus::AdministrationService {
       /**
        * Constructs a TradingGroup.
        * @param entry The DirectoryEntry containing the TradingGroup.
-       * @param managersDirectory The DirectoryEntry containing the managers.
+       * @param managers_directory The DirectoryEntry containing the managers.
        * @param managers The list of managers in the group.
-       * @param tradersDirectory The DirectoryEntry containing the traders.
+       * @param traders_directory The DirectoryEntry containing the traders.
        * @param traders The list of traders in the group.
        */
-      TradingGroup(const Beam::ServiceLocator::DirectoryEntry& entry,
-        const Beam::ServiceLocator::DirectoryEntry& managersDirectory,
-        const std::vector<Beam::ServiceLocator::DirectoryEntry>& managers,
-        const Beam::ServiceLocator::DirectoryEntry& tradersDirectory,
-        const std::vector<Beam::ServiceLocator::DirectoryEntry>& traders);
+      TradingGroup(Beam::DirectoryEntry entry,
+        Beam::DirectoryEntry managers_directory,
+        std::vector<Beam::DirectoryEntry> managers,
+        Beam::DirectoryEntry traders_directory,
+        std::vector<Beam::DirectoryEntry> traders) noexcept;
 
       /** Returns the DirectoryEntry representing this TradingGroup. */
-      const Beam::ServiceLocator::DirectoryEntry& GetEntry() const;
+      const Beam::DirectoryEntry& get_entry() const;
 
       /** Returns the DirectoryEntry for the managers directory. */
-      const Beam::ServiceLocator::DirectoryEntry& GetManagersDirectory() const;
+      const Beam::DirectoryEntry& get_managers_directory() const;
 
       /** Returns the list of managers in the group. */
-      const std::vector<Beam::ServiceLocator::DirectoryEntry>&
-        GetManagers() const;
+      const std::vector<Beam::DirectoryEntry>& get_managers() const;
 
       /** Returns the DirectoryEntry for the traders directory. */
-      const Beam::ServiceLocator::DirectoryEntry& GetTradersDirectory() const;
+      const Beam::DirectoryEntry& get_traders_directory() const;
 
       /** Returns the list of traders in the group. */
-      const std::vector<Beam::ServiceLocator::DirectoryEntry>&
-        GetTraders() const;
+      const std::vector<Beam::DirectoryEntry>& get_traders() const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
-      Beam::ServiceLocator::DirectoryEntry m_entry;
-      Beam::ServiceLocator::DirectoryEntry m_managersDirectory;
-      std::vector<Beam::ServiceLocator::DirectoryEntry> m_managers;
-      Beam::ServiceLocator::DirectoryEntry m_tradersDirectory;
-      std::vector<Beam::ServiceLocator::DirectoryEntry> m_traders;
+      friend struct Beam::DataShuttle;
+      Beam::DirectoryEntry m_entry;
+      Beam::DirectoryEntry m_managers_directory;
+      std::vector<Beam::DirectoryEntry> m_managers;
+      Beam::DirectoryEntry m_traders_directory;
+      std::vector<Beam::DirectoryEntry> m_traders;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
   inline TradingGroup::TradingGroup(
-    const Beam::ServiceLocator::DirectoryEntry& entry,
-    const Beam::ServiceLocator::DirectoryEntry& managersDirectory,
-    const std::vector<Beam::ServiceLocator::DirectoryEntry>& managers,
-    const Beam::ServiceLocator::DirectoryEntry& tradersDirectory,
-    const std::vector<Beam::ServiceLocator::DirectoryEntry>& traders)
-    : m_entry(entry),
-      m_managersDirectory(managersDirectory),
-      m_managers(managers),
-      m_tradersDirectory(tradersDirectory),
-      m_traders(traders) {}
+    Beam::DirectoryEntry entry, Beam::DirectoryEntry managers_directory,
+    std::vector<Beam::DirectoryEntry> managers,
+    Beam::DirectoryEntry traders_directory,
+    std::vector<Beam::DirectoryEntry> traders) noexcept
+    : m_entry(std::move(entry)),
+      m_managers_directory(std::move(managers_directory)),
+      m_managers(std::move(managers)),
+      m_traders_directory(std::move(traders_directory)),
+      m_traders(std::move(traders)) {}
 
-  inline const Beam::ServiceLocator::DirectoryEntry&
-      TradingGroup::GetEntry() const {
+  inline const Beam::DirectoryEntry& TradingGroup::get_entry() const {
     return m_entry;
   }
 
-  inline const Beam::ServiceLocator::DirectoryEntry&
-      TradingGroup::GetManagersDirectory() const {
-    return m_managersDirectory;
+  inline const Beam::DirectoryEntry&
+      TradingGroup::get_managers_directory() const {
+    return m_managers_directory;
   }
 
-  inline const std::vector<Beam::ServiceLocator::DirectoryEntry>&
-      TradingGroup::GetManagers() const {
+  inline const std::vector<Beam::DirectoryEntry>&
+      TradingGroup::get_managers() const {
     return m_managers;
   }
 
-  inline const Beam::ServiceLocator::DirectoryEntry&
-      TradingGroup::GetTradersDirectory() const {
-    return m_tradersDirectory;
+  inline const Beam::DirectoryEntry&
+      TradingGroup::get_traders_directory() const {
+    return m_traders_directory;
   }
 
-  inline const std::vector<Beam::ServiceLocator::DirectoryEntry>&
-      TradingGroup::GetTraders() const {
+  inline const std::vector<Beam::DirectoryEntry>&
+      TradingGroup::get_traders() const {
     return m_traders;
   }
 
-  template<typename Shuttler>
-  void TradingGroup::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("entry", m_entry);
-    shuttle.Shuttle("managers_directory", m_managersDirectory);
-    shuttle.Shuttle("managers", m_managers);
-    shuttle.Shuttle("traders_directory", m_tradersDirectory);
-    shuttle.Shuttle("traders", m_traders);
+  template<Beam::IsShuttle S>
+  void TradingGroup::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("entry", m_entry);
+    shuttle.shuttle("managers_directory", m_managers_directory);
+    shuttle.shuttle("managers", m_managers);
+    shuttle.shuttle("traders_directory", m_traders_directory);
+    shuttle.shuttle("traders", m_traders);
   }
 }
 

@@ -15,12 +15,12 @@ namespace Spire {
       /*!
         \param entry The administrator's DirectoryEntry.
       */
-      AdministratorItem(const Beam::ServiceLocator::DirectoryEntry& entry);
+      AdministratorItem(const Beam::DirectoryEntry& entry);
 
       virtual ~AdministratorItem();
 
       //! Returns the administrator's DirectoryEntry.
-      const Beam::ServiceLocator::DirectoryEntry& GetEntry() const;
+      const Beam::DirectoryEntry& GetEntry() const;
 
       virtual Type GetType() const;
 
@@ -29,7 +29,7 @@ namespace Spire {
       virtual QIcon GetIcon() const;
 
     private:
-      Beam::ServiceLocator::DirectoryEntry m_entry;
+      Beam::DirectoryEntry m_entry;
   };
 }
 

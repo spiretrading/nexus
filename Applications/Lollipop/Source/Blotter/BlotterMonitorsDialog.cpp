@@ -18,9 +18,9 @@ BlotterMonitorsDialog::BlotterMonitorsDialog(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_BlotterMonitorsDialog>()),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_propeties(properties),
-      m_model(model.Get()) {
+      m_model(model.get()) {
   m_ui->setupUi(this);
   m_ui->m_monitorTable->setHorizontalHeaderLabels(QStringList("Monitors"));
   m_ui->m_monitorTable->setMinimumWidth(1);

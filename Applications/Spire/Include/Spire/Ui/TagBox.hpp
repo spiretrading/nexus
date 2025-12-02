@@ -4,9 +4,13 @@
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/TextBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class GlobalPositionObserver;
+  class InfoTip;
+  class ScrollableListBox;
+  class ScrollBar;
+  class TextAreaBox;
 
   /** Displays a list of tags within a box. */
   class TagBox : public QWidget {
@@ -51,7 +55,6 @@ namespace Spire {
         const SubmitSignal::slot_type& slot) const;
 
       QSize minimumSizeHint() const override;
-
       QSize sizeHint() const override;
 
     protected:

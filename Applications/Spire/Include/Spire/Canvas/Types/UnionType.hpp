@@ -50,22 +50,22 @@ namespace Spire {
       virtual void Apply(CanvasTypeVisitor& visitor) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::vector<std::shared_ptr<NativeType>> m_compatibleTypes;
       std::string m_name;
 
       UnionType() = default;
       UnionType(std::vector<std::shared_ptr<NativeType>> compatibleTypes,
         std::string name);
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void UnionType::Shuttle(Shuttler& shuttle, unsigned int version) {
-    CanvasType::Shuttle(shuttle, version);
-    shuttle.Shuttle("compatible_types", m_compatibleTypes);
-    shuttle.Shuttle("name", m_name);
+  template<Beam::IsShuttle S>
+  void UnionType::shuttle(S& shuttle, unsigned int version) {
+    CanvasType::shuttle(shuttle, version);
+    shuttle.shuttle("compatible_types", m_compatibleTypes);
+    shuttle.shuttle("name", m_name);
   }
 }
 

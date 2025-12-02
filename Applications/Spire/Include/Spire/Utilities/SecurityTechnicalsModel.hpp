@@ -6,6 +6,7 @@
 #include "Nexus/Queries/StandardDataTypes.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Async/QtPromise.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Utilities/Utilities.hpp"
 
@@ -109,8 +110,8 @@ namespace Spire {
       std::shared_ptr<QtPromise<void>> m_loadPromise;
       EventHandler m_eventHandler;
 
-      SecurityTechnicalsModel(
-        Beam::Ref<UserProfile> userProfile, const Nexus::Security& security);
+      SecurityTechnicalsModel(Beam::Ref<UserProfile> userProfile,
+        const Nexus::Security& security);
       void OnTimeAndSale(const Nexus::TimeAndSale& timeAndSale);
   };
 }

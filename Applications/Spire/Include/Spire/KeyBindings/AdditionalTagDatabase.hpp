@@ -3,10 +3,9 @@
 #include <memory>
 #include <unordered_map>
 #include "Nexus/Definitions/Destination.hpp"
-#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/RegionMap.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/KeyBindings/AdditionalTagSchema.hpp"
-#include "Spire/KeyBindings/KeyBindings.hpp"
 
 namespace Spire {
 
@@ -17,14 +16,8 @@ namespace Spire {
   class AdditionalTagDatabase {
     public:
 
-      /**
-       * Constructs an empty database.
-       * @param markets The database of markets used to form regions.
-       * @param destinations The database of destinations used to resolve the
-       *        region they belong to.
-       */
-      AdditionalTagDatabase(
-        Nexus::MarketDatabase markets, Nexus::DestinationDatabase destinations);
+      /** Constructs an empty database. */
+      AdditionalTagDatabase();
 
       /**
        * Adds a schema to this database.
@@ -65,8 +58,6 @@ namespace Spire {
         find(const Nexus::Region& region) const;
 
     private:
-      Nexus::MarketDatabase m_markets;
-      Nexus::DestinationDatabase m_destinations;
       Nexus::RegionMap<std::unordered_map<
         int, std::shared_ptr<AdditionalTagSchema>>> m_schemas;
       std::unordered_map<Nexus::Destination, std::unordered_map<

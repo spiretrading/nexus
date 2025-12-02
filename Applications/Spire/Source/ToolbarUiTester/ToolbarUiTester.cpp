@@ -1,4 +1,5 @@
 #include "Spire/ToolbarUiTester/ToolbarUiTester.hpp"
+#include <QIcon>
 #include <QVBoxLayout>
 #include "Spire/Toolbar/ToolbarWindow.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -8,9 +9,7 @@
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 
@@ -53,11 +52,11 @@ void ToolbarUiTester::on_toolbar_click() {
     }
     m_toolbar_window.clear();
   }
-  auto account = DirectoryEntry::MakeAccount(
+  auto account = DirectoryEntry::make_account(
     123, m_user_name->get_current()->get().toStdString());
   auto roles = AccountRoles();
   if(m_mananger_check_box->get_current()->get()) {
-    roles.Set(AccountRole::MANAGER);
+    roles.set(AccountRole::MANAGER);
   }
   auto recently_closed_windows =
     std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>();
@@ -104,7 +103,7 @@ void ToolbarUiTester::on_settings(SettingsPanel::Mode mode,
     arg(mode_label).arg(QString::fromStdString(path.string())));
   for(auto i = 0; i != UserSettings::Category::COUNT; ++i) {
     auto category = static_cast<UserSettings::Category>(i);
-    if(categories.Test(category)) {
+    if(categories.test(category)) {
       m_output->append("\t" + to_text(category));
     }
   }

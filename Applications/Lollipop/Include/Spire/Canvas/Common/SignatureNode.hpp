@@ -1,7 +1,7 @@
 #ifndef SPIRE_SIGNATURE_NODE_HPP
 #define SPIRE_SIGNATURE_NODE_HPP
 #include <vector>
-#include <boost/mpl/for_each.hpp>
+#include <boost/mp11.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
@@ -35,7 +35,7 @@ namespace Details {
     template<typename T>
     void operator ()(T) {
       auto signature = std::vector<std::shared_ptr<NativeType>>();
-      boost::mpl::for_each<T>(
+      boost::mp11::mp_for_each<T>(
         Details::SignatureInnerLoop(m_typeRegistry, signature));
       m_signatures->push_back(std::move(signature));
     }
@@ -84,7 +84,7 @@ namespace Details {
   template<typename Signatures>
   std::vector<SignatureNode::Signature> MakeSignatures() {
     auto signatures = std::vector<SignatureNode::Signature>();
-    boost::mpl::for_each<typename Signatures::type>(
+    boost::mp11::mp_for_each<typename Signatures::type>(
       Details::SignatureOuterLoop(signatures));
     return signatures;
   }

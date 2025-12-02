@@ -1,56 +1,37 @@
 #ifndef NEXUS_PYTHON_TECHNICAL_ANALYSIS_HPP
 #define NEXUS_PYTHON_TECHNICAL_ANALYSIS_HPP
-#include <type_traits>
+#include <string_view>
+#include <boost/lexical_cast.hpp>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
-#include "Nexus/Python/DllExport.hpp"
+#include "Beam/Python/Utilities.hpp"
 #include "Nexus/TechnicalAnalysis/Candlestick.hpp"
 
 namespace Nexus::Python {
 
-  /** Returns the exported Candlestick. */
-  NEXUS_EXPORT_DLL pybind11::class_<
-    TechnicalAnalysis::Candlestick<pybind11::object, pybind11::object>>&
-      GetExportedCandlestick();
-
   /**
-   * Exports the generic Candlestick class.
+   * Exports a Candlestick class.
+   * @param C The type of Candlestick to export.
+   * @param name The name of the class to export.
    * @param module The module to export to.
+   * @return The exported class.
    */
-  template<typename Candlestick>
-  auto ExportCandlestick(pybind11::module& module, const std::string& name) {
-    auto candlestick = pybind11::class_<Candlestick>(module, name.c_str()).
-      def(pybind11::init()).
+  template<typename C>
+  auto export_candlestick(pybind11::module& module, std::string_view name) {
+    using DomainType = typename C::Domain;
+    using RangeType = typename C::Range;
+    auto candlestick = Beam::Python::export_default_methods(
+        pybind11::class_<C>(module, name.data())).
+      def(pybind11::init<DomainType, DomainType>()).
       def(pybind11::init<
-        typename Candlestick::Domain, typename Candlestick::Domain>()).
-      def(pybind11::init<
-        typename Candlestick::Domain, typename Candlestick::Domain,
-        typename Candlestick::Range, typename Candlestick::Range,
-        typename Candlestick::Range, typename Candlestick::Range>()).
-      def_property("start", &Candlestick::GetStart, &Candlestick::SetStart).
-      def_property("end", &Candlestick::GetEnd, &Candlestick::SetEnd).
-      def_property_readonly("open", &Candlestick::GetOpen).
-      def_property_readonly("close", &Candlestick::GetClose).
-      def_property_readonly("high", &Candlestick::GetHigh).
-      def_property_readonly("low", &Candlestick::GetLow).
-      def("update", &Candlestick::Update);
-    if constexpr(!std::is_same_v<Candlestick,
-        TechnicalAnalysis::Candlestick<pybind11::object, pybind11::object>>) {
-      candlestick.def(pybind11::self == pybind11::self).
-        def(pybind11::self != pybind11::self);
-      pybind11::implicitly_convertible<Candlestick,
-        TechnicalAnalysis::Candlestick<pybind11::object, pybind11::object>>();
-      GetExportedCandlestick().def(pybind11::init(
-        [] (const Candlestick& candlestick) {
-          return TechnicalAnalysis::Candlestick(
-            pybind11::cast(candlestick.GetStart()),
-            pybind11::cast(candlestick.GetEnd()),
-            pybind11::cast(candlestick.GetOpen()),
-            pybind11::cast(candlestick.GetClose()),
-            pybind11::cast(candlestick.GetHigh()),
-            pybind11::cast(candlestick.GetLow()));
-        }));
-    }
+        DomainType, DomainType, RangeType, RangeType, RangeType, RangeType>()).
+      def_property("start", &C::get_start, &C::set_start).
+      def_property("end", &C::get_end, &C::set_end).
+      def_property_readonly("open", &C::get_open).
+      def_property_readonly("close", &C::get_close).
+      def_property_readonly("high", &C::get_high).
+      def_property_readonly("low", &C::get_low).
+      def("update", &C::update);
     return candlestick;
   }
 
@@ -58,7 +39,13 @@ namespace Nexus::Python {
    * Exports the TechnicalAnalysis namespace.
    * @param module The module to export to.
    */
-  void ExportTechnicalAnalysis(pybind11::module& module);
+  void export_technical_analysis(pybind11::module& module);
+
+  /**
+   * Exports the standard security queries.
+   * @param module The module to export to.
+   */
+  void export_standard_security_queries(pybind11::module& module);
 }
 
 #endif

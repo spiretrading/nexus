@@ -1,7 +1,8 @@
 #ifndef SPIRE_ORDER_FIELD_INFO_TIP_HPP
 #define SPIRE_ORDER_FIELD_INFO_TIP_HPP
+#include <string>
+#include <vector>
 #include <QWidget>
-#include "Spire/KeyBindings/KeyBindings.hpp"
 
 namespace Spire {
 

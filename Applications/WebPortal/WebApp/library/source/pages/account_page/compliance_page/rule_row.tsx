@@ -7,7 +7,6 @@ import { DropDownButton, HLine } from '../../..';
 import { ParametersList } from './parameter_list';
 import { RuleExecutionDropDown } from './rule_execution_drop_down';
 
-
 interface Properties {
   
   /** The size at which the component should be displayed at. */
@@ -46,6 +45,10 @@ export class RuleRow extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
+    if(this.cachedEntry !== this.props.complianceRule) {
+      this.flattenedEntry = flattenEntry(this.props.complianceRule);
+      this.cachedEntry = this.props.complianceRule;
+    }
     const buttonSize = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return '20px';
@@ -93,7 +96,7 @@ export class RuleRow extends React.Component<Properties, State> {
             <div style={prefixPaddingStyle}/>
             <div style={headerTextStyle}>
               {Nexus.ComplianceRuleSchema.toTitleCase(
-                this.props.complianceRule.schema)}
+                Nexus.getUnwrappedName(this.props.complianceRule.schema))}
             </div>
           </div>
           {spacing}
@@ -116,7 +119,7 @@ export class RuleRow extends React.Component<Properties, State> {
                 <ParametersList 
                   displaySize={this.props.displaySize}
                   currencyDatabase={this.props.currencyDatabase}
-                  schema={this.props.complianceRule.schema}
+                  schema={this.flattenedEntry.schema}
                   readonly={this.props.readonly}
                   onChange={this.onParameterChange}/>
               </div>)}
@@ -149,7 +152,8 @@ export class RuleRow extends React.Component<Properties, State> {
   private onParameterChange = (schema: Nexus.ComplianceRuleSchema) => {
     const rule = new Nexus.ComplianceRuleEntry(
       this.props.complianceRule.id, this.props.complianceRule.directoryEntry,
-      this.props.complianceRule.state, schema);
+      this.props.complianceRule.state,
+      renest(schema, this.props.complianceRule.schema));
     this.props.onChange(rule);
   }
 
@@ -238,4 +242,106 @@ export class RuleRow extends React.Component<Properties, State> {
     }
   };
   private ruleParameters: HTMLDivElement;
+  private cachedEntry: Nexus.ComplianceRuleEntry;
+  private flattenedEntry: Nexus.ComplianceRuleEntry;
+}
+
+function flatten(schema: Nexus.ComplianceRuleSchema):
+    Nexus.ComplianceRuleSchema {
+  let wrappedName: string | undefined;
+  let args: Nexus.ComplianceValue[] | undefined;
+  for(const parameter of schema.parameters) {
+    if(parameter.name === 'name') {
+      if(parameter.value.type === Nexus.ComplianceValue.Type.STRING) {
+        wrappedName = parameter.value.value as string;
+      }
+    } else if(parameter.name === 'arguments') {
+      if(parameter.value.type === Nexus.ComplianceValue.Type.LIST) {
+        args = parameter.value.value as Nexus.ComplianceValue[];
+      }
+    }
+  }
+  if(wrappedName === undefined || args === undefined) {
+    return schema;
+  }
+  const innerParameters: Nexus.ComplianceParameter[] = [];
+  for(const argument of args) {
+    if(argument.type !== Nexus.ComplianceValue.Type.LIST) {
+      return schema;
+    }
+    const parameters = argument.value as Nexus.ComplianceValue[];
+    if(parameters.length !== 2) {
+      return schema;
+    }
+    if(parameters[0].type !== Nexus.ComplianceValue.Type.STRING) {
+      return schema;
+    }
+    const name = parameters[0].value as string;
+    innerParameters.push(new Nexus.ComplianceParameter(name, parameters[1]));
+  }
+  const inner = flatten(
+    new Nexus.ComplianceRuleSchema(wrappedName, innerParameters));
+  const resultParameters: Nexus.ComplianceParameter[] = [];
+  for(const parameter of schema.parameters) {
+    if(parameter.name === 'name' || parameter.name === 'arguments') {
+      continue;
+    }
+    resultParameters.push(parameter);
+  }
+  for(const parameter of inner.parameters) {
+    resultParameters.push(parameter);
+  }
+  return new Nexus.ComplianceRuleSchema(inner.name, resultParameters);
+}
+
+function flattenEntry(entry: Nexus.ComplianceRuleEntry):
+    Nexus.ComplianceRuleEntry {
+  return new Nexus.ComplianceRuleEntry(entry.id, entry.directoryEntry,
+    entry.state, flatten(entry.schema));
+}
+
+function renest(flattened: Nexus.ComplianceRuleSchema,
+    fullyWrapped: Nexus.ComplianceRuleSchema): Nexus.ComplianceRuleSchema {
+  let wrappedName: string | undefined;
+  let args: Nexus.ComplianceValue[] | undefined;
+  const parameterNames: string[] = [];
+  for(const parameter of fullyWrapped.parameters) {
+    if(parameter.name === 'name') {
+      if(parameter.value.type === Nexus.ComplianceValue.Type.STRING) {
+        wrappedName = parameter.value.value as string;
+      }
+    } else if(parameter.name === 'arguments') {
+      if(parameter.value.type === Nexus.ComplianceValue.Type.LIST) {
+        args = parameter.value.value as Nexus.ComplianceValue[];
+      }
+    } else {
+      parameterNames.push(parameter.name);
+    }
+  }
+  if(wrappedName === undefined || args === undefined ||
+      flattened.parameters.length < parameterNames.length) {
+    return flattened;
+  }
+  const outerParameters: Nexus.ComplianceParameter[] = [];
+  for(let i = 0; i < parameterNames.length; ++i) {
+    for(const flattenedParameter of flattened.parameters) {
+      if(flattenedParameter.name === parameterNames[i]) {
+        outerParameters.push(flattenedParameter);
+        break;
+      }
+    }
+    if(outerParameters.length !== i + 1) {
+      return flattened;
+    }
+  }
+  const innerParameters: Nexus.ComplianceParameter[] = [];
+  for(const flattenedParameter of flattened.parameters) {
+    if(!parameterNames.includes(flattenedParameter.name)) {
+      innerParameters.push(flattenedParameter);
+    }
+  }
+  const innerSchema = renest(
+    new Nexus.ComplianceRuleSchema(flattened.name, innerParameters),
+    Nexus.unwrap(fullyWrapped));
+  return Nexus.wrap(fullyWrapped.name, outerParameters, innerSchema);
 }

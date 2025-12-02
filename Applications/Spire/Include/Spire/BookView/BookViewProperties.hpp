@@ -8,28 +8,29 @@
 #include <boost/optional/optional.hpp>
 #include <QColor>
 #include <QFont>
-#include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/BookView/BookView.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class UserProfile;
 
   /** Stores the properties used by a BookViewWindow. */
   class BookViewProperties {
     public:
 
-      /** Stores a market's highlight properties. */
-      struct MarketHighlight {
+      /** Stores a venue's highlight properties. */
+      struct VenueHighlight {
 
-        /** The color to highlight the market with. */
+        /** The color to highlight the venue with. */
         QColor m_color;
 
         /** Whether to highlight all levels. */
         bool m_highlightAllLevels;
 
-        template<typename Shuttler>
-        void Shuttle(Shuttler& shuttle, unsigned int version);
+        template<Beam::IsShuttle S>
+        void shuttle(S& shuttle, unsigned int version);
       };
 
       /** Stores options available to highlight Orders. */
@@ -94,26 +95,26 @@ namespace Spire {
       void SetBookQuoteFont(const QFont& font);
 
       /**
-       * Returns the MarketHighlight for a specified market.
-       * @param market The market to get the property for.
-       * @return The <i>market</i>'s highlight property.
+       * Returns the VenueHighlight for a specified venue.
+       * @param venue The venue to get the property for.
+       * @return The <i>venue</i>'s highlight property.
        */
-      boost::optional<const MarketHighlight&> GetMarketHighlight(
-        Nexus::MarketCode market) const;
+      boost::optional<const VenueHighlight&> GetVenueHighlight(
+        Nexus::Venue venue) const;
 
       /**
-       * Sets the MarketHighlight for a specified market.
-       * @param market The market to apply the property to.
-       * @param highlight The MarketHighlight to apply.
+       * Sets the VenueHighlight for a specified venue.
+       * @param venue The venue to apply the property to.
+       * @param highlight The VenueHighlight to apply.
        */
-      void SetMarketHighlight(
-        Nexus::MarketCode market, const MarketHighlight& highlight);
+      void SetVenueHighlight(
+        Nexus::Venue venue, const VenueHighlight& highlight);
 
       /**
-       * Removes the MarketHighlight for a specified market.
-       * @param market The market to remove the highlight from.
+       * Removes the VenueHighlight for a specified venue.
+       * @param venue The venue to remove the highlight from.
        */
-      void RemoveMarketHighlight(Nexus::MarketCode market);
+      void RemoveVenueHighlight(Nexus::Venue venue);
 
       /** Returns the OrderHighlight option. */
       OrderHighlight GetOrderHighlight() const;
@@ -140,51 +141,50 @@ namespace Spire {
       void SetShowBbo(bool value);
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       QColor m_bookQuoteForegroundColor;
       std::vector<QColor> m_bookQuoteBackgroundColors;
       QFont m_bboQuoteFont;
       QFont m_bookQuoteFont;
-      std::unordered_map<Nexus::MarketCode, MarketHighlight> m_marketHighlights;
+      std::unordered_map<Nexus::Venue, VenueHighlight> m_venueHighlights;
       OrderHighlight m_orderHighlight;
       QColor m_orderHighlightColor;
       bool m_showGrid;
       bool m_showBbo;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void BookViewProperties::MarketHighlight::Shuttle(
-      Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("color", m_color);
-    shuttle.Shuttle("highlight_all_levels", m_highlightAllLevels);
+  template<Beam::IsShuttle S>
+  void BookViewProperties::VenueHighlight::shuttle(
+      S& shuttle, unsigned int version) {
+    shuttle.shuttle("color", m_color);
+    shuttle.shuttle("highlight_all_levels", m_highlightAllLevels);
   }
 
-  template<typename Shuttler>
-  void BookViewProperties::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("book_quote_foreground_color", m_bookQuoteForegroundColor);
-    shuttle.Shuttle(
+  template<Beam::IsShuttle S>
+  void BookViewProperties::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("book_quote_foreground_color", m_bookQuoteForegroundColor);
+    shuttle.shuttle(
       "book_quote_background_colors", m_bookQuoteBackgroundColors);
-    shuttle.Shuttle("bbo_quote_font", m_bboQuoteFont);
-    shuttle.Shuttle("book_quote_font", m_bookQuoteFont);
-    shuttle.Shuttle("market_highlights", m_marketHighlights);
-    shuttle.Shuttle("order_highlight", m_orderHighlight);
-    shuttle.Shuttle("order_highlight_color", m_orderHighlightColor);
-    shuttle.Shuttle("show_grid", m_showGrid);
+    shuttle.shuttle("bbo_quote_font", m_bboQuoteFont);
+    shuttle.shuttle("book_quote_font", m_bookQuoteFont);
+    shuttle.shuttle("venue_highlights", m_venueHighlights);
+    shuttle.shuttle("order_highlight", m_orderHighlight);
+    shuttle.shuttle("order_highlight_color", m_orderHighlightColor);
+    shuttle.shuttle("show_grid", m_showGrid);
     if(version >= 2) {
-      shuttle.Shuttle("show_bbo", m_showBbo);
+      shuttle.shuttle("show_bbo", m_showBbo);
     } else {
       m_showBbo = false;
     }
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
-  struct Version<Spire::BookViewProperties> :
-    std::integral_constant<unsigned int, 2> {};
+  constexpr auto shuttle_version<Spire::BookViewProperties> = 2;
 }
 
 #endif

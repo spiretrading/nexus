@@ -8,7 +8,6 @@
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace Beam;
-using namespace Beam::SignalHandling;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
@@ -83,7 +82,7 @@ namespace {
       }
       auto connection = stylist.connect_delete_signal(
         std::bind_front(&ChildObserver::remove, this, std::ref(child)));
-      m_delete_connections.AddConnection(&child, connection);
+      m_delete_connections.add(&child, connection);
       m_children_stylists.insert(i, std::pair(&child, &stylist));
       return true;
     }
@@ -93,7 +92,7 @@ namespace {
       if(i == m_children_stylists.end()) {
         return;
       }
-      m_delete_connections.Disconnect(&child);
+      m_delete_connections.disconnect(&child);
       auto stylist = i->second;
       m_children_stylists.erase(i);
       m_on_update({}, {stylist});
@@ -133,7 +132,7 @@ SelectConnection Spire::Styles::select(const ChildSelector& selector,
 }
 
 std::size_t std::hash<ChildSelector>::operator ()(
-    const ChildSelector& selector) const {
+    const ChildSelector& selector) const noexcept {
   auto seed = std::size_t(0);
   hash_combine(seed, std::hash<Selector>()(selector.get_base()));
   hash_combine(seed, std::hash<Selector>()(selector.get_child()));

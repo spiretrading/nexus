@@ -1,7 +1,6 @@
 #ifndef SPIRE_STYLES_PARENT_SELECTOR_HPP
 #define SPIRE_STYLES_PARENT_SELECTOR_HPP
 #include "Spire/Styles/Selector.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
@@ -44,7 +43,7 @@ namespace std {
   template<>
   struct hash<Spire::Styles::ParentSelector> {
     std::size_t operator ()(
-      const Spire::Styles::ParentSelector& selector) const;
+      const Spire::Styles::ParentSelector& selector) const noexcept;
   };
 }
 

@@ -2,6 +2,7 @@
 #define SPIRE_BLOTTER_WINDOW_HPP
 #include <boost/signals2/signal.hpp>
 #include <QFrame>
+#include "Nexus/Accounting/Portfolio.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
@@ -87,8 +88,7 @@ namespace Spire {
       void OnTaskAdded(const BlotterTasksModel::TaskEntry& entry);
       void OnTaskRemoved(const BlotterTasksModel::TaskEntry& entry);
       void OnActiveBlotterChanged(BlotterModel& blotter);
-      void OnProfitAndLossUpdate(
-        const SpirePortfolioController::UpdateEntry& update);
+      void OnProfitAndLossUpdate(const Nexus::PortfolioUpdateEntry& update);
       void OnTaskState(const std::shared_ptr<Task>& task,
         const Task::StateEntry& update);
       void OnExecuteAction();

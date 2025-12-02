@@ -1,21 +1,18 @@
 #ifndef NEXUS_PYTHON_ORDER_EXECUTION_CLIENT_HPP
 #define NEXUS_PYTHON_ORDER_EXECUTION_CLIENT_HPP
-#include <memory>
 #include <type_traits>
 #include <utility>
 #include <Beam/Python/GilRelease.hpp>
-#include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
-#include <pybind11/pybind11.h>
-#include "Nexus/OrderExecutionService/OrderExecutionClientBox.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /**
    * Wraps an OrderExecutionClient for use with Python.
    * @param <C> The type of OrderExecutionClient to wrap.
    */
-  template<typename C>
+  template<IsOrderExecutionClient C>
   class ToPythonOrderExecutionClient {
     public:
 
@@ -23,49 +20,50 @@ namespace Nexus::OrderExecutionService {
       using Client = C;
 
       /**
-       * Constructs a ToPythonOrderExecutionClient.
-       * @param args The arguments to forward to the Client's constructor.
+       * Constructs a ToPythonOrderExecutionClient in-place.
+       * @param args The arguments to forward to the constructor.
        */
-      template<typename... Args, typename =
-        Beam::disable_copy_constructor_t<ToPythonOrderExecutionClient, Args...>>
-      ToPythonOrderExecutionClient(Args&&... args);
+      template<typename... Args>
+      explicit ToPythonOrderExecutionClient(Args&&... args);
 
       ~ToPythonOrderExecutionClient();
 
-      /** Returns the wrapped client. */
-      const Client& GetClient() const;
+      /** Returns a reference to the underlying client. */
+      Client& get();
 
-      /** Returns the wrapped client. */
-      Client& GetClient();
+      /** Returns a reference to the underlying client. */
+      const Client& get() const;
 
-      boost::optional<const Order&> LoadOrder(OrderId id);
+      /** Returns a reference to the underlying client. */
+      Client& operator *();
 
-      void QueryOrderRecords(const AccountQuery& query,
+      /** Returns a reference to the underlying client. */
+      const Client& operator *() const;
+
+      /** Returns a pointer to the underlying client. */
+      Client* operator ->();
+
+      /** Returns a pointer to the underlying client. */
+      const Client* operator ->() const;
+
+      std::shared_ptr<Order> load_order(OrderId id);
+      void query(const AccountQuery& query,
         Beam::ScopedQueueWriter<SequencedOrderRecord> queue);
-
-      void QueryOrderRecords(const AccountQuery& query,
+      void query(const AccountQuery& query,
         Beam::ScopedQueueWriter<OrderRecord> queue);
-
-      void QueryOrderSubmissions(const AccountQuery& query,
+      void query(const AccountQuery& query,
         Beam::ScopedQueueWriter<SequencedOrder> queue);
-
-      void QueryOrderSubmissions(const AccountQuery& query,
-        Beam::ScopedQueueWriter<const Order*> queue);
-
-      void QueryExecutionReports(const AccountQuery& query,
+      void query(const AccountQuery& query,
+        Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue);
+      void query(const AccountQuery& query,
         Beam::ScopedQueueWriter<SequencedExecutionReport> queue);
-
-      void QueryExecutionReports(const AccountQuery& query,
+      void query(const AccountQuery& query,
         Beam::ScopedQueueWriter<ExecutionReport> queue);
-
-      const Order& Submit(const OrderFields& fields);
-
-      void Cancel(const Order& order);
-
-      void Update(OrderId orderId,
-        const ExecutionReport& executionReport);
-
-      void Close();
+      std::shared_ptr<Order> submit(const OrderFields& fields);
+      void cancel(const std::shared_ptr<Order>& order);
+      void cancel(const Order& order);
+      void update(OrderId id, const ExecutionReport& report);
+      void close();
 
     private:
       boost::optional<Client> m_client;
@@ -78,109 +76,136 @@ namespace Nexus::OrderExecutionService {
 
   template<typename Client>
   ToPythonOrderExecutionClient(Client&&) ->
-    ToPythonOrderExecutionClient<std::decay_t<Client>>;
+    ToPythonOrderExecutionClient<std::remove_cvref_t<Client>>;
 
-  template<typename C>
-  template<typename... Args, typename>
+  template<IsOrderExecutionClient C>
+  template<typename... Args>
   ToPythonOrderExecutionClient<C>::ToPythonOrderExecutionClient(Args&&... args)
     : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
-  template<typename C>
+  template<IsOrderExecutionClient C>
   ToPythonOrderExecutionClient<C>::~ToPythonOrderExecutionClient() {
     auto release = Beam::Python::GilRelease();
     m_client.reset();
   }
 
-  template<typename C>
-  const typename ToPythonOrderExecutionClient<C>::Client&
-      ToPythonOrderExecutionClient<C>::GetClient() const {
-    return *m_client;
-  }
-
-  template<typename C>
+  template<IsOrderExecutionClient C>
   typename ToPythonOrderExecutionClient<C>::Client&
-      ToPythonOrderExecutionClient<C>::GetClient() {
+      ToPythonOrderExecutionClient<C>::get() {
     return *m_client;
   }
 
-  template<typename C>
-  boost::optional<const Order&> ToPythonOrderExecutionClient<C>::LoadOrder(
-      OrderId id) {
-    auto release = Beam::Python::GilRelease();
-    return m_client->LoadOrder(id);
+  template<IsOrderExecutionClient C>
+  const typename ToPythonOrderExecutionClient<C>::Client&
+      ToPythonOrderExecutionClient<C>::get() const {
+    return *m_client;
   }
 
-  template<typename C>
-  void ToPythonOrderExecutionClient<C>::QueryOrderRecords(
-      const AccountQuery& query,
+  template<IsOrderExecutionClient C>
+  typename ToPythonOrderExecutionClient<C>::Client&
+      ToPythonOrderExecutionClient<C>::operator *() {
+    return *m_client;
+  }
+
+  template<IsOrderExecutionClient C>
+  const typename ToPythonOrderExecutionClient<C>::Client&
+      ToPythonOrderExecutionClient<C>::operator *() const {
+    return *m_client;
+  }
+
+  template<IsOrderExecutionClient C>
+  typename ToPythonOrderExecutionClient<C>::Client*
+      ToPythonOrderExecutionClient<C>::operator ->() {
+    return m_client.get_ptr();
+  }
+
+  template<IsOrderExecutionClient C>
+  const typename ToPythonOrderExecutionClient<C>::Client*
+      ToPythonOrderExecutionClient<C>::operator ->() const {
+    return m_client.get_ptr();
+  }
+
+  template<IsOrderExecutionClient C>
+  std::shared_ptr<Order>
+      ToPythonOrderExecutionClient<C>::load_order(OrderId id) {
+    auto release = Beam::Python::GilRelease();
+    return m_client->load_order(id);
+  }
+
+  template<IsOrderExecutionClient C>
+  void ToPythonOrderExecutionClient<C>::query(const AccountQuery& query,
       Beam::ScopedQueueWriter<SequencedOrderRecord> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryOrderRecords(query, std::move(queue));
+    m_client->query(query, std::move(queue));
   }
 
-  template<typename C>
-  void ToPythonOrderExecutionClient<C>::QueryOrderRecords(
-      const AccountQuery& query, Beam::ScopedQueueWriter<OrderRecord> queue) {
+  template<IsOrderExecutionClient C>
+  void ToPythonOrderExecutionClient<C>::query(const AccountQuery& query,
+      Beam::ScopedQueueWriter<OrderRecord> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryOrderRecords(query, std::move(queue));
+    m_client->query(query, std::move(queue));
   }
 
-  template<typename C>
-  void ToPythonOrderExecutionClient<C>::QueryOrderSubmissions(
-      const AccountQuery& query,
+  template<IsOrderExecutionClient C>
+  void ToPythonOrderExecutionClient<C>::query(const AccountQuery& query,
       Beam::ScopedQueueWriter<SequencedOrder> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryOrderSubmissions(query, std::move(queue));
+    m_client->query(query, std::move(queue));
   }
 
-  template<typename C>
-  void ToPythonOrderExecutionClient<C>::QueryOrderSubmissions(
-      const AccountQuery& query, Beam::ScopedQueueWriter<const Order*> queue) {
+  template<IsOrderExecutionClient C>
+  void ToPythonOrderExecutionClient<C>::query(const AccountQuery& query,
+      Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryOrderSubmissions(query, std::move(queue));
+    m_client->query(query, std::move(queue));
   }
 
-  template<typename C>
-  void ToPythonOrderExecutionClient<C>::QueryExecutionReports(
-      const AccountQuery& query,
+  template<IsOrderExecutionClient C>
+  void ToPythonOrderExecutionClient<C>::query(const AccountQuery& query,
       Beam::ScopedQueueWriter<SequencedExecutionReport> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryExecutionReports(query, std::move(queue));
+    m_client->query(query, std::move(queue));
   }
 
-  template<typename C>
-  void ToPythonOrderExecutionClient<C>::QueryExecutionReports(
-      const AccountQuery& query,
+  template<IsOrderExecutionClient C>
+  void ToPythonOrderExecutionClient<C>::query(const AccountQuery& query,
       Beam::ScopedQueueWriter<ExecutionReport> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryExecutionReports(query, std::move(queue));
+    m_client->query(query, std::move(queue));
   }
 
-  template<typename C>
-  const Order& ToPythonOrderExecutionClient<C>::Submit(
-      const OrderFields& fields) {
+  template<IsOrderExecutionClient C>
+  std::shared_ptr<Order>
+      ToPythonOrderExecutionClient<C>::submit(const OrderFields& fields) {
     auto release = Beam::Python::GilRelease();
-    return m_client->Submit(fields);
+    return m_client->submit(fields);
   }
 
-  template<typename C>
-  void ToPythonOrderExecutionClient<C>::Cancel(const Order& order) {
+  template<IsOrderExecutionClient C>
+  void ToPythonOrderExecutionClient<C>::cancel(
+      const std::shared_ptr<Order>& order) {
     auto release = Beam::Python::GilRelease();
-    m_client->Cancel(order);
+    m_client->cancel(order);
   }
 
-  template<typename C>
-  void ToPythonOrderExecutionClient<C>::Update(OrderId orderId,
-      const ExecutionReport& executionReport) {
+  template<IsOrderExecutionClient C>
+  void ToPythonOrderExecutionClient<C>::cancel(const Order& order) {
     auto release = Beam::Python::GilRelease();
-    m_client->Update(orderId, executionReport);
+    m_client->cancel(order);
   }
 
-  template<typename C>
-  void ToPythonOrderExecutionClient<C>::Close() {
+  template<IsOrderExecutionClient C>
+  void ToPythonOrderExecutionClient<C>::update(
+      OrderId id, const ExecutionReport& report) {
     auto release = Beam::Python::GilRelease();
-    m_client->Close();
+    m_client->update(id, report);
+  }
+
+  template<IsOrderExecutionClient C>
+  void ToPythonOrderExecutionClient<C>::close() {
+    auto release = Beam::Python::GilRelease();
+    m_client->close();
   }
 }
 

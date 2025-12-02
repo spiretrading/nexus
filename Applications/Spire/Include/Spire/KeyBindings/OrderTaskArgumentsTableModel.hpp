@@ -1,6 +1,5 @@
 #ifndef SPIRE_ORDER_TASK_ARGUMENTS_TABLE_MODEL_HPP
 #define SPIRE_ORDER_TASK_ARGUMENTS_TABLE_MODEL_HPP
-#include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/OrderTaskArguments.hpp"
 #include "Spire/Spire/TableModel.hpp"
 

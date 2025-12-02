@@ -21,7 +21,6 @@
 #include "ui_AccountViewWindow.h"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace Spire;
 using namespace std;
 
@@ -42,7 +41,7 @@ AccountViewWindow::AccountViewWindow(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QFrame{parent, flags},
       m_ui{std::make_unique<Ui_AccountViewWindow>()},
-      m_userProfile{userProfile.Get()},
+      m_userProfile{userProfile.get()},
       m_model{std::make_unique<AccountViewModel>(Ref(*m_userProfile))} {
   m_ui->setupUi(this);
   resize(scale(size()));
@@ -174,16 +173,16 @@ void AccountViewWindow::OnCurrentChanged(const QModelIndex& current,
     auto entry =
       [&] {
         auto& serviceLocatorClient =
-          m_userProfile->GetServiceClients().GetServiceLocatorClient();
-        auto groups = m_userProfile->GetServiceClients().
-          GetAdministrationClient().LoadManagedTradingGroups(
-          serviceLocatorClient.GetAccount());
+          m_userProfile->GetClients().get_service_locator_client();
+        auto groups = m_userProfile->GetClients().
+          get_administration_client().load_managed_trading_groups(
+          serviceLocatorClient.get_account());
         if(groups.empty()) {
           QMessageBox::critical(nullptr, QObject::tr("Error"),
             QObject::tr("Unable to load root directory."));
           return DirectoryEntry{};
         }
-        auto parents = serviceLocatorClient.LoadParents(groups.front());
+        auto parents = serviceLocatorClient.load_parents(groups.front());
         if(parents.empty()) {
           return groups.front();
         }

@@ -3,7 +3,6 @@
 #include <vector>
 #include <QStackedWidget>
 #include "Spire/Ui/SecurityDialog.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

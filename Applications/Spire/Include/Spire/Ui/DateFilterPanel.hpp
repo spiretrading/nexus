@@ -1,8 +1,12 @@
 #ifndef SPIRE_DATE_FILTER_PANEL_HPP
 #define SPIRE_DATE_FILTER_PANEL_HPP
-#include "Spire/Ui/Ui.hpp"
+#include <QWidget>
+#include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/optional.hpp>
+#include "Spire/Spire/ValueModel.hpp"
 
 namespace Spire {
+  class FilterPanel;
 
   /** Displays a FilterPanel to filter by a date range. */
   class DateFilterPanel : public QWidget {

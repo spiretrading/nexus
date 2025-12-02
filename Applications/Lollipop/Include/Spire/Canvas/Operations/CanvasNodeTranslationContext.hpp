@@ -6,8 +6,9 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/thread/mutex.hpp>
+#include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Canvas/Operations/Translation.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 
@@ -23,7 +24,7 @@ namespace Spire {
        */
       CanvasNodeTranslationContext(Beam::Ref<UserProfile> userProfile,
         Beam::Ref<Executor> executor,
-        Beam::ServiceLocator::DirectoryEntry executingAccount);
+        Beam::DirectoryEntry executingAccount);
 
       /**
        * Constructs a CanvasNodeTranslationContext from a parent context.
@@ -45,20 +46,20 @@ namespace Spire {
       Executor& GetExecutor();
 
       /** Returns the executing account. */
-      const Beam::ServiceLocator::DirectoryEntry& GetExecutingAccount() const;
+      const Beam::DirectoryEntry& GetExecutingAccount() const;
 
       /**
        * Returns the publisher for all orders submitted by the translated
        * node.
        */
-      const Beam::Publisher<const Nexus::OrderExecutionService::Order*>&
+      const Beam::Publisher<std::shared_ptr<Nexus::Order>>&
         GetOrderPublisher() const;
 
       /**
        * Returns the publisher for all orders submitted by the translated
        * node.
        */
-      Beam::SequencePublisher<const Nexus::OrderExecutionService::Order*>&
+      Beam::SequencePublisher<std::shared_ptr<Nexus::Order>>&
         GetOrderPublisher();
 
       /**
@@ -89,10 +90,10 @@ namespace Spire {
       mutable boost::mutex m_mutex;
       CanvasNodeTranslationContext* m_parent;
       UserProfile* m_userProfile;
-      Beam::ServiceLocator::DirectoryEntry m_executingAccount;
+      Beam::DirectoryEntry m_executingAccount;
       Executor* m_executor;
-      std::shared_ptr<Beam::SequencePublisher<
-        const Nexus::OrderExecutionService::Order*>> m_orderPublisher;
+      std::shared_ptr<Beam::SequencePublisher<std::shared_ptr<Nexus::Order>>>
+        m_orderPublisher;
       std::unordered_map<const CanvasNode*, Translation> m_translations;
       std::unordered_map<const CanvasNode*, Translation> m_subTranslations;
 

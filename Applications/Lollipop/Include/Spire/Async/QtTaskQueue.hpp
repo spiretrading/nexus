@@ -4,7 +4,6 @@
 #include <exception>
 #include <functional>
 #include <Beam/Queues/CallbackQueue.hpp>
-#include "Spire/Async/Async.hpp"
 
 namespace Spire {
 
@@ -59,25 +58,21 @@ namespace Spire {
        * Adds a value to the end of the Queue.
        * @param value The value to add to the end of the Queue.
        */
-      void push(const Target& value);
+      void push(const Target& value) override;
 
       /**
        * Adds a value to the end of the Queue.
        * @param value The value to add to the end of the Queue.
        */
-      void push(Target&& value);
-
-      /** Breaks this Queue, indicating no further values will be published.  */
-      void close();
+      void push(Target&& value) override;
 
       /**
        * Breaks this Queue, indicating no further values will be published.
        * @param exception The reason why the Queue was broken.
        */
-      void close(const std::exception_ptr& exception);
+      void close(const std::exception_ptr& exception) override;
 
-      using QueueWriter<std::function<void ()>>::Break;
-
+      using QueueWriter<std::function<void ()>>::close;
     private:
       struct EventHandler;
       std::atomic_bool m_is_broken;
@@ -86,9 +81,6 @@ namespace Spire {
       Beam::CallbackQueue m_callbacks;
 
       void safe_push(Target&& value);
-      void Push(const Target& value) override;
-      void Push(Target&& value) override;
-      void Break(const std::exception_ptr& exception) override;
       template<typename T, typename F, typename B>
       auto get_slot_helper(F&& callback, B&& breakCallback);
   };
@@ -117,7 +109,7 @@ namespace Spire {
 
   template<typename T, typename F, typename B>
   auto QtTaskQueue::get_slot_helper(F&& callback, B&& break_callback) {
-    return m_callbacks.GetSlot<T>(
+    return m_callbacks.get_slot<T>(
       [this, callback = std::make_shared<std::remove_reference_t<F>>(
           std::forward<F>(callback))] (const T& value) {
         safe_push([=] {

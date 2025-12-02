@@ -4,12 +4,12 @@
 #include <vector>
 #include <QLabel>
 #include <QWidget>
-#include "Spire/SignIn/SignIn.hpp"
 #include "Spire/SignIn/Track.hpp"
 #include "Spire/Spire/AssociativeValueModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Icon;
+  class MenuButton;
 
   /** Displays the Spire logo and allows the selection of Spire track to run. */
   class TrackMenuButton : public QWidget {
@@ -25,7 +25,7 @@ namespace Spire {
         LOADING,
 
         /** The button is neither interactive nor displaying the animation. */
-        READ_ONLY,
+        READ_ONLY
       };
 
       /**

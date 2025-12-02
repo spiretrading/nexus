@@ -2,9 +2,10 @@
 #define SPIRE_WINDOW_HIGHLIGHT_HPP
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 #include <QPainterPath>
 #include <QWidget>
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/Window.hpp"
 
 namespace Spire {
 
@@ -21,12 +22,7 @@ namespace Spire {
       ~WindowHighlight();
 
     private:
-      struct Overlay : QWidget {
-        QPainterPath m_path;
-
-        explicit Overlay(QScreen& screen);
-        void paintEvent(QPaintEvent*) override;
-      };
+      struct Overlay;
       std::vector<Window*> m_windows;
       std::vector<WId> m_z_order_windows;
       std::unordered_set<WId> m_minimized_windows;

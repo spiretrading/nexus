@@ -17,6 +17,7 @@
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

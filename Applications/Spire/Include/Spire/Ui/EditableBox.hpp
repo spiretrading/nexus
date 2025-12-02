@@ -9,7 +9,6 @@
 #include "Spire/Ui/AnyInputBox.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/MouseObserver.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Details {

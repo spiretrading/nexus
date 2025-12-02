@@ -1,48 +1,25 @@
 #include <doctest/doctest.h>
 #include "Nexus/Compliance/RejectCancelsComplianceRule.hpp"
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
-using namespace Beam;
-using namespace Beam::ServiceLocator;
-using namespace boost;
-using namespace boost::gregorian;
-using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::Compliance;
-using namespace Nexus::OrderExecutionService;
-
-namespace {
-  const auto TIMESTAMP = ptime(date(1984, May, 6), seconds(10));
-
-  auto MakeOrderFields() {
-    return OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
-      Security("TST", DefaultMarkets::TSX(), DefaultCountries::CA()),
-      DefaultCurrencies::CAD(), Side::BID, DefaultDestinations::TSX(), 100,
-      Money::ONE);
-  }
-}
 
 TEST_SUITE("RejectCancelsComplianceRule") {
-  TEST_CASE("add") {
-    auto rule = RejectCancelsComplianceRule("message");
-    auto order = PrimitiveOrder({MakeOrderFields(), 1, TIMESTAMP});
-    REQUIRE_NOTHROW(rule.Add(order));
+  TEST_CASE("cancel_throws_with_default_message") {
+    auto rule = RejectCancelsComplianceRule();
+    auto info = OrderInfo();
+    info.m_id = 1;
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    REQUIRE_THROWS_AS(rule.cancel(order), ComplianceCheckException);
+    REQUIRE_THROWS_WITH(rule.cancel(order), "Cancels not allowed.");
   }
 
-  TEST_CASE("submit") {
-    auto rule = RejectCancelsComplianceRule("message");
-    auto order = PrimitiveOrder({MakeOrderFields(), 1, TIMESTAMP});
-    REQUIRE_NOTHROW(rule.Submit(order));
-  }
-
-  TEST_CASE("cancel") {
-    auto rule = RejectCancelsComplianceRule("message");
-    auto order = PrimitiveOrder({MakeOrderFields(), 1, TIMESTAMP});
-    rule.Add(order);
-    REQUIRE_THROWS_WITH_AS(rule.Cancel(order), "message",
-      ComplianceCheckException);
+  TEST_CASE("cancel_throws_with_custom_message") {
+    auto rule = RejectCancelsComplianceRule("Custom cancel rejection.");
+    auto info = OrderInfo();
+    info.m_id = 2;
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    REQUIRE_THROWS_AS(rule.cancel(order), ComplianceCheckException);
+    REQUIRE_THROWS_WITH(rule.cancel(order), "Custom cancel rejection.");
   }
 }

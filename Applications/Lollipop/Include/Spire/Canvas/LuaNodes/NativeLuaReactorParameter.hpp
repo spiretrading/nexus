@@ -72,8 +72,10 @@ namespace Spire {
   struct PushLuaValue<boost::posix_time::ptime> {
     void operator ()(lua_State& state,
         const boost::posix_time::ptime& value) const {
-
-      // TODO
+      auto epoch = boost::posix_time::ptime(boost::gregorian::date(1970, 1, 1));
+      auto duration = value - epoch;
+      lua_pushnumber(
+        &state, static_cast<double>(duration.total_milliseconds()) / 1000.0);
     }
   };
 
@@ -81,8 +83,8 @@ namespace Spire {
   struct PushLuaValue<boost::posix_time::time_duration> {
     void operator ()(lua_State& state,
         const boost::posix_time::time_duration& value) const {
-
-      // TODO
+      lua_pushnumber(
+        &state, static_cast<double>(value.total_microseconds()) / 1000000.0);
     }
   };
 

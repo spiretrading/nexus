@@ -14,6 +14,7 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::gregorian;
@@ -185,7 +186,7 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
       const auto ICON_SIZE = scale(16, 16);
       const auto BUTTON_SIZE = scale(26, 26);
       m_previous_button = make_icon_button(
-        imageFromSvg(":Icons/calendar-arrow-left.svg", ICON_SIZE));
+        image_from_svg(":Icons/calendar-arrow-left.svg", ICON_SIZE));
       m_previous_button->setFixedSize(BUTTON_SIZE);
       m_previous_button->connect_click_signal([=] { update_current(-1); });
       auto layout = make_hbox_layout(this);
@@ -202,7 +203,7 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
       });
       layout->addWidget(m_label);
       m_next_button = make_icon_button(
-        imageFromSvg(":Icons/calendar-arrow-right.svg", ICON_SIZE));
+        image_from_svg(":Icons/calendar-arrow-right.svg", ICON_SIZE));
       m_next_button->setFixedSize(BUTTON_SIZE);
       m_next_button->connect_click_signal([=] { update_current(1); });
       layout->addWidget(m_next_button);

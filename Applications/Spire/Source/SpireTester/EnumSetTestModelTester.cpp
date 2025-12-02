@@ -21,7 +21,7 @@ TEST_SUITE("EnumSetTestModel") {
     auto gamma_model = make_enum_set_test_model(enum_model, Test::GAMMA);
     REQUIRE(!gamma_model->get());
     auto e = enum_model->get();
-    e.Set(Test::GAMMA);
+    e.set(Test::GAMMA);
     enum_model->set(e);
     REQUIRE(gamma_model->get());
   }

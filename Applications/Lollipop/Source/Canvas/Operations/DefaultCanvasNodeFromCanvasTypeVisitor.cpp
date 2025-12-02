@@ -8,7 +8,6 @@
 #include "Spire/Canvas/ValueNodes/DestinationNode.hpp"
 #include "Spire/Canvas/ValueNodes/DurationNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
-#include "Spire/Canvas/ValueNodes/MarketNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
@@ -16,6 +15,7 @@
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
+#include "Spire/Canvas/ValueNodes/VenueNode.hpp"
 
 using namespace Nexus;
 using namespace Spire;
@@ -37,7 +37,6 @@ namespace {
       virtual void Visit(const DestinationType& type);
       virtual void Visit(const DurationType& type);
       virtual void Visit(const IntegerType& type);
-      virtual void Visit(const MarketType& type);
       virtual void Visit(const MoneyType& type);
       virtual void Visit(const OrderStatusType& type);
       virtual void Visit(const OrderTypeType& type);
@@ -46,6 +45,7 @@ namespace {
       virtual void Visit(const TextType& type);
       virtual void Visit(const TimeInForceType& type);
       virtual void Visit(const TimeRangeType& type);
+      virtual void Visit(const VenueType& type);
   };
 }
 
@@ -88,10 +88,6 @@ void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const IntegerType& type) {
   m_node = make_unique<IntegerNode>();
 }
 
-void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const MarketType& type) {
-  m_node = make_unique<MarketNode>();
-}
-
 void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const MoneyType& type) {
   m_node = make_unique<MoneyNode>();
 }
@@ -124,6 +120,10 @@ void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(
 
 void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const TimeRangeType& type) {
   m_node = make_unique<TimeRangeParameterNode>();
+}
+
+void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const VenueType& type) {
+  m_node = make_unique<VenueNode>();
 }
 
 unique_ptr<CanvasNode> Spire::MakeDefaultCanvasNode(const CanvasType& type) {

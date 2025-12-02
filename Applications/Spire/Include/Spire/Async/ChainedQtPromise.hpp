@@ -3,29 +3,51 @@
 #include <memory>
 #include <type_traits>
 #include <utility>
-#include "Spire/Async/Async.hpp"
 #include "Spire/Async/QtPromiseImp.hpp"
 
 namespace Spire {
+
+  /**
+   * A promise that chains an executor to an existing promise's result.
+   * @param <P> The promise to chain from.
+   * @param <E> The executor to invoke on the promise result.
+   */
   template<typename P, typename E>
   class ChainedQtPromise final : public details::BaseQtPromiseImp<
       promise_executor_result_t<E, Beam::Expect<typename P::Type>>> {
     public:
+
+      /** The promise to chain from. */
       using Promise = P;
+
+      /** The executor to invoke on the promise result. */
       using Executor = E;
-      using Super = details::BaseQtPromiseImp<
-        promise_executor_result_t<Executor,
-        Beam::Expect<typename Promise::Type>>>;
+
+      /** The base class. */
+      using Super = details::BaseQtPromiseImp<promise_executor_result_t<
+        Executor, Beam::Expect<typename Promise::Type>>>;
+
+      /** The type this promise evaluates to. */
       using Type = typename Super::Type;
+
+      /** The type of continuation invoked when this promise completes. */
       using ContinuationType = typename Super::ContinuationType;
 
+      /**
+       * Constructs a chained promise.
+       * @param promise The promise to chain from.
+       * @param executor The executor to invoke on the promise result.
+       */
       template<typename ExecutorForward>
       ChainedQtPromise(Promise promise, ExecutorForward&& executor);
 
+      /**
+       * Binds this promise to its shared pointer and begins execution.
+       * @param self The shared pointer to this promise.
+       */
       void bind(std::shared_ptr<void> self);
 
       void then(ContinuationType continuation) override;
-
       void disconnect() override;
 
     protected:
@@ -42,8 +64,8 @@ namespace Spire {
 
   template<typename Promise, typename Executor>
   auto make_chained_qt_promise(Promise&& promise, Executor&& executor) {
-    return std::make_shared<
-      ChainedQtPromise<std::decay_t<Promise>, std::decay_t<Executor>>>(
+    return std::make_shared<ChainedQtPromise<
+      std::remove_cvref_t<Promise>, std::remove_cvref_t<Executor>>>(
         std::forward<Promise>(promise), std::forward<Executor>(executor));
   }
 
@@ -73,7 +95,9 @@ namespace Spire {
       m_promise.finish([=] (auto&& result) {
         using Result = decltype(std::forward<decltype(result)>(result));
         QCoreApplication::postEvent(this, details::make_qt_promise_event(
-          Beam::Try([&] { return m_executor(static_cast<Result>(result)); })));
+          Beam::try_call([&] {
+            return m_executor(static_cast<Result>(result));
+          })));
       });
     }
   }

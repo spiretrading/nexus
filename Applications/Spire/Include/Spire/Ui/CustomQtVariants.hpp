@@ -8,7 +8,6 @@
 #include <QDateTime>
 #include <QLocale>
 #include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
@@ -18,28 +17,10 @@
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/Spire/AnyRef.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
-
-  /** Wraps a MarketCode so that it can be displayed in a model. **/
-  struct MarketToken {
-
-    /** The MarketCode being wrapped. */
-    Nexus::MarketCode m_code;
-
-    /** Constructs a default token. */
-    MarketToken() = default;
-
-    /**
-     * Wraps a MarketCode.
-     * @param code The MarketCode to wrap.
-     */
-    MarketToken(Nexus::MarketCode code);
-
-    auto operator <=>(const MarketToken& token) const = default;
-  };
 
   /**
    * Wraps a Side so that it can be displayed within the context of a
@@ -50,29 +31,10 @@ namespace Spire {
     /** Wraps the Side. */
     Nexus::Side m_side;
 
-    /** Constructs a default token. */
-    PositionSideToken() = default;
-
-    /**
-     * Wraps a Side.
-     * @param side The Side to wrap.
-     */
-    PositionSideToken(Nexus::Side side);
-
     /** Returns the string representation of this Side. */
     QString to_string() const;
 
-    /**
-     * Returns <code>true</code> iff <i>token</i> has the same <i>side</i> as
-     * <code>this</code>.
-     */
     bool operator ==(const PositionSideToken& token) const = default;
-
-    /**
-     * Returns <code>true</code> iff <i>token</i> has a different <i>side</i>
-     * from <code>this</code>.
-     */
-    bool operator !=(const PositionSideToken& token) const = default;
   };
 }
 
@@ -90,11 +52,8 @@ Q_DECLARE_METATYPE(Nexus::Security);
 Q_DECLARE_METATYPE(Nexus::Side);
 Q_DECLARE_METATYPE(Nexus::TimeAndSale::Condition);
 Q_DECLARE_METATYPE(Nexus::TimeInForce);
-Q_DECLARE_METATYPE(Spire::MarketToken);
+Q_DECLARE_METATYPE(Nexus::Venue);
 Q_DECLARE_METATYPE(Spire::PositionSideToken);
-
-/** Add back this style when charting is implemented. */
-//Q_DECLARE_METATYPE(Spire::TrendLineStyle);
 Q_DECLARE_METATYPE(std::any);
 
 namespace Spire {
@@ -160,9 +119,6 @@ namespace Spire {
   QString to_text(
     Nexus::CurrencyId currency, const QLocale& locale = QLocale());
 
-  /** Returns the text representation of a MarketToken. */
-  QString to_text(MarketToken market, const QLocale& locale = QLocale());
-
   /** Returns the text representation of a Money value. */
   QString to_text(Nexus::Money value, const QLocale& locale = QLocale());
 
@@ -198,6 +154,9 @@ namespace Spire {
   /** Returns the text representation of a Security. */
   QString to_text(
     const Nexus::Security& security, const QLocale& locale = QLocale());
+
+  /** Returns the text representation of a Venue. */
+  QString to_text(Nexus::Venue venue, const QLocale& locale = QLocale());
 
   /** Returns the text representation of a keyboard modifier. */
   const QString& to_text(
@@ -282,6 +241,9 @@ namespace Spire {
 
   template<>
   boost::optional<Nexus::TimeInForce> from_text(const QString& text);
+
+  template<>
+  boost::optional<Nexus::Venue> from_text(const QString& text);
 
   template<>
   boost::optional<QColor> from_text(const QString& text);

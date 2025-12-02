@@ -11,15 +11,11 @@
 #include "Spire/Catalog/BuiltInCatalogEntry.hpp"
 #include "Spire/Catalog/CatalogEntry.hpp"
 #include "Spire/Catalog/CatalogTabModel.hpp"
-#include "Spire/Catalog/RegistryCatalogEntry.hpp"
 #include "Spire/Catalog/UserCatalogEntry.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::RegistryService;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace boost::signals2;
 using namespace boost::uuids;
@@ -73,18 +69,17 @@ namespace {
       }
       try {
         auto reader = BasicIStreamReader<std::ifstream>(
-          Initialize(i->path(), std::ios::binary));
+          init(i->path(), std::ios::binary));
         auto buffer = SharedBuffer();
-        reader.Read(Store(buffer));
+        reader.read(out(buffer));
         auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-        RegisterSpireTypes(Store(typeRegistry));
+        RegisterSpireTypes(out(typeRegistry));
         auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-        receiver.SetSource(Ref(buffer));
+        receiver.set(Ref(buffer));
         auto entry =
           std::make_unique<UserCatalogEntry>(settings.GetSettingsPath());
-        receiver.Shuttle(*entry);
-        settings.Add(
-          StaticCast<std::unique_ptr<CatalogEntry>>(std::move(entry)));
+        receiver.shuttle(*entry);
+        settings.Add(static_pointer_cast<CatalogEntry>(std::move(entry)));
       } catch(const std::exception&) {
         warnings += QObject::tr("Failed to load: ") +
           QString::fromStdString(std::filesystem::path(*i).string()) + "\n";
@@ -95,59 +90,31 @@ namespace {
     }
   }
 
-  void LoadRemoteCatalogEntries(RegistryClientBox& registryClient,
-      CatalogSettings& settings) {
-    auto libraryDirectory = RegistryService::LoadOrCreateDirectory(
-      registryClient, CatalogSettings::GetCatalogLibraryRegistryPath(),
-      RegistryEntry::GetRoot());
-    auto libraryEntries = registryClient.LoadChildren(libraryDirectory);
-    for(auto& libraryEntry : libraryEntries) {
-      if(libraryEntry.m_type != RegistryEntry::Type::VALUE) {
-        continue;
-      }
-      try {
-        auto buffer = registryClient.Load(libraryEntry);
-        auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-        RegisterSpireTypes(Store(typeRegistry));
-        auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-        receiver.SetSource(Ref(buffer));
-        auto entry =
-          std::make_unique<RegistryCatalogEntry>(settings.HasRegistryAccess(),
-            CatalogSettings::GetCatalogLibraryRegistryPath(), registryClient);
-        receiver.Shuttle(*entry);
-        settings.Add(
-          StaticCast<std::unique_ptr<CatalogEntry>>(std::move(entry)));
-      } catch(const std::exception&) {}
-    }
-  }
-
-  void CreateDefaultCatalog(
-      CatalogSettings& settings, RegistryClientBox& registryClient) {
+  void CreateDefaultCatalog(CatalogSettings& settings) {
     CreateValuesTab(settings);
     CreateTasksTab(settings);
     CreateKeyBindingsTab(settings);
-    LoadRemoteCatalogEntries(registryClient, settings);
   }
 
   void LoadCatalogTabs(const std::filesystem::path& catalogDirectoryPath,
-      CatalogSettings& settings, RegistryClientBox& registryClient) {
+      CatalogSettings& settings) {
     auto catalogTabPath = catalogDirectoryPath / "tabs.list";
     if(!std::filesystem::exists(catalogTabPath)) {
-      CreateDefaultCatalog(settings, registryClient);
+      CreateDefaultCatalog(settings);
       return;
     }
     auto tabs = std::vector<std::pair<std::string, std::vector<uuid>>>();
     auto warnings = QString();
     try {
       auto reader = BasicIStreamReader<std::ifstream>(
-        Initialize(catalogTabPath, std::ios::binary));
+        init(catalogTabPath, std::ios::binary));
       auto buffer = SharedBuffer();
-      reader.Read(Store(buffer));
+      reader.read(out(buffer));
       auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-      RegisterSpireTypes(Store(typeRegistry));
+      RegisterSpireTypes(out(typeRegistry));
       auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-      receiver.SetSource(Ref(buffer));
-      receiver.Shuttle(tabs);
+      receiver.set(Ref(buffer));
+      receiver.shuttle(tabs);
     } catch(const std::exception&) {
       QMessageBox::warning(nullptr, QObject::tr("Warning"),
         QObject::tr("Unable to load Catalog Tabs."));
@@ -183,14 +150,14 @@ namespace {
     }
     try {
       auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-      RegisterSpireTypes(Store(typeRegistry));
+      RegisterSpireTypes(out(typeRegistry));
       auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
       auto buffer = SharedBuffer();
-      sender.SetSink(Ref(buffer));
-      sender.Shuttle(tabs);
+      sender.set(Ref(buffer));
+      sender.shuttle(tabs);
       auto writer = BasicOStreamWriter<std::ofstream>(
-        Initialize(catalogTabPath, std::ios::binary));
-      writer.Write(buffer);
+        init(catalogTabPath, std::ios::binary));
+      writer.write(buffer);
     } catch(const std::exception&) {
       QMessageBox::warning(nullptr, QObject::tr("Warning"),
         QObject::tr("Failed to save Catalog Tabs."));
@@ -207,15 +174,11 @@ void CatalogSettings::Load(Out<UserProfile> userProfile) {
   auto catalogDirectoryPath = userProfile->GetProfilePath() / "catalog";
   if(!std::filesystem::exists(catalogDirectoryPath)) {
     std::filesystem::create_directory(catalogDirectoryPath);
-    CreateDefaultCatalog(
-      settings, userProfile->GetServiceClients().GetRegistryClient());
+    CreateDefaultCatalog(settings);
     return;
   }
   LoadCatalogEntries(catalogDirectoryPath, settings);
-  LoadRemoteCatalogEntries(
-    userProfile->GetServiceClients().GetRegistryClient(), settings);
-  LoadCatalogTabs(catalogDirectoryPath, settings,
-    userProfile->GetServiceClients().GetRegistryClient());
+  LoadCatalogTabs(catalogDirectoryPath, settings);
 }
 
 void CatalogSettings::Save(const UserProfile& userProfile) {

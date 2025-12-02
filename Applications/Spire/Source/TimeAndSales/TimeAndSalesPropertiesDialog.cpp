@@ -24,7 +24,7 @@ TimeAndSalesPropertiesDialog::TimeAndSalesPropertiesDialog(
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_TimeAndSalesPropertiesDialog>()),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_properties(properties) {
   m_ui->setupUi(this);
   setFixedSize(scale(size()));

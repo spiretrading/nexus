@@ -29,7 +29,7 @@ const vector<CatalogEntry*>& CatalogTabModel::GetEntries() const {
 }
 
 void CatalogTabModel::Add(Ref<CatalogEntry> entry) {
-  CatalogEntry* selfEntry = entry.Get();
+  CatalogEntry* selfEntry = entry.get();
   if(find(m_entries.begin(), m_entries.end(), selfEntry) != m_entries.end()) {
     return;
   }
