@@ -32,8 +32,8 @@ void CandlestickChartPlotSeries::OnChartPointAdded(
     const ChartPoint& chartPoint) {
   auto plotIterator = std::find_if(m_plots.begin(), m_plots.end(),
     [&] (const std::shared_ptr<CandlestickChartPlot>& plot) -> bool {
-      return chartPoint.m_x >= plot->GetValue().GetStart() &&
-        chartPoint.m_x <= plot->GetValue().GetEnd();
+      return chartPoint.m_x >= plot->GetValue().get_start() &&
+        chartPoint.m_x <= plot->GetValue().get_end();
     });
   bool signalPlot = false;
   std::shared_ptr<CandlestickChartPlot> plot;

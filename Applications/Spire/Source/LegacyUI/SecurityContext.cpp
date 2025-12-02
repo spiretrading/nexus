@@ -3,7 +3,6 @@
 #include <Beam/ServiceLocator/SessionEncryption.hpp>
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::container;
 using namespace boost::signals2;
@@ -18,7 +17,7 @@ namespace {
   std::string GenerateUniqueIdentifier() {
     std::string identifier;
     do {
-      identifier = GenerateSessionId();
+      identifier = generate_session_id();
     } while(contexts.find(identifier) != contexts.end());
     return identifier;
   }

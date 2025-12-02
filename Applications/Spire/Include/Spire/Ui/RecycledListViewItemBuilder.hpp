@@ -3,7 +3,6 @@
 #include <deque>
 #include <memory>
 #include "Spire/Ui/ListViewItemBuilder.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -29,7 +28,6 @@ namespace Spire {
 
       template<typename T>
       QWidget* mount(const std::shared_ptr<T>& list, int index);
-
       void unmount(QWidget* widget, int index);
 
     private:

@@ -11,9 +11,10 @@
 #include "Spire/Ui/KeyObserver.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/TextBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class DropDownList;
+  class EmptyState;
 
   /** Displays a data field over an open set of selectable values. */
   class AnyComboBox : public QWidget {

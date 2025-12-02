@@ -1,56 +1,160 @@
 #ifndef NEXUS_ADMINISTRATION_CLIENT_HPP
 #define NEXUS_ADMINISTRATION_CLIENT_HPP
+#include <memory>
+#include <type_traits>
+#include <utility>
 #include <vector>
-#include <Beam/Collections/SynchronizedMap.hpp>
-#include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/Connection.hpp>
-#include <Beam/IO/OpenState.hpp>
-#include <Beam/Queues/RoutineTaskQueue.hpp>
-#include <Beam/Queues/StatePublisher.hpp>
-#include <Beam/Queues/StateQueue.hpp>
+#include <Beam/Pointers/Dereference.hpp>
+#include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Pointers/VirtualPtr.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <Beam/Services/ServiceProtocolClientHandler.hpp>
-#include <Beam/Utilities/BeamWorkaround.hpp>
-#include <Beam/Utilities/Streamable.hpp>
-#include <boost/lexical_cast.hpp>
+#include <Beam/Queues/Publisher.hpp>
+#include <Beam/Queues/StateQueue.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
-#include "Nexus/AdministrationService/AdministrationService.hpp"
-#include "Nexus/AdministrationService/AdministrationServices.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
 #include "Nexus/AdministrationService/RiskModification.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
+#include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
+#include "Nexus/RiskService/RiskState.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /** Used to push updates about an account's RiskState. */
-  using RiskStateQueue = Beam::AbstractQueue<RiskService::RiskState>;
+  using RiskStateQueue = Beam::AbstractQueue<RiskState>;
 
   /** Used to push updates about an account's RiskParameters. */
-  using RiskParametersQueue = Beam::AbstractQueue<RiskService::RiskParameters>;
+  using RiskParametersQueue = Beam::AbstractQueue<RiskParameters>;
 
-  /**
-   * Client used to access the Nexus Administration service.
-   * @param <B> The type used to build ServiceProtocolClients to the server.
-   */
-  template<typename B>
+  /** Checks if a type implements an AdministrationClient. */
+  template<typename T>
+  concept IsAdministrationClient =
+    Beam::IsConnection<T> && requires(T& client) {
+      { client.load_accounts_by_roles(std::declval<AccountRoles>()) } ->
+          std::same_as<std::vector<Beam::DirectoryEntry>>;
+      { client.load_administrators_root_entry() } ->
+          std::same_as<Beam::DirectoryEntry>;
+      { client.load_services_root_entry() } ->
+          std::same_as<Beam::DirectoryEntry>;
+      { client.load_trading_groups_root_entry() } ->
+          std::same_as<Beam::DirectoryEntry>;
+      { client.check_administrator(
+          std::declval<const Beam::DirectoryEntry&>()) } -> std::same_as<bool>;
+      { client.load_account_roles(
+          std::declval<const Beam::DirectoryEntry&>()) } ->
+            std::same_as<AccountRoles>;
+      { client.load_account_roles(std::declval<const Beam::DirectoryEntry&>(),
+          std::declval<const Beam::DirectoryEntry&>()) } ->
+            std::same_as<AccountRoles>;
+      { client.load_parent_trading_group(
+          std::declval<const Beam::DirectoryEntry&>()) } ->
+            std::same_as<Beam::DirectoryEntry>;
+      { client.load_identity(std::declval<const Beam::DirectoryEntry&>()) } ->
+          std::same_as<AccountIdentity>;
+      client.store(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const AccountIdentity&>());
+      { client.load_trading_group(
+          std::declval<const Beam::DirectoryEntry&>()) } ->
+            std::same_as<TradingGroup>;
+      { client.load_managed_trading_groups(
+          std::declval<const Beam::DirectoryEntry&>()) } ->
+            std::same_as<std::vector<Beam::DirectoryEntry>>;
+      { client.load_administrators() } ->
+          std::same_as<std::vector<Beam::DirectoryEntry>>;
+      { client.load_services() } ->
+          std::same_as<std::vector<Beam::DirectoryEntry>>;
+      { client.load_entitlements() } -> std::same_as<EntitlementDatabase>;
+      { client.load_entitlements(
+          std::declval<const Beam::DirectoryEntry&>()) } ->
+            std::same_as<std::vector<Beam::DirectoryEntry>>;
+      client.store_entitlements(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const std::vector<Beam::DirectoryEntry>&>());
+      { client.get_risk_parameters_publisher(
+          std::declval<const Beam::DirectoryEntry&>()) } ->
+            std::same_as<const Beam::Publisher<RiskParameters>&>;
+      client.store(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const RiskParameters&>());
+      { client.get_risk_state_publisher(
+          std::declval<const Beam::DirectoryEntry&>()) } ->
+            std::same_as<const Beam::Publisher<RiskState>&>;
+      client.store(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const RiskState&>());
+      { client.load_account_modification_request(
+          std::declval<AccountModificationRequest::Id>()) } ->
+            std::same_as<AccountModificationRequest>;
+      { client.load_account_modification_request_ids(
+          std::declval<const Beam::DirectoryEntry&>(),
+          std::declval<AccountModificationRequest::Id>(),
+          std::declval<int>()) } ->
+            std::same_as<std::vector<AccountModificationRequest::Id>>;
+      { client.load_managed_account_modification_request_ids(
+          std::declval<const Beam::DirectoryEntry&>(),
+          std::declval<AccountModificationRequest::Id>(),
+          std::declval<int>()) } ->
+            std::same_as<std::vector<AccountModificationRequest::Id>>;
+      { client.load_entitlement_modification(
+          std::declval<AccountModificationRequest::Id>()) } ->
+            std::same_as<EntitlementModification>;
+      { client.submit(std::declval<const Beam::DirectoryEntry&>(),
+          std::declval<const EntitlementModification&>(),
+          std::declval<const Message&>()) } ->
+            std::same_as<AccountModificationRequest>;
+      { client.load_risk_modification(
+          std::declval<AccountModificationRequest::Id>()) } ->
+            std::same_as<RiskModification>;
+      { client.submit(std::declval<const Beam::DirectoryEntry&>(),
+          std::declval<const RiskModification&>(),
+          std::declval<const Message&>()) } ->
+            std::same_as<AccountModificationRequest>;
+      { client.load_account_modification_request_status(
+          std::declval<AccountModificationRequest::Id>()) } ->
+            std::same_as<AccountModificationRequest::Update>;
+      { client.approve_account_modification_request(
+          std::declval<AccountModificationRequest::Id>(),
+          std::declval<const Message&>()) } ->
+            std::same_as<AccountModificationRequest::Update>;
+      { client.reject_account_modification_request(
+          std::declval<AccountModificationRequest::Id>(),
+          std::declval<const Message&>()) } ->
+            std::same_as<AccountModificationRequest::Update>;
+      { client.load_message(std::declval<Message::Id>()) } ->
+          std::same_as<Message>;
+      { client.load_message_ids(
+          std::declval<AccountModificationRequest::Id>()) } ->
+            std::same_as<std::vector<Message::Id>>;
+      { client.send_account_modification_request_message(
+          std::declval<AccountModificationRequest::Id>(),
+          std::declval<const Message&>()) } -> std::same_as<Message>;
+    };
+
+  /** Provides a generic interface over an arbitrary AdministrationClient. */
   class AdministrationClient {
     public:
 
-      /** The type used to build ServiceProtocolClients to the server. */
-      using ServiceProtocolClientBuilder = Beam::GetTryDereferenceType<B>;
+      /**
+       * Constructs an AdministrationClient of a specified type using
+       * emplacement.
+       * @tparam T The type of administration client to emplace.
+       * @param args The arguments to pass to the emplaced administration
+       *        client.
+       */
+      template<IsAdministrationClient T, typename... Args>
+      explicit AdministrationClient(std::in_place_type_t<T>, Args&&... args);
 
       /**
-       * Constructs an AdministrationClient.
-       * @param clientBuilder Initializes the ServiceProtocolClientBuilder.
+       * Constructs an AdministrationClient by referencing an existing client.
+       * @param client The client to reference.
        */
-      template<typename BF>
-      explicit AdministrationClient(BF&& clientBuilder);
+      template<Beam::DisableCopy<AdministrationClient> T> requires
+        IsAdministrationClient<Beam::dereference_t<T>>
+      AdministrationClient(T&& client);
 
-      ~AdministrationClient();
+      AdministrationClient(const AdministrationClient&) = default;
+      AdministrationClient(AdministrationClient&&) = default;
 
       /**
        * Loads the list of accounts that match a set of roles.
@@ -58,33 +162,31 @@ namespace Nexus::AdministrationService {
        * @return The list of directory entries of accounts that match the
        *         specified roles.
        */
-      std::vector<Beam::ServiceLocator::DirectoryEntry> LoadAccountsByRoles(
+      std::vector<Beam::DirectoryEntry> load_accounts_by_roles(
         AccountRoles roles);
 
       /** Loads the DirectoryEntry containing all administrators. */
-      Beam::ServiceLocator::DirectoryEntry LoadAdministratorsRootEntry();
+      Beam::DirectoryEntry load_administrators_root_entry();
 
       /** Loads the DirectoryEntry containing all service accounts. */
-      Beam::ServiceLocator::DirectoryEntry LoadServicesRootEntry();
+      Beam::DirectoryEntry load_services_root_entry();
 
       /** Loads the DirectoryEntry containing all trading groups. */
-      Beam::ServiceLocator::DirectoryEntry LoadTradingGroupsRootEntry();
+      Beam::DirectoryEntry load_trading_groups_root_entry();
 
       /**
        * Returns <code>true</code> iff an account is an administrator.
        * @param account The account to test.
        * @return <code>true</code> iff the <i>account</i> is an administrator.
        */
-      bool CheckAdministrator(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+      bool check_administrator(const Beam::DirectoryEntry& account);
 
       /**
        * Returns an accounts roles.
        * @param account The account to lookup.
        * @return The roles associated with the <i>account</i>.
        */
-      AccountRoles LoadAccountRoles(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+      AccountRoles load_account_roles(const Beam::DirectoryEntry& account);
 
       /**
        * Returns the roles one account has over another.
@@ -93,76 +195,72 @@ namespace Nexus::AdministrationService {
        * @return The roles that the <i>parent</i> account has over the
        *         <i>child</i> account.
        */
-      AccountRoles LoadAccountRoles(
-        const Beam::ServiceLocator::DirectoryEntry& parent,
-        const Beam::ServiceLocator::DirectoryEntry& child);
+      AccountRoles load_account_roles(
+        const Beam::DirectoryEntry& parent, const Beam::DirectoryEntry& child);
 
       /**
        * Loads the DirectoryEntry representing an account's trading group.
        * @param account The account whose trading group is to be loaded.
        * @return The directory of the <i>account</i>'s trading group.
        */
-      Beam::ServiceLocator::DirectoryEntry LoadParentTradingGroup(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+      Beam::DirectoryEntry load_parent_trading_group(
+        const Beam::DirectoryEntry& account);
 
       /**
        * Loads an account's identity.
        * @param account The account whose identity is to be loaded.
        * @return The AccountIdentity for the specified <i>account</i>.
        */
-      AccountIdentity LoadIdentity(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+      AccountIdentity load_identity(const Beam::DirectoryEntry& account);
 
       /**
        * Sets the identity for an account.
        * @param account The account to set the identity for.
        * @param identity The AccountIdentity to assign to the <i>account</i>.
        */
-      void StoreIdentity(const Beam::ServiceLocator::DirectoryEntry& account,
-        const AccountIdentity& identity);
+      void store(
+        const Beam::DirectoryEntry& account, const AccountIdentity& identity);
 
       /**
        * Loads a TradingGroup from its DirectoryEntry.
        * @param directory The DirectoryEntry of the TradingGroup to load.
        * @return The TradingGroup represented by the specified <i>directory</i>.
        */
-      TradingGroup LoadTradingGroup(
-        const Beam::ServiceLocator::DirectoryEntry& directory);
+      TradingGroup load_trading_group(const Beam::DirectoryEntry& directory);
 
       /**
        * Loads the DirectoryEntries of TradingGroups managed by an account.
        * @param account The account to load the TradingGroups from.
        * @return The list of TradingGroups managed by the <i>account</i>.
        */
-      std::vector<Beam::ServiceLocator::DirectoryEntry>
-        LoadManagedTradingGroups(
-          const Beam::ServiceLocator::DirectoryEntry& account);
+      std::vector<Beam::DirectoryEntry> load_managed_trading_groups(
+        const Beam::DirectoryEntry& account);
 
       /**
        * Loads the system administrators.
        * @return The list of system administrators.
        */
-      std::vector<Beam::ServiceLocator::DirectoryEntry> LoadAdministrators();
+      std::vector<Beam::DirectoryEntry> load_administrators();
 
       /**
        * Loads the accounts providing system services.
        * @return The list of accounts providing system services.
        */
-      std::vector<Beam::ServiceLocator::DirectoryEntry> LoadServices();
+      std::vector<Beam::DirectoryEntry> load_services();
 
       /**
        * Loads the EntitlementDatabase.
        * @return The EntitlementDatabase.
        */
-      MarketDataService::EntitlementDatabase LoadEntitlements();
+      EntitlementDatabase load_entitlements();
 
       /**
        * Loads the entitlements granted to an account.
        * @param account The account to load the entitlements for.
        * @return The list of entitlements granted to the <i>account</i>.
        */
-      std::vector<Beam::ServiceLocator::DirectoryEntry> LoadEntitlements(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+      std::vector<Beam::DirectoryEntry> load_entitlements(
+        const Beam::DirectoryEntry& account);
 
       /**
        * Sets an account's entitlements.
@@ -170,84 +268,80 @@ namespace Nexus::AdministrationService {
        * @param entitlements The list of entitlements to grant to the
        *        <i>account</i>.
        */
-      void StoreEntitlements(
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements);
+      void store_entitlements(const Beam::DirectoryEntry& account,
+        const std::vector<Beam::DirectoryEntry>& entitlements);
 
       /**
        * Returns the object publishing an account's RiskParameters.
        * @param account The account to monitor.
        */
-      const Beam::Publisher<RiskService::RiskParameters>&
-        GetRiskParametersPublisher(
-          const Beam::ServiceLocator::DirectoryEntry& account);
+      const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
+        const Beam::DirectoryEntry& account);
 
       /**
        * Sets an account's RiskParameters.
        * @param account The account whose RiskParameters are to be set.
-       * @param riskParameters The RiskParameters to assign to the
+       * @param parameters The RiskParameters to assign to the
        *        <i>account</i>.
        */
-      void StoreRiskParameters(
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& riskParameters);
+      void store(
+        const Beam::DirectoryEntry& account, const RiskParameters& parameters);
 
       /**
        * Returns the object publishing an account's RiskState.
        * @param account The account to monitor.
        */
-      const Beam::Publisher<RiskService::RiskState>& GetRiskStatePublisher(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+      const Beam::Publisher<RiskState>& get_risk_state_publisher(
+        const Beam::DirectoryEntry& account);
 
       /**
        * Sets an account's RiskState.
        * @param account The account to set RiskState of.
-       * @param riskState The <i>account</i>'s current RiskState.
+       * @param state The <i>account</i>'s current RiskState.
        */
-      void StoreRiskState(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& riskState);
+      void store(const Beam::DirectoryEntry& account, const RiskState& state);
 
       /**
        * Loads an account modification request.
        * @param id The id of the request to load.
        * @return The request with the specified <i>id</i>.
        */
-      AccountModificationRequest LoadAccountModificationRequest(
+      AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
 
       /**
        * Given an account, loads the ids of requests to modify that account.
        * @param account The account whose requests are to be loaded.
-       * @param startId The id of the first request to load (exclusive) or -1
+       * @param start_id The id of the first request to load (exclusive) or -1
        *        to start with the most recent request.
-       * @param maxCount The maximum number of ids to load.
+       * @param max_count The maximum number of ids to load.
        * @return The list of account modification requests.
        */
       std::vector<AccountModificationRequest::Id>
-        LoadAccountModificationRequestIds(
-          const Beam::ServiceLocator::DirectoryEntry& account,
-          AccountModificationRequest::Id startId, int maxCount);
+        load_account_modification_request_ids(
+          const Beam::DirectoryEntry& account,
+          AccountModificationRequest::Id start_id, int max_count);
 
       /**
        * Given an account, loads the ids of requests that the account is
        * authorized to manage.
        * @param account The account managing modifications.
-       * @param startId The id of the first request to load (exclusive) or -1
+       * @param start_id The id of the first request to load (exclusive) or -1
        *        to start with the most recent request.
-       * @param maxCount The maximum number of ids to load.
+       * @param max_count The maximum number of ids to load.
        * @return The list of account modification requests.
        */
       std::vector<AccountModificationRequest::Id>
-        LoadManagedAccountModificationRequestIds(
-          const Beam::ServiceLocator::DirectoryEntry& account,
-          AccountModificationRequest::Id startId, int maxCount);
+        load_managed_account_modification_request_ids(
+          const Beam::DirectoryEntry& account,
+          AccountModificationRequest::Id start_id, int max_count);
 
       /**
        * Loads an entitlement modification.
        * @param id The id of the request to load.
        * @return The entitlement modification with the specified <i>id</i>.
        */
-      EntitlementModification LoadEntitlementModification(
+      EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
 
       /**
@@ -257,8 +351,7 @@ namespace Nexus::AdministrationService {
        * @param comment The comment to associate with the request.
        * @return An object representing the request.
        */
-      AccountModificationRequest SubmitAccountModificationRequest(
-        const Beam::ServiceLocator::DirectoryEntry& account,
+      AccountModificationRequest submit(const Beam::DirectoryEntry& account,
         const EntitlementModification& modification, const Message& comment);
 
       /**
@@ -266,7 +359,8 @@ namespace Nexus::AdministrationService {
        * @param id The id of the request to load.
        * @return The risk modification with the specified <i>id</i>.
        */
-      RiskModification LoadRiskModification(AccountModificationRequest::Id id);
+      RiskModification load_risk_modification(
+        AccountModificationRequest::Id id);
 
       /**
        * Submits a request to modify an account's risk parameters.
@@ -275,8 +369,7 @@ namespace Nexus::AdministrationService {
        * @param comment The comment to associate with the request.
        * @return An object representing the request.
        */
-      AccountModificationRequest SubmitAccountModificationRequest(
-        const Beam::ServiceLocator::DirectoryEntry& account,
+      AccountModificationRequest submit(const Beam::DirectoryEntry& account,
         const RiskModification& modification, const Message& comment);
 
       /**
@@ -284,8 +377,9 @@ namespace Nexus::AdministrationService {
        * @param id The id of the request.
        * @return The update representing the current status of the request.
        */
-      AccountModificationRequest::Update LoadAccountModificationRequestStatus(
-        AccountModificationRequest::Id id);
+      AccountModificationRequest::Update
+        load_account_modification_request_status(
+          AccountModificationRequest::Id id);
 
       /**
        * Approves an account modification request.
@@ -293,7 +387,7 @@ namespace Nexus::AdministrationService {
        * @param comment The comment to associate with the update.
        * @return An object representing the update.
        */
-      AccountModificationRequest::Update ApproveAccountModificationRequest(
+      AccountModificationRequest::Update approve_account_modification_request(
         AccountModificationRequest::Id id, const Message& comment);
 
       /**
@@ -302,7 +396,7 @@ namespace Nexus::AdministrationService {
        * @param comment The comment to associate with the update.
        * @return An object representing the update.
        */
-      AccountModificationRequest::Update RejectAccountModificationRequest(
+      AccountModificationRequest::Update reject_account_modification_request(
         AccountModificationRequest::Id id, const Message& comment);
 
       /**
@@ -310,14 +404,14 @@ namespace Nexus::AdministrationService {
        * @param id The id of the message.
        * @return The message with the specified <i>id</i>.
        */
-      Message LoadMessage(Message::Id id);
+      Message load_message(Message::Id id);
 
       /**
        * Loads the list of messages associated with an account modification.
        * @param id The id of the request.
        * @return A list of message ids associated with the request.
        */
-      std::vector<Message::Id> LoadMessageIds(
+      std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
 
       /**
@@ -326,585 +420,626 @@ namespace Nexus::AdministrationService {
        * @param message The message to append.
        * @return The appended message.
        */
-      Message SendAccountModificationRequestMessage(
+      Message send_account_modification_request_message(
         AccountModificationRequest::Id id, const Message& message);
 
-      void Close();
+      void close();
 
     private:
-      using ServiceProtocolClient =
-        typename ServiceProtocolClientBuilder::Client;
-      using RiskParameterPublisher = Beam::StatePublisher<
-        RiskService::RiskParameters>;
-      using RiskStatePublisher = Beam::StatePublisher<RiskService::RiskState>;
-      Beam::Services::ServiceProtocolClientHandler<B> m_clientHandler;
-      Beam::IO::OpenState m_openState;
-      Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
-        std::shared_ptr<RiskParameterPublisher>> m_riskParameterPublishers;
-      Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
-        std::shared_ptr<RiskStatePublisher>> m_riskStatePublishers;
-      Beam::RoutineTaskQueue m_tasks;
+      struct VirtualAdministrationClient {
+        virtual ~VirtualAdministrationClient() = default;
 
-      AdministrationClient(const AdministrationClient&) = delete;
-      AdministrationClient& operator =(const AdministrationClient&) = delete;
-      void OnReconnect(const std::shared_ptr<ServiceProtocolClient>& client);
-      void RecoverRiskParameters(ServiceProtocolClient& client);
-      void RecoverRiskState(ServiceProtocolClient& client);
-      void OnRiskParametersMessage(ServiceProtocolClient& client,
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& riskParameters);
-      void OnRiskStateMessage(ServiceProtocolClient& client,
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        RiskService::RiskState riskState);
+        virtual std::vector<Beam::DirectoryEntry> load_accounts_by_roles(
+          AccountRoles roles) = 0;
+        virtual Beam::DirectoryEntry load_administrators_root_entry() = 0;
+        virtual Beam::DirectoryEntry load_services_root_entry() = 0;
+        virtual Beam::DirectoryEntry load_trading_groups_root_entry() = 0;
+        virtual bool check_administrator(
+          const Beam::DirectoryEntry& account) = 0;
+        virtual AccountRoles load_account_roles(
+          const Beam::DirectoryEntry& account) = 0;
+        virtual AccountRoles load_account_roles(
+          const Beam::DirectoryEntry& parent,
+          const Beam::DirectoryEntry& child) = 0;
+        virtual Beam::DirectoryEntry load_parent_trading_group(
+          const Beam::DirectoryEntry& account) = 0;
+        virtual AccountIdentity load_identity(
+          const Beam::DirectoryEntry& account) = 0;
+        virtual void store(const Beam::DirectoryEntry& account,
+          const AccountIdentity& identity) = 0;
+        virtual TradingGroup load_trading_group(
+          const Beam::DirectoryEntry& directory) = 0;
+        virtual std::vector<Beam::DirectoryEntry> load_managed_trading_groups(
+          const Beam::DirectoryEntry& account) = 0;
+        virtual std::vector<Beam::DirectoryEntry> load_administrators() = 0;
+        virtual std::vector<Beam::DirectoryEntry> load_services() = 0;
+        virtual EntitlementDatabase load_entitlements() = 0;
+        virtual std::vector<Beam::DirectoryEntry> load_entitlements(
+          const Beam::DirectoryEntry& account) = 0;
+        virtual void store_entitlements(const Beam::DirectoryEntry& account,
+          const std::vector<Beam::DirectoryEntry>& entitlements) = 0;
+        virtual const Beam::Publisher<RiskParameters>&
+          get_risk_parameters_publisher(
+            const Beam::DirectoryEntry& account) = 0;
+        virtual void store(const Beam::DirectoryEntry& account,
+          const RiskParameters& risk_parameters) = 0;
+        virtual const Beam::Publisher<RiskState>& get_risk_state_publisher(
+          const Beam::DirectoryEntry& account) = 0;
+        virtual void store(const Beam::DirectoryEntry& account,
+          const RiskState& risk_state) = 0;
+        virtual AccountModificationRequest load_account_modification_request(
+          AccountModificationRequest::Id id) = 0;
+        virtual std::vector<AccountModificationRequest::Id>
+          load_account_modification_request_ids(
+            const Beam::DirectoryEntry& account,
+            AccountModificationRequest::Id start_id, int max_count) = 0;
+        virtual std::vector<AccountModificationRequest::Id>
+          load_managed_account_modification_request_ids(
+            const Beam::DirectoryEntry& account,
+            AccountModificationRequest::Id start_id, int max_count) = 0;
+        virtual EntitlementModification load_entitlement_modification(
+          AccountModificationRequest::Id id) = 0;
+        virtual AccountModificationRequest submit(
+          const Beam::DirectoryEntry& account,
+          const EntitlementModification& modification,
+          const Message& comment) = 0;
+        virtual RiskModification load_risk_modification(
+          AccountModificationRequest::Id id) = 0;
+        virtual AccountModificationRequest submit(
+          const Beam::DirectoryEntry& account,
+          const RiskModification& modification, const Message& comment) = 0;
+        virtual AccountModificationRequest::Update
+          load_account_modification_request_status(
+            AccountModificationRequest::Id id) = 0;
+        virtual AccountModificationRequest::Update
+          approve_account_modification_request(
+            AccountModificationRequest::Id id, const Message& comment) = 0;
+        virtual AccountModificationRequest::Update
+          reject_account_modification_request(
+            AccountModificationRequest::Id id, const Message& comment) = 0;
+        virtual Message load_message(Message::Id id) = 0;
+        virtual std::vector<Message::Id> load_message_ids(
+          AccountModificationRequest::Id id) = 0;
+        virtual Message send_account_modification_request_message(
+          AccountModificationRequest::Id id, const Message& message) = 0;
+        virtual void close() = 0;
+      };
+      template<typename C>
+      struct WrappedAdministrationClient final : VirtualAdministrationClient {
+        using AdministrationClient = C;
+        Beam::local_ptr_t<AdministrationClient> m_client;
+
+        template<typename... Args>
+        WrappedAdministrationClient(Args&&... args);
+
+        std::vector<Beam::DirectoryEntry> load_accounts_by_roles(
+          AccountRoles roles) override;
+        Beam::DirectoryEntry load_administrators_root_entry() override;
+        Beam::DirectoryEntry load_services_root_entry() override;
+        Beam::DirectoryEntry load_trading_groups_root_entry() override;
+        bool check_administrator(
+          const Beam::DirectoryEntry& account) override;
+        AccountRoles load_account_roles(
+          const Beam::DirectoryEntry& account) override;
+        AccountRoles load_account_roles(const Beam::DirectoryEntry& parent,
+          const Beam::DirectoryEntry& child) override;
+        Beam::DirectoryEntry load_parent_trading_group(
+          const Beam::DirectoryEntry& account) override;
+        AccountIdentity load_identity(
+          const Beam::DirectoryEntry& account) override;
+        void store(const Beam::DirectoryEntry& account,
+          const AccountIdentity& identity) override;
+        TradingGroup load_trading_group(
+          const Beam::DirectoryEntry& directory) override;
+        std::vector<Beam::DirectoryEntry> load_managed_trading_groups(
+          const Beam::DirectoryEntry& account) override;
+        std::vector<Beam::DirectoryEntry> load_administrators() override;
+        std::vector<Beam::DirectoryEntry> load_services() override;
+        EntitlementDatabase load_entitlements() override;
+        std::vector<Beam::DirectoryEntry> load_entitlements(
+          const Beam::DirectoryEntry& account) override;
+        void store_entitlements(const Beam::DirectoryEntry& account,
+          const std::vector<Beam::DirectoryEntry>& entitlements) override;
+        const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
+          const Beam::DirectoryEntry& account) override;
+        void store(const Beam::DirectoryEntry& account,
+          const RiskParameters& risk_parameters) override;
+        const Beam::Publisher<RiskState>& get_risk_state_publisher(
+          const Beam::DirectoryEntry& account) override;
+        void store(const Beam::DirectoryEntry& account,
+          const RiskState& risk_state) override;
+        AccountModificationRequest load_account_modification_request(
+          AccountModificationRequest::Id id) override;
+        std::vector<AccountModificationRequest::Id>
+          load_account_modification_request_ids(
+            const Beam::DirectoryEntry& account,
+            AccountModificationRequest::Id start_id, int max_count) override;
+        std::vector<AccountModificationRequest::Id>
+          load_managed_account_modification_request_ids(
+            const Beam::DirectoryEntry& account,
+            AccountModificationRequest::Id start_id, int max_count) override;
+        EntitlementModification load_entitlement_modification(
+          AccountModificationRequest::Id id) override;
+        AccountModificationRequest submit(const Beam::DirectoryEntry& account,
+          const EntitlementModification& modification,
+          const Message& comment) override;
+        RiskModification load_risk_modification(
+          AccountModificationRequest::Id id) override;
+        AccountModificationRequest submit(const Beam::DirectoryEntry& account,
+          const RiskModification& modification,
+          const Message& comment) override;
+        AccountModificationRequest::Update
+          load_account_modification_request_status(
+            AccountModificationRequest::Id id) override;
+        AccountModificationRequest::Update approve_account_modification_request(
+          AccountModificationRequest::Id id, const Message& comment) override;
+        AccountModificationRequest::Update reject_account_modification_request(
+          AccountModificationRequest::Id id, const Message& comment) override;
+        Message load_message(Message::Id id) override;
+        std::vector<Message::Id> load_message_ids(
+          AccountModificationRequest::Id id) override;
+        Message send_account_modification_request_message(
+          AccountModificationRequest::Id id, const Message& message) override;
+        void close() override;
+      };
+      Beam::VirtualPtr<VirtualAdministrationClient> m_client;
   };
 
   /**
    * Loads an account's RiskParameters.
-   * @param client The AdministrationClient used to load the parameters.
+   * @param client The ServiceAdministrationClient used to load the parameters.
    * @param account The account whose parameters are to be loaded.
    * @return The <i>account</i>'s RiskParameters.
    */
-  template<typename Client>
-  RiskService::RiskParameters LoadRiskParameters(Client& client,
-      const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto queue = std::make_shared<
-      Beam::StateQueue<RiskService::RiskParameters>>();
-    client.GetRiskParametersPublisher(account).Monitor(queue);
-    return queue->Pop();
+  RiskParameters load_risk_parameters(IsAdministrationClient auto& client,
+      const Beam::DirectoryEntry& account) {
+    auto queue = std::make_shared<Beam::StateQueue<RiskParameters>>();
+    client.get_risk_parameters_publisher(account).monitor(queue);
+    return queue->pop();
   }
 
-  template<typename B>
-  template<typename BF>
-  AdministrationClient<B>::AdministrationClient(BF&& clientBuilder)
-BEAM_SUPPRESS_THIS_INITIALIZER()
-      try : m_clientHandler(std::forward<BF>(clientBuilder),
-              std::bind_front(&AdministrationClient::OnReconnect, this)) {
-    RegisterAdministrationServices(Beam::Store(m_clientHandler.GetSlots()));
-    RegisterAdministrationMessages(Beam::Store(m_clientHandler.GetSlots()));
-    Beam::Services::AddMessageSlot<RiskParametersMessage>(
-      Beam::Store(m_clientHandler.GetSlots()),
-      std::bind_front(&AdministrationClient::OnRiskParametersMessage, this));
-    Beam::Services::AddMessageSlot<RiskStateMessage>(
-      Beam::Store(m_clientHandler.GetSlots()),
-      std::bind_front(&AdministrationClient::OnRiskStateMessage, this));
-BEAM_UNSUPPRESS_THIS_INITIALIZER()
-  } catch(const std::exception&) {
-    std::throw_with_nested(Beam::IO::ConnectException(
-      "Failed to connect to the administration server."));
+  template<IsAdministrationClient T, typename... Args>
+  AdministrationClient::AdministrationClient(
+    std::in_place_type_t<T>, Args&&... args)
+    : m_client(Beam::make_virtual_ptr<WrappedAdministrationClient<T>>(
+        std::forward<Args>(args)...)) {}
+
+  template<Beam::DisableCopy<AdministrationClient> T> requires
+    IsAdministrationClient<Beam::dereference_t<T>>
+  AdministrationClient::AdministrationClient(T&& client)
+    : m_client(Beam::make_virtual_ptr<WrappedAdministrationClient<
+        std::remove_cvref_t<T>>>(std::forward<T>(client))) {}
+
+  inline std::vector<Beam::DirectoryEntry>
+      AdministrationClient::load_accounts_by_roles(AccountRoles roles) {
+    return m_client->load_accounts_by_roles(roles);
   }
 
-  template<typename B>
-  AdministrationClient<B>::~AdministrationClient() {
-    Close();
+  inline Beam::DirectoryEntry
+      AdministrationClient::load_administrators_root_entry() {
+    return m_client->load_administrators_root_entry();
   }
 
-  template<typename B>
-  std::vector<Beam::ServiceLocator::DirectoryEntry>
-      AdministrationClient<B>::LoadAccountsByRoles(AccountRoles roles) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadAccountsByRolesService>(roles);
-    }, "Failed to load accounts by roles: " +
-      boost::lexical_cast<std::string>(roles));
+  inline Beam::DirectoryEntry
+      AdministrationClient::load_services_root_entry() {
+    return m_client->load_services_root_entry();
   }
 
-  template<typename B>
-  Beam::ServiceLocator::DirectoryEntry
-      AdministrationClient<B>::LoadAdministratorsRootEntry() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadAdministratorsRootEntryService>();
-    }, "Failed to load administrators root entry.");
+  inline Beam::DirectoryEntry
+      AdministrationClient::load_trading_groups_root_entry() {
+    return m_client->load_trading_groups_root_entry();
   }
 
-  template<typename B>
-  Beam::ServiceLocator::DirectoryEntry
-      AdministrationClient<B>::LoadServicesRootEntry() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadServicesRootEntryService>();
-    }, "Failed to load services root entry.");
+  inline bool AdministrationClient::check_administrator(
+      const Beam::DirectoryEntry& account) {
+    return m_client->check_administrator(account);
   }
 
-  template<typename B>
-  Beam::ServiceLocator::DirectoryEntry
-      AdministrationClient<B>::LoadTradingGroupsRootEntry() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadTradingGroupsRootEntryService>();
-    }, "Failed to load trading groups root entry.");
+  inline AccountRoles AdministrationClient::load_account_roles(
+      const Beam::DirectoryEntry& account) {
+    return m_client->load_account_roles(account);
   }
 
-  template<typename B>
-  bool AdministrationClient<B>::CheckAdministrator(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<CheckAdministratorService>(account);
-    }, "Failed to check administrator: " +
-      boost::lexical_cast<std::string>(account));
+  inline AccountRoles AdministrationClient::load_account_roles(
+      const Beam::DirectoryEntry& parent, const Beam::DirectoryEntry& child) {
+    return m_client->load_account_roles(parent, child);
   }
 
-  template<typename B>
-  AccountRoles AdministrationClient<B>::LoadAccountRoles(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadAccountRolesService>(account);
-    }, "Failed to load account roles: " +
-      boost::lexical_cast<std::string>(account));
+  inline Beam::DirectoryEntry AdministrationClient::load_parent_trading_group(
+      const Beam::DirectoryEntry& account) {
+    return m_client->load_parent_trading_group(account);
   }
 
-  template<typename B>
-  AccountRoles AdministrationClient<B>::LoadAccountRoles(
-      const Beam::ServiceLocator::DirectoryEntry& parent,
-      const Beam::ServiceLocator::DirectoryEntry& child) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadSupervisedAccountRolesService>(
-        parent, child);
-    }, "Failed to load account roles: " +
-      boost::lexical_cast<std::string>(parent) + ", " +
-      boost::lexical_cast<std::string>(child));
+  inline AccountIdentity AdministrationClient::load_identity(
+      const Beam::DirectoryEntry& account) {
+    return m_client->load_identity(account);
   }
 
-  template<typename B>
-  Beam::ServiceLocator::DirectoryEntry
-      AdministrationClient<B>::LoadParentTradingGroup(
-        const Beam::ServiceLocator::DirectoryEntry& account) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadParentTradingGroupService>(
-        account);
-    }, "Failed to load parent trading group: " +
-      boost::lexical_cast<std::string>(account));
+  inline void AdministrationClient::store(
+      const Beam::DirectoryEntry& account, const AccountIdentity& identity) {
+    m_client->store(account, identity);
   }
 
-  template<typename B>
-  AccountIdentity AdministrationClient<B>::LoadIdentity(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadAccountIdentityService>(account);
-    }, "Failed to load identity: " + boost::lexical_cast<std::string>(account));
+  inline TradingGroup AdministrationClient::load_trading_group(
+      const Beam::DirectoryEntry& directory) {
+    return m_client->load_trading_group(directory);
   }
 
-  template<typename B>
-  void AdministrationClient<B>::StoreIdentity(
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      const AccountIdentity& identity) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      client->template SendRequest<StoreAccountIdentityService>(
-        account, identity);
-    }, "Failed to store identity: " +
-      boost::lexical_cast<std::string>(account));
+  inline std::vector<Beam::DirectoryEntry>
+      AdministrationClient::load_managed_trading_groups(
+        const Beam::DirectoryEntry& account) {
+    return m_client->load_managed_trading_groups(account);
   }
 
-  template<typename B>
-  TradingGroup AdministrationClient<B>::LoadTradingGroup(
-      const Beam::ServiceLocator::DirectoryEntry& directory) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadTradingGroupService>(directory);
-    }, "Failed to load trading group: " +
-      boost::lexical_cast<std::string>(directory));
+  inline std::vector<Beam::DirectoryEntry>
+      AdministrationClient::load_administrators() {
+    return m_client->load_administrators();
   }
 
-  template<typename B>
-  std::vector<Beam::ServiceLocator::DirectoryEntry>
-      AdministrationClient<B>::LoadManagedTradingGroups(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadManagedTradingGroupsService>(
-        account);
-    }, "Failed to load managed trading groups: " +
-      boost::lexical_cast<std::string>(account));
+  inline std::vector<Beam::DirectoryEntry>
+      AdministrationClient::load_services() {
+    return m_client->load_services();
   }
 
-  template<typename B>
-  std::vector<Beam::ServiceLocator::DirectoryEntry>
-      AdministrationClient<B>::LoadAdministrators() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadAdministratorsService>();
-    }, "Failed to load administrators.");
+  inline EntitlementDatabase AdministrationClient::load_entitlements() {
+    return m_client->load_entitlements();
   }
 
-  template<typename B>
-  std::vector<Beam::ServiceLocator::DirectoryEntry>
-      AdministrationClient<B>::LoadServices() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadServicesService>();
-    }, "Failed to load services.");
+  inline std::vector<Beam::DirectoryEntry>
+      AdministrationClient::load_entitlements(
+        const Beam::DirectoryEntry& account) {
+    return m_client->load_entitlements(account);
   }
 
-  template<typename B>
-  MarketDataService::EntitlementDatabase
-      AdministrationClient<B>::LoadEntitlements() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadEntitlementsService>();
-    }, "Failed to load entitlements.");
+  inline void AdministrationClient::store_entitlements(
+      const Beam::DirectoryEntry& account,
+      const std::vector<Beam::DirectoryEntry>& entitlements) {
+    m_client->store_entitlements(account, entitlements);
   }
 
-  template<typename B>
-  std::vector<Beam::ServiceLocator::DirectoryEntry>
-      AdministrationClient<B>::LoadEntitlements(
-        const Beam::ServiceLocator::DirectoryEntry& account) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadAccountEntitlementsService>(
-        account);
-    }, "Failed to load entitlements: " +
-      boost::lexical_cast<std::string>(account));
+  inline const Beam::Publisher<RiskParameters>&
+      AdministrationClient::get_risk_parameters_publisher(
+        const Beam::DirectoryEntry& account) {
+    return m_client->get_risk_parameters_publisher(account);
   }
 
-  template<typename B>
-  void AdministrationClient<B>::StoreEntitlements(
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      const std::vector<Beam::ServiceLocator::DirectoryEntry>& entitlements) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      client->template SendRequest<StoreEntitlementsService>(account,
-        entitlements);
-    }, "Failed to store entitlements: " +
-      boost::lexical_cast<std::string>(account) +
-      boost::lexical_cast<std::string>(Beam::Stream(entitlements)));
+  inline void AdministrationClient::store(
+      const Beam::DirectoryEntry& account, const RiskParameters& parameters) {
+    m_client->store(account, parameters);
   }
 
-  template<typename B>
-  const Beam::Publisher<RiskService::RiskParameters>&
-      AdministrationClient<B>::GetRiskParametersPublisher(
-        const Beam::ServiceLocator::DirectoryEntry& account) {
-    return *m_riskParameterPublishers.GetOrInsert(account, [&] {
-      auto publisher = std::make_shared<RiskParameterPublisher>();
-      m_tasks.Push([=, this] {
-        try {
-          auto client = m_clientHandler.GetClient();
-          auto parameters =
-            client->template SendRequest<MonitorRiskParametersService>(account);
-          publisher->Push(parameters);
-        } catch(const std::exception&) {
-          publisher->Break(Beam::Services::MakeNestedServiceException(
-            "Failed to monitor risk parameters: " +
-            boost::lexical_cast<std::string>(account)));
-        }
-      });
-      return publisher;
-    });
+  inline const Beam::Publisher<RiskState>&
+      AdministrationClient::get_risk_state_publisher(
+        const Beam::DirectoryEntry& account) {
+    return m_client->get_risk_state_publisher(account);
   }
 
-  template<typename B>
-  void AdministrationClient<B>::StoreRiskParameters(
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& riskParameters) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      client->template SendRequest<StoreRiskParametersService>(account,
-        riskParameters);
-    }, "Failed to store risk parameters: " +
-      boost::lexical_cast<std::string>(account) + ", " +
-      boost::lexical_cast<std::string>(riskParameters));
+  inline void AdministrationClient::store(
+      const Beam::DirectoryEntry& account, const RiskState& state) {
+    m_client->store(account, state);
   }
 
-  template<typename B>
-  const Beam::Publisher<RiskService::RiskState>&
-      AdministrationClient<B>::GetRiskStatePublisher(
-        const Beam::ServiceLocator::DirectoryEntry& account) {
-    return *m_riskStatePublishers.GetOrInsert(account, [&] {
-      auto publisher = std::make_shared<RiskStatePublisher>();
-      m_tasks.Push([=, this] {
-        try {
-          auto client = m_clientHandler.GetClient();
-          auto state = client->template SendRequest<MonitorRiskStateService>(
-            account);
-          publisher->Push(state);
-        } catch(const std::exception&) {
-          publisher->Break(Beam::Services::MakeNestedServiceException(
-            "Failed to monitor risk state: " + boost::lexical_cast<std::string>(
-              account)));
-        }
-      });
-      return publisher;
-    });
+  inline AccountModificationRequest AdministrationClient::
+      load_account_modification_request(AccountModificationRequest::Id id) {
+    return m_client->load_account_modification_request(id);
   }
 
-  template<typename B>
-  void AdministrationClient<B>::StoreRiskState(
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& riskState) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      client->template SendRequest<StoreRiskStateService>(account, riskState);
-    }, "Failed to store risk state: " +
-      boost::lexical_cast<std::string>(account) + ", " +
-      boost::lexical_cast<std::string>(riskState));
+  inline std::vector<AccountModificationRequest::Id>
+      AdministrationClient::load_account_modification_request_ids(
+        const Beam::DirectoryEntry& account,
+        AccountModificationRequest::Id start_id, int max_count) {
+    return m_client->load_account_modification_request_ids(
+      account, start_id, max_count);
   }
 
-  template<typename B>
-  AccountModificationRequest
-      AdministrationClient<B>::LoadAccountModificationRequest(
-        AccountModificationRequest::Id id) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<
-        LoadAccountModificationRequestService>(id);
-    }, "Failed to load account modification request: " +
-      boost::lexical_cast<std::string>(id));
+  inline std::vector<AccountModificationRequest::Id>
+      AdministrationClient::load_managed_account_modification_request_ids(
+        const Beam::DirectoryEntry& account,
+        AccountModificationRequest::Id start_id, int max_count) {
+    return m_client->load_managed_account_modification_request_ids(
+      account, start_id, max_count);
   }
 
-  template<typename B>
-  std::vector<AccountModificationRequest::Id>
-      AdministrationClient<B>::LoadAccountModificationRequestIds(
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        AccountModificationRequest::Id id, int maxCount) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<
-        LoadAccountModificationRequestIdsService>(account, id, maxCount);
-    }, "Failed to load account modification request ids: " +
-      boost::lexical_cast<std::string>(account) + ", " +
-      boost::lexical_cast<std::string>(id) + ", " +
-      boost::lexical_cast<std::string>(maxCount));
+  inline EntitlementModification AdministrationClient::
+      load_entitlement_modification(AccountModificationRequest::Id id) {
+    return m_client->load_entitlement_modification(id);
   }
 
-  template<typename B>
-  std::vector<AccountModificationRequest::Id>
-      AdministrationClient<B>::LoadManagedAccountModificationRequestIds(
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        AccountModificationRequest::Id id, int maxCount) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<
-        LoadManagedAccountModificationRequestIdsService>(account, id, maxCount);
-    }, "Failed to load managed account modification request ids: " +
-      boost::lexical_cast<std::string>(account) + ", " +
-      boost::lexical_cast<std::string>(id) + ", " +
-      boost::lexical_cast<std::string>(maxCount));
+  inline AccountModificationRequest AdministrationClient::submit(
+      const Beam::DirectoryEntry& account,
+      const EntitlementModification& modification, const Message& comment) {
+    return m_client->submit(account, modification, comment);
   }
 
-  template<typename B>
-  EntitlementModification AdministrationClient<B>::LoadEntitlementModification(
+  inline RiskModification AdministrationClient::load_risk_modification(
       AccountModificationRequest::Id id) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadEntitlementModificationService>(
-        id);
-    }, "Failed to load entitlement modification: " +
-      boost::lexical_cast<std::string>(id));
+    return m_client->load_risk_modification(id);
   }
 
-  template<typename B>
-  AccountModificationRequest
-      AdministrationClient<B>::SubmitAccountModificationRequest(
-        const Beam::ServiceLocator::DirectoryEntry& account,
+  inline AccountModificationRequest AdministrationClient::submit(
+      const Beam::DirectoryEntry& account, const RiskModification& modification,
+      const Message& comment) {
+    return m_client->submit(account, modification, comment);
+  }
+
+  inline AccountModificationRequest::Update
+      AdministrationClient::load_account_modification_request_status(
+        AccountModificationRequest::Id id) {
+    return m_client->load_account_modification_request_status(id);
+  }
+
+  inline AccountModificationRequest::Update
+      AdministrationClient::approve_account_modification_request(
+        AccountModificationRequest::Id id, const Message& comment) {
+    return m_client->approve_account_modification_request(id, comment);
+  }
+
+  inline AccountModificationRequest::Update
+      AdministrationClient::reject_account_modification_request(
+        AccountModificationRequest::Id id, const Message& comment) {
+    return m_client->reject_account_modification_request(id, comment);
+  }
+
+  inline Message AdministrationClient::load_message(Message::Id id) {
+    return m_client->load_message(id);
+  }
+
+  inline std::vector<Message::Id> AdministrationClient::load_message_ids(
+      AccountModificationRequest::Id id) {
+    return m_client->load_message_ids(id);
+  }
+
+  inline Message AdministrationClient::
+      send_account_modification_request_message(
+        AccountModificationRequest::Id id, const Message& message) {
+    return m_client->send_account_modification_request_message(id, message);
+  }
+
+  inline void AdministrationClient::close() {
+    m_client->close();
+  }
+
+  template<typename C>
+  template<typename... Args>
+  AdministrationClient::WrappedAdministrationClient<C>::
+    WrappedAdministrationClient(Args&&... args)
+    : m_client(std::forward<Args>(args)...) {}
+
+  template<typename C>
+  std::vector<Beam::DirectoryEntry>
+      AdministrationClient::WrappedAdministrationClient<C>::
+        load_accounts_by_roles(AccountRoles roles) {
+    return m_client->load_accounts_by_roles(roles);
+  }
+
+  template<typename C>
+  Beam::DirectoryEntry AdministrationClient::WrappedAdministrationClient<C>::
+      load_administrators_root_entry() {
+    return m_client->load_administrators_root_entry();
+  }
+
+  template<typename C>
+  Beam::DirectoryEntry AdministrationClient::WrappedAdministrationClient<C>::
+      load_services_root_entry() {
+    return m_client->load_services_root_entry();
+  }
+
+  template<typename C>
+  Beam::DirectoryEntry AdministrationClient::WrappedAdministrationClient<C>::
+      load_trading_groups_root_entry() {
+    return m_client->load_trading_groups_root_entry();
+  }
+
+  template<typename C>
+  bool AdministrationClient::WrappedAdministrationClient<C>::
+      check_administrator(const Beam::DirectoryEntry& account) {
+    return m_client->check_administrator(account);
+  }
+
+  template<typename C>
+  AccountRoles AdministrationClient::WrappedAdministrationClient<C>::
+      load_account_roles(const Beam::DirectoryEntry& account) {
+    return m_client->load_account_roles(account);
+  }
+
+  template<typename C>
+  AccountRoles AdministrationClient::WrappedAdministrationClient<C>::
+      load_account_roles(const Beam::DirectoryEntry& parent,
+        const Beam::DirectoryEntry& child) {
+    return m_client->load_account_roles(parent, child);
+  }
+
+  template<typename C>
+  Beam::DirectoryEntry AdministrationClient::WrappedAdministrationClient<C>::
+      load_parent_trading_group(const Beam::DirectoryEntry& account) {
+    return m_client->load_parent_trading_group(account);
+  }
+
+  template<typename C>
+  AccountIdentity AdministrationClient::WrappedAdministrationClient<C>::
+      load_identity(const Beam::DirectoryEntry& account) {
+    return m_client->load_identity(account);
+  }
+
+  template<typename C>
+  void AdministrationClient::WrappedAdministrationClient<C>::store(
+      const Beam::DirectoryEntry& account, const AccountIdentity& identity) {
+    m_client->store(account, identity);
+  }
+
+  template<typename C>
+  TradingGroup AdministrationClient::WrappedAdministrationClient<C>::
+      load_trading_group(const Beam::DirectoryEntry& directory) {
+    return m_client->load_trading_group(directory);
+  }
+
+  template<typename C>
+  std::vector<Beam::DirectoryEntry>
+      AdministrationClient::WrappedAdministrationClient<C>::
+        load_managed_trading_groups(const Beam::DirectoryEntry& account) {
+    return m_client->load_managed_trading_groups(account);
+  }
+
+  template<typename C>
+  std::vector<Beam::DirectoryEntry>
+      AdministrationClient::WrappedAdministrationClient<C>::
+        load_administrators() {
+    return m_client->load_administrators();
+  }
+
+  template<typename C>
+  std::vector<Beam::DirectoryEntry>
+      AdministrationClient::WrappedAdministrationClient<C>::load_services() {
+    return m_client->load_services();
+  }
+
+  template<typename C>
+  EntitlementDatabase
+      AdministrationClient::WrappedAdministrationClient<C>::
+        load_entitlements() {
+    return m_client->load_entitlements();
+  }
+
+  template<typename C>
+  std::vector<Beam::DirectoryEntry>
+      AdministrationClient::WrappedAdministrationClient<C>::load_entitlements(
+        const Beam::DirectoryEntry& account) {
+    return m_client->load_entitlements(account);
+  }
+
+  template<typename C>
+  void AdministrationClient::WrappedAdministrationClient<C>::
+      store_entitlements(const Beam::DirectoryEntry& account,
+        const std::vector<Beam::DirectoryEntry>& entitlements) {
+    m_client->store_entitlements(account, entitlements);
+  }
+
+  template<typename C>
+  const Beam::Publisher<RiskParameters>&
+      AdministrationClient::WrappedAdministrationClient<C>::
+        get_risk_parameters_publisher(const Beam::DirectoryEntry& account) {
+    return m_client->get_risk_parameters_publisher(account);
+  }
+
+  template<typename C>
+  void AdministrationClient::WrappedAdministrationClient<C>::store(
+      const Beam::DirectoryEntry& account, const RiskParameters& parameters) {
+    m_client->store(account, parameters);
+  }
+
+  template<typename C>
+  const Beam::Publisher<RiskState>&
+      AdministrationClient::WrappedAdministrationClient<C>::
+        get_risk_state_publisher(const Beam::DirectoryEntry& account) {
+    return m_client->get_risk_state_publisher(account);
+  }
+
+  template<typename C>
+  void AdministrationClient::WrappedAdministrationClient<C>::store(
+      const Beam::DirectoryEntry& account, const RiskState& state) {
+    m_client->store(account, state);
+  }
+
+  template<typename C>
+  AccountModificationRequest AdministrationClient::
+      WrappedAdministrationClient<C>::load_account_modification_request(
+        AccountModificationRequest::Id id) {
+    return m_client->load_account_modification_request(id);
+  }
+
+  template<typename C>
+  std::vector<AccountModificationRequest::Id>
+      AdministrationClient::WrappedAdministrationClient<C>::
+        load_account_modification_request_ids(
+          const Beam::DirectoryEntry& account,
+          AccountModificationRequest::Id start_id, int max_count) {
+    return m_client->load_account_modification_request_ids(
+      account, start_id, max_count);
+  }
+
+  template<typename C>
+  std::vector<AccountModificationRequest::Id>
+      AdministrationClient::WrappedAdministrationClient<C>::
+        load_managed_account_modification_request_ids(
+          const Beam::DirectoryEntry& account,
+          AccountModificationRequest::Id start_id, int max_count) {
+    return m_client->load_managed_account_modification_request_ids(
+      account, start_id, max_count);
+  }
+
+  template<typename C>
+  EntitlementModification AdministrationClient::
+      WrappedAdministrationClient<C>::load_entitlement_modification(
+        AccountModificationRequest::Id id) {
+    return m_client->load_entitlement_modification(id);
+  }
+
+  template<typename C>
+  AccountModificationRequest AdministrationClient::
+      WrappedAdministrationClient<C>::submit(
+        const Beam::DirectoryEntry& account,
         const EntitlementModification& modification, const Message& comment) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<
-        SubmitEntitlementModificationRequestService>(account, modification,
-        comment);
-    }, "Failed to submit account modification request: " +
-      boost::lexical_cast<std::string>(account));
+    return m_client->submit(account, modification, comment);
   }
 
-  template<typename B>
-  RiskModification AdministrationClient<B>::LoadRiskModification(
-      AccountModificationRequest::Id id) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadRiskModificationService>(id);
-    }, "Failed to load risk modification: " +
-      boost::lexical_cast<std::string>(id));
+  template<typename C>
+  RiskModification AdministrationClient::WrappedAdministrationClient<C>::
+      load_risk_modification(AccountModificationRequest::Id id) {
+    return m_client->load_risk_modification(id);
   }
 
-  template<typename B>
-  AccountModificationRequest
-      AdministrationClient<B>::SubmitAccountModificationRequest(
-        const Beam::ServiceLocator::DirectoryEntry& account,
+  template<typename C>
+  AccountModificationRequest AdministrationClient::
+      WrappedAdministrationClient<C>::submit(
+        const Beam::DirectoryEntry& account,
         const RiskModification& modification, const Message& comment) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<SubmitRiskModificationRequestService>(
-        account, modification, comment);
-    }, "Failed to submit account modification request: " +
-      boost::lexical_cast<std::string>(account));
+    return m_client->submit(account, modification, comment);
   }
 
-  template<typename B>
-  AccountModificationRequest::Update
-      AdministrationClient<B>::LoadAccountModificationRequestStatus(
+  template<typename C>
+  AccountModificationRequest::Update AdministrationClient::
+      WrappedAdministrationClient<C>::load_account_modification_request_status(
         AccountModificationRequest::Id id) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<
-        LoadAccountModificationRequestStatusService>(id);
-    }, "Failed to load account modification request status: " +
-      boost::lexical_cast<std::string>(id));
+    return m_client->load_account_modification_request_status(id);
   }
 
-  template<typename B>
-  AccountModificationRequest::Update
-      AdministrationClient<B>::ApproveAccountModificationRequest(
+  template<typename C>
+  AccountModificationRequest::Update AdministrationClient::
+      WrappedAdministrationClient<C>::approve_account_modification_request(
         AccountModificationRequest::Id id, const Message& comment) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<
-        ApproveAccountModificationRequestService>(id, comment);
-    }, "Failed to approve account modification request: " +
-      boost::lexical_cast<std::string>(id));
+    return m_client->approve_account_modification_request(id, comment);
   }
 
-  template<typename B>
-  AccountModificationRequest::Update
-      AdministrationClient<B>::RejectAccountModificationRequest(
+  template<typename C>
+  AccountModificationRequest::Update AdministrationClient::
+      WrappedAdministrationClient<C>::reject_account_modification_request(
         AccountModificationRequest::Id id, const Message& comment) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<
-        RejectAccountModificationRequestService>(id, comment);
-    }, "Failed to reject account modification request: " +
-      boost::lexical_cast<std::string>(id));
+    return m_client->reject_account_modification_request(id, comment);
   }
 
-  template<typename B>
-  Message AdministrationClient<B>::LoadMessage(Message::Id id) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadMessageService>(id);
-    }, "Failed to load message: " + boost::lexical_cast<std::string>(id));
+  template<typename C>
+  Message AdministrationClient::WrappedAdministrationClient<C>::load_message(
+      Message::Id id) {
+    return m_client->load_message(id);
   }
 
-  template<typename B>
-  std::vector<Message::Id> AdministrationClient<B>::LoadMessageIds(
-      AccountModificationRequest::Id id) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadMessageIdsService>(id);
-    }, "Failed to load message ids: " + boost::lexical_cast<std::string>(id));
+  template<typename C>
+  std::vector<Message::Id> AdministrationClient::
+      WrappedAdministrationClient<C>::load_message_ids(
+        AccountModificationRequest::Id id) {
+    return m_client->load_message_ids(id);
   }
 
-  template<typename B>
-  Message AdministrationClient<B>::SendAccountModificationRequestMessage(
-      AccountModificationRequest::Id id, const Message& message) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<
-        SendAccountModificationRequestMessageService>(id, message);
-    }, "Failed to send account modification request message: " +
-      boost::lexical_cast<std::string>(id));
+  template<typename C>
+  Message AdministrationClient::WrappedAdministrationClient<C>::
+      send_account_modification_request_message(
+        AccountModificationRequest::Id id, const Message& message) {
+    return m_client->send_account_modification_request_message(id, message);
   }
 
-  template<typename B>
-  void AdministrationClient<B>::Close() {
-    if(m_openState.SetClosing()) {
-      return;
-    }
-    m_tasks.Break();
-    m_tasks.Wait();
-    m_clientHandler.Close();
-    m_riskStatePublishers.Clear();
-    m_riskParameterPublishers.Clear();
-    m_openState.Close();
-  }
-
-  template<typename B>
-  void AdministrationClient<B>::OnReconnect(
-      const std::shared_ptr<ServiceProtocolClient>& client) {
-    m_tasks.Push([=, this] {
-      RecoverRiskParameters(*client);
-      RecoverRiskState(*client);
-    });
-  }
-
-  template<typename B>
-  void AdministrationClient<B>::RecoverRiskParameters(
-      ServiceProtocolClient& client) {
-    auto currentRiskParameterEntries =
-      std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-        std::shared_ptr<RiskParameterPublisher>>>();
-    m_riskParameterPublishers.With([&] (auto& riskParameterPublishers) {
-      for(auto& publisher : riskParameterPublishers) {
-        currentRiskParameterEntries.emplace_back(
-          publisher.first, publisher.second);
-      }
-    });
-    for(auto& entry : currentRiskParameterEntries) {
-      auto& publisher = std::get<1>(entry);
-      try {
-        auto parameters =
-          client.template SendRequest<MonitorRiskParametersService>(
-          std::get<0>(entry));
-        if(publisher->GetSnapshot() != parameters) {
-          publisher->Push(parameters);
-        }
-      } catch(const std::exception&) {
-        publisher->Break(Beam::Services::MakeNestedServiceException(
-          "Failed to recover risk parameters."));
-      }
-    }
-  }
-
-  template<typename B>
-  void AdministrationClient<B>::RecoverRiskState(
-      ServiceProtocolClient& client) {
-    auto currentRiskStateEntries =
-      std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-        std::shared_ptr<RiskStatePublisher>>>();
-    m_riskStatePublishers.With([&] (auto& riskStatePublishers) {
-      for(auto& publisher : riskStatePublishers) {
-        currentRiskStateEntries.emplace_back(
-          publisher.first, publisher.second);
-      }
-    });
-    for(auto& entry : currentRiskStateEntries) {
-      auto& publisher = std::get<1>(entry);
-      try {
-        auto state = client.template SendRequest<MonitorRiskStateService>(
-          std::get<0>(entry));
-        if(publisher->GetSnapshot() != state) {
-          publisher->Push(state);
-        }
-      } catch(const std::exception&) {
-        publisher->Break(Beam::Services::MakeNestedServiceException(
-          "Failed to recover risk state."));
-      }
-    }
-  }
-
-  template<typename B>
-  void AdministrationClient<B>::OnRiskParametersMessage(
-      ServiceProtocolClient& client,
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& riskParameters) {
-    m_tasks.Push([=, this] {
-      if(auto publisher = m_riskParameterPublishers.FindValue(account)) {
-        try {
-          (*publisher)->Push(riskParameters);
-        } catch(const Beam::PipeBrokenException&) {
-          m_riskParameterPublishers.Erase(account);
-        }
-      }
-    });
-  }
-
-  template<typename B>
-  void AdministrationClient<B>::OnRiskStateMessage(
-      ServiceProtocolClient& client,
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      RiskService::RiskState riskState) {
-    m_tasks.Push([=, this] {
-      if(auto publisher = m_riskStatePublishers.FindValue(account)) {
-        try {
-          (*publisher)->Push(riskState);
-        } catch(const Beam::PipeBrokenException&) {
-          m_riskStatePublishers.Erase(account);
-        }
-      }
-    });
+  template<typename C>
+  void AdministrationClient::WrappedAdministrationClient<C>::close() {
+    m_client->close();
   }
 }
 

@@ -12,147 +12,122 @@
 #include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
-  struct IsStructure<QString> : std::false_type {};
+  constexpr auto is_structure<QString> = false;
 
   template<>
   struct Send<QString> {
-    template<typename Shuttler>
-    void operator ()(
-        Shuttler& shuttle, const char* name, const QString& value) const {
-      shuttle.Shuttle(name, value.toStdString());
+    template<IsSender S>
+    void operator ()(S& sender, const char* name, const QString& value) const {
+      sender.send(name, value.toStdString());
     }
   };
 
   template<>
   struct Receive<QString> {
-    template<typename Shuttler>
-    void operator ()(
-        Shuttler& shuttle, const char* name, QString& value) const {
-      auto s = std::string();
-      shuttle.Shuttle(name, s);
-      value = QString::fromStdString(s);
+    template<IsReceiver R>
+    void operator ()(R& receiver, const char* name, QString& value) const {
+      value = QString::fromStdString(receive<std::string>(receiver, name));
     }
   };
 
   template<>
   struct Send<QByteArray> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const QByteArray& value,
-        unsigned int version) const {
+    template<IsSender S>
+    void operator ()(
+        S& sender, const QByteArray& value, unsigned int version) const {
       auto buffer = std::string(value.data(), value.size());
-      shuttle.Shuttle("buffer", IO::BufferFromString<IO::SharedBuffer>(buffer));
+      sender.send("buffer", buffer);
     }
   };
 
   template<>
   struct Receive<QByteArray> {
-    template<typename Shuttler>
+    template<IsReceiver R>
     void operator ()(
-        Shuttler& shuttle, QByteArray& value, unsigned int version) const {
-      auto buffer = IO::SharedBuffer();
-      shuttle.Shuttle("buffer", buffer);
-      value = QByteArray(buffer.GetData(), buffer.GetSize());
+        R& receiver, QByteArray& value, unsigned int version) const {
+      auto buffer = receive<std::string>(receiver, "buffer");
+      value = QByteArray(buffer.c_str(), buffer.size());
     }
   };
 
   template<>
   struct Send<QColor> {
-    template<typename Shuttler>
+    template<IsSender S>
     void operator ()(
-        Shuttler& shuttle, const QColor& value, unsigned int version) const {
-      shuttle.Shuttle("rgba", value.rgba());
+        S& sender, const QColor& value, unsigned int version) const {
+      sender.send("rgba", value.rgba());
     }
   };
 
   template<>
   struct Receive<QColor> {
-    template<typename Shuttler>
-    void operator ()(
-        Shuttler& shuttle, QColor& value, unsigned int version) const {
-      auto rgba = QRgb();
-      shuttle.Shuttle("rgba", rgba);
-      value.setRgba(rgba);
+    template<IsReceiver R>
+    void operator ()(R& receiver, QColor& value, unsigned int version) const {
+      value.setRgba(receive<QRgb>(receiver, "rgba"));
     }
   };
 
   template<>
   struct Send<QFont> {
-    template<typename Shuttler>
+    template<IsSender S>
     void operator ()(
-        Shuttler& shuttle, const QFont& value, unsigned int version) const {
-      shuttle.Shuttle("family", value.family());
-      shuttle.Shuttle("point_size", value.pointSize());
-      shuttle.Shuttle("weight", value.weight());
-      shuttle.Shuttle("italic", value.italic());
-      if(value.pointSize() == -1) {
-        shuttle.Shuttle("pixel_size", Spire::unscale_width(value.pixelSize()));
-      }
+        S& sender, const QFont& value, unsigned int version) const {
+      sender.send("family", value.family());
+      sender.send("point_size", value.pointSize());
+      sender.send("weight", value.weight());
+      sender.send("italic", value.italic());
     }
   };
 
   template<>
   struct Receive<QFont> {
-    template<typename Shuttler>
-    void operator ()(
-        Shuttler& shuttle, QFont& value, unsigned int version) const {
-      auto family = QString();
-      shuttle.Shuttle("family", family);
-      auto point_size = int();
-      shuttle.Shuttle("point_size", point_size);
-      auto weight = int();
-      shuttle.Shuttle("weight", weight);
-      auto italic = bool();
-      shuttle.Shuttle("italic", italic);
+    template<IsReceiver R>
+    void operator ()(R& receiver, QFont& value, unsigned int version) const {
+      auto family = receive<QString>(receiver, "family");
+      auto point_size = receive<int>(receiver, "point_size");
+      auto weight = receive<int>(receiver, "weight");
+      auto italic = receive<bool>(receiver, "italic");
       value = QFont(family, point_size, weight, italic);
-      if(point_size == -1) {
-        auto pixel_size = int();
-        shuttle.Shuttle("pixel_size", pixel_size);
-        value.setPixelSize(Spire::scale_width(pixel_size));
-      }
     }
   };
 
   template<>
   struct Send<QKeySequence> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const QKeySequence& value,
-        unsigned int version) const {
-      shuttle.Shuttle("key", value.toString().toStdString());
+    template<IsSender S>
+    void operator ()(
+        S& sender, const QKeySequence& value, unsigned int version) const {
+      sender.send("key", value.toString().toStdString());
     }
   };
 
   template<>
   struct Receive<QKeySequence> {
-    template<typename Shuttler>
+    template<IsReceiver R>
     void operator ()(
-        Shuttler& shuttle, QKeySequence& value, unsigned int version) const {
-      auto key = std::string();
-      shuttle.Shuttle("key", key);
+        R& receiver, QKeySequence& value, unsigned int version) const {
+      auto key = receive<std::string>(receiver, "key");
       value = QKeySequence(QString::fromStdString(key));
     }
   };
 
   template<>
   struct Send<QPoint> {
-    template<typename Shuttler>
+    template<IsSender S>
     void operator ()(
-        Shuttler& shuttle, const QPoint& value, unsigned int version) const {
-      shuttle.Shuttle("x", value.x());
-      shuttle.Shuttle("y", value.y());
+        S& sender, const QPoint& value, unsigned int version) const {
+      sender.send("x", value.x());
+      sender.send("y", value.y());
     }
   };
 
   template<>
   struct Receive<QPoint> {
-    template<typename Shuttler>
-    void operator ()(
-        Shuttler& shuttle, QPoint& value, unsigned int version) const {
-      auto x = int();
-      shuttle.Shuttle("x", x);
-      auto y = int();
-      shuttle.Shuttle("y", y);
+    template<IsReceiver R>
+    void operator ()(R& receiver, QPoint& value, unsigned int version) const {
+      auto x = receive<int>(receiver, "x");
+      auto y = receive<int>(receiver, "y");
       value = QPoint(x, y);
     }
   };

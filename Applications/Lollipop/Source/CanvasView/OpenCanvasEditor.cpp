@@ -27,7 +27,6 @@
 #include "Spire/Canvas/ValueNodes/DestinationNode.hpp"
 #include "Spire/Canvas/ValueNodes/DurationNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
-#include "Spire/Canvas/ValueNodes/MarketNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
@@ -36,6 +35,7 @@
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
+#include "Spire/Canvas/ValueNodes/VenueNode.hpp"
 #include "Spire/CanvasView/CustomNodeDialog.hpp"
 #include "Spire/CanvasView/FileReaderNodeDialog.hpp"
 #include "Spire/CanvasView/LuaScriptDialog.hpp"
@@ -78,7 +78,6 @@ namespace {
       void Visit(const FileReaderNode& node) override;
       void Visit(const IntegerNode& node) override;
       void Visit(const LuaScriptNode& node) override;
-      void Visit(const MarketNode& node) override;
       void Visit(const MaxFloorNode& node) override;
       void Visit(const MoneyNode& node) override;
       void Visit(const OptionalPriceNode& node) override;
@@ -92,6 +91,7 @@ namespace {
       void Visit(const TimeInForceNode& node) override;
       void Visit(const TimeNode& node) override;
       void Visit(const TimeRangeParameterNode& node) override;
+      void Visit(const VenueNode& node) override;
       void Visit(const CanvasNode& node) override;
 
     private:
@@ -113,9 +113,9 @@ CanvasNodeEditor::EditVariant Spire::OpenCanvasEditor(const CanvasNode& node,
 OpenEditorCanvasNodeVisitor::OpenEditorCanvasNodeVisitor(
   Ref<const CanvasNode> node, Ref<CanvasNodeModel> model,
   Ref<UserProfile> userProfile, QEvent* event)
-  : m_node(node.Get()),
-    m_model(model.Get()),
-    m_userProfile(userProfile.Get()),
+  : m_node(node.get()),
+    m_model(model.get()),
+    m_userProfile(userProfile.get()),
     m_event(event) {}
 
 CanvasNodeEditor::EditVariant OpenEditorCanvasNodeVisitor::GetEditor() {
@@ -141,10 +141,10 @@ void OpenEditorCanvasNodeVisitor::Visit(const BooleanNode& node) {
 
 void OpenEditorCanvasNodeVisitor::Visit(const CurrencyNode& node) {
   auto editor = new QComboBox();
-  auto& currencies = m_userProfile->GetCurrencyDatabase().GetEntries();
+  auto currencies = m_userProfile->GetCurrencyDatabase().get_entries();
   for(auto i = std::size_t(0); i != currencies.size(); ++i) {
     auto& entry = currencies[i];
-    editor->addItem(QString::fromStdString(entry.m_code.GetData()));
+    editor->addItem(QString::fromStdString(entry.m_code.get_data()));
     if(node.GetValue() != CurrencyId::NONE && entry.m_id == node.GetValue()) {
       editor->setCurrentIndex(i);
     }
@@ -202,20 +202,20 @@ void OpenEditorCanvasNodeVisitor::Visit(const DecimalNode& node) {
 
 void OpenEditorCanvasNodeVisitor::Visit(const DestinationNode& node) {
   auto editor = new QComboBox();
-  auto marketCode = node.GetMarket();
+  auto venue = node.GetVenue();
   auto& destinationDatabase = m_userProfile->GetDestinationDatabase();
-  auto destinations = destinationDatabase.SelectEntries(
+  auto destinations = destinationDatabase.select_all(
     [=] (const auto& entry) {
-      if(marketCode.IsEmpty()) {
+      if(!venue) {
         return true;
       }
-      return find(entry.m_markets.begin(), entry.m_markets.end(), marketCode) !=
-        entry.m_markets.end();
+      return find(entry.m_venues.begin(), entry.m_venues.end(), venue) !=
+        entry.m_venues.end();
     });
   if(m_userProfile->IsAdministrator() &&
-      destinationDatabase.GetManualOrderEntryDestination().is_initialized()) {
+      destinationDatabase.get_manual_order_entry_destination()) {
     destinations.push_back(
-      *destinationDatabase.GetManualOrderEntryDestination());
+      *destinationDatabase.get_manual_order_entry_destination());
   }
   for(auto i = destinations.begin(); i != destinations.end(); ++i) {
     editor->addItem(QString::fromStdString(i->m_id));
@@ -295,22 +295,6 @@ void OpenEditorCanvasNodeVisitor::Visit(const LuaScriptNode& node) {
   auto coordinate = m_model->GetCoordinate(node);
   m_editVariant =
     new ReplaceNodeCommand(Ref(*m_model), coordinate, *dialog.GetNode());
-}
-
-void OpenEditorCanvasNodeVisitor::Visit(const MarketNode& node) {
-  auto editor = new QComboBox();
-  auto& markets = m_userProfile->GetMarketDatabase().GetEntries();
-  for(auto i = std::size_t(0); i != markets.size(); ++i) {
-    auto& entry = markets[i];
-    editor->addItem(QString::fromStdString(entry.m_code.GetData()));
-    if(!node.GetValue().IsEmpty() && entry.m_code == node.GetValue()) {
-      editor->setCurrentIndex(i);
-    }
-  }
-  if(m_event) {
-    QApplication::sendEvent(editor, m_event);
-  }
-  m_editVariant = editor;
 }
 
 void OpenEditorCanvasNodeVisitor::Visit(const MaxFloorNode& node) {
@@ -486,7 +470,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const SecurityNode& node) {
         return;
       }
       m_editVariant = new ReplaceNodeCommand(Ref(*m_model), coordinate,
-        *node.SetValue(newValue, m_userProfile->GetMarketDatabase()));
+        *node.SetValue(newValue, m_userProfile->GetVenueDatabase()));
     });
   dialog.show();
   while(dialog.isVisible()) {
@@ -557,6 +541,23 @@ void OpenEditorCanvasNodeVisitor::Visit(const TimeRangeParameterNode& node) {
   auto coordinate = m_model->GetCoordinate(node);
   m_editVariant = new ReplaceNodeCommand(Ref(*m_model), coordinate,
     *node.SetTimeRange(dialog.GetStartTime(), dialog.GetEndTime()));
+}
+
+void OpenEditorCanvasNodeVisitor::Visit(const VenueNode& node) {
+  auto editor = new QComboBox();
+  auto entries = m_userProfile->GetVenueDatabase().get_entries();
+  for(auto i = std::size_t(0); i != entries.size(); ++i) {
+    auto& entry = entries[i];
+    editor->addItem(
+      QString::fromStdString(entry.m_venue.get_code().get_data()));
+    if(node.GetValue() && entry.m_venue == node.GetValue()) {
+      editor->setCurrentIndex(i);
+    }
+  }
+  if(m_event) {
+    QApplication::sendEvent(editor, m_event);
+  }
+  m_editVariant = editor;
 }
 
 void OpenEditorCanvasNodeVisitor::Visit(const CanvasNode& node) {

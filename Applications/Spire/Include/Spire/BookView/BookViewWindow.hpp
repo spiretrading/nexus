@@ -14,7 +14,7 @@
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
-#include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/KeyBindings/OrderTaskArguments.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/SecurityContext.hpp"
 #include "Spire/LegacyUI/SecurityViewStack.hpp"
@@ -80,7 +80,7 @@ namespace Spire {
       CondensedCanvasWidget* m_taskEntryWidget;
       bool m_isTaskEntryWidgetForInteractionsProperties;
       std::shared_ptr<SecurityTechnicalsModel> m_securityTechnicalsModel;
-      Beam::SignalHandling::ConnectionGroup m_securityTechnicalsConnections;
+      Beam::ConnectionGroup m_securityTechnicalsConnections;
       std::unordered_map<Nexus::Security, std::vector<std::shared_ptr<Task>>>
         m_tasksExecuted;
       bool m_bidPanelGuard;

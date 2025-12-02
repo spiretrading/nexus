@@ -9,7 +9,7 @@ using namespace Nexus;
 using namespace Spire;
 
 SecurityInfoModel::SecurityInfoModel(Ref<UserProfile> userProfile)
-  : m_userProfile(userProfile.Get()) {}
+  : m_userProfile(userProfile.get()) {}
 
 void SecurityInfoModel::Search(const std::string& prefix) {
   if(prefix.empty()) {
@@ -20,8 +20,8 @@ void SecurityInfoModel::Search(const std::string& prefix) {
     return;
   }
   m_queryPromise = QtPromise([=] {
-    return m_userProfile->GetServiceClients().
-      GetMarketDataClient().LoadSecurityInfoFromPrefix(uppercasePrefix);
+    return m_userProfile->GetClients().
+      get_market_data_client().load_security_info_from_prefix(uppercasePrefix);
   }, LaunchPolicy::ASYNC).then(
     [=] (const std::vector<SecurityInfo>& securityInfoItems) {
       QTimer::singleShot(0, this, [=] {
@@ -45,8 +45,7 @@ QVariant SecurityInfoModel::data(const QModelIndex& index, int role) const {
   auto& item = m_securityInfoItems[index.row()];
   if(role == Qt::DisplayRole) {
     if(index.column() == SECURITY_COLUMN) {
-      return QString::fromStdString(
-        ToString(item.m_security, m_userProfile->GetMarketDatabase()));
+      return QString::fromStdString(to_string(item.m_security));
     } else if(index.column() == NAME_COLUMN) {
       return QString::fromStdString(item.m_name);
     } else if(index.column() == SECTOR_COLUMN) {

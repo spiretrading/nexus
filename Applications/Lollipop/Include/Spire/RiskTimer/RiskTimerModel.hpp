@@ -1,12 +1,12 @@
 #ifndef SPIRE_RISK_TIMER_MODEL_HPP
 #define SPIRE_RISK_TIMER_MODEL_HPP
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Threading/LiveTimer.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <boost/signals2/signal.hpp>
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/RiskTimer/RiskTimer.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 
@@ -44,13 +44,13 @@ namespace Spire {
     private:
       UserProfile* m_userProfile;
       boost::posix_time::time_duration m_timeRemaining;
-      Beam::Threading::LiveTimer m_timeRemainingTimer;
+      Beam::LiveTimer m_timeRemainingTimer;
       boost::signals2::scoped_connection m_timeRemainingConnection;
       boost::posix_time::ptime m_lastTimeCheck;
       mutable TimeRemainingSignal m_timeRemainingSignal;
       EventHandler m_eventHandler;
 
-      void OnTimeRemainingExpired(const Beam::Threading::Timer::Result& result);
+      void OnTimeRemainingExpired(const Beam::Timer::Result& result);
   };
 }
 

@@ -8,7 +8,6 @@
 #include "Spire/Canvas/Types/UnionType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
 
@@ -80,5 +79,3 @@ void CustomNode::Apply(CanvasNodeVisitor& visitor) const {
 std::unique_ptr<CanvasNode> CustomNode::Clone() const {
   return std::make_unique<CustomNode>(*this);
 }
-
-CustomNode::CustomNode(ReceiveBuilder) {}

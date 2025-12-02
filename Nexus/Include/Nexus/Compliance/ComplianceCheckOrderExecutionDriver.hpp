@@ -1,19 +1,18 @@
 #ifndef NEXUS_COMPLIANCE_CHECK_ORDER_EXECUTION_DRIVER_HPP
 #define NEXUS_COMPLIANCE_CHECK_ORDER_EXECUTION_DRIVER_HPP
-#include <Beam/Collections/SynchronizedList.hpp>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
-#include "Nexus/Compliance/Compliance.hpp"
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Compliance/ComplianceRuleSet.hpp"
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
-#include "Nexus/OrderExecutionService/OrderFields.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Performs a series of compliance checks on order execution operations.
@@ -22,7 +21,9 @@ namespace Nexus::Compliance {
    * @param <C> The type of TimeClient used for Order timestamps.
    * @param <S> The type of ComplianceRuleSet used to validate operations.
    */
-  template<typename D, typename C, typename S>
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+    Beam::IsTimeClient<Beam::dereference_t<C>>
   class ComplianceCheckOrderExecutionDriver {
     public:
 
@@ -30,162 +31,172 @@ namespace Nexus::Compliance {
        * The type of OrderExecutionDriver to send operations to if all checks
        * pass.
        */
-      using OrderExecutionDriver = Beam::GetTryDereferenceType<D>;
+      using OrderExecutionDriver = Beam::dereference_t<D>;
 
       /** The type of TimeClient used for Order timestamps. */
-      using TimeClient = Beam::GetTryDereferenceType<C>;
+      using TimeClient = Beam::dereference_t<C>;
 
       /** The type of ComplianceRuleSet used to validate operations. */
-      using ComplianceRuleSet = Beam::GetTryDereferenceType<S>;
+      using ComplianceRuleSet = Beam::dereference_t<S>;
 
       /**
        * Constructs a ComplianceCheckOrderExecutionDriver.
-       * @param orderExecutionDriver The OrderExecutionDriver to send operations
-       *        to if all checks pass.
-       * @param timeClient Initializes the TimeClient.
-       * @param complianceRuleSet Contains the set of compliance rules used to
+       * @param driver The OrderExecutionDriver to send operations to if all
+       *        checks pass.
+       * @param time_client Initializes the TimeClient.
+       * @param compliance_rule_set Contains the set of compliance rules used to
        *        check order execution operations.
        */
-      template<typename DF, typename CF, typename SF>
-      ComplianceCheckOrderExecutionDriver(DF&& orderExecutionDriver,
-        CF&& timeClient, SF&& complianceRuleSet);
+      template<Beam::Initializes<D> DF, Beam::Initializes<C> CF,
+        Beam::Initializes<S> SF>
+      ComplianceCheckOrderExecutionDriver(
+        DF&& driver, CF&& time_client, SF&& compliance_rule_set);
 
       ~ComplianceCheckOrderExecutionDriver();
 
-      const OrderExecutionService::Order& Recover(
-        const OrderExecutionService::SequencedAccountOrderRecord& order);
-
-      const OrderExecutionService::Order& Submit(
-        const OrderExecutionService::OrderInfo& orderInfo);
-
-      void Cancel(const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId orderId);
-
-      void Update(const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId orderId,
-        const OrderExecutionService::ExecutionReport& executionReport);
-
-      void Close();
+      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
+      void add(const std::shared_ptr<Order>& order);
+      std::shared_ptr<Order> submit(const OrderInfo& info);
+      void cancel(const OrderExecutionSession& session, OrderId id);
+      void update(const OrderExecutionSession& session, OrderId id,
+        const ExecutionReport& report);
+      void close();
 
     private:
-      Beam::GetOptionalLocalPtr<D> m_orderExecutionDriver;
-      Beam::GetOptionalLocalPtr<C> m_timeClient;
-      Beam::GetOptionalLocalPtr<S> m_complianceRuleSet;
-      Beam::SynchronizedUnorderedMap<OrderExecutionService::OrderId,
-        std::unique_ptr<OrderExecutionService::PrimitiveOrder>> m_orders;
-      Beam::IO::OpenState m_openState;
+      Beam::local_ptr_t<D> m_driver;
+      Beam::local_ptr_t<C> m_time_client;
+      Beam::local_ptr_t<S> m_compliance_rule_set;
+      Beam::SynchronizedUnorderedMap<OrderId, std::shared_ptr<PrimitiveOrder>>
+        m_orders;
+      Beam::OpenState m_open_state;
       Beam::RoutineTaskQueue m_tasks;
 
       ComplianceCheckOrderExecutionDriver(
         const ComplianceCheckOrderExecutionDriver&) = delete;
       ComplianceCheckOrderExecutionDriver& operator =(
         const ComplianceCheckOrderExecutionDriver&) = delete;
-      void OnExecutionReport(OrderExecutionService::PrimitiveOrder& order,
-        const OrderExecutionService::ExecutionReport& executionReport);
+      void on_execution_report(
+        PrimitiveOrder& order, const ExecutionReport& executionReport);
   };
 
-  template<typename D, typename C, typename S>
-  template<typename DF, typename CF, typename SF>
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
+  template<Beam::Initializes<D> DF, Beam::Initializes<C> CF,
+    Beam::Initializes<S> SF>
   ComplianceCheckOrderExecutionDriver<D, C, S>::
-    ComplianceCheckOrderExecutionDriver(DF&& orderExecutionDriver,
-      CF&& timeClient, SF&& complianceRuleSet)
-    : m_orderExecutionDriver(std::forward<DF>(orderExecutionDriver)),
-      m_timeClient(std::forward<CF>(timeClient)),
-      m_complianceRuleSet(std::forward<SF>(complianceRuleSet)) {}
+      ComplianceCheckOrderExecutionDriver(
+        DF&& driver, CF&& time_client, SF&& compliance_rule_set)
+    : m_driver(std::forward<DF>(driver)),
+      m_time_client(std::forward<CF>(time_client)),
+      m_compliance_rule_set(std::forward<SF>(compliance_rule_set)) {}
 
-  template<typename D, typename C, typename S>
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
   ComplianceCheckOrderExecutionDriver<D, C, S>::
       ~ComplianceCheckOrderExecutionDriver() {
-    Close();
+    close();
   }
 
-  template<typename D, typename C, typename S>
-  const OrderExecutionService::Order&
-      ComplianceCheckOrderExecutionDriver<D, C, S>::Recover(
-        const OrderExecutionService::SequencedAccountOrderRecord& orderRecord) {
-    auto& order = m_orderExecutionDriver->Recover(orderRecord);
-    m_complianceRuleSet->Add(order);
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
+  std::shared_ptr<Order> ComplianceCheckOrderExecutionDriver<D, C, S>::recover(
+      const SequencedAccountOrderRecord& record) {
+    auto order = m_driver->recover(record);
+    m_compliance_rule_set->add(order);
     return order;
   }
 
-  template<typename D, typename C, typename S>
-  const OrderExecutionService::Order&
-      ComplianceCheckOrderExecutionDriver<D, C, S>::Submit(
-        const OrderExecutionService::OrderInfo& orderInfo) {
-    auto instance = std::make_unique<OrderExecutionService::PrimitiveOrder>(
-      orderInfo);
-    auto& order = *instance;
-    m_orders.Insert(orderInfo.m_orderId, std::move(instance));
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
+  void ComplianceCheckOrderExecutionDriver<D, C, S>::add(
+      const std::shared_ptr<Order>& order) {
+    m_driver->add(order);
+    m_compliance_rule_set->add(order);
+  }
+
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
+  std::shared_ptr<Order> ComplianceCheckOrderExecutionDriver<D, C, S>::submit(
+      const OrderInfo& info) {
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    m_orders.insert(info.m_id, order);
     try {
-      m_complianceRuleSet->Submit(order);
+      m_compliance_rule_set->submit(order);
     } catch(const std::exception& e) {
-      order.With([&] (auto status, const auto& reports) {
-        auto& lastReport = reports.back();
-        auto updatedReport =
-          OrderExecutionService::ExecutionReport::MakeUpdatedReport(
-          lastReport, OrderStatus::REJECTED, m_timeClient->GetTime());
-        updatedReport.m_text = e.what();
-        order.Update(updatedReport);
+      order->with([&] (auto status, const auto& reports) {
+        auto& last_report = reports.back();
+        auto update = make_update(
+          last_report, OrderStatus::REJECTED, m_time_client->get_time());
+        update.m_text = e.what();
+        order->update(update);
       });
       return order;
     }
-    auto& driverOrder = m_orderExecutionDriver->Submit(orderInfo);
-    driverOrder.GetPublisher().Monitor(
-      m_tasks.GetSlot<OrderExecutionService::ExecutionReport>(std::bind_front(
-        &ComplianceCheckOrderExecutionDriver::OnExecutionReport,
-        this, std::ref(order))));
+    auto driver_order = m_driver->submit(info);
+    driver_order->get_publisher().monitor(m_tasks.get_slot<ExecutionReport>(
+      std::bind_front(&ComplianceCheckOrderExecutionDriver::on_execution_report,
+        this, std::ref(*order))));
     return order;
   }
 
-  template<typename D, typename C, typename S>
-  void ComplianceCheckOrderExecutionDriver<D, C, S>::Cancel(
-      const OrderExecutionService::OrderExecutionSession& session,
-      OrderExecutionService::OrderId orderId) {
-    auto order = m_orders.Find(orderId);
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
+  void ComplianceCheckOrderExecutionDriver<D, C, S>::cancel(
+      const OrderExecutionSession& session, OrderId id) {
+    auto order = m_orders.find(id);
     if(!order) {
-      m_orderExecutionDriver->Cancel(session, orderId);
+      m_driver->cancel(session, id);
       return;
     }
     try {
-      m_complianceRuleSet->Cancel(session.GetAccount(), **order);
+      m_compliance_rule_set->cancel(session.get_account(), *order);
     } catch(const std::exception& e) {
-      OrderExecutionService::RejectCancelRequest(**order,
-        m_timeClient->GetTime(), e.what());
+      reject_cancel_request(**order, m_time_client->get_time(), e.what());
       return;
     }
-    m_orderExecutionDriver->Cancel(session, orderId);
+    m_driver->cancel(session, id);
   }
 
-  template<typename D, typename C, typename S>
-  void ComplianceCheckOrderExecutionDriver<D, C, S>::Update(
-      const OrderExecutionService::OrderExecutionSession& session,
-      OrderExecutionService::OrderId orderId,
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    m_orderExecutionDriver->Update(session, orderId, executionReport);
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
+  void ComplianceCheckOrderExecutionDriver<D, C, S>::update(
+      const OrderExecutionSession& session, OrderId id,
+      const ExecutionReport& report) {
+    m_driver->update(session, id, report);
   }
 
-  template<typename D, typename C, typename S>
-  void ComplianceCheckOrderExecutionDriver<D, C, S>::Close() {
-    if(m_openState.SetClosing()) {
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
+  void ComplianceCheckOrderExecutionDriver<D, C, S>::close() {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_tasks.Break();
-    m_tasks.Wait();
-    m_orderExecutionDriver->Close();
-    m_openState.Close();
+    m_tasks.close();
+    m_tasks.wait();
+    m_driver->close();
+    m_open_state.close();
   }
 
-  template<typename D, typename C, typename S>
-  void ComplianceCheckOrderExecutionDriver<D, C, S>::OnExecutionReport(
-      OrderExecutionService::PrimitiveOrder& order,
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    if(executionReport.m_status == OrderStatus::PENDING_NEW) {
+  template<typename D, typename C, typename S> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<C>>
+  void ComplianceCheckOrderExecutionDriver<D, C, S>::on_execution_report(
+      PrimitiveOrder& order, const ExecutionReport& report) {
+    if(report.m_status == OrderStatus::PENDING_NEW) {
       return;
     }
-    order.With([&] (auto status, const auto& reports) {
-      auto update = executionReport;
+    order.with([&] (auto status, const auto& reports) {
+      auto update = report;
       update.m_sequence = reports.back().m_sequence + 1;
-      order.Update(update);
+      order.update(update);
     });
   }
 }

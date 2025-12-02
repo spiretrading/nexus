@@ -5,8 +5,6 @@
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::date_time;
 using namespace boost::posix_time;
@@ -15,22 +13,23 @@ using namespace Spire;
 
 namespace {
   std::string GetDisplayText(const Range& value) {
-    if(value == Range::RealTime()) {
+    if(value == Range::REAL_TIME) {
       return "Real-Time";
     }
     auto startingPoint = [&] {
-      if(value.GetStart() == Beam::Queries::Sequence::Present()) {
+      if(value.get_start() == Beam::Sequence::PRESENT) {
         return std::string("Present");
       } else {
         return to_simple_string(
-          ToLocalTime(boost::get<ptime>(value.GetStart())));
+          to_local_time(boost::get<ptime>(value.get_start())));
       }
     }();
     auto endingPoint = [&] {
-      if(value.GetStart() == Beam::Queries::Sequence::Present()) {
+      if(value.get_start() == Beam::Sequence::PRESENT) {
         return std::string("Present");
       } else {
-        return to_simple_string(ToLocalTime(boost::get<ptime>(value.GetEnd())));
+        return to_simple_string(
+          to_local_time(boost::get<ptime>(value.get_end())));
       }
     }();
     return startingPoint + " -> " + endingPoint;

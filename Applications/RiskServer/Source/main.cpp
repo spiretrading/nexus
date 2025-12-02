@@ -10,7 +10,7 @@
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Sql/MySqlConfig.hpp>
 #include <Beam/Sql/SqlConnection.hpp>
-#include <Beam/Threading/LiveTimer.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
@@ -27,93 +27,80 @@
 #include "Version.hpp"
 
 using namespace Beam;
-using namespace Beam::Codecs;
-using namespace Beam::IO;
-using namespace Beam::Network;
-using namespace Beam::Serialization;
-using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
-using namespace Beam::Threading;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::Accounting;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::DefinitionsService;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::RiskService;
 using namespace Viper;
 
 namespace {
-  using ApplicationDataStore = SqlRiskDataStore<
-    SqlConnection<MySql::Connection>>;
-  using RiskServletContainer = ServiceProtocolServletContainer<
-    MetaAuthenticationServletAdapter<
-      MetaRiskServlet<ApplicationAdministrationClient::Client*,
-        ApplicationMarketDataClient::Client*,
-        ApplicationOrderExecutionClient::Client*, LiveTimer,
-        std::unique_ptr<LiveNtpTimeClient>, ApplicationDataStore*>,
-      ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
-    BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
+  using ApplicationDataStore =
+    SqlRiskDataStore<SqlConnection<MySql::Connection>>;
+  using RiskServletContainer =
+    ServiceProtocolServletContainer<MetaAuthenticationServletAdapter<
+      MetaRiskServlet<ApplicationAdministrationClient*,
+        ApplicationMarketDataClient*, ApplicationOrderExecutionClient*,
+        LiveTimer, std::unique_ptr<LiveNtpTimeClient>, ApplicationDataStore*>,
+      ApplicationServiceLocatorClient*>, TcpServerSocket,
+      BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
 }
 
 int main(int argc, const char** argv) {
   try {
-    auto config = ParseCommandLine(argc, argv, "0.9-r" RISK_SERVER_VERSION
-      "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto serviceConfig = TryOrNest([&] {
-      return ServiceConfiguration::Parse(GetNode(config, "server"),
-        RiskService::SERVICE_NAME);
+    auto config = parse_command_line(argc, argv, "1.0-r" RISK_SERVER_VERSION
+      "\nCopyright (C) 2026 Spire Trading Inc.");
+    auto service_config = try_or_nest([&] {
+      return ServiceConfiguration::parse(
+        get_node(config, "server"), RISK_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'server'."));
-    auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
-      GetNode(config, "service_locator"));
-    auto definitionsClient = ApplicationDefinitionsClient(
-      serviceLocatorClient.Get());
-    auto administrationClient = ApplicationAdministrationClient(
-      serviceLocatorClient.Get());
-    auto marketDataClient = ApplicationMarketDataClient(
-      serviceLocatorClient.Get());
-    auto orderExecutionClient = ApplicationOrderExecutionClient(
-      serviceLocatorClient.Get());
-    auto timeClient = MakeLiveNtpTimeClientFromServiceLocator(
-      *serviceLocatorClient);
-    auto mySqlConfig = TryOrNest([&] {
-      return MySqlConfig::Parse(GetNode(config, "data_store"));
+    auto service_locator_client = ApplicationServiceLocatorClient(
+      ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
+    auto definitions_client =
+      ApplicationDefinitionsClient(Ref(service_locator_client));
+    auto administration_client =
+      ApplicationAdministrationClient(Ref(service_locator_client));
+    auto market_data_client =
+      ApplicationMarketDataClient(Ref(service_locator_client));
+    auto order_execution_client =
+      ApplicationOrderExecutionClient(Ref(service_locator_client));
+    auto time_client = make_live_ntp_time_client(service_locator_client);
+    auto mysql_config = try_or_nest([&] {
+      return MySqlConfig::parse(get_node(config, "data_store"));
     }, std::runtime_error("Error parsing section 'data_store'."));
-    auto dataStore = ApplicationDataStore(MakeSqlConnection(MySql::Connection(
-      mySqlConfig.m_address.GetHost(), mySqlConfig.m_address.GetPort(),
-      mySqlConfig.m_username, mySqlConfig.m_password, mySqlConfig.m_schema)));
-    auto exchangeRates = definitionsClient->LoadExchangeRates();
-    auto markets = definitionsClient->LoadMarketDatabase();
-    auto destinations = definitionsClient->LoadDestinationDatabase();
+    auto data_store = ApplicationDataStore(
+      std::make_unique<SqlConnection<MySql::Connection>>(MySql::Connection(
+        mysql_config.m_address.get_host(), mysql_config.m_address.get_port(),
+        mysql_config.m_username, mysql_config.m_password,
+        mysql_config.m_schema)));
+    auto exchange_rates =
+      ExchangeRateTable(definitions_client.load_exchange_rates());
+    auto venues = definitions_client.load_venue_database();
+    auto destinations = definitions_client.load_destination_database();
     auto accounts = std::make_shared<Queue<AccountUpdate>>();
-    serviceLocatorClient->MonitorAccounts(accounts);
-    auto riskServer = RiskServletContainer(Initialize(
-      serviceLocatorClient.Get(), Initialize(
-        MakeConverterQueueReader(MakeFilteredQueueReader(std::move(accounts),
+    service_locator_client.monitor(accounts);
+    auto risk_server =
+      RiskServletContainer(init(&service_locator_client, init(
+        convert(filter(std::move(accounts),
           [] (const auto& update) {
             return update.m_type == AccountUpdate::Type::ADDED;
           }),
           [] (const auto& update) {
             return update.m_account;
-          }), administrationClient.Get(), marketDataClient.Get(),
-        orderExecutionClient.Get(),
-        [] {
-          return std::make_unique<LiveTimer>(seconds(1));
-        }, std::move(timeClient), &dataStore, std::move(exchangeRates),
-        std::move(markets), std::move(destinations))),
-      Initialize(serviceConfig.m_interface),
+          }), &administration_client, &market_data_client,
+          &order_execution_client,
+          [] {
+            return std::make_unique<LiveTimer>(seconds(1));
+          }, std::move(time_client), &data_store, std::move(exchange_rates),
+        std::move(venues), std::move(destinations))),
+      init(service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-    Register(*serviceLocatorClient, serviceConfig);
-    WaitForKillEvent();
-    serviceLocatorClient->Close();
-    orderExecutionClient->Close();
-    marketDataClient->Close();
-    administrationClient->Close();
+    add(service_locator_client, service_config);
+    wait_for_kill_event();
+    service_locator_client.close();
+    order_execution_client.close();
+    market_data_client.close();
+    administration_client.close();
   } catch(...) {
-    ReportCurrentException();
+    report_current_exception();
     return -1;
   }
   return 0;

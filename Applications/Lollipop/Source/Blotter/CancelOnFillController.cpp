@@ -4,41 +4,43 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace std;
 
-CancelOnFillController::OrderEntry::OrderEntry(const Order& order)
-    : m_order(&order),
-      m_cancelSubmitted(false),
-      m_status(OrderStatus::PENDING_NEW) {}
+CancelOnFillController::OrderEntry::OrderEntry(
+  const std::shared_ptr<Order>& order)
+  : m_order(order),
+    m_cancelSubmitted(false),
+    m_status(OrderStatus::PENDING_NEW) {}
 
 CancelOnFillController::CancelOnFillController(Ref<UserProfile> userProfile)
-    : m_userProfile(userProfile.Get()) {
+    : m_userProfile(userProfile.get()) {
   m_slotHandler.emplace();
 }
 
-void CancelOnFillController::SetOrderExecutionPublisher(
-    Ref<const OrderExecutionPublisher> orderExecutionPublisher) {
+void CancelOnFillController::SetOrderExecutionPublisher(Ref<
+    const Publisher<std::shared_ptr<Order>>> orderExecutionPublisher) {
   m_slotHandler = std::nullopt;
   m_slotHandler.emplace();
-  m_orderExecutionPublisher = orderExecutionPublisher.Get();
-  m_orderExecutionPublisher->Monitor(m_slotHandler->GetSlot<const Order*>(
-    std::bind(&CancelOnFillController::OnOrderExecuted, this,
-    std::placeholders::_1)));
+  m_orderExecutionPublisher = orderExecutionPublisher.get();
+  m_orderExecutionPublisher->monitor(
+    m_slotHandler->get_slot<std::shared_ptr<Order>>(
+      std::bind(&CancelOnFillController::OnOrderExecuted, this,
+        std::placeholders::_1)));
 }
 
-void CancelOnFillController::OnOrderExecuted(const Order* order) {
-  Side side = order->GetInfo().m_fields.m_side;
+void CancelOnFillController::OnOrderExecuted(
+    const std::shared_ptr<Order>& order) {
+  Side side = order->get_info().m_fields.m_side;
   if(side == Side::NONE) {
     return;
   }
-  shared_ptr<OrderEntry> orderEntry = std::make_shared<OrderEntry>(*order);
+  shared_ptr<OrderEntry> orderEntry = std::make_shared<OrderEntry>(order);
   deque<shared_ptr<OrderEntry>>& orderEntries =
-    m_securityToOrderEntryList[order->GetInfo().m_fields.m_security][
+    m_securityToOrderEntryList[order->get_info().m_fields.m_security][
     static_cast<int>(side)];
   orderEntries.push_back(orderEntry);
-  order->GetPublisher().Monitor(m_slotHandler->GetSlot<ExecutionReport>(
+  order->get_publisher().monitor(m_slotHandler->get_slot<ExecutionReport>(
     std::bind(&CancelOnFillController::OnExecutionReport, this,
     weak_ptr<OrderEntry>(orderEntry), std::placeholders::_1)));
 }
@@ -54,20 +56,20 @@ void CancelOnFillController::OnExecutionReport(
     return;
   }
   const InteractionsProperties& interactionsProperties =
-    m_userProfile->GetInteractionProperties().Get(
-    orderEntry->m_order->GetInfo().m_fields.m_security);
+    m_userProfile->GetInteractionProperties().get(
+    orderEntry->m_order->get_info().m_fields.m_security);
   if(interactionsProperties.m_cancelOnFill) {
     deque<shared_ptr<OrderEntry>>& orderEntries =
       m_securityToOrderEntryList[
-      orderEntry->m_order->GetInfo().m_fields.m_security][
-      static_cast<int>(orderEntry->m_order->GetInfo().m_fields.m_side)];
+      orderEntry->m_order->get_info().m_fields.m_security][
+      static_cast<int>(orderEntry->m_order->get_info().m_fields.m_side)];
     auto i = orderEntries.begin();
     while(i != orderEntries.end()) {
-      if(i == orderEntries.begin() && IsTerminal((*i)->m_status)) {
+      if(i == orderEntries.begin() && is_terminal((*i)->m_status)) {
         i = orderEntries.erase(i);
       } else if(!(*i)->m_cancelSubmitted) {
         (*i)->m_cancelSubmitted = true;
-        m_userProfile->GetServiceClients().GetOrderExecutionClient().Cancel(
+        m_userProfile->GetClients().get_order_execution_client().cancel(
           *(*i)->m_order);
         ++i;
       } else {

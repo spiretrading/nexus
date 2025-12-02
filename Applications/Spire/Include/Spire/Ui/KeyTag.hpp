@@ -3,10 +3,12 @@
 #include <memory>
 #include <QWidget>
 #include <boost/signals2/connection.hpp>
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Styles/StateSelector.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class TextBox;
+
 namespace Styles {
 
   /** Styles the KeyTag when it's displaying a modifier key. */

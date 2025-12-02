@@ -5,7 +5,6 @@
 #include <QTimer>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/Evaluator.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 

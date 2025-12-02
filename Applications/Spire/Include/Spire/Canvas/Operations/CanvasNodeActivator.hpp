@@ -2,7 +2,7 @@
 #define SPIRE_CANVASNODEACTIVATOR_HPP
 #include <Beam/Pointers/Ref.hpp>
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 class QWidget;
 

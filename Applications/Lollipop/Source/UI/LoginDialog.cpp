@@ -10,8 +10,6 @@
 #include "Version.hpp"
 
 using namespace Beam;
-using namespace Beam::Network;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace Spire;
 using namespace Spire::UI;
@@ -95,7 +93,7 @@ void LoginDialog::UpdateChromaHash() {
   static const auto CHROMA_HASHES = 3;
   static const auto COLOR_LENGTH = 6;
   auto password = m_ui->m_passwordInput->text().toStdString();
-  auto hash = ComputeSHA(password);
+  auto hash = compute_sha(password);
   for(auto i = 0; i < CHROMA_HASHES; ++i) {
     auto color = hash.substr(COLOR_LENGTH * i, COLOR_LENGTH);
     auto styleSheet = QString::fromStdString(
@@ -139,7 +137,7 @@ void LoginDialog::OnLoginButtonClicked() {
     m_ui->m_loginButton->setEnabled(true);
     m_state = State::READY;
     try {
-      m_serviceLocatorClient = std::move(serviceLocatorClient.Get());
+      m_serviceLocatorClient = std::move(serviceLocatorClient.get());
       Q_EMIT accept();
     } catch(const AuthenticationException&) {
       m_ui->m_resultLabel->setText(tr("Invalid username or password."));

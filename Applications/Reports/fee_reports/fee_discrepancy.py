@@ -22,19 +22,18 @@ def report_yaml_error(error):
 def parse_ip_address(source):
   separator = source.find(':')
   if separator == -1:
-    return beam.network.IpAddress(source, 0)
-  return beam.network.IpAddress(source[0:separator],
+    return beam.IpAddress(source, 0)
+  return beam.IpAddress(source[0:separator],
     int(source[separator + 1 :]))
 
 def execute_report(account, start_date, end_date, fee_table, service_clients):
   definitions_client = service_clients.get_definitions_client()
-  market_database = definitions_client.load_market_database()
-  time_zone_database = definitions_client.load_time_zone_database()
+  venues = definitions_client.load_venue_database()
+  time_zones = definitions_client.load_time_zones()
   order_execution_client = service_clients.get_order_execution_client()
   order_queue = beam.Queue()
-  nexus.order_execution_service.query_daily_order_submissions(account,
-    start_date, end_date, market_database, time_zone_database,
-    order_execution_client, order_queue)
+  nexus.query_daily_order_submissions(account, start_date, end_date, venues,
+    time_zones, order_execution_client, order_queue)
   orders = []
   beam.flush(order_queue, orders)
   fee_state = nexus.ConsolidatedTmxFeeTable.State()
@@ -45,8 +44,7 @@ def execute_report(account, start_date, end_date, fee_table, service_clients):
       continue
     execution_reports = order.get_publisher().get_snapshot()
     for execution_report in execution_reports:
-      calculated_fee = nexus.order_execution_service.ExecutionReport(
-        execution_report)
+      calculated_fee = nexus.ExecutionReport(execution_report)
       calculated_fee.execution_fee = nexus.Money.ZERO
       calculated_fee.processing_fee = nexus.Money.ZERO
       calculated_fee.commission = nexus.Money.ZERO
@@ -58,7 +56,7 @@ def execute_report(account, start_date, end_date, fee_table, service_clients):
           execution_report.commission):
         print('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' %
           (order.info.order_id, execution_report.sequence,
-          order.info.fields.security.symbol, order.info.fields.security.market,
+          order.info.fields.security.symbol, order.info.fields.security.venue,
           order.info.fields.side, execution_report.last_price,
           execution_report.last_quantity, execution_report.last_market,
           execution_report.liquidity_flag, execution_report.execution_fee,
@@ -67,9 +65,9 @@ def execute_report(account, start_date, end_date, fee_table, service_clients):
           calculated_fee.commission))
         sys.stdout.flush()
 
-def load_fee_table(config, market_database):
+def load_fee_table(config, venues):
   fee_config = beam.load_yaml(config['fee_table'])
-  return nexus.parse_consolidated_tmx_fee_table(fee_config, market_database)
+  return nexus.parse_consolidated_tmx_fee_table(fee_config, venues)
 
 def main():
   parser = argparse.ArgumentParser(
@@ -93,12 +91,11 @@ def main():
   address = parse_ip_address(config['service_locator'])
   username = config['username']
   password = config['password']
-  start_date = beam.time_service.to_utc_time(args.start)
-  end_date = beam.time_service.to_utc_time(args.end)
-  service_clients = nexus.ApplicationServiceClients(username, password, address)
-  market_database = \
-    service_clients.get_definitions_client().load_market_database()
-  fee_table = load_fee_table(config, market_database)
+  start_date = beam.to_utc_time(args.start)
+  end_date = beam.to_utc_time(args.end)
+  service_clients = nexus.ServiceClients(username, password, address)
+  venues = service_clients.get_definitions_client().load_venue_database()
+  fee_table = load_fee_table(config, venues)
   for account in \
       service_clients.get_service_locator_client().load_all_accounts():
     execute_report(account, start_date, end_date, fee_table, service_clients)

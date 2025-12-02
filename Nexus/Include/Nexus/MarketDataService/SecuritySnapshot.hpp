@@ -1,65 +1,57 @@
 #ifndef NEXUS_MARKET_DATA_SECURITY_SNAPSHOT_HPP
 #define NEXUS_MARKET_DATA_SECURITY_SNAPSHOT_HPP
-#include <unordered_map>
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
-#include <Beam/Serialization/ShuttleUnorderedMap.hpp>
 #include "Nexus/Definitions/Security.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
-#include "Nexus/MarketDataService/MarketDataType.hpp"
-#include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
-  /* Stores a market data snapshot of a Security. */
+  /** Stores a market data snapshot of a Security. */
   struct SecuritySnapshot {
 
-    //! The Security represented.
+    /** The Security represented. */
     Security m_security;
 
-    //! The most recent BboQuote.
-    SequencedBboQuote m_bboQuote;
+    /** The most recent BboQuote. */
+    SequencedBboQuote m_bbo_quote;
 
-    //! The most recent TimeAndSale.
-    SequencedTimeAndSale m_timeAndSale;
+    /** The most recent TimeAndSale. */
+    SequencedTimeAndSale m_time_and_sale;
 
-    //! The list of MarketQuotes.
-    std::unordered_map<MarketCode, SequencedMarketQuote> m_marketQuotes;
+    /** The list of BookQuotes that are asks. */
+    std::vector<SequencedBookQuote> m_asks;
 
-    //! The list of BookQuotes that are ASKs.
-    std::vector<SequencedBookQuote> m_askBook;
+    /** The list of BookQuotes that are bids. */
+    std::vector<SequencedBookQuote> m_bids;
 
-    //! The list of BookQuotes that are BIDs.
-    std::vector<SequencedBookQuote> m_bidBook;
-
-    //! Constructs a SecuritySnapshot.
+    /** Constructs an empty SecuritySnapshot. */
     SecuritySnapshot() = default;
 
-    //! Constructs a SecuritySnapshot.
-    /*!
-      \param security The Security represented.
-    */
-    SecuritySnapshot(const Security& security);
+    /**
+     * Constructs a SecuritySnapshot.
+     * @param security The Security represented.
+     */
+    explicit SecuritySnapshot(Security security) noexcept;
+
+    bool operator ==(const SecuritySnapshot&) const = default;
   };
 
-  inline SecuritySnapshot::SecuritySnapshot(const Security& security)
-      : m_security(security) {}
+  inline SecuritySnapshot::SecuritySnapshot(Security security) noexcept
+    : m_security(std::move(security)) {}
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
-  struct Shuttle<Nexus::MarketDataService::SecuritySnapshot> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::MarketDataService::SecuritySnapshot& value,
-        unsigned int version) {
-      shuttle.Shuttle("security", value.m_security);
-      shuttle.Shuttle("bbo_quote", value.m_bboQuote);
-      shuttle.Shuttle("time_and_sale", value.m_timeAndSale);
-      shuttle.Shuttle("market_quotes", value.m_marketQuotes);
-      shuttle.Shuttle("ask_book", value.m_askBook);
-      shuttle.Shuttle("bid_book", value.m_bidBook);
+  struct Shuttle<Nexus::SecuritySnapshot> {
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::SecuritySnapshot& value,
+        unsigned int version) const {
+      shuttle.shuttle("security", value.m_security);
+      shuttle.shuttle("bbo_quote", value.m_bbo_quote);
+      shuttle.shuttle("time_and_sale", value.m_time_and_sale);
+      shuttle.shuttle("asks", value.m_asks);
+      shuttle.shuttle("bids", value.m_bids);
     }
   };
 }

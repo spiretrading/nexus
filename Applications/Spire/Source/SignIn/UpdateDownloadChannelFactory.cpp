@@ -4,8 +4,6 @@
 #include <Beam/WebServices/TcpChannelFactory.hpp>
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::WebServices;
 using namespace boost;
 using namespace boost::chrono;
 using namespace boost::posix_time;
@@ -16,7 +14,7 @@ namespace {
     std::shared_ptr<ProgressModel> m_download_progress;
     std::shared_ptr<ValueModel<time_duration>> m_time_left;
     std::size_t m_download_size;
-    ReaderBox* m_reader;
+    Reader* m_reader;
     std::size_t m_total_read_bytes;
     optional<steady_clock::time_point> m_start_time;
     steady_clock::time_point m_last_read_time;
@@ -24,7 +22,7 @@ namespace {
 
     explicit ProgressReader(std::shared_ptr<ProgressModel> download_progress,
       std::shared_ptr<ValueModel<time_duration>> time_left,
-      std::size_t download_size, ReaderBox& reader)
+      std::size_t download_size, Reader& reader)
       : m_download_progress(std::move(download_progress)),
         m_time_left(std::move(time_left)),
         m_download_size(download_size),
@@ -32,22 +30,13 @@ namespace {
         m_total_read_bytes(0),
         m_last_block(0) {}
 
-    bool IsDataAvailable() const {
-      return m_reader->IsDataAvailable();
+    bool poll() const {
+      return m_reader->poll();
     }
 
-    template<typename R>
-    std::size_t Read(Out<R> destination) {
-      return update_download_progress(m_reader->Read(Store(destination)));
-    }
-
-    std::size_t Read(char* destination, std::size_t size) {
-      return update_download_progress(m_reader->Read(destination, size));
-    }
-
-    template<typename R>
-    std::size_t Read(Out<R> destination, std::size_t size) {
-      return update_download_progress(m_reader->Read(Store(destination), size));
+    template<IsBuffer R>
+    std::size_t read(Out<R> destination, std::size_t size = -1) {
+      return update_download_progress(m_reader->read(out(destination), size));
     }
 
     std::size_t update_download_progress(std::size_t size) {
@@ -78,11 +67,6 @@ namespace {
   };
 }
 
-namespace Beam {
-  template<>
-  struct ImplementsConcept<ProgressReader, IO::Reader> : std::true_type {};
-}
-
 UpdateDownloadChannelFactory::UpdateDownloadChannelFactory(
   std::size_t download_size, std::shared_ptr<ProgressModel> download_progress,
   std::shared_ptr<ValueModel<posix_time::time_duration>> time_left)
@@ -90,15 +74,14 @@ UpdateDownloadChannelFactory::UpdateDownloadChannelFactory(
     m_download_progress(std::move(download_progress)),
     m_time_left(std::move(time_left)) {}
 
-std::unique_ptr<ChannelBox>
+std::unique_ptr<Channel>
     UpdateDownloadChannelFactory::operator ()(const Uri& uri) const {
   auto tcp_channel = TcpSocketChannelFactory()(uri);
   auto reader = std::make_unique<ProgressReader>(m_download_progress,
-    m_time_left, m_download_size, tcp_channel->GetReader());
-  auto progress_channel = std::make_unique<ChannelBox>(
-    std::in_place_type<WrapperChannel<std::unique_ptr<ChannelBox>,
-      std::unique_ptr<ProgressReader>>>, std::move(tcp_channel),
-      std::move(reader));
+    m_time_left, m_download_size, tcp_channel->get_reader());
+  auto progress_channel = std::make_unique<Channel>(
+    std::in_place_type<WrapperChannel<Channel, Reader>>,
+    Channel(std::move(tcp_channel)), Reader(std::move(reader)));
   m_download_progress->set(0);
   return progress_channel;
 }

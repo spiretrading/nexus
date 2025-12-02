@@ -24,13 +24,11 @@ AccountInfoWidget::~AccountInfoWidget() {}
 
 void AccountInfoWidget::Initialize(Ref<UserProfile> userProfile,
     bool isReadOnly, bool isPasswordReadOnly) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_isReadOnly = isReadOnly;
   m_ui->m_countryInput->clear();
   if(!m_isReadOnly) {
-    const vector<CountryDatabase::Entry>& countries =
-      m_userProfile->GetCountryDatabase().GetEntries();
-    for(const CountryDatabase::Entry& country : countries) {
+    for(auto& country : DEFAULT_COUNTRIES.get_entries()) {
       m_ui->m_countryInput->addItem(QString::fromStdString(country.m_name));
     }
   }
@@ -61,33 +59,32 @@ void AccountInfoWidget::SetModel(
     const std::shared_ptr<AccountInfoModel>& model) {
   m_model = model;
   m_ui->m_firstNameInput->setText(
-    QString::fromStdString(model->GetIdentity().m_firstName));
+    QString::fromStdString(model->GetIdentity().m_first_name));
   m_ui->m_lastNameInput->setText(
-    QString::fromStdString(model->GetIdentity().m_lastName));
+    QString::fromStdString(model->GetIdentity().m_last_name));
   m_ui->m_lastLoginInput->setText(
     CustomVariantItemDelegate(Ref(*m_userProfile)).displayText(
-    QVariant::fromValue(model->GetIdentity().m_lastLoginTime), QLocale()));
+    QVariant::fromValue(model->GetIdentity().m_last_login_time), QLocale()));
   m_ui->m_registeredInput->setText(
     CustomVariantItemDelegate(Ref(*m_userProfile)).displayText(
-    QVariant::fromValue(model->GetIdentity().m_registrationTime), QLocale()));
+    QVariant::fromValue(model->GetIdentity().m_registration_time), QLocale()));
   m_ui->m_accountIdInput->setText(QString::number(model->GetAccount().m_id));
   m_ui->m_emailInput->setText(QString::fromStdString(
-    model->GetIdentity().m_emailAddress));
+    model->GetIdentity().m_email_address));
   m_ui->m_addressLineOneInput->setText(
-    QString::fromStdString(model->GetIdentity().m_addressLineOne));
+    QString::fromStdString(model->GetIdentity().m_address_line_one));
   m_ui->m_addressLineTwoInput->setText(
-    QString::fromStdString(model->GetIdentity().m_addressLineTwo));
+    QString::fromStdString(model->GetIdentity().m_address_line_two));
   m_ui->m_addressLineThreeInput->setText(
-    QString::fromStdString(model->GetIdentity().m_addressLineThree));
+    QString::fromStdString(model->GetIdentity().m_address_line_three));
   m_ui->m_cityInput->setText(
     QString::fromStdString(model->GetIdentity().m_city));
   m_ui->m_provinceInput->setText(
     QString::fromStdString(model->GetIdentity().m_province));
   m_ui->m_userNotesInput->setPlainText(
-    QString::fromStdString(model->GetIdentity().m_userNotes));
+    QString::fromStdString(model->GetIdentity().m_user_notes));
   const CountryDatabase::Entry& country =
-    m_userProfile->GetCountryDatabase().FromCode(
-    m_model->GetIdentity().m_country);
+    DEFAULT_COUNTRIES.from(m_model->GetIdentity().m_country);
   if(m_isReadOnly) {
     m_ui->m_countryInput->clear();
     m_ui->m_countryInput->addItem(QString::fromStdString(country.m_name));
@@ -102,25 +99,24 @@ void AccountInfoWidget::SetModel(
 }
 
 void AccountInfoWidget::Commit() {
-  m_model->GetIdentity().m_firstName =
+  m_model->GetIdentity().m_first_name =
     m_ui->m_firstNameInput->text().toStdString();
-  m_model->GetIdentity().m_lastName =
+  m_model->GetIdentity().m_last_name =
     m_ui->m_lastNameInput->text().toStdString();
-  m_model->GetIdentity().m_emailAddress =
+  m_model->GetIdentity().m_email_address =
     m_ui->m_emailInput->text().toStdString();
-  m_model->GetIdentity().m_addressLineOne =
+  m_model->GetIdentity().m_address_line_one =
     m_ui->m_addressLineOneInput->text().toStdString();
-  m_model->GetIdentity().m_addressLineTwo =
+  m_model->GetIdentity().m_address_line_two =
     m_ui->m_addressLineTwoInput->text().toStdString();
-  m_model->GetIdentity().m_addressLineThree =
+  m_model->GetIdentity().m_address_line_three =
     m_ui->m_addressLineThreeInput->text().toStdString();
   m_model->GetIdentity().m_city = m_ui->m_cityInput->text().toStdString();
   m_model->GetIdentity().m_province =
     m_ui->m_provinceInput->text().toStdString();
-  m_model->GetIdentity().m_userNotes =
+  m_model->GetIdentity().m_user_notes =
     m_ui->m_userNotesInput->toPlainText().toStdString();
-  const CountryDatabase::Entry& country =
-    m_userProfile->GetCountryDatabase().FromName(
+  const CountryDatabase::Entry& country = DEFAULT_COUNTRIES.from_name(
     m_ui->m_countryInput->currentText().toStdString());
   m_model->GetIdentity().m_country = country.m_code;
   try {
@@ -148,7 +144,7 @@ void AccountInfoWidget::OnUpdatePasswordButton() {
   }
   string password = m_ui->m_newPasswordInput->text().toStdString();
   try {
-    m_userProfile->GetServiceClients().GetServiceLocatorClient().StorePassword(
+    m_userProfile->GetClients().get_service_locator_client().store_password(
       m_model->GetAccount(), password);
     QMessageBox::information(this, QObject::tr("Spire"),
       QObject::tr("Password has been updated successfully."));

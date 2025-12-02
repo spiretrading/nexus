@@ -7,7 +7,8 @@
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Sql/MySqlConfig.hpp>
 #include <Beam/Sql/SqlConnection.hpp>
-#include <Beam/Threading/LiveTimer.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
+#include <Beam/TimeService/LocalTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
@@ -20,74 +21,57 @@
 #include "Version.hpp"
 
 using namespace Beam;
-using namespace Beam::Codecs;
-using namespace Beam::IO;
-using namespace Beam::Network;
-using namespace Beam::Routines;
-using namespace Beam::Serialization;
-using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::DefinitionsService;
-using namespace Nexus::MarketDataService;
 using namespace Viper;
 
 namespace {
   using AdministrationServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<MetaAdministrationServlet<
-      ApplicationServiceLocatorClient::Client*, CachedAdministrationDataStore<
-        SqlAdministrationDataStore<SqlConnection<MySql::Connection>>>>,
-      ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
+      ApplicationServiceLocatorClient*, CachedAdministrationDataStore<
+        SqlAdministrationDataStore<SqlConnection<MySql::Connection>>>,
+      LocalTimeClient>, ApplicationServiceLocatorClient*>, TcpServerSocket,
       BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
 
-  EntitlementDatabase ParseEntitlements(const YAML::Node& config,
-      const CurrencyDatabase& currencies,
-      ApplicationServiceLocatorClient& serviceLocatorClient) {
-    auto entitlementsDirectory = LoadOrCreateDirectory(*serviceLocatorClient,
-      "entitlements", DirectoryEntry::GetStarDirectory());
+  EntitlementDatabase parse_entitlements(
+      const YAML::Node& config, const CurrencyDatabase& currencies,
+      ApplicationServiceLocatorClient& service_locator_client) {
+    auto entitlements_directory = load_or_create_directory(
+      service_locator_client, "entitlements", DirectoryEntry::STAR_DIRECTORY);
     auto database = EntitlementDatabase();
-    for(auto entitlementConfig : config) {
+    for(auto entitlement_config : config) {
       auto entry = EntitlementDatabase::Entry();
-      entry.m_name = Extract<std::string>(entitlementConfig, "name");
-      auto price = Money::FromValue(Extract<std::string>(entitlementConfig,
-        "price"));
-      if(!price.is_initialized()) {
-        throw std::runtime_error("Invalid entitlement price.");
-      }
-      entry.m_price = *price;
-      entry.m_currency = currencies.FromCode(
-        Extract<std::string>(entitlementConfig, "currency")).m_id;
-      auto groupName = Extract<std::string>(entitlementConfig, "group");
-      entry.m_groupEntry = LoadOrCreateDirectory(*serviceLocatorClient,
-        groupName, entitlementsDirectory);
-      auto applicability = GetNode(entitlementConfig, "applicability");
-      for(auto applicabilityConfig : applicability) {
-        auto market = MarketCode(
-          Extract<std::string>(applicabilityConfig, "market", ""));
-        auto source = MarketCode(
-          Extract<std::string>(applicabilityConfig, "source"));
-        auto key = EntitlementKey(market, source);
-        auto messages = GetNode(applicabilityConfig, "messages");
-        for(auto messageConfig : messages) {
-          auto message = messageConfig.as<std::string>();
+      entry.m_name = extract<std::string>(entitlement_config, "name");
+      entry.m_price =
+        parse_money(extract<std::string>(entitlement_config, "price"));
+      entry.m_currency = currencies.from(
+        extract<std::string>(entitlement_config, "currency")).m_id;
+      auto group_name = extract<std::string>(entitlement_config, "group");
+      entry.m_group_entry = load_or_create_directory(
+        service_locator_client, group_name, entitlements_directory);
+      auto applicability = get_node(entitlement_config, "applicability");
+      for(auto applicability_config : applicability) {
+        auto venue =
+          Venue(extract<std::string>(applicability_config, "venue", ""));
+        auto source =
+          Venue(extract<std::string>(applicability_config, "source"));
+        auto key = EntitlementKey(venue, source);
+        auto messages = get_node(applicability_config, "messages");
+        for(auto message_config : messages) {
+          auto message = message_config.as<std::string>();
           if(message == "BBO") {
-            entry.m_applicability[key].Set(MarketDataType::BBO_QUOTE);
-          } else if(message == "MQT") {
-            entry.m_applicability[key].Set(MarketDataType::MARKET_QUOTE);
+            entry.m_applicability[key].set(MarketDataType::BBO_QUOTE);
           } else if(message == "BOOK") {
-            entry.m_applicability[key].Set(MarketDataType::BOOK_QUOTE);
+            entry.m_applicability[key].set(MarketDataType::BOOK_QUOTE);
           } else if(message == "TAS") {
-            entry.m_applicability[key].Set(MarketDataType::TIME_AND_SALE);
+            entry.m_applicability[key].set(MarketDataType::TIME_AND_SALE);
           } else if(message == "IMB") {
-            entry.m_applicability[key].Set(MarketDataType::ORDER_IMBALANCE);
+            entry.m_applicability[key].set(MarketDataType::ORDER_IMBALANCE);
           }
         }
       }
-      database.Add(entry);
+      database.add(entry);
     }
     return database;
   }
@@ -95,39 +79,38 @@ namespace {
 
 int main(int argc, const char** argv) {
   try {
-    auto config = ParseCommandLine(argc, argv,
+    auto config = parse_command_line(argc, argv,
       "1.0-r" ADMINISTRATION_SERVER_VERSION
-      "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto mySqlConfig = TryOrNest([&] {
-      return MySqlConfig::Parse(GetNode(config, "data_store"));
+      "\nCopyright (C) 2026 Spire Trading Inc.");
+    auto mysql_config = try_or_nest([&] {
+      return MySqlConfig::parse(get_node(config, "data_store"));
     }, std::runtime_error("Error parsing section 'data_store'."));
-    auto serviceConfig = TryOrNest([&] {
-      return ServiceConfiguration::Parse(GetNode(config, "server"),
-        AdministrationService::SERVICE_NAME);
+    auto service_config = try_or_nest([&] {
+      return ServiceConfiguration::parse(
+        get_node(config, "server"), ADMINISTRATION_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'server'."));
-    auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
-      GetNode(config, "service_locator"));
-    auto definitionsClient = ApplicationDefinitionsClient(
-      serviceLocatorClient.Get());
-    auto entitlements = ParseEntitlements(GetNode(config, "entitlements"),
-      definitionsClient->LoadCurrencyDatabase(), serviceLocatorClient);
-    auto accountSource =
-      [&] (unsigned int id) {
-        return serviceLocatorClient->LoadDirectoryEntry(id);
-      };
-    auto server = AdministrationServletContainer(Initialize(
-      serviceLocatorClient.Get(), Initialize(serviceLocatorClient.Get(),
-        entitlements, Initialize(Initialize(MakeSqlConnection(MySql::Connection(
-          mySqlConfig.m_address.GetHost(), mySqlConfig.m_address.GetPort(),
-          mySqlConfig.m_username, mySqlConfig.m_password,
-          mySqlConfig.m_schema)), accountSource)))),
-      Initialize(serviceConfig.m_interface),
+    auto service_locator_client = ApplicationServiceLocatorClient(
+      ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
+    auto definitions_client =
+      ApplicationDefinitionsClient(Ref(service_locator_client));
+    auto entitlements = parse_entitlements(get_node(config, "entitlements"),
+      definitions_client.load_currency_database(), service_locator_client);
+    auto account_source = [&] (unsigned int id) {
+      return service_locator_client.load_directory_entry(id);
+    };
+    auto server = AdministrationServletContainer(
+      init(&service_locator_client, init(&service_locator_client, entitlements,
+        init(init(std::make_unique<SqlConnection<MySql::Connection>>(
+          MySql::Connection(mysql_config.m_address.get_host(),
+            mysql_config.m_address.get_port(), mysql_config.m_username,
+            mysql_config.m_password, mysql_config.m_schema)), account_source)),
+        init())), init(service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-    Register(*serviceLocatorClient, serviceConfig);
-    WaitForKillEvent();
-    serviceLocatorClient->Close();
+    add(service_locator_client, service_config);
+    wait_for_kill_event();
+    service_locator_client.close();
   } catch(...) {
-    ReportCurrentException();
+    report_current_exception();
     return -1;
   }
   return 0;

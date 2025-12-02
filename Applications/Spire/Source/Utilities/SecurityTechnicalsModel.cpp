@@ -3,16 +3,10 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::ChartingService;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::Queries;
-using namespace Nexus::TechnicalAnalysis;
 using namespace Spire;
 
 namespace {
@@ -119,19 +113,19 @@ connection SecurityTechnicalsModel::ConnectVolumeSignal(
 
 SecurityTechnicalsModel::SecurityTechnicalsModel(
     Ref<UserProfile> userProfile, const Security& security)
-    : m_userProfile(userProfile.Get()),
+    : m_userProfile(userProfile.get()),
       m_volume(0) {
   if(security == Security()) {
     return;
   }
-  auto timeAndSaleQuery = MakeRealTimeQuery(security);
-  timeAndSaleQuery.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-  m_userProfile->GetServiceClients().GetMarketDataClient().QueryTimeAndSales(
+  auto timeAndSaleQuery = make_real_time_query(security);
+  timeAndSaleQuery.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
+  m_userProfile->GetClients().get_market_data_client().query(
     timeAndSaleQuery, m_eventHandler.get_slot<TimeAndSale>(
       std::bind_front(&SecurityTechnicalsModel::OnTimeAndSale, this)));
   m_loadPromise = std::make_shared<QtPromise<void>>(QtPromise([=] {
-    return userProfile->GetServiceClients().GetMarketDataClient().
-      LoadSecurityTechnicals(security);
+    return userProfile->GetClients().get_market_data_client().load_technicals(
+      security);
   }, LaunchPolicy::ASYNC).then([=] (const SecurityTechnicals& technicals) {
     if(technicals.m_open != Money::ZERO) {
       m_open = technicals.m_open;

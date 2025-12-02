@@ -38,10 +38,10 @@ DashboardRenderer::DashboardRenderer(Ref<const DashboardModel> model,
     Ref<const DashboardSelectionModel> selectionModel,
     const DashboardRowRendererBuilder& rowRendererBuilder,
     Ref<UserProfile> userProfile)
-    : m_model{model.Get()},
-      m_selectionModel{selectionModel.Get()},
+    : m_model{model.get()},
+      m_selectionModel{selectionModel.get()},
       m_rowRendererBuilder{rowRendererBuilder},
-      m_userProfile{userProfile.Get()},
+      m_userProfile{userProfile.get()},
       m_header{std::make_unique<DashboardRow>(
         std::make_unique<ValueDashboardCell>())},
       m_headerEntry{std::make_unique<RowEntry>()},

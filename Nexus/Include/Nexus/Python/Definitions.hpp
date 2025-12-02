@@ -8,181 +8,181 @@ namespace Nexus::Python {
    * Exports the BboQuote struct.
    * @param module The module to export to.
    */
-  void ExportBboQuote(pybind11::module& module);
+  void export_bbo_quote(pybind11::module& module);
 
   /**
    * Exports the BookQuote struct.
    * @param module The module to export to.
    */
-  void ExportBookQuote(pybind11::module& module);
+  void export_book_quote(pybind11::module& module);
 
   /**
    * Exports the CountryDatabase class.
    * @param module The module to export to.
    */
-  void ExportCountry(pybind11::module& module);
+  void export_country(pybind11::module& module);
 
   /**
    * Exports the CurrencyDatabase class.
    * @param module The module to export to.
    */
-  void ExportCurrency(pybind11::module& module);
+  void export_currency(pybind11::module& module);
 
   /**
    * Exports the CurrencyPair class.
    * @param module The module to export to.
    */
-  void ExportCurrencyPair(pybind11::module& module);
+  void export_currency_pair(pybind11::module& module);
 
   /**
    * Exports the DefaultCountries namespace.
    * @param module The module to export to.
    */
-  void ExportDefaultCountries(pybind11::module& module);
+  void export_default_countries(pybind11::module& module);
 
   /**
    * Exports the DefaultCurrencies namespace.
    * @param module The module to export to.
    */
-  void ExportDefaultCurrencies(pybind11::module& module);
+  void export_default_currencies(pybind11::module& module);
 
   /**
    * Exports the DefaultDestinations namespace.
    * @param module The module to export to.
    */
-  void ExportDefaultDestinations(pybind11::module& module);
+  void export_default_destinations(pybind11::module& module);
 
   /**
-   * Exports the DefaultMarkets namespace.
+   * Exports the DefaultVenues namespace.
    * @param module The module to export to.
    */
-  void ExportDefaultMarkets(pybind11::module& module);
+  void export_default_venues(pybind11::module& module);
 
   /**
    * Exports the Definitions classes.
    * @param module The module to export to.
    */
-  void ExportDefinitions(pybind11::module& module);
+  void export_definitions(pybind11::module& module);
 
   /**
    * Exports the DestinationDatabase class.
    * @param module The module to export to.
    */
-  void ExportDestination(pybind11::module& module);
+  void export_destination(pybind11::module& module);
 
   /**
    * Exports the ExchangeRate class.
    * @param module The module to export to.
    */
-  void ExportExchangeRate(pybind11::module& module);
+  void export_exchange_rate(pybind11::module& module);
 
   /**
    * Exports the ExchangeRateTable class.
    * @param module The module to export to.
    */
-  void ExportExchangeRateTable(pybind11::module& module);
-
-  /**
-   * Exports the MarketDatabase class.
-   * @param module The module to export to.
-   */
-  void ExportMarket(pybind11::module& module);
-
-  /**
-   * Exports the MarketQuote struct.
-   * @param module The module to export to.
-   */
-  void ExportMarketQuote(pybind11::module& module);
+  void export_exchange_rate_table(pybind11::module& module);
 
   /**
    * Exports the Money class.
    * @param module The module to export to.
    */
-  void ExportMoney(pybind11::module& module);
+  void export_money(pybind11::module& module);
 
   /**
    * Exports the OrderImbalance class.
    * @param module The module to export to.
    */
-  void ExportOrderImbalance(pybind11::module& module);
+  void export_order_imbalance(pybind11::module& module);
 
   /**
    * Exports the OrderStatus enum.
    * @param module The module to export to.
    */
-  void ExportOrderStatus(pybind11::module& module);
+  void export_order_status(pybind11::module& module);
 
   /**
    * Exports the OrderType enum.
    * @param module The module to export to.
    */
-  void ExportOrderType(pybind11::module& module);
+  void export_order_type(pybind11::module& module);
 
   /**
    * Exports the Quantity class.
    * @param module The module to export to.
    */
-  void ExportQuantity(pybind11::module& module);
+  void export_quantity(pybind11::module& module);
 
   /**
    * Exports the Quote class.
    * @param module The module to export to.
    */
-  void ExportQuote(pybind11::module& module);
+  void export_quote(pybind11::module& module);
 
   /**
    * Exports the Region class.
    * @param module The module to export to.
    */
-  void ExportRegion(pybind11::module& module);
+  void export_region(pybind11::module& module);
+
+  /**
+   * Exports the RegionMap class.
+   * @param module The module to export to.
+   */
+  void export_region_map(pybind11::module& module);
 
   /**
    * Exports the Security class.
    * @param module The module to export to.
    */
-  void ExportSecurity(pybind11::module& module);
+  void export_security(pybind11::module& module);
 
   /**
    * Exports the SecurityInfo class.
    * @param module The module to export to.
    */
-  void ExportSecurityInfo(pybind11::module& module);
+  void export_security_info(pybind11::module& module);
 
   /**
    * Exports the SecurityTechnicals class.
    * @param module The module to export to.
    */
-  void ExportSecurityTechnicals(pybind11::module& module);
+  void export_security_technicals(pybind11::module& module);
 
   /**
    * Exports the Side enum.
    * @param module The module to export to.
    */
-  void ExportSide(pybind11::module& module);
+  void export_side(pybind11::module& module);
 
   /**
    * Exports the Tag class.
    * @param module The module to export to.
    */
-  void ExportTag(pybind11::module& module);
+  void export_tag(pybind11::module& module);
 
   /**
    * Exports the TimeAndSale struct.
    * @param module The module to export to.
    */
-  void ExportTimeAndSale(pybind11::module& module);
+  void export_time_and_sale(pybind11::module& module);
 
   /**
    * Exports the TimeInForce class.
    * @param module The module to export to.
    */
-  void ExportTimeInForce(pybind11::module& module);
+  void export_time_in_force(pybind11::module& module);
 
   /**
    * Exports the TradingSchedule class.
    * @param module The module to export to.
    */
-  void ExportTradingSchedule(pybind11::module& module);
+  void export_trading_schedule(pybind11::module& module);
+
+  /**
+   * Exports the VenueDatabase class.
+   * @param module The module to export to.
+   */
+  void export_venue(pybind11::module& module);
 }
 
 #endif

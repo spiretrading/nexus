@@ -1,5 +1,6 @@
 #ifndef SPIRE_BBOPRICEDASHBOARDCELLBUILDER_HPP
 #define SPIRE_BBOPRICEDASHBOARDCELLBUILDER_HPP
+#include "Nexus/Definitions/Side.hpp"
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardCellBuilder.hpp"
 
@@ -24,19 +25,18 @@ namespace Spire {
       virtual std::unique_ptr<DashboardCellBuilder> Clone() const;
 
     protected:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       Nexus::Side m_side;
 
       BboPriceDashboardCellBuilder() = default;
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void BboPriceDashboardCellBuilder::Shuttle(Shuttler& shuttle,
-      unsigned int version) {
-    DashboardCellBuilder::Shuttle(shuttle, version);
-    shuttle.Shuttle("side", m_side);
+  template<Beam::IsShuttle S>
+  void BboPriceDashboardCellBuilder::shuttle(S& shuttle, unsigned int version) {
+    DashboardCellBuilder::shuttle(shuttle, version);
+    shuttle.shuttle("side", m_side);
   }
 }
 

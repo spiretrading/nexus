@@ -10,49 +10,12 @@ namespace {
   auto split(const QString& name) {
     return name.split(' ', Qt::SkipEmptyParts);
   }
-  
-  auto to_text(CountryCode country, const CountryDatabase& countries) {
-    return QString::fromStdString(
-      countries.FromCode(country).m_threeLetterCode.GetData());
-  }
-
-  auto to_text(MarketCode market, const MarketDatabase& markets) {
-    return QString::fromStdString(markets.FromCode(market).m_displayName);
-  }
-
-  auto to_text(const Security& security, const MarketDatabase& markets) {
-    return QString::fromStdString(ToString(security, markets));
-  }
-
-  auto to_text(const Region& region, const CountryDatabase& countries,
-      const MarketDatabase& markets) {
-    auto texts = QVector<QString>();
-    for(auto& country : region.GetCountries()) {
-      texts.push_back(to_text(country, countries));
-    }
-    for(auto& market : region.GetMarkets()) {
-      texts.push_back(to_text(market, markets));
-    }
-    for(auto& security : region.GetSecurities()) {
-      texts.push_back(to_text(security, markets));
-    }
-    return texts;
-  }
-
-  auto to_text(const Destination& destination,
-      const DestinationDatabase& destinations) {
-    return QString::fromStdString(destinations.FromId(destination).m_id);
-  }
 }
 
 OrderTaskArgumentsContentCache::OrderTaskArgumentsContentCache(
-  std::shared_ptr<OrderTaskArgumentsListModel> model, CountryDatabase countries,
-  MarketDatabase markets, DestinationDatabase destinations,
+  std::shared_ptr<OrderTaskArgumentsListModel> model,
   AdditionalTagDatabase additional_tags)
   : m_model(std::move(model)),
-    m_countries(std::move(countries)),
-    m_markets(std::move(markets)),
-    m_destinations(std::move(destinations)),
     m_additional_tags(std::move(additional_tags)),
     m_connection(m_model->connect_operation_signal(
       std::bind_front(&OrderTaskArgumentsContentCache::on_operation, this))) {}
@@ -67,10 +30,11 @@ const std::vector<QString>& OrderTaskArgumentsContentCache::get(int index) {
   for(auto& name : split(arguments.m_name)) {
     row_words.push_back(name);
   }
-  for(auto& region : ::to_text(arguments.m_region, m_countries, m_markets)) {
+  for(auto& region : ::to_text(arguments.m_region)) {
     row_words.push_back(region);
   }
-  row_words.push_back(::to_text(arguments.m_destination, m_destinations));
+  row_words.push_back(QString::fromStdString(
+    DEFAULT_DESTINATIONS.from(arguments.m_destination).m_id));
   row_words.push_back(to_text(arguments.m_order_type));
   row_words.push_back(to_text(arguments.m_side));
   row_words.push_back(to_text(arguments.m_quantity));

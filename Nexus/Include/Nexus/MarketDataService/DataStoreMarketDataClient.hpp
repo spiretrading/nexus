@@ -1,232 +1,181 @@
 #ifndef NEXUS_DATA_STORE_MARKET_DATA_CLIENT_HPP
 #define NEXUS_DATA_STORE_MARKET_DATA_CLIENT_HPP
-#include <memory>
-#include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
-#include "Nexus/Definitions/SecurityTechnicals.hpp"
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
-#include "Nexus/MarketDataService/MarketWideDataQuery.hpp"
-#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
-#include "Nexus/MarketDataService/SecuritySnapshot.hpp"
+#include "Nexus/MarketDataService/MarketDataClient.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Implements a MarketDataClient that directly queries a data store.
    * @param <D> The type of HistoricalDataStore to query.
    */
-  template<typename D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   class DataStoreMarketDataClient {
     public:
 
       /** The type of HistoricalDataStore to query. */
-      using DataStore = Beam::GetTryDereferenceType<D>;
+      using DataStore = Beam::dereference_t<D>;
 
       /**
        * Constructs a DataStoreMarketDataClient.
-       * @param dataStore Initializes the HistoricalDataStore.
+       * @param data_store Initializes the HistoricalDataStore.
        */
-      template<typename S>
-      explicit DataStoreMarketDataClient(S&& dataStore);
+      template<Beam::Initializes<D> S>
+      explicit DataStoreMarketDataClient(S&& data_store);
 
       ~DataStoreMarketDataClient();
 
-      void QueryOrderImbalances(const MarketWideDataQuery& query,
+      void query(const VenueMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedOrderImbalance> queue);
-
-      void QueryOrderImbalances(const MarketWideDataQuery& query,
+      void query(const VenueMarketDataQuery& query,
         Beam::ScopedQueueWriter<OrderImbalance> queue);
-
-      void QueryBboQuotes(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedBboQuote> queue);
-
-      void QueryBboQuotes(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<BboQuote> queue);
-
-      void QueryBookQuotes(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedBookQuote> queue);
-
-      void QueryBookQuotes(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<BookQuote> queue);
-
-      void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        Beam::ScopedQueueWriter<SequencedMarketQuote> queue);
-
-      void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        Beam::ScopedQueueWriter<MarketQuote> queue);
-
-      void QueryTimeAndSales(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
-
-      void QueryTimeAndSales(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<TimeAndSale> queue);
-
-      SecuritySnapshot LoadSecuritySnapshot(const Security& security);
-
-      SecurityTechnicals LoadSecurityTechnicals(const Security& security);
-
-      std::vector<SecurityInfo> QuerySecurityInfo(
-        const SecurityInfoQuery& query);
-
-      std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
+      std::vector<SecurityInfo> query(const SecurityInfoQuery& query);
+      SecuritySnapshot load_snapshot(const Security& security);
+      SecurityTechnicals load_technicals(const Security& security);
+      std::vector<SecurityInfo> load_security_info_from_prefix(
         const std::string& prefix);
-
-      void Close();
+      void close();
 
     private:
-      Beam::GetOptionalLocalPtr<D> m_dataStore;
-      Beam::IO::OpenState m_openState;
+      Beam::local_ptr_t<D> m_data_store;
+      Beam::OpenState m_open_state;
 
       DataStoreMarketDataClient(const DataStoreMarketDataClient&) = delete;
       DataStoreMarketDataClient& operator =(
         const DataStoreMarketDataClient&) = delete;
   };
 
-  template<typename D>
-  template<typename S>
-  DataStoreMarketDataClient<D>::DataStoreMarketDataClient(S&& dataStore)
-    : m_dataStore(std::forward<S>(dataStore)) {}
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  template<Beam::Initializes<D> S>
+  DataStoreMarketDataClient<D>::DataStoreMarketDataClient(S&& data_store)
+    : m_data_store(std::forward<S>(data_store)) {}
 
-  template<typename D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   DataStoreMarketDataClient<D>::~DataStoreMarketDataClient() {
-    Close();
+    close();
   }
 
-  template<typename D>
-  void DataStoreMarketDataClient<D>::QueryOrderImbalances(
-      const MarketWideDataQuery& query,
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void DataStoreMarketDataClient<D>::query(const VenueMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) {
-    auto values = m_dataStore->LoadOrderImbalances(query);
+    auto values = m_data_store->load_order_imbalances(query);
     for(auto& value : values) {
-      queue.Push(std::move(value));
+      queue.push(std::move(value));
     }
   }
 
-  template<typename D>
-  void DataStoreMarketDataClient<D>::QueryOrderImbalances(
-      const MarketWideDataQuery& query,
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void DataStoreMarketDataClient<D>::query(const VenueMarketDataQuery& query,
       Beam::ScopedQueueWriter<OrderImbalance> queue) {
-    auto values = m_dataStore->LoadOrderImbalances(query);
+    auto values = m_data_store->load_order_imbalances(query);
     for(auto& value : values) {
-      queue.Push(std::move(*value));
+      queue.push(std::move(*value));
     }
   }
 
-  template<typename D>
-  void DataStoreMarketDataClient<D>::QueryBboQuotes(
-      const SecurityMarketDataQuery& query,
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void DataStoreMarketDataClient<D>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
-    auto values = m_dataStore->LoadBboQuotes(query);
+    auto values = m_data_store->load_bbo_quotes(query);
     for(auto& value : values) {
-      queue.Push(std::move(value));
+      queue.push(std::move(value));
     }
   }
 
-  template<typename D>
-  void DataStoreMarketDataClient<D>::QueryBboQuotes(
-      const SecurityMarketDataQuery& query,
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void DataStoreMarketDataClient<D>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<BboQuote> queue) {
-    auto values = m_dataStore->LoadBboQuotes(query);
+    auto values = m_data_store->load_bbo_quotes(query);
     for(auto& value : values) {
-      queue.Push(std::move(*value));
+      queue.push(std::move(*value));
     }
   }
 
-  template<typename D>
-  void DataStoreMarketDataClient<D>::QueryBookQuotes(
-      const SecurityMarketDataQuery& query,
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void DataStoreMarketDataClient<D>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
-    auto values = m_dataStore->LoadBookQuotes(query);
+    auto values = m_data_store->load_book_quotes(query);
     for(auto& value : values) {
-      queue.Push(std::move(value));
+      queue.push(std::move(value));
     }
   }
 
-  template<typename D>
-  void DataStoreMarketDataClient<D>::QueryBookQuotes(
-      const SecurityMarketDataQuery& query,
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void DataStoreMarketDataClient<D>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<BookQuote> queue) {
-    auto values = m_dataStore->LoadBookQuotes(query);
+    auto values = m_data_store->load_book_quotes(query);
     for(auto& value : values) {
-      queue.Push(std::move(*value));
+      queue.push(std::move(*value));
     }
   }
 
-  template<typename D>
-  void DataStoreMarketDataClient<D>::QueryMarketQuotes(
-      const SecurityMarketDataQuery& query,
-      Beam::ScopedQueueWriter<SequencedMarketQuote> queue) {
-    auto values = m_dataStore->LoadMarketQuotes(query);
-    for(auto& value : values) {
-      queue.Push(std::move(value));
-    }
-  }
-
-  template<typename D>
-  void DataStoreMarketDataClient<D>::QueryMarketQuotes(
-      const SecurityMarketDataQuery& query,
-      Beam::ScopedQueueWriter<MarketQuote> queue) {
-    auto values = m_dataStore->LoadMarketQuotes(query);
-    for(auto& value : values) {
-      queue.Push(std::move(*value));
-    }
-  }
-
-  template<typename D>
-  void DataStoreMarketDataClient<D>::QueryTimeAndSales(
-      const SecurityMarketDataQuery& query,
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void DataStoreMarketDataClient<D>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
-    auto values = m_dataStore->LoadTimeAndSales(query);
+    auto values = m_data_store->load_time_and_sales(query);
     for(auto& value : values) {
-      queue.Push(std::move(value));
+      queue.push(std::move(value));
     }
   }
 
-  template<typename D>
-  void DataStoreMarketDataClient<D>::QueryTimeAndSales(
-      const SecurityMarketDataQuery& query,
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void DataStoreMarketDataClient<D>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<TimeAndSale> queue) {
-    auto values = m_dataStore->LoadTimeAndSales(query);
+    auto values = m_data_store->load_time_and_sales(query);
     for(auto& value : values) {
-      queue.Push(std::move(*value));
+      queue.push(std::move(*value));
     }
   }
 
-  template<typename D>
-  SecuritySnapshot DataStoreMarketDataClient<D>::LoadSecuritySnapshot(
-      const Security& security) {
-    return {};
-  }
-
-  template<typename D>
-  SecurityTechnicals DataStoreMarketDataClient<D>::LoadSecurityTechnicals(
-      const Security& security) {
-    return {};
-  }
-
-  template<typename D>
-  std::vector<SecurityInfo> DataStoreMarketDataClient<D>::QuerySecurityInfo(
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  std::vector<SecurityInfo> DataStoreMarketDataClient<D>::query(
       const SecurityInfoQuery& query) {
-    return m_dataStore->LoadSecurityInfo(query);
+    return m_data_store->load_security_info(query);
   }
 
-  template<typename D>
-  std::vector<SecurityInfo> DataStoreMarketDataClient<D>::
-      LoadSecurityInfoFromPrefix(const std::string& prefix) {
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  SecuritySnapshot DataStoreMarketDataClient<D>::load_snapshot(
+      const Security& security) {
     return {};
   }
 
-  template<typename D>
-  void DataStoreMarketDataClient<D>::Close() {
-    if(m_openState.SetClosing()) {
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  SecurityTechnicals DataStoreMarketDataClient<D>::load_technicals(
+      const Security& security) {
+    return {};
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  std::vector<SecurityInfo>
+      DataStoreMarketDataClient<D>::load_security_info_from_prefix(
+        const std::string& prefix) {
+    return {};
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void DataStoreMarketDataClient<D>::close() {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_dataStore->Close();
-    m_openState.Close();
+    m_data_store->close();
+    m_open_state.close();
   }
 }
 

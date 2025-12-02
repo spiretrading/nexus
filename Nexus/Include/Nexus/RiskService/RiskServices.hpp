@@ -8,18 +8,20 @@
 #include "Nexus/Definitions/Region.hpp"
 #include "Nexus/RiskService/InventorySnapshot.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
-#include "Nexus/RiskService/RiskService.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
-namespace Nexus::RiskService {
-  BEAM_DEFINE_RECORD(SecurityValuationUpdate, Security, security,
-    RiskSecurityValuation, valuation);
-  BEAM_DEFINE_RECORD(InventoryUpdate, Beam::ServiceLocator::DirectoryEntry,
-    account, RiskInventory, inventory);
-  BEAM_DEFINE_RECORD(RiskStateUpdate, Beam::ServiceLocator::DirectoryEntry,
-    account, RiskState, risk_state);
+namespace Nexus {
+  BEAM_DEFINE_RECORD(SecurityValuationUpdate, (Security, security),
+    (SecurityValuation, valuation));
+  BEAM_DEFINE_RECORD(InventoryUpdate,
+    (Beam::DirectoryEntry, account), (Inventory, inventory));
+  BEAM_DEFINE_RECORD(RiskStateUpdate, (Beam::DirectoryEntry, account),
+    (RiskState, risk_state));
 
-  BEAM_DEFINE_SERVICES(RiskServices,
+  /** Standard name for the risk service. */
+  inline const auto RISK_SERVICE_NAME = std::string("risk_service");
+
+  BEAM_DEFINE_SERVICES(risk_services,
 
     /**
      * Loads the InventorySnapshot of a given account.
@@ -28,14 +30,14 @@ namespace Nexus::RiskService {
      */
     (LoadInventorySnapshotService,
       "Nexus.RiskService.LoadInventorySnapshotService", InventorySnapshot,
-      Beam::ServiceLocator::DirectoryEntry, account),
+      (Beam::DirectoryEntry, account)),
 
     /**
      * Resets all inventories whose Security is within a Region.
      * @param region The Region to reset.
      */
-    (ResetRegionService, "Nexus.RiskService.ResetRegionService", void, Region,
-      region),
+    (ResetRegionService, "Nexus.RiskService.ResetRegionService", void,
+      (Region, region)),
 
     /**
      * Subscribes to the RiskPortfolioUpdates permissioned by the session's
@@ -45,28 +47,14 @@ namespace Nexus::RiskService {
       "Nexus.RiskService.SubscribeRiskPortfolioUpdatesService",
       std::vector<RiskInventoryEntry>));
 
-  BEAM_DEFINE_MESSAGES(RiskMessages,
-
-    /**
-     * Indicates a list of updates to a Security's valuation.
-     * @param valuations The list of Securities whose valuations have updated.
-     */
-    (SecurityValuationMessage, "Nexus.RiskService.SecurityValuationMessage",
-      std::vector<SecurityValuationUpdate>, valuations),
+  BEAM_DEFINE_MESSAGES(risk_messages,
 
     /**
      * Indicates a list of updates to an account's Inventory.
      * @param inventories The list of updated Inventories.
      */
     (InventoryMessage, "Nexus.RiskService.InventoryMessage",
-      std::vector<InventoryUpdate>, inventories),
-
-    /**
-     * Indicates a list of updates to an account's RiskState.
-     * @param riskStates The list of updated RiskStates.
-     */
-    (RiskStateMessage, "Nexus.RiskService.RiskStateMessage",
-      std::vector<RiskStateUpdate>, risk_states));
+      (std::vector<InventoryUpdate>, inventories)));
 }
 
 #endif

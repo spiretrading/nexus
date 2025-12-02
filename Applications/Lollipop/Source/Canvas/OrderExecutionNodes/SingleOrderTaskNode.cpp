@@ -15,7 +15,6 @@
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Nexus;
 using namespace Spire;
 using namespace std;
@@ -113,5 +112,3 @@ void SingleOrderTaskNode::Apply(CanvasNodeVisitor& visitor) const {
 unique_ptr<CanvasNode> SingleOrderTaskNode::Clone() const {
   return make_unique<SingleOrderTaskNode>(*this);
 }
-
-SingleOrderTaskNode::SingleOrderTaskNode(ReceiveBuilder) {}

@@ -11,12 +11,12 @@ using namespace Spire;
 CanvasNodeEditor::EditVariant CanvasNodeEditor::GetEditor(
     Ref<const CanvasNode> node, Ref<CanvasNodeModel> view,
     Ref<UserProfile> userProfile, QEvent* event) {
-  m_node = node.Get();
+  m_node = node.get();
   if(m_node->IsReadOnly()) {
     return static_cast<QUndoCommand*>(nullptr);
   }
-  m_view = view.Get();
-  m_userProfile = userProfile.Get();
+  m_view = view.get();
+  m_userProfile = userProfile.get();
   m_editVariant = OpenCanvasEditor(*m_node, *m_view, *m_userProfile, event);
   return m_editVariant;
 }

@@ -8,7 +8,6 @@
 #include "Spire/Canvas/Types/UnionType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
 using namespace std;
@@ -23,7 +22,8 @@ QueryNode::QueryNode()
     : m_type(UnionType::GetAnyValueType()) {
   SetText("Query");
   SetType(*m_type);
-  AddChild("record", make_unique<NoneNode>(RecordType::GetEmptyRecordType()));
+  AddChild(
+    "record", std::make_unique<NoneNode>(RecordType::GetEmptyRecordType()));
 }
 
 const string& QueryNode::GetField() const {
@@ -119,8 +119,6 @@ void QueryNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> QueryNode::Clone() const {
-  return make_unique<QueryNode>(*this);
+std::unique_ptr<CanvasNode> QueryNode::Clone() const {
+  return std::make_unique<QueryNode>(*this);
 }
-
-QueryNode::QueryNode(ReceiveBuilder) {}

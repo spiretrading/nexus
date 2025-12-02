@@ -1,6 +1,6 @@
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/KeyBindings/BasicAdditionalTagSchema.hpp"
 #include "Spire/KeyBindings/EnumAdditionalTagSchema.hpp"
@@ -279,21 +279,16 @@ namespace {
   const auto& ASX() {
     static const auto REGION = [&] {
       auto region = Region();
-      region +=
-        Region(GetDefaultMarketDatabase().FromCode(DefaultMarkets::ASX()));
-      region +=
-        Region(GetDefaultMarketDatabase().FromCode(DefaultMarkets::CXA()));
+      region += DefaultVenues::ASX;
+      region += DefaultVenues::CXA;
       return region;
     }();
     return REGION;
   }
 }
 
-AdditionalTagDatabase::AdditionalTagDatabase(
-  MarketDatabase markets, DestinationDatabase destinations)
-  : m_markets(std::move(markets)),
-    m_destinations(std::move(destinations)),
-    m_schemas(
+AdditionalTagDatabase::AdditionalTagDatabase()
+  : m_schemas(
       std::unordered_map<int, std::shared_ptr<AdditionalTagSchema>>()) {}
 
 void AdditionalTagDatabase::add(const Destination& destination,
@@ -303,11 +298,11 @@ void AdditionalTagDatabase::add(const Destination& destination,
 
 void AdditionalTagDatabase::add(const Region& region,
     const std::shared_ptr<AdditionalTagSchema>& schema) {
-  auto i = m_schemas.Find(region);
+  auto i = m_schemas.find(region);
   if(std::get<0>(*i) == region) {
     std::get<1>(*i)[schema->get_key()] = schema;
   } else {
-    m_schemas.Set(region, {});
+    m_schemas.set(region, {});
     add(region, schema);
   }
 }
@@ -322,8 +317,8 @@ const std::shared_ptr<AdditionalTagSchema>&
     }
   }
   auto region = Region();
-  for(auto& market : m_destinations.FromId(destination).m_markets) {
-    region += Region(m_markets.FromCode(market));
+  for(auto& venue : DEFAULT_DESTINATIONS.from(destination).m_venues) {
+    region += venue;
   }
   return find(region, key);
 }
@@ -331,7 +326,7 @@ const std::shared_ptr<AdditionalTagSchema>&
 const std::shared_ptr<AdditionalTagSchema>&
     AdditionalTagDatabase::find(const Region& region, int key) const {
   auto match = &NONE;
-  for(auto i = m_schemas.Begin(); i != m_schemas.End(); ++i) {
+  for(auto i = m_schemas.begin(); i != m_schemas.end(); ++i) {
     if(region <= std::get<0>(*i)) {
       auto j = std::get<1>(*i).find(key);
       if(j != std::get<1>(*i).end()) {
@@ -360,8 +355,8 @@ std::vector<std::shared_ptr<AdditionalTagSchema>>
     }
   }
   auto region = Region();
-  for(auto& market : m_destinations.FromId(destination).m_markets) {
-    region += Region(m_markets.FromCode(market));
+  for(auto& venue : DEFAULT_DESTINATIONS.from(destination).m_venues) {
+    region += venue;
   }
   auto parent_matches = find(region);
   for(auto& match : parent_matches) {
@@ -373,7 +368,7 @@ std::vector<std::shared_ptr<AdditionalTagSchema>>
 std::vector<std::shared_ptr<AdditionalTagSchema>>
     AdditionalTagDatabase::find(const Region& region) const {
   auto matches = std::vector<std::shared_ptr<AdditionalTagSchema>>();
-  for(auto i = m_schemas.Begin(); i != m_schemas.End(); ++i) {
+  for(auto i = m_schemas.begin(); i != m_schemas.end(); ++i) {
     if(region <= std::get<0>(*i)) {
       for(auto& schema : std::get<1>(*i)) {
         auto j = std::find_if(matches.begin(), matches.end(),
@@ -391,32 +386,27 @@ std::vector<std::shared_ptr<AdditionalTagSchema>>
 
 const AdditionalTagDatabase& Spire::get_default_additional_tag_database() {
   static auto database = [] {
-    auto database = AdditionalTagDatabase(
-      GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
-    database.add(Region::Global(), MaxFloorSchema::get_instance());
-    database.add(Region::Global(), make_peg_difference_schema());
-    database.add(ASX(), make_asx_exec_inst_schema());
-    database.add(
-      DefaultDestinations::CHIX(), make_chix_ex_destination_schema());
-    database.add(DefaultDestinations::CHIX(), make_chix_exec_inst_schema());
-    database.add(DefaultDestinations::CHIX(), make_tsx_long_life_schema());
-    database.add(DefaultDestinations::CSE(), make_cse_exec_inst_schema());
-    database.add(DefaultDestinations::CSE2(), make_cse_exec_inst_schema());
-    database.add(DefaultDestinations::CX2(), make_cx2_ex_destination_schema());
-    database.add(DefaultDestinations::CX2(), make_cx2_exec_inst_schema());
-    database.add(DefaultDestinations::CX2(), make_tsx_long_life_schema());
-    database.add(DefaultDestinations::MATNLP(), make_matn_anonymous_schema());
-    database.add(DefaultDestinations::MATNLP(), make_matn_exec_inst_schema());
-    database.add(DefaultDestinations::MATNMF(), make_matn_anonymous_schema());
-    database.add(DefaultDestinations::MATNMF(), make_matn_exec_inst_schema());
-    database.add(
-      DefaultDestinations::NEOE(), make_neoe_ex_destination_schema());
-    database.add(DefaultDestinations::NEOE(), make_neoe_exec_inst_schema());
-    database.add(
-      DefaultDestinations::NEOE(), make_neoe_handl_inst_schema());
-    database.add(
-      DefaultDestinations::TSX(), make_tsx_ex_destination_schema());
-    database.add(DefaultDestinations::TSX(), make_tsx_long_life_schema());
+    auto database = AdditionalTagDatabase();
+    database.add(Region::GLOBAL, MaxFloorSchema::get_instance());
+    database.add(Region::GLOBAL, make_peg_difference_schema());
+    database.add(DefaultVenues::ASX, make_asx_exec_inst_schema());
+    database.add(DefaultDestinations::CHIX, make_chix_ex_destination_schema());
+    database.add(DefaultDestinations::CHIX, make_chix_exec_inst_schema());
+    database.add(DefaultDestinations::CHIX, make_tsx_long_life_schema());
+    database.add(DefaultDestinations::CSE, make_cse_exec_inst_schema());
+    database.add(DefaultDestinations::CSE2, make_cse_exec_inst_schema());
+    database.add(DefaultDestinations::CX2, make_cx2_ex_destination_schema());
+    database.add(DefaultDestinations::CX2, make_cx2_exec_inst_schema());
+    database.add(DefaultDestinations::CX2, make_tsx_long_life_schema());
+    database.add(DefaultDestinations::MATNLP, make_matn_anonymous_schema());
+    database.add(DefaultDestinations::MATNLP, make_matn_exec_inst_schema());
+    database.add(DefaultDestinations::MATNMF, make_matn_anonymous_schema());
+    database.add(DefaultDestinations::MATNMF, make_matn_exec_inst_schema());
+    database.add(DefaultDestinations::NEOE, make_neoe_ex_destination_schema());
+    database.add(DefaultDestinations::NEOE, make_neoe_exec_inst_schema());
+    database.add(DefaultDestinations::NEOE, make_neoe_handl_inst_schema());
+    database.add(DefaultDestinations::TSX, make_tsx_ex_destination_schema());
+    database.add(DefaultDestinations::TSX, make_tsx_long_life_schema());
     return database;
   }();
   return database;

@@ -6,16 +6,15 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Tests;
 
 namespace {
-  auto MakeFeeTable() {
-    auto feeTable = PureFeeTable();
+  auto make_fee_table() {
+    auto table = PureFeeTable();
     for(auto i = 0; i != PureFeeTable::SECTION_COUNT; ++i) {
-      PopulateFeeTable(Store(feeTable.m_feeTable[i]));
+      populate_fee_table(out(table.m_fee_table[i]));
     }
-    return feeTable;
+    return table;
   }
 
   static const auto LIQUIDITY_INDICATOR = [] {
@@ -28,108 +27,101 @@ namespace {
 
 TEST_SUITE("PureFeeHandling") {
   TEST_CASE("zero_quantity") {
-    auto feeTable = MakeFeeTable();
-    auto calculateDefaultFee =
-      [] (const auto& feeTable, const auto& executionReport) {
-        return CalculateFee(
-          feeTable, PureFeeTable::Section::DEFAULT, executionReport);
+    auto table = make_fee_table();
+    auto calculate_default_fee = [] (const auto& table, const auto& report) {
+      return calculate_fee(table, PureFeeTable::Section::DEFAULT, report);
+    };
+    auto calculate_etf_fee = [] (const auto& table, const auto& report) {
+      return calculate_fee(table, PureFeeTable::Section::ETF, report);
+    };
+    auto calculate_interlisted_fee =
+      [] (const auto& table, const auto& report) {
+        return calculate_fee(
+          table, PureFeeTable::Section::INTERLISTED, report);
       };
-    auto calculateEtfFee =
-      [] (const auto& feeTable, const auto& executionReport) {
-        return CalculateFee(
-          feeTable, PureFeeTable::Section::ETF, executionReport);
-      };
-    auto calculateInterlistedFee =
-      [] (const auto& feeTable, const auto& executionReport) {
-        return CalculateFee(
-          feeTable, PureFeeTable::Section::INTERLISTED, executionReport);
-      };
-    TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
-      calculateDefaultFee, Money::ZERO);
-    TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
-      calculateEtfFee, Money::ZERO);
-    TestPerShareFeeCalculation(feeTable, Money::ONE, 0, LiquidityFlag::NONE,
-      calculateInterlistedFee, Money::ZERO);
+    test_per_share_fee_calculation(table, Money::ONE, 0, LiquidityFlag::NONE,
+      Money::ZERO, calculate_default_fee);
+    test_per_share_fee_calculation(table, Money::ONE, 0, LiquidityFlag::NONE,
+      Money::ZERO, calculate_etf_fee);
+    test_per_share_fee_calculation(table, Money::ONE, 0, LiquidityFlag::NONE,
+      Money::ZERO, calculate_interlisted_fee);
   }
 
   TEST_CASE("fills") {
-    auto feeTable = MakeFeeTable();
+    auto table = make_fee_table();
     for(auto section : {PureFeeTable::Section::DEFAULT,
         PureFeeTable::Section::ETF, PureFeeTable::Section::INTERLISTED}) {
-      auto calculateDefaultFee =
-        [=] (const auto& feeTable, const auto& executionReport) {
-          return CalculateFee(feeTable, section, executionReport);
-        };
+      auto calculate_default_fee = [=] (const auto& table, const auto& report) {
+        return calculate_fee(table, section, report);
+      };
       SUBCASE("subdollar") {
-        auto activeFee = LookupFee(feeTable, section,
-          PureFeeTable::Row::SUBDOLLAR, LiquidityFlag::ACTIVE);
-        TestPerShareFeeCalculation(feeTable, Money::CENT, 100, "TT",
-          calculateDefaultFee, activeFee);
-        auto passiveFee = LookupFee(feeTable, section,
-          PureFeeTable::Row::SUBDOLLAR, LiquidityFlag::PASSIVE);
-        TestPerShareFeeCalculation(feeTable, Money::CENT, 100, "PC",
-          calculateDefaultFee, passiveFee);
+        auto active_fee = lookup_fee(
+          table, section, PureFeeTable::Row::SUBDOLLAR, LiquidityFlag::ACTIVE);
+        test_per_share_fee_calculation(
+          table, Money::CENT, 100, "TT", active_fee, calculate_default_fee);
+        auto passive_fee = lookup_fee(
+          table, section, PureFeeTable::Row::SUBDOLLAR, LiquidityFlag::PASSIVE);
+        test_per_share_fee_calculation(
+          table, Money::CENT, 100, "PC", passive_fee, calculate_default_fee);
       }
       SUBCASE("default") {
-        auto activeFee = LookupFee(feeTable, section,
-          PureFeeTable::Row::DEFAULT, LiquidityFlag::ACTIVE);
-        TestPerShareFeeCalculation(feeTable, Money::ONE, 100, "TT",
-          calculateDefaultFee, activeFee);
-        auto passiveFee = LookupFee(feeTable, section,
-          PureFeeTable::Row::DEFAULT, LiquidityFlag::PASSIVE);
-        TestPerShareFeeCalculation(feeTable, Money::ONE, 100, "PC",
-          calculateDefaultFee, passiveFee);
+        auto active_fee = lookup_fee(
+          table, section, PureFeeTable::Row::DEFAULT, LiquidityFlag::ACTIVE);
+        test_per_share_fee_calculation(
+          table, Money::ONE, 100, "TT", active_fee, calculate_default_fee);
+        auto passive_fee = lookup_fee(
+          table, section, PureFeeTable::Row::DEFAULT, LiquidityFlag::PASSIVE);
+        test_per_share_fee_calculation(
+          table, Money::ONE, 100, "PC", passive_fee, calculate_default_fee);
       }
       SUBCASE("dark_subdollar") {
-        auto activeFee = LookupFee(feeTable, section,
+        auto active_fee = lookup_fee(table, section,
           PureFeeTable::Row::DARK_SUBDOLLAR, LiquidityFlag::ACTIVE);
-        TestPerShareFeeCalculation(feeTable, Money::CENT, 100, "TTD",
-          calculateDefaultFee, activeFee);
-        auto passiveFee = LookupFee(feeTable, section,
+        test_per_share_fee_calculation(
+          table, Money::CENT, 100, "TTD", active_fee, calculate_default_fee);
+        auto passive_fee = lookup_fee(table, section,
           PureFeeTable::Row::DARK_SUBDOLLAR, LiquidityFlag::PASSIVE);
-        TestPerShareFeeCalculation(feeTable, Money::CENT, 100, "PCD",
-          calculateDefaultFee, passiveFee);
+        test_per_share_fee_calculation(
+          table, Money::CENT, 100, "PCD", passive_fee, calculate_default_fee);
       }
       SUBCASE("dark") {
-        auto activeFee = LookupFee(feeTable, section,
-          PureFeeTable::Row::DARK, LiquidityFlag::ACTIVE);
-        TestPerShareFeeCalculation(feeTable, Money::ONE, 100, "TTD",
-          calculateDefaultFee, activeFee);
-        auto passiveFee = LookupFee(feeTable, section,
-          PureFeeTable::Row::DARK, LiquidityFlag::PASSIVE);
-        TestPerShareFeeCalculation(feeTable, Money::ONE, 100, "PCD",
-          calculateDefaultFee, passiveFee);
+        auto active_fee = lookup_fee(
+          table, section, PureFeeTable::Row::DARK, LiquidityFlag::ACTIVE);
+        test_per_share_fee_calculation(
+          table, Money::ONE, 100, "TTD", active_fee, calculate_default_fee);
+        auto passive_fee = lookup_fee(
+          table, section, PureFeeTable::Row::DARK, LiquidityFlag::PASSIVE);
+        test_per_share_fee_calculation(
+          table, Money::ONE, 100, "PCD", passive_fee, calculate_default_fee);
       }
     }
   }
 
   TEST_CASE("unknown_liquidity_flag") {
-    auto feeTable = MakeFeeTable();
-    auto executionReport =
-      ExecutionReport::MakeInitialReport(0, second_clock::universal_time());
-    executionReport.m_lastPrice = Money::ONE;
-    executionReport.m_lastQuantity = 100;
-    executionReport.m_liquidityFlag = "Q";
-    auto calculatedFee =
-      CalculateFee(feeTable, PureFeeTable::Section::DEFAULT, executionReport);
-    auto expectedFee = executionReport.m_lastQuantity *
-      LookupFee(feeTable, PureFeeTable::Section::DEFAULT,
+    auto table = make_fee_table();
+    auto report = ExecutionReport(0, second_clock::universal_time());
+    report.m_last_price = Money::ONE;
+    report.m_last_quantity = 100;
+    report.m_liquidity_flag = "Q";
+    auto calculated_fee =
+      calculate_fee(table, PureFeeTable::Section::DEFAULT, report);
+    auto expected_fee = report.m_last_quantity *
+      lookup_fee(table, PureFeeTable::Section::DEFAULT,
         PureFeeTable::Row::DEFAULT, LiquidityFlag::ACTIVE);
-    REQUIRE(calculatedFee == expectedFee);
+    REQUIRE(calculated_fee == expected_fee);
   }
 
   TEST_CASE("empty_liquidity_flag") {
-    auto feeTable = MakeFeeTable();
-    auto executionReport =
-      ExecutionReport::MakeInitialReport(0, second_clock::universal_time());
-    executionReport.m_lastPrice = Money::ONE;
-    executionReport.m_lastQuantity = 100;
-    executionReport.m_liquidityFlag = "";
-    auto calculatedFee =
-      CalculateFee(feeTable, PureFeeTable::Section::DEFAULT, executionReport);
-    auto expectedFee = executionReport.m_lastQuantity *
-      LookupFee(feeTable, PureFeeTable::Section::DEFAULT,
+    auto table = make_fee_table();
+    auto report = ExecutionReport(0, second_clock::universal_time());
+    report.m_last_price = Money::ONE;
+    report.m_last_quantity = 100;
+    report.m_liquidity_flag = "";
+    auto calculated_fee =
+      calculate_fee(table, PureFeeTable::Section::DEFAULT, report);
+    auto expected_fee = report.m_last_quantity *
+      lookup_fee(table, PureFeeTable::Section::DEFAULT,
         PureFeeTable::Row::DEFAULT, LiquidityFlag::ACTIVE);
-    REQUIRE(calculatedFee == expectedFee);
+    REQUIRE(calculated_fee == expected_fee);
   }
 }

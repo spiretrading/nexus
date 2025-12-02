@@ -34,7 +34,7 @@ connection QueueDashboardCell::ConnectUpdateSignal(
 }
 
 void QueueDashboardCell::OnUpdateTimer() {
-  while(auto value = m_queue->TryPop()) {
+  while(auto value = m_queue->try_pop()) {
     m_values.push_back(std::move(*value));
     m_updateSignal(m_values.back());
   }

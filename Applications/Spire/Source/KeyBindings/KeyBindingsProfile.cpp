@@ -12,7 +12,7 @@
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/RegionMap.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
 #include "Spire/Canvas/Operations/CanvasOperationException.hpp"
@@ -22,19 +22,32 @@
 #include "Spire/LegacyUI/UISerialization.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  BEAM_ENUM(ModifierDefinitions,
+    PLAIN,
+    SHIFT,
+    ALT,
+    CONTROL);
+  BEAM_ENUM(CancelTypeDefinitions,
+    MOST_RECENT,
+    MOST_RECENT_ASK,
+    MOST_RECENT_BID,
+    OLDEST,
+    OLDEST_ASK,
+    OLDEST_BID,
+    ALL,
+    ALL_ASKS,
+    ALL_BIDS,
+    CLOSEST_ASK,
+    CLOSEST_BID,
+    FURTHEST_ASK,
+    FURTHEST_BID);
   struct LegacyInteractionsProperties {
-    BEAM_ENUM(Modifier,
-      PLAIN,
-      SHIFT,
-      ALT,
-      CONTROL);
+    using Modifier = ModifierDefinitions;
     static const auto MODIFIER_COUNT = 4;
     Quantity m_default_quantity;
     std::array<Quantity, MODIFIER_COUNT> m_quantity_increments;
@@ -48,27 +61,14 @@ namespace {
       std::shared_ptr<CanvasNode> m_node;
     };
     struct CancelBinding {
-      BEAM_ENUM(Type,
-        MOST_RECENT,
-        MOST_RECENT_ASK,
-        MOST_RECENT_BID,
-        OLDEST,
-        OLDEST_ASK,
-        OLDEST_BID,
-        ALL,
-        ALL_ASKS,
-        ALL_BIDS,
-        CLOSEST_ASK,
-        CLOSEST_BID,
-        FURTHEST_ASK,
-        FURTHEST_BID);
+      using Type = CancelTypeDefinitions;
       std::string m_description;
       Type m_type;
     };
-    std::unordered_map<MarketCode,
+    std::unordered_map<Venue,
       std::unordered_map<QKeySequence, TaskBinding>> m_task_bindings;
     std::unordered_map<QKeySequence, CancelBinding> m_cancel_bindings;
-    std::unordered_map<MarketCode, Quantity> m_default_quantities;
+    std::unordered_map<Venue, Quantity> m_default_quantities;
   };
 
   auto from_legacy(LegacyKeyBindings::CancelBinding::Type binding) {
@@ -105,60 +105,60 @@ namespace {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<LegacyInteractionsProperties> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, LegacyInteractionsProperties& value,
-        unsigned int version) {
+    template<IsShuttle S>
+    void operator ()(S& shuttle, LegacyInteractionsProperties& value,
+        unsigned int version) const {
       auto default_quantity = std::int64_t();
-      shuttle.Shuttle("default_quantity", default_quantity);
+      shuttle.shuttle("default_quantity", default_quantity);
       value.m_default_quantity = default_quantity;
       auto quantity_increments = std::array<
         std::int64_t, LegacyInteractionsProperties::MODIFIER_COUNT>();
-      shuttle.Shuttle("quantity_increments", quantity_increments);
+      shuttle.shuttle("quantity_increments", quantity_increments);
       for(auto i = 0; i < LegacyInteractionsProperties::MODIFIER_COUNT; ++i) {
         value.m_quantity_increments[i] = quantity_increments[i];
       }
       auto price_increments = std::array<
         std::int64_t, LegacyInteractionsProperties::MODIFIER_COUNT>();
-      shuttle.Shuttle("price_increments", price_increments);
+      shuttle.shuttle("price_increments", price_increments);
       for(auto i = 0; i < LegacyInteractionsProperties::MODIFIER_COUNT; ++i) {
         value.m_price_increments[i] = Nexus::Money(
           Nexus::Quantity(price_increments[i]) / Nexus::Quantity::MULTIPLIER);
       }
-      shuttle.Shuttle("cancel_on_fill", value.m_cancel_on_fill);
+      shuttle.shuttle("cancel_on_fill", value.m_cancel_on_fill);
     }
   };
 
   template<>
   struct Shuttle<LegacyKeyBindings::TaskBinding> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, LegacyKeyBindings::TaskBinding& value,
-        unsigned int version) {
-      shuttle.Shuttle("name", value.m_name);
-      shuttle.Shuttle("node", value.m_node);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, LegacyKeyBindings::TaskBinding& value,
+        unsigned int version) const {
+      shuttle.shuttle("name", value.m_name);
+      shuttle.shuttle("node", value.m_node);
     }
   };
 
   template<>
   struct Shuttle<LegacyKeyBindings::CancelBinding> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, LegacyKeyBindings::CancelBinding& value,
-        unsigned int version) {
-      shuttle.Shuttle("description", value.m_description);
-      shuttle.Shuttle("type", value.m_type);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, LegacyKeyBindings::CancelBinding& value,
+        unsigned int version) const {
+      shuttle.shuttle("description", value.m_description);
+      shuttle.shuttle("type", value.m_type);
     }
   };
 
   template<>
   struct Shuttle<LegacyKeyBindings> {
-    template<typename Shuttler>
+    template<IsShuttle S>
     void operator ()(
-        Shuttler& shuttle, LegacyKeyBindings& value, unsigned int version) {
-      shuttle.Shuttle("task_bindings", value.m_task_bindings);
-      shuttle.Shuttle("cancel_bindings", value.m_cancel_bindings);
-      shuttle.Shuttle("default_quantities", value.m_default_quantities);
+        S& shuttle, LegacyKeyBindings& value, unsigned int version) const {
+      shuttle.shuttle("task_bindings", value.m_task_bindings);
+      shuttle.shuttle("cancel_bindings", value.m_cancel_bindings);
+      shuttle.shuttle("default_quantities", value.m_default_quantities);
     }
   };
 }
@@ -170,10 +170,11 @@ namespace {
     int m_version;
     const KeyBindingsModel* m_key_bindings;
 
-    template<typename Shuttler>
-    void Shuttle(Shuttler& shuttle, unsigned int version) {
-      shuttle.Shuttle("version", m_version);
-      shuttle.Shuttle("key_bindings", *const_cast<KeyBindingsModel*>(m_key_bindings));
+    template<IsShuttle S>
+    void shuttle(S& shuttle, unsigned int version) {
+      shuttle.shuttle("version", m_version);
+      shuttle.shuttle(
+        "key_bindings", *const_cast<KeyBindingsModel*>(m_key_bindings));
     }
   };
 
@@ -288,14 +289,14 @@ namespace {
       RegionMap<LegacyInteractionsProperties>("Global", {});
     try {
       auto reader =
-        BasicIStreamReader<std::ifstream>(Initialize(path, std::ios::binary));
+        BasicIStreamReader<std::ifstream>(init(path, std::ios::binary));
       auto buffer = SharedBuffer();
-      reader.Read(Store(buffer));
+      reader.read(out(buffer));
       auto registry = TypeRegistry<BinarySender<SharedBuffer>>();
-      RegisterSpireTypes(Store(registry));
+      RegisterSpireTypes(out(registry));
       auto receiver = BinaryReceiver<SharedBuffer>(Ref(registry));
-      receiver.SetSource(Ref(buffer));
-      receiver.Shuttle(interactions_properties);
+      receiver.set(Ref(buffer));
+      receiver.shuttle(interactions_properties);
     } catch(const std::exception&) {
       throw std::runtime_error("Unable to load interactions.");
     }
@@ -306,23 +307,21 @@ namespace {
     auto key_bindings = LegacyKeyBindings();
     try {
       auto reader =
-        BasicIStreamReader<std::ifstream>(Initialize(path, std::ios::binary));
+        BasicIStreamReader<std::ifstream>(init(path, std::ios::binary));
       auto buffer = SharedBuffer();
-      reader.Read(Store(buffer));
+      reader.read(out(buffer));
       auto registry = TypeRegistry<BinarySender<SharedBuffer>>();
-      RegisterSpireTypes(Store(registry));
+      RegisterSpireTypes(out(registry));
       auto receiver = BinaryReceiver<SharedBuffer>(Ref(registry));
-      receiver.SetSource(Ref(buffer));
-      receiver.Shuttle(key_bindings);
+      receiver.set(Ref(buffer));
+      receiver.shuttle(key_bindings);
     } catch(const std::exception&) {
       throw std::runtime_error("Unable to load key bindings.");
     }
     return key_bindings;
   }
 
-  auto convert_legacy_key_bindings(
-      const std::filesystem::path& path, const MarketDatabase& markets,
-      const DestinationDatabase& destinations) {
+  auto convert_legacy_key_bindings(const std::filesystem::path& path) {
     auto key_bindings_path = path / "key_bindings.dat";
     if(!std::filesystem::exists(key_bindings_path)) {
       throw std::runtime_error("key_bindings.dat not found.");
@@ -334,10 +333,10 @@ namespace {
     auto legacy_key_bindings = load_legacy_key_bindings(key_bindings_path);
     auto legacy_interactions_properties =
       load_legacy_interactions_properties(interactions_properties_path);
-    auto key_bindings = std::make_shared<KeyBindingsModel>(markets);
+    auto key_bindings = std::make_shared<KeyBindingsModel>();
     for(auto& task : make_default_order_task_nodes()) {
       key_bindings->get_order_task_arguments()->push(
-        to_order_task_arguments(*task, markets, destinations));
+        to_order_task_arguments(*task));
     }
     auto& arguments = *key_bindings->get_order_task_arguments();
     for(auto& tasks :
@@ -358,8 +357,8 @@ namespace {
       key_bindings->get_cancel_key_bindings()->get_binding(
         from_legacy(cancel_binding.second.m_type))->set(cancel_binding.first);
     }
-    for(auto i = legacy_interactions_properties.Begin();
-        i != legacy_interactions_properties.End(); ++i) {
+    for(auto i = legacy_interactions_properties.begin();
+        i != legacy_interactions_properties.end(); ++i) {
       auto& properties = std::get<1>(*i);
       auto interactions =
         key_bindings->get_interactions_key_bindings(std::get<0>(*i));
@@ -393,11 +392,9 @@ namespace {
     return key_bindings;
   }
 
-  auto load_default_key_bindings(
-      const MarketDatabase& markets, const DestinationDatabase& destinations) {
-    auto key_bindings = std::make_shared<KeyBindingsModel>(markets);
-    reset_order_task_arguments(
-      *key_bindings->get_order_task_arguments(), markets, destinations);
+  auto load_default_key_bindings() {
+    auto key_bindings = std::make_shared<KeyBindingsModel>();
+    reset_order_task_arguments(*key_bindings->get_order_task_arguments());
     key_bindings->get_cancel_key_bindings()->get_binding(
       CancelKeyBindingsModel::Operation::OLDEST)->set(
         QKeySequence(Qt::Key_Escape));
@@ -410,54 +407,53 @@ namespace {
 
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_asx_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
-  populate_basic_order_task_nodes(DefaultDestinations::ASXT(),
-    "ASX TradeMatch", order_types);
+  populate_basic_order_task_nodes(
+    DefaultDestinations::ASXT, "ASX TradeMatch", order_types);
   auto primary_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("R"))->AddField(
       "peg_difference", 211, std::make_unique<MoneyNode>(Money::ZERO)));
   primary_peg.SetReadOnly("exec_inst", true);
   primary_peg.SetVisible("exec_inst", false);
   populate_bid_ask(primary_peg, "ASX TradeMatch Primary Peg",
-    DefaultDestinations::ASXT(), TimeInForce::Type::DAY, order_types);
+    DefaultDestinations::ASXT, TimeInForce::Type::DAY, order_types);
   auto mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("M")));
   mid_peg.SetReadOnly("exec_inst", true);
   mid_peg.SetVisible("exec_inst", false);
   populate_bid_ask(mid_peg, "ASX TradeMatch Mid Peg",
-    DefaultDestinations::ASXT(), TimeInForce::Type::DAY, order_types);
+    DefaultDestinations::ASXT, TimeInForce::Type::DAY, order_types);
   auto market_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("P"))->AddField(
       "peg_difference", 211, std::make_unique<MoneyNode>(-Money::CENT)));
   market_peg.SetReadOnly("exec_inst", true);
   market_peg.SetVisible("exec_inst", false);
   populate_bid_ask(market_peg, "ASX TradeMatch Market Peg",
-    DefaultDestinations::ASXT(), TimeInForce::Type::DAY, order_types);
+    DefaultDestinations::ASXT, TimeInForce::Type::DAY, order_types);
   return order_types;
 }
 
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_cxa_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
-  populate_basic_order_task_nodes(
-    DefaultDestinations::CXA(), "CXA", order_types);
+  populate_basic_order_task_nodes(DefaultDestinations::CXA, "CXA", order_types);
   auto primary_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("R"))->AddField(
       "peg_difference", 211, std::make_unique<MoneyNode>(Money::ZERO)));
   primary_peg.SetReadOnly("exec_inst", true);
   primary_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(primary_peg, "CXA Primary Peg", DefaultDestinations::CXA(),
+  populate_bid_ask(primary_peg, "CXA Primary Peg", DefaultDestinations::CXA,
     TimeInForce::Type::DAY, order_types);
   auto mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("M")));
   mid_peg.SetReadOnly("exec_inst", true);
   mid_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(mid_peg, "CXA Mid Peg", DefaultDestinations::CXA(),
+  populate_bid_ask(mid_peg, "CXA Mid Peg", DefaultDestinations::CXA,
     TimeInForce::Type::DAY, order_types);
   auto market_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("P"))->AddField(
       "peg_difference", 211, std::make_unique<MoneyNode>(-Money::CENT)));
   market_peg.SetReadOnly("exec_inst", true);
   market_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(market_peg, "CXA Market Peg", DefaultDestinations::CXA(),
+  populate_bid_ask(market_peg, "CXA Market Peg", DefaultDestinations::CXA,
     TimeInForce::Type::DAY, order_types);
   return order_types;
 }
@@ -465,19 +461,19 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_cxa_order_task_nodes() {
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_alpha_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
   populate_basic_order_task_nodes(
-    DefaultDestinations::ALPHA(), "Alpha", order_types);
+    DefaultDestinations::ALPHA, "Alpha", order_types);
   return order_types;
 }
 
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_chix_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
   populate_basic_order_task_nodes(
-    DefaultDestinations::CHIX(), "CHI-X", order_types);
+    DefaultDestinations::CHIX, "CHI-X", order_types);
   auto fee_sensitive =
     CanvasNodeBuilder(*SingleOrderTaskNode().AddField("max_floor", 111,
       LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
         "ex_destination", 100, std::make_unique<TextNode>("SMRTFEE")));
-  populate_bid_ask_limit_market(fee_sensitive, DefaultDestinations::CHIX(),
+  populate_bid_ask_limit_market(fee_sensitive, DefaultDestinations::CHIX,
     TimeInForce::Type::DAY, "CHI-X Fee Sensitive", order_types);
   auto smart_dark =
     CanvasNodeBuilder(*SingleOrderTaskNode().AddField("max_floor", 111,
@@ -485,21 +481,21 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_chix_order_task_nodes() {
         "ex_destination", 100,
           std::make_unique<TextNode>("SMRTXDARKNR"))->AddField(
         "long_life", 7735, std::make_unique<TextNode>("Y")));
-  populate_bid_ask_limit_market(smart_dark, DefaultDestinations::CHIX(),
+  populate_bid_ask_limit_market(smart_dark, DefaultDestinations::CHIX,
     TimeInForce::Type::DAY, "CHI-X SMART X Dark", order_types);
   auto dark_att = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
     "ex_destination", 100, std::make_unique<TextNode>("CXD"))->AddField(
       "exec_inst", 18, std::make_unique<TextNode>("P")));
   dark_att.SetReadOnly("exec_inst", true);
   dark_att.SetVisible("exec_inst", false);
-  populate_bid_ask(dark_att, "CHI-X Dark ATT", DefaultDestinations::CHIX(),
+  populate_bid_ask(dark_att, "CHI-X Dark ATT", DefaultDestinations::CHIX,
     TimeInForce::Type::DAY, order_types);
   auto dark_mpi = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
     "ex_destination", 100, std::make_unique<TextNode>("CXD"))->AddField(
       "exec_inst", 18, std::make_unique<TextNode>("x")));
   dark_mpi.SetReadOnly("exec_inst", true);
   dark_mpi.SetVisible("exec_inst", false);
-  populate_bid_ask(dark_mpi, "CHI-X Dark MPI", DefaultDestinations::CHIX(),
+  populate_bid_ask(dark_mpi, "CHI-X Dark MPI", DefaultDestinations::CHIX,
     TimeInForce::Type::DAY, order_types);
   auto primary_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("R"))->AddField(
@@ -507,12 +503,12 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_chix_order_task_nodes() {
   primary_peg.SetReadOnly("exec_inst", true);
   primary_peg.SetVisible("exec_inst", false);
   populate_bid_ask(primary_peg, "CHI-X Primary Peg",
-    DefaultDestinations::CHIX(), TimeInForce::Type::DAY, order_types);
+    DefaultDestinations::CHIX, TimeInForce::Type::DAY, order_types);
   auto mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("M")));
   mid_peg.SetReadOnly("exec_inst", true);
   mid_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(mid_peg, "CHI-X Mid Peg", DefaultDestinations::CHIX(),
+  populate_bid_ask(mid_peg, "CHI-X Mid Peg", DefaultDestinations::CHIX,
     TimeInForce::Type::DAY, order_types);
   auto dark_mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("M"))->AddField(
@@ -520,13 +516,13 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_chix_order_task_nodes() {
   dark_mid_peg.SetReadOnly("exec_inst", true);
   dark_mid_peg.SetVisible("exec_inst", false);
   populate_bid_ask(dark_mid_peg, "CHI-X Dark Mid Peg",
-    DefaultDestinations::CHIX(), TimeInForce::Type::DAY, order_types);
+    DefaultDestinations::CHIX, TimeInForce::Type::DAY, order_types);
   auto market_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("P"))->AddField(
       "peg_difference", 211, std::make_unique<MoneyNode>(-Money::CENT)));
   market_peg.SetReadOnly("exec_inst", true);
   market_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(market_peg, "CHI-X Market Peg", DefaultDestinations::CHIX(),
+  populate_bid_ask(market_peg, "CHI-X Market Peg", DefaultDestinations::CHIX,
     TimeInForce::Type::DAY, order_types);
   auto multi_mid_peg =
     CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField("exec_inst", 18,
@@ -535,26 +531,25 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_chix_order_task_nodes() {
   multi_mid_peg.SetReadOnly("exec_inst", true);
   multi_mid_peg.SetVisible("exec_inst", false);
   populate_bid_ask(multi_mid_peg, "CHI-X Multi-Mid Peg",
-    DefaultDestinations::CHIX(), TimeInForce::Type::DAY, order_types);
+    DefaultDestinations::CHIX, TimeInForce::Type::DAY, order_types);
   return order_types;
 }
 
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_cse_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
-  populate_basic_order_task_nodes(
-    DefaultDestinations::CSE(), "CSE", order_types);
+  populate_basic_order_task_nodes(DefaultDestinations::CSE, "CSE", order_types);
   auto mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("M")));
   mid_peg.SetReadOnly("exec_inst", true);
   mid_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(mid_peg, "CSE Mid Peg", DefaultDestinations::CSE(),
+  populate_bid_ask(mid_peg, "CSE Mid Peg", DefaultDestinations::CSE,
     TimeInForce::Type::DAY, order_types);
   auto market_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("P"))->AddField(
       "peg_difference", 211, std::make_unique<MoneyNode>(-Money::CENT)));
   market_peg.SetReadOnly("exec_inst", true);
   market_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(market_peg, "CSE Market Peg", DefaultDestinations::CSE(),
+  populate_bid_ask(market_peg, "CSE Market Peg", DefaultDestinations::CSE,
     TimeInForce::Type::DAY, order_types);
   return order_types;
 }
@@ -562,52 +557,51 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_cse_order_task_nodes() {
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_cse2_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
   populate_basic_order_task_nodes(
-    DefaultDestinations::CSE2(), "CSE2", order_types);
+    DefaultDestinations::CSE2, "CSE2", order_types);
   auto dark_limit = CanvasNodeBuilder(*GetLimitOrderTaskNode()->AddField(
     "max_floor", 111, std::make_unique<IntegerNode>(0)));
   dark_limit.SetVisible("max_floor", false);
   dark_limit.SetReadOnly("max_floor", true);
-  populate_bid_ask(dark_limit, "CSE Dark Limit", DefaultDestinations::CSE2(),
+  populate_bid_ask(dark_limit, "CSE Dark Limit", DefaultDestinations::CSE2,
     TimeInForce::Type::DAY, order_types);
   auto mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("M")));
   mid_peg.SetReadOnly("exec_inst", true);
   mid_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(mid_peg, "CSE2 Mid Peg", DefaultDestinations::CSE2(),
+  populate_bid_ask(mid_peg, "CSE2 Mid Peg", DefaultDestinations::CSE2,
     TimeInForce::Type::DAY, order_types);
   auto market_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("P"))->AddField(
       "peg_difference", 211, std::make_unique<MoneyNode>(-Money::CENT)));
   market_peg.SetReadOnly("exec_inst", true);
   market_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(market_peg, "CSE2 Market Peg", DefaultDestinations::CSE2(),
+  populate_bid_ask(market_peg, "CSE2 Market Peg", DefaultDestinations::CSE2,
     TimeInForce::Type::DAY, order_types);
   return order_types;
 }
 
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_cx2_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
-  populate_basic_order_task_nodes(
-    DefaultDestinations::CX2(), "CX2", order_types);
+  populate_basic_order_task_nodes(DefaultDestinations::CX2, "CX2", order_types);
   auto primary_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("R"))->AddField(
       "peg_difference", 211, std::make_unique<MoneyNode>(Money::ZERO)));
   primary_peg.SetReadOnly("exec_inst", true);
   primary_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(primary_peg, "CX2 Primary Peg", DefaultDestinations::CX2(),
+  populate_bid_ask(primary_peg, "CX2 Primary Peg", DefaultDestinations::CX2,
     TimeInForce::Type::DAY, order_types);
   auto mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("M")));
   mid_peg.SetReadOnly("exec_inst", true);
   mid_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(mid_peg, "CX2 Mid Peg", DefaultDestinations::CX2(),
+  populate_bid_ask(mid_peg, "CX2 Mid Peg", DefaultDestinations::CX2,
     TimeInForce::Type::DAY, order_types);
   auto market_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("P"))->AddField(
       "peg_difference", 211, std::make_unique<MoneyNode>(-Money::CENT)));
   market_peg.SetReadOnly("exec_inst", true);
   market_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(market_peg, "CX2 Market Peg", DefaultDestinations::CX2(),
+  populate_bid_ask(market_peg, "CX2 Market Peg", DefaultDestinations::CX2,
     TimeInForce::Type::DAY, order_types);
   return order_types;
 }
@@ -615,76 +609,76 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_cx2_order_task_nodes() {
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_lynx_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
   populate_basic_order_task_nodes(
-    DefaultDestinations::LYNX(), "Lynx", order_types);
+    DefaultDestinations::LYNX, "Lynx", order_types);
   return order_types;
 }
 
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_matnlp_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
   populate_basic_order_task_nodes(
-    DefaultDestinations::MATNLP(), "MATCH Now LP", order_types);
+    DefaultDestinations::MATNLP, "MATCH Now LP", order_types);
   auto att = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("R")));
   att.SetVisible("exec_inst", false);
   att.SetReadOnly("exec_inst", true);
   populate_bid_ask(att, "MATCH Now LP At-The-Touch",
-    DefaultDestinations::MATNLP(), TimeInForce::Type::DAY, order_types);
+    DefaultDestinations::MATNLP, TimeInForce::Type::DAY, order_types);
   auto mpi = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("p")));
   mpi.SetVisible("exec_inst", false);
   mpi.SetReadOnly("exec_inst", true);
   populate_bid_ask(mpi, "MATCH Now LP MPI",
-    DefaultDestinations::MATNLP(), TimeInForce::Type::DAY, order_types);
+    DefaultDestinations::MATNLP, TimeInForce::Type::DAY, order_types);
   return order_types;
 }
 
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_matnmf_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
   populate_basic_order_task_nodes(
-    DefaultDestinations::MATNMF(), "MATCH Now MF", order_types);
+    DefaultDestinations::MATNMF, "MATCH Now MF", order_types);
   auto att = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("R")));
   att.SetVisible("exec_inst", false);
   att.SetReadOnly("exec_inst", true);
   populate_bid_ask(att, "MATCH Now MF At-The-Touch",
-    DefaultDestinations::MATNMF(), TimeInForce::Type::DAY, order_types);
+    DefaultDestinations::MATNMF, TimeInForce::Type::DAY, order_types);
   auto mpi = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("p")));
   mpi.SetVisible("exec_inst", false);
   mpi.SetReadOnly("exec_inst", true);
   populate_bid_ask(mpi, "MATCH Now MF MPI",
-    DefaultDestinations::MATNMF(), TimeInForce::Type::DAY, order_types);
+    DefaultDestinations::MATNMF, TimeInForce::Type::DAY, order_types);
   return order_types;
 }
 
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_neoe_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
   populate_basic_order_task_nodes(
-    DefaultDestinations::NEOE(), "NEO Lit", order_types);
+    DefaultDestinations::NEOE, "NEO Lit", order_types);
   auto mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("M")));
   mid_peg.SetReadOnly("exec_inst", true);
   mid_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(mid_peg, "NEOE Lit Mid Peg", DefaultDestinations::NEOE(),
+  populate_bid_ask(mid_peg, "NEOE Lit Mid Peg", DefaultDestinations::NEOE,
     TimeInForce::Type::DAY, order_types);
   auto book = CanvasNodeBuilder(*SingleOrderTaskNode().AddField("max_floor",
     111, LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
       "ex_destination", 100, std::make_unique<TextNode>("N")));
   book.SetReadOnly("ex_destination", true);
   book.SetVisible("ex_destination", false);
-  populate_bid_ask_limit_market(book, DefaultDestinations::NEOE(),
+  populate_bid_ask_limit_market(book, DefaultDestinations::NEOE,
     TimeInForce::Type::DAY, "NEO Book", order_types);
   auto ioc = CanvasNodeBuilder(*GetLimitOrderTaskNode()->AddField(
     "ex_destination", 100, std::make_unique<TextNode>("N")));
   ioc.SetReadOnly("ex_destination", true);
   ioc.SetVisible("ex_destination", false);
-  populate_bid_ask(ioc, "NEO Book IOC", DefaultDestinations::NEOE(),
+  populate_bid_ask(ioc, "NEO Book IOC", DefaultDestinations::NEOE,
     TimeInForce::Type::IOC, order_types);
   auto fok = CanvasNodeBuilder(*GetLimitOrderTaskNode()->AddField(
     "ex_destination", 100, std::make_unique<TextNode>("N")));
   ioc.SetReadOnly("ex_destination", true);
   ioc.SetVisible("ex_destination", false);
-  populate_bid_ask(ioc, "NEO Book FOK", DefaultDestinations::NEOE(),
+  populate_bid_ask(ioc, "NEO Book FOK", DefaultDestinations::NEOE,
     TimeInForce::Type::FOK, order_types);
   auto book_mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("M"))->AddField(
@@ -694,21 +688,21 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_neoe_order_task_nodes() {
   book_mid_peg.SetReadOnly("ex_destination", true);
   book_mid_peg.SetVisible("ex_destination", false);
   populate_bid_ask(book_mid_peg, "NEOE Book Mid Peg",
-    DefaultDestinations::NEOE(), TimeInForce::Type::DAY, order_types);
+    DefaultDestinations::NEOE, TimeInForce::Type::DAY, order_types);
   return order_types;
 }
 
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_omega_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
   populate_basic_order_task_nodes(
-    DefaultDestinations::OMEGA(), "Omega", order_types);
+    DefaultDestinations::OMEGA, "Omega", order_types);
   return order_types;
 }
 
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_pure_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
   populate_basic_order_task_nodes(
-    DefaultDestinations::PURE(), "Pure", order_types);
+    DefaultDestinations::PURE, "Pure", order_types);
   return order_types;
 }
 
@@ -720,26 +714,26 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_tsx_order_task_nodes() {
         "ex_destination", 100, std::make_unique<TextNode>("SMRTXOPG-X2")));
   limit.SetReadOnly("long_life", true);
   limit.SetVisible("long_life", false);
-  populate_bid_ask(limit, "TSX Limit", DefaultDestinations::TSX(),
+  populate_bid_ask(limit, "TSX Limit", DefaultDestinations::TSX,
     TimeInForce::Type::DAY, order_types);
   auto market = CanvasNodeBuilder(*GetMarketOrderTaskNode()->AddField(
     "ex_destination", 100, std::make_unique<TextNode>("SMRTXOPG-X2")));
-  populate_bid_ask(market, "TSX Market", DefaultDestinations::TSX(),
+  populate_bid_ask(market, "TSX Market", DefaultDestinations::TSX,
     TimeInForce::Type::DAY, order_types);
   auto immediate = CanvasNodeBuilder(*GetMarketOrderTaskNode()->AddField(
     "ex_destination", 100, std::make_unique<TextNode>("SMRTXOPG-X2")));
   immediate.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
-  populate_bid_ask(immediate, "TSX Buy", "TSX Sell", DefaultDestinations::TSX(),
+  populate_bid_ask(immediate, "TSX Buy", "TSX Sell", DefaultDestinations::TSX,
     TimeInForce::Type::DAY, order_types);
   auto limit_on_close = CanvasNodeBuilder(*GetLimitOrderTaskNode());
   populate_bid_ask(limit_on_close, "TSX Limit On Close",
-    DefaultDestinations::TSX(), TimeInForce::Type::MOC, order_types);
+    DefaultDestinations::TSX, TimeInForce::Type::MOC, order_types);
   auto market_on_close = CanvasNodeBuilder(*GetMarketOrderTaskNode());
   populate_bid_ask(limit_on_close, "TSX Market On Close",
-    DefaultDestinations::TSX(), TimeInForce::Type::MOC, order_types);
+    DefaultDestinations::TSX, TimeInForce::Type::MOC, order_types);
   auto dark_mid_point = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false));
   populate_bid_ask(dark_mid_point, "TSX Dark Mid-Point",
-    DefaultDestinations::TSX(), TimeInForce::Type::DAY, order_types);
+    DefaultDestinations::TSX, TimeInForce::Type::DAY, order_types);
   return order_types;
 }
 
@@ -764,39 +758,36 @@ std::vector<std::unique_ptr<CanvasNode>>
 }
 
 void Spire::reset_order_task_arguments(
-    OrderTaskArgumentsListModel& order_task_arguments,
-    const MarketDatabase& markets, const DestinationDatabase& destinations) {
+    OrderTaskArgumentsListModel& order_task_arguments) {
   order_task_arguments.transact([&] {
     clear(order_task_arguments);
     for(auto& task : make_default_order_task_nodes()) {
-      order_task_arguments.push(
-        to_order_task_arguments(*task, markets, destinations));
+      order_task_arguments.push(to_order_task_arguments(*task));
     }
   });
 }
 
 std::shared_ptr<KeyBindingsModel> Spire::load_key_bindings_profile(
-    const std::filesystem::path& path, const MarketDatabase& markets,
-    const DestinationDatabase& destinations) {
+    const std::filesystem::path& path) {
   auto file_path = path / "key_bindings.json";
   if(!std::filesystem::exists(file_path)) {
     auto legacy_path = path / "key_bindings.dat";
     if(std::filesystem::exists(legacy_path)) {
-      return convert_legacy_key_bindings(path, markets, destinations);
+      return convert_legacy_key_bindings(path);
     }
-    return load_default_key_bindings(markets, destinations);
+    return load_default_key_bindings();
   }
-  auto key_bindings = std::make_shared<KeyBindingsModel>(markets);
+  auto key_bindings = std::make_shared<KeyBindingsModel>();
   try {
-    auto reader = BasicIStreamReader<std::ifstream>(Initialize(file_path));
+    auto reader = BasicIStreamReader<std::ifstream>(init(file_path));
     auto buffer = SharedBuffer();
-    reader.Read(Store(buffer));
+    reader.read(out(buffer));
     auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
-    RegisterSpireTypes(Store(registry));
+    RegisterSpireTypes(out(registry));
     auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
-    receiver.SetSource(Ref(buffer));
+    receiver.set(Ref(buffer));
     auto profile = KeyBindingsProfile(KEY_BINDINGS_VERSION, &*key_bindings);
-    receiver.Shuttle(profile);
+    receiver.shuttle(profile);
   } catch(const std::exception&) {
     throw std::runtime_error("Unable to load key bindings.");
   }
@@ -808,14 +799,14 @@ void Spire::save_key_bindings_profile(
   auto file_path = path / "key_bindings.json";
   try {
     auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
-    RegisterSpireTypes(Store(registry));
+    RegisterSpireTypes(out(registry));
     auto sender = JsonSender<SharedBuffer>(Ref(registry));
     auto buffer = SharedBuffer();
-    sender.SetSink(Ref(buffer));
+    sender.set(Ref(buffer));
     auto profile = KeyBindingsProfile(KEY_BINDINGS_VERSION, &key_bindings);
-    sender.Shuttle(profile);
-    auto writer = BasicOStreamWriter<std::ofstream>(Initialize(file_path));
-    writer.Write(buffer);
+    sender.shuttle(profile);
+    auto writer = BasicOStreamWriter<std::ofstream>(init(file_path));
+    writer.write(buffer);
   } catch(const std::exception&) {
     throw std::runtime_error("Unable to save key bindings.");
   }

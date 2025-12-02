@@ -10,95 +10,83 @@
 #include <Beam/Services/AuthenticatedServiceProtocolClientBuilder.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
-#include <Beam/Threading/TriggerTimer.hpp>
+#include <Beam/TimeService/LocalTimeClient.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
-#include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/AdministrationService/AdministrationServlet.hpp"
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
-#include "Nexus/AdministrationServiceTests/AdministrationServiceTests.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/AdministrationService/ServiceAdministrationClient.hpp"
 #include "Nexus/MarketDataService/EntitlementSet.hpp"
 
-namespace Nexus::AdministrationService::Tests {
+namespace Nexus::Tests {
 
   /**
-   * Wraps most components needed to run an instance of the
-   * AdministrationService with helper functions.
+   * Wraps most components needed to run an instance of the Administration
+   * service with helper functions.
    */
   class AdministrationServiceTestEnvironment {
     public:
 
       /**
        * Constructs an AdministrationServiceTestEnvironment.
-       * @param serviceLocatorClient The ServiceLocatorClient to use.
+       * @param client The ServiceLocatorClient to use.
        */
-      AdministrationServiceTestEnvironment(
-        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
+      explicit AdministrationServiceTestEnvironment(
+        Beam::ServiceLocatorClient client);
 
       /**
        * Constructs an AdministrationServiceTestEnvironment.
-       * @param serviceLocatorClient The ServiceLocatorClient to use.
+       * @param client The ServiceLocatorClient to use.
        * @param entitlements The entitlement database to use.
        */
       AdministrationServiceTestEnvironment(
-        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-        MarketDataService::EntitlementDatabase entitlements);
+        Beam::ServiceLocatorClient client, EntitlementDatabase entitlements);
 
       ~AdministrationServiceTestEnvironment();
 
       /** Returns this test environment's AdministrationClient. */
-      AdministrationClientBox& GetClient();
+      AdministrationClient& get_client();
 
       /**
        * Grants an account administrative privileges.
        * @param account The account to grant administrative privileges to.
        */
-      void MakeAdministrator(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+      void make_administrator(const Beam::DirectoryEntry& account);
 
       /**
        * Returns a new AdministrationClient.
-       * @param serviceLocatorClient The ServiceLocatorClient used to
-       *        authenticate the AdministrationClient.
+       * @param client The ServiceLocatorClient used to authenticate the
+       *        AdministrationClient.
        */
-      AdministrationClientBox MakeClient(
-        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
+      AdministrationClient make_client(
+        Beam::Ref<Beam::ServiceLocatorClient> client);
 
-      void Close();
+      void close();
 
     private:
-      using ServerConnection =
-        Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
-      using ClientChannel =
-        Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
       using ServiceProtocolServletContainer =
-        Beam::Services::ServiceProtocolServletContainer<
-          Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-            MetaAdministrationServlet<
-              Beam::ServiceLocator::ServiceLocatorClientBox,
-              LocalAdministrationDataStore*>,
-            Beam::ServiceLocator::ServiceLocatorClientBox>,
-          ServerConnection*,
-          Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-          Beam::Codecs::NullEncoder,
-          std::shared_ptr<Beam::Threading::TriggerTimer>>;
+        Beam::ServiceProtocolServletContainer<
+          Beam::MetaAuthenticationServletAdapter<MetaAdministrationServlet<
+            Beam::ServiceLocatorClient, LocalAdministrationDataStore*,
+            Beam::LocalTimeClient>, Beam::ServiceLocatorClient>,
+          Beam::LocalServerConnection*, Beam::BinarySender<Beam::SharedBuffer>,
+          Beam::NullEncoder, std::shared_ptr<Beam::TriggerTimer>>;
       using ServiceProtocolClientBuilder =
-        Beam::Services::AuthenticatedServiceProtocolClientBuilder<
-        Beam::ServiceLocator::ServiceLocatorClientBox,
-        Beam::Services::MessageProtocol<std::unique_ptr<ClientChannel>,
-          Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-          Beam::Codecs::NullEncoder>,
-        Beam::Threading::TriggerTimer>;
-      Beam::ServiceLocator::ServiceLocatorClientBox m_serviceLocatorClient;
-      LocalAdministrationDataStore m_dataStore;
-      ServerConnection m_serverConnection;
+        Beam::AuthenticatedServiceProtocolClientBuilder<
+          Beam::ServiceLocatorClient,
+          Beam::MessageProtocol<std::unique_ptr<Beam::LocalClientChannel>,
+            Beam::BinarySender<Beam::SharedBuffer>, Beam::NullEncoder>,
+          Beam::TriggerTimer>;
+      Beam::ServiceLocatorClient m_service_locator_client;
+      LocalAdministrationDataStore m_data_store;
+      Beam::LocalServerConnection m_server_connection;
       ServiceProtocolServletContainer m_container;
-      boost::optional<AdministrationClientBox> m_client;
+      boost::optional<AdministrationClient> m_client;
 
-      static MarketDataService::EntitlementDatabase MakeDefaultEntitlements(
-        Beam::ServiceLocator::ServiceLocatorClientBox& client);
+      static EntitlementDatabase make_default_entitlements(
+        Beam::ServiceLocatorClient& client);
       AdministrationServiceTestEnvironment(
         const AdministrationServiceTestEnvironment&) = delete;
       AdministrationServiceTestEnvironment& operator =(
@@ -108,133 +96,134 @@ namespace Nexus::AdministrationService::Tests {
   /**
    * Uses a ServiceLocatorAccount to make an account suitable for use by a
    * AdministrationServiceTestEnvironment.
-   * @param serviceLocatorClient The ServiceLocatorClient to use, should have
-   *        root permissions.
+   * @param client The ServiceLocatorClient to use, should have root
+   *        permissions.
    * @param name The name of the account.
    * @param password The account's password.
    * @return The account's DirectoryEntry.
    */
-  template<typename ServiceLocatorClient>
-  inline Beam::ServiceLocator::DirectoryEntry MakeAdministratorAccount(
-      ServiceLocatorClient& serviceLocatorClient, const std::string& name,
+  inline Beam::DirectoryEntry make_administrator_account(
+      Beam::IsServiceLocatorClient auto& client, const std::string& name,
       const std::string& password) {
-    auto account = serviceLocatorClient.MakeAccount(name, password,
-      Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
-    serviceLocatorClient.StorePermissions(account,
-      Beam::ServiceLocator::DirectoryEntry::GetStarDirectory(),
-      Beam::ServiceLocator::Permissions().Set(
-        Beam::ServiceLocator::Permission::READ).Set(
-        Beam::ServiceLocator::Permission::MOVE).Set(
-        Beam::ServiceLocator::Permission::ADMINISTRATE));
+    auto account =
+      client.make_account(name, password, Beam::DirectoryEntry::STAR_DIRECTORY);
+    client.store(account, Beam::DirectoryEntry::STAR_DIRECTORY,
+      Beam::Permissions().
+        set(Beam::Permission::READ).
+        set(Beam::Permission::MOVE).
+        set(Beam::Permission::ADMINISTRATE));
     return account;
   }
 
   /**
    * Constructs an AdministrationServiceTestEnvironment using defaults settings
    * from a ServiceLocatorTestEnvironment.
-   * @param serviceLocatorEnvironment The ServiceLocatorTestEnvironment used
-   *        to create default settings.
+   * @param environment The ServiceLocatorTestEnvironment used to create default
+   *        settings.
    */
   inline AdministrationServiceTestEnvironment
-      MakeAdministrationServiceTestEnvironment(
-        Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
-          serviceLocatorEnvironment) {
-    MakeAdministratorAccount(serviceLocatorEnvironment.GetRoot(),
-      "administration_service", "1234");
+      make_administration_service_test_environment(
+        Beam::Tests::ServiceLocatorTestEnvironment& environment) {
+    make_administrator_account(
+      environment.get_root(), "administration_service", "1234");
     return AdministrationServiceTestEnvironment(
-      serviceLocatorEnvironment.MakeClient("administration_service", "1234"));
+      environment.make_client("administration_service", "1234"));
+  }
+
+  /**
+   * Grants all available entitlements to an account.
+   * @param environment The test environment that the entitlements are being
+   *        granted on.
+   * @param account The account to grant the entitlements to.
+   */
+  inline void grant_all_entitlements(
+      AdministrationServiceTestEnvironment& environment,
+      const Beam::DirectoryEntry& account) {
+    auto entitlements = std::vector<Beam::DirectoryEntry>();
+    for(auto& entry :
+        environment.get_client().load_entitlements().get_entries()) {
+      entitlements.push_back(entry.m_group_entry);
+    }
+    environment.get_client().store_entitlements(account, entitlements);
   }
 
   inline AdministrationServiceTestEnvironment::
-    AdministrationServiceTestEnvironment(
-      Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient)
-    : AdministrationServiceTestEnvironment(std::move(serviceLocatorClient),
-        MakeDefaultEntitlements(serviceLocatorClient)) {}
+    AdministrationServiceTestEnvironment(Beam::ServiceLocatorClient client)
+    : AdministrationServiceTestEnvironment(
+        std::move(client), make_default_entitlements(client)) {}
 
   inline AdministrationServiceTestEnvironment::
     AdministrationServiceTestEnvironment(
-      Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-      MarketDataService::EntitlementDatabase entitlements)
-      : m_serviceLocatorClient(std::move(serviceLocatorClient)),
-          m_container(Beam::Initialize(m_serviceLocatorClient, Beam::Initialize(
-            m_serviceLocatorClient, std::move(entitlements), &m_dataStore)),
-            &m_serverConnection,
-            boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {
-    MakeAdministrator(m_serviceLocatorClient.GetAccount());
-    m_client.emplace(MakeClient(m_serviceLocatorClient));
+      Beam::ServiceLocatorClient client, EntitlementDatabase entitlements)
+      : m_service_locator_client(std::move(client)),
+          m_container(Beam::init(m_service_locator_client,
+            Beam::init(m_service_locator_client, std::move(entitlements),
+              &m_data_store, Beam::init())), &m_server_connection,
+            boost::factory<std::shared_ptr<Beam::TriggerTimer>>()) {
+    make_administrator(m_service_locator_client.get_account());
+    m_client.emplace(make_client(Beam::Ref(m_service_locator_client)));
   }
 
   inline AdministrationServiceTestEnvironment::
       ~AdministrationServiceTestEnvironment() {
-    Close();
+    close();
   }
 
-  inline AdministrationClientBox&
-      AdministrationServiceTestEnvironment::GetClient() {
+  inline AdministrationClient&
+      AdministrationServiceTestEnvironment::get_client() {
     return *m_client;
   }
 
-  inline void AdministrationServiceTestEnvironment::MakeAdministrator(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto administrators = m_serviceLocatorClient.LoadDirectoryEntry(
-      Beam::ServiceLocator::DirectoryEntry::GetStarDirectory(),
-      "administrators");
-    m_serviceLocatorClient.Associate(account, administrators);
+  inline void AdministrationServiceTestEnvironment::make_administrator(
+      const Beam::DirectoryEntry& account) {
+    auto administrators = m_service_locator_client.load_directory_entry(
+      Beam::DirectoryEntry::STAR_DIRECTORY, "administrators");
+    m_service_locator_client.associate(account, administrators);
   }
 
-  inline AdministrationClientBox
-      AdministrationServiceTestEnvironment::MakeClient(
-        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
-    return AdministrationClientBox(std::in_place_type<
-      AdministrationClient<ServiceProtocolClientBuilder>>,
-        ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
-          std::bind_front(boost::factory<std::unique_ptr<
+  inline AdministrationClient AdministrationServiceTestEnvironment::make_client(
+      Beam::Ref<Beam::ServiceLocatorClient> client) {
+    return AdministrationClient(std::in_place_type<
+      ServiceAdministrationClient<ServiceProtocolClientBuilder>>,
+        ServiceProtocolClientBuilder(
+          Beam::Ref(client), std::bind_front(boost::factory<std::unique_ptr<
             ServiceProtocolClientBuilder::Channel>>(),
-            "test_administration_client", std::ref(m_serverConnection)),
+            "test_administration_client", std::ref(m_server_connection)),
           boost::factory<
             std::unique_ptr<ServiceProtocolClientBuilder::Timer>>()));
   }
 
-  inline void AdministrationServiceTestEnvironment::Close() {
-    m_container.Close();
+  inline void AdministrationServiceTestEnvironment::close() {
+    m_container.close();
   }
 
-  inline MarketDataService::EntitlementDatabase
-      AdministrationServiceTestEnvironment::MakeDefaultEntitlements(
-      Beam::ServiceLocator::ServiceLocatorClientBox& client) {
-    auto entitlementsDirectory = client.MakeDirectory("entitlements",
-      Beam::ServiceLocator::DirectoryEntry::GetStarDirectory());
-    auto globalEntitlementGroup = client.MakeDirectory("global",
-      entitlementsDirectory);
-    client.Associate(client.GetAccount(), globalEntitlementGroup);
-    auto globalEntitlement = MarketDataService::EntitlementDatabase::Entry();
-    globalEntitlement.m_name = "global";
-    globalEntitlement.m_groupEntry = globalEntitlementGroup;
-    auto& marketDatabase = GetDefaultMarketDatabase();
-    auto markets = std::vector<MarketCode>();
-    for(auto& entry : marketDatabase.GetEntries()) {
-      markets.push_back(entry.m_code);
+  inline EntitlementDatabase
+      AdministrationServiceTestEnvironment::make_default_entitlements(
+        Beam::ServiceLocatorClient& client) {
+    auto entitlements_directory = client.make_directory(
+      "entitlements", Beam::DirectoryEntry::STAR_DIRECTORY);
+    auto global_entitlement_group =
+      client.make_directory("global", entitlements_directory);
+    client.associate(client.get_account(), global_entitlement_group);
+    auto global_entitlement = EntitlementDatabase::Entry();
+    global_entitlement.m_name = "global";
+    global_entitlement.m_group_entry = global_entitlement_group;
+    auto venues = std::vector<Venue>();
+    for(auto& entry : DEFAULT_VENUES.get_entries()) {
+      venues.push_back(entry.m_venue);
     }
-    markets.push_back(MarketCode());
-    for(auto& market : markets) {
-      globalEntitlement.m_applicability[
-        MarketDataService::EntitlementKey(market)].Set(
-          MarketDataService::MarketDataType::TIME_AND_SALE);
-      globalEntitlement.m_applicability[
-        MarketDataService::EntitlementKey(market)].Set(
-          MarketDataService::MarketDataType::BOOK_QUOTE);
-      globalEntitlement.m_applicability[
-        MarketDataService::EntitlementKey(market)].Set(
-          MarketDataService::MarketDataType::MARKET_QUOTE);
-      globalEntitlement.m_applicability[
-        MarketDataService::EntitlementKey(market)].Set(
-          MarketDataService::MarketDataType::BBO_QUOTE);
-      globalEntitlement.m_applicability[
-        MarketDataService::EntitlementKey(market)].Set(
-          MarketDataService::MarketDataType::ORDER_IMBALANCE);
+    for(auto& venue : venues) {
+      global_entitlement.m_applicability[EntitlementKey(venue)].set(
+        MarketDataType::TIME_AND_SALE);
+      global_entitlement.m_applicability[EntitlementKey(venue)].set(
+        MarketDataType::BOOK_QUOTE);
+      global_entitlement.m_applicability[EntitlementKey(venue)].set(
+        MarketDataType::BBO_QUOTE);
+      global_entitlement.m_applicability[EntitlementKey(venue)].set(
+        MarketDataType::ORDER_IMBALANCE);
     }
-    auto entitlements = MarketDataService::EntitlementDatabase();
-    entitlements.Add(globalEntitlement);
+    auto entitlements = EntitlementDatabase();
+    entitlements.add(global_entitlement);
     return entitlements;
   }
 }

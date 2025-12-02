@@ -1,211 +1,162 @@
 #include "Nexus/Python/RiskService.hpp"
 #include <Beam/Python/Beam.hpp>
 #include <Beam/Sql/SqlConnection.hpp>
+#include <boost/lexical_cast.hpp>
 #include <Viper/MySql/Connection.hpp>
 #include <Viper/Sqlite3/Connection.hpp>
-#include "Nexus/Python/RiskDataStore.hpp"
+#include <pybind11/operators.h>
 #include "Nexus/Python/ToPythonRiskClient.hpp"
+#include "Nexus/Python/ToPythonRiskDataStore.hpp"
 #include "Nexus/RiskService/ApplicationDefinitions.hpp"
+#include "Nexus/RiskService/InventorySnapshot.hpp"
 #include "Nexus/RiskService/LocalRiskDataStore.hpp"
-#include "Nexus/RiskService/RiskParameters.hpp"
 #include "Nexus/RiskService/SqlRiskDataStore.hpp"
+#include "Nexus/RiskService/RiskParameters.hpp"
+#include "Nexus/RiskService/RiskState.hpp"
 #include "Nexus/RiskServiceTests/RiskServiceTestEnvironment.hpp"
 
 using namespace Beam;
 using namespace Beam::Python;
-using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
-using namespace Beam::Threading;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::RiskService;
-using namespace Nexus::RiskService::Tests;
 using namespace Nexus::Python;
+using namespace Nexus::Tests;
 using namespace pybind11;
 
 namespace {
-  auto riskClientBox = std::unique_ptr<class_<RiskClientBox>>();
-
-  struct TrampolineRiskDataStore final : VirtualRiskDataStore {
-    InventorySnapshot LoadInventorySnapshot(
-        const DirectoryEntry& account) override {
-      PYBIND11_OVERLOAD_PURE_NAME(InventorySnapshot, VirtualRiskDataStore,
-        "load_inventory_snapshot", LoadInventorySnapshot, account);
-    }
-
-    void Store(const DirectoryEntry& account,
-        const InventorySnapshot& snapshot) override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualRiskDataStore, "store", Store,
-        account, snapshot);
-    }
-
-    void Close() override {
-      PYBIND11_OVERLOAD_PURE_NAME(void, VirtualRiskDataStore, "close", Close);
-    }
-  };
+  auto risk_client = std::unique_ptr<class_<RiskClient>>();
+  auto risk_data_store = std::unique_ptr<class_<RiskDataStore>>();
 }
 
-class_<RiskClientBox>& Nexus::Python::GetExportedRiskClientBox() {
-  return *riskClientBox;
+class_<RiskClient>& Nexus::Python::get_exported_risk_client() {
+  return *risk_client;
 }
 
-void Nexus::Python::ExportApplicationRiskClient(module& module) {
-  using PythonApplicationRiskClient = ToPythonRiskClient<
-    RiskClient<DefaultSessionBuilder<ServiceLocatorClientBox>>>;
-  ExportRiskClient<PythonApplicationRiskClient>(module,
-    "ApplicationRiskClient").
-    def(init([] (ServiceLocatorClientBox serviceLocatorClient) {
-      return std::make_shared<PythonApplicationRiskClient>(
-        MakeDefaultSessionBuilder(std::move(serviceLocatorClient),
-          RiskService::SERVICE_NAME));
-    }));
+class_<RiskDataStore>& Nexus::Python::get_exported_risk_data_store() {
+  return *risk_data_store;
 }
 
-void Nexus::Python::ExportInventorySnapshot(module& module) {
-  class_<InventorySnapshot>(module, "InventorySnapshot")
-    .def(init())
-    .def(init<const InventorySnapshot&>())
-    .def(init<std::vector<RiskInventory>, Beam::Queries::Sequence,
-      std::vector<OrderId>>())
-    .def_readwrite("inventories", &InventorySnapshot::m_inventories)
-    .def_readwrite("sequence", &InventorySnapshot::m_sequence)
-    .def_readwrite("excluded_orders", &InventorySnapshot::m_excludedOrders)
-    .def(self == self)
-    .def(self != self);
-  module.def("make_portfolio", &MakePortfolio<OrderExecutionClientBox>);
+void Nexus::Python::export_inventory_snapshot(module& module) {
+  export_default_methods(
+      class_<InventorySnapshot>(module, "InventorySnapshot")).
+    def(init<const std::vector<Inventory>&, Beam::Sequence,
+      const std::vector<OrderId>&>()).
+    def_readwrite("inventories", &InventorySnapshot::m_inventories).
+    def_readwrite("sequence", &InventorySnapshot::m_sequence).
+    def_readwrite("excluded_orders", &InventorySnapshot::m_excluded_orders);
+  module.def("strip", &strip);
+  module.def("make_portfolio",
+    [] (const InventorySnapshot& snapshot, const DirectoryEntry& account,
+        const VenueDatabase& venues, OrderExecutionClient& client) {
+      return make_portfolio(snapshot, account, venues, client);
+    }, keep_alive<0, 4>(), call_guard<GilRelease>());
 }
 
-void Nexus::Python::ExportLocalRiskDataStore(module& module) {
-  class_<ToPythonRiskDataStore<LocalRiskDataStore>, VirtualRiskDataStore,
-      std::shared_ptr<ToPythonRiskDataStore<LocalRiskDataStore>>>(module,
-      "LocalRiskDataStore")
-    .def(init([] {
-      return MakeToPythonRiskDataStore(std::make_unique<LocalRiskDataStore>());
-    }));
+void Nexus::Python::export_local_risk_data_store(module& module) {
+  export_risk_data_store<LocalRiskDataStore>(module, "LocalRiskDataStore").
+    def(init());
 }
 
-void Nexus::Python::ExportMySqlRiskDataStore(module& module) {
-  class_<ToPythonRiskDataStore<
-      SqlRiskDataStore<SqlConnection<Viper::MySql::Connection>>>,
-      VirtualRiskDataStore, std::shared_ptr<ToPythonRiskDataStore<
-        SqlRiskDataStore<SqlConnection<Viper::MySql::Connection>>>>>(module,
-          "MySqlRiskDataStore")
-    .def(init([] (std::string host, unsigned int port, std::string username,
+void Nexus::Python::export_mysql_risk_data_store(module& module) {
+  using DataStore = SqlRiskDataStore<SqlConnection<Viper::MySql::Connection>>;
+  class_<ToPythonRiskDataStore<DataStore>>(module, "MySqlRiskDataStore").
+    def(init([] (std::string host, unsigned int port, std::string username,
         std::string password, std::string database) {
-      return MakeToPythonRiskDataStore(std::make_unique<SqlRiskDataStore<
-        SqlConnection<Viper::MySql::Connection>>>(MakeSqlConnection(
+      return std::make_unique<ToPythonRiskDataStore<DataStore>>(
+        std::make_unique<SqlConnection<Viper::MySql::Connection>>(
           Viper::MySql::Connection(std::move(host), port, std::move(username),
-            std::move(password), std::move(database)))));
-    }), call_guard<GilRelease>());
+            std::move(password), std::move(database))));
+    }));
 }
 
-void Nexus::Python::ExportRiskDataStore(module& module) {
-  class_<VirtualRiskDataStore, TrampolineRiskDataStore,
-      std::shared_ptr<VirtualRiskDataStore>>(module, "RiskDataStore")
-    .def("load_inventory_snapshot",
-      &VirtualRiskDataStore::LoadInventorySnapshot)
-    .def("store", &VirtualRiskDataStore::Store)
-    .def("close", &VirtualRiskDataStore::Close);
+void Nexus::Python::export_risk_parameters(module& module) {
+  export_default_methods(class_<RiskParameters>(module, "RiskParameters")).
+    def(init<CurrencyId, Money, RiskState, Money, time_duration>()).
+    def_readwrite("currency", &RiskParameters::m_currency).
+    def_readwrite("buying_power", &RiskParameters::m_buying_power).
+    def_readwrite("allowed_state", &RiskParameters::m_allowed_state).
+    def_readwrite("net_loss", &RiskParameters::m_net_loss).
+    def_readwrite("transition_time", &RiskParameters::m_transition_time);
 }
 
-void Nexus::Python::ExportRiskParameters(module& module) {
-  class_<RiskParameters>(module, "RiskParameters")
-    .def(init())
-    .def(init<const RiskParameters&>())
-    .def(init<CurrencyId, Money, RiskState, Money, int, time_duration>())
-    .def_readwrite("currency", &RiskParameters::m_currency)
-    .def_readwrite("buying_power", &RiskParameters::m_buyingPower)
-    .def_readwrite("allowed_state", &RiskParameters::m_allowedState)
-    .def_readwrite("net_loss", &RiskParameters::m_netLoss)
-    .def_readwrite("loss_from_top", &RiskParameters::m_lossFromTop)
-    .def_readwrite("transition_time", &RiskParameters::m_transitionTime)
-    .def(self == self)
-    .def(self != self);
+void Nexus::Python::export_risk_service(module& module) {
+  risk_client = std::make_unique<class_<RiskClient>>(
+    export_risk_client<RiskClient>(module, "RiskClient"));
+  risk_data_store = std::make_unique<class_<RiskDataStore>>(
+    export_risk_data_store<RiskDataStore>(module, "RiskDataStore"));
+  export_inventory_snapshot(module);
+  export_local_risk_data_store(module);
+  export_mysql_risk_data_store(module);
+  export_risk_parameters(module);
+  export_risk_service_application_definitions(module);
+  export_risk_state(module);
+  export_sqlite_risk_data_store(module);
+  export_queue_suite<KeyValuePair<RiskPortfolioKey, Inventory>>(
+    module, "RiskPortfolioUpdateEntry");
+  auto tests_submodule = module.def_submodule("tests");
+  export_risk_service_test_environment(tests_submodule);
 }
 
-void Nexus::Python::ExportRiskService(module& module) {
-  auto submodule = module.def_submodule("risk_service");
-  riskClientBox = std::make_unique<class_<RiskClientBox>>(
-    ExportRiskClient<RiskClientBox>(submodule, "RiskClient"));
-  ExportRiskClient<ToPythonRiskClient<RiskClientBox>>(submodule,
-    "RiskClientBox");
-  ExportApplicationRiskClient(submodule);
-  ExportInventorySnapshot(submodule);
-  ExportRiskDataStore(submodule);
-  ExportLocalRiskDataStore(submodule);
-  ExportMySqlRiskDataStore(submodule);
-  ExportRiskParameters(submodule);
-  ExportRiskState(submodule);
-  ExportSqliteRiskDataStore(submodule);
-  ExportQueueSuite<KeyValuePair<RiskPortfolioKey, RiskInventory>>(module,
-    "RiskPortfolioUpdateEntry");
-  auto testModule = submodule.def_submodule("tests");
-  ExportRiskServiceTestEnvironment(testModule);
+void Nexus::Python::export_risk_service_application_definitions(
+    module& module) {
+  export_risk_client<ToPythonRiskClient<ApplicationRiskClient>>(
+      module, "ApplicationRiskClient").
+    def(pybind11::init([] (
+        ToPythonServiceLocatorClient<ApplicationServiceLocatorClient>& client) {
+      return std::make_unique<ToPythonRiskClient<ApplicationRiskClient>>(
+        Ref(*client));
+    }), keep_alive<1, 2>());
 }
 
-void Nexus::Python::ExportRiskServiceTestEnvironment(module& module) {
-  class_<RiskServiceTestEnvironment>(module, "RiskServiceTestEnvironment")
-    .def(init([] (ServiceLocatorClientBox serviceLocatorClient,
-          AdministrationClientBox administrationClient,
-          MarketDataClientBox marketDataClient,
-          OrderExecutionClientBox orderExecutionClient,
-          std::function<std::shared_ptr<TimerBox> ()> transitionTimerFactory,
-          TimeClientBox timeClient, std::vector<ExchangeRate> exchangeRates,
-          MarketDatabase markets, DestinationDatabase destinations) {
-        auto adaptedTransitionTimerFactory = [=] {
-          return std::make_unique<TimerBox>(transitionTimerFactory());
+void Nexus::Python::export_risk_service_test_environment(module& module) {
+  class_<RiskServiceTestEnvironment,
+      std::shared_ptr<RiskServiceTestEnvironment>>(
+        module, "RiskServiceTestEnvironment").
+    def(init([] (ServiceLocatorClient& service_locator_client,
+          AdministrationClient& administration_client,
+          MarketDataClient& market_data_client,
+          OrderExecutionClient& order_execution_client,
+          std::function<std::shared_ptr<Timer> ()> timer_builder,
+          TimeClient& time_client, const ExchangeRateTable& exchange_rates,
+          const VenueDatabase& venue_database,
+          const DestinationDatabase& destination_database) {
+        auto timer_adaptor = [timer_builder = std::move(timer_builder)] {
+          return std::make_unique<Timer>(timer_builder());
         };
-        return std::make_unique<RiskServiceTestEnvironment>(
-          std::move(serviceLocatorClient), std::move(administrationClient),
-          std::move(marketDataClient), std::move(orderExecutionClient),
-          std::move(adaptedTransitionTimerFactory), std::move(timeClient),
-          std::move(exchangeRates), std::move(markets),
-          std::move(destinations));
-      }), call_guard<GilRelease>())
-    .def("__del__", [] (RiskServiceTestEnvironment& self) {
-      self.Close();
-    }, call_guard<GilRelease>())
-    .def("make_client",
-      [] (RiskServiceTestEnvironment& self,
-          ServiceLocatorClientBox serviceLocatorClient) {
-        return ToPythonRiskClient(self.MakeClient(
-          std::move(serviceLocatorClient)));
-      }, call_guard<GilRelease>())
-    .def("close", &RiskServiceTestEnvironment::Close, call_guard<GilRelease>());
+        return make_python_shared<RiskServiceTestEnvironment>(
+          service_locator_client, administration_client, market_data_client,
+          order_execution_client, std::move(timer_adaptor), time_client,
+          exchange_rates, venue_database, destination_database);
+      }), keep_alive<1, 2>(), keep_alive<1, 3>(),
+      keep_alive<1, 4>(), keep_alive<1, 5>(), keep_alive<1, 7>()).
+    def("make_client",
+      [] (RiskServiceTestEnvironment& self, ServiceLocatorClient& client) {
+        return ToPythonRiskClient(self.make_client(Ref(client)));
+      }, call_guard<GilRelease>(), keep_alive<0, 2>()).
+    def("close", &RiskServiceTestEnvironment::close, call_guard<GilRelease>());
 }
 
-void Nexus::Python::ExportRiskState(module& module) {
-  auto outer = class_<RiskState>(module, "RiskState")
-    .def(init())
-    .def(init<RiskState::Type>())
-    .def(init<RiskState::Type, ptime>())
-    .def(init<const RiskState&>())
-    .def_readwrite("type", &RiskState::m_type)
-    .def_readwrite("expiry", &RiskState::m_expiry)
-    .def("__str__", &lexical_cast<std::string, RiskState>)
-    .def(self == self)
-    .def(self != self);
-  enum_<RiskState::Type::Type>(outer, "Type")
-    .value("NONE", RiskState::Type::NONE)
-    .value("ACTIVE", RiskState::Type::ACTIVE)
-    .value("CLOSE_ORDERS", RiskState::Type::CLOSE_ORDERS)
-    .value("DISABLED", RiskState::Type::DISABLED);
+void Nexus::Python::export_risk_state(module& module) {
+  auto risk_state =
+      export_default_methods(class_<RiskState>(module, "RiskState")).
+    def(init<RiskState::Type>()).
+    def(init<RiskState::Type, boost::posix_time::ptime>()).
+    def_readwrite("type", &RiskState::m_type).
+    def_readwrite("expiry", &RiskState::m_expiry);
+  enum_<RiskState::Type::Type>(risk_state, "Type").
+    value("NONE", RiskState::Type::NONE).
+    value("ACTIVE", RiskState::Type::ACTIVE).
+    value("CLOSE_ORDERS", RiskState::Type::CLOSE_ORDERS).
+    value("DISABLED", RiskState::Type::DISABLED);
 }
 
-void Nexus::Python::ExportSqliteRiskDataStore(module& module) {
-  class_<ToPythonRiskDataStore<
-      SqlRiskDataStore<SqlConnection<Viper::Sqlite3::Connection>>>,
-      VirtualRiskDataStore, std::shared_ptr<ToPythonRiskDataStore<
-        SqlRiskDataStore<SqlConnection<Viper::Sqlite3::Connection>>>>>(module,
-          "SqliteRiskDataStore")
-    .def(init([] (std::string path) {
-      return MakeToPythonRiskDataStore(std::make_unique<
-        SqlRiskDataStore<SqlConnection<Viper::Sqlite3::Connection>>>(
-          MakeSqlConnection(Viper::Sqlite3::Connection(path))));
-    }), call_guard<GilRelease>());
+void Nexus::Python::export_sqlite_risk_data_store(module& module) {
+  using DataStore = SqlRiskDataStore<SqlConnection<Viper::Sqlite3::Connection>>;
+  class_<ToPythonRiskDataStore<DataStore>>(module, "SqliteRiskDataStore").
+    def(init([] (std::string path) {
+      return std::make_unique<ToPythonRiskDataStore<DataStore>>(
+        std::make_unique<SqlConnection<Viper::Sqlite3::Connection>>(
+          Viper::Sqlite3::Connection(std::move(path))));
+    }));
 }

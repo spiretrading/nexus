@@ -1,7 +1,6 @@
 #ifndef SPIRE_FONT_STYLE_BOX_HPP
 #define SPIRE_FONT_STYLE_BOX_HPP
 #include "Spire/Ui/EnumBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

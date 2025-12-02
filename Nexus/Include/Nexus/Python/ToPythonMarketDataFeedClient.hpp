@@ -1,21 +1,18 @@
 #ifndef NEXUS_PYTHON_MARKET_DATA_FEED_CLIENT_HPP
 #define NEXUS_PYTHON_MARKET_DATA_FEED_CLIENT_HPP
-#include <memory>
 #include <type_traits>
 #include <utility>
 #include <Beam/Python/GilRelease.hpp>
-#include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
-#include <pybind11/pybind11.h>
-#include "Nexus/MarketDataService/MarketDataFeedClientBox.hpp"
+#include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Wraps a MarketDataFeedClient for use with Python.
    * param <C> The type of MarketDataFeedClient to wrap.
    */
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   class ToPythonMarketDataFeedClient {
     public:
 
@@ -23,51 +20,50 @@ namespace Nexus::MarketDataService {
       using Client = C;
 
       /**
-       * Constructs a ToPythonMarketDataFeedClient.
-       * @param args The arguments to forward to the Client's constructor.
+       * Constructs a ToPythonMarketDataFeedClient in-place.
+       * @param args The arguments to forward to the constructor.
        */
-      template<typename... Args, typename =
-        Beam::disable_copy_constructor_t<ToPythonMarketDataFeedClient, Args...>>
-      ToPythonMarketDataFeedClient(Args&&... args);
+      template<typename... Args>
+      explicit ToPythonMarketDataFeedClient(Args&&... args);
 
       ~ToPythonMarketDataFeedClient();
 
-      /** Returns the wrapped client. */
-      const Client& GetClient() const;
+      /** Returns a reference to the underlying client. */
+      Client& get();
 
-      /** Returns the wrapped client. */
-      Client& GetClient();
+      /** Returns a reference to the underlying client. */
+      const Client& get() const;
 
-      void Add(const SecurityInfo& securityInfo);
+      /** Returns a reference to the underlying client. */
+      Client& operator *();
 
-      void Publish(const MarketOrderImbalance& orderImbalance);
+      /** Returns a reference to the underlying client. */
+      const Client& operator *() const;
 
-      void Publish(const SecurityBboQuote& bboQuote);
+      /** Returns a pointer to the underlying client. */
+      Client* operator ->();
 
-      void Publish(const SecurityMarketQuote& marketQuote);
+      /** Returns a pointer to the underlying client. */
+      const Client* operator ->() const;
 
-      void Publish(const SecurityBookQuote& bookQuote);
-
-      void Publish(const SecurityTimeAndSale& timeAndSale);
-
-      void AddOrder(const Security& security, MarketCode market,
-        const std::string& mpid, bool isPrimaryMpid, const std::string& id,
+      void add(const SecurityInfo& info);
+      void publish(const VenueOrderImbalance& imbalance);
+      void publish(const SecurityBboQuote& quote);
+      void publish(const SecurityBookQuote& quote);
+      void publish(const SecurityTimeAndSale& time_and_sale);
+      void add_order(const Security& security, Venue venue,
+        const std::string& mpid, bool is_primary_mpid, const std::string& id,
         Side side, Money price, Quantity size,
         boost::posix_time::ptime timestamp);
-
-      void ModifyOrderSize(const std::string& id, Quantity size,
+      void modify_order_size(const std::string& id, Quantity size,
         boost::posix_time::ptime timestamp);
-
-      void OffsetOrderSize(const std::string& id, Quantity delta,
+      void offset_order_size(const std::string& id, Quantity delta,
         boost::posix_time::ptime timestamp);
-
-      void ModifyOrderPrice(const std::string& id, Money price,
+      void modify_order_price(const std::string& id, Money price,
         boost::posix_time::ptime timestamp);
-
-      void DeleteOrder(const std::string& id,
-        boost::posix_time::ptime timestamp);
-
-      void Close();
+      void remove_order(
+        const std::string& id, boost::posix_time::ptime timestamp);
+      void close();
 
     private:
       boost::optional<Client> m_client;
@@ -80,115 +76,131 @@ namespace Nexus::MarketDataService {
 
   template<typename Client>
   ToPythonMarketDataFeedClient(Client&&) ->
-    ToPythonMarketDataFeedClient<std::decay_t<Client>>;
+    ToPythonMarketDataFeedClient<std::remove_cvref_t<Client>>;
 
-  template<typename C>
-  template<typename... Args, typename>
+  template<IsMarketDataFeedClient C>
+  template<typename... Args>
   ToPythonMarketDataFeedClient<C>::ToPythonMarketDataFeedClient(Args&&... args)
     : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   ToPythonMarketDataFeedClient<C>::~ToPythonMarketDataFeedClient() {
     auto release = Beam::Python::GilRelease();
     m_client.reset();
   }
 
-  template<typename C>
-  const typename ToPythonMarketDataFeedClient<C>::Client&
-      ToPythonMarketDataFeedClient<C>::GetClient() const {
-    return *m_client;
-  }
-
-  template<typename C>
+  template<IsMarketDataFeedClient C>
   typename ToPythonMarketDataFeedClient<C>::Client&
-      ToPythonMarketDataFeedClient<C>::GetClient() {
+      ToPythonMarketDataFeedClient<C>::get() {
     return *m_client;
   }
 
-  template<typename C>
-  void ToPythonMarketDataFeedClient<C>::Add(const SecurityInfo& securityInfo) {
-    auto release = Beam::Python::GilRelease();
-    m_client->Add(securityInfo);
+  template<IsMarketDataFeedClient C>
+  const typename ToPythonMarketDataFeedClient<C>::Client&
+      ToPythonMarketDataFeedClient<C>::get() const {
+    return *m_client;
   }
 
-  template<typename C>
-  void ToPythonMarketDataFeedClient<C>::Publish(
-      const MarketOrderImbalance& orderImbalance) {
-    auto release = Beam::Python::GilRelease();
-    m_client->Publish(orderImbalance);
+  template<IsMarketDataFeedClient C>
+  typename ToPythonMarketDataFeedClient<C>::Client&
+      ToPythonMarketDataFeedClient<C>::operator *() {
+    return *m_client;
   }
 
-  template<typename C>
-  void ToPythonMarketDataFeedClient<C>::Publish(
-      const SecurityBboQuote& bboQuote) {
-    auto release = Beam::Python::GilRelease();
-    m_client->Publish(bboQuote);
+  template<IsMarketDataFeedClient C>
+  const typename ToPythonMarketDataFeedClient<C>::Client&
+      ToPythonMarketDataFeedClient<C>::operator *() const {
+    return *m_client;
   }
 
-  template<typename C>
-  void ToPythonMarketDataFeedClient<C>::Publish(
-      const SecurityMarketQuote& marketQuote) {
-    auto release = Beam::Python::GilRelease();
-    m_client->Publish(marketQuote);
+  template<IsMarketDataFeedClient C>
+  typename ToPythonMarketDataFeedClient<C>::Client*
+      ToPythonMarketDataFeedClient<C>::operator ->() {
+    return m_client.get_ptr();
   }
 
-  template<typename C>
-  void ToPythonMarketDataFeedClient<C>::Publish(
-      const SecurityBookQuote& bookQuote) {
-    auto release = Beam::Python::GilRelease();
-    m_client->Publish(bookQuote);
+  template<IsMarketDataFeedClient C>
+  const typename ToPythonMarketDataFeedClient<C>::Client*
+      ToPythonMarketDataFeedClient<C>::operator ->() const {
+    return m_client.get_ptr();
   }
 
-  template<typename C>
-  void ToPythonMarketDataFeedClient<C>::Publish(
-      const SecurityTimeAndSale& timeAndSale) {
+  template<IsMarketDataFeedClient C>
+  void ToPythonMarketDataFeedClient<C>::add(const SecurityInfo& info) {
     auto release = Beam::Python::GilRelease();
-    m_client->Publish(timeAndSale);
+    m_client->add(info);
   }
 
-  template<typename C>
-  void ToPythonMarketDataFeedClient<C>::AddOrder(const Security& security,
-      MarketCode market, const std::string& mpid, bool isPrimaryMpid,
-      const std::string& id, Side side, Money price, Quantity size,
-      boost::posix_time::ptime timestamp) {
+  template<IsMarketDataFeedClient C>
+  void ToPythonMarketDataFeedClient<C>::publish(
+      const VenueOrderImbalance& imbalance) {
     auto release = Beam::Python::GilRelease();
-    m_client->AddOrder(security, market, mpid, isPrimaryMpid, id, side, price,
-      size, timestamp);
+    m_client->publish(imbalance);
   }
 
-  template<typename C>
-  void ToPythonMarketDataFeedClient<C>::ModifyOrderSize(const std::string& id,
+  template<IsMarketDataFeedClient C>
+  void ToPythonMarketDataFeedClient<C>::publish(const SecurityBboQuote& quote) {
+    auto release = Beam::Python::GilRelease();
+    m_client->publish(quote);
+  }
+
+  template<IsMarketDataFeedClient C>
+  void ToPythonMarketDataFeedClient<C>::publish(
+      const SecurityBookQuote& quote) {
+    auto release = Beam::Python::GilRelease();
+    m_client->publish(quote);
+  }
+
+  template<IsMarketDataFeedClient C>
+  void ToPythonMarketDataFeedClient<C>::publish(
+      const SecurityTimeAndSale& time_and_sale) {
+    auto release = Beam::Python::GilRelease();
+    m_client->publish(time_and_sale);
+  }
+
+  template<IsMarketDataFeedClient C>
+  void ToPythonMarketDataFeedClient<C>::add_order(
+      const Security& security, Venue venue, const std::string& mpid,
+      bool is_primary_mpid, const std::string& id, Side side, Money price,
       Quantity size, boost::posix_time::ptime timestamp) {
     auto release = Beam::Python::GilRelease();
-    m_client->ModifyOrderSize(id, size, timestamp);
+    m_client->add_order(security, venue, mpid, is_primary_mpid, id, side,
+      price, size, timestamp);
   }
 
-  template<typename C>
-  void ToPythonMarketDataFeedClient<C>::OffsetOrderSize(const std::string& id,
+  template<IsMarketDataFeedClient C>
+  void ToPythonMarketDataFeedClient<C>::modify_order_size(const std::string& id,
+      Quantity size, boost::posix_time::ptime timestamp) {
+    auto release = Beam::Python::GilRelease();
+    m_client->modify_order_size(id, size, timestamp);
+  }
+
+  template<IsMarketDataFeedClient C>
+  void ToPythonMarketDataFeedClient<C>::offset_order_size(const std::string& id,
       Quantity delta, boost::posix_time::ptime timestamp) {
     auto release = Beam::Python::GilRelease();
-    m_client->OffsetOrderSize(id, delta, timestamp);
+    m_client->offset_order_size(id, delta, timestamp);
   }
 
-  template<typename C>
-  void ToPythonMarketDataFeedClient<C>::ModifyOrderPrice(const std::string& id,
-      Money price, boost::posix_time::ptime timestamp) {
+  template<IsMarketDataFeedClient C>
+  void ToPythonMarketDataFeedClient<C>::modify_order_price(
+      const std::string& id, Money price, boost::posix_time::ptime timestamp) {
     auto release = Beam::Python::GilRelease();
-    m_client->ModifyOrderPrice(id, price, timestamp);
+    m_client->modify_order_price(id, price, timestamp);
   }
 
-  template<typename C>
-  void ToPythonMarketDataFeedClient<C>::DeleteOrder(const std::string& id,
-      boost::posix_time::ptime timestamp) {
+  template<IsMarketDataFeedClient C>
+  void ToPythonMarketDataFeedClient<C>::remove_order(
+      const std::string& id, boost::posix_time::ptime timestamp) {
     auto release = Beam::Python::GilRelease();
-    m_client->DeleteOrder(id, timestamp);
+    m_client->remove_order(id, timestamp);
   }
 
-  template<typename C>
-  void ToPythonMarketDataFeedClient<C>::Close() {
+  template<IsMarketDataFeedClient C>
+  void ToPythonMarketDataFeedClient<C>::close() {
     auto release = Beam::Python::GilRelease();
-    m_client->Close();
+    m_client->close();
   }
 }
 

@@ -4,11 +4,11 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <QWidget>
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 class Ui_ManagerItemWidget;
 
 namespace Spire {
+  class UserProfile;
 
   /*! \class ManagerItemWidget
       \brief Shows the main widget used to display a ManagerItem.

@@ -1,6 +1,7 @@
 #ifndef SPIRE_STYLES_EXPRESSION_HPP
 #define SPIRE_STYLES_EXPRESSION_HPP
 #include <any>
+#include <concepts>
 #include <functional>
 #include <typeindex>
 #include <type_traits>
@@ -9,9 +10,12 @@
 #include <boost/functional/hash.hpp>
 #include "Spire/Styles/ConstantExpression.hpp"
 #include "Spire/Styles/Evaluator.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
+  class Stylist;
+  template<typename> class Expression;
+
+namespace Details {
   template<typename T, typename = void>
   struct is_expression_t : std::false_type {};
 
@@ -25,20 +29,23 @@ namespace Spire::Styles {
 
   template<typename T>
   constexpr auto is_expression_v = is_expression_t<T>::value;
+}
 
+  /** Returns the type that an expression evaluates to. */
   template<typename T, typename = void>
   struct expression_type {
     using type = T;
   };
 
   template<typename T>
-  struct
-      expression_type<T, std::enable_if_t<is_expression_v<std::decay_t<T>>>> {
+  struct expression_type<
+      T, std::enable_if_t<Details::is_expression_v<std::remove_cvref_t<T>>>> {
     using type = typename T::Type;
   };
 
   template<typename T>
-  using expression_type_t = typename expression_type<std::decay_t<T>>::type;
+  using expression_type_t =
+    typename expression_type<std::remove_cvref_t<T>>::type;
 
   /**
    * Represents an expression performed on a style.
@@ -57,8 +64,16 @@ namespace Spire::Styles {
        */
       Expression(Type constant);
 
-      template<typename E, typename = std::enable_if_t<is_expression_v<E>>>
+      /*
+       * Constructs an Expression from another expression.
+       * @param expression The expression to represent.
+       */
+      template<typename E,
+        typename = std::enable_if_t<Details::is_expression_v<E>>>
       Expression(E expression);
+
+      Expression(const Expression&) = default;
+      Expression(Expression&&) = default;
 
       /** Returns the type of the underlying expression. */
       const std::type_info& get_type() const;
@@ -68,8 +83,6 @@ namespace Spire::Styles {
       const U& as() const;
 
       bool operator ==(const Expression& expression) const;
-
-      bool operator !=(const Expression& expression) const;
 
     private:
       template<typename U>
@@ -87,6 +100,8 @@ namespace Spire::Styles {
       std::any m_expression;
 
       Evaluator<Type> make_evaluator(const Stylist& stylist) const;
+      Expression& operator =(const Expression&) = delete;
+      Expression& operator =(Expression&&) = delete;
   };
 
   /**
@@ -101,7 +116,7 @@ namespace Spire::Styles {
     return expression.make_evaluator(stylist);
   }
 
-  template<typename E, typename = std::enable_if_t<is_expression_v<E>>>
+  template<typename E, typename = std::enable_if_t<Details::is_expression_v<E>>>
   Evaluator<expression_type_t<E>> make_evaluator(
       const E& expression, const Stylist& stylist) {
     return make_evaluator(expression, stylist);
@@ -149,11 +164,6 @@ namespace Spire::Styles {
   }
 
   template<typename T>
-  bool Expression<T>::operator !=(const Expression& expression) const {
-    return !(*this == expression);
-  }
-
-  template<typename T>
   Evaluator<typename Expression<T>::Type>
       Expression<T>::make_evaluator(const Stylist& stylist) const {
     auto& operations = m_operations.at(m_expression.type());
@@ -165,7 +175,7 @@ namespace std {
   template<typename T>
   struct hash<Spire::Styles::Expression<T>> {
     std::size_t operator ()(
-        const Spire::Styles::Expression<T>& expression) const {
+        const Spire::Styles::Expression<T>& expression) const noexcept {
       auto& operations =
         Spire::Styles::Expression<T>::m_operations.at(expression.get_type());
       auto seed = std::size_t(0);

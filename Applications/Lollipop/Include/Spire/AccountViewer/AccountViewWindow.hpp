@@ -4,7 +4,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <QFrame>
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class QModelIndex;
 class Ui_AccountViewWindow;

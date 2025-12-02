@@ -1,21 +1,18 @@
 #ifndef NEXUS_PYTHON_MARKET_DATA_CLIENT_HPP
 #define NEXUS_PYTHON_MARKET_DATA_CLIENT_HPP
-#include <memory>
 #include <type_traits>
 #include <utility>
 #include <Beam/Python/GilRelease.hpp>
-#include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
-#include <pybind11/pybind11.h>
-#include "Nexus/MarketDataService/MarketDataClientBox.hpp"
+#include "Nexus/MarketDataService/MarketDataClient.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Wraps a MarketDataClient for use with Python.
    * param <C> The type of MarketDataClient to wrap.
    */
-  template<typename C>
+  template<IsMarketDataClient C>
   class ToPythonMarketDataClient {
     public:
 
@@ -23,62 +20,54 @@ namespace Nexus::MarketDataService {
       using Client = C;
 
       /**
-       * Constructs a ToPythonMarketDataClient.
-       * @param args The arguments to forward to the Client's constructor.
+       * Constructs a ToPythonMarketDataClient in-place.
+       * @param args The arguments to forward to the constructor.
        */
-      template<typename... Args, typename =
-        Beam::disable_copy_constructor_t<ToPythonMarketDataClient, Args...>>
-      ToPythonMarketDataClient(Args&&... args);
+      template<typename... Args>
+      explicit ToPythonMarketDataClient(Args&&... args);
 
       ~ToPythonMarketDataClient();
 
-      /** Returns the wrapped client. */
-      const Client& GetClient() const;
+      /** Returns a reference to the underlying client. */
+      Client& get();
 
-      /** Returns the wrapped client. */
-      Client& GetClient();
+      /** Returns a reference to the underlying client. */
+      const Client& get() const;
 
-      void QueryOrderImbalances(const MarketWideDataQuery& query,
+      /** Returns a reference to the underlying client. */
+      Client& operator *();
+
+      /** Returns a reference to the underlying client. */
+      const Client& operator *() const;
+
+      /** Returns a pointer to the underlying client. */
+      Client* operator ->();
+
+      /** Returns a pointer to the underlying client. */
+      const Client* operator ->() const;
+
+      void query(const VenueMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedOrderImbalance> queue);
-
-      void QueryOrderImbalances(const MarketWideDataQuery& query,
+      void query(const VenueMarketDataQuery& query,
         Beam::ScopedQueueWriter<OrderImbalance> queue);
-
-      void QueryBboQuotes(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedBboQuote> queue);
-
-      void QueryBboQuotes(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<BboQuote> queue);
-
-      void QueryBookQuotes(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedBookQuote> queue);
-
-      void QueryBookQuotes(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<BookQuote> queue);
-
-      void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        Beam::ScopedQueueWriter<SequencedMarketQuote> queue);
-
-      void QueryMarketQuotes(const SecurityMarketDataQuery& query,
-        Beam::ScopedQueueWriter<MarketQuote> queue);
-
-      void QueryTimeAndSales(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
-
-      void QueryTimeAndSales(const SecurityMarketDataQuery& query,
+      void query(const SecurityMarketDataQuery& query,
         Beam::ScopedQueueWriter<TimeAndSale> queue);
-
-      SecuritySnapshot LoadSecuritySnapshot(const Security& security);
-
-      SecurityTechnicals LoadSecurityTechnicals(const Security& security);
-
-      std::vector<SecurityInfo> QuerySecurityInfo(
-        const SecurityInfoQuery& query);
-
-      std::vector<SecurityInfo> LoadSecurityInfoFromPrefix(
+      std::vector<SecurityInfo> query(const SecurityInfoQuery& query);
+      SecuritySnapshot load_snapshot(const Security& security);
+      SecurityTechnicals load_technicals(const Security& security);
+      std::vector<SecurityInfo> load_security_info_from_prefix(
         const std::string& prefix);
-
-      void Close();
+      void close();
 
     private:
       boost::optional<Client> m_client;
@@ -90,144 +79,145 @@ namespace Nexus::MarketDataService {
 
   template<typename Client>
   ToPythonMarketDataClient(Client&&) ->
-    ToPythonMarketDataClient<std::decay_t<Client>>;
+    ToPythonMarketDataClient<std::remove_cvref_t<Client>>;
 
-  template<typename C>
-  template<typename... Args, typename>
+  template<IsMarketDataClient C>
+  template<typename... Args>
   ToPythonMarketDataClient<C>::ToPythonMarketDataClient(Args&&... args)
     : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
-  template<typename C>
+  template<IsMarketDataClient C>
   ToPythonMarketDataClient<C>::~ToPythonMarketDataClient() {
     auto release = Beam::Python::GilRelease();
     m_client.reset();
   }
 
-  template<typename C>
-  const typename ToPythonMarketDataClient<C>::Client&
-      ToPythonMarketDataClient<C>::GetClient() const {
-    return *m_client;
-  }
-
-  template<typename C>
+  template<IsMarketDataClient C>
   typename ToPythonMarketDataClient<C>::Client&
-      ToPythonMarketDataClient<C>::GetClient() {
+      ToPythonMarketDataClient<C>::get() {
     return *m_client;
   }
 
-  template<typename C>
-  void ToPythonMarketDataClient<C>::QueryOrderImbalances(
-      const MarketWideDataQuery& query,
+  template<IsMarketDataClient C>
+  const typename ToPythonMarketDataClient<C>::Client&
+      ToPythonMarketDataClient<C>::get() const {
+    return *m_client;
+  }
+
+  template<IsMarketDataClient C>
+  typename ToPythonMarketDataClient<C>::Client&
+      ToPythonMarketDataClient<C>::operator *() {
+    return *m_client;
+  }
+
+  template<IsMarketDataClient C>
+  const typename ToPythonMarketDataClient<C>::Client&
+      ToPythonMarketDataClient<C>::operator *() const {
+    return *m_client;
+  }
+
+  template<IsMarketDataClient C>
+  typename ToPythonMarketDataClient<C>::Client*
+      ToPythonMarketDataClient<C>::operator ->() {
+    return m_client.get_ptr();
+  }
+
+  template<IsMarketDataClient C>
+  const typename ToPythonMarketDataClient<C>::Client*
+      ToPythonMarketDataClient<C>::operator ->() const {
+    return m_client.get_ptr();
+  }
+
+  template<IsMarketDataClient C>
+  void ToPythonMarketDataClient<C>::query(const VenueMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryOrderImbalances(query, std::move(queue));
+    m_client->query(query, std::move(queue));
   }
 
-  template<typename C>
-  void ToPythonMarketDataClient<C>::QueryOrderImbalances(
-      const MarketWideDataQuery& query,
+  template<IsMarketDataClient C>
+  void ToPythonMarketDataClient<C>::query(const VenueMarketDataQuery& query,
       Beam::ScopedQueueWriter<OrderImbalance> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryOrderImbalances(query, std::move(queue));
+    m_client->query(query, std::move(queue));
   }
 
-  template<typename C>
-  void ToPythonMarketDataClient<C>::QueryBboQuotes(
-      const SecurityMarketDataQuery& query,
+  template<IsMarketDataClient C>
+  void ToPythonMarketDataClient<C>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryBboQuotes(query, std::move(queue));
+    m_client->query(query, std::move(queue));
   }
 
-  template<typename C>
-  void ToPythonMarketDataClient<C>::QueryBboQuotes(
-      const SecurityMarketDataQuery& query,
+  template<IsMarketDataClient C>
+  void ToPythonMarketDataClient<C>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<BboQuote> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryBboQuotes(query, std::move(queue));
+    m_client->query(query, std::move(queue));
   }
 
-  template<typename C>
-  void ToPythonMarketDataClient<C>::QueryBookQuotes(
-      const SecurityMarketDataQuery& query,
+  template<IsMarketDataClient C>
+  void ToPythonMarketDataClient<C>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryBookQuotes(query, std::move(queue));
+    m_client->query(query, std::move(queue));
   }
 
-  template<typename C>
-  void ToPythonMarketDataClient<C>::QueryBookQuotes(
-      const SecurityMarketDataQuery& query,
+  template<IsMarketDataClient C>
+  void ToPythonMarketDataClient<C>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<BookQuote> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryBookQuotes(query, std::move(queue));
+    m_client->query(query, std::move(queue));
   }
 
-  template<typename C>
-  void ToPythonMarketDataClient<C>::QueryMarketQuotes(
-      const SecurityMarketDataQuery& query,
-      Beam::ScopedQueueWriter<SequencedMarketQuote> queue) {
-    auto release = Beam::Python::GilRelease();
-    m_client->QueryMarketQuotes(query, std::move(queue));
-  }
-
-  template<typename C>
-  void ToPythonMarketDataClient<C>::QueryMarketQuotes(
-      const SecurityMarketDataQuery& query,
-      Beam::ScopedQueueWriter<MarketQuote> queue) {
-    auto release = Beam::Python::GilRelease();
-    m_client->QueryMarketQuotes(query, std::move(queue));
-  }
-
-  template<typename C>
-  void ToPythonMarketDataClient<C>::QueryTimeAndSales(
-      const SecurityMarketDataQuery& query,
+  template<IsMarketDataClient C>
+  void ToPythonMarketDataClient<C>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryTimeAndSales(query, std::move(queue));
+    m_client->query(query, std::move(queue));
   }
 
-  template<typename C>
-  void ToPythonMarketDataClient<C>::QueryTimeAndSales(
-      const SecurityMarketDataQuery& query,
+  template<IsMarketDataClient C>
+  void ToPythonMarketDataClient<C>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<TimeAndSale> queue) {
     auto release = Beam::Python::GilRelease();
-    m_client->QueryTimeAndSales(query, std::move(queue));
+    m_client->query(query, std::move(queue));
   }
 
-  template<typename C>
-  SecuritySnapshot ToPythonMarketDataClient<C>::LoadSecuritySnapshot(
+  template<IsMarketDataClient C>
+  std::vector<SecurityInfo>
+      ToPythonMarketDataClient<C>::query(const SecurityInfoQuery& query) {
+    auto release = Beam::Python::GilRelease();
+    return m_client->query(query);
+  }
+
+  template<IsMarketDataClient C>
+  SecuritySnapshot ToPythonMarketDataClient<C>::load_snapshot(
       const Security& security) {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadSecuritySnapshot(security);
+    return m_client->load_snapshot(security);
   }
 
-  template<typename C>
-  SecurityTechnicals ToPythonMarketDataClient<C>::
-      LoadSecurityTechnicals(const Security& security) {
+  template<IsMarketDataClient C>
+  SecurityTechnicals ToPythonMarketDataClient<C>::load_technicals(
+      const Security& security) {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadSecurityTechnicals(security);
+    return m_client->load_technicals(security);
   }
 
-  template<typename C>
-  std::vector<SecurityInfo> ToPythonMarketDataClient<C>::QuerySecurityInfo(
-      const SecurityInfoQuery& query) {
+  template<IsMarketDataClient C>
+  std::vector<SecurityInfo>
+      ToPythonMarketDataClient<C>::load_security_info_from_prefix(
+        const std::string& prefix) {
     auto release = Beam::Python::GilRelease();
-    return m_client->QuerySecurityInfo(query);
+    return m_client->load_security_info_from_prefix(prefix);
   }
 
-  template<typename C>
-  std::vector<SecurityInfo> ToPythonMarketDataClient<C>::
-      LoadSecurityInfoFromPrefix(const std::string& prefix) {
+  template<IsMarketDataClient C>
+  void ToPythonMarketDataClient<C>::close() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadSecurityInfoFromPrefix(prefix);
-  }
-
-  template<typename C>
-  void ToPythonMarketDataClient<C>::Close() {
-    auto release = Beam::Python::GilRelease();
-    m_client->Close();
+    m_client->close();
   }
 }
 

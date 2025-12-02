@@ -1,7 +1,8 @@
 #ifndef SPIRE_CANCEL_KEY_BINDINGS_FORM_HPP
 #define SPIRE_CANCEL_KEY_BINDINGS_FORM_HPP
+#include <memory>
 #include <QWidget>
-#include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
 
 namespace Spire {
 

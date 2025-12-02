@@ -1,10 +1,13 @@
 #ifndef SPIRE_COLOR_PICKER_HPP
 #define SPIRE_COLOR_PICKER_HPP
+#include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class OverlayPanel;
+  class Slider2D;
+  class Slider;
 
   /** A ValueModel over a QColor. */
   using ColorModel = ValueModel<QColor>;

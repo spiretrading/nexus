@@ -13,6 +13,7 @@
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/Tooltip.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -242,7 +243,7 @@ MenuButton* Spire::make_menu_icon_button(QImage icon, QString tooltip,
   auto action_icon = new Icon(std::move(icon));
   action_icon->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto arrow_icon =
-    new Icon(imageFromSvg(":/Icons/dropdown-arrow.svg", scale(6, 4)));
+    new Icon(image_from_svg(":/Icons/dropdown-arrow.svg", scale(6, 4)));
   arrow_icon->setFixedSize(scale(6, 4));
   auto body = new QWidget();
   auto layout = make_hbox_layout(body);
@@ -291,7 +292,7 @@ MenuButton* Spire::make_menu_label_button(QString label, QWidget* parent) {
   auto icon_layer = new QWidget();
   icon_layer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto arrow_icon =
-    new Icon(imageFromSvg(":/Icons/dropdown-arrow.svg", scale(6, 4)));
+    new Icon(image_from_svg(":/Icons/dropdown-arrow.svg", scale(6, 4)));
   arrow_icon->setFixedSize(scale(6, 4));
   auto icon_layer_layout = make_hbox_layout(icon_layer);
   icon_layer_layout->addStretch();

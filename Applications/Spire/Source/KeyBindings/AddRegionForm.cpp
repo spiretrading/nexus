@@ -5,6 +5,7 @@
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;

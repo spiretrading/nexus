@@ -7,7 +7,7 @@
 namespace Spire {
 
   /** Matches a Task's State. */
-  class TaskStateParser : public Beam::Parsers::EnumeratorParser<Task::State> {
+  class TaskStateParser : public Beam::EnumeratorParser<Task::State> {
     public:
 
       /** Constructs a TaskStateParser. */

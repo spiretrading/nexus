@@ -78,7 +78,7 @@
          </layout>
         </item>
         <item>
-         <spacer name="m_keyToMarketSpacer">
+         <spacer name="m_keyToVenueSpacer">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -94,9 +94,9 @@
          </spacer>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="m_marketLayout">
+         <layout class="QHBoxLayout" name="m_venueLayout">
           <item>
-           <widget class="QLabel" name="m_marketLabel">
+           <widget class="QLabel" name="m_venueLabel">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
               <horstretch>0</horstretch>
@@ -104,12 +104,12 @@
              </sizepolicy>
             </property>
             <property name="text">
-             <string>Market</string>
+             <string>Venue</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="m_marketComboBox">
+           <widget class="QComboBox" name="m_venueComboBox">
             <property name="minimumSize">
              <size>
               <width>150</width>
@@ -127,7 +127,7 @@
          </layout>
         </item>
         <item>
-         <spacer name="m_marketToEdgeSpacer">
+         <spacer name="m_venueToEdgeSpacer">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>

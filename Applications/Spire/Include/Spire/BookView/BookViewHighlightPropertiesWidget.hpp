@@ -3,8 +3,9 @@
 #include <memory>
 #include <Beam/Pointers/Ref.hpp>
 #include <QWidget>
-#include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/BookView/BookView.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 class QListWidgetItem;
@@ -13,7 +14,7 @@ class Ui_BookViewHighlightPropertiesWidget;
 namespace Spire {
 
   /*! \class BookViewHighlightPropertiesWidget
-      \brief Displays a book view's market highlight properties.
+      \brief Displays a book view's venue highlight properties.
    */
   class BookViewHighlightPropertiesWidget : public QWidget {
     public:
@@ -42,12 +43,12 @@ namespace Spire {
       std::unique_ptr<Ui_BookViewHighlightPropertiesWidget> m_ui;
       UserProfile* m_userProfile;
       BookViewProperties* m_properties;
-      QColor m_marketHighlightColor;
+      QColor m_venueHighlightColor;
       QColor m_orderHighlightColor;
 
-      const Nexus::MarketDatabase::Entry&
-        GetCurrentMarketHighlightEntry() const;
-      void UpdateMarketHighlightColor(const QColor& color);
+      const Nexus::VenueDatabase::Entry&
+        GetCurrentVenueHighlightEntry() const;
+      void UpdateVenueHighlightColor(const QColor& color);
       void UpdateOrderHighlightColor(const QColor& color);
       void OnCurrentItemChanged(QListWidgetItem* current,
         QListWidgetItem* previous);

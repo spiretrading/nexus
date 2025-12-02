@@ -67,19 +67,19 @@ POPD
 SET UPDATE_NODE=
 IF NOT EXIST node_modules (
   SET UPDATE_NODE=1
+) ELSE IF NOT EXIST mod_time.txt (
+  SET UPDATE_NODE=1
 ) ELSE (
-  IF NOT EXIST mod_time.txt (
+  SET CHECK_PKG_COMMAND=powershell -NoProfile -Command "& {" ^
+    "$mod = (Get-Item 'mod_time.txt').LastWriteTime.Ticks;" ^
+    "$pkg = (Get-Item '!DIRECTORY!package.json').LastWriteTime.Ticks;" ^
+    "if ($pkg -gt $mod) { 'YES' } else { 'NO' }" ^
+  "}"
+  FOR /F "delims=" %%r IN ('CALL !CHECK_PKG_COMMAND!') DO (
+    SET NEEDS_NODE_UPDATE=%%r
+  )
+  IF "!NEEDS_NODE_UPDATE!" == "YES" (
     SET UPDATE_NODE=1
-  ) ELSE (
-    FOR /F %%i IN (
-        'ls -l --time-style=full-iso "!DIRECTORY!package.json" ^| awk "{print $6 $7}"') DO (
-      FOR /F %%j IN (
-          'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
-        IF "%%i" GEQ "%%j" (
-          SET UPDATE_NODE=1
-        )
-      )
-    )
   )
 )
 SET UPDATE_BUILD=
@@ -89,43 +89,34 @@ IF "!UPDATE_NODE!" == "1" (
 )
 IF NOT EXIST application (
   SET UPDATE_BUILD=1
-) ELSE (
-  SET MAX_SOURCE_TIMESTAMP=
-  SET MAX_TARGET_TIMESTAMP=
-  SET CHUNK=100
-  FOR /F %%i IN ('DIR source /s/b/a-d ^| wc -l') DO SET LINE_COUNT=%%i
-  FOR /L %%i IN (0,!CHUNK!,!LINE_COUNT!) DO (
-    FOR /F %%j IN (
-        'DIR source /s/b/a-d ^| tail -n +%%i 2^>NUL ^| head -!CHUNK! ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
-      IF %%j GTR !MAX_SOURCE_TIMESTAMP! (
-        SET MAX_SOURCE_TIMESTAMP=%%j
-      )
-    )
-  )
-  FOR /F %%i IN ('DIR application /s/b/a-d ^| wc -l') DO SET LINE_COUNT=%%i
-  FOR /L %%i IN (0,!CHUNK!,!LINE_COUNT!) DO (
-    FOR /F %%j IN (
-        'DIR application /s/b/a-d ^| tail -n +%%i 2^>NUL ^| head -!CHUNK! ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
-      IF %%j GTR !MAX_TARGET_TIMESTAMP! (
-        SET MAX_TARGET_TIMESTAMP=%%j
-      )
-    )
-  )
-  IF !MAX_SOURCE_TIMESTAMP! GEQ !MAX_TARGET_TIMESTAMP! (
-    SET UPDATE_BUILD=1
-  )
-)
-IF NOT EXIST mod_time.txt (
+) ELSE IF NOT EXIST mod_time.txt (
   SET UPDATE_BUILD=1
 ) ELSE (
-  FOR /F %%i IN (
-      'ls -l --time-style=full-iso "!DIRECTORY!tsconfig.json" "!DIRECTORY!webpack.config.js" "!WEB_PORTAL_PATH!\mod_time.txt" ^| awk "{print $6 $7}"') DO (
-    FOR /F %%j IN (
-        'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
-      IF "%%i" GEQ "%%j" (
-        SET UPDATE_BUILD=1
-      )
-    )
+  SET CHECK_BUILD_COMMAND=powershell -NoProfile -Command "& {" ^
+    "$mod = (Get-Item 'mod_time.txt').LastWriteTime.Ticks;" ^
+    "$tsconfig = Get-Item '!DIRECTORY!tsconfig.json';" ^
+    "$webpack = Get-Item '!DIRECTORY!webpack.config.js';" ^
+    "$webPortalMod = Get-Item '!WEB_PORTAL_PATH!\mod_time.txt';" ^
+    "$sourceFiles = Get-ChildItem -Path '!DIRECTORY!source'" ^
+    "  -Recurse -File -ErrorAction SilentlyContinue;" ^
+    "$files = @($tsconfig, $webpack, $webPortalMod) + $sourceFiles;" ^
+    "if ($files) {" ^
+    "  $newest = ($files | Sort-Object LastWriteTime -Descending |" ^
+    "    Select-Object -First 1);" ^
+    "  if ($newest.LastWriteTime.Ticks -gt $mod) {" ^
+    "    'Result: YES'" ^
+    "  } else {" ^
+    "    'Result: NO'" ^
+    "  }" ^
+    "} else {" ^
+    "  'Result: NO'" ^
+    "}" ^
+  "}"
+  FOR /F "tokens=2" %%r IN ('CALL !CHECK_BUILD_COMMAND!') DO (
+    SET NEEDS_BUILD=%%r
+  )
+  IF "!NEEDS_BUILD!" == "YES" (
+    SET UPDATE_BUILD=1
   )
 )
 IF "!UPDATE_BUILD!" == "1" (
@@ -139,7 +130,7 @@ IF "!UPDATE_BUILD!" == "1" (
   IF "!CONFIG!" == "Release" (
     SET PROD_ENV=
   )
-  ECHO "timestamp" > mod_time.txt
+  ECHO. > mod_time.txt
   IF EXIST application (
     robocopy "!DIRECTORY!..\..\resources" application\resources /E > NUL
     COPY "!DIRECTORY!source\index.html" application\index.html > NUL

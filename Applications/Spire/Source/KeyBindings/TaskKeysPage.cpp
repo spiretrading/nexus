@@ -17,6 +17,7 @@
 #include "Spire/Ui/TableBody.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -44,32 +45,32 @@ namespace {
   }
 
   auto make_button(const QString& path, const QString& tooltip) {
-    auto button = make_icon_button(imageFromSvg(path, scale(16, 16)), tooltip);
+    auto button =
+      make_icon_button(image_from_svg(path, scale(16, 16)), tooltip);
     button->setFixedSize(scale(26, 26));
     button->setFocusPolicy(Qt::TabFocus);
     return button;
   }
 
   Region make_region(const SecurityInfo& security_info) {
-    auto region = Region(security_info.m_security);
-    region.SetName(security_info.m_name);
+    auto region = Region(security_info.m_name);
+    region += security_info.m_security;
     return region;
   }
 
-  auto populate_region_query_model(const CountryDatabase& countries,
-      const MarketDatabase& markets) {
+  auto populate_region_query_model() {
     auto regions = std::make_shared<LocalQueryModel<Region>>();
-    for(auto& country : countries.GetEntries()) {
-      auto region = Region(country.m_code);
-      region.SetName(country.m_name);
+    for(auto& country : DEFAULT_COUNTRIES.get_entries()) {
+      auto region = Region(country.m_name);
+      region += country.m_code;
       regions->add(to_text(country.m_code).toLower(), region);
-      regions->add(QString::fromStdString(region.GetName()).toLower(), region);
+      regions->add(QString::fromStdString(region.get_name()).toLower(), region);
     }
-    for(auto& market : markets.GetEntries()) {
-      auto region = Region(market);
-      region.SetName(market.m_description);
-      regions->add(to_text(MarketToken(market.m_code)).toLower(), region);
-      regions->add(QString::fromStdString(region.GetName()).toLower(), region);
+    for(auto& venue : DEFAULT_VENUES.get_entries()) {
+      auto region = Region(venue.m_description);
+      region += venue.m_venue;
+      regions->add(to_text(venue.m_venue).toLower(), region);
+      regions->add(QString::fromStdString(region.get_name()).toLower(), region);
     }
     return regions;
   }
@@ -95,7 +96,7 @@ namespace {
       return m_securities->submit(query).then([=] (auto&& security_result) {
         auto security_matches = [&] {
           try {
-            return security_result.Get();
+            return security_result.get();
           } catch(const std::exception&) {
             return std::vector<SecurityInfo>();
           }
@@ -108,7 +109,7 @@ namespace {
           [regions = std::move(regions)] (auto&& region_result) mutable {
             auto region_matches = [&] {
               try {
-                return region_result.Get();
+                return region_result.get();
               } catch(const std::exception&) {
                 return std::vector<Region>();
               }
@@ -126,13 +127,9 @@ namespace {
 
 TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     std::shared_ptr<SecurityInfoQueryModel> securities,
-    CountryDatabase countries, MarketDatabase markets,
-    DestinationDatabase destinations, AdditionalTagDatabase additional_tags,
-    QWidget* parent)
+    AdditionalTagDatabase additional_tags, QWidget* parent)
     : QWidget(parent),
-      m_key_bindings(std::move(key_bindings)),
-      m_markets(std::move(markets)),
-      m_destinations(std::move(destinations)) {
+      m_key_bindings(std::move(key_bindings)) {
   auto toolbar_body = new QWidget();
   auto toolbar_layout = make_hbox_layout(toolbar_body);
   auto search_box = new SearchBox();
@@ -182,11 +179,10 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
   layout->addWidget(toolbar);
   auto filtered_tasks = std::make_shared<SearchBarOrderTaskArgumentsListModel>(
     m_key_bindings->get_order_task_arguments(), search_box->get_current(),
-      countries, m_markets, m_destinations, additional_tags);
+    additional_tags);
   m_table_view = make_task_keys_table_view(
     std::move(filtered_tasks), std::make_shared<ConsolidatedRegionQueryModel>(
-      std::move(securities), populate_region_query_model(countries, m_markets)),
-    m_destinations, m_markets, additional_tags);
+      std::move(securities), populate_region_query_model()), additional_tags);
   layout->addWidget(m_table_view);
   auto box = new Box(body);
   update_style(*box, [] (auto& style) {
@@ -277,8 +273,7 @@ void TaskKeysPage::on_delete_task_action() {
 }
 
 void TaskKeysPage::on_reset() {
-  reset_order_task_arguments(
-    *m_key_bindings->get_order_task_arguments(), m_markets, m_destinations);
+  reset_order_task_arguments(*m_key_bindings->get_order_task_arguments());
 }
 
 void TaskKeysPage::on_new_task_submission(const QString& name) {

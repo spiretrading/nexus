@@ -3,115 +3,120 @@
 #include "Nexus/FeeHandlingTests/FeeTableTestUtilities.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Nexus::Tests;
 
 namespace {
   const auto AUCTION_MAX_QUANTITY = Quantity(10000);
 
-  auto MakeFeeTable() {
-    auto feeTable = TsxFeeTable();
-    PopulateFeeTable(Store(feeTable.m_continuousFeeTable));
-    PopulateFeeTable(Store(feeTable.m_auctionFeeTable));
-    feeTable.m_auctionFeeTable[static_cast<int>(
+  auto make_fee_table() {
+    auto table = TsxFeeTable();
+    populate_fee_table(out(table.m_continuous_fee_table));
+    populate_fee_table(out(table.m_auction_fee_table));
+    table.m_auction_fee_table[static_cast<int>(
       TsxFeeTable::AuctionType::OPEN)][static_cast<int>(
         TsxFeeTable::AuctionIndex::MAX_CHARGE)] = AUCTION_MAX_QUANTITY *
-        LookupAuctionFee(feeTable, TsxFeeTable::AuctionIndex::FEE,
-          TsxFeeTable::AuctionType::OPEN);
-    feeTable.m_auctionFeeTable[static_cast<int>(
+          lookup_auction_fee(table, TsxFeeTable::AuctionIndex::FEE,
+            TsxFeeTable::AuctionType::OPEN);
+    table.m_auction_fee_table[static_cast<int>(
       TsxFeeTable::AuctionType::CLOSE)][static_cast<int>(
         TsxFeeTable::AuctionIndex::MAX_CHARGE)] = AUCTION_MAX_QUANTITY *
-        LookupAuctionFee(feeTable, TsxFeeTable::AuctionIndex::FEE,
-          TsxFeeTable::AuctionType::CLOSE);
-    PopulateFeeTable(Store(feeTable.m_oddLotFeeList));
-    return feeTable;
+          lookup_auction_fee(table, TsxFeeTable::AuctionIndex::FEE,
+            TsxFeeTable::AuctionType::CLOSE);
+    populate_fee_table(out(table.m_odd_lot_fee_list));
+    return table;
   }
 
-  auto MakeOrderFields(Money price) {
-    return OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
-      Security("TST", DefaultMarkets::TSX(), DefaultCountries::CA()),
-      DefaultCurrencies::CAD(), Side::BID, DefaultDestinations::TSX(), 100,
-      price);
+  auto make_order_fields(Money price) {
+    return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
+      Security("TST", DefaultVenues::TSX), DefaultCurrencies::CAD, Side::BID,
+      DefaultDestinations::TSX, 100, price);
   }
 
-  auto MakeHiddenOrderFields(Money price) {
-    auto fields = MakeOrderFields(price);
+  auto make_hidden_order_fields(Money price) {
+    auto fields = make_order_fields(price);
     fields.m_type = OrderType::PEGGED;
-    fields.m_additionalFields.emplace_back(18, "M");
+    fields.m_additional_fields.emplace_back(18, "M");
     return fields;
   }
 }
 
 TEST_SUITE("TsxFeeHandling") {
   TEST_CASE("fee_table_calculations") {
-    auto feeTable = MakeFeeTable();
-    TestFeeTableIndex(feeTable, feeTable.m_continuousFeeTable,
-      LookupContinuousFee, TsxFeeTable::PRICE_CLASS_COUNT,
+    auto table = make_fee_table();
+    test_fee_table_index(table, table.m_continuous_fee_table,
+      lookup_continuous_fee, TsxFeeTable::PRICE_CLASS_COUNT,
       TsxFeeTable::TYPE_COUNT);
-    TestFeeTableIndex(feeTable, feeTable.m_auctionFeeTable, LookupAuctionFee,
+    test_fee_table_index(table, table.m_auction_fee_table, lookup_auction_fee,
       TsxFeeTable::AUCTION_INDEX_COUNT, TsxFeeTable::AUCTION_TYPE_COUNT);
   }
 
   TEST_CASE("zero_quantity") {
-    auto feeTable = MakeFeeTable();
-    auto expectedFee = Money::ZERO;
-    auto fields = MakeOrderFields(Money::ONE);
+    auto table = make_fee_table();
+    auto expected_fee = Money::ZERO;
+    auto fields = make_order_fields(Money::ONE);
     fields.m_quantity = 0;
-    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::NONE,
-      std::bind(CalculateFee, std::placeholders::_1,
-        TsxFeeTable::Classification::DEFAULT, std::placeholders::_2,
-        std::placeholders::_3), expectedFee);
+    test_per_share_fee_calculation(table, fields, LiquidityFlag::NONE,
+      expected_fee,
+      [] (const auto& table, const auto& fields, const auto& report) {
+        return calculate_fee(
+          table, TsxFeeTable::Classification::DEFAULT, fields, report);
+      });
   }
 
   TEST_CASE("active_interlisted_subdollar") {
-    auto feeTable = MakeFeeTable();
-    auto expectedFee = LookupContinuousFee(feeTable,
+    auto table = make_fee_table();
+    auto expected_fee = lookup_continuous_fee(table,
       TsxFeeTable::PriceClass::SUBDOLLAR, TsxFeeTable::Type::ACTIVE);
-    auto fields = MakeOrderFields(50 * Money::CENT);
+    auto fields = make_order_fields(50 * Money::CENT);
     fields.m_quantity = 100;
-    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::ACTIVE,
-      std::bind(CalculateFee, std::placeholders::_1,
-        TsxFeeTable::Classification::INTERLISTED, std::placeholders::_2,
-        std::placeholders::_3), expectedFee);
+    test_per_share_fee_calculation(table, fields, LiquidityFlag::ACTIVE,
+      expected_fee,
+      [] (const auto& table, const auto& fields, const auto& report) {
+        return calculate_fee(
+          table, TsxFeeTable::Classification::INTERLISTED, fields, report);
+      });
   }
 
   TEST_CASE("passive_interlisted_subdollar") {
-    auto feeTable = MakeFeeTable();
-    auto expectedFee = LookupContinuousFee(feeTable,
+    auto table = make_fee_table();
+    auto expected_fee = lookup_continuous_fee(table,
       TsxFeeTable::PriceClass::SUBDOLLAR, TsxFeeTable::Type::PASSIVE);
-    auto fields = MakeOrderFields(50 * Money::CENT);
+    auto fields = make_order_fields(50 * Money::CENT);
     fields.m_quantity = 100;
-    TestPerShareFeeCalculation(feeTable, fields, LiquidityFlag::PASSIVE,
-      std::bind(CalculateFee, std::placeholders::_1,
-        TsxFeeTable::Classification::INTERLISTED, std::placeholders::_2,
-        std::placeholders::_3), expectedFee);
+    test_per_share_fee_calculation(table, fields, LiquidityFlag::PASSIVE,
+      expected_fee,
+      [] (const auto& table, const auto& fields, const auto& report) {
+        return calculate_fee(table, TsxFeeTable::Classification::INTERLISTED,
+          fields, report);
+      });
   }
 
   TEST_CASE("opening_auction") {
-    auto feeTable = MakeFeeTable();
-    auto perShareFee = LookupAuctionFee(feeTable,
+    auto table = make_fee_table();
+    auto per_share_fee = lookup_auction_fee(table,
       TsxFeeTable::AuctionIndex::FEE, TsxFeeTable::AuctionType::OPEN);
-    auto maxFee = LookupAuctionFee(feeTable,
+    auto max_fee = lookup_auction_fee(table,
       TsxFeeTable::AuctionIndex::MAX_CHARGE, TsxFeeTable::AuctionType::OPEN);
     {
       auto quantity = Quantity(100);
-      auto fields = MakeOrderFields(5 * Money::ONE);
+      auto fields = make_order_fields(5 * Money::ONE);
       fields.m_quantity = quantity;
-      TestPerShareFeeCalculation(feeTable, fields, "O",
-        std::bind(CalculateFee, std::placeholders::_1,
-          TsxFeeTable::Classification::DEFAULT, std::placeholders::_2,
-          std::placeholders::_3), perShareFee);
+      test_per_share_fee_calculation(table, fields, "O", per_share_fee,
+        [] (const auto& table, const auto& fields, const auto& report) {
+          return calculate_fee(
+            table, TsxFeeTable::Classification::DEFAULT, fields, report);
+        });
     }
     {
       auto quantity = AUCTION_MAX_QUANTITY + 100;
-      auto fields = MakeOrderFields(Money::CENT);
+      auto fields = make_order_fields(Money::CENT);
       fields.m_quantity = quantity;
-      TestFeeCalculation(feeTable, fields, "O",
-        std::bind(CalculateFee, std::placeholders::_1,
-          TsxFeeTable::Classification::DEFAULT, std::placeholders::_2,
-          std::placeholders::_3), maxFee);
+      test_fee_calculation(table, fields, "O", max_fee,
+        [] (const auto& table, const auto& fields, const auto& report) {
+          return calculate_fee(table, TsxFeeTable::Classification::DEFAULT,
+            fields, report);
+        });
     }
   }
 }

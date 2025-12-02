@@ -41,7 +41,7 @@ MoneySpinBox::MoneySpinBox(Ref<UserProfile> userProfile, QWidget* parent,
 }
 
 void MoneySpinBox::Initialize(Ref<UserProfile> userProfile) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   AdjustIncrement(KeyModifiers::PLAIN);
 }
 
@@ -64,13 +64,13 @@ int MoneySpinBox::GetDecimals() const {
 }
 
 Money MoneySpinBox::GetValue() const {
-  auto value = Money::FromValue(m_spinBox->cleanText().toStdString());
+  auto value = try_parse_money(m_spinBox->cleanText().toStdString());
   assert(value.is_initialized());
   return *value;
 }
 
 void MoneySpinBox::SetValue(Money value) {
-  m_spinBox->setValue(static_cast<Quantity>(value).GetRepresentation() /
+  m_spinBox->setValue(static_cast<Quantity>(value).get_representation() /
     Quantity::MULTIPLIER);
   m_valueUpdatedSignal(value);
 }
@@ -106,7 +106,7 @@ void MoneySpinBox::AdjustIncrement(KeyModifiers modifier) {
   if(m_userProfile == nullptr || !m_security.is_initialized()) {
     return;
   }
-  auto priceIncrement = m_userProfile->GetInteractionProperties().Get(
+  auto priceIncrement = m_userProfile->GetInteractionProperties().get(
     *m_security).m_priceIncrements[static_cast<int>(modifier)];
   auto increment = static_cast<Quantity>(priceIncrement) / Quantity::MULTIPLIER;
   if(increment != m_spinBox->singleStep()) {

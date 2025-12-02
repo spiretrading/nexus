@@ -2,9 +2,9 @@
 #define SPIRE_SECURITY_DIALOG_HPP
 #include <QWidget>
 #include "Spire/Ui/SecurityBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class OverlayPanel;
 
   /**
    * Displays a dialog containing a SecurityBox to allow a user to enter a

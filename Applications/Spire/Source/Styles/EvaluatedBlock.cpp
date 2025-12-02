@@ -48,11 +48,3 @@ void EvaluatedBlock::remove(const Property& property) {
     m_properties.erase(i);
   }
 }
-
-bool EvaluatedBlock::operator ==(const EvaluatedBlock& block) const {
-  return m_properties == block.m_properties;
-}
-
-bool EvaluatedBlock::operator !=(const EvaluatedBlock& block) const {
-  return !(*this == block);
-}

@@ -4,6 +4,7 @@
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace Nexus;
@@ -48,8 +49,8 @@ namespace {
   }
 
   auto to_three_letter_code(CountryCode code) {
-    auto& entry = GetDefaultCountryDatabase().FromCode(code);
-    return entry.m_threeLetterCode.GetData();
+    auto& entry = DEFAULT_COUNTRIES.from(code);
+    return entry.m_three_letter_code.get_data();
   }
 }
 
@@ -75,7 +76,7 @@ RegionListItem::RegionListItem(Region region, QWidget* parent)
   value_container_layout->addLayout(type_icon_layout);
   auto layout = make_vbox_layout(this);
   layout->addLayout(value_container_layout);
-  auto name_label = make_label(QString::fromStdString(m_region.GetName()));
+  auto name_label = make_label(QString::fromStdString(m_region.get_name()));
   name_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   update_style(*name_label, [&] (auto& style) {
     style = NAME_LABEL_STYLE(style);
@@ -88,11 +89,11 @@ const Region& RegionListItem::get_region() const {
 }
 
 RegionListItem::Type RegionListItem::get_type() const {
-  if(!m_region.GetSecurities().empty()) {
+  if(!m_region.get_securities().empty()) {
     return Type::SECURITY;
-  } else if(!m_region.GetMarkets().empty()) {
-    return Type::MARKET;
-  } else if(!m_region.GetCountries().empty()) {
+  } else if(!m_region.get_venues().empty()) {
+    return Type::VENUE;
+  } else if(!m_region.get_countries().empty()) {
     return Type::COUNTRY;
   }
   return Type::NONE;
@@ -100,11 +101,11 @@ RegionListItem::Type RegionListItem::get_type() const {
 
 TextBox* RegionListItem::make_value_label() const {
   if(m_type == Type::SECURITY) {
-    return make_label(to_text(*m_region.GetSecurities().begin()));
-  } else if(m_type == Type::MARKET) {
-    return make_label(to_text(MarketToken(*m_region.GetMarkets().begin())));
+    return make_label(to_text(*m_region.get_securities().begin()));
+  } else if(m_type == Type::VENUE) {
+    return make_label(to_text(*m_region.get_venues().begin()));
   } else if(m_type == Type::COUNTRY) {
-    return make_label(to_three_letter_code(*m_region.GetCountries().begin()));
+    return make_label(to_three_letter_code(*m_region.get_countries().begin()));
   }
   return make_label("");
 }
@@ -112,18 +113,18 @@ TextBox* RegionListItem::make_value_label() const {
 Icon* RegionListItem::make_type_icon() const {
   if(m_type == Type::SECURITY) {
     auto icon =
-      new Icon(imageFromSvg(":/Icons/security-symbol.svg", ICON_SIZE()));
+      new Icon(image_from_svg(":/Icons/security-symbol.svg", ICON_SIZE()));
     icon->setFixedSize(ICON_SIZE());
     return icon;
-  } else if(m_type == Type::MARKET) {
+  } else if(m_type == Type::VENUE) {
     auto icon =
-      new Icon(imageFromSvg(":/Icons/market-symbol.svg", ICON_SIZE()));
+      new Icon(image_from_svg(":/Icons/venue-symbol.svg", ICON_SIZE()));
     icon->setFixedSize(ICON_SIZE());
     return icon;
   } else if(m_type == Type::COUNTRY) {
-    auto country_code =
-      QString(to_three_letter_code(*m_region.GetCountries().begin())).toLower();
-    auto flag_icon = new Icon(imageFromSvg(
+    auto country_code = QString(
+      to_three_letter_code(*m_region.get_countries().begin())).toLower();
+    auto flag_icon = new Icon(image_from_svg(
       QString(":/Icons/flag_icons/%1.svg").arg(country_code), FLAG_SIZE()));
     flag_icon->setFixedSize(FLAG_SIZE());
     return flag_icon;

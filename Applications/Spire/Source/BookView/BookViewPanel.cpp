@@ -5,10 +5,8 @@
 #include "ui_BookViewPanel.h"
 
 using namespace Beam;
-using namespace Beam::Queries;
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 
@@ -36,7 +34,7 @@ BookViewPanel::BookViewPanel(QWidget* parent, Qt::WindowFlags flags)
 
 void BookViewPanel::Initialize(Ref<UserProfile> userProfile,
     const BookViewProperties& properties, Side side) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_itemDelegate.emplace(Ref(*m_userProfile));
   SetProperties(properties);
   m_side = side;
@@ -95,9 +93,9 @@ void BookViewPanel::DisplaySecurity(const Security& security) {
   if(m_security == Security()) {
     return;
   }
-  auto bboQuery = MakeCurrentQuery(security);
-  bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
-  m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
+  auto bboQuery = make_current_query(security);
+  bboQuery.set_interruption_policy(InterruptionPolicy::IGNORE_CONTINUE);
+  m_userProfile->GetClients().get_market_data_client().query(
     bboQuery, m_eventHandler->get_slot<BboQuote>(
       std::bind_front(&BookViewPanel::OnBbo, this, security)));
 }
@@ -154,7 +152,7 @@ void BookViewPanel::OnBbo(const Security& security, const BboQuote& bbo) {
   if(m_bestQuote.m_size == 0) {
     quantity = 0;
   } else {
-    quantity = std::max<Quantity>(1, Floor(m_bestQuote.m_size / 100, 0));
+    quantity = std::max<Quantity>(1, floor(m_bestQuote.m_size / 100));
   }
   m_ui->m_bboQuantityLabel->setText(
     QString::number(static_cast<int>(quantity)));

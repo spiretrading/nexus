@@ -5,7 +5,6 @@
 #include <QByteArray>
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardModelSchema.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 
@@ -36,23 +35,23 @@ namespace Spire {
         Beam::Out<QWidget> widget) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::string m_name;
       DashboardModelSchema m_schema;
       std::unique_ptr<UI::WindowSettings> m_dashboardWidgetSettings;
       QByteArray m_geometry;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void DashboardWindowSettings::Shuttle(Shuttler& shuttle,
+  template<Beam::IsShuttle S>
+  void DashboardWindowSettings::shuttle(S& shuttle,
       unsigned int version) {
-    shuttle.Shuttle("name", m_name);
-    shuttle.Shuttle("schema", m_schema);
-    shuttle.Shuttle("dashboard_widget_settings", m_dashboardWidgetSettings);
-    shuttle.Shuttle("geometry", m_geometry);
+    shuttle.shuttle("name", m_name);
+    shuttle.shuttle("schema", m_schema);
+    shuttle.shuttle("dashboard_widget_settings", m_dashboardWidgetSettings);
+    shuttle.shuttle("geometry", m_geometry);
   }
 }
 

@@ -176,14 +176,14 @@ namespace Spire {
     std::ostream& out, const CanvasNodeModel::Coordinate& coordinate);
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Spire::CanvasNodeModel::Coordinate> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
+    template<IsShuttle S>
+    void operator ()(S& shuttle,
         Spire::CanvasNodeModel::Coordinate& value, unsigned int version) const {
-      shuttle.Shuttle("row", value.m_row);
-      shuttle.Shuttle("column", value.m_column);
+      shuttle.shuttle("row", value.m_row);
+      shuttle.shuttle("column", value.m_column);
     }
   };
 }

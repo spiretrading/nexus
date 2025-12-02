@@ -1,11 +1,11 @@
 #include "Spire/BookView/BookViewWindowSettings.hpp"
+#include <Beam/Utilities/ToString.hpp>
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_BookViewPanel.h"
 #include "ui_BookViewWindow.h"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Nexus;
 using namespace Spire;
 using namespace std;
@@ -25,8 +25,7 @@ BookViewWindowSettings::BookViewWindowSettings(const BookViewWindow& window,
       m_askPanelHeader(window.m_ui->m_askPanel->m_ui->m_bookView->
         horizontalHeader()->saveState()) {
   if(m_security != Security()) {
-    m_name = "Book View - " +
-      ToString(m_security, userProfile->GetMarketDatabase());
+    m_name = "Book View - " + to_string(m_security);
   } else {
     m_name = "Book View";
   }
@@ -41,7 +40,7 @@ QWidget* BookViewWindowSettings::Reopen(
   BookViewWindow* window = new BookViewWindow(Ref(userProfile), m_properties,
     m_identifier);
   window->setAttribute(Qt::WA_DeleteOnClose);
-  Apply(Ref(userProfile), Store(*window));
+  Apply(Ref(userProfile), out(*window));
   return window;
 }
 

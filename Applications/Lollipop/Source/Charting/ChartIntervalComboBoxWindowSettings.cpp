@@ -17,7 +17,7 @@ ChartIntervalComboBoxWindowSettings::ChartIntervalComboBoxWindowSettings(
 QWidget* ChartIntervalComboBoxWindowSettings::Reopen(
     Ref<UserProfile> userProfile) const {
   auto comboBox = new ChartIntervalComboBox();
-  Apply(Ref(userProfile), Store(*comboBox));
+  Apply(Ref(userProfile), out(*comboBox));
   return comboBox;
 }
 

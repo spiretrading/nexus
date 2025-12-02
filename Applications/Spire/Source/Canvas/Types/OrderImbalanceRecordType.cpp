@@ -15,10 +15,10 @@ using namespace std;
 namespace {
   std::shared_ptr<RecordType> MakeType() {
     vector<RecordType::Field> fields;
-    fields.emplace_back("security", SecurityType::GetInstance());
+    fields.emplace_back("security", Spire::SecurityType::GetInstance());
     fields.emplace_back("side", SideType::GetInstance());
     fields.emplace_back("size", IntegerType::GetInstance());
-    fields.emplace_back("reference_price", MoneyType::GetInstance());
+    fields.emplace_back("reference_price", Spire::MoneyType::GetInstance());
     fields.emplace_back("timestamp", DateTimeType::GetInstance());
     return MakeRecordType("Order Imbalance", std::move(fields));
   }
@@ -31,6 +31,6 @@ const RecordType& Spire::GetOrderImbalanceRecordType() {
 
 Record OrderImbalanceToRecordConverter::operator ()(
     const SequencedOrderImbalance& value) const {
-  return Record({ value->m_security, value->m_side, value->m_size,
-    value->m_referencePrice, value->m_timestamp });
+  return Record({value->m_security, value->m_side, value->m_size,
+    value->m_reference_price, value->m_timestamp});
 }

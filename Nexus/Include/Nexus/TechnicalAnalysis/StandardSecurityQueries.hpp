@@ -1,5 +1,6 @@
 #ifndef NEXUS_STANDARD_SECURITY_QUERIES_HPP
 #define NEXUS_STANDARD_SECURITY_QUERIES_HPP
+#include <memory>
 #include <string>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/ConstantExpression.hpp>
@@ -14,88 +15,39 @@
 #include <boost/date_time/local_time/tz_database.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/optional/optional.hpp>
+#include "Nexus/ChartingService/ChartingClient.hpp"
 #include "Nexus/ChartingService/SecurityChartingQuery.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
-#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Security.hpp"
+#include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 #include "Nexus/Queries/StandardValues.hpp"
-#include "Nexus/TechnicalAnalysis/TechnicalAnalysis.hpp"
+#include "Nexus/Queries/TraversalExpressionVisitor.hpp"
 
-namespace Nexus::TechnicalAnalysis {
-
-  /**
-   * Returns the default market center for a given MarketCode.
-   * @param code The market code to lookup.
-   * @return The default market center for the given <i>market</i>.
-   */
-  inline std::string GetDefaultMarketCenter(MarketCode code) {
-    if(code == DefaultMarkets::ASX()) {
-      return "ASX";
-    } else if(code == DefaultMarkets::CSE()) {
-      return "CNQ";
-    } else if(code == DefaultMarkets::HKEX()) {
-      return "HKEX";
-    } else if(code == DefaultMarkets::NEOE()) {
-      return "AQL";
-    } else if(code == DefaultMarkets::TSX()) {
-      return "TSE";
-    } else if(code == DefaultMarkets::TSXV()) {
-      return "CDX";
-    } else if(!code.IsEmpty()) {
-      return code.GetData();
-    }
-    return "";
-  }
+namespace Nexus {
 
   /**
    * Returns a query to retrieve a Security's opening trade.
    * @param security The Security to query.
    * @param date The date to retrieve the opening trade for.
-   * @param marketDatabase The database containing Market info.
-   * @param timeZoneDatabase The database of timezones.
-   * @param marketCenter The market center used to determine the opening trade.
+   * @param venues The database containing venue time zones.
+   * @param time_zones The database of timezones.
    * @return A SecurityMarketDataQuery that can be used to retrieve the
    *         <i>security</i>'s opening trade.
    */
-  inline MarketDataService::SecurityMarketDataQuery MakeOpenQuery(
-      Security security, boost::posix_time::ptime date,
-      const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase,
-      std::string marketCenter) {
-    auto marketStartOfDay = MarketDateToUtc(security.GetMarket(), date,
-      marketDatabase, timeZoneDatabase);
-    auto openQuery = MarketDataService::SecurityMarketDataQuery();
-    openQuery.SetIndex(security);
-    openQuery.SetRange(marketStartOfDay,
-      Beam::Queries::Decrement(Beam::Queries::Sequence::Last()));
-    openQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromHead(1));
-    auto parameter =
-      Beam::Queries::ParameterExpression(0, Nexus::Queries::TimeAndSaleType());
-    openQuery.SetFilter(
-      Beam::Queries::ConstantExpression(std::move(marketCenter)) ==
-        Queries::TimeAndSaleAccessor(parameter).m_marketCenter);
-    return openQuery;
-  }
-
-  /**
-   * Returns a query to retrieve a Security's opening trade using the default
-   * market center.
-   * @param security The Security to query.
-   * @param date The date to retrieve the opening trade for.
-   * @param marketDatabase The database containing Market info.
-   * @param timeZoneDatabase The database of timezones.
-   * @return A SecurityMarketDataQuery that can be used to retrieve the
-   *         <i>security</i>'s opening trade.
-   */
-  inline MarketDataService::SecurityMarketDataQuery MakeOpenQuery(
-      Security security, boost::posix_time::ptime date,
-      const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase) {
-    auto code = security.GetMarket();
-    return MakeOpenQuery(std::move(security), date, marketDatabase,
-      timeZoneDatabase, GetDefaultMarketCenter(code));
+  inline SecurityMarketDataQuery make_open_query(
+      const Security& security, boost::posix_time::ptime date,
+      const VenueDatabase& venues,
+      const boost::local_time::tz_database& time_zones) {
+    auto start_of_day =
+      venue_date_to_utc(security.get_venue(), date, venues, time_zones);
+    auto query = SecurityMarketDataQuery();
+    query.set_index(security);
+    query.set_range(start_of_day, Beam::decrement(Beam::Sequence::LAST));
+    query.set_snapshot_limit(Beam::SnapshotLimit::from_head(1));
+    query.set_filter(venues.from(security.get_venue()).m_market_center ==
+      TimeAndSaleAccessor::from_parameter(0).get_market_center());
+    return query;
   }
 
   /**
@@ -103,103 +55,53 @@ namespace Nexus::TechnicalAnalysis {
    * @param client The MarketDataClient to query.
    * @param security The Security to query.
    * @param date The date to retrieve the opening trade for.
-   * @param marketDatabase The database containing Market info.
-   * @param timeZoneDatabase The database of timezones.
-   * @param marketCenter The market center used to determine the closing trade.
+   * @param venues The database containing venue time zones.
+   * @param time_zones The database of timezones.
    * @return The opening trade for the specified <i>security</i>.
    */
-  template<typename MarketDataClient>
-  boost::optional<TimeAndSale> LoadOpen(MarketDataClient& client,
-      Security security, boost::posix_time::ptime date,
-      const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase,
-      std::string marketCenter) {
-    auto query = MakeOpenQuery(std::move(security), date, marketDatabase,
-      timeZoneDatabase, std::move(marketCenter));
+  boost::optional<TimeAndSale> load_open(IsMarketDataClient auto& client,
+      const Security& security, boost::posix_time::ptime date,
+      const VenueDatabase& venues,
+      const boost::local_time::tz_database& time_zones) {
+    auto query = make_open_query(security, date, venues, time_zones);
     auto queue = std::make_shared<Beam::Queue<TimeAndSale>>();
-    client.QueryTimeAndSales(query, queue);
+    client.query(query, queue);
     auto open = boost::optional<TimeAndSale>();
     try {
-      open = queue->Pop();
+      open = queue->pop();
     } catch(const std::exception&) {}
     return open;
   }
 
   /**
-   * Queries for a Security's opening trade using the default market center.
-   * @param client The MarketDataClient to query.
-   * @param security The Security to query.
-   * @param date The date to retrieve the opening trade for.
-   * @param marketDatabase The database containing Market info.
-   * @param timeZoneDatabase The database of timezones.
-   * @return The opening trade for the specified <i>security</i>.
-   */
-  template<typename MarketDataClient>
-  boost::optional<TimeAndSale> LoadOpen(MarketDataClient& client,
-      Security security, boost::posix_time::ptime date,
-      const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase) {
-    auto code = security.GetMarket();
-    return LoadOpen(client, std::move(security), date, marketDatabase,
-      timeZoneDatabase, GetDefaultMarketCenter(code));
-  }
-
-  /**
    * Queries for a Security's opening trade.
    * @param client The MarketDataClient to query.
    * @param security The Security to query.
    * @param date The date to retrieve the opening trade for.
-   * @param marketDatabase The database containing Market info.
-   * @param timeZoneDatabase The database of timezones.
-   * @param marketCenter The market center used to determine the closing trade.
+   * @param venues The database containing venue time zones.
+   * @param time_zones The database of timezones.
    * @param queue The Queue to store the opening trade in.
    */
-  template<typename MarketDataClient>
-  void QueryOpen(MarketDataClient&& client, Security security,
-      boost::posix_time::ptime date, const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase,
-      std::string marketCenter, Beam::ScopedQueueWriter<TimeAndSale> queue) {
-    Beam::Routines::Spawn(
-      [=, client = Beam::CapturePtr<MarketDataClient>(client),
-          queue = std::move(queue)] () mutable {
-        auto open = LoadOpen(*client, security, date, marketDatabase,
-          timeZoneDatabase, marketCenter);
-        if(open) {
-          queue.Push(*open);
-          return;
-        }
-        auto query = MakeOpenQuery(std::move(security), date, marketDatabase,
-          timeZoneDatabase, std::move(marketCenter));
-        query.SetRange(query.GetRange().GetStart(),
-          Beam::Queries::Sequence::Last());
-        query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::HEAD, 1);
-        auto localQueue = std::make_shared<Beam::Queue<TimeAndSale>>();
-        client->QueryTimeAndSales(query, localQueue);
-        try {
-          auto timeAndSale = localQueue->Pop();
-          queue.Push(std::move(timeAndSale));
-        } catch(const std::exception&) {}
-        localQueue->Break();
-      });
-  }
-
-  /**
-   * Queries for a Security's opening trade using the default market center.
-   * @param client The MarketDataClient to query.
-   * @param security The Security to query.
-   * @param date The date to retrieve the opening trade for.
-   * @param marketDatabase The database containing Market info.
-   * @param timeZoneDatabase The database of timezones.
-   * @param queue The Queue to store the opening trade in.
-   */
-  template<typename MarketDataClient>
-  void QueryOpen(MarketDataClient&& client, Security security,
-      boost::posix_time::ptime date, const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase,
+  void query_open(IsMarketDataClient auto& client, const Security& security,
+      boost::posix_time::ptime date, const VenueDatabase& venues,
+      const boost::local_time::tz_database& time_zones,
       Beam::ScopedQueueWriter<TimeAndSale> queue) {
-    auto code = security.GetMarket();
-    QueryOpen(client, std::move(security), date, marketDatabase,
-      timeZoneDatabase, GetDefaultMarketCenter(code), std::move(queue));
+    Beam::spawn([=, &client, queue = std::move(queue)] () mutable {
+      if(auto open = load_open(client, security, date, venues, time_zones)) {
+        queue.push(*open);
+        return;
+      }
+      auto query = make_open_query(security, date, venues, time_zones);
+      query.set_range(query.get_range().get_start(), Beam::Sequence::LAST);
+      query.set_snapshot_limit(Beam::SnapshotLimit::from_head(1));
+      auto local_queue = std::make_shared<Beam::Queue<TimeAndSale>>();
+      client.query(query, local_queue);
+      try {
+        auto time_and_sale = local_queue->pop();
+        queue.push(std::move(time_and_sale));
+      } catch(const std::exception&) {}
+      local_queue->close();
+    });
   }
 
   /**
@@ -207,51 +109,25 @@ namespace Nexus::TechnicalAnalysis {
    * @param security The Security to query.
    * @param date The date for which the previous trading session's closing trade
    *        will be retrieved.
-   * @param marketDatabase The database containing Market info.
-   * @param timeZoneDatabase The database of timezones.
-   * @param marketCenter The market center used to determine the closing trade.
+   * @param venues The database containing venue time zones.
+   * @param time_zones The database of timezones.
    * @return A SecurityMarketDataQuery that can be used to retrieve the
    *         <i>security</i>'s previous session's closing trade.
    */
-  inline MarketDataService::SecurityMarketDataQuery MakePreviousCloseQuery(
-      Security security, boost::posix_time::ptime date,
-      const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase,
-      std::string marketCenter) {
-    auto marketStartOfDay = MarketDateToUtc(security.GetMarket(), date,
-      marketDatabase, timeZoneDatabase);
-    auto previousCloseQuery = MarketDataService::SecurityMarketDataQuery();
-    previousCloseQuery.SetIndex(security);
-    previousCloseQuery.SetRange(
-      Beam::Queries::Sequence::First(), marketStartOfDay);
-    previousCloseQuery.SetSnapshotLimit(
-      Beam::Queries::SnapshotLimit::FromTail(1));
-    auto parameter =
-      Beam::Queries::ParameterExpression(0, Nexus::Queries::TimeAndSaleType());
-    previousCloseQuery.SetFilter(
-      Beam::Queries::ConstantExpression(std::move(marketCenter)) ==
-        Queries::TimeAndSaleAccessor(parameter).m_marketCenter);
-    return previousCloseQuery;
-  }
-
-  /**
-   * Returns a query to retrieve a Security's previous session's closing trade
-   * using the default market center.
-   * @param security The Security to query.
-   * @param date The date for which the previous trading session's closing trade
-   *        will be retrieved.
-   * @param marketDatabase The database containing Market info.
-   * @param timeZoneDatabase The database of timezones.
-   * @return A SecurityMarketDataQuery that can be used to retrieve the
-   *         <i>security</i>'s previous session's closing trade.
-   */
-  inline MarketDataService::SecurityMarketDataQuery MakePreviousCloseQuery(
-      Security security, boost::posix_time::ptime date,
-      const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase) {
-    auto code = security.GetMarket();
-    return MakePreviousCloseQuery(std::move(security), date, marketDatabase,
-      timeZoneDatabase, GetDefaultMarketCenter(code));
+  inline SecurityMarketDataQuery make_previous_close_query(
+      const Security& security, boost::posix_time::ptime date,
+      const VenueDatabase& venues,
+      const boost::local_time::tz_database& time_zones) {
+    auto start_of_day =
+      venue_date_to_utc(security.get_venue(), date, venues, time_zones);
+    auto query = SecurityMarketDataQuery();
+    query.set_index(security);
+    query.set_range(Beam::Sequence::FIRST, start_of_day);
+    query.set_snapshot_limit(Beam::SnapshotLimit::from_tail(1));
+    auto market_center = venues.from(security.get_venue()).m_market_center;
+    query.set_filter(venues.from(security.get_venue()).m_market_center ==
+      TimeAndSaleAccessor::from_parameter(0).get_market_center());
+    return query;
   }
 
   /**
@@ -260,114 +136,144 @@ namespace Nexus::TechnicalAnalysis {
    * @param security The Security to query.
    * @param date The date for which the previous trading session's closing trade
    *        will be retrieved.
-   * @param marketDatabase The database containing Market info.
-   * @param timeZoneDatabase The database of timezones.
-   * @param marketCenter The market center used to determine the closing trade.
+   * @param venues The database containing venue time zones.
+   * @param time_zones The database of timezones.
    * @return The previous session's closing trade for the specified
    *         <i>security</i>.
    */
-  template<typename MarketDataClient>
-  boost::optional<TimeAndSale> LoadPreviousClose(MarketDataClient& client,
-      Security security, boost::posix_time::ptime date,
-      const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase,
-      std::string marketCenter) {
-    auto query = MakePreviousCloseQuery(std::move(security), date,
-      marketDatabase, timeZoneDatabase, std::move(marketCenter));
+  boost::optional<TimeAndSale> load_previous_close(
+      IsMarketDataClient auto& client, const Security& security,
+      boost::posix_time::ptime date, const VenueDatabase& venues,
+      const boost::local_time::tz_database& time_zones) {
+    auto query = make_previous_close_query(security, date, venues, time_zones);
     auto queue = std::make_shared<Beam::Queue<TimeAndSale>>();
-    client.QueryTimeAndSales(query, queue);
-    auto previousClose = boost::optional<TimeAndSale>();
+    client.query(query, queue);
+    auto previous_close = boost::optional<TimeAndSale>();
     try {
-      previousClose = queue->Pop();
+      previous_close = queue->pop();
     } catch(const std::exception&) {}
-    return previousClose;
+    return previous_close;
   }
 
   /**
-   * Queries for a Security's previous session's closing trade using the default
-   * market center.
-   * @param client The MarketDataClient to query.
+   * Makes a range suitable for a query covering a range of days.
    * @param security The Security to query.
-   * @param date The date for which the previous trading session's closing trade
-   *        will be retrieved.
-   * @param marketDatabase The database containing Market info.
-   * @param timeZoneDatabase The database of timezones.
-   * @return The previous session's closing trade for the specified
-   *         <i>security</i>.
+   * @param start The day to begin the query.
+   * @param end The day to end the query.
+   * @param venues The database containing venue time zones.
+   * @param time_zones The database of timezones.
+   * @return A Range object for the daily query.
    */
-  template<typename MarketDataClient>
-  boost::optional<TimeAndSale> LoadPreviousClose(MarketDataClient& client,
-      Security security, boost::posix_time::ptime date,
-      const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase) {
-    auto code = security.GetMarket();
-    return LoadPreviousClose(client, std::move(security), date, marketDatabase,
-      timeZoneDatabase, GetDefaultMarketCenter(code));
+  inline Beam::Range make_daily_query_range(
+      const Security& security, boost::posix_time::ptime start,
+      boost::posix_time::ptime end, const VenueDatabase& venues,
+      const boost::local_time::tz_database& time_zones) {
+    auto start_of_day =
+      venue_date_to_utc(security.get_venue(), start, venues, time_zones);
+    auto end_of_day = [&] () -> boost::posix_time::ptime {
+      if(end == boost::posix_time::pos_infin) {
+        return boost::posix_time::pos_infin;
+      }
+      return venue_date_to_utc(security.get_venue(), end, venues, time_zones) +
+        boost::gregorian::days(1);
+    }();
+    return Beam::Range(start_of_day, end_of_day);
+  }
+
+  /**
+   * Makes a charting query for a security.
+   * @param security The Security to query.
+   * @param start The day to begin the query.
+   * @param end The day to end the query.
+   * @param venues The database containing venue time zones.
+   * @param time_zones The database of timezones.
+   * @param expression The expression to apply to the data.
+   * @return A SecurityChartingQuery configured with the specified parameters.
+   */
+  inline SecurityChartingQuery make_query(
+      const Security& security, boost::posix_time::ptime start,
+      boost::posix_time::ptime end, const VenueDatabase& venues,
+      const boost::local_time::tz_database& time_zones,
+      const Beam::Expression& expression) {
+    auto query = SecurityChartingQuery();
+    query.set_index(security);
+    struct MarketDataTypeFinder : TraversalExpressionVisitor {
+      MarketDataType m_type;
+
+      MarketDataTypeFinder()
+        : m_type(MarketDataType::NONE) {}
+
+      void visit(const Beam::ParameterExpression& expression) override {
+        if(m_type != MarketDataType::NONE) {
+          return;
+        }
+        if(expression.get_type() == typeid(TimeAndSale)) {
+          m_type = MarketDataType::TIME_AND_SALE;
+        } else if(expression.get_type() == typeid(BookQuote)) {
+          m_type = MarketDataType::BOOK_QUOTE;
+        } else if(expression.get_type() == typeid(BboQuote)) {
+          m_type = MarketDataType::BBO_QUOTE;
+        }
+      }
+
+      MarketDataType get_type() const {
+        return m_type;
+      }
+    };
+    auto type = [&] {
+      auto visitor = MarketDataTypeFinder();
+      expression.apply(visitor);
+      return visitor.get_type();
+    }();
+    query.set_market_data_type(type);
+    query.set_range(make_daily_query_range(
+      query.get_index(), start, end, venues, time_zones));
+    query.set_snapshot_limit(Beam::SnapshotLimit::from_tail(1));
+    query.set_update_policy(Beam::ExpressionQuery::UpdatePolicy::CHANGE);
+    query.set_expression(expression);
+    return query;
   }
 
   /**
    * Returns a query for a Security's high price.
    * @param security The Security to query.
-   * @param startDay The day to begin the high query.
-   * @param endDay The day to end the high query.
-   * @param marketDatabase The database containing Market info.
-   * @param timeZoneDatabase The database of timezones.
+   * @param start The day to begin the high query.
+   * @param end The day to end the high query.
+   * @param venues The database containing venue time zones.
+   * @param time_zones The database of timezones.
    * @return A SecurityChartingQuery that can be used to retrieve the
    *         <i>security</i>'s high price.
    */
-  inline ChartingService::SecurityChartingQuery MakeDailyHighQuery(
-      Security security, boost::posix_time::ptime startDay,
-      boost::posix_time::ptime endDay, const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase) {
-    auto marketStartOfDay = MarketDateToUtc(security.GetMarket(), startDay,
-      marketDatabase, timeZoneDatabase);
-    auto marketEndOfDay = [&] () -> boost::posix_time::ptime {
-      if(endDay == boost::posix_time::pos_infin) {
-        return boost::posix_time::pos_infin;
-      } else {
-        return MarketDateToUtc(security.GetMarket(), endDay, marketDatabase,
-          timeZoneDatabase) + boost::gregorian::days(1);
-      }
-    }();
-    auto highQuery = ChartingService::SecurityChartingQuery();
-    highQuery.SetIndex(security);
-    highQuery.SetMarketDataType(
-      MarketDataService::MarketDataType::TIME_AND_SALE);
-    highQuery.SetRange(marketStartOfDay, marketEndOfDay);
-    highQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromTail(1));
-    highQuery.SetUpdatePolicy(
-      Beam::Queries::ExpressionQuery::UpdatePolicy::CHANGE);
-    auto max = Beam::Queries::MakeMaxExpression(
-      Beam::Queries::ParameterExpression(0, Nexus::Queries::MoneyType()),
-      Beam::Queries::ParameterExpression(1, Nexus::Queries::MoneyType()));
-    auto high = Beam::Queries::ReduceExpression(
-      max, Queries::TimeAndSaleAccessor(Beam::Queries::ParameterExpression(
-        0, Queries::TimeAndSaleType())).m_price,
-      Queries::MoneyValue(Money::ZERO));
-    highQuery.SetExpression(high);
-    return highQuery;
+  inline SecurityChartingQuery make_daily_high_query(
+      const Security& security, boost::posix_time::ptime start,
+      boost::posix_time::ptime end, const VenueDatabase& venues,
+      const boost::local_time::tz_database& time_zones) {
+    auto max = Beam::max(Beam::ParameterExpression(0, typeid(Money)),
+      Beam::ParameterExpression(1, typeid(Money)));
+    auto high = Beam::ReduceExpression(
+      max, TimeAndSaleAccessor::from_parameter(0).get_price(), Money::ZERO);
+    return make_query(security, start, end, venues, time_zones, high);
   }
 
   /**
    * Submits a query for a Security's high price.
    * @param client The ChartingClient to submit the query to.
    * @param security The Security to query.
-   * @param startDay The day to begin the high query.
-   * @param endDay The day to end the high query.
-   * @param marketDatabase The database containing Market info.
-   * @param timeZoneDatabase The database of timezones.
+   * @param start The day to begin the high query.
+   * @param end The day to end the high query.
+   * @param venues The database containing venue time zones.
+   * @param time_zones The database of timezones.
    * @param queue The Queue to store the high price in.
    */
-  template<typename ChartingClient>
-  void QueryDailyHigh(ChartingClient& client, Security security,
-      boost::posix_time::ptime startDay, boost::posix_time::ptime endDay,
-      const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase,
+  void query_daily_high(IsChartingClient auto& client,
+      const Security& security, boost::posix_time::ptime start,
+      boost::posix_time::ptime end, const VenueDatabase& venues,
+      const boost::local_time::tz_database& time_zones,
       Beam::ScopedQueueWriter<Money> queue) {
-    client.QuerySecurity(MakeDailyHighQuery(std::move(security), startDay,
-      endDay, marketDatabase, timeZoneDatabase),
-      Beam::MakeConverterQueueWriter<Queries::QueryVariant>(std::move(queue),
-        [] (const Queries::QueryVariant& value) {
+    client.query(
+      make_daily_high_query(security, start, end, venues, time_zones),
+      Beam::convert<QueryVariant>(std::move(queue),
+        [] (const QueryVariant& value) {
           return boost::get<Money>(value);
         }));
   }
@@ -375,66 +281,43 @@ namespace Nexus::TechnicalAnalysis {
   /**
    * Returns a query for a Security's low price.
    * @param security The Security to query.
-   * @param startDay The day to begin the low query.
-   * @param startDay The day to end the low query.
-   * @param marketDatabase The database containing Market info.
-   * @param timeZoneDatabase The database of timezones.
+   * @param start The day to begin the low query.
+   * @param end The day to end the low query.
+   * @param venues The database containing venue time zones.
+   * @param time_zones The database of timezones.
    * @return A SecurityChartingQuery that can be used to retrieve the
    *         <i>security</i>'s low price.
    */
-  inline ChartingService::SecurityChartingQuery MakeDailyLowQuery(
-      Security security, boost::posix_time::ptime startDay,
-      boost::posix_time::ptime endDay, const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase) {
-    auto marketStartOfDay = MarketDateToUtc(security.GetMarket(), startDay,
-      marketDatabase, timeZoneDatabase);
-    auto marketEndOfDay = [&] () -> boost::posix_time::ptime {
-      if(endDay == boost::posix_time::pos_infin) {
-        return boost::posix_time::pos_infin;
-      } else {
-        return MarketDateToUtc(security.GetMarket(), endDay, marketDatabase,
-          timeZoneDatabase) + boost::gregorian::days(1);
-      }
-    }();
-    auto lowQuery = ChartingService::SecurityChartingQuery();
-    lowQuery.SetIndex(security);
-    lowQuery.SetMarketDataType(
-      MarketDataService::MarketDataType::TIME_AND_SALE);
-    lowQuery.SetRange(marketStartOfDay, marketEndOfDay);
-    lowQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromTail(1));
-    lowQuery.SetUpdatePolicy(
-      Beam::Queries::ExpressionQuery::UpdatePolicy::CHANGE);
-    auto min = Beam::Queries::MakeMinExpression(
-      Beam::Queries::ParameterExpression(0, Nexus::Queries::MoneyType()),
-      Beam::Queries::ParameterExpression(1, Nexus::Queries::MoneyType()));
-    auto low = Beam::Queries::ReduceExpression(
-      min, Queries::TimeAndSaleAccessor(Beam::Queries::ParameterExpression(
-        0, Queries::TimeAndSaleType())).m_price,
-      Queries::MoneyValue(99999999 * Money::ONE));
-    lowQuery.SetExpression(low);
-    return lowQuery;
+  inline SecurityChartingQuery make_daily_low_query(
+      const Security& security, boost::posix_time::ptime start,
+      boost::posix_time::ptime end, const VenueDatabase& venues,
+      const boost::local_time::tz_database& time_zones) {
+    auto min = Beam::min(Beam::ParameterExpression(0, typeid(Money)),
+      Beam::ParameterExpression(1, typeid(Money)));
+    auto low = Beam::ReduceExpression(
+      min, TimeAndSaleAccessor::from_parameter(0).get_price(),
+      99999999 * Money::ONE);
+    return make_query(security, start, end, venues, time_zones, low);
   }
 
   /**
    * Submits a query for a Security's low price.
    * @param client The ChartingClient to submit the query to.
    * @param security The Security to query.
-   * @param startDay The day to begin the low query.
-   * @param endDay The day to end the low query.
-   * @param marketDatabase The database containing Market info.
-   * @param timeZoneDatabase The database of timezones.
+   * @param start The day to begin the low query.
+   * @param end The day to end the low query.
+   * @param venues The database containing venue time zones.
+   * @param time_zones The database of timezones.
    * @param queue The Queue to store the low price in.
    */
-  template<typename ChartingClient>
-  void QueryDailyLow(ChartingClient& client, Security security,
-      boost::posix_time::ptime startDay, boost::posix_time::ptime endDay,
-      const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase,
+  void query_daily_low(IsChartingClient auto& client,
+      const Security& security, boost::posix_time::ptime start,
+      boost::posix_time::ptime end, const VenueDatabase& venues,
+      const boost::local_time::tz_database& time_zones,
       Beam::ScopedQueueWriter<Money> queue) {
-    client.QuerySecurity(MakeDailyLowQuery(std::move(security), startDay,
-      endDay, marketDatabase, timeZoneDatabase),
-      Beam::MakeConverterQueueWriter<Queries::QueryVariant>(std::move(queue),
-        [] (const Queries::QueryVariant& value) {
+    client.query(make_daily_low_query(security, start, end, venues, time_zones),
+      Beam::convert<QueryVariant>(std::move(queue),
+        [] (const QueryVariant& value) {
           return boost::get<Money>(value);
         }));
   }
@@ -442,64 +325,43 @@ namespace Nexus::TechnicalAnalysis {
   /**
    * Returns a query over a Security's volume.
    * @param security The Security to query.
-   * @param startDay The day to begin the volume query.
-   * @param endDay The day to end the volume query.
-   * @param marketDatabase The database containing Market info.
-   * @param timeZoneDatabase The database of timezones.
+   * @param start The day to begin the volume query.
+   * @param end The day to end the volume query.
+   * @param venues The database containing venue time zones.
+   * @param time_zones The database of timezones.
    * @return A SecurityChartingQuery that can be used to retrieve the
    *         <i>security</i>'s volume.
    */
-  inline ChartingService::SecurityChartingQuery MakeDailyVolumeQuery(
-      Security security, boost::posix_time::ptime startDay,
-      boost::posix_time::ptime endDay, const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase) {
-    auto marketStartOfDay = MarketDateToUtc(security.GetMarket(), startDay,
-      marketDatabase, timeZoneDatabase);
-    auto marketEndOfDay = [&] () -> boost::posix_time::ptime {
-      if(endDay == boost::posix_time::pos_infin) {
-        return boost::posix_time::pos_infin;
-      } else {
-        return MarketDateToUtc(security.GetMarket(), endDay, marketDatabase,
-          timeZoneDatabase) + boost::gregorian::days(1);
-      }
-    }();
-    auto volumeQuery = ChartingService::SecurityChartingQuery();
-    volumeQuery.SetIndex(std::move(security));
-    volumeQuery.SetMarketDataType(
-      MarketDataService::MarketDataType::TIME_AND_SALE);
-    volumeQuery.SetRange(marketStartOfDay, marketEndOfDay);
-    volumeQuery.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Type::TAIL, 1);
-    volumeQuery.SetUpdatePolicy(
-      Beam::Queries::ExpressionQuery::UpdatePolicy::CHANGE);
-    auto sum = Beam::Queries::ParameterExpression(0, Queries::QuantityType()) +
-      Beam::Queries::ParameterExpression(1, Queries::QuantityType());
-    auto volume = Beam::Queries::ReduceExpression(
-      sum, Queries::TimeAndSaleAccessor(Beam::Queries::ParameterExpression(
-        0, Queries::TimeAndSaleType())).m_size, Queries::QuantityValue(0));
-    volumeQuery.SetExpression(volume);
-    return volumeQuery;
+  inline SecurityChartingQuery make_daily_volume_query(
+      const Security& security, boost::posix_time::ptime start,
+      boost::posix_time::ptime end, const VenueDatabase& venues,
+      const boost::local_time::tz_database& time_zones) {
+    auto sum = Beam::ParameterExpression(0, typeid(Quantity)) +
+      Beam::ParameterExpression(1, typeid(Quantity));
+    auto volume = Beam::ReduceExpression(
+      sum, TimeAndSaleAccessor::from_parameter(0).get_size(), Quantity(0));
+    return make_query(security, start, end, venues, time_zones, volume);
   }
 
   /**
    * Submits a query for a Security's daily volume.
    * @param client The ChartingClient to submit the query to.
    * @param security The Security to query.
-   * @param startDay The day to begin the volume query.
-   * @param endDay The day to end the volume query.
-   * @param marketDatabase The database containing Market info.
-   * @param timeZoneDatabase The database of timezones.
+   * @param start The day to begin the volume query.
+   * @param end The day to end the volume query.
+   * @param venues The database containing venue time zones.
+   * @param time_zones The database of timezones.
    * @param queue The Queue to store the volume in.
    */
-  template<typename ChartingClient>
-  void QueryDailyVolume(ChartingClient& client, Security security,
-      boost::posix_time::ptime startDay, boost::posix_time::ptime endDay,
-      const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase,
+  void query_daily_volume(IsChartingClient auto& client, Security security,
+      boost::posix_time::ptime start, boost::posix_time::ptime end,
+      const VenueDatabase& venues,
+      const boost::local_time::tz_database& time_zones,
       Beam::ScopedQueueWriter<Quantity> queue) {
-    client.QuerySecurity(MakeDailyVolumeQuery(std::move(security), startDay,
-      endDay, marketDatabase, timeZoneDatabase),
-      Beam::MakeConverterQueueWriter<Queries::QueryVariant>(std::move(queue),
-        [] (const Queries::QueryVariant& value) {
+    client.query(
+      make_daily_volume_query(security, start, end, venues, time_zones),
+      Beam::convert<QueryVariant>(std::move(queue),
+        [] (const QueryVariant& value) {
           return boost::get<Quantity>(value);
         }));
   }

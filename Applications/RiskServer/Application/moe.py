@@ -11,19 +11,18 @@ import yaml
 @dataclass
 class Entry:
   account: str
-  position: nexus.accounting.Position
+  position: nexus.Position
 
 def parse_positions(file_path, currencies):
   positions = []
   with open(file_path, newline='') as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
-      position = nexus.accounting.Position()
-      position.key = nexus.accounting.Position.Key(
-        nexus.parse_security(row['Security']),
+      position = nexus.Position()
+      position.key = nexus.Position.Key(nexus.parse_security(row['Security']),
         currencies.from_code(row['Currency']).id)
-      position.quantity = nexus.Quantity.from_value(row['Open Quantity'])
-      position.cost_basis = nexus.Money.from_value(row['Cost Basis'])
+      position.quantity = nexus.parse_quantity(row['Open Quantity'])
+      position.cost_basis = nexus.parse_money(row['Cost Basis'])
       if row['Side'] == 'Short':
         position.quantity = -position.quantity
         position.cost_basis = -position.cost_basis
@@ -39,11 +38,11 @@ def moe(service_clients, position, destination, mode):
     position.account)
   if directory_entry is None:
     return
-  side = nexus.accounting.side(position.position)
+  side = nexus.side(position.position)
   if mode == Mode.MOE_OUT:
-    side = nexus.get_opposite(side)
-  price = abs(nexus.accounting.average_price(position.position))
-  fields = nexus.order_execution_service.OrderFields.make_limit_order(
+    side = nexus.opposite(side)
+  price = abs(nexus.average_price(position.position))
+  fields = nexus.make_limit_order_fields(
     directory_entry, position.position.key.index,
     position.position.key.currency, side, destination,
     abs(position.position.quantity), price)
@@ -59,8 +58,8 @@ def report_yaml_error(error):
 def parse_ip_address(source):
   separator = source.find(':')
   if separator == -1:
-    return beam.network.IpAddress(source, 0)
-  return beam.network.IpAddress(source[0:separator],
+    return beam.IpAddress(source, 0)
+  return beam.IpAddress(source[0:separator],
     int(source[separator + 1 :]))
 
 def main():
@@ -91,20 +90,19 @@ def main():
   address = parse_ip_address(section['address'])
   username = section['username']
   password = section['password']
-  service_clients = \
-    nexus.ApplicationServiceClients(username, password, address)
+  service_clients = nexus.ServiceClients(username, password, address)
   countries = service_clients.get_definitions_client().load_country_database()
-  markets = service_clients.get_definitions_client().load_market_database()
+  venues = service_clients.get_definitions_client().load_venue_database()
   if args.region is None:
     region = nexus.Region.GLOBAL
   else:
     region = nexus.parse_country_code(args.region, countries)
     if region == nexus.CountryCode.NONE:
-      region = nexus.parse_market_code(args.region, markets)
+      region = nexus.parse_venue(args.region, venues)
       if region != '':
-        region = markets.from_code(region)
+        region = venues.from_code(region)
       else:
-        region = nexus.parse_security(args.region, markets)
+        region = nexus.parse_security(args.region, venues)
     region = nexus.Region(region)
   positions = parse_positions(args.positions,
     service_clients.get_definitions_client().load_currency_database())

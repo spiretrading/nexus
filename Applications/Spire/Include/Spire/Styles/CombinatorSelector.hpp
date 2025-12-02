@@ -2,7 +2,6 @@
 #define SPIRE_STYLES_COMBINATOR_SELECTOR_HPP
 #include <functional>
 #include "Spire/Styles/Selector.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
@@ -80,7 +79,7 @@ namespace std {
   template<>
   struct hash<Spire::Styles::CombinatorSelector> {
     std::size_t operator ()(
-      const Spire::Styles::CombinatorSelector& selector) const;
+      const Spire::Styles::CombinatorSelector& selector) const noexcept;
   };
 }
 

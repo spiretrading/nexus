@@ -20,21 +20,13 @@ namespace Spire {
   class ColumnViewListModel : public ListModel<T> {
     public:
       using Type = typename ListModel<T>::Type;
-
       using OperationSignal = ListModel<T>::OperationSignal;
-
       using AddOperation = typename ListModel<T>::AddOperation;
-
       using MoveOperation = typename ListModel<T>::MoveOperation;
-
       using PreRemoveOperation = typename ListModel<T>::PreRemoveOperation;
-
       using RemoveOperation = typename ListModel<T>::RemoveOperation;
-
       using UpdateOperation = typename ListModel<T>::UpdateOperation;
-
       using StartTransaction = typename ListModel<T>::StartTransaction;
-
       using EndTransaction = typename ListModel<T>::EndTransaction;
 
       /**
@@ -46,14 +38,10 @@ namespace Spire {
       ColumnViewListModel(std::shared_ptr<TableModel> source, int column);
 
       int get_size() const override;
-
       const Type& get(int index) const override;
-
       QValidator::State set(int index, const Type& value) override;
-
       boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const override;
-
       using ListModel<T>::transact;
 
     protected:

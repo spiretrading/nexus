@@ -4,6 +4,7 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/SecurityDialog.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;

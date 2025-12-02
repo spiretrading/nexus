@@ -3,11 +3,10 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
-#include <Beam/WebServices/SessionStore.hpp>
-#include "WebPortal/WebPortal.hpp"
+#include <Beam/WebServices/WebSessionStore.hpp>
 #include "WebPortal/WebPortalSession.hpp"
 
-namespace Nexus::WebPortal {
+namespace Nexus {
 
   /** Provides a web interface to the AdministrationService. */
   class AdministrationWebServlet {
@@ -17,81 +16,77 @@ namespace Nexus::WebPortal {
        * Constructs an AdministrationWebServlet.
        * @param sessions The available web sessions.
        */
-      explicit AdministrationWebServlet(Beam::Ref<
-        Beam::WebServices::SessionStore<WebPortalSession>> sessions);
+      explicit AdministrationWebServlet(
+        Beam::Ref<Beam::WebSessionStore<WebPortalSession>> sessions);
 
       ~AdministrationWebServlet();
 
-      std::vector<Beam::WebServices::HttpRequestSlot> GetSlots();
-
-      void Close();
+      std::vector<Beam::HttpRequestSlot> get_slots();
+      void close();
 
     private:
-      Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
-      Beam::IO::OpenState m_openState;
+      Beam::WebSessionStore<WebPortalSession>* m_sessions;
+      Beam::OpenState m_open_state;
 
       AdministrationWebServlet(const AdministrationWebServlet&) = delete;
-      AdministrationWebServlet& operator =(
+      AdministrationWebServlet& operator=(
         const AdministrationWebServlet&) = delete;
-      Beam::WebServices::HttpResponse OnLoadAccountsByRoles(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadAdministratorsRootEntry(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadServicesRootEntry(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadTradingGroupsRootEntry(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadTradingGroup(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadManagedTradingGroups(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadParentTradingGroup(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadAccountRoles(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnStoreAccountRoles(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadAccountIdentity(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnStoreAccountIdentity(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadEntitlementsDatabase(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadAccountEntitlements(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnStoreAccountEntitlements(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadRiskParameters(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnStoreRiskParameters(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadAccountModificationRequest(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadAccountModificationRequestIds(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse
-        OnLoadManagedAccountModificationRequestIds(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadEntitlementModification(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnSubmitEntitlementModificationRequest(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadRiskModification(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnSubmitRiskModificationRequest(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadAccountModificationRequestStatus(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnApproveAccountModificationRequest(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnRejectAccountModificationRequest(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadMessage(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnLoadMessageIds(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnSendAccountModificationRequestMessage(
-        const Beam::WebServices::HttpRequest& request);
+      Beam::HttpResponse on_load_accounts_by_roles(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_administrators_root_entry(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_services_root_entry(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_trading_groups_root_entry(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_trading_group(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_managed_trading_groups(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_parent_trading_group(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_account_roles(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_store_account_roles(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_account_identity(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_store_account_identity(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_entitlements_database(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_account_entitlements(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_store_account_entitlements(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_risk_parameters(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_store_risk_parameters(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_account_modification_request(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_account_modification_request_ids(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_managed_account_modification_request_ids(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_entitlement_modification(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_submit_entitlement_modification_request(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_risk_modification(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_submit_risk_modification_request(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_account_modification_request_status(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_approve_account_modification_request(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_reject_account_modification_request(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_message(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_message_ids(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_send_account_modification_request_message(
+        const Beam::HttpRequest& request);
   };
 }
 

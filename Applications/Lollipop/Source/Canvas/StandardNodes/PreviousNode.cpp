@@ -4,7 +4,6 @@
 #include "Spire/Canvas/Types/UnionType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 
 PreviousNode::PreviousNode() {
@@ -15,7 +14,7 @@ PreviousNode::PreviousNode() {
 
 std::unique_ptr<CanvasNode> PreviousNode::Replace(
     const CanvasNode& child, std::unique_ptr<CanvasNode> replacement) const {
-  auto clone = StaticCast<std::unique_ptr<PreviousNode>>(
+  auto clone = static_pointer_cast<PreviousNode>(
     SignatureNode::Replace(child, std::move(replacement)));
   clone->SetType(clone->GetChildren().front().GetType());
   return clone;
@@ -42,5 +41,3 @@ const std::vector<PreviousNode::Signature>& PreviousNode::GetSignatures() const 
   }();
   return signatures;
 }
-
-PreviousNode::PreviousNode(ReceiveBuilder) {}

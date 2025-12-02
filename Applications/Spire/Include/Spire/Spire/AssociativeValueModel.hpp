@@ -5,7 +5,6 @@
 #include <boost/signals2/connection.hpp>
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/Spire/ValueModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -17,7 +16,6 @@ namespace Spire {
   class AssociativeValueModel : public ValueModel<T> {
     public:
       using UpdateSignal = typename ValueModel<T>::UpdateSignal;
-
       using Type = typename ValueModel<T>::Type;
 
       /**
@@ -55,32 +53,19 @@ namespace Spire {
        */
       std::shared_ptr<ValueModel<bool>> find(const Type& value) const;
 
-      /**
-       * Returns Acceptable if the model's value is valid, Invalid otherwise.
-       * @return The state of the AssociativeValueModel.
-       */
       QValidator::State get_state() const override;
-
-      /** Returns the AssociativeValueModel's value. */
       const Type& get() const override;
-
       QValidator::State test(const Type& value) const override;
-
-      /**
-       * Sets the value iff a model is associated with the value.
-       * @param value The value to set.
-       * @return Acceptable if the value was set successfully, Invalid
-       *         otherwise.
-       */
       QValidator::State set(const Type& value) override;
-
-      /** Connects a slot to the update signal. */
       boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 
     private:
       struct InnerModel : ValueModel<bool> {
         using Type = ValueModel<bool>::Type;
+        mutable UpdateSignal m_update_signal;
+        bool m_current;
+        std::function<void (bool)> m_slot;
 
         void update(bool value);
         void signal() const;
@@ -90,10 +75,6 @@ namespace Spire {
         QValidator::State set(const Type& value) override;
         boost::signals2::connection connect_update_signal(
           const typename UpdateSignal::slot_type& slot) const override;
-
-        mutable UpdateSignal m_update_signal;
-        bool m_current;
-        std::function<void (bool)> m_slot;
       };
       mutable UpdateSignal m_update_signal;
       std::unordered_map<Type, std::shared_ptr<InnerModel>> m_models;

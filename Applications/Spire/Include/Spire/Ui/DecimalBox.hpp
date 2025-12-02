@@ -5,7 +5,6 @@
 #include "Spire/Spire/Decimal.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/TextBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {

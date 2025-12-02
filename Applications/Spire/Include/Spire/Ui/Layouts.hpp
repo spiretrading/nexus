@@ -3,7 +3,6 @@
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

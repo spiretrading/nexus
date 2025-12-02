@@ -41,7 +41,7 @@ void ProfitAndLossWidget::SetModel(Ref<UserProfile> userProfile,
     OnModelRemoved(*entryModels.back());
     entryModels.pop_back();
   }
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_modelAddedConnection = model->ConnectProfitAndLossEntryModelAddedSignal(
     std::bind(&ProfitAndLossWidget::OnModelAdded, this, std::placeholders::_1));
   m_modelRemovedConnection = model->ConnectProfitAndLossEntryModelRemovedSignal(

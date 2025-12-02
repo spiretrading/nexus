@@ -2,12 +2,14 @@
 #define NEXUS_TAG_HPP
 #include <ostream>
 #include <string>
+#include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/Serialization/ShuttleVariant.hpp>
 #include <boost/date_time/gregorian/greg_date.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <boost/variant.hpp>
 #include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 
 namespace Nexus {
 
@@ -41,8 +43,8 @@ namespace Nexus {
       /** The index of the date type. */
       static constexpr auto DATE_INDEX = 6;
 
-      /** The index of the time type. */
-      static constexpr auto TIME_INDEX = 7;
+      /** The index of the duration type. */
+      static constexpr auto DURATION_INDEX = 7;
 
       /** The index of the date-time type. */
       static constexpr auto DATE_TIME_INDEX = 8;
@@ -55,47 +57,47 @@ namespace Nexus {
        * @param key The Tag's key.
        * @param value The tag's value.
        */
-      Tag(int key, Type value);
+      Tag(int key, Type value) noexcept;
 
       /** Returns the key. */
-      int GetKey() const;
+      int get_key() const;
 
       /** Returns the value. */
-      const Type& GetValue() const;
+      const Type& get_value() const;
 
-      bool operator ==(const Tag& tag) const = default;
+      bool operator ==(const Tag&) const = default;
 
     private:
-      friend struct Beam::Serialization::Shuttle<Tag>;
+      friend struct Beam::Shuttle<Tag>;
       int m_key;
       Type m_value;
   };
 
   inline std::ostream& operator <<(std::ostream& out, const Tag& value) {
-    return out << '(' << value.GetKey() << ' ' << value.GetValue() << ')';
+    return out << '(' << value.get_key() << ' ' << value.get_value() << ')';
   }
 
-  inline Tag::Tag(int key, Type value)
+  inline Tag::Tag(int key, Type value) noexcept
     : m_key(key),
       m_value(std::move(value)) {}
 
-  inline int Tag::GetKey() const {
+  inline int Tag::get_key() const {
     return m_key;
   }
 
-  inline const Tag::Type& Tag::GetValue() const {
+  inline const Tag::Type& Tag::get_value() const {
     return m_value;
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::Tag> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::Tag& value,
-        unsigned int version) {
-      shuttle.Shuttle("key", value.m_key);
-      shuttle.Shuttle("value", value.m_value);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::Tag& value, unsigned int version) const {
+      shuttle.shuttle("key", value.m_key);
+      shuttle.shuttle("value", value.m_value);
     }
   };
 }

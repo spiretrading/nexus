@@ -23,7 +23,7 @@ BookViewHighlightPropertiesWidget::BookViewHighlightPropertiesWidget(
     : QWidget(parent, flags),
       m_ui(std::make_unique<Ui_BookViewHighlightPropertiesWidget>()) {
   m_ui->setupUi(this);
-  connect(m_ui->m_marketsList, &QListWidget::currentItemChanged, this,
+  connect(m_ui->m_venueList, &QListWidget::currentItemChanged, this,
     &BookViewHighlightPropertiesWidget::OnCurrentItemChanged);
   connect(m_ui->m_highlightNoneButton, &QRadioButton::toggled, this,
     &BookViewHighlightPropertiesWidget::OnNoneClicked);
@@ -47,19 +47,19 @@ BookViewHighlightPropertiesWidget::~BookViewHighlightPropertiesWidget() {}
 
 void BookViewHighlightPropertiesWidget::Initialize(
     Ref<UserProfile> userProfile, Ref<BookViewProperties> properties) {
-  m_userProfile = userProfile.Get();
-  m_properties = properties.Get();
-  auto marketEntries = m_userProfile->GetMarketDatabase().GetEntries();
-  sort(marketEntries.begin(), marketEntries.end(),
-    [] (const MarketDatabase::Entry& lhs, const MarketDatabase::Entry& rhs) {
-      return lhs.m_displayName < rhs.m_displayName;
-    });
-  for(auto i = marketEntries.begin(); i != marketEntries.end(); ++i) {
+  m_userProfile = userProfile.get();
+  m_properties = properties.get();
+  auto venues = std::ranges::to<std::vector<VenueDatabase::Entry>>(
+    DEFAULT_VENUES.get_entries());
+  sort(venues.begin(), venues.end(), [] (const auto& lhs, const auto& rhs) {
+    return lhs.m_display_name < rhs.m_display_name;
+  });
+  for(auto& venue : venues) {
     QListWidgetItem* item = new QListWidgetItem(
-      QString::fromStdString(i->m_displayName));
-    m_ui->m_marketsList->addItem(item);
+      QString::fromStdString(venue.m_display_name));
+    m_ui->m_venueList->addItem(item);
   }
-  m_ui->m_marketsList->setCurrentRow(0);
+  m_ui->m_venueList->setCurrentRow(0);
   UpdateOrderHighlightColor(m_properties->GetOrderHighlightColor());
   if(properties->GetOrderHighlight() == BookViewProperties::HIDE_ORDERS) {
     m_ui->m_hideOrdersButton->setChecked(true);
@@ -73,12 +73,12 @@ void BookViewHighlightPropertiesWidget::Initialize(
 }
 
 void BookViewHighlightPropertiesWidget::Redisplay() {
-  for(int i = 0; i < m_ui->m_marketsList->count(); ++i) {
-    auto item = m_ui->m_marketsList->item(i);
-    auto& marketEntry = m_userProfile->GetMarketDatabase().FromDisplayName(
-      item->text().toStdString());
+  for(int i = 0; i < m_ui->m_venueList->count(); ++i) {
+    auto item = m_ui->m_venueList->item(i);
+    auto venue =
+      DEFAULT_VENUES.from_display_name(item->text().toStdString()).m_venue;
     QColor backgroundColor;
-    auto highlight = m_properties->GetMarketHighlight(marketEntry.m_code);
+    auto highlight = m_properties->GetVenueHighlight(venue);
     if(highlight.is_initialized()) {
       item->setBackground(highlight->m_color);
     } else {
@@ -90,23 +90,23 @@ void BookViewHighlightPropertiesWidget::Redisplay() {
     font.setBold(true);
     item->setFont(font);
   }
-  OnCurrentItemChanged(m_ui->m_marketsList->currentItem(), nullptr);
+  OnCurrentItemChanged(m_ui->m_venueList->currentItem(), nullptr);
 }
 
-const MarketDatabase::Entry& BookViewHighlightPropertiesWidget::
-    GetCurrentMarketHighlightEntry() const {
-  return m_userProfile->GetMarketDatabase().FromDisplayName(
-    m_ui->m_marketsList->currentItem()->text().toStdString());
+const VenueDatabase::Entry& BookViewHighlightPropertiesWidget::
+    GetCurrentVenueHighlightEntry() const {
+  return DEFAULT_VENUES.from_display_name(
+    m_ui->m_venueList->currentItem()->text().toStdString());
 }
 
-void BookViewHighlightPropertiesWidget::UpdateMarketHighlightColor(
+void BookViewHighlightPropertiesWidget::UpdateVenueHighlightColor(
     const QColor& color) {
-  if(color == m_marketHighlightColor) {
+  if(color == m_venueHighlightColor) {
     return;
   }
-  m_marketHighlightColor = color;
+  m_venueHighlightColor = color;
   m_ui->m_highlightColorButton->setStyleSheet(GetButtonStyle(
-    m_marketHighlightColor));
+    m_venueHighlightColor));
   Redisplay();
 }
 
@@ -123,21 +123,21 @@ void BookViewHighlightPropertiesWidget::UpdateOrderHighlightColor(
 
 void BookViewHighlightPropertiesWidget::OnCurrentItemChanged(
     QListWidgetItem* current, QListWidgetItem* previous) {
-  auto& currentMarketEntry = GetCurrentMarketHighlightEntry();
-  auto currentMarketHighlight = m_properties->GetMarketHighlight(
-    currentMarketEntry.m_code);
+  auto& currentVenueEntry = GetCurrentVenueHighlightEntry();
+  auto currentVenueHighlight = m_properties->GetVenueHighlight(
+    currentVenueEntry.m_venue);
   QRadioButton* highlightButton;
-  if(!currentMarketHighlight.is_initialized()) {
+  if(!currentVenueHighlight.is_initialized()) {
     highlightButton = m_ui->m_highlightNoneButton;
-  } else if(!currentMarketHighlight->m_highlightAllLevels) {
+  } else if(!currentVenueHighlight->m_highlightAllLevels) {
     highlightButton = m_ui->m_highlightTopLevelButton;
   } else {
     highlightButton = m_ui->m_highlightAllLevelsButton;
   }
-  if(currentMarketHighlight.is_initialized()) {
-    UpdateMarketHighlightColor(currentMarketHighlight->m_color);
+  if(currentVenueHighlight.is_initialized()) {
+    UpdateVenueHighlightColor(currentVenueHighlight->m_color);
   } else {
-    UpdateMarketHighlightColor(
+    UpdateVenueHighlightColor(
       m_properties->GetBookQuoteBackgroundColors().front());
   }
   highlightButton->setChecked(true);
@@ -147,63 +147,59 @@ void BookViewHighlightPropertiesWidget::OnNoneClicked(bool checked) {
   if(!checked) {
     return;
   }
-  auto& currentMarketEntry = GetCurrentMarketHighlightEntry();
-  m_properties->RemoveMarketHighlight(currentMarketEntry.m_code);
+  auto currentVenueEntry = GetCurrentVenueHighlightEntry().m_venue;
+  m_properties->RemoveVenueHighlight(currentVenueEntry);
 }
 
 void BookViewHighlightPropertiesWidget::OnTopLevelClicked(bool checked) {
   if(!checked) {
     return;
   }
-  auto& currentMarketEntry = GetCurrentMarketHighlightEntry();
-  auto currentHighlight = m_properties->GetMarketHighlight(
-    currentMarketEntry.m_code);
-  BookViewProperties::MarketHighlight newHighlight;
+  auto currentVenue = GetCurrentVenueHighlightEntry().m_venue;
+  auto currentHighlight = m_properties->GetVenueHighlight(currentVenue);
+  BookViewProperties::VenueHighlight newHighlight;
   if(currentHighlight.is_initialized()) {
     newHighlight = *currentHighlight;
   } else {
-    newHighlight.m_color = m_marketHighlightColor;
+    newHighlight.m_color = m_venueHighlightColor;
   }
   newHighlight.m_highlightAllLevels = false;
-  m_properties->SetMarketHighlight(currentMarketEntry.m_code, newHighlight);
+  m_properties->SetVenueHighlight(currentVenue, newHighlight);
 }
 
 void BookViewHighlightPropertiesWidget::OnAllLevelsClicked(bool checked) {
   if(!checked) {
     return;
   }
-  auto& currentMarketEntry = GetCurrentMarketHighlightEntry();
-  auto currentHighlight = m_properties->GetMarketHighlight(
-    currentMarketEntry.m_code);
-  BookViewProperties::MarketHighlight newHighlight;
+  auto currentVenue = GetCurrentVenueHighlightEntry().m_venue;
+  auto currentHighlight = m_properties->GetVenueHighlight(currentVenue);
+  BookViewProperties::VenueHighlight newHighlight;
   if(currentHighlight.is_initialized()) {
     newHighlight = *currentHighlight;
   } else {
-    newHighlight.m_color = m_marketHighlightColor;
+    newHighlight.m_color = m_venueHighlightColor;
   }
   newHighlight.m_highlightAllLevels = true;
-  m_properties->SetMarketHighlight(currentMarketEntry.m_code, newHighlight);
+  m_properties->SetVenueHighlight(currentVenue, newHighlight);
 }
 
 void BookViewHighlightPropertiesWidget::OnColorClicked() {
-  QColor color = QColorDialog::getColor(m_marketHighlightColor, this);
+  QColor color = QColorDialog::getColor(m_venueHighlightColor, this);
   if(!color.isValid()) {
     return;
   }
-  auto& currentMarketEntry = GetCurrentMarketHighlightEntry();
-  auto currentMarketHighlight = m_properties->GetMarketHighlight(
-    currentMarketEntry.m_code);
-  BookViewProperties::MarketHighlight newMarketHighlight;
-  if(currentMarketHighlight.is_initialized()) {
-    newMarketHighlight = *currentMarketHighlight;
+  auto currentVenue = GetCurrentVenueHighlightEntry().m_venue;
+  auto currentVenueHighlight = m_properties->GetVenueHighlight(currentVenue);
+  BookViewProperties::VenueHighlight newVenueHighlight;
+  if(currentVenueHighlight.is_initialized()) {
+    newVenueHighlight = *currentVenueHighlight;
   } else {
-    newMarketHighlight.m_highlightAllLevels =
+    newVenueHighlight.m_highlightAllLevels =
       m_ui->m_highlightAllLevelsButton->isChecked();
   }
-  newMarketHighlight.m_color = color;
-  m_properties->SetMarketHighlight(currentMarketEntry.m_code,
-    newMarketHighlight);
-  UpdateMarketHighlightColor(color);
+  newVenueHighlight.m_color = color;
+  m_properties->SetVenueHighlight(currentVenue, newVenueHighlight);
+  UpdateVenueHighlightColor(color);
 }
 
 void BookViewHighlightPropertiesWidget::OnHideOrdersClicked(

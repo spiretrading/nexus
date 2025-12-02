@@ -31,8 +31,7 @@ interface State {
 /** A component that displays a single security. */
 export class SecurityField extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    value: new Nexus.Security(
-      '', Nexus.MarketCode.NONE, Nexus.CountryCode.NONE),
+    value: new Nexus.Security('', Nexus.Venue.NONE),
     readonly: false,
     onChange: () => {}
   }
@@ -102,7 +101,7 @@ export class SecurityField extends React.Component<Properties, State> {
     })();
     const displayValue = (() => {
       if(this.props.value !== null) {
-        return Nexus.toWildCardString(this.props.value);
+        return this.props.value.toString();
       } else {
         return '';
       }

@@ -4,7 +4,6 @@
 #include <QByteArray>
 #include "Spire/Charting/ChartPlotView.hpp"
 #include "Spire/Charting/Charting.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 
@@ -30,24 +29,24 @@ namespace Spire {
         Beam::Out<QWidget> widget) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       ChartPlotView::Properties m_properties;
       ChartPlotView::AxisParameters m_xAxisParameters;
       ChartPlotView::AxisParameters m_yAxisParameters;
       QByteArray m_geometry;
 
       ChartPlotViewWindowSettings();
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void ChartPlotViewWindowSettings::Shuttle(Shuttler& shuttle,
+  template<Beam::IsShuttle S>
+  void ChartPlotViewWindowSettings::shuttle(S& shuttle,
       unsigned int version) {
-    shuttle.Shuttle("properties", m_properties);
-    shuttle.Shuttle("x_axis_parameters", m_xAxisParameters);
-    shuttle.Shuttle("y_axis_parameters", m_yAxisParameters);
-    shuttle.Shuttle("geometry", m_geometry);
+    shuttle.shuttle("properties", m_properties);
+    shuttle.shuttle("x_axis_parameters", m_xAxisParameters);
+    shuttle.shuttle("y_axis_parameters", m_yAxisParameters);
+    shuttle.shuttle("geometry", m_geometry);
   }
 }
 

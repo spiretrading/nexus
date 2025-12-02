@@ -3,8 +3,8 @@
 #include <array>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/FeeHandling/FeeHandling.hpp"
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
+#include "Nexus/FeeHandling/ParseFeeTable.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
@@ -47,19 +47,19 @@ namespace Nexus {
 
     /** The general fee table. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
-      m_generalFeeTable;
+      m_general_fee_table;
 
     /** The interlisted fee table. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
-      m_interlistedFeeTable;
+      m_interlisted_fee_table;
 
     /** The ETF fee table. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
-      m_etfFeeTable;
+      m_etf_table_fee;
 
     /** The NEO book fee table. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
-      m_neoBookFeeTable;
+      m_neo_book_fee_table;
   };
 
   /**
@@ -67,17 +67,17 @@ namespace Nexus {
    * @param config The configuration to parse the NeoeFeeTable from.
    * @return The NeoeFeeTable represented by the <i>config</i>.
    */
-  inline NeoeFeeTable ParseNeoeFeeTable(const YAML::Node& config) {
-    auto feeTable = NeoeFeeTable();
-    ParseFeeTable(
-      config, "general_table", Beam::Store(feeTable.m_generalFeeTable));
-    ParseFeeTable(
-      config, "interlisted_table", Beam::Store(feeTable.m_interlistedFeeTable));
-    ParseFeeTable(
-      config, "etf_table", Beam::Store(feeTable.m_interlistedFeeTable));
-    ParseFeeTable(
-      config, "neo_book_table", Beam::Store(feeTable.m_neoBookFeeTable));
-    return feeTable;
+  inline NeoeFeeTable parse_neoe_fee_table(const YAML::Node& config) {
+    auto table = NeoeFeeTable();
+    parse_fee_table(
+      config, "general_table", Beam::out(table.m_general_fee_table));
+    parse_fee_table(
+      config, "interlisted_table", Beam::out(table.m_interlisted_fee_table));
+    parse_fee_table(
+      config, "etf_table", Beam::out(table.m_interlisted_fee_table));
+    parse_fee_table(
+      config, "neo_book_table", Beam::out(table.m_neo_book_fee_table));
+    return table;
   }
 
   /**
@@ -86,116 +86,115 @@ namespace Nexus {
    * @return <code>true</code> iff the <i>order</i> was submitted to the NEO
    *         book.
    */
-  inline bool IsNeoBookOrder(const OrderExecutionService::OrderFields& fields) {
-    return OrderExecutionService::HasField(fields, Tag(100, "N"));
+  inline bool is_neo_book_order(const OrderFields& fields) {
+    return has_field(fields, Tag(100, "N"));
   }
 
   /**
    * Looks up a general fee.
-   * @param feeTable The NeoeFeeTable used to lookup the fee.
-   * @param liquidityFlag The trade's LiquidityFlag.
-   * @param priceClass The trade's PriceClass.
-   * @return The fee corresponding to the specified <i>liquidityFlag</i> and
-   *         <i>priceClass</i>.
+   * @param table The NeoeFeeTable used to lookup the fee.
+   * @param flag The trade's LiquidityFlag.
+   * @param price_class The trade's PriceClass.
+   * @return The fee corresponding to the specified <i>flag</i> and
+   *         <i>price_class</i>.
    */
-  inline Money LookupGeneralFee(const NeoeFeeTable& feeTable,
-      LiquidityFlag liquidityFlag, NeoeFeeTable::PriceClass priceClass) {
-    return feeTable.m_generalFeeTable[static_cast<int>(priceClass)][
-      static_cast<int>(liquidityFlag)];
+  inline Money lookup_general_fee(const NeoeFeeTable& table,
+      LiquidityFlag flag, NeoeFeeTable::PriceClass price_class) {
+    return table.m_general_fee_table[static_cast<int>(price_class)][
+      static_cast<int>(flag)];
   }
 
   /**
    * Looks up an interlisted fee.
-   * @param feeTable The NeoeFeeTable used to lookup the fee.
-   * @param liquidityFlag The trade's LiquidityFlag.
-   * @param priceClass The trade's PriceClass.
-   * @return The fee corresponding to the specified <i>liquidityFlag</i> and
-   *         <i>priceClass</i>.
+   * @param table The NeoeFeeTable used to lookup the fee.
+   * @param flag The trade's LiquidityFlag.
+   * @param price_class The trade's PriceClass.
+   * @return The fee corresponding to the specified <i>flag</i> and
+   *         <i>price_class</i>.
    */
-  inline Money LookupInterlistedFee(const NeoeFeeTable& feeTable,
-      LiquidityFlag liquidityFlag, NeoeFeeTable::PriceClass priceClass) {
-    return feeTable.m_interlistedFeeTable[static_cast<int>(priceClass)][
-      static_cast<int>(liquidityFlag)];
+  inline Money lookup_interlisted_fee(const NeoeFeeTable& table,
+      LiquidityFlag flag, NeoeFeeTable::PriceClass price_class) {
+    return table.m_interlisted_fee_table[static_cast<int>(price_class)][
+      static_cast<int>(flag)];
   }
 
   /**
    * Looks up an ETF fee.
-   * @param feeTable The NeoeFeeTable used to lookup the fee.
-   * @param liquidityFlag The trade's LiquidityFlag.
-   * @param priceClass The trade's PriceClass.
-   * @return The fee corresponding to the specified <i>liquidityFlag</i> and
-   *         <i>priceClass</i>.
+   * @param table The NeoeFeeTable used to lookup the fee.
+   * @param flag The trade's LiquidityFlag.
+   * @param price_class The trade's PriceClass.
+   * @return The fee corresponding to the specified <i>flag</i> and
+   *         <i>price_class</i>.
    */
-  inline Money LookupEtfFee(const NeoeFeeTable& feeTable,
-      LiquidityFlag liquidityFlag, NeoeFeeTable::PriceClass priceClass) {
-    return feeTable.m_etfFeeTable[static_cast<int>(priceClass)][
-      static_cast<int>(liquidityFlag)];
+  inline Money lookup_etf_fee(const NeoeFeeTable& table, LiquidityFlag flag,
+      NeoeFeeTable::PriceClass price_class) {
+    return table.m_etf_table_fee[static_cast<int>(price_class)][
+      static_cast<int>(flag)];
   }
 
   /**
    * Looks up a NEO book fee.
-   * @param feeTable The NeoeFeeTable used to lookup the fee.
-   * @param liquidityFlag The trade's LiquidityFlag.
-   * @param priceClass The trade's PriceClass.
-   * @return The fee corresponding to the specified <i>liquidityFlag</i>.
+   * @param table The NeoeFeeTable used to lookup the fee.
+   * @param flag The trade's LiquidityFlag.
+   * @param price_class The trade's PriceClass.
+   * @return The fee corresponding to the specified <i>flag</i>.
    */
-  inline Money LookupNeoBookFee(const NeoeFeeTable& feeTable,
-      LiquidityFlag liquidityFlag, NeoeFeeTable::PriceClass priceClass) {
-    return feeTable.m_neoBookFeeTable[static_cast<int>(priceClass)][
-      static_cast<int>(liquidityFlag)];
+  inline Money lookup_neo_book_fee(const NeoeFeeTable& table,
+      LiquidityFlag flag, NeoeFeeTable::PriceClass price_class) {
+    return table.m_neo_book_fee_table[static_cast<int>(price_class)][
+      static_cast<int>(flag)];
   }
 
   /**
    * Calculates the fee on a trade executed on NEOE.
-   * @param feeTable The NeoeFeeTable used to calculate the fee.
+   * @param table The NeoeFeeTable used to calculate the fee.
    * @param classification The listing classification of the security.
-   * @param orderFields The OrderFields submitted for the Order.
-   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @param fields The OrderFields submitted for the Order.
+   * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */
-  inline Money CalculateFee(const NeoeFeeTable& feeTable,
-      NeoeFeeTable::Classification classification,
-      const OrderExecutionService::OrderFields& orderFields,
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    if(executionReport.m_lastQuantity == 0) {
+  inline Money calculate_fee(
+      const NeoeFeeTable& table, NeoeFeeTable::Classification classification,
+      const OrderFields& fields, const ExecutionReport& report) {
+    if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }
-    auto priceClass = [&] {
-      if(executionReport.m_lastPrice < Money::ONE) {
+    auto price_class = [&] {
+      if(report.m_last_price < Money::ONE) {
         return NeoeFeeTable::PriceClass::SUBDOLLAR;
       } else {
         return NeoeFeeTable::PriceClass::DEFAULT;
       }
     }();
-    auto liquidityFlag = [&] {
-      if(executionReport.m_liquidityFlag.size() == 1) {
-        if(executionReport.m_liquidityFlag[0] == 'P') {
+    auto flag = [&] {
+      if(report.m_liquidity_flag.size() == 1) {
+        if(report.m_liquidity_flag[0] == 'P') {
           return LiquidityFlag::PASSIVE;
-        } else if(executionReport.m_liquidityFlag[0] == 'A') {
+        } else if(report.m_liquidity_flag[0] == 'A') {
           return LiquidityFlag::ACTIVE;
         } else {
           std::cout << "Unknown liquidity flag [NEOE]: " <<
-            executionReport.m_liquidityFlag << "\n";
+            report.m_liquidity_flag << "\n";
           return LiquidityFlag::ACTIVE;
         }
       } else {
         std::cout << "Unknown liquidity flag [NEOE]: " <<
-          executionReport.m_liquidityFlag << "\n";
+          report.m_liquidity_flag << "\n";
         return LiquidityFlag::ACTIVE;
       }
     }();
     auto fee = [&] {
-      if(IsNeoBookOrder(orderFields)) {
-        return LookupNeoBookFee(feeTable, liquidityFlag, priceClass);
+      if(is_neo_book_order(fields)) {
+        return lookup_neo_book_fee(table, flag, price_class);
       } else if(classification == NeoeFeeTable::Classification::INTERLISTED) {
-        return LookupInterlistedFee(feeTable, liquidityFlag, priceClass);
+        return lookup_interlisted_fee(table, flag, price_class);
       } else if(classification == NeoeFeeTable::Classification::ETF) {
-        return LookupEtfFee(feeTable, liquidityFlag, priceClass);
+        return lookup_etf_fee(table, flag, price_class);
       } else {
-        return LookupGeneralFee(feeTable, liquidityFlag, priceClass);
+        return lookup_general_fee(table, flag, price_class);
       }
     }();
-    return executionReport.m_lastQuantity * fee;
+    return report.m_last_quantity * fee;
   }
 }
 

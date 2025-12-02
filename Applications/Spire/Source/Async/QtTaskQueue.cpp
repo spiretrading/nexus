@@ -5,7 +5,6 @@
 #include <QEvent>
 
 using namespace Beam;
-using namespace Beam::Routines;
 using namespace Spire;
 
 namespace {
@@ -74,43 +73,27 @@ QtTaskQueue::~QtTaskQueue() {
 }
 
 void QtTaskQueue::push(const Target& value) {
-  Push(value);
-}
-
-void QtTaskQueue::push(Target&& value) {
-  Push(std::move(value));
-}
-
-void QtTaskQueue::close() {
-  Break();
-}
-
-void QtTaskQueue::close(const std::exception_ptr& exception) {
-  Break(exception);
-}
-
-void QtTaskQueue::safe_push(Target&& value) {
-  m_event_handler->push(std::move(value));
-}
-
-void QtTaskQueue::Push(const Target& value) {
   if(m_is_broken) {
     std::rethrow_exception(m_break_exception);
   }
   m_event_handler->push(value);
 }
 
-void QtTaskQueue::Push(Target&& value) {
+void QtTaskQueue::push(Target&& value) {
   if(m_is_broken) {
     std::rethrow_exception(m_break_exception);
   }
   m_event_handler->push(std::move(value));
 }
 
-void QtTaskQueue::Break(const std::exception_ptr& exception) {
+void QtTaskQueue::close(const std::exception_ptr& exception) {
   if(m_is_broken.exchange(true)) {
     return;
   }
   m_break_exception = exception;
-  m_callbacks.Break(exception);
+  m_callbacks.close(exception);
+}
+
+void QtTaskQueue::safe_push(Target&& value) {
+  m_event_handler->push(std::move(value));
 }

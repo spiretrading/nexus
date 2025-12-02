@@ -3,9 +3,9 @@
 #include <QTimer>
 #include <QWidget>
 #include "Spire/Ui/ContextMenu.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class EmptyState;
 
   /** Represents a button that can open a menu */
   class MenuButton : public QWidget {

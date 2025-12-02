@@ -4,12 +4,12 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <QFrame>
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 class QModelIndex;
 class Ui_AccountViewWindow;
 
 namespace Spire {
+  class UserProfile;
 
   /*! \class AccountViewWindow
       \brief Displays and manages the accounts in a TradingGroup.

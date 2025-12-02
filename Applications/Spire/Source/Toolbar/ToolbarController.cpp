@@ -3,8 +3,8 @@
 #include <QApplication>
 #include <QGuiApplication>
 #include <QScreen>
-#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/AccountViewer/AccountViewWindow.hpp"
 #include "Spire/AccountViewer/TraderProfileWindow.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
@@ -38,17 +38,11 @@ namespace {
     auto next_height = 0;
     auto resolution = QGuiApplication::primaryScreen()->availableGeometry();
     auto securities = std::vector<Security>();
-    auto& market_entry = user_profile.GetMarketDatabase().FromCode("XTSE");
-    securities.push_back(
-      Security("RY", market_entry.m_code, market_entry.m_countryCode));
-    securities.push_back(
-      Security("XIU", market_entry.m_code, market_entry.m_countryCode));
-    securities.push_back(
-      Security("ABX", market_entry.m_code, market_entry.m_countryCode));
-    securities.push_back(
-      Security("SU", market_entry.m_code, market_entry.m_countryCode));
-    securities.push_back(
-      Security("BCE", market_entry.m_code, market_entry.m_countryCode));
+    securities.push_back(Security("RY", DefaultVenues::TSX));
+    securities.push_back(Security("XIU", DefaultVenues::TSX));
+    securities.push_back(Security("ABX", DefaultVenues::TSX));
+    securities.push_back(Security("SU", DefaultVenues::TSX));
+    securities.push_back(Security("BCE", DefaultVenues::TSX));
     auto index = std::size_t(0);
     auto windows = std::vector<QWidget*>();
     while(instantiate_security_windows && index < securities.size()) {
@@ -111,7 +105,7 @@ struct ToolbarController::EventFilter : QObject {
 };
 
 ToolbarController::ToolbarController(Ref<UserProfile> user_profile)
-    : m_user_profile(user_profile.Get()) {
+    : m_user_profile(user_profile.get()) {
   m_event_filter = std::make_unique<EventFilter>(*this);
 }
 
@@ -273,8 +267,6 @@ void ToolbarController::open_key_bindings_window() {
   m_key_bindings_window = std::make_unique<KeyBindingsWindow>(
     m_user_profile->GetKeyBindings(),
     m_user_profile->GetSecurityInfoQueryModel(),
-    m_user_profile->GetCountryDatabase(), m_user_profile->GetMarketDatabase(),
-    m_user_profile->GetDestinationDatabase(),
     m_user_profile->GetAdditionalTagDatabase());
   m_key_bindings_window->installEventFilter(m_event_filter.get());
   m_key_bindings_window->show();
@@ -284,7 +276,7 @@ void ToolbarController::open_profile_window() {
   auto window = new TraderProfileWindow(Ref(*m_user_profile));
   window->setAttribute(Qt::WA_DeleteOnClose);
   window->Load(
-    m_user_profile->GetServiceClients().GetServiceLocatorClient().GetAccount());
+    m_user_profile->GetClients().get_service_locator_client().get_account());
   window->show();
 }
 
@@ -345,7 +337,7 @@ void ToolbarController::on_restore_all() {
 
 void ToolbarController::on_import(
     UserSettings::Categories categories, const std::filesystem::path& path) {
-  import_settings(categories, path, Store(*m_user_profile));
+  import_settings(categories, path, out(*m_user_profile));
 }
 
 void ToolbarController::on_export(
@@ -355,7 +347,7 @@ void ToolbarController::on_export(
 
 void ToolbarController::on_new_blotter(const QString& name) {
   auto blotter = std::make_unique<BlotterModel>(name.toStdString(),
-    m_user_profile->GetServiceClients().GetServiceLocatorClient().GetAccount(),
+    m_user_profile->GetClients().get_service_locator_client().get_account(),
     false, Ref(*m_user_profile),
     m_user_profile->GetBlotterSettings().GetDefaultBlotterTaskProperties(),
     m_user_profile->GetBlotterSettings().GetDefaultOrderLogProperties());

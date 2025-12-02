@@ -15,10 +15,10 @@ ProfitAndLossHeader::ProfitAndLossHeader(Ref<ProfitAndLossEntryModel> model,
     QWidget* parent)
     : QWidget(parent),
       m_ui(std::make_unique<Ui_ProfitAndLossHeader>()),
-      m_model(model.Get()) {
+      m_model(model.get()) {
   m_ui->setupUi(this);
   m_ui->m_currencyCode->setText(QString::fromStdString(
-    m_model->GetCurrency().m_code.GetData()));
+    m_model->GetCurrency().m_code.get_data()));
   m_ui->m_currencySymbol->setText(QString::fromStdString(
     m_model->GetCurrency().m_sign));
   m_profitAndLossConnection = m_model->ConnectProfitAndLossSignal(

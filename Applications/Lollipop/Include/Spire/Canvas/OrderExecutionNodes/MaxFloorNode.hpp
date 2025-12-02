@@ -42,17 +42,17 @@ namespace Spire {
       virtual std::unique_ptr<CanvasNode> Reset() const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::string m_referent;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void MaxFloorNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    ValueNode<IntegerType>::Shuttle(shuttle, version);
-    shuttle.Shuttle("referent", m_referent);
+  template<Beam::IsShuttle S>
+  void MaxFloorNode::shuttle(S& shuttle, unsigned int version) {
+    ValueNode<IntegerType>::shuttle(shuttle, version);
+    shuttle.shuttle("referent", m_referent);
   }
 }
 

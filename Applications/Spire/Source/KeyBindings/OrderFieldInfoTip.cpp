@@ -31,22 +31,17 @@ namespace {
       set(Font(font)).
       set(TextColor(QColor(0x4B23A0))).
       set(PaddingLeft(scale_width(18))).
-      set(PaddingTop(scale_height(8))).
-      set(vertical_padding(0));
+      set(PaddingTop(scale_height(8)));
     return style;
   }
 
   auto make_description_layout(const OrderFieldInfoTip::Model& model) {
     auto name_label = make_label(QString::fromStdString(model.m_tag.m_name));
-    name_label->set_read_only(true);
     set_style(*name_label, NAME_STYLE());
     auto description_label =
-      new TextAreaBox(QString::fromStdString(model.m_tag.m_description));
-    description_label->set_read_only(true);
+      make_text_area_label(QString::fromStdString(model.m_tag.m_description));
     update_style(*description_label, [] (auto& style) {
-      style.get(ReadOnly()).
-        set(PaddingTop(scale_height(18))).
-        set(PaddingBottom(0));
+      style.get(ReadOnly()).set(PaddingTop(scale_height(18)));
     });
     auto layout = make_vbox_layout();
     layout->setContentsMargins(
@@ -58,17 +53,11 @@ namespace {
 
   auto make_value_row(const OrderFieldInfoTip::Model::Argument& argument) {
     auto id_label = make_label(QString::fromStdString(argument.m_value));
+    id_label->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     auto description_label =
-      new TextAreaBox(QString::fromStdString(argument.m_description));
-    description_label->set_read_only(true);
-    description_label->setSizePolicy(
-      QSizePolicy::Expanding, QSizePolicy::Fixed);
-    update_style(*description_label, [] (auto& style) {
-      style.get(ReadOnly()).
-        set(border_size(0)).
-        set(vertical_padding(0)).
-        set(PaddingLeft(scale_width(8)));
-    });
+      make_text_area_label(QString::fromStdString(argument.m_description));
+    description_label->setMaximumWidth(scale_width(272));
+    description_label->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     return std::tuple(id_label, description_label);
   }
 
@@ -77,7 +66,7 @@ namespace {
     auto layout = make_grid_layout();
     layout->setContentsMargins(
       scale_width(18), 0, scale_width(18), scale_height(18));
-    layout->setHorizontalSpacing(0);
+    layout->setHorizontalSpacing(scale_width(8));
     layout->setVerticalSpacing(scale_height(12));
     for(auto i = std::size_t(0); i != arguments.size(); ++i) {
       auto& value = arguments[i];
@@ -123,8 +112,8 @@ namespace {
   }
 
   auto make_prerequisite_container(const OrderFieldInfoTip::Model& model) {
-    auto prerequisites_label = new TextAreaBox(describe_prerequisites(model));
-    prerequisites_label->set_read_only(true);
+    auto prerequisites_label =
+      make_text_area_label(describe_prerequisites(model));
     set_style(*prerequisites_label, PREREQUISITES_STYLE());
     auto container = new QWidget();
     container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -156,8 +145,8 @@ OrderFieldInfoTip::OrderFieldInfoTip(Model model, QWidget* parent)
 }
 
 QSize OrderFieldInfoTip::sizeHint() const {
+  auto size = QWidget::sizeHint();
   auto height = [&] {
-    auto size = QWidget::sizeHint();
     auto max_height = scale_height(300);
     if(layout()->count() > 1) {
       auto scroll_box_height = layout()->itemAt(0)->sizeHint().height();
@@ -166,5 +155,5 @@ QSize OrderFieldInfoTip::sizeHint() const {
     }
     return std::min(size.height(), max_height);
   }();
-  return QSize(scale_width(300), height);
+  return QSize(std::max(scale_width(300), size.width()), height);
 }

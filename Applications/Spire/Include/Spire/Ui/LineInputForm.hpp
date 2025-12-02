@@ -2,9 +2,10 @@
 #define SPIRE_LINE_INPUT_FORM_HPP
 #include <QWidget>
 #include "Spire/Ui/TextBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Button;
+  class OverlayPanel;
 
   /** Displays a form to input a line of text. */
   class LineInputForm : public QWidget {

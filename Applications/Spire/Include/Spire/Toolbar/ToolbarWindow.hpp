@@ -2,17 +2,21 @@
 #define SPIRE_TOOLBAR_WINDOW_HPP
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/AdministrationService/AccountRoles.hpp"
-#include "Spire/Blotter/Blotter.hpp"
+#include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
-#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Toolbar/Toolbar.hpp"
+#include "Spire/Spire/Spire.hpp"
 #include "Spire/Toolbar/UserSettings.hpp"
-#include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
 
 namespace Spire {
+  class Button;
+  class ContextMenu;
+  class LineInputForm;
+  class MenuButton;
+  class SettingsPanel;
 
   /** Displays the toolbar window. */
   class ToolbarWindow : public Window, public LegacyUI::PersistentWindow {
@@ -113,8 +117,7 @@ namespace Spire {
        * @param pinned_blotters The list of the user's pinned blotters.
        * @param parent The parent widget.
        */
-      ToolbarWindow(Beam::ServiceLocator::DirectoryEntry account,
-        Nexus::AdministrationService::AccountRoles roles,
+      ToolbarWindow(Beam::DirectoryEntry account, Nexus::AccountRoles roles,
         std::shared_ptr<RecentlyClosedWindowListModel> recently_closed_windows,
         std::shared_ptr<ListModel<BlotterModel*>> pinned_blotters,
         QWidget* parent = nullptr);
@@ -179,7 +182,7 @@ namespace Spire {
       mutable ExportSignal m_export_signal;
       mutable SignOutSignal m_sign_out_signal;
       mutable NewBlotterSignal m_new_blotter_signal;
-      Beam::ServiceLocator::DirectoryEntry m_account;
+      Beam::DirectoryEntry m_account;
       ContextMenu* m_recently_closed_menu;
       ContextMenu* m_blotter_menu;
       LineInputForm* m_new_blotter_form;

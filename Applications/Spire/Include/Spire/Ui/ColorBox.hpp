@@ -6,9 +6,9 @@
 #include "Spire/Ui/ColorPicker.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/PressObserver.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Box;
 
   /**
    * Presents a color.

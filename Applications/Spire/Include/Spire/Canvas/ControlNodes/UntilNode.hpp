@@ -1,5 +1,6 @@
 #ifndef SPIRE_UNTIL_NODE_HPP
 #define SPIRE_UNTIL_NODE_HPP
+#include <boost/mp11.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/FunctionNode.hpp"
 
@@ -12,12 +13,9 @@ namespace Spire {
       /** Specifies an UntilNode's signatures. */
       struct Signatures {
         template<typename T>
-        struct MakeSignature {
-          using type = typename boost::mpl::vector<bool, T, T>::type;
-        };
+        using MakeSignature = boost::mp11::mp_list<bool, T, T>;
 
-        using type = boost::mpl::transform<NativeTypes,
-          MakeSignature<boost::mpl::placeholders::_1>>::type;
+        using type = boost::mp11::mp_transform<MakeSignature, NativeTypes>;
       };
 
       /** Constructs an UntilNode. */
@@ -29,22 +27,16 @@ namespace Spire {
       std::unique_ptr<CanvasNode> Clone() const override;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
-      UntilNode(Beam::Serialization::ReceiveBuilder);
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void UntilNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    FunctionNode::Shuttle(shuttle, version);
+  template<Beam::IsShuttle S>
+  void UntilNode::shuttle(S& shuttle, unsigned int version) {
+    FunctionNode::shuttle(shuttle, version);
   }
-}
-
-namespace Beam::Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::UntilNode> : std::false_type {};
 }
 
 #endif

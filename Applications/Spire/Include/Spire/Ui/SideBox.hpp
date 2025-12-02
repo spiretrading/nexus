@@ -2,9 +2,8 @@
 #define SPIRE_SIDE_BOX_HPP
 #include "Nexus/Definitions/Side.hpp"
 #include "Spire/Ui/EnumBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
-namespace Spire {  
+namespace Spire {
 
   /** A ValueModel over a Nexus::Side. */
   using SideModel = ValueModel<Nexus::Side>;

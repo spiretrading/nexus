@@ -1,5 +1,4 @@
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
-#include <Beam/Collections/DereferenceIterator.hpp>
 #include <boost/range/algorithm/find_if.hpp>
 #include "Spire/Canvas/Types/BooleanType.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRedefinitionException.hpp"
@@ -10,7 +9,6 @@
 #include "Spire/Canvas/Types/DurationType.hpp"
 #include "Spire/Canvas/Types/ExecutionReportRecordType.hpp"
 #include "Spire/Canvas/Types/IntegerType.hpp"
-#include "Spire/Canvas/Types/MarketType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/Canvas/Types/OrderFieldsRecordType.hpp"
 #include "Spire/Canvas/Types/OrderReferenceType.hpp"
@@ -25,6 +23,7 @@
 #include "Spire/Canvas/Types/TextType.hpp"
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
+#include "Spire/Canvas/Types/VenueType.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -43,7 +42,6 @@ CanvasTypeRegistry::CanvasTypeRegistry() {
   Register(GetExecutionReportRecordType());
   Register(RecordType::GetEmptyRecordType());
   Register(IntegerType::GetInstance());
-  Register(MarketType::GetInstance());
   Register(MoneyType::GetInstance());
   Register(GetOrderFieldsRecordType());
   Register(OrderReferenceType::GetInstance());
@@ -57,6 +55,7 @@ CanvasTypeRegistry::CanvasTypeRegistry() {
   Register(TextType::GetInstance());
   Register(TimeInForceType::GetInstance());
   Register(TimeRangeType::GetInstance());
+  Register(VenueType::GetInstance());
 }
 
 boost::optional<const CanvasType&> CanvasTypeRegistry::Find(
@@ -96,9 +95,9 @@ void CanvasTypeRegistry::Register(const CanvasType& type) {
 }
 
 View<CanvasType> CanvasTypeRegistry::GetTypes() const {
-  return MakeDereferenceView(m_types);
+  return make_dereference_view(m_types);
 }
 
 View<NativeType> CanvasTypeRegistry::GetNativeTypes() const {
-  return MakeDereferenceView(m_nativeTypes);
+  return make_dereference_view(m_nativeTypes);
 }

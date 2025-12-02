@@ -51,7 +51,7 @@ CondensedCanvasWidget::CondensedCanvasWidget(const string& name,
     Ref<UserProfile> userProfile, QWidget* parent)
     : QWidget{parent},
       m_name{name},
-      m_userProfile{userProfile.Get()},
+      m_userProfile{userProfile.get()},
       m_node{nullptr},
       m_topLeaf{nullptr},
       m_currentNode{nullptr} {

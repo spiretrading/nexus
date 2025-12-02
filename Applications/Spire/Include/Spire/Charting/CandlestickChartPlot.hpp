@@ -14,8 +14,7 @@ namespace Spire {
     public:
 
       //! The normalized type of Candlestick used.
-      typedef Nexus::TechnicalAnalysis::Candlestick<ChartValue, ChartValue>
-        CandlestickValue;
+      typedef Nexus::Candlestick<ChartValue, ChartValue> CandlestickValue;
 
       //! Constructs a CandlestickChartPlot.
       /*!

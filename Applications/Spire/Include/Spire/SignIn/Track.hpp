@@ -1,7 +1,6 @@
 #ifndef SPIRE_TRACK_HPP
 #define SPIRE_TRACK_HPP
 #include <QString>
-#include "Spire/SignIn/SignIn.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 
 namespace Spire {

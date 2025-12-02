@@ -1,6 +1,5 @@
 #ifndef NEXUS_MARKET_DATA_REGISTRY_SERVLET_HPP
 #define NEXUS_MARKET_DATA_REGISTRY_SERVLET_HPP
-#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -8,15 +7,15 @@
 #include <Beam/Services/ServiceProtocolServlet.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
+#include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServices.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistrySession.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Maintains a registry of all Securities and data subscriptions.
@@ -26,561 +25,499 @@ namespace Nexus::MarketDataService {
    * @param <D> The type of data store storing historical market data.
    * @param <A> The type of AdministrationClient to use.
    */
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   class MarketDataRegistryServlet {
     public:
 
       /** The registry storing all market data sent to this servlet. */
-      using MarketDataRegistry = Beam::GetTryDereferenceType<R>;
+      using MarketDataRegistry = Beam::dereference_t<R>;
 
       /** The type of data store storing historical market data. */
-      using HistoricalDataStore = Beam::GetTryDereferenceType<D>;
+      using HistoricalDataStore = Beam::dereference_t<D>;
+
+      /** The type of AdministrationClient to use. */
+      using AdministrationClient = Beam::dereference_t<A>;
+
       using Container = C;
       using ServiceProtocolClient = typename Container::ServiceProtocolClient;
 
-      /** The type of AdministrationClient to use. */
-      using AdministrationClient = Beam::GetTryDereferenceType<A>;
-
       /**
        * Constructs a MarketDataRegistryServlet.
-       * @param administrationClient Used to check for entitlements.
-       * @param marketDataRegistry The registry storing all market data
+       * @param administration_client Used to check for entitlements.
+       * @param market_data_registry The registry storing all market data
        *        originating from this servlet.
-       * @param dataStore Initializes the historical market data store.
+       * @param data_store Initializes the historical market data store.
        */
-      template<typename AF, typename RF, typename DF>
-      MarketDataRegistryServlet(AF&& administrationClient,
-        RF&& marketDataRegistry, DF&& dataStore);
+      template<Beam::Initializes<A> AF, Beam::Initializes<R> RF,
+        Beam::Initializes<D> DF>
+      MarketDataRegistryServlet(AF&& administration_client,
+        RF&& market_data_registry, DF&& data_store);
 
-      void Add(const SecurityInfo& securityInfo);
-
-      void PublishOrderImbalance(const MarketOrderImbalance& orderImbalance,
-        int sourceId);
-
-      void PublishBboQuote(const SecurityBboQuote& bboQuote, int sourceId);
-
-      void PublishMarketQuote(const SecurityMarketQuote& marketQuote,
-        int sourceId);
-
-      void UpdateBookQuote(const SecurityBookQuote& delta, int sourceId);
-
-      void PublishTimeAndSale(const SecurityTimeAndSale& timeAndSale,
-        int sourceId);
-
-      void Clear(int sourceId);
-
-      void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
-        ServiceProtocolClient>> slots);
-
-      void HandleClientAccepted(ServiceProtocolClient& client);
-
-      void HandleClientClosed(ServiceProtocolClient& client);
-
-      void Close();
+      void add(const SecurityInfo& info);
+      void publish(const VenueOrderImbalance& imbalance, int source_id);
+      void publish(const SecurityBboQuote& quote, int source_id);
+      void publish(const SecurityBookQuote& delta, int source_id);
+      void publish(const SecurityTimeAndSale& time_and_sale, int source_id);
+      void clear(int source_id);
+      void register_services(
+        Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots);
+      void handle_accept(ServiceProtocolClient& client);
+      void handle_close(ServiceProtocolClient& client);
+      void close();
 
     private:
       template<typename T>
-      using MarketSubscriptions = Beam::Queries::IndexedSubscriptions<
-        T, MarketCode, ServiceProtocolClient>;
+      using VenueSubscriptions =
+        Beam::IndexedSubscriptions<T, Venue, ServiceProtocolClient>;
       template<typename T>
       using SecuritySubscriptions =
-        Beam::Queries::IndexedSubscriptions<T, Security, ServiceProtocolClient>;
-      EntitlementDatabase m_entitlementDatabase;
-      Beam::GetOptionalLocalPtr<A> m_administrationClient;
-      Beam::GetOptionalLocalPtr<R> m_registry;
-      Beam::GetOptionalLocalPtr<D> m_dataStore;
-      MarketSubscriptions<OrderImbalance> m_orderImbalanceSubscriptions;
-      SecuritySubscriptions<BboQuote> m_bboQuoteSubscriptions;
-      SecuritySubscriptions<BookQuote> m_bookQuoteSubscriptions;
-      SecuritySubscriptions<MarketQuote> m_marketQuoteSubscriptions;
-      SecuritySubscriptions<TimeAndSale> m_timeAndSaleSubscriptions;
-      Beam::IO::OpenState m_openState;
+        Beam::IndexedSubscriptions<T, Security, ServiceProtocolClient>;
+      EntitlementDatabase m_entitlement_database;
+      Beam::local_ptr_t<A> m_administration_client;
+      Beam::local_ptr_t<R> m_registry;
+      Beam::local_ptr_t<D> m_data_store;
+      VenueSubscriptions<OrderImbalance> m_order_imbalance_subscriptions;
+      SecuritySubscriptions<BboQuote> m_bbo_quote_subscriptions;
+      SecuritySubscriptions<BookQuote> m_book_quote_subscriptions;
+      SecuritySubscriptions<TimeAndSale> m_time_and_sale_subscriptions;
+      Beam::OpenState m_open_state;
 
       MarketDataRegistryServlet(const MarketDataRegistryServlet&) = delete;
       MarketDataRegistryServlet& operator =(
         const MarketDataRegistryServlet&) = delete;
-      Security NormalizePrimaryMarket(const Security& security);
-      void OnQueryOrderImbalances(Beam::Services::RequestToken<
+      Security normalize(const Security& security);
+      Venue normalize(Venue venue);
+      template<typename Type, typename Service, typename Query,
+        typename Subscriptions>
+      void on_query(Beam::RequestToken<ServiceProtocolClient, Service>& request,
+        const Query& query, Subscriptions& subscriptions);
+      void on_query_order_imbalance(Beam::RequestToken<
         ServiceProtocolClient, QueryOrderImbalancesService>& request,
-        const MarketWideDataQuery& query);
-      void OnEndOrderImbalanceQuery(ServiceProtocolClient& client,
-        MarketCode market, int id);
-      void OnQueryBboQuotes(Beam::Services::RequestToken<ServiceProtocolClient,
-        QueryBboQuotesService>& request, const SecurityMarketDataQuery& query);
-      void OnEndBboQuoteQuery(ServiceProtocolClient& client,
-        const Security& security, int id);
-      void OnQueryBookQuotes(Beam::Services::RequestToken<
+        const VenueMarketDataQuery& query);
+      void on_end_order_imbalance_query(
+        ServiceProtocolClient& client, Venue venue, int id);
+      void on_query_bbo_quotes(Beam::RequestToken<
+        ServiceProtocolClient, QueryBboQuotesService>& request,
+        const SecurityMarketDataQuery& query);
+      void on_end_bbo_quote_query(
+        ServiceProtocolClient& client, const Security& security, int id);
+      void on_query_book_quotes(Beam::RequestToken<
         ServiceProtocolClient, QueryBookQuotesService>& request,
         const SecurityMarketDataQuery& query);
-      void OnEndBookQuoteQuery(ServiceProtocolClient& client,
-        const Security& security, int id);
-      void OnQueryMarketQuotes(Beam::Services::RequestToken<
-        ServiceProtocolClient, QueryMarketQuotesService>& request,
-        const SecurityMarketDataQuery& query);
-      void OnEndMarketQuoteQuery(ServiceProtocolClient& client,
-        const Security& security, int id);
-      void OnQueryTimeAndSales(Beam::Services::RequestToken<
+      void on_end_book_quote_query(
+        ServiceProtocolClient& client, const Security& security, int id);
+      void on_query_time_and_sales(Beam::RequestToken<
         ServiceProtocolClient, QueryTimeAndSalesService>& request,
         const SecurityMarketDataQuery& query);
-      void OnEndTimeAndSaleQuery(ServiceProtocolClient& client,
-        const Security& security, int id);
-      SecuritySnapshot OnLoadSecuritySnapshot(ServiceProtocolClient& client,
-        Security security);
-      SecurityTechnicals OnLoadSecurityTechnicals(ServiceProtocolClient& client,
-        Security security);
-      std::vector<SecurityInfo> OnQuerySecurityInfo(
+      void on_end_time_and_sale_query(
+        ServiceProtocolClient& client, const Security& security, int id);
+      SecuritySnapshot on_load_security_snapshot(
+        ServiceProtocolClient& client, Security security);
+      SecurityTechnicals on_load_security_technicals(
+        ServiceProtocolClient& client, Security security);
+      std::vector<SecurityInfo> on_query_security_info(
         ServiceProtocolClient& client, const SecurityInfoQuery& query);
-      std::vector<SecurityInfo> OnLoadSecurityInfoFromPrefix(
+      std::vector<SecurityInfo> on_load_security_info_from_prefix(
         ServiceProtocolClient& client, const std::string& prefix);
   };
 
   template<typename R, typename D, typename A>
   struct MetaMarketDataRegistryServlet {
     using Session = MarketDataRegistrySession;
+
     template<typename C>
     struct apply {
       using type = MarketDataRegistryServlet<C, R, D, A>;
     };
   };
 
-  template<typename C, typename R, typename D, typename A>
-  template<typename AF, typename RF, typename DF>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  template<Beam::Initializes<A> AF, Beam::Initializes<R> RF,
+    Beam::Initializes<D> DF>
   MarketDataRegistryServlet<C, R, D, A>::MarketDataRegistryServlet(
-      AF&& administrationClient, RF&& registry, DF&& dataStore)
-      : m_administrationClient(std::forward<AF>(administrationClient)),
+      AF&& administration_client, RF&& registry, DF&& data_store)
+      : m_administration_client(std::forward<AF>(administration_client)),
         m_registry(std::forward<RF>(registry)),
-        m_dataStore(std::forward<DF>(dataStore)) {
+        m_data_store(std::forward<DF>(data_store)) {
     try {
       auto query = SecurityInfoQuery();
-      query.SetIndex(Region::Global());
-      query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::Unlimited());
-      auto securityInfo = m_dataStore->LoadSecurityInfo(query);
-      for(auto& entry : securityInfo) {
-        m_registry->Add(entry);
+      query.set_index(Region::GLOBAL);
+      query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
+      auto info = m_data_store->load_security_info(query);
+      for(auto& entry : info) {
+        m_registry->add(entry);
       }
-      m_entitlementDatabase = m_administrationClient->LoadEntitlements();
+      m_entitlement_database = m_administration_client->load_entitlements();
     } catch(const std::exception&) {
-      Close();
-      BOOST_RETHROW;
+      close();
+      throw;
     }
   }
 
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::Add(
-      const SecurityInfo& securityInfo) {
-    m_dataStore->Store(securityInfo);
-    m_registry->Add(securityInfo);
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::add(const SecurityInfo& info) {
+    m_data_store->store(info);
+    m_registry->add(info);
   }
 
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::PublishOrderImbalance(
-      const MarketOrderImbalance& orderImbalance, int sourceId) {
-    m_registry->PublishOrderImbalance(orderImbalance, sourceId, *m_dataStore,
-      [&] (const auto& orderImbalance) {
-        m_dataStore->Store(orderImbalance);
-        m_orderImbalanceSubscriptions.Publish(orderImbalance,
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::publish(
+      const VenueOrderImbalance& imbalance, int source_id) {
+    m_registry->publish(imbalance, source_id, *m_data_store,
+      [&] (const auto& imbalance) {
+        m_data_store->store(imbalance);
+        m_order_imbalance_subscriptions.publish(imbalance,
           [&] (const auto& clients) {
-            Beam::Services::BroadcastRecordMessage<OrderImbalanceMessage>(
-              clients, orderImbalance);
+            Beam::broadcast_record_message<OrderImbalanceMessage>(
+              clients, imbalance);
           });
       });
   }
 
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::PublishBboQuote(
-      const SecurityBboQuote& bboQuote, int sourceId) {
-    m_registry->PublishBboQuote(bboQuote, sourceId, *m_dataStore,
-      [&] (const auto& bboQuote) {
-        m_dataStore->Store(bboQuote);
-        m_bboQuoteSubscriptions.Publish(bboQuote, [&] (const auto& clients) {
-          Beam::Services::BroadcastRecordMessage<BboQuoteMessage>(clients,
-            bboQuote);
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::publish(
+      const SecurityBboQuote& quote, int source_id) {
+    m_registry->publish(quote, source_id, *m_data_store,
+      [&] (const auto& quote) {
+        m_data_store->store(quote);
+        m_bbo_quote_subscriptions.publish(quote,
+          [&] (const auto& clients) {
+            Beam::broadcast_record_message<BboQuoteMessage>(clients, quote);
+          });
+      });
+  }
+
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::publish(
+      const SecurityBookQuote& delta, int source_id) {
+    auto security = m_registry->get_primary_listing(delta.get_index());
+    auto key = EntitlementKey(security.get_venue(), delta.get_value().m_venue);
+    m_registry->publish(delta, source_id, *m_data_store,
+      [&] (const auto& quote) {
+        m_data_store->store(quote);
+        if(!security.get_venue()) {
+          return;
+        }
+        m_book_quote_subscriptions.publish(quote, [&] (const auto& client) {
+          return has_entitlement(
+            client.get_session(), key, MarketDataType::BOOK_QUOTE);
+        },
+        [&] (const auto& clients) {
+          Beam::broadcast_record_message<BookQuoteMessage>(clients, quote);
         });
       });
   }
 
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::PublishMarketQuote(
-      const SecurityMarketQuote& marketQuote, int sourceId) {
-    m_registry->PublishMarketQuote(marketQuote, sourceId, *m_dataStore,
-      [&] (const auto& marketQuote) {
-        m_dataStore->Store(marketQuote);
-        m_marketQuoteSubscriptions.Publish(marketQuote,
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::publish(
+      const SecurityTimeAndSale& time_and_sale, int source_id) {
+    m_registry->publish(time_and_sale, source_id, *m_data_store,
+      [&] (const auto& time_and_sale) {
+        m_data_store->store(time_and_sale);
+        m_time_and_sale_subscriptions.publish(time_and_sale,
           [&] (const auto& clients) {
-            Beam::Services::BroadcastRecordMessage<MarketQuoteMessage>(clients,
-              marketQuote);
+            Beam::broadcast_record_message<TimeAndSaleMessage>(
+              clients, time_and_sale);
           });
       });
   }
 
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::UpdateBookQuote(
-      const SecurityBookQuote& delta, int sourceId) {
-    auto security = m_registry->GetPrimaryListing(delta.GetIndex());
-    auto key = EntitlementKey(security.GetMarket(), delta.GetValue().m_market);
-    m_registry->UpdateBookQuote(delta, sourceId, *m_dataStore,
-      [&] (const auto& bookQuote) {
-        m_dataStore->Store(bookQuote);
-        if(security.GetMarket() == MarketCode()) {
-          return;
-        }
-        m_bookQuoteSubscriptions.Publish(bookQuote,
-          [&] (const auto& client) {
-            return HasEntitlement(client.GetSession(), key,
-              MarketDataType::BOOK_QUOTE);
-          },
-          [&] (const auto& clients) {
-            Beam::Services::BroadcastRecordMessage<BookQuoteMessage>(clients,
-              bookQuote);
-          });
-      });
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::clear(int source_id) {
+    m_registry->clear(source_id);
   }
 
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::PublishTimeAndSale(
-      const SecurityTimeAndSale& timeAndSale, int sourceId) {
-    m_registry->PublishTimeAndSale(timeAndSale, sourceId, *m_dataStore,
-      [&] (const auto& timeAndSale) {
-        m_dataStore->Store(timeAndSale);
-        m_timeAndSaleSubscriptions.Publish(timeAndSale,
-          [&] (const auto& clients) {
-            Beam::Services::BroadcastRecordMessage<TimeAndSaleMessage>(clients,
-              timeAndSale);
-          });
-      });
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::register_services(
+      Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots) {
+    Nexus::register_query_types(Beam::out(slots->get_registry()));
+    register_market_data_registry_services(out(slots));
+    register_market_data_registry_messages(out(slots));
+    QueryOrderImbalancesService::add_request_slot(out(slots), std::bind_front(
+      &MarketDataRegistryServlet::on_query_order_imbalance, this));
+    Beam::add_message_slot<EndOrderImbalanceQueryMessage>(
+      out(slots), std::bind_front(
+        &MarketDataRegistryServlet::on_end_order_imbalance_query, this));
+    QueryBboQuotesService::add_request_slot(out(slots),
+      std::bind_front(&MarketDataRegistryServlet::on_query_bbo_quotes, this));
+    Beam::add_message_slot<EndBboQuoteQueryMessage>(
+      out(slots), std::bind_front(
+        &MarketDataRegistryServlet::on_end_bbo_quote_query, this));
+    QueryBookQuotesService::add_request_slot(out(slots),
+      std::bind_front(&MarketDataRegistryServlet::on_query_book_quotes, this));
+    Beam::add_message_slot<EndBookQuoteQueryMessage>(
+      out(slots), std::bind_front(
+        &MarketDataRegistryServlet::on_end_book_quote_query, this));
+    QueryTimeAndSalesService::add_request_slot(out(slots),
+      std::bind_front(&MarketDataRegistryServlet::on_query_time_and_sales,
+        this));
+    Beam::add_message_slot<EndTimeAndSaleQueryMessage>(
+      out(slots), std::bind_front(
+        &MarketDataRegistryServlet::on_end_time_and_sale_query, this));
+    LoadSecuritySnapshotService::add_slot(out(slots), std::bind_front(
+      &MarketDataRegistryServlet::on_load_security_snapshot, this));
+    LoadSecurityTechnicalsService::add_slot(out(slots), std::bind_front(
+      &MarketDataRegistryServlet::on_load_security_technicals, this));
+    QuerySecurityInfoService::add_slot(out(slots), std::bind_front(
+      &MarketDataRegistryServlet::on_query_security_info, this));
+    LoadSecurityInfoFromPrefixService::add_slot(out(slots), std::bind_front(
+      &MarketDataRegistryServlet::on_load_security_info_from_prefix, this));
   }
 
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::Clear(int sourceId) {
-    m_registry->Clear(sourceId);
-  }
-
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::RegisterServices(
-      Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
-    Queries::RegisterQueryTypes(Beam::Store(slots->GetRegistry()));
-    RegisterMarketDataRegistryServices(Beam::Store(slots));
-    RegisterMarketDataRegistryMessages(Beam::Store(slots));
-    QueryOrderImbalancesService::AddRequestSlot(Store(slots), std::bind_front(
-      &MarketDataRegistryServlet::OnQueryOrderImbalances, this));
-    Beam::Services::AddMessageSlot<EndOrderImbalanceQueryMessage>(
-      Store(slots), std::bind_front(
-        &MarketDataRegistryServlet::OnEndOrderImbalanceQuery, this));
-    QueryBboQuotesService::AddRequestSlot(Store(slots),
-      std::bind_front(&MarketDataRegistryServlet::OnQueryBboQuotes, this));
-    Beam::Services::AddMessageSlot<EndBboQuoteQueryMessage>(Store(slots),
-      std::bind_front(&MarketDataRegistryServlet::OnEndBboQuoteQuery, this));
-    QueryBookQuotesService::AddRequestSlot(Store(slots),
-      std::bind_front(&MarketDataRegistryServlet::OnQueryBookQuotes, this));
-    Beam::Services::AddMessageSlot<EndBookQuoteQueryMessage>(Store(slots),
-      std::bind_front(&MarketDataRegistryServlet::OnEndBookQuoteQuery, this));
-    QueryMarketQuotesService::AddRequestSlot(Store(slots),
-      std::bind_front(&MarketDataRegistryServlet::OnQueryMarketQuotes, this));
-    Beam::Services::AddMessageSlot<EndMarketQuoteQueryMessage>(Store(slots),
-      std::bind_front(&MarketDataRegistryServlet::OnEndMarketQuoteQuery, this));
-    QueryTimeAndSalesService::AddRequestSlot(Store(slots),
-      std::bind_front(&MarketDataRegistryServlet::OnQueryTimeAndSales, this));
-    Beam::Services::AddMessageSlot<EndTimeAndSaleQueryMessage>(Store(slots),
-      std::bind_front(&MarketDataRegistryServlet::OnEndTimeAndSaleQuery, this));
-    LoadSecuritySnapshotService::AddSlot(Store(slots), std::bind_front(
-      &MarketDataRegistryServlet::OnLoadSecuritySnapshot, this));
-    LoadSecurityTechnicalsService::AddSlot(Store(slots), std::bind_front(
-      &MarketDataRegistryServlet::OnLoadSecurityTechnicals, this));
-    QuerySecurityInfoService::AddSlot(Store(slots),
-      std::bind_front(&MarketDataRegistryServlet::OnQuerySecurityInfo, this));
-    LoadSecurityInfoFromPrefixService::AddSlot(Store(slots), std::bind_front(
-      &MarketDataRegistryServlet::OnLoadSecurityInfoFromPrefix, this));
-  }
-
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::HandleClientAccepted(
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::handle_accept(
       ServiceProtocolClient& client) {
-    auto& session = client.GetSession();
-    session.m_roles = m_administrationClient->LoadAccountRoles(
-      session.GetAccount());
-    auto& entitlements = m_entitlementDatabase.GetEntries();
-    auto accountEntitlements = m_administrationClient->LoadEntitlements(
-      session.GetAccount());
-    for(auto& entitlement : entitlements) {
-      auto entryIterator = std::find(accountEntitlements.begin(),
-        accountEntitlements.end(), entitlement.m_groupEntry);
-      if(entryIterator != accountEntitlements.end()) {
+    auto& session = client.get_session();
+    session.m_roles =
+      m_administration_client->load_account_roles(session.get_account());
+    auto account_entitlements =
+      m_administration_client->load_entitlements(session.get_account());
+    for(auto& entitlement : m_entitlement_database.get_entries()) {
+      auto i = std::find(account_entitlements.begin(),
+        account_entitlements.end(), entitlement.m_group_entry);
+      if(i != account_entitlements.end()) {
         for(auto& applicability : entitlement.m_applicability) {
-          session.m_entitlements.GrantEntitlement(applicability.first,
-            applicability.second);
+          session.m_entitlements.grant(
+            applicability.first, applicability.second);
         }
       }
     }
   }
 
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::HandleClientClosed(
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::handle_close(
       ServiceProtocolClient& client) {
-    m_orderImbalanceSubscriptions.RemoveAll(client);
-    m_bboQuoteSubscriptions.RemoveAll(client);
-    m_marketQuoteSubscriptions.RemoveAll(client);
-    m_bookQuoteSubscriptions.RemoveAll(client);
-    m_timeAndSaleSubscriptions.RemoveAll(client);
+    m_order_imbalance_subscriptions.remove_all(client);
+    m_bbo_quote_subscriptions.remove_all(client);
+    m_book_quote_subscriptions.remove_all(client);
+    m_time_and_sale_subscriptions.remove_all(client);
   }
 
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::Close() {
-    if(m_openState.SetClosing()) {
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::close() {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_dataStore->Close();
-    m_openState.Close();
+    m_data_store->close();
+    m_open_state.close();
   }
 
-  template<typename C, typename R, typename D, typename A>
-  Security MarketDataRegistryServlet<C, R, D, A>::NormalizePrimaryMarket(
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  Security MarketDataRegistryServlet<C, R, D, A>::normalize(
       const Security& security) {
-    if(security.GetMarket().IsEmpty()) {
+    if(!security.get_venue()) {
       return security;
     }
     auto result =
-      m_dataStore->LoadSecurityInfo(MakeSecurityInfoQuery(security));
+      m_data_store->load_security_info(make_security_info_query(security));
     if(result.empty()) {
       return security;
     }
-    if(result.front().m_security.GetMarket() == security.GetMarket()) {
+    if(result.front().m_security.get_venue() == security.get_venue()) {
       return result.front().m_security;
     }
     return {};
   }
 
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::OnQueryOrderImbalances(
-      Beam::Services::RequestToken<ServiceProtocolClient,
-        QueryOrderImbalancesService>& request,
-      const MarketWideDataQuery& query) {
-    auto& session = request.GetSession();
-    if(!HasEntitlement(session, query.GetIndex(),
-        MarketDataType::ORDER_IMBALANCE)) {
-      request.SetResult(OrderImbalanceQueryResult());
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  Venue MarketDataRegistryServlet<C, R, D, A>::normalize(Venue venue) {
+    return venue;
+  }
+
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  template<typename Type, typename Service, typename Query,
+    typename Subscriptions>
+  void MarketDataRegistryServlet<C, R, D, A>::on_query(
+      Beam::RequestToken<ServiceProtocolClient, Service>& request,
+      const Query& query, Subscriptions& subscriptions) {
+    using Result = Beam::QueryResult<Beam::SequencedValue<Type>>;
+    auto& session = request.get_session();
+    if(!has_entitlement<Type>(session, query)) {
+      request.set(Result());
       return;
     }
-    auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
-      query.GetFilter());
-    auto result = OrderImbalanceQueryResult();
-    result.m_queryId = m_orderImbalanceSubscriptions.Initialize(
-      query.GetIndex(), request.GetClient(), query.GetRange(),
-      std::move(filter));
-    result.m_snapshot = m_dataStore->LoadOrderImbalances(query);
-    m_orderImbalanceSubscriptions.Commit(query.GetIndex(), std::move(result),
-      [&] (const auto& result) {
-        request.SetResult(result);
-      });
-  }
-
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::OnEndOrderImbalanceQuery(
-      ServiceProtocolClient& client, MarketCode market, int id) {
-    m_orderImbalanceSubscriptions.End(market, id);
-  }
-
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::OnQueryBboQuotes(
-      Beam::Services::RequestToken<ServiceProtocolClient,
-        QueryBboQuotesService>& request, const SecurityMarketDataQuery& query) {
-    auto& session = request.GetSession();
-    if(!HasEntitlement(session, query.GetIndex().GetMarket(),
-        MarketDataType::BBO_QUOTE)) {
-      request.SetResult(BboQuoteQueryResult());
+    auto index = normalize(query.get_index());
+    if(index == typename Query::Index()) {
+      request.set(Result());
       return;
     }
-    auto security = NormalizePrimaryMarket(query.GetIndex());
-    if(security == Security()) {
-      request.SetResult(BboQuoteQueryResult());
-      return;
-    }
-    auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
-      query.GetFilter());
-    auto result = BboQuoteQueryResult();
-    result.m_queryId = m_bboQuoteSubscriptions.Initialize(security,
-      request.GetClient(), query.GetRange(), std::move(filter));
-    result.m_snapshot = m_dataStore->LoadBboQuotes(query);
-    m_bboQuoteSubscriptions.Commit(security, std::move(result),
-      [&] (const auto& result) {
-        request.SetResult(result);
-      });
+    auto filter = Beam::translate<EvaluatorTranslator>(query.get_filter());
+    auto result = Result();
+    result.m_id = subscriptions.init(
+      index, request.get_client(), query.get_range(), std::move(filter));
+    result.m_snapshot = load<Type>(*m_data_store, query);
+    subscriptions.commit(index, std::move(result), [&] (const auto& result) {
+      request.set(result);
+    });
   }
 
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::OnEndBboQuoteQuery(
-      ServiceProtocolClient& client, const Security& security, int id) {
-    m_bboQuoteSubscriptions.End(security, id);
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::on_query_order_imbalance(
+      Beam::RequestToken<ServiceProtocolClient, QueryOrderImbalancesService>&
+        request, const VenueMarketDataQuery& query) {
+    on_query<OrderImbalance>(request, query, m_order_imbalance_subscriptions);
   }
 
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::OnQueryBookQuotes(
-      Beam::Services::RequestToken<ServiceProtocolClient,
-        QueryBookQuotesService>& request,
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::on_end_order_imbalance_query(
+      ServiceProtocolClient& client, Venue venue, int id) {
+    m_order_imbalance_subscriptions.end(venue, id);
+  }
+
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::on_query_bbo_quotes(
+      Beam::RequestToken<ServiceProtocolClient, QueryBboQuotesService>& request,
       const SecurityMarketDataQuery& query) {
-    auto& session = request.GetSession();
-    if(!HasEntitlement(session, query.GetIndex().GetMarket(),
-        MarketDataType::BOOK_QUOTE)) {
-      request.SetResult(BookQuoteQueryResult());
-      return;
-    }
-    auto security = NormalizePrimaryMarket(query.GetIndex());
-    if(security == Security()) {
-      request.SetResult(BookQuoteQueryResult());
-      return;
-    }
-    auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
-      query.GetFilter());
-    auto result = BookQuoteQueryResult();
-    result.m_queryId = m_bookQuoteSubscriptions.Initialize(security,
-      request.GetClient(), query.GetRange(), std::move(filter));
-    result.m_snapshot = m_dataStore->LoadBookQuotes(query);
-    m_bookQuoteSubscriptions.Commit(security, std::move(result),
-      [&] (const auto& result) {
-        request.SetResult(result);
-      });
+    on_query<BboQuote>(request, query, m_bbo_quote_subscriptions);
   }
 
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::OnEndBookQuoteQuery(
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::on_end_bbo_quote_query(
       ServiceProtocolClient& client, const Security& security, int id) {
-    m_bookQuoteSubscriptions.End(security, id);
+    m_bbo_quote_subscriptions.end(security, id);
   }
 
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::OnQueryMarketQuotes(
-      Beam::Services::RequestToken<ServiceProtocolClient,
-        QueryMarketQuotesService>& request,
-      const SecurityMarketDataQuery& query) {
-    auto& session = request.GetSession();
-    if(!HasEntitlement(session, query.GetIndex().GetMarket(),
-        MarketDataType::MARKET_QUOTE)) {
-      request.SetResult(MarketQuoteQueryResult());
-      return;
-    }
-    auto security = NormalizePrimaryMarket(query.GetIndex());
-    if(security == Security()) {
-      request.SetResult(MarketQuoteQueryResult());
-      return;
-    }
-    auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
-      query.GetFilter());
-    auto result = MarketQuoteQueryResult();
-    result.m_queryId = m_marketQuoteSubscriptions.Initialize(security,
-      request.GetClient(), query.GetRange(), std::move(filter));
-    result.m_snapshot = m_dataStore->LoadMarketQuotes(query);
-    m_marketQuoteSubscriptions.Commit(security, std::move(result),
-      [&] (const auto& result) {
-        request.SetResult(result);
-      });
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::on_query_book_quotes(
+      Beam::RequestToken<ServiceProtocolClient, QueryBookQuotesService>&
+        request, const SecurityMarketDataQuery& query) {
+    on_query<BookQuote>(request, query, m_book_quote_subscriptions);
   }
 
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::OnEndMarketQuoteQuery(
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::on_end_book_quote_query(
       ServiceProtocolClient& client, const Security& security, int id) {
-    m_marketQuoteSubscriptions.End(security, id);
+    m_book_quote_subscriptions.end(security, id);
   }
 
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::OnQueryTimeAndSales(
-      Beam::Services::RequestToken<ServiceProtocolClient,
-        QueryTimeAndSalesService>& request,
-      const SecurityMarketDataQuery& query) {
-    auto& session = request.GetSession();
-    if(!HasEntitlement(session, query.GetIndex().GetMarket(),
-        MarketDataType::TIME_AND_SALE)) {
-      request.SetResult(TimeAndSaleQueryResult());
-      return;
-    }
-    auto security = NormalizePrimaryMarket(query.GetIndex());
-    if(security == Security()) {
-      request.SetResult(TimeAndSaleQueryResult());
-      return;
-    }
-    auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
-      query.GetFilter());
-    auto result = TimeAndSaleQueryResult();
-    result.m_queryId = m_timeAndSaleSubscriptions.Initialize(security,
-      request.GetClient(), query.GetRange(), std::move(filter));
-    result.m_snapshot = m_dataStore->LoadTimeAndSales(query);
-    m_timeAndSaleSubscriptions.Commit(security, std::move(result),
-      [&] (const auto& result) {
-        request.SetResult(result);
-      });
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::on_query_time_and_sales(
+      Beam::RequestToken<ServiceProtocolClient, QueryTimeAndSalesService>&
+        request, const SecurityMarketDataQuery& query) {
+    on_query<TimeAndSale>(request, query, m_time_and_sale_subscriptions);
   }
 
-  template<typename C, typename R, typename D, typename A>
-  void MarketDataRegistryServlet<C, R, D, A>::OnEndTimeAndSaleQuery(
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::on_end_time_and_sale_query(
       ServiceProtocolClient& client, const Security& security, int id) {
-    m_timeAndSaleSubscriptions.End(security, id);
+    m_time_and_sale_subscriptions.end(security, id);
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   SecuritySnapshot MarketDataRegistryServlet<C, R, D, A>::
-      OnLoadSecuritySnapshot(ServiceProtocolClient& client, Security security) {
-    auto& session = client.GetSession();
-    security = NormalizePrimaryMarket(security);
-    if(security == Security()) {
+      on_load_security_snapshot(
+        ServiceProtocolClient& client, Security security) {
+    auto& session = client.get_session();
+    security = normalize(security);
+    if(!security) {
       return {};
     }
-    auto securitySnapshot = m_registry->FindSnapshot(security);
-    if(!securitySnapshot) {
+    auto snapshot = m_registry->find_snapshot(security);
+    if(!snapshot) {
       return {};
     }
-    if(!HasEntitlement(session, security.GetMarket(),
-        MarketDataType::BBO_QUOTE)) {
-      securitySnapshot->m_bboQuote = SequencedBboQuote();
+    if(!has_entitlement(session,
+        EntitlementKey(security.get_venue()), MarketDataType::BBO_QUOTE)) {
+      snapshot->m_bbo_quote = SequencedBboQuote();
     }
-    if(!HasEntitlement(session, security.GetMarket(),
-        MarketDataType::TIME_AND_SALE)) {
-      securitySnapshot->m_timeAndSale = SequencedTimeAndSale();
+    if(!has_entitlement(session,
+        EntitlementKey(security.get_venue()), MarketDataType::TIME_AND_SALE)) {
+      snapshot->m_time_and_sale = SequencedTimeAndSale();
     }
-    if(!HasEntitlement(session, security.GetMarket(),
-        MarketDataType::MARKET_QUOTE)) {
-      securitySnapshot->m_marketQuotes.clear();
-    }
-    auto askEndRange = std::remove_if(securitySnapshot->m_askBook.begin(),
-      securitySnapshot->m_askBook.end(),
-      [&] (auto& bookQuote) {
-        return !HasEntitlement(session,
-          EntitlementKey(security.GetMarket(), bookQuote->m_market),
+    auto ask_end_range = std::remove_if(snapshot->m_asks.begin(),
+      snapshot->m_asks.end(), [&] (const auto& quote) {
+        return !has_entitlement(
+          session, EntitlementKey(security.get_venue(), quote->m_venue),
           MarketDataType::BOOK_QUOTE);
       });
-    securitySnapshot->m_askBook.erase(askEndRange,
-      securitySnapshot->m_askBook.end());
-    auto bidEndRange = std::remove_if(securitySnapshot->m_bidBook.begin(),
-      securitySnapshot->m_bidBook.end(), [&] (auto& bookQuote) {
-        return !HasEntitlement(session,
-          EntitlementKey(security.GetMarket(), bookQuote->m_market),
+    snapshot->m_asks.erase(ask_end_range, snapshot->m_asks.end());
+    auto bid_end_range = std::remove_if(snapshot->m_bids.begin(),
+      snapshot->m_bids.end(), [&] (const auto& quote) {
+        return !has_entitlement(
+          session, EntitlementKey(security.get_venue(), quote->m_venue),
           MarketDataType::BOOK_QUOTE);
       });
-    securitySnapshot->m_bidBook.erase(bidEndRange,
-      securitySnapshot->m_bidBook.end());
-    return *securitySnapshot;
+    snapshot->m_bids.erase(bid_end_range, snapshot->m_bids.end());
+    return *snapshot;
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   SecurityTechnicals MarketDataRegistryServlet<C, R, D, A>::
-      OnLoadSecurityTechnicals(ServiceProtocolClient& client,
-        Security security) {
-    security = NormalizePrimaryMarket(security);
-    if(auto securityTechnicals = m_registry->FindSecurityTechnicals(security)) {
-      return *securityTechnicals;
+      on_load_security_technicals(
+        ServiceProtocolClient& client, Security security) {
+    security = normalize(security);
+    if(auto technicals = m_registry->find_security_technicals(security)) {
+      return *technicals;
     }
     return {};
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   std::vector<SecurityInfo> MarketDataRegistryServlet<C, R, D, A>::
-      OnQuerySecurityInfo(ServiceProtocolClient& client,
-        const SecurityInfoQuery& query) {
-    return m_dataStore->LoadSecurityInfo(query);
+      on_query_security_info(
+        ServiceProtocolClient& client, const SecurityInfoQuery& query) {
+    return m_data_store->load_security_info(query);
   }
 
-  template<typename C, typename R, typename D, typename A>
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
   std::vector<SecurityInfo> MarketDataRegistryServlet<C, R, D, A>::
-      OnLoadSecurityInfoFromPrefix(ServiceProtocolClient& client,
-        const std::string& prefix) {
-    return m_registry->SearchSecurityInfo(prefix);
+      on_load_security_info_from_prefix(
+        ServiceProtocolClient& client, const std::string& prefix) {
+    return m_registry->search_security_info(prefix);
   }
 }
 

@@ -26,14 +26,12 @@ namespace Spire {
         Beam::Ref<UserProfile> userProfile);
 
       std::string GetName() const override;
-
       QWidget* Reopen(Beam::Ref<UserProfile> userProfile) const override;
-
       void Apply(Beam::Ref<UserProfile> userProfile,
         Beam::Out<QWidget> widget) const override;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       TimeAndSalesProperties m_properties;
       Nexus::Security m_security;
       std::string m_name;
@@ -45,23 +43,22 @@ namespace Spire {
       QByteArray m_viewHeaderState;
       QByteArray m_snapshotHeaderState;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void TimeAndSalesWindowSettings::Shuttle(Shuttler& shuttle,
-      unsigned int version) {
-    shuttle.Shuttle("properties", m_properties);
-    shuttle.Shuttle("security", m_security);
-    shuttle.Shuttle("name", m_name);
-    shuttle.Shuttle("security_view_stack", m_securityViewStack);
-    shuttle.Shuttle("identifier", m_identifier);
-    shuttle.Shuttle("link_identifier", m_linkIdentifier);
-    shuttle.Shuttle("geometry", m_geometry);
-    shuttle.Shuttle("splitter_state", m_splitterState);
-    shuttle.Shuttle("view_header_state", m_viewHeaderState);
-    shuttle.Shuttle("snapshot_header_state", m_snapshotHeaderState);
+  template<Beam::IsShuttle S>
+  void TimeAndSalesWindowSettings::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("properties", m_properties);
+    shuttle.shuttle("security", m_security);
+    shuttle.shuttle("name", m_name);
+    shuttle.shuttle("security_view_stack", m_securityViewStack);
+    shuttle.shuttle("identifier", m_identifier);
+    shuttle.shuttle("link_identifier", m_linkIdentifier);
+    shuttle.shuttle("geometry", m_geometry);
+    shuttle.shuttle("splitter_state", m_splitterState);
+    shuttle.shuttle("view_header_state", m_viewHeaderState);
+    shuttle.shuttle("snapshot_header_state", m_snapshotHeaderState);
   }
 }
 

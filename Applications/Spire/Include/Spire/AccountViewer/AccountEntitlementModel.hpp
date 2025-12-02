@@ -5,9 +5,9 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class UserProfile;
 
   /*! \class AccountEntitlementModel
       \brief Stores an account's entitlements.
@@ -19,16 +19,14 @@ namespace Spire {
       /*!
         \param entry The group entry of the entitlement granted.
       */
-      typedef boost::signals2::signal<
-        void (const Beam::ServiceLocator::DirectoryEntry& entry)>
+      typedef boost::signals2::signal<void (const Beam::DirectoryEntry& entry)>
         EntitlementGrantedSignal;
 
       //! Signals that an entitlement has been revoked.
       /*!
         \param entry The group entry of the revoked entitlement.
       */
-      typedef boost::signals2::signal<
-        void (const Beam::ServiceLocator::DirectoryEntry& entry)>
+      typedef boost::signals2::signal<void (const Beam::DirectoryEntry& entry)>
         EntitlementRevokedSignal;
 
       //! Constructs an AccountEntitlementModel.
@@ -38,7 +36,7 @@ namespace Spire {
                model.
       */
       AccountEntitlementModel(Beam::Ref<UserProfile> userProfile,
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::DirectoryEntry& account);
 
       //! Loads the entitlements for the account.
       void Load();
@@ -53,19 +51,19 @@ namespace Spire {
                 <i>entry</i> was granted.
       */
       bool HasEntitlement(
-        const Beam::ServiceLocator::DirectoryEntry& entry) const;
+        const Beam::DirectoryEntry& entry) const;
 
       //! Grants an entitlement.
       /*!
         \param entry The group entry of the entitlement to grant.
       */
-      void Grant(const Beam::ServiceLocator::DirectoryEntry& entry);
+      void Grant(const Beam::DirectoryEntry& entry);
 
       //! Revokes an entitlement.
       /*!
         \param entry The group entry of the entitlement to revoke.
       */
-      void Revoke(const Beam::ServiceLocator::DirectoryEntry& entry);
+      void Revoke(const Beam::DirectoryEntry& entry);
 
       //! Connects a slot to the EntitlementGrantedSignal.
       /*!
@@ -85,8 +83,8 @@ namespace Spire {
 
     private:
       UserProfile* m_userProfile;
-      Beam::ServiceLocator::DirectoryEntry m_account;
-      std::unordered_set<Beam::ServiceLocator::DirectoryEntry>
+      Beam::DirectoryEntry m_account;
+      std::unordered_set<Beam::DirectoryEntry>
         m_entitlementsGranted;
       mutable EntitlementGrantedSignal m_entitlementGrantedSignal;
       mutable EntitlementRevokedSignal m_entitlementRevokedSignal;

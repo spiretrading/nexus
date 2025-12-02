@@ -2,7 +2,6 @@
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 
 WhenNode::WhenNode() {
@@ -17,5 +16,3 @@ void WhenNode::Apply(CanvasNodeVisitor& visitor) const {
 std::unique_ptr<CanvasNode> WhenNode::Clone() const {
   return std::make_unique<WhenNode>(*this);
 }
-
-WhenNode::WhenNode(ReceiveBuilder) {}

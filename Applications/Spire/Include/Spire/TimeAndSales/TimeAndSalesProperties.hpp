@@ -10,6 +10,7 @@
 #include "Spire/TimeAndSales/TimeAndSales.hpp"
 
 namespace Spire {
+  class UserProfile;
 
   /*! \class TimeAndSalesProperties
       \brief Stores the properties used by a TimeAndSalesWindow.
@@ -86,7 +87,7 @@ namespace Spire {
       void SetFont(const QFont& font);
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::array<QColor, PRICE_RANGE_COUNT> m_priceRangeForegroundColor;
       std::array<QColor, PRICE_RANGE_COUNT> m_priceRangeBackgroundColor;
       std::array<bool, COLUMN_COUNT> m_visibleColumns;
@@ -95,23 +96,22 @@ namespace Spire {
       bool m_horizontalScrollBarVisible;
       QFont m_font;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void TimeAndSalesProperties::Shuttle(Shuttler& shuttle,
-      unsigned int version) {
-    shuttle.Shuttle("price_range_foreground_color",
+  template<Beam::IsShuttle S>
+  void TimeAndSalesProperties::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("price_range_foreground_color",
       m_priceRangeForegroundColor);
-    shuttle.Shuttle("price_range_background_color",
+    shuttle.shuttle("price_range_background_color",
       m_priceRangeBackgroundColor);
-    shuttle.Shuttle("visible_columns", m_visibleColumns);
-    shuttle.Shuttle("show_grid_lines", m_showGridLines);
-    shuttle.Shuttle("vertical_scroll_bar_visible", m_verticalScrollBarVisible);
-    shuttle.Shuttle("horizontal_scroll_bar_visible",
+    shuttle.shuttle("visible_columns", m_visibleColumns);
+    shuttle.shuttle("show_grid_lines", m_showGridLines);
+    shuttle.shuttle("vertical_scroll_bar_visible", m_verticalScrollBarVisible);
+    shuttle.shuttle("horizontal_scroll_bar_visible",
       m_horizontalScrollBarVisible);
-    shuttle.Shuttle("font", m_font);
+    shuttle.shuttle("font", m_font);
   }
 }
 

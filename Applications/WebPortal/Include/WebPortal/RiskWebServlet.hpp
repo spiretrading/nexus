@@ -6,97 +6,84 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <Beam/Stomp/StompServer.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
 #include <Beam/WebServices/HttpUpgradeSlot.hpp>
-#include <Beam/WebServices/SessionStore.hpp>
+#include <Beam/WebServices/WebSessionStore.hpp>
 #include <Beam/WebServices/WebSocketChannel.hpp>
+#include "Nexus/Clients/Clients.hpp"
 #include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
-#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
-#include "WebPortal/WebPortal.hpp"
-#include "WebPortal/WebPortalSession.hpp"
 #include "WebPortal/PortfolioModel.hpp"
+#include "WebPortal/WebPortalSession.hpp"
 
-namespace Nexus::WebPortal {
+namespace Nexus {
 
   /** Provides a web interface to the RiskService. */
   class RiskWebServlet {
     public:
 
       /** The type of WebSocketChannel used. */
-      using WebSocketChannel = Beam::WebServices::WebSocketChannel<
-        std::shared_ptr<Beam::Network::TcpSocketChannel>>;
+      using WebSocketChannel = Beam::WebSocketChannel<
+        std::shared_ptr<Beam::TcpSocketChannel>>;
 
       /**
        * Constructs a RiskWebServlet.
        * @param sessions The available web sessions.
-       * @param serviceClients The clients used to access Spire services.
+       * @param clients The clients used to access Spire services.
        */
-      RiskWebServlet(Beam::Ref<
-        Beam::WebServices::SessionStore<WebPortalSession>> sessions,
-        ServiceClientsBox serviceClients);
+      RiskWebServlet(
+        Beam::Ref<Beam::WebSessionStore<WebPortalSession>> sessions,
+        Clients clients);
 
       ~RiskWebServlet();
 
-      std::vector<Beam::WebServices::HttpRequestSlot> GetSlots();
-
-      std::vector<Beam::WebServices::HttpUpgradeSlot<WebSocketChannel>>
-        GetWebSocketSlots();
-
-      void Close();
+      std::vector<Beam::HttpRequestSlot> get_slots();
+      std::vector<Beam::HttpUpgradeSlot<WebSocketChannel>>
+        get_web_socket_slots();
+      void close();
 
     private:
-      using StompServer =
-        Beam::Stomp::StompServer<std::unique_ptr<WebSocketChannel>>;
       struct PortfolioFilter {
-        std::unordered_set<Beam::ServiceLocator::DirectoryEntry> m_groups;
-        std::unordered_set<MarketCode> m_markets;
+        std::unordered_set<Beam::DirectoryEntry> m_groups;
+        std::unordered_set<Venue> m_venues;
         std::unordered_set<CurrencyId> m_currencies;
 
-        bool IsFiltered(const PortfolioModel::Entry& entry,
-          const Beam::ServiceLocator::DirectoryEntry& group) const;
+        bool is_filtered(const PortfolioModel::Entry& entry,
+          const Beam::DirectoryEntry& group) const;
       };
       struct PortfolioSubscriber {
-        Beam::ServiceLocator::DirectoryEntry m_account;
-        StompServer m_client;
-        std::string m_subscriptionId;
+        Beam::DirectoryEntry m_account;
+        std::string m_subscription_id;
         PortfolioFilter m_filter;
 
-        PortfolioSubscriber(Beam::ServiceLocator::DirectoryEntry account,
+        PortfolioSubscriber(Beam::DirectoryEntry account,
           std::unique_ptr<WebSocketChannel> channel);
       };
-      ServiceClientsBox m_serviceClients;
-      Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
-      std::unordered_map<RiskService::RiskPortfolioKey, PortfolioModel::Entry>
-        m_portfolioEntries;
-      std::unordered_set<PortfolioModel::Entry> m_updatedPortfolioEntries;
-      std::vector<std::shared_ptr<PortfolioSubscriber>> m_porfolioSubscribers;
-      PortfolioModel m_portfolioModel;
-      Beam::Threading::TimerBox m_portfolioTimer;
-      std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
-        Beam::ServiceLocator::DirectoryEntry> m_traderGroups;
-      Beam::IO::OpenState m_openState;
+      Clients m_clients;
+      Beam::WebSessionStore<WebPortalSession>* m_sessions;
+      std::unordered_map<RiskPortfolioKey, PortfolioModel::Entry>
+        m_portfolio_entries;
+      std::unordered_set<PortfolioModel::Entry> m_updated_portfolio_entries;
+      std::vector<std::shared_ptr<PortfolioSubscriber>> m_portfolio_subscribers;
+      PortfolioModel m_portfolio_model;
+      Beam::Timer m_portfolio_timer;
+      std::unordered_map<Beam::DirectoryEntry, Beam::DirectoryEntry>
+        m_trader_groups;
+      Beam::OpenState m_open_state;
       Beam::RoutineTaskQueue m_tasks;
 
       RiskWebServlet(const RiskWebServlet&) = delete;
-      RiskWebServlet& operator =(const RiskWebServlet&) = delete;
-      const Beam::ServiceLocator::DirectoryEntry& FindTradingGroup(
-        const Beam::ServiceLocator::DirectoryEntry& trader);
-      void SendPortfolioEntry(const PortfolioModel::Entry& entry,
-        const Beam::ServiceLocator::DirectoryEntry& group,
-        PortfolioSubscriber& subscriber, bool checkFilter);
-      void OnPortfolioUpgrade(const Beam::WebServices::HttpRequest& request,
+      RiskWebServlet& operator=(const RiskWebServlet&) = delete;
+      const Beam::DirectoryEntry& find_trading_group(
+        const Beam::DirectoryEntry& trader);
+      void send_portfolio_entry(const PortfolioModel::Entry& entry,
+        const Beam::DirectoryEntry& group, PortfolioSubscriber& subscriber,
+        bool check_filter);
+      void on_portfolio_upgrade(const Beam::HttpRequest& request,
         std::unique_ptr<WebSocketChannel> channel);
-      void OnPortfolioRequest(
-        const std::shared_ptr<PortfolioSubscriber>& subscriber,
-        const Beam::Stomp::StompFrame& frame);
-      void OnPortfolioFilterRequest(
-        const std::shared_ptr<PortfolioSubscriber>& subscriber,
-        const Beam::Stomp::StompFrame& frame);
-      void OnPortfolioUpdate(const PortfolioModel::Entry& entry);
-      void OnPortfolioTimerExpired(Beam::Threading::Timer::Result result);
+      void on_portfolio_update(const PortfolioModel::Entry& entry);
+      void on_portfolio_timer_expired(Beam::Timer::Result result);
   };
 }
 

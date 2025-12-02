@@ -1,6 +1,6 @@
 #ifndef SPIRE_LOCAL_QUERY_MODEL_HPP
 #define SPIRE_LOCAL_QUERY_MODEL_HPP
-#include <Beam/Collections/Trie.hpp>
+#include <tsl/htrie_map.h>
 #include "Spire/Spire/QueryModel.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -17,7 +17,7 @@ namespace Spire {
       using Type = typename QueryModel<T>::Type;
 
       /** Constructs an empty model. */
-      LocalQueryModel();
+      LocalQueryModel() = default;
 
       /**
        * Adds a value to the model that can be queried through its string
@@ -34,16 +34,11 @@ namespace Spire {
       void add(const QString& id, const Type& value);
 
       boost::optional<Type> parse(const QString& query) override;
-
       QtPromise<std::vector<Type>> submit(const QString& query) override;
 
     private:
-      rtv::Trie<QChar, Type> m_values;
+      tsl::htrie_map<char, Type> m_values;
   };
-
-  template<typename T>
-  LocalQueryModel<T>::LocalQueryModel()
-    : m_values(QChar()) {}
 
   template<typename T>
   void LocalQueryModel<T>::add(const Type& value) {
@@ -52,32 +47,32 @@ namespace Spire {
 
   template<typename T>
   void LocalQueryModel<T>::add(const QString& id, const Type& value) {
-    m_values[id.toLower().data()] = value;
+    m_values[id.toLower().toStdString()] = value;
   }
 
   template<typename T>
   boost::optional<typename LocalQueryModel<T>::Type>
       LocalQueryModel<T>::parse(const QString& query) {
-    auto i = m_values.find(query.toLower().data());
+    auto i = m_values.find(query.toLower().toStdString());
     if(i == m_values.end()) {
       return boost::none;
     }
-    return *i->second;
+    return *i;
   }
 
   template<typename T>
   QtPromise<std::vector<typename LocalQueryModel<T>::Type>>
       LocalQueryModel<T>::submit(const QString& query) {
     auto matches = std::vector<Type>();
-    for(auto i = m_values.startsWith(query.toLower().data());
-        i != m_values.end(); ++i) {
+    auto range = m_values.equal_prefix_range(query.toLower().toStdString());
+    for(auto i = range.first; i != range.second; ++i) {
       if constexpr(requires(const Type& a, const Type& b) { a == b; }) {
-        auto j = std::find(matches.begin(), matches.end(), *i->second);
+        auto j = std::find(matches.begin(), matches.end(), *i);
         if(j == matches.end()) {
-          matches.push_back(*i->second);
+          matches.push_back(*i);
         }
       } else {
-        matches.push_back(*i->second);
+        matches.push_back(*i);
       }
     }
     return QtPromise(std::move(matches));

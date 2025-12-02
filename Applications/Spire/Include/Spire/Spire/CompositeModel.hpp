@@ -28,7 +28,6 @@ namespace Details {
   class CompositeModel : public ValueModel<T> {
     public:
       using Type = typename ValueModel<T>::Type;
-
       using UpdateSignal = typename ValueModel<T>::UpdateSignal;
 
       /** Constructs a CompositeModel with a default initial value. */
@@ -54,11 +53,8 @@ namespace Details {
         R accessor);
 
       const Type& get() const override;
-
       QValidator::State test(const Type& value) const override;
-
       QValidator::State set(const Type& value) override;
-
       boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 
@@ -77,6 +73,7 @@ namespace Details {
 
         FieldUpdater(
           Accessor accessor, std::shared_ptr<ValueModel<Member>> model);
+
         std::shared_ptr<void> get_model() const override;
         void update(Type& value) const override;
       };
@@ -84,7 +81,7 @@ namespace Details {
       Type m_value;
       std::unordered_map<Field, std::unique_ptr<VirtualFieldUpdater>> m_fields;
       int m_set_count;
-      Beam::SignalHandling::ConnectionGroup m_connections;
+      Beam::ConnectionGroup m_connections;
 
       template<typename R, typename U>
       void on_update(R accessor, const U& value);
@@ -98,7 +95,7 @@ namespace Details {
   template<typename R>
   void CompositeModel<T>::add(R accessor,
       std::shared_ptr<ValueModel<Details::model_type_t<T, R>>> model) {
-    m_connections.AddConnection(model->connect_update_signal(std::bind_front(
+    m_connections.add(model->connect_update_signal(std::bind_front(
       &CompositeModel::on_update<R, Details::model_type_t<T, R>>, this,
       accessor)));
     auto updater = std::make_unique<

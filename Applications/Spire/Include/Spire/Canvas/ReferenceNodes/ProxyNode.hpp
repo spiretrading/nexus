@@ -38,18 +38,18 @@ namespace Spire {
       virtual std::unique_ptr<CanvasNode> Reset() const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::shared_ptr<CanvasNode> m_original;
 
       ProxyNode() = default;
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void ProxyNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    ReferenceNode::Shuttle(shuttle, version);
-    shuttle.Shuttle("original", m_original);
+  template<Beam::IsShuttle S>
+  void ProxyNode::shuttle(S& shuttle, unsigned int version) {
+    ReferenceNode::shuttle(shuttle, version);
+    shuttle.shuttle("original", m_original);
   }
 }
 

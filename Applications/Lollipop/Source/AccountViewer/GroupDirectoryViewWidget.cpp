@@ -5,7 +5,6 @@
 #include "ui_GroupDirectoryViewWidget.h"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace Spire;
 
 GroupDirectoryViewWidget::GroupDirectoryViewWidget(QWidget* parent,

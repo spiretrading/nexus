@@ -1,11 +1,10 @@
 #ifndef SPIRE_TIMERANGEPARAMETERNODE_HPP
 #define SPIRE_TIMERANGEPARAMETERNODE_HPP
 #include <Beam/Queries/Range.hpp>
-#include <Beam/TimeService/TimeService.hpp>
+#include <Beam/TimeService/TimeClient.hpp>
 #include "Spire/InputWidgets/TimeRangeInputWidget.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
@@ -46,8 +45,7 @@ namespace Spire {
         \param timeClient The TimeClient used to resolve the query.
         \return The time range as a query.
       */
-      Beam::Queries::Range GetTimeRangeQuery(
-        Beam::TimeService::TimeClientBox& timeClient) const;
+      Beam::Range GetTimeRangeQuery(Beam::TimeClient& timeClient) const;
 
       virtual void Apply(CanvasNodeVisitor& visitor) const;
 
@@ -57,21 +55,20 @@ namespace Spire {
       virtual std::unique_ptr<CanvasNode> Reset() const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       TimeRangeParameter m_startTime;
       TimeRangeParameter m_endTime;
 
-      TimeRangeParameterNode(Beam::Serialization::ReceiveBuilder);
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void TimeRangeParameterNode::Shuttle(Shuttler& shuttle,
+  template<Beam::IsShuttle S>
+  void TimeRangeParameterNode::shuttle(S& shuttle,
       unsigned int version) {
-    CanvasNode::Shuttle(shuttle, version);
-    shuttle.Shuttle("start_time", m_startTime);
-    shuttle.Shuttle("end_time", m_endTime);
+    CanvasNode::shuttle(shuttle, version);
+    shuttle.shuttle("start_time", m_startTime);
+    shuttle.shuttle("end_time", m_endTime);
   }
 }
 

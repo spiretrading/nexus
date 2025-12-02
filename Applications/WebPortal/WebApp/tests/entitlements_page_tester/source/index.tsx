@@ -13,7 +13,7 @@ interface State {
   roles: Nexus.AccountRoles;
   checkedDB: Beam.Set<Beam.DirectoryEntry>;
   currencyDB: Nexus.CurrencyDatabase;
-  marketDB: Nexus.MarketDatabase;
+  venueDB: Nexus.VenueDatabase;
   entitlementDB: Nexus.EntitlementDatabase;
   status: string;
   displayedStatus: string;
@@ -29,7 +29,7 @@ class TestApp extends React.Component<Properties, State> {
       entitlementDB: new Nexus.EntitlementDatabase(),
       checkedDB: new Beam.Set<Beam.DirectoryEntry>(),
       currencyDB: Nexus.buildDefaultCurrencyDatabase(),
-      marketDB: Nexus.buildDefaultMarketDatabase(),
+      venueDB: Nexus.buildDefaultVenueDatabase(),
       status: '',
       displayedStatus: '',
       submitEnabled: false
@@ -40,7 +40,7 @@ class TestApp extends React.Component<Properties, State> {
     return (
       <Dali.VBoxLayout width='100%' height='100%'>
         <WebPortal.EntitlementsPage displaySize={this.props.displaySize}
-          marketDatabase={this.state.marketDB} roles={this.state.roles}
+          venueDatabase={this.state.venueDB} roles={this.state.roles}
           entitlements={this.state.entitlementDB} checked={this.state.checkedDB}
           currencyDatabase={this.state.currencyDB}
           onEntitlementClick={this.toggleCheckMark}
@@ -135,11 +135,11 @@ class TestApp extends React.Component<Properties, State> {
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 37, 'MEH');
 
     const dataset1 = new Nexus.MarketDataTypeSet(134);
-    const marketcode1 = new Nexus.MarketCode('XASX');
-    const ekey1 = new Nexus.EntitlementKey(marketcode1);
+    const venuecode1 = new Nexus.Venue('XASX');
+    const ekey1 = new Nexus.EntitlementKey(venuecode1);
     const dataset2 = new Nexus.MarketDataTypeSet(1);
-    const marketcode2 = new Nexus.MarketCode('XCIS');
-    const ekey2 = new Nexus.EntitlementKey(marketcode2);
+    const venuecode2 = new Nexus.Venue('XCIS');
+    const ekey2 = new Nexus.EntitlementKey(venuecode2);
 
     const app = new Beam.Map<Nexus.EntitlementKey, Nexus.MarketDataTypeSet>();
     app.set(ekey1, dataset1);

@@ -162,27 +162,25 @@ namespace Spire {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<typename T>
-  struct IsStructure<Spire::ValueModel<T>> : std::false_type {};
+  constexpr auto is_structure<Spire::ValueModel<T>> = false;
 
   template<typename T>
   struct Send<Spire::ValueModel<T>> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        const Spire::ValueModel<T>& value) const {
-      shuttle.Shuttle(name, value.get());
+    template<IsSender S>
+    void operator ()(
+        S& sender, const char* name, const Spire::ValueModel<T>& value) const {
+      sender.send(name, value.get());
     }
   };
 
   template<typename T>
   struct Receive<Spire::ValueModel<T>> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        Spire::ValueModel<T>& value) const {
-      auto field = T();
-      shuttle.Shuttle(name, field);
-      value.set(field);
+    template<IsReceiver R>
+    void operator ()(
+        R& receiver, const char* name, Spire::ValueModel<T>& value) const {
+      value.set(receive<T>(receiver, name));
     }
   };
 }

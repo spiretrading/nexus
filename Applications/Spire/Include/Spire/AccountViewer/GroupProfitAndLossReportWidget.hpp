@@ -7,11 +7,11 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Spire/AccountViewer/AccountViewer.hpp"
 #include "Spire/Blotter/ProfitAndLossModel.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 class Ui_GroupProfitAndLossReportWidget;
 
 namespace Spire {
+  class UserProfile;
 
   /*! \class GroupProfitAndLossReportWidget
       \brief Shows a group's profit and loss.
@@ -35,20 +35,19 @@ namespace Spire {
         \param group The group to display.
       */
       void Initialize(Beam::Ref<UserProfile> userProfile,
-        const Beam::ServiceLocator::DirectoryEntry& group);
+        const Beam::DirectoryEntry& group);
 
     private:
       struct ReportModel {
         ProfitAndLossModel m_profitAndLossModel;
-        SpirePortfolioController m_portfolioController;
+        ProfitAndLossModel::PortfolioController m_portfolioController;
 
         ReportModel(Beam::Ref<UserProfile> userProfile,
-          Beam::ScopedQueueReader<const Nexus::OrderExecutionService::Order*>
-          orders);
+          Beam::ScopedQueueReader<std::shared_ptr<Nexus::Order>> orders);
       };
       std::unique_ptr<Ui_GroupProfitAndLossReportWidget> m_ui;
       UserProfile* m_userProfile;
-      Beam::ServiceLocator::DirectoryEntry m_group;
+      Beam::DirectoryEntry m_group;
       std::optional<ReportModel> m_totalsModel;
       std::vector<std::unique_ptr<ReportModel>> m_groupModels;
 

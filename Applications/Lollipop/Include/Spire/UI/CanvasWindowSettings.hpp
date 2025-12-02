@@ -5,7 +5,6 @@
 #include <QByteArray>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasNodeModel.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 
@@ -35,20 +34,20 @@ namespace UI {
         Beam::Out<QWidget> widget) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::vector<std::tuple<CanvasNodeModel::Coordinate,
         std::unique_ptr<CanvasNode>>> m_nodes;
       QByteArray m_geometry;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void CanvasWindowSettings::Shuttle(Shuttler& shuttle,
+  template<Beam::IsShuttle S>
+  void CanvasWindowSettings::shuttle(S& shuttle,
       unsigned int version) {
-    shuttle.Shuttle("nodes", m_nodes);
-    shuttle.Shuttle("geometry", m_geometry);
+    shuttle.shuttle("nodes", m_nodes);
+    shuttle.shuttle("geometry", m_geometry);
   }
 }
 }

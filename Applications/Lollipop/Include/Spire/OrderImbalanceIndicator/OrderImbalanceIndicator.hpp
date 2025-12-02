@@ -2,10 +2,10 @@
 #define SPIRE_ORDERIMBALANCEINDICATOR_HPP
 
 namespace Spire {
-  class OrderImbalanceIndicatorMarketSelectionWidget;
-  class OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings;
   class OrderImbalanceIndicatorModel;
   struct OrderImbalanceIndicatorProperties;
+  class OrderImbalanceIndicatorVenueSelectionWidget;
+  class OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings;
   class OrderImbalanceIndicatorWindow;
   class OrderImbalanceIndicatorWindowSettings;
 }

@@ -31,10 +31,10 @@ namespace Spire {
       virtual std::unique_ptr<DashboardRowBuilder> Clone() const;
 
     protected:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
 
     private:
       std::vector<std::unique_ptr<DashboardCellBuilder>> m_cellBuilders;
@@ -42,11 +42,11 @@ namespace Spire {
       ListDashboardRowBuilder() = default;
   };
 
-  template<typename Shuttler>
-  void ListDashboardRowBuilder::Shuttle(Shuttler& shuttle,
+  template<Beam::IsShuttle S>
+  void ListDashboardRowBuilder::shuttle(S& shuttle,
       unsigned int version) {
-    DashboardRowBuilder::Shuttle(shuttle, version);
-    shuttle.Shuttle("cell_builders", m_cellBuilders);
+    DashboardRowBuilder::shuttle(shuttle, version);
+    shuttle.shuttle("cell_builders", m_cellBuilders);
   }
 }
 

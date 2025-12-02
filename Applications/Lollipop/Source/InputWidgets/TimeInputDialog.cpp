@@ -5,7 +5,6 @@
 #include "ui_TimeInputDialog.h"
 
 using namespace Beam;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
@@ -27,10 +26,10 @@ TimeInputDialog::TimeInputDialog(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui{std::make_unique<Ui_TimeInputDialog>()},
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
-  auto currentTime = ToLocalTime(
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime());
+  auto currentTime =
+    to_local_time(m_userProfile->GetClients().get_time_client().get_time());
   m_ui->m_currentTimeDisplay->setTime(PosixTimeToQTime(
     currentTime.time_of_day()));
   connect(m_ui->m_buttonBox, &QDialogButtonBox::accepted, this,
@@ -46,14 +45,14 @@ TimeInputDialog::TimeInputDialog(const time_duration& initialValue,
     Ref<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_TimeInputDialog>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
-  auto currentTime = ToLocalTime(
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime());
+  auto currentTime =
+    to_local_time(m_userProfile->GetClients().get_time_client().get_time());
   m_ui->m_currentTimeDisplay->setTime(PosixTimeToQTime(
     currentTime.time_of_day()));
   if(!initialValue.is_special() && !initialValue.is_not_a_date_time()) {
-    auto localTime = ToLocalTime(initialValue);
+    auto localTime = to_local_time(initialValue);
     m_ui->m_selectedTimeInput->setTime(PosixTimeToQTime(localTime));
   }
   connect(m_ui->m_buttonBox, &QDialogButtonBox::accepted, this,
@@ -71,13 +70,13 @@ time_duration TimeInputDialog::GetTime() const {
   auto timeInput = m_ui->m_selectedTimeInput->time();
   time_duration posixTime(timeInput.hour(), timeInput.minute(),
     timeInput.second(), timeInput.msec());
-  auto utcTime = ToUtcTime(posixTime);
+  auto utcTime = to_utc_time(posixTime);
   return utcTime;
 }
 
 void TimeInputDialog::OnCurrentTimer() {
-  auto currentTime = ToLocalTime(
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime());
+  auto currentTime = to_local_time(
+    m_userProfile->GetClients().get_time_client().get_time());
   m_ui->m_currentTimeDisplay->setTime(PosixTimeToQTime(
     currentTime.time_of_day()));
 }

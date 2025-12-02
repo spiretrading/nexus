@@ -14,7 +14,7 @@ using namespace Spire::LegacyUI;
 OptionalPriceSpinBox::OptionalPriceSpinBox(Ref<UserProfile> userProfile,
     const OptionalPriceNode& node, QWidget* parent)
     : QDoubleSpinBox(parent),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_referencePrice(node.GetReferencePrice()) {
   setMaximum(std::numeric_limits<double>::max());
   setMinimum(0);
@@ -41,7 +41,7 @@ OptionalPriceSpinBox::OptionalPriceSpinBox(Ref<UserProfile> userProfile,
 OptionalPriceSpinBox::~OptionalPriceSpinBox() = default;
 
 Money OptionalPriceSpinBox::GetValue() const {
-  if(auto value = Money::FromValue(cleanText().toStdString())) {
+  if(auto value = try_parse_money(cleanText().toStdString())) {
     return *value;
   }
   return Money::ZERO;

@@ -12,7 +12,6 @@
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
 
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace std;
 
@@ -38,7 +37,7 @@ const RecordType& Spire::GetOrderFieldsRecordType() {
 
 Record OrderFieldsToRecordConverter::operator ()(
     const OrderFields& value) const {
-  return Record({ value.m_security, value.m_currency, value.m_type,
-    value.m_side, value.m_destination, value.m_quantity, value.m_price,
-    value.m_timeInForce });
+  return Record({value.m_security, value.m_currency, value.m_type, value.m_side,
+    value.m_destination, value.m_quantity, value.m_price,
+    value.m_time_in_force});
 }

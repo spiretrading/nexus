@@ -2,7 +2,6 @@
 #define SPIRE_SPLIT_VIEW_HPP
 #include <boost/signals2/connection.hpp>
 #include "Spire/Styles/StateSelector.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

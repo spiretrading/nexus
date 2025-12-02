@@ -9,7 +9,6 @@
 #include "Spire/Canvas/Types/TextType.hpp"
 
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace std;
 
@@ -39,9 +38,9 @@ const RecordType& Spire::GetExecutionReportRecordType() {
 
 Record ExecutionReportToRecordConverter::operator ()(
     const ExecutionReport& value) const {
-  return Record({ static_cast<Quantity>(value.m_id),
+  return Record({static_cast<Quantity>(value.m_id),
     static_cast<Quantity>(value.m_sequence), value.m_timestamp, value.m_status,
-    value.m_lastQuantity, value.m_lastPrice, value.m_liquidityFlag,
-    value.m_lastMarket, value.m_executionFee, value.m_processingFee,
-    value.m_commission, value.m_text });
+    value.m_last_quantity, value.m_last_price, value.m_liquidity_flag,
+    value.m_last_market, value.m_execution_fee, value.m_processing_fee,
+    value.m_commission, value.m_text});
 }

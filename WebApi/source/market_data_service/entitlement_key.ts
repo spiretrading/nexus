@@ -1,50 +1,50 @@
 import * as Beam from 'beam';
-import { MarketCode } from '..';
+import { Venue } from '..';
 
 /** Stores an index into a market data entitlement. */
 export class EntitlementKey {
 
   /** Parses an EntitlementKey from JSON. */
   public static fromJson(value: any): EntitlementKey {
-    return new EntitlementKey(MarketCode.fromJson(value.market),
-      MarketCode.fromJson(value.source));
+    return new EntitlementKey(Venue.fromJson(value.venue),
+      Venue.fromJson(value.source));
   }
 
   /**
    * Constructs an EntitlementKey.
-   * @param market - The market the security belongs to.
-   * @param source - The market disseminating the data, the default value is
-   *        the market.
+   * @param venue - The venue the security belongs to.
+   * @param source - The venue disseminating the data, the default value is
+   *        the venue.
    */
-  constructor(market: MarketCode, source?: MarketCode) {
-    this._market = market;
+  constructor(venue: Venue, source?: Venue) {
+    this._venue = venue;
     if(source) {
       this._source = source;
     } else {
-      this._source = market;
+      this._source = venue;
     }
   }
 
-  /** Returns the market the security belongs to. */
-  public get market(): MarketCode {
-    return this._market;
+  /** Returns the venue the security belongs to. */
+  public get venue(): Venue {
+    return this._venue;
   }
 
-  /** Returns the market disseminating the data. */
-  public get source(): MarketCode {
+  /** Returns the venue disseminating the data. */
+  public get source(): Venue {
     return this._source;
   }
 
   /** Tests if two keys are equal. */
   public equals(other: EntitlementKey): boolean {
-    return other && this._market.equals(other._market) &&
+    return other && this._venue.equals(other._venue) &&
       this._source.equals(other._source);
   }
 
   /** Converts this object to JSON. */
   public toJson(): any {
     return {
-      market: this._market.toJson(),
+      venue: this._venue.toJson(),
       source: this._source.toJson()
     };
   }
@@ -52,11 +52,11 @@ export class EntitlementKey {
   /** Returns a hash of this object. */
   public hash(): number {
     let seed = 0;
-    seed = Beam.hashCombine(seed, this._market.hash());
+    seed = Beam.hashCombine(seed, this._venue.hash());
     seed = Beam.hashCombine(seed, this._source.hash());
     return seed;
   }
 
-  private _market: MarketCode;
-  private _source: MarketCode;
+  private _venue: Venue;
+  private _source: Venue;
 }

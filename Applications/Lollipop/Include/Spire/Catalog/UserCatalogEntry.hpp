@@ -73,7 +73,7 @@ namespace Spire {
       bool IsReadOnly() const override;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::string m_name;
       std::unique_ptr<CanvasNode> m_node;
       std::string m_iconPath;
@@ -82,18 +82,18 @@ namespace Spire {
       std::filesystem::path m_catalogPath;
 
       void Validate();
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void UserCatalogEntry::Shuttle(Shuttler& shuttle, unsigned int version) {
-    CatalogEntry::Shuttle(shuttle, version);
-    shuttle.Shuttle("name", m_name);
-    shuttle.Shuttle("description", m_description);
-    shuttle.Shuttle("icon_path", m_iconPath);
-    shuttle.Shuttle("node", m_node);
-    if(Beam::Serialization::IsReceiver<Shuttler>::value) {
+  template<Beam::IsShuttle S>
+  void UserCatalogEntry::shuttle(S& shuttle, unsigned int version) {
+    CatalogEntry::shuttle(shuttle, version);
+    shuttle.shuttle("name", m_name);
+    shuttle.shuttle("description", m_description);
+    shuttle.shuttle("icon_path", m_iconPath);
+    shuttle.shuttle("node", m_node);
+    if(Beam::IsReceiver<S>) {
       m_icon = QIcon(QString::fromStdString(m_iconPath));
       Validate();
     }

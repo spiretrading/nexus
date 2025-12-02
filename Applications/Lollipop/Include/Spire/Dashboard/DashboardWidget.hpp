@@ -12,7 +12,6 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardCell.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/PersistentWindow.hpp"
 
 namespace Spire {
@@ -72,7 +71,7 @@ namespace Spire {
       void resizeEvent(QResizeEvent* event) override;
 
     private:
-      template<typename, typename> friend struct Beam::Serialization::Shuttle;
+      template<typename, typename> friend struct Beam::Shuttle;
       friend class DashboardWidgetWindowSettings;
       enum MouseState {
         NONE,
@@ -106,7 +105,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_selectedRowsConnection;
       boost::signals2::scoped_connection m_activeRowConnection;
       boost::signals2::scoped_connection m_rowAddedConnection;
-      Beam::SignalHandling::ConnectionGroup m_cellUpdateConnections;
+      Beam::ConnectionGroup m_cellUpdateConnections;
 
       void ModifyColumnSortOrder(int index);
       void SortRows();
@@ -126,14 +125,14 @@ namespace Spire {
   };
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Spire::DashboardWidget::SortOrder> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Spire::DashboardWidget::SortOrder& value, unsigned int version) {
-      shuttle.Shuttle("index", value.m_index);
-      shuttle.Shuttle("direction", value.m_direction);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::DashboardWidget::SortOrder& value,
+        unsigned int version) {
+      shuttle.shuttle("index", value.m_index);
+      shuttle.shuttle("direction", value.m_direction);
     }
   };
 }

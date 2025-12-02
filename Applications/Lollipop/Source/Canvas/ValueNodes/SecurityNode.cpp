@@ -1,9 +1,11 @@
 #include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
+#include "Spire/UI/CustomQtVariants.hpp"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::UI;
 using namespace std;
 
 SecurityNode::SecurityNode() {
@@ -11,16 +13,16 @@ SecurityNode::SecurityNode() {
 }
 
 SecurityNode::SecurityNode(const Security& value,
-    const MarketDatabase& marketDatabase)
+    const VenueDatabase& venueDatabase)
     : ValueNode(value) {
-  SetText(ToString(value, marketDatabase));
+  SetText(displayText(value).toStdString());
 }
 
 unique_ptr<SecurityNode> SecurityNode::SetValue(const Security& value,
-    const MarketDatabase& marketDatabase) const {
+    const VenueDatabase& venueDatabase) const {
   auto clone = CanvasNode::Clone(*this);
   clone->SetInternalValue(value);
-  clone->SetText(ToString(clone->GetValue(), marketDatabase));
+  clone->SetText(displayText(clone->GetValue()).toStdString());
   return clone;
 }
 

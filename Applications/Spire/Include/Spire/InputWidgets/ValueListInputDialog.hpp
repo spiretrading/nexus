@@ -7,6 +7,7 @@
 #include <boost/variant/variant.hpp>
 #include <QDialog>
 #include "Nexus/Definitions/Security.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 class Ui_ValueListInputDialog;

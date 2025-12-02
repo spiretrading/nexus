@@ -5,7 +5,6 @@
 #include "Spire/Canvas/Types/IntegerType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 using namespace std;
 
@@ -22,5 +21,3 @@ void TimerNode::Apply(CanvasNodeVisitor& visitor) const {
 unique_ptr<CanvasNode> TimerNode::Clone() const {
   return make_unique<TimerNode>(*this);
 }
-
-TimerNode::TimerNode(ReceiveBuilder) {}

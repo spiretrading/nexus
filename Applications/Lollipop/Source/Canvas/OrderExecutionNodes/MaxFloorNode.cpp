@@ -48,9 +48,9 @@ unique_ptr<CanvasNode> MaxFloorNode::SetReferent(const string& referent) const {
 }
 
 unique_ptr<CanvasNode> MaxFloorNode::Clone() const {
-  return make_unique<MaxFloorNode>(*this);
+  return std::make_unique<MaxFloorNode>(*this);
 }
 
 unique_ptr<CanvasNode> MaxFloorNode::Reset() const {
-  return make_unique<MaxFloorNode>();
+  return std::make_unique<MaxFloorNode>();
 }

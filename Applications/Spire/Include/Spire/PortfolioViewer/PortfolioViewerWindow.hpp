@@ -1,12 +1,12 @@
 #ifndef SPIRE_PORTFOLIOVIEWERWINDOW_HPP
 #define SPIRE_PORTFOLIOVIEWERWINDOW_HPP
 #include <QFrame>
+#include "Spire/LegacyUI/PersistentWindow.hpp"
+#include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewer.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerModel.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/LegacyUI/PersistentWindow.hpp"
-#include "Spire/LegacyUI/WindowSettings.hpp"
 
 class QStatusBar;
 class Ui_PortfolioViewerWindow;

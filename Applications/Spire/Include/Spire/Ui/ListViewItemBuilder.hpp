@@ -3,9 +3,9 @@
 #include <concepts>
 #include <functional>
 #include <memory>
+#include <Beam/Pointers/LocalPtr.hpp>
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -45,29 +45,21 @@ namespace Spire {
        */
       template<typename M>
       ListViewItemBuilder(
-          std::invocable<const std::shared_ptr<Spire::ListModel<M>>&, int>
-            auto builder) requires std::is_same_v<ListModel, AnyListModel>
-        : ListViewItemBuilder([builder = std::move(builder)] (
-              const std::shared_ptr<ListModel>& list, int index) {
-            return builder(
-              std::static_pointer_cast<Spire::ListModel<M>>(list), index);
-          }) {}
+        std::invocable<const std::shared_ptr<Spire::ListModel<M>>&, int> auto
+          builder) requires std::is_same_v<T, AnyListModel>;
 
       /** Constructs a ListViewItemBuilder. */
-      template<ListViewItemBuilderConcept<ListModel> B>
-      ListViewItemBuilder(B&& builder) requires
-        !std::is_same_v<std::remove_cvref_t<B>, ListViewItemBuilder>
-        : m_builder(std::make_shared<WrappedListViewItemBuilder<
-            std::remove_cvref_t<B>>>(std::forward<B>(builder))) {}
+      template<ListViewItemBuilderConcept<T> B>
+      ListViewItemBuilder(B&& builder) requires(
+        !std::is_same_v<std::remove_cvref_t<B>, ListViewItemBuilder>);
 
       /** Constructs a ListViewItemBuilder. */
       template<typename M>
-      ListViewItemBuilder(ListViewItemBuilder<M> builder) requires
+      ListViewItemBuilder(ListViewItemBuilder<M> builder) requires(
         std::is_same_v<ListModel, AnyListModel> &&
-          !std::is_same_v<M, AnyListModel>;
+          !std::is_same_v<M, AnyListModel>);
 
       ListViewItemBuilder(const ListViewItemBuilder&) = default;
-
       ListViewItemBuilder(ListViewItemBuilder&&) = default;
 
       /**
@@ -86,12 +78,12 @@ namespace Spire {
       void unmount(QWidget* widget, int index);
 
       ListViewItemBuilder& operator =(const ListViewItemBuilder&) = default;
-
       ListViewItemBuilder& operator =(ListViewItemBuilder&&) = default;
 
     private:
       struct VirtualListViewItemBuilder {
         virtual ~VirtualListViewItemBuilder() = default;
+
         virtual QWidget* mount(
           const std::shared_ptr<ListModel>& list, int index) = 0;
         virtual void unmount(QWidget* widget, int index) = 0;
@@ -99,10 +91,11 @@ namespace Spire {
       template<typename B>
       struct WrappedListViewItemBuilder final : VirtualListViewItemBuilder {
         using Builder = B;
-        Beam::GetOptionalLocalPtr<Builder> m_builder;
+        Beam::local_ptr_t<Builder> m_builder;
 
         template<typename... Args>
         WrappedListViewItemBuilder(Args&&... args);
+
         QWidget* mount(const std::shared_ptr<ListModel>& list, int index)
           override;
         void unmount(QWidget* widget, int index) override;
@@ -131,7 +124,6 @@ namespace Spire {
           builder);
 
       QWidget* mount(const std::shared_ptr<ListModel>& list, int index);
-
       void unmount(QWidget* widget, int index);
 
     private:
@@ -158,7 +150,6 @@ namespace Spire {
       AnyListViewItemBuilder(ListViewItemBuilder<T> builder);
 
       QWidget* mount(const std::shared_ptr<ListModel>& list, int index);
-
       void unmount(QWidget* widget, int index);
 
     private:
@@ -173,9 +164,27 @@ namespace Spire {
 
   template<typename T>
   template<typename M>
+  ListViewItemBuilder<T>::ListViewItemBuilder(
+    std::invocable<const std::shared_ptr<Spire::ListModel<M>>&, int> auto
+      builder) requires std::is_same_v<T, AnyListModel>
+    : ListViewItemBuilder([builder = std::move(builder)] (
+          const std::shared_ptr<ListModel>& list, int index) {
+        return builder(
+          std::static_pointer_cast<Spire::ListModel<M>>(list), index);
+      }) {}
+
+  template<typename T>
+  template<ListViewItemBuilderConcept<T> B>
+  ListViewItemBuilder<T>::ListViewItemBuilder(B&& builder) requires(
+    !std::is_same_v<std::remove_cvref_t<B>, ListViewItemBuilder>)
+    : m_builder(std::make_shared<WrappedListViewItemBuilder<
+        std::remove_cvref_t<B>>>(std::forward<B>(builder))) {}
+
+  template<typename T>
+  template<typename M>
   ListViewItemBuilder<T>::ListViewItemBuilder(ListViewItemBuilder<M> builder)
-    requires std::is_same_v<ListModel, AnyListModel> &&
-      !std::is_same_v<M, AnyListModel>
+    requires(std::is_same_v<ListModel, AnyListModel> &&
+      !std::is_same_v<M, AnyListModel>)
     : ListViewItemBuilder(AnyListViewItemBuilder(std::move(builder))) {}
 
   template<typename T>

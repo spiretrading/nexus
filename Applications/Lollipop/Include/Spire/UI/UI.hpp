@@ -2,6 +2,7 @@
 #define SPIRE_UI_HPP
 
 namespace Spire {
+  class UserProfile;
 namespace UI {
   class CanvasWindow;
   class CanvasWindowSettings;

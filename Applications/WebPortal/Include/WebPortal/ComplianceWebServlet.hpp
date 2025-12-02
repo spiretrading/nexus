@@ -3,11 +3,10 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
-#include <Beam/WebServices/SessionStore.hpp>
-#include "WebPortal/WebPortal.hpp"
+#include <Beam/WebServices/WebSessionStore.hpp>
 #include "WebPortal/WebPortalSession.hpp"
 
-namespace Nexus::WebPortal {
+namespace Nexus {
 
   /** Provides a web interface to the ComplianceService. */
   class ComplianceWebServlet {
@@ -17,29 +16,28 @@ namespace Nexus::WebPortal {
        * Constructs a ComplianceWebServlet.
        * @param sessions The available web sessions.
        */
-      explicit ComplianceWebServlet(Beam::Ref<
-        Beam::WebServices::SessionStore<WebPortalSession>> sessions);
+      explicit ComplianceWebServlet(
+        Beam::Ref<Beam::WebSessionStore<WebPortalSession>> sessions);
 
       ~ComplianceWebServlet();
 
-      std::vector<Beam::WebServices::HttpRequestSlot> GetSlots();
-
-      void Close();
+      std::vector<Beam::HttpRequestSlot> get_slots();
+      void close();
 
     private:
-      Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
-      Beam::IO::OpenState m_openState;
+      Beam::WebSessionStore<WebPortalSession>* m_sessions;
+      Beam::OpenState m_open_state;
 
       ComplianceWebServlet(const ComplianceWebServlet&) = delete;
-      ComplianceWebServlet& operator =(const ComplianceWebServlet&) = delete;
-      Beam::WebServices::HttpResponse OnLoadDirectoryEntryComplianceRuleEntry(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnAddComplianceRuleEntry(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnUpdateComplianceRuleEntry(
-        const Beam::WebServices::HttpRequest& request);
-      Beam::WebServices::HttpResponse OnDeleteComplianceRuleEntry(
-        const Beam::WebServices::HttpRequest& request);
+      ComplianceWebServlet& operator=(const ComplianceWebServlet&) = delete;
+      Beam::HttpResponse on_load_directory_entry_compliance_rule_entry(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_add_compliance_rule_entry(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_update_compliance_rule_entry(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_delete_compliance_rule_entry(
+        const Beam::HttpRequest& request);
   };
 }
 

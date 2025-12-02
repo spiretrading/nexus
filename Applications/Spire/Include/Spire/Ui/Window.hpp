@@ -3,9 +3,10 @@
 #include <boost/optional/optional.hpp>
 #include <QWidget>
 #include "Spire/Styles/Selectors.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class TitleBar;
+
 namespace Styles {
 
   /** Selects a highlighted widget. */
@@ -55,11 +56,13 @@ namespace Styles {
       TitleBar* m_title_bar;
       QWidget* m_body;
       bool m_is_resizable;
+      boost::optional<bool> m_is_bottom_border_mismatched;
       boost::optional<bool> m_has_maximize_attribute;
       boost::optional<QSize> m_frame_size;
 
       void on_highlighted(bool is_match);
       void on_screen_changed(QScreen* screen);
+      void on_logical_dots_per_inch_changed();
       void set_window_attributes(bool is_resizeable);
   };
 }

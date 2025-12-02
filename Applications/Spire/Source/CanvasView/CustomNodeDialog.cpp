@@ -26,7 +26,7 @@ CustomNodeDialog::CustomNodeDialog(const CustomNode& customNode,
     Ref<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_CustomNodeDialog>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   Setup(customNode);
 }
 
@@ -34,7 +34,7 @@ CustomNodeDialog::CustomNodeDialog(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_CustomNodeDialog>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   vector<CustomNode::Child> children;
   children.push_back(CustomNode::Child("expression", UnionType::GetAnyType()));
   CustomNode customNode("New Node", children);
@@ -54,7 +54,7 @@ unique_ptr<CustomNode> CustomNodeDialog::GetNode() {
     builder.Replace(customNode->GetChildren()[i],
       CanvasNode::Clone(*m_nodes[i]));
   }
-  return StaticCast<std::unique_ptr<CustomNode>>(builder.Make());
+  return static_pointer_cast<CustomNode>(builder.Make());
 }
 
 void CustomNodeDialog::Setup(const CustomNode& customNode) {

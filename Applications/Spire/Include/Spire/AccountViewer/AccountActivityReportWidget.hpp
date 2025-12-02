@@ -6,11 +6,11 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Spire/AccountViewer/AccountViewer.hpp"
 #include "Spire/Blotter/ProfitAndLossModel.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 class Ui_AccountActivityReportWidget;
 
 namespace Spire {
+  class UserProfile;
 
   /*! \class AccountActivityReportWidget
       \brief Shows an account's activity report.
@@ -34,20 +34,19 @@ namespace Spire {
         \param account The account to display.
       */
       void Initialize(Beam::Ref<UserProfile> userProfile,
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::DirectoryEntry& account);
 
     private:
       struct ReportModel {
         ProfitAndLossModel m_profitAndLossModel;
-        SpirePortfolioController m_portfolioController;
+        ProfitAndLossModel::PortfolioController m_portfolioController;
 
         ReportModel(Beam::Ref<UserProfile> userProfile,
-          Beam::ScopedQueueReader<const Nexus::OrderExecutionService::Order*>
-          orders);
+          Beam::ScopedQueueReader<std::shared_ptr<Nexus::Order>> orders);
       };
       std::unique_ptr<Ui_AccountActivityReportWidget> m_ui;
       UserProfile* m_userProfile;
-      Beam::ServiceLocator::DirectoryEntry m_account;
+      Beam::DirectoryEntry m_account;
       std::optional<ReportModel> m_model;
 
       void OnUpdate(bool checked);

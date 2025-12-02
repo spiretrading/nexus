@@ -2,7 +2,6 @@
 #define SPIRE_STATE_SELECTOR_HPP
 #include <utility>
 #include <boost/signals2/connection.hpp>
-#include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
 namespace Spire::Styles {
@@ -95,16 +94,12 @@ namespace Spire::Styles {
 
   SelectConnection select(const Disabled& selector, const Stylist& base,
     const SelectionUpdateSignal& on_update);
-
   SelectConnection select(const Focus& selector, const Stylist& base,
     const SelectionUpdateSignal& on_update);
-
   SelectConnection select(const FocusIn& selector, const Stylist& base,
     const SelectionUpdateSignal& on_update);
-
   SelectConnection select(const FocusVisible& selector, const Stylist& base,
     const SelectionUpdateSignal& on_update);
-
   SelectConnection select(const Hover& selector, const Stylist& base,
     const SelectionUpdateSignal& on_update);
 
@@ -123,7 +118,7 @@ namespace std {
   template<typename T, typename G>
   struct hash<Spire::Styles::StateSelector<T, G>> {
     std::size_t operator ()(
-        const Spire::Styles::StateSelector<T, G>& selector) {
+        const Spire::Styles::StateSelector<T, G>& selector) const noexcept {
       return std::hash<T>()(selector.get_data());
     }
   };
@@ -131,8 +126,8 @@ namespace std {
   template<typename G>
   struct hash<Spire::Styles::StateSelector<void, G>> {
     std::size_t operator ()(
-        const Spire::Styles::StateSelector<void, G>& selector) const {
-      return 1;
+        const Spire::Styles::StateSelector<void, G>& selector) const noexcept {
+      return 0xe6b3a28707fad0fe;
     }
   };
 }
