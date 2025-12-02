@@ -1,171 +1,156 @@
 #include "OasisOrderExecutionServer/AsxFixApplication.hpp"
 #include <boost/throw_exception.hpp>
 #include <quickfix/Session.h>
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
 #include "Nexus/FixUtilities/FixConversions.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
 using namespace Beam;
-using namespace Beam::Threading;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::FixUtilities;
-using namespace Nexus::OasisOrderExecutionService;
-using namespace Nexus::OrderExecutionService;
-using namespace std;
 
 namespace {
   const auto ACCOUNT_TAG = 28888;
 }
 
-AsxFixApplication::AsxFixApplication(Ref<LiveNtpTimeClient> timeClient)
-    : m_timeClient(timeClient.Get()) {}
+AsxFixApplication::AsxFixApplication(Ref<LiveNtpTimeClient> time_client)
+  : m_time_client(time_client.get()) {}
 
-const Order& AsxFixApplication::Recover(
-    const SequencedAccountOrderRecord& orderRecord) {
-  return m_orderLog.Recover(orderRecord);
+std::shared_ptr<Order> AsxFixApplication::recover(
+    const SequencedAccountOrderRecord& record) {
+  return m_order_log.recover(record);
 }
 
-const Order& AsxFixApplication::Submit(const OrderInfo& info) {
-  return m_orderLog.Submit(info, GetSessionId().getSenderCompID(),
-    GetSessionId().getTargetCompID(),
-    [&] (Out<FIX42::NewOrderSingle> newOrderSingle) {
-      if(info.m_fields.m_timeInForce.GetType() == TimeInForce::Type::GTC ||
-          info.m_fields.m_timeInForce.GetType() == TimeInForce::Type::GTD) {
-        BOOST_THROW_EXCEPTION(
+std::shared_ptr<Order> AsxFixApplication::submit(const OrderInfo& info) {
+  return m_order_log.submit(info, get_session_id().getSenderCompID(),
+    get_session_id().getTargetCompID(),
+    [&] (Out<FIX42::NewOrderSingle> new_order_single) {
+      if(info.m_fields.m_time_in_force.get_type() == TimeInForce::Type::GTC ||
+          info.m_fields.m_time_in_force.get_type() == TimeInForce::Type::GTD) {
+        throw_with_location(
           FixOrderRejectedException("Invalid time in force."));
       }
       if(info.m_fields.m_type == OrderType::STOP) {
-        BOOST_THROW_EXCEPTION(FixOrderRejectedException("Invalid order type."));
+        throw_with_location(FixOrderRejectedException("Invalid order type."));
       }
-      if(info.m_fields.m_security.GetCountry() != DefaultCountries::AU()) {
-        BOOST_THROW_EXCEPTION(FixOrderRejectedException{"Invalid country."});
+      if(info.m_fields.m_currency != DefaultCurrencies::AUD) {
+        throw_with_location(FixOrderRejectedException("Invalid currency."));
       }
-      if(info.m_fields.m_currency != DefaultCurrencies::AUD()) {
-        BOOST_THROW_EXCEPTION(FixOrderRejectedException{"Invalid currency."});
+      new_order_single->set(FIX::Account(get_account()));
+      new_order_single->setField(ACCOUNT_TAG, info.m_submission_account.m_name);
+      if(auto deliver_to_comp_id = get_deliver_to_comp_id()) {
+        new_order_single->getHeader().setField(
+          FIX::DeliverToCompID(*deliver_to_comp_id));
       }
-      newOrderSingle->set(FIX::Account(GetAccount()));
-      newOrderSingle->setField(ACCOUNT_TAG, info.m_submissionAccount.m_name);
-      if(auto deliverToCompId = GetDeliverToCompId()) {
-        newOrderSingle->getHeader().setField(
-          FIX::DeliverToCompID(*deliverToCompId));
-      }
-      if(info.m_fields.m_security.GetMarket() == DefaultMarkets::ASX()) {
-        newOrderSingle->set(FIX::SecurityExchange{"ASX"});
+      if(info.m_fields.m_security.get_venue() == DefaultVenues::ASX) {
+        new_order_single->set(FIX::SecurityExchange("ASX"));
       } else {
-        BOOST_THROW_EXCEPTION(FixOrderRejectedException{"Invalid market."});
+        throw_with_location(FixOrderRejectedException("Invalid venue."));
       }
-      if(info.m_fields.m_destination == DefaultDestinations::ASXT()) {
-        newOrderSingle->set(FIX::ExDestination{"BESTMKT"});
-      } else if(info.m_fields.m_destination == DefaultDestinations::CXA()) {
+      if(info.m_fields.m_destination == DefaultDestinations::ASXT) {
+        new_order_single->set(FIX::ExDestination("BESTMKT"));
+      } else if(info.m_fields.m_destination == DefaultDestinations::CXA) {
         if(info.m_fields.m_type == OrderType::PEGGED) {
-          newOrderSingle->set(FIX::ExDestination{"CXA"});
+          new_order_single->set(FIX::ExDestination("CXA"));
         } else {
-          newOrderSingle->set(FIX::ExDestination{"BESTMKT2"});
+          new_order_single->set(FIX::ExDestination("BESTMKT2"));
         }
       } else {
-        BOOST_THROW_EXCEPTION(FixOrderRejectedException{
-          "Invalid destination."});
+        throw_with_location(FixOrderRejectedException("Invalid destination."));
       }
       if(info.m_fields.m_type == OrderType::MARKET) {
-        newOrderSingle->set(FIX::OrdType{'K'});
+        new_order_single->set(FIX::OrdType('K'));
       }
     });
 }
 
-void AsxFixApplication::Cancel(const OrderExecutionSession& session,
-    OrderId orderId) {
-  m_orderLog.Cancel(session, orderId, m_timeClient->GetTime(),
-    GetSessionId().getSenderCompID(), GetSessionId().getTargetCompID(),
-    [&] (const Order& order,
-        Out<FIX42::OrderCancelRequest> orderCancelRequest) {
-      orderCancelRequest->set(FIX::Account(GetAccount()));
-      orderCancelRequest->setField(ACCOUNT_TAG, session.GetAccount().m_name);
-      if(auto deliverToCompId = GetDeliverToCompId()) {
-        orderCancelRequest->getHeader().setField(
-          FIX::DeliverToCompID(*deliverToCompId));
+void AsxFixApplication::cancel(
+    const OrderExecutionSession& session, OrderId id) {
+  m_order_log.cancel(session, id, m_time_client->get_time(),
+    get_session_id().getSenderCompID(), get_session_id().getTargetCompID(),
+    [&] (const std::shared_ptr<Order>& order,
+        Out<FIX42::OrderCancelRequest> request) {
+      request->set(FIX::Account(get_account()));
+      request->setField(ACCOUNT_TAG, session.get_account().m_name);
+      if(auto deliver_to_comp_id = get_deliver_to_comp_id()) {
+        request->getHeader().setField(
+          FIX::DeliverToCompID(*deliver_to_comp_id));
       }
-      auto& fields = order.GetInfo().m_fields;
-      if(fields.m_security.GetMarket() == DefaultMarkets::ASX()) {
-        orderCancelRequest->set(FIX::SecurityExchange{"ASX"});
+      auto& fields = order->get_info().m_fields;
+      if(fields.m_security.get_venue() == DefaultVenues::ASX) {
+        request->set(FIX::SecurityExchange("ASX"));
       } else {
-        BOOST_THROW_EXCEPTION(FixOrderRejectedException{"Invalid market."});
+        throw_with_location(FixOrderRejectedException("Invalid venue."));
       }
     });
 }
 
-void AsxFixApplication::Update(const OrderExecutionSession& session,
-    OrderId orderId, const ExecutionReport& executionReport) {
-  m_orderLog.Update(session, orderId, executionReport, m_timeClient->GetTime());
+void AsxFixApplication::update(const OrderExecutionSession& session,
+    OrderId id, const ExecutionReport& report) {
+  m_order_log.update(session, id, report, m_time_client->get_time());
 }
 
-void AsxFixApplication::onCreate(const FIX::SessionID& sessionID) {}
+void AsxFixApplication::onCreate(const FIX::SessionID&) {}
 
-void AsxFixApplication::onLogon(const FIX::SessionID& sessionID) {}
+void AsxFixApplication::onLogon(const FIX::SessionID&) {}
 
-void AsxFixApplication::onLogout(const FIX::SessionID& sessionID) {}
+void AsxFixApplication::onLogout(const FIX::SessionID&) {}
 
-void AsxFixApplication::toAdmin(FIX::Message& message,
-    const FIX::SessionID& sessionID) {}
+void AsxFixApplication::toAdmin(FIX::Message&, const FIX::SessionID&) {}
 
-void AsxFixApplication::toApp(FIX::Message& message,
-    const FIX::SessionID& sessionID) {}
+void AsxFixApplication::toApp(FIX::Message&, const FIX::SessionID&) {}
 
-void AsxFixApplication::fromAdmin(const FIX::Message& message,
-    const FIX::SessionID& sessionID) {}
+void AsxFixApplication::fromAdmin(const FIX::Message&, const FIX::SessionID&) {}
 
-void AsxFixApplication::fromApp(const FIX::Message& message,
-    const FIX::SessionID& sessionID) {
-  crack(message, sessionID);
+void AsxFixApplication::fromApp(
+    const FIX::Message& message, const FIX::SessionID& session_id) {
+  crack(message, session_id);
 }
 
-void AsxFixApplication::onMessage(const FIX42::ExecutionReport& message,
-    const FIX::SessionID& sessionId) {
-  m_orderLog.Update(message, sessionId, m_timeClient->GetTime(),
-    [=] (const Order& order, Out<ExecutionReport> update) {
-      if(update->m_lastQuantity != 0) {
-        update->m_liquidityFlag = lexical_cast<std::string>(
-          LiquidityFlag::ACTIVE);
-        auto lastMkt = FIX::LastMkt();
-        if(message.isSet(lastMkt)) {
-          message.get(lastMkt);
+void AsxFixApplication::onMessage(
+    const FIX42::ExecutionReport& message, const FIX::SessionID& session_id) {
+  m_order_log.update(message, session_id, m_time_client->get_time(),
+    [=] (const std::shared_ptr<Order>& order, Out<ExecutionReport> update) {
+      if(update->m_last_quantity != 0) {
+        update->m_liquidity_flag =
+          lexical_cast<std::string>(LiquidityFlag::ACTIVE);
+        auto last_mkt = FIX::LastMkt();
+        if(message.isSet(last_mkt)) {
+          message.get(last_mkt);
         }
-        if(lastMkt == "CXA" || lastMkt == "CXAP" || lastMkt == "CXAC") {
-          update->m_lastMarket = DefaultDestinations::CXA();
-        } else if(lastMkt == "TM") {
-          update->m_lastMarket = DefaultDestinations::ASXT();
+        if(last_mkt == "CXA" || last_mkt == "CXAP" || last_mkt == "CXAC") {
+          update->m_last_market = DefaultDestinations::CXA;
+        } else if(last_mkt == "TM") {
+          update->m_last_market = DefaultDestinations::ASXT;
         } else {
-          update->m_lastMarket = order.GetInfo().m_fields.m_destination;
+          update->m_last_market = order->get_info().m_fields.m_destination;
         }
       }
     });
 }
 
-void AsxFixApplication::onMessage(const FIX42::TradingSessionStatus& message,
-    const FIX::SessionID& sessionId) {}
+void AsxFixApplication::onMessage(
+  const FIX42::TradingSessionStatus&, const FIX::SessionID&) {}
 
-void AsxFixApplication::onMessage(const FIX42::OrderCancelReject& message,
-    const FIX::SessionID& sessionId) {}
+void AsxFixApplication::onMessage(
+  const FIX42::OrderCancelReject&, const FIX::SessionID&) {}
 
-string AsxFixApplication::GetAccount() const {
-  return GetSessionSettings().get(GetSessionId()).getString("Account");
+std::string AsxFixApplication::get_account() const {
+  return get_session_settings().get(get_session_id()).getString("Account");
 }
 
-string AsxFixApplication::GetUsername() const {
-  return GetSessionSettings().get(GetSessionId()).getString("Username");
+std::string AsxFixApplication::get_username() const {
+  return get_session_settings().get(get_session_id()).getString("Username");
 }
 
-string AsxFixApplication::GetPassword() const {
-  return GetSessionSettings().get(GetSessionId()).getString("Password");
+std::string AsxFixApplication::get_password() const {
+  return get_session_settings().get(get_session_id()).getString("Password");
 }
 
-boost::optional<string> AsxFixApplication::GetDeliverToCompId() const {
-  auto& settings = GetSessionSettings().get(GetSessionId());
+optional<std::string> AsxFixApplication::get_deliver_to_comp_id() const {
+  auto& settings = get_session_settings().get(get_session_id());
   if(settings.has("DeliverToCompID")) {
     return settings.getString("DeliverToCompID");
   }

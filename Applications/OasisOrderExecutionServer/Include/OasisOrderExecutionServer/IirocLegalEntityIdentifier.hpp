@@ -6,7 +6,7 @@
 #include <quickfix/Dictionary.h>
 #include <quickfix/fix42/NewOrderSingle.h>
 
-namespace Nexus::OasisOrderExecutionService {
+namespace Nexus {
 
   /** Encrypts and stores the IIROC LEI for participating members. */
   class IirocLegalEntityIdentifier {
@@ -21,14 +21,14 @@ namespace Nexus::OasisOrderExecutionService {
 
       /**
        * Populates a FIX new order single message with LEI fields.
-       * @param newOrderSingle The FIX message to populate, no-op if LEI fields
+       * @param new_order_single The FIX message to populate, no-op if LEI fields
        *        were not provided.
        */
-      void populate(Beam::Out<FIX42::NewOrderSingle> newOrderSingle) const;
+      void populate(Beam::Out<FIX42::NewOrderSingle> new_order_single) const;
 
     private:
-      boost::optional<std::string> m_brokerNumber;
-      boost::optional<std::string> m_orderOrigination;
+      boost::optional<std::string> m_broker_number;
+      boost::optional<std::string> m_order_origination;
       boost::optional<std::string> m_lei;
   };
 }
