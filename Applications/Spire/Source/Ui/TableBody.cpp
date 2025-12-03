@@ -1651,10 +1651,10 @@ void TableBody::on_widths_operation(const ListModel<int>::Operation& operation) 
       }
       move_element(m_visual_to_logical_columns, operation.m_source,
         operation.m_destination);
-      for(auto i = 0; i < get_layout().count(); ++i) {
-        if(auto row_cover = find_row(i)) {
-          row_cover->move_column(operation.m_source, operation.m_destination);
-        }
+      auto& layout = get_layout();
+      for(auto i = 0; i < layout.count(); ++i) {
+        layout.get_row(i).move_column(operation.m_source,
+          operation.m_destination);
       }
       for(auto& row_cover : m_recycled_rows) {
         row_cover->move_column(operation.m_source, operation.m_destination);
