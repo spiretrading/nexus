@@ -23,6 +23,7 @@
 
 using namespace Beam;
 using namespace boost;
+using namespace boost::local_time;
 using namespace boost::posix_time;
 using namespace Nexus;
 
@@ -70,22 +71,29 @@ namespace {
     }, std::runtime_error("Unable to parse MPID mappings."));
   }
 
-  CseConfiguration parse_configuration(
-      const YAML::Node& config, ptime current_date) {
+  time_duration get_utc_offset(const tz_database& tz_database,
+      const std::string& time_zone) {
+    auto tz = tz_database.time_zone_from_region(time_zone);
+    if(!tz) {
+      throw_with_location(std::runtime_error(
+        "Time zone '" + time_zone + "' not found in database."));
+    }
+    auto current_time = second_clock::universal_time();
+    auto local_time = local_date_time(current_time, tz);
+    return local_time.local_time() - local_time.utc_time();
+  }
+
+  CseConfiguration parse_configuration(const YAML::Node& config) {
     return try_or_nest([&] {
-      auto config_time_zone =
+      auto time_zone =
         extract<std::string>(config, "time_zone", "Eastern_Time");
-      auto time_zone = get_default_time_zone_database().time_zone_from_region(
-        config_time_zone);
-      if(!time_zone) {
-        throw_with_location(std::runtime_error("Time zone not found."));
-      }
       auto cse_config = CseConfiguration();
       cse_config.m_is_logging_messages =
         extract<bool>(config, "enable_logging", false);
       cse_config.m_is_time_and_sale_feed =
         extract<bool>(config, "is_time_and_sale", false);
-      cse_config.m_time_offset = -get_utc_offset(current_date, *time_zone);
+      cse_config.m_time_offset = -get_utc_offset(
+        get_default_time_zone_database(), time_zone);
       cse_config.m_venue = parse_venue(extract<std::string>(config, "venue"));
       if(auto mpid_mappings = config["mpid_mappings"]) {
         cse_config.m_mpid_mappings = load_mpid_mappings(mpid_mappings);
@@ -135,7 +143,7 @@ int main(int argc, const char** argv) {
       extract<int>(config, "max_retransmissions", 10);
     service_access_config.m_max_retransmission_block =
       extract<int>(config, "retransmission_block_size", 20000);
-    auto cse_config = parse_configuration(config, time_client->get_time());
+    auto cse_config = parse_configuration(config);
     auto symbolList = extract<std::string>(config, "symbol_list");
     auto securities = parse_security_info_list(symbolList);
     for(auto& security : securities) {

@@ -6,6 +6,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
+#include "Nexus/Stamp/StampMessage.hpp"
 #include "CseMarketDataFeedClient/CseConfiguration.hpp"
 #include "CseMarketDataFeedClient/CseServiceAccessClient.hpp"
 

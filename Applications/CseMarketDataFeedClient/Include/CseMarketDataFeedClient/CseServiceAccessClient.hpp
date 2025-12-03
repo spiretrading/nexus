@@ -12,8 +12,8 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <boost/throw_exception.hpp>
-#include "Nexus/StampProtocol/StampMessage.hpp"
-#include "Nexus/StampProtocol/StampPacket.hpp"
+#include "Nexus/Stamp/StampMessage.hpp"
+#include "Nexus/Stamp/StampPacket.hpp"
 #include "CseMarketDataFeedClient/CseMarketDataFeedClient.hpp"
 
 namespace Nexus {
@@ -217,7 +217,7 @@ namespace Nexus {
         if(packet.m_header.m_continuation_indicator ==
             ContinuationIndicator::STAND_ALONE) {
           return StampMessage(
-            packet.m_header, packet.m_message, packet.m_messageSize);
+            packet.m_header, packet.m_message, packet.m_message_size);
         } else if(packet.m_header.m_continuation_indicator ==
             ContinuationIndicator::SPANNING) {
           buffer_index = 1;
@@ -250,7 +250,7 @@ namespace Nexus {
       Beam::Out<Beam::SharedBuffer> buffer, std::size_t start_sequence_number,
       std::size_t end_sequence_number) {
     static constexpr auto SEQUENCE_NUMBER_SIZE = std::size_t(9);
-    append(*buffer, "SEQN");
+    append(*buffer, "SEQN", 4);
     auto message_start_number =
       boost::lexical_cast<std::string>(start_sequence_number);
     while(message_start_number.size() < SEQUENCE_NUMBER_SIZE) {
