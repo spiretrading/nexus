@@ -1,4 +1,5 @@
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
+#include <QGraphicsOpacityEffect>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ConstantValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -6,6 +7,8 @@
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
+#include "Spire/Ui/ScrollBar.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -36,6 +39,14 @@ namespace {
     add_item(QObject::tr("Seller"), QObject::tr("Sell"));
     add_item("", "");
     return model;
+  }
+
+  auto make_header_model(const ListModel<TableHeaderItem::Model>& model, int column) {
+    auto one_column_model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
+    one_column_model->push(model.get(column));
+    one_column_model->push({"", "", TableHeaderItem::Order::UNORDERED,
+      TableFilter::Filter::NONE});
+    return one_column_model;
   }
 
   struct HeaderItemProperties {
@@ -139,6 +150,308 @@ namespace {
     }
   };
 
+  struct ColumnViewTableModel : TableModel {
+    std::shared_ptr<TableModel> m_source;
+    int m_column;
+
+    ColumnViewTableModel(std::shared_ptr<TableModel> source, int column)
+      : m_source(std::move(source)),
+      m_column(column) {
+    }
+
+    int get_row_size() const override {
+      return m_source->get_row_size();
+    }
+
+    int get_column_size() const override {
+      return 1;
+    }
+
+    AnyRef at(int row, int column) const override {
+      if(column != 0) {
+        throw std::out_of_range("The column is out of range.");
+      }
+      return m_source->at(row, m_column);
+    }
+
+    connection connect_operation_signal(
+      const OperationSignal::slot_type& slot) const override {
+      return m_source->connect_operation_signal(slot);
+    }
+  };
+
+  struct ColumnTableViewItemBuilder {
+    TableViewItemBuilder m_builder;
+    std::shared_ptr<TableModel> m_source;
+    int m_column;
+
+    ColumnTableViewItemBuilder(TableViewItemBuilder builder, std::shared_ptr<TableModel> source, int column)
+      : m_builder(std::move(builder)),
+        m_source(std::move(source)),
+        m_column(column) {}
+
+    QWidget* mount(const std::shared_ptr<TableModel>& table, int row, int column) {
+      return m_builder.mount(m_source, row, m_column);
+    }
+
+    void unmount(QWidget* widget) {
+      m_builder.unmount(widget);
+    }
+  };
+
+  QWidget* make_column_cover(TableView& table_view, int column_index) {
+    auto& header = table_view.get_header();
+    auto item = header.get_item(column_index);
+    auto item_pos = item->mapTo(&table_view, QPoint(0, 0));
+    auto column_cover = new Box(nullptr);
+    column_cover->setParent(&table_view);
+    update_style(*column_cover, [] (auto& style) {
+      style.get(Any()).
+        set(BackgroundColor(QColor(0xFFFFFF))).
+        set(BorderLeftSize(scale_width(2))).
+        set(BorderLeftColor(QColor(Qt::blue)));
+    });
+    column_cover->setFixedSize(header.get_widths()->get(column_index),
+      table_view.height());
+    column_cover->move(item_pos.x(), 0);
+    column_cover->show();
+    return column_cover;
+  }
+
+  TableView* make_float_table_view(TableView& table_view,
+      const TableViewItemBuilder& m_item_builder, int visual_index, int logical_index) {
+    auto& header = table_view.get_header();
+    auto item = header.get_item(visual_index);
+    auto item_pos = item->mapTo(&table_view, QPoint(0, 0));
+    auto table_model = table_view.get_table();
+    auto float_table_view = TableViewBuilder(
+      std::make_shared<ColumnViewTableModel>(table_model, logical_index)).
+      set_header(make_header_model(*header.get_items(), visual_index)).
+      set_item_builder(ColumnTableViewItemBuilder(m_item_builder, table_model, logical_index)).
+      set_current(
+        std::make_shared<ConstantValueModel<optional<TableIndex>>>(none)).
+      make();
+    float_table_view->setParent(&table_view);
+    //m_float_table_view->setAttribute(Qt::WA_TransparentForMouseEvents);
+    auto effect = new QGraphicsOpacityEffect(float_table_view);
+    effect->setOpacity(0.5);
+    float_table_view->setGraphicsEffect(effect);
+    float_table_view->get_scroll_box().set_vertical(ScrollBox::DisplayPolicy::NEVER);
+    header.grabMouse();
+    float_table_view->move(item_pos.x(), 0);
+    auto width = header.get_widths()->get(visual_index);
+    float_table_view->setFixedSize(width, table_view.height());
+    auto& float_table_header = float_table_view->get_header();
+    float_table_header.setFixedWidth(width);
+    float_table_header.get_widths()->set(0, width - scale_width(1));
+    set_style(*float_table_view, get_style(table_view));
+    set_style(float_table_header, get_style(header));
+    set_style(*float_table_header.get_item(0), get_style(*item));
+    set_style(float_table_view->get_body(), get_style(table_view.get_body()));
+    update_style(*float_table_view, [] (auto& style) {
+      style.get(Any() > is_a<TableHeader>()).
+        set(BorderTopSize(scale_height(1))).
+        set(BorderLeftSize(scale_width(1))).
+        set(BorderRightSize(scale_width(1))).
+        set(BorderTopColor(QColor(Qt::blue))).
+        set(BorderLeftColor(QColor(Qt::blue))).
+        set(BorderRightColor(QColor(Qt::blue)));
+      style.get(Any() > is_a<TableBody>()).
+        set(HorizontalSpacing(scale_width(1))).
+        set(VerticalGridColor(QColor(Qt::blue)));
+    });
+    float_table_view->show();
+    return float_table_view;
+  }
+
+  template <typename Widths>
+  std::tuple<bool, int, int> find_column_at_position(TableHeader& header,
+      const Widths& widths, int x) {
+    auto last_visible_column = -1;
+    auto left = 0;
+    auto index = 0;
+    for(auto i = std::begin(widths); i != std::end(widths); ++i, ++index) {
+      auto item = header.get_item(index);
+      if(!item->isVisible()) {
+        continue;
+      }
+      last_visible_column = index;
+      auto right = left + *i;
+      if(x >= left && x < right) {
+        return {true, index, left};
+      }
+      left = right;
+    }
+    return {false, last_visible_column, left};
+  }
+
+  struct TableViewColumnMover : QObject {
+    TableView* m_table_view;
+    TableViewItemBuilder m_item_builder;
+    TableView* m_float_table_view;
+    QWidget* m_column_cover;
+    int m_current_index;
+    int m_item_x_offset;
+    std::vector<int> m_visual_to_logical;
+    std::vector<int> m_widths;
+
+    TableViewColumnMover(TableView& table_view, TableViewItemBuilder item_builder)
+        : QObject(&table_view),
+          m_table_view(&table_view),
+          m_item_builder(std::move(item_builder)),
+          m_float_table_view(nullptr),
+          m_column_cover(nullptr),
+          m_current_index(-1),
+          m_item_x_offset(0) {
+      auto& header = m_table_view->get_header();
+      header.setMouseTracking(true);
+      header.installEventFilter(this);
+      m_visual_to_logical.resize(header.get_items()->get_size());
+      std::iota(m_visual_to_logical.begin(), m_visual_to_logical.end(), 0);
+      header.setCursor(Qt::OpenHandCursor);
+    }
+
+    bool eventFilter(QObject* watched, QEvent* event) override {
+      if(watched == m_table_view->get_header().get_item(m_current_index) &&
+          m_column_cover && event->type() == QEvent::Move) {
+        auto& item = *m_table_view->get_header().get_item(m_current_index);
+        //m_column_cover->move(item.mapTo(m_table_view, QPoint(0, 0)).x(), 0);
+        m_column_cover->move(m_table_view->mapFromGlobal(item.mapToGlobal(QPoint(0, 0))).x(), 0);
+      } else if(watched == &m_table_view->get_header()) {
+        auto& header = m_table_view->get_header();
+        if(event->type() == QEvent::MouseButtonPress) {
+          auto& mouse_event = *static_cast<QMouseEvent*>(event);
+          if(mouse_event.button() == Qt::LeftButton) {
+            header.setCursor(Qt::ClosedHandCursor);
+            if(auto [is_found, index, item_left] = find_column_at_position(
+                header, *header.get_widths(), mouse_event.x());
+                is_found) {
+              m_item_x_offset = mouse_event.x() - item_left;
+              start_drag(index);
+            }
+          }
+        } else if(event->type() == QEvent::MouseButtonRelease) {
+          stop_drag();
+        } else if(event->type() == QEvent::MouseMove) {
+          drag_move(*static_cast<QMouseEvent*>(event));
+        }
+      }
+      return QObject::eventFilter(watched, event);
+    }
+
+    int find_previous_visible_column(int start_index) const {
+      auto& header = m_table_view->get_header();
+      for(int i = start_index; i >= 0; --i) {
+        if(header.get_item(i)->isVisible()) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
+    int find_next_visible_column(int start_index) const {
+      auto& header = m_table_view->get_header();
+      for(int i = start_index; i < header.get_widths()->get_size(); ++i) {
+        if(header.get_item(i)->isVisible()) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
+    void start_drag(int index) {
+      if(m_float_table_view) {
+        return;
+      }
+      auto& header = m_table_view->get_header();
+      header.grabMouse();
+      auto item = header.get_item(index);
+      item->installEventFilter(this);
+      m_column_cover = make_column_cover(*m_table_view, index);
+      m_float_table_view = make_float_table_view(*m_table_view, m_item_builder,
+        index, m_visual_to_logical[index]);
+      m_widths.assign(header.get_widths()->begin(), header.get_widths()->end());
+      m_current_index = index;
+    }
+
+    void stop_drag() {
+      if(m_float_table_view) {
+        delete m_float_table_view;
+        m_float_table_view = nullptr;
+      }
+      if(m_column_cover) {
+        delete m_column_cover;
+        m_column_cover = nullptr;
+      }
+      auto& header = m_table_view->get_header();
+      if(m_current_index >= 0) {
+        header.get_item(m_current_index)->removeEventFilter(this);
+        m_current_index = -1;
+      }
+      m_widths.clear();
+      header.releaseMouse();
+      header.setCursor(Qt::OpenHandCursor);
+    }
+
+    void drag_move(const QMouseEvent& mouse_event) {
+      if(!m_float_table_view) {
+        return;
+      }
+      auto& header = m_table_view->get_header();
+      auto& horizontal_scroll_bar =
+        m_table_view->get_scroll_box().get_horizontal_scroll_bar();
+      auto mouse_x = std::max(0, mouse_event.x());
+      auto [is_found, index, item_left] =
+        find_column_at_position(header, m_widths, mouse_x);
+      auto should_move_column = [&] {
+        if(is_found) {
+          if(index != m_current_index) {
+            return true;
+          }
+        } else if(mouse_x >= item_left) {
+          return true;
+        }
+        return false;
+      }();
+      if(should_move_column) {
+        header.get_items()->move(m_current_index, index);
+        move_element(m_visual_to_logical, m_current_index, index);
+        m_current_index = index;
+      }
+      if(horizontal_scroll_bar.isVisible()) {
+        update_scroll(mouse_x);
+      }
+      update_float_table_view_position(mouse_event.globalPos());
+    }
+
+    void update_float_table_view_position(const QPoint& global_position) {
+      auto x = std::max(0,
+        std::min(m_table_view->width() - m_float_table_view->width(),
+          m_table_view->mapFromGlobal(global_position).x() - m_item_x_offset));
+      m_float_table_view->move(x, 0);
+    }
+
+    void update_scroll(int mouse_x) {
+      auto float_table_view_x = std::max(0, mouse_x - m_item_x_offset);
+      auto float_table_view_right =
+        float_table_view_x + m_float_table_view->width();
+      auto& horizontal_scroll_bar =
+        m_table_view->get_scroll_box().get_horizontal_scroll_bar();
+      auto scroll_position = horizontal_scroll_bar.get_position();
+      auto scroll_right =
+        scroll_position + horizontal_scroll_bar.get_page_size();
+      if(float_table_view_x < scroll_position) {
+        horizontal_scroll_bar.set_position(float_table_view_x);
+      } else if(float_table_view_right >= scroll_right) {
+        horizontal_scroll_bar.set_position(std::min(
+            horizontal_scroll_bar.get_range().m_end,
+            float_table_view_right - horizontal_scroll_bar.get_page_size()));
+      }
+      auto& item = *m_table_view->get_header().get_item(m_current_index);
+      m_column_cover->move(m_table_view->mapFromGlobal(item.mapToGlobal(QPoint(0, 0))).x(), 0);
+    }
+  };
+
   struct TableViewStylist : QObject {
     std::shared_ptr<TimeAndSalesPropertiesModel> m_properties;
     scoped_connection m_connection;
@@ -236,14 +549,26 @@ namespace {
 TableView* Spire::make_time_and_sales_table_view(
     std::shared_ptr<TimeAndSalesTableModel> table,
     std::shared_ptr<TimeAndSalesPropertiesModel> properties, QWidget* parent) {
+  auto builder = ItemBuilder();
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
-    set_item_builder(RecycledTableViewItemBuilder(ItemBuilder())).
+    set_item_builder(RecycledTableViewItemBuilder(builder)).
     set_current(
       std::make_shared<ConstantValueModel<optional<TableIndex>>>(none)).
     make();
   make_header_menu(*table_view, properties);
   auto pull_indicator = new PullIndicator(*table_view);
-  auto stylist = new TableViewStylist(*table_view, std::move(properties));
+  auto stylist = new TableViewStylist(*table_view, properties);
+  auto column_move = new TableViewColumnMover(*table_view, builder);
+  table_view->get_header().get_items()->connect_operation_signal(
+    [=] (const ListModel<TableHeaderItem::Model>::Operation& operation) {
+    visit(operation,
+      [=] (const ListModel<TableHeaderItem::Model>::MoveOperation& operation) {
+        auto current_properties = properties->get();
+        current_properties.move_column(static_cast<TimeAndSalesTableModel::Column>(operation.m_source),
+          static_cast<TimeAndSalesTableModel::Column>(operation.m_destination));
+        properties->set(current_properties);
+    });
+  });
   return table_view;
 }

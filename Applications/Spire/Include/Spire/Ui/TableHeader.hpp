@@ -2,6 +2,7 @@
 #define SPIRE_TABLE_HEADER_HPP
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/TranslatedListModel.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -75,9 +76,12 @@ namespace Spire {
       std::shared_ptr<ListModel<TableHeaderItem::Model>> m_items;
       std::shared_ptr<ListModel<int>> m_widths;
       std::vector<TableHeaderItem*> m_item_views;
+      TranslatedListModel<int> m_translation;
       int m_resize_index;
+      boost::signals2::scoped_connection m_items_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
+      void on_items_operation(const ListModel<TableHeaderItem::Model>::Operation& operation);
       void on_widths_operation(const ListModel<int>::Operation& operation);
       void on_start_resize(int index);
       void on_end_resize(int index);

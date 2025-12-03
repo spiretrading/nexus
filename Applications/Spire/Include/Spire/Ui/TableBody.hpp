@@ -9,6 +9,7 @@
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
+//#include "Spire/Spire/TranslatedListModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Styles/CompositeProperty.hpp"
@@ -163,6 +164,8 @@ namespace Styles {
       KeyObserver m_key_observer;
       std::unordered_map<TableItem*, HoverObserver> m_hover_observers;
       boost::optional<Index> m_hover_index;
+      std::vector<int> m_visual_to_logical_columns;
+      //TranslatedListModel<int> m_translation;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_row_style_connection;
       boost::signals2::scoped_connection m_table_connection;
@@ -207,7 +210,7 @@ namespace Styles {
       void on_style();
       void on_cover_style(Cover& cover);
       void on_table_operation(const TableModel::Operation& operation);
-      void on_widths_update(const ListModel<int>::Operation& operation);
+      void on_widths_operation(const ListModel<int>::Operation& operation);
       bool on_key_press(QWidget& target, QKeyEvent& event);
   };
 }

@@ -30,7 +30,7 @@ namespace Spire {
       static const TimeAndSalesProperties& get_default();
 
        /* Constructs an empty set of properties. */
-      TimeAndSalesProperties() = default;
+      TimeAndSalesProperties();
 
       /**
        * Returns the highlight color of a specific BBO indicator.
@@ -70,11 +70,15 @@ namespace Spire {
        */
       void set_grid_enabled(bool is_enabled);
 
+      void move_column(TimeAndSalesTableModel::Column source,
+        TimeAndSalesTableModel::Column destination);
+
     private:
       static const auto COLUMN_COUNT = 10;
       friend struct Beam::Serialization::DataShuttle;
       std::array<HighlightColor, BBO_INDICATOR_COUNT> m_highlight_colors;
       QFont m_font;
+      std::array<int, COLUMN_COUNT> m_column_order;
       std::bitset<COLUMN_COUNT> m_visible_columns;
       bool m_is_grid_enabled;
 
@@ -105,6 +109,7 @@ namespace Spire {
     shuttle.Shuttle("font", m_font);
     shuttle.Shuttle("visible_columns", m_visible_columns);
     shuttle.Shuttle("is_grid_enabled", m_is_grid_enabled);
+    shuttle.Shuttle("column_order", m_column_order);
   }
 }
 

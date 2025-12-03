@@ -32,6 +32,8 @@ namespace Spire {
 
       void invalidate() override;
 
+      void move(int source, int destination);
+
     private:
       mutable boost::optional<QSize> m_size_hint;
       std::vector<std::unique_ptr<QLayoutItem>> m_items;

@@ -11,6 +11,7 @@
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/TimeAndSales/LegacyTimeAndSalesWindowSettings.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace Beam;
 using namespace Beam::IO;
@@ -112,6 +113,10 @@ const TimeAndSalesProperties& TimeAndSalesProperties::get_default() {
   return PROPERTIES;
 }
 
+TimeAndSalesProperties::TimeAndSalesProperties() {
+  std::iota(m_column_order.begin(), m_column_order.end(), 0);
+}
+
 const HighlightColor& TimeAndSalesProperties::get_highlight_color(
     BboIndicator indicator) const {
   return m_highlight_colors[static_cast<int>(indicator)];
@@ -132,15 +137,15 @@ void TimeAndSalesProperties::set_font(const QFont& font) {
 
 bool TimeAndSalesProperties::is_visible(
     TimeAndSalesTableModel::Column column) const {
-  return m_visible_columns.test(static_cast<int>(column));
+  return m_visible_columns.test(m_column_order[static_cast<int>(column)]);
 }
 
 void TimeAndSalesProperties::set_visible(
     TimeAndSalesTableModel::Column column, bool is_visible) {
   if(is_visible) {
-    m_visible_columns.set(static_cast<int>(column));
+    m_visible_columns.set(m_column_order[static_cast<int>(column)]);
   } else {
-    m_visible_columns.reset(static_cast<int>(column));
+    m_visible_columns.reset(m_column_order[static_cast<int>(column)]);
   }
 }
 
@@ -150,6 +155,12 @@ bool TimeAndSalesProperties::is_grid_enabled() const {
 
 void TimeAndSalesProperties::set_grid_enabled(bool is_enabled) {
   m_is_grid_enabled = is_enabled;
+}
+
+void TimeAndSalesProperties::move_column(TimeAndSalesTableModel::Column source,
+        TimeAndSalesTableModel::Column destination) {
+  move_element(m_column_order, static_cast<int>(source),
+    static_cast<int>(destination));
 }
 
 TimeAndSalesProperties Spire::load_time_and_sales_properties(

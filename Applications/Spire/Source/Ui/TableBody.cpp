@@ -174,7 +174,8 @@ struct TableBody::RowCover : Cover {
   void mount(int index) {
     auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != layout()->count(); ++i) {
-      get_item(i)->mount(*body.m_item_builder.mount(body.m_table, index, i));
+      get_item(i)->mount(*body.m_item_builder.mount(
+        body.m_table, index, body.m_visual_to_logical_columns[i]));
     }
   }
 
@@ -191,6 +192,11 @@ struct TableBody::RowCover : Cover {
     if(!testAttribute(Qt::WA_WState_Hidden)) {
       setAttribute(Qt::WA_WState_Hidden);
     }
+  }
+
+  void move_column(int source, int destination) {
+    static_cast<FixedHorizontalLayout*>(this->layout())->move(
+      source, destination);
   }
 
   QSize sizeHint() const override {
@@ -655,6 +661,7 @@ TableBody::TableBody(
     }();
     add_column_cover(column, QRect(QPoint(left, 0), QSize(width, height())));
     left += width;
+    m_visual_to_logical_columns.push_back(column);
   }
   if(auto current = m_current_controller.get_column()) {
     match(*m_column_covers[*current], CurrentColumn());
@@ -667,7 +674,7 @@ TableBody::TableBody(
   m_selection_connection = m_selection_controller.connect_row_operation_signal(
     std::bind_front(&TableBody::on_row_selection, this));
   m_widths_connection = m_widths->connect_operation_signal(
-    std::bind_front(&TableBody::on_widths_update, this));
+    std::bind_front(&TableBody::on_widths_operation, this));
   m_key_observer.connect_filtered_key_press_signal(
     std::bind_front(&TableBody::on_key_press, this));
 }
@@ -1612,7 +1619,7 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
   }
 }
 
-void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
+void TableBody::on_widths_operation(const ListModel<int>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<int>::UpdateOperation& operation) {
       auto spacing = get_left_spacing(operation.m_index);
@@ -1636,6 +1643,21 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
             }
           }
         }
+      }
+    },
+    [&] (const ListModel<int>::MoveOperation& operation) {
+      if(operation.m_source == operation.m_destination) {
+        return;
+      }
+      move_element(m_visual_to_logical_columns, operation.m_source,
+        operation.m_destination);
+      for(auto i = 0; i < get_layout().count(); ++i) {
+        if(auto row_cover = find_row(i)) {
+          row_cover->move_column(operation.m_source, operation.m_destination);
+        }
+      }
+      for(auto& row_cover : m_recycled_rows) {
+        row_cover->move_column(operation.m_source, operation.m_destination);
       }
     });
 }

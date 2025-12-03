@@ -78,3 +78,8 @@ void FixedHorizontalLayout::invalidate() {
     item->invalidate();
   }
 }
+
+void FixedHorizontalLayout::move(int source, int destination) {
+  move_element(m_items, source, destination);
+  update();
+}
