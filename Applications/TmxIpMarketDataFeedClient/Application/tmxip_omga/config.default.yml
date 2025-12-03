@@ -8,7 +8,7 @@ enable_logging: false
 use_broker_number: false
 mpid: OMGA
 consolidate_mpids: true
-market: OMGA
+venue: OMGA
 sampling: 100ms
 enable_retransmission: false
 max_retransmissions: 10000

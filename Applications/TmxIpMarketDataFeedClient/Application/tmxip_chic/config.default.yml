@@ -8,7 +8,7 @@ enable_logging: false
 mpid: CHIC
 use_broker_number: false
 consolidate_mpids: true
-market: CHIC
+venue: CHIC
 sampling: 100ms
 enable_retransmission: false
 max_retransmissions: 10000
