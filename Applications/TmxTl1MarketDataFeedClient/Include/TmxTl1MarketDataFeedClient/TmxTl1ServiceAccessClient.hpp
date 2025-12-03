@@ -12,9 +12,9 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <boost/throw_exception.hpp>
-#include "Nexus/StampProtocol/StampPacket.hpp"
+#include "Nexus/Stamp/StampPacket.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Produces fixed-width messages received from a TMX TL1 service.
@@ -25,7 +25,7 @@ namespace Nexus::MarketDataService {
     public:
 
       /** The type of channel receiving the market data feed. */
-      using Channel = Beam::GetTryDereferenceType<C>;
+      using Channel = Beam::dereference_t<C>;
 
       /**
        * Constructs a TmxTl1ServiceAccessClient.
@@ -37,137 +37,135 @@ namespace Nexus::MarketDataService {
       ~TmxTl1ServiceAccessClient();
 
       /** Reads the next message from the feed. */
-      StampProtocol::StampPacket Read();
+      StampPacket read();
 
-      void Close();
+      void close();
 
     private:
       struct BufferEntry {
-        Beam::IO::SharedBuffer m_buffer;
-        std::uint32_t m_sequenceNumber;
+        Beam::SharedBuffer m_buffer;
+        std::uint32_t m_sequence_number;
 
-        BufferEntry(Beam::IO::SharedBuffer buffer,
-          std::uint32_t sequenceNumber);
+        BufferEntry(Beam::SharedBuffer buffer, std::uint32_t sequence_number);
       };
-      Beam::GetOptionalLocalPtr<C> m_channel;
-      std::uint32_t m_sequenceNumber;
-      std::vector<Beam::IO::SharedBuffer> m_buffers;
-      std::deque<BufferEntry> m_pendingBuffers;
-      Beam::IO::OpenState m_openState;
+      Beam::local_ptr_t<C> m_channel;
+      std::uint32_t m_sequence_number;
+      std::vector<Beam::SharedBuffer> m_buffers;
+      std::deque<BufferEntry> m_pending_buffers;
+      Beam::OpenState m_open_state;
 
       TmxTl1ServiceAccessClient(const TmxTl1ServiceAccessClient&) = delete;
       TmxTl1ServiceAccessClient& operator =(
         const TmxTl1ServiceAccessClient&) = delete;
-      void AddPendingBuffer(Beam::IO::SharedBuffer buffer,
-        std::size_t sequenceNumber);
+      void add_pending_buffer(
+        Beam::SharedBuffer buffer, std::size_t sequence_number);
   };
 
   template<typename C>
   TmxTl1ServiceAccessClient<C>::BufferEntry::BufferEntry(
-    Beam::IO::SharedBuffer buffer, std::uint32_t sequenceNumber)
+    Beam::SharedBuffer buffer, std::uint32_t sequence_number)
     : m_buffer(std::move(buffer)),
-      m_sequenceNumber(sequenceNumber) {}
+      m_sequence_number(sequence_number) {}
 
   template<typename C>
   template<typename CF>
   TmxTl1ServiceAccessClient<C>::TmxTl1ServiceAccessClient(CF&& channel)
     try : m_channel(std::forward<CF>(channel)),
-          m_sequenceNumber(0) {
+          m_sequence_number(0) {
     } catch(const std::exception&) {
-      std::throw_with_nested(Beam::IO::ConnectException(
+      std::throw_with_nested(Beam::ConnectException(
         "Failed to initialize the TMX TL1 service access client."));
     }
 
   template<typename C>
   TmxTl1ServiceAccessClient<C>::~TmxTl1ServiceAccessClient() {
-    Close();
+    close();
   }
 
   template<typename C>
-  StampProtocol::StampPacket TmxTl1ServiceAccessClient<C>::Read() {
+  StampPacket TmxTl1ServiceAccessClient<C>::read() {
     static const auto HEARTBEAT_MESSAGE_TYPE = Beam::FixedString<2>("V ");
-    return Beam::TryOrNest([&] {
-      auto bufferIndex = std::size_t(0);
+    return Beam::try_or_nest([&] {
+      auto buffer_index = std::size_t(0);
       while(true) {
-        if(m_buffers.size() <= bufferIndex) {
+        if(m_buffers.size() <= buffer_index) {
           m_buffers.emplace_back();
         }
-        auto& buffer = m_buffers[bufferIndex];
-        buffer.Reset();
-        if(m_pendingBuffers.empty()) {
-          m_channel->GetReader().Read(Beam::Store(buffer));
+        auto& buffer = m_buffers[buffer_index];
+        reset(buffer);
+        if(m_pending_buffers.empty()) {
+          m_channel->get_reader().read(Beam::out(buffer));
         } else {
-          buffer = std::move(m_pendingBuffers.front().m_buffer);
-          m_pendingBuffers.pop_front();
+          buffer = std::move(m_pending_buffers.front().m_buffer);
+          m_pending_buffers.pop_front();
         }
-        auto packet = StampProtocol::StampPacket::Parse(buffer.GetData(),
-          buffer.GetSize());
-        if(packet.m_header.m_messageType == HEARTBEAT_MESSAGE_TYPE) {
+        auto packet = StampPacket::parse(buffer.get_data(), buffer.get_size());
+        if(packet.m_header.m_message_type == HEARTBEAT_MESSAGE_TYPE) {
           continue;
         }
-        if(m_sequenceNumber == 0) {
-          if(packet.m_header.m_continuationIndicator ==
-              StampProtocol::ContinuationIndicator::STAND_ALONE ||
-              packet.m_header.m_continuationIndicator ==
-              StampProtocol::ContinuationIndicator::SPANNING) {
-            m_sequenceNumber = packet.m_header.m_sequenceNumber;
+        if(m_sequence_number == 0) {
+          if(packet.m_header.m_continuation_indicator ==
+              ContinuationIndicator::STAND_ALONE ||
+                packet.m_header.m_continuation_indicator ==
+                  ContinuationIndicator::SPANNING) {
+            m_sequence_number = packet.m_header.m_sequence_number;
           } else {
             continue;
           }
-        } else if(packet.m_header.m_sequenceNumber == m_sequenceNumber + 1) {
-          ++m_sequenceNumber;
-        } else if(packet.m_header.m_sequenceNumber <= m_sequenceNumber) {
+        } else if(packet.m_header.m_sequence_number == m_sequence_number + 1) {
+          ++m_sequence_number;
+        } else if(packet.m_header.m_sequence_number <= m_sequence_number) {
           continue;
         } else {
-          std::cout << "Dropped packets: " << m_sequenceNumber + 1 << " - " <<
-            packet.m_header.m_sequenceNumber - 1 << std::endl;
-          AddPendingBuffer(buffer, packet.m_header.m_sequenceNumber);
-          m_sequenceNumber = 0;
-          bufferIndex = 0;
+          std::cout << "Dropped packets: " << m_sequence_number + 1 << " - " <<
+            packet.m_header.m_sequence_number - 1 << std::endl;
+          add_pending_buffer(buffer, packet.m_header.m_sequence_number);
+          m_sequence_number = 0;
+          buffer_index = 0;
           continue;
         }
-        if(packet.m_header.m_continuationIndicator ==
-            StampProtocol::ContinuationIndicator::STAND_ALONE) {
+        if(packet.m_header.m_continuation_indicator ==
+            ContinuationIndicator::STAND_ALONE) {
           return packet;
-        } else if(packet.m_header.m_continuationIndicator ==
-            StampProtocol::ContinuationIndicator::SPANNING) {
+        } else if(packet.m_header.m_continuation_indicator ==
+            ContinuationIndicator::SPANNING) {
           std::cout << "Spanning" << std::endl;
-          bufferIndex = 1;
-        } else if(packet.m_header.m_continuationIndicator ==
-            StampProtocol::ContinuationIndicator::SPANNING_CONTINUATION) {
+          buffer_index = 1;
+        } else if(packet.m_header.m_continuation_indicator ==
+            ContinuationIndicator::SPANNING_CONTINUATION) {
           std::cout << "Spanning Continuation" << std::endl;
-          ++bufferIndex;
-        } else if(packet.m_header.m_continuationIndicator ==
-            StampProtocol::ContinuationIndicator::CONTINUATION) {
+          ++buffer_index;
+        } else if(packet.m_header.m_continuation_indicator ==
+            ContinuationIndicator::CONTINUATION) {
           std::cout << "Continuation" << std::endl;
-          bufferIndex = 0;
+          buffer_index = 0;
         }
       }
-    }, Beam::IO::IOException("Failed to read STAMP message."));
+    }, Beam::IOException("Failed to read STAMP message."));
   }
 
   template<typename C>
-  void TmxTl1ServiceAccessClient<C>::Close() {
-    if(m_openState.SetClosing()) {
+  void TmxTl1ServiceAccessClient<C>::close() {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_channel->GetConnection().Close();
+    m_channel->get_connection().close();
     m_buffers.clear();
-    m_openState.Close();
+    m_open_state.close();
   }
 
   template<typename C>
-  void TmxTl1ServiceAccessClient<C>::AddPendingBuffer(
-      Beam::IO::SharedBuffer buffer, std::size_t sequenceNumber) {
-    auto entry = BufferEntry(std::move(buffer), sequenceNumber);
-    auto pendingBufferIterator = std::lower_bound(m_pendingBuffers.begin(),
-      m_pendingBuffers.end(), entry,
+  void TmxTl1ServiceAccessClient<C>::add_pending_buffer(
+      Beam::SharedBuffer buffer, std::size_t sequence_number) {
+    auto entry = BufferEntry(std::move(buffer), sequence_number);
+    auto pending_buffer_iterator = std::lower_bound(
+      m_pending_buffers.begin(), m_pending_buffers.end(), entry,
       [] (const auto& lhs, const auto& rhs) {
-        return lhs.m_sequenceNumber < rhs.m_sequenceNumber;
+        return lhs.m_sequence_number < rhs.m_sequence_number;
       });
-    if(pendingBufferIterator == m_pendingBuffers.end() ||
-        pendingBufferIterator->m_sequenceNumber != sequenceNumber) {
-      m_pendingBuffers.insert(pendingBufferIterator, entry);
+    if(pending_buffer_iterator == m_pending_buffers.end() ||
+        pending_buffer_iterator->m_sequence_number != sequence_number) {
+      m_pending_buffers.insert(pending_buffer_iterator, entry);
     }
   }
 }

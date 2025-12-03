@@ -76,8 +76,8 @@ namespace {
         get_utc_offset(get_default_time_zone_database(), time_zone);
       tmx_ip_config.m_is_time_and_sale_feed =
         extract<bool>(config, "is_time_and_sale", false);
-      auto& venue =
-        DEFAULT_VENUES.from_display_name(extract<std::string>(config, "venue"));
+      auto& venue = DEFAULT_VENUES.from(
+        parse_venue(extract<std::string>(config, "venue")));
       tmx_ip_config.m_venue = venue.m_venue;
       tmx_ip_config.m_country = venue.m_country_code;
       tmx_ip_config.m_use_broker_number_as_key =
