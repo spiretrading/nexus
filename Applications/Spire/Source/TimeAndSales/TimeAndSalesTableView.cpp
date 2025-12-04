@@ -6,6 +6,7 @@
 #include "Spire/TimeAndSales/PullIndicator.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -199,26 +200,43 @@ namespace {
     }
   };
 
-  QWidget* make_column_cover(TableView& table_view, int column_index) {
-    auto& header = table_view.get_header();
-    auto item = header.get_item(column_index);
-    auto item_pos = item->mapTo(&table_view, QPoint(0, 0));
-    auto column_cover = new Box(nullptr);
-    column_cover->setParent(&table_view);
-    update_style(*column_cover, [] (auto& style) {
-      style.get(Any()).
-        set(BackgroundColor(QColor(0xFFFFFF))).
-        set(BorderLeftSize(scale_width(2))).
-        set(BorderLeftColor(QColor(Qt::blue)));
-    });
-    column_cover->setFixedSize(header.get_widths()->get(column_index),
-      table_view.height());
-    column_cover->move(item_pos.x(), 0);
-    column_cover->show();
-    return column_cover;
-  }
+  struct ColumnCover : QWidget {
+    int m_horizontal_spacing;
 
-  QWidget* make_preview(TableView& table_view,
+    ColumnCover(TableView& table_view, int column)
+        : QWidget(&table_view) {
+      auto box = new Box(nullptr);
+      update_style(*box, [] (auto& style) {
+        style.get(Any()).
+          set(BackgroundColor(QColor(0xFFFFFF))).
+          set(BorderLeftSize(scale_width(2))).
+          set(BorderLeftColor(QColor(Qt::blue)));
+      });
+      auto& body_stylist = find_stylist(table_view.get_body());
+      for(auto& property : body_stylist.get_computed_block()) {
+        property.visit(
+          [&] (const HorizontalSpacing& spacing) {
+            body_stylist.evaluate(spacing, [&] (auto spacing) {
+              m_horizontal_spacing = std::max(1, spacing);
+          });
+        });
+      }
+      enclose(*this, *box);
+      auto& header = table_view.get_header();
+      setFixedSize(header.get_widths()->get(column) + m_horizontal_spacing,
+        table_view.height());
+      move_position(column);
+    }
+
+    void move_position(int column) {
+      auto parent = parentWidget();
+      auto& item =
+        *static_cast<TableView*>(parent)->get_header().get_item(column);
+      move(item.mapTo(parent, QPoint(0, 0)).x() - m_horizontal_spacing, 0);
+    }
+  };
+
+  QWidget* make_column_preview(TableView& table_view,
       const TableViewItemBuilder& m_item_builder,
       int visual_index, int logical_index) {
     auto& table_header = table_view.get_header();
@@ -295,7 +313,7 @@ namespace {
     TableView* m_table_view;
     TableViewItemBuilder m_item_builder;
     QWidget* m_preview;
-    QWidget* m_column_cover;
+    ColumnCover* m_column_cover;
     int m_current_index;
     int m_item_x_offset;
     std::vector<int> m_visual_to_logical;
@@ -321,7 +339,7 @@ namespace {
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(watched == m_table_view->get_header().get_item(m_current_index) &&
           m_column_cover && event->type() == QEvent::Move) {
-        update_cover_position();
+        m_column_cover->move_position(m_current_index);
       } else if(watched == &m_table_view->get_header()) {
         auto& header = m_table_view->get_header();
         if(event->type() == QEvent::MouseButtonPress) {
@@ -372,8 +390,9 @@ namespace {
       header.grabMouse();
       auto item = header.get_item(index);
       item->installEventFilter(this);
-      m_column_cover = make_column_cover(*m_table_view, index);
-      m_preview = make_preview(*m_table_view, m_item_builder,
+      m_column_cover = new ColumnCover(*m_table_view, index);
+      m_column_cover->show();
+      m_preview = make_column_preview(*m_table_view, m_item_builder,
         index, m_visual_to_logical[index]);
       m_widths.assign(header.get_widths()->begin(), header.get_widths()->end());
       m_current_index = index;
@@ -428,7 +447,8 @@ namespace {
       }
       auto x = std::max(0,
         std::min(m_table_view->width() - m_preview->width(),
-          m_table_view->mapFromGlobal(mouse_event.globalPos()).x() - m_item_x_offset));
+          m_table_view->mapFromGlobal(mouse_event.globalPos()).x()
+            - m_item_x_offset));
       m_preview->move(x, m_preview->y());
     }
 
@@ -449,13 +469,8 @@ namespace {
             float_table_view_right - horizontal_scroll_bar.get_page_size()));
       }
       if(m_column_cover) {
-        update_cover_position();
+        m_column_cover->move_position(m_current_index);
       }
-    }
-
-    void update_cover_position() {
-      auto& item = *m_table_view->get_header().get_item(m_current_index);
-      m_column_cover->move(item.mapTo(m_table_view, QPoint(0, 0)).x(), 0);
     }
   };
 
