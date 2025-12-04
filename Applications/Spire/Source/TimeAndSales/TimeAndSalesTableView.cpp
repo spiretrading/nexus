@@ -210,7 +210,7 @@ namespace {
         style.get(Any()).
           set(BackgroundColor(QColor(0xFFFFFF))).
           set(BorderLeftSize(scale_width(2))).
-          set(BorderLeftColor(QColor(Qt::blue)));
+          set(BorderLeftColor(QColor(0x4B23A0)));
       });
       auto& body_stylist = find_stylist(table_view.get_body());
       for(auto& property : body_stylist.get_computed_block()) {
@@ -273,7 +273,7 @@ namespace {
         set(BorderTopSize(scale_height(1))).
         set(BorderLeftSize(scale_width(1))).
         set(BorderRightSize(scale_width(1))).
-        set(border_color(QColor(Qt::blue)));
+        set(border_color(QColor(0x4B23A0)));
     });
     if(is_match(table_view, ShowGrid())) {
       match(*table_view_preview, ShowGrid());
