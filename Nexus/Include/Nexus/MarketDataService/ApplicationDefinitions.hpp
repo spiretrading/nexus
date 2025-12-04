@@ -141,10 +141,9 @@ namespace Nexus {
                   boost::throw_with_location(Beam::ConnectException(
                     "No market data services available."));
                 }
-                auto addresses = Beam::parse<std::vector<Beam::IpAddress>>(
+                return Beam::parse<std::vector<Beam::IpAddress>>(
                   boost::get<std::string>(
                     service->get_properties().at("addresses")));
-                return Beam::init(addresses);
               } catch(const std::exception&) {
                 std::throw_with_nested(Beam::ConnectException(
                   "Failed to connect to the market data server."));
@@ -171,10 +170,9 @@ namespace Nexus {
                     "No market data services available."));
                 }
                 auto& service = services.front();
-                auto addresses = Beam::parse<std::vector<Beam::IpAddress>>(
+                return Beam::parse<std::vector<Beam::IpAddress>>(
                   boost::get<std::string>(
                     service.get_properties().at("addresses")));
-                return Beam::init(addresses);
               } catch(const std::exception&) {
                 std::throw_with_nested(Beam::ConnectException(
                   "Failed to connect to the market data server."));
