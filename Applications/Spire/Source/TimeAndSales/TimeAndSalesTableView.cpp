@@ -240,8 +240,9 @@ namespace {
       const TableViewItemBuilder& m_item_builder,
       int visual_index, int logical_index) {
     auto& table_header = table_view.get_header();
+    table_header.grabMouse();
     auto item = table_header.get_item(visual_index);
-    auto float_table_view = TableViewBuilder(
+    auto table_view_preview = TableViewBuilder(
       std::make_shared<ColumnViewTableModel>(
         table_view.get_table(), logical_index)).
       set_header(make_header_model(*table_header.get_items(), visual_index)).
@@ -250,18 +251,17 @@ namespace {
       set_current(
         std::make_shared<ConstantValueModel<optional<TableIndex>>>(none)).
       make();
-    auto effect = new QGraphicsOpacityEffect(float_table_view);
+    auto effect = new QGraphicsOpacityEffect(table_view_preview);
     effect->setOpacity(0.5);
-    float_table_view->setGraphicsEffect(effect);
-    table_header.grabMouse();
+    table_view_preview->setGraphicsEffect(effect);
     auto width = table_header.get_widths()->get(visual_index);
-    auto& float_table_header = float_table_view->get_header();
+    auto& float_table_header = table_view_preview->get_header();
     float_table_header.get_widths()->set(0, width);
-    set_style(*float_table_view, get_style(table_view));
+    set_style(*table_view_preview, get_style(table_view));
     set_style(float_table_header, get_style(table_header));
     set_style(*float_table_header.get_item(0), get_style(*item));
-    set_style(float_table_view->get_body(), get_style(table_view.get_body()));
-    auto preview = new Box(float_table_view, table_view.window());
+    set_style(table_view_preview->get_body(), get_style(table_view.get_body()));
+    auto preview = new Box(table_view_preview, table_view.window());
     preview->setFixedSize(width + scale_width(1),
       table_view.height() + scale_height(1));
     auto y = table_view.mapTo(preview->parentWidget(), QPoint(0, 0)).y();
@@ -276,13 +276,13 @@ namespace {
         set(border_color(QColor(Qt::blue)));
     });
     if(is_match(table_view, ShowGrid())) {
-      match(*float_table_view, ShowGrid());
+      match(*table_view_preview, ShowGrid());
     }
     preview->show();
     auto& vertical_scroll_bar =
       table_view.get_scroll_box().get_vertical_scroll_bar();
     auto& float_vertical_scroll_bar =
-      float_table_view->get_scroll_box().get_vertical_scroll_bar();
+      table_view_preview->get_scroll_box().get_vertical_scroll_bar();
     float_vertical_scroll_bar.set_range(vertical_scroll_bar.get_range());
     float_vertical_scroll_bar.set_position(vertical_scroll_bar.get_position());
     return preview;
@@ -312,8 +312,10 @@ namespace {
   struct TableViewColumnMover : QObject {
     TableView* m_table_view;
     TableViewItemBuilder m_item_builder;
-    QWidget* m_preview;
+    QWidget* m_column_preview;
     ColumnCover* m_column_cover;
+    QWidget* m_horizontal_scroll_bar_parent;
+    QWidget* m_vertical_scroll_bar_parent;
     int m_current_index;
     int m_item_x_offset;
     std::vector<int> m_visual_to_logical;
@@ -324,8 +326,10 @@ namespace {
         : QObject(&table_view),
           m_table_view(&table_view),
           m_item_builder(std::move(item_builder)),
-          m_preview(nullptr),
+          m_column_preview(nullptr),
           m_column_cover(nullptr),
+          m_horizontal_scroll_bar_parent(nullptr),
+          m_vertical_scroll_bar_parent(nullptr),
           m_current_index(-1),
           m_item_x_offset(0) {
       auto& header = m_table_view->get_header();
@@ -383,7 +387,7 @@ namespace {
     }
 
     void start_drag(int index) {
-      if(m_preview) {
+      if(m_column_preview) {
         return;
       }
       auto& header = m_table_view->get_header();
@@ -392,16 +396,36 @@ namespace {
       item->installEventFilter(this);
       m_column_cover = new ColumnCover(*m_table_view, index);
       m_column_cover->show();
-      m_preview = make_column_preview(*m_table_view, m_item_builder,
+      m_column_preview = make_column_preview(*m_table_view, m_item_builder,
         index, m_visual_to_logical[index]);
+      auto& horizontal_scroll_bar =
+        m_table_view->get_scroll_box().get_horizontal_scroll_bar();
+      auto horizontal_scroll_bar_position =
+        horizontal_scroll_bar.mapToGlobal(QPoint(0, 0));
+      if(horizontal_scroll_bar.isVisible()) {
+        m_horizontal_scroll_bar_parent = popup_scroll_bar(horizontal_scroll_bar);
+      }
+      auto& vertical_scroll_bar =
+        m_table_view->get_scroll_box().get_vertical_scroll_bar();
+      auto vertical_scroll_bar_position =
+        vertical_scroll_bar.mapToGlobal(QPoint(0, 0));
+      if(vertical_scroll_bar.isVisible()) {
+        m_vertical_scroll_bar_parent = popup_scroll_bar(vertical_scroll_bar);
+      }
+      vertical_scroll_bar.move(
+        vertical_scroll_bar.parentWidget()->mapFromGlobal(
+          vertical_scroll_bar_position));
+      horizontal_scroll_bar.move(
+        vertical_scroll_bar.parentWidget()->mapFromGlobal(
+          horizontal_scroll_bar_position));
       m_widths.assign(header.get_widths()->begin(), header.get_widths()->end());
       m_current_index = index;
     }
 
     void stop_drag() {
-      if(m_preview) {
-        delete m_preview;
-        m_preview = nullptr;
+      if(m_column_preview) {
+        delete m_column_preview;
+        m_column_preview = nullptr;
       }
       if(m_column_cover) {
         delete m_column_cover;
@@ -412,13 +436,25 @@ namespace {
         header.get_item(m_current_index)->removeEventFilter(this);
         m_current_index = -1;
       }
+      if(m_horizontal_scroll_bar_parent) {
+        restore_scroll_bar(
+          m_table_view->get_scroll_box().get_horizontal_scroll_bar(),
+          m_horizontal_scroll_bar_parent, 1, 0);
+        m_horizontal_scroll_bar_parent = nullptr;
+      }
+      if(m_vertical_scroll_bar_parent) {
+        restore_scroll_bar(
+          m_table_view->get_scroll_box().get_vertical_scroll_bar(),
+          m_vertical_scroll_bar_parent, 0, 1);
+        m_vertical_scroll_bar_parent = nullptr;
+      }
       m_widths.clear();
       header.releaseMouse();
       header.setCursor(Qt::OpenHandCursor);
     }
 
     void drag_move(const QMouseEvent& mouse_event) {
-      if(!m_preview) {
+      if(!m_column_preview) {
         return;
       }
       auto& header = m_table_view->get_header();
@@ -446,16 +482,31 @@ namespace {
         update_scroll(mouse_x);
       }
       auto x = std::max(0,
-        std::min(m_table_view->width() - m_preview->width(),
+        std::min(m_table_view->width() - m_column_preview->width(),
           m_table_view->mapFromGlobal(mouse_event.globalPos()).x()
             - m_item_x_offset));
-      m_preview->move(x, m_preview->y());
+      m_column_preview->move(x, m_column_preview->y());
+    }
+
+    QWidget* popup_scroll_bar(ScrollBar& scroll_bar) {
+      auto parent = scroll_bar.parentWidget();
+      auto layout = parent->layout();
+      layout->removeWidget(&scroll_bar);
+      scroll_bar.setParent(m_column_preview->parentWidget());
+      scroll_bar.show();
+      return parent;
+    }
+
+    void restore_scroll_bar(ScrollBar& scroll_bar, QWidget* original_parent,
+        int row, int column) {
+      static_cast<QGridLayout*>(original_parent->layout())->addWidget(
+        &scroll_bar, row, column);
     }
 
     void update_scroll(int mouse_x) {
       auto float_table_view_x = std::max(0, mouse_x - m_item_x_offset);
       auto float_table_view_right =
-        float_table_view_x + m_preview->width();
+        float_table_view_x + m_column_preview->width();
       auto& horizontal_scroll_bar =
         m_table_view->get_scroll_box().get_horizontal_scroll_bar();
       auto scroll_position = horizontal_scroll_bar.get_position();
