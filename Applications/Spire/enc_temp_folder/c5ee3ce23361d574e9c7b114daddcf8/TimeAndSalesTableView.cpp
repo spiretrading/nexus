@@ -322,6 +322,9 @@ namespace {
       if(watched == m_table_view->get_header().get_item(m_current_index) &&
           m_column_cover && event->type() == QEvent::Move) {
         update_cover_position();
+        //auto& item = *m_table_view->get_header().get_item(m_current_index);
+        //m_column_cover->move(m_table_view->mapFromGlobal(
+        //  item.mapToGlobal(QPoint(0, 0))).x(), 0);
       } else if(watched == &m_table_view->get_header()) {
         auto& header = m_table_view->get_header();
         if(event->type() == QEvent::MouseButtonPress) {
@@ -450,11 +453,14 @@ namespace {
       }
       if(m_column_cover) {
         update_cover_position();
+        //auto& item = *m_table_view->get_header().get_item(m_current_index);
+        //m_column_cover->move(m_table_view->mapFromGlobal(item.mapToGlobal(QPoint(0, 0))).x(), 0);
       }
     }
 
     void update_cover_position() {
       auto& item = *m_table_view->get_header().get_item(m_current_index);
+      //m_column_cover->move(m_table_view->mapFromGlobal(item.mapToGlobal(QPoint(0, 0))).x(), 0);
       m_column_cover->move(item.mapTo(m_table_view, QPoint(0, 0)).x(), 0);
     }
   };
@@ -572,8 +578,7 @@ TableView* Spire::make_time_and_sales_table_view(
     visit(operation,
       [=] (const ListModel<TableHeaderItem::Model>::MoveOperation& operation) {
         auto current_properties = properties->get();
-        current_properties.move_column(
-          static_cast<TimeAndSalesTableModel::Column>(operation.m_source),
+        current_properties.move_column(static_cast<TimeAndSalesTableModel::Column>(operation.m_source),
           static_cast<TimeAndSalesTableModel::Column>(operation.m_destination));
         properties->set(current_properties);
     });
