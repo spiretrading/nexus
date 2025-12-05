@@ -34,7 +34,7 @@ class Mode(Enum):
   MOE_OUT = 'out'
 
 def moe(service_clients, position, destination, mode):
-  directory_entry = service_clients.get_service_locator_client().find_account(
+  directory_entry = service_clients.service_locator_client.find_account(
     position.account)
   if directory_entry is None:
     return
@@ -46,7 +46,7 @@ def moe(service_clients, position, destination, mode):
     directory_entry, position.position.key.index,
     position.position.key.currency, side, destination,
     abs(position.position.quantity), price)
-  service_clients.get_order_execution_client().submit(fields)
+  service_clients.order_execution_client.submit(fields)
 
 def report_yaml_error(error):
   if hasattr(error, 'problem_mark'):
@@ -91,23 +91,23 @@ def main():
   username = section['username']
   password = section['password']
   service_clients = nexus.ServiceClients(username, password, address)
-  countries = service_clients.get_definitions_client().load_country_database()
-  venues = service_clients.get_definitions_client().load_venue_database()
+  countries = service_clients.definitions_client.load_country_database()
+  venues = service_clients.definitions_client.load_venue_database()
   if args.region is None:
     region = nexus.Region.GLOBAL
   else:
     region = nexus.parse_country_code(args.region, countries)
     if region == nexus.CountryCode.NONE:
       region = nexus.parse_venue(args.region, venues)
-      if region != '':
+      if region:
         region = venues.from_code(region)
       else:
         region = nexus.parse_security(args.region, venues)
     region = nexus.Region(region)
   positions = parse_positions(args.positions,
-    service_clients.get_definitions_client().load_currency_database())
+    service_clients.definitions_client.load_currency_database())
   destinations = \
-    service_clients.get_definitions_client().load_destination_database()
+    service_clients.definitions_client.load_destination_database()
   destination = destinations.manual_order_entry_destination.id
   for position in positions:
     if region.contains(nexus.Region(position.position.key.index)):

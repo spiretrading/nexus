@@ -42,16 +42,16 @@ def main():
   username = section['username']
   password = section['password']
   service_clients = nexus.ServiceClients(username, password, address)
-  countries = service_clients.get_definitions_client().load_country_database()
-  venues = service_clients.get_definitions_client().load_venue_database()
+  countries = service_clients.definitions_client.load_country_database()
+  venues = service_clients.definitions_client.load_venue_database()
   region = nexus.parse_country_code(args.region, countries)
   if region == nexus.CountryCode.NONE:
     region = nexus.parse_venue(args.region, venues)
-    if region != '':
+    if region:
       region = venues.from_code(region)
     else:
       region = nexus.parse_security(args.region, venues)
-  service_clients.get_risk_client().reset(nexus.Region(region))
+  service_clients.risk_client.reset(nexus.Region(region))
 
 if __name__ == '__main__':
   main()
