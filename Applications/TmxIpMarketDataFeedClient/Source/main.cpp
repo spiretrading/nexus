@@ -73,7 +73,7 @@ namespace {
       tmx_ip_config.m_is_logging_messages =
         extract<bool>(config, "enable_logging", false);
       tmx_ip_config.m_time_offset =
-        get_utc_offset(get_default_time_zone_database(), time_zone);
+        -get_utc_offset(get_default_time_zone_database(), time_zone);
       tmx_ip_config.m_is_time_and_sale_feed =
         extract<bool>(config, "is_time_and_sale", false);
       auto& venue = DEFAULT_VENUES.from(
