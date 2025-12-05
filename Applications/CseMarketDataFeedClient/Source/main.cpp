@@ -144,8 +144,8 @@ int main(int argc, const char** argv) {
     service_access_config.m_max_retransmission_block =
       extract<int>(config, "retransmission_block_size", 20000);
     auto cse_config = parse_configuration(config);
-    auto symbolList = extract<std::string>(config, "symbol_list");
-    auto securities = parse_security_info_list(symbolList);
+    auto symbol_list = extract<std::string>(config, "symbol_list");
+    auto securities = parse_security_info_list(symbol_list);
     for(auto& security : securities) {
       cse_config.m_securities.insert(security.m_security.get_symbol());
     }

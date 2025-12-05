@@ -103,14 +103,6 @@ int main(int argc, const char** argv) {
     }, std::runtime_error("Unable to join TMX TL1 multicast group."));
     auto feed_channel = ApplicationFeedChannel(
       &multicast_socket_channel, &multicast_socket_channel.get_reader());
-    auto retransmission_client_address =
-      extract<IpAddress>(config, "retransmission_request_address");
-    auto retransmission_server_address =
-      extract<IpAddress>(config, "retransmission_response_address");
-    auto retransmission_client_channel_builder =
-      [=] (Out<std::optional<TcpSocketChannel>> channel) {
-        channel->emplace(retransmission_client_address);
-      };
     auto tmx_tl1_config = parse_configuration(config);
     auto service_access_client =
       ApplicationTmxTl1ServiceAccessClient(&feed_channel);
