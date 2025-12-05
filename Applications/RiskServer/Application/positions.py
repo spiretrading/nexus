@@ -7,9 +7,9 @@ import nexus
 import yaml
 
 def report_positions(service_clients, account, venues, currencies, writer):
-  snapshot = service_clients.get_risk_client().load_inventory_snapshot(account)
+  snapshot = service_clients.risk_client.load_inventory_snapshot(account)
   portfolio, sequence, excluded_orders = nexus.make_portfolio(
-    snapshot, account, venues, service_clients.get_order_execution_client())
+    snapshot, account, venues, service_clients.order_execution_client)
   for order in excluded_orders:
     execution_reports = order.get_publisher().get_snapshot()
     if execution_reports is not None:
@@ -64,18 +64,17 @@ def main():
   csv_writer = csv.writer(sys.stdout, quoting=csv.QUOTE_NONNUMERIC)
   csv_writer.writerow(["Account", "Security", "Currency", "Side",
     "Open Quantity", "Cost Basis"])
-  venues = service_clients.get_definitions_client().load_venue_database()
-  currencies = service_clients.get_definitions_client().load_currency_database()
+  venues = service_clients.definitions_client.load_venue_database()
+  currencies = service_clients.definitions_client.load_currency_database()
   if args.account:
-    account = service_clients.get_service_locator_client().find_account(
+    account = service_clients.service_locator_client.find_account(
       args.account)
     if not account:
       print(f'Account {args.account} not found.')
       return
     report_positions(service_clients, account, venues, currencies, csv_writer)
   else:
-    for account in \
-        service_clients.get_service_locator_client().load_all_accounts():
+    for account in service_clients.service_locator_client.load_all_accounts():
       report_positions(service_clients, account, venues, currencies,
         csv_writer)
 

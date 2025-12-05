@@ -35,46 +35,46 @@ def parse_ip_address(source):
 def parse_region(service_clients, region):
   if region == '*':
     return nexus.Region.GLOBAL
-  market_database = \
-    service_clients.get_definitions_client().load_market_database()
-  countries = service_clients.get_definitions_client().load_country_database()
+  venue_database = \
+    service_clients.definitions_client.load_venue_database()
+  countries = service_clients.definitions_client.load_country_database()
   region = nexus.parse_country_code(region, countries)
   if region == nexus.CountryCode.NONE:
-    region = nexus.parse_market_code(region, market_database)
-    if region != '':
-      region = market_database.from_code(region)
+    region = nexus.parse_venue(region)
+    if region:
+      region = venue_database.from_code(region)
     else:
-      region = nexus.parse_security(region, market_database)
+      region = nexus.parse_security(region)
   return nexus.Region(region)
 
 def cancel_order(service_clients, order, message):
   execution_reports = order.get_publisher().get_snapshot()
   if len(execution_reports) == 0:
     pending_new_report = nexus.ExecutionReport(
-      order.info.order_id, service_clients.get_time_client().get_time())
-    service_clients.get_order_execution_client().update(
+      order.info.order_id, service_clients.time_client.get_time())
+    service_clients.order_execution_client.update(
       order.info.order_id, pending_new_report)
     execution_reports = [pending_new_report]
   if not nexus.is_terminal(execution_reports[-1].status):
     cancel_report = nexus.make_update(
       execution_reports[-1], nexus.OrderStatus.CANCELED,
-      service_clients.get_time_client().get_time())
+      service_clients.time_client.get_time())
     cancel_report.text = message
-    service_clients.get_order_execution_client().update(
+    service_clients.order_execution_client.update(
       order.info.order_id, cancel_report)
 
 def cancel_order_by_id(service_clients, order_id, message):
-  order = service_clients.get_order_execution_client().load_order(order_id)
+  order = service_clients.order_execution_client.load_order(order_id)
   cancel_order(service_clients, order, message)
 
 def cancel_account(service_clients, account, region, begin, end, message):
-  market_database = \
-    service_clients.get_definitions_client().load_market_database()
+  venue_database = \
+    service_clients.definitions_client.load_venue_database()
   time_zone_database = \
-    service_clients.get_definitions_client().load_time_zone_database()
+    service_clients.definitions_client.load_time_zone_database()
   queue = beam.Queue()
-  nexus.query_daily_order_submissions(account, begin, end, market_database,
-    time_zone_database, service_clients.get_order_execution_client(), queue)
+  nexus.query_daily_order_submissions(account, begin, end, venue_database,
+    time_zone_database, service_clients.order_execution_client, queue)
   orders = []
   beam.flush(queue, orders)
   for order in orders:
@@ -85,7 +85,7 @@ def cancel_region(service_clients, region, begin, end, message):
   count = 0
   routines = beam.RoutineHandlerGroup()
   for account in \
-      service_clients[0].get_service_locator_client().load_all_accounts():
+      service_clients[0].service_locator_client.load_all_accounts():
     if count == len(service_clients):
       count = 0
       routines.wait()
@@ -132,7 +132,7 @@ def main():
       region = parse_region(service_clients[0], args.region)
     else:
       region = nexus.Region.GLOBAL
-    account = service_clients[0].get_service_locator_client().find_account(
+    account = service_clients[0].service_locator_client.find_account(
       args.account)
     if not account:
       print('Account %s not found.' % args.account)
