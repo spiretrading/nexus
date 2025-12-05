@@ -254,6 +254,7 @@ namespace {
     auto effect = new QGraphicsOpacityEffect(table_view_preview);
     effect->setOpacity(0.5);
     table_view_preview->setGraphicsEffect(effect);
+    table_view_preview->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
     auto width = table_header.get_widths()->get(visual_index);
     auto& float_table_header = table_view_preview->get_header();
     float_table_header.get_widths()->set(0, width);
