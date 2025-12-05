@@ -91,6 +91,7 @@ namespace Nexus {
       AccountRoles load_account_roles(
         const Beam::DirectoryEntry& parent, const Beam::DirectoryEntry& child);
       bool check_administrator(const Beam::DirectoryEntry& account);
+      bool check_service(const Beam::DirectoryEntry& account);
       bool check_read_permission(
         const Beam::DirectoryEntry& parent, const Beam::DirectoryEntry& child);
       std::vector<Beam::DirectoryEntry> load_managed_trading_groups(
@@ -444,6 +445,16 @@ namespace Nexus {
     return std::ranges::contains(parents, m_administrators_root);
   }
 
+    template<typename C, typename S, typename D, typename R> requires
+    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+      IsAdministrationDataStore<Beam::dereference_t<D>> &&
+        Beam::IsTimeClient<Beam::dereference_t<R>>
+  bool AdministrationServlet<C, S, D, R>::check_service(
+      const Beam::DirectoryEntry& account) {
+    auto parents = m_service_locator_client->load_parents(account);
+    return std::ranges::contains(parents, m_services_root);
+  }
+
   template<typename C, typename S, typename D, typename R> requires
     Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
       IsAdministrationDataStore<Beam::dereference_t<D>> &&
@@ -453,7 +464,7 @@ namespace Nexus {
     if(parent == child) {
       return true;
     }
-    if(check_administrator(parent)) {
+    if(check_administrator(parent) || check_service(parent)) {
       return true;
     }
     auto trading_groups = load_managed_trading_groups(parent);
