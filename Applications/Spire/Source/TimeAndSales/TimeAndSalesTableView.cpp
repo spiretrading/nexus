@@ -350,7 +350,6 @@ namespace {
         if(event->type() == QEvent::MouseButtonPress) {
           auto& mouse_event = *static_cast<QMouseEvent*>(event);
           if(mouse_event.button() == Qt::LeftButton) {
-            header.setCursor(Qt::ClosedHandCursor);
             if(auto [is_found, index, item_left] = find_column_at_position(
                 header, *header.get_widths(), mouse_event.x());
                 is_found) {
@@ -391,6 +390,7 @@ namespace {
       if(m_column_preview) {
         return;
       }
+      QApplication::setOverrideCursor(Qt::ClosedHandCursor);
       auto& header = m_table_view->get_header();
       header.grabMouse();
       auto item = header.get_item(index);
@@ -451,7 +451,7 @@ namespace {
       }
       m_widths.clear();
       header.releaseMouse();
-      header.setCursor(Qt::OpenHandCursor);
+      QApplication::restoreOverrideCursor();
     }
 
     void drag_move(const QMouseEvent& mouse_event) {
