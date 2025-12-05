@@ -72,7 +72,7 @@ namespace {
       tmx_tl1_config.m_venue = venue.m_venue;
       tmx_tl1_config.m_country = venue.m_country_code;
       tmx_tl1_config.m_time_offset =
-        get_utc_offset(get_default_time_zone_database(), time_zone);
+        -get_utc_offset(get_default_time_zone_database(), time_zone);
       return tmx_tl1_config;
     }, std::runtime_error("Failed to parse TMX TL1 configuration."));
   }
