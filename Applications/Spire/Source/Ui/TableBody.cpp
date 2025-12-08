@@ -1651,6 +1651,8 @@ void TableBody::on_widths_operation(const ListModel<int>::Operation& operation) 
       }
       move_element(m_visual_to_logical_columns, operation.m_source,
         operation.m_destination);
+      move_element(m_column_covers, operation.m_source,
+        operation.m_destination);
       auto& layout = get_layout();
       for(auto i = 0; i < layout.count(); ++i) {
         layout.get_row(i).move_column(operation.m_source,

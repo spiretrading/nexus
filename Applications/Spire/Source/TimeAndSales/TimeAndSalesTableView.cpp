@@ -228,9 +228,6 @@ namespace {
       set_current(
         std::make_shared<ConstantValueModel<optional<TableIndex>>>(none)).
       make();
-    auto effect = new QGraphicsOpacityEffect(table_view_preview);
-    effect->setOpacity(0.5);
-    table_view_preview->setGraphicsEffect(effect);
     table_view_preview->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
     auto width = table_header.get_widths()->get(visual_index);
     auto& float_table_header = table_view_preview->get_header();
@@ -240,6 +237,9 @@ namespace {
     set_style(*float_table_header.get_item(0), get_style(*item));
     set_style(table_view_preview->get_body(), get_style(table_view.get_body()));
     auto preview = new Box(table_view_preview, table_view.window());
+    auto effect = new QGraphicsOpacityEffect(preview);
+    effect->setOpacity(0.5);
+    preview->setGraphicsEffect(effect);
     update_style(*preview, [] (auto& style) {
       style.get(Any()).
         set(BorderTopSize(scale_height(1))).
@@ -247,10 +247,10 @@ namespace {
         set(BorderRightSize(scale_width(1))).
         set(border_color(QColor(0x4B23A0)));
     });
+    preview->show();
     if(is_match(table_view, ShowGrid())) {
       match(*table_view_preview, ShowGrid());
     }
-    preview->show();
     auto& vertical_scroll_bar =
       table_view.get_scroll_box().get_vertical_scroll_bar();
     auto& float_vertical_scroll_bar =
@@ -282,13 +282,17 @@ namespace {
   }
 
   struct TableViewColumnMover : QObject {
+    using ColumnMoved = Signal<void(int source, int destination)>;
+    mutable ColumnMoved m_column_moved_signal;
     TableView* m_table_view;
     TableViewItemBuilder m_item_builder;
     QWidget* m_column_preview;
     QWidget* m_column_cover;
     QWidget* m_horizontal_scroll_bar_parent;
     QWidget* m_vertical_scroll_bar_parent;
+    int m_last_mouse_x;
     int m_left_padding;
+    int m_source_index;
     int m_current_index;
     int m_item_x_offset;
     std::vector<int> m_visual_to_logical;
@@ -303,7 +307,9 @@ namespace {
           m_column_cover(nullptr),
           m_horizontal_scroll_bar_parent(nullptr),
           m_vertical_scroll_bar_parent(nullptr),
+          m_last_mouse_x(0),
           m_left_padding(0),
+          m_source_index(-1),
           m_current_index(-1),
           m_item_x_offset(0) {
       auto& header = m_table_view->get_header();
@@ -312,6 +318,11 @@ namespace {
       m_visual_to_logical.resize(header.get_items()->get_size());
       std::iota(m_visual_to_logical.begin(), m_visual_to_logical.end(), 0);
       header.setCursor(Qt::OpenHandCursor);
+    }
+
+    connection connect_column_moved_signal(
+        const ColumnMoved::slot_type & slot) const {
+      return m_column_moved_signal.connect(slot);
     }
 
     bool eventFilter(QObject* watched, QEvent* event) override {
@@ -365,6 +376,7 @@ namespace {
       move_column_cover(index);
       m_column_preview = make_column_preview(*m_table_view, m_item_builder,
         index, m_visual_to_logical[index]);
+      m_column_preview->setAttribute(Qt::WA_TransparentForMouseEvents);
       m_column_preview->setFixedSize(m_column_cover->width() + scale_width(1),
         m_column_cover->height() + scale_height(1));
       auto position =
@@ -398,10 +410,13 @@ namespace {
             vertical_scroll_bar_position));
       }
       m_widths.assign(header.get_widths()->begin(), header.get_widths()->end());
+      m_source_index = index;
       m_current_index = index;
     }
 
     void stop_drag() {
+      QApplication::restoreOverrideCursor();
+      m_widths.clear();
       if(m_column_preview) {
         delete m_column_preview;
         m_column_preview = nullptr;
@@ -409,11 +424,6 @@ namespace {
       if(m_column_cover) {
         delete m_column_cover;
         m_column_cover = nullptr;
-      }
-      auto& header = m_table_view->get_header();
-      if(m_current_index >= 0) {
-        header.get_item(m_current_index)->removeEventFilter(this);
-        m_current_index = -1;
       }
       if(m_horizontal_scroll_bar_parent) {
         restore_scroll_bar(
@@ -427,19 +437,29 @@ namespace {
           m_vertical_scroll_bar_parent, 0, 1);
         m_vertical_scroll_bar_parent = nullptr;
       }
-      m_widths.clear();
+      auto& header = m_table_view->get_header();
       header.releaseMouse();
-      QApplication::restoreOverrideCursor();
+      if(m_current_index >= 0) {
+        header.get_item(m_current_index)->removeEventFilter(this);
+        m_column_moved_signal(m_source_index, m_current_index);
+        m_source_index = -1;
+        m_current_index = -1;
+      }
     }
 
     void drag_move(const QMouseEvent& mouse_event) {
       if(!m_column_preview) {
         return;
       }
-      auto& header = m_table_view->get_header();
+      if(m_last_mouse_x == mouse_event.pos().x()) {
+        return;
+      }
+      m_last_mouse_x = mouse_event.pos().x();
+      auto start = std::chrono::high_resolution_clock::now();
       auto& horizontal_scroll_bar =
         m_table_view->get_scroll_box().get_horizontal_scroll_bar();
       auto mouse_x = std::max(0, mouse_event.x());
+      auto& header = m_table_view->get_header();
       auto [is_found, index, item_left] =
         find_column_at_position(header, m_widths, mouse_x);
       auto should_move_column = [&] {
@@ -618,16 +638,12 @@ TableView* Spire::make_time_and_sales_table_view(
   auto pull_indicator = new PullIndicator(*table_view);
   auto stylist = new TableViewStylist(*table_view, properties);
   auto column_move = new TableViewColumnMover(*table_view, builder);
-  table_view->get_header().get_items()->connect_operation_signal(
-    [=] (const ListModel<TableHeaderItem::Model>::Operation& operation) {
-    visit(operation,
-      [=] (const ListModel<TableHeaderItem::Model>::MoveOperation& operation) {
-        auto current_properties = properties->get();
-        current_properties.move_column(
-          static_cast<TimeAndSalesTableModel::Column>(operation.m_source),
-          static_cast<TimeAndSalesTableModel::Column>(operation.m_destination));
-        properties->set(current_properties);
-    });
+  column_move->connect_column_moved_signal([=] (int source, int destination) {
+    auto current_properties = properties->get();
+    current_properties.move_column(
+      static_cast<TimeAndSalesTableModel::Column>(source),
+      static_cast<TimeAndSalesTableModel::Column>(destination));
+    properties->set(current_properties);
   });
   return table_view;
 }
