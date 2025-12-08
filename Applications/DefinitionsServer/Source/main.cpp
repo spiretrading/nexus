@@ -101,17 +101,16 @@ int main(int argc, const char** argv) {
       return stream.str();
     }();
     auto countries = parse_country_database(
-      get_node(require(load_file, extract<std::string>(
+      get_node(load_file(extract<std::string>(
         config, "countries", "countries.yml")), "countries"));
-    auto currencies = parse_currency_database(
-      get_node(require(load_file, extract<std::string>(
-        config, "currencies", "currencies.yml")), "currencies"));
-    auto venues = parse_venue_database(get_node(
-      require(load_file, extract<std::string>(config, "venues", "venues.yml")),
-      "venues"), countries, currencies);
-    auto destinations = parse_destination_database(
-      require(load_file, extract<std::string>(
-        config, "destinations", "destinations.yml")), venues);
+    auto currencies = parse_currency_database(get_node(load_file(
+      extract<std::string>(config, "currencies", "currencies.yml")),
+      "currencies"));
+    auto venues = parse_venue_database(get_node(load_file(extract<std::string>(
+      config, "venues", "venues.yml")), "venues"), countries, currencies);
+    auto destinations = parse_destination_database(load_file(
+      extract<std::string>(config, "destinations", "destinations.yml")),
+      venues);
     auto rates = parse_exchange_rates(get_node(config, "exchange_rates"));
     auto schemas = make_compliance_rule_schemas();
     auto schedule = TradingSchedule();
