@@ -26,7 +26,7 @@ def execute_report(start_date, end_date, currencies, venues, time_zones,
       orders = []
       beam.flush(order_queue, orders)
       for order in orders:
-        execution_reports = order.get_publisher().get_snapshot()
+        execution_reports = order.publisher.get_snapshot()
         for execution_report in execution_reports:
           account_portfolio.update(order.info.fields, execution_report)
           account_volumes[order.info.fields.currency.value] += \

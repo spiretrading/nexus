@@ -42,7 +42,7 @@ def execute_report(account, start_date, end_date, fee_table, service_clients):
       continue
     if order.info.fields.destination == nexus.default_destinations.MOE:
       continue
-    execution_reports = order.get_publisher().get_snapshot()
+    execution_reports = order.publisher.get_snapshot()
     for execution_report in execution_reports:
       calculated_fee = nexus.ExecutionReport(execution_report)
       calculated_fee.execution_fee = nexus.Money.ZERO

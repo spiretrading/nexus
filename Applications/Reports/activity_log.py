@@ -21,7 +21,7 @@ def execute_report(start_date, end_date, security, venue, account,
       if venue is not None and venue != order.info.fields.security.venue:
         continue
       orders.append(order)
-      execution_reports = order.get_publisher().get_snapshot()
+      execution_reports = order.publisher.get_snapshot()
       for execution_report in execution_reports:
         activity_log.append((order.info.fields, execution_report))
   else:

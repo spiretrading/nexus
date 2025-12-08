@@ -48,7 +48,7 @@ def parse_region(service_clients, region):
   return nexus.Region(region)
 
 def cancel_order(service_clients, order, message):
-  execution_reports = order.get_publisher().get_snapshot()
+  execution_reports = order.publisher.get_snapshot()
   if len(execution_reports) == 0:
     pending_new_report = nexus.ExecutionReport(
       order.info.order_id, service_clients.time_client.get_time())

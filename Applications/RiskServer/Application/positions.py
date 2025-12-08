@@ -11,7 +11,7 @@ def report_positions(service_clients, account, venues, currencies, writer):
   portfolio, sequence, excluded_orders = nexus.make_portfolio(
     snapshot, account, venues, service_clients.order_execution_client)
   for order in excluded_orders:
-    execution_reports = order.get_publisher().get_snapshot()
+    execution_reports = order.publisher.get_snapshot()
     if execution_reports is not None:
       for execution_report in execution_reports:
         portfolio.update(order.info.fields, execution_report)
