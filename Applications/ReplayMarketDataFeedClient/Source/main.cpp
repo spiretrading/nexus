@@ -43,7 +43,7 @@ namespace {
 
   auto parse_securities(const std::string& path, const VenueDatabase& venues) {
     return try_or_nest([&] {
-      auto config = require(load_file, path);
+      auto config = load_file(path);
       auto securities_node = get_node(config, "securities");
       auto securities = std::vector<Security>();
       for(auto item : securities_node) {
