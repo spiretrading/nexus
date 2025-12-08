@@ -42,7 +42,7 @@ namespace {
       chia_config.m_country = primary_venue_entry.m_country_code;
       chia_config.m_primary_venue = primary_venue_entry.m_venue;
       auto disseminating_venue_entry = DEFAULT_VENUES.from_display_name(
-        extract<std::string>(config, "disseminating_market"));
+        extract<std::string>(config, "disseminating_venue"));
       chia_config.m_disseminating_venue = disseminating_venue_entry.m_venue;
       chia_config.m_mpid = extract<std::string>(
         config, "mpid", disseminating_venue_entry.m_display_name);
