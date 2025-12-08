@@ -400,13 +400,13 @@ namespace Nexus {
   boost::optional<MarketDataRegistry::SyncSecurityEntry&>
       MarketDataRegistry::load(
         const Security& security, IsHistoricalDataStore auto& data_store) {
-    if(security.get_symbol().empty() || !security.get_venue()) {
+    auto sanitized_security = get_primary_listing(security);
+    if(!sanitized_security) {
       return boost::none;
     }
-    auto entry = m_security_entries.get_or_insert(security, [&] {
+    auto entry = m_security_entries.get_or_insert(sanitized_security, [&] {
       return std::make_shared<
         Beam::Remote<SyncSecurityEntry, Beam::Mutex>>([&] (auto& entry) {
-          auto sanitized_security = get_primary_listing(security);
           auto initial_sequences =
             load_initial_sequences(data_store, sanitized_security);
           auto& market_center =
