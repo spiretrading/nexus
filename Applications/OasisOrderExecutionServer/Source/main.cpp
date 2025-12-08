@@ -127,7 +127,7 @@ int main(int argc, const char** argv) {
     auto config = parse_command_line(argc, argv,
       "1.0-r" OASIS_ORDER_EXECUTION_SERVER_VERSION
       "\nCopyright (C) 2026 Spire Trading Inc.");
-    auto fee_table_config = require(load_file, "fee_table.yml");
+    auto fee_table_config = load_file("fee_table.yml");
     auto service_config = try_or_nest([&] {
       return ServiceConfiguration::parse(
         get_node(config, "server"), ORDER_EXECUTION_SERVICE_NAME);

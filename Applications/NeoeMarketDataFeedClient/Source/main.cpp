@@ -42,7 +42,7 @@ namespace {
 
   std::vector<SecurityInfo> parse_security_info_list(const std::string& path) {
     return try_or_nest([&] {
-      auto config = require(load_file, path);
+      auto config = load_file(path);
       auto securities = std::vector<SecurityInfo>();
       for(auto node : config) {
         auto symbol = extract<std::string>(node, "symbol");
