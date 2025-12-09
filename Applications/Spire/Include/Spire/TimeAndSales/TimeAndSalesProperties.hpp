@@ -70,6 +70,11 @@ namespace Spire {
        */
       void set_grid_enabled(bool is_enabled);
 
+      /**
+       * Moves a column from source to destination.
+       * @param source The index of the column to move.
+       * @param destination The index to move the column to.
+       */
       void move_column(TimeAndSalesTableModel::Column source,
         TimeAndSalesTableModel::Column destination);
 

@@ -9,7 +9,6 @@
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
-//#include "Spire/Spire/TranslatedListModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Styles/CompositeProperty.hpp"
@@ -209,7 +208,7 @@ namespace Styles {
       void on_style();
       void on_cover_style(Cover& cover);
       void on_table_operation(const TableModel::Operation& operation);
-      void on_widths_operation(const ListModel<int>::Operation& operation);
+      void on_widths_update(const ListModel<int>::Operation& operation);
       bool on_key_press(QWidget& target, QKeyEvent& event);
   };
 }

@@ -22,6 +22,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto DRAG_DROP_INDICATOR_COLOR = QColor(0x4B23A0);
+
   using IndicatorRow = StateSelector<BboIndicator, struct IndicatorRowTag>;
   using ShowGrid = StateSelector<void, struct ShowGridTag>;
 
@@ -42,12 +44,14 @@ namespace {
     return model;
   }
 
-  auto make_header_model(const ListModel<TableHeaderItem::Model>& model, int column) {
-    auto one_column_model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
-    one_column_model->push(model.get(column));
-    one_column_model->push({"", "", TableHeaderItem::Order::UNORDERED,
+  auto make_header_model(const ListModel<TableHeaderItem::Model>& model,
+      int column) {
+    auto column_model =
+      std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
+    column_model->push(model.get(column));
+    column_model->push({"", "", TableHeaderItem::Order::UNORDERED,
       TableFilter::Filter::NONE});
-    return one_column_model;
+    return column_model;
   }
 
   struct HeaderItemProperties {
@@ -154,10 +158,14 @@ namespace {
   struct ColumnViewTableModel : TableModel {
     std::shared_ptr<TableModel> m_source;
     int m_column;
+    TableModelTransactionLog m_transaction;
+    scoped_connection m_source_connection;
 
     ColumnViewTableModel(std::shared_ptr<TableModel> source, int column)
       : m_source(std::move(source)),
-        m_column(column) {}
+        m_column(column),
+        m_source_connection(m_source->connect_operation_signal(
+          std::bind_front(&ColumnViewTableModel::on_operation, this))) {}
 
     int get_row_size() const override {
       return m_source->get_row_size();
@@ -176,7 +184,21 @@ namespace {
 
     connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override {
-      return m_source->connect_operation_signal(slot);
+      return m_transaction.connect_operation_signal(slot);
+    }
+
+    void on_operation(const TableModel::Operation& operation) {
+      visit(operation,
+        [&] (const TableModel::UpdateOperation& operation) {
+          if(operation.m_column != m_column) {
+            return;
+          }
+          m_transaction.push(TableModel::UpdateOperation(operation.m_row, 0,
+            operation.m_previous, operation.m_value));
+        },
+        [&] (const auto& operation) {
+          m_transaction.push(operation);
+        });
     }
   };
 
@@ -201,13 +223,13 @@ namespace {
     }
   };
 
-  QWidget* make_column_cover(TableView& table_view, int index) {
-    auto cover = new Box(nullptr, &table_view);
+  QWidget* make_column_cover(QWidget& parent) {
+    auto cover = new Box(nullptr, &parent);
     update_style(*cover, [] (auto& style) {
       style.get(Any()).
         set(BackgroundColor(QColor(0xFFFFFF))).
         set(BorderLeftSize(scale_width(2))).
-        set(BorderLeftColor(QColor(0x4B23A0)));
+        set(BorderLeftColor(DRAG_DROP_INDICATOR_COLOR));
     });
     cover->show();
     return cover;
@@ -217,8 +239,6 @@ namespace {
       const TableViewItemBuilder& m_item_builder,
       int visual_index, int logical_index) {
     auto& table_header = table_view.get_header();
-    table_header.grabMouse();
-    auto item = table_header.get_item(visual_index);
     auto table_view_preview = TableViewBuilder(
       std::make_shared<ColumnViewTableModel>(
         table_view.get_table(), logical_index)).
@@ -229,24 +249,26 @@ namespace {
         std::make_shared<ConstantValueModel<optional<TableIndex>>>(none)).
       make();
     table_view_preview->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
-    auto width = table_header.get_widths()->get(visual_index);
     auto& float_table_header = table_view_preview->get_header();
-    float_table_header.get_widths()->set(0, width);
+    float_table_header.get_widths()->set(0,
+      table_header.get_widths()->get(visual_index));
     set_style(*table_view_preview, get_style(table_view));
     set_style(float_table_header, get_style(table_header));
-    set_style(*float_table_header.get_item(0), get_style(*item));
+    set_style(*float_table_header.get_item(0),
+      get_style(*table_header.get_item(visual_index)));
     set_style(table_view_preview->get_body(), get_style(table_view.get_body()));
     auto preview = new Box(table_view_preview, table_view.window());
-    auto effect = new QGraphicsOpacityEffect(preview);
-    effect->setOpacity(0.5);
-    preview->setGraphicsEffect(effect);
+    preview->setAttribute(Qt::WA_TransparentForMouseEvents);
     update_style(*preview, [] (auto& style) {
       style.get(Any()).
         set(BorderTopSize(scale_height(1))).
         set(BorderLeftSize(scale_width(1))).
         set(BorderRightSize(scale_width(1))).
-        set(border_color(QColor(0x4B23A0)));
+        set(border_color(DRAG_DROP_INDICATOR_COLOR));
     });
+    auto effect = new QGraphicsOpacityEffect(preview);
+    effect->setOpacity(0.5);
+    preview->setGraphicsEffect(effect);
     preview->show();
     if(is_match(table_view, ShowGrid())) {
       match(*table_view_preview, ShowGrid());
@@ -258,6 +280,21 @@ namespace {
     float_vertical_scroll_bar.set_range(vertical_scroll_bar.get_range());
     float_vertical_scroll_bar.set_position(vertical_scroll_bar.get_position());
     return preview;
+  }
+
+  QWidget* raise_scroll_bar(ScrollBar& scroll_bar, QWidget& new_parent) {
+    auto parent = scroll_bar.parentWidget();
+    auto layout = parent->layout();
+    layout->removeWidget(&scroll_bar);
+    scroll_bar.setParent(&new_parent);
+    scroll_bar.show();
+    return parent;
+  }
+
+  void restore_scroll_bar(ScrollBar& scroll_bar, QWidget* original_parent,
+      int row, int column) {
+    static_cast<QGridLayout*>(original_parent->layout())->addWidget(
+      &scroll_bar, row, column);
   }
 
   template <typename Widths>
@@ -294,7 +331,7 @@ namespace {
     int m_left_padding;
     int m_source_index;
     int m_current_index;
-    int m_item_x_offset;
+    int m_preview_x_offset;
     std::vector<int> m_visual_to_logical;
     std::vector<int> m_widths;
 
@@ -311,7 +348,7 @@ namespace {
           m_left_padding(0),
           m_source_index(-1),
           m_current_index(-1),
-          m_item_x_offset(0) {
+          m_preview_x_offset(0) {
       auto& header = m_table_view->get_header();
       header.setMouseTracking(true);
       header.installEventFilter(this);
@@ -330,16 +367,10 @@ namespace {
           m_column_cover && event->type() == QEvent::Move) {
         move_column_cover(m_current_index);
       } else if(watched == &m_table_view->get_header()) {
-        auto& header = m_table_view->get_header();
         if(event->type() == QEvent::MouseButtonPress) {
           auto& mouse_event = *static_cast<QMouseEvent*>(event);
           if(mouse_event.button() == Qt::LeftButton) {
-            if(auto [is_found, index, item_left] = find_column_at_position(
-                header, *header.get_widths(), mouse_event.x());
-                is_found) {
-              m_item_x_offset = mouse_event.x() - item_left;
-              start_drag(index);
-            }
+            start_drag(mouse_event);
           }
         } else if(event->type() == QEvent::MouseButtonRelease) {
           stop_drag();
@@ -350,12 +381,17 @@ namespace {
       return QObject::eventFilter(watched, event);
     }
 
-    void start_drag(int index) {
+    void start_drag(const QMouseEvent& mouse_event) {
       if(m_column_preview) {
         return;
       }
-      QApplication::setOverrideCursor(Qt::ClosedHandCursor);
       auto& header = m_table_view->get_header();
+      auto [is_found, index, _] = find_column_at_position(
+        header, *header.get_widths(), mouse_event.x());
+      if(!is_found) {
+        return;
+      }
+      QApplication::setOverrideCursor(Qt::ClosedHandCursor);
       header.grabMouse();
       auto& header_stylist = find_stylist(header);
       auto header_proxies = header_stylist.get_proxies();
@@ -367,49 +403,47 @@ namespace {
             });
           });
       }
-      auto item = header.get_item(index);
-      item->installEventFilter(this);
-      m_column_cover = make_column_cover(*m_table_view, index);
+      header.get_item(index)->installEventFilter(this);
+      auto& widths = header.get_widths();
+      m_widths.assign(widths->begin(), widths->end());
+      m_column_cover = make_column_cover(*m_table_view);
       m_column_cover->setFixedSize(
-        header.get_widths()->get(index) + m_left_padding,
-        m_table_view->height());
+        widths->get(index) + m_left_padding, m_table_view->height());
       move_column_cover(index);
       m_column_preview = make_column_preview(*m_table_view, m_item_builder,
         index, m_visual_to_logical[index]);
-      m_column_preview->setAttribute(Qt::WA_TransparentForMouseEvents);
       m_column_preview->setFixedSize(m_column_cover->width() + scale_width(1),
         m_column_cover->height() + scale_height(1));
-      auto position =
-        m_column_cover->mapTo(m_column_preview->parentWidget(), QPoint(0, 0));
+      auto parent = m_column_preview->parentWidget();
+      auto position = m_column_cover->mapTo(parent, QPoint(0, 0));
       m_column_preview->move(position.x() - scale_width(1),
         position.y() - scale_height(1));
       auto& horizontal_scroll_bar =
         m_table_view->get_scroll_box().get_horizontal_scroll_bar();
-      auto horizontal_scroll_bar_position =
+      auto original_horizontal_scroll_bar_position =
         horizontal_scroll_bar.mapToGlobal(QPoint(0, 0));
       if(horizontal_scroll_bar.isVisible()) {
         m_horizontal_scroll_bar_parent =
-          raise_scroll_bar(horizontal_scroll_bar);
+          raise_scroll_bar(horizontal_scroll_bar, *parent);
       }
       auto& vertical_scroll_bar =
         m_table_view->get_scroll_box().get_vertical_scroll_bar();
-      auto vertical_scroll_bar_position =
+      auto original_vertical_scroll_bar_position =
         vertical_scroll_bar.mapToGlobal(QPoint(0, 0));
       if(vertical_scroll_bar.isVisible()) {
         m_vertical_scroll_bar_parent =
-          raise_scroll_bar(vertical_scroll_bar);
+          raise_scroll_bar(vertical_scroll_bar, *parent);
       }
       if(horizontal_scroll_bar.isVisible()) {
         horizontal_scroll_bar.move(
-          vertical_scroll_bar.parentWidget()->mapFromGlobal(
-            horizontal_scroll_bar_position));
+          parent->mapFromGlobal(original_horizontal_scroll_bar_position));
       }
       if(vertical_scroll_bar.isVisible()) {
         vertical_scroll_bar.move(
-          vertical_scroll_bar.parentWidget()->mapFromGlobal(
-            vertical_scroll_bar_position));
+          parent->mapFromGlobal(original_vertical_scroll_bar_position));
       }
-      m_widths.assign(header.get_widths()->begin(), header.get_widths()->end());
+      m_preview_x_offset =
+        m_column_preview->mapFromGlobal(mouse_event.globalPos()).x();
       m_source_index = index;
       m_current_index = index;
     }
@@ -455,9 +489,6 @@ namespace {
         return;
       }
       m_last_mouse_x = mouse_event.pos().x();
-      auto start = std::chrono::high_resolution_clock::now();
-      auto& horizontal_scroll_bar =
-        m_table_view->get_scroll_box().get_horizontal_scroll_bar();
       auto mouse_x = std::max(0, mouse_event.x());
       auto& header = m_table_view->get_header();
       auto [is_found, index, item_left] =
@@ -467,7 +498,7 @@ namespace {
           if(index != m_current_index) {
             return true;
           }
-        } else if(mouse_x >= item_left) {
+        } else if(mouse_x >= item_left && index != m_current_index) {
           return true;
         }
         return false;
@@ -477,13 +508,16 @@ namespace {
         move_element(m_visual_to_logical, m_current_index, index);
         m_current_index = index;
       }
+      auto& horizontal_scroll_bar =
+        m_table_view->get_scroll_box().get_horizontal_scroll_bar();
       if(horizontal_scroll_bar.isVisible()) {
         update_scroll(mouse_x);
       }
-      auto x = std::max(0,
-        std::min(m_table_view->width() - m_column_preview->width(),
-          m_table_view->mapFromGlobal(mouse_event.globalPos()).x()
-            - m_item_x_offset));
+      auto x = std::max(m_table_view->x(),
+        std::min(
+          m_table_view->width() - m_column_preview->width() + scale_width(1),
+          m_column_preview->parentWidget()->mapFromGlobal(
+            mouse_event.globalPos()).x() - m_preview_x_offset));
       m_column_preview->move(x, m_column_preview->y());
     }
 
@@ -493,36 +527,20 @@ namespace {
         item.mapTo(m_table_view, QPoint(0, 0)).x() - m_left_padding, 0);
     }
 
-    QWidget* raise_scroll_bar(ScrollBar& scroll_bar) {
-      auto parent = scroll_bar.parentWidget();
-      auto layout = parent->layout();
-      layout->removeWidget(&scroll_bar);
-      scroll_bar.setParent(m_column_preview->parentWidget());
-      scroll_bar.show();
-      return parent;
-    }
-
-    void restore_scroll_bar(ScrollBar& scroll_bar, QWidget* original_parent,
-        int row, int column) {
-      static_cast<QGridLayout*>(original_parent->layout())->addWidget(
-        &scroll_bar, row, column);
-    }
-
     void update_scroll(int mouse_x) {
-      auto float_table_view_x = std::max(0, mouse_x - m_item_x_offset);
-      auto float_table_view_right =
-        float_table_view_x + m_column_preview->width();
+      auto preview_x = std::max(0, mouse_x - m_preview_x_offset);
+      auto preview_right = preview_x + m_column_preview->width();
       auto& horizontal_scroll_bar =
         m_table_view->get_scroll_box().get_horizontal_scroll_bar();
       auto scroll_position = horizontal_scroll_bar.get_position();
       auto scroll_right =
         scroll_position + horizontal_scroll_bar.get_page_size();
-      if(float_table_view_x < scroll_position) {
-        horizontal_scroll_bar.set_position(float_table_view_x);
-      } else if(float_table_view_right >= scroll_right) {
+      if(preview_x < scroll_position) {
+        horizontal_scroll_bar.set_position(preview_x);
+      } else if(preview_right >= scroll_right) {
         horizontal_scroll_bar.set_position(std::min(
             horizontal_scroll_bar.get_range().m_end,
-            float_table_view_right - horizontal_scroll_bar.get_page_size()));
+            preview_right - horizontal_scroll_bar.get_page_size()));
       }
       if(m_column_cover) {
         move_column_cover(m_current_index);

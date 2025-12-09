@@ -674,7 +674,7 @@ TableBody::TableBody(
   m_selection_connection = m_selection_controller.connect_row_operation_signal(
     std::bind_front(&TableBody::on_row_selection, this));
   m_widths_connection = m_widths->connect_operation_signal(
-    std::bind_front(&TableBody::on_widths_operation, this));
+    std::bind_front(&TableBody::on_widths_update, this));
   m_key_observer.connect_filtered_key_press_signal(
     std::bind_front(&TableBody::on_key_press, this));
 }
@@ -1619,7 +1619,7 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
   }
 }
 
-void TableBody::on_widths_operation(const ListModel<int>::Operation& operation) {
+void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<int>::UpdateOperation& operation) {
       auto spacing = get_left_spacing(operation.m_index);

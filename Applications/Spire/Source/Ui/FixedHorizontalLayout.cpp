@@ -9,6 +9,11 @@ FixedHorizontalLayout::FixedHorizontalLayout(QWidget* parent)
   setContentsMargins({});
 }
 
+void FixedHorizontalLayout::move(int source, int destination) {
+  move_element(m_items, source, destination);
+  update();
+}
+
 void FixedHorizontalLayout::addItem(QLayoutItem* item) {
   m_items.emplace_back(item);
   invalidate();
@@ -77,9 +82,4 @@ void FixedHorizontalLayout::invalidate() {
   for(auto& item : m_items) {
     item->invalidate();
   }
-}
-
-void FixedHorizontalLayout::move(int source, int destination) {
-  move_element(m_items, source, destination);
-  update();
 }
