@@ -282,6 +282,7 @@ void TableHeaderItem::mouseReleaseEvent(QMouseEvent* event) {
   } else if(order == Order::ASCENDING) {
     m_sort_signal(Order::DESCENDING);
   }
+  QWidget::mouseReleaseEvent(event);
 }
 
 void TableHeaderItem::on_update(const Model& model) {
