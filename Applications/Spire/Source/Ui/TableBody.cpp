@@ -381,7 +381,7 @@ struct TableBody::Layout : QLayout {
     activate();
     auto additional_rows = size - get_top_index() - count();
     auto& styles = static_cast<TableBody*>(parent())->m_styles;
-    auto total_height = itemAt(count() - 1)->geometry().bottom() +
+    auto total_height = itemAt(count() - 1)->geometry().bottom() + 1 +
       styles.m_vertical_spacing - count() * styles.m_vertical_spacing;
     auto row_height = total_height / count();
     for(auto i = 0; i != additional_rows; ++i) {
