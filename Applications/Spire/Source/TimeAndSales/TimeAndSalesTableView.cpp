@@ -511,7 +511,10 @@ namespace {
       auto& horizontal_scroll_bar =
         m_table_view->get_scroll_box().get_horizontal_scroll_bar();
       if(horizontal_scroll_bar.isVisible()) {
-        update_scroll(mouse_x);
+        update_horizontal_scroll_position(mouse_x);
+        if(m_column_cover) {
+          move_column_cover(m_current_index);
+        }
       }
       auto x = std::max(m_table_view->x(),
         std::min(
@@ -527,7 +530,7 @@ namespace {
         item.mapTo(m_table_view, QPoint(0, 0)).x() - m_left_padding, 0);
     }
 
-    void update_scroll(int mouse_x) {
+    void update_horizontal_scroll_position(int mouse_x) {
       auto preview_x = std::max(0, mouse_x - m_preview_x_offset);
       auto preview_right = preview_x + m_column_preview->width();
       auto& horizontal_scroll_bar =
@@ -541,9 +544,6 @@ namespace {
         horizontal_scroll_bar.set_position(std::min(
             horizontal_scroll_bar.get_range().m_end,
             preview_right - horizontal_scroll_bar.get_page_size()));
-      }
-      if(m_column_cover) {
-        move_column_cover(m_current_index);
       }
     }
   };
