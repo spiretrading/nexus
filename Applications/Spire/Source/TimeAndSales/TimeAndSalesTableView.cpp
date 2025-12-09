@@ -655,8 +655,8 @@ TableView* Spire::make_time_and_sales_table_view(
   make_header_menu(*table_view, properties);
   auto pull_indicator = new PullIndicator(*table_view);
   auto stylist = new TableViewStylist(*table_view, properties);
-  auto column_move = new TableViewColumnMover(*table_view, builder);
-  column_move->connect_column_moved_signal([=] (int source, int destination) {
+  auto column_mover = new TableViewColumnMover(*table_view, builder);
+  column_mover->connect_column_moved_signal([=] (int source, int destination) {
     auto current_properties = properties->get();
     current_properties.move_column(
       static_cast<TimeAndSalesTableModel::Column>(source),
