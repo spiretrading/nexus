@@ -2,7 +2,6 @@
 #define NEXUS_PYTHON_ORDER_EXECUTION_CLIENT_HPP
 #include <type_traits>
 #include <utility>
-#include <Beam/Python/GilRelease.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 
@@ -33,18 +32,6 @@ namespace Nexus {
 
       /** Returns a reference to the underlying client. */
       const Client& get() const;
-
-      /** Returns a reference to the underlying client. */
-      Client& operator *();
-
-      /** Returns a reference to the underlying client. */
-      const Client& operator *() const;
-
-      /** Returns a pointer to the underlying client. */
-      Client* operator ->();
-
-      /** Returns a pointer to the underlying client. */
-      const Client* operator ->() const;
 
       std::shared_ptr<Order> load_order(OrderId id);
       void query(const AccountQuery& query,
@@ -100,30 +87,6 @@ namespace Nexus {
   const typename ToPythonOrderExecutionClient<C>::Client&
       ToPythonOrderExecutionClient<C>::get() const {
     return *m_client;
-  }
-
-  template<IsOrderExecutionClient C>
-  typename ToPythonOrderExecutionClient<C>::Client&
-      ToPythonOrderExecutionClient<C>::operator *() {
-    return *m_client;
-  }
-
-  template<IsOrderExecutionClient C>
-  const typename ToPythonOrderExecutionClient<C>::Client&
-      ToPythonOrderExecutionClient<C>::operator *() const {
-    return *m_client;
-  }
-
-  template<IsOrderExecutionClient C>
-  typename ToPythonOrderExecutionClient<C>::Client*
-      ToPythonOrderExecutionClient<C>::operator ->() {
-    return m_client.get_ptr();
-  }
-
-  template<IsOrderExecutionClient C>
-  const typename ToPythonOrderExecutionClient<C>::Client*
-      ToPythonOrderExecutionClient<C>::operator ->() const {
-    return m_client.get_ptr();
   }
 
   template<IsOrderExecutionClient C>

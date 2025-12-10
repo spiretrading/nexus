@@ -79,7 +79,7 @@ void Nexus::Python::export_compliance_application_definitions(module& module) {
       [] (ToPythonServiceLocatorClient<ApplicationServiceLocatorClient>&
           client) {
         return std::make_unique<ToPythonComplianceClient<
-          ApplicationComplianceClient>>(Ref(*client));
+          ApplicationComplianceClient>>(Ref(client.get()));
       }), keep_alive<1, 2>());
 }
 

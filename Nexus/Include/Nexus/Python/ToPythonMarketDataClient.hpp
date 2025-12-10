@@ -2,7 +2,6 @@
 #define NEXUS_PYTHON_MARKET_DATA_CLIENT_HPP
 #include <type_traits>
 #include <utility>
-#include <Beam/Python/GilRelease.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 
@@ -33,18 +32,6 @@ namespace Nexus {
 
       /** Returns a reference to the underlying client. */
       const Client& get() const;
-
-      /** Returns a reference to the underlying client. */
-      Client& operator *();
-
-      /** Returns a reference to the underlying client. */
-      const Client& operator *() const;
-
-      /** Returns a pointer to the underlying client. */
-      Client* operator ->();
-
-      /** Returns a pointer to the underlying client. */
-      const Client* operator ->() const;
 
       void query(const VenueMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedOrderImbalance> queue);
@@ -103,30 +90,6 @@ namespace Nexus {
   const typename ToPythonMarketDataClient<C>::Client&
       ToPythonMarketDataClient<C>::get() const {
     return *m_client;
-  }
-
-  template<IsMarketDataClient C>
-  typename ToPythonMarketDataClient<C>::Client&
-      ToPythonMarketDataClient<C>::operator *() {
-    return *m_client;
-  }
-
-  template<IsMarketDataClient C>
-  const typename ToPythonMarketDataClient<C>::Client&
-      ToPythonMarketDataClient<C>::operator *() const {
-    return *m_client;
-  }
-
-  template<IsMarketDataClient C>
-  typename ToPythonMarketDataClient<C>::Client*
-      ToPythonMarketDataClient<C>::operator ->() {
-    return m_client.get_ptr();
-  }
-
-  template<IsMarketDataClient C>
-  const typename ToPythonMarketDataClient<C>::Client*
-      ToPythonMarketDataClient<C>::operator ->() const {
-    return m_client.get_ptr();
   }
 
   template<IsMarketDataClient C>

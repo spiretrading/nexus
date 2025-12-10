@@ -2,7 +2,6 @@
 #define NEXUS_PYTHON_MARKET_DATA_FEED_CLIENT_HPP
 #include <type_traits>
 #include <utility>
-#include <Beam/Python/GilRelease.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 
@@ -33,18 +32,6 @@ namespace Nexus {
 
       /** Returns a reference to the underlying client. */
       const Client& get() const;
-
-      /** Returns a reference to the underlying client. */
-      Client& operator *();
-
-      /** Returns a reference to the underlying client. */
-      const Client& operator *() const;
-
-      /** Returns a pointer to the underlying client. */
-      Client* operator ->();
-
-      /** Returns a pointer to the underlying client. */
-      const Client* operator ->() const;
 
       void add(const SecurityInfo& info);
       void publish(const VenueOrderImbalance& imbalance);
@@ -100,30 +87,6 @@ namespace Nexus {
   const typename ToPythonMarketDataFeedClient<C>::Client&
       ToPythonMarketDataFeedClient<C>::get() const {
     return *m_client;
-  }
-
-  template<IsMarketDataFeedClient C>
-  typename ToPythonMarketDataFeedClient<C>::Client&
-      ToPythonMarketDataFeedClient<C>::operator *() {
-    return *m_client;
-  }
-
-  template<IsMarketDataFeedClient C>
-  const typename ToPythonMarketDataFeedClient<C>::Client&
-      ToPythonMarketDataFeedClient<C>::operator *() const {
-    return *m_client;
-  }
-
-  template<IsMarketDataFeedClient C>
-  typename ToPythonMarketDataFeedClient<C>::Client*
-      ToPythonMarketDataFeedClient<C>::operator ->() {
-    return m_client.get_ptr();
-  }
-
-  template<IsMarketDataFeedClient C>
-  const typename ToPythonMarketDataFeedClient<C>::Client*
-      ToPythonMarketDataFeedClient<C>::operator ->() const {
-    return m_client.get_ptr();
   }
 
   template<IsMarketDataFeedClient C>

@@ -2,7 +2,6 @@
 #define NEXUS_PYTHON_DEFINITIONS_CLIENT_HPP
 #include <type_traits>
 #include <utility>
-#include <Beam/Python/GilRelease.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/DefinitionsService/DefinitionsClient.hpp"
 
@@ -33,18 +32,6 @@ namespace Nexus {
 
       /** Returns a reference to the underlying client. */
       const Client& get() const;
-
-      /** Returns a reference to the underlying client. */
-      Client& operator *();
-
-      /** Returns a reference to the underlying client. */
-      const Client& operator *() const;
-
-      /** Returns a pointer to the underlying client. */
-      Client* operator ->();
-
-      /** Returns a pointer to the underlying client. */
-      const Client* operator ->() const;
 
       std::string load_minimum_spire_client_version();
       std::string load_organization_name();
@@ -92,30 +79,6 @@ namespace Nexus {
   const typename ToPythonDefinitionsClient<C>::Client&
       ToPythonDefinitionsClient<C>::get() const {
     return *m_client;
-  }
-
-  template<IsDefinitionsClient C>
-  typename ToPythonDefinitionsClient<C>::Client&
-      ToPythonDefinitionsClient<C>::operator *() {
-    return *m_client;
-  }
-
-  template<IsDefinitionsClient C>
-  const typename ToPythonDefinitionsClient<C>::Client&
-      ToPythonDefinitionsClient<C>::operator *() const {
-    return *m_client;
-  }
-
-  template<IsDefinitionsClient C>
-  typename ToPythonDefinitionsClient<C>::Client*
-      ToPythonDefinitionsClient<C>::operator ->() {
-    return m_client.get_ptr();
-  }
-
-  template<IsDefinitionsClient C>
-  const typename ToPythonDefinitionsClient<C>::Client*
-      ToPythonDefinitionsClient<C>::operator ->() const {
-    return m_client.get_ptr();
   }
 
   template<IsDefinitionsClient C>

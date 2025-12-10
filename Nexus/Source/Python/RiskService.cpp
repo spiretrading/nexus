@@ -105,7 +105,7 @@ void Nexus::Python::export_risk_service_application_definitions(
     def(pybind11::init([] (
         ToPythonServiceLocatorClient<ApplicationServiceLocatorClient>& client) {
       return std::make_unique<ToPythonRiskClient<ApplicationRiskClient>>(
-        Ref(*client));
+        Ref(client.get()));
     }), keep_alive<1, 2>());
 }
 

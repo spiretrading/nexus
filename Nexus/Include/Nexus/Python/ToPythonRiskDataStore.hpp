@@ -2,7 +2,6 @@
 #define NEXUS_PYTHON_RISK_DATA_STORE_HPP
 #include <type_traits>
 #include <utility>
-#include <Beam/Python/GilRelease.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/RiskService/RiskDataStore.hpp"
 
@@ -33,18 +32,6 @@ namespace Nexus {
 
       /** Returns a reference to the underlying data store. */
       const DataStore& get() const;
-
-      /** Returns a reference to the underlying data store. */
-      DataStore& operator *();
-
-      /** Returns a reference to the underlying data store. */
-      const DataStore& operator *() const;
-
-      /** Returns a pointer to the underlying data store. */
-      DataStore* operator ->();
-
-      /** Returns a pointer to the underlying data store. */
-      const DataStore* operator ->() const;
 
       InventorySnapshot load_inventory_snapshot(
         const Beam::DirectoryEntry& account);
@@ -82,30 +69,6 @@ namespace Nexus {
   const typename ToPythonRiskDataStore<D>::DataStore&
       ToPythonRiskDataStore<D>::get() const {
     return *m_data_store;
-  }
-
-  template<IsRiskDataStore D>
-  typename ToPythonRiskDataStore<D>::DataStore&
-      ToPythonRiskDataStore<D>::operator *() {
-    return *m_data_store;
-  }
-
-  template<IsRiskDataStore D>
-  const typename ToPythonRiskDataStore<D>::DataStore&
-      ToPythonRiskDataStore<D>::operator *() const {
-    return *m_data_store;
-  }
-
-  template<IsRiskDataStore D>
-  typename ToPythonRiskDataStore<D>::DataStore*
-      ToPythonRiskDataStore<D>::operator ->() {
-    return m_data_store.get_ptr();
-  }
-
-  template<IsRiskDataStore D>
-  const typename ToPythonRiskDataStore<D>::DataStore*
-      ToPythonRiskDataStore<D>::operator ->() const {
-    return m_data_store.get_ptr();
   }
 
   template<IsRiskDataStore D>

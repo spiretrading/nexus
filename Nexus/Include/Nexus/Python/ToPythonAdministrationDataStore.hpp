@@ -2,7 +2,6 @@
 #define NEXUS_TO_PYTHON_ADMINISTRATION_DATA_STORE_HPP
 #include <type_traits>
 #include <utility>
-#include <Beam/Python/GilRelease.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 
@@ -33,18 +32,6 @@ namespace Nexus {
 
       /** Returns a reference to the underlying data store. */
       const DataStore& get() const;
-
-      /** Returns a reference to the underlying data store. */
-      DataStore& operator *();
-
-      /** Returns a reference to the underlying data store. */
-      const DataStore& operator *() const;
-
-      /** Returns a pointer to the underlying data store. */
-      DataStore* operator ->();
-
-      /** Returns a pointer to the underlying data store. */
-      const DataStore* operator ->() const;
 
       std::vector<AdministrationDataStore::IndexedAccountIdentity>
         load_all_account_identities();
@@ -127,30 +114,6 @@ namespace Nexus {
   const typename ToPythonAdministrationDataStore<D>::DataStore&
       ToPythonAdministrationDataStore<D>::get() const {
     return *m_data_store;
-  }
-
-  template<IsAdministrationDataStore D>
-  typename ToPythonAdministrationDataStore<D>::DataStore&
-      ToPythonAdministrationDataStore<D>::operator *() {
-    return *m_data_store;
-  }
-
-  template<IsAdministrationDataStore D>
-  const typename ToPythonAdministrationDataStore<D>::DataStore&
-      ToPythonAdministrationDataStore<D>::operator *() const {
-    return *m_data_store;
-  }
-
-  template<IsAdministrationDataStore D>
-  typename ToPythonAdministrationDataStore<D>::DataStore*
-      ToPythonAdministrationDataStore<D>::operator ->() {
-    return m_data_store.get_ptr();
-  }
-
-  template<IsAdministrationDataStore D>
-  const typename ToPythonAdministrationDataStore<D>::DataStore*
-      ToPythonAdministrationDataStore<D>::operator ->() const {
-    return m_data_store.get_ptr();
   }
 
   template<IsAdministrationDataStore D>

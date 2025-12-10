@@ -38,7 +38,7 @@ void Nexus::Python::export_charting_service_application_definitions(
       [] (ToPythonServiceLocatorClient<ApplicationServiceLocatorClient>&
           client) {
         return std::make_unique<ToPythonChartingClient<
-          ApplicationChartingClient>>(Ref(*client));
+          ApplicationChartingClient>>(Ref(client.get()));
       }), keep_alive<1, 2>());
 }
 
@@ -54,7 +54,7 @@ void Nexus::Python::export_charting_service_test_environment(module& module) {
         return ToPythonChartingClient(self.make_client(Ref(client)));
       }, call_guard<GilRelease>(), keep_alive<0, 2>()).
     def("close", &ChartingServiceTestEnvironment::close,
-      call_guard<gil_scoped_release>());
+      call_guard<GilRelease>());
 }
 
 void Nexus::Python::export_security_charting_query(module& module) {

@@ -2,7 +2,6 @@
 #define NEXUS_PYTHON_HISTORICAL_DATA_STORE_HPP
 #include <type_traits>
 #include <utility>
-#include <Beam/Python/GilRelease.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 
@@ -33,18 +32,6 @@ namespace Nexus {
 
       /** Returns a reference to the underlying data store. */
       const DataStore& get() const;
-
-      /** Returns a reference to the underlying data store. */
-      DataStore& operator *();
-
-      /** Returns a reference to the underlying data store. */
-      const DataStore& operator *() const;
-
-      /** Returns a pointer to the underlying data store. */
-      DataStore* operator ->();
-
-      /** Returns a pointer to the underlying data store. */
-      const DataStore* operator ->() const;
 
       std::vector<SecurityInfo> load_security_info(
         const SecurityInfoQuery& query);
@@ -102,30 +89,6 @@ namespace Nexus {
   const typename ToPythonHistoricalDataStore<D>::DataStore&
       ToPythonHistoricalDataStore<D>::get() const {
     return *m_data_store;
-  }
-
-  template<IsHistoricalDataStore D>
-  typename ToPythonHistoricalDataStore<D>::DataStore&
-      ToPythonHistoricalDataStore<D>::operator *() {
-    return *m_data_store;
-  }
-
-  template<IsHistoricalDataStore D>
-  const typename ToPythonHistoricalDataStore<D>::DataStore&
-      ToPythonHistoricalDataStore<D>::operator *() const {
-    return *m_data_store;
-  }
-
-  template<IsHistoricalDataStore D>
-  typename ToPythonHistoricalDataStore<D>::DataStore*
-      ToPythonHistoricalDataStore<D>::operator ->() {
-    return m_data_store.get_ptr();
-  }
-
-  template<IsHistoricalDataStore D>
-  const typename ToPythonHistoricalDataStore<D>::DataStore*
-      ToPythonHistoricalDataStore<D>::operator ->() const {
-    return m_data_store.get_ptr();
   }
 
   template<IsHistoricalDataStore D>

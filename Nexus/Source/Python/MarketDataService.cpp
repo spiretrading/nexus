@@ -120,16 +120,16 @@ void Nexus::Python::export_local_historical_data_store(module& module) {
   export_historical_data_store<DataStore>(module, "LocalHistoricalDataStore").
     def(init()).
     def("load_all_order_imbalances", [] (DataStore& self) {
-      return self->load_order_imbalances();
+      return self.get().load_order_imbalances();
     }, call_guard<GilRelease>()).
     def("load_all_bbo_quotes", [] (DataStore& self) {
-      return self->load_bbo_quotes();
+      return self.get().load_bbo_quotes();
     }, call_guard<GilRelease>()).
     def("load_all_book_quotes", [] (DataStore& self) {
-      return self->load_book_quotes();
+      return self.get().load_book_quotes();
     }, call_guard<GilRelease>()).
     def("load_all_time_and_sales", [] (DataStore& self) {
-      return self->load_time_and_sales();
+      return self.get().load_time_and_sales();
     }, call_guard<GilRelease>());
 }
 
@@ -234,7 +234,7 @@ void Nexus::Python::export_market_data_service_application_definitions(
       [] (ToPythonServiceLocatorClient<ApplicationServiceLocatorClient>&
           client) {
         return std::make_unique<ToPythonMarketDataClient<
-          ApplicationMarketDataClient>>(Ref(*client));
+          ApplicationMarketDataClient>>(Ref(client.get()));
       }), keep_alive<1, 2>());
   export_market_data_feed_client<
     ToPythonMarketDataFeedClient<ApplicationMarketDataFeedClient>>(
@@ -244,13 +244,13 @@ void Nexus::Python::export_market_data_service_application_definitions(
           boost::posix_time::time_duration sampling_time, CountryCode country) {
         return std::make_unique<ToPythonMarketDataFeedClient<
           ApplicationMarketDataFeedClient>>(
-            Ref(*client), sampling_time, country);
+            Ref(client.get()), sampling_time, country);
       }), keep_alive<1, 2>()).
     def(init(
       [] (ToPythonServiceLocatorClient<ApplicationServiceLocatorClient>& client,
           boost::posix_time::time_duration sampling_time) {
         return std::make_unique<ToPythonMarketDataFeedClient<
-          ApplicationMarketDataFeedClient>>(Ref(*client), sampling_time);
+          ApplicationMarketDataFeedClient>>(Ref(client.get()), sampling_time);
       }), keep_alive<1, 2>());
 }
 

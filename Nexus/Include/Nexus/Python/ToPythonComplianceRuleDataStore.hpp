@@ -2,7 +2,6 @@
 #define NEXUS_TO_PYTHON_COMPLIANCE_RULE_DATA_STORE_HPP
 #include <type_traits>
 #include <utility>
-#include <Beam/Python/GilRelease.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Compliance/ComplianceRuleDataStore.hpp"
 
@@ -33,18 +32,6 @@ namespace Nexus {
 
       /** Returns a reference to the underlying data store. */
       const DataStore& get() const;
-
-      /** Returns a reference to the underlying data store. */
-      DataStore& operator *();
-
-      /** Returns a reference to the underlying data store. */
-      const DataStore& operator *() const;
-
-      /** Returns a pointer to the underlying data store. */
-      DataStore* operator ->();
-
-      /** Returns a pointer to the underlying data store. */
-      const DataStore* operator ->() const;
 
       std::vector<ComplianceRuleEntry> load_all_compliance_rule_entries();
       ComplianceRuleEntry::Id load_next_compliance_rule_entry_id();
@@ -93,30 +80,6 @@ namespace Nexus {
   const typename ToPythonComplianceRuleDataStore<D>::DataStore&
       ToPythonComplianceRuleDataStore<D>::get() const {
     return *m_data_store;
-  }
-
-  template<IsComplianceRuleDataStore D>
-  typename ToPythonComplianceRuleDataStore<D>::DataStore&
-      ToPythonComplianceRuleDataStore<D>::operator *() {
-    return *m_data_store;
-  }
-
-  template<IsComplianceRuleDataStore D>
-  const typename ToPythonComplianceRuleDataStore<D>::DataStore&
-      ToPythonComplianceRuleDataStore<D>::operator *() const {
-    return *m_data_store;
-  }
-
-  template<IsComplianceRuleDataStore D>
-  typename ToPythonComplianceRuleDataStore<D>::DataStore*
-      ToPythonComplianceRuleDataStore<D>::operator ->() {
-    return m_data_store.get_ptr();
-  }
-
-  template<IsComplianceRuleDataStore D>
-  const typename ToPythonComplianceRuleDataStore<D>::DataStore*
-      ToPythonComplianceRuleDataStore<D>::operator ->() const {
-    return m_data_store.get_ptr();
   }
 
   template<IsComplianceRuleDataStore D>

@@ -2,7 +2,6 @@
 #define NEXUS_PYTHON_RISK_CLIENT_HPP
 #include <type_traits>
 #include <utility>
-#include <Beam/Python/GilRelease.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/RiskService/RiskClient.hpp"
 
@@ -33,18 +32,6 @@ namespace Nexus {
 
       /** Returns a reference to the underlying client. */
       const Client& get() const;
-
-      /** Returns a reference to the underlying client. */
-      Client& operator *();
-
-      /** Returns a reference to the underlying client. */
-      const Client& operator *() const;
-
-      /** Returns a pointer to the underlying client. */
-      Client* operator ->();
-
-      /** Returns a pointer to the underlying client. */
-      const Client* operator ->() const;
 
       InventorySnapshot load_inventory_snapshot(
         const Beam::DirectoryEntry& account);
@@ -84,28 +71,6 @@ namespace Nexus {
   const typename ToPythonRiskClient<C>::Client&
       ToPythonRiskClient<C>::get() const {
     return *m_client;
-  }
-
-  template<IsRiskClient C>
-  typename ToPythonRiskClient<C>::Client& ToPythonRiskClient<C>::operator *() {
-    return *m_client;
-  }
-
-  template<IsRiskClient C>
-  const typename ToPythonRiskClient<C>::Client&
-      ToPythonRiskClient<C>::operator *() const {
-    return *m_client;
-  }
-
-  template<IsRiskClient C>
-  typename ToPythonRiskClient<C>::Client* ToPythonRiskClient<C>::operator ->() {
-    return m_client.get_ptr();
-  }
-
-  template<IsRiskClient C>
-  const typename ToPythonRiskClient<C>::Client*
-      ToPythonRiskClient<C>::operator ->() const {
-    return m_client.get_ptr();
   }
 
   template<IsRiskClient C>

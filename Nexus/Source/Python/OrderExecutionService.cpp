@@ -230,7 +230,7 @@ void Nexus::Python::export_order_execution_service_application_definitions(
       [] (ToPythonServiceLocatorClient<ApplicationServiceLocatorClient>&
           client) {
         return std::make_unique<ToPythonOrderExecutionClient<
-          ApplicationOrderExecutionClient>>(Ref(*client));
+          ApplicationOrderExecutionClient>>(Ref(client.get()));
       }), keep_alive<1, 2>());
 }
 

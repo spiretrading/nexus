@@ -2,7 +2,6 @@
 #define NEXUS_TO_PYTHON_ADMINISTRATION_CLIENT_HPP
 #include <type_traits>
 #include <utility>
-#include <Beam/Python/GilRelease.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 
@@ -33,18 +32,6 @@ namespace Nexus {
 
       /** Returns a reference to the underlying client. */
       const Client& get() const;
-
-      /** Returns a reference to the underlying client. */
-      Client& operator *();
-
-      /** Returns a reference to the underlying client. */
-      const Client& operator *() const;
-
-      /** Returns a pointer to the underlying client. */
-      Client* operator ->();
-
-      /** Returns a pointer to the underlying client. */
-      const Client* operator ->() const;
 
       std::vector<Beam::DirectoryEntry>
         load_accounts_by_roles(AccountRoles roles);
@@ -144,30 +131,6 @@ namespace Nexus {
   const typename ToPythonAdministrationClient<C>::Client&
       ToPythonAdministrationClient<C>::get() const {
     return *m_client;
-  }
-
-  template<IsAdministrationClient C>
-  typename ToPythonAdministrationClient<C>::Client&
-      ToPythonAdministrationClient<C>::operator *() {
-    return *m_client;
-  }
-
-  template<IsAdministrationClient C>
-  const typename ToPythonAdministrationClient<C>::Client&
-      ToPythonAdministrationClient<C>::operator *() const {
-    return *m_client;
-  }
-
-  template<IsAdministrationClient C>
-  typename ToPythonAdministrationClient<C>::Client*
-      ToPythonAdministrationClient<C>::operator ->() {
-    return m_client.get_ptr();
-  }
-
-  template<IsAdministrationClient C>
-  const typename ToPythonAdministrationClient<C>::Client*
-      ToPythonAdministrationClient<C>::operator ->() const {
-    return m_client.get_ptr();
   }
 
   template<IsAdministrationClient C>

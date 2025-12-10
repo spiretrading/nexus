@@ -155,7 +155,7 @@ void Nexus::Python::export_administration_service_application_definitions(
       [] (ToPythonServiceLocatorClient<ApplicationServiceLocatorClient>&
           client) {
         return std::make_unique<ToPythonAdministrationClient<
-          ApplicationAdministrationClient>>(Ref(*client));
+          ApplicationAdministrationClient>>(Ref(client.get()));
       }), keep_alive<1, 2>());
 }
 
