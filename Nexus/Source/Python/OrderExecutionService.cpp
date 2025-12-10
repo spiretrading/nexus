@@ -113,14 +113,10 @@ void Nexus::Python::export_mock_order_execution_driver(module& module) {
       return_value_policy::reference_internal).
     def("recover", &MockOrderExecutionDriver::recover).
     def("add", &MockOrderExecutionDriver::add).
-    def("submit", &MockOrderExecutionDriver::submit,
-      call_guard<gil_scoped_release>()).
-    def("cancel", &MockOrderExecutionDriver::cancel,
-      call_guard<gil_scoped_release>()).
-    def("update", &MockOrderExecutionDriver::update,
-      call_guard<gil_scoped_release>()).
-    def("close", &MockOrderExecutionDriver::close,
-      call_guard<gil_scoped_release>());
+    def("submit", &MockOrderExecutionDriver::submit, call_guard<GilRelease>()).
+    def("cancel", &MockOrderExecutionDriver::cancel, call_guard<GilRelease>()).
+    def("update", &MockOrderExecutionDriver::update, call_guard<GilRelease>()).
+    def("close", &MockOrderExecutionDriver::close, call_guard<GilRelease>());
 }
 
 void Nexus::Python::export_my_sql_order_execution_data_store(module& module) {
@@ -131,7 +127,7 @@ void Nexus::Python::export_my_sql_order_execution_data_store(module& module) {
     def(init([] (std::string host, unsigned int port, std::string username,
         std::string password, std::string database) {
       return std::make_unique<ToPythonOrderExecutionDataStore<DataStore>>([=] {
-        auto release = gil_scoped_release();
+        auto release = GilRelease();
         return SqlConnection(Viper::MySql::Connection(host, port, username,
           password, database));
       });
@@ -193,36 +189,36 @@ void Nexus::Python::export_order_execution_service(module& module) {
   export_mock_order_execution_driver(test_module);
   export_order_execution_service_test_environment(test_module);
   test_module.def("cancel", overload_cast<PrimitiveOrder&, ptime>(&cancel),
-    call_guard<gil_scoped_release>());
+    call_guard<GilRelease>());
   test_module.def("cancel", overload_cast<PrimitiveOrder&>(&cancel),
-    call_guard<gil_scoped_release>());
+    call_guard<GilRelease>());
   test_module.def(
     "set_order_status", overload_cast<PrimitiveOrder&, OrderStatus, ptime>(
-      &set_order_status), call_guard<gil_scoped_release>());
+      &set_order_status), call_guard<GilRelease>());
   test_module.def("set_order_status",
     overload_cast<PrimitiveOrder&, OrderStatus>(&set_order_status),
-    call_guard<gil_scoped_release>());
+    call_guard<GilRelease>());
   test_module.def("accept", overload_cast<PrimitiveOrder&, ptime>(&accept),
-    call_guard<gil_scoped_release>());
+    call_guard<GilRelease>());
   test_module.def("accept", overload_cast<PrimitiveOrder&>(&accept),
-    call_guard<gil_scoped_release>());
+    call_guard<GilRelease>());
   test_module.def("reject", overload_cast<PrimitiveOrder&, ptime>(&reject),
-    call_guard<gil_scoped_release>());
+    call_guard<GilRelease>());
   test_module.def("reject", overload_cast<PrimitiveOrder&>(&reject),
-    call_guard<gil_scoped_release>());
+    call_guard<GilRelease>());
   test_module.def(
     "fill", overload_cast<PrimitiveOrder&, Money, Quantity, ptime>(&fill),
-    call_guard<gil_scoped_release>());
+    call_guard<GilRelease>());
   test_module.def(
     "fill", overload_cast<PrimitiveOrder&, Money, Quantity>(&fill),
-    call_guard<gil_scoped_release>());
+    call_guard<GilRelease>());
   test_module.def(
     "fill", overload_cast<PrimitiveOrder&, Quantity, ptime>(&fill),
-    call_guard<gil_scoped_release>());
-  test_module.def("fill", overload_cast<PrimitiveOrder&, Quantity>(&fill),
-    call_guard<gil_scoped_release>());
+    call_guard<GilRelease>());
+  test_module.def("fill",
+    overload_cast<PrimitiveOrder&, Quantity>(&fill), call_guard<GilRelease>());
   test_module.def(
-    "is_pending_cancel", &is_pending_cancel, call_guard<gil_scoped_release>());
+    "is_pending_cancel", &is_pending_cancel, call_guard<GilRelease>());
 }
 
 void Nexus::Python::export_order_execution_service_application_definitions(
@@ -260,12 +256,11 @@ void Nexus::Python::export_order_execution_service_test_environment(
     def("make_client", [] (OrderExecutionServiceTestEnvironment& self,
         ServiceLocatorClient& client) {
       return ToPythonOrderExecutionClient(self.make_client(Ref(client)));
-    }, call_guard<gil_scoped_release>(), keep_alive<0, 2>()).
+    }, call_guard<GilRelease>(), keep_alive<0, 2>()).
     def("close", &OrderExecutionServiceTestEnvironment::close,
-      call_guard<gil_scoped_release>());
+      call_guard<GilRelease>());
   module.def("make_order_execution_service_test_environment",
-    &make_order_execution_service_test_environment,
-    call_guard<gil_scoped_release>());
+    &make_order_execution_service_test_environment, call_guard<GilRelease>());
 }
 
 void Nexus::Python::export_order_fields(module& module) {
@@ -462,7 +457,7 @@ void Nexus::Python::export_standard_queries(module& module) {
   module.def("load_live_orders",
     [] (const DirectoryEntry& account, OrderExecutionClient& client) {
       return load_live_orders(account, client);
-    }, call_guard<gil_scoped_release>());
+    }, call_guard<GilRelease>());
   module.def("make_order_id_filter", &make_order_id_filter);
   module.def("make_order_id_query", &make_order_id_query);
   module.def("query_order_ids",
@@ -475,7 +470,7 @@ void Nexus::Python::export_standard_queries(module& module) {
     [] (const DirectoryEntry& account, const std::vector<OrderId>& ids,
         OrderExecutionClient& client) {
       return load_orders(account, ids, client);
-    }, call_guard<gil_scoped_release>());
+    }, call_guard<GilRelease>());
 }
 
 void Nexus::Python::export_sqlite_order_execution_data_store(module& module) {
@@ -486,7 +481,7 @@ void Nexus::Python::export_sqlite_order_execution_data_store(module& module) {
       def(init([] (std::string path) {
         return std::make_unique<ToPythonOrderExecutionDataStore<DataStore>>(
           [=] {
-            auto release = gil_scoped_release();
+            auto release = GilRelease();
             return SqlConnection(Viper::Sqlite3::Connection(path));
           });
       }));

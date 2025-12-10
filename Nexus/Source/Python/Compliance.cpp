@@ -146,9 +146,8 @@ void Nexus::Python::export_compliance_test_environment(module& module) {
     def("make_client",
       [] (ComplianceTestEnvironment& self, ServiceLocatorClient& client) {
         return ToPythonComplianceClient(self.make_client(Ref(client)));
-      }, call_guard<gil_scoped_release>(), keep_alive<0, 2>()).
-    def("close", &ComplianceTestEnvironment::close,
-      call_guard<gil_scoped_release>());
+      }, call_guard<GilRelease>(), keep_alive<0, 2>()).
+    def("close", &ComplianceTestEnvironment::close, call_guard<GilRelease>());
 }
 
 void Nexus::Python::export_local_compliance_rule_data_store(module& module) {
@@ -169,7 +168,7 @@ void Nexus::Python::export_mysql_compliance_rule_data_store(module& module) {
       return std::make_unique<DataStore>(
         std::make_unique<SqlConnection<Viper::MySql::Connection>>(
           Viper::MySql::Connection(host, port, username, password, database)));
-    }), call_guard<gil_scoped_release>());
+    }), call_guard<GilRelease>());
 }
 
 void Nexus::Python::export_sqlite_compliance_rule_data_store(module& module) {
@@ -180,5 +179,5 @@ void Nexus::Python::export_sqlite_compliance_rule_data_store(module& module) {
     def(init([] (std::string path) {
       return std::make_unique<DataStore>(
         std::make_unique<SqlConnection<Viper::Sqlite3::Connection>>(path));
-    }),   call_guard<gil_scoped_release>());
+    }),   call_guard<GilRelease>());
 }

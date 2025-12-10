@@ -95,12 +95,12 @@ namespace Nexus {
   template<typename... Args>
   ToPythonAdministrationDataStore<D>::ToPythonAdministrationDataStore(
     Args&&... args)
-    : m_data_store((pybind11::gil_scoped_release(), boost::in_place_init),
+    : m_data_store((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
   template<IsAdministrationDataStore D>
   ToPythonAdministrationDataStore<D>::~ToPythonAdministrationDataStore() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store.reset();
   }
 
@@ -119,35 +119,35 @@ namespace Nexus {
   template<IsAdministrationDataStore D>
   std::vector<AdministrationDataStore::IndexedAccountIdentity>
       ToPythonAdministrationDataStore<D>::load_all_account_identities() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_all_account_identities();
   }
 
   template<IsAdministrationDataStore D>
   AccountIdentity ToPythonAdministrationDataStore<D>::load_identity(
       const Beam::DirectoryEntry& account) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_identity(account);
   }
 
   template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::store(
       const Beam::DirectoryEntry& account, const AccountIdentity& identity) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store->store(account, identity);
   }
 
   template<IsAdministrationDataStore D>
   std::vector<AdministrationDataStore::IndexedRiskParameters>
       ToPythonAdministrationDataStore<D>::load_all_risk_parameters() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_all_risk_parameters();
   }
 
   template<IsAdministrationDataStore D>
   RiskParameters ToPythonAdministrationDataStore<D>::load_risk_parameters(
       const Beam::DirectoryEntry& account) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_risk_parameters(account);
   }
 
@@ -155,28 +155,28 @@ namespace Nexus {
   void ToPythonAdministrationDataStore<D>::store(
       const Beam::DirectoryEntry& account,
       const RiskParameters& risk_parameters) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store->store(account, risk_parameters);
   }
 
   template<IsAdministrationDataStore D>
   std::vector<AdministrationDataStore::IndexedRiskState>
       ToPythonAdministrationDataStore<D>::load_all_risk_states() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_all_risk_states();
   }
 
   template<IsAdministrationDataStore D>
   RiskState ToPythonAdministrationDataStore<D>::load_risk_state(
       const Beam::DirectoryEntry& account) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_risk_state(account);
   }
 
   template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::store(
       const Beam::DirectoryEntry& account, const RiskState& risk_state) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store->store(account, risk_state);
   }
 
@@ -184,7 +184,7 @@ namespace Nexus {
   AccountModificationRequest
       ToPythonAdministrationDataStore<D>::load_account_modification_request(
         AccountModificationRequest::Id id) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_account_modification_request(id);
   }
 
@@ -193,7 +193,7 @@ namespace Nexus {
       ToPythonAdministrationDataStore<D>::load_account_modification_request_ids(
         const Beam::DirectoryEntry& account,
         AccountModificationRequest::Id start_id, int max_count) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_account_modification_request_ids(
       account, start_id, max_count);
   }
@@ -202,7 +202,7 @@ namespace Nexus {
   std::vector<AccountModificationRequest::Id>
       ToPythonAdministrationDataStore<D>::load_account_modification_request_ids(
         AccountModificationRequest::Id start_id, int max_count) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_account_modification_request_ids(
       start_id, max_count);
   }
@@ -211,7 +211,7 @@ namespace Nexus {
   EntitlementModification
       ToPythonAdministrationDataStore<D>::load_entitlement_modification(
         AccountModificationRequest::Id id) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_entitlement_modification(id);
   }
 
@@ -219,14 +219,14 @@ namespace Nexus {
   void ToPythonAdministrationDataStore<D>::store(
       const AccountModificationRequest& request,
       const EntitlementModification& modification) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store->store(request, modification);
   }
 
   template<IsAdministrationDataStore D>
   RiskModification ToPythonAdministrationDataStore<D>::load_risk_modification(
       AccountModificationRequest::Id id) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_risk_modification(id);
   }
 
@@ -234,14 +234,14 @@ namespace Nexus {
   void ToPythonAdministrationDataStore<D>::store(
       const AccountModificationRequest& request,
       const RiskModification& modification) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store->store(request, modification);
   }
 
   template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::store(
       AccountModificationRequest::Id id, const Message& message) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store->store(id, message);
   }
 
@@ -249,7 +249,7 @@ namespace Nexus {
   AccountModificationRequest::Update ToPythonAdministrationDataStore<D>::
       load_account_modification_request_status(
         AccountModificationRequest::Id id) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_account_modification_request_status(id);
   }
 
@@ -257,39 +257,39 @@ namespace Nexus {
   void ToPythonAdministrationDataStore<D>::store(
       AccountModificationRequest::Id id,
       const AccountModificationRequest::Update& status) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store->store(id, status);
   }
 
   template<IsAdministrationDataStore D>
   Message::Id ToPythonAdministrationDataStore<D>::load_last_message_id() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_last_message_id();
   }
 
   template<IsAdministrationDataStore D>
   Message ToPythonAdministrationDataStore<D>::load_message(Message::Id id) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_message(id);
   }
 
   template<IsAdministrationDataStore D>
   std::vector<Message::Id> ToPythonAdministrationDataStore<D>::load_message_ids(
       AccountModificationRequest::Id id) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_message_ids(id);
   }
 
   template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::with_transaction(
       const std::function<void ()>& transaction) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store->with_transaction(transaction);
   }
 
   template<IsAdministrationDataStore D>
   void ToPythonAdministrationDataStore<D>::close() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store->close();
   }
 }

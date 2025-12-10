@@ -55,12 +55,12 @@ namespace Nexus {
   template<IsChartingClient C>
   template<typename... Args>
   ToPythonChartingClient<C>::ToPythonChartingClient(Args&&... args)
-    : m_client((pybind11::gil_scoped_release(), boost::in_place_init),
+    : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
   template<IsChartingClient C>
   ToPythonChartingClient<C>::~ToPythonChartingClient() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client.reset();
   }
 
@@ -79,7 +79,7 @@ namespace Nexus {
   template<IsChartingClient C>
   void ToPythonChartingClient<C>::query(const SecurityChartingQuery& query,
       Beam::ScopedQueueWriter<QueryVariant> queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->query(query, std::move(queue));
   }
 
@@ -87,13 +87,13 @@ namespace Nexus {
   TimePriceQueryResult ToPythonChartingClient<C>::load_time_price_series(
       const Security& security, boost::posix_time::ptime start,
       boost::posix_time::ptime end, boost::posix_time::time_duration interval) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->load_time_price_series(security, start, end, interval);
   }
 
   template<IsChartingClient C>
   void ToPythonChartingClient<C>::close() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->close();
   }
 }

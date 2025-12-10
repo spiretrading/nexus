@@ -62,12 +62,12 @@ namespace Nexus {
   template<typename... Args>
   ToPythonOrderExecutionDataStore<D>::ToPythonOrderExecutionDataStore(
     Args&&... args)
-    : m_data_store((pybind11::gil_scoped_release(), boost::in_place_init),
+    : m_data_store((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
   template<IsOrderExecutionDataStore D>
   ToPythonOrderExecutionDataStore<D>::~ToPythonOrderExecutionDataStore() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store.reset();
   }
 
@@ -86,7 +86,7 @@ namespace Nexus {
   template<IsOrderExecutionDataStore D>
   boost::optional<SequencedAccountOrderRecord>
       ToPythonOrderExecutionDataStore<D>::load_order_record(OrderId id) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_order_record(id);
   }
 
@@ -94,21 +94,21 @@ namespace Nexus {
   std::vector<SequencedOrderRecord>
       ToPythonOrderExecutionDataStore<D>::load_order_records(
         const AccountQuery& query) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_order_records(query);
   }
 
   template<IsOrderExecutionDataStore D>
   void ToPythonOrderExecutionDataStore<D>::store(
       const SequencedAccountOrderInfo& info) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store->store(info);
   }
 
   template<IsOrderExecutionDataStore D>
   void ToPythonOrderExecutionDataStore<D>::store(
       const std::vector<SequencedAccountOrderInfo>& info) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store->store(info);
   }
 
@@ -116,27 +116,27 @@ namespace Nexus {
   std::vector<SequencedExecutionReport>
       ToPythonOrderExecutionDataStore<D>::load_execution_reports(
         const AccountQuery& query) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_execution_reports(query);
   }
 
   template<IsOrderExecutionDataStore D>
   void ToPythonOrderExecutionDataStore<D>::store(
       const SequencedAccountExecutionReport& report) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store->store(report);
   }
 
   template<IsOrderExecutionDataStore D>
   void ToPythonOrderExecutionDataStore<D>::store(
       const std::vector<SequencedAccountExecutionReport>& reports) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store->store(reports);
   }
 
   template<IsOrderExecutionDataStore D>
   void ToPythonOrderExecutionDataStore<D>::close() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store->close();
   }
 }

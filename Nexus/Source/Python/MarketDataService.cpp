@@ -121,16 +121,16 @@ void Nexus::Python::export_local_historical_data_store(module& module) {
     def(init()).
     def("load_all_order_imbalances", [] (DataStore& self) {
       return self.get().load_order_imbalances();
-    }, call_guard<gil_scoped_release>()).
+    }, call_guard<GilRelease>()).
     def("load_all_bbo_quotes", [] (DataStore& self) {
       return self.get().load_bbo_quotes();
-    }, call_guard<gil_scoped_release>()).
+    }, call_guard<GilRelease>()).
     def("load_all_book_quotes", [] (DataStore& self) {
       return self.get().load_book_quotes();
-    }, call_guard<gil_scoped_release>()).
+    }, call_guard<GilRelease>()).
     def("load_all_time_and_sales", [] (DataStore& self) {
       return self.get().load_time_and_sales();
-    }, call_guard<gil_scoped_release>());
+    }, call_guard<GilRelease>());
 }
 
 void Nexus::Python::export_market_data_reactors(module& module) {
@@ -276,21 +276,20 @@ void Nexus::Python::export_market_data_service_test_environment(
     def("make_registry_client",
       [] (TestEnvironment& self, ServiceLocatorClient& client) {
         return ToPythonMarketDataClient(self.make_registry_client(Ref(client)));
-      }, call_guard<gil_scoped_release>(), keep_alive<0, 2>()).
+      }, call_guard<GilRelease>(), keep_alive<0, 2>()).
     def("make_feed_client",
       [] (TestEnvironment& self, ServiceLocatorClient& client) {
         return ToPythonMarketDataFeedClient(self.make_feed_client(Ref(client)));
-      }, call_guard<gil_scoped_release>(), keep_alive<0, 2>()).
+      }, call_guard<GilRelease>(), keep_alive<0, 2>()).
     def("update_bbo", overload_cast<const Security&, Money, Money>(
-      &TestEnvironment::update_bbo), call_guard<gil_scoped_release>()).
+      &TestEnvironment::update_bbo), call_guard<GilRelease>()).
     def("update_bbo", overload_cast<const Security&, Money>(
-      &TestEnvironment::update_bbo), call_guard<gil_scoped_release>()).
-    def("close", &TestEnvironment::close, call_guard<gil_scoped_release>());
+      &TestEnvironment::update_bbo), call_guard<GilRelease>()).
+    def("close", &TestEnvironment::close, call_guard<GilRelease>());
   module.def("make_market_data_service_test_environment",
-    &make_market_data_service_test_environment,
-    call_guard<gil_scoped_release>());
+    &make_market_data_service_test_environment, call_guard<GilRelease>());
   module.def("make_market_data_client", &make_market_data_client,
-    call_guard<gil_scoped_release>());
+    call_guard<GilRelease>());
 }
 
 void Nexus::Python::export_market_data_type(module& module) {
@@ -310,7 +309,7 @@ void Nexus::Python::export_mysql_historical_data_store(module& module) {
         unsigned int port, std::string username, std::string password,
         std::string database) {
       return std::make_unique<DataStore>(venues, [=] {
-        auto release = gil_scoped_release();
+        auto release = Beam::Python::GilRelease();
         return SqlConnection(
           Viper::MySql::Connection(host, port, username, password, database));
       });
@@ -318,7 +317,7 @@ void Nexus::Python::export_mysql_historical_data_store(module& module) {
     def(init([] (std::string host, unsigned int port, std::string username,
         std::string password, std::string database) {
       return std::make_unique<DataStore>(DEFAULT_VENUES, [=] {
-        auto release = gil_scoped_release();
+        auto release = Beam::Python::GilRelease();
         return SqlConnection(
           Viper::MySql::Connection(host, port, username, password, database));
       });
@@ -341,13 +340,13 @@ void Nexus::Python::export_sqlite_historical_data_store(module& module) {
   export_historical_data_store<DataStore>(module, "SqliteHistoricalDataStore").
     def(init([] (const VenueDatabase& venues, std::string path) {
       return std::make_unique<DataStore>(venues, [=] {
-        auto release = gil_scoped_release();
+        auto release = Beam::Python::GilRelease();
         return SqlConnection(Viper::Sqlite3::Connection(path));
       });
     })).
     def(init([] (std::string path) {
       return std::make_unique<DataStore>(DEFAULT_VENUES, [=] {
-        auto release = gil_scoped_release();
+        auto release = Beam::Python::GilRelease();
         return SqlConnection(Viper::Sqlite3::Connection(path));
       });
     }));

@@ -94,7 +94,7 @@ namespace Nexus {
   template<IsClients C>
   template<typename... Args>
   ToPythonClients<C>::ToPythonClients(Args&&... args)
-    : m_clients((pybind11::gil_scoped_release(), boost::in_place_init),
+    : m_clients((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...),
       m_service_locator_client(boost::in_place_init, std::in_place_type<
         Beam::Python::ToPythonServiceLocatorClient<ServiceLocatorClient>>,
@@ -126,7 +126,7 @@ namespace Nexus {
 
   template<IsClients C>
   ToPythonClients<C>::~ToPythonClients() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_time_client.reset();
     m_risk_client.reset();
     m_order_execution_client.reset();
@@ -197,7 +197,7 @@ namespace Nexus {
   template<IsClients C>
   std::unique_ptr<typename ToPythonClients<C>::Timer>
       ToPythonClients<C>::make_timer(boost::posix_time::time_duration expiry) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return std::make_unique<Timer>(m_clients->make_timer(expiry));
   }
 

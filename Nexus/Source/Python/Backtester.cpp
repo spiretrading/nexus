@@ -42,7 +42,7 @@ void Nexus::Python::export_backtester_clients(module& module) {
       def(init([] (BacktesterEnvironment& environment) {
         return std::make_unique<ToPythonClients<BacktesterClients>>(
           Ref(environment));
-      }), call_guard<gil_scoped_release>(), keep_alive<1, 2>());
+      }), call_guard<GilRelease>(), keep_alive<1, 2>());
 }
 
 void Nexus::Python::export_backtester_environment(module& module) {
@@ -84,8 +84,7 @@ void Nexus::Python::export_backtester_environment(module& module) {
       return_value_policy::reference_internal).
     def("get_risk_environment", &BacktesterEnvironment::get_risk_environment,
       return_value_policy::reference_internal).
-    def(
-      "close", &BacktesterEnvironment::close, call_guard<gil_scoped_release>());
+    def("close", &BacktesterEnvironment::close, call_guard<GilRelease>());
 }
 
 void Nexus::Python::export_backtester_event(module& module) {
@@ -101,7 +100,7 @@ void Nexus::Python::export_backtester_event(module& module) {
   class_<BacktesterEvent, PythonBacktesterEvent,
     std::shared_ptr<BacktesterEvent>>(module, "BacktesterEvent").
       def("get_timestamp", &BacktesterEvent::get_timestamp).
-      def("wait", &BacktesterEvent::wait, call_guard<gil_scoped_release>()).
+      def("wait", &BacktesterEvent::wait, call_guard<GilRelease>()).
       def("is_passive", &BacktesterEvent::is_passive).
       def("execute", &BacktesterEvent::execute);
 }
@@ -124,6 +123,5 @@ void Nexus::Python::export_backtester_event_handler(module& module) {
         }
         self.add(std::move(e));
       }).
-      def("close", &BacktesterEventHandler::close,
-        call_guard<gil_scoped_release>());
+      def("close", &BacktesterEventHandler::close, call_guard<GilRelease>());
 }

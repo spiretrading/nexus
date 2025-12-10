@@ -52,9 +52,9 @@ void Nexus::Python::export_charting_service_test_environment(module& module) {
     def("make_client",
       [] (ChartingServiceTestEnvironment& self, ServiceLocatorClient& client) {
         return ToPythonChartingClient(self.make_client(Ref(client)));
-      }, call_guard<gil_scoped_release>(), keep_alive<0, 2>()).
+      }, call_guard<GilRelease>(), keep_alive<0, 2>()).
     def("close", &ChartingServiceTestEnvironment::close,
-      call_guard<gil_scoped_release>());
+      call_guard<GilRelease>());
 }
 
 void Nexus::Python::export_security_charting_query(module& module) {

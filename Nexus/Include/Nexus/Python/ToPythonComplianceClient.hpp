@@ -62,12 +62,12 @@ namespace Nexus {
   template<IsComplianceClient C>
   template<typename... Args>
   ToPythonComplianceClient<C>::ToPythonComplianceClient(Args&&... args)
-    : m_client((pybind11::gil_scoped_release(), boost::in_place_init),
+    : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
   template<IsComplianceClient C>
   ToPythonComplianceClient<C>::~ToPythonComplianceClient() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client.reset();
   }
 
@@ -86,7 +86,7 @@ namespace Nexus {
   template<IsComplianceClient C>
   std::vector<ComplianceRuleEntry> ToPythonComplianceClient<C>::load(
       const Beam::DirectoryEntry& directory_entry) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->load(directory_entry);
   }
 
@@ -94,26 +94,26 @@ namespace Nexus {
   ComplianceRuleEntry::Id ToPythonComplianceClient<C>::add(
       const Beam::DirectoryEntry& directory_entry,
       ComplianceRuleEntry::State state, const ComplianceRuleSchema& schema) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->add(directory_entry, state, schema);
   }
 
   template<IsComplianceClient C>
   void ToPythonComplianceClient<C>::update(const ComplianceRuleEntry& entry) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->update(entry);
   }
 
   template<IsComplianceClient C>
   void ToPythonComplianceClient<C>::remove(ComplianceRuleEntry::Id id) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->remove(id);
   }
 
   template<IsComplianceClient C>
   void ToPythonComplianceClient<C>::report(
       const ComplianceRuleViolationRecord& record) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->report(record);
   }
 
@@ -122,14 +122,14 @@ namespace Nexus {
       const Beam::DirectoryEntry& directory_entry,
       Beam::ScopedQueueWriter<ComplianceRuleEntry> queue,
       Beam::Out<std::vector<ComplianceRuleEntry>> snapshot) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->monitor_compliance_rule_entries(directory_entry, std::move(queue),
       Beam::out(snapshot));
   }
 
   template<IsComplianceClient C>
   void ToPythonComplianceClient<C>::close() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->close();
   }
 }

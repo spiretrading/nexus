@@ -53,12 +53,12 @@ namespace Nexus {
   template<IsRiskClient C>
   template<typename... Args>
   ToPythonRiskClient<C>::ToPythonRiskClient(Args&&... args)
-    : m_client((pybind11::gil_scoped_release(), boost::in_place_init),
+    : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
   template<IsRiskClient C>
   ToPythonRiskClient<C>::~ToPythonRiskClient() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client.reset();
   }
 
@@ -76,26 +76,26 @@ namespace Nexus {
   template<IsRiskClient C>
   InventorySnapshot ToPythonRiskClient<C>::load_inventory_snapshot(
       const Beam::DirectoryEntry& account) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->load_inventory_snapshot(account);
   }
 
   template<IsRiskClient C>
   void ToPythonRiskClient<C>::reset(const Region& region) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->reset(region);
   }
 
   template<IsRiskClient C>
   const RiskPortfolioUpdatePublisher&
       ToPythonRiskClient<C>::get_risk_portfolio_update_publisher() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->get_risk_portfolio_update_publisher();
   }
 
   template<IsRiskClient C>
   void ToPythonRiskClient<C>::close() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->close();
   }
 }

@@ -71,12 +71,12 @@ namespace Nexus {
   template<IsMarketDataClient C>
   template<typename... Args>
   ToPythonMarketDataClient<C>::ToPythonMarketDataClient(Args&&... args)
-    : m_client((pybind11::gil_scoped_release(), boost::in_place_init),
+    : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
   template<IsMarketDataClient C>
   ToPythonMarketDataClient<C>::~ToPythonMarketDataClient() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client.reset();
   }
 
@@ -95,77 +95,77 @@ namespace Nexus {
   template<IsMarketDataClient C>
   void ToPythonMarketDataClient<C>::query(const VenueMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->query(query, std::move(queue));
   }
 
   template<IsMarketDataClient C>
   void ToPythonMarketDataClient<C>::query(const VenueMarketDataQuery& query,
       Beam::ScopedQueueWriter<OrderImbalance> queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->query(query, std::move(queue));
   }
 
   template<IsMarketDataClient C>
   void ToPythonMarketDataClient<C>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->query(query, std::move(queue));
   }
 
   template<IsMarketDataClient C>
   void ToPythonMarketDataClient<C>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<BboQuote> queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->query(query, std::move(queue));
   }
 
   template<IsMarketDataClient C>
   void ToPythonMarketDataClient<C>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->query(query, std::move(queue));
   }
 
   template<IsMarketDataClient C>
   void ToPythonMarketDataClient<C>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<BookQuote> queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->query(query, std::move(queue));
   }
 
   template<IsMarketDataClient C>
   void ToPythonMarketDataClient<C>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->query(query, std::move(queue));
   }
 
   template<IsMarketDataClient C>
   void ToPythonMarketDataClient<C>::query(const SecurityMarketDataQuery& query,
       Beam::ScopedQueueWriter<TimeAndSale> queue) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->query(query, std::move(queue));
   }
 
   template<IsMarketDataClient C>
   std::vector<SecurityInfo>
       ToPythonMarketDataClient<C>::query(const SecurityInfoQuery& query) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->query(query);
   }
 
   template<IsMarketDataClient C>
   SecuritySnapshot ToPythonMarketDataClient<C>::load_snapshot(
       const Security& security) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->load_snapshot(security);
   }
 
   template<IsMarketDataClient C>
   SecurityTechnicals ToPythonMarketDataClient<C>::load_technicals(
       const Security& security) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->load_technicals(security);
   }
 
@@ -173,13 +173,13 @@ namespace Nexus {
   std::vector<SecurityInfo>
       ToPythonMarketDataClient<C>::load_security_info_from_prefix(
         const std::string& prefix) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_client->load_security_info_from_prefix(prefix);
   }
 
   template<IsMarketDataClient C>
   void ToPythonMarketDataClient<C>::close() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_client->close();
   }
 }

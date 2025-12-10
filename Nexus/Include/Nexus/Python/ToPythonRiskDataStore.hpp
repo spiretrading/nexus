@@ -50,12 +50,12 @@ namespace Nexus {
   template<IsRiskDataStore D>
   template<typename... Args>
   ToPythonRiskDataStore<D>::ToPythonRiskDataStore(Args&&... args)
-    : m_data_store((pybind11::gil_scoped_release(), boost::in_place_init),
+    : m_data_store((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
   template<IsRiskDataStore D>
   ToPythonRiskDataStore<D>::~ToPythonRiskDataStore() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store.reset();
   }
 
@@ -74,7 +74,7 @@ namespace Nexus {
   template<IsRiskDataStore D>
   InventorySnapshot ToPythonRiskDataStore<D>::load_inventory_snapshot(
       const Beam::DirectoryEntry& account) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     return m_data_store->load_inventory_snapshot(account);
   }
 
@@ -82,13 +82,13 @@ namespace Nexus {
   void ToPythonRiskDataStore<D>::store(
       const Beam::DirectoryEntry& account,
       const InventorySnapshot& snapshot) {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store->store(account, snapshot);
   }
 
   template<IsRiskDataStore D>
   void ToPythonRiskDataStore<D>::close() {
-    auto release = pybind11::gil_scoped_release();
+    auto release = Beam::Python::GilRelease();
     m_data_store->close();
   }
 }
