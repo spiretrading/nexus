@@ -2,7 +2,6 @@
 #define NEXUS_TO_PYTHON_ADMINISTRATION_CLIENT_HPP
 #include <type_traits>
 #include <utility>
-#include <Beam/Python/GilRelease.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 
@@ -33,18 +32,6 @@ namespace Nexus {
 
       /** Returns a reference to the underlying client. */
       const Client& get() const;
-
-      /** Returns a reference to the underlying client. */
-      Client& operator *();
-
-      /** Returns a reference to the underlying client. */
-      const Client& operator *() const;
-
-      /** Returns a pointer to the underlying client. */
-      Client* operator ->();
-
-      /** Returns a pointer to the underlying client. */
-      const Client* operator ->() const;
 
       std::vector<Beam::DirectoryEntry>
         load_accounts_by_roles(AccountRoles roles);
@@ -125,12 +112,12 @@ namespace Nexus {
   template<IsAdministrationClient C>
   template<typename... Args>
   ToPythonAdministrationClient<C>::ToPythonAdministrationClient(Args&&... args)
-    : m_client((Beam::Python::GilRelease(), boost::in_place_init),
+    : m_client((pybind11::gil_scoped_release(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
   template<IsAdministrationClient C>
   ToPythonAdministrationClient<C>::~ToPythonAdministrationClient() {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_client.reset();
   }
 
@@ -147,76 +134,52 @@ namespace Nexus {
   }
 
   template<IsAdministrationClient C>
-  typename ToPythonAdministrationClient<C>::Client&
-      ToPythonAdministrationClient<C>::operator *() {
-    return *m_client;
-  }
-
-  template<IsAdministrationClient C>
-  const typename ToPythonAdministrationClient<C>::Client&
-      ToPythonAdministrationClient<C>::operator *() const {
-    return *m_client;
-  }
-
-  template<IsAdministrationClient C>
-  typename ToPythonAdministrationClient<C>::Client*
-      ToPythonAdministrationClient<C>::operator ->() {
-    return m_client.get_ptr();
-  }
-
-  template<IsAdministrationClient C>
-  const typename ToPythonAdministrationClient<C>::Client*
-      ToPythonAdministrationClient<C>::operator ->() const {
-    return m_client.get_ptr();
-  }
-
-  template<IsAdministrationClient C>
   std::vector<Beam::DirectoryEntry>
       ToPythonAdministrationClient<C>::load_accounts_by_roles(
         AccountRoles roles) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_accounts_by_roles(roles);
   }
 
   template<IsAdministrationClient C>
   Beam::DirectoryEntry
       ToPythonAdministrationClient<C>::load_administrators_root_entry() {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_administrators_root_entry();
   }
 
   template<IsAdministrationClient C>
   Beam::DirectoryEntry
       ToPythonAdministrationClient<C>::load_services_root_entry() {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_services_root_entry();
   }
 
   template<IsAdministrationClient C>
   Beam::DirectoryEntry
       ToPythonAdministrationClient<C>::load_trading_groups_root_entry() {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_trading_groups_root_entry();
   }
 
   template<IsAdministrationClient C>
   bool ToPythonAdministrationClient<C>::check_administrator(
       const Beam::DirectoryEntry& account) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->check_administrator(account);
   }
 
   template<IsAdministrationClient C>
   AccountRoles ToPythonAdministrationClient<C>::load_account_roles(
       const Beam::DirectoryEntry& account) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_account_roles(account);
   }
 
   template<IsAdministrationClient C>
   AccountRoles ToPythonAdministrationClient<C>::load_account_roles(
       const Beam::DirectoryEntry& parent, const Beam::DirectoryEntry& child) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_account_roles(parent, child);
   }
 
@@ -224,28 +187,28 @@ namespace Nexus {
   Beam::DirectoryEntry
       ToPythonAdministrationClient<C>::load_parent_trading_group(
         const Beam::DirectoryEntry& account) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_parent_trading_group(account);
   }
 
   template<IsAdministrationClient C>
   AccountIdentity ToPythonAdministrationClient<C>::load_identity(
       const Beam::DirectoryEntry& account) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_identity(account);
   }
 
   template<IsAdministrationClient C>
   void ToPythonAdministrationClient<C>::store(
       const Beam::DirectoryEntry& account, const AccountIdentity& identity) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_client->store(account, identity);
   }
 
   template<IsAdministrationClient C>
   TradingGroup ToPythonAdministrationClient<C>::load_trading_group(
       const Beam::DirectoryEntry& directory) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_trading_group(directory);
   }
 
@@ -253,27 +216,27 @@ namespace Nexus {
   std::vector<Beam::DirectoryEntry>
       ToPythonAdministrationClient<C>::load_managed_trading_groups(
         const Beam::DirectoryEntry& account) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_managed_trading_groups(account);
   }
 
   template<IsAdministrationClient C>
   std::vector<Beam::DirectoryEntry>
       ToPythonAdministrationClient<C>::load_administrators() {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_administrators();
   }
 
   template<IsAdministrationClient C>
   std::vector<Beam::DirectoryEntry>
       ToPythonAdministrationClient<C>::load_services() {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_services();
   }
 
   template<IsAdministrationClient C>
   EntitlementDatabase ToPythonAdministrationClient<C>::load_entitlements() {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_entitlements();
   }
 
@@ -281,7 +244,7 @@ namespace Nexus {
   std::vector<Beam::DirectoryEntry>
       ToPythonAdministrationClient<C>::load_entitlements(
         const Beam::DirectoryEntry& account) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_entitlements(account);
   }
 
@@ -289,7 +252,7 @@ namespace Nexus {
   void ToPythonAdministrationClient<C>::store_entitlements(
       const Beam::DirectoryEntry& account,
       const std::vector<Beam::DirectoryEntry>& entitlements) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_client->store_entitlements(account, entitlements);
   }
 
@@ -297,14 +260,14 @@ namespace Nexus {
   const Beam::Publisher<RiskParameters>&
       ToPythonAdministrationClient<C>::get_risk_parameters_publisher(
         const Beam::DirectoryEntry& account) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->get_risk_parameters_publisher(account);
   }
 
   template<IsAdministrationClient C>
   void ToPythonAdministrationClient<C>::store(
       const Beam::DirectoryEntry& account, const RiskParameters& parameters) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_client->store(account, parameters);
   }
 
@@ -312,14 +275,14 @@ namespace Nexus {
   const Beam::Publisher<RiskState>&
       ToPythonAdministrationClient<C>::get_risk_state_publisher(
         const Beam::DirectoryEntry& account) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->get_risk_state_publisher(account);
   }
 
   template<IsAdministrationClient C>
   void ToPythonAdministrationClient<C>::store(
       const Beam::DirectoryEntry& account, const RiskState& state) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_client->store(account, state);
   }
 
@@ -327,7 +290,7 @@ namespace Nexus {
   AccountModificationRequest
       ToPythonAdministrationClient<C>::load_account_modification_request(
         AccountModificationRequest::Id id) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_account_modification_request(id);
   }
 
@@ -336,7 +299,7 @@ namespace Nexus {
       ToPythonAdministrationClient<C>::load_account_modification_request_ids(
         const Beam::DirectoryEntry& account,
         AccountModificationRequest::Id start_id, int max_count) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_account_modification_request_ids(
       account, start_id, max_count);
   }
@@ -346,7 +309,7 @@ namespace Nexus {
       load_managed_account_modification_request_ids(
         const Beam::DirectoryEntry& account,
         AccountModificationRequest::Id start_id, int max_count) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_managed_account_modification_request_ids(
       account, start_id, max_count);
   }
@@ -355,7 +318,7 @@ namespace Nexus {
   EntitlementModification
       ToPythonAdministrationClient<C>::load_entitlement_modification(
         AccountModificationRequest::Id id) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_entitlement_modification(id);
   }
 
@@ -363,14 +326,14 @@ namespace Nexus {
   AccountModificationRequest ToPythonAdministrationClient<C>::submit(
       const Beam::DirectoryEntry& account,
       const EntitlementModification& modification, const Message& comment) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->submit(account, modification, comment);
   }
 
   template<IsAdministrationClient C>
   RiskModification ToPythonAdministrationClient<C>::load_risk_modification(
       AccountModificationRequest::Id id) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_risk_modification(id);
   }
 
@@ -378,7 +341,7 @@ namespace Nexus {
   AccountModificationRequest ToPythonAdministrationClient<C>::submit(
       const Beam::DirectoryEntry& account,
       const RiskModification& modification, const Message& comment) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->submit(account, modification, comment);
   }
 
@@ -386,7 +349,7 @@ namespace Nexus {
   AccountModificationRequest::Update
       ToPythonAdministrationClient<C>::load_account_modification_request_status(
         AccountModificationRequest::Id id) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_account_modification_request_status(id);
   }
 
@@ -394,7 +357,7 @@ namespace Nexus {
   AccountModificationRequest::Update
       ToPythonAdministrationClient<C>::approve_account_modification_request(
         AccountModificationRequest::Id id, const Message& comment) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->approve_account_modification_request(id, comment);
   }
 
@@ -402,20 +365,20 @@ namespace Nexus {
   AccountModificationRequest::Update
       ToPythonAdministrationClient<C>::reject_account_modification_request(
         AccountModificationRequest::Id id, const Message& comment) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->reject_account_modification_request(id, comment);
   }
 
   template<IsAdministrationClient C>
   Message ToPythonAdministrationClient<C>::load_message(Message::Id id) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_message(id);
   }
 
   template<IsAdministrationClient C>
   std::vector<Message::Id> ToPythonAdministrationClient<C>::load_message_ids(
       AccountModificationRequest::Id id) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_message_ids(id);
   }
 
@@ -423,13 +386,13 @@ namespace Nexus {
   Message ToPythonAdministrationClient<C>::
       send_account_modification_request_message(
         AccountModificationRequest::Id id, const Message& message) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->send_account_modification_request_message(id, message);
   }
 
   template<IsAdministrationClient C>
   void ToPythonAdministrationClient<C>::close() {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_client->close();
   }
 }

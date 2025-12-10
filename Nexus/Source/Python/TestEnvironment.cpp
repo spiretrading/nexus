@@ -19,7 +19,7 @@ void Nexus::Python::export_test_clients(module& module) {
   export_clients<ToPythonClients<TestClients>>(module, "TestClients").
     def(init([] (TestEnvironment& environment) {
       return std::make_unique<ToPythonClients<TestClients>>(Ref(environment));
-  }), call_guard<GilRelease>(), keep_alive<1, 2>());
+  }), call_guard<gil_scoped_release>(), keep_alive<1, 2>());
 }
 
 void Nexus::Python::export_test_environment(module& module) {
@@ -31,30 +31,33 @@ void Nexus::Python::export_test_environment(module& module) {
         keep_alive<1, 2>()).
       def(init(&make_python_shared<
         TestEnvironment, HistoricalDataStore&, ptime>), keep_alive<1, 2>()).
-      def("set_time", &TestEnvironment::set, call_guard<GilRelease>()).
-      def("advance_time", &TestEnvironment::advance, call_guard<GilRelease>()).
+      def("set_time", &TestEnvironment::set, call_guard<gil_scoped_release>()).
+      def("advance_time", &TestEnvironment::advance,
+        call_guard<gil_scoped_release>()).
       def("publish", overload_cast<Venue, const OrderImbalance&>(
-        &TestEnvironment::publish), call_guard<GilRelease>()).
+        &TestEnvironment::publish), call_guard<gil_scoped_release>()).
       def("publish", overload_cast<const Security&, const BboQuote&>(
-        &TestEnvironment::publish), call_guard<GilRelease>()).
+        &TestEnvironment::publish), call_guard<gil_scoped_release>()).
       def("publish", overload_cast<const Security&, const BookQuote&>(
-        &TestEnvironment::publish), call_guard<GilRelease>()).
+        &TestEnvironment::publish), call_guard<gil_scoped_release>()).
       def("publish", overload_cast<const Security&, const TimeAndSale&>(
-        &TestEnvironment::publish), call_guard<GilRelease>()).
+        &TestEnvironment::publish), call_guard<gil_scoped_release>()).
       def("update_bbo_price", overload_cast<const Security&, Money, Money,
-        ptime>(&TestEnvironment::update_bbo_price), call_guard<GilRelease>()).
+        ptime>(&TestEnvironment::update_bbo_price),
+        call_guard<gil_scoped_release>()).
       def("update_bbo_price", overload_cast<const Security&, Money, Money>(
-        &TestEnvironment::update_bbo_price), call_guard<GilRelease>()).
+        &TestEnvironment::update_bbo_price), call_guard<gil_scoped_release>()).
       def("monitor_order_submissions",
-        &TestEnvironment::monitor_order_submissions, call_guard<GilRelease>()).
-      def("accept", &TestEnvironment::accept, call_guard<GilRelease>()).
-      def("reject", &TestEnvironment::reject, call_guard<GilRelease>()).
-      def("cancel", &TestEnvironment::cancel, call_guard<GilRelease>()).
+        &TestEnvironment::monitor_order_submissions,
+        call_guard<gil_scoped_release>()).
+      def("accept", &TestEnvironment::accept, call_guard<gil_scoped_release>()).
+      def("reject", &TestEnvironment::reject, call_guard<gil_scoped_release>()).
+      def("cancel", &TestEnvironment::cancel, call_guard<gil_scoped_release>()).
       def("fill", overload_cast<const Order&, Money, Quantity>(
-        &TestEnvironment::fill), call_guard<GilRelease>()).
+        &TestEnvironment::fill), call_guard<gil_scoped_release>()).
       def("fill", overload_cast<const Order&, Quantity>(&TestEnvironment::fill),
-        call_guard<GilRelease>()).
-      def("update", &TestEnvironment::update, call_guard<GilRelease>()).
+        call_guard<gil_scoped_release>()).
+      def("update", &TestEnvironment::update, call_guard<gil_scoped_release>()).
       def("get_time_environment", &TestEnvironment::get_time_environment,
         return_value_policy::reference_internal).
       def("get_service_locator_environment",
@@ -82,7 +85,7 @@ void Nexus::Python::export_test_environment(module& module) {
         return_value_policy::reference_internal).
       def("get_risk_environment", &TestEnvironment::get_risk_environment,
         return_value_policy::reference_internal).
-      def("close", &TestEnvironment::close, call_guard<GilRelease>());
+      def("close", &TestEnvironment::close, call_guard<gil_scoped_release>());
   export_test_clients(module);
   export_test_environment_exception(module);
 }

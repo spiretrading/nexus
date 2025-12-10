@@ -2,7 +2,6 @@
 #define NEXUS_PYTHON_RISK_DATA_STORE_HPP
 #include <type_traits>
 #include <utility>
-#include <Beam/Python/GilRelease.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/RiskService/RiskDataStore.hpp"
 
@@ -34,18 +33,6 @@ namespace Nexus {
       /** Returns a reference to the underlying data store. */
       const DataStore& get() const;
 
-      /** Returns a reference to the underlying data store. */
-      DataStore& operator *();
-
-      /** Returns a reference to the underlying data store. */
-      const DataStore& operator *() const;
-
-      /** Returns a pointer to the underlying data store. */
-      DataStore* operator ->();
-
-      /** Returns a pointer to the underlying data store. */
-      const DataStore* operator ->() const;
-
       InventorySnapshot load_inventory_snapshot(
         const Beam::DirectoryEntry& account);
       void store(const Beam::DirectoryEntry& account,
@@ -63,12 +50,12 @@ namespace Nexus {
   template<IsRiskDataStore D>
   template<typename... Args>
   ToPythonRiskDataStore<D>::ToPythonRiskDataStore(Args&&... args)
-    : m_data_store((Beam::Python::GilRelease(), boost::in_place_init),
+    : m_data_store((pybind11::gil_scoped_release(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
   template<IsRiskDataStore D>
   ToPythonRiskDataStore<D>::~ToPythonRiskDataStore() {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_data_store.reset();
   }
 
@@ -85,33 +72,9 @@ namespace Nexus {
   }
 
   template<IsRiskDataStore D>
-  typename ToPythonRiskDataStore<D>::DataStore&
-      ToPythonRiskDataStore<D>::operator *() {
-    return *m_data_store;
-  }
-
-  template<IsRiskDataStore D>
-  const typename ToPythonRiskDataStore<D>::DataStore&
-      ToPythonRiskDataStore<D>::operator *() const {
-    return *m_data_store;
-  }
-
-  template<IsRiskDataStore D>
-  typename ToPythonRiskDataStore<D>::DataStore*
-      ToPythonRiskDataStore<D>::operator ->() {
-    return m_data_store.get_ptr();
-  }
-
-  template<IsRiskDataStore D>
-  const typename ToPythonRiskDataStore<D>::DataStore*
-      ToPythonRiskDataStore<D>::operator ->() const {
-    return m_data_store.get_ptr();
-  }
-
-  template<IsRiskDataStore D>
   InventorySnapshot ToPythonRiskDataStore<D>::load_inventory_snapshot(
       const Beam::DirectoryEntry& account) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_data_store->load_inventory_snapshot(account);
   }
 
@@ -119,13 +82,13 @@ namespace Nexus {
   void ToPythonRiskDataStore<D>::store(
       const Beam::DirectoryEntry& account,
       const InventorySnapshot& snapshot) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_data_store->store(account, snapshot);
   }
 
   template<IsRiskDataStore D>
   void ToPythonRiskDataStore<D>::close() {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_data_store->close();
   }
 }

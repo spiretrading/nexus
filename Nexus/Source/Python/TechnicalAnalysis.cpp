@@ -26,7 +26,7 @@ void Nexus::Python::export_standard_security_queries(module& module) {
     [] (MarketDataClient& client, const Security& security, ptime date,
         const VenueDatabase& venues, const tz_database& time_zones) {
       return load_open(client, security, date, venues, time_zones);
-    }, call_guard<GilRelease>());
+    }, call_guard<gil_scoped_release>());
   module.def("query_open",
     [] (MarketDataClient& client, const Security& security, ptime date,
         const VenueDatabase& venues, const tz_database& time_zones,
@@ -38,7 +38,7 @@ void Nexus::Python::export_standard_security_queries(module& module) {
     [] (MarketDataClient& client, const Security& security, ptime date,
         const VenueDatabase& venues, const tz_database& time_zones) {
       return load_previous_close(client, security, date, venues, time_zones);
-    }, call_guard<GilRelease>());
+    }, call_guard<gil_scoped_release>());
   module.def("make_daily_query_range", &make_daily_query_range);
   module.def("make_query", &make_query);
   module.def("make_daily_high_query", &make_daily_high_query);

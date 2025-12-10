@@ -127,7 +127,7 @@ void Nexus::Python::export_administration_service(module& module) {
   module.def("load_risk_parameters",
     [] (AdministrationClient& client, const DirectoryEntry& account) {
       return load_risk_parameters(client, account);
-    }, call_guard<GilRelease>());
+    }, call_guard<gil_scoped_release>());
   export_administration_data_store_exception(module);
   export_cached_administration_data_store(module);
   export_entitlement_modification(module);
@@ -155,7 +155,7 @@ void Nexus::Python::export_administration_service_application_definitions(
       [] (ToPythonServiceLocatorClient<ApplicationServiceLocatorClient>&
           client) {
         return std::make_unique<ToPythonAdministrationClient<
-          ApplicationAdministrationClient>>(Ref(*client));
+          ApplicationAdministrationClient>>(Ref(client.get()));
       }), keep_alive<1, 2>());
 }
 
@@ -173,17 +173,18 @@ void Nexus::Python::export_administration_service_test_environment(
       return ToPythonAdministrationClient(self.get_client());
     }).
     def("make_administrator", &TestEnvironment::make_administrator,
-      call_guard<GilRelease>()).
+      call_guard<gil_scoped_release>()).
     def("make_client",
       [] (TestEnvironment& self, ServiceLocatorClient& client) {
         return ToPythonAdministrationClient(self.make_client(Ref(client)));
-      }, call_guard<GilRelease>(), keep_alive<0, 2>()).
-    def("close", &TestEnvironment::close, call_guard<GilRelease>());
+      }, call_guard<gil_scoped_release>(), keep_alive<0, 2>()).
+    def("close", &TestEnvironment::close, call_guard<gil_scoped_release>());
   module.def("make_administrator_account",
     &make_administrator_account<ServiceLocatorClient>,
-    call_guard<GilRelease>());
+    call_guard<gil_scoped_release>());
   module.def("make_administration_service_test_environment",
-    &make_administration_service_test_environment, call_guard<GilRelease>());
+    &make_administration_service_test_environment,
+    call_guard<gil_scoped_release>());
   module.def("grant_all_entitlements", &grant_all_entitlements);
 }
 
@@ -266,7 +267,7 @@ void Nexus::Python::export_mysql_administration_data_store(module& module) {
         std::make_unique<SqlConnection<Viper::MySql::Connection>>(
           Viper::MySql::Connection(host, port, username, password, database)),
           source);
-    }), call_guard<GilRelease>());
+    }), call_guard<gil_scoped_release>());
 }
 
 void Nexus::Python::export_risk_modification(module& module) {
@@ -286,7 +287,7 @@ void Nexus::Python::export_sqlite_administration_data_store(module& module) {
       return std::make_unique<DataStore>(
         std::make_unique<SqlConnection<Viper::Sqlite3::Connection>>(path),
         source);
-    }), call_guard<GilRelease>());
+    }), call_guard<gil_scoped_release>());
 }
 
 void Nexus::Python::export_trading_group(module& module) {

@@ -120,17 +120,17 @@ void Nexus::Python::export_local_historical_data_store(module& module) {
   export_historical_data_store<DataStore>(module, "LocalHistoricalDataStore").
     def(init()).
     def("load_all_order_imbalances", [] (DataStore& self) {
-      return self->load_order_imbalances();
-    }, call_guard<GilRelease>()).
+      return self.get().load_order_imbalances();
+    }, call_guard<gil_scoped_release>()).
     def("load_all_bbo_quotes", [] (DataStore& self) {
-      return self->load_bbo_quotes();
-    }, call_guard<GilRelease>()).
+      return self.get().load_bbo_quotes();
+    }, call_guard<gil_scoped_release>()).
     def("load_all_book_quotes", [] (DataStore& self) {
-      return self->load_book_quotes();
-    }, call_guard<GilRelease>()).
+      return self.get().load_book_quotes();
+    }, call_guard<gil_scoped_release>()).
     def("load_all_time_and_sales", [] (DataStore& self) {
-      return self->load_time_and_sales();
-    }, call_guard<GilRelease>());
+      return self.get().load_time_and_sales();
+    }, call_guard<gil_scoped_release>());
 }
 
 void Nexus::Python::export_market_data_reactors(module& module) {
@@ -234,7 +234,7 @@ void Nexus::Python::export_market_data_service_application_definitions(
       [] (ToPythonServiceLocatorClient<ApplicationServiceLocatorClient>&
           client) {
         return std::make_unique<ToPythonMarketDataClient<
-          ApplicationMarketDataClient>>(Ref(*client));
+          ApplicationMarketDataClient>>(Ref(client.get()));
       }), keep_alive<1, 2>());
   export_market_data_feed_client<
     ToPythonMarketDataFeedClient<ApplicationMarketDataFeedClient>>(
@@ -244,13 +244,13 @@ void Nexus::Python::export_market_data_service_application_definitions(
           boost::posix_time::time_duration sampling_time, CountryCode country) {
         return std::make_unique<ToPythonMarketDataFeedClient<
           ApplicationMarketDataFeedClient>>(
-            Ref(*client), sampling_time, country);
+            Ref(client.get()), sampling_time, country);
       }), keep_alive<1, 2>()).
     def(init(
       [] (ToPythonServiceLocatorClient<ApplicationServiceLocatorClient>& client,
           boost::posix_time::time_duration sampling_time) {
         return std::make_unique<ToPythonMarketDataFeedClient<
-          ApplicationMarketDataFeedClient>>(Ref(*client), sampling_time);
+          ApplicationMarketDataFeedClient>>(Ref(client.get()), sampling_time);
       }), keep_alive<1, 2>());
 }
 
@@ -276,20 +276,21 @@ void Nexus::Python::export_market_data_service_test_environment(
     def("make_registry_client",
       [] (TestEnvironment& self, ServiceLocatorClient& client) {
         return ToPythonMarketDataClient(self.make_registry_client(Ref(client)));
-      }, call_guard<GilRelease>(), keep_alive<0, 2>()).
+      }, call_guard<gil_scoped_release>(), keep_alive<0, 2>()).
     def("make_feed_client",
       [] (TestEnvironment& self, ServiceLocatorClient& client) {
         return ToPythonMarketDataFeedClient(self.make_feed_client(Ref(client)));
-      }, call_guard<GilRelease>(), keep_alive<0, 2>()).
+      }, call_guard<gil_scoped_release>(), keep_alive<0, 2>()).
     def("update_bbo", overload_cast<const Security&, Money, Money>(
-      &TestEnvironment::update_bbo), call_guard<GilRelease>()).
+      &TestEnvironment::update_bbo), call_guard<gil_scoped_release>()).
     def("update_bbo", overload_cast<const Security&, Money>(
-      &TestEnvironment::update_bbo), call_guard<GilRelease>()).
-    def("close", &TestEnvironment::close, call_guard<GilRelease>());
+      &TestEnvironment::update_bbo), call_guard<gil_scoped_release>()).
+    def("close", &TestEnvironment::close, call_guard<gil_scoped_release>());
   module.def("make_market_data_service_test_environment",
-    &make_market_data_service_test_environment, call_guard<GilRelease>());
+    &make_market_data_service_test_environment,
+    call_guard<gil_scoped_release>());
   module.def("make_market_data_client", &make_market_data_client,
-    call_guard<GilRelease>());
+    call_guard<gil_scoped_release>());
 }
 
 void Nexus::Python::export_market_data_type(module& module) {
@@ -309,7 +310,7 @@ void Nexus::Python::export_mysql_historical_data_store(module& module) {
         unsigned int port, std::string username, std::string password,
         std::string database) {
       return std::make_unique<DataStore>(venues, [=] {
-        auto release = Beam::Python::GilRelease();
+        auto release = gil_scoped_release();
         return SqlConnection(
           Viper::MySql::Connection(host, port, username, password, database));
       });
@@ -317,7 +318,7 @@ void Nexus::Python::export_mysql_historical_data_store(module& module) {
     def(init([] (std::string host, unsigned int port, std::string username,
         std::string password, std::string database) {
       return std::make_unique<DataStore>(DEFAULT_VENUES, [=] {
-        auto release = Beam::Python::GilRelease();
+        auto release = gil_scoped_release();
         return SqlConnection(
           Viper::MySql::Connection(host, port, username, password, database));
       });
@@ -340,13 +341,13 @@ void Nexus::Python::export_sqlite_historical_data_store(module& module) {
   export_historical_data_store<DataStore>(module, "SqliteHistoricalDataStore").
     def(init([] (const VenueDatabase& venues, std::string path) {
       return std::make_unique<DataStore>(venues, [=] {
-        auto release = Beam::Python::GilRelease();
+        auto release = gil_scoped_release();
         return SqlConnection(Viper::Sqlite3::Connection(path));
       });
     })).
     def(init([] (std::string path) {
       return std::make_unique<DataStore>(DEFAULT_VENUES, [=] {
-        auto release = Beam::Python::GilRelease();
+        auto release = gil_scoped_release();
         return SqlConnection(Viper::Sqlite3::Connection(path));
       });
     }));

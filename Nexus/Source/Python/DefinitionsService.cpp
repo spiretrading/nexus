@@ -42,7 +42,7 @@ void Nexus::Python::export_definitions_service_application_definitions(
     def(pybind11::init([] (
         ToPythonServiceLocatorClient<ApplicationServiceLocatorClient>& client) {
       return std::make_unique<ToPythonDefinitionsClient<
-        ApplicationDefinitionsClient>>(Ref(*client));
+        ApplicationDefinitionsClient>>(Ref(client.get()));
     }), keep_alive<1, 2>());
 }
 
@@ -57,7 +57,7 @@ void Nexus::Python::export_definitions_service_test_environment(
       def("make_client", [] (DefinitionsServiceTestEnvironment& self,
           ServiceLocatorClient& client) {
         return ToPythonDefinitionsClient(self.make_client(Ref(client)));
-      }, call_guard<GilRelease>(), keep_alive<0, 2>()).
+      }, call_guard<gil_scoped_release>(), keep_alive<0, 2>()).
       def("close", &DefinitionsServiceTestEnvironment::close,
-        call_guard<GilRelease>());
+        call_guard<gil_scoped_release>());
 }

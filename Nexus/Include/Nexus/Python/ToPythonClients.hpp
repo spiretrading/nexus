@@ -4,7 +4,6 @@
 #include <type_traits>
 #include <utility>
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/ToPythonServiceLocatorClient.hpp>
 #include <Beam/Python/ToPythonTimeClient.hpp>
 #include <Beam/Python/ToPythonTimer.hpp>
@@ -59,18 +58,6 @@ namespace Nexus {
       /** Returns a reference to the underlying clients. */
       const Clients& get() const;
 
-      /** Returns a reference to the underlying clients. */
-      Clients& operator *();
-
-      /** Returns a reference to the underlying clients. */
-      const Clients& operator *() const;
-
-      /** Returns a pointer to the underlying clients. */
-      Clients* operator ->();
-
-      /** Returns a pointer to the underlying clients. */
-      const Clients* operator ->() const;
-
       ServiceLocatorClient& get_service_locator_client();
       AdministrationClient& get_administration_client();
       DefinitionsClient& get_definitions_client();
@@ -107,39 +94,39 @@ namespace Nexus {
   template<IsClients C>
   template<typename... Args>
   ToPythonClients<C>::ToPythonClients(Args&&... args)
-    : m_clients((Beam::Python::GilRelease(), boost::in_place_init),
+    : m_clients((pybind11::gil_scoped_release(), boost::in_place_init),
         std::forward<Args>(args)...),
       m_service_locator_client(boost::in_place_init, std::in_place_type<
         Beam::Python::ToPythonServiceLocatorClient<ServiceLocatorClient>>,
-        ServiceLocatorClient(&m_clients->get_service_locator_client())),
-      m_administration_client(boost::in_place_init, std::in_place_type<
-        ToPythonAdministrationClient<AdministrationClient>>,
-        AdministrationClient(&m_clients->get_administration_client())),
-      m_definitions_client(boost::in_place_init, std::in_place_type<
-        ToPythonDefinitionsClient<DefinitionsClient>>,
-        DefinitionsClient(&m_clients->get_definitions_client())),
-      m_market_data_client(boost::in_place_init, std::in_place_type<
-        ToPythonMarketDataClient<MarketDataClient>>,
-        MarketDataClient(&m_clients->get_market_data_client())),
-      m_charting_client(boost::in_place_init, std::in_place_type<
-        ToPythonChartingClient<ChartingClient>>,
-        ChartingClient(&m_clients->get_charting_client())),
-      m_compliance_client(boost::in_place_init, std::in_place_type<
-        ToPythonComplianceClient<ComplianceClient>>,
-        ComplianceClient(&m_clients->get_compliance_client())),
-      m_order_execution_client(boost::in_place_init, std::in_place_type<
-        ToPythonOrderExecutionClient<OrderExecutionClient>>,
-        OrderExecutionClient(&m_clients->get_order_execution_client())),
+        &m_clients->get_service_locator_client()),
+      m_administration_client(boost::in_place_init,
+        std::in_place_type<ToPythonAdministrationClient<AdministrationClient>>,
+        &m_clients->get_administration_client()),
+      m_definitions_client(boost::in_place_init,
+        std::in_place_type<ToPythonDefinitionsClient<DefinitionsClient>>,
+        &m_clients->get_definitions_client()),
+      m_market_data_client(boost::in_place_init,
+        std::in_place_type<ToPythonMarketDataClient<MarketDataClient>>,
+        &m_clients->get_market_data_client()),
+      m_charting_client(boost::in_place_init,
+        std::in_place_type<ToPythonChartingClient<ChartingClient>>,
+        &m_clients->get_charting_client()),
+      m_compliance_client(boost::in_place_init,
+        std::in_place_type<ToPythonComplianceClient<ComplianceClient>>,
+        &m_clients->get_compliance_client()),
+      m_order_execution_client(boost::in_place_init,
+        std::in_place_type<ToPythonOrderExecutionClient<OrderExecutionClient>>,
+        &m_clients->get_order_execution_client()),
       m_risk_client(boost::in_place_init,
         std::in_place_type<ToPythonRiskClient<RiskClient>>,
-        RiskClient(&m_clients->get_risk_client())),
-      m_time_client(boost::in_place_init, std::in_place_type<
-        Beam::Python::ToPythonTimeClient<TimeClient>>,
-        TimeClient(&m_clients->get_time_client())) {}
+        &m_clients->get_risk_client()),
+      m_time_client(boost::in_place_init,
+        std::in_place_type<Beam::Python::ToPythonTimeClient<TimeClient>>,
+        &m_clients->get_time_client()) {}
 
   template<IsClients C>
   ToPythonClients<C>::~ToPythonClients() {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_time_client.reset();
     m_risk_client.reset();
     m_order_execution_client.reset();
@@ -210,8 +197,8 @@ namespace Nexus {
   template<IsClients C>
   std::unique_ptr<typename ToPythonClients<C>::Timer>
       ToPythonClients<C>::make_timer(boost::posix_time::time_duration expiry) {
-    auto release = Beam::Python::GilRelease();
-    return std::make_unique<Timer>(Beam::Timer(m_clients->make_timer(expiry)));
+    auto release = pybind11::gil_scoped_release();
+    return std::make_unique<Timer>(m_clients->make_timer(expiry));
   }
 
   template<IsClients C>

@@ -2,7 +2,6 @@
 #define NEXUS_PYTHON_ORDER_EXECUTION_CLIENT_HPP
 #include <type_traits>
 #include <utility>
-#include <Beam/Python/GilRelease.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 
@@ -33,18 +32,6 @@ namespace Nexus {
 
       /** Returns a reference to the underlying client. */
       const Client& get() const;
-
-      /** Returns a reference to the underlying client. */
-      Client& operator *();
-
-      /** Returns a reference to the underlying client. */
-      const Client& operator *() const;
-
-      /** Returns a pointer to the underlying client. */
-      Client* operator ->();
-
-      /** Returns a pointer to the underlying client. */
-      const Client* operator ->() const;
 
       std::shared_ptr<Order> load_order(OrderId id);
       void query(const AccountQuery& query,
@@ -81,12 +68,12 @@ namespace Nexus {
   template<IsOrderExecutionClient C>
   template<typename... Args>
   ToPythonOrderExecutionClient<C>::ToPythonOrderExecutionClient(Args&&... args)
-    : m_client((Beam::Python::GilRelease(), boost::in_place_init),
+    : m_client((pybind11::gil_scoped_release(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
   template<IsOrderExecutionClient C>
   ToPythonOrderExecutionClient<C>::~ToPythonOrderExecutionClient() {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_client.reset();
   }
 
@@ -103,108 +90,84 @@ namespace Nexus {
   }
 
   template<IsOrderExecutionClient C>
-  typename ToPythonOrderExecutionClient<C>::Client&
-      ToPythonOrderExecutionClient<C>::operator *() {
-    return *m_client;
-  }
-
-  template<IsOrderExecutionClient C>
-  const typename ToPythonOrderExecutionClient<C>::Client&
-      ToPythonOrderExecutionClient<C>::operator *() const {
-    return *m_client;
-  }
-
-  template<IsOrderExecutionClient C>
-  typename ToPythonOrderExecutionClient<C>::Client*
-      ToPythonOrderExecutionClient<C>::operator ->() {
-    return m_client.get_ptr();
-  }
-
-  template<IsOrderExecutionClient C>
-  const typename ToPythonOrderExecutionClient<C>::Client*
-      ToPythonOrderExecutionClient<C>::operator ->() const {
-    return m_client.get_ptr();
-  }
-
-  template<IsOrderExecutionClient C>
   std::shared_ptr<Order>
       ToPythonOrderExecutionClient<C>::load_order(OrderId id) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->load_order(id);
   }
 
   template<IsOrderExecutionClient C>
   void ToPythonOrderExecutionClient<C>::query(const AccountQuery& query,
       Beam::ScopedQueueWriter<SequencedOrderRecord> queue) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_client->query(query, std::move(queue));
   }
 
   template<IsOrderExecutionClient C>
   void ToPythonOrderExecutionClient<C>::query(const AccountQuery& query,
       Beam::ScopedQueueWriter<OrderRecord> queue) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_client->query(query, std::move(queue));
   }
 
   template<IsOrderExecutionClient C>
   void ToPythonOrderExecutionClient<C>::query(const AccountQuery& query,
       Beam::ScopedQueueWriter<SequencedOrder> queue) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_client->query(query, std::move(queue));
   }
 
   template<IsOrderExecutionClient C>
   void ToPythonOrderExecutionClient<C>::query(const AccountQuery& query,
       Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_client->query(query, std::move(queue));
   }
 
   template<IsOrderExecutionClient C>
   void ToPythonOrderExecutionClient<C>::query(const AccountQuery& query,
       Beam::ScopedQueueWriter<SequencedExecutionReport> queue) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_client->query(query, std::move(queue));
   }
 
   template<IsOrderExecutionClient C>
   void ToPythonOrderExecutionClient<C>::query(const AccountQuery& query,
       Beam::ScopedQueueWriter<ExecutionReport> queue) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_client->query(query, std::move(queue));
   }
 
   template<IsOrderExecutionClient C>
   std::shared_ptr<Order>
       ToPythonOrderExecutionClient<C>::submit(const OrderFields& fields) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     return m_client->submit(fields);
   }
 
   template<IsOrderExecutionClient C>
   void ToPythonOrderExecutionClient<C>::cancel(
       const std::shared_ptr<Order>& order) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_client->cancel(order);
   }
 
   template<IsOrderExecutionClient C>
   void ToPythonOrderExecutionClient<C>::cancel(const Order& order) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_client->cancel(order);
   }
 
   template<IsOrderExecutionClient C>
   void ToPythonOrderExecutionClient<C>::update(
       OrderId id, const ExecutionReport& report) {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_client->update(id, report);
   }
 
   template<IsOrderExecutionClient C>
   void ToPythonOrderExecutionClient<C>::close() {
-    auto release = Beam::Python::GilRelease();
+    auto release = pybind11::gil_scoped_release();
     m_client->close();
   }
 }

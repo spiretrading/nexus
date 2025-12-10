@@ -50,7 +50,7 @@ void Nexus::Python::export_inventory_snapshot(module& module) {
     [] (const InventorySnapshot& snapshot, const DirectoryEntry& account,
         const VenueDatabase& venues, OrderExecutionClient& client) {
       return make_portfolio(snapshot, account, venues, client);
-    }, keep_alive<0, 4>(), call_guard<GilRelease>());
+    }, keep_alive<0, 4>(), call_guard<gil_scoped_release>());
 }
 
 void Nexus::Python::export_local_risk_data_store(module& module) {
@@ -105,7 +105,7 @@ void Nexus::Python::export_risk_service_application_definitions(
     def(pybind11::init([] (
         ToPythonServiceLocatorClient<ApplicationServiceLocatorClient>& client) {
       return std::make_unique<ToPythonRiskClient<ApplicationRiskClient>>(
-        Ref(*client));
+        Ref(client.get()));
     }), keep_alive<1, 2>());
 }
 
@@ -133,8 +133,9 @@ void Nexus::Python::export_risk_service_test_environment(module& module) {
     def("make_client",
       [] (RiskServiceTestEnvironment& self, ServiceLocatorClient& client) {
         return ToPythonRiskClient(self.make_client(Ref(client)));
-      }, call_guard<GilRelease>(), keep_alive<0, 2>()).
-    def("close", &RiskServiceTestEnvironment::close, call_guard<GilRelease>());
+      }, call_guard<gil_scoped_release>(), keep_alive<0, 2>()).
+    def("close", &RiskServiceTestEnvironment::close,
+      call_guard<gil_scoped_release>());
 }
 
 void Nexus::Python::export_risk_state(module& module) {
