@@ -14,6 +14,6 @@ services+=" SimulationMarketDataFeedClient"
 
 for directory in $services; do
   pushd $directory/Application > /dev/null
-  ./check.sh
+  ./check.sh "$@"
   popd > /dev/null
 done
