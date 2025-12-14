@@ -1,21 +1,17 @@
 #ifndef NEXUS_PYTHON_DEFINITIONS_CLIENT_HPP
 #define NEXUS_PYTHON_DEFINITIONS_CLIENT_HPP
-#include <memory>
 #include <type_traits>
 #include <utility>
-#include <Beam/Python/GilRelease.hpp>
-#include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
-#include <pybind11/pybind11.h>
-#include "Nexus/DefinitionsService/DefinitionsClientBox.hpp"
+#include "Nexus/DefinitionsService/DefinitionsClient.hpp"
 
-namespace Nexus::DefinitionsService {
+namespace Nexus {
 
   /**
    * Wraps a DefinitionsClient for use with Python.
    * @param <C> The type of DefinitionsClient to wrap.
    */
-  template<typename C>
+  template<IsDefinitionsClient C>
   class ToPythonDefinitionsClient {
     public:
 
@@ -23,42 +19,31 @@ namespace Nexus::DefinitionsService {
       using Client = C;
 
       /**
-       * Constructs a ToPythonDefinitionsClient.
-       * @param args The arguments to forward to the Client's constructor.
+       * Constructs a ToPythonDefinitionsClient in-place.
+       * @param args The arguments to forward to the constructor.
        */
-      template<typename... Args, typename =
-        Beam::disable_copy_constructor_t<ToPythonDefinitionsClient, Args...>>
-      ToPythonDefinitionsClient(Args&&... args);
+      template<typename... Args>
+      explicit ToPythonDefinitionsClient(Args&&... args);
 
       ~ToPythonDefinitionsClient();
 
-      /** Returns the wrapped client. */
-      const Client& GetClient() const;
+      /** Returns a reference to the underlying client. */
+      Client& get();
 
-      /** Returns the wrapped client. */
-      Client& GetClient();
+      /** Returns a reference to the underlying client. */
+      const Client& get() const;
 
-      std::string LoadMinimumSpireClientVersion();
-
-      std::string LoadOrganizationName();
-
-      CountryDatabase LoadCountryDatabase();
-
-      boost::local_time::tz_database LoadTimeZoneDatabase();
-
-      CurrencyDatabase LoadCurrencyDatabase();
-
-      DestinationDatabase LoadDestinationDatabase();
-
-      MarketDatabase LoadMarketDatabase();
-
-      std::vector<ExchangeRate> LoadExchangeRates();
-
-      std::vector<Compliance::ComplianceRuleSchema> LoadComplianceRuleSchemas();
-
-      TradingSchedule LoadTradingSchedule();
-
-      void Close();
+      std::string load_minimum_spire_client_version();
+      std::string load_organization_name();
+      CountryDatabase load_country_database();
+      boost::local_time::tz_database load_time_zone_database();
+      CurrencyDatabase load_currency_database();
+      DestinationDatabase load_destination_database();
+      VenueDatabase load_venue_database();
+      std::vector<ExchangeRate> load_exchange_rates();
+      std::vector<ComplianceRuleSchema> load_compliance_rule_schemas();
+      TradingSchedule load_trading_schedule();
+      void close();
 
     private:
       boost::optional<Client> m_client;
@@ -70,98 +55,101 @@ namespace Nexus::DefinitionsService {
 
   template<typename Client>
   ToPythonDefinitionsClient(Client&&) ->
-    ToPythonDefinitionsClient<std::decay_t<Client>>;
+    ToPythonDefinitionsClient<std::remove_cvref_t<Client>>;
 
-  template<typename C>
-  template<typename... Args, typename>
+  template<IsDefinitionsClient C>
+  template<typename... Args>
   ToPythonDefinitionsClient<C>::ToPythonDefinitionsClient(Args&&... args)
     : m_client((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
-  template<typename C>
+  template<IsDefinitionsClient C>
   ToPythonDefinitionsClient<C>::~ToPythonDefinitionsClient() {
     auto release = Beam::Python::GilRelease();
     m_client.reset();
   }
 
-  template<typename C>
-  const typename ToPythonDefinitionsClient<C>::Client&
-      ToPythonDefinitionsClient<C>::GetClient() const {
-    return *m_client;
-  }
-
-  template<typename C>
+  template<IsDefinitionsClient C>
   typename ToPythonDefinitionsClient<C>::Client&
-      ToPythonDefinitionsClient<C>::GetClient() {
+      ToPythonDefinitionsClient<C>::get() {
     return *m_client;
   }
 
-  template<typename C>
-  std::string ToPythonDefinitionsClient<C>::LoadMinimumSpireClientVersion() {
-    auto release = Beam::Python::GilRelease();
-    return m_client->LoadMinimumSpireClientVersion();
+  template<IsDefinitionsClient C>
+  const typename ToPythonDefinitionsClient<C>::Client&
+      ToPythonDefinitionsClient<C>::get() const {
+    return *m_client;
   }
 
-  template<typename C>
-  std::string ToPythonDefinitionsClient<C>::LoadOrganizationName() {
+  template<IsDefinitionsClient C>
+  std::string ToPythonDefinitionsClient<C>::
+      load_minimum_spire_client_version() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadOrganizationName();
+    return m_client->load_minimum_spire_client_version();
   }
 
-  template<typename C>
-  CountryDatabase ToPythonDefinitionsClient<C>::LoadCountryDatabase() {
+  template<IsDefinitionsClient C>
+  std::string ToPythonDefinitionsClient<C>::load_organization_name() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadCountryDatabase();
+    return m_client->load_organization_name();
   }
 
-  template<typename C>
+  template<IsDefinitionsClient C>
+  CountryDatabase ToPythonDefinitionsClient<C>::load_country_database() {
+    auto release = Beam::Python::GilRelease();
+    return m_client->load_country_database();
+  }
+
+  template<IsDefinitionsClient C>
   boost::local_time::tz_database
-      ToPythonDefinitionsClient<C>::LoadTimeZoneDatabase() {
+      ToPythonDefinitionsClient<C>::load_time_zone_database() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadTimeZoneDatabase();
+    return m_client->load_time_zone_database();
   }
 
-  template<typename C>
-  CurrencyDatabase ToPythonDefinitionsClient<C>::LoadCurrencyDatabase() {
+  template<IsDefinitionsClient C>
+  CurrencyDatabase ToPythonDefinitionsClient<C>::load_currency_database() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadCurrencyDatabase();
+    return m_client->load_currency_database();
   }
 
-  template<typename C>
-  DestinationDatabase ToPythonDefinitionsClient<C>::LoadDestinationDatabase() {
+  template<IsDefinitionsClient C>
+  DestinationDatabase
+      ToPythonDefinitionsClient<C>::load_destination_database() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadDestinationDatabase();
+    return m_client->load_destination_database();
   }
 
-  template<typename C>
-  MarketDatabase ToPythonDefinitionsClient<C>::LoadMarketDatabase() {
+  template<IsDefinitionsClient C>
+  VenueDatabase ToPythonDefinitionsClient<C>::load_venue_database() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadMarketDatabase();
+    return m_client->load_venue_database();
   }
 
-  template<typename C>
-  std::vector<ExchangeRate> ToPythonDefinitionsClient<C>::LoadExchangeRates() {
+  template<IsDefinitionsClient C>
+  std::vector<ExchangeRate>
+      ToPythonDefinitionsClient<C>::load_exchange_rates() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadExchangeRates();
+    return m_client->load_exchange_rates();
   }
 
-  template<typename C>
-  std::vector<Compliance::ComplianceRuleSchema>
-      ToPythonDefinitionsClient<C>::LoadComplianceRuleSchemas() {
+  template<IsDefinitionsClient C>
+  std::vector<ComplianceRuleSchema>
+      ToPythonDefinitionsClient<C>::load_compliance_rule_schemas() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadComplianceRuleSchemas();
+    return m_client->load_compliance_rule_schemas();
   }
 
-  template<typename C>
-  TradingSchedule ToPythonDefinitionsClient<C>::LoadTradingSchedule() {
+  template<IsDefinitionsClient C>
+  TradingSchedule ToPythonDefinitionsClient<C>::load_trading_schedule() {
     auto release = Beam::Python::GilRelease();
-    return m_client->LoadTradingSchedule();
+    return m_client->load_trading_schedule();
   }
 
-  template<typename C>
-  void ToPythonDefinitionsClient<C>::Close() {
+  template<IsDefinitionsClient C>
+  void ToPythonDefinitionsClient<C>::close() {
     auto release = Beam::Python::GilRelease();
-    m_client->Close();
+    m_client->close();
   }
 }
 

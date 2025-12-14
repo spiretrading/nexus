@@ -4,7 +4,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/signals2/signal.hpp>
 #include "Nexus/Definitions/Security.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class QLineEdit;
 

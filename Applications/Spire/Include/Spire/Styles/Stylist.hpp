@@ -11,10 +11,10 @@
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/EvaluatedBlock.hpp"
 #include "Spire/Styles/PseudoElement.hpp"
-#include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/StyleSheet.hpp"
 
 namespace Spire::Styles {
+  template<typename T> class RevertExpression;
 
   /** Specifies whether an element is visible. */
   enum class Visibility {

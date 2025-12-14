@@ -19,15 +19,15 @@ namespace Spire {
       virtual const std::type_info& GetNativeType() const = 0;
 
     protected:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void NativeType::Shuttle(Shuttler& shuttle, unsigned int version) {
-    CanvasType::Shuttle(shuttle, version);
+  template<Beam::IsShuttle S>
+  void NativeType::shuttle(S& shuttle, unsigned int version) {
+    CanvasType::shuttle(shuttle, version);
   }
 }
 

@@ -1,4 +1,5 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
+#include <Beam/Utilities/ToString.hpp>
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "ui_TimeAndSalesWindow.h"
@@ -24,8 +25,7 @@ TimeAndSalesWindowSettings::TimeAndSalesWindowSettings(
   if(m_security == Security()) {
     m_name = "Time And Sales";
   } else {
-    m_name = "Time And Sales - " +
-      ToString(m_security, userProfile->GetMarketDatabase());
+    m_name = "Time And Sales - " + to_string(m_security);
   }
 }
 
@@ -38,7 +38,7 @@ QWidget* TimeAndSalesWindowSettings::Reopen(
   TimeAndSalesWindow* window = new TimeAndSalesWindow(Ref(userProfile),
     m_properties, m_identifier);
   window->setAttribute(Qt::WA_DeleteOnClose);
-  Apply(Ref(userProfile), Store(*window));
+  Apply(Ref(userProfile), out(*window));
   return window;
 }
 

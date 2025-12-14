@@ -4,7 +4,6 @@
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 
 using namespace Beam;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::date_time;
 using namespace boost::posix_time;
@@ -15,7 +14,7 @@ namespace {
     if(value.is_special() || value.is_not_a_date_time()) {
       return to_simple_string(value);
     } else {
-      return to_simple_string(ToLocalTime(value));
+      return to_simple_string(to_local_time(value));
     }
   }
 }

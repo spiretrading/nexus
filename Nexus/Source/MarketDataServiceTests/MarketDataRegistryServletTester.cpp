@@ -1,214 +1,266 @@
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/ServiceLocator/SessionAuthenticator.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
-#include <Beam/ServicesTests/ServicesTests.hpp>
-#include <boost/optional/optional.hpp>
+#include <Beam/Services/ServiceProtocolClient.hpp>
+#include <Beam/Services/ServiceProtocolServletContainer.hpp>
+#include <Beam/ServicesTests/TestServices.hpp>
+#include <Beam/TimeService/FixedTimeClient.hpp>
+#include <boost/functional/factory.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/AdministrationService/AdministrationClientBox.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
+#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
+#include "Nexus/MarketDataService/MarketDataRegistry.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServlet.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Queries;
-using namespace Beam::Services;
-using namespace Beam::Services::Tests;
-using namespace Beam::ServiceLocator;
-using namespace Beam::ServiceLocator::Tests;
-using namespace Beam::Threading;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::AdministrationService::Tests;
-using namespace Nexus::MarketDataService;
+using namespace Nexus::DefaultVenues;
+using namespace Nexus::Tests;
 
 namespace {
-  const auto SECURITY_A =
-    Security("ABX", DefaultMarkets::TSX(), DefaultCountries::CA());
-
   struct Fixture {
-    using TestServletContainer =
-      TestAuthenticatedServiceProtocolServletContainer<
-        MetaMarketDataRegistryServlet<MarketDataRegistry*,
-          LocalHistoricalDataStore, AdministrationClientBox>,
-        NativePointerPolicy>;
-
-    ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;
-    AdministrationServiceTestEnvironment m_administrationEnvironment;
+    using ServletContainer = TestAuthenticatedServiceProtocolServletContainer<
+      MetaMarketDataRegistryServlet<MarketDataRegistry*,
+        LocalHistoricalDataStore*, AdministrationClient>, NativePointerPolicy>;
+    FixedTimeClient m_time_client;
+    ServiceLocatorTestEnvironment m_service_locator_environment;
+    AdministrationServiceTestEnvironment m_administration_environment;
+    optional<ServiceLocatorClient> m_servlet_service_locator_client;
+    optional<AdministrationClient> m_servlet_administration_client;
     MarketDataRegistry m_registry;
-    boost::optional<TestServletContainer::Servlet::Servlet> m_registryServlet;
-    boost::optional<TestServletContainer> m_container;
-    boost::optional<TestServiceProtocolClient> m_protocolClient;
+    LocalHistoricalDataStore m_data_store;
+    optional<ServletContainer::Servlet::Servlet> m_servlet;
+    std::shared_ptr<LocalServerConnection> m_server_connection;
+    optional<ServletContainer> m_container;
+    DirectoryEntry m_client_account;
+    std::unique_ptr<TestServiceProtocolClient> m_client;
+
+    auto make_account(const std::string& name, const DirectoryEntry& parent) {
+      return m_service_locator_environment.get_root().make_account(
+        name, "", parent);
+    }
+
+    auto make_client(const std::string& name) {
+      auto service_locator_client =
+        m_service_locator_environment.make_client(name, "");
+      auto authenticator = SessionAuthenticator(Ref(service_locator_client));
+      auto protocol_client = std::make_unique<TestServiceProtocolClient>(
+        std::make_unique<LocalClientChannel>(name, *m_server_connection),
+        init());
+      Nexus::register_query_types(
+        Beam::out(protocol_client->get_slots().get_registry()));
+      register_market_data_registry_services(out(protocol_client->get_slots()));
+      register_market_data_registry_messages(out(protocol_client->get_slots()));
+      authenticator(*protocol_client);
+      return std::tuple(
+        service_locator_client.get_account(), std::move(protocol_client));
+    }
 
     Fixture()
-        : m_administrationEnvironment(
-            m_serviceLocatorEnvironment.MakeClient(), MakeEntitlements()) {
-      auto servletServiceLocatorClient =
-        m_serviceLocatorEnvironment.MakeClient();
-      m_registryServlet.emplace(m_administrationEnvironment.MakeClient(
-        servletServiceLocatorClient), &m_registry, Initialize());
-      auto serverConnection = std::make_shared<TestServerConnection>();
-      m_container.emplace(Initialize(std::move(servletServiceLocatorClient),
-        &*m_registryServlet), serverConnection,
-        factory<std::unique_ptr<TriggerTimer>>());
-      m_protocolClient.emplace(Initialize("test", *serverConnection),
-        Initialize());
-      Nexus::Queries::RegisterQueryTypes(
-        Store(m_protocolClient->GetSlots().GetRegistry()));
-      RegisterMarketDataRegistryServices(Store(m_protocolClient->GetSlots()));
-      RegisterMarketDataRegistryMessages(Store(m_protocolClient->GetSlots()));
-      auto clientServiceLocatorClient =
-        m_serviceLocatorEnvironment.MakeClient("client", "");
-      auto authenticator = SessionAuthenticator(clientServiceLocatorClient);
-      authenticator(*m_protocolClient);
-    }
-
-    EntitlementDatabase MakeEntitlements() {
-      auto servletAccount = m_serviceLocatorEnvironment.GetRoot().MakeAccount(
-        "servlet", "", DirectoryEntry::GetStarDirectory());
-      auto clientEntry = m_serviceLocatorEnvironment.GetRoot().MakeAccount(
-        "client", "", DirectoryEntry::GetStarDirectory());
-      auto entitlementsDirectory =
-        m_serviceLocatorEnvironment.GetRoot().MakeDirectory("entitlements",
-        DirectoryEntry::GetStarDirectory());
-      auto nyseEntitlementGroup =
-        m_serviceLocatorEnvironment.GetRoot().MakeDirectory(
-        "NYSE", entitlementsDirectory);
-      auto servletPermissions = Permissions();
-      servletPermissions.Set(Permission::READ);
-      servletPermissions.Set(Permission::MOVE);
-      servletPermissions.Set(Permission::ADMINISTRATE);
-      m_serviceLocatorEnvironment.GetRoot().StorePermissions(servletAccount,
-        entitlementsDirectory, servletPermissions);
-      auto tsxEntitlementGroup =
-        m_serviceLocatorEnvironment.GetRoot().MakeDirectory("TSX",
-        entitlementsDirectory);
-      auto nyseEntitlement = EntitlementDatabase::Entry();
-      nyseEntitlement.m_name = "NYSE";
-      nyseEntitlement.m_groupEntry = nyseEntitlementGroup;
-      nyseEntitlement.m_applicability[DefaultMarkets::NYSE()].Set(
-        MarketDataType::BBO_QUOTE);
-      nyseEntitlement.m_applicability[DefaultMarkets::NYSE()].Set(
-        MarketDataType::ORDER_IMBALANCE);
-      auto entitlements = EntitlementDatabase();
-      entitlements.Add(nyseEntitlement);
-      auto tsxEntitlements = EntitlementDatabase::Entry();
-      tsxEntitlements.m_name = "TSX";
-      tsxEntitlements.m_groupEntry = tsxEntitlementGroup;
-      auto tsxKey = EntitlementKey(DefaultMarkets::TSX(),
-        DefaultMarkets::TSX());
-      tsxEntitlements.m_applicability[tsxKey].Set(MarketDataType::BBO_QUOTE);
-      tsxEntitlements.m_applicability[tsxKey].Set(MarketDataType::BOOK_QUOTE);
-      auto tsxvKey = EntitlementKey(DefaultMarkets::TSXV(),
-        DefaultMarkets::TSXV());
-      tsxEntitlements.m_applicability[tsxvKey].Set(MarketDataType::BBO_QUOTE);
-      auto chicTsxKey = EntitlementKey(DefaultMarkets::TSX(),
-        DefaultMarkets::CHIC());
-      tsxEntitlements.m_applicability[chicTsxKey].Set(
-        MarketDataType::BOOK_QUOTE);
-      entitlements.Add(tsxEntitlements);
-      m_serviceLocatorEnvironment.GetRoot().Associate(clientEntry,
-        nyseEntitlementGroup);
-      m_serviceLocatorEnvironment.GetRoot().Associate(clientEntry,
-        tsxEntitlementGroup);
-      return entitlements;
+        : m_time_client(time_from_string("2024-07-04 12:00:00")),
+          m_server_connection(std::make_shared<LocalServerConnection>()),
+          m_administration_environment(
+            make_administration_service_test_environment(
+              m_service_locator_environment)),
+          m_registry(DEFAULT_VENUES, get_default_time_zone_database()) {
+      auto servlet_account = make_account(
+        "market_data_service", DirectoryEntry::STAR_DIRECTORY);
+      m_administration_environment.make_administrator(servlet_account);
+      m_service_locator_environment.get_root().store(
+        servlet_account, DirectoryEntry::STAR_DIRECTORY, Permissions(~0));
+      m_servlet_service_locator_client.emplace(
+        m_service_locator_environment.make_client(servlet_account.m_name, ""));
+      m_servlet_administration_client.emplace(
+        m_administration_environment.make_client(
+          Ref(*m_servlet_service_locator_client)));
+      m_servlet.emplace(
+        *m_servlet_administration_client, &m_registry, &m_data_store);
+      m_container.emplace(init(
+        *m_servlet_service_locator_client, &*m_servlet),
+        m_server_connection, factory<std::unique_ptr<TriggerTimer>>());
+      m_client_account =
+        make_account("client", DirectoryEntry::STAR_DIRECTORY);
+      auto global_entitlement = m_servlet_administration_client->
+        load_entitlements().get_entries().front().m_group_entry;
+      m_servlet_administration_client->store_entitlements(
+        m_client_account, {global_entitlement});
+      std::tie(m_client_account, m_client) = make_client("client");
     }
   };
+
+  template<typename QueryService, typename MessageType,
+    typename MakeData, typename LoadFromStore, typename GetRecord>
+  void test_query_publish(Fixture& fixture, const Security& security,
+      MakeData&& make_data, LoadFromStore&& load_from_store,
+      GetRecord&& get_record) {
+    auto query = SecurityMarketDataQuery();
+    query.set_index(security);
+    query.set_range(Range::REAL_TIME);
+    query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+    auto result = fixture.m_client->send_request<QueryService>(query);
+    REQUIRE(result.m_id != -1);
+    REQUIRE(result.m_snapshot.empty());
+    auto data = make_data();
+    fixture.m_servlet->publish(data, 1);
+    auto message = fixture.m_client->read_message();
+    auto received_message = std::dynamic_pointer_cast<
+      RecordMessage<MessageType, TestServiceProtocolClient>>(message);
+    auto received_data = get_record(received_message->get_record());
+    REQUIRE(*received_data == *data);
+    auto data_store_query = SecurityMarketDataQuery();
+    data_store_query.set_index(security);
+    data_store_query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+    data_store_query.set_range(
+      received_data.get_sequence(), increment(received_data.get_sequence()));
+    auto stored_data = load_from_store(data_store_query);
+    REQUIRE(stored_data.size() == 1);
+    REQUIRE(stored_data.front() == to_sequenced_value(received_data));
+    SUBCASE("query_no_entitlement") {
+      auto client_account =
+        fixture.make_account("client2", DirectoryEntry::STAR_DIRECTORY);
+      auto client = std::unique_ptr<TestServiceProtocolClient>();
+      std::tie(client_account, client) = fixture.make_client("client2");
+      auto query = SecurityMarketDataQuery();
+      query.set_index(security);
+      query.set_range(Range::TOTAL);
+      query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+      auto result = client->send_request<QueryService>(query);
+      REQUIRE(result.m_id == -1);
+      REQUIRE(result.m_snapshot.empty());
+    }
+  }
 }
 
 TEST_SUITE("MarketDataRegistryServlet") {
-  TEST_CASE_FIXTURE(Fixture, "market_and_source_entitlement") {
-    auto query = SecurityMarketDataQuery();
-    query.SetIndex(SECURITY_A);
-    query.SetRange(Range::RealTime());
-    auto snapshot = m_protocolClient->SendRequest<QueryBookQuotesService>(
-      query);
-    auto bookQuote = SecurityBookQuote(
-      BookQuote("CHIC", false, DefaultMarkets::CHIC(),
-        Quote(Money::ONE, 100, Side::BID), second_clock::universal_time()),
-      SECURITY_A);
-    m_registryServlet->UpdateBookQuote(bookQuote, 1);
-  }
-
-  TEST_CASE_FIXTURE(Fixture, "query_security_info") {
-    auto query = SecurityInfoQuery();
-    query.SetIndex(Region::Global());
-    query.SetSnapshotLimit(SnapshotLimit::Unlimited());
-    auto info = SecurityInfo(SECURITY_A, "ABX", "Mining", 100);
-    m_registryServlet->Add(info);
-    auto result = m_protocolClient->SendRequest<QuerySecurityInfoService>(
-      query);
+  TEST_CASE("query_security_info") {
+    auto fixture = Fixture();
+    auto security = Security("A", TSX);
+    auto info = SecurityInfo(security, "SECURITY A", "", 100);
+    fixture.m_data_store.store(info);
+    fixture.m_registry.add(info);
+    auto query = make_security_info_query(security);
+    auto result =
+      fixture.m_client->send_request<QuerySecurityInfoService>(query);
     REQUIRE(result.size() == 1);
-    REQUIRE(result[0] == info);
+    REQUIRE(result.front() == info);
   }
 
-  TEST_CASE_FIXTURE(Fixture, "security_market_query") {
-    auto bboQuote = SecurityBboQuote(BboQuote(Quote(Money::ONE, 100, Side::BID),
-      Quote(Money::ONE, 100, Side::ASK), second_clock::universal_time()),
-      SECURITY_A);
-    m_registryServlet->PublishBboQuote(bboQuote, 1);
-    SUBCASE("Mismatched market.") {
-      auto info = SecurityInfo(SECURITY_A, "ABX", "Mining", 100);
-      m_registryServlet->Add(info);
-      auto query = SecurityMarketDataQuery();
-      query.SetIndex(Security(SECURITY_A.GetSymbol(), DefaultMarkets::TSXV(),
-        DefaultCountries::CA()));
-      query.SetRange(Range::Historical());
-      query.SetSnapshotLimit(SnapshotLimit::Unlimited());
-      auto snapshot = m_protocolClient->SendRequest<QueryBboQuotesService>(
-        query);
-      REQUIRE(snapshot.m_queryId == -1);
-      REQUIRE(snapshot.m_snapshot.empty());
+  TEST_CASE("load_security_info_from_prefix") {
+    auto fixture = Fixture();
+    auto security_a = Security("A", TSX);
+    auto info_a = SecurityInfo(security_a, "SECURITY A", "", 100);
+    fixture.m_registry.add(info_a);
+    auto security_b = Security("B", TSX);
+    auto info_b = SecurityInfo(security_b, "SECURITY B", "", 100);
+    fixture.m_registry.add(info_b);
+    auto security_c = Security("C", TSX);
+    auto info_c = SecurityInfo(security_c, "SECURITY C", "", 100);
+    fixture.m_registry.add(info_c);
+    auto result =
+      fixture.m_client->send_request<LoadSecurityInfoFromPrefixService>("A");
+    REQUIRE(result.size() == 1);
+    REQUIRE(result.front() == info_a);
+  }
+
+  TEST_CASE("query_publish_order_imbalance") {
+    auto fixture = Fixture();
+    auto security = Security("A", TSX);
+    auto info = SecurityInfo(security, "SECURITY A", "", 100);
+    fixture.m_registry.add(info);
+    auto query = VenueMarketDataQuery();
+    query.set_index(TSX);
+    query.set_range(Range::REAL_TIME);
+    query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+    auto result =
+      fixture.m_client->send_request<QueryOrderImbalancesService>(query);
+    REQUIRE(result.m_id != -1);
+    REQUIRE(result.m_snapshot.empty());
+    auto imbalance = VenueOrderImbalance(
+      OrderImbalance(security, Side::ASK, 100, Money::ONE,
+        fixture.m_time_client.get_time()), TSX);
+    fixture.m_servlet->publish(imbalance, 1);
+    auto message = fixture.m_client->read_message();
+    auto received_imbalance_message = std::dynamic_pointer_cast<
+      RecordMessage<OrderImbalanceMessage, TestServiceProtocolClient>>(message);
+    auto received_imbalance =
+      received_imbalance_message->get_record().order_imbalance;
+    REQUIRE(*received_imbalance == *imbalance);
+    auto data_store_query = VenueMarketDataQuery();
+    data_store_query.set_index(TSX);
+    data_store_query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+    data_store_query.set_range(received_imbalance.get_sequence(),
+      increment(received_imbalance.get_sequence()));
+    auto stored_imbalances =
+      fixture.m_data_store.load_order_imbalances(data_store_query);
+    REQUIRE(stored_imbalances.size() == 1);
+    REQUIRE(
+      stored_imbalances.front() == to_sequenced_value(received_imbalance));
+    SUBCASE("query_no_entitlement") {
+      auto client_account =
+        fixture.make_account("client2", DirectoryEntry::STAR_DIRECTORY);
+      auto client = std::unique_ptr<TestServiceProtocolClient>();
+      std::tie(client_account, client) = fixture.make_client("client2");
+      auto query = VenueMarketDataQuery();
+      query.set_index(TSX);
+      query.set_range(Range::TOTAL);
+      query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+      auto result = client->send_request<QueryOrderImbalancesService>(query);
+      REQUIRE(result.m_id == -1);
+      REQUIRE(result.m_snapshot.empty());
     }
-    SUBCASE("Mismatched country.") {
-      auto info = SecurityInfo(SECURITY_A, "ABX", "Mining", 100);
-      m_registryServlet->Add(info);
-      auto query = SecurityMarketDataQuery();
-      query.SetIndex(Security(SECURITY_A.GetSymbol(), DefaultMarkets::TSX(),
-        DefaultCountries::US()));
-      query.SetRange(Range::Historical());
-      query.SetSnapshotLimit(SnapshotLimit::Unlimited());
-      auto snapshot = m_protocolClient->SendRequest<QueryBboQuotesService>(
-        query);
-      REQUIRE(snapshot.m_queryId == -1);
-      REQUIRE(snapshot.m_snapshot.empty());
-    }
-    SUBCASE("Mismatched market and country.") {
-      auto info = SecurityInfo(SECURITY_A, "ABX", "Mining", 100);
-      m_registryServlet->Add(info);
-      auto query = SecurityMarketDataQuery();
-      query.SetIndex(Security(SECURITY_A.GetSymbol(), DefaultMarkets::NYSE(),
-        DefaultCountries::US()));
-      query.SetRange(Range::Historical());
-      query.SetSnapshotLimit(SnapshotLimit::Unlimited());
-      auto snapshot = m_protocolClient->SendRequest<QueryBboQuotesService>(
-        query);
-      REQUIRE(snapshot.m_queryId == -1);
-      REQUIRE(snapshot.m_snapshot.empty());
-    }
-    SUBCASE("Missing info record.") {
-      auto query = SecurityMarketDataQuery();
-      query.SetIndex(Security(SECURITY_A.GetSymbol(), DefaultMarkets::TSXV(),
-        DefaultCountries::CA()));
-      query.SetRange(Range::Historical());
-      query.SetSnapshotLimit(SnapshotLimit::Unlimited());
-      auto snapshot = m_protocolClient->SendRequest<QueryBboQuotesService>(
-        query);
-      REQUIRE(snapshot.m_snapshot.size() == 1);
-      REQUIRE(*snapshot.m_snapshot[0] == *bboQuote);
-    }
-    SUBCASE("Proper query.") {
-      auto info = SecurityInfo(SECURITY_A, "ABX", "Mining", 100);
-      m_registryServlet->Add(info);
-      auto query = SecurityMarketDataQuery();
-      query.SetIndex(SECURITY_A);
-      query.SetRange(Range::Historical());
-      query.SetSnapshotLimit(SnapshotLimit::Unlimited());
-      auto snapshot = m_protocolClient->SendRequest<QueryBboQuotesService>(
-        query);
-      REQUIRE(snapshot.m_snapshot.size() == 1);
-      REQUIRE(*snapshot.m_snapshot[0] == *bboQuote);
-    }
+  }
+
+  TEST_CASE("query_publish_bbo_quote") {
+    auto fixture = Fixture();
+    auto security = Security("A", TSX);
+    auto info = SecurityInfo(security, "SECURITY A", "", 100);
+    fixture.m_registry.add(info);
+    test_query_publish<QueryBboQuotesService, BboQuoteMessage>(
+      fixture, security, [&] {
+        return SecurityBboQuote(
+          BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
+            fixture.m_time_client.get_time()), security);
+      }, [&] (const auto& query) {
+        return fixture.m_data_store.load_bbo_quotes(query);
+      }, [] (const auto& record) {
+        return record.bbo_quote;
+      });
+  }
+
+  TEST_CASE("query_publish_book_quote") {
+    auto fixture = Fixture();
+    auto security = Security("A", TSX);
+    auto info = SecurityInfo(security, "SECURITY A", "", 100);
+    fixture.m_registry.add(info);
+    test_query_publish<QueryBookQuotesService, BookQuoteMessage>(
+      fixture, security, [&] {
+        return SecurityBookQuote(
+          BookQuote("MP1", false, TSX, make_bid(Money::CENT, 100),
+            fixture.m_time_client.get_time()), security);
+      }, [&] (const auto& query) {
+        return fixture.m_data_store.load_book_quotes(query);
+      }, [] (const auto& record) {
+        return record.book_quote;
+      });
+  }
+
+  TEST_CASE("query_publish_time_and_sale") {
+    auto fixture = Fixture();
+    auto security = Security("A", TSX);
+    auto info = SecurityInfo(security, "SECURITY A", "", 100);
+    fixture.m_registry.add(info);
+    test_query_publish<QueryTimeAndSalesService, TimeAndSaleMessage>(
+      fixture, security, [&] {
+        return SecurityTimeAndSale(TimeAndSale(fixture.m_time_client.get_time(),
+          Money::ONE, 100, TimeAndSale::Condition(), "TSX", "", ""), security);
+      }, [&] (const auto& query) {
+        return fixture.m_data_store.load_time_and_sales(query);
+      }, [] (const auto& record) {
+        return record.time_and_sale;
+      });
   }
 }

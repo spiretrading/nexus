@@ -31,13 +31,13 @@ namespace Spire {
     private:
       std::mutex m_mutex;
       Aspen::Trigger m_trigger;
-      Beam::Routines::RoutineHandler m_reactorLoop;
+      Beam::RoutineHandler m_reactorLoop;
       bool m_has_update;
       Aspen::Shared<Aspen::Queue<Aspen::SharedBox<void>>> m_producer;
       Aspen::Concur<Aspen::Shared<Aspen::Queue<Aspen::SharedBox<void>>>>
         m_reactor;
-      Beam::Threading::ConditionVariable m_updateCondition;
-      Beam::IO::OpenState m_openState;
+      Beam::ConditionVariable m_updateCondition;
+      Beam::OpenState m_openState;
 
       void RunLoop();
       void OnUpdate();

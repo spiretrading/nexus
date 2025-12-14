@@ -181,7 +181,7 @@ export class SecuritiesField extends React.Component<Properties, State> {
     })();
     let displayValue  = '';
     for(let i = 0; i < this.props.value.length; ++i) {
-      const symbol = Nexus.toWildCardString(this.props.value[i]);
+      const symbol = this.props.value[i].toString();
       displayValue = displayValue.concat(symbol);
       if(this.props.value.length > 1 && i < this.props.value.length - 1) {
         displayValue = displayValue.concat(', ');
@@ -211,7 +211,7 @@ export class SecuritiesField extends React.Component<Properties, State> {
                   onClick={this.onClose}/>
               </div>
               {inputField}
-              <SymbolsField 
+              <SymbolsField
                 displaySize={this.props.displaySize}
                 readonly={this.props.readonly}
                 value={this.state.localValue}
@@ -513,7 +513,7 @@ class SymbolsField extends React.Component<SymbolsFieldProperties> {
     })();
     const entries = [];
     for(let i = 0; i < this.props.value.length; ++i) {
-      const symbol = Nexus.toWildCardString(this.props.value[i]);
+      const symbol = this.props.value[i].toString();
       if(this.props.readonly) {
         entries.push(
           <div key={i} className={css(SymbolsField.EXTRA_STYLE.entryReadonly)}>

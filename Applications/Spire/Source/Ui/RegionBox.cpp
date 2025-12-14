@@ -20,12 +20,12 @@ namespace {
     std::size_t operator()(const Region& region) const {
       auto seed = std::size_t(0);
       boost::hash_combine(seed, boost::hash_range(
-        region.GetCountries().begin(), region.GetCountries().end()));
-      auto markets = region.GetMarkets();
+        region.get_countries().begin(), region.get_countries().end()));
+      auto venues = region.get_venues();
+      boost::hash_combine(
+        seed, boost::hash_range(venues.begin(), venues.end()));
       boost::hash_combine(seed, boost::hash_range(
-        markets.begin(), markets.end()));
-      boost::hash_combine(seed, boost::hash_range(
-        region.GetSecurities().begin(), region.GetSecurities().end()));
+        region.get_securities().begin(), region.get_securities().end()));
       return seed;
     }
   };
@@ -33,13 +33,13 @@ namespace {
   std::vector<Region> to_tag_list(
       const Region& region, RegionQueryModel& regions) {
     auto tags = std::vector<Region>();
-    for(auto& country : region.GetCountries()) {
+    for(auto& country : region.get_countries()) {
       tags.push_back(*regions.parse(to_text(country)));
     }
-    for(auto& market : region.GetMarkets()) {
-      tags.push_back(*regions.parse(to_text(MarketToken(market))));
+    for(auto& venue : region.get_venues()) {
+      tags.push_back(*regions.parse(to_text(venue)));
     }
-    for(auto& security : region.GetSecurities()) {
+    for(auto& security : region.get_securities()) {
       tags.push_back(*regions.parse(to_text(security)));
     }
     return tags;
@@ -49,25 +49,25 @@ namespace {
     auto comparator = [&] (const auto& lhs, const auto& rhs) {
       auto lhs_region = std::any_cast<Region&&>(list.get(lhs));
       auto rhs_region = std::any_cast<Region&&>(list.get(rhs));
-      if(!lhs_region.GetCountries().empty() &&
-          !rhs_region.GetCountries().empty()) {
-        return to_text(*lhs_region.GetCountries().begin()) <
-          to_text(*rhs_region.GetCountries().begin());
-      } else if(!lhs_region.GetMarkets().empty() &&
-          !rhs_region.GetMarkets().empty()) {
-        return to_text(MarketToken(*lhs_region.GetMarkets().begin())) <
-          to_text(MarketToken(*rhs_region.GetMarkets().begin()));
-      } else if(!lhs_region.GetSecurities().empty() &&
-          !rhs_region.GetSecurities().empty()) {
-        return to_text(*lhs_region.GetSecurities().begin()) <
-          to_text(*rhs_region.GetSecurities().begin());
+      if(!lhs_region.get_countries().empty() &&
+          !rhs_region.get_countries().empty()) {
+        return to_text(*lhs_region.get_countries().begin()) <
+          to_text(*rhs_region.get_countries().begin());
+      } else if(!lhs_region.get_venues().empty() &&
+          !rhs_region.get_venues().empty()) {
+        return to_text(*lhs_region.get_venues().begin()) <
+          to_text(*rhs_region.get_venues().begin());
+      } else if(!lhs_region.get_securities().empty() &&
+          !rhs_region.get_securities().empty()) {
+        return to_text(*lhs_region.get_securities().begin()) <
+          to_text(*rhs_region.get_securities().begin());
       }
-      if(!lhs_region.GetCountries().empty() ||
-          !rhs_region.GetCountries().empty()) {
-        return !lhs_region.GetCountries().empty();
+      if(!lhs_region.get_countries().empty() ||
+          !rhs_region.get_countries().empty()) {
+        return !lhs_region.get_countries().empty();
       }
-      if(!lhs_region.GetMarkets().empty() || !rhs_region.GetMarkets().empty()) {
-        return !lhs_region.GetMarkets().empty();
+      if(!lhs_region.get_venues().empty() || !rhs_region.get_venues().empty()) {
+        return !lhs_region.get_venues().empty();
       }
       return true;
     };

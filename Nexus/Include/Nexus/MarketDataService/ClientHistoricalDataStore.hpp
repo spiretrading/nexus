@@ -1,214 +1,167 @@
 #ifndef NEXUS_MARKET_DATA_CLIENT_HISTORICAL_DATA_STORE_HPP
 #define NEXUS_MARKET_DATA_CLIENT_HISTORICAL_DATA_STORE_HPP
-#include <type_traits>
+#include <memory>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
+#include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/Queue.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
+#include "Nexus/MarketDataService/MarketDataClient.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Wraps a MarketDataClient for use as a HistoricalDataStore.
    * @param <C> The type of MarketDataClient to wrap.
    */
-  template<typename C>
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   class ClientHistoricalDataStore {
     public:
 
       /** The type of MarketDataClient to wrap. */
-      using MarketDataClient = Beam::GetTryDereferenceType<C>;
+      using MarketDataClient = Beam::dereference_t<C>;
 
       /**
        * Constructs a ClientHistoricalDataStore.
        * @param client Initializes the client to wrap.
        */
-      template<typename CF>
+      template<Beam::Initializes<C> CF>
       explicit ClientHistoricalDataStore(CF&& client);
 
       ~ClientHistoricalDataStore();
 
-      std::vector<SecurityInfo> LoadSecurityInfo(
+      std::vector<SecurityInfo> load_security_info(
         const SecurityInfoQuery& query);
-
-      std::vector<SequencedOrderImbalance> LoadOrderImbalances(
-        const MarketWideDataQuery& query);
-
-      std::vector<SequencedBboQuote> LoadBboQuotes(
+      void store(const SecurityInfo& info);
+      std::vector<SequencedOrderImbalance> load_order_imbalances(
+        const VenueMarketDataQuery& query);
+      void store(const SequencedVenueOrderImbalance& imbalance);
+      void store(const std::vector<SequencedVenueOrderImbalance>& imbalances);
+      std::vector<SequencedBboQuote> load_bbo_quotes(
         const SecurityMarketDataQuery& query);
-
-      std::vector<SequencedBookQuote> LoadBookQuotes(
+      void store(const SequencedSecurityBboQuote& quote);
+      void store(const std::vector<SequencedSecurityBboQuote>& quotes);
+      std::vector<SequencedBookQuote> load_book_quotes(
         const SecurityMarketDataQuery& query);
-
-      std::vector<SequencedMarketQuote> LoadMarketQuotes(
+      void store(const SequencedSecurityBookQuote& quote);
+      void store(const std::vector<SequencedSecurityBookQuote>& quotes);
+      std::vector<SequencedTimeAndSale> load_time_and_sales(
         const SecurityMarketDataQuery& query);
-
-      std::vector<SequencedTimeAndSale> LoadTimeAndSales(
-        const SecurityMarketDataQuery& query);
-
-      void Store(const SecurityInfo& info);
-
-      void Store(const SequencedMarketOrderImbalance& orderImbalance);
-
-      void Store(const std::vector<SequencedMarketOrderImbalance>&
-        orderImbalances);
-
-      void Store(const SequencedSecurityBboQuote& bboQuote);
-
-      void Store(const std::vector<SequencedSecurityBboQuote>& bboQuotes);
-
-      void Store(const SequencedSecurityMarketQuote& marketQuote);
-
-      void Store(const std::vector<SequencedSecurityMarketQuote>& marketQuotes);
-
-      void Store(const SequencedSecurityBookQuote& bookQuote);
-
-      void Store(const std::vector<SequencedSecurityBookQuote>& bookQuotes);
-
-      void Store(const SequencedSecurityTimeAndSale& timeAndSale);
-
-      void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
-
-      void Close();
+      void store(const SequencedSecurityTimeAndSale& time_and_sale);
+      void store(
+        const std::vector<SequencedSecurityTimeAndSale>& time_and_sales);
+      void close();
 
     private:
-      using ClientType = std::remove_reference_t<
-        decltype(*std::declval<Beam::GetOptionalLocalPtr<C>>())>;
-      Beam::GetOptionalLocalPtr<C> m_client;
-      Beam::IO::OpenState m_openState;
+      Beam::local_ptr_t<C> m_client;
+      Beam::OpenState m_open_state;
 
       ClientHistoricalDataStore(const ClientHistoricalDataStore&) = delete;
       ClientHistoricalDataStore& operator =(
         const ClientHistoricalDataStore&) = delete;
-      template<typename T, typename Query, typename F>
-      std::vector<T> SubmitQuery(const Query& query, F f);
+      template<typename T, typename Query>
+      std::vector<T> submit(const Query& query);
   };
 
-  template<typename C>
-  template<typename CF>
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  template<Beam::Initializes<C> CF>
   ClientHistoricalDataStore<C>::ClientHistoricalDataStore(CF&& client)
     : m_client(std::forward<CF>(client)) {}
 
-  template<typename C>
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   ClientHistoricalDataStore<C>::~ClientHistoricalDataStore() {
-    Close();
+    close();
   }
 
-  template<typename C>
-  std::vector<SecurityInfo> ClientHistoricalDataStore<C>::LoadSecurityInfo(
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  std::vector<SecurityInfo> ClientHistoricalDataStore<C>::load_security_info(
       const SecurityInfoQuery& query) {
-    return m_client->QuerySecurityInfo(query);
+    return m_client->query(query);
   }
 
-  template<typename C>
-  std::vector<SequencedOrderImbalance> ClientHistoricalDataStore<C>::
-      LoadOrderImbalances(const MarketWideDataQuery& query) {
-    using MemberType = void (ClientType::*)(const MarketWideDataQuery&,
-      Beam::ScopedQueueWriter<SequencedOrderImbalance>);
-    return SubmitQuery<SequencedOrderImbalance>(query,
-      static_cast<MemberType>(&ClientType::QueryOrderImbalances));
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  void ClientHistoricalDataStore<C>::store(const SecurityInfo& info) {}
+
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  std::vector<SequencedOrderImbalance>
+      ClientHistoricalDataStore<C>::load_order_imbalances(
+        const VenueMarketDataQuery& query) {
+    return submit<SequencedOrderImbalance>(query);
   }
 
-  template<typename C>
-  std::vector<SequencedBboQuote> ClientHistoricalDataStore<C>::LoadBboQuotes(
-      const SecurityMarketDataQuery& query) {
-    using MemberType = void (ClientType::*)(const SecurityMarketDataQuery&,
-      Beam::ScopedQueueWriter<SequencedBboQuote>);
-    return SubmitQuery<SequencedBboQuote>(query,
-      static_cast<MemberType>(&ClientType::QueryBboQuotes));
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  void ClientHistoricalDataStore<C>::store(
+    const SequencedVenueOrderImbalance& imbalance) {}
+
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  void ClientHistoricalDataStore<C>::store(
+    const std::vector<SequencedVenueOrderImbalance>& imbalances) {}
+
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  std::vector<SequencedBboQuote>
+      ClientHistoricalDataStore<C>::load_bbo_quotes(
+        const SecurityMarketDataQuery& query) {
+    return submit<SequencedBboQuote>(query);
   }
 
-  template<typename C>
-  std::vector<SequencedBookQuote> ClientHistoricalDataStore<C>::LoadBookQuotes(
-      const SecurityMarketDataQuery& query) {
-    using MemberType = void (ClientType::*)(const SecurityMarketDataQuery&,
-      Beam::ScopedQueueWriter<SequencedBookQuote>);
-    return SubmitQuery<SequencedBookQuote>(query,
-      static_cast<MemberType>(&ClientType::QueryBookQuotes));
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  void ClientHistoricalDataStore<C>::store(
+    const SequencedSecurityBboQuote& quote) {}
+
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  void ClientHistoricalDataStore<C>::store(
+    const std::vector<SequencedSecurityBboQuote>& quotes) {}
+
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  std::vector<SequencedBookQuote>
+      ClientHistoricalDataStore<C>::load_book_quotes(
+        const SecurityMarketDataQuery& query) {
+    return submit<SequencedBookQuote>(query);
   }
 
-  template<typename C>
-  std::vector<SequencedMarketQuote> ClientHistoricalDataStore<C>::
-      LoadMarketQuotes(const SecurityMarketDataQuery& query) {
-    using MemberType = void (ClientType::*)(const SecurityMarketDataQuery&,
-      Beam::ScopedQueueWriter<SequencedMarketQuote>);
-    return SubmitQuery<SequencedMarketQuote>(query,
-      static_cast<MemberType>(&ClientType::QueryMarketQuotes));
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  void ClientHistoricalDataStore<C>::store(
+    const SequencedSecurityBookQuote& quote) {}
+
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  void ClientHistoricalDataStore<C>::store(
+    const std::vector<SequencedSecurityBookQuote>& quotes) {}
+
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  std::vector<SequencedTimeAndSale>
+      ClientHistoricalDataStore<C>::load_time_and_sales(
+        const SecurityMarketDataQuery& query) {
+    return submit<SequencedTimeAndSale>(query);
   }
 
-  template<typename C>
-  std::vector<SequencedTimeAndSale> ClientHistoricalDataStore<C>::
-      LoadTimeAndSales(const SecurityMarketDataQuery& query) {
-    using MemberType = void (ClientType::*)(const SecurityMarketDataQuery&,
-      Beam::ScopedQueueWriter<SequencedTimeAndSale>);
-    return SubmitQuery<SequencedTimeAndSale>(query,
-      static_cast<MemberType>(&ClientType::QueryTimeAndSales));
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  void ClientHistoricalDataStore<C>::store(
+    const SequencedSecurityTimeAndSale& time_and_sale) {}
+
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  void ClientHistoricalDataStore<C>::store(
+    const std::vector<SequencedSecurityTimeAndSale>& time_and_sales) {}
+
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  void ClientHistoricalDataStore<C>::close() {
+    m_open_state.close();
   }
 
-  template<typename C>
-  void ClientHistoricalDataStore<C>::Store(const SecurityInfo& info) {}
-
-  template<typename C>
-  void ClientHistoricalDataStore<C>::Store(
-    const SequencedMarketOrderImbalance& orderImbalance) {}
-
-  template<typename C>
-  void ClientHistoricalDataStore<C>::Store(
-    const std::vector<SequencedMarketOrderImbalance>& orderImbalances) {}
-
-  template<typename C>
-  void ClientHistoricalDataStore<C>::Store(
-    const SequencedSecurityBboQuote& bboQuote) {}
-
-  template<typename C>
-  void ClientHistoricalDataStore<C>::Store(
-    const std::vector<SequencedSecurityBboQuote>& bboQuotes) {}
-
-  template<typename C>
-  void ClientHistoricalDataStore<C>::Store(
-    const SequencedSecurityMarketQuote& marketQuote) {}
-
-  template<typename C>
-  void ClientHistoricalDataStore<C>::Store(
-    const std::vector<SequencedSecurityMarketQuote>& marketQuotes) {}
-
-  template<typename C>
-  void ClientHistoricalDataStore<C>::Store(
-    const SequencedSecurityBookQuote& bookQuote) {}
-
-  template<typename C>
-  void ClientHistoricalDataStore<C>::Store(
-    const std::vector<SequencedSecurityBookQuote>& bookQuotes) {}
-
-  template<typename C>
-  void ClientHistoricalDataStore<C>::Store(
-    const SequencedSecurityTimeAndSale& timeAndSale) {}
-
-  template<typename C>
-  void ClientHistoricalDataStore<C>::Store(
-    const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {}
-
-  template<typename C>
-  void ClientHistoricalDataStore<C>::Close() {
-    m_openState.Close();
-  }
-
-  template<typename C>
-  template<typename T, typename Query, typename F>
-  std::vector<T> ClientHistoricalDataStore<C>::SubmitQuery(const Query& query,
-      F f) {
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  template<typename T, typename Query>
+  std::vector<T> ClientHistoricalDataStore<C>::submit(const Query& query) {
     auto queue = std::make_shared<Beam::Queue<T>>();
-    if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
-      auto revisedQuery = query;
-      revisedQuery.SetRange(query.GetRange().GetStart(),
-        Beam::Queries::Sequence::Present());
-      ((*m_client).*f)(revisedQuery, queue);
+    if(query.get_range().get_end() == Beam::Sequence::LAST) {
+      auto revised_query = query;
+      revised_query.set_range(
+        query.get_range().get_start(), Beam::Sequence::PRESENT);
+      m_client->query(revised_query, queue);
     } else {
-      ((*m_client).*f)(query, queue);
+      m_client->query(query, queue);
     }
     auto matches = std::vector<T>();
-    Beam::Flush(queue, std::back_inserter(matches));
+    Beam::flush(queue, std::back_inserter(matches));
     return matches;
   }
 }

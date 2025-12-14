@@ -6,6 +6,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TagBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -85,7 +86,7 @@ namespace {
       return m_source->submit(query).then([=] (auto&& source_result) {
         auto& matches = [&] () -> auto& {
           try {
-            return source_result.Get();
+            return source_result.get();
           } catch(const std::exception&) {
             static auto empty_matches = std::vector<std::any>();
             return empty_matches;
@@ -252,6 +253,7 @@ void AnyTagComboBox::install_text_proxy_event_filter() {
 
 void AnyTagComboBox::push_combo_box() {
   if(m_tag_box->get_current()->get().isEmpty()) {
+    submit();
     return;
   }
   auto value =
@@ -286,7 +288,9 @@ QWidget* AnyTagComboBox::find_drop_down_window() {
 }
 
 void AnyTagComboBox::on_combo_box_submit(const AnyRef& submission) {
-  m_tag_box->get_current()->set("");
+  QTimer::singleShot(0, this, [=] {
+    m_tag_box->get_current()->set("");
+  });
   get_current()->push(to_any(submission));
 }
 

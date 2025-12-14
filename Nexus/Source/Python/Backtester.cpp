@@ -1,112 +1,127 @@
 #include "Nexus/Python/Backtester.hpp"
 #include <Beam/Python/Beam.hpp>
+#include "Nexus/Backtester/ActiveBacktesterEvent.hpp"
+#include "Nexus/Backtester/BacktesterClients.hpp"
 #include "Nexus/Backtester/BacktesterEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
-#include "Nexus/Backtester/BacktesterServiceClients.hpp"
-#include "Nexus/Python/ServiceClients.hpp"
+#include "Nexus/Python/Clients.hpp"
+#include "Nexus/Python/ToPythonClients.hpp"
 
 using namespace Beam;
 using namespace Beam::Python;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
 using namespace Nexus::Python;
 using namespace pybind11;
 
-namespace {
-  struct ToPythonBacktesterServiceClients final :
-      ToPythonServiceClients<BacktesterServiceClients> {
-    std::shared_ptr<BacktesterEnvironment> m_environment;
-
-    ToPythonBacktesterServiceClients(
-      std::shared_ptr<BacktesterEnvironment> environment)
-      : ToPythonServiceClients(Ref(*environment)),
-        m_environment(std::move(environment)) {}
+void Nexus::Python::export_active_backtester_event(module& module) {
+  struct PythonActiveBacktesterEvent : ActiveBacktesterEvent {
+    using ActiveBacktesterEvent::ActiveBacktesterEvent;
+    void execute() override {
+      PYBIND11_OVERRIDE(void, ActiveBacktesterEvent, execute, );
+    }
   };
+  class_<ActiveBacktesterEvent, PythonActiveBacktesterEvent, BacktesterEvent,
+    std::shared_ptr<ActiveBacktesterEvent>>(module, "ActiveBacktesterEvent").
+    def(init()).
+    def(init<ptime>());
 }
 
-void Nexus::Python::ExportBacktester(module& module) {
-  ExportBacktesterEnvironment(module);
-  ExportBacktesterEventHandler(module);
-  ExportBacktesterServiceClients(module);
+void Nexus::Python::export_backtester(module& module) {
+  export_backtester_clients(module);
+  export_backtester_environment(module);
+  export_backtester_event(module);
+  export_active_backtester_event(module);
+  export_backtester_event_handler(module);
 }
 
-void Nexus::Python::ExportBacktesterEnvironment(module& module) {
-  class_<BacktesterEnvironment, std::shared_ptr<BacktesterEnvironment>>(module,
-      "BacktesterEnvironment").
-    def(init<ptime, ServiceClientsBox>(), call_guard<GilRelease>()).
-    def(init<ptime, ptime, ServiceClientsBox>(), call_guard<GilRelease>()).
-    def("__del__",
-      [] (BacktesterEnvironment& self) {
-        self.Close();
-      }, call_guard<GilRelease>()).
+void Nexus::Python::export_backtester_clients(module& module) {
+  export_clients<ToPythonClients<BacktesterClients>>(
+    module, "BacktesterClients").
+      def(init([] (BacktesterEnvironment& environment) {
+        return std::make_unique<ToPythonClients<BacktesterClients>>(
+          Ref(environment));
+      }), call_guard<GilRelease>(), keep_alive<1, 2>());
+}
+
+void Nexus::Python::export_backtester_environment(module& module) {
+  class_<BacktesterEnvironment, std::shared_ptr<BacktesterEnvironment>>(
+      module, "BacktesterEnvironment").
+    def(init(&make_python_shared<BacktesterEnvironment, ptime, Clients&>),
+      keep_alive<1, 3>()).
+    def(
+      init(&make_python_shared<BacktesterEnvironment, ptime, ptime, Clients&>),
+      keep_alive<1, 4>()).
     def_property_readonly("event_handler",
-      static_cast<BacktesterEventHandler& (BacktesterEnvironment::*)()>(
-        &BacktesterEnvironment::GetEventHandler),
-      return_value_policy::reference_internal).
-    def_property_readonly("service_locator_environment",
-      &BacktesterEnvironment::GetServiceLocatorEnvironment,
-      return_value_policy::reference_internal).
-    def_property_readonly("uid_environment",
-      &BacktesterEnvironment::GetUidEnvironment,
-      return_value_policy::reference_internal).
-    def_property_readonly("registry_environment",
-      &BacktesterEnvironment::GetRegistryEnvironment,
-      return_value_policy::reference_internal).
-    def_property_readonly("definitions_environment",
-      &BacktesterEnvironment::GetDefinitionsEnvironment,
-      return_value_policy::reference_internal).
-    def_property_readonly("administration_environment",
-      &BacktesterEnvironment::GetAdministrationEnvironment,
-      return_value_policy::reference_internal).
-    def_property_readonly("market_data_environment",
-      &BacktesterEnvironment::GetMarketDataEnvironment,
+      overload_cast<>(&BacktesterEnvironment::get_event_handler),
       return_value_policy::reference_internal).
     def_property_readonly("market_data_service",
-      static_cast<BacktesterMarketDataService& (BacktesterEnvironment::*)()>(
-        &BacktesterEnvironment::GetMarketDataService),
+      overload_cast<>(&BacktesterEnvironment::get_market_data_service),
       return_value_policy::reference_internal).
-    def_property_readonly("charting_environment",
-      &BacktesterEnvironment::GetChartingEnvironment,
+    def("get_service_locator_environment",
+      &BacktesterEnvironment::get_service_locator_environment,
       return_value_policy::reference_internal).
-    def_property_readonly("compliance_environment",
-      &BacktesterEnvironment::GetComplianceEnvironment,
+    def("get_uid_environment", &BacktesterEnvironment::get_uid_environment,
       return_value_policy::reference_internal).
-    def_property_readonly("order_execution_environment",
-      &BacktesterEnvironment::GetOrderExecutionEnvironment,
+    def("get_definitions_environment",
+      &BacktesterEnvironment::get_definitions_environment,
       return_value_policy::reference_internal).
-    def_property_readonly("risk_environment",
-      &BacktesterEnvironment::GetRiskEnvironment,
+    def("get_administration_environment",
+      &BacktesterEnvironment::get_administration_environment,
       return_value_policy::reference_internal).
-    def("close", &BacktesterEnvironment::Close, call_guard<GilRelease>());
+    def("get_market_data_environment",
+      &BacktesterEnvironment::get_market_data_environment,
+      return_value_policy::reference_internal).
+    def("get_charting_environment",
+      &BacktesterEnvironment::get_charting_environment,
+      return_value_policy::reference_internal).
+    def("get_compliance_environment",
+      &BacktesterEnvironment::get_compliance_environment,
+      return_value_policy::reference_internal).
+    def("get_order_execution_environment",
+      &BacktesterEnvironment::get_order_execution_environment,
+      return_value_policy::reference_internal).
+    def("get_risk_environment", &BacktesterEnvironment::get_risk_environment,
+      return_value_policy::reference_internal).
+    def("close", &BacktesterEnvironment::close, call_guard<GilRelease>());
 }
 
-void Nexus::Python::ExportBacktesterEventHandler(module& module) {
-  class_<BacktesterEventHandler>(module, "BacktesterEventHandler").
-    def(init<ptime>(), call_guard<GilRelease>()).
-    def(init<ptime, ptime>(), call_guard<GilRelease>()).
-    def("__del__",
-      [] (BacktesterEventHandler& self) {
-        self.Close();
-      }, call_guard<GilRelease>()).
-    def_property_readonly("start_time", &BacktesterEventHandler::GetStartTime).
-    def_property_readonly("end_time", &BacktesterEventHandler::GetEndTime).
-    def("add", static_cast<void (BacktesterEventHandler::*)(
-      std::shared_ptr<BacktesterEvent>)>(&BacktesterEventHandler::Add)).
-    def("add",
-      [] (BacktesterEventHandler& self, const object& events) {
+void Nexus::Python::export_backtester_event(module& module) {
+  struct PythonBacktesterEvent : BacktesterEvent {
+    using BacktesterEvent::BacktesterEvent;
+    bool is_passive() const override {
+      PYBIND11_OVERRIDE(bool, BacktesterEvent, is_passive, );
+    }
+    void execute() override {
+      PYBIND11_OVERRIDE_PURE(void, BacktesterEvent, execute, );
+    }
+  };
+  class_<BacktesterEvent, PythonBacktesterEvent,
+    std::shared_ptr<BacktesterEvent>>(module, "BacktesterEvent").
+      def("get_timestamp", &BacktesterEvent::get_timestamp).
+      def("wait", &BacktesterEvent::wait, call_guard<GilRelease>()).
+      def("is_passive", &BacktesterEvent::is_passive).
+      def("execute", &BacktesterEvent::execute);
+}
+
+void Nexus::Python::export_backtester_event_handler(module& module) {
+  class_<BacktesterEventHandler, std::shared_ptr<BacktesterEventHandler>>(
+    module, "BacktesterEventHandler").
+      def(init(&make_python_shared<BacktesterEventHandler, ptime>)).
+      def(init(&make_python_shared<BacktesterEventHandler, ptime, ptime>)).
+      def_property_readonly(
+        "start_time", &BacktesterEventHandler::get_start_time).
+      def_property_readonly("end_time", &BacktesterEventHandler::get_end_time).
+      def_property_readonly("time", &BacktesterEventHandler::get_time).
+      def("add", overload_cast<const std::shared_ptr<BacktesterEvent>&>(
+          &BacktesterEventHandler::add)).
+      def("add", [] (BacktesterEventHandler& self, const object& events) {
         auto e = std::vector<std::shared_ptr<BacktesterEvent>>();
         for(auto& event : events) {
           e.push_back(event.cast<std::shared_ptr<BacktesterEvent>>());
         }
-        self.Add(std::move(e));
+        self.add(std::move(e));
       }).
-    def("close", &BacktesterEventHandler::Close, call_guard<GilRelease>());
-}
-
-void Nexus::Python::ExportBacktesterServiceClients(module& module) {
-  ExportServiceClients<ToPythonBacktesterServiceClients>(module,
-    "BacktesterServiceClients").
-    def(init<std::shared_ptr<BacktesterEnvironment>>());
+      def("close", &BacktesterEventHandler::close, call_guard<GilRelease>());
 }

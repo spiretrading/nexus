@@ -8,7 +8,7 @@ done
 directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd -P)"
 root=$(pwd -P)
 "$directory/../../../WebApi/setup.sh"
-dali_commit="2855c56169ece6e82874ac448d3eaeda29613736"
+dali_commit="2c305bb47a518b870bf5cc27697bd27ccb9a848c"
 if [ ! -d "dali" ]; then
   git clone https://www.github.com/spiretrading/dali
   if [ "$?" == "0" ]; then

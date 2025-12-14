@@ -1,7 +1,7 @@
 #ifndef SPIRE_ADAPTIVE_BOX_HPP
 #define SPIRE_ADAPTIVE_BOX_HPP
 #include <QStackedLayout>
-#include "Spire/Ui/Ui.hpp"
+#include <QWidget>
 
 namespace Spire {
 
@@ -25,7 +25,6 @@ namespace Spire {
       void add(QLayout& layout);
 
       QSize sizeHint() const override;
-
       QSize minimumSizeHint() const override;
 
     protected:

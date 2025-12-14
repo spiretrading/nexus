@@ -4,9 +4,9 @@
 #include <QColor>
 #include <QWidget>
 #include "Spire/Spire/ValueModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class TextBox;
 
   /** Represents a color in hex rgb format #RRGGBB. */
   class HexColorBox : public QWidget {

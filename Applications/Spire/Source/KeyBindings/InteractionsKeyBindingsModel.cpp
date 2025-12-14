@@ -206,25 +206,25 @@ InteractionsKeyBindingsModel::InteractionsKeyBindingsModel(
     : m_is_detached(false) {
   auto default_quantity =
     std::make_shared<HierarchicalQuantityModel>(parent->get_default_quantity());
-  m_connections.AddConnection(default_quantity->connect_write_signal(
+  m_connections.add(default_quantity->connect_write_signal(
     std::bind_front(&InteractionsKeyBindingsModel::on_write, this)));
   m_default_quantity = std::move(default_quantity);
   auto is_cancel_on_fill =
     std::make_shared<HierarchicalBooleanModel>(parent->is_cancel_on_fill());
-  m_connections.AddConnection(is_cancel_on_fill->connect_write_signal(
+  m_connections.add(is_cancel_on_fill->connect_write_signal(
     std::bind_front(&InteractionsKeyBindingsModel::on_write, this)));
   m_is_cancel_on_fill = std::move(is_cancel_on_fill);
   for(auto i : std::views::iota(0, MODIFIER_COUNT)) {
     auto model = std::make_shared<HierarchicalQuantityModel>(
       parent->get_quantity_increment(to_modifier(i)));
-    m_connections.AddConnection(model->connect_write_signal(
+    m_connections.add(model->connect_write_signal(
       std::bind_front(&InteractionsKeyBindingsModel::on_write, this)));
     m_quantity_increments[i] = std::move(model);
   }
   for(auto i : std::views::iota(0, MODIFIER_COUNT)) {
     auto model = std::make_shared<HierarchicalMoneyModel>(
       parent->get_price_increment(to_modifier(i)));
-    m_connections.AddConnection(model->connect_write_signal(
+    m_connections.add(model->connect_write_signal(
       std::bind_front(&InteractionsKeyBindingsModel::on_write, this)));
     m_price_increments[i] = std::move(model);
   }
@@ -338,7 +338,7 @@ Quantity Spire::get_default_order_quantity(
     return 0;
   } else if(
       side == Side::BID && position < 0 || side == Side::ASK && position > 0) {
-    return std::min(baseQuantity, Abs(position));
+    return std::min(baseQuantity, abs(position));
   }
-  return baseQuantity - Abs(position) % baseQuantity;
+  return baseQuantity - abs(position) % baseQuantity;
 }

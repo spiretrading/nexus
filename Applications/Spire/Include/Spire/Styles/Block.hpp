@@ -6,7 +6,6 @@
 #include <boost/optional/optional.hpp>
 #include "Spire/Styles/CompositeProperty.hpp"
 #include "Spire/Styles/Property.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
@@ -149,7 +148,7 @@ namespace Spire::Styles {
 namespace std {
   template<>
   struct hash<Spire::Styles::Block> {
-    std::size_t operator ()(const Spire::Styles::Block& block) const;
+    std::size_t operator ()(const Spire::Styles::Block& block) const noexcept;
   };
 }
 

@@ -3,7 +3,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <QDialog>
 #include "Spire/KeyBindings/KeyBindings.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class Ui_SimplifiedKeyBindingsDialog;
 
@@ -31,11 +31,11 @@ namespace Spire {
 
     private:
       std::unique_ptr<Ui_SimplifiedKeyBindingsDialog> m_ui;
-      std::unordered_map<Nexus::MarketCode,
+      std::unordered_map<Nexus::Venue,
         std::vector<std::unique_ptr<const CanvasNode>>> m_orderTypes;
       std::unordered_map<int, QKeySequence> m_taskBindings;
       std::unordered_map<int, QKeySequence> m_cancelBindings;
-      Nexus::MarketCode m_currentMarket;
+      Nexus::Venue m_currentVenue;
       UserProfile* m_userProfile;
       KeyBindings m_keyBindings;
 
@@ -47,7 +47,7 @@ namespace Spire {
       void OnClearCancelsButton();
       void OnOkButton();
       void OnApplyButton();
-      void OnMarketChanged(int index);
+      void OnVenueChanged(int index);
   };
 }
 

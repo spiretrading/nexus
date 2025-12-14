@@ -1,52 +1,48 @@
 import * as Beam from 'beam';
 import { CountryCode, CountryDatabase } from './country';
 import { defaultCountryDatabase } from './default_country_database';
-import { defaultMarketDatabase } from './default_market_database';
-import { MarketCode, MarketDatabase } from './market';
+import { defaultVenueDatabase } from './default_venue_database';
+import { Venue, VenueDatabase } from './venue';
 
 /** Identifies a financial security. */
 export class Security {
 
   /** Represents no Security. */
-  public static readonly NONE = new Security('', MarketCode.NONE,
-    CountryCode.NONE);
+  public static readonly NONE = new Security('', Venue.NONE);
 
   /** Makes a value from a JSON object. */
   public static fromJson(value: any): Security {
-    return new Security(value.symbol, MarketCode.fromJson(value.market),
-      CountryCode.fromJson(value.country));
+    return new Security(value.symbol, Venue.fromJson(value.venue));
   }
 
   /** Parses a value from a string. */
-  public static parse(source: string, marketDatabase?: MarketDatabase):
+  public static parse(source: string, venueDatabase?: VenueDatabase):
       Security {
     const seperator = source.lastIndexOf('.');
     if(seperator === -1) {
       return Security.NONE;
     }
     const symbol = source.substring(0, seperator);
-    const marketSource = new MarketCode(source.substring(seperator + 1));
-    const database = marketDatabase || defaultMarketDatabase;
-    let market = database.fromDisplayName(marketSource.toString());
-    if(market.code.equals(MarketCode.NONE)) {
-      market = database.fromCode(marketSource);
-      if(market.code.equals(MarketCode.NONE)) {
+    const venueSource = new Venue(source.substring(seperator + 1));
+    const database = venueDatabase || defaultVenueDatabase;
+    let venue = database.fromDisplayName(venueSource.toString());
+    if(venue.venue.equals(Venue.NONE)) {
+      venue = database.fromVenue(venueSource);
+      if(venue.venue.equals(Venue.NONE)) {
         return Security.NONE;
       }
     }
-    return new Security(symbol, market.code, market.countryCode);
+    return new Security(symbol, venue.venue);
   }
 
   /**
    * Constructs a Security.
    * @param symbol - The security's ticker symbol.
-   * @param market - The security's market code.
-   * @param country - The security's country of origin.
+   * @param venue - The security's venue.
    */
-  public constructor(symbol: string, market: MarketCode, country: CountryCode) {
+  public constructor(symbol: string, venue: Venue) {
     this._symbol = symbol;
-    this._market = market;
-    this._country = country;
+    this._venue = venue;
   }
 
   /** Returns the ticker symbol. */
@@ -54,139 +50,41 @@ export class Security {
     return this._symbol;
   }
 
-  /** Returns the market code. */
-  public get market(): MarketCode {
-    return this._market;
-  }
-
-  /** Returns the country of origin. */
-  public get country(): CountryCode {
-    return this._country;
+  /** Returns the venue. */
+  public get venue(): Venue {
+    return this._venue;
   }
 
   /** Tests if two Securities are equal. */
   public equals(other: Security): boolean {
-    return this.symbol == other.symbol && this.country.equals(other.country);
+    return this.symbol == other.symbol && this.venue.equals(other.venue);
   }
 
   /** Converts this object to JSON. */
   public toJson(): any {
     return {
       symbol: this._symbol,
-      market: this._market.toJson(),
-      country: this._country.toJson()
+      venue: this._venue.toJson()
     };
   }
 
   /** Returns a hash of this value. */
   public hash(): number {
-    return Beam.hashCombine(Beam.hash(this.symbol), Beam.hash(this.country));
+    return Beam.hashCombine(Beam.hash(this.symbol), Beam.hash(this.venue));
   }
 
-  public toString(marketDatabase?: MarketDatabase): string {
-    if(this._market.equals(MarketCode.NONE) || this._symbol === '') {
+  public toString(venueDatabase?: VenueDatabase): string {
+    if(this._venue.equals(Venue.NONE) || this._symbol === '') {
       return this._symbol;
     }
-    const database = marketDatabase || defaultMarketDatabase;
-    const market = database.fromCode(this._market);
-    if(market.code.equals(MarketCode.NONE)) {
-      return `${this._symbol}.${this._market.toString()}`;
+    const database = venueDatabase || defaultVenueDatabase;
+    const venue = database.fromVenue(this._venue);
+    if(venue.venue.equals(Venue.NONE)) {
+      return `${this._symbol}.${this._venue.toString()}`;
     }
-    return `${this._symbol}.${market.displayName}`;
+    return `${this._symbol}.${venue.displayName}`;
   }
 
   private _symbol: string;
-  private _market: MarketCode;
-  private _country: CountryCode;
-}
-
-/**
- * Parses a string that potentially represents a wild card Security.
- * @param source The string to parse.
- * @param marketDatabase The database of markets to reference.
- * @param countryDatabase The database of countries to reference.
- * @return A Security potentially representing a wild card.
- */
-export function parseWildCardSecurity(
-    source: string, marketDatabase?: MarketDatabase,
-    countryDatabase?: CountryDatabase): Security {
-  marketDatabase = marketDatabase || defaultMarketDatabase;
-  countryDatabase = countryDatabase || defaultCountryDatabase;
-  if(source === '*' || source === '*.*' || source === '*.*.*') {
-    return new Security('*', new MarketCode('*'), CountryCode.NONE);
-  }
-  const seperator = source.lastIndexOf('.');
-  if(seperator === -1) {
-    return Security.NONE;
-  }
-  const header = source.substring(0, seperator);
-  const trailer = source.substring(seperator + 1);
-  if(header === '*') {
-    const market = MarketDatabase.Entry.parse(trailer, marketDatabase);
-    if(!market.code.equals(MarketCode.NONE)) {
-      return new Security(header, market.code, market.countryCode);
-    }
-  }
-  const prefixSecurity =
-    parseWildCardSecurity(header, marketDatabase, countryDatabase);
-  if(!prefixSecurity.equals(Security.NONE)) {
-    if(trailer.length == 2) {
-      const code = countryDatabase.fromLetterCode(trailer);
-      if(!code.code.equals(CountryCode.NONE)) {
-        return new Security(
-          prefixSecurity.symbol, prefixSecurity.market, code.code);
-      } else {
-        return Security.NONE;
-      }
-    } else if(trailer === '*') {
-      return new Security(
-        prefixSecurity.symbol, prefixSecurity.market, CountryCode.NONE);
-    } else {
-      return Security.NONE;
-    }
-  }
-  let market = null;
-  let country = null;
-  if(trailer === '*') {
-    [market, country] = [new MarketCode('*'), CountryCode.NONE];
-  } else {
-    const marketEntry = MarketDatabase.Entry.parse(trailer, marketDatabase);
-    if(marketEntry.code.equals(MarketCode.NONE)) {
-      return Security.NONE;
-    }
-    [market, country] = [marketEntry.code, marketEntry.countryCode];
-  }
-  return new Security(header, market, country);
-}
-
-
-/**
- * Returns the string representation of a Security, including wild-cards.
- * @param security The Security to represent.
- * @param marketDatabase The MarketDatabase used to represent the MarketCode.
- * @param countryDatabase The CountryDatabase used to represent the CountryCode.
- * @return The string representation of the security.
- */
-export function toWildCardString(security: Security,
-    marketDatabase?: MarketDatabase, countryDatabase?: CountryDatabase) {
-  marketDatabase = marketDatabase || defaultMarketDatabase;
-  countryDatabase = countryDatabase || defaultCountryDatabase;
-  if(security.symbol === '*' && security.market.toString() === '*' &&
-      security.country.equals(CountryCode.NONE)) {
-    return '*';
-  } else if(security.equals(Security.NONE)) {
-    return '';
-  }
-  const suffix = (() => {
-    if(security.market.toString() === '*') {
-      if(!security.country.equals(CountryCode.NONE)) {
-        const countryEntry = countryDatabase.fromCode(security.country);
-        return countryEntry.twoLetterCode;
-      }
-      return '*';
-    }
-    const market = marketDatabase.fromCode(security.market);
-    return market.displayName;
-  })();
-  return `${security.symbol}.${suffix}`;
+  private _venue: Venue;
 }

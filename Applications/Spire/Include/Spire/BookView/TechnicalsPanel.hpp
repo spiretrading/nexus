@@ -3,15 +3,16 @@
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class AdaptiveBox;
 
   /** A ValueModel over a SecurityTechnicals. */
   using SecurityTechnicalsModel = ValueModel<Nexus::SecurityTechnicals>;
 
   /** A LocalValueModel over a SecurityTechnicals. */
-  using LocalSecuirtyTechnicalsModel = LocalValueModel<Nexus::SecurityTechnicals>;
+  using LocalSecuirtyTechnicalsModel =
+    LocalValueModel<Nexus::SecurityTechnicals>;
 
   /** Displays the technical details on the adaptive panel. */
   class TechnicalsPanel : public QWidget {

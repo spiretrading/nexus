@@ -5,6 +5,7 @@
 #include <boost/optional/optional.hpp>
 #include <QDialog>
 #include "Nexus/Definitions/Security.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Utilities/Utilities.hpp"
 
@@ -43,11 +44,8 @@ namespace Spire {
 
       ~SecurityInputDialog() override;
 
-      /**
-       * Returns the Security represented by this dialog.
-       * @param supportWildCards Whether wild-cards should be supported.
-       */
-      Nexus::Security GetSecurity(bool supportWildCards = false) const;
+      /** Returns the Security represented by this dialog. */
+      Nexus::Security GetSecurity() const;
 
       /** Returns the line edit widget being used by this dialog. */
       QLineEdit& GetSymbolInput();
@@ -78,18 +76,6 @@ namespace Spire {
    * @param resultSlot The slot to call when the dialog finishes.
    */
   void ShowSecurityInputDialog(Beam::Ref<UserProfile> userProfile,
-    const boost::variant<std::string, Nexus::Security>& initialValue,
-    QWidget* parent,
-    std::function<void (boost::optional<Nexus::Security> security)> onResult);
-
-  /**
-   * Pops up a SecurityInputDialog with support for wild cards.
-   * @param userProfile The user's profile.
-   * @param initialValue The initial value to display in the text field.
-   * @param parent The parent widget.
-   * @param resultSlot The slot to call when the dialog finishes.
-   */
-  void ShowWildCardSecurityInputDialog(Beam::Ref<UserProfile> userProfile,
     const boost::variant<std::string, Nexus::Security>& initialValue,
     QWidget* parent,
     std::function<void (boost::optional<Nexus::Security> security)> onResult);

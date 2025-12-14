@@ -3,7 +3,6 @@
 #include <QDoubleSpinBox>
 #include <QKeyEvent>
 #include <QVBoxLayout>
-#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -39,7 +38,7 @@ MoneySpinBox::MoneySpinBox(Ref<UserProfile> userProfile, QWidget* parent,
 }
 
 void MoneySpinBox::Initialize(Ref<UserProfile> userProfile) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   AdjustIncrement(Qt::NoModifier);
 }
 
@@ -61,14 +60,12 @@ int MoneySpinBox::GetDecimals() const {
 }
 
 Money MoneySpinBox::GetValue() const {
-  auto value = Money::FromValue(m_spinBox->cleanText().toStdString());
-  assert((value));
-  return *value;
+  return parse_money(m_spinBox->cleanText().toStdString());
 }
 
 void MoneySpinBox::SetValue(Money value) {
   m_spinBox->setValue(
-    static_cast<Quantity>(value).GetRepresentation() / Quantity::MULTIPLIER);
+    static_cast<Quantity>(value).get_representation() / Quantity::MULTIPLIER);
   m_valueUpdatedSignal(value);
 }
 

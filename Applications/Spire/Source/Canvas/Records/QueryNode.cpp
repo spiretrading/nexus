@@ -8,7 +8,6 @@
 #include "Spire/Canvas/Types/UnionType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
 
@@ -120,5 +119,3 @@ void QueryNode::Apply(CanvasNodeVisitor& visitor) const {
 std::unique_ptr<CanvasNode> QueryNode::Clone() const {
   return std::make_unique<QueryNode>(*this);
 }
-
-QueryNode::QueryNode(ReceiveBuilder) {}

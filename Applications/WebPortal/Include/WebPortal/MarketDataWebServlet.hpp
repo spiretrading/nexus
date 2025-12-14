@@ -3,11 +3,10 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
-#include <Beam/WebServices/SessionStore.hpp>
-#include "WebPortal/WebPortal.hpp"
+#include <Beam/WebServices/WebSessionStore.hpp>
 #include "WebPortal/WebPortalSession.hpp"
 
-namespace Nexus::WebPortal {
+namespace Nexus {
 
   /** Provides a web interface to the MarketDataService. */
   class MarketDataWebServlet {
@@ -16,25 +15,23 @@ namespace Nexus::WebPortal {
       /**
        * Constructs a MarketDataWebServlet.
        * @param sessions The available web sessions.
-       * @param serviceClients The clients used to access Spire services.
        */
-      MarketDataWebServlet(Beam::Ref<
-        Beam::WebServices::SessionStore<WebPortalSession>> sessions);
+      explicit MarketDataWebServlet(
+        Beam::Ref<Beam::WebSessionStore<WebPortalSession>> sessions);
 
       ~MarketDataWebServlet();
 
-      std::vector<Beam::WebServices::HttpRequestSlot> GetSlots();
-
-      void Close();
+      std::vector<Beam::HttpRequestSlot> get_slots();
+      void close();
 
     private:
-      Beam::WebServices::SessionStore<WebPortalSession>* m_sessions;
-      Beam::IO::OpenState m_openState;
+      Beam::WebSessionStore<WebPortalSession>* m_sessions;
+      Beam::OpenState m_open_state;
 
       MarketDataWebServlet(const MarketDataWebServlet&) = delete;
-      MarketDataWebServlet& operator =(const MarketDataWebServlet&) = delete;
-      Beam::WebServices::HttpResponse OnLoadSecurityInfoFromPrefix(
-        const Beam::WebServices::HttpRequest& request);
+      MarketDataWebServlet& operator=(const MarketDataWebServlet&) = delete;
+      Beam::HttpResponse on_load_security_info_from_prefix(
+        const Beam::HttpRequest& request);
   };
 }
 

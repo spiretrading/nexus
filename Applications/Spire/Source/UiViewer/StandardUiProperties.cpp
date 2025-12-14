@@ -228,12 +228,11 @@ std::shared_ptr<TypedUiProperty<CurrencyId>>
     [] (QWidget* parent, StandardUiProperty<CurrencyId>& property) {
       auto setter = new QLineEdit(parent);
       property.connect_changed_signal([=] (auto value) {
-        auto code = GetDefaultCurrencyDatabase().FromId(value).m_code;
-        setter->setText(QString::fromStdString(code.GetData()));
+        auto code = DEFAULT_CURRENCIES.from(value).m_code;
+        setter->setText(QString::fromStdString(code.get_data()));
       });
       QObject::connect(setter, &QLineEdit::textChanged, [&] (const auto& text) {
-        auto id = GetDefaultCurrencyDatabase().FromCode(
-          text.toUpper().toStdString()).m_id;
+        auto id = DEFAULT_CURRENCIES.from(text.toUpper().toStdString()).m_id;
         if(id != CurrencyId::NONE) {
           property.set(id);
         }
@@ -295,7 +294,7 @@ std::shared_ptr<TypedUiProperty<Money>> Spire::make_standard_property<Money>(
       });
       QObject::connect(setter, &QDoubleSpinBox::textChanged,
         [&] (const auto& value) {
-          if(auto money = Money::FromValue(value.toStdString())) {
+          if(auto money = try_parse_money(value.toStdString())) {
             property.set(*money);
           }
         });
@@ -316,7 +315,7 @@ std::shared_ptr<TypedUiProperty<Quantity>>
       });
       QObject::connect(setter, &QDoubleSpinBox::textChanged,
         [&] (const auto& value) {
-          if(auto quantity = Quantity::FromValue(value.toStdString())) {
+          if(auto quantity = try_parse_quantity(value.toStdString())) {
             property.set(*quantity);
           }
         });
@@ -394,20 +393,6 @@ std::shared_ptr<TypedUiProperty<QString>>
       });
       return setter;
     });
-}
-
-template<>
-std::shared_ptr<TypedUiProperty<DateFormat>>
-    Spire::make_standard_property<DateFormat>(QString name, DateFormat value) {
-  auto formats = define_enum<DateFormat>(
-    {{"YYYYMMDD", DateFormat::YYYYMMDD}, {"MMDD", DateFormat::MMDD}});
-  return make_standard_enum_property(std::move(name), value, formats);
-}
-
-template<>
-std::shared_ptr<TypedUiProperty<DateFormat>>
-    Spire::make_standard_property<DateFormat>(QString name) {
-  return make_standard_property(std::move(name), DateFormat::YYYYMMDD);
 }
 
 std::shared_ptr<TypedUiProperty<optional<StyleSheet>>>

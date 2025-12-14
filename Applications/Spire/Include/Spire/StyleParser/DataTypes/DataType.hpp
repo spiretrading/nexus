@@ -15,9 +15,14 @@ namespace Spire {
       bool operator ==(const DataType& rhs) const;
 
     protected:
-      virtual bool is_equal(const DataType& rhs) const = 0;
-      
+
+      /**
+       * Constructs a DataType.
+       * @param name The name of the DataType.
+       */
       explicit DataType(std::string name);
+
+      virtual bool is_equal(const DataType& rhs) const = 0;
 
     private:
       std::string m_name;

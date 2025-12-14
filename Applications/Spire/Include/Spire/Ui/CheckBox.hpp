@@ -2,10 +2,13 @@
 #define SPIRE_CHECK_BOX_HPP
 #include <QWidget>
 #include "Spire/Spire/LocalValueModel.hpp"
+#include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Icon;
+  class TextBox;
+
 namespace Styles {
 
   /** Selects a checked CheckBox. */

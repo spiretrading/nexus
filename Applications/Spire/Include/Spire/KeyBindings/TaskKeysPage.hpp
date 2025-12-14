@@ -1,13 +1,13 @@
 #ifndef SPIRE_TASK_KEYS_PAGE_HPP
 #define SPIRE_TASK_KEYS_PAGE_HPP
 #include <QWidget>
-#include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Ui/SecurityBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Button;
+  class TableView;
 
   /** Implements a widget for the task key bindings. */
   class TaskKeysPage : public QWidget {
@@ -17,16 +17,11 @@ namespace Spire {
        * Constructs a TaskKeysPage.
        * @param key_bindings The task key bindings to display.
        * @param securities The set of securities to use.
-       * @param countries The country database to use.
-       * @param markets The market database to use.
-       * @param destinations The destination database to use.
        * @param additional_tags Defines all available additional tags.
        * @param parent The parent widget.
        */
       TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
         std::shared_ptr<SecurityInfoQueryModel> securities,
-        Nexus::CountryDatabase countries, Nexus::MarketDatabase markets,
-        Nexus::DestinationDatabase destinations,
         AdditionalTagDatabase additional_tags, QWidget* parent = nullptr);
 
       /** Returns the key bindings being displayed. */
@@ -37,8 +32,6 @@ namespace Spire {
 
     private:
       std::shared_ptr<KeyBindingsModel> m_key_bindings;
-      Nexus::MarketDatabase m_markets;
-      Nexus::DestinationDatabase m_destinations;
       TableView* m_table_view;
       Button* m_duplicate_button;
       Button* m_delete_button;

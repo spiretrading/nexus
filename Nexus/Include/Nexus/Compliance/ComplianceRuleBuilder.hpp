@@ -1,70 +1,86 @@
 #ifndef NEXUS_COMPLIANCE_RULE_BUILDER_HPP
 #define NEXUS_COMPLIANCE_RULE_BUILDER_HPP
+#include <memory>
+#include <Beam/TimeService/TimeClient.hpp>
 #include <boost/variant/get.hpp>
 #include "Nexus/Compliance/BuyingPowerComplianceRule.hpp"
-#include "Nexus/Compliance/CancelRestrictionPeriodComplianceRule.hpp"
-#include "Nexus/Compliance/Compliance.hpp"
-#include "Nexus/Compliance/OpposingOrderCancellationComplianceRule.hpp"
-#include "Nexus/Compliance/OpposingOrderSubmissionComplianceRule.hpp"
-#include "Nexus/Compliance/OrderCountPerSideComplianceRule.hpp"
-#include "Nexus/Compliance/PerAccountComplianceRule.hpp"
-#include "Nexus/Compliance/SubmissionRestrictionPeriodComplianceRule.hpp"
-#include "Nexus/Compliance/SymbolRestrictionComplianceRule.hpp"
+#include "Nexus/Compliance/MapComplianceRule.hpp"
+#include "Nexus/Compliance/OpposingCancelComplianceRule.hpp"
+#include "Nexus/Compliance/OpposingSubmissionComplianceRule.hpp"
+#include "Nexus/Compliance/OrderCountLimitComplianceRule.hpp"
+#include "Nexus/Compliance/RegionFilterComplianceRule.hpp"
+#include "Nexus/Compliance/RejectCancelsComplianceRule.hpp"
+#include "Nexus/Compliance/RejectSubmissionsComplianceRule.hpp"
+#include "Nexus/Compliance/TimeFilterComplianceRule.hpp"
+#include "Nexus/DefinitionsService/DefinitionsClient.hpp"
+#include "Nexus/MarketDataService/MarketDataClient.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Returns a ComplianceRule from a ComplianceRuleSchema.
    * @param schema The ComplianceRuleSchema to build the ComplianceRule from.
+   * @param market_data_client The MarketDataClient needed by various rules.
+   * @param definitions_client The DefinitionsClient needed by various rules.
+   * @param time_client The TimeClient needed by various rules.
    * @return The ComplianceRule represented by the <i>schema</i>.
    */
-  template<typename MarketDataClient, typename DefinitionsClient,
-    typename TimeClient>
-  std::unique_ptr<ComplianceRule> MakeComplianceRule(
-      const ComplianceRuleSchema& schema, MarketDataClient& marketDataClient,
-      DefinitionsClient& definitionsClient, TimeClient& timeClient) {
-    if(schema.GetName() == "buying_power") {
-      return std::make_unique<BuyingPowerComplianceRule<MarketDataClient*>>(
-        schema.GetParameters(), definitionsClient.LoadExchangeRates(),
-        &marketDataClient);
-    } else if(schema.GetName() == "cancel_restriction_period") {
-      return std::make_unique<
-        CancelRestrictionPeriodComplianceRule<TimeClient*>>(
-        schema.GetParameters(), &timeClient);
-    } else if(schema.GetName() == "opposing_order_cancellation") {
-      return MakeOpposingOrderCancellationComplianceRule(schema.GetParameters(),
-        &timeClient);
-    } else if(schema.GetName() == "opposing_order_submission") {
-      return MakeOpposingOrderSubmissionComplianceRule(schema.GetParameters(),
-        &timeClient);
-    } else if(schema.GetName() == "orders_per_side_limit") {
-      return std::make_unique<OrderCountPerSideComplianceRule>(
-        schema.GetParameters());
-    } else if(schema.GetName() == "submission_restriction_period") {
-      return std::make_unique<
-        SubmissionRestrictionPeriodComplianceRule<TimeClient*>>(
-        schema.GetParameters(), &timeClient);
-    } else if(schema.GetName() == "symbol_restriction") {
-      return std::make_unique<SymbolRestrictionComplianceRule>(
-        schema.GetParameters());
-    } else if(schema.GetName() == PerAccountComplianceRule::GetName()) {
-      auto name = std::string();
-      auto parameters = std::vector<ComplianceParameter>();
-      for(auto& parameter : schema.GetParameters()) {
-        if(parameter.m_name == "name") {
-          name = boost::get<std::string>(parameter.m_value);
-        } else if(parameter.m_name.size() > 0 &&
-            parameter.m_name.front() == '\\') {
-          parameters.emplace_back(parameter.m_name.substr(1),
-            parameter.m_value);
-        }
-      }
-      auto perAccountSchema = ComplianceRuleSchema(std::move(name),
-        std::move(parameters));
-      return std::make_unique<PerAccountComplianceRule>(perAccountSchema,
-        std::bind(&MakeComplianceRule<MarketDataClient, DefinitionsClient,
-          TimeClient>, std::placeholders::_1, std::ref(marketDataClient),
-        std::ref(definitionsClient), std::ref(timeClient)));
+  std::unique_ptr<ComplianceRule> make_compliance_rule(
+      const ComplianceRuleSchema& schema,
+      IsMarketDataClient auto& market_data_client,
+      IsDefinitionsClient auto& definitions_client,
+      Beam::IsTimeClient auto& time_client) {
+    if(schema.get_name() == BUYING_POWER_COMPLIANCE_RULE_NAME) {
+      return make_buying_power_compliance_rule(schema.get_parameters(),
+        ExchangeRateTable(definitions_client.load_exchange_rates()),
+        market_data_client);
+    } else if(schema.get_name() == OPPOSING_CANCEL_RULE_NAME) {
+      return make_opposing_cancel_compliance_rule(
+        schema.get_parameters(), time_client);
+    } else if(schema.get_name() == OPPOSING_SUBMISSION_RULE_NAME) {
+      return make_opposing_submission_compliance_rule(
+        schema.get_parameters(), time_client);
+    } else if(schema.get_name() == ORDER_COUNT_LIMIT_RULE_NAME) {
+      return make_order_count_limit_compliance_rule(schema.get_parameters());
+    } else if(schema.get_name() == ORDER_COUNT_LIMIT_PER_SIDE_RULE_NAME) {
+      return make_order_count_limit_per_side_compliance_rule(
+        schema.get_parameters());
+    } else if(schema.get_name() == PER_ACCOUNT_RULE_NAME) {
+      return make_per_account_compliance_rule(
+        unwrap(schema), [&] (const auto& schema) {
+          return make_compliance_rule(schema, market_data_client,
+            definitions_client, time_client);
+        });
+    } else if(schema.get_name() == PER_SECURITY_RULE_NAME) {
+      return make_per_security_compliance_rule(
+        unwrap(schema), [&] (const auto& schema) {
+          return make_compliance_rule(schema, market_data_client,
+            definitions_client, time_client);
+        });
+    } else if(schema.get_name() == PER_SIDE_RULE_NAME) {
+      return make_per_side_compliance_rule(
+        unwrap(schema), [&] (const auto& schema) {
+          return make_compliance_rule(schema, market_data_client,
+            definitions_client, time_client);
+        });
+    } else if(schema.get_name() == REGION_FILTER_RULE_NAME) {
+      auto sub_schema = unwrap(schema);
+      auto sub_rule = make_compliance_rule(
+        sub_schema, market_data_client, definitions_client, time_client);
+      return make_region_filter_compliance_rule(
+        schema.get_parameters(), std::move(sub_rule));
+    } else if(schema.get_name() == REJECT_CANCELS_RULE_NAME) {
+      return std::make_unique<RejectCancelsComplianceRule>();
+    } else if(schema.get_name() == REJECT_SUBMISSIONS_RULE_NAME) {
+      return std::make_unique<RejectSubmissionsComplianceRule>();
+    } else if(schema.get_name() == TIME_FILTER_RULE_NAME) {
+      auto sub_schema = unwrap(schema);
+      auto sub_rule = make_compliance_rule(
+        sub_schema, market_data_client, definitions_client, time_client);
+      return make_time_filter_compliance_rule(schema.get_parameters(),
+        definitions_client.load_time_zone_database(),
+        definitions_client.load_venue_database(), time_client,
+        std::move(sub_rule));
     }
     return nullptr;
   }

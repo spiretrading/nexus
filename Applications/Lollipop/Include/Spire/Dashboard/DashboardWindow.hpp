@@ -3,15 +3,15 @@
 #include <memory>
 #include <unordered_map>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Queues/Queues.hpp>
+#include <Beam/Queues/StateQueue.hpp>
 #include <boost/optional/optional.hpp>
 #include <QWidget>
+#include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/CanvasView/OrderTaskView.hpp"
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardModelSchema.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/PersistentWindow.hpp"
 
 class Ui_DashboardWindow;

@@ -2,6 +2,7 @@
 #define SPIRE_DECIMAL_HPP
 #include <memory>
 #include <boost/multiprecision/cpp_dec_float.hpp>
+#include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ScalarValueModel.hpp"
 
@@ -89,20 +90,13 @@ namespace Spire {
       explicit ToDecimalModel(std::shared_ptr<Model> model);
 
       boost::optional<Decimal> get_minimum() const override;
-
       boost::optional<Decimal> get_maximum() const override;
-
       boost::optional<Decimal> get_increment() const override;
-
       QValidator::State get_state() const override;
-
       const boost::optional<Decimal>& get() const override;
-
       QValidator::State test(
         const boost::optional<Decimal>& value) const override;
-
       QValidator::State set(const boost::optional<Decimal>& value) override;
-
       boost::signals2::connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const override;
 

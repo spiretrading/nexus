@@ -32,6 +32,6 @@ const RecordType& Spire::GetTimeAndSaleRecordType() {
 Record TimeAndSaleToRecordConverter::operator ()(
     const SequencedTimeAndSale& value) const {
   return Record({ value->m_timestamp, value->m_price, value->m_size,
-    value->m_condition.m_code, value->m_marketCenter, value->m_buyerMpid,
-    value->m_sellerMpid });
+    value->m_condition.m_code, value->m_market_center, value->m_buyer_mpid,
+    value->m_seller_mpid });
 }

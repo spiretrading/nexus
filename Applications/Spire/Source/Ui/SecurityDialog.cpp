@@ -5,6 +5,7 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

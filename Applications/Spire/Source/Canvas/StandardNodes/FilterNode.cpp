@@ -5,7 +5,6 @@
 #include "Spire/Canvas/ValueNodes/BooleanNode.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 using namespace std;
 
@@ -33,7 +32,7 @@ FilterNode::FilterNode() {
 
 unique_ptr<CanvasNode> FilterNode::Replace(const CanvasNode& child,
     unique_ptr<CanvasNode> replacement) const {
-  auto clone = StaticCast<std::unique_ptr<FilterNode>>(
+  auto clone = static_pointer_cast<FilterNode>(
     SignatureNode::Replace(child, std::move(replacement)));
   clone->SetType(clone->GetChildren().front().GetType());
   return std::move(clone);
@@ -51,5 +50,3 @@ const vector<FilterNode::Signature>& FilterNode::GetSignatures() const {
   static vector<FilterNode::Signature> signatures = MakeFilterSignatures();
   return signatures;
 }
-
-FilterNode::FilterNode(ReceiveBuilder) {}

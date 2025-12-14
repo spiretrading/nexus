@@ -1,7 +1,9 @@
 #ifndef NEXUS_RISK_PORTFOLIO_TYPES_HPP
 #define NEXUS_RISK_PORTFOLIO_TYPES_HPP
 #include <functional>
+#include <ostream>
 #include <boost/functional/hash.hpp>
+#include <Beam/Queues/Publisher.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Utilities/KeyValuePair.hpp>
 #include "Nexus/Accounting/Inventory.hpp"
@@ -9,42 +11,35 @@
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/RiskService/RiskService.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /** Used as a key into an account's Inventory. */
   struct RiskPortfolioKey {
 
     /** The portfolio's account. */
-    Beam::ServiceLocator::DirectoryEntry m_account;
+    Beam::DirectoryEntry m_account;
 
     /** The Security being indexed. */
     Security m_security;
 
-    bool operator ==(const RiskPortfolioKey& key) const = default;
+    bool operator ==(const RiskPortfolioKey&) const = default;
   };
 
-  /** The type used to represent a portfolio's position. */
-  using RiskPosition = Accounting::Position<Security>;
-
-  /** The type used to represent a portfolio's Inventory. */
-  using RiskInventory = Accounting::Inventory<RiskPosition>;
-
   /** The type of Portfolio used. */
-  using RiskPortfolio = Accounting::Portfolio<
-    Accounting::TrueAverageBookkeeper<RiskInventory>>;
-
-  /** The type of valuation used. */
-  using RiskSecurityValuation = Accounting::SecurityValuation;
+  using RiskPortfolio = Portfolio<TrueAverageBookkeeper>;
 
   /** Stores an Inventory update. */
-  using RiskInventoryEntry =
-    Beam::KeyValuePair<RiskPortfolioKey, RiskInventory>;
+  using RiskInventoryEntry = Beam::KeyValuePair<RiskPortfolioKey, Inventory>;
 
   /** The Publisher used for portfolio events. */
-  using RiskPortfolioUpdatePublisher = Beam::Publisher<
-    Beam::KeyValuePair<RiskPortfolioKey, RiskInventory>>;
+  using RiskPortfolioUpdatePublisher =
+    Beam::Publisher<Beam::KeyValuePair<RiskPortfolioKey, Inventory>>;
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const RiskPortfolioKey& key) {
+    return out << '(' << key.m_account << ' ' << key.m_security << ')';
+  }
 
   inline std::size_t hash_value(const RiskPortfolioKey& value) {
     auto seed = std::size_t(0);
@@ -54,26 +49,25 @@ namespace Nexus::RiskService {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
-  struct Shuttle<Nexus::RiskService::RiskPortfolioKey> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::RiskService::RiskPortfolioKey& value,
+  struct Shuttle<Nexus::RiskPortfolioKey> {
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::RiskPortfolioKey& value,
         unsigned int version) const {
-      shuttle.Shuttle("account", value.m_account);
-      shuttle.Shuttle("security", value.m_security);
+      shuttle.shuttle("account", value.m_account);
+      shuttle.shuttle("security", value.m_security);
     }
   };
 }
 
 namespace std {
   template <>
-  struct hash<Nexus::RiskService::RiskPortfolioKey> {
-    size_t operator()(const Nexus::RiskService::RiskPortfolioKey& value) const {
-      return Nexus::RiskService::hash_value(value);
+  struct hash<Nexus::RiskPortfolioKey> {
+    size_t operator()(const Nexus::RiskPortfolioKey& value) const {
+      return Nexus::hash_value(value);
     }
   };
-};
+}
 
 #endif

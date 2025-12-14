@@ -8,13 +8,12 @@ source_group("AdministrationService"
 file(GLOB_RECURSE
   backtester_header_files ${NEXUS_INCLUDE_PATH}/Nexus/Backtester/*.hpp)
 source_group("Backtester" FILES ${backtester_header_files})
-file(GLOB_RECURSE binary_sequence_protocol_header_files
-  ${NEXUS_INCLUDE_PATH}/Nexus/BinarySequenceProtocol/*.hpp)
-source_group("BinarySequenceProtocol"
-  FILES ${binary_sequence_protocol_header_files})
 file(GLOB_RECURSE charting_service_header_files
   ${NEXUS_INCLUDE_PATH}/Nexus/ChartingService/*.hpp)
 source_group("ChartingService" FILES ${charting_service_header_files})
+file(GLOB_RECURSE
+  clients_header_files ${NEXUS_INCLUDE_PATH}/Nexus/Clients/*.hpp)
+source_group("Clients" FILES ${clients_header_files})
 file(GLOB_RECURSE
   compliance_header_files ${NEXUS_INCLUDE_PATH}/Nexus/Compliance/*.hpp)
 source_group("Compliance" FILES ${compliance_header_files})
@@ -52,36 +51,33 @@ source_group("Queries" FILES ${queries_header_files})
 file(GLOB_RECURSE risk_service_header_files
   ${NEXUS_INCLUDE_PATH}/Nexus/RiskService/*.hpp)
 source_group("RiskService" FILES ${risk_service_header_files})
-file(GLOB_RECURSE service_clients_header_files
-  ${NEXUS_INCLUDE_PATH}/Nexus/ServiceClients/*.hpp)
-source_group("ServiceClients" FILES ${service_clients_header_files})
 file(GLOB_RECURSE simulation_matcher_header_files
   ${NEXUS_INCLUDE_PATH}/Nexus/SimulationMatcher/*.hpp)
 source_group("SimulationMatcher" FILES ${simulation_matcher_header_files})
 file(GLOB_RECURSE soup_bin_tcp_header_files
   ${NEXUS_INCLUDE_PATH}/Nexus/SoupBinTcp/*.hpp)
 source_group("SoupBinTcp" FILES ${soup_bin_tcp_header_files})
-file(GLOB_RECURSE stamp_protocol_header_files
-  ${NEXUS_INCLUDE_PATH}/Nexus/StampProtocol/*.hpp)
-source_group("StampProtocol" FILES ${stamp_protocol_header_files})
+file(GLOB_RECURSE stamp_header_files
+  ${NEXUS_INCLUDE_PATH}/Nexus/Stamp/*.hpp)
+source_group("Stamp" FILES ${stamp_header_files})
 file(GLOB_RECURSE technical_analysis_header_files
   ${NEXUS_INCLUDE_PATH}/Nexus/TechnicalAnalysis/*.hpp)
 source_group("TechnicalAnalysis" FILES ${technical_analysis_header_files})
-file(GLOB_RECURSE telemetry_service_header_files
-  ${NEXUS_INCLUDE_PATH}/Nexus/TelemetryService/*.hpp)
-source_group("TelemetryService" FILES ${telemetry_service_header_files})
+file(GLOB_RECURSE test_environment_header_files
+  ${NEXUS_INCLUDE_PATH}/Nexus/TestEnvironment/*.hpp)
+source_group("TestEnvironment" FILES ${test_environment_header_files})
 file(GLOB_RECURSE header_files ${accounting_header_files}
   ${administration_service_header_files} ${backtester_header_files}
-  ${binary_sequence_protocol_header_files} ${charting_service_header_files}
+  ${charting_service_header_files} ${clients_header_files}
   ${compliance_header_files} ${definitions_header_files}
   ${definitions_service_header_files} ${fee_handling_header_files}
   ${fix_utilities_header_files} ${internal_matcher_header_files}
   ${market_data_service_header_files} ${mold_udp64_header_files}
   ${order_execution_service_header_files} ${parsers_header_files}
   ${queries_header_files} ${risk_service_header_files}
-  ${service_clients_header_files} ${simulation_matcher_header_files}
-  ${soup_bin_tcp_header_files} ${stamp_protocol_header_files}
-  ${technical_analysis_header_files} ${telemetry_service_header_files})
+  ${simulation_matcher_header_files} ${soup_bin_tcp_header_files}
+  ${stamp_header_files} ${technical_analysis_header_files}
+  ${test_environment_header_files})
 add_library(Nexus ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Nexus PROPERTIES LINKER_LANGUAGE CXX OUTPUT_NAME nexus)

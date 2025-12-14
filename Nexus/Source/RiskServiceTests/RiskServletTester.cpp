@@ -1,227 +1,302 @@
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
+#include <Beam/Services/ServiceProtocolClient.hpp>
+#include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/ServicesTests/TestServices.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
+#include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 #include "Nexus/RiskService/LocalRiskDataStore.hpp"
 #include "Nexus/RiskService/RiskServlet.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
-using namespace Beam::ServiceLocator::Tests;
-using namespace Beam::Services;
-using namespace Beam::Services::Tests;
-using namespace Beam::Threading;
-using namespace Beam::TimeService;
-using namespace Beam::UidService;
-using namespace Beam::UidService::Tests;
+using namespace Beam::Tests;
 using namespace boost;
-using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::AdministrationService::Tests;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::MarketDataService::Tests;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::OrderExecutionService::Tests;
-using namespace Nexus::RiskService;
+using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::DefaultVenues;
+using namespace Nexus::Tests;
 
 namespace {
-  auto TSLA = Security("TSLA", DefaultMarkets::NASDAQ(),
-    DefaultCountries::US());
-  auto XIU = Security("XIU", DefaultMarkets::TSX(), DefaultCountries::CA());
-
-  using TestServletContainer = TestAuthenticatedServiceProtocolServletContainer<
-    MetaRiskServlet<AdministrationClientBox, MarketDataClientBox,
-      OrderExecutionClientBox, TriggerTimer, std::shared_ptr<FixedTimeClient>,
-      LocalRiskDataStore*>>;
-
-  using TestInventoryMessage = RecordMessage<InventoryMessage,
-    TestServiceProtocolClient>;
-
-  struct Client {
-    ServiceLocatorClientBox m_serviceLocatorClient;
-    optional<OrderExecutionClientBox> m_orderExecutionClient;
-    std::unique_ptr<TestServiceProtocolClient> m_riskClient;
-
-    Client(ServiceLocatorClientBox serviceLocatorClient)
-      : m_serviceLocatorClient(std::move(serviceLocatorClient)) {}
-  };
+  auto S32 = Security("S32", ASX);
+  auto SHOP = Security("SHOP", TSX);
 
   struct Fixture {
-    ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;
-    UidServiceTestEnvironment m_uidServiceEnvironment;
-    AdministrationServiceTestEnvironment m_administrationEnvironment;
-    std::shared_ptr<Queue<DirectoryEntry>> m_accounts;
-    MarketDataServiceTestEnvironment m_marketDataServiceEnvironment;
-    MockOrderExecutionDriver m_driver;
-    OrderExecutionServiceTestEnvironment m_orderExecutionServiceEnvironment;
-    std::shared_ptr<Queue<PrimitiveOrder*>> m_orders;
-    LocalRiskDataStore m_dataStore;
-    std::shared_ptr<TestServerConnection> m_serverConnection;
-    optional<TestServletContainer> m_container;
+    using ServletContainer = TestAuthenticatedServiceProtocolServletContainer<
+      MetaRiskServlet<AdministrationClient, MarketDataClient,
+        OrderExecutionClient, TriggerTimer, FixedTimeClient*,
+        LocalRiskDataStore*>>;
+    ServiceLocatorTestEnvironment m_service_locator_environment;
+    UidServiceTestEnvironment m_uid_environment;
+    AdministrationServiceTestEnvironment m_administration_environment;
+    MarketDataServiceTestEnvironment m_market_data_environment;
+    OrderExecutionServiceTestEnvironment m_order_execution_environment;
+    FixedTimeClient m_time_client;
+    LocalRiskDataStore m_data_store;
+    ExchangeRateTable m_exchange_rates;
+    optional<ServiceLocatorClient> m_service_locator;
+    optional<AdministrationClient> m_administration_client;
+    optional<MarketDataClient> m_market_data_client;
+    optional<OrderExecutionClient> m_service_order_execution_client;
+    std::shared_ptr<Queue<DirectoryEntry>> m_accounts_queue;
+    std::shared_ptr<LocalServerConnection> m_server_connection;
+    optional<ServletContainer> m_container;
+    std::shared_ptr<Queue<std::shared_ptr<PrimitiveOrder>>> m_order_submissions;
 
     Fixture()
-        : m_administrationEnvironment(MakeAdministrationServiceTestEnvironment(
-            m_serviceLocatorEnvironment)),
-          m_accounts(std::make_shared<Queue<DirectoryEntry>>()),
-          m_marketDataServiceEnvironment(m_serviceLocatorEnvironment.GetRoot(),
-            m_administrationEnvironment.GetClient()),
-          m_orderExecutionServiceEnvironment(GetDefaultMarketDatabase(),
-            GetDefaultDestinationDatabase(),
-            m_serviceLocatorEnvironment.GetRoot(),
-            m_uidServiceEnvironment.MakeClient(),
-            m_administrationEnvironment.GetClient(),
-            TimeClientBox(std::in_place_type<FixedTimeClient>,
-              time_from_string("2020-05-12 04:12:18")),
-            MakeVirtualOrderExecutionDriver(&m_driver)),
-          m_serverConnection(std::make_shared<TestServerConnection>()),
-          m_orders(std::make_shared<Queue<PrimitiveOrder*>>()) {
-      m_administrationEnvironment.MakeAdministrator(
-        m_serviceLocatorEnvironment.GetRoot().GetAccount());
-      m_driver.GetPublisher().Monitor(m_orders);
-      auto exchangeRates = std::vector<ExchangeRate>();
-      exchangeRates.push_back(ExchangeRate(CurrencyPair(
-        DefaultCurrencies::USD(), DefaultCurrencies::CAD()), 1));
-      m_container.emplace(Initialize(m_serviceLocatorEnvironment.GetRoot(),
-        Initialize(m_accounts, m_administrationEnvironment.GetClient(),
-          m_marketDataServiceEnvironment.MakeRegistryClient(
-            m_serviceLocatorEnvironment.GetRoot()),
-          m_orderExecutionServiceEnvironment.MakeClient(
-            m_serviceLocatorEnvironment.GetRoot()),
-          factory<std::unique_ptr<TriggerTimer>>(),
-          std::make_shared<FixedTimeClient>(
-            ptime(date(2020, 5, 12), time_duration(4, 12, 18))), &m_dataStore,
-          exchangeRates, GetDefaultMarketDatabase(),
-          GetDefaultDestinationDatabase())), m_serverConnection,
-        factory<std::unique_ptr<TriggerTimer>>());
-      m_marketDataServiceEnvironment.GetFeedClient().Publish(
-        SecurityBboQuote(BboQuote(
-          Quote(*Money::FromValue("1.00"), 100, Side::BID),
-          Quote(*Money::FromValue("1.01"), 100, Side::ASK),
-          second_clock::universal_time()), TSLA));
-      m_marketDataServiceEnvironment.GetFeedClient().Publish(
-        SecurityBboQuote(BboQuote(
-          Quote(*Money::FromValue("2.00"), 100, Side::BID),
-          Quote(*Money::FromValue("2.01"), 100, Side::ASK),
-          second_clock::universal_time()), XIU));
+        : m_administration_environment(
+            make_administration_service_test_environment(
+              m_service_locator_environment)),
+          m_market_data_environment(make_market_data_service_test_environment(
+            m_service_locator_environment, m_administration_environment)),
+          m_order_execution_environment(
+            make_order_execution_service_test_environment(
+              m_service_locator_environment, m_uid_environment,
+              m_administration_environment)),
+          m_time_client(time_from_string("2025-07-14 6:23:00:00")),
+          m_accounts_queue(std::make_shared<Queue<DirectoryEntry>>()),
+          m_server_connection(std::make_shared<LocalServerConnection>()),
+          m_order_submissions(
+            std::make_shared<Queue<std::shared_ptr<PrimitiveOrder>>>()) {
+      auto servlet_account =
+        m_service_locator_environment.get_root().make_account(
+          "risk_service", "", DirectoryEntry::STAR_DIRECTORY);
+      m_administration_environment.make_administrator(servlet_account);
+      m_service_locator.emplace(
+        m_service_locator_environment.make_client("risk_service", ""));
+      grant_all_entitlements(
+        m_administration_environment, m_service_locator->get_account());
+      m_administration_client.emplace(
+        m_administration_environment.make_client(Ref(*m_service_locator)));
+      m_market_data_client.emplace(
+        m_market_data_environment.make_registry_client(
+          Ref(*m_service_locator)));
+      m_service_order_execution_client.emplace(
+        m_order_execution_environment.make_client(Ref(*m_service_locator)));
+      m_container.emplace(init(*m_service_locator,
+        init(m_accounts_queue, *m_administration_client, *m_market_data_client,
+          *m_service_order_execution_client,
+          factory<std::unique_ptr<TriggerTimer>>(), &m_time_client,
+          &m_data_store, m_exchange_rates, DEFAULT_VENUES,
+          DEFAULT_DESTINATIONS)),
+        m_server_connection, factory<std::unique_ptr<TriggerTimer>>());
+      m_order_execution_environment.get_driver().as<
+        MockOrderExecutionDriver>().get_publisher().monitor(
+          m_order_submissions);
     }
 
-    Client MakeClient(std::string name) {
-      auto account = m_serviceLocatorEnvironment.GetRoot().MakeAccount(name,
-        "1234", DirectoryEntry::GetStarDirectory());
-      m_administrationEnvironment.GetClient().StoreRiskParameters(account,
-        RiskParameters(DefaultCurrencies::USD(), 100000 * Money::ONE,
-          RiskState::Type::ACTIVE, 100 * Money::ONE, 1, minutes(1)));
-      m_administrationEnvironment.GetClient().StoreRiskState(account,
-        RiskState::Type::ACTIVE);
-      auto client = Client(m_serviceLocatorEnvironment.MakeClient(
-        name, "1234"));
-      client.m_orderExecutionClient.emplace(
-        m_orderExecutionServiceEnvironment.MakeClient(
-          client.m_serviceLocatorClient));
-      client.m_riskClient = std::make_unique<TestServiceProtocolClient>(
-        Initialize("test", *m_serverConnection), Initialize());
-      RegisterRiskServices(Store(client.m_riskClient->GetSlots()));
-      RegisterRiskMessages(Store(client.m_riskClient->GetSlots()));
-      auto authenticator = SessionAuthenticator(client.m_serviceLocatorClient);
-      authenticator(*client.m_riskClient);
-      return client;
+    auto make_client(const std::string& name) {
+      if(!m_service_locator_environment.get_root().find_account(name)) {
+        m_service_locator_environment.get_root().make_account(
+          name, "", DirectoryEntry::STAR_DIRECTORY);
+      }
+      auto service_locator_client =
+        m_service_locator_environment.make_client(name, "");
+      auto authenticator = SessionAuthenticator(Ref(service_locator_client));
+      auto protocol_client = std::make_unique<TestServiceProtocolClient>(
+        std::make_unique<LocalClientChannel>(name, *m_server_connection),
+        init());
+      register_risk_services(out(protocol_client->get_slots()));
+      register_risk_messages(out(protocol_client->get_slots()));
+      authenticator(*protocol_client);
+      return std::tuple(
+        service_locator_client.get_account(), std::move(protocol_client));
     }
   };
+
+  void submit_and_fill(Fixture& fixture, const DirectoryEntry& account,
+      const Security& security, Side side, Quantity quantity, Money price) {
+    auto order_fields = make_market_order_fields(security, side, quantity);
+    order_fields.m_account = account;
+    fixture.m_service_order_execution_client->submit(order_fields);
+    auto order = fixture.m_order_submissions->pop();
+    accept(*order);
+    fill(*order, price, quantity);
+  }
+
+  auto setup_account(Fixture& fixture, const std::string& name,
+      const std::vector<Inventory>& inventories) {
+    auto account =
+      fixture.m_service_locator_environment.get_root().make_account(
+        name, "", DirectoryEntry::STAR_DIRECTORY);
+    auto snapshot = InventorySnapshot();
+    snapshot.m_inventories = inventories;
+    snapshot.m_sequence = Beam::Sequence(1);
+    fixture.m_data_store.store(account, snapshot);
+    fixture.m_accounts_queue->push(account);
+    flush_pending_routines();
+    auto [account_, client] = fixture.make_client(name);
+    return std::tuple(account, std::move(client), inventories);
+  }
+
+  void require_inventory_message(TestServiceProtocolClient& client,
+      const DirectoryEntry& expected_account, const Security& expected_security,
+      Quantity expected_quantity, Money expected_cost_basis) {
+    auto message = client.read_message();
+    auto update_message = std::dynamic_pointer_cast<
+      RecordMessage<InventoryMessage, TestServiceProtocolClient>>(message);
+    REQUIRE(update_message);
+    REQUIRE(update_message->get_record().inventories.size() == 1);
+    auto& inventory = update_message->get_record().inventories[0].inventory;
+    REQUIRE(inventory.m_position.m_security == expected_security);
+    REQUIRE(inventory.m_position.m_quantity == expected_quantity);
+    REQUIRE(inventory.m_position.m_cost_basis == expected_cost_basis);
+  }
 }
 
 TEST_SUITE("RiskServlet") {
-  TEST_CASE_FIXTURE(Fixture, "reset_region") {
-    auto client = MakeClient("simba");
-    m_administrationEnvironment.MakeAdministrator(
-      client.m_serviceLocatorClient.GetAccount());
-    auto subscriptionResponse =
-      client.m_riskClient->SendRequest<SubscribeRiskPortfolioUpdatesService>();
-    m_accounts->Push(client.m_serviceLocatorClient.GetAccount());
-    client.m_orderExecutionClient->Submit(OrderFields::MakeLimitOrder(XIU,
-      Side::BID, 200, Money::ONE));
-    auto& receivedBid = *m_orders->Pop();
-    Accept(receivedBid);
-    receivedBid.With([&] (auto status, const auto& executionReports) {
-      auto report = ExecutionReport::MakeUpdatedReport(
-        executionReports.back(), OrderStatus::PARTIALLY_FILLED,
-        executionReports.back().m_timestamp);
-      report.m_executionFee = Money::CENT;
-      report.m_processingFee = Money::CENT;
-      report.m_commission = Money::CENT;
-      report.m_lastQuantity = 100;
-      report.m_lastPrice = Money::ONE;
-      receivedBid.Update(report);
-    });
-    auto bidMessage = std::static_pointer_cast<TestInventoryMessage>(
-      client.m_riskClient->ReadMessage());
-    REQUIRE(bidMessage != nullptr);
-    REQUIRE(bidMessage->GetRecord().inventories.size() == 1);
-    REQUIRE(bidMessage->GetRecord().inventories[0].account ==
-      client.m_serviceLocatorClient.GetAccount());
-    auto bidInventory = bidMessage->GetRecord().inventories[0].inventory;
-    REQUIRE(bidInventory.m_position.m_key ==
-      RiskPosition::Key(XIU, DefaultCurrencies::CAD()));
-    REQUIRE(bidInventory.m_position.m_quantity == 100);
-    REQUIRE(bidInventory.m_position.m_costBasis == 100 * Money::ONE);
-    REQUIRE(bidInventory.m_fees == 3 * Money::CENT);
-    REQUIRE(bidInventory.m_grossProfitAndLoss == Money::ZERO);
-    REQUIRE(bidInventory.m_transactionCount == 1);
-    REQUIRE(bidInventory.m_volume == 100);
-    client.m_orderExecutionClient->Submit(OrderFields::MakeLimitOrder(XIU,
-      Side::ASK, 200, Money::ONE + Money::CENT));
-    auto& receivedAsk = *m_orders->Pop();
-    Accept(receivedAsk);
-    receivedAsk.With([&] (auto status, const auto& executionReports) {
-      auto report = ExecutionReport::MakeUpdatedReport(
-        executionReports.back(), OrderStatus::FILLED,
-        executionReports.back().m_timestamp);
-      report.m_executionFee = Money::CENT;
-      report.m_processingFee = Money::CENT;
-      report.m_commission = Money::CENT;
-      report.m_lastQuantity = 200;
-      report.m_lastPrice = Money::ONE + Money::CENT;
-      receivedAsk.Update(report);
-    });
-    auto askMessage = std::static_pointer_cast<TestInventoryMessage>(
-      client.m_riskClient->ReadMessage());
-    REQUIRE(askMessage != nullptr);
-    REQUIRE(askMessage->GetRecord().inventories.size() == 1);
-    REQUIRE(askMessage->GetRecord().inventories[0].account ==
-      client.m_serviceLocatorClient.GetAccount());
-    auto askInventory = askMessage->GetRecord().inventories[0].inventory;
-    REQUIRE(askInventory.m_position.m_key ==
-      RiskPosition::Key(XIU, DefaultCurrencies::CAD()));
-    REQUIRE(askInventory.m_position.m_quantity == -100);
-    REQUIRE(askInventory.m_position.m_costBasis ==
-      -100 * (Money::ONE + Money::CENT));
-    REQUIRE(askInventory.m_fees == 6 * Money::CENT);
-    REQUIRE(askInventory.m_grossProfitAndLoss == Money::ONE);
-    REQUIRE(askInventory.m_transactionCount == 2);
-    REQUIRE(askInventory.m_volume == 300);
-    client.m_riskClient->SendRequest<ResetRegionService>(XIU);
-    auto resetMessage = std::static_pointer_cast<TestInventoryMessage>(
-      client.m_riskClient->ReadMessage());
-    REQUIRE(resetMessage != nullptr);
-    REQUIRE(resetMessage->GetRecord().inventories.size() == 1);
-    REQUIRE(resetMessage->GetRecord().inventories[0].account ==
-      client.m_serviceLocatorClient.GetAccount());
-    auto resetInventory = resetMessage->GetRecord().inventories[0].inventory;
-    REQUIRE(resetInventory.m_position.m_key ==
-      RiskPosition::Key(XIU, DefaultCurrencies::CAD()));
-    REQUIRE(resetInventory.m_position.m_quantity == -100);
-    REQUIRE(resetInventory.m_position.m_costBasis ==
-      -100 * (Money::ONE + Money::CENT));
-    REQUIRE(resetInventory.m_fees == Money::ZERO);
-    REQUIRE(resetInventory.m_grossProfitAndLoss == Money::ZERO);
-    REQUIRE(resetInventory.m_transactionCount == 0);
-    REQUIRE(resetInventory.m_volume == 0);
+  TEST_CASE("load_inventory") {
+    auto fixture = Fixture();
+    auto account1 =
+      fixture.m_service_locator_environment.get_root().make_account(
+        "account1", "", DirectoryEntry::STAR_DIRECTORY);
+    auto snapshot1 = InventorySnapshot();
+    snapshot1.m_sequence = Beam::Sequence(123);
+    fixture.m_data_store.store(account1, snapshot1);
+    auto account2 =
+      fixture.m_service_locator_environment.get_root().make_account(
+        "account2", "", DirectoryEntry::STAR_DIRECTORY);
+    auto snapshot2 = InventorySnapshot();
+    snapshot2.m_sequence = Beam::Sequence(456);
+    fixture.m_data_store.store(account2, snapshot2);
+    auto [account1_, client] = fixture.make_client("account1");
+    auto loaded_snapshot =
+      client->send_request<LoadInventorySnapshotService>(account1);
+    REQUIRE(loaded_snapshot.m_sequence == Beam::Sequence(123));
+    REQUIRE_THROWS_AS(client->send_request<LoadInventorySnapshotService>(
+      account2), ServiceRequestException);
+    auto admin_account =
+      fixture.m_service_locator_environment.get_root().make_account(
+        "admin", "", DirectoryEntry::STAR_DIRECTORY);
+    fixture.m_administration_environment.make_administrator(admin_account);
+    auto [admin_account_, admin_client] = fixture.make_client("admin");
+    auto admin_loaded_snapshot1 =
+      admin_client->send_request<LoadInventorySnapshotService>(account1);
+    REQUIRE(admin_loaded_snapshot1.m_sequence == Beam::Sequence(123));
+    auto admin_loaded_snapshot2 =
+      admin_client->send_request<LoadInventorySnapshotService>(account2);
+    REQUIRE(admin_loaded_snapshot2.m_sequence == Beam::Sequence(456));
+  }
+
+  TEST_CASE("reset") {
+    auto fixture = Fixture();
+    auto admin_account =
+      fixture.m_service_locator_environment.get_root().make_account(
+        "admin", "", DirectoryEntry::STAR_DIRECTORY);
+    fixture.m_administration_environment.make_administrator(admin_account);
+    auto [admin_entry, admin_client] = fixture.make_client("admin");
+    auto [account1, client1, inventories1] = setup_account(fixture, "account1",
+      {
+        Inventory(Position(S32, AUD, 200, 200 * Money::ONE),
+          Money::ZERO, 7 * Money::ONE, 200, 2),
+        Inventory(Position(SHOP, CAD, 100, 100 * Money::ONE),
+          Money::ZERO, 5 * Money::ONE, 100, 1)
+      });
+    auto [account2, client2, inventories2] = setup_account(fixture, "account2",
+      {
+        Inventory(Position(S32, AUD, 400, 300 * Money::ONE),
+          Money::ZERO, 14 * Money::ONE, 300, 6),
+        Inventory(Position(SHOP, CAD, 300, 300 * Money::ONE),
+          Money::ZERO, 10 * Money::ONE, 300, 1)
+      });
+    auto region = Region(SHOP);
+    admin_client->send_request<ResetRegionService>(region);
+    auto reset_inventories1 = admin_client->send_request<
+      LoadInventorySnapshotService>(account1).m_inventories;
+    std::sort(reset_inventories1.begin(), reset_inventories1.end(),
+      [] (const auto& lhs, const auto& rhs) {
+        return lhs.m_position.m_security < rhs.m_position.m_security;
+      });
+    REQUIRE(reset_inventories1.size() == 2);
+    REQUIRE(reset_inventories1[0] == inventories1[0]);
+    REQUIRE(reset_inventories1[1].m_position == inventories1[1].m_position);
+    REQUIRE(reset_inventories1[1].m_gross_profit_and_loss == Money::ZERO);
+    REQUIRE(reset_inventories1[1].m_fees == Money::ZERO);
+    REQUIRE(reset_inventories1[1].m_volume == 0);
+    REQUIRE(reset_inventories1[1].m_transaction_count == 0);
+    auto reset_inventories2 = admin_client->send_request<
+      LoadInventorySnapshotService>(account2).m_inventories;
+    std::sort(reset_inventories2.begin(), reset_inventories2.end(),
+      [] (const auto& lhs, const auto& rhs) {
+        return lhs.m_position.m_security < rhs.m_position.m_security;
+      });
+    REQUIRE(reset_inventories2.size() == 2);
+    REQUIRE(reset_inventories2[0] == inventories2[0]);
+    REQUIRE(reset_inventories2[1].m_position == inventories2[1].m_position);
+    REQUIRE(reset_inventories2[1].m_gross_profit_and_loss == Money::ZERO);
+    REQUIRE(reset_inventories2[1].m_fees == Money::ZERO);
+    REQUIRE(reset_inventories2[1].m_volume == 0);
+    REQUIRE(reset_inventories2[1].m_transaction_count == 0);
+    REQUIRE_THROWS_AS(client1->send_request<ResetRegionService>(region),
+      ServiceRequestException);
+  }
+
+  TEST_CASE("subscribe") {
+    auto fixture = Fixture();
+    auto admin_account =
+      fixture.m_service_locator_environment.get_root().make_account(
+        "admin", "", DirectoryEntry::STAR_DIRECTORY);
+    fixture.m_administration_environment.make_administrator(admin_account);
+    auto [admin_account_, admin_client] = fixture.make_client("admin");
+    auto [account1, client1, inventories1] = setup_account(fixture, "account1",
+      {
+        Inventory(Position(S32, AUD, 200, 200 * Money::ONE),
+          Money::ZERO, 7 * Money::ONE, 200, 2),
+        Inventory(Position(SHOP, CAD, 100, 100 * Money::ONE),
+          Money::ZERO, 5 * Money::ONE, 100, 1)
+      });
+    auto [account2, client2, inventories2] = setup_account(fixture, "account2",
+      {
+        Inventory(Position(S32, AUD, 400, 300 * Money::ONE),
+          Money::ZERO, 14 * Money::ONE, 300, 6),
+        Inventory(Position(SHOP, CAD, 300, 300 * Money::ONE),
+          Money::ZERO, 10 * Money::ONE, 300, 1)
+      });
+    auto entries1 =
+      client1->send_request<SubscribeRiskPortfolioUpdatesService>();
+    std::sort(entries1.begin(), entries1.end(),
+      [] (const auto& lhs, const auto& rhs) {
+        return std::tie(lhs.m_key.m_account.m_id, lhs.m_key.m_security) <
+          std::tie(rhs.m_key.m_account.m_id, rhs.m_key.m_security);
+      });
+    REQUIRE(entries1.size() == 2);
+    REQUIRE(entries1[0].m_key.m_account == account1);
+    REQUIRE(entries1[0].m_key.m_security == S32);
+    REQUIRE(entries1[0].m_value == inventories1[0]);
+    REQUIRE(entries1[1].m_key.m_account == account1);
+    REQUIRE(entries1[1].m_key.m_security == SHOP);
+    REQUIRE(entries1[1].m_value == inventories1[1]);
+    auto admin_entries =
+      admin_client->send_request<SubscribeRiskPortfolioUpdatesService>();
+    std::sort(admin_entries.begin(), admin_entries.end(),
+      [] (const auto& lhs, const auto& rhs) {
+        return std::tie(lhs.m_key.m_account.m_id, lhs.m_key.m_security) <
+          std::tie(rhs.m_key.m_account.m_id, rhs.m_key.m_security);
+      });
+    REQUIRE(admin_entries.size() == 4);
+    REQUIRE(admin_entries[0].m_key.m_account == account1);
+    REQUIRE(admin_entries[0].m_key.m_security == S32);
+    REQUIRE(admin_entries[0].m_value == inventories1[0]);
+    REQUIRE(admin_entries[1].m_key.m_account == account1);
+    REQUIRE(admin_entries[1].m_key.m_security == SHOP);
+    REQUIRE(admin_entries[1].m_value == inventories1[1]);
+    REQUIRE(admin_entries[2].m_key.m_account == account2);
+    REQUIRE(admin_entries[2].m_key.m_security == S32);
+    REQUIRE(admin_entries[2].m_value == inventories2[0]);
+    REQUIRE(admin_entries[3].m_key.m_account == account2);
+    REQUIRE(admin_entries[3].m_key.m_security == SHOP);
+    REQUIRE(admin_entries[3].m_value == inventories2[1]);
+    submit_and_fill(fixture, account2, S32, Side::BID, 300, Money::ONE);
+    require_inventory_message(
+      *admin_client, account2, S32, 700, 600 * Money::ONE);
+    submit_and_fill(fixture, account1, SHOP, Side::BID, 100, Money::ONE);
+    require_inventory_message(
+      *admin_client, account1, SHOP, 200, 200 * Money::ONE);
+    require_inventory_message(*client1, account1, SHOP, 200, 200 * Money::ONE);
   }
 }

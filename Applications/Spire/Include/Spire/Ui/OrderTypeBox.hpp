@@ -2,7 +2,6 @@
 #define SPIRE_ORDER_TYPE_BOX_HPP
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Spire/Ui/EnumBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

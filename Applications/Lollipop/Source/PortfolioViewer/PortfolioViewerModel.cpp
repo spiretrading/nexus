@@ -7,14 +7,9 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::Accounting;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::RiskService;
 using namespace Spire;
 using namespace Spire::UI;
 
@@ -27,13 +22,13 @@ PortfolioViewerModel::TotalEntry::TotalEntry()
 
 PortfolioViewerModel::PortfolioViewerModel(Ref<UserProfile> userProfile,
     Ref<PortfolioSelectionModel> selectionModel)
-    : m_userProfile(userProfile.Get()),
-      m_totalCurrency(DefaultCurrencies::CAD()),
+    : m_userProfile(userProfile.get()),
+      m_totalCurrency(DefaultCurrencies::CAD),
       m_exchangeRates(&m_userProfile->GetExchangeRates()),
-      m_selectionModel(selectionModel.Get()),
+      m_selectionModel(selectionModel.get()),
       m_displayCount(0) {
-  m_userProfile->GetServiceClients().GetRiskClient().
-    GetRiskPortfolioUpdatePublisher().Monitor(
+  m_userProfile->GetClients().get_risk_client().
+    get_risk_portfolio_update_publisher().monitor(
       m_eventHandler.get_slot<RiskInventoryEntry>(std::bind_front(
         &PortfolioViewerModel::OnRiskPortfolioInventoryUpdate, this)));
   connect(m_selectionModel, &PortfolioSelectionModel::dataChanged, this,
@@ -117,22 +112,23 @@ QVariant PortfolioViewerModel::data(const QModelIndex& index, int role) const {
       }
       return QVariant::fromValue(accountTotalsIterator->second.m_fees);
     } else if(index.column() == SECURITY_COLUMN) {
-      return QVariant::fromValue(entry.m_inventory.m_position.m_key.m_index);
+      return QVariant::fromValue(entry.m_inventory.m_position.m_security);
     } else if(index.column() == OPEN_QUANTITY_COLUMN) {
-      return QVariant::fromValue(Abs(entry.m_inventory.m_position.m_quantity));
+      return QVariant::fromValue(abs(entry.m_inventory.m_position.m_quantity));
     } else if(index.column() == SIDE_COLUMN) {
       return QVariant::fromValue(PositionSideToken(
-        GetSide(entry.m_inventory.m_position)));
+        get_side(entry.m_inventory.m_position)));
     } else if(index.column() == AVERAGE_PRICE_COLUMN) {
-      return QVariant::fromValue(GetAveragePrice(entry.m_inventory.m_position));
+      return QVariant::fromValue(
+        get_average_price(entry.m_inventory.m_position));
     } else if(index.column() == TOTAL_PROFIT_LOSS_COLUMN) {
       auto unrealizedProfitAndLoss =
         GetUnrealizedProfitAndLoss(entry.m_inventory);
       if(!unrealizedProfitAndLoss) {
         return tr("N/A");
       }
-      auto totalProfitAndLoss =
-        *unrealizedProfitAndLoss + GetRealizedProfitAndLoss(entry.m_inventory);
+      auto totalProfitAndLoss = *unrealizedProfitAndLoss +
+        get_realized_profit_and_loss(entry.m_inventory);
       return QVariant::fromValue(totalProfitAndLoss);
     } else if(index.column() == UNREALIZED_PROFIT_LOSS_COLUMN) {
       auto unrealizedProfitAndLoss =
@@ -142,17 +138,18 @@ QVariant PortfolioViewerModel::data(const QModelIndex& index, int role) const {
       }
       return QVariant::fromValue(*unrealizedProfitAndLoss);
     } else if(index.column() == REALIZED_PROFIT_LOSS_COLUMN) {
-      return QVariant::fromValue(GetRealizedProfitAndLoss(entry.m_inventory));
+      return QVariant::fromValue(
+        get_realized_profit_and_loss(entry.m_inventory));
     } else if(index.column() == FEES_COLUMN) {
       return QVariant::fromValue(entry.m_inventory.m_fees);
     } else if(index.column() == COST_BASIS_COLUMN) {
-      return QVariant::fromValue(entry.m_inventory.m_position.m_costBasis);
+      return QVariant::fromValue(entry.m_inventory.m_position.m_cost_basis);
     } else if(index.column() == CURRENCY_COLUMN) {
-      return QVariant::fromValue(entry.m_inventory.m_position.m_key.m_currency);
+      return QVariant::fromValue(entry.m_inventory.m_position.m_currency);
     } else if(index.column() == VOLUME_COLUMN) {
       return QVariant::fromValue(entry.m_inventory.m_volume);
     } else if(index.column() == TRADES_COLUMN) {
-      return QVariant::fromValue(entry.m_inventory.m_transactionCount);
+      return QVariant::fromValue(entry.m_inventory.m_transaction_count);
     }
   }
   return QVariant();
@@ -205,15 +202,14 @@ QVariant PortfolioViewerModel::headerData(
 }
 
 boost::optional<Money> PortfolioViewerModel::GetUnrealizedProfitAndLoss(
-    const RiskInventory& inventory) const {
-  auto valuationIterator =
-    m_valuations.find(inventory.m_position.m_key.m_index);
+    const Inventory& inventory) const {
+  auto valuationIterator = m_valuations.find(inventory.m_position.m_security);
   if(valuationIterator == m_valuations.end()) {
     return none;
   }
   auto& valuation = valuationIterator->second;
-  auto unrealizedProfitAndLoss =
-    Accounting::GetUnrealizedProfitAndLoss(inventory, valuation);
+  auto unrealizedProfitAndLoss = get_unrealized_profit_and_loss(
+    inventory, valuation);
   if(!unrealizedProfitAndLoss) {
     return none;
   }
@@ -224,30 +220,30 @@ void PortfolioViewerModel::OnBboQuote(
     const Security& security, const BboQuote& bboQuote) {
   auto& valuation = m_valuations.at(security);
   auto previousValuation = valuation;
-  valuation.m_askValue = bboQuote.m_ask.m_price;
-  valuation.m_bidValue = bboQuote.m_bid.m_price;
+  valuation.m_ask_value = bboQuote.m_ask.m_price;
+  valuation.m_bid_value = bboQuote.m_bid.m_price;
   auto& indexes = m_securityToIndexes.at(security);
   for(auto& item : indexes) {
     auto& viewerEntry = m_entries[item];
-    auto baseCurrency = viewerEntry.m_inventory.m_position.m_key.m_currency;
+    auto baseCurrency = viewerEntry.m_inventory.m_position.m_currency;
     auto& accountTotals = m_accountTotals[viewerEntry.m_account];
-    auto unrealizedProfitAndLoss = Accounting::GetUnrealizedProfitAndLoss(
+    auto unrealizedProfitAndLoss = get_unrealized_profit_and_loss(
       viewerEntry.m_inventory, previousValuation);
     if(unrealizedProfitAndLoss) {
-      accountTotals.m_unrealizedProfitAndLoss -= m_exchangeRates->Convert(
+      accountTotals.m_unrealizedProfitAndLoss -= m_exchangeRates->convert(
         *unrealizedProfitAndLoss, baseCurrency, m_totalCurrency);
       if(viewerEntry.m_isDisplayed) {
-        m_totals.m_unrealizedProfitAndLoss -= m_exchangeRates->Convert(
+        m_totals.m_unrealizedProfitAndLoss -= m_exchangeRates->convert(
           *unrealizedProfitAndLoss, baseCurrency, m_totalCurrency);
       }
     }
     unrealizedProfitAndLoss = GetUnrealizedProfitAndLoss(
       viewerEntry.m_inventory);
     if(unrealizedProfitAndLoss) {
-      accountTotals.m_unrealizedProfitAndLoss += m_exchangeRates->Convert(
+      accountTotals.m_unrealizedProfitAndLoss += m_exchangeRates->convert(
         *unrealizedProfitAndLoss, baseCurrency, m_totalCurrency);
       if(viewerEntry.m_isDisplayed) {
-        m_totals.m_unrealizedProfitAndLoss += m_exchangeRates->Convert(
+        m_totals.m_unrealizedProfitAndLoss += m_exchangeRates->convert(
           *unrealizedProfitAndLoss, baseCurrency, m_totalCurrency);
       }
     }
@@ -262,13 +258,13 @@ void PortfolioViewerModel::OnBboQuote(
 void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
     const RiskInventoryEntry& entry) {
   auto& security = entry.m_key.m_security;
-  auto baseCurrency = entry.m_value.m_position.m_key.m_currency;
+  auto baseCurrency = entry.m_value.m_position.m_currency;
   if(m_valuations.find(security) == m_valuations.end()) {
     m_valuations.insert(std::pair(
-      security, SecurityValuation(entry.m_value.m_position.m_key.m_currency)));
-    auto bboQuery = MakeCurrentQuery(security);
-    bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
-    m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
+      security, SecurityValuation(entry.m_value.m_position.m_currency)));
+    auto bboQuery = make_current_query(security);
+    bboQuery.set_interruption_policy(InterruptionPolicy::IGNORE_CONTINUE);
+    m_userProfile->GetClients().get_market_data_client().query(
       bboQuery, m_eventHandler.get_slot<BboQuote>(
         std::bind_front(&PortfolioViewerModel::OnBboQuote, this, security)));
   }
@@ -280,21 +276,21 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
     auto row = static_cast<int>(m_entries.size());
     auto groupIterator = m_groups.find(entry.m_key.m_account);
     if(groupIterator == m_groups.end()) {
-      auto group = m_userProfile->GetServiceClients().GetAdministrationClient().
-        LoadParentTradingGroup(entry.m_key.m_account);
+      auto group = m_userProfile->GetClients().get_administration_client().
+        load_parent_trading_group(entry.m_key.m_account);
       groupIterator =
         m_groups.insert(std::pair(entry.m_key.m_account, group)).first;
     }
     portfolioViewerEntry.m_group = groupIterator->second;
     auto& accountTotals = m_accountTotals[entry.m_key.m_account];
-    auto realizedProfitAndLoss = GetRealizedProfitAndLoss(entry.m_value);
-    accountTotals.m_realizedProfitAndLoss += m_exchangeRates->Convert(
+    auto realizedProfitAndLoss = get_realized_profit_and_loss(entry.m_value);
+    accountTotals.m_realizedProfitAndLoss += m_exchangeRates->convert(
       realizedProfitAndLoss, baseCurrency, m_totalCurrency);
-    accountTotals.m_fees += m_exchangeRates->Convert(
+    accountTotals.m_fees += m_exchangeRates->convert(
       entry.m_value.m_fees, baseCurrency, m_totalCurrency);
     auto unrealizedProfitAndLoss = GetUnrealizedProfitAndLoss(entry.m_value);
     if(unrealizedProfitAndLoss) {
-      accountTotals.m_unrealizedProfitAndLoss += m_exchangeRates->Convert(
+      accountTotals.m_unrealizedProfitAndLoss += m_exchangeRates->convert(
         *unrealizedProfitAndLoss, baseCurrency, m_totalCurrency);
     }
     portfolioViewerEntry.m_isDisplayed =
@@ -317,14 +313,14 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
     if(portfolioViewerEntry.m_isDisplayed) {
       ++m_displayCount;
       endInsertRows();
-      m_totals.m_trades += entry.m_value.m_transactionCount;
+      m_totals.m_trades += entry.m_value.m_transaction_count;
       m_totals.m_volume += entry.m_value.m_volume;
-      m_totals.m_realizedProfitAndLoss += m_exchangeRates->Convert(
+      m_totals.m_realizedProfitAndLoss += m_exchangeRates->convert(
         realizedProfitAndLoss, baseCurrency, m_totalCurrency);
-      m_totals.m_fees += m_exchangeRates->Convert(entry.m_value.m_fees,
+      m_totals.m_fees += m_exchangeRates->convert(entry.m_value.m_fees,
         baseCurrency, m_totalCurrency);
       if(unrealizedProfitAndLoss) {
-        m_totals.m_unrealizedProfitAndLoss += m_exchangeRates->Convert(
+        m_totals.m_unrealizedProfitAndLoss += m_exchangeRates->convert(
           *unrealizedProfitAndLoss, baseCurrency, m_totalCurrency);
       }
       m_totalsUpdatedSignal(m_totals);
@@ -333,41 +329,41 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
     auto row = indexIterator->second;
     auto& viewerEntry = m_entries[row];
     auto& accountTotals = m_accountTotals[entry.m_key.m_account];
-    accountTotals.m_realizedProfitAndLoss -= m_exchangeRates->Convert(
-      GetRealizedProfitAndLoss(viewerEntry.m_inventory), baseCurrency,
+    accountTotals.m_realizedProfitAndLoss -= m_exchangeRates->convert(
+      get_realized_profit_and_loss(viewerEntry.m_inventory), baseCurrency,
       m_totalCurrency);
-    accountTotals.m_fees -= m_exchangeRates->Convert(
+    accountTotals.m_fees -= m_exchangeRates->convert(
       viewerEntry.m_inventory.m_fees, baseCurrency, m_totalCurrency);
     auto unrealizedProfitAndLoss = GetUnrealizedProfitAndLoss(
       viewerEntry.m_inventory);
     if(unrealizedProfitAndLoss) {
-      accountTotals.m_unrealizedProfitAndLoss -= m_exchangeRates->Convert(
+      accountTotals.m_unrealizedProfitAndLoss -= m_exchangeRates->convert(
         *unrealizedProfitAndLoss, baseCurrency, m_totalCurrency);
       if(viewerEntry.m_isDisplayed) {
-        m_totals.m_unrealizedProfitAndLoss -= m_exchangeRates->Convert(
+        m_totals.m_unrealizedProfitAndLoss -= m_exchangeRates->convert(
           *unrealizedProfitAndLoss, baseCurrency, m_totalCurrency);
       }
     }
     if(viewerEntry.m_isDisplayed) {
-      m_totals.m_trades -= viewerEntry.m_inventory.m_transactionCount;
+      m_totals.m_trades -= viewerEntry.m_inventory.m_transaction_count;
       m_totals.m_volume -= viewerEntry.m_inventory.m_volume;
-      m_totals.m_realizedProfitAndLoss -= m_exchangeRates->Convert(
-        GetRealizedProfitAndLoss(viewerEntry.m_inventory), baseCurrency,
+      m_totals.m_realizedProfitAndLoss -= m_exchangeRates->convert(
+        get_realized_profit_and_loss(viewerEntry.m_inventory), baseCurrency,
         m_totalCurrency);
-      m_totals.m_fees -= m_exchangeRates->Convert(
+      m_totals.m_fees -= m_exchangeRates->convert(
         viewerEntry.m_inventory.m_fees, baseCurrency, m_totalCurrency);
     }
     viewerEntry.m_inventory = entry.m_value;
-    auto realizedProfitAndLoss = GetRealizedProfitAndLoss(
+    auto realizedProfitAndLoss = get_realized_profit_and_loss(
       viewerEntry.m_inventory);
-    accountTotals.m_realizedProfitAndLoss += m_exchangeRates->Convert(
+    accountTotals.m_realizedProfitAndLoss += m_exchangeRates->convert(
       realizedProfitAndLoss, baseCurrency, m_totalCurrency);
-    accountTotals.m_fees += m_exchangeRates->Convert(
+    accountTotals.m_fees += m_exchangeRates->convert(
       viewerEntry.m_inventory.m_fees, baseCurrency, m_totalCurrency);
     unrealizedProfitAndLoss = GetUnrealizedProfitAndLoss(
       viewerEntry.m_inventory);
     if(unrealizedProfitAndLoss) {
-      accountTotals.m_unrealizedProfitAndLoss += m_exchangeRates->Convert(
+      accountTotals.m_unrealizedProfitAndLoss += m_exchangeRates->convert(
         *unrealizedProfitAndLoss, baseCurrency, m_totalCurrency);
     }
     auto previousVisibility = viewerEntry.m_isDisplayed;
@@ -396,19 +392,19 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
         index(viewerEntry.m_displayIndex, COLUMN_COUNT - 1));
     }
     if(viewerEntry.m_isDisplayed) {
-      m_totals.m_trades += entry.m_value.m_transactionCount;
+      m_totals.m_trades += entry.m_value.m_transaction_count;
       m_totals.m_volume += entry.m_value.m_volume;
-      m_totals.m_realizedProfitAndLoss += m_exchangeRates->Convert(
+      m_totals.m_realizedProfitAndLoss += m_exchangeRates->convert(
         realizedProfitAndLoss, baseCurrency, m_totalCurrency);
-      m_totals.m_fees += m_exchangeRates->Convert(entry.m_value.m_fees,
+      m_totals.m_fees += m_exchangeRates->convert(entry.m_value.m_fees,
         baseCurrency, m_totalCurrency);
       if(unrealizedProfitAndLoss) {
-        m_totals.m_unrealizedProfitAndLoss += m_exchangeRates->Convert(
+        m_totals.m_unrealizedProfitAndLoss += m_exchangeRates->convert(
           *unrealizedProfitAndLoss, baseCurrency, m_totalCurrency);
       }
       m_totalsUpdatedSignal(m_totals);
     }
-    if(entry.m_value.m_transactionCount == 0 &&
+    if(entry.m_value.m_transaction_count == 0 &&
         entry.m_value.m_position.m_quantity == 0) {
       if(viewerEntry.m_isDisplayed) {
         beginRemoveRows(QModelIndex(), viewerEntry.m_displayIndex,
@@ -420,7 +416,7 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
         endRemoveRows();
       }
       auto& securityIndicies =
-        m_securityToIndexes[viewerEntry.m_inventory.m_position.m_key.m_index];
+        m_securityToIndexes[viewerEntry.m_inventory.m_position.m_security];
       auto securityIndexIterator = std::find(securityIndicies.begin(),
         securityIndicies.end(), row);
       securityIndicies.erase(securityIndexIterator);
@@ -449,21 +445,21 @@ void PortfolioViewerModel::OnSelectionModelUpdated(const QModelIndex& topLeft,
   m_totals = TotalEntry();
   for(auto& entry : m_entries) {
     if(m_selectionModel->TestSelectionAcceptsEntry(entry)) {
-      auto baseCurrency = entry.m_inventory.m_position.m_key.m_currency;
+      auto baseCurrency = entry.m_inventory.m_position.m_currency;
       entry.m_isDisplayed = true;
       entry.m_displayIndex = m_displayCount;
       ++m_displayCount;
-      m_totals.m_trades += entry.m_inventory.m_transactionCount;
+      m_totals.m_trades += entry.m_inventory.m_transaction_count;
       m_totals.m_volume += entry.m_inventory.m_volume;
-      m_totals.m_realizedProfitAndLoss += m_exchangeRates->Convert(
-        GetRealizedProfitAndLoss(entry.m_inventory), baseCurrency,
+      m_totals.m_realizedProfitAndLoss += m_exchangeRates->convert(
+        get_realized_profit_and_loss(entry.m_inventory), baseCurrency,
         m_totalCurrency);
-      m_totals.m_fees += m_exchangeRates->Convert(
+      m_totals.m_fees += m_exchangeRates->convert(
         entry.m_inventory.m_fees, baseCurrency, m_totalCurrency);
       auto unrealizedProfitAndLoss =
         GetUnrealizedProfitAndLoss(entry.m_inventory);
       if(unrealizedProfitAndLoss) {
-        m_totals.m_unrealizedProfitAndLoss += m_exchangeRates->Convert(
+        m_totals.m_unrealizedProfitAndLoss += m_exchangeRates->convert(
           *unrealizedProfitAndLoss, baseCurrency, m_totalCurrency);
       }
     } else {

@@ -1,48 +1,63 @@
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/RegionMap.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace Nexus;
+using namespace Nexus::DefaultCountries;
+using namespace Nexus::DefaultVenues;
 
 TEST_SUITE("RegionMap") {
-  TEST_CASE("market_region_subset_of_country_region") {
-    auto map = RegionMap<int>(-1);
-    map.Set(DefaultCountries::US(), 1);
-    map.Set(DefaultCountries::CA(), 2);
-    auto usCode = map.Get(DefaultCountries::US());
-    REQUIRE(usCode == 1);
-    auto caCode = map.Get(DefaultCountries::CA());
-    REQUIRE(caCode == 2);
-    auto brCode = map.Get(DefaultCountries::BR());
-    REQUIRE(brCode == -1);
-    REQUIRE(map.Get(GetDefaultMarketDatabase().FromCode(
-      DefaultMarkets::NASDAQ())) == 1);
-    REQUIRE(map.Get(GetDefaultMarketDatabase().FromCode(
-      DefaultMarkets::TSX())) == 2);
+  TEST_CASE("venue_region_subset_of_country_region") {
+    auto map = RegionMap(-1);
+    map.set(AU, 1);
+    map.set(CA, 2);
+    auto au = map.get(AU);
+    REQUIRE(au == 1);
+    auto ca = map.get(CA);
+    REQUIRE(ca == 2);
+    auto br = map.get(BR);
+    REQUIRE(br == -1);
+    REQUIRE(map.get(ASX) == 1);
+    REQUIRE(map.get(TSX) == 2);
   }
 
-  TEST_CASE("set_country_security_market") {
-    auto map = RegionMap<int>(-1);
-    auto country = DefaultCountries::CA();
-    auto market = GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSX());
-    auto security = Security("TST", DefaultMarkets::TSX(),
-      DefaultCountries::CA());
-    map.Set(country, 1);
-    map.Set(security, 2);
-    map.Set(market, 3);
-    REQUIRE(map.Get(country) == 1);
-    REQUIRE(map.Get(security) == 2);
-    REQUIRE(map.Get(market) == 3);
+  TEST_CASE("set_country_security_venue") {
+    auto map = RegionMap(-1);
+    auto country = CA;
+    auto security = Security("TST", TSX);
+    map.set(country, 1);
+    map.set(security, 2);
+    map.set(TSX, 3);
+    REQUIRE(map.get(country) == 1);
+    REQUIRE(map.get(security) == 2);
+    REQUIRE(map.get(TSX) == 3);
   }
 
   TEST_CASE("region_map_iterator") {
-    auto map = RegionMap<int>(-1);
-    map.Set(DefaultCountries::US(), 1);
-    map.Set(DefaultCountries::CA(), 2);
-    auto mapIterator = map.Begin();
-    REQUIRE(std::get<0>(*mapIterator) == Region::Global());
-    ++mapIterator;
-    REQUIRE(std::get<0>(*mapIterator) == DefaultCountries::US());
+    auto map = RegionMap(-1);
+    map.set(AU, 1);
+    map.set(CA, 2);
+    auto i = map.begin();
+    REQUIRE(std::get<0>(*i) == Region::GLOBAL);
+    ++i;
+    REQUIRE(std::get<0>(*i) == AU);
+  }
+
+  TEST_CASE("shuttle") {
+    auto map = RegionMap(0);
+    map.set(AU, 1);
+    map.set(CA, 2);
+    map.set(GB, 3);
+    map.set(Region(std::string("CustomRegion")), 4);
+    test_round_trip_shuttle(map, [&] (const auto& result) {
+      for(auto& region : map) {
+        REQUIRE(result.get(std::get<0>(region)) == std::get<1>(region));
+      }
+      for(auto& region : result) {
+        REQUIRE(map.get(std::get<0>(region)) == std::get<1>(region));
+      }
+    });
   }
 }

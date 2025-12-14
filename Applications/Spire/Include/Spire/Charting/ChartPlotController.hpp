@@ -78,8 +78,8 @@ namespace Spire {
       std::unordered_map<std::shared_ptr<ChartPlotSeries>,
         std::vector<RangeEntry>> m_ranges;
       ChartPlotView::AxisParameters m_xAxisParameters;
-      Beam::SignalHandling::ConnectionGroup m_seriesConnections;
-      Beam::SignalHandling::ConnectionGroup m_plotConnections;
+      Beam::ConnectionGroup m_seriesConnections;
+      Beam::ConnectionGroup m_plotConnections;
       boost::signals2::scoped_connection m_xAxisParametersConnection;
       QTimer m_updateTimer;
       Beam::RoutineTaskQueue m_taskQueue;

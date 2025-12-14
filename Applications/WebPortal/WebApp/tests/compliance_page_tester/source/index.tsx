@@ -155,47 +155,25 @@ function makeEntries() {
           Nexus.ComplianceValue.Type.LIST, [
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('AST.XASX',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.Security.parse('S32.ASX')),
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('PST.CSE',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.Security.parse('TD.TSX')),
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('NQR.YYYY',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.Security.parse('RY.TSX')),
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('NQR.YYYY',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
+              Nexus.Security.parse('SHOP.TSX')),
             new Nexus.ComplianceValue(
               Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('NQR.YYYY',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
-            new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('NQR.YYYY',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
-            new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('NQR.YYYY',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
-            new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('NQR.YYYY',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA)),
-            new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY,
-              new Nexus.Security('AST.NYC',
-                Nexus.MarketCode.NONE, Nexus.DefaultCountries.CA))
+              Nexus.Security.parse('RIO.ASX'))
           ])),
       new Nexus.ComplianceParameter(
         'Security',
         new Nexus.ComplianceValue(
           Nexus.ComplianceValue.Type.SECURITY,
-          new Nexus.Security('NQR.YYYY', Nexus.MarketCode.NONE,
-            Nexus.DefaultCountries.CA)))
+          Nexus.Security.parse('TD.TSX')))
     ])));
   return entries;
 }

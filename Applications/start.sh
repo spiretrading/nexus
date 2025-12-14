@@ -1,7 +1,6 @@
 #!/bin/bash
 services="ServiceLocator"
 services+=" UidServer"
-services+=" RegistryServer"
 services+=" DefinitionsServer"
 services+=" AdministrationServer"
 services+=" MarketDataServer"
@@ -10,7 +9,6 @@ services+=" ChartingServer"
 services+=" ComplianceServer"
 services+=" SimulationOrderExecutionServer"
 services+=" RiskServer"
-services+=" TelemetryServer"
 services+=" WebPortal"
 services+=" SimulationMarketDataFeedClient"
 

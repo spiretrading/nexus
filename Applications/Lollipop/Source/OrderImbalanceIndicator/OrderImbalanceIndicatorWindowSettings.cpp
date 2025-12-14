@@ -24,8 +24,8 @@ OrderImbalanceIndicatorWindowSettings::OrderImbalanceIndicatorWindowSettings(
         horizontalHeader()->saveState()),
       m_timeRangeSettings(
         window.m_ui->m_timeRangeParametersWidget->GetWindowSettings()),
-      m_marketsSettings(
-        window.m_ui->m_marketSelectionWidget->GetWindowSettings()) {}
+      m_venuesSettings(
+        window.m_ui->m_venueSelectionWidget->GetWindowSettings()) {}
 
 OrderImbalanceIndicatorWindowSettings::
     ~OrderImbalanceIndicatorWindowSettings() {}
@@ -42,7 +42,7 @@ QWidget* OrderImbalanceIndicatorWindowSettings::Reopen(
   OrderImbalanceIndicatorWindow* window = new OrderImbalanceIndicatorWindow(
     Ref(userProfile), model);
   window->setAttribute(Qt::WA_DeleteOnClose);
-  Apply(Ref(userProfile), Store(*window));
+  Apply(Ref(userProfile), out(*window));
   return window;
 }
 
@@ -56,7 +56,7 @@ void OrderImbalanceIndicatorWindowSettings::Apply(
   window.m_ui->m_orderImbalanceIndicatorTableView->horizontalHeader()->
     restoreState(m_tableHeaderState);
   m_timeRangeSettings->Apply(Ref(userProfile),
-    Store(*window.m_ui->m_timeRangeParametersWidget));
-  m_marketsSettings->Apply(Ref(userProfile),
-    Store(*window.m_ui->m_marketSelectionWidget));
+    out(*window.m_ui->m_timeRangeParametersWidget));
+  m_venuesSettings->Apply(Ref(userProfile),
+    out(*window.m_ui->m_venueSelectionWidget));
 }

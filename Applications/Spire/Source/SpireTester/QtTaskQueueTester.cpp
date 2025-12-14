@@ -14,13 +14,13 @@ TEST_SUITE("QtTaskQueue") {
       auto slot = tasks.get_slot<int>([&] (auto value) {
         values.push_back(value);
       });
-      slot.Push(123);
+      slot.push(123);
       QApplication::processEvents();
       REQUIRE(values.size() == 1);
       REQUIRE(values.front() == 123);
       values.pop_front();
       tasks.close();
-      REQUIRE_THROWS(slot.Push(11));
+      REQUIRE_THROWS(slot.push(11));
     });
   }
 }

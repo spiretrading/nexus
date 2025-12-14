@@ -13,7 +13,6 @@
 #include "Spire/Catalog/CatalogEntry.hpp"
 #include "Spire/Catalog/CatalogTabModel.hpp"
 #include "Spire/Catalog/CatalogTabView.hpp"
-#include "Spire/Catalog/RegistryCatalogEntry.hpp"
 #include "Spire/Catalog/UserCatalogEntry.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -27,11 +26,6 @@ using namespace std;
 
 bool CatalogWindow::DisplayAllFilter(const CatalogEntry& entry) {
   return true;
-}
-
-bool CatalogWindow::DisplayRegistryCatalogEntryFilter(
-    const CatalogEntry& entry) {
-  return dynamic_cast<const RegistryCatalogEntry*>(&entry) != nullptr;
 }
 
 CatalogWindow::Filter CatalogWindow::EqualTypeFilter(const CanvasType& type) {
@@ -68,22 +62,17 @@ CatalogWindow::CatalogWindow(Ref<UserProfile> userProfile, QWidget* parent,
       m_filter(DisplayAllFilter),
       m_ui(std::make_unique<Ui_CatalogWindow>()),
       m_mode(LOADING),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   Initialize();
 }
 
 CatalogWindow::CatalogWindow(Ref<UserProfile> userProfile,
-    const CanvasNode& node, bool saveToRegistry, QWidget* parent,
-    Qt::WindowFlags flags)
+    const CanvasNode& node, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_CatalogWindow>()),
-      m_mode(saveToRegistry ? REGISTRY : SAVING),
-      m_userProfile(userProfile.Get()) {
-  if(m_mode == SAVING) {
-    m_filter = DisplayAllFilter;
-  } else {
-    m_filter = DisplayRegistryCatalogEntryFilter;
-  }
+      m_mode(SAVING),
+      m_userProfile(userProfile.get()) {
+  m_filter = DisplayAllFilter;
   Initialize();
   SetDefaultSearchName(node);
 }
@@ -94,18 +83,18 @@ CatalogWindow::CatalogWindow(Ref<UserProfile> userProfile,
       m_filter(filter),
       m_ui(std::make_unique<Ui_CatalogWindow>()),
       m_mode(LOADING),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   Initialize();
 }
 
 CatalogWindow::CatalogWindow(Ref<UserProfile> userProfile,
-    const Filter& filter, const CanvasNode& node, bool saveToRegistry,
-    QWidget* parent, Qt::WindowFlags flags)
+    const Filter& filter, const CanvasNode& node, QWidget* parent,
+    Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_filter(filter),
       m_ui(std::make_unique<Ui_CatalogWindow>()),
-      m_mode(saveToRegistry ? REGISTRY : SAVING),
-      m_userProfile(userProfile.Get()) {
+      m_mode(SAVING),
+      m_userProfile(userProfile.get()) {
   Initialize();
   SetDefaultSearchName(node);
 }
@@ -182,8 +171,6 @@ void CatalogWindow::Initialize() {
   m_ui->m_categoryTabs->installEventFilter(this);
   if(m_mode == SAVING) {
     setWindowTitle(tr("Catalog Save As - Spire"));
-  } else if(m_mode == REGISTRY) {
-    setWindowTitle(tr("Catalog Save To Registry - Spire"));
   } else {
     setWindowTitle(tr("Catalog - Spire"));
   }
@@ -267,7 +254,7 @@ void CatalogWindow::OnCatalogTabRemoved(CatalogTabModel& model) {
     auto view = static_cast<CatalogTabView*>(m_ui->m_categoryTabs->widget(i));
     if(&view->GetModel() == &model) {
       m_ui->m_categoryTabs->removeTab(i);
-      m_viewConnections.Disconnect(view);
+      m_viewConnections.disconnect(view);
     }
   }
   if(m_ui->m_categoryTabs->currentIndex() ==
@@ -277,7 +264,7 @@ void CatalogWindow::OnCatalogTabRemoved(CatalogTabModel& model) {
 }
 
 void CatalogWindow::AddTab(CatalogTabModel& model) {
-  auto saving = (m_mode == SAVING || m_mode == REGISTRY);
+  auto saving = m_mode == SAVING;
   auto view = new CatalogTabView(Ref(model), Ref(m_searchBarModel), m_filter,
     Ref(*m_userProfile), saving);
   m_ui->m_categoryTabs->insertTab(m_ui->m_categoryTabs->count() - 1, view,
@@ -286,15 +273,15 @@ void CatalogWindow::AddTab(CatalogTabModel& model) {
   if(m_mode == LOADING) {
     auto viewConnection = view->ConnectCatalogEntryActivatedSignal(
       std::bind(&CatalogWindow::OnCatalogEntryActivated, this));
-    m_viewConnections.AddConnection(view, viewConnection);
+    m_viewConnections.add(view, viewConnection);
   } else {
     auto viewConnection = view->ConnectCatalogEntryActivatedSignal(
       std::bind(&CatalogWindow::OnAccept, this));
-    m_viewConnections.AddConnection(view, viewConnection);
+    m_viewConnections.add(view, viewConnection);
   }
   auto nameConnection = model.ConnectNameSignal(
     std::bind(&CatalogWindow::OnNameChanged, this, std::ref(model)));
-  m_modelConnections.AddConnection(view, nameConnection);
+  m_modelConnections.add(view, nameConnection);
 }
 
 void CatalogWindow::OnAccept() {
@@ -303,7 +290,7 @@ void CatalogWindow::OnAccept() {
     return;
   }
   auto selection = GetSelection();
-  if((m_mode == SAVING || m_mode == REGISTRY) && !selection.empty()) {
+  if(m_mode == SAVING && !selection.empty()) {
     QMessageBox confirmMessage(this);
     confirmMessage.setIcon(QMessageBox::Warning);
     confirmMessage.setWindowTitle(tr("Confirm Overwrite"));
