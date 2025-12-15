@@ -9,6 +9,7 @@
 #include "Spire/Ui/EmptyState.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -440,12 +441,15 @@ void AnyComboBox::on_query(
   m_data->m_is_querying = true;
   auto selection = [&] {
     try {
-      return result.Get();
+      return result.get();
     } catch(const std::exception&) {
       return std::vector<std::any>();
     }
   }();
   {
+    if(m_data->m_matches->get_size() > 0) {
+      m_data->m_drop_down_list->hide();
+    }
     auto blocker =
       shared_connection_block(m_data->m_drop_down_current_connection);
     while(m_data->m_matches->get_size() != 0) {

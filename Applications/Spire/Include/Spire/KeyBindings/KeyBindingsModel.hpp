@@ -4,11 +4,10 @@
 #include <unordered_map>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
-#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Region.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
-#include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/OrderTaskArguments.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 
@@ -18,11 +17,8 @@ namespace Spire {
   class KeyBindingsModel {
     public:
 
-      /**
-       * Constructs an empty KeyBindingsModel.
-       * @param markets The database of market definitions.
-       */
-      explicit KeyBindingsModel(Nexus::MarketDatabase markets);
+      /** Constructs an empty KeyBindingsModel. */
+      KeyBindingsModel();
 
       /** Returns the list of order task arguments. */
       const std::shared_ptr<OrderTaskArgumentsListModel>&
@@ -42,8 +38,7 @@ namespace Spire {
       std::vector<Nexus::Region> make_interactions_key_bindings_regions() const;
 
     private:
-      friend struct Beam::Serialization::Shuttle<KeyBindingsModel>;
-      Nexus::MarketDatabase m_markets;
+      friend struct Beam::Shuttle<KeyBindingsModel>;
       std::shared_ptr<OrderTaskArgumentsListModel> m_order_task_arguments;
       std::shared_ptr<CancelKeyBindingsModel> m_cancel_key_bindings;
       mutable std::unordered_map<Nexus::Region,
@@ -54,39 +49,39 @@ namespace Spire {
   };
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Spire::KeyBindingsModel> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Spire::KeyBindingsModel& value,
-        unsigned int version) {
-      shuttle.Shuttle("order_task_arguments", *value.m_order_task_arguments);
-      shuttle.Shuttle("cancel_key_bindings", *value.m_cancel_key_bindings);
-      if constexpr(IsSender<Shuttler>::value) {
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::KeyBindingsModel& value,
+        unsigned int version) const {
+      shuttle.shuttle("order_task_arguments", *value.m_order_task_arguments);
+      shuttle.shuttle("cancel_key_bindings", *value.m_cancel_key_bindings);
+      if constexpr(IsSender<S>) {
         auto size = 0;
         for(auto& interactions : value.m_interactions) {
           if(interactions.second->is_detached()) {
             ++size;
           }
         }
-        shuttle.StartSequence("interactions", 2 * size);
+        shuttle.start_sequence("interactions", 2 * size);
         for(auto& interactions : value.m_interactions) {
           if(interactions.second->is_detached()) {
-            shuttle.Shuttle(interactions.first);
-            shuttle.Shuttle(*interactions.second);
+            shuttle.shuttle(interactions.first);
+            shuttle.shuttle(*interactions.second);
           }
         }
       } else {
         auto size = int();
-        shuttle.StartSequence("interactions", size);
+        shuttle.start_sequence("interactions", size);
         for(auto i = 0; i != size / 2; ++i) {
           auto region = Nexus::Region();
-          shuttle.Shuttle(region);
+          shuttle.shuttle(region);
           auto& interactions = value.get_interactions_key_bindings(region);
-          shuttle.Shuttle(*interactions);
+          shuttle.shuttle(*interactions);
         }
       }
-      shuttle.EndSequence();
+      shuttle.end_sequence();
     }
   };
 }

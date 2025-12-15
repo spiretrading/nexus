@@ -5,7 +5,7 @@
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
-#include "Spire/BookView/BookView.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 
 namespace Spire {
@@ -26,7 +26,6 @@ namespace Spire {
         Nexus::Security security, Nexus::Side side);
 
       const Type& get() const override;
-
       boost::signals2::connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const override;
 

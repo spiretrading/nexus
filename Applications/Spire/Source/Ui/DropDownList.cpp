@@ -77,11 +77,6 @@ bool DropDownList::eventFilter(QObject* watched, QEvent* event) {
       event->type() == QEvent::LayoutRequest) {
     m_size_hint = none;
     updateGeometry();
-    auto size = sizeHint().grownBy(m_panel->layout()->contentsMargins()) +
-      m_panel_border_size;
-    if(size != m_panel->size()) {
-      m_panel->setFixedSize(size);
-    }
     if(width() != 0 && height() != 0 && !m_is_scrolled_to_current) {
       m_is_scrolled_to_current = true;
       if(auto current = m_list_view->get_current()->get()) {

@@ -1,8 +1,8 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Checkmark, CurrencySelectionField, DateTimeField, DisplaySize,
-  MoneyField, NumberField, SecuritiesField, SecurityField, TextField,
-  TimeOfDayField } from '../../..';
+  MoneyField, NumberField, RegionField, SecuritiesField, SecurityField,
+  TextField, TimeOfDayField } from '../../..';
 
 interface Properties {
 
@@ -100,6 +100,12 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.SECURITY:
           return <SecurityField
             displaySize={this.props.displaySize}
+            onChange={this.onChange}
+            value={this.props.parameter.value.value}/>;
+        case Nexus.ComplianceValue.Type.REGION:
+          return <RegionField
+            displaySize={this.props.displaySize}
+            readonly={this.props.readonly}
             onChange={this.onChange}
             value={this.props.parameter.value.value}/>;
         case Nexus.ComplianceValue.Type.LIST:

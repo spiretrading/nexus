@@ -1,6 +1,6 @@
 #include "Spire/Canvas/SystemNodes/CanvasObserver.hpp"
 #include <Aspen/Aspen.hpp>
-#include <Beam/Utilities/InstantiateTemplate.hpp>
+#include <Beam/Utilities/Instantiate.hpp>
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
@@ -15,8 +15,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Reactors;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
@@ -25,15 +23,15 @@ namespace {
   constexpr auto TRANSLATE_INTERVAL = 100;
 
   struct ObserverTranslator {
+    using type = ValueTypes;
+
     template<typename T>
-    static Aspen::Box<void> Template(const Translation& translation,
-        const std::function<void (const any& value)>& callback) {
+    Aspen::Box<void> operator ()(const Translation& translation,
+        const std::function<void (const any& value)>& callback) const {
       return Aspen::box(Aspen::lift([=] (const T& value) {
         callback(value);
       }, translation.Extract<Aspen::Box<T>>()));
     }
-
-    using SupportedTypes = ValueTypes;
   };
 }
 
@@ -100,12 +98,12 @@ void CanvasObserver::Translate() {
         auto monitorDependency = &*m_observer->GetChildren().front().FindNode(
           GetFullName(*rootDependency));
         Mirror(*rootDependency, m_task->GetContext(), *monitorDependency,
-          Store(m_task->GetContext()));
+          out(m_task->GetContext()));
       }
       auto observer = Spire::Translate(
         m_task->GetContext(), m_observer->GetChildren().back());
-      auto reactor = Instantiate<ObserverTranslator>(
-        observer.GetTypeInfo())(observer, m_callbacks.MakeSlot(
+      auto reactor = instantiate<ObserverTranslator>(
+        observer.GetTypeInfo())(observer, m_callbacks.make_slot(
           std::bind_front(&CanvasObserver::OnReactorUpdate, this)));
       m_task->GetExecutor().Add(std::move(reactor));
       m_isTranslated = true;

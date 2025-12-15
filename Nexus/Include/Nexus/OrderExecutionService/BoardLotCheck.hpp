@@ -4,25 +4,28 @@
 #include <type_traits>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Queues/StateQueue.hpp>
+#include <Beam/Routines/RoutineHandler.hpp>
+#include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/optional/optional.hpp>
+#include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheck.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheckException.hpp"
 #include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /**
    * Validates an Order's board lot size.
    * @param <C> The type of MarketDataClient used to determine the price of a
    *        Security.
    */
-  template<typename C>
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   class BoardLotCheck : public OrderSubmissionCheck {
     public:
 
@@ -30,123 +33,121 @@ namespace Nexus::OrderExecutionService {
        * The type of MarketDataClient used to price Orders for buying power
        * checks.
        */
-      using MarketDataClient = Beam::GetTryDereferenceType<C>;
+      using MarketDataClient = Beam::dereference_t<C>;
 
       /**
        * Constructs a BoardLotCheck.
-       * @param marketDataClient Initializes the MarketDataClient.
+       * @param market_data_client Initializes the MarketDataClient.
+       * @param venues The available venues to submit an order to.
+       * @param time_zones The database of timezones.
        */
-      template<typename CF>
-      BoardLotCheck(CF&& marketDataClient, const MarketDatabase& marketDatabase,
-        const boost::local_time::tz_database& timeZoneDatabase);
+      template<Beam::Initializes<C> CF>
+      BoardLotCheck(CF&& market_data_client, VenueDatabase venues,
+        boost::local_time::tz_database time_zones);
 
-      void Submit(const OrderInfo& orderInfo) override;
+      void submit(const OrderInfo& info) override;
 
     private:
       struct ClosingEntry {
-        boost::posix_time::ptime m_lastUpdate;
-        boost::optional<Money> m_closingPrice;
+        boost::posix_time::ptime m_last_update;
+        boost::optional<Money> m_closing_price;
 
         ClosingEntry();
       };
-      Beam::GetOptionalLocalPtr<C> m_marketDataClient;
-      MarketDatabase m_marketDatabase;
-      boost::local_time::tz_database m_timeZoneDatabase;
-      Beam::SynchronizedUnorderedMap<Security,
-        Beam::Threading::Sync<ClosingEntry, Beam::Threading::Mutex>>
-          m_closingEntries;
-      Beam::SynchronizedUnorderedMap<Security,
-        std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bboQuotes;
+      Beam::local_ptr_t<C> m_market_data_client;
+      VenueDatabase m_venues;
+      boost::local_time::tz_database m_time_zones;
+      Beam::SynchronizedUnorderedMap<
+        Security, Beam::Sync<ClosingEntry, Beam::Mutex>> m_closing_entries;
+      Beam::SynchronizedUnorderedMap<
+        Security, std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bbo_quotes;
+      std::vector<Beam::RoutineHandler> m_query_routines;
 
-      Money LoadPrice(const Security& security,
-        boost::posix_time::ptime timestamp);
+      Money load_price(
+        const Security& security, boost::posix_time::ptime timestamp);
   };
 
-  template<typename C>
-  BoardLotCheck<C>::ClosingEntry::ClosingEntry()
-    : m_lastUpdate(boost::posix_time::neg_infin) {}
-
-  template<typename MarketDataClient>
-  auto MakeBoardLotCheck(MarketDataClient&& marketDataClient,
-      const MarketDatabase& marketDatabase,
-      const boost::local_time::tz_database& timeZoneDatabase) {
-    return std::make_unique<BoardLotCheck<std::decay_t<MarketDataClient>>>(
-      std::forward<MarketDataClient>(marketDataClient), marketDatabase,
-      timeZoneDatabase);
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  auto make_board_lot_check(C&& market_data_client,
+      VenueDatabase venues, boost::local_time::tz_database time_zones) {
+    return std::make_unique<BoardLotCheck<std::remove_reference_t<C>>>(
+      std::forward<C>(market_data_client), std::move(venues),
+      std::move(time_zones));
   }
 
-  template<typename C>
-  template<typename CF>
-  BoardLotCheck<C>::BoardLotCheck(CF&& marketDataClient,
-    const MarketDatabase& marketDatabase,
-    const boost::local_time::tz_database& timeZoneDatabase)
-    : m_marketDataClient(std::forward<CF>(marketDataClient)),
-      m_marketDatabase(marketDatabase),
-      m_timeZoneDatabase(timeZoneDatabase) {}
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  BoardLotCheck<C>::ClosingEntry::ClosingEntry()
+    : m_last_update(boost::posix_time::neg_infin) {}
 
-  template<typename C>
-  void BoardLotCheck<C>::Submit(const OrderInfo& orderInfo) {
-    if(orderInfo.m_fields.m_security.GetMarket() != DefaultMarkets::TSX() &&
-        orderInfo.m_fields.m_security.GetMarket() != DefaultMarkets::TSXV() &&
-        orderInfo.m_fields.m_security.GetMarket() != DefaultMarkets::NEOE() &&
-        orderInfo.m_fields.m_security.GetMarket() != DefaultMarkets::CSE()) {
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  template<Beam::Initializes<C> CF>
+  BoardLotCheck<C>::BoardLotCheck(CF&& market_data_client, VenueDatabase venues,
+    boost::local_time::tz_database time_zones)
+    : m_market_data_client(std::forward<CF>(market_data_client)),
+      m_venues(std::move(venues)),
+      m_time_zones(std::move(time_zones)) {}
+
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  void BoardLotCheck<C>::submit(const OrderInfo& info) {
+    if(info.m_fields.m_security.get_venue() != DefaultVenues::TSX &&
+        info.m_fields.m_security.get_venue() != DefaultVenues::TSXV &&
+        info.m_fields.m_security.get_venue() != DefaultVenues::NEOE &&
+        info.m_fields.m_security.get_venue() != DefaultVenues::CSE) {
       return;
     }
-    auto currentPrice = LoadPrice(orderInfo.m_fields.m_security,
-      orderInfo.m_timestamp);
-    if(currentPrice < 10 * Money::CENT) {
-      if(orderInfo.m_fields.m_quantity % 1000 != 0) {
-        BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
+    auto current_price = load_price(info.m_fields.m_security, info.m_timestamp);
+    if(current_price < 10 * Money::CENT) {
+      if(info.m_fields.m_quantity % 1000 != 0) {
+        boost::throw_with_location(OrderSubmissionCheckException(
           "Quantity must be a multiple of 1000."));
       }
-    } else if(currentPrice < Money::ONE) {
-      if(orderInfo.m_fields.m_quantity % 500 != 0) {
-        BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
-          "Quantity must be a multiple of 500."));
+    } else if(current_price < Money::ONE) {
+      if(info.m_fields.m_quantity % 500 != 0) {
+        boost::throw_with_location(
+          OrderSubmissionCheckException("Quantity must be a multiple of 500."));
       }
     } else {
-      if(orderInfo.m_fields.m_quantity % 100 != 0) {
-        BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
-          "Quantity must be a multiple of 100."));
+      if(info.m_fields.m_quantity % 100 != 0) {
+        boost::throw_with_location(
+          OrderSubmissionCheckException("Quantity must be a multiple of 100."));
       }
     }
   }
 
-  template<typename C>
-  Money BoardLotCheck<C>::LoadPrice(const Security& security,
-      boost::posix_time::ptime timestamp) {
-    auto& closingEntry = m_closingEntries.Get(security);
-    auto closingPrice = Beam::Threading::With(closingEntry, [&] (auto& entry) {
-      if(timestamp - entry.m_lastUpdate > boost::posix_time::hours(1)) {
-        if(auto close = TechnicalAnalysis::LoadPreviousClose(
-            *m_marketDataClient, security, timestamp, m_marketDatabase,
-            m_timeZoneDatabase)) {
-          entry.m_closingPrice = close->m_price;
-          entry.m_lastUpdate = timestamp;
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  Money BoardLotCheck<C>::load_price(
+      const Security& security, boost::posix_time::ptime timestamp) {
+    auto& closing_entry = m_closing_entries.get(security);
+    auto closing_price = Beam::with(closing_entry, [&] (auto& entry) {
+      if(timestamp - entry.m_last_update > boost::posix_time::hours(1)) {
+        if(auto close = load_previous_close(*m_market_data_client, security,
+            timestamp, m_venues, m_time_zones)) {
+          entry.m_closing_price = close->m_price;
+          entry.m_last_update = timestamp;
         }
       }
-      return entry.m_closingPrice;
+      return entry.m_closing_price;
     });
-    if(closingPrice) {
-      return *closingPrice;
+    if(closing_price) {
+      return *closing_price;
     }
-    auto publisher = m_bboQuotes.GetOrInsert(security, [&] {
+    auto publisher = m_bbo_quotes.get_or_insert(security, [&] {
       auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
-      MarketDataService::QueryRealTimeWithSnapshot(security,
-        *m_marketDataClient, publisher);
+      m_query_routines.push_back(query_real_time_with_snapshot(
+        *m_market_data_client, security, publisher));
       return publisher;
     });
     try {
-      auto effectiveClosingPrice = publisher->Peek().m_bid.m_price;
-      return Beam::Threading::With(closingEntry, [&] (auto& entry) {
-        entry.m_closingPrice = effectiveClosingPrice;
-        entry.m_lastUpdate = timestamp;
-        return effectiveClosingPrice;
+      auto effective_closing_price = publisher->peek().m_bid.m_price;
+      return Beam::with(closing_entry, [&] (auto& entry) {
+        entry.m_closing_price = effective_closing_price;
+        entry.m_last_update = timestamp;
+        return effective_closing_price;
       });
     } catch(const Beam::PipeBrokenException&) {
-      m_bboQuotes.Erase(security);
-      BOOST_THROW_EXCEPTION(OrderSubmissionCheckException(
-        "No BBO quote available."));
+      m_bbo_quotes.erase(security);
+      boost::throw_with_location(
+        OrderSubmissionCheckException("No BBO quote available."));
     }
   }
 }

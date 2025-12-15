@@ -7,12 +7,11 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 
-OrderLogModel::OrderEntry::OrderEntry(const Order* order)
-  : m_order(order),
+OrderLogModel::OrderEntry::OrderEntry(std::shared_ptr<Order> order)
+  : m_order(std::move(order)),
     m_status(OrderStatus::PENDING_NEW) {}
 
 OrderLogModel::OrderLogModel(const OrderLogProperties& properties)
@@ -37,7 +36,7 @@ const OrderLogModel::OrderEntry& OrderLogModel::GetEntry(
 }
 
 void OrderLogModel::SetOrderExecutionPublisher(
-    Ref<const OrderExecutionPublisher> orderExecutionPublisher) {
+    Ref<const Publisher<std::shared_ptr<Order>>> orderExecutionPublisher) {
   if(!m_entries.empty()) {
     beginRemoveRows(QModelIndex(), 0, m_entries.size() - 1);
     auto entries = std::vector<OrderEntry>();
@@ -49,9 +48,10 @@ void OrderLogModel::SetOrderExecutionPublisher(
   }
   m_eventHandler = std::nullopt;
   m_eventHandler.emplace();
-  m_orderExecutionPublisher = orderExecutionPublisher.Get();
-  m_orderExecutionPublisher->Monitor(m_eventHandler->get_slot<const Order*>(
-    std::bind_front(&OrderLogModel::OnOrderExecuted, this)));
+  m_orderExecutionPublisher = orderExecutionPublisher.get();
+  m_orderExecutionPublisher->monitor(
+    m_eventHandler->get_slot<std::shared_ptr<Order>>(
+      std::bind_front(&OrderLogModel::OnOrderExecuted, this)));
 }
 
 connection OrderLogModel::ConnectOrderAddedSignal(
@@ -77,14 +77,14 @@ QVariant OrderLogModel::data(const QModelIndex& index, int role) const {
     return QVariant();
   }
   auto& entry = m_entries[index.row()];
-  auto& fields = entry.m_order->GetInfo().m_fields;
+  auto& fields = entry.m_order->get_info().m_fields;
   if(role == Qt::TextAlignmentRole) {
     return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
   } else if(role == Qt::DisplayRole) {
     if(index.column() == TIME_COLUMN) {
-      return QVariant::fromValue(entry.m_order->GetInfo().m_timestamp);
+      return QVariant::fromValue(entry.m_order->get_info().m_timestamp);
     } else if(index.column() == ID_COLUMN) {
-      return entry.m_order->GetInfo().m_orderId;
+      return entry.m_order->get_info().m_id;
     } else if(index.column() == STATUS_COLUMN) {
       return QVariant::fromValue(entry.m_status);
     } else if(index.column() == SECURITY_COLUMN) {
@@ -107,7 +107,7 @@ QVariant OrderLogModel::data(const QModelIndex& index, int role) const {
         return tr("N/A");
       }
     } else if(index.column() == TIME_IN_FORCE_COLUMN) {
-      return QVariant::fromValue(fields.m_timeInForce);
+      return QVariant::fromValue(fields.m_time_in_force);
     }
   }
   return QVariant();
@@ -145,10 +145,10 @@ QVariant OrderLogModel::headerData(int section, Qt::Orientation orientation,
   return QVariant();
 }
 
-void OrderLogModel::OnOrderExecuted(const Order* order) {
+void OrderLogModel::OnOrderExecuted(const std::shared_ptr<Order>& order) {
   auto index = m_entries.size();
   beginInsertRows(QModelIndex(), m_entries.size(), m_entries.size());
-  order->GetPublisher().Monitor(m_eventHandler->get_slot<ExecutionReport>(
+  order->get_publisher().monitor(m_eventHandler->get_slot<ExecutionReport>(
     std::bind_front(&OrderLogModel::OnExecutionReport, this, index)));
   auto entry = OrderEntry(order);
   m_entries.push_back(entry);

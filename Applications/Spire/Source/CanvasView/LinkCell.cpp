@@ -7,8 +7,8 @@ using namespace std;
 LinkCell::LinkCell(Qt::Orientation orientation,
     Ref<const CanvasNode> parent, Ref<const CanvasNode> child)
     : m_orientation(orientation),
-      m_parent(parent.Get()),
-      m_child(child.Get()) {
+      m_parent(parent.get()),
+      m_child(child.get()) {
   setFlags(flags() & ~Qt::ItemIsEditable & ~Qt::ItemIsSelectable &
     ~Qt::ItemIsDragEnabled & ~Qt::ItemIsDropEnabled);
 }

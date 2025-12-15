@@ -6,12 +6,13 @@
 #include <string>
 #include <Beam/Network/IpAddress.hpp>
 #include <boost/optional/optional.hpp>
-#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
+#include "Nexus/Clients/Clients.hpp"
 #include "Spire/Async/QtPromise.hpp"
-#include "Spire/SignIn/SignIn.hpp"
+#include "Spire/SignIn/Track.hpp"
 #include "Spire/Ui/ProgressBar.hpp"
 
 namespace Spire {
+  class SignInWindow;
 
   /** Allows the user to sign in to Spire. */
   class SignInController {
@@ -24,37 +25,35 @@ namespace Spire {
         std::string m_name;
 
         /** The server's address. */
-        Beam::Network::IpAddress m_address;
+        Beam::IpAddress m_address;
       };
 
       /**
        * Signals a successful sign in.
-       * @param service_clients The ServiceClients that successfully signed in.
+       * @param clients The Clients that successfully signed in.
        */
-      using SignedInSignal =
-        Signal<void (const Nexus::ServiceClientsBox& service_clients)>;
+      using SignedInSignal = Signal<void (const Nexus::Clients& clients)>;
 
       /**
-       * Factory used to build the Spire service clients.
+       * Factory used to build the Spire clients.
        * @param username The username to sign in with.
        * @param password The password to sign in with.
        * @param address The IpAddress to connect to.
-       * @return The service clients used to sign in to Spire.
+       * @return The clients used to sign in to Spire.
        */
-      using ServiceClientsFactory = std::function<Nexus::ServiceClientsBox (
-        const std::string& username, const std::string& password,
-        const Beam::Network::IpAddress& address)>;
+      using ClientsFactory =
+        std::function<Nexus::Clients (const std::string& username,
+          const std::string& password, const Beam::IpAddress& address)>;
 
       /**
        * Constructs a sign in controller in a state ready to display the sign in
        * window.
        * @param version The application build version.
        * @param servers The list of servers available to connect to.
-       * @param service_clients_factory Builds the service clients used to
-       *        sign in to Spire.
+       * @param clients_factory Builds the clients used to sign in to Spire.
        */
       SignInController(std::string version, std::vector<ServerEntry> servers,
-        ServiceClientsFactory service_clients_factory);
+        ClientsFactory clients_factory);
 
       /** Launches the sign in window. */
       void open();
@@ -67,7 +66,7 @@ namespace Spire {
       mutable SignedInSignal m_signed_in_signal;
       std::string m_version;
       std::vector<ServerEntry> m_servers;
-      ServiceClientsFactory m_service_clients_factory;
+      ClientsFactory m_clients_factory;
       std::shared_ptr<ProgressModel> m_download_progress;
       std::shared_ptr<ProgressModel> m_installation_progress;
       std::shared_ptr<ValueModel<boost::posix_time::time_duration>> m_time_left;
@@ -80,8 +79,7 @@ namespace Spire {
       void on_sign_in(const std::string& username, const std::string& password,
         Track track, const std::string& server);
       void on_cancel();
-      void on_sign_in_promise(
-        Beam::Expect<Nexus::ServiceClientsBox> service_clients);
+      void on_sign_in_promise(Beam::Expect<Nexus::Clients> clients);
   };
 }
 

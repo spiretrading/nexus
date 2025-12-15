@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20" height="20" viewBox="0 0 20 20">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Rectangle_32" data-name="Rectangle 32" width="11" height="11" fill="none"/>
+    </clipPath>
+  </defs>
+  <g id="Calendar" transform="translate(350 264)">
+    <rect id="base" width="20" height="20" transform="translate(-350 -264)" fill="none"/>
+    <g id="Icon" transform="translate(-345.5 -259.5)">
+      <path id="Path_87" data-name="Path 87" d="M1,2h9v8H1ZM0,11H11V1H0Z" fill="#333"/>
+      <path id="Path_88" data-name="Path 88" d="M1,2h9V4H1ZM0,5H11V1H0Z" fill="#333"/>
+      <g id="Group_3" data-name="Group 3">
+        <g id="Group_2" data-name="Group 2" clip-path="url(#clip-path)">
+          <path id="Path_89" data-name="Path 89" d="M2.5,0A.5.5,0,0,0,2,.5v2a.5.5,0,0,0,1,0V.5A.5.5,0,0,0,2.5,0" fill="#333"/>
+          <path id="Path_90" data-name="Path 90" d="M8.5,0A.5.5,0,0,0,8,.5v2a.5.5,0,0,0,1,0V.5A.5.5,0,0,0,8.5,0" fill="#333"/>
+          <rect id="Rectangle_23" data-name="Rectangle 23" width="1" height="3" transform="translate(2)" fill="#333"/>
+          <rect id="Rectangle_24" data-name="Rectangle 24" width="1" height="3" transform="translate(8)" fill="#333"/>
+          <rect id="Rectangle_25" data-name="Rectangle 25" width="1" height="1" transform="translate(2 6)" fill="#333"/>
+          <rect id="Rectangle_26" data-name="Rectangle 26" width="1" height="1" transform="translate(4 6)" fill="#333"/>
+          <rect id="Rectangle_27" data-name="Rectangle 27" width="1" height="1" transform="translate(6 6)" fill="#333"/>
+          <rect id="Rectangle_28" data-name="Rectangle 28" width="1" height="1" transform="translate(2 8)" fill="#333"/>
+          <rect id="Rectangle_29" data-name="Rectangle 29" width="1" height="1" transform="translate(4 8)" fill="#333"/>
+          <rect id="Rectangle_30" data-name="Rectangle 30" width="1" height="1" transform="translate(6 8)" fill="#333"/>
+          <rect id="Rectangle_31" data-name="Rectangle 31" width="1" height="1" transform="translate(8 6)" fill="#333"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>

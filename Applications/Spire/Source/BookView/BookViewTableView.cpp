@@ -32,7 +32,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -135,7 +134,7 @@ namespace {
               if(quantity == 0) {
                 return Quantity(0);
               }
-              return std::max<Quantity>(1, Floor(quantity / 100, 0));
+              return std::max<Quantity>(1, floor_to(quantity / 100, 1));
             })));
         auto quantity_box = make_label(std::move(current));
         update_style(*quantity_box, [] (auto& style) {
@@ -261,13 +260,13 @@ namespace {
   }
 
   struct TableViewStylist : QObject {
-    struct PreviousMarketHighlight {
-      MarketCode m_market;
-      BookViewHighlightProperties::MarketHighlightLevel m_level;
+    struct PreviousVenueHighlight {
+      Venue m_venue;
+      BookViewHighlightProperties::VenueHighlightLevel m_level;
     };
     std::shared_ptr<BookViewPropertiesModel> m_properties;
     std::size_t m_previous_levels;
-    std::vector<PreviousMarketHighlight> m_previous_market_highlights;
+    std::vector<PreviousVenueHighlight> m_previous_venue_highlights;
     scoped_connection m_connection;
 
     TableViewStylist(TableView& table_view,
@@ -305,34 +304,34 @@ namespace {
       return QObject::eventFilter(watched, event);
     }
 
-    void apply_market_highlight_styles(
+    void apply_venue_highlight_styles(
         StyleSheet& style, const BookViewProperties& properties) {
-      for(auto& highlight : m_previous_market_highlights) {
+      for(auto& highlight : m_previous_venue_highlights) {
         if(highlight.m_level ==
-            BookViewHighlightProperties::MarketHighlightLevel::TOP) {
+            BookViewHighlightProperties::VenueHighlightLevel::TOP) {
           clear_row_style(
-            style, TopMarketRow() && MarketRow(highlight.m_market));
+            style, TopVenueRow() && VenueRow(highlight.m_venue));
         } else {
-          clear_row_style(style, MarketRow(highlight.m_market));
+          clear_row_style(style, VenueRow(highlight.m_venue));
         }
       }
-      m_previous_market_highlights.clear();
-      auto& market_highlights =
-        properties.m_highlight_properties.m_market_highlights;
-      for(auto& highlight : market_highlights) {
+      m_previous_venue_highlights.clear();
+      auto& venue_highlights =
+        properties.m_highlight_properties.m_venue_highlights;
+      for(auto& highlight : venue_highlights) {
         if(highlight.m_level ==
-            BookViewHighlightProperties::MarketHighlightLevel::TOP) {
+            BookViewHighlightProperties::VenueHighlightLevel::TOP) {
           apply_row_style(
-            style, TopMarketRow() && MarketRow(highlight.m_market),
+            style, TopVenueRow() && VenueRow(highlight.m_venue),
             TextColor(highlight.m_color.m_text_color),
             BackgroundColor(highlight.m_color.m_background_color));
         } else {
-          apply_row_style(style, MarketRow(highlight.m_market),
+          apply_row_style(style, VenueRow(highlight.m_venue),
             TextColor(highlight.m_color.m_text_color),
             BackgroundColor(highlight.m_color.m_background_color));
         }
-        m_previous_market_highlights.push_back(
-          PreviousMarketHighlight(highlight.m_market, highlight.m_level));
+        m_previous_venue_highlights.push_back(
+          PreviousVenueHighlight(highlight.m_venue, highlight.m_level));
       }
     }
 
@@ -360,7 +359,7 @@ namespace {
       update_style(table_view.get_body(), [&] (auto& style) {
         apply_level_highlight_styles(style, properties);
         apply_order_visibility_styles(style, properties);
-        apply_market_highlight_styles(style, properties);
+        apply_venue_highlight_styles(style, properties);
         style.get(Any() > Row() > Any() > Any()).
           set(Font(properties.m_level_properties.m_font));
       });
@@ -450,8 +449,9 @@ TableView* Spire::make_book_view_table_view(
       table, static_cast<int>(BookViewColumn::PRICE)),
       make_max_level_model(properties));
   auto top_mpid_prices = std::make_shared<TopMpidPriceListModel>(
-    std::make_shared<SortedListModel<BookQuote>>(
-      std::move(quotes), &BookQuoteListingComparator));
+    std::make_shared<SortedListModel<BookQuote>>(std::move(quotes),
+      static_cast<bool (*)(const BookQuote&, const BookQuote&)>(
+        &listing_comparator)));
   auto proxy_current = make_proxy_value_model(
     std::make_shared<LocalValueModel<optional<TableIndex>>>());
   auto table_view = TableViewBuilder(table).

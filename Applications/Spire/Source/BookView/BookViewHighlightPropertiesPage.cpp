@@ -1,5 +1,5 @@
 #include "Spire/BookView/BookViewHighlightPropertiesPage.hpp"
-#include "Spire/BookView/MarketHighlightsTableView.hpp"
+#include "Spire/BookView/VenueHighlightsTableView.hpp"
 #include "Spire/Spire/ArrayValueToListModel.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
@@ -15,7 +15,7 @@ using namespace Spire::Styles;
 
 namespace {
   using OrderVisibility = BookViewHighlightProperties::OrderVisibility;
-  using MarketHighlight = BookViewHighlightProperties::MarketHighlight;
+  using VenueHighlight = BookViewHighlightProperties::VenueHighlight;
 
   auto apply_header_label_style(int bottom_padding, StyleSheet& style) {
     auto font = QFont("Roboto");
@@ -42,19 +42,19 @@ namespace {
     style.get(Any() > is_a<TextBox>()).set(Font(font));
   }
 
-  auto make_markets_title() {
-    auto markets_header = make_label(QObject::tr("Markets"));
-    markets_header->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    update_style(*markets_header, std::bind_front(apply_header_label_style, 4));
-    auto markets_description = make_label(
-      QObject::tr("Set up highlights on orders from specific markets"));
-    markets_description->setSizePolicy(QSizePolicy::Expanding,
-      QSizePolicy::Fixed);
-    update_style(*markets_description, apply_description_label_style);
+  auto make_venues_title() {
+    auto venues_header = make_label(QObject::tr("Venues"));
+    venues_header->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    update_style(*venues_header, std::bind_front(apply_header_label_style, 4));
+    auto venues_description = make_label(
+      QObject::tr("Set up highlights on orders from specific venues"));
+    venues_description->setSizePolicy(
+      QSizePolicy::Expanding, QSizePolicy::Fixed);
+    update_style(*venues_description, apply_description_label_style);
     auto body = new QWidget();
     auto layout = make_vbox_layout(body);
-    layout->addWidget(markets_header);
-    layout->addWidget(markets_description);
+    layout->addWidget(venues_header);
+    layout->addWidget(venues_description);
     auto box = new Box(body);
     update_style(*box, [] (auto& style) {
       style.get(Any()).
@@ -198,18 +198,16 @@ namespace {
 }
 
 BookViewHighlightPropertiesPage::BookViewHighlightPropertiesPage(
-    std::shared_ptr<HighlightPropertiesModel> current,
-    MarketDatabase markets, QWidget* parent)
+    std::shared_ptr<HighlightPropertiesModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)) {
   auto body = new QWidget();
   auto layout = make_vbox_layout(body);
-  layout->addWidget(make_markets_title());
-  auto table_view = make_market_highlights_table_view(
-    std::make_shared<ArrayValueToListModel<MarketHighlight>>(
-      make_field_value_model(m_current,
-        &BookViewHighlightProperties::m_market_highlights)),
-    std::move(markets));
+  layout->addWidget(make_venues_title());
+  auto table_view = make_venue_highlights_table_view(
+    std::make_shared<ArrayValueToListModel<VenueHighlight>>(
+      make_field_value_model(
+        m_current, &BookViewHighlightProperties::m_venue_highlights)));
   auto table_box = new Box(table_view);
   table_box->setFixedHeight(scale_height(208));
   update_style(*table_box, [] (auto& style) {

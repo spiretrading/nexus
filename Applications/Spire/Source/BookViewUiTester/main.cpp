@@ -7,10 +7,9 @@
 #include <QRandomGenerator>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
-#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
-#include "Nexus/ServiceClients/TestEnvironment.hpp"
-#include "Nexus/ServiceClients/TestServiceClients.hpp"
-#include "Nexus/TelemetryServiceTests/TelemetryServiceTestEnvironment.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
+#include "Nexus/TestEnvironment/TestClients.hpp"
+#include "Nexus/TestEnvironment/TestEnvironment.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/BookView/AggregateBookViewModel.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
@@ -29,21 +28,16 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
-#include "Spire/Ui/MarketBox.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/TableView.hpp"
+#include "Spire/Ui/VenueBox.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::TelemetryService;
-using namespace Nexus::TelemetryService::Tests;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 using namespace Spire::Styles;
@@ -103,20 +97,20 @@ const QString& to_text(CancelKeyBindingsModel::Operation operation) {
 
 std::shared_ptr<SecurityInfoQueryModel> populate_security_query_model() {
   auto security_infos = std::vector<SecurityInfo>();
-  security_infos.emplace_back(ParseSecurity("MRU.TSX"),
-    "Metro Inc.", "", 0);
-  security_infos.emplace_back(ParseSecurity("MG.TSX"),
-    "Magna International Inc.", "", 0);
-  security_infos.emplace_back(ParseSecurity("MGA.TSX"),
-    "Mega Uranium Ltd.", "", 0);
-  security_infos.emplace_back(ParseSecurity("MGAB.TSX"),
+  security_infos.emplace_back(
+    parse_security("MRU.TSX"), "Metro Inc.", "", 0);
+  security_infos.emplace_back(
+    parse_security("MG.TSX"), "Magna International Inc.", "", 0);
+  security_infos.emplace_back(
+    parse_security("MGA.TSX"), "Mega Uranium Ltd.", "", 0);
+  security_infos.emplace_back(parse_security("MGAB.TSX"),
     "Mackenzie Global Fixed Income Alloc ETF", "", 0);
-  security_infos.emplace_back(ParseSecurity("MON.NYSE"),
-    "Monsanto Co.", "", 0);
-  security_infos.emplace_back(ParseSecurity("MFC.TSX"),
-    "Manulife Financial Corporation", "", 0);
-  security_infos.emplace_back(ParseSecurity("MX.TSX"),
-    "Methanex Corporation", "", 0);
+  security_infos.emplace_back(
+    parse_security("MON.NYSE"), "Monsanto Co.", "", 0);
+  security_infos.emplace_back(
+    parse_security("MFC.TSX"), "Manulife Financial Corporation", "", 0);
+  security_infos.emplace_back(
+    parse_security("MX.TSX"), "Methanex Corporation", "", 0);
   auto model = std::make_shared<LocalQueryModel<SecurityInfo>>();
   for(auto& security_info : security_infos) {
     model->add(to_text(security_info.m_security).toLower(), security_info);
@@ -126,16 +120,16 @@ std::shared_ptr<SecurityInfoQueryModel> populate_security_query_model() {
   return model;
 }
 
-BookQuote make_random_market_quote(Side side) {
+BookQuote make_random_venue_quote(Side side) {
   auto random_generator =
     QRandomGenerator(to_time_t_milliseconds(microsec_clock::universal_time()));
-  auto& markets = GetDefaultMarketDatabase().GetEntries();
-  auto market_index = random_generator.bounded(
-    static_cast<int>(markets.size()));
-  auto market_code = markets[market_index].m_code;
-  return BookQuote(to_text(MarketToken(market_code)).toStdString(), true,
-    market_code, Quote{Truncate(Money(random_generator.bounded(200.0)), 2),
-      random_generator.bounded(1000), side}, second_clock::local_time());
+  auto venues = DEFAULT_VENUES.get_entries();
+  auto venue_index = random_generator.bounded(
+    static_cast<int>(venues.size()));
+  auto venue_code = venues[venue_index].m_venue;
+  return BookQuote(to_text(venue_code).toStdString(), true, venue_code,
+    Quote(truncate_to(Money(random_generator.bounded(200.0)), Money::CENT),
+      random_generator.bounded(1000), side), second_clock::local_time());
 }
 
 OrderStatusBox* make_order_status_box(QWidget* parent = nullptr) {
@@ -187,7 +181,7 @@ auto make_table_header() {
   return header;
 }
 
-AnyRef extract(const BookViewModel::UserOrder& order, int index) {
+AnyRef extract_column(const BookViewModel::UserOrder& order, int index) {
   if(index == 0) {
     return order.m_destination;
   } else if(index == 1) {
@@ -241,7 +235,7 @@ struct BookViewOrderTester : QWidget {
     left_layout->addStretch(1);
     m_bid_table_view = TableViewBuilder(
       std::make_shared<ListToTableModel<BookViewModel::UserOrder>>(
-        m_model->get_bid_orders(), ORDER_COLUMN_COUNT, &extract)).
+        m_model->get_bid_orders(), ORDER_COLUMN_COUNT, &extract_column)).
       set_header(make_table_header()).make();
     m_bid_table_view->get_body().get_current()->connect_update_signal(
       std::bind_front(&BookViewOrderTester::on_current, this, Side::BID));
@@ -251,7 +245,7 @@ struct BookViewOrderTester : QWidget {
     bid_layout->addWidget(m_bid_table_view);
     m_ask_table_view = TableViewBuilder(
       std::make_shared<ListToTableModel<BookViewModel::UserOrder>>(
-        m_model->get_ask_orders(), ORDER_COLUMN_COUNT, &extract)).
+        m_model->get_ask_orders(), ORDER_COLUMN_COUNT, &extract_column)).
       set_header(make_table_header()).make();
     m_ask_table_view->get_body().get_current()->connect_update_signal(
       std::bind_front(&BookViewOrderTester::on_current, this, Side::ASK));
@@ -350,9 +344,7 @@ struct BookViewOrderTester : QWidget {
 
 struct BookViewTester : QWidget {
   TestEnvironment m_environment;
-  ServiceClientsBox m_service_clients;
-  TelemetryServiceTestEnvironment m_telemetry_environment;
-  TelemetryClientBox m_telemetry_client;
+  Clients m_clients;
   UserProfile m_user_profile;
   DemoBookViewModel m_model;
   LocalTechnicalsModel m_technicals_model;
@@ -362,23 +354,13 @@ struct BookViewTester : QWidget {
   QTimer m_quote_timer;
   int m_line_number;
 
-  BookViewTester(std::shared_ptr<SecurityTechnicalsValueModel> technicals,
+  BookViewTester(std::shared_ptr<SecurityTechnicalsModel> technicals,
     std::shared_ptr<BookViewModel> model,
     KeyBindingsWindow& key_bindings_window, QWidget* parent = nullptr)
       : QWidget(parent),
-        m_service_clients(std::in_place_type<TestServiceClients>,
-          Ref(m_environment)),
-        m_telemetry_environment(m_service_clients.GetServiceLocatorClient(),
-          m_service_clients.GetTimeClient(),
-          m_service_clients.GetAdministrationClient()),
-        m_telemetry_client(m_telemetry_environment.MakeClient(
-          m_service_clients.GetServiceLocatorClient())),
-        m_user_profile("", false, false, GetDefaultCountryDatabase(),
-          GetDefaultTimeZoneDatabase(), GetDefaultCurrencyDatabase(), {},
-          GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
-          EntitlementDatabase(), get_default_additional_tag_database(),
-          BookViewProperties(), TimeAndSalesProperties(), m_service_clients,
-          m_telemetry_client),
+        m_clients(std::in_place_type<TestClients>, Ref(m_environment)),
+        m_user_profile("", false, false, {}, {},
+          get_default_additional_tag_database(), {}, {}, m_clients),
         m_model(std::move(model)),
         m_technicals_model(Security()),
         m_key_bindings_window(&key_bindings_window),
@@ -393,15 +375,14 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       BlotterTaskProperties::GetDefault());
     settings.SetDefaultOrderLogProperties(OrderLogProperties::GetDefault());
     auto left_layout = new QVBoxLayout();
-    auto book_quote_group_box = new QGroupBox(tr("Market Quote"));
+    auto book_quote_group_box = new QGroupBox(tr("Venue Quote"));
     book_quote_group_box->setSizePolicy(QSizePolicy::Preferred,
       QSizePolicy::Fixed);
     auto book_quote_layout = new QVBoxLayout(book_quote_group_box);
     auto book_quote_fields_layout = new QFormLayout();
-    auto book_quote_market_box =
-      make_market_box(std::make_shared<LocalMarketModel>("ARCX"),
-        GetDefaultMarketDatabase());
-    book_quote_fields_layout->addRow(tr("MPID:"), book_quote_market_box);
+    auto book_quote_venue_box =
+      make_venue_box(std::make_shared<LocalVenueModel>(Venue("ARCX")));
+    book_quote_fields_layout->addRow(tr("MPID:"), book_quote_venue_box);
     auto book_quote_price_box =
       new MoneyBox(std::make_shared<LocalOptionalMoneyModel>(Money(200)));
     book_quote_fields_layout->addRow(tr("Price:"), book_quote_price_box);
@@ -414,7 +395,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     auto submit_quote_button = make_label_button(tr("Submit"));
     submit_quote_button->connect_click_signal(
       std::bind_front(&BookViewTester::on_book_quote_submit_click, this,
-        book_quote_market_box, book_quote_price_box,
+        book_quote_venue_box, book_quote_price_box,
         book_quote_quantity_box, book_quote_side_box));
     book_quote_layout->addWidget(submit_quote_button, 0, Qt::AlignRight);
     auto book_quote_period_layout = new QFormLayout();
@@ -465,7 +446,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     create_preview_order_button->connect_click_signal([=] {
       create_preview_order_button->setEnabled(false);
       submit_preview_order_button->setEnabled(true);
-      m_model.get_model()->get_preview_order()->set(OrderFields::MakeLimitOrder(
+      m_model.get_model()->get_preview_order()->set(make_limit_order_fields(
         Security(), preview_order_side_box->get_current()->get(),
         preview_order_destination_box->get_current()->get().toStdString(),
         *preview_order_quantity_box->get_current()->get(),
@@ -539,26 +520,26 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   void on_quote_timeout() {
-    auto bid_quote = make_random_market_quote(Side::BID);
+    auto bid_quote = make_random_venue_quote(Side::BID);
     m_model.submit_book_quote(bid_quote);
-    auto ask_quote = make_random_market_quote(Side::ASK);
+    auto ask_quote = make_random_venue_quote(Side::ASK);
     m_model.submit_book_quote(ask_quote);
     m_technicals_model.update(TimeAndSale(bid_quote.m_timestamp,
       bid_quote.m_quote.m_price, bid_quote.m_quote.m_size,
-      TimeAndSale::Condition(), bid_quote.m_market.GetData(), bid_quote.m_mpid,
-      ""));
+      TimeAndSale::Condition(), bid_quote.m_venue.get_code().get_data(),
+      bid_quote.m_mpid, ""));
     m_technicals_model.update(TimeAndSale(ask_quote.m_timestamp,
       ask_quote.m_quote.m_price, ask_quote.m_quote.m_size,
-      TimeAndSale::Condition(), ask_quote.m_market.GetData(), "",
+      TimeAndSale::Condition(), ask_quote.m_venue.get_code().get_data(), "",
       ask_quote.m_mpid));
   }
 
-  void on_book_quote_submit_click(MarketBox* market_box,
+  void on_book_quote_submit_click(VenueBox* venue_box,
       MoneyBox* price_box, QuantityBox* quantity_box, SideBox* side_box) {
-    auto market_code = market_box->get_current()->get();
-    auto quote = BookQuote(to_text(MarketToken(market_code)).toStdString(),
-        true, market_code, Quote{*price_box->get_current()->get(),
-        *quantity_box->get_current()->get(), side_box->get_current()->get()},
+    auto venue_code = venue_box->get_current()->get();
+    auto quote = BookQuote(to_text(venue_code).toStdString(), true, venue_code,
+      Quote(*price_box->get_current()->get(),
+        *quantity_box->get_current()->get(), side_box->get_current()->get()),
         second_clock::local_time());
     m_model.submit_book_quote(quote);
   }
@@ -597,19 +578,15 @@ int main(int argc, char** argv) {
   application.setApplicationName(QObject::tr("BookView Ui Tester"));
   application.setQuitOnLastWindowClosed(true);
   initialize_resources();
-  auto key_bindings =
-    std::make_shared<KeyBindingsModel>(GetDefaultMarketDatabase());
+  auto key_bindings = std::make_shared<KeyBindingsModel>();
   auto key_bindings_window = KeyBindingsWindow(key_bindings,
-    populate_security_query_model(), GetDefaultCountryDatabase(),
-    GetDefaultMarketDatabase(), GetDefaultDestinationDatabase(),
-    get_default_additional_tag_database());
+    populate_security_query_model(), get_default_additional_tag_database());
   auto book_views = make_local_aggregate_book_view_model();
   auto order_tester = BookViewOrderTester(book_views);
   auto tester = BookViewTester(
     book_views->get_technicals(), book_views, key_bindings_window);
-  auto markets = GetDefaultMarketDatabase();
   auto window = BookViewWindow(Ref(tester.m_user_profile),
-    populate_security_query_model(), key_bindings, markets,
+    populate_security_query_model(), key_bindings,
     std::make_shared<BookViewPropertiesWindowFactory>(),
     std::bind_front(&model_builder, book_views, &tester));
   window.connect_cancel_operation_signal(

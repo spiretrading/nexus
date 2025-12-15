@@ -1,11 +1,10 @@
 #include "Spire/Canvas/ValueNodes/DestinationNode.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
-#include "Spire/Canvas/Types/MarketType.hpp"
 #include "Spire/Canvas/Types/SecurityType.hpp"
+#include "Spire/Canvas/Types/VenueType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
@@ -27,46 +26,46 @@ unique_ptr<DestinationNode> DestinationNode::SetValue(string value) const {
   return clone;
 }
 
-MarketCode DestinationNode::GetMarket() const {
+Venue DestinationNode::GetVenue() const {
   if(m_referent.empty()) {
-    return MarketCode();
+    return Venue();
   }
   auto name = m_referent;
   boost::optional<const CanvasNode&> node = *this;
   while(node.is_initialized() && !name.empty() && name[0] == '<') {
     if(IsRoot(*node)) {
-      return MarketCode();
+      return Venue();
     }
     node = node->GetParent();
     name = name.substr(1);
   }
   if(!node.is_initialized()) {
-    return MarketCode();
+    return Venue();
   }
   if(name.empty()) {
     if(auto securityNode = dynamic_cast<const ValueNode<SecurityType>*>(
         &*node)) {
-      return securityNode->GetValue().GetMarket();
+      return securityNode->GetValue().get_venue();
     }
-    if(auto marketNode = dynamic_cast<const ValueNode<MarketType>*>(&*node)) {
-      return marketNode->GetValue();
+    if(auto venueNode = dynamic_cast<const ValueNode<VenueType>*>(&*node)) {
+      return venueNode->GetValue();
     }
-    return MarketCode();
+    return Venue();
   }
   if(IsRoot(*node)) {
-    return MarketCode();
+    return Venue();
   }
   node = node->GetParent()->FindNode(name);
   if(!node.is_initialized()) {
-    return MarketCode();
+    return Venue();
   }
   if(auto securityNode = dynamic_cast<const ValueNode<SecurityType>*>(&*node)) {
-    return securityNode->GetValue().GetMarket();
+    return securityNode->GetValue().get_venue();
   }
-  if(auto marketNode = dynamic_cast<const ValueNode<MarketType>*>(&*node)) {
-    return marketNode->GetValue();
+  if(auto venueNode = dynamic_cast<const ValueNode<VenueType>*>(&*node)) {
+    return venueNode->GetValue();
   }
-  return MarketCode();
+  return Venue();
 }
 
 void DestinationNode::Apply(CanvasNodeVisitor& visitor) const {
@@ -85,11 +84,9 @@ unique_ptr<CanvasNode> DestinationNode::SetReferent(
 }
 
 unique_ptr<CanvasNode> DestinationNode::Clone() const {
-  return make_unique<DestinationNode>(*this);
+  return std::make_unique<DestinationNode>(*this);
 }
 
 unique_ptr<CanvasNode> DestinationNode::Reset() const {
   return make_unique<DestinationNode>();
 }
-
-DestinationNode::DestinationNode(ReceiveBuilder) {}

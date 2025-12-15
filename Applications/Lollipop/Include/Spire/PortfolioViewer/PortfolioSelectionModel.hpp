@@ -8,7 +8,7 @@
 #include "Spire/PortfolioViewer/PortfolioViewer.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerModel.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 
@@ -32,8 +32,8 @@ namespace Spire {
         //! Select by Currency.
         CURRENCY_SELECTION,
 
-        //! Select by market.
-        MARKET_SELECTION,
+        //! Select by venue.
+        VENUE_SELECTION,
 
         //! Select by Side.
         SIDE_SELECTION,
@@ -92,14 +92,14 @@ namespace Spire {
 
     private:
       using SelectionVariant = boost::variant<
-        Beam::ServiceLocator::DirectoryEntry, Nexus::CurrencyDatabase::Entry,
-        Nexus::MarketDatabase::Entry, Nexus::Side>;
+        Beam::DirectoryEntry, Nexus::CurrencyDatabase::Entry,
+        Nexus::VenueDatabase::Entry, Nexus::Side>;
       UserProfile* m_userProfile;
       std::array<QModelIndex, SELECTION_TYPES_COUNT> m_roots;
-      std::vector<Beam::ServiceLocator::DirectoryEntry> m_groups;
-      std::unordered_set<Beam::ServiceLocator::DirectoryEntry> m_selectedGroups;
+      std::vector<Beam::DirectoryEntry> m_groups;
+      std::unordered_set<Beam::DirectoryEntry> m_selectedGroups;
       std::unordered_set<Nexus::CurrencyId> m_selectedCurrencies;
-      std::unordered_set<Nexus::MarketCode> m_selectedMarkets;
+      std::unordered_set<Nexus::Venue> m_selectedVenues;
       std::unordered_set<Nexus::Side> m_selectedSides;
 
       boost::optional<SelectionVariant> Find(const QModelIndex& index) const;

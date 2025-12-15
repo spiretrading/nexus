@@ -1,5 +1,6 @@
 #include "Spire/KeyBindings/AdditionalTagsWindow.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
+#include <QIcon>
 #include "Spire/KeyBindings/AdditionalTagKeyBox.hpp"
 #include "Spire/KeyBindings/AdditionalTagValueBox.hpp"
 #include "Spire/KeyBindings/NoneAdditionalTagSchema.hpp"
@@ -8,12 +9,14 @@
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/EditableTableView.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -308,7 +311,7 @@ namespace {
     auto outer_layout = make_hbox_layout(body);
     auto error_layout = make_vbox_layout();
     auto error_icon =
-      new Icon(imageFromSvg(":Icons/key_bindings/error.svg", scale(14, 14)));
+      new Icon(image_from_svg(":Icons/key_bindings/error.svg", scale(14, 14)));
     update_style(*error_icon, [] (auto& style) {
       style.get(Any()).set(Fill(QColor(0xE63F44)));
     });

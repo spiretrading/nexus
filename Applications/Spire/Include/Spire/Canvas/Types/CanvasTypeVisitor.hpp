@@ -25,8 +25,6 @@ namespace Spire {
 
       virtual void Visit(const IntegerType& type);
 
-      virtual void Visit(const MarketType& type);
-
       virtual void Visit(const MoneyType& type);
 
       virtual void Visit(const NativeType& type);
@@ -52,6 +50,8 @@ namespace Spire {
       virtual void Visit(const TimeRangeType& type);
 
       virtual void Visit(const UnionType& type);
+
+      virtual void Visit(const VenueType& type);
   };
 }
 

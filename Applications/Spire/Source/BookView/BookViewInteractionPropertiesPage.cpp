@@ -1,6 +1,7 @@
 #include "Spire/BookView/BookViewInteractionPropertiesPage.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsForm.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
 using namespace Nexus;

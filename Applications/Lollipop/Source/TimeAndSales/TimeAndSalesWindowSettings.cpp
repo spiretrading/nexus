@@ -1,11 +1,13 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
 #include "ui_TimeAndSalesWindow.h"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::UI;
 using namespace std;
 
 TimeAndSalesWindowSettings::TimeAndSalesWindowSettings() {}
@@ -26,8 +28,7 @@ TimeAndSalesWindowSettings::TimeAndSalesWindowSettings(
   if(m_security == Security()) {
     m_name = "Time And Sales";
   } else {
-    m_name = "Time And Sales - " +
-      ToString(m_security, userProfile->GetMarketDatabase());
+    m_name = "Time And Sales - " + displayText(m_security).toStdString();
   }
 }
 
@@ -42,7 +43,7 @@ QWidget* TimeAndSalesWindowSettings::Reopen(
   TimeAndSalesWindow* window = new TimeAndSalesWindow(Ref(userProfile),
     m_properties, m_identifier);
   window->setAttribute(Qt::WA_DeleteOnClose);
-  Apply(Ref(userProfile), Store(*window));
+  Apply(Ref(userProfile), out(*window));
   return window;
 }
 

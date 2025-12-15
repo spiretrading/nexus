@@ -37,15 +37,15 @@ namespace Spire {
       virtual std::unique_ptr<CanvasNode> Reset() const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void DateTimeNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    ValueNode<DateTimeType>::Shuttle(shuttle, version);
+  template<Beam::IsShuttle S>
+  void DateTimeNode::shuttle(S& shuttle, unsigned int version) {
+    ValueNode<DateTimeType>::shuttle(shuttle, version);
   }
 }
 

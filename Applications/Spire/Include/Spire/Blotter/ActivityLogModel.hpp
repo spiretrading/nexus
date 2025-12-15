@@ -3,8 +3,7 @@
 #include <optional>
 #include <Beam/Pointers/Ref.hpp>
 #include <QAbstractItemModel>
-#include "Nexus/OrderExecutionService/ExecutionReport.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 
@@ -70,31 +69,28 @@ namespace Spire {
        * @param publisher Publishes the Orders to model.
        */
       void SetOrderExecutionPublisher(
-        Beam::Ref<const Nexus::OrderExecutionService::OrderExecutionPublisher>
-        publisher);
+        Beam::Ref<const Beam::Publisher<std::shared_ptr<Nexus::Order>>>
+          publisher);
 
       int rowCount(const QModelIndex& parent) const override;
-
       int columnCount(const QModelIndex& parent) const override;
-
       QVariant data(const QModelIndex& index, int role) const override;
-
       QVariant headerData(
         int section, Qt::Orientation orientation, int role) const override;
 
     private:
       struct UpdateEntry {
-        const Nexus::OrderExecutionService::Order* m_order;
-        Nexus::OrderExecutionService::ExecutionReport m_report;
+        std::shared_ptr<Nexus::Order> m_order;
+        Nexus::ExecutionReport m_report;
       };
-      const Nexus::OrderExecutionService::OrderExecutionPublisher*
+      const Beam::Publisher<std::shared_ptr<Nexus::Order>>*
         m_orderExecutionPublisher;
       std::vector<UpdateEntry> m_entries;
       std::optional<EventHandler> m_eventHandler;
 
-      void OnOrderExecuted(const Nexus::OrderExecutionService::Order* order);
-      void OnExecutionReport(const Nexus::OrderExecutionService::Order* order,
-        const Nexus::OrderExecutionService::ExecutionReport& report);
+      void OnOrderExecuted(const std::shared_ptr<Nexus::Order>& order);
+      void OnExecutionReport(const std::shared_ptr<Nexus::Order>& order,
+        const Nexus::ExecutionReport& report);
   };
 }
 

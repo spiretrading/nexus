@@ -5,7 +5,10 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/signals2/signal.hpp>
 #include <QObject>
+#include "Nexus/Accounting/PortfolioController.hpp"
+#include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
+#include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -16,13 +19,18 @@ namespace Spire {
   class ProfitAndLossModel : public QObject {
     public:
 
+      /** The type of PortfolioController managing updates. */
+      using PortfolioController = Nexus::PortfolioController<
+        Nexus::Portfolio<Nexus::TrueAverageBookkeeper>,
+        Nexus::MarketDataClient>;
+
       /**
        * Signals an update to the total profit and loss.
        * @param update Stores the update to the total profit and loss. Only the
        *        currency entries are populated.
        */
       using ProfitAndLossUpdateSignal = boost::signals2::signal<
-        void (const SpirePortfolioController::UpdateEntry& update)>;
+        void (const Nexus::PortfolioUpdateEntry& update)>;
 
       /**
        * Signals that a ProfitAndLossEntryModel was added.
@@ -40,7 +48,7 @@ namespace Spire {
 
       /** Defines the factory used to build a PortfolioController. */
       using PortfolioControllerFactory =
-        std::function<std::unique_ptr<SpirePortfolioController> ()>;
+        std::function<std::unique_ptr<PortfolioController> ()>;
 
       /**
        * Constructs a ProfitAndLossModel.
@@ -48,7 +56,6 @@ namespace Spire {
        * @param exchangeRates The list of exchange rates.
        */
       ProfitAndLossModel(
-        Beam::Ref<const Nexus::CurrencyDatabase> currencyDatabase,
         Beam::Ref<const Nexus::ExchangeRateTable> exchangeRates,
         bool showUnrealized);
 
@@ -60,7 +67,7 @@ namespace Spire {
        *        loss is to be modeled.
        */
       void SetPortfolioController(
-        Beam::Ref<SpirePortfolioController> portfolioController);
+        Beam::Ref<PortfolioController> portfolioController);
 
       /** Set the currency that profit and loss updates are expressed in. */
       void SetCurrency(Nexus::CurrencyId currency);
@@ -86,16 +93,15 @@ namespace Spire {
         const ProfitAndLossEntryModelRemovedSignal::slot_type& slot) const;
 
     private:
-      const Nexus::CurrencyDatabase* m_currencyDatabase;
       const Nexus::ExchangeRateTable* m_exchangeRates;
       bool m_showUnrealized;
-      SpirePortfolioController* m_portfolioController;
+      PortfolioController* m_portfolioController;
       Nexus::CurrencyId m_currency;
-      std::unordered_map<Nexus::CurrencyId,
-        SpirePortfolioController::UpdateEntry> m_currencyToPortfolio;
+      std::unordered_map<Nexus::CurrencyId, Nexus::PortfolioUpdateEntry>
+        m_currencyToPortfolio;
       std::unordered_map<Nexus::CurrencyId,
         std::unique_ptr<ProfitAndLossEntryModel>> m_currencyToModel;
-      SpirePortfolioController::UpdateEntry m_update;
+      Nexus::PortfolioUpdateEntry m_update;
       mutable ProfitAndLossUpdateSignal m_profitAndLossUpdateSignal;
       mutable ProfitAndLossEntryModelAddedSignal
         m_profitAndLossEntryModelAddedSignal;
@@ -103,8 +109,7 @@ namespace Spire {
         m_profitAndLossEntryModelRemovedSignal;
       std::optional<EventHandler> m_eventHandler;
 
-      void OnPortfolioUpdate(
-        const SpirePortfolioController::UpdateEntry& update);
+      void OnPortfolioUpdate(const Nexus::PortfolioUpdateEntry& update);
   };
 }
 

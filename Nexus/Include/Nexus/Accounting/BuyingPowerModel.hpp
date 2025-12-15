@@ -1,8 +1,8 @@
 #ifndef NEXUS_BUYING_POWER_MODEL_HPP
 #define NEXUS_BUYING_POWER_MODEL_HPP
+#include <algorithm>
 #include <unordered_map>
-#include <Beam/Utilities/Algorithm.hpp>
-#include "Nexus/Accounting/Accounting.hpp"
+#include <vector>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Security.hpp"
@@ -10,7 +10,7 @@
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
-namespace Nexus::Accounting {
+namespace Nexus {
 
   /** Tracks the amount of buying power used up by a series of Orders. */
   class BuyingPowerModel {
@@ -22,190 +22,178 @@ namespace Nexus::Accounting {
        * @return <code>true</code> iff the Order with the specified <i>id</i>
        *         has previously been accounted for.
        */
-      bool HasOrder(OrderExecutionService::OrderId id) const;
+      bool has_order(OrderId id) const;
 
       /**
        * Returns the buying power used in a particular Currency.
        * @param currency The Currency to lookup.
        * @return The buying power used in the <i>currency</i>.
        */
-      Money GetBuyingPower(CurrencyId currency) const;
+      Money get_buying_power(CurrencyId currency) const;
 
       /**
        * Tracks a submission and returns the updated buying power.
        * @param id The id used to track this submission.
-       * @param orderFields The OrderFields storing the details of the
+       * @param fields The OrderFields storing the details of the
        *        submission.
-       * @param expectedPrice The expected price of the Order, this may differ
+       * @param expected_price The expected price of the Order, this may differ
        *        from the price that the Order is submitted for.
        * @return The updated buying power for the submission's Currency.
        */
-      Money Submit(OrderExecutionService::OrderId id,
-        const OrderExecutionService::OrderFields& orderFields,
-        Money expectedPrice);
+      Money submit(OrderId id, const OrderFields& fields, Money expected_price);
 
       /**
        * Updates this model with the contents of an ExecutionReport.
-       * @param executionReport The ExecutionReport to update this model with.
+       * @param report The ExecutionReport to update this model with.
        */
-      void Update(
-        const OrderExecutionService::ExecutionReport& executionReport);
+      void update(const ExecutionReport& report);
 
     private:
       struct OrderEntry {
-        OrderExecutionService::OrderId m_id;
-        OrderExecutionService::OrderFields m_fields;
-        Money m_expectedPrice;
-        Quantity m_remainingQuantity;
+        OrderId m_id;
+        OrderFields m_fields;
+        Money m_expected_price;
+        Quantity m_remaining_quantity;
 
-        OrderEntry(OrderExecutionService::OrderId id,
-          const OrderExecutionService::OrderFields& fields,
-          Money expectedPrice);
+        OrderEntry(OrderId id, const OrderFields& fields, Money expected_price);
       };
       struct BuyingPowerEntry {
         std::vector<OrderEntry> m_asks;
         std::vector<OrderEntry> m_bids;
         Money m_expenditure;
         Quantity m_quantity;
-
-        BuyingPowerEntry();
       };
-      std::unordered_map<OrderExecutionService::OrderId,
-        OrderExecutionService::OrderFields> m_idToOrderFields;
-      std::unordered_map<Security, BuyingPowerEntry> m_buyingPowerEntries;
-      std::unordered_map<CurrencyId, Money> m_currencyToBuyingPower;
+      std::unordered_map<OrderId, OrderFields> m_order_fields;
+      std::unordered_map<Security, BuyingPowerEntry> m_buying_power_entries;
+      std::unordered_map<CurrencyId, Money> m_buying_power;
 
-      static Money ComputeBuyingPower(
-        const std::vector<OrderEntry>& orderEntries, Quantity quantityOffset);
-      static Money ComputeBuyingPower(const BuyingPowerEntry& entry);
+      static Money compute_buying_power(
+        const std::vector<OrderEntry>& entries, Quantity offset);
+      static Money compute_buying_power(const BuyingPowerEntry& entry);
   };
 
   inline BuyingPowerModel::OrderEntry::OrderEntry(
-    OrderExecutionService::OrderId id,
-    const OrderExecutionService::OrderFields& fields, Money expectedPrice)
+    OrderId id, const OrderFields& fields, Money expected_price)
     : m_id(id),
       m_fields(fields),
-      m_expectedPrice(expectedPrice),
-      m_remainingQuantity(fields.m_quantity) {}
+      m_expected_price(expected_price),
+      m_remaining_quantity(fields.m_quantity) {}
 
-  inline BuyingPowerModel::BuyingPowerEntry::BuyingPowerEntry()
-    : m_quantity(0) {}
-
-  inline bool BuyingPowerModel::HasOrder(
-      OrderExecutionService::OrderId id) const {
-    return m_idToOrderFields.find(id) != m_idToOrderFields.end();
+  inline bool BuyingPowerModel::has_order(OrderId id) const {
+    return m_order_fields.contains(id);
   }
 
-  inline Money BuyingPowerModel::GetBuyingPower(CurrencyId currency) const {
-    auto currencyIterator = m_currencyToBuyingPower.find(currency);
-    if(currencyIterator == m_currencyToBuyingPower.end()) {
+  inline Money BuyingPowerModel::get_buying_power(CurrencyId currency) const {
+    auto currency_iterator = m_buying_power.find(currency);
+    if(currency_iterator == m_buying_power.end()) {
       return Money::ZERO;
     }
-    return currencyIterator->second;
+    return currency_iterator->second;
   }
 
-  inline Money BuyingPowerModel::Submit(OrderExecutionService::OrderId id,
-      const OrderExecutionService::OrderFields& orderFields,
-      Money expectedPrice) {
-    auto& entry = m_buyingPowerEntries[orderFields.m_security];
-    auto& buyingPower = m_currencyToBuyingPower[orderFields.m_currency];
-    buyingPower -= ComputeBuyingPower(entry);
-    auto& orderEntries = Pick(orderFields.m_side, entry.m_asks, entry.m_bids);
-    auto orderEntry = OrderEntry(id, orderFields, expectedPrice);
-    auto insertIterator = std::lower_bound(orderEntries.begin(),
-      orderEntries.end(), orderEntry,
-      [](const auto& lhs, const auto& rhs) {
+  inline Money BuyingPowerModel::submit(
+      OrderId id, const OrderFields& fields, Money expected_price) {
+    auto& entry = m_buying_power_entries[fields.m_security];
+    auto& buying_power = m_buying_power[fields.m_currency];
+    buying_power -= compute_buying_power(entry);
+    auto& order_entries = pick(fields.m_side, entry.m_asks, entry.m_bids);
+    auto order_entry = OrderEntry(id, fields, expected_price);
+    auto insert_iterator = std::lower_bound(order_entries.begin(),
+      order_entries.end(), order_entry, [] (const auto& lhs, const auto& rhs) {
         return (lhs.m_fields.m_side == Side::ASK &&
-          lhs.m_expectedPrice < rhs.m_expectedPrice) ||
+          lhs.m_expected_price < rhs.m_expected_price) ||
           (lhs.m_fields.m_side == Side::BID &&
-          lhs.m_expectedPrice > rhs.m_expectedPrice);
+            lhs.m_expected_price > rhs.m_expected_price);
       });
-    if(insertIterator != orderEntries.end() &&
-        insertIterator->m_remainingQuantity == 0) {
-      *insertIterator = orderEntry;
+    if(insert_iterator != order_entries.end() &&
+        insert_iterator->m_remaining_quantity == 0) {
+      *insert_iterator = order_entry;
     } else {
-      orderEntries.insert(insertIterator, orderEntry);
+      order_entries.insert(insert_iterator, order_entry);
     }
-    buyingPower += ComputeBuyingPower(entry);
-    m_idToOrderFields.insert(std::pair(id, orderFields));
-    return buyingPower;
+    buying_power += compute_buying_power(entry);
+    m_order_fields.insert(std::pair(id, fields));
+    return buying_power;
   }
 
-  inline void BuyingPowerModel::Update(
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    if(executionReport.m_status == OrderStatus::PENDING_NEW ||
-        executionReport.m_status == OrderStatus::SUSPENDED ||
-        executionReport.m_status == OrderStatus::PENDING_CANCEL ||
-        executionReport.m_status == OrderStatus::NEW ||
-        executionReport.m_status == OrderStatus::CANCEL_REJECT) {
+  inline void BuyingPowerModel::update(const ExecutionReport& report) {
+    if(report.m_status == OrderStatus::PENDING_NEW ||
+        report.m_status == OrderStatus::SUSPENDED ||
+        report.m_status == OrderStatus::PENDING_CANCEL ||
+        report.m_status == OrderStatus::NEW ||
+        report.m_status == OrderStatus::CANCEL_REJECT) {
       return;
     }
-    auto& orderFields = m_idToOrderFields.at(executionReport.m_id);
-    auto& buyingPowerEntry = m_buyingPowerEntries.at(orderFields.m_security);
-    auto& buyingPower = m_currencyToBuyingPower[orderFields.m_currency];
-    buyingPower -= ComputeBuyingPower(buyingPowerEntry);
-    auto& orderEntries = Pick(orderFields.m_side, buyingPowerEntry.m_asks,
-      buyingPowerEntry.m_bids);
-    for(auto& orderEntry : orderEntries) {
-      if(executionReport.m_id == orderEntry.m_id) {
-        if(IsTerminal(executionReport.m_status)) {
-          orderEntry.m_remainingQuantity = 0;
+    auto& order_fields = m_order_fields.at(report.m_id);
+    auto& buying_power_entry =
+      m_buying_power_entries.at(order_fields.m_security);
+    auto& buying_power = m_buying_power[order_fields.m_currency];
+    buying_power -= compute_buying_power(buying_power_entry);
+    auto& order_entries = pick(order_fields.m_side,
+      buying_power_entry.m_asks, buying_power_entry.m_bids);
+    for(auto& order_entry : order_entries) {
+      if(report.m_id == order_entry.m_id) {
+        if(is_terminal(report.m_status)) {
+          order_entry.m_remaining_quantity = 0;
         } else {
-          orderEntry.m_remainingQuantity -= executionReport.m_lastQuantity;
+          order_entry.m_remaining_quantity -= report.m_last_quantity;
         }
         break;
       }
     }
-    auto lastQuantity = executionReport.m_lastQuantity;
-    if((orderFields.m_side == Side::BID && buyingPowerEntry.m_quantity < 0) ||
-        (orderFields.m_side == Side::ASK && buyingPowerEntry.m_quantity > 0)) {
+    auto last_quantity = report.m_last_quantity;
+    if((order_fields.m_side == Side::BID &&
+        buying_power_entry.m_quantity < 0) ||
+        (order_fields.m_side == Side::ASK &&
+          buying_power_entry.m_quantity > 0)) {
       auto delta =
-        std::min(Abs(buyingPowerEntry.m_quantity), lastQuantity);
-      buyingPowerEntry.m_expenditure -=
-        GetDirection(GetOpposite(orderFields.m_side)) * delta *
-        (buyingPowerEntry.m_expenditure / buyingPowerEntry.m_quantity);
-      buyingPowerEntry.m_quantity += GetDirection(orderFields.m_side) * delta;
-      lastQuantity -= delta;
+        std::min(abs(buying_power_entry.m_quantity), last_quantity);
+      buying_power_entry.m_expenditure -=
+        get_direction(get_opposite(order_fields.m_side)) * delta *
+          (buying_power_entry.m_expenditure / buying_power_entry.m_quantity);
+      buying_power_entry.m_quantity +=
+        get_direction(order_fields.m_side) * delta;
+      last_quantity -= delta;
     }
-    buyingPowerEntry.m_quantity += GetDirection(orderFields.m_side) *
-      lastQuantity;
-    buyingPowerEntry.m_expenditure += GetDirection(orderFields.m_side) *
-      lastQuantity * executionReport.m_lastPrice;
-    buyingPower += ComputeBuyingPower(buyingPowerEntry);
+    buying_power_entry.m_quantity +=
+      get_direction(order_fields.m_side) * last_quantity;
+    buying_power_entry.m_expenditure +=
+      get_direction(order_fields.m_side) * last_quantity * report.m_last_price;
+    buying_power += compute_buying_power(buying_power_entry);
   }
 
-  inline Money BuyingPowerModel::ComputeBuyingPower(
-      const std::vector<OrderEntry>& orderEntries, Quantity quantityOffset) {
-    auto buyingPower = Money();
-    for(auto& orderEntry : orderEntries) {
-      if(quantityOffset == 0) {
-        buyingPower += orderEntry.m_remainingQuantity *
-          orderEntry.m_expectedPrice;
-      } else if(orderEntry.m_remainingQuantity < quantityOffset) {
-        quantityOffset -= orderEntry.m_remainingQuantity;
+  inline Money BuyingPowerModel::compute_buying_power(
+      const std::vector<OrderEntry>& entries, Quantity offset) {
+    auto buying_power = Money();
+    for(auto& order_entry : entries) {
+      if(offset == 0) {
+        buying_power +=
+          order_entry.m_remaining_quantity * order_entry.m_expected_price;
+      } else if(order_entry.m_remaining_quantity < offset) {
+        offset -= order_entry.m_remaining_quantity;
       } else {
-        buyingPower += (orderEntry.m_remainingQuantity - quantityOffset) *
-          orderEntry.m_expectedPrice;
-        quantityOffset = 0;
+        buying_power += (order_entry.m_remaining_quantity - offset) *
+          order_entry.m_expected_price;
+        offset = 0;
       }
     }
-    return buyingPower;
+    return buying_power;
   }
 
-  inline Money BuyingPowerModel::ComputeBuyingPower(
+  inline Money BuyingPowerModel::compute_buying_power(
       const BuyingPowerEntry& entry) {
-    auto askBuyingPower = Money();
-    auto bidBuyingPower = Money();
+    auto ask_buying_power = Money();
+    auto bid_buying_power = Money();
     if(entry.m_quantity >= 0) {
-      askBuyingPower = ComputeBuyingPower(entry.m_asks, entry.m_quantity);
-      bidBuyingPower = ComputeBuyingPower(entry.m_bids, 0) +
-        entry.m_expenditure;
+      ask_buying_power = compute_buying_power(entry.m_asks, entry.m_quantity);
+      bid_buying_power =
+        compute_buying_power(entry.m_bids, 0) + entry.m_expenditure;
     } else {
-      askBuyingPower = ComputeBuyingPower(entry.m_asks, 0) -
-        entry.m_expenditure;
-      bidBuyingPower = ComputeBuyingPower(entry.m_bids, -entry.m_quantity);
+      ask_buying_power =
+        compute_buying_power(entry.m_asks, 0) - entry.m_expenditure;
+      bid_buying_power = compute_buying_power(entry.m_bids, -entry.m_quantity);
     }
-    return std::max(askBuyingPower, bidBuyingPower);
+    return std::max(ask_buying_power, bid_buying_power);
   }
 }
 

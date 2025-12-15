@@ -1,3 +1,3 @@
 #include <Beam/Utilities/DoctestMain.hpp>
 
-DOCTEST_MAIN()
+DOCTEST_MAIN_TIMEOUT(120)

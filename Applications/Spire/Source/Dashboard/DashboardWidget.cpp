@@ -15,7 +15,6 @@
 #include "Spire/Dashboard/ValueDashboardCell.hpp"
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
-#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -100,9 +99,9 @@ DashboardWidget::DashboardWidget(QWidget* parent, Qt::WindowFlags flags)
 
 void DashboardWidget::Initialize(Ref<DashboardModel> model,
     const DashboardRowBuilder& rowBuilder, Ref<UserProfile> userProfile) {
-  m_model = model.Get();
+  m_model = model.get();
   m_rowBuilder = rowBuilder.Clone();
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   auto rowRenderer = [=] (const DashboardRow& row) {
     auto renderer = std::make_unique<DashboardRowRenderer>(Ref(row),
       [=, &row] (const DashboardCell& cell) ->
@@ -256,10 +255,8 @@ void DashboardWidget::mouseReleaseEvent(QMouseEvent* event) {
     setCursor(Qt::ArrowCursor);
     TestHoveringColumnExpansion(*event);
     auto position = event->pos();
-    if(std::abs(position.x() - m_lastMousePressPosition.x()) <=
-        scale_width(5) &&
-        std::abs(position.y() - m_lastMousePressPosition.y()) <=
-        scale_height(5)) {
+    if(std::abs(position.x() - m_lastMousePressPosition.x()) <= 5 &&
+        std::abs(position.y() - m_lastMousePressPosition.y()) <= 5) {
       auto column = GetColumnAt(position);
       ModifyColumnSortOrder(column);
     }
@@ -349,7 +346,7 @@ void DashboardWidget::SortRows() {
 void DashboardWidget::ActivateRow(int index, const std::string& prefix) {
   ShowSecurityInputDialog(Ref(*m_userProfile), prefix, this,
     [=] (auto security) {
-      if(!security || security == Security()) {
+      if(!security) {
         return;
       }
       for(auto i = m_renderer->GetSize(); i < index; ++i) {
@@ -380,7 +377,7 @@ void DashboardWidget::DeleteSelectedRows() {
 }
 
 void DashboardWidget::TestHoveringColumnExpansion(const QMouseEvent& event) {
-  const auto WIDTH_ADJUSTMENT_THRESHOLD = scale_width(3);
+  const auto WIDTH_ADJUSTMENT_THRESHOLD = 3;
   auto position = event.pos();
   if(position.y() > m_renderer->GetMaxRowHeight()) {
     if(m_isHoveringOverColumnResize) {
@@ -477,7 +474,7 @@ void DashboardWidget::MoveColumn(const QMouseEvent& event) {
 
 void DashboardWidget::OnRowAddedSignal(const DashboardRow& row) {
   for(auto i = 0; i < row.GetSize(); ++i) {
-    m_cellUpdateConnections.AddConnection(
+    m_cellUpdateConnections.add(
       row.GetCell(i).ConnectUpdateSignal(std::bind_front(
         &DashboardWidget::OnCellUpdatedSignal, this, std::ref(row))));
   }

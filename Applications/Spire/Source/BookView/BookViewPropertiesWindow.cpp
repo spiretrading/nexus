@@ -4,6 +4,7 @@
 #include "Spire/BookView/BookViewInteractionPropertiesPage.hpp"
 #include "Spire/BookView/BookViewLevelPropertiesPage.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 
 using namespace Nexus;
@@ -29,8 +30,7 @@ namespace {
 BookViewPropertiesWindow::BookViewPropertiesWindow(
     std::shared_ptr<BookViewPropertiesModel> properties,
     std::shared_ptr<KeyBindingsModel> key_bindings,
-    std::shared_ptr<SecurityModel> security,
-    const MarketDatabase& markets, QWidget* parent)
+    std::shared_ptr<SecurityModel> security, QWidget* parent)
     : Window(parent),
       m_properties(std::move(properties)),
       m_key_bindings(std::move(key_bindings)),
@@ -51,7 +51,7 @@ BookViewPropertiesWindow::BookViewPropertiesWindow(
   navigation_view->add_tab(*levels_page, tr("Levels"));
   m_highlights_page = new BookViewHighlightPropertiesPage(
     make_field_value_model(
-      m_properties, &BookViewProperties::m_highlight_properties), markets);
+      m_properties, &BookViewProperties::m_highlight_properties));
   m_highlights_page->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
   navigation_view->add_tab(*m_highlights_page, tr("Highlights"));

@@ -52,7 +52,7 @@ void ConsolidatedUserOrderListModel::transact(
 
 void ConsolidatedUserOrderListModel::add(
     const BookViewModel::UserOrder& order) {
-  if(order.m_size == 0 || IsTerminal(order.m_status)) {
+  if(order.m_size == 0 || is_terminal(order.m_status)) {
     return;
   }
   auto i = std::lower_bound(
@@ -113,7 +113,7 @@ void ConsolidatedUserOrderListModel::on_operation(const Operation& operation) {
         add(user_order);
         return;
       } else if(user_order.m_status != OrderStatus::FILLED &&
-          IsTerminal(user_order.m_status)) {
+          is_terminal(user_order.m_status)) {
         remove(user_order);
         return;
       }

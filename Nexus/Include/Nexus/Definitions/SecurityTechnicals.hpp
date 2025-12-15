@@ -1,7 +1,9 @@
 #ifndef NEXUS_SECURITY_TECHNICALS_HPP
 #define NEXUS_SECURITY_TECHNICALS_HPP
+#include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/Quantity.hpp"
 
 namespace Nexus {
 
@@ -23,19 +25,25 @@ namespace Nexus {
     /** The previous day's closing price. */
     Money m_close;
   };
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const SecurityTechnicals& value) {
+    return out << '(' << value.m_volume << ' ' << value.m_high << ' ' <<
+      value.m_low << ' ' << value.m_open << ' ' << value.m_close  << ')';
+  }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::SecurityTechnicals> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::SecurityTechnicals& value,
-        unsigned int version) {
-      shuttle.Shuttle("volume", value.m_volume);
-      shuttle.Shuttle("high", value.m_high);
-      shuttle.Shuttle("low", value.m_low);
-      shuttle.Shuttle("open", value.m_open);
-      shuttle.Shuttle("close", value.m_close);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::SecurityTechnicals& value,
+        unsigned int version) const {
+      shuttle.shuttle("volume", value.m_volume);
+      shuttle.shuttle("high", value.m_high);
+      shuttle.shuttle("low", value.m_low);
+      shuttle.shuttle("open", value.m_open);
+      shuttle.shuttle("close", value.m_close);
     }
   };
 }

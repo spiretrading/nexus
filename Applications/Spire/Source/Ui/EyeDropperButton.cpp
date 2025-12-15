@@ -3,6 +3,7 @@
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -12,7 +13,7 @@ EyeDropperButton::EyeDropperButton(QWidget* parent)
     : QWidget(parent),
       m_current(std::make_shared<LocalColorModel>()) {
   m_button = make_icon_toggle_button(
-    imageFromSvg(":/Icons/eye-dropper.svg", scale(16, 16)));
+    image_from_svg(":/Icons/eye-dropper.svg", scale(16, 16)));
   m_button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   enclose(*this, *m_button);
   proxy_style(*this, *m_button);

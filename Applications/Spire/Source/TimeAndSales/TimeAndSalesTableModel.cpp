@@ -15,18 +15,29 @@ namespace {
     } else if(column == TimeAndSalesTableModel::Column::SIZE) {
       return time_and_sale.m_size;
     } else if(column == TimeAndSalesTableModel::Column::MARKET) {
-      return time_and_sale.m_marketCenter;
+      return time_and_sale.m_market_center;
     } else if(column == TimeAndSalesTableModel::Column::CONDITION) {
       return time_and_sale.m_condition;
     } else if(column == TimeAndSalesTableModel::Column::BUYER) {
-      return time_and_sale.m_buyerMpid;
+      return time_and_sale.m_buyer_mpid;
     }
-    return time_and_sale.m_sellerMpid;
+    return time_and_sale.m_seller_mpid;
   }
+}
 
-  auto get_timestamp(const TimeAndSalesModel::Entry& entry) {
-    return entry.m_time_and_sale.GetValue().m_timestamp;
-  }
+namespace Beam {
+  template<>
+  struct TimestampAccessor<Spire::TimeAndSalesModel::Entry> {
+    const boost::posix_time::ptime& operator ()(
+        const Spire::TimeAndSalesModel::Entry& value) const noexcept {
+      return get_timestamp(value.m_time_and_sale);
+    }
+
+    boost::posix_time::ptime& operator ()(
+        Spire::TimeAndSalesModel::Entry& value) const noexcept {
+      return value.m_time_and_sale->m_timestamp;
+    }
+  };
 }
 
 TimeAndSalesTableModel::TimeAndSalesTableModel(
@@ -42,9 +53,9 @@ const std::shared_ptr<TimeAndSalesModel>&
 
 void TimeAndSalesTableModel::load_history(int max_count) {
   if(m_entries.empty()) {
-    load_snapshot(Queries::Sequence::Present(), max_count);
+    load_snapshot(Sequence::PRESENT, max_count);
   } else {
-    load_snapshot(m_entries.front().m_time_and_sale.GetSequence(), max_count);
+    load_snapshot(m_entries.front().m_time_and_sale.get_sequence(), max_count);
   }
 }
 
@@ -69,7 +80,7 @@ AnyRef TimeAndSalesTableModel::at(int row, int column) const {
     throw std::out_of_range("The row or column is out of range.");
   }
   return extract_field(
-    m_entries[m_entries.size() - 1 - row].m_time_and_sale.GetValue(),
+    *m_entries[m_entries.size() - 1 - row].m_time_and_sale,
     static_cast<Column>(column));
 }
 
@@ -88,11 +99,11 @@ connection TimeAndSalesTableModel::connect_operation_signal(
   return m_transaction.connect_operation_signal(slot);
 }
 
-void TimeAndSalesTableModel::load_snapshot(Queries::Sequence last, int count) {
+void TimeAndSalesTableModel::load_snapshot(Sequence last, int count) {
   m_begin_loading_signal();
   m_promise = m_model->query_until(last, count).then(
     [=] (auto&& result) {
-      auto& snapshot = result.Get();
+      auto& snapshot = result.get();
       if(!snapshot.empty()) {
         if(m_entries.empty() ||
             get_timestamp(snapshot.back()) < get_timestamp(m_entries.front())) {

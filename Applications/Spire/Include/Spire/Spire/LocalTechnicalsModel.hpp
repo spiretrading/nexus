@@ -29,36 +29,23 @@ namespace Spire {
       void update(const Nexus::TimeAndSale& time_and_sale);
 
       const Nexus::Security& get_security() const override;
-
       boost::optional<Nexus::Money> get_high() const override;
-
       boost::optional<Nexus::Money> get_low() const override;
-
       boost::optional<Nexus::Money> get_open() const override;
-
       boost::optional<Nexus::Money> get_close() const override;
-
       boost::optional<Nexus::Money> get_last_price() const override;
-
       Nexus::Quantity get_volume() const override;
-
       QtPromise<void> load() override;
-
       boost::signals2::connection connect_high_slot(
         const PriceSignal::slot_type& slot) const override;
-
       boost::signals2::connection connect_low_slot(
         const PriceSignal::slot_type& slot) const override;
-
       boost::signals2::connection connect_open_slot(
         const PriceSignal::slot_type& slot) const override;
-
       boost::signals2::connection connect_close_slot(
         const PriceSignal::slot_type& slot) const override;
-
       boost::signals2::connection connect_last_price_slot(
         const PriceSignal::slot_type& slot) const override;
-
       boost::signals2::connection connect_volume_slot(
         const QuantitySignal::slot_type& slot) const override;
 

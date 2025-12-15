@@ -8,7 +8,6 @@
 #include "Spire/Canvas/Types/SideType.hpp"
 
 using namespace Nexus;
-using namespace Nexus::Accounting;
 using namespace Spire;
 using namespace std;
 
@@ -34,15 +33,13 @@ const RecordType& Spire::GetPortfolioEntryRecordType() {
 }
 
 Record PortfolioEntryToRecordConverter::operator ()(
-    const SpirePortfolio::UpdateEntry& value) const {
-  return Record( {
-    value.m_securityInventory.m_position.m_key.m_index,
-    value.m_securityInventory.m_position.m_key.m_currency,
-    GetSide(value.m_securityInventory.m_position),
-    Abs(value.m_securityInventory.m_position.m_quantity),
-    value.m_securityInventory.m_position.m_costBasis,
-    value.m_securityInventory.m_grossProfitAndLoss,
-    value.m_securityInventory.m_fees,
-    value.m_securityInventory.m_volume,
-    static_cast<Quantity>(value.m_securityInventory.m_transactionCount) });
+    const PortfolioUpdateEntry& value) const {
+  return Record({value.m_security_inventory.m_position.m_security,
+    value.m_security_inventory.m_position.m_currency,
+    get_side(value.m_security_inventory.m_position),
+    abs(value.m_security_inventory.m_position.m_quantity),
+    value.m_security_inventory.m_position.m_cost_basis,
+    value.m_security_inventory.m_gross_profit_and_loss,
+    value.m_security_inventory.m_fees, value.m_security_inventory.m_volume,
+    static_cast<Quantity>(value.m_security_inventory.m_transaction_count)});
 }

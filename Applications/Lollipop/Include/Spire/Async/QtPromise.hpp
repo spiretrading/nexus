@@ -4,7 +4,6 @@
 #include <type_traits>
 #include <utility>
 #include <QApplication>
-#include "Spire/Async/Async.hpp"
 #include "Spire/Async/ChainedQtPromise.hpp"
 #include "Spire/Async/QtPromiseImp.hpp"
 
@@ -32,8 +31,8 @@ namespace Spire {
        */
       template<typename Executor,
         typename = std::enable_if_t<std::is_invocable_v<Executor>>>
-      explicit QtPromise(Executor&& executor, LaunchPolicy launch_policy =
-          LaunchPolicy::DEFERRED) {
+      explicit QtPromise(Executor&& executor,
+          LaunchPolicy launch_policy = LaunchPolicy::DEFERRED) {
         auto imp = std::make_shared<details::QtPromiseImp<Executor>>(
           std::forward<Executor>(executor), launch_policy);
         imp->bind(imp);
@@ -130,7 +129,7 @@ namespace Spire {
           completed_promises = completed_promises.get()]
         (auto&& result) mutable {
           completed_promises->push_back(
-            std::forward<decltype(result)>(result).Get());
+            std::forward<decltype(result)>(result).get());
           return std::move(p);
         });
     }
@@ -138,7 +137,7 @@ namespace Spire {
       [=, completed_promises = std::move(completed_promises)] (
           auto&& result) mutable {
         completed_promises->push_back(std::forward<decltype(result)>(
-          result).Get());
+          result).get());
         return std::move(*completed_promises);
       });
   }
@@ -162,9 +161,9 @@ namespace Spire {
       QCoreApplication::sendPostedEvents();
     }
     if constexpr(std::is_same_v<T, void>) {
-      return future->Get();
+      return future->get();
     } else {
-      return std::move(future->Get());
+      return std::move(future->get());
     }
   }
 
@@ -183,8 +182,8 @@ namespace Spire {
     if constexpr(std::is_same_v<T, void>) {
       auto executor = [] {};
       using Executor = decltype(executor);
-      auto imp = std::make_shared<details::QtPromiseImp<Executor>>(executor,
-        LaunchPolicy::ASYNC);
+      auto imp = std::make_shared<details::QtPromiseImp<Executor>>(
+        executor, LaunchPolicy::ASYNC);
       imp->bind(imp);
       m_imp = std::move(imp);
     }
@@ -194,7 +193,7 @@ namespace Spire {
   template<typename U>
   QtPromise<T>::QtPromise(Beam::Expect<U> value)
     : QtPromise([value = std::move(value)] () mutable {
-        return std::move(value.Get());
+        return std::move(value.get());
       }) {}
 
   template<typename T>

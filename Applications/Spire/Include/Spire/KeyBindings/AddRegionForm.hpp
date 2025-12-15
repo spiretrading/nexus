@@ -1,12 +1,11 @@
 #ifndef SPIRE_ADD_REGION_FORM_HPP
 #define SPIRE_ADD_REGION_FORM_HPP
 #include <QWidget>
-#include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/RegionDropDownBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class OverlayPanel;
 
   /** Displays a panel to add a region. */
   class AddRegionForm : public QWidget {

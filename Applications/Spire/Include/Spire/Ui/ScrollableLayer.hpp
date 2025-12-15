@@ -2,7 +2,7 @@
 #define SPIRE_SCROLLABLE_LAYER_HPP
 #include <QGridLayout>
 #include <QWidget>
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/ScrollBar.hpp"
 
 namespace Spire {
 
@@ -25,15 +25,14 @@ namespace Spire {
       /** Returns the horizontal ScrollBar. */
       ScrollBar& get_horizontal_scroll_bar();
 
-      void keyPressEvent(QKeyEvent* event) override;
-
-      void wheelEvent(QWheelEvent* event) override;
-
     protected:
+      void keyPressEvent(QKeyEvent* event) override;
+      void wheelEvent(QWheelEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
+      friend class ScrollBox;
       ScrollBar* m_vertical_scroll_bar;
       ScrollBar* m_horizontal_scroll_bar;
       QGridLayout* m_layout;

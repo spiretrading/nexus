@@ -2,7 +2,6 @@
 #define SPIRE_CONSOLIDATED_USER_ORDER_LIST_MODEL_HPP
 #include <memory>
 #include <QObject>
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 
@@ -24,9 +23,7 @@ namespace Spire {
         std::shared_ptr<BookViewModel::UserOrderListModel> user_orders);
 
       int get_size() const override;
-
-      const Type& get(int index) const;
-
+      const Type& get(int index) const override;
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
 

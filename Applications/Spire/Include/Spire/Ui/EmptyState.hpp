@@ -1,9 +1,9 @@
 #ifndef SPIRE_EMPTY_STATE_HPP
 #define SPIRE_EMPTY_STATE_HPP
 #include "Spire/Ui/ClickObserver.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class OverlayPanel;
 
   /** Indicates that no results were found in a pop-up dropdown panel. */
   class EmptyState : public QWidget {

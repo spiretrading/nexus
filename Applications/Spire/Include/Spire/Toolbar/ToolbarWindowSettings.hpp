@@ -1,10 +1,10 @@
 #ifndef SPIRE_TOOLBAR_WINDOW_SETTINGS_HPP
 #define SPIRE_TOOLBAR_WINDOW_SETTINGS_HPP
-#include <Beam/Serialization/Serialization.hpp>
+#include <Beam/Serialization/DataShuttle.hpp>
 #include <QPoint>
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
-#include "Spire/Toolbar/Toolbar.hpp"
+#include "Spire/Toolbar/ToolbarWindow.hpp"
 
 namespace Spire {
 
@@ -25,23 +25,21 @@ namespace Spire {
       explicit ToolbarWindowSettings(const ToolbarWindow& toolbar);
 
       std::string GetName() const override;
-
       QWidget* Reopen(Beam::Ref<UserProfile> profile) const override;
-
       void Apply(Beam::Ref<UserProfile> userProfile, Beam::Out<QWidget> widget)
         const override;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       QPoint m_position;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void ToolbarWindowSettings::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("position", m_position);
+  template<Beam::IsShuttle S>
+  void ToolbarWindowSettings::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("position", m_position);
   }
 }
 

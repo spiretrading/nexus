@@ -5,7 +5,7 @@
 #include <boost/signals2/signal.hpp>
 #include <QAbstractItemModel>
 #include "Nexus/Definitions/OrderStatus.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/OrderLogProperties.hpp"
@@ -60,7 +60,7 @@ namespace Spire {
       struct OrderEntry {
 
         /** The Order represented. */
-        const Nexus::OrderExecutionService::Order* m_order;
+        std::shared_ptr<Nexus::Order> m_order;
 
         /** The current Order's status. */
         Nexus::OrderStatus m_status;
@@ -69,7 +69,7 @@ namespace Spire {
          * Constructs an OrderEntry.
          * @param order The Order to represent.
          */
-        OrderEntry(const Nexus::OrderExecutionService::Order* order);
+        OrderEntry(std::shared_ptr<Nexus::Order> order);
       };
 
       /**
@@ -111,7 +111,7 @@ namespace Spire {
        *        are to be logged.
        */
       void SetOrderExecutionPublisher(
-        Beam::Ref<const Nexus::OrderExecutionService::OrderExecutionPublisher>
+        Beam::Ref<const Beam::Publisher<std::shared_ptr<Nexus::Order>>>
           orderExecutionPublisher);
 
       /**
@@ -141,16 +141,16 @@ namespace Spire {
 
     private:
       OrderLogProperties m_properties;
-      const Nexus::OrderExecutionService::OrderExecutionPublisher*
+      const Beam::Publisher<std::shared_ptr<Nexus::Order>>*
         m_orderExecutionPublisher;
       std::vector<OrderEntry> m_entries;
       mutable OrderAddedSignal m_orderAddedSignal;
       mutable OrderRemovedSignal m_orderRemovedSignal;
       std::optional<EventHandler> m_eventHandler;
 
-      void OnOrderExecuted(const Nexus::OrderExecutionService::Order* order);
-      void OnExecutionReport(std::size_t entryIndex,
-        const Nexus::OrderExecutionService::ExecutionReport& report);
+      void OnOrderExecuted(const std::shared_ptr<Nexus::Order>& order);
+      void OnExecutionReport(
+        std::size_t entryIndex, const Nexus::ExecutionReport& report);
   };
 }
 

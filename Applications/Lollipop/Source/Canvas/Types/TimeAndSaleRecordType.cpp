@@ -14,7 +14,7 @@ namespace {
   std::shared_ptr<RecordType> MakeType() {
     vector<RecordType::Field> fields;
     fields.emplace_back("timestamp", DateTimeType::GetInstance());
-    fields.emplace_back("price", MoneyType::GetInstance());
+    fields.emplace_back("price", Spire::MoneyType::GetInstance());
     fields.emplace_back("size", IntegerType::GetInstance());
     fields.emplace_back("condition", TextType::GetInstance());
     fields.emplace_back("market_center", TextType::GetInstance());
@@ -29,6 +29,6 @@ const RecordType& Spire::GetTimeAndSaleRecordType() {
 
 Record TimeAndSaleToRecordConverter::operator ()(
     const SequencedTimeAndSale& value) const {
-  return Record({ value->m_timestamp, value->m_price, value->m_size,
-    value->m_condition.m_code, value->m_marketCenter });
+  return Record({value->m_timestamp, value->m_price, value->m_size,
+    value->m_condition.m_code, value->m_market_center});
 }

@@ -6,7 +6,6 @@
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartValue.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 
@@ -30,22 +29,22 @@ namespace Spire {
         Beam::Out<QWidget> widget) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::shared_ptr<NativeType> m_type;
       ChartValue m_value;
       QByteArray m_geometry;
 
       ChartIntervalComboBoxWindowSettings() = default;
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void ChartIntervalComboBoxWindowSettings::Shuttle(Shuttler& shuttle,
+  template<Beam::IsShuttle S>
+  void ChartIntervalComboBoxWindowSettings::shuttle(S& shuttle,
       unsigned int version) {
-    shuttle.Shuttle("type", m_type);
-    shuttle.Shuttle("value", m_value);
-    shuttle.Shuttle("geometry", m_geometry);
+    shuttle.shuttle("type", m_type);
+    shuttle.shuttle("value", m_value);
+    shuttle.shuttle("geometry", m_geometry);
   }
 }
 

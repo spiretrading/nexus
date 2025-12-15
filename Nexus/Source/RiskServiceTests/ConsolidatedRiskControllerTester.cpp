@@ -1,112 +1,106 @@
 #include <Beam/Queues/Queue.hpp>
-#include <Beam/ServicesTests/TestServices.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
+#include <Beam/TimeService/FixedTimeClient.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
+#include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
-#include "Nexus/RiskService/ConsolidatedRiskController.hpp"
+#include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
+#include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
+#include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/RiskService/LocalRiskDataStore.hpp"
-#include "Nexus/RiskServiceTests/TestRiskDataStore.hpp"
-#include "Nexus/ServiceClients/TestEnvironment.hpp"
-#include "Nexus/ServiceClients/TestServiceClients.hpp"
+#include "Nexus/RiskService/ConsolidatedRiskController.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::OrderExecutionService::Tests;
-using namespace Nexus::RiskService;
-using namespace Nexus::RiskService::Tests;
+using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::DefaultVenues;
+using namespace Nexus::Tests;
 
 namespace {
-  auto TSLA = Security("TSLA", DefaultMarkets::NASDAQ(),
-    DefaultCountries::US());
-  auto XIU = Security("XIU", DefaultMarkets::TSX(), DefaultCountries::CA());
-
   struct Fixture {
-    TestEnvironment m_environment;
-    TestServiceClients m_adminClients;
-    TestServiceClients m_userAClients;
-    TestServiceClients m_userBClients;
-    std::shared_ptr<Queue<const Order*>> m_orders;
-    DirectoryEntry m_accountA;
-    DirectoryEntry m_accountB;
+    ServiceLocatorTestEnvironment m_service_locator_environment;
+    UidServiceTestEnvironment m_uid_environment;
+    AdministrationServiceTestEnvironment m_administration_environment;
+    MarketDataServiceTestEnvironment m_market_data_environment;
+    OrderExecutionServiceTestEnvironment m_order_execution_environment;
+    FixedTimeClient m_time_client;
+    LocalRiskDataStore m_data_store;
+    ExchangeRateTable m_exchange_rates;
+    optional<ServiceLocatorClient> m_service_locator;
+    optional<AdministrationClient> m_administration_client;
+    optional<MarketDataClient> m_market_data_client;
+    optional<OrderExecutionClient> m_service_order_execution_client;
+    std::shared_ptr<Queue<DirectoryEntry>> m_accounts_queue;
 
     Fixture()
-        : m_adminClients(Ref(m_environment)),
-          m_userAClients(Ref(m_environment)),
-          m_userBClients(Ref(m_environment)),
-          m_orders(std::make_shared<Queue<const Order*>>()) {
-      m_environment.MonitorOrderSubmissions(m_orders);
-      m_environment.GetAdministrationEnvironment().MakeAdministrator(
-        DirectoryEntry::GetRootAccount());
-      m_environment.Publish(TSLA, BboQuote(
-        Quote(*Money::FromValue("1.00"), 100, Side::BID),
-        Quote(*Money::FromValue("1.01"), 100, Side::ASK),
-        m_environment.GetTimeEnvironment().GetTime()));
-      m_accountA = MakeAccount("simba1", 2 * Money::ONE, minutes(10));
-      m_accountB = MakeAccount("simba2", 10 * Money::ONE, minutes(3));
-    }
-
-    DirectoryEntry MakeAccount(std::string name, Money netLoss,
-        time_duration transitionTime) {
-      auto account = m_adminClients.GetServiceLocatorClient().MakeAccount(name,
-        "1234", DirectoryEntry::GetStarDirectory());
-      m_adminClients.GetAdministrationClient().StoreRiskParameters(account,
-        RiskParameters(DefaultCurrencies::USD(), 100000 * Money::ONE,
-          RiskState::Type::ACTIVE, netLoss, 1, transitionTime));
-      m_adminClients.GetAdministrationClient().StoreRiskState(account,
-        RiskState::Type::ACTIVE);
-      return account;
+        : m_administration_environment(
+            make_administration_service_test_environment(
+              m_service_locator_environment)),
+          m_market_data_environment(make_market_data_service_test_environment(
+            m_service_locator_environment, m_administration_environment)),
+          m_order_execution_environment(
+            make_order_execution_service_test_environment(
+              m_service_locator_environment, m_uid_environment,
+              m_administration_environment)),
+          m_time_client(time_from_string("2025-07-14 6:23:00:00")),
+          m_accounts_queue(std::make_shared<Queue<DirectoryEntry>>()) {
+      auto servlet_account =
+        m_service_locator_environment.get_root().make_account(
+          "risk_service", "", DirectoryEntry::STAR_DIRECTORY);
+      m_administration_environment.make_administrator(servlet_account);
+      m_service_locator.emplace(
+        m_service_locator_environment.make_client("risk_service", ""));
+      grant_all_entitlements(
+        m_administration_environment, m_service_locator->get_account());
+      m_administration_client.emplace(
+        m_administration_environment.make_client(Ref(*m_service_locator)));
+      m_market_data_client.emplace(
+        m_market_data_environment.make_registry_client(
+          Ref(*m_service_locator)));
+      m_service_order_execution_client.emplace(
+        m_order_execution_environment.make_client(Ref(*m_service_locator)));
     }
   };
 }
 
 TEST_SUITE("ConsolidatedRiskController") {
-  TEST_CASE_FIXTURE(Fixture, "single_account") {
-    auto exchangeRates = std::vector<ExchangeRate>();
-    auto dataStore = LocalRiskDataStore();
-    auto accounts = std::make_shared<Queue<DirectoryEntry>>();
-    auto controller = ConsolidatedRiskController(accounts,
-      &m_adminClients.GetAdministrationClient(),
-      &m_adminClients.GetMarketDataClient(),
-      &m_adminClients.GetOrderExecutionClient(),
-      [this] {
-        return m_adminClients.MakeTimer(seconds(1));
-      },
-      &m_adminClients.GetTimeClient(), &dataStore, exchangeRates,
-      GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
-    accounts->Push(m_accountA);
-  }
-
-  TEST_CASE_FIXTURE(Fixture, "data_store_exception") {
-    auto exchangeRates = std::vector<ExchangeRate>();
-    auto dataStore = TestRiskDataStore();
-    auto operations = std::make_shared<
-      Queue<std::shared_ptr<TestRiskDataStore::Operation>>>();
-    dataStore.GetPublisher().Monitor(operations);
-    auto accounts = std::make_shared<Queue<DirectoryEntry>>();
-    auto controller = ConsolidatedRiskController(accounts,
-      &m_adminClients.GetAdministrationClient(),
-      &m_adminClients.GetMarketDataClient(),
-      &m_adminClients.GetOrderExecutionClient(),
-      [this] {
-        return m_adminClients.MakeTimer(seconds(1));
-      },
-      &m_adminClients.GetTimeClient(), &dataStore, exchangeRates,
-      GetDefaultMarketDatabase(), GetDefaultDestinationDatabase());
-    auto states = std::make_shared<Queue<RiskStateEntry>>();
-    controller.GetRiskStatePublisher().Monitor(states);
-    accounts->Push(m_accountA);
-    auto operation = operations->Pop();
-    auto loadOperation = get<TestRiskDataStore::LoadInventorySnapshotOperation>(
-      &*operation);
-    REQUIRE(loadOperation);
-    REQUIRE(*loadOperation->m_account == m_accountA);
-    loadOperation->m_result.SetException(std::runtime_error("Fail"));
-    auto state = states->Pop();
-    REQUIRE(state.m_key == m_accountA);
-    REQUIRE(state.m_value == RiskState::Type::DISABLED);
+  TEST_CASE("add_account") {
+    auto fixture = Fixture();
+    auto timer_factory = [] {
+      return std::make_unique<TriggerTimer>();
+    };
+    auto consolidated_controller = ConsolidatedRiskController(
+      fixture.m_accounts_queue, &*fixture.m_administration_client,
+      &*fixture.m_market_data_client,
+      &*fixture.m_service_order_execution_client, timer_factory,
+      &fixture.m_time_client, &fixture.m_data_store, fixture.m_exchange_rates,
+      DEFAULT_VENUES, DEFAULT_DESTINATIONS);
+    auto state_updates = std::make_shared<Queue<RiskStateEntry>>();
+    consolidated_controller.get_risk_state_publisher().monitor(state_updates);
+    auto account1 = fixture.m_service_locator_environment.get_root().
+      make_account("trader", "", DirectoryEntry::STAR_DIRECTORY);
+    fixture.m_administration_environment.get_client().store(
+      account1, RiskParameters(USD, 100000 * Money::ONE,
+        RiskState::Type::ACTIVE, 2 * Money::ONE, minutes(10)));
+    fixture.m_administration_environment.get_client().store(
+      account1, RiskState::Type::ACTIVE);
+    fixture.m_accounts_queue->push(account1);
+    auto state_entry = state_updates->pop();
+    REQUIRE(state_entry.m_key == account1);
+    REQUIRE(state_entry.m_value == RiskState::Type::ACTIVE);
+    auto account2 = fixture.m_service_locator_environment.get_root().
+      make_account("trader2", "", DirectoryEntry::STAR_DIRECTORY);
+    fixture.m_administration_environment.get_client().store(
+      account2, RiskParameters(USD, 50000 * Money::ONE, RiskState::Type::ACTIVE,
+        1 * Money::ONE, minutes(5)));
+    fixture.m_administration_environment.get_client().store(
+      account2, RiskState::Type::ACTIVE);
+    fixture.m_accounts_queue->push(account2);
+    state_entry = state_updates->pop();
+    REQUIRE(state_entry.m_key == account2);
+    REQUIRE(state_entry.m_value == RiskState::Type::ACTIVE);
   }
 }

@@ -122,8 +122,8 @@
     <file>Icons/delete.svg</file>
     <file>Icons/delete2.svg</file>
     <file>Icons/magnifying-glass.svg</file>
-    <file>Icons/market-symbol.svg</file>
     <file>Icons/security-symbol.svg</file>
+    <file>Icons/venue-symbol.svg</file>
     <file>Icons/flag_icons/aus.svg</file>
     <file>Icons/flag_icons/bra.svg</file>
     <file>Icons/flag_icons/can.svg</file>
@@ -134,6 +134,7 @@
     <file>Icons/dropdown-arrow.svg</file>
     <file>Icons/calendar-arrow-left.svg</file>
     <file>Icons/calendar-arrow-right.svg</file>
+    <file>Icons/calendar.svg</file>
     <file>Icons/sort_ascending.svg</file>
     <file>Icons/sort_descending.svg</file>
     <file>Icons/filter.svg</file>

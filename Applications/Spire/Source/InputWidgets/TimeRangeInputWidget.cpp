@@ -6,8 +6,6 @@
 #include "ui_TimeRangeInputWidget.h"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -73,7 +71,7 @@ TimeRangeParameter TimeRangeInputWidget::GetStartTime() const {
     timeParameter.m_timeOfDay = ToPosixTimeDuration(
       m_ui->m_startTimeOfDayInput->dateTime().toUTC().time());
   } else {
-    timeParameter.m_specialValue = Beam::Queries::Sequence::Present();
+    timeParameter.m_specialValue = Beam::Sequence::PRESENT;
   }
   return timeParameter;
 }
@@ -110,7 +108,7 @@ void TimeRangeInputWidget::SetTimeRange(const TimeRangeParameter& startTime,
     m_ui->m_startTimeOfDayButton->setChecked(true);
     ptime timeOfDay(gregorian::day_clock::universal_day(),
       *startTime.m_timeOfDay);
-    ptime localTime = ToLocalTime(timeOfDay);
+    ptime localTime = to_local_time(timeOfDay);
     m_ui->m_startTimeOfDayInput->setDateTime(ToQDateTime(localTime));
   } else {
     m_ui->m_presentButton->setChecked(true);
@@ -131,7 +129,7 @@ void TimeRangeInputWidget::SetTimeRange(const TimeRangeParameter& startTime,
     m_ui->m_endTimeOfDayButton->setChecked(true);
     ptime timeOfDay(gregorian::day_clock::universal_day(),
       *endTime.m_timeOfDay);
-    ptime localTime = ToLocalTime(timeOfDay);
+    ptime localTime = to_local_time(timeOfDay);
     m_ui->m_endTimeOfDayInput->setDateTime(ToQDateTime(localTime));
   } else {
     m_ui->m_realTimeButton->setChecked(true);

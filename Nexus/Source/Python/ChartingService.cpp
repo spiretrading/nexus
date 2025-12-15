@@ -1,78 +1,67 @@
 #include "Nexus/Python/ChartingService.hpp"
 #include <Beam/Python/Beam.hpp>
 #include "Nexus/ChartingService/ApplicationDefinitions.hpp"
+#include "Nexus/ChartingService/SecurityChartingQuery.hpp"
 #include "Nexus/ChartingServiceTests/ChartingServiceTestEnvironment.hpp"
+#include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/Python/ToPythonChartingClient.hpp"
 
 using namespace Beam;
 using namespace Beam::Python;
-using namespace Beam::Queries;
-using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
-using namespace boost;
-using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::ChartingService;
-using namespace Nexus::ChartingService::Tests;
-using namespace Nexus::MarketDataService;
 using namespace Nexus::Python;
+using namespace Nexus::Tests;
 using namespace pybind11;
 
 namespace {
-  auto chartingClientBox = std::unique_ptr<class_<ChartingClientBox>>();
+  auto charting_client = std::unique_ptr<class_<ChartingClient>>();
 }
 
-class_<ChartingClientBox>& Nexus::Python::GetExportedChartingClientBox() {
-  return *chartingClientBox;
+class_<ChartingClient>& Nexus::Python::get_exported_charting_client() {
+  return *charting_client;
 }
 
-void Nexus::Python::ExportApplicationChartingClient(module& module) {
-  using PythonApplicationChartingClient = ToPythonChartingClient<
-    ChartingClient<ZLibSessionBuilder<ServiceLocatorClientBox>>>;
-  ExportChartingClient<PythonApplicationChartingClient>(module,
-    "ApplicationChartingClient").
-    def(init([] (ServiceLocatorClientBox serviceLocatorClient) {
-      return std::make_shared<PythonApplicationChartingClient>(
-        MakeSessionBuilder<ZLibSessionBuilder<ServiceLocatorClientBox>>(
-          std::move(serviceLocatorClient), ChartingService::SERVICE_NAME));
-    }));
+void Nexus::Python::export_charting_service(module& module) {
+  charting_client = std::make_unique<class_<ChartingClient>>(
+    export_charting_client<ChartingClient>(module, "ChartingClient"));
+  export_charting_service_application_definitions(module);
+  export_security_charting_query(module);
+  auto tests_submodule = module.def_submodule("tests");
+  export_charting_service_test_environment(tests_submodule);
 }
 
-void Nexus::Python::ExportChartingService(module& module) {
-  auto submodule = module.def_submodule("charting_service");
-  chartingClientBox = std::make_unique<class_<ChartingClientBox>>(
-    ExportChartingClient<ChartingClientBox>(submodule, "ChartingClient"));
-  ExportChartingClient<ToPythonChartingClient<ChartingClientBox>>(submodule,
-    "ChartingClientBox");
-  ExportApplicationChartingClient(submodule);
-  ExportSecurityChartingQuery(submodule);
-  auto test_module = submodule.def_submodule("tests");
-  ExportChartingServiceTestEnvironment(test_module);
+void Nexus::Python::export_charting_service_application_definitions(
+    module& module) {
+  export_charting_client<ToPythonChartingClient<ApplicationChartingClient>>(
+    module, "ApplicationChartingClient").
+    def(pybind11::init(
+      [] (ToPythonServiceLocatorClient<ApplicationServiceLocatorClient>&
+          client) {
+        return std::make_unique<ToPythonChartingClient<
+          ApplicationChartingClient>>(Ref(client.get()));
+      }), keep_alive<1, 2>());
 }
 
-void Nexus::Python::ExportChartingServiceTestEnvironment(module& module) {
-  class_<ChartingServiceTestEnvironment>(module,
-    "ChartingServiceTestEnvironment").
-    def(init<ServiceLocatorClientBox, MarketDataClientBox>(),
-      call_guard<GilRelease>()).
-    def("__del__",
-      [] (ChartingServiceTestEnvironment& self) {
-        self.Close();
-      }, call_guard<GilRelease>()).
-    def("close", &ChartingServiceTestEnvironment::Close,
-      call_guard<GilRelease>()).
+void Nexus::Python::export_charting_service_test_environment(module& module) {
+  class_<ChartingServiceTestEnvironment,
+      std::shared_ptr<ChartingServiceTestEnvironment>>(module,
+        "ChartingServiceTestEnvironment").
+    def(pybind11::init(&make_python_shared<ChartingServiceTestEnvironment,
+      ServiceLocatorClient&, MarketDataClient&>), keep_alive<1, 2>(),
+      keep_alive<1, 3>()).
     def("make_client",
-      [] (ChartingServiceTestEnvironment& self,
-          ServiceLocatorClientBox serviceLocatorClient) {
-        return ToPythonChartingClient(self.MakeClient(
-          std::move(serviceLocatorClient)));
-      }, call_guard<GilRelease>());
+      [] (ChartingServiceTestEnvironment& self, ServiceLocatorClient& client) {
+        return ToPythonChartingClient(self.make_client(Ref(client)));
+      }, call_guard<GilRelease>(), keep_alive<0, 2>()).
+    def("close", &ChartingServiceTestEnvironment::close,
+      call_guard<GilRelease>());
 }
 
-void Nexus::Python::ExportSecurityChartingQuery(module& module) {
-  class_<SecurityChartingQuery, BasicQuery<Security>, ExpressionQuery>(module,
-    "SecurityChartingQuery").
+void Nexus::Python::export_security_charting_query(module& module) {
+  export_default_methods(
+    class_<SecurityChartingQuery, BasicQuery<Security>, ExpressionQuery>(
+      module, "SecurityChartingQuery")).
     def_property("market_data_type",
-      &SecurityChartingQuery::GetMarketDataType,
-      &SecurityChartingQuery::SetMarketDataType);
+      &SecurityChartingQuery::get_market_data_type,
+      &SecurityChartingQuery::set_market_data_type);
 }

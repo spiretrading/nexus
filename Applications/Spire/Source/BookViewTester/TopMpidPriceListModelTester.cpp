@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Spire/BookView/TopMpidPriceListModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 
@@ -9,14 +9,14 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  auto make_book_quote(MarketCode market, Money price, Side side = Side::BID) {
-    return BookQuote(market.GetData(), true, market,
+  auto make_book_quote(Venue venue, Money price, Side side = Side::BID) {
+    return BookQuote(venue.get_code().get_data(), true, venue,
       Quote(price, 100, side), time_from_string("2016-07-31 19:00:00"));
   }
 
-  int find_mpid(const ListModel<TopMpidPrice>& list, MarketCode market) {
+  int find_mpid(const ListModel<TopMpidPrice>& list, Venue venue) {
     auto i = std::find_if(list.begin(), list.end(), [&] (const auto& top) {
-      return top.m_market == market;
+      return top.m_venue == venue;
     });
     if(i == list.end()) {
       return -1;
@@ -31,30 +31,30 @@ TEST_SUITE("TopMpidPriceListModel") {
     auto top_prices = TopMpidPriceListModel(quotes);
     REQUIRE(top_prices.get_size() == 0);
     SUBCASE("add") {
-      quotes->push(make_book_quote(DefaultMarkets::TSX(), Money(100)));
+      quotes->push(make_book_quote(DefaultVenues::TSX, Money(100)));
       REQUIRE(top_prices.get_size() == 1);
-      REQUIRE(top_prices.get(0).m_market == DefaultMarkets::TSX());
+      REQUIRE(top_prices.get(0).m_venue == DefaultVenues::TSX);
       REQUIRE(top_prices.get(0).m_price == Money(100));
     }
   }
-  TEST_CASE("multiple_markets") {
+  TEST_CASE("multiple_venues") {
     auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
     auto top_prices = TopMpidPriceListModel(quotes);
-    quotes->push(make_book_quote(DefaultMarkets::TSX(), Money(100)));
-    quotes->push(make_book_quote(DefaultMarkets::OMGA(), Money(200)));
+    quotes->push(make_book_quote(DefaultVenues::TSX, Money(100)));
+    quotes->push(make_book_quote(DefaultVenues::OMGA, Money(200)));
     REQUIRE(top_prices.get_size() == 2);
-    REQUIRE(find_mpid(top_prices, DefaultMarkets::TSX()) != -1);
-    REQUIRE(find_mpid(top_prices, DefaultMarkets::OMGA()) != -1);
+    REQUIRE(find_mpid(top_prices, DefaultVenues::TSX) != -1);
+    REQUIRE(find_mpid(top_prices, DefaultVenues::OMGA) != -1);
   }
   TEST_CASE("multiple_quotes") {
     auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
     auto top_prices = TopMpidPriceListModel(quotes);
-    quotes->push(make_book_quote(DefaultMarkets::TSX(), Money(100)));
-    quotes->push(make_book_quote(DefaultMarkets::TSX(), Money(200)));
-    quotes->push(make_book_quote(DefaultMarkets::TSX(), Money(150)));
+    quotes->push(make_book_quote(DefaultVenues::TSX, Money(100)));
+    quotes->push(make_book_quote(DefaultVenues::TSX, Money(200)));
+    quotes->push(make_book_quote(DefaultVenues::TSX, Money(150)));
     REQUIRE(top_prices.get_size() == 1);
     auto& top = top_prices.get(0);
-    REQUIRE(top.m_market == DefaultMarkets::TSX());
+    REQUIRE(top.m_venue == DefaultVenues::TSX);
     REQUIRE(top.m_price == Money(200));
   }
 }

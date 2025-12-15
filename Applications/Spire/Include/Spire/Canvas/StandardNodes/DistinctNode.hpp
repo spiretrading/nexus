@@ -23,22 +23,16 @@ namespace Spire {
       const std::vector<Signature>& GetSignatures() const override;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
-      DistinctNode(Beam::Serialization::ReceiveBuilder);
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void DistinctNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    SignatureNode::Shuttle(shuttle, version);
+  template<Beam::IsShuttle S>
+  void DistinctNode::shuttle(S& shuttle, unsigned int version) {
+    SignatureNode::shuttle(shuttle, version);
   }
-}
-
-namespace Beam::Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::DistinctNode> : std::false_type {};
 }
 
 #endif

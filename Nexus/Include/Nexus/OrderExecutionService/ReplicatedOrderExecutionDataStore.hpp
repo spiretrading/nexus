@@ -1,12 +1,9 @@
 #ifndef NEXUS_REPLICATED_ORDER_EXECUTION_DATA_STORE_HPP
 #define NEXUS_REPLICATED_ORDER_EXECUTION_DATA_STORE_HPP
-#include <iostream>
-#include <vector>
-#include <boost/atomic/atomic.hpp>
-#include "Nexus/OrderExecutionService/OrderExecutionDataStoreBox.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include <atomic>
+#include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Duplicates an OrderExecutionDataStore across multiple instances. */
   class ReplicatedOrderExecutionDataStore {
@@ -14,33 +11,32 @@ namespace Nexus::OrderExecutionService {
 
       /**
        * Constructs an empty ReplicatedOrderExecutionDataStore.
-       * @param primaryDataStore The primary data store to access.
-       * @param duplicateDataStores The data stores to replicate the primary to.
+       * @param primary_data_store The primary data store to access.
+       * @param duplicate_data_stores The data stores to replicate the primary
+       *        to.
        */
       ReplicatedOrderExecutionDataStore(
-        OrderExecutionDataStoreBox primaryDataStore,
-        std::vector<OrderExecutionDataStoreBox> duplicateDataStores);
+        OrderExecutionDataStore primary_data_store,
+        std::vector<OrderExecutionDataStore> duplicate_data_stores);
 
       ~ReplicatedOrderExecutionDataStore();
 
-      boost::optional<SequencedAccountOrderRecord> LoadOrder(OrderId id);
-
-      std::vector<SequencedOrderRecord> LoadOrderSubmissions(
-        const AccountQuery& query);
-
-      std::vector<SequencedExecutionReport> LoadExecutionReports(
-        const AccountQuery& query);
-
-      void Store(const SequencedAccountOrderInfo& orderInfo);
-
-      void Store(const SequencedAccountExecutionReport& executionReport);
-
-      void Close();
+      boost::optional<SequencedAccountOrderRecord>
+        load_order_record(OrderId id);
+      std::vector<SequencedOrderRecord>
+        load_order_records(const AccountQuery& query);
+      void store(const SequencedAccountOrderInfo& info);
+      void store(const std::vector<SequencedAccountOrderInfo>& info);
+      std::vector<SequencedExecutionReport>
+        load_execution_reports(const AccountQuery& query);
+      void store(const SequencedAccountExecutionReport& report);
+      void store(const std::vector<SequencedAccountExecutionReport>& reports);
+      void close();
 
     private:
-      OrderExecutionDataStoreBox m_primaryDataStore;
-      std::vector<OrderExecutionDataStoreBox> m_duplicateDataStores;
-      boost::atomic<std::size_t> m_nextDataStore;
+      OrderExecutionDataStore m_primary_data_store;
+      std::vector<OrderExecutionDataStore> m_duplicate_data_stores;
+      std::atomic_size_t m_next_data_store;
 
       ReplicatedOrderExecutionDataStore(
         const ReplicatedOrderExecutionDataStore&) = delete;
@@ -49,70 +45,86 @@ namespace Nexus::OrderExecutionService {
   };
 
   inline ReplicatedOrderExecutionDataStore::ReplicatedOrderExecutionDataStore(
-    OrderExecutionDataStoreBox primaryDataStore,
-    std::vector<OrderExecutionDataStoreBox> duplicateDataStores)
-    : m_primaryDataStore(std::move(primaryDataStore)),
-      m_duplicateDataStores(std::move(duplicateDataStores)),
-      m_nextDataStore(0) {}
+    OrderExecutionDataStore primary_data_store,
+    std::vector<OrderExecutionDataStore> duplicate_data_stores)
+    : m_primary_data_store(std::move(primary_data_store)),
+      m_duplicate_data_stores(std::move(duplicate_data_stores)),
+      m_next_data_store(0) {}
 
   inline ReplicatedOrderExecutionDataStore::
       ~ReplicatedOrderExecutionDataStore() {
-    Close();
+    close();
   }
 
   inline boost::optional<SequencedAccountOrderRecord>
-      ReplicatedOrderExecutionDataStore::LoadOrder(OrderId id) {
-    if(m_duplicateDataStores.empty()) {
-      return m_primaryDataStore.LoadOrder(id);
+      ReplicatedOrderExecutionDataStore::load_order_record(OrderId id) {
+    if(m_duplicate_data_stores.empty()) {
+      return m_primary_data_store.load_order_record(id);
     }
-    auto index = ++m_nextDataStore;
-    index = index % m_duplicateDataStores.size();
-    return m_duplicateDataStores[index].LoadOrder(id);
+    auto index = ++m_next_data_store;
+    index %= m_duplicate_data_stores.size();
+    return m_duplicate_data_stores[index].load_order_record(id);
   }
 
   inline std::vector<SequencedOrderRecord>
-      ReplicatedOrderExecutionDataStore::LoadOrderSubmissions(
+      ReplicatedOrderExecutionDataStore::load_order_records(
       const AccountQuery& query) {
-    if(m_duplicateDataStores.empty()) {
-      return m_primaryDataStore.LoadOrderSubmissions(query);
+    if(m_duplicate_data_stores.empty()) {
+      return m_primary_data_store.load_order_records(query);
     }
-    auto index = ++m_nextDataStore;
-    index = index % m_duplicateDataStores.size();
-    return m_duplicateDataStores[index].LoadOrderSubmissions(query);
+    auto index = ++m_next_data_store;
+    index %= m_duplicate_data_stores.size();
+    return m_duplicate_data_stores[index].load_order_records(query);
+  }
+
+  inline void ReplicatedOrderExecutionDataStore::store(
+      const SequencedAccountOrderInfo& info) {
+    m_primary_data_store.store(info);
+    for(auto& data_store : m_duplicate_data_stores) {
+      data_store.store(info);
+    }
+  }
+
+  inline void ReplicatedOrderExecutionDataStore::store(
+      const std::vector<SequencedAccountOrderInfo>& info) {
+    m_primary_data_store.store(info);
+    for(auto& data_store : m_duplicate_data_stores) {
+      data_store.store(info);
+    }
   }
 
   inline std::vector<SequencedExecutionReport>
-      ReplicatedOrderExecutionDataStore::LoadExecutionReports(
+      ReplicatedOrderExecutionDataStore::load_execution_reports(
       const AccountQuery& query) {
-    if(m_duplicateDataStores.empty()) {
-      return m_primaryDataStore.LoadExecutionReports(query);
+    if(m_duplicate_data_stores.empty()) {
+      return m_primary_data_store.load_execution_reports(query);
     }
-    auto index = ++m_nextDataStore;
-    index = index % m_duplicateDataStores.size();
-    return m_duplicateDataStores[index].LoadExecutionReports(query);
+    auto index = ++m_next_data_store;
+    index %= m_duplicate_data_stores.size();
+    return m_duplicate_data_stores[index].load_execution_reports(query);
   }
 
-  inline void ReplicatedOrderExecutionDataStore::Store(
-      const SequencedAccountOrderInfo& orderInfo) {
-    m_primaryDataStore.Store(orderInfo);
-    for(auto& dataStore : m_duplicateDataStores) {
-      dataStore.Store(orderInfo);
-    }
-  }
-
-  inline void ReplicatedOrderExecutionDataStore::Store(
-      const SequencedAccountExecutionReport& executionReport) {
-    m_primaryDataStore.Store(executionReport);
-    for(auto& dataStore : m_duplicateDataStores) {
-      dataStore.Store(executionReport);
+  inline void ReplicatedOrderExecutionDataStore::store(
+      const SequencedAccountExecutionReport& report) {
+    m_primary_data_store.store(report);
+    for(auto& data_store : m_duplicate_data_stores) {
+      data_store.store(report);
     }
   }
 
-  inline void ReplicatedOrderExecutionDataStore::Close() {
-    for(auto& dataStore : m_duplicateDataStores) {
-      dataStore.Close();
+  inline void ReplicatedOrderExecutionDataStore::store(
+      const std::vector<SequencedAccountExecutionReport>& reports) {
+    m_primary_data_store.store(reports);
+    for(auto& data_store : m_duplicate_data_stores) {
+      data_store.store(reports);
     }
-    m_primaryDataStore.Close();
+  }
+
+  inline void ReplicatedOrderExecutionDataStore::close() {
+    for(auto& data_store : m_duplicate_data_stores) {
+      data_store.close();
+    }
+    m_primary_data_store.close();
   }
 }
 

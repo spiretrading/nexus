@@ -27,32 +27,32 @@ namespace Spire {
 
   template<>
   struct ParserType<bool> {
-    typedef Beam::Parsers::BoolParser type;
+    typedef Beam::BoolParser type;
   };
 
   template<>
   struct ParserType<Nexus::Quantity> {
-    typedef Beam::Parsers::IntegralParser<Nexus::Quantity> type;
+    typedef Beam::IntegralParser<Nexus::Quantity> type;
   };
 
   template<>
   struct ParserType<double> {
-    typedef Beam::Parsers::DecimalParser<double> type;
+    typedef Beam::DecimalParser<double> type;
   };
 
   template<>
   struct ParserType<boost::posix_time::ptime> {
-    typedef Beam::Parsers::DateTimeParser type;
+    typedef Beam::DateTimeParser type;
   };
 
   template<>
   struct ParserType<boost::posix_time::time_duration> {
-    typedef Beam::Parsers::TimeDurationParser type;
+    typedef Beam::TimeDurationParser type;
   };
 
   template<>
   struct ParserType<std::string> {
-    typedef Beam::Parsers::StringParser type;
+    typedef Beam::StringParser type;
   };
 
   template<>

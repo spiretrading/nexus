@@ -5,6 +5,7 @@
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/DropDownList.hpp"
 #include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;

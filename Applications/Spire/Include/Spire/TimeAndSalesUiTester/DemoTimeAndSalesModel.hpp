@@ -2,7 +2,7 @@
 #define SPIRE_DEMO_TIME_AND_SALES_MODEL_HPP
 #include <vector>
 #include <QTimer>
-#include <Beam/Threading/LiveTimer.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 
@@ -51,7 +51,7 @@ namespace Spire {
       void set_data_random(bool is_random);
 
       QtPromise<std::vector<Entry>> query_until(
-        Beam::Queries::Sequence sequence, int max_count) override;
+        Beam::Sequence sequence, int max_count) override;
 
       boost::signals2::connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const override;
@@ -64,8 +64,7 @@ namespace Spire {
       boost::posix_time::time_duration m_query_duration;
       bool m_is_data_random;
       QTimer m_timer;
-      std::vector<std::shared_ptr<Beam::Threading::LiveTimer>>
-        m_query_duration_timers;
+      std::vector<std::shared_ptr<Beam::LiveTimer>> m_query_duration_timers;
 
       Entry make_entry(boost::posix_time::ptime timestamp) const;
       void on_timeout();

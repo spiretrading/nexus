@@ -18,19 +18,19 @@ namespace Spire {
       //! Constructs a SecurityNode with an initial value.
       /*!
         \param value The node's initial value.
-        \param marketDatabase The database of all available markets.
+        \param venueDatabase The database of all available venues.
       */
       SecurityNode(const Nexus::Security& value,
-        const Nexus::MarketDatabase& marketDatabase);
+        const Nexus::VenueDatabase& venueDatabase);
 
       //! Clones this CanvasNode with a new value.
       /*!
         \param value The new value.
-        \param marketDatabase The database of all available markets.
+        \param venueDatabase The database of all available venues.
         \return A clone of this CanvasNode with the specified <i>value</i>.
       */
       std::unique_ptr<SecurityNode> SetValue(const Nexus::Security& value,
-        const Nexus::MarketDatabase& marketDatabase) const;
+        const Nexus::VenueDatabase& venueDatabase) const;
 
       virtual void Apply(CanvasNodeVisitor& visitor) const;
 
@@ -40,15 +40,15 @@ namespace Spire {
       virtual std::unique_ptr<CanvasNode> Reset() const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void SecurityNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    ValueNode<SecurityType>::Shuttle(shuttle, version);
+  template<Beam::IsShuttle S>
+  void SecurityNode::shuttle(S& shuttle, unsigned int version) {
+    ValueNode<SecurityType>::shuttle(shuttle, version);
   }
 }
 

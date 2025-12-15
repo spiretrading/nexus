@@ -2,7 +2,6 @@
 #define SPIRE_PORTFOLIOVIEWERWINDOWSETTINGS_HPP
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 #include "Spire/UI/UI.hpp"
 #include "Spire/UI/WindowSettings.hpp"
@@ -34,7 +33,7 @@ namespace Spire {
         Beam::Out<QWidget> widget) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::string m_name;
       PortfolioViewerProperties m_properties;
       QByteArray m_geometry;
@@ -42,20 +41,20 @@ namespace Spire {
       QByteArray m_splitterState;
       QByteArray m_selectionTableHeaderState;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void PortfolioViewerWindowSettings::Shuttle(Shuttler& shuttle,
+  template<Beam::IsShuttle S>
+  void PortfolioViewerWindowSettings::shuttle(S& shuttle,
       unsigned int version) {
-    shuttle.Shuttle("name", m_name);
-    shuttle.Shuttle("properties", m_properties);
-    shuttle.Shuttle("geometry", m_geometry);
-    shuttle.Shuttle("portfolio_table_header_state",
+    shuttle.shuttle("name", m_name);
+    shuttle.shuttle("properties", m_properties);
+    shuttle.shuttle("geometry", m_geometry);
+    shuttle.shuttle("portfolio_table_header_state",
       m_portfolioTableHeaderState);
-    shuttle.Shuttle("splitter_state", m_splitterState);
-    shuttle.Shuttle("selection_table_header_state",
+    shuttle.shuttle("splitter_state", m_splitterState);
+    shuttle.shuttle("selection_table_header_state",
       m_selectionTableHeaderState);
   }
 }

@@ -5,11 +5,11 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <QWidget>
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 class Ui_GroupDirectoryItemWidget;
 
 namespace Spire {
+  class UserProfile;
 
   /*! \class GroupDirectoryItemWidget
       \brief Shows the main widget used to display a DirectoryItem for a group.
@@ -26,7 +26,7 @@ namespace Spire {
         \param flags Qt flags passed to the parent widget.
       */
       GroupDirectoryItemWidget(Beam::Ref<UserProfile> userProfile,
-        const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
+        const Beam::DirectoryEntry& directoryEntry,
         std::shared_ptr<ComplianceModel> complianceModel,
         QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 

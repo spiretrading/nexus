@@ -21,8 +21,8 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
-  /** The set of markets. */
-  marketDatabase: Nexus.MarketDatabase;
+  /** The set of venues. */
+  venueDatabase: Nexus.VenueDatabase;
 
   /** Indicates an entitlement has been clicked.
    * @param entitlement - The entitlement that was clicked.
@@ -167,7 +167,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
                   <ApplicabilityTable
                     entitlementEntry={this.props.entitlementEntry}
                     displaySize={this.props.displaySize}
-                    marketDatabase={this.props.marketDatabase}/>
+                    venueDatabase={this.props.venueDatabase}/>
                 </div>
               </div>)}
           </Transition>

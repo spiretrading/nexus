@@ -16,8 +16,6 @@
 #include "Spire/Toolbar/ToolbarWindow.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
 using namespace Spire::LegacyUI;
@@ -25,28 +23,29 @@ using namespace Spire::LegacyUI;
 void Spire::export_settings(UserSettings::Categories categories,
     const std::filesystem::path& path, const UserProfile& user_profile) {
   auto settings = UserSettings();
-  if(categories.Test(UserSettings::Category::BOOK_VIEW)) {
+  if(categories.test(UserSettings::Category::BOOK_VIEW)) {
+    /** TODO */
   }
-  if(categories.Test(UserSettings::Category::WATCHLIST)) {
+  if(categories.test(UserSettings::Category::WATCHLIST)) {
     settings.m_dashboards = user_profile.GetSavedDashboards();
   }
-  if(categories.Test(UserSettings::Category::ORDER_IMBALANCE_INDICATOR)) {
+  if(categories.test(UserSettings::Category::ORDER_IMBALANCE_INDICATOR)) {
     settings.m_order_imbalance_indicator_properties =
       user_profile.GetDefaultOrderImbalanceIndicatorProperties();
   }
-  if(categories.Test(UserSettings::Category::KEY_BINDINGS)) {
+  if(categories.test(UserSettings::Category::KEY_BINDINGS)) {
     settings.m_key_bindings = user_profile.GetKeyBindings();
   }
-  if(categories.Test(UserSettings::Category::PORTFOLIO)) {
+  if(categories.test(UserSettings::Category::PORTFOLIO)) {
     settings.m_portfolio_properties =
       user_profile.GetDefaultPortfolioViewerProperties();
   }
-  if(categories.Test(UserSettings::Category::TIME_AND_SALES)) {
+  if(categories.test(UserSettings::Category::TIME_AND_SALES)) {
     settings.m_time_and_sales_properties =
       user_profile.GetTimeAndSalesPropertiesWindowFactory()->
         get_properties()->get();
   }
-  if(categories.Test(UserSettings::Category::LAYOUT)) {
+  if(categories.test(UserSettings::Category::LAYOUT)) {
     auto layouts = std::vector<std::shared_ptr<WindowSettings>>();
     for(auto& widget : QApplication::topLevelWidgets()) {
       auto window = dynamic_cast<PersistentWindow*>(widget);
@@ -58,13 +57,13 @@ void Spire::export_settings(UserSettings::Categories categories,
   }
   try {
     auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
-    RegisterSpireTypes(Store(registry));
+    RegisterSpireTypes(out(registry));
     auto sender = JsonSender<SharedBuffer>(Ref(registry));
     auto buffer = SharedBuffer();
-    sender.SetSink(Ref(buffer));
-    sender.Shuttle(settings);
-    auto writer = BasicOStreamWriter<std::ofstream>(Initialize(path));
-    writer.Write(buffer);
+    sender.set(Ref(buffer));
+    sender.shuttle(settings);
+    auto writer = BasicOStreamWriter<std::ofstream>(init(path));
+    writer.write(buffer);
   } catch(const std::exception&) {
     throw std::runtime_error(
       QObject::tr("Unable to write to the specified path.").toStdString());
@@ -75,28 +74,27 @@ std::vector<QWidget*> Spire::import_settings(
     UserSettings::Categories categories, const std::filesystem::path& path,
     Out<UserProfile> user_profile) {
   auto settings = UserSettings();
-  if(categories.Test(UserSettings::Category::KEY_BINDINGS) &&
+  if(categories.test(UserSettings::Category::KEY_BINDINGS) &&
       settings.m_key_bindings) {
     settings.m_key_bindings = user_profile->GetKeyBindings();
   } else {
-    settings.m_key_bindings =
-      std::make_shared<KeyBindingsModel>(user_profile->GetMarketDatabase());;
+    settings.m_key_bindings = std::make_shared<KeyBindingsModel>();;
   }
   try {
-    auto reader = BasicIStreamReader<std::ifstream>(Initialize(path));
+    auto reader = BasicIStreamReader<std::ifstream>(init(path));
     auto buffer = SharedBuffer();
-    reader.Read(Store(buffer));
+    reader.read(out(buffer));
     auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
-    RegisterSpireTypes(Store(registry));
+    RegisterSpireTypes(out(registry));
     auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
-    receiver.SetSource(Ref(buffer));
-    receiver.Shuttle(settings);
+    receiver.set(Ref(buffer));
+    receiver.shuttle(settings);
   } catch(const std::exception&) {
     throw std::runtime_error(
       QObject::tr("Unable to read from the specified path.").toStdString());
   }
   auto windows = std::vector<QWidget*>();
-  if(categories.Test(UserSettings::Category::LAYOUT) && settings.m_layouts) {
+  if(categories.test(UserSettings::Category::LAYOUT) && settings.m_layouts) {
     for(auto& widget : QApplication::topLevelWidgets()) {
       if(dynamic_cast<PersistentWindow*>(widget) &&
           !dynamic_cast<ToolbarWindow*>(widget)) {
@@ -112,21 +110,22 @@ std::vector<QWidget*> Spire::import_settings(
       windows.push_back(window);
     }
   }
-  if(categories.Test(UserSettings::Category::WATCHLIST) &&
+  /** TODO: Book view. */
+  if(categories.test(UserSettings::Category::WATCHLIST) &&
       settings.m_dashboards) {
     user_profile->GetSavedDashboards() = *settings.m_dashboards;
   }
-  if(categories.Test(UserSettings::Category::ORDER_IMBALANCE_INDICATOR) &&
+  if(categories.test(UserSettings::Category::ORDER_IMBALANCE_INDICATOR) &&
       settings.m_order_imbalance_indicator_properties) {
     user_profile->SetDefaultOrderImbalanceIndicatorProperties(
       *settings.m_order_imbalance_indicator_properties);
   }
-  if(categories.Test(UserSettings::Category::PORTFOLIO) &&
+  if(categories.test(UserSettings::Category::PORTFOLIO) &&
       settings.m_portfolio_properties) {
     user_profile->SetDefaultPortfolioViewerProperties(
       *settings.m_portfolio_properties);
   }
-  if(categories.Test(UserSettings::Category::TIME_AND_SALES) &&
+  if(categories.test(UserSettings::Category::TIME_AND_SALES) &&
       settings.m_time_and_sales_properties) {
     user_profile->GetTimeAndSalesPropertiesWindowFactory()->
       get_properties()->set(*settings.m_time_and_sales_properties);

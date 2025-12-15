@@ -9,4 +9,3 @@ vector<unique_ptr<AccountViewItem>> AccountViewItem::LoadChildren(
     const UserProfile& userProfile) const {
   return vector<unique_ptr<AccountViewItem>>();
 }
-

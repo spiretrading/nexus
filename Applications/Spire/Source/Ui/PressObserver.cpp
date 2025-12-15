@@ -89,6 +89,6 @@ connection PressObserver::connect_press_start_signal(
 }
 
 connection PressObserver::connect_press_end_signal(
-    const PressStartSignal::slot_type& slot) const {
+    const PressEndSignal::slot_type& slot) const {
   return m_filter->m_press_end_signal.connect(slot);
 }

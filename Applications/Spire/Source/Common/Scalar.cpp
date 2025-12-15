@@ -12,13 +12,13 @@ namespace {
   const auto BASE = ptime(date(1970, Jan, 1), seconds(0));
 }
 
-Scalar::Scalar(Money value)
+Scalar::Scalar(Money value) noexcept
   : m_value(static_cast<Quantity>(value)) {}
 
-Scalar::Scalar(Quantity value)
+Scalar::Scalar(Quantity value) noexcept
   : m_value(value) {}
 
-Scalar::Scalar(ptime value) {
+Scalar::Scalar(ptime value) noexcept {
   if(value == not_a_date_time) {
     m_value = std::numeric_limits<Quantity>::quiet_NaN();
   } else if(value == pos_infin) {
@@ -31,7 +31,7 @@ Scalar::Scalar(ptime value) {
   }
 }
 
-Scalar::Scalar(time_duration value)
+Scalar::Scalar(time_duration value) noexcept
   : m_value(value.total_milliseconds()) {}
 
 Scalar::operator ptime() const {
@@ -48,30 +48,6 @@ Scalar::operator Quantity() const {
 
 Scalar::operator time_duration() const {
   return milliseconds(static_cast<std::int64_t>(m_value));
-}
-
-bool Scalar::operator <(Scalar rhs) const {
-  return m_value < rhs.m_value;
-}
-
-bool Scalar::operator <=(Scalar rhs) const {
-  return m_value <= rhs.m_value;
-}
-
-bool Scalar::operator ==(Scalar rhs) const {
-  return m_value == rhs.m_value;
-}
-
-bool Scalar::operator !=(Scalar rhs) const {
-  return m_value != rhs.m_value;
-}
-
-bool Scalar::operator >=(Scalar rhs) const {
-  return m_value >= rhs.m_value;
-}
-
-bool Scalar::operator >(Scalar rhs) const {
-  return m_value > rhs.m_value;
 }
 
 Scalar Scalar::operator +(Scalar rhs) const {

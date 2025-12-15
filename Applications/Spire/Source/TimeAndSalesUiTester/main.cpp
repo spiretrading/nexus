@@ -18,18 +18,19 @@ using namespace Spire;
 
 std::shared_ptr<SecurityInfoQueryModel> populate_securities() {
   auto security_infos = std::vector<SecurityInfo>();
-  security_infos.emplace_back(ParseSecurity("MRU.TSX"), "Metro Inc.", "", 0);
-  security_infos.emplace_back(ParseSecurity("MG.TSX"),
-    "Magna International Inc.", "", 0);
-  security_infos.emplace_back(ParseSecurity("MGA.TSX"),
-    "Mega Uranium Ltd.", "", 0);
-  security_infos.emplace_back(ParseSecurity("MGAB.TSX"),
+  security_infos.emplace_back(parse_security("MRU.TSX"), "Metro Inc.", "", 0);
+  security_infos.emplace_back(
+    parse_security("MG.TSX"), "Magna International Inc.", "", 0);
+  security_infos.emplace_back(
+    parse_security("MGA.TSX"), "Mega Uranium Ltd.", "", 0);
+  security_infos.emplace_back(parse_security("MGAB.TSX"),
     "Mackenzie Global Fixed Income Alloc ETF", "", 0);
-  security_infos.emplace_back(ParseSecurity("MON.NYSE"), "Monsanto Co.", "", 0);
-  security_infos.emplace_back(ParseSecurity("MFC.TSX"),
-    "Manulife Financial Corporation", "", 0);
-  security_infos.emplace_back(ParseSecurity("MX.TSX"),
-    "Methanex Corporation", "", 0);
+  security_infos.emplace_back(
+    parse_security("MON.NYSE"), "Monsanto Co.", "", 0);
+  security_infos.emplace_back(
+    parse_security("MFC.TSX"), "Manulife Financial Corporation", "", 0);
+  security_infos.emplace_back(
+    parse_security("MX.TSX"), "Methanex Corporation", "", 0);
   auto model = std::make_shared<LocalQueryModel<SecurityInfo>>();
   for(auto& security_info : security_infos) {
     model->add(to_text(security_info.m_security).toLower(), security_info);
@@ -180,8 +181,7 @@ struct TimeAndSalesWindowController {
   explicit TimeAndSalesWindowController(
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory)
 BEAM_SUPPRESS_THIS_INITIALIZER()
-      : m_time_and_sales_window(populate_securities(),
-          GetDefaultMarketDatabase(), std::move(factory),
+      : m_time_and_sales_window(populate_securities(), std::move(factory),
           std::bind_front(&TimeAndSalesWindowController::model_builder, this)),
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
         m_time_and_sales_test_window(

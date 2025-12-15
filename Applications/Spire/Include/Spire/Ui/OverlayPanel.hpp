@@ -1,10 +1,11 @@
 #ifndef SPIRE_OVERLAY_PANEL_HPP
 #define SPIRE_OVERLAY_PANEL_HPP
+#include <QWidget>
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/GlobalPositionObserver.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Box;
 
   /** 
    * Represents a overlay panel component which is used as a pop-up window
@@ -78,6 +79,7 @@ namespace Spire {
 
     private:
       QWidget* m_body;
+      Box* m_box;
       bool m_is_closed_on_focus_out;
       bool m_is_draggable;
       bool m_was_activated;

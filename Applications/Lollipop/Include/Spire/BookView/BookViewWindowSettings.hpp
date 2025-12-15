@@ -3,7 +3,6 @@
 #include <QByteArray>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/SecurityViewStack.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 #include "Spire/UI/WindowSettings.hpp"
@@ -35,7 +34,7 @@ namespace Spire {
         Beam::Out<QWidget> widget) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       BookViewProperties m_properties;
       Nexus::Security m_security;
       std::string m_name;
@@ -46,22 +45,22 @@ namespace Spire {
       QByteArray m_bidPanelHeader;
       QByteArray m_askPanelHeader;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void BookViewWindowSettings::Shuttle(Shuttler& shuttle,
+  template<Beam::IsShuttle S>
+  void BookViewWindowSettings::shuttle(S& shuttle,
       unsigned int version) {
-    shuttle.Shuttle("properties", m_properties);
-    shuttle.Shuttle("security", m_security);
-    shuttle.Shuttle("name", m_name);
-    shuttle.Shuttle("security_view_stack", m_securityViewStack);
-    shuttle.Shuttle("identifier", m_identifier);
-    shuttle.Shuttle("link_identifier", m_linkIdentifier);
-    shuttle.Shuttle("geometry", m_geometry);
-    shuttle.Shuttle("bid_panel_header", m_bidPanelHeader);
-    shuttle.Shuttle("ask_panel_header", m_askPanelHeader);
+    shuttle.shuttle("properties", m_properties);
+    shuttle.shuttle("security", m_security);
+    shuttle.shuttle("name", m_name);
+    shuttle.shuttle("security_view_stack", m_securityViewStack);
+    shuttle.shuttle("identifier", m_identifier);
+    shuttle.shuttle("link_identifier", m_linkIdentifier);
+    shuttle.shuttle("geometry", m_geometry);
+    shuttle.shuttle("bid_panel_header", m_bidPanelHeader);
+    shuttle.shuttle("ask_panel_header", m_askPanelHeader);
   }
 }
 

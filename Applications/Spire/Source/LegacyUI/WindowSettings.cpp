@@ -18,8 +18,6 @@
 #include "Spire/Ui/Window.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
 using namespace Spire::LegacyUI;
@@ -33,14 +31,14 @@ namespace {
     }
     try {
       auto reader = BasicIStreamReader<std::ifstream>(
-        Initialize(windowSettingsPath, std::ios::binary));
+        init(windowSettingsPath, std::ios::binary));
       auto buffer = SharedBuffer();
-      reader.Read(Store(buffer));
+      reader.read(out(buffer));
       auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-      RegisterSpireTypes(Store(typeRegistry));
+      RegisterSpireTypes(out(typeRegistry));
       auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-      receiver.SetSource(Ref(buffer));
-      receiver.Shuttle(windowSettings);
+      receiver.set(Ref(buffer));
+      receiver.shuttle(windowSettings);
     } catch(const std::exception&) {
       windowSettings.clear();
     }
@@ -60,14 +58,14 @@ std::vector<std::unique_ptr<WindowSettings>>
     return settings;
   }
   try {
-    auto reader = BasicIStreamReader<std::ifstream>(Initialize(file_path));
+    auto reader = BasicIStreamReader<std::ifstream>(init(file_path));
     auto buffer = SharedBuffer();
-    reader.Read(Store(buffer));
+    reader.read(out(buffer));
     auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
-    RegisterSpireTypes(Store(registry));
+    RegisterSpireTypes(out(registry));
     auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
-    receiver.SetSource(Ref(buffer));
-    receiver.Shuttle(settings);
+    receiver.set(Ref(buffer));
+    receiver.shuttle(settings);
   } catch(const std::exception&) {
     settings.clear();
   }
@@ -89,13 +87,13 @@ void WindowSettings::Save(const UserProfile& userProfile) {
   }
   try {
     auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
-    RegisterSpireTypes(Store(registry));
+    RegisterSpireTypes(out(registry));
     auto sender = JsonSender<SharedBuffer>(Ref(registry));
     auto buffer = SharedBuffer();
-    sender.SetSink(Ref(buffer));
-    sender.Shuttle(settings);
-    auto writer = BasicOStreamWriter<std::ofstream>(Initialize(settings_path));
-    writer.Write(buffer);
+    sender.set(Ref(buffer));
+    sender.shuttle(settings);
+    auto writer = BasicOStreamWriter<std::ofstream>(init(settings_path));
+    writer.write(buffer);
   } catch(const std::exception&) {
     throw std::runtime_error("Unable to save layout.");
   }

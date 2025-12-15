@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include <Beam/Collections/DereferenceIterator.hpp>
+#include <Beam/Collections/View.hpp>
 #include <boost/optional/optional_io.hpp>
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 #include "Spire/Canvas/Common/NoneNode.hpp"
@@ -18,6 +18,8 @@
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 
 using namespace Beam;
+using namespace boost;
+using namespace boost::mp11;
 using namespace Nexus;
 using namespace Spire;
 
@@ -26,16 +28,16 @@ namespace {
     public:
       TestSignatureNode() {
         struct Signatures {
-          using type = boost::mpl::list<
-            boost::mpl::vector<Quantity, Money, Money>,
-            boost::mpl::vector<Money, Quantity, Money>,
-            boost::mpl::vector<Quantity, Quantity, Quantity>>;
+          using type = mp_list<
+            mp_list<Quantity, Money, Money>,
+            mp_list<Money, Quantity, Money>,
+            mp_list<Quantity, Quantity, Quantity>>;
         };
         m_signatures = MakeSignatures<Signatures>();
         SetText("TestSignature");
-        auto type = UnionType::Create(
-          MakeDereferenceView(std::vector<std::shared_ptr<NativeType>>{
-            MoneyType::GetInstance(), IntegerType::GetInstance()}));
+        auto members = std::vector<std::shared_ptr<NativeType>>{
+          MoneyType::GetInstance(), IntegerType::GetInstance()};
+        auto type = UnionType::Create(make_dereference_view(members));
         AddChild("p1", MakeDefaultCanvasNode(*type));
         AddChild("p2", MakeDefaultCanvasNode(*type));
         SetType(*type);
@@ -78,9 +80,9 @@ TEST_SUITE("SignatureNode") {
     auto node =
       std::unique_ptr<CanvasNode>(std::make_unique<TestSignatureNode>());
     node = node->Replace("p1", std::make_unique<IntegerNode>(0));
-    auto expectedType = UnionType::Create(
-      MakeDereferenceView(std::vector<std::shared_ptr<NativeType>>{
-        IntegerType::GetInstance(), MoneyType::GetInstance()}));
+    auto members = std::vector<std::shared_ptr<NativeType>>{
+        IntegerType::GetInstance(), MoneyType::GetInstance()};
+    auto expectedType = UnionType::Create(make_dereference_view(members));
     REQUIRE(node->GetType().GetCompatibility(*expectedType) ==
       CanvasType::Compatibility::EQUAL);
     node = node->Replace("p2", std::make_unique<TimerNode>());
@@ -96,9 +98,10 @@ TEST_SUITE("SignatureNode") {
     node = node->Replace("p1", std::make_unique<MoneyNode>(3 * Money::CENT));
     REQUIRE(node->GetType().GetCompatibility(MoneyType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL);
-    auto p2 = NoneNode().Convert(*UnionType::Create(
-      MakeDereferenceView(std::vector<std::shared_ptr<NativeType>>{
-        IntegerType::GetInstance(), MoneyType::GetInstance()})));
+    auto members = std::vector<std::shared_ptr<NativeType>>{
+        IntegerType::GetInstance(), MoneyType::GetInstance()};
+    auto p2 =
+      NoneNode().Convert(*UnionType::Create(make_dereference_view(members)));
     node = node->Replace("p2", std::move(p2));
     REQUIRE(node->GetType().GetCompatibility(MoneyType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL);
@@ -116,9 +119,9 @@ TEST_SUITE("SignatureNode") {
     auto node =
       std::unique_ptr<CanvasNode>(std::make_unique<AdditionNode>());
     node = node->Replace("left", std::make_unique<IntegerNode>(711));
-    auto expectedType = UnionType::Create(
-      MakeDereferenceView(std::vector<std::shared_ptr<NativeType>>{
-        DecimalType::GetInstance(), IntegerType::GetInstance()}));
+    auto members = std::vector<std::shared_ptr<NativeType>>{
+        DecimalType::GetInstance(), IntegerType::GetInstance()};
+    auto expectedType = UnionType::Create(make_dereference_view(members));
     REQUIRE(node->GetType().GetCompatibility(*expectedType) ==
       CanvasType::Compatibility::EQUAL);
     node = node->Replace("right", std::make_unique<MultiplicationNode>());
@@ -135,9 +138,9 @@ TEST_SUITE("SignatureNode") {
       std::unique_ptr<CanvasNode>(std::make_unique<AdditionNode>());
     auto initialType = std::shared_ptr<CanvasType>(node->GetType());
     node = node->Replace("left", std::make_unique<IntegerNode>(711));
-    auto expectedType = UnionType::Create(
-      MakeDereferenceView(std::vector<std::shared_ptr<NativeType>>{
-        DecimalType::GetInstance(), IntegerType::GetInstance()}));
+    auto members = std::vector<std::shared_ptr<NativeType>>{
+        DecimalType::GetInstance(), IntegerType::GetInstance()};
+    auto expectedType = UnionType::Create(make_dereference_view(members));
     REQUIRE(node->GetType().GetCompatibility(*expectedType) ==
       CanvasType::Compatibility::EQUAL);
     node = node->Replace("left", std::make_unique<NoneNode>());

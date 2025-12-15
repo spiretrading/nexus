@@ -106,6 +106,7 @@ ContextMenu::ContextMenu(QWidget& parent, ItemViewBuilder item_view_builder)
       m_visible_submenu(nullptr),
       m_pending_submenu_index(-1),
       m_hide_count(0),
+      m_last_show_items(0),
       m_block_move(0),
       m_mouse_observer(*this) {
   setAttribute(Qt::WA_Hover);
@@ -182,8 +183,17 @@ void ContextMenu::reset() {
   clear(*m_list);
 }
 
+int ContextMenu::get_count() const {
+  return m_list->get_size();
+}
+
 QWidget* ContextMenu::get_menu_item(int index) {
   return m_list_view->get_list_item(index);
+}
+
+connection ContextMenu::connect_current_signal(
+    const CurrentSignal::slot_type& slot) const {
+  return m_list_view->get_current()->connect_update_signal(slot);
 }
 
 connection ContextMenu::connect_submit_signal(
@@ -238,7 +248,11 @@ bool ContextMenu::eventFilter(QObject* watched, QEvent* event) {
 
 bool ContextMenu::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
+    if(m_last_show_items != m_list_view->get_list()->get_size()) {
+      m_window->setWindowOpacity(0.0);
+    }
     m_window->show();
+    m_last_show_items = m_list_view->get_list()->get_size();
     setFocus(Qt::PopupFocusReason);
     if(m_list->get_size() == 0) {
       QTimer::singleShot(10, [=] { m_window->hide(); });
@@ -264,6 +278,7 @@ void ContextMenu::hideEvent(QHideEvent* event) {
 }
 
 void ContextMenu::resizeEvent(QResizeEvent* event) {
+  m_window->setWindowOpacity(1.0);
   if(!m_window->updatesEnabled() &&
       event->size().height() >= scale_height(10)) {
     m_window->setUpdatesEnabled(true);

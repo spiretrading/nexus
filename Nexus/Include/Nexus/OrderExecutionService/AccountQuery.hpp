@@ -6,44 +6,38 @@
 #include <Beam/Queries/SequencedValue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderInfo.hpp"
 #include "Nexus/OrderExecutionService/OrderRecord.hpp"
 
-namespace Nexus::OrderExecutionService {
-  using SequencedOrder = Beam::Queries::SequencedValue<const Order*>;
-  using SequencedOrderInfo = Beam::Queries::SequencedValue<OrderInfo>;
-  using SequencedOrderRecord = Beam::Queries::SequencedValue<OrderRecord>;
-  using SequencedExecutionReport =
-    Beam::Queries::SequencedValue<ExecutionReport>;
-  using AccountOrderInfo = Beam::Queries::IndexedValue<OrderInfo,
-    Beam::ServiceLocator::DirectoryEntry>;
-  using AccountOrderRecord = Beam::Queries::IndexedValue<OrderRecord,
-    Beam::ServiceLocator::DirectoryEntry>;
-  using AccountExecutionReport = Beam::Queries::IndexedValue<ExecutionReport,
-    Beam::ServiceLocator::DirectoryEntry>;
-  using SequencedAccountOrderInfo =
-    Beam::Queries::SequencedValue<AccountOrderInfo>;
-  using SequencedAccountOrderRecord =
-    Beam::Queries::SequencedValue<AccountOrderRecord>;
-  using SequencedAccountExecutionReport = Beam::Queries::SequencedValue<
-    AccountExecutionReport>;
+namespace Nexus {
+  using SequencedOrder = Beam::SequencedValue<std::shared_ptr<Order>>;
+  using SequencedOrderInfo = Beam::SequencedValue<OrderInfo>;
+  using SequencedOrderRecord = Beam::SequencedValue<OrderRecord>;
+  using SequencedExecutionReport = Beam::SequencedValue<ExecutionReport>;
+  using AccountOrderInfo = Beam::IndexedValue<OrderInfo, Beam::DirectoryEntry>;
+  using AccountOrderRecord =
+    Beam::IndexedValue<OrderRecord, Beam::DirectoryEntry>;
+  using AccountExecutionReport =
+    Beam::IndexedValue<ExecutionReport, Beam::DirectoryEntry>;
+  using SequencedAccountOrderInfo = Beam::SequencedValue<AccountOrderInfo>;
+  using SequencedAccountOrderRecord = Beam::SequencedValue<AccountOrderRecord>;
+  using SequencedAccountExecutionReport =
+    Beam::SequencedValue<AccountExecutionReport>;
 
   /** Defines the type of query used to receive Order submissions. */
-  using AccountQuery =
-    Beam::Queries::BasicQuery<Beam::ServiceLocator::DirectoryEntry>;
+  using AccountQuery = Beam::BasicQuery<Beam::DirectoryEntry>;
 }
 
-namespace Beam::Queries {
+namespace Beam {
   template<>
-  struct TimestampAccessor<Nexus::OrderExecutionService::OrderRecord> {
+  struct TimestampAccessor<Nexus::OrderRecord> {
     const boost::posix_time::ptime& operator ()(
-        const Nexus::OrderExecutionService::OrderRecord& value) const {
+        const Nexus::OrderRecord& value) const {
       return value.m_info.m_timestamp;
     }
 
-    boost::posix_time::ptime& operator ()(
-        Nexus::OrderExecutionService::OrderRecord& value) const {
+    boost::posix_time::ptime& operator ()(Nexus::OrderRecord& value) const {
       return value.m_info.m_timestamp;
     }
   };

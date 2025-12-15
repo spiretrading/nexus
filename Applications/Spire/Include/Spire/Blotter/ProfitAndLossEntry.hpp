@@ -4,7 +4,7 @@
 #include <boost/signals2/connection.hpp>
 #include <QWidget>
 #include "Spire/Blotter/Blotter.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 namespace Spire {
 

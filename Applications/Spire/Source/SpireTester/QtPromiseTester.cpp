@@ -37,12 +37,12 @@ TEST_SUITE("QtPromise") {
         return 123;
       }).then([] (auto result) {
         return QtPromise([=] {
-          return 2 * result.Get();
+          return 2 * result.get();
         }).then([] (auto result) {
-          return 3 * result.Get();
+          return 3 * result.get();
         });
       }).then([] (auto result) {
-        return 6 * result.Get();
+        return 6 * result.get();
       });
       auto result = wait(std::move(promise));
       REQUIRE(result == 4428);
@@ -53,7 +53,7 @@ TEST_SUITE("QtPromise") {
     run_test([] {
       auto promise1 = QtPromise([] { return 5; });
       auto promise2 = promise1.then([] (auto&& result) {
-        return 7 + result.Get();
+        return 7 + result.get();
       });
       auto result = wait(std::move(promise2));
       REQUIRE(result == 12);

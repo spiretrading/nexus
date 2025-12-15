@@ -3,7 +3,6 @@
 
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 AggregateBookViewModel::AggregateBookViewModel(
@@ -13,7 +12,7 @@ AggregateBookViewModel::AggregateBookViewModel(
   std::shared_ptr<UserOrderListModel> ask_orders,
   std::shared_ptr<PreviewOrderModel> preview_order,
   std::shared_ptr<BboQuoteModel> bbo_quote,
-  std::shared_ptr<SecurityTechnicalsValueModel> technicals)
+  std::shared_ptr<SecurityTechnicalsModel> technicals)
   : m_bids(std::move(bids)),
     m_asks(std::move(asks)),
     m_bid_orders(std::move(bid_orders)),
@@ -52,7 +51,7 @@ const std::shared_ptr<BboQuoteModel>&
   return m_bbo_quote;
 }
 
-const std::shared_ptr<SecurityTechnicalsValueModel>&
+const std::shared_ptr<SecurityTechnicalsModel>&
     AggregateBookViewModel::get_technicals() const {
   return m_technicals;
 }
@@ -66,5 +65,5 @@ std::shared_ptr<AggregateBookViewModel>
     std::make_shared<ArrayListModel<AggregateBookViewModel::UserOrder>>(),
     std::make_shared<LocalValueModel<optional<OrderFields>>>(),
     std::make_shared<LocalBboQuoteModel>(),
-    std::make_shared<LocalSecurityTechnicalsValueModel>());
+    std::make_shared<LocalSecurityTechnicalsModel>());
 }

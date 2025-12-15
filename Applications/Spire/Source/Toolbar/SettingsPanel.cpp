@@ -46,7 +46,7 @@ SettingsPanel::SettingsPanel(Mode mode,
   });
   auto settings_list =
     std::make_shared<ArrayListModel<UserSettings::Category>>();
-  auto& settings_bitset = m_categories->get().GetBitset();
+  auto& settings_bitset = m_categories->get().get_bitset();
   for(auto i = 0; i < static_cast<int>(settings_bitset.size()); ++i) {
     settings_list->push(static_cast<UserSettings::Category>(i));
   }
@@ -149,7 +149,7 @@ bool SettingsPanel::event(QEvent* event) {
 }
 
 void SettingsPanel::on_update(const UserSettings::Categories& categories) {
-  m_commit_button->setEnabled(categories.GetBitset().count() != 0);
+  m_commit_button->setEnabled(categories.get_bitset().count() != 0);
 }
 
 void SettingsPanel::on_cancel() {

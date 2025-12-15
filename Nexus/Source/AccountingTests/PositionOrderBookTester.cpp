@@ -1,154 +1,250 @@
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/PositionOrderBook.hpp"
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
+#include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::Accounting;
-using namespace Nexus::OrderExecutionService;
-
-namespace {
-  const auto SECURITY_A = Security("TST", DefaultMarkets::NASDAQ(),
-    DefaultCountries::US());
-
-  auto MakeOrderFields(Side side, Quantity quantity, Money price) {
-    return OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
-      SECURITY_A, DefaultCurrencies::USD(), side, "NYSE", quantity, price);
-  }
-
-  auto AddOrder(OrderId id, const OrderFields& fields,
-      PositionOrderBook& book) {
-    auto order = std::make_shared<PrimitiveOrder>(OrderInfo{fields, id,
-      second_clock::universal_time()});
-    book.Add(*order);
-    return order;
-  }
-
-  void Fill(PrimitiveOrder& order, PositionOrderBook& book, Quantity quantity,
-      Money price) {
-    order.With(
-      [&] (OrderStatus status,
-          const std::vector<ExecutionReport>& executionReports) {
-        auto update = ExecutionReport::MakeUpdatedReport(
-          executionReports.back(), OrderStatus::FILLED,
-          second_clock::universal_time());
-        update.m_lastQuantity = quantity;
-        update.m_lastPrice = price;
-        book.Update(update);
-      });
-  }
-
-  void Cancel(PrimitiveOrder& order, PositionOrderBook& book) {
-    order.With(
-      [&] (OrderStatus status,
-          const std::vector<ExecutionReport>& executionReports) {
-        auto update = ExecutionReport::MakeUpdatedReport(
-          executionReports.back(), OrderStatus::CANCELED,
-          second_clock::universal_time());
-        book.Update(update);
-      });
-  }
-
-  void AssertOpeningOrders(const std::vector<const Order*>& openingOrders,
-      const std::vector<const Order*>& expectedOrders) {
-    REQUIRE(expectedOrders.size() == openingOrders.size());
-    for(auto expectedOrder : expectedOrders) {
-      REQUIRE(find(openingOrders.begin(),
-        openingOrders.end(), expectedOrder) != openingOrders.end());
-    }
-  }
-}
+using namespace Nexus::DefaultVenues;
+using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::Tests;
 
 TEST_SUITE("PositionOrderBook") {
-  TEST_CASE("bid_opening_order_submission") {
+  TEST_CASE("constructor") {
     auto book = PositionOrderBook();
-    auto orderFieldsA = MakeOrderFields(Side::BID, 100, Money::ONE);
-    REQUIRE(book.TestOpeningOrderSubmission(orderFieldsA));
-    auto orderA = AddOrder(1, orderFieldsA, book);
-    Fill(*orderA, book, orderA->GetInfo().m_fields.m_quantity,
-      orderA->GetInfo().m_fields.m_price);
-    auto orderFieldsB = MakeOrderFields(Side::BID, 100, Money::ONE);
-    REQUIRE(book.TestOpeningOrderSubmission(orderFieldsB));
-    auto orderFieldsC = MakeOrderFields(Side::ASK, 100, Money::ONE);
-    REQUIRE(!book.TestOpeningOrderSubmission(orderFieldsC));
-    auto orderC = AddOrder(2, orderFieldsC, book);
-    auto orderFieldsD = MakeOrderFields(Side::ASK, 100, Money::ONE);
-    REQUIRE(book.TestOpeningOrderSubmission(orderFieldsD));
-    Fill(*orderC, book, orderC->GetInfo().m_fields.m_quantity,
-      orderC->GetInfo().m_fields.m_price);
-    auto orderFieldsE = MakeOrderFields(Side::BID, 100, Money::ONE);
-    REQUIRE(book.TestOpeningOrderSubmission(orderFieldsE));
-    auto orderFieldsF = MakeOrderFields(Side::ASK, 100, Money::ONE);
-    REQUIRE(book.TestOpeningOrderSubmission(orderFieldsF));
+    REQUIRE(book.get_positions().empty());
+    REQUIRE(book.get_live_orders().empty());
+    REQUIRE(book.get_opening_orders().empty());
   }
 
-  TEST_CASE("ask_opening_order_submission") {
-    auto book = PositionOrderBook();
-    auto orderFieldsA = MakeOrderFields(Side::ASK, 100, Money::ONE);
-    REQUIRE(book.TestOpeningOrderSubmission(orderFieldsA));
-    auto orderA = AddOrder(1, orderFieldsA, book);
-    Fill(*orderA, book, orderA->GetInfo().m_fields.m_quantity,
-      orderA->GetInfo().m_fields.m_price);
-    auto orderFieldsB = MakeOrderFields(Side::ASK, 100, Money::ONE);
-    REQUIRE(book.TestOpeningOrderSubmission(orderFieldsB));
-    auto orderFieldsC = MakeOrderFields(Side::BID, 100, Money::ONE);
-    REQUIRE(!book.TestOpeningOrderSubmission(orderFieldsC));
-    auto orderC = AddOrder(2, orderFieldsC, book);
-    auto orderFieldsD = MakeOrderFields(Side::BID, 100, Money::ONE);
-    REQUIRE(book.TestOpeningOrderSubmission(orderFieldsD));
-    Fill(*orderC, book, orderC->GetInfo().m_fields.m_quantity,
-      orderC->GetInfo().m_fields.m_price);
-    auto orderFieldsE = MakeOrderFields(Side::ASK, 100, Money::ONE);
-    REQUIRE(book.TestOpeningOrderSubmission(orderFieldsE));
-    auto orderFieldsF = MakeOrderFields(Side::BID, 100, Money::ONE);
-    REQUIRE(book.TestOpeningOrderSubmission(orderFieldsF));
+  TEST_CASE("initial_positions_population") {
+    auto security = Security("TST", TSX);
+    auto inventory = Inventory(Position(security, CAD, 100, 100 * Money::ONE),
+      Money::ZERO, Money::ZERO, 100, 1);
+    auto book = PositionOrderBook(View(std::vector{inventory}));
+    auto positions = book.get_positions();
+    REQUIRE(positions.size() == 1);
+    REQUIRE(positions.front().m_security == security);
+    REQUIRE(positions.front().m_quantity == 100);
   }
 
-  TEST_CASE("removing_orders") {
+  TEST_CASE("add_order_increases_live_orders") {
     auto book = PositionOrderBook();
-    auto orderFieldsA = MakeOrderFields(Side::ASK, 100, Money::ONE);
-    auto orderA = AddOrder(1, orderFieldsA, book);
-    auto orderFieldsB = MakeOrderFields(Side::ASK, 100, Money::ONE);
-    auto orderB = AddOrder(2, orderFieldsA, book);
-    Fill(*orderA, book, orderA->GetInfo().m_fields.m_quantity,
-      orderA->GetInfo().m_fields.m_price);
-    Cancel(*orderB, book);
-    auto orderFieldsC = MakeOrderFields(Side::BID, 200, Money::ONE);
-    auto orderC = AddOrder(3, orderFieldsC, book);
-    Fill(*orderC, book, orderC->GetInfo().m_fields.m_quantity,
-      orderC->GetInfo().m_fields.m_price);
-    auto orderFieldsD = MakeOrderFields(Side::ASK, 200, Money::ONE);
-    REQUIRE(book.TestOpeningOrderSubmission(orderFieldsD));
+    auto security = Security("TST", TSX);
+    auto fields =
+      make_limit_order_fields(security, CAD, Side::BID, "TSX", 50, Money::ONE);
+    auto info =
+      OrderInfo(fields, 1, false, time_from_string("2024-07-21 10:15:00.000"));
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    book.add(order);
+    auto live_orders = book.get_live_orders();
+    REQUIRE(live_orders.size() == 1);
+    REQUIRE(live_orders.front() == order);
   }
 
-  TEST_CASE("get_opening_orders") {
+  TEST_CASE("add_order_opening_vs_closing") {
+    auto security = Security("TST", TSX);
+    auto inventory = Inventory(Position(security, CAD, 100, 100 * Money::ONE),
+      Money::ZERO, Money::ZERO, 100, 1);
+    auto book = PositionOrderBook(View(std::vector{inventory}));
+    auto opening_fields =
+      make_limit_order_fields(security, CAD, Side::BID, "TSX", 50, Money::ONE);
+    auto closing_fields =
+      make_limit_order_fields(security, CAD, Side::ASK, "TSX", 50, Money::ONE);
+    REQUIRE(book.test_opening_order_submission(opening_fields));
+    REQUIRE(!book.test_opening_order_submission(closing_fields));
+  }
+
+  TEST_CASE("update_order_execution_report_changes_position") {
+    auto security = Security("TST", TSX);
     auto book = PositionOrderBook();
-    auto orderFieldsA = MakeOrderFields(Side::BID, 100, Money::ONE);
-    auto orderA = AddOrder(1, orderFieldsA, book);
-    AssertOpeningOrders(book.GetOpeningOrders(), {orderA.get()});
-    auto orderFieldsB = MakeOrderFields(Side::ASK, 100, Money::ONE);
-    auto orderB = AddOrder(2, orderFieldsB, book);
-    AssertOpeningOrders(book.GetOpeningOrders(), {orderA.get(), orderB.get()});
-    Fill(*orderA, book, orderA->GetInfo().m_fields.m_quantity,
-      orderA->GetInfo().m_fields.m_price);
-    AssertOpeningOrders(book.GetOpeningOrders(), {});
-    auto orderFieldsC = MakeOrderFields(Side::ASK, 100, Money::ONE);
-    auto orderC = AddOrder(3, orderFieldsC, book);
-    AssertOpeningOrders(book.GetOpeningOrders(), {orderC.get()});
-    Fill(*orderC, book, orderC->GetInfo().m_fields.m_quantity,
-      orderC->GetInfo().m_fields.m_price);
-    AssertOpeningOrders(book.GetOpeningOrders(), {orderB.get()});
-    Fill(*orderB, book, orderB->GetInfo().m_fields.m_quantity,
-      orderB->GetInfo().m_fields.m_price);
-    AssertOpeningOrders(book.GetOpeningOrders(), {});
-    auto orderFieldsD = MakeOrderFields(Side::BID, 200, Money::ONE);
-    auto orderD = AddOrder(4, orderFieldsD, book);
-    AssertOpeningOrders(book.GetOpeningOrders(), {orderD.get()});
+    auto fields =
+      make_limit_order_fields(security, CAD, Side::BID, "TSX", 50, Money::ONE);
+    auto info =
+      OrderInfo(fields, 1, false, time_from_string("2024-07-21 10:15:00.000"));
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    book.add(order);
+    book.update(accept(*order));
+    book.update(fill(*order, 50));
+    auto positions = book.get_positions();
+    REQUIRE(positions.size() == 1);
+    REQUIRE(positions.front().m_security == security);
+    REQUIRE(positions.front().m_quantity == 50);
+    auto live_orders = book.get_live_orders();
+    REQUIRE(live_orders.empty());
+  }
+
+  TEST_CASE("multiple_orders_same_security") {
+    auto security = Security("TST", TSX);
+    auto book = PositionOrderBook();
+    auto fields1 =
+      make_limit_order_fields(security, CAD, Side::BID, "TSX", 30, Money::ONE);
+    auto info1 =
+      OrderInfo(fields1, 1, false, time_from_string("2024-07-21 10:15:00.000"));
+    auto order1 = std::make_shared<PrimitiveOrder>(info1);
+    book.add(order1);
+    auto fields2 =
+      make_limit_order_fields(security, CAD, Side::BID, "TSX", 20, Money::ONE);
+    auto info2 =
+      OrderInfo(fields2, 2, false, time_from_string("2024-07-21 10:25:00.000"));
+    auto order2 = std::make_shared<PrimitiveOrder>(info2);
+    book.add(order2);
+    book.update(accept(*order1));
+    book.update(fill(*order1, 30));
+    book.update(accept(*order2));
+    book.update(fill(*order2, 20));
+    auto positions = book.get_positions();
+    REQUIRE(positions.size() == 1);
+    REQUIRE(positions.front().m_security == security);
+    REQUIRE(positions.front().m_quantity == 50);
+    auto live_orders = book.get_live_orders();
+    REQUIRE(live_orders.empty());
+  }
+
+  TEST_CASE("get_opening_orders_returns_correct_orders") {
+    auto security = Security("TST", TSX);
+    auto book = PositionOrderBook();
+    auto fields =
+      make_limit_order_fields(security, CAD, Side::BID, "TSX", 50, Money::ONE);
+    auto info =
+      OrderInfo(fields, 1, false, time_from_string("2024-07-21 10:15:00.000"));
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    book.add(order);
+    book.update(accept(*order));
+    auto opening_orders = book.get_opening_orders();
+    REQUIRE(opening_orders.size() == 1);
+    REQUIRE(opening_orders.front() == order);
+  }
+
+  TEST_CASE("get_positions_returns_nonzero_positions") {
+    auto security1 = Security("TST", TSX);
+    auto security2 = Security("ABC", TSX);
+    auto book = PositionOrderBook();
+    auto fields1 =
+      make_limit_order_fields(security1, CAD, Side::BID, "TSX", 50, Money::ONE);
+    auto info1 =
+      OrderInfo(fields1, 1, false, time_from_string("2024-07-21 10:15:00.000"));
+    auto order1 = std::make_shared<PrimitiveOrder>(info1);
+    book.add(order1);
+    book.update(accept(*order1));
+    book.update(fill(*order1, 50));
+    auto fields2 =
+      make_limit_order_fields(security2, CAD, Side::BID, "TSX", 0, Money::ONE);
+    auto info2 =
+      OrderInfo(fields2, 2, false, time_from_string("2024-07-21 10:35:00.000"));
+    auto order2 = std::make_shared<PrimitiveOrder>(info2);
+    book.add(order2);
+    book.update(accept(*order2));
+    auto positions = book.get_positions();
+    REQUIRE(positions.size() == 1);
+    REQUIRE(positions.front().m_security == security1);
+    REQUIRE(positions.front().m_quantity == 50);
+  }
+
+  TEST_CASE("partial_fill_updates_remaining_quantity") {
+    auto security = Security("TST", TSX);
+    auto book = PositionOrderBook();
+    auto fields =
+      make_limit_order_fields(security, CAD, Side::BID, "TSX", 100, Money::ONE);
+    auto info =
+      OrderInfo(fields, 1, false, time_from_string("2024-07-21 10:15:00.000"));
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    book.add(order);
+    book.update(accept(*order));
+    book.update(fill(*order, 40));
+    auto live_orders = book.get_live_orders();
+    REQUIRE(live_orders.size() == 1);
+    book.update(fill(*order, 60));
+    live_orders = book.get_live_orders();
+    REQUIRE(live_orders.empty());
+    auto positions = book.get_positions();
+    REQUIRE(positions.size() == 1);
+    REQUIRE(positions.front().m_quantity == 100);
+  }
+
+  TEST_CASE("terminal_status_removes_order") {
+    auto security = Security("TST", TSX);
+    auto book = PositionOrderBook();
+    auto fields =
+      make_limit_order_fields(security, CAD, Side::BID, "TSX", 50, Money::ONE);
+    auto info =
+      OrderInfo(fields, 1, false, time_from_string("2024-07-21 10:15:00.000"));
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    book.add(order);
+    book.update(accept(*order));
+    book.update(reject(*order));
+    auto live_orders = book.get_live_orders();
+    REQUIRE(live_orders.empty());
+  }
+
+  TEST_CASE("side_switching_orders") {
+    auto security = Security("TST", TSX);
+    auto book = PositionOrderBook();
+    auto fields_long =
+      make_limit_order_fields(security, CAD, Side::BID, "TSX", 100, Money::ONE);
+    auto info_long = OrderInfo(
+      fields_long, 1, false, time_from_string("2024-07-21 10:15:00.000"));
+    auto order_long = std::make_shared<PrimitiveOrder>(info_long);
+    book.add(order_long);
+    book.update(accept(*order_long));
+    book.update(fill(*order_long, 100));
+    auto fields_short =
+      make_limit_order_fields(security, CAD, Side::ASK, "TSX", 150, Money::ONE);
+    auto info_short = OrderInfo(
+      fields_short, 2, false, time_from_string("2024-07-21 10:25:00.000"));
+    auto order_short = std::make_shared<PrimitiveOrder>(info_short);
+    book.add(order_short);
+    book.update(accept(*order_short));
+    book.update(fill(*order_short, 150));
+    auto positions = book.get_positions();
+    REQUIRE(positions.size() == 1);
+    REQUIRE(positions.front().m_quantity == -50);
+  }
+
+  TEST_CASE("open_quantity_tracking") {
+    auto security = Security("TST", TSX);
+    auto book = PositionOrderBook();
+    auto fields_bid =
+      make_limit_order_fields(security, CAD, Side::BID, "TSX", 100, Money::ONE);
+    auto info_bid = OrderInfo(
+      fields_bid, 1, false, time_from_string("2024-07-21 10:15:00.000"));
+    auto order_bid = std::make_shared<PrimitiveOrder>(info_bid);
+    book.add(order_bid);
+    book.update(accept(*order_bid));
+    book.update(fill(*order_bid, 100));
+    auto fields_ask =
+      make_limit_order_fields(security, CAD, Side::ASK, "TSX", 50, Money::ONE);
+    auto info_ask = OrderInfo(
+      fields_ask, 2, false, time_from_string("2024-07-21 10:16:00.000"));
+    auto order_ask = std::make_shared<PrimitiveOrder>(info_ask);
+    book.add(order_ask);
+    book.update(accept(*order_ask));
+    book.update(fill(*order_ask, 50));
+    auto positions = book.get_positions();
+    REQUIRE(positions.size() == 1);
+    REQUIRE(positions.front().m_quantity == 50);
+  }
+
+  TEST_CASE("order_sequence_numbering") {
+    auto security = Security("TST", TSX);
+    auto book = PositionOrderBook();
+    auto fields1 =
+      make_limit_order_fields(security, CAD, Side::BID, "TSX", 10, Money::ONE);
+    auto info1 =
+      OrderInfo(fields1, 1, false, time_from_string("2024-07-21 10:15:00.000"));
+    auto order1 = std::make_shared<PrimitiveOrder>(info1);
+    book.add(order1);
+    auto fields2 =
+      make_limit_order_fields(security, CAD, Side::BID, "TSX", 20, Money::ONE);
+    auto info2 =
+      OrderInfo(fields2, 2, false, time_from_string("2024-07-21 10:25:00.000"));
+    auto order2 = std::make_shared<PrimitiveOrder>(info2);
+    book.add(order2);
+    auto live_orders = book.get_live_orders();
+    REQUIRE(live_orders.size() == 2);
+    REQUIRE(live_orders[0] == order1);
+    REQUIRE(live_orders[1] == order2);
   }
 }

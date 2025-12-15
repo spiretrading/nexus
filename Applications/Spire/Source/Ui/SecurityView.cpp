@@ -5,10 +5,9 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/SecurityDialog.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
@@ -41,7 +40,7 @@ SecurityView::SecurityView(std::shared_ptr<SecurityInfoQueryModel> securities,
     std::bind_front(&SecurityView::on_current, this));
   m_security_dialog.connect_submit_signal(
     std::bind_front(&SecurityView::on_submit, this));
-  if(m_current->get() != Security()) {
+  if(m_current->get()) {
     on_current(m_current->get());
   }
 }
@@ -105,7 +104,7 @@ void SecurityView::keyPressEvent(QKeyEvent* event) {
 }
 
 void SecurityView::on_current(const Security& security) {
-  if(security == Security()) {
+  if(!security) {
     return;
   }
   m_security_dialog.hide();

@@ -5,24 +5,49 @@
 #include "Nexus/Parsers/CountryParser.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Parsers;
 using namespace Nexus;
+using namespace Nexus::DefaultCountries;
 
 TEST_SUITE("CountryParser") {
   TEST_CASE("valid_country") {
-    auto parser = CountryParser();
-    auto stream = ParserStreamFromString("CAN");
+    auto parser = country_parser();
+    auto stream = to_parser_stream("CAN");
     auto country = CountryCode();
-    REQUIRE(parser.Read(stream, country));
-    REQUIRE(country == DefaultCountries::CA());
+    REQUIRE(parser.read(stream, country));
+    REQUIRE(country == CA);
   }
 
   TEST_CASE("invalid_country") {
-    auto parser = CountryParser();
-    auto stream = ParserStreamFromString("QQQQQ");
+    auto parser = country_parser();
+    auto stream = to_parser_stream("QQQQQ");
     auto country = CountryCode();
-    REQUIRE_FALSE(parser.Read(stream, country));
-    REQUIRE(country == CountryCode());
+    REQUIRE_FALSE(parser.read(stream, country));
+    REQUIRE(!country);
+  }
+
+  TEST_CASE("lowercase_country") {
+    auto parser = country_parser();
+    auto stream = to_parser_stream("can");
+    auto country = CountryCode();
+    REQUIRE_FALSE(parser.read(stream, country));
+    REQUIRE(!country);
+  }
+
+  TEST_CASE("partial_country") {
+    auto parser = country_parser();
+    auto stream = to_parser_stream("CA");
+    auto country = CountryCode();
+    REQUIRE_FALSE(parser.read(stream, country));
+    REQUIRE(!country);
+  }
+
+  TEST_CASE("multiple_countries") {
+    auto parser = country_parser();
+    auto stream = to_parser_stream("CANUSA");
+    auto country = CountryCode();
+    REQUIRE(parser.read(stream, country));
+    REQUIRE(country == CA);
+    REQUIRE(parser.read(stream, country));
+    REQUIRE(country == US);
   }
 }
