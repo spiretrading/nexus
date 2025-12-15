@@ -78,7 +78,7 @@ namespace Spire {
       QWidget* m_text_focus_proxy;
       FocusObserver m_focus_observer;
       std::unique_ptr<GlobalPositionObserver> m_text_box_position_observer;
-      Styles::Overflow m_list_view_overflow;
+      boost::optional<Styles::Overflow> m_list_view_overflow;
       QString m_placeholder;
       bool m_is_read_only;
       QMargins m_input_box_border;
@@ -89,6 +89,7 @@ namespace Spire {
       int m_min_scroll_height;
       int m_horizontal_scroll_bar_end_range;
       int m_vertical_scroll_bar_end_range;
+      bool m_is_transaction;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_view_style_connection;
       boost::signals2::scoped_connection m_text_area_box_style_connection;
@@ -97,6 +98,7 @@ namespace Spire {
       QWidget* make_tag(const std::shared_ptr<AnyListModel>& model, int index);
       int get_available_width() const;
       int get_height_for_width(int width) const;
+      void set_overflow(Styles::Overflow overflow);
       void install_text_proxy_event_filter();
       void scroll_to_text_box();
       void update_placeholder();

@@ -8,6 +8,7 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
 #include "Spire/Ui/TagComboBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost::iterators;
 using namespace boost::signals2;
@@ -16,20 +17,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  struct RegionHash {
-    std::size_t operator()(const Region& region) const {
-      auto seed = std::size_t(0);
-      boost::hash_combine(seed, boost::hash_range(
-        region.get_countries().begin(), region.get_countries().end()));
-      auto venues = region.get_venues();
-      boost::hash_combine(
-        seed, boost::hash_range(venues.begin(), venues.end()));
-      boost::hash_combine(seed, boost::hash_range(
-        region.get_securities().begin(), region.get_securities().end()));
-      return seed;
-    }
-  };
-
   std::vector<Region> to_tag_list(
       const Region& region, RegionQueryModel& regions) {
     auto tags = std::vector<Region>();
@@ -45,42 +32,81 @@ namespace {
     return tags;
   }
 
-  void sort(AnyListModel& list) {
-    auto comparator = [&] (const auto& lhs, const auto& rhs) {
-      auto lhs_region = std::any_cast<Region&&>(list.get(lhs));
-      auto rhs_region = std::any_cast<Region&&>(list.get(rhs));
-      if(!lhs_region.get_countries().empty() &&
-          !rhs_region.get_countries().empty()) {
-        return to_text(*lhs_region.get_countries().begin()) <
-          to_text(*rhs_region.get_countries().begin());
-      } else if(!lhs_region.get_venues().empty() &&
-          !rhs_region.get_venues().empty()) {
-        return to_text(*lhs_region.get_venues().begin()) <
-          to_text(*rhs_region.get_venues().begin());
-      } else if(!lhs_region.get_securities().empty() &&
-          !rhs_region.get_securities().empty()) {
-        return to_text(*lhs_region.get_securities().begin()) <
-          to_text(*rhs_region.get_securities().begin());
-      }
-      if(!lhs_region.get_countries().empty() ||
-          !rhs_region.get_countries().empty()) {
-        return !lhs_region.get_countries().empty();
-      }
-      if(!lhs_region.get_venues().empty() || !rhs_region.get_venues().empty()) {
-        return !lhs_region.get_venues().empty();
-      }
-      return true;
+  void sort(ListModel<Region>& list) {
+    enum class EntryType : std::uint8_t {
+      COUNTRY,
+      VENUE,
+      SECURITY,
+      NONE
     };
-    list.transact([&] {
-      for(auto i = 0; i < list.get_size(); ++i) {
-        auto index = *std::upper_bound(
-          make_counting_iterator(0), make_counting_iterator(i), i,
-          [&] (auto lhs, auto rhs) {
-            return comparator(lhs, rhs);
-          });
-        if(index != i) {
-          list.move(i, index);
+    struct Entry {
+      int m_index;
+      EntryType m_type;
+      QString m_key;
+
+      Entry()
+        : m_index(0),
+          m_type(EntryType::NONE) {
+      }
+    };
+    auto size = list.get_size();
+    if(size <= 1) {
+      return;
+    }
+    auto entries = std::vector<Entry>();
+    entries.reserve(size);
+    for(auto i = 0; i < size; ++i) {
+      auto entry = Entry();
+      entry.m_index = i;
+      auto& region = list.get(i);
+      auto& countries = region.get_countries();
+      auto& venues = region.get_venues();
+      auto& securities = region.get_securities();
+      if(!countries.empty()) {
+        entry.m_type = EntryType::COUNTRY;
+        entry.m_key = to_text(*countries.begin());
+      } else if(!venues.empty()) {
+        entry.m_type = EntryType::VENUE;
+        entry.m_key = to_text(*venues.begin());
+      } else if(!securities.empty()) {
+        entry.m_type = EntryType::SECURITY;
+        entry.m_key = to_text(*securities.begin());
+      } else {
+        entry.m_type = EntryType::NONE;
+      }
+      entries.emplace_back(std::move(entry));
+    }
+    std::stable_sort(entries.begin(), entries.end(),
+      [] (const auto& a, const auto& b) {
+        if(a.m_type != b.m_type) {
+          return a.m_type < b.m_type;
         }
+        return a.m_key < b.m_key;
+      });
+    auto current_pos = std::vector<int>(size);
+    std::iota(current_pos.begin(), current_pos.end(), 0);
+    auto placed = std::vector<bool>(size, false);
+    list.transact([&] {
+      for(auto i = 0; i < size; ++i) {
+        auto original = entries[i].m_index;
+        if(placed[original]) {
+          continue;
+        }
+        auto from = current_pos[original];
+        auto to = i;
+        if(from != to) {
+          list.move(from, to);
+          for(auto j = 0; j < size; ++j) {
+            auto& pos = current_pos[j];
+            if(pos >= to && pos < from) {
+              ++pos;
+            } else if(pos <= to && pos > from) {
+              --pos;
+            }
+          }
+          current_pos[original] = to;
+        }
+        placed[original] = true;
       }
     });
   }
@@ -171,6 +197,8 @@ void RegionBox::on_current(const Region& region) {
     }
     sort(*current);
   });
+  invalidate_descendant_layouts(*this);
+  adjustSize();
 }
 
 void RegionBox::on_submit(
