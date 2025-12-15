@@ -88,7 +88,7 @@ CanvasTableWidget::CanvasTableWidget(QWidget* parent)
 }
 
 void CanvasTableWidget::SetUserProfile(Ref<UserProfile> userProfile) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
 }
 
 void CanvasTableWidget::NavigateForward() {
@@ -155,7 +155,7 @@ void CanvasTableWidget::Edit(const CanvasNode& node, QEvent* event) {
   m_editor.reset(new CanvasNodeEditor());
   auto editAction = m_editor->GetEditor(Ref(node), Ref(*this),
     Ref(*m_userProfile), event);
-  auto visitor = MakeVariantLambdaVisitor<void>(
+  auto visitor = make_variant_lambda_visitor(
     [&] (QWidget* cellEditor) {
       m_cellEditor = cellEditor;
       m_cellEditor->installEventFilter(this);
@@ -607,7 +607,7 @@ void CanvasTableWidget::OnContextMenu(const QPoint& position) {
   }
   QMenu contextMenu;
   PopulateCanvasNodeContextMenu(Ref(*this), item->GetNode(),
-    Ref(*m_userProfile), Store(contextMenu));
+    Ref(*m_userProfile), out(contextMenu));
   auto selectedAction = dynamic_cast<CommandAction*>(
     contextMenu.exec(static_cast<QWidget*>(sender())->mapToGlobal(position)));
   if(selectedAction != nullptr) {

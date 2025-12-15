@@ -2,8 +2,6 @@
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QToolButton>
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Spire/Canvas/Types/DateTimeType.hpp"
 #include "Spire/Canvas/Types/DurationType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
@@ -12,10 +10,9 @@
 #include "Spire/Charting/ChartWindowSettings.hpp"
 #include "Spire/Charting/SecurityTimePriceChartPlotSeries.hpp"
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/LinkSecurityContextAction.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
-#include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/ListModel.hpp"
 #include "ui_ChartWindow.h"
 
 using namespace Beam;
@@ -23,7 +20,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::TechnicalAnalysis;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 
@@ -32,10 +28,9 @@ ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
     : QMainWindow(parent, flags),
       SecurityContext(identifier),
       m_ui(std::make_unique<Ui_ChartWindow>()),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_interactionMode(ChartInteractionMode::NONE) {
   m_ui->setupUi(this);
-  resize(scale(size()));
   m_intervalComboBox = new ChartIntervalComboBox(this);
   m_ui->m_toolBar->insertWidget(m_ui->m_panAction, m_intervalComboBox);
   m_ui->m_toolBar->insertSeparator(m_ui->m_panAction);
@@ -47,7 +42,7 @@ ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
   m_ui->m_chart->Initialize(
     Ref(*m_userProfile), ChartPlotView::Properties::GetDefault());
   auto currentTime =
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime();
+    m_userProfile->GetClients().get_time_client().get_time();
   auto xAxisParameters = ChartPlotView::AxisParameters(
     DateTimeType::GetInstance(), ChartValue(currentTime - hours(1)),
     ChartValue(currentTime + hours(1)), ChartValue(minutes(1)));
@@ -131,12 +126,10 @@ void ChartWindow::SetLockGrid(bool lockGrid) {
 
 void ChartWindow::DisplaySecurity(const Security& security) {
   m_security = security;
-  if(m_security == Security()) {
+  if(!m_security) {
     setWindowTitle(tr("Chart - Spire"));
   } else {
-    setWindowTitle(QString::fromStdString(
-      ToString(m_security, m_userProfile->GetMarketDatabase())) +
-      tr(" - Chart"));
+    setWindowTitle(displayText(m_security) + tr(" - Chart"));
     OnIntervalChanged(
       m_intervalComboBox->GetType(), m_intervalComboBox->GetValue());
   }
@@ -159,7 +152,7 @@ void ChartWindow::showEvent(QShowEvent* event) {
 }
 
 void ChartWindow::closeEvent(QCloseEvent* event) {
-  if(m_security != Security()) {
+  if(m_security) {
     auto settings = GetWindowSettings();
     m_userProfile->GetRecentlyClosedWindows()->push(std::move(settings));
   }
@@ -187,7 +180,7 @@ void ChartWindow::keyPressEvent(QKeyEvent* event) {
   }
   ShowSecurityInputDialog(Ref(*m_userProfile), text.toStdString(), this,
     [=] (auto security) {
-      if(!security || security == Security() || security == m_security) {
+      if(!security || security == m_security) {
         return;
       }
       m_securityViewStack.Push(m_security);
@@ -285,7 +278,7 @@ void ChartWindow::OnHorizontalSliderChanged(int previousMinimum,
 void ChartWindow::OnIntervalChanged(const std::shared_ptr<NativeType>& type,
     ChartValue value) {
   m_ui->m_chart->setFocus(Qt::ActiveWindowFocusReason);
-  if(m_security == Security()) {
+  if(!m_security) {
     return;
   }
   m_controller->Clear();
@@ -389,5 +382,5 @@ void ChartWindow::OnLinkActionTriggered(QAction* action) {
   if(!linkAction) {
     return;
   }
-  linkAction->Execute(Store(*this));
+  linkAction->Execute(out(*this));
 }

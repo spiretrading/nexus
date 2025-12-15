@@ -67,7 +67,6 @@
 #include "Spire/Canvas/ValueNodes/DestinationNode.hpp"
 #include "Spire/Canvas/ValueNodes/DurationNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
-#include "Spire/Canvas/ValueNodes/MarketNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
@@ -78,6 +77,7 @@
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeRangeNode.hpp"
 #include "Spire/Canvas/ValueNodes/ValueNode.hpp"
+#include "Spire/Canvas/ValueNodes/VenueNode.hpp"
 
 using namespace Spire;
 
@@ -251,10 +251,6 @@ void CanvasNodeVisitor::Visit(const LuaScriptNode& node) {
   Visit(static_cast<const CanvasNode&>(node));
 }
 
-void CanvasNodeVisitor::Visit(const MarketNode& node) {
-  Visit(static_cast<const BaseValueNode&>(node));
-}
-
 void CanvasNodeVisitor::Visit(const MaxFloorNode& node) {
   Visit(static_cast<const BaseValueNode&>(node));
 }
@@ -393,6 +389,10 @@ void CanvasNodeVisitor::Visit(const UnequalNode& node) {
 
 void CanvasNodeVisitor::Visit(const UntilNode& node) {
   Visit(static_cast<const FunctionNode&>(node));
+}
+
+void CanvasNodeVisitor::Visit(const VenueNode& node) {
+  Visit(static_cast<const BaseValueNode&>(node));
 }
 
 void CanvasNodeVisitor::Visit(const WhenNode& node) {

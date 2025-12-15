@@ -5,6 +5,7 @@
 #include <QWidget>
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/LegacyUI/LegacyUI.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 class QModelIndex;

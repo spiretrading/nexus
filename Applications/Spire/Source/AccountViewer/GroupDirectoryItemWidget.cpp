@@ -3,7 +3,6 @@
 #include "ui_GroupDirectoryItemWidget.h"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace Spire;
 
 GroupDirectoryItemWidget::GroupDirectoryItemWidget(

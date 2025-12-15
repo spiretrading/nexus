@@ -19,9 +19,7 @@ namespace Spire {
       virtual ~RootItem();
 
       virtual Type GetType() const;
-
       virtual std::string GetName() const;
-
       virtual QIcon GetIcon() const;
 
     private:

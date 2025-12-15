@@ -2,8 +2,6 @@
 #include <QRandomGenerator>
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -40,7 +38,7 @@ DemoTimeAndSalesModel::DemoTimeAndSalesModel()
 
 DemoTimeAndSalesModel::~DemoTimeAndSalesModel() {
   for(auto& timer : m_query_duration_timers) {
-    timer->Cancel();
+    timer->cancel();
   }
 }
 
@@ -89,7 +87,7 @@ void DemoTimeAndSalesModel::set_data_random(bool is_random) {
 }
 
 QtPromise<std::vector<TimeAndSalesModel::Entry>>
-DemoTimeAndSalesModel::query_until(Queries::Sequence sequence, int max_count) {
+DemoTimeAndSalesModel::query_until(Beam::Sequence sequence, int max_count) {
   auto timer = std::make_shared<LiveTimer>(m_query_duration);
   m_query_duration_timers.push_back(timer);
   return QtPromise([=, query_duration = m_query_duration, period = m_period] {
@@ -106,13 +104,13 @@ DemoTimeAndSalesModel::query_until(Queries::Sequence sequence, int max_count) {
       }
     };
     auto now = microsec_clock::universal_time();
-    if(sequence >= Queries::Sequence(to_time_t_milliseconds(now))) {
+    if(sequence >= Beam::Sequence(to_time_t_milliseconds(now))) {
       populate(now);
     } else {
-      populate(from_time_t_milliseconds(sequence.GetOrdinal()) - period);
+      populate(from_time_t_milliseconds(sequence.get_ordinal()) - period);
     }
-    timer->Start();
-    timer->Wait();
+    timer->start();
+    timer->wait();
     return result;
   }, LaunchPolicy::ASYNC);
 }
@@ -128,15 +126,15 @@ DemoTimeAndSalesModel::Entry DemoTimeAndSalesModel::make_entry(
     auto random_generator = QRandomGenerator(to_time_t_milliseconds(timestamp));
     return {SequencedValue(
       make_time_and_sale(timestamp,
-        Truncate(Money(random_generator.bounded(2000.0)), 2),
+        truncate_to(Money(random_generator.bounded(2000.0)), Money::CENT),
         random_generator.bounded(1, 10000),
         markets[random_generator.bounded(static_cast<int>(markets.size()))]),
-      Queries::Sequence(to_time_t_milliseconds(timestamp))),
+      Beam::Sequence(to_time_t_milliseconds(timestamp))),
       static_cast<BboIndicator>(random_generator.bounded(6))};
   }
   return {SequencedValue(
     make_time_and_sale(timestamp, m_price, 100, markets.front()),
-      Queries::Sequence(to_time_t_milliseconds(timestamp))), m_indicator};
+      Beam::Sequence(to_time_t_milliseconds(timestamp))), m_indicator};
 }
 
 void DemoTimeAndSalesModel::on_timeout() {

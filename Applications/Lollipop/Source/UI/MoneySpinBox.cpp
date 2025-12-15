@@ -27,7 +27,7 @@ MoneySpinBox::MoneySpinBox(QWidget* parent)
 MoneySpinBox::MoneySpinBox(Ref<UserProfile> userProfile,
     const MoneyNode& node, QWidget* parent)
     : QDoubleSpinBox(parent),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   setMaximum(numeric_limits<double>::max());
   setMinimum(numeric_limits<double>::lowest());
   setCorrectionMode(QAbstractSpinBox::CorrectToPreviousValue);
@@ -54,9 +54,7 @@ MoneySpinBox::MoneySpinBox(Ref<UserProfile> userProfile,
 MoneySpinBox::~MoneySpinBox() {}
 
 Money MoneySpinBox::GetValue() const {
-  auto value = Money::FromValue(cleanText().toStdString());
-  assert(value.is_initialized());
-  return *value;
+  return parse_money(cleanText().toStdString());
 }
 
 void MoneySpinBox::SetValue(Money value) {
@@ -80,7 +78,7 @@ void MoneySpinBox::AdjustIncrement(KeyModifiers modifier) {
   if(m_userProfile == nullptr || !m_security.is_initialized()) {
     return;
   }
-  auto priceIncrement = m_userProfile->GetInteractionProperties().Get(
+  auto priceIncrement = m_userProfile->GetInteractionProperties().get(
     *m_security).m_priceIncrements[static_cast<int>(modifier)];
   auto increment = static_cast<double>(static_cast<Quantity>(priceIncrement));
   if(increment != singleStep()) {

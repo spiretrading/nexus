@@ -16,6 +16,8 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class AnyRef;
+  template<typename T> class ListModel;
 
   /** Base class used to model a list of values. */
   class AnyListModel {
@@ -244,27 +246,16 @@ namespace Spire {
       ListModelIterator(const ListModelIterator&) = default;
 
       reference operator *() const;
-
       pointer operator ->() const;
-
       ListModelIterator& operator++();
-
       ListModelIterator operator++(int);
-
       ListModelIterator& operator --();
-
       ListModelIterator operator--(int);
-
       ListModelIterator operator+(difference_type n) const;
-
       ListModelIterator& operator+=(difference_type n);
-
       ListModelIterator operator-(difference_type n) const;
-
       ListModelIterator& operator-=(difference_type n);
-
       difference_type operator-(const ListModelIterator& other) const;
-
       auto operator<=>(const ListModelIterator& other) const = default;
 
     private:
@@ -451,11 +442,8 @@ namespace Spire {
         const typename OperationSignal::slot_type& slot) const = 0;
 
       QValidator::State set(int index, const std::any& value) override;
-
       std::any at(int index) const override;
-
       QValidator::State insert(const std::any& value, int index) override;
-
       boost::signals2::connection connect_operation_signal(
         const AnyListModel::OperationSignal::slot_type& slot) const override;
 
@@ -468,69 +456,41 @@ namespace Spire {
   class ListModel<std::any> : public AnyListModel {
     public:
       using Type = std::any;
-
       struct UpdateOperation : AnyListModel::UpdateOperation {
         UpdateOperation(int index, Type previous, Type value);
 
         const Type& get_previous() const;
-
         const Type& get_value() const;
       };
-
       using Operation = boost::variant<AddOperation, PreRemoveOperation,
         RemoveOperation, MoveOperation, UpdateOperation, StartTransaction,
         EndTransaction>;
-
       using OperationSignal = Signal<void (const Operation&)>;
-
       using iterator = ListModelIterator<Type>;
-
       using const_iterator = ListModelIterator<const Type>;
-
       using reverse_iterator = std::reverse_iterator<iterator>;
-
       using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
       virtual const Type& get(int index) const = 0;
-
       virtual QValidator::State set(int index, const Type& value);
-
       virtual QValidator::State push(const Type& value);
-
       virtual QValidator::State insert(const Type& value, int index);
-
       virtual QValidator::State insert(const Type& value, const_iterator i);
-
       QValidator::State move(int source, int destination) override;
-
       QValidator::State remove(int index) override;
-
       QValidator::State remove(const_iterator index);
-
       iterator begin();
-
       iterator end();
-
       const_iterator begin() const;
-
       const_iterator end() const;
-
       const_iterator cbegin() const;
-
       const_iterator cend() const;
-
       reverse_iterator rbegin();
-
       reverse_iterator rend();
-
       const_reverse_iterator rbegin() const;
-
       const_reverse_iterator rend() const;
-
       const_reverse_iterator crbegin() const;
-
       const_reverse_iterator crend() const;
-
       template<typename F>
       boost::signals2::connection connect_operation_signal(const F& slot) const;
 
@@ -539,7 +499,6 @@ namespace Spire {
 
       boost::signals2::connection connect_operation_signal(
         const AnyListModel::OperationSignal::slot_type& slot) const override;
-
       virtual boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const = 0;
 
@@ -614,19 +573,14 @@ namespace Spire {
 
   std::ostream& operator <<(
     std::ostream& out, const AnyListModel::AddOperation& operation);
-
   std::ostream& operator <<(
     std::ostream& out, const AnyListModel::PreRemoveOperation& operation);
-
   std::ostream& operator <<(
     std::ostream& out, const AnyListModel::RemoveOperation& operation);
-
   std::ostream& operator <<(
     std::ostream& out, const AnyListModel::MoveOperation& operation);
-
   std::ostream& operator <<(
     std::ostream& out, const AnyListModel::UpdateOperation& operation);
-
   std::ostream& operator <<(
     std::ostream& out, const AnyListModel::Operation& operation);
 
@@ -926,38 +880,36 @@ namespace Spire {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<typename T>
-  struct IsStructure<Spire::ListModel<T>> : std::false_type {};
+  constexpr auto is_structure<Spire::ListModel<T>> = false;
 
   template<typename T>
   struct Send<Spire::ListModel<T>> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        const Spire::ListModel<T>& value) const {
-      shuttle.StartSequence(name, value.get_size());
-      for(const auto& i : value) {
-        shuttle.Shuttle(i);
+    template<IsSender S>
+    void operator ()(
+        S& sender, const char* name, const Spire::ListModel<T>& value) const {
+      sender.start_sequence(name, value.get_size());
+      for(auto& i : value) {
+        sender.send(i);
       }
-      shuttle.EndSequence();
+      sender.end_sequence();
     }
   };
 
   template<typename T>
   struct Receive<Spire::ListModel<T>> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, const char* name,
-        Spire::ListModel<T>& value) const {
+    template<IsReceiver R>
+    void operator ()(
+        R& receiver, const char* name, Spire::ListModel<T>& value) const {
       value.transact([&] {
         Spire::clear(value);
         auto size = int();
-        shuttle.StartSequence(name, size);
+        receiver.start_sequence(name, size);
         for(auto i = 0; i < size; ++i) {
-          auto element = T();
-          shuttle.Shuttle(element);
-          value.push(element);
+          value.push(receive<T>(receiver));
         }
-        shuttle.EndSequence();
+        receiver.end_sequence();
       });
     }
   };

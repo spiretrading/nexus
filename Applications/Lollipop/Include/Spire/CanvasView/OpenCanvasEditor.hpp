@@ -2,7 +2,7 @@
 #define SPIRE_OPEN_CANVAS_EDITOR_HPP
 #include "Spire/CanvasView/CanvasNodeEditor.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 

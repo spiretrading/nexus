@@ -6,14 +6,13 @@
 #include "Spire/Canvas/Types/PortfolioEntryRecordType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 using namespace std;
 
 SecurityPortfolioNode::SecurityPortfolioNode() {
   SetText("Security Portfolio");
   SetType(GetPortfolioEntryRecordType());
-  AddChild("source", make_unique<ReferenceNode>());
+  AddChild("source", std::make_unique<ReferenceNode>());
 }
 
 unique_ptr<CanvasNode> SecurityPortfolioNode::Replace(const CanvasNode& child,
@@ -32,7 +31,5 @@ void SecurityPortfolioNode::Apply(CanvasNodeVisitor& visitor) const {
 }
 
 unique_ptr<CanvasNode> SecurityPortfolioNode::Clone() const {
-  return make_unique<SecurityPortfolioNode>(*this);
+  return std::make_unique<SecurityPortfolioNode>(*this);
 }
-
-SecurityPortfolioNode::SecurityPortfolioNode(ReceiveBuilder) {}

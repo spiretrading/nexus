@@ -1,5 +1,6 @@
 #ifndef NEXUS_DEFINITIONS_SERVICES_HPP
 #define NEXUS_DEFINITIONS_SERVICES_HPP
+#include <string>
 #include <vector>
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
@@ -10,12 +11,16 @@
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/ExchangeRate.hpp"
-#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/TradingSchedule.hpp"
-#include "Nexus/DefinitionsService/DefinitionsService.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 
-namespace Nexus::DefinitionsService {
-  BEAM_DEFINE_SERVICES(DefinitionsServices,
+namespace Nexus {
+
+  /** Standard name for the definitions service. */
+  inline const auto DEFINITIONS_SERVICE_NAME =
+    std::string("definitions_service");
+
+  BEAM_DEFINE_SERVICES(definitions_services,
 
     /**
      * Loads the minimum version of the Spire client needed to login.
@@ -63,11 +68,11 @@ namespace Nexus::DefinitionsService {
       DestinationDatabase),
 
     /**
-     * Loads the MarketDatabase.
-     * @return The MarketDatabase.
+     * Loads the VenueDatabase.
+     * @return The VenueDatabase.
      */
-    (LoadMarketDatabaseService,
-      "Nexus.DefinitionsServices.LoadMarketDatabaseService", MarketDatabase),
+    (LoadVenueDatabaseService,
+      "Nexus.DefinitionsServices.LoadVenueDatabaseService", VenueDatabase),
 
     /**
      * Loads the list of ExchangeRates.
@@ -83,10 +88,10 @@ namespace Nexus::DefinitionsService {
      */
     (LoadComplianceRuleSchemasService,
       "Nexus.DefinitionsServices.LoadComplianceRuleSchemasService",
-      std::vector<Compliance::ComplianceRuleSchema>),
+      std::vector<ComplianceRuleSchema>),
 
     /**
-     * Loads a single day's market trading schedule.
+     * Loads a single day's trading schedule.
      * @return The TradingSchedule.
      */
     (LoadTradingScheduleService,

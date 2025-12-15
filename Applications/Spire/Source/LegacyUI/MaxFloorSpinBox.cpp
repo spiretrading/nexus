@@ -15,7 +15,7 @@ using namespace Spire::LegacyUI;
 MaxFloorSpinBox::MaxFloorSpinBox(
     Ref<UserProfile> userProfile, const MaxFloorNode& node, QWidget* parent)
     : QSpinBox(parent),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   setMaximum(std::numeric_limits<int>::max());
   setMinimum(-1);
   setSpecialValueText(tr("N/A"));

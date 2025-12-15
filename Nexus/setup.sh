@@ -21,7 +21,7 @@ if [ -f "cache_files/nexus.txt" ]; then
   fi
 fi
 cores="`grep -c "processor" < /proc/cpuinfo`"
-beam_commit="e800d781dcee626a29d79ebd900f1ddcdaaf237e"
+beam_commit="4b70c823deb4883649419e0ee783611f5b5130c9"
 build_beam=0
 if [ ! -d "Beam" ]; then
   git clone https://www.github.com/spiretrading/beam.git Beam
@@ -84,6 +84,12 @@ if [ ! -d "quickfix-v.1.15.1" ]; then
     exit_status=1
   fi
   rm -rf quickfix-v.1.15.1.zip
+fi
+if [ ! -d "hat-trie-0.7.0" ]; then
+  wget https://github.com/Tessil/hat-trie/archive/refs/tags/v0.7.0.zip --no-check-certificate
+  if [ "$?" == "0" ]; then
+    unzip v0.7.0.zip
+  fi
 fi
 python3 -c "import git"
 if [ "$?" != "0" ]; then

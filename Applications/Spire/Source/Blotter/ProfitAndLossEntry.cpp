@@ -17,7 +17,7 @@ ProfitAndLossEntry::ProfitAndLossEntry(Ref<UserProfile> userProfile,
     Ref<ProfitAndLossEntryModel> model, QWidget* parent,
     Qt::WindowFlags flags)
     : QWidget(parent, flags),
-      m_model(model.Get()) {
+      m_model(model.get()) {
   m_header = new ProfitAndLossHeader(Ref(*m_model), this);
   m_table = new ProfitAndLossTable(Ref(userProfile), Ref(*m_model), this);
   QVBoxLayout* layout = new QVBoxLayout(this);

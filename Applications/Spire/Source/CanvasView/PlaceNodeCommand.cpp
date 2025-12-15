@@ -12,8 +12,7 @@ using namespace std;
 const CanvasNode& PlaceNodeCommand::PlaceNode(Out<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate coordinate, const CanvasNode& node,
     bool overrideReadOnly) {
-  auto placedNode = TryPlaceNode(Store(view), coordinate, node,
-    overrideReadOnly);
+  auto placedNode = TryPlaceNode(out(view), coordinate, node, overrideReadOnly);
   if(!placedNode.is_initialized()) {
     return view->Add(coordinate, *Refresh(CanvasNode::Clone(node)));
   }
@@ -54,16 +53,16 @@ boost::optional<const CanvasNode&> PlaceNodeCommand::TryPlaceNode(
 
 PlaceNodeCommand::PlaceNodeCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& coordinate, const CanvasNode& node)
-    : m_view(view.Get()),
+    : m_view(view.get()),
       m_coordinate(coordinate),
       m_node(CanvasNode::Clone(node)) {}
 
 void PlaceNodeCommand::undo() {
-  m_snapshot.Restore(Store(*m_view));
+  m_snapshot.Restore(out(*m_view));
 }
 
 void PlaceNodeCommand::redo() {
   m_snapshot.Save(*m_view);
-  auto& node = PlaceNode(Store(*m_view), m_coordinate, *m_node, false);
+  auto& node = PlaceNode(out(*m_view), m_coordinate, *m_node, false);
   m_view->SetCurrent(node);
 }

@@ -3,9 +3,10 @@
 #include <QTimer>
 #include <QWidget>
 #include "Spire/Styles/StateSelector.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Box;
+
 namespace Styles {
 
   /** Selects the track in a ScrollBar. */

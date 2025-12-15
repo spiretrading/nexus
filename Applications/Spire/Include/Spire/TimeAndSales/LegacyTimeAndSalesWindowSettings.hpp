@@ -63,7 +63,7 @@ namespace Spire {
         Beam::Out<QWidget> widget) const override;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       Properties m_properties;
       Nexus::Security m_security;
       std::string m_name;
@@ -75,44 +75,44 @@ namespace Spire {
       QByteArray m_view_header_state;
       QByteArray m_snapshot_header_state;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void LegacyTimeAndSalesWindowSettings::Shuttle(
-      Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("properties", m_properties);
-    shuttle.Shuttle("security", m_security);
-    shuttle.Shuttle("name", m_name);
-    shuttle.Shuttle("security_view_stack", m_security_view_stack);
-    shuttle.Shuttle("identifier", m_identifier);
-    shuttle.Shuttle("link_identifier", m_link_identifier);
-    shuttle.Shuttle("geometry", m_geometry);
-    shuttle.Shuttle("splitter_state", m_splitter_state);
-    shuttle.Shuttle("view_header_state", m_view_header_state);
-    shuttle.Shuttle("snapshot_header_state", m_snapshot_header_state);
+  template<Beam::IsShuttle S>
+  void LegacyTimeAndSalesWindowSettings::shuttle(
+      S& shuttle, unsigned int version) {
+    shuttle.shuttle("properties", m_properties);
+    shuttle.shuttle("security", m_security);
+    shuttle.shuttle("name", m_name);
+    shuttle.shuttle("security_view_stack", m_security_view_stack);
+    shuttle.shuttle("identifier", m_identifier);
+    shuttle.shuttle("link_identifier", m_link_identifier);
+    shuttle.shuttle("geometry", m_geometry);
+    shuttle.shuttle("splitter_state", m_splitter_state);
+    shuttle.shuttle("view_header_state", m_view_header_state);
+    shuttle.shuttle("snapshot_header_state", m_snapshot_header_state);
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Spire::LegacyTimeAndSalesWindowSettings::Properties> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
+    template<IsShuttle S>
+    void operator ()(S& shuttle,
         Spire::LegacyTimeAndSalesWindowSettings::Properties& value,
         unsigned int version) {
-      shuttle.Shuttle("price_range_foreground_color",
+      shuttle.shuttle("price_range_foreground_color",
         value.m_price_range_foreground_color);
-      shuttle.Shuttle("price_range_background_color",
+      shuttle.shuttle("price_range_background_color",
         value.m_price_range_background_color);
-      shuttle.Shuttle("visible_columns", value.m_visible_columns);
-      shuttle.Shuttle("show_grid_lines", value.m_show_grid_lines);
-      shuttle.Shuttle(
+      shuttle.shuttle("visible_columns", value.m_visible_columns);
+      shuttle.shuttle("show_grid_lines", value.m_show_grid_lines);
+      shuttle.shuttle(
         "vertical_scroll_bar_visible", value.m_vertical_scroll_bar_visible);
-      shuttle.Shuttle("horizontal_scroll_bar_visible",
+      shuttle.shuttle("horizontal_scroll_bar_visible",
         value.m_horizontal_scroll_bar_visible);
-      shuttle.Shuttle("font", value.m_font);
+      shuttle.shuttle("font", value.m_font);
     }
   };
 }

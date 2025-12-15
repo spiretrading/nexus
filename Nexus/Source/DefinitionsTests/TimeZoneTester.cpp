@@ -1,6 +1,5 @@
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
-#include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 
 using namespace boost;
 using namespace boost::gregorian;
@@ -22,10 +21,10 @@ namespace {
 
 TEST_SUITE("TimeZone") {
   TEST_CASE("tsx_start_of_day") {
-    auto baseTime = ptime(date(1984, 5, 7), time_duration(1, 30, 0, 0));
-    auto convertedTime = MarketDateToUtc(DefaultMarkets::TSX(), baseTime,
-      GetDefaultMarketDatabase(), GetTimeZoneDatabase());
-    auto expectedTime = ptime(date(1984, 5, 6), time_duration(4, 0, 0, 0));
-    REQUIRE(convertedTime == expectedTime);
+    auto base_time = ptime(date(1984, 5, 7), time_duration(1, 30, 0, 0));
+    auto converted_time = venue_date_to_utc(
+      DefaultVenues::TSX, base_time, DEFAULT_VENUES, GetTimeZoneDatabase());
+    auto expected_time = ptime(date(1984, 5, 7), time_duration(4, 0, 0, 0));
+    REQUIRE(converted_time == expected_time);
   }
 }

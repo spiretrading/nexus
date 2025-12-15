@@ -5,8 +5,8 @@
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardCell.hpp"
 #include "Spire/Dashboard/DashboardCellRenderer.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 

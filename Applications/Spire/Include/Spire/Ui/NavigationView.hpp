@@ -2,10 +2,12 @@
 #define SPIRE_NAVIGATION_VIEW_HPP
 #include <any>
 #include <QStackedLayout>
+#include <QWidget>
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/AssociativeValueModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class ListView;
 
   /**
    * Represents a component which holds the NavigationList and associated page

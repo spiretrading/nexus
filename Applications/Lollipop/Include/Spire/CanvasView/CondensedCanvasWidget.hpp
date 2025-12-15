@@ -6,7 +6,7 @@
 #include <QWidget>
 #include "Spire/CanvasView/CanvasNodeModel.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class QGroupBox;
 class QGridLayout;

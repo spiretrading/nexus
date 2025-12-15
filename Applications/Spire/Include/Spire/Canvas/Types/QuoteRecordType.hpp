@@ -1,7 +1,7 @@
 #ifndef SPIRE_QUOTERECORDTYPE_HPP
 #define SPIRE_QUOTERECORDTYPE_HPP
 #include <memory>
-#include "Nexus/Definitions/Definitions.hpp"
+#include "Nexus/Definitions/Quote.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
 

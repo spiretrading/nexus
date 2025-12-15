@@ -1,7 +1,6 @@
 #ifndef SPIRE_BOOK_VIEW_CURRENT_TABLE_MODEL_HPP
 #define SPIRE_BOOK_VIEW_CURRENT_TABLE_MODEL_HPP
 #include <memory>
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/Spire/TableCurrentIndexModel.hpp"
 #include "Spire/Ui/TableCurrentController.hpp"
 
@@ -22,11 +21,8 @@ namespace Spire {
       explicit BookViewCurrentTableModel(std::shared_ptr<TableModel> table);
 
       const Type& get() const override;
-
       QValidator::State test(const Type& value) const override;
-
       QValidator::State set(const Type& value) override;
-
       boost::signals2::connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const override;
 

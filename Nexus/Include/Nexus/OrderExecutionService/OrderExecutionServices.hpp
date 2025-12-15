@@ -1,18 +1,21 @@
 #ifndef NEXUS_ORDER_EXECUTION_SERVICES_HPP
 #define NEXUS_ORDER_EXECUTION_SERVICES_HPP
 #include <Beam/Queries/QueryResult.hpp>
+#include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
   using ExecutionReportQueryResult =
-    Beam::Queries::QueryResult<SequencedExecutionReport>;
-  using OrderSubmissionQueryResult =
-    Beam::Queries::QueryResult<SequencedOrderRecord>;
+    Beam::QueryResult<SequencedExecutionReport>;
+  using OrderSubmissionQueryResult = Beam::QueryResult<SequencedOrderRecord>;
 
-  BEAM_DEFINE_SERVICES(OrderExecutionServices,
+  /** Standard name for the order execution service. */
+  inline const auto ORDER_EXECUTION_SERVICE_NAME =
+    std::string("order_execution_service");
+
+  BEAM_DEFINE_SERVICES(order_execution_services,
 
     /**
      * Submits a request for a single Order.
@@ -20,7 +23,7 @@ namespace Nexus::OrderExecutionService {
      * @return The SequencedAccountOrderInfo representing the submitted Order.
      */
     (NewOrderSingleService, "Nexus.OrderExecutionService.NewOrderSingleService",
-      SequencedAccountOrderInfo, OrderFields, fields),
+      SequencedAccountOrderInfo, (OrderFields, fields)),
 
     /**
      * Updates an existing Order.
@@ -28,7 +31,7 @@ namespace Nexus::OrderExecutionService {
      * @param execution_report The ExecutionReport containing the update.
      */
     (UpdateOrderService, "Nexus.OrderExecutionService.UpdateOrderService",
-      void, OrderId, order_id, ExecutionReport, execution_report),
+      void, (OrderId, order_id), (ExecutionReport, execution_report)),
 
     /**
      * Loads an Order from its id.
@@ -36,7 +39,7 @@ namespace Nexus::OrderExecutionService {
      * @return The SequencedAccountOrderRecord with the specified id.
      */
     (LoadOrderByIdService, "Nexus.OrderExecutionService.LoadOrderByIdService",
-      boost::optional<SequencedAccountOrderRecord>, OrderId, id),
+      boost::optional<SequencedAccountOrderRecord>, (OrderId, id)),
 
     /**
      * Submits a query for an account's Order submissions.
@@ -45,7 +48,7 @@ namespace Nexus::OrderExecutionService {
      */
     (QueryOrderSubmissionsService,
       "Nexus.OrderExecutionService.QueryOrderSubmissionsService",
-      OrderSubmissionQueryResult, AccountQuery, query),
+      OrderSubmissionQueryResult, (AccountQuery, query)),
 
     /**
      * Submits a query for an account's ExecutionReports.
@@ -54,16 +57,16 @@ namespace Nexus::OrderExecutionService {
      */
     (QueryExecutionReportsService,
       "Nexus.OrderExecutionService.QueryExecutionReportsService",
-      ExecutionReportQueryResult, AccountQuery, query));
+      ExecutionReportQueryResult, (AccountQuery, query)));
 
-  BEAM_DEFINE_MESSAGES(OrderExecutionMessages,
+  BEAM_DEFINE_MESSAGES(order_execution_messages,
 
     /**
      * Submits a request to cancel an Order.
      * @param id The id of the Order to cancel.
      */
     (CancelOrderMessage, "Nexus.OrderExecutionService.CancelOrderMessage",
-      OrderId, id),
+      (OrderId, id)),
 
     /**
      * Sends the details of an Order submission.
@@ -72,14 +75,14 @@ namespace Nexus::OrderExecutionService {
      */
     (OrderSubmissionMessage,
       "Nexus.OrderExecutionService.OrderSubmissionMessage",
-      SequencedAccountOrderRecord, order),
+      (SequencedAccountOrderRecord, order)),
 
     /**
      * Sends an update for an Order.
      * @param execution_report The ExecutionReport containing the update.
      */
     (OrderUpdateMessage, "Nexus.OrderExecutionService.OrderUpdateMessage",
-      ExecutionReport, execution_report),
+      (ExecutionReport, execution_report)),
 
     /**
      * Sends a query's ExecutionReport.
@@ -87,7 +90,7 @@ namespace Nexus::OrderExecutionService {
      */
     (ExecutionReportMessage,
       "Nexus.OrderExecutionService.ExecutionReportMessage",
-      SequencedAccountExecutionReport, execution_report),
+      (SequencedAccountExecutionReport, execution_report)),
 
     /**
      * Terminates a previous query of an account's Order submissions.
@@ -96,7 +99,7 @@ namespace Nexus::OrderExecutionService {
      */
     (EndOrderSubmissionQueryMessage,
       "Nexus.OrderExecutionService.EndOrderSubmissionQueryMessage",
-      Beam::ServiceLocator::DirectoryEntry, account, int, id),
+      (Beam::DirectoryEntry, account), (int, id)),
 
     /**
      * Terminates a previous query of an account's ExecutionReports.
@@ -105,7 +108,7 @@ namespace Nexus::OrderExecutionService {
      */
     (EndExecutionReportQueryMessage,
       "Nexus.OrderExecutionService.EndExecutionReportQueryMessage",
-      Beam::ServiceLocator::DirectoryEntry, account, int, id));
+      (Beam::DirectoryEntry, account), (int, id)));
 }
 
 #endif

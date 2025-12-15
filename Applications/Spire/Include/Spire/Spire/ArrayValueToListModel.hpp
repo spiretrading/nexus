@@ -2,7 +2,6 @@
 #define ARRAY_VALUE_TO_LIST_MODEL_HPP
 #include <vector>
 #include <boost/signals2/shared_connection_block.hpp>
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
 
@@ -15,41 +14,26 @@ namespace Spire {
   template<typename T>
   class ArrayValueToListModel : public ListModel<T> {
     public:
-
       using Type = typename ListModel<T>::Type;
-
       using Operation = typename ListModel<T>::Operation;
-
       using OperationSignal = ListModel<T>::OperationSignal;
-
       using AddOperation = typename ListModel<T>::AddOperation;
-
       using PreRemoveOperation = typename ListModel<T>::PreRemoveOperation;
-
       using RemoveOperation = typename ListModel<T>::RemoveOperation;
-
       using UpdateOperation = typename ListModel<T>::UpdateOperation;
-
       using StartTransaction = typename ListModel<T>::StartTransaction;
-
       using EndTransaction = typename ListModel<T>::EndTransaction;
 
       explicit ArrayValueToListModel(
         std::shared_ptr<ValueModel<std::vector<Type>>> source);
 
       int get_size() const override;
-
       const Type& get(int index) const override;
-
       QValidator::State set(int index, const Type& value) override;
-
       QValidator::State insert(const Type& value, int index) override;
-
       QValidator::State remove(int index) override;
-
       boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const override;
-
       void transact(const std::function<void()>& transaction) override;
 
     private:

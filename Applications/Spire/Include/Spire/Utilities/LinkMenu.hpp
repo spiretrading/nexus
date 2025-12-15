@@ -10,10 +10,8 @@ namespace Spire {
    * Adds a ContextMenu sub-menu with actions to link a window to another.
    * @param parent The ContextMenu to add the sub-menu to.
    * @param window The window representing the SecurityContext to link.
-   * @param market_database The database of markets used to sort ticker symbols.
    */
-  void add_link_menu(ContextMenu& parent, LegacyUI::SecurityContext& window,
-    const Nexus::MarketDatabase& market_database);
+  void add_link_menu(ContextMenu& parent, LegacyUI::SecurityContext& window);
 }
 
 #endif

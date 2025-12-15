@@ -5,7 +5,7 @@
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/Tag.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
-#include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/KeyBindings/AdditionalTag.hpp"
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/AnyInputBox.hpp"

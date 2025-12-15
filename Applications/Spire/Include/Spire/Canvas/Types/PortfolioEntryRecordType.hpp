@@ -1,8 +1,8 @@
 #ifndef SPIRE_PORTFOLIOENTRYRECORDTYPE_HPP
 #define SPIRE_PORTFOLIOENTRYRECORDTYPE_HPP
+#include "Nexus/Accounting/Portfolio.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
@@ -19,7 +19,7 @@ namespace Spire {
       \param value The Portfolio UpdateEntry to convert.
       \return The Record representation of the <i>value</i>.
     */
-    Record operator ()(const SpirePortfolio::UpdateEntry& value) const;
+    Record operator ()(const Nexus::PortfolioUpdateEntry& value) const;
   };
 }
 

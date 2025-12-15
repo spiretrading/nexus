@@ -19,7 +19,7 @@ namespace Spire {
       /*!
         \param value The initial value.
       */
-      TimeRangeNode(const Beam::Queries::Range& timeRange);
+      TimeRangeNode(const Beam::Range& timeRange);
 
       //! Clones this CanvasNode with a new value.
       /*!
@@ -27,7 +27,7 @@ namespace Spire {
         \return A clone of this CanvasNode with the specified <i>value</i>.
       */
       std::unique_ptr<TimeRangeNode> SetValue(
-        const Beam::Queries::Range& value) const;
+        const Beam::Range& value) const;
 
       virtual void Apply(CanvasNodeVisitor& visitor) const;
 
@@ -37,15 +37,15 @@ namespace Spire {
       virtual std::unique_ptr<CanvasNode> Reset() const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void TimeRangeNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    ValueNode<TimeRangeType>::Shuttle(shuttle, version);
+  template<Beam::IsShuttle S>
+  void TimeRangeNode::shuttle(S& shuttle, unsigned int version) {
+    ValueNode<TimeRangeType>::shuttle(shuttle, version);
   }
 }
 

@@ -1,391 +1,311 @@
 #ifndef NEXUS_LOCAL_ADMINISTRATION_DATA_STORE_HPP
 #define NEXUS_LOCAL_ADMINISTRATION_DATA_STORE_HPP
 #include <unordered_map>
-#include <Beam/IO/OpenState.hpp>
-#include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <Beam/Threading/Mutex.hpp>
-#include "Nexus/AdministrationService/AccountIdentity.hpp"
+#include <boost/thread/locks.hpp>
+#include <boost/thread/mutex.hpp>
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
-#include "Nexus/RiskService/RiskParameters.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
-  /** Stores Nexus account info locally. */
-  class LocalAdministrationDataStore : public AdministrationDataStore {
+  /**
+   * Implements the AdministrationDataStore interface using in-memory data
+   * structures.
+   */
+  class LocalAdministrationDataStore {
     public:
+      using IndexedAccountIdentity =
+        AdministrationDataStore::IndexedAccountIdentity;
+      using IndexedRiskParameters =
+        AdministrationDataStore::IndexedRiskParameters;
+      using IndexedRiskState = AdministrationDataStore::IndexedRiskState;
 
       /** Constructs an empty LocalAdministrationDataStore. */
-      LocalAdministrationDataStore();
+      LocalAdministrationDataStore() = default;
 
-      ~LocalAdministrationDataStore() override;
-
-      std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-        AccountIdentity>> LoadAllAccountIdentities() override;
-
-      AccountIdentity LoadIdentity(
-        const Beam::ServiceLocator::DirectoryEntry& account) override;
-
-      void Store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const AccountIdentity& identity) override;
-
-      std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-        RiskService::RiskParameters>> LoadAllRiskParameters() override;
-
-      RiskService::RiskParameters LoadRiskParameters(
-        const Beam::ServiceLocator::DirectoryEntry& account) override;
-
-      void Store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskParameters& riskParameters) override;
-
-      std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-        RiskService::RiskState>> LoadAllRiskStates() override;
-
-      RiskService::RiskState LoadRiskState(
-        const Beam::ServiceLocator::DirectoryEntry& account) override;
-
-      void Store(const Beam::ServiceLocator::DirectoryEntry& account,
-        const RiskService::RiskState& riskState) override;
-
-      AccountModificationRequest LoadAccountModificationRequest(
-        AccountModificationRequest::Id id) override;
-
+      std::vector<IndexedAccountIdentity> load_all_account_identities();
+      AccountIdentity load_identity(
+        const Beam::DirectoryEntry& account);
+      void store(
+        const Beam::DirectoryEntry& account, const AccountIdentity& identity);
+      std::vector<IndexedRiskParameters> load_all_risk_parameters();
+      RiskParameters load_risk_parameters(const Beam::DirectoryEntry& account);
+      void store(const Beam::DirectoryEntry& account,
+        const RiskParameters& risk_parameters);
+      std::vector<IndexedRiskState> load_all_risk_states();
+      RiskState load_risk_state(const Beam::DirectoryEntry& account);
+      void store(
+        const Beam::DirectoryEntry& account, const RiskState& risk_state);
+      AccountModificationRequest load_account_modification_request(
+        AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest::Id>
-        LoadAccountModificationRequestIds(
-        const Beam::ServiceLocator::DirectoryEntry& account,
-        AccountModificationRequest::Id startId, int maxCount) override;
-
+        load_account_modification_request_ids(
+          const Beam::DirectoryEntry& account,
+          AccountModificationRequest::Id start_id, int max_count);
       std::vector<AccountModificationRequest::Id>
-        LoadAccountModificationRequestIds(
-        AccountModificationRequest::Id startId, int maxCount) override;
-
-      EntitlementModification LoadEntitlementModification(
-        AccountModificationRequest::Id id) override;
-
-      void Store(const AccountModificationRequest& request,
-        const EntitlementModification& modification) override;
-
-      RiskModification LoadRiskModification(
-        AccountModificationRequest::Id id) override;
-
-      void Store(const AccountModificationRequest& request,
-        const RiskModification& modification) override;
-
-      void Store(AccountModificationRequest::Id id,
-        const Message& message) override;
-
+        load_account_modification_request_ids(
+          AccountModificationRequest::Id start_id, int max_count);
+      EntitlementModification load_entitlement_modification(
+        AccountModificationRequest::Id id);
+      void store(const AccountModificationRequest& request,
+        const EntitlementModification& modification);
+      RiskModification load_risk_modification(
+        AccountModificationRequest::Id id);
+      void store(const AccountModificationRequest& request,
+        const RiskModification& modification);
+      void store(AccountModificationRequest::Id id, const Message& message);
       AccountModificationRequest::Update
-        LoadAccountModificationRequestStatus(
-        AccountModificationRequest::Id id) override;
-
-      void Store(AccountModificationRequest::Id id,
-        const AccountModificationRequest::Update& status) override;
-
-      Message::Id LoadLastMessageId() override;
-
-      Message LoadMessage(Message::Id id) override;
-
-      std::vector<Message::Id> LoadMessageIds(
-        AccountModificationRequest::Id id) override;
-
-      void WithTransaction(const std::function<void ()>& transaction) override;
-
-      void Close() override;
-
-      using AdministrationDataStore::WithTransaction;
+        load_account_modification_request_status(
+          AccountModificationRequest::Id id);
+      void store(AccountModificationRequest::Id id,
+        const AccountModificationRequest::Update& status);
+      Message::Id load_last_message_id();
+      Message load_message(Message::Id id);
+      std::vector<Message::Id> load_message_ids(
+        AccountModificationRequest::Id id);
+      template<typename F>
+      decltype(auto) with_transaction(F&& transaction);
+      void close();
 
     private:
-      mutable Beam::Threading::Mutex m_mutex;
-      std::unordered_map<Beam::ServiceLocator::DirectoryEntry, AccountIdentity>
-        m_identities;
-      std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
-        RiskService::RiskParameters> m_riskParameters;
-      std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
-        RiskService::RiskState> m_riskStates;
+      mutable boost::mutex m_mutex;
+      std::unordered_map<Beam::DirectoryEntry, AccountIdentity>
+        m_account_identities;
+      std::unordered_map<Beam::DirectoryEntry, RiskParameters>
+        m_risk_parameters;
+      std::unordered_map<Beam::DirectoryEntry, RiskState> m_risk_states;
       std::unordered_map<AccountModificationRequest::Id,
-        AccountModificationRequest> m_idToModificationRequests;
-      std::vector<AccountModificationRequest::Id> m_modificationRequests;
-      std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
-        std::vector<AccountModificationRequest::Id>>
-        m_accountToModificationRequests;
+        AccountModificationRequest> m_account_modification_requests;
       std::unordered_map<AccountModificationRequest::Id,
-        EntitlementModification> m_idToEntitlementModification;
+        EntitlementModification> m_entitlement_modifications;
+      std::unordered_map<AccountModificationRequest::Id, RiskModification>
+        m_risk_modifications;
       std::unordered_map<AccountModificationRequest::Id,
-        RiskModification> m_idToRiskModification;
-      std::unordered_map<Message::Id, Message> m_idToMessage;
+        std::vector<AccountModificationRequest::Update>>
+          m_account_modification_request_updates;
       std::unordered_map<AccountModificationRequest::Id,
-        std::vector<Message::Id>> m_requestToMessages;
-      std::unordered_map<AccountModificationRequest::Id,
-        AccountModificationRequest::Update> m_idToRequestStatus;
-      Message::Id m_lastMessageId;
-      Beam::IO::OpenState m_openState;
+        std::vector<Message::Id>> m_request_messages;
+      std::unordered_map<Message::Id, Message> m_messages;
+      Message::Id m_last_message_id;
 
-      std::vector<AccountModificationRequest::Id> Filter(
-        const std::vector<AccountModificationRequest::Id>& requests,
-        AccountModificationRequest::Id startId, int maxCount);
-      void Store(const AccountModificationRequest& request);
+      LocalAdministrationDataStore(
+        const LocalAdministrationDataStore&) = delete;
+      LocalAdministrationDataStore& operator =(
+        const LocalAdministrationDataStore&) = delete;
   };
 
-  inline LocalAdministrationDataStore::LocalAdministrationDataStore()
-    : m_lastMessageId(0) {}
-
-  inline LocalAdministrationDataStore::~LocalAdministrationDataStore() {
-    Close();
-  }
-
-  inline std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-      AccountIdentity>> LocalAdministrationDataStore::
-      LoadAllAccountIdentities() {
-    auto identities = std::vector<
-      std::tuple<Beam::ServiceLocator::DirectoryEntry, AccountIdentity>>();
-    identities.reserve(m_identities.size());
-    std::transform(m_identities.begin(), m_identities.end(),
-      std::back_inserter(identities),
-      [] (auto& identity) {
-        return std::tuple(identity.first, identity.second);
-      });
-    return identities;
-  }
-
-  inline AccountIdentity LocalAdministrationDataStore::LoadIdentity(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto identity = m_identities.find(account);
-    if(identity == m_identities.end()) {
-      return {};
+  inline std::vector<LocalAdministrationDataStore::IndexedAccountIdentity>
+      LocalAdministrationDataStore::load_all_account_identities() {
+    auto result = std::vector<IndexedAccountIdentity>();
+    result.reserve(m_account_identities.size());
+    for(auto& entry : m_account_identities) {
+      result.push_back({entry.first, entry.second});
     }
-    return identity->second;
+    return result;
   }
 
-  inline void LocalAdministrationDataStore::Store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      const AccountIdentity& identity) {
-    m_identities[account] = identity;
-  }
-
-  inline std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-      RiskService::RiskParameters>> LocalAdministrationDataStore::
-      LoadAllRiskParameters() {
-    auto riskParameters = std::vector<
-      std::tuple<Beam::ServiceLocator::DirectoryEntry,
-      RiskService::RiskParameters>>();
-    riskParameters.reserve(m_riskParameters.size());
-    std::transform(m_riskParameters.begin(), m_riskParameters.end(),
-      std::back_inserter(riskParameters),
-      [] (auto& riskParameters) {
-        return std::tuple(riskParameters.first, riskParameters.second);
-      });
-    return riskParameters;
-  }
-
-  inline RiskService::RiskParameters LocalAdministrationDataStore::
-      LoadRiskParameters(const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto riskParameters = m_riskParameters.find(account);
-    if(riskParameters == m_riskParameters.end()) {
-      return {};
+  inline AccountIdentity LocalAdministrationDataStore::load_identity(
+      const Beam::DirectoryEntry& account) {
+    auto i = m_account_identities.find(account);
+    if(i == m_account_identities.end()) {
+      return AccountIdentity();
     }
-    return riskParameters->second;
+    return i->second;
   }
 
-  inline void LocalAdministrationDataStore::Store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskParameters& riskParameters) {
-    m_riskParameters[account] = riskParameters;
+  inline void LocalAdministrationDataStore::store(
+      const Beam::DirectoryEntry& account, const AccountIdentity& identity) {
+    m_account_identities[account] = identity;
   }
 
-  inline std::vector<std::tuple<Beam::ServiceLocator::DirectoryEntry,
-      RiskService::RiskState>> LocalAdministrationDataStore::
-      LoadAllRiskStates() {
-    auto riskStates = std::vector<std::tuple<
-      Beam::ServiceLocator::DirectoryEntry, RiskService::RiskState>>();
-    riskStates.reserve(m_riskStates.size());
-    std::transform(m_riskStates.begin(), m_riskStates.end(),
-      std::back_inserter(riskStates),
-      [] (auto& riskState) {
-        return std::tuple(riskState.first, riskState.second);
-      });
-    return riskStates;
-  }
-
-  inline RiskService::RiskState LocalAdministrationDataStore::LoadRiskState(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto riskState = m_riskStates.find(account);
-    if(riskState == m_riskStates.end()) {
-      return {};
+  inline std::vector<LocalAdministrationDataStore::IndexedRiskParameters>
+      LocalAdministrationDataStore::load_all_risk_parameters() {
+    auto result = std::vector<IndexedRiskParameters>();
+    result.reserve(m_risk_parameters.size());
+    for(auto& entry : m_risk_parameters) {
+      result.push_back({entry.first, entry.second});
     }
-    return riskState->second;
+    return result;
   }
 
-  inline void LocalAdministrationDataStore::Store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      const RiskService::RiskState& riskState) {
-    m_riskStates[account] = riskState;
+  inline RiskParameters LocalAdministrationDataStore::load_risk_parameters(
+      const Beam::DirectoryEntry& account) {
+    auto i = m_risk_parameters.find(account);
+    if(i == m_risk_parameters.end()) {
+      return RiskParameters();
+    }
+    return i->second;
+  }
+
+  inline void LocalAdministrationDataStore::store(
+      const Beam::DirectoryEntry& account,
+      const RiskParameters& risk_parameters) {
+    m_risk_parameters[account] = risk_parameters;
+  }
+
+  inline std::vector<LocalAdministrationDataStore::IndexedRiskState>
+      LocalAdministrationDataStore::load_all_risk_states() {
+    auto result = std::vector<IndexedRiskState>();
+    result.reserve(m_risk_states.size());
+    for(auto& entry : m_risk_states) {
+      result.push_back({entry.first, entry.second});
+    }
+    return result;
+  }
+
+  inline RiskState LocalAdministrationDataStore::load_risk_state(
+      const Beam::DirectoryEntry& account) {
+    auto i = m_risk_states.find(account);
+    if(i == m_risk_states.end()) {
+      return RiskState();
+    }
+    return i->second;
+  }
+
+  inline void LocalAdministrationDataStore::store(
+      const Beam::DirectoryEntry& account, const RiskState& risk_state) {
+    m_risk_states[account] = risk_state;
   }
 
   inline AccountModificationRequest
-      LocalAdministrationDataStore::LoadAccountModificationRequest(
-      AccountModificationRequest::Id id) {
-    auto request = m_idToModificationRequests.find(id);
-    if(request == m_idToModificationRequests.end()) {
-      return {};
+      LocalAdministrationDataStore::load_account_modification_request(
+        AccountModificationRequest::Id id) {
+    auto i = m_account_modification_requests.find(id);
+    if(i == m_account_modification_requests.end()) {
+      return AccountModificationRequest();
     }
-    return request->second;
+    return i->second;
   }
 
   inline std::vector<AccountModificationRequest::Id>
-      LocalAdministrationDataStore::LoadAccountModificationRequestIds(
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      AccountModificationRequest::Id startId, int maxCount) {
-    auto requestsIterator = m_accountToModificationRequests.find(account);
-    if(requestsIterator == m_accountToModificationRequests.end()) {
-      return {};
-    }
-    auto& requests = requestsIterator->second;
-    return Filter(requests, startId, maxCount);
-  }
-
-  inline std::vector<AccountModificationRequest::Id>
-      LocalAdministrationDataStore::LoadAccountModificationRequestIds(
-      AccountModificationRequest::Id startId, int maxCount) {
-    return Filter(m_modificationRequests, startId, maxCount);
-  }
-
-  inline EntitlementModification LocalAdministrationDataStore::
-      LoadEntitlementModification(AccountModificationRequest::Id id) {
-    auto request = m_idToEntitlementModification.find(id);
-    if(request == m_idToEntitlementModification.end()) {
-      return {};
-    }
-    return request->second;
-  }
-
-  inline void LocalAdministrationDataStore::Store(
-      const AccountModificationRequest& request,
-      const EntitlementModification& modification) {
-    Store(request);
-    m_idToEntitlementModification.insert(
-      std::pair(request.GetId(), modification));
-  }
-
-  inline RiskModification LocalAdministrationDataStore::LoadRiskModification(
-      AccountModificationRequest::Id id) {
-    auto request = m_idToRiskModification.find(id);
-    if(request == m_idToRiskModification.end()) {
-      return {};
-    }
-    return request->second;
-  }
-
-  inline void LocalAdministrationDataStore::Store(
-      const AccountModificationRequest& request,
-      const RiskModification& modification) {
-    Store(request);
-    m_idToRiskModification.insert(std::pair(request.GetId(), modification));
-  }
-
-  inline void LocalAdministrationDataStore::Store(
-      AccountModificationRequest::Id id, const Message& message) {
-    m_idToMessage.insert(std::pair(message.GetId(), message));
-    m_requestToMessages[id].push_back(message.GetId());
-    m_lastMessageId = message.GetId();
-  }
-
-  inline AccountModificationRequest::Update
-      LocalAdministrationDataStore::LoadAccountModificationRequestStatus(
-      AccountModificationRequest::Id id) {
-    auto status = m_idToRequestStatus.find(id);
-    if(status == m_idToRequestStatus.end()) {
-      return {};
-    }
-    return status->second;
-  }
-
-  inline void LocalAdministrationDataStore::Store(
-      AccountModificationRequest::Id id,
-      const AccountModificationRequest::Update& status) {
-    m_idToRequestStatus[id] = status;
-  }
-
-  inline Message::Id LocalAdministrationDataStore::LoadLastMessageId() {
-    return m_lastMessageId;
-  }
-
-  inline Message LocalAdministrationDataStore::LoadMessage(Message::Id id) {
-    auto message = m_idToMessage.find(id);
-    if(message == m_idToMessage.end()) {
-      return {};
-    }
-    return message->second;
-  }
-
-  inline std::vector<Message::Id> LocalAdministrationDataStore::LoadMessageIds(
-      AccountModificationRequest::Id id) {
-    auto messageIds = m_requestToMessages.find(id);
-    if(messageIds == m_requestToMessages.end()) {
-      return {};
-    }
-    return messageIds->second;
-  }
-
-  inline void LocalAdministrationDataStore::WithTransaction(
-      const std::function<void ()>& transaction) {
-    auto lock = boost::lock_guard(m_mutex);
-    transaction();
-  }
-
-  inline void LocalAdministrationDataStore::Close() {
-    m_openState.Close();
-  }
-
-  inline std::vector<AccountModificationRequest::Id>
-      LocalAdministrationDataStore::Filter(
-      const std::vector<AccountModificationRequest::Id>& requests,
-      AccountModificationRequest::Id startId, int maxCount) {
-    if(requests.empty()) {
-      return {};
-    }
-    if(startId == -1) {
-      startId = std::numeric_limits<AccountModificationRequest::Id>::max();
-    }
-    auto lastRequest = std::lower_bound(requests.begin(), requests.end(),
-      startId);
-    if(lastRequest != requests.end() && *lastRequest == startId) {
-      if(lastRequest == requests.begin()) {
-        return {};
-      }
-      --lastRequest;
-    }
+      LocalAdministrationDataStore::load_account_modification_request_ids(
+        const Beam::DirectoryEntry& account,
+        AccountModificationRequest::Id start_id, int max_count) {
     auto ids = std::vector<AccountModificationRequest::Id>();
-    while(static_cast<int>(ids.size()) < maxCount &&
-        lastRequest != requests.begin()) {
-      ids.push_back(*lastRequest);
-      --lastRequest;
+    auto i = m_account_modification_requests.begin();
+    while(i != m_account_modification_requests.end()) {
+      if(i->second.get_id() > start_id && i->second.get_account() == account) {
+        ids.push_back(i->first);
+      }
+      ++i;
     }
-    if(static_cast<int>(ids.size()) == maxCount) {
-      return ids;
+    std::sort(ids.begin(), ids.end());
+    while(ids.size() > max_count) {
+      ids.pop_back();
     }
-    ids.push_back(*lastRequest);
     return ids;
   }
 
-  inline void LocalAdministrationDataStore::Store(
-      const AccountModificationRequest& request) {
-    m_idToModificationRequests.insert(std::pair(request.GetId(), request));
-    if(m_modificationRequests.empty() ||
-        request.GetId() > m_modificationRequests.back()) {
-      m_modificationRequests.push_back(request.GetId());
-      m_accountToModificationRequests[request.GetAccount()].push_back(
-        request.GetId());
+  inline std::vector<AccountModificationRequest::Id>
+      LocalAdministrationDataStore::load_account_modification_request_ids(
+        AccountModificationRequest::Id start_id, int max_count) {
+    auto ids = std::vector<AccountModificationRequest::Id>();
+    auto i = m_account_modification_requests.begin();
+    while(i != m_account_modification_requests.end()) {
+      if(i->second.get_id() > start_id) {
+        ids.push_back(i->first);
+      }
+      ++i;
+    }
+    std::sort(ids.begin(), ids.end());
+    while(ids.size() > max_count) {
+      ids.pop_back();
+    }
+    return ids;
+  }
+
+  inline EntitlementModification
+      LocalAdministrationDataStore::load_entitlement_modification(
+        AccountModificationRequest::Id id) {
+    auto i = m_entitlement_modifications.find(id);
+    if(i == m_entitlement_modifications.end()) {
+      return EntitlementModification();
+    }
+    return i->second;
+  }
+
+  inline void LocalAdministrationDataStore::store(
+      const AccountModificationRequest& request,
+      const EntitlementModification& modification) {
+    m_account_modification_requests[request.get_id()] = request;
+    m_entitlement_modifications[request.get_id()] = modification;
+  }
+
+  inline RiskModification LocalAdministrationDataStore::load_risk_modification(
+      AccountModificationRequest::Id id) {
+    auto i = m_risk_modifications.find(id);
+    if(i == m_risk_modifications.end()) {
+      return RiskModification();
+    }
+    return i->second;
+  }
+
+  inline void LocalAdministrationDataStore::store(
+      const AccountModificationRequest& request,
+      const RiskModification& modification) {
+    m_account_modification_requests[request.get_id()] = request;
+    m_risk_modifications[request.get_id()] = modification;
+  }
+
+  inline void LocalAdministrationDataStore::store(
+      AccountModificationRequest::Id id, const Message& message) {
+    m_messages[message.get_id()] = message;
+    m_request_messages[id].push_back(message.get_id());
+    if(m_messages.size() == 1) {
+      m_last_message_id = message.get_id();
     } else {
-      auto insertionPoint = std::lower_bound(m_modificationRequests.begin(),
-        m_modificationRequests.end(), request.GetId());
-      m_modificationRequests.insert(insertionPoint,
-        request.GetId());
-      auto& accountRequests = m_accountToModificationRequests[
-        request.GetAccount()];
-      auto accountInsertion = std::lower_bound(accountRequests.begin(),
-        accountRequests.end(), request.GetId());
-      accountRequests.insert(accountInsertion, request.GetId());
+      m_last_message_id = std::max(m_last_message_id, message.get_id());
     }
   }
+
+  inline AccountModificationRequest::Update
+      LocalAdministrationDataStore::load_account_modification_request_status(
+        AccountModificationRequest::Id id) {
+    auto i = m_account_modification_request_updates.find(id);
+    if(i == m_account_modification_request_updates.end() || i->second.empty()) {
+      return AccountModificationRequest::Update();
+    }
+    return i->second.back();
+  }
+
+  inline void LocalAdministrationDataStore::store(
+      AccountModificationRequest::Id id,
+      const AccountModificationRequest::Update& status) {
+    m_account_modification_request_updates[id].push_back(status);
+  }
+
+  inline Message::Id LocalAdministrationDataStore::load_last_message_id() {
+    if(m_messages.empty()) {
+      return 0;
+    }
+    return m_last_message_id;
+  }
+
+  inline Message LocalAdministrationDataStore::load_message(Message::Id id) {
+    auto i = m_messages.find(id);
+    if(i == m_messages.end()) {
+      return Message();
+    }
+    return i->second;
+  }
+
+  inline std::vector<Message::Id>
+      LocalAdministrationDataStore::load_message_ids(
+        AccountModificationRequest::Id id) {
+    auto i = m_request_messages.find(id);
+    if(i == m_request_messages.end()) {
+      return std::vector<Message::Id>();
+    }
+    return i->second;
+  }
+
+  template<typename F>
+  decltype(auto) LocalAdministrationDataStore::with_transaction(
+      F&& transaction) {
+    auto lock = boost::lock_guard(m_mutex);
+    return std::forward<F>(transaction)();
+  }
+
+  inline void LocalAdministrationDataStore::close() {}
 }
 
 #endif

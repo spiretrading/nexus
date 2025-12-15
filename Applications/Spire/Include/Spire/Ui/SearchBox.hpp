@@ -2,9 +2,9 @@
 #define SPIRE_SEARCH_BOX_HPP
 #include <QWidget>
 #include "Spire/Ui/TextBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Button;
 
   /** Displays a text search input box. */
   class SearchBox : public QWidget {

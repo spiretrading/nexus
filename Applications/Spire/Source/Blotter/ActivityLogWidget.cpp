@@ -45,9 +45,9 @@ void ActivityLogWidget::SetUIState(const UIState& state) {
 
 void ActivityLogWidget::SetModel(Ref<UserProfile> userProfile,
     Ref<BlotterModel> model) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_ui->m_activityLogTable->reset();
-  m_model = model.Get();
+  m_model = model.get();
   CustomVariantSortFilterProxyModel* proxyModel =
     new CustomVariantSortFilterProxyModel(Ref(*m_userProfile));
   proxyModel->setSourceModel(&m_model->GetActivityLogModel());

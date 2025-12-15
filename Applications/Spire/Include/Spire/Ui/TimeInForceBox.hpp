@@ -2,7 +2,6 @@
 #define SPIRE_TIME_IN_FORCE_BOX_HPP
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/Ui/EnumBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

@@ -2,7 +2,6 @@
 #define SPIRE_SIDE_FILTER_PANEL_HPP
 #include "Nexus/Definitions/Side.hpp"
 #include "Spire/Ui/ClosedFilterPanel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

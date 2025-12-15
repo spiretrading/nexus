@@ -22,7 +22,7 @@ std::unique_ptr<CanvasNode> Spire::MakeTaskVolumeNode() {
   executionReportMonitor = executionReportMonitor->Replace(
     executionReportMonitor->GetChildren().front(), std::move(taskReference));
   auto quantityQuery = std::make_unique<QueryNode>();
-  quantityQuery = StaticCast<std::unique_ptr<QueryNode>>(quantityQuery->Replace(
+  quantityQuery = static_pointer_cast<QueryNode>(quantityQuery->Replace(
     quantityQuery->GetChildren().front(), std::move(executionReportMonitor)));
   quantityQuery = quantityQuery->SetField("last_quantity");
   auto additionCombiner =

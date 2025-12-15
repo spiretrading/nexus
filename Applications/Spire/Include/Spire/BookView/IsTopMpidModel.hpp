@@ -1,6 +1,5 @@
 #ifndef SPIRE_IS_TOP_MPID_MODEL_HPP
 #define SPIRE_IS_TOP_MPID_MODEL_HPP
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/BookView/TopMpidPriceListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -23,14 +22,13 @@ namespace Spire {
         std::shared_ptr<ValueModel<Nexus::Money>> price);
 
       const bool& get() const override;
-
       boost::signals2::connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const override;
 
     private:
       std::shared_ptr<ListModel<TopMpidPrice>> m_top_mpid_prices;
       std::shared_ptr<BookEntryModel> m_mpid;
-      Nexus::MarketCode m_market;
+      Nexus::Venue m_venue;
       std::shared_ptr<ValueModel<Nexus::Money>> m_price;
       std::shared_ptr<ValueModel<TopMpidPrice>> m_top_mpid;
       LocalValueModel<bool> m_current;

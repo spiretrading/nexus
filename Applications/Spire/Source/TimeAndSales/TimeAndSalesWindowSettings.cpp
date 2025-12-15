@@ -1,4 +1,5 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
+#include <Beam/Utilities/ToString.hpp>
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -19,11 +20,10 @@ TimeAndSalesWindowSettings::TimeAndSalesWindowSettings(
     auto& widths = *window.m_table_view->get_header().get_widths();
     m_column_widths.insert(m_column_widths.end(), widths.begin(), widths.end());
   }
-  auto& security = window.GetDisplayedSecurity();
-  if(security == Security()) {
-    m_name = "Time And Sales";
+  if(auto& security = window.GetDisplayedSecurity()) {
+    m_name = "Time And Sales - " + to_string(security);
   } else {
-    m_name = "Time And Sales - " + to_text(security).toStdString();
+    m_name = "Time And Sales";
   }
 }
 
@@ -35,11 +35,10 @@ QWidget* TimeAndSalesWindowSettings::Reopen(
     Ref<UserProfile> user_profile) const {
   auto window = new TimeAndSalesWindow(
     user_profile->GetSecurityInfoQueryModel(),
-    user_profile->GetMarketDatabase(),
     user_profile->GetTimeAndSalesPropertiesWindowFactory(),
     user_profile->GetTimeAndSalesModelBuilder(), m_identifier);
   window->setAttribute(Qt::WA_DeleteOnClose);
-  Apply(Ref(user_profile), Store(*window));
+  Apply(Ref(user_profile), out(*window));
   return window;
 }
 

@@ -6,7 +6,7 @@
 #include <QAbstractItemModel>
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/Blotter.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/Blotter/ProfitAndLossModel.hpp"
 
 namespace Spire {
 
@@ -49,10 +49,10 @@ namespace Spire {
         int m_index;
 
         /** The open position's Security. */
-        SpireBookkeeper::Key m_key;
+        Nexus::Position::Key m_key;
 
         /** The Inventory representing the open position. */
-        SpireBookkeeper::Inventory m_inventory;
+        Nexus::Inventory m_inventory;
 
         /** The position's unrealized earnings. */
         Nexus::Money m_unrealizedEarnings;
@@ -62,7 +62,7 @@ namespace Spire {
          * @param index The Entry's index.
          * @param key The open position's Security.
          */
-        Entry(int index, const SpireBookkeeper::Key& key);
+        Entry(int index, const Nexus::Position::Key& key);
       };
 
       /** Constructs an empty OpenPositionsModel. */
@@ -74,7 +74,7 @@ namespace Spire {
        *        are to be modelled.
        */
       void SetPortfolioController(
-        Beam::Ref<SpirePortfolioController> portfolioController);
+        Beam::Ref<ProfitAndLossModel::PortfolioController> portfolioController);
 
       /** Returns all open positions. */
       std::vector<Entry> GetOpenPositions() const;
@@ -90,22 +90,18 @@ namespace Spire {
         GetOpenPosition(const Nexus::Security& security) const;
 
       int rowCount(const QModelIndex& parent) const override;
-
       int columnCount(const QModelIndex& parent) const override;
-
       QVariant data(const QModelIndex& index, int role) const override;
-
       QVariant headerData(
         int section, Qt::Orientation orientation, int role) const override;
 
     private:
-      SpirePortfolioController* m_portfolioController;
+      ProfitAndLossModel::PortfolioController* m_portfolioController;
       std::vector<std::unique_ptr<Entry>> m_entries;
       std::unordered_map<Nexus::Security, Entry*> m_securityToEntry;
       std::optional<EventHandler> m_eventHandler;
 
-      void OnPortfolioUpdate(
-        const SpirePortfolioController::UpdateEntry& update);
+      void OnPortfolioUpdate(const Nexus::PortfolioUpdateEntry& update);
   };
 }
 

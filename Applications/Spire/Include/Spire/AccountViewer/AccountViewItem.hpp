@@ -6,11 +6,12 @@
 #include <Beam/Collections/Enum.hpp>
 #include <boost/noncopyable.hpp>
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 class QIcon;
 
 namespace Spire {
+  class UserProfile;
+
 namespace Details {
   BEAM_ENUM(AccountViewItemTypeDefinition,
 

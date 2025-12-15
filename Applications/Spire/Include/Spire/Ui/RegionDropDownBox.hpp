@@ -2,7 +2,6 @@
 #define SPIRE_REGION_DROP_DOWN_BOX_HPP
 #include "Nexus/Definitions/Region.hpp"
 #include "Spire/Ui/EnumBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

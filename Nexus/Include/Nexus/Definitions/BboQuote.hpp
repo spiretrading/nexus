@@ -1,7 +1,9 @@
 #ifndef NEXUS_BBO_QUOTE_HPP
 #define NEXUS_BBO_QUOTE_HPP
+#include <cassert>
 #include <ostream>
-#include <Beam/Serialization/DataShuttle.hpp>
+#include <utility>
+#include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include "Nexus/Definitions/Quote.hpp"
@@ -17,11 +19,11 @@ namespace Nexus {
     /** The best ask. */
     Quote m_ask;
 
-    /** The time of the transaction. */
+    /** The time of the update. */
     boost::posix_time::ptime m_timestamp;
 
     /** Constructs an uninitialized BboQuote. */
-    BboQuote();
+    BboQuote() noexcept;
 
     /**
      * Constructs a BboQuote.
@@ -29,23 +31,23 @@ namespace Nexus {
      * @param ask The best ask.
      * @param timestamp The time of the transaction.
      */
-    BboQuote(Quote bid, Quote ask, boost::posix_time::ptime timestamp);
+    BboQuote(Quote bid, Quote ask, boost::posix_time::ptime timestamp) noexcept;
 
-    bool operator ==(const BboQuote& rhs) const = default;
+    bool operator ==(const BboQuote&) const = default;
   };
 
   inline std::ostream& operator <<(std::ostream& out, const BboQuote& value) {
-    return out << "(" << value.m_bid << " " << value.m_ask << " " <<
-      value.m_timestamp << ")";
+    return out << '(' << value.m_bid << ' ' << value.m_ask << ' ' <<
+      value.m_timestamp << ')';
   }
 
-  inline BboQuote::BboQuote() {
+  inline BboQuote::BboQuote() noexcept {
     m_bid.m_side = Side::BID;
     m_ask.m_side = Side::ASK;
   }
 
-  inline BboQuote::BboQuote(Quote bid, Quote ask,
-      boost::posix_time::ptime timestamp)
+  inline BboQuote::BboQuote(
+      Quote bid, Quote ask, boost::posix_time::ptime timestamp) noexcept
       : m_bid(std::move(bid)),
         m_ask(std::move(ask)),
         m_timestamp(timestamp) {
@@ -54,15 +56,15 @@ namespace Nexus {
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::BboQuote> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::BboQuote& value,
-        unsigned int version) {
-      shuttle.Shuttle("bid", value.m_bid);
-      shuttle.Shuttle("ask", value.m_ask);
-      shuttle.Shuttle("timestamp", value.m_timestamp);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::BboQuote& value, unsigned int version) const {
+      shuttle.shuttle("bid", value.m_bid);
+      shuttle.shuttle("ask", value.m_ask);
+      shuttle.shuttle("timestamp", value.m_timestamp);
     }
   };
 }

@@ -41,8 +41,8 @@ namespace Spire {
         */
         Field(std::string name, const NativeType& type);
 
-        template<typename Shuttler>
-        void Shuttle(Shuttler& shuttle, unsigned int version);
+        template<Beam::IsShuttle S>
+        void shuttle(S& shuttle, unsigned int version);
       };
 
       //! Returns a RecordType containing no Fields.
@@ -67,15 +67,15 @@ namespace Spire {
         std::vector<Field> fields);
       friend std::shared_ptr<RecordType> MakeRecordType(std::string name,
         std::vector<Field> fields);
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::string m_name;
       std::vector<Field> m_fields;
 
       RecordType();
       RecordType(std::vector<Field> fields);
       RecordType(std::string name, std::vector<Field> fields);
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
   //! Makes an anonymous RecordType.
@@ -102,17 +102,17 @@ namespace Spire {
   boost::optional<const RecordType::Field&> FindField(const RecordType& type,
     const std::string& name);
 
-  template<typename Shuttler>
-  void RecordType::Field::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("name", m_name);
-    shuttle.Shuttle("type", m_type);
+  template<Beam::IsShuttle S>
+  void RecordType::Field::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("name", m_name);
+    shuttle.shuttle("type", m_type);
   }
 
-  template<typename Shuttler>
-  void RecordType::Shuttle(Shuttler& shuttle, unsigned int version) {
-    NativeType::Shuttle(shuttle, version);
-    shuttle.Shuttle("name", m_name);
-    shuttle.Shuttle("fields", m_fields);
+  template<Beam::IsShuttle S>
+  void RecordType::shuttle(S& shuttle, unsigned int version) {
+    NativeType::shuttle(shuttle, version);
+    shuttle.shuttle("name", m_name);
+    shuttle.shuttle("fields", m_fields);
   }
 }
 

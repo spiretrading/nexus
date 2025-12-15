@@ -2,14 +2,12 @@
 #define SPIRE_TOOLBAR_CONTROLLER_HPP
 #include <memory>
 #include <Beam/Pointers/Ref.hpp>
-#include "Spire/Blotter/Blotter.hpp"
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
-#include "Spire/LegacyUI/LegacyUI.hpp"
-#include "Spire/Toolbar/Toolbar.hpp"
 #include "Spire/Toolbar/ToolbarWindow.hpp"
 
 namespace Spire {
+  class BookViewController;
+  class UserProfile;
 
   /** Implements the main application controller for the ToolbarWindow. */
   class ToolbarController {

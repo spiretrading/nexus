@@ -9,7 +9,6 @@
 #include <boost/signals2/signal.hpp>
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardModelSchema.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 
 namespace Spire {
@@ -116,31 +115,31 @@ namespace Spire {
         const DashboardRemovedSignal::slot_type& slot) const;
 
     private:
-      friend struct Beam::Serialization::Shuttle<Spire::SavedDashboards>;
+      friend struct Beam::Shuttle<Spire::SavedDashboards>;
       std::vector<Entry> m_dashboards;
       mutable DashboardAddedSignal m_dashboardAddedSignal;
       mutable DashboardRemovedSignal m_dashboardRemovedSignal;
   };
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Spire::SavedDashboards::Entry> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Spire::SavedDashboards::Entry& value,
-        unsigned int version) {
-      shuttle.Shuttle("name", value.m_name);
-      shuttle.Shuttle("schema", value.m_schema);
-      shuttle.Shuttle("settings", value.m_settings);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::SavedDashboards::Entry& value,
+        unsigned int version) const {
+      shuttle.shuttle("name", value.m_name);
+      shuttle.shuttle("schema", value.m_schema);
+      shuttle.shuttle("settings", value.m_settings);
     }
   };
 
   template<>
   struct Shuttle<Spire::SavedDashboards> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Spire::SavedDashboards& value,
-        unsigned int version) {
-      shuttle.Shuttle("dashboards", value.m_dashboards);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Spire::SavedDashboards& value, unsigned int version) const {
+      shuttle.shuttle("dashboards", value.m_dashboards);
     }
   };
 }

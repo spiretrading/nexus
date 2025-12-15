@@ -8,7 +8,7 @@
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Sql/MySqlConfig.hpp>
 #include <Beam/Sql/SqlConnection.hpp>
-#include <Beam/Threading/LiveTimer.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/UidService/ApplicationDefinitions.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
@@ -22,8 +22,6 @@
 #include "Nexus/Compliance/ComplianceCheckOrderExecutionDriver.hpp"
 #include "Nexus/Compliance/ComplianceRuleBuilder.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
-#include "Nexus/InternalMatcher/InternalMatchingOrderExecutionDriver.hpp"
-#include "Nexus/InternalMatcher/NullMatchReportBuilder.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Nexus/OrderExecutionService/BoardLotCheck.hpp"
 #include "Nexus/OrderExecutionService/BuyingPowerCheck.hpp"
@@ -36,145 +34,116 @@
 #include "Version.hpp"
 
 using namespace Beam;
-using namespace Beam::Codecs;
-using namespace Beam::IO;
-using namespace Beam::Network;
-using namespace Beam::Parsers;
-using namespace Beam::Routines;
-using namespace Beam::Serialization;
-using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
-using namespace Beam::Threading;
-using namespace Beam::TimeService;
-using namespace Beam::UidService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::Compliance;
-using namespace Nexus::DefinitionsService;
-using namespace Nexus::InternalMatcher;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::OrderExecutionService;
 using namespace Viper;
 
 namespace {
-  using SqlDataStore = SqlOrderExecutionDataStore<
-    SqlConnection<MySql::Connection>>;
+  using DataStore =
+    SqlOrderExecutionDataStore<SqlConnection<MySql::Connection>>;
   using ApplicationSimulationOrderExecutionDriver =
-    SimulationOrderExecutionDriver<ApplicationMarketDataClient::Client*,
-      LiveNtpTimeClient*>;
-  using ApplicationInternalMatchingOrderExecutionDriver =
-    InternalMatchingOrderExecutionDriver<NullMatchReportBuilder,
-      ApplicationMarketDataClient::Client*, LiveNtpTimeClient*,
-      ApplicationUidClient::Client*,
-      ApplicationSimulationOrderExecutionDriver*>;
-  using ApplicationOrderSubmissionCheckDriver = OrderSubmissionCheckDriver<
-    ApplicationInternalMatchingOrderExecutionDriver*>;
+    SimulationOrderExecutionDriver<
+      ApplicationMarketDataClient*, LiveNtpTimeClient*>;
+  using ApplicationOrderSubmissionCheckDriver =
+    OrderSubmissionCheckDriver<ApplicationSimulationOrderExecutionDriver*>;
   using ApplicationComplianceCheckOrderExecutionDriver =
     ComplianceCheckOrderExecutionDriver<ApplicationOrderSubmissionCheckDriver*,
-      LiveNtpTimeClient*,
-      ComplianceRuleSet<ApplicationComplianceClient::Client*,
-      ApplicationServiceLocatorClient::Client*>*>;
+      LiveNtpTimeClient*, ComplianceRuleSet<
+        ApplicationComplianceClient*, ApplicationServiceLocatorClient*>*>;
   using ApplicationOrderExecutionDriver =
     ApplicationComplianceCheckOrderExecutionDriver;
   using OrderExecutionServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<MetaOrderExecutionServlet<
-      LiveNtpTimeClient*, ApplicationServiceLocatorClient::Client*,
-      ApplicationUidClient::Client*, ApplicationAdministrationClient::Client*,
+      LiveNtpTimeClient*, ApplicationServiceLocatorClient*,
+      ApplicationUidClient*, ApplicationAdministrationClient*,
       ApplicationOrderExecutionDriver*, ReplicatedOrderExecutionDataStore*>,
-    ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
+    ApplicationServiceLocatorClient*>, TcpServerSocket,
     BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
 }
 
 int main(int argc, const char** argv) {
   try {
-    auto config = ParseCommandLine(argc, argv,
-      "0.9-r" SIMULATION_ORDER_EXECUTION_SERVER_VERSION
-      "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto serviceConfig = TryOrNest([&] {
-      return ServiceConfiguration::Parse(GetNode(config, "server"),
-        OrderExecutionService::SERVICE_NAME);
+    auto config = parse_command_line(argc, argv,
+      "1.0-r" SIMULATION_ORDER_EXECUTION_SERVER_VERSION
+      "\nCopyright (C) 2026 Spire Trading Inc.");
+    auto service_config = try_or_nest([&] {
+      return ServiceConfiguration::parse(
+        get_node(config, "server"), ORDER_EXECUTION_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'server'."));
-    auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
-      GetNode(config, "service_locator"));
-    auto uidClient = ApplicationUidClient(serviceLocatorClient.Get());
-    auto timeClient = MakeLiveNtpTimeClientFromServiceLocator(
-      *serviceLocatorClient);
-    auto administrationClient = ApplicationAdministrationClient(
-      serviceLocatorClient.Get());
-    auto marketDataClient = ApplicationMarketDataClient(
-      serviceLocatorClient.Get());
-    auto definitionsClient = ApplicationDefinitionsClient(
-      serviceLocatorClient.Get());
-    auto complianceClient = ApplicationComplianceClient(
-      serviceLocatorClient.Get());
-    auto simulationOrderExecutionDriver =
-      ApplicationSimulationOrderExecutionDriver(marketDataClient.Get(),
-        timeClient.get());
-    auto internalMatchingOrderExecutionDriver =
-      ApplicationInternalMatchingOrderExecutionDriver(
-        serviceLocatorClient->GetAccount(), Initialize(),
-        marketDataClient.Get(), timeClient.get(), uidClient.Get(),
-        &simulationOrderExecutionDriver);
+    auto service_locator_client = ApplicationServiceLocatorClient(
+      ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
+    auto uid_client = ApplicationUidClient(Ref(service_locator_client));
+    auto time_client = make_live_ntp_time_client(service_locator_client);
+    auto administration_client =
+      ApplicationAdministrationClient(Ref(service_locator_client));
+    auto market_data_client =
+      ApplicationMarketDataClient(Ref(service_locator_client));
+    auto definitions_client =
+      ApplicationDefinitionsClient(Ref(service_locator_client));
+    auto compliance_client =
+      ApplicationComplianceClient(Ref(service_locator_client));
+    auto simulation_driver = ApplicationSimulationOrderExecutionDriver(
+      &market_data_client, time_client.get());
     auto checks = std::vector<std::unique_ptr<OrderSubmissionCheck>>();
-    TryOrNest([&] {
-      checks.emplace_back(MakeBoardLotCheck(marketDataClient.Get(),
-        definitionsClient->LoadMarketDatabase(),
-        definitionsClient->LoadTimeZoneDatabase()));
-      checks.emplace_back(std::make_unique<
-        BuyingPowerCheck<ApplicationAdministrationClient::Client*,
-          ApplicationMarketDataClient::Client*>>(
-            definitionsClient->LoadExchangeRates(), administrationClient.Get(),
-            marketDataClient.Get()));
-      checks.emplace_back(std::make_unique<
-        RiskStateCheck<ApplicationAdministrationClient::Client*>>(
-          administrationClient.Get()));
+    try_or_nest([&] {
+      checks.emplace_back(make_board_lot_check(&market_data_client,
+        definitions_client.load_venue_database(),
+        definitions_client.load_time_zone_database()));
+      checks.emplace_back(
+        std::make_unique<BuyingPowerCheck<ApplicationAdministrationClient*,
+          ApplicationMarketDataClient*>>(
+            ExchangeRateTable(definitions_client.load_exchange_rates()),
+            &administration_client, &market_data_client));
+      checks.emplace_back(
+        std::make_unique<RiskStateCheck<ApplicationAdministrationClient*>>(
+          &administration_client));
     }, std::runtime_error("Unable to initialize order submission checks"));
-    auto orderSubmissionCheckDriver = ApplicationOrderSubmissionCheckDriver(
-      &internalMatchingOrderExecutionDriver, std::move(checks));
-    auto complianceRuleSet = ComplianceRuleSet(complianceClient.Get(),
-      serviceLocatorClient.Get(), [&] (const auto& entry) {
-        return MakeComplianceRule(entry.GetSchema(), *marketDataClient,
-          *definitionsClient, *timeClient);
+    auto submission_check_driver = ApplicationOrderSubmissionCheckDriver(
+      &simulation_driver, std::move(checks));
+    auto rule_set = ComplianceRuleSet(
+      &compliance_client, &service_locator_client, [&] (const auto& entry) {
+        return make_compliance_rule(entry.get_schema(), market_data_client,
+          definitions_client, *time_client);
       });
-    auto complianceCheckOrderExecutionDriver =
+    auto compliance_check_driver =
       ApplicationComplianceCheckOrderExecutionDriver(
-        &orderSubmissionCheckDriver, timeClient.get(), &complianceRuleSet);
-    auto mySqlConfigs = TryOrNest([&] {
-      return MySqlConfig::ParseReplication(GetNode(config, "data_store"));
+        &submission_check_driver, time_client.get(), &rule_set);
+    auto mysql_configs = try_or_nest([&] {
+      return MySqlConfig::parse_replication(get_node(config, "data_store"));
     }, std::runtime_error("Error parsing section 'data_store'."));
-    auto sessionStartTime = Extract<ptime>(config, "session_start_time",
-      pos_infin);
-    auto accountSource = [&] (unsigned int id) {
-      return serviceLocatorClient->LoadDirectoryEntry(id);
+    auto session_start_time =
+      extract<ptime>(config, "session_start_time", pos_infin);
+    auto account_source = [&] (unsigned int id) {
+      return service_locator_client.load_directory_entry(id);
     };
-    auto connectionBuilders = std::vector<SqlDataStore::ConnectionBuilder>();
-    for(auto& mySqlConfig : mySqlConfigs) {
-      connectionBuilders.emplace_back([=] {
-        return SqlConnection(MySql::Connection(mySqlConfig.m_address.GetHost(),
-          mySqlConfig.m_address.GetPort(), mySqlConfig.m_username,
-          mySqlConfig.m_password, mySqlConfig.m_schema));
+    auto connection_builders = std::vector<DataStore::ConnectionBuilder>();
+    for(auto& mysql_config : mysql_configs) {
+      connection_builders.emplace_back([=] {
+        return SqlConnection(MySql::Connection(
+          mysql_config.m_address.get_host(), mysql_config.m_address.get_port(),
+          mysql_config.m_username, mysql_config.m_password,
+          mysql_config.m_schema));
       });
     }
-    auto dataStore = MakeReplicatedMySqlOrderExecutionDataStore(
-      connectionBuilders, accountSource);
-    auto orderExecutionServer = OrderExecutionServletContainer(
-      Initialize(serviceLocatorClient.Get(), Initialize(
-        sessionStartTime, definitionsClient->LoadMarketDatabase(),
-        definitionsClient->LoadDestinationDatabase(), timeClient.get(),
-        serviceLocatorClient.Get(), uidClient.Get(), administrationClient.Get(),
-        &complianceCheckOrderExecutionDriver, dataStore.get())),
-      Initialize(serviceConfig.m_interface),
+    auto data_store = make_replicated_sql_order_execution_data_store(
+      connection_builders, account_source);
+    auto order_execution_server = OrderExecutionServletContainer(
+      init(&service_locator_client, init(
+        session_start_time , definitions_client.load_venue_database(),
+        definitions_client.load_destination_database(), time_client.get(),
+        &service_locator_client, &uid_client, &administration_client,
+        &compliance_check_driver, data_store.get())),
+      init(service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-    Register(*serviceLocatorClient, serviceConfig);
-    WaitForKillEvent();
-    serviceLocatorClient->Close();
-    complianceClient->Close();
-    marketDataClient->Close();
-    administrationClient->Close();
+    add(service_locator_client, service_config);
+    wait_for_kill_event();
+    service_locator_client.close();
+    compliance_client.close();
+    market_data_client.close();
+    administration_client.close();
   } catch(...) {
-    ReportCurrentException();
+    report_current_exception();
     return -1;
   }
   return 0;

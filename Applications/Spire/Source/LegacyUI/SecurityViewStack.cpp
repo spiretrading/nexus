@@ -9,7 +9,7 @@ using namespace std;
 SecurityViewStack::SecurityViewStack() {}
 
 void SecurityViewStack::Push(const Security& security) {
-  if(security == Security()) {
+  if(!security) {
     return;
   }
   m_securities.push_front(security);

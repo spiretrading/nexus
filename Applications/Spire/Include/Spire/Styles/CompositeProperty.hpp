@@ -3,7 +3,6 @@
 #include <tuple>
 #include <type_traits>
 #include <utility>
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 

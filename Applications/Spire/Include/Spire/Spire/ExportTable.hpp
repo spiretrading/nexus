@@ -1,6 +1,8 @@
 #ifndef SPIRE_EXPORT_TABLE_HPP
 #define SPIRE_EXPORT_TABLE_HPP
 #include <ostream>
+#include <vector>
+#include <QString>
 #include "Spire/Spire/TableModel.hpp"
 
 namespace Spire {
@@ -11,9 +13,8 @@ namespace Spire {
    * @param headers The table headers to export.
    * @param out The stream to output in CSV format.
    */
-  void export_table_as_csv(const TableModel& table,
+  void export_as_csv(const TableModel& table,
     const std::vector<QString>& headers, std::ostream& out);
-
 }
 
 #endif

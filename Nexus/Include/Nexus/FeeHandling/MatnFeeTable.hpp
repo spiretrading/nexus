@@ -3,8 +3,8 @@
 #include <array>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/FeeHandling/FeeHandling.hpp"
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
+#include "Nexus/FeeHandling/ParseFeeTable.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 
 namespace Nexus {
@@ -81,11 +81,11 @@ namespace Nexus {
 
     /** The general fee table. */
     std::array<std::array<Money, GENERAL_INDEX_COUNT>, PRICE_CLASS_COUNT>
-      m_generalFeeTable;
+      m_general_fee_table;
 
     /** The alternative fee table. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, CATEGORY_COUNT>
-      m_alternativeFeeTable;
+      m_alternative_fee_table;
   };
 
   /**
@@ -93,93 +93,93 @@ namespace Nexus {
    * @param config The configuration to parse the MatnFeeTable from.
    * @return The MatnFeeTable represented by the <i>config</i>.
    */
-  inline MatnFeeTable ParseMatnFeeTable(const YAML::Node& config) {
-    auto feeTable = MatnFeeTable();
-    ParseFeeTable(config, "general_table",
-      Beam::Store(feeTable.m_generalFeeTable));
-    ParseFeeTable(config, "alternative_table",
-      Beam::Store(feeTable.m_alternativeFeeTable));
-    return feeTable;
+  inline MatnFeeTable parse_matn_fee_table(const YAML::Node& config) {
+    auto table = MatnFeeTable();
+    parse_fee_table(
+      config, "general_table", Beam::out(table.m_general_fee_table));
+    parse_fee_table(
+      config, "alternative_table", Beam::out(table.m_alternative_fee_table));
+    return table;
   }
 
   /**
    * Looks up a fee in the general fee table.
-   * @param feeTable The MatnFeeTable used to lookup the fee.
-   * @param priceClass The trade's PriceClass.
-   * @param generalIndex The trade's general index.
-   * @return The fee corresponding to the specified <i>priceClass</i> and
-   *         <i>generalIndex</i>.
+   * @param table The MatnFeeTable used to lookup the fee.
+   * @param price_class The trade's PriceClass.
+   * @param general_index The trade's general index.
+   * @return The fee corresponding to the specified <i>price_class</i> and
+   *         <i>general_index</i>.
    */
-  inline Money LookupFee(const MatnFeeTable& feeTable,
-      MatnFeeTable::GeneralIndex generalIndex,
-      MatnFeeTable::PriceClass priceClass) {
-    return feeTable.m_generalFeeTable[static_cast<int>(priceClass)][
-      static_cast<int>(generalIndex)];
+  inline Money lookup_fee(
+      const MatnFeeTable& table, MatnFeeTable::GeneralIndex general_index,
+      MatnFeeTable::PriceClass price_class) {
+    return table.m_general_fee_table[static_cast<int>(price_class)][
+      static_cast<int>(general_index)];
   }
 
   /**
    * Looks up a fee in the alternative fee table.
-   * @param feeTable The MatnFeeTable used to lookup the fee.
-   * @param liquidityFlag The trade's LiquidityFlag.
+   * @param table The MatnFeeTable used to lookup the fee.
+   * @param flag The trade's LiquidityFlag.
    * @param category The trade's Category.
-   * @return The fee corresponding to the specified <i>liquidityFlag</i> and
+   * @return The fee corresponding to the specified <i>flag</i> and
    *         <i>category</i>.
    */
-  inline Money LookupFee(const MatnFeeTable& feeTable,
-      LiquidityFlag liquidityFlag, MatnFeeTable::Category category) {
-    return feeTable.m_alternativeFeeTable[static_cast<int>(category)][
-      static_cast<int>(liquidityFlag)];
+  inline Money lookup_fee(const MatnFeeTable& table, LiquidityFlag flag,
+      MatnFeeTable::Category category) {
+    return table.m_alternative_fee_table[static_cast<int>(category)][
+      static_cast<int>(flag)];
   }
 
   /**
    * Calculates the fee on a trade executed on MATN.
-   * @param feeTable The MatnFeeTable used to calculate the fee.
+   * @param table The MatnFeeTable used to calculate the fee.
    * @param classification The Security's classification.
-   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */
-  inline Money CalculateFee(const MatnFeeTable& feeTable,
-      MatnFeeTable::Classification classification,
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    if(executionReport.m_lastQuantity == 0) {
+  inline Money calculate_fee(
+      const MatnFeeTable& table, MatnFeeTable::Classification classification,
+      const ExecutionReport& report) {
+    if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }
     if(classification == MatnFeeTable::Classification::DEFAULT &&
-        executionReport.m_lastQuantity >= 100) {
-      auto priceClass = [&] {
-        if(executionReport.m_lastPrice < Money::ONE) {
+        report.m_last_quantity >= 100) {
+      auto price_class = [&] {
+        if(report.m_last_price < Money::ONE) {
           return MatnFeeTable::PriceClass::SUBDOLLAR;
-        } else if(executionReport.m_lastPrice < 5 * Money::ONE) {
+        } else if(report.m_last_price < 5 * Money::ONE) {
           return MatnFeeTable::PriceClass::SUBFIVE_DOLLAR;
         } else {
           return MatnFeeTable::PriceClass::DEFAULT;
         }
       }();
-      auto fee = LookupFee(feeTable, MatnFeeTable::GeneralIndex::FEE,
-        priceClass);
-      auto maxCharge = LookupFee(feeTable,
-        MatnFeeTable::GeneralIndex::MAX_CHARGE, priceClass);
-      return std::min(executionReport.m_lastQuantity * fee, maxCharge);
+      auto fee =
+        lookup_fee(table, MatnFeeTable::GeneralIndex::FEE, price_class);
+      auto max_charge =
+        lookup_fee(table, MatnFeeTable::GeneralIndex::MAX_CHARGE, price_class);
+      return std::min(report.m_last_quantity * fee, max_charge);
     } else {
-      auto liquidityFlag = [&] {
-        if(executionReport.m_liquidityFlag.size() == 1) {
-          if(executionReport.m_liquidityFlag[0] == 'P') {
+      auto flag = [&] {
+        if(report.m_liquidity_flag.size() == 1) {
+          if(report.m_liquidity_flag[0] == 'P') {
             return LiquidityFlag::PASSIVE;
-          } else if(executionReport.m_liquidityFlag[0] == 'A') {
+          } else if(report.m_liquidity_flag[0] == 'A') {
             return LiquidityFlag::ACTIVE;
           } else {
             std::cout << "Unknown liquidity flag [MATN]: \"" <<
-              executionReport.m_liquidityFlag << "\"\n";
+              report.m_liquidity_flag << "\"\n";
             return LiquidityFlag::ACTIVE;
           }
         } else {
           std::cout << "Unknown liquidity flag [MATN]: \"" <<
-            executionReport.m_liquidityFlag << "\"\n";
+            report.m_liquidity_flag << "\"\n";
           return LiquidityFlag::ACTIVE;
         }
       }();
       auto category = [&] {
-        if(executionReport.m_lastQuantity < 100) {
+        if(report.m_last_quantity < 100) {
           return MatnFeeTable::Category::ODD_LOT;
         } else if(classification == MatnFeeTable::Classification::ETF) {
           return MatnFeeTable::Category::ETF;
@@ -188,8 +188,8 @@ namespace Nexus {
           return MatnFeeTable::Category::ETF;
         }
       }();
-      auto fee = LookupFee(feeTable, liquidityFlag, category);
-      return executionReport.m_lastQuantity * fee;
+      auto fee = lookup_fee(table, flag, category);
+      return report.m_last_quantity * fee;
     }
   }
 }

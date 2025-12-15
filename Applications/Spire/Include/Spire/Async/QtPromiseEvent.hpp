@@ -3,28 +3,26 @@
 #include <utility>
 #include <Beam/Utilities/Expect.hpp>
 #include <QEvent>
-#include "Spire/Async/Async.hpp"
 
-namespace Spire {
-namespace details {
+namespace Spire::details {
   class QtDeferredExecutionEvent : public QEvent {
     public:
       const static QEvent::Type EVENT_TYPE;
 
-      QtDeferredExecutionEvent();
+      QtDeferredExecutionEvent() noexcept;
   };
 
   class QtBasePromiseEvent : public QEvent {
     public:
       const static QEvent::Type EVENT_TYPE;
 
-      QtBasePromiseEvent();
+      QtBasePromiseEvent() noexcept;
   };
 
   template<typename T>
   class QtPromiseEvent : public QtBasePromiseEvent {
     public:
-      explicit QtPromiseEvent(Beam::Expect<T> result);
+      explicit QtPromiseEvent(Beam::Expect<T> result) noexcept;
 
       Beam::Expect<T>& get_result();
 
@@ -38,14 +36,13 @@ namespace details {
   }
 
   template<typename T>
-  QtPromiseEvent<T>::QtPromiseEvent(Beam::Expect<T> result)
-      : m_result(std::move(result)) {}
+  QtPromiseEvent<T>::QtPromiseEvent(Beam::Expect<T> result) noexcept
+    : m_result(std::move(result)) {}
 
   template<typename T>
   Beam::Expect<T>& QtPromiseEvent<T>::get_result() {
     return m_result;
   }
-}
 }
 
 #endif

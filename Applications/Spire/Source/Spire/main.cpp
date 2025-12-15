@@ -7,7 +7,6 @@
 #include <QSharedMemory>
 #include <QStandardPaths>
 #include <tclap/CmdLine.h>
-#include "Nexus/TelemetryService/ApplicationDefinitions.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/BookView/BookViewPropertiesWindowFactory.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
@@ -22,7 +21,8 @@
 #include "Spire/SignIn/SignInController.hpp"
 #include "Spire/SignIn/SignInException.hpp"
 #include "Spire/Spire/Resources.hpp"
-#include "Spire/Spire/SpireServiceClients.hpp"
+#include "Spire/Spire/SpireClients.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/Toolbar/ToolbarController.hpp"
 #include "Version.hpp"
 #include <QtPlugin>
@@ -30,14 +30,8 @@
 Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin)
 
 using namespace Beam;
-using namespace Beam::Network;
-using namespace Beam::Services;
-using namespace Beam::ServiceLocator;
-using namespace Beam::Threading;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::TelemetryService;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 
@@ -46,36 +40,30 @@ inline void InitializeResources() {
 }
 
 namespace {
-  template<typename C>
-  using MetaTelemetryClient = TelemetryClient<C, TimeClientBox>;
-  using SpireTelemetryClient = ApplicationClient<MetaTelemetryClient,
-    ServiceName<TelemetryService::SERVICE_NAME>,
-    ZLibSessionBuilder<ServiceLocatorClientBox>>;
-
-  std::vector<SignInController::ServerEntry> ParseServers(
-      const YAML::Node& config, const std::filesystem::path& configPath) {
+  std::vector<SignInController::ServerEntry> parse_servers(
+      const YAML::Node& config, const std::filesystem::path& config_path) {
     auto servers = std::vector<SignInController::ServerEntry>();
     if(!config["servers"]) {
       {
-        auto configFile = std::ofstream(configPath);
-        configFile <<
+        auto config_file = std::ofstream(config_path);
+        config_file <<
           "---\n"
           "servers:\n"
           "  - name: Local Environment\n"
           "    address: 127.0.0.1:20000\n"
           "...";
       }
-      auto configStream = std::ifstream(configPath);
-      if(!configStream.good()) {
+      auto config_stream = std::ifstream(config_path);
+      if(!config_stream.good()) {
         QMessageBox::critical(nullptr, QObject::tr("Error"),
           QObject::tr("Unable to load configuration: config.yml"));
       }
-      return ParseServers(YAML::Load(configStream), configPath);
+      return parse_servers(YAML::Load(config_stream), config_path);
     }
-    auto serverList = GetNode(config, "servers");
-    for(auto server : serverList) {
-      auto name = Extract<std::string>(server, "name");
-      auto address = Extract<IpAddress>(server, "address");
+    auto server_list = get_node(config, "servers");
+    for(auto server : server_list) {
+      auto name = extract<std::string>(server, "name");
+      auto address = extract<IpAddress>(server, "address");
       servers.push_back({name, address});
     }
     return servers;
@@ -100,8 +88,8 @@ int main(int argc, char* argv[]) {
 #endif
   auto show_sign_in_window = true;
   auto command_line = TCLAP::CmdLine("", ' ', "Spire " SPIRE_VERSION);
-  auto key_argument = TCLAP::ValueArg<std::string>(
-    "k", "key", "Shared key", false, "", "text");
+  auto key_argument =
+    TCLAP::ValueArg<std::string>("k", "key", "Shared key", false, "", "text");
   command_line.add(key_argument);
   auto username_argument = TCLAP::ValueArg<std::string>(
     "u", "username", "Username", false, "", "text");
@@ -137,16 +125,16 @@ int main(int argc, char* argv[]) {
   initialize_resources();
   RegisterCustomQtVariants();
   InitializeResources();
-  auto applicationPath =
+  auto application_path =
     QStandardPaths::writableLocation(QStandardPaths::DataLocation);
-  auto configPath = std::filesystem::path(applicationPath.toStdString());
-  if(!std::filesystem::exists(configPath)) {
-    std::filesystem::create_directories(configPath);
+  auto config_path = std::filesystem::path(application_path.toStdString());
+  if(!std::filesystem::exists(config_path)) {
+    std::filesystem::create_directories(config_path);
   }
-  configPath /= "config.yml";
-  if(!std::filesystem::is_regular_file(configPath)) {
-    auto configFile = std::ofstream(configPath);
-    configFile <<
+  config_path /= "config.yml";
+  if(!std::filesystem::is_regular_file(config_path)) {
+    auto config_file = std::ofstream(config_path);
+    config_file <<
       "---\n"
       "servers:\n"
       "  - name: Local Environment\n"
@@ -155,13 +143,13 @@ int main(int argc, char* argv[]) {
   }
   auto config = YAML::Node();
   try {
-    auto configStream = std::ifstream(configPath);
-    if(!configStream.good()) {
+    auto config_stream = std::ifstream(config_path);
+    if(!config_stream.good()) {
       QMessageBox::critical(nullptr, QObject::tr("Error"),
         QObject::tr("Unable to load configuration: config.yml"));
       return -1;
     }
-    config = YAML::Load(configStream);
+    config = YAML::Load(config_stream);
   } catch(const YAML::ParserException&) {
     QMessageBox::critical(nullptr, QObject::tr("Error"),
       QObject::tr("Invalid configuration file."));
@@ -169,7 +157,7 @@ int main(int argc, char* argv[]) {
   }
   auto servers = std::vector<SignInController::ServerEntry>();
   try {
-    servers = ParseServers(config, configPath);
+    servers = parse_servers(config, config_path);
   } catch(const std::exception&) {
     QMessageBox::critical(nullptr, QObject::tr("Error"),
       QObject::tr("Invalid configuration file."));
@@ -178,9 +166,6 @@ int main(int argc, char* argv[]) {
   auto user_profile = optional<UserProfile>();
   auto risk_timer_monitor = optional<RiskTimerMonitor>();
   auto toolbar_controller = optional<ToolbarController>();
-  auto telemetry_client_mutex = Mutex();
-  auto application_telemetry_client = std::unique_ptr<SpireTelemetryClient>();
-  auto telemetry_client = std::unique_ptr<TelemetryClientBox>();
   auto service_client_factory =
     [&] (const auto& username, const auto& password, const auto& address)  {
       auto service_locator_client =
@@ -199,62 +184,71 @@ int main(int argc, char* argv[]) {
         }
         throw;
       }
-      auto service_clients = std::make_unique<SpireServiceClients>(
-        std::move(service_locator_client));
-      try {
-        auto spire_telemetry_client =
-          std::make_unique<SpireTelemetryClient>(
-            service_clients->GetServiceLocatorClient(),
-            service_clients->GetTimeClient());
-        auto lock = std::lock_guard(telemetry_client_mutex);
-        application_telemetry_client = std::move(spire_telemetry_client);
-        telemetry_client = std::make_unique<TelemetryClientBox>(
-          application_telemetry_client->Get());
-      } catch(const std::exception&) {
-        throw SignInException("Telemetry server not available.");
-      }
-      return ServiceClientsBox(std::move(service_clients));
+      auto clients =
+        std::make_unique<SpireClients>(std::move(service_locator_client));
+      return Clients(std::move(clients));
     };
   auto sign_in_controller = std::unique_ptr<SignInController>();
-  auto sign_in_handler = [&] (auto service_clients) {
-    auto username =
-      service_clients.GetServiceLocatorClient().GetAccount().m_name;
-    auto is_administrator =
-      service_clients.GetAdministrationClient().CheckAdministrator(
-        service_clients.GetServiceLocatorClient().GetAccount());
-    auto is_manager = is_administrator ||
-      !service_clients.GetAdministrationClient().LoadManagedTradingGroups(
-        service_clients.GetServiceLocatorClient().GetAccount()).empty();
-    auto book_view_properties =
-      load_book_view_properties(get_profile_path(username));
-    auto time_and_sales_properties =
-      load_time_and_sales_properties(get_profile_path(username));
-    user_profile.emplace(username, is_administrator, is_manager,
-      service_clients.GetDefinitionsClient().LoadCountryDatabase(),
-      service_clients.GetDefinitionsClient().LoadTimeZoneDatabase(),
-      service_clients.GetDefinitionsClient().LoadCurrencyDatabase(),
-      service_clients.GetDefinitionsClient().LoadExchangeRates(),
-      service_clients.GetDefinitionsClient().LoadMarketDatabase(),
-      service_clients.GetDefinitionsClient().LoadDestinationDatabase(),
-      service_clients.GetAdministrationClient().LoadEntitlements(),
-      get_default_additional_tag_database(), std::move(book_view_properties),
-      std::move(time_and_sales_properties), std::move(service_clients),
-      *telemetry_client);
-    auto sign_in_data = JsonObject();
-    sign_in_data["version"] = std::string(SPIRE_VERSION);
+  auto sign_in_handler = [&] (auto clients) {
     try {
-      user_profile->CreateProfilePath();
-    } catch(const std::exception&) {
+      auto username = clients.get_service_locator_client().get_account().m_name;
+      auto is_administrator = [&] {
+        try {
+          return clients.get_administration_client().check_administrator(
+            clients.get_service_locator_client().get_account());
+        } catch(const std::exception&) {
+          throw std::runtime_error("Unable to verify administrator status.");
+        }
+      }();
+      auto is_manager = [&] {
+        try {
+          return is_administrator ||
+            !clients.get_administration_client().load_managed_trading_groups(
+              clients.get_service_locator_client().get_account()).empty();
+        } catch(const std::exception&) {
+          throw std::runtime_error("Unable to verify manager status.");
+        }
+      }();
+      auto exchange_rates = [&] {
+        try {
+          return clients.get_definitions_client().load_exchange_rates();
+        } catch(const std::exception&) {
+          throw std::runtime_error("Unable to load exchange rates.");
+        }
+      }();
+      auto entitlements = [&] {
+        try {
+          return clients.get_administration_client().load_entitlements();
+        } catch(const std::exception&) {
+          throw std::runtime_error("Unable to load entitlements.");
+        }
+      }();
+      auto book_view_properties =
+        load_book_view_properties(get_profile_path(username));
+      auto time_and_sales_properties =
+        load_time_and_sales_properties(get_profile_path(username));
+      user_profile.emplace(username, is_administrator, is_manager,
+        std::move(exchange_rates), std::move(entitlements),
+        get_default_additional_tag_database(), std::move(book_view_properties),
+        std::move(time_and_sales_properties), std::move(clients));
+      auto sign_in_data = JsonObject();
+      sign_in_data["version"] = std::string(SPIRE_VERSION);
+      try {
+        user_profile->CreateProfilePath();
+      } catch(const std::exception&) {
+        throw std::runtime_error("Unable to create profile path.");
+      }
+    } catch(const std::exception& e) {
       QMessageBox::critical(nullptr, QObject::tr("Error"),
-        QObject::tr("Error creating profile path."));
+        QObject::tr(e.what()));
       return;
     }
-    BlotterSettings::Load(Store(*user_profile));
-    CatalogSettings::Load(Store(*user_profile));
-    RiskTimerProperties::Load(Store(*user_profile));
-    PortfolioViewerProperties::Load(Store(*user_profile));
-    OrderImbalanceIndicatorProperties::Load(Store(*user_profile));
-    SavedDashboards::Load(Store(*user_profile));
+    BlotterSettings::Load(out(*user_profile));
+    CatalogSettings::Load(out(*user_profile));
+    RiskTimerProperties::Load(out(*user_profile));
+    PortfolioViewerProperties::Load(out(*user_profile));
+    OrderImbalanceIndicatorProperties::Load(out(*user_profile));
+    SavedDashboards::Load(out(*user_profile));
     toolbar_controller.emplace(Ref(*user_profile));
     toolbar_controller->open();
     risk_timer_monitor.emplace(Ref(*user_profile));

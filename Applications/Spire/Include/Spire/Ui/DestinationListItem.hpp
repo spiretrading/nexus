@@ -2,7 +2,6 @@
 #define SPIRE_DESTINATION_LIST_ITEM_HPP
 #include <QWidget>
 #include "Nexus/Definitions/Destination.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
