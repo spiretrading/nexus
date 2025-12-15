@@ -466,6 +466,7 @@ void DropDownBox::show_drop_down_panel() {
 }
 
 void DropDownBox::hide_drop_down_panel() {
+  setFocus();
   m_drop_down_panel.destroy();
   unmatch(*this, PopUp());
 }
