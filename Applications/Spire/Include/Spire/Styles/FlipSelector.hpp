@@ -1,7 +1,6 @@
 #ifndef SPIRE_STYLES_FLIP_SELECTOR_HPP
 #define SPIRE_STYLES_FLIP_SELECTOR_HPP
 #include "Spire/Styles/Selector.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
@@ -37,7 +36,8 @@ namespace Spire::Styles {
 namespace std {
   template<>
   struct hash<Spire::Styles::FlipSelector> {
-    std::size_t operator ()(const Spire::Styles::FlipSelector& selector) const;
+    std::size_t operator ()(
+      const Spire::Styles::FlipSelector& selector) const noexcept;
   };
 }
 

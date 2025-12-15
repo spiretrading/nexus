@@ -6,7 +6,6 @@
 #include <string>
 #include "Spire/SpireTester/SpireTester.hpp"
 #include "Spire/Styles/StateSelector.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 class QWidget;
 

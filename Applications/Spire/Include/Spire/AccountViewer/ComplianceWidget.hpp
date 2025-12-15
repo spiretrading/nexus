@@ -4,13 +4,13 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/signals2/connection.hpp>
 #include <QWidget>
-#include "Nexus/Compliance/Compliance.hpp"
+#include "Nexus/Compliance/ComplianceRuleEntry.hpp"
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 class Ui_ComplianceWidget;
 
 namespace Spire {
+  class UserProfile;
 
   /*! \class ComplianceWidget
       \brief Shows an account's compliance rules.
@@ -60,8 +60,8 @@ namespace Spire {
       boost::signals2::scoped_connection m_entryRemovedConnection;
 
       void OnNewRuleActivated(int index);
-      void OnEntryAdded(const Nexus::Compliance::ComplianceRuleEntry& entry);
-      void OnEntryRemoved(const Nexus::Compliance::ComplianceRuleEntry& entry);
+      void OnEntryAdded(const Nexus::ComplianceRuleEntry& entry);
+      void OnEntryRemoved(const Nexus::ComplianceRuleEntry& entry);
       void OnDeleteRules();
   };
 }

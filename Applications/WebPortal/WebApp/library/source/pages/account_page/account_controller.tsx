@@ -22,8 +22,8 @@ interface Properties extends Router.RouteComponentProps {
   /** The database of countries. */
   currencyDatabase: Nexus.CurrencyDatabase;
 
-  /** The set of markets. */
-  marketDatabase: Nexus.MarketDatabase;
+  /** The set of venues. */
+  venueDatabase: Nexus.VenueDatabase;
 
   /** Determines the layout to use based on the display device. */
   displaySize: DisplaySize;
@@ -159,7 +159,7 @@ export class AccountController extends React.Component<Properties, State> {
       entitlements={this.props.entitlements}
       model={this.props.model.entitlementsModel}
       currencyDatabase={this.props.currencyDatabase}
-      marketDatabase={this.props.marketDatabase}
+      venueDatabase={this.props.venueDatabase}
       displaySize={this.props.displaySize}/>;
   }
 

@@ -56,7 +56,7 @@ namespace Spire {
   template<typename T>
   std::unique_ptr<T> LinkedNode::SetReferent(const T& node,
       const std::string& referent) {
-    return Beam::StaticCast<std::unique_ptr<T>>(node.SetReferent(referent));
+    return Beam::static_pointer_cast<T>(node.SetReferent(referent));
   }
 }
 

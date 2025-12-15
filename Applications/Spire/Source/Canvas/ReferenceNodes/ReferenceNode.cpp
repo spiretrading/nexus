@@ -6,7 +6,6 @@
 #include "Spire/Canvas/Types/UnionType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
 
@@ -71,8 +70,6 @@ std::unique_ptr<CanvasNode> ReferenceNode::Clone() const {
 std::unique_ptr<CanvasNode> ReferenceNode::Reset() const {
   return std::unique_ptr<ReferenceNode>();
 }
-
-ReferenceNode::ReferenceNode(ReceiveBuilder) {}
 
 optional<const CanvasNode&> Spire::FindAnchor(const CanvasNode& node) {
   auto i = &node;

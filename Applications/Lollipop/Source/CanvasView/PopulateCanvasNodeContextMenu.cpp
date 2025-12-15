@@ -21,21 +21,21 @@ void Spire::PopulateCanvasNodeContextMenu(Ref<CanvasNodeModel> view,
     const CanvasNode& node, Ref<UserProfile> userProfile, Out<QMenu> menu) {
   auto coordinate = view->GetCoordinate(node);
   auto cutAction = new CommandAction(
-    make_unique<CutNodeCommand>(Ref(view), coordinate), menu.Get());
+    make_unique<CutNodeCommand>(Ref(view), coordinate), menu.get());
   cutAction->setText(QObject::tr("Cut"));
   cutAction->setToolTip(QObject::tr(
     "Removes the selected item and moves it to the clipboard."));
   cutAction->setShortcut(QKeySequence::Cut);
   menu->addAction(cutAction);
   auto copyAction = new CommandAction(make_unique<CopyNodeCommand>(node),
-    menu.Get());
+    menu.get());
   copyAction->setText(QObject::tr("Copy"));
   copyAction->setToolTip(QObject::tr(
     "Copies the selected item to the clipboard."));
   copyAction->setShortcut(QKeySequence::Copy);
   menu->addAction(copyAction);
   auto pasteAction = new CommandAction(make_unique<PasteNodeCommand>(
-    Ref(view), coordinate), menu.Get());
+    Ref(view), coordinate), menu.get());
   pasteAction->setText(QObject::tr("Paste"));
   pasteAction->setToolTip(QObject::tr("Pastes an item from the clipboard."));
   pasteAction->setShortcut(QKeySequence::Paste);
@@ -43,7 +43,7 @@ void Spire::PopulateCanvasNodeContextMenu(Ref<CanvasNodeModel> view,
   menu->addAction(pasteAction);
   menu->addSeparator();
   auto readOnlyAction = new CommandAction(make_unique<SetNodeReadOnlyCommand>(
-    Ref(view), coordinate, !node.IsReadOnly()), menu.Get());
+    Ref(view), coordinate, !node.IsReadOnly()), menu.get());
   if(node.IsReadOnly()) {
     readOnlyAction->setText(QObject::tr("Unset read-only"));
     readOnlyAction->setToolTip(QObject::tr("Unset the read-only property."));
@@ -56,7 +56,7 @@ void Spire::PopulateCanvasNodeContextMenu(Ref<CanvasNodeModel> view,
     auto parentCoordinate = view->GetCoordinate(*node.GetParent());
     auto visibilityAction = new CommandAction(
       make_unique<SetNodeVisibleCommand>(Ref(view), parentCoordinate,
-      node.GetName(), false), menu.Get());
+      node.GetName(), false), menu.get());
     visibilityAction->setText(QObject::tr("Hide"));
     visibilityAction->setToolTip(QObject::tr("Hides this item."));
     menu->addAction(visibilityAction);
@@ -68,7 +68,7 @@ void Spire::PopulateCanvasNodeContextMenu(Ref<CanvasNodeModel> view,
     }
   }
   if(!invisibleChildren.empty()) {
-    auto showMenu = new QMenu(QObject::tr("Show child"), menu.Get());
+    auto showMenu = new QMenu(QObject::tr("Show child"), menu.get());
     for(const auto& child : invisibleChildren) {
       auto visibilityAction = new CommandAction(
         make_unique<SetNodeVisibleCommand>(Ref(view), coordinate,

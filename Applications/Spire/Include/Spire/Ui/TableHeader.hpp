@@ -4,7 +4,6 @@
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/TranslatedListModel.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

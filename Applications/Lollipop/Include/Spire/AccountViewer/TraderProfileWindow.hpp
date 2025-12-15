@@ -2,10 +2,10 @@
 #define SPIRE_TRADERPROFILEWINDOW_HPP
 #include <memory>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/ServiceLocator/ServiceLocator.hpp>
+#include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <QFrame>
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class Ui_TraderProfileWindow;
 
@@ -32,7 +32,7 @@ namespace Spire {
       /*!
         \param account The account whose trader models are to be loaded.
       */
-      void Load(const Beam::ServiceLocator::DirectoryEntry& account);
+      void Load(const Beam::DirectoryEntry& account);
 
     private:
       std::unique_ptr<Ui_TraderProfileWindow> m_ui;

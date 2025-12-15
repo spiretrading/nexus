@@ -6,6 +6,7 @@
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/MenuButton.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace Spire;
 using namespace Spire::Styles;
@@ -42,15 +43,15 @@ namespace {
   const QImage& get_logo(Track track) {
     if(track == Track::CLASSIC) {
       static auto icon =
-        imageFromSvg(":/Icons/sign_in/logo_classic.svg", scale(32, 32));
+        image_from_svg(":/Icons/sign_in/logo_classic.svg", scale(32, 32));
       return icon;
     } else if(track == Track::CURRENT) {
       static auto icon =
-        imageFromSvg(":/Icons/sign_in/logo_current.svg", scale(32, 32));
+        image_from_svg(":/Icons/sign_in/logo_current.svg", scale(32, 32));
       return icon;
     } else if(track == Track::PREVIEW) {
       static auto icon =
-        imageFromSvg(":/Icons/sign_in/logo_preview.svg", scale(32, 32));
+        image_from_svg(":/Icons/sign_in/logo_preview.svg", scale(32, 32));
       return icon;
     }
     throw std::runtime_error("Unknown track.");
@@ -70,7 +71,7 @@ namespace {
 
   auto make_wordmark(Track track) {
     auto wordmark =
-      new Icon(imageFromSvg(get_wordmark_path(track), scale(80, 41)));
+      new Icon(image_from_svg(get_wordmark_path(track), scale(80, 41)));
     set_style(*wordmark, StyleSheet());
     return wordmark;
   }
@@ -78,7 +79,7 @@ namespace {
   auto make_track_menu_item(
       Track track, std::shared_ptr<BooleanModel> is_checked) {
     static auto checkmark =
-      imageFromSvg(":/Icons/sign_in/check.svg", scale(16, 16));
+      image_from_svg(":/Icons/sign_in/check.svg", scale(16, 16));
     auto item = new QWidget();
     auto layout = make_hbox_layout(item);
     auto check_icon = new Icon(checkmark);
@@ -153,7 +154,7 @@ TrackMenuButton::TrackMenuButton(std::vector<Track> tracks,
   contents_layout->addLayout(wordmark_layout);
   contents_layout->addSpacing(scale_width(9));
   auto chevron =
-    new Icon(imageFromSvg(":/Icons/sign_in/chevron_down.svg", scale(11, 8)));
+    new Icon(image_from_svg(":/Icons/sign_in/chevron_down.svg", scale(11, 8)));
   if(m_is_multitrack) {
     set_style(*chevron, StyleSheet());
   } else {

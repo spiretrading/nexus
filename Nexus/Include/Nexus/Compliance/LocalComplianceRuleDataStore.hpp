@@ -1,5 +1,6 @@
 #ifndef NEXUS_LOCAL_COMPLIANCE_RULE_DATA_STORE_HPP
 #define NEXUS_LOCAL_COMPLIANCE_RULE_DATA_STORE_HPP
+#include <algorithm>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -7,145 +8,141 @@
 #include <Beam/Utilities/Algorithm.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
-#include <boost/noncopyable.hpp>
-#include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceRuleDataStore.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Implements a ComplianceRuleDataStore in memory. */
-  class LocalComplianceRuleDataStore : private boost::noncopyable {
+  class LocalComplianceRuleDataStore {
     public:
 
-      /** Constructs a LocalComplianceRuleDataStore. */
+      /** Constructs an empty LocalComplianceRuleDataStore. */
       LocalComplianceRuleDataStore() = default;
 
       ~LocalComplianceRuleDataStore();
 
-      std::vector<ComplianceRuleEntry> LoadAllComplianceRuleEntries();
-
-      ComplianceRuleId LoadNextComplianceRuleEntryId();
-
-      boost::optional<ComplianceRuleEntry> LoadComplianceRuleEntry(
-        ComplianceRuleId id);
-
-      std::vector<ComplianceRuleEntry> LoadComplianceRuleEntries(
-        const Beam::ServiceLocator::DirectoryEntry& directoryEntry);
-
-      void Store(const ComplianceRuleEntry& entry);
-
-      void Delete(ComplianceRuleId id);
-
-      void Store(const ComplianceRuleViolationRecord& violationRecord);
-
-      void Close();
+      std::vector<ComplianceRuleEntry> load_all_compliance_rule_entries();
+      ComplianceRuleEntry::Id load_next_compliance_rule_entry_id();
+      boost::optional<ComplianceRuleEntry>
+        load_compliance_rule_entry(ComplianceRuleEntry::Id id);
+      std::vector<ComplianceRuleEntry> load_compliance_rule_entries(
+        const Beam::DirectoryEntry& directory_entry);
+      void store(const ComplianceRuleEntry& entry);
+      void remove(ComplianceRuleEntry::Id id);
+      void store(const ComplianceRuleViolationRecord& record);
+      void close();
 
     private:
       mutable boost::mutex m_mutex;
-      std::unordered_map<ComplianceRuleId, std::shared_ptr<ComplianceRuleEntry>>
-        m_entriesById;
-      std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
+      std::unordered_map<ComplianceRuleEntry::Id,
+        std::shared_ptr<ComplianceRuleEntry>> m_entries_by_id;
+      std::unordered_map<Beam::DirectoryEntry,
         std::vector<std::shared_ptr<ComplianceRuleEntry>>>
-        m_entriesByDirectoryEntry;
-      Beam::IO::OpenState m_openState;
+          m_entries_by_directory_entry;
+      Beam::OpenState m_open_state;
+
+      LocalComplianceRuleDataStore(
+        const LocalComplianceRuleDataStore&) = delete;
+      LocalComplianceRuleDataStore& operator =(
+        const LocalComplianceRuleDataStore&) = delete;
   };
 
   inline LocalComplianceRuleDataStore::~LocalComplianceRuleDataStore() {
-    Close();
+    close();
   }
 
-  inline std::vector<ComplianceRuleEntry> LocalComplianceRuleDataStore::
-      LoadAllComplianceRuleEntries() {
+  inline std::vector<ComplianceRuleEntry>
+      LocalComplianceRuleDataStore::load_all_compliance_rule_entries() {
     auto entries = std::vector<ComplianceRuleEntry>();
     auto lock = boost::lock_guard(m_mutex);
-    entries.reserve(m_entriesById.size());
-    std::transform(m_entriesById.begin(), m_entriesById.end(),
-      std::back_inserter(entries),
-      [] (auto& entry) {
+    entries.reserve(m_entries_by_id.size());
+    std::transform(m_entries_by_id.begin(), m_entries_by_id.end(),
+      std::back_inserter(entries), [] (const auto& entry) {
         return *entry.second;
       });
     return entries;
   }
 
-  inline ComplianceRuleId LocalComplianceRuleDataStore::
-      LoadNextComplianceRuleEntryId() {
+  inline ComplianceRuleEntry::Id
+      LocalComplianceRuleDataStore::load_next_compliance_rule_entry_id() {
+    auto id = ComplianceRuleEntry::Id(1);
     auto lock = boost::lock_guard(m_mutex);
-    auto id = ComplianceRuleId(1);
-    for(auto& entry : m_entriesById) {
-      id = std::max(entry.second->GetId() + 1, id);
+    for(auto& entry : m_entries_by_id) {
+      id = std::max(entry.second->get_id() + 1, id);
     }
     return id;
   }
 
   inline boost::optional<ComplianceRuleEntry>
-      LocalComplianceRuleDataStore::LoadComplianceRuleEntry(
-      ComplianceRuleId id) {
+      LocalComplianceRuleDataStore::load_compliance_rule_entry(
+        ComplianceRuleEntry::Id id) {
     auto lock = boost::lock_guard(m_mutex);
-    auto entry = Beam::Retrieve(m_entriesById, id);
-    if(!entry.is_initialized()) {
+    auto i = m_entries_by_id.find(id);
+    if(i == m_entries_by_id.end()) {
       return boost::none;
     }
-    return **entry;
+    return *i->second;
   }
 
-  inline std::vector<ComplianceRuleEntry> LocalComplianceRuleDataStore::
-      LoadComplianceRuleEntries(
-      const Beam::ServiceLocator::DirectoryEntry& directoryEntry) {
+  inline std::vector<ComplianceRuleEntry>
+      LocalComplianceRuleDataStore::load_compliance_rule_entries(
+        const Beam::DirectoryEntry& directory_entry) {
     auto lock = boost::lock_guard(m_mutex);
-    auto entries = Beam::Retrieve(m_entriesByDirectoryEntry, directoryEntry);
-    if(!entries.is_initialized()) {
+    auto i = m_entries_by_directory_entry.find(directory_entry);
+    if(i == m_entries_by_directory_entry.end()) {
       return {};
     }
+    auto& entries = i->second;
     auto result = std::vector<ComplianceRuleEntry>();
-    result.reserve(entries->size());
-    std::transform(entries->begin(), entries->end(), std::back_inserter(result),
-      [] (auto& entry) {
+    result.reserve(entries.size());
+    std::transform(entries.begin(), entries.end(), std::back_inserter(result),
+      [] (const auto& entry) {
         return *entry;
       });
     return result;
   }
 
-  inline void LocalComplianceRuleDataStore::Store(
+  inline void LocalComplianceRuleDataStore::store(
       const ComplianceRuleEntry& entry) {
-    auto newEntry = std::make_shared<ComplianceRuleEntry>(entry);
+    auto new_entry = std::make_shared<ComplianceRuleEntry>(entry);
     auto lock = boost::lock_guard(m_mutex);
-    auto& previousEntry = m_entriesById[entry.GetId()];
-    if(previousEntry != nullptr) {
-      auto& previousAccountEntries = m_entriesByDirectoryEntry[
-        previousEntry->GetDirectoryEntry()];
-      previousAccountEntries.erase(std::find_if(previousAccountEntries.begin(),
-        previousAccountEntries.end(),
-        [&] (auto& accountEntry) {
-          return accountEntry->GetId() == entry.GetId();
+    auto& previous_entry = m_entries_by_id[entry.get_id()];
+    if(previous_entry) {
+      auto& previous_account_entries =
+        m_entries_by_directory_entry[previous_entry->get_directory_entry()];
+      previous_account_entries.erase(std::find_if(
+        previous_account_entries.begin(), previous_account_entries.end(),
+        [&] (const auto& account_entry) {
+          return account_entry->get_id() == entry.get_id();
         }));
     }
-    previousEntry = newEntry;
-    auto& accountEntries = m_entriesByDirectoryEntry[entry.GetDirectoryEntry()];
-    accountEntries.push_back(newEntry);
+    previous_entry = new_entry;
+    auto& account_entries =
+      m_entries_by_directory_entry[entry.get_directory_entry()];
+    account_entries.push_back(new_entry);
   }
 
-  inline void LocalComplianceRuleDataStore::Delete(ComplianceRuleId id) {
+  inline void LocalComplianceRuleDataStore::remove(ComplianceRuleEntry::Id id) {
     auto lock = boost::lock_guard(m_mutex);
-    auto entryByIdIterator = m_entriesById.find(id);
-    if(entryByIdIterator == m_entriesById.end()) {
+    auto entry_by_id_iterator = m_entries_by_id.find(id);
+    if(entry_by_id_iterator == m_entries_by_id.end()) {
       return;
     }
-    auto& entry = entryByIdIterator->second;
-    auto& accountEntries =
-      m_entriesByDirectoryEntry[entry->GetDirectoryEntry()];
-    accountEntries.erase(std::find_if(accountEntries.begin(),
-      accountEntries.end(),
-      [&] (auto& accountEntry) {
-        return accountEntry->GetId() == id;
+    auto& entry = entry_by_id_iterator->second;
+    auto& account_entries =
+      m_entries_by_directory_entry[entry->get_directory_entry()];
+    account_entries.erase(std::find_if(account_entries.begin(),
+      account_entries.end(), [&] (const auto& account_entry) {
+        return account_entry->get_id() == id;
       }));
-    m_entriesById.erase(entryByIdIterator);
+    m_entries_by_id.erase(entry_by_id_iterator);
   }
 
-  inline void LocalComplianceRuleDataStore::Store(
-    const ComplianceRuleViolationRecord& violationRecord) {}
+  inline void LocalComplianceRuleDataStore::store(
+    const ComplianceRuleViolationRecord& record) {}
 
-  inline void LocalComplianceRuleDataStore::Close() {
-    m_openState.Close();
+  inline void LocalComplianceRuleDataStore::close() {
+    m_open_state.close();
   }
 }
 

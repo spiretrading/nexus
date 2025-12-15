@@ -13,6 +13,7 @@
 #include "Spire/Ui/TableHeaderItem.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::posix_time;

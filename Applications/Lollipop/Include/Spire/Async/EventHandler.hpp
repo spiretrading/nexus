@@ -6,7 +6,6 @@
 #include <utility>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <QTimer>
-#include "Spire/Async/Async.hpp"
 
 namespace Spire {
 
@@ -62,18 +61,18 @@ namespace Spire {
 
   template<typename T, typename F>
   auto EventHandler::get_slot(F&& slot) {
-    return m_tasks->GetSlot<T>(std::forward<F>(slot));
+    return m_tasks->get_slot<T>(std::forward<F>(slot));
   }
 
   template<typename T, typename F, typename B>
   auto EventHandler::get_slot(F&& slot, B&& break_slot) {
-    return m_tasks->GetSlot<T>(std::forward<F>(slot),
+    return m_tasks->get_slot<T>(std::forward<F>(slot),
       std::forward<B>(break_slot));
   }
 
   template<typename F>
   void EventHandler::push(F&& f) {
-    m_tasks->Push(std::forward<F>(f));
+    m_tasks->push(std::forward<F>(f));
   }
 }
 

@@ -1,50 +1,44 @@
 #include "Spire/BookView/ServiceBookViewModel.hpp"
 #include <ranges>
-#include "Nexus/Definitions/QuoteConversions.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/BookView/AggregateBookViewModel.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 namespace {
   bool is_order_displayed(const Order& order, const Security& security) {
-    return order.GetInfo().m_fields.m_security == security &&
-      order.GetInfo().m_fields.m_type == OrderType::LIMIT;
+    return order.get_info().m_fields.m_security == security &&
+      order.get_info().m_fields.m_type == OrderType::LIMIT;
   }
 
-  optional<std::tuple<std::vector<const Order*>&, int,
-      BookViewModel::UserOrderListModel&>> pick(const Order& order,
-        std::vector<const Order*>& ask_orders,
-        std::vector<const Order*> bid_orders, BookViewModel& model) {
-    auto& fields = order.GetInfo().m_fields;
-    auto& orders = Pick(fields.m_side, ask_orders, bid_orders);
+  optional<std::tuple<std::vector<std::shared_ptr<Order>>&, int,
+      BookViewModel::UserOrderListModel&>> pick(std::shared_ptr<Order> order,
+        std::vector<std::shared_ptr<Order>>& ask_orders,
+        std::vector<std::shared_ptr<Order>> bid_orders, BookViewModel& model) {
+    auto& fields = order->get_info().m_fields;
+    auto& orders = pick(fields.m_side, ask_orders, bid_orders);
     auto i = std::find_if(orders.begin(), orders.end(),
       [&] (const auto& element) {
-        return &order == element;
+        return order == element;
       });
     if(i == orders.end()) {
       return none;
     }
     auto index = std::distance(orders.begin(), i);
-    auto& user_orders = *Pick(
+    auto& user_orders = *pick(
       fields.m_side, model.get_ask_orders(), model.get_bid_orders());
-    return std::tuple<std::vector<const Order*>&, int,
+    return std::tuple<std::vector<std::shared_ptr<Order>>&, int,
       BookViewModel::UserOrderListModel&>(orders, index, user_orders);
   }
 }
 
 ServiceBookViewModel::ServiceBookViewModel(
-    Security security, MarketDatabase markets, BlotterSettings& blotter,
-    MarketDataClientBox client)
+    Security security, BlotterSettings& blotter, MarketDataClient client)
     : m_security(std::move(security)),
-      m_markets(std::move(markets)),
       m_blotter(&blotter),
       m_client(std::move(client)),
       m_model(make_local_aggregate_book_view_model()),
@@ -52,31 +46,24 @@ ServiceBookViewModel::ServiceBookViewModel(
         std::make_shared<ReversedListModel<BookQuote>>(m_model->get_bids())),
       m_ask_quotes(
         std::make_shared<ReversedListModel<BookQuote>>(m_model->get_asks())) {
-  if(m_security == Security()) {
+  if(!m_security) {
     return;
   }
-  auto bbo_query = MakeCurrentQuery(m_security);
-  bbo_query.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
-  m_client.QueryBboQuotes(bbo_query, m_event_handler.get_slot<BboQuote>(
+  auto bbo_query = make_current_query(m_security);
+  bbo_query.set_interruption_policy(InterruptionPolicy::IGNORE_CONTINUE);
+  m_client.query(bbo_query, m_event_handler.get_slot<BboQuote>(
     std::bind_front(&ServiceBookViewModel::on_bbo, this)));
-  QueryRealTimeBookQuotesWithSnapshot(m_client, m_security,
+  query_real_time_with_snapshot(m_client, m_security,
     m_event_handler.get_slot<BookQuote>(
       std::bind_front(&ServiceBookViewModel::buffer_book_quote, this),
       std::bind_front(&ServiceBookViewModel::on_book_quote_interruption, this)),
     InterruptionPolicy::BREAK_QUERY);
-  QueryRealTimeMarketQuotesWithSnapshot(m_client, m_security,
-    m_event_handler.get_slot<MarketQuote>(
-      std::bind_front(&ServiceBookViewModel::on_market_quote, this),
-      std::bind_front(
-        &ServiceBookViewModel::on_market_quote_interruption, this)),
-    InterruptionPolicy::BREAK_QUERY);
-  auto time_and_sale_query = MakeRealTimeQuery(m_security);
-  time_and_sale_query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-  m_client.QueryTimeAndSales(
-    time_and_sale_query, m_event_handler.get_slot<TimeAndSale>(
-      std::bind_front(&ServiceBookViewModel::on_time_and_sales, this)));
+  auto time_and_sale_query = make_real_time_query(m_security);
+  time_and_sale_query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
+  m_client.query(time_and_sale_query, m_event_handler.get_slot<TimeAndSale>(
+    std::bind_front(&ServiceBookViewModel::on_time_and_sales, this)));
   m_load_promise = std::make_shared<QtPromise<void>>(QtPromise([=] {
-    return m_client.LoadSecurityTechnicals(m_security);
+    return m_client.load_technicals(m_security);
   }, LaunchPolicy::ASYNC).then([model = m_model] (const auto& technicals) {
     model->get_technicals()->set(technicals);
   }));
@@ -115,7 +102,7 @@ const std::shared_ptr<BboQuoteModel>&
   return m_model->get_bbo_quote();
 }
 
-const std::shared_ptr<SecurityTechnicalsValueModel>&
+const std::shared_ptr<SecurityTechnicalsModel>&
     ServiceBookViewModel::get_technicals() const {
   return m_model->get_technicals();
 }
@@ -144,8 +131,8 @@ void ServiceBookViewModel::on_end_book_quote_buffer() {
 }
 
 void ServiceBookViewModel::on_book_quote(const BookQuote& quote) {
-  auto direction = GetDirection(quote.m_quote.m_side);
-  auto quotes = Pick(quote.m_quote.m_side, get_asks(), get_bids());
+  auto direction = get_direction(quote.m_quote.m_side);
+  auto quotes = pick(quote.m_quote.m_side, get_asks(), get_bids());
   auto lower_bound = [&] {
     for(auto i = quotes->begin(); i != quotes->end(); ++i) {
       auto& book_quote = i->m_quote;
@@ -205,36 +192,10 @@ void ServiceBookViewModel::on_book_quote(const BookQuote& quote) {
   }
 }
 
-void ServiceBookViewModel::on_market_quote(const MarketQuote& quote) {
-  auto& previous_market_quote = m_market_quotes[quote.m_market];
-  auto mpid = m_markets.FromCode(quote.m_market).m_displayName;
-  if(!previous_market_quote.m_market.IsEmpty()) {
-    auto previous_book_quotes = ToBookQuotePair(previous_market_quote);
-    previous_book_quotes.m_ask.m_quote.m_size = 0;
-    previous_book_quotes.m_ask.m_mpid = mpid;
-    previous_book_quotes.m_bid.m_quote.m_size = 0;
-    previous_book_quotes.m_bid.m_mpid = mpid;
-    on_book_quote(previous_book_quotes.m_ask);
-    on_book_quote(previous_book_quotes.m_bid);
-  }
-  auto book_quotes = ToBookQuotePair(quote);
-  previous_market_quote = quote;
-  book_quotes.m_ask.m_mpid = mpid;
-  book_quotes.m_bid.m_mpid = mpid;
-  on_book_quote(book_quotes.m_ask);
-  on_book_quote(book_quotes.m_bid);
-}
-
 void ServiceBookViewModel::clear(const BookQuoteListModel& quotes) {
   auto cleared_quotes = std::vector<BookQuote>(quotes.begin(), quotes.end());
-  auto market_quote_mpids = std::unordered_set<std::string>();
-  for(auto& code : m_market_quotes | std::views::keys) {
-    auto mpid = m_markets.FromCode(code).m_displayName;
-    market_quote_mpids.insert(mpid);
-  }
   for(auto& quote : cleared_quotes) {
-    if(!quote.m_mpid.empty() &&
-        market_quote_mpids.find(quote.m_mpid) == market_quote_mpids.end()) {
+    if(!quote.m_mpid.empty()) {
       auto cleared_quote = quote;
       quote.m_quote.m_size = 0;
       on_book_quote(cleared_quote);
@@ -246,27 +207,10 @@ void ServiceBookViewModel::on_book_quote_interruption(
     const std::exception_ptr&) {
   clear(*get_asks());
   clear(*get_bids());
-  QueryRealTimeBookQuotesWithSnapshot(m_client, m_security,
-    m_event_handler.get_slot<BookQuote>(
+  query_real_time_with_snapshot(
+    m_client, m_security, m_event_handler.get_slot<BookQuote>(
       std::bind_front(&ServiceBookViewModel::on_book_quote, this),
       std::bind_front(&ServiceBookViewModel::on_book_quote_interruption, this)),
-    InterruptionPolicy::BREAK_QUERY);
-}
-
-void ServiceBookViewModel::on_market_quote_interruption(
-    const std::exception_ptr&) {
-  auto market_quotes = m_market_quotes;
-  for(auto& market_quote : market_quotes | std::views::values) {
-    auto clear_quote = market_quote;
-    clear_quote.m_ask.m_size = 0;
-    clear_quote.m_bid.m_size = 0;
-    on_market_quote(clear_quote);
-  }
-  QueryRealTimeMarketQuotesWithSnapshot(m_client, m_security,
-    m_event_handler.get_slot<MarketQuote>(
-      std::bind_front(&ServiceBookViewModel::on_market_quote, this),
-      std::bind_front(
-        &ServiceBookViewModel::on_market_quote_interruption, this)),
     InterruptionPolicy::BREAK_QUERY);
 }
 
@@ -287,7 +231,7 @@ void ServiceBookViewModel::on_time_and_sales(const TimeAndSale& time_and_sale) {
 }
 
 void ServiceBookViewModel::on_execution_report(
-    const Order& order, const ExecutionReport& report) {
+    const std::shared_ptr<Order>& order, const ExecutionReport& report) {
   auto entry = pick(order, m_ask_orders, m_bid_orders, *m_model);
   if(!entry) {
     return;
@@ -295,7 +239,7 @@ void ServiceBookViewModel::on_execution_report(
   auto [orders, index, user_orders] = *entry;
   auto user_order = user_orders.get(index);
   user_order.m_status = report.m_status;
-  user_order.m_size -= report.m_lastQuantity;
+  user_order.m_size -= report.m_last_quantity;
   user_orders.set(index, user_order);
 }
 
@@ -304,21 +248,21 @@ void ServiceBookViewModel::on_order_added(
   if(!is_order_displayed(*order.m_order, m_security)) {
     return;
   }
-  auto& fields = order.m_order->GetInfo().m_fields;
-  auto& orders = Pick(fields.m_side, m_ask_orders, m_bid_orders);
+  auto& fields = order.m_order->get_info().m_fields;
+  auto& orders = pick(fields.m_side, m_ask_orders, m_bid_orders);
   orders.push_back(order.m_order);
   auto& user_orders =
-    *Pick(fields.m_side, m_model->get_ask_orders(), m_model->get_bid_orders());
+    *pick(fields.m_side, m_model->get_ask_orders(), m_model->get_bid_orders());
   auto execution_reports = optional<std::vector<ExecutionReport>>();
-  order.m_order->GetPublisher().Monitor(
-    m_order_event_handler->get_slot<ExecutionReport>(
-      std::bind_front(&ServiceBookViewModel::on_execution_report, this,
-        std::cref(*order.m_order))), Store(execution_reports));
+  order.m_order->get_publisher().monitor(
+    m_order_event_handler->get_slot<ExecutionReport>(std::bind_front(
+      &ServiceBookViewModel::on_execution_report, this, order.m_order)),
+      out(execution_reports));
   auto remaining_quantity = fields.m_quantity;
   auto status = OrderStatus::PENDING_NEW;
   if(execution_reports) {
     for(auto& report : *execution_reports) {
-      remaining_quantity -= report.m_lastQuantity;
+      remaining_quantity -= report.m_last_quantity;
       status = report.m_status;
     }
   }
@@ -331,7 +275,7 @@ void ServiceBookViewModel::on_order_removed(
   if(!is_order_displayed(*order.m_order, m_security)) {
     return;
   }
-  auto entry = pick(*order.m_order, m_ask_orders, m_bid_orders, *m_model);
+  auto entry = pick(order.m_order, m_ask_orders, m_bid_orders, *m_model);
   if(!entry) {
     return;
   }
@@ -349,7 +293,7 @@ void ServiceBookViewModel::on_active_blotter(BlotterModel& blotter) {
       Spire::clear(user_orders);
       for(auto i = 0; i != orders.rowCount(orders.index(0, 0)); ++i) {
         auto& entry = orders.GetEntry(orders.index(i, 0));
-        auto& fields = entry.m_order->GetInfo().m_fields;
+        auto& fields = entry.m_order->get_info().m_fields;
         if(fields.m_side == side) {
           on_order_added(entry);
         }

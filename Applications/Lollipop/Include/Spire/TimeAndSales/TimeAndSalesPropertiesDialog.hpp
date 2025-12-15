@@ -2,8 +2,8 @@
 #define SPIRE_TIMEANDSALESPROPERTIESDIALOG_HPP
 #include <boost/signals2/connection.hpp>
 #include <QDialog>
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include "Spire/UI/UI.hpp"
 
 class QAbstractButton;
 class QListWidgetItem;

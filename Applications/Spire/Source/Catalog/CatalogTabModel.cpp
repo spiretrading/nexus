@@ -26,7 +26,7 @@ const std::vector<CatalogEntry*>& CatalogTabModel::GetEntries() const {
 }
 
 void CatalogTabModel::Add(Ref<CatalogEntry> entry) {
-  auto selfEntry = entry.Get();
+  auto selfEntry = entry.get();
   if(std::find(m_entries.begin(), m_entries.end(), selfEntry) !=
       m_entries.end()) {
     return;

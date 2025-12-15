@@ -1,14 +1,16 @@
 #ifndef SPIRE_HIGHLIGHT_PICKER_HPP
 #define SPIRE_HIGHLIGHT_PICKER_HPP
+#include <QWidget>
 #include "Spire/Ui/HighlightSwatch.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class ColorBox;
+  class ListView;
+  class OverlayPanel;
 
   /** Displays a panel where the user can select and custom highlight. */
   class HighlightPicker : public QWidget {
     public:
-
       using Highlight = HighlightSwatch::Highlight;
 
       /**

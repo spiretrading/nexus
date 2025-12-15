@@ -82,6 +82,7 @@ void TableItem::mount(QWidget& body) {
 }
 
 QWidget* TableItem::unmount() {
+  setFocusProxy(nullptr);
   auto item = layout()->takeAt(0);
   auto body = item->widget();
   body->setAttribute(Qt::WA_DontShowOnScreen);

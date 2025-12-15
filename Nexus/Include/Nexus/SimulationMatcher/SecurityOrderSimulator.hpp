@@ -2,266 +2,267 @@
 #define NEXUS_SECURITY_ORDER_SIMULATOR_HPP
 #include <vector>
 #include <Beam/Pointers/Dereference.hpp>
+#include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
+#include <Beam/TimeService/ToLocalTime.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
-#include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
-#include "Nexus/SimulationMatcher/SimulationMatcher.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /**
    * Handles simulating Orders submitted for a specific Security.
-   * @param <C> The type of TimeClient used for Order timestamps.
+   * @param <T> The type of TimeClient used for Order timestamps.
    */
-  template<typename C>
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   class SecurityOrderSimulator {
     public:
 
-      /** The type of TimeClient to use. */
-      using TimeClient = Beam::GetTryDereferenceType<C>;
+      /** The type of TimeClient used for Order timestamps. */
+      using TimeClient = Beam::dereference_t<T>;
 
       /**
        * Constructs a SecurityOrderSimulator.
-       * @param marketDataClient The MarketDataClient to query.
+       * @param market_data_client The MarketDataClient to query.
        * @param security The Security to simulate Order executions for.
-       * @param timeClient The TimeClient used for Order timestamps.
+       * @param time_client The TimeClient used for Order timestamps.
        */
-      template<typename MarketDataClient>
-      SecurityOrderSimulator(MarketDataClient& marketDataClient,
-        const Security& security, Beam::Ref<TimeClient> timeClient);
-
-      /**
-       * Submits an Order for simulated Order entry.
-       * @param order The Order to submit.
-       */
-      void Submit(const std::shared_ptr<PrimitiveOrder>& order);
-
-      /**
-       * Cancels a previously submitted order.
-       * @param order The Order to cancel.
-       */
-      void Cancel(const std::shared_ptr<PrimitiveOrder>& order);
-
-      /**
-       * Updates an Order.
-       * @param order The Order to update.
-       * @param executionReport The ExecutionReport containing the update.
-       */
-      void Update(const std::shared_ptr<PrimitiveOrder>& order,
-        const ExecutionReport& executionReport);
+      template<Beam::Initializes<T> TF>
+      SecurityOrderSimulator(IsMarketDataClient auto& market_data_client,
+        const Security& security, TF&& time_client);
 
       /**
        * Recovers a previously submitted Order.
        * @param order The Order to recover.
        */
-      void Recover(const std::shared_ptr<PrimitiveOrder>& order);
+      void recover(const std::shared_ptr<PrimitiveOrder>& order);
+
+      /**
+       * Submits an Order for simulated Order entry.
+       * @param order The Order to submit.
+       */
+      void submit(const std::shared_ptr<PrimitiveOrder>& order);
+
+      /**
+       * Cancels a previously submitted order.
+       * @param order The Order to cancel.
+       */
+      void cancel(const std::shared_ptr<PrimitiveOrder>& order);
+
+      /**
+       * Updates an Order.
+       * @param order The Order to update.
+       * @param report The ExecutionReport containing the update.
+       */
+      void update(const std::shared_ptr<PrimitiveOrder>& order,
+        const ExecutionReport& report);
 
     private:
-      TimeClient* m_timeClient;
+      Beam::local_ptr_t<T> m_time_client;
       boost::gregorian::date m_date;
-      boost::posix_time::ptime m_marketCloseTime;
-      bool m_isMocPending;
+      boost::posix_time::ptime m_market_close_time;
+      bool m_is_moc_pending;
       std::vector<std::shared_ptr<PrimitiveOrder>> m_orders;
-      BboQuote m_bboQuote;
+      BboQuote m_bbo;
       Beam::RoutineTaskQueue m_tasks;
 
       SecurityOrderSimulator(const SecurityOrderSimulator&) = delete;
       SecurityOrderSimulator& operator =(
         const SecurityOrderSimulator&) = delete;
-      void SetSessionTimestamps(boost::posix_time::ptime timestamp);
-      OrderStatus Fill(PrimitiveOrder& order, Money price);
-      OrderStatus UpdateOrder(PrimitiveOrder& order);
-      void OnBbo(const BboQuote& bboQuote);
-      void OnTimeAndSale(const TimeAndSale& timeAndSale);
+      void set_session_timestamps(boost::posix_time::ptime timestamp);
+      OrderStatus fill(PrimitiveOrder& order, Money price);
+      OrderStatus update(PrimitiveOrder& order);
+      void on_bbo(const BboQuote& bbo);
+      void on_time_and_sale(const TimeAndSale& time_and_sale);
   };
 
-  template<typename C>
-  template<typename MarketDataClient>
-  SecurityOrderSimulator<C>::SecurityOrderSimulator(
-      MarketDataClient& marketDataClient, const Security& security,
-      Beam::Ref<TimeClient> timeClient)
-      : m_timeClient(timeClient.Get()) {
-    SetSessionTimestamps(m_timeClient->GetTime());
+  template<typename T>
+  SecurityOrderSimulator(IsMarketDataClient auto&, const Security&, T&&) ->
+    SecurityOrderSimulator<std::remove_cvref_t<T>>;
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  template<Beam::Initializes<T> TF>
+  SecurityOrderSimulator<T>::SecurityOrderSimulator(
+      IsMarketDataClient auto& market_data_client, const Security& security,
+      TF&& time_client)
+      : m_time_client(std::forward<TF>(time_client)) {
+    set_session_timestamps(m_time_client->get_time());
     auto snapshot = std::make_shared<Beam::Queue<BboQuote>>();
-    marketDataClient.QueryBboQuotes(Beam::Queries::MakeLatestQuery(security),
-      snapshot);
+    market_data_client.query(Beam::make_latest_query(security), snapshot);
     try {
-      m_bboQuote = snapshot->Pop();
+      m_bbo = snapshot->pop();
     } catch(const std::exception&) {
       return;
     }
-    auto query = Beam::Queries::MakeCurrentQuery(security);
-    marketDataClient.QueryBboQuotes(query, m_tasks.GetSlot<BboQuote>(
-      std::bind_front(&SecurityOrderSimulator::OnBbo, this)));
-    marketDataClient.QueryTimeAndSales(query, m_tasks.GetSlot<TimeAndSale>(
-      std::bind_front(&SecurityOrderSimulator::OnTimeAndSale, this)));
+    auto query = Beam::make_current_query(security);
+    market_data_client.query(query, m_tasks.get_slot<BboQuote>(
+      std::bind_front(&SecurityOrderSimulator::on_bbo, this)));
+    market_data_client.query(query, m_tasks.get_slot<TimeAndSale>(
+      std::bind_front(&SecurityOrderSimulator::on_time_and_sale, this)));
   }
 
-  template<typename C>
-  void SecurityOrderSimulator<C>::Submit(
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  void SecurityOrderSimulator<T>::recover(
       const std::shared_ptr<PrimitiveOrder>& order) {
-    m_tasks.Push([=, this] {
-      auto isLive = true;
-      order->With([&] (auto status, auto& reports) {
-        auto& lastReport = reports.back();
-        auto nextStatus = [&] {
-          if(m_bboQuote.m_bid.m_price == Money::ZERO ||
-              m_bboQuote.m_ask.m_price == Money::ZERO) {
-            isLive = false;
+    m_tasks.push([=, this] {
+      m_orders.push_back(order);
+      update(*order);
+    });
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  void SecurityOrderSimulator<T>::submit(
+      const std::shared_ptr<PrimitiveOrder>& order) {
+    m_tasks.push([=, this] {
+      auto is_live = true;
+      order->with([&] (auto status, const auto& reports) {
+        auto& last_report = reports.back();
+        auto next_status = [&] {
+          if(m_bbo.m_bid.m_price == Money::ZERO ||
+              m_bbo.m_ask.m_price == Money::ZERO) {
+            is_live = false;
             return OrderStatus::REJECTED;
           }
           return OrderStatus::NEW;
         }();
-        auto updatedReport = ExecutionReport::MakeUpdatedReport(lastReport,
-          nextStatus, order->GetInfo().m_timestamp);
-        order->Update(updatedReport);
+        auto updated_report =
+          make_update(last_report, next_status, order->get_info().m_timestamp);
+        order->update(updated_report);
       });
-      if(isLive) {
+      if(is_live) {
         m_orders.push_back(order);
-        UpdateOrder(*order);
+        update(*order);
       }
     });
   }
 
-  template<typename C>
-  void SecurityOrderSimulator<C>::Cancel(
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  void SecurityOrderSimulator<T>::cancel(
       const std::shared_ptr<PrimitiveOrder>& order) {
-    m_tasks.Push([=, this] {
-      order->With([&] (auto status, auto& reports) {
-        if(IsTerminal(status) || reports.empty()) {
+    m_tasks.push([=, this] {
+      order->with([&] (auto status, const auto& reports) {
+        if(is_terminal(status) || reports.empty()) {
           return;
         }
-        auto pendingCancelReport = ExecutionReport::MakeUpdatedReport(
-          reports.back(), OrderStatus::PENDING_CANCEL, m_timeClient->GetTime());
-        order->Update(pendingCancelReport);
-        auto cancelReport = ExecutionReport::MakeUpdatedReport(reports.back(),
-          OrderStatus::CANCELED, m_timeClient->GetTime());
-        order->Update(cancelReport);
+        auto pending_cancel_report = make_update(reports.back(),
+          OrderStatus::PENDING_CANCEL, m_time_client->get_time());
+        order->update(pending_cancel_report);
+        auto cancel_report = make_update(
+          reports.back(), OrderStatus::CANCELED, m_time_client->get_time());
+        order->update(cancel_report);
       });
     });
   }
 
-  template<typename C>
-  void SecurityOrderSimulator<C>::Update(
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  void SecurityOrderSimulator<T>::update(
       const std::shared_ptr<PrimitiveOrder>& order,
-      const ExecutionReport& executionReport) {
-    m_tasks.Push([=, this] {
-      order->With([&] (auto status, auto& executionReports) {
-        if(IsTerminal(status) || executionReports.empty() &&
-            executionReport.m_status != OrderStatus::PENDING_NEW) {
+      const ExecutionReport& report) {
+    m_tasks.push([=, this] {
+      order->with([&] (auto status, const auto& reports) {
+        if(is_terminal(status) ||
+            reports.empty() && report.m_status != OrderStatus::PENDING_NEW) {
           return;
         }
-        auto updatedReport = executionReport;
-        if(executionReports.empty()) {
-          updatedReport.m_sequence = 0;
+        auto updated_report = report;
+        if(reports.empty()) {
+          updated_report.m_sequence = 0;
         } else {
-          updatedReport.m_sequence = executionReports.back().m_sequence + 1;
+          updated_report.m_sequence = reports.back().m_sequence + 1;
         }
-        if(updatedReport.m_timestamp.is_special()) {
-          updatedReport.m_timestamp = m_timeClient->GetTime();
+        if(updated_report.m_timestamp.is_special()) {
+          updated_report.m_timestamp = m_time_client->get_time();
         }
-        order->Update(updatedReport);
+        order->update(updated_report);
       });
     });
   }
 
-  template<typename C>
-  void SecurityOrderSimulator<C>::Recover(
-      const std::shared_ptr<PrimitiveOrder>& order) {
-    m_tasks.Push([=, this] {
-      m_orders.push_back(order);
-      UpdateOrder(*order);
-    });
-  }
-
-  template<typename C>
-  void SecurityOrderSimulator<C>::SetSessionTimestamps(
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  void SecurityOrderSimulator<T>::set_session_timestamps(
       boost::posix_time::ptime timestamp) {
     m_date = timestamp.date();
-    auto easternTimestamp = Beam::TimeService::AdjustDateTime(timestamp, "UTC",
-      "Eastern_Time", GetDefaultTimeZoneDatabase());
-    m_marketCloseTime = Beam::TimeService::AdjustDateTime(
-      boost::posix_time::ptime{easternTimestamp.date(),
-      boost::posix_time::hours(16)}, "Eastern_Time", "UTC",
-      GetDefaultTimeZoneDatabase());
-    m_isMocPending = timestamp < m_marketCloseTime;
+    auto eastern_timestamp = Beam::adjust_date_time(
+      timestamp, "UTC", "Eastern_Time", get_default_time_zone_database());
+    m_market_close_time = Beam::adjust_date_time(
+      boost::posix_time::ptime(eastern_timestamp.date(),
+        boost::posix_time::hours(16)), "Eastern_Time", "UTC",
+      get_default_time_zone_database());
+    m_is_moc_pending = timestamp < m_market_close_time;
   }
 
-  template<typename C>
-  OrderStatus SecurityOrderSimulator<C>::Fill(
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  OrderStatus SecurityOrderSimulator<T>::fill(
       PrimitiveOrder& order, Money price) {
-    order.With([&] (auto status, auto& reports) {
-      auto& lastReport = reports.back();
-      auto updatedReport = ExecutionReport::MakeUpdatedReport(lastReport,
-        OrderStatus::FILLED, m_timeClient->GetTime());
-      updatedReport.m_lastQuantity = order.GetInfo().m_fields.m_quantity;
-      updatedReport.m_lastPrice = price;
-      order.Update(updatedReport);
+    order.with([&] (auto status, const auto& reports) {
+      auto& last_report = reports.back();
+      auto updated_report =
+        make_update(last_report, OrderStatus::FILLED, m_time_client->get_time());
+      updated_report.m_last_quantity = order.get_info().m_fields.m_quantity;
+      updated_report.m_last_price = price;
+      order.update(updated_report);
     });
     return OrderStatus::FILLED;
   }
 
-  template<typename C>
-  OrderStatus SecurityOrderSimulator<C>::UpdateOrder(PrimitiveOrder& order) {
-    return order.With([&] (auto status, auto& reports) {
-      auto side = order.GetInfo().m_fields.m_side;
-      if(status == OrderStatus::PENDING_NEW || IsTerminal(status) ||
-          order.GetInfo().m_fields.m_timeInForce.GetType() ==
-          TimeInForce::Type::MOC) {
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  OrderStatus SecurityOrderSimulator<T>::update(PrimitiveOrder& order) {
+    return order.with([&] (auto status, const auto& reports) {
+      auto side = order.get_info().m_fields.m_side;
+      if(status == OrderStatus::PENDING_NEW || is_terminal(status) ||
+          order.get_info().m_fields.m_time_in_force.get_type() ==
+            TimeInForce::Type::MOC) {
         return status;
       }
-      if(order.GetInfo().m_fields.m_type == OrderType::MARKET) {
-        auto price = Pick(side, m_bboQuote.m_bid.m_price,
-          m_bboQuote.m_ask.m_price);
-        return Fill(order, price);
-      } else if(side == Side::BID && m_bboQuote.m_ask.m_price <=
-          order.GetInfo().m_fields.m_price) {
-        return Fill(order, m_bboQuote.m_ask.m_price);
-      } else if(side == Side::ASK && m_bboQuote.m_bid.m_price >=
-          order.GetInfo().m_fields.m_price) {
-        return Fill(order, m_bboQuote.m_bid.m_price);
+      if(order.get_info().m_fields.m_type == OrderType::MARKET) {
+        auto price = pick(side, m_bbo.m_bid.m_price, m_bbo.m_ask.m_price);
+        return fill(order, price);
+      } else if(side == Side::BID && m_bbo.m_ask.m_price <=
+          order.get_info().m_fields.m_price) {
+        return fill(order, m_bbo.m_ask.m_price);
+      } else if(side == Side::ASK && m_bbo.m_bid.m_price >=
+          order.get_info().m_fields.m_price) {
+        return fill(order, m_bbo.m_bid.m_price);
       }
       return status;
     });
   }
 
-  template<typename C>
-  void SecurityOrderSimulator<C>::OnBbo(const BboQuote& bboQuote) {
-    if(bboQuote.m_timestamp.date() != m_date) {
-      SetSessionTimestamps(bboQuote.m_timestamp);
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  void SecurityOrderSimulator<T>::on_bbo(const BboQuote& bbo) {
+    if(bbo.m_timestamp.date() != m_date) {
+      set_session_timestamps(bbo.m_timestamp);
     }
-    m_bboQuote = bboQuote;
-    m_orders.erase(std::remove_if(m_orders.begin(), m_orders.end(),
-      [&] (auto& order) {
-        return IsTerminal(UpdateOrder(*order));
-      }), m_orders.end());
+    m_bbo = bbo;
+    std::erase_if(m_orders, [&] (auto& order) {
+      return is_terminal(update(*order));
+    });
   }
 
-  template<typename C>
-  void SecurityOrderSimulator<C>::OnTimeAndSale(
-      const TimeAndSale& timeAndSale) {
-    if(timeAndSale.m_timestamp.date() != m_date) {
-      SetSessionTimestamps(timeAndSale.m_timestamp);
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  void SecurityOrderSimulator<T>::on_time_and_sale(
+      const TimeAndSale& time_and_sale) {
+    if(time_and_sale.m_timestamp.date() != m_date) {
+      set_session_timestamps(time_and_sale.m_timestamp);
     }
-    if(m_isMocPending && timeAndSale.m_timestamp >= m_marketCloseTime &&
-        timeAndSale.m_marketCenter == "TSE") {
-      m_isMocPending = false;
-      auto closingPrice = timeAndSale.m_price;
-      m_orders.erase(std::remove_if(m_orders.begin(), m_orders.end(),
-        [&] (auto& order) {
-          if(order->GetInfo().m_fields.m_timeInForce.GetType() ==
-              TimeInForce::Type::MOC) {
-            Fill(*order, closingPrice);
-            return true;
-          } else {
-            return false;
-          }
-        }), m_orders.end());
+    if(m_is_moc_pending && time_and_sale.m_timestamp >= m_market_close_time &&
+        time_and_sale.m_market_center == "TSE") {
+      m_is_moc_pending = false;
+      auto closing_price = time_and_sale.m_price;
+      std::erase_if(m_orders, [&] (auto& order) {
+        if(order->get_info().m_fields.m_time_in_force.get_type() ==
+            TimeInForce::Type::MOC) {
+          fill(*order, closing_price);
+          return true;
+        } else {
+          return false;
+        }
+      });
     }
   }
 }

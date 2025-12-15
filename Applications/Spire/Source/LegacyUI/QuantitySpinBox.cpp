@@ -14,7 +14,7 @@ using namespace Spire::LegacyUI;
 QuantitySpinBox::QuantitySpinBox(Ref<UserProfile> userProfile,
     const IntegerNode& node, QWidget* parent)
     : QSpinBox(parent),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   setMaximum(std::numeric_limits<int>::max());
   setMinimum(std::numeric_limits<int>::min());
   setCorrectionMode(QAbstractSpinBox::CorrectToPreviousValue);

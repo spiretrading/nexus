@@ -20,6 +20,6 @@ SelectConnection Spire::Styles::select(const FlipSelector& selector,
 }
 
 std::size_t std::hash<FlipSelector>::operator ()(
-    const FlipSelector& selector) const {
+    const FlipSelector& selector) const noexcept {
   return std::hash<Selector>()(selector.get_selector());
 }

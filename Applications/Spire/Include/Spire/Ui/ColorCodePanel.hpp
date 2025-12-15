@@ -5,9 +5,10 @@
 #include <QStackedWidget>
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Styles/StateSelector.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class DropDownBox;
+  class PercentBox;
 
   /**
    * Displays a panel where the user can enter a color code using different

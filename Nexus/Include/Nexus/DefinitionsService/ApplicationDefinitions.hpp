@@ -1,14 +1,13 @@
 #ifndef NEXUS_DEFINITIONS_APPLICATION_DEFINITIONS_HPP
 #define NEXUS_DEFINITIONS_APPLICATION_DEFINITIONS_HPP
 #include <Beam/Services/ApplicationDefinitions.hpp>
-#include "Nexus/DefinitionsService/DefinitionsClient.hpp"
-#include "Nexus/DefinitionsService/DefinitionsService.hpp"
+#include "Nexus/DefinitionsService/ServiceDefinitionsClient.hpp"
 
-namespace Nexus::DefinitionsService {
+namespace Nexus {
 
   /** Encapsulates a standard DefinitionsClient used in an application. */
-  using ApplicationDefinitionsClient = Beam::Services::ApplicationClient<
-    DefinitionsClient, Beam::Services::ServiceName<SERVICE_NAME>>;
+  using ApplicationDefinitionsClient = Beam::ApplicationClient<
+    ServiceDefinitionsClient, Beam::ServiceName<DEFINITIONS_SERVICE_NAME>>;
 }
 
 #endif

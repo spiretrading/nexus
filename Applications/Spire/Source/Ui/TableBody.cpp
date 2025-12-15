@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QKeyEvent>
 #include <QPainter>
+#include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
@@ -12,6 +13,7 @@
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -387,13 +389,29 @@ struct TableBody::Layout : QLayout {
     activate();
     auto additional_rows = size - get_top_index() - count();
     auto& styles = static_cast<TableBody*>(parent())->m_styles;
-    auto total_height = itemAt(count() - 1)->geometry().bottom() +
+    auto total_height = itemAt(count() - 1)->geometry().bottom() + 1 +
       styles.m_vertical_spacing - count() * styles.m_vertical_spacing;
     auto row_height = total_height / count();
     for(auto i = 0; i != additional_rows; ++i) {
       m_bottom.push_back(row_height);
       m_bottom_height += row_height;
     }
+  }
+
+  void update_row_height() {
+    if(m_items.empty()) {
+      return;
+    }
+    auto row_height = m_items[0]->sizeHint().height();
+    auto update_segment = [&] (std::vector<int>& segment, int& segment_height) {
+      if(segment.empty() || segment[0] == row_height) {
+        return;
+      }
+      std::fill(segment.begin(), segment.end(), row_height);
+      segment_height = row_height * static_cast<int>(segment.size());
+    };
+    update_segment(m_top, m_top_height);
+    update_segment(m_bottom, m_bottom_height);
   }
 
   void addItem(QLayoutItem* item) override {
@@ -1569,8 +1587,11 @@ void TableBody::on_style() {
     get_layout().setContentsMargins(m_styles.m_padding);
   }
   update_column_widths();
-  update_visible_region();
   update();
+  QTimer::singleShot(0, this, [=] {
+    get_layout().update_row_height();
+    update_visible_region();
+  });
 }
 
 void TableBody::on_cover_style(Cover& cover) {

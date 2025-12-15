@@ -9,16 +9,15 @@
 #include <QKeySequence>
 #include <QString>
 #include "Nexus/Definitions/Destination.hpp"
-#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/KeyBindings/AdditionalTag.hpp"
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
-#include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
 
@@ -93,34 +92,29 @@ namespace Spire {
   /**
    * Converts an OrderTaskNode into an OrderTaskArguments record.
    * @param node The node to convert, should be a SingleOrderTaskNode.
-   * @param markets The database of markets used to set specify the region.
-   * @param destinations The database of destinations used to identify the
-   *        market.
    * @return The OrderTaskArguments represented by the <i>node</i>.
    */
-  OrderTaskArguments to_order_task_arguments(const CanvasNode& node,
-    const Nexus::MarketDatabase& markets,
-    const Nexus::DestinationDatabase& destinations);
+  OrderTaskArguments to_order_task_arguments(const CanvasNode& node);
 
   /** Returns the text representation of a QuantitySetting. */
   const QString& to_text(QuantitySetting setting);
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Spire::OrderTaskArguments> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Spire::OrderTaskArguments& value,
-        unsigned int version) {
-      shuttle.Shuttle("name", value.m_name);
-      shuttle.Shuttle("region", value.m_region);
-      shuttle.Shuttle("destination", value.m_destination);
-      shuttle.Shuttle("order_type", value.m_order_type);
-      shuttle.Shuttle("side", value.m_side);
-      shuttle.Shuttle("quantity", value.m_quantity);
-      shuttle.Shuttle("time_in_force", value.m_time_in_force);
-      shuttle.Shuttle("additional_tags", value.m_additional_tags);
-      shuttle.Shuttle("key", value.m_key);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::OrderTaskArguments& value,
+        unsigned int version) const {
+      shuttle.shuttle("name", value.m_name);
+      shuttle.shuttle("region", value.m_region);
+      shuttle.shuttle("destination", value.m_destination);
+      shuttle.shuttle("order_type", value.m_order_type);
+      shuttle.shuttle("side", value.m_side);
+      shuttle.shuttle("quantity", value.m_quantity);
+      shuttle.shuttle("time_in_force", value.m_time_in_force);
+      shuttle.shuttle("additional_tags", value.m_additional_tags);
+      shuttle.shuttle("key", value.m_key);
     }
   };
 }

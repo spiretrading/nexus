@@ -7,8 +7,8 @@
 #include "Spire/Styles/CombinatorSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
+using namespace Beam;
 using namespace boost;
-using namespace Beam::SignalHandling;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -42,7 +42,7 @@ namespace {
       for(auto descendant : descendants) {
         auto connection = descendant->connect_delete_signal(std::bind_front(
           &Executor::on_delete, this, std::ref(*descendant)));
-        m_delete_connections.AddConnection(&descendant, connection);
+        m_delete_connections.add(&descendant, connection);
         descendant->get_widget().installEventFilter(this);
       }
       m_on_update(std::move(descendants), {});
@@ -62,7 +62,7 @@ namespace {
           for(auto descendant : descendants) {
             auto connection = descendant->connect_delete_signal(std::bind_front(
               &Executor::on_delete, this, std::ref(*descendant)));
-            m_delete_connections.AddConnection(&descendant, connection);
+            m_delete_connections.add(&descendant, connection);
             descendant->get_widget().installEventFilter(this);
           }
           m_on_update(std::move(descendants), {});
@@ -74,7 +74,7 @@ namespace {
           auto descendants = build_descendants(child);
           descendants.insert(&find_stylist(child));
           for(auto descendant : descendants) {
-            m_delete_connections.Disconnect(&descendant);
+            m_delete_connections.disconnect(&descendant);
             descendant->get_widget().removeEventFilter(this);
           }
           m_on_update({}, std::move(descendants));
@@ -87,7 +87,7 @@ namespace {
       auto descendants = build_descendants(stylist.get_widget());
       descendants.insert(&stylist);
       for(auto descendant : descendants) {
-        m_delete_connections.Disconnect(&descendant);
+        m_delete_connections.disconnect(&descendant);
         descendant->get_widget().removeEventFilter(this);
       }
       m_on_update({}, std::move(descendants));
@@ -121,7 +121,7 @@ SelectConnection Spire::Styles::select(const DescendantSelector& selector,
 }
 
 std::size_t std::hash<DescendantSelector>::operator ()(
-    const DescendantSelector& selector) const {
+    const DescendantSelector& selector) const noexcept {
   auto seed = std::size_t(0);
   hash_combine(seed, std::hash<Selector>()(selector.get_base()));
   hash_combine(seed, std::hash<Selector>()(selector.get_descendant()));

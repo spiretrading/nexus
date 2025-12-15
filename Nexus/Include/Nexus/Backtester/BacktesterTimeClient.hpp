@@ -2,7 +2,6 @@
 #define NEXUS_BACKTESTER_TIME_CLIENT_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
-#include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
 
 namespace Nexus {
@@ -13,39 +12,38 @@ namespace Nexus {
 
       /**
        * Constructs a BacktesterTimeClient.
-       * @param environment The event handler this client belongs to.
+       * @param event_handler The event handler this client belongs to.
        */
       explicit BacktesterTimeClient(
-        Beam::Ref<BacktesterEventHandler> eventHandler);
+        Beam::Ref<BacktesterEventHandler> event_handler) noexcept;
 
       ~BacktesterTimeClient();
 
-      boost::posix_time::ptime GetTime();
-
-      void Close();
+      boost::posix_time::ptime get_time();
+      void close();
 
     private:
-      BacktesterEventHandler* m_eventHandler;
-      Beam::IO::OpenState m_openState;
+      BacktesterEventHandler* m_event_handler;
+      Beam::OpenState m_open_state;
 
       BacktesterTimeClient(const BacktesterTimeClient&) = delete;
       BacktesterTimeClient& operator =(const BacktesterTimeClient&) = delete;
   };
 
   inline BacktesterTimeClient::BacktesterTimeClient(
-    Beam::Ref<BacktesterEventHandler> eventHandler)
-    : m_eventHandler(eventHandler.Get()) {}
+    Beam::Ref<BacktesterEventHandler> event_handler) noexcept
+    : m_event_handler(event_handler.get()) {}
 
   inline BacktesterTimeClient::~BacktesterTimeClient() {
-    Close();
+    close();
   }
 
-  inline boost::posix_time::ptime BacktesterTimeClient::GetTime() {
-    return m_eventHandler->GetTime();
+  inline boost::posix_time::ptime BacktesterTimeClient::get_time() {
+    return m_event_handler->get_time();
   }
 
-  inline void BacktesterTimeClient::Close() {
-    m_openState.Close();
+  inline void BacktesterTimeClient::close() {
+    m_open_state.close();
   }
 }
 

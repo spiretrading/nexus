@@ -3,7 +3,6 @@
 #include <QTimer>
 #include "Spire/Ui/ClickObserver.hpp"
 #include "Spire/Ui/ColorBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

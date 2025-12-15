@@ -14,23 +14,14 @@ namespace Spire {
   class ReversedListModel : public ListModel<T> {
     public:
       using Type = typename ListModel<T>::Type;
-
       using OperationSignal = typename ListModel<T>::OperationSignal;
-
       using AddOperation = typename ListModel<T>::AddOperation;
-
       using MoveOperation = typename ListModel<T>::MoveOperation;
-
       using PreRemoveOperation = typename ListModel<T>::PreRemoveOperation;
-
       using RemoveOperation = typename ListModel<T>::RemoveOperation;
-
       using UpdateOperation = typename ListModel<T>::UpdateOperation;
-
       using StartTransaction = typename ListModel<T>::StartTransaction;
-
       using EndTransaction = typename ListModel<T>::EndTransaction;
-
       using Operation = typename ListModel<T>::Operation;
 
       /**
@@ -59,20 +50,13 @@ namespace Spire {
       int index_from_source(int index) const;
 
       int get_size() const override;
-
       const Type& get(int index) const override;
-
       QValidator::State set(int index, const Type& value) override;
-
       QValidator::State insert(const Type& value, int index) override;
-
       QValidator::State move(int source, int destination) override;
-
       QValidator::State remove(int index) override;
-
       boost::signals2::connection connect_operation_signal(
         const typename OperationSignal::slot_type& slot) const override;
-
       using ListModel<T>::insert;
       using ListModel<T>::remove;
       using ListModel<T>::transact;

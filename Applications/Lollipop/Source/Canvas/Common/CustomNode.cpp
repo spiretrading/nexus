@@ -8,7 +8,6 @@
 #include "Spire/Canvas/Types/UnionType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
 using namespace std;
@@ -66,7 +65,7 @@ unique_ptr<CanvasNode> CustomNode::Replace(const CanvasNode& child,
       }
       auto path = AppendCanvasNodePaths(GetPath(*target, *replacement),
         GetPath(child, selfChild));
-      auto proxy = make_unique<ProxyNode>(path, selfChild.GetType(),
+      auto proxy = std::make_unique<ProxyNode>(path, selfChild.GetType(),
         CanvasNode::Clone(*original));
       builder.Replace(*target, std::move(proxy));
     }
@@ -79,7 +78,7 @@ void CustomNode::Apply(CanvasNodeVisitor& visitor) const {
 }
 
 unique_ptr<CanvasNode> CustomNode::Clone() const {
-  return make_unique<CustomNode>(*this);
+  return std::make_unique<CustomNode>(*this);
 }
 
-CustomNode::CustomNode(ReceiveBuilder) {}
+CustomNode::CustomNode() {}

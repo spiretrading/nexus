@@ -95,8 +95,6 @@ namespace Spire {
 
       virtual void Visit(const LuaScriptNode& node);
 
-      virtual void Visit(const MarketNode& node);
-
       virtual void Visit(const MaxFloorNode& node);
 
       virtual void Visit(const MaxNode& node);
@@ -166,6 +164,8 @@ namespace Spire {
       virtual void Visit(const UnequalNode& node);
 
       virtual void Visit(const UntilNode& node);
+
+      virtual void Visit(const VenueNode& node);
 
       virtual void Visit(const WhenNode& node);
   };

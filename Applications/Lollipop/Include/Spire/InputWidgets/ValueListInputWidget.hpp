@@ -6,7 +6,6 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/signals2/signal.hpp>
 #include "Spire/InputWidgets/ValueListInputDialog.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/UI.hpp"
 
 class QLineEdit;

@@ -1,19 +1,15 @@
 #ifndef NEXUS_MARKET_DATA_SECURITY_ENTRY_HPP
 #define NEXUS_MARKET_DATA_SECURITY_ENTRY_HPP
-#include <unordered_map>
-#include <vector>
 #include <Beam/Queries/Sequencer.hpp>
-#include <Beam/Utilities/Algorithm.hpp>
+#include <boost/date_time/local_time/tz_database.hpp>
 #include <boost/optional/optional.hpp>
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/SecuritySnapshot.hpp"
-#include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
+#include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Keeps track of a Security's market data. */
   class SecurityEntry {
@@ -23,109 +19,99 @@ namespace Nexus::MarketDataService {
       struct InitialSequences {
 
         /** The next Sequence to use for a BboQuote. */
-        Beam::Queries::Sequence m_nextBboQuoteSequence;
+        Beam::Sequence m_next_bbo_quote_sequence;
 
         /** The next Sequence to use for a BookQuote. */
-        Beam::Queries::Sequence m_nextBookQuoteSequence;
-
-        /** The next Sequence to use for a MarketQuote. */
-        Beam::Queries::Sequence m_nextMarketQuoteSequence;
+        Beam::Sequence m_next_book_quote_sequence;
 
         /** The next Sequence to use for a TimeAndSale. */
-        Beam::Queries::Sequence m_nextTimeAndSaleSequence;
+        Beam::Sequence m_next_time_and_sale_sequence;
       };
 
       /**
        * Constructs a SecurityEntry.
        * @param security The Security represented.
-       * @param closePrice The closing price.
-       * @param initialSequences The initial Sequences to use.
+       * @param venues The venues publishing market data.
+       * @param time_zones The database of time zones.
+       * @param close The closing price.
+       * @param initial_sequences The initial Sequences to use.
        */
-      SecurityEntry(Security security, Money closePrice,
-        const InitialSequences& initialSequences);
+      SecurityEntry(Security security, VenueDatabase venues,
+        boost::local_time::tz_database time_zones, Money close,
+        const InitialSequences& initial_sequences);
 
       /** Returns the Security. */
-      const Security& GetSecurity() const;
+      const Security& get_security() const;
 
       /** Sets the Security. */
-      void SetSecurity(const Security& security);
-
-      /** Returns the most recently published BboQuote. */
-      const SequencedSecurityBboQuote& GetBboQuote() const;
-
-      /**
-       * Publishes a BboQuote.
-       * @param bboQuote The BboQuote to publish.
-       * @param sourceId The id of the source setting the value.
-       * @return The BboQuote to publish.
-       */
-      boost::optional<SequencedSecurityBboQuote> PublishBboQuote(
-        const BboQuote& bboQuote, int sourceId);
-
-      /**
-       * Sets a MarketQuote.
-       * @param marketQuote The MarketQuote to set.
-       * @param sourceId The id of the source setting the value.
-       * @return The MarketQuote to publish.
-       */
-      boost::optional<SequencedSecurityMarketQuote> PublishMarketQuote(
-        const MarketQuote& marketQuote, int sourceId);
-
-      /**
-       * Updates a BookQuote.
-       * @param delta The BookQuote storing the change.
-       * @param sourceId The id of the source setting the value.
-       * @return The BookQuote to publish.
-       */
-      boost::optional<SequencedSecurityBookQuote> UpdateBookQuote(
-        const BookQuote& delta, int sourceId);
-
-      /**
-       * Publishes a TimeAndSale.
-       * @param timeAndSale The TimeAndSale to publish.
-       * @param sourceId The id of the source setting the value.
-       * @return The TimeAndSale to publish.
-       */
-      boost::optional<SequencedSecurityTimeAndSale> PublishTimeAndSale(
-        const TimeAndSale& timeAndSale, int sourceId);
+      void set_security(const Security& security);
 
       /** Returns the SecurityTechnicals. */
-      const SecurityTechnicals& GetSecurityTechnicals() const;
+      const SecurityTechnicals& get_security_technicals() const;
 
       /**
        * Returns the Security's current snapshot.
        * @return The real-time snapshot of the <i>security</i>.
        */
-      boost::optional<SecuritySnapshot> LoadSnapshot() const;
+      boost::optional<SecuritySnapshot> load_snapshot() const;
+
+      /** Returns the most recently published BboQuote. */
+      const SequencedSecurityBboQuote& get_bbo_quote() const;
+
+      /**
+       * Publishes a BboQuote.
+       * @param bbo_quote The BboQuote to publish.
+       * @param source_id The id of the source setting the value.
+       * @return The BboQuote to publish.
+       */
+      boost::optional<SequencedSecurityBboQuote> publish(
+        const BboQuote& bbo_quote, int source_id);
+
+      /**
+       * Updates a BookQuote.
+       * @param quote The updated BookQuote to publish.
+       * @param source_id The id of the source setting the value.
+       * @return The BookQuote to publish.
+       */
+      boost::optional<SequencedSecurityBookQuote> publish(
+        const BookQuote& quote, int source_id);
+
+      /**
+       * Publishes a TimeAndSale.
+       * @param time_and_sale The TimeAndSale to publish.
+       * @param source_id The id of the source setting the value.
+       * @return The TimeAndSale to publish.
+       */
+      boost::optional<SequencedSecurityTimeAndSale> publish(
+        const TimeAndSale& time_and_sale, int source_id);
 
       /**
        * Clears market data that originated from a specified source.
-       * @param sourceId The id of the source to clear.
+       * @param source_id The id of the source to clear.
        */
-      void Clear(int sourceId);
+      void clear(int source_id);
 
     private:
       struct BookQuoteEntry {
         SequencedSecurityBookQuote m_quote;
-        int m_sourceId;
+        int m_source_id;
 
-        BookQuoteEntry(const SequencedSecurityBookQuote& quote, int sourceId);
+        BookQuoteEntry(const SequencedSecurityBookQuote& quote, int source_id);
       };
       Security m_security;
-      Beam::Queries::Sequencer m_bboSequencer;
-      Beam::Queries::Sequencer m_marketQuoteSequencer;
-      Beam::Queries::Sequencer m_bookQuoteSequencer;
-      Beam::Queries::Sequencer m_timeAndSaleSequencer;
+      VenueDatabase m_venues;
+      boost::local_time::tz_database m_time_zones;
+      Beam::Sequencer m_bbo_sequencer;
+      Beam::Sequencer m_book_quote_sequencer;
+      Beam::Sequencer m_time_and_sale_sequencer;
       SecurityTechnicals m_technicals;
-      std::string m_marketCenter;
-      Money m_nextClose;
-      boost::posix_time::ptime m_technicalsResetTime;
-      SequencedSecurityBboQuote m_bboQuote;
-      SequencedSecurityTimeAndSale m_timeAndSale;
-      std::unordered_map<MarketCode, SequencedSecurityMarketQuote>
-        m_marketQuotes;
-      std::vector<BookQuoteEntry> m_askBook;
-      std::vector<BookQuoteEntry> m_bidBook;
+      std::string m_market_center;
+      Money m_next_close;
+      boost::posix_time::ptime m_technicals_reset_time;
+      SequencedSecurityBboQuote m_bbo_quote;
+      SequencedSecurityTimeAndSale m_time_and_sale;
+      std::vector<BookQuoteEntry> m_asks;
+      std::vector<BookQuoteEntry> m_bids;
 
       SecurityEntry(const SecurityEntry&) = delete;
       SecurityEntry& operator =(const SecurityEntry&) = delete;
@@ -133,239 +119,214 @@ namespace Nexus::MarketDataService {
 
   /**
    * Returns the InitialSequences for a SecurityEntry.
-   * @param dataStore The DataStore to load the InitialSequences from.
+   * @param data_store The DataStore to load the InitialSequences from.
    * @param security The security to load the InitialSequences for.
    * @return The set of InitialSequences for the specified <i>security</i>.
    */
-  template<typename DataStore>
-  SecurityEntry::InitialSequences LoadInitialSequences(DataStore& dataStore,
-      const Security& security) {
+  SecurityEntry::InitialSequences load_initial_sequences(
+      IsHistoricalDataStore auto& data_store, const Security& security) {
     auto query = SecurityMarketDataQuery();
-    query.SetIndex(security);
-    query.SetRange(Beam::Queries::Range::Total());
-    query.SetSnapshotLimit(Beam::Queries::SnapshotLimit::FromTail(1));
-    auto initialSequences = SecurityEntry::InitialSequences();
+    query.set_index(security);
+    query.set_range(Beam::Range::TOTAL);
+    query.set_snapshot_limit(Beam::SnapshotLimit::from_tail(1));
+    auto initial_sequences = SecurityEntry::InitialSequences();
     {
-      auto results = dataStore.LoadBboQuotes(query);
+      auto results = data_store.load_bbo_quotes(query);
       if(results.empty()) {
-        initialSequences.m_nextBboQuoteSequence =
-          Beam::Queries::Sequence::First();
+        initial_sequences.m_next_bbo_quote_sequence = Beam::Sequence::FIRST;
       } else {
-        initialSequences.m_nextBboQuoteSequence =
-          Beam::Queries::Increment(results.back().GetSequence());
+        initial_sequences.m_next_bbo_quote_sequence =
+          Beam::increment(results.back().get_sequence());
       }
     }
     {
-      auto results = dataStore.LoadBookQuotes(query);
+      auto results = data_store.load_book_quotes(query);
       if(results.empty()) {
-        initialSequences.m_nextBookQuoteSequence =
-          Beam::Queries::Sequence::First();
+        initial_sequences.m_next_book_quote_sequence = Beam::Sequence::FIRST;
       } else {
-        initialSequences.m_nextBookQuoteSequence =
-          Beam::Queries::Increment(results.back().GetSequence());
+        initial_sequences.m_next_book_quote_sequence =
+          Beam::increment(results.back().get_sequence());
       }
     }
     {
-      auto results = dataStore.LoadMarketQuotes(query);
+      auto results = data_store.load_time_and_sales(query);
       if(results.empty()) {
-        initialSequences.m_nextMarketQuoteSequence =
-          Beam::Queries::Sequence::First();
+        initial_sequences.m_next_time_and_sale_sequence = Beam::Sequence::FIRST;
       } else {
-        initialSequences.m_nextMarketQuoteSequence =
-          Beam::Queries::Increment(results.back().GetSequence());
+        initial_sequences.m_next_time_and_sale_sequence =
+          Beam::increment(results.back().get_sequence());
       }
     }
-    {
-      auto results = dataStore.LoadTimeAndSales(query);
-      if(results.empty()) {
-        initialSequences.m_nextTimeAndSaleSequence =
-          Beam::Queries::Sequence::First();
-      } else {
-        initialSequences.m_nextTimeAndSaleSequence =
-          Beam::Queries::Increment(results.back().GetSequence());
-      }
-    }
-    return initialSequences;
+    return initial_sequences;
   }
 
   inline SecurityEntry::BookQuoteEntry::BookQuoteEntry(
-    const SequencedSecurityBookQuote& quote, int sourceId)
+    const SequencedSecurityBookQuote& quote, int source_id)
     : m_quote(quote),
-      m_sourceId(sourceId) {}
+      m_source_id(source_id) {}
 
-  inline SecurityEntry::SecurityEntry(Security security, Money closePrice,
-      const InitialSequences& initialSequences)
+  inline SecurityEntry::SecurityEntry(Security security, VenueDatabase venues,
+      boost::local_time::tz_database time_zones, Money close,
+      const InitialSequences& initial_sequences)
       : m_security(std::move(security)),
-        m_bboSequencer(initialSequences.m_nextBboQuoteSequence),
-        m_marketQuoteSequencer(initialSequences.m_nextMarketQuoteSequence),
-        m_bookQuoteSequencer(initialSequences.m_nextBookQuoteSequence),
-        m_timeAndSaleSequencer(initialSequences.m_nextTimeAndSaleSequence),
-        m_marketCenter(TechnicalAnalysis::GetDefaultMarketCenter(
-          m_security.GetMarket())) {
-    m_technicals.m_close = closePrice;
+        m_venues(std::move(venues)),
+        m_time_zones(std::move(time_zones)),
+        m_bbo_sequencer(initial_sequences.m_next_bbo_quote_sequence),
+        m_book_quote_sequencer(initial_sequences.m_next_book_quote_sequence),
+        m_time_and_sale_sequencer(
+          initial_sequences.m_next_time_and_sale_sequence) {
+    m_market_center = m_venues.from(m_security.get_venue()).m_market_center;
+    if(m_market_center.empty()) {
+      m_market_center = m_security.get_venue().get_code().get_data();
+    }
+    m_technicals.m_close = close;
   }
 
-  inline const Security& SecurityEntry::GetSecurity() const {
+  inline const Security& SecurityEntry::get_security() const {
     return m_security;
   }
 
-  inline void SecurityEntry::SetSecurity(const Security& security) {
+  inline void SecurityEntry::set_security(const Security& security) {
     m_security = security;
   }
 
-  inline const SequencedSecurityBboQuote& SecurityEntry::GetBboQuote() const {
-    return m_bboQuote;
-  }
-
-  inline boost::optional<SequencedSecurityBboQuote>
-      SecurityEntry::PublishBboQuote(const BboQuote& bboQuote, int sourceId) {
-    if(m_technicalsResetTime == boost::posix_time::not_a_date_time) {
-      auto& marketEntry = GetDefaultMarketDatabase().FromCode(
-        m_security.GetMarket());
-      if(marketEntry != MarketDatabase::GetNoneEntry()) {
-        auto marketTimeZone =
-          GetDefaultTimeZoneDatabase().time_zone_from_region(
-            marketEntry.m_timeZone);
-        auto marketResetTime = boost::local_time::local_date_time(
-          bboQuote.m_timestamp, marketTimeZone) + boost::gregorian::days(1);
-        marketResetTime -= marketResetTime.local_time().time_of_day();
-        m_technicalsResetTime = marketResetTime.utc_time();
-      } else {
-        m_technicalsResetTime = boost::posix_time::pos_infin;
-      }
-    }
-    if(bboQuote.m_timestamp >= m_technicalsResetTime) {
-      m_technicals.m_volume = 0;
-      m_technicals.m_high = Money::ZERO;
-      m_technicals.m_low = Money::ZERO;
-      m_technicals.m_open = Money::ZERO;
-      m_technicals.m_close = m_nextClose;
-      auto delta = bboQuote.m_timestamp.date() - m_technicalsResetTime.date();
-      m_technicalsResetTime += delta;
-      if(m_technicalsResetTime <= bboQuote.m_timestamp) {
-        m_technicalsResetTime += boost::gregorian::days(1);
-      }
-    }
-    auto value = m_bboSequencer.MakeSequencedValue(bboQuote, m_security);
-    m_bboQuote = value;
-    return value;
-  }
-
-  inline boost::optional<SequencedSecurityMarketQuote>
-      SecurityEntry::PublishMarketQuote(
-        const MarketQuote& marketQuote, int sourceId) {
-    auto value = m_marketQuoteSequencer.MakeSequencedValue(marketQuote,
-      m_security);
-    m_marketQuotes[marketQuote.m_market] = value;
-    return value;
-  }
-
-  inline boost::optional<SequencedSecurityBookQuote>
-      SecurityEntry::UpdateBookQuote(const BookQuote& delta, int sourceId) {
-    auto book = Pick(delta.m_quote.m_side, &m_askBook, &m_bidBook);
-    auto entryIterator = Beam::LinearLowerBound(book->begin(), book->end(),
-      delta, [] (const auto& lhs, const auto& rhs) {
-        return BookQuoteListingComparator(**lhs.m_quote, rhs);
-      });
-    if(entryIterator == book->end()) {
-      if(delta.m_quote.m_size <= 0) {
-        return boost::none;
-      }
-      auto value = m_bookQuoteSequencer.MakeSequencedValue(delta, m_security);
-      book->emplace_back(std::move(value), sourceId);
-      entryIterator = book->end() - 1;
-    } else {
-      auto& entry = *entryIterator;
-      if((*entry.m_quote)->m_quote.m_price != delta.m_quote.m_price ||
-          (*entry.m_quote)->m_mpid != delta.m_mpid) {
-        if(delta.m_quote.m_size <= 0) {
-          return boost::none;
-        }
-        if((*entry.m_quote)->m_quote.m_size == 0) {
-          auto value = m_bookQuoteSequencer.MakeSequencedValue(delta,
-            m_security);
-          auto quoteEntry = BookQuoteEntry(std::move(value), sourceId);
-          entry = quoteEntry;
-        } else {
-          auto value = m_bookQuoteSequencer.MakeSequencedValue(delta,
-            m_security);
-          entryIterator = book->emplace(entryIterator, std::move(value),
-            sourceId);
-        }
-      } else {
-        (*entry.m_quote)->m_quote.m_size = std::max<Quantity>(0,
-          (*entry.m_quote)->m_quote.m_size + delta.m_quote.m_size);
-        (*entry.m_quote)->m_timestamp = delta.m_timestamp;
-        entry.m_quote.GetSequence() =
-          m_bookQuoteSequencer.IncrementNextSequence(delta.m_timestamp);
-        entry.m_sourceId = sourceId;
-      }
-    }
-    return entryIterator->m_quote;
-  }
-
-  inline boost::optional<SequencedSecurityTimeAndSale>
-      SecurityEntry::PublishTimeAndSale(
-        const TimeAndSale& timeAndSale, int sourceId) {
-    if(m_technicals.m_open == Money::ZERO) {
-      m_technicals.m_open = timeAndSale.m_price;
-    }
-    if(m_technicals.m_high == Money::ZERO ||
-        timeAndSale.m_price > m_technicals.m_high) {
-      m_technicals.m_high = timeAndSale.m_price;
-    }
-    if(m_technicals.m_low == Money::ZERO ||
-        timeAndSale.m_price < m_technicals.m_low) {
-      m_technicals.m_low = timeAndSale.m_price;
-    }
-    m_technicals.m_volume += timeAndSale.m_size;
-    if(timeAndSale.m_marketCenter == m_marketCenter) {
-      m_nextClose = timeAndSale.m_price;
-    }
-    auto value = m_timeAndSaleSequencer.MakeSequencedValue(
-      timeAndSale, m_security);
-    m_timeAndSale = value;
-    return value;
-  }
-
   inline const SecurityTechnicals&
-      SecurityEntry::GetSecurityTechnicals() const {
+      SecurityEntry::get_security_technicals() const {
     return m_technicals;
   }
 
-  inline boost::optional<SecuritySnapshot> SecurityEntry::LoadSnapshot() const {
-    if(m_security.GetMarket().IsEmpty()) {
+  inline boost::optional<SecuritySnapshot>
+      SecurityEntry::load_snapshot() const {
+    if(!m_security.get_venue()) {
       return boost::none;
     }
     auto snapshot = SecuritySnapshot(m_security);
-    snapshot.m_bboQuote = m_bboQuote;
-    snapshot.m_timeAndSale = m_timeAndSale;
-    snapshot.m_marketQuotes.insert(m_marketQuotes.begin(),
-      m_marketQuotes.end());
-    for(auto& entry : m_askBook) {
-      if((*entry.m_quote)->m_quote.m_size > 0) {
-        snapshot.m_askBook.push_back(entry.m_quote);
+    snapshot.m_bbo_quote = m_bbo_quote;
+    snapshot.m_time_and_sale = m_time_and_sale;
+    for(auto& ask : m_asks) {
+      if((*ask.m_quote)->m_quote.m_size > 0) {
+        snapshot.m_asks.push_back(ask.m_quote);
       }
     }
-    for(auto& entry : m_bidBook) {
-      if((*entry.m_quote)->m_quote.m_size > 0) {
-        snapshot.m_bidBook.push_back(entry.m_quote);
+    for(auto& bid : m_bids) {
+      if((*bid.m_quote)->m_quote.m_size > 0) {
+        snapshot.m_bids.push_back(bid.m_quote);
       }
     }
     return snapshot;
   }
 
-  inline void SecurityEntry::Clear(int sourceId) {
-    auto askRange = std::remove_if(m_askBook.begin(), m_askBook.end(),
-      [&] (auto& bookQuoteEntry) {
-        return bookQuoteEntry.m_sourceId == sourceId;
+  inline const SequencedSecurityBboQuote& SecurityEntry::get_bbo_quote() const {
+    return m_bbo_quote;
+  }
+
+  inline boost::optional<SequencedSecurityBboQuote> SecurityEntry::publish(
+      const BboQuote& bbo_quote, int source_id) {
+    if(m_technicals_reset_time == boost::posix_time::not_a_date_time) {
+      auto& venue_entry = m_venues.from(m_security.get_venue());
+      if(venue_entry.m_venue) {
+        auto time_zone =
+          m_time_zones.time_zone_from_region(venue_entry.m_time_zone);
+        auto reset_time = boost::local_time::local_date_time(
+          bbo_quote.m_timestamp, time_zone) + boost::gregorian::days(1);
+        reset_time -= reset_time.local_time().time_of_day();
+        m_technicals_reset_time = reset_time.utc_time();
+      } else {
+        m_technicals_reset_time = boost::posix_time::pos_infin;
+      }
+    }
+    if(bbo_quote.m_timestamp >= m_technicals_reset_time) {
+      m_technicals.m_volume = 0;
+      m_technicals.m_high = Money::ZERO;
+      m_technicals.m_low = Money::ZERO;
+      m_technicals.m_open = Money::ZERO;
+      m_technicals.m_close = m_next_close;
+      auto delta =
+        bbo_quote.m_timestamp.date() - m_technicals_reset_time.date();
+      m_technicals_reset_time += delta;
+      if(m_technicals_reset_time <= bbo_quote.m_timestamp) {
+        m_technicals_reset_time += boost::gregorian::days(1);
+      }
+    }
+    auto value = m_bbo_sequencer.make_sequenced_value(bbo_quote, m_security);
+    m_bbo_quote = value;
+    return value;
+  }
+
+  inline boost::optional<SequencedSecurityBookQuote> SecurityEntry::publish(
+      const BookQuote& quote, int source_id) {
+    auto& book = pick(quote.m_quote.m_side, m_asks, m_bids);
+    auto i = std::lower_bound(book.begin(), book.end(), quote,
+      [] (const auto& lhs, const auto& rhs) {
+        return listing_comparator(**lhs.m_quote, rhs);
       });
-    m_askBook.erase(askRange, m_askBook.end());
-    auto bidRange = std::remove_if(m_bidBook.begin(), m_bidBook.end(),
-      [&] (auto& bookQuoteEntry) {
-        return bookQuoteEntry.m_sourceId == sourceId;
-      });
-    m_bidBook.erase(bidRange, m_bidBook.end());
+    if(i == book.end()) {
+      if(quote.m_quote.m_size <= 0) {
+        return boost::none;
+      }
+      auto value =
+        m_book_quote_sequencer.make_sequenced_value(quote, m_security);
+      book.emplace_back(std::move(value), source_id);
+      i = book.end() - 1;
+    } else {
+      auto& entry = *i;
+      if((*entry.m_quote)->m_quote.m_price != quote.m_quote.m_price ||
+          (*entry.m_quote)->m_mpid != quote.m_mpid) {
+        if(quote.m_quote.m_size <= 0) {
+          return boost::none;
+        }
+        if((*entry.m_quote)->m_quote.m_size == 0) {
+          auto value =
+            m_book_quote_sequencer.make_sequenced_value(quote, m_security);
+          auto quote_entry = BookQuoteEntry(std::move(value), source_id);
+          entry = quote_entry;
+        } else {
+          auto value =
+            m_book_quote_sequencer.make_sequenced_value(quote, m_security);
+          i = book.emplace(i, std::move(value), source_id);
+        }
+      } else {
+        (*entry.m_quote)->m_quote.m_size = std::max<Quantity>(
+          0, (*entry.m_quote)->m_quote.m_size + quote.m_quote.m_size);
+        (*entry.m_quote)->m_timestamp = quote.m_timestamp;
+        entry.m_quote.get_sequence() =
+          m_book_quote_sequencer.increment_next_sequence(quote.m_timestamp);
+        entry.m_source_id = source_id;
+      }
+    }
+    return i->m_quote;
+  }
+
+  inline boost::optional<SequencedSecurityTimeAndSale> SecurityEntry::publish(
+      const TimeAndSale& time_and_sale, int source_id) {
+    if(m_technicals.m_open == Money::ZERO) {
+      m_technicals.m_open = time_and_sale.m_price;
+    }
+    if(m_technicals.m_high == Money::ZERO ||
+        time_and_sale.m_price > m_technicals.m_high) {
+      m_technicals.m_high = time_and_sale.m_price;
+    }
+    if(m_technicals.m_low == Money::ZERO ||
+        time_and_sale.m_price < m_technicals.m_low) {
+      m_technicals.m_low = time_and_sale.m_price;
+    }
+    m_technicals.m_volume += time_and_sale.m_size;
+    if(time_and_sale.m_market_center == m_market_center) {
+      m_next_close = time_and_sale.m_price;
+    }
+    auto value =
+      m_time_and_sale_sequencer.make_sequenced_value(time_and_sale, m_security);
+    m_time_and_sale = value;
+    return value;
+  }
+
+  inline void SecurityEntry::clear(int source_id) {
+    std::erase_if(m_asks, [&] (const auto& entry) {
+      return entry.m_source_id == source_id;
+    });
+    std::erase_if(m_bids, [&] (const auto& entry) {
+      return entry.m_source_id == source_id;
+    });
   }
 }
 

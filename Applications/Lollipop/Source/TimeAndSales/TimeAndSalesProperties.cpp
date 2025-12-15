@@ -12,8 +12,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
 using namespace std;
@@ -68,14 +66,14 @@ void TimeAndSalesProperties::Load(Out<UserProfile> userProfile) {
   TimeAndSalesProperties properties;
   try {
     BasicIStreamReader<ifstream> reader(
-      Initialize(timeAndSalesFilePath, ios::binary));
+      init(timeAndSalesFilePath, ios::binary));
     SharedBuffer buffer;
-    reader.Read(Store(buffer));
+    reader.read(out(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-    receiver.SetSource(Ref(buffer));
-    receiver.Shuttle(properties);
+    receiver.set(Ref(buffer));
+    receiver.shuttle(properties);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to load time and sales properties, using defaults."));
@@ -89,14 +87,14 @@ void TimeAndSalesProperties::Save(const UserProfile& userProfile) {
     "time_and_sales.dat";
   try {
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
     SharedBuffer buffer;
-    sender.SetSink(Ref(buffer));
-    sender.Shuttle(userProfile.GetDefaultTimeAndSalesProperties());
+    sender.set(Ref(buffer));
+    sender.shuttle(userProfile.GetDefaultTimeAndSalesProperties());
     BasicOStreamWriter<ofstream> writer(
-      Initialize(timeAndSalesFilePath, ios::binary));
-    writer.Write(buffer);
+      init(timeAndSalesFilePath, ios::binary));
+    writer.write(buffer);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to save time and sales properties."));

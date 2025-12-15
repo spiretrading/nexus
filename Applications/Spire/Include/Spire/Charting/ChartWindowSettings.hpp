@@ -9,7 +9,6 @@
 #include "Spire/LegacyUI/SecurityViewStack.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
@@ -40,7 +39,7 @@ namespace Spire {
         Beam::Out<QWidget> widget) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       ChartInteractionMode m_interactionMode;
       bool m_isAutoScaleEnabled;
       bool m_isLockGridEnabled;
@@ -54,24 +53,24 @@ namespace Spire {
       std::unique_ptr<LegacyUI::WindowSettings>
         m_chartIntervalComboBoxWindowSettings;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void ChartWindowSettings::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("interaction_mode", m_interactionMode);
-    shuttle.Shuttle("is_auto_scale_enabled", m_isAutoScaleEnabled);
-    shuttle.Shuttle("is_lock_grid_enabled", m_isLockGridEnabled);
-    shuttle.Shuttle("security", m_security);
-    shuttle.Shuttle("name", m_name);
-    shuttle.Shuttle("security_view_stack", m_securityViewStack);
-    shuttle.Shuttle("identifier", m_identifier);
-    shuttle.Shuttle("link_identifier", m_linkIdentifier);
-    shuttle.Shuttle("geometry", m_geometry);
-    shuttle.Shuttle("chart_plot_view_window_settings",
+  template<Beam::IsShuttle S>
+  void ChartWindowSettings::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("interaction_mode", m_interactionMode);
+    shuttle.shuttle("is_auto_scale_enabled", m_isAutoScaleEnabled);
+    shuttle.shuttle("is_lock_grid_enabled", m_isLockGridEnabled);
+    shuttle.shuttle("security", m_security);
+    shuttle.shuttle("name", m_name);
+    shuttle.shuttle("security_view_stack", m_securityViewStack);
+    shuttle.shuttle("identifier", m_identifier);
+    shuttle.shuttle("link_identifier", m_linkIdentifier);
+    shuttle.shuttle("geometry", m_geometry);
+    shuttle.shuttle("chart_plot_view_window_settings",
       m_chartPlotViewWindowSettings);
-    shuttle.Shuttle("chart_interval_combox_box_window_settings",
+    shuttle.shuttle("chart_interval_combox_box_window_settings",
       m_chartIntervalComboBoxWindowSettings);
   }
 }

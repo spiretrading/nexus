@@ -4,7 +4,6 @@
 #include <QFrame>
 #include "Spire/InputWidgets/TimeRangeInputWidget.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/PersistentWindow.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 #include "Spire/Utilities/Utilities.hpp"

@@ -10,8 +10,6 @@ namespace Spire {
    * Returns a new EditableTableView for task keys.
    * @param order_task_arguments The list of order task arguments to view.
    * @param regions The Regions available to query.
-   * @param destinations The destination database to use.
-   * @param markets The market database to use.
    * @param additional_tags Specifies the definition of all available additional
    *        tags.
    * @param parent The parent widget.
@@ -19,7 +17,6 @@ namespace Spire {
   TableView* make_task_keys_table_view(
     std::shared_ptr<OrderTaskArgumentsListModel> order_task_arguments,
     std::shared_ptr<RegionQueryModel> regions,
-    Nexus::DestinationDatabase destinations, Nexus::MarketDatabase markets,
     AdditionalTagDatabase additional_tags, QWidget* parent = nullptr);
 }
 

@@ -3,7 +3,6 @@
 #include <string>
 #include <QPoint>
 #include <QWidget>
-#include "Spire/SignIn/SignIn.hpp"
 #include "Spire/SignIn/SignInUpdateBox.hpp"
 #include "Spire/SignIn/Track.hpp"
 #include "Spire/Ui/KeyObserver.hpp"
@@ -14,10 +13,16 @@
 #endif
 
 namespace Spire {
+  class Button;
+  class ChromaHashWidget;
+  class DropDownBox;
+  class DropShadow;
+  class TrackMenuButton;
 
   /** Displays the sign in window. */
   class SignInWindow : public QWidget {
     public:
+      using Operation = SignInUpdateBox::Operation;
 
       /** The sign in state to display to the user. */
       enum class State {
@@ -37,8 +42,6 @@ namespace Spire {
         /** An error occured. */
         ERROR
       };
-
-      using Operation = SignInUpdateBox::Operation;
 
       /**
        * Signals an attempt to sign in.

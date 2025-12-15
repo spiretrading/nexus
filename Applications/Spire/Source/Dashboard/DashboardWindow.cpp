@@ -17,15 +17,11 @@
 #include "Spire/Dashboard/ValueDashboardCell.hpp"
 #include "Spire/LegacyUI/LineInputDialog.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
-#include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/ListModel.hpp"
 #include "ui_DashboardWindow.h"
 
 using namespace Beam;
-using namespace Beam::Queries;
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 using namespace std;
@@ -39,19 +35,8 @@ DashboardWindow::DashboardWindow(const string& name,
     QWidget* parent, Qt::WindowFlags flags)
     : QWidget{parent, flags},
       m_ui{std::make_unique<Ui_DashboardWindow>()},
-      m_userProfile{userProfile.Get()} {
+      m_userProfile{userProfile.get()} {
   m_ui->setupUi(this);
-  resize(scale(size()));
-  m_ui->m_deleteButton->setMinimumSize(
-    scale(m_ui->m_deleteButton->minimumSize()));
-  m_ui->m_saveButton->setMinimumSize(scale(m_ui->m_saveButton->minimumSize()));
-  m_ui->m_saveToButtonSpacer->changeSize(
-    scale_width(m_ui->m_saveToButtonSpacer->sizeHint().width()),
-    scale_height(m_ui->m_saveToButtonSpacer->sizeHint().height()),
-    m_ui->m_saveToButtonSpacer->sizePolicy().horizontalPolicy(),
-    m_ui->m_saveToButtonSpacer->sizePolicy().verticalPolicy());
-  m_ui->m_savesComboBox->setMinimumWidth(
-    scale_width(m_ui->m_savesComboBox->minimumWidth()));
   auto displayTaskSlot = [=] (CondensedCanvasWidget& widget) {
     m_ui->verticalLayout->insertWidget(2, &widget);
     widget.Focus();
@@ -122,7 +107,7 @@ void DashboardWindow::keyPressEvent(QKeyEvent* event) {
     if(bboQuoteIterator == m_bboQuotes.end()) {
       return BboQuote();
     }
-    return bboQuoteIterator->second.m_bboQuote->Peek();
+    return bboQuoteIterator->second.m_bboQuote->peek();
   }();
   if(m_orderTaskView->HandleKeyPressEvent(*event, *security,
       bboQuote.m_ask.m_price, bboQuote.m_bid.m_price)) {
@@ -199,12 +184,12 @@ void DashboardWindow::OnRowAdded(const DashboardRow& row) {
   if(security == nullptr) {
     return;
   }
-  auto& bboQuoteEntry = GetOrInsert(m_bboQuotes, *security);
+  auto& bboQuoteEntry = get_or_insert(m_bboQuotes, *security);
   if(bboQuoteEntry.m_counter == 0) {
     bboQuoteEntry.m_bboQuote = std::make_shared<StateQueue<BboQuote>>();
-    bboQuoteEntry.m_bboQuote->Push(BboQuote());
-    auto query = MakeCurrentQuery(*security);
-    m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
+    bboQuoteEntry.m_bboQuote->push(BboQuote());
+    auto query = make_current_query(*security);
+    m_userProfile->GetClients().get_market_data_client().query(
       query, bboQuoteEntry.m_bboQuote);
   }
   ++bboQuoteEntry.m_counter;
@@ -257,7 +242,7 @@ void DashboardWindow::OnDashboardActivated(const QString& text) {
       Save();
       Apply(savedDashboard.m_schema, savedDashboard.m_name);
       savedDashboard.m_settings->Apply(Ref(*m_userProfile),
-        Store(*m_ui->m_dashboard));
+        out(*m_ui->m_dashboard));
       break;
     }
   }

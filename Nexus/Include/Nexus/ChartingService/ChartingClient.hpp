@@ -1,197 +1,158 @@
 #ifndef NEXUS_CHARTING_CLIENT_HPP
 #define NEXUS_CHARTING_CLIENT_HPP
-#include <vector>
-#include <Beam/Collections/SynchronizedMap.hpp>
-#include <Beam/IO/ConnectException.hpp>
+#include <concepts>
+#include <memory>
+#include <type_traits>
+#include <utility>
 #include <Beam/IO/Connection.hpp>
-#include <Beam/IO/OpenState.hpp>
-#include <Beam/Queries/SequencedValuePublisher.hpp>
-#include <Beam/Queues/ConverterQueueWriter.hpp>
-#include <Beam/Routines/RoutineHandlerGroup.hpp>
-#include <Beam/Services/ServiceProtocolClientHandler.hpp>
-#include <boost/atomic/atomic.hpp>
-#include <boost/lexical_cast.hpp>
-#include "Nexus/ChartingService/ChartingService.hpp"
+#include <Beam/Pointers/Dereference.hpp>
+#include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Pointers/VirtualPtr.hpp>
+#include <Beam/Queues/ScopedQueueWriter.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/ChartingService/ChartingServices.hpp"
 #include "Nexus/ChartingService/SecurityChartingQuery.hpp"
-#include "Nexus/Queries/ShuttleQueryTypes.hpp"
-#include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
 
-namespace Nexus::ChartingService {
+namespace Nexus {
 
-  /**
-   * Client used to access the charting related services.
-   * @param <B> The type used to build ServiceProtocolClients to the server.
-   */
-  template<typename B>
+  /** Checks if a type implements a ChartingClient. */
+  template<typename T>
+  concept IsChartingClient = Beam::IsConnection<T> && requires(T& client) {
+    client.query(std::declval<const SecurityChartingQuery&>(),
+      std::declval<Beam::ScopedQueueWriter<QueryVariant>>());
+    { client.load_time_price_series(std::declval<const Security&>(),
+        std::declval<boost::posix_time::ptime>(),
+        std::declval<boost::posix_time::ptime>(),
+        std::declval<boost::posix_time::time_duration>()) } ->
+          std::same_as<TimePriceQueryResult>;
+  };
+
+  /** Provides a generic interface over an arbitrary ChartingClient. */
   class ChartingClient {
     public:
 
-      /** The type used to build ServiceProtocolClients to the server. */
-      using ServiceProtocolClientBuilder = Beam::GetTryDereferenceType<B>;
+      /**
+       * Constructs a ChartingClient of a specified type using emplacement.
+       * @tparam T The type of charting client to emplace.
+       * @param args The arguments to pass to the emplaced charting client.
+       */
+      template<IsChartingClient T, typename... Args>
+      explicit ChartingClient(std::in_place_type_t<T>, Args&&... args);
 
       /**
-       * Constructs a ChartingClient.
-       * @param clientBuilder Initializes the ServiceProtocolClientBuilder.
+       * Constructs a ChartingClient by referencing an existing charting
+       * client.
+       * @param client The client to reference.
        */
-      template<typename BF>
-      explicit ChartingClient(BF&& clientBuilder);
+      template<Beam::DisableCopy<ChartingClient> T> requires
+        IsChartingClient<Beam::dereference_t<T>>
+      ChartingClient(T&& client);
 
-      ~ChartingClient();
+      ChartingClient(const ChartingClient&) = default;
+      ChartingClient(ChartingClient&&) = default;
 
       /**
        * Submits a query for a Security's technical info.
        * @param query The query to submit.
        * @param queue The queue that will store the result of the query.
        */
-      void QuerySecurity(const SecurityChartingQuery& query,
-        Beam::ScopedQueueWriter<Queries::QueryVariant> queue);
+      void query(const SecurityChartingQuery& query,
+        Beam::ScopedQueueWriter<QueryVariant> queue);
 
       /**
        * Loads a Security's time/price series.
        * @param security The Security to load the series for.
-       * @param startTime The series start time (inclusive).
-       * @param endTime The series end time (inclusive).
+       * @param start The series start time (inclusive).
+       * @param end The series end time (inclusive).
        * @param interval The time interval per Candlestick.
        * @return The Security's time/price series with the specified parameters.
        */
-      TimePriceQueryResult LoadTimePriceSeries(const Security& security,
-        boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
+      TimePriceQueryResult load_time_price_series(const Security& security,
+        boost::posix_time::ptime start, boost::posix_time::ptime end,
         boost::posix_time::time_duration interval);
 
-      void Close();
+      void close();
 
     private:
-      using ServiceProtocolClient =
-        typename ServiceProtocolClientBuilder::Client;
-      using SecurityChartingPublisher = Beam::Queries::SequencedValuePublisher<
-        SecurityChartingQuery, Queries::QueryVariant>;
-      boost::atomic_int m_nextQueryId;
-      Beam::SynchronizedUnorderedMap<int,
-        std::shared_ptr<SecurityChartingPublisher>>
-        m_securityChartingPublishers;
-      Beam::Services::ServiceProtocolClientHandler<B> m_clientHandler;
-      Beam::IO::OpenState m_openState;
-      Beam::Routines::RoutineHandlerGroup m_queryRoutines;
+      struct VirtualChartingClient {
+        virtual ~VirtualChartingClient() = default;
 
-      ChartingClient(const ChartingClient&) = delete;
-      ChartingClient& operator =(const ChartingClient&) = delete;
-      void OnSecurityQuery(ServiceProtocolClient& client, int queryId,
-        const Queries::SequencedQueryVariant& value);
+        virtual void query(const SecurityChartingQuery& query,
+          Beam::ScopedQueueWriter<QueryVariant> queue) = 0;
+        virtual TimePriceQueryResult load_time_price_series(
+          const Security& security, boost::posix_time::ptime start,
+          boost::posix_time::ptime end,
+          boost::posix_time::time_duration interval) = 0;
+        virtual void close() = 0;
+      };
+      template<typename C>
+      struct WrappedChartingClient final : VirtualChartingClient {
+        using ChartingClient = C;
+        Beam::local_ptr_t<ChartingClient> m_client;
+
+        template<typename... Args>
+        WrappedChartingClient(Args&&... args);
+
+        void query(const SecurityChartingQuery& query,
+          Beam::ScopedQueueWriter<QueryVariant> queue) override;
+        TimePriceQueryResult load_time_price_series(const Security& security,
+          boost::posix_time::ptime start, boost::posix_time::ptime end,
+          boost::posix_time::time_duration interval) override;
+        void close() override;
+      };
+      Beam::VirtualPtr<VirtualChartingClient> m_client;
   };
 
-  template<typename B>
-  template<typename BF>
-  ChartingClient<B>::ChartingClient(BF&& clientBuilder)
-      try : m_nextQueryId(0),
-            m_clientHandler(std::forward<BF>(clientBuilder)) {
-    Queries::RegisterQueryTypes(Beam::Store(
-      m_clientHandler.GetSlots().GetRegistry()));
-    RegisterChartingServices(Beam::Store(m_clientHandler.GetSlots()));
-    RegisterChartingMessages(Beam::Store(m_clientHandler.GetSlots()));
-    Beam::Services::AddMessageSlot<SecurityQueryMessage>(
-      Beam::Store(m_clientHandler.GetSlots()),
-      std::bind_front(&ChartingClient::OnSecurityQuery, this));
-  } catch(const std::exception&) {
-    std::throw_with_nested(Beam::IO::ConnectException(
-      "Failed to connect to the charting server."));
+  template<IsChartingClient T, typename... Args>
+  ChartingClient::ChartingClient(std::in_place_type_t<T>, Args&&... args)
+    : m_client(Beam::make_virtual_ptr<WrappedChartingClient<T>>(
+        std::forward<Args>(args)...)) {}
+
+  template<Beam::DisableCopy<ChartingClient> T> requires
+    IsChartingClient<Beam::dereference_t<T>>
+  ChartingClient::ChartingClient(T&& client)
+    : m_client(Beam::make_virtual_ptr<WrappedChartingClient<
+        std::remove_cvref_t<T>>>(std::forward<T>(client))) {}
+
+  inline void ChartingClient::query(const SecurityChartingQuery& query,
+      Beam::ScopedQueueWriter<QueryVariant> queue) {
+    m_client->query(query, std::move(queue));
   }
 
-  template<typename B>
-  ChartingClient<B>::~ChartingClient() {
-    Close();
+  inline TimePriceQueryResult ChartingClient::load_time_price_series(
+      const Security& security, boost::posix_time::ptime start,
+      boost::posix_time::ptime end, boost::posix_time::time_duration interval) {
+    return m_client->load_time_price_series(security, start, end, interval);
   }
 
-  template<typename B>
-  void ChartingClient<B>::QuerySecurity(const SecurityChartingQuery& query,
-      Beam::ScopedQueueWriter<Queries::QueryVariant> queue) {
-    if(query.GetRange().GetEnd() == Beam::Queries::Sequence::Last()) {
-      m_queryRoutines.Spawn([=, this, queue = std::move(queue)] () mutable {
-        auto filter = Beam::Queries::Translate<Queries::EvaluatorTranslator>(
-          query.GetFilter());
-        auto conversionQueue = Beam::MakeConverterQueueWriter<
-          Queries::SequencedQueryVariant>(std::move(queue),
-          [] (const auto& value) {
-            return *value;
-          });
-        auto publisher = std::make_shared<SecurityChartingPublisher>(query,
-          std::move(filter), std::move(conversionQueue));
-        auto id = ++m_nextQueryId;
-        try {
-          publisher->BeginSnapshot();
-          m_securityChartingPublishers.Insert(id, publisher);
-          auto client = m_clientHandler.GetClient();
-          auto queryResult = client->template SendRequest<QuerySecurityService>(
-            query, id);
-          publisher->PushSnapshot(queryResult.m_snapshot.begin(),
-            queryResult.m_snapshot.end());
-          publisher->EndSnapshot(queryResult.m_queryId);
-        } catch(const std::exception&) {
-          publisher->Break();
-          m_securityChartingPublishers.Erase(id);
-        }
-      });
-    } else {
-      m_queryRoutines.Spawn([=, this, queue = std::move(queue)] () mutable {
-        try {
-          auto client = m_clientHandler.GetClient();
-          auto id = ++m_nextQueryId;
-          auto queryResult = client->template SendRequest<QuerySecurityService>(
-            query, id);
-          for(auto& value : queryResult.m_snapshot) {
-            queue.Push(std::move(value));
-          }
-          queue.Break();
-        } catch(const std::exception&) {
-          queue.Break(std::current_exception());
-        }
-      });
-    }
+  inline void ChartingClient::close() {
+    m_client->close();
   }
 
-  template<typename B>
-  TimePriceQueryResult ChartingClient<B>::LoadTimePriceSeries(
-      const Security& security, boost::posix_time::ptime startTime,
-      boost::posix_time::ptime endTime,
-      boost::posix_time::time_duration interval) {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadSecurityTimePriceSeriesService>(
-        security, startTime, endTime, interval);
-    }, "Failed to load time price series: " +
-      boost::lexical_cast<std::string>(security) + ", " +
-      boost::lexical_cast<std::string>(startTime) + ", " +
-      boost::lexical_cast<std::string>(endTime) + ", " +
-      boost::lexical_cast<std::string>(interval));
+  template<typename C>
+  template<typename... Args>
+  ChartingClient::WrappedChartingClient<C>::WrappedChartingClient(
+    Args&&... args)
+    : m_client(std::forward<Args>(args)...) {}
+
+  template<typename C>
+  void ChartingClient::WrappedChartingClient<C>::query(
+      const SecurityChartingQuery& query,
+      Beam::ScopedQueueWriter<QueryVariant> queue) {
+    m_client->query(query, std::move(queue));
   }
 
-  template<typename B>
-  void ChartingClient<B>::Close() {
-    if(m_openState.SetClosing()) {
-      return;
-    }
-    m_clientHandler.Close();
-    m_securityChartingPublishers.Clear();
-    m_openState.Close();
+  template<typename C>
+  TimePriceQueryResult ChartingClient::WrappedChartingClient<C>::
+      load_time_price_series(const Security& security,
+        boost::posix_time::ptime start, boost::posix_time::ptime end,
+        boost::posix_time::time_duration interval) {
+    return m_client->load_time_price_series(security, start, end, interval);
   }
 
-  template<typename B>
-  void ChartingClient<B>::OnSecurityQuery(ServiceProtocolClient& client,
-      int queryId, const Queries::SequencedQueryVariant& value) {
-    auto checkPublisher = m_securityChartingPublishers.FindValue(queryId);
-    if(!checkPublisher) {
-      return;
-    }
-    auto& publisher = *checkPublisher;
-    try {
-      publisher->Push(value);
-    } catch(const std::exception&) {
-      if(publisher->GetId() != -1) {
-        auto client = m_clientHandler.GetClient();
-        Beam::Services::SendRecordMessage<EndSecurityQueryMessage>(*client,
-          queryId);
-      }
-    }
+  template<typename C>
+  void ChartingClient::WrappedChartingClient<C>::close() {
+    m_client->close();
   }
 }
 

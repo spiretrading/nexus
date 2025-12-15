@@ -3,7 +3,6 @@
 #include <utility>
 #include <Beam/Utilities/Expect.hpp>
 #include <QEvent>
-#include "Spire/Async/Async.hpp"
 
 namespace Spire {
 namespace details {
@@ -39,7 +38,7 @@ namespace details {
 
   template<typename T>
   QtPromiseEvent<T>::QtPromiseEvent(Beam::Expect<T> result)
-      : m_result(std::move(result)) {}
+    : m_result(std::move(result)) {}
 
   template<typename T>
   Beam::Expect<T>& QtPromiseEvent<T>::get_result() {

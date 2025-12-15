@@ -5,6 +5,7 @@
 #include "Spire/Ui/Window.hpp"
 
 namespace Spire {
+  class FontBox;
 
   /** Displays the properties for the time and sales. */
   class TimeAndSalesPropertiesWindow : public Window {

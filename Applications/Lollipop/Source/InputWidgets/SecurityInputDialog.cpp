@@ -37,37 +37,13 @@ void Spire::ShowSecurityInputDialog(Ref<UserProfile> userProfile,
   dialog->show();
 }
 
-void Spire::ShowWildCardSecurityInputDialog(Ref<UserProfile> userProfile,
-    const variant<std::string, Security>& initialValue, QWidget* parent,
-    std::function<void (optional<Security>)> onResult) {
-  auto dialog = [&] {
-    if(auto text = get<std::string>(&initialValue)) {
-      return new SecurityInputDialog(Ref(userProfile), *text, parent);
-    }
-    return new SecurityInputDialog(
-      Ref(userProfile), get<Security>(initialValue), parent);
-  }();
-  dialog->setAttribute(Qt::WA_DeleteOnClose);
-  QObject::connect(dialog, &SecurityInputDialog::finished, parent,
-    [=] (auto result) {
-      if(result == QDialog::Rejected) {
-        onResult(none);
-      } else {
-        onResult(dialog->GetSecurity(true));
-      }
-    });
-  dialog->show();
-}
-
 SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
     const Security& initial, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_SecurityInputDialog>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   Initialize();
-  auto text = ToWildCardString(initial, m_userProfile->GetMarketDatabase(),
-    m_userProfile->GetCountryDatabase());
-  m_ui->m_input->setText(QString::fromStdString(text));
+  m_ui->m_input->setText(displayText(initial));
   if(parent) {
     parent->installEventFilter(this);
   }
@@ -77,7 +53,7 @@ SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
     const std::string& text, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_SecurityInputDialog>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   Initialize();
   m_ui->m_input->setText(QString::fromStdString(text));
   if(parent) {
@@ -87,18 +63,9 @@ SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
 
 SecurityInputDialog::~SecurityInputDialog() = default;
 
-Security SecurityInputDialog::GetSecurity(bool supportWildCards) const {
+Security SecurityInputDialog::GetSecurity() const {
   auto source = m_ui->m_input->text().toUpper().toStdString();
-  if(supportWildCards) {
-    auto optionalSecurity =
-      ParseWildCardSecurity(source, m_userProfile->GetMarketDatabase(),
-        m_userProfile->GetCountryDatabase());
-    if(optionalSecurity) {
-      return *optionalSecurity;
-    }
-    return Security();
-  }
-  return ParseSecurity(source, m_userProfile->GetMarketDatabase());
+  return parse_security(source, m_userProfile->GetVenueDatabase());
 }
 
 QLineEdit& SecurityInputDialog::GetSymbolInput() {

@@ -2,7 +2,6 @@
 #define SPIRE_CLICK_OBSERVER_HPP
 #include <memory>
 #include "Spire/Ui/PressObserver.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

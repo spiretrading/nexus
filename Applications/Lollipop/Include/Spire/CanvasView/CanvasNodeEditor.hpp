@@ -4,7 +4,7 @@
 #include <boost/variant/variant.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class QEvent;
 class QUndoCommand;

@@ -6,6 +6,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/FixedHorizontalLayout.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

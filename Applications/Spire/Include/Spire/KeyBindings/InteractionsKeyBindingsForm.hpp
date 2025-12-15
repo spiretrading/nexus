@@ -2,14 +2,13 @@
 #define SPIRE_INTERACTIONS_KEY_BINDINGS_FORM_HPP
 #include <array>
 #include <QWidget>
-#include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/Spire/ProxyScalarValueModel.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Ui/RegionDropDownBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class TextAreaBox;
 
   /** Implements a form for the interactions key bindings of a region. */
   class InteractionsKeyBindingsForm : public QWidget {

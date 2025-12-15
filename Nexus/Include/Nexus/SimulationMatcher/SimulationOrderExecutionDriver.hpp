@@ -1,148 +1,165 @@
 #ifndef NEXUS_SIMULATION_ORDER_EXECUTION_DRIVER_HPP
 #define NEXUS_SIMULATION_ORDER_EXECUTION_DRIVER_HPP
-#include <unordered_map>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
-#include "Nexus/OrderExecutionService/AccountQuery.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
-#include "Nexus/OrderExecutionService/OrderUnrecoverableException.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/SimulationMatcher/SecurityOrderSimulator.hpp"
-#include "Nexus/SimulationMatcher/SimulationMatcher.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /**
    * An OrderExecutionDriver that simulates transactions.
-   * @param C The type of MarketDataClient to use.
-   * @param T The type of TimeClient used for Order timestamps.
+   * @param <M> The type of MarketDataClient to use.
+   * @param <T> The type of TimeClient used for Order timestamps.
    */
-  template<typename C, typename T>
+  template<typename M, typename T> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
   class SimulationOrderExecutionDriver {
     public:
 
       /** The type of MarketDataClient to use. */
-      using MarketDataClient = Beam::GetTryDereferenceType<C>;
+      using MarketDataClient = Beam::dereference_t<M>;
 
       /** The type of TimeClient to use. */
-      using TimeClient = Beam::GetTryDereferenceType<T>;
+      using TimeClient = Beam::dereference_t<T>;
 
       /**
        * Constructs a SimulationOrderExecutionDriver.
-       * @param marketDataClient Initializes the MarketDataClient.
-       * @param timeClient Initializes the TimeClient.
+       * @param market_data_client Initializes the MarketDataClient.
+       * @param time_client Initializes the TimeClient.
        */
-      template<typename CF, typename TF>
-      SimulationOrderExecutionDriver(CF&& marketDataClient, TF&& timeClient);
+      template<Beam::Initializes<M> MF, Beam::Initializes<T> TF>
+      SimulationOrderExecutionDriver(MF&& market_data_client, TF&& time_client);
 
       ~SimulationOrderExecutionDriver();
 
-      const Order& Recover(const SequencedAccountOrderRecord& orderRecord);
-
-      const Order& Submit(const OrderInfo& orderInfo);
-
-      void Cancel(const OrderExecutionSession& session, OrderId orderId);
-
-      void Update(const OrderExecutionSession& session, OrderId orderId,
-        const ExecutionReport& executionReport);
-
-      void Close();
+      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
+      void add(const std::shared_ptr<Order>& order);
+      std::shared_ptr<Order> submit(const OrderInfo& info);
+      void cancel(const OrderExecutionSession& session, OrderId id);
+      void update(const OrderExecutionSession& session, OrderId id,
+        const ExecutionReport& report);
+      void close();
 
     private:
-      using SecurityOrderSimulator =
-        OrderExecutionService::SecurityOrderSimulator<TimeClient>;
-      using Orders =
-        std::unordered_map<OrderId, std::shared_ptr<PrimitiveOrder>>;
-      using SecurityOrderSimulators =
-        std::unordered_map<Security, std::unique_ptr<SecurityOrderSimulator>>;
-      Beam::GetOptionalLocalPtr<C> m_marketDataClient;
-      Beam::GetOptionalLocalPtr<T> m_timeClient;
-      Beam::SynchronizedMap<Orders> m_orders;
-      OrderId m_nextOrderId;
-      Beam::SynchronizedMap<SecurityOrderSimulators, Beam::Threading::Mutex>
-        m_securityOrderSimulators;
-      Beam::IO::OpenState m_openState;
+      using SecurityOrderSimulator = Nexus::SecurityOrderSimulator<TimeClient*>;
+      Beam::local_ptr_t<M> m_market_data_client;
+      Beam::local_ptr_t<T> m_time_client;
+      Beam::SynchronizedUnorderedMap<OrderId, std::shared_ptr<PrimitiveOrder>>
+        m_orders;
+      OrderId m_next_order_id;
+      Beam::SynchronizedUnorderedMap<Security,
+        std::unique_ptr<SecurityOrderSimulator>, Beam::Mutex> m_simulators;
+      Beam::OpenState m_open_state;
 
       SimulationOrderExecutionDriver(
         const SimulationOrderExecutionDriver&) = delete;
       SimulationOrderExecutionDriver& operator =(
         const SimulationOrderExecutionDriver&) = delete;
-      SecurityOrderSimulator& LoadSimulator(const Security& security);
+      SecurityOrderSimulator& load(const Security& security);
   };
 
-  template<typename C, typename T>
-  template<typename CF, typename TF>
-  SimulationOrderExecutionDriver<C, T>::SimulationOrderExecutionDriver(
-    CF&& marketDataClient, TF&& timeClient)
-    : m_marketDataClient(std::forward<CF>(marketDataClient)),
-      m_timeClient(std::forward<TF>(timeClient)),
-      m_nextOrderId(1) {}
+  template<typename M, typename T>
+  SimulationOrderExecutionDriver(M&&, T&&) -> SimulationOrderExecutionDriver<
+    std::remove_cvref_t<M>, std::remove_cvref_t<T>>;
 
-  template<typename C, typename T>
-  SimulationOrderExecutionDriver<C, T>::~SimulationOrderExecutionDriver() {
-    Close();
+  template<typename M, typename T> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
+  template<Beam::Initializes<M> MF, Beam::Initializes<T> TF>
+  SimulationOrderExecutionDriver<M, T>::SimulationOrderExecutionDriver(
+    MF&& market_data_client, TF&& time_client)
+    : m_market_data_client(std::forward<MF>(market_data_client)),
+      m_time_client(std::forward<TF>(time_client)),
+      m_next_order_id(1) {}
+
+  template<typename M, typename T> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
+  SimulationOrderExecutionDriver<M, T>::~SimulationOrderExecutionDriver() {
+    close();
   }
 
-  template<typename C, typename T>
-  const Order& SimulationOrderExecutionDriver<C, T>::Recover(
-      const SequencedAccountOrderRecord& orderRecord) {
-    auto order = std::make_shared<PrimitiveOrder>(**orderRecord);
-    m_orders.Insert((*orderRecord)->m_info.m_orderId, order);
-    auto& simulator = LoadSimulator((*orderRecord)->m_info.m_fields.m_security);
-    simulator.Recover(order);
-    return *order;
+  template<typename M, typename T> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
+  std::shared_ptr<Order> SimulationOrderExecutionDriver<M, T>::recover(
+      const SequencedAccountOrderRecord& record) {
+    auto order = std::make_shared<PrimitiveOrder>(**record);
+    m_orders.insert((*record)->m_info.m_id, order);
+    auto& simulator = load((*record)->m_info.m_fields.m_security);
+    simulator.recover(order);
+    return order;
   }
 
-  template<typename C, typename T>
-  const Order& SimulationOrderExecutionDriver<C, T>::Submit(
-      const OrderInfo& orderInfo) {
-    auto order = std::make_shared<PrimitiveOrder>(orderInfo);
-    m_orders.Insert(orderInfo.m_orderId, order);
-    auto& simulator = LoadSimulator(orderInfo.m_fields.m_security);
-    simulator.Submit(order);
-    return *order;
+  template<typename M, typename T> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
+  void SimulationOrderExecutionDriver<M, T>::add(
+    const std::shared_ptr<Order>& order) {}
+
+  template<typename M, typename T> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
+  std::shared_ptr<Order> SimulationOrderExecutionDriver<M, T>::submit(
+      const OrderInfo& info) {
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    m_orders.insert(info.m_id, order);
+    auto& simulator = load(info.m_fields.m_security);
+    simulator.submit(order);
+    return order;
   }
 
-  template<typename C, typename T>
-  void SimulationOrderExecutionDriver<C, T>::Cancel(
-      const OrderExecutionSession& session, OrderId orderId) {
-    if(auto order = m_orders.Find(orderId)) {
-      auto& simulator = LoadSimulator((*order)->GetInfo().m_fields.m_security);
-      simulator.Cancel(*order);
+  template<typename M, typename T> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
+  void SimulationOrderExecutionDriver<M, T>::cancel(
+      const OrderExecutionSession& session, OrderId id) {
+    if(auto order = m_orders.find(id)) {
+      auto& simulator = load((*order)->get_info().m_fields.m_security);
+      simulator.cancel(*order);
     }
   }
 
-  template<typename C, typename T>
-  void SimulationOrderExecutionDriver<C, T>::Update(
-      const OrderExecutionSession& session, OrderId orderId,
-      const ExecutionReport& executionReport) {
-    if(auto order = m_orders.Find(orderId)) {
-      auto& simulator = LoadSimulator((*order)->GetInfo().m_fields.m_security);
-      simulator.Update(*order, executionReport);
+  template<typename M, typename T> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
+  void SimulationOrderExecutionDriver<M, T>::update(
+      const OrderExecutionSession& session, OrderId id,
+      const ExecutionReport& report) {
+    if(auto order = m_orders.find(id)) {
+      auto& simulator = load((*order)->get_info().m_fields.m_security);
+      simulator.update(*order, report);
     }
   }
 
-  template<typename C, typename T>
-  void SimulationOrderExecutionDriver<C, T>::Close() {
-    if(m_openState.SetClosing()) {
+  template<typename M, typename T> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
+  void SimulationOrderExecutionDriver<M, T>::close() {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_securityOrderSimulators.Clear();
-    m_openState.Close();
+    m_simulators.clear();
+    m_open_state.close();
   }
 
-  template<typename C, typename T>
-  typename SimulationOrderExecutionDriver<C, T>::SecurityOrderSimulator&
-      SimulationOrderExecutionDriver<C, T>::LoadSimulator(
-      const Security& security) {
-    return *m_securityOrderSimulators.GetOrInsert(security, [&] {
-      return std::make_unique<SecurityOrderSimulator>(*m_marketDataClient,
-        security, Beam::Ref(*m_timeClient));
+  template<typename M, typename T> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
+  typename SimulationOrderExecutionDriver<M, T>::SecurityOrderSimulator&
+      SimulationOrderExecutionDriver<M, T>::load(const Security& security) {
+    return *m_simulators.get_or_insert(security, [&] {
+      return std::make_unique<SecurityOrderSimulator>(
+        *m_market_data_client, security, &*m_time_client);
     });
   }
 }

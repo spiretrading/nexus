@@ -1,11 +1,13 @@
 #ifndef SPIRE_SECURITY_BOX_HPP
 #define SPIRE_SECURITY_BOX_HPP
+#include <QWidget>
 #include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/QueryModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  template<typename> class ComboBox;
 
   /** Represents a ValueModel for a Security. */
   using SecurityModel = ValueModel<Nexus::Security>;

@@ -2,7 +2,6 @@
 #define SPIRE_STYLES_MINIMUM_EXPRESSION_HPP
 #include <algorithm>
 #include "Spire/Styles/FunctionDefinitionExpression.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
   template<typename T>

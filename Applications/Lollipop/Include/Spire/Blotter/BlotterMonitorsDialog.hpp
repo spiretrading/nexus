@@ -4,7 +4,7 @@
 #include <QDialog>
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterTaskProperties.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class Ui_BlotterMonitorsDialog;
 

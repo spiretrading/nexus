@@ -1,69 +1,61 @@
 #ifndef NEXUS_FIX_APPLICATION_HPP
 #define NEXUS_FIX_APPLICATION_HPP
-#include <boost/date_time/posix_time/ptime.hpp>
 #include <quickfix/Application.h>
-#include "Nexus/FixUtilities/FixUtilities.hpp"
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
 
-namespace Nexus::FixUtilities {
+namespace Nexus {
 
   /** Implements a FIX Application to be used by the FixOrderExecutionDriver. */
   class FixApplication : public FIX::Application {
     public:
 
       /** Returns the session id. */
-      const FIX::SessionID& GetSessionId() const;
+      const FIX::SessionID& get_session_id() const;
 
       /** Returns the session settings. */
-      const FIX::SessionSettings& GetSessionSettings() const;
+      const FIX::SessionSettings& get_session_settings() const;
 
-      virtual const OrderExecutionService::Order& Recover(
-        const OrderExecutionService::SequencedAccountOrderRecord&
-        orderRecord) = 0;
+      virtual std::shared_ptr<Order> recover(
+        const SequencedAccountOrderRecord& record) = 0;
 
-      virtual const OrderExecutionService::Order& Submit(
-        const OrderExecutionService::OrderInfo& info) = 0;
+      virtual std::shared_ptr<Order> submit(const OrderInfo& info) = 0;
 
-      virtual void Cancel(
-        const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId orderId) = 0;
+      virtual void cancel(const OrderExecutionSession& session, OrderId id) = 0;
 
-      virtual void Update(
-        const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId orderId,
-        const OrderExecutionService::ExecutionReport& executionReport) = 0;
+      virtual void update(const OrderExecutionSession& session, OrderId id,
+        const ExecutionReport& report) = 0;
 
     protected:
 
       /**
        * Sets the application's session settings.
-       * @param sessionId The application's session id.
-       * @param sessionSettings The session's settings.
+       * @param session_id The application's session id.
+       * @param session_settings The session's settings.
        */
-      void SetSessionSettings(const FIX::SessionID& sessionId,
-        const FIX::SessionSettings& sessionSettings);
+      void set_session_settings(const FIX::SessionID& session_id,
+        const FIX::SessionSettings& session_settings);
 
     private:
       friend class FixOrderExecutionDriver;
-      FIX::SessionID m_sessionId;
-      FIX::SessionSettings m_sessionSettings;
+      FIX::SessionID m_session_id;
+      FIX::SessionSettings m_session_settings;
   };
 
-  inline const FIX::SessionID& FixApplication::GetSessionId() const {
-    return m_sessionId;
+  inline const FIX::SessionID& FixApplication::get_session_id() const {
+    return m_session_id;
   }
 
-  inline const FIX::SessionSettings& FixApplication::
-      GetSessionSettings() const {
-    return m_sessionSettings;
+  inline const FIX::SessionSettings&
+      FixApplication::get_session_settings() const {
+    return m_session_settings;
   }
 
-  inline void FixApplication::SetSessionSettings(
-      const FIX::SessionID& sessionId,
-      const FIX::SessionSettings& sessionSettings) {
-    m_sessionId = sessionId;
-    m_sessionSettings = sessionSettings;
+  inline void FixApplication::set_session_settings(
+      const FIX::SessionID& session_id,
+      const FIX::SessionSettings& session_settings) {
+    m_session_id = session_id;
+    m_session_settings = session_settings;
   }
 }
 

@@ -4,6 +4,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/signals2/signal.hpp>
 #include "Nexus/Definitions/Currency.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 class QComboBox;

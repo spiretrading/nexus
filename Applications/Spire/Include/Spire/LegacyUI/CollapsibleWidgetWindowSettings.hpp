@@ -6,8 +6,7 @@
 #include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
 
-namespace Spire {
-namespace LegacyUI {
+namespace Spire::LegacyUI {
 
   /*! \class CollapsibleWidgetWindowSettings
       \brief Stores the window settings for a CollapsibleWidget.
@@ -27,32 +26,29 @@ namespace LegacyUI {
       virtual ~CollapsibleWidgetWindowSettings();
 
       virtual std::string GetName() const;
-
       virtual QWidget* Reopen(Beam::Ref<UserProfile> userProfile) const;
-
       virtual void Apply(Beam::Ref<UserProfile> userProfile,
         Beam::Out<QWidget> widget) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::string m_label;
       bool m_isExpanded;
       QByteArray m_geometry;
       std::unique_ptr<WindowSettings> m_subWindowSettings;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void CollapsibleWidgetWindowSettings::Shuttle(Shuttler& shuttle,
-      unsigned int version) {
-    shuttle.Shuttle("label", m_label);
-    shuttle.Shuttle("is_expanded", m_isExpanded);
-    shuttle.Shuttle("geometry", m_geometry);
-    shuttle.Shuttle("sub_window_settings", m_subWindowSettings);
+  template<Beam::IsShuttle S>
+  void CollapsibleWidgetWindowSettings::shuttle(
+      S& shuttle, unsigned int version) {
+    shuttle.shuttle("label", m_label);
+    shuttle.shuttle("is_expanded", m_isExpanded);
+    shuttle.shuttle("geometry", m_geometry);
+    shuttle.shuttle("sub_window_settings", m_subWindowSettings);
   }
-}
 }
 
 #endif

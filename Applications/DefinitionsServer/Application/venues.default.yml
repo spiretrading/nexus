@@ -1,0 +1,87 @@
+---
+venues:
+  - venue: XASX
+    country_code: AU
+    time_zone: Australian_Eastern_Standard_Time
+    currency: AUD
+    description: Australian Stock Market
+    display_name: ASX
+  - venue: CHIA
+    country_code: AU
+    time_zone: Australian_Eastern_Standard_Time
+    currency: AUD
+    description: CHI-X Australia
+    display_name: CXA
+  - venue: XATS
+    country_code: CA
+    time_zone: Eastern_Time
+    currency: CAD
+    description: Alpha Exchange
+    display_name: XATS
+  - venue: CHIC
+    country_code: CA
+    time_zone: Eastern_Time
+    currency: CAD
+    description: CHI-X Canada ATS
+    display_name: CHIC
+  - venue: XCNQ
+    country_code: CA
+    time_zone: Eastern_Time
+    currency: CAD
+    description: Canadian Securities Exchange
+    display_name: CSE
+  - venue: CSE2
+    country_code: CA
+    time_zone: Eastern_Time
+    currency: CAD
+    description: Canadian Securities Exchange - CSE2
+    display_name: CSE2
+  - venue: XCX2
+    country_code: CA
+    time_zone: Eastern_Time
+    currency: CAD
+    description: CX2
+    display_name: CX2
+  - venue: LYNX
+    country_code: CA
+    time_zone: Eastern_Time
+    currency: CAD
+    description: Lynx ATS
+    display_name: LYNX
+  - venue: MATN
+    country_code: CA
+    time_zone: Eastern_Time
+    currency: CAD
+    description: MATCH Now
+    display_name: MATN
+  - venue: NEOE
+    country_code: CA
+    time_zone: Eastern_Time
+    currency: CAD
+    description: Aequitas NEO Exchange
+    display_name: NEOE
+  - venue: OMGA
+    country_code: CA
+    time_zone: Eastern_Time
+    currency: CAD
+    description: Omega ATS
+    display_name: OMGA
+  - venue: PURE
+    country_code: CA
+    time_zone: Eastern_Time
+    currency: CAD
+    description: Pure Trading
+    display_name: PURE
+  - venue: XTSE
+    country_code: CA
+    time_zone: Eastern_Time
+    currency: CAD
+    description: Toronto Stock Exchange
+    display_name: TSX
+  - venue: XTSX
+    country_code: CA
+    time_zone: Eastern_Time
+    currency: CAD
+    description: TSX Venture Exchange
+    display_name: TSXV
+...

@@ -3,7 +3,6 @@
 #include <memory>
 #include <Beam/Pointers/Ref.hpp>
 #include <QDialog>
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/UI.hpp"
 
 class Ui_ImportExportDialog;

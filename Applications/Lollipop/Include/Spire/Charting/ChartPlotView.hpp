@@ -11,7 +11,6 @@
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartValue.hpp"
 #include "Spire/Charting/ChartInteractions.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/PersistentWindow.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 
@@ -202,7 +201,7 @@ namespace Spire {
       AxisParameters m_xAxisParameters;
       AxisParameters m_yAxisParameters;
       std::vector<std::shared_ptr<ChartPlot>> m_plots;
-      Beam::SignalHandling::ConnectionGroup m_plotConnections;
+      Beam::ConnectionGroup m_plotConnections;
       mutable BeginPanSignal m_beginPanSignal;
       mutable EndPanSignal m_endPanSignal;
       mutable AxisParametersChangedSignal m_xAxisParametersChangedSignal;
@@ -227,34 +226,32 @@ namespace Spire {
 }
 
 namespace Beam {
-namespace Serialization {
   template<>
   struct Shuttle<Spire::ChartPlotView::Properties> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Spire::ChartPlotView::Properties& value,
-        unsigned int version) {
-      shuttle.Shuttle("background_color", value.m_backgroundColor);
-      shuttle.Shuttle("grid_line_color", value.m_gridLineColor);
-      shuttle.Shuttle("grid_label_color", value.m_gridLabelColor);
-      shuttle.Shuttle("grid_label_font", value.m_gridLabelFont);
-      shuttle.Shuttle("uptick_color", value.m_uptickColor);
-      shuttle.Shuttle("downtick_color", value.m_downtickColor);
-      shuttle.Shuttle("outline_color", value.m_outlineColor);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::ChartPlotView::Properties& value,
+        unsigned int version) const {
+      shuttle.shuttle("background_color", value.m_backgroundColor);
+      shuttle.shuttle("grid_line_color", value.m_gridLineColor);
+      shuttle.shuttle("grid_label_color", value.m_gridLabelColor);
+      shuttle.shuttle("grid_label_font", value.m_gridLabelFont);
+      shuttle.shuttle("uptick_color", value.m_uptickColor);
+      shuttle.shuttle("downtick_color", value.m_downtickColor);
+      shuttle.shuttle("outline_color", value.m_outlineColor);
     }
   };
 
   template<>
   struct Shuttle<Spire::ChartPlotView::AxisParameters> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Spire::ChartPlotView::AxisParameters& value, unsigned int version) {
-      shuttle.Shuttle("type", value.m_type);
-      shuttle.Shuttle("min", value.m_min);
-      shuttle.Shuttle("max", value.m_max);
-      shuttle.Shuttle("increment", value.m_increment);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::ChartPlotView::AxisParameters& value,
+        unsigned int version) const {
+      shuttle.shuttle("type", value.m_type);
+      shuttle.shuttle("min", value.m_min);
+      shuttle.shuttle("max", value.m_max);
+      shuttle.shuttle("increment", value.m_increment);
     }
   };
-}
 }
 
 #endif

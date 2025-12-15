@@ -38,7 +38,7 @@ namespace {
   auto make_description(std::shared_ptr<RegionModel> region) {
     auto description = make_to_text_model(std::move(region),
       [] (const auto& region) {
-        if(region.IsGlobal()) {
+        if(region.is_global()) {
           return QObject::tr("Customize the default interactions for all "
             "regions to suit your trading style.");
         }

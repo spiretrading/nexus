@@ -2,6 +2,7 @@
 #define SPIRE_RECORD_HPP
 #include <tuple>
 #include <vector>
+#include <Beam/Queries/Range.hpp>
 #include <boost/fusion/adapted/boost_tuple.hpp>
 #include <boost/fusion/algorithm/iteration/for_each.hpp>
 #include <boost/fusion/include/boost_tuple.hpp>
@@ -14,7 +15,6 @@
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/Canvas/Records/Record.hpp"
 #include "Spire/Canvas/Tasks/Task.hpp"
 
 namespace Spire {
@@ -26,9 +26,9 @@ namespace Spire {
       /** Defines the types allowed for a member of a Record. */
       using Field = boost::variant<Record, bool, Nexus::Quantity, double,
         boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
-        Nexus::CurrencyId, Nexus::MarketCode, Nexus::Money, Nexus::OrderStatus,
-        Nexus::OrderType, Nexus::Security, Nexus::Side, Nexus::TimeInForce,
-        Beam::Queries::Range, Beam::Queries::Sequence>;
+        Nexus::CurrencyId, Nexus::Money, Nexus::OrderStatus, Nexus::OrderType,
+        Nexus::Security, Nexus::Side, Nexus::TimeInForce, Nexus::Venue,
+        Beam::Range, Beam::Sequence>;
 
       /** Constructs an empty Record. */
       Record() = default;

@@ -7,19 +7,12 @@
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <QColor>
 #include <QFont>
-#include "Nexus/Definitions/Market.hpp"
-#include "Spire/BookView/BookView.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Ui/HighlightBox.hpp"
 
 namespace Spire {
-
-  /** A ValueModel over a BookViewProperties. */
-  using BookViewPropertiesModel = ValueModel<BookViewProperties>;
-
-  /** A LocalValueModel over a BookViewProperties. */
-  using LocalBookViewPropertiesModel = LocalValueModel<BookViewProperties>;
 
   /** Represents the price level properties in the book view window. */
   struct BookViewLevelProperties {
@@ -49,8 +42,8 @@ namespace Spire {
     /** Returns the default properties. */
     static const BookViewLevelProperties& get_default();
 
-    template<typename Shuttler>
-    void Shuttle(Shuttler& shuttle, unsigned int version);
+    template<Beam::IsShuttle S>
+    void shuttle(S& shuttle, unsigned int version);
   };
 
   /** Represents the highlight properties in the book view window. */
@@ -70,7 +63,7 @@ namespace Spire {
     };
 
     /** Specifies the level of price depth for applying highlights. */
-    enum class MarketHighlightLevel {
+    enum class VenueHighlightLevel {
 
       /** The highlight applies only to the top price level. */
       TOP,
@@ -101,26 +94,26 @@ namespace Spire {
     /** The number of the order highlight state. */
     static const auto ORDER_HIGHLIGHT_STATE_COUNT = 5;
 
-    /** Specifies a market's highlight properties. */
-    struct MarketHighlight {
+    /** Specifies a venue's highlight properties. */
+    struct VenueHighlight {
 
-      /** The market that the highlight applies to. */
-      Nexus::MarketCode m_market;
+      /** The venue that the highlight applies to. */
+      Nexus::Venue m_venue;
 
-      /** The color to highlight the market with. */
+      /** The color to highlight the venue with. */
       HighlightColor m_color;
 
       /** The highlight level. */
-      MarketHighlightLevel m_level;
+      VenueHighlightLevel m_level;
 
-      auto operator <=>(const MarketHighlight&) const = default;
+      auto operator <=>(const VenueHighlight&) const = default;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
     };
 
-    /** A list of Highlights for each market. */
-    std::vector<MarketHighlight> m_market_highlights;
+    /** A list of Highlights for each venue. */
+    std::vector<VenueHighlight> m_venue_highlights;
 
     /** The visibility of the user's orders. */
     OrderVisibility m_order_visibility;
@@ -131,8 +124,8 @@ namespace Spire {
     /** Returns the default properties. */
     static const BookViewHighlightProperties& get_default();
 
-    template<typename Shuttler>
-    void Shuttle(Shuttler& shuttle, unsigned int version);
+    template<Beam::IsShuttle S>
+    void shuttle(S& shuttle, unsigned int version);
   };
 
   /** Represents the properties for the book view window. */
@@ -147,9 +140,15 @@ namespace Spire {
     /** Returns the default properties. */
     static const BookViewProperties& get_default();
 
-    template<typename Shuttler>
-    void Shuttle(Shuttler& shuttle, unsigned int version);
+    template<Beam::IsShuttle S>
+    void shuttle(S& shuttle, unsigned int version);
   };
+
+  /** A ValueModel over a BookViewProperties. */
+  using BookViewPropertiesModel = ValueModel<BookViewProperties>;
+
+  /** A LocalValueModel over a BookViewProperties. */
+  using LocalBookViewPropertiesModel = LocalValueModel<BookViewProperties>;
 
   /** Returns the HighlightColor associated with an OrderHighlightState. */
   const HighlightColor& get_highlight(const BookViewProperties& properties,
@@ -159,9 +158,9 @@ namespace Spire {
   const QString& to_text(
     BookViewHighlightProperties::OrderVisibility visibility);
 
-  /** Returns the text representation of a MarketHighlightLevel. */
+  /** Returns the text representation of a VenueHighlightLevel. */
   const QString& to_text(
-    BookViewHighlightProperties::MarketHighlightLevel level);
+    BookViewHighlightProperties::VenueHighlightLevel level);
 
   /** Returns the text representation of a OrderHighlightState. */
   const QString& to_text(
@@ -183,35 +182,33 @@ namespace Spire {
   void save_book_view_properties(
     const BookViewProperties& properties, const std::filesystem::path& path);
 
-  template<typename Shuttler>
-  void BookViewLevelProperties::Shuttle(
-      Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("font", m_font);
-    shuttle.Shuttle("is_grid_enabled", m_is_grid_enabled);
-    shuttle.Shuttle("fill_type", m_fill_type);
-    shuttle.Shuttle("color_scheme", m_color_scheme);
+  template<Beam::IsShuttle S>
+  void BookViewLevelProperties::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("font", m_font);
+    shuttle.shuttle("is_grid_enabled", m_is_grid_enabled);
+    shuttle.shuttle("fill_type", m_fill_type);
+    shuttle.shuttle("color_scheme", m_color_scheme);
   }
 
-  template<typename Shuttler>
-  void BookViewHighlightProperties::MarketHighlight::Shuttle(
-      Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("market", m_market);
-    shuttle.Shuttle("color", m_color);
-    shuttle.Shuttle("level", m_level);
+  template<Beam::IsShuttle S>
+  void BookViewHighlightProperties::VenueHighlight::shuttle(
+      S& shuttle, unsigned int version) {
+    shuttle.shuttle("venue", m_venue);
+    shuttle.shuttle("color", m_color);
+    shuttle.shuttle("level", m_level);
   }
 
-  template<typename Shuttler>
-  void BookViewHighlightProperties::Shuttle(
-      Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("market_highlights", m_market_highlights);
-    shuttle.Shuttle("order_visibility", m_order_visibility);
-    shuttle.Shuttle("order_highlights", m_order_highlights);
+  template<Beam::IsShuttle S>
+  void BookViewHighlightProperties::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("venue_highlights", m_venue_highlights);
+    shuttle.shuttle("order_visibility", m_order_visibility);
+    shuttle.shuttle("order_highlights", m_order_highlights);
   }
 
-  template<typename Shuttler>
-  void BookViewProperties::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("level_properties", m_level_properties);
-    shuttle.Shuttle("highlight_properties", m_highlight_properties);
+  template<Beam::IsShuttle S>
+  void BookViewProperties::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("level_properties", m_level_properties);
+    shuttle.shuttle("highlight_properties", m_highlight_properties);
   }
 }
 

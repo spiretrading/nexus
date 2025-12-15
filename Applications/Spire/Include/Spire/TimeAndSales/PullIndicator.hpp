@@ -2,7 +2,6 @@
 #define SPIRE_PULL_INDICATOR_HPP
 #include <QTimer>
 #include <QWidget>
-#include "Spire/TimeAndSales/TimeAndSales.hpp"
 #include "Spire/Ui/TableView.hpp"
 
 namespace Spire {

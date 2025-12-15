@@ -28,33 +28,32 @@ def report_yaml_error(error):
 def parse_ip_address(source):
   separator = source.find(':')
   if separator == -1:
-    return beam.network.IpAddress(source, 0)
-  return beam.network.IpAddress(
+    return beam.IpAddress(source, 0)
+  return beam.IpAddress(
     source[0:separator], int(source[separator + 1 :]))
 
 def load_securities(source):
   securities = []
   cursor = source.cursor()
-  query = 'SELECT DISTINCT `symbol`, `country` FROM `bbo_quotes`'
+  query = 'SELECT DISTINCT `symbol`, `venue` FROM `bbo_quotes`'
   cursor.execute(query)
   for result in cursor.fetchall():
-    securities.append(
-      nexus.Security(result[0], nexus.CountryCode(int(result[1]))))
+    securities.append(nexus.Security(result[0], nexus.Venue(result[1])))
   return securities
 
-def load_markets(source):
-  markets = []
+def load_venues(source):
+  venues = []
   cursor = source.cursor()
-  query = 'SELECT DISTINCT `market` FROM `order_imbalances`'
+  query = 'SELECT DISTINCT `venue` FROM `order_imbalances`'
   cursor.execute(query)
   for result in cursor.fetchall():
-    markets.append(result[0])
-  return markets
+    venues.append(result[0])
+  return venues
 
 def backup_security_info(source, destination):
-  query = beam.queries.PagedQuery()
+  query = beam.PagedQuery()
   query.index = nexus.Region.GLOBAL
-  query.snapshot_limit = beam.queries.SnapshotLimit.UNLIMITED
+  query.snapshot_limit = beam.SnapshotLimit.UNLIMITED
   rows = source.load_security_info(query)
   for info in rows:
     destination.store(info)
@@ -80,21 +79,20 @@ def backup(index, start, end, loader, destination):
   localized_end = timezone.localize(end)
   utc_start = localized_start.astimezone(pytz.utc)
   utc_end = localized_end.astimezone(pytz.utc)
-  query = beam.queries.Query()
+  query = beam.Query()
   query.index = index
-  query.snapshot_limit = beam.queries.SnapshotLimit.UNLIMITED
+  query.snapshot_limit = beam.SnapshotLimit.UNLIMITED
   query.set_range(utc_start, utc_end)
   values = loader(query)
   for i in range(len(values)):
-    values[i] = beam.queries.SequencedValue(
-      beam.queries.IndexedValue(values[i].value, index), values[i].sequence)
+    values[i] = beam.SequencedValue(
+      beam.IndexedValue(values[i].value, index), values[i].sequence)
   destination.store(values)
 
 def backup_spawn(index, start, end, source, destination):
   backup(index, start, end, source.load_bbo_quotes, destination)
   backup(index, start, end, source.load_time_and_sales, destination)
   backup(index, start, end, source.load_book_quotes, destination)
-  backup(index, start, end, source.load_market_quotes, destination)
 
 def main():
   parser = argparse.ArgumentParser(
@@ -139,19 +137,18 @@ def main():
     sqlite_path = args.input
     connection = sqlite3.connect(sqlite_path)
   securities = load_securities(connection)
-  markets = load_markets(connection)
+  venues = load_venues(connection)
   connection.close()
-  mysql_data_store = nexus.market_data_service.MySqlHistoricalDataStore(
+  mysql_data_store = nexus.MySqlHistoricalDataStore(
     address.host, address.port, username, password, schema)
-  sqlite_data_store = nexus.market_data_service.SqliteHistoricalDataStore(
-    sqlite_path)
+  sqlite_data_store = nexus.SqliteHistoricalDataStore(sqlite_path)
   if args.output is not None:
     source = mysql_data_store
     destination = sqlite_data_store
   else:
     source = sqlite_data_store
     destination = mysql_data_store
-  routines = beam.routines.RoutineHandlerGroup()
+  routines = beam.RoutineHandlerGroup()
   count = 0
   for security in securities:
     routines.spawn(functools.partial(backup_spawn, security, args.start,
@@ -160,10 +157,10 @@ def main():
     if count % args.cores == 0:
       routines.wait()
   routines.wait()
-  routines = beam.routines.RoutineHandlerGroup()
+  routines = beam.RoutineHandlerGroup()
   count = 0
-  for market in markets:
-    routines.spawn(functools.partial(backup, market, args.start, args.end,
+  for venue in venues:
+    routines.spawn(functools.partial(backup, venue, args.start, args.end,
       source.load_order_imbalances, destination))
     count += 1
     if count % args.cores == 0:

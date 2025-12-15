@@ -1,16 +1,14 @@
 #ifndef NEXUS_FIX_ORDER_HPP
 #define NEXUS_FIX_ORDER_HPP
+#include <atomic>
 #include <type_traits>
-#include <Beam/Threading/Sync.hpp>
-#include <boost/lexical_cast.hpp>
 #include <quickfix/FixFields.h>
 #include <quickfix/FixValues.h>
-#include <quickfix/Message.h>
+#include <quickfix/fix42/Message.h>
 #include "Nexus/FixUtilities/FixConversions.hpp"
-#include "Nexus/FixUtilities/FixUtilities.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
-namespace Nexus::FixUtilities {
+namespace Nexus {
 namespace Details {
   template<bool Enabled>
   struct AddAdditionalFix42Tag {
@@ -22,10 +20,10 @@ namespace Details {
   struct AddAdditionalFix42Tag<true> {
     template<typename Message>
     void operator ()(const Tag& tag, Beam::Out<Message> message) const {
-      if(tag.GetKey() == FIX::FIELD::PegDifference) {
-        auto value = boost::get<Money>(tag.GetValue());
-        auto pegDifference = FIX::PegDifference(static_cast<double>(value));
-        message->set(pegDifference);
+      if(tag.get_key() == FIX::FIELD::PegDifference) {
+        auto value = boost::get<Money>(tag.get_value());
+        auto peg_difference = FIX::PegDifference(static_cast<double>(value));
+        message->set(peg_difference);
       }
     }
   };
@@ -35,7 +33,7 @@ namespace Details {
    * Extends a PrimitiveOrder to store information useful when transmitting
    * Orders via the FIX protocol.
    */
-  class FixOrder : public OrderExecutionService::PrimitiveOrder {
+  class FixOrder : public PrimitiveOrder {
     public:
 
       /**
@@ -43,90 +41,82 @@ namespace Details {
        * @param info The OrderInfo represented.
        * @param side The FIX Side used to execute this Order.
        */
-      FixOrder(OrderExecutionService::OrderInfo info, FIX::Side side);
+      FixOrder(OrderInfo info, FIX::Side side);
 
       /**
        * Constructs a FixOrder.
-       * @param orderRecord The OrderRecord represented.
+       * @param record The OrderRecord represented.
        * @param side The FIX Side used to execute this Order.
        */
-      FixOrder(OrderExecutionService::OrderRecord orderRecord, FIX::Side side);
+      FixOrder(OrderRecord record, FIX::Side side);
 
       /** Returns the FIX Symbol used to execute this Order. */
-      const FIX::Symbol& GetSymbol() const;
+      const FIX::Symbol& get_symbol() const;
 
       /** Returns the FIX Side used to execute this Order. */
-      FIX::Side GetSide() const;
+      FIX::Side get_side() const;
 
       /** Returns the next available cancel ID. */
-      FIX::ClOrdID GetNextCancelId();
+      FIX::ClOrdID get_next_cancel_id();
 
     private:
       FIX::Symbol m_symbol;
       FIX::Side m_side;
-      Beam::Threading::Sync<int> m_cancelId;
+      std::atomic_int m_cancel_id;
   };
 
-  //! Adds additional FIX tags to a FIX Message.
-  /*!
-    \param additionalTags The additional FIX tags to add.
-    \param message The FIX Message to add the tags to.
-  */
+  /**
+   * Adds additional FIX tags to a FIX Message.
+   * @param additional_tags The additional FIX tags to add.
+   * @param message The FIX Message to add the tags to.
+   */
   template<typename NewMessageType>
-  inline void AddAdditionalTags(const std::vector<Tag>& additionalTags,
+  void add_additional_tags(const std::vector<Tag>& additional_tags,
       Beam::Out<NewMessageType> message) {
-    for(const Tag& tag : additionalTags) {
-      if(tag.GetKey() == FIX::FIELD::MaxFloor) {
-        auto qty = boost::get<Quantity>(tag.GetValue());
+    for(auto& tag : additional_tags) {
+      if(tag.get_key() == FIX::FIELD::MaxFloor) {
+        auto qty = boost::get<Quantity>(tag.get_value());
         if(qty >= 0) {
-          FIX::MaxFloor maxFloor(static_cast<FIX::QTY>(qty));
-          message->set(maxFloor);
+          message->set(FIX::MaxFloor(static_cast<FIX::QTY>(qty)));
         }
-      } else if(tag.GetKey() == FIX::FIELD::ExecInst) {
-        auto value = boost::get<std::string>(tag.GetValue());
-        FIX::ExecInst execInst(value);
-        message->set(execInst);
+      } else if(tag.get_key() == FIX::FIELD::ExecInst) {
+        auto value = boost::get<std::string>(tag.get_value());
+        message->set(FIX::ExecInst(value));
       } else {
         Details::AddAdditionalFix42Tag<
-          std::is_base_of<FIX42::Message, NewMessageType>::value>()(tag,
-          Beam::Store(message));
+          std::is_base_of_v<FIX42::Message, NewMessageType>>()(
+            tag, Beam::out(message));
       }
     }
   }
 
-  inline FixOrder::FixOrder(OrderExecutionService::OrderInfo info,
-      FIX::Side side)
-      : OrderExecutionService::PrimitiveOrder(std::move(info)),
+  inline FixOrder::FixOrder(OrderInfo info, FIX::Side side)
+      : PrimitiveOrder(std::move(info)),
         m_side(side),
-        m_cancelId(0) {
-    m_symbol = GetInfo().m_fields.m_security.GetSymbol();
+        m_cancel_id(0) {
+    m_symbol = get_info().m_fields.m_security.get_symbol();
   }
 
-  inline FixOrder::FixOrder(OrderExecutionService::OrderRecord orderRecord,
-      FIX::Side side)
-      : OrderExecutionService::PrimitiveOrder(std::move(orderRecord)),
+  inline FixOrder::FixOrder(OrderRecord record, FIX::Side side)
+      : PrimitiveOrder(std::move(record)),
         m_side(side),
-        m_cancelId(0) {
-    m_symbol = GetInfo().m_fields.m_security.GetSymbol();
+        m_cancel_id(0) {
+    m_symbol = get_info().m_fields.m_security.get_symbol();
   }
 
-  inline const FIX::Symbol& FixOrder::GetSymbol() const {
+  inline const FIX::Symbol& FixOrder::get_symbol() const {
     return m_symbol;
   }
 
-  inline FIX::Side FixOrder::GetSide() const {
+  inline FIX::Side FixOrder::get_side() const {
     return m_side;
   }
 
-  inline FIX::ClOrdID FixOrder::GetNextCancelId() {
-    auto cancelToken = std::string();
-    Beam::Threading::With(m_cancelId,
-      [&] (auto& cancelId) {
-        cancelToken = boost::lexical_cast<std::string>(GetInfo().m_orderId) +
-          "-" + boost::lexical_cast<std::string>(cancelId);
-        ++cancelId;
-      });
-    return cancelToken;
+  inline FIX::ClOrdID FixOrder::get_next_cancel_id() {
+    auto id = ++m_cancel_id;
+    auto cancel_token =
+      std::to_string(get_info().m_id) + '-' + std::to_string(id);
+    return cancel_token;
   }
 }
 
