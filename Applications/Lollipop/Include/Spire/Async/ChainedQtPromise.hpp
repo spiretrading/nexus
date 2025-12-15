@@ -3,7 +3,6 @@
 #include <memory>
 #include <type_traits>
 #include <utility>
-#include "Spire/Async/Async.hpp"
 #include "Spire/Async/QtPromiseImp.hpp"
 
 namespace Spire {
@@ -13,9 +12,8 @@ namespace Spire {
     public:
       using Promise = P;
       using Executor = E;
-      using Super = details::BaseQtPromiseImp<
-        promise_executor_result_t<Executor,
-        Beam::Expect<typename Promise::Type>>>;
+      using Super = details::BaseQtPromiseImp<promise_executor_result_t<
+        Executor, Beam::Expect<typename Promise::Type>>>;
       using Type = typename Super::Type;
       using ContinuationType = typename Super::ContinuationType;
 
@@ -23,9 +21,7 @@ namespace Spire {
       ChainedQtPromise(Promise promise, ExecutorForward&& executor);
 
       void bind(std::shared_ptr<void> self);
-
       void then(ContinuationType continuation) override;
-
       void disconnect() override;
 
     protected:
@@ -73,7 +69,9 @@ namespace Spire {
       m_promise.finish([=] (auto&& result) {
         using Result = decltype(std::forward<decltype(result)>(result));
         QCoreApplication::postEvent(this, details::make_qt_promise_event(
-          Beam::Try([&] { return m_executor(static_cast<Result>(result)); })));
+          Beam::try_call([&] {
+            return m_executor(static_cast<Result>(result));
+          })));
       });
     }
   }

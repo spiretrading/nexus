@@ -5,7 +5,6 @@
 #include <type_traits>
 #include <QWidget>
 #include "Spire/Styles/SelectConnection.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
@@ -55,7 +54,8 @@ namespace Spire::Styles {
 namespace std {
   template<>
   struct hash<Spire::Styles::IsASelector> {
-    std::size_t operator ()(const Spire::Styles::IsASelector& selector) const;
+    std::size_t operator ()(
+      const Spire::Styles::IsASelector& selector) const noexcept;
   };
 }
 

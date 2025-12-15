@@ -4,11 +4,12 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <boost/signals2/signal.hpp>
 #include <QAbstractItemModel>
-#include "Nexus/Definitions/Definitions.hpp"
+#include "Nexus/Definitions/BboQuote.hpp"
+#include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 
@@ -20,13 +21,13 @@ namespace Spire {
       struct Entry {
 
         /** The Entry's account. */
-        Beam::ServiceLocator::DirectoryEntry m_account;
+        Beam::DirectoryEntry m_account;
 
         /** The Entry's group. */
-        Beam::ServiceLocator::DirectoryEntry m_group;
+        Beam::DirectoryEntry m_group;
 
         /** A single Inventory item held by the <i>account</i>. */
-        Nexus::RiskService::RiskInventory m_inventory;
+        Nexus::Inventory m_inventory;
 
         /** Constructs an Entry. */
         Entry() = default;
@@ -35,7 +36,7 @@ namespace Spire {
          * Constructs an Entry.
          * @param account The Entry's account.
          */
-        explicit Entry(const Beam::ServiceLocator::DirectoryEntry& account);
+        explicit Entry(const Beam::DirectoryEntry& account);
       };
 
       /** Stores the totals among all displayed Entries. */
@@ -181,24 +182,24 @@ namespace Spire {
       std::vector<IndexedEntry> m_entries;
       int m_displayCount;
       TotalEntry m_totals;
-      std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
-        Beam::ServiceLocator::DirectoryEntry> m_groups;
-      std::unordered_map<Nexus::Security, Nexus::Accounting::SecurityValuation>
+      std::unordered_map<Beam::DirectoryEntry,
+        Beam::DirectoryEntry> m_groups;
+      std::unordered_map<Nexus::Security, Nexus::SecurityValuation>
         m_valuations;
-      std::unordered_map<Beam::ServiceLocator::DirectoryEntry, AccountTotals>
+      std::unordered_map<Beam::DirectoryEntry, AccountTotals>
         m_accountTotals;
       std::unordered_map<Nexus::Security, std::vector<int>> m_securityToIndexes;
-      std::unordered_map<Nexus::RiskService::RiskPortfolioKey, int>
+      std::unordered_map<Nexus::RiskPortfolioKey, int>
         m_inventoryKeyToIndex;
       EventHandler m_eventHandler;
       mutable TotalsUpdatedSignal m_totalsUpdatedSignal;
 
       boost::optional<Nexus::Money> GetUnrealizedProfitAndLoss(
-        const Nexus::RiskService::RiskInventory& inventory) const;
+        const Nexus::Inventory& inventory) const;
       void OnBboQuote(
         const Nexus::Security& security, const Nexus::BboQuote& bboQuote);
       void OnRiskPortfolioInventoryUpdate(
-        const Nexus::RiskService::RiskInventoryEntry& entry);
+        const Nexus::RiskInventoryEntry& entry);
       void OnSelectionModelUpdated(
         const QModelIndex& topLeft, const QModelIndex& bottomRight);
   };

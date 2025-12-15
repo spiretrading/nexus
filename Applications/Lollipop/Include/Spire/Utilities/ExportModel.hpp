@@ -1,7 +1,7 @@
 #ifndef SPIRE_EXPORTMODEL_HPP
 #define SPIRE_EXPORTMODEL_HPP
 #include <ostream>
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class QAbstractItemModel;
 

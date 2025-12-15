@@ -4,7 +4,6 @@
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Details {

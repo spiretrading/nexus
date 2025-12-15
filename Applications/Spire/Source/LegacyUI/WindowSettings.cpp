@@ -16,8 +16,6 @@
 #include "Spire/Ui/Window.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
 using namespace Spire::LegacyUI;
@@ -31,14 +29,14 @@ std::vector<std::unique_ptr<WindowSettings>>
   }
   try {
     auto reader = BasicIStreamReader<std::ifstream>(
-      Initialize(windowSettingsPath, std::ios::binary));
+      init(windowSettingsPath, std::ios::binary));
     auto buffer = SharedBuffer();
-    reader.Read(Store(buffer));
+    reader.read(out(buffer));
     auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-    receiver.SetSource(Ref(buffer));
-    receiver.Shuttle(windowSettings);
+    receiver.set(Ref(buffer));
+    receiver.shuttle(windowSettings);
   } catch(const std::exception&) {
     QMessageBox::warning(
       nullptr, QObject::tr("Warning"), QObject::tr("Unable to load layout."));
@@ -63,14 +61,14 @@ void WindowSettings::Save(const UserProfile& userProfile) {
   }
   try {
     auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
     auto buffer = SharedBuffer();
-    sender.SetSink(Ref(buffer));
-    sender.Shuttle(windowSettings);
+    sender.set(Ref(buffer));
+    sender.shuttle(windowSettings);
     auto writer = BasicOStreamWriter<std::ofstream>(
-      Initialize(windowSettingsPath, std::ios::binary));
-    writer.Write(buffer);
+      init(windowSettingsPath, std::ios::binary));
+    writer.write(buffer);
   } catch(const std::exception&) {
     QMessageBox::warning(
       nullptr, QObject::tr("Warning"), QObject::tr("Unable to save layout."));

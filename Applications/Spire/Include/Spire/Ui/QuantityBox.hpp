@@ -2,7 +2,6 @@
 #define SPIRE_QUANTITY_BOX_HPP
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Spire/Ui/DecimalBoxAdaptor.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

@@ -1,7 +1,6 @@
 #ifndef SPIRE_STYLES_ENUM_PROPERTY_HPP
 #define SPIRE_STYLES_ENUM_PROPERTY_HPP
 #include "Spire/Styles/BasicProperty.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 

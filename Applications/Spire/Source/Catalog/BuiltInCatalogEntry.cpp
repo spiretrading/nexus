@@ -73,7 +73,6 @@
 #include "Spire/Canvas/ValueNodes/DestinationNode.hpp"
 #include "Spire/Canvas/ValueNodes/DurationNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
-#include "Spire/Canvas/ValueNodes/MarketNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
@@ -83,6 +82,7 @@
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeRangeNode.hpp"
+#include "Spire/Canvas/ValueNodes/VenueNode.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -187,7 +187,7 @@ const uuid BuiltInCatalogEntry::MARKET_BID_ORDER_TASK_UUID =
   stringUuidGenerator("{cebd25b9-1bcc-4613-8a17-207bd4c6193a}");
 const uuid BuiltInCatalogEntry::MARKET_ORDER_TASK_UUID = stringUuidGenerator(
   "{6bd96fe8-10b7-49ae-9ffc-32b4b34818f2}");
-const uuid BuiltInCatalogEntry::MARKET_UUID = stringUuidGenerator(
+const uuid BuiltInCatalogEntry::VENUE_UUID = stringUuidGenerator(
   "{7c59c5ef-25aa-454d-89ac-27e9013a1e2d}");
 const uuid BuiltInCatalogEntry::MAX_FLOOR_UUID = stringUuidGenerator(
   "{63a4bba0-d2da-11e2-8b8b-0800200c9a66}");
@@ -199,7 +199,7 @@ const uuid BuiltInCatalogEntry::MONEY_UUID = stringUuidGenerator(
   "{46a723f9-6263-4239-b389-6cded9596739}");
 const uuid BuiltInCatalogEntry::MULTIPLICATION_UUID = stringUuidGenerator(
   "{ef66f68b-8150-486d-aef9-4b5c28c56aec}");
-const uuid BuiltInCatalogEntry::MARKET_ORDER_IMBALANCE_UUID =
+const uuid BuiltInCatalogEntry::ORDER_IMBALANCE_UUID =
   stringUuidGenerator("{140370d0-edcb-11e2-91e2-0800200c9a66}");
 const uuid BuiltInCatalogEntry::NONE_UUID = stringUuidGenerator(
   "{e1ad68d0-6a58-11e1-b0c4-0800200c9a66}");
@@ -358,8 +358,6 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(
     MARKET_BID_ORDER_TASK_UUID, ":/icons/flash_yellow.png", "",
     *GetMarketBidOrderTaskNode()));
-  entries.push_back(std::make_unique<BuiltInCatalogEntry>("Market",
-    MARKET_UUID, ":/icons/shopping_basket.png", "", MarketNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(
     MARKET_ORDER_TASK_UUID, ":/icons/flash_yellow.png", "",
     *GetMarketOrderTaskNode()));
@@ -373,9 +371,6 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
     ":/icons/money.png", "", MoneyNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(MULTIPLICATION_UUID,
     ":/icons/calculator.png", "", MultiplicationNode()));
-  entries.push_back(std::make_unique<BuiltInCatalogEntry>(
-    MARKET_ORDER_IMBALANCE_UUID, ":/icons/chart_line.png", "",
-    OrderImbalanceQueryNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(NONE_UUID,
     ":/icons/flash_yellow.png", "", NoneNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(NOT_EQUAL_UUID,
@@ -387,6 +382,9 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(
     ORDER_FIELDS_RECORD_UUID, ":/icons/chart_line.png", "",
     RecordNode(GetOrderFieldsRecordType())));
+  entries.push_back(std::make_unique<BuiltInCatalogEntry>(
+    ORDER_IMBALANCE_UUID, ":/icons/chart_line.png", "",
+    OrderImbalanceQueryNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>("Order Status",
     ORDER_STATUS_UUID, ":/icons/trafficlight_green.png", "",
     OrderStatusNode()));
@@ -437,6 +435,8 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
     TimeRangeParameterNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(UNTIL_TASK_UUID,
     ":/icons/flash_yellow.png", "", UntilNode()));
+  entries.push_back(std::make_unique<BuiltInCatalogEntry>("Venue",
+    VENUE_UUID, ":/icons/shopping_basket.png", "", VenueNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(WHEN_TASK_UUID,
     ":/icons/flash_yellow.png", "", WhenNode()));
   return entries;

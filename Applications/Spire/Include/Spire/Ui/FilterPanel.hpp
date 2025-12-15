@@ -1,8 +1,10 @@
 #ifndef SPIRE_FILTER_PANEL_HPP
 #define SPIRE_FILTER_PANEL_HPP
-#include "Spire/Ui/Ui.hpp"
+#include <QWidget>
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class OverlayPanel;
 
   /** Represents a panel to display inputs for filtering values. */
   class FilterPanel : public QWidget {

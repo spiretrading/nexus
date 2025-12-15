@@ -4,7 +4,6 @@
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/EnumBox.hpp"
 #include "Spire/Ui/RegionBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -20,13 +19,9 @@ namespace Spire {
   /**
    * Makes a list of destinations that are restricted to a region.
    * @param destinations The destinations available.
-   * @param markets The markets used to resolve destinations.
-   * @param region The region to restrict the destinations to.
    */
   std::shared_ptr<ListModel<Nexus::DestinationDatabase::Entry>>
-    make_region_filtered_destination_list(
-      Nexus::DestinationDatabase destinations, Nexus::MarketDatabase markets,
-      std::shared_ptr<RegionModel> region);
+    make_region_filtered_destination_list(std::shared_ptr<RegionModel> region);
 
   /**
    * Returns a DestinationBox.

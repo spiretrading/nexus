@@ -6,12 +6,11 @@
 #include <Beam/Queues/TaskQueue.hpp>
 #include <boost/noncopyable.hpp>
 #include <QKeyEvent>
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 

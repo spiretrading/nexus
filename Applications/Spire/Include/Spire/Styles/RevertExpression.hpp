@@ -1,7 +1,6 @@
 #ifndef SPIRE_STYLES_REVERT_EXPRESSION_HPP
 #define SPIRE_STYLES_REVERT_EXPRESSION_HPP
 #include "Spire/Styles/Expression.hpp"
-#include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
 namespace Spire::Styles {
@@ -69,8 +68,8 @@ namespace std {
   template<typename T>
   struct hash<Spire::Styles::RevertExpression<T>> {
     std::size_t operator ()(
-        const Spire::Styles::RevertExpression<T>& expression) const {
-      return 1;
+        const Spire::Styles::RevertExpression<T>& expression) const noexcept {
+      return 0x70b377d2b4e6243f;
     }
   };
 }

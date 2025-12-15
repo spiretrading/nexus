@@ -2,25 +2,24 @@
 #include "Nexus/FeeHandling/CxdFeeTable.hpp"
 
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 
 namespace {
-  ExecutionReport MakeExecutionReport(
-      Money price, Quantity quantity, std::string liquidityFlag) {
-    auto report = ExecutionReport::MakeInitialReport(0, {});
-    report.m_lastPrice = price;
-    report.m_lastQuantity = quantity;
-    report.m_liquidityFlag = std::move(liquidityFlag);
+  ExecutionReport make_execution_report(
+      Money price, Quantity quantity, std::string liquidity_flag) {
+    auto report = ExecutionReport(0, {});
+    report.m_last_price = price;
+    report.m_last_quantity = quantity;
+    report.m_liquidity_flag = std::move(liquidity_flag);
     return report;
   }
 
-  CxdFeeTable MakeFeeTable() {
+  CxdFeeTable make_fee_table() {
     auto table = CxdFeeTable();
     for(auto l = 0; l < LIQUIDITY_FLAG_COUNT; ++l) {
       for(auto c = 0; c < CxdFeeTable::BBO_PRICE_PAIR_COUNT; ++c) {
-        table.m_feeTable[l][c] = Money(l * 100 + c);
-        table.m_maxFeeTable[l][c] = Money(1000 + l * 100 + c);
-        table.m_etfFeeTable[l][c] = Money(10000 + l * 100 + c);
+        table.m_fee_table[l][c] = Money(l * 100 + c);
+        table.m_max_fee_table[l][c] = Money(1000 + l * 100 + c);
+        table.m_etf_fee_table[l][c] = Money(10000 + l * 100 + c);
       }
     }
     return table;
@@ -28,122 +27,125 @@ namespace {
 }
 
 TEST_SUITE("CxdFeeTable") {
-  TEST_CASE("GetCxdBboType") {
-    REQUIRE(GetCxdBboType("a") == CxdFeeTable::BboType::INSIDE_BBO);
-    REQUIRE(GetCxdBboType("r") == CxdFeeTable::BboType::INSIDE_BBO);
-    REQUIRE(GetCxdBboType("d") == CxdFeeTable::BboType::AT_BBO);
-    REQUIRE(GetCxdBboType("D") == CxdFeeTable::BboType::AT_BBO);
-    REQUIRE(GetCxdBboType("x") == CxdFeeTable::BboType::NONE);
-    REQUIRE(GetCxdBboType("") == CxdFeeTable::BboType::NONE);
+  TEST_CASE("get_cxd_bbo_type") {
+    REQUIRE(get_cxd_bbo_type("a") == CxdFeeTable::BboType::INSIDE_BBO);
+    REQUIRE(get_cxd_bbo_type("r") == CxdFeeTable::BboType::INSIDE_BBO);
+    REQUIRE(get_cxd_bbo_type("d") == CxdFeeTable::BboType::AT_BBO);
+    REQUIRE(get_cxd_bbo_type("D") == CxdFeeTable::BboType::AT_BBO);
+    REQUIRE(get_cxd_bbo_type("x") == CxdFeeTable::BboType::NONE);
+    REQUIRE(get_cxd_bbo_type("") == CxdFeeTable::BboType::NONE);
   }
 
-  TEST_CASE("GetCxdLiquidityFlag") {
-    REQUIRE(GetCxdLiquidityFlag("a") == LiquidityFlag::PASSIVE);
-    REQUIRE(GetCxdLiquidityFlag("d") == LiquidityFlag::PASSIVE);
-    REQUIRE(GetCxdLiquidityFlag("r") == LiquidityFlag::ACTIVE);
-    REQUIRE(GetCxdLiquidityFlag("D") == LiquidityFlag::ACTIVE);
-    REQUIRE(GetCxdLiquidityFlag("x") == LiquidityFlag::NONE);
-    REQUIRE(GetCxdLiquidityFlag("") == LiquidityFlag::NONE);
+  TEST_CASE("get_cxd_liquidity_flag") {
+    REQUIRE(get_cxd_liquidity_flag("a") == LiquidityFlag::PASSIVE);
+    REQUIRE(get_cxd_liquidity_flag("d") == LiquidityFlag::PASSIVE);
+    REQUIRE(get_cxd_liquidity_flag("r") == LiquidityFlag::ACTIVE);
+    REQUIRE(get_cxd_liquidity_flag("D") == LiquidityFlag::ACTIVE);
+    REQUIRE(get_cxd_liquidity_flag("x") == LiquidityFlag::NONE);
+    REQUIRE(get_cxd_liquidity_flag("") == LiquidityFlag::NONE);
   }
 
-  TEST_CASE("GetCxdPriceClass") {
-    REQUIRE(GetCxdPriceClass(Money(0)) == CxdFeeTable::PriceClass::SUBDOLLAR);
+  TEST_CASE("get_cxd_price_class") {
     REQUIRE(
-      GetCxdPriceClass(Money::CENT) == CxdFeeTable::PriceClass::SUBDOLLAR);
-    REQUIRE(GetCxdPriceClass(Money::ONE - Money::CENT) ==
+      get_cxd_price_class(Money(0)) == CxdFeeTable::PriceClass::SUBDOLLAR);
+    REQUIRE(
+      get_cxd_price_class(Money::CENT) == CxdFeeTable::PriceClass::SUBDOLLAR);
+    REQUIRE(get_cxd_price_class(Money::ONE - Money::CENT) ==
       CxdFeeTable::PriceClass::SUBDOLLAR);
-    REQUIRE(GetCxdPriceClass(Money::ONE) == CxdFeeTable::PriceClass::SUBFIVE);
-    REQUIRE(GetCxdPriceClass(Money(4) + Money::CENT) ==
+    REQUIRE(
+      get_cxd_price_class(Money::ONE) == CxdFeeTable::PriceClass::SUBFIVE);
+    REQUIRE(get_cxd_price_class(Money(4) + Money::CENT) ==
       CxdFeeTable::PriceClass::SUBFIVE);
-    REQUIRE(GetCxdPriceClass(Money(5)) == CxdFeeTable::PriceClass::DEFAULT);
-    REQUIRE(GetCxdPriceClass(Money(100)) == CxdFeeTable::PriceClass::DEFAULT);
+    REQUIRE(get_cxd_price_class(Money(5)) == CxdFeeTable::PriceClass::DEFAULT);
+    REQUIRE(
+      get_cxd_price_class(Money(100)) == CxdFeeTable::PriceClass::DEFAULT);
   }
 
-  TEST_CASE("Lookup") {
-    auto table = MakeFeeTable();
-    REQUIRE(LookupFee(table, LiquidityFlag::ACTIVE,
+  TEST_CASE("lookup") {
+    auto table = make_fee_table();
+    REQUIRE(lookup_fee(table, LiquidityFlag::ACTIVE,
       CxdFeeTable::SecurityClass::DEFAULT, CxdFeeTable::PriceClass::SUBDOLLAR,
       CxdFeeTable::BboType::AT_BBO) ==
-        table.m_feeTable[static_cast<std::size_t>(LiquidityFlag::ACTIVE)][0]);
-    REQUIRE(LookupFee(table, LiquidityFlag::PASSIVE,
+        table.m_fee_table[static_cast<std::size_t>(LiquidityFlag::ACTIVE)][0]);
+    REQUIRE(lookup_fee(table, LiquidityFlag::PASSIVE,
       CxdFeeTable::SecurityClass::DEFAULT, CxdFeeTable::PriceClass::SUBFIVE,
       CxdFeeTable::BboType::INSIDE_BBO) ==
-        table.m_feeTable[static_cast<std::size_t>(LiquidityFlag::PASSIVE)][
+        table.m_fee_table[static_cast<std::size_t>(LiquidityFlag::PASSIVE)][
           CxdFeeTable::PRICE_CLASS_COUNT + 1]);
-    REQUIRE(LookupFee(table, LiquidityFlag::ACTIVE,
+    REQUIRE(lookup_fee(table, LiquidityFlag::ACTIVE,
       CxdFeeTable::SecurityClass::ETF, CxdFeeTable::PriceClass::DEFAULT,
       CxdFeeTable::BboType::INSIDE_BBO) ==
-        table.m_etfFeeTable[static_cast<std::size_t>(LiquidityFlag::ACTIVE)][
+        table.m_etf_fee_table[static_cast<std::size_t>(LiquidityFlag::ACTIVE)][
           CxdFeeTable::PRICE_CLASS_COUNT + 2]);
-    REQUIRE(LookupMaxFee(table, LiquidityFlag::PASSIVE,
+    REQUIRE(lookup_max_fee(table, LiquidityFlag::PASSIVE,
       CxdFeeTable::PriceClass::DEFAULT, CxdFeeTable::BboType::AT_BBO) ==
-        table.m_maxFeeTable[
+        table.m_max_fee_table[
           static_cast<std::size_t>(LiquidityFlag::PASSIVE)][2]);
   }
 
   TEST_CASE("zero_quantity") {
-    auto feeTable = MakeFeeTable();
-    auto report = MakeExecutionReport(Money::ONE, 0, "a");
+    auto table = make_fee_table();
+    auto report = make_execution_report(Money::ONE, 0, "a");
     auto fee =
-      CalculateFee(feeTable, CxdFeeTable::SecurityClass::DEFAULT, report);
+      calculate_fee(table, CxdFeeTable::SecurityClass::DEFAULT, report);
     REQUIRE(fee == Money::ZERO);
   }
 
   TEST_CASE("default_security_fee_below_max") {
-    auto feeTable = MakeFeeTable();
-    auto report = MakeExecutionReport(Money::ONE, 1, "a");
-    auto liquidityFlag = GetCxdLiquidityFlag("a");
-    auto bboType = GetCxdBboType("a");
-    auto priceClass = GetCxdPriceClass(Money::ONE);
-    auto perShareFee = LookupFee(feeTable, liquidityFlag,
-      CxdFeeTable::SecurityClass::DEFAULT, priceClass, bboType);
-    auto maxFee = LookupMaxFee(feeTable, liquidityFlag, priceClass, bboType);
-    auto expectedFee = std::min(perShareFee, maxFee);
+    auto table = make_fee_table();
+    auto report = make_execution_report(Money::ONE, 1, "a");
+    auto liquidity_flag = get_cxd_liquidity_flag("a");
+    auto bbo_type = get_cxd_bbo_type("a");
+    auto price_class = get_cxd_price_class(Money::ONE);
+    auto per_share_fee = lookup_fee(table, liquidity_flag,
+      CxdFeeTable::SecurityClass::DEFAULT, price_class, bbo_type);
+    auto max_fee = lookup_max_fee(table, liquidity_flag, price_class, bbo_type);
+    auto expected_fee = std::min(per_share_fee, max_fee);
     auto fee =
-      CalculateFee(feeTable, CxdFeeTable::SecurityClass::DEFAULT, report);
-    REQUIRE(fee == expectedFee);
+      calculate_fee(table, CxdFeeTable::SecurityClass::DEFAULT, report);
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("default_security_fee_above_max") {
-    auto feeTable = MakeFeeTable();
-    auto report = MakeExecutionReport(Money::ONE, 1000, "a");
-    auto liquidityFlag = GetCxdLiquidityFlag("a");
-    auto bboType = GetCxdBboType("a");
-    auto priceClass = GetCxdPriceClass(Money::ONE);
-    auto perShareFee = LookupFee(feeTable, liquidityFlag,
-      CxdFeeTable::SecurityClass::DEFAULT, priceClass, bboType);
-    auto maxFee = LookupMaxFee(feeTable, liquidityFlag, priceClass, bboType);
-    auto expectedFee = std::min(1000 * perShareFee, maxFee);
+    auto table = make_fee_table();
+    auto report = make_execution_report(Money::ONE, 1000, "a");
+    auto liquidity_flag = get_cxd_liquidity_flag("a");
+    auto bbo_type = get_cxd_bbo_type("a");
+    auto price_class = get_cxd_price_class(Money::ONE);
+    auto per_share_fee = lookup_fee(table, liquidity_flag,
+      CxdFeeTable::SecurityClass::DEFAULT, price_class, bbo_type);
+    auto max_fee = lookup_max_fee(table, liquidity_flag, price_class, bbo_type);
+    auto expected_fee = std::min(1000 * per_share_fee, max_fee);
     auto fee =
-      CalculateFee(feeTable, CxdFeeTable::SecurityClass::DEFAULT, report);
-    REQUIRE(fee == expectedFee);
+      calculate_fee(table, CxdFeeTable::SecurityClass::DEFAULT, report);
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("etf_security_no_max_fee") {
-    auto feeTable = MakeFeeTable();
-    auto report = MakeExecutionReport(Money(5), 10, "D");
-    auto liquidityFlag = GetCxdLiquidityFlag("D");
-    auto bboType = GetCxdBboType("D");
-    auto priceClass = GetCxdPriceClass(Money(5));
-    auto perShareFee = LookupFee(feeTable, liquidityFlag,
-      CxdFeeTable::SecurityClass::ETF, priceClass, bboType);
-    auto expectedFee = 10 * perShareFee;
-    auto fee = CalculateFee(feeTable, CxdFeeTable::SecurityClass::ETF, report);
-    REQUIRE(fee == expectedFee);
+    auto table = make_fee_table();
+    auto report = make_execution_report(Money(5), 10, "D");
+    auto liquidity_flag = get_cxd_liquidity_flag("D");
+    auto bbo_type = get_cxd_bbo_type("D");
+    auto price_class = get_cxd_price_class(Money(5));
+    auto per_share_fee = lookup_fee(table, liquidity_flag,
+      CxdFeeTable::SecurityClass::ETF, price_class, bbo_type);
+    auto expected_fee = 10 * per_share_fee;
+    auto fee = calculate_fee(table, CxdFeeTable::SecurityClass::ETF, report);
+    REQUIRE(fee == expected_fee);
   }
 
   TEST_CASE("unknown_liquidity_flag_defaults") {
-    auto feeTable = MakeFeeTable();
-    auto report = MakeExecutionReport(Money::ONE, 5, "x");
-    auto liquidityFlag = LiquidityFlag::ACTIVE;
-    auto bboType = CxdFeeTable::BboType::AT_BBO;
-    auto priceClass = GetCxdPriceClass(Money::ONE);
-    auto perShareFee = LookupFee(feeTable, liquidityFlag,
-      CxdFeeTable::SecurityClass::DEFAULT, priceClass, bboType);
-    auto maxFee = LookupMaxFee(feeTable, liquidityFlag, priceClass, bboType);
-    auto expectedFee = std::min(5 * perShareFee, maxFee);
+    auto table = make_fee_table();
+    auto report = make_execution_report(Money::ONE, 5, "x");
+    auto liquidity_flag = LiquidityFlag::ACTIVE;
+    auto bbo_type = CxdFeeTable::BboType::AT_BBO;
+    auto price_class = get_cxd_price_class(Money::ONE);
+    auto per_share_fee = lookup_fee(table, liquidity_flag,
+      CxdFeeTable::SecurityClass::DEFAULT, price_class, bbo_type);
+    auto max_fee = lookup_max_fee(table, liquidity_flag, price_class, bbo_type);
+    auto expected_fee = std::min(5 * per_share_fee, max_fee);
     auto fee =
-      CalculateFee(feeTable, CxdFeeTable::SecurityClass::DEFAULT, report);
-    REQUIRE(fee == expectedFee);
+      calculate_fee(table, CxdFeeTable::SecurityClass::DEFAULT, report);
+    REQUIRE(fee == expected_fee);
   }
 }

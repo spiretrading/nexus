@@ -1,5 +1,4 @@
 #include "Spire/Canvas/Operations/CanvasTypeIntersection.hpp"
-#include <Beam/Collections/DereferenceIterator.hpp>
 #include "Spire/Canvas/Types/NativeType.hpp"
 #include "Spire/Canvas/Types/UnionType.hpp"
 
@@ -45,7 +44,7 @@ std::shared_ptr<CanvasType> Spire::Intersect(const CanvasType& a,
       }
     }
   }
-  return UnionType::Create(MakeDereferenceView(compatibleTypes));
+  return UnionType::Create(make_dereference_view(compatibleTypes));
 }
 
 std::shared_ptr<CanvasType> Spire::LeftIntersect(const CanvasType& left,
@@ -89,5 +88,5 @@ std::shared_ptr<CanvasType> Spire::LeftIntersect(const CanvasType& left,
   if(compatibleTypes.empty()) {
     return left;
   }
-  return UnionType::Create(MakeDereferenceView(compatibleTypes));
+  return UnionType::Create(make_dereference_view(compatibleTypes));
 }

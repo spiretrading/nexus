@@ -4,7 +4,7 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 
@@ -21,7 +21,7 @@ namespace Spire {
                model.
       */
       AccountInfoModel(Beam::Ref<UserProfile> userProfile,
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::DirectoryEntry& account);
 
       //! Loads the account's info.
       void Load();
@@ -30,18 +30,18 @@ namespace Spire {
       void Commit();
 
       //! Returns the represented account's entry.
-      const Beam::ServiceLocator::DirectoryEntry& GetAccount() const;
+      const Beam::DirectoryEntry& GetAccount() const;
 
       //! Returns the account's identity.
-      const Nexus::AdministrationService::AccountIdentity& GetIdentity() const;
+      const Nexus::AccountIdentity& GetIdentity() const;
 
       //! Returns the account's identity.
-      Nexus::AdministrationService::AccountIdentity& GetIdentity();
+      Nexus::AccountIdentity& GetIdentity();
 
     private:
       UserProfile* m_userProfile;
-      Beam::ServiceLocator::DirectoryEntry m_account;
-      Nexus::AdministrationService::AccountIdentity m_identity;
+      Beam::DirectoryEntry m_account;
+      Nexus::AccountIdentity m_identity;
   };
 }
 

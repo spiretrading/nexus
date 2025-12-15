@@ -1,7 +1,6 @@
 #ifndef SPIRE_EDITABLE_TABLE_VIEW_HPP
 #define SPIRE_EDITABLE_TABLE_VIEW_HPP
 #include "Spire/Ui/TableView.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

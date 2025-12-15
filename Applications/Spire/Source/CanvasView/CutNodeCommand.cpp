@@ -1,5 +1,5 @@
 #include "Spire/CanvasView/CutNodeCommand.hpp"
-#include <Beam/Collections/DereferenceIterator.hpp>
+#include <Beam/Collections/View.hpp>
 #include <QApplication>
 #include <QClipboard>
 #include <QMimeData>
@@ -17,7 +17,7 @@ using namespace std;
 CutNodeCommand::CutNodeCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& coordinate)
     : m_isInitialRedo(true),
-      m_view(view.Get()),
+      m_view(view.get()),
       m_coordinate(coordinate),
       m_deleteCommand(Ref(view), coordinate) {}
 
@@ -34,7 +34,7 @@ void CutNodeCommand::redo() {
     }
     vector<const CanvasNode*> nodes;
     nodes.push_back(&*optionalNode);
-    auto data = EncodeAsMimeData(MakeDereferenceView(nodes));
+    auto data = EncodeAsMimeData(make_dereference_view(nodes));
     QApplication::clipboard()->setMimeData(data.release());
   }
   m_deleteCommand.redo();

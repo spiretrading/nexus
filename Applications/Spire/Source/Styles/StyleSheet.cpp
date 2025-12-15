@@ -32,7 +32,8 @@ Rule& StyleSheet::get(const Selector& selector) {
   return m_rules.back();
 }
 
-std::size_t std::hash<StyleSheet>::operator ()(const StyleSheet& styles) const {
+std::size_t std::hash<StyleSheet>::operator ()(
+    const StyleSheet& styles) const noexcept {
   auto seed = styles.get_rules().size();
   for(auto& rule : styles.get_rules()) {
     hash_combine(seed, std::hash<Rule>()(rule));

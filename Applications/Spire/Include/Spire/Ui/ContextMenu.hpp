@@ -7,9 +7,12 @@
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/MouseMoveObserver.hpp"
 #include "Spire/Ui/PressObserver.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  template<typename> class ArrayListModel;
+  class ListItem;
+  class ListView;
+  class OverlayPanel;
 
   /** Represents a pop-up context menu. */
   class ContextMenu : public QWidget {

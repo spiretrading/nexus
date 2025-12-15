@@ -3,6 +3,7 @@
 #include <optional>
 #include <QMetaObject>
 #include <QWidget>
+#include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/Quote.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Spire/Async/EventHandler.hpp"

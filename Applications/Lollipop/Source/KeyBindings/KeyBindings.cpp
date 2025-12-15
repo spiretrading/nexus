@@ -14,12 +14,9 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace boost::uuids;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
@@ -378,18 +375,18 @@ void KeyBindings::CancelBinding::HandleCancel(
 
 void KeyBindings::CancelBinding::HandleCancel(
     const CancelBinding& cancelBinding,
-    OrderExecutionClientBox& orderExecutionClient,
+    OrderExecutionClient& orderExecutionClient,
     Out<vector<OrderLogModel::OrderEntry>> orders) {
   if(orders->empty()) {
     return;
   }
-  vector<const Order*> ordersToCancel;
+  vector<std::shared_ptr<Order>> ordersToCancel;
   if(cancelBinding.m_type == Type::MOST_RECENT) {
     ordersToCancel.push_back(orders->back().m_order);
     orders->pop_back();
   } else if(cancelBinding.m_type == Type::MOST_RECENT_ASK) {
     for(auto i = orders->rbegin(); i != orders->rend(); ++i) {
-      if(i->m_order->GetInfo().m_fields.m_side == Side::ASK) {
+      if(i->m_order->get_info().m_fields.m_side == Side::ASK) {
         ordersToCancel.push_back(i->m_order);
         orders->erase((i + 1).base());
         break;
@@ -397,7 +394,7 @@ void KeyBindings::CancelBinding::HandleCancel(
     }
   } else if(cancelBinding.m_type == Type::MOST_RECENT_BID) {
     for(auto i = orders->rbegin(); i != orders->rend(); ++i) {
-      if(i->m_order->GetInfo().m_fields.m_side == Side::BID) {
+      if(i->m_order->get_info().m_fields.m_side == Side::BID) {
         ordersToCancel.push_back(i->m_order);
         orders->erase((i + 1).base());
         break;
@@ -408,7 +405,7 @@ void KeyBindings::CancelBinding::HandleCancel(
     orders->erase(orders->begin());
   } else if(cancelBinding.m_type == Type::OLDEST_ASK) {
     for(auto i = orders->begin(); i != orders->end(); ++i) {
-      if(i->m_order->GetInfo().m_fields.m_side == Side::ASK) {
+      if(i->m_order->get_info().m_fields.m_side == Side::ASK) {
         ordersToCancel.push_back(i->m_order);
         orders->erase(i);
         break;
@@ -416,7 +413,7 @@ void KeyBindings::CancelBinding::HandleCancel(
     }
   } else if(cancelBinding.m_type == Type::OLDEST_BID) {
     for(auto i = orders->begin(); i != orders->end(); ++i) {
-      if(i->m_order->GetInfo().m_fields.m_side == Side::BID) {
+      if(i->m_order->get_info().m_fields.m_side == Side::BID) {
         ordersToCancel.push_back(i->m_order);
         orders->erase(i);
         break;
@@ -430,7 +427,7 @@ void KeyBindings::CancelBinding::HandleCancel(
   } else if(cancelBinding.m_type == Type::ALL_ASKS) {
     auto i = orders->begin();
     while(i != orders->end()) {
-      if(i->m_order->GetInfo().m_fields.m_side == Side::ASK) {
+      if(i->m_order->get_info().m_fields.m_side == Side::ASK) {
         ordersToCancel.push_back(i->m_order);
         i = orders->erase(i);
         continue;
@@ -440,7 +437,7 @@ void KeyBindings::CancelBinding::HandleCancel(
   } else if(cancelBinding.m_type == Type::ALL_BIDS) {
     auto i = orders->begin();
     while(i != orders->end()) {
-      if(i->m_order->GetInfo().m_fields.m_side == Side::BID) {
+      if(i->m_order->get_info().m_fields.m_side == Side::BID) {
         ordersToCancel.push_back(i->m_order);
         i = orders->erase(i);
         continue;
@@ -451,10 +448,10 @@ void KeyBindings::CancelBinding::HandleCancel(
     auto closestIterator = orders->rend();
     boost::optional<Money> closestPrice;
     for(auto i = orders->rbegin(); i != orders->rend(); ++i) {
-      if(i->m_order->GetInfo().m_fields.m_side == Side::ASK) {
+      if(i->m_order->get_info().m_fields.m_side == Side::ASK) {
         if(!closestPrice.is_initialized() ||
-            i->m_order->GetInfo().m_fields.m_price < *closestPrice) {
-          closestPrice = i->m_order->GetInfo().m_fields.m_price;
+            i->m_order->get_info().m_fields.m_price < *closestPrice) {
+          closestPrice = i->m_order->get_info().m_fields.m_price;
           closestIterator = i;
         }
       }
@@ -467,10 +464,10 @@ void KeyBindings::CancelBinding::HandleCancel(
     auto closestIterator = orders->rend();
     boost::optional<Money> closestPrice;
     for(auto i = orders->rbegin(); i != orders->rend(); ++i) {
-      if(i->m_order->GetInfo().m_fields.m_side == Side::BID) {
+      if(i->m_order->get_info().m_fields.m_side == Side::BID) {
         if(!closestPrice.is_initialized() ||
-            i->m_order->GetInfo().m_fields.m_price > *closestPrice) {
-          closestPrice = i->m_order->GetInfo().m_fields.m_price;
+            i->m_order->get_info().m_fields.m_price > *closestPrice) {
+          closestPrice = i->m_order->get_info().m_fields.m_price;
           closestIterator = i;
         }
       }
@@ -483,10 +480,10 @@ void KeyBindings::CancelBinding::HandleCancel(
     auto closestIterator = orders->rend();
     boost::optional<Money> closestPrice;
     for(auto i = orders->rbegin(); i != orders->rend(); ++i) {
-      if(i->m_order->GetInfo().m_fields.m_side == Side::ASK) {
+      if(i->m_order->get_info().m_fields.m_side == Side::ASK) {
         if(!closestPrice.is_initialized() ||
-            i->m_order->GetInfo().m_fields.m_price >= *closestPrice) {
-          closestPrice = i->m_order->GetInfo().m_fields.m_price;
+            i->m_order->get_info().m_fields.m_price >= *closestPrice) {
+          closestPrice = i->m_order->get_info().m_fields.m_price;
           closestIterator = i;
         }
       }
@@ -499,10 +496,10 @@ void KeyBindings::CancelBinding::HandleCancel(
     auto closestIterator = orders->rend();
     boost::optional<Money> closestPrice;
     for(auto i = orders->rbegin(); i != orders->rend(); ++i) {
-      if(i->m_order->GetInfo().m_fields.m_side == Side::ASK) {
+      if(i->m_order->get_info().m_fields.m_side == Side::ASK) {
         if(!closestPrice.is_initialized() ||
-            i->m_order->GetInfo().m_fields.m_price <= *closestPrice) {
-          closestPrice = i->m_order->GetInfo().m_fields.m_price;
+            i->m_order->get_info().m_fields.m_price <= *closestPrice) {
+          closestPrice = i->m_order->get_info().m_fields.m_price;
           closestIterator = i;
         }
       }
@@ -512,8 +509,8 @@ void KeyBindings::CancelBinding::HandleCancel(
       orders->erase((closestIterator + 1).base());
     }
   }
-  for(const Order* order : ordersToCancel) {
-    orderExecutionClient.Cancel(*order);
+  for(auto& order : ordersToCancel) {
+    orderExecutionClient.cancel(order);
   }
 }
 
@@ -530,14 +527,14 @@ void KeyBindings::Load(Out<UserProfile> userProfile) {
   KeyBindings keyBindings;
   try {
     BasicIStreamReader<ifstream> reader(
-      Initialize(keyBindingsFilePath, ios::binary));
+      init(keyBindingsFilePath, ios::binary));
     SharedBuffer buffer;
-    reader.Read(Store(buffer));
+    reader.read(out(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-    receiver.SetSource(Ref(buffer));
-    receiver.Shuttle(keyBindings);
+    receiver.set(Ref(buffer));
+    receiver.shuttle(keyBindings);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to load key bindings, using defaults."));
@@ -550,14 +547,14 @@ void KeyBindings::Save(const UserProfile& userProfile) {
   path keyBindingsFilePath = userProfile.GetProfilePath() / "key_bindings.dat";
   try {
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
     SharedBuffer buffer;
-    sender.SetSink(Ref(buffer));
-    sender.Shuttle(userProfile.GetKeyBindings());
+    sender.set(Ref(buffer));
+    sender.shuttle(userProfile.GetKeyBindings());
     BasicOStreamWriter<ofstream> writer(
-      Initialize(keyBindingsFilePath, ios::binary));
-    writer.Write(buffer);
+      init(keyBindingsFilePath, ios::binary));
+    writer.write(buffer);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to save key bindings."));
@@ -565,23 +562,23 @@ void KeyBindings::Save(const UserProfile& userProfile) {
 }
 
 boost::optional<const KeyBindings::TaskBinding&>
-    KeyBindings::GetTaskFromBinding(MarketCode market,
+    KeyBindings::GetTaskFromBinding(Venue venue,
     const QKeySequence& binding) const {
-  auto marketBindingsIterator = m_taskBindings.find(market);
-  if(marketBindingsIterator == m_taskBindings.end()) {
-    if(market.IsEmpty()) {
+  auto venueBindingsIterator = m_taskBindings.find(venue);
+  if(venueBindingsIterator == m_taskBindings.end()) {
+    if(!venue) {
       return none;
     }
-    return GetTaskFromBinding(MarketCode(), binding);
+    return GetTaskFromBinding(Venue(), binding);
   }
   const std::unordered_map<QKeySequence, TaskBinding>& keyBindings =
-    marketBindingsIterator->second;
+    venueBindingsIterator->second;
   auto keyBindingsIterator = keyBindings.find(binding);
   if(keyBindingsIterator == keyBindings.end()) {
-    if(market.IsEmpty()) {
+    if(!venue) {
       return none;
     }
-    return GetTaskFromBinding(MarketCode(), binding);
+    return GetTaskFromBinding(Venue(), binding);
   }
   auto keyBindingIterator = keyBindings.find(binding);
   if(keyBindingsIterator == keyBindings.end()) {
@@ -590,14 +587,14 @@ boost::optional<const KeyBindings::TaskBinding&>
   return keyBindingIterator->second;
 }
 
-void KeyBindings::ResetTaskBinding(MarketCode market,
+void KeyBindings::ResetTaskBinding(Venue venue,
     const QKeySequence& binding) {
-  m_taskBindings[market].erase(binding);
+  m_taskBindings[venue].erase(binding);
 }
 
-void KeyBindings::SetTaskBinding(MarketCode market, const QKeySequence& binding,
+void KeyBindings::SetTaskBinding(Venue venue, const QKeySequence& binding,
     const TaskBinding& taskBinding) {
-  m_taskBindings[market][binding] = taskBinding;
+  m_taskBindings[venue][binding] = taskBinding;
 }
 
 boost::optional<const KeyBindings::CancelBinding&>
@@ -618,14 +615,14 @@ void KeyBindings::SetCancelBinding(const QKeySequence& binding,
   m_cancelBindings[binding] = cancelBinding;
 }
 
-Quantity KeyBindings::GetDefaultQuantity(MarketCode market) const {
-  auto defaultQuantityIterator = m_defaultQuantities.find(market);
+Quantity KeyBindings::GetDefaultQuantity(Venue venue) const {
+  auto defaultQuantityIterator = m_defaultQuantities.find(venue);
   if(defaultQuantityIterator == m_defaultQuantities.end()) {
     return 100;
   }
   return defaultQuantityIterator->second;
 }
 
-void KeyBindings::SetDefaultQuantity(MarketCode market, Quantity quantity) {
-  m_defaultQuantities[market] = quantity;
+void KeyBindings::SetDefaultQuantity(Venue venue, Quantity quantity) {
+  m_defaultQuantities[venue] = quantity;
 }

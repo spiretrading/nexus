@@ -6,11 +6,13 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPropertyAnimation>
 #include <QScreen>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/Utility.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost::posix_time;
 using namespace Spire;

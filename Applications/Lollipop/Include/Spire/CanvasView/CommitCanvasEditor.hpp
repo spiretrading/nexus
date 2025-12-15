@@ -2,7 +2,7 @@
 #define SPIRE_COMMITCANVASEDITOR_HPP
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class QUndoCommand;
 class QWidget;

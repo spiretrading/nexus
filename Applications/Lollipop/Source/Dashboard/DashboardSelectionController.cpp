@@ -11,7 +11,7 @@ using namespace std;
 
 DashboardSelectionController::DashboardSelectionController(
     Ref<DashboardSelectionModel> model)
-    : m_model{model.Get()},
+    : m_model{model.get()},
       m_mouseState{MouseState::NONE},
       m_selectState{SelectState::NONE},
       m_multiSelectRange{1, 0} {}

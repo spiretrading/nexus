@@ -10,6 +10,7 @@
 class Ui_InteractionsWidget;
 
 namespace Spire {
+  class UserProfile;
 
   /** Displays and allows modification of the InteractionsProperties. */
   class InteractionsWidget : public QWidget {

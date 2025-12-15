@@ -2,7 +2,6 @@
 #define SPIRE_SUBMENU_ITEM_HPP
 #include <QWidget>
 #include "Spire/Ui/ContextMenu.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

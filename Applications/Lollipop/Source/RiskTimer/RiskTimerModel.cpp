@@ -2,20 +2,19 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
 
 RiskTimerModel::RiskTimerModel(Ref<UserProfile> userProfile)
-    : m_userProfile(userProfile.Get()),
+    : m_userProfile(userProfile.get()),
       m_timeRemaining(seconds(0)),
       m_timeRemainingTimer(seconds(1)) {
-  m_timeRemainingTimer.GetPublisher().Monitor(
+  m_timeRemainingTimer.get_publisher().monitor(
     m_eventHandler.get_slot<Timer::Result>(
       std::bind_front(&RiskTimerModel::OnTimeRemainingExpired, this)));
-  m_timeRemainingTimer.Start();
+  m_timeRemainingTimer.start();
 }
 
 time_duration RiskTimerModel::GetTimeRemaining() const {
@@ -25,7 +24,7 @@ time_duration RiskTimerModel::GetTimeRemaining() const {
 void RiskTimerModel::SetTimeRemaining(time_duration timeRemaining) {
   m_timeRemaining = timeRemaining;
   m_lastTimeCheck =
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime();
+    m_userProfile->GetClients().get_time_client().get_time();
 }
 
 connection RiskTimerModel::ConnectTimeRemainingSignal(
@@ -36,7 +35,7 @@ connection RiskTimerModel::ConnectTimeRemainingSignal(
 void RiskTimerModel::OnTimeRemainingExpired(const Timer::Result& result) {
   if(m_timeRemaining != seconds(0)) {
     auto currentTime =
-      m_userProfile->GetServiceClients().GetTimeClient().GetTime();
+      m_userProfile->GetClients().get_time_client().get_time();
     m_timeRemaining -= (currentTime - m_lastTimeCheck);
     m_lastTimeCheck = currentTime;
     if(m_timeRemaining < seconds(0)) {
@@ -44,5 +43,5 @@ void RiskTimerModel::OnTimeRemainingExpired(const Timer::Result& result) {
     }
     m_timeRemainingSignal(m_timeRemaining);
   }
-  m_timeRemainingTimer.Start();
+  m_timeRemainingTimer.start();
 }

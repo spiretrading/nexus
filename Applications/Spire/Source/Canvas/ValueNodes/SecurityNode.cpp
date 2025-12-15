@@ -1,26 +1,26 @@
 #include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
+#include "Spire/LegacyUI/CustomQtVariants.hpp"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::LegacyUI;
 using namespace std;
 
 SecurityNode::SecurityNode() {
   SetText("");
 }
 
-SecurityNode::SecurityNode(const Security& value,
-    const MarketDatabase& marketDatabase)
+SecurityNode::SecurityNode(const Security& value)
     : ValueNode(value) {
-  SetText(ToString(value, marketDatabase));
+  SetText(displayText(value).toStdString());
 }
 
-unique_ptr<SecurityNode> SecurityNode::SetValue(const Security& value,
-    const MarketDatabase& marketDatabase) const {
+unique_ptr<SecurityNode> SecurityNode::SetValue(const Security& value) const {
   auto clone = CanvasNode::Clone(*this);
   clone->SetInternalValue(value);
-  clone->SetText(ToString(clone->GetValue(), marketDatabase));
+  clone->SetText(displayText(clone->GetValue()).toStdString());
   return clone;
 }
 

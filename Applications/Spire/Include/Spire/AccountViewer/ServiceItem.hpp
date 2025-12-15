@@ -15,21 +15,19 @@ namespace Spire {
       /*!
         \param entry The service provider's DirectoryEntry.
       */
-      ServiceItem(const Beam::ServiceLocator::DirectoryEntry& entry);
+      ServiceItem(const Beam::DirectoryEntry& entry);
 
       virtual ~ServiceItem();
 
       //! Returns the service provider's DirectoryEntry.
-      const Beam::ServiceLocator::DirectoryEntry& GetEntry() const;
+      const Beam::DirectoryEntry& GetEntry() const;
 
       virtual Type GetType() const;
-
       virtual std::string GetName() const;
-
       virtual QIcon GetIcon() const;
 
     private:
-      Beam::ServiceLocator::DirectoryEntry m_entry;
+      Beam::DirectoryEntry m_entry;
   };
 }
 

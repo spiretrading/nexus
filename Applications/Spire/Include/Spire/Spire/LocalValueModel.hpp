@@ -14,7 +14,6 @@ namespace Spire {
   class LocalValueModel : public ValueModel<T> {
     public:
       using Type = typename ValueModel<T>::Type;
-
       using UpdateSignal = typename ValueModel<T>::UpdateSignal;
 
       /** Constructs a default model. */
@@ -27,11 +26,8 @@ namespace Spire {
       explicit LocalValueModel(Type value);
 
       const Type& get() const override;
-
       QValidator::State test(const Type& value) const override;
-
       QValidator::State set(const Type& value) override;
-
       boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 

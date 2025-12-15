@@ -24,7 +24,7 @@ TaskKeyBindingsDialog::TaskKeyBindingsDialog(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_TaskKeyBindingsDialog>()),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_keyBindings(m_userProfile->GetKeyBindings()) {
   m_ui->setupUi(this);
   auto keyComboBoxView = new QTableView(m_ui->m_keyComboBox);
@@ -39,11 +39,11 @@ TaskKeyBindingsDialog::TaskKeyBindingsDialog(Ref<UserProfile> userProfile,
   keyComboBoxView->setShowGrid(false);
   keyComboBoxView->setModel(m_ui->m_keyComboBox->model());
   m_ui->m_keyComboBox->setView(keyComboBoxView);
-  m_ui->m_marketComboBox->addItem(tr("All"));
-  for(const auto& market : m_userProfile->GetMarketDatabase().GetEntries()) {
-    m_markets.push_back(market.m_displayName);
-    m_ui->m_marketComboBox->addItem(QString::fromStdString(
-      market.m_displayName));
+  m_ui->m_venueComboBox->addItem(tr("All"));
+  for(const auto& venue : m_userProfile->GetVenueDatabase().get_entries()) {
+    m_venues.push_back(venue.m_venue);
+    m_ui->m_venueComboBox->addItem(QString::fromStdString(
+      venue.m_display_name));
   }
   auto keyComboBoxModel = static_cast<QStandardItemModel*>(
     m_ui->m_keyComboBox->model());
@@ -60,16 +60,16 @@ TaskKeyBindingsDialog::TaskKeyBindingsDialog(Ref<UserProfile> userProfile,
     &TaskKeyBindingsDialog::reject);
   connect(m_ui->m_applyButton, &QPushButton::clicked, this,
     &TaskKeyBindingsDialog::OnApply);
-  connect(m_ui->m_marketComboBox, static_cast<void (QComboBox::*)(int)>(
+  connect(m_ui->m_venueComboBox, static_cast<void (QComboBox::*)(int)>(
     &QComboBox::currentIndexChanged), this,
-    &TaskKeyBindingsDialog::OnMarketChanged);
+    &TaskKeyBindingsDialog::OnVenueChanged);
   connect(m_ui->m_keyComboBox, static_cast<void (QComboBox::*)(int)>(
     &QComboBox::currentIndexChanged), this,
     &TaskKeyBindingsDialog::OnKeyChanged);
   m_ui->m_keyComboBox->view()->installEventFilter(this);
-  m_ui->m_marketComboBox->setCurrentIndex(0);
+  m_ui->m_venueComboBox->setCurrentIndex(0);
   m_ui->m_keyComboBox->setCurrentIndex(0);
-  OnMarketChanged(0);
+  OnVenueChanged(0);
   OnKeyChanged(0);
 }
 
@@ -114,7 +114,7 @@ void TaskKeyBindingsDialog::PopulateComboBox() {
     QKeySequence binding(Qt::Key_F1 + i);
     auto keyItem = new QStandardItem(binding.toString());
     auto taskBinding = m_keyBindings.GetTaskFromBinding(
-      m_currentMarket, binding);
+      m_currentVenue, binding);
     QStandardItem* nameItem;
     if(taskBinding.is_initialized()) {
       nameItem = new QStandardItem(QString::fromStdString(taskBinding->m_name));
@@ -152,20 +152,20 @@ void TaskKeyBindingsDialog::Commit() {
     }
   }
   if(taskBinding.is_initialized()) {
-    m_keyBindings.SetTaskBinding(m_currentMarket, GetCurrentKeyBinding(),
+    m_keyBindings.SetTaskBinding(m_currentVenue, GetCurrentKeyBinding(),
       *taskBinding);
   } else {
-    m_keyBindings.ResetTaskBinding(m_currentMarket, GetCurrentKeyBinding());
+    m_keyBindings.ResetTaskBinding(m_currentVenue, GetCurrentKeyBinding());
   }
   PopulateComboBox();
 }
 
-void TaskKeyBindingsDialog::OnMarketChanged(int index) {
+void TaskKeyBindingsDialog::OnVenueChanged(int index) {
   Commit();
   if(index == 0) {
-    m_currentMarket.Reset();
+    m_currentVenue = Venue();
   } else {
-    m_currentMarket = m_markets[index - 1];
+    m_currentVenue = m_venues[index - 1];
   }
   PopulateComboBox();
 }
@@ -179,7 +179,7 @@ void TaskKeyBindingsDialog::OnKeyChanged(int index) {
   m_currentIndex = index;
   auto canvas = new CanvasWindow(Ref(*m_userProfile));
   m_ui->m_canvasScrollArea->setWidget(canvas);
-  auto taskBinding = m_keyBindings.GetTaskFromBinding(m_currentMarket,
+  auto taskBinding = m_keyBindings.GetTaskFromBinding(m_currentVenue,
     GetCurrentKeyBinding());
   if(!taskBinding.is_initialized()) {
     m_ui->m_taskNameInput->clear();

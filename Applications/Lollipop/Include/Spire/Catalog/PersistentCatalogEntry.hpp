@@ -20,7 +20,7 @@ namespace Spire {
       virtual void Delete() const = 0;
 
     protected:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
       //! Constructs a PersistentCatalogEntry.
       /*!

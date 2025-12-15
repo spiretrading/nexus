@@ -1,6 +1,7 @@
 #ifndef SPIRE_EXPORTMODEL_HPP
 #define SPIRE_EXPORTMODEL_HPP
 #include <ostream>
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 class QAbstractItemModel;

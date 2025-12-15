@@ -3,7 +3,6 @@
 #include "Spire/Canvas/Types/DurationType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 using namespace std;
 
@@ -19,5 +18,3 @@ void CurrentTimeNode::Apply(CanvasNodeVisitor& visitor) const {
 unique_ptr<CanvasNode> CurrentTimeNode::Clone() const {
   return make_unique<CurrentTimeNode>(*this);
 }
-
-CurrentTimeNode::CurrentTimeNode(ReceiveBuilder) {}

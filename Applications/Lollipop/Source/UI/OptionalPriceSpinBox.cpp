@@ -15,7 +15,7 @@ using namespace std;
 OptionalPriceSpinBox::OptionalPriceSpinBox(Ref<UserProfile> userProfile,
     const OptionalPriceNode& node, QWidget* parent)
     : QDoubleSpinBox(parent),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_referencePrice(node.GetReferencePrice()) {
   setMaximum(numeric_limits<double>::max());
   setMinimum(0);
@@ -44,8 +44,8 @@ OptionalPriceSpinBox::OptionalPriceSpinBox(Ref<UserProfile> userProfile,
 OptionalPriceSpinBox::~OptionalPriceSpinBox() {}
 
 Money OptionalPriceSpinBox::GetValue() const {
-  auto value = Money::FromValue(cleanText().toStdString());
-  if(value.is_initialized()) {
+  auto value = try_parse_money(cleanText().toStdString());
+  if(value) {
     return *value;
   }
   return Money::ZERO;
@@ -88,7 +88,7 @@ void OptionalPriceSpinBox::AdjustIncrement(KeyModifiers modifier) {
   if(m_userProfile == nullptr || !m_security.is_initialized()) {
     return;
   }
-  auto priceIncrement = m_userProfile->GetInteractionProperties().Get(
+  auto priceIncrement = m_userProfile->GetInteractionProperties().get(
     *m_security).m_priceIncrements[static_cast<int>(modifier)];
   auto increment = static_cast<double>(static_cast<Quantity>(priceIncrement));
   if(increment != singleStep()) {

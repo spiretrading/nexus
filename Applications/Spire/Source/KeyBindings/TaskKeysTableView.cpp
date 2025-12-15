@@ -26,6 +26,7 @@
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TimeInForceBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -347,8 +348,6 @@ namespace {
 
   struct TaskKeysTableViewItemBuilder {
     std::shared_ptr<RegionQueryModel> m_regions;
-    DestinationDatabase m_destinations;
-    MarketDatabase m_markets;
     AdditionalTagDatabase m_additional_tags;
     std::map<QWidget*, std::shared_ptr<ItemState>> m_item_states;
 
@@ -379,8 +378,7 @@ namespace {
             auto region = make_proxy_value_model(
               make_table_value_model<Region>(table, row,
                 static_cast<int>(OrderTaskColumns::REGION)));
-            auto destinations = make_region_filtered_destination_list(
-              m_destinations, m_markets, region);
+            auto destinations = make_region_filtered_destination_list(region);
             auto current = make_proxy.operator ()<Destination>();
             return {new EditableBox(
               *make_destination_box(current, std::move(destinations))),
@@ -483,16 +481,15 @@ namespace {
 
 TableView* Spire::make_task_keys_table_view(
     std::shared_ptr<OrderTaskArgumentsListModel> order_task_arguments,
-    std::shared_ptr<RegionQueryModel> regions, DestinationDatabase destinations,
-    MarketDatabase markets, AdditionalTagDatabase additional_tags,
-    QWidget* parent) {
+    std::shared_ptr<RegionQueryModel> regions,
+    AdditionalTagDatabase additional_tags, QWidget* parent) {
   auto table =
     make_order_task_arguments_table_model(std::move(order_task_arguments));
   auto builder = EditableTableViewBuilder(
     std::make_shared<UniqueTaskKeyTableModel>(std::move(table))).
     set_header(make_header_model()).
-    set_item_builder(RecycledTableViewItemBuilder(TaskKeysTableViewItemBuilder(
-      regions, destinations, markets, additional_tags))).
+    set_item_builder(RecycledTableViewItemBuilder(
+      TaskKeysTableViewItemBuilder(regions, additional_tags))).
     set_comparator(&comparator);
   auto table_view = builder.make();
   auto widths = make_header_widths();

@@ -2,7 +2,6 @@
 #define SPIRE_DROP_SHADOW_HPP
 #include <QAbstractNativeEventFilter>
 #include <QWidget>
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

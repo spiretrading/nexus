@@ -19,13 +19,13 @@ namespace {
   std::vector<Region> to_tag_list(
       const Region& region, RegionQueryModel& regions) {
     auto tags = std::vector<Region>();
-    for(auto& country : region.GetCountries()) {
+    for(auto& country : region.get_countries()) {
       tags.push_back(*regions.parse(to_text(country)));
     }
-    for(auto& market : region.GetMarkets()) {
-      tags.push_back(*regions.parse(to_text(MarketToken(market))));
+    for(auto& venue : region.get_venues()) {
+      tags.push_back(*regions.parse(to_text(venue)));
     }
-    for(auto& security : region.GetSecurities()) {
+    for(auto& security : region.get_securities()) {
       tags.push_back(*regions.parse(to_text(security)));
     }
     return tags;

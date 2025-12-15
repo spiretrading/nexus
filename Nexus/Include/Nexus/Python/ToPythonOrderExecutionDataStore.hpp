@@ -1,21 +1,17 @@
 #ifndef NEXUS_PYTHON_ORDER_EXECUTION_DATA_STORE_HPP
 #define NEXUS_PYTHON_ORDER_EXECUTION_DATA_STORE_HPP
-#include <memory>
 #include <type_traits>
 #include <utility>
-#include <Beam/Python/GilRelease.hpp>
-#include <Beam/Utilities/TypeList.hpp>
 #include <boost/optional/optional.hpp>
-#include <pybind11/pybind11.h>
-#include "Nexus/OrderExecutionService/OrderExecutionDataStoreBox.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /**
    * Wraps an OrderExecutionDataStore for use with Python.
    * @param <D> The type of OrderExecutionDataStore to wrap.
    */
-  template<typename D>
+  template<IsOrderExecutionDataStore D>
   class ToPythonOrderExecutionDataStore {
     public:
 
@@ -23,43 +19,34 @@ namespace Nexus::OrderExecutionService {
       using DataStore = D;
 
       /**
-       * Constructs a ToPythonOrderExecutionDataStore.
-       * @param args The arguments to forward to the DataStore's constructor.
+       * Constructs a ToPythonOrderExecutionDataStore in-place.
+       * @param args The arguments to forward to the constructor.
        */
-      template<typename... Args, typename =
-        Beam::disable_copy_constructor_t<ToPythonOrderExecutionDataStore,
-          Args...>>
-      ToPythonOrderExecutionDataStore(Args&&... args);
+      template<typename... Args>
+      explicit ToPythonOrderExecutionDataStore(Args&&... args);
 
       ~ToPythonOrderExecutionDataStore();
 
-      /** Returns the wrapped data store. */
-      const DataStore& GetDataStore() const;
+      /** Returns a reference to the underlying data store. */
+      DataStore& get();
 
-      /** Returns the wrapped data store. */
-      DataStore& GetDataStore();
+      /** Returns a reference to the underlying data store. */
+      const DataStore& get() const;
 
-      boost::optional<SequencedAccountOrderRecord> LoadOrder(OrderId id);
-
-      std::vector<SequencedOrderRecord> LoadOrderSubmissions(
-        const AccountQuery& query);
-
-      std::vector<SequencedExecutionReport> LoadExecutionReports(
-        const AccountQuery& query);
-
-      void Store(const SequencedAccountOrderInfo& orderInfo);
-
-      void Store(const std::vector<SequencedAccountOrderInfo>& orderInfo);
-
-      void Store(const SequencedAccountExecutionReport& executionReport);
-
-      void Store(const std::vector<SequencedAccountExecutionReport>&
-        executionReports);
-
-      void Close();
+      boost::optional<SequencedAccountOrderRecord>
+        load_order_record(OrderId id);
+      std::vector<SequencedOrderRecord>
+        load_order_records(const AccountQuery& query);
+      void store(const SequencedAccountOrderInfo& info);
+      void store(const std::vector<SequencedAccountOrderInfo>& info);
+      std::vector<SequencedExecutionReport>
+        load_execution_reports(const AccountQuery& query);
+      void store(const SequencedAccountExecutionReport& report);
+      void store(const std::vector<SequencedAccountExecutionReport>& reports);
+      void close();
 
     private:
-      boost::optional<DataStore> m_dataStore;
+      boost::optional<DataStore> m_data_store;
 
       ToPythonOrderExecutionDataStore(
         const ToPythonOrderExecutionDataStore&) = delete;
@@ -69,88 +56,88 @@ namespace Nexus::OrderExecutionService {
 
   template<typename DataStore>
   ToPythonOrderExecutionDataStore(DataStore&&) ->
-    ToPythonOrderExecutionDataStore<std::decay_t<DataStore>>;
+    ToPythonOrderExecutionDataStore<std::remove_cvref_t<DataStore>>;
 
-  template<typename D>
-  template<typename... Args, typename>
+  template<IsOrderExecutionDataStore D>
+  template<typename... Args>
   ToPythonOrderExecutionDataStore<D>::ToPythonOrderExecutionDataStore(
     Args&&... args)
-    : m_dataStore((Beam::Python::GilRelease(), boost::in_place_init),
+    : m_data_store((Beam::Python::GilRelease(), boost::in_place_init),
         std::forward<Args>(args)...) {}
 
-  template<typename D>
+  template<IsOrderExecutionDataStore D>
   ToPythonOrderExecutionDataStore<D>::~ToPythonOrderExecutionDataStore() {
     auto release = Beam::Python::GilRelease();
-    m_dataStore.reset();
+    m_data_store.reset();
   }
 
-  template<typename D>
-  const typename ToPythonOrderExecutionDataStore<D>::DataStore&
-      ToPythonOrderExecutionDataStore<D>::GetDataStore() const {
-    return *m_dataStore;
-  }
-
-  template<typename D>
+  template<IsOrderExecutionDataStore D>
   typename ToPythonOrderExecutionDataStore<D>::DataStore&
-      ToPythonOrderExecutionDataStore<D>::GetDataStore() {
-    return *m_dataStore;
+      ToPythonOrderExecutionDataStore<D>::get() {
+    return *m_data_store;
   }
 
-  template<typename D>
+  template<IsOrderExecutionDataStore D>
+  const typename ToPythonOrderExecutionDataStore<D>::DataStore&
+      ToPythonOrderExecutionDataStore<D>::get() const {
+    return *m_data_store;
+  }
+
+  template<IsOrderExecutionDataStore D>
   boost::optional<SequencedAccountOrderRecord>
-      ToPythonOrderExecutionDataStore<D>::LoadOrder(OrderId id) {
+      ToPythonOrderExecutionDataStore<D>::load_order_record(OrderId id) {
     auto release = Beam::Python::GilRelease();
-    return m_dataStore->LoadOrder(id);
+    return m_data_store->load_order_record(id);
   }
 
-  template<typename D>
+  template<IsOrderExecutionDataStore D>
   std::vector<SequencedOrderRecord>
-      ToPythonOrderExecutionDataStore<D>::LoadOrderSubmissions(
+      ToPythonOrderExecutionDataStore<D>::load_order_records(
         const AccountQuery& query) {
     auto release = Beam::Python::GilRelease();
-    return m_dataStore->LoadOrderSubmissions(query);
+    return m_data_store->load_order_records(query);
   }
 
-  template<typename D>
+  template<IsOrderExecutionDataStore D>
+  void ToPythonOrderExecutionDataStore<D>::store(
+      const SequencedAccountOrderInfo& info) {
+    auto release = Beam::Python::GilRelease();
+    m_data_store->store(info);
+  }
+
+  template<IsOrderExecutionDataStore D>
+  void ToPythonOrderExecutionDataStore<D>::store(
+      const std::vector<SequencedAccountOrderInfo>& info) {
+    auto release = Beam::Python::GilRelease();
+    m_data_store->store(info);
+  }
+
+  template<IsOrderExecutionDataStore D>
   std::vector<SequencedExecutionReport>
-      ToPythonOrderExecutionDataStore<D>::LoadExecutionReports(
+      ToPythonOrderExecutionDataStore<D>::load_execution_reports(
         const AccountQuery& query) {
     auto release = Beam::Python::GilRelease();
-    return m_dataStore->LoadExecutionReports(query);
+    return m_data_store->load_execution_reports(query);
   }
 
-  template<typename D>
-  void ToPythonOrderExecutionDataStore<D>::Store(
-      const SequencedAccountOrderInfo& orderInfo) {
+  template<IsOrderExecutionDataStore D>
+  void ToPythonOrderExecutionDataStore<D>::store(
+      const SequencedAccountExecutionReport& report) {
     auto release = Beam::Python::GilRelease();
-    m_dataStore->Store(orderInfo);
+    m_data_store->store(report);
   }
 
-  template<typename D>
-  void ToPythonOrderExecutionDataStore<D>::Store(
-      const std::vector<SequencedAccountOrderInfo>& orderInfo) {
+  template<IsOrderExecutionDataStore D>
+  void ToPythonOrderExecutionDataStore<D>::store(
+      const std::vector<SequencedAccountExecutionReport>& reports) {
     auto release = Beam::Python::GilRelease();
-    m_dataStore->Store(orderInfo);
+    m_data_store->store(reports);
   }
 
-  template<typename D>
-  void ToPythonOrderExecutionDataStore<D>::Store(
-      const SequencedAccountExecutionReport& executionReport) {
+  template<IsOrderExecutionDataStore D>
+  void ToPythonOrderExecutionDataStore<D>::close() {
     auto release = Beam::Python::GilRelease();
-    m_dataStore->Store(executionReport);
-  }
-
-  template<typename D>
-  void ToPythonOrderExecutionDataStore<D>::Store(
-      const std::vector<SequencedAccountExecutionReport>& executionReports) {
-    auto release = Beam::Python::GilRelease();
-    m_dataStore->Store(executionReports);
-  }
-
-  template<typename D>
-  void ToPythonOrderExecutionDataStore<D>::Close() {
-    auto release = Beam::Python::GilRelease();
-    m_dataStore->Close();
+    m_data_store->close();
   }
 }
 

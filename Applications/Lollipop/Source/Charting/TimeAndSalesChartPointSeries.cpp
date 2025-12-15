@@ -20,7 +20,7 @@ void TimeAndSalesChartPointSeries::Query(ChartValue start, ChartValue end) {
   if(m_publisher == nullptr) {
     return;
   }
-  m_publisher->Monitor(m_taskQueue.GetSlot<TimeAndSale>(std::bind(
+  m_publisher->monitor(m_taskQueue.get_slot<TimeAndSale>(std::bind(
     &TimeAndSalesChartPointSeries::OnTimeAndSale, this,
     std::placeholders::_1)));
   m_publisher = nullptr;

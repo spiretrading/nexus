@@ -1,5 +1,5 @@
 import * as Beam from 'beam';
-import { Currency, Money, Security } from '..';
+import { Currency, Money, Region, Security, Venue } from '..';
 
 /** Used to represent one of the various types of values used by a
  *  ComplianceParameter.
@@ -19,12 +19,18 @@ export class ComplianceValue {
         return Beam.DateTime.fromJson(value.value);
       } else if(value.which === ComplianceValue.Type.DURATION) {
         return Beam.Duration.fromJson(value.value);
+      } else if(value.which === ComplianceValue.Type.DIRECTORY_ENTRY) {
+        return Beam.DirectoryEntry.fromJson(value.value);
       } else if(value.which === ComplianceValue.Type.CURRENCY) {
         return Currency.fromJson(value.value);
       } else if(value.which === ComplianceValue.Type.MONEY) {
         return Money.fromJson(value.value);
       } else if(value.which === ComplianceValue.Type.SECURITY) {
         return Security.fromJson(value.value);
+      } else if(value.which === ComplianceValue.Type.VENUE) {
+        return Venue.fromJson(value.value);
+      } else if(value.which === ComplianceValue.Type.REGION) {
+        return Region.fromJson(value.value);
       } else if(value.which === ComplianceValue.Type.LIST) {
         return Beam.arrayFromJson(ComplianceValue, value.value);
       }
@@ -104,16 +110,25 @@ export module ComplianceValue {
     /** Resolves to a Beam.Duration. */
     DURATION = 5,
 
+    /** Resolves to a Beam.DirectoryEntry. */
+    DIRECTORY_ENTRY = 6,
+
     /** Resolves to a Currency. */
-    CURRENCY = 6,
+    CURRENCY = 7,
 
     /** Resolves to a Money. */
-    MONEY = 7,
+    MONEY = 8,
 
     /** Resolves to a Security. */
-    SECURITY = 8,
+    SECURITY = 9,
 
-    /** Resolves to a list of ComplianceValue's. */
-    LIST = 9
+    /** Resolves to a Venue. */
+    VENUE = 10,
+
+    /** Resolves to a Region. */
+    REGION = 11,
+
+    /** Resolves to a list of ComplianceValues. */
+    LIST = 12
   }
 }

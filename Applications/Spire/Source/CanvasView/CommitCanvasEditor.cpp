@@ -15,13 +15,13 @@
 #include "Spire/Canvas/ValueNodes/DestinationNode.hpp"
 #include "Spire/Canvas/ValueNodes/DurationNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
-#include "Spire/Canvas/ValueNodes/MarketNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
+#include "Spire/Canvas/ValueNodes/VenueNode.hpp"
 #include "Spire/CanvasView/ReplaceNodeCommand.hpp"
 #include "Spire/LegacyUI/MaxFloorSpinBox.hpp"
 #include "Spire/LegacyUI/MoneySpinBox.hpp"
@@ -50,7 +50,6 @@ namespace {
       virtual void Visit(const DestinationNode& node);
       virtual void Visit(const DurationNode& node);
       virtual void Visit(const IntegerNode& node);
-      virtual void Visit(const MarketNode& node);
       virtual void Visit(const MaxFloorNode& node);
       virtual void Visit(const MoneyNode& node);
       virtual void Visit(const OptionalPriceNode& node);
@@ -61,6 +60,7 @@ namespace {
       virtual void Visit(const SideNode& node);
       virtual void Visit(const TextNode& node);
       virtual void Visit(const TimeInForceNode& node);
+      virtual void Visit(const VenueNode& node);
 
     private:
       const CanvasNode* m_node;
@@ -82,10 +82,10 @@ QUndoCommand* Spire::CommitCanvasEditor(const CanvasNode& node,
 CommitEditorCanvasNodeVisitor::CommitEditorCanvasNodeVisitor(
     Ref<const CanvasNode> node, Ref<const QWidget> editor,
     Ref<CanvasNodeModel> model, Ref<const UserProfile> userProfile)
-    : m_node(node.Get()),
-      m_editor(editor.Get()),
-      m_model(model.Get()),
-      m_userProfile(userProfile.Get()) {}
+    : m_node(node.get()),
+      m_editor(editor.get()),
+      m_model(model.get()),
+      m_userProfile(userProfile.get()) {}
 
 QUndoCommand* CommitEditorCanvasNodeVisitor::GetCommand() {
   m_command = nullptr;
@@ -113,14 +113,14 @@ void CommitEditorCanvasNodeVisitor::Visit(const BooleanNode& node) {
 void CommitEditorCanvasNodeVisitor::Visit(const CurrencyNode& node) {
   auto previousValue = node.GetValue();
   auto comboEditor = qobject_cast<const QComboBox*>(m_editor);
-  auto& newValue = m_userProfile->GetCurrencyDatabase().FromCode(
+  auto& newValue = DEFAULT_CURRENCIES.from(
     comboEditor->currentText().toStdString());
   if(previousValue == newValue.m_id) {
     return;
   }
   auto coordinate = m_model->GetCoordinate(node);
   m_command = new ReplaceNodeCommand(Ref(*m_model), coordinate,
-    *node.SetValue(newValue.m_id, newValue.m_code.GetData()));
+    *node.SetValue(newValue.m_id, newValue.m_code.get_data()));
 }
 
 void CommitEditorCanvasNodeVisitor::Visit(const DecimalNode& node) {
@@ -169,19 +169,6 @@ void CommitEditorCanvasNodeVisitor::Visit(const IntegerNode& node) {
   auto coordinate = m_model->GetCoordinate(node);
   m_command = new ReplaceNodeCommand(Ref(*m_model), coordinate,
     *node.SetValue(newValue));
-}
-
-void CommitEditorCanvasNodeVisitor::Visit(const MarketNode& node) {
-  auto previousValue = node.GetValue();
-  auto comboEditor = qobject_cast<const QComboBox*>(m_editor);
-  auto& newValue = m_userProfile->GetMarketDatabase().FromCode(
-    comboEditor->currentText().toStdString());
-  if(previousValue == newValue.m_code) {
-    return;
-  }
-  auto coordinate = m_model->GetCoordinate(node);
-  m_command = new ReplaceNodeCommand(Ref(*m_model), coordinate,
-    *node.SetValue(newValue.m_code));
 }
 
 void CommitEditorCanvasNodeVisitor::Visit(const MaxFloorNode& node) {
@@ -318,4 +305,17 @@ void CommitEditorCanvasNodeVisitor::Visit(const TimeInForceNode& node) {
   auto coordinate = m_model->GetCoordinate(node);
   m_command = new ReplaceNodeCommand(Ref(*m_model), coordinate,
     *node.SetValue(newValue));
+}
+
+void CommitEditorCanvasNodeVisitor::Visit(const VenueNode& node) {
+  auto previousValue = node.GetValue();
+  auto comboEditor = qobject_cast<const QComboBox*>(m_editor);
+  auto& newValue = DEFAULT_VENUES.from(
+    comboEditor->currentText().toStdString());
+  if(previousValue == newValue.m_venue) {
+    return;
+  }
+  auto coordinate = m_model->GetCoordinate(node);
+  m_command = new ReplaceNodeCommand(Ref(*m_model), coordinate,
+    *node.SetValue(newValue.m_venue));
 }

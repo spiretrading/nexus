@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/InteractionsWidget.hpp"
+#include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/MoneySpinBox.hpp"
 #include "Spire/UI/UserProfile.hpp"
 #include "ui_InteractionsWidget.h"
@@ -6,6 +7,7 @@
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::UI;
 using namespace std;
 
 InteractionsWidget::InteractionsWidget(QWidget* parent, Qt::WindowFlags flags)
@@ -41,35 +43,32 @@ InteractionsWidget::InteractionsWidget(QWidget* parent, Qt::WindowFlags flags)
 InteractionsWidget::~InteractionsWidget() {}
 
 void InteractionsWidget::Initialize(Ref<UserProfile> userProfile) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_properties = m_userProfile->GetInteractionProperties();
   m_ui->m_regionComboBox->clear();
   RegionEntry globalRegion;
-  globalRegion.m_region = Region::Global("Global");
+  globalRegion.m_region = Region::make_global("Global");
   AddRegion(globalRegion);
-  const vector<CountryDatabase::Entry>& countries =
-    m_userProfile->GetCountryDatabase().GetEntries();
+  auto countries = m_userProfile->GetCountryDatabase().get_entries();
   for(auto i = countries.begin(); i != countries.end(); ++i) {
     RegionEntry region;
-    region.m_region = i->m_code;
-    region.m_region.SetName(i->m_name);
+    region.m_region = Region(i->m_name);
+    region.m_region += i->m_code;
     AddRegion(region);
   }
-  const vector<MarketDatabase::Entry>& markets =
-    m_userProfile->GetMarketDatabase().GetEntries();
-  for(auto i = markets.begin(); i != markets.end(); ++i) {
+  auto venues = m_userProfile->GetVenueDatabase().get_entries();
+  for(auto i = venues.begin(); i != venues.end(); ++i) {
     RegionEntry region;
-    region.m_region = *i;
-    region.m_region.SetName(i->m_displayName);
+    region.m_region = Region(i->m_display_name);
+    region.m_region += i->m_venue;
     AddRegion(region);
   }
-  for(auto i = m_properties.Begin(); i != m_properties.End(); ++i) {
-    if(!std::get<0>(*i).GetSecurities().empty()) {
+  for(auto i = m_properties.begin(); i != m_properties.end(); ++i) {
+    if(!std::get<0>(*i).get_securities().empty()) {
       RegionEntry region;
-      Security security = *std::get<0>(*i).GetSecurities().begin();
-      region.m_region = security;
-      region.m_region.SetName(ToString(security,
-        m_userProfile->GetMarketDatabase()));
+      Security security = *std::get<0>(*i).get_securities().begin();
+      region.m_region = Region(displayText(security).toStdString());
+      region.m_region += security;
       AddRegion(region);
     }
   }
@@ -78,13 +77,12 @@ void InteractionsWidget::Initialize(Ref<UserProfile> userProfile) {
 
 void InteractionsWidget::Initialize(Ref<UserProfile> userProfile,
     const Security& security) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_properties = m_userProfile->GetInteractionProperties();
   m_ui->m_regionComboBox->clear();
   RegionEntry region;
-  region.m_region = security;
-  region.m_region.SetName(ToString(security,
-    m_userProfile->GetMarketDatabase()));
+  region.m_region = Region(displayText(security).toStdString());
+  region.m_region += security;
   AddRegion(region);
   Update();
 }
@@ -95,18 +93,18 @@ const RegionMap<InteractionsProperties>& InteractionsWidget::GetProperties() {
 }
 
 void InteractionsWidget::AddRegion(RegionEntry region) {
-  region.m_isActive = std::get<0>(*m_properties.Find(region.m_region)) ==
+  region.m_isActive = std::get<0>(*m_properties.find(region.m_region)) ==
     region.m_region;
-  m_regions[region.m_region.GetName()] = region;
+  m_regions[region.m_region.get_name()] = region;
   m_ui->m_regionComboBox->addItem(QString::fromStdString(
-    region.m_region.GetName()));
+    region.m_region.get_name()));
   int index = m_ui->m_regionComboBox->count() - 1;
   StyleRegion(region);
 }
 
 void InteractionsWidget::StyleRegion(const RegionEntry& region) {
   int index = m_ui->m_regionComboBox->findText(
-    QString::fromStdString(region.m_region.GetName()));
+    QString::fromStdString(region.m_region.get_name()));
   if(region.m_isActive) {
     QVariant textColor = m_ui->m_regionComboBox->palette().color(
       QPalette::Normal, QPalette::Text);
@@ -132,7 +130,7 @@ void InteractionsWidget::Update() {
     m_ui->m_quantityIncrementModifierComboBox->currentIndex();
   m_priceModifierIndex = m_ui->m_priceIncrementModifierComboBox->currentIndex();
   const RegionEntry& region = m_regions.at(m_regionIndex);
-  const InteractionsProperties& properties = m_properties.Get(region.m_region);
+  const InteractionsProperties& properties = m_properties.get(region.m_region);
   m_ui->m_defaultQuantitySpinBox->setValue(
     static_cast<int>(properties.m_defaultQuantity));
   m_ui->m_quantityIncrementSpinBox->setValue(
@@ -140,13 +138,13 @@ void InteractionsWidget::Update() {
   m_ui->m_priceIncrementSpinBox->SetValue(
     properties.m_priceIncrements[m_priceModifierIndex]);
   m_ui->m_cancelOnFillCheckBox->setChecked(properties.m_cancelOnFill);
-  m_ui->m_activateRegionButton->setEnabled(region.m_region.IsGlobal());
+  m_ui->m_activateRegionButton->setEnabled(region.m_region.is_global());
   if(region.m_isActive) {
     m_ui->m_activateRegionButton->setText(tr("Deactivate"));
   } else {
     m_ui->m_activateRegionButton->setText(tr("Activate"));
   }
-  m_ui->m_activateRegionButton->setEnabled(!region.m_region.IsGlobal());
+  m_ui->m_activateRegionButton->setEnabled(!region.m_region.is_global());
   m_ui->m_resetRegionButton->setEnabled(region.m_isActive);
   m_ui->m_defaultQuantitySpinBox->setEnabled(region.m_isActive);
   m_ui->m_quantityIncrementSpinBox->setEnabled(region.m_isActive);
@@ -160,7 +158,7 @@ void InteractionsWidget::Store() {
   if(m_regionIndex.empty()) {
     return;
   }
-  InteractionsProperties& properties = m_properties.Get(
+  InteractionsProperties& properties = m_properties.get(
     m_regions.at(m_regionIndex).m_region);
   properties.m_defaultQuantity = m_ui->m_defaultQuantitySpinBox->value();
   if(m_quantityModifierIndex != -1) {
@@ -191,12 +189,12 @@ void InteractionsWidget::OnActivateRegionClicked() {
   RegionEntry& region = m_regions.at(m_regionIndex);
   if(!region.m_isActive) {
     region.m_isActive = true;
-    m_properties.Set(region.m_region,
+    m_properties.set(region.m_region,
       InteractionsProperties::GetDefaultProperties());
     Store();
   } else {
     region.m_isActive = false;
-    m_properties.Erase(region.m_region);
+    m_properties.erase(region.m_region);
   }
   StyleRegion(region);
   Update();
@@ -204,7 +202,7 @@ void InteractionsWidget::OnActivateRegionClicked() {
 
 void InteractionsWidget::OnResetRegionClicked() {
   const RegionEntry& region = m_regions.at(m_regionIndex);
-  m_properties.Get(region.m_region) =
+  m_properties.get(region.m_region) =
     InteractionsProperties::GetDefaultProperties();
   Update();
 }

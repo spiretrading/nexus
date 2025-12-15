@@ -73,7 +73,6 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListSelectionModel.hpp"
 #include "Spire/Ui/ListView.hpp"
-#include "Spire/Ui/MarketBox.hpp"
 #include "Spire/Ui/MenuButton.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
@@ -117,6 +116,8 @@
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/Ui/TransitionView.hpp"
+#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/VenueBox.hpp"
 #include "Spire/Ui/Window.hpp"
 #include "Spire/Ui/WindowHighlight.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
@@ -243,16 +244,18 @@ namespace {
     maximum.connect_changed_signal([=] (auto value) {
       model->set_maximum(value);
     });
-    auto& min_max_enabled = get<bool>("min_max_enabled", profile.get_properties());
-    min_max_enabled.connect_changed_signal([=, &minimum, &maximum] (auto value) {
-      if(value) {
-        model->set_minimum(minimum.get());
-        model->set_maximum(maximum.get());
-      } else {
-        model->set_minimum(none);
-        model->set_maximum(none);
-      }
-    });
+    auto& min_max_enabled =
+      get<bool>("min_max_enabled", profile.get_properties());
+    min_max_enabled.connect_changed_signal(
+      [=, &minimum, &maximum] (auto value) {
+        if(value) {
+          model->set_minimum(minimum.get());
+          model->set_maximum(maximum.get());
+        } else {
+          model->set_minimum(none);
+          model->set_maximum(none);
+        }
+      });
     auto& default_increment =
       get<Type>("default_increment", profile.get_properties());
     auto& alt_increment = get<Type>("alt_increment", profile.get_properties());
@@ -660,19 +663,19 @@ namespace {
 
   std::shared_ptr<SecurityInfoQueryModel> populate_security_query_model() {
     auto security_infos = std::vector<SecurityInfo>();
-    security_infos.emplace_back(ParseSecurity("MRU.TSX"),
+    security_infos.emplace_back(parse_security("MRU.TSX"),
       "Metro Inc.", "", 0);
-    security_infos.emplace_back(ParseSecurity("MG.TSX"),
+    security_infos.emplace_back(parse_security("MG.TSX"),
       "Magna International Inc.", "", 0);
-    security_infos.emplace_back(ParseSecurity("MGA.TSX"),
+    security_infos.emplace_back(parse_security("MGA.TSX"),
       "Mega Uranium Ltd.", "", 0);
-    security_infos.emplace_back(ParseSecurity("MGAB.TSX"),
+    security_infos.emplace_back(parse_security("MGAB.TSX"),
       "Mackenzie Global Fixed Income Alloc ETF", "", 0);
-    security_infos.emplace_back(ParseSecurity("MON.NYSE"),
+    security_infos.emplace_back(parse_security("MON.NYSE"),
       "Monsanto Co.", "", 0);
-    security_infos.emplace_back(ParseSecurity("MFC.TSX"),
+    security_infos.emplace_back(parse_security("MFC.TSX"),
       "Manulife Financial Corporation", "", 0);
-    security_infos.emplace_back(ParseSecurity("MX.TSX"),
+    security_infos.emplace_back(parse_security("MX.TSX"),
       "Methanex Corporation", "", 0);
     auto model = std::make_shared<LocalQueryModel<SecurityInfo>>();
     for(auto& security_info : security_infos) {
@@ -718,33 +721,30 @@ namespace {
       {"MFC.TSX", "Manulife Financial Corporation"},
       {"MX.TSX", "Methanex Corporation"},
       {"TSO.ASX", "Tesoro Resources Limited"}};
-    auto markets = std::vector<MarketCode>{DefaultMarkets::NSEX(),
-      DefaultMarkets::ISE(), DefaultMarkets::CSE(), DefaultMarkets::TSX(),
-      DefaultMarkets::TSXV(), DefaultMarkets::BOSX()};
-    auto countries = std::vector<CountryCode>{DefaultCountries::US(),
-      DefaultCountries::CA(), DefaultCountries::AU(), DefaultCountries::JP(),
-      DefaultCountries::CN()};
+    auto venues = std::vector{DefaultVenues::ASX, DefaultVenues::CXD,
+      DefaultVenues::CSE, DefaultVenues::TSX, DefaultVenues::TSXV};
+    auto countries = std::vector{DefaultCountries::US, DefaultCountries::CA,
+      DefaultCountries::AU, DefaultCountries::JP, DefaultCountries::CN};
     auto model = std::make_shared<LocalQueryModel<Region>>();
     for(auto& security_info : securities) {
-      auto security = ParseSecurity(security_info.first);
-      auto region = Region(security);
-      region.SetName(security_info.second);
+      auto security = parse_security(security_info.first);
+      auto region = Region(security_info.second);
+      region += security;
       model->add(to_text(security).toLower(), region);
-      model->add(QString::fromStdString(region.GetName()).toLower(), region);
+      model->add(QString::fromStdString(region.get_name()).toLower(), region);
     }
-    for(auto& market_code : markets) {
-      auto market = GetDefaultMarketDatabase().FromCode(market_code);
-      auto region = Region(market);
-      region.SetName(market.m_description);
-      model->add(to_text(MarketToken(market.m_code)).toLower(), region);
-      model->add(QString::fromStdString(region.GetName()).toLower(), region);
+    for(auto& venue : venues) {
+      auto entry = DEFAULT_VENUES.from(venue);
+      auto region = Region(entry.m_description);
+      region += venue;
+      model->add(to_text(venue).toLower(), region);
+      model->add(QString::fromStdString(region.get_name()).toLower(), region);
     }
     for(auto& country : countries) {
-      auto region = Region(country);
-      region.SetName(
-        GetDefaultCountryDatabase().FromCode(country).m_name);
+      auto region = Region(DEFAULT_COUNTRIES.from(country).m_name);
+      region += country;
       model->add(to_text(country).toLower(), region);
-      model->add(QString::fromStdString(region.GetName()).toLower(), region);
+      model->add(QString::fromStdString(region.get_name()).toLower(), region);
     }
     return model;
   }
@@ -1609,7 +1609,8 @@ UiProfile Spire::make_date_filter_panel_profile() {
     auto& default_date_unit = get<DateFilterPanel::DateUnit>(
       "default_date_unit", profile.get_properties());
     auto button = make_label_button("Click me");
-    auto model = std::make_shared<LocalValueModel<DateFilterPanel::DateRange>>();
+    auto model =
+      std::make_shared<LocalValueModel<DateFilterPanel::DateRange>>();
     auto default_date_range = DateFilterPanel::DateRange();
     default_date_range.m_start = parse_date(default_start_date.get());
     default_date_range.m_end = parse_date(default_end_date.get());
@@ -1756,8 +1757,8 @@ UiProfile Spire::make_destination_box_profile() {
   properties.push_back(make_standard_property<QString>("current", "TSX"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("DestinationBox", properties, [] (auto& profile) {
-    auto selection = GetDefaultDestinationDatabase().SelectEntries(
-      [] (auto& value) { return true; });
+    auto selection =
+      DEFAULT_DESTINATIONS.select_all([] (auto& value) { return true; });
     auto destinations =
       std::make_shared<ArrayListModel<DestinationDatabase::Entry>>();
     for(auto& destination : selection) {
@@ -1789,7 +1790,7 @@ UiProfile Spire::make_destination_list_item_profile() {
   auto profile = UiProfile("DestinationListItem", properties,
     [] (auto& profile) {
       auto item = new DestinationListItem(
-        GetDefaultDestinationDatabase().FromId(DefaultDestinations::TSX()));
+        DEFAULT_DESTINATIONS.from(DefaultDestinations::TSX));
       apply_widget_properties(item, profile.get_properties());
       return item;
     });
@@ -1919,18 +1920,19 @@ UiProfile Spire::make_duration_filter_panel_profile() {
         auto panel =
           new DurationFilterPanel(range, "Filter by Duration", *button);
         auto filter_slot = profile.make_event_slot<QString>("SubmitSignal");
-        panel->connect_submit_signal([=] (const DurationFilterPanel::Range& submission) {
-          auto to_string =
-            [&] (const auto& value) {
-              if(value) {
-                return QString::fromStdString(to_simple_string(*value));
-              }
-              return QString("null");
-            };
-          filter_slot(QString("%1, %2").
-            arg(to_string(submission.m_min)).
-            arg(to_string(submission.m_max)));
-        });
+        panel->connect_submit_signal(
+          [=] (const DurationFilterPanel::Range& submission) {
+            auto to_string =
+              [&] (const auto& value) {
+                if(value) {
+                  return QString::fromStdString(to_simple_string(*value));
+                }
+                return QString("null");
+              };
+            filter_slot(QString("%1, %2").
+              arg(to_string(submission.m_min)).
+              arg(to_string(submission.m_max)));
+          });
         panel->show();
       });
       return button;
@@ -2530,7 +2532,7 @@ UiProfile Spire::make_icon_button_profile() {
   auto profile = UiProfile("IconButton", properties, [] (auto& profile) {
     auto& tooltip = get<QString>("tooltip", profile.get_properties());
     auto button = make_icon_button(
-      imageFromSvg(":/Icons/demo.svg", scale(26, 26)), tooltip.get());
+      image_from_svg(":/Icons/demo.svg", scale(26, 26)), tooltip.get());
     apply_widget_properties(button, profile.get_properties());
     auto& disable_on_click =
       get<bool>("disable_on_click", profile.get_properties());
@@ -2551,7 +2553,7 @@ UiProfile Spire::make_icon_toggle_button_profile() {
   auto profile = UiProfile("IconToggleButton", properties, [] (auto& profile) {
     auto& tooltip = get<QString>("tooltip", profile.get_properties());
     auto button = make_icon_toggle_button(
-      imageFromSvg(":/Icons/demo.svg", scale(26, 26)), tooltip.get());
+      image_from_svg(":/Icons/demo.svg", scale(26, 26)), tooltip.get());
     apply_widget_properties(button, profile.get_properties());
     return button;
   });
@@ -2996,39 +2998,6 @@ UiProfile Spire::make_list_view_profile() {
   return profile;
 }
 
-UiProfile Spire::make_market_box_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  properties.push_back(make_standard_property<QString>("current", "ARCX"));
-  properties.push_back(make_standard_property("read_only", false));
-  auto profile = UiProfile("MarketBox", properties, [] (auto& profile) {
-    auto& current = get<QString>("current", profile.get_properties());
-    auto current_model = std::make_shared<LocalMarketModel>(
-      current.get().toStdString());
-    auto box = make_market_box(current_model, GetDefaultMarketDatabase());
-    box->setFixedWidth(scale_width(112));
-    apply_widget_properties(box, profile.get_properties());
-    current.connect_changed_signal([=] (const auto& current) {
-      if(current.length() != 4) {
-        return;
-      }
-      auto code = MarketCode(current.toUpper().toStdString().c_str());
-      auto& market = GetDefaultMarketDatabase().FromCode(code);
-      if(!market.m_code.IsEmpty()) {
-        box->get_current()->set(code);
-      }
-    });
-    auto& read_only = get<bool>("read_only", profile.get_properties());
-    read_only.connect_changed_signal(
-      std::bind_front(&MarketBox::set_read_only, box));
-    box->get_current()->connect_update_signal(
-      profile.make_event_slot<MarketToken>("Current"));
-    box->connect_submit_signal(profile.make_event_slot<MarketToken>("Submit"));
-    return box;
-  });
-  return profile;
-}
-
 UiProfile Spire::make_menu_button_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3106,7 +3075,7 @@ UiProfile Spire::make_menu_icon_button_profile() {
   auto profile = UiProfile("MenuIconButton", properties, [] (auto& profile) {
     auto& tooltip = get<QString>("tooltip", profile.get_properties());
     auto menu_button = make_menu_icon_button(
-      imageFromSvg(":/Icons/toolbar_icons/blotter.svg", scale(26, 26)),
+      image_from_svg(":/Icons/toolbar_icons/blotter.svg", scale(26, 26)),
       tooltip.get());
     apply_widget_properties(menu_button, profile.get_properties());
     auto& menu = menu_button->get_menu();
@@ -3603,13 +3572,13 @@ UiProfile Spire::make_region_box_profile() {
     };
     auto to_string = [] (const auto& region) {
       auto text = QString();
-      for(auto& country : region.GetCountries()) {
+      for(auto& country : region.get_countries()) {
         text = text % to_text(country) % ",";
       }
-      for(auto& market : region.GetMarkets()) {
-        text = text % to_text(MarketToken(market)) % ",";
+      for(auto& venue : region.get_venues()) {
+        text = text % to_text(venue) % ",";
       }
-      for(auto& security : region.GetSecurities()) {
+      for(auto& security : region.get_securities()) {
         text = text % to_text(security) % ",";
       }
       text.remove(text.length() - 1, 1);
@@ -3637,18 +3606,18 @@ UiProfile Spire::make_region_box_profile() {
     auto print_region = [] (const Region& region) {
       auto result = QString();
       result += "Region{Countries{";
-      for(auto& country : region.GetCountries()) {
-        result += GetDefaultCountryDatabase().FromCode(country).
-          m_threeLetterCode.GetData();
+      for(auto& country : region.get_countries()) {
+        result +=
+          DEFAULT_COUNTRIES.from(country).m_three_letter_code.get_data();
         result += " ";
       }
-      result += "} Markets{";
-      for(auto& market : region.GetMarkets()) {
-        result += to_text(MarketToken(market));
+      result += "} Venues{";
+      for(auto& venue : region.get_venues()) {
+        result += to_text(venue);
         result += " ";
       }
       result += "} Securities{";
-      for(auto& security : region.GetSecurities()) {
+      for(auto& security : region.get_securities()) {
         result += to_text(security);
         result += " ";
       }
@@ -3676,28 +3645,24 @@ UiProfile Spire::make_region_drop_down_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto current_region = define_enum<Region>(
-    {{"NSEX", GetDefaultMarketDatabase().FromCode(DefaultMarkets::NSEX())},
-     {"ISE", GetDefaultMarketDatabase().FromCode(DefaultMarkets::ISE())},
-     {"TSX", GetDefaultMarketDatabase().FromCode(DefaultMarkets::TSX())},
-     {"USA", Region(DefaultCountries::US())},
-     {"CAN", Region(DefaultCountries::CA())}});
+    {{"ASX", DefaultVenues::ASX}, {"CXD", DefaultVenues::CXD},
+     {"TSX", DefaultVenues::TSX}, {"USA", Region(DefaultCountries::US)},
+     {"CAN", Region(DefaultCountries::CA)}});
   properties.push_back(make_standard_enum_property("current", current_region));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("RegionDropDownBox", properties, [] (auto& profile) {
-    auto markets = std::vector<MarketCode>{DefaultMarkets::NSEX(),
-      DefaultMarkets::ISE(), DefaultMarkets::TSX()};
-    auto countries = std::vector<CountryCode>{DefaultCountries::US(),
-      DefaultCountries::CA()};
+    auto venues = std::vector{DefaultVenues::ASX, DefaultVenues::CXD,
+      DefaultVenues::TSX};
+    auto countries = std::vector{DefaultCountries::US, DefaultCountries::CA};
     auto regions = std::make_shared<ArrayListModel<Region>>();
-    for(auto& market_code : markets) {
-      auto market = GetDefaultMarketDatabase().FromCode(market_code);
-      auto region = Region(market);
-      region.SetName(market.m_description);
+    for(auto& venue : venues) {
+      auto region = Region(DEFAULT_VENUES.from(venue).m_display_name);
+      region += venue;
       regions->push(region);
     }
     for(auto& country : countries) {
-      auto region = Region(country);
-      region.SetName(GetDefaultCountryDatabase().FromCode(country).m_name);
+      auto region = Region(DEFAULT_COUNTRIES.from(country).m_name);
+      region += country;
       regions->push(region);
     }
     auto box = make_region_drop_down_box(std::move(regions));
@@ -3722,27 +3687,25 @@ UiProfile Spire::make_region_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto type_property = define_enum<int>(
-    {{"SECURITY", 0}, {"MARKET", 1}, {"COUNTRY", 2}});
+    {{"SECURITY", 0}, {"VENUE", 1}, {"COUNTRY", 2}});
   properties.push_back(make_standard_enum_property("type", type_property));
   auto profile = UiProfile("RegionListItem", properties, [] (auto& profile) {
     auto& type = get<int>("type", profile.get_properties());
     auto region = [&] {
       if(type.get() == 0) {
-        auto security = ParseSecurity("MSFT.NSDQ");
-        auto region = Region(security);
-        region.SetName("Microsoft Corporation");
+        auto security = parse_security("MSFT.NSDQ");
+        auto region = Region("Microsoft Corporation");
+        region += security;
         return region;
       } else if(type.get() == 1) {
-        auto market =
-          GetDefaultMarketDatabase().FromCode(DefaultMarkets::NSEX());
-        auto region = Region(market);
-        region.SetName(market.m_description);
+        auto venue = DEFAULT_VENUES.from(DefaultVenues::ASX);
+        auto region = Region(venue.m_description);
+        region += venue.m_venue;
         return region;
       } else {
-        auto country_code = DefaultCountries::US();
-        auto region = Region(country_code);
-        region.SetName(
-          GetDefaultCountryDatabase().FromCode(country_code).m_name);
+        auto country = DefaultCountries::US;
+        auto region = Region(DEFAULT_COUNTRIES.from(country).m_name);
+        region += country;
         return region;
       }
     }();
@@ -4041,7 +4004,7 @@ UiProfile Spire::make_security_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto profile = UiProfile("SecurityListItem", properties, [] (auto& profile) {
-    auto security = ParseSecurity("AB.NYSE");
+    auto security = parse_security("AB.NYSE");
     auto security_info =
       SecurityInfo(security, "Alliancebernstein Holding LP", "", 0);
     auto item = new SecurityListItem(security_info);
@@ -4146,7 +4109,7 @@ UiProfile Spire::make_slider_profile() {
       } else if(value == 1) {
         auto track_image = QImage(":/Icons/hue-spectrum.png");
         auto thumb_image =
-          imageFromSvg(":/Icons/color-thumb.svg", scale(14, 14));
+          image_from_svg(":/Icons/color-thumb.svg", scale(14, 14));
         update_style(*slider, [&] (auto& style) {
           style.get(Any() > Track()).set(IconImage(track_image));
           style.get(Any() > Thumb() > is_a<Icon>()).
@@ -4255,7 +4218,7 @@ UiProfile Spire::make_slider_2d_profile() {
     apply_widget_properties(slider, profile.get_properties());
     slider->setFixedSize(size);
     auto thumb_image =
-      imageFromSvg(":/Icons/color-thumb.svg", scale(14, 14));
+      image_from_svg(":/Icons/color-thumb.svg", scale(14, 14));
     auto& type = get<int>("type", profile.get_properties());
     type.connect_changed_signal([=] (auto value) {
       if(value == 0) {
@@ -5136,6 +5099,35 @@ UiProfile Spire::make_transition_view_profile() {
     status.connect_changed_signal([=] (auto s) {
       transition_view->set_status(s);
     });
+    return box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_venue_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current", "ASX"));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("VenueBox", properties, [] (auto& profile) {
+    auto& current = get<QString>("current", profile.get_properties());
+    auto current_model =
+      std::make_shared<LocalVenueModel>(Venue(current.get().toStdString()));
+    auto box = make_venue_box(current_model);
+    box->setFixedWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
+    current.connect_changed_signal([=] (const auto& current) {
+      auto code = Venue(current.toUpper().toStdString().c_str());
+      if(auto venue = DEFAULT_VENUES.from(code).m_venue) {
+        box->get_current()->set(venue);
+      }
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&VenueBox::set_read_only, box));
+    box->get_current()->connect_update_signal(
+      profile.make_event_slot<Venue>("Current"));
+    box->connect_submit_signal(profile.make_event_slot<Venue>("Submit"));
     return box;
   });
   return profile;

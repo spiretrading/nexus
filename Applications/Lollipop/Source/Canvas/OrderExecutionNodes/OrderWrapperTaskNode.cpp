@@ -17,24 +17,23 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace std;
 
-OrderWrapperTaskNode::OrderWrapperTaskNode(const Order& order,
+OrderWrapperTaskNode::OrderWrapperTaskNode(const std::shared_ptr<Order>& order,
     const UserProfile& userProfile)
-    : m_order(&order) {
+    : m_order(order) {
   Initialize("Single Order", userProfile);
 }
 
-OrderWrapperTaskNode::OrderWrapperTaskNode(const Order& order,
+OrderWrapperTaskNode::OrderWrapperTaskNode(const std::shared_ptr<Order>& order,
     const UserProfile& userProfile, string text)
-    : m_order(&order) {
+    : m_order(order) {
   Initialize(std::move(text), userProfile);
 }
 
-const Order& OrderWrapperTaskNode::GetOrder() const {
-  return *m_order;
+const std::shared_ptr<Order>& OrderWrapperTaskNode::GetOrder() const {
+  return m_order;
 }
 
 unique_ptr<OrderWrapperTaskNode> OrderWrapperTaskNode::Rename(
@@ -57,26 +56,26 @@ void OrderWrapperTaskNode::Initialize(string text,
   SetText(std::move(text));
   SetType(OrderReferenceType::GetInstance());
   AddChild(SingleOrderTaskNode::SECURITY_PROPERTY,
-    make_unique<SecurityNode>(m_order->GetInfo().m_fields.m_security,
-    userProfile.GetMarketDatabase()));
+    make_unique<SecurityNode>(m_order->get_info().m_fields.m_security,
+    userProfile.GetVenueDatabase()));
   AddChild(SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
-    make_unique<OrderTypeNode>(m_order->GetInfo().m_fields.m_type));
+    make_unique<OrderTypeNode>(m_order->get_info().m_fields.m_type));
   AddChild(SingleOrderTaskNode::SIDE_PROPERTY,
-    make_unique<SideNode>(m_order->GetInfo().m_fields.m_side));
+    make_unique<SideNode>(m_order->get_info().m_fields.m_side));
   unique_ptr<DestinationNode> destinationNode = LinkedNode::SetReferent(
-    DestinationNode(m_order->GetInfo().m_fields.m_destination), "security");
+    DestinationNode(m_order->get_info().m_fields.m_destination), "security");
   AddChild(SingleOrderTaskNode::DESTINATION_PROPERTY,
     std::move(destinationNode));
   auto priceNode = LinkedNode::SetReferent(
-    MoneyNode(m_order->GetInfo().m_fields.m_price), "security");
+    MoneyNode(m_order->get_info().m_fields.m_price), "security");
   AddChild(SingleOrderTaskNode::PRICE_PROPERTY, std::move(priceNode));
   auto quantityNode = LinkedNode::SetReferent(
-    IntegerNode(m_order->GetInfo().m_fields.m_quantity), "security");
+    IntegerNode(m_order->get_info().m_fields.m_quantity), "security");
   AddChild(SingleOrderTaskNode::QUANTITY_PROPERTY, std::move(quantityNode));
   AddChild(SingleOrderTaskNode::CURRENCY_PROPERTY,
-    make_unique<CurrencyNode>(m_order->GetInfo().m_fields.m_currency,
-    userProfile.GetCurrencyDatabase().FromId(
-    m_order->GetInfo().m_fields.m_currency).m_code.GetData()));
+    make_unique<CurrencyNode>(m_order->get_info().m_fields.m_currency,
+    userProfile.GetCurrencyDatabase().from(
+    m_order->get_info().m_fields.m_currency).m_code.get_data()));
   AddChild(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
-    make_unique<TimeInForceNode>(m_order->GetInfo().m_fields.m_timeInForce));
+    make_unique<TimeInForceNode>(m_order->get_info().m_fields.m_time_in_force));
 }

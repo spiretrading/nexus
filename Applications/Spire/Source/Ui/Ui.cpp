@@ -2,6 +2,7 @@
 #include <QIcon>
 #include <QLayout>
 #include <QPainter>
+#include <QWidget>
 #include "Spire/Spire/Dimensions.hpp"
 
 using namespace boost::posix_time;
@@ -31,11 +32,11 @@ QWidget* Spire::find_focus_proxy(QWidget& widget) {
   return proxy;
 }
 
-QImage Spire::imageFromSvg(const QString& path, const QSize& size) {
-  return imageFromSvg(path, size, QRect(0, 0, size.width(), size.height()));
+QImage Spire::image_from_svg(const QString& path, const QSize& size) {
+  return image_from_svg(path, size, QRect(0, 0, size.width(), size.height()));
 }
 
-QImage Spire::imageFromSvg(const QString& path, const QSize& size,
+QImage Spire::image_from_svg(const QString& path, const QSize& size,
     const QRect& box) {
   // TODO: Revert this when Qt fixes the regression.
   // https://bugreports.qt.io/browse/QTBUG-81259

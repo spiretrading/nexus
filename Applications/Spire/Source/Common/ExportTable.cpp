@@ -2,12 +2,13 @@
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include "Spire/Ui/CustomQtVariants.hpp"
 
-using namespace Beam::TimeService;
+using namespace Beam;
+using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 
-void Spire::export_table_as_csv(const TableModel& table,
+void Spire::export_as_csv(const TableModel& table,
     const std::vector<QString>& headers, std::ostream& out) {
   auto locale = QLocale();
   locale.setNumberOptions(QLocale::OmitGroupSeparator);
@@ -30,7 +31,7 @@ void Spire::export_table_as_csv(const TableModel& table,
       auto value = table.at(i, j);
       auto& value_type = value.get_type();
       if(value_type == typeid(ptime)) {
-        auto local_time = ToLocalTime(std::any_cast<ptime>(to_any(value)));
+        auto local_time = to_local_time(std::any_cast<ptime>(to_any(value)));
         out << to_iso_extended_string(local_time).replace(10, 1, " ");
       } else if(value_type == typeid(bool) || value_type == typeid(int) ||
           value_type == typeid(double) || value_type == typeid(date) ||

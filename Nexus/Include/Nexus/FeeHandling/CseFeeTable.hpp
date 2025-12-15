@@ -2,8 +2,8 @@
 #define NEXUS_CSE_FEE_TABLE_HPP
 #include <array>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include "Nexus/FeeHandling/FeeHandling.hpp"
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
+#include "Nexus/FeeHandling/ParseFeeTable.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 
 namespace Nexus {
@@ -74,27 +74,27 @@ namespace Nexus {
 
     /** The fee table for default listed continuous trading. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>,
-      TRADE_TYPE_COUNT * PRICE_CLASS_COUNT> m_feeTable;
+      TRADE_TYPE_COUNT * PRICE_CLASS_COUNT> m_fee_table;
 
     /** The fee table for interlisted continuous trading. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>,
-      TRADE_TYPE_COUNT * PRICE_CLASS_COUNT> m_interlistedFeeTable;
+      TRADE_TYPE_COUNT * PRICE_CLASS_COUNT> m_interlisted_fee_table;
 
     /** The fee table for ETF listed continuous trading. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>,
-      TRADE_TYPE_COUNT * PRICE_CLASS_COUNT> m_etfFeeTable;
+      TRADE_TYPE_COUNT * PRICE_CLASS_COUNT> m_etf_fee_table;
 
     /** The fee table for CSE listed continuous trading. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
-      m_cseListedFeeTable;
+      m_cse_listed_fee_table;
 
     /** The fee table for CSE listed opening trades. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
-      m_cseOpenFeeTable;
+      m_cse_open_fee_table;
 
     /** The fee table for CSE listed closing trades. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
-      m_cseCloseFeeTable;
+      m_cse_close_fee_table;
   };
 
   /**
@@ -102,42 +102,38 @@ namespace Nexus {
    * @param config The configuration to parse the CseFeeTable from.
    * @return The CseFeeTable represented by the <i>config</i>.
    */
-  inline CseFeeTable ParseCseFeeTable(const YAML::Node& config) {
-    auto feeTable = CseFeeTable();
-    ParseFeeTable(config, "fee_table",
-      Beam::Store(feeTable.m_feeTable));
-    ParseFeeTable(config, "interlisted_fee_table",
-      Beam::Store(feeTable.m_interlistedFeeTable));
-    ParseFeeTable(config, "etf_fee_table",
-      Beam::Store(feeTable.m_etfFeeTable));
-    ParseFeeTable(config, "cse_listed_fee_table",
-      Beam::Store(feeTable.m_cseListedFeeTable));
-    ParseFeeTable(config, "open_fee_table",
-      Beam::Store(feeTable.m_cseOpenFeeTable));
-    ParseFeeTable(config, "close_fee_table",
-      Beam::Store(feeTable.m_cseCloseFeeTable));
-    return feeTable;
+  inline CseFeeTable parse_cse_fee_table(const YAML::Node& config) {
+    auto table = CseFeeTable();
+    parse_fee_table(config, "fee_table", Beam::out(table.m_fee_table));
+    parse_fee_table(config, "interlisted_fee_table",
+      Beam::out(table.m_interlisted_fee_table));
+    parse_fee_table(config, "etf_fee_table", Beam::out(table.m_etf_fee_table));
+    parse_fee_table(
+      config, "cse_listed_fee_table", Beam::out(table.m_cse_listed_fee_table));
+    parse_fee_table(
+      config, "open_fee_table", Beam::out(table.m_cse_open_fee_table));
+    parse_fee_table(
+      config, "close_fee_table", Beam::out(table.m_cse_close_fee_table));
+    return table;
   }
 
   /**
    * Determines the liquidity flag for a CSE trade based on the provided string.
-   * @param liquidityFlag The liquidity flag string.
+   * @param flag The liquidity flag string.
    * @return The corresponding LiquidityFlag.
    */
-  inline LiquidityFlag GetCseLiquidityFlag(const std::string& liquidityFlag) {
-    if(liquidityFlag.size() >= 1) {
-      if(liquidityFlag[0] == 'P') {
+  inline LiquidityFlag get_cse_liquidity_flag(const std::string& flag) {
+    if(flag.size() >= 1) {
+      if(flag[0] == 'P') {
         return LiquidityFlag::PASSIVE;
-      } else if(liquidityFlag[0] == 'T') {
+      } else if(flag[0] == 'T') {
         return LiquidityFlag::ACTIVE;
       } else {
-        std::cout << "Unknown liquidity flag [CSE]: \"" <<
-          liquidityFlag << "\"\n";
+        std::cout << "Unknown liquidity flag [CSE]: \"" << flag << "\"\n";
         return LiquidityFlag::ACTIVE;
       }
     } else {
-      std::cout << "Unknown liquidity flag [CSE]: \"" <<
-        liquidityFlag << "\"\n";
+      std::cout << "Unknown liquidity flag [CSE]: \"" << flag << "\"\n";
       return LiquidityFlag::ACTIVE;
     }
   }
@@ -147,7 +143,7 @@ namespace Nexus {
    * @param price The trade price.
    * @return The corresponding PriceClass.
    */
-  inline CseFeeTable::PriceClass GetCsePriceClass(Money price) {
+  inline CseFeeTable::PriceClass get_cse_price_class(Money price) {
     if(price < Money::ONE) {
       return CseFeeTable::PriceClass::SUBDOLLAR;
     }
@@ -156,14 +152,14 @@ namespace Nexus {
 
   /**
    * Determines the session type for a CSE trade based on the provided string.
-   * @param liquidityFlag The liquidity flag string.
+   * @param flag The liquidity flag string.
    * @return The corresponding Session.
    */
-  inline CseFeeTable::Session GetCseSession(const std::string& liquidityFlag) {
-    if(liquidityFlag.size() > 3) {
-      if(liquidityFlag[3] == 'O') {
+  inline CseFeeTable::Session get_cse_session(const std::string& flag) {
+    if(flag.size() > 3) {
+      if(flag[3] == 'O') {
         return CseFeeTable::Session::OPEN;
-      } else if(liquidityFlag[3] == 'M') {
+      } else if(flag[3] == 'M') {
         return CseFeeTable::Session::CLOSE;
       }
     }
@@ -172,12 +168,11 @@ namespace Nexus {
 
   /**
    * Determines the trade type for a CSE trade based on the provided string.
-   * @param liquidityFlag The liquidity flag string.
+   * @param flag The liquidity flag string.
    * @return The corresponding TradeType.
    */
-  inline CseFeeTable::TradeType GetCseTradeType(
-      const std::string& liquidityFlag) {
-    if(liquidityFlag.size() >= 3 && liquidityFlag[2] == 'D') {
+  inline CseFeeTable::TradeType get_cse_trade_type(const std::string& flag) {
+    if(flag.size() >= 3 && flag[2] == 'D') {
       return CseFeeTable::TradeType::DARK;
     }
     return CseFeeTable::TradeType::DEFAULT;
@@ -186,132 +181,128 @@ namespace Nexus {
   /**
    * Retrieves the fee for a default security based on trade type, price class,
    * and liquidity flag.
-   * @param feeTable The CseFeeTable containing the fee data.
-   * @param tradeType The trade type.
-   * @param priceClass The price class of the trade.
-   * @param liquidityFlag The liquidity flag of the trade.
+   * @param table The CseFeeTable containing the fee data.
+   * @param type The trade type.
+   * @param price_class The price class of the trade.
+   * @param flag The liquidity flag of the trade.
    * @return The corresponding fee.
    */
-  inline Money GetDefaultFee(const CseFeeTable& feeTable,
-      CseFeeTable::TradeType tradeType, CseFeeTable::PriceClass priceClass,
-      LiquidityFlag liquidityFlag) {
-    auto row = static_cast<std::size_t>(tradeType) *
-      CseFeeTable::PRICE_CLASS_COUNT + static_cast<std::size_t>(priceClass);
-    return feeTable.m_feeTable[row][static_cast<std::size_t>(liquidityFlag)];
+  inline Money get_default_fee(const CseFeeTable& table,
+      CseFeeTable::TradeType type, CseFeeTable::PriceClass price_class,
+      LiquidityFlag flag) {
+    auto row = static_cast<std::size_t>(type) *
+      CseFeeTable::PRICE_CLASS_COUNT + static_cast<std::size_t>(price_class);
+    return table.m_fee_table[row][static_cast<std::size_t>(flag)];
   }
 
   /**
    * Retrieves the fee for an interlisted security based on trade type, price
    * class, and liquidity flag.
-   * @param feeTable The CseFeeTable containing the fee data.
-   * @param tradeType The trade type.
-   * @param priceClass The price class of the trade.
-   * @param liquidityFlag The liquidity flag of the trade.
+   * @param table The CseFeeTable containing the fee data.
+   * @param type The trade type.
+   * @param price_class The price class of the trade.
+   * @param flag The liquidity flag of the trade.
    * @return The corresponding fee.
    */
-  inline Money GetInterlistedFee(const CseFeeTable& feeTable,
-      CseFeeTable::TradeType tradeType, CseFeeTable::PriceClass priceClass,
-      LiquidityFlag liquidityFlag) {
-    auto row = static_cast<std::size_t>(tradeType) *
-      CseFeeTable::PRICE_CLASS_COUNT + static_cast<std::size_t>(priceClass);
-    return feeTable.m_interlistedFeeTable[row][
-      static_cast<std::size_t>(liquidityFlag)];
+  inline Money get_interlisted_fee(const CseFeeTable& table,
+      CseFeeTable::TradeType type, CseFeeTable::PriceClass price_class,
+      LiquidityFlag flag) {
+    auto row = static_cast<std::size_t>(type) *
+      CseFeeTable::PRICE_CLASS_COUNT + static_cast<std::size_t>(price_class);
+    return table.m_interlisted_fee_table[row][static_cast<std::size_t>(flag)];
   }
 
   /**
    * Retrieves the fee for an ETF security based on trade type, price class, and
    * liquidity flag.
-   * @param feeTable The CseFeeTable containing the fee data.
-   * @param tradeType The trade type.
-   * @param priceClass The price class of the trade.
-   * @param liquidityFlag The liquidity flag of the trade.
+   * @param table The CseFeeTable containing the fee data.
+   * @param type The trade type.
+   * @param price_class The price class of the trade.
+   * @param flag The liquidity flag of the trade.
    * @return The corresponding fee.
    */
-  inline Money GetEtfFee(const CseFeeTable& feeTable,
-      CseFeeTable::TradeType tradeType, CseFeeTable::PriceClass priceClass,
-      LiquidityFlag liquidityFlag) {
-    auto row = static_cast<std::size_t>(tradeType) *
-      CseFeeTable::PRICE_CLASS_COUNT + static_cast<std::size_t>(priceClass);
-    return feeTable.m_etfFeeTable[row][static_cast<std::size_t>(liquidityFlag)];
+  inline Money get_etf_fee(const CseFeeTable& table,
+      CseFeeTable::TradeType type, CseFeeTable::PriceClass price_class,
+      LiquidityFlag flag) {
+    auto row = static_cast<std::size_t>(type) *
+      CseFeeTable::PRICE_CLASS_COUNT + static_cast<std::size_t>(price_class);
+    return table.m_etf_fee_table[row][static_cast<std::size_t>(flag)];
   }
 
   /**
    * Retrieves the fee for a CSE listed security based on price class and
    * liquidity flag.
-   * @param feeTable The CseFeeTable containing the fee data.
-   * @param priceClass The price class of the trade.
-   * @param liquidityFlag The liquidity flag of the trade.
+   * @param table The CseFeeTable containing the fee data.
+   * @param price_class The price class of the trade.
+   * @param flag The liquidity flag of the trade.
    * @return The corresponding fee.
    */
-  inline Money GetCseListedFee(const CseFeeTable& feeTable,
-      CseFeeTable::PriceClass priceClass, LiquidityFlag liquidityFlag) {
-    return feeTable.m_cseListedFeeTable[static_cast<std::size_t>(priceClass)][
-      static_cast<std::size_t>(liquidityFlag)];
+  inline Money get_cse_listed_fee(const CseFeeTable& table,
+      CseFeeTable::PriceClass price_class, LiquidityFlag flag) {
+    return table.m_cse_listed_fee_table[static_cast<std::size_t>(price_class)][
+      static_cast<std::size_t>(flag)];
   }
 
   /**
    * Retrieves the fee for a CSE listed security in the opening auction based on
    * price class and liquidity flag.
-   * @param feeTable The CseFeeTable containing the fee data.
-   * @param priceClass The price class of the trade.
-   * @param liquidityFlag The liquidity flag of the trade.
+   * @param table The CseFeeTable containing the fee data.
+   * @param price_class The price class of the trade.
+   * @param flag The liquidity flag of the trade.
    * @return The corresponding fee.
    */
-  inline Money GetOpenFee(const CseFeeTable& feeTable,
-      CseFeeTable::PriceClass priceClass, LiquidityFlag liquidityFlag) {
-    return feeTable.m_cseOpenFeeTable[static_cast<std::size_t>(priceClass)][
-      static_cast<std::size_t>(liquidityFlag)];
+  inline Money get_open_fee(const CseFeeTable& table,
+      CseFeeTable::PriceClass price_class, LiquidityFlag flag) {
+    return table.m_cse_open_fee_table[static_cast<std::size_t>(price_class)][
+      static_cast<std::size_t>(flag)];
   }
 
   /**
    * Retrieves the fee for a CSE listed security in the closing auction based on
    * price class and liquidity flag.
-   * @param feeTable The CseFeeTable containing the fee data.
-   * @param priceClass The price class of the trade.
-   * @param liquidityFlag The liquidity flag of the trade.
+   * @param table The CseFeeTable containing the fee data.
+   * @param price_class The price class of the trade.
+   * @param flag The liquidity flag of the trade.
    * @return The corresponding fee.
    */
-  inline Money GetCloseFee(const CseFeeTable& feeTable,
-      CseFeeTable::PriceClass priceClass, LiquidityFlag liquidityFlag) {
-    return feeTable.m_cseCloseFeeTable[static_cast<std::size_t>(priceClass)][
-      static_cast<std::size_t>(liquidityFlag)];
+  inline Money get_close_fee(const CseFeeTable& table,
+      CseFeeTable::PriceClass price_class, LiquidityFlag flag) {
+    return table.m_cse_close_fee_table[static_cast<std::size_t>(price_class)][
+      static_cast<std::size_t>(flag)];
   }
 
   /**
    * Calculates the fee for a trade executed on the CSE.
-   * @param feeTable The CseFeeTable containing the fee data.
+   * @param table The CseFeeTable containing the fee data.
    * @param listing The CseListing type of the security.
-   * @param executionReport The ExecutionReport for the trade.
+   * @param report The ExecutionReport for the trade.
    * @return The calculated fee for the trade.
    */
-  inline Money CalculateFee(const CseFeeTable& feeTable,
-      CseFeeTable::CseListing listing,
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    if(executionReport.m_lastQuantity == 0) {
+  inline Money calculate_fee(const CseFeeTable& table,
+      CseFeeTable::CseListing listing, const ExecutionReport& report) {
+    if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }
-    auto priceClass = GetCsePriceClass(executionReport.m_lastPrice);
-    auto liquidityFlag = GetCseLiquidityFlag(executionReport.m_liquidityFlag);
-    auto session = GetCseSession(executionReport.m_liquidityFlag);
+    auto price_class = get_cse_price_class(report.m_last_price);
+    auto flag = get_cse_liquidity_flag(report.m_liquidity_flag);
+    auto session = get_cse_session(report.m_liquidity_flag);
     if(session == CseFeeTable::Session::OPEN) {
-      return executionReport.m_lastQuantity *
-        GetOpenFee(feeTable, priceClass, liquidityFlag);
+      return report.m_last_quantity * get_open_fee(table, price_class, flag);
     } else if(session == CseFeeTable::Session::CLOSE) {
-      return executionReport.m_lastQuantity *
-        GetCloseFee(feeTable, priceClass, liquidityFlag);
+      return report.m_last_quantity * get_close_fee(table, price_class, flag);
     }
-    auto tradeType = GetCseTradeType(executionReport.m_liquidityFlag);
+    auto type = get_cse_trade_type(report.m_liquidity_flag);
     auto fee = [&] {
       if(listing == CseFeeTable::CseListing::CSE_LISTED) {
-        return GetCseListedFee(feeTable, priceClass, liquidityFlag);
+        return get_cse_listed_fee(table, price_class, flag);
       } else if(listing == CseFeeTable::CseListing::INTERLISTED) {
-        return GetInterlistedFee(feeTable, tradeType, priceClass, liquidityFlag);
+        return get_interlisted_fee(table, type, price_class, flag);
       } else if(listing == CseFeeTable::CseListing::ETF) {
-        return GetEtfFee(feeTable, tradeType, priceClass, liquidityFlag);
+        return get_etf_fee(table, type, price_class, flag);
       }
-      return GetDefaultFee(feeTable, tradeType, priceClass, liquidityFlag);
+      return get_default_fee(table, type, price_class, flag);
     }();
-    return executionReport.m_lastQuantity * fee;
+    return report.m_last_quantity * fee;
   }
 }
 

@@ -3,7 +3,6 @@
 #include <QWidget>
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

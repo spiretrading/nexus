@@ -46,8 +46,7 @@ namespace {
   };
 }
 
-void Spire::add_link_menu(ContextMenu& parent, SecurityContext& context,
-    const MarketDatabase& markets) {
+void Spire::add_link_menu(ContextMenu& parent, SecurityContext& context) {
   struct Item {
     Security m_security;
     QString m_title;

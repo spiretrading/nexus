@@ -41,7 +41,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(Ref<UserProfile> userProfile,
     : QFrame(parent, flags),
       SecurityContext(identifier),
       m_ui(std::make_unique<Ui_TimeAndSalesWindow>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
   resize(scale(size()));
   m_ui->m_timeAndSalesView->setItemDelegate(
@@ -141,8 +141,7 @@ void TimeAndSalesWindow::SetProperties(
 
 void TimeAndSalesWindow::DisplaySecurity(const Security& security) {
   m_security = security;
-  setWindowTitle(QString::fromStdString(
-    ToString(m_security, m_userProfile->GetMarketDatabase())) +
+  setWindowTitle(QString::fromStdString(to_string(m_security)) +
     tr(" - Time and Sales"));
   auto widths = std::vector<int>();
   for(auto i = 0; i < TimeAndSalesProperties::COLUMN_COUNT; ++i) {
@@ -279,7 +278,7 @@ void TimeAndSalesWindow::OnContextMenu(const QPoint& position) {
     ExportModelAsCsv(*m_userProfile, *m_model, exportFile);
   } else if(auto linkAction =
       dynamic_cast<LinkSecurityContextAction*>(selectedAction)) {
-    linkAction->Execute(Store(*this));
+    linkAction->Execute(out(*this));
   }
 }
 

@@ -3,9 +3,10 @@
 #include <boost/optional/optional.hpp>
 #include <QWidget>
 #include "Spire/Styles/Selectors.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class TitleBar;
+
 namespace Styles {
 
   /** Selects a highlighted widget. */

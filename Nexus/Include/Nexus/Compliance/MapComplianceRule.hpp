@@ -2,13 +2,12 @@
 #define NEXUS_MAP_COMPLIANCE_RULE_HPP
 #include <functional>
 #include <Beam/Collections/SynchronizedMap.hpp>
-#include "Nexus/Compliance/Compliance.hpp"
+#include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
-#include "Nexus/OrderExecutionService/Order.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Maps a key to an independent set of ComplianceRules.
@@ -30,80 +29,151 @@ namespace Nexus::Compliance {
         std::unique_ptr<ComplianceRule> (const ComplianceRuleSchema& schema)>;
 
       /** The type of function used to compute the key. */
-      using KeyBuilder = std::function<
-        Key (const OrderExecutionService::Order& order)>;
+      using KeyBuilder = std::function<Key (const Order& order)>;
 
       /**
        * Constructs a MapComplianceRule.
        * @param schema The ComplianceRuleSchema to apply.
-       * @param complianceRuleBuilder Returns the compliance rule.
-       * @param keyBuilder Returns the key.
+       * @param rule_builder Returns the compliance rule.
+       * @param key_builder Returns the key.
        */
       MapComplianceRule(ComplianceRuleSchema schema,
-        ComplianceRuleBuilder complianceRuleBuilder, KeyBuilder keyBuilder);
+        ComplianceRuleBuilder rule_builder, KeyBuilder key_builder);
 
-      void Submit(const OrderExecutionService::Order& order) override;
-
-      void Cancel(const OrderExecutionService::Order& order) override;
-
-      void Add(const OrderExecutionService::Order& order) override;
+      void submit(const std::shared_ptr<Order>& order) override;
+      void cancel(const std::shared_ptr<Order>& order) override;
+      void add(const std::shared_ptr<Order>& order) override;
 
     private:
       ComplianceRuleSchema m_schema;
-      ComplianceRuleBuilder m_complianceRuleBuilder;
-      KeyBuilder m_keyBuilder;
+      ComplianceRuleBuilder m_rule_builder;
+      KeyBuilder m_key_builder;
       Beam::SynchronizedUnorderedMap<Key, std::unique_ptr<ComplianceRule>>
         m_rules;
   };
 
+  template<typename K>
+  MapComplianceRule(ComplianceRuleSchema, std::function<
+    std::unique_ptr<ComplianceRule> (const ComplianceRuleSchema&)>, K) ->
+      MapComplianceRule<std::invoke_result_t<K, const Order&>>;
+
   /**
-   * Returns a MapComplianceRule that applies per Security.
-   * @param schema The ComplianceRuleSchema to apply.
-   * @param complianceRuleBuilder Returns the compliance rule.
+   * Defines a MapComplianceRule that applies on an account by account basis.
    */
-  inline std::unique_ptr<MapComplianceRule<Security>>
-      MakeMapSecurityComplianceRule(ComplianceRuleSchema schema,
-      MapComplianceRule<Security>::ComplianceRuleBuilder
-      complianceRuleBuilder) {
-    return std::make_unique<MapComplianceRule<Security>>(
-      std::move(schema), std::move(complianceRuleBuilder),
-      [] (const auto& order) {
-        return order.GetInfo().m_fields.m_security;
+  using PerAccountComplianceRule = MapComplianceRule<Beam::DirectoryEntry>;
+
+  /** The standard name used to identify the PerAccountComplianceRule. */
+  inline const auto PER_ACCOUNT_RULE_NAME = std::string("per_account");
+
+  /**
+   * Returns a ComplianceRuleSchema representing a PerAccountComplianceRule.
+   * @param schema The ComplianceRuleSchema to apply per account.
+   */
+  inline ComplianceRuleSchema make_per_account_compliance_rule_schema(
+      const ComplianceRuleSchema& schema) {
+    return wrap(PER_ACCOUNT_RULE_NAME, schema);
+  }
+
+  /**
+   * Makes a new PerSecurityComplianceRule.
+   * @param schema The ComplianceRuleSchema to apply.
+   * @param rule_builder Builds an instance of the compliance rule per account.
+   */
+  inline std::unique_ptr<PerAccountComplianceRule>
+      make_per_account_compliance_rule(ComplianceRuleSchema schema,
+        PerAccountComplianceRule::ComplianceRuleBuilder rule_builder) {
+    return std::make_unique<PerAccountComplianceRule>(
+      std::move(schema), std::move(rule_builder), [] (const auto& order) {
+        return order.get_info().m_fields.m_account;
+      });
+  }
+
+  /** Defines a MapComplianceRule that applies to each security individually. */
+  using PerSecurityComplianceRule = MapComplianceRule<Security>;
+
+  /** The standard name used to identify the PerSecurityComplianceRule. */
+  inline const auto PER_SECURITY_RULE_NAME = std::string("per_security");
+
+  /**
+   * Returns a ComplianceRuleSchema representing a PerSecurityComplianceRule.
+   * @param schema The ComplianceRuleSchema to apply per security.
+   */
+  inline ComplianceRuleSchema make_per_security_compliance_rule_schema(
+      const ComplianceRuleSchema& schema) {
+    return wrap(PER_SECURITY_RULE_NAME, schema);
+  }
+
+  /**
+   * Makes a new PerSecurityComplianceRule.
+   * @param schema The ComplianceRuleSchema to apply.
+   * @param rule_builder Builds an instance of the compliance rule per security.
+   */
+  inline std::unique_ptr<PerSecurityComplianceRule>
+      make_per_security_compliance_rule(ComplianceRuleSchema schema,
+        PerSecurityComplianceRule::ComplianceRuleBuilder rule_builder) {
+    return std::make_unique<PerSecurityComplianceRule>(
+      std::move(schema), std::move(rule_builder), [] (const auto& order) {
+        return order.get_info().m_fields.m_security;
+      });
+  }
+
+  /** Defines a MapComplianceRule that applies to each Side individually. */
+  using PerSideComplianceRule = MapComplianceRule<Side>;
+
+  /** The standard name used to identify the PerSideComplianceRule. */
+  inline const auto PER_SIDE_RULE_NAME = std::string("per_side");
+
+  /**
+   * Returns a ComplianceRuleSchema representing a PerSideComplianceRule.
+   * @param schema The ComplianceRuleSchema to apply per side.
+   */
+  inline ComplianceRuleSchema make_per_side_compliance_rule_schema(
+      const ComplianceRuleSchema& schema) {
+    return wrap(PER_SIDE_RULE_NAME, schema);
+  }
+
+  /**
+   * Makes a new PerSideComplianceRule.
+   * @param schema The ComplianceRuleSchema to apply.
+   * @param rule_builder Builds an instance of the compliance rule per Side.
+   */
+  inline std::unique_ptr<PerSideComplianceRule>
+      make_per_side_compliance_rule(ComplianceRuleSchema schema,
+        PerSecurityComplianceRule::ComplianceRuleBuilder rule_builder) {
+    return std::make_unique<PerSideComplianceRule>(
+      std::move(schema), std::move(rule_builder), [] (const auto& order) {
+        return order.get_info().m_fields.m_side;
       });
   }
 
   template<typename K>
   MapComplianceRule<K>::MapComplianceRule(ComplianceRuleSchema schema,
-    ComplianceRuleBuilder complianceRuleBuilder, KeyBuilder keyBuilder)
+    ComplianceRuleBuilder rule_builder, KeyBuilder key_builder)
     : m_schema(std::move(schema)),
-      m_complianceRuleBuilder(std::move(complianceRuleBuilder)),
-      m_keyBuilder(std::move(keyBuilder)) {}
+      m_rule_builder(std::move(rule_builder)),
+      m_key_builder(std::move(key_builder)) {}
 
   template<typename K>
-  void MapComplianceRule<K>::Submit(const OrderExecutionService::Order& order) {
-    auto& rule = *m_rules.GetOrInsert(m_keyBuilder(order),
-      [&] {
-        return m_complianceRuleBuilder(m_schema);
-      });
-    rule.Submit(order);
+  void MapComplianceRule<K>::submit(const std::shared_ptr<Order>& order) {
+    auto& rule = *m_rules.get_or_insert(m_key_builder(*order), [&] {
+      return m_rule_builder(m_schema);
+    });
+    rule.submit(order);
   }
 
   template<typename K>
-  void MapComplianceRule<K>::Cancel(const OrderExecutionService::Order& order) {
-    auto rule = m_rules.Find(m_keyBuilder(order));
-    if(!rule.is_initialized()) {
-      return;
+  void MapComplianceRule<K>::cancel(const std::shared_ptr<Order>& order) {
+    if(auto rule = m_rules.find(m_key_builder(*order))) {
+      (*rule)->cancel(order);
     }
-    (*rule)->Cancel(order);
   }
 
   template<typename K>
-  void MapComplianceRule<K>::Add(const OrderExecutionService::Order& order) {
-    auto& rule = *m_rules.GetOrInsert(m_keyBuilder(order),
-      [&] {
-        return m_complianceRuleBuilder(m_schema);
-      });
-    rule.Add(order);
+  void MapComplianceRule<K>::add(const std::shared_ptr<Order>& order) {
+    auto& rule = *m_rules.get_or_insert(m_key_builder(*order), [&] {
+      return m_rule_builder(m_schema);
+    });
+    rule.add(order);
   }
 }
 

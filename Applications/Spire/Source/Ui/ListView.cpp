@@ -806,7 +806,7 @@ void ListView::on_item_click(ItemEntry& item) {
 }
 
 void ListView::on_list_operation(const AnyListModel::Operation& operation) {
-  m_operation_queue.Add([=] {
+  m_operation_queue.add([=] {
     visit(operation,
       [&] (AnyListModel::StartTransaction) {
         m_is_transaction = true;

@@ -9,10 +9,8 @@
 #include "Spire/Charting/ChartPlotViewWindowSettings.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
-#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Beam;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -23,7 +21,7 @@ using namespace std;
 
 namespace {
   ChartValue GetScale(const ChartPlotView::AxisParameters& parameters) {
-    if(parameters.m_type->GetCompatibility(MoneyType::GetInstance()) ==
+    if(parameters.m_type->GetCompatibility(Spire::MoneyType::GetInstance()) ==
         CanvasType::Compatibility::EQUAL) {
       return ChartValue(Money::CENT);
     } else if(parameters.m_type->GetCompatibility(
@@ -67,7 +65,7 @@ ChartPlotView::ChartPlotView(QWidget* parent)
 
 void ChartPlotView::Initialize(Ref<UserProfile> userProfile,
     const Properties& properties) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_properties = properties;
   QPalette p(palette());
   p.setColor(QPalette::Window, m_properties.m_backgroundColor);
@@ -123,14 +121,14 @@ void ChartPlotView::SetYAxisParameters(const AxisParameters& parameters) {
 
 void ChartPlotView::Plot(const std::shared_ptr<ChartPlot>& plot) {
   m_plots.push_back(plot);
-  m_plotConnections.AddConnection(plot->ConnectUpdateSignal(
+  m_plotConnections.add(plot->ConnectUpdateSignal(
     std::bind(&ChartPlotView::OnPlotUpdate, this)));
   update();
 }
 
 void ChartPlotView::Clear() {
   m_plots.clear();
-  m_plotConnections.DisconnectAll();
+  m_plotConnections.disconnect();
   update();
 }
 
@@ -212,7 +210,7 @@ void ChartPlotView::PaintGrids() {
   auto chartWidth = m_xAxisParameters.m_max - m_xAxisParameters.m_min;
   auto gridPoint = m_xAxisParameters.m_min +
     (xScale - (m_xAxisParameters.m_min % xScale));
-  QRectF previousTextBox(scale_width(-100), 0, 0, 0);
+  QRectF previousTextBox(-100, 0, 0, 0);
   while(true) {
     painter.setPen(gridPen);
     auto topPoint = ComputeScreenPoint(gridPoint, m_yAxisParameters.m_min);
@@ -222,9 +220,8 @@ void ChartPlotView::PaintGrids() {
     }
     auto label = LoadLabel(gridPoint, *GetXAxisParameters().m_type);
     auto boundingBox = painter.fontMetrics().boundingRect(label);
-    QRectF textBox(topPoint.x() - boundingBox.width() / 2,
-      topPoint.y() + scale_height(4),
-      boundingBox.width() + scale_width(4), boundingBox.height());
+    QRectF textBox(topPoint.x() - boundingBox.width() / 2, topPoint.y() + 4,
+      boundingBox.width() + 4, boundingBox.height());
     if(textBox.x() > previousTextBox.x() + previousTextBox.width()) {
       painter.drawLine(topPoint, bottomPoint);
       painter.setPen(labelPen);
@@ -238,7 +235,7 @@ void ChartPlotView::PaintGrids() {
   auto chartHeight = m_yAxisParameters.m_max - m_yAxisParameters.m_min;
   gridPoint = m_yAxisParameters.m_min +
     (yScale - (m_yAxisParameters.m_min % yScale));
-  previousTextBox = QRectF(0, height() + scale_height(100), 0, 0);
+  previousTextBox = QRectF(0, height() + 100, 0, 0);
   while(true) {
     painter.setPen(gridPen);
     auto leftPoint = ComputeScreenPoint(m_xAxisParameters.m_min, gridPoint);
@@ -248,9 +245,9 @@ void ChartPlotView::PaintGrids() {
     }
     auto label = LoadLabel(gridPoint, *GetYAxisParameters().m_type);
     auto boundingBox = painter.fontMetrics().boundingRect(label);
-    QRectF textBox(rightPoint.x() + scale_width(4),
-      rightPoint.y() - boundingBox.height() / 2,
-      boundingBox.width() + scale_width(4), boundingBox.height());
+    QRectF textBox(rightPoint.x() + 4,
+      rightPoint.y() - boundingBox.height() / 2, boundingBox.width() + 4,
+      boundingBox.height());
     if(textBox.y() + textBox.height() < previousTextBox.y()) {
       painter.drawLine(leftPoint, rightPoint);
       painter.setPen(labelPen);
@@ -328,18 +325,18 @@ void ChartPlotView::PaintCrossHairs() {
 
 void ChartPlotView::PaintCandlestickChartPlot(
     const CandlestickChartPlot& plot) {
-  auto bodyTop = std::max(plot.GetValue().GetOpen(),
-    plot.GetValue().GetClose());
-  auto bodyBottom = std::min(plot.GetValue().GetOpen(),
-    plot.GetValue().GetClose());
-  auto bodyTopLeft = ComputeScreenPoint(plot.GetValue().GetStart(), bodyTop);
+  auto bodyTop = std::max(plot.GetValue().get_open(),
+    plot.GetValue().get_close());
+  auto bodyBottom = std::min(plot.GetValue().get_open(),
+    plot.GetValue().get_close());
+  auto bodyTopLeft = ComputeScreenPoint(plot.GetValue().get_start(), bodyTop);
   bodyTopLeft.rx() += 1;
-  auto bodyBottomRight = ComputeScreenPoint(plot.GetValue().GetEnd(),
+  auto bodyBottomRight = ComputeScreenPoint(plot.GetValue().get_end(),
     bodyBottom);
   bodyBottomRight.rx() -= 1;
   QRect body(bodyTopLeft, bodyBottomRight);
   QBrush bodyBrush(Qt::SolidPattern);
-  if(plot.GetValue().GetOpen() >= plot.GetValue().GetClose()) {
+  if(plot.GetValue().get_open() >= plot.GetValue().get_close()) {
     bodyBrush.setColor(m_properties.m_downtickColor);
   } else {
     bodyBrush.setColor(m_properties.m_uptickColor);
@@ -361,16 +358,16 @@ void ChartPlotView::PaintCandlestickChartPlot(
   QPen shadowPen(m_properties.m_outlineColor);
   painter.setBrush(shadowBrush);
   painter.setPen(shadowPen);
-  auto barWidth = plot.GetValue().GetEnd() - plot.GetValue().GetStart();
-  auto shadowLeft = plot.GetValue().GetStart() + (4 * barWidth) / 9;
-  auto shadowRight = plot.GetValue().GetStart() + (5 * barWidth) / 9;
-  auto highShadowTop = plot.GetValue().GetHigh();
+  auto barWidth = plot.GetValue().get_end() - plot.GetValue().get_start();
+  auto shadowLeft = plot.GetValue().get_start() + (4 * barWidth) / 9;
+  auto shadowRight = plot.GetValue().get_start() + (5 * barWidth) / 9;
+  auto highShadowTop = plot.GetValue().get_high();
   auto highShadowBottom = bodyTop;
   auto highShadowTopLeft = ComputeScreenPoint(shadowLeft, highShadowTop);
   auto highShadowBottomRight =
     ComputeScreenPoint(shadowRight, highShadowBottom);
   highShadowBottomRight.ry() -= 1;
-  if(body.width() <= scale_width(3)) {
+  if(body.width() <= 3) {
     highShadowBottomRight.rx() = highShadowTopLeft.x();
   }
   QRect highShadow(highShadowTopLeft, highShadowBottomRight);
@@ -385,11 +382,11 @@ void ChartPlotView::PaintCandlestickChartPlot(
     painter.drawRect(highShadow);
   }
   auto lowShadowTop = bodyBottom;
-  auto lowShadowBottom = plot.GetValue().GetLow();
+  auto lowShadowBottom = plot.GetValue().get_low();
   auto lowShadowTopLeft = ComputeScreenPoint(shadowLeft, lowShadowTop);
   auto lowShadowBottomRight = ComputeScreenPoint(shadowRight, lowShadowBottom);
   lowShadowTopLeft.ry() += 1;
-  if(body.width() <= scale_width(3)) {
+  if(body.width() <= 3) {
     lowShadowBottomRight.rx() = lowShadowTopLeft.x();
   }
   QRect lowShadow(lowShadowTopLeft, lowShadowBottomRight);
@@ -406,7 +403,7 @@ void ChartPlotView::PaintCandlestickChartPlot(
 
 void ChartPlotView::PaintHorizontalCursor(const QPoint& position,
     const ChartValue& value) {
-  const auto WIDTH = scale_width(55);
+  const auto WIDTH = 55;
   const auto HEIGHT = height() - position.y();
   QPainter painter{this};
   QPoint bodyTopLeft{position.x() - WIDTH / 2, position.y()};
@@ -425,7 +422,7 @@ void ChartPlotView::PaintHorizontalCursor(const QPoint& position,
 void ChartPlotView::PaintVerticalCursor(const QPoint& position,
     const ChartValue& value) {
   const auto WIDTH = width() - position.x();
-  const auto HEIGHT = scale_height(16);
+  const auto HEIGHT = 16;
   QPainter painter{this};
   QPoint bodyTopLeft{position.x(), position.y() - HEIGHT / 2};
   QPoint bodyBottomRight{position.x() + WIDTH, position.y() + HEIGHT / 2};
@@ -434,9 +431,8 @@ void ChartPlotView::PaintVerticalCursor(const QPoint& position,
   bodyBrush.setColor(QColor{155, 155, 155});
   painter.setBrush(bodyBrush);
   painter.drawRect(body);
-  QRectF textBox{static_cast<qreal>(body.x() + scale_width(4)),
-    static_cast<qreal>(body.y()), static_cast<qreal>(body.width()),
-    static_cast<qreal>(body.height())};
+  QRectF textBox{static_cast<qreal>(body.x() + 4), static_cast<qreal>(body.y()),
+    static_cast<qreal>(body.width()), static_cast<qreal>(body.height())};
   painter.drawText(textBox, Qt::AlignLeft | Qt::AlignVCenter,
     LoadLabel(value, *GetYAxisParameters().m_type));
 }
@@ -493,14 +489,14 @@ QString ChartPlotView::LoadLabel(ChartValue value,
       CanvasType::Compatibility::EQUAL) {
     auto v = value.ToMoney();
     if(v >= Money::ONE) {
-      v = Floor(v, 3);
+      v = floor_to(v, Money::CENT / 1000);
     } else {
-      v = Floor(v, 4);
+      v = floor_to(v, Money::CENT / 10000);
     }
     return QString::fromStdString(lexical_cast<string>(v));
   } else if(type.GetCompatibility(DateTimeType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
-    auto v = ToLocalTime(value.ToDateTime());
+    auto v = to_local_time(value.ToDateTime());
     auto s = to_simple_string(v).substr(12, 8);
     if(v.time_of_day().seconds() == 0) {
       s = s.substr(0, 5);
@@ -514,12 +510,12 @@ QString ChartPlotView::LoadLabel(ChartValue value,
 }
 
 int ChartPlotView::GetChartWidth() const {
-  static const int LABEL_WIDTH = scale_width(40);
+  static const int LABEL_WIDTH = 40;
   return width() - LABEL_WIDTH;
 }
 
 int ChartPlotView::GetChartHeight() const {
-  static const int LABEL_HEIGHT = scale_height(20);
+  static const int LABEL_HEIGHT = 20;
   return height() - LABEL_HEIGHT;
 }
 

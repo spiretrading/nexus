@@ -4,7 +4,6 @@
 #include "Spire/Styles/Block.hpp"
 #include "Spire/Styles/CompositeProperty.hpp"
 #include "Spire/Styles/EvaluatedProperty.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
@@ -60,9 +59,7 @@ namespace Spire::Styles {
        * Tests if two EvaluatedBlock's contain the same EvaluatedProperties in
        * the same order.
        */
-      bool operator ==(const EvaluatedBlock& block) const;
-
-      bool operator !=(const EvaluatedBlock& block) const;
+      bool operator ==(const EvaluatedBlock& block) const = default;
 
     private:
       std::vector<EvaluatedProperty> m_properties;

@@ -53,9 +53,7 @@ namespace Spire {
       static const boost::uuids::uuid LUA_SCRIPT_UUID;
       static const boost::uuids::uuid MARKET_ASK_ORDER_TASK_UUID;
       static const boost::uuids::uuid MARKET_BID_ORDER_TASK_UUID;
-      static const boost::uuids::uuid MARKET_ORDER_IMBALANCE_UUID;
       static const boost::uuids::uuid MARKET_ORDER_TASK_UUID;
-      static const boost::uuids::uuid MARKET_UUID;
       static const boost::uuids::uuid MAX_FLOOR_UUID;
       static const boost::uuids::uuid MAX_UUID;
       static const boost::uuids::uuid MIN_UUID;
@@ -66,6 +64,7 @@ namespace Spire {
       static const boost::uuids::uuid NOT_UUID;
       static const boost::uuids::uuid OPTIONAL_PRICE_UUID;
       static const boost::uuids::uuid ORDER_FIELDS_RECORD_UUID;
+      static const boost::uuids::uuid ORDER_IMBALANCE_UUID;
       static const boost::uuids::uuid ORDER_STATUS_UUID;
       static const boost::uuids::uuid ORDER_TYPE_UUID;
       static const boost::uuids::uuid PORTFOLIO_ENTRY_RECORD_UUID;
@@ -89,6 +88,7 @@ namespace Spire {
       static const boost::uuids::uuid TIME_RANGE_PARAMETER_UUID;
       static const boost::uuids::uuid TIMER_UUID;
       static const boost::uuids::uuid UNTIL_TASK_UUID;
+      static const boost::uuids::uuid VENUE_UUID;
       static const boost::uuids::uuid WHEN_TASK_UUID;
 
       /** Loads the list of BuiltInCatalogEntries. */

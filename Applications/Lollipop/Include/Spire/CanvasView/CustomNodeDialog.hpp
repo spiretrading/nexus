@@ -5,7 +5,7 @@
 #include <QMetaObject>
 #include "Spire/Canvas/Common/CustomNode.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class QAbstractButton;
 class QComboBox;

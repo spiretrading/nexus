@@ -1,17 +1,19 @@
-#ifndef SPIRE_WINDOW_SETTINGS_HPP
-#define SPIRE_WINDOW_SETTINGS_HPP
+#ifndef SPIRE_LEGACY_UI_WINDOW_SETTINGS_HPP
+#define SPIRE_LEGACY_UI_WINDOW_SETTINGS_HPP
 #include <memory>
 #include <string>
 #include <vector>
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <QByteArray>
-#include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 class QWidget;
 
-namespace Spire::LegacyUI {
+namespace Spire {
+  class UserProfile;
+
+namespace LegacyUI {
 
   /** Stores the information needed to re-open a window. */
   class WindowSettings {
@@ -58,6 +60,7 @@ namespace Spire::LegacyUI {
    * @param geometry The byte array containing the geometry.
    */
   void restore_geometry(QWidget& widget, const QByteArray& geometry);
+}
 }
 
 #endif

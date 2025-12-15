@@ -1,7 +1,6 @@
 #ifndef SPIRE_SIGN_IN_EXCEPTION_HPP
 #define SPIRE_SIGN_IN_EXCEPTION_HPP
 #include <stdexcept>
-#include "Spire/SignIn/SignIn.hpp"
 
 namespace Spire {
 

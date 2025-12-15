@@ -3,7 +3,6 @@
 #include "Spire/Canvas/StandardNodes/ComparisonSignatures.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 using namespace std;
 
@@ -19,5 +18,3 @@ void LesserOrEqualsNode::Apply(CanvasNodeVisitor& visitor) const {
 unique_ptr<CanvasNode> LesserOrEqualsNode::Clone() const {
   return make_unique<LesserOrEqualsNode>(*this);
 }
-
-LesserOrEqualsNode::LesserOrEqualsNode(ReceiveBuilder) {}

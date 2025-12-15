@@ -6,8 +6,8 @@
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Styles/StateSelector.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/TableFilter.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

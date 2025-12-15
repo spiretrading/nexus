@@ -108,27 +108,25 @@ namespace Details {
 }
 
 namespace Beam {
-namespace Serialization {
   template<>
   struct Shuttle<Spire::UI::EnvironmentSettings> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Spire::UI::EnvironmentSettings& value,
-        unsigned int version) {
-      shuttle.Shuttle("book_view_properties", value.m_bookViewProperties);
-      shuttle.Shuttle("dashboards", value.m_dashboards);
-      shuttle.Shuttle("order_imbalance_indicator_properties",
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::UI::EnvironmentSettings& value,
+        unsigned int version) const {
+      shuttle.shuttle("book_view_properties", value.m_bookViewProperties);
+      shuttle.shuttle("dashboards", value.m_dashboards);
+      shuttle.shuttle("order_imbalance_indicator_properties",
         value.m_orderImbalanceIndicatorProperties);
-      shuttle.Shuttle("interactions_properties",
+      shuttle.shuttle("interactions_properties",
         value.m_interactionsProperties);
-      shuttle.Shuttle("key_bindings", value.m_keyBindings);
-      shuttle.Shuttle("portfolio_viewer_properties",
+      shuttle.shuttle("key_bindings", value.m_keyBindings);
+      shuttle.shuttle("portfolio_viewer_properties",
         value.m_portfolioViewerProperties);
-      shuttle.Shuttle("time_and_sales_properties",
+      shuttle.shuttle("time_and_sales_properties",
         value.m_timeAndSalesProperties);
-      shuttle.Shuttle("window_layouts", value.m_windowLayouts);
+      shuttle.shuttle("window_layouts", value.m_windowLayouts);
     }
   };
-}
 }
 
 #endif

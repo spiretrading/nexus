@@ -6,6 +6,7 @@
 #include <QAbstractTableModel>
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Spire/Async/QtPromise.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
@@ -24,7 +25,7 @@ namespace Spire {
         NAME_COLUMN,
 
         /** The sector column. */
-        SECTOR_COLUMN,
+        SECTOR_COLUMN
       };
 
       /** The number of columns available. */
@@ -43,11 +44,8 @@ namespace Spire {
       void Search(const std::string& prefix);
 
       int rowCount(const QModelIndex& parent) const override;
-
       int columnCount(const QModelIndex& parent) const override;
-
       QVariant data(const QModelIndex& index, int role) const override;
-
       QVariant headerData(
         int section, Qt::Orientation orientation, int role) const override;
 

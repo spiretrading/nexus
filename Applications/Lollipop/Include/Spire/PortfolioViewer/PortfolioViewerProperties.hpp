@@ -5,10 +5,9 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Pointers/Out.hpp>
 #include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Side.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/UI.hpp"
 
 namespace Spire {
@@ -38,11 +37,11 @@ namespace Spire {
       PortfolioViewerProperties();
 
       //! Returns the set of selected groups.
-      const std::unordered_set<Beam::ServiceLocator::DirectoryEntry>&
+      const std::unordered_set<Beam::DirectoryEntry>&
         GetSelectedGroups() const;
 
       //! Returns the set of selected groups.
-      std::unordered_set<Beam::ServiceLocator::DirectoryEntry>&
+      std::unordered_set<Beam::DirectoryEntry>&
         GetSelectedGroups();
 
       //! Returns <code>true</code> iff all groups should be selected.
@@ -64,17 +63,17 @@ namespace Spire {
       //! Sets whether all currencies should be selected.
       void SetSelectingAllCurrencies(bool value);
 
-      //! Returns the set of selected markets.
-      const std::unordered_set<Nexus::MarketCode>& GetSelectedMarkets() const;
+      //! Returns the set of selected venues.
+      const std::unordered_set<Nexus::Venue>& GetSelectedVenues() const;
 
-      //! Returns the set of selected markets.
-      std::unordered_set<Nexus::MarketCode>& GetSelectedMarkets();
+      //! Returns the set of selected venues.
+      std::unordered_set<Nexus::Venue>& GetSelectedVenues();
 
-      //! Returns <code>true</code> iff all markets should be selected.
-      bool IsSelectingAllMarkets() const;
+      //! Returns <code>true</code> iff all venues should be selected.
+      bool IsSelectingAllVenues() const;
 
-      //! Sets whether all markets should be selected.
-      void SetSelectingAllMarkets(bool value);
+      //! Sets whether all venues should be selected.
+      void SetSelectingAllVenues(bool value);
 
       //! Returns the set of selected Sides.
       const std::unordered_set<Nexus::Side>& GetSelectedSides() const;
@@ -83,29 +82,29 @@ namespace Spire {
       std::unordered_set<Nexus::Side>& GetSelectedSides();
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
-      std::unordered_set<Beam::ServiceLocator::DirectoryEntry> m_selectedGroups;
+      friend struct Beam::DataShuttle;
+      std::unordered_set<Beam::DirectoryEntry> m_selectedGroups;
       bool m_selectAllGroups;
       std::unordered_set<Nexus::CurrencyId> m_selectedCurrencies;
       bool m_selectAllCurrencies;
-      std::unordered_set<Nexus::MarketCode> m_selectedMarkets;
-      bool m_selectAllMarkets;
+      std::unordered_set<Nexus::Venue> m_selectedVenues;
+      bool m_selectAllVenues;
       std::unordered_set<Nexus::Side> m_selectedSides;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void PortfolioViewerProperties::Shuttle(Shuttler& shuttle,
+  template<Beam::IsShuttle S>
+  void PortfolioViewerProperties::shuttle(S& shuttle,
       unsigned int version) {
-    shuttle.Shuttle("selected_groups", m_selectedGroups);
-    shuttle.Shuttle("select_all_groups", m_selectAllGroups);
-    shuttle.Shuttle("selected_currencies", m_selectedCurrencies);
-    shuttle.Shuttle("select_all_currencies", m_selectAllCurrencies);
-    shuttle.Shuttle("selected_markets", m_selectedMarkets);
-    shuttle.Shuttle("select_all_markets", m_selectAllMarkets);
-    shuttle.Shuttle("selected_sides", m_selectedSides);
+    shuttle.shuttle("selected_groups", m_selectedGroups);
+    shuttle.shuttle("select_all_groups", m_selectAllGroups);
+    shuttle.shuttle("selected_currencies", m_selectedCurrencies);
+    shuttle.shuttle("select_all_currencies", m_selectAllCurrencies);
+    shuttle.shuttle("selected_venues", m_selectedVenues);
+    shuttle.shuttle("select_all_venues", m_selectAllVenues);
+    shuttle.shuttle("selected_sides", m_selectedSides);
   }
 }
 

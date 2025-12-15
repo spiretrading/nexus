@@ -3,7 +3,7 @@
 #include <QDialog>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class Ui_BookViewPropertiesDialog;
 

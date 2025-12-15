@@ -8,4 +8,4 @@ const DashboardCell& DashboardCellRenderer::GetCell() const {
 }
 
 DashboardCellRenderer::DashboardCellRenderer(Ref<const DashboardCell> cell)
-    : m_cell{cell.Get()} {}
+    : m_cell{cell.get()} {}

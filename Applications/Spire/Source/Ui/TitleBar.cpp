@@ -14,6 +14,7 @@
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
 
 using namespace boost;
@@ -78,7 +79,7 @@ namespace {
   }
 
   auto make_button(const QString& icon) {
-    auto button = make_icon_button(imageFromSvg(icon, BUTTON_SIZE()));
+    auto button = make_icon_button(image_from_svg(icon, BUTTON_SIZE()));
     button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
     button->setFixedSize(BUTTON_SIZE());
     set_style(*button, BUTTON_STYLE());
