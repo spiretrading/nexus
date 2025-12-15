@@ -8,6 +8,7 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
 #include "Spire/Ui/TagComboBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost::iterators;
 using namespace boost::signals2;
@@ -34,7 +35,7 @@ namespace {
   void sort(ListModel<Region>& list) {
     enum class EntryType : std::uint8_t {
       COUNTRY,
-      MARKET,
+      VENUE,
       SECURITY,
       NONE
     };
@@ -58,15 +59,15 @@ namespace {
       auto entry = Entry();
       entry.m_index = i;
       auto& region = list.get(i);
-      auto& countries = region.GetCountries();
-      auto markets = region.GetMarkets();
-      auto& securities = region.GetSecurities();
+      auto& countries = region.get_countries();
+      auto& venues = region.get_venues();
+      auto& securities = region.get_securities();
       if(!countries.empty()) {
         entry.m_type = EntryType::COUNTRY;
         entry.m_key = to_text(*countries.begin());
-      } else if(!markets.empty()) {
-        entry.m_type = EntryType::MARKET;
-        entry.m_key = to_text(MarketToken(*markets.begin()));
+      } else if(!venues.empty()) {
+        entry.m_type = EntryType::VENUE;
+        entry.m_key = to_text(*venues.begin());
       } else if(!securities.empty()) {
         entry.m_type = EntryType::SECURITY;
         entry.m_key = to_text(*securities.begin());
