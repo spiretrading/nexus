@@ -2,7 +2,7 @@
 
 # ASX TradeMatch fees based on https://www.asxonline.com/intradoc-cgi/groups/participant_services/documents/information/asx_027373.pdf
 au_equities:
-  spire_fee: 0.18
+  spire_fee: 0.24
 
   #              Price < 0.25    0.25 <= Price < 1.00   Price >= 1.00
   # Regular          X                   X                  X
@@ -16,7 +16,7 @@ au_equities:
 
 # Fees charges for Canadian equity markets.
 ca_equities:
-  spire_fee: 0.00014
+  spire_fee: 0.000185
   iiroc_fee: 0.132
   cds_fee: 0.13
   cds_cap: 5
@@ -37,14 +37,14 @@ ca_equities:
   # >= $5.00               X       X        X          X           X            X            X
   xats:
     general_table:
-      [[-0.0001, 0.0007, 0.0003, 0.0001, 0.0000, 0.0001, 0.0001],
-       [-0.0001, 0.0007, 0.0003, 0.0001, 0.0000, 0.0001, 0.0001],
-       [-0.0021, 0.0029, 0.0003, 0.0004, 0.0000, 0.0003, 0.0003],
-       [-0.0021, 0.0029, 0.0005, 0.0004, 0.0000, 0.0005, 0.0005]]
+      [[-0.0007, 0.0011, 0.0003, 0.0001, 0.0000, 0.0001, 0.0001],
+       [-0.0007, 0.0011, 0.0003, 0.0001, 0.0000, 0.0001, 0.0001],
+       [-0.0025, 0.0030, 0.0003, 0.0004, 0.0000, 0.0003, 0.0003],
+       [-0.0025, 0.0030, 0.0005, 0.0004, 0.0000, 0.0005, 0.0005]]
 
     etf_table:
-      [[0.0000, 0.0006, 0.0003, 0.0001, 0.0000, 0.0001, 0.0001],
-       [0.0000, 0.0006, 0.0003, 0.0001, 0.0000, 0.0001, 0.0001],
+      [[-0.0007, 0.0011, 0.0003, 0.0001, 0.0000, 0.0001, 0.0001],
+       [-0.0007, 0.0011, 0.0003, 0.0001, 0.0000, 0.0001, 0.0001],
        [0.0000, 0.0006, 0.0003, 0.0004, 0.0000, 0.0003, 0.0003],
        [0.0000, 0.0006, 0.0005, 0.0004, 0.0000, 0.0005, 0.0005]]
 
@@ -69,55 +69,108 @@ ca_equities:
        [0.00030,  0.00000, 0.00030,  0.00000],
        [0.00030,  0.00000, 0.00030,  0.00000]]
 
-  # CSE fees are based on https://thecse.com/trading/trading-resources/#trading-access-fees
+  # CSE fees are based on http://thecse.com/en/services/become-dealer/fee-schedule
   cse:
 
-  # The fee_table is structured as follows:
-  #                     Active, Passive
-  # >= $1.00               X       X
-  #  < $1.00               X       X
-  #  < $0.10               X       X
+    # The tables are structured as follows:
+    #                           Active, Passive
+    # >= $1.00                     X       X
+    #  < $1.00                     X       X
+    # Dark >= $1.00                X       X
+    # Dark  < $1.00                X       X
     fee_table:
+      [[0.0012, -0.0008],
+       [0.0003, -0.0001],
+       [0.0012, -0.0006],
+       [0.0003, -0.0001]]
+
+    interlisted_fee_table:
+      [[0.0025, -0.0021],
+       [0.0003, -0.0001],
+       [0.0025, -0.0016],
+       [0.0003, -0.0001]]
+
+    etf_fee_table:
+      [[0.0016, -0.0012],
+       [0.0003, -0.0001],
+       [0.0016, -0.0006],
+       [0.0003, -0.0001]]
+
+    # The tables are structured as follows:
+    #                  Active, Passive
+    # >= $1.00            X       X
+    #  < $1.00            X       X
+    cse_listed_fee_table:
       [[0.00020, 0.00020],
-       [0.00008, 0.00008],
-       [0.00004, 0.00004]]
+       [0.00015, 0.00015]]
+
+    open_fee_table:
+      [[0.0010, 0.0010],
+       [0.0005, 0.0005]]
+
+    close_fee_table:
+      [[0.0010, 0.0010],
+       [0.0005, 0.0005]]
 
   # CSE2 fees are based on https://thecse.com/trading/trading-resources/#trading-access-fees
   cse2:
 
-  # The fee_table is structured as follows:
-  #                     Active, Passive
-  # >= $1.00               X       X
-  #  < $1.00               X       X
+    # The fee_table is structured as follows:
+    #                     Active, Passive
+    # >= $1.00               X       X
+    #  < $1.00               X       X
     regular_table:
       [[-0.0020, 0.0028],
        [-0.0004, 0.0009]]
 
-  # The fee_table is structured as follows:
-  # Active, Passive
-  #    X       X
+    # The fee_table is structured as follows:
+    #                     Active, Passive
+    # >= $1.00               X       X
+    #  < $1.00               X       X
     dark_table:
-      [0.00, 0.00]
+      [[0.00, 0.0003],
+       [0.00, 0.0002]]
 
-  # The fee_table is structured as follows:
-  #                    Active, Passive
-  #  CSE Listed           X       X
-  #  Default              X       X
+    # The fee_table is structured as follows:
+    #                    Active, Passive
+    #  CSE Listed           X       X
+    #  Default              X       X
     debentures_or_notes_table:
       [[0.09, -0.07],
        [0.09, -0.08]]
 
-  # The fee_table is structured as follows:
-  # Active, Passive
-  #    X       X
+    # The fee_table is structured as follows:
+    # Active, Passive
+    #    X       X
     cse_listed_government_bonds_table:
       [9.75, 9.75]
 
-  # The fee_table is structured as follows:
-  # Active, Passive
-  #    X       X
+    # The fee_table is structured as follows:
+    #                     Active, Passive
+    # >= $1.00               X       X
+    #  < $1.00               X       X
     oddlot_table:
-      [0.00, 0.00]
+      [[-0.0003, 0.0004],
+       [-0.0002, 0.0003]]
+
+  # CXD fees are based on: https://www.nasdaq.com/docs/trading-fees-schedule-cxd
+  cxd:
+
+    # The fee tables are structured as follows:
+    #            At BBO/Price < $1.00, At BBO/Price < $5.00, At BBO, Inside BBO/Price < $1.00, Inside BBO/Price < $5.00, Inside BBO
+    # Active             X                      X               X             X                         X                    X
+    # Passive            X                      X               X             X                         X                    X
+    fee_table:
+      [[0.0001, 0.0002, 0.0002, 0.0004, 0.0004, 0.0006],
+       [0.0001, 0.0002, 0.0002, 0.0001, 0.0004, 0.0006]]
+
+    max_fee_table:
+      [[2.0, 10000.0, 10000.0, 10.0, 10.0, 10.0],
+       [2.0, 10000.0, 10000.0,  5.0, 10.0, 10.0]]
+
+    etf_fee_table:
+      [[0.0004, 0.0004, 0.0004,  0.0004,  0.0004,  0.0004],
+       [0.0000, 0.0000, 0.0000, -0.0001, -0.0001, -0.0001]]
 
   # CX2 fees are based on http://business.nasdaq.com/trade/Canadian-Equities/Trading/Pricing
   # Fees for notes and debentures are not supported.
@@ -157,11 +210,11 @@ ca_equities:
   #  Midpoint         X       X
   lynx:
     fee_table:
-      [[0.00135, -0.00115],
-       [0.00255, -0.00235],
-       [0.00165, -0.00145],
-       [0.00040, -0.00020],
-       [0.00002, 0.00000]]
+      [[0.0000, 0.0027],
+       [0.0000, 0.0027],
+       [0.0000, 0.0004],
+       [0.0000, 0.0006],
+       [0.0000, 0.0000]]
 
   # Match NOW fees based on http://www.triactcanada.com/fee-schedule.htm
   # Fees for notes and debentures are not supported.
@@ -207,7 +260,7 @@ ca_equities:
        [0.0017, -0.0010]]
 
     neo_book_table:
-      [[-0.0005, 0.0008],
+      [[-0.0007, 0.0010],
        [-0.0019, 0.0023]]
 
   # NEX fees based on http://www.tsx.com/trading/tsx-venture-exchange/fee-schedule
@@ -224,34 +277,34 @@ ca_equities:
   # Price < $1.00       X       X           X               X             X           X          X
   omga:
     fee_table:
-      [[0.0034, -0.0025, 0.0034, -0.0025, 0.0034, -0.0025, 0.0000],
-       [0.0011, -0.0006, 0.0011, -0.0006, 0.0011, -0.0006, 0.0000]]
+      [[0.0034, -0.0025, 0.0034, -0.0025, 0.0034, -0.0021, 0.0000],
+       [0.0012, -0.0007, 0.0012, -0.0007, 0.0012, -0.0007, 0.0000]]
 
   # Pure ATS fees based on http://www.cnsx.ca/CNSX/Trading/Fees--Hours/Fee-Schedule.aspx
-  # Fees for notes and debentures are not supported.
   # Table is structured as:
-  #                      Active, Passive
-  # Designated              X       X
-  # >= $1.00                X       X
-  # >= $0.10 & < $1.00      X       X
-  # < $0.10                 X       X
-
+  #                           Active, Passive
+  #      <  $1.00                X       X
+  #      >= $1.00                X       X
+  # Dark <  $1.00                X       X
+  # Dark >= $1.00                X       X
   pure:
-    tsx_venture_listed_fee_table:
-      [[-0.0014, 0.0018],
-       [-0.0014, 0.0018],
-       [-0.0006, 0.0008],
-       [-0.0006, 0.0008]]
+    fee_table:
+      [[0.0003, -0.0001],
+       [0.0012, -0.0008],
+       [0.0003, -0.0001],
+       [0.0012, -0.0006]]
 
-    tsx_listed_fee_table:
-      [[-0.0014, 0.0018],
-       [-0.0014, 0.0018],
-       [-0.0006, 0.0008],
-       [-0.0006, 0.0008]]
+    interlisted_table:
+      [[0.0003, -0.0001],
+       [0.0025, -0.0021],
+       [0.0003, -0.0001],
+       [0.0025, -0.0016]]
 
-    odd_lot: 0.0002
-    tsx_venture_subdime_cap: 1000.00
-    designated_securities_path: "./pure_designated_securities.yml"
+    etf_table:
+      [[0.0003, -0.0001],
+       [0.0016, -0.0012],
+       [0.0003, -0.0001],
+       [0.0016, -0.0006]]
 
   # TMX Select fees based on http://www.tsx.com/trading/tmx-select/fee-schedule
   # Fees for notes and debentures are not supported.

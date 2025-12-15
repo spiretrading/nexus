@@ -7,7 +7,7 @@ service_locator:
 enable_logging: false
 use_broker_number: true
 consolidate_mpids: false
-market: TSXV
+venue: TSXV
 sampling: 100ms
 enable_retransmission: false
 max_retransmissions: 10000

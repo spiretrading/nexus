@@ -59,16 +59,11 @@ namespace Nexus {
       T& as();
 
       std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
-
       void add(const std::shared_ptr<Order>& order);
-
       std::shared_ptr<Order> submit(const OrderInfo& info);
-
       void cancel(const OrderExecutionSession& session, OrderId id);
-
       void update(const OrderExecutionSession& session, OrderId id,
         const ExecutionReport& report);
-
       void close();
 
     private:

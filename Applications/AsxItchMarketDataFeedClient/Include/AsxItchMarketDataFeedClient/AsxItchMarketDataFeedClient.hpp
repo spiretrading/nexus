@@ -10,18 +10,17 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
-#include <Beam/Utilities/Endian.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/endian.hpp>
 #include "AsxItchMarketDataFeedClient/AsxItchConfiguration.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MoldUdp64/MoldUdp64Client.hpp"
 #include "Nexus/SoupBinTcp/SoupBinTcpClient.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** The type of product. */
   enum class ProductType {
@@ -43,7 +42,7 @@ namespace Nexus::MarketDataService {
     std::uint32_t m_id;
 
     /** The type of product. */
-    ProductType m_productType;
+    ProductType m_product_type;
 
     /** Details about the Security represented by this order book. */
     SecurityInfo m_security;
@@ -52,16 +51,16 @@ namespace Nexus::MarketDataService {
     CurrencyId m_currency;
 
     /** The number of decimal places used in the book's price. */
-    std::uint16_t m_priceDecimalPlaces;
+    std::uint16_t m_price_decimal_places;
 
     /** The number of decimal places used in the book's nominal value. */
-    std::uint16_t m_valueDecimalPlaces;
+    std::uint16_t m_value_decimal_places;
 
     /** The size of an odd-lot. */
-    std::uint32_t m_oddLotSize;
+    std::uint32_t m_odd_lot_size;
 
     /** The size of a block-lot. */
-    std::uint64_t m_blockLotSize;
+    std::uint64_t m_block_lot_size;
   };
 
   /**
@@ -78,35 +77,34 @@ namespace Nexus::MarketDataService {
       /**
        * The type of MarketDataFeedClient used to update the MarketDataServer.
        */
-      using MarketDataFeedClient = Beam::GetTryDereferenceType<M>;
+      using MarketDataFeedClient = Beam::dereference_t<M>;
 
       /** The type of client receiving ITCH messages. */
-      using ItchClient = Beam::GetTryDereferenceType<I>;
+      using ItchClient = Beam::dereference_t<I>;
 
       /** The type of client connecting to Glimpse. */
-      using GlimpseClient = Beam::GetTryDereferenceType<G>;
+      using GlimpseClient = Beam::dereference_t<G>;
 
       /**
        * Constructs a AsxItchMarketDataFeedClient.
        * @param config The configuration to use.
-       * @param marketDataFeedClient Initializes the MarketDataFeedClient.
-       * @param itchClient The client receiving ITCH messages.
-       * @param glimpseClient The client connecting to Glimpse.
+       * @param market_data_feed_client Initializes the MarketDataFeedClient.
+       * @param itch_client The client receiving ITCH messages.
+       * @param glimpse_client The client connecting to Glimpse.
        */
       template<typename MF, typename IF, typename GF>
       AsxItchMarketDataFeedClient(const AsxItchConfiguration& config,
-        Beam::Ref<CurrencyDatabase> currencyDatabase, MF&& marketDataFeedClient,
-        IF&& itchClient, GF&& glimpseClient);
+        MF&& market_data_feed_client, IF&& itch_client, GF&& glimpse_client);
 
       ~AsxItchMarketDataFeedClient();
 
-      void Close();
+      void close();
 
     private:
       struct OrderEntry {
         std::string m_mpid;
         Money m_price;
-        Quantity m_remainingQuantity;
+        Quantity m_remaining_quantity;
       };
       struct PriceLevel {
         Money m_price;
@@ -117,180 +115,175 @@ namespace Nexus::MarketDataService {
         std::vector<PriceLevel> m_bids;
       };
       AsxItchConfiguration m_config;
-      CurrencyDatabase* m_currencyDatabase;
-      Beam::GetOptionalLocalPtr<M> m_marketDataFeedClient;
-      Beam::GetOptionalLocalPtr<I> m_itchClient;
-      Beam::GetOptionalLocalPtr<G> m_glimpseClient;
-      boost::posix_time::ptime m_lastTimePoint;
+      Beam::local_ptr_t<M> m_market_data_feed_client;
+      Beam::local_ptr_t<I> m_itch_client;
+      Beam::local_ptr_t<G> m_glimpse_client;
+      boost::posix_time::ptime m_last_time_point;
       std::unordered_map<std::uint32_t, OrderBookDirectory>
-        m_orderBookDirectories;
-      std::unordered_map<Security, BboEntry> m_bboEntries;
-      std::unordered_map<std::string, OrderEntry> m_orderEntries;
-      Beam::Routines::RoutineHandler m_readLoopRoutine;
-      Beam::IO::OpenState m_openState;
+        m_order_book_directories;
+      std::unordered_map<Security, BboEntry> m_bbo_entries;
+      std::unordered_map<std::string, OrderEntry> m_order_entries;
+      Beam::RoutineHandler m_read_loop;
+      Beam::OpenState m_open_state;
 
       AsxItchMarketDataFeedClient(const AsxItchMarketDataFeedClient&) = delete;
       AsxItchMarketDataFeedClient& operator =(
         const AsxItchMarketDataFeedClient&) = delete;
       boost::posix_time::ptime
-        ParseTimestamp(Beam::Out<const char*> cursor) const;
-      std::uint8_t ParseChar(Beam::Out<const char*> cursor) const;
-      std::uint8_t ParseInt8(Beam::Out<const char*> cursor) const;
-      std::uint16_t ParseInt16(Beam::Out<const char*> cursor) const;
-      std::uint32_t ParseInt32(Beam::Out<const char*> cursor) const;
-      std::uint64_t ParseInt64(Beam::Out<const char*> cursor) const;
+        parse_timestamp(Beam::Out<const char*> cursor) const;
+      std::uint8_t parse_char(Beam::Out<const char*> cursor) const;
+      std::uint8_t parse_int8(Beam::Out<const char*> cursor) const;
+      std::uint16_t parse_int16(Beam::Out<const char*> cursor) const;
+      std::uint32_t parse_int32(Beam::Out<const char*> cursor) const;
+      std::uint64_t parse_int64(Beam::Out<const char*> cursor) const;
       std::string
-        ParseAlpha(std::size_t size, Beam::Out<const char*> cursor) const;
-      Side ParseSide(Beam::Out<const char*> cursor) const;
-      Money ParsePrice(const OrderBookDirectory& directory,
+        parse_alpha(std::size_t size, Beam::Out<const char*> cursor) const;
+      Side parse_side(Beam::Out<const char*> cursor) const;
+      Money parse_price(const OrderBookDirectory& directory,
         Beam::Out<const char*> cursor) const;
-      std::string ParseMpid(Beam::Out<const char*> cursor) const;
-      std::tuple<std::string, std::string> ParseBuyerSellerMpids(
+      std::string parse_mpid(Beam::Out<const char*> cursor) const;
+      std::tuple<std::string, std::string> parse_buyer_seller_mpids(
         Side side, Beam::Out<const char*> cursor) const;
-      std::string BuildOrderKey(const Security& security, Side side,
-        std::uint64_t orderId) const;
-      void UpdateBbo(const Security& security, Side side, Money price,
+      std::string build_order_key(const Security& security, Side side,
+        std::uint64_t order_id) const;
+      void update_bbo(const Security& security, Side side, Money price,
         Quantity delta, boost::posix_time::ptime timestamp);
-      void HandleSecondsMessage(const MoldUdp64::MoldUdp64Message& message);
-      void HandleAddOrderMessage(bool isAnonymous,
-        const MoldUdp64::MoldUdp64Message& message);
-      void HandleOrderExecutedMessage(
-        const MoldUdp64::MoldUdp64Message& message);
-      void HandleOrderExecutedAtPriceMessage(
-        const MoldUdp64::MoldUdp64Message& message);
-      void HandleOrderReplaceMessage(
-        const MoldUdp64::MoldUdp64Message& message);
-      void HandleOrderDeleteMessage(
-        const MoldUdp64::MoldUdp64Message& message);
-      void HandleTradeMessage(const MoldUdp64::MoldUdp64Message& message);
-      void HandleOrderBookDirectoryMessage(
-        const MoldUdp64::MoldUdp64Message& message);
-      void Dispatch(const MoldUdp64::MoldUdp64Message& message);
-      void ReadLoop();
+      void handle_seconds_message(const MoldUdp64Message& message);
+      void handle_add_order_message(
+        bool is_anonymous, const MoldUdp64Message& message);
+      void handle_order_executed_message(const MoldUdp64Message& message);
+      void handle_order_executed_at_price_message(
+        const MoldUdp64Message& message);
+      void handle_order_replaced_message(const MoldUdp64Message& message);
+      void handle_order_delete_message(const MoldUdp64Message& message);
+      void handle_trade_message(const MoldUdp64Message& message);
+      void handle_order_book_directory_message(const MoldUdp64Message& message);
+      void dispatch(const MoldUdp64Message& message);
+      void read_loop();
   };
 
   template<typename M, typename I, typename G>
   template<typename MF, typename IF, typename GF>
   AsxItchMarketDataFeedClient<M, I, G>::AsxItchMarketDataFeedClient(
-      const AsxItchConfiguration& config,
-      Beam::Ref<CurrencyDatabase> currencyDatabase, MF&& marketDataFeedClient,
-      IF&& itchClient, GF&& glimpseClient)
+      const AsxItchConfiguration& config, MF&& market_data_feed_client,
+      IF&& itch_client, GF&& glimpse_client)
       try : m_config(config),
-            m_currencyDatabase(currencyDatabase.Get()),
-            m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
-            m_itchClient(std::forward<IF>(itchClient)),
-            m_glimpseClient(std::forward<GF>(glimpseClient)),
-            m_lastTimePoint(boost::posix_time::not_a_date_time),
-            m_readLoopRoutine(Beam::Routines::Spawn(
-              std::bind(&AsxItchMarketDataFeedClient::ReadLoop, this))) {
+            m_market_data_feed_client(
+              std::forward<MF>(market_data_feed_client)),
+            m_itch_client(std::forward<IF>(itch_client)),
+            m_glimpse_client(std::forward<GF>(glimpse_client)),
+            m_last_time_point(boost::posix_time::not_a_date_time),
+            m_read_loop(Beam::spawn(
+              std::bind(&AsxItchMarketDataFeedClient::read_loop, this))) {
   } catch(const std::exception&) {
-    std::throw_with_nested(Beam::IO::ConnectException(
+    std::throw_with_nested(Beam::ConnectException(
       "Failed to initialize the ASX ITCH market data feed client."));
   }
 
   template<typename M, typename I, typename G>
   AsxItchMarketDataFeedClient<M, I, G>::~AsxItchMarketDataFeedClient() {
-    Close();
+   close();
   }
 
   template<typename M, typename I, typename G>
-  void AsxItchMarketDataFeedClient<M, I, G>::Close() {
-    if(m_openState.SetClosing()) {
+  void AsxItchMarketDataFeedClient<M, I, G>::close() {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_glimpseClient->Close();
-    m_itchClient->Close();
-    m_marketDataFeedClient->Close();
-    m_readLoopRoutine.Wait();
-    m_openState.Close();
+    m_glimpse_client->close();
+    m_itch_client->close();
+    m_market_data_feed_client->close();
+    m_read_loop.wait();
+    m_open_state.close();
   }
 
   template<typename M, typename I, typename G>
-  boost::posix_time::ptime AsxItchMarketDataFeedClient<M, I, G>::ParseTimestamp(
-      Beam::Out<const char*> cursor) const {
-    auto nanoseconds = Beam::FromBigEndian(
+  boost::posix_time::ptime
+      AsxItchMarketDataFeedClient<M, I, G>::parse_timestamp(
+        Beam::Out<const char*> cursor) const {
+    auto nanoseconds = boost::endian::big_to_native(
       *reinterpret_cast<const std::uint32_t*>(*cursor));
     *cursor += sizeof(std::uint32_t);
-    if(m_lastTimePoint == boost::posix_time::not_a_date_time) {
-      return m_lastTimePoint;
+    if(m_last_time_point == boost::posix_time::not_a_date_time) {
+      return m_last_time_point;
     }
-    return m_lastTimePoint +
+    return m_last_time_point +
       boost::posix_time::microseconds(nanoseconds / 1000);
   }
 
   template<typename M, typename I, typename G>
-  std::uint8_t AsxItchMarketDataFeedClient<M, I, G>::ParseChar(
+  std::uint8_t AsxItchMarketDataFeedClient<M, I, G>::parse_char(
       Beam::Out<const char*> cursor) const {
-    auto result = Beam::FromBigEndian(
+    auto result = boost::endian::big_to_native(
       *reinterpret_cast<const std::uint8_t*>(*cursor));
     *cursor += sizeof(std::uint8_t);
     return result;
   }
 
   template<typename M, typename I, typename G>
-  std::uint8_t AsxItchMarketDataFeedClient<M, I, G>::ParseInt8(
+  std::uint8_t AsxItchMarketDataFeedClient<M, I, G>::parse_int8(
       Beam::Out<const char*> cursor) const {
-    auto result = Beam::FromBigEndian(
+    auto result = boost::endian::big_to_native(
       *reinterpret_cast<const std::uint8_t*>(*cursor));
     *cursor += sizeof(std::uint8_t);
     return result;
   }
 
   template<typename M, typename I, typename G>
-  std::uint16_t AsxItchMarketDataFeedClient<M, I, G>::ParseInt16(
+  std::uint16_t AsxItchMarketDataFeedClient<M, I, G>::parse_int16(
       Beam::Out<const char*> cursor) const {
-    auto result = Beam::FromBigEndian(
+    auto result = boost::endian::big_to_native(
       *reinterpret_cast<const std::uint16_t*>(*cursor));
     *cursor += sizeof(std::uint16_t);
     return result;
   }
 
   template<typename M, typename I, typename G>
-  std::uint32_t AsxItchMarketDataFeedClient<M, I, G>::ParseInt32(
+  std::uint32_t AsxItchMarketDataFeedClient<M, I, G>::parse_int32(
       Beam::Out<const char*> cursor) const {
-    auto result = Beam::FromBigEndian(
+    auto result = boost::endian::big_to_native(
       *reinterpret_cast<const std::uint32_t*>(*cursor));
     *cursor += sizeof(std::uint32_t);
     return result;
   }
 
   template<typename M, typename I, typename G>
-  std::uint64_t AsxItchMarketDataFeedClient<M, I, G>::ParseInt64(
+  std::uint64_t AsxItchMarketDataFeedClient<M, I, G>::parse_int64(
       Beam::Out<const char*> cursor) const {
-    auto result = Beam::FromBigEndian(
+    auto result = boost::endian::big_to_native(
       *reinterpret_cast<const std::uint64_t*>(*cursor));
     *cursor += sizeof(std::uint64_t);
     return result;
   }
 
   template<typename M, typename I, typename G>
-  std::string AsxItchMarketDataFeedClient<M, I, G>::ParseAlpha(std::size_t size,
-      Beam::Out<const char*> cursor) const {
+  std::string AsxItchMarketDataFeedClient<M, I, G>::parse_alpha(
+      std::size_t size, Beam::Out<const char*> cursor) const {
     if(size == 0) {
-      return std::string{};
+      return std::string();
     }
-    auto lastCharacter = *cursor + size - 1;
+    auto last_character = *cursor + size - 1;
     while(true) {
-      if(*lastCharacter == ' ') {
-        if(lastCharacter == *cursor) {
+      if(*last_character == ' ') {
+        if(last_character == *cursor) {
           *cursor += size;
-          return std::string{};
+          return std::string();
         } else {
-          --lastCharacter;
+          --last_character;
         }
       } else {
         break;
       }
     }
-    auto result = std::string(*cursor, lastCharacter + 1);
+    auto result = std::string(*cursor, last_character + 1);
     *cursor += size;
     return result;
   }
 
   template<typename M, typename I, typename G>
-  Side AsxItchMarketDataFeedClient<M, I, G>::ParseSide(
+  Side AsxItchMarketDataFeedClient<M, I, G>::parse_side(
       Beam::Out<const char*> cursor) const {
-    auto s = ParseChar(Beam::Store(cursor));
+    auto s = parse_char(Beam::out(cursor));
     if(s == 'S') {
       return Side::ASK;
     } else if(s == 'B') {
@@ -300,25 +293,25 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename M, typename I, typename G>
-  Money AsxItchMarketDataFeedClient<M, I, G>::ParsePrice(
+  Money AsxItchMarketDataFeedClient<M, I, G>::parse_price(
       const OrderBookDirectory& directory,
       Beam::Out<const char*> cursor) const {
-    auto PowerOfTen = [] (std::uint16_t exponent) {
+    auto power_of_ten = [] (std::uint16_t exponent) {
       auto result = Quantity(1);
       for(auto i = std::uint16_t(0); i < exponent; ++i) {
         result *= 10;
       }
       return result;
     };
-    auto price = Money{ParseInt32(Beam::Store(cursor)) /
-      (100 * PowerOfTen(directory.m_priceDecimalPlaces))};
+    auto price = Money(parse_int32(Beam::out(cursor)) /
+      (100 * power_of_ten(directory.m_price_decimal_places)));
     return price;
   }
 
   template<typename M, typename I, typename G>
-  std::string AsxItchMarketDataFeedClient<M, I, G>::ParseMpid(
+  std::string AsxItchMarketDataFeedClient<M, I, G>::parse_mpid(
       Beam::Out<const char*> cursor) const {
-    auto mpid = ParseAlpha(7, Beam::Store(cursor));
+    auto mpid = parse_alpha(7, Beam::out(cursor));
     if(mpid.empty()) {
       return "AU000";
     }
@@ -327,20 +320,20 @@ namespace Nexus::MarketDataService {
 
   template<typename M, typename I, typename G>
   std::tuple<std::string, std::string>
-    AsxItchMarketDataFeedClient<M, I, G>::ParseBuyerSellerMpids(
+    AsxItchMarketDataFeedClient<M, I, G>::parse_buyer_seller_mpids(
       Side side, Beam::Out<const char*> cursor) const {
-    auto ownerMpid = ParseMpid(Beam::Store(cursor));
-    auto counterMpid = ParseMpid(Beam::Store(cursor));
+    auto owner_mpid = parse_mpid(Beam::out(cursor));
+    auto counter_mpid = parse_mpid(Beam::out(cursor));
     if(side == Side::BID) {
-      return std::tuple(std::move(ownerMpid), std::move(counterMpid));
+      return std::tuple(std::move(owner_mpid), std::move(counter_mpid));
     }
-    return std::tuple(std::move(counterMpid), std::move(ownerMpid));
+    return std::tuple(std::move(counter_mpid), std::move(owner_mpid));
   }
 
   template<typename M, typename I, typename G>
-  std::string AsxItchMarketDataFeedClient<M, I, G>::BuildOrderKey(
-      const Security& security, Side side, std::uint64_t orderId) const {
-    auto result = security.GetSymbol();
+  std::string AsxItchMarketDataFeedClient<M, I, G>::build_order_key(
+      const Security& security, Side side, std::uint64_t order_id) const {
+    auto result = security.get_symbol();
     result += '-';
     if(side == Side::ASK) {
       result += 'A';
@@ -348,384 +341,381 @@ namespace Nexus::MarketDataService {
       result += 'B';
     }
     result += '-';
-    result += std::to_string(orderId);
+    result += std::to_string(order_id);
     return result;
   }
 
   template<typename M, typename I, typename G>
-  void AsxItchMarketDataFeedClient<M, I, G>::HandleSecondsMessage(
-      const MoldUdp64::MoldUdp64Message& message) {
+  void AsxItchMarketDataFeedClient<M, I, G>::handle_seconds_message(
+      const MoldUdp64Message& message) {
     auto cursor = message.m_data;
-    auto epochTime = static_cast<std::time_t>(Beam::FromBigEndian(
+    auto epoch_time = static_cast<std::time_t>(boost::endian::big_to_native(
       *reinterpret_cast<const std::uint32_t*>(cursor)));
-    m_lastTimePoint = boost::posix_time::from_time_t(epochTime);
+    m_last_time_point = boost::posix_time::from_time_t(epoch_time);
   }
 
   template<typename M, typename I, typename G>
-  void AsxItchMarketDataFeedClient<M, I, G>::UpdateBbo(const Security& security,
-      Side side, Money price, Quantity delta,
+  void AsxItchMarketDataFeedClient<M, I, G>::update_bbo(
+      const Security& security, Side side, Money price, Quantity delta,
       boost::posix_time::ptime timestamp) {
-    auto& bboEntry = Beam::GetOrInsert(m_bboEntries, security, [] {
-      return BboEntry();
-    });
-    auto& levels = Pick(side, bboEntry.m_asks, bboEntry.m_bids);
-    auto positionIterator = std::lower_bound(levels.begin(),
-      levels.end(), price,
-      [&] (const PriceLevel& lhs, Money rhs) {
+    auto& bbo_entry = m_bbo_entries[security];
+    auto& levels = pick(side, bbo_entry.m_asks, bbo_entry.m_bids);
+    auto i = std::lower_bound(
+      levels.begin(), levels.end(), price, [&] (const auto& lhs, auto rhs) {
         if(side == Side::ASK) {
           return lhs.m_price < rhs;
         } else {
           return lhs.m_price > rhs;
         }
       });
-    if(positionIterator == levels.end() || positionIterator->m_price != price) {
+    if(i == levels.end() || i->m_price != price) {
       if(delta <= 0) {
         return;
       }
       auto level = PriceLevel();
       level.m_price = price;
       level.m_quantity = delta;
-      positionIterator = levels.insert(positionIterator, level);
+      i = levels.insert(i, level);
     } else {
-      auto& level = *positionIterator;
+      auto& level = *i;
       level.m_quantity += delta;
       if(level.m_quantity <= 0) {
-        positionIterator = levels.erase(positionIterator);
+        i = levels.erase(i);
       }
     }
-    if(positionIterator == levels.begin()) {
+    if(i == levels.begin()) {
       auto ask = Quote();
       ask.m_side = Side::ASK;
-      if(bboEntry.m_asks.empty()) {
+      if(bbo_entry.m_asks.empty()) {
         ask.m_price = Money::ZERO;
         ask.m_size = 0;
       } else {
-        ask.m_price = bboEntry.m_asks.front().m_price;
-        ask.m_size = bboEntry.m_asks.front().m_quantity;
+        ask.m_price = bbo_entry.m_asks.front().m_price;
+        ask.m_size = bbo_entry.m_asks.front().m_quantity;
       }
       auto bid = Quote();
       bid.m_side = Side::BID;
-      if(bboEntry.m_bids.empty()) {
+      if(bbo_entry.m_bids.empty()) {
         bid.m_price = Money::ZERO;
         bid.m_size = 0;
       } else {
-        bid.m_price = bboEntry.m_bids.front().m_price;
-        bid.m_size = bboEntry.m_bids.front().m_quantity;
+        bid.m_price = bbo_entry.m_bids.front().m_price;
+        bid.m_size = bbo_entry.m_bids.front().m_quantity;
       }
       auto bbo = BboQuote(bid, ask, timestamp);
-      m_marketDataFeedClient->Publish(SecurityBboQuote(bbo, security));
+      m_market_data_feed_client->publish(SecurityBboQuote(bbo, security));
     }
   }
 
   template<typename M, typename I, typename G>
-  void AsxItchMarketDataFeedClient<M, I, G>::HandleAddOrderMessage(
-      bool isAnonymous, const MoldUdp64::MoldUdp64Message& message) {
+  void AsxItchMarketDataFeedClient<M, I, G>::handle_add_order_message(
+      bool is_anonymous, const MoldUdp64Message& message) {
     auto cursor = message.m_data;
-    auto timestamp = ParseTimestamp(Beam::Store(cursor));
-    auto orderId = ParseInt64(Beam::Store(cursor));
-    auto orderBookId = ParseInt32(Beam::Store(cursor));
-    auto directory = Beam::Retrieve(m_orderBookDirectories, orderBookId);
+    auto timestamp = parse_timestamp(Beam::out(cursor));
+    auto order_id = parse_int64(Beam::out(cursor));
+    auto order_book_id = parse_int32(Beam::out(cursor));
+    auto directory = Beam::lookup(m_order_book_directories, order_book_id);
     if(!directory) {
       return;
     }
-    auto side = ParseSide(Beam::Store(cursor));
-    auto position = ParseInt32(Beam::Store(cursor));
-    auto quantity = ParseInt64(Beam::Store(cursor));
+    auto side = parse_side(Beam::out(cursor));
+    auto position = parse_int32(Beam::out(cursor));
+    auto quantity = parse_int64(Beam::out(cursor));
     if(quantity == 0) {
       return;
     }
-    auto price = ParsePrice(*directory, Beam::Store(cursor));
-    auto type = ParseInt16(Beam::Store(cursor));
-    auto lot = ParseInt8(Beam::Store(cursor));
+    auto price = parse_price(*directory, Beam::out(cursor));
+    auto type = parse_int16(Beam::out(cursor));
+    auto lot = parse_int8(Beam::out(cursor));
     auto mpid = [&] {
-      if(isAnonymous) {
+      if(is_anonymous) {
         return std::string("AU000");
       } else {
-        return ParseMpid(Beam::Store(cursor));
+        return parse_mpid(Beam::out(cursor));
       }
     }();
-    auto orderKey = BuildOrderKey(directory->m_security.m_security, side,
-      orderId);
-    auto orderEntry = OrderEntry();
-    orderEntry.m_mpid = mpid;
-    orderEntry.m_price = price;
-    orderEntry.m_remainingQuantity = quantity;
-    m_orderEntries[orderKey] = orderEntry;
-    m_marketDataFeedClient->AddOrder(directory->m_security.m_security,
-      m_config.m_market.m_code, mpid, false, orderKey, side, price, quantity,
+    auto order_key =
+      build_order_key(directory->m_security.m_security, side, order_id);
+    auto order_entry = OrderEntry();
+    order_entry.m_mpid = mpid;
+    order_entry.m_price = price;
+    order_entry.m_remaining_quantity = quantity;
+    m_order_entries[order_key] = order_entry;
+    m_market_data_feed_client->add_order(directory->m_security.m_security,
+      m_config.m_venue.m_venue, mpid, false, order_key, side, price, quantity,
       timestamp);
-    UpdateBbo(directory->m_security.m_security, side, price, quantity,
-      timestamp);
+    update_bbo(
+      directory->m_security.m_security, side, price, quantity, timestamp);
   }
 
   template<typename M, typename I, typename G>
-  void AsxItchMarketDataFeedClient<M, I, G>::HandleOrderExecutedMessage(
-      const MoldUdp64::MoldUdp64Message& message) {
+  void AsxItchMarketDataFeedClient<M, I, G>::handle_order_executed_message(
+      const MoldUdp64Message& message) {
     auto cursor = message.m_data;
-    auto timestamp = ParseTimestamp(Beam::Store(cursor));
-    auto orderId = ParseInt64(Beam::Store(cursor));
-    auto orderBookId = ParseInt32(Beam::Store(cursor));
-    auto directory = Beam::Retrieve(m_orderBookDirectories, orderBookId);
+    auto timestamp = parse_timestamp(Beam::out(cursor));
+    auto order_id = parse_int64(Beam::out(cursor));
+    auto order_book_id = parse_int32(Beam::out(cursor));
+    auto directory = Beam::lookup(m_order_book_directories, order_book_id);
     if(!directory) {
       return;
     }
-    auto side = ParseSide(Beam::Store(cursor));
-    auto executedQuantity = static_cast<std::int64_t>(
-      ParseInt64(Beam::Store(cursor)));
-    auto orderKey = BuildOrderKey(directory->m_security.m_security, side,
-      orderId);
-    auto matchId = ParseAlpha(12, Beam::Store(cursor));
-    auto [buyerMpid, sellerMpid] =
-      ParseBuyerSellerMpids(side, Beam::Store(cursor));
-    m_marketDataFeedClient->OffsetOrderSize(orderKey, -executedQuantity,
-      timestamp);
-    if(auto orderEntry = Beam::Retrieve(m_orderEntries, orderKey)) {
-      orderEntry->m_remainingQuantity -= executedQuantity;
-      if(m_config.m_isTimeAndSaleFeed) {
+    auto side = parse_side(Beam::out(cursor));
+    auto executed_quantity =
+      static_cast<std::int64_t>(parse_int64(Beam::out(cursor)));
+    auto order_key =
+      build_order_key(directory->m_security.m_security, side, order_id);
+    auto match_id = parse_alpha(12, Beam::out(cursor));
+    auto [buyer_mpid, seller_mpid] =
+      parse_buyer_seller_mpids(side, Beam::out(cursor));
+    m_market_data_feed_client->offset_order_size(
+      order_key, -executed_quantity, timestamp);
+    if(auto order_entry = Beam::lookup(m_order_entries, order_key)) {
+      order_entry->m_remaining_quantity -= executed_quantity;
+      if(m_config.m_is_time_and_sale_feed) {
         auto condition = TimeAndSale::Condition();
         condition.m_code = "@";
-        auto timeAndSale = TimeAndSale(timestamp, orderEntry->m_price,
-          executedQuantity, std::move(condition),
-          m_config.m_market.m_displayName, std::move(buyerMpid),
-          std::move(sellerMpid));
-        m_marketDataFeedClient->Publish(SecurityTimeAndSale(
-          std::move(timeAndSale), directory->m_security.m_security));
+        auto time_and_sale = TimeAndSale(timestamp, order_entry->m_price,
+          executed_quantity, std::move(condition),
+          m_config.m_venue.m_display_name, std::move(buyer_mpid),
+          std::move(seller_mpid));
+        m_market_data_feed_client->publish(SecurityTimeAndSale(
+          std::move(time_and_sale), directory->m_security.m_security));
       }
-      UpdateBbo(directory->m_security.m_security, side, orderEntry->m_price,
-        -executedQuantity, timestamp);
+      update_bbo(directory->m_security.m_security, side, order_entry->m_price,
+        -executed_quantity, timestamp);
     }
   }
 
   template<typename M, typename I, typename G>
-  void AsxItchMarketDataFeedClient<M, I, G>::HandleOrderExecutedAtPriceMessage(
-      const MoldUdp64::MoldUdp64Message& message) {
+  void AsxItchMarketDataFeedClient<M, I, G>::handle_order_executed_at_price_message(
+      const MoldUdp64Message& message) {
     auto cursor = message.m_data;
-    auto timestamp = ParseTimestamp(Beam::Store(cursor));
-    auto orderId = ParseInt64(Beam::Store(cursor));
-    auto orderBookId = ParseInt32(Beam::Store(cursor));
-    auto directory = Beam::Retrieve(m_orderBookDirectories, orderBookId);
+    auto timestamp = parse_timestamp(Beam::out(cursor));
+    auto order_id = parse_int64(Beam::out(cursor));
+    auto order_book_id = parse_int32(Beam::out(cursor));
+    auto directory = Beam::lookup(m_order_book_directories, order_book_id);
     if(!directory) {
       return;
     }
-    auto side = ParseSide(Beam::Store(cursor));
-    auto executedQuantity = static_cast<std::int64_t>(
-      ParseInt64(Beam::Store(cursor)));
-    auto matchId = ParseAlpha(12, Beam::Store(cursor));
-    auto [buyerMpid, sellerMpid] =
-      ParseBuyerSellerMpids(side, Beam::Store(cursor));
-    auto price = ParsePrice(*directory, Beam::Store(cursor));
-    auto atCross = ParseChar(Beam::Store(cursor));
-    auto printable = ParseChar(Beam::Store(cursor));
-    auto orderKey = BuildOrderKey(directory->m_security.m_security, side,
-      orderId);
-    m_marketDataFeedClient->OffsetOrderSize(orderKey, -executedQuantity,
-      timestamp);
-    if(auto orderEntry = Beam::Retrieve(m_orderEntries, orderKey)) {
-      orderEntry->m_remainingQuantity -= executedQuantity;
-      if(printable == 'Y' && m_config.m_isTimeAndSaleFeed) {
+    auto side = parse_side(Beam::out(cursor));
+    auto executed_quantity =
+      static_cast<std::int64_t>(parse_int64(Beam::out(cursor)));
+    auto match_id = parse_alpha(12, Beam::out(cursor));
+    auto [buyer_mpid, seller_mpid] =
+      parse_buyer_seller_mpids(side, Beam::out(cursor));
+    auto price = parse_price(*directory, Beam::out(cursor));
+    auto at_cross = parse_char(Beam::out(cursor));
+    auto printable = parse_char(Beam::out(cursor));
+    auto order_key =
+      build_order_key(directory->m_security.m_security, side, order_id);
+    m_market_data_feed_client->offset_order_size(
+      order_key, -executed_quantity, timestamp);
+    if(auto order_entry = Beam::lookup(m_order_entries, order_key)) {
+      order_entry->m_remaining_quantity -= executed_quantity;
+      if(printable == 'Y' && m_config.m_is_time_and_sale_feed) {
         auto condition = TimeAndSale::Condition();
         condition.m_code = "@";
-        auto timeAndSale = TimeAndSale(timestamp, price, executedQuantity,
-          std::move(condition), m_config.m_market.m_displayName,
-          std::move(buyerMpid), std::move(sellerMpid));
-        m_marketDataFeedClient->Publish(SecurityTimeAndSale(
-          std::move(timeAndSale), directory->m_security.m_security));
+        auto time_and_sale = TimeAndSale(timestamp, price, executed_quantity,
+          std::move(condition), m_config.m_venue.m_display_name,
+          std::move(buyer_mpid), std::move(seller_mpid));
+        m_market_data_feed_client->publish(SecurityTimeAndSale(
+          std::move(time_and_sale), directory->m_security.m_security));
       }
-      UpdateBbo(directory->m_security.m_security, side, orderEntry->m_price,
-        -executedQuantity, timestamp);
+      update_bbo(directory->m_security.m_security, side, order_entry->m_price,
+        -executed_quantity, timestamp);
     }
   }
 
   template<typename M, typename I, typename G>
-  void AsxItchMarketDataFeedClient<M, I, G>::HandleOrderReplaceMessage(
-      const MoldUdp64::MoldUdp64Message& message) {
+  void AsxItchMarketDataFeedClient<M, I, G>::handle_order_replaced_message(
+      const MoldUdp64Message& message) {
     auto cursor = message.m_data;
-    auto timestamp = ParseTimestamp(Beam::Store(cursor));
-    auto orderId = ParseInt64(Beam::Store(cursor));
-    auto orderBookId = ParseInt32(Beam::Store(cursor));
-    auto directory = Beam::Retrieve(m_orderBookDirectories, orderBookId);
+    auto timestamp = parse_timestamp(Beam::out(cursor));
+    auto order_id = parse_int64(Beam::out(cursor));
+    auto order_book_id = parse_int32(Beam::out(cursor));
+    auto directory = Beam::lookup(m_order_book_directories, order_book_id);
     if(!directory) {
       return;
     }
-    auto side = ParseSide(Beam::Store(cursor));
-    auto newPosition = ParseInt32(Beam::Store(cursor));
-    auto quantity = ParseInt64(Beam::Store(cursor));
-    auto price = ParsePrice(*directory, Beam::Store(cursor));
-    auto type = ParseInt16(Beam::Store(cursor));
-    auto orderKey = BuildOrderKey(directory->m_security.m_security, side,
-      orderId);
-    m_marketDataFeedClient->DeleteOrder(orderKey, timestamp);
-    auto orderEntry = Beam::Retrieve(m_orderEntries, orderKey);
-    if(!orderEntry) {
+    auto side = parse_side(Beam::out(cursor));
+    auto new_position = parse_int32(Beam::out(cursor));
+    auto quantity = parse_int64(Beam::out(cursor));
+    auto price = parse_price(*directory, Beam::out(cursor));
+    auto type = parse_int16(Beam::out(cursor));
+    auto order_key =
+      build_order_key(directory->m_security.m_security, side, order_id);
+    m_market_data_feed_client->remove_order(order_key, timestamp);
+    auto order_entry = Beam::lookup(m_order_entries, order_key);
+    if(!order_entry) {
       return;
     }
-    UpdateBbo(directory->m_security.m_security, side, orderEntry->m_price,
-      -orderEntry->m_remainingQuantity, timestamp);
-    auto newOrderEntry = *orderEntry;
-    newOrderEntry.m_price = price;
-    newOrderEntry.m_remainingQuantity = quantity;
-    m_orderEntries[orderKey] = newOrderEntry;
-    m_marketDataFeedClient->AddOrder(directory->m_security.m_security,
-      m_config.m_market.m_displayName, newOrderEntry.m_mpid, false, orderKey,
+    update_bbo(directory->m_security.m_security, side, order_entry->m_price,
+      -order_entry->m_remaining_quantity, timestamp);
+    auto new_order_entry = *order_entry;
+    new_order_entry.m_price = price;
+    new_order_entry.m_remaining_quantity = quantity;
+    m_order_entries[order_key] = new_order_entry;
+    m_market_data_feed_client->add_order(directory->m_security.m_security,
+      m_config.m_venue.m_venue, new_order_entry.m_mpid, false, order_key,
       side, price, quantity, timestamp);
-    UpdateBbo(directory->m_security.m_security, side, price, quantity,
-      timestamp);
+    update_bbo(
+      directory->m_security.m_security, side, price, quantity, timestamp);
   }
 
   template<typename M, typename I, typename G>
-  void AsxItchMarketDataFeedClient<M, I, G>::HandleOrderDeleteMessage(
-      const MoldUdp64::MoldUdp64Message& message) {
+  void AsxItchMarketDataFeedClient<M, I, G>::handle_order_delete_message(
+      const MoldUdp64Message& message) {
     auto cursor = message.m_data;
-    auto timestamp = ParseTimestamp(Beam::Store(cursor));
-    auto orderId = ParseInt64(Beam::Store(cursor));
-    auto orderBookId = ParseInt32(Beam::Store(cursor));
-    auto directory = Beam::Retrieve(m_orderBookDirectories, orderBookId);
+    auto timestamp = parse_timestamp(Beam::out(cursor));
+    auto order_id = parse_int64(Beam::out(cursor));
+    auto order_book_id = parse_int32(Beam::out(cursor));
+    auto directory = Beam::lookup(m_order_book_directories, order_book_id);
     if(!directory) {
       return;
     }
-    auto side = ParseSide(Beam::Store(cursor));
-    auto orderKey = BuildOrderKey(directory->m_security.m_security, side,
-      orderId);
-    m_marketDataFeedClient->DeleteOrder(orderKey, timestamp);
-    auto orderEntry = Beam::Retrieve(m_orderEntries, orderKey);
-    if(!orderEntry) {
+    auto side = parse_side(Beam::out(cursor));
+    auto order_key =
+      build_order_key(directory->m_security.m_security, side, order_id);
+    m_market_data_feed_client->remove_order(order_key, timestamp);
+    auto order_entry = Beam::lookup(m_order_entries, order_key);
+    if(!order_entry) {
       return;
     }
-    UpdateBbo(directory->m_security.m_security, side, orderEntry->m_price,
-      -orderEntry->m_remainingQuantity, timestamp);
-    m_orderEntries.erase(orderKey);
+    update_bbo(directory->m_security.m_security, side, order_entry->m_price,
+      -order_entry->m_remaining_quantity, timestamp);
+    m_order_entries.erase(order_key);
   }
 
   template<typename M, typename I, typename G>
-  void AsxItchMarketDataFeedClient<M, I, G>::HandleTradeMessage(
-      const MoldUdp64::MoldUdp64Message& message) {
+  void AsxItchMarketDataFeedClient<M, I, G>::handle_trade_message(
+      const MoldUdp64Message& message) {
     auto cursor = message.m_data;
-    auto timestamp = ParseTimestamp(Beam::Store(cursor));
+    auto timestamp = parse_timestamp(Beam::out(cursor));
     cursor += 12;
-    auto side = ParseSide(Beam::Store(cursor));
-    auto quantity = ParseInt64(Beam::Store(cursor));
-    auto orderBookId = ParseInt32(Beam::Store(cursor));
-    auto directory = Beam::Retrieve(m_orderBookDirectories, orderBookId);
+    auto side = parse_side(Beam::out(cursor));
+    auto quantity = parse_int64(Beam::out(cursor));
+    auto order_book_id = parse_int32(Beam::out(cursor));
+    auto directory = Beam::lookup(m_order_book_directories, order_book_id);
     if(!directory) {
       return;
     }
-    auto price = ParsePrice(*directory, Beam::Store(cursor));
-    auto [buyerMpid, sellerMpid] =
-      ParseBuyerSellerMpids(side, Beam::Store(cursor));
-    auto printable = ParseChar(Beam::Store(cursor));
-    auto atCross = ParseChar(Beam::Store(cursor));
-    if(printable == 'Y' && m_config.m_isTimeAndSaleFeed) {
+    auto price = parse_price(*directory, Beam::out(cursor));
+    auto [buyer_mpid, seller_mpid] =
+      parse_buyer_seller_mpids(side, Beam::out(cursor));
+    auto printable = parse_char(Beam::out(cursor));
+    auto at_cross = parse_char(Beam::out(cursor));
+    if(printable == 'Y' && m_config.m_is_time_and_sale_feed) {
       auto condition = TimeAndSale::Condition();
       condition.m_code = "@";
-      auto timeAndSale = TimeAndSale(timestamp, price, quantity,
-        std::move(condition), m_config.m_market.m_displayName,
-        std::move(buyerMpid), std::move(sellerMpid));
-      m_marketDataFeedClient->Publish(SecurityTimeAndSale(
-        std::move(timeAndSale), directory->m_security.m_security));
+      auto time_and_sale = TimeAndSale(timestamp, price, quantity,
+        std::move(condition), m_config.m_venue.m_display_name,
+        std::move(buyer_mpid), std::move(seller_mpid));
+      m_market_data_feed_client->publish(SecurityTimeAndSale(
+        std::move(time_and_sale), directory->m_security.m_security));
     }
   }
 
   template<typename M, typename I, typename G>
-  void AsxItchMarketDataFeedClient<M, I, G>::HandleOrderBookDirectoryMessage(
-      const MoldUdp64::MoldUdp64Message& message) {
+  void AsxItchMarketDataFeedClient<M, I, G>::
+      handle_order_book_directory_message(const MoldUdp64Message& message) {
     auto cursor = message.m_data;
     auto directory = OrderBookDirectory();
-    auto timestamp = ParseTimestamp(Beam::Store(cursor));
-    directory.m_id = ParseInt32(Beam::Store(cursor));
-    auto symbol = ParseAlpha(32, Beam::Store(cursor));
-    directory.m_security.m_security = Security(symbol, m_config.m_market.m_code,
-      m_config.m_market.m_countryCode);
-    directory.m_security.m_name = ParseAlpha(32, Beam::Store(cursor));
-    auto isin = ParseAlpha(12, Beam::Store(cursor));
-    auto productType = ParseInt8(Beam::Store(cursor));
-    if(productType == 1) {
-      directory.m_productType = ProductType::OPTION;
-    } else if(productType == 3) {
-      directory.m_productType = ProductType::FUTURE;
-    } else if(productType == 5) {
-      directory.m_productType = ProductType::EQUITY;
+    auto timestamp = parse_timestamp(Beam::out(cursor));
+    directory.m_id = parse_int32(Beam::out(cursor));
+    auto symbol = parse_alpha(32, Beam::out(cursor));
+    directory.m_security.m_security =
+      Security(symbol, m_config.m_venue.m_venue);
+    directory.m_security.m_name = parse_alpha(32, Beam::out(cursor));
+    auto isin = parse_alpha(12, Beam::out(cursor));
+    auto product_type = parse_int8(Beam::out(cursor));
+    if(product_type == 1) {
+      directory.m_product_type = ProductType::OPTION;
+    } else if(product_type == 3) {
+      directory.m_product_type = ProductType::FUTURE;
+    } else if(product_type == 5) {
+      directory.m_product_type = ProductType::EQUITY;
     }
-    directory.m_currency = m_currencyDatabase->FromCode(
-      ParseAlpha(3, Beam::Store(cursor))).m_id;
-    directory.m_priceDecimalPlaces = ParseInt16(Beam::Store(cursor));
-    directory.m_valueDecimalPlaces = ParseInt16(Beam::Store(cursor));
-    directory.m_oddLotSize = ParseInt32(Beam::Store(cursor));
-    directory.m_security.m_boardLot = ParseInt32(Beam::Store(cursor));
-    directory.m_blockLotSize = ParseInt64(Beam::Store(cursor));
-    if(directory.m_productType != ProductType::EQUITY) {
+    directory.m_currency =
+      DEFAULT_CURRENCIES.from(parse_alpha(3, Beam::out(cursor))).m_id;
+    directory.m_price_decimal_places = parse_int16(Beam::out(cursor));
+    directory.m_value_decimal_places = parse_int16(Beam::out(cursor));
+    directory.m_odd_lot_size = parse_int32(Beam::out(cursor));
+    directory.m_security.m_board_lot = parse_int32(Beam::out(cursor));
+    directory.m_block_lot_size = parse_int64(Beam::out(cursor));
+    if(directory.m_product_type != ProductType::EQUITY) {
       return;
     }
-    m_orderBookDirectories[directory.m_id] = directory;
-    m_marketDataFeedClient->Add(directory.m_security);
+    m_order_book_directories[directory.m_id] = directory;
+    m_market_data_feed_client->add(directory.m_security);
   }
 
   template<typename M, typename I, typename G>
-  void AsxItchMarketDataFeedClient<M, I, G>::Dispatch(
-      const MoldUdp64::MoldUdp64Message& message) {
-    if(message.m_messageType == 'T') {
-      HandleSecondsMessage(message);
-    } else if(message.m_messageType == 'A') {
-      HandleAddOrderMessage(true, message);
-    } else if(message.m_messageType == 'F') {
-      HandleAddOrderMessage(false, message);
-    } else if(message.m_messageType == 'E') {
-      HandleOrderExecutedMessage(message);
-    } else if(message.m_messageType == 'C') {
-      HandleOrderExecutedAtPriceMessage(message);
-    } else if(message.m_messageType == 'U') {
-      HandleOrderReplaceMessage(message);
-    } else if(message.m_messageType == 'D') {
-      HandleOrderDeleteMessage(message);
-    } else if(message.m_messageType == 'P') {
-      HandleTradeMessage(message);
-    } else if(message.m_messageType == 'R') {
-      HandleOrderBookDirectoryMessage(message);
+  void AsxItchMarketDataFeedClient<M, I, G>::dispatch(
+      const MoldUdp64Message& message) {
+    if(message.m_message_type == 'T') {
+      handle_seconds_message(message);
+    } else if(message.m_message_type == 'A') {
+      handle_add_order_message(true, message);
+    } else if(message.m_message_type == 'F') {
+      handle_add_order_message(false, message);
+    } else if(message.m_message_type == 'E') {
+      handle_order_executed_message(message);
+    } else if(message.m_message_type == 'C') {
+      handle_order_executed_at_price_message(message);
+    } else if(message.m_message_type == 'U') {
+      handle_order_replaced_message(message);
+    } else if(message.m_message_type == 'D') {
+      handle_order_delete_message(message);
+    } else if(message.m_message_type == 'P') {
+      handle_trade_message(message);
+    } else if(message.m_message_type == 'R') {
+      handle_order_book_directory_message(message);
     }
   }
 
   template<typename M, typename I, typename G>
-  void AsxItchMarketDataFeedClient<M, I, G>::ReadLoop() {
-    auto lastSequenceNumber = std::uint64_t(-1);
+  void AsxItchMarketDataFeedClient<M, I, G>::read_loop() {
+    auto last_sequence_number = std::uint64_t(-1);
     while(true) {
-      auto packet = SoupBinTcp::SoupBinTcpPacket();
+      auto packet = SoupBinTcpPacket();
       try {
-        packet = m_glimpseClient->Read();
-      } catch(Beam::IO::EndOfFileException&) {
+        packet = m_glimpse_client->read();
+      } catch(Beam::EndOfFileException&) {
         break;
       }
       if(packet.m_type == 'S') {
-        auto message = MoldUdp64::MoldUdp64Message();
+        auto message = MoldUdp64Message();
         message.m_length = packet.m_length - 1;
-        message.m_messageType = packet.m_payload[0];
+        message.m_message_type = packet.m_payload[0];
         message.m_data = &packet.m_payload[1];
-        if(message.m_messageType == 'G') {
+        if(message.m_message_type == 'G') {
           auto cursor = message.m_data;
-          lastSequenceNumber =
-            SoupBinTcp::ParseLeftPaddedNumeric<std::uint64_t>(20,
-            Beam::Store(cursor));
+          last_sequence_number =
+            parse_left_padded_numeric<std::uint64_t>(20, Beam::out(cursor));
           break;
         }
-        Dispatch(message);
+        dispatch(message);
       } else if(packet.m_type == 'Z') {
         break;
       }
     }
-    m_glimpseClient->Close();
+    m_glimpse_client->close();
     while(true) {
       try {
-        auto sequenceNumber = std::uint64_t();
-        auto message = m_itchClient->Read(Beam::Store(sequenceNumber));
-        if(lastSequenceNumber != -1 && sequenceNumber <= lastSequenceNumber) {
+        auto sequence_number = std::uint64_t();
+        auto message = m_itch_client->read(Beam::out(sequence_number));
+        if(last_sequence_number != -1 &&
+            sequence_number <= last_sequence_number) {
           continue;
         }
-        if(lastSequenceNumber != -1 &&
-            sequenceNumber > lastSequenceNumber + 1) {
-          std::cout << "Packets dropped: " << (lastSequenceNumber + 1) <<
-            " - " << (sequenceNumber - 1) << std::endl;
+        if(last_sequence_number != -1 &&
+            sequence_number > last_sequence_number + 1) {
+          std::cout << "Packets dropped: " << (last_sequence_number + 1) <<
+            " - " << (sequence_number - 1) << std::endl;
         }
-        lastSequenceNumber = sequenceNumber;
-        Dispatch(message);
-      } catch(Beam::IO::EndOfFileException&) {
+        last_sequence_number = sequence_number;
+        dispatch(message);
+      } catch(Beam::EndOfFileException&) {
         break;
       }
     }

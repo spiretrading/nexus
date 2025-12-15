@@ -10,9 +10,8 @@
 #include "ChiaMarketDataFeedClient/ChiaConfiguration.hpp"
 #include "ChiaMarketDataFeedClient/PitchMessage.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Parses PITCH messages from the CHIA market data feed.
@@ -27,24 +26,24 @@ namespace Nexus::MarketDataService {
       /**
        * The type of MarketDataFeedClient used to update the MarketDataServer.
        */
-      using MarketDataFeedClient = Beam::GetTryDereferenceType<M>;
+      using MarketDataFeedClient = Beam::dereference_t<M>;
 
       /** The type of client receiving PITCH messages. */
-      using ProtocolClient = Beam::GetTryDereferenceType<P>;
+      using ProtocolClient = Beam::dereference_t<P>;
 
       /**
        * Constructs a ChiaMarketDataFeedClient.
        * @param config The configuration to use.
-       * @param marketDataFeedClient Initializes the MarketDataFeedClient.
-       * @param protocolClient The client receiving PITCH messages.
+       * @param feed_client Initializes the MarketDataFeedClient.
+       * @param itch_client The client receiving PITCH messages.
        */
       template<typename MF, typename PF>
       ChiaMarketDataFeedClient(
-        ChiaConfiguration config, MF&& marketDataFeedClient, PF&& itchClient);
+        ChiaConfiguration config, MF&& feed_client, PF&& itch_client);
 
       ~ChiaMarketDataFeedClient();
 
-      void Close();
+      void close();
 
     private:
       struct OrderEntry {
@@ -54,60 +53,60 @@ namespace Nexus::MarketDataService {
         std::string m_mpid;
       };
       ChiaConfiguration m_config;
-      Beam::GetOptionalLocalPtr<M> m_marketDataFeedClient;
-      Beam::GetOptionalLocalPtr<P> m_protocolClient;
-      std::unordered_map<std::string, OrderEntry> m_orderEntries;
-      Beam::Routines::RoutineHandler m_readLoopRoutine;
-      Beam::IO::OpenState m_openState;
+      Beam::local_ptr_t<M> m_feed_client;
+      Beam::local_ptr_t<P> m_protocol_client;
+      std::unordered_map<std::string, OrderEntry> m_order_entries;
+      Beam::RoutineHandler m_read_loop;
+      Beam::OpenState m_open_state;
 
-      static std::string ParseMpid(Beam::Out<const char*> cursor);
+      static std::string parse_mpid(Beam::Out<const char*> cursor);
       ChiaMarketDataFeedClient(const ChiaMarketDataFeedClient&) = delete;
       ChiaMarketDataFeedClient& operator =(
         const ChiaMarketDataFeedClient&) = delete;
-      void HandleAddOrderMessage(const PitchMessage& message);
-      void HandleOrderExecutedMessage(const PitchMessage& message);
-      void HandleReduceSizeMessage(const PitchMessage& message);
-      void HandleModifyOrderMessage(const PitchMessage& message);
-      void HandleDeleteOrderMessage(const PitchMessage& message);
-      void HandleTradeMessage(const PitchMessage& message);
-      void Dispatch(const PitchMessage& message);
-      void ReadLoop();
+      void handle_add_order_message(const PitchMessage& message);
+      void handle_order_executed_message(const PitchMessage& message);
+      void handle_reduce_size_message(const PitchMessage& message);
+      void handle_modify_order_message(const PitchMessage& message);
+      void handle_delete_order_message(const PitchMessage& message);
+      void handle_trade_message(const PitchMessage& message);
+      void dispatch(const PitchMessage& message);
+      void read_loop();
   };
 
   template<typename M, typename P>
   template<typename MF, typename PF>
   ChiaMarketDataFeedClient<M, P>::ChiaMarketDataFeedClient(
-      ChiaConfiguration config, MF&& marketDataFeedClient, PF&& protocolClient)
+      ChiaConfiguration config, MF&& feed_client, PF&& protocol_client)
       try : m_config(std::move(config)),
-            m_marketDataFeedClient(std::forward<MF>(marketDataFeedClient)),
-            m_protocolClient(std::forward<PF>(protocolClient)),
-            m_readLoopRoutine(Beam::Routines::Spawn(
-              std::bind_front(&ChiaMarketDataFeedClient::ReadLoop, this))) {
+            m_feed_client(std::forward<MF>(feed_client)),
+            m_protocol_client(std::forward<PF>(protocol_client)),
+            m_read_loop(Beam::spawn(
+              std::bind_front(&ChiaMarketDataFeedClient::read_loop, this))) {
   } catch(const std::exception&) {
-    std::throw_with_nested(Beam::IO::ConnectException(
+    std::throw_with_nested(Beam::ConnectException(
       "Unable to initialize the CHIA market data feed client."));
   }
 
   template<typename M, typename P>
   ChiaMarketDataFeedClient<M, P>::~ChiaMarketDataFeedClient() {
-    Close();
+    close();
   }
 
   template<typename M, typename P>
-  void ChiaMarketDataFeedClient<M, P>::Close() {
-    if(m_openState.SetClosing()) {
+  void ChiaMarketDataFeedClient<M, P>::close() {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_protocolClient->Close();
-    m_marketDataFeedClient->Close();
-    m_readLoopRoutine.Wait();
-    m_openState.Close();
+    m_protocol_client->close();
+    m_feed_client->close();
+    m_read_loop.wait();
+    m_open_state.close();
   }
 
   template<typename M, typename P>
-  std::string ChiaMarketDataFeedClient<M, P>::ParseMpid(
+  std::string ChiaMarketDataFeedClient<M, P>::parse_mpid(
       Beam::Out<const char*> cursor) {
-    auto mpid = PitchMessage::ParseAlphanumeric(4, Beam::Store(cursor));
+    auto mpid = PitchMessage::parse_alphanumeric(4, Beam::out(cursor));
     if(mpid.empty()) {
       return "AU000";
     }
@@ -115,161 +114,159 @@ namespace Nexus::MarketDataService {
   }
 
   template<typename M, typename P>
-  void ChiaMarketDataFeedClient<M, P>::HandleAddOrderMessage(
+  void ChiaMarketDataFeedClient<M, P>::handle_add_order_message(
       const PitchMessage& message) {
     auto cursor = message.m_payload;
-    auto timestamp = PitchMessage::ParseTimestamp(Beam::Store(cursor));
-    auto orderId =
-      std::to_string(PitchMessage::ParseUint64(Beam::Store(cursor)));
-    auto side = PitchMessage::ParseSide(Beam::Store(cursor));
-    auto quantity = PitchMessage::ParseUint32(Beam::Store(cursor));
+    auto timestamp = PitchMessage::parse_timestamp(Beam::out(cursor));
+    auto order_id =
+      std::to_string(PitchMessage::parse_uint64(Beam::out(cursor)));
+    auto side = PitchMessage::parse_side(Beam::out(cursor));
+    auto quantity = PitchMessage::parse_uint32(Beam::out(cursor));
     if(quantity == 0) {
       return;
     }
-    auto symbol = PitchMessage::ParseAlphanumeric(6, Beam::Store(cursor));
-    auto price = PitchMessage::ParsePrice(Beam::Store(cursor));
-    auto mpid = ParseMpid(Beam::Store(cursor));
-    auto security =
-      Security(symbol, m_config.m_primaryMarket, m_config.m_country);
-    if(m_config.m_isTimeAndSaleFeed) {
-      m_orderEntries[orderId] = OrderEntry(security, price, side, mpid);
+    auto symbol = PitchMessage::parse_alphanumeric(6, Beam::out(cursor));
+    auto price = PitchMessage::parse_price(Beam::out(cursor));
+    auto mpid = parse_mpid(Beam::out(cursor));
+    auto security = Security(symbol, m_config.m_primary_venue);
+    if(m_config.m_is_time_and_sale_feed) {
+      m_order_entries[order_id] = OrderEntry(security, price, side, mpid);
     }
-    m_marketDataFeedClient->AddOrder(security, m_config.m_disseminatingMarket,
-      m_config.m_mpid, false, orderId, side, price, quantity, timestamp);
-    if(m_config.m_isLoggingMessages) {
-      std::cout << timestamp << ',' << message.m_type << ',' << orderId <<
+    m_feed_client->add_order(security, m_config.m_disseminating_venue,
+      m_config.m_mpid, false, order_id, side, price, quantity, timestamp);
+    if(m_config.m_is_logging_messages) {
+      std::cout << timestamp << ',' << message.m_type << ',' << order_id <<
         ',' << side << ',' << quantity << ',' << symbol << ',' << price <<
         ',' << mpid << std::endl;
     }
   }
 
   template<typename M, typename P>
-  void ChiaMarketDataFeedClient<M, P>::HandleOrderExecutedMessage(
+  void ChiaMarketDataFeedClient<M, P>::handle_order_executed_message(
       const PitchMessage& message) {
     auto cursor = message.m_payload;
-    auto timestamp = PitchMessage::ParseTimestamp(Beam::Store(cursor));
-    auto orderId =
-      std::to_string(PitchMessage::ParseUint64(Beam::Store(cursor)));
-    auto executedQuantity = PitchMessage::ParseUint32(Beam::Store(cursor));
-    if(executedQuantity == 0) {
+    auto timestamp = PitchMessage::parse_timestamp(Beam::out(cursor));
+    auto order_id =
+      std::to_string(PitchMessage::parse_uint64(Beam::out(cursor)));
+    auto executed_quantity = PitchMessage::parse_uint32(Beam::out(cursor));
+    if(executed_quantity == 0) {
       return;
     }
-    auto executionId = PitchMessage::ParseUint64(Beam::Store(cursor));
-    auto contraOrderId = PitchMessage::ParseUint64(Beam::Store(cursor));
-    auto contraMpid = ParseMpid(Beam::Store(cursor));
-    m_marketDataFeedClient->OffsetOrderSize(
-      orderId, -static_cast<std::int32_t>(executedQuantity), timestamp);
-    if(m_config.m_isTimeAndSaleFeed) {
-      if(auto orderEntry = Beam::Lookup(m_orderEntries, orderId)) {
+    auto execution_id = PitchMessage::parse_uint64(Beam::out(cursor));
+    auto contra_order_id = PitchMessage::parse_uint64(Beam::out(cursor));
+    auto contra_mpid = parse_mpid(Beam::out(cursor));
+    m_feed_client->offset_order_size(
+      order_id, -static_cast<std::int32_t>(executed_quantity), timestamp);
+    if(m_config.m_is_time_and_sale_feed) {
+      if(auto order_entry = Beam::lookup(m_order_entries, order_id)) {
         auto condition = TimeAndSale::Condition();
         condition.m_code = "@";
-        auto [buyerMpid, sellerMpid] = [&] {
-          if(orderEntry->m_side == Side::BID) {
-            return std::tuple(&orderEntry->m_mpid, &contraMpid);
+        auto [buyer_mpid, seller_mpid] = [&] {
+          if(order_entry->m_side == Side::BID) {
+            return std::tuple(&order_entry->m_mpid, &contra_mpid);
           }
-          return std::tuple(&contraMpid, &orderEntry->m_mpid);
+          return std::tuple(&contra_mpid, &order_entry->m_mpid);
         }();
-        auto timeAndSale = TimeAndSale(timestamp, orderEntry->m_price,
-          executedQuantity, std::move(condition), m_config.m_mpid, *buyerMpid,
-          *sellerMpid);
-        m_marketDataFeedClient->Publish(SecurityTimeAndSale(
-          std::move(timeAndSale), orderEntry->m_security));
+        auto time_and_sale = TimeAndSale(timestamp, order_entry->m_price,
+          executed_quantity, std::move(condition), m_config.m_mpid, *buyer_mpid,
+          *seller_mpid);
+        m_feed_client->publish(SecurityTimeAndSale(
+          std::move(time_and_sale), order_entry->m_security));
       }
     }
-    if(m_config.m_isLoggingMessages) {
-      std::cout << timestamp << ',' << message.m_type << ',' << orderId <<
-        ',' << executedQuantity << std::endl;
+    if(m_config.m_is_logging_messages) {
+      std::cout << timestamp << ',' << message.m_type << ',' << order_id <<
+        ',' << executed_quantity << std::endl;
     }
   }
 
   template<typename M, typename P>
-  void ChiaMarketDataFeedClient<M, P>::HandleReduceSizeMessage(
+  void ChiaMarketDataFeedClient<M, P>::handle_reduce_size_message(
       const PitchMessage& message) {
     auto cursor = message.m_payload;
-    auto timestamp = PitchMessage::ParseTimestamp(Beam::Store(cursor));
-    auto orderId =
-      std::to_string(PitchMessage::ParseUint64(Beam::Store(cursor)));
-    auto cancelledQuantity = PitchMessage::ParseUint32(Beam::Store(cursor));
-    if(cancelledQuantity == 0) {
+    auto timestamp = PitchMessage::parse_timestamp(Beam::out(cursor));
+    auto order_id =
+      std::to_string(PitchMessage::parse_uint64(Beam::out(cursor)));
+    auto cancelled_quantity = PitchMessage::parse_uint32(Beam::out(cursor));
+    if(cancelled_quantity == 0) {
       return;
     }
-    m_marketDataFeedClient->OffsetOrderSize(
-      orderId, -static_cast<std::int32_t>(cancelledQuantity), timestamp);
-    if(m_config.m_isLoggingMessages) {
-      std::cout << timestamp << ',' << message.m_type << ',' << orderId <<
-        ',' << cancelledQuantity << std::endl;
+    m_feed_client->offset_order_size(
+      order_id, -static_cast<std::int32_t>(cancelled_quantity), timestamp);
+    if(m_config.m_is_logging_messages) {
+      std::cout << timestamp << ',' << message.m_type << ',' << order_id <<
+        ',' << cancelled_quantity << std::endl;
     }
   }
 
   template<typename M, typename P>
-  void ChiaMarketDataFeedClient<M, P>::HandleModifyOrderMessage(
+  void ChiaMarketDataFeedClient<M, P>::handle_modify_order_message(
       const PitchMessage& message) {
     auto cursor = message.m_payload;
-    auto timestamp = PitchMessage::ParseTimestamp(Beam::Store(cursor));
-    auto orderId =
-      std::to_string(PitchMessage::ParseUint64(Beam::Store(cursor)));
-    auto quantity = PitchMessage::ParseUint32(Beam::Store(cursor));
-    auto price = PitchMessage::ParsePrice(Beam::Store(cursor));
-    m_marketDataFeedClient->ModifyOrderSize(orderId, quantity, timestamp);
-    m_marketDataFeedClient->ModifyOrderPrice(orderId, price, timestamp);
-    if(m_config.m_isTimeAndSaleFeed) {
-      if(auto orderEntry = Beam::Lookup(m_orderEntries, orderId)) {
-        orderEntry->m_price = price;
+    auto timestamp = PitchMessage::parse_timestamp(Beam::out(cursor));
+    auto order_id =
+      std::to_string(PitchMessage::parse_uint64(Beam::out(cursor)));
+    auto quantity = PitchMessage::parse_uint32(Beam::out(cursor));
+    auto price = PitchMessage::parse_price(Beam::out(cursor));
+    m_feed_client->modify_order_size(order_id, quantity, timestamp);
+    m_feed_client->modify_order_price(order_id, price, timestamp);
+    if(m_config.m_is_time_and_sale_feed) {
+      if(auto order_entry = Beam::lookup(m_order_entries, order_id)) {
+        order_entry->m_price = price;
       }
     }
-    if(m_config.m_isLoggingMessages) {
-      std::cout << timestamp << ',' << message.m_type << ',' << orderId <<
+    if(m_config.m_is_logging_messages) {
+      std::cout << timestamp << ',' << message.m_type << ',' << order_id <<
         ',' << quantity << ',' << price << std::endl;
     }
   }
 
   template<typename M, typename P>
-  void ChiaMarketDataFeedClient<M, P>::HandleDeleteOrderMessage(
+  void ChiaMarketDataFeedClient<M, P>::handle_delete_order_message(
       const PitchMessage& message) {
     auto cursor = message.m_payload;
-    auto timestamp = PitchMessage::ParseTimestamp(Beam::Store(cursor));
-    auto orderId =
-      std::to_string(PitchMessage::ParseUint64(Beam::Store(cursor)));
-    m_marketDataFeedClient->DeleteOrder(orderId, timestamp);
-    if(m_config.m_isLoggingMessages) {
-      std::cout << timestamp << ',' << message.m_type << ',' << orderId <<
+    auto timestamp = PitchMessage::parse_timestamp(Beam::out(cursor));
+    auto order_id =
+      std::to_string(PitchMessage::parse_uint64(Beam::out(cursor)));
+    m_feed_client->remove_order(order_id, timestamp);
+    if(m_config.m_is_logging_messages) {
+      std::cout << timestamp << ',' << message.m_type << ',' << order_id <<
         std::endl;
     }
   }
 
   template<typename M, typename P>
-  void ChiaMarketDataFeedClient<M, P>::HandleTradeMessage(
+  void ChiaMarketDataFeedClient<M, P>::handle_trade_message(
       const PitchMessage& message) {
     auto cursor = message.m_payload;
-    auto timestamp = PitchMessage::ParseTimestamp(Beam::Store(cursor));
-    auto symbol = PitchMessage::ParseAlphanumeric(6, Beam::Store(cursor));
-    auto quantity = PitchMessage::ParseUint32(Beam::Store(cursor));
+    auto timestamp = PitchMessage::parse_timestamp(Beam::out(cursor));
+    auto symbol = PitchMessage::parse_alphanumeric(6, Beam::out(cursor));
+    auto quantity = PitchMessage::parse_uint32(Beam::out(cursor));
     if(quantity == 0) {
       return;
     }
-    auto price = PitchMessage::ParsePrice(Beam::Store(cursor));
-    auto executionId = PitchMessage::ParseUint64(Beam::Store(cursor));
-    auto orderId = PitchMessage::ParseUint64(Beam::Store(cursor));
-    auto contraOrderId = PitchMessage::ParseUint64(Beam::Store(cursor));
-    auto buyerMpid = ParseMpid(Beam::Store(cursor));
-    auto sellerMpid = ParseMpid(Beam::Store(cursor));
-    auto security =
-      Security(symbol, m_config.m_primaryMarket, m_config.m_country);
+    auto price = PitchMessage::parse_price(Beam::out(cursor));
+    auto execution_id = PitchMessage::parse_uint64(Beam::out(cursor));
+    auto order_id = PitchMessage::parse_uint64(Beam::out(cursor));
+    auto contra_order_id = PitchMessage::parse_uint64(Beam::out(cursor));
+    auto buyer_mpid = parse_mpid(Beam::out(cursor));
+    auto seller_mpid = parse_mpid(Beam::out(cursor));
+    auto security = Security(symbol, m_config.m_primary_venue);
     auto condition = TimeAndSale::Condition();
     condition.m_code = "@";
-    auto timeAndSale = TimeAndSale(
+    auto time_and_sale = TimeAndSale(
       timestamp, price, quantity, std::move(condition), m_config.m_mpid,
-      std::move(buyerMpid), std::move(sellerMpid));
-    m_marketDataFeedClient->Publish(
-      SecurityTimeAndSale(std::move(timeAndSale), security));
-    if(m_config.m_isLoggingMessages) {
+      std::move(buyer_mpid), std::move(seller_mpid));
+    m_feed_client->publish(
+      SecurityTimeAndSale(std::move(time_and_sale), security));
+    if(m_config.m_is_logging_messages) {
       std::cout << timestamp << ',' << message.m_type << ',' << symbol << ',' <<
         quantity << ',' << price << std::endl;
     }
   }
 
   template<typename M, typename P>
-  void ChiaMarketDataFeedClient<M, P>::Dispatch(const PitchMessage& message) {
+  void ChiaMarketDataFeedClient<M, P>::dispatch(const PitchMessage& message) {
     static const auto ADD_ORDER_MESSAGE = 0x37;
     static const auto ORDER_EXECUTED_MESSAGE = 0x38;
     static const auto REDUCE_SIZE_MESSAGE = 0x39;
@@ -277,26 +274,26 @@ namespace Nexus::MarketDataService {
     static const auto DELETE_ORDER_MESSAGE = 0x3C;
     static const auto TRADE_MESSAGE = 0x3D;
     if(message.m_type == ADD_ORDER_MESSAGE) {
-      HandleAddOrderMessage(message);
+      handle_add_order_message(message);
     } else if(message.m_type == ORDER_EXECUTED_MESSAGE) {
-      HandleOrderExecutedMessage(message);
+      handle_order_executed_message(message);
     } else if(message.m_type == REDUCE_SIZE_MESSAGE) {
-      HandleReduceSizeMessage(message);
+      handle_reduce_size_message(message);
     } else if(message.m_type == MODIFY_ORDER_MESSAGE) {
-      HandleModifyOrderMessage(message);
+      handle_modify_order_message(message);
     } else if(message.m_type == DELETE_ORDER_MESSAGE) {
-      HandleDeleteOrderMessage(message);
+      handle_delete_order_message(message);
     } else if(message.m_type == TRADE_MESSAGE) {
-      HandleTradeMessage(message);
+      handle_trade_message(message);
     }
   }
 
   template<typename M, typename P>
-  void ChiaMarketDataFeedClient<M, P>::ReadLoop() {
+  void ChiaMarketDataFeedClient<M, P>::read_loop() {
     while(true) {
       try {
-        Dispatch(m_protocolClient->Read());
-      } catch(const Beam::IO::EndOfFileException&) {
+        dispatch(m_protocol_client->read());
+      } catch(const Beam::EndOfFileException&) {
         break;
       }
     }

@@ -7,7 +7,7 @@
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Network/UdpSocketChannel.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
-#include <Beam/Threading/LiveTimer.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
@@ -16,151 +16,148 @@
 #include <boost/throw_exception.hpp>
 #include "NeoeMarketDataFeedClient/NeoeMarketDataFeedClient.hpp"
 #include "NeoeMarketDataFeedClient/NeoeServiceAccessClient.hpp"
+#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Network;
-using namespace Beam::ServiceLocator;
-using namespace Beam::Threading;
-using namespace Beam::TimeService;
 using namespace boost;
+using namespace boost::local_time;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefinitionsService;
-using namespace Nexus::MarketDataService;
 
 namespace {
-  using ApplicationFeedChannel = WrapperChannel<MulticastSocketChannel*,
-    QueuedReader<SharedBuffer, MulticastSocketChannel::Reader*>>;
+  using ApplicationFeedChannel = WrapperChannel<
+    MulticastSocketChannel*, QueuedReader<MulticastSocketChannel::Reader*>>;
   using ApplicationRetransmissionServerChannel = UdpSocketChannel;
-  using ApplicationNeoeServiceAccessClient = NeoeServiceAccessClient<
-    ApplicationFeedChannel*, TcpSocketChannel,
-    ApplicationRetransmissionServerChannel>;
+  using ApplicationNeoeServiceAccessClient =
+    NeoeServiceAccessClient<ApplicationFeedChannel*, TcpSocketChannel,
+      ApplicationRetransmissionServerChannel>;
   using ApplicationNeoeMarketDataFeedClient = NeoeMarketDataFeedClient<
-    ApplicationMarketDataFeedClient::Client*,
-    ApplicationNeoeServiceAccessClient*, LiveNtpTimeClient*>;
+    ApplicationMarketDataFeedClient*, ApplicationNeoeServiceAccessClient*,
+    LiveNtpTimeClient*>;
 
   static constexpr auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(16777216);
 
-  std::vector<SecurityInfo> ParseSecurityInfoList(const std::string& path) {
-    return TryOrNest([&] {
-      auto config = Require(LoadFile, path);
+  std::vector<SecurityInfo> parse_security_info_list(const std::string& path) {
+    return try_or_nest([&] {
+      auto config = load_file(path);
       auto securities = std::vector<SecurityInfo>();
       for(auto node : config) {
-        auto symbol = Extract<std::string>(node, "symbol");
-        auto name = Extract<std::string>(node, "name");
-        auto boardLot = Extract<Quantity>(node, "board_lot");
+        auto symbol = extract<std::string>(node, "symbol");
+        auto name = extract<std::string>(node, "name");
+        auto board_lot = extract<Quantity>(node, "board_lot");
         auto info = SecurityInfo();
         info.m_name = name;
-        info.m_security = Security(symbol, DefaultMarkets::NEOE(),
-          DefaultCountries::CA());
-        info.m_boardLot = boardLot;
+        info.m_security = Security(symbol, DefaultVenues::NEOE);
+        info.m_board_lot = board_lot;
         securities.push_back(std::move(info));
       }
       return securities;
     }, std::runtime_error("Unable to parse security info list."));
   }
 
-  std::unordered_map<std::string, std::string> LoadMpidMappings(
+  std::unordered_map<std::string, std::string> load_mpid_mappings(
       const YAML::Node& config) {
-    return TryOrNest([&] {
+    return try_or_nest([&] {
       auto mappings = std::unordered_map<std::string, std::string>();
       for(auto node : config) {
-        auto source = Extract<std::string>(node, "source");
-        auto name = Extract<std::string>(node, "name");
+        auto source = extract<std::string>(node, "source");
+        auto name = extract<std::string>(node, "name");
         mappings.insert(std::pair(source, name));
       }
       return mappings;
     }, std::runtime_error("Unable to parse MPID mappings."));
   }
 
-  NeoeConfiguration ParseConfiguration(const YAML::Node& config,
-      const MarketDatabase& marketDatabase, const ptime& currentDate,
-      const local_time::tz_database& timeZones) {
-    return TryOrNest([&] {
-      auto configTimezone = Extract<std::string>(config, "time_zone",
-        "Eastern_Time");
-      auto timeZone = timeZones.time_zone_from_region(configTimezone);
-      if(timeZone == nullptr) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Time zone not found."));
+  time_duration get_utc_offset(const tz_database& tz_database,
+      const std::string& time_zone) {
+    auto tz = tz_database.time_zone_from_region(time_zone);
+    if(!tz) {
+      throw_with_location(std::runtime_error(
+        "Time zone '" + time_zone + "' not found in database."));
+    }
+    auto current_time = second_clock::universal_time();
+    auto local_time = local_date_time(current_time, tz);
+    return local_time.local_time() - local_time.utc_time();
+  }
+
+  NeoeConfiguration parse_configuration(const YAML::Node& config) {
+    return try_or_nest([&] {
+      auto time_zone =
+        extract<std::string>(config, "time_zone", "Eastern_Time");
+      auto neoe_config = NeoeConfiguration();
+      neoe_config.m_is_logging_messages =
+        extract<bool>(config, "enable_logging", false);
+      neoe_config.m_is_time_and_sale_feed =
+        extract<bool>(config, "is_time_and_sale", false);
+      neoe_config.m_time_offset = -get_utc_offset(
+        get_default_time_zone_database(), time_zone);
+      if(auto mpid_mappings = config["mpid_mappings"]) {
+        neoe_config.m_mpid_mappings = load_mpid_mappings(mpid_mappings);
       }
-      auto neoeConfig = NeoeConfiguration();
-      neoeConfig.m_isLoggingMessages = Extract<bool>(config, "enable_logging",
-        false);
-      neoeConfig.m_timeOffset = -GetUtcOffset(currentDate, *timeZone);
-      neoeConfig.m_isTimeAndSaleFeed = Extract<bool>(config, "is_time_and_sale",
-        false);
-      if(auto mpidMappings = config["mpid_mappings"]) {
-        neoeConfig.m_mpidMappings = LoadMpidMappings(mpidMappings);
-      }
-      return neoeConfig;
+      return neoe_config;
     }, std::runtime_error("Unable to parse NEOE configuration."));
   }
 }
 
 int main(int argc, const char** argv) {
   try {
-    auto config = ParseCommandLine(argc, argv,
+    auto config = parse_command_line(argc, argv,
       "1.0-r" NEOE_MARKET_DATA_FEED_CLIENT_VERSION
-      "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
-      GetNode(config, "service_locator"));
-    auto definitionsClient = ApplicationDefinitionsClient(
-      serviceLocatorClient.Get());
-    auto timeClient = MakeLiveNtpTimeClientFromServiceLocator(
-      *serviceLocatorClient);
-    auto samplingTime = Extract<time_duration>(config, "sampling");
-    auto marketDataFeedClient = ApplicationMarketDataFeedClient(
-      serviceLocatorClient.Get(), samplingTime, DefaultCountries::CA());
-    auto host = Extract<IpAddress>(config, "host");
-    auto interface = Extract<IpAddress>(config, "interface");
+      "\nCopyright (C) 2026 Spire Trading Inc.");
+    auto service_locator_client = ApplicationServiceLocatorClient(
+      ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
+    auto definitions_client =
+      ApplicationDefinitionsClient(Ref(service_locator_client));
+    auto time_client = make_live_ntp_time_client(service_locator_client);
+    auto sampling_time = extract<time_duration>(config, "sampling");
+    auto market_data_feed_client = ApplicationMarketDataFeedClient(
+      Ref(service_locator_client), sampling_time, DefaultCountries::CA);
+    auto host = extract<IpAddress>(config, "host");
+    auto interface = extract<IpAddress>(config, "interface");
     auto options = MulticastSocketOptions();
-    options.m_receiveBufferSize = Extract<int>(config, "receive_buffer",
-      DEFAULT_RECEIVE_BUFFER_SIZE);
-    options.m_maxDatagramSize = Extract<int>(config, "mtu",
-      options.m_maxDatagramSize);
-    auto multicastSocketChannel = TryOrNest([&] {
+    options.m_receive_buffer_size =
+      extract<int>(config, "receive_buffer", DEFAULT_RECEIVE_BUFFER_SIZE);
+    options.m_max_datagram_size =
+      extract<int>(config, "mtu", options.m_max_datagram_size);
+    auto multicast_socket_channel = try_or_nest([&] {
       return MulticastSocketChannel(host, interface, options);
     }, std::runtime_error("Unable to join NEOE multicast group."));
-    auto feedChannel = ApplicationFeedChannel(&multicastSocketChannel,
-      &multicastSocketChannel.GetReader());
-    auto retransmissionClientAddress = Extract<IpAddress>(config,
-      "retransmission_request_address");
-    auto retransmissionServerAddress = Extract<IpAddress>(config,
-      "retransmission_response_address");
-    auto retransmissionClientChannelBuilder =
+    auto feed_channel = ApplicationFeedChannel(
+      &multicast_socket_channel, &multicast_socket_channel.get_reader());
+    auto retransmission_client_address =
+      extract<IpAddress>(config, "retransmission_request_address");
+    auto retransmission_server_address =
+      extract<IpAddress>(config, "retransmission_response_address");
+    auto retransmission_client_channel_builder =
       [=] (Out<std::optional<TcpSocketChannel>> channel) {
-        channel->emplace(retransmissionClientAddress);
+        channel->emplace(retransmission_client_address);
       };
-    auto serviceAccessConfig = NeoeServiceAccessConfiguration();
-    serviceAccessConfig.m_enableRetransmission = Extract<bool>(
-      config, "enable_retransmission", false);
-    serviceAccessConfig.m_maxRetransmissionCount = Extract<int>(
-      config, "max_retransmissions", 10);
-    serviceAccessConfig.m_maxRetransmissionBlock = Extract<int>(
-      config, "retransmission_block_size", 20000);
-    auto marketDatabase = definitionsClient->LoadMarketDatabase();
-    auto timeZones = definitionsClient->LoadTimeZoneDatabase();
-    auto neoeConfig = ParseConfiguration(config, marketDatabase,
-      timeClient->GetTime(), timeZones);
-    auto symbolList = Extract<std::string>(config, "symbol_list");
-    auto securities = ParseSecurityInfoList(symbolList);
+    auto service_access_config = NeoeServiceAccessConfiguration();
+    service_access_config.m_enable_retransmission =
+      extract<bool>(config, "enable_retransmission", false);
+    service_access_config.m_max_retransmission_count =
+      extract<int>(config, "max_retransmissions", 10);
+    service_access_config.m_max_retransmission_block =
+      extract<int>(config, "retransmission_block_size", 20000);
+    auto neoe_config = parse_configuration(config);
+    auto symbol_list = extract<std::string>(config, "symbol_list");
+    auto securities = parse_security_info_list(symbol_list);
     for(auto& security : securities) {
-      neoeConfig.m_securities.insert(security.m_security.GetSymbol());
+      neoe_config.m_securities.insert(security.m_security.get_symbol());
     }
-    auto serviceAccessClient = ApplicationNeoeServiceAccessClient(
-      serviceAccessConfig, &feedChannel, retransmissionClientChannelBuilder,
-      Initialize(retransmissionServerAddress,
-      IpAddress("0.0.0.0", retransmissionServerAddress.GetPort())));
-    auto feedClient = ApplicationNeoeMarketDataFeedClient(neoeConfig,
-      marketDataFeedClient.Get(), &serviceAccessClient, timeClient.get());
-    WaitForKillEvent();
-    serviceLocatorClient->Close();
+    auto service_access_client = ApplicationNeoeServiceAccessClient(
+      service_access_config, &feed_channel,
+      retransmission_client_channel_builder, init(retransmission_server_address,
+        IpAddress("0.0.0.0", retransmission_server_address.get_port())));
+    auto feed_client = ApplicationNeoeMarketDataFeedClient(neoe_config,
+      &market_data_feed_client, &service_access_client, time_client.get());
+    wait_for_kill_event();
+    service_locator_client.close();
   } catch(...) {
-    ReportCurrentException();
+    report_current_exception();
     return -1;
   }
   return 0;

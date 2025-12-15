@@ -5,7 +5,7 @@ service_locator:
   password: $admin_password
 
 enable_logging: false
-market: TSXV
+venue: TSXV
 sampling: 100ms
 host: "224.0.72.15:30700"
 interface: "$local_interface:30700"

@@ -2,13 +2,14 @@
 #define NEXUS_PITCH_MESSAGE_HPP
 #include <cstdint>
 #include <Beam/Pointers/Out.hpp>
-#include <Beam/Utilities/Endian.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/endian.hpp>
+#include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "ChiaMarketDataFeedClient/PitchParserException.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Stores a single PITCH message. */
   struct PitchMessage {
@@ -28,28 +29,28 @@ namespace Nexus::MarketDataService {
      *        of the message if parsed successfully.
      * @param size The size of the data to parse.
      */
-    static PitchMessage Parse(Beam::Out<const char*> cursor, std::size_t size);
+    static PitchMessage parse(Beam::Out<const char*> cursor, std::size_t size);
 
     /**
      * Parses a <code>std::uint32_t</code> field from a message.
      * @param cursor A pointer to the first byte of the field to parse.
      * @return The value of the field.
      */
-    static std::uint32_t ParseUint32(Beam::Out<const char*> cursor);
+    static std::uint32_t parse_uint32(Beam::Out<const char*> cursor);
 
     /**
      * Parses a <code>std::uint64_t</code> field from a message.
      * @param cursor A pointer to the first byte of the field to parse.
      * @return The value of the field.
      */
-    static std::uint64_t ParseUint64(Beam::Out<const char*> cursor);
+    static std::uint64_t parse_uint64(Beam::Out<const char*> cursor);
 
     /**
      * Parses a timestamp field from a message.
      * @param cursor A pointer to the first byte of the field to parse.
      * @return The value of the field.
      */
-    static boost::posix_time::ptime ParseTimestamp(
+    static boost::posix_time::ptime parse_timestamp(
       Beam::Out<const char*> cursor);
 
     /**
@@ -57,7 +58,7 @@ namespace Nexus::MarketDataService {
      * @param cursor A pointer to the first byte of the field to parse.
      * @return The value of the field.
      */
-    static char ParseChar(Beam::Out<const char*> cursor);
+    static char parse_char(Beam::Out<const char*> cursor);
 
     /**
      * Parses a <code>std::string</code> field from a message.
@@ -65,7 +66,7 @@ namespace Nexus::MarketDataService {
      * @param cursor A pointer to the first byte of the field to parse.
      * @return The value of the field.
      */
-    static std::string ParseAlphanumeric(
+    static std::string parse_alphanumeric(
       int size, Beam::Out<const char*> cursor);
 
     /**
@@ -73,26 +74,28 @@ namespace Nexus::MarketDataService {
      * @param cursor A pointer to the first byte of the field to parse.
      * @return The value of the field.
      */
-    static Side ParseSide(Beam::Out<const char*> cursor);
+    static Side parse_side(Beam::Out<const char*> cursor);
 
     /**
      * Parses a <code>Money</code> field from a message.
      * @param cursor A pointer to the first byte of the field to parse.
      * @return The value of the field.
      */
-    static Money ParsePrice(Beam::Out<const char*> cursor);
+    static Money parse_price(Beam::Out<const char*> cursor);
   };
 
-  inline PitchMessage PitchMessage::Parse(
+  inline PitchMessage PitchMessage::parse(
       Beam::Out<const char*> cursor, std::size_t size) {
     auto message = PitchMessage();
     if(size == 0) {
-      BOOST_THROW_EXCEPTION(PitchParserException("PITCH message too short."));
+      boost::throw_with_location(
+        PitchParserException("PITCH message too short."));
     }
-    message.m_length =
-      Beam::FromLittleEndian(*reinterpret_cast<const std::uint8_t*>(*cursor));
+    message.m_length = boost::endian::little_to_native(
+      *reinterpret_cast<const std::uint8_t*>(*cursor));
     if(size < message.m_length) {
-      BOOST_THROW_EXCEPTION(PitchParserException("PITCH message too short."));
+      boost::throw_with_location(
+        PitchParserException("PITCH message too short."));
     }
     ++*cursor;
     message.m_type = **cursor;
@@ -101,37 +104,37 @@ namespace Nexus::MarketDataService {
     return message;
   }
 
-  inline std::uint32_t PitchMessage::ParseUint32(
+  inline std::uint32_t PitchMessage::parse_uint32(
       Beam::Out<const char*> cursor) {
-    auto value =
-      Beam::FromLittleEndian(*reinterpret_cast<const std::uint32_t*>(*cursor));
+    auto value = boost::endian::little_to_native(
+      *reinterpret_cast<const std::uint32_t*>(*cursor));
     *cursor += sizeof(std::uint32_t);
     return value;
   }
 
-  inline std::uint64_t PitchMessage::ParseUint64(
+  inline std::uint64_t PitchMessage::parse_uint64(
       Beam::Out<const char*> cursor) {
-    auto value =
-      Beam::FromLittleEndian(*reinterpret_cast<const std::uint64_t*>(*cursor));
+    auto value = boost::endian::little_to_native(
+      *reinterpret_cast<const std::uint64_t*>(*cursor));
     *cursor += sizeof(std::uint64_t);
     return value;
   }
 
-  inline boost::posix_time::ptime PitchMessage::ParseTimestamp(
+  inline boost::posix_time::ptime PitchMessage::parse_timestamp(
       Beam::Out<const char*> cursor) {
     static const auto EPOCH =
       boost::posix_time::ptime(boost::gregorian::date(1970, 1, 1));
     return EPOCH +
-      boost::posix_time::microseconds(ParseUint64(Beam::Store(*cursor)) / 1000);
+      boost::posix_time::microseconds(parse_uint64(Beam::out(*cursor)) / 1000);
   }
 
-  inline char PitchMessage::ParseChar(Beam::Out<const char*> cursor) {
+  inline char PitchMessage::parse_char(Beam::Out<const char*> cursor) {
     auto value = **cursor;
     ++*cursor;
     return value;
   }
 
-  inline std::string PitchMessage::ParseAlphanumeric(
+  inline std::string PitchMessage::parse_alphanumeric(
       int size, Beam::Out<const char*> cursor) {
     auto value = std::string();
     for(auto i = 0; i < size; ++i) {
@@ -144,8 +147,8 @@ namespace Nexus::MarketDataService {
     return value;
   }
 
-  inline Side PitchMessage::ParseSide(Beam::Out<const char*> cursor) {
-    auto value = ParseChar(Beam::Store(cursor));
+  inline Side PitchMessage::parse_side(Beam::Out<const char*> cursor) {
+    auto value = parse_char(Beam::out(cursor));
     auto side = [&] {
       if(value == 'B') {
         return Side::BID;
@@ -157,9 +160,9 @@ namespace Nexus::MarketDataService {
     return side;
   }
 
-  inline Money PitchMessage::ParsePrice(Beam::Out<const char*> cursor) {
+  inline Money PitchMessage::parse_price(Beam::Out<const char*> cursor) {
     static auto DENOMINATOR = 10000000;
-    auto value = Quantity(ParseUint64(Beam::Store(*cursor)));
+    auto value = Quantity(parse_uint64(Beam::out(*cursor)));
     return Money(value / DENOMINATOR);
   }
 }

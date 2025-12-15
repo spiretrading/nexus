@@ -7,27 +7,28 @@
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/IOException.hpp>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <boost/throw_exception.hpp>
-#include "Nexus/StampProtocol/StampMessage.hpp"
-#include "Nexus/StampProtocol/StampPacket.hpp"
+#include "Nexus/Stamp/StampMessage.hpp"
+#include "Nexus/Stamp/StampPacket.hpp"
 #include "CseMarketDataFeedClient/CseMarketDataFeedClient.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Stores the configuration used for a CseServiceAccessClient. */
   struct CseServiceAccessConfiguration {
 
     /** Whether retransmission is enabled. */
-    bool m_enableRetransmission;
+    bool m_enable_retransmission;
 
     /** The maximum number of retransmissions to perform. */
-    int m_maxRetransmissionCount;
+    int m_max_retransmission_count;
 
     /** The size of the largest possible retransmission block. */
-    std::size_t m_maxRetransmissionBlock;
+    std::size_t m_max_retransmission_block;
 
     /** Constructs a CseServiceAccessConfiguration with default values. */
     CseServiceAccessConfiguration();
@@ -44,13 +45,13 @@ namespace Nexus::MarketDataService {
     public:
 
       /** The type of channel receiving the market data feed. */
-      using FeedChannel = Beam::GetTryDereferenceType<F>;
+      using FeedChannel = Beam::dereference_t<F>;
 
       /** The type of Channel used to send retransmission requests. */
-      using RetransmissionClientChannel = Beam::GetTryDereferenceType<C>;
+      using RetransmissionClientChannel = Beam::dereference_t<C>;
 
       /** The type of Channel used to receive retransmission messages. */
-      using RetransmissionServerChannel = Beam::GetTryDereferenceType<S>;
+      using RetransmissionServerChannel = Beam::dereference_t<S>;
 
       /**
        * The type of function used to build instances of the
@@ -63,283 +64,286 @@ namespace Nexus::MarketDataService {
       /**
        * Constructs a CseServiceAccessClient.
        * @param config The configuration to use.
-       * @param feedChannel The Channel receiving the market data feed.
-       * @param retransmissionClientChannelBuilder Builds instances of the
+       * @param feed_channel The Channel receiving the market data feed.
+       * @param retransmission_client_channel_builder Builds instances of the
        *        Channel used to send retransmission requests.
-       * @param retransmissionServerChannel The Channel receiving retransmission
-       *        messages.
+       * @param retransmission_server_channel The Channel receiving
+       *        retransmission messages.
        */
       template<typename FF, typename SF>
-      CseServiceAccessClient(CseServiceAccessConfiguration config,
-        FF&& feedChannel,
-        RetransmissionClientChannelBuilder retransmissionClientChannelBuilder,
-        SF&& retransmissionServerChannel);
+      CseServiceAccessClient(
+        CseServiceAccessConfiguration config, FF&& feed_channel,
+        RetransmissionClientChannelBuilder
+          retransmission_client_channel_builder,
+        SF&& retransmission_server_channel);
 
       ~CseServiceAccessClient();
 
       /** Reads the next message from the feed. */
-      StampProtocol::StampMessage Read();
+      StampMessage read();
 
-      void Close();
+      void close();
 
     private:
-      using FeedBuffer = typename FeedChannel::Reader::Buffer;
       struct BufferEntry {
-        FeedBuffer m_buffer;
-        std::uint32_t m_sequenceNumber;
+        Beam::SharedBuffer m_buffer;
+        std::uint32_t m_sequence_number;
 
-        BufferEntry(FeedBuffer buffer, std::uint32_t sequenceNumber);
+        BufferEntry(Beam::SharedBuffer buffer, std::uint32_t sequence_number);
       };
       CseServiceAccessConfiguration m_config;
-      Beam::GetOptionalLocalPtr<F> m_feedChannel;
-      RetransmissionClientChannelBuilder m_retransmissionClientChannelBuilder;
-      Beam::GetOptionalLocalPtr<S> m_retransmissionServerChannel;
-      int m_retransmissionCount;
-      std::uint32_t m_sequenceNumber;
-      std::vector<FeedBuffer> m_buffers;
-      std::deque<BufferEntry> m_pendingBuffers;
-      Beam::IO::OpenState m_openState;
+      Beam::local_ptr_t<F> m_feed_channel;
+      RetransmissionClientChannelBuilder
+        m_retransmission_client_channel_builder;
+      Beam::local_ptr_t<S> m_retransmission_server_channel;
+      int m_retransmission_count;
+      std::uint32_t m_sequence_number;
+      std::vector<Beam::SharedBuffer> m_buffers;
+      std::deque<BufferEntry> m_pending_buffers;
+      Beam::OpenState m_open_state;
 
       CseServiceAccessClient(const CseServiceAccessClient&) = delete;
       CseServiceAccessClient& operator =(
         const CseServiceAccessClient&) = delete;
-      template<typename Buffer>
-      static void BuildRetransmissionRequestBuffer(Beam::Out<Buffer> buffer,
-        std::size_t startSequenceNumber, std::size_t endSequenceNumber);
-      void AddPendingBuffer(FeedBuffer buffer, std::size_t sequenceNumber);
-      void SendRetransmissionRequest(std::size_t startSequenceNumber,
-        std::size_t endSequenceNumber);
-      void ReadRetransmissionResponse(std::size_t startSequenceNumber,
-        std::size_t endSequenceNumber);
-      void Retransmit(std::size_t startSequenceNumber,
-        std::size_t endSequenceNumber);
+      static void build_retransmission_request_buffer(
+        Beam::Out<Beam::SharedBuffer> buffer, std::size_t start_sequence_number,
+        std::size_t end_sequence_number);
+      void add_pending_buffer(
+        Beam::SharedBuffer buffer, std::size_t sequence_number);
+      void send_retransmission_request(
+        std::size_t start_sequence_number, std::size_t end_sequence_number);
+      void read_retransmission_response(
+        std::size_t start_sequence_number, std::size_t end_sequence_number);
+      void retransmit(
+        std::size_t start_sequence_number, std::size_t end_sequence_number);
   };
 
   inline CseServiceAccessConfiguration::CseServiceAccessConfiguration()
-    : m_enableRetransmission(false),
-      m_maxRetransmissionCount(100),
-      m_maxRetransmissionBlock(20000) {}
+    : m_enable_retransmission(false),
+      m_max_retransmission_count(100),
+      m_max_retransmission_block(20000) {}
 
   template<typename F, typename C, typename S>
-  CseServiceAccessClient<F, C, S>::BufferEntry::BufferEntry(FeedBuffer buffer,
-    std::uint32_t sequenceNumber)
+  CseServiceAccessClient<F, C, S>::BufferEntry::BufferEntry(
+    Beam::SharedBuffer buffer, std::uint32_t sequence_number)
     : m_buffer(std::move(buffer)),
-      m_sequenceNumber(sequenceNumber) {}
+      m_sequence_number(sequence_number) {}
 
   template<typename F, typename C, typename S>
   template<typename FF, typename SF>
   CseServiceAccessClient<F, C, S>::CseServiceAccessClient(
-      CseServiceAccessConfiguration config, FF&& feedChannel,
-      RetransmissionClientChannelBuilder retransmissionClientChannelBuilder,
-      SF&& retransmissionServerChannel)
+      CseServiceAccessConfiguration config, FF&& feed_channel,
+      RetransmissionClientChannelBuilder retransmission_client_channel_builder,
+      SF&& retransmission_server_channel)
       try : m_config(std::move(config)),
-            m_feedChannel(std::forward<F>(feedChannel)),
-            m_retransmissionClientChannelBuilder(
-              std::move(retransmissionClientChannelBuilder)),
-            m_retransmissionServerChannel(std::forward<SF>(
-              retransmissionServerChannel)),
-            m_retransmissionCount(0),
-            m_sequenceNumber(0) {
+            m_feed_channel(std::forward<F>(feed_channel)),
+            m_retransmission_client_channel_builder(
+              std::move(retransmission_client_channel_builder)),
+            m_retransmission_server_channel(
+              std::forward<SF>(retransmission_server_channel)),
+            m_retransmission_count(0),
+            m_sequence_number(0) {
   } catch(const std::exception&) {
-    std::throw_with_nested(Beam::IO::ConnectException(
+    std::throw_with_nested(Beam::ConnectException(
       "Failed to initialize the CSE service access client."));
   }
 
   template<typename F, typename C, typename S>
   CseServiceAccessClient<F, C, S>::~CseServiceAccessClient() {
-    Close();
+    close();
   }
 
   template<typename F, typename C, typename S>
-  StampProtocol::StampMessage CseServiceAccessClient<F, C, S>::Read() {
+  StampMessage CseServiceAccessClient<F, C, S>::read() {
     static const auto HEARTBEAT_MESSAGE_TYPE = Beam::FixedString<2>("V ");
-    return Beam::TryOrNest([&] {
-      auto packet = StampProtocol::StampPacket();
-      if(m_config.m_enableRetransmission) {
-        auto retransmissionBuffer = Beam::IO::SharedBuffer();
-        while(m_retransmissionServerChannel->GetReader().IsDataAvailable()) {
-          retransmissionBuffer.Reset();
-          m_retransmissionServerChannel->GetReader().Read(
-            Beam::Store(retransmissionBuffer));
+    return Beam::try_or_nest([&] {
+      auto packet = StampPacket();
+      if(m_config.m_enable_retransmission) {
+        auto retransmission_buffer = Beam::SharedBuffer();
+        while(m_retransmission_server_channel->get_reader().poll()) {
+          reset(retransmission_buffer);
+          m_retransmission_server_channel->get_reader().read(
+            Beam::out(retransmission_buffer));
         }
       }
-      auto bufferIndex = std::size_t(0);
+      auto buffer_index = std::size_t(0);
       while(true) {
-        if(m_buffers.size() <= bufferIndex) {
+        if(m_buffers.size() <= buffer_index) {
           m_buffers.emplace_back();
         }
-        auto& buffer = m_buffers[bufferIndex];
-        buffer.Reset();
-        if(m_pendingBuffers.empty()) {
-          m_feedChannel->GetReader().Read(Beam::Store(buffer));
+        auto& buffer = m_buffers[buffer_index];
+        reset(buffer);
+        if(m_pending_buffers.empty()) {
+          m_feed_channel->get_reader().read(Beam::out(buffer));
         } else {
-          buffer = std::move(m_pendingBuffers.front().m_buffer);
-          m_pendingBuffers.pop_front();
+          buffer = std::move(m_pending_buffers.front().m_buffer);
+          m_pending_buffers.pop_front();
         }
-        auto packet = StampProtocol::StampPacket::Parse(buffer.GetData(),
-          buffer.GetSize());
-        if(packet.m_header.m_messageType == HEARTBEAT_MESSAGE_TYPE) {
+        auto packet = StampPacket::parse(buffer.get_data(), buffer.get_size());
+        if(packet.m_header.m_message_type == HEARTBEAT_MESSAGE_TYPE) {
           continue;
         }
-        if(m_sequenceNumber == 0) {
-          if(packet.m_header.m_continuationIndicator ==
-              StampProtocol::ContinuationIndicator::STAND_ALONE ||
-              packet.m_header.m_continuationIndicator ==
-              StampProtocol::ContinuationIndicator::SPANNING) {
-            m_sequenceNumber = packet.m_header.m_sequenceNumber;
+        if(m_sequence_number == 0) {
+          if(packet.m_header.m_continuation_indicator ==
+              ContinuationIndicator::STAND_ALONE ||
+                packet.m_header.m_continuation_indicator ==
+                  ContinuationIndicator::SPANNING) {
+            m_sequence_number = packet.m_header.m_sequence_number;
           } else {
             continue;
           }
-        } else if(packet.m_header.m_sequenceNumber == m_sequenceNumber + 1) {
-          ++m_sequenceNumber;
-        } else if(packet.m_header.m_sequenceNumber <= m_sequenceNumber) {
+        } else if(packet.m_header.m_sequence_number == m_sequence_number + 1) {
+          ++m_sequence_number;
+        } else if(packet.m_header.m_sequence_number <= m_sequence_number) {
           continue;
         } else {
-          std::cout << "Dropped packets: " << m_sequenceNumber + 1 << " - " <<
-            packet.m_header.m_sequenceNumber - 1 << std::endl;
-          AddPendingBuffer(buffer, packet.m_header.m_sequenceNumber);
-          if(m_config.m_enableRetransmission) {
+          std::cout << "Dropped packets: " << m_sequence_number + 1 << " - " <<
+            packet.m_header.m_sequence_number - 1 << std::endl;
+          add_pending_buffer(buffer, packet.m_header.m_sequence_number);
+          if(m_config.m_enable_retransmission) {
             try {
-              Retransmit(m_sequenceNumber + 1,
-                packet.m_header.m_sequenceNumber - 1);
+              retransmit(
+                m_sequence_number + 1, packet.m_header.m_sequence_number - 1);
             } catch(const std::exception&) {
-              m_sequenceNumber = 0;
-              bufferIndex = 0;
+              m_sequence_number = 0;
+              buffer_index = 0;
             }
           } else {
-            m_sequenceNumber = 0;
-            bufferIndex = 0;
+            m_sequence_number = 0;
+            buffer_index = 0;
           }
           continue;
         }
-        if(packet.m_header.m_continuationIndicator ==
-            StampProtocol::ContinuationIndicator::STAND_ALONE) {
-          auto message = StampProtocol::StampMessage(packet.m_header,
-            packet.m_message, packet.m_messageSize);
-          return message;
-        } else if(packet.m_header.m_continuationIndicator ==
-            StampProtocol::ContinuationIndicator::SPANNING) {
-          bufferIndex = 1;
-        } else if(packet.m_header.m_continuationIndicator ==
-            StampProtocol::ContinuationIndicator::SPANNING_CONTINUATION) {
-          ++bufferIndex;
-        } else if(packet.m_header.m_continuationIndicator ==
-            StampProtocol::ContinuationIndicator::CONTINUATION) {
-          bufferIndex = 0;
+        if(packet.m_header.m_continuation_indicator ==
+            ContinuationIndicator::STAND_ALONE) {
+          return StampMessage(
+            packet.m_header, packet.m_message, packet.m_message_size);
+        } else if(packet.m_header.m_continuation_indicator ==
+            ContinuationIndicator::SPANNING) {
+          buffer_index = 1;
+        } else if(packet.m_header.m_continuation_indicator ==
+            ContinuationIndicator::SPANNING_CONTINUATION) {
+          ++buffer_index;
+        } else if(packet.m_header.m_continuation_indicator ==
+            ContinuationIndicator::CONTINUATION) {
+          buffer_index = 0;
         }
       }
-    }, Beam::IO::IOException("Unable to read CSE message."));
+    }, Beam::IOException("Unable to read CSE message."));
   }
 
   template<typename F, typename C, typename S>
-  void CseServiceAccessClient<F, C, S>::Close() {
-    if(m_openState.SetClosing()) {
+  void CseServiceAccessClient<F, C, S>::close() {
+    if(m_open_state.set_closing()) {
       return;
     }
-    if(m_config.m_enableRetransmission) {
-      m_retransmissionServerChannel->GetConnection().Close();
+    if(m_config.m_enable_retransmission) {
+      m_retransmission_server_channel->get_connection().close();
     }
-    m_feedChannel->GetConnection().Close();
+    m_feed_channel->get_connection().close();
     m_buffers.clear();
-    m_openState.Close();
+    m_open_state.close();
   }
 
   template<typename F, typename C, typename S>
-  template<typename Buffer>
-  void CseServiceAccessClient<F, C, S>::BuildRetransmissionRequestBuffer(
-      Beam::Out<Buffer> buffer, std::size_t startSequenceNumber,
-      std::size_t endSequenceNumber) {
+  void CseServiceAccessClient<F, C, S>::build_retransmission_request_buffer(
+      Beam::Out<Beam::SharedBuffer> buffer, std::size_t start_sequence_number,
+      std::size_t end_sequence_number) {
     static constexpr auto SEQUENCE_NUMBER_SIZE = std::size_t(9);
-    buffer->Append("SEQN", 4);
-    auto messageStartNumber = boost::lexical_cast<std::string>(
-      startSequenceNumber);
-    while(messageStartNumber.size() < SEQUENCE_NUMBER_SIZE) {
-      messageStartNumber.insert(messageStartNumber.begin(), '0');
+    append(*buffer, "SEQN", 4);
+    auto message_start_number =
+      boost::lexical_cast<std::string>(start_sequence_number);
+    while(message_start_number.size() < SEQUENCE_NUMBER_SIZE) {
+      message_start_number.insert(message_start_number.begin(), '0');
     }
-    buffer->Append(messageStartNumber.c_str(), SEQUENCE_NUMBER_SIZE);
-    auto messageEndNumber = boost::lexical_cast<std::string>(endSequenceNumber);
-    while(messageEndNumber.size() < SEQUENCE_NUMBER_SIZE) {
-      messageEndNumber.insert(messageEndNumber.begin(), '0');
+    append(*buffer, message_start_number.c_str(), SEQUENCE_NUMBER_SIZE);
+    auto message_end_number =
+      boost::lexical_cast<std::string>(end_sequence_number);
+    while(message_end_number.size() < SEQUENCE_NUMBER_SIZE) {
+      message_end_number.insert(message_end_number.begin(), '0');
     }
-    buffer->Append(messageEndNumber.c_str(), SEQUENCE_NUMBER_SIZE);
-    buffer->Append('\n');
+    append(*buffer, message_end_number.c_str(), SEQUENCE_NUMBER_SIZE);
+    append(*buffer, '\n');
   }
 
   template<typename F, typename C, typename S>
-  void CseServiceAccessClient<F, C, S>::AddPendingBuffer(FeedBuffer buffer,
-      std::size_t sequenceNumber) {
-    auto entry = BufferEntry(std::move(buffer), sequenceNumber);
-    auto pendingBufferIterator = std::lower_bound(m_pendingBuffers.begin(),
-      m_pendingBuffers.end(), entry,
+  void CseServiceAccessClient<F, C, S>::add_pending_buffer(
+      Beam::SharedBuffer buffer, std::size_t sequence_number) {
+    auto entry = BufferEntry(std::move(buffer), sequence_number);
+    auto pending_buffer_iterator = std::lower_bound(
+      m_pending_buffers.begin(), m_pending_buffers.end(), entry,
       [] (const auto& lhs, const auto& rhs) {
-        return lhs.m_sequenceNumber < rhs.m_sequenceNumber;
+        return lhs.m_sequence_number < rhs.m_sequence_number;
       });
-    if(pendingBufferIterator == m_pendingBuffers.end() ||
-        pendingBufferIterator->m_sequenceNumber != sequenceNumber) {
-      m_pendingBuffers.insert(pendingBufferIterator, entry);
+    if(pending_buffer_iterator == m_pending_buffers.end() ||
+        pending_buffer_iterator->m_sequence_number != sequence_number) {
+      m_pending_buffers.insert(pending_buffer_iterator, entry);
     }
   }
 
   template<typename F, typename C, typename S>
-  void CseServiceAccessClient<F, C, S>::SendRetransmissionRequest(
-      std::size_t startSequenceNumber, std::size_t endSequenceNumber) {
+  void CseServiceAccessClient<F, C, S>::send_retransmission_request(
+      std::size_t start_sequence_number, std::size_t end_sequence_number) {
     static constexpr auto RETRANSMISSION_RESPONSE_SIZE = std::size_t(151);
-    auto retransmissionRequestBuffer =
-      typename RetransmissionClientChannel::Writer::Buffer();
-    BuildRetransmissionRequestBuffer(Beam::Store(retransmissionRequestBuffer),
-      startSequenceNumber, endSequenceNumber);
-    auto retransmissionClientChannel =
+    auto retransmission_request_buffer = Beam::SharedBuffer();
+    build_retransmission_request_buffer(
+      Beam::out(retransmission_request_buffer), start_sequence_number,
+      end_sequence_number);
+    auto retransmission_client_channel =
       std::optional<RetransmissionClientChannel>();
-    m_retransmissionClientChannelBuilder(
-      Beam::Store(retransmissionClientChannel));
-    retransmissionClientChannel->GetWriter().Write(retransmissionRequestBuffer);
-    auto retransmissionResponseBuffer = Beam::IO::SharedBuffer();
-    while(retransmissionResponseBuffer.GetSize() <
+    m_retransmission_client_channel_builder(
+      Beam::out(retransmission_client_channel));
+    retransmission_client_channel->get_writer().write(
+      retransmission_request_buffer);
+    auto retransmission_response_buffer = Beam::SharedBuffer();
+    while(retransmission_response_buffer.get_size() <
         RETRANSMISSION_RESPONSE_SIZE) {
-      retransmissionClientChannel->GetReader().Read(
-        Beam::Store(retransmissionResponseBuffer));
+      retransmission_client_channel->get_reader().read(
+        Beam::out(retransmission_response_buffer));
     }
-    retransmissionResponseBuffer.Reset();
+    reset(retransmission_response_buffer);
     try {
-      retransmissionClientChannel->GetReader().Read(
-        Beam::Store(retransmissionResponseBuffer));
+      retransmission_client_channel->get_reader().read(
+        Beam::out(retransmission_response_buffer));
     } catch(const std::exception&) {}
   }
 
   template<typename F, typename C, typename S>
-  void CseServiceAccessClient<F, C, S>::ReadRetransmissionResponse(
-      std::size_t startSequenceNumber, std::size_t endSequenceNumber) {
-    auto packet = StampProtocol::StampPacket();
-    auto retransmissionBuffer = Beam::IO::SharedBuffer();
-    while(m_retransmissionServerChannel->GetReader().IsDataAvailable()) {
-      retransmissionBuffer.Reset();
-      m_retransmissionServerChannel->GetReader().Read(
-        Beam::Store(retransmissionBuffer));
-      auto packet = StampProtocol::StampPacket::Parse(
-        retransmissionBuffer.GetData(), retransmissionBuffer.GetSize());
-      if(packet.m_header.m_sequenceNumber < startSequenceNumber ||
-          packet.m_header.m_sequenceNumber > endSequenceNumber) {
+  void CseServiceAccessClient<F, C, S>::read_retransmission_response(
+      std::size_t start_sequence_number, std::size_t end_sequence_number) {
+    auto packet = StampPacket();
+    auto retransmission_buffer = Beam::SharedBuffer();
+    while(m_retransmission_server_channel->get_reader().poll()) {
+      reset(retransmission_buffer);
+      m_retransmission_server_channel->get_reader().read(
+        Beam::out(retransmission_buffer));
+      auto packet = StampPacket::parse(
+        retransmission_buffer.get_data(), retransmission_buffer.get_size());
+      if(packet.m_header.m_sequence_number < start_sequence_number ||
+          packet.m_header.m_sequence_number > end_sequence_number) {
         continue;
       }
-      std::cout << "Recovered: " << packet.m_header.m_sequenceNumber <<
+      std::cout << "Recovered: " << packet.m_header.m_sequence_number <<
         std::endl;
-      AddPendingBuffer(retransmissionBuffer, packet.m_header.m_sequenceNumber);
+      add_pending_buffer(
+        retransmission_buffer, packet.m_header.m_sequence_number);
     }
   }
 
   template<typename F, typename C, typename S>
-  void CseServiceAccessClient<F, C, S>::Retransmit(
-      std::size_t startSequenceNumber, std::size_t endSequenceNumber) {
-    while(startSequenceNumber <= endSequenceNumber) {
-      if(m_retransmissionCount > m_config.m_maxRetransmissionCount) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Too many retransmissions"));
+  void CseServiceAccessClient<F, C, S>::retransmit(
+      std::size_t start_sequence_number, std::size_t end_sequence_number) {
+    while(start_sequence_number <= end_sequence_number) {
+      if(m_retransmission_count > m_config.m_max_retransmission_count) {
+        boost::throw_with_location(
+          std::runtime_error("Too many retransmissions"));
       }
-      auto endBlock = std::min(endSequenceNumber, startSequenceNumber +
-        m_config.m_maxRetransmissionBlock - 1);
-      ++m_retransmissionCount;
-      SendRetransmissionRequest(startSequenceNumber, endBlock);
-      ReadRetransmissionResponse(startSequenceNumber, endBlock);
-      startSequenceNumber = endBlock + 1;
+      auto end_block = std::min(end_sequence_number,
+        start_sequence_number + m_config.m_max_retransmission_block - 1);
+      ++m_retransmission_count;
+      send_retransmission_request(start_sequence_number, end_block);
+      read_retransmission_response(start_sequence_number, end_block);
+      start_sequence_number = end_block + 1;
     }
   }
 }

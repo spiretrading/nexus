@@ -6,7 +6,7 @@
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/Sql/MySqlConfig.hpp>
-#include <Beam/Threading/LiveTimer.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/UidService/ApplicationDefinitions.hpp>
@@ -20,6 +20,7 @@
 #include "Nexus/Compliance/ComplianceCheckOrderExecutionDriver.hpp"
 #include "Nexus/Compliance/ComplianceRuleBuilder.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
+#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/FixUtilities/FixOrderExecutionDriver.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
@@ -37,104 +38,85 @@
 #include "Version.hpp"
 
 using namespace Beam;
-using namespace Beam::Codecs;
-using namespace Beam::IO;
-using namespace Beam::Network;
-using namespace Beam::Routines;
-using namespace Beam::Serialization;
-using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
-using namespace Beam::Threading;
-using namespace Beam::TimeService;
-using namespace Beam::UidService;
 using namespace boost;
 using namespace boost::local_time;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::Compliance;
-using namespace Nexus::DefinitionsService;
-using namespace Nexus::FixUtilities;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::OasisOrderExecutionService;
-using namespace Nexus::OrderExecutionService;
 using namespace TCLAP;
 using namespace Viper;
 
 namespace {
-  using SqlDataStore = SqlOrderExecutionDataStore<MySql::Connection>;
+  using ApplicationSqlDataStore = SqlOrderExecutionDataStore<MySql::Connection>;
   using ApplicationFixOrderExecutionDriver = FixOrderExecutionDriver;
   using ApplicationFeesCalculatorOrderExecutionDriver =
     FeesCalculatorOrderExecutionDriver<ApplicationFixOrderExecutionDriver*>;
   using ApplicationOrderSubmissionCheckDriver =
     OrderSubmissionCheckDriver<ApplicationFeesCalculatorOrderExecutionDriver*>;
   using ApplicationComplianceCheckOrderExecutionDriver =
-    ComplianceCheckOrderExecutionDriver<
-      ApplicationOrderSubmissionCheckDriver*, LiveNtpTimeClient*,
-      ComplianceRuleSet<ApplicationComplianceClient::Client*,
-        ApplicationServiceLocatorClient::Client*>*>;
+    ComplianceCheckOrderExecutionDriver<ApplicationOrderSubmissionCheckDriver*,
+      LiveNtpTimeClient*, ComplianceRuleSet<
+        ApplicationComplianceClient*, ApplicationServiceLocatorClient*>*>;
   using ApplicationManualOrderEntryDriver =
     ManualOrderEntryDriver<ApplicationComplianceCheckOrderExecutionDriver*,
-      ApplicationAdministrationClient::Client*>;
+      ApplicationAdministrationClient*>;
   using ApplicationOrderExecutionDriver = ApplicationManualOrderEntryDriver;
   using OrderExecutionServletContainer = ServiceProtocolServletContainer<
     MetaAuthenticationServletAdapter<MetaOrderExecutionServlet<
-      LiveNtpTimeClient*, ApplicationServiceLocatorClient::Client*,
-      ApplicationUidClient::Client*, ApplicationAdministrationClient::Client*,
+      LiveNtpTimeClient*, ApplicationServiceLocatorClient*,
+      ApplicationUidClient*, ApplicationAdministrationClient*,
       ApplicationOrderExecutionDriver*, ReplicatedOrderExecutionDataStore*>,
-    ApplicationServiceLocatorClient::Client*>, TcpServerSocket,
+    ApplicationServiceLocatorClient*>, TcpServerSocket,
     BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
 
-  std::vector<FixApplicationEntry> LoadFixApplications(
-      Ref<LiveNtpTimeClient> timeClient,
-      Ref<ApplicationMarketDataClient> marketDataClient) {
-    return TryOrNest([&] {
+  std::vector<FixApplicationEntry> load_fix_applications(
+      Ref<LiveNtpTimeClient> time_client,
+      Ref<ApplicationMarketDataClient> market_data_client) {
+    return try_or_nest([&] {
       auto entries = std::vector<FixApplicationEntry>();
-      auto asxEntry = FixApplicationEntry();
-      asxEntry.m_configPath = "asx.cfg";
-      asxEntry.m_application =
-        std::make_shared<AsxFixApplication>(Ref(timeClient));
-      asxEntry.m_destinations.push_back(DefaultDestinations::ASXT());
-      asxEntry.m_destinations.push_back(DefaultDestinations::CXA());
-      entries.push_back(asxEntry);
-      auto serenityEntry = FixApplicationEntry();
-      serenityEntry.m_configPath = "serenity.cfg";
-      serenityEntry.m_application = std::make_shared<SerenityFixApplication>(
-        Ref(timeClient), Ref(**marketDataClient));
-      serenityEntry.m_destinations.push_back(DefaultDestinations::ALPHA());
-      serenityEntry.m_destinations.push_back(DefaultDestinations::CHIX());
-      serenityEntry.m_destinations.push_back(DefaultDestinations::CSE());
-      serenityEntry.m_destinations.push_back(DefaultDestinations::CSE2());
-      serenityEntry.m_destinations.push_back(DefaultDestinations::CX2());
-      serenityEntry.m_destinations.push_back(DefaultDestinations::MATNLP());
-      serenityEntry.m_destinations.push_back(DefaultDestinations::MATNMF());
-      serenityEntry.m_destinations.push_back(DefaultDestinations::NEOE());
-      serenityEntry.m_destinations.push_back(DefaultDestinations::LYNX());
-      serenityEntry.m_destinations.push_back(DefaultDestinations::OMEGA());
-      serenityEntry.m_destinations.push_back(DefaultDestinations::PURE());
-      serenityEntry.m_destinations.push_back(DefaultDestinations::TSX());
-      entries.push_back(serenityEntry);
+      auto asx_entry = FixApplicationEntry();
+      asx_entry.m_settings = FIX::SessionSettings("asx.cfg");
+      asx_entry.m_application =
+        std::make_shared<AsxFixApplication>(Ref(time_client));
+      asx_entry.m_destinations.push_back(DefaultDestinations::ASXT);
+      asx_entry.m_destinations.push_back(DefaultDestinations::CXA);
+      entries.push_back(asx_entry);
+      auto serenity_entry = FixApplicationEntry();
+      serenity_entry.m_settings = FIX::SessionSettings("serenity.cfg");
+      serenity_entry.m_application = std::make_shared<SerenityFixApplication>(
+        Ref(time_client), Ref(market_data_client));
+      serenity_entry.m_destinations.push_back(DefaultDestinations::ALPHA);
+      serenity_entry.m_destinations.push_back(DefaultDestinations::CHIX);
+      serenity_entry.m_destinations.push_back(DefaultDestinations::CSE);
+      serenity_entry.m_destinations.push_back(DefaultDestinations::CSE2);
+      serenity_entry.m_destinations.push_back(DefaultDestinations::CX2);
+      serenity_entry.m_destinations.push_back(DefaultDestinations::MATNLP);
+      serenity_entry.m_destinations.push_back(DefaultDestinations::MATNMF);
+      serenity_entry.m_destinations.push_back(DefaultDestinations::NEOE);
+      serenity_entry.m_destinations.push_back(DefaultDestinations::LYNX);
+      serenity_entry.m_destinations.push_back(DefaultDestinations::OMEGA);
+      serenity_entry.m_destinations.push_back(DefaultDestinations::PURE);
+      serenity_entry.m_destinations.push_back(DefaultDestinations::TSX);
+      entries.push_back(serenity_entry);
       return entries;
     }, std::runtime_error("Unable to initialize FIX application."));
   }
 
-  std::vector<std::unique_ptr<OrderSubmissionCheck>> LoadOrderSubmissionChecks(
-      ApplicationMarketDataClient::Client& marketDataClient,
-      ApplicationAdministrationClient::Client& administrationClient,
-      const MarketDatabase& marketDatabase,
-      const tz_database& timeZoneDatabase,
-      const std::vector<ExchangeRate>& exchangeRates) {
-    return TryOrNest([&] {
+  std::vector<std::unique_ptr<OrderSubmissionCheck>>
+      load_order_submission_checks(
+        ApplicationMarketDataClient& market_data_client,
+        ApplicationAdministrationClient& administration_client,
+        const ExchangeRateTable& exchange_rates) {
+    return try_or_nest([&] {
       auto checks = std::vector<std::unique_ptr<OrderSubmissionCheck>>();
-      checks.emplace_back(
-        MakeBoardLotCheck(&marketDataClient, marketDatabase, timeZoneDatabase));
+      checks.emplace_back(make_board_lot_check(
+        &market_data_client, DEFAULT_VENUES, get_default_time_zone_database()));
       checks.emplace_back(std::make_unique<
-        BuyingPowerCheck<ApplicationAdministrationClient::Client*,
-          ApplicationMarketDataClient::Client*>>(exchangeRates,
-            &administrationClient, &marketDataClient));
+        BuyingPowerCheck<ApplicationAdministrationClient*,
+          ApplicationMarketDataClient*>>(exchange_rates,
+            &administration_client, &market_data_client));
       checks.emplace_back(std::make_unique<
-        RiskStateCheck<ApplicationAdministrationClient::Client*>>(
-          &administrationClient));
+        RiskStateCheck<ApplicationAdministrationClient*>>(
+          &administration_client));
       return checks;
     }, std::runtime_error("Unable to initialize order submission checks."));
   }
@@ -142,105 +124,92 @@ namespace {
 
 int main(int argc, const char** argv) {
   try {
-    auto config = ParseCommandLine(argc, argv,
+    auto config = parse_command_line(argc, argv,
       "1.0-r" OASIS_ORDER_EXECUTION_SERVER_VERSION
-      "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto feeTableConfig = Require(LoadFile, "fee_table.yml");
-    auto serviceConfig = TryOrNest([&] {
-      return ServiceConfiguration::Parse(GetNode(config, "server"),
-        OrderExecutionService::SERVICE_NAME);
+      "\nCopyright (C) 2026 Spire Trading Inc.");
+    auto fee_table_config = load_file("fee_table.yml");
+    auto service_config = try_or_nest([&] {
+      return ServiceConfiguration::parse(
+        get_node(config, "server"), ORDER_EXECUTION_SERVICE_NAME);
     }, std::runtime_error("Error parsing section 'server'."));
-    auto serviceLocatorClient = MakeApplicationServiceLocatorClient(
-      GetNode(config, "service_locator"));
-    auto uidClient = ApplicationUidClient(serviceLocatorClient.Get());
-    auto timeClient =
-      MakeLiveNtpTimeClientFromServiceLocator(*serviceLocatorClient);
-    auto administrationClient =
-      ApplicationAdministrationClient(serviceLocatorClient.Get());
-    auto definitionsClient =
-      ApplicationDefinitionsClient(serviceLocatorClient.Get());
-    auto complianceClient =
-      ApplicationComplianceClient(serviceLocatorClient.Get());
-    auto marketDataClient =
-      ApplicationMarketDataClient(serviceLocatorClient.Get());
-    auto fixApplicationEntries =
-      LoadFixApplications(Ref(*timeClient), Ref(marketDataClient));
-    auto fixOrderExecutionDriver =
-      ApplicationFixOrderExecutionDriver(fixApplicationEntries);
-    auto marketDatabase = definitionsClient->LoadMarketDatabase();
-    auto asxtFeeTable = TryOrNest([&] {
-      return ParseAsxFeeTable(GetNode(feeTableConfig, "au_equities"));
+    auto service_locator_client = ApplicationServiceLocatorClient(
+      ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
+    auto uid_client = ApplicationUidClient(Ref(service_locator_client));
+    auto time_client = make_live_ntp_time_client(service_locator_client);
+    auto administration_client =
+      ApplicationAdministrationClient(Ref(service_locator_client));
+    auto definitions_client =
+      ApplicationDefinitionsClient(Ref(service_locator_client));
+    auto compliance_client =
+      ApplicationComplianceClient(Ref(service_locator_client));
+    auto market_data_client =
+      ApplicationMarketDataClient(Ref(service_locator_client));
+    auto fix_application_entries =
+      load_fix_applications(Ref(*time_client), Ref(market_data_client));
+    auto fix_order_execution_driver =
+      ApplicationFixOrderExecutionDriver(fix_application_entries);
+    auto asx_trade_match_fee_table = try_or_nest([&] {
+      return parse_asx_trade_match_fee_table(
+        get_node(fee_table_config, "au_equities"));
     }, std::runtime_error("Failed parse section 'au_equities'."));
-    auto hkexFeeTable = TryOrNest([&] {
-      return ParseHkexFeeTable(
-        GetNode(feeTableConfig, "hk_equities"), marketDatabase);
-    }, std::runtime_error("Failed parse section 'hk_equities'."));
-    auto jpxFeeTable = TryOrNest([&] {
-      return ParseJpxFeeTable(
-        GetNode(feeTableConfig, "jp_equities"), marketDatabase);
-    }, std::runtime_error("Failed parse section 'jp_equities'."));
-    auto tmxFeeTable = TryOrNest([&] {
-      return ParseConsolidatedTmxFeeTable(
-        GetNode(feeTableConfig, "ca_equities"), marketDatabase);
+    auto tmx_fee_table = try_or_nest([&] {
+      return parse_consolidated_tmx_fee_table(
+        get_node(fee_table_config, "ca_equities"), DEFAULT_VENUES);
     }, std::runtime_error("Failed parse section 'ca_equities'."));
-    auto usFeeTable = TryOrNest([&] {
-      return ParseConsolidatedUsFeeTable(
-        GetNode(feeTableConfig, "us_equities"), marketDatabase);
-    }, std::runtime_error("Failed parse section 'us_equities'."));
-    auto feesCalculator = ApplicationFeesCalculatorOrderExecutionDriver(
-      &fixOrderExecutionDriver, asxtFeeTable, hkexFeeTable, jpxFeeTable,
-      tmxFeeTable, usFeeTable);
-    auto timeZoneDatabase = definitionsClient->LoadTimeZoneDatabase();
-    auto exchangeRates = definitionsClient->LoadExchangeRates();
-    auto checks = LoadOrderSubmissionChecks(*marketDataClient,
-      *administrationClient, marketDatabase, timeZoneDatabase, exchangeRates);
-    auto orderSubmissionCheckDriver = ApplicationOrderSubmissionCheckDriver(
-      &feesCalculator, std::move(checks));
-    auto complianceRuleSet = ComplianceRuleSet(complianceClient.Get(),
-        serviceLocatorClient.Get(), [&] (const auto& entry) {
-      return MakeComplianceRule(
-        entry.GetSchema(), *marketDataClient, *definitionsClient, *timeClient);
-    });
-    auto complianceCheckOrderExecutionDriver =
+    auto fees_calculator = ApplicationFeesCalculatorOrderExecutionDriver(
+      &fix_order_execution_driver, asx_trade_match_fee_table, tmx_fee_table);
+    auto exchange_rates =
+      ExchangeRateTable(definitions_client.load_exchange_rates());
+    auto checks = load_order_submission_checks(
+      market_data_client, administration_client, exchange_rates);
+    auto order_submission_check_driver = ApplicationOrderSubmissionCheckDriver(
+      &fees_calculator, std::move(checks));
+    auto compliance_rule_set = ComplianceRuleSet(&compliance_client,
+      &service_locator_client, [&] (const auto& entry) {
+        return make_compliance_rule(entry.get_schema(), market_data_client,
+          definitions_client, *time_client);
+      });
+    auto compliance_check_order_execution_driver =
       ApplicationComplianceCheckOrderExecutionDriver(
-        &orderSubmissionCheckDriver, timeClient.get(), &complianceRuleSet);
-    auto manualOrderExecutionDriver = ApplicationManualOrderEntryDriver(
-      DefaultDestinations::MOE(), &complianceCheckOrderExecutionDriver,
-      administrationClient.Get());
-    auto sessionStartTime =
-      ToUtcTime(Extract<ptime>(config, "session_start_time", pos_infin));
-    auto mySqlConfigs = TryOrNest([&] {
-      return MySqlConfig::ParseReplication(GetNode(config, "data_store"));
+        &order_submission_check_driver, time_client.get(),
+        &compliance_rule_set);
+    auto manual_order_execution_driver = ApplicationManualOrderEntryDriver(
+      DefaultDestinations::MOE, &compliance_check_order_execution_driver,
+      &administration_client);
+    auto session_start_time =
+      to_utc_time(extract<ptime>(config, "session_start_time", pos_infin));
+    auto mysql_configs = try_or_nest([&] {
+      return MySqlConfig::parse_replication(get_node(config, "data_store"));
     }, std::runtime_error("Error parsing section 'data_store'."));
-    auto accountSource = [&] (unsigned int id) {
-      return serviceLocatorClient->LoadDirectoryEntry(id);
+    auto account_source = [&] (unsigned int id) {
+      return service_locator_client.load_directory_entry(id);
     };
-    auto connectionBuilders = std::vector<SqlDataStore::ConnectionBuilder>();
-    for(auto& mySqlConfig : mySqlConfigs) {
-      connectionBuilders.emplace_back([=] {
-        return MySql::Connection(mySqlConfig.m_address.GetHost(),
-          mySqlConfig.m_address.GetPort(), mySqlConfig.m_username,
-          mySqlConfig.m_password, mySqlConfig.m_schema);
+    auto connection_builders =
+      std::vector<ApplicationSqlDataStore::ConnectionBuilder>();
+    for(auto& mysql_config : mysql_configs) {
+      connection_builders.emplace_back([=] {
+        return MySql::Connection(mysql_config.m_address.get_host(),
+          mysql_config.m_address.get_port(), mysql_config.m_username,
+          mysql_config.m_password, mysql_config.m_schema);
       });
     }
-    auto dataStore = MakeReplicatedMySqlOrderExecutionDataStore(
-      connectionBuilders, accountSource);
-    auto destinationDatabase = definitionsClient->LoadDestinationDatabase();
-    auto server = OrderExecutionServletContainer(Initialize(
-      serviceLocatorClient.Get(), Initialize(sessionStartTime,
-        marketDatabase, destinationDatabase, timeClient.get(),
-        serviceLocatorClient.Get(), uidClient.Get(), administrationClient.Get(),
-        &manualOrderExecutionDriver, dataStore.get())),
-      Initialize(serviceConfig.m_interface),
-        std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
-    Register(*serviceLocatorClient, serviceConfig);
-    WaitForKillEvent();
-    serviceLocatorClient->Close();
-    complianceClient->Close();
-    marketDataClient->Close();
-    administrationClient->Close();
+    auto data_store = make_replicated_sql_order_execution_data_store(
+      connection_builders, account_source);
+    auto server = OrderExecutionServletContainer(init(
+      &service_locator_client, init(session_start_time,
+        DEFAULT_VENUES, DEFAULT_DESTINATIONS, time_client.get(),
+        &service_locator_client, &uid_client, &administration_client,
+        &manual_order_execution_driver, data_store.get())),
+      init(service_config.m_interface),
+      std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
+    add(service_locator_client, service_config);
+    wait_for_kill_event();
+    service_locator_client.close();
+    compliance_client.close();
+    market_data_client.close();
+    administration_client.close();
   } catch(...) {
-    ReportCurrentException();
+    report_current_exception();
     return -1;
   }
   return 0;
