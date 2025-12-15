@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <fstream>
+#include <unordered_set>
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <QApplication>
@@ -51,7 +52,7 @@ namespace {
           "servers:\n"
           "  - name: Local Environment\n"
           "    address: 127.0.0.1:20000\n"
-          "...";
+          "...\n";
       }
       auto config_stream = std::ifstream(config_path);
       if(!config_stream.good()) {
@@ -189,7 +190,9 @@ int main(int argc, char* argv[]) {
       return Clients(std::move(clients));
     };
   auto sign_in_controller = std::unique_ptr<SignInController>();
+  auto loaded_settings = std::unordered_set<std::string>();
   auto sign_in_handler = [&] (auto clients) {
+    loaded_settings.clear();
     try {
       auto is_administrator = [&] {
         try {
@@ -234,24 +237,32 @@ int main(int argc, char* argv[]) {
       } catch(const std::exception&) {
         throw std::runtime_error("Unable to create profile path.");
       }
+      BlotterSettings::Load(out(*user_profile));
+      loaded_settings.insert("BlotterSettings");
+      CatalogSettings::Load(out(*user_profile));
+      loaded_settings.insert("CatalogSettings");
+      BookViewProperties::Load(out(*user_profile));
+      loaded_settings.insert("BookViewProperties");
+      RiskTimerProperties::Load(out(*user_profile));
+      loaded_settings.insert("RiskTimerProperties");
+      TimeAndSalesProperties::Load(out(*user_profile));
+      loaded_settings.insert("TimeAndSalesProperties");
+      PortfolioViewerProperties::Load(out(*user_profile));
+      loaded_settings.insert("PortfolioViewerProperties");
+      OrderImbalanceIndicatorProperties::Load(out(*user_profile));
+      loaded_settings.insert("OrderImbalanceIndicatorProperties");
+      SavedDashboards::Load(out(*user_profile));
+      loaded_settings.insert("SavedDashboards");
+      toolbar_controller.emplace(Ref(*user_profile));
+      toolbar_controller->open();
+      risk_timer_monitor.emplace(Ref(*user_profile));
+      risk_timer_monitor->Load();
+      sign_in_controller = nullptr;
     } catch(const std::exception& e) {
       QMessageBox::critical(nullptr, QObject::tr("Error"),
         QObject::tr(e.what()));
       return;
     }
-    BlotterSettings::Load(out(*user_profile));
-    CatalogSettings::Load(out(*user_profile));
-    BookViewProperties::Load(out(*user_profile));
-    RiskTimerProperties::Load(out(*user_profile));
-    TimeAndSalesProperties::Load(out(*user_profile));
-    PortfolioViewerProperties::Load(out(*user_profile));
-    OrderImbalanceIndicatorProperties::Load(out(*user_profile));
-    SavedDashboards::Load(out(*user_profile));
-    toolbar_controller.emplace(Ref(*user_profile));
-    toolbar_controller->open();
-    risk_timer_monitor.emplace(Ref(*user_profile));
-    risk_timer_monitor->Load();
-    sign_in_controller = nullptr;
   };
   if(show_sign_in_window) {
     sign_in_controller = std::make_unique<SignInController>(
@@ -281,16 +292,32 @@ int main(int argc, char* argv[]) {
   if(!user_profile) {
     return -1;
   }
-  SavedDashboards::Save(*user_profile);
-  OrderImbalanceIndicatorProperties::Save(*user_profile);
+  if(loaded_settings.contains("SavedDashboards")) {
+    SavedDashboards::Save(*user_profile);
+  }
+  if(loaded_settings.contains("OrderImbalanceIndicatorProperties")) {
+    OrderImbalanceIndicatorProperties::Save(*user_profile);
+  }
   save_key_bindings_profile(
     *user_profile->GetKeyBindings(), user_profile->GetProfilePath());
-  PortfolioViewerProperties::Save(*user_profile);
-  TimeAndSalesProperties::Save(*user_profile);
-  RiskTimerProperties::Save(*user_profile);
-  BookViewProperties::Save(*user_profile);
-  CatalogSettings::Save(*user_profile);
-  BlotterSettings::Save(*user_profile);
+  if(loaded_settings.contains("PortfolioViewerProperties")) {
+    PortfolioViewerProperties::Save(*user_profile);
+  }
+  if(loaded_settings.contains("TimeAndSalesProperties")) {
+    TimeAndSalesProperties::Save(*user_profile);
+  }
+  if(loaded_settings.contains("RiskTimerProperties")) {
+    RiskTimerProperties::Save(*user_profile);
+  }
+  if(loaded_settings.contains("BookViewProperties")) {
+    BookViewProperties::Save(*user_profile);
+  }
+  if(loaded_settings.contains("CatalogSettings")) {
+    CatalogSettings::Save(*user_profile);
+  }
+  if(loaded_settings.contains("BlotterSettings")) {
+    BlotterSettings::Save(*user_profile);
+  }
   toolbar_controller->close();
   return 0;
 }
