@@ -1,6 +1,5 @@
 #ifndef SPIRE_BOOK_VIEW_PROPERTIES_WINDOW_FACTORY_HPP
 #define SPIRE_BOOK_VIEW_PROPERTIES_WINDOW_FACTORY_HPP
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewPropertiesWindow.hpp"
 
 namespace Spire {
@@ -30,11 +29,10 @@ namespace Spire {
        * @param key_bindings The KeyBindingsModel storing all of the user's
        *        interactions.
        * @param security The security whose interactions are to be displayed.
-       * @param markets The market database to use.
        */
       BookViewPropertiesWindow* make(
         std::shared_ptr<KeyBindingsModel> key_bindings,
-        const Nexus::Security& security, const Nexus::MarketDatabase& markets);
+        const Nexus::Security& security);
 
     private:
       std::shared_ptr<BookViewPropertiesModel> m_properties;

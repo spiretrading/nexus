@@ -6,12 +6,12 @@ using namespace Spire;
 
 AddRootCommand::AddRootCommand(Ref<CanvasNodeModel> view,
   const CanvasNodeModel::Coordinate& coordinate, const CanvasNode& node)
-  : m_view(view.Get()),
+  : m_view(view.get()),
     m_coordinate(coordinate),
     m_node(CanvasNode::Clone(node)) {}
 
 void AddRootCommand::undo() {
-  m_snapshot.Restore(Store(*m_view));
+  m_snapshot.Restore(out(*m_view));
 }
 
 void AddRootCommand::redo() {

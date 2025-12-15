@@ -32,7 +32,7 @@ SecurityInputWidget::SecurityInputWidget(Ref<UserProfile> userProfile,
 }
 
 void SecurityInputWidget::Initialize(Ref<UserProfile> userProfile) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
 }
 
 const Security& SecurityInputWidget::GetSecurity() const {
@@ -41,8 +41,7 @@ const Security& SecurityInputWidget::GetSecurity() const {
 
 void SecurityInputWidget::SetSecurity(Security security) {
   m_security = std::move(security);
-  m_lineEdit->setText(QString::fromStdString(ToWildCardString(security,
-    m_userProfile->GetMarketDatabase(), m_userProfile->GetCountryDatabase())));
+  m_lineEdit->setText(displayText(m_security));
   m_securityUpdatedSignal(m_security);
 }
 
@@ -78,9 +77,9 @@ void SecurityInputWidget::keyPressEvent(QKeyEvent* event) {
   if(m_isReadOnly) {
     return;
   }
-  ShowWildCardSecurityInputDialog(Ref(*m_userProfile), text.toStdString(), this,
+  ShowSecurityInputDialog(Ref(*m_userProfile), text.toStdString(), this,
     [=] (auto security) {
-      if(!security || security == Security()) {
+      if(!security) {
         return;
       }
       SetSecurity(std::move(*security));
@@ -96,8 +95,8 @@ void SecurityInputWidget::mouseDoubleClickEvent(QMouseEvent* event) {
   if(dialog.exec() == QDialog::Rejected) {
     return;
   }
-  auto newValue = dialog.GetSecurity(true);
-  if(newValue == Security()) {
+  auto newValue = dialog.GetSecurity();
+  if(!newValue) {
     return;
   }
   SetSecurity(newValue);

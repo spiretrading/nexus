@@ -5,11 +5,12 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/TechnicalAnalysis/Candlestick.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartPlotSeries.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 namespace Spire {
 
@@ -52,8 +53,8 @@ namespace Spire {
       Beam::RoutineTaskQueue m_taskQueue;
 
       CandlestickEntry& LoadCandlestick(boost::posix_time::ptime timestamp);
-      void OnCandlestickLoaded(const Nexus::TechnicalAnalysis::Candlestick<
-        ChartValue, ChartValue>& candlestick);
+      void OnCandlestickLoaded(
+        const Nexus::Candlestick<ChartValue, ChartValue>& candlestick);
       void OnTimeAndSale(const Nexus::TimeAndSale& timeAndSale);
   };
 }

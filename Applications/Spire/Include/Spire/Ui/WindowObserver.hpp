@@ -1,6 +1,8 @@
 #ifndef SPIRE_WINDOW_OBSERVER_HPP
 #define SPIRE_WINDOW_OBSERVER_HPP
-#include "Spire/Ui/Ui.hpp"
+#include <memory>
+#include <QWidget>
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

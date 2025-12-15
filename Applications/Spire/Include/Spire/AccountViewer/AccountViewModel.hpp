@@ -6,9 +6,9 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <QAbstractItemModel>
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class UserProfile;
 
   /*! \class AccountViewModel
       \brief Stores the list of account entries.

@@ -4,7 +4,6 @@
 
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 namespace {

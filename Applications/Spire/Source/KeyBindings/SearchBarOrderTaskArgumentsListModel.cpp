@@ -8,11 +8,8 @@ using namespace Spire;
 
 SearchBarOrderTaskArgumentsListModel::SearchBarOrderTaskArgumentsListModel(
     std::shared_ptr<OrderTaskArgumentsListModel> source,
-    std::shared_ptr<TextModel> keywords, CountryDatabase countries,
-    MarketDatabase markets, DestinationDatabase destinations,
-    AdditionalTagDatabase additional_tags)
-    : m_cache(source, std::move(countries), std::move(markets),
-        std::move(destinations), std::move(additional_tags)),
+    std::shared_ptr<TextModel> keywords, AdditionalTagDatabase additional_tags)
+    : m_cache(source, std::move(additional_tags)),
       m_filtered_list(std::move(source), make_filter(keywords->get())),
       m_keywords(std::move(keywords)) {
   m_connection = m_keywords->connect_update_signal(

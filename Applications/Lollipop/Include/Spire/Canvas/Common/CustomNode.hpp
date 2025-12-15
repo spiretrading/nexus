@@ -38,8 +38,8 @@ namespace Spire {
         */
         Child(std::string name, const CanvasType& type);
 
-        template<typename Shuttler>
-        void Shuttle(Shuttler& shuttle, unsigned int version);
+        template<Beam::IsShuttle S>
+        void shuttle(S& shuttle, unsigned int version);
       };
 
       //! Constructs a CustomNode.
@@ -66,32 +66,25 @@ namespace Spire {
       virtual std::unique_ptr<CanvasNode> Clone() const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::vector<Child> m_children;
 
-      CustomNode(Beam::Serialization::ReceiveBuilder);
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      CustomNode();
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void CustomNode::Child::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("name", m_name);
-    shuttle.Shuttle("type", m_type);
+  template<Beam::IsShuttle S>
+  void CustomNode::Child::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("name", m_name);
+    shuttle.shuttle("type", m_type);
   }
 
-  template<typename Shuttler>
-  void CustomNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    CanvasNode::Shuttle(shuttle, version);
-    shuttle.Shuttle("children", m_children);
+  template<Beam::IsShuttle S>
+  void CustomNode::shuttle(S& shuttle, unsigned int version) {
+    CanvasNode::shuttle(shuttle, version);
+    shuttle.shuttle("children", m_children);
   }
-}
-
-namespace Beam {
-namespace Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::CustomNode> : std::false_type {};
-}
 }
 
 #endif

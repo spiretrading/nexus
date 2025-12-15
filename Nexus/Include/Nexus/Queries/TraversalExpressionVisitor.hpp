@@ -2,13 +2,11 @@
 #define NEXUS_TRAVERSAL_EXPRESSION_VISITOR_HPP
 #include <Beam/Queries/TraversalExpressionVisitor.hpp>
 #include "Nexus/Queries/ExpressionVisitor.hpp"
-#include "Nexus/Queries/Queries.hpp"
 
-namespace Nexus::Queries {
+namespace Nexus {
 
   /** An ExpressionVisitor that traverses all of its children. */
-  class TraversalExpressionVisitor :
-    public Beam::Queries::TraversalExpressionVisitor,
+  class TraversalExpressionVisitor : public Beam::TraversalExpressionVisitor,
     public ExpressionVisitor {};
 }
 

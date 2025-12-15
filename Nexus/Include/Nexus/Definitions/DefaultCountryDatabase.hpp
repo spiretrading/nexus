@@ -1,127 +1,103 @@
 #ifndef NEXUS_DEFAULT_COUNTRY_DATABASE_HPP
 #define NEXUS_DEFAULT_COUNTRY_DATABASE_HPP
+#include <atomic>
+#include <memory>
 #include "Nexus/Definitions/Country.hpp"
 
 namespace Nexus {
-
-  /**
-   * Returns the default CountryDatabase, typically used for testing purposes.
-   */
-  inline const CountryDatabase& GetDefaultCountryDatabase() {
+namespace Details {
+  inline const CountryDatabase& get_base_country_database() {
     static auto database = [] {
       auto database = CountryDatabase();
       {
         auto entry = CountryDatabase::Entry();
         entry.m_name = "Australia";
-        entry.m_twoLetterCode = "AU";
-        entry.m_threeLetterCode = "AUS";
+        entry.m_two_letter_code = "AU";
+        entry.m_three_letter_code = "AUS";
         entry.m_code = CountryCode(36);
-        database.Add(entry);
+        database.add(entry);
       }
       {
         auto entry = CountryDatabase::Entry();
         entry.m_name = "Brazil";
-        entry.m_twoLetterCode = "BR";
-        entry.m_threeLetterCode = "BRA";
+        entry.m_two_letter_code = "BR";
+        entry.m_three_letter_code = "BRA";
         entry.m_code = CountryCode(76);
-        database.Add(entry);
+        database.add(entry);
       }
       {
         auto entry = CountryDatabase::Entry();
         entry.m_name = "Canada";
-        entry.m_twoLetterCode = "CA";
-        entry.m_threeLetterCode = "CAN";
+        entry.m_two_letter_code = "CA";
+        entry.m_three_letter_code = "CAN";
         entry.m_code = CountryCode(124);
-        database.Add(entry);
+        database.add(entry);
       }
       {
         auto entry = CountryDatabase::Entry();
         entry.m_name = "China";
-        entry.m_twoLetterCode = "CN";
-        entry.m_threeLetterCode = "CHN";
+        entry.m_two_letter_code = "CN";
+        entry.m_three_letter_code = "CHN";
         entry.m_code = CountryCode(156);
-        database.Add(entry);
+        database.add(entry);
+      }
+      {
+        auto entry = CountryDatabase::Entry();
+        entry.m_name = "United Kingdom";
+        entry.m_two_letter_code = "GB";
+        entry.m_three_letter_code = "GBR";
+        entry.m_code = CountryCode(826);
+        database.add(entry);
       }
       {
         auto entry = CountryDatabase::Entry();
         entry.m_name = "Hong Kong";
-        entry.m_twoLetterCode = "HK";
-        entry.m_threeLetterCode = "HKG";
+        entry.m_two_letter_code = "HK";
+        entry.m_three_letter_code = "HKG";
         entry.m_code = CountryCode(344);
-        database.Add(entry);
+        database.add(entry);
       }
       {
         auto entry = CountryDatabase::Entry();
         entry.m_name = "Japan";
-        entry.m_twoLetterCode = "JP";
-        entry.m_threeLetterCode = "JPN";
+        entry.m_two_letter_code = "JP";
+        entry.m_three_letter_code = "JPN";
         entry.m_code = CountryCode(392);
-        database.Add(entry);
+        database.add(entry);
       }
       {
         auto entry = CountryDatabase::Entry();
         entry.m_name = "United States";
-        entry.m_twoLetterCode = "US";
-        entry.m_threeLetterCode = "USA";
+        entry.m_two_letter_code = "US";
+        entry.m_three_letter_code = "USA";
         entry.m_code = CountryCode(840);
-        database.Add(entry);
+        database.add(entry);
       }
       return database;
     }();
     return database;
   }
 
-  /**
-   * Parses a CountryCode from a string using the default database.
-   * @param source The string to parse.
-   * @return The CountryCode represented by the <i>source</i>.
-   */
-  inline CountryCode ParseCountryCode(const std::string& source) {
-    return ParseCountryCode(source, GetDefaultCountryDatabase());
+  inline auto default_countries = get_base_country_database();
+}
+
+  /** Returns the default CountryDatabase. */
+  inline const CountryDatabase& DEFAULT_COUNTRIES = Details::default_countries;
+
+  /** Updates the default CountryDatabase. */
+  inline void set_default_countries(CountryDatabase database) {
+    Details::default_countries = database;
   }
 
   namespace DefaultCountries {
-    inline CountryCode AU() {
-      static auto value = GetDefaultCountryDatabase().FromTwoLetterCode(
-        "AU").m_code;
-      return value;
-    }
-
-    inline CountryCode BR() {
-      static auto value = GetDefaultCountryDatabase().FromTwoLetterCode(
-        "BR").m_code;
-      return value;
-    }
-
-    inline CountryCode CA() {
-      static auto value = GetDefaultCountryDatabase().FromTwoLetterCode(
-        "CA").m_code;
-      return value;
-    }
-
-    inline CountryCode CN() {
-      static auto value = GetDefaultCountryDatabase().FromTwoLetterCode(
-        "CN").m_code;
-      return value;
-    }
-
-    inline CountryCode HK() {
-      static auto value = GetDefaultCountryDatabase().FromTwoLetterCode(
-        "HK").m_code;
-      return value;
-    }
-
-    inline CountryCode JP() {
-      static auto value = GetDefaultCountryDatabase().FromTwoLetterCode(
-        "JP").m_code;
-      return value;
-    }
-
-    inline CountryCode US() {
-      static auto value = GetDefaultCountryDatabase().FromTwoLetterCode(
-        "US").m_code;
-      return value;
-    }
+    inline const auto AU = DEFAULT_COUNTRIES.from("AU").m_code;
+    inline const auto BR = DEFAULT_COUNTRIES.from("BR").m_code;
+    inline const auto CA = DEFAULT_COUNTRIES.from("CA").m_code;
+    inline const auto CN = DEFAULT_COUNTRIES.from("CN").m_code;
+    inline const auto GB = DEFAULT_COUNTRIES.from("GB").m_code;
+    inline const auto HK = DEFAULT_COUNTRIES.from("HK").m_code;
+    inline const auto JP = DEFAULT_COUNTRIES.from("JP").m_code;
+    inline const auto US = DEFAULT_COUNTRIES.from("US").m_code;
   }
 }
 

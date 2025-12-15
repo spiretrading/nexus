@@ -2,9 +2,10 @@
 #define SPIRE_GROUPDIRECTORYVIEWWIDGET_HPP
 #include <memory>
 #include <Beam/Pointers/Ref.hpp>
+#include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <QWidget>
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class Ui_GroupDirectoryViewWidget;
 
@@ -35,7 +36,7 @@ namespace Spire {
         \param complianceModel The ComplianceModel to display.
       */
       void Initialize(Beam::Ref<UserProfile> userProfile, bool isReadOnly,
-        const Beam::ServiceLocator::DirectoryEntry& directoryEntry,
+        const Beam::DirectoryEntry& directoryEntry,
         std::shared_ptr<ComplianceModel> complianceModel);
 
       //! Removes the tab displaying the profit and loss.

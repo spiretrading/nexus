@@ -12,13 +12,12 @@
 #include <boost/signals2/signal.hpp>
 #include <QAbstractItemModel>
 #include <QTimer>
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/BlotterTaskProperties.hpp"
 #include "Spire/Canvas/SystemNodes/CanvasObserver.hpp"
 #include "Spire/Canvas/Tasks/Task.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 
@@ -108,7 +107,7 @@ namespace Spire {
        * @param properties The properties used to display Tasks.
        */
       BlotterTasksModel(Beam::Ref<UserProfile> userProfile,
-        const Beam::ServiceLocator::DirectoryEntry& executingAccount,
+        const Beam::DirectoryEntry& executingAccount,
         bool isConsolidated, const BlotterTaskProperties& properties);
 
       ~BlotterTasksModel() = default;
@@ -123,7 +122,7 @@ namespace Spire {
       void SetProperties(const BlotterTaskProperties& properties);
 
       /** Returns the OrderExecutionPublisher. */
-      const Nexus::OrderExecutionService::OrderExecutionPublisher&
+      const Beam::Publisher<std::shared_ptr<Nexus::Order>>&
         GetOrderExecutionPublisher() const;
 
       /**
@@ -195,13 +194,13 @@ namespace Spire {
 
     private:
       UserProfile* m_userProfile;
-      Beam::ServiceLocator::DirectoryEntry m_executingAccount;
+      Beam::DirectoryEntry m_executingAccount;
       BlotterTaskProperties m_properties;
       QTimer m_expiryTimer;
       bool m_isRefreshing;
-      std::shared_ptr<Beam::MultiQueueWriter<
-        const Nexus::OrderExecutionService::Order*>> m_orders;
-      std::shared_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
+      std::shared_ptr<Beam::MultiQueueWriter<std::shared_ptr<Nexus::Order>>>
+        m_orders;
+      std::shared_ptr<Beam::Publisher<std::shared_ptr<Nexus::Order>>>
         m_linkedOrderExecutionPublisher;
       std::vector<std::unique_ptr<TaskEntry>> m_entries;
       std::unordered_map<int, TaskEntry*> m_taskIds;
@@ -210,23 +209,22 @@ namespace Spire {
       std::vector<TaskEntry*> m_expiredEntries;
       std::vector<BlotterTasksModel*> m_incomingLinks;
       std::vector<BlotterTasksModel*> m_outgoingLinks;
-      std::shared_ptr<Nexus::OrderExecutionService::OrderExecutionPublisher>
+      std::shared_ptr<Beam::Publisher<std::shared_ptr<Nexus::Order>>>
         m_accountOrderPublisher;
-      std::set<const Nexus::OrderExecutionService::Order*> m_submittedOrders;
-      std::set<const Nexus::OrderExecutionService::Order*> m_taskOrders;
+      std::set<std::shared_ptr<Nexus::Order>> m_submittedOrders;
+      std::set<std::shared_ptr<Nexus::Order>> m_taskOrders;
       mutable TaskAddedSignal m_taskAddedSignal;
       mutable TaskRemovedSignal m_taskRemovedSignal;
       EventHandler m_orderEventHandler;
       std::optional<EventHandler> m_taskEventHandler;
-      Beam::Routines::RoutineHandlerGroup m_pendingRoutines;
+      Beam::RoutineHandlerGroup m_pendingRoutines;
 
       void SetupLinkedOrderExecutionMonitor();
       void OnMonitorUpdate(TaskEntry& entry, const std::string& property,
         const boost::any& value);
       void OnTaskState(TaskEntry& entry, const Task::StateEntry& update);
-      void OnOrderSubmitted(const Nexus::OrderExecutionService::Order* order);
-      void OnTaskOrderSubmitted(
-        const Nexus::OrderExecutionService::Order* order);
+      void OnOrderSubmitted(const std::shared_ptr<Nexus::Order>& order);
+      void OnTaskOrderSubmitted(const std::shared_ptr<Nexus::Order>& order);
       void OnExpiryTimer();
   };
 }

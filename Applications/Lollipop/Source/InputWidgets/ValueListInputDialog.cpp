@@ -1,11 +1,11 @@
 #include "Spire/InputWidgets/ValueListInputDialog.hpp"
-#include <Beam/Utilities/InstantiateTemplate.hpp>
+#include <Beam/Utilities/Instantiate.hpp>
 #include <boost/optional/optional.hpp>
 #include <QFileDialog>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QMouseEvent>
-#include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/InputWidgets/SecurityInputDialog.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
@@ -13,48 +13,49 @@
 
 using namespace Beam;
 using namespace boost;
+using namespace boost::mp11;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
 
 namespace {
   struct ValueToVariantConverter {
+    using type = mp_list<Security>;
+
     template<typename T>
-    static void Template(std::vector<ValueListInputDialog::Value>& values,
-        const QVariant& value) {
+    void operator ()(std::vector<ValueListInputDialog::Value>& values,
+        const QVariant& value) const {
       values.push_back(value.value<T>());
     }
-
-    using SupportedTypes = boost::mpl::list<Security>;
   };
 
   struct VariantToValueConverter {
+    using type = mp_list<Security>;
+
     template<typename T>
-    static QVariant Template(const ValueListInputDialog::Value& value) {
+    QVariant operator ()(const ValueListInputDialog::Value& value) const {
       return QVariant::fromValue(get<T>(value));
     }
-
-    using SupportedTypes = boost::mpl::list<Security>;
   };
 
   struct ParseLine {
+    using type = mp_list<Security>;
+
     template<typename T>
-    static ValueListInputDialog::Value Template(
-        const std::string& line, const UserProfile& userProfile) {
+    ValueListInputDialog::Value operator ()(
+        const std::string& line, const UserProfile& userProfile) const {
       return {};
     }
 
     template<>
-    static ValueListInputDialog::Value Template<Security>(
-        const std::string& line, const UserProfile& userProfile) {
-      auto security = ParseSecurity(line, userProfile.GetMarketDatabase());
-      if(security == Security()) {
+    ValueListInputDialog::Value operator ()<Security>(
+        const std::string& line, const UserProfile& userProfile) const {
+      auto security = parse_security(line, userProfile.GetVenueDatabase());
+      if(!security) {
         BOOST_THROW_EXCEPTION(std::runtime_error("Invalid symbol specified."));
       }
       return security;
     }
-
-    using SupportedTypes = boost::mpl::list<Security>;
   };
 }
 
@@ -62,7 +63,7 @@ ValueListInputDialog::ValueListInputDialog(Ref<UserProfile> userProfile,
     const std::type_info& type, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_ValueListInputDialog>()),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_type(&type) {
   m_ui->setupUi(this);
   connect(m_ui->m_addToolButton, &QToolButton::clicked, this,
@@ -141,7 +142,7 @@ void ValueListInputDialog::ActivateRow(int row, QKeyEvent* event) {
       }
       return text.toStdString();
     }();
-    ShowWildCardSecurityInputDialog(
+    ShowSecurityInputDialog(
       Ref(*m_userProfile), initialValue, m_ui->m_valueListWidget,
       [=] (auto security) {
         if(!security || security == Security()) {
@@ -159,7 +160,7 @@ void ValueListInputDialog::AppendItem(const Value& value) {
   m_ui->m_valueListWidget->setRowCount(row + 1);
   m_ui->m_valueListWidget->setItem(row, 0, item);
   item->setData(
-    Qt::DisplayRole, Instantiate<VariantToValueConverter>(*m_type)(value));
+    Qt::DisplayRole, instantiate<VariantToValueConverter>(*m_type)(value));
 }
 
 void ValueListInputDialog::OnAccept() {
@@ -167,7 +168,7 @@ void ValueListInputDialog::OnAccept() {
   for(auto i = 0; i < m_ui->m_valueListWidget->rowCount(); ++i) {
     auto value = m_ui->m_valueListWidget->item(i, 0)->data(Qt::DisplayRole);
     if(value.isValid()) {
-      Instantiate<ValueToVariantConverter>(*m_type)(m_values, value);
+      instantiate<ValueToVariantConverter>(*m_type)(m_values, value);
     }
   }
   accept();
@@ -194,7 +195,7 @@ void ValueListInputDialog::OnLoadFileAction() {
   while(std::getline(file, line)) {
     ++lineCount;
     try {
-      auto parsedValue = Instantiate<ParseLine>(*m_type)(line, *m_userProfile);
+      auto parsedValue = instantiate<ParseLine>(*m_type)(line, *m_userProfile);
       parsedValues.push_back(parsedValue);
     } catch(const std::exception& e) {
       QMessageBox::critical(nullptr, QObject::tr("Error"),

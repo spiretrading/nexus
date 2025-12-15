@@ -4,7 +4,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/signals2/signal.hpp>
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class QLineEdit;
 

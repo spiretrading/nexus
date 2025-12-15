@@ -29,7 +29,7 @@ class TestApp extends React.Component<Properties, State> {
       parameters: new Nexus.RiskParameters(Nexus.DefaultCurrencies.CAD,
         Nexus.Money.ONE.multiply(100000),
         new Nexus.RiskState(Nexus.RiskState.Type.ACTIVE),
-        Nexus.Money.ONE.multiply(1000), 100,
+        Nexus.Money.ONE.multiply(1000),
         Beam.Duration.HOUR.multiply(5).add(
           Beam.Duration.MINUTE.multiply(30)).add(
             Beam.Duration.SECOND.multiply(15))),

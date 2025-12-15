@@ -4,16 +4,13 @@
 #include "Spire/RiskTimer/RiskTimerDialog.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::RiskService;
 using namespace Spire;
 
 RiskTimerMonitor::RiskTimerMonitor(Ref<UserProfile> userProfile)
-  : m_userProfile(userProfile.Get()) {}
+  : m_userProfile(userProfile.get()) {}
 
 RiskTimerMonitor::~RiskTimerMonitor() {
   if(m_dialog) {
@@ -24,10 +21,11 @@ RiskTimerMonitor::~RiskTimerMonitor() {
 
 void RiskTimerMonitor::Load() {
   auto account =
-    m_userProfile->GetServiceClients().GetServiceLocatorClient().GetAccount();
-  m_userProfile->GetServiceClients().GetAdministrationClient().
-    GetRiskStatePublisher(account).Monitor(m_eventHandler.get_slot<RiskState>(
-      std::bind_front(&RiskTimerMonitor::OnRiskState, this)));
+    m_userProfile->GetClients().get_service_locator_client().get_account();
+  m_userProfile->GetClients().get_administration_client().
+    get_risk_state_publisher(account).monitor(
+      m_eventHandler.get_slot<RiskState>(
+        std::bind_front(&RiskTimerMonitor::OnRiskState, this)));
 }
 
 void RiskTimerMonitor::OnRiskState(const RiskState& riskState) {
@@ -47,7 +45,7 @@ void RiskTimerMonitor::OnRiskState(const RiskState& riskState) {
         m_model->SetTimeRemaining(seconds(0));
       } else {
         auto currentTime =
-          m_userProfile->GetServiceClients().GetTimeClient().GetTime();
+          m_userProfile->GetClients().get_time_client().get_time();
         m_model->SetTimeRemaining(std::max(time_duration(seconds(0)),
           riskState.m_expiry - currentTime));
       }

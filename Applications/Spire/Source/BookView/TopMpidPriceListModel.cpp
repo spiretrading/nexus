@@ -6,11 +6,10 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  int find_index(
-      const ListModel<TopMpidPrice>& prices, const MarketCode& market) {
+  int find_index(const ListModel<TopMpidPrice>& prices, Venue venue) {
     auto i = std::find_if(prices.begin(), prices.end(),
       [&] (const auto& price) {
-        return price.m_market == market;
+        return price.m_venue == venue;
       });
     if(i != prices.end()) {
       return static_cast<int>(std::distance(prices.begin(), i));
@@ -54,18 +53,18 @@ void TopMpidPriceListModel::on_operation(
   visit(operation,
     [&] (const BookQuoteListModel::AddOperation& operation) {
       auto quote = m_quotes->get(operation.m_index);
-      if(!quote.m_isPrimaryMpid) {
+      if(!quote.m_is_primary_mpid) {
         return;
       }
-      auto mpid_index = find_index(m_top_prices, quote.m_market);
+      auto mpid_index = find_index(m_top_prices, quote.m_venue);
       if(mpid_index == -1) {
-        m_top_prices.push(TopMpidPrice(quote.m_market, quote.m_quote.m_price));
+        m_top_prices.push(TopMpidPrice(quote.m_venue, quote.m_quote.m_price));
       } else {
         auto& top_mpid = m_top_prices.get(mpid_index);
-        auto direction = GetDirection(quote.m_quote.m_side);
+        auto direction = get_direction(quote.m_quote.m_side);
         if(direction * quote.m_quote.m_price >= direction * top_mpid.m_price) {
           m_top_prices.set(
-            mpid_index, TopMpidPrice(quote.m_market, quote.m_quote.m_price));
+            mpid_index, TopMpidPrice(quote.m_venue, quote.m_quote.m_price));
         }
       }
     },
@@ -73,15 +72,15 @@ void TopMpidPriceListModel::on_operation(
       m_removed_quote = m_quotes->get(operation.m_index);
     },
     [&] (const BookQuoteListModel::RemoveOperation& operation) {
-      if(!m_removed_quote.m_isPrimaryMpid) {
+      if(!m_removed_quote.m_is_primary_mpid) {
         return;
       }
-      auto mpid_index = find_index(m_top_prices, m_removed_quote.m_market);
+      auto mpid_index = find_index(m_top_prices, m_removed_quote.m_venue);
       auto& top_mpid = m_top_prices.get(mpid_index);
       if(top_mpid.m_price == m_removed_quote.m_quote.m_price) {
         for(auto i = operation.m_index; i != m_quotes->get_size(); ++i) {
           auto& quote = m_quotes->get(i);
-          if(quote.m_isPrimaryMpid && quote.m_market == top_mpid.m_market) {
+          if(quote.m_is_primary_mpid && quote.m_venue == top_mpid.m_venue) {
             auto update = top_mpid;
             update.m_price = quote.m_quote.m_price;
             m_top_prices.set(mpid_index, update);

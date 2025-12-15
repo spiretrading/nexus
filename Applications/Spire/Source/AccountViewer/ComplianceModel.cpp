@@ -1,57 +1,57 @@
 #include "Spire/AccountViewer/ComplianceModel.hpp"
 #include <algorithm>
+#include <boost/mpl/size.hpp>
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::Compliance;
 using namespace Spire;
 using namespace std;
 
 ComplianceModel::ComplianceModel(Ref<UserProfile> userProfile,
     const DirectoryEntry& account)
-    : m_userProfile{userProfile.Get()},
+    : m_userProfile{userProfile.get()},
       m_account{account},
       m_newComplianceEntryId{1},
       m_nextComplianceEntryId{1} {}
 
 void ComplianceModel::Load() {
-  m_schemas = m_userProfile->GetServiceClients().GetDefinitionsClient().
-    LoadComplianceRuleSchemas();
-  m_entries = m_userProfile->GetServiceClients().GetComplianceClient().Load(
-    m_account);
+  m_schemas = m_userProfile->GetClients().get_definitions_client().
+    load_compliance_rule_schemas();
+  m_entries =
+    m_userProfile->GetClients().get_compliance_client().load(m_account);
   m_updatedEntries.clear();
   m_deletedEntries.clear();
   m_newEntries.clear();
   m_newComplianceEntryId = 1;
   for(auto& entry : m_entries) {
-    m_newComplianceEntryId = std::max(m_newComplianceEntryId,
-      entry.GetId() + 1);
+    m_newComplianceEntryId =
+      std::max(m_newComplianceEntryId, entry.get_id() + 1);
   }
   m_nextComplianceEntryId = m_newComplianceEntryId;
 }
 
 void ComplianceModel::Commit() {
-  auto& complianceClient =
-    m_userProfile->GetServiceClients().GetComplianceClient();
+  auto& complianceClient = m_userProfile->GetClients().get_compliance_client();
   for(auto& entry : m_updatedEntries) {
-    complianceClient.Update(entry);
+    complianceClient.update(entry);
   }
   m_updatedEntries.clear();
   for(auto& id : m_deletedEntries) {
-    complianceClient.Delete(id);
+    complianceClient.remove(id);
   }
   m_deletedEntries.clear();
   for(auto& newEntry : m_newEntries) {
-    auto id = complianceClient.Add(m_account, newEntry.GetState(),
-      newEntry.GetSchema());
+    auto id = complianceClient.add(m_account, newEntry.get_state(),
+      newEntry.get_schema());
     for(auto& previousEntry : m_entries) {
-      if(previousEntry.GetId() == newEntry.GetId()) {
-        previousEntry.SetId(id);
-        m_complianceRuleEntryIdUpdatedSignal(newEntry.GetId(), id);
+      if(previousEntry.get_id() == newEntry.get_id()) {
+        previousEntry = ComplianceRuleEntry(id,
+          previousEntry.get_directory_entry(), previousEntry.get_state(),
+          previousEntry.get_schema());
+        m_complianceRuleEntryIdUpdatedSignal(newEntry.get_id(), id);
       }
     }
   }
@@ -79,22 +79,22 @@ void ComplianceModel::Add(const ComplianceRuleSchema& schema) {
   m_complianceRuleEntryAddedSignal(entry);
 }
 
-void ComplianceModel::Remove(ComplianceRuleId id) {
+void ComplianceModel::Remove(ComplianceRuleEntry::Id id) {
   auto entryIterator = std::find_if(m_entries.begin(), m_entries.end(),
     [&] (const ComplianceRuleEntry& entry) {
-      return entry.GetId() == id;
+      return entry.get_id() == id;
     });
   if(entryIterator == m_entries.end()) {
     return;
   }
   auto entry = std::move(*entryIterator);
   m_entries.erase(entryIterator);
-  if(entry.GetId() < m_newComplianceEntryId) {
-    m_deletedEntries.push_back(entry.GetId());
+  if(entry.get_id() < m_newComplianceEntryId) {
+    m_deletedEntries.push_back(entry.get_id());
     auto updateIterator = std::find_if(m_updatedEntries.begin(),
       m_updatedEntries.end(),
       [&] (const ComplianceRuleEntry& entry) {
-        return entry.GetId() == id;
+        return entry.get_id() == id;
       });
     if(updateIterator != m_updatedEntries.end()) {
       m_updatedEntries.erase(updateIterator);
@@ -106,17 +106,17 @@ void ComplianceModel::Remove(ComplianceRuleId id) {
 void ComplianceModel::Update(const ComplianceRuleEntry& entry) {
   auto entryIterator = std::find_if(m_entries.begin(), m_entries.end(),
     [&] (const ComplianceRuleEntry& previousEntry) {
-      return previousEntry.GetId() == entry.GetId();
+      return previousEntry.get_id() == entry.get_id();
     });
   if(entryIterator == m_entries.end()) {
     return;
   }
   *entryIterator = entry;
-  if(entry.GetId() < m_newComplianceEntryId) {
+  if(entry.get_id() < m_newComplianceEntryId) {
     auto updateIterator = std::find_if(
       m_updatedEntries.begin(), m_updatedEntries.end(),
       [&] (const ComplianceRuleEntry& previousEntry) {
-        return previousEntry.GetId() == entry.GetId();
+        return previousEntry.get_id() == entry.get_id();
       });
     if(updateIterator == m_updatedEntries.end()) {
       m_updatedEntries.push_back(entry);
@@ -126,7 +126,7 @@ void ComplianceModel::Update(const ComplianceRuleEntry& entry) {
   } else {
     auto entryIterator = std::find_if(m_newEntries.begin(), m_newEntries.end(),
       [&] (const ComplianceRuleEntry& previousEntry) {
-        return previousEntry.GetId() == entry.GetId();
+        return previousEntry.get_id() == entry.get_id();
       });
     if(entryIterator == m_newEntries.end()) {
       return;
@@ -148,4 +148,23 @@ connection ComplianceModel::ConnectComplianceRuleEntryRemovedSignal(
 connection ComplianceModel::ConnectComplianceRuleEntryIdUpdatedSignal(
     const ComplianceRuleEntryIdUpdatedSignal::slot_type& slot) const {
   return m_complianceRuleEntryIdUpdatedSignal.connect(slot);
+}
+
+bool Spire::IsWrapped(const ComplianceRuleSchema& schema) {
+  if(schema.get_parameters().size() < 2) {
+    return false;
+  }
+  auto& name = *(schema.get_parameters().rbegin() + 1);
+  auto& arguments = *schema.get_parameters().rbegin();
+  return name.m_name == "name" &&
+    name.m_value.type() == typeid(std::string) &&
+    arguments.m_name == "arguments" && arguments.m_value.which() ==
+      mpl::size<ComplianceValue::types>::value - 1;
+}
+
+QString Spire::GetUnwrappedName(const ComplianceRuleSchema& schema) {
+  if(IsWrapped(schema)) {
+    return GetUnwrappedName(unwrap(schema));
+  }
+  return QString::fromStdString(schema.get_name());
 }

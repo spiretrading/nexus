@@ -12,6 +12,7 @@
 #include "Spire/LegacyUI/LegacyUI.hpp"
 
 namespace Spire {
+  class UserProfile;
 
   /** Stores settings related to blotters. */
   class BlotterSettings {
@@ -103,7 +104,7 @@ namespace Spire {
        * @return The consolidated blotter for the specified <i>account</i>.
        */
       const BlotterModel& GetConsolidatedBlotter(
-        const Beam::ServiceLocator::DirectoryEntry& account) const;
+        const Beam::DirectoryEntry& account) const;
 
       /**
        * Returns an account's consolidated blotter.
@@ -111,7 +112,7 @@ namespace Spire {
        * @return The consolidated blotter for the specified <i>account</i>.
        */
       BlotterModel& GetConsolidatedBlotter(
-        const Beam::ServiceLocator::DirectoryEntry& account);
+        const Beam::DirectoryEntry& account);
 
       /** Returns the active blotter model. */
       const BlotterModel& GetActiveBlotter() const;
@@ -168,8 +169,8 @@ namespace Spire {
       std::vector<std::unique_ptr<BlotterModel>> m_blotters;
       std::unordered_map<const BlotterModel*,
         std::shared_ptr<LegacyUI::WindowSettings>> m_recentlyClosedBlotters;
-      mutable std::unordered_map<Beam::ServiceLocator::DirectoryEntry,
-        BlotterModel*> m_consolidatedBlotters;
+      mutable std::unordered_map<Beam::DirectoryEntry, BlotterModel*>
+        m_consolidatedBlotters;
       BlotterModel* m_activeBlotter;
       BlotterAddedSignal m_blotterAddedSignal;
       BlotterRemovedSignal m_blotterRemovedSignal;

@@ -4,62 +4,53 @@
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Sql/Conversions.hpp>
+#include <boost/throw_exception.hpp>
 #include <Viper/Row.hpp>
 #include "Nexus/Definitions/SqlDefinitions.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionDataStoreException.hpp"
 #include "Nexus/OrderExecutionService/OrderRecord.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 #include "Nexus/Queries/TraversalExpressionVisitor.hpp"
 
-namespace Nexus::OrderExecutionService {
-  inline const auto& GetAccountRow() {
-    static auto ROW = Viper::Row<Beam::ServiceLocator::DirectoryEntry>().
-      add_column("account", &Beam::ServiceLocator::DirectoryEntry::m_id);
+namespace Nexus {
+  inline const auto& get_account_row() {
+    static auto ROW = Viper::Row<Beam::DirectoryEntry>().
+      add_column("account", &Beam::DirectoryEntry::m_id);
     return ROW;
   }
 
-  inline const auto& GetOrderInfoRow() {
+  inline const auto& get_order_info_row() {
     static auto ROW = Viper::Row<OrderInfo>().
       add_column("account",
         [] (auto& row) -> auto& {
           return row.m_fields.m_account.m_id;
         }).
-      add_column("order_id", &OrderInfo::m_orderId).
+      add_column("order_id", &OrderInfo::m_id).
       add_column("submission_account",
         [] (auto& row) {
-          return row.m_submissionAccount.m_id;
+          return row.m_submission_account.m_id;
         },
         [] (auto& row, auto column) {
-          row.m_submissionAccount.m_id = column;
-          row.m_submissionAccount.m_type =
-            Beam::ServiceLocator::DirectoryEntry::Type::ACCOUNT;
+          row.m_submission_account.m_id = column;
+          row.m_submission_account.m_type =
+            Beam::DirectoryEntry::Type::ACCOUNT;
         }).
       extend(Viper::Row<OrderFields>().
         add_column("symbol", Viper::varchar(16),
           [] (auto& row) {
-            return row.m_security.GetSymbol();
+            return row.m_security.get_symbol();
           },
           [] (auto& row, auto column) {
-            row.m_security = Security(std::move(column),
-              row.m_security.GetMarket(), row.m_security.GetCountry());
+            row.m_security =
+              Security(std::move(column), row.m_security.get_venue());
           }).
-        add_column("market", Viper::varchar(16),
+        add_column("venue", Viper::varchar(16),
           [] (auto& row) {
-            return row.m_security.GetMarket();
+            return row.m_security.get_venue();
           },
           [] (auto& row, auto column) {
-            row.m_security = Security(row.m_security.GetSymbol(), column,
-              row.m_security.GetCountry());
-          }).
-        add_column("country",
-          [] (auto& row) {
-            return row.m_security.GetCountry();
-          },
-          [] (auto& row, auto column) {
-            row.m_security = Security(row.m_security.GetSymbol(),
-              row.m_security.GetMarket(), column);
+            row.m_security = Security(row.m_security.get_symbol(), column);
           }).
         add_column("currency", &OrderFields::m_currency).
         add_column("type", &OrderFields::m_type).
@@ -70,91 +61,88 @@ namespace Nexus::OrderExecutionService {
         add_column("price", &OrderFields::m_price).
         add_column("time_in_force",
           [] (auto& row) {
-            return row.m_timeInForce.GetType();
+            return row.m_time_in_force.get_type();
           },
           [] (auto& row, auto column) {
-            row.m_timeInForce = TimeInForce(column,
-              row.m_timeInForce.GetExpiry());
+            row.m_time_in_force =
+              TimeInForce(column, row.m_time_in_force.get_expiry());
           }).
         add_column("time_in_force_expiry",
           [] (auto& row) {
-            return Beam::ToSqlTimestamp(row.m_timeInForce.GetExpiry());
+            return Beam::to_sql_timestamp(row.m_time_in_force.get_expiry());
           },
           [] (auto& row, auto column) {
-            row.m_timeInForce = TimeInForce(row.m_timeInForce.GetType(),
-              Beam::FromSqlTimestamp(column));
+            row.m_time_in_force = TimeInForce(
+              row.m_time_in_force.get_type(), Beam::from_sql_timestamp(column));
           }).
         add_column("additional_fields",
           [] (auto& row) {
-            auto buffer = Beam::IO::SharedBuffer();
-            if(row.m_additionalFields.empty()) {
+            auto buffer = Beam::SharedBuffer();
+            if(row.m_additional_fields.empty()) {
               return buffer;
             }
-            auto sender = Beam::Serialization::BinarySender<
-              Beam::IO::SharedBuffer>();
-            sender.SetSink(Beam::Ref(buffer));
+            auto sender = Beam::BinarySender<Beam::SharedBuffer>();
+            sender.set(Beam::Ref(buffer));
             try {
-              sender.Shuttle(row.m_additionalFields);
-            } catch(const Beam::Serialization::SerializationException&) {
-              BOOST_THROW_EXCEPTION(OrderExecutionDataStoreException(
+              sender.shuttle(row.m_additional_fields);
+            } catch(const Beam::SerializationException&) {
+              boost::throw_with_location(OrderExecutionDataStoreException(
                 "Unable to store additional fields."));
             }
             return buffer;
           },
           [] (auto& row, const auto& column) {
-            if(!column.IsEmpty()) {
-              auto receiver = Beam::Serialization::BinaryReceiver<
-                Beam::IO::SharedBuffer>();
-              receiver.SetSource(Beam::Ref(column));
+            if(!is_empty(column)) {
+              auto receiver = Beam::BinaryReceiver<Beam::SharedBuffer>();
+              receiver.set(Beam::Ref(column));
               try {
-                receiver.Shuttle(row.m_additionalFields);
-              } catch(const Beam::Serialization::SerializationException&) {
-                BOOST_THROW_EXCEPTION(OrderExecutionDataStoreException(
+                receiver.shuttle(row.m_additional_fields);
+              } catch(const Beam::SerializationException&) {
+                boost::throw_with_location(OrderExecutionDataStoreException(
                   "Unable to load additional fields."));
               }
             }
           }), &OrderInfo::m_fields).
-        add_column("shorting_flag", &OrderInfo::m_shortingFlag).
+        add_column("shorting_flag", &OrderInfo::m_shorting_flag).
         set_primary_key("order_id");
     return ROW;
   }
 
-  inline const auto& GetExecutionReportRow() {
+  inline const auto& get_execution_report_row() {
     static auto ROW = Viper::Row<ExecutionReport>().
       add_column("order_id", &ExecutionReport::m_id).
       add_column("sequence", &ExecutionReport::m_sequence).
       add_column("status", &ExecutionReport::m_status).
-      add_column("last_quantity", &ExecutionReport::m_lastQuantity).
-      add_column("last_price", &ExecutionReport::m_lastPrice).
+      add_column("last_quantity", &ExecutionReport::m_last_quantity).
+      add_column("last_price", &ExecutionReport::m_last_price).
       add_column("liquidity_flag", Viper::varchar(8),
-        &ExecutionReport::m_liquidityFlag).
-      add_column("last_market", Viper::varchar(16),
-        &ExecutionReport::m_lastMarket).
-      add_column("execution_fee", &ExecutionReport::m_executionFee).
-      add_column("processing_fee", &ExecutionReport::m_processingFee).
+        &ExecutionReport::m_liquidity_flag).
+      add_column(
+        "last_market", Viper::varchar(16), &ExecutionReport::m_last_market).
+      add_column("execution_fee", &ExecutionReport::m_execution_fee).
+      add_column("processing_fee", &ExecutionReport::m_processing_fee).
       add_column("commission", &ExecutionReport::m_commission).
       add_column("text", Viper::varchar(256), &ExecutionReport::m_text).
       add_index("order_id", "order_id");
     return ROW;
   }
 
-  inline auto HasLiveCheck(const Beam::Queries::Expression& expression) {
-    struct IsLiveVisitor final : Queries::TraversalExpressionVisitor {
-      bool m_hasCheck = false;
+  inline auto has_live_check(const Beam::Expression& expression) {
+    struct IsLiveVisitor final : TraversalExpressionVisitor {
+      bool m_has_check = false;
 
-      void Visit(const Beam::Queries::MemberAccessExpression& expression)
-          override {
-        if(expression.GetName() == "is_live" &&
-            expression.GetExpression()->GetType() == Queries::OrderInfoType()) {
-          m_hasCheck = true;
+      void visit(const Beam::MemberAccessExpression& expression) override {
+        if(expression.get_name() == "is_live" &&
+            expression.get_expression().get_type() == typeid(OrderInfo)) {
+          m_has_check = true;
         } else {
-          Queries::TraversalExpressionVisitor::Visit(expression);
+          TraversalExpressionVisitor::visit(expression);
         }
       }
     };
     auto visitor = IsLiveVisitor();
-    expression->Apply(visitor);
-    return visitor.m_hasCheck;
+    expression.apply(visitor);
+    return visitor.m_has_check;
   }
 }
 

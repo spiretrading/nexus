@@ -4,6 +4,7 @@
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Ui/AdaptiveBox.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

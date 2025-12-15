@@ -4,15 +4,9 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include <boost/date_time/local_time/tz_database.hpp>
-#include "Nexus/Definitions/Country.hpp"
-#include "Nexus/Definitions/Currency.hpp"
+#include "Nexus/Clients/Clients.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
-#include "Nexus/Definitions/Destination.hpp"
-#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
-#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
-#include "Nexus/TelemetryService/TelemetryClientBox.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
@@ -46,12 +40,7 @@ namespace Spire {
        * @param isAdministrator Whether the account is a system administrator.
        * @param isManager Whether the account manages at least one trading
        *        group.
-       * @param countryDatabase Stores the database of all countries.
-       * @param timeZoneDatabase Stores the database of all time zones.
-       * @param currencyDatabase Stores the database of all currencies.
        * @param exchangeRates The list of ExchangeRates to use.
-       * @param marketDatabase Stores the database of all markets.
-       * @param destinationDatabase Stores the database of all destinations.
        * @param entitlementDatabase Stores the database of market data
        *        entitlements.
        * @param additionalTagDatabase Stores the database of additional tags.
@@ -59,23 +48,15 @@ namespace Spire {
        *        BookViewWindow.
        * @param time_and_sales_properties Initializes the time and sales
        *        properties.
-       * @param serviceClients The set of clients connected to Spire services.
-       * @param telemetryClient The client used to submit telemetry data.
+       * @param clients The set of clients connected to Spire services.
        */
       UserProfile(const std::string& username, bool isAdministrator,
-        bool isManager, const Nexus::CountryDatabase& countryDatabase,
-        const boost::local_time::tz_database& timeZoneDatabase,
-        const Nexus::CurrencyDatabase& currencyDatabase,
-        const std::vector<Nexus::ExchangeRate>& exchangeRates,
-        const Nexus::MarketDatabase& marketDatabase,
-        const Nexus::DestinationDatabase& destinationDatabase,
-        const Nexus::MarketDataService::EntitlementDatabase&
-          entitlementDatabase,
+        bool isManager, const std::vector<Nexus::ExchangeRate>& exchangeRates,
+        const Nexus::EntitlementDatabase& entitlementDatabase,
         const AdditionalTagDatabase& additionalTagDatabase,
         BookViewProperties book_view_properties,
         TimeAndSalesProperties time_and_sales_properties,
-        Nexus::ServiceClientsBox serviceClients,
-        Nexus::TelemetryService::TelemetryClientBox telemetryClient);
+        Nexus::Clients clients);
 
       ~UserProfile();
 
@@ -91,33 +72,14 @@ namespace Spire {
        */
       bool IsManager() const;
 
-      /** Returns the CountryDatabase. */
-      const Nexus::CountryDatabase& GetCountryDatabase() const;
-
-      /** Returns the time zone database. */
-      const boost::local_time::tz_database& GetTimeZoneDatabase() const;
-
-      /** Returns the CurrencyDatabase. */
-      const Nexus::CurrencyDatabase& GetCurrencyDatabase() const;
-
       /** Returns the ExchangeRates. */
       const Nexus::ExchangeRateTable& GetExchangeRates() const;
 
-      /** Returns the MarketDatabase. */
-      const Nexus::MarketDatabase& GetMarketDatabase() const;
-
-      /** Returns the DestinationDatabase. */
-      const Nexus::DestinationDatabase& GetDestinationDatabase() const;
-
       /** Returns the EntitlementDatabase. */
-      const Nexus::MarketDataService::EntitlementDatabase&
-        GetEntitlementDatabase() const;
+      const Nexus::EntitlementDatabase& GetEntitlementDatabase() const;
 
       /** Returns the set of clients connected to Spire services. */
-      Nexus::ServiceClientsBox& GetServiceClients() const;
-
-      /** Returns the telemetry client. */
-      Nexus::TelemetryService::TelemetryClientBox& GetTelemetryClient() const;
+      Nexus::Clients& GetClients() const;
 
       /** Creates the profile path. */
       void CreateProfilePath() const;
@@ -227,15 +189,9 @@ namespace Spire {
       std::string m_username;
       bool m_isAdministrator;
       bool m_isManager;
-      Nexus::CountryDatabase m_countryDatabase;
-      boost::local_time::tz_database m_timeZoneDatabase;
-      Nexus::CurrencyDatabase m_currencyDatabase;
       Nexus::ExchangeRateTable m_exchangeRates;
-      Nexus::MarketDatabase m_marketDatabase;
-      Nexus::DestinationDatabase m_destinationDatabase;
-      Nexus::MarketDataService::EntitlementDatabase m_entitlementDatabase;
-      mutable Nexus::ServiceClientsBox m_serviceClients;
-      mutable Nexus::TelemetryService::TelemetryClientBox m_telemetryClient;
+      Nexus::EntitlementDatabase m_entitlementDatabase;
+      mutable Nexus::Clients m_clients;
       std::filesystem::path m_profilePath;
       std::shared_ptr<RecentlyClosedWindowListModel> m_recentlyClosedWindows;
       std::shared_ptr<SecurityInfoQueryModel> m_security_info_query_model;

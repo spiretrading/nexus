@@ -1,16 +1,14 @@
 #ifndef SPIRE_EYE_DROPPER_BUTTON_HPP
 #define SPIRE_EYE_DROPPER_BUTTON_HPP
 #include "Spire/Ui/EyeDropper.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class ToggleButton;
 
   /** Displays a button that uses the EyeDropper to pick a color. */
   class EyeDropperButton : public QWidget {
     public:
-
       using SubmitSignal = EyeDropper::SubmitSignal;
-
       using RejectSignal = EyeDropper::RejectSignal;
 
       /**

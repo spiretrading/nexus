@@ -17,7 +17,7 @@ ImportExportDialog::ImportExportDialog(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_ImportExportDialog>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
   if(!m_userProfile->IsManager()) {
     m_ui->m_portfolioViewerSettingsButton->setChecked(false);
@@ -98,31 +98,31 @@ void ImportExportDialog::ExportSettings() {
 void ImportExportDialog::ImportSettings() {
   EnvironmentSettings::TypeSet settings;
   if(m_ui->m_bookViewSettingsButton->isChecked()) {
-    settings.Set(EnvironmentSettings::Type::BOOK_VIEW);
+    settings.set(EnvironmentSettings::Type::BOOK_VIEW);
   }
   if(m_ui->m_dashboardsButton->isChecked()) {
-    settings.Set(EnvironmentSettings::Type::DASHBOARDS);
+    settings.set(EnvironmentSettings::Type::DASHBOARDS);
   }
   if(m_ui->m_orderImbalanceIndicatorButton->isChecked()) {
-    settings.Set(EnvironmentSettings::Type::ORDER_IMBALANCE_INDICATOR);
+    settings.set(EnvironmentSettings::Type::ORDER_IMBALANCE_INDICATOR);
   }
   if(m_ui->m_interactionsButton->isChecked()) {
-    settings.Set(EnvironmentSettings::Type::INTERACTIONS);
+    settings.set(EnvironmentSettings::Type::INTERACTIONS);
   }
   if(m_ui->m_keyBindingsButton->isChecked()) {
-    settings.Set(EnvironmentSettings::Type::KEY_BINDINGS);
+    settings.set(EnvironmentSettings::Type::KEY_BINDINGS);
   }
   if(m_ui->m_portfolioViewerSettingsButton->isChecked()) {
-    settings.Set(EnvironmentSettings::Type::PORTFOLIO_VIEWER);
+    settings.set(EnvironmentSettings::Type::PORTFOLIO_VIEWER);
   }
   if(m_ui->m_timeAndSalesSettingsButton->isChecked()) {
-    settings.Set(EnvironmentSettings::Type::TIME_AND_SALES);
+    settings.set(EnvironmentSettings::Type::TIME_AND_SALES);
   }
   if(m_ui->m_windowLayoutButton->isChecked()) {
-    settings.Set(EnvironmentSettings::Type::WINDOW_LAYOUTS);
+    settings.set(EnvironmentSettings::Type::WINDOW_LAYOUTS);
   }
   if(Import(m_ui->m_pathInput->GetPath(), settings,
-      m_ui->m_importAndApplyButton->isChecked(), Store(*m_userProfile))) {
+      m_ui->m_importAndApplyButton->isChecked(), out(*m_userProfile))) {
     accept();
   }
 }

@@ -25,7 +25,7 @@ FOR /F "usebackq delims=" %%i IN (` ^
   )
 )
 SET BUILD_BEAM=
-SET BEAM_COMMIT="e800d781dcee626a29d79ebd900f1ddcdaaf237e"
+SET BEAM_COMMIT="0330a61f0c91fd2ad430b9846c307b2a24a5cf72"
 IF NOT EXIST Beam (
   git clone https://www.github.com/spiretrading/beam Beam
   IF !ERRORLEVEL! EQU 0 (
@@ -65,8 +65,9 @@ IF NOT EXIST qt-5.15.13 (
     PUSHD qt-5.15.13
     perl init-repository --module-subset=qtbase,qtsvg,qttools,qttranslations
     CALL configure -prefix %cd% -opensource -static -mp -make libs ^
-      -make tools -nomake examples -nomake tests -opengl desktop -no-icu ^
-      -qt-freetype -qt-harfbuzz -qt-libpng -qt-pcre -qt-zlib -confirm-license
+      -make tools -nomake examples -nomake tests -opengl desktop ^
+      -no-feature-vulkan -no-icu -qt-freetype -qt-harfbuzz -qt-libpng ^
+      -qt-pcre -qt-zlib -confirm-license
     SET CL=/MP
     nmake
     DEL qtbase\lib\cmake\Qt5Core\Qt5CoreConfigExtrasMkspecDir.cmake
@@ -116,6 +117,8 @@ IF %BUILD_NEEDED%==1 (
   xcopy /s src\C++\* include\quickfix
   POPD
 )
+CALL :DownloadAndExtract "hat-trie-0.7.0" ^
+  "https://github.com/Tessil/hat-trie/archive/refs/tags/v0.7.0.zip"
 ECHO timestamp > cache_files\nexus.txt
 ENDLOCAL
 EXIT /B !EXIT_STATUS!

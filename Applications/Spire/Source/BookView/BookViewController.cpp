@@ -16,7 +16,6 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 namespace {
@@ -50,12 +49,12 @@ struct BookViewController::EventFilter : QObject {
 };
 
 BookViewController::BookViewController(Ref<UserProfile> user_profile)
-  : m_user_profile(user_profile.Get()),
+  : m_user_profile(user_profile.get()),
     m_window(nullptr) {}
 
 BookViewController::BookViewController(
     Ref<UserProfile> user_profile, BookViewWindow& window)
-    : m_user_profile(user_profile.Get()) {
+    : m_user_profile(user_profile.get()) {
   set_window(window);
 }
 
@@ -70,7 +69,7 @@ void BookViewController::open() {
   }
   auto window = new BookViewWindow(Ref(*m_user_profile),
     m_user_profile->GetSecurityInfoQueryModel(),
-    m_user_profile->GetKeyBindings(), m_user_profile->GetMarketDatabase(),
+    m_user_profile->GetKeyBindings(),
     m_user_profile->GetBookViewPropertiesWindowFactory(),
     m_user_profile->GetBookViewModelBuilder());
   set_window(*window);
@@ -143,5 +142,5 @@ void BookViewController::on_cancel_operation(
       }
     }
   }
-  execute(operation, Store(tasks));
+  execute(operation, out(tasks));
 }

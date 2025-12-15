@@ -24,7 +24,7 @@ Decimal Spire::to_decimal(const Money& value) {
 
 template<>
 Money Spire::from_decimal(const Decimal& value) {
-  return *Money::FromValue(value.str(
+  return parse_money(value.str(
     Decimal::backend_type::cpp_dec_float_digits10, std::ios_base::fixed));
 }
 
@@ -35,6 +35,6 @@ Decimal Spire::to_decimal(const Quantity& value) {
 
 template<>
 Quantity Spire::from_decimal(const Decimal& value) {
-  return *Quantity::FromValue(value.str(
+  return parse_quantity(value.str(
     Decimal::backend_type::cpp_dec_float_digits10, std::ios_base::fixed));
 }

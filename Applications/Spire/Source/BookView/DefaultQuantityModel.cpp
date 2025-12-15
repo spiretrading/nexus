@@ -9,7 +9,7 @@ using namespace Spire;
 
 DefaultQuantityModel::DefaultQuantityModel(
     Ref<UserProfile> user_profile, Security security, Side side)
-    : m_user_profile(user_profile.Get()),
+    : m_user_profile(user_profile.get()),
       m_security(std::move(security)),
       m_side(side) {
   const auto UPDATE_INTERVAL_MS = 300;

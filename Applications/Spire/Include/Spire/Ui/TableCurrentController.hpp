@@ -4,7 +4,6 @@
 #include <boost/optional/optional.hpp>
 #include "Spire/Spire/TableIndex.hpp"
 #include "Spire/Spire/ValueModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

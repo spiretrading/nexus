@@ -8,7 +8,7 @@
 #include <QStandardPaths>
 #include <QThread>
 #include <QUuid>
-#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
+#include "Nexus/Clients/Clients.hpp"
 #include "Spire/SignIn/SignInException.hpp"
 #include "Spire/SignIn/SignInWindow.hpp"
 #include "Spire/SignIn/UpdateDownloadChannelFactory.hpp"
@@ -16,10 +16,6 @@
 #include "Spire/Spire/Utility.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Network;
-using namespace Beam::ServiceLocator;
-using namespace Beam::WebServices;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -119,7 +115,7 @@ namespace {
 
   auto get_update_url(
       const IpAddress& address, Track track, const std::string& path) {
-    return Uri("http://" + address.GetHost() + ":8080" +
+    return Uri("http://" + address.get_host() + ":8080" +
       "/distribution/spire/" + to_text(track).toLower().toStdString() +
       "/x86/windows/" + path);
   }
@@ -130,13 +126,13 @@ namespace {
     auto directory_listing = std::string();
     try {
       auto client =
-        HttpClient<std::unique_ptr<ChannelBox>>(TcpSocketChannelFactory());
-      auto response = client.Send(request);
-      if(response.GetStatusCode() != HttpStatusCode::OK) {
+        HttpClient<std::unique_ptr<Channel>>(TcpSocketChannelFactory());
+      auto response = client.send(request);
+      if(response.get_status_code() != HttpStatusCode::OK) {
         return version;
       }
-      directory_listing =
-        std::string(response.GetBody().GetData(), response.GetBody().GetSize());
+      directory_listing = std::string(
+        response.get_body().get_data(), response.get_body().get_size());
     } catch(const std::exception&) {
       return version;
     }
@@ -160,8 +156,8 @@ namespace {
     auto arguments = QStringList();
     arguments << "-u" << QString::fromStdString(username) << "-p" <<
       QString::fromStdString(password) << "-a" <<
-      QString::fromStdString(address.GetHost()) << "-s" <<
-      QString::number(address.GetPort());
+      QString::fromStdString(address.get_host()) << "-s" <<
+      QString::number(address.get_port());
     auto output = std::string();
     try {
       output = launch_and_read(track, arguments);
@@ -203,11 +199,11 @@ namespace {
     auto directory_listing = std::string();
     try {
       static const auto DOWNLOAD_SIZE = 52277248;
-      auto client = HttpClient<std::unique_ptr<ChannelBox>>(
-        UpdateDownloadChannelFactory(
+      auto client =
+        HttpClient<std::unique_ptr<Channel>>(UpdateDownloadChannelFactory(
           DOWNLOAD_SIZE, download_progress, time_left));
-      auto response = client.Send(request);
-      if(response.GetStatusCode() != HttpStatusCode::OK) {
+      auto response = client.send(request);
+      if(response.get_status_code() != HttpStatusCode::OK) {
         download_progress->set(-1);
         return false;
       }
@@ -227,7 +223,7 @@ namespace {
       {
         auto out_file = std::ofstream(executable_path, std::ios::binary);
         out_file.write(
-          response.GetBody().GetData(), response.GetBody().GetSize());
+          response.get_body().get_data(), response.get_body().get_size());
       }
       installation_progress->set(100);
       time_left->set(seconds(0));
@@ -273,12 +269,11 @@ namespace {
   }
 }
 
-SignInController::SignInController(
-  std::string version, std::vector<ServerEntry> servers,
-  ServiceClientsFactory service_clients_factory)
+SignInController::SignInController(std::string version,
+  std::vector<ServerEntry> servers, ClientsFactory clients_factory)
   : m_version(std::move(version)),
     m_servers(std::move(servers)),
-    m_service_clients_factory(std::move(service_clients_factory)),
+    m_clients_factory(std::move(clients_factory)),
     m_download_progress(std::make_shared<QtValueModel<int>>(0)),
     m_installation_progress(std::make_shared<QtValueModel<int>>(0)),
     m_time_left(std::make_shared<QtValueModel<time_duration>>(seconds(0))),
@@ -326,7 +321,7 @@ void SignInController::on_sign_in(const std::string& username,
     throw SignInException("Server not found.");
   }();
   store_track(track);
-  m_sign_in_promise = QtPromise([=] () -> optional<ServiceClientsBox> {
+  m_sign_in_promise = QtPromise([=] () -> optional<Clients> {
     if(m_run_update.test(index(track))) {
       if(launch_update(address, track, username, password)) {
         return none;
@@ -347,19 +342,17 @@ void SignInController::on_sign_in(const std::string& username,
         }
       }
     }
-    return m_service_clients_factory(username, password, address);
-  }, LaunchPolicy::ASYNC).then(
-    [=] (Expect<optional<ServiceClientsBox>> service_clients) {
-      if(service_clients.IsException()) {
-        on_sign_in_promise(
-          Expect<ServiceClientsBox>(service_clients.GetException()));
-      } else if(service_clients.Get()) {
-        on_sign_in_promise(std::move(*service_clients.Get()));
-      } else {
-        m_sign_in_window->close();
-        delete_later(m_sign_in_window);
-      }
-    });
+    return m_clients_factory(username, password, address);
+  }, LaunchPolicy::ASYNC).then([=] (Expect<optional<Clients>> clients) {
+    if(clients.is_exception()) {
+      on_sign_in_promise(Expect<Clients>(clients.get_exception()));
+    } else if(clients.get()) {
+      on_sign_in_promise(std::move(*clients.get()));
+    } else {
+      m_sign_in_window->close();
+      delete_later(m_sign_in_window);
+    }
+  });
 }
 
 void SignInController::on_cancel() {
@@ -367,11 +360,10 @@ void SignInController::on_cancel() {
   m_sign_in_window->set_state(SignInWindow::State::NONE);
 }
 
-void SignInController::on_sign_in_promise(
-    Expect<ServiceClientsBox> service_clients) {
-  if(service_clients.IsException()) {
+void SignInController::on_sign_in_promise(Expect<Clients> clients) {
+  if(clients.is_exception()) {
     try {
-      std::rethrow_exception(service_clients.GetException());
+      std::rethrow_exception(clients.get_exception());
     } catch(const AuthenticationException&) {
       m_sign_in_window->set_error(
         QObject::tr("Incorrect username or password."));
@@ -384,5 +376,5 @@ void SignInController::on_sign_in_promise(
   }
   m_sign_in_window->close();
   delete_later(m_sign_in_window);
-  m_signed_in_signal(std::move(service_clients.Get()));
+  m_signed_in_signal(std::move(clients.get()));
 }

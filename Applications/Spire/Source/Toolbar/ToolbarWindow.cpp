@@ -1,5 +1,6 @@
 #include "Spire/Toolbar/ToolbarWindow.hpp"
 #include <QFileDialog>
+#include <QIcon>
 #include <QStandardPaths>
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -12,12 +13,11 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/LineInputForm.hpp"
 #include "Spire/Ui/MenuButton.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 using namespace Spire::Styles;
@@ -51,44 +51,44 @@ namespace {
 
   auto get_recently_closed_icon(ToolbarWindow::WindowType window) {
     if(window == ToolbarWindow::WindowType::BLOTTER) {
-      static auto icon = imageFromSvg(
+      static auto icon = image_from_svg(
         ":/Icons/toolbar/recently_closed/blotter.svg", scale(10, 10));
       return icon;
     } else if(window == ToolbarWindow::WindowType::BOOK_VIEW) {
-      static auto icon = imageFromSvg(
+      static auto icon = image_from_svg(
         ":/Icons/toolbar/recently_closed/book_view.svg", scale(10, 10));
       return icon;
     } else if(window == ToolbarWindow::WindowType::CANVAS) {
-      static auto icon = imageFromSvg(
+      static auto icon = image_from_svg(
         ":/Icons/toolbar/recently_closed/canvas.svg", scale(10, 10));
       return icon;
     } else if(window == ToolbarWindow::WindowType::CHART) {
-      static auto icon = imageFromSvg(
+      static auto icon = image_from_svg(
         ":/Icons/toolbar/recently_closed/chart.svg", scale(10, 10));
       return icon;
     } else if(window == ToolbarWindow::WindowType::KEY_BINDINGS) {
-      static auto icon = imageFromSvg(
+      static auto icon = image_from_svg(
         ":/Icons/toolbar/recently_closed/key_bindings.svg", scale(10, 10));
       return icon;
     } else if(window == ToolbarWindow::WindowType::ORDER_IMBALANCE_INDICATOR) {
-      static auto icon = imageFromSvg(
+      static auto icon = image_from_svg(
         ":/Icons/toolbar/recently_closed/order_imbalance_indicator.svg",
         scale(10, 10));
       return icon;
     } else if(window == ToolbarWindow::WindowType::PORTFOLIO) {
-      static auto icon = imageFromSvg(
+      static auto icon = image_from_svg(
         ":/Icons/toolbar/recently_closed/portfolio.svg", scale(10, 10));
       return icon;
     } else if(window == ToolbarWindow::WindowType::PROFILE) {
-      static auto icon = imageFromSvg(
+      static auto icon = image_from_svg(
         ":/Icons/toolbar/recently_closed/profile.svg", scale(10, 10));
       return icon;
     } else if(window == ToolbarWindow::WindowType::TIME_AND_SALES) {
-      static auto icon = imageFromSvg(
+      static auto icon = image_from_svg(
         ":/Icons/toolbar/recently_closed/time_and_sales.svg", scale(10, 10));
       return icon;
     } else if(window == ToolbarWindow::WindowType::WATCHLIST) {
-      static auto icon = imageFromSvg(
+      static auto icon = image_from_svg(
         ":/Icons/toolbar/recently_closed/watchlist.svg", scale(10, 10));
       return icon;
     }
@@ -145,8 +145,8 @@ ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
   m_pinned_blotter_connection = m_pinned_blotters->connect_operation_signal(
     std::bind_front(&ToolbarWindow::on_blotter_operation, this));
   bottom_layout->addWidget(blotter_button);
-  if(roles.Test(AccountRole::MANAGER) ||
-      roles.Test(AccountRole::ADMINISTRATOR)) {
+  if(roles.test(AccountRole::MANAGER) ||
+      roles.test(AccountRole::ADMINISTRATOR)) {
     bottom_layout->addWidget(make_icon_tool_button(
       WindowType::ACCOUNT_DIRECTORY, ":/Icons/toolbar/account_directory.svg",
       QColor(0x4392D6), QColor(0x406ABF), QColor(0x70C1EB)));
@@ -274,7 +274,7 @@ MenuButton* ToolbarWindow::make_recently_closed_button() const {
 
 MenuButton* ToolbarWindow::make_blotter_button() {
   auto blotter_button = make_menu_icon_button(
-    imageFromSvg(":/Icons/toolbar/blotter.svg", scale(26, 26)),
+    image_from_svg(":/Icons/toolbar/blotter.svg", scale(26, 26)),
     to_text(WindowType::BLOTTER));
   update_style(*blotter_button, [&] (auto& style) {
     style.get(Any() > is_a<Icon>()).set(Fill(QColor(0x00BFA0)));
@@ -290,7 +290,7 @@ Button* ToolbarWindow::make_icon_tool_button(
     WindowType type, const QString& icon_path, QColor fill,
     QColor hover_color, QColor press_color) const {
   auto button =
-    make_icon_button(imageFromSvg(icon_path, scale(26, 26)), to_text(type));
+    make_icon_button(image_from_svg(icon_path, scale(26, 26)), to_text(type));
   update_style(*button, [&] (auto& style) {
     style.get(Any() > is_a<Icon>()).set(Fill(fill));
     style.get(Hover() > is_a<Icon>()).set(Fill(hover_color));
@@ -305,17 +305,13 @@ Button* ToolbarWindow::make_icon_tool_button(
 
 void ToolbarWindow::populate_recently_closed_menu() {
   m_recently_closed_menu->reset();
-  if(m_recently_closed_windows->get_size() == 0) {
-    m_recently_closed_menu->add_disabled_action(tr("Empty"));
-  } else {
-    for(auto i = 0; i < m_recently_closed_windows->get_size(); ++i) {
-      auto& window = m_recently_closed_windows->get(i);
-      m_recently_closed_menu->add_action(
-        QString::fromStdString(window->GetName()), [=] {
-          auto window = m_recently_closed_windows->get(i);
-          m_reopen_signal(*window);
-        });
-    }
+  for(auto i = 0; i < m_recently_closed_windows->get_size(); ++i) {
+    auto& window = m_recently_closed_windows->get(i);
+    m_recently_closed_menu->add_action(
+      QString::fromStdString(window->GetName()), [=] {
+        auto window = m_recently_closed_windows->get(i);
+        m_reopen_signal(*window);
+      });
   }
 }
 

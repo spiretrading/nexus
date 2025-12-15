@@ -22,11 +22,10 @@ QWidget* LegacyTimeAndSalesWindowSettings::Reopen(
     Ref<UserProfile> user_profile) const {
   auto window = new TimeAndSalesWindow(
     user_profile->GetSecurityInfoQueryModel(),
-    user_profile->GetMarketDatabase(),
     user_profile->GetTimeAndSalesPropertiesWindowFactory(),
     user_profile->GetTimeAndSalesModelBuilder(), m_identifier);
   window->setAttribute(Qt::WA_DeleteOnClose);
-  Apply(Ref(user_profile), Store(*window));
+  Apply(Ref(user_profile), out(*window));
   return window;
 }
 
@@ -37,7 +36,7 @@ void LegacyTimeAndSalesWindowSettings::Apply(
   auto frame_height = get_frame_height();
   window.move(window.x(), window.y() - frame_height);
   window.resize(window.width(), window.height() + frame_height);
-  if(m_security != Security()) {
+  if(m_security) {
     window.m_security_view->get_current()->set(m_security);
   }
   window.m_link_identifier = m_link_identifier;

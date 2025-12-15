@@ -1,9 +1,10 @@
 #ifndef SPIRE_TABLE_FILTER_HPP
 #define SPIRE_TABLE_FILTER_HPP
 #include <QWidget>
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class TableModel;
 
   /** Base class used to filter rows from a TableView. */
   class TableFilter {

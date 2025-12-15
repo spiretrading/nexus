@@ -15,7 +15,6 @@ namespace Spire {
   class AnyListValueModel : public ValueModel<std::any> {
     public:
       using Type = ValueModel<std::any>::Type;
-
       using UpdateSignal = ValueModel<std::any>::UpdateSignal;
 
       /**
@@ -27,13 +26,9 @@ namespace Spire {
       AnyListValueModel(std::shared_ptr<AnyListModel> source, int index);
 
       QValidator::State get_state() const override;
-
       const Type& get() const override;
-
       QValidator::State test(const Type& value) const override;
-
       QValidator::State set(const Type& value) override;
-
       boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 

@@ -42,13 +42,11 @@ namespace Spire {
 
       virtual std::unique_ptr<CanvasNode> Reset() const;
 
-      ReferenceNode(Beam::Serialization::ReceiveBuilder);
-
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::string m_referent;
   };
 
@@ -59,18 +57,11 @@ namespace Spire {
   */
   boost::optional<const CanvasNode&> FindAnchor(const CanvasNode& node);
 
-  template<typename Shuttler>
-  void ReferenceNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    CanvasNode::Shuttle(shuttle, version);
-    shuttle.Shuttle("referent", m_referent);
+  template<Beam::IsShuttle S>
+  void ReferenceNode::shuttle(S& shuttle, unsigned int version) {
+    CanvasNode::shuttle(shuttle, version);
+    shuttle.shuttle("referent", m_referent);
   }
-}
-
-namespace Beam {
-namespace Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::ReferenceNode> : std::false_type {};
-}
 }
 
 #endif

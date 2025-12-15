@@ -1,10 +1,12 @@
 #ifndef SPIRE_CLOSED_FILTER_PANEL_HPP
 #define SPIRE_CLOSED_FILTER_PANEL_HPP
-#include "Spire/Spire/ListModel.hpp"
+#include <QWidget>
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/FilterPanel.hpp"
 
 namespace Spire {
+  class ListView;
 
   /** Displays a FilterPanel over a closed list of values. */
   class ClosedFilterPanel : public QWidget {

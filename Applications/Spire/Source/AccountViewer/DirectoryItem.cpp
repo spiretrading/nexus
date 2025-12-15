@@ -5,13 +5,12 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace Spire;
 using namespace std;
 
 DirectoryItem::DirectoryItem(const DirectoryEntry& entry, DirectoryType type)
-    : m_entry(entry),
-      m_directoryType(type) {}
+  : m_entry(entry),
+    m_directoryType(type) {}
 
 DirectoryItem::~DirectoryItem() {}
 
@@ -37,9 +36,10 @@ QIcon DirectoryItem::GetIcon() const {
 
 vector<unique_ptr<AccountViewItem>> DirectoryItem::LoadChildren(
     const UserProfile& userProfile) const {
-  auto children = userProfile.GetServiceClients().GetServiceLocatorClient().
-    LoadChildren(m_entry);
-  std::sort(children.begin(), children.end(), DirectoryEntry::NameComparator);
+  auto children =
+    userProfile.GetClients().get_service_locator_client().load_children(
+      m_entry);
+  std::sort(children.begin(), children.end(), DirectoryEntry::name_comparator);
   vector<unique_ptr<AccountViewItem>> childrenItems;
   for(auto& child : children) {
     if(child.m_type == DirectoryEntry::Type::ACCOUNT) {

@@ -6,7 +6,6 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 
@@ -21,7 +20,7 @@ ActivityLogModel::ActivityLogModel()
 }
 
 void ActivityLogModel::SetOrderExecutionPublisher(
-    Ref<const OrderExecutionPublisher> orderExecutionPublisher) {
+    Ref<const Publisher<std::shared_ptr<Order>>> orderExecutionPublisher) {
   m_eventHandler = std::nullopt;
   m_eventHandler.emplace();
   if(!m_entries.empty()) {
@@ -29,9 +28,10 @@ void ActivityLogModel::SetOrderExecutionPublisher(
     m_entries.clear();
     endRemoveRows();
   }
-  m_orderExecutionPublisher = orderExecutionPublisher.Get();
-  m_orderExecutionPublisher->Monitor(m_eventHandler->get_slot<const Order*>(
-    std::bind_front(&ActivityLogModel::OnOrderExecuted, this)));
+  m_orderExecutionPublisher = orderExecutionPublisher.get();
+  m_orderExecutionPublisher->monitor(
+    m_eventHandler->get_slot<std::shared_ptr<Order>>(
+      std::bind_front(&ActivityLogModel::OnOrderExecuted, this)));
 }
 
 int ActivityLogModel::rowCount(const QModelIndex& parent) const {
@@ -47,7 +47,7 @@ QVariant ActivityLogModel::data(const QModelIndex& index, int role) const {
     return QVariant();
   }
   auto& entry = m_entries[index.row()];
-  auto& fields = entry.m_order->GetInfo().m_fields;
+  auto& fields = entry.m_order->get_info().m_fields;
   if(role == Qt::TextAlignmentRole) {
     return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
   } else if(role == Qt::DisplayRole) {
@@ -65,17 +65,17 @@ QVariant ActivityLogModel::data(const QModelIndex& index, int role) const {
     } else if(index.column() == STATUS_COLUMN) {
       return QVariant::fromValue(entry.m_report.m_status);
     } else if(index.column() == LAST_QUANTITY_COLUMN) {
-      return QVariant::fromValue(entry.m_report.m_lastQuantity);
+      return QVariant::fromValue(entry.m_report.m_last_quantity);
     } else if(index.column() == LAST_PRICE_COLUMN) {
-      return QVariant::fromValue(entry.m_report.m_lastPrice);
+      return QVariant::fromValue(entry.m_report.m_last_price);
     } else if(index.column() == LAST_MARKET_COLUMN) {
-      return QString::fromStdString(entry.m_report.m_lastMarket);
+      return QString::fromStdString(entry.m_report.m_last_market);
     } else if(index.column() == LIQUIDITY_FLAG_COLUMN) {
-      return QString::fromStdString(entry.m_report.m_liquidityFlag);
+      return QString::fromStdString(entry.m_report.m_liquidity_flag);
     } else if(index.column() == EXECUTION_FEE_COLUMN) {
-      return QVariant::fromValue(entry.m_report.m_executionFee);
+      return QVariant::fromValue(entry.m_report.m_execution_fee);
     } else if(index.column() == PROCESSING_FEE_COLUMN) {
-      return QVariant::fromValue(entry.m_report.m_processingFee);
+      return QVariant::fromValue(entry.m_report.m_processing_fee);
     } else if(index.column() == COMMISSION_COLUMN) {
       return QVariant::fromValue(entry.m_report.m_commission);
     } else if(index.column() == MESSAGE_COLUMN) {
@@ -122,7 +122,7 @@ QVariant ActivityLogModel::headerData(
 }
 
 void ActivityLogModel::OnExecutionReport(
-    const Order* order, const ExecutionReport& report) {
+    const std::shared_ptr<Order>& order, const ExecutionReport& report) {
   beginInsertRows(QModelIndex(), static_cast<int>(m_entries.size()),
     static_cast<int>(m_entries.size()));
   m_entries.push_back(UpdateEntry(order, report));
@@ -135,7 +135,7 @@ void ActivityLogModel::OnExecutionReport(
   }
 }
 
-void ActivityLogModel::OnOrderExecuted(const Order* order) {
-  order->GetPublisher().Monitor(m_eventHandler->get_slot<ExecutionReport>(
+void ActivityLogModel::OnOrderExecuted(const std::shared_ptr<Order>& order) {
+  order->get_publisher().monitor(m_eventHandler->get_slot<ExecutionReport>(
     std::bind_front(&ActivityLogModel::OnExecutionReport, this, order)));
 }

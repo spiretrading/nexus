@@ -8,7 +8,6 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::Compliance;
 using namespace Spire;
 
 ComplianceWidget::ComplianceWidget(QWidget* parent, Qt::WindowFlags flags)
@@ -30,7 +29,7 @@ ComplianceWidget::~ComplianceWidget() {}
 void ComplianceWidget::Initialize(Ref<UserProfile> userProfile,
     bool isReadOnly) {
   m_isReadOnly = isReadOnly;
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   if(m_isReadOnly) {
     m_ui->m_toolbarWidget->hide();
   }
@@ -59,8 +58,8 @@ void ComplianceWidget::SetModel(const std::shared_ptr<ComplianceModel>& model) {
     font.setItalic(true);
     m_ui->m_newRuleComboBox->lineEdit()->setFont(font);
     for(auto& schema : m_model->GetSchemas()) {
-      m_ui->m_newRuleComboBox->addItem(
-        QString::fromStdString(schema.GetName()));
+      auto name = GetUnwrappedName(schema);
+      m_ui->m_newRuleComboBox->addItem(name);
     }
     m_ui->m_newRuleComboBox->lineEdit()->setText(tr("Assign New Rule"));
   }
@@ -107,7 +106,7 @@ void ComplianceWidget::OnEntryRemoved(const ComplianceRuleEntry& entry) {
   while(i < layout->count() - 1) {
     auto entryWidget = static_cast<ComplianceRuleEntryWidget*>(
       layout->itemAt(i)->widget());
-    if(entryWidget->GetEntry().GetId() == entry.GetId()) {
+    if(entryWidget->GetEntry().get_id() == entry.get_id()) {
       layout->takeAt(i);
       delete entryWidget;
     } else {
@@ -122,7 +121,7 @@ void ComplianceWidget::OnDeleteRules() {
     auto entryWidget = static_cast<ComplianceRuleEntryWidget*>(
       layout->itemAt(i)->widget());
     if(entryWidget->IsSelected()) {
-      m_model->Remove(entryWidget->GetEntry().GetId());
+      m_model->Remove(entryWidget->GetEntry().get_id());
     }
   }
 }

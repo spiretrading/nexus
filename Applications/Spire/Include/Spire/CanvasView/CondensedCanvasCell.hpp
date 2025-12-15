@@ -4,6 +4,7 @@
 #include <QWidget>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 class QLineEdit;

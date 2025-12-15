@@ -9,6 +9,6 @@ SelectConnection Spire::Styles::select(const Any& selector, const Stylist& base,
   return {};
 }
 
-std::size_t std::hash<Any>::operator ()(const Any& selector) const {
-  return 1;
+std::size_t std::hash<Any>::operator ()(const Any& selector) const noexcept {
+  return 0x9e3779b97f4a7c15;
 }

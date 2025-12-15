@@ -2,24 +2,24 @@
 #define NEXUS_BACKTESTER_ENVIRONMENT_HPP
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/RegistryServiceTests/RegistryServiceTestEnvironment.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
-#include <Beam/Threading/TriggerTimer.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
-#include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
-#include "Nexus/Backtester/BacktesterHistoricalDataStore.hpp"
+#include "Nexus/Backtester/BacktesterMarketDataClient.hpp"
 #include "Nexus/Backtester/BacktesterMarketDataService.hpp"
+#include "Nexus/Backtester/BacktesterTimeClient.hpp"
+#include "Nexus/Backtester/CutoffHistoricalDataStore.hpp"
 #include "Nexus/ChartingServiceTests/ChartingServiceTestEnvironment.hpp"
+#include "Nexus/Clients/Clients.hpp"
 #include "Nexus/ComplianceTests/ComplianceTestEnvironment.hpp"
 #include "Nexus/DefinitionsServiceTests/DefinitionsServiceTestEnvironment.hpp"
 #include "Nexus/MarketDataService/ClientHistoricalDataStore.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/RiskServiceTests/RiskServiceTestEnvironment.hpp"
-#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
 #include "Nexus/SimulationMatcher/SimulationOrderExecutionDriver.hpp"
 
 namespace Nexus {
@@ -30,276 +30,249 @@ namespace Nexus {
 
       /**
        * Constructs a BacktesterEnvironment.
-       * @param startTime The backtester's starting time.
-       * @param serviceClients The ServiceClients connected to the historical
-       *        data source.
+       * @param start The backtester's starting time.
+       * @param clients The Clients connected to the historical data source.
        */
-      BacktesterEnvironment(boost::posix_time::ptime startTime,
-        ServiceClientsBox serviceClients);
+      BacktesterEnvironment(boost::posix_time::ptime start, Clients clients);
 
       /**
        * Constructs a BacktesterEnvironment.
-       * @param startTime The backtester's starting time.
-       * @param endTime The backtester's ending time.
-       * @param serviceClients The ServiceClients connected to the historical
-       *        data source.
+       * @param start The backtester's starting time.
+       * @param end The backtester's ending time.
+       * @param clients The Clients connected to the historical data source.
        */
-      BacktesterEnvironment(boost::posix_time::ptime startTime,
-        boost::posix_time::ptime endTime, ServiceClientsBox serviceClients);
+      BacktesterEnvironment(boost::posix_time::ptime start,
+        boost::posix_time::ptime end, Clients clients);
 
       ~BacktesterEnvironment();
 
       /** Returns the BacktesterEventHandler. */
-      const BacktesterEventHandler& GetEventHandler() const;
+      const BacktesterEventHandler& get_event_handler() const;
 
       /** Returns the BacktesterEventHandler. */
-      BacktesterEventHandler& GetEventHandler();
+      BacktesterEventHandler& get_event_handler();
 
       /** Returns the ServiceLocatorTestEnvironment. */
-      Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
-        GetServiceLocatorEnvironment();
+      Beam::Tests::ServiceLocatorTestEnvironment&
+        get_service_locator_environment();
 
       /** Returns the UidServiceTestEnvironment. */
-      Beam::UidService::Tests::UidServiceTestEnvironment& GetUidEnvironment();
-
-      /** Returns the RegistryServiceTestEnvironment. */
-      Beam::RegistryService::Tests::RegistryServiceTestEnvironment&
-        GetRegistryEnvironment();
+      Beam::Tests::UidServiceTestEnvironment& get_uid_environment();
 
       /** Returns the DefinitionsServiceTestEnvironment. */
-      DefinitionsService::Tests::DefinitionsServiceTestEnvironment&
-        GetDefinitionsEnvironment();
+      Tests::DefinitionsServiceTestEnvironment& get_definitions_environment();
 
       /** Returns the AdministrationServiceTestEnvironment. */
-      AdministrationService::Tests::AdministrationServiceTestEnvironment&
-        GetAdministrationEnvironment();
+      Tests::AdministrationServiceTestEnvironment&
+        get_administration_environment();
 
       /** Returns the MarketDataServiceTestEnvironment. */
-      MarketDataService::Tests::MarketDataServiceTestEnvironment&
-        GetMarketDataEnvironment();
+      Tests::MarketDataServiceTestEnvironment& get_market_data_environment();
 
       /** Returns the BacktesterMarketDataService. */
-      BacktesterMarketDataService& GetMarketDataService();
+      BacktesterMarketDataService& get_market_data_service();
 
       /** Returns the BacktesterMarketDataService. */
-      const BacktesterMarketDataService& GetMarketDataService() const;
+      const BacktesterMarketDataService& get_market_data_service() const;
 
       /** Returns the ChartingServiceTestEnvironment. */
-      ChartingService::Tests::ChartingServiceTestEnvironment&
-        GetChartingEnvironment();
+      Tests::ChartingServiceTestEnvironment& get_charting_environment();
 
       /** Returns the ComplianceTestEnvironment. */
-      Compliance::Tests::ComplianceTestEnvironment& GetComplianceEnvironment();
+      Tests::ComplianceTestEnvironment& get_compliance_environment();
 
       /** Returns the OrderExecutionServiceTestEnvironment. */
-      OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment&
-        GetOrderExecutionEnvironment();
+      Tests::OrderExecutionServiceTestEnvironment&
+        get_order_execution_environment();
 
       /** Returns the RiskServiceTestEnvironment. */
-      RiskService::Tests::RiskServiceTestEnvironment& GetRiskEnvironment();
+      Tests::RiskServiceTestEnvironment& get_risk_environment();
 
-      void Close();
+      void close();
 
     private:
-      ServiceClientsBox m_serviceClients;
-      BacktesterEventHandler m_eventHandler;
-      Beam::TimeService::TimeClientBox m_timeClient;
-      Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment
-        m_serviceLocatorEnvironment;
-      Beam::ServiceLocator::ServiceLocatorClientBox m_serviceLocatorClient;
-      Beam::UidService::Tests::UidServiceTestEnvironment m_uidEnvironment;
-      Beam::UidService::UidClientBox m_uidClient;
-      Beam::RegistryService::Tests::RegistryServiceTestEnvironment
-        m_registryEnvironment;
-      DefinitionsService::Tests::DefinitionsServiceTestEnvironment
-        m_definitionsEnvironment;
-      AdministrationService::Tests::AdministrationServiceTestEnvironment
-        m_administrationEnvironment;
-      AdministrationService::AdministrationClientBox m_administrationClient;
-      MarketDataService::Tests::MarketDataServiceTestEnvironment
-        m_marketDataEnvironment;
-      BacktesterMarketDataService m_marketDataService;
-      MarketDataService::MarketDataClientBox m_marketDataClient;
-      ChartingService::Tests::ChartingServiceTestEnvironment
-        m_chartingEnvironment;
-      Compliance::Tests::ComplianceTestEnvironment m_complianceEnvironment;
-      boost::optional<
-        OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment>
-        m_orderExecutionEnvironment;
-      boost::optional<OrderExecutionService::OrderExecutionClientBox>
-        m_orderExecutionClient;
-      boost::optional<RiskService::Tests::RiskServiceTestEnvironment>
-        m_riskEnvironment;
-      Beam::IO::OpenState m_openState;
+      Clients m_clients;
+      BacktesterEventHandler m_event_handler;
+      Beam::TimeClient m_time_client;
+      Beam::Tests::ServiceLocatorTestEnvironment m_service_locator_environment;
+      Beam::ServiceLocatorClient m_service_locator_client;
+      Beam::Tests::UidServiceTestEnvironment m_uid_environment;
+      Beam::UidClient m_uid_client;
+      Tests::DefinitionsServiceTestEnvironment m_definitions_environment;
+      Tests::AdministrationServiceTestEnvironment m_administration_environment;
+      AdministrationClient m_administration_client;
+      Tests::MarketDataServiceTestEnvironment m_market_data_environment;
+      BacktesterMarketDataService m_market_data_service;
+      MarketDataClient m_market_data_client;
+      Tests::ChartingServiceTestEnvironment m_charting_environment;
+      Tests::ComplianceTestEnvironment m_compliance_environment;
+      boost::optional<Tests::OrderExecutionServiceTestEnvironment>
+        m_order_execution_environment;
+      boost::optional<OrderExecutionClient> m_order_execution_client;
+      boost::optional<Tests::RiskServiceTestEnvironment> m_risk_environment;
+      Beam::OpenState m_open_state;
 
       BacktesterEnvironment(const BacktesterEnvironment&) = delete;
       BacktesterEnvironment& operator =(const BacktesterEnvironment&) = delete;
   };
 
   inline BacktesterEnvironment::BacktesterEnvironment(
-    boost::posix_time::ptime startTime, ServiceClientsBox serviceClients)
-    : BacktesterEnvironment(startTime, boost::posix_time::pos_infin,
-        std::move(serviceClients)) {}
+    boost::posix_time::ptime start, Clients clients)
+    : BacktesterEnvironment(
+        start, boost::posix_time::pos_infin, std::move(clients)) {}
 
   inline BacktesterEnvironment::BacktesterEnvironment(
-      boost::posix_time::ptime startTime, boost::posix_time::ptime endTime,
-      ServiceClientsBox serviceClients)
-      : m_serviceClients(std::move(serviceClients)),
-        m_eventHandler(startTime, endTime),
-        m_timeClient(std::in_place_type<BacktesterTimeClient>,
-          Beam::Ref(m_eventHandler)),
-        m_serviceLocatorClient(m_serviceLocatorEnvironment.MakeClient()),
-        m_uidClient(m_uidEnvironment.MakeClient()),
-        m_registryEnvironment(m_serviceLocatorClient),
-        m_definitionsEnvironment(m_serviceLocatorClient),
-        m_administrationEnvironment(m_serviceLocatorClient),
-        m_administrationClient(m_administrationEnvironment.MakeClient(
-          m_serviceLocatorClient)),
-        m_marketDataEnvironment(m_serviceLocatorClient, m_administrationClient,
-          MarketDataService::HistoricalDataStoreBox(
-            std::in_place_type<BacktesterHistoricalDataStore<
-              MarketDataService::ClientHistoricalDataStore<
-                MarketDataService::MarketDataClientBox>>>,
-            m_serviceClients.GetMarketDataClient(),
-            m_eventHandler.GetStartTime())),
-        m_marketDataService(Beam::Ref(m_eventHandler),
-          Beam::Ref(m_marketDataEnvironment),
-          m_serviceClients.GetMarketDataClient()),
-        m_marketDataClient(std::make_unique<BacktesterMarketDataClient>(
-          Beam::Ref(m_marketDataService),
-          m_marketDataEnvironment.MakeRegistryClient(m_serviceLocatorClient))),
-        m_chartingEnvironment(m_serviceLocatorClient, m_marketDataClient),
-        m_complianceEnvironment(m_serviceLocatorClient, m_administrationClient,
-          m_timeClient) {
+      boost::posix_time::ptime start, boost::posix_time::ptime end,
+      Clients clients)
+      : m_clients(std::move(clients)),
+        m_event_handler(start, end),
+        m_time_client(
+          std::in_place_type<BacktesterTimeClient>, Beam::Ref(m_event_handler)),
+        m_service_locator_client(m_service_locator_environment.make_client()),
+        m_uid_client(m_uid_environment.make_client()),
+        m_definitions_environment(m_service_locator_client),
+        m_administration_environment(m_service_locator_client),
+        m_administration_client(m_administration_environment.make_client(
+          Beam::Ref(m_service_locator_client))),
+        m_market_data_environment(
+          m_service_locator_client, m_administration_client,
+          HistoricalDataStore(std::in_place_type<CutoffHistoricalDataStore<
+            ClientHistoricalDataStore<MarketDataClient>>>,
+            m_clients.get_market_data_client(),
+            m_event_handler.get_start_time())),
+        m_market_data_service(
+          Beam::Ref(m_event_handler), Beam::Ref(m_market_data_environment),
+          m_clients.get_market_data_client()),
+        m_market_data_client(std::in_place_type<BacktesterMarketDataClient>,
+          Beam::Ref(m_market_data_service),
+          m_market_data_environment.make_registry_client(
+            Beam::Ref(m_service_locator_client))),
+        m_charting_environment(m_service_locator_client, m_market_data_client),
+        m_compliance_environment(
+          m_service_locator_client, m_administration_client, m_time_client) {
     try {
-      auto definitionsClient = m_definitionsEnvironment.MakeClient(
-        m_serviceLocatorClient);
-      m_orderExecutionEnvironment.emplace(
-        definitionsClient.LoadMarketDatabase(),
-        definitionsClient.LoadDestinationDatabase(), m_serviceLocatorClient,
-        m_uidClient, m_administrationClient, m_timeClient,
-        OrderExecutionService::MakeVirtualOrderExecutionDriver(
-          std::make_unique<
-            OrderExecutionService::SimulationOrderExecutionDriver<
-              MarketDataService::MarketDataClientBox,
-              Beam::TimeService::TimeClientBox>>(
-                m_marketDataClient, m_timeClient)));
-      m_orderExecutionClient.emplace(m_orderExecutionEnvironment->MakeClient(
-        m_serviceLocatorClient));
-      auto transitionTimerFactory = std::bind_front(
-        boost::factory<std::unique_ptr<Beam::Threading::TimerBox>>(),
-        std::in_place_type<Beam::Threading::TriggerTimer>);
-      m_riskEnvironment.emplace(m_serviceLocatorClient, m_administrationClient,
-        m_marketDataClient, *m_orderExecutionClient, transitionTimerFactory,
-        m_timeClient, definitionsClient.LoadExchangeRates(),
-        definitionsClient.LoadMarketDatabase(),
-        definitionsClient.LoadDestinationDatabase());
-      auto rootAccount = m_serviceLocatorClient.GetAccount();
-      m_serviceLocatorClient.Associate(rootAccount,
-        m_administrationClient.LoadAdministratorsRootEntry());
-      m_serviceLocatorClient.Associate(rootAccount,
-        m_administrationClient.LoadServicesRootEntry());
+      auto definitions_client = m_definitions_environment.make_client(
+        Beam::Ref(m_service_locator_client));
+      m_order_execution_environment.emplace(
+        definitions_client.load_venue_database(),
+        definitions_client.load_destination_database(),
+        m_service_locator_client, m_uid_client, m_administration_client,
+        m_time_client, OrderExecutionDriver(
+          std::in_place_type<SimulationOrderExecutionDriver<
+            MarketDataClient, Beam::TimeClient>>,
+          m_market_data_client, m_time_client));
+      m_order_execution_client.emplace(
+        m_order_execution_environment->make_client(
+          Beam::Ref(m_service_locator_client)));
+      auto transition_timer_factory =
+        std::bind_front(boost::factory<std::unique_ptr<Beam::Timer>>(),
+          std::in_place_type<Beam::TriggerTimer>);
+      m_risk_environment.emplace(m_service_locator_client,
+        m_administration_client, m_market_data_client,
+        *m_order_execution_client, transition_timer_factory, m_time_client,
+        ExchangeRateTable(definitions_client.load_exchange_rates()),
+        definitions_client.load_venue_database(),
+        definitions_client.load_destination_database());
+      auto root_account = m_service_locator_client.get_account();
+      m_service_locator_client.associate(root_account,
+        m_administration_client.load_administrators_root_entry());
+      m_service_locator_client.associate(root_account,
+        m_administration_client.load_services_root_entry());
     } catch(const std::exception&) {
-      Close();
-      BOOST_RETHROW;
+      close();
+      throw;
     }
   }
 
   inline BacktesterEnvironment::~BacktesterEnvironment() {
-    Close();
+    close();
   }
 
   inline const BacktesterEventHandler&
-      BacktesterEnvironment::GetEventHandler() const {
-    return m_eventHandler;
+      BacktesterEnvironment::get_event_handler() const {
+    return m_event_handler;
   }
 
-  inline BacktesterEventHandler& BacktesterEnvironment::GetEventHandler() {
-    return m_eventHandler;
+  inline BacktesterEventHandler& BacktesterEnvironment::get_event_handler() {
+    return m_event_handler;
   }
 
-  inline Beam::ServiceLocator::Tests::ServiceLocatorTestEnvironment&
-      BacktesterEnvironment::GetServiceLocatorEnvironment() {
-    return m_serviceLocatorEnvironment;
+  inline Beam::Tests::ServiceLocatorTestEnvironment&
+      BacktesterEnvironment::get_service_locator_environment() {
+    return m_service_locator_environment;
   }
 
-  inline Beam::UidService::Tests::UidServiceTestEnvironment&
-      BacktesterEnvironment::GetUidEnvironment() {
-    return m_uidEnvironment;
+  inline Beam::Tests::UidServiceTestEnvironment&
+      BacktesterEnvironment::get_uid_environment() {
+    return m_uid_environment;
   }
 
-  inline Beam::RegistryService::Tests::RegistryServiceTestEnvironment&
-      BacktesterEnvironment::GetRegistryEnvironment() {
-    return m_registryEnvironment;
+  inline Tests::DefinitionsServiceTestEnvironment&
+      BacktesterEnvironment::get_definitions_environment() {
+    return m_definitions_environment;
   }
 
-  inline DefinitionsService::Tests::DefinitionsServiceTestEnvironment&
-      BacktesterEnvironment::GetDefinitionsEnvironment() {
-    return m_definitionsEnvironment;
+  inline Tests::AdministrationServiceTestEnvironment&
+      BacktesterEnvironment::get_administration_environment() {
+    return m_administration_environment;
   }
 
-  inline AdministrationService::Tests::AdministrationServiceTestEnvironment&
-      BacktesterEnvironment::GetAdministrationEnvironment() {
-    return m_administrationEnvironment;
-  }
-
-  inline MarketDataService::Tests::MarketDataServiceTestEnvironment&
-      BacktesterEnvironment::GetMarketDataEnvironment() {
-    return m_marketDataEnvironment;
+  inline Tests::MarketDataServiceTestEnvironment&
+      BacktesterEnvironment::get_market_data_environment() {
+    return m_market_data_environment;
   }
 
   inline BacktesterMarketDataService&
-      BacktesterEnvironment::GetMarketDataService() {
-    return m_marketDataService;
+      BacktesterEnvironment::get_market_data_service() {
+    return m_market_data_service;
   }
 
   inline const BacktesterMarketDataService&
-      BacktesterEnvironment::GetMarketDataService() const {
-    return m_marketDataService;
+      BacktesterEnvironment::get_market_data_service() const {
+    return m_market_data_service;
   }
 
-  inline ChartingService::Tests::ChartingServiceTestEnvironment&
-      BacktesterEnvironment::GetChartingEnvironment() {
-    return m_chartingEnvironment;
+  inline Tests::ChartingServiceTestEnvironment&
+      BacktesterEnvironment::get_charting_environment() {
+    return m_charting_environment;
   }
 
-  inline Compliance::Tests::ComplianceTestEnvironment&
-      BacktesterEnvironment::GetComplianceEnvironment() {
-    return m_complianceEnvironment;
+  inline Tests::ComplianceTestEnvironment&
+      BacktesterEnvironment::get_compliance_environment() {
+    return m_compliance_environment;
   }
 
-  inline OrderExecutionService::Tests::OrderExecutionServiceTestEnvironment&
-      BacktesterEnvironment::GetOrderExecutionEnvironment() {
-    return *m_orderExecutionEnvironment;
+  inline Tests::OrderExecutionServiceTestEnvironment&
+      BacktesterEnvironment::get_order_execution_environment() {
+    return *m_order_execution_environment;
   }
 
-  inline RiskService::Tests::RiskServiceTestEnvironment&
-      BacktesterEnvironment::GetRiskEnvironment() {
-    return *m_riskEnvironment;
+  inline Tests::RiskServiceTestEnvironment&
+      BacktesterEnvironment::get_risk_environment() {
+    return *m_risk_environment;
   }
 
-  inline void BacktesterEnvironment::Close() {
-    if(m_openState.SetClosing()) {
+  inline void BacktesterEnvironment::close() {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_riskEnvironment->Close();
-    m_orderExecutionClient->Close();
-    m_orderExecutionEnvironment->Close();
-    m_complianceEnvironment.Close();
-    m_chartingEnvironment.Close();
-    m_marketDataClient.Close();
-    m_marketDataEnvironment.Close();
-    m_administrationClient.Close();
-    m_administrationEnvironment.Close();
-    m_definitionsEnvironment.Close();
-    m_registryEnvironment.Close();
-    m_uidClient.Close();
-    m_uidEnvironment.Close();
-    m_serviceLocatorClient.Close();
-    m_serviceLocatorEnvironment.Close();
-    m_timeClient.Close();
-    m_eventHandler.Close();
-    m_openState.Close();
+    m_risk_environment->close();
+    m_order_execution_client->close();
+    m_order_execution_environment->close();
+    m_compliance_environment.close();
+    m_charting_environment.close();
+    m_market_data_client.close();
+    m_market_data_environment.close();
+    m_administration_client.close();
+    m_administration_environment.close();
+    m_definitions_environment.close();
+    m_uid_client.close();
+    m_uid_environment.close();
+    m_service_locator_client.close();
+    m_service_locator_environment.close();
+    m_time_client.close();
+    m_event_handler.close();
+    m_open_state.close();
   }
 }
 

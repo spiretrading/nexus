@@ -1,4 +1,5 @@
 #include "Spire/SignIn/SignInWindow.hpp"
+#include <QIcon>
 #include <QKeyEvent>
 #include "Spire/SignIn/ChromaHashWidget.hpp"
 #include "Spire/SignIn/TrackMenuButton.hpp"
@@ -13,8 +14,14 @@
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
+
+#ifdef ERROR
+  #undef ERROR
+#endif
 
 using namespace boost;
+using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -113,8 +120,7 @@ SignInWindow::SignInWindow(std::string version, std::vector<Track> tracks,
     std::shared_ptr<TrackModel> track, std::vector<std::string> servers,
     std::shared_ptr<ProgressModel> download_progress,
     std::shared_ptr<ProgressModel> installation_progress,
-    std::shared_ptr<ValueModel<boost::posix_time::time_duration>> time_left,
-    QWidget* parent)
+    std::shared_ptr<ValueModel<time_duration>> time_left, QWidget* parent)
     : QWidget(parent, Qt::FramelessWindowHint),
       m_version(std::move(version)),
       m_servers(std::move(servers)),
@@ -135,7 +141,7 @@ SignInWindow::SignInWindow(std::string version, std::vector<Track> tracks,
       border: 1px solid #321471;
     })");
   auto close_button =
-    make_icon_button(imageFromSvg(":/Icons/close.svg", BUTTON_SIZE()));
+    make_icon_button(image_from_svg(":/Icons/close.svg", BUTTON_SIZE()));
   set_style(*close_button, CLOSE_BUTTON_STYLE());
   close_button->setFixedSize(BUTTON_SIZE());
   close_button->setFocusPolicy(Qt::NoFocus);

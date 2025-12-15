@@ -7,10 +7,8 @@ namespace Spire {
   /* Implements a none TimeAndSalesModel. */
   class NoneTimeAndSalesModel : public TimeAndSalesModel {
     public:
- 
       QtPromise<std::vector<Entry>> query_until(
-        Beam::Queries::Sequence sequence, int max_count) override;
-
+        Beam::Sequence sequence, int max_count) override;
       boost::signals2::connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const override;
   };

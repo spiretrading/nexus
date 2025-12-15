@@ -38,16 +38,16 @@ namespace LegacyUI {
         const std::function<void (const Nexus::Security&)>& continuation);
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::deque<Nexus::Security> m_securities;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void SecurityViewStack::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("securities", m_securities);
+  template<Beam::IsShuttle S>
+  void SecurityViewStack::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("securities", m_securities);
   }
 }
 }

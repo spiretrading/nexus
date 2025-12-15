@@ -1,23 +1,22 @@
 #ifndef NEXUS_ORDER_EXECUTION_DATA_STORE_EXCEPTION_HPP
 #define NEXUS_ORDER_EXECUTION_DATA_STORE_EXCEPTION_HPP
 #include <Beam/IO/IOException.hpp>
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /**
    * Exception to indicate an operation on an OrderExecutionDataStore failed.
    */
-  class OrderExecutionDataStoreException : public Beam::IO::IOException {
+  class OrderExecutionDataStoreException : public Beam::IOException {
     public:
-      using Beam::IO::IOException::IOException;
+      using Beam::IOException::IOException;
 
       /** Constructs an OrderExecutionDataStoreException. */
       OrderExecutionDataStoreException();
   };
 
   inline OrderExecutionDataStoreException::OrderExecutionDataStoreException()
-    : Beam::IO::IOException("Operation failed.") {}
+    : OrderExecutionDataStoreException("Operation failed.") {}
 }
 
 #endif

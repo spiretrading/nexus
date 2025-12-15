@@ -4,36 +4,33 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
 using namespace Spire;
 using namespace Spire::UI;
 
 TimeAndSalesModel::TimeAndSalesModel(Ref<UserProfile> userProfile,
     const TimeAndSalesProperties& properties, const Security& security)
-    : m_userProfile(userProfile.Get()),
+    : m_userProfile(userProfile.get()),
       m_properties(properties) {
   if(security == Security()) {
     return;
   }
-  auto marketStartOfDay = MarketDateToUtc(security.GetMarket(),
-    m_userProfile->GetServiceClients().GetTimeClient().GetTime(),
-    m_userProfile->GetMarketDatabase(), m_userProfile->GetTimeZoneDatabase());
+  auto marketStartOfDay = venue_date_to_utc(security.get_venue(),
+    m_userProfile->GetClients().get_time_client().get_time(),
+    m_userProfile->GetVenueDatabase(), m_userProfile->GetTimeZoneDatabase());
   auto query = SecurityMarketDataQuery();
-  query.SetIndex(security);
-  query.SetRange(marketStartOfDay, Beam::Queries::Sequence::Last());
-  query.SetSnapshotLimit(SnapshotLimit::Type::TAIL, 50);
-  query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-  m_userProfile->GetServiceClients().GetMarketDataClient().QueryTimeAndSales(
+  query.set_index(security);
+  query.set_range(marketStartOfDay, Beam::Sequence::LAST);
+  query.set_snapshot_limit(SnapshotLimit::Type::TAIL, 50);
+  query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
+  m_userProfile->GetClients().get_market_data_client().query(
     query, m_eventHandler.get_slot<TimeAndSale>(
       std::bind_front(&TimeAndSalesModel::OnTimeAndSale, this)));
-  auto bboQuery = MakeCurrentQuery(security);
-  bboQuery.SetInterruptionPolicy(InterruptionPolicy::IGNORE_CONTINUE);
-  m_userProfile->GetServiceClients().GetMarketDataClient().QueryBboQuotes(
+  auto bboQuery = make_current_query(security);
+  bboQuery.set_interruption_policy(InterruptionPolicy::IGNORE_CONTINUE);
+  m_userProfile->GetClients().get_market_data_client().query(
     bboQuery, m_eventHandler.get_slot<BboQuote>(
       std::bind_front(&TimeAndSalesModel::OnBbo, this)));
 }
@@ -81,7 +78,7 @@ QVariant TimeAndSalesModel::data(const QModelIndex& index, int role) const {
     } else if(index.column() == SIZE_COLUMN) {
       return QVariant::fromValue(timeAndSale.m_size);
     } else if(index.column() == MARKET_COLUMN) {
-      return QString::fromStdString(timeAndSale.m_marketCenter);
+      return QString::fromStdString(timeAndSale.m_market_center);
     } else if(index.column() == CONDITION_COLUMN) {
       return QString::fromStdString(timeAndSale.m_condition.m_code);
     }

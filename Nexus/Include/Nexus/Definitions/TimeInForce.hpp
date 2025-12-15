@@ -5,11 +5,9 @@
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
-#include <Beam/Utilities/HashPtime.hpp>
+#include <Beam/Utilities/HashPosixTimeTypes.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/functional/hash.hpp>
-#include <boost/lexical_cast.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 
 namespace Nexus {
 namespace Details {
@@ -54,100 +52,86 @@ namespace Details {
        * Constructs a TimeInForce.
        * @param type The TimeInForce's Type.
        */
-      TimeInForce(Type type);
+      TimeInForce(Type type) noexcept;
 
       /**
        * Constructs a TimeInForce.
        * @param type The TimeInForce's Type.
        */
-      TimeInForce(Type::Type type);
+      TimeInForce(Type::Type type) noexcept;
 
       /**
        * Constructs a TimeInForce.
        * @param type The TimeInForce's Type.
        * @param expiry Specifies when the Order expires.
        */
-      TimeInForce(Type type, boost::posix_time::ptime expiry);
+      TimeInForce(Type type, boost::posix_time::ptime expiry) noexcept;
 
       /** Returns the Type. */
-      Type GetType() const;
+      Type get_type() const;
 
       /** Returns the expiry. */
-      boost::posix_time::ptime GetExpiry() const;
+      boost::posix_time::ptime get_expiry() const;
 
-      bool operator ==(const TimeInForce& timeInForce) const = default;
+      bool operator ==(const TimeInForce&) const = default;
 
     private:
-      friend struct Beam::Serialization::Shuttle<TimeInForce>;
+      friend struct Beam::Shuttle<TimeInForce>;
       Type m_type;
       boost::posix_time::ptime m_expiry;
   };
 
-  inline std::ostream& operator <<(
-      std::ostream& out, TimeInForce::Type value) {
-    if(value == Nexus::TimeInForce::Type::DAY) {
-      return out << "DAY";
-    } else if(value == Nexus::TimeInForce::Type::GTC) {
-      return out << "GTC";
-    } else if(value == Nexus::TimeInForce::Type::OPG) {
-      return out << "OPG";
-    } else if(value == Nexus::TimeInForce::Type::MOC) {
-      return out << "MOC";
-    } else if(value == Nexus::TimeInForce::Type::IOC) {
-      return out << "IOC";
-    } else if(value == Nexus::TimeInForce::Type::FOK) {
-      return out << "FOK";
-    } else if(value == Nexus::TimeInForce::Type::GTX) {
-      return out << "GTX";
-    } else if(value == Nexus::TimeInForce::Type::GTD) {
-      return out << "GTD";
-    }
-    return out << "NONE";
+  /**
+   * Makes a TimeInForce whose type is GTD.
+   * @param expiry Specifies when the Order expires.
+   */
+  inline TimeInForce make_gtd(boost::posix_time::ptime expiry) {
+    return TimeInForce(TimeInForce::Type::GTD, expiry);
   }
 
   inline std::ostream& operator <<(
       std::ostream& out, const TimeInForce& value) {
-    if(value.GetExpiry() == boost::posix_time::not_a_date_time) {
-      return out << value.GetType();
-    } else {
-      return out << "(" << value.GetType() << " " << value.GetExpiry() << ")";
+    if(value.get_expiry() == boost::posix_time::not_a_date_time) {
+      return out << value.get_type();
     }
+    return out << '(' << value.get_type() << ' ' << value.get_expiry() << ')';
   }
 
-  inline std::size_t hash_value(const TimeInForce& timeInForce) noexcept {
+  inline std::size_t hash_value(const TimeInForce& value) noexcept {
     auto seed = std::size_t(0);
-    boost::hash_combine(seed, timeInForce.GetType());
-    boost::hash_combine(seed, timeInForce.GetExpiry());
+    boost::hash_combine(seed, value.get_type());
+    boost::hash_combine(seed, value.get_expiry());
     return seed;
   }
 
-  inline TimeInForce::TimeInForce(Type type)
+  inline TimeInForce::TimeInForce(Type type) noexcept
     : m_type(type) {}
 
-  inline TimeInForce::TimeInForce(Type::Type type)
+  inline TimeInForce::TimeInForce(Type::Type type) noexcept
     : TimeInForce(Type(type)) {}
 
-  inline TimeInForce::TimeInForce(Type type, boost::posix_time::ptime expiry)
+  inline TimeInForce::TimeInForce(
+    Type type, boost::posix_time::ptime expiry) noexcept
     : m_type(type),
       m_expiry(expiry) {}
 
-  inline TimeInForce::Type TimeInForce::GetType() const {
+  inline TimeInForce::Type TimeInForce::get_type() const {
     return m_type;
   }
 
-  inline boost::posix_time::ptime TimeInForce::GetExpiry() const {
+  inline boost::posix_time::ptime TimeInForce::get_expiry() const {
     return m_expiry;
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::TimeInForce> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::TimeInForce& value,
-        unsigned int version) {
-      shuttle.Shuttle("type", value.m_type);
-      shuttle.Shuttle("expiry", value.m_expiry);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::TimeInForce& value, unsigned int version) const {
+      shuttle.shuttle("type", value.m_type);
+      shuttle.shuttle("expiry", value.m_expiry);
     }
   };
 }

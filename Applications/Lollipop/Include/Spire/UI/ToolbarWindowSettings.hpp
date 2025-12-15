@@ -1,8 +1,6 @@
 #ifndef SPIRE_TOOLBARWINDOWSETTINGS_HPP
 #define SPIRE_TOOLBARWINDOWSETTINGS_HPP
-#include <Beam/Serialization/Serialization.hpp>
 #include <QPoint>
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 
@@ -34,16 +32,16 @@ namespace UI {
         Beam::Out<QWidget> widget) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       QPoint m_position;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void ToolbarWindowSettings::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("position", m_position);
+  template<Beam::IsShuttle S>
+  void ToolbarWindowSettings::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("position", m_position);
   }
 }
 }

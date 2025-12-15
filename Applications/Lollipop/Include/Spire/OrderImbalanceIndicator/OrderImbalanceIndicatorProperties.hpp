@@ -6,12 +6,12 @@
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/Serialization/ShuttleOptional.hpp>
 #include <Beam/Serialization/ShuttleUnorderedSet.hpp>
-#include <Beam/TimeService/TimeService.hpp>
+#include <Beam/TimeService/TimeClient.hpp>
 #include <boost/optional/optional.hpp>
-#include "Nexus/Definitions/Market.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/InputWidgets/TimeRangeInputWidget.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 
@@ -41,37 +41,35 @@ namespace Spire {
     //! The query's end time.
     TimeRangeParameter m_endTime;
 
-    //! The set of filtered markets.
-    std::unordered_set<Nexus::MarketCode> m_filteredMarkets;
+    //! The set of filtered venues.
+    std::unordered_set<Nexus::Venue> m_filteredVenues;
 
-    //! Returns <code>true</code> iff a market is filtered.
-    bool IsDisplayed(Nexus::MarketCode market) const;
+    //! Returns <code>true</code> iff a venue is filtered.
+    bool IsDisplayed(Nexus::Venue venue) const;
 
-    //! Returns <code>true</code> iff a market is filtered.
-    bool IsFiltered(Nexus::MarketCode market) const;
+    //! Returns <code>true</code> iff a venue is filtered.
+    bool IsFiltered(Nexus::Venue venue) const;
 
     //! Returns the time range to query.
     /*!
       \param timeClient The time client used to compute times from offsets.
     */
-    Beam::Queries::Range GetTimeRange(
-      Beam::TimeService::TimeClientBox& timeClient) const;
+    Beam::Range GetTimeRange(Beam::TimeClient& timeClient) const;
   };
 }
 
 namespace Beam {
-namespace Serialization {
   template<>
   struct Shuttle<Spire::OrderImbalanceIndicatorProperties> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Spire::OrderImbalanceIndicatorProperties& value, unsigned int version) {
-      shuttle.Shuttle("start_time", value.m_startTime);
-      shuttle.Shuttle("end_time", value.m_endTime);
-      shuttle.Shuttle("filtered_markets", value.m_filteredMarkets);
+    template<IsShuttle S>
+    void operator ()(S& shuttle,
+        Spire::OrderImbalanceIndicatorProperties& value,
+        unsigned int version) const {
+      shuttle.shuttle("start_time", value.m_startTime);
+      shuttle.shuttle("end_time", value.m_endTime);
+      shuttle.shuttle("filtered_venues", value.m_filteredVenues);
     }
   };
-}
 }
 
 #endif

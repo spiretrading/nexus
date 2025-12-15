@@ -35,7 +35,7 @@ connection IsTopMpidModel::connect_update_signal(
 
 void IsTopMpidModel::initialize_top_mpid() {
   for(auto i = 0; i != m_top_mpid_prices->get_size(); ++i) {
-    if(m_top_mpid_prices->get(i).m_market == m_market) {
+    if(m_top_mpid_prices->get(i).m_venue == m_venue) {
       m_top_mpid = make_list_value_model(m_top_mpid_prices, i);
       on_top_mpid(m_top_mpid->get());
       m_top_mpid->connect_update_signal(
@@ -48,10 +48,10 @@ void IsTopMpidModel::initialize_top_mpid() {
 void IsTopMpidModel::on_mpid(const BookEntry& mpid) {
   m_top_mpid = nullptr;
   if(auto quote = boost::get<BookQuote>(&mpid)) {
-    m_market = quote->m_market;
+    m_venue = quote->m_venue;
     initialize_top_mpid();
   } else if(m_current.get()) {
-    m_market = MarketCode();
+    m_venue = Venue();
     m_current.set(false);
   }
 }
@@ -83,7 +83,7 @@ void IsTopMpidModel::on_operation(
     const ListModel<TopMpidPrice>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<TopMpidPrice>::AddOperation& operation) {
-      if(m_top_mpid_prices->get(operation.m_index).m_market == m_market) {
+      if(m_top_mpid_prices->get(operation.m_index).m_venue == m_venue) {
         initialize_top_mpid();
         m_top_mpid_prices_connection.disconnect();
       }

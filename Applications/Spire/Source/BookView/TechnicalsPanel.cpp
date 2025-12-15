@@ -8,6 +8,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace Nexus;
@@ -35,7 +36,7 @@ namespace {
 
   template<typename T, typename U>
   auto make_technicals_value_field(
-      std::shared_ptr<SecurityTechnicalsValueModel> technicals, U field) {
+      std::shared_ptr<SecurityTechnicalsModel> technicals, U field) {
     auto label = make_label(
       make_to_text_model(make_field_value_model(technicals, field),
         [] (const auto& value) {
@@ -92,7 +93,7 @@ namespace {
 }
 
 TechnicalsPanel::TechnicalsPanel(
-    std::shared_ptr<SecurityTechnicalsValueModel> technicals,
+    std::shared_ptr<SecurityTechnicalsModel> technicals,
     std::shared_ptr<QuantityModel> default_bid_quantity,
     std::shared_ptr<QuantityModel> default_ask_quantity, QWidget* parent)
     : QWidget(parent),
@@ -158,7 +159,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   });
 }
 
-const std::shared_ptr<SecurityTechnicalsValueModel>&
+const std::shared_ptr<SecurityTechnicalsModel>&
     TechnicalsPanel::get_technicals() const {
   return m_technicals;
 }

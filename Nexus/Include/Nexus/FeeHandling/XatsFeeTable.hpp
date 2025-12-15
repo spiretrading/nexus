@@ -2,9 +2,7 @@
 #define NEXUS_XATS_FEE_TABLE_HPP
 #include <array>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include "Nexus/Definitions/Money.hpp"
-#include "Nexus/FeeHandling/FeeHandling.hpp"
-#include "Nexus/FeeHandling/LiquidityFlag.hpp"
+#include "Nexus/FeeHandling/ParseFeeTable.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 
 namespace Nexus {
@@ -67,19 +65,20 @@ namespace Nexus {
 
     /** The general fee table. */
     std::array<std::array<Money, TYPE_COUNT>, PRICE_CLASS_COUNT>
-      m_generalFeeTable;
+      m_general_fee_table;
 
     /** The ETF fee table. */
-    std::array<std::array<Money, TYPE_COUNT>, PRICE_CLASS_COUNT> m_etfFeeTable;
+    std::array<std::array<Money, TYPE_COUNT>, PRICE_CLASS_COUNT>
+      m_etf_fee_table;
 
     /**
      * The max fee charged on IntraSpread Dark executions that are below a
      * dollar.
      */
-    Money m_intraspreadDarkToDarkSubdollarMaxFee;
+    Money m_intraspread_dark_to_dark_subdollar_max_fee;
 
     /** The max fee charged on IntraSpread Dark executions. */
-    Money m_intraspreadDarkToDarkMaxFee;
+    Money m_intraspread_dark_to_dark_max_fee;
   };
 
   /**
@@ -87,94 +86,94 @@ namespace Nexus {
    * @param config The configuration to parse the XatsFeeTable from.
    * @return The XatsFeeTable represented by the <i>config</i>.
    */
-  inline XatsFeeTable ParseXatsFeeTable(const YAML::Node& config) {
-    auto feeTable = XatsFeeTable();
-    ParseFeeTable(config, "general_table",
-      Beam::Store(feeTable.m_generalFeeTable));
-    ParseFeeTable(config, "etf_table", Beam::Store(feeTable.m_etfFeeTable));
-    feeTable.m_intraspreadDarkToDarkSubdollarMaxFee =
-      Beam::Extract<Money>(config, "intraspread_dark_to_dark_subdollar_max");
-    feeTable.m_intraspreadDarkToDarkMaxFee = Beam::Extract<Money>(config,
-      "intraspread_dark_to_dark_max");
-    return feeTable;
+  inline XatsFeeTable parse_xats_fee_table(const YAML::Node& config) {
+    auto table = XatsFeeTable();
+    parse_fee_table(
+      config, "general_table", Beam::out(table.m_general_fee_table));
+    parse_fee_table(config, "etf_table", Beam::out(table.m_etf_fee_table));
+    table.m_intraspread_dark_to_dark_subdollar_max_fee =
+      Beam::extract<Money>(config, "intraspread_dark_to_dark_subdollar_max");
+    table.m_intraspread_dark_to_dark_max_fee =
+      Beam::extract<Money>(config, "intraspread_dark_to_dark_max");
+    return table;
   }
 
   /**
    * Looks up a general fee.
-   * @param feeTable The XatsFeeTable used to lookup the fee.
+   * @param table The XatsFeeTable used to lookup the fee.
    * @param type The trade's Type.
-   * @param priceClass The trade's PriceClass.
+   * @param price_class The trade's PriceClass.
    * @return The fee corresponding to the specified <i>type</i> and
-   *         <i>priceClass</i>.
+   *         <i>price_class</i>.
    */
-  inline Money LookupGeneralFee(const XatsFeeTable& feeTable,
-      XatsFeeTable::Type type, XatsFeeTable::PriceClass priceClass) {
-    return feeTable.m_generalFeeTable[static_cast<int>(priceClass)][
+  inline Money lookup_general_fee(const XatsFeeTable& table,
+      XatsFeeTable::Type type, XatsFeeTable::PriceClass price_class) {
+    return table.m_general_fee_table[static_cast<int>(price_class)][
       static_cast<int>(type)];
   }
 
   /**
    * Looks up an ETF fee.
-   * @param feeTable The XatsFeeTable used to lookup the fee.
+   * @param table The XatsFeeTable used to lookup the fee.
    * @param type The trade's Type.
-   * @param priceClass The trade's PriceClass.
+   * @param price_class The trade's PriceClass.
    * @return The fee corresponding to the specified <i>type</i> and
-   *         <i>priceClass</i>.
+   *         <i>price_class</i>.
    */
-  inline Money LookupEtfFee(const XatsFeeTable& feeTable,
-      XatsFeeTable::Type type, XatsFeeTable::PriceClass priceClass) {
-    return feeTable.m_etfFeeTable[static_cast<int>(priceClass)][
+  inline Money lookup_etf_fee(const XatsFeeTable& table,
+      XatsFeeTable::Type type, XatsFeeTable::PriceClass price_class) {
+    return table.m_etf_fee_table[static_cast<int>(price_class)][
       static_cast<int>(type)];
   }
 
   /**
    * Calculates the fee on a trade executed on XATS.
-   * @param feeTable The XatsFeeTable used to calculate the fee.
-   * @param isEtf Whether the calculation is for an ETF.
-   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @param table The XatsFeeTable used to calculate the fee.
+   * @param is_etf Whether the calculation is for an ETF.
+   * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */
-  inline Money CalculateFee(const XatsFeeTable& feeTable, bool isEtf,
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    if(executionReport.m_lastQuantity == 0) {
+  inline Money calculate_fee(
+      const XatsFeeTable& table, bool is_etf, const ExecutionReport& report) {
+    if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }
-    auto priceClass = [&] {
-      if(executionReport.m_lastPrice < 50 * Money::CENT) {
+    auto price_class = [&] {
+      if(report.m_last_price < 50 * Money::CENT) {
         return XatsFeeTable::PriceClass::SUBHALF_DOLLAR;
-      } else if(executionReport.m_lastPrice < Money::ONE) {
+      } else if(report.m_last_price < Money::ONE) {
         return XatsFeeTable::PriceClass::SUBDOLLAR;
-      } else if(executionReport.m_lastPrice < 5 * Money::ONE) {
+      } else if(report.m_last_price < 5 * Money::ONE) {
         return XatsFeeTable::PriceClass::SUBFIVE_DOLLAR;
       } else {
         return XatsFeeTable::PriceClass::DEFAULT;
       }
     }();
     auto type = [&] {
-      if(executionReport.m_liquidityFlag.size() == 1) {
-        if(executionReport.m_liquidityFlag[0] == 'P') {
+      if(report.m_liquidity_flag.size() == 1) {
+        if(report.m_liquidity_flag[0] == 'P') {
           return XatsFeeTable::Type::PASSIVE;
-        } else if(executionReport.m_liquidityFlag[0] == 'A') {
+        } else if(report.m_liquidity_flag[0] == 'A') {
           return XatsFeeTable::Type::ACTIVE;
         } else {
           std::cout << "Unknown liquidity flag [XATS]: " <<
-            executionReport.m_liquidityFlag << "\n";
+            report.m_liquidity_flag << "\n";
           return XatsFeeTable::Type::ACTIVE;
         }
       } else {
         std::cout << "Unknown liquidity flag [XATS]: " <<
-          executionReport.m_liquidityFlag << "\n";
+          report.m_liquidity_flag << "\n";
         return XatsFeeTable::Type::ACTIVE;
       }
     }();
     auto fee = [&] {
-      if(isEtf) {
-        return LookupEtfFee(feeTable, type, priceClass);
+      if(is_etf) {
+        return lookup_etf_fee(table, type, price_class);
       } else {
-        return LookupGeneralFee(feeTable, type, priceClass);
+        return lookup_general_fee(table, type, price_class);
       }
     }();
-    return executionReport.m_lastQuantity * fee;
+    return report.m_last_quantity * fee;
   }
 }
 

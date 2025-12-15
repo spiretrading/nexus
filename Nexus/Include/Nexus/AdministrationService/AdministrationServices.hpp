@@ -1,5 +1,6 @@
 #ifndef NEXUS_ADMINISTRATION_SERVICES_HPP
 #define NEXUS_ADMINISTRATION_SERVICES_HPP
+#include <string>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Services/RecordMessage.hpp>
@@ -7,7 +8,6 @@
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
-#include "Nexus/AdministrationService/AdministrationService.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
 #include "Nexus/AdministrationService/RiskModification.hpp"
@@ -15,8 +15,13 @@
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 
-namespace Nexus::AdministrationService {
-  BEAM_DEFINE_SERVICES(AdministrationServices,
+namespace Nexus {
+
+  /** Standard name for the administration service. */
+  inline const auto ADMINISTRATION_SERVICE_NAME =
+    std::string("administration_service");
+
+  BEAM_DEFINE_SERVICES(administration_services,
 
     /**
      * Loads the list of accounts that match a set of roles.
@@ -26,7 +31,7 @@ namespace Nexus::AdministrationService {
      */
     (LoadAccountsByRolesService,
       "Nexus.AdministrationServices.LoadAccountsByRolesService",
-      std::vector<Beam::ServiceLocator::DirectoryEntry>, AccountRoles, roles),
+      std::vector<Beam::DirectoryEntry>, (AccountRoles, roles)),
 
     /**
      * Loads the DirectoryEntry containing all administrators.
@@ -34,7 +39,7 @@ namespace Nexus::AdministrationService {
      */
     (LoadAdministratorsRootEntryService,
       "Nexus.AdministrationServices.LoadAdministratorsRootEntryService",
-      Beam::ServiceLocator::DirectoryEntry),
+      Beam::DirectoryEntry),
 
     /**
      * Loads the DirectoryEntry containing all service accounts.
@@ -42,7 +47,7 @@ namespace Nexus::AdministrationService {
      */
     (LoadServicesRootEntryService,
       "Nexus.AdministrationServices.LoadServicesRootEntryService",
-      Beam::ServiceLocator::DirectoryEntry),
+      Beam::DirectoryEntry),
 
     /**
      * Loads the DirectoryEntry containing all trading groups.
@@ -50,7 +55,7 @@ namespace Nexus::AdministrationService {
      */
     (LoadTradingGroupsRootEntryService,
       "Nexus.AdministrationServices.LoadTradingGroupsRootEntryService",
-      Beam::ServiceLocator::DirectoryEntry),
+      Beam::DirectoryEntry),
 
     /**
      * Tests if an account is an administrator.
@@ -59,7 +64,7 @@ namespace Nexus::AdministrationService {
      */
     (CheckAdministratorService,
       "Nexus.AdministrationServices.CheckAdministratorService", bool,
-      Beam::ServiceLocator::DirectoryEntry, account),
+      (Beam::DirectoryEntry, account)),
 
     /**
      * Returns an accounts roles.
@@ -68,7 +73,7 @@ namespace Nexus::AdministrationService {
      */
     (LoadAccountRolesService,
       "Nexus.AdministrationServices.LoadAccountRolesService", AccountRoles,
-      Beam::ServiceLocator::DirectoryEntry, account),
+      (Beam::DirectoryEntry, account)),
 
     /**
      * Returns the roles one account has over another.
@@ -79,8 +84,8 @@ namespace Nexus::AdministrationService {
      */
     (LoadSupervisedAccountRolesService,
       "Nexus.AdministrationServices.LoadSupervisedAccountRolesService",
-      AccountRoles, Beam::ServiceLocator::DirectoryEntry, parent,
-      Beam::ServiceLocator::DirectoryEntry, child),
+      AccountRoles, (Beam::DirectoryEntry, parent),
+      (Beam::DirectoryEntry, child)),
 
     /**
      * Loads the DirectoryEntry representing an account's trading group.
@@ -89,8 +94,7 @@ namespace Nexus::AdministrationService {
      */
     (LoadParentTradingGroupService,
       "Nexus.AdministrationServices.LoadParentTradingGroupService",
-      Beam::ServiceLocator::DirectoryEntry,
-      Beam::ServiceLocator::DirectoryEntry, account),
+      Beam::DirectoryEntry, (Beam::DirectoryEntry, account)),
 
     /**
      * Loads an account's identity.
@@ -99,7 +103,7 @@ namespace Nexus::AdministrationService {
      */
     (LoadAccountIdentityService,
       "Nexus.AdministrationServices.LoadAccountIdentityService",
-      AccountIdentity, Beam::ServiceLocator::DirectoryEntry, account),
+      AccountIdentity, (Beam::DirectoryEntry, account)),
 
     /**
      * Sets an account's identity.
@@ -108,8 +112,7 @@ namespace Nexus::AdministrationService {
      */
     (StoreAccountIdentityService,
       "Nexus.AdministrationServices.StoreAccountIdentityService", void,
-      Beam::ServiceLocator::DirectoryEntry, account, AccountIdentity,
-      identity),
+      (Beam::DirectoryEntry, account), (AccountIdentity, identity)),
 
     /**
      * Loads a TradingGroup from its DirectoryEntry.
@@ -118,7 +121,7 @@ namespace Nexus::AdministrationService {
      */
     (LoadTradingGroupService,
       "Nexus.AdministrationServices.LoadTradingGroupService", TradingGroup,
-      Beam::ServiceLocator::DirectoryEntry, directory),
+      (Beam::DirectoryEntry, directory)),
 
     /**
      * Loads the list of system administrators.
@@ -126,14 +129,14 @@ namespace Nexus::AdministrationService {
      */
     (LoadAdministratorsService,
       "Nexus.AdministrationServices.LoadAdministratorsService",
-      std::vector<Beam::ServiceLocator::DirectoryEntry>),
+      std::vector<Beam::DirectoryEntry>),
 
     /**
      * Loads the list of accounts providing system services.
      * @return The list of system service providers.
      */
     (LoadServicesService, "Nexus.AdministrationServices.LoadServicesService",
-      std::vector<Beam::ServiceLocator::DirectoryEntry>),
+      std::vector<Beam::DirectoryEntry>),
 
     /**
      * Loads the database of available entitlements.
@@ -141,7 +144,7 @@ namespace Nexus::AdministrationService {
      */
     (LoadEntitlementsService,
       "Nexus.AdministrationServices.LoadEntitlementsService",
-      MarketDataService::EntitlementDatabase),
+      EntitlementDatabase),
 
     /**
      * Loads the entitlements granted to an account.
@@ -150,8 +153,7 @@ namespace Nexus::AdministrationService {
      */
     (LoadAccountEntitlementsService,
       "Nexus.AdministrationServices.LoadAccountEntitlementsService",
-      std::vector<Beam::ServiceLocator::DirectoryEntry>,
-      Beam::ServiceLocator::DirectoryEntry, account),
+      std::vector<Beam::DirectoryEntry>, (Beam::DirectoryEntry, account)),
 
     /**
      * Sets the entitlements granted to an account.
@@ -160,8 +162,8 @@ namespace Nexus::AdministrationService {
      */
     (StoreEntitlementsService,
       "Nexus.AdministrationServices.StoreEntitlementsService", void,
-      Beam::ServiceLocator::DirectoryEntry, account,
-      std::vector<Beam::ServiceLocator::DirectoryEntry>, entitlements),
+      (Beam::DirectoryEntry, account),
+      (std::vector<Beam::DirectoryEntry>, entitlements)),
 
     /**
      * Monitors an account's RiskParameters.
@@ -170,8 +172,7 @@ namespace Nexus::AdministrationService {
      */
     (MonitorRiskParametersService,
       "Nexus.AdministrationServices.MonitorRiskParametersService",
-      RiskService::RiskParameters, Beam::ServiceLocator::DirectoryEntry,
-      account),
+      RiskParameters, (Beam::DirectoryEntry, account)),
 
     /**
      * Sets an account's RiskParameters.
@@ -180,8 +181,7 @@ namespace Nexus::AdministrationService {
      */
     (StoreRiskParametersService,
       "Nexus.AdministrationServices.StoreRiskParametersService", void,
-      Beam::ServiceLocator::DirectoryEntry, account,
-      RiskService::RiskParameters, risk_parameters),
+      (Beam::DirectoryEntry, account), (RiskParameters, risk_parameters)),
 
     /**
      * Monitors an account's RiskState.
@@ -189,8 +189,8 @@ namespace Nexus::AdministrationService {
      * @return The <i>account</i>'s current RiskState.
      */
     (MonitorRiskStateService,
-      "Nexus.AdministrationServices.MonitorRiskStateService",
-      RiskService::RiskState, Beam::ServiceLocator::DirectoryEntry, account),
+      "Nexus.AdministrationServices.MonitorRiskStateService", RiskState,
+      (Beam::DirectoryEntry, account)),
 
     /**
      * Sets an account's RiskState.
@@ -199,8 +199,7 @@ namespace Nexus::AdministrationService {
      */
     (StoreRiskStateService,
       "Nexus.AdministrationServices.StoreRiskStateService", void,
-      Beam::ServiceLocator::DirectoryEntry, account, RiskService::RiskState,
-      risk_state),
+      (Beam::DirectoryEntry, account), (RiskState, risk_state)),
 
     /**
      * Loads the DirectoryEntries of TradingGroups managed by an account.
@@ -209,8 +208,7 @@ namespace Nexus::AdministrationService {
      */
     (LoadManagedTradingGroupsService,
       "Nexus.AdministrationServices.LoadManagedTradingGroupsService",
-      std::vector<Beam::ServiceLocator::DirectoryEntry>,
-      Beam::ServiceLocator::DirectoryEntry, account),
+      std::vector<Beam::DirectoryEntry>, (Beam::DirectoryEntry, account)),
 
     /**
      * Loads an account modification request.
@@ -219,7 +217,7 @@ namespace Nexus::AdministrationService {
      */
     (LoadAccountModificationRequestService,
       "Nexus.AdministrationServices.LoadAccountModificationRequestService",
-      AccountModificationRequest, AccountModificationRequest::Id, id),
+      AccountModificationRequest, (AccountModificationRequest::Id, id)),
 
     /**
      * Given an account, loads the ids of requests to modify that account.
@@ -232,8 +230,8 @@ namespace Nexus::AdministrationService {
     (LoadAccountModificationRequestIdsService,
       "Nexus.AdministrationServices.LoadAccountModificationRequestIdsService",
       std::vector<AccountModificationRequest::Id>,
-      Beam::ServiceLocator::DirectoryEntry, account,
-      AccountModificationRequest::Id, start_id, int, max_count),
+      (Beam::DirectoryEntry, account),
+      (AccountModificationRequest::Id, start_id), (int, max_count)),
 
     /**
      * Given an account, loads the ids of requests that the account is
@@ -247,8 +245,8 @@ namespace Nexus::AdministrationService {
     (LoadManagedAccountModificationRequestIdsService,
       "Nexus.AdministrationServices.LoadManagedAccountModificationRequestIdsService",
       std::vector<AccountModificationRequest::Id>,
-      Beam::ServiceLocator::DirectoryEntry, account,
-      AccountModificationRequest::Id, start_id, int, max_count),
+      (Beam::DirectoryEntry, account),
+      (AccountModificationRequest::Id, start_id), (int, max_count)),
 
     /**
      * Loads an entitlement modification.
@@ -257,7 +255,7 @@ namespace Nexus::AdministrationService {
      */
     (LoadEntitlementModificationService,
       "Nexus.AdministrationServices.LoadEntitlementModificationService",
-      EntitlementModification, AccountModificationRequest::Id, id),
+      EntitlementModification, (AccountModificationRequest::Id, id)),
 
     /**
      * Submits a request to modify an account's entitlements.
@@ -269,8 +267,8 @@ namespace Nexus::AdministrationService {
      */
     (SubmitEntitlementModificationRequestService,
       "Nexus.AdministrationServices.SubmitEntitlementModificationRequestService",
-      AccountModificationRequest, Beam::ServiceLocator::DirectoryEntry, account,
-      EntitlementModification, modification, Message, comment),
+      AccountModificationRequest, (Beam::DirectoryEntry, account),
+      (EntitlementModification, modification), (Message, comment)),
 
     /**
      * Loads a risk modification.
@@ -279,7 +277,7 @@ namespace Nexus::AdministrationService {
      */
     (LoadRiskModificationService,
       "Nexus.AdministrationServices.LoadRiskModificationService",
-      RiskModification, AccountModificationRequest::Id, id),
+      RiskModification, (AccountModificationRequest::Id, id)),
 
     /**
      * Submits a request to modify an account's risk parameters.
@@ -290,8 +288,8 @@ namespace Nexus::AdministrationService {
      */
     (SubmitRiskModificationRequestService,
       "Nexus.AdministrationServices.SubmitRiskModificationRequestService",
-      AccountModificationRequest, Beam::ServiceLocator::DirectoryEntry, account,
-      RiskModification, modification, Message, comment),
+      AccountModificationRequest, (Beam::DirectoryEntry, account),
+      (RiskModification, modification), (Message, comment)),
 
     /**
      * Loads the status of an account modification request.
@@ -300,7 +298,7 @@ namespace Nexus::AdministrationService {
      */
     (LoadAccountModificationRequestStatusService,
       "Nexus.AdministrationServices.LoadAccountModificationRequestStatusService",
-      AccountModificationRequest::Update, AccountModificationRequest::Id, id),
+      AccountModificationRequest::Update, (AccountModificationRequest::Id, id)),
 
     /**
      * Approves an account modification request.
@@ -310,8 +308,8 @@ namespace Nexus::AdministrationService {
      */
     (ApproveAccountModificationRequestService,
       "Nexus.AdministrationServices.ApproveAccountModificationRequestService",
-      AccountModificationRequest::Update, AccountModificationRequest::Id, id,
-      Message, comment),
+      AccountModificationRequest::Update, (AccountModificationRequest::Id, id),
+      (Message, comment)),
 
     /**
      * Rejects an account modification request.
@@ -321,8 +319,8 @@ namespace Nexus::AdministrationService {
      */
     (RejectAccountModificationRequestService,
       "Nexus.AdministrationServices.RejectAccountModificationRequestService",
-      AccountModificationRequest::Update, AccountModificationRequest::Id, id,
-      Message, comment),
+      AccountModificationRequest::Update, (AccountModificationRequest::Id, id),
+      (Message, comment)),
 
     /**
      * Loads a message.
@@ -330,7 +328,7 @@ namespace Nexus::AdministrationService {
      * @return The message with the specified <i>id</i>.
      */
     (LoadMessageService, "Nexus.AdministrationServices.LoadMessageService",
-      Message, Message::Id, id),
+      Message, (Message::Id, id)),
 
     /**
      * Loads the list of messages associated with an account modification.
@@ -339,7 +337,7 @@ namespace Nexus::AdministrationService {
      */
     (LoadMessageIdsService,
       "Nexus.AdministrationServices.LoadMessageIdsService",
-      std::vector<Message::Id>, AccountModificationRequest::Id, id),
+      std::vector<Message::Id>, (AccountModificationRequest::Id, id)),
 
     /**
      * Appends a message to an account modification request.
@@ -349,9 +347,9 @@ namespace Nexus::AdministrationService {
      */
     (SendAccountModificationRequestMessageService,
       "Nexus.AdministrationServices.SendAccountModificationRequestMessageService",
-      Message, AccountModificationRequest::Id, id, Message, message));
+      Message, (AccountModificationRequest::Id, id), (Message, message)));
 
-  BEAM_DEFINE_MESSAGES(AdministrationMessages,
+  BEAM_DEFINE_MESSAGES(administration_messages,
 
     /**
      * Indicates a change in an account's RiskParameters.
@@ -359,8 +357,8 @@ namespace Nexus::AdministrationService {
      * @param risk_parameters The updated parameters for the <i>account</i>.
      */
     (RiskParametersMessage, "Nexus.AdministrationService.RiskParametersMessage",
-      Beam::ServiceLocator::DirectoryEntry, account,
-      RiskService::RiskParameters, risk_parameters),
+      (Beam::DirectoryEntry, account),
+      (RiskParameters, risk_parameters)),
 
     /**
      * Indicates a change in an account's RiskState.
@@ -368,8 +366,7 @@ namespace Nexus::AdministrationService {
      * @param risk_state The <i>account</i>'s current RiskState.
      */
     (RiskStateMessage, "Nexus.AdministrationService.RiskStateMessage",
-      Beam::ServiceLocator::DirectoryEntry, account, RiskService::RiskState,
-      risk_state));
+      (Beam::DirectoryEntry, account), (RiskState, risk_state)));
 }
 
 #endif

@@ -1,7 +1,6 @@
 #ifndef SPIRE_MERGED_BOOK_ENTRY_LIST_MODEL_HPP
 #define SPIRE_MERGED_BOOK_ENTRY_LIST_MODEL_HPP
 #include <boost/circular_buffer.hpp>
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
 
@@ -27,9 +26,7 @@ namespace Spire {
         std::shared_ptr<BookViewModel::PreviewOrderModel> preview);
 
       int get_size() const override;
-
-      const Type& get(int index) const;
-
+      const Type& get(int index) const override;
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
 
@@ -51,8 +48,7 @@ namespace Spire {
         const BookQuoteListModel::Operation& operation);
       void on_user_order_operation(
         const BookViewModel::UserOrderListModel::Operation& operation);
-      void on_preview(const
-        boost::optional<Nexus::OrderExecutionService::OrderFields>& preview);
+      void on_preview(const boost::optional<Nexus::OrderFields>& preview);
   };
 }
 

@@ -30,7 +30,7 @@ namespace Spire {
 
       using SignatureNode::Replace;
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::string m_name;
       std::vector<Signature> m_signatures;
   };
@@ -41,11 +41,6 @@ namespace Spire {
     shuttle.Shuttle("name", m_name);
     shuttle.Shuttle("signatures", m_signatures);
   }
-}
-
-namespace Beam::Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::FunctionNode> : std::false_type {};
 }
 
 #endif

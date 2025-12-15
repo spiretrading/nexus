@@ -7,6 +7,7 @@
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace Spire;
@@ -20,25 +21,25 @@ namespace {
 
   const auto& INFO_IMAGE() {
     static auto image =
-      imageFromSvg(":/Icons/info_panel/info.svg", SEVERITY_ICON_SIZE());
+      image_from_svg(":/Icons/info_panel/info.svg", SEVERITY_ICON_SIZE());
     return image;
   }
 
   const auto& SUCCESS_IMAGE() {
     static auto image =
-      imageFromSvg(":/Icons/info_panel/success.svg", SEVERITY_ICON_SIZE());
+      image_from_svg(":/Icons/info_panel/success.svg", SEVERITY_ICON_SIZE());
     return image;
   }
 
   const auto& WARNING_IMAGE() {
     static auto image =
-      imageFromSvg(":/Icons/info_panel/warning.svg", SEVERITY_ICON_SIZE());
+      image_from_svg(":/Icons/info_panel/warning.svg", SEVERITY_ICON_SIZE());
     return image;
   }
 
   const auto& ERROR_IMAGE() {
     static auto image =
-      imageFromSvg(":/Icons/info_panel/error.svg", SEVERITY_ICON_SIZE());
+      image_from_svg(":/Icons/info_panel/error.svg", SEVERITY_ICON_SIZE());
     return image;
   }
 
@@ -89,7 +90,7 @@ InfoPanel::InfoPanel(Severity severity, QString message, QWidget& parent)
   left_area_layout->addSpacing(scale_height(1));
   left_area_layout->addLayout(message_area_layout);
   auto close_button = make_icon_button(
-    imageFromSvg(":/Icons/info_panel/close.svg", scale(16, 16)));
+    image_from_svg(":/Icons/info_panel/close.svg", scale(16, 16)));
   close_button->setFixedSize(scale(16, 16));
   close_button->connect_click_signal([=] { close(); });
   auto layout = make_hbox_layout(this);

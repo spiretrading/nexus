@@ -3,12 +3,13 @@
 #include <optional>
 #include <QMetaObject>
 #include <QWidget>
+#include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/Quote.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
+#include "Spire/UI/UI.hpp"
 
 class QModelIndex;
 class QTableView;

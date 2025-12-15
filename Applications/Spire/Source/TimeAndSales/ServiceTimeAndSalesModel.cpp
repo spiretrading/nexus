@@ -1,41 +1,38 @@
 #include "Spire/TimeAndSales/ServiceTimeAndSalesModel.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
 using namespace Spire;
 
 ServiceTimeAndSalesModel::ServiceTimeAndSalesModel(
-    Security security, MarketDataClientBox client)
+    Security security, MarketDataClient client)
     : m_security(std::move(security)),
       m_client(std::move(client)) {
-  auto query = MakeRealTimeQuery(m_security);
-  query.SetInterruptionPolicy(InterruptionPolicy::RECOVER_DATA);
-  m_client.QueryBboQuotes(query, m_event_handler.get_slot<SequencedBboQuote>(
+  auto query = make_real_time_query(m_security);
+  query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
+  m_client.query(query, m_event_handler.get_slot<SequencedBboQuote>(
     std::bind_front(&ServiceTimeAndSalesModel::on_bbo, this)));
-  m_client.QueryTimeAndSales(query,
-    m_event_handler.get_slot<SequencedTimeAndSale>(
-      std::bind_front(&ServiceTimeAndSalesModel::on_time_and_sale, this)));
+  m_client.query(query, m_event_handler.get_slot<SequencedTimeAndSale>(
+    std::bind_front(&ServiceTimeAndSalesModel::on_time_and_sale, this)));
 }
 
 QtPromise<std::vector<TimeAndSalesModel::Entry>>
     ServiceTimeAndSalesModel::query_until(
-      Beam::Queries::Sequence sequence, int max_count) {
+      Beam::Sequence sequence, int max_count) {
   return QtPromise(
     [sequence, max_count, security = m_security, client = m_client] () mutable {
       auto query = SecurityMarketDataQuery();
-      query.SetIndex(security);
-      query.SetRange(Beam::Queries::Sequence::First(), sequence);
-      query.SetSnapshotLimit(SnapshotLimit::FromTail(max_count));
+      query.set_index(security);
+      query.set_range(Beam::Sequence::FIRST, sequence);
+      query.set_snapshot_limit(SnapshotLimit::from_tail(max_count));
       auto queue = std::make_shared<Queue<SequencedTimeAndSale>>();
-      client.QueryTimeAndSales(query, queue);
+      client.query(query, queue);
       auto result = std::vector<TimeAndSalesModel::Entry>();
       try {
         while(true) {
-          auto time_and_sale = queue->Pop();
+          auto time_and_sale = queue->pop();
           result.push_back(
             Entry(std::move(time_and_sale), BboIndicator::UNKNOWN));
         }

@@ -15,8 +15,8 @@ export class ComplianceRuleSchema {
   }
 
   /** Returns the title case of a ComplianceRuleSchema. */
-  public static toTitleCase(schema: ComplianceRuleSchema) {
-    const split = schema.name.replace(/_/g, ' ').split(' ');
+  public static toTitleCase(name: string) {
+    const split = name.replace(/_/g, ' ').split(' ');
     for(let i = 0; i < split.length; ++i) {
       split[i] = split[i].charAt(0).toUpperCase() + split[i].substring(1);
     }
@@ -129,4 +129,91 @@ export namespace ComplianceRuleSchema {
     /** The rule is applied by consolidating all accounts together. */
     CONSOLIDATED
   }
+}
+
+/**
+ * Determines if a ComplianceRuleSchema is a wrapped schema.
+ * @param schema The ComplianceRuleSchema to check.
+ * @return True iff the schema is wrapped.
+ */
+export function isWrapped(schema: ComplianceRuleSchema): boolean {
+  if(schema.parameters.length < 2) {
+    return false;
+  }
+  const name = schema.parameters[schema.parameters.length - 2];
+  const args = schema.parameters[schema.parameters.length - 1];
+  return name.name === 'name' &&
+    name.value.type === ComplianceValue.Type.STRING &&
+    args.name === 'arguments' && args.value.type === ComplianceValue.Type.LIST;
+}
+
+/**
+ * Gets the fully unwrapped name of a ComplianceRuleSchema.
+ * @param schema The ComplianceRuleSchema to get the name from.
+ * @return The unwrapped name of the schema.
+ */
+export function getUnwrappedName(schema: ComplianceRuleSchema): string {
+  if(isWrapped(schema)) {
+    return getUnwrappedName(unwrap(schema));
+  }
+  return schema.name;
+}
+
+/**
+ * Wraps a ComplianceRuleSchema for use by a higher-order
+ * ComplianceRuleSchema.
+ * @param name The name of the higher order ComplianceRuleSchema.
+ * @param parametersOrSchema The parameters used by the higher-order
+ *        ComplianceRuleSchema, or the schema to wrap if only 2 arguments.
+ * @param schema The ComplianceRuleSchema to wrap (optional if 2 arguments).
+ * @return A higher-order ComplianceRuleSchema.
+ */
+export function wrap(name: string,
+    parametersOrSchema: ComplianceParameter[] | ComplianceRuleSchema,
+    schema?: ComplianceRuleSchema): ComplianceRuleSchema {
+  if(parametersOrSchema instanceof ComplianceRuleSchema && !schema) {
+    return wrap(name, [], parametersOrSchema);
+  }
+  const parameters = parametersOrSchema as ComplianceParameter[];
+  const wrappedSchema = schema as ComplianceRuleSchema;
+  const newParameters = parameters.slice();
+  newParameters.push(new ComplianceParameter('name',
+    new ComplianceValue(ComplianceValue.Type.STRING, wrappedSchema.name)));
+  const args: ComplianceValue[] = [];
+  for(const parameter of wrappedSchema.parameters) {
+    args.push(new ComplianceValue(ComplianceValue.Type.LIST, [
+      new ComplianceValue(ComplianceValue.Type.STRING, parameter.name),
+      parameter.value]));
+  }
+  newParameters.push(new ComplianceParameter(
+    'arguments', new ComplianceValue(ComplianceValue.Type.LIST, args)));
+  return new ComplianceRuleSchema(name, newParameters);
+}
+
+/**
+ * Unwraps a higher-order ComplianceRuleSchema, returning the wrapped
+ * schema.
+ * @param schema The higher-order ComplianceRuleSchema to unwrap.
+ * @return The ComplianceRuleSchema that was wrapped.
+ */
+export function unwrap(schema: ComplianceRuleSchema): ComplianceRuleSchema {
+  let name = '';
+  let args: ComplianceValue[] = [];
+  for(const parameter of schema.parameters) {
+    if(parameter.name === 'name') {
+      name = parameter.value.value as string;
+    } else if(parameter.name === 'arguments') {
+      args = parameter.value.value as ComplianceValue[];
+    }
+  }
+  const parameters: ComplianceParameter[] = [];
+  for(const argument of args) {
+    const parameter = argument.value as ComplianceValue[];
+    if(parameter.length !== 2) {
+      throw new Error('Invalid ComplianceParameter specified.');
+    }
+    parameters.push(
+      new ComplianceParameter(parameter[0].value as string, parameter[1]));
+  }
+  return new ComplianceRuleSchema(name, parameters);
 }

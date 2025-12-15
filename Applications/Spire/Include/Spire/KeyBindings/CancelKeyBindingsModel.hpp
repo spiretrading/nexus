@@ -7,9 +7,9 @@
 #include <Beam/Serialization/Sender.hpp>
 #include <QKeySequence>
 #include <QValidator>
+#include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 #include "Spire/Blotter/OrderLogModel.hpp"
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/HashQtTypes.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
@@ -83,7 +83,7 @@ namespace Spire {
         find_operation(const QKeySequence& sequence) const;
 
     private:
-      friend struct Beam::Serialization::Shuttle<CancelKeyBindingsModel>;
+      friend struct Beam::Shuttle<CancelKeyBindingsModel>;
       std::array<std::shared_ptr<KeySequenceValueModel>, OPERATION_COUNT>
         m_bindings;
       std::unordered_map<QKeySequence, Operation> m_bindings_map;
@@ -112,24 +112,24 @@ namespace Spire {
    *        on.
    */
   void execute(CancelKeyBindingsModel::Operation operation,
-    Nexus::OrderExecutionService::OrderExecutionClientBox& client,
+    Nexus::OrderExecutionClient& client,
     Beam::Out<std::vector<OrderLogModel::OrderEntry>> entries);
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Spire::CancelKeyBindingsModel> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Spire::CancelKeyBindingsModel& value,
-        unsigned int version) {
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::CancelKeyBindingsModel& value,
+        unsigned int version) const {
       auto size = static_cast<int>(value.m_bindings.size());
-      shuttle.StartSequence("bindings", size);
+      shuttle.start_sequence("bindings", size);
       for(auto& binding : value.m_bindings) {
-        shuttle.Shuttle(*binding);
+        shuttle.shuttle(*binding);
       }
-      shuttle.EndSequence();
-      shuttle.Shuttle("bindings_map", value.m_bindings_map);
-      shuttle.Shuttle("previous_bindings", value.m_previous_bindings);
+      shuttle.end_sequence();
+      shuttle.shuttle("bindings_map", value.m_bindings_map);
+      shuttle.shuttle("previous_bindings", value.m_previous_bindings);
     }
   };
 }

@@ -46,7 +46,7 @@ QWidget* BlotterWindowSettings::Reopen(Ref<UserProfile> userProfile) const {
   }
   BlotterWindow* window = &BlotterWindow::GetBlotterWindow(Ref(userProfile),
     Ref(*model));
-  Apply(Ref(userProfile), Store(*window));
+  Apply(Ref(userProfile), out(*window));
   return window;
 }
 

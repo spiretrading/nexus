@@ -4,7 +4,6 @@
 #include "Spire/Canvas/Types/UnionType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
 using namespace std;
@@ -28,8 +27,6 @@ void BlotterTaskMonitorNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> BlotterTaskMonitorNode::Clone() const {
-  return make_unique<BlotterTaskMonitorNode>(*this);
+std::unique_ptr<CanvasNode> BlotterTaskMonitorNode::Clone() const {
+  return std::make_unique<BlotterTaskMonitorNode>(*this);
 }
-
-BlotterTaskMonitorNode::BlotterTaskMonitorNode(ReceiveBuilder) {}

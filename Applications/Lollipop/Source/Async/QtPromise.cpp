@@ -10,7 +10,7 @@ QtPromise<void> Spire::all(std::vector<QtPromise<void>> promises) {
   for(auto i = std::size_t(0); i < promises.size() - 1; ++i) {
     promise = promise.then([=, p = std::move(promises[i + 1])]
         (auto&& result) mutable {
-      result.Get();
+      result.get();
       return std::move(p);
     });
   }

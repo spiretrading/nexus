@@ -1,7 +1,6 @@
 #!/bin/bash
 services="ServiceLocator"
 services+=" UidServer"
-services+=" RegistryServer"
 services+=" DefinitionsServer"
 services+=" AdministrationServer"
 services+=" MarketDataServer"
@@ -22,6 +21,6 @@ services+=" TmxIpMarketDataFeedClient"
 
 for directory in $services; do
   pushd $directory/Application > /dev/null
-  ./check.sh
+  ./check.sh "$@"
   popd > /dev/null
 done

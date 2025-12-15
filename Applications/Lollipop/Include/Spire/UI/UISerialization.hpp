@@ -68,7 +68,6 @@
 #include "Spire/Canvas/Types/DestinationType.hpp"
 #include "Spire/Canvas/Types/DurationType.hpp"
 #include "Spire/Canvas/Types/IntegerType.hpp"
-#include "Spire/Canvas/Types/MarketType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/Canvas/Types/OrderStatusType.hpp"
@@ -81,6 +80,7 @@
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
 #include "Spire/Canvas/Types/UnionType.hpp"
+#include "Spire/Canvas/Types/VenueType.hpp"
 #include "Spire/Canvas/ValueNodes/BooleanNode.hpp"
 #include "Spire/Canvas/ValueNodes/CurrencyNode.hpp"
 #include "Spire/Canvas/ValueNodes/DateTimeNode.hpp"
@@ -88,7 +88,6 @@
 #include "Spire/Canvas/ValueNodes/DestinationNode.hpp"
 #include "Spire/Canvas/ValueNodes/DurationNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
-#include "Spire/Canvas/ValueNodes/MarketNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
@@ -99,6 +98,7 @@
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeRangeNode.hpp"
 #include "Spire/Canvas/ValueNodes/ValueNode.hpp"
+#include "Spire/Canvas/ValueNodes/VenueNode.hpp"
 #include "Spire/Charting/ChartIntervalComboBoxWindowSettings.hpp"
 #include "Spire/Charting/ChartPlotViewWindowSettings.hpp"
 #include "Spire/Charting/ChartWindowSettings.hpp"
@@ -114,7 +114,7 @@
 #include "Spire/Dashboard/LowDashboardCellBuilder.hpp"
 #include "Spire/Dashboard/ValueDashboardCellBuilder.hpp"
 #include "Spire/Dashboard/VolumeDashboardCellBuilder.hpp"
-#include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings.hpp"
+#include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
 #include "Spire/InputWidgets/TimeRangeInputWidgetWindowSettings.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
@@ -210,7 +210,6 @@ namespace Spire {
     (DestinationType, "Spire.DestinationType"),
     (DurationType, "Spire.DurationType"),
     (IntegerType, "Spire.IntegerType"),
-    (MarketType, "Spire.MarketType"),
     (MoneyType, "Spire.MoneyType"),
     (OrderReferenceType, "Spire.OrderReferenceType"),
     (OrderStatusType, "Spire.OrderStatusType"),
@@ -222,7 +221,8 @@ namespace Spire {
     (TextType, "Spire.TextType"),
     (TimeInForceType, "Spire.TimeInForceType"),
     (TimeRangeType, "Spire.TimeRangeType"),
-    (UnionType, "Spire.UnionType"));
+    (UnionType, "Spire.UnionType"),
+    (VenueType, "Spire.VenueType"));
 
   BEAM_REGISTER_TYPES(RegisterCanvasValueNodeTypes,
     (BooleanNode, "Spire.BooleanNode"),
@@ -232,7 +232,6 @@ namespace Spire {
     (DestinationNode, "Spire.DestinationNode"),
     (DurationNode, "Spire.DurationNode"),
     (IntegerNode, "Spire.IntegerNode"),
-    (MarketNode, "Spire.MarketNode"),
     (MoneyNode, "Spire.MoneyNode"),
     (OrderStatusNode, "Spire.OrderStatusNode"),
     (OrderTypeNode, "Spire.OrderTypeNode"),
@@ -241,7 +240,8 @@ namespace Spire {
     (TextNode, "Spire.TextNode"),
     (TimeInForceNode, "Spire.TimeInForceNode"),
     (TimeNode, "Spire.TimeNode"),
-    (TimeRangeNode, "Spire.TimeRangeNode"));
+    (TimeRangeNode, "Spire.TimeRangeNode"),
+    (VenueNode, "Spire.VenueNode"));
 
   BEAM_REGISTER_TYPES(RegisterDashboardTypes,
     (BboPriceDashboardCellBuilder, "Spire.BboPriceDashboardCellBuilder"),
@@ -269,31 +269,30 @@ namespace Spire {
       "Spire.UI.CollapsibleWidgetWindowSettings"),
     (OrderImbalanceIndicatorWindowSettings,
       "Spire.OrderImbalanceIndicatorWindowSettings"),
-    (OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings,
-      "Spire.OrderImbalanceIndicatorMarketSelectionWidgetWindowSettings"),
+    (OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings,
+      "Spire.OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings"),
     (PortfolioViewerWindowSettings, "Spire.PortfolioViewerWindowSettings"),
     (TimeAndSalesWindowSettings, "Spire.TimeAndSalesWindowSettings"),
     (TimeRangeInputWidgetWindowSettings,
       "Spire.TimeRangeInputWidgetWindowSettings"),
     (UI::ToolbarWindowSettings, "Spire.UI.ToolbarWindowSettings"));
 
-  template<typename SenderType>
-  void RegisterSpireTypes(
-      Beam::Out<Beam::Serialization::TypeRegistry<SenderType>> registry) {
-    RegisterCanvasCommonTypes(Beam::Store(registry));
-    RegisterCanvasControlNodeTypes(Beam::Store(registry));
-    RegisterCanvasIONodeTypes(Beam::Store(registry));
-    RegisterCanvasLuaNodeTypes(Beam::Store(registry));
-    RegisterCanvasMarketDataNodeTypes(Beam::Store(registry));
-    RegisterCanvasOrderExecutionNodeTypes(Beam::Store(registry));
-    RegisterCanvasRecordTypes(Beam::Store(registry));
-    RegisterCanvasReferenceTypes(Beam::Store(registry));
-    RegisterCanvasStandardTypes(Beam::Store(registry));
-    RegisterCanvasSystemNodeTypes(Beam::Store(registry));
-    RegisterCanvasTypeTypes(Beam::Store(registry));
-    RegisterCanvasValueNodeTypes(Beam::Store(registry));
-    RegisterDashboardTypes(Beam::Store(registry));
-    RegisterWindowSettingsTypes(Beam::Store(registry));
+  template<Beam::IsSender S>
+  void RegisterSpireTypes(Beam::Out<Beam::TypeRegistry<S>> registry) {
+    RegisterCanvasCommonTypes(Beam::out(registry));
+    RegisterCanvasControlNodeTypes(Beam::out(registry));
+    RegisterCanvasIONodeTypes(Beam::out(registry));
+    RegisterCanvasLuaNodeTypes(Beam::out(registry));
+    RegisterCanvasMarketDataNodeTypes(Beam::out(registry));
+    RegisterCanvasOrderExecutionNodeTypes(Beam::out(registry));
+    RegisterCanvasRecordTypes(Beam::out(registry));
+    RegisterCanvasReferenceTypes(Beam::out(registry));
+    RegisterCanvasStandardTypes(Beam::out(registry));
+    RegisterCanvasSystemNodeTypes(Beam::out(registry));
+    RegisterCanvasTypeTypes(Beam::out(registry));
+    RegisterCanvasValueNodeTypes(Beam::out(registry));
+    RegisterDashboardTypes(Beam::out(registry));
+    RegisterWindowSettingsTypes(Beam::out(registry));
   }
 }
 

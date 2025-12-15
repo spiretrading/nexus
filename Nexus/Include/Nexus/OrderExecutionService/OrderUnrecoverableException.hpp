@@ -1,14 +1,11 @@
 #ifndef NEXUS_ORDER_UNRECOVERABLE_EXCEPTION_HPP
 #define NEXUS_ORDER_UNRECOVERABLE_EXCEPTION_HPP
 #include <stdexcept>
-#include <boost/exception/exception.hpp>
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Exception to indicate that an Order can not be recovered. */
-  class OrderUnrecoverableException : public std::runtime_error,
-      public boost::exception {
+  class OrderUnrecoverableException : public std::runtime_error {
     public:
       using std::runtime_error::runtime_error;
 
@@ -17,7 +14,7 @@ namespace Nexus::OrderExecutionService {
   };
 
   inline OrderUnrecoverableException::OrderUnrecoverableException()
-    : std::runtime_error("Order can not be recovered.") {}
+    : OrderUnrecoverableException("Order can not be recovered.") {}
 }
 
 #endif

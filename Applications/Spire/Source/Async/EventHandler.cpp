@@ -55,8 +55,8 @@ namespace {
 
     time_duration update(std::shared_ptr<TaskQueue> tasks) {
       auto start = microsec_clock::universal_time();
-      for(auto task = tasks->TryPop(); task && tasks.use_count() != 1;
-          task = tasks->TryPop()) {
+      for(auto task = tasks->try_pop(); task && tasks.use_count() != 1;
+          task = tasks->try_pop()) {
         (*task)();
         auto duration = microsec_clock::universal_time() - start;
         if(duration >= TIME_SLICE) {
@@ -88,4 +88,8 @@ namespace {
 EventHandler::EventHandler()
     : m_tasks(std::make_shared<TaskQueue>()) {
   GlobalEventHandler::get_instance().m_tasks.push_back(m_tasks);
+}
+
+void EventHandler::push(std::function<void ()> f) {
+  m_tasks->push(std::move(f));
 }

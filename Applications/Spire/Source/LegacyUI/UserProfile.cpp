@@ -12,64 +12,49 @@
 
 using namespace Beam;
 using namespace boost;
-using namespace boost::local_time;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::TelemetryService;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 
 namespace {
   std::shared_ptr<TimeAndSalesModel> time_and_sales_model_builder(
-      const Security& security, MarketDataClientBox client) {
+      const Security& security, MarketDataClient client) {
     return std::make_shared<ServiceTimeAndSalesModel>(security, client);
   }
 
   std::shared_ptr<BookViewModel> book_view_model_builder(
-      const Security& security, const MarketDatabase& markets,
-      BlotterSettings& blotter, MarketDataClientBox client) {
-    return std::make_shared<ServiceBookViewModel>(
-      security, markets, blotter, client);
+      const Security& security, BlotterSettings& blotter,
+      MarketDataClient client) {
+    return std::make_shared<ServiceBookViewModel>(security, blotter, client);
   }
 }
 
 UserProfile::UserProfile(const std::string& username, bool isAdministrator,
-    bool isManager, const CountryDatabase& countryDatabase,
-    const tz_database& timeZoneDatabase,
-    const CurrencyDatabase& currencyDatabase,
-    const std::vector<ExchangeRate>& exchangeRates,
-    const MarketDatabase& marketDatabase,
-    const DestinationDatabase& destinationDatabase,
+    bool isManager, const std::vector<ExchangeRate>& exchangeRates,
     const EntitlementDatabase& entitlementDatabase,
     const AdditionalTagDatabase& additionalTagDatabase,
     BookViewProperties book_view_properties,
-    TimeAndSalesProperties time_and_sales_properties,
-    ServiceClientsBox serviceClients, TelemetryClientBox telemetryClient)
+    TimeAndSalesProperties time_and_sales_properties, Clients clients)
 BEAM_SUPPRESS_THIS_INITIALIZER()
     : m_username(username),
       m_isAdministrator(isAdministrator),
       m_isManager(isManager),
-      m_countryDatabase(countryDatabase),
-      m_timeZoneDatabase(timeZoneDatabase),
-      m_currencyDatabase(currencyDatabase),
-      m_marketDatabase(marketDatabase),
-      m_destinationDatabase(destinationDatabase),
       m_entitlementDatabase(entitlementDatabase),
-      m_serviceClients(std::move(serviceClients)),
-      m_telemetryClient(std::move(telemetryClient)),
-      m_profilePath(get_profile_path(m_username)),
+      m_clients(std::move(clients)),
+      m_profilePath(std::filesystem::path(QStandardPaths::writableLocation(
+        QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
       m_recentlyClosedWindows(
         std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>()),
       m_security_info_query_model(
         std::make_shared<ServiceSecurityInfoQueryModel>(
-          m_marketDatabase, m_serviceClients.GetMarketDataClient())),
+          m_clients.get_market_data_client())),
       m_book_view_properties_window_factory(
         std::make_shared<BookViewPropertiesWindowFactory>(
           std::make_shared<LocalBookViewPropertiesModel>(
             std::move(book_view_properties)))),
       m_book_view_model_builder([=] (const auto& security) {
-        return book_view_model_builder(security, m_marketDatabase,
-          *m_blotterSettings, m_serviceClients.GetMarketDataClient());
+        return book_view_model_builder(
+          security, *m_blotterSettings, m_clients.get_market_data_client());
       }),
       m_time_and_sales_properties_window_factory(
         std::make_shared<TimeAndSalesPropertiesWindowFactory>(
@@ -77,15 +62,14 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
             std::move(time_and_sales_properties)))),
       m_time_and_sales_model_builder([=] (const auto& security) {
         return time_and_sales_model_builder(
-          security, m_serviceClients.GetMarketDataClient());
+          security, m_clients.get_market_data_client());
       }),
-BEAM_UNSUPPRESS_THIS_INITIALIZER()
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_additionalTagDatabase(additionalTagDatabase) {
-  m_keyBindings = load_key_bindings_profile(
-    m_profilePath, m_marketDatabase, m_destinationDatabase);
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
+  m_keyBindings = load_key_bindings_profile(m_profilePath);
   for(auto& exchangeRate : exchangeRates) {
-    m_exchangeRates.Add(exchangeRate);
+    m_exchangeRates.add(exchangeRate);
   }
   m_blotterSettings = std::make_unique<BlotterSettings>(Ref(*this));
 }
@@ -104,40 +88,16 @@ bool UserProfile::IsManager() const {
   return m_isAdministrator || m_isManager;
 }
 
-const CountryDatabase& UserProfile::GetCountryDatabase() const {
-  return m_countryDatabase;
-}
-
-const tz_database& UserProfile::GetTimeZoneDatabase() const {
-  return m_timeZoneDatabase;
-}
-
-const CurrencyDatabase& UserProfile::GetCurrencyDatabase() const {
-  return m_currencyDatabase;
-}
-
 const ExchangeRateTable& UserProfile::GetExchangeRates() const {
   return m_exchangeRates;
-}
-
-const MarketDatabase& UserProfile::GetMarketDatabase() const {
-  return m_marketDatabase;
-}
-
-const DestinationDatabase& UserProfile::GetDestinationDatabase() const {
-  return m_destinationDatabase;
 }
 
 const EntitlementDatabase& UserProfile::GetEntitlementDatabase() const {
   return m_entitlementDatabase;
 }
 
-ServiceClientsBox& UserProfile::GetServiceClients() const {
-  return m_serviceClients;
-}
-
-TelemetryClientBox& UserProfile::GetTelemetryClient() const {
-  return m_telemetryClient;
+Clients& UserProfile::GetClients() const {
+  return m_clients;
 }
 
 void UserProfile::CreateProfilePath() const {

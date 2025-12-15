@@ -13,7 +13,7 @@ optional<Security> SecurityDeck::get_top() const {
 }
 
 void SecurityDeck::add(const Security& security) {
-  if(security == Security()) {
+  if(!security) {
     return;
   }
   auto i = std::find(m_deck.begin(), m_deck.end(), security);

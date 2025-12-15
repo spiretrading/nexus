@@ -1,6 +1,7 @@
 #ifndef SPIRE_HOVER_OBSERVER_HPP
 #define SPIRE_HOVER_OBSERVER_HPP
-#include "Spire/Ui/Ui.hpp"
+#include <QWidget>
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

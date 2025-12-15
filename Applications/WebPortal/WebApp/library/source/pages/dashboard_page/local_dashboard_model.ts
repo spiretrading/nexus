@@ -13,21 +13,21 @@ export class LocalDashboardModel extends DashboardModel {
    * @param entitlementDatabase - The entitlement database to use.
    * @param countryDatabase - The country database to use.
    * @param currencyDatabase - The currency database to use.
-   * @param marketDatabase - The market database to use.
+   * @param venueDatabase - The venue database to use.
    * @param accountDirectoryModel - The AccountDirectoryModel to return.
    */
   constructor(account: Beam.DirectoryEntry, roles: Nexus.AccountRoles,
       entitlementDatabase: Nexus.EntitlementDatabase,
       countryDatabase: Nexus.CountryDatabase,
       currencyDatabase: Nexus.CurrencyDatabase,
-      marketDatabase: Nexus.MarketDatabase,
+      venueDatabase: Nexus.VenueDatabase,
       accountDirectoryModel: AccountDirectoryModel) {
     super();
     this._isLoaded = false;
     this._entitlementDatabase = entitlementDatabase;
     this._countryDatabase = countryDatabase;
     this._currencyDatabase = currencyDatabase;
-    this._marketDatabase = marketDatabase;
+    this._venueDatabase = venueDatabase;
     this._account = account;
     this._roles = roles;
     this._accountDirectoryModel = accountDirectoryModel;
@@ -54,9 +54,9 @@ export class LocalDashboardModel extends DashboardModel {
     return this._currencyDatabase;
   }
 
-  public get marketDatabase(): Nexus.MarketDatabase {
+  public get venueDatabase(): Nexus.VenueDatabase {
     this.ensureLoaded();
-    return this._marketDatabase;
+    return this._venueDatabase;
   }
 
   public get account(): Beam.DirectoryEntry {
@@ -115,7 +115,7 @@ export class LocalDashboardModel extends DashboardModel {
   private _entitlementDatabase: Nexus.EntitlementDatabase;
   private _countryDatabase: Nexus.CountryDatabase;
   private _currencyDatabase: Nexus.CurrencyDatabase;
-  private _marketDatabase: Nexus.MarketDatabase;
+  private _venueDatabase: Nexus.VenueDatabase;
   private _account: Beam.DirectoryEntry;
   private _roles: Nexus.AccountRoles;
   private _accountDirectoryModel: AccountDirectoryModel;

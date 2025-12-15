@@ -3,9 +3,10 @@
 #include <QLabel>
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Slider.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Box;
+
 namespace Styles {
 
   /** Selects the pad of the track. */

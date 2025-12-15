@@ -3,7 +3,6 @@
 #include <functional>
 #include "Spire/Styles/Block.hpp"
 #include "Spire/Styles/Selector.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
@@ -73,7 +72,7 @@ namespace Spire::Styles {
 namespace std {
   template<>
   struct hash<Spire::Styles::Rule> {
-    std::size_t operator ()(const Spire::Styles::Rule& rule) const;
+    std::size_t operator ()(const Spire::Styles::Rule& rule) const noexcept;
   };
 }
 

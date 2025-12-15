@@ -5,7 +5,6 @@
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/OpenPositionsWidget.hpp"
 #include "Spire/Blotter/OrderLogWidget.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 
@@ -39,7 +38,7 @@ namespace Spire {
         Beam::Out<QWidget> widget) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::string m_blotterName;
       QByteArray m_geometry;
       QByteArray m_splitterState;
@@ -47,18 +46,18 @@ namespace Spire {
       OrderLogWidget::UIState m_orderLogWidgetState;
       ActivityLogWidget::UIState m_activityLogWidgetState;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void BlotterWindowSettings::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("blotter_name", m_blotterName);
-    shuttle.Shuttle("geometry", m_geometry);
-    shuttle.Shuttle("splitter_state", m_splitterState);
-    shuttle.Shuttle("open_positions_widget_state", m_openPositionsWidgetState);
-    shuttle.Shuttle("order_log_widget_state", m_orderLogWidgetState);
-    shuttle.Shuttle("activity_log_widget_state", m_activityLogWidgetState);
+  template<Beam::IsShuttle S>
+  void BlotterWindowSettings::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("blotter_name", m_blotterName);
+    shuttle.shuttle("geometry", m_geometry);
+    shuttle.shuttle("splitter_state", m_splitterState);
+    shuttle.shuttle("open_positions_widget_state", m_openPositionsWidgetState);
+    shuttle.shuttle("order_log_widget_state", m_orderLogWidgetState);
+    shuttle.shuttle("activity_log_widget_state", m_activityLogWidgetState);
   }
 }
 

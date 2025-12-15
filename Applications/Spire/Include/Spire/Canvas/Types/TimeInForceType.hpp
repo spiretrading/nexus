@@ -1,6 +1,6 @@
 #ifndef SPIRE_TIMEINFORCETYPE_HPP
 #define SPIRE_TIMEINFORCETYPE_HPP
-#include "Nexus/Definitions/Definitions.hpp"
+#include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Types/NativeType.hpp"
 
@@ -27,16 +27,16 @@ namespace Spire {
       virtual void Apply(CanvasTypeVisitor& visitor) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
       TimeInForceType() = default;
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void TimeInForceType::Shuttle(Shuttler& shuttle, unsigned int version) {
-    NativeType::Shuttle(shuttle, version);
+  template<Beam::IsShuttle S>
+  void TimeInForceType::shuttle(S& shuttle, unsigned int version) {
+    NativeType::shuttle(shuttle, version);
   }
 }
 

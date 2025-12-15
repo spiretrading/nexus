@@ -5,7 +5,6 @@
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {

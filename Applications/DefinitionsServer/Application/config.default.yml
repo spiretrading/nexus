@@ -17,7 +17,7 @@ ntp_pool: ["0.pool.ntp.org:123",
 countries: countries.yml
 currencies: currencies.yml
 destinations: destinations.yml
-markets: markets.yml
+venues: venues.yml
 time_zones: date_time_zonespec.csv
 exchange_rates:
   - symbol: USD/CAD

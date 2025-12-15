@@ -72,7 +72,8 @@ export class NewRuleModal extends React.Component<Properties, State> {
       return (
         <div key={i} className={css(className)}
             onClick={() => this.onClickRule(i)}>
-          {Nexus.ComplianceRuleSchema.toTitleCase(schema)}
+          {Nexus.ComplianceRuleSchema.toTitleCase(
+            Nexus.getUnwrappedName(schema))}
         </div>);
     });
     return (

@@ -1,173 +1,102 @@
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
-#include "Nexus/AccountingTests/BookkeeperTestHelper.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+#include "Nexus/Definitions/Security.hpp"
 
 using namespace Nexus;
-using namespace Nexus::Accounting;
-using namespace Nexus::Accounting::Tests;
+using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::DefaultVenues;
 
 namespace {
-  using TestPosition = Position<std::string>;
-  using TestInventory = Inventory<TestPosition>;
-  using TestTrueAverageBookkeeper = TrueAverageBookkeeper<TestInventory>;
+  auto TST = Security("TST", TSX);
+  auto S32 = Security("S32", ASX);
 }
 
 TEST_SUITE("TrueAverageBookkeeper") {
-  TEST_CASE("add_transaction_no_fees") {
-    auto bookkeeper = TestTrueAverageBookkeeper();
-
-    // Buy 1 unit of Coke for $1.
-    bookkeeper.RecordTransaction("Coke", DefaultCurrencies::USD(), 1,
-      Money::ONE, Money::ZERO);
-
-    // Pull it out and run Tests on it.
-    auto cokeEntry = bookkeeper.GetInventory("Coke", DefaultCurrencies::USD());
-    REQUIRE(cokeEntry.m_position.m_costBasis == Money::ONE);
-    REQUIRE(cokeEntry.m_fees == Money::ZERO);
-    REQUIRE(cokeEntry.m_grossProfitAndLoss == Money::ZERO);
-    REQUIRE(cokeEntry.m_position.m_quantity == 1);
+  TEST_CASE("empty_bookkeeper") {
+    auto bookkeeper = TrueAverageBookkeeper();
+    auto cad_inventory = bookkeeper.get_inventory(TST, CAD);
+    REQUIRE(is_empty(cad_inventory));
+    auto aud_inventory = bookkeeper.get_inventory(S32, AUD);
+    REQUIRE(is_empty(aud_inventory));
+    auto cad_total = bookkeeper.get_total(CAD);
+    REQUIRE(is_empty(cad_total));
+    auto aud_total = bookkeeper.get_total(AUD);
+    REQUIRE(is_empty(aud_total));
   }
 
-  TEST_CASE("add_transaction_with_fees") {
-    auto bookkeeper = TestTrueAverageBookkeeper();
-
-    // Buy 1 unit of Coke for $1 with $1 worth of fees.
-    bookkeeper.RecordTransaction("Coke", DefaultCurrencies::USD(), 1,
-      Money::ONE, Money::ONE);
-
-    // Pull it out and run Tests on it.
-    auto cokeEntry = bookkeeper.GetInventory("Coke", DefaultCurrencies::USD());
-    REQUIRE(cokeEntry.m_position.m_costBasis == Money::ONE);
-    REQUIRE(cokeEntry.m_fees == Money::ONE);
-    REQUIRE(cokeEntry.m_grossProfitAndLoss == Money::ZERO);
-    REQUIRE(cokeEntry.m_position.m_quantity == 1);
+  TEST_CASE("buy_and_sell_to_flat") {
+    auto bookkeeper = TrueAverageBookkeeper();
+    bookkeeper.record(TST, CAD, 100, 1000 * Money::ONE, Money::CENT);
+    auto& inventory1 = bookkeeper.get_inventory(TST, CAD);
+    REQUIRE(inventory1.m_position.m_quantity == 100);
+    REQUIRE(inventory1.m_position.m_cost_basis == 1000 * Money::ONE);
+    REQUIRE(inventory1.m_fees == Money::CENT);
+    REQUIRE(inventory1.m_gross_profit_and_loss == Money::ZERO);
+    bookkeeper.record(TST, CAD, -100, -1200 * Money::ONE, Money::CENT);
+    auto& inventory2 = bookkeeper.get_inventory(TST, CAD);
+    REQUIRE(inventory2.m_position.m_quantity == 0);
+    REQUIRE(inventory2.m_position.m_cost_basis == Money::ZERO);
+    REQUIRE(inventory2.m_fees == 2 * Money::CENT);
+    REQUIRE(inventory2.m_gross_profit_and_loss == 200 * Money::ONE);
+    auto& total = bookkeeper.get_total(CAD);
+    REQUIRE(total.m_position.m_quantity == 0);
+    REQUIRE(total.m_position.m_cost_basis == Money::ZERO);
+    REQUIRE(total.m_fees == 2 * Money::CENT);
+    REQUIRE(total.m_gross_profit_and_loss == 200 * Money::ONE);
   }
 
-  TEST_CASE("add_remove_transaction_at_flat") {
-    TestAddRemoveHelper<TestTrueAverageBookkeeper>(1, Money::ONE, Money::ZERO,
-      -1, Money::ONE, Money::ZERO, Money::ZERO, Money::ZERO);
+  TEST_CASE("sell_to_short_and_buy_to_flat") {
+    auto bookkeeper = TrueAverageBookkeeper();
+    bookkeeper.record(TST, CAD, -100, -1000 * Money::ONE, Money::CENT);
+    auto& inventory1 = bookkeeper.get_inventory(TST, CAD);
+    REQUIRE(inventory1.m_position.m_quantity == -100);
+    REQUIRE(inventory1.m_position.m_cost_basis == -1000 * Money::ONE);
+    REQUIRE(inventory1.m_fees == Money::CENT);
+    REQUIRE(inventory1.m_gross_profit_and_loss == Money::ZERO);
+    bookkeeper.record(TST, CAD, 100, 1200 * Money::ONE, Money::CENT);
+    auto& inventory2 = bookkeeper.get_inventory(TST, CAD);
+    REQUIRE(inventory2.m_position.m_quantity == 0);
+    REQUIRE(inventory2.m_position.m_cost_basis == Money::ZERO);
+    REQUIRE(inventory2.m_fees == 2 * Money::CENT);
+    REQUIRE(inventory2.m_gross_profit_and_loss == -200 * Money::ONE);
+    auto& total = bookkeeper.get_total(CAD);
+    REQUIRE(total.m_position.m_quantity == 0);
+    REQUIRE(total.m_position.m_cost_basis == Money::ZERO);
+    REQUIRE(total.m_fees == 2 * Money::CENT);
+    REQUIRE(total.m_gross_profit_and_loss == -200 * Money::ONE);
   }
 
-  TEST_CASE("add_remove_transaction_at_profit") {
-    TestAddRemoveHelper<TestTrueAverageBookkeeper>(1, Money::ONE, Money::ZERO,
-      -1, 2 * Money::ONE + 50 * Money::CENT, Money::ZERO, Money::ZERO,
-      Money::ONE + 50 * Money::CENT);
+  TEST_CASE("multiple_buys_and_sells") {
+    auto bookkeeper = TrueAverageBookkeeper();
+    bookkeeper.record(TST, CAD, 100, 1000 * Money::ONE, Money::ZERO);
+    bookkeeper.record(TST, CAD, 100, 1200 * Money::ONE, Money::ZERO);
+    auto& inventory1 = bookkeeper.get_inventory(TST, CAD);
+    REQUIRE(inventory1.m_position.m_quantity == 200);
+    REQUIRE(inventory1.m_position.m_cost_basis == 2200 * Money::ONE);
+    bookkeeper.record(TST, CAD, -150, -1950 * Money::ONE, Money::ZERO);
+    auto& inventory2 = bookkeeper.get_inventory(TST, CAD);
+    REQUIRE(inventory2.m_position.m_quantity == 50);
+    REQUIRE(inventory2.m_position.m_cost_basis == 550 * Money::ONE);
+    REQUIRE(inventory2.m_gross_profit_and_loss == 300 * Money::ONE);
   }
 
-  TEST_CASE("add_remove_transaction_at_loss") {
-    TestAddRemoveHelper<TestTrueAverageBookkeeper>(1, Money::ONE, Money::ZERO,
-      -1, 50 * Money::CENT, Money::ZERO, Money::ZERO, -50 * Money::CENT);
-  }
-
-  TEST_CASE("add_two_remove_one_transaction_at_flat") {
-    TestAddRemoveHelper<TestTrueAverageBookkeeper>(2, 2 * Money::ONE,
-      Money::ZERO, -1, Money::ONE, Money::ZERO, Money::ONE, Money::ZERO);
-  }
-
-  TEST_CASE("add_two_remove_one_transaction_at_profit") {
-    TestAddRemoveHelper<TestTrueAverageBookkeeper>(2, 2 * Money::ONE,
-      Money::ZERO, -1, 2 * Money::ONE, Money::ZERO, Money::ONE, Money::ONE);
-  }
-
-  TEST_CASE("add_two_remove_one_transaction_at_loss") {
-    TestAddRemoveHelper<TestTrueAverageBookkeeper>(2, 2 * Money::ONE,
-      Money::ZERO, -1, 50 * Money::CENT, Money::ZERO, Money::ONE,
-      -50 * Money::CENT);
-  }
-
-  TEST_CASE("add_one_remove_two_transaction_at_flat") {
-    TestAddRemoveHelper<TestTrueAverageBookkeeper>(1, Money::ONE, Money::ZERO,
-      -2, 2 * Money::ONE, Money::ZERO, -Money::ONE, Money::ZERO);
-  }
-
-  TEST_CASE("add_one_remove_two_transaction_at_profit") {
-    TestAddRemoveHelper<TestTrueAverageBookkeeper>(1, Money::ONE, Money::ZERO,
-      -2, 4 * Money::ONE, Money::ZERO, -2 * Money::ONE, Money::ONE);
-  }
-
-  TEST_CASE("add_one_remove_two_transaction_at_loss") {
-    TestAddRemoveHelper<TestTrueAverageBookkeeper>(1, Money::ONE, Money::ZERO,
-      -2, Money::ONE, Money::ZERO, -50 * Money::CENT, -50 * Money::CENT);
-  }
-
-  TEST_CASE("reset_cost_basis_when_flat") {
-    auto bookkeeper = TestTrueAverageBookkeeper();
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
-      -100 * *Money::FromValue("32.84"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
-      -100 * *Money::FromValue("32.835"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
-      -100 * *Money::FromValue("32.82"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
-      -100 * *Money::FromValue("32.83"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
-      -100 * *Money::FromValue("32.83"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
-      -100 * *Money::FromValue("32.825"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
-      -100 * *Money::FromValue("32.825"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
-      -100 * *Money::FromValue("32.825"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
-      -100 * *Money::FromValue("32.825"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
-      -100 * *Money::FromValue("32.825"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
-      -100 * *Money::FromValue("32.825"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
-      -100 * *Money::FromValue("32.825"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
-      -100 * *Money::FromValue("32.825"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
-      -100 * *Money::FromValue("32.825"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
-      -100 * *Money::FromValue("32.825"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
-      -100 * *Money::FromValue("32.825"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -100,
-      -100 * *Money::FromValue("32.825"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -700,
-      -700 * *Money::FromValue("32.83"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -800,
-      -800 * *Money::FromValue("32.83"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
-      100 * *Money::FromValue("32.84"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
-      100 * *Money::FromValue("32.84"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
-      100 * *Money::FromValue("32.84"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
-      100 * *Money::FromValue("32.84"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 200,
-      200 * *Money::FromValue("32.84"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
-      100 * *Money::FromValue("32.84"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 300,
-      300 * *Money::FromValue("32.84"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 200,
-      200 * *Money::FromValue("32.84"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 200,
-      200 * *Money::FromValue("32.84"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 200,
-      200 * *Money::FromValue("32.84"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 200,
-      200 * *Money::FromValue("32.84"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 900,
-      900 * *Money::FromValue("32.84"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
-      100 * *Money::FromValue("32.84"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
-      100 * *Money::FromValue("32.84"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
-      100 * *Money::FromValue("32.84"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 100,
-      100 * *Money::FromValue("32.84"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), -200,
-      -200 * *Money::FromValue("32.885"), Money::ZERO);
-    bookkeeper.RecordTransaction("TST", DefaultCurrencies::CAD(), 300,
-      300 * *Money::FromValue("32.89"), Money::ZERO);
-    auto inventory = bookkeeper.GetInventory("TST", DefaultCurrencies::CAD());
-    REQUIRE(inventory.m_position.m_costBasis == Money::ZERO);
+  TEST_CASE("multiple_inventories_and_currencies") {
+    auto bookkeeper = TrueAverageBookkeeper();
+    bookkeeper.record(TST, CAD, 100, 1000 * Money::ONE, Money::CENT);
+    bookkeeper.record(S32, AUD, 50, 7500 * Money::ONE, Money::CENT);
+    auto& tst_inventory = bookkeeper.get_inventory(TST, CAD);
+    REQUIRE(tst_inventory.m_position.m_quantity == 100);
+    REQUIRE(tst_inventory.m_position.m_cost_basis == 1000 * Money::ONE);
+    auto& msft_inventory = bookkeeper.get_inventory(S32, AUD);
+    REQUIRE(msft_inventory.m_position.m_quantity == 50);
+    REQUIRE(msft_inventory.m_position.m_cost_basis == 7500 * Money::ONE);
+    auto& cad_total = bookkeeper.get_total(CAD);
+    REQUIRE(cad_total.m_position.m_quantity == 100);
+    REQUIRE(cad_total.m_position.m_cost_basis == 1000 * Money::ONE);
+    REQUIRE(cad_total.m_fees == Money::CENT);
+    auto& aud_total = bookkeeper.get_total(AUD);
+    REQUIRE(aud_total.m_position.m_quantity == 50);
+    REQUIRE(aud_total.m_position.m_cost_basis == 7500 * Money::ONE);
+    REQUIRE(aud_total.m_fees == Money::CENT);
   }
 }

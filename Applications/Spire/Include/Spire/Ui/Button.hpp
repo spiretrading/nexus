@@ -3,7 +3,6 @@
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/ClickObserver.hpp"
 #include "Spire/Ui/PressObserver.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -26,8 +25,10 @@ namespace Styles {
        */
       explicit Button(QWidget* body, QWidget* parent = nullptr);
 
+      /** Returns the body of the Button. */
       const QWidget& get_body() const;
 
+      /** Returns the body of the Button. */
       QWidget& get_body();
 
       /** Connects a slot to the click signal. */
@@ -41,8 +42,8 @@ namespace Styles {
     private:
       mutable ClickSignal m_click_signal;
       QWidget* m_body;
-      PressObserver m_press_observer;
       ClickObserver m_click_observer;
+      PressObserver m_press_observer;
 
       void on_press_start(PressObserver::Reason reason);
       void on_press_end(PressObserver::Reason reason);

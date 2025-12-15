@@ -27,10 +27,6 @@ bool PseudoElement::operator ==(const PseudoElement& element) const {
   return operations.m_is_equal(*this, element);
 }
 
-bool PseudoElement::operator !=(const PseudoElement& element) const {
-  return !(*this == element);
-}
-
 SelectConnection Spire::Styles::select(const PseudoElement& element,
     const Stylist& base, const SelectionUpdateSignal& on_update) {
   auto& operations = PseudoElement::m_operations.at(element.get_type());
@@ -38,7 +34,7 @@ SelectConnection Spire::Styles::select(const PseudoElement& element,
 }
 
 std::size_t std::hash<PseudoElement>::operator ()(
-    const PseudoElement& element) const {
+    const PseudoElement& element) const noexcept {
   auto seed = std::size_t(0);
   hash_combine(seed, std::hash<std::type_index>()(element.get_type()));
   auto& operations = PseudoElement::m_operations.at(element.get_type());

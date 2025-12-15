@@ -21,9 +21,7 @@
 #include "ui_PortfolioViewerWindow.h"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
@@ -33,14 +31,13 @@ namespace {
       UserProfile& userProfile) {
     auto& blotter = userProfile.GetBlotterSettings().GetConsolidatedBlotter(
       entry.m_account);
-    auto orderFields = OrderFields::MakeMarketOrder(
-      blotter.GetExecutingAccount(),
-      entry.m_inventory.m_position.m_key.m_index,
-      entry.m_inventory.m_position.m_key.m_currency,
-      GetOpposite(GetSide(entry.m_inventory.m_position)),
-      userProfile.GetDestinationDatabase().GetPreferredDestination(
-      entry.m_inventory.m_position.m_key.m_index.GetMarket()).m_id,
-      Abs(entry.m_inventory.m_position.m_quantity));
+    auto orderFields = make_market_order_fields(blotter.GetExecutingAccount(),
+      entry.m_inventory.m_position.m_security,
+      entry.m_inventory.m_position.m_currency,
+      get_opposite(get_side(entry.m_inventory.m_position)),
+      userProfile.GetDestinationDatabase().get_preferred_destination(
+      entry.m_inventory.m_position.m_security.get_venue()).m_id,
+      abs(entry.m_inventory.m_position.m_quantity));
     auto orderNode = MakeOrderTaskNodeFromOrderFields(orderFields,
       userProfile);
     auto& taskEntry = blotter.GetTasksModel().Add(*orderNode);
@@ -53,7 +50,7 @@ PortfolioViewerWindow::PortfolioViewerWindow(Ref<UserProfile> userProfile,
     Qt::WindowFlags flags)
     : QFrame(parent, flags),
       m_ui(std::make_unique<Ui_PortfolioViewerWindow>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
   m_statusBar = new QStatusBar(this);
   m_statusBar->setStyleSheet("QStatusBar::item { border: 0px solid black };");
@@ -123,7 +120,7 @@ void PortfolioViewerWindow::SetProperties(
 }
 
 unique_ptr<WindowSettings> PortfolioViewerWindow::GetWindowSettings() const {
-  m_selectionModel->UpdateProperties(Store(m_properties));
+  m_selectionModel->UpdateProperties(out(m_properties));
   auto settings = std::make_unique<PortfolioViewerWindowSettings>(*this);
   return std::move(settings);
 }
@@ -134,7 +131,7 @@ void PortfolioViewerWindow::showEvent(QShowEvent* event) {
 }
 
 void PortfolioViewerWindow::closeEvent(QCloseEvent* event) {
-  m_selectionModel->UpdateProperties(Store(m_properties));
+  m_selectionModel->UpdateProperties(out(m_properties));
   auto settings = std::make_unique<PortfolioViewerWindowSettings>(*this);
   m_userProfile->SetInitialPortfolioViewerWindowSettings(*settings);
   m_userProfile->SetDefaultPortfolioViewerProperties(m_properties);

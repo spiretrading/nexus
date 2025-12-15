@@ -7,7 +7,6 @@
 #include "Spire/Dashboard/DashboardCell.hpp"
 #include "Spire/Dashboard/DashboardCellRenderer.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

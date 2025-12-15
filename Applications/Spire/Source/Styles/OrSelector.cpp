@@ -77,7 +77,7 @@ SelectConnection Spire::Styles::select(const OrSelector& selector,
 }
 
 std::size_t std::hash<OrSelector>::operator ()(
-    const OrSelector& selector) const {
+    const OrSelector& selector) const noexcept {
   auto seed = std::size_t(0);
   hash_combine(seed, std::hash<Selector>()(selector.get_left()));
   hash_combine(seed, std::hash<Selector>()(selector.get_right()));

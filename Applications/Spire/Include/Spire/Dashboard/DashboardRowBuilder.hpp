@@ -5,9 +5,9 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardCell.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class UserProfile;
 
   /*! \class DashboardRowBuilder
       \brief Constructs a DashboardRow.
@@ -30,17 +30,17 @@ namespace Spire {
       virtual std::unique_ptr<DashboardRowBuilder> Clone() const = 0;
 
     protected:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
       //! Constructs a DashboardRowBuilder.
       DashboardRowBuilder() = default;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void DashboardRowBuilder::Shuttle(Shuttler& shuttle, unsigned int version) {}
+  template<Beam::IsShuttle S>
+  void DashboardRowBuilder::shuttle(S& shuttle, unsigned int version) {}
 }
 
 #endif

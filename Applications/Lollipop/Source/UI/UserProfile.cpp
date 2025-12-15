@@ -9,8 +9,6 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::local_time;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::TelemetryService;
 using namespace Spire;
 using namespace Spire::UI;
 
@@ -19,27 +17,25 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
     const tz_database& timeZoneDatabase,
     const CurrencyDatabase& currencyDatabase,
     const std::vector<ExchangeRate>& exchangeRates,
-    const MarketDatabase& marketDatabase,
+    const VenueDatabase& venueDatabase,
     const DestinationDatabase& destinationDatabase,
-    const EntitlementDatabase& entitlementDatabase,
-    ServiceClientsBox serviceClients, TelemetryClientBox telemetryClient)
+    const EntitlementDatabase& entitlementDatabase, Clients clients)
     : m_username(username),
       m_isAdministrator(isAdministrator),
       m_isManager(isManager),
       m_countryDatabase(countryDatabase),
       m_timeZoneDatabase(timeZoneDatabase),
       m_currencyDatabase(currencyDatabase),
-      m_marketDatabase(marketDatabase),
+      m_venueDatabase(venueDatabase),
       m_destinationDatabase(destinationDatabase),
       m_entitlementDatabase(entitlementDatabase),
-      m_serviceClients(std::move(serviceClients)),
-      m_telemetryClient(std::move(telemetryClient)),
+      m_clients(std::move(clients)),
       m_profilePath(std::filesystem::path(QStandardPaths::writableLocation(
         QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_interactionProperties(InteractionsProperties::GetDefaultProperties()) {
   for(auto& exchangeRate : exchangeRates) {
-    m_exchangeRates.Add(exchangeRate);
+    m_exchangeRates.add(exchangeRate);
   }
   m_blotterSettings = std::make_unique<BlotterSettings>(Ref(*this));
 }
@@ -74,8 +70,8 @@ const ExchangeRateTable& UserProfile::GetExchangeRates() const {
   return m_exchangeRates;
 }
 
-const MarketDatabase& UserProfile::GetMarketDatabase() const {
-  return m_marketDatabase;
+const VenueDatabase& UserProfile::GetVenueDatabase() const {
+  return m_venueDatabase;
 }
 
 const DestinationDatabase& UserProfile::GetDestinationDatabase() const {
@@ -86,12 +82,8 @@ const EntitlementDatabase& UserProfile::GetEntitlementDatabase() const {
   return m_entitlementDatabase;
 }
 
-ServiceClientsBox& UserProfile::GetServiceClients() const {
-  return m_serviceClients;
-}
-
-TelemetryClientBox& UserProfile::GetTelemetryClient() const {
-  return m_telemetryClient;
+Clients& UserProfile::GetClients() const {
+  return m_clients;
 }
 
 void UserProfile::CreateProfilePath() const {
@@ -241,7 +233,7 @@ const RegionMap<InteractionsProperties>&
 Quantity
     UserProfile::GetDefaultQuantity(const Security& security, Side side) const {
   auto baseQuantity =
-    GetInteractionProperties().Get(security).m_defaultQuantity;
+    GetInteractionProperties().get(security).m_defaultQuantity;
   if(baseQuantity <= 0) {
     return 0;
   }
@@ -256,9 +248,9 @@ Quantity
   }();
   if(side == Side::BID && currentQuantity < 0 ||
       side == Side::ASK && currentQuantity > 0) {
-    return std::min(baseQuantity, Abs(currentQuantity));
+    return std::min(baseQuantity, abs(currentQuantity));
   } else {
-    return baseQuantity - Abs(currentQuantity) % baseQuantity;
+    return baseQuantity - abs(currentQuantity) % baseQuantity;
   }
 }
 

@@ -3,7 +3,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <QDialog>
 #include "Spire/KeyBindings/KeyBindings.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class QKeySequence;
 class QTableWidgetItem;
@@ -35,15 +35,15 @@ namespace Spire {
       std::unique_ptr<Ui_TaskKeyBindingsDialog> m_ui;
       UserProfile* m_userProfile;
       KeyBindings m_keyBindings;
-      std::vector<Nexus::MarketCode> m_markets;
-      Nexus::MarketCode m_currentMarket;
+      std::vector<Nexus::Venue> m_venues;
+      Nexus::Venue m_currentVenue;
       QKeySequence m_currentKeyBinding;
       int m_currentIndex;
 
       QKeySequence GetCurrentKeyBinding() const;
       void PopulateComboBox();
       void Commit();
-      void OnMarketChanged(int index);
+      void OnVenueChanged(int index);
       void OnKeyChanged(int index);
       void OnTaskNameChanged(const QString& text);
       void OnOkButton();

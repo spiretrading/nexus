@@ -1,10 +1,9 @@
 #ifndef NEXUS_XCX2_FEE_TABLE_HPP
 #define NEXUS_XCX2_FEE_TABLE_HPP
 #include <array>
+#include <unordered_set>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include "Nexus/Definitions/Money.hpp"
-#include "Nexus/FeeHandling/FeeHandling.hpp"
-#include "Nexus/FeeHandling/LiquidityFlag.hpp"
+#include "Nexus/FeeHandling/ParseFeeTable.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
@@ -70,13 +69,14 @@ namespace Nexus {
     static constexpr auto TYPE_COUNT = std::size_t(7);
 
     /** The fee table for non-TSX listed securities. */
-    std::array<std::array<Money, TYPE_COUNT>, PRICE_CLASS_COUNT> m_defaultTable;
+    std::array<std::array<Money, TYPE_COUNT>, PRICE_CLASS_COUNT>
+      m_default_table;
 
     /** The fee table for TSX listed securities. */
-    std::array<std::array<Money, TYPE_COUNT>, PRICE_CLASS_COUNT> m_tsxTable;
+    std::array<std::array<Money, TYPE_COUNT>, PRICE_CLASS_COUNT> m_tsx_table;
 
     /** The large trade size threshold. */
-    Quantity m_largeTradeSize;
+    Quantity m_large_trade_size;
 
     /** The set of ETFs. */
     std::unordered_set<Security> m_etfs;
@@ -88,102 +88,100 @@ namespace Nexus {
    * @param etfs The set of ETF Securities.
    * @return The Xcx2FeeTable represented by the <i>config</i>.
    */
-  inline Xcx2FeeTable ParseXcx2FeeTable(const YAML::Node& config,
-      std::unordered_set<Security> etfs) {
-    auto feeTable = Xcx2FeeTable();
-    ParseFeeTable(config, "default_table",
-      Beam::Store(feeTable.m_defaultTable));
-    ParseFeeTable(config, "tsx_table", Beam::Store(feeTable.m_tsxTable));
-    feeTable.m_largeTradeSize =
-      Beam::Extract<Quantity>(config, "large_trade_size");
-    feeTable.m_etfs = std::move(etfs);
-    return feeTable;
+  inline Xcx2FeeTable parse_xcx2_fee_table(
+      const YAML::Node& config, std::unordered_set<Security> etfs) {
+    auto table = Xcx2FeeTable();
+    parse_fee_table(
+      config, "default_table", Beam::out(table.m_default_table));
+    parse_fee_table(config, "tsx_table", Beam::out(table.m_tsx_table));
+    table.m_large_trade_size =
+      Beam::extract<Quantity>(config, "large_trade_size");
+    table.m_etfs = std::move(etfs);
+    return table;
   }
 
   /**
    * Looks up a fee.
-   * @param feeTable The Xcx2FeeTable used to lookup the fee.
-   * @param orderFields The OrderFields the trade took place on.
+   * @param table The Xcx2FeeTable used to lookup the fee.
+   * @param fields The OrderFields the trade took place on.
    * @param type The trade's Type.
-   * @param priceClass The trade's PriceClass.
+   * @param price_class The trade's PriceClass.
    * @return The fee corresponding to the specified <i>type</i> and
-   *         <i>priceClass</i>.
+   *         <i>price_class</i>.
    */
-  inline Money LookupFee(const Xcx2FeeTable& feeTable,
-      const OrderExecutionService::OrderFields& fields, Xcx2FeeTable::Type type,
-      Xcx2FeeTable::PriceClass priceClass) {
-    if(fields.m_security.GetMarket() == DefaultMarkets::TSX()) {
-      return feeTable.m_tsxTable[static_cast<int>(priceClass)][
+  inline Money lookup_fee(const Xcx2FeeTable& table, const OrderFields& fields,
+      Xcx2FeeTable::Type type, Xcx2FeeTable::PriceClass price_class) {
+    if(fields.m_security.get_venue() == DefaultVenues::TSX) {
+      return table.m_tsx_table[static_cast<int>(price_class)][
         static_cast<int>(type)];
     } else {
-      return feeTable.m_defaultTable[static_cast<int>(priceClass)][
+      return table.m_default_table[static_cast<int>(price_class)][
         static_cast<int>(type)];
     }
   }
 
   /**
    * Calculates the fee on a trade executed on XCX2.
-   * @param feeTable The Xcx2FeeTable used to calculate the fee.
-   * @param orderFields The OrderFields the trade took place on.
-   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @param table The Xcx2FeeTable used to calculate the fee.
+   * @param fields The OrderFields the trade took place on.
+   * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */
-  inline Money CalculateFee(const Xcx2FeeTable& feeTable,
-      const OrderExecutionService::OrderFields& fields,
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    if(executionReport.m_lastQuantity == 0) {
+  inline Money calculate_fee(const Xcx2FeeTable& table,
+      const OrderFields& fields, const ExecutionReport& report) {
+    if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }
-    auto priceClass = [&] {
-      if(feeTable.m_etfs.count(fields.m_security) == 1) {
+    auto price_class = [&] {
+      if(table.m_etfs.contains(fields.m_security)) {
         return Xcx2FeeTable::PriceClass::ETF;
-      } else if(executionReport.m_lastPrice < 10 * Money::CENT) {
+      } else if(report.m_last_price < 10 * Money::CENT) {
         return Xcx2FeeTable::PriceClass::SUBDIME;
-      } else if(executionReport.m_lastPrice < Money::ONE) {
+      } else if(report.m_last_price < Money::ONE) {
         return Xcx2FeeTable::PriceClass::SUBDOLLAR;
-      } else if (executionReport.m_lastPrice < 5 * Money::ONE) {
+      } else if (report.m_last_price < 5 * Money::ONE) {
         return Xcx2FeeTable::PriceClass::SUB_FIVE_DOLLAR;
       } else {
         return Xcx2FeeTable::PriceClass::DEFAULT;
       }
     }();
     auto type = [&] {
-      if(executionReport.m_lastQuantity < 100) {
+      if(report.m_last_quantity < 100) {
         return Xcx2FeeTable::Type::ODD_LOT;
-      } else if(executionReport.m_liquidityFlag.size() == 1) {
-        if(executionReport.m_liquidityFlag[0] == 'P' ||
-            executionReport.m_liquidityFlag[0] == 'S') {
-          if(executionReport.m_lastQuantity >= feeTable.m_largeTradeSize) {
+      } else if(report.m_liquidity_flag.size() == 1) {
+        if(report.m_liquidity_flag[0] == 'P' ||
+            report.m_liquidity_flag[0] == 'S') {
+          if(report.m_last_quantity >= table.m_large_trade_size) {
             return Xcx2FeeTable::Type::LARGE_PASSIVE;
           } else {
             return Xcx2FeeTable::Type::PASSIVE;
           }
-        } else if(executionReport.m_liquidityFlag[0] == 'A' ||
-            executionReport.m_liquidityFlag[0] == 'C') {
-          if(executionReport.m_lastQuantity >= feeTable.m_largeTradeSize) {
+        } else if(report.m_liquidity_flag[0] == 'A' ||
+            report.m_liquidity_flag[0] == 'C') {
+          if(report.m_last_quantity >= table.m_large_trade_size) {
             return Xcx2FeeTable::Type::LARGE_ACTIVE;
           } else {
             return Xcx2FeeTable::Type::ACTIVE;
           }
-        } else if(executionReport.m_liquidityFlag[0] == 'a' ||
-            executionReport.m_liquidityFlag[0] == 'd') {
+        } else if(report.m_liquidity_flag[0] == 'a' ||
+            report.m_liquidity_flag[0] == 'd') {
           return Xcx2FeeTable::Type::HIDDEN_PASSIVE;
-        } else if(executionReport.m_liquidityFlag[0] == 'r' ||
-            executionReport.m_liquidityFlag[0] == 'D') {
+        } else if(report.m_liquidity_flag[0] == 'r' ||
+            report.m_liquidity_flag[0] == 'D') {
           return Xcx2FeeTable::Type::HIDDEN_ACTIVE;
         } else {
           std::cout << "Unknown liquidity flag [XCX2]: \"" <<
-            executionReport.m_liquidityFlag << "\"\n";
+            report.m_liquidity_flag << "\"\n";
           return Xcx2FeeTable::Type::PASSIVE;
         }
       } else {
         std::cout << "Unknown liquidity flag [XCX2]: \"" <<
-          executionReport.m_liquidityFlag << "\"\n";
+          report.m_liquidity_flag << "\"\n";
         return Xcx2FeeTable::Type::PASSIVE;
       }
     }();
-    auto fee = LookupFee(feeTable, fields, type, priceClass);
-    return executionReport.m_lastQuantity * fee;
+    auto fee = lookup_fee(table, fields, type, price_class);
+    return report.m_last_quantity * fee;
   }
 }
 

@@ -2,6 +2,7 @@
 #define SPIRE_TIME_AND_SALES_MODEL_HPP
 #include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 #include "Spire/Async/QtPromise.hpp"
+#include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/BboIndicator.hpp"
 
 namespace Spire {
@@ -37,7 +38,7 @@ namespace Spire {
        *         <i>sequence</i>.
        */
       virtual QtPromise<std::vector<Entry>> query_until(
-        Beam::Queries::Sequence sequence, int max_count) = 0;
+        Beam::Sequence sequence, int max_count) = 0;
 
       /* Connects a slot to the update signal. */
       virtual boost::signals2::connection connect_update_signal(

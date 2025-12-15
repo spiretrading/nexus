@@ -2,7 +2,6 @@
 #define NEXUS_NEX_FEE_TABLE_HPP
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/FeeHandling/FeeHandling.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 
 namespace Nexus {
@@ -19,24 +18,24 @@ namespace Nexus {
    * @param config The configuration to parse the NexFeeTable from.
    * @return The NexFeeTable represented by the <i>config</i>.
    */
-  inline NexFeeTable ParseNexFeeTable(const YAML::Node& config) {
-    auto feeTable = NexFeeTable();
-    feeTable.m_fee = Beam::Extract<Money>(config, "fee");
-    return feeTable;
+  inline NexFeeTable parse_nex_fee_table(const YAML::Node& config) {
+    auto table = NexFeeTable();
+    table.m_fee = Beam::extract<Money>(config, "fee");
+    return table;
   }
 
   /**
    * Calculates the fee on a trade executed on NEX.
-   * @param feeTable The NexFeeTable used to calculate the fee.
-   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @param table The NexFeeTable used to calculate the fee.
+   * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */
-  inline Money CalculateFee(const NexFeeTable& feeTable,
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    if(executionReport.m_lastQuantity == 0) {
+  inline Money calculate_fee(
+      const NexFeeTable& table, const ExecutionReport& report) {
+    if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }
-    return executionReport.m_lastQuantity * feeTable.m_fee;
+    return report.m_last_quantity * table.m_fee;
   }
 }
 

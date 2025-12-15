@@ -5,7 +5,7 @@
 #include <QWidget>
 #include "Nexus/Definitions/RegionMap.hpp"
 #include "Spire/KeyBindings/InteractionsProperties.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class Ui_InteractionsWidget;
 
@@ -17,7 +17,7 @@ namespace Spire {
   class InteractionsWidget : public QWidget {
     public:
 
-      //! Constructs an InteractionsWidget, call Initialize after construction.
+      //! Constructs an InteractionsWidget, call init after construction.
       /*!
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.

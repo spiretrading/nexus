@@ -1,5 +1,6 @@
 #include "Spire/KeyBindings/InteractionsWidget.hpp"
 #include <stdexcept>
+#include <Beam/Utilities/ToString.hpp>
 #include "Spire/LegacyUI/MoneySpinBox.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_InteractionsWidget.h"
@@ -56,34 +57,33 @@ InteractionsWidget::InteractionsWidget(QWidget* parent, Qt::WindowFlags flags)
 InteractionsWidget::~InteractionsWidget() = default;
 
 void InteractionsWidget::Initialize(Ref<UserProfile> userProfile) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_ui->m_regionComboBox->clear();
   auto globalRegion = RegionEntry();
-  globalRegion.m_region = Region::Global("Global");
+  globalRegion.m_region = Region::make_global("Global");
   Add(globalRegion);
-  for(auto& country : m_userProfile->GetCountryDatabase().GetEntries()) {
+  for(auto& country : DEFAULT_COUNTRIES.get_entries()) {
     auto region = RegionEntry();
-    region.m_region = country.m_code;
-    region.m_region.SetName(country.m_name);
+    region.m_region = Region(country.m_name);
+    region.m_region += country.m_code;
     Add(region);
   }
-  for(auto& market : m_userProfile->GetMarketDatabase().GetEntries()) {
+  for(auto& venue : DEFAULT_VENUES.get_entries()) {
     auto region = RegionEntry();
-    region.m_region = market;
-    region.m_region.SetName(market.m_displayName);
+    region.m_region = Region(venue.m_display_name);
+    region.m_region += venue.m_venue;
     Add(region);
   }
   auto regions =
     m_userProfile->GetKeyBindings()->make_interactions_key_bindings_regions();
   for(auto& regionKey : regions) {
-    if(regionKey.GetSecurities().empty()) {
+    if(regionKey.get_securities().empty()) {
       continue;
     }
     auto region = RegionEntry();
-    auto security = *regionKey.GetSecurities().begin();
-    region.m_region = security;
-    region.m_region.SetName(
-      ToString(security, m_userProfile->GetMarketDatabase()));
+    auto security = *regionKey.get_securities().begin();
+    region.m_region = Region(to_string(security));
+    region.m_region += security;
     Add(region);
   }
   Update();
@@ -91,12 +91,11 @@ void InteractionsWidget::Initialize(Ref<UserProfile> userProfile) {
 
 void InteractionsWidget::Initialize(
     Ref<UserProfile> userProfile, const Security& security) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_ui->m_regionComboBox->clear();
   auto region = RegionEntry();
-  region.m_region = security;
-  region.m_region.SetName(
-    ToString(security, m_userProfile->GetMarketDatabase()));
+  region.m_region = Region(to_string(security));
+  region.m_region += security;
   Add(region);
   Update();
 }
@@ -106,15 +105,15 @@ void InteractionsWidget::Add(RegionEntry region) {
     m_userProfile->GetKeyBindings()->make_interactions_key_bindings_regions();
   region.m_isActive =
     std::find(regions.begin(), regions.end(), region.m_region) != regions.end();
-  m_regions[region.m_region.GetName()] = region;
+  m_regions[region.m_region.get_name()] = region;
   m_ui->m_regionComboBox->addItem(
-    QString::fromStdString(region.m_region.GetName()));
+    QString::fromStdString(region.m_region.get_name()));
   Style(region);
 }
 
 void InteractionsWidget::Style(const RegionEntry& region) {
   auto index = m_ui->m_regionComboBox->findText(
-    QString::fromStdString(region.m_region.GetName()));
+    QString::fromStdString(region.m_region.get_name()));
   if(region.m_isActive) {
     auto textColor =
       m_ui->m_regionComboBox->palette().color(QPalette::Normal, QPalette::Text);
@@ -152,13 +151,13 @@ void InteractionsWidget::Update() {
     make_modifier(m_priceModifierIndex))->get());
   m_ui->m_cancelOnFillCheckBox->setChecked(
     interactions->is_cancel_on_fill()->get());
-  m_ui->m_activateRegionButton->setEnabled(region.m_region.IsGlobal());
+  m_ui->m_activateRegionButton->setEnabled(region.m_region.is_global());
   if(region.m_isActive) {
     m_ui->m_activateRegionButton->setText(tr("Deactivate"));
   } else {
     m_ui->m_activateRegionButton->setText(tr("Activate"));
   }
-  m_ui->m_activateRegionButton->setEnabled(!region.m_region.IsGlobal());
+  m_ui->m_activateRegionButton->setEnabled(!region.m_region.is_global());
   m_ui->m_resetRegionButton->setEnabled(region.m_isActive);
   m_ui->m_defaultQuantitySpinBox->setEnabled(region.m_isActive);
   m_ui->m_quantityIncrementSpinBox->setEnabled(region.m_isActive);

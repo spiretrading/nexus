@@ -5,6 +5,7 @@
 #include <QSpinBox>
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Canvas/Canvas.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire::LegacyUI {

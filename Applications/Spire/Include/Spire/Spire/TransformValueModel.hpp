@@ -37,7 +37,7 @@ namespace Details {
    *            into a value of type <i>T</i>.
    * @param <G> The type of callable used to invert <i>F</i>.
    */
-  template<typename T, typename U, typename F, typename G>
+  template<typename T, typename U, std::invocable<U> F, typename G>
   class TransformValueModel : public ValueModel<T> {
     public:
 
@@ -52,10 +52,7 @@ namespace Details {
        * @param f The callable used to perform the transformation.
        */
       template<typename FF>
-      TransformValueModel(
-        std::shared_ptr<ValueModel<Source>> source, FF&& f)
-        : TransformValueModel(std::move(source), std::forward<FF>(f),
-            Details::ThrowTransformInverter<Source>()) {}
+      TransformValueModel(std::shared_ptr<ValueModel<Source>> source, FF&& f);
 
       /**
        * Constructs a TransformValueModel.
@@ -63,11 +60,9 @@ namespace Details {
        * @param f The callable used to perform the transformation.
        * @param g The callable used to invert <i>f</i>.
        */
-      template<typename FF, std::invocable<Type> GG>
+      template<typename FF, std::invocable<T> GG>
       TransformValueModel(
-        std::shared_ptr<ValueModel<Source>> source, FF&& f, GG&& g)
-        : TransformValueModel(std::move(source), std::forward<FF>(f),
-            Details::TransformValueModelCollapser(std::forward<GG>(g))) {}
+        std::shared_ptr<ValueModel<Source>> source, FF&& f, GG&& g);
 
       /**
        * Constructs a TransformValueModel.
@@ -75,25 +70,14 @@ namespace Details {
        * @param f The callable used to perform the transformation.
        * @param g The callable used to invert <i>f</i>.
        */
-      template<typename FF, std::invocable<Source, Type> GG>
+      template<typename FF, typename GG>
       TransformValueModel(
-          std::shared_ptr<ValueModel<Source>> source, FF&& f, GG&& g)
-          : m_source(std::move(source)),
-            m_f(std::forward<FF>(f)),
-            m_g(std::forward<GG>(g)),
-            m_model(m_f(m_source->get())) {
-        m_connection = m_source->connect_update_signal(
-          std::bind_front(&TransformValueModel::on_update, this));
-      }
+        std::shared_ptr<ValueModel<Source>> source, FF&& f, GG&& g);
 
       QValidator::State get_state() const override;
-
       const Type& get() const override;
-
       QValidator::State test(const Type& value) const override;
-
       QValidator::State set(const Type& value) override;
-
       boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 
@@ -108,26 +92,23 @@ namespace Details {
   };
 
   template<typename T, typename F>
-  TransformValueModel(std::shared_ptr<T>, F&&) ->
-    TransformValueModel<std::remove_cvref_t<
-        std::invoke_result_t<F, typename T::Type>>,
-      typename T::Type, std::remove_reference_t<F>,
-      Details::ThrowTransformInverter<typename T::Type>>;
+  TransformValueModel(std::shared_ptr<T>, F&&) -> TransformValueModel<
+    std::remove_cvref_t<std::invoke_result_t<F, typename T::Type>>,
+    typename T::Type, std::remove_reference_t<F>,
+    Details::ThrowTransformInverter<typename T::Type>>;
 
   template<typename T, typename F,
     std::invocable<std::invoke_result_t<F, typename T::Type>> G>
-  TransformValueModel(std::shared_ptr<T>, F&&, G&&) ->
-    TransformValueModel<std::remove_cvref_t<
-        std::invoke_result_t<F, typename T::Type>>,
-      typename T::Type, std::remove_reference_t<F>,
-      Details::TransformValueModelCollapser<std::remove_reference_t<G>>>;
+  TransformValueModel(std::shared_ptr<T>, F&&, G&&) -> TransformValueModel<
+    std::remove_cvref_t<std::invoke_result_t<F, typename T::Type>>,
+    typename T::Type, std::remove_reference_t<F>,
+    Details::TransformValueModelCollapser<std::remove_reference_t<G>>>;
 
   template<typename T, typename F, std::invocable<
     typename T::Type, std::invoke_result_t<F, typename T::Type>> G>
-  TransformValueModel(std::shared_ptr<T>, F&&, G&&) ->
-    TransformValueModel<std::remove_cvref_t<
-        std::invoke_result_t<F, typename T::Type>>,
-      typename T::Type, std::remove_reference_t<F>, std::remove_reference_t<G>>;
+  TransformValueModel(std::shared_ptr<T>, F&&, G&&) -> TransformValueModel<
+    std::remove_cvref_t<std::invoke_result_t<F, typename T::Type>>,
+    typename T::Type, std::remove_reference_t<F>, std::remove_reference_t<G>>;
 
   template<typename T, typename F>
   auto make_transform_value_model(std::shared_ptr<T> source, F&& f) {
@@ -144,18 +125,44 @@ namespace Details {
       std::move(source), std::forward<F>(f), std::forward<G>(g));
   }
 
-  template<typename T, typename U, typename F, typename G>
+  template<typename T, typename U, std::invocable<U> F, typename G>
+  template<typename FF>
+  TransformValueModel<T, U, F, G>::TransformValueModel(
+    std::shared_ptr<ValueModel<Source>> source, FF&& f)
+    : TransformValueModel(std::move(source), std::forward<FF>(f),
+        Details::ThrowTransformInverter<Source>()) {}
+
+  template<typename T, typename U, std::invocable<U> F, typename G>
+  template<typename FF, std::invocable<T> GG>
+  TransformValueModel<T, U, F, G>::TransformValueModel(
+    std::shared_ptr<ValueModel<Source>> source, FF&& f, GG&& g)
+    : TransformValueModel(std::move(source), std::forward<FF>(f),
+        Details::TransformValueModelCollapser(std::forward<GG>(g))) {}
+
+  template<typename T, typename U, std::invocable<U> F, typename G>
+  template<typename FF, typename GG>
+  TransformValueModel<T, U, F, G>::TransformValueModel(
+      std::shared_ptr<ValueModel<Source>> source, FF&& f, GG&& g)
+      : m_source(std::move(source)),
+        m_f(std::forward<FF>(f)),
+        m_g(std::forward<GG>(g)),
+        m_model(m_f(m_source->get())) {
+    m_connection = m_source->connect_update_signal(
+      std::bind_front(&TransformValueModel::on_update, this));
+  }
+
+  template<typename T, typename U, std::invocable<U> F, typename G>
   QValidator::State TransformValueModel<T, U, F, G>::get_state() const {
     return m_source->get_state();
   }
 
-  template<typename T, typename U, typename F, typename G>
+  template<typename T, typename U, std::invocable<U> F, typename G>
   const typename TransformValueModel<T, U, F, G>::Type&
       TransformValueModel<T, U, F, G>::get() const {
     return m_model.get();
   }
 
-  template<typename T, typename U, typename F, typename G>
+  template<typename T, typename U, std::invocable<U> F, typename G>
   QValidator::State TransformValueModel<T, U, F, G>::test(
       const Type& value) const {
     try {
@@ -165,7 +172,7 @@ namespace Details {
     }
   }
 
-  template<typename T, typename U, typename F, typename G>
+  template<typename T, typename U, std::invocable<U> F, typename G>
   QValidator::State TransformValueModel<T, U, F, G>::set(const Type& value) {
     try {
       return m_source->set(m_g(m_source->get(), value));
@@ -174,14 +181,14 @@ namespace Details {
     }
   }
 
-  template<typename T, typename U, typename F, typename G>
+  template<typename T, typename U, std::invocable<U> F, typename G>
   boost::signals2::connection
       TransformValueModel<T, U, F, G>::connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const {
     return m_model.connect_update_signal(slot);
   }
 
-  template<typename T, typename U, typename F, typename G>
+  template<typename T, typename U, std::invocable<U> F, typename G>
   void TransformValueModel<T, U, F, G>::on_update(const Source& value) {
     m_model.set(m_f(value));
   }

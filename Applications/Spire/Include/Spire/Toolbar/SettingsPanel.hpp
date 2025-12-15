@@ -1,11 +1,11 @@
 #ifndef SPIRE_SETTINGS_PANEL_HPP
 #define SPIRE_SETTINGS_PANEL_HPP
 #include <QWidget>
-#include "Spire/Toolbar/Toolbar.hpp"
 #include "Spire/Toolbar/UserSettings.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Button;
+  class OverlayPanel;
 
   /** Displays a panel for selecting settings to import or export. */
   class SettingsPanel : public QWidget {
@@ -40,8 +40,8 @@ namespace Spire {
        * @param categories The selected settings.
        * @param parent The parent widget.
        */
-      SettingsPanel(Mode mode,
-        std::shared_ptr<UserSettings::CategoriesModel> categories,
+      SettingsPanel(
+        Mode mode, std::shared_ptr<UserSettings::CategoriesModel> categories,
         QWidget& parent);
 
       /** Returns the selected settings. */

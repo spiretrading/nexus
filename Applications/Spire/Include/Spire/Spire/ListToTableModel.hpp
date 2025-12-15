@@ -42,16 +42,11 @@ namespace Spire {
       const std::shared_ptr<ListModel<Type>>& get_source() const;
 
       int get_row_size() const override;
-
       int get_column_size() const override;
-
       AnyRef at(int row, int column) const override;
-
       QValidator::State
         set(int row, int column, const std::any& value) override;
-
       QValidator::State remove(int row) override;
-
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
 

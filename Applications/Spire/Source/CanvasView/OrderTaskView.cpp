@@ -29,8 +29,8 @@ using namespace Spire;
 OrderTaskView::OrderTaskView(const DisplayWidgetSlot& displayWidgetSlot,
   const RemoveWidgetSlot& removeWidgetSlot, Ref<QWidget> parent,
   Ref<UserProfile> userProfile)
-  : m_parent(parent.Get()),
-    m_userProfile(userProfile.Get()),
+  : m_parent(parent.get()),
+    m_userProfile(userProfile.get()),
     m_isTaskEntryWidgetForInteractionsProperties(false),
     m_taskEntryWidget(nullptr),
     m_displayWidgetSlot(displayWidgetSlot),
@@ -45,12 +45,11 @@ bool OrderTaskView::HandleKeyPressEvent(const QKeyEvent& event,
   m_state = &state;
   if(m_taskEntryWidget) {
     return HandleTaskInputEvent(event);
-  } else if(security != Security()) {
+  } else if(security) {
     auto& keyBindings = *m_userProfile->GetKeyBindings();
     auto taskBinding =
       find_order_task_arguments(*keyBindings.get_order_task_arguments(),
-        m_userProfile->GetMarketDatabase().FromCode(security.GetMarket()),
-        event.key());
+        security.get_venue(), event.key());
     if(taskBinding) {
       return HandleKeyBindingEvent(*taskBinding);
     }
@@ -89,7 +88,7 @@ void OrderTaskView::ExecuteTask(const CanvasNode& node) {
   }
   auto& entry = activeBlotter.GetTasksModel().Add(node);
   m_tasksExecuted[*m_state->m_security].push_back(entry.m_task);
-  entry.m_task->GetPublisher().Monitor(m_slotHandler.GetSlot<Task::StateEntry>(
+  entry.m_task->GetPublisher().monitor(m_slotHandler.get_slot<Task::StateEntry>(
     [=, security = *m_state->m_security, task = entry.m_task] (
         const Task::StateEntry& update) {
       OnTaskState(task, security, update);
@@ -107,7 +106,7 @@ std::unique_ptr<CanvasNode>
         dynamic_cast<const SecurityNode*>(&*securityNode)) {
       auto builder = CanvasNodeBuilder(*taskNode);
       builder.Replace(*securityNode, securityValueNode->SetValue(
-        *m_state->m_security, m_userProfile->GetMarketDatabase()));
+        *m_state->m_security));
       builder.SetReadOnly(*securityNode, true);
       auto sideNode = taskNode->FindNode(SingleOrderTaskNode::SIDE_PROPERTY);
       auto price = [&] {
@@ -225,7 +224,7 @@ void OrderTaskView::HandleInteractionsPropertiesEvent() {
     *m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
       *m_state->m_security);
   auto interactionsNode = std::make_unique<InteractionsNode>(
-    *m_state->m_security, m_userProfile->GetMarketDatabase(), interactions);
+    *m_state->m_security, interactions);
   m_taskEntryWidget =
     new CondensedCanvasWidget("Interactions", Ref(*m_userProfile), m_parent);
   m_isTaskEntryWidgetForInteractionsProperties = true;
@@ -237,14 +236,14 @@ void OrderTaskView::HandleInteractionsPropertiesEvent() {
 
 bool OrderTaskView::HandleCancelBindingEvent(
     const CancelKeyBindingsModel::Operation& operation) {
-  HandleTasks(m_slotHandler);
-  execute(operation, Store(m_tasksExecuted[*m_state->m_security]));
+  flush(m_slotHandler);
+  execute(operation, out(m_tasksExecuted[*m_state->m_security]));
   return true;
 }
 
 void OrderTaskView::OnTaskState(const std::shared_ptr<Task>& task,
     const Security& security, const Task::StateEntry& update) {
   if(IsTerminal(update.m_state)) {
-    RemoveFirst(m_tasksExecuted[security], task);
+    remove_first(m_tasksExecuted[security], task);
   }
 }

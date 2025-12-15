@@ -11,8 +11,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
@@ -33,14 +31,14 @@ void SavedDashboards::Load(Out<UserProfile> userProfile) {
   }
   try {
     auto reader =
-      BasicIStreamReader<std::ifstream>(Initialize(filePath, std::ios::binary));
+      BasicIStreamReader<std::ifstream>(init(filePath, std::ios::binary));
     auto buffer = SharedBuffer();
-    reader.Read(Store(buffer));
+    reader.read(out(buffer));
     auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-    receiver.SetSource(Ref(buffer));
-    receiver.Shuttle(savedDashboards);
+    receiver.set(Ref(buffer));
+    receiver.shuttle(savedDashboards);
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to load dashboards, using defaults."));
@@ -53,14 +51,14 @@ void SavedDashboards::Save(const UserProfile& userProfile) {
   auto filePath = userProfile.GetProfilePath() / "dashboards.dat";
   try {
     auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
     auto buffer = SharedBuffer();
-    sender.SetSink(Ref(buffer));
-    sender.Shuttle(userProfile.GetSavedDashboards());
+    sender.set(Ref(buffer));
+    sender.shuttle(userProfile.GetSavedDashboards());
     auto writer =
-      BasicOStreamWriter<std::ofstream>(Initialize(filePath, std::ios::binary));
-    writer.Write(buffer);
+      BasicOStreamWriter<std::ofstream>(init(filePath, std::ios::binary));
+    writer.write(buffer);
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to save dashboards."));

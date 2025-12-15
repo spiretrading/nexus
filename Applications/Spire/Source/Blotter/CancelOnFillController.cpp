@@ -3,45 +3,49 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
+using namespace std;
 
-CancelOnFillController::OrderEntry::OrderEntry(const Order& order)
-  : m_order(&order),
+CancelOnFillController::OrderEntry::OrderEntry(
+  const std::shared_ptr<Order>& order)
+  : m_order(order),
     m_cancelSubmitted(false),
     m_status(OrderStatus::PENDING_NEW) {}
 
 CancelOnFillController::CancelOnFillController(Ref<UserProfile> userProfile)
-    : m_userProfile(userProfile.Get()) {
+    : m_userProfile(userProfile.get()) {
   m_slotHandler.emplace();
 }
 
-void CancelOnFillController::SetOrderExecutionPublisher(
-    Ref<const OrderExecutionPublisher> orderExecutionPublisher) {
+void CancelOnFillController::SetOrderExecutionPublisher(Ref<
+    const Publisher<std::shared_ptr<Order>>> orderExecutionPublisher) {
   m_slotHandler = std::nullopt;
   m_slotHandler.emplace();
-  m_orderExecutionPublisher = orderExecutionPublisher.Get();
-  m_orderExecutionPublisher->Monitor(m_slotHandler->GetSlot<const Order*>(
-    std::bind_front(&CancelOnFillController::OnOrderExecuted, this)));
+  m_orderExecutionPublisher = orderExecutionPublisher.get();
+  m_orderExecutionPublisher->monitor(
+    m_slotHandler->get_slot<std::shared_ptr<Order>>(
+      std::bind(&CancelOnFillController::OnOrderExecuted, this,
+        std::placeholders::_1)));
 }
 
-void CancelOnFillController::OnOrderExecuted(const Order* order) {
-  auto side = order->GetInfo().m_fields.m_side;
+void CancelOnFillController::OnOrderExecuted(
+    const std::shared_ptr<Order>& order) {
+  Side side = order->get_info().m_fields.m_side;
   if(side == Side::NONE) {
     return;
   }
-  auto orderEntry = std::make_shared<OrderEntry>(*order);
-  auto& orderEntries =
-    m_securityToOrderEntryList[order->GetInfo().m_fields.m_security][
-      static_cast<int>(side)];
+  shared_ptr<OrderEntry> orderEntry = std::make_shared<OrderEntry>(order);
+  deque<shared_ptr<OrderEntry>>& orderEntries =
+    m_securityToOrderEntryList[order->get_info().m_fields.m_security][
+    static_cast<int>(side)];
   orderEntries.push_back(orderEntry);
-  order->GetPublisher().Monitor(m_slotHandler->GetSlot<ExecutionReport>(
-    std::bind_front(&CancelOnFillController::OnExecutionReport, this,
-      std::weak_ptr<OrderEntry>(orderEntry))));
+  order->get_publisher().monitor(m_slotHandler->get_slot<ExecutionReport>(
+    std::bind(&CancelOnFillController::OnExecutionReport, this,
+    weak_ptr<OrderEntry>(orderEntry), std::placeholders::_1)));
 }
 
 void CancelOnFillController::OnExecutionReport(
-    std::weak_ptr<OrderEntry> weakOrderEntry, const ExecutionReport& report) {
+    weak_ptr<OrderEntry> weakOrderEntry, const ExecutionReport& report) {
   auto orderEntry = weakOrderEntry.lock();
   if(!orderEntry) {
     return;
@@ -52,19 +56,19 @@ void CancelOnFillController::OnExecutionReport(
   }
   auto is_cancel_on_fill =
     m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
-      orderEntry->m_order->GetInfo().m_fields.m_security)->
+      orderEntry->m_order->get_info().m_fields.m_security)->
         is_cancel_on_fill()->get();
   if(is_cancel_on_fill) {
     auto& orderEntries = m_securityToOrderEntryList[
-      orderEntry->m_order->GetInfo().m_fields.m_security][
-        static_cast<int>(orderEntry->m_order->GetInfo().m_fields.m_side)];
+      orderEntry->m_order->get_info().m_fields.m_security][
+        static_cast<int>(orderEntry->m_order->get_info().m_fields.m_side)];
     auto i = orderEntries.begin();
     while(i != orderEntries.end()) {
-      if(i == orderEntries.begin() && IsTerminal((*i)->m_status)) {
+      if(i == orderEntries.begin() && is_terminal((*i)->m_status)) {
         i = orderEntries.erase(i);
       } else if(!(*i)->m_cancelSubmitted) {
         (*i)->m_cancelSubmitted = true;
-        m_userProfile->GetServiceClients().GetOrderExecutionClient().Cancel(
+        m_userProfile->GetClients().get_order_execution_client().cancel(
           *(*i)->m_order);
         ++i;
       } else {

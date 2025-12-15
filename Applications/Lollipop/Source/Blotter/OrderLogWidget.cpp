@@ -11,7 +11,6 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::UI;
 
@@ -21,7 +20,7 @@ namespace {
       OrderLogFilterProxyModel(Ref<UserProfile> userProfile,
           Ref<OrderLogModel> sourceModel)
           : CustomVariantSortFilterProxyModel(Ref(userProfile)),
-            m_sourceModel(sourceModel.Get()) {
+            m_sourceModel(sourceModel.get()) {
         setSourceModel(m_sourceModel);
       }
 
@@ -37,11 +36,12 @@ namespace {
         auto& properties = m_sourceModel->GetProperties();
         if(properties.m_orderStatusFilterType ==
             OrderLogProperties::OrderStatusFilterType::LIVE_ORDERS &&
-            IsTerminal(entry.m_status) || properties.m_orderStatusFilterType ==
+            is_terminal(entry.m_status) || properties.m_orderStatusFilterType ==
             OrderLogProperties::OrderStatusFilterType::TERMINAL_ORDERS &&
-            !IsTerminal(entry.m_status) || properties.m_orderStatusFilterType ==
+            !is_terminal(entry.m_status) ||
+              properties.m_orderStatusFilterType ==
             OrderLogProperties::OrderStatusFilterType::CUSTOM &&
-            !properties.m_orderStatusFilter.Test(entry.m_status)) {
+            !properties.m_orderStatusFilter.test(entry.m_status)) {
           return false;
         }
         return CustomVariantSortFilterProxyModel::filterAcceptsRow(
@@ -79,10 +79,10 @@ void OrderLogWidget::SetUIState(const UIState& state) {
 
 void OrderLogWidget::SetModel(
     Ref<UserProfile> userProfile, Ref<BlotterModel> model) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
   m_orderEntries.clear();
   m_ui->m_orderLogTable->reset();
-  m_model = model.Get();
+  m_model = model.get();
   m_proxyModel = std::make_unique<OrderLogFilterProxyModel>(
     Ref(userProfile), Ref(m_model->GetOrderLogModel()));
   m_ui->m_orderLogTable->setModel(m_proxyModel.get());
@@ -121,8 +121,8 @@ bool OrderLogWidget::eventFilter(QObject* object, QEvent* event) {
         m_userProfile->GetKeyBindings().GetCancelFromBinding(key);
       if(cancelBinding) {
         KeyBindings::CancelBinding::HandleCancel(*cancelBinding,
-          m_userProfile->GetServiceClients().GetOrderExecutionClient(),
-          Store(m_orderEntries));
+          m_userProfile->GetClients().get_order_execution_client(),
+          out(m_orderEntries));
         return true;
       }
     }
@@ -132,7 +132,7 @@ bool OrderLogWidget::eventFilter(QObject* object, QEvent* event) {
 
 void OrderLogWidget::OnOrderAdded(const OrderLogModel::OrderEntry& entry) {
   m_orderEntries.push_back(entry);
-  entry.m_order->GetPublisher().Monitor(
+  entry.m_order->get_publisher().monitor(
     m_eventHandler.get_slot<ExecutionReport>(
       std::bind_front(
         &OrderLogWidget::OnExecutionReport, this, entry.m_order)));
@@ -157,7 +157,7 @@ void OrderLogWidget::OnProxyOrderAdded(
     auto orderData = JsonObject();
     orderData["blotter_id"] = reinterpret_cast<std::intptr_t>(parentWidget());
     orderData["order_id"] =
-      static_cast<double>(entry.m_order->GetInfo().m_orderId);
+      static_cast<double>(entry.m_order->get_info().m_id);
   }
 }
 
@@ -169,7 +169,7 @@ void OrderLogWidget::OnProxyOrderRemoved(
     auto orderData = JsonObject();
     orderData["blotter_id"] = reinterpret_cast<std::intptr_t>(parentWidget());
     orderData["order_id"] =
-      static_cast<double>(entry.m_order->GetInfo().m_orderId);
+      static_cast<double>(entry.m_order->get_info().m_id);
   }
 }
 
@@ -178,13 +178,13 @@ void OrderLogWidget::OnCancel() {
   for(auto& index : indexes) {
     auto& entry =
       m_model->GetOrderLogModel().GetEntry(m_proxyModel->mapToSource(index));
-    m_userProfile->GetServiceClients().GetOrderExecutionClient().Cancel(
+    m_userProfile->GetClients().get_order_execution_client().cancel(
       *entry.m_order);
   }
 }
 
-void OrderLogWidget::OnExecutionReport(
-    const Order* order, const ExecutionReport& executionReport) {
+void OrderLogWidget::OnExecutionReport(const std::shared_ptr<Order>& order,
+    const ExecutionReport& executionReport) {
   auto orderIterator = std::find_if(m_orderEntries.begin(),
     m_orderEntries.end(), [&] (const auto& entry) {
       return entry.m_order == order;
@@ -193,7 +193,7 @@ void OrderLogWidget::OnExecutionReport(
     return;
   }
   orderIterator->m_status = executionReport.m_status;
-  if(!IsTerminal(executionReport.m_status)) {
+  if(!is_terminal(executionReport.m_status)) {
     return;
   }
   m_orderEntries.erase(orderIterator);

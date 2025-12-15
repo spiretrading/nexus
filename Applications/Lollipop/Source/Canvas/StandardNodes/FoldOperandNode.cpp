@@ -5,7 +5,6 @@
 #include "Spire/Canvas/Types/UnionType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
 using namespace std;
@@ -16,7 +15,8 @@ FoldOperandNode::FoldOperandNode(Side side)
   SetText("Fold Operand");
 }
 
-unique_ptr<CanvasNode> FoldOperandNode::Convert(const CanvasType& type) const {
+std::unique_ptr<CanvasNode>
+    FoldOperandNode::Convert(const CanvasType& type) const {
   if(type.GetCompatibility(OrderReferenceType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
     BOOST_THROW_EXCEPTION(CanvasTypeCompatibilityException());
@@ -30,8 +30,8 @@ void FoldOperandNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> FoldOperandNode::Clone() const {
-  return make_unique<FoldOperandNode>(*this);
+std::unique_ptr<CanvasNode> FoldOperandNode::Clone() const {
+  return std::make_unique<FoldOperandNode>(*this);
 }
 
-FoldOperandNode::FoldOperandNode(ReceiveBuilder) {}
+FoldOperandNode::FoldOperandNode() = default;

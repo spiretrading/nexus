@@ -6,18 +6,17 @@
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/AuthenticationServletAdapter.hpp>
-#include <Beam/ServiceLocator/ServiceLocatorClientBox.hpp>
+#include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
+#include <Beam/Services/AuthenticatedServiceProtocolClientBuilder.hpp>
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
-#include <Beam/Threading/TriggerTimer.hpp>
+#include <Beam/TimeService/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
-#include "Nexus/ChartingService/ChartingClient.hpp"
-#include "Nexus/ChartingService/ChartingClientBox.hpp"
 #include "Nexus/ChartingService/ChartingServlet.hpp"
-#include "Nexus/ChartingServiceTests/ChartingServiceTests.hpp"
-#include "Nexus/MarketDataService/MarketDataClientBox.hpp"
+#include "Nexus/ChartingService/ServiceChartingClient.hpp"
+#include "Nexus/MarketDataService/MarketDataClient.hpp"
 
-namespace Nexus::ChartingService::Tests {
+namespace Nexus::Tests {
 
   /**
    * Wraps most components needed to run an instance of the ChartingService with
@@ -28,47 +27,39 @@ namespace Nexus::ChartingService::Tests {
 
       /**
        * Constructs a ChartingServiceTestEnvironment.
-       * @param serviceLocatorClient The ServiceLocatorClient to use.
-       * @param marketDataClient The MarketDataClient to use.
+       * @param service_locator_client The ServiceLocatorClient to use.
+       * @param market_data_client The MarketDataClient to use.
        */
       ChartingServiceTestEnvironment(
-        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-        MarketDataService::MarketDataClientBox marketDataClient);
+        Beam::ServiceLocatorClient service_locator_client,
+        MarketDataClient market_data_client);
 
       ~ChartingServiceTestEnvironment();
 
       /**
        * Returns a new ChartingClient.
-       * @param serviceLocatorClient The ServiceLocatorClient used to
+       * @param service_locator_client The ServiceLocatorClient used to
        *        authenticate the ChartingClient.
        */
-      ChartingClientBox MakeClient(
-        Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient);
+      ChartingClient make_client(
+        Beam::Ref<Beam::ServiceLocatorClient> service_locator_client);
 
-      void Close();
+      void close();
 
     private:
-      using ServerConnection =
-        Beam::IO::LocalServerConnection<Beam::IO::SharedBuffer>;
-      using ClientChannel =
-        Beam::IO::LocalClientChannel<Beam::IO::SharedBuffer>;
       using ServiceProtocolServletContainer =
-        Beam::Services::ServiceProtocolServletContainer<
-          Beam::ServiceLocator::MetaAuthenticationServletAdapter<
-            MetaChartingServlet<MarketDataService::MarketDataClientBox>,
-            Beam::ServiceLocator::ServiceLocatorClientBox>,
-          ServerConnection*,
-          Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-          Beam::Codecs::NullEncoder,
-          std::shared_ptr<Beam::Threading::TriggerTimer>>;
+        Beam::ServiceProtocolServletContainer<
+          Beam::MetaAuthenticationServletAdapter<
+            MetaChartingServlet<MarketDataClient>, Beam::ServiceLocatorClient>,
+          Beam::LocalServerConnection*, Beam::BinarySender<Beam::SharedBuffer>,
+          Beam::NullEncoder, std::shared_ptr<Beam::TriggerTimer>>;
       using ServiceProtocolClientBuilder =
-        Beam::Services::AuthenticatedServiceProtocolClientBuilder<
-          Beam::ServiceLocator::ServiceLocatorClientBox,
-          Beam::Services::MessageProtocol<std::unique_ptr<ClientChannel>,
-            Beam::Serialization::BinarySender<Beam::IO::SharedBuffer>,
-            Beam::Codecs::NullEncoder>,
-          Beam::Threading::TriggerTimer>;
-      ServerConnection m_serverConnection;
+        Beam::AuthenticatedServiceProtocolClientBuilder<
+          Beam::ServiceLocatorClient,
+          Beam::MessageProtocol<std::unique_ptr<Beam::LocalClientChannel>,
+            Beam::BinarySender<Beam::SharedBuffer>, Beam::NullEncoder>,
+          Beam::TriggerTimer>;
+      Beam::LocalServerConnection m_server_connection;
       ServiceProtocolServletContainer m_container;
 
       ChartingServiceTestEnvironment(
@@ -78,30 +69,30 @@ namespace Nexus::ChartingService::Tests {
   };
 
   inline ChartingServiceTestEnvironment::ChartingServiceTestEnvironment(
-    Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient,
-    MarketDataService::MarketDataClientBox marketDataClient)
-    : m_container(Beam::Initialize(std::move(serviceLocatorClient),
-        Beam::Initialize(std::move(marketDataClient))), &m_serverConnection,
-        boost::factory<std::shared_ptr<Beam::Threading::TriggerTimer>>()) {}
+    Beam::ServiceLocatorClient service_locator_client,
+    MarketDataClient market_data_client)
+    : m_container(Beam::init(std::move(service_locator_client),
+        Beam::init(std::move(market_data_client))), &m_server_connection,
+        boost::factory<std::shared_ptr<Beam::TriggerTimer>>()) {}
 
   inline ChartingServiceTestEnvironment::~ChartingServiceTestEnvironment() {
-    Close();
+    close();
   }
 
-  inline ChartingClientBox ChartingServiceTestEnvironment::MakeClient(
-      Beam::ServiceLocator::ServiceLocatorClientBox serviceLocatorClient) {
-    return ChartingClientBox(std::in_place_type<
-      ChartingClient<ServiceProtocolClientBuilder>>,
-      ServiceProtocolClientBuilder(std::move(serviceLocatorClient),
+  inline ChartingClient ChartingServiceTestEnvironment::make_client(
+      Beam::Ref<Beam::ServiceLocatorClient> service_locator_client) {
+    return ChartingClient(std::in_place_type<
+      ServiceChartingClient<ServiceProtocolClientBuilder>>,
+      ServiceProtocolClientBuilder(Beam::Ref(service_locator_client),
         std::bind_front(boost::factory<
           std::unique_ptr<ServiceProtocolClientBuilder::Channel>>(),
-          "test_charting_client", std::ref(m_serverConnection)),
+          "test_charting_client", std::ref(m_server_connection)),
         boost::factory<
           std::unique_ptr<ServiceProtocolClientBuilder::Timer>>()));
   }
 
-  inline void ChartingServiceTestEnvironment::Close() {
-    m_container.Close();
+  inline void ChartingServiceTestEnvironment::close() {
+    m_container.close();
   }
 }
 

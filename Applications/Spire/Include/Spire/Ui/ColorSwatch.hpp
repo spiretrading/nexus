@@ -2,7 +2,6 @@
 #define SPIRE_COLOR_SWATCH_HPP
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/ColorBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {

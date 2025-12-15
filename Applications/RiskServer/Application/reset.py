@@ -17,8 +17,8 @@ def report_yaml_error(error):
 def parse_ip_address(source):
   separator = source.find(':')
   if separator == -1:
-    return beam.network.IpAddress(source, 0)
-  return beam.network.IpAddress(source[0:separator],
+    return beam.IpAddress(source, 0)
+  return beam.IpAddress(source[0:separator],
     int(source[separator + 1 :]))
 
 def main():
@@ -41,18 +41,17 @@ def main():
   address = parse_ip_address(section['address'])
   username = section['username']
   password = section['password']
-  service_clients = \
-    nexus.ApplicationServiceClients(username, password, address)
-  countries = service_clients.get_definitions_client().load_country_database()
-  markets = service_clients.get_definitions_client().load_market_database()
+  service_clients = nexus.ServiceClients(username, password, address)
+  countries = service_clients.definitions_client.load_country_database()
+  venues = service_clients.definitions_client.load_venue_database()
   region = nexus.parse_country_code(args.region, countries)
   if region == nexus.CountryCode.NONE:
-    region = nexus.parse_market_code(args.region, markets)
-    if region != '':
-      region = markets.from_code(region)
+    region = nexus.parse_venue(args.region, venues)
+    if region:
+      region = venues.from_code(region)
     else:
-      region = nexus.parse_security(args.region, markets)
-  service_clients.get_risk_client().reset(nexus.Region(region))
+      region = nexus.parse_security(args.region, venues)
+  service_clients.risk_client.reset(nexus.Region(region))
 
 if __name__ == '__main__':
   main()

@@ -2,11 +2,12 @@
 #define SPIRE_PROFITANDLOSSENTRYMODEL_HPP
 #include <boost/signals2/signal.hpp>
 #include <QAbstractItemModel>
+#include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Blotter/Blotter.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 
@@ -68,8 +69,7 @@ namespace Spire {
       /*
         \param update The update to the Portfolio.
       */
-      void OnPortfolioUpdate(
-        const SpirePortfolioController::UpdateEntry& update);
+      void OnPortfolioUpdate(const Nexus::PortfolioUpdateEntry& update);
 
       //! Connects a slot to the ProfitAndLossSignal.
       /*!

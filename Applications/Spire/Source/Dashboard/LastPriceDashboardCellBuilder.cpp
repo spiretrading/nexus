@@ -4,28 +4,24 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
 using namespace Spire;
 
 std::unique_ptr<DashboardCell> LastPriceDashboardCellBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
   auto& security = boost::get<Security>(index);
   auto& marketDataClient =
-    userProfile.Get()->GetServiceClients().GetMarketDataClient();
+    userProfile.get()->GetClients().get_market_data_client();
   auto baseQueue = std::make_shared<Queue<TimeAndSale>>();
-  std::shared_ptr<QueueReader<Money>> queue =
-    MakeConverterQueueReader(baseQueue,
-      [] (const TimeAndSale& timeAndSale) {
-        return timeAndSale.m_price;
-      });
-  auto query = MakeCurrentQuery(security);
-  marketDataClient.QueryTimeAndSales(query, baseQueue);
-  auto last = std::make_unique<QueueDashboardCell>(queue);
-  return std::move(last);
+  auto queue = std::static_pointer_cast<QueueReader<Money>>(
+    convert(baseQueue, [] (const TimeAndSale& timeAndSale) {
+      return timeAndSale.m_price;
+    }));
+  auto query = make_current_query(security);
+  marketDataClient.query(query, baseQueue);
+  return std::make_unique<QueueDashboardCell>(queue);
 }
 
 std::unique_ptr<DashboardCellBuilder>

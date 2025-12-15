@@ -5,7 +5,6 @@
 #include <boost/optional/optional.hpp>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Details {
@@ -15,6 +14,8 @@ namespace Details {
   template<typename T>
   struct is_index_optional<boost::optional<T>> : std::true_type {};
 }
+
+  template<typename> class LocalValueModel;
 
   /**
    * Models an index into a ListModel containing the value represented by a
@@ -36,24 +37,10 @@ namespace Details {
       ListIndexValueModel(std::shared_ptr<ListModel<SearchType>> list,
         std::shared_ptr<ValueModel<SearchType>> value);
 
-      /**
-       * Returns the state of the current value, by default this is
-       * <i>QValidator::State::Acceptable</i>
-       */
       QValidator::State get_state() const override;
-
-      /** Returns the current value. */
       const boost::optional<int>& get() const override;
-
       QValidator::State test(const boost::optional<int>& value) const override;
-
-      /**
-       * Sets the current value. By default this operation is a no-op that
-       * always returns <i>QValidator::State::Invalid</i>.
-       */
       QValidator::State set(const boost::optional<int>& value) override;
-
-      /** Connects a slot to the UpdateSignal. */
       boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 

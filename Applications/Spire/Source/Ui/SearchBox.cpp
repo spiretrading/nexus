@@ -6,6 +6,7 @@
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
@@ -52,7 +53,7 @@ SearchBox::SearchBox(std::shared_ptr<TextModel> model, QWidget* parent)
     : QWidget(parent) {
   auto container = new QWidget();
   auto search_icon =
-    new Icon(imageFromSvg(":/Icons/magnifying-glass.svg", scale(16, 16)));
+    new Icon(image_from_svg(":/Icons/magnifying-glass.svg", scale(16, 16)));
   search_icon->setFixedSize(scale(16, 16));
   auto container_layout = make_hbox_layout(container);
   container_layout->addWidget(search_icon);

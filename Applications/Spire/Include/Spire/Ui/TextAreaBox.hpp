@@ -9,6 +9,9 @@
 #include "Spire/Ui/TextBox.hpp"
 
 namespace Spire {
+  class ScrollBar;
+  class ScrollBox;
+
 namespace Styles {
 
   /** Styles the line height as a percentage of the font height. */

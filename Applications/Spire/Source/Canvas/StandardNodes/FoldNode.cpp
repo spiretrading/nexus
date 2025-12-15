@@ -2,7 +2,6 @@
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
 using namespace std;
@@ -49,5 +48,3 @@ void FoldNode::Apply(CanvasNodeVisitor& visitor) const {
 unique_ptr<CanvasNode> FoldNode::Clone() const {
   return std::make_unique<FoldNode>(*this);
 }
-
-FoldNode::FoldNode(ReceiveBuilder) {}

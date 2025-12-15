@@ -1,6 +1,5 @@
 #ifndef SPIRE_TOP_MPID_PRICE_LIST_MODEL_HPP
 #define SPIRE_TOP_MPID_PRICE_LIST_MODEL_HPP
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 
@@ -9,14 +8,14 @@ namespace Spire {
   /** Stores the price of an MPID's top level. */
   struct TopMpidPrice {
 
-    /** The MPID's market. */
-    Nexus::MarketCode m_market;
+    /** The MPID's venue. */
+    Nexus::Venue m_venue;
 
     /** The price of the represented MPID's top level. */
     Nexus::Money m_price;
   };
 
-  /** Maintains a list of the top MPID prices for all markets in a book. */
+  /** Maintains a list of the top MPID prices for all venues in a book. */
   class TopMpidPriceListModel : public ListModel<TopMpidPrice> {
     public:
 

@@ -29,7 +29,7 @@ namespace {
           if(quantity == 0) {
             return Quantity(0);
           }
-          return std::max<Quantity>(1, Floor(quantity / 100, 0));
+          return std::max<Quantity>(1, floor_to(quantity / 100, 1));
         })));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     return label;

@@ -5,9 +5,9 @@
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Styles/PeriodicEvaluator.hpp"
 #include "Spire/Styles/StateSelector.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Box;
 
   /**
    * The type of model used to measure progress, represents an integer from -1

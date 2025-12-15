@@ -15,26 +15,26 @@ const CanvasNode& ReplaceNodeCommand::Replace(Out<CanvasNodeModel> view,
   if(IsRoot(*node)) {
     view->Remove(*node);
   }
-  return PlaceNodeCommand::PlaceNode(Store(*view), source, replacement, false);
+  return PlaceNodeCommand::PlaceNode(out(*view), source, replacement, false);
 }
 
 const CanvasNode& ReplaceNodeCommand::Replace(Out<CanvasNodeModel> view,
     const CanvasNode& source, const CanvasNode& replacement) {
-  return Replace(Store(view), view->GetCoordinate(source), replacement);
+  return Replace(out(view), view->GetCoordinate(source), replacement);
 }
 
 ReplaceNodeCommand::ReplaceNodeCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& coordinate, const CanvasNode& node)
-    : m_view(view.Get()),
+    : m_view(view.get()),
       m_coordinate(coordinate),
       m_node(CanvasNode::Clone(node)) {}
 
 void ReplaceNodeCommand::undo() {
-  m_snapshot.Restore(Store(*m_view));
+  m_snapshot.Restore(out(*m_view));
 }
 
 void ReplaceNodeCommand::redo() {
   m_snapshot.Save(*m_view);
-  auto& placedNode = Replace(Store(*m_view), m_coordinate, *m_node);
+  auto& placedNode = Replace(out(*m_view), m_coordinate, *m_node);
   m_view->SetCurrent(placedNode);
 }

@@ -3,7 +3,6 @@
 #include "Spire/Canvas/StandardNodes/MathSignatures.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 using namespace std;
 
@@ -19,5 +18,3 @@ void RoundNode::Apply(CanvasNodeVisitor& visitor) const {
 unique_ptr<CanvasNode> RoundNode::Clone() const {
   return make_unique<RoundNode>(*this);
 }
-
-RoundNode::RoundNode(ReceiveBuilder) {}

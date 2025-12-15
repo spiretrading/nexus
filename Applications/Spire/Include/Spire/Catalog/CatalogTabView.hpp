@@ -9,6 +9,7 @@
 #include <QWidget>
 #include "Spire/Catalog/Catalog.hpp"
 #include "Spire/Catalog/CatalogSearchBarModel.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 class QModelIndex;

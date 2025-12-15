@@ -1,9 +1,10 @@
 #ifndef SPIRE_BOOK_VIEW_MODEL_HPP
 #define SPIRE_BOOK_VIEW_MODEL_HPP
+#include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
+#include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/Definitions/SecurityTechnicals.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 
@@ -19,10 +20,10 @@ namespace Spire {
   using BookQuoteListModel = ListModel<Nexus::BookQuote>;
 
   /** A ValueModel over a SecurityTechnicals. */
-  using SecurityTechnicalsValueModel = ValueModel<Nexus::SecurityTechnicals>;
+  using SecurityTechnicalsModel = ValueModel<Nexus::SecurityTechnicals>;
 
   /** A LocalValueModel over a SecurityTechnicals. */
-  using LocalSecurityTechnicalsValueModel =
+  using LocalSecurityTechnicalsModel =
     LocalValueModel<Nexus::SecurityTechnicals>;
 
   /** The model for the book view. */
@@ -30,8 +31,7 @@ namespace Spire {
     public:
 
       /** A ValueModel over optional OrderFields. */
-      using PreviewOrderModel =
-        ValueModel<boost::optional<Nexus::OrderExecutionService::OrderFields>>;
+      using PreviewOrderModel = ValueModel<boost::optional<Nexus::OrderFields>>;
 
       /** Represents the user order. */
       struct UserOrder {
@@ -78,7 +78,7 @@ namespace Spire {
       virtual const std::shared_ptr<BboQuoteModel>& get_bbo_quote() const = 0;
 
       /** Returns the technical details about a Security. */
-      virtual const std::shared_ptr<SecurityTechnicalsValueModel>&
+      virtual const std::shared_ptr<SecurityTechnicalsModel>&
         get_technicals() const = 0;
 
     protected:

@@ -29,7 +29,6 @@ CALL:configure Applications\Scratch %*
 CALL:configure Applications\SimulationMarketDataFeedClient %*
 CALL:configure Applications\SimulationOrderExecutionServer %*
 CALL:configure Applications\Spire %*
-CALL:configure Applications\TelemetryServer %*
 CALL:configure Applications\TmxIpMarketDataFeedClient %*
 CALL:configure Applications\TmxTl1MarketDataFeedClient %*
 CALL:configure Applications\WebPortal\WebApp %*

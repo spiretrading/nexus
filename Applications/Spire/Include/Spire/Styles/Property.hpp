@@ -1,14 +1,14 @@
 #ifndef SPIRE_STYLES_PROPERTY_HPP
 #define SPIRE_STYLES_PROPERTY_HPP
 #include <any>
+#include <concepts>
 #include <typeindex>
 #include <type_traits>
 #include <utility>
-#include <Beam/Utilities/Functional.hpp>
+#include <boost/callable_traits/args.hpp>
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Styles/EnumProperty.hpp"
 #include "Spire/Styles/Expression.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
@@ -21,7 +21,7 @@ namespace Spire::Styles {
       Property(BasicProperty<T, G> property);
 
       /** Stores an enum property. */
-      template<typename T, typename = std::enable_if_t<std::is_enum_v<T>>>
+      template<typename T> requires std::is_enum_v<T>
       Property(T property);
 
       /** Returns the underlying property's type. */
@@ -44,30 +44,17 @@ namespace Spire::Styles {
 
       template<typename F, typename... G>
       decltype(auto) visit(F&& f, G&&... g) const;
-
-      bool operator ==(const Property& property) const;
-
-      bool operator !=(const Property& property) const;
+      bool operator ==(const Property& property) const noexcept;
 
     private:
-      template<typename T>
-      struct TypeExtractor {};
-      template<typename T>
-      struct TypeExtractor<Beam::TypeSequence<T>> {
-        using type = std::decay_t<T>;
-      };
-      template<typename T, typename U>
-      struct TypeExtractor<Beam::TypeSequence<T, U>> {
-        using type = std::decay_t<U>;
-      };
       friend struct std::hash<Property>;
       struct BaseEntry {
         virtual ~BaseEntry() = default;
+
         virtual std::type_index get_type() const = 0;
         virtual std::size_t hash() const = 0;
         virtual const void* expression_as(std::type_index type) const = 0;
-        virtual bool operator ==(const BaseEntry& entry) const = 0;
-        bool operator !=(const BaseEntry& entry) const;
+        virtual bool operator ==(const BaseEntry& entry) const noexcept = 0;
       };
       template<typename T>
       struct Entry final : BaseEntry {
@@ -75,10 +62,11 @@ namespace Spire::Styles {
         Type m_property;
 
         Entry(Type property);
+
         std::type_index get_type() const override;
         virtual std::size_t hash() const override;
         const void* expression_as(std::type_index type) const override;
-        bool operator ==(const BaseEntry& entry) const override;
+        bool operator ==(const BaseEntry& entry) const noexcept override;
       };
       std::shared_ptr<BaseEntry> m_entry;
   };
@@ -88,7 +76,7 @@ namespace Spire::Styles {
     : m_entry(
         std::make_shared<Entry<BasicProperty<T, G>>>(std::move(property))) {}
 
-  template<typename T, typename>
+  template<typename T> requires std::is_enum_v<T>
   Property::Property(T property)
     : Property(EnumProperty<T>(property)) {}
 
@@ -108,23 +96,27 @@ namespace Spire::Styles {
 
   template<typename F>
   decltype(auto) Property::visit(F&& f) const {
-    using Parameter = typename TypeExtractor<
-      Beam::GetFunctionParameters<std::decay_t<F>>>::type;
-    if constexpr(std::is_invocable_v<std::decay_t<F>>) {
+    if constexpr(std::is_invocable_v<std::remove_cvref_t<F>>) {
       return std::forward<F>(f)();
-    } else if(m_entry->get_type() == typeid(Parameter)) {
-      return std::forward<F>(f)(
-        static_cast<const Entry<Parameter>&>(*m_entry).m_property);
-    }
-    if constexpr(!std::is_invocable_r_v<void, F, const Parameter&>) {
-      throw std::bad_any_cast();
+    } else {
+      using Args = boost::callable_traits::args_t<std::remove_cvref_t<F>>;
+      using Parameter = std::remove_cvref_t<
+        std::tuple_element_t<std::tuple_size_v<Args> - 1, Args>>;
+      if(m_entry->get_type() == typeid(Parameter)) {
+        return std::forward<F>(f)(
+          static_cast<const Entry<Parameter>&>(*m_entry).m_property);
+      }
+      if constexpr(!std::is_invocable_r_v<void, F, const Parameter&>) {
+        throw std::bad_any_cast();
+      }
     }
   }
 
   template<typename F, typename... G>
   decltype(auto) Property::visit(F&& f, G&&... g) const {
-    using Parameter = typename TypeExtractor<
-      Beam::GetFunctionParameters<std::decay_t<F>>>::type;
+    using Args = boost::callable_traits::args_t<std::remove_cvref_t<F>>;
+    using Parameter = std::remove_cvref_t<
+      std::tuple_element_t<std::tuple_size_v<Args> - 1, Args>>;
     if(m_entry->get_type() == typeid(Parameter)) {
       return std::forward<F>(f)(
         static_cast<const Entry<Parameter>&>(*m_entry).m_property);
@@ -155,7 +147,7 @@ namespace Spire::Styles {
   }
 
   template<typename T>
-  bool Property::Entry<T>::operator ==(const BaseEntry& entry) const {
+  bool Property::Entry<T>::operator ==(const BaseEntry& entry) const noexcept {
     return entry.get_type() == typeid(Type) &&
       m_property == static_cast<const Entry<Type>&>(entry).m_property;
   }
@@ -164,7 +156,8 @@ namespace Spire::Styles {
 namespace std {
   template<>
   struct hash<Spire::Styles::Property> {
-    std::size_t operator ()(const Spire::Styles::Property& property) const;
+    std::size_t operator ()(
+      const Spire::Styles::Property& property) const noexcept;
   };
 }
 

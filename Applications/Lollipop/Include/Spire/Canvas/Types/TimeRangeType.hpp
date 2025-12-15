@@ -13,7 +13,7 @@ namespace Spire {
     public:
 
       //! Defines the native type being represented.
-      typedef Beam::Queries::Range Type;
+      typedef Beam::Range Type;
 
       //! Returns an instance of this type.
       static const TimeRangeType& GetInstance();
@@ -27,16 +27,16 @@ namespace Spire {
       virtual void Apply(CanvasTypeVisitor& visitor) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
       TimeRangeType() = default;
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void TimeRangeType::Shuttle(Shuttler& shuttle, unsigned int version) {
-    NativeType::Shuttle(shuttle, version);
+  template<Beam::IsShuttle S>
+  void TimeRangeType::shuttle(S& shuttle, unsigned int version) {
+    NativeType::shuttle(shuttle, version);
   }
 }
 

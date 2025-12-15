@@ -149,9 +149,6 @@ namespace Spire {
   /** Returns a UiProfile for the ListView. */
   UiProfile make_list_view_profile();
 
-  /** Returns a UiProfile for the MarketBox. */
-  UiProfile make_market_box_profile();
-
   /** Returns a UiProfile for the MenuButton. */
   UiProfile make_menu_button_profile();
 
@@ -298,6 +295,12 @@ namespace Spire {
 
   /** Returns a UiProfile for the TransitionView. */
   UiProfile make_transition_view_profile();
+
+  /** Returns a UiProfile for the VenueBox. */
+  UiProfile make_venue_box_profile();
+
+  /** Returns a UiProfile for the WindowHighlight. */
+  UiProfile make_window_highlight_profile();
 }
 
 #endif

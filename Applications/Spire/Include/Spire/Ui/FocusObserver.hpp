@@ -2,7 +2,8 @@
 #define SPIRE_FOCUS_OBSERVER_HPP
 #include <memory>
 #include <ostream>
-#include "Spire/Ui/Ui.hpp"
+#include <QWidget>
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

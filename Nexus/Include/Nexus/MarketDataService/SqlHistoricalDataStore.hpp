@@ -6,14 +6,12 @@
 #include <Beam/Queries/SqlDataStore.hpp>
 #include <Beam/Sql/DatabaseConnectionPool.hpp>
 #include <Beam/Threading/Sync.hpp>
-#include <boost/throw_exception.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/HistoricalDataStoreException.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/SqlDefinitions.hpp"
 #include "Nexus/Queries/SqlTranslator.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Stores historical market data in an SQL database.
@@ -31,71 +29,51 @@ namespace Nexus::MarketDataService {
 
       /**
        * Constructs an SqlHistoricalDataStore.
-       * @param connectionBuilder The callable used to build SQL connections.
+       * @param venues The available venues.
+       * @param connection_builder The callable used to build SQL connections.
        */
-      explicit SqlHistoricalDataStore(ConnectionBuilder connectionBuilder);
+      explicit SqlHistoricalDataStore(
+        VenueDatabase venues, ConnectionBuilder connection_builder);
 
       ~SqlHistoricalDataStore();
 
-      std::vector<SecurityInfo> LoadSecurityInfo(
+      std::vector<SecurityInfo> load_security_info(
         const SecurityInfoQuery& query);
-
-      std::vector<SequencedOrderImbalance> LoadOrderImbalances(
-        const MarketWideDataQuery& query);
-
-      std::vector<SequencedBboQuote> LoadBboQuotes(
+      void store(const SecurityInfo& info);
+      std::vector<SequencedOrderImbalance> load_order_imbalances(
+        const VenueMarketDataQuery& query);
+      void store(const SequencedVenueOrderImbalance& imbalance);
+      void store(const std::vector<SequencedVenueOrderImbalance>& imbalances);
+      std::vector<SequencedBboQuote> load_bbo_quotes(
         const SecurityMarketDataQuery& query);
-
-      std::vector<SequencedBookQuote> LoadBookQuotes(
+      void store(const SequencedSecurityBboQuote& quote);
+      void store(const std::vector<SequencedSecurityBboQuote>& quotes);
+      std::vector<SequencedBookQuote> load_book_quotes(
         const SecurityMarketDataQuery& query);
-
-      std::vector<SequencedMarketQuote> LoadMarketQuotes(
+      void store(const SequencedSecurityBookQuote& quote);
+      void store(const std::vector<SequencedSecurityBookQuote>& quotes);
+      std::vector<SequencedTimeAndSale> load_time_and_sales(
         const SecurityMarketDataQuery& query);
-
-      std::vector<SequencedTimeAndSale> LoadTimeAndSales(
-        const SecurityMarketDataQuery& query);
-
-      void Store(const SecurityInfo& info);
-
-      void Store(const SequencedMarketOrderImbalance& orderImbalance);
-
-      void Store(const std::vector<SequencedMarketOrderImbalance>&
-        orderImbalances);
-
-      void Store(const SequencedSecurityBboQuote& bboQuote);
-
-      void Store(const std::vector<SequencedSecurityBboQuote>& bboQuotes);
-
-      void Store(const SequencedSecurityMarketQuote& marketQuote);
-
-      void Store(const std::vector<SequencedSecurityMarketQuote>& marketQuotes);
-
-      void Store(const SequencedSecurityBookQuote& bookQuote);
-
-      void Store(const std::vector<SequencedSecurityBookQuote>& bookQuotes);
-
-      void Store(const SequencedSecurityTimeAndSale& timeAndSale);
-
-      void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
-
-      void Close();
+      void store(const SequencedSecurityTimeAndSale& time_and_sale);
+      void store(
+        const std::vector<SequencedSecurityTimeAndSale>& time_and_sales);
+      void close();
 
     private:
       template<typename V, typename I>
-      using DataStore = Beam::Queries::SqlDataStore<Connection, V, I,
-        Queries::SqlTranslator>;
-      Beam::DatabaseConnectionPool<Connection> m_readerPool;
-      Beam::DatabaseConnectionPool<Connection> m_writerPool;
-      DataStore<Viper::Row<OrderImbalance>, Viper::Row<MarketCode>>
-        m_orderImbalanceDataStore;
-      DataStore<Viper::Row<BboQuote>, Viper::Row<Security>> m_bboQuoteDataStore;
-      DataStore<Viper::Row<MarketQuote>, Viper::Row<Security>>
-        m_marketQuoteDataStore;
+      using DataStore = Beam::SqlDataStore<Connection, V, I, SqlTranslator>;
+      VenueDatabase m_venues;
+      Beam::DatabaseConnectionPool<Connection> m_reader_pool;
+      Beam::DatabaseConnectionPool<Connection> m_writer_pool;
+      DataStore<Viper::Row<OrderImbalance>, Viper::Row<Venue>>
+        m_order_imbalance_data_store;
+      DataStore<Viper::Row<BboQuote>, Viper::Row<Security>>
+        m_bbo_quote_data_store;
       DataStore<Viper::Row<BookQuote>, Viper::Row<Security>>
-        m_bookQuoteDataStore;
+        m_book_quote_data_store;
       DataStore<Viper::Row<TimeAndSale>, Viper::Row<Security>>
-        m_timeAndSaleDataStore;
-      Beam::IO::OpenState m_openState;
+        m_time_and_sale_data_store;
+      Beam::OpenState m_open_state;
 
       SqlHistoricalDataStore(const SqlHistoricalDataStore&) = delete;
       SqlHistoricalDataStore& operator =(
@@ -104,220 +82,202 @@ namespace Nexus::MarketDataService {
 
   template<typename C>
   SqlHistoricalDataStore<C>::SqlHistoricalDataStore(
-      ConnectionBuilder connectionBuilder)
-      : m_readerPool(std::thread::hardware_concurrency(), [&] {
-          auto connection = std::make_unique<Connection>(connectionBuilder());
+      VenueDatabase venues, ConnectionBuilder connection_builder)
+      : m_venues(std::move(venues)),
+        m_reader_pool(std::thread::hardware_concurrency(), [&] {
+          auto connection = std::make_unique<Connection>(connection_builder());
           connection->open();
           return connection;
         }),
-        m_writerPool(1, [&] {
-          auto connection = std::make_unique<Connection>(connectionBuilder());
+        m_writer_pool(1, [&] {
+          auto connection = std::make_unique<Connection>(connection_builder());
           connection->open();
           return connection;
         }),
-        m_orderImbalanceDataStore("order_imbalances", GetOrderImbalanceRow(),
-          GetMarketCodeRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)),
-        m_bboQuoteDataStore("bbo_quotes", GetBboQuoteRow(), GetSecurityRow(),
-          Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)),
-        m_marketQuoteDataStore("market_quotes", GetMarketQuoteRow(),
-          GetSecurityRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)),
-        m_bookQuoteDataStore("book_quotes", GetBookQuoteRow(), GetSecurityRow(),
-          Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)),
-        m_timeAndSaleDataStore("time_and_sales", GetTimeAndSaleRow(),
-          GetSecurityRow(), Beam::Ref(m_readerPool), Beam::Ref(m_writerPool)) {
+        m_order_imbalance_data_store(
+          "order_imbalances", get_order_imbalance_row(), get_venue_row(),
+          Beam::Ref(m_reader_pool), Beam::Ref(m_writer_pool)),
+        m_bbo_quote_data_store("bbo_quotes", get_bbo_quote_row(),
+          get_security_row(), Beam::Ref(m_reader_pool),
+          Beam::Ref(m_writer_pool)),
+        m_book_quote_data_store("book_quotes", get_book_quote_row(),
+          get_security_row(), Beam::Ref(m_reader_pool),
+          Beam::Ref(m_writer_pool)),
+        m_time_and_sale_data_store("time_and_sales", get_time_and_sale_row(),
+          get_security_row(), Beam::Ref(m_reader_pool),
+          Beam::Ref(m_writer_pool)) {
     try {
-      auto connection = m_writerPool.Acquire();
-      connection->execute(Viper::create_if_not_exists(
-        GetSecurityInfoRow(), "security_info"));
+      auto connection = m_writer_pool.load();
+      connection->execute(
+        Viper::create_if_not_exists(get_security_info_row(), "security_info"));
     } catch(const std::exception&) {
-      Close();
-      BOOST_RETHROW;
+      close();
+      throw;
     }
   }
 
   template<typename C>
   SqlHistoricalDataStore<C>::~SqlHistoricalDataStore() {
-    Close();
+    close();
   }
 
   template<typename C>
-  std::vector<SecurityInfo> SqlHistoricalDataStore<C>::LoadSecurityInfo(
+  std::vector<SecurityInfo> SqlHistoricalDataStore<C>::load_security_info(
       const SecurityInfoQuery& query) {
     auto matches = std::vector<SecurityInfo>();
-    auto filter = Beam::Queries::MakeSqlQuery<Queries::SqlTranslator>(
-      "security_info", query.GetFilter());
+    auto filter =
+      Beam::make_sql_query<SqlTranslator>("security_info", query.get_filter());
     auto anchor = [&] {
-      if(auto anchor = query.GetAnchor()) {
+      if(auto anchor = query.get_anchor()) {
         auto left = Viper::Expression(
-          std::make_shared<Viper::LiteralExpression>("(symbol,country)"));
-        auto symbolLiteral = std::string();
-        Viper::literal(anchor->GetSymbol()).append_query(symbolLiteral);
-        auto countryLiteral = std::string();
-        Viper::literal(anchor->GetCountry()).append_query(countryLiteral);
+          std::make_shared<Viper::LiteralExpression>("(symbol,venue)"));
+        auto symbol_literal = std::string();
+        Viper::literal(anchor->get_symbol()).append_query(symbol_literal);
+        auto venue_literal = std::string();
+        Viper::literal(anchor->get_venue()).append_query(venue_literal);
         auto right = Viper::Expression(
           std::make_shared<Viper::LiteralExpression>(
-            "(" + symbolLiteral + "," + countryLiteral + ")"));
-        if(query.GetSnapshotLimit().GetType() ==
-            Beam::Queries::SnapshotLimit::Type::HEAD) {
+            "(" + symbol_literal + "," + venue_literal + ")"));
+        if(query.get_snapshot_limit().get_type() ==
+            Beam::SnapshotLimit::Type::HEAD) {
           return left > right;
-        } else {
-          return left < right;
         }
-      } else {
-        return Viper::literal(true);
+        return left < right;
       }
+      return Viper::literal(true);
     }();
     auto order = [&] {
-      if(query.GetSnapshotLimit().GetType() ==
-          Beam::Queries::SnapshotLimit::Type::HEAD) {
+      if(query.get_snapshot_limit().get_type() ==
+          Beam::SnapshotLimit::Type::HEAD) {
         return Viper::Order::ASC;
-      } else {
-        return Viper::Order::DESC;
       }
+      return Viper::Order::DESC;
     }();
-    auto regionFilter = [&] {
-      if(query.GetIndex().IsGlobal()) {
-        return Viper::literal(true);
+    auto region_filter = Viper::literal(query.get_index().is_global());
+    for(auto country : query.get_index().get_countries()) {
+      for(auto entry : m_venues.get_entries()) {
+        if(entry.m_country_code == country) {
+          region_filter = region_filter || Viper::sym("venue") ==
+            Viper::literal(std::string(entry.m_venue.get_code().get_data()));
+        }
       }
-      return Viper::literal(false);
-    }();
-    for(auto country : query.GetIndex().GetCountries()) {
-      regionFilter = regionFilter || Viper::sym("country") == country;
     }
-    for(auto market : query.GetIndex().GetMarkets()) {
-      regionFilter = regionFilter ||
-        Viper::sym("market") == Viper::literal(std::string(market.GetData()));
+    for(auto venue : query.get_index().get_venues()) {
+      region_filter = region_filter || Viper::sym("venue") ==
+        Viper::literal(std::string(venue.get_code().get_data()));
     }
-    for(auto& security : query.GetIndex().GetSecurities()) {
-      regionFilter = regionFilter ||
-        Viper::sym("symbol") == security.GetSymbol() &&
-        Viper::sym("country") == security.GetCountry();
+    for(auto& security : query.get_index().get_securities()) {
+      region_filter = region_filter ||
+        Viper::sym("symbol") == security.get_symbol() &&
+        Viper::sym("venue") == security.get_venue();
     }
     {
-      auto reader = m_readerPool.Acquire();
-      reader->execute(Viper::select(GetSecurityInfoRow(), "security_info",
-        filter && anchor && regionFilter,
-        Viper::order_by({{"symbol", order}, {"country", order}}),
-        Viper::limit(query.GetSnapshotLimit().GetSize()),
+      auto reader = m_reader_pool.load();
+      reader->execute(Viper::select(get_security_info_row(), "security_info",
+        filter && anchor && region_filter,
+        Viper::order_by({{"symbol", order}, {"venue", order}}),
+        Viper::limit(query.get_snapshot_limit().get_size()),
         std::back_inserter(matches)));
     }
-    if(query.GetSnapshotLimit().GetType() ==
-        Beam::Queries::SnapshotLimit::Type::TAIL) {
+    if(query.get_snapshot_limit().get_type() ==
+        Beam::SnapshotLimit::Type::TAIL) {
       std::reverse(matches.begin(), matches.end());
     }
     return matches;
   }
 
   template<typename C>
+  void SqlHistoricalDataStore<C>::store(const SecurityInfo& info) {
+    auto writer = m_writer_pool.load();
+    writer->execute(
+      Viper::upsert(get_security_info_row(), "security_info", &info));
+  }
+
+  template<typename C>
   std::vector<SequencedOrderImbalance> SqlHistoricalDataStore<C>::
-      LoadOrderImbalances(const MarketWideDataQuery& query) {
-    return m_orderImbalanceDataStore.Load(query);
+      load_order_imbalances(const VenueMarketDataQuery& query) {
+    return m_order_imbalance_data_store.load(query);
   }
 
   template<typename C>
-  std::vector<SequencedBboQuote> SqlHistoricalDataStore<C>::LoadBboQuotes(
+  void SqlHistoricalDataStore<C>::store(
+      const SequencedVenueOrderImbalance& imbalance) {
+    m_order_imbalance_data_store.store(imbalance);
+  }
+
+  template<typename C>
+  void SqlHistoricalDataStore<C>::store(
+      const std::vector<SequencedVenueOrderImbalance>& imbalances) {
+    m_order_imbalance_data_store.store(imbalances);
+  }
+
+  template<typename C>
+  std::vector<SequencedBboQuote> SqlHistoricalDataStore<C>::load_bbo_quotes(
       const SecurityMarketDataQuery& query) {
-    return m_bboQuoteDataStore.Load(query);
+    return m_bbo_quote_data_store.load(query);
   }
 
   template<typename C>
-  std::vector<SequencedBookQuote> SqlHistoricalDataStore<C>::LoadBookQuotes(
+  void SqlHistoricalDataStore<C>::store(
+      const SequencedSecurityBboQuote& quote) {
+    m_bbo_quote_data_store.store(quote);
+  }
+
+  template<typename C>
+  void SqlHistoricalDataStore<C>::store(
+      const std::vector<SequencedSecurityBboQuote>& quotes) {
+    m_bbo_quote_data_store.store(quotes);
+  }
+
+
+  template<typename C>
+  std::vector<SequencedBookQuote> SqlHistoricalDataStore<C>::load_book_quotes(
       const SecurityMarketDataQuery& query) {
-    return m_bookQuoteDataStore.Load(query);
+    return m_book_quote_data_store.load(query);
   }
 
   template<typename C>
-  std::vector<SequencedMarketQuote> SqlHistoricalDataStore<C>::LoadMarketQuotes(
-      const SecurityMarketDataQuery& query) {
-    return m_marketQuoteDataStore.Load(query);
+  void SqlHistoricalDataStore<C>::store(
+      const SequencedSecurityBookQuote& quote) {
+    m_book_quote_data_store.store(quote);
   }
 
   template<typename C>
-  std::vector<SequencedTimeAndSale> SqlHistoricalDataStore<C>::LoadTimeAndSales(
-      const SecurityMarketDataQuery& query) {
-    return m_timeAndSaleDataStore.Load(query);
+  void SqlHistoricalDataStore<C>::store(
+      const std::vector<SequencedSecurityBookQuote>& quotes) {
+    m_book_quote_data_store.store(quotes);
   }
 
   template<typename C>
-  void SqlHistoricalDataStore<C>::Store(const SecurityInfo& info) {
-    auto writer = m_writerPool.Acquire();
-    writer->execute(Viper::upsert(GetSecurityInfoRow(), "security_info",
-      &info));
+  std::vector<SequencedTimeAndSale> SqlHistoricalDataStore<C>::
+      load_time_and_sales(const SecurityMarketDataQuery& query) {
+    return m_time_and_sale_data_store.load(query);
   }
 
   template<typename C>
-  void SqlHistoricalDataStore<C>::Store(
-      const SequencedMarketOrderImbalance& orderImbalance) {
-    m_orderImbalanceDataStore.Store(orderImbalance);
+  void SqlHistoricalDataStore<C>::store(
+      const SequencedSecurityTimeAndSale& time_and_sale) {
+    m_time_and_sale_data_store.store(time_and_sale);
   }
 
   template<typename C>
-  void SqlHistoricalDataStore<C>::Store(
-      const std::vector<SequencedMarketOrderImbalance>& orderImbalances) {
-    m_orderImbalanceDataStore.Store(orderImbalances);
+  void SqlHistoricalDataStore<C>::store(
+      const std::vector<SequencedSecurityTimeAndSale>& time_and_sales) {
+    m_time_and_sale_data_store.store(time_and_sales);
   }
 
   template<typename C>
-  void SqlHistoricalDataStore<C>::Store(
-      const SequencedSecurityBboQuote& bboQuote) {
-    m_bboQuoteDataStore.Store(bboQuote);
-  }
-
-  template<typename C>
-  void SqlHistoricalDataStore<C>::Store(
-      const std::vector<SequencedSecurityBboQuote>& bboQuotes) {
-    m_bboQuoteDataStore.Store(bboQuotes);
-  }
-
-  template<typename C>
-  void SqlHistoricalDataStore<C>::Store(
-      const SequencedSecurityMarketQuote& marketQuote) {
-    m_marketQuoteDataStore.Store(marketQuote);
-  }
-
-  template<typename C>
-  void SqlHistoricalDataStore<C>::Store(
-      const std::vector<SequencedSecurityMarketQuote>& marketQuotes) {
-    m_marketQuoteDataStore.Store(marketQuotes);
-  }
-
-  template<typename C>
-  void SqlHistoricalDataStore<C>::Store(
-      const SequencedSecurityBookQuote& bookQuote) {
-    m_bookQuoteDataStore.Store(bookQuote);
-  }
-
-  template<typename C>
-  void SqlHistoricalDataStore<C>::Store(
-      const std::vector<SequencedSecurityBookQuote>& bookQuotes) {
-    m_bookQuoteDataStore.Store(bookQuotes);
-  }
-
-  template<typename C>
-  void SqlHistoricalDataStore<C>::Store(
-      const SequencedSecurityTimeAndSale& timeAndSale) {
-    m_timeAndSaleDataStore.Store(timeAndSale);
-  }
-
-  template<typename C>
-  void SqlHistoricalDataStore<C>::Store(
-      const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
-    m_timeAndSaleDataStore.Store(timeAndSales);
-  }
-
-  template<typename C>
-  void SqlHistoricalDataStore<C>::Close() {
-    if(m_openState.SetClosing()) {
+  void SqlHistoricalDataStore<C>::close() {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_timeAndSaleDataStore.Close();
-    m_bookQuoteDataStore.Close();
-    m_marketQuoteDataStore.Close();
-    m_bboQuoteDataStore.Close();
-    m_orderImbalanceDataStore.Close();
-    m_writerPool.Close();
-    m_readerPool.Close();
-    m_openState.Close();
+    m_time_and_sale_data_store.close();
+    m_book_quote_data_store.close();
+    m_bbo_quote_data_store.close();
+    m_order_imbalance_data_store.close();
+    m_writer_pool.close();
+    m_reader_pool.close();
+    m_open_state.close();
   }
 }
 

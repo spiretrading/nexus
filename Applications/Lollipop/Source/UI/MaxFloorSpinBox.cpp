@@ -16,7 +16,7 @@ using namespace std;
 MaxFloorSpinBox::MaxFloorSpinBox(Ref<UserProfile> userProfile,
     const MaxFloorNode& node, QWidget* parent)
     : QSpinBox(parent),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   setMaximum(numeric_limits<int>::max());
   setMinimum(-1);
   setSpecialValueText(tr("N/A"));
@@ -80,7 +80,7 @@ void MaxFloorSpinBox::AdjustIncrement(KeyModifiers modifier) {
   if(!m_security.is_initialized()) {
     return;
   }
-  auto quantityIncrement = m_userProfile->GetInteractionProperties().Get(
+  auto quantityIncrement = m_userProfile->GetInteractionProperties().get(
     *m_security).m_quantityIncrements[static_cast<int>(modifier)];
   if(quantityIncrement != singleStep()) {
     setSingleStep(static_cast<int>(quantityIncrement));

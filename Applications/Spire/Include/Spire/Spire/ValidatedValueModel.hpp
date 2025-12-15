@@ -30,31 +30,21 @@ namespace Spire {
        * as its base.
        * @param validator The function used to validate updates.
        */
-      template<std::invocable<const Type&> V>
-      explicit ValidatedValueModel(V&& validator)
-        : ValidatedValueModel(std::forward<V>(validator),
-            std::make_shared<LocalValueModel<Type>>()) {}
+      template<std::invocable<const T&> V>
+      explicit ValidatedValueModel(V&& validator);
 
       /**
        * Constructs a ValidatedValueModel.
        * @param validator The function used to validate updates.
        * @param base The base ValueModel to apply the validation to.
        */
-      template<std::invocable<const Type&> V>
-      ValidatedValueModel(V&& validator, std::shared_ptr<ValueModel<T>> base)
-        : m_validator(std::forward<V>(validator)),
-          m_base(std::move(base)),
-          m_state(QValidator::State::Acceptable),
-          m_update_connection(m_base->connect_update_signal(m_update_signal)) {}
+      template<std::invocable<const T&> V>
+      ValidatedValueModel(V&& validator, std::shared_ptr<ValueModel<T>> base);
 
       QValidator::State get_state() const override;
-
       const Type& get() const override;
-
       QValidator::State test(const Type& value) const override;
-
       QValidator::State set(const Type& value) override;
-
       boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 
@@ -88,6 +78,22 @@ namespace Spire {
     return std::make_shared<ValidatedValueModel<T, std::remove_reference_t<V>>>(
       std::forward<V>(validator));
   }
+
+  template<typename T, std::invocable<const T&> F>
+  template<std::invocable<const T&> V>
+  ValidatedValueModel<T, F>::ValidatedValueModel(V&& validator)
+    : ValidatedValueModel(std::forward<V>(validator),
+        std::make_shared<LocalValueModel<Type>>()) {}
+
+
+  template<typename T, std::invocable<const T&> F>
+  template<std::invocable<const T&> V>
+  ValidatedValueModel<T, F>::ValidatedValueModel(
+    V&& validator, std::shared_ptr<ValueModel<T>> base)
+    : m_validator(std::forward<V>(validator)),
+      m_base(std::move(base)),
+      m_state(QValidator::State::Acceptable),
+      m_update_connection(m_base->connect_update_signal(m_update_signal)) {}
 
   template<typename T, std::invocable<const T&> F>
   QValidator::State ValidatedValueModel<T, F>::get_state() const {

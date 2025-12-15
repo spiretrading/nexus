@@ -1,6 +1,5 @@
 #ifndef SPIRE_BOOK_VIEW_TABLE_VIEW_HPP
 #define SPIRE_BOOK_VIEW_TABLE_VIEW_HPP
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Ui/TableView.hpp"

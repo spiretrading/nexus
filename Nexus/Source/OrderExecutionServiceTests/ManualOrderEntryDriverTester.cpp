@@ -1,123 +1,114 @@
+#include <future>
+#include <Beam/Queues/Queue.hpp>
 #include <doctest/doctest.h>
-#include "Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp"
-#include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
+#include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
 #include "Nexus/OrderExecutionService/ManualOrderEntryDriver.hpp"
-#include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
+#include "Nexus/OrderExecutionServiceTests/TestOrderExecutionDriver.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::ServiceLocator;
-using namespace Beam::ServiceLocator::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::AdministrationService::Tests;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::OrderExecutionService::Tests;
+using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::DefaultVenues;
+using namespace Nexus::Tests;
 
 namespace {
-  using TestManualOrderEntryDriver = ManualOrderEntryDriver<
-    MockOrderExecutionDriver*, AdministrationClientBox>;
-
-  const auto SECURITY = Security("ABX", DefaultMarkets::TSX(),
-    DefaultCountries::CA());
-
   struct Fixture {
-    ServiceLocatorTestEnvironment m_serviceLocatorEnvironment;
-    optional<AdministrationServiceTestEnvironment>
-      m_administrationTestEnvironment;
-    MockOrderExecutionDriver m_testDriver;
-    optional<TestManualOrderEntryDriver> m_driver;
+    std::shared_ptr<Queue<std::shared_ptr<TestOrderExecutionDriver::Operation>>>
+      m_driver_operations;
+    TestOrderExecutionDriver m_test_driver;
+    std::shared_ptr<Queue<std::shared_ptr<TestAdministrationClient::Operation>>>
+      m_admin_operations;
+    TestAdministrationClient m_admin_client;
+    ManualOrderEntryDriver<
+      TestOrderExecutionDriver*, TestAdministrationClient*> m_driver;
 
-    Fixture() {
-      m_serviceLocatorEnvironment.GetRoot().MakeAccount("administrator", "",
-        DirectoryEntry::GetStarDirectory());
-      auto adminServiceLocatorClient = m_serviceLocatorEnvironment.MakeClient(
-        "administrator", "");
-      m_serviceLocatorEnvironment.GetRoot().StorePermissions(
-        adminServiceLocatorClient.GetAccount(),
-        DirectoryEntry::GetStarDirectory(),
-        Permissions().
-          Set(Permission::ADMINISTRATE).
-          Set(Permission::MOVE).
-          Set(Permission::READ));
-      auto adminAccount = adminServiceLocatorClient.GetAccount();
-      m_administrationTestEnvironment.emplace(adminServiceLocatorClient);
-      m_administrationTestEnvironment->MakeAdministrator(adminAccount);
-      m_driver.emplace("MOE", &m_testDriver,
-        m_administrationTestEnvironment->MakeClient(
-          m_serviceLocatorEnvironment.MakeClient("administrator", "")));
-    }
+    Fixture()
+      : m_driver_operations(std::make_shared<
+          Queue<std::shared_ptr<TestOrderExecutionDriver::Operation>>>()),
+        m_test_driver(m_driver_operations),
+        m_admin_operations(std::make_shared<
+          Queue<std::shared_ptr<TestAdministrationClient::Operation>>>()),
+        m_admin_client(m_admin_operations),
+        m_driver("MANUAL", &m_test_driver, &m_admin_client) {}
   };
+
+  auto make_order_info(
+      const DirectoryEntry& account, const std::string& destination) {
+    auto fields = OrderFields();
+    fields.m_account = account;
+    fields.m_security = Security("TST", TSX);
+    fields.m_currency = CAD;
+    fields.m_type = OrderType::LIMIT;
+    fields.m_side = Side::BID;
+    fields.m_destination = destination;
+    fields.m_quantity = 100;
+    fields.m_price = Money::ONE;
+    return OrderInfo(fields, 1, false, ptime(not_a_date_time));
+  }
 }
 
 TEST_SUITE("ManualOrderEntryDriver") {
-  TEST_CASE_FIXTURE(Fixture, "submit_moe_without_permission") {
-    auto account = m_serviceLocatorEnvironment.GetRoot().MakeAccount("trader",
-      "1234", DirectoryEntry::GetStarDirectory());
-    auto orderInfo = OrderInfo(OrderFields::MakeLimitOrder(SECURITY, Side::BID,
-      "MOE", 100, Money::ONE), account, 100, false,
-      time_from_string("2020-12-18 14:49:12"));
-    auto& rejectedOrder = m_driver->Submit(orderInfo);
-    auto snapshot = rejectedOrder.GetPublisher().GetSnapshot();
-    REQUIRE(snapshot.is_initialized());
-    REQUIRE(!snapshot->empty());
-    REQUIRE(snapshot->back().m_status == OrderStatus::REJECTED);
+  TEST_CASE("successful_submission") {
+    auto fixture = Fixture();
+    auto info = make_order_info(DirectoryEntry::make_account(123), "MANUAL");
+    auto future_order = std::async(std::launch::async, [&] {
+      return fixture.m_driver.submit(info);
+    });
+    auto admin_operation = fixture.m_admin_operations->pop();
+    auto& check_admin_operation =
+      std::get<TestAdministrationClient::CheckAdministratorOperation>(
+        *admin_operation);
+    REQUIRE(check_admin_operation.m_account == info.m_submission_account);
+    check_admin_operation.m_result.set(true);
+    auto submitted_order = future_order.get();
+    REQUIRE(submitted_order->get_info() == info);
+    auto reports = *submitted_order->get_publisher().get_snapshot();
+    REQUIRE(reports.size() == 3);
+    REQUIRE(reports[0].m_status == OrderStatus::PENDING_NEW);
+    REQUIRE(reports[1].m_status == OrderStatus::NEW);
+    REQUIRE(reports[2].m_status == OrderStatus::FILLED);
+    REQUIRE(reports[2].m_last_quantity == info.m_fields.m_quantity);
+    REQUIRE(reports[2].m_last_price == info.m_fields.m_price);
+    REQUIRE(reports[2].m_last_market == "MANUAL");
   }
 
-  TEST_CASE_FIXTURE(Fixture, "submit_moe_with_permission") {
-    auto adminAccount = m_serviceLocatorEnvironment.GetRoot().FindAccount(
-      "administrator");
-    REQUIRE(adminAccount.is_initialized());
-    auto orderInfo = OrderInfo(OrderFields::MakeLimitOrder(SECURITY, Side::BID,
-      "MOE", 100, Money::ONE), *adminAccount, 100, false,
-      time_from_string("2020-12-18 14:49:12"));
-    auto& filledOrder = m_driver->Submit(orderInfo);
-    auto executionReports = std::make_shared<Queue<ExecutionReport>>();
-    filledOrder.GetPublisher().Monitor(executionReports);
-    REQUIRE(executionReports->Pop().m_status == OrderStatus::PENDING_NEW);
-    REQUIRE(executionReports->Pop().m_status == OrderStatus::NEW);
-    REQUIRE(executionReports->Pop().m_status == OrderStatus::FILLED);
+  TEST_CASE("insufficient_permissions") {
+    auto fixture = Fixture();
+    auto info = make_order_info(DirectoryEntry::make_account(123), "MANUAL");
+    auto future_order = std::async(std::launch::async, [&] {
+      return fixture.m_driver.submit(info);
+    });
+    auto admin_operation = fixture.m_admin_operations->pop();
+    auto& check_admin_operation =
+      std::get<TestAdministrationClient::CheckAdministratorOperation>(
+        *admin_operation);
+    REQUIRE(check_admin_operation.m_account == info.m_submission_account);
+    check_admin_operation.m_result.set(false);
+    auto submitted_order = future_order.get();
+    REQUIRE(submitted_order->get_info() == info);
+    auto reports = *submitted_order->get_publisher().get_snapshot();
+    REQUIRE(reports.size() == 2);
+    REQUIRE(reports[0].m_status == OrderStatus::PENDING_NEW);
+    REQUIRE(reports[1].m_status == OrderStatus::REJECTED);
+    REQUIRE(reports[1].m_text ==
+      "Insufficient permissions to execute a manual order.");
   }
 
-  TEST_CASE_FIXTURE(Fixture, "submit") {
-    auto account = m_serviceLocatorEnvironment.GetRoot().MakeAccount("trader",
-      "1234", DirectoryEntry::GetStarDirectory());
-    auto orderInfo = OrderInfo(OrderFields::MakeLimitOrder(SECURITY, Side::BID,
-      "TSX", 100, Money::ONE), account, 100, false,
-      time_from_string("2020-12-18 14:49:12"));
-    auto submittedOrders = std::make_shared<Queue<PrimitiveOrder*>>();
-    m_testDriver.SetOrderStatusNewOnSubmission(true);
-    m_testDriver.GetPublisher().Monitor(submittedOrders);
-    auto& order = m_driver->Submit(orderInfo);
-    auto snapshot = order.GetPublisher().GetSnapshot();
-    REQUIRE(snapshot.is_initialized());
-    REQUIRE(!snapshot->empty());
-    REQUIRE(snapshot->back().m_status == OrderStatus::NEW);
-    auto receivedOrder = submittedOrders->Pop();
-    REQUIRE(receivedOrder == &order);
-    auto session = OrderExecutionSession();
-    session.SetAccount(account);
-    m_driver->Cancel(session, order.GetInfo().m_orderId);
-    snapshot = order.GetPublisher().GetSnapshot();
-    REQUIRE(snapshot.is_initialized());
-    REQUIRE(!snapshot->empty());
-    REQUIRE(snapshot->back().m_status == OrderStatus::PENDING_CANCEL);
-  }
-
-  TEST_CASE_FIXTURE(Fixture, "recover_moe") {
-    auto account = m_serviceLocatorEnvironment.GetRoot().MakeAccount("trader",
-      "1234", DirectoryEntry::GetStarDirectory());
-    auto orderInfo = OrderInfo(OrderFields::MakeLimitOrder(SECURITY, Side::BID,
-      "MOE", 100, Money::ONE), account, 100, false,
-      time_from_string("2020-12-18 14:49:12"));
-    auto submittedOrders = std::make_shared<Queue<PrimitiveOrder*>>();
-    m_testDriver.SetOrderStatusNewOnSubmission(true);
-    m_testDriver.GetPublisher().Monitor(submittedOrders);
-    auto& order = m_driver->Recover(SequencedValue(
-      IndexedValue(OrderRecord(orderInfo, {}), account),
-      Queries::Sequence(100)));
-    REQUIRE_THROWS(m_testDriver.FindOrder(order.GetInfo().m_orderId));
+  TEST_CASE("forward_submission") {
+    auto fixture = Fixture();
+    auto info = make_order_info(DirectoryEntry::make_account(123), "FORWARD");
+    auto future_order = std::async(std::launch::async, [&] {
+      return fixture.m_driver.submit(info);
+    });
+    auto driver_operation = fixture.m_driver_operations->pop();
+    auto& submit_operation =
+      std::get<TestOrderExecutionDriver::SubmitOperation>(*driver_operation);
+    REQUIRE(submit_operation.m_info == info);
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    submit_operation.m_result.set(order);
+    auto submitted_order = future_order.get();
+    REQUIRE(submitted_order == order);
   }
 }

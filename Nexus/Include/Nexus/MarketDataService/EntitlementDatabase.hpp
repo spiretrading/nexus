@@ -2,15 +2,17 @@
 #define NEXUS_MARKET_DATA_ENTITLEMENT_DATABASE_HPP
 #include <unordered_map>
 #include <vector>
-#include <Beam/Serialization/DataShuttle.hpp>
+#include <Beam/Collections/View.hpp>
+#include <Beam/Serialization/Receiver.hpp>
+#include <Beam/Serialization/Sender.hpp>
 #include <Beam/Serialization/ShuttleUnorderedMap.hpp>
+#include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/MarketDataService/EntitlementSet.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/MarketDataService/MarketDataType.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Stores the database of all market data entitlements. */
   class EntitlementDatabase {
@@ -32,85 +34,148 @@ namespace Nexus::MarketDataService {
          * The entitlement's group entry, basically it's the directory all
          * accounts with this entitlement are located under.
          */
-        Beam::ServiceLocator::DirectoryEntry m_groupEntry;
+        Beam::DirectoryEntry m_group_entry;
 
         /**
-         * Stores the entitlement's applicability.  Each market this
-         * entitlement applies to is mapped to the message types the
-         * entitlement grants.
+         * Stores the entitlement's applicability.  Each market this entitlement
+         * applies to is mapped to the message types the entitlement grants.
          */
         std::unordered_map<EntitlementKey, MarketDataTypeSet> m_applicability;
+
+        bool operator ==(const Entry&) const = default;
       };
 
-      /** Constructs an empty MarketDatabase. */
+      /** The entry returned for any failed lookup. */
+      inline static const auto NONE = Entry();
+
+      /** Constructs an empty EntitlementDatabase. */
       EntitlementDatabase() = default;
 
+      EntitlementDatabase(const EntitlementDatabase& database) noexcept;
+
       /** Returns all Entries. */
-      const std::vector<Entry>& GetEntries() const;
+      Beam::View<const Entry> get_entries() const;
 
       /**
        * Adds an Entry.
        * @param entry The Entry to add.
        */
-      void Add(const Entry& entry);
+      void add(const Entry& entry);
 
       /**
-       * Deletes an Entry.
-       * @param groupEntry The Entry's group to delete.
+       * Removes an Entry.
+       * @param group The Entry's group to delete.
        */
-      void Delete(const Beam::ServiceLocator::DirectoryEntry& groupEntry);
+      void remove(const Beam::DirectoryEntry& group);
+
+      EntitlementDatabase& operator =(
+        const EntitlementDatabase& database) noexcept;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
-      template<typename T>
-      struct NoneEntry {
-        static Entry NONE_ENTRY;
-      };
-      std::vector<Entry> m_entries;
-
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      friend struct Beam::Shuttle<EntitlementDatabase>;
+      std::atomic<std::shared_ptr<std::vector<Entry>>> m_entries;
   };
 
-  inline const std::vector<EntitlementDatabase::Entry>&
-      EntitlementDatabase::GetEntries() const {
-    return m_entries;
-  }
+  inline EntitlementDatabase::EntitlementDatabase(
+    const EntitlementDatabase& database) noexcept
+    : m_entries(database.m_entries.load()) {}
 
-  inline void EntitlementDatabase::Add(const Entry& entry) {
-    m_entries.push_back(entry);
-  }
-
-  inline void EntitlementDatabase::Delete(
-      const Beam::ServiceLocator::DirectoryEntry& groupEntry) {
-    auto entryIterator = std::find_if(m_entries.begin(), m_entries.end(),
-      [&] (const auto& entry) {
-        return entry.m_groupEntry == groupEntry;
-      });
-    if(entryIterator == m_entries.end()) {
-      return;
+  inline Beam::View<const EntitlementDatabase::Entry>
+      EntitlementDatabase::get_entries() const {
+    if(auto entries = m_entries.load()) {
+      return Beam::View(Beam::SharedIterator(entries, entries->begin()),
+        Beam::SharedIterator(entries, entries->end()));
     }
-    m_entries.erase(entryIterator);
+    return Beam::View<const Entry>();
   }
 
-  template<typename Shuttler>
-  void EntitlementDatabase::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("entries", m_entries);
+  inline void EntitlementDatabase::add(const Entry& entry) {
+    while(true) {
+      auto entries = m_entries.load();
+      auto new_entries = [&] {
+        if(!entries) {
+          auto new_entries = std::make_shared<std::vector<Entry>>();
+          new_entries->push_back(entry);
+          return new_entries;
+        }
+        auto i = std::find_if(entries->begin(), entries->end(),
+          [&] (const auto& i) {
+            return entry.m_group_entry == i.m_group_entry;
+          });
+        if(i == entries->end()) {
+          auto new_entries = std::make_shared<std::vector<Entry>>(*entries);
+          new_entries->insert(
+            new_entries->begin() + std::distance(entries->begin(), i), entry);
+          return new_entries;
+        }
+        return std::shared_ptr<std::vector<Entry>>();
+      }();
+      if(!new_entries ||
+          m_entries.compare_exchange_weak(entries, new_entries)) {
+        break;
+      }
+    }
+  }
+
+  inline void EntitlementDatabase::remove(const Beam::DirectoryEntry& group) {
+    while(true) {
+      auto entries = m_entries.load();
+      if(!entries) {
+        break;
+      }
+      auto i = std::find_if(entries->begin(), entries->end(),
+        [&] (const auto& i) {
+          return group == i.m_group_entry;
+        });
+      if(i != entries->end()) {
+        auto new_entries = std::make_shared<std::vector<Entry>>(*entries);
+        new_entries->erase(
+          new_entries->begin() + std::distance(entries->begin(), i));
+        if(m_entries.compare_exchange_weak(entries, new_entries)) {
+          break;
+        }
+      } else {
+        break;
+      }
+    }
+  }
+
+  inline EntitlementDatabase& EntitlementDatabase::operator =(
+      const EntitlementDatabase& database) noexcept {
+    m_entries.store(database.m_entries.load());
+    return *this;
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
-  struct Shuttle<Nexus::MarketDataService::EntitlementDatabase::Entry> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::MarketDataService::EntitlementDatabase::Entry& value,
-        unsigned int version) {
-      shuttle.Shuttle("name", value.m_name);
-      shuttle.Shuttle("price", value.m_price);
-      shuttle.Shuttle("currency", value.m_currency);
-      shuttle.Shuttle("group_entry", value.m_groupEntry);
-      shuttle.Shuttle("applicability", value.m_applicability);
+  struct Shuttle<Nexus::EntitlementDatabase::Entry> {
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::EntitlementDatabase::Entry& value,
+        unsigned int version) const {
+      shuttle.shuttle("name", value.m_name);
+      shuttle.shuttle("price", value.m_price);
+      shuttle.shuttle("currency", value.m_currency);
+      shuttle.shuttle("group_entry", value.m_group_entry);
+      shuttle.shuttle("applicability", value.m_applicability);
+    }
+  };
+
+  template<>
+  struct Shuttle<Nexus::EntitlementDatabase> {
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::EntitlementDatabase& value,
+        unsigned int version) const {
+      if constexpr(IsSender<S>) {
+        if(auto entries = value.m_entries.load()) {
+          shuttle.send("entries", *entries);
+        }
+      } else {
+        auto entries =
+          std::make_shared<std::vector<Nexus::EntitlementDatabase::Entry>>();
+        shuttle.shuttle("entries", *entries);
+        value.m_entries.store(std::move(entries));
+      }
     }
   };
 }

@@ -101,21 +101,21 @@ namespace Details {
     const std::filesystem::path& path, Beam::Out<UserProfile> userProfile);
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Spire::UserSettings> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Spire::UserSettings& value,
-        unsigned int version) {
-      shuttle.Shuttle("dashboards", value.m_dashboards);
-      shuttle.Shuttle("order_imbalance_indicator_properties",
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Spire::UserSettings& value, unsigned int version) const {
+      shuttle.shuttle("dashboards", value.m_dashboards);
+      shuttle.shuttle("order_imbalance_indicator_properties",
         value.m_order_imbalance_indicator_properties);
-      shuttle.Shuttle("key_bindings", *value.m_key_bindings);
-      shuttle.Shuttle("portfolio_viewer_properties",
+      shuttle.shuttle("key_bindings", *value.m_key_bindings);
+      shuttle.shuttle("portfolio_viewer_properties",
         value.m_portfolio_properties);
-      shuttle.Shuttle("time_and_sales_properties",
+      shuttle.shuttle("time_and_sales_properties",
         value.m_time_and_sales_properties);
-      shuttle.Shuttle("window_layouts", value.m_layouts);
+      shuttle.shuttle("window_layouts", value.m_layouts);
     }
   };
 }

@@ -1,7 +1,6 @@
 #ifndef SPIRE_CURRENT_USER_ORDER_MODEL_HPP
 #define SPIRE_CURRENT_USER_ORDER_MODEL_HPP
 #include <boost/optional/optional.hpp>
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/SortedTableModel.hpp"
@@ -48,11 +47,8 @@ namespace Spire {
       void navigate_to_asks();
 
       const Type& get() const override;
-
       QValidator::State test(const Type& value) const override;
-
       QValidator::State set(const Type& value) override;
-
       boost::signals2::connection connect_update_signal(
         const UpdateSignal::slot_type& slot) const override;
 

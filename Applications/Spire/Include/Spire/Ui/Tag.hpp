@@ -2,9 +2,9 @@
 #define SPIRE_TAG_HPP
 #include <QWidget>
 #include "Spire/Ui/TextBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Button;
 
   /** Represents a Tag in a TagBox. */
   class Tag : public QWidget {

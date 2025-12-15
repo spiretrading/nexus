@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QGroupBox" name="m_marketsGroup">
+    <widget class="QGroupBox" name="m_venuesGroup">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
        <horstretch>0</horstretch>
@@ -23,21 +23,21 @@
       </sizepolicy>
      </property>
      <property name="title">
-      <string>Markets</string>
+      <string>Venues</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
-       <widget class="QListWidget" name="m_marketsList">
+       <widget class="QListWidget" name="m_venuesList">
         <property name="selectionMode">
          <enum>QAbstractItemView::SingleSelection</enum>
         </property>
        </widget>
       </item>
       <item>
-       <spacer name="m_marketsToOptionsSpacer">
+       <spacer name="m_venuesToOptionsSpacer">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>

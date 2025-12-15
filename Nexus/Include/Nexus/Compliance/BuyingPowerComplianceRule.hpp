@@ -5,26 +5,20 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/MultiQueueWriter.hpp>
 #include <Beam/Queues/StateQueue.hpp>
+#include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Accounting/BuyingPowerModel.hpp"
 #include "Nexus/Definitions/BboQuote.hpp"
-#include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
-#include "Nexus/Definitions/Region.hpp"
-#include "Nexus/Compliance/Compliance.hpp"
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
-#include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
-#include "Nexus/OrderExecutionService/ExecutionReport.hpp"
-#include "Nexus/OrderExecutionService/Order.hpp"
-#include "Nexus/OrderExecutionService/OrderFields.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /**
    * Checks that an Order submission doesn't exceed the maximum allocated buying
@@ -32,7 +26,8 @@ namespace Nexus::Compliance {
    * @param <C> The type of MarketDataClient used to price Orders for buying
    *            power checks.
    */
-  template<typename C>
+  template<typename C> requires
+    IsMarketDataClient<Beam::dereference_t<C>>
   class BuyingPowerComplianceRule : public ComplianceRule {
     public:
 
@@ -40,210 +35,204 @@ namespace Nexus::Compliance {
        * The type of MarketDataClient used to price Orders for buying power
        * checks.
        */
-      using MarketDataClient = Beam::GetTryDereferenceType<C>;
+      using MarketDataClient = Beam::dereference_t<C>;
 
       /**
        * Constructs a BuyingPowerComplianceRule.
-       * @param parameters The list of buying power parameters.
-       * @param exchangeRates The list of ExchangeRates.
-       * @param marketDataClient Initializes the MarketDataClient used to price
-       *        Orders.
+       * @param buying_power The total buying power available.
+       * @param currency The buying power's currency.
+       * @param exchange_rates Used to convert currencies.
+       * @param market_data_client Initializes the MarketDataClient used to
+       *        price Orders.
        */
-      template<typename CF>
-      BuyingPowerComplianceRule(
-        const std::vector<ComplianceParameter>& parameters,
-        const std::vector<ExchangeRate>& exchangeRates,
-        CF&& marketDataClient);
+      template<Beam::Initializes<C> CF>
+      BuyingPowerComplianceRule(Money buying_power, CurrencyId currency,
+        const ExchangeRateTable& exchange_rates, CF&& market_data_client);
 
-      void Submit(const OrderExecutionService::Order& order) override;
-
-      void Add(const OrderExecutionService::Order& order) override;
+      void submit(const std::shared_ptr<Order>& order) override;
+      void add(const std::shared_ptr<Order>& order) override;
 
     private:
+      Money m_buying_power;
       CurrencyId m_currency;
-      Money m_buyingPower;
-      Region m_region;
-      ExchangeRateTable m_exchangeRates;
-      Beam::GetOptionalLocalPtr<C> m_marketDataClient;
-      Beam::Threading::Sync<Accounting::BuyingPowerModel> m_buyingPowerModel;
-      Beam::MultiQueueWriter<OrderExecutionService::ExecutionReport>
-        m_executionReportQueue;
-      std::unordered_map<OrderExecutionService::OrderId, CurrencyId>
-        m_currencies;
+      ExchangeRateTable m_exchange_rates;
+      Beam::local_ptr_t<C> m_market_data_client;
+      Beam::Sync<BuyingPowerModel> m_buying_power_model;
+      Beam::MultiQueueWriter<ExecutionReport> m_execution_report_queue;
+      std::unordered_map<OrderId, CurrencyId> m_currencies;
       Beam::SynchronizedUnorderedMap<Security,
-        std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bboQuotes;
+        std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bbo_quotes;
+      std::vector<Beam::RoutineHandler> m_query_routines;
 
-      BboQuote LoadBboQuote(const Security& security);
-      Money GetExpectedPrice(
-        const OrderExecutionService::OrderFields& orderFields);
+      BboQuote load_bbo_quote(const Security& security);
+      Money get_expected_price(const OrderFields& fields);
   };
 
+  template<typename C>
+  BuyingPowerComplianceRule(
+    Money, CurrencyId, const ExchangeRateTable&, C&&) ->
+      BuyingPowerComplianceRule<std::remove_cvref_t<C>>;
 
-  template<typename MarketDataClient>
-  BuyingPowerComplianceRule(const std::vector<ComplianceParameter>&,
-    const std::vector<ExchangeRate>&, MarketDataClient&&) ->
-    BuyingPowerComplianceRule<std::decay_t<MarketDataClient>>;
+  /** The standard name used to identify the BuyingPowerComplianceRule. */
+  inline auto BUYING_POWER_COMPLIANCE_RULE_NAME = std::string("buying_power");
 
   /**
    * Returns a ComplianceRuleSchema representing a BuyingPowerComplianceRule.
    */
-  inline ComplianceRuleSchema MakeBuyingPowerComplianceRuleSchema() {
+  inline ComplianceRuleSchema make_buying_power_compliance_rule_schema() {
     auto parameters = std::vector<ComplianceParameter>();
-    parameters.emplace_back("currency", DefaultCurrencies::USD());
     parameters.emplace_back("buying_power", Money::ZERO);
-    auto symbols = std::vector<ComplianceValue>();
-    symbols.push_back(Security("*", MarketCode(), CountryCode::NONE));
-    parameters.emplace_back("symbols", symbols);
-    auto schema = ComplianceRuleSchema("buying_power", std::move(parameters));
-    return schema;
+    parameters.emplace_back("currency", DefaultCurrencies::USD);
+    return ComplianceRuleSchema(
+      BUYING_POWER_COMPLIANCE_RULE_NAME, std::move(parameters));
   }
 
-  template<typename C>
-  template<typename CF>
-  BuyingPowerComplianceRule<C>::BuyingPowerComplianceRule(
+  /**
+   * Makes a new BuyingPowerComplianceRule from a list of ComplianceParameters.
+   * @param parameters The parameters to construct the rule from.
+   * @param exchange_rates Used to convert currencies.
+   * @param market_data_client Initializes the MarketDataClient used to
+   *        price Orders.
+   */
+  inline auto make_buying_power_compliance_rule(
       const std::vector<ComplianceParameter>& parameters,
-      const std::vector<ExchangeRate>& exchangeRates, CF&& marketDataClient)
-      : m_marketDataClient(std::forward<CF>(marketDataClient)) {
+      const ExchangeRateTable& exchange_rates,
+      IsMarketDataClient auto& market_data_client) {
+    auto buying_power = Money::ZERO;
+    auto currency = DefaultCurrencies::USD;
     for(auto& parameter : parameters) {
-      if(parameter.m_name == "currency") {
-        m_currency = boost::get<CurrencyId>(parameter.m_value);
-      } else if(parameter.m_name == "buying_power") {
-        m_buyingPower = boost::get<Money>(parameter.m_value);
-      } else if(parameter.m_name == "symbols") {
-        for(auto& security :
-            boost::get<std::vector<ComplianceValue>>(parameter.m_value)) {
-          m_region += boost::get<Security>(security);
-        }
+      if(parameter.m_name == "buying_power") {
+        buying_power = boost::get<Money>(parameter.m_value);
+      } else if(parameter.m_name == "currency") {
+        currency = boost::get<CurrencyId>(parameter.m_value);
       }
     }
-    if(m_region.IsEmpty()) {
-      m_region = Region::Global();
-    }
-    for(auto& exchangeRate : exchangeRates) {
-      m_exchangeRates.Add(exchangeRate);
-    }
+    using Rule = BuyingPowerComplianceRule<
+      std::remove_reference_t<decltype(market_data_client)>*>;
+    return std::make_unique<Rule>(
+      buying_power, currency, exchange_rates, &market_data_client);
   }
 
-  template<typename C>
-  void BuyingPowerComplianceRule<C>::Submit(
-      const OrderExecutionService::Order& order) {
-    auto& fields = order.GetInfo().m_fields;
-    if(!m_region.Contains(fields.m_security)) {
-      return;
-    }
-    auto price = GetExpectedPrice(fields);
-    Beam::Threading::With(m_buyingPowerModel, [&] (auto& buyingPowerModel) {
-      while(auto report = m_executionReportQueue.TryPop()) {
-        if(report->m_lastQuantity != 0) {
-          auto currency = Beam::Lookup(m_currencies, report->m_id);
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  template<Beam::Initializes<C> CF>
+  BuyingPowerComplianceRule<C>::BuyingPowerComplianceRule(Money buying_power,
+    CurrencyId currency, const ExchangeRateTable& exchange_rates,
+    CF&& market_data_client)
+    : m_buying_power(buying_power),
+      m_currency(currency),
+      m_market_data_client(std::forward<CF>(market_data_client)) {}
+
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  void BuyingPowerComplianceRule<C>::submit(
+      const std::shared_ptr<Order>& order) {
+    auto& fields = order->get_info().m_fields;
+    auto price = get_expected_price(fields);
+    Beam::with(m_buying_power_model, [&] (auto& buying_power_model) {
+      while(auto report = m_execution_report_queue.try_pop()) {
+        if(report->m_last_quantity != 0) {
+          auto currency = Beam::lookup(m_currencies, report->m_id);
           if(!currency) {
-            BOOST_THROW_EXCEPTION(
+            boost::throw_with_location(
               ComplianceCheckException("Currency not recognized."));
           }
-          report->m_lastPrice =
-            m_exchangeRates.Convert(report->m_lastPrice, *currency, m_currency);
+          report->m_last_price = m_exchange_rates.convert(
+            report->m_last_price, *currency, m_currency);
         }
-        buyingPowerModel.Update(*report);
+        buying_power_model.update(*report);
       }
-      auto convertedFields = fields;
-      convertedFields.m_currency = m_currency;
-      auto convertedPrice = Money();
+      auto converted_fields = fields;
+      converted_fields.m_currency = m_currency;
+      auto converted_price = Money();
       try {
-        convertedFields.m_price = m_exchangeRates.Convert(
+        converted_fields.m_price = m_exchange_rates.convert(
           fields.m_price, fields.m_currency, m_currency);
-        convertedPrice =
-          m_exchangeRates.Convert(price, fields.m_currency, m_currency);
+        converted_price =
+          m_exchange_rates.convert(price, fields.m_currency, m_currency);
       } catch(const CurrencyPairNotFoundException&) {
-        BOOST_THROW_EXCEPTION(
+        boost::throw_with_location(
           ComplianceCheckException("Currency not recognized."));
       }
-      m_currencies.insert(
-        std::pair(order.GetInfo().m_orderId, fields.m_currency));
-      auto updatedBuyingPower = buyingPowerModel.Submit(
-        order.GetInfo().m_orderId, convertedFields, convertedPrice);
-      if(updatedBuyingPower > m_buyingPower) {
-        auto report = OrderExecutionService::ExecutionReport();
-        report.m_id = order.GetInfo().m_orderId;
+      m_currencies.insert(std::pair(order->get_info().m_id, fields.m_currency));
+      auto updated_buying_power = buying_power_model.submit(
+        order->get_info().m_id, converted_fields, converted_price);
+      if(updated_buying_power > m_buying_power) {
+        auto report = ExecutionReport();
+        report.m_id = order->get_info().m_id;
         report.m_status = OrderStatus::REJECTED;
-        buyingPowerModel.Update(report);
-        BOOST_THROW_EXCEPTION(
+        buying_power_model.update(report);
+        boost::throw_with_location(
           ComplianceCheckException("Order exceeds available buying power."));
       } else {
-        order.GetPublisher().Monitor(m_executionReportQueue.GetWriter());
+        order->get_publisher().monitor(m_execution_report_queue.get_writer());
       }
     });
   }
 
-  template<typename C>
-  void BuyingPowerComplianceRule<C>::Add(
-      const OrderExecutionService::Order& order) {
-    auto& fields = order.GetInfo().m_fields;
-    if(!m_region.Contains(fields.m_security)) {
-      return;
-    }
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  void BuyingPowerComplianceRule<C>::add(const std::shared_ptr<Order>& order) {
+    auto& fields = order->get_info().m_fields;
     auto price = [&] {
       try {
-        return GetExpectedPrice(order.GetInfo().m_fields);
+        return get_expected_price(order->get_info().m_fields);
       } catch(const std::exception&) {
-        if(order.GetInfo().m_fields.m_type == OrderType::LIMIT) {
-          return order.GetInfo().m_fields.m_price;
+        if(order->get_info().m_fields.m_type == OrderType::LIMIT) {
+          return order->get_info().m_fields.m_price;
         }
         return Money::ZERO;
       }
     }();
-    Beam::Threading::With(m_buyingPowerModel, [&] (auto& buyingPowerModel) {
-      auto convertedFields = fields;
-      m_currencies.insert(
-        std::pair(order.GetInfo().m_orderId, fields.m_currency));
-      convertedFields.m_currency = m_currency;
-      auto convertedPrice = Money();
+    Beam::with(m_buying_power_model, [&] (auto& buying_power_model) {
+      auto converted_fields = fields;
+      m_currencies.insert(std::pair(order->get_info().m_id, fields.m_currency));
+      converted_fields.m_currency = m_currency;
+      auto converted_price = Money();
       try {
-        convertedFields.m_price = m_exchangeRates.Convert(
-          fields.m_price, fields.m_currency, convertedFields.m_currency);
-        convertedPrice =
-          m_exchangeRates.Convert(price, fields.m_currency, fields.m_currency);
+        converted_fields.m_price = m_exchange_rates.convert(
+          fields.m_price, fields.m_currency, converted_fields.m_currency);
+        converted_price = m_exchange_rates.convert(
+          price, fields.m_currency, converted_fields.m_currency);
       } catch(const CurrencyPairNotFoundException&) {
         return;
       }
-      buyingPowerModel.Submit(
-        order.GetInfo().m_orderId, convertedFields, convertedPrice);
-      order.GetPublisher().Monitor(m_executionReportQueue.GetWriter());
+      buying_power_model.submit(
+        order->get_info().m_id, converted_fields, converted_price);
+      order->get_publisher().monitor(m_execution_report_queue.get_writer());
     });
   }
 
-  template<typename C>
-  BboQuote BuyingPowerComplianceRule<C>::LoadBboQuote(
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  BboQuote BuyingPowerComplianceRule<C>::load_bbo_quote(
       const Security& security) {
-    auto publisher = m_bboQuotes.GetOrInsert(security, [&] {
+    auto publisher = m_bbo_quotes.get_or_insert(security, [&] {
       auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
-      MarketDataService::QueryRealTimeWithSnapshot(
-        security, *m_marketDataClient, publisher);
+      m_query_routines.push_back(query_real_time_with_snapshot(
+        *m_market_data_client, security, publisher));
       return publisher;
     });
     try {
-      return publisher->Peek();
+      return publisher->peek();
     } catch(const Beam::PipeBrokenException&) {
-      m_bboQuotes.Erase(security);
-      BOOST_THROW_EXCEPTION(
+      m_bbo_quotes.erase(security);
+      boost::throw_with_location(
         ComplianceCheckException("No BBO quote available."));
     }
   }
 
-  template<typename C>
-  Money BuyingPowerComplianceRule<C>::GetExpectedPrice(
-      const OrderExecutionService::OrderFields& orderFields) {
-    auto bbo = LoadBboQuote(orderFields.m_security);
-    if(orderFields.m_type == OrderType::LIMIT) {
-      if(orderFields.m_price <= Money::ZERO) {
-        BOOST_THROW_EXCEPTION(ComplianceCheckException("Invalid price."));
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  Money BuyingPowerComplianceRule<C>::get_expected_price(
+      const OrderFields& fields) {
+    auto bbo = load_bbo_quote(fields.m_security);
+    if(fields.m_type == OrderType::LIMIT) {
+      if(fields.m_price <= Money::ZERO) {
+        boost::throw_with_location(ComplianceCheckException("Invalid price."));
       }
-      if(orderFields.m_side == Side::ASK) {
-        return std::max(bbo.m_bid.m_price, orderFields.m_price);
+      if(fields.m_side == Side::ASK) {
+        return std::max(bbo.m_bid.m_price, fields.m_price);
       } else {
-        return std::min(bbo.m_ask.m_price, orderFields.m_price);
+        return std::min(bbo.m_ask.m_price, fields.m_price);
       }
     } else {
-      if(orderFields.m_side == Side::ASK) {
+      if(fields.m_side == Side::ASK) {
         return bbo.m_bid.m_price;
       } else {
         return bbo.m_ask.m_price;

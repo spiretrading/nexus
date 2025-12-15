@@ -9,6 +9,7 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -21,13 +22,13 @@ namespace {
   struct SortIndicator : QWidget {
     static const QImage& ASCENDING_IMAGE() {
       static auto image =
-        imageFromSvg(":/Icons/sort_ascending.svg", scale(5, 6));
+        image_from_svg(":/Icons/sort_ascending.svg", scale(5, 6));
       return image;
     }
 
     static const QImage& DESCENDING_IMAGE() {
       static auto image =
-        imageFromSvg(":/Icons/sort_descending.svg", scale(5, 6));
+        image_from_svg(":/Icons/sort_descending.svg", scale(5, 6));
       return image;
     }
 
@@ -69,7 +70,7 @@ namespace {
   };
 
   auto make_filter_button() {
-    static auto icon = imageFromSvg(":/Icons/filter.svg", scale(6, 6));
+    static auto icon = image_from_svg(":/Icons/filter.svg", scale(6, 6));
     auto button = make_icon_button(icon);
     button->setFocusPolicy(Qt::NoFocus);
     button->setFixedSize(scale(16, 16));

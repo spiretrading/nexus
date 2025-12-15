@@ -15,7 +15,7 @@ using namespace std;
 QuantitySpinBox::QuantitySpinBox(Ref<UserProfile> userProfile,
     const IntegerNode& node, QWidget* parent)
     : QSpinBox(parent),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   setMaximum(numeric_limits<int>::max());
   setMinimum(numeric_limits<int>::min());
   setCorrectionMode(QAbstractSpinBox::CorrectToPreviousValue);
@@ -56,7 +56,7 @@ void QuantitySpinBox::AdjustIncrement(KeyModifiers modifier) {
   if(!m_security.is_initialized()) {
     return;
   }
-  auto quantityIncrement = m_userProfile->GetInteractionProperties().Get(
+  auto quantityIncrement = m_userProfile->GetInteractionProperties().get(
     *m_security).m_quantityIncrements[static_cast<int>(modifier)];
   if(quantityIncrement != singleStep()) {
     setSingleStep(static_cast<int>(quantityIncrement));

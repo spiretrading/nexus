@@ -42,8 +42,7 @@ export class SecurityInput extends React.Component<Properties> {
 
   private onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if(event.key === 'Enter') {
-      const security =
-        Nexus.parseWildCardSecurity(this.props.value.toUpperCase());
+      const security = Nexus.Security.parse(this.props.value.toUpperCase());
       if(!security.equals(Nexus.Security.NONE)) {
         this.props.onEnter(security);
       }
