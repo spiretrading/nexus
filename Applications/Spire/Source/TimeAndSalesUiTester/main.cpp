@@ -175,24 +175,41 @@ struct TimeAndSalesTestWindow : QWidget {
 };
 
 struct TimeAndSalesWindowController {
-  TimeAndSalesWindow m_time_and_sales_window;
+  std::shared_ptr<TimeAndSalesPropertiesWindowFactory> m_factory;
+  std::array<TimeAndSalesWindow*, 3> m_time_and_sales_windows;
   TimeAndSalesTestWindow m_time_and_sales_test_window;
 
   explicit TimeAndSalesWindowController(
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory)
 BEAM_SUPPRESS_THIS_INITIALIZER()
-      : m_time_and_sales_window(populate_securities(), std::move(factory),
-          std::bind_front(&TimeAndSalesWindowController::model_builder, this)),
+      : m_factory(std::move(factory)),
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
         m_time_and_sales_test_window(
           std::make_shared<DemoTimeAndSalesModel>()) {
-    m_time_and_sales_window.show();
-    m_time_and_sales_window.installEventFilter(&m_time_and_sales_test_window);
+    auto last_window = static_cast<TimeAndSalesWindow*>(nullptr);
+    for(auto window : m_time_and_sales_windows) {
+      window = new TimeAndSalesWindow(populate_securities(), m_factory,
+        std::bind_front(&TimeAndSalesWindowController::model_builder, this));
+      window->setAttribute(Qt::WA_DeleteOnClose);
+      window->show();
+      window->installEventFilter(&m_time_and_sales_test_window);
+      if(last_window != nullptr) {
+        window->move(last_window->pos().x() +
+          last_window->frameGeometry().width() + scale_width(50),
+          last_window->pos().y());
+      }
+      last_window = window;
+    }
     m_time_and_sales_test_window.setAttribute(Qt::WA_ShowWithoutActivating);
     m_time_and_sales_test_window.show();
-    m_time_and_sales_test_window.move(m_time_and_sales_window.pos().x() +
-      m_time_and_sales_window.frameGeometry().width() + scale_width(100),
-      m_time_and_sales_window.pos().y());
+    m_time_and_sales_test_window.move(last_window->pos().x() +
+      last_window->frameGeometry().width() + scale_width(50),
+      last_window->pos().y());
+  }
+
+  ~TimeAndSalesWindowController() {
+    save_time_and_sales_properties(m_factory->get_properties()->get(),
+      std::filesystem::current_path());
   }
 
   std::shared_ptr<TimeAndSalesModel> model_builder(const Security&) {
@@ -214,7 +231,10 @@ int main(int argc, char** argv) {
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Time and Sales UI Tester"));
   initialize_resources();
+  auto properties = std::make_shared<LocalTimeAndSalesPropertiesModel>(
+    load_time_and_sales_properties(std::filesystem::current_path()));
   auto controller = TimeAndSalesWindowController(
-    std::make_shared<TimeAndSalesPropertiesWindowFactory>());
+    std::make_shared<TimeAndSalesPropertiesWindowFactory>(
+      std::move(properties)));
   application.exec();
 }

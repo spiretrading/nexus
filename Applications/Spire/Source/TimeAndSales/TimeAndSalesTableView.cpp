@@ -1,4 +1,5 @@
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include <QGraphicsOpacityEffect>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ConstantValueModel.hpp"
@@ -320,10 +321,12 @@ namespace {
   }
 
   struct TableViewColumnMover : QObject {
+    using HeaderItemModel = TableHeaderItem::Model;
     using ColumnMoved = Signal<void(int source, int destination)>;
     mutable ColumnMoved m_column_moved_signal;
     TableView* m_table_view;
     TableViewItemBuilder m_item_builder;
+    std::vector<int> m_column_order;
     QWidget* m_column_preview;
     QWidget* m_column_cover;
     QWidget* m_horizontal_scroll_bar_parent;
@@ -333,14 +336,15 @@ namespace {
     int m_source_index;
     int m_current_index;
     int m_preview_x_offset;
-    std::vector<int> m_visual_to_logical;
     std::vector<int> m_widths;
+    scoped_connection m_connection;
 
     TableViewColumnMover(TableView& table_view,
-        TableViewItemBuilder item_builder)
+        TableViewItemBuilder item_builder, std::vector<int> column_order)
         : QObject(&table_view),
           m_table_view(&table_view),
           m_item_builder(std::move(item_builder)),
+          m_column_order(std::move(column_order)),
           m_column_preview(nullptr),
           m_column_cover(nullptr),
           m_horizontal_scroll_bar_parent(nullptr),
@@ -353,9 +357,13 @@ namespace {
       auto& header = m_table_view->get_header();
       header.setMouseTracking(true);
       header.installEventFilter(this);
-      m_visual_to_logical.resize(header.get_items()->get_size());
-      std::iota(m_visual_to_logical.begin(), m_visual_to_logical.end(), 0);
+      if(m_column_order.empty()) {
+        m_column_order.resize(header.get_items()->get_size());
+        std::iota(m_column_order.begin(), m_column_order.end(), 0);
+      }
       header.setCursor(Qt::OpenHandCursor);
+      m_connection = header.get_items()->connect_operation_signal(
+        std::bind_front(&TableViewColumnMover::on_operation, this));
     }
 
     connection connect_column_moved_signal(
@@ -412,7 +420,7 @@ namespace {
         widths->get(index) + m_left_padding, m_table_view->height());
       move_column_cover(index);
       m_column_preview = make_column_preview(*m_table_view, m_item_builder,
-        index, m_visual_to_logical[index]);
+        index, m_column_order[index]);
       m_column_preview->setFixedSize(m_column_cover->width() + scale_width(1),
         m_column_cover->height() + scale_height(1));
       auto parent = m_column_preview->parentWidget();
@@ -505,8 +513,9 @@ namespace {
         return false;
       }();
       if(should_move_column) {
+        auto blocker = shared_connection_block(m_connection);
         header.get_items()->move(m_current_index, index);
-        move_element(m_visual_to_logical, m_current_index, index);
+        move_element(m_column_order, m_current_index, index);
         m_current_index = index;
       }
       auto& horizontal_scroll_bar =
@@ -518,8 +527,8 @@ namespace {
         }
       }
       auto x = std::max(m_table_view->x(),
-        std::min(
-          m_table_view->width() - m_column_preview->width() + scale_width(1),
+        std::min(m_table_view->width() - m_column_preview->width() +
+          2 * scale_width(1),
           m_column_preview->parentWidget()->mapFromGlobal(
             mouse_event.globalPos()).x() - m_preview_x_offset));
       m_column_preview->move(x, m_column_preview->y());
@@ -547,16 +556,30 @@ namespace {
             preview_right - horizontal_scroll_bar.get_page_size()));
       }
     }
+
+    void on_operation(const ListModel<HeaderItemModel>::Operation& operation) {
+      visit(operation,
+        [&] (const ListModel<HeaderItemModel>::MoveOperation& operation) {
+          move_element(m_column_order, operation.m_source,
+            operation.m_destination);
+        });
+    }
   };
 
   struct TableViewStylist : QObject {
     std::shared_ptr<TimeAndSalesPropertiesModel> m_properties;
+    std::vector<int> m_last_column_order;
+    bool m_is_moving;
     scoped_connection m_connection;
 
     TableViewStylist(TableView& table_view,
         std::shared_ptr<TimeAndSalesPropertiesModel> properties)
         : QObject(&table_view),
-          m_properties(std::move(properties)) {
+          m_properties(std::move(properties)),
+          m_is_moving(false) {
+      m_last_column_order.resize(m_properties->get().get_column_order().size());
+      std::iota(m_last_column_order.begin(), m_last_column_order.end(), 0);
+      reorder_column_order(m_properties->get());
       update_style(table_view, [&] (auto& style) {
         style.get(ShowGrid() > is_a<TableBody>()).
           set(HorizontalSpacing(scale_width(1))).
@@ -583,10 +606,11 @@ namespace {
       auto header_properties = make_header_item_properties();
       auto& header = table_view.get_header();
       for(auto i = 0; i < std::ssize(header_properties); ++i) {
-        header.get_widths()->set(i, header_properties[i].m_width);
+        auto index = m_last_column_order[i];
+        header.get_widths()->set(i, header_properties[index].m_width);
         update_style(*header.get_item(i), [&] (auto& style) {
           style.get(Any() > TableHeaderItem::Label()).
-            set(TextAlign(header_properties[i].m_alignment));
+            set(TextAlign(header_properties[index].m_alignment));
         });
       }
       apply_column_visibility(m_properties->get());
@@ -633,7 +657,31 @@ namespace {
       }
     }
 
+    void reorder_column_order(const TimeAndSalesProperties& properties) {
+      auto& header = static_cast<TableView*>(parent())->get_header();
+      auto order = properties.get_column_order();
+      for(int i = 0; i < header.get_items()->get_size(); ++i) {
+        if(m_last_column_order[i] == order[i]) {
+          continue;
+        }
+        if(auto iter = std::find(m_last_column_order.begin() + i,
+            m_last_column_order.end(), order[i]);
+            iter != m_last_column_order.end()) {
+          auto from = static_cast<int>(iter - m_last_column_order.begin()) ;
+          header.get_items()->move(from, i);
+          auto value = m_last_column_order[from];
+          m_last_column_order.erase(m_last_column_order.begin() + from);
+          m_last_column_order.insert(m_last_column_order.begin() + i, value);
+        }
+      }
+    }
+
     void on_properties(const TimeAndSalesProperties& properties) {
+      if(m_is_moving) {
+        m_last_column_order = properties.get_column_order();
+      } else {
+        reorder_column_order(properties);
+      }
       apply_column_visibility(properties);
       const auto DEBOUNCE_TIME_MS = 100;
       QTimer::singleShot(DEBOUNCE_TIME_MS, this, [=] {
@@ -656,13 +704,16 @@ TableView* Spire::make_time_and_sales_table_view(
   make_header_menu(*table_view, properties);
   auto pull_indicator = new PullIndicator(*table_view);
   auto stylist = new TableViewStylist(*table_view, properties);
-  auto column_mover = new TableViewColumnMover(*table_view, builder);
+  auto column_mover = new TableViewColumnMover(*table_view, builder,
+    properties->get().get_column_order());
   column_mover->connect_column_moved_signal([=] (int source, int destination) {
     auto current_properties = properties->get();
     current_properties.move_column(
       static_cast<TimeAndSalesTableModel::Column>(source),
       static_cast<TimeAndSalesTableModel::Column>(destination));
+    stylist->m_is_moving = true;
     properties->set(current_properties);
+    stylist->m_is_moving = false;
   });
   return table_view;
 }
