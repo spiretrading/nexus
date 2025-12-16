@@ -1,4 +1,5 @@
 #include "Spire/Ui/ListItem.hpp"
+#include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
@@ -86,6 +87,15 @@ QSize ListItem::sizeHint() const {
     return m_box->sizeHint();
   }
   return QWidget::sizeHint();
+}
+
+void ListItem::keyPressEvent(QKeyEvent* event) {
+  if(event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
+    m_submit_signal();
+    event->accept();
+    return;
+  }
+  QWidget::keyPressEvent(event);
 }
 
 void ListItem::mount(QSpacerItem& body) {

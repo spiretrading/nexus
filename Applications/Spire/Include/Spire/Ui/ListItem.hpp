@@ -63,6 +63,9 @@ namespace Styles {
 
       QSize sizeHint() const override;
 
+    protected:
+      void keyPressEvent(QKeyEvent* event) override;
+
     private:
       friend class ListView;
       mutable SubmitSignal m_submit_signal;
