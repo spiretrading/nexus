@@ -204,9 +204,6 @@ BookViewProperties Spire::load_book_view_properties(
     return BookViewProperties::get_default();
   }
   return properties;
-
-
-  return BookViewProperties::get_default();
 }
 
 void Spire::save_book_view_properties(
