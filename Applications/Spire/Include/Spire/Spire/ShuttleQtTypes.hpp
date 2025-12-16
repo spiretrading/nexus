@@ -78,6 +78,9 @@ namespace Beam {
       sender.send("point_size", value.pointSize());
       sender.send("weight", value.weight());
       sender.send("italic", value.italic());
+      if(value.pointSize() == -1) {
+        sender.send("pixel_size", Spire::unscale_width(value.pixelSize()));
+      }
     }
   };
 
@@ -90,6 +93,10 @@ namespace Beam {
       auto weight = receive<int>(receiver, "weight");
       auto italic = receive<bool>(receiver, "italic");
       value = QFont(family, point_size, weight, italic);
+      if(point_size == -1) {
+        auto pixel_size = receive<int>(receiver, "pixel_size");
+        value.setPixelSize(Spire::scale_width(pixel_size));
+      }
     }
   };
 
