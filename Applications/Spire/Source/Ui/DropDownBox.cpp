@@ -241,8 +241,11 @@ bool DropDownBox::eventFilter(QObject* watched, QEvent* event) {
         if(key == Qt::Key_Escape) {
           revert_current();
         } else if(key == Qt::Key_Enter || key == Qt::Key_Return) {
+          auto was_drop_down_panel_visible = is_drop_down_panel_visible();
           hide_drop_down_panel();
-          submit();
+          if(!was_drop_down_panel_visible) {
+            submit();
+          }
           return true;
         }
       }
@@ -337,7 +340,9 @@ void DropDownBox::keyPressEvent(QKeyEvent* event) {
   if(event->key() == Qt::Key_Escape) {
     revert_current();
   } else if(event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    submit();
+    if(!is_drop_down_panel_visible()) {
+      submit();
+    }
     return;
   } else if((event->key() != Qt::Key_Space || is_drop_down_panel_visible())) {
     make_drop_down_panel();
@@ -523,5 +528,7 @@ void DropDownBox::on_submit(const std::any& submission) {
     return;
   }
   hide_drop_down_panel();
-  submit();
+  if(m_has_update) {
+    submit();
+  }
 }
