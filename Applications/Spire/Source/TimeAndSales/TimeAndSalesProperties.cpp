@@ -156,6 +156,10 @@ void TimeAndSalesProperties::set_grid_enabled(bool is_enabled) {
   m_is_grid_enabled = is_enabled;
 }
 
+std::vector<int> TimeAndSalesProperties::get_column_order() const {
+  return std::vector<int>(m_column_order.begin(), m_column_order.end());
+}
+
 void TimeAndSalesProperties::move_column(TimeAndSalesTableModel::Column source,
         TimeAndSalesTableModel::Column destination) {
   move_element(m_column_order, static_cast<int>(source),

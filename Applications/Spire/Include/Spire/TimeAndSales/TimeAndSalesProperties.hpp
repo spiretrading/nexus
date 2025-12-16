@@ -62,6 +62,9 @@ namespace Spire {
        */
       void set_grid_enabled(bool is_enabled);
 
+      /* Returns the column order. */
+      std::vector<int> get_column_order() const;
+
       /**
        * Moves a column from source to destination.
        * @param source The index of the column to move.
