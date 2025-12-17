@@ -70,6 +70,9 @@ namespace Beam {
   };
 
   template<>
+  constexpr unsigned int shuttle_version<QFont> = 2;
+
+  template<>
   struct Send<QFont> {
     template<IsSender S>
     void operator ()(
@@ -78,6 +81,9 @@ namespace Beam {
       sender.send("point_size", value.pointSize());
       sender.send("weight", value.weight());
       sender.send("italic", value.italic());
+      if(version >= 2) {
+        sender.send("pixel_size", value.pixelSize());
+      }
     }
   };
 
@@ -89,7 +95,18 @@ namespace Beam {
       auto point_size = receive<int>(receiver, "point_size");
       auto weight = receive<int>(receiver, "weight");
       auto italic = receive<bool>(receiver, "italic");
+      auto pixel_size = [&] {
+        if(version >= 2) {
+          return receive<int>(receiver, "pixel_size");
+        }
+        return -1;
+      }();
       value = QFont(family, point_size, weight, italic);
+      if(version >= 2) {
+        if(point_size == -1) {
+          value.setPixelSize(pixel_size);
+        }
+      }
     }
   };
 
