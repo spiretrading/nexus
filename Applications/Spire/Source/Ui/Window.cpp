@@ -227,8 +227,10 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
       return true;
     }
   } else if(msg->message == WM_WINDOWPOSCHANGING) {
-    auto wp = reinterpret_cast<WINDOWPOS*>(msg->lParam);
-    wp->flags |= SWP_NOCOPYBITS;
+    auto position = reinterpret_cast<WINDOWPOS*>(msg->lParam);
+    if(!(position->flags & SWP_NOSIZE)) {
+      position->flags |= SWP_NOCOPYBITS;
+    }
     *result = 0;
     return true;
   } else if(msg->message == WM_NCHITTEST) {
