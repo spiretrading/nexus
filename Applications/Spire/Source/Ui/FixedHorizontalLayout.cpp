@@ -1,5 +1,5 @@
 #include "Spire/Ui/FixedHorizontalLayout.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Spire/ListModel.hpp"
 
 using namespace boost;
 using namespace Spire;

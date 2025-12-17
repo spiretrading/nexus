@@ -11,7 +11,6 @@
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/TimeAndSales/LegacyTimeAndSalesWindowSettings.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 using namespace Beam;
 using namespace boost;
