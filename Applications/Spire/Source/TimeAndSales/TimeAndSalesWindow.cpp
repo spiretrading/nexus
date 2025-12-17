@@ -110,8 +110,7 @@ void TimeAndSalesWindow::on_context_menu(QWidget* parent, const QPoint& pos) {
   menu->add_separator();
   menu->add_action(tr("Export..."),
     std::bind_front(&TimeAndSalesWindow::on_export_menu, this));
-  const auto EXPORT_MENU_ITEM_INDEX = 3;
-  if(auto export_item = menu->get_menu_item(EXPORT_MENU_ITEM_INDEX)) {
+  if(auto export_item = menu->get_menu_item(menu->get_count() - 1)) {
     export_item->setEnabled(m_table_model->get_row_size() != 0);
   }
   menu->window()->setAttribute(Qt::WA_DeleteOnClose);
