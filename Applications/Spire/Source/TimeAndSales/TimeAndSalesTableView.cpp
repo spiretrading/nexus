@@ -677,7 +677,8 @@ namespace {
 
     void on_properties(const TimeAndSalesProperties& properties) {
       if(m_is_moving) {
-        m_last_column_order = properties.get_column_order();
+        auto& column_order = properties.get_column_order();
+        m_last_column_order.assign(column_order.begin(), column_order.end());
       } else {
         reorder_column_order(properties);
       }
@@ -703,8 +704,9 @@ TableView* Spire::make_time_and_sales_table_view(
   make_header_menu(*table_view, properties);
   auto pull_indicator = new PullIndicator(*table_view);
   auto stylist = new TableViewStylist(*table_view, properties);
+  auto& column_order = properties->get().get_column_order();
   auto column_mover = new TableViewColumnMover(*table_view, builder,
-    properties->get().get_column_order());
+    std::vector<int>(column_order.begin(), column_order.end()));
   column_mover->connect_column_moved_signal([=] (int source, int destination) {
     auto current_properties = properties->get();
     current_properties.move_column(
