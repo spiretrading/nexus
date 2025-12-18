@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QGraphicsOpacityEffect>
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ColumnViewTableModel.hpp"
 #include "Spire/Spire/ConstantValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 
@@ -77,53 +78,6 @@ namespace {
     return {false, last_visible_column, left};
   }
 
-  struct ColumnViewTableModel : TableModel {
-    std::shared_ptr<TableModel> m_source;
-    int m_column;
-    TableModelTransactionLog m_transaction;
-    scoped_connection m_source_connection;
-
-    ColumnViewTableModel(std::shared_ptr<TableModel> source, int column)
-      : m_source(std::move(source)),
-        m_column(column),
-        m_source_connection(m_source->connect_operation_signal(
-          std::bind_front(&ColumnViewTableModel::on_operation, this))) {}
-
-    int get_row_size() const override {
-      return m_source->get_row_size();
-    }
-
-    int get_column_size() const override {
-      return 1;
-    }
-
-    AnyRef at(int row, int column) const override {
-      if(column != 0) {
-        throw std::out_of_range("The column is out of range.");
-      }
-      return m_source->at(row, m_column);
-    }
-
-    connection connect_operation_signal(
-        const OperationSignal::slot_type& slot) const override {
-      return m_transaction.connect_operation_signal(slot);
-    }
-
-    void on_operation(const TableModel::Operation& operation) {
-      visit(operation,
-        [&] (const TableModel::UpdateOperation& operation) {
-          if(operation.m_column != m_column) {
-            return;
-          }
-          m_transaction.push(TableModel::UpdateOperation(operation.m_row, 0,
-            operation.m_previous, operation.m_value));
-        },
-        [&] (const auto& operation) {
-          m_transaction.push(operation);
-        });
-    }
-  };
-
   struct ColumnTableViewItemBuilder {
     TableViewItemBuilder m_builder;
     std::shared_ptr<TableModel> m_source;
@@ -197,7 +151,7 @@ TableColumnReorderController::TableColumnReorderController(
   TableView& table_view, TableViewItemBuilder item_builder)
   : TableColumnReorderController(table_view, std::move(item_builder),
       make_default_column_order(
-        table_view.get_header().get_items()->get_size())) {}
+        table_view.get_header().get_widths()->get_size())) {}
 
 TableColumnReorderController::TableColumnReorderController(
     TableView& table_view, TableViewItemBuilder item_builder,
