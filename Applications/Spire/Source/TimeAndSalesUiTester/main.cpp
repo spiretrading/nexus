@@ -207,11 +207,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       last_window->pos().y());
   }
 
-  ~TimeAndSalesWindowController() {
-    save_time_and_sales_properties(m_factory->get_properties()->get(),
-      std::filesystem::current_path());
-  }
-
   std::shared_ptr<TimeAndSalesModel> model_builder(const Security&) {
     auto time_and_sales = m_time_and_sales_test_window.m_time_and_sales;
     auto new_time_and_sales = std::make_shared<DemoTimeAndSalesModel>();
@@ -231,10 +226,7 @@ int main(int argc, char** argv) {
   application.setOrganizationName(QObject::tr("Spire Trading Inc"));
   application.setApplicationName(QObject::tr("Time and Sales UI Tester"));
   initialize_resources();
-  auto properties = std::make_shared<LocalTimeAndSalesPropertiesModel>(
-    load_time_and_sales_properties(std::filesystem::current_path()));
   auto controller = TimeAndSalesWindowController(
-    std::make_shared<TimeAndSalesPropertiesWindowFactory>(
-      std::move(properties)));
+    std::make_shared<TimeAndSalesPropertiesWindowFactory>());
   application.exec();
 }
