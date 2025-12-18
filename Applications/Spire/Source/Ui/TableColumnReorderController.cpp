@@ -320,11 +320,11 @@ void TableColumnReorderController::stop_drag() {
   QApplication::restoreOverrideCursor();
   m_widths.clear();
   if(m_column_preview) {
-    delete m_column_preview;
+    m_column_preview->deleteLater();
     m_column_preview = nullptr;
   }
   if(m_column_cover) {
-    delete m_column_cover;
+    m_column_cover->deleteLater();
     m_column_cover = nullptr;
   }
   if(m_horizontal_scroll_bar_parent) {
