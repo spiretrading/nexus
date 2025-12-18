@@ -18,9 +18,6 @@ namespace Spire {
   class TimeAndSalesProperties {
     public:
 
-      /** The number of columns. */
-      static const auto COLUMN_COUNT = 10;
-
       /** Returns the default properties. */
       static const TimeAndSalesProperties& get_default();
 
@@ -66,7 +63,8 @@ namespace Spire {
       void set_grid_enabled(bool is_enabled);
 
       /* Returns the column order. */
-      const std::array<int, COLUMN_COUNT>& get_column_order() const;
+      const std::array<int, TimeAndSalesTableModel::COLUMN_SIZE>&
+        get_column_order() const;
 
       /**
        * Moves a column from source to destination.
@@ -80,8 +78,8 @@ namespace Spire {
       friend struct Beam::DataShuttle;
       std::array<HighlightColor, BBO_INDICATOR_COUNT> m_highlight_colors;
       QFont m_font;
-      std::array<int, COLUMN_COUNT> m_column_order;
-      std::bitset<COLUMN_COUNT> m_visible_columns;
+      std::array<int, TimeAndSalesTableModel::COLUMN_SIZE> m_column_order;
+      std::bitset<TimeAndSalesTableModel::COLUMN_SIZE> m_visible_columns;
       bool m_is_grid_enabled;
 
       template<Beam::IsShuttle S>

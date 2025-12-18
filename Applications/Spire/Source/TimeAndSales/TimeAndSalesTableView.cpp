@@ -233,8 +233,8 @@ namespace {
 
     void reorder_column_order(const TimeAndSalesProperties& properties) {
       auto& header = static_cast<TableView*>(parent())->get_header();
-      auto order = properties.get_column_order();
-      for(int i = 0; i < header.get_items()->get_size(); ++i) {
+      auto& order = properties.get_column_order();
+      for(int i = 0; i < order.size(); ++i) {
         if(m_last_column_order[i] == order[i]) {
           continue;
         }

@@ -155,7 +155,7 @@ void TimeAndSalesProperties::set_grid_enabled(bool is_enabled) {
   m_is_grid_enabled = is_enabled;
 }
 
-const std::array<int, TimeAndSalesProperties::COLUMN_COUNT>&
+const std::array<int, TimeAndSalesTableModel::COLUMN_SIZE>&
     TimeAndSalesProperties::get_column_order() const {
   return m_column_order;
 }
