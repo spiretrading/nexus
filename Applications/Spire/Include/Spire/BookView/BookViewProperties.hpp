@@ -184,7 +184,7 @@ namespace Spire {
 
 namespace Beam {
   template<>
-  constexpr auto shuttle_version<Spire::BookViewProperties> = 2;
+  constexpr unsigned int shuttle_version<Spire::BookViewProperties> = 2;
 }
 
 #endif
