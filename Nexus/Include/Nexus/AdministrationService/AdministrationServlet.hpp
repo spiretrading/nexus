@@ -58,7 +58,7 @@ namespace Nexus {
 
       void register_services(
         Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots);
-      void handle_closed(ServiceProtocolClient& client);
+      void handle_close(ServiceProtocolClient& client);
       void close();
 
     private:
@@ -335,7 +335,7 @@ namespace Nexus {
     Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
       IsAdministrationDataStore<Beam::dereference_t<D>> &&
         Beam::IsTimeClient<Beam::dereference_t<R>>
-  void AdministrationServlet<C, S, D, R>::handle_closed(
+  void AdministrationServlet<C, S, D, R>::handle_close(
       ServiceProtocolClient& client) {
     Beam::with(m_risk_parameters_subscribers,
       [&] (auto& risk_parameters_subscribers) {
