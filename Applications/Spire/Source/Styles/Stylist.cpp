@@ -241,6 +241,10 @@ void Stylist::link(Stylist& target) {
   target.m_backlink_signal(*this);
 }
 
+const std::unordered_set<Selector>& Stylist::get_matches() const {
+  return m_matches;
+}
+
 void Stylist::match(const Selector& selector) {
   if(m_matches.insert(selector).second) {
     auto signal = m_match_signals.find(selector);

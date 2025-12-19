@@ -123,6 +123,9 @@ namespace Spire::Styles {
        */
       void link(Stylist& target);
 
+      /** Returns the set of matched Selectors. */
+      const std::unordered_set<Selector>& get_matches() const;
+
       /**
        * Directs this Stylist to match a Selector.
        * @param selector The selector to match.

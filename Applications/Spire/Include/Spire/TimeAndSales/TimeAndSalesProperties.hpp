@@ -22,7 +22,7 @@ namespace Spire {
       static const TimeAndSalesProperties& get_default();
 
        /* Constructs an empty set of properties. */
-      TimeAndSalesProperties() = default;
+      TimeAndSalesProperties();
 
       /**
        * Returns the highlight color of a specific BBO indicator.
@@ -62,12 +62,24 @@ namespace Spire {
        */
       void set_grid_enabled(bool is_enabled);
 
+      /* Returns the column order. */
+      const std::array<int, TimeAndSalesTableModel::COLUMN_SIZE>&
+        get_column_order() const;
+
+      /**
+       * Moves a column from source to destination.
+       * @param source The index of the column to move.
+       * @param destination The index to move the column to.
+       */
+      void move_column(TimeAndSalesTableModel::Column source,
+        TimeAndSalesTableModel::Column destination);
+
     private:
       friend struct Beam::DataShuttle;
-      static const auto COLUMN_COUNT = 10;
       std::array<HighlightColor, BBO_INDICATOR_COUNT> m_highlight_colors;
       QFont m_font;
-      std::bitset<COLUMN_COUNT> m_visible_columns;
+      std::array<int, TimeAndSalesTableModel::COLUMN_SIZE> m_column_order;
+      std::bitset<TimeAndSalesTableModel::COLUMN_SIZE> m_visible_columns;
       bool m_is_grid_enabled;
 
       template<Beam::IsShuttle S>
@@ -103,6 +115,7 @@ namespace Spire {
     shuttle.shuttle("font", m_font);
     shuttle.shuttle("visible_columns", m_visible_columns);
     shuttle.shuttle("is_grid_enabled", m_is_grid_enabled);
+    shuttle.shuttle("column_order", m_column_order);
   }
 }
 

@@ -175,7 +175,8 @@ struct TableBody::RowCover : Cover {
   void mount(int index) {
     auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != layout()->count(); ++i) {
-      get_item(i)->mount(*body.m_item_builder.mount(body.m_table, index, i));
+      get_item(i)->mount(*body.m_item_builder.mount(
+        body.m_table, index, body.m_visual_to_logical_columns[i]));
     }
   }
 
@@ -192,6 +193,11 @@ struct TableBody::RowCover : Cover {
     if(!testAttribute(Qt::WA_WState_Hidden)) {
       setAttribute(Qt::WA_WState_Hidden);
     }
+  }
+
+  void move_column(int source, int destination) {
+    static_cast<FixedHorizontalLayout*>(this->layout())->move(
+      source, destination);
   }
 
   QSize sizeHint() const override {
@@ -672,6 +678,7 @@ TableBody::TableBody(
     }();
     add_column_cover(column, QRect(QPoint(left, 0), QSize(width, height())));
     left += width;
+    m_visual_to_logical_columns.push_back(column);
   }
   if(auto current = m_current_controller.get_column()) {
     match(*m_column_covers[*current], CurrentColumn());
@@ -1656,6 +1663,23 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
             }
           }
         }
+      }
+    },
+    [&] (const ListModel<int>::MoveOperation& operation) {
+      if(operation.m_source == operation.m_destination) {
+        return;
+      }
+      move_element(m_visual_to_logical_columns, operation.m_source,
+        operation.m_destination);
+      move_element(m_column_covers, operation.m_source,
+        operation.m_destination);
+      auto& layout = get_layout();
+      for(auto i = 0; i < layout.count(); ++i) {
+        layout.get_row(i).move_column(operation.m_source,
+          operation.m_destination);
+      }
+      for(auto& row_cover : m_recycled_rows) {
+        row_cover->move_column(operation.m_source, operation.m_destination);
       }
     });
 }
