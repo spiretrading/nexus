@@ -147,6 +147,7 @@ int main(int argc, const char** argv) {
     auto securities = parse_security_info_list(symbol_list);
     for(auto& security : securities) {
       neoe_config.m_securities.insert(security.m_security.get_symbol());
+      market_data_feed_client.add(security);
     }
     auto service_access_client = ApplicationNeoeServiceAccessClient(
       service_access_config, &feed_channel,
