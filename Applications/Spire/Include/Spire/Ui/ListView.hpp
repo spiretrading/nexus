@@ -11,6 +11,7 @@
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Ui/ClickObserver.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -256,7 +257,7 @@ namespace Details {
 
     private:
       struct ItemEntry {
-        ListItem m_item;
+        unique_qt_ptr<ListItem> m_item;
         int m_index;
         boost::optional<ClickObserver> m_click_observer;
 
