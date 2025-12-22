@@ -6,12 +6,30 @@
 namespace Spire {
 
   /**
+   * A deleter which deletes QObjects using deleteLater().
+   */
+  struct QObjectDeleter {
+
+    /**
+     * Deletes the given QObject.
+     * @param object The object to delete.
+     */
+    void operator ()(QObject* object) const noexcept;
+  };
+
+  /**
+   * A unique pointer which deletes QObjects using deleteLater().
+   */
+  template<typename T>
+  using unique_qt_ptr = std::unique_ptr<T, QObjectDeleter>;
+
+  /**
    * Deletes an object when control returns to the thread's event loop.
    * @param object The object to schedule for deletion.
    */
   template<typename T>
   std::enable_if_t<std::is_base_of_v<QObject, T>> delete_later(T*& object) {
-    if(object != nullptr) {
+    if(object) {
       object->deleteLater();
       object = nullptr;
     }
