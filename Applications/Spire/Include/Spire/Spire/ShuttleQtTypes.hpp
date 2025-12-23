@@ -33,12 +33,19 @@ namespace Beam {
   };
 
   template<>
+  constexpr unsigned int shuttle_version<QByteArray> = 2;
+
+  template<>
   struct Send<QByteArray> {
     template<IsSender S>
     void operator ()(
         S& sender, const QByteArray& value, unsigned int version) const {
-      auto buffer = std::string(value.data(), value.size());
-      sender.send("buffer", buffer);
+      if(version < 2) {
+        sender.send("data", std::string(value.data(), value.size()));
+      } else {
+        auto buffer = Beam::SharedBuffer(value.data(), value.size());
+        sender.send("buffer", buffer);
+      }
     }
   };
 
@@ -47,8 +54,13 @@ namespace Beam {
     template<IsReceiver R>
     void operator ()(
         R& receiver, QByteArray& value, unsigned int version) const {
-      auto buffer = receive<std::string>(receiver, "buffer");
-      value = QByteArray(buffer.c_str(), buffer.size());
+      if(version < 2) {
+        auto data = receive<std::string>(receiver, "data");
+        value = QByteArray(data.data(), data.size());
+      } else {
+        auto buffer = receive<Beam::SharedBuffer>(receiver, "buffer");
+        value = QByteArray(buffer.get_data(), buffer.get_size());
+      }
     }
   };
 
