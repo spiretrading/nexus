@@ -20,20 +20,21 @@ struct SecurityBox::SecurityQueryModel : QueryModel<Security> {
     : m_source(std::move(source)) {}
 
   optional<Security> parse(const QString& query) override {
-    if(auto value = m_source->parse(query)) {
+    if(auto value = m_source->parse(query.toUpper())) {
       return value->m_security;
     }
     return none;
   }
 
   QtPromise<std::vector<Security>> submit(const QString& query) override {
-    return m_source->submit(query).then([] (std::vector<SecurityInfo> matches) {
-      auto securities = std::unordered_set<Security>();
-      for(auto& match : matches) {
-        securities.insert(match.m_security);
-      }
-      return std::vector<Security>(securities.begin(), securities.end());
-    });
+    return m_source->submit(query.toUpper()).then(
+      [] (std::vector<SecurityInfo> matches) {
+        auto securities = std::unordered_set<Security>();
+        for(auto& match : matches) {
+          securities.insert(match.m_security);
+        }
+        return std::vector<Security>(securities.begin(), securities.end());
+      });
   }
 };
 
