@@ -57,7 +57,7 @@ include_directories(${PROJECT_BINARY_DIR})
 link_directories(${BOOST_DEBUG_PATH})
 link_directories(${BOOST_OPTIMIZED_PATH})
 set(Qt5Widgets_DIR "${QT_ROOT}/qtbase/lib/cmake/Qt5Widgets")
-add_compile_definitions(QT_NO_KEYWORDS)
+add_compile_definitions(BEAM_ENABLE_STACK_PRINT QT_NO_KEYWORDS)
 if(MSVC)
   add_compile_options(/bigobj /external:anglebrackets /external:W0
     $<$<CONFIG:Release>:/GL> /MP /WX /Zc:__cplusplus /Zc:preprocessor)
