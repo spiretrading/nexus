@@ -19,8 +19,8 @@ void SecurityInfoModel::Search(const std::string& prefix) {
   if(!m_prefixes.insert(uppercasePrefix).second) {
     return;
   }
-  m_queryPromise = QtPromise([=] {
-    return m_userProfile->GetClients().
+  m_queryPromise = QtPromise([=, userProfile = m_userProfile] {
+    return userProfile->GetClients().
       get_market_data_client().load_security_info_from_prefix(uppercasePrefix);
   }, LaunchPolicy::ASYNC).then(
     [=] (const std::vector<SecurityInfo>& securityInfoItems) {

@@ -70,6 +70,7 @@ ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
   auto linkMenuButton = dynamic_cast<QToolButton*>(
     m_ui->m_toolBar->widgetForAction(m_ui->m_linkAction));
   linkMenuButton->setStyleSheet("QToolButton::menu-indicator { image: none; }");
+  resize(scale(size()));
   connect(m_ui->m_panAction, &QAction::toggled, this,
     &ChartWindow::OnPanActionToggled);
   connect(m_ui->m_zoomAction, &QAction::toggled, this,

@@ -403,7 +403,7 @@ void ChartPlotView::PaintCandlestickChartPlot(
 
 void ChartPlotView::PaintHorizontalCursor(const QPoint& position,
     const ChartValue& value) {
-  const auto WIDTH = 55;
+  const auto WIDTH = scale_width(55);
   const auto HEIGHT = height() - position.y();
   QPainter painter{this};
   QPoint bodyTopLeft{position.x() - WIDTH / 2, position.y()};
@@ -422,7 +422,7 @@ void ChartPlotView::PaintHorizontalCursor(const QPoint& position,
 void ChartPlotView::PaintVerticalCursor(const QPoint& position,
     const ChartValue& value) {
   const auto WIDTH = width() - position.x();
-  const auto HEIGHT = 16;
+  const auto HEIGHT = scale_height(16);
   QPainter painter{this};
   QPoint bodyTopLeft{position.x(), position.y() - HEIGHT / 2};
   QPoint bodyBottomRight{position.x() + WIDTH, position.y() + HEIGHT / 2};
@@ -510,12 +510,12 @@ QString ChartPlotView::LoadLabel(ChartValue value,
 }
 
 int ChartPlotView::GetChartWidth() const {
-  static const int LABEL_WIDTH = 40;
+  static const int LABEL_WIDTH = scale_width(40);
   return width() - LABEL_WIDTH;
 }
 
 int ChartPlotView::GetChartHeight() const {
-  static const int LABEL_HEIGHT = 20;
+  static const int LABEL_HEIGHT = scale_height(20);
   return height() - LABEL_HEIGHT;
 }
 
