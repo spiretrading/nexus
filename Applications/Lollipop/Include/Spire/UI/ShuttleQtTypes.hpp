@@ -1,5 +1,6 @@
-#ifndef SPIRE_SHUTTLEQTTYPES_HPP
-#define SPIRE_SHUTTLEQTTYPES_HPP
+#ifndef SPIRE_SHUTTLE_QT_TYPES_HPP
+#define SPIRE_SHUTTLE_QT_TYPES_HPP
+#include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <QByteArray>
@@ -31,12 +32,19 @@ namespace Beam {
   };
 
   template<>
+  constexpr unsigned int shuttle_version<QByteArray> = 2;
+
+  template<>
   struct Send<QByteArray> {
     template<IsSender S>
     void operator ()(
         S& sender, const QByteArray& value, unsigned int version) const {
-      auto buffer = std::string(value.data(), value.size());
-      sender.send("buffer", buffer);
+      if(version < 2) {
+        sender.send("data", std::string(value.data(), value.size()));
+      } else {
+        auto buffer = Beam::SharedBuffer(value.data(), value.size());
+        sender.send("buffer", buffer);
+      }
     }
   };
 
@@ -45,8 +53,13 @@ namespace Beam {
     template<IsReceiver R>
     void operator ()(
         R& receiver, QByteArray& value, unsigned int version) const {
-      auto buffer = receive<std::string>(receiver, "buffer");
-      value = QByteArray(buffer.c_str(), buffer.size());
+      if(version < 2) {
+        auto data = receive<std::string>(receiver, "data");
+        value = QByteArray(data.data(), data.size());
+      } else {
+        auto buffer = receive<Beam::SharedBuffer>(receiver, "buffer");
+        value = QByteArray(buffer.get_data(), buffer.get_size());
+      }
     }
   };
 
@@ -68,6 +81,9 @@ namespace Beam {
   };
 
   template<>
+  constexpr unsigned int shuttle_version<QFont> = 2;
+
+  template<>
   struct Send<QFont> {
     template<IsSender S>
     void operator ()(
@@ -76,6 +92,9 @@ namespace Beam {
       sender.send("point_size", value.pointSize());
       sender.send("weight", value.weight());
       sender.send("italic", value.italic());
+      if(version >= 2) {
+        sender.send("pixel_size", value.pixelSize());
+      }
     }
   };
 
@@ -87,7 +106,18 @@ namespace Beam {
       auto point_size = receive<int>(receiver, "point_size");
       auto weight = receive<int>(receiver, "weight");
       auto italic = receive<bool>(receiver, "italic");
+      auto pixel_size = [&] {
+        if(version >= 2) {
+          return receive<int>(receiver, "pixel_size");
+        }
+        return -1;
+      }();
       value = QFont(family, point_size, weight, italic);
+      if(version >= 2) {
+        if(point_size == -1) {
+          value.setPixelSize(pixel_size);
+        }
+      }
     }
   };
 

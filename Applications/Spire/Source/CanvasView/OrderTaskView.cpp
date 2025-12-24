@@ -117,7 +117,7 @@ std::unique_ptr<CanvasNode>
             }
           }
         }
-        return *m_state->m_askPrice;
+        return *m_state->m_bidPrice;
       }();
       auto priceNode = taskNode->FindNode(SingleOrderTaskNode::PRICE_PROPERTY);
       if(priceNode && !priceNode->IsReadOnly()) {

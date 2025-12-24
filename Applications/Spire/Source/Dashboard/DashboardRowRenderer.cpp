@@ -1,6 +1,7 @@
 #include "Spire/Dashboard/DashboardRowRenderer.hpp"
 #include <QPainter>
 #include "Spire/Dashboard/DashboardRow.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -12,7 +13,7 @@ DashboardRowRenderer::DashboardRowRenderer(Ref<const DashboardRow> row,
     const DashboardCellRendererBuilder& cellRendererBuilder)
     : m_row{row.get()},
       m_cellRendererBuilder{cellRendererBuilder},
-      m_defaultCellWidth{75} {
+      m_defaultCellWidth{scale_width(75)} {
   for(auto i = 0; i < m_row->GetSize(); ++i) {
     OnCellAddedSignal(m_row->GetCell(i));
   }
