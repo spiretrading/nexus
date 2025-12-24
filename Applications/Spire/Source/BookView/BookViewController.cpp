@@ -80,6 +80,10 @@ void BookViewController::close() {
   if(!m_window) {
     return;
   }
+  if(m_window->GetDisplayedSecurity()) {
+    m_user_profile->GetRecentlyClosedWindows()->push(
+      m_window->GetWindowSettings());
+  }
   m_window->removeEventFilter(m_event_filter.get());
   m_window->close();
   m_window->deleteLater();
