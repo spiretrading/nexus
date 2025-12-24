@@ -7,6 +7,7 @@
 
 namespace Spire {
   class BookViewController;
+  class TimeAndSalesController;
   class UserProfile;
 
   /** Implements the main application controller for the ToolbarWindow. */
@@ -34,6 +35,8 @@ namespace Spire {
       std::unique_ptr<ToolbarWindow> m_toolbar_window;
       std::shared_ptr<ListModel<BlotterModel*>> m_pinned_blotters;
       std::vector<std::unique_ptr<BookViewController>> m_book_view_controllers;
+      std::vector<std::unique_ptr<TimeAndSalesController>>
+        m_time_and_sales_controllers;
       std::unique_ptr<KeyBindingsWindow> m_key_bindings_window;
       boost::signals2::scoped_connection m_blotter_added_connection;
       boost::signals2::scoped_connection m_blotter_removed_connection;
@@ -64,6 +67,7 @@ namespace Spire {
       void on_blotter_removed(BlotterModel& blotter);
       void on_book_view_closed(BookViewController& controller);
       void on_key_bindings_window_closed();
+      void on_time_and_sales_closed(TimeAndSalesController& controller);
       void on_sign_out();
   };
 }

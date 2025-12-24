@@ -23,6 +23,7 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindow.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindow.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesController.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 
 using namespace Beam;
@@ -163,6 +164,12 @@ void ToolbarController::open() {
         std::make_unique<BookViewController>(Ref(*m_user_profile), *book_view);
       controller->open();
       m_book_view_controllers.push_back(std::move(controller));
+    } else if(auto time_and_sales_window =
+        dynamic_cast<TimeAndSalesWindow*>(window)) {
+      auto controller = std::make_unique<TimeAndSalesController>(
+        Ref(*m_user_profile), *time_and_sales_window);
+      controller->open();
+      m_time_and_sales_controllers.push_back(std::move(controller));
     } else {
       window->show();
     }
@@ -197,6 +204,10 @@ void ToolbarController::close() {
   for(auto& controller : book_view_controllers) {
     controller->close();
   }
+  auto time_and_sales_controllers = std::move(m_time_and_sales_controllers);
+  for(auto& controller : time_and_sales_controllers) {
+    controller->close();
+  }
   for(auto& window : QApplication::topLevelWidgets()) {
     if(window != &*m_toolbar_window) {
       window->close();
@@ -223,12 +234,12 @@ void ToolbarController::open_book_view_window() {
 }
 
 void ToolbarController::open_time_and_sales_window() {
-  auto window = new TimeAndSalesWindow(
-    m_user_profile->GetSecurityInfoQueryModel(),
-    m_user_profile->GetTimeAndSalesPropertiesWindowFactory(),
-    m_user_profile->GetTimeAndSalesModelBuilder());
-  window->setAttribute(Qt::WA_DeleteOnClose);
-  window->show();
+  auto controller =
+    std::make_unique<TimeAndSalesController>(Ref(*m_user_profile));
+  controller->connect_closed_signal(std::bind_front(
+    &ToolbarController::on_time_and_sales_closed, this, std::ref(*controller)));
+  controller->open();
+  m_time_and_sales_controllers.push_back(std::move(controller));
 }
 
 void ToolbarController::open_canvas_window() {
@@ -338,6 +349,12 @@ void ToolbarController::on_reopen(const WindowSettings& settings) {
       std::make_unique<BookViewController>(Ref(*m_user_profile), *book_view);
     controller->open();
     m_book_view_controllers.push_back(std::move(controller));
+  } else if(auto time_and_sales_window =
+      dynamic_cast<TimeAndSalesWindow*>(window)) {
+    auto controller = std::make_unique<TimeAndSalesController>(
+      Ref(*m_user_profile), *time_and_sales_window);
+    controller->open();
+    m_time_and_sales_controllers.push_back(std::move(controller));
   } else {
     window->show();
   }
@@ -371,6 +388,12 @@ void ToolbarController::on_import(
         std::make_unique<BookViewController>(Ref(*m_user_profile), *book_view);
       controller->open();
       m_book_view_controllers.push_back(std::move(controller));
+    } else if(auto time_and_sales_window =
+        dynamic_cast<TimeAndSalesWindow*>(window)) {
+      auto controller = std::make_unique<TimeAndSalesController>(
+        Ref(*m_user_profile), *time_and_sales_window);
+      controller->open();
+      m_time_and_sales_controllers.push_back(std::move(controller));
     } else {
       window->show();
     }
@@ -417,6 +440,13 @@ void ToolbarController::on_book_view_closed(BookViewController& controller) {
 void ToolbarController::on_key_bindings_window_closed() {
   auto window = std::move(m_key_bindings_window);
   window.release()->deleteLater();
+}
+
+void ToolbarController::on_time_and_sales_closed(
+    TimeAndSalesController& controller) {
+  std::erase_if(m_time_and_sales_controllers, [&] (const auto& entry) {
+    return &controller == entry.get();
+  });
 }
 
 void ToolbarController::on_sign_out() {
