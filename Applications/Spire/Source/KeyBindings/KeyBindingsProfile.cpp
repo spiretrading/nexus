@@ -11,6 +11,7 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
+#include <QMessageBox>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/RegionMap.hpp"
@@ -773,7 +774,13 @@ std::shared_ptr<KeyBindingsModel> Spire::load_key_bindings_profile(
   if(!std::filesystem::exists(file_path)) {
     auto legacy_path = path / "key_bindings.dat";
     if(std::filesystem::exists(legacy_path)) {
-      return convert_legacy_key_bindings(path);
+      try {
+        return convert_legacy_key_bindings(path);
+      } catch(const std::exception&) {
+        QMessageBox::warning(nullptr, QObject::tr("Warning"),
+          QObject::tr("Unable to load key bindings, using defaults."));
+        return load_default_key_bindings();
+      }
     }
     return load_default_key_bindings();
   }
@@ -789,7 +796,9 @@ std::shared_ptr<KeyBindingsModel> Spire::load_key_bindings_profile(
     auto profile = KeyBindingsProfile(KEY_BINDINGS_VERSION, &*key_bindings);
     receiver.shuttle(profile);
   } catch(const std::exception&) {
-    throw std::runtime_error("Unable to load key bindings.");
+    QMessageBox::warning(nullptr, QObject::tr("Warning"),
+      QObject::tr("Unable to load key bindings, using defaults."));
+    return load_default_key_bindings();
   }
   return key_bindings;
 }
