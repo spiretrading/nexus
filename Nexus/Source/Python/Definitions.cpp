@@ -67,7 +67,9 @@ void Nexus::Python::export_book_quote(module& module) {
 void Nexus::Python::export_country(module& module) {
   export_default_methods(class_<CountryCode>(module, "CountryCode")).
     def(init<std::uint16_t>()).
-    def_readonly_static("NONE", &CountryCode::NONE);
+    def_property_readonly_static("NONE", [] (const object&) {
+      return CountryCode::NONE;
+    });
   auto country_database = class_<CountryDatabase>(module, "CountryDatabase").
     def(init()).
     def(init<const CountryDatabase&>()).
@@ -101,7 +103,9 @@ void Nexus::Python::export_country(module& module) {
 void Nexus::Python::export_currency(module& module) {
   export_default_methods(class_<CurrencyId>(module, "CurrencyId")).
     def(init<std::uint16_t>()).
-    def_readonly_static("NONE", &CurrencyId::NONE);
+    def_property_readonly_static("NONE", [] (const object&) {
+      return CurrencyId::NONE;
+    });
   auto currency_database =
     class_<CurrencyDatabase>(module, "CurrencyDatabase").
     def(init()).
@@ -317,10 +321,18 @@ void Nexus::Python::export_money(module& module) {
   auto money = export_default_methods(class_<Money>(module, "Money")).
     def(init<double>()).
     def(init<Quantity>()).
-    def_readonly_static("ZERO", &Money::ZERO).
-    def_readonly_static("ONE", &Money::ONE).
-    def_readonly_static("CENT", &Money::CENT).
-    def_readonly_static("BIP", &Money::BIP).
+    def_property_readonly_static("ZERO", [] (const object&) {
+      return Money::ZERO;
+    }).
+    def_property_readonly_static("ONE", [] (const object&) {
+      return Money::ONE;
+    }).
+    def_property_readonly_static("CENT", [] (const object&) {
+      return Money::CENT;
+    }).
+    def_property_readonly_static("BIP", [] (const object&) {
+      return Money::BIP;
+    }).
     def_static("try_parse", &try_parse_money).
     def_static("parse", &parse_money).
     def("__abs__", overload_cast<Money>(&abs)).
@@ -462,7 +474,7 @@ void Nexus::Python::export_quote(module& module) {
 
 void Nexus::Python::export_region(module& module) {
   export_default_methods(class_<Region>(module, "Region")).
-    def_readonly_static("GLOBAL", &Region::GLOBAL).
+    def_property_readonly_static("GLOBAL", [] (const object&) { return Region::GLOBAL; }).
     def_static("make_global", &Region::make_global).
     def(init<std::string>()).
     def(init<CountryCode>()).
