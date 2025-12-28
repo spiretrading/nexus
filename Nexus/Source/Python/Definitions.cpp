@@ -644,7 +644,8 @@ void Nexus::Python::export_venue(module& module) {
     def(init<const VenueDatabase&>()).
     def_property_readonly("entries", &VenueDatabase::get_entries).
     def("select", overload_cast<Venue>(&VenueDatabase::from, const_)).
-    def("select", overload_cast<std::string_view>(&VenueDatabase::from, const_)).
+    def(
+      "select", overload_cast<std::string_view>(&VenueDatabase::from, const_)).
     def("select", overload_cast<CountryCode>(&VenueDatabase::from, const_)).
     def("select_display_name", &VenueDatabase::from_display_name).
     def("add", &VenueDatabase::add).
