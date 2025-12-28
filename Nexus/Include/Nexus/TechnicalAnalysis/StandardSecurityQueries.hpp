@@ -82,11 +82,12 @@ namespace Nexus {
    * @param time_zones The database of timezones.
    * @param queue The Queue to store the opening trade in.
    */
-  void query_open(IsMarketDataClient auto& client, const Security& security,
-      boost::posix_time::ptime date, const VenueDatabase& venues,
+  Beam::Routine::Id query_open(IsMarketDataClient auto& client,
+      const Security& security, boost::posix_time::ptime date,
+      const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones,
       Beam::ScopedQueueWriter<TimeAndSale> queue) {
-    Beam::spawn([=, &client, queue = std::move(queue)] () mutable {
+    return Beam::spawn([=, &client, queue = std::move(queue)] () mutable {
       if(auto open = load_open(client, security, date, venues, time_zones)) {
         queue.push(*open);
         return;
