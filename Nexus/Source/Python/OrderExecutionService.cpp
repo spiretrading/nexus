@@ -442,10 +442,13 @@ void Nexus::Python::export_standard_queries(module& module) {
   module.def("query_daily_order_submissions",
     [] (const DirectoryEntry& account, ptime start, ptime end,
         const VenueDatabase& venues, const local_time::tz_database& time_zones,
-        OrderExecutionClient& client,
+        std::shared_ptr<OrderExecutionClient> client,
         ScopedQueueWriter<std::shared_ptr<Order>> queue) {
-      return query_daily_order_submissions(account, start, end, venues,
-        time_zones, client, std::move(queue));
+      return spawn([=, queue = std::move(queue)] mutable {
+        auto query = RoutineHandler(query_daily_order_submissions(
+          account, start, end, venues, time_zones, *client, std::move(queue)));
+        query.wait();
+      });
     });
   module.def("make_live_orders_filter", &make_live_orders_filter);
   module.def("make_live_orders_query", &make_live_orders_query);
