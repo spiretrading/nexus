@@ -5,34 +5,34 @@
 
 namespace Spire {
 namespace Details {
-  template<typename Shuttler>
-  void Shuttle(Shuttler& shuttle, Nexus::Quantity& value) {
-    if(Beam::IsReceiver<Shuttler>::value) {
+  template<Beam::IsShuttle S>
+  void shuttle(S& shuttle, Nexus::Quantity& value) {
+    if(Beam::IsReceiver<S>) {
       std::int64_t v;
-      shuttle.Shuttle("value", v);
+      shuttle.shuttle("value", v);
       value = v;
     } else {
       std::int64_t v = static_cast<std::int64_t>(value);
-      shuttle.Shuttle("value", v);
+      shuttle.shuttle("value", v);
     }
   }
 
-  template<typename Shuttler>
-  void Shuttle(Shuttler& shuttle, Nexus::Money& value) {
-    if(Beam::IsReceiver<Shuttler>::value) {
+  template<Beam::IsShuttle S>
+  void shuttle(S& shuttle, Nexus::Money& value) {
+    if(Beam::IsReceiver<S>) {
       std::int64_t v;
-      shuttle.Shuttle("value", v);
+      shuttle.shuttle("value", v);
       value = Nexus::Money{Nexus::Quantity{v} / Nexus::Quantity::MULTIPLIER};
     } else {
       std::int64_t v = static_cast<std::int64_t>(
         static_cast<Nexus::Quantity>(value) * Nexus::Quantity::MULTIPLIER);
-      shuttle.Shuttle("value", v);
+      shuttle.shuttle("value", v);
     }
   }
 
-  template<typename Shuttler, typename T>
-  void Shuttle(Shuttler& shuttle, T& value) {
-    shuttle.Shuttle("value", value);
+  template<Beam::IsShuttle S, typename T>
+  void shuttle(S& shuttle, T& value) {
+    shuttle.shuttle("value", value);
   }
 }
 
@@ -78,8 +78,8 @@ namespace Details {
       */
       void SetInternalValue(const typename Type::Type& value);
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
 
     private:
       typename Type::Type m_value;
@@ -108,10 +108,10 @@ namespace Details {
   }
 
   template<typename T>
-  template<typename Shuttler>
-  void ValueNode<T>::Shuttle(Shuttler& shuttle, unsigned int version) {
-    CanvasNode::Shuttle(shuttle, version);
-    Details::Shuttle(shuttle, m_value);
+  template<Beam::IsShuttle S>
+  void ValueNode<T>::shuttle(S& shuttle, unsigned int version) {
+    CanvasNode::shuttle(shuttle, version);
+    Details::shuttle(shuttle, m_value);
   }
 }
 
