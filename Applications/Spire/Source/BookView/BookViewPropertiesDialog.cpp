@@ -74,6 +74,9 @@ void BookViewPropertiesDialog::OnOk() {
 }
 
 void BookViewPropertiesDialog::OnApply() {
+  if(m_security) {
+    m_ui->m_interactionsTab->Store();
+  }
   BookViewWindow* window = dynamic_cast<BookViewWindow*>(parent());
   if(window == nullptr) {
     return;
@@ -82,6 +85,9 @@ void BookViewPropertiesDialog::OnApply() {
 }
 
 void BookViewPropertiesDialog::OnApplyToAll() {
+  if(m_security) {
+    m_ui->m_interactionsTab->Store();
+  }
   QWidgetList widgets = QApplication::topLevelWidgets();
   for(auto i = widgets.begin(); i != widgets.end(); ++i) {
     BookViewWindow* window = dynamic_cast<BookViewWindow*>(*i);

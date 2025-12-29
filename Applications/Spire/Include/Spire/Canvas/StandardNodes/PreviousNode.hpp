@@ -25,13 +25,13 @@ namespace Spire {
     private:
       friend struct Beam::DataShuttle;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void PreviousNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    SignatureNode::Shuttle(shuttle, version);
+  template<Beam::IsShuttle S>
+  void PreviousNode::shuttle(S& shuttle, unsigned int version) {
+    SignatureNode::shuttle(shuttle, version);
   }
 }
 
