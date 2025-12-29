@@ -100,7 +100,7 @@ def main():
     if region == nexus.CountryCode.NONE:
       region = nexus.parse_venue(args.region, venues)
       if region:
-        region = venues.from_code(region)
+        region = venues.select(region).venue
       else:
         region = nexus.parse_security(args.region, venues)
     region = nexus.Region(region)

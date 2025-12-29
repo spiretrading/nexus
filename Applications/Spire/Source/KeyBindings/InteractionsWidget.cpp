@@ -100,6 +100,28 @@ void InteractionsWidget::Initialize(
   Update();
 }
 
+void InteractionsWidget::Store() {
+  if(m_regionIndex.empty()) {
+    return;
+  }
+  auto interactions =
+    m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
+      m_regions.at(m_regionIndex).m_region);
+  interactions->get_default_quantity()->set(
+    m_ui->m_defaultQuantitySpinBox->value());
+  if(m_quantityModifierIndex != -1) {
+    interactions->get_quantity_increment(
+      make_modifier(m_quantityModifierIndex))->set(
+        m_ui->m_quantityIncrementSpinBox->value());
+  }
+  if(m_priceModifierIndex != -1) {
+    interactions->get_price_increment(make_modifier(m_priceModifierIndex))->set(
+      m_ui->m_priceIncrementSpinBox->GetValue());
+  }
+  interactions->is_cancel_on_fill()->set(
+    m_ui->m_cancelOnFillCheckBox->isChecked());
+}
+
 void InteractionsWidget::Add(RegionEntry region) {
   auto regions =
     m_userProfile->GetKeyBindings()->make_interactions_key_bindings_regions();
@@ -165,28 +187,6 @@ void InteractionsWidget::Update() {
   m_ui->m_priceIncrementSpinBox->setEnabled(region.m_isActive);
   m_ui->m_priceIncrementModifierComboBox->setEnabled(region.m_isActive);
   m_ui->m_cancelOnFillCheckBox->setEnabled(region.m_isActive);
-}
-
-void InteractionsWidget::Store() {
-  if(m_regionIndex.empty()) {
-    return;
-  }
-  auto interactions =
-    m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
-      m_regions.at(m_regionIndex).m_region);
-  interactions->get_default_quantity()->set(
-    m_ui->m_defaultQuantitySpinBox->value());
-  if(m_quantityModifierIndex != -1) {
-    interactions->get_quantity_increment(
-      make_modifier(m_quantityModifierIndex))->set(
-        m_ui->m_quantityIncrementSpinBox->value());
-  }
-  if(m_priceModifierIndex != -1) {
-    interactions->get_price_increment(make_modifier(m_priceModifierIndex))->set(
-      m_ui->m_priceIncrementSpinBox->GetValue());
-  }
-  interactions->is_cancel_on_fill()->set(
-    m_ui->m_cancelOnFillCheckBox->isChecked());
 }
 
 void InteractionsWidget::OnRegionIndexChanged(int index) {
