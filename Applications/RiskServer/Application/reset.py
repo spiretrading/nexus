@@ -3,7 +3,6 @@ import sys
 
 import yaml
 
-import aspen
 import beam
 import nexus
 
@@ -48,7 +47,7 @@ def main():
   if region == nexus.CountryCode.NONE:
     region = nexus.parse_venue(args.region, venues)
     if region:
-      region = venues.from_code(region)
+      region = venues.select(region).venue
     else:
       region = nexus.parse_security(args.region, venues)
   service_clients.risk_client.reset(nexus.Region(region))

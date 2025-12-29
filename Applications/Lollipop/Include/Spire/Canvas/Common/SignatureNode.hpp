@@ -73,8 +73,8 @@ namespace Details {
       /** Returns the signatures supported by this CanvasNode. */
       virtual const std::vector<Signature>& GetSignatures() const = 0;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
 
     private:
       std::shared_ptr<CanvasType> m_type;
@@ -89,10 +89,10 @@ namespace Details {
     return signatures;
   }
 
-  template<typename Shuttler>
-  void SignatureNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    CanvasNode::Shuttle(shuttle, version);
-    shuttle.Shuttle("type", m_type);
+  template<Beam::IsShuttle S>
+  void SignatureNode::shuttle(S& shuttle, unsigned int version) {
+    CanvasNode::shuttle(shuttle, version);
+    shuttle.shuttle("type", m_type);
   }
 }
 
