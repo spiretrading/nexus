@@ -31,14 +31,13 @@ namespace Spire {
       //! Constructs a PersistentCatalogEntry.
       PersistentCatalogEntry();
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void PersistentCatalogEntry::Shuttle(Shuttler& shuttle,
-      unsigned int version) {
-    CatalogEntry::Shuttle(shuttle, version);
+  template<Beam::IsShuttle S>
+  void PersistentCatalogEntry::shuttle(S& shuttle, unsigned int version) {
+    CatalogEntry::shuttle(shuttle, version);
   }
 }
 
