@@ -1,11 +1,9 @@
 #include "Spire/Styles/CombinatorSelector.hpp"
 #include <unordered_map>
-#include <Beam/SignalHandling/ConnectionGroup.hpp>
 #include <boost/functional/hash.hpp>
 #include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
-using namespace Beam;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
@@ -59,7 +57,6 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
     std::unordered_map<const Stylist*, MatchEntry> m_match_entries;
     std::unordered_map<const Stylist*, std::unordered_set<const Stylist*>>
       m_selection;
-    std::unordered_map<const Stylist*, ConnectionGroup> m_selection_connections;
     std::unordered_map<const Stylist*, int> m_match_counts;
     int m_matches;
     int m_match_connections;
@@ -120,11 +117,6 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
       }
       if(!additions.empty()) {
         m_selection[&base].insert(additions.begin(), additions.end());
-        for(auto addition : additions) {
-          m_selection_connections[&base].add(addition->connect_delete_signal([=, &base] {
-            on_selection(base, {}, {addition});
-          }));
-        }
       }
       auto consolidated_additions = std::unordered_set<const Stylist*>();
       auto consolidated_removals = std::unordered_set<const Stylist*>();
