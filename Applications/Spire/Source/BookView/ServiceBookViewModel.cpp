@@ -18,7 +18,7 @@ namespace {
   optional<std::tuple<std::vector<std::shared_ptr<Order>>&, int,
       BookViewModel::UserOrderListModel&>> pick(std::shared_ptr<Order> order,
         std::vector<std::shared_ptr<Order>>& ask_orders,
-        std::vector<std::shared_ptr<Order>> bid_orders, BookViewModel& model) {
+        std::vector<std::shared_ptr<Order>>& bid_orders, BookViewModel& model) {
     auto& fields = order->get_info().m_fields;
     auto& orders = pick(fields.m_side, ask_orders, bid_orders);
     auto i = std::find_if(orders.begin(), orders.end(),
@@ -279,7 +279,7 @@ void ServiceBookViewModel::on_order_removed(
   if(!entry) {
     return;
   }
-  auto [orders, index, user_orders] = *entry;
+  auto& [orders, index, user_orders] = *entry;
   orders.erase(orders.begin() + index);
   user_orders.remove(index);
 }

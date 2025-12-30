@@ -71,20 +71,34 @@ void ConsolidatedUserOrderListModel::remove(
     const BookViewModel::UserOrder& order) {
   auto i = std::lower_bound(
     m_model.begin(), m_model.end(), order, user_order_comparator);
+  if(i == m_model.end()) {
+    return;
+  }
   if(i->m_size == order.m_size) {
-    if(order.m_size != 0) {
-      auto update = static_cast<BookViewModel::UserOrder>(*i);
-      update.m_size = 0;
-      update.m_status = order.m_status;
-      *i = update;
-    }
-    QTimer::singleShot(1000, this, [=] {
-      auto i = std::lower_bound(
-        m_model.begin(), m_model.end(), order, user_order_comparator);
-      if(i != m_model.end() && i->m_size == 0) {
-        m_model.remove(i);
+    auto has_transition = [&] {
+      if(order.m_size != 0) {
+        if(!is_terminal(order.m_status) &&
+            order.m_status != OrderStatus::PARTIALLY_FILLED) {
+          m_model.remove(i);
+          return false;
+        } else {
+          auto update = static_cast<BookViewModel::UserOrder>(*i);
+          update.m_size = 0;
+          update.m_status = order.m_status;
+          *i = update;
+        }
       }
-    });
+      return true;
+    }();
+    if(has_transition) {
+      QTimer::singleShot(1000, this, [=] {
+        auto i = std::lower_bound(
+          m_model.begin(), m_model.end(), order, user_order_comparator);
+        if(i != m_model.end() && i->m_size == 0) {
+          m_model.remove(i);
+        }
+      });
+    }
   } else {
     auto update = static_cast<BookViewModel::UserOrder>(*i);
     update.m_size -= order.m_size;
