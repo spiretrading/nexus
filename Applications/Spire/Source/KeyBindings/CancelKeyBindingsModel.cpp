@@ -175,7 +175,8 @@ void Spire::execute(CancelKeyBindingsModel::Operation operation,
       for(auto i = begin; i != end; ++i) {
         if(get_side((*i)->GetNode()) == expected_side) {
           if(auto price = get_price((*i)->GetNode())) {
-            if(closest_price && (*price < direction * *closest_price) == flip) {
+            if(!closest_price ||
+                (*price < direction * *closest_price) == flip) {
               closest_price = *price;
               closest_iterator = i;
             }
