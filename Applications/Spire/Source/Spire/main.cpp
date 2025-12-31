@@ -290,6 +290,7 @@ int main(int argc, char* argv[]) {
     }
   }
   auto hotkey_override = HotkeyOverride();
+  application.installNativeEventFilter(&hotkey_override);
   application.exec();
   if(!user_profile) {
     return -1;

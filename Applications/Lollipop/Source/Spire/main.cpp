@@ -312,7 +312,8 @@ int main(int argc, char* argv[]) {
   SavedDashboards::Load(out(userProfile));
   auto windowSettings = WindowSettings::Load(userProfile);
   auto windows = std::vector<QWidget*>();
-  auto hotkeyOverride = HotkeyOverride();
+  auto hotkey_override = HotkeyOverride();
+  application.installNativeEventFilter(&hotkey_override);
   if(!windowSettings.empty()) {
     for(auto& settings : windowSettings) {
       if(auto window = settings->Reopen(Ref(userProfile))) {
