@@ -50,16 +50,7 @@ export class TimeOfDayField extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const now = new Date();
-    const utcDateTime = new Beam.DateTime(new Beam.Date(
-      now.getUTCFullYear(), now.getUTCMonth() + 1, now.getUTCDate()),
-      this.props.value);
-    const localDateTime = utcDateTime.toDate();
-    const splitTime = {
-      hours: localDateTime.getHours(),
-      minutes: localDateTime.getMinutes(),
-      seconds: localDateTime.getSeconds()
-    };
+    const splitTime = this.props.value.split();
     const containerStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return TimeOfDayField.STYLE.containerSmall;
@@ -174,14 +165,10 @@ export class TimeOfDayField extends React.Component<Properties, State> {
       }
     })();
     const localTimeSplit = localTimeValue.split();
-    const date = new Date();
-    date.setHours(localTimeSplit.hours);
-    date.setMinutes(localTimeSplit.minutes);
-    date.setSeconds(localTimeSplit.seconds);
     this.props.onChange(
-      Beam.Duration.HOUR.multiply(date.getUTCHours()).add(
-        Beam.Duration.MINUTE.multiply(date.getUTCMinutes())).add(
-        Beam.Duration.SECOND.multiply(date.getUTCSeconds())));
+      Beam.Duration.HOUR.multiply(localTimeSplit.hours).add(
+        Beam.Duration.MINUTE.multiply(localTimeSplit.minutes)).add(
+        Beam.Duration.SECOND.multiply(localTimeSplit.seconds)));
   }
 
   private static readonly STYLE = {
