@@ -52,8 +52,7 @@ TimeInputDialog::TimeInputDialog(const time_duration& initialValue,
   m_ui->m_currentTimeDisplay->setTime(PosixTimeToQTime(
     currentTime.time_of_day()));
   if(!initialValue.is_special() && !initialValue.is_not_a_date_time()) {
-    auto localTime = to_local_time(initialValue);
-    m_ui->m_selectedTimeInput->setTime(PosixTimeToQTime(localTime));
+    m_ui->m_selectedTimeInput->setTime(PosixTimeToQTime(initialValue));
   }
   connect(m_ui->m_buttonBox, &QDialogButtonBox::accepted, this,
     &TimeInputDialog::accept);
@@ -70,8 +69,7 @@ time_duration TimeInputDialog::GetTime() const {
   auto timeInput = m_ui->m_selectedTimeInput->time();
   time_duration posixTime(timeInput.hour(), timeInput.minute(),
     timeInput.second(), timeInput.msec());
-  auto utcTime = to_utc_time(posixTime);
-  return utcTime;
+  return posixTime;
 }
 
 void TimeInputDialog::OnCurrentTimer() {
