@@ -1,5 +1,6 @@
 #include "Spire/CanvasView/OpenCanvasEditor.hpp"
 #include <limits>
+#include <Beam/TimeService/ToLocalTime.hpp>
 #include <boost/lexical_cast.hpp>
 #include <QApplication>
 #include <QComboBox>
@@ -523,7 +524,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const TimeNode& node) {
     return;
   }
   auto previousValue = node.GetValue();
-  auto newValue = dialog.GetTime();
+  auto newValue = to_utc_time(dialog.GetTime());
   if(previousValue == newValue) {
     return;
   }

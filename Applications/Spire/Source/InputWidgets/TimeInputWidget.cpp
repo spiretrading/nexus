@@ -1,5 +1,4 @@
 #include "Spire/InputWidgets/TimeInputWidget.hpp"
-#include <Beam/TimeService/ToLocalTime.hpp>
 #include <QApplication>
 #include <QKeyEvent>
 #include <QLineEdit>
@@ -45,9 +44,8 @@ const time_duration& TimeInputWidget::GetTime() const {
 void TimeInputWidget::SetTime(time_duration time) {
   m_time = std::move(time);
   QTime timeDisplay{0, 0, 0, 0};
-  auto localTime = to_local_time(m_time);
   timeDisplay = timeDisplay.addMSecs(
-    static_cast<int>(localTime.total_milliseconds()));
+    static_cast<int>(m_time.total_milliseconds()));
   m_lineEdit->setText(timeDisplay.toString("hh:mm:ss.zzz"));
   m_timeUpdatedSignal(m_time);
 }
