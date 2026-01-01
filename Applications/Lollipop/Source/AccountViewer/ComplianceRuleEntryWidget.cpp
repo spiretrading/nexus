@@ -114,15 +114,15 @@ ComplianceRuleEntryWidget::ComplianceRuleEntryWidget(
     Ref<UserProfile> userProfile, bool isReadOnly,
     const ComplianceRuleEntry& entry, std::shared_ptr<ComplianceModel> model,
     QWidget* parent, Qt::WindowFlags flags)
-    : QWidget(parent, flags),
-      m_ui(std::make_unique<Ui_ComplianceRuleEntryWidget>()),
-      m_userProfile(userProfile.get()),
-      m_hasModifications(false),
-      m_isReadOnly(isReadOnly),
-      m_idUpdated(false),
-      m_entry(entry),
-      m_flattenedEntry(Flatten(m_entry)),
-      m_model(std::move(model)) {
+    : QWidget{parent, flags},
+      m_ui{std::make_unique<Ui_ComplianceRuleEntryWidget>()},
+      m_userProfile{userProfile.get()},
+      m_hasModifications{false},
+      m_isReadOnly{isReadOnly},
+      m_idUpdated{false},
+      m_entry{entry},
+      m_flattenedEntry{Flatten(entry)},
+      m_model{std::move(model)} {
   m_ui->setupUi(this);
   m_ui->m_parametersWidget->hide();
   m_ui->m_ruleLabel->setText(

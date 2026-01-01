@@ -18,70 +18,82 @@ venues:
     currency: CAD
     description: Alpha Exchange
     display_name: XATS
+    market_center: ALP
   - venue: CHIC
     country_code: CA
     time_zone: Eastern_Time
     currency: CAD
     description: CHI-X Canada ATS
     display_name: CHIC
+    market_center: CHI
   - venue: XCNQ
     country_code: CA
     time_zone: Eastern_Time
     currency: CAD
     description: Canadian Securities Exchange
     display_name: CSE
+    market_center: CNQ
   - venue: CSE2
     country_code: CA
     time_zone: Eastern_Time
     currency: CAD
     description: Canadian Securities Exchange - CSE2
     display_name: CSE2
+    market_center: CS2
   - venue: XCX2
     country_code: CA
     time_zone: Eastern_Time
     currency: CAD
     description: CX2
     display_name: CX2
+    market_center: CHT
   - venue: LYNX
     country_code: CA
     time_zone: Eastern_Time
     currency: CAD
     description: Lynx ATS
     display_name: LYNX
+    market_center: LYX
   - venue: MATN
     country_code: CA
     time_zone: Eastern_Time
     currency: CAD
     description: MATCH Now
     display_name: MATN
+    market_center: TCM
   - venue: NEOE
     country_code: CA
     time_zone: Eastern_Time
     currency: CAD
     description: Aequitas NEO Exchange
     display_name: NEOE
+    market_center: AQL
   - venue: OMGA
     country_code: CA
     time_zone: Eastern_Time
     currency: CAD
     description: Omega ATS
     display_name: OMGA
+    market_center: OMG
   - venue: PURE
     country_code: CA
     time_zone: Eastern_Time
     currency: CAD
     description: Pure Trading
     display_name: PURE
+    market_center: PUR
   - venue: XTSE
     country_code: CA
     time_zone: Eastern_Time
     currency: CAD
     description: Toronto Stock Exchange
     display_name: TSX
+    market_center: TSE
   - venue: XTSX
     country_code: CA
     time_zone: Eastern_Time
     currency: CAD
     description: TSX Venture Exchange
     display_name: TSXV
+    market_center: CDX
 ...
