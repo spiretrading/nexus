@@ -1,10 +1,10 @@
 #include "Spire/AccountViewer/ComplianceModel.hpp"
 #include <algorithm>
+#include <boost/mpl/size.hpp>
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace boost;
-using namespace boost::mp11;
 using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
@@ -159,7 +159,7 @@ bool Spire::IsWrapped(const ComplianceRuleSchema& schema) {
   return name.m_name == "name" &&
     name.m_value.type() == typeid(std::string) &&
     arguments.m_name == "arguments" && arguments.m_value.which() ==
-      mp_size<ComplianceValue::types>::value - 1;
+      mpl::size<ComplianceValue::types>::value - 1;
 }
 
 QString Spire::GetUnwrappedName(const ComplianceRuleSchema& schema) {
