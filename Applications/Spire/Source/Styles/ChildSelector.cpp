@@ -14,11 +14,11 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  void insert_proxies(
-      const Stylist& root, std::unordered_set<const Stylist*>& proxies) {
+  template<typename F>
+  void for_each_proxy(const Stylist& root, F f) {
     for(auto& proxy : root.get_proxies()) {
-      proxies.insert(proxy);
-      insert_proxies(*proxy, proxies);
+      f(*proxy);
+      for_each_proxy(*proxy, f);
     }
   }
 
@@ -47,7 +47,10 @@ namespace {
       }
       m_link_connection = stylist.connect_link_signal(
         std::bind_front(&ChildObserver::on_link, this));
-      insert_proxies(stylist, children);
+      for_each_proxy(stylist, [&] (auto& proxy) {
+        add(proxy);
+        children.insert(&proxy);
+      });
       if(!children.empty()) {
         m_on_update(std::move(children), {});
       }

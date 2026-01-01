@@ -50,5 +50,6 @@ int main(int argc, char** argv) {
     get_default_additional_tag_database());
   window.show();
   auto hotkey_override = HotkeyOverride();
+  application.installNativeEventFilter(&hotkey_override);
   application.exec();
 }
