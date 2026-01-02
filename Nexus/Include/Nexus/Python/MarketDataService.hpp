@@ -121,7 +121,7 @@ namespace Nexus::Python {
   template<IsMarketDataClient C>
   auto export_market_data_client(
       pybind11::module& module, std::string_view name) {
-    auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
+    auto client = pybind11::class_<C>(module, name.data()).
       def("query_sequenced_order_imbalances",
         pybind11::overload_cast<const VenueMarketDataQuery&,
           Beam::ScopedQueueWriter<SequencedOrderImbalance>>(&C::query)).
@@ -170,7 +170,7 @@ namespace Nexus::Python {
   template<IsMarketDataFeedClient C>
   auto export_market_data_feed_client(
       pybind11::module& module, std::string_view name) {
-    auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
+    auto client = pybind11::class_<C>(module, name.data()).
       def("add", &C::add).
       def("publish",
         pybind11::overload_cast<const VenueOrderImbalance&>(&C::publish)).
