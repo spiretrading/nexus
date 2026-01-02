@@ -442,11 +442,15 @@ void Nexus::Python::export_standard_queries(module& module) {
   module.def("query_daily_order_submissions",
     [] (const DirectoryEntry& account, ptime start, ptime end,
         const VenueDatabase& venues, const local_time::tz_database& time_zones,
-        std::shared_ptr<OrderExecutionClient> client,
+        SharedObject shared_client,
         ScopedQueueWriter<std::shared_ptr<Order>> queue) {
       return spawn([=, queue = std::move(queue)] mutable {
+        auto& client = [&] () -> auto& {
+          auto lock = GilLock();
+          return shared_client->cast<OrderExecutionClient&>();
+        }();
         auto query = RoutineHandler(query_daily_order_submissions(
-          account, start, end, venues, time_zones, *client, std::move(queue)));
+          account, start, end, venues, time_zones, client, std::move(queue)));
         query.wait();
       });
     });

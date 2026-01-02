@@ -205,22 +205,30 @@ void Nexus::Python::export_market_data_service(module& module) {
   export_security_snapshot(module);
   export_sqlite_historical_data_store(module);
   module.def("query_real_time_book_quotes_with_snapshot",
-    [] (std::shared_ptr<MarketDataClient> client, const Security& security,
+    [] (SharedObject shared_client, const Security& security,
         ScopedQueueWriter<BookQuote> queue,
         InterruptionPolicy interruption_policy) {
       return spawn([=, queue = std::move(queue)] mutable {
+        auto& client = [&] () -> auto& {
+          auto lock = GilLock();
+          return shared_client->cast<MarketDataClient&>();
+        }();
         auto query = RoutineHandler(query_real_time_with_snapshot(
-          *client, security, std::move(queue), interruption_policy));
+          client, security, std::move(queue), interruption_policy));
         query.wait();
       });
     }, arg("client"), arg("security"), arg("queue"),
     arg("interruption_policy") = InterruptionPolicy::BREAK_QUERY);
   module.def("query_real_time_bbo_quotes_with_snapshot",
-    [] (std::shared_ptr<MarketDataClient> client, const Security& security,
+    [] (SharedObject shared_client, const Security& security,
         ScopedQueueWriter<BboQuote> queue) {
       return spawn([=, queue = std::move(queue)] mutable {
+        auto& client = [&] () -> auto& {
+          auto lock = GilLock();
+          return shared_client->cast<MarketDataClient&>();
+        }();
         auto query = RoutineHandler(
-          query_real_time_with_snapshot(*client, security, std::move(queue)));
+          query_real_time_with_snapshot(client, security, std::move(queue)));
         query.wait();
       });
     });

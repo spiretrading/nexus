@@ -68,7 +68,7 @@ namespace Nexus::Python {
   template<IsOrderExecutionClient C>
   auto export_order_execution_client(
       pybind11::module& module, std::string_view name) {
-    auto client = pybind11::class_<C, std::shared_ptr<C>>(module, name.data()).
+    auto client = pybind11::class_<C>(module, name.data()).
       def("load_order", &C::load_order).
       def("query_sequenced_order_records", pybind11::overload_cast<
         const AccountQuery&, Beam::ScopedQueueWriter<SequencedOrderRecord>>(
