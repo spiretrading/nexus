@@ -78,7 +78,8 @@ namespace Nexus {
           return;
         }
         for(auto& entry : entries) {
-          if(entry.m_value.m_transaction_count == 0) {
+          if(entry.m_value.m_transaction_count == 0 &&
+              entry.m_value.m_position.m_quantity == 0) {
             m_publisher->erase(entry.m_key);
           } else {
             m_publisher->push(entry);
