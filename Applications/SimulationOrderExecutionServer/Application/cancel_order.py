@@ -51,9 +51,9 @@ def cancel_order(service_clients, order, message):
   execution_reports = order.publisher.get_snapshot()
   if len(execution_reports) == 0:
     pending_new_report = nexus.ExecutionReport(
-      order.info.order_id, service_clients.time_client.get_time())
+      order.info.id, service_clients.time_client.get_time())
     service_clients.order_execution_client.update(
-      order.info.order_id, pending_new_report)
+      order.info.id, pending_new_report)
     execution_reports = [pending_new_report]
   if not nexus.is_terminal(execution_reports[-1].status):
     cancel_report = nexus.make_update(
@@ -61,7 +61,7 @@ def cancel_order(service_clients, order, message):
       service_clients.time_client.get_time())
     cancel_report.text = message
     service_clients.order_execution_client.update(
-      order.info.order_id, cancel_report)
+      order.info.id, cancel_report)
 
 def cancel_order_by_id(service_clients, order_id, message):
   order = service_clients.order_execution_client.load_order(order_id)
