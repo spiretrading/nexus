@@ -25,7 +25,10 @@ void Executor::Close() {
   if(m_openState.set_closing()) {
     return;
   }
-  m_updateCondition.notify_all();
+  {
+    auto lock = std::unique_lock(m_mutex);
+    m_updateCondition.notify_all();
+  }
   m_openState.close();
 }
 
