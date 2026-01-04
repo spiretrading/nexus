@@ -82,40 +82,43 @@ namespace Nexus {
       const boost::local_time::tz_database& time_zones,
       IsOrderExecutionClient auto& client,
       Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) {
-    return Beam::spawn([=, queue = std::move(queue), &client] () mutable {
-      auto venue_time_zones =
-        std::unordered_map<std::string, std::vector<Venue>>();
-      for(auto& venue : venues.get_entries()) {
-        venue_time_zones[venue.m_time_zone].push_back(venue.m_venue);
+    auto venue_time_zones =
+      std::unordered_map<std::string, std::vector<Venue>>();
+    for(auto& venue : venues.get_entries()) {
+      venue_time_zones[venue.m_time_zone].push_back(venue.m_venue);
+    }
+    auto snapshots =
+      std::vector<std::shared_ptr<Beam::Queue<SequencedOrder>>>();
+    for(auto& venue_time_zone : venue_time_zones) {
+      auto venue_start = venue_date_to_utc(
+        venue_time_zone.second.front(), start, venues, time_zones);
+      auto venue_end = venue_date_to_utc(venue_time_zone.second.front(),
+        end, venues, time_zones) + boost::gregorian::days(1);
+      auto venue_expressions = std::vector<Beam::Expression>();
+      for(auto& venue : venue_time_zone.second) {
+        venue_expressions.push_back(make_venue_filter(venue));
       }
-      for(auto& venue_time_zone : venue_time_zones) {
-        auto venue_start = venue_date_to_utc(
-          venue_time_zone.second.front(), start, venues, time_zones);
-        auto venue_end = venue_date_to_utc(venue_time_zone.second.front(),
-          end, venues, time_zones) + boost::gregorian::days(1);
-        auto venue_expressions = std::vector<Beam::Expression>();
-        for(auto& venue : venue_time_zone.second) {
-          venue_expressions.push_back(make_venue_filter(venue));
-        }
-        auto venue_filter =
-          Beam::disjunction(venue_expressions.begin(), venue_expressions.end());
-        auto query = AccountQuery();
-        query.set_index(account);
-        query.set_range(venue_start, venue_end);
-        query.set_filter(venue_filter);
-        query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
-        auto snapshot_queue = std::make_shared<Beam::Queue<SequencedOrder>>();
-        client.query(query, snapshot_queue);
-        try {
-          while(true) {
-            auto value = snapshot_queue->pop();
-            if(value.get_value()->get_info().m_timestamp < venue_end) {
-              queue.push(std::move(value.get_value()));
+      auto venue_filter =
+        Beam::disjunction(venue_expressions.begin(), venue_expressions.end());
+      auto query = AccountQuery();
+      query.set_index(account);
+      query.set_range(venue_start, venue_end);
+      query.set_filter(venue_filter);
+      query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
+      auto snapshot_queue = std::make_shared<Beam::Queue<SequencedOrder>>();
+      client.query(query, snapshot_queue);
+      snapshots.push_back(std::move(snapshot_queue));
+    }
+    return Beam::spawn(
+      [snapshots = std::move(snapshots), queue = std::move(queue)] () mutable {
+        for(auto& snapshot : snapshots) {
+          try {
+            while(true) {
+              queue.push(snapshot->pop().get_value());
             }
-          }
-        } catch(const std::exception&) {}
-      }
-    });
+          } catch(const std::exception&) {}
+        }
+      });
   }
 
   /** Returns a Query Expression to filter an account's live Orders. */

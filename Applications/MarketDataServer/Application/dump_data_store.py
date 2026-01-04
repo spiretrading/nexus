@@ -1,5 +1,4 @@
 import argparse
-import copy
 import datetime
 import functools
 import multiprocessing
@@ -47,7 +46,7 @@ def load_venues(source):
   query = 'SELECT DISTINCT `venue` FROM `order_imbalances`'
   cursor.execute(query)
   for result in cursor.fetchall():
-    venues.append(result[0])
+    venues.append(nexus.Venue(result[0]))
   return venues
 
 def backup_security_info(source, destination):
@@ -60,18 +59,19 @@ def backup_security_info(source, destination):
 
 def backup(index, start, end, loader, destination):
   if isinstance(index, nexus.Security):
-    if index.country == nexus.default_countries.CA or \
-        index.country == nexus.default_countries.US:
+    country = nexus.DEFAULT_VENUES.select(index.venue).country_code
+    if country == nexus.default_countries.CA or \
+        country == nexus.default_countries.US:
       timezone = pytz.timezone('US/Eastern')
-    elif index.country == nexus.default_countries.AU:
+    elif country == nexus.default_countries.AU:
       timezone = pytz.timezone('Australia/Sydney')
-    elif index.country == nexus.default_countries.BR:
+    elif country == nexus.default_countries.BR:
       timezone = pytz.timezone('America/Sao_Paulo')
-    elif index.country == nexus.default_countries.CN:
+    elif country == nexus.default_countries.CN:
       timezone = pytz.timezone('Asia/Shanghai')
-    elif index.country == nexus.default_countries.HK:
+    elif country == nexus.default_countries.HK:
       timezone = pytz.timezone('Asia/Hong_Kong')
-    elif index.country == nexus.default_countries.JP:
+    elif country == nexus.default_countries.JP:
       timezone = pytz.timezone('Asia/Tokyo')
   else:
     timezone = pytz.timezone('US/Eastern')
