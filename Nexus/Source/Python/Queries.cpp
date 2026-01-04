@@ -49,10 +49,13 @@ void Nexus::Python::export_queries(module& module) {
   export_time_and_sale_accessor(module);
   export_indexed_query<Security>(module, "SecurityIndexedQuery");
   export_basic_query<Security>(module, "SecurityQuery");
+  export_indexed_query<Venue>(module, "VenueIndexedQuery");
+  export_basic_query<Venue>(module, "VenueQuery");
   export_queue_suite<Nexus::QueryVariant>(module, "QueryVariant");
   export_queue_suite<Quantity>(module, "Quantity");
   export_queue_suite<Money>(module, "Money");
   export_queue_suite<Security>(module, "Security");
+  export_queue_suite<Venue>(module, "Venue");
   export_queue_suite<SecurityInfo>(module, "SecurityInfo");
 }
 
