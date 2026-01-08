@@ -48,8 +48,9 @@ namespace {
       m_link_connection = stylist.connect_link_signal(
         std::bind_front(&ChildObserver::on_link, this));
       for_each_proxy(stylist, [&] (auto& proxy) {
-        add(proxy);
-        children.insert(&proxy);
+        if(add(proxy)) {
+          children.insert(&proxy);
+        }
       });
       if(!children.empty()) {
         m_on_update(std::move(children), {});
