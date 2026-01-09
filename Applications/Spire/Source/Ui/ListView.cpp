@@ -663,6 +663,7 @@ void ListView::update_layout() {
       ++i;
     }
   }
+  body_layout.activate();
   update_visible_region();
 }
 
