@@ -445,6 +445,9 @@ void DropDownBox::make_drop_down_list() {
   }
   auto list_view =
     new ListView(m_list, m_current, m_selection, m_item_builder, m_to_text);
+  if(!m_current->get()) {
+    list_view->setFocusProxy(nullptr);
+  }
   auto drop_down_list = new DropDownList(*list_view, *this);
   link(*this, *drop_down_list);
   drop_down_list->installEventFilter(this);
