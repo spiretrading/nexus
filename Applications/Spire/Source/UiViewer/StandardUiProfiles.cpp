@@ -5117,8 +5117,8 @@ UiProfile Spire::make_venue_box_profile() {
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     current.connect_changed_signal([=] (const auto& current) {
-      auto code = Venue(current.toUpper().toStdString().c_str());
-      if(auto venue = DEFAULT_VENUES.from(code).m_venue) {
+      if(auto venue = DEFAULT_VENUES.from_display_name(
+          current.toUpper().toStdString()).m_venue) {
         box->get_current()->set(venue);
       }
     });
