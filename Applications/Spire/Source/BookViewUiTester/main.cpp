@@ -97,27 +97,26 @@ const QString& to_text(CancelKeyBindingsModel::Operation operation) {
 
 std::shared_ptr<SecurityInfoQueryModel> populate_security_query_model() {
   auto security_infos = std::vector<SecurityInfo>();
-  security_infos.emplace_back(
-    parse_security("MRU.TSX"), "Metro Inc.", "", 0);
-  security_infos.emplace_back(
-    parse_security("MG.TSX"), "Magna International Inc.", "", 0);
-  security_infos.emplace_back(
-    parse_security("MGA.TSX"), "Mega Uranium Ltd.", "", 0);
-  security_infos.emplace_back(parse_security("MGAB.TSX"),
-    "Mackenzie Global Fixed Income Alloc ETF", "", 0);
-  security_infos.emplace_back(
-    parse_security("MON.NYSE"), "Monsanto Co.", "", 0);
-  security_infos.emplace_back(
-    parse_security("MFC.TSX"), "Manulife Financial Corporation", "", 0);
-  security_infos.emplace_back(
-    parse_security("MX.TSX"), "Methanex Corporation", "", 0);
-  auto model = std::make_shared<LocalQueryModel<SecurityInfo>>();
+  auto add_security = [&] (const Security& security, const std::string& name) {
+    if(security) {
+      security_infos.emplace_back(security, name, "", 0);
+    }
+  };
+  add_security(parse_security("MRU.TSX"), "Metro Inc.");
+  add_security(parse_security("MG.TSX"), "Magna International Inc.");
+  add_security(parse_security("MGA.TSX"), "Mega Uranium Ltd.");
+  add_security(parse_security("MGAB.TSX"),
+    "Mackenzie Global Fixed Income Alloc ETF");
+  add_security(parse_security("MON.NYSE"), "Monsanto Co.");
+  add_security(parse_security("MFC.TSX"), "Manulife Financial Corporation");
+  add_security(parse_security("MX.TSX"), "Methanex Corporation");
+  auto securities = std::make_shared<LocalQueryModel<SecurityInfo>>();
   for(auto& security_info : security_infos) {
-    model->add(to_text(security_info.m_security).toLower(), security_info);
-    model->add(
+    securities->add(to_text(security_info.m_security).toLower(), security_info);
+    securities->add(
       QString::fromStdString(security_info.m_name).toLower(), security_info);
   }
-  return model;
+  return securities;
 }
 
 BookQuote make_random_venue_quote(Side side) {
