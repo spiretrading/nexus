@@ -401,6 +401,13 @@ struct EditableTableView::ItemBuilder {
       item->connect_read_only_signal([=] (auto read_only) {
         if(read_only) {
           m_view->setFocus();
+        } else {
+          auto& scroll_box = m_view->get_scroll_box();
+          auto item_geometry =
+            QRect(item->mapTo(&scroll_box, QPoint(0, 0)), item->size());
+          if(!QRect(QPoint(0, 0), scroll_box.size()).contains(item_geometry)) {
+            scroll_box.scroll_to(*item);
+          }
         }
       });
       return item;
