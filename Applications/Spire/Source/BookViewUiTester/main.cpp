@@ -110,13 +110,13 @@ std::shared_ptr<SecurityInfoQueryModel> populate_security_query_model() {
   add_security(parse_security("MON.NYSE"), "Monsanto Co.");
   add_security(parse_security("MFC.TSX"), "Manulife Financial Corporation");
   add_security(parse_security("MX.TSX"), "Methanex Corporation");
-  auto securities = std::make_shared<LocalQueryModel<SecurityInfo>>();
+  auto model = std::make_shared<LocalQueryModel<SecurityInfo>>();
   for(auto& security_info : security_infos) {
-    securities->add(to_text(security_info.m_security).toLower(), security_info);
-    securities->add(
+    model->add(to_text(security_info.m_security).toLower(), security_info);
+    model->add(
       QString::fromStdString(security_info.m_name).toLower(), security_info);
   }
-  return securities;
+  return model;
 }
 
 BookQuote make_random_venue_quote(Side side) {
