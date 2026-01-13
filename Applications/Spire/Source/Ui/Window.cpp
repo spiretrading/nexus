@@ -21,6 +21,10 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto BORDER_COLOR = QColor(0x7F5EEC);
+  const auto BORDER_COLOR_REF =
+    RGB(BORDER_COLOR.red(), BORDER_COLOR.green(), BORDER_COLOR.blue());
+
   auto RESIZE_AREA() {
     return scale(8, 8);
   }
@@ -153,6 +157,13 @@ namespace {
         DWMWA_WINDOW_CORNER_PREFERENCE, &preference, sizeof(preference));
     }
   }
+
+  void set_border_color(QWidget& widget, COLORREF color) {
+    if(is_windows11_or_newer()) {
+      DwmSetWindowAttribute(reinterpret_cast<HWND>(widget.effectiveWinId()),
+        DWMWA_BORDER_COLOR, &color, sizeof(color));
+    }
+  }
 }
 
 Window::Window(QWidget* parent)
@@ -171,11 +182,11 @@ Window::Window(QWidget* parent)
   box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   proxy_style(*this, *box);
   update_style(*this, [] (auto& style) {
-    style.get(Any()).
-      set(BackgroundColor(QColor(0xF5F5F5))).
-      set(border(scale_width(1), QColor(0xA0A0A0)));
-    style.get(Highlighted()).
-      set(border_color(QColor(0x7F5EEC)));
+    style.get(Any()).set(BackgroundColor(QColor(0xF5F5F5)));
+    if(!is_windows11_or_newer()) {
+      style.get(Any()).set(border(scale_width(1), QColor(0xA0A0A0)));
+      style.get(Highlighted()).set(border_color(BORDER_COLOR));
+    }
   });
   enclose(*this, *box);
   find_stylist(*this).connect_match_signal(Highlighted(),
@@ -375,8 +386,10 @@ void Window::set_body(QWidget* body) {
 
 void Window::on_highlighted(bool is_match) {
   if(is_match) {
+    set_border_color(*this, BORDER_COLOR_REF);
     match(*m_title_bar, Highlighted());
   } else {
+    set_border_color(*this, DWMWA_COLOR_DEFAULT);
     unmatch(*m_title_bar, Highlighted());
   }
 }
