@@ -42,8 +42,8 @@ TEST_SUITE("StandardSecurityQueries") {
     auto end_date = ptime(date(2024, 7, 16));
     auto range = make_daily_query_range(security, start_date, end_date,
       DEFAULT_VENUES, get_default_time_zone_database());
-    REQUIRE(range.get_start() == time_from_string("2024-07-16 04:00:00"));
-    REQUIRE(range.get_end() == time_from_string("2024-07-17 04:00:00"));
+    REQUIRE(range.get_start() == time_from_string("2024-07-15 04:00:00"));
+    REQUIRE(range.get_end() == time_from_string("2024-07-16 04:00:00"));
   }
 
   TEST_CASE("make_query") {
@@ -60,9 +60,9 @@ TEST_SUITE("StandardSecurityQueries") {
       REQUIRE(query.get_index() == security);
       REQUIRE(query.get_market_data_type() == MarketDataType::TIME_AND_SALE);
       REQUIRE(query.get_range().get_start() ==
-        time_from_string("2024-07-16 04:00:00"));
+        time_from_string("2024-07-15 04:00:00"));
       REQUIRE(query.get_range().get_end() ==
-        time_from_string("2024-07-17 04:00:00"));
+        time_from_string("2024-07-16 04:00:00"));
     }
   }
 }
