@@ -33,7 +33,7 @@ std::unique_ptr<DashboardCell> ChangeDashboardCellBuilder::Make(
     }
     *closePrice = close->m_price;
     auto& marketDataClient = serviceClients.get_market_data_client();
-    auto venueStartOfDay = venue_date_to_utc(security.get_venue(),
+    auto venueStartOfDay = utc_start_of_day(security.get_venue(),
       serviceClients.get_time_client().get_time(),
       selfUserProfile->GetVenueDatabase(),
       selfUserProfile->GetTimeZoneDatabase());
