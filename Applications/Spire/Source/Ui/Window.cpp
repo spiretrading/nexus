@@ -21,10 +21,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto BORDER_COLOR = QColor(0x7F5EEC);
-  const auto BORDER_COLOR_REF =
-    RGB(BORDER_COLOR.red(), BORDER_COLOR.green(), BORDER_COLOR.blue());
-
   auto RESIZE_AREA() {
     return scale(8, 8);
   }
@@ -382,7 +378,7 @@ void Window::set_body(QWidget* body) {
 
 void Window::on_highlighted(bool is_match) {
   if(is_match) {
-    set_border_color(*this, BORDER_COLOR_REF);
+    set_border_color(*this, RGB(127, 94, 236));
     match(*m_title_bar, Highlighted());
   } else {
     set_border_color(*this, DWMWA_COLOR_DEFAULT);
