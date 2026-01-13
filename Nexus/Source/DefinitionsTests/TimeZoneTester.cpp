@@ -22,9 +22,9 @@ namespace {
 TEST_SUITE("TimeZone") {
   TEST_CASE("tsx_start_of_day") {
     auto base_time = ptime(date(1984, 5, 7), time_duration(1, 30, 0, 0));
-    auto converted_time = venue_date_to_utc(
+    auto converted_time = utc_start_of_day(
       DefaultVenues::TSX, base_time, DEFAULT_VENUES, GetTimeZoneDatabase());
-    auto expected_time = ptime(date(1984, 5, 7), time_duration(4, 0, 0, 0));
+    auto expected_time = ptime(date(1984, 5, 6), time_duration(4, 0, 0, 0));
     REQUIRE(converted_time == expected_time);
   }
 }

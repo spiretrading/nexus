@@ -663,20 +663,20 @@ namespace {
 
   std::shared_ptr<SecurityInfoQueryModel> populate_security_query_model() {
     auto security_infos = std::vector<SecurityInfo>();
-    security_infos.emplace_back(parse_security("MRU.TSX"),
-      "Metro Inc.", "", 0);
-    security_infos.emplace_back(parse_security("MG.TSX"),
-      "Magna International Inc.", "", 0);
-    security_infos.emplace_back(parse_security("MGA.TSX"),
-      "Mega Uranium Ltd.", "", 0);
-    security_infos.emplace_back(parse_security("MGAB.TSX"),
-      "Mackenzie Global Fixed Income Alloc ETF", "", 0);
-    security_infos.emplace_back(parse_security("MON.NYSE"),
-      "Monsanto Co.", "", 0);
-    security_infos.emplace_back(parse_security("MFC.TSX"),
-      "Manulife Financial Corporation", "", 0);
-    security_infos.emplace_back(parse_security("MX.TSX"),
-      "Methanex Corporation", "", 0);
+    auto add_security = [&] (const Security& security,
+        const std::string& name) {
+      if(security) {
+        security_infos.emplace_back(security, name, "", 0);
+      }
+    };
+    add_security(parse_security("MRU.TSX"), "Metro Inc.");
+    add_security(parse_security("MG.TSX"), "Magna International Inc.");
+    add_security(parse_security("MGA.TSX"), "Mega Uranium Ltd.");
+    add_security(parse_security("MGAB.TSX"),
+      "Mackenzie Global Fixed Income Alloc ETF");
+    add_security(parse_security("MON.NYSE"), "Monsanto Co.");
+    add_security(parse_security("MFC.TSX"), "Manulife Financial Corporation");
+    add_security(parse_security("MX.TSX"), "Methanex Corporation");
     auto model = std::make_shared<LocalQueryModel<SecurityInfo>>();
     for(auto& security_info : security_infos) {
       model->add(to_text(security_info.m_security).toLower(), security_info);
@@ -728,6 +728,9 @@ namespace {
     auto model = std::make_shared<LocalQueryModel<Region>>();
     for(auto& security_info : securities) {
       auto security = parse_security(security_info.first);
+      if(!security) {
+        continue;
+      }
       auto region = Region(security_info.second);
       region += security;
       model->add(to_text(security).toLower(), region);
@@ -3693,8 +3696,8 @@ UiProfile Spire::make_region_list_item_profile() {
     auto& type = get<int>("type", profile.get_properties());
     auto region = [&] {
       if(type.get() == 0) {
-        auto security = parse_security("MSFT.NSDQ");
-        auto region = Region("Microsoft Corporation");
+        auto security = parse_security("MRU.TSX");
+        auto region = Region("Metro Inc.");
         region += security;
         return region;
       } else if(type.get() == 1) {
@@ -4004,9 +4007,8 @@ UiProfile Spire::make_security_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto profile = UiProfile("SecurityListItem", properties, [] (auto& profile) {
-    auto security = parse_security("AB.NYSE");
-    auto security_info =
-      SecurityInfo(security, "Alliancebernstein Holding LP", "", 0);
+    auto security = parse_security("MRU.TSX");
+    auto security_info = SecurityInfo(security, "Metro Inc.", "", 0);
     auto item = new SecurityListItem(security_info);
     apply_widget_properties(item, profile.get_properties());
     return item;
@@ -5114,8 +5116,8 @@ UiProfile Spire::make_venue_box_profile() {
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     current.connect_changed_signal([=] (const auto& current) {
-      auto code = Venue(current.toUpper().toStdString().c_str());
-      if(auto venue = DEFAULT_VENUES.from(code).m_venue) {
+      if(auto venue = DEFAULT_VENUES.from_display_name(
+          current.toUpper().toStdString()).m_venue) {
         box->get_current()->set(venue);
       }
     });

@@ -17,7 +17,7 @@ TimeAndSalesModel::TimeAndSalesModel(Ref<UserProfile> userProfile,
   if(security == Security()) {
     return;
   }
-  auto marketStartOfDay = venue_date_to_utc(security.get_venue(),
+  auto marketStartOfDay = utc_start_of_day(security.get_venue(),
     m_userProfile->GetClients().get_time_client().get_time(),
     m_userProfile->GetVenueDatabase(), m_userProfile->GetTimeZoneDatabase());
   auto query = SecurityMarketDataQuery();
