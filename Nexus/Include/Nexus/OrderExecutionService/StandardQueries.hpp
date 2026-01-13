@@ -48,12 +48,12 @@ namespace Nexus {
       const Beam::DirectoryEntry& account, boost::posix_time::ptime start,
       boost::posix_time::ptime end, const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones) {
-    auto venue_start = venue_date_to_utc(venue, start, venues, time_zones);
+    auto venue_start = utc_start_of_day(venue, start, venues, time_zones);
     auto venue_end = [&] {
       if(end == boost::posix_time::pos_infin) {
         return boost::posix_time::ptime(boost::posix_time::pos_infin);
       } else {
-        return venue_date_to_utc(venue, end, venues, time_zones) +
+        return utc_start_of_day(venue, end, venues, time_zones) +
           boost::gregorian::days(1);
       }
     }();
@@ -90,9 +90,9 @@ namespace Nexus {
     auto snapshots =
       std::vector<std::shared_ptr<Beam::Queue<SequencedOrder>>>();
     for(auto& venue_time_zone : venue_time_zones) {
-      auto venue_start = venue_date_to_utc(
+      auto venue_start = utc_start_of_day(
         venue_time_zone.second.front(), start, venues, time_zones);
-      auto venue_end = venue_date_to_utc(venue_time_zone.second.front(),
+      auto venue_end = utc_start_of_day(venue_time_zone.second.front(),
         end, venues, time_zones) + boost::gregorian::days(1);
       auto venue_expressions = std::vector<Beam::Expression>();
       for(auto& venue : venue_time_zone.second) {

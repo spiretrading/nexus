@@ -40,7 +40,7 @@ namespace Nexus {
       const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones) {
     auto start_of_day =
-      venue_date_to_utc(security.get_venue(), date, venues, time_zones);
+      utc_start_of_day(security.get_venue(), date, venues, time_zones);
     auto query = SecurityMarketDataQuery();
     query.set_index(security);
     query.set_range(start_of_day, Beam::decrement(Beam::Sequence::LAST));
@@ -120,7 +120,7 @@ namespace Nexus {
       const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones) {
     auto start_of_day =
-      venue_date_to_utc(security.get_venue(), date, venues, time_zones);
+      utc_start_of_day(security.get_venue(), date, venues, time_zones);
     auto query = SecurityMarketDataQuery();
     query.set_index(security);
     query.set_range(Beam::Sequence::FIRST, start_of_day);
@@ -170,13 +170,12 @@ namespace Nexus {
       boost::posix_time::ptime end, const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones) {
     auto start_of_day =
-      venue_date_to_utc(security.get_venue(), start, venues, time_zones);
+      utc_start_of_day(security.get_venue(), start, venues, time_zones);
     auto end_of_day = [&] () -> boost::posix_time::ptime {
       if(end == boost::posix_time::pos_infin) {
         return boost::posix_time::pos_infin;
       }
-      return venue_date_to_utc(security.get_venue(), end, venues, time_zones) +
-        boost::gregorian::days(1);
+      return utc_end_of_day(security.get_venue(), end, venues, time_zones);
     }();
     return Beam::Range(start_of_day, end_of_day);
   }

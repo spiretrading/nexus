@@ -94,12 +94,12 @@ TEST_SUITE("Venue") {
     REQUIRE(database.get_entries().empty());
   }
 
-  TEST_CASE("venue_date_to_utc") {
+  TEST_CASE("utc_start_of_day") {
     auto tz_database = load_test_tz_database();
     auto venue_database = load_test_venue_database();
     auto date_time = ptime(date(2025, 6, 26), hours(0));
     auto result =
-      venue_date_to_utc(Venue("UTC"), date_time, venue_database, tz_database);
+      utc_start_of_day(Venue("UTC"), date_time, venue_database, tz_database);
     REQUIRE(result == date_time);
   }
 
@@ -109,7 +109,7 @@ TEST_SUITE("Venue") {
     auto date_time = ptime(date(2025, 6, 26), hours(0));
     auto expected = ptime(date(2025, 6, 25), hours(14));
     auto result =
-      venue_date_to_utc(Venue("AEST"), date_time, venue_database, tz_database);
+      utc_start_of_day(Venue("AEST"), date_time, venue_database, tz_database);
     REQUIRE(result == expected);
   }
 
@@ -117,9 +117,9 @@ TEST_SUITE("Venue") {
     auto tz_database = load_test_tz_database();
     auto venue_database = load_test_venue_database();
     auto date_time = ptime(date(2025, 6, 26), hours(0));
-    auto expected = ptime(date(2025, 6, 26), hours(4));
+    auto expected = ptime(date(2025, 6, 25), hours(4));
     auto result =
-      venue_date_to_utc(Venue("EST"), date_time, venue_database, tz_database);
+      utc_start_of_day(Venue("EST"), date_time, venue_database, tz_database);
     REQUIRE(result == expected);
   }
 
@@ -127,9 +127,9 @@ TEST_SUITE("Venue") {
     auto tz_database = load_test_tz_database();
     auto venue_database = load_test_venue_database();
     auto date_time = ptime(date(2025, 1, 15), hours(0));
-    auto expected = ptime(date(2025, 1, 15), hours(5));
+    auto expected = ptime(date(2025, 1, 14), hours(5));
     auto result =
-      venue_date_to_utc(Venue("EST"), date_time, venue_database, tz_database);
+      utc_start_of_day(Venue("EST"), date_time, venue_database, tz_database);
     REQUIRE(result == expected);
   }
 

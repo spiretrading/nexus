@@ -452,19 +452,21 @@ void AnyComboBox::on_query(
     }
     auto blocker =
       shared_connection_block(m_data->m_drop_down_current_connection);
-    while(m_data->m_matches->get_size() != 0) {
-      m_data->m_matches->remove(m_data->m_matches->get_size() - 1);
-    }
-    for(auto& item : selection) {
-      m_data->m_matches->push(item);
-      auto& list_view = m_data->m_drop_down_list->get_list_view();
-      auto list_item = list_view.get_list_item(
-        list_view.get_list()->get_size() - 1);
-      list_item->setFocusPolicy(Qt::NoFocus);
-      if(list_item->is_mounted()) {
-        list_item->layout()->itemAt(0)->widget()->setFocusPolicy(Qt::NoFocus);
+    m_data->m_matches->transact([&] {
+      while(m_data->m_matches->get_size() != 0) {
+        m_data->m_matches->remove(m_data->m_matches->get_size() - 1);
       }
-    }
+      for(auto& item : selection) {
+        m_data->m_matches->push(item);
+        auto& list_view = m_data->m_drop_down_list->get_list_view();
+        auto list_item = list_view.get_list_item(
+          list_view.get_list()->get_size() - 1);
+        list_item->setFocusPolicy(Qt::NoFocus);
+        if(list_item->is_mounted()) {
+          list_item->layout()->itemAt(0)->widget()->setFocusPolicy(Qt::NoFocus);
+        }
+      }
+    });
   }
   m_data->m_is_querying = false;
   update_completion();
