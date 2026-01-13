@@ -124,6 +124,42 @@ namespace {
       SendMessage(hwnd, WM_SYSCOMMAND, cmd, 0);
     }
   }
+
+  auto is_windows11_or_newer() {
+    using RtlGetVersionProc = LONG(WINAPI*)(PRTL_OSVERSIONINFOW);
+    static auto function = [] () -> RtlGetVersionProc {
+      if(auto handle = GetModuleHandle("ntdll.dll")) {
+        return reinterpret_cast<RtlGetVersionProc>(
+          GetProcAddress(handle, "RtlGetVersion"));
+      }
+      return nullptr;
+    }();
+    if(function) {
+      auto os_info = RTL_OSVERSIONINFOW{0};
+      os_info.dwOSVersionInfoSize = sizeof(os_info);
+      if(function(&os_info) == 0) {
+        return os_info.dwMajorVersion > 10 ||
+          os_info.dwMajorVersion == 10 && os_info.dwMinorVersion == 0 &&
+            os_info.dwBuildNumber >= 22000;
+      }
+    }
+    return false;
+  }
+
+  void remove_rounded_corners(QWidget& widget) {
+    if(is_windows11_or_newer()) {
+      auto preference = DWM_WINDOW_CORNER_PREFERENCE::DWMWCP_DONOTROUND;
+      DwmSetWindowAttribute(reinterpret_cast<HWND>(widget.effectiveWinId()),
+        DWMWA_WINDOW_CORNER_PREFERENCE, &preference, sizeof(preference));
+    }
+  }
+
+  void set_border_color(QWidget& widget, COLORREF color) {
+    if(is_windows11_or_newer()) {
+      DwmSetWindowAttribute(reinterpret_cast<HWND>(widget.effectiveWinId()),
+        DWMWA_BORDER_COLOR, &color, sizeof(color));
+    }
+  }
 }
 
 Window::Window(QWidget* parent)
@@ -142,11 +178,7 @@ Window::Window(QWidget* parent)
   box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   proxy_style(*this, *box);
   update_style(*this, [] (auto& style) {
-    style.get(Any()).
-      set(BackgroundColor(QColor(0xF5F5F5))).
-      set(border(scale_width(1), QColor(0xA0A0A0)));
-    style.get(Highlighted()).
-      set(border_color(QColor(0x7F5EEC)));
+    style.get(Any()).set(BackgroundColor(QColor(0xF5F5F5)));
   });
   enclose(*this, *box);
   find_stylist(*this).connect_match_signal(Highlighted(),
@@ -168,6 +200,7 @@ void Window::closeEvent(QCloseEvent* event) {
 bool Window::event(QEvent* event) {
   if(event->type() == QEvent::WinIdChange) {
     set_window_attributes(m_is_resizable);
+    remove_rounded_corners(*this);
     connect(windowHandle(), &QWindow::screenChanged, this,
       &Window::on_screen_changed);
     connect(screen(), &QScreen::logicalDotsPerInchChanged, this,
@@ -181,7 +214,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
   auto msg = reinterpret_cast<MSG*>(message);
   if(msg->message == WM_NCACTIVATE) {
     RedrawWindow(msg->hwnd, NULL, NULL, RDW_UPDATENOW);
-    if(!m_is_bottom_border_mismatched) {
+    if(!is_windows11_or_newer() && !m_is_bottom_border_mismatched) {
       auto offset = get_bottom_border_offset(msg->hwnd,
         get_system_border_size(get_dpi(*this)).height());
       m_is_bottom_border_mismatched = std::abs(offset) > 0;
@@ -216,7 +249,8 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
           }
           rect.left += border_size.width();
           rect.right -= border_size.width();
-          if(m_is_bottom_border_mismatched && *m_is_bottom_border_mismatched) {
+          if(!is_windows11_or_newer() && m_is_bottom_border_mismatched &&
+              *m_is_bottom_border_mismatched) {
             rect.bottom -= 1;
           } else {
             rect.bottom -= border_size.height();
@@ -344,8 +378,10 @@ void Window::set_body(QWidget* body) {
 
 void Window::on_highlighted(bool is_match) {
   if(is_match) {
+    set_border_color(*this, RGB(127, 94, 236));
     match(*m_title_bar, Highlighted());
   } else {
+    set_border_color(*this, DWMWA_COLOR_DEFAULT);
     unmatch(*m_title_bar, Highlighted());
   }
 }
