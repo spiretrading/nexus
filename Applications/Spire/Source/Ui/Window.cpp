@@ -183,10 +183,6 @@ Window::Window(QWidget* parent)
   proxy_style(*this, *box);
   update_style(*this, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xF5F5F5)));
-    if(!is_windows11_or_newer()) {
-      style.get(Any()).set(border(scale_width(1), QColor(0xA0A0A0)));
-      style.get(Highlighted()).set(border_color(BORDER_COLOR));
-    }
   });
   enclose(*this, *box);
   find_stylist(*this).connect_match_signal(Highlighted(),
