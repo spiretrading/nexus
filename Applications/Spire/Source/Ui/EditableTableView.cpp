@@ -420,6 +420,7 @@ struct EditableTableView::ItemBuilder {
 
   void unmount(QWidget* widget) {
     if(auto box = dynamic_cast<EditableBox*>(widget)) {
+      m_read_only_connections.erase(box);
       m_builder.unmount(widget);
     } else {
       m_editable_builder.unmount(widget);
@@ -449,8 +450,8 @@ EditableTableView::EditableTableView(
     std::move(current), header->get_size() + 2));
   get_header().get_item(0)->set_is_resizeable(false);
   get_header().get_widths()->set(0, scale_width(26));
-  set_style(*this, TABLE_VIEW_STYLE());
   get_scroll_box().installEventFilter(this);
+  set_style(*this, TABLE_VIEW_STYLE());
 }
 
 bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
