@@ -381,6 +381,7 @@ struct EditableTableView::ItemBuilder {
   EditableTableView* m_view;
   TableViewItemBuilder m_builder;
   RecycledTableViewItemBuilder<EditableItemBuilder> m_editable_builder;
+  std::unordered_map<EditableBox*, scoped_connection> m_read_only_connections;
 
   ItemBuilder(EditableTableView* view, TableViewItemBuilder builder)
     : m_view(view),
@@ -398,18 +399,21 @@ struct EditableTableView::ItemBuilder {
         std::static_pointer_cast<EditableTableModel>(
           m_view->get_table())->m_source, any_cast<int>(table->at(row, 0)),
           column - 1));
-      item->connect_read_only_signal([=] (auto read_only) {
-        if(read_only) {
-          m_view->setFocus();
-        } else {
-          auto& scroll_box = m_view->get_scroll_box();
-          auto item_geometry =
-            QRect(item->mapTo(&scroll_box, QPoint(0, 0)), item->size());
-          if(!QRect(QPoint(0, 0), scroll_box.size()).contains(item_geometry)) {
-            scroll_box.scroll_to(*item);
+      auto& connection = m_read_only_connections[item];
+      if(!connection.connected()) {
+        connection = item->connect_read_only_signal([=] (auto read_only) {
+          if(read_only) {
+            m_view->setFocus();
+          } else {
+            auto& scroll_box = m_view->get_scroll_box();
+            auto item_geometry =
+              QRect(item->mapTo(&scroll_box, QPoint(0, 0)), item->size());
+            if(!scroll_box.rect().contains(item_geometry)) {
+              scroll_box.scroll_to(*item);
+            }
           }
-        }
-      });
+        });
+      }
       return item;
     }
   }
