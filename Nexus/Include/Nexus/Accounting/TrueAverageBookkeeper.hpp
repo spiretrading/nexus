@@ -1,22 +1,10 @@
 #ifndef NEXUS_TRUE_AVERAGE_BOOKKEEPER_HPP
 #define NEXUS_TRUE_AVERAGE_BOOKKEEPER_HPP
+#include <ranges>
 #include <Beam/Collections/SynchronizedMap.hpp>
-#include <boost/iterator/transform_iterator.hpp>
 #include "Nexus/Accounting/Bookkeeper.hpp"
 
 namespace Nexus {
-namespace Details {
-  template<typename T>
-  struct ValueAccessor {
-    using value_type = const typename T::second_type;
-    using result_type = const value_type&;
-
-    template<typename U>
-    result_type operator ()(const U& value) const {
-      return value.second;
-    }
-  };
-}
 
   /** Implements a Bookkeeper using true average bookkeeping. */
   class TrueAverageBookkeeper {
@@ -157,20 +145,14 @@ namespace Details {
 
   inline Beam::View<const Inventory>
       TrueAverageBookkeeper::get_inventory_range() const {
-    using Accessor =
-      Details::ValueAccessor<std::pair<const Position::Key, Inventory>>;
-    return Beam::View(
-      boost::make_transform_iterator(m_inventories.begin(), Accessor()),
-      boost::make_transform_iterator(m_inventories.end(), Accessor()));
+    auto values = m_inventories | std::views::values;
+    return Beam::View(values.begin(), values.end());
   }
 
   inline Beam::View<const Inventory>
       TrueAverageBookkeeper::get_totals_range() const {
-    using Accessor =
-      Details::ValueAccessor<std::pair<const CurrencyId, Inventory>>;
-    return Beam::View(
-      boost::make_transform_iterator(m_totals.begin(), Accessor()),
-      boost::make_transform_iterator(m_totals.end(), Accessor()));
+    auto values = m_totals | std::views::values;
+    return Beam::View(values.begin(), values.end());
   }
 
   inline Inventory&
