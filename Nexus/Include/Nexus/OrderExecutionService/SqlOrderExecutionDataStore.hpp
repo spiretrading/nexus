@@ -65,6 +65,7 @@ namespace Nexus {
       void close();
 
     private:
+      static const auto MAX_EXECUTION_REPORT_TEXT_SIZE = 255;
       template<bool IsLive>
       struct Translator : SqlTranslator {
         using SqlTranslator::SqlTranslator;
@@ -258,7 +259,13 @@ namespace Nexus {
   template<typename C>
   void SqlOrderExecutionDataStore<C>::store(
       const SequencedAccountExecutionReport& report) {
-    m_execution_reports_data_store.store(report);
+    if((*report)->m_text.size() > MAX_EXECUTION_REPORT_TEXT_SIZE) {
+      auto truncated_report = report;
+      (*truncated_report)->m_text.resize(MAX_EXECUTION_REPORT_TEXT_SIZE);
+      m_execution_reports_data_store.store(truncated_report);
+    } else {
+      m_execution_reports_data_store.store(report);
+    }
     if(is_terminal((*report)->m_status)) {
       auto connection = m_writer_pool.load();
       connection->execute(
@@ -269,7 +276,15 @@ namespace Nexus {
   template<typename C>
   void SqlOrderExecutionDataStore<C>::store(
       const std::vector<SequencedAccountExecutionReport>& reports) {
-    m_execution_reports_data_store.store(reports);
+    for(auto& report : reports) {
+      if((*report)->m_text.size() > MAX_EXECUTION_REPORT_TEXT_SIZE) {
+        auto truncated_report = report;
+        (*truncated_report)->m_text.resize(MAX_EXECUTION_REPORT_TEXT_SIZE);
+        m_execution_reports_data_store.store(truncated_report);
+      } else {
+        m_execution_reports_data_store.store(report);
+      }
+    }
     auto erase_condition = Viper::literal(false);
     auto has_erase = false;
     for(auto& report : reports) {
