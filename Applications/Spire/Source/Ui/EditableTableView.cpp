@@ -450,6 +450,23 @@ EditableTableView::EditableTableView(
   get_header().get_item(0)->set_is_resizeable(false);
   get_header().get_widths()->set(0, scale_width(26));
   set_style(*this, TABLE_VIEW_STYLE());
+  get_scroll_box().installEventFilter(this);
+}
+
+bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == &get_scroll_box() && event->type() == QEvent::Wheel) {
+    if(auto current = get_body().get_current()->get()) {
+      if(current->m_column != 0 &&
+          current->m_column != get_table()->get_column_size() - 1) {
+        if(auto item = get_body().find_item(*current)) {
+          if(!static_cast<EditableBox*>(&item->get_body())->is_read_only()) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return TableView::eventFilter(watched, event);
 }
 
 void EditableTableView::keyPressEvent(QKeyEvent* event) {
