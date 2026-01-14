@@ -7,11 +7,11 @@ set(BEAM_PYTHON_LIBRARY_DEBUG_PATH
   "${PROJECT_BINARY_DIR}/Dependencies/Beam/Beam/Libraries/Debug/beam.lib")
 set(BEAM_PYTHON_LIBRARY_OPTIMIZED_PATH
   "${PROJECT_BINARY_DIR}/Dependencies/Beam/Beam/Libraries/Release/beam.lib")
-set(LUA_INCLUDE_PATH "${PROJECT_BINARY_DIR}/Dependencies/lua-5.4.7/src")
+set(LUA_INCLUDE_PATH "${PROJECT_BINARY_DIR}/Dependencies/lua-5.5.0/src")
 set(LUA_LIBRARY_DEBUG_PATH
-  "${PROJECT_BINARY_DIR}/Dependencies/lua-5.4.7/src/Debug/lua.lib")
+  "${PROJECT_BINARY_DIR}/Dependencies/lua-5.5.0/src/Debug/lua.lib")
 set(LUA_LIBRARY_OPTIMIZED_PATH
-  "${PROJECT_BINARY_DIR}/Dependencies/lua-5.4.7/src/Release/lua.lib")
+  "${PROJECT_BINARY_DIR}/Dependencies/lua-5.5.0/src/Release/lua.lib")
 set(QT_ROOT "${PROJECT_BINARY_DIR}/Dependencies/qt-5.15.13")
 set(QT_INCLUDE_PATH "${QT_ROOT}/qtbase/include")
 set(QT_CORE_INCLUDE_PATH "${QT_INCLUDE_PATH}/QtCore")
