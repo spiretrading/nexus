@@ -25,7 +25,7 @@ FOR /F "usebackq delims=" %%i IN (` ^
   )
 )
 SET BUILD_BEAM=
-SET BEAM_COMMIT="e1e8a672a1297a88debbc5ce757c06fce6bea28a"
+SET BEAM_COMMIT="d6a57b83dca9d3c8a0c6df5ff56a4ecaa942279d"
 IF NOT EXIST Beam (
   git clone https://www.github.com/spiretrading/beam Beam
   IF !ERRORLEVEL! EQU 0 (
@@ -78,9 +78,9 @@ IF NOT EXIST qt-5.15.13 (
     SET EXIT_STATUS=1
   )
 )
-CALL :DownloadAndExtract "lua-5.4.7" "https://www.lua.org/ftp/lua-5.4.7.tar.gz"
+CALL :DownloadAndExtract "lua-5.5.0" "https://www.lua.org/ftp/lua-5.5.0.tar.gz"
 IF %BUILD_NEEDED%==1 (
-  PUSHD lua-5.4.7\src
+  PUSHD lua-5.5.0\src
   COPY %~dp0\Config\lua.cmake CMakeLists.txt
   cmake .
   cmake --build . --target ALL_BUILD --config Debug
