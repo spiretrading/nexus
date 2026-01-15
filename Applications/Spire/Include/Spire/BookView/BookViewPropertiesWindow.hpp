@@ -2,6 +2,7 @@
 #define BOOK_VIEW_PROPERTIES_WINDOW_HPP
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
+#include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/SecurityBox.hpp"
 #include "Spire/Ui/Window.hpp"
 
@@ -30,6 +31,7 @@ namespace Spire {
       BookViewProperties m_initial_properties;
       InteractionsKeyBindingsModel m_initial_interactions;
       bool m_are_interactions_detached;
+      NavigationView* m_navigation_view;
       QWidget* m_highlights_page;
       boost::signals2::scoped_connection m_level_connection;
       boost::signals2::scoped_connection m_security_connection;

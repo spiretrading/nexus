@@ -5,7 +5,6 @@
 #include "Spire/BookView/BookViewLevelPropertiesPage.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Ui/Button.hpp"
-#include "Spire/Ui/NavigationView.hpp"
 
 using namespace Nexus;
 using namespace Spire;
@@ -39,27 +38,26 @@ BookViewPropertiesWindow::BookViewPropertiesWindow(
   set_svg_icon(":/Icons/bookview.svg");
   setWindowTitle(tr("Book View Properties"));
   setWindowFlags(windowFlags() & ~Qt::WindowMinMaxButtonsHint);
-  on_security_update(m_security->get());
-  auto navigation_view = new NavigationView();
-  navigation_view->setSizePolicy(
+  m_navigation_view = new NavigationView();
+  m_navigation_view->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto levels_page = new BookViewLevelPropertiesPage(make_field_value_model(
     m_properties, &BookViewProperties::m_level_properties));
   levels_page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_level_connection = levels_page->get_current()->connect_update_signal(
     std::bind_front(&BookViewPropertiesWindow::on_level_update, this));
-  navigation_view->add_tab(*levels_page, tr("Levels"));
+  m_navigation_view->add_tab(*levels_page, tr("Levels"));
   m_highlights_page = new BookViewHighlightPropertiesPage(
     make_field_value_model(
       m_properties, &BookViewProperties::m_highlight_properties));
   m_highlights_page->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
-  navigation_view->add_tab(*m_highlights_page, tr("Highlights"));
+  m_navigation_view->add_tab(*m_highlights_page, tr("Highlights"));
   auto interactions_page =
     new BookViewInteractionPropertiesPage(m_key_bindings, m_security);
   interactions_page->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
-  navigation_view->add_tab(*interactions_page, tr("Interactions"));
+  m_navigation_view->add_tab(*interactions_page, tr("Interactions"));
   auto actions_body = new QWidget();
   auto actions_body_layout = make_hbox_layout(actions_body);
   actions_body_layout->addStretch(1);
@@ -84,11 +82,12 @@ BookViewPropertiesWindow::BookViewPropertiesWindow(
   auto body = new QWidget();
   body->setFixedSize(scale(360, 608));
   auto layout = make_vbox_layout(body);
-  layout->addWidget(navigation_view);
+  layout->addWidget(m_navigation_view);
   layout->addWidget(actions_box);
   set_body(body);
   m_security_connection = m_security->connect_update_signal(
     std::bind_front(&BookViewPropertiesWindow::on_security_update, this));
+  on_security_update(m_security->get());
 }
 
 void BookViewPropertiesWindow::on_cancel_button_click() {
@@ -124,11 +123,15 @@ void BookViewPropertiesWindow::on_level_update(
 }
 
 void BookViewPropertiesWindow::on_security_update(const Security& security) {
-  if(auto& current_interactions =
-      m_key_bindings->get_interactions_key_bindings(m_security->get())) {
-    m_are_interactions_detached = current_interactions->is_detached();
-    copy_interactions(*current_interactions, m_initial_interactions);
-  } else {
-    m_are_interactions_detached = true;
+  auto is_empty_security = !security;
+  m_navigation_view->set_enabled(m_navigation_view->get_count() - 1, !is_empty_security);
+  if(!is_empty_security) {
+    if(auto& current_interactions =
+      m_key_bindings->get_interactions_key_bindings(security)) {
+      m_are_interactions_detached = current_interactions->is_detached();
+      copy_interactions(*current_interactions, m_initial_interactions);
+    } else {
+      m_are_interactions_detached = true;
+    }
   }
 }
