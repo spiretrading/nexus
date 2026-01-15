@@ -399,9 +399,8 @@ struct EditableTableView::ItemBuilder {
         std::static_pointer_cast<EditableTableModel>(
           m_view->get_table())->m_source, any_cast<int>(table->at(row, 0)),
           column - 1));
-      auto& connection = m_read_only_connections[item];
-      if(!connection.connected()) {
-        connection = item->connect_read_only_signal([=] (auto read_only) {
+      m_read_only_connections[item] =
+        item->connect_read_only_signal([=] (auto read_only) {
           if(read_only) {
             m_view->setFocus();
           } else {
@@ -413,7 +412,6 @@ struct EditableTableView::ItemBuilder {
             }
           }
         });
-      }
       return item;
     }
   }
