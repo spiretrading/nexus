@@ -208,11 +208,9 @@ void Nexus::Python::export_market_data_service(module& module) {
     [] (SharedObject shared_client, const Security& security,
         ScopedQueueWriter<BookQuote> queue,
         InterruptionPolicy interruption_policy) {
-      return spawn([=, queue = std::move(queue)] mutable {
-        auto& client = [&] () -> auto& {
-          auto lock = GilLock();
-          return shared_client->cast<MarketDataClient&>();
-        }();
+      auto& client = shared_client->cast<MarketDataClient&>();
+      return spawn([=, &client, shared_client = std::move(shared_client),
+          queue = std::move(queue)] mutable {
         auto query = RoutineHandler(query_real_time_with_snapshot(
           client, security, std::move(queue), interruption_policy));
         query.wait();
@@ -222,11 +220,9 @@ void Nexus::Python::export_market_data_service(module& module) {
   module.def("query_real_time_bbo_quotes_with_snapshot",
     [] (SharedObject shared_client, const Security& security,
         ScopedQueueWriter<BboQuote> queue) {
-      return spawn([=, queue = std::move(queue)] mutable {
-        auto& client = [&] () -> auto& {
-          auto lock = GilLock();
-          return shared_client->cast<MarketDataClient&>();
-        }();
+      auto& client = shared_client->cast<MarketDataClient&>();
+      return spawn([=, &client, shared_client = std::move(shared_client),
+          queue = std::move(queue)] mutable {
         auto query = RoutineHandler(
           query_real_time_with_snapshot(client, security, std::move(queue)));
         query.wait();
