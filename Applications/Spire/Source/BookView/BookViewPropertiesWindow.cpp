@@ -123,11 +123,11 @@ void BookViewPropertiesWindow::on_level_update(
 }
 
 void BookViewPropertiesWindow::on_security_update(const Security& security) {
-  auto is_empty_security = !security;
-  m_navigation_view->set_enabled(m_navigation_view->get_count() - 1, !is_empty_security);
-  if(!is_empty_security) {
+  m_navigation_view->set_enabled(m_navigation_view->get_count() - 1,
+    static_cast<bool>(security));
+  if(security) {
     if(auto& current_interactions =
-      m_key_bindings->get_interactions_key_bindings(security)) {
+        m_key_bindings->get_interactions_key_bindings(security)) {
       m_are_interactions_detached = current_interactions->is_detached();
       copy_interactions(*current_interactions, m_initial_interactions);
     } else {
