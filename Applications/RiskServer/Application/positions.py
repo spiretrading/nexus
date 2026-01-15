@@ -16,7 +16,7 @@ def report_positions(service_clients, account, venues, currencies, writer):
       for execution_report in execution_reports:
         portfolio.update(order.info.fields, execution_report)
   for security in portfolio.security_entries:
-    currency = venues.from_code(security.venue).currency
+    currency = venues.select(security.venue).currency
     inventory = portfolio.bookkeeper.get_inventory(security, currency)
     position = inventory.position
     if nexus.side(position) == nexus.Side.BID:

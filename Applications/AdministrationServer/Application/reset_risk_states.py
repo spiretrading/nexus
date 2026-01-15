@@ -3,7 +3,6 @@ import sys
 
 import yaml
 
-import aspen
 import beam
 import nexus
 

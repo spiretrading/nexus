@@ -487,6 +487,9 @@ void Nexus::Python::export_region(module& module) {
     def_property_readonly("venues", &Region::get_venues).
     def_property_readonly("securities", &Region::get_securities).
     def("contains", &Region::contains);
+  implicitly_convertible<CountryCode, Region>();
+  implicitly_convertible<Venue, Region>();
+  implicitly_convertible<Security, Region>();
 }
 
 void Nexus::Python::export_region_map(module& module) {
