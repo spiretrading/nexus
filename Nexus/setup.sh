@@ -90,6 +90,7 @@ if [ ! -d "hat-trie-0.7.0" ]; then
   if [ "$?" == "0" ]; then
     unzip v0.7.0.zip
   fi
+  rm -rf v0.7.0.zip
 fi
 python3 -c "import git"
 if [ "$?" != "0" ]; then
