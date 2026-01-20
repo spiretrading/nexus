@@ -1414,6 +1414,9 @@ bool TableBody::navigate_previous() {
 }
 
 void TableBody::on_item_activated(TableItem& item) {
+  if(!is_match(item.get_body(), ReadOnly())) {
+    return;
+  }
   auto& row_widget = *item.parentWidget();
   auto index = get_index(item);
   if(m_current_controller.get_current()->get() != index) {
@@ -1475,6 +1478,9 @@ void TableBody::on_current(const optional<Index>& current) {
       match(*m_column_covers[m_current_index->m_column], CurrentColumn());
     }
     if(previous_had_focus || QApplication::focusObject() == this) {
+      if(!previous || previous->m_row == m_current_index->m_row) {
+        m_selection_controller.set_mode(TableSelectionController::Mode::SINGLE);
+      }
       current_item->setFocus(Qt::FocusReason::OtherFocusReason);
     }
   }

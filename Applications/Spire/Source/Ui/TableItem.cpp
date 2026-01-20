@@ -1,4 +1,5 @@
 #include "Spire/Ui/TableItem.hpp"
+#include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
@@ -23,7 +24,7 @@ TableItem::TableItem(QWidget* parent)
   setFocusPolicy(Qt::NoFocus);
   auto layout = make_hbox_layout(this);
   m_click_observer.connect_click_signal(m_active_signal);
-  m_focus_observer.connect_state_signal(
+  m_focus_connection = m_focus_observer.connect_state_signal(
     std::bind_front(&TableItem::on_focus, this));
   m_mouse_observer.connect_mouse_signal(
     std::bind_front(&TableItem::on_mouse, this));
@@ -100,6 +101,7 @@ void TableItem::on_mouse(QWidget& target, const QMouseEvent& event) {
   if(event.type() == QEvent::MouseButtonPress &&
       event.button() == Qt::MouseButton::LeftButton &&
       m_focus_observer.get_state() == FocusObserver::State::NONE) {
+    auto blocker = shared_connection_block(m_focus_connection);
     setFocus(Qt::FocusReason::MouseFocusReason);
     m_active_signal();
   }

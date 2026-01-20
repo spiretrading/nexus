@@ -72,6 +72,7 @@ namespace Spire {
       ClickObserver m_click_observer;
       FocusObserver m_focus_observer;
       MouseObserver m_mouse_observer;
+      boost::signals2::scoped_connection m_focus_connection;
       boost::signals2::scoped_connection m_style_connection;
 
       void mount(QWidget& body);
