@@ -276,7 +276,9 @@ void Nexus::Python::export_market_data_service_test_environment(
       AdministrationClient&, HistoricalDataStore&>), keep_alive<1, 2>(),
       keep_alive<1, 3>(), keep_alive<1, 4>()).
     def_property_readonly("data_store", [] (TestEnvironment& self) {
-      return ToPythonHistoricalDataStore(self.get_data_store());
+      return HistoricalDataStore(
+        std::in_place_type<ToPythonHistoricalDataStore<HistoricalDataStore>>,
+        self.get_data_store());
     }).
     def_property_readonly("registry_client", [] (TestEnvironment& self) {
       return ToPythonMarketDataClient(self.get_registry_client());

@@ -198,7 +198,12 @@ namespace Nexus {
   std::unique_ptr<typename ToPythonClients<C>::Timer>
       ToPythonClients<C>::make_timer(boost::posix_time::time_duration expiry) {
     auto release = Beam::Python::GilRelease();
-    return std::make_unique<Timer>(m_clients->make_timer(expiry));
+    if constexpr(std::is_same_v<
+        decltype(m_clients->make_timer(expiry)), std::unique_ptr<Timer>>) {
+      return m_clients->make_timer(expiry);
+    } else {
+      return std::make_unique<Timer>(m_clients->make_timer(expiry));
+    }
   }
 
   template<IsClients C>

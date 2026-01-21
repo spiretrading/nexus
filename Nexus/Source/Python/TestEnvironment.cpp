@@ -15,6 +15,30 @@ using namespace Nexus;
 using namespace Nexus::Python;
 using namespace pybind11;
 
+namespace {
+  struct PythonTestEnvironment : TestEnvironment {
+    std::shared_ptr<HistoricalDataStore> m_data_store;
+
+    PythonTestEnvironment() {}
+
+    PythonTestEnvironment(ptime start_time)
+      : TestEnvironment(start_time) {}
+
+    PythonTestEnvironment(std::shared_ptr<HistoricalDataStore> data_store)
+      : TestEnvironment(*data_store),
+        m_data_store(std::move(data_store)) {}
+
+    PythonTestEnvironment(
+      std::shared_ptr<HistoricalDataStore> data_store, ptime start_time)
+      : TestEnvironment(*data_store, start_time),
+        m_data_store(std::move(data_store)) {}
+
+    ~PythonTestEnvironment() {
+      close();
+    }
+  };
+}
+
 void Nexus::Python::export_test_clients(module& module) {
   export_clients<ToPythonClients<TestClients>>(module, "TestClients").
     def(init([] (TestEnvironment& environment) {
@@ -24,13 +48,19 @@ void Nexus::Python::export_test_clients(module& module) {
 
 void Nexus::Python::export_test_environment(module& module) {
   class_<TestEnvironment, std::shared_ptr<TestEnvironment>>(
-    module, "TestEnvironment").
-      def(init(&make_python_shared<TestEnvironment>)).
-      def(init(&make_python_shared<TestEnvironment, ptime>)).
-      def(init(&make_python_shared<TestEnvironment, HistoricalDataStore&>),
-        keep_alive<1, 2>()).
-      def(init(&make_python_shared<
-        TestEnvironment, HistoricalDataStore&, ptime>), keep_alive<1, 2>()).
+    module, "_TestEnvironment");
+  class_<PythonTestEnvironment, TestEnvironment,
+    std::shared_ptr<PythonTestEnvironment>>(module, "TestEnvironment").
+      def(init(&make_python_shared<PythonTestEnvironment>)).
+      def(init(&make_python_shared<PythonTestEnvironment, ptime>)).
+      def(init([] (std::shared_ptr<HistoricalDataStore> data_store) {
+        return make_python_shared<PythonTestEnvironment>(std::move(data_store));
+      })).
+      def(init(
+        [] (std::shared_ptr<HistoricalDataStore> data_store, ptime start_time) {
+          return make_python_shared<PythonTestEnvironment>(
+            std::move(data_store), start_time);
+        })).
       def("set_time", &TestEnvironment::set, call_guard<GilRelease>()).
       def("advance_time", &TestEnvironment::advance, call_guard<GilRelease>()).
       def("publish", overload_cast<Venue, const OrderImbalance&>(
