@@ -67,7 +67,8 @@ namespace Nexus::Python {
   template<IsHistoricalDataStore D>
   auto export_historical_data_store(
       pybind11::module& module, std::string_view name) {
-    auto data_store = pybind11::class_<D>(module, name.data()).
+    auto data_store = pybind11::class_<D, std::shared_ptr<D>>(
+        module, name.data()).
       def("load_security_info", &D::load_security_info).
       def("store", pybind11::overload_cast<const SecurityInfo&>(&D::store)).
       def("load_order_imbalances", &D::load_order_imbalances).

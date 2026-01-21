@@ -41,7 +41,11 @@ namespace Nexus::Python {
         pybind11::return_value_policy::reference).
       def_property_readonly("time_client", &C::get_time_client,
         pybind11::return_value_policy::reference).
-      def("make_timer", &C::make_timer).
+      def("make_timer",
+        [] (C& self, boost::posix_time::time_duration duration) {
+          auto timer = self.make_timer(duration);
+          return std::shared_ptr<typename C::Timer>(std::move(timer));
+        }).
       def("close", &C::close);
     if constexpr(!std::is_same_v<C, Clients>) {
       pybind11::implicitly_convertible<C, Clients>();
