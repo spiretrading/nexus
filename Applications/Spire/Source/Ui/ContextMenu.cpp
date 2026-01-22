@@ -344,10 +344,15 @@ bool ContextMenu::is_mouse_approaching_submenu() const {
   }
   auto& body = static_cast<ContextMenu&>(m_visible_submenu->get_body());
   auto body_rect = body.rect();
-  auto upper_left = body.mapToGlobal(body_rect.topLeft());
-  auto lower_left = body.mapToGlobal(body_rect.bottomLeft());
+  auto [upper_corner, lower_corner] = [&] {
+    if(mapToGlobal(rect().center()).x() <
+        body.mapToGlobal(body_rect.center()).x()) {
+      return std::tuple(body_rect.topLeft(), body_rect.bottomLeft());
+    }
+    return std::tuple(body_rect.topRight(), body_rect.bottomRight());
+  }();
   return is_point_in_triangle(m_mouse_history.back(), m_mouse_history.front(),
-    upper_left, lower_left);
+    body.mapToGlobal(upper_corner), body.mapToGlobal(lower_corner));
 }
 
 void ContextMenu::apply_hover_style() {
