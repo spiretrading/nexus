@@ -12,6 +12,10 @@ IF NOT EXIST build.bat (
   >>build.bat ECHO CALL "%~dp0build.bat" %%*
 )
 SET ARGS=%*
+SET FIRST_ARG=%~1
+SET PARALLEL=1
+IF "!FIRST_ARG!" == "clean" SET PARALLEL=0
+IF "!FIRST_ARG!" == "reset" SET PARALLEL=0
 CALL:build Nexus %*
 IF !EXIT_STATUS! NEQ 0 (
   EXIT /B !EXIT_STATUS!
@@ -20,24 +24,29 @@ CALL:build WebApi %*
 IF !EXIT_STATUS! NEQ 0 (
   EXIT /B !EXIT_STATUS!
 )
-SET BUILD_TEMP=!ROOT!\_build_tmp
-IF EXIST "!BUILD_TEMP!" RD /S /Q "!BUILD_TEMP!"
-MD "!BUILD_TEMP!"
-CALL:build_parallel Applications\AdministrationServer
-CALL:build_parallel Applications\ChartingServer
-CALL:build_parallel Applications\ComplianceServer
-CALL:build_parallel Applications\DefinitionsServer
-CALL:build_parallel Applications\Lollipop
-CALL:build_parallel Applications\MarketDataRelayServer
-CALL:build_parallel Applications\MarketDataServer
-CALL:build_parallel Applications\ReplayMarketDataFeedClient
-CALL:build_parallel Applications\RiskServer
-CALL:build_parallel Applications\Scratch
-CALL:build_parallel Applications\SimulationMarketDataFeedClient
-CALL:build_parallel Applications\SimulationOrderExecutionServer
-CALL:build_parallel Applications\Spire
-CALL:build_parallel Applications\WebPortal\WebApp
-CALL:build_parallel Applications\WebPortal
+IF !PARALLEL! EQU 1 (
+  SET BUILD_TEMP=!ROOT!\_build_tmp
+  IF EXIST "!BUILD_TEMP!" RD /S /Q "!BUILD_TEMP!"
+  MD "!BUILD_TEMP!"
+)
+CALL:build_app Applications\AdministrationServer %*
+CALL:build_app Applications\ChartingServer %*
+CALL:build_app Applications\ComplianceServer %*
+CALL:build_app Applications\DefinitionsServer %*
+CALL:build_app Applications\Lollipop %*
+CALL:build_app Applications\MarketDataRelayServer %*
+CALL:build_app Applications\MarketDataServer %*
+CALL:build_app Applications\ReplayMarketDataFeedClient %*
+CALL:build_app Applications\RiskServer %*
+CALL:build_app Applications\Scratch %*
+CALL:build_app Applications\SimulationMarketDataFeedClient %*
+CALL:build_app Applications\SimulationOrderExecutionServer %*
+CALL:build_app Applications\Spire %*
+CALL:build_app Applications\WebPortal\WebApp %*
+CALL:build_app Applications\WebPortal %*
+IF !PARALLEL! EQU 0 (
+  EXIT /B !EXIT_STATUS!
+)
 :wait_loop
 SET RUNNING=0
 FOR %%F IN ("!BUILD_TEMP!\*.running") DO SET RUNNING=1
@@ -46,11 +55,13 @@ IF !RUNNING! EQU 1 (
   GOTO wait_loop
 )
 FOR %%F IN ("!BUILD_TEMP!\*.log") DO (
-  ECHO.
-  ECHO ============================================================
-  ECHO %%~nF
-  ECHO ============================================================
-  TYPE "%%F"
+  IF %%~zF GTR 0 (
+    ECHO.
+    ECHO ============================================================
+    ECHO %%~nF
+    ECHO ============================================================
+    TYPE "%%F"
+  )
 )
 FOR %%F IN ("!BUILD_TEMP!\*.failed") DO (
   SET EXIT_STATUS=1
@@ -70,7 +81,11 @@ IF ERRORLEVEL 1 SET EXIT_STATUS=1
 POPD
 EXIT /B 0
 
-:build_parallel
+:build_app
+IF !PARALLEL! EQU 0 (
+  CALL:build %*
+  EXIT /B 0
+)
 SET PROJECT=%~1
 SET PROJECT_NAME=%~n1
 IF NOT EXIST "!PROJECT!" (

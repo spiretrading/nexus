@@ -1,7 +1,13 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
 SET ROOT=%cd%
-CALL "%~dp0..\..\..\WebApi\setup.bat"
+SET DIRECTORY=%~dp0
+SET EXIT_STATUS=0
+CALL "!DIRECTORY!..\..\..\WebApi\setup.bat"
+IF ERRORLEVEL 1 (
+  ECHO Error: WebApi setup.bat failed.
+  EXIT /B 1
+)
 SET DALI_COMMIT="2c305bb47a518b870bf5cc27697bd27ccb9a848c"
 IF NOT EXIST dali (
   git clone https://www.github.com/spiretrading/dali
@@ -27,7 +33,9 @@ IF EXIST dali (
 IF NOT EXIST WebApi (
   MD WebApi
   PUSHD WebApi
-  CALL "%~dp0..\..\..\WebApi\configure.bat" -DD="%ROOT%"
+  CALL "!DIRECTORY!..\..\..\WebApi\configure.bat" -DD="!ROOT!"
+  IF ERRORLEVEL 1 SET EXIT_STATUS=1
   POPD
 )
+EXIT /B !EXIT_STATUS!
 ENDLOCAL
