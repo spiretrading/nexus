@@ -1,5 +1,6 @@
 #include "Spire/Ui/SecurityDialog.hpp"
 #include <QKeyEvent>
+#include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"

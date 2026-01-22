@@ -360,7 +360,7 @@ void AnyComboBox::submit(const QString& query, bool is_passive) {
       shared_connection_block(m_data->m_current_connection);
     m_current->set(value);
   }
-  m_data->m_last_completion = query;
+  m_data->m_last_completion.clear();
   m_data->m_prefix = query;
   m_data->m_completion.clear();
   m_data->m_submission = value;
@@ -477,6 +477,9 @@ void AnyComboBox::on_query(
     } else if(m_data->m_focus_observer.get_state() !=
         FocusObserver::State::NONE && !m_data->m_drop_down_list->isVisible()) {
       m_data->m_empty_state->hide();
+      auto& list_view = m_data->m_drop_down_list->get_list_view();
+      list_view.setFocusProxy(nullptr);
+      list_view.setFocus();
       m_data->m_drop_down_list->show();
     }
   } else {
@@ -518,6 +521,7 @@ void AnyComboBox::on_drop_down_submit(const std::any& submission) {
   }
   m_data->m_submission = submission;
   m_data->m_submission_text = text;
+  m_data->m_last_completion.clear();
   m_data->m_drop_down_list->hide();
   auto input_blocker = shared_connection_block(m_data->m_input_connection);
   m_data->m_submit_signal(submission);
