@@ -93,6 +93,18 @@ namespace {
     }
     return nullptr;
   }
+
+  auto is_point_in_triangle(const QPoint& p, const QPoint& a, const QPoint& b,
+      const QPoint& c) {
+    auto sign = [] (const QPoint& p1, const QPoint& p2, const QPoint& p3) {
+      return (p1.x() - p3.x()) * (p2.y() - p3.y()) -
+        (p2.x() - p3.x()) * (p1.y() - p3.y());
+    };
+    auto b1 = sign(p, a, b) < 0;
+    auto b2 = sign(p, b, c) < 0;
+    auto b3 = sign(p, c, a) < 0;
+    return (b1 == b2) && (b2 == b3);
+  }
 }
 
 ContextMenu::ContextMenu(QWidget& parent)
@@ -103,7 +115,7 @@ ContextMenu::ContextMenu(QWidget& parent, ItemViewBuilder item_view_builder)
       m_item_view_builder(std::move(item_view_builder)),
       m_next_id(0),
       m_visible_submenu(nullptr),
-      m_pending_submenu_index(-1),
+      m_pending_item_index(-1),
       m_last_show_items(0),
       m_block_move(0),
       m_mouse_observer(*this),
@@ -316,9 +328,39 @@ ListItem* ContextMenu::get_current_item() const {
   return nullptr;
 }
 
+int ContextMenu::find_hovered_item(const QPoint& global_pos) const {
+  for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
+    auto item = m_list_view->get_list_item(i);
+    if(item->rect().contains(item->mapFromGlobal(global_pos))) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+bool ContextMenu::is_mouse_approaching_submenu() const {
+  if(!m_visible_submenu || m_mouse_history.size() < 2) {
+    return false;
+  }
+  auto& body = static_cast<ContextMenu&>(m_visible_submenu->get_body());
+  auto body_rect = body.rect();
+  auto upper_left = body.mapToGlobal(body_rect.topLeft());
+  auto lower_left = body.mapToGlobal(body_rect.bottomLeft());
+  return is_point_in_triangle(m_mouse_history.back(), m_mouse_history.front(),
+    upper_left, lower_left);
+}
+
+void ContextMenu::apply_hover_style() {
+  if(auto item = get_current_item()) {
+    auto enter_event = QEvent(QEvent::Enter);
+    QCoreApplication::sendEvent(item, &enter_event);
+  }
+}
+
 void ContextMenu::clear_hover_style() {
   if(auto item = get_current_item()) {
-    send_hover_event(*item, false);
+    auto leave_event = QEvent(QEvent::Leave);
+    QCoreApplication::sendEvent(item, &leave_event);
   }
 }
 
@@ -351,10 +393,6 @@ bool ContextMenu::handle_mouse_event(QMouseEvent* event) {
         }
       } else if(event->type() == QEvent::MouseButtonPress ||
           event->type() == QEvent::MouseButtonDblClick) {
-        if(m_list->get(*m_list_view->get_current()->get()).m_type !=
-            MenuItemType::SUBMENU) {
-          forward_mouse_click(*item, *event);
-        }
         return true;
       }
     }
@@ -376,17 +414,6 @@ void ContextMenu::forward_mouse_click(QWidget& target,
     mouse_event.button(), mouse_event.buttons(), mouse_event.modifiers(),
     mouse_event.source());
   QCoreApplication::sendEvent(&target, &release_event);
-}
-
-void ContextMenu::send_hover_event(QWidget& target, bool is_hovered) {
-  auto event_type = [&] {
-    if(is_hovered) {
-      return QEvent::Enter;
-    }
-    return QEvent::Leave;
-  }();
-  QEvent event(event_type);
-  QCoreApplication::sendEvent(&target, &event);
 }
 
 void ContextMenu::position_submenu() {
@@ -462,35 +489,26 @@ void ContextMenu::hide_submenu() {
     m_visible_submenu->hide();
     m_visible_submenu->removeEventFilter(this);
     m_visible_submenu = nullptr;
+    m_mouse_history.clear();
+  }
+}
+
+void ContextMenu::cancel_defer_hide_submenu() {
+  if(m_defer_hide_timer.isActive()) {
+    m_defer_hide_timer.stop();
   }
 }
 
 void ContextMenu::defer_hide_submenu() {
-  if(!m_visible_submenu) {
-    return;
+  if(m_visible_submenu) {
+    m_defer_hide_timer.start(MENU_SHOW_DELAY());
   }
-  m_defer_hide_timer.start(MENU_SHOW_DELAY());
 }
 
 void ContextMenu::show_submenu(int index) {
   auto& menu_item = m_list->get(index);
   if(menu_item.m_type == MenuItemType::SUBMENU) {
-    if(index == m_pending_submenu_index) {
-      return;
-    }
     auto menu_window = m_submenus[index];
-    if(m_visible_submenu == menu_window) {
-      m_defer_hide_timer.stop();
-      if(!m_visible_submenu->isVisible()) {
-        hide_submenu();
-      }
-      return;
-    }
-    if(m_visible_submenu) {
-      defer_hide_submenu();
-      m_pending_submenu_index = index;
-      return;
-    }
     m_visible_submenu = menu_window;
     m_visible_submenu->installEventFilter(this);
     m_visible_submenu->get_body().installEventFilter(this);
@@ -499,59 +517,55 @@ void ContextMenu::show_submenu(int index) {
       static_cast<ContextMenu&>(m_visible_submenu->get_body());
     if(active_menu.m_list->get_size() != 0) {
       m_visible_submenu->show();
+      m_mouse_history.push_back(QCursor::pos());
     }
-  } else {
-    m_pending_submenu_index = -1;
   }
 }
 
 void ContextMenu::on_defer_hide_timeout() {
-  if(is_submenu_hovered()) {
-    m_pending_submenu_index = -1;
-    for(auto& submenu : m_submenus) {
-      if(submenu.second == m_visible_submenu) {
-        m_list_view->get_current()->set(submenu.first);
-        break;
-      }
-    }
-    return;
-  }
   hide_submenu();
-  if(m_pending_submenu_index != -1) {
-    auto index = m_pending_submenu_index;
-    m_pending_submenu_index = -1;
-    m_list_view->get_current()->set(index);
-    show_submenu(index);
+  if(m_pending_item_index != -1) {
+    m_list_view->get_current()->set(m_pending_item_index);
+    apply_hover_style();
+    show_submenu(m_pending_item_index);
+    m_pending_item_index = -1;
   }
 }
 
 void ContextMenu::on_mouse_move(QWidget& target, QMouseEvent& event) {
   if(is_submenu_hovered()) {
+    cancel_defer_hide_submenu();
     return;
   }
-  for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
-    auto item = m_list_view->get_list_item(i);
-    auto position = item->mapFromGlobal(event.globalPos());
-    if(!item->rect().contains(position)) {
-      continue;
+  auto global_pos = event.globalPos();
+  int hovered_index = find_hovered_item(global_pos);
+  if(hovered_index == -1) {
+    return;
+  }
+  if(m_visible_submenu) {
+    m_mouse_history.push_back(global_pos);
+    static const auto MAX_HISTORY_SIZE = 5;
+    if(static_cast<int>(m_mouse_history.size()) > MAX_HISTORY_SIZE) {
+      m_mouse_history.pop_front();
     }
-    if(m_list_view->get_current()->get() != i) {
-      defer_hide_submenu();
-      if(target.window()->isVisible() && window()->isVisible()) {
-        m_list_view->get_current()->set(i);
-        send_hover_event(*item, true);
-        show_submenu(i);
+    if(m_list_view->get_current()->get() != hovered_index) {
+      if(is_mouse_approaching_submenu()) {
+        m_pending_item_index = hovered_index;
+        defer_hide_submenu();
+      } else {
+        m_pending_item_index = -1;
+        cancel_defer_hide_submenu();
+        if(!is_submenu_hovered()) {
+          hide_submenu();
+        }
       }
-    } else if(!m_visible_submenu) {
-      show_submenu(i);
+    } else {
+      apply_hover_style();
     }
-    return;
-  }
-  if(auto current = m_list_view->get_current()->get()) {
-    auto i = m_submenus.find(*current);
-    if(i == m_submenus.end() || i->second != m_visible_submenu) {
-      m_list_view->get_current()->set(none);
-    }
+  } else if(m_list_view->get_current()->get() != hovered_index) {
+    m_list_view->get_current()->set(hovered_index);
+    apply_hover_style();
+    show_submenu(hovered_index);
   }
 }
 

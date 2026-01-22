@@ -1,5 +1,6 @@
 #ifndef SPIRE_CONTEXT_MENU_HPP
 #define SPIRE_CONTEXT_MENU_HPP
+#include <deque>
 #include <unordered_map>
 #include <variant>
 #include <QTimer>
@@ -169,7 +170,7 @@ namespace Spire {
       ListView* m_list_view;
       OverlayPanel* m_window;
       OverlayPanel* m_visible_submenu;
-      int m_pending_submenu_index;
+      int m_pending_item_index;
       int m_last_show_items;
       QRect m_active_item_geometry;
       int m_block_move;
@@ -177,22 +178,26 @@ namespace Spire {
       QTimer m_defer_hide_timer;
       QMargins m_window_border_size;
       boost::optional<QSize> m_window_size;
+      std::deque<QPoint> m_mouse_history;
       std::unordered_map<int, OverlayPanel*> m_submenus;
       std::unordered_map<int, PressObserver> m_check_item_press_observers;
       boost::signals2::scoped_connection m_window_style_connection;
 
       QWidget* build_item(const std::shared_ptr<AnyListModel>& list, int index);
       ListItem* get_current_item() const;
+      int find_hovered_item(const QPoint& global_pos) const;
+      bool is_mouse_approaching_submenu() const;
+      void apply_hover_style();
       void clear_hover_style();
       void focus_first_item();
       void handle_right_or_enter_event(QEvent* event);
       bool handle_mouse_event(QMouseEvent* event);
       void forward_mouse_click(QWidget& target, const QMouseEvent& event);
-      void send_hover_event(QWidget& target, bool is_hovered);
       void position_submenu();
       void position_submenu(ListItem& item);
       bool is_submenu_hovered() const;
       void hide_submenu();
+      void cancel_defer_hide_submenu();
       void defer_hide_submenu();
       void show_submenu(int index);
       void on_defer_hide_timeout();
