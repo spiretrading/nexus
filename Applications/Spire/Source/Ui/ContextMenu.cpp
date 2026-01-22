@@ -524,11 +524,13 @@ void ContextMenu::show_submenu(int index) {
 
 void ContextMenu::on_defer_hide_timeout() {
   hide_submenu();
-  if(m_pending_item_index != -1) {
-    m_list_view->get_current()->set(m_pending_item_index);
-    apply_hover_style();
-    show_submenu(m_pending_item_index);
+  if(m_pending_item_index >= 0 &&
+      m_pending_item_index < m_list_view->get_list()->get_size()) {
+    auto index = m_pending_item_index;
     m_pending_item_index = -1;
+    m_list_view->get_current()->set(index);
+    apply_hover_style();
+    show_submenu(index);
   }
 }
 
@@ -562,7 +564,9 @@ void ContextMenu::on_mouse_move(QWidget& target, QMouseEvent& event) {
     } else {
       apply_hover_style();
     }
-  } else if(m_list_view->get_current()->get() != hovered_index) {
+  } else if(m_list_view->get_current()->get() != hovered_index &&
+      hovered_index >= 0 &&
+      hovered_index < m_list_view->get_list()->get_size()) {
     m_list_view->get_current()->set(hovered_index);
     apply_hover_style();
     show_submenu(hovered_index);
