@@ -1,12 +1,11 @@
 @ECHO OFF
-SETLOCAL
+SETLOCAL EnableDelayedExpansion
 IF NOT EXIST Version.hpp (
-  COPY NUL Version.hpp > NUL
+  COPY NUL Version.hpp >NUL
 )
-FOR /f "usebackq tokens=*" %%a IN (`git --git-dir=%~dp0..\..\.git rev-list --count --first-parent HEAD`) DO SET VERSION=%%a
-findstr "%VERSION%" Version.hpp > NUL
-IF NOT "%ERRORLEVEL%" == "0" (
-  ECHO #define WEB_PORTAL_VERSION "%VERSION%"> Version.hpp
+FOR /F "usebackq tokens=*" %%a IN (`git --git-dir=%~dp0..\..\.git rev-list --count --first-parent HEAD`) DO SET VERSION=%%a
+findstr "!VERSION!" Version.hpp >NUL
+IF ERRORLEVEL 1 (
+  >Version.hpp ECHO #define WEB_PORTAL_VERSION "!VERSION!"
 )
 EXIT /B 0
-ENDLOCAL

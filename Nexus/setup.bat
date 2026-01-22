@@ -2,20 +2,12 @@
 SETLOCAL EnableDelayedExpansion
 SET EXIT_STATUS=0
 SET ROOT=%cd%
+FOR /F "skip=1" %%H IN ('certutil -hashfile "%~dp0setup.bat" SHA256') DO (
+  IF NOT DEFINED SETUP_HASH SET SETUP_HASH=%%H
+)
 IF EXIST cache_files\nexus.txt (
-  SET CACHE_COMMAND=powershell -Command "& { " ^
-    "$setupTimestamp = (Get-Item '%~dp0setup.bat').LastWriteTime; " ^
-    "$nexusTimestamp = (Get-Item 'cache_files\\nexus.txt').LastWriteTime; " ^
-    "if($setupTimestamp -lt $nexusTimestamp) {" ^
-    "  Write-Output '0';" ^
-    "} else {" ^
-    "  Write-Output '1';" ^
-    "}" ^
-  "}"
-  FOR /F "delims=" %%A IN ('CALL !CACHE_COMMAND!') DO SET IS_CACHED=%%A
-  IF "!IS_CACHED!"=="0" (
-    EXIT /B 0
-  )
+  SET /P CACHED_HASH=<cache_files\nexus.txt
+  IF "!SETUP_HASH!"=="!CACHED_HASH!" EXIT /B 0
 )
 SET VSWHERE="%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 FOR /F "usebackq delims=" %%i IN (` ^
@@ -78,8 +70,10 @@ IF NOT EXIST qt-5.15.13 (
     SET EXIT_STATUS=1
   )
 )
-CALL :DownloadAndExtract "lua-5.5.0" "https://www.lua.org/ftp/lua-5.5.0.tar.gz"
-IF %BUILD_NEEDED%==1 (
+CALL :DownloadAndExtract "lua-5.5.0" ^
+  "https://www.lua.org/ftp/lua-5.5.0.tar.gz" ^
+  "57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d"
+IF !BUILD_NEEDED!==1 (
   PUSHD lua-5.5.0\src
   COPY %~dp0\Config\lua.cmake CMakeLists.txt
   cmake .
@@ -88,8 +82,9 @@ IF %BUILD_NEEDED%==1 (
   POPD
 )
 CALL :DownloadAndExtract "quickfix-v.1.15.1" ^
-  "https://github.com/quickfix/quickfix/archive/49b3508e48f0bbafbab13b68be72250bdd971ac2.zip"
-IF %BUILD_NEEDED%==1 (
+  "https://github.com/quickfix/quickfix/archive/49b3508e48f0bbafbab13b68be72250bdd971ac2.zip" ^
+  "0bed2ae8359fc807f351fd2d08cec13b472d27943460f1d8f0869ed8cc8c2735"
+IF !BUILD_NEEDED!==1 (
   PUSHD quickfix-v.1.15.1
   PUSHD src\C++
   powershell -NoProfile -ExecutionPolicy Bypass -Command "& {" ^
@@ -118,45 +113,58 @@ IF %BUILD_NEEDED%==1 (
   POPD
 )
 CALL :DownloadAndExtract "hat-trie-0.7.0" ^
-  "https://github.com/Tessil/hat-trie/archive/refs/tags/v0.7.0.zip"
-ECHO timestamp > cache_files\nexus.txt
-ENDLOCAL
-EXIT /B !EXIT_STATUS!
+  "https://github.com/Tessil/hat-trie/archive/refs/tags/v0.7.0.zip" ^
+  "8ea5441c06fd5d9de1ec8725bf762025a63f931949b9f49d211ab76a75ced68f"
+IF !EXIT_STATUS! NEQ 0 (
+  EXIT /B !EXIT_STATUS!
+)
+IF NOT EXIST cache_files (
+  MD cache_files
+)
+>cache_files\nexus.txt ECHO !SETUP_HASH!
+EXIT /B 0
 
 :DownloadAndExtract
 SET FOLDER=%~1
 SET URL=%~2
+SET EXPECTED_HASH=%~3
 SET BUILD_NEEDED=0
 FOR /F "tokens=* delims=/" %%A IN ("%URL%") DO (
   SET ARCHIVE=%%~nxA
 )
-SET EXTENSION=%ARCHIVE:~-4%
 IF EXIST !FOLDER! (
   EXIT /B 0
 )
-powershell -Command "$ProgressPreference = 'SilentlyContinue'; "^
-  "Invoke-WebRequest -Uri '%URL%' -OutFile '%ARCHIVE%'"
-IF ERRORLEVEL 1 (
-  ECHO Error: Failed to download !ARCHIVE!.
+IF NOT EXIST !ARCHIVE! (
+  curl -fsL -o "!ARCHIVE!" "!URL!"
+  IF ERRORLEVEL 1 (
+    ECHO Error: Failed to download !ARCHIVE!.
+    SET EXIT_STATUS=1
+    EXIT /B
+  )
+)
+FOR /F "skip=1 tokens=*" %%H IN ('certutil -hashfile "!ARCHIVE!" SHA256') DO (
+  IF NOT DEFINED ACTUAL_HASH SET ACTUAL_HASH=%%H
+)
+SET ACTUAL_HASH=!ACTUAL_HASH: =!
+IF /I NOT "!ACTUAL_HASH!"=="!EXPECTED_HASH!" (
+  ECHO Error: SHA256 mismatch for !ARCHIVE!.
+  ECHO   Expected: !EXPECTED_HASH!
+  ECHO   Actual:   !ACTUAL_HASH!
+  DEL /F /Q "!ARCHIVE!"
   SET EXIT_STATUS=1
+  SET ACTUAL_HASH=
   EXIT /B
 )
+SET ACTUAL_HASH=
 SET EXTRACT_PATH=_extract_tmp
 RD /S /Q "!EXTRACT_PATH!" >NUL 2>NUL
 MD "!EXTRACT_PATH!"
-IF /I "!EXTENSION!"==".zip" (
-  powershell -Command "$ProgressPreference = 'SilentlyContinue'; "^
-    "Expand-Archive -Path '%ARCHIVE%' -DestinationPath '%EXTRACT_PATH%'"
-) ELSE IF /I "!EXTENSION!"==".tgz" (
-  powershell -Command "$ProgressPreference = 'SilentlyContinue'; "^
-    "tar -xf '%ARCHIVE%' -C '%EXTRACT_PATH%'"
-) ELSE IF /I "%ARCHIVE:~-7%"==".tar.gz" (
-  powershell -Command "$ProgressPreference = 'SilentlyContinue'; "^
-    "tar -xf '%ARCHIVE%' -C '%EXTRACT_PATH%'"
-) ELSE (
-  ECHO Error: Unknown archive format for %ARCHIVE%.
+tar -xf "!ARCHIVE!" -C "!EXTRACT_PATH!"
+IF ERRORLEVEL 1 (
+  ECHO Error: Failed to extract !ARCHIVE!.
   SET EXIT_STATUS=1
-  EXIT /B 1
+  EXIT /B
 )
 SET DETECTED_FOLDER=
 FOR %%F IN ("!EXTRACT_PATH!\*") DO (
@@ -177,15 +185,11 @@ IF "!DETECTED_FOLDER!"=="MULTIPLE" (
   REN "!EXTRACT_PATH!" "!FOLDER!"
 ) ELSE IF NOT "!DETECTED_FOLDER!"=="!EXTRACT_PATH!\!FOLDER!" (
   MOVE /Y "!DETECTED_FOLDER!" "!FOLDER!" >NUL
+  RD /S /Q "!EXTRACT_PATH!" >NUL 2>NUL
 ) ELSE (
   MOVE /Y "!EXTRACT_PATH!\!FOLDER!" "!ROOT!" >NUL
-)
-RD /S /Q "!EXTRACT_PATH!"
-IF ERRORLEVEL 1 (
-  ECHO Error: Failed to extract !ARCHIVE!.
-  SET EXIT_STATUS=1
-  EXIT /B 0
+  RD /S /Q "!EXTRACT_PATH!" >NUL 2>NUL
 )
 SET BUILD_NEEDED=1
-DEL /F /Q !ARCHIVE!
+DEL /F /Q "!ARCHIVE!"
 EXIT /B 0

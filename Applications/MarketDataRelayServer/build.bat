@@ -38,12 +38,18 @@ IF "!CONFIG!" == "clean" (
       SET CONFIG=Release
     )
   )
+  IF /I "!CONFIG!"=="release" SET CONFIG=Release
+  IF /I "!CONFIG!"=="debug" SET CONFIG=Debug
+  IF /I "!CONFIG!"=="relwithdebinfo" SET CONFIG=RelWithDebInfo
+  IF /I "!CONFIG!"=="minsizerel" SET CONFIG=MinSizeRel
   IF NOT "!DEPENDENCIES!" == "" (
     CALL "!DIRECTORY!configure.bat" -DD="!DEPENDENCIES!"
   ) ELSE (
     CALL "!DIRECTORY!configure.bat"
   )
-  cmake --build "!ROOT!" --target INSTALL --config "!CONFIG!"
-  ECHO !CONFIG! > CMakeFiles\config.txt
+  IF ERRORLEVEL 1 EXIT /B 1
+  cmake --build "!ROOT!" --target INSTALL --config "!CONFIG!" --parallel
+  IF ERRORLEVEL 1 EXIT /B 1
+  >CMakeFiles\config.txt ECHO !CONFIG!
 )
 ENDLOCAL
