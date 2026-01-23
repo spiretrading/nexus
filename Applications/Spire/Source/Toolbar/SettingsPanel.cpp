@@ -125,7 +125,7 @@ SettingsPanel::SettingsPanel(Mode mode,
   on_update(m_categories->get());
   m_connection = m_categories->connect_update_signal(
     std::bind_front(&SettingsPanel::on_update, this));
-  setFocusProxy(list_box);
+  settings_view->get_current()->set(0);
 }
 
 const std::shared_ptr<UserSettings::CategoriesModel>&
