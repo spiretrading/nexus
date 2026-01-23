@@ -61,11 +61,18 @@ SettingsPanel::SettingsPanel(Mode mode,
       return check_box;
     });
   for(auto i = 0; i < settings_list->get_size(); ++i) {
-    update_style(*settings_view->get_list_item(i), [] (auto& styles) {
+    auto item = settings_view->get_list_item(i);
+    update_style(*item, [] (auto& styles) {
       styles.get(Any()).
         set(border_size(0)).
         set(horizontal_padding(scale_width(8))).
         set(vertical_padding(scale_height(5)));
+    });
+    item->connect_submit_signal([=] () {
+      if(&item->get_body() != item) {
+        auto& check_box = *static_cast<CheckBox*>(&item->get_body());
+        check_box.get_current()->set(!check_box.get_current()->get());
+      }
     });
   }
   auto list_box = new ScrollableListBox(*settings_view);
