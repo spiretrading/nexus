@@ -1,8 +1,8 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
-SET ROOT=%cd%
-SET DIRECTORY=%~dp0
-SET EXIT_STATUS=0
+SET "ROOT=%cd%"
+SET "DIRECTORY=%~dp0"
+SET "EXIT_STATUS=0"
 IF NOT EXIST configure.bat (
   >configure.bat ECHO @ECHO OFF
   >>configure.bat ECHO CALL "%~dp0configure.bat" %%*
@@ -11,48 +11,48 @@ IF NOT EXIST build.bat (
   >build.bat ECHO @ECHO OFF
   >>build.bat ECHO CALL "%~dp0build.bat" %%*
 )
-SET ARGS=%*
-SET FIRST_ARG=%~1
-SET PARALLEL=1
-IF "!FIRST_ARG!" == "clean" SET PARALLEL=0
-IF "!FIRST_ARG!" == "reset" SET PARALLEL=0
-CALL:build Nexus %*
+SET "ARGS=%*"
+SET "FIRST_ARG=%~1"
+SET "PARALLEL=1"
+IF /I "!FIRST_ARG!"=="clean" SET "PARALLEL=0"
+IF /I "!FIRST_ARG!"=="reset" SET "PARALLEL=0"
+CALL :Build Nexus %*
 IF !EXIT_STATUS! NEQ 0 (
   EXIT /B !EXIT_STATUS!
 )
-CALL:build WebApi %*
+CALL :Build WebApi %*
 IF !EXIT_STATUS! NEQ 0 (
   EXIT /B !EXIT_STATUS!
 )
 IF !PARALLEL! EQU 1 (
-  SET BUILD_TEMP=!ROOT!\_build_tmp
+  SET "BUILD_TEMP=!ROOT!\_build_tmp"
   IF EXIST "!BUILD_TEMP!" RD /S /Q "!BUILD_TEMP!"
   MD "!BUILD_TEMP!"
 )
-CALL:build_app Applications\AdministrationServer %*
-CALL:build_app Applications\ChartingServer %*
-CALL:build_app Applications\ComplianceServer %*
-CALL:build_app Applications\DefinitionsServer %*
-CALL:build_app Applications\Lollipop %*
-CALL:build_app Applications\MarketDataRelayServer %*
-CALL:build_app Applications\MarketDataServer %*
-CALL:build_app Applications\ReplayMarketDataFeedClient %*
-CALL:build_app Applications\RiskServer %*
-CALL:build_app Applications\Scratch %*
-CALL:build_app Applications\SimulationMarketDataFeedClient %*
-CALL:build_app Applications\SimulationOrderExecutionServer %*
-CALL:build_app Applications\Spire %*
-CALL:build_app Applications\WebPortal\WebApp %*
-CALL:build_app Applications\WebPortal %*
+CALL :BuildApp Applications\AdministrationServer %*
+CALL :BuildApp Applications\ChartingServer %*
+CALL :BuildApp Applications\ComplianceServer %*
+CALL :BuildApp Applications\DefinitionsServer %*
+CALL :BuildApp Applications\Lollipop %*
+CALL :BuildApp Applications\MarketDataRelayServer %*
+CALL :BuildApp Applications\MarketDataServer %*
+CALL :BuildApp Applications\ReplayMarketDataFeedClient %*
+CALL :BuildApp Applications\RiskServer %*
+CALL :BuildApp Applications\Scratch %*
+CALL :BuildApp Applications\SimulationMarketDataFeedClient %*
+CALL :BuildApp Applications\SimulationOrderExecutionServer %*
+CALL :BuildApp Applications\Spire %*
+CALL :BuildApp Applications\WebPortal\WebApp %*
+CALL :BuildApp Applications\WebPortal %*
 IF !PARALLEL! EQU 0 (
   EXIT /B !EXIT_STATUS!
 )
-:wait_loop
-SET RUNNING=0
-FOR %%F IN ("!BUILD_TEMP!\*.running") DO SET RUNNING=1
+:WaitLoop
+SET "RUNNING=0"
+FOR %%F IN ("!BUILD_TEMP!\*.running") DO SET "RUNNING=1"
 IF !RUNNING! EQU 1 (
   timeout /t 1 /nobreak >NUL
-  GOTO wait_loop
+  GOTO WaitLoop
 )
 FOR %%F IN ("!BUILD_TEMP!\*.log") DO (
   IF %%~zF GTR 0 (
@@ -64,30 +64,30 @@ FOR %%F IN ("!BUILD_TEMP!\*.log") DO (
   )
 )
 FOR %%F IN ("!BUILD_TEMP!\*.failed") DO (
-  SET EXIT_STATUS=1
+  SET "EXIT_STATUS=1"
 )
 RD /S /Q "!BUILD_TEMP!"
 EXIT /B !EXIT_STATUS!
 ENDLOCAL
 
-:build
-SET PROJECT=%~1
+:Build
+SET "PROJECT=%~1"
 IF NOT EXIST "!PROJECT!" (
   MD "!PROJECT!"
 )
 PUSHD "!PROJECT!"
 CALL "!DIRECTORY!!PROJECT!\build.bat" -DD="!ROOT!\Nexus\Dependencies" %~2 %~3 %~4 %~5 %~6 %~7
-IF ERRORLEVEL 1 SET EXIT_STATUS=1
+IF ERRORLEVEL 1 SET "EXIT_STATUS=1"
 POPD
 EXIT /B 0
 
-:build_app
+:BuildApp
 IF !PARALLEL! EQU 0 (
-  CALL:build %*
+  CALL :Build %*
   EXIT /B 0
 )
-SET PROJECT=%~1
-SET PROJECT_NAME=%~n1
+SET "PROJECT=%~1"
+SET "PROJECT_NAME=%~n1"
 IF NOT EXIST "!PROJECT!" (
   MD "!PROJECT!"
 )
