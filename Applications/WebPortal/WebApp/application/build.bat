@@ -166,7 +166,8 @@ IF "!UPDATE_BUILD!"=="1" (
   IF EXIST application (
     robocopy "%~dp0..\resources" application\resources /E >NUL
     COPY "!DIRECTORY!source\index.html" application\index.html >NUL
-    IF EXIST ..\..\Application (
+    DIR /B /AD ..\..\  2>NUL | findstr /X "Application" >NUL
+    IF NOT ERRORLEVEL 1 (
       IF NOT EXIST ..\..\Application\web_app (
         PUSHD ..\..\Application
         MD web_app
