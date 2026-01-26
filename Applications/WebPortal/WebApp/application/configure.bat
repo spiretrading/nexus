@@ -59,7 +59,7 @@ IF NOT EXIST "!DEPENDENCIES!" (
   MD "!DEPENDENCIES!" || EXIT /B 1
 )
 PUSHD "!DEPENDENCIES!" || EXIT /B 1
-CALL "!DIRECTORY!setup.bat" || (POPD & EXIT /B 1)
+CALL "%~dp0setup.bat" || (POPD & EXIT /B 1)
 POPD
 EXIT /B 0
 
