@@ -1,48 +1,76 @@
 @ECHO OFF
-SETLOCAL
-SET ROOT=%cd%
+SETLOCAL EnableDelayedExpansion
+SET "ROOT=%cd%"
+SET "DIRECTORY=%~dp0"
+CALL :CreateForwardingScripts
+CALL :ParseArgs %*
+CALL :SetupDependencies || EXIT /B 1
+CALL :CreateSymlinks || EXIT /B 1
+ENDLOCAL
+EXIT /B 0
+
+:CreateForwardingScripts
 IF NOT EXIST build.bat (
-  ECHO @ECHO OFF > build.bat
-  ECHO CALL "%~dp0build.bat" %%* >> build.bat
+  >build.bat ECHO @ECHO OFF || EXIT /B 1
+  >>build.bat ECHO CALL "%~dp0build.bat" %%* || EXIT /B 1
 )
 IF NOT EXIST configure.bat (
-  ECHO @ECHO OFF > configure.bat
-  ECHO CALL "%~dp0configure.bat" %%* >> configure.bat
+  >configure.bat ECHO @ECHO OFF || EXIT /B 1
+  >>configure.bat ECHO CALL "%~dp0configure.bat" %%* || EXIT /B 1
 )
-SET DIRECTORY=%~dp0
-SET DEPENDENCIES=
-SET IS_DEPENDENCY=
-:begin_args
-SET ARG=%~1
-IF "%IS_DEPENDENCY%" == "1" (
-  SET DEPENDENCIES=%ARG%
-  SET IS_DEPENDENCY=
-  GOTO begin_args
-) ELSE IF NOT "%ARG%" == "" (
-  IF "%ARG:~0,3%" == "-DD" (
-    SET IS_DEPENDENCY=1
+EXIT /B 0
+
+:ParseArgs
+SET "DEPENDENCIES="
+SET "IS_DEPENDENCY="
+SET "IS_DIRECTORY="
+:ParseArgsLoop
+SET "ARG=%~1"
+IF "!IS_DEPENDENCY!"=="1" (
+  SET "DEPENDENCIES=!ARG!"
+  SET "IS_DEPENDENCY="
+  SHIFT
+  GOTO ParseArgsLoop
+) ELSE IF "!IS_DIRECTORY!"=="1" (
+  SET "DIRECTORY=!ARG!"
+  SET "IS_DIRECTORY="
+  SHIFT
+  GOTO ParseArgsLoop
+) ELSE IF NOT "!ARG!"=="" (
+  IF "!ARG:~0,4!"=="-DD=" (
+    SET "DEPENDENCIES=!ARG:~4!"
+  ) ELSE IF "!ARG!"=="-DD" (
+    SET "IS_DEPENDENCY=1"
+  ) ELSE IF "!ARG:~0,3!"=="-D=" (
+    SET "DIRECTORY=!ARG:~3!"
+  ) ELSE IF "!ARG!"=="-D" (
+    SET "IS_DIRECTORY=1"
   )
   SHIFT
-  GOTO begin_args
+  GOTO ParseArgsLoop
 )
-IF "%DEPENDENCIES%" == "" (
-  SET DEPENDENCIES=%ROOT%\Dependencies
+IF "!DEPENDENCIES!"=="" (
+  SET "DEPENDENCIES=!ROOT!\Dependencies"
 )
-IF NOT EXIST "%DEPENDENCIES%" (
-  MD "%DEPENDENCIES%"
+EXIT /B 0
+
+:SetupDependencies
+IF NOT EXIST "!DEPENDENCIES!" (
+  MD "!DEPENDENCIES!" || EXIT /B 1
 )
-PUSHD "%DEPENDENCIES%"
-CALL "%DIRECTORY%\setup.bat"
+PUSHD "!DEPENDENCIES!" || EXIT /B 1
+CALL "!DIRECTORY!setup.bat" || (POPD & EXIT /B 1)
 POPD
-IF NOT "%DEPENDENCIES%" == "%ROOT%\Dependencies" (
+EXIT /B 0
+
+:CreateSymlinks
+IF NOT "!DEPENDENCIES!"=="!ROOT!\Dependencies" (
   IF NOT EXIST Dependencies (
-    mklink /j Dependencies "%DEPENDENCIES%" > NUL
+    mklink /j Dependencies "!DEPENDENCIES!" >NUL || EXIT /B 1
   )
 )
-IF NOT "%DIRECTORY%" == "%ROOT%\" (
-  IF EXIST source (
-    RMDIR source /S /Q
-  )
-  mklink /j source "%DIRECTORY%source" > NUL
+IF NOT "!DIRECTORY!"=="!ROOT!\" (
+  RD /S /Q source 2>NUL
+  mklink /j source "!DIRECTORY!source" >NUL || EXIT /B 1
 )
-ENDLOCAL
+EXIT /B 0

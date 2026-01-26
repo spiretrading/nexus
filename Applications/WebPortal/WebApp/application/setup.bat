@@ -1,11 +1,15 @@
 @ECHO OFF
-SETLOCAL
-SET ROOT=%cd%
-CALL "%~dp0..\setup.bat"
+SETLOCAL EnableDelayedExpansion
+SET "ROOT=%cd%"
+SET "DIRECTORY=%~dp0"
+CALL "!DIRECTORY!..\setup.bat" || EXIT /B 1
 IF NOT EXIST library (
-  MD library
+  MD library || EXIT /B 1
   PUSHD library
-  CALL "%~dp0..\library\configure.bat" -DD="%ROOT%"
+  CALL "!DIRECTORY!..\library\configure.bat" -DD="!ROOT!" || (
+    POPD & EXIT /B 1
+  )
   POPD
 )
 ENDLOCAL
+EXIT /B 0
