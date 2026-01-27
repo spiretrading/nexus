@@ -2,6 +2,7 @@
 set -o errexit
 set -o pipefail
 ROOT=""
+SCRIPT_DIR=""
 DIRECTORY=""
 DEPENDENCIES=""
 CONFIG=""
@@ -13,7 +14,7 @@ main() {
   resolve_paths
   parse_args "$@"
   configure
-  build_dependencies "$@"
+  build_dependencies
   check_node_modules
   check_build
   run_build
@@ -26,7 +27,8 @@ resolve_paths() {
     source="$(readlink "$source")"
     [[ $source != /* ]] && source="$dir/$source"
   done
-  DIRECTORY="$(cd -P "$(dirname "$source")" >/dev/null && pwd -P)"
+  SCRIPT_DIR="$(cd -P "$(dirname "$source")" >/dev/null && pwd -P)"
+  DIRECTORY="$SCRIPT_DIR"
   ROOT="$(pwd -P)"
 }
 
@@ -67,24 +69,43 @@ clean_build() {
 
 configure() {
   if [[ -n "$DEPENDENCIES" ]]; then
-    "$DIRECTORY/configure.sh" -DD="$DEPENDENCIES"
+    "$SCRIPT_DIR/configure.sh" -DD="$DEPENDENCIES"
   else
-    "$DIRECTORY/configure.sh"
+    "$SCRIPT_DIR/configure.sh"
   fi
 }
 
 build_dependencies() {
   pushd "$WEB_PORTAL_PATH" > /dev/null
-  ./build.sh "$@" || { popd > /dev/null; return 1; }
+  ./build.sh || { popd > /dev/null; return 1; }
   popd > /dev/null
 }
 
 md5hash() {
-  if command -v md5sum >/dev/null; then
-    md5sum | cut -d" " -f1
+  if [[ $# -eq 0 ]]; then
+    if command -v md5sum > /dev/null 2>&1; then
+      md5sum | awk '{print $1}'
+    else
+      md5
+    fi
   else
-    md5 | cut -d" " -f4
+    if command -v md5sum > /dev/null 2>&1; then
+      md5sum "$@" 2> /dev/null | awk '{print $1}'
+    else
+      md5 -q "$@" 2> /dev/null
+    fi
   fi
+}
+
+compute_source_hash() {
+  {
+    cat "$DIRECTORY/tsconfig.json"
+    cat "$DIRECTORY/webpack.config.js"
+    find "$DIRECTORY/source" -type f -print0 | sort -z | xargs -0 cat 2> /dev/null
+    if [[ -f "$WEB_PORTAL_PATH/mod_time.txt" ]]; then
+      cat "$WEB_PORTAL_PATH/mod_time.txt"
+    fi
+  } | md5hash
 }
 
 check_node_modules() {
@@ -92,11 +113,11 @@ check_node_modules() {
     UPDATE_NODE=1
     return
   fi
-  local current_hash cached_hash
-  current_hash=$(md5hash < "$DIRECTORY/package.json")
+  local current_hash stored_hash
+  current_hash="$(md5hash "$DIRECTORY/package.json")"
   if [[ -f "mod_time.txt" ]]; then
-    cached_hash=$(cat "mod_time.txt")
-    if [[ "$cached_hash" != "$current_hash" ]]; then
+    stored_hash="$(cat "mod_time.txt")"
+    if [[ "$stored_hash" != "$current_hash" ]]; then
       UPDATE_NODE=1
     fi
   else
@@ -109,33 +130,24 @@ check_build() {
     UPDATE_BUILD=1
     return
   fi
-  local source_hash cached_hash
-  source_hash=$(find "$DIRECTORY/source" -type f -print0 | sort -z |
-    xargs -0 cat | md5hash)
-  source_hash+=$(md5hash < "$DIRECTORY/tsconfig.json")
-  source_hash+=$(md5hash < "$DIRECTORY/webpack.config.js")
-  if [[ -f "$WEB_PORTAL_PATH/mod_time.txt" ]]; then
-    source_hash+=$(cat "$WEB_PORTAL_PATH/mod_time.txt")
-  fi
+  local current_hash stored_hash
+  current_hash="$(compute_source_hash)"
   if [[ -f ".build_hash.txt" ]]; then
-    cached_hash=$(cat ".build_hash.txt")
-    if [[ "$cached_hash" != "$source_hash" ]]; then
+    stored_hash="$(cat ".build_hash.txt")"
+    if [[ "$current_hash" != "$stored_hash" ]]; then
       UPDATE_BUILD=1
     fi
   else
     UPDATE_BUILD=1
-  fi
-  if [[ "$UPDATE_BUILD" == "1" ]]; then
-    echo "$source_hash" > ".build_hash.txt"
   fi
 }
 
 run_build() {
   if [[ "$UPDATE_NODE" == "1" ]]; then
     UPDATE_BUILD=1
-    npm install --no-package-lock || return 1
+    npm install || return 1
     local package_hash
-    package_hash=$(md5hash < "$DIRECTORY/package.json")
+    package_hash="$(md5hash "$DIRECTORY/package.json")"
     echo "$package_hash" > "mod_time.txt"
   fi
   if [[ "$UPDATE_BUILD" == "1" ]]; then
@@ -150,16 +162,10 @@ run_build() {
       unset PROD_ENV
     fi
     local source_hash
-    source_hash=$(find "$DIRECTORY/source" -type f -print0 | sort -z |
-      xargs -0 cat | md5hash)
-    source_hash+=$(md5hash < "$DIRECTORY/tsconfig.json")
-    source_hash+=$(md5hash < "$DIRECTORY/webpack.config.js")
-    if [[ -f "$WEB_PORTAL_PATH/mod_time.txt" ]]; then
-      source_hash+=$(cat "$WEB_PORTAL_PATH/mod_time.txt")
-    fi
+    source_hash="$(compute_source_hash)"
     echo "$source_hash" > ".build_hash.txt"
     if [[ -d "application" ]]; then
-      cp -r "$DIRECTORY/../resources" application/
+      cp -r "$SCRIPT_DIR/../resources" application/
       cp "$DIRECTORY/source/index.html" application/index.html
     fi
     if [[ -d "../../Application" ]]; then

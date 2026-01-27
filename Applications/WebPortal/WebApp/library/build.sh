@@ -74,9 +74,11 @@ clean_build() {
 }
 
 configure() {
-  if [[ "$DIRECTORY" != "$ROOT" ]]; then
-    cp "$DIRECTORY/package.json" . > /dev/null
-    cp "$DIRECTORY/tsconfig.json" . > /dev/null
+  if [[ ! "$SCRIPT_DIR/package.json" -ef "./package.json" ]]; then
+    cp "$SCRIPT_DIR/package.json" . > /dev/null
+  fi
+  if [[ ! "$SCRIPT_DIR/tsconfig.json" -ef "./tsconfig.json" ]]; then
+    cp "$SCRIPT_DIR/tsconfig.json" . > /dev/null
   fi
   if [[ -n "$DEPENDENCIES" ]]; then
     "$SCRIPT_DIR/configure.sh" -DD="$DEPENDENCIES"
@@ -95,10 +97,18 @@ build_dependencies() {
 }
 
 md5hash() {
-  if command -v md5sum > /dev/null 2>&1; then
-    md5sum "$@" 2> /dev/null | awk '{print $1}'
+  if [[ $# -eq 0 ]]; then
+    if command -v md5sum > /dev/null 2>&1; then
+      md5sum | awk '{print $1}'
+    else
+      md5
+    fi
   else
-    md5 -q "$@" 2> /dev/null
+    if command -v md5sum > /dev/null 2>&1; then
+      md5sum "$@" 2> /dev/null | awk '{print $1}'
+    else
+      md5 -q "$@" 2> /dev/null
+    fi
   fi
 }
 
@@ -112,7 +122,7 @@ check_node_modules() {
     local pkg_hash
     local stored_hash
     pkg_hash="$(md5hash "$DIRECTORY/package.json")"
-    stored_hash="$(grep "^package.json:" mod_time.txt 2> /dev/null | cut -d: -f2)"
+    stored_hash="$(grep "^package.json:" mod_time.txt 2> /dev/null | cut -d: -f2 || true)"
     if [[ "$pkg_hash" != "$stored_hash" ]]; then
       UPDATE_NODE=1
     fi
@@ -132,7 +142,7 @@ check_build() {
     local current_hash
     local stored_hash
     current_hash="$(compute_source_hash)"
-    stored_hash="$(grep "^source:" mod_time.txt 2> /dev/null | cut -d: -f2)"
+    stored_hash="$(grep "^source:" mod_time.txt 2> /dev/null | cut -d: -f2 || true)"
     if [[ "$current_hash" != "$stored_hash" ]]; then
       UPDATE_BUILD=1
     fi
@@ -140,18 +150,16 @@ check_build() {
 }
 
 compute_source_hash() {
-  local hash_input=""
-  hash_input+="$(md5hash "$DIRECTORY/tsconfig.json")"
-  if [[ -f "$DALI_PATH/mod_time.txt" ]]; then
-    hash_input+="$(md5hash "$DALI_PATH/mod_time.txt")"
-  fi
-  if [[ -f "$NEXUS_PATH/mod_time.txt" ]]; then
-    hash_input+="$(md5hash "$NEXUS_PATH/mod_time.txt")"
-  fi
-  if [[ -d "$DIRECTORY/source" ]]; then
-    hash_input+="$(find "$DIRECTORY/source" -type f -exec md5hash {} \; | sort)"
-  fi
-  echo "$hash_input" | md5hash
+  {
+    cat "$DIRECTORY/tsconfig.json"
+    if [[ -f "$DALI_PATH/mod_time.txt" ]]; then
+      cat "$DALI_PATH/mod_time.txt"
+    fi
+    if [[ -f "$NEXUS_PATH/mod_time.txt" ]]; then
+      cat "$NEXUS_PATH/mod_time.txt"
+    fi
+    find "$DIRECTORY/source" -type f -print0 | sort -z | xargs -0 cat 2> /dev/null
+  } | md5hash
 }
 
 run_build() {

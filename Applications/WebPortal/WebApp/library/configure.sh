@@ -70,8 +70,7 @@ create_symlinks() {
     fi
   fi
   if [[ "$DIRECTORY" != "$ROOT" ]]; then
-    rm -rf source 2> /dev/null || true
-    ln -s "$DIRECTORY/source" source
+    ln -snf "$DIRECTORY/source" source
   fi
 }
 

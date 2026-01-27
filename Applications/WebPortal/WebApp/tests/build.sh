@@ -41,16 +41,6 @@ create_forwarding_scripts() {
   fi
 }
 
-get_job_count() {
-  if [[ -f "/proc/cpuinfo" ]]; then
-    grep -c "processor" /proc/cpuinfo
-  elif command -v sysctl > /dev/null 2>&1; then
-    sysctl -n hw.ncpu
-  else
-    echo 4
-  fi
-}
-
 build_project() {
   local project="$1"
   shift
@@ -58,19 +48,14 @@ build_project() {
     mkdir -p "$project"
   fi
   pushd "$project" > /dev/null
-  "$SCRIPT_DIR/$project/build.sh" -DD="$ROOT/../library/Dependencies" "$@" 2>&1
+  "$SCRIPT_DIR/$project/build.sh" -DD="$ROOT/../library/Dependencies" "$@"
   popd > /dev/null
 }
 
 build_projects() {
-  export -f build_project
-  export SCRIPT_DIR
-  export ROOT
-  build_project "${PROJECTS[0]}" "$@"
-  local remaining=("${PROJECTS[@]:1}")
-  local jobs
-  jobs="$(get_job_count)"
-  parallel -j"$jobs" --no-notice build_project {} "$@" ::: "${remaining[@]}"
+  for project in "${PROJECTS[@]}"; do
+    build_project "$project" "$@"
+  done
 }
 
 main "$@"
