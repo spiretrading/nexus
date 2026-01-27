@@ -1,101 +1,170 @@
 #!/bin/bash
-source="${BASH_SOURCE[0]}"
-while [ -h "$source" ]; do
-  dir="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd -P)"
-  source="$(readlink "$source")"
-  [[ $source != /* ]] && source="$dir/$source"
-done
-directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd -P)"
-root=$(pwd -P)
-for i in "$@"; do
-  case $i in
-    -DD=*)
-      dependencies="${i#*=}"
-      shift
+set -o errexit
+set -o pipefail
+
+DALI_PATH="Dependencies/dali"
+NEXUS_PATH="Dependencies/WebApi"
+
+main() {
+  resolve_paths
+  parse_args "$@"
+  case "$CONFIG" in
+    clean)
+      clean_build "clean"
+      exit 0
       ;;
-    *)
-      config="$i"
-      shift
+    reset)
+      clean_build "reset"
+      exit 0
       ;;
   esac
-done
-if [ "$(uname -s)" = "Darwin" ]; then
-  STAT='stat -x -t "%Y%m%d%H%M%S"'
-else
-  STAT='stat'
-fi
-if [ "$config" = "clean" ]; then
+  configure
+  build_dependencies
+  check_node_modules
+  check_build
+  run_build
+}
+
+resolve_paths() {
+  local source="${BASH_SOURCE[0]}"
+  while [[ -h "$source" ]]; do
+    local dir
+    dir="$(cd -P "$(dirname "$source")" > /dev/null 2>&1 && pwd -P)"
+    source="$(readlink "$source")"
+    [[ "$source" != /* ]] && source="$dir/$source"
+  done
+  SCRIPT_DIR="$(cd -P "$(dirname "$source")" > /dev/null 2>&1 && pwd -P)"
+  DIRECTORY="$SCRIPT_DIR"
+  ROOT="$(pwd -P)"
+}
+
+parse_args() {
+  DEPENDENCIES=""
+  CONFIG=""
+  while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+      -DD=*)
+        DEPENDENCIES="${1#*=}"
+        shift
+        ;;
+      -DD)
+        DEPENDENCIES="$2"
+        shift 2
+        ;;
+      *)
+        CONFIG="$1"
+        shift
+        ;;
+    esac
+  done
+}
+
+clean_build() {
+  local mode="$1"
   rm -rf library
   rm -f mod_time.txt
-  exit 0
-fi
-if [ "$config" = "reset" ]; then
-  rm -rf library
-  rm -f mod_time.txt
-  rm -rf node_modules
-  rm -f package-lock.json
-  exit 0
-fi
-if [ "$dependencies" != "" ]; then
-  "$directory/configure.sh" -DD="$dependencies"
-else
-  "$directory/configure.sh"
-fi
-DALI_PATH=Dependencies/dali
-NEXUS_PATH=Dependencies/WebApi
-pushd $DALI_PATH
-./build.sh "$@"
-popd
-pushd $NEXUS_PATH
-./build.sh "$@"
-popd
-if [ ! -d "node_modules" ]; then
-  UPDATE_NODE=1
-else
-  if [ ! -f "mod_time.txt" ]; then
+  if [[ "$mode" == "reset" ]]; then
+    rm -rf Dependencies
+    rm -rf node_modules
+    if [[ "$DIRECTORY" != "$ROOT" ]]; then
+      rm -f package.json
+      rm -f tsconfig.json
+    fi
+  fi
+}
+
+configure() {
+  if [[ "$DIRECTORY" != "$ROOT" ]]; then
+    cp "$DIRECTORY/package.json" . > /dev/null
+    cp "$DIRECTORY/tsconfig.json" . > /dev/null
+  fi
+  if [[ -n "$DEPENDENCIES" ]]; then
+    "$SCRIPT_DIR/configure.sh" -DD="$DEPENDENCIES"
+  else
+    "$SCRIPT_DIR/configure.sh"
+  fi
+}
+
+build_dependencies() {
+  pushd "$DALI_PATH" > /dev/null
+  ./build.sh "$@"
+  popd > /dev/null
+  pushd "$NEXUS_PATH" > /dev/null
+  ./build.sh "$@"
+  popd > /dev/null
+}
+
+md5hash() {
+  if command -v md5sum > /dev/null 2>&1; then
+    md5sum "$@" 2> /dev/null | awk '{print $1}'
+  else
+    md5 -q "$@" 2> /dev/null
+  fi
+}
+
+check_node_modules() {
+  UPDATE_NODE=""
+  if [[ ! -d "node_modules" ]]; then
+    UPDATE_NODE=1
+  elif [[ ! -f "mod_time.txt" ]]; then
     UPDATE_NODE=1
   else
-    pt="$($STAT $directory/package.json | grep Modify | awk '{print $2 $3}')"
-    mt="$($STAT mod_time.txt | grep Modify | awk '{print $2 $3}')"
-    if [ "$pt" \> "$mt" ]; then
+    local pkg_hash
+    local stored_hash
+    pkg_hash="$(md5hash "$DIRECTORY/package.json")"
+    stored_hash="$(grep "^package.json:" mod_time.txt 2> /dev/null | cut -d: -f2)"
+    if [[ "$pkg_hash" != "$stored_hash" ]]; then
       UPDATE_NODE=1
     fi
   fi
-fi
-if [ "$UPDATE_NODE" = "1" ]; then
-  UPDATE_BUILD=1
-  npm install --no-package-lock
-fi
-if [ ! -d "library" ]; then
-  UPDATE_BUILD=1
-else
-  st="$(find source/ -type f | xargs $STAT | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
-  lt="$(find library/ -type f | xargs $STAT | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
-  if [ "$st" \> "$lt" ]; then
+  if [[ -n "$UPDATE_NODE" ]]; then
     UPDATE_BUILD=1
+    npm install
   fi
-fi
-if [ ! -f "mod_time.txt" ]; then
-  UPDATE_BUILD=1
-else
-  pt="$($STAT $directory/tsconfig.json | grep Modify | awk '{print $2 $3}')"
-  dt="$($STAT $DALI_PATH/mod_time.txt | grep Modify | awk '{print $2 $3}')"
-  nt="$($STAT $NEXUS_PATH/mod_time.txt | grep Modify | awk '{print $2 $3}')"
-  mt="$($STAT mod_time.txt | grep Modify | awk '{print $2 $3}')"
-  if [ "$pt" \> "$mt" ]; then
+}
+
+check_build() {
+  if [[ ! -d "library" ]]; then
     UPDATE_BUILD=1
-  fi
-  if [ "$dt" \> "$mt" ]; then
+  elif [[ ! -f "mod_time.txt" ]]; then
     UPDATE_BUILD=1
+  else
+    local current_hash
+    local stored_hash
+    current_hash="$(compute_source_hash)"
+    stored_hash="$(grep "^source:" mod_time.txt 2> /dev/null | cut -d: -f2)"
+    if [[ "$current_hash" != "$stored_hash" ]]; then
+      UPDATE_BUILD=1
+    fi
   fi
-  if [ "$nt" \> "$mt" ]; then
-    UPDATE_BUILD=1
+}
+
+compute_source_hash() {
+  local hash_input=""
+  hash_input+="$(md5hash "$DIRECTORY/tsconfig.json")"
+  if [[ -f "$DALI_PATH/mod_time.txt" ]]; then
+    hash_input+="$(md5hash "$DALI_PATH/mod_time.txt")"
   fi
-fi
-if [ "$UPDATE_BUILD" = "1" ]; then
-  if [ -d library ]; then
+  if [[ -f "$NEXUS_PATH/mod_time.txt" ]]; then
+    hash_input+="$(md5hash "$NEXUS_PATH/mod_time.txt")"
+  fi
+  if [[ -d "$DIRECTORY/source" ]]; then
+    hash_input+="$(find "$DIRECTORY/source" -type f -exec md5hash {} \; | sort)"
+  fi
+  echo "$hash_input" | md5hash
+}
+
+run_build() {
+  if [[ -n "$UPDATE_BUILD" ]]; then
     rm -rf library
+    npm run build
+    local pkg_hash
+    local source_hash
+    pkg_hash="$(md5hash "$DIRECTORY/package.json")"
+    source_hash="$(compute_source_hash)"
+    echo "package.json:$pkg_hash" > mod_time.txt
+    echo "source:$source_hash" >> mod_time.txt
   fi
-  npm run build
-  echo "timestamp" > mod_time.txt
-fi
+}
+
+main "$@"
