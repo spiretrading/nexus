@@ -2,7 +2,6 @@
 #include <QCoreApplication>
 #include <QKeyEvent>
 #include <QScreen>
-#include <QTimer>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
@@ -94,6 +93,18 @@ namespace {
     }
     return nullptr;
   }
+
+  auto is_point_in_triangle(const QPoint& p, const QPoint& a, const QPoint& b,
+      const QPoint& c) {
+    auto sign = [] (const QPoint& p1, const QPoint& p2, const QPoint& p3) {
+      return (p1.x() - p3.x()) * (p2.y() - p3.y()) -
+        (p2.x() - p3.x()) * (p1.y() - p3.y());
+    };
+    auto b1 = sign(p, a, b) < 0;
+    auto b2 = sign(p, b, c) < 0;
+    auto b3 = sign(p, c, a) < 0;
+    return (b1 == b2) && (b2 == b3);
+  }
 }
 
 ContextMenu::ContextMenu(QWidget& parent)
@@ -104,11 +115,11 @@ ContextMenu::ContextMenu(QWidget& parent, ItemViewBuilder item_view_builder)
       m_item_view_builder(std::move(item_view_builder)),
       m_next_id(0),
       m_visible_submenu(nullptr),
-      m_pending_submenu_index(-1),
-      m_hide_count(0),
+      m_pending_item_index(-1),
       m_last_show_items(0),
       m_block_move(0),
-      m_mouse_observer(*this) {
+      m_mouse_observer(*this),
+      m_defer_hide_timer(this) {
   setAttribute(Qt::WA_Hover);
   setMinimumWidth(scale_width(MIN_WIDTH));
   m_list = std::make_shared<ArrayListModel<MenuItem>>();
@@ -140,6 +151,9 @@ ContextMenu::ContextMenu(QWidget& parent, ItemViewBuilder item_view_builder)
     std::bind_front(&ContextMenu::on_list_operation, this));
   m_mouse_observer.connect_move_signal(
     std::bind_front(&ContextMenu::on_mouse_move, this));
+  m_defer_hide_timer.setSingleShot(true);
+  connect(&m_defer_hide_timer, &QTimer::timeout,
+    std::bind_front(&ContextMenu::on_defer_hide_timeout, this));
 }
 
 void ContextMenu::add_menu(const QString& name, ContextMenu& menu) {
@@ -314,6 +328,40 @@ ListItem* ContextMenu::get_current_item() const {
   return nullptr;
 }
 
+int ContextMenu::find_hovered_item(const QPoint& global_pos) const {
+  for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
+    auto item = m_list_view->get_list_item(i);
+    if(item->rect().contains(item->mapFromGlobal(global_pos))) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+bool ContextMenu::is_mouse_approaching_submenu() const {
+  if(!m_visible_submenu || m_mouse_history.size() < 2) {
+    return false;
+  }
+  auto& body = static_cast<ContextMenu&>(m_visible_submenu->get_body());
+  auto body_rect = body.rect();
+  auto [upper_corner, lower_corner] = [&] {
+    if(mapToGlobal(rect().center()).x() <
+        body.mapToGlobal(body_rect.center()).x()) {
+      return std::tuple(body_rect.topLeft(), body_rect.bottomLeft());
+    }
+    return std::tuple(body_rect.topRight(), body_rect.bottomRight());
+  }();
+  return is_point_in_triangle(m_mouse_history.back(), m_mouse_history.front(),
+    body.mapToGlobal(upper_corner), body.mapToGlobal(lower_corner));
+}
+
+void ContextMenu::apply_hover_style() {
+  if(auto item = get_current_item()) {
+    auto enter_event = QEvent(QEvent::Enter);
+    QCoreApplication::sendEvent(item, &enter_event);
+  }
+}
+
 void ContextMenu::clear_hover_style() {
   if(auto item = get_current_item()) {
     auto leave_event = QEvent(QEvent::Leave);
@@ -322,9 +370,12 @@ void ContextMenu::clear_hover_style() {
 }
 
 void ContextMenu::focus_first_item() {
-  if(m_list_view->get_list()->get_size() > 0) {
-    m_list_view->get_current()->set(0);
-  }
+  QTimer::singleShot(0, m_list_view, [=] {
+    if(m_list_view->get_list()->get_size() > 0) {
+      m_list_view->get_current()->set(0);
+      m_list_view->get_list_item(0)->setFocus();
+    }
+  });
 }
 
 void ContextMenu::handle_right_or_enter_event(QEvent* event) {
@@ -341,6 +392,10 @@ bool ContextMenu::handle_mouse_event(QMouseEvent* event) {
     if(auto item = get_current_item()) {
       if(!item->rect().contains(item->mapFromGlobal(event->globalPos()))) {
         clear_hover_style();
+        if(event->type() == QEvent::MouseButtonPress ||
+            event->type() == QEvent::MouseButtonDblClick) {
+          forward_mouse_click(*this, *event);
+        }
       } else if(event->type() == QEvent::MouseButtonPress ||
           event->type() == QEvent::MouseButtonDblClick) {
         return true;
@@ -348,6 +403,22 @@ bool ContextMenu::handle_mouse_event(QMouseEvent* event) {
     }
   }
   return false;
+}
+
+void ContextMenu::forward_mouse_click(QWidget& target,
+    const QMouseEvent& mouse_event) {
+  auto press_event = QMouseEvent(mouse_event.type(),
+    target.mapFromGlobal(mouse_event.globalPos()),
+    mouse_event.windowPos(), mouse_event.screenPos(),
+    mouse_event.button(), mouse_event.buttons(), mouse_event.modifiers(),
+    mouse_event.source());
+  QCoreApplication::sendEvent(&target, &press_event);
+  auto release_event = QMouseEvent(QEvent::MouseButtonRelease,
+    target.mapFromGlobal(mouse_event.globalPos()),
+    mouse_event.windowPos(), mouse_event.screenPos(),
+    mouse_event.button(), mouse_event.buttons(), mouse_event.modifiers(),
+    mouse_event.source());
+  QCoreApplication::sendEvent(&target, &release_event);
 }
 
 void ContextMenu::position_submenu() {
@@ -423,54 +494,26 @@ void ContextMenu::hide_submenu() {
     m_visible_submenu->hide();
     m_visible_submenu->removeEventFilter(this);
     m_visible_submenu = nullptr;
+    m_mouse_history.clear();
+  }
+}
+
+void ContextMenu::cancel_defer_hide_submenu() {
+  if(m_defer_hide_timer.isActive()) {
+    m_defer_hide_timer.stop();
   }
 }
 
 void ContextMenu::defer_hide_submenu() {
-  if(!m_visible_submenu) {
-    return;
+  if(m_visible_submenu) {
+    m_defer_hide_timer.start(MENU_SHOW_DELAY());
   }
-  auto hide_count = m_hide_count;
-  QTimer::singleShot(MENU_SHOW_DELAY(), this, [=] {
-    if(hide_count == m_hide_count) {
-      if(is_submenu_hovered()) {
-        m_pending_submenu_index = -1;
-        for(auto& submenu : m_submenus) {
-          if(submenu.second == m_visible_submenu) {
-            m_list_view->get_current()->set(submenu.first);
-          }
-        }
-      } else {
-        hide_submenu();
-      }
-    }
-    if(m_pending_submenu_index != -1) {
-      auto index = m_pending_submenu_index;
-      m_pending_submenu_index = -1;
-      if(m_list_view->get_current()->get() == index) {
-        show_submenu(index);
-      }
-    }
-  });
 }
 
 void ContextMenu::show_submenu(int index) {
   auto& menu_item = m_list->get(index);
   if(menu_item.m_type == MenuItemType::SUBMENU) {
-    if(index == m_pending_submenu_index) {
-      return;
-    }
     auto menu_window = m_submenus[index];
-    if(m_visible_submenu == menu_window) {
-      ++m_hide_count;
-      return;
-    }
-    if(m_visible_submenu) {
-      defer_hide_submenu();
-      m_pending_submenu_index = index;
-      return;
-    }
-    ++m_hide_count;
     m_visible_submenu = menu_window;
     m_visible_submenu->installEventFilter(this);
     m_visible_submenu->get_body().installEventFilter(this);
@@ -479,30 +522,59 @@ void ContextMenu::show_submenu(int index) {
       static_cast<ContextMenu&>(m_visible_submenu->get_body());
     if(active_menu.m_list->get_size() != 0) {
       m_visible_submenu->show();
+      m_mouse_history.push_back(QCursor::pos());
     }
+  }
+}
+
+void ContextMenu::on_defer_hide_timeout() {
+  hide_submenu();
+  if(m_pending_item_index >= 0 &&
+      m_pending_item_index < m_list_view->get_list()->get_size()) {
+    auto index = m_pending_item_index;
+    m_pending_item_index = -1;
+    m_list_view->get_current()->set(index);
+    apply_hover_style();
+    show_submenu(index);
   }
 }
 
 void ContextMenu::on_mouse_move(QWidget& target, QMouseEvent& event) {
   if(is_submenu_hovered()) {
+    cancel_defer_hide_submenu();
     return;
   }
-  for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
-    auto item = m_list_view->get_list_item(i);
-    auto position = item->mapFromGlobal(event.globalPos());
-    if(item->rect().contains(position)) {
-      if(m_list_view->get_current()->get() != i) {
-        defer_hide_submenu();
-        if(target.window()->isVisible() && window()->isVisible()) {
-          m_list_view->get_current()->set(i);
-          item->setFocus();
-          show_submenu(i);
-        }
-      } else if(!m_visible_submenu) {
-        show_submenu(i);
-      }
-      break;
+  auto global_pos = event.globalPos();
+  int hovered_index = find_hovered_item(global_pos);
+  if(hovered_index == -1) {
+    return;
+  }
+  if(m_visible_submenu) {
+    m_mouse_history.push_back(global_pos);
+    static const auto MAX_HISTORY_SIZE = 5;
+    if(static_cast<int>(m_mouse_history.size()) > MAX_HISTORY_SIZE) {
+      m_mouse_history.pop_front();
     }
+    if(m_list_view->get_current()->get() != hovered_index) {
+      if(is_mouse_approaching_submenu()) {
+        m_pending_item_index = hovered_index;
+        defer_hide_submenu();
+      } else {
+        m_pending_item_index = -1;
+        cancel_defer_hide_submenu();
+        if(!is_submenu_hovered()) {
+          hide_submenu();
+        }
+      }
+    } else {
+      apply_hover_style();
+    }
+  } else if(m_list_view->get_current()->get() != hovered_index &&
+      hovered_index >= 0 &&
+      hovered_index < m_list_view->get_list()->get_size()) {
+    m_list_view->get_current()->set(hovered_index);
+    apply_hover_style();
+    show_submenu(hovered_index);
   }
 }
 
