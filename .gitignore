@@ -24,6 +24,7 @@ Dependencies/
 
 ## Ignore the generated web-app files.
 mod_time.txt
+.build_hash.txt
 WebApi/library/
 Applications/WebPortal/Application/web_app/
 Applications/WebPortal/WebApp/tests/*/application/
