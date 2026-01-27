@@ -3975,8 +3975,13 @@ UiProfile Spire::make_security_box_profile() {
   auto profile = UiProfile("SecurityBox", properties, [] (auto& profile) {
     auto model = populate_security_query_model();
     auto& current = get<QString>("current", profile.get_properties());
-    auto current_model = std::make_shared<LocalValueModel<Security>>(
-      model->parse(current.get())->m_security);
+    auto security = [&] {
+      if(auto value = model->parse(current.get())) {
+        return value->m_security;
+      }
+      return Security();
+    }();
+    auto current_model = std::make_shared<LocalValueModel<Security>>(security);
     auto box = new SecurityBox(model, current_model);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
