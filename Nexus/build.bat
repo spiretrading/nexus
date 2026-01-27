@@ -82,9 +82,9 @@ IF /I "!CONFIG!"=="release" (
   EXIT /B 1
 )
 IF NOT "!DEPENDENCIES!"=="" (
-  CALL "!DIRECTORY!configure.bat" -DD="!DEPENDENCIES!"
+  CALL "!DIRECTORY!configure.bat" "!CONFIG!" -DD="!DEPENDENCIES!"
 ) ELSE (
-  CALL "!DIRECTORY!configure.bat"
+  CALL "!DIRECTORY!configure.bat" "!CONFIG!"
 )
 EXIT /B !ERRORLEVEL!
 

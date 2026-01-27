@@ -7,7 +7,11 @@ CALL :ParseArgs %*
 CALL :SetupDependencies || EXIT /B 1
 CALL :CheckHashes || EXIT /B 1
 CALL :RunCMake || EXIT /B 1
-IF EXIST "!DIRECTORY!version.bat" CALL "!DIRECTORY!version.bat"
+IF EXIST "!DIRECTORY!version.bat" (
+  FOR %%F IN ("!DIRECTORY!version.bat") DO SET "DIR_VERSION=%%~fF"
+  FOR %%F IN ("%~dp0version.bat") DO SET "SCRIPT_VERSION=%%~fF"
+  IF /I NOT "!DIR_VERSION!"=="!SCRIPT_VERSION!" CALL "!DIRECTORY!version.bat"
+)
 EXIT /B !ERRORLEVEL!
 ENDLOCAL
 

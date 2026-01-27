@@ -1,118 +1,179 @@
 #!/bin/bash
-if [ "$(uname -s)" = "Darwin" ]; then
-  STAT='stat -x -t "%Y%m%d%H%M%S"'
-else
-  STAT='stat'
-fi
-source="${BASH_SOURCE[0]}"
-while [ -h "$source" ]; do
-  dir="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd -P)"
-  source="$(readlink "$source")"
-  [[ $source != /* ]] && source="$dir/$source"
-done
-directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd -P)"
-root=$(pwd -P)
-if [ ! -f "build.sh" ]; then
-  ln -s "$directory/build.sh" build.sh
-fi
-if [ ! -f "configure.sh" ]; then
-  ln -s "$directory/configure.sh" configure.sh
-fi
-for i in "$@"; do
-  case $i in
-    -DD=*)
-      dependencies="${i#*=}"
-      shift
-      ;;
-    *)
-      config="$i"
-      shift
-      ;;
-  esac
-done
-if [ "$config" = "" ]; then
-  config="Release"
-fi
-if [ "$dependencies" = "" ]; then
-  dependencies="$root/Dependencies"
-fi
-if [ ! -d "$dependencies" ]; then
-  mkdir -p "$dependencies"
-fi
-pushd "$dependencies"
-"$directory"/setup.sh
-popd
-if [ ! -d "CMakeFiles" ]; then
-  run_cmake=1
-else
-  if [ ! -f "CMakeFiles/timestamp.txt" ]; then
-    run_cmake=1
+set -o errexit
+set -o pipefail
+ROOT=""
+DIRECTORY=""
+SCRIPT_DIR=""
+DEPENDENCIES=""
+CONFIG=""
+RUN_CMAKE=""
+
+main() {
+  resolve_paths
+  create_forwarding_scripts
+  parse_args "$@"
+  setup_dependencies || return 1
+  check_hashes || return 1
+  run_cmake || return 1
+  run_version
+}
+
+resolve_paths() {
+  local source="${BASH_SOURCE[0]}"
+  while [[ -h "$source" ]]; do
+    local dir="$(cd -P "$(dirname "$source")" >/dev/null && pwd -P)"
+    source="$(readlink "$source")"
+    [[ $source != /* ]] && source="$dir/$source"
+  done
+  SCRIPT_DIR="$(cd -P "$(dirname "$source")" >/dev/null && pwd -P)"
+  DIRECTORY="$SCRIPT_DIR"
+  ROOT="$(pwd -P)"
+}
+
+create_forwarding_scripts() {
+  if [[ ! -f "build.sh" ]]; then
+    ln -s "$DIRECTORY/build.sh" build.sh
+  fi
+  if [[ ! -f "configure.sh" ]]; then
+    ln -s "$DIRECTORY/configure.sh" configure.sh
+  fi
+}
+
+parse_args() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -DD=*) DEPENDENCIES="${1#*=}" ;;
+      -DD)   DEPENDENCIES="$2"; shift ;;
+      -D=*)  DIRECTORY="${1#*=}" ;;
+      -D)    DIRECTORY="$2"; shift ;;
+      *)     CONFIG="$1" ;;
+    esac
+    shift
+  done
+  if [[ -z "$DEPENDENCIES" ]]; then
+    DEPENDENCIES="$ROOT/Dependencies"
+  fi
+}
+
+setup_dependencies() {
+  if [[ ! -d "$DEPENDENCIES" ]]; then
+    mkdir -p "$DEPENDENCIES" || return 1
+  fi
+  pushd "$DEPENDENCIES" > /dev/null
+  "$SCRIPT_DIR/setup.sh" || { popd > /dev/null; return 1; }
+  popd > /dev/null
+  if [[ "$DEPENDENCIES" != "$ROOT/Dependencies" ]]; then
+    if [[ -e "Dependencies" ]]; then
+      rm -rf Dependencies || return 1
+    fi
+    ln -s "$DEPENDENCIES" Dependencies || return 1
+  fi
+}
+
+md5hash() {
+  if command -v md5sum >/dev/null; then
+    md5sum | cut -d" " -f1
   else
-    ct="$((echo $directory/CMakeLists.txt; find $directory/Config -type f -name CMakeLists.txt -o -name dependencies*.cmake) | xargs $STAT | grep Modify | awk '{print $2 $3}' | sort -r | head -1)"
-    mt="$($STAT CMakeFiles/timestamp.txt | grep Modify | awk '{print $2 $3}')"
-    if [ "$ct" \> "$mt" ]; then
-      run_cmake=1
-    fi
+    md5 | cut -d" " -f4
   fi
-fi
-if [ "$run_cmake" = "1" ]; then
-  if [ ! -d "CMakeFiles" ]; then
-    mkdir CMakeFiles
+}
+
+check_hashes() {
+  if [[ ! -d "CMakeFiles" ]]; then
+    mkdir -p CMakeFiles || return 1
+    RUN_CMAKE=1
   fi
-  echo "timestamp" > "CMakeFiles/timestamp.txt"
-fi
-if [ -f "CMakeFiles/config.txt" ]; then
-  config_hash=$(cat "CMakeFiles/config.txt")
-  if [ "$config_hash" != "$config" ]; then
-    run_cmake=1
+  check_config
+  check_cmake_hash
+  if [[ -d "$DIRECTORY/Include" ]]; then
+    check_directory_hash "$DIRECTORY/Include" "CMakeFiles/hpp_hash.txt"
   fi
-else
-  run_cmake=1
-fi
-if [ "$run_cmake" = "1" ]; then
-  if [ ! -d "CMakeFiles" ]; then
-    mkdir CMakeFiles
+  if [[ -d "$DIRECTORY/Source" ]]; then
+    check_directory_hash "$DIRECTORY/Source" "CMakeFiles/cpp_hash.txt"
   fi
-  echo $config > "CMakeFiles/config.txt"
-fi
-if [ "$dependencies" != "$root/Dependencies" ] && [ ! -d Dependencies ]; then
-  rm -rf Dependencies
-  ln -s "$dependencies" Dependencies
-fi
-if [ -d "$directory/Include" ]; then
-  include_hash=$(find $directory/Include -name "*" | grep "^/" | md5sum | cut -d" " -f1)
-  if [ -f "CMakeFiles/hpp_hash.txt" ]; then
-    hpp_hash=$(cat "CMakeFiles/hpp_hash.txt")
-    if [ "$include_hash" != "$hpp_hash" ]; then
-      run_cmake=1
-    fi
-  else
-    run_cmake=1
-  fi
-  if [ "$run_cmake" = "1" ]; then
-    if [ ! -d "CMakeFiles" ]; then
-      mkdir CMakeFiles
-    fi
-    echo $include_hash > "CMakeFiles/hpp_hash.txt"
-  fi
-fi
-if [ -d "$directory/Source" ]; then
-  source_hash=$(find $directory/Source -name "*" | grep "^/" | md5sum | cut -d" " -f1)
-  if [ -f "CMakeFiles/cpp_hash.txt" ]; then
-    cpp_hash=$(cat "CMakeFiles/cpp_hash.txt")
-    if [ "$source_hash" != "$cpp_hash" ]; then
-      run_cmake=1
+}
+
+check_config() {
+  if [[ -f "CMakeFiles/config.txt" ]]; then
+    local cached_config
+    cached_config=$(cat "CMakeFiles/config.txt")
+    if [[ "$cached_config" != "$CONFIG" ]]; then
+      RUN_CMAKE=1
     fi
   else
-    run_cmake=1
+    RUN_CMAKE=1
   fi
-  if [ "$run_cmake" = "1" ]; then
-    if [ ! -d "CMakeFiles" ]; then
-      mkdir CMakeFiles
+  if [[ "$RUN_CMAKE" == "1" ]]; then
+    echo "$CONFIG" > "CMakeFiles/config.txt"
+  fi
+}
+
+check_cmake_hash() {
+  local temp_file="$ROOT/temp_$$.txt"
+  cat "$DIRECTORY/CMakeLists.txt" > "$temp_file"
+  if [[ -d "$DIRECTORY/Config" ]]; then
+    find "$DIRECTORY/Config" -name "*.cmake" -type f -exec cat {} + >>\
+      "$temp_file" 2>/dev/null || true
+    find "$DIRECTORY/Config" -name "CMakeLists.txt" -type f -exec cat {} + >>\
+      "$temp_file" 2>/dev/null || true
+  fi
+  check_file_hash "$temp_file" "CMakeFiles/cmake_hash.txt"
+}
+
+check_file_hash() {
+  local file="$1"
+  local hash_file="$2"
+  local current_hash
+  current_hash=$(md5hash < "$file")
+  rm -f "$file"
+  if [[ -f "$hash_file" ]]; then
+    local cached_hash
+    cached_hash=$(cat "$hash_file")
+    if [[ "$cached_hash" != "$current_hash" ]]; then
+      RUN_CMAKE=1
     fi
-    echo $source_hash > "CMakeFiles/cpp_hash.txt"
+  else
+    RUN_CMAKE=1
   fi
-fi
-if [ "$run_cmake" = "1" ]; then
-  cmake -S "$directory" -DCMAKE_BUILD_TYPE=$config -DD="$dependencies"
-fi
+  if [[ "$RUN_CMAKE" == "1" ]]; then
+    echo "$current_hash" > "$hash_file"
+  fi
+}
+
+check_directory_hash() {
+  local dir="$1"
+  local hash_file="$2"
+  local current_hash
+  current_hash=$(find "$dir" -type f | sort | md5hash)
+  if [[ -f "$hash_file" ]]; then
+    local cached_hash
+    cached_hash=$(cat "$hash_file")
+    if [[ "$cached_hash" != "$current_hash" ]]; then
+      RUN_CMAKE=1
+    fi
+  else
+    RUN_CMAKE=1
+  fi
+  if [[ "$RUN_CMAKE" == "1" ]]; then
+    echo "$current_hash" > "$hash_file"
+  fi
+}
+
+run_cmake() {
+  if [[ "$RUN_CMAKE" == "1" ]]; then
+    cmake -S "$DIRECTORY" -DCMAKE_BUILD_TYPE="$CONFIG" -DD="$DEPENDENCIES" ||
+      return 1
+  fi
+}
+
+run_version() {
+  if [[ -f "$DIRECTORY/version.sh" ]]; then
+    local dir_version
+    dir_version=$(cd -P "$DIRECTORY" && pwd -P)/version.sh
+    if [[ "$dir_version" != "$SCRIPT_DIR/version.sh" ]]; then
+      "$DIRECTORY/version.sh"
+    fi
+  fi
+}
+
+main "$@"
