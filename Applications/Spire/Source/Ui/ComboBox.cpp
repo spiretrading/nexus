@@ -450,6 +450,10 @@ void AnyComboBox::on_query(
     if(m_data->m_matches->get_size() > 0) {
       m_data->m_drop_down_list->hide();
     }
+    auto& list_view = m_data->m_drop_down_list->get_list_view();
+    for(auto i = 0; i < list_view.get_list()->get_size(); ++i) {
+      list_view.get_list_item(i)->hide();
+    }
     auto blocker =
       shared_connection_block(m_data->m_drop_down_current_connection);
     m_data->m_matches->transact([&] {
@@ -458,7 +462,6 @@ void AnyComboBox::on_query(
       }
       for(auto& item : selection) {
         m_data->m_matches->push(item);
-        auto& list_view = m_data->m_drop_down_list->get_list_view();
         auto list_item = list_view.get_list_item(
           list_view.get_list()->get_size() - 1);
         list_item->setFocusPolicy(Qt::NoFocus);
@@ -477,9 +480,6 @@ void AnyComboBox::on_query(
     } else if(m_data->m_focus_observer.get_state() !=
         FocusObserver::State::NONE && !m_data->m_drop_down_list->isVisible()) {
       m_data->m_empty_state->hide();
-      auto& list_view = m_data->m_drop_down_list->get_list_view();
-      list_view.setFocusProxy(nullptr);
-      list_view.setFocus();
       m_data->m_drop_down_list->show();
     }
   } else {
