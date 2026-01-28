@@ -32,8 +32,20 @@ resolve_paths() {
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      -DD=*) DEPENDENCIES="${1#*=}" ;;
-      -DD)   DEPENDENCIES="$2"; shift ;;
+      -DD=*)
+        DEPENDENCIES="${1#*=}"
+        if [[ -z "$DEPENDENCIES" ]]; then
+          echo "Error: -DD requires a path argument."
+          exit 1
+        fi
+        ;;
+      -DD)
+        if [[ -z "$2" || "$2" == -* ]]; then
+          echo "Error: -DD requires a path argument."
+          exit 1
+        fi
+        DEPENDENCIES="$2"; shift
+        ;;
       clean)
         clean_build "clean"
         exit 0
@@ -88,7 +100,7 @@ check_node_modules() {
   local current_hash cached_hash
   current_hash=$(md5hash < "$DIRECTORY/package.json")
   if [[ -f "mod_time.txt" ]]; then
-    cached_hash=$(cat "mod_time.txt")
+    cached_hash=$(< "mod_time.txt")
     if [[ "$cached_hash" != "$current_hash" ]]; then
       UPDATE_NODE=1
     fi
@@ -107,10 +119,10 @@ check_build() {
     xargs -0 cat | md5hash)
   source_hash+=$(md5hash < "$DIRECTORY/tsconfig.json")
   if [[ -f "$BEAM_PATH/mod_time.txt" ]]; then
-    source_hash+=$(cat "$BEAM_PATH/mod_time.txt")
+    source_hash+=$(< "$BEAM_PATH/mod_time.txt")
   fi
   if [[ -f ".build_hash.txt" ]]; then
-    cached_hash=$(cat ".build_hash.txt")
+    cached_hash=$(< ".build_hash.txt")
     if [[ "$cached_hash" != "$source_hash" ]]; then
       UPDATE_BUILD=1
     fi
@@ -138,7 +150,7 @@ run_build() {
       xargs -0 cat | md5hash)
     source_hash+=$(md5hash < "$DIRECTORY/tsconfig.json")
     if [[ -f "$BEAM_PATH/mod_time.txt" ]]; then
-      source_hash+=$(cat "$BEAM_PATH/mod_time.txt")
+      source_hash+=$(< "$BEAM_PATH/mod_time.txt")
     fi
     echo "$source_hash" > ".build_hash.txt"
   fi

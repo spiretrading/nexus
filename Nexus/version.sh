@@ -1,7 +1,6 @@
 #!/bin/bash
 set -o errexit
 set -o pipefail
-
 APP_NAME="$1"
 if [[ -z "$APP_NAME" ]]; then
   echo "Error: Application name required."

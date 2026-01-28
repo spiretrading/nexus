@@ -32,6 +32,17 @@ SET "IS_DEPENDENCY="
 SET "IS_DIRECTORY="
 :ParseArgsLoop
 SET "ARG=%~1"
+IF "!ARG!"=="" (
+  IF "!IS_DEPENDENCY!"=="1" (
+    ECHO Error: -DD requires a path argument.
+    EXIT /B 1
+  )
+  IF "!IS_DIRECTORY!"=="1" (
+    ECHO Error: -D requires a path argument.
+    EXIT /B 1
+  )
+  GOTO ParseArgsDone
+)
 IF "!IS_DEPENDENCY!"=="1" (
   SET "DEPENDENCIES=!ARG!"
   SET "IS_DEPENDENCY="
@@ -42,19 +53,28 @@ IF "!IS_DEPENDENCY!"=="1" (
   SET "IS_DIRECTORY="
   SHIFT
   GOTO ParseArgsLoop
-) ELSE IF NOT "!ARG!"=="" (
+) ELSE (
   IF "!ARG:~0,4!"=="-DD=" (
     SET "DEPENDENCIES=!ARG:~4!"
+    IF "!DEPENDENCIES!"=="" (
+      ECHO Error: -DD requires a path argument.
+      EXIT /B 1
+    )
   ) ELSE IF "!ARG!"=="-DD" (
     SET "IS_DEPENDENCY=1"
   ) ELSE IF "!ARG:~0,3!"=="-D=" (
     SET "DIRECTORY=!ARG:~3!"
+    IF "!DIRECTORY!"=="" (
+      ECHO Error: -D requires a path argument.
+      EXIT /B 1
+    )
   ) ELSE IF "!ARG!"=="-D" (
     SET "IS_DIRECTORY=1"
   )
   SHIFT
   GOTO ParseArgsLoop
 )
+:ParseArgsDone
 IF "!DEPENDENCIES!"=="" (
   SET "DEPENDENCIES=!ROOT!\Dependencies"
 )

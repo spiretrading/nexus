@@ -38,10 +38,34 @@ create_forwarding_scripts() {
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      -DD=*) DEPENDENCIES="${1#*=}" ;;
-      -DD)   DEPENDENCIES="$2"; shift ;;
-      -D=*)  DIRECTORY="${1#*=}" ;;
-      -D)    DIRECTORY="$2"; shift ;;
+      -DD=*)
+        DEPENDENCIES="${1#*=}"
+        if [[ -z "$DEPENDENCIES" ]]; then
+          echo "Error: -DD requires a path argument."
+          return 1
+        fi
+        ;;
+      -DD)
+        if [[ -z "$2" || "$2" == -* ]]; then
+          echo "Error: -DD requires a path argument."
+          return 1
+        fi
+        DEPENDENCIES="$2"; shift
+        ;;
+      -D=*)
+        DIRECTORY="${1#*=}"
+        if [[ -z "$DIRECTORY" ]]; then
+          echo "Error: -D requires a path argument."
+          return 1
+        fi
+        ;;
+      -D)
+        if [[ -z "$2" || "$2" == -* ]]; then
+          echo "Error: -D requires a path argument."
+          return 1
+        fi
+        DIRECTORY="$2"; shift
+        ;;
     esac
     shift
   done

@@ -42,10 +42,34 @@ create_forwarding_scripts() {
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      -DD=*) DEPENDENCIES="${1#*=}" ;;
-      -DD)   DEPENDENCIES="$2"; shift ;;
-      -D=*)  DIRECTORY="${1#*=}" ;;
-      -D)    DIRECTORY="$2"; shift ;;
+      -DD=*)
+        DEPENDENCIES="${1#*=}"
+        if [[ -z "$DEPENDENCIES" ]]; then
+          echo "Error: -DD requires a path argument."
+          return 1
+        fi
+        ;;
+      -DD)
+        if [[ -z "$2" || "$2" == -* ]]; then
+          echo "Error: -DD requires a path argument."
+          return 1
+        fi
+        DEPENDENCIES="$2"; shift
+        ;;
+      -D=*)
+        DIRECTORY="${1#*=}"
+        if [[ -z "$DIRECTORY" ]]; then
+          echo "Error: -D requires a path argument."
+          return 1
+        fi
+        ;;
+      -D)
+        if [[ -z "$2" || "$2" == -* ]]; then
+          echo "Error: -D requires a path argument."
+          return 1
+        fi
+        DIRECTORY="$2"; shift
+        ;;
       *)     CONFIG="$1" ;;
     esac
     shift
@@ -96,7 +120,7 @@ check_hashes() {
 check_config() {
   if [[ -f "CMakeFiles/config.txt" ]]; then
     local cached_config
-    cached_config=$(cat "CMakeFiles/config.txt")
+    cached_config=$(< "CMakeFiles/config.txt")
     if [[ "$cached_config" != "$CONFIG" ]]; then
       RUN_CMAKE=1
     fi
@@ -112,10 +136,11 @@ check_cmake_hash() {
   local temp_file="$ROOT/temp_$$.txt"
   cat "$DIRECTORY/CMakeLists.txt" > "$temp_file"
   if [[ -d "$DIRECTORY/Config" ]]; then
-    find "$DIRECTORY/Config" -name "*.cmake" -type f -exec cat {} + >>\
-      "$temp_file" 2>/dev/null || true
-    find "$DIRECTORY/Config" -name "CMakeLists.txt" -type f -exec cat {} + >>\
-      "$temp_file" 2>/dev/null || true
+    for f in "$DIRECTORY/Config"/*.cmake; do
+      [[ -f "$f" ]] && cat "$f" >> "$temp_file"
+    done
+    find "$DIRECTORY/Config" -name "CMakeLists.txt" -type f -print0 |
+      sort -z | xargs -0 cat >> "$temp_file" 2>/dev/null || true
   fi
   check_file_hash "$temp_file" "CMakeFiles/cmake_hash.txt"
 }
@@ -128,7 +153,7 @@ check_file_hash() {
   rm -f "$file"
   if [[ -f "$hash_file" ]]; then
     local cached_hash
-    cached_hash=$(cat "$hash_file")
+    cached_hash=$(< "$hash_file")
     if [[ "$cached_hash" != "$current_hash" ]]; then
       RUN_CMAKE=1
     fi
@@ -147,7 +172,7 @@ check_directory_hash() {
   current_hash=$(find "$dir" -type f | sort | md5hash)
   if [[ -f "$hash_file" ]]; then
     local cached_hash
-    cached_hash=$(cat "$hash_file")
+    cached_hash=$(< "$hash_file")
     if [[ "$cached_hash" != "$current_hash" ]]; then
       RUN_CMAKE=1
     fi

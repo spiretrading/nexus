@@ -35,10 +35,34 @@ resolve_paths() {
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      -DD=*) DEPENDENCIES="${1#*=}" ;;
-      -DD)   DEPENDENCIES="$2"; shift ;;
-      -D=*)  DIRECTORY="${1#*=}" ;;
-      -D)    DIRECTORY="$2"; shift ;;
+      -DD=*)
+        DEPENDENCIES="${1#*=}"
+        if [[ -z "$DEPENDENCIES" ]]; then
+          echo "Error: -DD requires a path argument."
+          exit 1
+        fi
+        ;;
+      -DD)
+        if [[ -z "$2" || "$2" == -* ]]; then
+          echo "Error: -DD requires a path argument."
+          exit 1
+        fi
+        DEPENDENCIES="$2"; shift
+        ;;
+      -D=*)
+        DIRECTORY="${1#*=}"
+        if [[ -z "$DIRECTORY" ]]; then
+          echo "Error: -D requires a path argument."
+          exit 1
+        fi
+        ;;
+      -D)
+        if [[ -z "$2" || "$2" == -* ]]; then
+          echo "Error: -D requires a path argument."
+          exit 1
+        fi
+        DIRECTORY="$2"; shift
+        ;;
       clean)
         clean_build "clean"
         exit 0
@@ -116,7 +140,7 @@ check_node_modules() {
   local current_hash stored_hash
   current_hash="$(md5hash "$DIRECTORY/package.json")"
   if [[ -f "mod_time.txt" ]]; then
-    stored_hash="$(cat "mod_time.txt")"
+    stored_hash="$(< "mod_time.txt")"
     if [[ "$stored_hash" != "$current_hash" ]]; then
       UPDATE_NODE=1
     fi
@@ -133,7 +157,7 @@ check_build() {
   local current_hash stored_hash
   current_hash="$(compute_source_hash)"
   if [[ -f ".build_hash.txt" ]]; then
-    stored_hash="$(cat ".build_hash.txt")"
+    stored_hash="$(< ".build_hash.txt")"
     if [[ "$current_hash" != "$stored_hash" ]]; then
       UPDATE_BUILD=1
     fi

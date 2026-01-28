@@ -12,11 +12,11 @@ main() {
   local config_lower="${CONFIG,,}"
   if [[ "$config_lower" == "clean" ]]; then
     clean_build "clean"
-    return $?
+    return "$?"
   fi
   if [[ "$config_lower" == "reset" ]]; then
     clean_build "reset"
-    return $?
+    return "$?"
   fi
   configure || return 1
   run_build
@@ -36,10 +36,34 @@ resolve_paths() {
 parse_args() {
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      -DD=*) DEPENDENCIES="${1#*=}" ;;
-      -DD)   DEPENDENCIES="$2"; shift ;;
-      -D=*)  DIRECTORY="${1#*=}" ;;
-      -D)    DIRECTORY="$2"; shift ;;
+      -DD=*)
+        DEPENDENCIES="${1#*=}"
+        if [[ -z "$DEPENDENCIES" ]]; then
+          echo "Error: -DD requires a path argument."
+          return 1
+        fi
+        ;;
+      -DD)
+        if [[ -z "$2" || "$2" == -* ]]; then
+          echo "Error: -DD requires a path argument."
+          return 1
+        fi
+        DEPENDENCIES="$2"; shift
+        ;;
+      -D=*)
+        DIRECTORY="${1#*=}"
+        if [[ -z "$DIRECTORY" ]]; then
+          echo "Error: -D requires a path argument."
+          return 1
+        fi
+        ;;
+      -D)
+        if [[ -z "$2" || "$2" == -* ]]; then
+          echo "Error: -D requires a path argument."
+          return 1
+        fi
+        DIRECTORY="$2"; shift
+        ;;
       *)     CONFIG="$1" ;;
     esac
     shift
@@ -60,7 +84,7 @@ clean_build() {
 configure() {
   if [[ -z "$CONFIG" ]]; then
     if [[ -f "CMakeFiles/config.txt" ]]; then
-      CONFIG=$(cat "CMakeFiles/config.txt")
+      CONFIG=$(< "CMakeFiles/config.txt")
     else
       CONFIG="Release"
     fi
@@ -86,8 +110,8 @@ configure() {
 run_build() {
   local jobs
   jobs=$(get_job_count)
-  cmake --build "$ROOT" --target install --config "$CONFIG" -- -j"$jobs" ||
-    return 1
+  cmake --build "$ROOT" --target install --config "$CONFIG" \
+    --parallel "$jobs" || return 1
   echo "$CONFIG" > "CMakeFiles/config.txt"
 }
 

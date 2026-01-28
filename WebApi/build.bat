@@ -26,14 +26,25 @@ SET "IS_DEPENDENCY="
 SET "CONFIG="
 :ParseArgsLoop
 SET "ARG=%~1"
+IF "!ARG!"=="" (
+  IF "!IS_DEPENDENCY!"=="1" (
+    ECHO Error: -DD requires a path argument.
+    EXIT /B 1
+  )
+  EXIT /B 0
+)
 IF "!IS_DEPENDENCY!"=="1" (
   SET "DEPENDENCIES=!ARG!"
   SET "IS_DEPENDENCY="
   SHIFT
   GOTO ParseArgsLoop
-) ELSE IF NOT "!ARG!"=="" (
+) ELSE (
   IF "!ARG:~0,4!"=="-DD=" (
     SET "DEPENDENCIES=!ARG:~4!"
+    IF "!DEPENDENCIES!"=="" (
+      ECHO Error: -DD requires a path argument.
+      EXIT /B 1
+    )
   ) ELSE IF "!ARG!"=="-DD" (
     SET "IS_DEPENDENCY=1"
   ) ELSE (
