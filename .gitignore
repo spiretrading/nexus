@@ -56,6 +56,8 @@ Applications/ReplayMarketDataFeedClient/Application/ReplayMarketDataFeedClient
 Applications/ReplayMarketDataFeedClient/ReplayMarketDataFeedClient
 Applications/RiskServer/Application/RiskServer
 Applications/RiskServer/RiskServer
+Applications/Scratch/Application/
+Applications/Scratch/Scratch
 Applications/SimulationMarketDataFeedClient/Application/SimulationMarketDataFeedClient
 Applications/SimulationMarketDataFeedClient/SimulationMarketDataFeedClient
 Applications/SimulationOrderExecutionServer/Application/SimulationOrderExecutionServer
@@ -74,13 +76,20 @@ Nexus/Config/Backtester/BacktesterTests
 Nexus/Config/ChartingService/ChartingServiceTests
 Nexus/Config/Compliance/ComplianceTests
 Nexus/Config/Definitions/DefinitionsTests
+Nexus/Config/DefinitionsService/DefinitionsServiceTests
 Nexus/Config/FeeHandling/FeeHandlingTests
+Nexus/Config/FixUtilities/FixUtilitiesTests
 Nexus/Config/InternalMatcher/InternalMatcherTests
 Nexus/Config/MarketDataService/MarketDataServiceTests
+Nexus/Config/MoldUdp64/MoldUdp64Tests
 Nexus/Config/OrderExecutionService/OrderExecutionServiceTests
 Nexus/Config/Parsers/ParsersTests
 Nexus/Config/Queries/QueriesTests
 Nexus/Config/RiskService/RiskServiceTests
+Nexus/Config/SimulationMatcher/SimulationMatcherTests
+Nexus/Config/SoupBinTcp/SoupBinTcpTests
+Nexus/Config/Stamp/StampTests
+Nexus/Config/TechnicalAnalysis/TechnicalAnalysisTests
 
 
 ## Ignore CMake files
