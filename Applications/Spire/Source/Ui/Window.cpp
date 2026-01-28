@@ -258,8 +258,9 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
           }
           rect.left += border_size.width();
           rect.right -= border_size.width();
-          if(!is_windows11_or_newer() && m_is_bottom_border_mismatched &&
-              *m_is_bottom_border_mismatched) {
+          if(!is_windows11_or_newer() && (!m_is_resizable ||
+              m_is_bottom_border_mismatched &&
+              *m_is_bottom_border_mismatched)) {
             rect.bottom -= 1;
           } else {
             rect.bottom -= border_size.height();
