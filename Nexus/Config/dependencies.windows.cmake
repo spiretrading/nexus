@@ -55,11 +55,11 @@ set(QT_PCRE_LIBRARY_OPTIMIZED_PATH "${QT_LIBRARY_OPTIMIZED_PATH}/qtpcre2.lib")
 set(QT_PNG_LIBRARY_DEBUG_PATH "${QT_LIBRARY_DEBUG_PATH}/qtlibpngd.lib")
 set(QT_PNG_LIBRARY_OPTIMIZED_PATH "${QT_LIBRARY_OPTIMIZED_PATH}/qtlibpng.lib")
 set(QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH
-  "${QT_ROOT}/qtsvg/plugins/iconengines/qsvgicond.lib")
+  "${QT_LIBRARY_DEBUG_PATH}/../plugins/iconengines/qsvgicond.lib")
 set(QT_SVG_ICON_PLUGIN_LIBRARY_OPTIMIZED_PATH
-  "${QT_ROOT}/qtsvg/plugins/iconengines/qsvgicon.lib")
-set(QT_SVG_LIBRARY_DEBUG_PATH "${QT_ROOT}/qtsvg/lib/Qt5Svgd.lib")
-set(QT_SVG_LIBRARY_OPTIMIZED_PATH "${QT_ROOT}/qtsvg/lib/Qt5Svg.lib")
+  "${QT_LIBRARY_OPTIMIZED_PATH}/../plugins/iconengines/qsvgicon.lib")
+set(QT_SVG_LIBRARY_DEBUG_PATH "${QT_LIBRARY_DEBUG_PATH}/Qt5Svgd.lib")
+set(QT_SVG_LIBRARY_OPTIMIZED_PATH "${QT_LIBRARY_OPTIMIZED_PATH}/Qt5Svg.lib")
 set(QT_THEME_LIBRARY_DEBUG_PATH "${QT_LIBRARY_DEBUG_PATH}/Qt5ThemeSupportd.lib")
 set(QT_THEME_LIBRARY_OPTIMIZED_PATH
   "${QT_LIBRARY_OPTIMIZED_PATH}/Qt5ThemeSupport.lib")

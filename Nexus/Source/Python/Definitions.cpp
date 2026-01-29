@@ -346,10 +346,6 @@ void Nexus::Python::export_money(module& module) {
     def(self / Quantity()).
     def(self / double()).
     def(self / int());
-  implicitly_convertible<std::int32_t, Money>();
-  implicitly_convertible<std::int64_t, Money>();
-  implicitly_convertible<double, Money>();
-  implicitly_convertible<Quantity, Money>();
   module.def("abs", overload_cast<Money>(&abs));
   module.def("floor_to", overload_cast<Money, Money>(&floor_to));
   module.def("ceil_to", overload_cast<Money, Money>(&ceil_to));
@@ -487,6 +483,9 @@ void Nexus::Python::export_region(module& module) {
     def_property_readonly("venues", &Region::get_venues).
     def_property_readonly("securities", &Region::get_securities).
     def("contains", &Region::contains);
+  implicitly_convertible<CountryCode, Region>();
+  implicitly_convertible<Venue, Region>();
+  implicitly_convertible<Security, Region>();
 }
 
 void Nexus::Python::export_region_map(module& module) {

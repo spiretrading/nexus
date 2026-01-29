@@ -380,6 +380,7 @@ struct EditableTableView::ItemBuilder {
   EditableTableView* m_view;
   TableViewItemBuilder m_builder;
   RecycledTableViewItemBuilder<EditableItemBuilder> m_editable_builder;
+  std::unordered_map<EditableBox*, scoped_connection> m_read_only_connections;
 
   ItemBuilder(EditableTableView* view, TableViewItemBuilder builder)
     : m_view(view),
@@ -397,17 +398,26 @@ struct EditableTableView::ItemBuilder {
         std::static_pointer_cast<EditableTableModel>(
           m_view->get_table())->m_source, any_cast<int>(table->at(row, 0)),
           column - 1));
-      item->connect_read_only_signal([=] (auto read_only) {
-        if(read_only) {
-          m_view->setFocus();
-        }
-      });
+      m_read_only_connections[item] =
+        item->connect_read_only_signal([=] (auto read_only) {
+          if(read_only) {
+            m_view->setFocus();
+          } else {
+            auto& scroll_box = m_view->get_scroll_box();
+            auto item_geometry =
+              QRect(item->mapTo(&scroll_box, QPoint(0, 0)), item->size());
+            if(!scroll_box.rect().contains(item_geometry)) {
+              scroll_box.scroll_to(*item);
+            }
+          }
+        });
       return item;
     }
   }
 
   void unmount(QWidget* widget) {
     if(auto box = dynamic_cast<EditableBox*>(widget)) {
+      m_read_only_connections.erase(box);
       m_builder.unmount(widget);
     } else {
       m_editable_builder.unmount(widget);
@@ -437,7 +447,24 @@ EditableTableView::EditableTableView(
     std::move(current), header->get_size() + 2));
   get_header().get_item(0)->set_is_resizeable(false);
   get_header().get_widths()->set(0, scale_width(26));
+  get_scroll_box().installEventFilter(this);
   set_style(*this, TABLE_VIEW_STYLE());
+}
+
+bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
+  if(watched == &get_scroll_box() && event->type() == QEvent::Wheel) {
+    if(auto current = get_body().get_current()->get()) {
+      if(current->m_column != 0 &&
+          current->m_column != get_table()->get_column_size() - 1) {
+        if(auto item = get_body().find_item(*current)) {
+          if(!static_cast<EditableBox*>(&item->get_body())->is_read_only()) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return TableView::eventFilter(watched, event);
 }
 
 void EditableTableView::keyPressEvent(QKeyEvent* event) {

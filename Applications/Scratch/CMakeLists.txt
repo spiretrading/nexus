@@ -29,11 +29,14 @@ if(NOT configure_result EQUAL 0)
 endif()
 include(../../Nexus/Config/dependencies.cmake)
 include_directories(${NEXUS_INCLUDE_PATH})
+include_directories(SYSTEM ${ASPEN_INCLUDE_PATH})
 include_directories(SYSTEM ${BEAM_INCLUDE_PATH})
 include_directories(SYSTEM ${BOOST_INCLUDE_PATH})
 include_directories(SYSTEM ${CRYPTOPP_INCLUDE_PATH})
+include_directories(SYSTEM ${HTRIE_INCLUDE_PATH})
 include_directories(SYSTEM ${MYSQL_INCLUDE_PATH})
 include_directories(SYSTEM ${OPEN_SSL_INCLUDE_PATH})
+include_directories(SYSTEM ${SQLITE_INCLUDE_PATH})
 include_directories(SYSTEM ${TCLAP_INCLUDE_PATH})
 include_directories(SYSTEM ${VIPER_INCLUDE_PATH})
 include_directories(SYSTEM ${YAML_INCLUDE_PATH})
@@ -72,6 +75,8 @@ target_link_libraries(Scratch
   optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
   optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
+  debug ${SQLITE_LIBRARY_DEBUG_PATH}
+  optimized ${SQLITE_LIBRARY_OPTIMIZED_PATH}
   debug ${YAML_LIBRARY_DEBUG_PATH}
   optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}

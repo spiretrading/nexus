@@ -1,6 +1,15 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
-SET ROOT=%cd%
+SET "DIRECTORY=%~dp0"
+SET "ROOT=%cd%"
+CALL :CreateForwardingScripts
+CALL :ParseArgs %*
+CALL :SetupDependencies || EXIT /B 1
+CALL :CreateSymlinks || EXIT /B 1
+ENDLOCAL
+EXIT /B 0
+
+:CreateForwardingScripts
 IF NOT EXIST build.bat (
   ECHO @ECHO OFF > build.bat
   ECHO CALL "%~dp0build.bat" %%* >> build.bat
@@ -9,39 +18,60 @@ IF NOT EXIST configure.bat (
   ECHO @ECHO OFF > configure.bat
   ECHO CALL "%~dp0configure.bat" %%* >> configure.bat
 )
-SET DIRECTORY=%~dp0
-:begin_args
-SET ARG=%~1
-IF "!IS_DEPENDENCY!" == "1" (
-  SET DEPENDENCIES=!ARG!
-  SET IS_DEPENDENCY=
+EXIT /B 0
+
+:ParseArgs
+SET "DEPENDENCIES="
+SET "IS_DEPENDENCY="
+:ParseArgsLoop
+SET "ARG=%~1"
+IF "!ARG!"=="" (
+  IF "!IS_DEPENDENCY!"=="1" (
+    ECHO Error: -DD requires a path argument.
+    EXIT /B 1
+  )
+  EXIT /B 0
+)
+IF "!IS_DEPENDENCY!"=="1" (
+  SET "DEPENDENCIES=!ARG!"
+  SET "IS_DEPENDENCY="
   SHIFT
-  GOTO begin_args
-) ELSE IF NOT "!ARG!" == "" (
-  IF "!ARG:~0,3!" == "-DD" (
-    SET IS_DEPENDENCY=1
+  GOTO ParseArgsLoop
+) ELSE (
+  IF "!ARG:~0,4!"=="-DD=" (
+    SET "DEPENDENCIES=!ARG:~4!"
+    IF "!DEPENDENCIES!"=="" (
+      ECHO Error: -DD requires a path argument.
+      EXIT /B 1
+    )
+  ) ELSE IF "!ARG!"=="-DD" (
+    SET "IS_DEPENDENCY=1"
   )
   SHIFT
-  GOTO begin_args
+  GOTO ParseArgsLoop
 )
-IF "!DEPENDENCIES!" == "" (
-  SET DEPENDENCIES=!ROOT!\Dependencies
+EXIT /B 0
+
+:SetupDependencies
+IF "!DEPENDENCIES!"=="" (
+  SET "DEPENDENCIES=!ROOT!\Dependencies"
 )
 IF NOT EXIST "!DEPENDENCIES!" (
-  MD "!DEPENDENCIES!"
+  MD "!DEPENDENCIES!" || EXIT /B 1
 )
-PUSHD "!DEPENDENCIES!"
-CALL "!DIRECTORY!setup.bat"
+PUSHD "!DEPENDENCIES!" || EXIT /B 1
+CALL "!DIRECTORY!setup.bat" || (POPD & EXIT /B 1)
 POPD
-IF NOT "!DEPENDENCIES!" == "!ROOT!\Dependencies" (
+EXIT /B 0
+
+:CreateSymlinks
+IF NOT "!DEPENDENCIES!"=="!ROOT!\Dependencies" (
   IF NOT EXIST Dependencies (
-    mklink /j Dependencies "!DEPENDENCIES!" > NUL
+    mklink /j Dependencies "!DEPENDENCIES!" >NUL || EXIT /B 1
   )
 )
-IF NOT "!DIRECTORY!" == "!ROOT!\" (
-  IF EXIST source (
-    RMDIR source /S /Q
-  )
-  mklink /j source "!DIRECTORY!source" >NUL
+IF NOT "!DIRECTORY!"=="!ROOT!\" (
+  RD /S /Q source 2>NUL
+  mklink /j source "!DIRECTORY!source" >NUL || EXIT /B 1
 )
-ENDLOCAL
+EXIT /B 0

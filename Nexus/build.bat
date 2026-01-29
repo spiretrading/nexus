@@ -1,49 +1,114 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
-SET DIRECTORY=%~dp0
-SET ROOT=%cd%
-:begin_args
-SET ARG=%~1
-IF "!IS_DEPENDENCY!" == "1" (
-  SET DEPENDENCIES=!ARG!
-  SET IS_DEPENDENCY=
-  SHIFT
-  GOTO begin_args
-) ELSE IF NOT "!ARG!" == "" (
-  IF "!ARG:~0,3!" == "-DD" (
-    SET IS_DEPENDENCY=1
-  ) ELSE (
-    SET CONFIG=!ARG!
-  )
-  SHIFT
-  GOTO begin_args
+SET "DIRECTORY=%~dp0"
+SET "ROOT=%cd%"
+CALL :ParseArgs %*
+IF /I "!CONFIG!"=="clean" (
+  CALL :CleanBuild "clean"
+  EXIT /B !ERRORLEVEL!
 )
-IF "!CONFIG!" == "clean" (
-  git clean -ffxd -e *Dependencies*
-  IF EXIST Dependencies\cache_files\nexus.txt (
-    DEL Dependencies\cache_files\nexus.txt
-  )
-) ELSE IF "!CONFIG!" == "reset" (
-  git clean -ffxd
-  IF EXIST Dependencies\cache_files\nexus.txt (
-    DEL Dependencies\cache_files\nexus.txt
-  )
-) ELSE (
-  IF "!CONFIG!" == "" (
-    IF EXIST CMakeFiles\config.txt (
-      FOR /F %%i IN ('TYPE CMakeFiles\config.txt') DO (
-        SET CONFIG=%%i
-      )
-    ) ELSE (
-      SET CONFIG=Release
-    )
-  )
-  IF NOT "!DEPENDENCIES!" == "" (
-    CALL "!DIRECTORY!configure.bat" -DD="!DEPENDENCIES!"
-  ) ELSE (
-    CALL "!DIRECTORY!configure.bat"
-  )
-  cmake --build "!ROOT!" --target INSTALL --config "!CONFIG!"
-  echo !CONFIG! > CMakeFiles\config.txt
+IF /I "!CONFIG!"=="reset" (
+  CALL :CleanBuild "reset"
+  EXIT /B !ERRORLEVEL!
 )
+CALL :Configure || EXIT /B 1
+CALL :RunBuild
+EXIT /B !ERRORLEVEL!
 ENDLOCAL
+
+:ParseArgs
+SET "DEPENDENCIES="
+SET "IS_DEPENDENCY="
+SET "IS_DIRECTORY="
+SET "CONFIG="
+:ParseArgsLoop
+SET "ARG=%~1"
+IF "!ARG!"=="" (
+  IF "!IS_DEPENDENCY!"=="1" (
+    ECHO Error: -DD requires a path argument.
+    EXIT /B 1
+  )
+  IF "!IS_DIRECTORY!"=="1" (
+    ECHO Error: -D requires a path argument.
+    EXIT /B 1
+  )
+  EXIT /B 0
+)
+IF "!IS_DEPENDENCY!"=="1" (
+  SET "DEPENDENCIES=!ARG!"
+  SET "IS_DEPENDENCY="
+  SHIFT
+  GOTO ParseArgsLoop
+) ELSE IF "!IS_DIRECTORY!"=="1" (
+  SET "DIRECTORY=!ARG!"
+  SET "IS_DIRECTORY="
+  SHIFT
+  GOTO ParseArgsLoop
+) ELSE (
+  IF "!ARG:~0,4!"=="-DD=" (
+    SET "DEPENDENCIES=!ARG:~4!"
+    IF "!DEPENDENCIES!"=="" (
+      ECHO Error: -DD requires a path argument.
+      EXIT /B 1
+    )
+  ) ELSE IF "!ARG!"=="-DD" (
+    SET "IS_DEPENDENCY=1"
+  ) ELSE IF "!ARG:~0,3!"=="-D=" (
+    SET "DIRECTORY=!ARG:~3!"
+    IF "!DIRECTORY!"=="" (
+      ECHO Error: -D requires a path argument.
+      EXIT /B 1
+    )
+  ) ELSE IF "!ARG!"=="-D" (
+    SET "IS_DIRECTORY=1"
+  ) ELSE (
+    SET "CONFIG=!ARG!"
+  )
+  SHIFT
+  GOTO ParseArgsLoop
+)
+EXIT /B 0
+
+:CleanBuild
+SET "CLEAN_ERROR=0"
+IF "%~1"=="reset" (
+  RD /S /Q Dependencies 2>NUL
+  git clean -ffxd || SET "CLEAN_ERROR=1"
+) ELSE (
+  git clean -ffxd -e "*Dependencies*" || SET "CLEAN_ERROR=1"
+  DEL "Dependencies\cache_files\nexus.txt" >NUL 2>&1
+)
+EXIT /B !CLEAN_ERROR!
+
+:Configure
+IF "!CONFIG!"=="" (
+  IF EXIST "CMakeFiles\config.txt" (
+    SET /P CONFIG=<"CMakeFiles\config.txt"
+  ) ELSE (
+    SET "CONFIG=Release"
+  )
+)
+IF /I "!CONFIG!"=="release" (
+  SET "CONFIG=Release"
+) ELSE IF /I "!CONFIG!"=="debug" (
+  SET "CONFIG=Debug"
+) ELSE IF /I "!CONFIG!"=="relwithdebinfo" (
+  SET "CONFIG=RelWithDebInfo"
+) ELSE IF /I "!CONFIG!"=="minsizerel" (
+  SET "CONFIG=MinSizeRel"
+) ELSE (
+  ECHO Error: Invalid configuration "!CONFIG!".
+  EXIT /B 1
+)
+IF NOT "!DEPENDENCIES!"=="" (
+  CALL "!DIRECTORY!configure.bat" "!CONFIG!" -DD="!DEPENDENCIES!"
+) ELSE (
+  CALL "!DIRECTORY!configure.bat" "!CONFIG!"
+)
+EXIT /B !ERRORLEVEL!
+
+:RunBuild
+cmake --build "!ROOT!" --target INSTALL --config "!CONFIG!" --parallel ^
+  || EXIT /B 1
+>"CMakeFiles\config.txt" ECHO !CONFIG!
+EXIT /B 0

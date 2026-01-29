@@ -35,6 +35,7 @@ namespace Styles {
         QWidget* parent = nullptr);
 
     protected:
+      bool eventFilter(QObject* watched, QEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
 
     private:

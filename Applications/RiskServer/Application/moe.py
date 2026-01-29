@@ -19,10 +19,10 @@ def parse_positions(file_path, currencies):
     reader = csv.DictReader(csvfile)
     for row in reader:
       position = nexus.Position()
-      position.key = nexus.Position.Key(nexus.parse_security(row['Security']),
-        currencies.from_code(row['Currency']).id)
-      position.quantity = nexus.parse_quantity(row['Open Quantity'])
-      position.cost_basis = nexus.parse_money(row['Cost Basis'])
+      position.security = nexus.parse_security(row['Security'])
+      position.currency = currencies.from_code(row['Currency']).id
+      position.quantity = nexus.Quantity.parse(row['Open Quantity'])
+      position.cost_basis = nexus.Money.parse(row['Cost Basis'])
       if row['Side'] == 'Short':
         position.quantity = -position.quantity
         position.cost_basis = -position.cost_basis
@@ -43,9 +43,8 @@ def moe(service_clients, position, destination, mode):
     side = nexus.opposite(side)
   price = abs(nexus.average_price(position.position))
   fields = nexus.make_limit_order_fields(
-    directory_entry, position.position.key.index,
-    position.position.key.currency, side, destination,
-    abs(position.position.quantity), price)
+    directory_entry, position.position.security, position.position.currency,
+    side, destination, abs(position.position.quantity), price)
   service_clients.order_execution_client.submit(fields)
 
 def report_yaml_error(error):
@@ -110,7 +109,7 @@ def main():
     service_clients.definitions_client.load_destination_database()
   destination = destinations.manual_order_entry_destination.id
   for position in positions:
-    if region.contains(nexus.Region(position.position.key.index)):
+    if region.contains(position.position.security):
       if args.account:
         if position.account == args.account:
           moe(service_clients, position, destination, args.mode)
