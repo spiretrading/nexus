@@ -1,33 +1,100 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
-SET ROOT=%cd%
-CALL "%~dp0..\..\..\WebApi\setup.bat"
-SET DALI_COMMIT="2c305bb47a518b870bf5cc27697bd27ccb9a848c"
-IF NOT EXIST dali (
-  git clone https://www.github.com/spiretrading/dali
-  IF !ERRORLEVEL! EQU 0 (
-    PUSHD dali
-    git checkout "!DALI_COMMIT!"
-    POPD
-  ) ELSE (
-    RD /S /Q dali
-    SET EXIT_STATUS=1
-  )
+SET "ROOT=%cd%"
+SET "DIRECTORY=%~dp0"
+CALL "!DIRECTORY!..\..\..\WebApi\setup.bat" || EXIT /B 1
+CALL :CheckCache "nexus_webapp"
+IF ERRORLEVEL 1 EXIT /B 0
+CALL :AddRepo "dali" ^
+  "https://www.github.com/spiretrading/dali" ^
+  "2c305bb47a518b870bf5cc27697bd27ccb9a848c"
+CALL :InstallRepos || EXIT /B 1
+CALL :ConfigureWebApi || EXIT /B 1
+CALL :Commit
+EXIT /B !ERRORLEVEL!
+ENDLOCAL
+
+:CheckCache
+SET "CACHE_NAME=%~1"
+SET "SETUP_HASH="
+FOR /F "skip=1" %%H IN ('certutil -hashfile "%~dp0setup.bat" SHA256') DO (
+  IF NOT DEFINED SETUP_HASH SET "SETUP_HASH=%%H"
 )
-IF EXIST dali (
-  PUSHD dali
-  git merge-base --is-ancestor "!DALI_COMMIT!" HEAD
-  IF !ERRORLEVEL! NEQ 0 (
+IF EXIST "cache_files\!CACHE_NAME!.txt" (
+  SET /P CACHED_HASH=<"cache_files\!CACHE_NAME!.txt"
+  IF "!SETUP_HASH!"=="!CACHED_HASH!" EXIT /B 1
+)
+EXIT /B 0
+
+:Commit
+IF NOT EXIST cache_files (
+  MD cache_files || EXIT /B 1
+)
+>"cache_files\!CACHE_NAME!.txt" ECHO !SETUP_HASH!
+EXIT /B 0
+
+:ConfigureWebApi
+IF EXIST WebApi EXIT /B 0
+MD WebApi || EXIT /B 1
+PUSHD WebApi
+CALL "!DIRECTORY!..\..\..\WebApi\configure.bat" -DD="!ROOT!" || (
+  POPD & EXIT /B 1
+)
+POPD
+EXIT /B 0
+
+:AddRepo
+IF NOT DEFINED NEXT_REPO_INDEX SET "NEXT_REPO_INDEX=0"
+SET "REPOS[%NEXT_REPO_INDEX%].NAME=%~1"
+SET "REPOS[%NEXT_REPO_INDEX%].URL=%~2"
+SET "REPOS[%NEXT_REPO_INDEX%].COMMIT=%~3"
+SET "REPOS[%NEXT_REPO_INDEX%].BUILD=%~4"
+SET /A NEXT_REPO_INDEX+=1
+EXIT /B 0
+
+:InstallRepos
+SET "I=0"
+:InstallReposLoop
+IF NOT DEFINED REPOS[%I%].NAME EXIT /B 0
+CALL :CloneOrUpdateRepo "!REPOS[%I%].NAME!" "!REPOS[%I%].URL!" ^
+  "!REPOS[%I%].COMMIT!" "!REPOS[%I%].BUILD!" || EXIT /B 1
+SET /A I+=1
+GOTO InstallReposLoop
+
+:CloneOrUpdateRepo
+SET "REPO_NAME=%~1"
+SET "REPO_URL=%~2"
+SET "REPO_COMMIT=%~3"
+SET "BUILD_LABEL=%~4"
+SET "NEEDS_BUILD=0"
+IF NOT EXIST "!REPO_NAME!" (
+  git clone "!REPO_URL!" "!REPO_NAME!"
+  IF ERRORLEVEL 1 (
+    RD /S /Q "!REPO_NAME!" >NUL 2>NUL
+    EXIT /B 1
+  )
+  PUSHD "!REPO_NAME!"
+  git checkout "!REPO_COMMIT!"
+  POPD
+  SET "NEEDS_BUILD=1"
+) ELSE (
+  PUSHD "!REPO_NAME!"
+  git merge-base --is-ancestor "!REPO_COMMIT!" HEAD
+  IF ERRORLEVEL 1 (
     git checkout master
     git pull
-    git checkout "!DALI_COMMIT!"
+    git checkout "!REPO_COMMIT!"
+    SET "NEEDS_BUILD=1"
   )
   POPD
 )
-IF NOT EXIST WebApi (
-  MD WebApi
-  PUSHD WebApi
-  CALL "%~dp0..\..\..\WebApi\configure.bat" -DD="%ROOT%"
-  POPD
+IF "!NEEDS_BUILD!"=="1" (
+  IF DEFINED BUILD_LABEL (
+    PUSHD "!REPO_NAME!"
+    CALL !BUILD_LABEL!
+    SET "BUILD_RESULT=!ERRORLEVEL!"
+    POPD
+    IF NOT "!BUILD_RESULT!"=="0" EXIT /B !BUILD_RESULT!
+  )
 )
-ENDLOCAL
+EXIT /B 0

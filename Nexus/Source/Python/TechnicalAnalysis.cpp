@@ -28,12 +28,14 @@ void Nexus::Python::export_standard_security_queries(module& module) {
       return load_open(client, security, date, venues, time_zones);
     }, call_guard<GilRelease>());
   module.def("query_open",
-    [] (std::shared_ptr<MarketDataClient> client, const Security& security,
+    [] (SharedObject shared_client, const Security& security,
         ptime date, const VenueDatabase& venues, const tz_database& time_zones,
         ScopedQueueWriter<TimeAndSale> queue) {
-      return spawn([=, queue = std::move(queue)] mutable {
-        auto query = RoutineHandler(query_open(
-          *client, security, date, venues, time_zones, std::move(queue)));
+      auto& client = shared_client->cast<MarketDataClient&>();
+      return spawn([=, &client, shared_client = std::move(shared_client),
+          queue = std::move(queue)] mutable {
+        auto query = RoutineHandler(query_open(client, security, date, venues,
+          time_zones, std::move(queue)));
         query.wait();
       });
     });
