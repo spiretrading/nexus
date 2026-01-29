@@ -360,7 +360,7 @@ void AnyComboBox::submit(const QString& query, bool is_passive) {
       shared_connection_block(m_data->m_current_connection);
     m_current->set(value);
   }
-  m_data->m_last_completion = query;
+  m_data->m_last_completion.clear();
   m_data->m_prefix = query;
   m_data->m_completion.clear();
   m_data->m_submission = value;
@@ -450,6 +450,10 @@ void AnyComboBox::on_query(
     if(m_data->m_matches->get_size() > 0) {
       m_data->m_drop_down_list->hide();
     }
+    auto& list_view = m_data->m_drop_down_list->get_list_view();
+    for(auto i = 0; i < list_view.get_list()->get_size(); ++i) {
+      list_view.get_list_item(i)->hide();
+    }
     auto blocker =
       shared_connection_block(m_data->m_drop_down_current_connection);
     m_data->m_matches->transact([&] {
@@ -458,7 +462,6 @@ void AnyComboBox::on_query(
       }
       for(auto& item : selection) {
         m_data->m_matches->push(item);
-        auto& list_view = m_data->m_drop_down_list->get_list_view();
         auto list_item = list_view.get_list_item(
           list_view.get_list()->get_size() - 1);
         list_item->setFocusPolicy(Qt::NoFocus);
@@ -518,6 +521,7 @@ void AnyComboBox::on_drop_down_submit(const std::any& submission) {
   }
   m_data->m_submission = submission;
   m_data->m_submission_text = text;
+  m_data->m_last_completion.clear();
   m_data->m_drop_down_list->hide();
   auto input_blocker = shared_connection_block(m_data->m_input_connection);
   m_data->m_submit_signal(submission);

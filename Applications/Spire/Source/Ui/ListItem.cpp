@@ -109,6 +109,9 @@ void ListItem::mount(QWidget& body) {
   m_click_observer.emplace(*this);
   m_click_observer->connect_click_signal(m_submit_signal);
   m_box.emplace(&body, Box::Fit::BOTH);
+  auto size_policy = m_box->sizePolicy();
+  size_policy.setRetainSizeWhenHidden(true);
+  m_box->setSizePolicy(size_policy);
   body.setAttribute(Qt::WA_DontShowOnScreen, false);
   setFocusProxy(&*m_box);
   setFocusPolicy(focusPolicy());

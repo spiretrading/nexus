@@ -1,12 +1,3 @@
 @ECHO OFF
-SETLOCAL
-IF NOT EXIST Version.hpp (
-  COPY NUL Version.hpp > NUL
-)
-FOR /f "usebackq tokens=*" %%a IN (`git --git-dir=%~dp0..\..\.git rev-list --count --first-parent HEAD`) DO SET VERSION=%%a
-findstr "%VERSION%" Version.hpp > NUL
-IF NOT "%ERRORLEVEL%" == "0" (
-  ECHO #define MARKET_DATA_RELAY_SERVER_VERSION "%VERSION%"> Version.hpp
-)
-EXIT /B 0
-ENDLOCAL
+CALL "%~dp0..\..\Nexus\version.bat" MARKET_DATA_RELAY_SERVER
+EXIT /B %ERRORLEVEL%

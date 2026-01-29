@@ -1,51 +1,138 @@
 #!/bin/bash
 set -o errexit
 set -o pipefail
-source="${BASH_SOURCE[0]}"
-while [ -h "$source" ]; do
-  dir="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd -P)"
-  source="$(readlink "$source")"
-  [[ $source != /* ]] && source="$dir/$source"
-done
-directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd -P)"
-root=$(pwd -P)
-for i in "$@"; do
-  case $i in
-    -DD=*)
-      dependencies="${i#*=}"
-      shift
-      ;;
+DIRECTORY=""
+ROOT=""
+DEPENDENCIES=""
+CONFIG=""
+
+main() {
+  resolve_paths
+  parse_args "$@"
+  local config_lower="${CONFIG,,}"
+  if [[ "$config_lower" == "clean" ]]; then
+    clean_build "clean"
+    return "$?"
+  fi
+  if [[ "$config_lower" == "reset" ]]; then
+    clean_build "reset"
+    return "$?"
+  fi
+  configure || return 1
+  run_build
+}
+
+resolve_paths() {
+  local source="${BASH_SOURCE[0]}"
+  while [[ -h "$source" ]]; do
+    local dir="$(cd -P "$(dirname "$source")" >/dev/null && pwd -P)"
+    source="$(readlink "$source")"
+    [[ $source != /* ]] && source="$dir/$source"
+  done
+  DIRECTORY="$(cd -P "$(dirname "$source")" >/dev/null && pwd -P)"
+  ROOT="$(pwd -P)"
+}
+
+parse_args() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -DD=*)
+        DEPENDENCIES="${1#*=}"
+        if [[ -z "$DEPENDENCIES" ]]; then
+          echo "Error: -DD requires a path argument."
+          return 1
+        fi
+        ;;
+      -DD)
+        if [[ -z "$2" || "$2" == -* ]]; then
+          echo "Error: -DD requires a path argument."
+          return 1
+        fi
+        DEPENDENCIES="$2"; shift
+        ;;
+      -D=*)
+        DIRECTORY="${1#*=}"
+        if [[ -z "$DIRECTORY" ]]; then
+          echo "Error: -D requires a path argument."
+          return 1
+        fi
+        ;;
+      -D)
+        if [[ -z "$2" || "$2" == -* ]]; then
+          echo "Error: -D requires a path argument."
+          return 1
+        fi
+        DIRECTORY="$2"; shift
+        ;;
+      *)     CONFIG="$1" ;;
+    esac
+    shift
+  done
+}
+
+clean_build() {
+  local mode="$1"
+  if [[ "$mode" == "reset" ]]; then
+    rm -rf Dependencies
+    git clean -ffxd
+  else
+    git clean -ffxd -e "*Dependencies*"
+    rm -f "Dependencies/cache_files/nexus.txt"
+  fi
+}
+
+configure() {
+  if [[ -z "$CONFIG" ]]; then
+    if [[ -f "CMakeFiles/config.txt" ]]; then
+      CONFIG=$(< "CMakeFiles/config.txt")
+    else
+      CONFIG="Release"
+    fi
+  fi
+  local config_lower="${CONFIG,,}"
+  case "$config_lower" in
+    release)        CONFIG="Release" ;;
+    debug)          CONFIG="Debug" ;;
+    relwithdebinfo) CONFIG="RelWithDebInfo" ;;
+    minsizerel)     CONFIG="MinSizeRel" ;;
     *)
-      config="$i"
-      shift
+      echo "Error: Invalid configuration \"$CONFIG\"."
+      return 1
       ;;
   esac
-done
-if [ "$config" = "" ]; then
-  if [ -f "CMakeFiles/config.txt" ]; then
-    config=$(cat CMakeFiles/config.txt)
+  if [[ -n "$DEPENDENCIES" ]]; then
+    "$DIRECTORY/configure.sh" "$CONFIG" -DD="$DEPENDENCIES"
   else
-    config="Release"
+    "$DIRECTORY/configure.sh" "$CONFIG"
   fi
-fi
-if [ "$config" = "clean" ]; then
-  git clean -ffxd -e *Dependencies*
-  if [ -f "Dependencies/cache_files/nexus.txt" ]; then
-    rm "Dependencies/cache_files/nexus.txt"
-  fi
-elif [ "$config" = "reset" ]; then
-  git clean -ffxd
-  if [ -f "Dependencies/cache_files/nexus.txt" ]; then
-    rm "Dependencies/cache_files/nexus.txt"
-  fi
-else
-  cores="`grep -c "processor" < /proc/cpuinfo` - 2"
-  mem="`grep -oP "MemTotal: +\K([[:digit:]]+)(?=.*)" < /proc/meminfo` / 12582912"
-  jobs="$(($cores<$mem?$cores:$mem))"
-  if [ "$dependencies" != "" ]; then
-    "$directory/configure.sh" $config -DD="$dependencies"
+}
+
+run_build() {
+  local jobs
+  jobs=$(get_job_count)
+  cmake --build "$ROOT" --target install --config "$CONFIG" \
+    --parallel "$jobs" || return 1
+  echo "$CONFIG" > "CMakeFiles/config.txt"
+}
+
+get_job_count() {
+  local cores mem jobs
+  if [[ -f /proc/cpuinfo ]]; then
+    cores=$(grep -c "processor" /proc/cpuinfo)
   else
-    "$directory/configure.sh" $config
+    cores=$(sysctl -n hw.ncpu 2>/dev/null || echo 4)
   fi
-  cmake --build "$root" --target install -- -j$jobs
-fi
+  if [[ -f /proc/meminfo ]]; then
+    mem=$(awk '/MemTotal/ {print int($2 / 4194304)}' /proc/meminfo)
+  else
+    mem=$(sysctl -n hw.memsize 2>/dev/null |
+      awk '{print int($1 / 4294967296)}' || echo 4)
+  fi
+  ((cores -= 2))
+  [[ $cores -lt 1 ]] && cores=1
+  [[ $mem -lt 1 ]] && mem=1
+  jobs=$((cores < mem ? cores : mem))
+  echo "$jobs"
+}
+
+main "$@"

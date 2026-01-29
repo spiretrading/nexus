@@ -209,6 +209,15 @@ bool Window::event(QEvent* event) {
   return QWidget::event(event);
 }
 
+bool Spire::Window::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::Resize) {
+    if(watched == m_body && !isMaximized()) {
+      resize(adjusted_window_size(m_body->size()));
+    }
+  }
+  return QWidget::eventFilter(watched, event);
+}
+
 bool Window::nativeEvent(const QByteArray& eventType, void* message,
     long* result) {
   auto msg = reinterpret_cast<MSG*>(message);
@@ -249,8 +258,9 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
           }
           rect.left += border_size.width();
           rect.right -= border_size.width();
-          if(!is_windows11_or_newer() && m_is_bottom_border_mismatched &&
-              *m_is_bottom_border_mismatched) {
+          if(!is_windows11_or_newer() && (!m_is_resizable ||
+              m_is_bottom_border_mismatched &&
+              *m_is_bottom_border_mismatched)) {
             rect.bottom -= 1;
           } else {
             rect.bottom -= border_size.height();
@@ -371,9 +381,16 @@ void Window::set_body(QWidget* body) {
   m_body = body;
   if(body->maximumSize() != QSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX)) {
     set_window_attributes(false);
+  } else {
+    resize(adjusted_window_size(body->size()));
   }
   auto& box = *static_cast<Box*>(layout()->itemAt(0)->widget());
   box.get_body()->layout()->addWidget(m_body);
+  m_body->installEventFilter(this);
+}
+
+QSize Window::adjusted_window_size(const QSize& body_size) const {
+  return {body_size.width(), body_size.height() + m_title_bar->height()};
 }
 
 void Window::on_highlighted(bool is_match) {
