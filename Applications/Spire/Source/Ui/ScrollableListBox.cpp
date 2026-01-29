@@ -65,6 +65,8 @@ bool ScrollableListBox::eventFilter(QObject* watched, QEvent* event) {
       return m_styles.m_overflow_gap;
     }();
     if(auto item = m_list_view->get_list_item(0)) {
+      m_scroll_box->get_horizontal_scroll_bar().set_line_size(
+        item->width() + gap);
       m_scroll_box->get_vertical_scroll_bar().set_line_size(
         item->height() + gap);
     }
