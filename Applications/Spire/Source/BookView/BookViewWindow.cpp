@@ -77,10 +77,13 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
     std::bind_front(&BookViewWindow::on_current, this));
   m_security_view->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_security_view->setContextMenuPolicy(Qt::CustomContextMenu);
   set_body(m_security_view);
   update_style(*this, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
+  connect(m_security_view, &QWidget::customContextMenuRequested,
+    std::bind_front(&BookViewWindow::on_context_menu, this));
   resize(scale(266, 361));
 }
 
@@ -279,19 +282,21 @@ bool BookViewWindow::on_key_press(QWidget& target, const QKeyEvent& event) {
 }
 
 void BookViewWindow::on_context_menu(const QPoint& pos) {
-  auto menu = new ContextMenu(*m_book_depth);
-  if(auto current = m_book_depth->get_current()->get()) {
-    menu->add_action(tr("Cancel Most Recent"),
-      std::bind_front(&BookViewWindow::on_cancel_most_recent, this, *current));
-    menu->add_action(tr("Cancel All"),
-      std::bind_front(&BookViewWindow::on_cancel_all, this, *current));
-    menu->add_separator();
+  auto menu = new ContextMenu(*m_security_view);
+  if(m_book_depth) {
+    if(auto current = m_book_depth->get_current()->get()) {
+      menu->add_action(tr("Cancel Most Recent"),
+        std::bind_front(&BookViewWindow::on_cancel_most_recent, this, *current));
+      menu->add_action(tr("Cancel All"),
+        std::bind_front(&BookViewWindow::on_cancel_all, this, *current));
+      menu->add_separator();
+    }
   }
   menu->add_action(tr("Properties"),
     std::bind_front(&BookViewWindow::on_properties_menu, this));
   add_link_menu(*menu, *this);
   menu->window()->setAttribute(Qt::WA_DeleteOnClose);
-  menu->window()->move(m_book_depth->mapToGlobal(pos));
+  menu->window()->move(m_security_view->mapToGlobal(pos));
   menu->window()->show();
 }
 
@@ -378,11 +383,8 @@ void BookViewWindow::on_current(const Security& security) {
   panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   layout->addWidget(panel);
   m_book_depth = new BookDepth(m_model, m_factory->get_properties());
-  m_book_depth->setContextMenuPolicy(Qt::CustomContextMenu);
   layout->addWidget(m_book_depth);
   body->setFocusProxy(m_book_depth);
-  connect(m_book_depth, &QWidget::customContextMenuRequested,
-    std::bind_front(&BookViewWindow::on_context_menu, this));
   m_transition_view->set_body(*body);
   m_transition_view->set_status(TransitionView::Status::READY);
   m_bid_order_connection = m_model->get_bid_orders()->connect_operation_signal(
