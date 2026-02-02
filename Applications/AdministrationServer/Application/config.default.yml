@@ -42,4 +42,6 @@ entitlements:
         messages: [BBO, BOOK, TAS, IMB]
       - source: XTSX
         messages: [BBO, BOOK, TAS, IMB]
+      - source: OTCM
+        messages: [BBO, BOOK, TAS, IMB]
 ...
