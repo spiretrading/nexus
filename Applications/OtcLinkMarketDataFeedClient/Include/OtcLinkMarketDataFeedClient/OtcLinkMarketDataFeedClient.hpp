@@ -11,6 +11,7 @@
 #include <boost/endian/conversion.hpp>
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkClient.hpp"
+#include "OtcLinkMarketDataFeedClient/OtcLinkConfiguration.hpp"
 
 namespace Nexus {
 
@@ -34,11 +35,13 @@ namespace Nexus {
 
       /**
        * Constructs an OtcLinkMarketDataFeedClient.
+       * @param configuration The OtcLinkConfiguration used to parse messages.
        * @param feed_client Initializes the MarketDataFeedClient.
        * @param otc_link_client The OtcLinkClient receiving messages.
        */
       template<Beam::Initializes<M> MF, Beam::Initializes<O> OF>
-      OtcLinkMarketDataFeedClient(MF&& feed_client, OF&& otc_link_client);
+      OtcLinkMarketDataFeedClient(OtcLinkConfiguration configuration,
+        MF&& feed_client, OF&& otc_link_client);
 
       ~OtcLinkMarketDataFeedClient();
 
@@ -54,6 +57,7 @@ namespace Nexus {
         Security m_security;
         BboQuote m_bbo;
       };
+      OtcLinkConfiguration m_configuration;
       Beam::local_ptr_t<M> m_feed_client;
       Beam::local_ptr_t<O> m_otc_link_client;
       std::unordered_map<std::uint32_t, BookQuoteEntry> m_book_quotes;
@@ -80,9 +84,10 @@ namespace Nexus {
   template<typename M, typename O>
   template<Beam::Initializes<M> MF, Beam::Initializes<O> OF>
   OtcLinkMarketDataFeedClient<M, O>::OtcLinkMarketDataFeedClient(
-      MF&& feed_client, OF&& otc_link_client)
+    OtcLinkConfiguration configuration,  MF&& feed_client, OF&& otc_link_client)
 BEAM_SUPPRESS_THIS_INITIALIZER()
-      try : m_feed_client(std::forward<MF>(feed_client)),
+      try : m_configuration(std::move(configuration)),
+            m_feed_client(std::forward<MF>(feed_client)),
             m_otc_link_client(std::forward<OF>(otc_link_client)),
             m_read_loop(Beam::spawn(
               std::bind(&OtcLinkMarketDataFeedClient::read_loop, this))) {
@@ -178,14 +183,15 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     }
     auto security_id = parse_uint32(data + 10);
     auto mpid = std::string(data + 14, 4);
-    auto security = Security(std::to_string(security_id), Venue("OTCM"));
+    auto security =
+      Security(std::to_string(security_id), m_configuration.m_venue);
     auto bid_price = parse_money(data + 39);
     auto bid = BookQuote();
     if(bid_price != Money::ZERO) {
       auto bid_size = parse_quantity(data + 47);
       auto bid_timestamp = parse_timestamp(data + 52);
-      bid = BookQuote(mpid, true, Venue("OTCM"), make_bid(bid_price, bid_size),
-        bid_timestamp);
+      bid = BookQuote(mpid, true, m_configuration.m_venue,
+        make_bid(bid_price, bid_size), bid_timestamp);
       std::cout <<
         "OTC LINK ADD: " << SecurityBookQuote(bid, security) << std::endl;
 //      m_feed_client->publish(SecurityBookQuote(bid, security));
@@ -195,8 +201,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     if(ask_price != Money::ZERO) {
       auto ask_size = parse_quantity(data + 26);
       auto ask_timestamp = parse_timestamp(data + 31);
-      ask = BookQuote(mpid, true, Venue("OTCM"), make_ask(ask_price, ask_size),
-        ask_timestamp);
+      ask = BookQuote(mpid, true, m_configuration.m_venue,
+        make_ask(ask_price, ask_size), ask_timestamp);
       std::cout <<
         "OTC LINK ADD: " << SecurityBookQuote(ask, security) << std::endl;
 //      m_feed_client->publish(SecurityBookQuote(ask, security));
@@ -249,7 +255,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       return;
     }
     auto security_id = parse_uint32(data + 10);
-    auto security = Security(std::to_string(security_id), Venue("OTCM"));
+    auto security =
+      Security(std::to_string(security_id), m_configuration.m_venue);
     auto ask_price = parse_money(data + 14);
     auto ask_size = parse_quantity(data + 22);
     auto ask_timestamp = parse_timestamp(data + 26);
@@ -304,7 +311,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     auto price = parse_money(data + 23);
     auto size = parse_quantity(data + 31);
     auto timestamp = parse_timestamp(data + 35);
-    auto security = Security(std::to_string(security_id), Venue("OTCM"));
+    auto security =
+      Security(std::to_string(security_id), m_configuration.m_venue);
     auto condition = TimeAndSale::Condition(
       TimeAndSale::Condition::Type::REGULAR, "@");
     auto time_and_sale = TimeAndSale(

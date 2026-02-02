@@ -1,5 +1,5 @@
 #!/bin/bash
-PREFIX="otc_link"
+PREFIX="otcm"
 PID_FILE="pid.lock"
 
 is_application_running() {

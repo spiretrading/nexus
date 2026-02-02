@@ -5,7 +5,6 @@
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
-#include "OtcLinkMarketDataFeedClient/OtcLinkClient.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkMarketDataFeedClient.hpp"
 #include "Version.hpp"
 
@@ -21,6 +20,17 @@ namespace {
   using ApplicationOtcLinkMarketDataFeedClient = OtcLinkMarketDataFeedClient<
     ApplicationMarketDataFeedClient*, ApplicationOtcLinkClient*>;
   static const auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(16777216);
+
+  OtcLinkConfiguration parse_configuration(const YAML::Node& config) {
+    return try_or_nest([&] {
+      auto otc_link_config = OtcLinkConfiguration();
+      otc_link_config.m_is_logging_messages =
+        extract<bool>(config, "enable_logging", false);
+      otc_link_config.m_venue = DEFAULT_VENUES.from_display_name(
+        extract<std::string>(config, "venue")).m_venue;
+      return otc_link_config;
+    }, std::runtime_error("Unable to parse OTC Link configuration."));
+  }
 }
 
 int main(int argc, const char** argv) {
@@ -46,8 +56,9 @@ int main(int argc, const char** argv) {
     auto feed_channel = ApplicationFeedChannel(
       &multicast_socket_channel, &multicast_socket_channel.get_reader());
     auto otc_link_client = ApplicationOtcLinkClient(&feed_channel);
+    auto feed_configuration = parse_configuration(config);
     auto feed_client = ApplicationOtcLinkMarketDataFeedClient(
-      &market_data_feed_client, &otc_link_client);
+      feed_configuration, &market_data_feed_client, &otc_link_client);
     wait_for_kill_event();
     service_locator_client.close();
   } catch(...) {

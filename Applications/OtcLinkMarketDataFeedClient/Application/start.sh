@@ -1,6 +1,6 @@
 #!/bin/bash
 TARGET="OtcLinkMarketDataFeedClient"
-PREFIX="otc_link"
+PREFIX="otcm"
 LOG_DIR="./logs"
 
 is_application_running() {

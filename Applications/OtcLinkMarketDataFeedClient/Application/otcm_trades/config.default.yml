@@ -5,7 +5,8 @@ service_locator:
   password: $admin_password
 
 enable_logging: false
+venue: OTCM
 sampling: 100ms
-host: "224.0.23.196:21000"
-interface: "$local_interface:21000"
+host: "224.0.23.218:21008"
+interface: "$local_interface:21008"
 ...

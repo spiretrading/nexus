@@ -1,0 +1,12 @@
+---
+service_locator:
+  address: $service_locator_address
+  username: $username
+  password: $admin_password
+
+enable_logging: false
+venue: OTCM
+sampling: 100ms
+host: "224.0.23.196:21000"
+interface: "$local_interface:21000"
+...
