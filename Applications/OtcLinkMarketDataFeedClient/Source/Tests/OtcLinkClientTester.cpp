@@ -59,7 +59,7 @@ namespace {
     return buffer;
   }
 
-  auto is_equal(const void* data, const char* expected) {
+  auto is_payload_equal(const void* data, const char* expected) {
     return std::memcmp(data, expected, std::strlen(expected)) == 0;
   }
 }
@@ -73,7 +73,7 @@ TEST_SUITE("OtcLinkClient") {
     auto message = fixture.m_client->read(out(expected_sequence));
     REQUIRE(message.m_type == OtcLinkMessage::Type::TRADE);
     REQUIRE(expected_sequence == 42);
-    REQUIRE(is_equal(message.m_payload, "DATA"));
+    REQUIRE(is_payload_equal(message.m_payload, "DATA"));
   }
 
   TEST_CASE("read_single_packet_multiple_messages") {
@@ -85,12 +85,12 @@ TEST_SUITE("OtcLinkClient") {
     auto message1 = fixture.m_client->read(out(expected_sequence1));
     REQUIRE(message1.m_type == OtcLinkMessage::Type::QUOTE);
     REQUIRE(expected_sequence1 == 100);
-    REQUIRE(is_equal(message1.m_payload, "ONE"));
+    REQUIRE(is_payload_equal(message1.m_payload, "ONE"));
     auto expected_sequence2 = std::uint32_t(0);
     auto message2 = fixture.m_client->read(out(expected_sequence2));
     REQUIRE(message2.m_type == OtcLinkMessage::Type::QUOTE_UPDATE);
     REQUIRE(expected_sequence2 == 101);
-    REQUIRE(is_equal(message2.m_payload, "TWO"));
+    REQUIRE(is_payload_equal(message2.m_payload, "TWO"));
   }
 
   TEST_CASE("read_empty_packet") {
@@ -104,6 +104,6 @@ TEST_SUITE("OtcLinkClient") {
     auto message = fixture.m_client->read(out(expected_sequence));
     REQUIRE(message.m_type == OtcLinkMessage::Type::INSIDE);
     REQUIRE(expected_sequence == 201);
-    REQUIRE(is_equal(message.m_payload, "REAL"));
+    REQUIRE(is_payload_equal(message.m_payload, "REAL"));
   }
 }

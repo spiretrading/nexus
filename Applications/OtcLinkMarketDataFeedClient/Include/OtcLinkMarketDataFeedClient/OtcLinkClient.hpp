@@ -1,6 +1,7 @@
 #ifndef OTC_LINK_CLIENT_HPP
 #define OTC_LINK_CLIENT_HPP
 #include <cstdint>
+#include <iostream>
 #include <Beam/IO/Channel.hpp>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -10,6 +11,7 @@
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include "OtcLinkMarketDataFeedClient/OtcLinkMessage.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkPacket.hpp"
 
@@ -97,6 +99,12 @@ namespace Nexus {
             std::string_view(m_buffer.get_data(), m_buffer.get_size()));
         }, Beam::IOException("Failed to read OTC Link packet."));
         if(m_packet.m_message_count != 0) {
+          if(m_sequence_number != -1 &&
+              m_packet.m_sequence_number != m_sequence_number) {
+            std::cout << boost::posix_time::microsec_clock::universal_time() <<
+              ": packets dropped (" << m_sequence_number << " - " <<
+                (m_packet.m_sequence_number - 1) << ')' << std::endl;
+          }
           m_sequence_number = m_packet.m_sequence_number;
           m_source = m_packet.m_payload;
           m_remaining_size = m_buffer.get_size() - OtcLinkPacket::HEADER_LENGTH;

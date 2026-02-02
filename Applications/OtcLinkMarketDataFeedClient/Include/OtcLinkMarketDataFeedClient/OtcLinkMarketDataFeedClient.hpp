@@ -9,7 +9,6 @@
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/endian/conversion.hpp>
-#include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkClient.hpp"
 
@@ -46,14 +45,19 @@ namespace Nexus {
       void close();
 
     private:
-      struct StoredQuote {
+      struct BookQuoteEntry {
         Security m_security;
         BookQuote m_bid;
         BookQuote m_ask;
       };
+      struct BboQuoteEntry {
+        Security m_security;
+        BboQuote m_bbo;
+      };
       Beam::local_ptr_t<M> m_feed_client;
       Beam::local_ptr_t<O> m_otc_link_client;
-      std::unordered_map<std::uint32_t, StoredQuote> m_quotes;
+      std::unordered_map<std::uint32_t, BookQuoteEntry> m_book_quotes;
+      std::unordered_map<std::uint32_t, BboQuoteEntry> m_bbo_quotes;
       Beam::RoutineHandler m_read_loop;
       Beam::OpenState m_open_state;
 
@@ -66,6 +70,10 @@ namespace Nexus {
       static Money parse_money(const char* data);
       static boost::posix_time::ptime parse_timestamp(const char* data);
       void parse_quote_message(const OtcLinkMessage& message);
+      void parse_quote_update_message(const OtcLinkMessage& message);
+      void parse_inside_message(const OtcLinkMessage& message);
+      void parse_inside_update_message(const OtcLinkMessage& message);
+      void parse_trade_message(const OtcLinkMessage& message);
       void read_loop();
   };
 
@@ -144,46 +152,166 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     auto quote_id = parse_uint32(data + 4);
     auto quote_action = parse_byte(data + 8);
     if(quote_action == QUOTE_ACTION_DELETE) {
-      auto i = m_quotes.find(quote_id);
-      if(i == m_quotes.end()) {
+      auto i = m_book_quotes.find(quote_id);
+      if(i == m_book_quotes.end()) {
         return;
       }
       auto& stored = i->second;
-      auto bid = stored.m_bid;
-      bid.m_quote.m_size = 0;
-      bid.m_timestamp = parse_timestamp(data + 52);
-      std::cout << "OTC LINK DELETE: " <<
-        SecurityBookQuote(bid, stored.m_security) << std::endl;
-//      m_feed_client->publish(SecurityBookQuote(bid, stored.m_security));
-      auto ask = stored.m_ask;
-      ask.m_quote.m_size = 0;
-      ask.m_timestamp = parse_timestamp(data + 31);
-      std::cout << "OTC LINK DELETE: " <<
-        SecurityBookQuote(ask, stored.m_security) << std::endl;
-//      m_feed_client->publish(SecurityBookQuote(ask, stored.m_security));
-      m_quotes.erase(i);
+      if(stored.m_bid.m_quote.m_price != Money::ZERO) {
+        auto bid = stored.m_bid;
+        bid.m_quote.m_size = 0;
+        bid.m_timestamp = parse_timestamp(data + 52);
+        std::cout << "OTC LINK DELETE: " <<
+          SecurityBookQuote(bid, stored.m_security) << std::endl;
+//        m_feed_client->publish(SecurityBookQuote(bid, stored.m_security));
+      }
+      if(stored.m_ask.m_quote.m_price != Money::ZERO) {
+        auto ask = stored.m_ask;
+        ask.m_quote.m_size = 0;
+        ask.m_timestamp = parse_timestamp(data + 31);
+        std::cout << "OTC LINK DELETE: " <<
+          SecurityBookQuote(ask, stored.m_security) << std::endl;
+//        m_feed_client->publish(SecurityBookQuote(ask, stored.m_security));
+      }
+      m_book_quotes.erase(i);
       return;
     }
     auto security_id = parse_uint32(data + 10);
     auto mpid = std::string(data + 14, 4);
-    auto ask_price = parse_money(data + 18);
-    auto ask_size = parse_quantity(data + 26);
-    auto ask_timestamp = parse_timestamp(data + 31);
-    auto bid_price = parse_money(data + 39);
-    auto bid_size = parse_quantity(data + 47);
-    auto bid_timestamp = parse_timestamp(data + 52);
     auto security = Security(std::to_string(security_id), Venue("OTCM"));
-    auto bid = BookQuote(
-      mpid, true, Venue("OTCM"), make_bid(bid_price, bid_size), bid_timestamp);
-    auto ask = BookQuote(
-      mpid, true, Venue("OTCM"), make_ask(ask_price, ask_size), ask_timestamp);
-    m_quotes.insert(std::pair(quote_id, StoredQuote(security, bid, ask)));
-    std::cout <<
-      "OTC LINK ADD: " << SecurityBookQuote(bid, security) << std::endl;
-//    m_feed_client->publish(SecurityBookQuote(bid, security));
-    std::cout <<
-      "OTC LINK ADD: " << SecurityBookQuote(ask, security) << std::endl;
-//    m_feed_client->publish(SecurityBookQuote(ask, security));
+    auto bid_price = parse_money(data + 39);
+    auto bid = BookQuote();
+    if(bid_price != Money::ZERO) {
+      auto bid_size = parse_quantity(data + 47);
+      auto bid_timestamp = parse_timestamp(data + 52);
+      bid = BookQuote(mpid, true, Venue("OTCM"), make_bid(bid_price, bid_size),
+        bid_timestamp);
+      std::cout <<
+        "OTC LINK ADD: " << SecurityBookQuote(bid, security) << std::endl;
+//      m_feed_client->publish(SecurityBookQuote(bid, security));
+    }
+    auto ask_price = parse_money(data + 18);
+    auto ask = BookQuote();
+    if(ask_price != Money::ZERO) {
+      auto ask_size = parse_quantity(data + 26);
+      auto ask_timestamp = parse_timestamp(data + 31);
+      ask = BookQuote(mpid, true, Venue("OTCM"), make_ask(ask_price, ask_size),
+        ask_timestamp);
+      std::cout <<
+        "OTC LINK ADD: " << SecurityBookQuote(ask, security) << std::endl;
+//      m_feed_client->publish(SecurityBookQuote(ask, security));
+    }
+    m_book_quotes.insert(
+      std::pair(quote_id, BookQuoteEntry(security, bid, ask)));
+  }
+
+  template<typename M, typename O>
+  void OtcLinkMarketDataFeedClient<M, O>::parse_quote_update_message(
+      const OtcLinkMessage& message) {
+    static const auto UPDATE_SIDE_ASK = std::uint8_t(0x01);
+    auto data = message.m_payload;
+    auto quote_id = parse_uint32(data + 4);
+    auto i = m_book_quotes.find(quote_id);
+    if(i == m_book_quotes.end()) {
+      return;
+    }
+    auto quote_flags = parse_byte(data + 8);
+    auto is_ask_update = (quote_flags & UPDATE_SIDE_ASK) != 0;
+    auto price = parse_money(data + 9);
+    auto size = parse_quantity(data + 17);
+    auto timestamp = parse_timestamp(data + 22);
+    auto& stored = i->second;
+    auto& quote = [&] () -> auto& {
+      if(is_ask_update) {
+        return stored.m_ask;
+      }
+      return stored.m_bid;
+    }();
+    quote.m_quote.m_price = price;
+    quote.m_quote.m_size = size;
+    quote.m_timestamp = timestamp;
+    std::cout << "OTC LINK UPDATE: " <<
+      SecurityBookQuote(quote, stored.m_security) << std::endl;
+//      m_feed_client->publish(SecurityBookQuote(stored.m_ask, stored.m_security));
+  }
+
+  template<typename M, typename O>
+  void OtcLinkMarketDataFeedClient<M, O>::parse_inside_message(
+      const OtcLinkMessage& message) {
+    static const auto INSIDE_ACTION_ADD = std::uint8_t(0x02);
+    static const auto INSIDE_ACTION_DELETE = std::uint8_t(0x03);
+    static const auto INSIDE_ACTION_SPIN = std::uint8_t(0x04);
+    auto data = message.m_payload;
+    auto inside_id = parse_uint32(data + 4);
+    auto inside_action = parse_byte(data + 8);
+    if(inside_action == INSIDE_ACTION_DELETE) {
+      m_bbo_quotes.erase(inside_id);
+      return;
+    }
+    auto security_id = parse_uint32(data + 10);
+    auto security = Security(std::to_string(security_id), Venue("OTCM"));
+    auto ask_price = parse_money(data + 14);
+    auto ask_size = parse_quantity(data + 22);
+    auto ask_timestamp = parse_timestamp(data + 26);
+    auto bid_price = parse_money(data + 34);
+    auto bid_size = parse_quantity(data + 42);
+    auto bid_timestamp = parse_timestamp(data + 46);
+    auto timestamp = std::max(bid_timestamp, ask_timestamp);
+    auto bid = make_bid(bid_price, bid_size);
+    auto ask = make_ask(ask_price, ask_size);
+    auto bbo = BboQuote(bid, ask, timestamp);
+    m_bbo_quotes.insert(std::pair(inside_id, BboQuoteEntry(security, bbo)));
+    std::cout << "OTC LINK INSIDE ADD: " <<
+      SecurityBboQuote(bbo, security) << std::endl;
+//    m_feed_client->publish(SecurityBboQuote(bbo, security));
+  }
+
+  template<typename M, typename O>
+  void OtcLinkMarketDataFeedClient<M, O>::parse_inside_update_message(
+      const OtcLinkMessage& message) {
+    static const auto UPDATE_SIDE_ASK = std::uint8_t(0x01);
+    auto data = message.m_payload;
+    auto inside_id = parse_uint32(data + 4);
+    auto i = m_bbo_quotes.find(inside_id);
+    if(i == m_bbo_quotes.end()) {
+      return;
+    }
+    auto quote_flags = parse_byte(data + 8);
+    auto is_ask_update = (quote_flags & UPDATE_SIDE_ASK) != 0;
+    auto price = parse_money(data + 9);
+    auto size = parse_quantity(data + 17);
+    auto timestamp = parse_timestamp(data + 21);
+    auto& stored = i->second;
+    if(is_ask_update) {
+      stored.m_bbo.m_ask.m_price = price;
+      stored.m_bbo.m_ask.m_size = size;
+    } else {
+      stored.m_bbo.m_bid.m_price = price;
+      stored.m_bbo.m_bid.m_size = size;
+    }
+    stored.m_bbo.m_timestamp = timestamp;
+    std::cout << "OTC LINK INSIDE UPDATE: " <<
+      SecurityBboQuote(stored.m_bbo, stored.m_security) << std::endl;
+//    m_feed_client->publish(SecurityBboQuote(stored.m_bbo, stored.m_security));
+  }
+
+  template<typename M, typename O>
+  void OtcLinkMarketDataFeedClient<M, O>::parse_trade_message(
+      const OtcLinkMessage& message) {
+    auto data = message.m_payload;
+    auto security_id = parse_uint32(data + 10);
+    auto venue = std::string(data + 15, 3);
+    auto price = parse_money(data + 23);
+    auto size = parse_quantity(data + 31);
+    auto timestamp = parse_timestamp(data + 35);
+    auto security = Security(std::to_string(security_id), Venue("OTCM"));
+    auto condition = TimeAndSale::Condition(
+      TimeAndSale::Condition::Type::REGULAR, "@");
+    auto time_and_sale = TimeAndSale(
+      timestamp, price, size, condition, venue, std::string(), std::string());
+    std::cout << "OTC LINK TRADE: " <<
+      SecurityTimeAndSale(time_and_sale, security) << std::endl;
+//    m_feed_client->publish(SecurityTimeAndSale(time_and_sale, security));
   }
 
   template<typename M, typename O>
@@ -197,6 +325,14 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       }
       if(message.m_type == OtcLinkMessage::Type::QUOTE) {
         parse_quote_message(message);
+      } else if(message.m_type == OtcLinkMessage::Type::QUOTE_UPDATE) {
+        parse_quote_update_message(message);
+      } else if(message.m_type == OtcLinkMessage::Type::INSIDE) {
+        parse_inside_message(message);
+      } else if(message.m_type == OtcLinkMessage::Type::INSIDE_UPDATE) {
+        parse_inside_update_message(message);
+      } else if(message.m_type == OtcLinkMessage::Type::TRADE) {
+        parse_trade_message(message);
       }
     }
   }
