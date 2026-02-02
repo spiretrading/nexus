@@ -279,15 +279,26 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     static const auto UPDATE_SIDE_ASK = std::uint8_t(0x01);
     auto data = message.m_payload;
     auto inside_id = parse_uint32(data + 4);
-    auto i = m_bbo_quotes.find(inside_id);
-    if(i == m_bbo_quotes.end()) {
-      return;
-    }
     auto quote_flags = parse_byte(data + 8);
     auto is_ask_update = (quote_flags & UPDATE_SIDE_ASK) != 0;
     auto price = parse_money(data + 9);
     auto size = parse_quantity(data + 17);
     auto timestamp = parse_timestamp(data + 21);
+    auto i = m_bbo_quotes.find(inside_id);
+    if(i == m_bbo_quotes.end()) {
+      auto security_id = parse_uint32(data + 10);
+      auto security =
+        Security(std::to_string(security_id), m_configuration.m_venue);
+      auto bbo = BboQuote();
+      if(is_ask_update) {
+        bbo.m_ask = make_ask(price, size);
+      } else {
+        bbo.m_bid = make_bid(price, size);
+      }
+      bbo.m_timestamp = timestamp;
+      m_bbo_quotes.insert(std::pair(inside_id, BboQuoteEntry(security, bbo)));
+      return;
+    }
     auto& stored = i->second;
     if(is_ask_update) {
       stored.m_bbo.m_ask.m_price = price;
@@ -297,6 +308,10 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       stored.m_bbo.m_bid.m_size = size;
     }
     stored.m_bbo.m_timestamp = timestamp;
+    if(stored.m_bbo.m_bid.m_price == Money::ZERO ||
+        stored.m_bbo.m_ask.m_price == Money::ZERO) {
+      return;
+    }
     std::cout << "OTC LINK INSIDE UPDATE: " <<
       SecurityBboQuote(stored.m_bbo, stored.m_security) << std::endl;
 //    m_feed_client->publish(SecurityBboQuote(stored.m_bbo, stored.m_security));
