@@ -162,6 +162,17 @@ namespace Details {
         entry.m_display_name = "TSXV";
         database.add(entry);
       }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("OTCM");
+        entry.m_country_code = DefaultCountries::US;
+        entry.m_market_center = "OTCM";
+        entry.m_time_zone = "Eastern_Time";
+        entry.m_currency = DefaultCurrencies::USD;
+        entry.m_description = "OTC Markets Group Inc.";
+        entry.m_display_name = "OTCM";
+        database.add(entry);
+      }
       return database;
     }();
     return database;
@@ -194,6 +205,7 @@ namespace Details {
     inline const auto TSXV = DEFAULT_VENUES.from("XTSX").m_venue;
     inline const auto XATS = DEFAULT_VENUES.from("XATS").m_venue;
     inline const auto XCX2 = DEFAULT_VENUES.from("XCX2").m_venue;
+    inline const auto OTCM = DEFAULT_VENUES.from("OTCM").m_venue;
   }
 }
 
