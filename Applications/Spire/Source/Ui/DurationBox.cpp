@@ -544,6 +544,24 @@ bool DurationBox::eventFilter(QObject* watched, QEvent* event) {
           }
         }
       }
+    } else if(key_event.key() == Qt::Key_Backspace &&
+        (field == m_minute_field || field == m_second_field)) {
+      if(auto editor = field->findChild<QLineEdit*>()) {
+        if(editor->cursorPosition() == 0 && !editor->hasSelectedText()) {
+          if(field == m_minute_field) {
+            m_hour_field->setFocus();
+            if(auto hour_editor = m_hour_field->findChild<QLineEdit*>()) {
+              hour_editor->setCursorPosition(hour_editor->text().length());
+            }
+          } else {
+            m_minute_field->setFocus();
+            if(auto minute_editor = m_minute_field->findChild<QLineEdit*>()) {
+              minute_editor->setCursorPosition(minute_editor->text().length());
+            }
+          }
+          return true;
+        }
+      }
     }
   }
   return QWidget::eventFilter(watched, event);
