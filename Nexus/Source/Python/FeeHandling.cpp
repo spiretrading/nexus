@@ -154,7 +154,9 @@ void Nexus::Python::export_cse2_fee_table(module& module) {
         &Cse2FeeTable::m_debentures_or_notes_table).
       def_readwrite("cse_listed_government_bonds_table",
         &Cse2FeeTable::m_cse_listed_government_bonds_table).
-      def_readwrite("oddlot_table", &Cse2FeeTable::m_oddlot_table);
+      def_readwrite("oddlot_table", &Cse2FeeTable::m_oddlot_table).
+      def_readwrite("large_trade_size", &Cse2FeeTable::m_large_trade_size).
+      def_readwrite("large_trade_fee", &Cse2FeeTable::m_large_trade_fee);
   enum_<Cse2FeeTable::Section>(fee_table, "Section").
     value("REGULAR", Cse2FeeTable::Section::REGULAR).
     value("DARK", Cse2FeeTable::Section::DARK).
