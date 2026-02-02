@@ -404,7 +404,7 @@ void ContextMenu::position_submenu(ListItem& item) {
 }
 
 bool ContextMenu::is_submenu_hovered() const {
-  if(!m_visible_submenu) {
+  if(!m_visible_submenu || !m_visible_submenu->isVisible()) {
     return false;
   }
   auto& body = static_cast<ContextMenu&>(m_visible_submenu->get_body());
@@ -463,6 +463,9 @@ void ContextMenu::show_submenu(int index) {
     auto menu_window = m_submenus[index];
     if(m_visible_submenu == menu_window) {
       ++m_hide_count;
+      if(!m_visible_submenu->isVisible()) {
+        hide_submenu();
+      }
       return;
     }
     if(m_visible_submenu) {
