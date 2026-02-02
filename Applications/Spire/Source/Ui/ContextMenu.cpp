@@ -1,5 +1,6 @@
 #include "Spire/Ui/ContextMenu.hpp"
 #include <QCoreApplication>
+#include <QGuiApplication>
 #include <QKeyEvent>
 #include <QScreen>
 #include <QTimer>
@@ -242,6 +243,23 @@ bool ContextMenu::eventFilter(QObject* watched, QEvent* event) {
   } else if(m_visible_submenu && watched ==
       &m_visible_submenu->get_body() && event->type() == QEvent::Resize) {
     position_submenu();
+  } else if(watched == m_window) {
+    if(event->type() == QEvent::Resize && m_menu_position &&
+        m_window->isVisible()) {
+      if(auto screen = QGuiApplication::screenAt(QCursor::pos())) {
+        auto geometry = screen->availableGeometry();
+        auto x = std::clamp(m_menu_position->x(), geometry.x(),
+          geometry.x() + geometry.width() - m_window->width());
+        auto y = std::clamp(m_menu_position->y(), geometry.y(),
+          geometry.y() + geometry.height() - m_window->height());
+        m_window->move(x, y);
+      }
+    } else if(event->type() == QEvent::Move && !m_menu_position) {
+      auto& move_event = *static_cast<QMoveEvent*>(event);
+      m_menu_position = move_event.pos();
+    } else if(event->type() == QEvent::Hide) {
+      m_menu_position = none;
+    }
   }
   return QWidget::eventFilter(watched, event);
 }

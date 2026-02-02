@@ -176,6 +176,7 @@ namespace Spire {
       MouseMoveObserver m_mouse_observer;
       QMargins m_window_border_size;
       boost::optional<QSize> m_window_size;
+      boost::optional<QPoint> m_menu_position;
       std::unordered_map<int, OverlayPanel*> m_submenus;
       std::unordered_map<int, PressObserver> m_check_item_press_observers;
       boost::signals2::scoped_connection m_window_style_connection;
