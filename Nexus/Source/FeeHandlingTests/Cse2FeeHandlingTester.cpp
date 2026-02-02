@@ -18,6 +18,8 @@ namespace {
     populate_fee_table(out(table.m_debentures_or_notes_table));
     populate_fee_table(out(table.m_cse_listed_government_bonds_table));
     populate_fee_table(out(table.m_oddlot_table));
+    table.m_large_trade_size = 200000;
+    table.m_large_trade_fee = 2 * Money::ONE;
     return table;
   }
 
@@ -198,6 +200,57 @@ TEST_SUITE("Cse2FeeHandling") {
       table, LiquidityFlag::PASSIVE, Cse2FeeTable::PriceClass::DEFAULT);
     auto fee = calculate_fee(table, make_order_fields(Money::ONE),
       make_execution_report(Money::ONE, 20, "PT "));
+    REQUIRE(fee == expected_fee);
+  }
+
+  TEST_CASE("large_trade_regular") {
+    auto table = make_fee_table();
+    auto expected_fee = table.m_large_trade_fee;
+    auto fee = calculate_fee(table, make_order_fields(Money::ONE),
+      make_execution_report(Money::ONE, 200000, "TT "));
+    REQUIRE(fee == expected_fee);
+  }
+
+  TEST_CASE("large_trade_regular_above_threshold") {
+    auto table = make_fee_table();
+    auto expected_fee = table.m_large_trade_fee;
+    auto fee = calculate_fee(table, make_order_fields(Money::ONE),
+      make_execution_report(Money::ONE, 500000, "PT "));
+    REQUIRE(fee == expected_fee);
+  }
+
+  TEST_CASE("large_trade_below_threshold") {
+    auto table = make_fee_table();
+    auto expected_fee = 199999 * lookup_regular_fee(
+      table, LiquidityFlag::ACTIVE, Cse2FeeTable::PriceClass::DEFAULT);
+    auto fee = calculate_fee(table, make_order_fields(Money::ONE),
+      make_execution_report(Money::ONE, 199999, "TT "));
+    REQUIRE(fee == expected_fee);
+  }
+
+  TEST_CASE("large_trade_dark_not_applied") {
+    auto table = make_fee_table();
+    auto expected_fee = 200000 * lookup_dark_fee(
+      table, LiquidityFlag::ACTIVE, Cse2FeeTable::PriceClass::DEFAULT);
+    auto fee = calculate_fee(table, make_order_fields(Money::ONE),
+      make_execution_report(Money::ONE, 200000, "TTD"));
+    REQUIRE(fee == expected_fee);
+  }
+
+  TEST_CASE("large_trade_oddlot_not_applied") {
+    auto table = make_fee_table();
+    auto expected_fee = 50 * lookup_oddlot_fee(
+      table, LiquidityFlag::ACTIVE, Cse2FeeTable::PriceClass::DEFAULT);
+    auto fee = calculate_fee(table, make_order_fields(Money::ONE),
+      make_execution_report(Money::ONE, 50, "TT "));
+    REQUIRE(fee == expected_fee);
+  }
+
+  TEST_CASE("large_trade_debentures") {
+    auto table = make_fee_table();
+    auto expected_fee = table.m_large_trade_fee;
+    auto fee = calculate_fee(table, make_order_fields("TST.DB", Money::ONE,
+      CSE), make_execution_report(Money::ONE, 200000, "TC "));
     REQUIRE(fee == expected_fee);
   }
 }
