@@ -47,7 +47,7 @@ namespace Nexus {
     std::uint32_t m_milliseconds;
 
     /** Pointer to payload data messages. */
-    const void* m_payload;
+    const char* m_payload;
 
     /**
      * Parses an OtcLinkPacket.

@@ -5,6 +5,7 @@ service_locator:
   password: $admin_password
 
 enable_logging: false
+sampling: 100ms
 host: "224.0.23.196:21000"
 interface: "$local_interface:21000"
 ...

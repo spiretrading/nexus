@@ -98,7 +98,7 @@ namespace Nexus {
         }, Beam::IOException("Failed to read OTC Link packet."));
         if(m_packet.m_message_count != 0) {
           m_sequence_number = m_packet.m_sequence_number;
-          m_source = static_cast<const char*>(m_packet.m_payload);
+          m_source = m_packet.m_payload;
           m_remaining_size = m_buffer.get_size() - OtcLinkPacket::HEADER_LENGTH;
           m_remaining_messages = m_packet.m_message_count;
           break;
