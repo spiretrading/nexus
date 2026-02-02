@@ -99,13 +99,13 @@ namespace Nexus {
             std::string_view(m_buffer.get_data(), m_buffer.get_size()));
         }, Beam::IOException("Failed to read OTC Link packet."));
         if(m_packet.m_message_count != 0) {
-          if(m_sequence_number != -1 &&
+          if(m_sequence_number != static_cast<std::uint32_t>(-1) &&
               m_packet.m_sequence_number != m_sequence_number) {
             std::cout << boost::posix_time::microsec_clock::universal_time() <<
               ": packets dropped (" << m_sequence_number << " - " <<
                 (m_packet.m_sequence_number - 1) << ')' << std::endl;
           }
-          m_sequence_number = m_packet.m_sequence_number;
+          m_sequence_number = m_packet.m_sequence_number + 1;
           m_source = m_packet.m_payload;
           m_remaining_size = m_buffer.get_size() - OtcLinkPacket::HEADER_LENGTH;
           m_remaining_messages = m_packet.m_message_count;
@@ -120,8 +120,7 @@ namespace Nexus {
     m_remaining_size -= message.m_size;
     m_source += message.m_size;
     --m_remaining_messages;
-    *sequence_number = m_sequence_number;
-    ++m_sequence_number;
+    *sequence_number = m_packet.m_sequence_number;
     return message;
   }
 
