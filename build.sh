@@ -21,6 +21,7 @@ main() {
     "Applications/MarketDataServer"
     "Applications/NeoeMarketDataFeedClient"
     "Applications/OasisOrderExecutionServer"
+    "Applications/OtcLinkMarketDataFeedClient"
     "Applications/ReplayMarketDataFeedClient"
     "Applications/RiskServer"
     "Applications/Scratch"
