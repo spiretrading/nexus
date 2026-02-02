@@ -36,7 +36,7 @@ def main():
   variables['admin_password'] = args.password
   for filename in os.listdir('.'):
     default_path = os.path.join(filename, 'config.default.yml')
-    if filename.startswith('cse_') and os.path.isdir(filename) and \
+    if filename.startswith('otc_link_') and os.path.isdir(filename) and \
         os.path.isfile(default_path):
       with open(default_path, 'r+') as file:
         source = setup_utils.translate(file.read(), variables)
