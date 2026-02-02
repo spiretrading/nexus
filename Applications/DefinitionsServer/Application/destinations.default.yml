@@ -82,6 +82,10 @@ destinations:
     venues:
       - XTSE
       - XTSX
+  - id: OTCM
+    description: OTC Markets Group Inc.
+    venues:
+      - OTCM
 
 preferred_destinations:
   - venue: CSE2
@@ -96,6 +100,8 @@ preferred_destinations:
     destination: TSX
   - venue: XTSX
     destination: TSX
+  - venue: OTCM
+    destination: OTCM
 
 manual_order_entry:
   id: MOE
@@ -106,4 +112,5 @@ manual_order_entry:
     - XCNQ
     - XTSE
     - XTSX
+    - OTCM
 ...

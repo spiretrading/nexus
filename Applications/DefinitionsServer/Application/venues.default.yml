@@ -96,4 +96,11 @@ venues:
     description: TSX Venture Exchange
     display_name: TSXV
     market_center: CDX
+  - venue: OTCM
+    country_code: US
+    time_zone: Eastern_Time
+    currency: USD
+    description: OTC Markets Group Inc.
+    display_name: OTCM
+    market_center: OTCM
 ...
