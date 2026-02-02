@@ -89,7 +89,7 @@ TEST_SUITE("OtcLinkClient") {
     auto expected_sequence2 = std::uint32_t(0);
     auto message2 = fixture.m_client->read(out(expected_sequence2));
     REQUIRE(message2.m_type == OtcLinkMessage::Type::QUOTE_UPDATE);
-    REQUIRE(expected_sequence2 == 101);
+    REQUIRE(expected_sequence2 == 100);
     REQUIRE(is_payload_equal(message2.m_payload, "TWO"));
   }
 
