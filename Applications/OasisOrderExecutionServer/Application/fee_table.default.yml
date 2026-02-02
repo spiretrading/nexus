@@ -120,7 +120,7 @@ ca_equities:
     # >= $1.00               X       X
     #  < $1.00               X       X
     regular_table:
-      [[-0.0020, 0.0028],
+      [[-0.0022, 0.0030],
        [-0.0004, 0.0009]]
 
     # The fee_table is structured as follows:
@@ -152,6 +152,10 @@ ca_equities:
     oddlot_table:
       [[-0.0003, 0.0004],
        [-0.0002, 0.0003]]
+
+    # Large trade flat fee threshold and amount
+    large_trade_size: 200000
+    large_trade_fee: 2.00
 
   # CXD fees are based on: https://www.nasdaq.com/docs/trading-fees-schedule-cxd
   cxd:
