@@ -159,6 +159,10 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     if(quote_action == QUOTE_ACTION_DELETE) {
       auto i = m_book_quotes.find(quote_id);
       if(i == m_book_quotes.end()) {
+        if(m_configuration.m_is_logging_messages) {
+          std::cout << boost::posix_time::microsec_clock::universal_time() <<
+            " Delete: quote_id " << quote_id << " not found" << std::endl;
+        }
         return;
       }
       auto& stored = i->second;
@@ -166,17 +170,23 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         auto bid = stored.m_bid;
         bid.m_quote.m_size = 0;
         bid.m_timestamp = parse_timestamp(data + 52);
-        std::cout << "OTC LINK DELETE: " <<
-          SecurityBookQuote(bid, stored.m_security) << std::endl;
-//        m_feed_client->publish(SecurityBookQuote(bid, stored.m_security));
+        if(m_configuration.m_is_logging_messages) {
+          std::cout << boost::posix_time::microsec_clock::universal_time() <<
+            " Delete: " << SecurityBookQuote(bid, stored.m_security) <<
+            std::endl;
+        }
+        m_feed_client->publish(SecurityBookQuote(bid, stored.m_security));
       }
       if(stored.m_ask.m_quote.m_price != Money::ZERO) {
         auto ask = stored.m_ask;
         ask.m_quote.m_size = 0;
         ask.m_timestamp = parse_timestamp(data + 31);
-        std::cout << "OTC LINK DELETE: " <<
-          SecurityBookQuote(ask, stored.m_security) << std::endl;
-//        m_feed_client->publish(SecurityBookQuote(ask, stored.m_security));
+        if(m_configuration.m_is_logging_messages) {
+          std::cout << boost::posix_time::microsec_clock::universal_time() <<
+            " Delete: " << SecurityBookQuote(ask, stored.m_security) <<
+            std::endl;
+        }
+        m_feed_client->publish(SecurityBookQuote(ask, stored.m_security));
       }
       m_book_quotes.erase(i);
       return;
@@ -192,9 +202,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       auto bid_timestamp = parse_timestamp(data + 52);
       bid = BookQuote(mpid, true, m_configuration.m_venue,
         make_bid(bid_price, bid_size), bid_timestamp);
-      std::cout <<
-        "OTC LINK ADD: " << SecurityBookQuote(bid, security) << std::endl;
-//      m_feed_client->publish(SecurityBookQuote(bid, security));
+      if(m_configuration.m_is_logging_messages) {
+        std::cout << boost::posix_time::microsec_clock::universal_time() <<
+          " Add: " << SecurityBookQuote(bid, security) << std::endl;
+      }
+      m_feed_client->publish(SecurityBookQuote(bid, security));
     }
     auto ask_price = parse_money(data + 18);
     auto ask = BookQuote();
@@ -203,9 +215,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       auto ask_timestamp = parse_timestamp(data + 31);
       ask = BookQuote(mpid, true, m_configuration.m_venue,
         make_ask(ask_price, ask_size), ask_timestamp);
-      std::cout <<
-        "OTC LINK ADD: " << SecurityBookQuote(ask, security) << std::endl;
-//      m_feed_client->publish(SecurityBookQuote(ask, security));
+      if(m_configuration.m_is_logging_messages) {
+        std::cout << boost::posix_time::microsec_clock::universal_time() <<
+          " Add: " << SecurityBookQuote(ask, security) << std::endl;
+      }
+      m_feed_client->publish(SecurityBookQuote(ask, security));
     }
     m_book_quotes.insert(
       std::pair(quote_id, BookQuoteEntry(security, bid, ask)));
@@ -219,6 +233,10 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     auto quote_id = parse_uint32(data + 4);
     auto i = m_book_quotes.find(quote_id);
     if(i == m_book_quotes.end()) {
+      if(m_configuration.m_is_logging_messages) {
+        std::cout << boost::posix_time::microsec_clock::universal_time() <<
+          " Update: quote_id " << quote_id << " not found" << std::endl;
+      }
       return;
     }
     auto quote_flags = parse_byte(data + 8);
@@ -236,9 +254,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     quote.m_quote.m_price = price;
     quote.m_quote.m_size = size;
     quote.m_timestamp = timestamp;
-    std::cout << "OTC LINK UPDATE: " <<
-      SecurityBookQuote(quote, stored.m_security) << std::endl;
-//      m_feed_client->publish(SecurityBookQuote(stored.m_ask, stored.m_security));
+    if(m_configuration.m_is_logging_messages) {
+      std::cout << boost::posix_time::microsec_clock::universal_time() <<
+        " Update: " << SecurityBookQuote(quote, stored.m_security) << std::endl;
+    }
+    m_feed_client->publish(SecurityBookQuote(quote, stored.m_security));
   }
 
   template<typename M, typename O>
@@ -268,9 +288,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     auto ask = make_ask(ask_price, ask_size);
     auto bbo = BboQuote(bid, ask, timestamp);
     m_bbo_quotes.insert(std::pair(inside_id, BboQuoteEntry(security, bbo)));
-    std::cout << "OTC LINK INSIDE ADD: " <<
-      SecurityBboQuote(bbo, security) << std::endl;
-//    m_feed_client->publish(SecurityBboQuote(bbo, security));
+    if(m_configuration.m_is_logging_messages) {
+      std::cout << boost::posix_time::microsec_clock::universal_time() <<
+        " Inside add: " << SecurityBboQuote(bbo, security) << std::endl;
+    }
+    m_feed_client->publish(SecurityBboQuote(bbo, security));
   }
 
   template<typename M, typename O>
@@ -279,26 +301,20 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     static const auto UPDATE_SIDE_ASK = std::uint8_t(0x01);
     auto data = message.m_payload;
     auto inside_id = parse_uint32(data + 4);
+    auto i = m_bbo_quotes.find(inside_id);
+    if(i == m_bbo_quotes.end()) {
+      if(m_configuration.m_is_logging_messages) {
+        std::cout << boost::posix_time::microsec_clock::universal_time() <<
+          " Inside update: inside_id " << inside_id << " not found" <<
+          std::endl;
+      }
+      return;
+    }
     auto quote_flags = parse_byte(data + 8);
     auto is_ask_update = (quote_flags & UPDATE_SIDE_ASK) != 0;
     auto price = parse_money(data + 9);
     auto size = parse_quantity(data + 17);
     auto timestamp = parse_timestamp(data + 21);
-    auto i = m_bbo_quotes.find(inside_id);
-    if(i == m_bbo_quotes.end()) {
-      auto security_id = parse_uint32(data + 10);
-      auto security =
-        Security(std::to_string(security_id), m_configuration.m_venue);
-      auto bbo = BboQuote();
-      if(is_ask_update) {
-        bbo.m_ask = make_ask(price, size);
-      } else {
-        bbo.m_bid = make_bid(price, size);
-      }
-      bbo.m_timestamp = timestamp;
-      m_bbo_quotes.insert(std::pair(inside_id, BboQuoteEntry(security, bbo)));
-      return;
-    }
     auto& stored = i->second;
     if(is_ask_update) {
       stored.m_bbo.m_ask.m_price = price;
@@ -310,11 +326,19 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     stored.m_bbo.m_timestamp = timestamp;
     if(stored.m_bbo.m_bid.m_price == Money::ZERO ||
         stored.m_bbo.m_ask.m_price == Money::ZERO) {
+      if(m_configuration.m_is_logging_messages) {
+        std::cout << boost::posix_time::microsec_clock::universal_time() <<
+          " Inside update: inside_id " << inside_id <<
+          " bid or ask price is zero" << std::endl;
+      }
       return;
     }
-    std::cout << "OTC LINK INSIDE UPDATE: " <<
-      SecurityBboQuote(stored.m_bbo, stored.m_security) << std::endl;
-//    m_feed_client->publish(SecurityBboQuote(stored.m_bbo, stored.m_security));
+    if(m_configuration.m_is_logging_messages) {
+      std::cout << boost::posix_time::microsec_clock::universal_time() <<
+        " Inside update: " <<
+        SecurityBboQuote(stored.m_bbo, stored.m_security) << std::endl;
+    }
+    m_feed_client->publish(SecurityBboQuote(stored.m_bbo, stored.m_security));
   }
 
   template<typename M, typename O>
@@ -332,9 +356,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       TimeAndSale::Condition::Type::REGULAR, "@");
     auto time_and_sale = TimeAndSale(
       timestamp, price, size, condition, venue, std::string(), std::string());
-    std::cout << "OTC LINK TRADE: " <<
-      SecurityTimeAndSale(time_and_sale, security) << std::endl;
-//    m_feed_client->publish(SecurityTimeAndSale(time_and_sale, security));
+    if(m_configuration.m_is_logging_messages) {
+      std::cout << boost::posix_time::microsec_clock::universal_time() <<
+        " Trade: " << SecurityTimeAndSale(time_and_sale, security) << std::endl;
+    }
+    m_feed_client->publish(SecurityTimeAndSale(time_and_sale, security));
   }
 
   template<typename M, typename O>
@@ -356,6 +382,10 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         parse_inside_update_message(message);
       } else if(message.m_type == OtcLinkMessage::Type::TRADE) {
         parse_trade_message(message);
+      } else if(m_configuration.m_is_logging_messages) {
+        std::cout << boost::posix_time::microsec_clock::universal_time() <<
+          " Unhandled message type: " << static_cast<int>(message.m_type) <<
+          std::endl;
       }
     }
   }
