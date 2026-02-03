@@ -6,7 +6,12 @@ service_locator:
 
 enable_logging: false
 venue: OTCM
+snapshot_type: bbo
 sampling: 100ms
 host: "224.0.23.214:21004"
 interface: "$local_interface:21004"
+sender_comp_id: OWTSIERRA
+recovery_address: "192.26.98.86:21100"
+recovery_host: "224.0.23.214:21005"
+recovery_interface: "$local_interface:21005"
 ...

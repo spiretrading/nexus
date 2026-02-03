@@ -38,6 +38,19 @@ namespace {
         extract<bool>(config, "enable_logging", false);
       otc_link_config.m_venue = DEFAULT_VENUES.from_display_name(
         extract<std::string>(config, "venue")).m_venue;
+      auto snapshot_type = extract<std::string>(config, "snapshot_type");
+      if(snapshot_type == "bbo") {
+        otc_link_config.m_recovery_channel =
+          OtcLinkChannelId::QUOTE_INSIDE_SNAPSHOT;
+      } else if(snapshot_type == "book") {
+        otc_link_config.m_recovery_channel =
+          OtcLinkChannelId::QUOTE_BOOK_SNAPSHOT;
+      } else if(snapshot_type == "trades") {
+        otc_link_config.m_recovery_channel = OtcLinkChannelId::TRADE_REAL_TIME;
+      } else {
+        throw std::runtime_error("Invalid snapshot_type: " + snapshot_type +
+          ". Expected 'bbo', 'book', or 'trades'.");
+      }
       return otc_link_config;
     }, std::runtime_error("Unable to parse OTC Link configuration."));
   }

@@ -96,6 +96,8 @@ namespace Nexus {
       void parse_inside_message(const OtcLinkMessage& message);
       void parse_inside_update_message(const OtcLinkMessage& message);
       void parse_trade_message(const OtcLinkMessage& message);
+      void parse_message(const OtcLinkMessage& message);
+      std::uint32_t initialize_snapshot();
       void read_loop();
   };
 
@@ -389,29 +391,85 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename M, typename O, typename R, typename S>
-  void OtcLinkMarketDataFeedClient<M, O, R, S>::read_loop() {
+  void OtcLinkMarketDataFeedClient<M, O, R, S>::parse_message(
+      const OtcLinkMessage& message) {
+    if(message.m_type == OtcLinkMessage::Type::QUOTE) {
+      parse_quote_message(message);
+    } else if(message.m_type == OtcLinkMessage::Type::QUOTE_UPDATE) {
+      parse_quote_update_message(message);
+    } else if(message.m_type == OtcLinkMessage::Type::INSIDE) {
+      parse_inside_message(message);
+    } else if(message.m_type == OtcLinkMessage::Type::INSIDE_UPDATE) {
+      parse_inside_update_message(message);
+    } else if(message.m_type == OtcLinkMessage::Type::TRADE) {
+      parse_trade_message(message);
+    } else if(m_configuration.m_is_logging_messages) {
+      std::cout << boost::posix_time::microsec_clock::universal_time() <<
+        " Unhandled message type: " << static_cast<int>(message.m_type) <<
+        std::endl;
+    }
+  }
+
+  template<typename M, typename O, typename R, typename S>
+  std::uint32_t OtcLinkMarketDataFeedClient<M, O, R, S>::initialize_snapshot() {
+    if(m_configuration.m_recovery_channel !=
+        OtcLinkChannelId::QUOTE_INSIDE_SNAPSHOT) {
+      return 0;
+    }
+    auto snapshot_client = m_snapshot_client_builder();
+    auto result =
+      m_recovery_client->request_snapshot(m_configuration.m_recovery_channel);
+    if(result.m_response != OtcLinkReplayAckMessage::ResponseType::SUCCESS) {
+      std::cout << boost::posix_time::microsec_clock::universal_time() <<
+        " Snapshot request failed: " << result.m_text << std::endl;
+      return 0;
+    }
+    auto last_sequence_number = std::uint32_t(0);
+    auto received_start_of_spin = false;
     while(true) {
       auto message = OtcLinkMessage();
       try {
-        message = m_otc_link_client->read();
+        message = snapshot_client->read();
       } catch(const Beam::EndOfFileException&) {
         break;
       }
-      if(message.m_type == OtcLinkMessage::Type::QUOTE) {
-        parse_quote_message(message);
-      } else if(message.m_type == OtcLinkMessage::Type::QUOTE_UPDATE) {
-        parse_quote_update_message(message);
-      } else if(message.m_type == OtcLinkMessage::Type::INSIDE) {
-        parse_inside_message(message);
-      } else if(message.m_type == OtcLinkMessage::Type::INSIDE_UPDATE) {
-        parse_inside_update_message(message);
-      } else if(message.m_type == OtcLinkMessage::Type::TRADE) {
-        parse_trade_message(message);
-      } else if(m_configuration.m_is_logging_messages) {
-        std::cout << boost::posix_time::microsec_clock::universal_time() <<
-          " Unhandled message type: " << static_cast<int>(message.m_type) <<
-          std::endl;
+      if(message.m_type == OtcLinkMessage::Type::START_OF_SPIN) {
+        received_start_of_spin = true;
+        if(m_configuration.m_is_logging_messages) {
+          std::cout << boost::posix_time::microsec_clock::universal_time() <<
+            " Start of spin" << std::endl;
+        }
+      } else if(message.m_type == OtcLinkMessage::Type::END_OF_SPIN) {
+        last_sequence_number = parse_uint32(message.m_payload + 17);
+        if(m_configuration.m_is_logging_messages) {
+          std::cout << boost::posix_time::microsec_clock::universal_time() <<
+            " End of spin, last sequence number: " << last_sequence_number <<
+            std::endl;
+        }
+        break;
+      } else if(received_start_of_spin) {
+        parse_message(message);
       }
+    }
+    return last_sequence_number;
+  }
+
+  template<typename M, typename O, typename R, typename S>
+  void OtcLinkMarketDataFeedClient<M, O, R, S>::read_loop() {
+    auto last_sequence_number = initialize_snapshot();
+    while(true) {
+      auto message = OtcLinkMessage();
+      auto sequence_number = std::uint32_t(0);
+      try {
+        message = m_otc_link_client->read(Beam::out(sequence_number));
+      } catch(const Beam::EndOfFileException&) {
+        break;
+      }
+      if(sequence_number <= last_sequence_number) {
+        continue;
+      }
+      last_sequence_number = sequence_number;
+      parse_message(message);
     }
   }
 }

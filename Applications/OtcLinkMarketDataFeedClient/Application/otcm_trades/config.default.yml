@@ -6,7 +6,12 @@ service_locator:
 
 enable_logging: false
 venue: OTCM
+snapshot_type: trades
 sampling: 100ms
 host: "224.0.23.218:21008"
 interface: "$local_interface:21008"
+sender_comp_id: OWTSIERRA
+recovery_address: "192.26.98.86:21100"
+recovery_host: "224.0.23.196:21001"
+recovery_interface: "$local_interface:21001"
 ...
