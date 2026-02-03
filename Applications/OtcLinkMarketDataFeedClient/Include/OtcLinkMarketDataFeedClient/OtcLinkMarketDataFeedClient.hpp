@@ -1,6 +1,7 @@
 #ifndef OTC_LINK_MARKET_DATA_FEED_CLIENT_HPP
 #define OTC_LINK_MARKET_DATA_FEED_CLIENT_HPP
 #include <cstdint>
+#include <functional>
 #include <unordered_map>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -12,6 +13,7 @@
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkClient.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkConfiguration.hpp"
+#include "OtcLinkMarketDataFeedClient/OtcLinkRecoveryClient.hpp"
 
 namespace Nexus {
 
@@ -20,8 +22,10 @@ namespace Nexus {
    * @tparam M The type of MarketDataFeedClient used to update the
    *         MarketDataServer.
    * @tparam O The type of OtcLinkClient receiving messages.
+   * @tparam R The type of OtcLinkRecoveryClient used for recovery requests.
+   * @tparam S The type of OtcLinkClient used for recovery messages.
    */
-  template<typename M, typename O>
+  template<typename M, typename O, typename R, typename S>
   class OtcLinkMarketDataFeedClient {
     public:
 
@@ -33,15 +37,27 @@ namespace Nexus {
       /** The type of client receiving OTC Link messages. */
       using OtcLinkClient = Beam::dereference_t<O>;
 
+      /** The type of client used for recovery requests. */
+      using RecoveryClient = Beam::dereference_t<R>;
+
+      /**
+       * The type of function used to build OtcLinkClients used for recovery.
+       */
+      using SnapshotClientBuilder = std::function<S ()>;
+
       /**
        * Constructs an OtcLinkMarketDataFeedClient.
        * @param configuration The OtcLinkConfiguration used to parse messages.
        * @param feed_client Initializes the MarketDataFeedClient.
        * @param otc_link_client The OtcLinkClient receiving messages.
+       * @param recovery_client The RecoveryClient used for recovery requests.
+       * @param snapshot_client_builder Builds snapshots when needed.
        */
-      template<Beam::Initializes<M> MF, Beam::Initializes<O> OF>
+      template<Beam::Initializes<M> MF, Beam::Initializes<O> OF,
+        Beam::Initializes<R> RF>
       OtcLinkMarketDataFeedClient(OtcLinkConfiguration configuration,
-        MF&& feed_client, OF&& otc_link_client);
+        MF&& feed_client, OF&& otc_link_client, RF&& recovery_client,
+        SnapshotClientBuilder snapshot_client_builder);
 
       ~OtcLinkMarketDataFeedClient();
 
@@ -60,6 +76,8 @@ namespace Nexus {
       OtcLinkConfiguration m_configuration;
       Beam::local_ptr_t<M> m_feed_client;
       Beam::local_ptr_t<O> m_otc_link_client;
+      Beam::local_ptr_t<R> m_recovery_client;
+      SnapshotClientBuilder m_snapshot_client_builder;
       std::unordered_map<std::uint32_t, BookQuoteEntry> m_book_quotes;
       std::unordered_map<std::uint32_t, BboQuoteEntry> m_bbo_quotes;
       Beam::RoutineHandler m_read_loop;
@@ -81,14 +99,18 @@ namespace Nexus {
       void read_loop();
   };
 
-  template<typename M, typename O>
-  template<Beam::Initializes<M> MF, Beam::Initializes<O> OF>
-  OtcLinkMarketDataFeedClient<M, O>::OtcLinkMarketDataFeedClient(
-    OtcLinkConfiguration configuration,  MF&& feed_client, OF&& otc_link_client)
+  template<typename M, typename O, typename R, typename S>
+  template<Beam::Initializes<M> MF, Beam::Initializes<O> OF,
+    Beam::Initializes<R> RF>
+  OtcLinkMarketDataFeedClient<M, O, R, S>::OtcLinkMarketDataFeedClient(
+    OtcLinkConfiguration configuration, MF&& feed_client, OF&& otc_link_client,
+    RF&& recovery_client, SnapshotClientBuilder snapshot_client_builder)
 BEAM_SUPPRESS_THIS_INITIALIZER()
       try : m_configuration(std::move(configuration)),
             m_feed_client(std::forward<MF>(feed_client)),
             m_otc_link_client(std::forward<OF>(otc_link_client)),
+            m_recovery_client(std::forward<RF>(recovery_client)),
+            m_snapshot_client_builder(std::move(snapshot_client_builder)),
             m_read_loop(Beam::spawn(
               std::bind(&OtcLinkMarketDataFeedClient::read_loop, this))) {
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
@@ -97,13 +119,13 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       "Failed to initialize the OTC Link market data feed client."));
   }
 
-  template<typename M, typename O>
-  OtcLinkMarketDataFeedClient<M, O>::~OtcLinkMarketDataFeedClient() {
+  template<typename M, typename O, typename R, typename S>
+  OtcLinkMarketDataFeedClient<M, O, R, S>::~OtcLinkMarketDataFeedClient() {
     close();
   }
 
-  template<typename M, typename O>
-  void OtcLinkMarketDataFeedClient<M, O>::close() {
+  template<typename M, typename O, typename R, typename S>
+  void OtcLinkMarketDataFeedClient<M, O, R, S>::close() {
     if(m_open_state.set_closing()) {
       return;
     }
@@ -113,32 +135,35 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_open_state.close();
   }
 
-  template<typename M, typename O>
-  std::uint8_t OtcLinkMarketDataFeedClient<M, O>::parse_byte(const char* data) {
+  template<typename M, typename O, typename R, typename S>
+  std::uint8_t OtcLinkMarketDataFeedClient<M, O, R, S>::parse_byte(
+      const char* data) {
     return *reinterpret_cast<const std::uint8_t*>(data);
   }
 
-  template<typename M, typename O>
-  std::uint32_t OtcLinkMarketDataFeedClient<M, O>::parse_uint32(
+  template<typename M, typename O, typename R, typename S>
+  std::uint32_t OtcLinkMarketDataFeedClient<M, O, R, S>::parse_uint32(
       const char* data) {
     return boost::endian::big_to_native(
       *reinterpret_cast<const std::uint32_t*>(data));
   }
 
-  template<typename M, typename O>
-  Quantity OtcLinkMarketDataFeedClient<M, O>::parse_quantity(const char* data) {
+  template<typename M, typename O, typename R, typename S>
+  Quantity OtcLinkMarketDataFeedClient<M, O, R, S>::parse_quantity(
+      const char* data) {
     return Quantity(parse_uint32(data));
   }
 
-  template<typename M, typename O>
-  Money OtcLinkMarketDataFeedClient<M, O>::parse_money(const char* data) {
+  template<typename M, typename O, typename R, typename S>
+  Money OtcLinkMarketDataFeedClient<M, O, R, S>::parse_money(const char* data) {
     auto value = boost::endian::big_to_native(
       *reinterpret_cast<const std::uint64_t*>(data));
     return Money(Quantity(value) / 1000000);
   }
 
-  template<typename M, typename O>
-  boost::posix_time::ptime OtcLinkMarketDataFeedClient<M, O>::parse_timestamp(
+  template<typename M, typename O, typename R, typename S>
+  boost::posix_time::ptime
+      OtcLinkMarketDataFeedClient<M, O, R, S>::parse_timestamp(
       const char* data) {
     auto milliseconds = boost::endian::big_to_native(
       *reinterpret_cast<const std::uint64_t*>(data));
@@ -147,8 +172,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       boost::posix_time::milliseconds(milliseconds));
   }
 
-  template<typename M, typename O>
-  void OtcLinkMarketDataFeedClient<M, O>::parse_quote_message(
+  template<typename M, typename O, typename R, typename S>
+  void OtcLinkMarketDataFeedClient<M, O, R, S>::parse_quote_message(
       const OtcLinkMessage& message) {
     static const auto QUOTE_ACTION_ADD = std::uint8_t(0x02);
     static const auto QUOTE_ACTION_DELETE = std::uint8_t(0x03);
@@ -225,8 +250,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       std::pair(quote_id, BookQuoteEntry(security, bid, ask)));
   }
 
-  template<typename M, typename O>
-  void OtcLinkMarketDataFeedClient<M, O>::parse_quote_update_message(
+  template<typename M, typename O, typename R, typename S>
+  void OtcLinkMarketDataFeedClient<M, O, R, S>::parse_quote_update_message(
       const OtcLinkMessage& message) {
     static const auto UPDATE_SIDE_ASK = std::uint8_t(0x01);
     auto data = message.m_payload;
@@ -261,8 +286,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_feed_client->publish(SecurityBookQuote(quote, stored.m_security));
   }
 
-  template<typename M, typename O>
-  void OtcLinkMarketDataFeedClient<M, O>::parse_inside_message(
+  template<typename M, typename O, typename R, typename S>
+  void OtcLinkMarketDataFeedClient<M, O, R, S>::parse_inside_message(
       const OtcLinkMessage& message) {
     static const auto INSIDE_ACTION_ADD = std::uint8_t(0x02);
     static const auto INSIDE_ACTION_DELETE = std::uint8_t(0x03);
@@ -295,8 +320,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_feed_client->publish(SecurityBboQuote(bbo, security));
   }
 
-  template<typename M, typename O>
-  void OtcLinkMarketDataFeedClient<M, O>::parse_inside_update_message(
+  template<typename M, typename O, typename R, typename S>
+  void OtcLinkMarketDataFeedClient<M, O, R, S>::parse_inside_update_message(
       const OtcLinkMessage& message) {
     static const auto UPDATE_SIDE_ASK = std::uint8_t(0x01);
     auto data = message.m_payload;
@@ -341,8 +366,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_feed_client->publish(SecurityBboQuote(stored.m_bbo, stored.m_security));
   }
 
-  template<typename M, typename O>
-  void OtcLinkMarketDataFeedClient<M, O>::parse_trade_message(
+  template<typename M, typename O, typename R, typename S>
+  void OtcLinkMarketDataFeedClient<M, O, R, S>::parse_trade_message(
       const OtcLinkMessage& message) {
     auto data = message.m_payload;
     auto security_id = parse_uint32(data + 10);
@@ -363,8 +388,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_feed_client->publish(SecurityTimeAndSale(time_and_sale, security));
   }
 
-  template<typename M, typename O>
-  void OtcLinkMarketDataFeedClient<M, O>::read_loop() {
+  template<typename M, typename O, typename R, typename S>
+  void OtcLinkMarketDataFeedClient<M, O, R, S>::read_loop() {
     while(true) {
       auto message = OtcLinkMessage();
       try {
