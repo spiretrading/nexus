@@ -21,6 +21,13 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  auto get_text_width(const QString& text) {
+    auto font = QFont("Roboto");
+    font.setWeight(QFont::Normal);
+    font.setPixelSize(scale_width(12));
+    return QFontMetrics(font).horizontalAdvance(text);
+  }
+
   template<typename Model, typename M1, typename M2>
   QValidator::State test(Model& model, const typename Model::Type& value,
       std::weak_ptr<M1> m1, std::weak_ptr<M2> m2,
@@ -290,26 +297,7 @@ namespace {
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
     style.get(Any()).
-      set(BackgroundColor(QColor(0xFFFFFF))).
-      set(BodyAlign(Qt::AlignCenter)).
-      set(border(scale_width(1), QColor(0xC8C8C8))).
-      set(horizontal_padding(scale_width(4)));
-    style.get(Hover() || FocusIn()).
-      set(border_color(QColor(0x4B23A0)));
-    style.get(ReadOnly()).
-      set(BackgroundColor(QColor(Qt::transparent))).
-      set(border_color(QColor(Qt::transparent)));
-    style.get(Disabled()).
-      set(BackgroundColor(QColor(0xF5F5F5))).
-      set(border_color(QColor(0xC8C8C8)));
-    style.get(ReadOnly() && Disabled()).
-      set(BackgroundColor(QColor(Qt::transparent))).
-      set(border_color(QColor(Qt::transparent)));
-    style.get(Rejected()).
-      set(BackgroundColor(chain(timeout(QColor(0xFFF1F1), milliseconds(250)),
-        linear(QColor(0xFFF1F1), revert, milliseconds(300))))).
-      set(border_color(
-        chain(timeout(QColor(0xB71C1C), milliseconds(550)), revert)));
+      set(TextAlign(Qt::AlignLeft));
     style.get(Any() > Colon()).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
     style.get(Disabled() > Colon()).
@@ -321,7 +309,7 @@ namespace {
     style.get(Any()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(border_size(0)).
-      set(horizontal_padding(scale_width(0))).
+      set(padding(0)).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
     style.get(Any() > (DownButton() || UpButton())).set(Visibility::NONE);
     return style;
@@ -331,7 +319,7 @@ namespace {
     style.get(Any()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(border_size(0)).
-      set(horizontal_padding(scale_width(0))).
+      set(padding(0)).
       set(LeadingZeros(2)).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
     style.get(Any() > (DownButton() || UpButton())).set(Visibility::NONE);
@@ -342,7 +330,7 @@ namespace {
     style.get(Any()).
       set(BackgroundColor(QColor(Qt::transparent))).
       set(border_size(0)).
-      set(horizontal_padding(scale_width(0))).
+      set(padding(0)).
       set(LeadingZeros(2)).set(TrailingZeros(3)).
       set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
     style.get(Any() > (DownButton() || UpButton())).set(Visibility::NONE);
@@ -352,8 +340,10 @@ namespace {
   auto make_hour_field(std::shared_ptr<OptionalIntegerModel> current,
       QWidget& event_filter) {
     auto field = new IntegerBox(std::move(current));
-    field->setMinimumWidth(scale_width(24));
-    field->set_placeholder("hh");
+    auto placeholder = "hh";
+    field->setMinimumWidth(
+      std::max(get_text_width("00"), get_text_width(placeholder)));
+    field->set_placeholder(placeholder);
     update_style(*field, [&] (auto& style) {
       style = HOUR_FIELD_STYLE(style);
     });
@@ -364,8 +354,10 @@ namespace {
   auto make_minute_field(std::shared_ptr<OptionalIntegerModel> current,
       QWidget& event_filter) {
     auto field = new IntegerBox(std::move(current));
-    field->setMinimumWidth(scale_width(28));
-    field->set_placeholder("mm");
+    auto placeholder = "mm";
+    field->setMinimumWidth(
+      std::max(get_text_width("00"), get_text_width(placeholder)));
+    field->set_placeholder(placeholder);
     update_style(*field, [&] (auto& style) {
       style = MINUTE_FIELD_STYLE(style);
     });
@@ -377,8 +369,10 @@ namespace {
       std::shared_ptr<ScalarValueModel<optional<Decimal>>> current,
         QWidget& event_filter) {
     auto field = new DecimalBox(std::move(current));
-    field->setMinimumWidth(scale_width(44));
-    field->set_placeholder("ss.sss");
+    auto placeholder = "ss.sss";
+    field->setMinimumWidth(
+      std::max(get_text_width("00.000"), get_text_width(placeholder)));
+    field->set_placeholder(placeholder);
     update_style(*field, [&] (auto& style) {
       style = SECOND_FIELD_STYLE(style);
     });
@@ -388,7 +382,7 @@ namespace {
 
   auto make_colon() {
     auto colon = make_label(":");
-    colon->setFixedWidth(scale_width(10));
+    colon->setFixedWidth(scale_width(6));
     match(*colon, Colon());
     return colon;
   }
@@ -417,27 +411,33 @@ DurationBox::DurationBox(std::shared_ptr<OptionalDurationModel> current,
   second_model->m_hours = hour_model;
   second_model->m_minutes = minute_model;
   m_hour_field = make_hour_field(std::move(hour_model), *this);
+  m_hour_field->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
   m_minute_field = make_minute_field(std::move(minute_model), *this);
+  m_minute_field->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
   m_second_field = make_second_field(std::move(second_model), *this);
+  m_second_field->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
   auto hour_minute_colon = make_colon();
   auto minute_second_colon = make_colon();
   auto container_layout = make_hbox_layout(container);
-  container_layout->addWidget(m_hour_field, 6);
+  container_layout->addWidget(m_hour_field);
   container_layout->addWidget(hour_minute_colon);
-  container_layout->addWidget(m_minute_field, 7);
+  container_layout->addWidget(m_minute_field);
   container_layout->addWidget(minute_second_colon);
-  container_layout->addWidget(m_second_field, 11);
-  auto box = new Box(container);
-  enclose(*this, *box);
+  container_layout->addWidget(m_second_field);
+  m_input_box = make_input_box(container);
+  enclose(*this, *m_input_box);
   link(*this, *m_hour_field);
   link(*this, *hour_minute_colon);
   link(*this, *m_minute_field);
   link(*this, *minute_second_colon);
   link(*this, *m_second_field);
   setFocusPolicy(Qt::StrongFocus);
-  setFocusProxy(box);
-  proxy_style(*this, *box);
+  setFocusProxy(m_input_box);
+  proxy_style(*this, *m_input_box);
   set_style(*this, DEFAULT_STYLE());
+  on_style();
+  m_style_connection = connect_style_signal(*this,
+    std::bind_front(&DurationBox::on_style, this));
   m_hour_field->connect_submit_signal([=] (const auto& submission) {
     if(m_hour_field->hasFocus()) {
       on_submit();
@@ -477,9 +477,9 @@ void DurationBox::set_read_only(bool is_read_only) {
   m_minute_field->set_read_only(m_is_read_only);
   m_second_field->set_read_only(m_is_read_only);
   if(m_is_read_only) {
-    match(*this, ReadOnly());
+    match(*m_input_box, ReadOnly());
   } else {
-    unmatch(*this, ReadOnly());
+    unmatch(*m_input_box, ReadOnly());
   }
 }
 
@@ -571,7 +571,7 @@ void DurationBox::on_current(const optional<time_duration>& current) {
   m_has_update = current != m_submission;
   if(m_is_rejected) {
     m_is_rejected = false;
-    unmatch(*this, Rejected());
+    unmatch(*m_input_box, Rejected());
   }
 }
 
@@ -594,9 +594,25 @@ void DurationBox::on_reject() {
   m_current->set(submission);
   if(!m_is_rejected) {
     m_is_rejected = true;
-    match(*this, Rejected());
+    match(*m_input_box, Rejected());
   }
 }
+
+void DurationBox::on_style() {
+  auto& stylist = find_stylist(*this);
+  auto& block = stylist.get_computed_block();
+  for(auto& property : block) {
+    property.visit(
+      [&] (const TextAlign& alignment) {
+        stylist.evaluate(alignment, [=] (auto alignment) {
+          auto body_layout = m_input_box->get_body()->layout();
+          body_layout->setAlignment(alignment);
+          body_layout->update();
+        });
+      });
+  }
+}
+
 
 void DurationBox::update_empty_fields() {
   if(m_submission) {

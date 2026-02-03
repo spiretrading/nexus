@@ -1867,6 +1867,7 @@ UiProfile Spire::make_drop_down_list_profile() {
 UiProfile Spire::make_duration_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  properties.push_back(make_style_property("style_sheet", ""));
   properties.push_back(make_standard_property<QString>("current", ""));
   properties.push_back(
     make_standard_property<QString>("minimum", "10:10:10.000"));
@@ -1877,6 +1878,11 @@ UiProfile Spire::make_duration_box_profile() {
     auto model = std::make_shared<LocalOptionalDurationModel>();
     auto duration_box = new DurationBox(model);
     apply_widget_properties(duration_box, profile.get_properties());
+    auto& style_sheet =
+      get<optional<StyleSheet>>("style_sheet", profile.get_properties());
+    style_sheet.connect_changed_signal([=] (const auto& styles) {
+      update_widget_style(*duration_box, styles);
+    });
     auto& minimum = get<QString>("minimum", profile.get_properties());
     minimum.connect_changed_signal([=] (auto value) {
       if(auto minimum_value = parse_duration(value)) {
