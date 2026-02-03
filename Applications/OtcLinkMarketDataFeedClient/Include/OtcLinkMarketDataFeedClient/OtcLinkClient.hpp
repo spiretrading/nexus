@@ -19,7 +19,7 @@ namespace Nexus {
 
   /**
    * Implements a client using the OTC Link message protocol.
-   * @param <C> The type of Channel connected to the OTC Link server.
+   * @tparam C The type of Channel connected to the OTC Link server.
    */
   template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>
   class OtcLinkClient {

@@ -17,9 +17,9 @@ namespace Nexus {
 
   /**
    * Parses packets from the OTC Link data feed.
-   * @param <M> The type of MarketDataFeedClient used to update the
-   *        MarketDataServer.
-   * @param <O> The type of OtcLinkClient receiving messages.
+   * @tparam M The type of MarketDataFeedClient used to update the
+   *         MarketDataServer.
+   * @tparam O The type of OtcLinkClient receiving messages.
    */
   template<typename M, typename O>
   class OtcLinkMarketDataFeedClient {
