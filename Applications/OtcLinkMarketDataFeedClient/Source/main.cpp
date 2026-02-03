@@ -83,7 +83,8 @@ namespace {
     auto options = MulticastSocketOptions();
     options.m_receive_buffer_size = extract<int>(
       config, "recovery_receive_buffer", DEFAULT_RECEIVE_BUFFER_SIZE);
-    options.m_max_datagram_size = extract<int>(config, "recovery_mtu");
+    options.m_max_datagram_size =
+      extract<int>(config, "recovery_mtu", options.m_max_datagram_size);
     return [=] {
       auto channel = try_or_nest([&] {
         return std::make_unique<MulticastSocketChannel>(
