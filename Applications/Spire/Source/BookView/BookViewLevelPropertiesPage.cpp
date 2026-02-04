@@ -501,6 +501,9 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_colors_connection = m_model->m_colors->connect_operation_signal(
       std::bind_front(&PriceLevelWidget::on_colors_operation, this));
     on_type_update(m_model->m_fill_type->get(), true);
+    for(auto i = 0; i < m_color_boxes_layout->count(); ++i) {
+      m_color_boxes_layout->itemAt(i)->widget()->installEventFilter(this);
+    }
   }
 
   bool eventFilter(QObject* watched, QEvent* event) override {
@@ -523,6 +526,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         m_scroll_box->width() - scroll_bar_width -
           scale_width(COLOR_LIST_RIGHT_PADDING) - m_color_boxes->x(),
         m_color_boxes->height());
+    } else if(event->type() == QEvent::FocusIn && watched->isWidgetType()) {
+      auto widget = static_cast<QWidget*>(watched);
+      if(m_scroll_box->isAncestorOf(widget)) {
+        m_scroll_box->scroll_to(*widget);
+      }
     }
     return QWidget::eventFilter(watched, event);
   }
@@ -692,8 +700,18 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   void on_colors_operation(const ListModel<QColor>::Operation& operation) {
     visit(operation,
       [&] (const ListModel<QColor>::AddOperation& operation) {
-        m_color_boxes_layout->insertWidget(operation.m_index,
-          make_color_box(operation.m_index));
+        auto color_box = make_color_box(operation.m_index);
+        color_box->installEventFilter(this);
+        m_color_boxes_layout->insertWidget(operation.m_index, color_box);
+        if(operation.m_index > 0) {
+          QWidget::setTabOrder(
+            m_color_boxes_layout->itemAt(operation.m_index - 1)->widget(),
+            color_box);
+        }
+        if(operation.m_index < m_color_boxes_layout->count() - 1) {
+          QWidget::setTabOrder(color_box,
+            m_color_boxes_layout->itemAt(operation.m_index + 1)->widget());
+        }
       },
       [&] (const ListModel<QColor>::RemoveOperation& operation) {
         if(auto item = m_color_boxes_layout->takeAt(operation.m_index)) {
