@@ -1,6 +1,7 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 
 using namespace Beam;
@@ -11,33 +12,22 @@ using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
-  boost::local_time::tz_database load_test_tz_database() {
-    auto tz_data = std::string();
-    tz_data += "\"Australian_Eastern_Standard_Time\",\"AEST\",\"AEST\",\"AEST\",\"AEST\",\"+10:00:00\",\"+01:00:00\",\"1;0;10\",\"+02:00:00\",\"1;0;4\",\"+03:00:00\"\n";
-    tz_data += "\"Eastern_Time\",\"EST\",\"Eastern Standard Time\",\"EDT\",\"Eastern Daylight Time\",\"-05:00:00\",\"+01:00:00\",\"2;0;3\",\"+02:00:00\",\"1;0;11\",\"+02:00:00\"\n";
-    tz_data += "\"UTC\",\"UTC\",\"UTC\",\"\",\"\",\"+00:00:00\",\"+00:00:00\",\"\",\"\",\"\",\"+00:00:00\"\n";
-    auto stream = std::istringstream(tz_data);
-    auto tz_database = boost::local_time::tz_database();
-    tz_database.load_from_stream(stream);
-    return tz_database;
-  }
-
   VenueDatabase load_test_venue_database() {
     auto database = VenueDatabase();
     auto entry = VenueDatabase::Entry();
     entry.m_venue = Venue("AEST");
     entry.m_country_code = CountryCode::NONE;
     entry.m_market_center = "ASX";
-    entry.m_time_zone = "Australian_Eastern_Standard_Time";
+    entry.m_time_zone = "Australia/Sydney";
     entry.m_currency = CurrencyId::NONE;
     entry.m_description = "";
     entry.m_display_name = "";
     database.add(entry);
     entry.m_venue = Venue("EST");
-    entry.m_time_zone = "Eastern_Time";
+    entry.m_time_zone = "America/New_York";
     database.add(entry);
     entry.m_venue = Venue("UTC");
-    entry.m_time_zone = "UTC";
+    entry.m_time_zone = "Etc/UTC";
     database.add(entry);
     return database;
   }
@@ -76,7 +66,7 @@ TEST_SUITE("Venue") {
     entry.m_venue = venue;
     entry.m_country_code = CountryCode(123);
     entry.m_market_center = "ABCD";
-    entry.m_time_zone = "UTC";
+    entry.m_time_zone = "Etc/UTC";
     entry.m_currency = CurrencyId(321);
     entry.m_description = "Description";
     entry.m_display_name = "DisplayName";
@@ -95,7 +85,7 @@ TEST_SUITE("Venue") {
   }
 
   TEST_CASE("utc_start_of_day") {
-    auto tz_database = load_test_tz_database();
+    auto tz_database = get_default_time_zone_database();
     auto venue_database = load_test_venue_database();
     auto date_time = ptime(date(2025, 6, 26), hours(0));
     auto result =
@@ -104,7 +94,7 @@ TEST_SUITE("Venue") {
   }
 
   TEST_CASE("aest_start") {
-    auto tz_database = load_test_tz_database();
+    auto tz_database = get_default_time_zone_database();
     auto venue_database = load_test_venue_database();
     auto date_time = ptime(date(2025, 6, 26), hours(0));
     auto expected = ptime(date(2025, 6, 25), hours(14));
@@ -114,7 +104,7 @@ TEST_SUITE("Venue") {
   }
 
   TEST_CASE("est_in_dst_start") {
-    auto tz_database = load_test_tz_database();
+    auto tz_database = get_default_time_zone_database();
     auto venue_database = load_test_venue_database();
     auto date_time = ptime(date(2025, 6, 26), hours(0));
     auto expected = ptime(date(2025, 6, 25), hours(4));
@@ -124,7 +114,7 @@ TEST_SUITE("Venue") {
   }
 
   TEST_CASE("est_in_standard_start") {
-    auto tz_database = load_test_tz_database();
+    auto tz_database = get_default_time_zone_database();
     auto venue_database = load_test_venue_database();
     auto date_time = ptime(date(2025, 1, 15), hours(0));
     auto expected = ptime(date(2025, 1, 14), hours(5));
