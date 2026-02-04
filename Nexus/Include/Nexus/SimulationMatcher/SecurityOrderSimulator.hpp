@@ -187,11 +187,11 @@ namespace Nexus {
   void SecurityOrderSimulator<T>::set_session_timestamps(
       boost::posix_time::ptime timestamp) {
     m_date = timestamp.date();
-    auto eastern_timestamp = Beam::adjust_date_time(
-      timestamp, "Etc/UTC", "Eastern_Time", get_default_time_zone_database());
-    m_market_close_time = Beam::adjust_date_time(
+    auto eastern_timestamp = Beam::to_timezone(timestamp, "Etc/UTC",
+      "America/New_York", get_default_time_zone_database());
+    m_market_close_time = Beam::to_timezone(
       boost::posix_time::ptime(eastern_timestamp.date(),
-        boost::posix_time::hours(16)), "Eastern_Time", "Etc/UTC",
+        boost::posix_time::hours(16)), "America/New_York", "Etc/UTC",
       get_default_time_zone_database());
     m_is_moc_pending = timestamp < m_market_close_time;
   }
