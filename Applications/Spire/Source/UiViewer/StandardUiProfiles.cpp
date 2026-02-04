@@ -4927,6 +4927,12 @@ UiProfile Spire::make_text_box_profile() {
 UiProfile Spire::make_time_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
+  auto default_style = R"(
+    any {
+      text_align: left;
+    }
+  )";
+  properties.push_back(make_style_property("style_sheet", default_style));
   properties.push_back(make_standard_property<QString>("current", ""));
   properties.push_back(make_standard_property<bool>("read_only"));
   auto profile = UiProfile("TimeBox", properties, [] (auto& profile) {
@@ -4938,9 +4944,14 @@ UiProfile Spire::make_time_box_profile() {
         return {};
       }
     };
-    auto& current = get<QString>("current", profile.get_properties());
     auto time_box = make_time_box();
     apply_widget_properties(time_box, profile.get_properties());
+    auto& style_sheet =
+      get<optional<StyleSheet>>("style_sheet", profile.get_properties());
+    style_sheet.connect_changed_signal([=] (const auto& styles) {
+      update_widget_style(*time_box, styles);
+    });
+    auto& current = get<QString>("current", profile.get_properties());
     current.connect_changed_signal([=] (auto value) {
       if(auto current_value = parse_time(value)) {
         if(time_box->get_current()->get() != *current_value) {
