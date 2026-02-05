@@ -1,0 +1,3 @@
+@ECHO OFF
+CALL "%~dp0..\..\Nexus\version.bat" ASTER_MARKET_DATA_FEED_CLIENT
+EXIT /B %ERRORLEVEL%

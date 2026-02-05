@@ -30,6 +30,7 @@ IF !PARALLEL! EQU 1 (
   MD "!BUILD_TEMP!"
 )
 CALL :BuildApp Applications\AdministrationServer %*
+CALL :BuildApp Applications\AsterMarketDataFeedClient %*
 CALL :BuildApp Applications\ChartingServer %*
 CALL :BuildApp Applications\ComplianceServer %*
 CALL :BuildApp Applications\DefinitionsServer %*

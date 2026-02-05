@@ -11,6 +11,7 @@ main() {
   build_function "$@" "WebApi"
   local targets=(
     "Applications/AdministrationServer"
+    "Applications/AsterMarketDataFeedClient"
     "Applications/ChartingServer"
     "Applications/ComplianceServer"
     "Applications/DefinitionsServer"

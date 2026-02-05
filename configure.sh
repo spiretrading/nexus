@@ -11,6 +11,7 @@ main() {
     "Nexus"
     "WebApi"
     "Applications/AdministrationServer"
+    "Applications/AsterMarketDataFeedClient"
     "Applications/ChartingServer"
     "Applications/ComplianceServer"
     "Applications/DefinitionsServer"

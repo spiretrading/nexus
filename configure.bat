@@ -13,6 +13,7 @@ IF NOT EXIST build.bat (
 CALL :Configure Nexus %*
 CALL :Configure WebApi %*
 CALL :Configure Applications\AdministrationServer %*
+CALL :Configure Applications\AsterMarketDataFeedClient %*
 CALL :Configure Applications\ChartingServer %*
 CALL :Configure Applications\ComplianceServer %*
 CALL :Configure Applications\DefinitionsServer %*
