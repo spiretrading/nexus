@@ -44,4 +44,6 @@ entitlements:
         messages: [BBO, BOOK, TAS, IMB]
       - source: OTCM
         messages: [BBO, BOOK, TAS, IMB]
+      - source: ASTR
+        messages: [BBO, BOOK, TAS, IMB]
 ...

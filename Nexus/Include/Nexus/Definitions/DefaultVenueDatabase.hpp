@@ -173,6 +173,17 @@ namespace Details {
         entry.m_display_name = "OTCM";
         database.add(entry);
       }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("ASTR");
+        entry.m_country_code = DefaultCountries::US;
+        entry.m_market_center = "ASTR";
+        entry.m_time_zone = "Etc/UTC";
+        entry.m_currency = DefaultCurrencies::USD;
+        entry.m_description = "Aster DEX";
+        entry.m_display_name = "ASTR";
+        database.add(entry);
+      }
       return database;
     }();
     return database;
@@ -206,6 +217,7 @@ namespace Details {
     inline const auto XATS = DEFAULT_VENUES.from("XATS").m_venue;
     inline const auto XCX2 = DEFAULT_VENUES.from("XCX2").m_venue;
     inline const auto OTCM = DEFAULT_VENUES.from("OTCM").m_venue;
+    inline const auto ASTR = DEFAULT_VENUES.from("ASTR").m_venue;
   }
 }
 

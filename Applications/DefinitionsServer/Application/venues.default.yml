@@ -103,4 +103,11 @@ venues:
     description: OTC Markets Group Inc.
     display_name: OTCM
     market_center: OTCM
+  - venue: ASTR
+    country_code: US
+    time_zone: Etc/UTC
+    currency: USD
+    description: Aster DEX
+    display_name: ASTR
+    market_center: ASTR
 ...
