@@ -56,7 +56,7 @@ namespace Nexus {
     AF&& aster_client, MF&& market_data_feed_client)
     try : m_aster_client(std::forward<AF>(aster_client)),
           m_market_data_feed_client(std::forward<MF>(market_data_feed_client)) {
-      auto security = Security("BTCUSDT", Venue("ASTR"));
+      auto security = Security("QQQUSDT", Venue("ASTR"));
       m_aster_client->subscribe(
         security, m_tasks.get_slot<BboQuote>(std::bind_front(
           &AsterMarketDataFeedClient::on_bbo_quote, this, security)));

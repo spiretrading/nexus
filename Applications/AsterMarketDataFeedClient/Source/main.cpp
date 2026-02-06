@@ -27,8 +27,10 @@ int main(int argc, const char** argv) {
     auto service_locator_client = ApplicationServiceLocatorClient(
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto sampling_time = extract<time_duration>(config, "sampling");
-    auto http_base_uri = extract<Uri>(config, "http_base_uri");
-    auto ws_base_uri = extract<Uri>(config, "ws_base_uri");
+    auto http_base_uri = Uri(extract<std::string>(
+      config, "http_base_uri", "https://fapi.binance.com"));
+    auto ws_base_uri = Uri(extract<std::string>(
+      config, "ws_base_uri", "wss://fstream.asterdex.com/ws"));
     auto market_data_feed_client = ApplicationMarketDataFeedClient(
       Ref(service_locator_client), sampling_time, DefaultCountries::US);
     auto aster_client = AsterWebClient(
