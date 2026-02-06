@@ -1,22 +1,41 @@
 #include <iostream>
 #include <Beam/Queues/Queue.hpp>
-#include <Beam/WebServices/TcpChannelFactory.hpp>
+#include <Beam/WebServices/TcpSocketChannelFactory.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
+#include "AsterMarketDataFeedClient/AsterMarketDataFeedClient.hpp"
 #include "AsterMarketDataFeedClient/AsterWebClient.hpp"
+#include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
+using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
 
+namespace {
+  using ApplicationAsterMarketDataFeedClient = AsterMarketDataFeedClient<
+    AsterWebClient<std::unique_ptr<Channel>>*,
+    ApplicationMarketDataFeedClient*>;
+}
+
 int main(int argc, const char** argv) {
-  auto client = AsterWebClient(TcpSocketChannelFactory());
-  client.ping();
-  std::cout << client.load_server_time() << std::endl;
-  auto data = std::make_shared<Queue<TimeAndSale>>();
-  client.subscribe(Security("BTCUSDT", Venue("ASTR")), data);
-  while(!received_kill_event()) {
-    auto item = data->pop();
-    std::cout << item << std::endl;
+  try {
+    auto config = parse_command_line(
+      argc, argv, "1.0-r" ASTER_MARKET_DATA_FEED_CLIENT_VERSION
+      "\nCopyright (C) 2026 Spire Trading Inc.");
+    auto service_locator_client = ApplicationServiceLocatorClient(
+      ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
+    auto sampling_time = extract<time_duration>(config, "sampling");
+    auto market_data_feed_client = ApplicationMarketDataFeedClient(
+      Ref(service_locator_client), sampling_time, DefaultCountries::US);
+    auto aster_client = AsterWebClient(TcpSocketChannelFactory());
+    auto feed_client = ApplicationAsterMarketDataFeedClient(
+      &aster_client, &market_data_feed_client);
+    wait_for_kill_event();
+    service_locator_client.close();
+  } catch(...) {
+    report_current_exception();
+    return -1;
   }
   return 0;
 }

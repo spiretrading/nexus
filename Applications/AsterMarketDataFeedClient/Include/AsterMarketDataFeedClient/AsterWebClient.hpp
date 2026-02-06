@@ -20,6 +20,7 @@
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
+#include "Nexus/MarketDataService/BboQuoteModel.hpp"
 
 namespace Nexus {
 
@@ -53,6 +54,14 @@ namespace Nexus {
       boost::posix_time::ptime load_server_time();
 
       /**
+       * Subscribes to bbo quote updates for a security.
+       * @param security The security to subscribe to.
+       * @param queue The queue to publish BboQuotes to.
+       */
+      void subscribe(
+        const Security& security, Beam::ScopedQueueWriter<BboQuote> queue);
+
+      /**
        * Subscribes to book quote updates for a security.
        * @param security The security to subscribe to.
        * @param queue The queue to publish BookQuotes to.
@@ -71,10 +80,16 @@ namespace Nexus {
       void close();
 
     private:
+      struct BboSubscriptionEntry {
+        std::vector<Beam::ScopedQueueWriter<BboQuote>> m_queues;
+        BboQuoteModel m_model;
+      };
       Beam::HttpClient<C> m_http_client;
       Beam::WebSocket<C> m_web_socket;
       std::atomic_int m_next_subscription_id;
       Beam::Mutex m_mutex;
+      std::unordered_map<std::string, BboSubscriptionEntry>
+        m_bbo_subscriptions;
       std::unordered_map<std::string,
         std::vector<Beam::ScopedQueueWriter<BookQuote>>>
           m_book_quote_subscriptions;
@@ -85,6 +100,8 @@ namespace Nexus {
       Beam::OpenState m_open_state;
 
       static boost::posix_time::ptime to_ptime(std::uint64_t milliseconds);
+      AsterWebClient(const AsterWebClient&) = delete;
+      AsterWebClient& operator =(const AsterWebClient&) = delete;
       void send_subscribe(const std::string& stream);
       void send_unsubscribe(const std::string& stream);
       void on_depth_update(const Beam::SharedBuffer& message);
@@ -145,11 +162,26 @@ namespace Nexus {
 
   template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>
   void AsterWebClient<C>::subscribe(
+      const Security& security, Beam::ScopedQueueWriter<BboQuote> queue) {
+    auto stream = boost::to_lower_copy(security.get_symbol()) + "@depth";
+    auto lock = std::lock_guard(m_mutex);
+    auto& entry = m_bbo_subscriptions[stream];
+    if(entry.m_queues.empty() &&
+        m_book_quote_subscriptions.find(stream) ==
+          m_book_quote_subscriptions.end()) {
+      send_subscribe(stream);
+    }
+    entry.m_queues.push_back(std::move(queue));
+  }
+
+  template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>
+  void AsterWebClient<C>::subscribe(
       const Security& security, Beam::ScopedQueueWriter<BookQuote> queue) {
     auto stream = boost::to_lower_copy(security.get_symbol()) + "@depth";
     auto lock = std::lock_guard(m_mutex);
     auto& queues = m_book_quote_subscriptions[stream];
-    if(queues.empty()) {
+    if(queues.empty() && m_bbo_subscriptions.find(stream) ==
+        m_bbo_subscriptions.end()) {
       send_subscribe(stream);
     }
     queues.push_back(std::move(queue));
@@ -176,6 +208,7 @@ namespace Nexus {
     m_web_socket_read_handler.wait();
     {
       auto lock = std::lock_guard(m_mutex);
+      m_bbo_subscriptions.clear();
       m_book_quote_subscriptions.clear();
       m_time_and_sale_subscriptions.clear();
     }
@@ -290,24 +323,53 @@ namespace Nexus {
     }
     auto stream = boost::to_lower_copy(update.m_symbol) + "@depth";
     auto lock = std::lock_guard(m_mutex);
-    auto subscription = m_book_quote_subscriptions.find(stream);
-    if(subscription == m_book_quote_subscriptions.end()) {
-      return;
-    }
-    auto& queues = subscription->second;
-    auto iterator = queues.begin();
-    while(iterator != queues.end()) {
-      try {
-        for(auto& quote : quotes) {
-          iterator->push(quote);
+    auto book_subscription = m_book_quote_subscriptions.find(stream);
+    if(book_subscription != m_book_quote_subscriptions.end()) {
+      auto& queues = book_subscription->second;
+      auto iterator = queues.begin();
+      while(iterator != queues.end()) {
+        try {
+          for(auto& quote : quotes) {
+            iterator->push(quote);
+          }
+          ++iterator;
+        } catch(const std::exception&) {
+          iterator = queues.erase(iterator);
         }
-        ++iterator;
-      } catch(const std::exception&) {
-        iterator = queues.erase(iterator);
+      }
+      if(queues.empty()) {
+        m_book_quote_subscriptions.erase(book_subscription);
       }
     }
-    if(queues.empty()) {
-      m_book_quote_subscriptions.erase(subscription);
+    auto bbo_subscription = m_bbo_subscriptions.find(stream);
+    if(bbo_subscription != m_bbo_subscriptions.end()) {
+      auto& model = bbo_subscription->second.m_model;
+      auto changed = false;
+      for(auto& quote : quotes) {
+        if(model.update(quote)) {
+          changed = true;
+        }
+      }
+      if(changed) {
+        auto& queues = bbo_subscription->second.m_queues;
+        auto iterator = queues.begin();
+        while(iterator != queues.end()) {
+          try {
+            iterator->push(model.get_bbo());
+            ++iterator;
+          } catch(const std::exception&) {
+            iterator = queues.erase(iterator);
+          }
+        }
+        if(queues.empty()) {
+          m_bbo_subscriptions.erase(bbo_subscription);
+        }
+      }
+    }
+    if(m_book_quote_subscriptions.find(stream) ==
+        m_book_quote_subscriptions.end() &&
+        m_bbo_subscriptions.find(stream) ==
+          m_bbo_subscriptions.end()) {
       send_unsubscribe(stream);
     }
   }

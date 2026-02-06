@@ -60,17 +60,17 @@ endif()
 include_directories(Include)
 include_directories(${PROJECT_BINARY_DIR})
 file(GLOB_RECURSE library_header_files Include/AsterMarketDataFeedClient/*.hpp)
-add_library(Library INTERFACE)
-target_sources(Library
-  PUBLIC FILE_SET HEADERS BASE_DIRS Include FILES ${library_header_files})
+add_library(Library ${library_header_files})
 target_include_directories(Library INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/Include
   ${PROJECT_BINARY_DIR})
+set_target_properties(Library PROPERTIES LINKER_LANGUAGE CXX
+  OUTPUT_NAME aster_market_data_feed_client)
 file(GLOB application_source_files Source/main.cpp)
 add_executable(Application ${application_source_files} Version.hpp)
 set_target_properties(
   Application PROPERTIES OUTPUT_NAME AsterMarketDataFeedClient)
-target_link_libraries(Application Library
+target_link_libraries(Application
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
@@ -101,7 +101,7 @@ file(GLOB test_source_files Source/Tests/*.cpp)
 add_executable(Tests ${test_source_files})
 set_target_properties(
   Tests PROPERTIES OUTPUT_NAME AsterMarketDataFeedClientTester)
-target_link_libraries(Tests Library
+target_link_libraries(Tests
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
