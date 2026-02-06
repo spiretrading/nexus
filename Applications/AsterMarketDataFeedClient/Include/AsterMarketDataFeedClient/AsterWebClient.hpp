@@ -2,6 +2,8 @@
 #define ASTER_WEB_CLIENT_HPP
 #include <atomic>
 #include <functional>
+#include <string>
+#include <string_view>
 #include <type_traits>
 #include <unordered_map>
 #include <Beam/IO/OpenState.hpp>
@@ -10,9 +12,9 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
-#include <Beam/Serialization/ShuttleArray.hpp>
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
+#include <Beam/Serialization/ShuttleArray.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/WebServices/HttpClient.hpp>
 #include <Beam/WebServices/WebSocket.hpp>
@@ -44,6 +46,15 @@ namespace Nexus {
        * @param builder The ChannelBuilder used to connect to the server.
        */
       explicit AsterWebClient(const ChannelBuilder& builder);
+
+      /**
+       * Constructs an AsterWebClient.
+       * @param builder The ChannelBuilder used to connect to the server.
+       * @param http_uri The endpoint used for HTTP services.
+       * @param web_socket_uri The endpoint used for WebSocket services.
+       */
+      explicit AsterWebClient(const ChannelBuilder& builder,
+        Beam::Uri http_uri, Beam::Uri web_socket_uri);
 
       ~AsterWebClient();
 
@@ -98,10 +109,12 @@ namespace Nexus {
           m_time_and_sale_subscriptions;
       Beam::RoutineHandler m_web_socket_read_handler;
       Beam::OpenState m_open_state;
+      Beam::Uri m_http_uri;
 
       static boost::posix_time::ptime to_ptime(std::uint64_t milliseconds);
       AsterWebClient(const AsterWebClient&) = delete;
       AsterWebClient& operator =(const AsterWebClient&) = delete;
+      Beam::Uri make_http_uri(std::string_view path) const;
       void send_subscribe(const std::string& stream);
       void send_unsubscribe(const std::string& stream);
       void on_depth_update(const Beam::SharedBuffer& message);
@@ -110,15 +123,25 @@ namespace Nexus {
   };
 
   template<typename F>
+  AsterWebClient(F, Beam::Uri, Beam::Uri) ->
+    AsterWebClient<std::invoke_result_t<F, const Beam::Uri&>>;
+
+  template<typename F>
   AsterWebClient(F) ->
     AsterWebClient<std::invoke_result_t<F, const Beam::Uri&>>;
 
   template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>
   AsterWebClient<C>::AsterWebClient(const ChannelBuilder& builder)
+    : AsterWebClient(builder, Beam::Uri("https://fapi.binance.com"),
+        Beam::Uri("wss://fstream.asterdex.com/ws")) {}
+
+  template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>
+  AsterWebClient<C>::AsterWebClient(const ChannelBuilder& builder,
+      Beam::Uri http_uri, Beam::Uri web_socket_uri)
       : m_http_client(builder),
-        m_web_socket(Beam::WebSocketConfig().set_uri(
-          Beam::Uri("wss://fstream.asterdex.com/ws")), builder),
-        m_next_subscription_id(0) {
+        m_web_socket(Beam::WebSocketConfig().set_uri(web_socket_uri), builder),
+        m_next_subscription_id(0),
+        m_http_uri(http_uri) {
     m_web_socket_read_handler = Beam::spawn(
       std::bind_front(&AsterWebClient::web_socket_read_loop, this));
   }
@@ -131,7 +154,7 @@ namespace Nexus {
   template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>
   void AsterWebClient<C>::ping() {
     auto request = Beam::HttpRequest(Beam::HttpMethod::GET,
-      Beam::Uri("https://fapi.binance.com/fapi/v1/ping"));
+      make_http_uri("/fapi/v1/ping"));
     auto response = m_http_client.send(request);
     if(response.get_status_code() != Beam::HttpStatusCode::OK) {
       throw std::runtime_error("Ping failed.");
@@ -149,7 +172,7 @@ namespace Nexus {
       }
     };
     auto request = Beam::HttpRequest(Beam::HttpMethod::GET,
-      Beam::Uri("https://fapi.binance.com/fapi/v1/time"));
+      make_http_uri("/fapi/v1/time"));
     auto response = m_http_client.send(request);
     if(response.get_status_code() != Beam::HttpStatusCode::OK) {
       throw std::runtime_error("Load server time failed.");
@@ -431,6 +454,20 @@ namespace Nexus {
       m_time_and_sale_subscriptions.erase(subscription);
       send_unsubscribe(stream);
     }
+  }
+
+  template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>
+  Beam::Uri AsterWebClient<C>::make_http_uri(std::string_view path) const {
+    auto uri = std::string(m_http_uri.get_scheme());
+    uri += "://";
+    uri += m_http_uri.get_hostname();
+    auto port = m_http_uri.get_port();
+    if(port != 0) {
+      uri += ":";
+      uri += std::to_string(port);
+    }
+    uri += std::string(path);
+    return Beam::Uri(uri);
   }
 
   template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>

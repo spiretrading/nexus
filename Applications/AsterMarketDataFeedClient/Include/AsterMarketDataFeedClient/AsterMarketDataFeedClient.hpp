@@ -89,18 +89,22 @@ namespace Nexus {
   template<typename A, typename M>
   void AsterMarketDataFeedClient<A, M>::on_bbo_quote(
       const Security& security, const BboQuote& bbo_quote) {
+    std::cout << "Bbo Quote: " << security << " " << bbo_quote << std::endl;
     m_market_data_feed_client->publish(SecurityBboQuote(bbo_quote, security));
   }
 
   template<typename A, typename M>
   void AsterMarketDataFeedClient<A, M>::on_book_quote(
       const Security& security, const BookQuote& book_quote) {
+    std::cout << "Book Quote: " << security << " " << book_quote << std::endl;
     m_market_data_feed_client->publish(SecurityBookQuote(book_quote, security));
   }
 
   template<typename A, typename M>
   void AsterMarketDataFeedClient<A, M>::on_time_and_sale(
       const Security& security, const TimeAndSale& time_and_sale) {
+    std::cout << "Time and Sale: " << security << " " << time_and_sale <<
+      std::endl;
     m_market_data_feed_client->publish(
       SecurityTimeAndSale(time_and_sale, security));
   }
