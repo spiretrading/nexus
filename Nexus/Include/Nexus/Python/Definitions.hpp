@@ -5,6 +5,12 @@
 namespace Nexus::Python {
 
   /**
+   * Exports the Asset class.
+   * @param module The module to export to.
+   */
+  void export_asset(pybind11::module& module);
+
+  /**
    * Exports the BboQuote struct.
    * @param module The module to export to.
    */

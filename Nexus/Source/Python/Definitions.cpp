@@ -2,6 +2,7 @@
 #include <boost/lexical_cast.hpp>
 #include <Beam/Python/Beam.hpp>
 #include <pybind11/operators.h>
+#include "Nexus/Definitions/Asset.hpp"
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/Country.hpp"
@@ -38,6 +39,33 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Python;
 using namespace pybind11;
+
+void Nexus::Python::export_asset(module& module) {
+  export_default_methods(class_<Asset>(module, "Asset")).
+    def(init<>()).
+    def(init<std::uint64_t>()).
+    def(init<std::uint16_t, std::uint64_t>()).
+    def(init<std::string, std::uint64_t>()).
+    def_property_readonly("type", &Asset::get_type).
+    def_property_readonly("id", &Asset::get_id).
+    def("__bool__", [] (const Asset& value) {
+      return static_cast<bool>(value);
+    }).
+    def_property_readonly_static("CURRENCY", [] (const object&) {
+      return Asset::CURRENCY;
+    }).
+    def_property_readonly_static("CCY", [] (const object&) {
+      return Asset::CCY;
+    }).
+    def_property_readonly_static("EQUITY", [] (const object&) {
+      return Asset::EQUITY;
+    }).
+    def_property_readonly_static("EQY", [] (const object&) {
+      return Asset::EQY;
+    });
+  module.def("encode_asset_type", &encode_asset_type);
+  module.def("decode_asset_type", &decode_asset_type);
+}
 
 void Nexus::Python::export_bbo_quote(module& module) {
   export_default_methods(class_<BboQuote>(module, "BboQuote")).
@@ -223,6 +251,7 @@ void Nexus::Python::export_default_venues(module& module) {
 }
 
 void Nexus::Python::export_definitions(module& module) {
+  export_asset(module);
   export_bbo_quote(module);
   export_book_quote(module);
   export_country(module);
