@@ -12,6 +12,7 @@
 #include "Nexus/Definitions/ExchangeRate.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/Definitions/Instrument.hpp"
+#include "Nexus/Definitions/Listing.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
@@ -260,6 +261,7 @@ void Nexus::Python::export_definitions(module& module) {
   export_currency_pair(module);
   export_destination(module);
   export_instrument(module);
+  export_listing(module);
   export_venue(module);
   export_default_countries(module);
   export_default_currencies(module);
@@ -348,6 +350,14 @@ void Nexus::Python::export_exchange_rate_table(module& module) {
     def("convert", overload_cast<Money, CurrencyId, CurrencyId>(
       &ExchangeRateTable::convert, const_)).
     def("add", &ExchangeRateTable::add);
+}
+
+void Nexus::Python::export_listing(module& module) {
+  export_default_methods(class_<Listing>(module, "Listing")).
+    def(init<>()).
+    def(init<std::uint64_t, Instrument>()).
+    def_readwrite("id", &Listing::m_id).
+    def_readwrite("instrument", &Listing::m_instrument);
 }
 
 void Nexus::Python::export_money(module& module) {

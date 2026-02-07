@@ -95,6 +95,12 @@ namespace Nexus::Python {
   void export_instrument(pybind11::module& module);
 
   /**
+   * Exports the Listing class.
+   * @param module The module to export to.
+   */
+  void export_listing(pybind11::module& module);
+
+  /**
    * Exports the Money class.
    * @param module The module to export to.
    */
