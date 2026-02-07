@@ -11,6 +11,7 @@
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/ExchangeRate.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
+#include "Nexus/Definitions/Instrument.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
@@ -258,6 +259,7 @@ void Nexus::Python::export_definitions(module& module) {
   export_currency(module);
   export_currency_pair(module);
   export_destination(module);
+  export_instrument(module);
   export_venue(module);
   export_default_countries(module);
   export_default_currencies(module);
@@ -703,4 +705,23 @@ void Nexus::Python::export_venue(module& module) {
   module.def("venue_to_utc", &venue_to_utc);
   module.def("utc_start_of_day", &utc_start_of_day);
   module.def("utc_end_of_day", &utc_end_of_day);
+}
+
+void Nexus::Python::export_instrument(module& module) {
+  auto instrument = export_default_methods(
+      class_<Instrument>(module, "Instrument")).
+    def(init<>()).
+    def(init<Asset, Asset, Instrument::Type>()).
+    def_readwrite("base", &Instrument::m_base).
+    def_readwrite("quote", &Instrument::m_quote).
+    def_readwrite("type", &Instrument::m_type);
+  enum_<Instrument::Type>(instrument, "Type").
+    value("NONE", Instrument::Type::NONE).
+    value("SPOT", Instrument::Type::SPOT).
+    value("FORWARD", Instrument::Type::FORWARD).
+    value("FUTURE", Instrument::Type::FUTURE).
+    value("PERPETUAL", Instrument::Type::PERPETUAL).
+    value("OPTION", Instrument::Type::OPTION).
+    value("SWAP", Instrument::Type::SWAP).
+    value("CFD", Instrument::Type::CFD);
 }

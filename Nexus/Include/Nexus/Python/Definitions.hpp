@@ -89,6 +89,12 @@ namespace Nexus::Python {
   void export_exchange_rate_table(pybind11::module& module);
 
   /**
+   * Exports the Instrument class.
+   * @param module The module to export to.
+   */
+  void export_instrument(pybind11::module& module);
+
+  /**
    * Exports the Money class.
    * @param module The module to export to.
    */
