@@ -8,13 +8,14 @@
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Utilities/Streamable.hpp>
 #include <boost/optional/optional.hpp>
+#include "Nexus/Definitions/Asset.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/Tag.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 
 namespace Nexus {
@@ -25,11 +26,11 @@ namespace Nexus {
     /** The account to assign the Order to. */
     Beam::DirectoryEntry m_account;
 
-    /** The Security the Order was submitted for. */
-    Security m_security;
+    /** The ticker the order was submitted for. */
+    Ticker m_ticker;
 
-    /** The Currency being used. */
-    CurrencyId m_currency;
+    /** The currency being used. */
+    Asset m_currency;
 
     /** The type of Order. */
     OrderType m_type;
@@ -58,8 +59,8 @@ namespace Nexus {
     /**
      * Constructs an OrderFields.
      * @param account The account to assign the Order to.
-     * @param security The Security the Order was submitted for.
-     * @param currency The Currency being used.
+     * @param ticker The ticker the order was submitted for.
+     * @param currency The currency being used.
      * @param type The type of Order.
      * @param side The Side of the Order.
      * @param destination The destination to submit the Order to.
@@ -68,9 +69,9 @@ namespace Nexus {
      * @param time_in_force The Order's time in force.
      * @param additional_fields Carries any additional fields to submit.
      */
-    OrderFields(Beam::DirectoryEntry account, Security security,
-      CurrencyId currency, OrderType type, Side side, Destination destination,
-      Quantity quantity, Money price, TimeInForce time_in_force,
+    OrderFields(Beam::DirectoryEntry account, Ticker ticker, Asset currency,
+      OrderType type, Side side, Destination destination, Quantity quantity,
+      Money price, TimeInForce time_in_force,
       std::vector<Tag> additional_fields) noexcept;
 
     /**
@@ -86,106 +87,105 @@ namespace Nexus {
   /**
    * Returns OrderFields for a LIMIT order with all mandatory fields populated.
    * @param account The account to assign the Order to.
-   * @param security The Security the Order was submitted for.
-   * @param currency The Currency being used.
+   * @param ticker The ticker the order was submitted for.
+   * @param currency The currency being used.
    * @param side The Side of the Order.
    * @param destination The destination to submit the Order to.
    * @param quantity The quantity to order.
    * @param price The price of the Order.
    */
   inline OrderFields make_limit_order_fields(Beam::DirectoryEntry account,
-      Security security, CurrencyId currency, Side side,
-      Destination destination, Quantity quantity, Money price) {
-    return OrderFields(std::move(account), std::move(security), currency,
+      Ticker ticker, Asset currency, Side side, Destination destination,
+      Quantity quantity, Money price) {
+    return OrderFields(std::move(account), std::move(ticker), currency,
       OrderType::LIMIT, side, std::move(destination), quantity, price,
-      TimeInForce(TimeInForce::Type::DAY), {});
+      TimeInForce::Type::DAY, {});
   }
 
   /**
    * Returns OrderFields for a LIMIT order with all mandatory fields populated.
-   * @param security The Security the Order was submitted for.
-   * @param currency The Currency being used.
+   * @param ticker The ticker the order was submitted for.
+   * @param currency The currency being used.
    * @param side The Side of the Order.
    * @param destination The destination to submit the Order to.
    * @param quantity The quantity to order.
    * @param price The price of the Order.
    */
-  inline OrderFields make_limit_order_fields(Security security,
-      CurrencyId currency, Side side, Destination destination,
-      Quantity quantity, Money price) {
-    return make_limit_order_fields(Beam::DirectoryEntry(), std::move(security),
+  inline OrderFields make_limit_order_fields(Ticker ticker, Asset currency,
+      Side side, Destination destination, Quantity quantity, Money price) {
+    return make_limit_order_fields(Beam::DirectoryEntry(), std::move(ticker),
       currency, side, std::move(destination), quantity, price);
   }
 
   /**
    * Returns OrderFields for a LIMIT order with all mandatory fields populated.
    * @param account The account to assign the Order to.
-   * @param security The Security the Order was submitted for.
+   * @param ticker The ticker the Order was submitted for.
    * @param side The Side of the Order.
    * @param destination The destination to submit the Order to.
    * @param quantity The quantity to order.
    * @param price The price of the Order.
    */
   inline OrderFields make_limit_order_fields(Beam::DirectoryEntry account,
-      Security security, Side side, Destination destination, Quantity quantity,
+      Ticker ticker, Side side, Destination destination, Quantity quantity,
       Money price) {
-    return make_limit_order_fields(std::move(account), std::move(security),
+    return make_limit_order_fields(std::move(account), std::move(ticker),
       CurrencyId::NONE, side, std::move(destination), quantity, price);
   }
 
   /**
    * Returns OrderFields for a LIMIT order with all mandatory fields populated.
-   * @param security The Security the Order was submitted for.
+   * @param ticker The ticker the Order was submitted for.
    * @param side The Side of the Order.
    * @param destination The destination to submit the Order to.
    * @param quantity The quantity to order.
    * @param price The price of the Order.
    */
-  inline OrderFields make_limit_order_fields(Security security, Side side,
+  inline OrderFields make_limit_order_fields(Ticker ticker, Side side,
       Destination destination, Quantity quantity, Money price) {
-    return make_limit_order_fields(Beam::DirectoryEntry(), std::move(security),
+    return make_limit_order_fields(Beam::DirectoryEntry(), std::move(ticker),
       CurrencyId::NONE, side, std::move(destination), quantity, price);
   }
 
   /**
    * Returns OrderFields for a LIMIT order with all mandatory fields populated.
-   * @param security The Security the Order was submitted for.
+   * @param ticker The ticker the Order was submitted for.
    * @param currency The Currency being used.
    * @param side The Side of the Order.
    * @param quantity The quantity to order.
    * @param price The price of the Order.
    */
-  inline OrderFields make_limit_order_fields(Security security,
-      CurrencyId currency, Side side, Quantity quantity, Money price) {
-    return make_limit_order_fields(Beam::DirectoryEntry(), std::move(security),
+  inline OrderFields make_limit_order_fields(Ticker ticker, Asset currency,
+      Side side, Quantity quantity, Money price) {
+    return make_limit_order_fields(Beam::DirectoryEntry(), std::move(ticker),
       currency, side, {}, quantity, price);
   }
 
   /**
    * Returns OrderFields for a LIMIT order with all mandatory fields populated.
    * @param account The account to assign the Order to.
-   * @param security The Security the Order was submitted for.
+   * @param ticker The ticker the Order was submitted for.
    * @param side The Side of the Order.
    * @param quantity The quantity to order.
    * @param price The price of the Order.
    */
   inline OrderFields make_limit_order_fields(Beam::DirectoryEntry account,
-      Security security, Side side, Quantity quantity, Money price) {
-    return make_limit_order_fields(std::move(account), std::move(security),
+      Ticker ticker, Side side, Quantity quantity, Money price) {
+    return make_limit_order_fields(std::move(account), std::move(ticker),
       CurrencyId::NONE, side, {}, quantity, price);
   }
 
   /**
    * Returns OrderFields for a LIMIT order with all mandatory fields
    * populated.
-   * @param security The Security the Order was submitted for.
+   * @param ticker The ticker the Order was submitted for.
    * @param side The Side of the Order.
    * @param quantity The quantity to order.
    * @param price The price of the Order.
    */
-  inline OrderFields make_limit_order_fields(Security security, Side side,
+  inline OrderFields make_limit_order_fields(Ticker ticker, Side side,
       Quantity quantity, Money price) {
-    return make_limit_order_fields(Beam::DirectoryEntry(), std::move(security),
+    return make_limit_order_fields(Beam::DirectoryEntry(), std::move(ticker),
       CurrencyId::NONE, side, {}, quantity, price);
   }
 
@@ -193,33 +193,32 @@ namespace Nexus {
    * Returns OrderFields for a MARKET order with all mandatory fields
    * populated.
    * @param account The account to assign the Order to.
-   * @param security The Security the Order was submitted for.
+   * @param ticker The ticker the Order was submitted for.
    * @param currency The Currency being used.
    * @param side The Side of the Order.
    * @param destination The destination to submit the Order to.
    * @param quantity The quantity to order.
    */
   inline OrderFields make_market_order_fields(Beam::DirectoryEntry account,
-      Security security, CurrencyId currency, Side side,
-      Destination destination, Quantity quantity) {
-    return OrderFields(std::move(account), std::move(security), currency,
+      Ticker ticker, Asset currency, Side side, Destination destination,
+      Quantity quantity) {
+    return OrderFields(std::move(account), std::move(ticker), currency,
       OrderType::MARKET, side, std::move(destination), quantity, Money::ZERO,
-      TimeInForce(TimeInForce::Type::DAY), {});
+      TimeInForce::Type::DAY, {});
   }
 
   /**
    * Returns OrderFields for a MARKET order with all mandatory fields
    * populated.
-   * @param security The Security the Order was submitted for.
+   * @param ticker The ticker the Order was submitted for.
    * @param currency The Currency being used.
    * @param side The Side of the Order.
    * @param destination The destination to submit the Order to.
    * @param quantity The quantity to order.
    */
-  inline OrderFields make_market_order_fields(Security security,
-      CurrencyId currency, Side side, Destination destination,
-      Quantity quantity) {
-    return make_market_order_fields(Beam::DirectoryEntry(), std::move(security),
+  inline OrderFields make_market_order_fields(Ticker ticker, Asset currency,
+      Side side, Destination destination, Quantity quantity) {
+    return make_market_order_fields(Beam::DirectoryEntry(), std::move(ticker),
       currency, side, std::move(destination), quantity);
   }
 
@@ -227,43 +226,42 @@ namespace Nexus {
    * Returns OrderFields for a MARKET order with all mandatory fields
    * populated.
    * @param account The account to assign the Order to.
-   * @param security The Security the Order was submitted for.
+   * @param ticker The ticker the Order was submitted for.
    * @param side The Side of the Order.
    * @param destination The destination to submit the Order to.
    * @param quantity The quantity to order.
    */
   inline OrderFields make_market_order_fields(Beam::DirectoryEntry account,
-      Security security, Side side, Destination destination,
-      Quantity quantity) {
-    return make_market_order_fields(std::move(account), std::move(security),
+      Ticker ticker, Side side, Destination destination, Quantity quantity) {
+    return make_market_order_fields(std::move(account), std::move(ticker),
       CurrencyId::NONE, side, std::move(destination), quantity);
   }
 
   /**
    * Returns OrderFields for a MARKET order with all mandatory fields
    * populated.
-   * @param security The Security the Order was submitted for.
+   * @param ticker The ticker the Order was submitted for.
    * @param side The Side of the Order.
    * @param destination The destination to submit the Order to.
    * @param quantity The quantity to order.
    */
-  inline OrderFields make_market_order_fields(Security security, Side side,
+  inline OrderFields make_market_order_fields(Ticker ticker, Side side,
       Destination destination, Quantity quantity) {
-    return make_market_order_fields(Beam::DirectoryEntry(), std::move(security),
+    return make_market_order_fields(Beam::DirectoryEntry(), std::move(ticker),
       CurrencyId::NONE, side, std::move(destination), quantity);
   }
 
   /**
    * Returns OrderFields for a MARKET order with all mandatory fields
    * populated.
-   * @param security The Security the Order was submitted for.
+   * @param ticker The ticker the Order was submitted for.
    * @param currency The Currency being used.
    * @param side The Side of the Order.
    * @param quantity The quantity to order.
    */
-  inline OrderFields make_market_order_fields(Security security,
-      CurrencyId currency, Side side, Quantity quantity) {
-    return make_market_order_fields(Beam::DirectoryEntry(), std::move(security),
+  inline OrderFields make_market_order_fields(Ticker ticker, Asset currency,
+      Side side, Quantity quantity) {
+    return make_market_order_fields(Beam::DirectoryEntry(), std::move(ticker),
       currency, side, {}, quantity);
   }
 
@@ -271,26 +269,26 @@ namespace Nexus {
    * Returns OrderFields for a MARKET order with all mandatory fields
    * populated.
    * @param account The account to assign the Order to.
-   * @param security The Security the Order was submitted for.
+   * @param ticker The ticker the Order was submitted for.
    * @param side The Side of the Order.
    * @param quantity The quantity to order.
    */
   inline OrderFields make_market_order_fields(Beam::DirectoryEntry account,
-      Security security, Side side, Quantity quantity) {
-    return make_market_order_fields(std::move(account), std::move(security),
+      Ticker ticker, Side side, Quantity quantity) {
+    return make_market_order_fields(std::move(account), std::move(ticker),
       CurrencyId::NONE, side, {}, quantity);
   }
 
   /**
    * Returns OrderFields for a MARKET order with all mandatory fields
    * populated.
-   * @param security The Security the Order was submitted for.
+   * @param ticker The ticker the Order was submitted for.
    * @param side The Side of the Order.
    * @param quantity The quantity to order.
    */
-  inline OrderFields make_market_order_fields(Security security, Side side,
-      Quantity quantity) {
-    return make_market_order_fields(Beam::DirectoryEntry(), std::move(security),
+  inline OrderFields make_market_order_fields(
+      Ticker ticker, Side side, Quantity quantity) {
+    return make_market_order_fields(Beam::DirectoryEntry(), std::move(ticker),
       CurrencyId::NONE, side, {}, quantity);
   }
 
@@ -323,9 +321,9 @@ namespace Nexus {
         fields.m_additional_fields.end();
   }
 
-  inline std::ostream& operator <<(std::ostream& out,
-      const OrderFields& value) {
-    return out << '(' << value.m_account << ' ' << value.m_security << ' ' <<
+  inline std::ostream& operator <<(
+      std::ostream& out, const OrderFields& value) {
+    return out << '(' << value.m_account << ' ' << value.m_ticker << ' ' <<
       value.m_currency << ' ' << value.m_type << ' ' << value.m_side << ' ' <<
       value.m_destination << ' ' << value.m_quantity << ' ' << value.m_price <<
       ' ' << value.m_time_in_force << ' ' <<
@@ -339,12 +337,12 @@ namespace Nexus {
       m_price(Money::ZERO),
       m_time_in_force(TimeInForce::Type::GTC) {}
 
-  inline OrderFields::OrderFields(Beam::DirectoryEntry account,
-    Security security, CurrencyId currency, OrderType type, Side side,
-    Destination destination, Quantity quantity, Money price,
-    TimeInForce time_in_force, std::vector<Tag> additional_fields) noexcept
+  inline OrderFields::OrderFields(Beam::DirectoryEntry account, Ticker ticker,
+    Asset currency, OrderType type, Side side, Destination destination,
+    Quantity quantity, Money price, TimeInForce time_in_force,
+    std::vector<Tag> additional_fields) noexcept
     : m_account(std::move(account)),
-      m_security(std::move(security)),
+      m_ticker(std::move(ticker)),
       m_currency(currency),
       m_type(type),
       m_side(side),
@@ -368,7 +366,7 @@ namespace Beam {
     void operator ()(
         S& shuttle, Nexus::OrderFields& value, unsigned int version) const {
       shuttle.shuttle("account", value.m_account);
-      shuttle.shuttle("security", value.m_security);
+      shuttle.shuttle("ticker", value.m_ticker);
       shuttle.shuttle("currency", value.m_currency);
       shuttle.shuttle("type", value.m_type);
       shuttle.shuttle("side", value.m_side);

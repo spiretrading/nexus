@@ -20,7 +20,7 @@ TEST_SUITE("Position") {
       Position(TST, DefaultCurrencies::CAD, 100, 1000 * Money::ONE);
     test_round_trip_shuttle(
       Position(TST, DefaultCurrencies::CAD, 100, 1000 * Money::ONE));
-    REQUIRE(to_string(position) == "(TST.TSX CAD 100 1000.00)");
+    REQUIRE(to_string(position) == "(SHOP.TSX CAD 100 1000.00)");
   }
 
   TEST_CASE("get_average_price") {

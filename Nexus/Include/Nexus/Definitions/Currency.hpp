@@ -199,6 +199,15 @@ namespace Nexus {
     return in;
   }
 
+  inline std::ostream& operator <<(std::ostream& out, Asset value) {
+    if(value.get_type() == Asset::CCY) {
+      auto id = CurrencyId(static_cast<std::uint16_t>(value.get_id() & 0xFFFF));
+      return out << id;
+    }
+    return out <<
+      decode_asset_type(value.get_type()) << '(' << value.get_id() << ')';
+  }
+
   inline std::size_t hash_value(CurrencyId code) {
     return static_cast<std::uint16_t>(code);
   }
@@ -210,6 +219,9 @@ namespace Nexus {
     : m_value(value) {}
 
   constexpr CurrencyId::operator Asset() const {
+    if(*this == CurrencyId::NONE) {
+      return Asset();
+    }
     return Asset(Asset::CCY, static_cast<Asset::Id>(m_value));
   }
 

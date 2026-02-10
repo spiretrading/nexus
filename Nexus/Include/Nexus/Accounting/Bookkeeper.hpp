@@ -17,8 +17,8 @@ namespace Nexus {
   concept IsBookkeeper = requires(T& bookkeeper) {
     bookkeeper.record(std::declval<const Ticker&>(), std::declval<Asset>(),
       std::declval<Quantity>(), std::declval<Money>(), std::declval<Money>());
-    { bookkeeper.get_inventory(std::declval<const Ticker&>(),
-      std::declval<Asset>()) } -> std::same_as<const Inventory&>;
+    { bookkeeper.get_inventory(std::declval<const Ticker&>()) } ->
+      std::same_as<const Inventory&>;
     { bookkeeper.get_total(std::declval<Asset>()) } ->
       std::same_as<const Inventory&>;
     { bookkeeper.get_inventory_range() } ->

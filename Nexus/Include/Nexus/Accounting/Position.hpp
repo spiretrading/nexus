@@ -34,8 +34,8 @@ namespace Nexus {
 
   inline std::ostream& operator <<(
       std::ostream& out, const Position& position) {
-    return out << '(' << position.m_ticker << ' ' << position.m_quantity <<
-      ' ' << position.m_cost_basis << ')';
+    return out << '(' << position.m_ticker << ' ' << position.m_currency <<
+      ' ' << position.m_quantity << ' ' << position.m_cost_basis << ')';
   }
 
   /**

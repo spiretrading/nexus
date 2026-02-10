@@ -8,7 +8,6 @@ using namespace Beam;
 using namespace Beam::Tests;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
 
 namespace {
   auto TST = parse_ticker("TST.TSX");

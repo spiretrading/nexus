@@ -6,9 +6,6 @@
 #include <Beam/Serialization/ShuttleOptional.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Accounting/Bookkeeper.hpp"
-#include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/Security.hpp"
-#include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
@@ -17,39 +14,30 @@ namespace Nexus {
   /** Stores an update to a Portfolio's snapshot. */
   struct PortfolioUpdateEntry {
 
-    /** The updated Security Inventory. */
-    Inventory m_security_inventory;
+    /** The updated Inventory. */
+    Inventory m_inventory;
 
-    /** The updated unrealized gross earnings for the Security. */
-    Money m_unrealized_security;
+    /** The updated unrealized gross earnings. */
+    Money m_unrealized;
 
-    /** The updated Currency Inventory. */
+    /** The updated currency Inventory. */
     Inventory m_currency_inventory;
 
-    /** The updated unrealized gross earnings for the Currency. */
+    /** The updated unrealized gross earnings for the currency. */
     Money m_unrealized_currency;
   };
 
-  /** Stores the valuation used for a Security. */
-  struct SecurityValuation {
+  /** Stores a valuation. */
+  struct Valuation {
 
-    /** The currency used to value the Security. */
-    CurrencyId m_currency;
+    /** The currency used to denominate the value. */
+    Asset m_currency;
 
     /** The ask side value. */
     boost::optional<Money> m_ask_value;
 
     /** The bid side value. */
     boost::optional<Money> m_bid_value;
-
-    /** Constructs a SecurityValuation. */
-    SecurityValuation() = default;
-
-    /**
-     * Constructs a SecurityValuation.
-     * @param currency The currency used to value the Security.
-     */
-    explicit SecurityValuation(CurrencyId currency) noexcept;
   };
 
   /**
@@ -63,58 +51,55 @@ namespace Nexus {
       /** The type of Bookkeeper to use. */
       using Bookkeeper = B;
 
-      /** Stores portfolio related info about a single Security. */
-      struct SecurityEntry {
+      /** Stores portfolio related info about a single entry. */
+      struct Entry {
 
-        /** The current value of the Security. */
-        SecurityValuation m_valuation;
+        /** The current value of the entry. */
+        Valuation m_valuation;
 
         /** The unrealized profit and loss. */
         Money m_unrealized;
 
         /**
-         * Constructs a SecurityEntry.
-         * @param currency The currency used to value the Security.
+         * Constructs an empty Entry with no valuation or unrealized profit and
+         * loss.
          */
-        explicit SecurityEntry(CurrencyId currency) noexcept;
+        Entry() = default;
+
+        /**
+         * Constructs an Entry.
+         * @param currency The currency used to value the entry.
+         */
+        explicit Entry(Asset currency) noexcept;
+
+        /**
+         * Constructs an Entry.
+         * @param valuation The valuation to use for the entry.
+         * @param unrealized The unrealized profit and loss for the entry.
+         */
+        Entry(Valuation valuation, Money unrealized) noexcept;
       };
 
-      /** The type used to map Securities to SecurityEntries. */
-      using SecurityEntryMap = std::unordered_map<Security, SecurityEntry>;
+      /** The type used to map tickers to entries. */
+      using EntryMap = std::unordered_map<Ticker, Entry>;
 
       /** The type used to map currencies to unrealized profit and losses. */
-      using UnrealizedProfitAndLossMap = std::unordered_map<CurrencyId, Money>;
+      using UnrealizedProfitAndLossMap = std::unordered_map<Asset, Money>;
 
-      /** Constructs an empty Portfolio using the default venues. */
-      Portfolio();
-
-      /**
-       * Constructs an empty Portfolio.
-       * @param venues The venues used to identify the currency used for an
-       *        position.
-       */
-      explicit Portfolio(VenueDatabase venues);
-
-      /**
-       * Constructs a Portfolio for an existing set of positions using the
-       * default venues.
-       * @param bookkeeper The bookkeeper with the existing set of positions.
-       */
-      explicit Portfolio(Bookkeeper bookkeeper);
+      /** Constructs an empty Portfolio. */
+      Portfolio() = default;
 
       /**
        * Constructs a Portfolio for an existing set of positions.
        * @param bookkeeper The bookkeeper with the existing set of positions.
-       * @param venues The venues used to identify the currency used for an
-       *        position.
        */
-      Portfolio(Bookkeeper bookkeeper, VenueDatabase venues);
+      explicit Portfolio(Bookkeeper bookkeeper);
 
       /** Returns the Bookkeeper. */
       const Bookkeeper& get_bookkeeper() const;
 
-      /** Returns the Portfolio's SecurityEntries. */
-      const SecurityEntryMap& get_security_entries() const;
+      /** Returns the Portfolio's entries. */
+      const EntryMap& get_entries() const;
 
       /** Returns the Portfolio's unrealized profit and losses. */
       const UnrealizedProfitAndLossMap&
@@ -130,43 +115,42 @@ namespace Nexus {
       bool update(const OrderFields& fields, const ExecutionReport& report);
 
       /**
-       * Updates the ask value of a Security.
-       * @param security The Security whose value is being updated.
-       * @param value The <i>security</i>'s ask side value.
+       * Updates a ticker's ask value.
+       * @param ticker The ticker whose value is being updated.
+       * @param value The <i>ticker</i>'s ask side value.
        * @return <code>true</code> iff the update resulted in a change to
        *         the portfolio.
        */
-      bool update_ask(const Security& security, Money value);
+      bool update_ask(const Ticker& ticker, Money value);
 
       /**
-       * Updates the bid value of a Security.
-       * @param security The Security whose value is being updated.
-       * @param value The <i>security</i>'s bid side value.
+       * Updates a ticker's bid value.
+       * @param ticker The ticker whose value is being updated.
+       * @param value The <i>ticker</i>'s bid side value.
        * @return <code>true</code> iff the update resulted in a change to
        *         the portfolio.
        */
-      bool update_bid(const Security& security, Money value);
+      bool update_bid(const Ticker& ticker, Money value);
 
       /**
-       * Updates the market value of a Security.
-       * @param security The Security whose value is being updated.
-       * @param ask_value The <i>security</i>'s ask side value.
-       * @param bid_value The <i>security</i>'s bid side value.
+       * Updates the market value of a ticker.
+       * @param ticker The ticker whose value is being updated.
+       * @param ask_value The <i>ticker</i>'s ask side value.
+       * @param bid_value The <i>ticker</i>'s bid side value.
        * @return <code>true</code> iff the update resulted in a change to
        *         the portfolio.
        */
-      bool update(const Security& security, Money ask_value, Money bid_value);
+      bool update(const Ticker& ticker, Money ask_value, Money bid_value);
 
     private:
       Bookkeeper m_bookkeeper;
-      VenueDatabase m_venues;
-      SecurityEntryMap m_security_entries;
+      EntryMap m_entries;
       UnrealizedProfitAndLossMap m_unrealized_currencies;
 
       static boost::optional<Money> calculate_unrealized(
-        const Inventory& inventory, const SecurityEntry& entry);
-      SecurityEntry& get_entry(const Security& security);
-      bool update(const Security& security, SecurityEntry& entry);
+        const Inventory& inventory, const Entry& entry);
+      Entry& get_entry(const Ticker& ticker, Asset currency);
+      bool update(const Ticker& ticker, Entry& entry);
   };
 
   /**
@@ -187,7 +171,7 @@ namespace Nexus {
    * @return The <i>inventory</i>'s unrealized profit and loss.
    */
   inline boost::optional<Money> get_unrealized_profit_and_loss(
-      const Inventory& inventory, const SecurityValuation& valuation) {
+      const Inventory& inventory, const Valuation& valuation) {
     if(inventory.m_position.m_quantity == 0) {
       return Money::ZERO;
     }
@@ -217,7 +201,7 @@ namespace Nexus {
    * @return The <i>inventory</i>'s total profit and loss.
    */
   inline boost::optional<Money> get_total_profit_and_loss(
-      const Inventory& inventory, const SecurityValuation& valuation) {
+      const Inventory& inventory, const Valuation& valuation) {
     if(auto unrealized_profit_and_loss =
         get_unrealized_profit_and_loss(inventory, valuation)) {
       return get_realized_profit_and_loss(inventory) +
@@ -236,7 +220,7 @@ namespace Nexus {
    */
   template<typename B>
   Money get_total_profit_and_loss(
-      const Portfolio<B>& portfolio, CurrencyId currency) {
+      const Portfolio<B>& portfolio, Asset currency) {
     auto unrealized_profit_and_loss = Money();
     auto profit_and_loss_iterator =
       portfolio.get_unrealized_profit_and_losses().find(currency);
@@ -258,22 +242,19 @@ namespace Nexus {
   template<typename B, typename F>
     requires std::invocable<F, PortfolioUpdateEntry>
   void for_each(const Portfolio<B>& portfolio, F f) {
-    auto& security_entries = portfolio.get_security_entries();
-    for(auto& security_entry_pair : security_entries) {
-      auto& security = security_entry_pair.first;
-      auto& security_entry = security_entry_pair.second;
+    auto& entries = portfolio.get_entries();
+    for(auto& [ticker, entry] : entries) {
       auto update = PortfolioUpdateEntry();
-      update.m_security_inventory = portfolio.get_bookkeeper().get_inventory(
-        security, security_entry.m_valuation.m_currency);
-      if(is_empty(update.m_security_inventory)) {
+      update.m_inventory = portfolio.get_bookkeeper().get_inventory(ticker);
+      if(is_empty(update.m_inventory)) {
         continue;
       }
-      update.m_unrealized_security = security_entry.m_unrealized;
+      update.m_unrealized = entry.m_unrealized;
       update.m_currency_inventory = portfolio.get_bookkeeper().get_total(
-        security_entry.m_valuation.m_currency);
+        entry.m_valuation.m_currency);
       auto unrealized_currency_iterator =
         portfolio.get_unrealized_profit_and_losses().find(
-          security_entry.m_valuation.m_currency);
+          entry.m_valuation.m_currency);
       if(unrealized_currency_iterator ==
           portfolio.get_unrealized_profit_and_losses().end()) {
         update.m_unrealized_currency = Money::ZERO;
@@ -286,13 +267,13 @@ namespace Nexus {
 
   inline std::ostream& operator <<(
       std::ostream& out, const PortfolioUpdateEntry& entry) {
-    return out << '(' << entry.m_security_inventory << ' ' <<
-      entry.m_unrealized_security << ' ' << entry.m_currency_inventory << ' ' <<
-      entry.m_unrealized_currency << ')';
+    return out << '(' << entry.m_inventory << ' ' << entry.m_unrealized <<
+      ' ' << entry.m_currency_inventory << ' ' << entry.m_unrealized_currency <<
+      ')';
   }
 
   inline std::ostream& operator <<(
-      std::ostream& out, const SecurityValuation& valuation) {
+      std::ostream& out, const Valuation& valuation) {
     out << '(' << valuation.m_currency << ' ';
     if(valuation.m_ask_value) {
       out << *valuation.m_ask_value;
@@ -309,31 +290,20 @@ namespace Nexus {
     return out;
   }
 
-  inline SecurityValuation::SecurityValuation(CurrencyId currency) noexcept
-    : m_currency(currency) {}
-
   template<IsBookkeeper B>
-  Portfolio<B>::SecurityEntry::SecurityEntry(CurrencyId currency) noexcept
+  Portfolio<B>::Entry::Entry(Asset currency) noexcept
     : m_valuation(currency) {}
 
   template<IsBookkeeper B>
-  Portfolio<B>::Portfolio()
-    : Portfolio(DEFAULT_VENUES) {}
-
-  template<IsBookkeeper B>
-  Portfolio<B>::Portfolio(VenueDatabase venues)
-    : m_venues(std::move(venues)) {}
+  Portfolio<B>::Entry::Entry(Valuation valuation, Money unrealized) noexcept
+    : m_valuation(std::move(valuation)),
+      m_unrealized(unrealized) {}
 
   template<IsBookkeeper B>
   Portfolio<B>::Portfolio(Bookkeeper bookkeeper)
-    : Portfolio(std::move(bookkeeper), DEFAULT_VENUES) {}
-
-  template<IsBookkeeper B>
-  Portfolio<B>::Portfolio(Bookkeeper bookkeeper, VenueDatabase venues)
-      : m_bookkeeper(std::move(bookkeeper)),
-        m_venues(std::move(venues)) {
+      : m_bookkeeper(std::move(bookkeeper)) {
     for(auto& inventory : m_bookkeeper.get_inventory_range()) {
-      get_entry(inventory.m_position.m_security);
+      get_entry(inventory.m_position.m_ticker, inventory.m_position.m_currency);
     }
   }
 
@@ -344,9 +314,8 @@ namespace Nexus {
   }
 
   template<IsBookkeeper B>
-  const typename Portfolio<B>::SecurityEntryMap&
-      Portfolio<B>::get_security_entries() const {
-    return m_security_entries;
+  const typename Portfolio<B>::EntryMap& Portfolio<B>::get_entries() const {
+    return m_entries;
   }
 
   template<IsBookkeeper B>
@@ -361,18 +330,18 @@ namespace Nexus {
     if(report.m_last_quantity == 0) {
       return false;
     }
-    auto& security = fields.m_security;
+    auto& ticker = fields.m_ticker;
     auto currency = fields.m_currency;
-    auto& entry = get_entry(security);
+    auto& entry = get_entry(ticker, currency);
     auto quantity = get_direction(fields.m_side) * report.m_last_quantity;
-    m_bookkeeper.record(security, currency, quantity,
+    m_bookkeeper.record(ticker, currency, quantity,
       report.m_last_quantity * report.m_last_price, get_fee_total(report));
-    auto inventory = m_bookkeeper.get_inventory(security, currency);
-    if(auto unrealized_security = calculate_unrealized(inventory, entry)) {
+    auto inventory = m_bookkeeper.get_inventory(ticker);
+    if(auto unrealized = calculate_unrealized(inventory, entry)) {
       auto& unrealized_currency = m_unrealized_currencies[currency];
-      if(*unrealized_security != entry.m_unrealized) {
+      if(*unrealized != entry.m_unrealized) {
         unrealized_currency -= entry.m_unrealized;
-        entry.m_unrealized = *unrealized_security;
+        entry.m_unrealized = *unrealized;
         unrealized_currency += entry.m_unrealized;
       }
     }
@@ -380,31 +349,31 @@ namespace Nexus {
   }
 
   template<IsBookkeeper B>
-  bool Portfolio<B>::update_ask(const Security& security, Money value) {
-    auto& entry = get_entry(security);
+  bool Portfolio<B>::update_ask(const Ticker& ticker, Money value) {
+    auto& entry = get_entry(ticker, Asset());
     entry.m_valuation.m_ask_value = value;
-    return update(security, entry);
+    return update(ticker, entry);
   }
 
   template<IsBookkeeper B>
-  bool Portfolio<B>::update_bid(const Security& security, Money value) {
-    auto& entry = get_entry(security);
+  bool Portfolio<B>::update_bid(const Ticker& ticker, Money value) {
+    auto& entry = get_entry(ticker, Asset());
     entry.m_valuation.m_bid_value = value;
-    return update(security, entry);
+    return update(ticker, entry);
   }
 
   template<IsBookkeeper B>
   bool Portfolio<B>::update(
-      const Security& security, Money ask_value, Money bid_value) {
-    auto& entry = get_entry(security);
+      const Ticker& ticker, Money ask_value, Money bid_value) {
+    auto& entry = get_entry(ticker, Asset());
     entry.m_valuation.m_ask_value = ask_value;
     entry.m_valuation.m_bid_value = bid_value;
-    return update(security, entry);
+    return update(ticker, entry);
   }
 
   template<IsBookkeeper B>
   boost::optional<Money> Portfolio<B>::calculate_unrealized(
-      const Inventory& inventory, const SecurityEntry& entry) {
+      const Inventory& inventory, const Entry& entry) {
     auto valuation = [&] {
       if(inventory.m_position.m_quantity >= 0) {
         return entry.m_valuation.m_bid_value;
@@ -419,29 +388,29 @@ namespace Nexus {
   }
 
   template<IsBookkeeper B>
-  typename Portfolio<B>::SecurityEntry& Portfolio<B>::get_entry(
-      const Security& security) {
-    auto security_iterator = m_security_entries.find(security);
-    if(security_iterator == m_security_entries.end()) {
-      auto currency = m_venues.from(security.get_venue()).m_currency;
-      security_iterator = m_security_entries.insert(
-        std::pair(security, SecurityEntry(currency))).first;
+  typename Portfolio<B>::Entry& Portfolio<B>::get_entry(
+      const Ticker& ticker, Asset currency) {
+    auto entry_iterator = m_entries.find(ticker);
+    if(entry_iterator == m_entries.end()) {
+      entry_iterator =
+        m_entries.insert(std::pair(ticker, Entry(currency))).first;
+    } else if(!entry_iterator->second.m_valuation.m_currency) {
+      entry_iterator->second.m_valuation.m_currency = currency;
     }
-    return security_iterator->second;
+    return entry_iterator->second;
   }
 
   template<IsBookkeeper B>
-  bool Portfolio<B>::update(const Security& security, SecurityEntry& entry) {
-    auto inventory =
-      m_bookkeeper.get_inventory(security, entry.m_valuation.m_currency);
-    auto unrealized_security = calculate_unrealized(inventory, entry);
-    if(!unrealized_security || *unrealized_security == entry.m_unrealized) {
+  bool Portfolio<B>::update(const Ticker& ticker, Entry& entry) {
+    auto& inventory = m_bookkeeper.get_inventory(ticker);
+    auto unrealized = calculate_unrealized(inventory, entry);
+    if(!unrealized || *unrealized == entry.m_unrealized) {
       return false;
     }
     auto& unrealized_currency =
       m_unrealized_currencies[entry.m_valuation.m_currency];
     unrealized_currency -= entry.m_unrealized;
-    entry.m_unrealized = *unrealized_security;
+    entry.m_unrealized = *unrealized;
     unrealized_currency += entry.m_unrealized;
     return true;
   }
@@ -453,18 +422,18 @@ namespace Beam {
     template<IsShuttle S>
     void operator ()(S& shuttle, Nexus::PortfolioUpdateEntry& value,
         unsigned int version) const {
-      shuttle.shuttle("security_inventory", value.m_security_inventory);
-      shuttle.shuttle("unrealized_security", value.m_unrealized_security);
+      shuttle.shuttle("inventory", value.m_inventory);
+      shuttle.shuttle("unrealized", value.m_unrealized);
       shuttle.shuttle("currency_inventory", value.m_currency_inventory);
       shuttle.shuttle("unrealized_currency", value.m_unrealized_currency);
     }
   };
 
   template<>
-  struct Shuttle<Nexus::SecurityValuation> {
+  struct Shuttle<Nexus::Valuation> {
     template<IsShuttle S>
-    void operator ()(S& shuttle, Nexus::SecurityValuation& value,
-        unsigned int version) const {
+    void operator ()(
+        S& shuttle, Nexus::Valuation& value, unsigned int version) const {
       shuttle.shuttle("currency", value.m_currency);
       shuttle.shuttle("ask_value", value.m_ask_value);
       shuttle.shuttle("bid_value", value.m_bid_value);

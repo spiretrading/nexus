@@ -3,10 +3,6 @@
 #include <algorithm>
 #include <unordered_map>
 #include <vector>
-#include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/Security.hpp"
-#include "Nexus/Definitions/Side.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
@@ -25,11 +21,11 @@ namespace Nexus {
       bool has_order(OrderId id) const;
 
       /**
-       * Returns the buying power used in a particular Currency.
-       * @param currency The Currency to lookup.
+       * Returns the buying power used in a particular currency.
+       * @param currency The currency to lookup.
        * @return The buying power used in the <i>currency</i>.
        */
-      Money get_buying_power(CurrencyId currency) const;
+      Money get_buying_power(Asset currency) const;
 
       /**
        * Tracks a submission and returns the updated buying power.
@@ -38,7 +34,7 @@ namespace Nexus {
        *        submission.
        * @param expected_price The expected price of the Order, this may differ
        *        from the price that the Order is submitted for.
-       * @return The updated buying power for the submission's Currency.
+       * @return The updated buying power for the submission's currency.
        */
       Money submit(OrderId id, const OrderFields& fields, Money expected_price);
 
@@ -64,8 +60,8 @@ namespace Nexus {
         Quantity m_quantity;
       };
       std::unordered_map<OrderId, OrderFields> m_order_fields;
-      std::unordered_map<Security, BuyingPowerEntry> m_buying_power_entries;
-      std::unordered_map<CurrencyId, Money> m_buying_power;
+      std::unordered_map<Ticker, BuyingPowerEntry> m_buying_power_entries;
+      std::unordered_map<Asset, Money> m_buying_power;
 
       static Money compute_buying_power(
         const std::vector<OrderEntry>& entries, Quantity offset);
@@ -83,7 +79,7 @@ namespace Nexus {
     return m_order_fields.contains(id);
   }
 
-  inline Money BuyingPowerModel::get_buying_power(CurrencyId currency) const {
+  inline Money BuyingPowerModel::get_buying_power(Asset currency) const {
     auto currency_iterator = m_buying_power.find(currency);
     if(currency_iterator == m_buying_power.end()) {
       return Money::ZERO;
@@ -93,7 +89,7 @@ namespace Nexus {
 
   inline Money BuyingPowerModel::submit(
       OrderId id, const OrderFields& fields, Money expected_price) {
-    auto& entry = m_buying_power_entries[fields.m_security];
+    auto& entry = m_buying_power_entries[fields.m_ticker];
     auto& buying_power = m_buying_power[fields.m_currency];
     buying_power -= compute_buying_power(entry);
     auto& order_entries = pick(fields.m_side, entry.m_asks, entry.m_bids);
@@ -125,8 +121,7 @@ namespace Nexus {
       return;
     }
     auto& order_fields = m_order_fields.at(report.m_id);
-    auto& buying_power_entry =
-      m_buying_power_entries.at(order_fields.m_security);
+    auto& buying_power_entry = m_buying_power_entries.at(order_fields.m_ticker);
     auto& buying_power = m_buying_power[order_fields.m_currency];
     buying_power -= compute_buying_power(buying_power_entry);
     auto& order_entries = pick(order_fields.m_side,

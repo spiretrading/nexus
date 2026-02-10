@@ -15,12 +15,11 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
-  const auto TST = Security("TST", TSX);
   using TestPortfolio = Portfolio<TrueAverageBookkeeper>;
+  const auto TST = parse_ticker("TST.TSX");
 
   struct Fixture {
     ServiceLocatorTestEnvironment m_service_locator_environment;
@@ -47,19 +46,19 @@ namespace {
 TEST_SUITE("PortfolioController") {
   TEST_CASE("empty_orders") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     order_queue->close();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
     auto updates = *controller.get_publisher().get_snapshot();
-    REQUIRE(updates->get_security_entries().empty());
+    REQUIRE(updates->get_entries().empty());
     REQUIRE(updates->get_unrealized_profit_and_losses().empty());
   }
 
   TEST_CASE("single_order_lifecycle") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
@@ -75,45 +74,43 @@ TEST_SUITE("PortfolioController") {
     auto updates = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_publisher().monitor(updates);
     auto update = updates->pop();
-    REQUIRE(update.m_security_inventory.m_position.m_security == TST);
-    REQUIRE(update.m_security_inventory.m_position.m_quantity == 100);
-    REQUIRE(
-      update.m_security_inventory.m_position.m_cost_basis == 100 * Money::ONE);
+    REQUIRE(update.m_inventory.m_position.m_ticker == TST);
+    REQUIRE(update.m_inventory.m_position.m_quantity == 100);
+    REQUIRE(update.m_inventory.m_position.m_cost_basis == 100 * Money::ONE);
   }
 
   TEST_CASE("multiple_orders_multiple_securities") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
     auto updates = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_publisher().monitor(updates);
     auto timestamp = time_from_string("2024-07-21 10:00:00.000");
-    auto security1 = Security("AAA", TSX);
-    auto security2 = Security("BBB", TSX);
+    auto ticker1 = parse_ticker("AAA.TSX");
+    auto ticker2 = parse_ticker("BBB.TSX");
     fixture.m_market_data_environment.get_feed_client().publish(
       SecurityBboQuote(BboQuote(
         make_bid(Money::ONE, 100), make_ask(2 * Money::ONE, 100), timestamp),
-        security1));
+        ticker1));
     fixture.m_market_data_environment.get_feed_client().publish(
       SecurityBboQuote(BboQuote(
         make_bid(Money::ONE, 100), make_ask(2 * Money::ONE, 100), timestamp),
-        security2));
+        ticker2));
     auto fields1 =
-      make_limit_order_fields(security1, CAD, Side::BID, "TSX", 50, Money::ONE);
+      make_limit_order_fields(ticker1, CAD, Side::BID, "TSX", 50, Money::ONE);
     auto info1 = OrderInfo(fields1, 1, false, timestamp);
     auto order1 = std::make_shared<PrimitiveOrder>(info1);
     order_queue->push(order1);
     accept(*order1, timestamp + seconds(1));
     fill(*order1, 50, timestamp + seconds(2));
     auto update1 = updates->pop();
-    REQUIRE(update1.m_security_inventory.m_position.m_security == security1);
-    REQUIRE(update1.m_security_inventory.m_position.m_quantity == 50);
-    REQUIRE(
-      update1.m_security_inventory.m_position.m_cost_basis == 50 * Money::ONE);
+    REQUIRE(update1.m_inventory.m_position.m_ticker == ticker1);
+    REQUIRE(update1.m_inventory.m_position.m_quantity == 50);
+    REQUIRE(update1.m_inventory.m_position.m_cost_basis == 50 * Money::ONE);
     auto fields2 =
-      make_limit_order_fields(security2, CAD, Side::BID, "TSX", 75, Money::ONE);
+      make_limit_order_fields(ticker2, CAD, Side::BID, "TSX", 75, Money::ONE);
     auto info2 = OrderInfo(fields2, 2, false, timestamp);
     auto order2 = std::make_shared<PrimitiveOrder>(info2);
     order_queue->push(order2);
@@ -121,15 +118,14 @@ TEST_SUITE("PortfolioController") {
     fill(*order2, 75, timestamp + seconds(2));
     order_queue->close();
     auto update2 = updates->pop();
-    REQUIRE(update2.m_security_inventory.m_position.m_security == security2);
-    REQUIRE(update2.m_security_inventory.m_position.m_quantity == 75);
-    REQUIRE(
-      update2.m_security_inventory.m_position.m_cost_basis == 75 * Money::ONE);
+    REQUIRE(update2.m_inventory.m_position.m_ticker == ticker2);
+    REQUIRE(update2.m_inventory.m_position.m_quantity == 75);
+    REQUIRE(update2.m_inventory.m_position.m_cost_basis == 75 * Money::ONE);
   }
 
   TEST_CASE("bbo_quote_update_triggers_portfolio_update") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
@@ -151,12 +147,10 @@ TEST_SUITE("PortfolioController") {
     fixture.m_market_data_environment.get_feed_client().publish(
       SecurityBboQuote(new_bbo, TST));
     auto bbo_update = updates->pop();
-    REQUIRE(bbo_update.m_security_inventory.m_position.m_security == TST);
-    REQUIRE(bbo_update.m_security_inventory.m_position.m_quantity == 100);
-    REQUIRE(
-      bbo_update.m_unrealized_security != initial_update.m_unrealized_security);
-    REQUIRE(bbo_update.m_security_inventory.m_position.m_cost_basis ==
-      100 * Money::ONE);
+    REQUIRE(bbo_update.m_inventory.m_position.m_ticker == TST);
+    REQUIRE(bbo_update.m_inventory.m_position.m_quantity == 100);
+    REQUIRE(bbo_update.m_unrealized != initial_update.m_unrealized);
+    REQUIRE(bbo_update.m_inventory.m_position.m_cost_basis == 100 * Money::ONE);
   }
 
   TEST_CASE("bbo_quote_no_change_no_update") {
@@ -188,14 +182,14 @@ TEST_SUITE("PortfolioController") {
     fixture.m_market_data_environment.get_feed_client().publish(
       SecurityBboQuote(changed_bbo, TST));
     auto final_update = updates->pop();
-    REQUIRE(final_update.m_security_inventory.m_position.m_security == TST);
-    REQUIRE(final_update.m_security_inventory.m_position.m_quantity == 100);
-    REQUIRE(final_update.m_unrealized_security == 100 * Money::ONE);
+    REQUIRE(final_update.m_inventory.m_position.m_ticker == TST);
+    REQUIRE(final_update.m_inventory.m_position.m_quantity == 100);
+    REQUIRE(final_update.m_unrealized == 100 * Money::ONE);
   }
 
   TEST_CASE("portfolio_initialization_with_existing_inventory") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto timestamp = time_from_string("2024-07-21 09:00:00.000");
     auto pre_fields =
       make_limit_order_fields(TST, CAD, Side::BID, "TSX", 50, Money::CENT);
@@ -218,20 +212,19 @@ TEST_SUITE("PortfolioController") {
     auto updates = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_publisher().monitor(updates);
     auto update1 = updates->pop();
-    REQUIRE(update1.m_security_inventory.m_position.m_security == TST);
-    REQUIRE(update1.m_security_inventory.m_position.m_quantity == 50);
-    REQUIRE(
-      update1.m_security_inventory.m_position.m_cost_basis == 50 * Money::CENT);
+    REQUIRE(update1.m_inventory.m_position.m_ticker == TST);
+    REQUIRE(update1.m_inventory.m_position.m_quantity == 50);
+    REQUIRE(update1.m_inventory.m_position.m_cost_basis == 50 * Money::CENT);
     auto update2 = updates->pop();
-    REQUIRE(update2.m_security_inventory.m_position.m_security == TST);
-    REQUIRE(update2.m_security_inventory.m_position.m_quantity == 150);
-    REQUIRE(update2.m_security_inventory.m_position.m_cost_basis ==
+    REQUIRE(update2.m_inventory.m_position.m_ticker == TST);
+    REQUIRE(update2.m_inventory.m_position.m_quantity == 150);
+    REQUIRE(update2.m_inventory.m_position.m_cost_basis ==
       100 * Money::ONE + 50 * Money::CENT);
   }
 
   TEST_CASE("unrealized_pnl_update") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
@@ -253,13 +246,12 @@ TEST_SUITE("PortfolioController") {
     fixture.m_market_data_environment.get_feed_client().publish(
       SecurityBboQuote(new_bbo, TST));
     auto bbo_update = updates->pop();
-    REQUIRE(
-      bbo_update.m_unrealized_security != initial_update.m_unrealized_security);
+    REQUIRE(bbo_update.m_unrealized != initial_update.m_unrealized);
   }
 
   TEST_CASE("out_of_order_execution_reports") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
@@ -286,25 +278,22 @@ TEST_SUITE("PortfolioController") {
     accept(*order_c, timestamp + seconds(3));
     fill(*order_a, 100, timestamp + seconds(4));
     auto update1 = updates->pop();
-    REQUIRE(update1.m_security_inventory.m_position.m_quantity == 100);
-    REQUIRE(update1.m_security_inventory.m_position.m_cost_basis ==
-      100 * Money::CENT);
+    REQUIRE(update1.m_inventory.m_position.m_quantity == 100);
+    REQUIRE(update1.m_inventory.m_position.m_cost_basis == 100 * Money::CENT);
     fill(*order_c, 100, timestamp + seconds(5));
     auto update2 = updates->pop();
-    REQUIRE(update2.m_security_inventory.m_position.m_quantity == 0);
-    REQUIRE(update2.m_security_inventory.m_position.m_cost_basis ==
-      Money::ZERO);
+    REQUIRE(update2.m_inventory.m_position.m_quantity == 0);
+    REQUIRE(update2.m_inventory.m_position.m_cost_basis == Money::ZERO);
     fill(*order_b, 100, timestamp + seconds(6));
     auto update3 = updates->pop();
-    REQUIRE(update3.m_security_inventory.m_position.m_quantity == 100);
-    REQUIRE(update3.m_security_inventory.m_position.m_cost_basis ==
-      200 * Money::CENT);
+    REQUIRE(update3.m_inventory.m_position.m_quantity == 100);
+    REQUIRE(update3.m_inventory.m_position.m_cost_basis == 200 * Money::CENT);
     REQUIRE(!updates->try_pop());
   }
 
   TEST_CASE("zero_position_bbo_update") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
@@ -312,40 +301,40 @@ TEST_SUITE("PortfolioController") {
     controller.get_publisher().monitor(updates);
     auto timestamp = time_from_string("2024-07-21 10:00:00.000");
     auto fields_buy = make_limit_order_fields(
-      Security("FOO", TSX), CAD, Side::BID, "TSX", 100, Money::ONE);
+      parse_ticker("FOO.TSX"), CAD, Side::BID, "TSX", 100, Money::ONE);
     auto info_buy = OrderInfo(fields_buy, 1, false, timestamp);
     auto order_buy = std::make_shared<PrimitiveOrder>(info_buy);
     order_queue->push(order_buy);
     accept(*order_buy, timestamp + seconds(1));
     fill(*order_buy, 100, timestamp + seconds(2));
     auto update1 = updates->pop();
-    REQUIRE(update1.m_security_inventory.m_position.m_quantity == 100);
-    REQUIRE(update1.m_unrealized_security == Money::ZERO);
+    REQUIRE(update1.m_inventory.m_position.m_quantity == 100);
+    REQUIRE(update1.m_unrealized == Money::ZERO);
     auto fields_sell = make_limit_order_fields(
-      Security("FOO", TSX), CAD, Side::ASK, "TSX", 100, Money::ONE);
+      parse_ticker("FOO.TSX"), CAD, Side::ASK, "TSX", 100, Money::ONE);
     auto info_sell = OrderInfo(fields_sell, 2, false, timestamp);
     auto order_sell = std::make_shared<PrimitiveOrder>(info_sell);
     order_queue->push(order_sell);
     accept(*order_sell, timestamp + seconds(3));
     fill(*order_sell, 100, timestamp + seconds(4));
     auto update2 = updates->pop();
-    REQUIRE(update2.m_security_inventory.m_position.m_quantity == 0);
-    REQUIRE(update2.m_unrealized_security == Money::ZERO);
+    REQUIRE(update2.m_inventory.m_position.m_quantity == 0);
+    REQUIRE(update2.m_unrealized == Money::ZERO);
     auto new_bbo =
       BboQuote(make_bid(2 * Money::ONE, 100), make_ask(2 * Money::ONE, 100),
         timestamp + seconds(5));
     fixture.m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(new_bbo, Security("FOO", TSX)));
+      SecurityBboQuote(new_bbo, parse_ticker("FOO.TSX")));
     REQUIRE(!updates->try_pop());
     auto fields_short = make_limit_order_fields(
-      Security("FOO", TSX), CAD, Side::ASK, "TSX", 100, Money::ONE);
+      parse_ticker("FOO.TSX"), CAD, Side::ASK, "TSX", 100, Money::ONE);
     auto info_short = OrderInfo(fields_short, 3, false, timestamp);
     auto order_short = std::make_shared<PrimitiveOrder>(info_short);
     order_queue->push(order_short);
     accept(*order_short, timestamp + seconds(6));
     fill(*order_short, 100, timestamp + seconds(7));
     auto update3 = updates->pop();
-    REQUIRE(update3.m_security_inventory.m_position.m_quantity == -100);
+    REQUIRE(update3.m_inventory.m_position.m_quantity == -100);
   }
 
   TEST_CASE("empty_snapshot") {
@@ -353,7 +342,7 @@ TEST_SUITE("PortfolioController") {
     auto portfolio = [&] {
       auto inventories = std::vector{Inventory(TST, CAD)};
       auto bookkeeper = TestPortfolio::Bookkeeper(inventories);
-      return TestPortfolio(DEFAULT_VENUES);
+      return TestPortfolio();
     }();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
@@ -365,7 +354,7 @@ TEST_SUITE("PortfolioController") {
 
   TEST_CASE("no_bbo_available") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
@@ -380,15 +369,15 @@ TEST_SUITE("PortfolioController") {
     accept(*order, timestamp + seconds(1));
     fill(*order, 100, timestamp + seconds(2));
     auto update1 = updates->pop();
-    REQUIRE(update1.m_security_inventory.m_position.m_quantity == 100);
-    REQUIRE(update1.m_unrealized_security == Money::ZERO);
+    REQUIRE(update1.m_inventory.m_position.m_quantity == 100);
+    REQUIRE(update1.m_unrealized == Money::ZERO);
     auto new_bbo =
       BboQuote(make_bid(2 * Money::ONE, 100), make_ask(2 * Money::ONE, 100),
         timestamp + seconds(3));
     fixture.m_market_data_environment.get_feed_client().publish(
       SecurityBboQuote(new_bbo, TST));
     auto update2 = updates->pop();
-    REQUIRE(update2.m_security_inventory.m_position.m_quantity == 100);
-    REQUIRE(update2.m_unrealized_security == 100 * Money::ONE);
+    REQUIRE(update2.m_inventory.m_position.m_quantity == 100);
+    REQUIRE(update2.m_unrealized == 100 * Money::ONE);
   }
 }

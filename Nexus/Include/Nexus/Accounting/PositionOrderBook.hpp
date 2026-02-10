@@ -23,8 +23,8 @@ namespace Nexus {
       /** Stores a single position. */
       struct PositionEntry {
 
-        /** The position's Security. */
-        Security m_security;
+        /** The position's ticker. */
+        Ticker m_ticker;
 
         /** The position's quantity. */
         Quantity m_quantity;
@@ -87,14 +87,14 @@ namespace Nexus {
 
         OrderEntry(std::shared_ptr<Order> order, int sequence_number) noexcept;
       };
-      struct SecurityEntry {
+      struct Entry {
         std::vector<OrderEntry> m_asks;
         std::vector<OrderEntry> m_bids;
         Quantity m_position;
         Quantity m_ask_open_quantity;
         Quantity m_bid_open_quantity;
       };
-      std::unordered_map<Security, SecurityEntry> m_security_entries;
+      std::unordered_map<Ticker, Entry> m_entries;
       std::unordered_map<OrderId, OrderFields> m_fields;
       int m_order_sequence_number;
       Beam::CachedValue<std::vector<std::shared_ptr<Order>>> m_live_orders;
@@ -104,7 +104,7 @@ namespace Nexus {
 
   inline std::ostream& operator <<(
       std::ostream& out, const PositionOrderBook::PositionEntry& entry) {
-    return out << '(' << entry.m_security << ' ' << entry.m_quantity << ')';
+    return out << '(' << entry.m_ticker << ' ' << entry.m_quantity << ')';
   }
 
   inline PositionOrderBook::OrderEntry::OrderEntry(
@@ -117,7 +117,7 @@ namespace Nexus {
     : m_order_sequence_number(0) {
     m_live_orders.set_computation([this] {
       auto orders = std::vector<std::shared_ptr<Order>>();
-      for(auto& entry : m_security_entries | std::views::values) {
+      for(auto& entry : m_entries | std::views::values) {
         for(auto& order_entry : entry.m_asks) {
           orders.push_back(order_entry.m_order);
         }
@@ -129,7 +129,7 @@ namespace Nexus {
     });
     m_opening_orders.set_computation([this] {
       auto orders = std::vector<std::shared_ptr<Order>>();
-      for(auto& entry : m_security_entries | std::views::values) {
+      for(auto& entry : m_entries | std::views::values) {
         if(entry.m_position == 0) {
           for(auto& order_entry : entry.m_asks) {
             orders.push_back(order_entry.m_order);
@@ -173,10 +173,9 @@ namespace Nexus {
     });
     m_positions.set_computation([this] {
       auto positions = std::vector<PositionEntry>();
-      for(auto& security_entry_pair : m_security_entries) {
-        if(security_entry_pair.second.m_position != 0) {
-          positions.push_back(PositionEntry(security_entry_pair.first,
-            security_entry_pair.second.m_position));
+      for(auto& [ticker, entry] : m_entries) {
+        if(entry.m_position != 0) {
+          positions.push_back(PositionEntry(ticker, entry.m_position));
         }
       }
       return positions;
@@ -187,8 +186,8 @@ namespace Nexus {
       Beam::View<const Inventory> positions)
       : PositionOrderBook() {
     for(auto& position : positions) {
-      auto& security_entry = m_security_entries[position.m_position.m_security];
-      security_entry.m_position = position.m_position.m_quantity;
+      auto& entry = m_entries[position.m_position.m_ticker];
+      entry.m_position = position.m_position.m_quantity;
     }
   }
 
@@ -209,20 +208,20 @@ namespace Nexus {
 
   inline bool PositionOrderBook::test_opening_order_submission(
       const OrderFields& fields) const {
-    auto security_entry_iterator = m_security_entries.find(fields.m_security);
-    if(security_entry_iterator == m_security_entries.end()) {
+    auto entry_iterator = m_entries.find(fields.m_ticker);
+    if(entry_iterator == m_entries.end()) {
       return true;
     }
-    const auto& security_entry = security_entry_iterator->second;
-    if(security_entry.m_position == 0) {
+    const auto& entry = entry_iterator->second;
+    if(entry.m_position == 0) {
       return true;
     }
-    if(Nexus::get_side(security_entry.m_position) == fields.m_side) {
+    if(Nexus::get_side(entry.m_position) == fields.m_side) {
       return true;
     }
-    auto open_quantity = pick(fields.m_side, security_entry.m_ask_open_quantity,
-      security_entry.m_bid_open_quantity);
-    if(open_quantity + fields.m_quantity > abs(security_entry.m_position)) {
+    auto open_quantity =
+      pick(fields.m_side, entry.m_ask_open_quantity, entry.m_bid_open_quantity);
+    if(open_quantity + fields.m_quantity > abs(entry.m_position)) {
       return true;
     }
     return false;
@@ -231,21 +230,20 @@ namespace Nexus {
   inline void PositionOrderBook::add(std::shared_ptr<Order> order) {
     auto& fields = order->get_info().m_fields;
     m_fields.emplace(order->get_info().m_id, fields);
-    auto& security_entry = m_security_entries[fields.m_security];
-    auto& orders = pick(fields.m_side, security_entry.m_asks,
-      security_entry.m_bids);
-    auto& open_quantity = pick(fields.m_side,
-      security_entry.m_ask_open_quantity, security_entry.m_bid_open_quantity);
+    auto& entry = m_entries[fields.m_ticker];
+    auto& orders = pick(fields.m_side, entry.m_asks, entry.m_bids);
+    auto& open_quantity =
+      pick(fields.m_side, entry.m_ask_open_quantity, entry.m_bid_open_quantity);
     open_quantity += fields.m_quantity;
-    auto entry = OrderEntry(order, m_order_sequence_number);
+    auto order_entry = OrderEntry(order, m_order_sequence_number);
     ++m_order_sequence_number;
-    auto insert_iterator = std::lower_bound(orders.begin(), orders.end(), entry,
-      [] (const auto& lhs, const auto& rhs) {
+    auto insert_iterator = std::lower_bound(orders.begin(), orders.end(),
+      order_entry, [] (const auto& lhs, const auto& rhs) {
         return std::tie(
           lhs.m_order->get_info().m_fields, lhs.m_sequence_number) <
             std::tie(rhs.m_order->get_info().m_fields, rhs.m_sequence_number);
       });
-    orders.insert(insert_iterator, entry);
+    orders.insert(insert_iterator, order_entry);
     m_live_orders.invalidate();
     m_opening_orders.invalidate();
   }
@@ -259,18 +257,17 @@ namespace Nexus {
       return;
     }
     auto& fields = fields_iterator->second;
-    auto security_entry_iterator = m_security_entries.find(fields.m_security);
-    if(security_entry_iterator == m_security_entries.end()) {
+    auto entry_iterator = m_entries.find(fields.m_ticker);
+    if(entry_iterator == m_entries.end()) {
       return;
     }
-    auto& security_entry = security_entry_iterator->second;
-    auto& orders =
-      pick(fields.m_side, security_entry.m_asks, security_entry.m_bids);
-    auto entry_iterator = std::find_if(orders.begin(), orders.end(),
+    auto& entry = entry_iterator->second;
+    auto& orders = pick(fields.m_side, entry.m_asks, entry.m_bids);
+    auto order_iterator = std::find_if(orders.begin(), orders.end(),
       [&] (const auto& entry) {
         return entry.m_order->get_info().m_id == report.m_id;
       });
-    if(entry_iterator == orders.end()) {
+    if(order_iterator == orders.end()) {
       return;
     }
     if(is_terminal(report.m_status)) {
@@ -280,17 +277,16 @@ namespace Nexus {
     if(report.m_last_quantity != 0) {
       m_positions.invalidate();
     }
-    security_entry.m_position +=
-      get_direction(fields.m_side) * report.m_last_quantity;
-    auto& open_quantity = pick(fields.m_side,
-      security_entry.m_ask_open_quantity, security_entry.m_bid_open_quantity);
+    entry.m_position += get_direction(fields.m_side) * report.m_last_quantity;
+    auto& open_quantity =
+      pick(fields.m_side, entry.m_ask_open_quantity, entry.m_bid_open_quantity);
     open_quantity -= report.m_last_quantity;
-    auto& entry = *entry_iterator;
-    entry.m_remaining_quantity -= report.m_last_quantity;
-    if(entry.m_remaining_quantity == 0 || is_terminal(report.m_status)) {
-      open_quantity -= entry.m_remaining_quantity;
+    auto& order_entry = *order_iterator;
+    order_entry.m_remaining_quantity -= report.m_last_quantity;
+    if(order_entry.m_remaining_quantity == 0 || is_terminal(report.m_status)) {
+      open_quantity -= order_entry.m_remaining_quantity;
       m_fields.erase(report.m_id);
-      orders.erase(entry_iterator);
+      orders.erase(order_iterator);
     }
   }
 }
