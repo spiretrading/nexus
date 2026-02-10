@@ -2,6 +2,7 @@
 #include <functional>
 #include <sstream>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <boost/functional/hash.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Instrument.hpp"
 
@@ -37,12 +38,11 @@ TEST_SUITE("Instrument") {
     instrument.m_quote = Asset(Asset::CCY, 2);
     instrument.m_type = Instrument::Type::SPOT;
     auto hash = std::hash<Instrument>()(instrument);
-    auto seed = std::hash<Asset>()(instrument.m_base);
-    auto quote_hash = std::hash<Asset>()(instrument.m_quote);
-    seed ^= quote_hash + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-    auto type_hash =
-      std::hash<int>()(static_cast<int>(instrument.m_type));
-    seed ^= type_hash + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    auto seed = std::size_t(0);
+    boost::hash_combine(seed, std::hash<Asset>()(instrument.m_base));
+    boost::hash_combine(seed, std::hash<Asset>()(instrument.m_quote));
+    boost::hash_combine(seed,
+      std::hash<std::uint8_t>()(static_cast<std::uint8_t>(instrument.m_type)));
     REQUIRE(hash == seed);
   }
 

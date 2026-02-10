@@ -17,6 +17,7 @@
 #include <Beam/Utilities/FixedString.hpp>
 #include <Beam/Utilities/ScopedStreamManipulator.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
+#include "Nexus/Definitions/Asset.hpp"
 
 namespace Nexus {
 
@@ -35,6 +36,9 @@ namespace Nexus {
        * @param value The currency id.
        */
       constexpr explicit CurrencyId(std::uint16_t value) noexcept;
+
+      /** Converts this CurrencyId to an Asset. */
+      constexpr operator Asset() const;
 
       /** Returns the integral representation of this id. */
       constexpr explicit operator std::uint16_t() const noexcept;
@@ -204,6 +208,10 @@ namespace Nexus {
 
   constexpr CurrencyId::CurrencyId(std::uint16_t value) noexcept
     : m_value(value) {}
+
+  constexpr CurrencyId::operator Asset() const {
+    return Asset(Asset::CCY, static_cast<Asset::Id>(m_value));
+  }
 
   constexpr CurrencyId::operator std::uint16_t() const noexcept {
     return m_value;

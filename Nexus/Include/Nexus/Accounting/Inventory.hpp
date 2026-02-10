@@ -3,7 +3,6 @@
 #include <ostream>
 #include <utility>
 #include <Beam/Serialization/DataShuttle.hpp>
-#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Accounting/Position.hpp"
 
 namespace Nexus {
@@ -24,23 +23,17 @@ namespace Nexus {
     Quantity m_volume;
 
     /** The number of transactions made. */
-    int m_transaction_count;
+    int m_transaction_count = 0;
 
     /** Constructs an empty Inventory. */
-    Inventory() noexcept;
+    Inventory() = default;
 
     /**
      * Constructs an Inventory.
-     * @param security The Security being managed.
-     * @param currency The currency being transacted.
+     * @param ticker The Ticker being managed.
+     * @param currency The currency used to value the Inventory.
      */
-    Inventory(Security security, CurrencyId currency) noexcept;
-
-    /**
-     * Constructs an Inventory.
-     * @param key Stores the position's security and currency.
-     */
-    explicit Inventory(Position::Key key) noexcept;
+    Inventory(Ticker ticker, Asset currency) noexcept;
 
     /**
      * Constructs an Inventory.
@@ -64,20 +57,11 @@ namespace Nexus {
   */
   inline bool is_empty(const Inventory& inventory) {
     return inventory == Inventory(
-      inventory.m_position.m_security, inventory.m_position.m_currency);
+      inventory.m_position.m_ticker, inventory.m_position.m_currency);
   }
 
-  inline Inventory::Inventory() noexcept
-    : m_volume(0),
-      m_transaction_count(0) {}
-
-  inline Inventory::Inventory(Security security, CurrencyId currency) noexcept
-    : m_position(std::move(security), currency),
-      m_volume(0),
-      m_transaction_count(0) {}
-
-  inline Inventory::Inventory(Position::Key key) noexcept
-    : Inventory(std::move(key.m_security), key.m_currency) {}
+  inline Inventory::Inventory(Ticker ticker, Asset currency) noexcept
+    : m_position(std::move(ticker), currency) {}
 
   inline Inventory::Inventory(Position position, Money gross_profit_and_loss,
     Money fees, Quantity volume, int transaction_count)

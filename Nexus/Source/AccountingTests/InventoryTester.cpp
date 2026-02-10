@@ -2,7 +2,7 @@
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/Inventory.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
@@ -11,7 +11,7 @@ using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
 
 namespace {
-  auto TST = Security("TST", TSX);
+  auto TST = parse_ticker("TST.TSX");
 }
 
 TEST_SUITE("Inventory") {
@@ -26,9 +26,8 @@ TEST_SUITE("Inventory") {
   }
 
   TEST_CASE("key_constructor") {
-    auto key = Position::Key(TST, CAD);
-    auto inventory = Inventory(key);
-    REQUIRE(inventory.m_position.m_security == TST);
+    auto inventory = Inventory(TST, CAD);
+    REQUIRE(inventory.m_position.m_ticker == TST);
     REQUIRE(inventory.m_position.m_currency == CAD);
     REQUIRE(inventory.m_position.m_quantity == 0);
     REQUIRE(inventory.m_position.m_cost_basis == Money::ZERO);
@@ -53,12 +52,11 @@ TEST_SUITE("Inventory") {
   }
 
   TEST_CASE("is_empty") {
-    auto key = Position::Key(TST, CAD);
     auto empty_by_default = Inventory();
     REQUIRE(is_empty(empty_by_default));
-    auto empty_by_key = Inventory(key);
+    auto empty_by_key = Inventory(TST, CAD);
     REQUIRE(is_empty(empty_by_key));
-    auto non_empty = Inventory(key);
+    auto non_empty = Inventory(TST, CAD);
     non_empty.m_volume = 100;
     REQUIRE(!is_empty(non_empty));
   }

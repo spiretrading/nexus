@@ -20,19 +20,18 @@ namespace Nexus {
       explicit TrueAverageBookkeeper(
         const Beam::View<const Inventory>& inventories);
 
-      void record(const Security& security, CurrencyId currency,
-        Quantity quantity, Money cost_basis, Money fees);
-      const Inventory& get_inventory(
-        const Security& security, CurrencyId currency) const;
-      const Inventory& get_total(CurrencyId currency) const;
+      void record(const Ticker& ticker, Asset currency, Quantity quantity,
+        Money cost_basis, Money fees);
+      const Inventory& get_inventory(const Ticker& ticker) const;
+      const Inventory& get_total(Asset asset) const;
       Beam::View<const Inventory> get_inventory_range() const;
       Beam::View<const Inventory> get_totals_range() const;
 
     private:
-      std::unordered_map<Position::Key, Inventory> m_inventories;
-      std::unordered_map<CurrencyId, Inventory> m_totals;
+      std::unordered_map<Ticker, Inventory> m_inventories;
+      std::unordered_map<Asset, Inventory> m_totals;
 
-      Inventory& internal_get_total(CurrencyId currency);
+      Inventory& internal_get_total(Asset asset);
   };
 
   inline TrueAverageBookkeeper::TrueAverageBookkeeper(
@@ -41,7 +40,7 @@ namespace Nexus {
       if(is_empty(inventory)) {
         continue;
       }
-      m_inventories.insert(std::pair(get_key(inventory.m_position), inventory));
+      m_inventories.insert(std::pair(inventory.m_position.m_ticker, inventory));
       auto& total = internal_get_total(inventory.m_position.m_currency);
       total.m_gross_profit_and_loss += inventory.m_gross_profit_and_loss;
       total.m_position.m_quantity += abs(inventory.m_position.m_quantity);
@@ -52,13 +51,12 @@ namespace Nexus {
     }
   }
 
-  inline void TrueAverageBookkeeper::record(const Security& security,
-      CurrencyId currency, Quantity quantity, Money cost_basis, Money fees) {
-    auto key = Position::Key(security, currency);
-    auto entry_iterator = m_inventories.find(key);
+  inline void TrueAverageBookkeeper::record(const Ticker& ticker,
+      Asset currency, Quantity quantity, Money cost_basis, Money fees) {
+    auto entry_iterator = m_inventories.find(ticker);
     if(entry_iterator == m_inventories.end()) {
-      entry_iterator =
-        m_inventories.insert(std::pair(key, Inventory(key))).first;
+      entry_iterator = m_inventories.insert(
+        std::pair(ticker, Inventory(ticker, currency))).first;
     }
     auto& entry = entry_iterator->second;
     entry.m_fees += fees;
@@ -115,29 +113,25 @@ namespace Nexus {
   }
 
   inline const Inventory& TrueAverageBookkeeper::get_inventory(
-      const Security& security, CurrencyId currency) const {
-    auto key = Position::Key(security, currency);
-    auto inventory_iterator = m_inventories.find(key);
+      const Ticker& ticker) const {
+    auto inventory_iterator = m_inventories.find(ticker);
     if(inventory_iterator == m_inventories.end()) {
       static auto empty_inventories =
-        Beam::SynchronizedUnorderedMap<Position::Key, Inventory>();
-      return empty_inventories.get_or_insert(key, [&] {
-        return Inventory(key);
+        Beam::SynchronizedUnorderedMap<Ticker, Inventory>();
+      return empty_inventories.get_or_insert(ticker, [&] {
+        return Inventory(ticker, Asset());
       });
     }
     return inventory_iterator->second;
   }
 
-  inline const Inventory&
-      TrueAverageBookkeeper::get_total(CurrencyId currency) const {
-    auto totals_iterator = m_totals.find(currency);
+  inline const Inventory& TrueAverageBookkeeper::get_total(Asset asset) const {
+    auto totals_iterator = m_totals.find(asset);
     if(totals_iterator == m_totals.end()) {
       static auto empty_totals =
-        Beam::SynchronizedUnorderedMap<CurrencyId, Inventory>();
-      return empty_totals.get_or_insert(currency, [&] {
-        auto totals = Inventory();
-        totals.m_position.m_currency = currency;
-        return totals;
+        Beam::SynchronizedUnorderedMap<Asset, Inventory>();
+      return empty_totals.get_or_insert(asset, [&] {
+        return Inventory(Ticker(), asset);
       });
     }
     return totals_iterator->second;
@@ -155,12 +149,11 @@ namespace Nexus {
     return Beam::View(values.begin(), values.end());
   }
 
-  inline Inventory&
-      TrueAverageBookkeeper::internal_get_total(CurrencyId currency) {
-    auto totals_iterator = m_totals.find(currency);
+  inline Inventory& TrueAverageBookkeeper::internal_get_total(Asset asset) {
+    auto totals_iterator = m_totals.find(asset);
     if(totals_iterator == m_totals.end()) {
-      totals_iterator = m_totals.insert(std::pair(currency, Inventory())).first;
-      totals_iterator->second.m_position.m_currency = currency;
+      totals_iterator =
+        m_totals.insert(std::pair(asset, Inventory(Ticker(), asset))).first;
     }
     return totals_iterator->second;
   }

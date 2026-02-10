@@ -6,6 +6,7 @@
 #include <ostream>
 #include <string>
 #include <Beam/Serialization/DataShuttle.hpp>
+#include <boost/functional/hash.hpp>
 #include "Nexus/Definitions/Asset.hpp"
 
 namespace Nexus {
@@ -48,7 +49,7 @@ namespace Nexus {
     Asset m_quote;
 
     /** The instrument type. */
-    Type m_type;
+    Type m_type = Type::NONE;
 
     bool operator ==(const Instrument&) const = default;
   };
@@ -93,11 +94,11 @@ namespace std {
   template<>
   struct hash<Nexus::Instrument> {
     std::size_t operator ()(const Nexus::Instrument& value) const noexcept {
-      auto seed = std::hash<Nexus::Asset>()(value.m_base);
-      auto quote_hash = std::hash<Nexus::Asset>()(value.m_quote);
-      seed ^= quote_hash + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-      auto type_hash = std::hash<int>()(static_cast<int>(value.m_type));
-      seed ^= type_hash + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+      auto seed = std::size_t(0);
+      boost::hash_combine(seed, std::hash<Nexus::Asset>()(value.m_base));
+      boost::hash_combine(seed, std::hash<Nexus::Asset>()(value.m_quote));
+      boost::hash_combine(seed,
+        std::hash<std::uint8_t>()(static_cast<std::uint8_t>(value.m_type)));
       return seed;
     }
   };

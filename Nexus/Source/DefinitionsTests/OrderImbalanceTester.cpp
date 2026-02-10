@@ -11,9 +11,9 @@ using namespace Nexus;
 
 TEST_SUITE("OrderImbalance") {
   TEST_CASE("stream") {
-    auto imbalance = OrderImbalance(Security("ABC", DefaultVenues::TSX),
-      Side::BID, 42, Money(12345), time_from_string("2020-01-02 03:04:05"));
-    auto expected_security = to_string(imbalance.m_security);
+    auto imbalance = OrderImbalance(parse_ticker("ABC.TSX"), Side::BID, 42,
+      Money(12345), time_from_string("2020-01-02 03:04:05"));
+    auto expected_security = to_string(imbalance.m_ticker);
     auto expected_side = to_string(imbalance.m_side);
     auto expected_size = to_string(imbalance.m_size);
     auto expected_price = to_string(imbalance.m_reference_price);

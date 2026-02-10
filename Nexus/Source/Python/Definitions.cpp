@@ -45,9 +45,9 @@ using namespace pybind11;
 void Nexus::Python::export_asset(module& module) {
   export_default_methods(class_<Asset>(module, "Asset")).
     def(init<>()).
-    def(init<std::uint64_t>()).
-    def(init<std::uint16_t, std::uint64_t>()).
-    def(init<std::string, std::uint64_t>()).
+    def(init<Asset::Id>()).
+    def(init<Asset::Type, Asset::Id>()).
+    def(init<std::string, Asset::Id>()).
     def_property_readonly("type", &Asset::get_type).
     def_property_readonly("id", &Asset::get_id).
     def("__bool__", [] (const Asset& value) {
@@ -355,7 +355,7 @@ void Nexus::Python::export_exchange_rate_table(module& module) {
 void Nexus::Python::export_listing(module& module) {
   export_default_methods(class_<Listing>(module, "Listing")).
     def(init<>()).
-    def(init<std::uint64_t, Instrument>()).
+    def(init<Listing::Id, Instrument>()).
     def_readwrite("id", &Listing::m_id).
     def_readwrite("instrument", &Listing::m_instrument);
 }

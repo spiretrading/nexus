@@ -31,35 +31,44 @@ namespace Nexus {
   class Asset {
     public:
 
-      /** Represents a currency asset type. */
-      static constexpr std::uint16_t CURRENCY = encode_asset_type("CCY");
+      /** Represents an asset type. */
+      using Type = std::uint16_t;
+
+      /** Represents an asset id. */
+      using Id = std::uint64_t;
+
+      /** Represents no asset. */
+      static constexpr auto NONE = Type(0);
 
       /** Represents a currency asset type. */
-      static constexpr std::uint16_t CCY = CURRENCY;
+      static constexpr auto CURRENCY = encode_asset_type("CCY");
+
+      /** Represents a currency asset type. */
+      static constexpr auto CCY = CURRENCY;
 
       /** Represents an equity asset type. */
-      static constexpr std::uint16_t EQUITY = encode_asset_type("EQY");
+      static constexpr auto EQUITY = encode_asset_type("EQY");
 
       /** Represents an equity asset type. */
-      static constexpr std::uint16_t EQY = EQUITY;
+      static constexpr auto EQY = EQUITY;
 
       /** Constructs a default Asset. */
       constexpr Asset() noexcept;
 
       /** Constructs an Asset from a value. */
-      explicit constexpr Asset(std::uint64_t value) noexcept;
+      explicit constexpr Asset(Id value) noexcept;
 
       /** Constructs an Asset from a type and id. */
-      constexpr Asset(std::uint16_t type, std::uint64_t id) noexcept;
+      constexpr Asset(Type type, Id id) noexcept;
 
       /** Constructs an Asset from a type and id. */
-      constexpr Asset(std::string_view type, std::uint64_t id) noexcept;
+      constexpr Asset(std::string_view type, Id id) noexcept;
 
       /** Returns the asset type. */
-      constexpr std::uint16_t get_type() const;
+      constexpr Type get_type() const;
 
       /** Returns the asset id. */
-      constexpr std::uint64_t get_id() const;
+      constexpr Id get_id() const;
 
       /** Tests if this Asset is not equal to zero. */
       explicit constexpr operator bool() const;
@@ -67,31 +76,31 @@ namespace Nexus {
       bool operator ==(const Asset&) const = default;
 
     private:
-      std::uint64_t m_value;
+      Id m_value;
   };
 
   constexpr Asset::Asset() noexcept
     : m_value(0) {}
 
-  constexpr Asset::Asset(std::uint64_t value) noexcept
-    : m_value(static_cast<std::uint64_t>(value)) {}
+  constexpr Asset::Asset(Id value) noexcept
+    : m_value(static_cast<Id>(value)) {}
 
-  constexpr Asset::Asset(std::uint16_t type, std::uint64_t id) noexcept
-    : m_value((static_cast<std::uint64_t>(type) << 48) |
+  constexpr Asset::Asset(Type type, Id id) noexcept
+    : m_value((static_cast<Id>(type) << 48) |
         (id & 0x0000FFFFFFFFFFFFULL)) {}
 
-  constexpr Asset::Asset(std::string_view type, std::uint64_t id) noexcept
+  constexpr Asset::Asset(std::string_view type, Id id) noexcept
     : Asset(encode_asset_type(type), id) {}
 
   constexpr Asset::operator bool() const {
     return m_value != 0;
   }
 
-  constexpr std::uint16_t Asset::get_type() const {
-    return static_cast<std::uint16_t>(m_value >> 48);
+  constexpr Asset::Type Asset::get_type() const {
+    return static_cast<Type>(m_value >> 48);
   }
 
-  constexpr std::uint64_t Asset::get_id() const {
+  constexpr Asset::Id Asset::get_id() const {
     return m_value;
   }
 }
