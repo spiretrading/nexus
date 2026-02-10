@@ -75,6 +75,11 @@ namespace Nexus {
     out.setstate(std::ios::failbit);
     return out;
   }
+
+  inline std::ostream& operator <<(std::ostream& out, const Instrument& value) {
+    return out << '(' << value.m_base << ' ' << value.m_quote << ' ' <<
+      value.m_type << ')';
+  }
 }
 
 namespace Beam {

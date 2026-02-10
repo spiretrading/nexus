@@ -1,7 +1,8 @@
 #include <functional>
+#include <sstream>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/Asset.hpp"
+#include "Nexus/Definitions/Currency.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
@@ -54,6 +55,17 @@ TEST_SUITE("Asset") {
     auto hash = std::hash<Asset>()(asset);
     auto expected = std::hash<std::uint64_t>()(value);
     REQUIRE(hash == expected);
+  }
+
+  TEST_CASE("stream") {
+    auto asset = Asset(Asset::EQY, 42);
+    auto stream = std::stringstream();
+    stream << asset;
+    REQUIRE(stream.str() == "EQY(42)");
+    auto currency = Asset(Asset::CCY, 124);
+    stream.str("");
+    stream << currency;
+    REQUIRE(stream.str() == "CAD");
   }
 
   TEST_CASE("shuttle") {

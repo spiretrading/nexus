@@ -12,14 +12,15 @@ using namespace Nexus;
 
 TEST_SUITE("Instrument") {
   TEST_CASE("type_stream") {
-    auto cases = std::array<std::pair<Instrument::Type, const char*>, 7>({
+    auto cases = std::array<std::pair<Instrument::Type, const char*>, 8>({
       {Instrument::Type::NONE, "NONE"},
       {Instrument::Type::SPOT, "SPT"},
       {Instrument::Type::FORWARD, "FWD"},
       {Instrument::Type::FUTURE, "FUT"},
       {Instrument::Type::PERPETUAL, "PERP"},
       {Instrument::Type::OPTION, "OPT"},
-      {Instrument::Type::SWAP, "SWP"}
+      {Instrument::Type::SWAP, "SWP"},
+      {Instrument::Type::CFD, "CFD"}
     });
     for(auto& entry : cases) {
       auto stream = std::stringstream();
@@ -30,6 +31,16 @@ TEST_SUITE("Instrument") {
     auto stream = std::stringstream();
     stream << static_cast<Instrument::Type>(255);
     REQUIRE(stream.fail());
+  }
+
+  TEST_CASE("stream") {
+    auto instrument = Instrument();
+    instrument.m_base = Asset(Asset::EQY, 123);
+    instrument.m_quote = Asset(Asset::EQY, 456);
+    instrument.m_type = Instrument::Type::SPOT;
+    auto stream = std::stringstream();
+    stream << instrument;
+    REQUIRE(stream.str() == "(EQY(123) EQY(456) SPT)");
   }
 
   TEST_CASE("hash") {
