@@ -27,8 +27,8 @@ namespace Nexus {
    */
   inline auto make_venue_filter(Venue venue) {
     return std::string(venue.get_code().get_data()) ==
-      SecurityAccessor(OrderFieldsAccessor(OrderInfoAccessor::from_parameter(0).
-        get_fields()).get_security()).get_venue();
+      TickerAccessor(OrderFieldsAccessor(OrderInfoAccessor::from_parameter(0).
+        get_fields()).get_ticker()).get_venue();
   }
 
   /**

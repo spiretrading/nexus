@@ -61,36 +61,35 @@ namespace Nexus {
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   class HistoricalDataStoreQueryWrapper<BboQuote, D> final :
       public BaseHistoricalDataStoreQueryWrapper<
-        SecurityMarketDataQuery, BboQuote, Security, D> {
+        TickerMarketDataQuery, BboQuote, Ticker, D> {
     public:
       template<Beam::Initializes<D> DF>
       explicit HistoricalDataStoreQueryWrapper(DF&& data_store);
 
-      std::vector<SequencedBboQuote> load(const SecurityMarketDataQuery& query);
+      std::vector<SequencedBboQuote> load(const TickerMarketDataQuery& query);
   };
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   class HistoricalDataStoreQueryWrapper<BookQuote, D> final :
       public BaseHistoricalDataStoreQueryWrapper<
-        SecurityMarketDataQuery, BookQuote, Security, D> {
+        TickerMarketDataQuery, BookQuote, Ticker, D> {
     public:
       template<Beam::Initializes<D> DF>
       explicit HistoricalDataStoreQueryWrapper(DF&& data_store);
 
-      std::vector<SequencedBookQuote> load(
-        const SecurityMarketDataQuery& query);
+      std::vector<SequencedBookQuote> load(const TickerMarketDataQuery& query);
   };
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   class HistoricalDataStoreQueryWrapper<TimeAndSale, D> final :
       public BaseHistoricalDataStoreQueryWrapper<
-        SecurityMarketDataQuery, TimeAndSale, Security, D> {
+        TickerMarketDataQuery, TimeAndSale, Ticker, D> {
     public:
       template<Beam::Initializes<D> DF>
       explicit HistoricalDataStoreQueryWrapper(DF&& data_store);
 
       std::vector<SequencedTimeAndSale> load(
-        const SecurityMarketDataQuery& query);
+        const TickerMarketDataQuery& query);
   };
 
   template<typename Q, typename V, typename I, typename D> requires
@@ -145,13 +144,13 @@ namespace Nexus {
   template<Beam::Initializes<D> DF>
   HistoricalDataStoreQueryWrapper<BboQuote, D>::HistoricalDataStoreQueryWrapper(
     DF&& data_store)
-    : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery, BboQuote,
-        Security, D>(std::forward<DF>(data_store)) {}
+    : BaseHistoricalDataStoreQueryWrapper<TickerMarketDataQuery, BboQuote,
+        Ticker, D>(std::forward<DF>(data_store)) {}
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   std::vector<SequencedBboQuote>
       HistoricalDataStoreQueryWrapper<BboQuote, D>::load(
-        const SecurityMarketDataQuery& query) {
+        const TickerMarketDataQuery& query) {
     return this->m_data_store->load_bbo_quotes(query);
   }
 
@@ -159,13 +158,13 @@ namespace Nexus {
   template<Beam::Initializes<D> DF>
   HistoricalDataStoreQueryWrapper<BookQuote, D>::
     HistoricalDataStoreQueryWrapper(DF&& data_store)
-    : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery, BookQuote,
-        Security, D>(std::forward<DF>(data_store)) {}
+    : BaseHistoricalDataStoreQueryWrapper<TickerMarketDataQuery, BookQuote,
+        Ticker, D>(std::forward<DF>(data_store)) {}
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   std::vector<SequencedBookQuote>
       HistoricalDataStoreQueryWrapper<BookQuote, D>::load(
-        const SecurityMarketDataQuery& query) {
+        const TickerMarketDataQuery& query) {
     return this->m_data_store->load_book_quotes(query);
   }
 
@@ -173,13 +172,13 @@ namespace Nexus {
   template<Beam::Initializes<D> DF>
   HistoricalDataStoreQueryWrapper<TimeAndSale, D>::
     HistoricalDataStoreQueryWrapper(DF&& data_store)
-    : BaseHistoricalDataStoreQueryWrapper<SecurityMarketDataQuery, TimeAndSale,
-        Security, D>(std::forward<DF>(data_store)) {}
+    : BaseHistoricalDataStoreQueryWrapper<TickerMarketDataQuery, TimeAndSale,
+        Ticker, D>(std::forward<DF>(data_store)) {}
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   std::vector<SequencedTimeAndSale>
       HistoricalDataStoreQueryWrapper<TimeAndSale, D>::load(
-        const SecurityMarketDataQuery& query) {
+        const TickerMarketDataQuery& query) {
     return this->m_data_store->load_time_and_sales(query);
   }
 }

@@ -1,16 +1,20 @@
-#ifndef NEXUS_MARKET_DATA_TICKER_INFO_HPP
-#define NEXUS_MARKET_DATA_TICKER_INFO_HPP
+#ifndef NEXUS_DEFINITIONS_TICKER_INFO_HPP
+#define NEXUS_DEFINITIONS_TICKER_INFO_HPP
 #include <ostream>
 #include <string>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Nexus/Definitions/Instrument.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 
 namespace Nexus {
 
   /** Stores the trading properties of a ticker. */
   struct TickerInfo {
+
+    /** The ticker. */
+    Ticker m_ticker;
 
     /** The display name. */
     std::string m_name;
@@ -40,10 +44,11 @@ namespace Nexus {
   };
 
   inline std::ostream& operator <<(std::ostream& out, const TickerInfo& value) {
-    return out << '(' << value.m_name << ' ' << value.m_instrument << ' ' <<
-      value.m_tick_size << ' ' << value.m_lot_size << ' ' <<
-      value.m_board_lot << ' ' << value.m_price_precision << ' ' <<
-      value.m_quantity_precision << ' ' << value.m_multiplier << ')';
+    return out << '(' << value.m_ticker << ' ' << value.m_name << ' ' <<
+      value.m_instrument << ' ' << value.m_tick_size << ' ' <<
+      value.m_lot_size << ' ' << value.m_board_lot << ' ' <<
+      value.m_price_precision << ' ' << value.m_quantity_precision << ' ' <<
+      value.m_multiplier << ')';
   }
 }
 
@@ -53,6 +58,7 @@ namespace Beam {
     template<IsShuttle S>
     void operator ()(
         S& shuttle, Nexus::TickerInfo& value, unsigned int version) const {
+      shuttle.shuttle("ticker", value.m_ticker);
       shuttle.shuttle("name", value.m_name);
       shuttle.shuttle("instrument", value.m_instrument);
       shuttle.shuttle("tick_size", value.m_tick_size);

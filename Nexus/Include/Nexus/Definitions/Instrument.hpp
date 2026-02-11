@@ -8,6 +8,7 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/functional/hash.hpp>
 #include "Nexus/Definitions/Asset.hpp"
+#include "Nexus/Definitions/Currency.hpp"
 
 namespace Nexus {
 

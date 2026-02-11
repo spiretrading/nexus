@@ -24,6 +24,7 @@ TEST_SUITE("Candlestick") {
     REQUIRE(candlestick.get_close() == Money());
     REQUIRE(candlestick.get_high() == Money());
     REQUIRE(candlestick.get_low() == Money());
+    REQUIRE(candlestick.get_volume() == Quantity(0));
   }
 
   TEST_CASE("domain_constructor") {
@@ -36,6 +37,7 @@ TEST_SUITE("Candlestick") {
     REQUIRE(candlestick.get_close() == Money());
     REQUIRE(candlestick.get_high() == Money());
     REQUIRE(candlestick.get_low() == Money());
+    REQUIRE(candlestick.get_volume() == Quantity(0));
   }
 
   TEST_CASE("constructor") {
@@ -45,13 +47,16 @@ TEST_SUITE("Candlestick") {
     auto close = 12 * Money::ONE;
     auto high = 15 * Money::ONE;
     auto low = 9 * Money::ONE;
-    auto candlestick = TestCandlestick(start, end, open, close, high, low);
+    auto volume = Quantity(100);
+    auto candlestick =
+      TestCandlestick(start, end, open, close, high, low, volume);
     REQUIRE(candlestick.get_start() == start);
     REQUIRE(candlestick.get_end() == end);
     REQUIRE(candlestick.get_open() == open);
     REQUIRE(candlestick.get_close() == close);
     REQUIRE(candlestick.get_high() == high);
     REQUIRE(candlestick.get_low() == low);
+    REQUIRE(candlestick.get_volume() == volume);
   }
 
   TEST_CASE("update") {
@@ -63,16 +68,43 @@ TEST_SUITE("Candlestick") {
     REQUIRE(candlestick.get_close() == 10 * Money::ONE);
     REQUIRE(candlestick.get_high() == 10 * Money::ONE);
     REQUIRE(candlestick.get_low() == 10 * Money::ONE);
+    REQUIRE(candlestick.get_volume() == Quantity(0));
     candlestick.update(12 * Money::ONE);
     REQUIRE(candlestick.get_open() == 10 * Money::ONE);
     REQUIRE(candlestick.get_close() == 12 * Money::ONE);
     REQUIRE(candlestick.get_high() == 12 * Money::ONE);
     REQUIRE(candlestick.get_low() == 10 * Money::ONE);
+    REQUIRE(candlestick.get_volume() == Quantity(0));
     candlestick.update(8 * Money::ONE);
     REQUIRE(candlestick.get_open() == 10 * Money::ONE);
     REQUIRE(candlestick.get_close() == 8 * Money::ONE);
     REQUIRE(candlestick.get_high() == 12 * Money::ONE);
     REQUIRE(candlestick.get_low() == 8 * Money::ONE);
+    REQUIRE(candlestick.get_volume() == Quantity(0));
+  }
+
+  TEST_CASE("update_with_volume") {
+    auto start = from_iso_string("20240131T100000");
+    auto end = from_iso_string("20240131T110000");
+    auto candlestick = TestCandlestick(start, end);
+    candlestick.update(10 * Money::ONE, Quantity(100));
+    REQUIRE(candlestick.get_open() == 10 * Money::ONE);
+    REQUIRE(candlestick.get_close() == 10 * Money::ONE);
+    REQUIRE(candlestick.get_high() == 10 * Money::ONE);
+    REQUIRE(candlestick.get_low() == 10 * Money::ONE);
+    REQUIRE(candlestick.get_volume() == Quantity(100));
+    candlestick.update(12 * Money::ONE, Quantity(200));
+    REQUIRE(candlestick.get_open() == 10 * Money::ONE);
+    REQUIRE(candlestick.get_close() == 12 * Money::ONE);
+    REQUIRE(candlestick.get_high() == 12 * Money::ONE);
+    REQUIRE(candlestick.get_low() == 10 * Money::ONE);
+    REQUIRE(candlestick.get_volume() == Quantity(300));
+    candlestick.update(8 * Money::ONE, Quantity(50));
+    REQUIRE(candlestick.get_open() == 10 * Money::ONE);
+    REQUIRE(candlestick.get_close() == 8 * Money::ONE);
+    REQUIRE(candlestick.get_high() == 12 * Money::ONE);
+    REQUIRE(candlestick.get_low() == 8 * Money::ONE);
+    REQUIRE(candlestick.get_volume() == Quantity(350));
   }
 
   TEST_CASE("stream") {
@@ -82,9 +114,11 @@ TEST_SUITE("Candlestick") {
     auto close = 12 * Money::ONE;
     auto high = 15 * Money::ONE;
     auto low = 9 * Money::ONE;
-    auto candlestick = TestCandlestick(start, end, open, close, high, low);
+    auto volume = Quantity(100);
+    auto candlestick =
+      TestCandlestick(start, end, open, close, high, low, volume);
     REQUIRE(to_string(candlestick) == "(2024-Jan-31 10:00:00, 2024-Jan-31 "
-      "11:00:00, 10.00, 15.00, 9.00, 12.00)");
+      "11:00:00, 10.00, 15.00, 9.00, 12.00, 100)");
     auto empty_candlestick = TestCandlestick(start, end);
     REQUIRE(to_string(empty_candlestick) ==
       "(2024-Jan-31 10:00:00, 2024-Jan-31 11:00:00)");

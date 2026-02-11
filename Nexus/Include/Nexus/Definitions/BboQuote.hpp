@@ -1,5 +1,5 @@
-#ifndef NEXUS_BBO_QUOTE_HPP
-#define NEXUS_BBO_QUOTE_HPP
+#ifndef NEXUS_DEFINITIONS_BBO_QUOTE_HPP
+#define NEXUS_DEFINITIONS_BBO_QUOTE_HPP
 #include <cassert>
 #include <ostream>
 #include <utility>

@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <utility>
 #include <Beam/Serialization/DataShuttle.hpp>
+#include "Nexus/Definitions/Quantity.hpp"
 
 namespace Nexus {
 
@@ -44,10 +45,12 @@ namespace Nexus {
        * @param close The last value represented.
        * @param high The highest value represented.
        * @param low The lowest value represented.
+       * @param volume The total volume represented.
        */
       Candlestick(Domain start, Domain end, Range open, Range close, Range high,
-        Range low) noexcept(std::is_nothrow_move_constructible_v<Domain> &&
-        std::is_nothrow_move_constructible_v<Range>);
+        Range low, Quantity volume) noexcept(
+          std::is_nothrow_move_constructible_v<Domain> &&
+          std::is_nothrow_move_constructible_v<Range>);
 
       /** Returns the start of the domain represented. */
       Domain get_start() const;
@@ -73,11 +76,21 @@ namespace Nexus {
       /** Returns the Candlestick's lowest value. */
       Range get_low() const;
 
+      /** Returns the Candlestick's volume. */
+      Quantity get_volume() const;
+
       /**
        * Updates the Candlestick with a value.
        * @param value The value to update this Candlestick with.
        */
       void update(Range value);
+
+      /**
+       * Updates the Candlestick with a value and volume.
+       * @param value The value to update this Candlestick with.
+       * @param volume The volume to add.
+       */
+      void update(Range value, Quantity volume);
 
       bool operator ==(const Candlestick&) const = default;
 
@@ -92,6 +105,7 @@ namespace Nexus {
       Range m_close;
       Range m_high;
       Range m_low;
+      Quantity m_volume;
   };
 
   template<typename D, typename R>
@@ -104,7 +118,7 @@ namespace Nexus {
     return out << '(' << candlestick.get_start() << ", " <<
       candlestick.get_end() << ", " << candlestick.get_open() << ", " <<
       candlestick.get_high() << ", " << candlestick.get_low() << ", " <<
-      candlestick.get_close() << ")";
+      candlestick.get_close() << ", " << candlestick.get_volume() << ")";
   }
 
   template<typename D, typename R>
@@ -125,11 +139,15 @@ namespace Nexus {
     std::is_nothrow_default_constructible_v<Range>)
     : m_has_open(false),
       m_start(std::move(start)),
-      m_end(std::move(end)) {}
+      m_end(std::move(end)),
+      m_open(),
+      m_close(),
+      m_high(),
+      m_low() {}
 
   template<typename D, typename R>
   Candlestick<D, R>::Candlestick(Domain start, Domain end, Range open,
-    Range close, Range high, Range low) noexcept(
+    Range close, Range high, Range low, Quantity volume) noexcept(
     std::is_nothrow_move_constructible_v<Domain> &&
     std::is_nothrow_move_constructible_v<Range>)
     : m_has_open(true),
@@ -138,7 +156,8 @@ namespace Nexus {
       m_open(std::move(open)),
       m_close(std::move(close)),
       m_high(std::move(high)),
-      m_low(std::move(low)) {}
+      m_low(std::move(low)),
+      m_volume(volume) {}
 
   template<typename D, typename R>
   typename Candlestick<D, R>::Domain Candlestick<D, R>::get_start() const {
@@ -181,6 +200,11 @@ namespace Nexus {
   }
 
   template<typename D, typename R>
+  Quantity Candlestick<D, R>::get_volume() const {
+    return m_volume;
+  }
+
+  template<typename D, typename R>
   void Candlestick<D, R>::update(Range value) {
     if(m_has_open) {
       m_close = value;
@@ -193,6 +217,12 @@ namespace Nexus {
     m_high = value;
     m_low = value;
     m_has_open = true;
+  }
+
+  template<typename D, typename R>
+  void Candlestick<D, R>::update(Range value, Quantity volume) {
+    update(value);
+    m_volume += volume;
   }
 }
 
@@ -209,6 +239,7 @@ namespace Beam {
       shuttle.shuttle("close", value.m_close);
       shuttle.shuttle("high", value.m_high);
       shuttle.shuttle("low", value.m_low);
+      shuttle.shuttle("volume", value.m_volume);
     }
   };
 }

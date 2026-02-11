@@ -1,5 +1,5 @@
-#ifndef NEXUS_QUOTE_HPP
-#define NEXUS_QUOTE_HPP
+#ifndef NEXUS_DEFINITIONS_QUOTE_HPP
+#define NEXUS_DEFINITIONS_QUOTE_HPP
 #include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Nexus/Definitions/Money.hpp"

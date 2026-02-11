@@ -1,5 +1,5 @@
-#ifndef NEXUS_EXCHANGE_RATE_TABLE_HPP
-#define NEXUS_EXCHANGE_RATE_TABLE_HPP
+#ifndef NEXUS_DEFINITIONS_EXCHANGE_RATE_TABLE_HPP
+#define NEXUS_DEFINITIONS_EXCHANGE_RATE_TABLE_HPP
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>

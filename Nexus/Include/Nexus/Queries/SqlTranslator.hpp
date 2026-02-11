@@ -35,9 +35,9 @@ namespace Nexus {
       void visit(const Beam::MemberAccessExpression& expression) override;
 
     private:
-      void translate_security_member_access_expression(
+      void translate_ticker_member_access_expression(
         const Beam::MemberAccessExpression& expression);
-      void translate_security_info_member_access_expression(
+      void translate_ticker_info_member_access_expression(
         const Beam::MemberAccessExpression& expression);
       void translate_time_and_sale_member_access_expression(
         const Beam::MemberAccessExpression& expression);
@@ -76,10 +76,10 @@ namespace Nexus {
 
   inline void SqlTranslator::visit(
       const Beam::MemberAccessExpression& expression) {
-    if(expression.get_expression().get_type() == typeid(Security)) {
-      translate_security_member_access_expression(expression);
-    } else if(expression.get_expression().get_type() == typeid(SecurityInfo)) {
-      translate_security_info_member_access_expression(expression);
+    if(expression.get_expression().get_type() == typeid(Ticker)) {
+      translate_ticker_member_access_expression(expression);
+    } else if(expression.get_expression().get_type() == typeid(TickerInfo)) {
+      translate_ticker_info_member_access_expression(expression);
     } else if(expression.get_expression().get_type() == typeid(TimeAndSale)) {
       translate_time_and_sale_member_access_expression(expression);
     } else if(expression.get_expression().get_type() == typeid(OrderFields)) {
@@ -91,7 +91,7 @@ namespace Nexus {
     }
   }
 
-  inline void SqlTranslator::translate_security_member_access_expression(
+  inline void SqlTranslator::translate_ticker_member_access_expression(
       const Beam::MemberAccessExpression& expression) {
     if(expression.get_name() == "symbol" || expression.get_name() == "venue") {
       expression.get_expression().apply(*this);
@@ -102,14 +102,18 @@ namespace Nexus {
     }
   }
 
-  inline void SqlTranslator::translate_security_info_member_access_expression(
+  inline void SqlTranslator::translate_ticker_info_member_access_expression(
       const Beam::MemberAccessExpression& expression) {
-    if(expression.get_name() == "security") {
+    if(expression.get_name() == "instrument") {
       expression.get_expression().apply(*this);
       get_translation() = Viper::sym("");
     } else if(expression.get_name() == "name" ||
-        expression.get_name() == "sector" ||
-        expression.get_name() == "board_lot") {
+        expression.get_name() == "tick_size" ||
+        expression.get_name() == "lot_size" ||
+        expression.get_name() == "board_lot" ||
+        expression.get_name() == "price_precision" ||
+        expression.get_name() == "quantity_precision" ||
+        expression.get_name() == "multiplier") {
       expression.get_expression().apply(*this);
       auto term = get_translation();
       get_translation() = Viper::access(term, expression.get_name());
@@ -120,8 +124,8 @@ namespace Nexus {
 
   inline void SqlTranslator::translate_time_and_sale_member_access_expression(
       const Beam::MemberAccessExpression& expression) {
-    if(expression.get_name() == "timestamp" || expression.get_name() == "price" ||
-        expression.get_name() == "size") {
+    if(expression.get_name() == "timestamp" ||
+        expression.get_name() == "price" || expression.get_name() == "size") {
       expression.get_expression().apply(*this);
       auto term = get_translation();
       get_translation() = Viper::access(term, expression.get_name());
@@ -144,7 +148,7 @@ namespace Nexus {
 
   inline void SqlTranslator::translate_order_fields_member_access_expression(
       const Beam::MemberAccessExpression& expression) {
-    if(expression.get_name() == "security") {
+    if(expression.get_name() == "ticker") {
       expression.get_expression().apply(*this);
       get_translation() = Viper::sym("");
     } else {

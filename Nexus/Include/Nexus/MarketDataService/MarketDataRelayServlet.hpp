@@ -17,7 +17,7 @@
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServices.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistrySession.hpp"
-#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
@@ -88,21 +88,21 @@ namespace Nexus {
       using VenueSubscriptions =
         Beam::IndexedSubscriptions<T, Venue, ServiceProtocolClient>;
       template<typename T>
-      using SecuritySubscriptions =
-        Beam::IndexedSubscriptions<T, Security, ServiceProtocolClient>;
+      using TickerSubscriptions =
+        Beam::IndexedSubscriptions<T, Ticker, ServiceProtocolClient>;
       using RealTimeVenueSubscriptionSet =
         Beam::SynchronizedUnorderedSet<Venue, Beam::Mutex>;
-      using RealTimeSecuritySubscriptionSet =
-        Beam::SynchronizedUnorderedSet<Security, Beam::Mutex>;
+      using RealTimeTickerSubscriptionSet =
+        Beam::SynchronizedUnorderedSet<Ticker, Beam::Mutex>;
       VenueSubscriptions<OrderImbalance> m_order_imbalance_subscriptions;
-      SecuritySubscriptions<BboQuote> m_bbo_quote_subscriptions;
-      SecuritySubscriptions<BookQuote> m_book_quote_subscriptions;
-      SecuritySubscriptions<TimeAndSale> m_time_and_sale_subscriptions;
+      TickerSubscriptions<BboQuote> m_bbo_quote_subscriptions;
+      TickerSubscriptions<BookQuote> m_book_quote_subscriptions;
+      TickerSubscriptions<TimeAndSale> m_time_and_sale_subscriptions;
       RealTimeVenueSubscriptionSet m_order_imbalance_real_time_subscriptions;
-      RealTimeSecuritySubscriptionSet m_bbo_quote_real_time_subscriptions;
-      RealTimeSecuritySubscriptionSet m_book_quote_real_time_subscriptions;
-      RealTimeSecuritySubscriptionSet m_time_and_sale_real_time_subscriptions;
-      Beam::SynchronizedUnorderedSet<Security> m_securities;
+      RealTimeTickerSubscriptionSet m_bbo_quote_real_time_subscriptions;
+      RealTimeTickerSubscriptionSet m_book_quote_real_time_subscriptions;
+      RealTimeTickerSubscriptionSet m_time_and_sale_real_time_subscriptions;
+      Beam::SynchronizedUnorderedSet<Ticker> m_tickers;
       Beam::ResourcePool<MarketDataClient, MarketDataClientBuilder>
         m_market_data_clients;
       Beam::local_ptr_t<A> m_administration_client;
@@ -126,22 +126,22 @@ namespace Nexus {
       void on_end_query(ServiceProtocolClient& client,
         const typename Subscriptions::Index& index, int id,
         Subscriptions& subscriptions);
-      SecuritySnapshot on_load_security_snapshot(
-        ServiceProtocolClient& client, const Security& security);
-      SecurityTechnicals on_load_security_technicals(
-        ServiceProtocolClient& client, const Security& security);
-      std::vector<SecurityInfo> on_query_security_info(
-        ServiceProtocolClient& client, const SecurityInfoQuery& query);
-      std::vector<SecurityInfo> on_load_security_info_from_prefix(
+      TickerSnapshot on_load_ticker_snapshot(
+        ServiceProtocolClient& client, const Ticker& ticker);
+      PriceCandlestick on_load_session_candlestick(
+        ServiceProtocolClient& client, const Ticker& ticker);
+      std::vector<TickerInfo> on_query_ticker_info(
+        ServiceProtocolClient& client, const TickerInfoQuery& query);
+      std::vector<TickerInfo> on_load_ticker_info_from_prefix(
         ServiceProtocolClient& client, const std::string& prefix);
       template<typename Index, typename Value, typename Subscriptions>
       std::enable_if_t<!std::is_same_v<Value, SequencedBookQuote>>
-        on_real_time_update(const Index& index, const Value& value,
-          Subscriptions& subscriptions);
+        on_real_time_update(
+          const Index& index, const Value& value, Subscriptions& subscriptions);
       template<typename Index, typename Value, typename Subscriptions>
       std::enable_if_t<std::is_same_v<Value, SequencedBookQuote>>
-        on_real_time_update(const Index& index, const Value& value,
-          Subscriptions& subscriptions);
+        on_real_time_update(
+          const Index& index, const Value& value, Subscriptions& subscriptions);
   };
 
   template<typename M, typename A>
@@ -226,14 +226,14 @@ namespace Nexus {
       [=, this] (auto& client, const auto& index, auto id) {
         on_end_query(client, index, id, m_time_and_sale_subscriptions);
       });
-    LoadSecuritySnapshotService::add_slot(out(slots), std::bind_front(
-      &MarketDataRelayServlet::on_load_security_snapshot, this));
-    LoadSecurityTechnicalsService::add_slot(out(slots), std::bind_front(
-      &MarketDataRelayServlet::on_load_security_technicals, this));
-    QuerySecurityInfoService::add_slot(out(slots),
-      std::bind_front(&MarketDataRelayServlet::on_query_security_info, this));
-    LoadSecurityInfoFromPrefixService::add_slot(out(slots), std::bind_front(
-      &MarketDataRelayServlet::on_load_security_info_from_prefix, this));
+    LoadTickerSnapshotService::add_slot(out(slots), std::bind_front(
+      &MarketDataRelayServlet::on_load_ticker_snapshot, this));
+    LoadSessionCandlestickService::add_slot(out(slots), std::bind_front(
+      &MarketDataRelayServlet::on_load_session_candlestick, this));
+    QueryTickerInfoService::add_slot(out(slots),
+      std::bind_front(&MarketDataRelayServlet::on_query_ticker_info, this));
+    LoadTickerInfoFromPrefixService::add_slot(out(slots), std::bind_front(
+      &MarketDataRelayServlet::on_load_ticker_info_from_prefix, this));
   }
 
   template<typename C, typename M, typename A> requires
@@ -326,19 +326,19 @@ namespace Nexus {
       request.set(result);
       return;
     }
-    if constexpr(std::is_same_v<typename Query::Index, Security>) {
+    if constexpr(std::is_same_v<typename Query::Index, Ticker>) {
       if(!query.get_index().get_venue()) {
         request.set(result);
         return;
       }
-      if(!m_securities.try_load(query.get_index())) {
+      if(!m_tickers.try_load(query.get_index())) {
         auto client = m_market_data_clients.load();
-        auto info = load_security_info(*client, query.get_index());
+        auto info = load_ticker_info(*client, query.get_index());
         if(info) {
-          m_securities.update(info->m_security);
+          m_tickers.update(info->m_ticker);
         }
         if(!info ||
-            info->m_security.get_venue() != query.get_index().get_venue()) {
+            info->m_ticker.get_venue() != query.get_index().get_venue()) {
           request.set(result);
           return;
         }
@@ -408,30 +408,30 @@ namespace Nexus {
   template<typename C, typename M, typename A> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       IsAdministrationClient<Beam::dereference_t<A>>
-  SecuritySnapshot MarketDataRelayServlet<C, M, A>::on_load_security_snapshot(
-      ServiceProtocolClient& client, const Security& security) {
+  TickerSnapshot MarketDataRelayServlet<C, M, A>::on_load_ticker_snapshot(
+      ServiceProtocolClient& client, const Ticker& ticker) {
     auto& session = client.get_session();
     auto market_data_client = m_market_data_clients.load();
-    auto snapshot = market_data_client->load_snapshot(security);
+    auto snapshot = market_data_client->load_snapshot(ticker);
     if(!has_entitlement(
-        session, security.get_venue(), MarketDataType::BBO_QUOTE)) {
+        session, ticker.get_venue(), MarketDataType::BBO_QUOTE)) {
       snapshot.m_bbo_quote = SequencedBboQuote();
     }
     if(!has_entitlement(
-        session, security.get_venue(), MarketDataType::TIME_AND_SALE)) {
+        session, ticker.get_venue(), MarketDataType::TIME_AND_SALE)) {
       snapshot.m_time_and_sale = SequencedTimeAndSale();
     }
     auto ask_end_range = std::remove_if(
       snapshot.m_asks.begin(), snapshot.m_asks.end(), [&] (auto& quote) {
         return !has_entitlement(
-          session, EntitlementKey(security.get_venue(), quote->m_venue),
+          session, EntitlementKey(ticker.get_venue(), quote->m_venue),
           MarketDataType::BOOK_QUOTE);
       });
     snapshot.m_asks.erase(ask_end_range, snapshot.m_asks.end());
     auto bid_end_range = std::remove_if(
       snapshot.m_bids.begin(), snapshot.m_bids.end(), [&] (auto& quote) {
         return !has_entitlement(
-          session, EntitlementKey(security.get_venue(), quote->m_venue),
+          session, EntitlementKey(ticker.get_venue(), quote->m_venue),
           MarketDataType::BOOK_QUOTE);
       });
     snapshot.m_bids.erase(bid_end_range, snapshot.m_bids.end());
@@ -441,19 +441,17 @@ namespace Nexus {
   template<typename C, typename M, typename A> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       IsAdministrationClient<Beam::dereference_t<A>>
-  SecurityTechnicals MarketDataRelayServlet<C, M, A>::
-      on_load_security_technicals(
-        ServiceProtocolClient& client, const Security& security) {
+  PriceCandlestick MarketDataRelayServlet<C, M, A>::on_load_session_candlestick(
+      ServiceProtocolClient& client, const Ticker& ticker) {
     auto market_data_client = m_market_data_clients.load();
-    return market_data_client->load_technicals(security);
+    return market_data_client->load_session_candlestick(ticker);
   }
 
   template<typename C, typename M, typename A> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       IsAdministrationClient<Beam::dereference_t<A>>
-  std::vector<SecurityInfo> MarketDataRelayServlet<C, M, A>::
-      on_query_security_info(
-        ServiceProtocolClient& client, const SecurityInfoQuery& query) {
+  std::vector<TickerInfo> MarketDataRelayServlet<C, M, A>::on_query_ticker_info(
+      ServiceProtocolClient& client, const TickerInfoQuery& query) {
     auto market_data_client = m_market_data_clients.load();
     return market_data_client->query(query);
   }
@@ -461,11 +459,11 @@ namespace Nexus {
   template<typename C, typename M, typename A> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       IsAdministrationClient<Beam::dereference_t<A>>
-  std::vector<SecurityInfo> MarketDataRelayServlet<C, M, A>::
-      on_load_security_info_from_prefix(
+  std::vector<TickerInfo> MarketDataRelayServlet<C, M, A>::
+      on_load_ticker_info_from_prefix(
         ServiceProtocolClient& client, const std::string& prefix) {
     auto market_data_client = m_market_data_clients.load();
-    return market_data_client->load_security_info_from_prefix(prefix);
+    return market_data_client->load_ticker_info_from_prefix(prefix);
   }
 
   template<typename C, typename M, typename A> requires

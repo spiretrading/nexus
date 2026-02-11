@@ -25,15 +25,14 @@ namespace Nexus {
 
       ~TestEnvironmentMarketDataFeedClient();
 
-      void add(const SecurityInfo& info);
+      void add(const TickerInfo& info);
       void publish(const VenueOrderImbalance& imbalance);
-      void publish(const SecurityBboQuote& quote);
-      void publish(const SecurityBookQuote& quote);
-      void publish(const SecurityTimeAndSale& time_and_sale);
-      void add_order(const Security& security, Venue venue,
-        const std::string& mpid, bool is_primary_mpid, const std::string& id,
-        Side side, Money price, Quantity size,
-        boost::posix_time::ptime timestamp);
+      void publish(const TickerBboQuote& quote);
+      void publish(const TickerBookQuote& quote);
+      void publish(const TickerTimeAndSale& time_and_sale);
+      void add_order(const Ticker& ticker, Venue venue, const std::string& mpid,
+        bool is_primary_mpid, const std::string& id, Side side, Money price,
+        Quantity size, boost::posix_time::ptime timestamp);
       void modify_order_size(const std::string& id, Quantity size,
         boost::posix_time::ptime timestamp);
       void offset_order_size(const std::string& id, Quantity delta,
@@ -66,7 +65,7 @@ namespace Nexus {
   }
 
   inline void TestEnvironmentMarketDataFeedClient::add(
-      const SecurityInfo& info) {
+      const TickerInfo& info) {
     m_client.add(info);
     Beam::flush_pending_routines();
     m_sampling_timer->trigger();
@@ -82,7 +81,7 @@ namespace Nexus {
   }
 
   inline void TestEnvironmentMarketDataFeedClient::publish(
-      const SecurityBboQuote& quote) {
+      const TickerBboQuote& quote) {
     m_client.publish(quote);
     Beam::flush_pending_routines();
     m_sampling_timer->trigger();
@@ -90,7 +89,7 @@ namespace Nexus {
   }
 
   inline void TestEnvironmentMarketDataFeedClient::publish(
-      const SecurityBookQuote& quote) {
+      const TickerBookQuote& quote) {
     m_client.publish(quote);
     Beam::flush_pending_routines();
     m_sampling_timer->trigger();
@@ -98,7 +97,7 @@ namespace Nexus {
   }
 
   inline void TestEnvironmentMarketDataFeedClient::publish(
-      const SecurityTimeAndSale& time_and_sale) {
+      const TickerTimeAndSale& time_and_sale) {
     m_client.publish(time_and_sale);
     Beam::flush_pending_routines();
     m_sampling_timer->trigger();
@@ -106,11 +105,11 @@ namespace Nexus {
   }
 
   inline void TestEnvironmentMarketDataFeedClient::add_order(
-      const Security& security, Venue venue, const std::string& mpid,
+      const Ticker& ticker, Venue venue, const std::string& mpid,
       bool is_primary_mpid, const std::string& id, Side side, Money price,
       Quantity size, boost::posix_time::ptime timestamp) {
     m_client.add_order(
-      security, venue, mpid, is_primary_mpid, id, side, price, size, timestamp);
+      ticker, venue, mpid, is_primary_mpid, id, side, price, size, timestamp);
     Beam::flush_pending_routines();
     m_sampling_timer->trigger();
     Beam::flush_pending_routines();

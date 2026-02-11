@@ -1,5 +1,5 @@
-#ifndef NEXUS_TIME_AND_SALE_HPP
-#define NEXUS_TIME_AND_SALE_HPP
+#ifndef NEXUS_DEFINITIONS_TIME_AND_SALE_HPP
+#define NEXUS_DEFINITIONS_TIME_AND_SALE_HPP
 #include <ostream>
 #include <string>
 #include <Beam/Collections/Enum.hpp>

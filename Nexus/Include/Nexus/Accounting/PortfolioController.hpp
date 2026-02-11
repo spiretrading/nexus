@@ -55,15 +55,15 @@ namespace Nexus {
       ExecutionReportPublisher m_execution_report_publisher;
       Beam::ValueSnapshotPublisher<PortfolioUpdateEntry, Portfolio*>
         m_publisher;
-      std::unordered_map<Security, BboQuote> m_bbo_quotes;
-      std::unordered_set<Security> m_securities;
+      std::unordered_map<Ticker, BboQuote> m_bbo_quotes;
+      std::unordered_set<Ticker> m_tickers;
       Beam::RoutineTaskQueue m_tasks;
 
       PortfolioController(const PortfolioController&) = delete;
       PortfolioController& operator =(const PortfolioController&) = delete;
-      void subscribe(const Security& security);
-      void push_update(const Security& security);
-      void on_bbo(const Security& security, const BboQuote& bbo);
+      void subscribe(const Ticker& ticker);
+      void push_update(const Ticker& ticker);
+      void on_bbo(const Ticker& ticker, const BboQuote& bbo);
       void on_execution_report(const ExecutionReportEntry& execution_report);
   };
 
@@ -91,7 +91,7 @@ namespace Nexus {
     m_publisher.with([&] {
       for(auto& inventory :
           m_portfolio->get_bookkeeper().get_inventory_range()) {
-        subscribe(inventory.m_position.m_security);
+        subscribe(inventory.m_position.m_ticker);
       }
       auto reports = boost::optional<std::vector<ExecutionReportEntry>>();
       m_execution_report_publisher.monitor(
@@ -116,41 +116,40 @@ namespace Nexus {
 
   template<typename P, typename C> requires
     IsMarketDataClient<Beam::dereference_t<C>>
-  void PortfolioController<P, C>::subscribe(const Security& security) {
-    if(auto security_iterator = m_securities.find(security);
-        security_iterator == m_securities.end()) {
+  void PortfolioController<P, C>::subscribe(const Ticker& ticker) {
+    if(auto ticker_iterator = m_tickers.find(ticker);
+        ticker_iterator == m_tickers.end()) {
       auto snapshot = std::make_shared<Beam::StateQueue<BboQuote>>();
-      m_market_data_client->query(Beam::make_latest_query(security), snapshot);
+      m_market_data_client->query(Beam::make_latest_query(ticker), snapshot);
       try {
-        on_bbo(security, snapshot->pop());
+        on_bbo(ticker, snapshot->pop());
       } catch(const std::exception&) {
       }
-      m_market_data_client->query(Beam::make_real_time_query(security),
+      m_market_data_client->query(Beam::make_real_time_query(ticker),
         m_tasks.get_slot<BboQuote>(
-          std::bind_front(&PortfolioController::on_bbo, this, security)));
-      m_securities.insert(security);
+          std::bind_front(&PortfolioController::on_bbo, this, ticker)));
+      m_tickers.insert(ticker);
     }
   }
 
   template<typename P, typename C> requires
     IsMarketDataClient<Beam::dereference_t<C>>
-  void PortfolioController<P, C>::push_update(const Security& security) {
-    auto security_entry_iterator =
-      m_portfolio->get_security_entries().find(security);
-    if(security_entry_iterator == m_portfolio->get_security_entries().end()) {
+  void PortfolioController<P, C>::push_update(const Ticker& ticker) {
+    auto ticker_entry_iterator = m_portfolio->get_entries().find(ticker);
+    if(ticker_entry_iterator == m_portfolio->get_entries().end()) {
       return;
     }
-    auto& security_entry = security_entry_iterator->second;
-    auto& security_inventory = m_portfolio->get_bookkeeper().get_inventory(
-      security, security_entry.m_valuation.m_currency);
+    auto& ticker_entry = ticker_entry_iterator->second;
+    auto& ticker_inventory =
+      m_portfolio->get_bookkeeper().get_inventory(ticker);
     auto update = PortfolioUpdateEntry();
-    update.m_security_inventory = security_inventory;
-    update.m_unrealized_security = security_entry.m_unrealized;
+    update.m_inventory = ticker_inventory;
+    update.m_unrealized = ticker_entry.m_unrealized;
     update.m_currency_inventory = m_portfolio->get_bookkeeper().get_total(
-      security_entry.m_valuation.m_currency);
+      ticker_entry.m_valuation.m_currency);
     auto unrealized_currency_iterator =
       m_portfolio->get_unrealized_profit_and_losses().find(
-        security_entry.m_valuation.m_currency);
+        ticker_entry.m_valuation.m_currency);
     if(unrealized_currency_iterator ==
         m_portfolio->get_unrealized_profit_and_losses().end()) {
       update.m_unrealized_currency = Money::ZERO;
@@ -163,8 +162,8 @@ namespace Nexus {
   template<typename P, typename C> requires
     IsMarketDataClient<Beam::dereference_t<C>>
   void PortfolioController<P, C>::on_bbo(
-      const Security& security, const BboQuote& bbo) {
-    auto& last_bbo = m_bbo_quotes[security];
+      const Ticker& ticker, const BboQuote& bbo) {
+    auto& last_bbo = m_bbo_quotes[ticker];
     if(last_bbo.m_ask.m_price == bbo.m_ask.m_price &&
         last_bbo.m_bid.m_price == bbo.m_bid.m_price) {
       return;
@@ -176,15 +175,15 @@ namespace Nexus {
     m_publisher.with([&] {
       auto has_update = [&] {
         if(bbo.m_ask.m_price == Money::ZERO) {
-          return m_portfolio->update_bid(security, bbo.m_bid.m_price);
+          return m_portfolio->update_bid(ticker, bbo.m_bid.m_price);
         } else if(bbo.m_bid.m_price == Money::ZERO) {
-          return m_portfolio->update_ask(security, bbo.m_ask.m_price);
+          return m_portfolio->update_ask(ticker, bbo.m_ask.m_price);
         }
         return m_portfolio->update(
-          security, bbo.m_ask.m_price, bbo.m_bid.m_price);
+          ticker, bbo.m_ask.m_price, bbo.m_bid.m_price);
       }();
       if(has_update) {
-        push_update(security);
+        push_update(ticker);
       }
     });
   }
@@ -194,12 +193,12 @@ namespace Nexus {
   void PortfolioController<P, C>::on_execution_report(
       const ExecutionReportEntry& entry) {
     if(entry.m_report.m_status == OrderStatus::PENDING_NEW) {
-      subscribe(entry.m_order->get_info().m_fields.m_security);
+      subscribe(entry.m_order->get_info().m_fields.m_ticker);
     }
     m_publisher.with([&] {
       if(m_portfolio->update(
           entry.m_order->get_info().m_fields, entry.m_report)) {
-        push_update(entry.m_order->get_info().m_fields.m_security);
+        push_update(entry.m_order->get_info().m_fields.m_ticker);
       }
     });
   }

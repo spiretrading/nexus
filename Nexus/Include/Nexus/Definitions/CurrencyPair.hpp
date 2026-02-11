@@ -1,5 +1,5 @@
-#ifndef NEXUS_CURRENCY_PAIR_HPP
-#define NEXUS_CURRENCY_PAIR_HPP
+#ifndef NEXUS_DEFINITIONS_CURRENCY_PAIR_HPP
+#define NEXUS_DEFINITIONS_CURRENCY_PAIR_HPP
 #include <ostream>
 #include <stdexcept>
 #include <string_view>

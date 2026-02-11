@@ -1,6 +1,6 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/MarketDataService/SecuritySnapshot.hpp"
+#include "Nexus/MarketDataService/TickerSnapshot.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
@@ -9,10 +9,10 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultVenues;
 
-TEST_SUITE("SecuritySnapshot") {
+TEST_SUITE("TickerSnapshot") {
   TEST_CASE("shuttle") {
-    auto snapshot = SecuritySnapshot();
-    snapshot.m_security = Security("BCA", TSX);
+    auto snapshot = TickerSnapshot();
+    snapshot.m_ticker = parse_ticker("BCA.TSX");
     snapshot.m_bbo_quote = SequencedBboQuote(
       BboQuote(make_bid(50 * Money::CENT, 213), make_ask(55 * Money::CENT, 312),
         time_from_string("2021-02-25 15:30:05.000")), Beam::Sequence(20000));

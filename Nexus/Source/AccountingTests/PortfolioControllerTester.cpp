@@ -35,8 +35,7 @@ namespace {
           make_market_data_service_test_environment(
             m_service_locator_environment, m_administration_environment)),
         m_market_data_client(m_market_data_environment.get_registry_client()) {
-    m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(
+      m_market_data_environment.get_feed_client().publish(TickerBboQuote(
         BboQuote(make_bid(Money::ONE, 100), make_ask(2 * Money::ONE, 100),
           time_from_string("2024-07-21 09:30:00.000")), TST));
     }
@@ -91,11 +90,11 @@ TEST_SUITE("PortfolioController") {
     auto ticker1 = parse_ticker("AAA.TSX");
     auto ticker2 = parse_ticker("BBB.TSX");
     fixture.m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(BboQuote(
+      TickerBboQuote(BboQuote(
         make_bid(Money::ONE, 100), make_ask(2 * Money::ONE, 100), timestamp),
         ticker1));
     fixture.m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(BboQuote(
+      TickerBboQuote(BboQuote(
         make_bid(Money::ONE, 100), make_ask(2 * Money::ONE, 100), timestamp),
         ticker2));
     auto fields1 =
@@ -145,7 +144,7 @@ TEST_SUITE("PortfolioController") {
       BboQuote(make_bid(2 * Money::ONE, 100), make_ask(3 * Money::ONE, 100),
         timestamp + seconds(3));
     fixture.m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(new_bbo, TST));
+      TickerBboQuote(new_bbo, TST));
     auto bbo_update = updates->pop();
     REQUIRE(bbo_update.m_inventory.m_position.m_ticker == TST);
     REQUIRE(bbo_update.m_inventory.m_position.m_quantity == 100);
@@ -155,7 +154,7 @@ TEST_SUITE("PortfolioController") {
 
   TEST_CASE("bbo_quote_no_change_no_update") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
@@ -175,12 +174,12 @@ TEST_SUITE("PortfolioController") {
       BboQuote(make_bid(Money::ONE, 100), make_ask(2 * Money::ONE, 100),
         timestamp + seconds(3));
     fixture.m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(unchanged_bbo, TST));
+      TickerBboQuote(unchanged_bbo, TST));
     auto changed_bbo =
       BboQuote(make_bid(2 * Money::ONE, 100), make_ask(3 * Money::ONE, 100),
         timestamp + seconds(3));
     fixture.m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(changed_bbo, TST));
+      TickerBboQuote(changed_bbo, TST));
     auto final_update = updates->pop();
     REQUIRE(final_update.m_inventory.m_position.m_ticker == TST);
     REQUIRE(final_update.m_inventory.m_position.m_quantity == 100);
@@ -244,7 +243,7 @@ TEST_SUITE("PortfolioController") {
       BboQuote(make_bid(3 * Money::ONE, 100), make_ask(4 * Money::ONE, 100),
         timestamp + seconds(3));
     fixture.m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(new_bbo, TST));
+      TickerBboQuote(new_bbo, TST));
     auto bbo_update = updates->pop();
     REQUIRE(bbo_update.m_unrealized != initial_update.m_unrealized);
   }
@@ -324,7 +323,7 @@ TEST_SUITE("PortfolioController") {
       BboQuote(make_bid(2 * Money::ONE, 100), make_ask(2 * Money::ONE, 100),
         timestamp + seconds(5));
     fixture.m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(new_bbo, parse_ticker("FOO.TSX")));
+      TickerBboQuote(new_bbo, parse_ticker("FOO.TSX")));
     REQUIRE(!updates->try_pop());
     auto fields_short = make_limit_order_fields(
       parse_ticker("FOO.TSX"), CAD, Side::ASK, "TSX", 100, Money::ONE);
@@ -375,7 +374,7 @@ TEST_SUITE("PortfolioController") {
       BboQuote(make_bid(2 * Money::ONE, 100), make_ask(2 * Money::ONE, 100),
         timestamp + seconds(3));
     fixture.m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(new_bbo, TST));
+      TickerBboQuote(new_bbo, TST));
     auto update2 = updates->pop();
     REQUIRE(update2.m_inventory.m_position.m_quantity == 100);
     REQUIRE(update2.m_unrealized == 100 * Money::ONE);

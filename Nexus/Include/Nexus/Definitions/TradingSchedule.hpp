@@ -1,5 +1,5 @@
-#ifndef NEXUS_TRADING_SCHEDULE_HPP
-#define NEXUS_TRADING_SCHEDULE_HPP
+#ifndef NEXUS_DEFINITIONS_TRADING_SCHEDULE_HPP
+#define NEXUS_DEFINITIONS_TRADING_SCHEDULE_HPP
 #include <algorithm>
 #include <ostream>
 #include <string>

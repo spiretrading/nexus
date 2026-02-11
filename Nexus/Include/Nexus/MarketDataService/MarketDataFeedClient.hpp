@@ -9,8 +9,8 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/VirtualPtr.hpp>
-#include "Nexus/Definitions/SecurityInfo.hpp"
-#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
+#include "Nexus/Definitions/TickerInfo.hpp"
+#include "Nexus/MarketDataService/TickerMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
 namespace Nexus {
@@ -19,12 +19,12 @@ namespace Nexus {
   template<typename T>
   concept IsMarketDataFeedClient = Beam::IsConnection<T> &&
     requires(T& client) {
-      client.add(std::declval<const SecurityInfo&>());
+      client.add(std::declval<const TickerInfo&>());
       client.publish(std::declval<const VenueOrderImbalance&>());
-      client.publish(std::declval<const SecurityBboQuote&>());
-      client.publish(std::declval<const SecurityBookQuote&>());
-      client.publish(std::declval<const SecurityTimeAndSale&>());
-      client.add_order(std::declval<const Security&>(), std::declval<Venue>(),
+      client.publish(std::declval<const TickerBboQuote&>());
+      client.publish(std::declval<const TickerBookQuote&>());
+      client.publish(std::declval<const TickerTimeAndSale&>());
+      client.add_order(std::declval<const Ticker&>(), std::declval<Venue>(),
         std::declval<const std::string&>(), std::declval<bool>(),
         std::declval<const std::string&>(), std::declval<Side>(),
         std::declval<Money>(), std::declval<Quantity>(),
@@ -66,10 +66,10 @@ namespace Nexus {
       MarketDataFeedClient(MarketDataFeedClient&&) = default;
 
       /**
-       * Adds or updates a SecurityInfo.
-       * @param info The SecurityInfo to add or update.
+       * Adds or updates a TickerInfo.
+       * @param info The TickerInfo to add or update.
        */
-      void add(const SecurityInfo& info);
+      void add(const TickerInfo& info);
 
       /**
        * Publishes an OrderImbalance.
@@ -81,23 +81,23 @@ namespace Nexus {
        * Publishes a BboQuote.
        * @param quote The BboQuote to publish.
        */
-      void publish(const SecurityBboQuote& quote);
+      void publish(const TickerBboQuote& quote);
 
       /**
        * Sets a BookQuote.
        * @param quote The BookQuote to set.
        */
-      void publish(const SecurityBookQuote& quote);
+      void publish(const TickerBookQuote& quote);
 
       /**
        * Publishes a TimeAndSale.
        * @param time_and_sale The TimeAndSale to publish.
        */
-      void publish(const SecurityTimeAndSale& time_and_sale);
+      void publish(const TickerTimeAndSale& time_and_sale);
 
       /**
        * Adds an order.
-       * @param security The Security the order belongs to.
+       * @param ticker The Ticker the order belongs to.
        * @param venue The venue the order was placed on.
        * @param mpid The MPID submitting the order.
        * @param is_primary_mpid Whether the <i>mpid</i> is the <i>venue</i>'s
@@ -108,10 +108,9 @@ namespace Nexus {
        * @param size The size of the order.
        * @param timestamp The Order's timestamp.
        */
-      void add_order(const Security& security, Venue venue,
-        const std::string& mpid, bool is_primary_mpid, const std::string& id,
-        Side side, Money price, Quantity size,
-        boost::posix_time::ptime timestamp);
+      void add_order(const Ticker& ticker, Venue venue, const std::string& mpid,
+        bool is_primary_mpid, const std::string& id, Side side, Money price,
+        Quantity size, boost::posix_time::ptime timestamp);
 
       /**
        * Modifies the size of an order.
@@ -154,12 +153,12 @@ namespace Nexus {
       struct VirtualMarketDataFeedClient {
         virtual ~VirtualMarketDataFeedClient() = default;
 
-        virtual void add(const SecurityInfo& info) = 0;
+        virtual void add(const TickerInfo& info) = 0;
         virtual void publish(const VenueOrderImbalance& imbalance) = 0;
-        virtual void publish(const SecurityBboQuote& quote) = 0;
-        virtual void publish(const SecurityBookQuote& quote) = 0;
-        virtual void publish(const SecurityTimeAndSale& time_and_sale) = 0;
-        virtual void add_order(const Security& security, Venue venue,
+        virtual void publish(const TickerBboQuote& quote) = 0;
+        virtual void publish(const TickerBookQuote& quote) = 0;
+        virtual void publish(const TickerTimeAndSale& time_and_sale) = 0;
+        virtual void add_order(const Ticker& ticker, Venue venue,
           const std::string& mpid, bool is_primary_mpid, const std::string& id,
           Side side, Money price, Quantity size,
           boost::posix_time::ptime timestamp) = 0;
@@ -181,12 +180,12 @@ namespace Nexus {
         template<typename... Args>
         WrappedMarketDataFeedClient(Args&&... args);
 
-        void add(const SecurityInfo& info) override;
+        void add(const TickerInfo& info) override;
         void publish(const VenueOrderImbalance& imbalance) override;
-        void publish(const SecurityBboQuote& quote) override;
-        void publish(const SecurityBookQuote& quote) override;
-        void publish(const SecurityTimeAndSale& time_and_sale) override;
-        void add_order(const Security& security, Venue venue,
+        void publish(const TickerBboQuote& quote) override;
+        void publish(const TickerBookQuote& quote) override;
+        void publish(const TickerTimeAndSale& time_and_sale) override;
+        void add_order(const Ticker& ticker, Venue venue,
           const std::string& mpid, bool is_primary_mpid, const std::string& id,
           Side side, Money price, Quantity size,
           boost::posix_time::ptime timestamp) override;
@@ -215,7 +214,7 @@ namespace Nexus {
     : m_client(Beam::make_virtual_ptr<WrappedMarketDataFeedClient<
         std::remove_cvref_t<T>>>(std::forward<T>(client))) {}
 
-  inline void MarketDataFeedClient::add(const SecurityInfo& info) {
+  inline void MarketDataFeedClient::add(const TickerInfo& info) {
     m_client->add(info);
   }
 
@@ -224,25 +223,25 @@ namespace Nexus {
     m_client->publish(imbalance);
   }
 
-  inline void MarketDataFeedClient::publish(const SecurityBboQuote& quote) {
+  inline void MarketDataFeedClient::publish(const TickerBboQuote& quote) {
     m_client->publish(quote);
   }
 
-  inline void MarketDataFeedClient::publish(const SecurityBookQuote& quote) {
+  inline void MarketDataFeedClient::publish(const TickerBookQuote& quote) {
     m_client->publish(quote);
   }
 
   inline void MarketDataFeedClient::publish(
-      const SecurityTimeAndSale& time_and_sale) {
+      const TickerTimeAndSale& time_and_sale) {
     m_client->publish(time_and_sale);
   }
 
-  inline void MarketDataFeedClient::add_order(const Security& security,
-      Venue venue, const std::string& mpid, bool is_primary_mpid,
-      const std::string& id, Side side, Money price, Quantity size,
+  inline void MarketDataFeedClient::add_order(const Ticker& ticker, Venue venue,
+      const std::string& mpid, bool is_primary_mpid, const std::string& id,
+      Side side, Money price, Quantity size,
       boost::posix_time::ptime timestamp) {
     m_client->add_order(
-      security, venue, mpid, is_primary_mpid, id, side, price, size, timestamp);
+      ticker, venue, mpid, is_primary_mpid, id, side, price, size, timestamp);
   }
 
   inline void MarketDataFeedClient::modify_order_size(const std::string& id,
@@ -277,7 +276,7 @@ namespace Nexus {
 
   template<typename C>
   void MarketDataFeedClient::WrappedMarketDataFeedClient<C>::add(
-      const SecurityInfo& info) {
+      const TickerInfo& info) {
     m_client->add(info);
   }
 
@@ -289,29 +288,29 @@ namespace Nexus {
 
   template<typename C>
   void MarketDataFeedClient::WrappedMarketDataFeedClient<C>::publish(
-      const SecurityBboQuote& quote) {
+      const TickerBboQuote& quote) {
     m_client->publish(quote);
   }
 
   template<typename C>
   void MarketDataFeedClient::WrappedMarketDataFeedClient<C>::publish(
-      const SecurityBookQuote& quote) {
+      const TickerBookQuote& quote) {
     m_client->publish(quote);
   }
 
   template<typename C>
   void MarketDataFeedClient::WrappedMarketDataFeedClient<C>::publish(
-      const SecurityTimeAndSale& time_and_sale) {
+      const TickerTimeAndSale& time_and_sale) {
     m_client->publish(time_and_sale);
   }
 
   template<typename C>
   void MarketDataFeedClient::WrappedMarketDataFeedClient<C>::add_order(
-      const Security& security, Venue venue, const std::string& mpid,
+      const Ticker& ticker, Venue venue, const std::string& mpid,
       bool is_primary_mpid, const std::string& id, Side side, Money price,
       Quantity size, boost::posix_time::ptime timestamp) {
     m_client->add_order(
-      security, venue, mpid, is_primary_mpid, id, side, price, size, timestamp);
+      ticker, venue, mpid, is_primary_mpid, id, side, price, size, timestamp);
   }
 
   template<typename C>

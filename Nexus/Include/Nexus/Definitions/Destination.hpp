@@ -1,5 +1,5 @@
-#ifndef NEXUS_DESTINATION_HPP
-#define NEXUS_DESTINATION_HPP
+#ifndef NEXUS_DEFINITIONS_DESTINATION_HPP
+#define NEXUS_DEFINITIONS_DESTINATION_HPP
 #include <algorithm>
 #include <atomic>
 #include <memory>

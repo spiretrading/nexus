@@ -8,9 +8,8 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/VirtualPtr.hpp>
-#include "Nexus/Definitions/SecurityInfo.hpp"
-#include "Nexus/Definitions/SecurityTechnicals.hpp"
-#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
+#include "Nexus/Definitions/TickerInfo.hpp"
+#include "Nexus/MarketDataService/TickerMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
 namespace Nexus {
@@ -18,30 +17,28 @@ namespace Nexus {
   /** Concept for types that can be used as a historical data store. */
   template<typename T>
   concept IsHistoricalDataStore = Beam::IsConnection<T> && requires(T& store) {
-    { store.load_security_info(std::declval<const SecurityInfoQuery&>()) } ->
-        std::same_as<std::vector<SecurityInfo>>;
-    store.store(std::declval<const SecurityInfo&>());
+    { store.load_ticker_info(std::declval<const TickerInfoQuery&>()) } ->
+        std::same_as<std::vector<TickerInfo>>;
+    store.store(std::declval<const TickerInfo&>());
     { store.load_order_imbalances(
         std::declval<const VenueMarketDataQuery&>()) } ->
           std::same_as<std::vector<SequencedOrderImbalance>>;
     store.store(std::declval<const SequencedVenueOrderImbalance&>());
     store.store(
       std::declval<const std::vector<SequencedVenueOrderImbalance>&>());
-    { store.load_bbo_quotes(std::declval<const SecurityMarketDataQuery&>()) } ->
+    { store.load_bbo_quotes(std::declval<const TickerMarketDataQuery&>()) } ->
         std::same_as<std::vector<SequencedBboQuote>>;
-    store.store(std::declval<const SequencedSecurityBboQuote&>());
-    store.store(std::declval<const std::vector<SequencedSecurityBboQuote>&>());
-    { store.load_book_quotes(
-        std::declval<const SecurityMarketDataQuery&>()) } ->
-          std::same_as<std::vector<SequencedBookQuote>>;
-    store.store(std::declval<const SequencedSecurityBookQuote&>());
-    store.store(std::declval<const std::vector<SequencedSecurityBookQuote>&>());
+    store.store(std::declval<const SequencedTickerBboQuote&>());
+    store.store(std::declval<const std::vector<SequencedTickerBboQuote>&>());
+    { store.load_book_quotes(std::declval<const TickerMarketDataQuery&>()) } ->
+        std::same_as<std::vector<SequencedBookQuote>>;
+    store.store(std::declval<const SequencedTickerBookQuote&>());
+    store.store(std::declval<const std::vector<SequencedTickerBookQuote>&>());
     { store.load_time_and_sales(
-        std::declval<const SecurityMarketDataQuery&>()) } ->
+        std::declval<const TickerMarketDataQuery&>()) } ->
           std::same_as<std::vector<SequencedTimeAndSale>>;
-    store.store(std::declval<const SequencedSecurityTimeAndSale&>());
-    store.store(
-      std::declval<const std::vector<SequencedSecurityTimeAndSale>&>());
+    store.store(std::declval<const SequencedTickerTimeAndSale&>());
+    store.store(std::declval<const std::vector<SequencedTickerTimeAndSale>&>());
   };
 
   /** Provides a generic interface over an arbitrary HistoricalDataStore. */
@@ -70,19 +67,18 @@ namespace Nexus {
       HistoricalDataStore(HistoricalDataStore&&) = default;
 
       /**
-       * Loads SecurityInfo objects that match a query.
+       * Loads TickerInfo objects that match a query.
        * @param query The query to load.
-       * @return The list of all SecurityInfo objects that match the
+       * @return The list of all TickerInfo objects that match the
        *         <i>query</i>.
        */
-      std::vector<SecurityInfo> load_security_info(
-        const SecurityInfoQuery& query);
+      std::vector<TickerInfo> load_ticker_info(const TickerInfoQuery& query);
 
       /**
-       * Stores a SecurityInfo.
-       * @param info The SecurityInfo to store.
+       * Stores a TickerInfo.
+       * @param info The TickerInfo to store.
        */
-      void store(const SecurityInfo& info);
+      void store(const TickerInfo& info);
 
       /**
        * Executes a search query over a Market's OrderImbalances.
@@ -106,66 +102,65 @@ namespace Nexus {
       void store(const std::vector<SequencedVenueOrderImbalance>& imbalances);
 
       /**
-       * Executes a search query over a Security's BboQuotes.
+       * Executes a search query over a Ticker's BboQuotes.
        * @param query The search query to execute.
        * @return The list of BboQuotes that satisfy the search <i>query</i>.
        */
       std::vector<SequencedBboQuote> load_bbo_quotes(
-        const SecurityMarketDataQuery& query);
+        const TickerMarketDataQuery& query);
 
       /**
-       * Stores a SequencedSecurityBboQuote.
-       * @param quote The SequencedSecurityBboQuote to store.
+       * Stores a SequencedTickerBboQuote.
+       * @param quote The SequencedTickerBboQuote to store.
        */
-      void store(const SequencedSecurityBboQuote& quote);
+      void store(const SequencedTickerBboQuote& quote);
 
       /**
-       * Stores a list of SequencedSecurityBboQuotes.
-       * @param quotes The list of SequencedSecurityBboQuotes to store.
+       * Stores a list of SequencedTickerBboQuotes.
+       * @param quotes The list of SequencedTickerBboQuotes to store.
        */
-      void store(const std::vector<SequencedSecurityBboQuote>& quotes);
+      void store(const std::vector<SequencedTickerBboQuote>& quotes);
 
       /**
-       * Executes a search query over a Security's BookQuotes.
+       * Executes a search query over a Ticker's BookQuotes.
        * @param query The search query to execute.
        * @return The list of BookQuotes that satisfy the search <i>query</i>.
        */
       std::vector<SequencedBookQuote> load_book_quotes(
-        const SecurityMarketDataQuery& query);
+        const TickerMarketDataQuery& query);
 
       /**
-       * Stores a SequencedSecurityBookQuote.
-       * @param quote The SequencedSecurityBookQuote to store.
+       * Stores a SequencedTickerBookQuote.
+       * @param quote The SequencedTickerBookQuote to store.
        */
-      void store(const SequencedSecurityBookQuote& quote);
+      void store(const SequencedTickerBookQuote& quote);
 
       /**
-       * Stores a list of SequencedSecurityBookQuotes.
-       * @param quotes The list of SequencedSecurityBookQuotes to store.
+       * Stores a list of SequencedTickerBookQuotes.
+       * @param quotes The list of SequencedTickerBookQuotes to store.
        */
-      void store(const std::vector<SequencedSecurityBookQuote>& quotes);
+      void store(const std::vector<SequencedTickerBookQuote>& quotes);
 
       /**
-       * Executes a search query over a Security's TimeAndSales.
+       * Executes a search query over a Ticker's TimeAndSales.
        * @param query The search query to execute.
        * @return The list of TimeAndSales that satisfy the search <i>query</i>.
        */
       std::vector<SequencedTimeAndSale> load_time_and_sales(
-        const SecurityMarketDataQuery& query);
+        const TickerMarketDataQuery& query);
 
       /**
-       * Stores a SequencedSecurityTimeAndSale.
-       * @param time_and_sale The SequencedSecurityTimeAndSale to store.
+       * Stores a SequencedTickerTimeAndSale.
+       * @param time_and_sale The SequencedTickerTimeAndSale to store.
        */
-      void store(const SequencedSecurityTimeAndSale& time_and_sale);
+      void store(const SequencedTickerTimeAndSale& time_and_sale);
 
       /**
-       * Stores a list of SequencedSecurityTimeAndSales.
-       * @param time_and_sales The list of SequencedSecurityTimeAndSales to
+       * Stores a list of SequencedTickerTimeAndSales.
+       * @param time_and_sales The list of SequencedTickerTimeAndSales to
        *        store.
        */
-      void store(
-        const std::vector<SequencedSecurityTimeAndSale>& time_and_sales);
+      void store(const std::vector<SequencedTickerTimeAndSale>& time_and_sales);
 
       /** Closes the data store. */
       void close();
@@ -174,30 +169,26 @@ namespace Nexus {
       struct VirtualHistoricalDataStore {
         virtual ~VirtualHistoricalDataStore() = default;
 
-        virtual std::vector<SecurityInfo> load_security_info(
-          const SecurityInfoQuery& query) = 0;
-        virtual void store(const SecurityInfo& info) = 0;
+        virtual std::vector<TickerInfo> load_ticker_info(
+          const TickerInfoQuery&) = 0;
+        virtual void store(const TickerInfo&) = 0;
         virtual std::vector<SequencedOrderImbalance> load_order_imbalances(
-          const VenueMarketDataQuery& query) = 0;
-        virtual void store(const SequencedVenueOrderImbalance& imbalance) = 0;
+          const VenueMarketDataQuery&) = 0;
+        virtual void store(const SequencedVenueOrderImbalance&) = 0;
         virtual void store(
-          const std::vector<SequencedVenueOrderImbalance>& imbalances) = 0;
+          const std::vector<SequencedVenueOrderImbalance>&) = 0;
         virtual std::vector<SequencedBboQuote> load_bbo_quotes(
-          const SecurityMarketDataQuery& query) = 0;
-        virtual void store(const SequencedSecurityBboQuote& quote) = 0;
-        virtual void store(
-          const std::vector<SequencedSecurityBboQuote>& quotes) = 0;
+          const TickerMarketDataQuery&) = 0;
+        virtual void store(const SequencedTickerBboQuote&) = 0;
+        virtual void store(const std::vector<SequencedTickerBboQuote>&) = 0;
         virtual std::vector<SequencedBookQuote> load_book_quotes(
-          const SecurityMarketDataQuery& query) = 0;
-        virtual void store(const SequencedSecurityBookQuote& quote) = 0;
-        virtual void store(
-          const std::vector<SequencedSecurityBookQuote>& quotes) = 0;
+          const TickerMarketDataQuery&) = 0;
+        virtual void store(const SequencedTickerBookQuote&) = 0;
+        virtual void store(const std::vector<SequencedTickerBookQuote>&) = 0;
         virtual std::vector<SequencedTimeAndSale> load_time_and_sales(
-          const SecurityMarketDataQuery& query) = 0;
-        virtual void store(
-          const SequencedSecurityTimeAndSale& time_and_sale) = 0;
-        virtual void store(
-          const std::vector<SequencedSecurityTimeAndSale>& time_and_sales) = 0;
+          const TickerMarketDataQuery&) = 0;
+        virtual void store(const SequencedTickerTimeAndSale&) = 0;
+        virtual void store(const std::vector<SequencedTickerTimeAndSale>&) = 0;
         virtual void close() = 0;
       };
       template<typename D>
@@ -208,28 +199,27 @@ namespace Nexus {
         template<typename... Args>
         WrappedHistoricalDataStore(Args&&... args);
 
-        std::vector<SecurityInfo> load_security_info(
-          const SecurityInfoQuery& query) override;
-        void store(const SecurityInfo& info) override;
+        std::vector<TickerInfo> load_ticker_info(
+          const TickerInfoQuery& query) override;
+        void store(const TickerInfo& info) override;
         std::vector<SequencedOrderImbalance> load_order_imbalances(
           const VenueMarketDataQuery& query) override;
         void store(const SequencedVenueOrderImbalance& imbalance) override;
         void store(
           const std::vector<SequencedVenueOrderImbalance>& imbalances) override;
         std::vector<SequencedBboQuote> load_bbo_quotes(
-          const SecurityMarketDataQuery& query) override;
-        void store(const SequencedSecurityBboQuote& quote) override;
-        void store(
-          const std::vector<SequencedSecurityBboQuote>& quotes) override;
+          const TickerMarketDataQuery& query) override;
+        void store(const SequencedTickerBboQuote& quote) override;
+        void store(const std::vector<SequencedTickerBboQuote>& quotes) override;
         std::vector<SequencedBookQuote> load_book_quotes(
-          const SecurityMarketDataQuery& query) override;
-        void store(const SequencedSecurityBookQuote& quote) override;
+          const TickerMarketDataQuery& query) override;
+        void store(const SequencedTickerBookQuote& quote) override;
         void store(
-          const std::vector<SequencedSecurityBookQuote>& quotes) override;
+          const std::vector<SequencedTickerBookQuote>& quotes) override;
         std::vector<SequencedTimeAndSale> load_time_and_sales(
-          const SecurityMarketDataQuery& query) override;
-        void store(const SequencedSecurityTimeAndSale& time_and_sale) override;
-        void store(const std::vector<SequencedSecurityTimeAndSale>&
+          const TickerMarketDataQuery& query) override;
+        void store(const SequencedTickerTimeAndSale& time_and_sale) override;
+        void store(const std::vector<SequencedTickerTimeAndSale>&
           time_and_sales) override;
         void close() override;
       };
@@ -261,7 +251,7 @@ namespace Nexus {
    * @return The list of values that satisfy the search <i>query</i>.
    */
   template<typename T, IsHistoricalDataStore D>
-  auto load(D& data_store, const SecurityMarketDataQuery& query) {
+  auto load(D& data_store, const TickerMarketDataQuery& query) {
     if constexpr(
         std::is_same_v<T, BboQuote> || std::is_same_v<T, SequencedBboQuote>) {
       return data_store.load_bbo_quotes(query);
@@ -288,12 +278,12 @@ namespace Nexus {
     : m_data_store(Beam::make_virtual_ptr<WrappedHistoricalDataStore<
         std::remove_cvref_t<T>>>(std::forward<T>(data_store))) {}
 
-  inline std::vector<SecurityInfo> HistoricalDataStore::load_security_info(
-      const SecurityInfoQuery& query) {
-    return m_data_store->load_security_info(query);
+  inline std::vector<TickerInfo> HistoricalDataStore::load_ticker_info(
+      const TickerInfoQuery& query) {
+    return m_data_store->load_ticker_info(query);
   }
 
-  inline void HistoricalDataStore::store(const SecurityInfo& info) {
+  inline void HistoricalDataStore::store(const TickerInfo& info) {
     m_data_store->store(info);
   }
 
@@ -314,48 +304,47 @@ namespace Nexus {
   }
 
   inline std::vector<SequencedBboQuote> HistoricalDataStore::load_bbo_quotes(
-      const SecurityMarketDataQuery& query) {
+      const TickerMarketDataQuery& query) {
     return m_data_store->load_bbo_quotes(query);
   }
 
-  inline void HistoricalDataStore::store(
-      const SequencedSecurityBboQuote& quote) {
+  inline void HistoricalDataStore::store(const SequencedTickerBboQuote& quote) {
     m_data_store->store(quote);
   }
 
   inline void HistoricalDataStore::store(
-      const std::vector<SequencedSecurityBboQuote>& quotes) {
+      const std::vector<SequencedTickerBboQuote>& quotes) {
     m_data_store->store(quotes);
   }
 
   inline std::vector<SequencedBookQuote> HistoricalDataStore::
-      load_book_quotes(const SecurityMarketDataQuery& query) {
+      load_book_quotes(const TickerMarketDataQuery& query) {
     return m_data_store->load_book_quotes(query);
   }
 
   inline void HistoricalDataStore::store(
-      const SequencedSecurityBookQuote& quote) {
+      const SequencedTickerBookQuote& quote) {
     m_data_store->store(quote);
   }
 
   inline void HistoricalDataStore::store(
-      const std::vector<SequencedSecurityBookQuote>& quotes) {
+      const std::vector<SequencedTickerBookQuote>& quotes) {
     m_data_store->store(quotes);
   }
 
   inline std::vector<SequencedTimeAndSale>
       HistoricalDataStore::load_time_and_sales(
-        const SecurityMarketDataQuery& query) {
+        const TickerMarketDataQuery& query) {
     return m_data_store->load_time_and_sales(query);
   }
 
   inline void HistoricalDataStore::store(
-      const SequencedSecurityTimeAndSale& time_and_sale) {
+      const SequencedTickerTimeAndSale& time_and_sale) {
     m_data_store->store(time_and_sale);
   }
 
   inline void HistoricalDataStore::store(
-      const std::vector<SequencedSecurityTimeAndSale>& time_and_sales) {
+      const std::vector<SequencedTickerTimeAndSale>& time_and_sales) {
     m_data_store->store(time_and_sales);
   }
 
@@ -370,15 +359,15 @@ namespace Nexus {
     : m_data_store(std::forward<Args>(args)...) {}
 
   template<typename D>
-  std::vector<SecurityInfo>
-      HistoricalDataStore::WrappedHistoricalDataStore<D>::load_security_info(
-        const SecurityInfoQuery& query) {
-    return m_data_store->load_security_info(query);
+  std::vector<TickerInfo>
+      HistoricalDataStore::WrappedHistoricalDataStore<D>::load_ticker_info(
+        const TickerInfoQuery& query) {
+    return m_data_store->load_ticker_info(query);
   }
 
   template<typename D>
   void HistoricalDataStore::WrappedHistoricalDataStore<D>::store(
-      const SecurityInfo& info) {
+      const TickerInfo& info) {
     m_data_store->store(info);
   }
 
@@ -404,57 +393,57 @@ namespace Nexus {
   template<typename D>
   std::vector<SequencedBboQuote> HistoricalDataStore::
       WrappedHistoricalDataStore<D>::load_bbo_quotes(
-        const SecurityMarketDataQuery& query) {
+        const TickerMarketDataQuery& query) {
     return m_data_store->load_bbo_quotes(query);
   }
 
   template<typename D>
   void HistoricalDataStore::WrappedHistoricalDataStore<D>::store(
-      const SequencedSecurityBboQuote& quote) {
+      const SequencedTickerBboQuote& quote) {
     m_data_store->store(quote);
   }
 
   template<typename D>
   void HistoricalDataStore::WrappedHistoricalDataStore<D>::store(
-      const std::vector<SequencedSecurityBboQuote>& quotes) {
+      const std::vector<SequencedTickerBboQuote>& quotes) {
     m_data_store->store(quotes);
   }
 
   template<typename D>
   std::vector<SequencedBookQuote> HistoricalDataStore::
       WrappedHistoricalDataStore<D>::load_book_quotes(
-        const SecurityMarketDataQuery& query) {
+        const TickerMarketDataQuery& query) {
     return m_data_store->load_book_quotes(query);
   }
 
   template<typename D>
   void HistoricalDataStore::WrappedHistoricalDataStore<D>::store(
-      const SequencedSecurityBookQuote& quote) {
+      const SequencedTickerBookQuote& quote) {
     m_data_store->store(quote);
   }
 
   template<typename D>
   void HistoricalDataStore::WrappedHistoricalDataStore<D>::store(
-      const std::vector<SequencedSecurityBookQuote>& quotes) {
+      const std::vector<SequencedTickerBookQuote>& quotes) {
     m_data_store->store(quotes);
   }
 
   template<typename D>
   std::vector<SequencedTimeAndSale> HistoricalDataStore::
       WrappedHistoricalDataStore<D>::load_time_and_sales(
-        const SecurityMarketDataQuery& query) {
+        const TickerMarketDataQuery& query) {
     return m_data_store->load_time_and_sales(query);
   }
 
   template<typename D>
   void HistoricalDataStore::WrappedHistoricalDataStore<D>::store(
-      const SequencedSecurityTimeAndSale& time_and_sale) {
+      const SequencedTickerTimeAndSale& time_and_sale) {
     m_data_store->store(time_and_sale);
   }
 
   template<typename D>
   void HistoricalDataStore::WrappedHistoricalDataStore<D>::store(
-      const std::vector<SequencedSecurityTimeAndSale>& time_and_sales) {
+      const std::vector<SequencedTickerTimeAndSale>& time_and_sales) {
     m_data_store->store(time_and_sales);
   }
 

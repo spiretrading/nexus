@@ -31,26 +31,24 @@ namespace Nexus {
 
       ~CachedHistoricalDataStore();
 
-      std::vector<SecurityInfo> load_security_info(
-        const SecurityInfoQuery& query);
-      void store(const SecurityInfo& info);
+      std::vector<TickerInfo> load_ticker_info(const TickerInfoQuery& query);
+      void store(const TickerInfo& info);
       std::vector<SequencedOrderImbalance> load_order_imbalances(
         const VenueMarketDataQuery& query);
       void store(const SequencedVenueOrderImbalance& imbalance);
       void store(const std::vector<SequencedVenueOrderImbalance>& imbalances);
       std::vector<SequencedBboQuote> load_bbo_quotes(
-        const SecurityMarketDataQuery& query);
-      void store(const SequencedSecurityBboQuote& quote);
-      void store(const std::vector<SequencedSecurityBboQuote>& quotes);
+        const TickerMarketDataQuery& query);
+      void store(const SequencedTickerBboQuote& quote);
+      void store(const std::vector<SequencedTickerBboQuote>& quotes);
       std::vector<SequencedBookQuote> load_book_quotes(
-        const SecurityMarketDataQuery& query);
-      void store(const SequencedSecurityBookQuote& quote);
-      void store(const std::vector<SequencedSecurityBookQuote>& quotes);
+        const TickerMarketDataQuery& query);
+      void store(const SequencedTickerBookQuote& quote);
+      void store(const std::vector<SequencedTickerBookQuote>& quotes);
       std::vector<SequencedTimeAndSale> load_time_and_sales(
-        const SecurityMarketDataQuery& query);
-      void store(const SequencedSecurityTimeAndSale& time_and_sale);
-      void store(
-        const std::vector<SequencedSecurityTimeAndSale>& time_and_sales);
+        const TickerMarketDataQuery& query);
+      void store(const SequencedTickerTimeAndSale& time_and_sale);
+      void store(const std::vector<SequencedTickerTimeAndSale>& time_and_sales);
       void close();
 
     private:
@@ -86,13 +84,13 @@ namespace Nexus {
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
-  std::vector<SecurityInfo> CachedHistoricalDataStore<D>::load_security_info(
-      const SecurityInfoQuery& query) {
-    return m_data_store->load_security_info(query);
+  std::vector<TickerInfo> CachedHistoricalDataStore<D>::load_ticker_info(
+      const TickerInfoQuery& query) {
+    return m_data_store->load_ticker_info(query);
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
-  void CachedHistoricalDataStore<D>::store(const SecurityInfo& info) {
+  void CachedHistoricalDataStore<D>::store(const TickerInfo& info) {
     m_data_store->store(info);
   }
 
@@ -116,59 +114,58 @@ namespace Nexus {
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
-  std::vector<SequencedBboQuote>
-      CachedHistoricalDataStore<D>::load_bbo_quotes(
-        const SecurityMarketDataQuery& query) {
+  std::vector<SequencedBboQuote> CachedHistoricalDataStore<D>::load_bbo_quotes(
+      const TickerMarketDataQuery& query) {
     return m_bbo_quote_data_store.load(query);
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void CachedHistoricalDataStore<D>::store(
-      const SequencedSecurityBboQuote& quote) {
+      const SequencedTickerBboQuote& quote) {
     m_bbo_quote_data_store.store(quote);
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void CachedHistoricalDataStore<D>::store(
-      const std::vector<SequencedSecurityBboQuote>& quotes) {
+      const std::vector<SequencedTickerBboQuote>& quotes) {
     m_bbo_quote_data_store.store(quotes);
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   std::vector<SequencedBookQuote>
       CachedHistoricalDataStore<D>::load_book_quotes(
-        const SecurityMarketDataQuery& query) {
+        const TickerMarketDataQuery& query) {
     return m_book_quote_data_store.load(query);
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void CachedHistoricalDataStore<D>::store(
-      const SequencedSecurityBookQuote& quote) {
+      const SequencedTickerBookQuote& quote) {
     m_book_quote_data_store.store(quote);
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void CachedHistoricalDataStore<D>::store(
-      const std::vector<SequencedSecurityBookQuote>& quotes) {
+      const std::vector<SequencedTickerBookQuote>& quotes) {
     m_book_quote_data_store.store(quotes);
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   std::vector<SequencedTimeAndSale>
       CachedHistoricalDataStore<D>::load_time_and_sales(
-        const SecurityMarketDataQuery& query) {
+        const TickerMarketDataQuery& query) {
     return m_time_and_sale_data_store.load(query);
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void CachedHistoricalDataStore<D>::store(
-      const SequencedSecurityTimeAndSale& time_and_sale) {
+      const SequencedTickerTimeAndSale& time_and_sale) {
     m_time_and_sale_data_store.store(time_and_sale);
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void CachedHistoricalDataStore<D>::store(
-      const std::vector<SequencedSecurityTimeAndSale>& time_and_sales) {
+      const std::vector<SequencedTickerTimeAndSale>& time_and_sales) {
     m_time_and_sale_data_store.store(time_and_sales);
   }
 

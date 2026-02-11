@@ -1,5 +1,5 @@
-#ifndef NEXUS_ORDER_IMBALANCE_HPP
-#define NEXUS_ORDER_IMBALANCE_HPP
+#ifndef NEXUS_DEFINITIONS_ORDER_IMBALANCE_HPP
+#define NEXUS_DEFINITIONS_ORDER_IMBALANCE_HPP
 #include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>

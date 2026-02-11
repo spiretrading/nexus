@@ -89,8 +89,7 @@ namespace {
           m_administration_environment.make_client(
             Ref(*m_servlet_service_locator_client)))),
         m_server_connection, factory<std::unique_ptr<TriggerTimer>>());
-      m_client_account =
-        make_account("client", DirectoryEntry::STAR_DIRECTORY);
+      m_client_account = make_account("client", DirectoryEntry::STAR_DIRECTORY);
       auto global_entitlement = m_servlet_administration_client->
         load_entitlements().get_entries().front().m_group_entry;
       m_servlet_administration_client->store_entitlements(
@@ -101,27 +100,26 @@ namespace {
 }
 
 TEST_SUITE("MarketDataRegistryServlet") {
-  TEST_CASE("query_security_info") {
+  TEST_CASE("query_ticker_info") {
     auto fixture = Fixture();
-    auto security = Security("TST", TSX);
-    auto query = SecurityInfoQuery();
-    query.set_index(security);
+    auto ticker = parse_ticker("TST.TSX");
+    auto query = TickerInfoQuery();
+    query.set_index(ticker);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     auto query_thread = std::async(std::launch::async, [&] {
-      return fixture.m_client->send_request<QuerySecurityInfoService>(query);
+      return fixture.m_client->send_request<QueryTickerInfoService>(query);
     });
     auto operation = fixture.m_operations->pop();
-    auto& security_info_operation =
-      std::get<TestMarketDataClient::SecurityInfoQueryOperation>(*operation);
-    REQUIRE(security_info_operation.m_query.get_index() == security);
-    auto security_info = SecurityInfo();
-    security_info.m_security = security;
-    security_info.m_name = "Test";
-    security_info.m_sector = "Tech";
-    security_info.m_board_lot = 100;
-    security_info_operation.m_result.set({security_info});
+    auto& ticker_info_operation =
+      std::get<TestMarketDataClient::TickerInfoQueryOperation>(*operation);
+    REQUIRE(ticker_info_operation.m_query.get_index() == ticker);
+    auto ticker_info = TickerInfo();
+    ticker_info.m_ticker = ticker;
+    ticker_info.m_name = "Test";
+    ticker_info.m_board_lot = 100;
+    ticker_info_operation.m_result.set({ticker_info});
     auto result = query_thread.get();
     REQUIRE(result.size() == 1);
-    REQUIRE(result.front() == security_info);
+    REQUIRE(result.front() == ticker_info);
   }
 }

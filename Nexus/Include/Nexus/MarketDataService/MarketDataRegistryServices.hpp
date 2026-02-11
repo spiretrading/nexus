@@ -5,11 +5,11 @@
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
-#include "Nexus/Definitions/SecurityInfo.hpp"
-#include "Nexus/Definitions/SecurityTechnicals.hpp"
-#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
-#include "Nexus/MarketDataService/SecuritySnapshot.hpp"
+#include "Nexus/Definitions/TickerInfo.hpp"
+#include "Nexus/MarketDataService/TickerMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerSnapshot.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
+#include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
 
 namespace Nexus {
   using OrderImbalanceQueryResult = Beam::QueryResult<SequencedOrderImbalance>;
@@ -37,65 +37,64 @@ namespace Nexus {
       OrderImbalanceQueryResult, (VenueMarketDataQuery, query)),
 
     /**
-     * Queries a Security's BboQuotes.
+     * Queries a Ticker's BboQuotes.
      * @param query The query to run.
      * @return The list of BboQuotes satisfying the query.
      */
     (QueryBboQuotesService, "Nexus.MarketDataService.QueryBboQuotesService",
-      BboQuoteQueryResult, (SecurityMarketDataQuery, query)),
+      BboQuoteQueryResult, (TickerMarketDataQuery, query)),
 
     /**
-     * Queries a Security's BookQuotes.
+     * Queries a Ticker's BookQuotes.
      * @param query The query to run.
      * @return The list of BookQuotes satisfying the query.
      */
     (QueryBookQuotesService, "Nexus.MarketDataService.QueryBookQuotesService",
-      BookQuoteQueryResult, (SecurityMarketDataQuery, query)),
+      BookQuoteQueryResult, (TickerMarketDataQuery, query)),
 
     /**
-     * Queries a Security's TimeAndSales.
+     * Queries a Ticker's TimeAndSales.
      * @param query The query to run.
      * @return The list of TimeAndSales satisfying the query.
      */
     (QueryTimeAndSalesService,
       "Nexus.MarketDataService.QueryTimeAndSalesService",
-      TimeAndSaleQueryResult, (SecurityMarketDataQuery, query)),
+      TimeAndSaleQueryResult, (TickerMarketDataQuery, query)),
 
     /**
-     * Loads a Security's real-time snapshot.
-     * @param security The Security whose snapshot is to be loaded.
-     * @return The SecuritySnapshot for the specified <i>security</i>.
+     * Loads a Ticker's real-time snapshot.
+     * @param ticker The Ticker whose snapshot is to be loaded.
+     * @return The TickerSnapshot for the specified <i>ticker</i>.
      */
-    (LoadSecuritySnapshotService,
-      "Nexus.MarketDataService.LoadSecuritySnapshotService", SecuritySnapshot,
-      (Security, security)),
+    (LoadTickerSnapshotService,
+      "Nexus.MarketDataService.LoadTickerSnapshotService", TickerSnapshot,
+      (Ticker, ticker)),
 
     /**
-     * Loads the SecurityTechnicals for a specified Security.
-     * @param security The Security whose SecurityTechnicals is to be loaded.
-     * @return The SecurityTechnicals for the specified <i>security</i>.
+     * Loads the session candlestick for a specified Ticker.
+     * @param ticker The Ticker whose session candlestick is to be loaded.
+     * @return The PriceCandlestick for the specified <i>ticker</i>.
      */
-    (LoadSecurityTechnicalsService,
-      "Nexus.MarketDataService.LoadSecurityTechnicalsService",
-      SecurityTechnicals, (Security, security)),
+    (LoadSessionCandlestickService,
+      "Nexus.MarketDataService.LoadSessionCandlestickService",
+      PriceCandlestick, (Ticker, ticker)),
 
     /**
-     * Queries for all SecurityInfo objects that are within a region.
-     * @param security The Security whose SecurityInfo is to be loaded.
-     * @return The list of SecurityInfo objects that match the <i>query</i>.
+     * Queries for all TickerInfo objects that are within a region.
+     * @param ticker The Ticker whose TickerInfo is to be loaded.
+     * @return The list of TickerInfo objects that match the <i>query</i>.
      */
-    (QuerySecurityInfoService,
-      "Nexus.MarketDataService.QuerySecurityInfoService",
-      std::vector<SecurityInfo>, (SecurityInfoQuery, query)),
+    (QueryTickerInfoService, "Nexus.MarketDataService.QueryTickerInfoService",
+      std::vector<TickerInfo>, (TickerInfoQuery, query)),
 
     /**
-     * Loads all SecurityInfo objects that match a prefix.
+     * Loads all TickerInfo objects that match a prefix.
      * @param prefix The prefix to search for.
-     * @return The list of SecurityInfo objects that match the <i>prefix</i>.
+     * @return The list of TickerInfo objects that match the <i>prefix</i>.
      */
-    (LoadSecurityInfoFromPrefixService,
-      "Nexus.MarketDataService.LoadSecurityInfoFromPrefixService",
-      std::vector<SecurityInfo>, (std::string, prefix)));
+    (LoadTickerInfoFromPrefixService,
+      "Nexus.MarketDataService.LoadTickerInfoFromPrefixService",
+      std::vector<TickerInfo>, (std::string, prefix)));
 
   BEAM_DEFINE_MESSAGES(market_data_registry_messages,
 
@@ -107,25 +106,25 @@ namespace Nexus {
       (SequencedVenueOrderImbalance, order_imbalance)),
 
     /**
-     * Sends a query's SequencedSecurityBboQuote.
-     * @param bbo_quote The query's SequencedSecurityBboQuote.
+     * Sends a query's SequencedTickerBboQuote.
+     * @param bbo_quote The query's SequencedTickerBboQuote.
      */
     (BboQuoteMessage, "Nexus.MarketDataService.BboQuoteMessage",
-      (SequencedSecurityBboQuote, bbo_quote)),
+      (SequencedTickerBboQuote, bbo_quote)),
 
     /**
-     * Sends a query's SequencedSecurityBookQuote.
-     * @param book_quote The query's SequencedSecurityBookQuote.
+     * Sends a query's SequencedTickerBookQuote.
+     * @param book_quote The query's SequencedTickerBookQuote.
      */
     (BookQuoteMessage, "Nexus.MarketDataService.BookQuoteMessage",
-      (SequencedSecurityBookQuote, book_quote)),
+      (SequencedTickerBookQuote, book_quote)),
 
     /**
-     * Sends a query's SequencedSecurityTimeAndSale.
-     * @param time_and_sale The query's SequencedSecurityTimeAndSale.
+     * Sends a query's SequencedTickerTimeAndSale.
+     * @param time_and_sale The query's SequencedTickerTimeAndSale.
      */
     (TimeAndSaleMessage,  "Nexus.MarketDataService.TimeAndSaleMessage",
-      (SequencedSecurityTimeAndSale, time_and_sale)),
+      (SequencedTickerTimeAndSale, time_and_sale)),
 
     /**
      * Terminates a previous OrderImbalance query.
@@ -138,29 +137,29 @@ namespace Nexus {
 
     /**
      * Terminates a previous BboQuote query.
-     * @param security The Security that was queried.
+     * @param ticker The Ticker that was queried.
      * @param id The id of query to end.
      */
     (EndBboQuoteQueryMessage, "Nexus.MarketDataService.EndBboQuoteQueryMessage",
-      (Security, security), (int, id)),
+      (Ticker, ticker), (int, id)),
 
     /**
      * Terminates a previous BookQuote query.
-     * @param security The Security that was queried.
+     * @param ticker The Ticker that was queried.
      * @param id The id of query to end.
      */
     (EndBookQuoteQueryMessage,
-      "Nexus.MarketDataService.EndBookQuoteQueryMessage", (Security, security),
+      "Nexus.MarketDataService.EndBookQuoteQueryMessage", (Ticker, ticker),
       (int, id)),
 
     /**
      * Terminates a previous TimeAndSale query.
-     * @param security The Security that was queried.
+     * @param ticker The Ticker that was queried.
      * @param id The id of query to end.
      */
     (EndTimeAndSaleQueryMessage,
       "Nexus.MarketDataService.EndTimeAndSaleQueryMessage",
-      (Security, security), (int, id)));
+      (Ticker, ticker), (int, id)));
 
   /**
    * Returns the type of Service Message used to publish an update to a market

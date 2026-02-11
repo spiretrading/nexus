@@ -58,14 +58,17 @@ namespace Nexus {
       /** Constructs an Asset from a value. */
       explicit constexpr Asset(Id value) noexcept;
 
-      /** Constructs an Asset from a type and id. */
-      constexpr Asset(Type type, Id id) noexcept;
+      /** Constructs an Asset from a type and code. */
+      constexpr Asset(Type type, Id code) noexcept;
 
-      /** Constructs an Asset from a type and id. */
-      constexpr Asset(std::string_view type, Id id) noexcept;
+      /** Constructs an Asset from a type and code. */
+      constexpr Asset(std::string_view type, Id code) noexcept;
 
       /** Returns the asset type. */
       constexpr Type get_type() const;
+
+      /** Returns the asset code. */
+      constexpr Id get_code() const;
 
       /** Returns the asset id. */
       constexpr Id get_id() const;
@@ -85,12 +88,12 @@ namespace Nexus {
   constexpr Asset::Asset(Id value) noexcept
     : m_value(static_cast<Id>(value)) {}
 
-  constexpr Asset::Asset(Type type, Id id) noexcept
+  constexpr Asset::Asset(Type type, Id code) noexcept
     : m_value((static_cast<Id>(type) << 48) |
-        (id & 0x0000FFFFFFFFFFFFULL)) {}
+        (code & 0x0000FFFFFFFFFFFFULL)) {}
 
-  constexpr Asset::Asset(std::string_view type, Id id) noexcept
-    : Asset(encode_asset_type(type), id) {}
+  constexpr Asset::Asset(std::string_view type, Id code) noexcept
+    : Asset(encode_asset_type(type), code) {}
 
   constexpr Asset::operator bool() const {
     return m_value != 0;
@@ -98,6 +101,10 @@ namespace Nexus {
 
   constexpr Asset::Type Asset::get_type() const {
     return static_cast<Type>(m_value >> 48);
+  }
+
+  constexpr Asset::Id Asset::get_code() const {
+    return m_value & 0x0000FFFFFFFFFFFFULL;
   }
 
   constexpr Asset::Id Asset::get_id() const {

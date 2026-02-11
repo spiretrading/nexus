@@ -24,21 +24,23 @@ TEST_SUITE("Asset") {
     REQUIRE(static_cast<bool>(asset));
   }
 
-  TEST_CASE("type_and_id_constructor") {
-    auto id = std::uint64_t(0x000056789ABCDEF0ULL);
-    auto asset = Asset(Asset::CURRENCY, id);
+  TEST_CASE("type_and_code_constructor") {
+    auto code = std::uint64_t(0x000056789ABCDEF0ULL);
+    auto asset = Asset(Asset::CURRENCY, code);
     auto expected = (static_cast<std::uint64_t>(Asset::CURRENCY) << 48) |
-      (id & 0x0000FFFFFFFFFFFFULL);
+      (code & 0x0000FFFFFFFFFFFFULL);
     REQUIRE(asset.get_type() == Asset::CURRENCY);
+    REQUIRE(asset.get_code() == code);
     REQUIRE(asset.get_id() == expected);
   }
 
   TEST_CASE("string_type_constructor") {
-    auto id = std::uint64_t(42);
-    auto asset = Asset("EQY", id);
+    auto code = std::uint64_t(42);
+    auto asset = Asset("EQY", code);
     auto expected = (static_cast<std::uint64_t>(Asset::EQUITY) << 48) |
-      (id & 0x0000FFFFFFFFFFFFULL);
+      (code & 0x0000FFFFFFFFFFFFULL);
     REQUIRE(asset.get_type() == Asset::EQUITY);
+    REQUIRE(asset.get_code() == code);
     REQUIRE(asset.get_id() == expected);
   }
 

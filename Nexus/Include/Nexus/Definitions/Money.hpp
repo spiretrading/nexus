@@ -1,5 +1,5 @@
-#ifndef NEXUS_MONEY_HPP
-#define NEXUS_MONEY_HPP
+#ifndef NEXUS_DEFINITIONS_MONEY_HPP
+#define NEXUS_DEFINITIONS_MONEY_HPP
 #include <concepts>
 #include <functional>
 #include <istream>

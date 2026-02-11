@@ -22,16 +22,15 @@ namespace {
 }
 
 TEST_SUITE("DataStoreMarketDataClient") {
-  TEST_CASE("query_security_info") {
+  TEST_CASE("query_ticker_info") {
     auto fixture = Fixture();
-    auto security = Security("TST", TSX);
-    auto info = SecurityInfo();
-    info.m_security = security;
+    auto ticker = parse_ticker("TST.TSX");
+    auto info = TickerInfo();
+    info.m_ticker = ticker;
     info.m_name = "Test Inc.";
-    info.m_sector = "Technology";
     fixture.m_data_store.store(info);
-    auto query = SecurityInfoQuery();
-    query.set_index(security);
+    auto query = TickerInfoQuery();
+    query.set_index(ticker);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     auto result = fixture.m_client.query(query);
     REQUIRE(result.size() == 1);
@@ -41,8 +40,8 @@ TEST_SUITE("DataStoreMarketDataClient") {
   TEST_CASE("query_sequenced_order_imbalances") {
     auto fixture = Fixture();
     auto imbalance = SequencedValue(
-      VenueOrderImbalance(OrderImbalance(Security("TST", TSX), Side::BID, 100,
-        Money::ONE, time_from_string("2024-07-10 12:00:00")), TSX),
+      VenueOrderImbalance(OrderImbalance(parse_ticker("TST.TSX"), Side::BID,
+        100, Money::ONE, time_from_string("2024-07-10 12:00:00")), TSX),
       Beam::Sequence(1));
     fixture.m_data_store.store(imbalance);
     auto query = VenueMarketDataQuery();
@@ -58,8 +57,8 @@ TEST_SUITE("DataStoreMarketDataClient") {
   TEST_CASE("query_order_imbalances") {
     auto fixture = Fixture();
     auto imbalance = SequencedValue(
-      VenueOrderImbalance(OrderImbalance(Security("TST", TSX), Side::BID, 100,
-        Money::ONE, time_from_string("2024-07-10 12:00:00")), TSX),
+      VenueOrderImbalance(OrderImbalance(parse_ticker("TST.TSX"), Side::BID,
+        100, Money::ONE, time_from_string("2024-07-10 12:00:00")), TSX),
       Beam::Sequence(1));
     fixture.m_data_store.store(imbalance);
     auto query = VenueMarketDataQuery();
@@ -74,14 +73,14 @@ TEST_SUITE("DataStoreMarketDataClient") {
 
   TEST_CASE("query_sequenced_bbo_quotes") {
     auto fixture = Fixture();
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto quote = SequencedValue(BboQuote(
       make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 100),
       time_from_string("2024-07-10 12:00:00")), Beam::Sequence(1));
-    fixture.m_data_store.store(SequencedSecurityBboQuote(
-      SecurityBboQuote(*quote, security), quote.get_sequence()));
-    auto query = SecurityMarketDataQuery();
-    query.set_index(security);
+    fixture.m_data_store.store(SequencedTickerBboQuote(
+      TickerBboQuote(*quote, ticker), quote.get_sequence()));
+    auto query = TickerMarketDataQuery();
+    query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     auto queue = std::make_shared<Queue<SequencedBboQuote>>();
@@ -92,14 +91,14 @@ TEST_SUITE("DataStoreMarketDataClient") {
 
   TEST_CASE("query_bbo_quotes") {
     auto fixture = Fixture();
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto quote = SequencedValue(BboQuote(
       make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 100),
       time_from_string("2024-07-10 12:00:00")), Beam::Sequence(1));
-    fixture.m_data_store.store(SequencedSecurityBboQuote(
-      SecurityBboQuote(*quote, security), quote.get_sequence()));
-    auto query = SecurityMarketDataQuery();
-    query.set_index(security);
+    fixture.m_data_store.store(SequencedTickerBboQuote(
+      TickerBboQuote(*quote, ticker), quote.get_sequence()));
+    auto query = TickerMarketDataQuery();
+    query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     auto queue = std::make_shared<Queue<BboQuote>>();
@@ -110,14 +109,14 @@ TEST_SUITE("DataStoreMarketDataClient") {
 
   TEST_CASE("query_sequenced_book_quotes") {
     auto fixture = Fixture();
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto quote = SequencedValue(
       BookQuote("MPID", true, TSX, make_bid(Money::ONE, 100),
         time_from_string("2024-07-10 12:00:00")), Beam::Sequence(1));
-    fixture.m_data_store.store(SequencedSecurityBookQuote(
-      SecurityBookQuote(*quote, security), quote.get_sequence()));
-    auto query = SecurityMarketDataQuery();
-    query.set_index(security);
+    fixture.m_data_store.store(SequencedTickerBookQuote(
+      TickerBookQuote(*quote, ticker), quote.get_sequence()));
+    auto query = TickerMarketDataQuery();
+    query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     auto queue = std::make_shared<Queue<SequencedBookQuote>>();
@@ -128,14 +127,14 @@ TEST_SUITE("DataStoreMarketDataClient") {
 
   TEST_CASE("query_book_quotes") {
     auto fixture = Fixture();
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto quote = SequencedValue(
       BookQuote("MPID", true, TSX, make_bid(Money::ONE, 100),
         time_from_string("2024-07-10 12:00:00")), Beam::Sequence(1));
-    fixture.m_data_store.store(SequencedSecurityBookQuote(
-      SecurityBookQuote(*quote, security), quote.get_sequence()));
-    auto query = SecurityMarketDataQuery();
-    query.set_index(security);
+    fixture.m_data_store.store(SequencedTickerBookQuote(
+      TickerBookQuote(*quote, ticker), quote.get_sequence()));
+    auto query = TickerMarketDataQuery();
+    query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     auto queue = std::make_shared<Queue<BookQuote>>();
@@ -146,15 +145,15 @@ TEST_SUITE("DataStoreMarketDataClient") {
 
   TEST_CASE("query_sequenced_time_and_sales") {
     auto fixture = Fixture();
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto sale = SequencedValue(
       TimeAndSale(time_from_string("2024-07-10 12:00:00"), Money::ONE, 100,
         TimeAndSale::Condition(), "TSX", "", ""),
       Beam::Sequence(1));
-    fixture.m_data_store.store(SequencedSecurityTimeAndSale(
-      SecurityTimeAndSale(*sale, security), sale.get_sequence()));
-    auto query = SecurityMarketDataQuery();
-    query.set_index(security);
+    fixture.m_data_store.store(SequencedTickerTimeAndSale(
+      TickerTimeAndSale(*sale, ticker), sale.get_sequence()));
+    auto query = TickerMarketDataQuery();
+    query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     auto queue = std::make_shared<Queue<SequencedTimeAndSale>>();
@@ -165,14 +164,14 @@ TEST_SUITE("DataStoreMarketDataClient") {
 
   TEST_CASE("query_time_and_sales") {
     auto fixture = Fixture();
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto sale = SequencedValue(
       TimeAndSale(time_from_string("2024-07-10 12:00:00"), Money::ONE, 100,
         TimeAndSale::Condition(), "TSX", "", ""), Beam::Sequence(1));
-    fixture.m_data_store.store(SequencedSecurityTimeAndSale(
-      SecurityTimeAndSale(*sale, security), sale.get_sequence()));
-    auto query = SecurityMarketDataQuery();
-    query.set_index(security);
+    fixture.m_data_store.store(SequencedTickerTimeAndSale(
+      TickerTimeAndSale(*sale, ticker), sale.get_sequence()));
+    auto query = TickerMarketDataQuery();
+    query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     auto queue = std::make_shared<Queue<TimeAndSale>>();
@@ -183,19 +182,20 @@ TEST_SUITE("DataStoreMarketDataClient") {
 
   TEST_CASE("load_snapshot") {
     auto fixture = Fixture();
-    auto snapshot = fixture.m_client.load_snapshot(Security("TST", TSX));
-    REQUIRE(snapshot == SecuritySnapshot());
+    auto snapshot = fixture.m_client.load_snapshot(parse_ticker("TST.TSX"));
+    REQUIRE(snapshot == TickerSnapshot());
   }
 
-  TEST_CASE("load_technicals") {
+  TEST_CASE("load_session_candlestick") {
     auto fixture = Fixture();
-    auto technicals = fixture.m_client.load_technicals(Security("TST", TSX));
-    test_json_equality(technicals, SecurityTechnicals());
+    auto candlestick =
+      fixture.m_client.load_session_candlestick(parse_ticker("TST.TSX"));
+    REQUIRE(candlestick == PriceCandlestick());
   }
 
-  TEST_CASE("load_security_info_from_prefix") {
+  TEST_CASE("load_ticker_info_from_prefix") {
     auto fixture = Fixture();
-    auto result = fixture.m_client.load_security_info_from_prefix("T");
+    auto result = fixture.m_client.load_ticker_info_from_prefix("T");
     REQUIRE(result.empty());
   }
 }

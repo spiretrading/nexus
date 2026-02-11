@@ -89,19 +89,19 @@ namespace Nexus::Tests {
       /**
        * Publishes a BboQuote where only the price is significant and the size
        * is set to 100.
-       * @param security The security whose BboQuote is being updated.
+       * @param ticker The ticker whose BboQuote is being updated.
        * @param bid The BboQuote's bid price.
        * @param ask The BboQuote's ask price.
        */
-      void update_bbo(const Security& security, Money bid, Money ask);
+      void update_bbo(const Ticker& ticker, Money bid, Money ask);
 
       /**
        * Publishes a BboQuote where only the price is significant and both the
        * bid and ask share the same price.
-       * @param security The security whose BboQuote is being updated.
+       * @param ticker The ticker whose BboQuote is being updated.
        * @param price The BboQuote's bid and ask price.
        */
-      void update_bbo(const Security& security, Money price);
+      void update_bbo(const Ticker& ticker, Money price);
 
       void close();
 
@@ -275,15 +275,15 @@ namespace Nexus::Tests {
   }
 
   inline void MarketDataServiceTestEnvironment::update_bbo(
-      const Security& security, Money bid, Money ask) {
+      const Ticker& ticker, Money bid, Money ask) {
     get_feed_client().publish(
-      SecurityBboQuote(BboQuote(make_bid(bid, 100), make_ask(ask, 100),
-        boost::posix_time::ptime()), security));
+      TickerBboQuote(BboQuote(make_bid(bid, 100), make_ask(ask, 100),
+        boost::posix_time::ptime()), ticker));
   }
 
   inline void MarketDataServiceTestEnvironment::update_bbo(
-      const Security& security, Money price) {
-    update_bbo(security, price, price);
+      const Ticker& ticker, Money price) {
+    update_bbo(ticker, price, price);
   }
 
   inline void MarketDataServiceTestEnvironment::close() {

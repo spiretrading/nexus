@@ -6,8 +6,8 @@
 namespace Nexus {
   using QuantityValue = Beam::NativeValue<Quantity>;
   using MoneyValue = Beam::NativeValue<Money>;
-  using SecurityValue = Beam::NativeValue<Security>;
-  using SecurityInfoValue = Beam::NativeValue<SecurityInfo>;
+  using TickerValue = Beam::NativeValue<Ticker>;
+  using TickerInfoValue = Beam::NativeValue<TickerInfo>;
   using OrderImbalanceValue = Beam::NativeValue<OrderImbalance>;
   using BboQuoteValue = Beam::NativeValue<BboQuote>;
   using BookQuoteValue = Beam::NativeValue<BookQuote>;

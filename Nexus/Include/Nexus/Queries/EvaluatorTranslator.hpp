@@ -37,9 +37,9 @@ namespace Nexus {
     private:
       const Beam::SynchronizedUnorderedSet<OrderId>* m_live_orders;
 
-      void translate_security_member_access_expression(
+      void translate_ticker_member_access_expression(
         const Beam::MemberAccessExpression& expression);
-      void translate_security_info_member_access_expression(
+      void translate_ticker_info_member_access_expression(
         const Beam::MemberAccessExpression& expression);
       void translate_time_and_sale_member_access_expression(
         const Beam::MemberAccessExpression& expression);
@@ -67,10 +67,10 @@ namespace Nexus {
 
   inline void EvaluatorTranslator::visit(
       const Beam::MemberAccessExpression& expression) {
-    if(expression.get_expression().get_type() == typeid(Security)) {
-      translate_security_member_access_expression(expression);
-    } else if(expression.get_expression().get_type() == typeid(SecurityInfo)) {
-      translate_security_info_member_access_expression(expression);
+    if(expression.get_expression().get_type() == typeid(Ticker)) {
+      translate_ticker_member_access_expression(expression);
+    } else if(expression.get_expression().get_type() == typeid(TickerInfo)) {
+      translate_ticker_info_member_access_expression(expression);
     } else if(expression.get_expression().get_type() == typeid(TimeAndSale)) {
       translate_time_and_sale_member_access_expression(expression);
     } else if(expression.get_expression().get_type() == typeid(OrderFields)) {
@@ -82,49 +82,66 @@ namespace Nexus {
     }
   }
 
-  inline void EvaluatorTranslator::translate_security_member_access_expression(
+  inline void EvaluatorTranslator::translate_ticker_member_access_expression(
       const Beam::MemberAccessExpression& expression) {
     expression.get_expression().apply(*this);
-    auto security_expression =
-      Beam::static_pointer_cast<Beam::EvaluatorNode<Security>>(get_evaluator());
+    auto ticker_expression =
+      Beam::static_pointer_cast<Beam::EvaluatorNode<Ticker>>(get_evaluator());
     if(expression.get_name() == "symbol") {
       set_evaluator(Beam::make_function_evaluator_node(
-        [] (const Security& security) {
-          return security.get_symbol();
-        }, std::move(security_expression)));
+        [] (const Ticker& ticker) {
+          return ticker.get_symbol();
+        }, std::move(ticker_expression)));
     } else if(expression.get_name() == "venue") {
       set_evaluator(Beam::make_function_evaluator_node(
-        [] (const Security& security) {
+        [] (const Ticker& ticker) {
           return static_cast<std::string>(
-            security.get_venue().get_code().get_data());
-        }, std::move(security_expression)));
+            ticker.get_venue().get_code().get_data());
+        }, std::move(ticker_expression)));
     } else {
       Beam::EvaluatorTranslator<QueryTypes>::visit(expression);
     }
   }
 
   inline void EvaluatorTranslator::
-      translate_security_info_member_access_expression(
+      translate_ticker_info_member_access_expression(
         const Beam::MemberAccessExpression& expression) {
     expression.get_expression().apply(*this);
-    auto security_info_expression = Beam::static_pointer_cast<
-      Beam::EvaluatorNode<SecurityInfo>>(get_evaluator());
-    if(expression.get_name() == "security") {
+    auto ticker_info_expression = Beam::static_pointer_cast<
+      Beam::EvaluatorNode<TickerInfo>>(get_evaluator());
+    if(expression.get_name() == "name") {
       set_evaluator(std::make_unique<
-        Beam::MemberAccessEvaluatorNode<SecurityInfo, Security>>(
-          std::move(security_info_expression), &SecurityInfo::m_security));
-    } else if(expression.get_name() == "name") {
+        Beam::MemberAccessEvaluatorNode<TickerInfo, std::string>>(
+          std::move(ticker_info_expression), &TickerInfo::m_name));
+    } else if(expression.get_name() == "instrument") {
       set_evaluator(std::make_unique<
-        Beam::MemberAccessEvaluatorNode<SecurityInfo, std::string>>(
-          std::move(security_info_expression), &SecurityInfo::m_name));
-    } else if(expression.get_name() == "sector") {
-      set_evaluator(std::make_unique<
-        Beam::MemberAccessEvaluatorNode<SecurityInfo, std::string>>(
-          std::move(security_info_expression), &SecurityInfo::m_sector));
+        Beam::MemberAccessEvaluatorNode<TickerInfo, Instrument>>(
+          std::move(ticker_info_expression), &TickerInfo::m_instrument));
+    } else if(expression.get_name() == "tick_size") {
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<TickerInfo, Money>>(
+          std::move(ticker_info_expression), &TickerInfo::m_tick_size));
+    } else if(expression.get_name() == "lot_size") {
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<TickerInfo, Quantity>>(
+          std::move(ticker_info_expression), &TickerInfo::m_lot_size));
     } else if(expression.get_name() == "board_lot") {
-      set_evaluator(std::make_unique<
-        Beam::MemberAccessEvaluatorNode<SecurityInfo, Quantity>>(
-          std::move(security_info_expression), &SecurityInfo::m_board_lot));
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<TickerInfo, Quantity>>(
+          std::move(ticker_info_expression), &TickerInfo::m_board_lot));
+    } else if(expression.get_name() == "price_precision") {
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<TickerInfo, int>>(
+          std::move(ticker_info_expression), &TickerInfo::m_price_precision));
+    } else if(expression.get_name() == "quantity_precision") {
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<TickerInfo, int>>(
+          std::move(ticker_info_expression),
+          &TickerInfo::m_quantity_precision));
+    } else if(expression.get_name() == "multiplier") {
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<TickerInfo, Quantity>>(
+          std::move(ticker_info_expression), &TickerInfo::m_multiplier));
     } else {
       Beam::EvaluatorTranslator<QueryTypes>::visit(expression);
     }
@@ -171,10 +188,10 @@ namespace Nexus {
     expression.get_expression().apply(*this);
     auto order_fields_expression = Beam::static_pointer_cast<
       Beam::EvaluatorNode<OrderFields>>(get_evaluator());
-    if(expression.get_name() == "security") {
+    if(expression.get_name() == "ticker") {
       set_evaluator(std::make_unique<
-        Beam::MemberAccessEvaluatorNode<OrderFields, Security>>(
-          std::move(order_fields_expression), &OrderFields::m_security));
+        Beam::MemberAccessEvaluatorNode<OrderFields, Ticker>>(
+          std::move(order_fields_expression), &OrderFields::m_ticker));
     } else {
       Beam::EvaluatorTranslator<QueryTypes>::visit(expression);
     }

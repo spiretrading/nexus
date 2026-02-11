@@ -1,5 +1,5 @@
-#ifndef NEXUS_TICKER_HPP
-#define NEXUS_TICKER_HPP
+#ifndef NEXUS_DEFINITIONS_TICKER_HPP
+#define NEXUS_DEFINITIONS_TICKER_HPP
 #include <istream>
 #include <ostream>
 #include <string>

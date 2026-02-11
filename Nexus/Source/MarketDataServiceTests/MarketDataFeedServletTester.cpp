@@ -14,19 +14,19 @@ using namespace Nexus::DefaultVenues;
 
 namespace {
   struct TestRegistry {
-    std::function<void (const SecurityInfo&)> m_add_slot;
+    std::function<void (const TickerInfo&)> m_add_slot;
     std::function<void (const VenueOrderImbalance&, int)>
       m_order_imbalance_slot;
-    std::function<void (const SecurityBboQuote&, int)> m_bbo_quote_slot;
-    std::function<void (const SecurityBookQuote&, int)> m_book_quote_slot;
-    std::function<void (const SecurityTimeAndSale&, int)> m_time_and_sale_slot;
+    std::function<void (const TickerBboQuote&, int)> m_bbo_quote_slot;
+    std::function<void (const TickerBookQuote&, int)> m_book_quote_slot;
+    std::function<void (const TickerTimeAndSale&, int)> m_time_and_sale_slot;
     std::function<void (int)> m_clear_slot;
 
     TestRegistry() {
       m_clear_slot = [] (auto) {};
     }
 
-    void add(const SecurityInfo& info) {
+    void add(const TickerInfo& info) {
       m_add_slot(info);
     }
 
@@ -34,15 +34,15 @@ namespace {
       m_order_imbalance_slot(imbalance, source_id);
     }
 
-    void publish(const SecurityBboQuote& quote, int source_id) {
+    void publish(const TickerBboQuote& quote, int source_id) {
       m_bbo_quote_slot(quote, source_id);
     }
 
-    void publish(const SecurityBookQuote& quote, int source_id) {
+    void publish(const TickerBookQuote& quote, int source_id) {
       m_book_quote_slot(quote, source_id);
     }
 
-    void publish(const SecurityTimeAndSale& time_and_sale, int source_id) {
+    void publish(const TickerTimeAndSale& time_and_sale, int source_id) {
       m_time_and_sale_slot(time_and_sale, source_id);
     }
 
@@ -72,24 +72,27 @@ namespace {
 }
 
 TEST_SUITE("MarketDataFeedServlet") {
-  TEST_CASE("set_security_info") {
+  TEST_CASE("set_ticker_info") {
     auto fixture = Fixture();
-    auto info = SecurityInfo(Security("A", TSX), "SECURITY A", "", 100);
+    auto info = TickerInfo();
+    info.m_ticker = parse_ticker("A.TSX");
+    info.m_name = "SECURITY A";
+    info.m_board_lot = 100;
     auto completion_token = Async<void>();
     fixture.m_registry.m_add_slot = [&] (const auto& received_info) {
       REQUIRE(received_info == info);
       completion_token.get_eval().set();
     };
-    send_record_message<SetSecurityInfoMessage>(*fixture.m_client, info);
+    send_record_message<SetTickerInfoMessage>(*fixture.m_client, info);
     completion_token.get();
   }
 
   TEST_CASE("send_bbo_quote") {
     auto fixture = Fixture();
-    auto security = Security("A", TSX);
-    auto bbo_quote = SecurityBboQuote(
+    auto ticker = parse_ticker("A.TSX");
+    auto bbo_quote = TickerBboQuote(
       BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
-        time_from_string("2024-07-14 12:00:00")), security);
+        time_from_string("2024-07-14 12:00:00")), ticker);
     auto completion_token = Async<void>();
     fixture.m_registry.m_bbo_quote_slot =
       [&] (const auto& received_quote, auto source_id) {
@@ -103,10 +106,10 @@ TEST_SUITE("MarketDataFeedServlet") {
 
   TEST_CASE("send_book_quote") {
     auto fixture = Fixture();
-    auto security = Security("A", TSX);
-    auto book_quote = SecurityBookQuote(
+    auto ticker = parse_ticker("A.TSX");
+    auto book_quote = TickerBookQuote(
       BookQuote("MP1", false, TSX, make_bid(Money::CENT, 100),
-        time_from_string("2024-07-14 12:00:00")), security);
+        time_from_string("2024-07-14 12:00:00")), ticker);
     auto completion_token = Async<void>();
     fixture.m_registry.m_book_quote_slot =
       [&] (const auto& received_quote, auto source_id) {
@@ -120,8 +123,8 @@ TEST_SUITE("MarketDataFeedServlet") {
 
   TEST_CASE("send_order_imbalance") {
     auto fixture = Fixture();
-    auto security = Security("A", TSX);
-    auto order_imbalance = VenueOrderImbalance(OrderImbalance(security,
+    auto ticker = parse_ticker("A.TSX");
+    auto order_imbalance = VenueOrderImbalance(OrderImbalance(ticker,
       Side::ASK, 100, Money::ONE, time_from_string("2024-07-14 12:00:00")),
       TSX);
     auto completion_token = Async<void>();
@@ -137,10 +140,10 @@ TEST_SUITE("MarketDataFeedServlet") {
 
   TEST_CASE("send_time_and_sale") {
     auto fixture = Fixture();
-    auto security = Security("A", TSX);
-    auto time_and_sale = SecurityTimeAndSale(
+    auto ticker = parse_ticker("A.TSX");
+    auto time_and_sale = TickerTimeAndSale(
       TimeAndSale(time_from_string("2024-07-14 12:00:00"), Money::ONE, 100,
-        TimeAndSale::Condition(), "TSX", "", ""), security);
+        TimeAndSale::Condition(), "TSX", "", ""), ticker);
     auto completion_token = Async<void>();
     fixture.m_registry.m_time_and_sale_slot =
       [&] (const auto& received_time_and_sale, auto source_id) {
@@ -154,19 +157,19 @@ TEST_SUITE("MarketDataFeedServlet") {
 
   TEST_CASE("send_multiple_messages") {
     auto fixture = Fixture();
-    auto security = Security("A", TSX);
-    auto bbo_quote = SecurityBboQuote(
+    auto ticker = parse_ticker("A.TSX");
+    auto bbo_quote = TickerBboQuote(
       BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
-        time_from_string("2024-07-14 12:00:00")), security);
-    auto book_quote = SecurityBookQuote(
+        time_from_string("2024-07-14 12:00:00")), ticker);
+    auto book_quote = TickerBookQuote(
       BookQuote("MP1", false, TSX, make_bid(Money::CENT, 100),
-        time_from_string("2024-07-14 12:00:00")), security);
-    auto order_imbalance = VenueOrderImbalance(OrderImbalance(security,
+        time_from_string("2024-07-14 12:00:00")), ticker);
+    auto order_imbalance = VenueOrderImbalance(OrderImbalance(ticker,
       Side::ASK, 100, Money::ONE, time_from_string("2024-07-14 12:00:00")),
       TSX);
-    auto time_and_sale = SecurityTimeAndSale(
+    auto time_and_sale = TickerTimeAndSale(
       TimeAndSale(time_from_string("2024-07-14 12:00:00"), Money::ONE, 100,
-        TimeAndSale::Condition(), "TSX", "", ""), security);
+        TimeAndSale::Condition(), "TSX", "", ""), ticker);
     auto bbo_quote_completion = Async<void>();
     auto book_quote_completion = Async<void>();
     auto order_imbalance_completion = Async<void>();

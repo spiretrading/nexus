@@ -1,5 +1,5 @@
-#ifndef NEXUS_SCOPE_TABLE_HPP
-#define NEXUS_SCOPE_TABLE_HPP
+#ifndef NEXUS_DEFINITIONS_SCOPE_TABLE_HPP
+#define NEXUS_DEFINITIONS_SCOPE_TABLE_HPP
 #include <algorithm>
 #include <deque>
 #include <iterator>

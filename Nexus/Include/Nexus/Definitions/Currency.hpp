@@ -1,5 +1,5 @@
-#ifndef NEXUS_CURRENCY_HPP
-#define NEXUS_CURRENCY_HPP
+#ifndef NEXUS_DEFINITIONS_CURRENCY_HPP
+#define NEXUS_DEFINITIONS_CURRENCY_HPP
 #include <algorithm>
 #include <atomic>
 #include <cstdint>
@@ -205,7 +205,7 @@ namespace Nexus {
       return out << id;
     }
     return out <<
-      decode_asset_type(value.get_type()) << '(' << value.get_id() << ')';
+      decode_asset_type(value.get_type()) << '(' << value.get_code() << ')';
   }
 
   inline std::size_t hash_value(CurrencyId code) {

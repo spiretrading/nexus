@@ -1,5 +1,5 @@
-#ifndef NEXUS_BOOK_QUOTE_HPP
-#define NEXUS_BOOK_QUOTE_HPP
+#ifndef NEXUS_DEFINITIONS_BOOK_QUOTE_HPP
+#define NEXUS_DEFINITIONS_BOOK_QUOTE_HPP
 #include <string>
 #include <ostream>
 #include <Beam/Serialization/ShuttleDateTime.hpp>

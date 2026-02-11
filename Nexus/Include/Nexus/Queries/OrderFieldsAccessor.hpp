@@ -28,8 +28,8 @@ namespace Nexus {
       /** Returns an accessor for the account member. */
       Beam::MemberAccessExpression get_account() const;
 
-      /** Returns an accessor for the security member. */
-      Beam::MemberAccessExpression get_security() const;
+      /** Returns an accessor for the ticker member. */
+      Beam::MemberAccessExpression get_ticker() const;
 
       /** Returns an accessor for the currency member. */
       Beam::MemberAccessExpression get_currency() const;
@@ -70,16 +70,14 @@ namespace Nexus {
       "account", typeid(Beam::DirectoryEntry), m_expression);
   }
 
-  inline Beam::MemberAccessExpression
-      OrderFieldsAccessor::get_security() const {
-    return Beam::MemberAccessExpression(
-      "security", typeid(Security), m_expression);
+  inline Beam::MemberAccessExpression OrderFieldsAccessor::get_ticker() const {
+    return Beam::MemberAccessExpression("ticker", typeid(Ticker), m_expression);
   }
 
   inline Beam::MemberAccessExpression
       OrderFieldsAccessor::get_currency() const {
     return Beam::MemberAccessExpression(
-      "currency", typeid(CurrencyId), m_expression);
+      "currency", typeid(Asset), m_expression);
   }
 
   inline Beam::MemberAccessExpression OrderFieldsAccessor::get_type() const {

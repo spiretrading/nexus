@@ -6,13 +6,13 @@
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
 #include <boost/variant/variant.hpp>
-#include "Nexus/Definitions/SecurityInfo.hpp"
-#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
+#include "Nexus/Definitions/TickerInfo.hpp"
+#include "Nexus/MarketDataService/TickerMarketDataQuery.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
 namespace Nexus {
-  using MarketDataFeedMessage = boost::variant<SecurityBboQuote,
-    SecurityBookQuote, SecurityTimeAndSale, VenueOrderImbalance>;
+  using MarketDataFeedMessage = boost::variant<TickerBboQuote,
+    TickerBookQuote, TickerTimeAndSale, VenueOrderImbalance>;
 
   /** Standard name for the market data feed service. */
   inline const auto MARKET_DATA_FEED_SERVICE_NAME =
@@ -21,11 +21,11 @@ namespace Nexus {
   BEAM_DEFINE_MESSAGES(market_data_feed_messages,
 
     /**
-     * Sets or updates a SecurityInfo.
-     * @param security_info The updated SecurityInfo.
+     * Sets or updates a TickerInfo.
+     * @param ticker_info The updated TickerInfo.
      */
-    (SetSecurityInfoMessage, "Nexus.MarketDataService.SetSecurityInfoMessage",
-      (SecurityInfo, security_info)),
+    (SetTickerInfoMessage, "Nexus.MarketDataService.SetTickerInfoMessage",
+      (TickerInfo, ticker_info)),
 
     /**
      * Sends a list of MarketDataFeedMessages for processing.

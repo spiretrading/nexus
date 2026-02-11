@@ -16,16 +16,15 @@
 #include <boost/variant/variant.hpp>
 #include <tsl/htrie_map.h>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
-#include "Nexus/MarketDataService/SecurityEntry.hpp"
+#include "Nexus/MarketDataService/TickerEntry.hpp"
 #include "Nexus/MarketDataService/VenueEntry.hpp"
 #include "Nexus/Queries/StandardValues.hpp"
 
 namespace Nexus::Details {
-  Money load_close_price(
-      const Security& security, const std::string& market_center,
+  Money load_close_price(const Ticker& ticker, const std::string& market_center,
       IsHistoricalDataStore auto& data_store) {
-    auto previous_close_query = SecurityMarketDataQuery();
-    previous_close_query.set_index(security);
+    auto previous_close_query = TickerMarketDataQuery();
+    previous_close_query.set_index(ticker);
     previous_close_query.set_range(Beam::Range::TOTAL);
     previous_close_query.set_snapshot_limit(Beam::SnapshotLimit::Type::TAIL, 1);
     previous_close_query.set_filter(market_center ==
@@ -73,43 +72,41 @@ namespace Nexus {
         boost::local_time::tz_database time_zones) noexcept;
 
       /**
-       * Returns a list of SecurityInfo's matching a prefix.
+       * Returns a list of TickerInfo's matching a prefix.
        * @param prefix The prefix to search for.
-       * @return The list of SecurityInfo's that match the <i>prefix</i>.
+       * @return The list of TickerInfo's that match the <i>prefix</i>.
        */
-      std::vector<SecurityInfo>
-        search_security_info(const std::string& prefix) const;
+      std::vector<TickerInfo>
+        search_ticker_info(const std::string& prefix) const;
 
       /**
-       * Returns a Security's primary listing.
-       * @param security The Security to search.
-       * @return The <i>security</i>'s primary listing, if no such listing
-       *         exists then the MarketCode will be set to empty.
+       * Returns a Ticker's primary listing.
+       * @param ticker The Ticker to search.
+       * @return The <i>ticker</i>'s primary listing, if no such listing
+       *         exists then the Venue will be set to empty.
        */
-      Security get_primary_listing(const Security& security) const;
+      Ticker get_primary_listing(const Ticker& ticker) const;
 
       /**
-       * Returns a Security's SecurityTechnicals.
-       * @param security The Security whose SecurityTechnicals is to be
-       *        returned.
-       * @return A snapshot of the <i>security</i>'s SecurityTechnicals.
+       * Returns a Ticker's session candlestick.
+       * @param ticker The Ticker whose session candlestick is to be returned.
+       * @return The <i>ticker</i>'s session candlestick.
        */
-      boost::optional<SecurityTechnicals>
-        find_security_technicals(const Security& security) const;
+      boost::optional<PriceCandlestick>
+        find_session_candlestick(const Ticker& ticker) const;
 
       /**
-       * Returns a Security's real time snapshot.
-       * @param security The Security whose snapshot is to be returned.
-       * @return The real-time snapshot of the <i>security</i>.
+       * Returns a Ticker's real time snapshot.
+       * @param ticker The Ticker whose snapshot is to be returned.
+       * @return The real-time snapshot of the <i>ticker</i>.
        */
-      boost::optional<SecuritySnapshot>
-        find_snapshot(const Security& security) const;
+      boost::optional<TickerSnapshot> find_snapshot(const Ticker& ticker) const;
 
       /**
-       * Adds or updates a SecurityInfo to this registry.
-       * @param info The SecurityInfo to add or update.
+       * Adds or updates a TickerInfo to this registry.
+       * @param info The TickerInfo to add or update.
        */
-      void add(const SecurityInfo& info);
+      void add(const TickerInfo& info);
 
       /**
        * Publishes an OrderImbalance.
@@ -126,33 +123,33 @@ namespace Nexus {
        * Publishes a BboQuote.
        * @param quote The BboQuote to publish.
        * @param source_id The id of the source setting the value.
-       * @param data_store Used to initialize the Security's data.
+       * @param data_store Used to initialize the Ticker's data.
        * @param f Receives synchronized access to the updated data.
        */
       template<typename F>
-      void publish(const SecurityBboQuote& quote, int source_id,
+      void publish(const TickerBboQuote& quote, int source_id,
         IsHistoricalDataStore auto& data_store, const F& f);
 
       /**
        * Updates a BookQuote.
        * @param delta The BookQuote storing the change.
        * @param source_id The id of the source setting the value.
-       * @param data_store Used to initialize the Security's data.
+       * @param data_store Used to initialize the Ticker's data.
        * @param f Receives synchronized access to the updated data.
        */
       template<typename F>
-      void publish(const SecurityBookQuote& delta, int source_id,
+      void publish(const TickerBookQuote& delta, int source_id,
         IsHistoricalDataStore auto& data_store, const F& f);
 
       /**
        * Publishes a TimeAndSale.
        * @param time_and_sale The TimeAndSale to publish.
        * @param source_id The id of the source setting the value.
-       * @param data_store Used to initialize the Security's data.
+       * @param data_store Used to initialize the Ticker's data.
        * @param f Receives synchronized access to the updated data.
        */
       template<typename F>
-      void publish(const SecurityTimeAndSale& time_and_sale, int source_id,
+      void publish(const TickerTimeAndSale& time_and_sale, int source_id,
         IsHistoricalDataStore auto& data_store, const F& f);
 
       /**
@@ -165,23 +162,23 @@ namespace Nexus {
       using PrimaryListingKey = Details::PrimaryListingKey;
       template<typename> friend struct std::hash;
       using SyncVenueEntry = Beam::Sync<VenueEntry, Beam::Mutex>;
-      using SyncSecurityEntry = Beam::Sync<SecurityEntry, Beam::Mutex>;
+      using SyncTickerEntry = Beam::Sync<TickerEntry, Beam::Mutex>;
       VenueDatabase m_venues;
       boost::local_time::tz_database m_time_zones;
-      Beam::Sync<tsl::htrie_map<char, SecurityInfo>> m_security_database;
-      Beam::SynchronizedUnorderedMap<PrimaryListingKey, Security>
+      Beam::Sync<tsl::htrie_map<char, TickerInfo>> m_ticker_database;
+      Beam::SynchronizedUnorderedMap<PrimaryListingKey, Ticker>
         m_primary_listings;
       Beam::SynchronizedUnorderedMap<Venue, std::shared_ptr<
         Beam::Remote<SyncVenueEntry, Beam::Mutex>>> m_venue_entries;
-      Beam::SynchronizedUnorderedMap<Security, std::shared_ptr<Beam::Remote<
-        SyncSecurityEntry, Beam::Mutex>>> m_security_entries;
+      Beam::SynchronizedUnorderedMap<Ticker, std::shared_ptr<Beam::Remote<
+        SyncTickerEntry, Beam::Mutex>>> m_ticker_entries;
 
       MarketDataRegistry(const MarketDataRegistry&) = delete;
       MarketDataRegistry& operator =(const MarketDataRegistry&) = delete;
       boost::optional<SyncVenueEntry&> load(
         Venue venue, IsHistoricalDataStore auto& data_store);
-      boost::optional<SyncSecurityEntry&> load(
-        const Security& security, IsHistoricalDataStore auto & data_store);
+      boost::optional<SyncTickerEntry&> load(
+        const Ticker& ticker, IsHistoricalDataStore auto& data_store);
   };
 
   inline MarketDataRegistry::MarketDataRegistry(
@@ -189,30 +186,36 @@ namespace Nexus {
     : m_venues(std::move(venues)),
       m_time_zones(std::move(time_zones)) {}
 
-  inline std::vector<SecurityInfo> MarketDataRegistry::search_security_info(
+  inline std::vector<TickerInfo> MarketDataRegistry::search_ticker_info(
       const std::string& prefix) const {
-    auto matches = std::unordered_set<SecurityInfo>();
+    struct TickerInfoHash {
+      std::size_t operator ()(const TickerInfo& info) const {
+        return std::hash<Ticker>()(info.m_ticker);
+      }
+    };
+    auto matches = std::unordered_set<TickerInfo, TickerInfoHash>();
     auto uppercase_prefix = boost::to_upper_copy(prefix);
-    Beam::with(m_security_database, [&] (auto& database) {
+    Beam::with(m_ticker_database, [&] (auto& database) {
       auto range = database.equal_prefix_range(uppercase_prefix);
       for(auto i = range.first; i != range.second; ++i) {
         matches.insert(*i);
       }
     });
-    auto activity_result = std::vector<std::pair<Money, SecurityInfo>>();
+    auto activity_result = std::vector<std::pair<Money, TickerInfo>>();
     for(auto& match : matches) {
       activity_result.push_back(std::pair(Money::ZERO, match));
     }
     for(auto& entry : activity_result) {
-      if(auto technicals = find_security_technicals(entry.second.m_security)) {
-        entry.first = abs(technicals->m_volume * technicals->m_open);
+      if(auto candlestick =
+          find_session_candlestick(entry.second.m_ticker)) {
+        entry.first = abs(candlestick->get_volume() * candlestick->get_open());
       }
     }
     std::sort(activity_result.begin(), activity_result.end(),
       [] (const auto& lhs, const auto& rhs) {
         return lhs.first > rhs.first;
       });
-    auto result = std::vector<SecurityInfo>();
+    auto result = std::vector<TickerInfo>();
     for(auto& entry : activity_result) {
       result.push_back(std::move(entry.second));
       static const auto MAX_MATCH_COUNT = 8;
@@ -223,45 +226,44 @@ namespace Nexus {
     return result;
   }
 
-  inline Security MarketDataRegistry::get_primary_listing(
-      const Security& security) const {
-    if(security.get_symbol().empty() || !security.get_venue()) {
-      return Security(security.get_symbol(), Venue());
+  inline Ticker MarketDataRegistry::get_primary_listing(
+      const Ticker& ticker) const {
+    if(ticker.get_symbol().empty() || !ticker.get_venue()) {
+      return Ticker(ticker.get_symbol(), Venue());
     }
     auto venue_key =
-      PrimaryListingKey(security.get_symbol(), security.get_venue());
-    if(auto verified_security = m_primary_listings.try_load(venue_key)) {
-      return *verified_security;
+      PrimaryListingKey(ticker.get_symbol(), ticker.get_venue());
+    if(auto verified_ticker = m_primary_listings.try_load(venue_key)) {
+      return *verified_ticker;
     }
-    auto& venue_entry = m_venues.from(security.get_venue());
+    auto& venue_entry = m_venues.from(ticker.get_venue());
     if(!venue_entry.m_venue) {
-      return security;
+      return ticker;
     }
-    auto country_key = 
-      PrimaryListingKey(security.get_symbol(), venue_entry.m_country_code);
-    if(auto verified_security = m_primary_listings.try_load(country_key)) {
+    auto country_key =
+      PrimaryListingKey(ticker.get_symbol(), venue_entry.m_country_code);
+    if(auto verified_ticker = m_primary_listings.try_load(country_key)) {
       const_cast<MarketDataRegistry*>(this)->m_primary_listings.insert(
-        venue_key, *verified_security);
-      return *verified_security;
+        venue_key, *verified_ticker);
+      return *verified_ticker;
     }
-    return security;
+    return ticker;
   }
 
-  inline boost::optional<SecurityTechnicals>
-      MarketDataRegistry::find_security_technicals(
-        const Security& security) const {
-    auto entry = m_security_entries.find(get_primary_listing(security));
+  inline boost::optional<PriceCandlestick>
+      MarketDataRegistry::find_session_candlestick(const Ticker& ticker) const {
+    auto entry = m_ticker_entries.find(get_primary_listing(ticker));
     if(!entry || !(*entry)->is_available()) {
       return boost::none;
     }
     return Beam::with(***entry, [&] (const auto& entry) {
-      return entry.get_security_technicals();
+      return entry.get_session_candlestick();
     });
   }
 
-  inline boost::optional<SecuritySnapshot>
-      MarketDataRegistry::find_snapshot(const Security& security) const {
-    auto entry = m_security_entries.find(get_primary_listing(security));
+  inline boost::optional<TickerSnapshot>
+      MarketDataRegistry::find_snapshot(const Ticker& ticker) const {
+    auto entry = m_ticker_entries.find(get_primary_listing(ticker));
     if(!entry || !(*entry)->is_available()) {
       return boost::none;
     }
@@ -270,38 +272,38 @@ namespace Nexus {
     });
   }
 
-  inline void MarketDataRegistry::add(const SecurityInfo& info) {
-    auto key = boost::lexical_cast<std::string>(info.m_security);
+  inline void MarketDataRegistry::add(const TickerInfo& info) {
+    auto key = boost::lexical_cast<std::string>(info.m_ticker);
     auto name = boost::to_upper_copy(info.m_name);
-    Beam::with(m_security_database, [&] (auto& database) {
+    Beam::with(m_ticker_database, [&] (auto& database) {
       database[key] = info;
       database[name] = info;
     });
-    auto& venue_entry = m_venues.from(info.m_security.get_venue());
+    auto& venue_entry = m_venues.from(info.m_ticker.get_venue());
     if(!venue_entry.m_venue) {
       return;
     }
     auto venue_key = PrimaryListingKey(
-      info.m_security.get_symbol(), info.m_security.get_venue());
-    m_primary_listings.update(venue_key, info.m_security);
+      info.m_ticker.get_symbol(), info.m_ticker.get_venue());
+    m_primary_listings.update(venue_key, info.m_ticker);
     auto country_key = PrimaryListingKey(
-      info.m_security.get_symbol(), venue_entry.m_country_code);
-    m_primary_listings.update(country_key, info.m_security);
+      info.m_ticker.get_symbol(), venue_entry.m_country_code);
+    m_primary_listings.update(country_key, info.m_ticker);
   }
 
   template<typename F>
   void MarketDataRegistry::publish(const VenueOrderImbalance& imbalance,
       int source_id, IsHistoricalDataStore auto& data_store, const F& f) {
-    auto security_entry = load(imbalance->m_security, data_store);
-    if(!security_entry) {
+    auto ticker_entry = load(imbalance->m_ticker, data_store);
+    if(!ticker_entry) {
       return;
     }
     auto venue_entry = load(imbalance.get_index(), data_store);
     if(!venue_entry) {
       return;
     }
-    auto [security, reference_price] =
-      Beam::with(*security_entry, [&] (const auto& entry) {
+    auto [ticker, reference_price] =
+      Beam::with(*ticker_entry, [&] (const auto& entry) {
         auto reference_price = [&] {
           if(imbalance->m_reference_price == Money::ZERO) {
             auto& bbo = **entry.get_bbo_quote();
@@ -310,11 +312,11 @@ namespace Nexus {
           }
           return imbalance->m_reference_price;
         }();
-        return std::tuple(entry.get_security(), reference_price);
+        return std::tuple(entry.get_ticker(), reference_price);
       });
     Beam::with(*venue_entry, [&] (auto& entry) {
       auto sanitized_imbalance = OrderImbalance(imbalance);
-      sanitized_imbalance.m_security = std::move(security);
+      sanitized_imbalance.m_ticker = std::move(ticker);
       sanitized_imbalance.m_reference_price = std::move(reference_price);
       if(auto sequenced_imbalance =
           entry.publish(std::move(sanitized_imbalance), source_id)) {
@@ -324,7 +326,7 @@ namespace Nexus {
   }
 
   template<typename F>
-  void MarketDataRegistry::publish(const SecurityBboQuote& quote,
+  void MarketDataRegistry::publish(const TickerBboQuote& quote,
       int source_id, IsHistoricalDataStore auto& data_store, const F& f) {
     auto entry = load(quote.get_index(), data_store);
     if(!entry) {
@@ -338,7 +340,7 @@ namespace Nexus {
   }
 
   template<typename F>
-  void MarketDataRegistry::publish(const SecurityBookQuote& delta,
+  void MarketDataRegistry::publish(const TickerBookQuote& delta,
       int source_id, IsHistoricalDataStore auto& data_store, const F& f) {
     auto entry = load(delta.get_index(), data_store);
     if(!entry) {
@@ -352,7 +354,7 @@ namespace Nexus {
   }
 
   template<typename F>
-  void MarketDataRegistry::publish(const SecurityTimeAndSale& time_and_sale,
+  void MarketDataRegistry::publish(const TickerTimeAndSale& time_and_sale,
       int source_id, IsHistoricalDataStore auto& data_store, const F& f) {
     auto entry = load(time_and_sale.get_index(), data_store);
     if(!entry) {
@@ -368,9 +370,9 @@ namespace Nexus {
 
   inline void MarketDataRegistry::clear(int source_id) {
     auto entries = std::vector<
-      std::shared_ptr<Beam::Remote<SyncSecurityEntry, Beam::Mutex>>>();
-    m_security_entries.with([&] (auto& security_entries) {
-      for(auto& entry : security_entries | std::views::values) {
+      std::shared_ptr<Beam::Remote<SyncTickerEntry, Beam::Mutex>>>();
+    m_ticker_entries.with([&] (auto& ticker_entries) {
+      for(auto& entry : ticker_entries | std::views::values) {
         entries.push_back(entry);
       }
     });
@@ -397,24 +399,24 @@ namespace Nexus {
     return **entry;
   }
 
-  boost::optional<MarketDataRegistry::SyncSecurityEntry&>
+  boost::optional<MarketDataRegistry::SyncTickerEntry&>
       MarketDataRegistry::load(
-        const Security& security, IsHistoricalDataStore auto& data_store) {
-    auto sanitized_security = get_primary_listing(security);
-    if(!sanitized_security) {
+        const Ticker& ticker, IsHistoricalDataStore auto& data_store) {
+    auto sanitized_ticker = get_primary_listing(ticker);
+    if(!sanitized_ticker) {
       return boost::none;
     }
-    auto entry = m_security_entries.get_or_insert(sanitized_security, [&] {
+    auto entry = m_ticker_entries.get_or_insert(sanitized_ticker, [&] {
       return std::make_shared<
-        Beam::Remote<SyncSecurityEntry, Beam::Mutex>>([&] (auto& entry) {
+        Beam::Remote<SyncTickerEntry, Beam::Mutex>>([&] (auto& entry) {
           auto initial_sequences =
-            load_initial_sequences(data_store, sanitized_security);
+            load_initial_sequences(data_store, sanitized_ticker);
           auto& market_center =
-            m_venues.from(sanitized_security.get_venue()).m_market_center;
+            m_venues.from(sanitized_ticker.get_venue()).m_market_center;
           auto close = Details::load_close_price(
-            sanitized_security, market_center, data_store);
-          entry.emplace(sanitized_security, m_venues, m_time_zones, close,
-            initial_sequences);
+            sanitized_ticker, market_center, data_store);
+          entry.emplace(
+            sanitized_ticker, m_venues, m_time_zones, close, initial_sequences);
         });
     });
     return **entry;

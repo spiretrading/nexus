@@ -1,5 +1,5 @@
-#ifndef NEXUS_SCOPE_HPP
-#define NEXUS_SCOPE_HPP
+#ifndef NEXUS_DEFINITIONS_SCOPE_HPP
+#define NEXUS_DEFINITIONS_SCOPE_HPP
 #include <functional>
 #include <string>
 #include <unordered_set>

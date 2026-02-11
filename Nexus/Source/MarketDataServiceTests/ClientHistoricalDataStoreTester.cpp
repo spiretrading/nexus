@@ -11,28 +11,26 @@ using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 TEST_SUITE("ClientHistoricalDataStore") {
-  TEST_CASE("load_security_info") {
+  TEST_CASE("load_ticker_info") {
     auto operations = std::make_shared<
       Queue<std::shared_ptr<TestMarketDataClient::Operation>>>();
     auto client = TestMarketDataClient(operations);
     auto data_store = ClientHistoricalDataStore<TestMarketDataClient*>(&client);
-    auto security = Security("TST", TSX);
-    auto info = SecurityInfo();
-    info.m_security = security;
+    auto ticker = parse_ticker("TST.TSX");
+    auto info = TickerInfo();
+    info.m_ticker = ticker;
     info.m_name = "Test Inc.";
-    info.m_sector = "Technology";
-    auto query = SecurityInfoQuery();
-    query.set_index(security);
+    auto query = TickerInfoQuery();
+    query.set_index(ticker);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     auto load_routine = std::async(std::launch::async, [&] {
-      return data_store.load_security_info(query);
+      return data_store.load_ticker_info(query);
     });
     auto operation = operations->pop();
     auto query_operation =
-      std::get_if<TestMarketDataClient::SecurityInfoQueryOperation>(
-        &*operation);
+      std::get_if<TestMarketDataClient::TickerInfoQueryOperation>(&*operation);
     REQUIRE(query_operation);
-    REQUIRE(query_operation->m_query.get_index() == security);
+    REQUIRE(query_operation->m_query.get_index() == ticker);
     query_operation->m_result.set({info});
     auto result = load_routine.get();
     REQUIRE(result.size() == 1);
@@ -58,8 +56,8 @@ TEST_SUITE("ClientHistoricalDataStore") {
     REQUIRE(query_operation);
     REQUIRE(query_operation->m_query.get_index() == TSX);
     auto imbalance = SequencedValue(OrderImbalance(
-      OrderImbalance(Security("TST", TSX), Side::BID, 100, Money::ONE,
-        time_from_string("2024-07-10 12:00:00"))), Beam::Sequence(1));
+      parse_ticker("TST.TSX"), Side::BID, 100, Money::ONE,
+        time_from_string("2024-07-10 12:00:00")), Beam::Sequence(1));
     query_operation->m_queue.push(imbalance);
     query_operation->m_queue.close();
     auto result = load_routine.get();
@@ -72,9 +70,9 @@ TEST_SUITE("ClientHistoricalDataStore") {
       Queue<std::shared_ptr<TestMarketDataClient::Operation>>>();
     auto client = TestMarketDataClient(operations);
     auto data_store = ClientHistoricalDataStore<TestMarketDataClient*>(&client);
-    auto security = Security("TST", TSX);
-    auto query = SecurityMarketDataQuery();
-    query.set_index(security);
+    auto ticker = parse_ticker("TST.TSX");
+    auto query = TickerMarketDataQuery();
+    query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     auto load_routine = std::async(std::launch::async, [&] {
@@ -85,7 +83,7 @@ TEST_SUITE("ClientHistoricalDataStore") {
       std::get_if<TestMarketDataClient::QuerySequencedBboQuoteOperation>(
         &*operation);
     REQUIRE(query_operation);
-    REQUIRE(query_operation->m_query.get_index() == security);
+    REQUIRE(query_operation->m_query.get_index() == ticker);
     auto quote = SequencedValue(BboQuote(
       make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 100),
       time_from_string("2024-07-10 12:00:00")), Beam::Sequence(1));
@@ -101,9 +99,9 @@ TEST_SUITE("ClientHistoricalDataStore") {
       Queue<std::shared_ptr<TestMarketDataClient::Operation>>>();
     auto client = TestMarketDataClient(operations);
     auto data_store = ClientHistoricalDataStore<TestMarketDataClient*>(&client);
-    auto security = Security("TST", TSX);
-    auto query = SecurityMarketDataQuery();
-    query.set_index(security);
+    auto ticker = parse_ticker("TST.TSX");
+    auto query = TickerMarketDataQuery();
+    query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     auto load_routine = std::async(std::launch::async, [&] {
@@ -114,7 +112,7 @@ TEST_SUITE("ClientHistoricalDataStore") {
       std::get_if<TestMarketDataClient::QuerySequencedBookQuoteOperation>(
         &*operation);
     REQUIRE(query_operation);
-    REQUIRE(query_operation->m_query.get_index() == security);
+    REQUIRE(query_operation->m_query.get_index() == ticker);
     auto quote =
       SequencedValue(BookQuote("MPID", true, TSX, make_bid(Money::ONE, 100),
         time_from_string("2024-07-10 12:00:00")), Beam::Sequence(1));
@@ -130,9 +128,9 @@ TEST_SUITE("ClientHistoricalDataStore") {
       Queue<std::shared_ptr<TestMarketDataClient::Operation>>>();
     auto client = TestMarketDataClient(operations);
     auto data_store = ClientHistoricalDataStore<TestMarketDataClient*>(&client);
-    auto security = Security("TST", TSX);
-    auto query = SecurityMarketDataQuery();
-    query.set_index(security);
+    auto ticker = parse_ticker("TST.TSX");
+    auto query = TickerMarketDataQuery();
+    query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     auto load_routine = std::async(std::launch::async, [&] {
@@ -143,7 +141,7 @@ TEST_SUITE("ClientHistoricalDataStore") {
       std::get_if<TestMarketDataClient::QuerySequencedTimeAndSaleOperation>(
         &*operation);
     REQUIRE(query_operation);
-    REQUIRE(query_operation->m_query.get_index() == security);
+    REQUIRE(query_operation->m_query.get_index() == ticker);
     auto sale = SequencedValue(
       TimeAndSale(time_from_string("2024-07-10 12:00:00"), Money::ONE, 100,
         TimeAndSale::Condition(), "TSX", "", ""), Beam::Sequence(1));

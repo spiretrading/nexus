@@ -1,5 +1,5 @@
-#ifndef NEXUS_DEFAULT_TIME_ZONE_DATABASE_HPP
-#define NEXUS_DEFAULT_TIME_ZONE_DATABASE_HPP
+#ifndef NEXUS_DEFINITIONS_DEFAULT_TIME_ZONE_DATABASE_HPP
+#define NEXUS_DEFINITIONS_DEFAULT_TIME_ZONE_DATABASE_HPP
 #include <sstream>
 #include <string>
 #include <boost/date_time/local_time/tz_database.hpp>

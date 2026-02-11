@@ -1,5 +1,5 @@
-#ifndef NEXUS_ORDER_STATUS_HPP
-#define NEXUS_ORDER_STATUS_HPP
+#ifndef NEXUS_DEFINITIONS_ORDER_STATUS_HPP
+#define NEXUS_DEFINITIONS_ORDER_STATUS_HPP
 #include <ostream>
 #include <Beam/Collections/Enum.hpp>
 

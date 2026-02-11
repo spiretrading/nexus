@@ -1,5 +1,5 @@
-#ifndef NEXUS_VENUE_HPP
-#define NEXUS_VENUE_HPP
+#ifndef NEXUS_DEFINITIONS_VENUE_HPP
+#define NEXUS_DEFINITIONS_VENUE_HPP
 #include <algorithm>
 #include <atomic>
 #include <memory>

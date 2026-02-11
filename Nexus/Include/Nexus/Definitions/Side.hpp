@@ -1,5 +1,5 @@
-#ifndef NEXUS_SIDE_HPP
-#define NEXUS_SIDE_HPP
+#ifndef NEXUS_DEFINITIONS_SIDE_HPP
+#define NEXUS_DEFINITIONS_SIDE_HPP
 #include <ostream>
 #include <Beam/Collections/Enum.hpp>
 #include <Beam/Collections/EnumSet.hpp>

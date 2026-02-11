@@ -1,5 +1,5 @@
-#ifndef NEXUS_TIME_IN_FORCE_HPP
-#define NEXUS_TIME_IN_FORCE_HPP
+#ifndef NEXUS_DEFINITIONS_TIME_IN_FORCE_HPP
+#define NEXUS_DEFINITIONS_TIME_IN_FORCE_HPP
 #include <functional>
 #include <ostream>
 #include <Beam/Collections/Enum.hpp>

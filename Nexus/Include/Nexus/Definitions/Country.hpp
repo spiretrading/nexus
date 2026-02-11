@@ -1,5 +1,5 @@
-#ifndef NEXUS_COUNTRY_HPP
-#define NEXUS_COUNTRY_HPP
+#ifndef NEXUS_DEFINITIONS_COUNTRY_HPP
+#define NEXUS_DEFINITIONS_COUNTRY_HPP
 #include <algorithm>
 #include <atomic>
 #include <cstdint>

@@ -3,7 +3,6 @@
 #include <Beam/Queries/Sequencer.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
-#include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
 namespace Nexus {

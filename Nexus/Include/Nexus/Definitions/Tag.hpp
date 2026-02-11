@@ -1,5 +1,5 @@
-#ifndef NEXUS_TAG_HPP
-#define NEXUS_TAG_HPP
+#ifndef NEXUS_DEFINITIONS_TAG_HPP
+#define NEXUS_DEFINITIONS_TAG_HPP
 #include <ostream>
 #include <string>
 #include <Beam/Serialization/ShuttleDateTime.hpp>

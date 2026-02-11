@@ -5,7 +5,6 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/QueryReactor.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
-#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
 
 namespace Nexus {
 
@@ -26,27 +25,27 @@ namespace Nexus {
   /**
    * Returns a reactor that queries the current BboQuote.
    * @param client The market data client to query.
-   * @param security The security whose current BboQuotes are to be queried.
+   * @param ticker The ticker whose current BboQuotes are to be queried.
    */
-  template<typename SecurityReactor>
+  template<typename TickerReactor>
   auto make_current_bbo_quote_reactor(
-      IsMarketDataClient auto& client, SecurityReactor&& security) {
+      IsMarketDataClient auto& client, TickerReactor&& ticker) {
     return make_bbo_quote_reactor(
-      client, Aspen::lift(&Beam::make_current_query<Security>,
-        std::forward<SecurityReactor>(security)));
+      client, Aspen::lift(&Beam::make_current_query<Ticker>,
+        std::forward<TickerReactor>(ticker)));
   }
 
   /**
    * Returns a reactor that queries for real time BboQuotes.
    * @param client The market data client to query.
-   * @param security The security whose real time BboQuotes are to be queried.
+   * @param ticker The ticker whose real time BboQuotes are to be queried.
    */
-  template<typename SecurityReactor>
+  template<typename TickerReactor>
   auto make_real_time_bbo_quote_reactor(
-      IsMarketDataClient auto& client, SecurityReactor&& security) {
+      IsMarketDataClient auto& client, TickerReactor&& ticker) {
     return make_bbo_quote_reactor(
-      client, Aspen::lift(&Beam::make_real_time_query<Security>,
-        std::forward<SecurityReactor>(security)));
+      client, Aspen::lift(&Beam::make_real_time_query<Ticker>,
+        std::forward<TickerReactor>(ticker)));
   }
 
   /**
@@ -66,27 +65,27 @@ namespace Nexus {
   /**
    * Returns a reactor that queries the current BookQuote.
    * @param client The market data client to query.
-   * @param security The security whose current BookQuotes are to be queried.
+   * @param ticker The ticker whose current BookQuotes are to be queried.
    */
-  template<typename SecurityReactor>
+  template<typename TickerReactor>
   auto make_current_book_quote_reactor(
-      IsMarketDataClient auto& client, SecurityReactor&& security) {
+      IsMarketDataClient auto& client, TickerReactor&& ticker) {
     return make_book_quote_reactor(
-      client, Aspen::lift(&Beam::make_current_query<Security>,
-        std::forward<SecurityReactor>(security)));
+      client, Aspen::lift(&Beam::make_current_query<Ticker>,
+        std::forward<TickerReactor>(ticker)));
   }
 
   /**
    * Returns a reactor that queries for real time BookQuotes.
    * @param client The market data client to query.
-   * @param security The security whose real time BookQuotes are to be queried.
+   * @param ticker The ticker whose real time BookQuotes are to be queried.
    */
-  template<typename SecurityReactor>
+  template<typename TickerReactor>
   auto make_real_time_book_quote_reactor(
-      IsMarketDataClient auto& client, SecurityReactor&& security) {
+      IsMarketDataClient auto& client, TickerReactor&& ticker) {
     return make_book_quote_reactor(
-      client, Aspen::lift(&Beam::make_real_time_query<Security>,
-        std::forward<SecurityReactor>(security)));
+      client, Aspen::lift(&Beam::make_real_time_query<Ticker>,
+        std::forward<TickerReactor>(ticker)));
   }
 
   /**
@@ -106,28 +105,27 @@ namespace Nexus {
   /**
    * Returns a reactor that queries the current TimeAndSales.
    * @param client The market data client to query.
-   * @param security The security whose current TimeAndSales are to be queried.
+   * @param ticker The ticker whose current TimeAndSales are to be queried.
    */
-  template<typename SecurityReactor>
+  template<typename TickerReactor>
   auto make_current_time_and_sales_reactor(
-      IsMarketDataClient auto& client, SecurityReactor&& security) {
+      IsMarketDataClient auto& client, TickerReactor&& ticker) {
     return make_time_and_sales_reactor(
-      client, Aspen::lift(&Beam::make_current_query<Security>,
-        std::forward<SecurityReactor>(security)));
+      client, Aspen::lift(&Beam::make_current_query<Ticker>,
+        std::forward<TickerReactor>(ticker)));
   }
 
   /**
    * Returns a reactor that queries for real time TimeAndSales.
    * @param client The market data client to query.
-   * @param security The security whose real time TimeAndSales are to be
-   *        queried.
+   * @param ticker The ticker whose real time TimeAndSales are to be queried.
    */
-  template<typename SecurityReactor>
+  template<typename TickerReactor>
   auto make_real_time_time_and_sales_reactor(
-      IsMarketDataClient auto& client, SecurityReactor&& security) {
+      IsMarketDataClient auto& client, TickerReactor&& ticker) {
     return make_time_and_sales_reactor(
-      client, Aspen::lift(&Beam::make_real_time_query<Security>,
-        std::forward<SecurityReactor>(security)));
+      client, Aspen::lift(&Beam::make_real_time_query<Ticker>,
+        std::forward<TickerReactor>(ticker)));
   }
 }
 

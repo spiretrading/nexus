@@ -24,11 +24,11 @@ TEST_SUITE("MarketDataRegistrySession") {
     REQUIRE(!has_entitlement(session, other_key, MarketDataType::BBO_QUOTE));
   }
 
-  TEST_CASE("has_entitlement_security_query") {
+  TEST_CASE("has_entitlement_ticker_query") {
     auto session = MarketDataRegistrySession();
-    auto security = Security("TST", TSX);
-    auto query = SecurityMarketDataQuery();
-    query.set_index(security);
+    auto ticker = parse_ticker("TST.TSX");
+    auto query = TickerMarketDataQuery();
+    query.set_index(ticker);
     query.set_range(Range::REAL_TIME);
     REQUIRE(!has_entitlement<BboQuote>(session, query));
     session.m_roles.set(AccountRole::SERVICE);
@@ -41,9 +41,9 @@ TEST_SUITE("MarketDataRegistrySession") {
       EntitlementKey(TSX), MarketDataTypeSet(MarketDataType::BBO_QUOTE));
     REQUIRE(has_entitlement<BboQuote>(session, query));
     REQUIRE(!has_entitlement<BookQuote>(session, query));
-    auto other_security = Security("S32", ASX);
-    auto other_query = SecurityMarketDataQuery();
-    other_query.set_index(other_security);
+    auto other_ticker = parse_ticker("S32.ASX");
+    auto other_query = TickerMarketDataQuery();
+    other_query.set_index(other_ticker);
     other_query.set_range(Range::REAL_TIME);
     REQUIRE(!has_entitlement<BboQuote>(session, other_query));
   }

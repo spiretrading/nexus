@@ -66,6 +66,6 @@ TEST_SUITE("TestMarketDataClient") {
     auto operations = std::make_shared<TestMarketDataClient::Queue>();
     auto client = TestMarketDataClient(operations);
     client.close();
-    REQUIRE_THROWS_AS(client.load_snapshot(Security()), EndOfFileException);
+    REQUIRE_THROWS_AS(client.load_snapshot(Ticker()), EndOfFileException);
   }
 }

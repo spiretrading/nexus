@@ -1,5 +1,5 @@
-#ifndef NEXUS_EXCHANGE_RATE_HPP
-#define NEXUS_EXCHANGE_RATE_HPP
+#ifndef NEXUS_DEFINITIONS_EXCHANGE_RATE_HPP
+#define NEXUS_DEFINITIONS_EXCHANGE_RATE_HPP
 #include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleRational.hpp>

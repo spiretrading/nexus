@@ -63,15 +63,14 @@ namespace Nexus {
 
       ~ServiceMarketDataFeedClient();
 
-      void add(const SecurityInfo& info);
+      void add(const TickerInfo& info);
       void publish(const VenueOrderImbalance& imbalance);
-      void publish(const SecurityBboQuote& quote);
-      void publish(const SecurityBookQuote& quote);
-      void publish(const SecurityTimeAndSale& time_and_sale);
-      void add_order(const Security& security, Venue venue,
-        const std::string& mpid, bool is_primary_mpid, const OrderId& id,
-        Side side, Money price, Quantity size,
-        boost::posix_time::ptime timestamp);
+      void publish(const TickerBboQuote& quote);
+      void publish(const TickerBookQuote& quote);
+      void publish(const TickerTimeAndSale& time_and_sale);
+      void add_order(const Ticker& ticker, Venue venue, const std::string& mpid,
+        bool is_primary_mpid, const OrderId& id, Side side, Money price,
+        Quantity size, boost::posix_time::ptime timestamp);
       void modify_order_size(
         const OrderId& id, Quantity size, boost::posix_time::ptime timestamp);
       void offset_order_size(
@@ -83,7 +82,7 @@ namespace Nexus {
 
     private:
       struct OrderEntry {
-        Security m_security;
+        Ticker m_ticker;
         Venue m_venue;
         std::string m_mpid;
         bool m_is_primary_mpid;
@@ -92,15 +91,15 @@ namespace Nexus {
         Quantity m_size;
       };
       struct QuoteUpdates {
-        boost::optional<SecurityBboQuote> m_bbo_quote;
-        std::vector<SecurityBookQuote> m_asks;
-        std::vector<SecurityBookQuote> m_bids;
-        std::vector<SecurityTimeAndSale> m_time_and_sales;
+        boost::optional<TickerBboQuote> m_bbo_quote;
+        std::vector<TickerBookQuote> m_asks;
+        std::vector<TickerBookQuote> m_bids;
+        std::vector<TickerTimeAndSale> m_time_and_sales;
       };
       mutable boost::mutex m_mutex;
       ServiceProtocolClient m_client;
       Beam::local_ptr_t<S> m_sampling_timer;
-      std::unordered_map<Security, QuoteUpdates> m_quote_updates;
+      std::unordered_map<Ticker, QuoteUpdates> m_quote_updates;
       std::vector<VenueOrderImbalance> m_order_imbalances;
       std::unordered_map<OrderId, OrderEntry> m_orders;
       Beam::OpenState m_open_state;
@@ -109,8 +108,8 @@ namespace Nexus {
       ServiceMarketDataFeedClient(const ServiceMarketDataFeedClient&) = delete;
       ServiceMarketDataFeedClient& operator =(
         const ServiceMarketDataFeedClient&) = delete;
-      void update_book_sampling(const SecurityBookQuote& quote);
-      void locked_add_order(const Security& security, Venue venue,
+      void update_book_sampling(const TickerBookQuote& quote);
+      void locked_add_order(const Ticker& ticker, Venue venue,
         const std::string& mpid, bool is_primary_mpid, const OrderId& id,
         Side side, Money price, Quantity size,
         boost::posix_time::ptime timestamp);
@@ -191,11 +190,10 @@ namespace Nexus {
   template<typename O, typename S, typename P, typename H> requires
     Beam::IsTimer<Beam::dereference_t<S>> &&
       Beam::IsTimer<Beam::dereference_t<H>>
-  void ServiceMarketDataFeedClient<O, S, P, H>::add(const SecurityInfo& info) {
+  void ServiceMarketDataFeedClient<O, S, P, H>::add(const TickerInfo& info) {
     return Beam::service_or_throw_with_nested([&] {
-      Beam::send_record_message<SetSecurityInfoMessage>(m_client, info);
-    }, "Failed to add security info: " +
-      boost::lexical_cast<std::string>(info));
+      Beam::send_record_message<SetTickerInfoMessage>(m_client, info);
+    }, "Failed to add ticker info: " + boost::lexical_cast<std::string>(info));
   }
 
   template<typename O, typename S, typename P, typename H> requires
@@ -211,7 +209,7 @@ namespace Nexus {
     Beam::IsTimer<Beam::dereference_t<S>> &&
       Beam::IsTimer<Beam::dereference_t<H>>
   void ServiceMarketDataFeedClient<O, S, P, H>::publish(
-      const SecurityBboQuote& quote) {
+      const TickerBboQuote& quote) {
     auto lock = boost::lock_guard(m_mutex);
     auto& updates = m_quote_updates[quote.get_index()];
     updates.m_bbo_quote = quote;
@@ -221,7 +219,7 @@ namespace Nexus {
     Beam::IsTimer<Beam::dereference_t<S>> &&
       Beam::IsTimer<Beam::dereference_t<H>>
   void ServiceMarketDataFeedClient<O, S, P, H>::publish(
-      const SecurityBookQuote& quote) {
+      const TickerBookQuote& quote) {
     auto id = quote.get_index().get_symbol() + '-' +
       boost::lexical_cast<std::string>(quote.get_index().get_venue()) +
       quote->m_mpid + '-' +
@@ -247,7 +245,7 @@ namespace Nexus {
     Beam::IsTimer<Beam::dereference_t<S>> &&
       Beam::IsTimer<Beam::dereference_t<H>>
   void ServiceMarketDataFeedClient<O, S, P, H>::publish(
-      const SecurityTimeAndSale& time_and_sale) {
+      const TickerTimeAndSale& time_and_sale) {
     auto lock = boost::lock_guard(m_mutex);
     auto& updates = m_quote_updates[time_and_sale.get_index()];
     updates.m_time_and_sales.push_back(time_and_sale);
@@ -257,11 +255,11 @@ namespace Nexus {
     Beam::IsTimer<Beam::dereference_t<S>> &&
       Beam::IsTimer<Beam::dereference_t<H>>
   void ServiceMarketDataFeedClient<O, S, P, H>::add_order(
-      const Security& security, Venue venue, const std::string& mpid,
+      const Ticker& ticker, Venue venue, const std::string& mpid,
       bool is_primary_mpid, const OrderId& id, Side side, Money price,
       Quantity size, boost::posix_time::ptime timestamp) {
     auto lock = boost::lock_guard(m_mutex);
-    locked_add_order(security, venue, mpid, is_primary_mpid, id, side, price,
+    locked_add_order(ticker, venue, mpid, is_primary_mpid, id, side, price,
       size, timestamp);
   }
 
@@ -277,7 +275,7 @@ namespace Nexus {
     }
     auto entry = i->second;
     locked_remove_order(i, timestamp);
-    locked_add_order(entry.m_security, entry.m_venue, entry.m_mpid,
+    locked_add_order(entry.m_ticker, entry.m_venue, entry.m_mpid,
       entry.m_is_primary_mpid, id, entry.m_side, entry.m_price, size,
       timestamp);
   }
@@ -294,7 +292,7 @@ namespace Nexus {
     }
     auto entry = i->second;
     locked_remove_order(i, timestamp);
-    locked_add_order(entry.m_security, entry.m_venue, entry.m_mpid,
+    locked_add_order(entry.m_ticker, entry.m_venue, entry.m_mpid,
       entry.m_is_primary_mpid, id, entry.m_side, entry.m_price,
       entry.m_size + delta, timestamp);
   }
@@ -311,7 +309,7 @@ namespace Nexus {
     }
     auto entry = i->second;
     locked_remove_order(i, timestamp);
-    locked_add_order(entry.m_security, entry.m_venue, entry.m_mpid,
+    locked_add_order(entry.m_ticker, entry.m_venue, entry.m_mpid,
       entry.m_is_primary_mpid, id, entry.m_side, price, entry.m_size,
       timestamp);
   }
@@ -347,7 +345,7 @@ namespace Nexus {
     Beam::IsTimer<Beam::dereference_t<S>> &&
       Beam::IsTimer<Beam::dereference_t<H>>
   void ServiceMarketDataFeedClient<O, S, P, H>::update_book_sampling(
-      const SecurityBookQuote& quote) {
+      const TickerBookQuote& quote) {
     auto& book = pick(quote->m_quote.m_side,
       m_quote_updates[quote.get_index()].m_asks,
       m_quote_updates[quote.get_index()].m_bids);
@@ -370,7 +368,7 @@ namespace Nexus {
     Beam::IsTimer<Beam::dereference_t<S>> &&
       Beam::IsTimer<Beam::dereference_t<H>>
   void ServiceMarketDataFeedClient<O, S, P, H>::locked_add_order(
-      const Security& security, Venue venue, const std::string& mpid,
+      const Ticker& ticker, Venue venue, const std::string& mpid,
       bool is_primary_mpid, const OrderId& id, Side side, Money price,
       Quantity size, boost::posix_time::ptime timestamp) {
     if(size <= 0) {
@@ -380,11 +378,11 @@ namespace Nexus {
     if(i != m_orders.end()) {
       locked_remove_order(i, timestamp);
     }
-    m_orders.insert(std::pair(id,
-      OrderEntry(security, venue, mpid, is_primary_mpid, side, price, size)));
+    m_orders.insert(std::pair(
+      id, OrderEntry(ticker, venue, mpid, is_primary_mpid, side, price, size)));
     auto quote = BookQuote(
       mpid, is_primary_mpid, venue, Quote(price, size, side), timestamp);
-    update_book_sampling(Beam::IndexedValue(std::move(quote), security));
+    update_book_sampling(Beam::IndexedValue(std::move(quote), ticker));
   }
 
   template<typename O, typename S, typename P, typename H> requires
@@ -396,8 +394,7 @@ namespace Nexus {
     auto& entry = i->second;
     auto quote = BookQuote(entry.m_mpid, entry.m_is_primary_mpid, entry.m_venue,
       Quote(entry.m_price, -entry.m_size, entry.m_side), timestamp);
-    update_book_sampling(
-      Beam::IndexedValue(std::move(quote), entry.m_security));
+    update_book_sampling(Beam::IndexedValue(std::move(quote), entry.m_ticker));
     m_orders.erase(i);
   }
 
@@ -407,14 +404,14 @@ namespace Nexus {
   void ServiceMarketDataFeedClient<O, S, P, H>::on_timer_expired(
       Beam::Timer::Result result) {
     auto messages = std::vector<MarketDataFeedMessage>();
-    auto quote_updates = std::unordered_map<Security, QuoteUpdates>();
+    auto quote_updates = std::unordered_map<Ticker, QuoteUpdates>();
     auto order_imbalances = std::vector<VenueOrderImbalance>();
     {
       auto lock = boost::lock_guard(m_mutex);
       quote_updates.swap(m_quote_updates);
       order_imbalances.swap(m_order_imbalances);
     }
-    for(auto& [security, updates] : quote_updates) {
+    for(auto& [ticker, updates] : quote_updates) {
       if(updates.m_bbo_quote) {
         messages.push_back(std::move(*updates.m_bbo_quote));
       }
