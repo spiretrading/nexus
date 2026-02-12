@@ -7,15 +7,14 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 
 TEST_SUITE("OpposingSubmissionComplianceRule") {
   TEST_CASE("submit_without_cancel") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-29 10:00:00"));
     auto rule =
       OpposingSubmissionComplianceRule(seconds(10), Money::ZERO, &time_client);
-    auto fields =
-      make_limit_order_fields(Security("ABX", TSX), Side::BID, 100, Money::ONE);
+    auto fields = make_limit_order_fields(
+      parse_ticker("ABX.TSX"), Side::BID, 100, Money::ONE);
     auto info = OrderInfo(fields, 3, time_from_string("2024-07-29 10:00:00"));
     auto order = std::make_shared<PrimitiveOrder>(info);
     REQUIRE_NOTHROW(rule.submit(order));
@@ -25,8 +24,8 @@ TEST_SUITE("OpposingSubmissionComplianceRule") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-29 09:59:50"));
     auto rule =
       OpposingSubmissionComplianceRule(seconds(10), Money::ZERO, &time_client);
-    auto ask_fields =
-      make_limit_order_fields(Security("ABX", TSX), Side::ASK, 100, Money::ONE);
+    auto ask_fields = make_limit_order_fields(
+      parse_ticker("ABX.TSX"), Side::ASK, 100, Money::ONE);
     auto ask_info =
       OrderInfo(ask_fields, 1, time_from_string("2024-07-29 09:59:50"));
     auto ask_order = std::make_shared<PrimitiveOrder>(ask_info);
@@ -36,8 +35,8 @@ TEST_SUITE("OpposingSubmissionComplianceRule") {
         time_from_string("2024-07-29 09:59:59"));
       ask_order->update(cancel_report);
     });
-    auto bid_fields =
-      make_limit_order_fields(Security("ABX", TSX), Side::BID, 100, Money::ONE);
+    auto bid_fields = make_limit_order_fields(
+      parse_ticker("ABX.TSX"), Side::BID, 100, Money::ONE);
     auto bid_info =
       OrderInfo(bid_fields, 2, time_from_string("2024-07-29 10:00:00"));
     auto bid_order = std::make_shared<PrimitiveOrder>(bid_info);
@@ -52,8 +51,8 @@ TEST_SUITE("OpposingSubmissionComplianceRule") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-29 09:59:50"));
     auto rule = OpposingSubmissionComplianceRule(
       seconds(10), 5 * Money::CENT, &time_client);
-    auto ask_fields =
-      make_limit_order_fields(Security("ABX", TSX), Side::ASK, 100, Money::ONE);
+    auto ask_fields = make_limit_order_fields(
+      parse_ticker("ABX.TSX"), Side::ASK, 100, Money::ONE);
     auto ask_info =
       OrderInfo(ask_fields, 1, time_from_string("2024-07-29 09:59:50"));
     auto ask_order = std::make_shared<PrimitiveOrder>(ask_info);
@@ -64,7 +63,7 @@ TEST_SUITE("OpposingSubmissionComplianceRule") {
       ask_order->update(cancel_report);
     });
     auto bid_fields = make_limit_order_fields(
-      Security("ABX", TSX), Side::BID, 100, 94 * Money::CENT);
+      parse_ticker("ABX.TSX"), Side::BID, 100, 94 * Money::CENT);
     auto bid_info =
       OrderInfo(bid_fields, 2, time_from_string("2024-07-29 10:00:00"));
     auto bid_order = std::make_shared<PrimitiveOrder>(bid_info);
@@ -77,8 +76,8 @@ TEST_SUITE("OpposingSubmissionComplianceRule") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-29 09:59:50"));
     auto rule =
       OpposingSubmissionComplianceRule(seconds(10), Money::ZERO, &time_client);
-    auto ask_fields =
-      make_limit_order_fields(Security("ABX", TSX), Side::ASK, 100, Money::ONE);
+    auto ask_fields = make_limit_order_fields(
+      parse_ticker("ABX.TSX"), Side::ASK, 100, Money::ONE);
     auto ask_info1 =
       OrderInfo(ask_fields, 1, time_from_string("2024-07-29 09:59:50"));
     auto ask_order1 = std::make_shared<PrimitiveOrder>(ask_info1);
@@ -97,8 +96,8 @@ TEST_SUITE("OpposingSubmissionComplianceRule") {
         time_from_string("2024-07-29 09:59:58"));
       ask_order2->update(cancel_report2);
     });
-    auto bid_fields =
-      make_limit_order_fields(Security("ABX", TSX), Side::BID, 100, Money::ONE);
+    auto bid_fields = make_limit_order_fields(
+      parse_ticker("ABX.TSX"), Side::BID, 100, Money::ONE);
     auto bid_info =
       OrderInfo(bid_fields, 3, time_from_string("2024-07-29 10:00:00"));
     auto bid_order = std::make_shared<PrimitiveOrder>(bid_info);
@@ -115,8 +114,8 @@ TEST_SUITE("OpposingSubmissionComplianceRule") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-29 09:59:50"));
     auto rule =
       OpposingSubmissionComplianceRule(seconds(10), Money::ZERO, &time_client);
-    auto bid_fields =
-      make_limit_order_fields(Security("ABX", TSX), Side::BID, 100, Money::ONE);
+    auto bid_fields = make_limit_order_fields(
+      parse_ticker("ABX.TSX"), Side::BID, 100, Money::ONE);
     auto bid_info =
       OrderInfo(bid_fields, 1, time_from_string("2024-07-29 09:59:50"));
     auto bid_order = std::make_shared<PrimitiveOrder>(bid_info);

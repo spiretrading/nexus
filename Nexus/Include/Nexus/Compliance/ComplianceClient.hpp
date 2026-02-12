@@ -115,18 +115,16 @@ namespace Nexus {
         virtual ~VirtualComplianceClient() = default;
 
         virtual std::vector<ComplianceRuleEntry> load(
-          const Beam::DirectoryEntry& directory_entry) = 0;
-        virtual ComplianceRuleEntry::Id add(
-          const Beam::DirectoryEntry& directory_entry,
-          ComplianceRuleEntry::State state,
-          const ComplianceRuleSchema& schema) = 0;
-        virtual void update(const ComplianceRuleEntry& entry) = 0;
-        virtual void remove(ComplianceRuleEntry::Id id) = 0;
-        virtual void report(const ComplianceRuleViolationRecord& record) = 0;
+          const Beam::DirectoryEntry&) = 0;
+        virtual ComplianceRuleEntry::Id add(const Beam::DirectoryEntry&,
+          ComplianceRuleEntry::State, const ComplianceRuleSchema&) = 0;
+        virtual void update(const ComplianceRuleEntry&) = 0;
+        virtual void remove(ComplianceRuleEntry::Id) = 0;
+        virtual void report(const ComplianceRuleViolationRecord&) = 0;
         virtual void monitor_compliance_rule_entries(
-          const Beam::DirectoryEntry& directory_entry,
-          Beam::ScopedQueueWriter<ComplianceRuleEntry> queue,
-          Beam::Out<std::vector<ComplianceRuleEntry>> snapshot) = 0;
+          const Beam::DirectoryEntry&,
+          Beam::ScopedQueueWriter<ComplianceRuleEntry>,
+          Beam::Out<std::vector<ComplianceRuleEntry>>) = 0;
         virtual void close() = 0;
       };
       template<typename C>

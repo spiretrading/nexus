@@ -11,9 +11,10 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/variant/recursive_variant.hpp>
 #include <boost/variant/variant.hpp>
+#include "Nexus/Definitions/Asset.hpp"
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/Region.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Scope.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 
 namespace Nexus {
@@ -21,7 +22,7 @@ namespace Nexus {
   /** Defines the set of types that can be used as a compliance parameter. */
   using ComplianceValue = boost::make_recursive_variant<bool, Quantity, double,
     std::string, boost::posix_time::ptime, boost::posix_time::time_duration,
-    Beam::DirectoryEntry, CurrencyId, Money, Security, Venue, Region,
+    Beam::DirectoryEntry, Asset, Money, Ticker, Venue, Scope,
     std::vector<boost::recursive_variant_>>::type;
 
   /** Stores a single parameter used by a compliance rule. */

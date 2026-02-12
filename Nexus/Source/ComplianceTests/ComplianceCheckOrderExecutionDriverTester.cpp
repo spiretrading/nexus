@@ -15,7 +15,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
@@ -66,7 +65,7 @@ TEST_SUITE("ComplianceCheckOrderExecutionDriver") {
   TEST_CASE("submit") {
     auto fixture = Fixture();
     auto schema = ComplianceRuleSchema("test_rule", {});
-    auto security = Security("TST", TSX);
+    auto security = parse_ticker("TST.TSX");
     auto info = OrderInfo(make_limit_order_fields(
       fixture.m_account, security, CAD, Side::BID, "TSX", 100, Money::ONE), 123,
       time_from_string("2025-03-22 15:12:22:00"));

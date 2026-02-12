@@ -12,7 +12,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
@@ -46,7 +45,7 @@ TEST_SUITE("ComplianceRuleSet") {
         };
         return std::make_unique<DummyRule>();
       });
-    auto security = Security("TST", TSX);
+    auto security = parse_ticker("TST.TSX");
     auto order = std::make_shared<PrimitiveOrder>(OrderInfo(
       make_limit_order_fields(account, security, CAD, Side::BID, "TSX", 100,
         Money::ONE), 123, time_from_string("2024-03-12 13:12:00:00")));

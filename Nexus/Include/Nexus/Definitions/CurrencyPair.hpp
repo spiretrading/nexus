@@ -6,6 +6,7 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <boost/functional/hash.hpp>
 #include <boost/throw_exception.hpp>
+#include "Nexus/Definitions/Asset.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 
 namespace Nexus {
@@ -14,10 +15,10 @@ namespace Nexus {
   struct CurrencyPair {
 
     /** The base currency. */
-    CurrencyId m_base;
+    Asset m_base;
 
     /** The counter currency. */
-    CurrencyId m_counter;
+    Asset m_counter;
 
     auto operator <=>(const CurrencyPair&) const = default;
   };
@@ -91,8 +92,8 @@ namespace std {
   struct hash<Nexus::CurrencyPair> {
     size_t operator()(Nexus::CurrencyPair value) const {
       auto seed = std::size_t(0);
-      boost::hash_combine(seed, value.m_base);
-      boost::hash_combine(seed, value.m_counter);
+      boost::hash_combine(seed, std::hash<Nexus::Asset>()(value.m_base));
+      boost::hash_combine(seed, std::hash<Nexus::Asset>()(value.m_counter));
       return seed;
     }
   };

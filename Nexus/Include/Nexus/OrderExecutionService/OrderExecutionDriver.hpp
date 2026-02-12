@@ -59,16 +59,11 @@ namespace Nexus {
       T& as();
 
       std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
-
       void add(const std::shared_ptr<Order>& order);
-
       std::shared_ptr<Order> submit(const OrderInfo& info);
-
       void cancel(const OrderExecutionSession& session, OrderId id);
-
       void update(const OrderExecutionSession& session, OrderId id,
         const ExecutionReport& report);
-
       void close();
 
     private:
@@ -76,13 +71,12 @@ namespace Nexus {
         virtual ~VirtualOrderExecutionDriver() = default;
 
         virtual std::shared_ptr<Order> recover(
-          const SequencedAccountOrderRecord& record) = 0;
-        virtual void add(const std::shared_ptr<Order>& order) = 0;
-        virtual std::shared_ptr<Order> submit(const OrderInfo& info) = 0;
-        virtual void cancel(
-          const OrderExecutionSession& session, OrderId id) = 0;
-        virtual void update(const OrderExecutionSession& session, OrderId id,
-          const ExecutionReport& report) = 0;
+          const SequencedAccountOrderRecord&) = 0;
+        virtual void add(const std::shared_ptr<Order>&) = 0;
+        virtual std::shared_ptr<Order> submit(const OrderInfo&) = 0;
+        virtual void cancel(const OrderExecutionSession&, OrderId) = 0;
+        virtual void update(
+          const OrderExecutionSession&, OrderId, const ExecutionReport&) = 0;
         virtual void close() = 0;
       };
       template<typename D>

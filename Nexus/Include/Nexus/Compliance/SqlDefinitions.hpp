@@ -82,8 +82,8 @@ namespace Nexus {
     }
     auto schema =
       ComplianceRuleSchema(row.m_schema_name, std::move(schema_parameters));
-    auto result = ComplianceRuleEntry(row.m_entry_id,
-      std::move(row.m_directory_entry), row.m_state, std::move(schema));
+    auto result = ComplianceRuleEntry(
+      row.m_entry_id, row.m_directory_entry, row.m_state, std::move(schema));
     return result;
   }
 }

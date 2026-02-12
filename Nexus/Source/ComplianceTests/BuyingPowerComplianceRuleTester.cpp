@@ -11,7 +11,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
@@ -38,7 +37,7 @@ TEST_SUITE("BuyingPowerComplianceRule") {
     auto exchange_rates = ExchangeRateTable();
     auto rule = BuyingPowerComplianceRule(1000 * Money::ONE, AUD,
       exchange_rates, fixture.m_market_data_environment.get_registry_client());
-    auto security = Security("TST", ASX);
+    auto security = parse_ticker("TST.ASX");
     fixture.m_market_data_environment.update_bbo(security, Money::ONE);
     auto fields = make_limit_order_fields(
       DirectoryEntry::make_account(1, "test"), security, AUD, Side::BID, "ASX",
@@ -54,7 +53,7 @@ TEST_SUITE("BuyingPowerComplianceRule") {
     auto exchange_rates = ExchangeRateTable();
     auto rule = BuyingPowerComplianceRule(100 * Money::ONE, AUD, exchange_rates,
       fixture.m_market_data_environment.get_registry_client());
-    auto security = Security("TST", ASX);
+    auto security = parse_ticker("TST.ASX");
     fixture.m_market_data_environment.update_bbo(security, Money::ONE);
     auto fields = make_limit_order_fields(
       DirectoryEntry::make_account(1, "test"), security, AUD, Side::BID, "ASX",

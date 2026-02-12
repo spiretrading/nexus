@@ -75,7 +75,7 @@ namespace Nexus {
   }
 
   /**
-   * Makes a new PerSecurityComplianceRule.
+   * Makes a new PerTickerComplianceRule.
    * @param schema The ComplianceRuleSchema to apply.
    * @param rule_builder Builds an instance of the compliance rule per account.
    */
@@ -88,32 +88,32 @@ namespace Nexus {
       });
   }
 
-  /** Defines a MapComplianceRule that applies to each security individually. */
-  using PerSecurityComplianceRule = MapComplianceRule<Security>;
+  /** Defines a MapComplianceRule that applies to each ticker individually. */
+  using PerTickerComplianceRule = MapComplianceRule<Ticker>;
 
-  /** The standard name used to identify the PerSecurityComplianceRule. */
-  inline const auto PER_SECURITY_RULE_NAME = std::string("per_security");
+  /** The standard name used to identify the PerTickerComplianceRule. */
+  inline const auto PER_TICKER_RULE_NAME = std::string("per_ticker");
 
   /**
-   * Returns a ComplianceRuleSchema representing a PerSecurityComplianceRule.
-   * @param schema The ComplianceRuleSchema to apply per security.
+   * Returns a ComplianceRuleSchema representing a PerTickerComplianceRule.
+   * @param schema The ComplianceRuleSchema to apply per ticker.
    */
-  inline ComplianceRuleSchema make_per_security_compliance_rule_schema(
+  inline ComplianceRuleSchema make_per_ticker_compliance_rule_schema(
       const ComplianceRuleSchema& schema) {
-    return wrap(PER_SECURITY_RULE_NAME, schema);
+    return wrap(PER_TICKER_RULE_NAME, schema);
   }
 
   /**
-   * Makes a new PerSecurityComplianceRule.
+   * Makes a new PerTickerComplianceRule.
    * @param schema The ComplianceRuleSchema to apply.
-   * @param rule_builder Builds an instance of the compliance rule per security.
+   * @param rule_builder Builds an instance of the compliance rule per ticker.
    */
-  inline std::unique_ptr<PerSecurityComplianceRule>
-      make_per_security_compliance_rule(ComplianceRuleSchema schema,
-        PerSecurityComplianceRule::ComplianceRuleBuilder rule_builder) {
-    return std::make_unique<PerSecurityComplianceRule>(
+  inline std::unique_ptr<PerTickerComplianceRule>
+      make_per_ticker_compliance_rule(ComplianceRuleSchema schema,
+        PerTickerComplianceRule::ComplianceRuleBuilder rule_builder) {
+    return std::make_unique<PerTickerComplianceRule>(
       std::move(schema), std::move(rule_builder), [] (const auto& order) {
-        return order.get_info().m_fields.m_security;
+        return order.get_info().m_fields.m_ticker;
       });
   }
 
@@ -139,7 +139,7 @@ namespace Nexus {
    */
   inline std::unique_ptr<PerSideComplianceRule>
       make_per_side_compliance_rule(ComplianceRuleSchema schema,
-        PerSecurityComplianceRule::ComplianceRuleBuilder rule_builder) {
+        PerTickerComplianceRule::ComplianceRuleBuilder rule_builder) {
     return std::make_unique<PerSideComplianceRule>(
       std::move(schema), std::move(rule_builder), [] (const auto& order) {
         return order.get_info().m_fields.m_side;

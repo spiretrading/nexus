@@ -42,9 +42,9 @@ TEST_SUITE("ExchangeRateTable") {
   TEST_CASE("convert_base_counter") {
     auto table = ExchangeRateTable();
     auto rate_value = rational<int>(2, 5);
-    table.add(ExchangeRate(CurrencyPair(XBT, HKD), rate_value));
+    table.add(ExchangeRate(CurrencyPair(AUD, HKD), rate_value));
     auto amount = Money(100);
-    auto converted = table.convert(amount, XBT, HKD);
+    auto converted = table.convert(amount, AUD, HKD);
     auto expected = Money(40);
     REQUIRE(converted == expected);
   }

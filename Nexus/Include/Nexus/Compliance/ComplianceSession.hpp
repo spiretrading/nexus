@@ -5,8 +5,7 @@
 namespace Nexus {
 
   /** Stores session info for a ComplianceServlet client. */
-  class ComplianceSession :
-    public Beam::AuthenticatedSession {};
+  class ComplianceSession : public Beam::AuthenticatedSession {};
 }
 
 #endif

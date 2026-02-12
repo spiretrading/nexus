@@ -51,18 +51,18 @@ TEST_SUITE("ComplianceRuleBuilder") {
       REQUIRE(dynamic_cast<PerAccountComplianceRule*>(rule.get()));
     }
     {
-      auto schema = make_per_security_compliance_rule_schema(
+      auto schema = make_per_ticker_compliance_rule_schema(
         make_buying_power_compliance_rule_schema());
       auto rule = make_compliance_rule(schema, market_data_client,
         definitions_client, time_client);
-      REQUIRE(dynamic_cast<PerSecurityComplianceRule*>(rule.get()));
+      REQUIRE(dynamic_cast<PerTickerComplianceRule*>(rule.get()));
     }
     {
-      auto schema = make_region_filter_compliance_rule_schema(
+      auto schema = make_scope_filter_compliance_rule_schema(
         make_buying_power_compliance_rule_schema());
       auto rule = make_compliance_rule(schema, market_data_client,
         definitions_client, time_client);
-      REQUIRE(dynamic_cast<RegionFilterComplianceRule*>(rule.get()));
+      REQUIRE(dynamic_cast<ScopeFilterComplianceRule*>(rule.get()));
     }
     {
       auto rule = make_compliance_rule(
@@ -81,8 +81,8 @@ TEST_SUITE("ComplianceRuleBuilder") {
         make_buying_power_compliance_rule_schema());
       auto rule = make_compliance_rule(schema, market_data_client,
         definitions_client, time_client);
-      REQUIRE(dynamic_cast<TimeFilterComplianceRule<FixedTimeClient*>*>(
-        rule.get()));
+      REQUIRE(
+        dynamic_cast<TimeFilterComplianceRule<FixedTimeClient*>*>(rule.get()));
     }
   }
 }

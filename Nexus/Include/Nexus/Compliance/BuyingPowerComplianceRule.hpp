@@ -46,7 +46,7 @@ namespace Nexus {
        *        price Orders.
        */
       template<Beam::Initializes<C> CF>
-      BuyingPowerComplianceRule(Money buying_power, CurrencyId currency,
+      BuyingPowerComplianceRule(Money buying_power, Asset currency,
         const ExchangeRateTable& exchange_rates, CF&& market_data_client);
 
       void submit(const std::shared_ptr<Order>& order) override;
@@ -54,24 +54,23 @@ namespace Nexus {
 
     private:
       Money m_buying_power;
-      CurrencyId m_currency;
+      Asset m_currency;
       ExchangeRateTable m_exchange_rates;
       Beam::local_ptr_t<C> m_market_data_client;
       Beam::Sync<BuyingPowerModel> m_buying_power_model;
       Beam::MultiQueueWriter<ExecutionReport> m_execution_report_queue;
-      std::unordered_map<OrderId, CurrencyId> m_currencies;
-      Beam::SynchronizedUnorderedMap<Security,
+      std::unordered_map<OrderId, Asset> m_currencies;
+      Beam::SynchronizedUnorderedMap<Ticker,
         std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bbo_quotes;
       std::vector<Beam::RoutineHandler> m_query_routines;
 
-      BboQuote load_bbo_quote(const Security& security);
+      BboQuote load_bbo_quote(const Ticker& ticker);
       Money get_expected_price(const OrderFields& fields);
   };
 
   template<typename C>
-  BuyingPowerComplianceRule(
-    Money, CurrencyId, const ExchangeRateTable&, C&&) ->
-      BuyingPowerComplianceRule<std::remove_cvref_t<C>>;
+  BuyingPowerComplianceRule(Money, Asset, const ExchangeRateTable&, C&&) ->
+    BuyingPowerComplianceRule<std::remove_cvref_t<C>>;
 
   /** The standard name used to identify the BuyingPowerComplianceRule. */
   inline auto BUYING_POWER_COMPLIANCE_RULE_NAME = std::string("buying_power");
@@ -91,20 +90,20 @@ namespace Nexus {
    * Makes a new BuyingPowerComplianceRule from a list of ComplianceParameters.
    * @param parameters The parameters to construct the rule from.
    * @param exchange_rates Used to convert currencies.
-   * @param market_data_client Initializes the MarketDataClient used to
-   *        price Orders.
+   * @param market_data_client Initializes the MarketDataClient used to price
+   *        Orders.
    */
   inline auto make_buying_power_compliance_rule(
       const std::vector<ComplianceParameter>& parameters,
       const ExchangeRateTable& exchange_rates,
       IsMarketDataClient auto& market_data_client) {
     auto buying_power = Money::ZERO;
-    auto currency = DefaultCurrencies::USD;
+    auto currency = Asset(DefaultCurrencies::USD);
     for(auto& parameter : parameters) {
       if(parameter.m_name == "buying_power") {
         buying_power = boost::get<Money>(parameter.m_value);
       } else if(parameter.m_name == "currency") {
-        currency = boost::get<CurrencyId>(parameter.m_value);
+        currency = boost::get<Asset>(parameter.m_value);
       }
     }
     using Rule = BuyingPowerComplianceRule<
@@ -116,7 +115,7 @@ namespace Nexus {
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   template<Beam::Initializes<C> CF>
   BuyingPowerComplianceRule<C>::BuyingPowerComplianceRule(Money buying_power,
-    CurrencyId currency, const ExchangeRateTable& exchange_rates,
+    Asset currency, const ExchangeRateTable& exchange_rates,
     CF&& market_data_client)
     : m_buying_power(buying_power),
       m_currency(currency),
@@ -201,18 +200,17 @@ namespace Nexus {
   }
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
-  BboQuote BuyingPowerComplianceRule<C>::load_bbo_quote(
-      const Security& security) {
-    auto publisher = m_bbo_quotes.get_or_insert(security, [&] {
+  BboQuote BuyingPowerComplianceRule<C>::load_bbo_quote(const Ticker& ticker) {
+    auto publisher = m_bbo_quotes.get_or_insert(ticker, [&] {
       auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
       m_query_routines.push_back(query_real_time_with_snapshot(
-        *m_market_data_client, security, publisher));
+        *m_market_data_client, ticker, publisher));
       return publisher;
     });
     try {
       return publisher->peek();
     } catch(const Beam::PipeBrokenException&) {
-      m_bbo_quotes.erase(security);
+      m_bbo_quotes.erase(ticker);
       boost::throw_with_location(
         ComplianceCheckException("No BBO quote available."));
     }
@@ -221,7 +219,7 @@ namespace Nexus {
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   Money BuyingPowerComplianceRule<C>::get_expected_price(
       const OrderFields& fields) {
-    auto bbo = load_bbo_quote(fields.m_security);
+    auto bbo = load_bbo_quote(fields.m_ticker);
     if(fields.m_type == OrderType::LIMIT) {
       if(fields.m_price <= Money::ZERO) {
         boost::throw_with_location(ComplianceCheckException("Invalid price."));

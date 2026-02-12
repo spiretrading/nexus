@@ -6,7 +6,6 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 TEST_SUITE("MapComplianceRule") {
@@ -19,13 +18,13 @@ TEST_SUITE("MapComplianceRule") {
       return std::make_unique<TestComplianceRule>(queue);
     };
     auto key_builder = [] (const Order& order) {
-      return order.get_info().m_fields.m_security;
+      return order.get_info().m_fields.m_ticker;
     };
     auto schema = ComplianceRuleSchema("test_rule", {});
     auto rule = MapComplianceRule(schema, rule_builder, key_builder);
     auto info = OrderInfo();
     info.m_id = 42;
-    info.m_fields.m_security = Security("FOO", TSX);
+    info.m_fields.m_ticker = parse_ticker("FOO.TSX");
     auto order = std::make_shared<PrimitiveOrder>(info);
     auto async_submit = std::async(std::launch::async, [&] {
       rule.submit(order);
@@ -39,7 +38,7 @@ TEST_SUITE("MapComplianceRule") {
     submit_operation->m_result.set();
     auto info2 = OrderInfo();
     info2.m_id = 43;
-    info2.m_fields.m_security = Security("FOO", TSX);
+    info2.m_fields.m_ticker = parse_ticker("FOO.TSX");
     auto order2 = std::make_shared<PrimitiveOrder>(info2);
     auto async_submit2 = std::async(std::launch::async, [&] {
       rule.submit(order2);
@@ -61,13 +60,13 @@ TEST_SUITE("MapComplianceRule") {
       return std::make_unique<TestComplianceRule>(queue);
     };
     auto key_builder = [] (const Order& order) {
-      return order.get_info().m_fields.m_security;
+      return order.get_info().m_fields.m_ticker;
     };
     auto schema = ComplianceRuleSchema("test_rule", {});
     auto rule = MapComplianceRule(schema, rule_builder, key_builder);
     auto info1 = OrderInfo();
     info1.m_id = 100;
-    info1.m_fields.m_security = Security("BAR", TSX);
+    info1.m_fields.m_ticker = parse_ticker("BAR.TSX");
     auto order1 = std::make_shared<PrimitiveOrder>(info1);
     auto async_add1 = std::async(std::launch::async, [&] {
       rule.add(order1);
@@ -81,7 +80,7 @@ TEST_SUITE("MapComplianceRule") {
     add_operation1->m_result.set();
     auto info2 = OrderInfo();
     info2.m_id = 101;
-    info2.m_fields.m_security = Security("BAR", TSX);
+    info2.m_fields.m_ticker = parse_ticker("BAR.TSX");
     auto order2 = std::make_shared<PrimitiveOrder>(info2);
     auto async_add2 = std::async(std::launch::async, [&] {
       rule.add(order2);

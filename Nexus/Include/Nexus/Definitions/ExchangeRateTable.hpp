@@ -56,7 +56,7 @@ namespace Nexus {
        * @throws CurrencyPairNotFoundException If no exchange rate exists for
        *         the constructed pair.
        */
-      Money convert(Money value, CurrencyId base, CurrencyId counter) const;
+      Money convert(Money value, Asset base, Asset counter) const;
 
       /**
        * Adds or updates an exchange rate in the table.
@@ -105,8 +105,8 @@ namespace Nexus {
       auto lock = boost::lock_guard(m_mutex);
       rates = m_direct_rates;
     }
-    auto visited = std::unordered_set<CurrencyId>();
-    auto queue = std::queue<std::pair<CurrencyId, boost::rational<int>>>();
+    auto visited = std::unordered_set<Asset>();
+    auto queue = std::queue<std::pair<Asset, boost::rational<int>>>();
     queue.push(std::pair(pair.m_base, boost::rational<int>(1)));
     visited.insert(pair.m_base);
     while(!queue.empty()) {
@@ -148,7 +148,7 @@ namespace Nexus {
   }
 
   inline Money ExchangeRateTable::convert(
-      Money value, CurrencyId base, CurrencyId counter) const {
+      Money value, Asset base, Asset counter) const {
     return convert(value, CurrencyPair(base, counter));
   }
 

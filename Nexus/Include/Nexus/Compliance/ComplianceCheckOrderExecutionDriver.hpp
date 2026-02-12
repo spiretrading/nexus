@@ -23,7 +23,7 @@ namespace Nexus {
    */
   template<typename D, typename C, typename S> requires
     IsOrderExecutionDriver<Beam::dereference_t<D>> &&
-    Beam::IsTimeClient<Beam::dereference_t<C>>
+      Beam::IsTimeClient<Beam::dereference_t<C>>
   class ComplianceCheckOrderExecutionDriver {
     public:
 

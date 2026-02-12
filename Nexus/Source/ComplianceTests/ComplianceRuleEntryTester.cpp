@@ -10,7 +10,7 @@ using namespace Nexus;
 TEST_SUITE("compliance_rule_entry") {
   TEST_CASE("constructor") {
     auto directory_entry = DirectoryEntry::make_account(321, "alpha");
-    auto parameter = ComplianceParameter("amount", ComplianceValue(100.0));
+    auto parameter = ComplianceParameter("amount", 100.0);
     auto schema = ComplianceRuleSchema("limit_rule", std::vector{parameter});
     auto entry = ComplianceRuleEntry(
       99, directory_entry, ComplianceRuleEntry::State::PASSIVE, schema);

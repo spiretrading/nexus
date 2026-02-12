@@ -22,8 +22,8 @@ namespace Nexus {
      */
     (LoadDirectoryEntryComplianceRuleEntryService,
       "Nexus.Compliance.LoadDirectoryEntryComplianceRuleEntryService",
-      std::vector<ComplianceRuleEntry>, (Beam::DirectoryEntry,
-      directory_entry)),
+      std::vector<ComplianceRuleEntry>,
+      (Beam::DirectoryEntry, directory_entry)),
 
     /**
      * Monitors changes to a DirectoryEntry's ComplianceRuleEntries.

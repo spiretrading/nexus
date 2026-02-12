@@ -58,13 +58,6 @@ namespace Details {
         entry.m_sign = "$";
         database.add(entry);
       }
-      {
-        auto entry = CurrencyDatabase::Entry();
-        entry.m_id = CurrencyId(1001);
-        entry.m_code = "XBT";
-        entry.m_sign = "\xE2\x82\xBF";
-        database.add(entry);
-      }
       return database;
     }();
     return database;
@@ -90,7 +83,6 @@ namespace Details {
     inline const auto HKD = DEFAULT_CURRENCIES.from("HKD").m_id;
     inline const auto JPY = DEFAULT_CURRENCIES.from("JPY").m_id;
     inline const auto USD = DEFAULT_CURRENCIES.from("USD").m_id;
-    inline const auto XBT = DEFAULT_CURRENCIES.from("XBT").m_id;
   }
 }
 

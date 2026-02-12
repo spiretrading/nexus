@@ -6,12 +6,12 @@
 using namespace Beam;
 using namespace Beam::Tests;
 using namespace Nexus;
+using namespace Nexus::DefaultCurrencies;
 
 TEST_SUITE("CurrencyPair") {
   TEST_CASE("parse_currency_pair") {
     auto pair = parse_currency_pair("JPY/AUD");
-    REQUIRE(
-      pair == CurrencyPair(DefaultCurrencies::JPY, DefaultCurrencies::AUD));
+    REQUIRE(pair == CurrencyPair(JPY, AUD));
   }
 
   TEST_CASE("parse_currency_pair_no_separator") {
@@ -33,7 +33,7 @@ TEST_SUITE("CurrencyPair") {
   }
 
   TEST_CASE("stream") {
-    auto pair = CurrencyPair(DefaultCurrencies::CAD, DefaultCurrencies::USD);
+    auto pair = CurrencyPair(CAD, USD);
     REQUIRE(to_string(pair) == "CAD/USD");
     test_round_trip_shuttle(pair);
   }

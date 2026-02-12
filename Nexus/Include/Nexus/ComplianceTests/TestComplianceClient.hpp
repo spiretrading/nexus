@@ -20,8 +20,7 @@ namespace Nexus::Tests {
       /** Records a call to load(). */
       struct LoadOperation {
         Beam::DirectoryEntry m_directory_entry;
-        Beam::Tests::ServiceResult<std::vector<ComplianceRuleEntry>>
-          m_result;
+        Beam::Tests::ServiceResult<std::vector<ComplianceRuleEntry>> m_result;
       };
 
       /** Records a call to add(). */
@@ -54,8 +53,7 @@ namespace Nexus::Tests {
       struct MonitorComplianceRuleEntriesOperation {
         Beam::DirectoryEntry m_directory_entry;
         Beam::ScopedQueueWriter<ComplianceRuleEntry> m_queue;
-        Beam::Tests::ServiceResult<std::vector<ComplianceRuleEntry>>
-          m_result;
+        Beam::Tests::ServiceResult<std::vector<ComplianceRuleEntry>> m_result;
       };
 
       /** A variant covering all possible TestComplianceClient operations. */
@@ -78,17 +76,11 @@ namespace Nexus::Tests {
 
       std::vector<ComplianceRuleEntry> load(
         const Beam::DirectoryEntry& directory_entry);
-
-      ComplianceRuleEntry::Id add(
-        const Beam::DirectoryEntry& directory_entry,
+      ComplianceRuleEntry::Id add(const Beam::DirectoryEntry& directory_entry,
         ComplianceRuleEntry::State state, const ComplianceRuleSchema& schema);
-
       void update(const ComplianceRuleEntry& entry);
-
       void remove(ComplianceRuleEntry::Id id);
-
       void report(const ComplianceRuleViolationRecord& record);
-
       void monitor_compliance_rule_entries(
         const Beam::DirectoryEntry& directory_entry,
         Beam::ScopedQueueWriter<ComplianceRuleEntry> queue,
@@ -113,8 +105,8 @@ namespace Nexus::Tests {
 
   inline std::vector<ComplianceRuleEntry> TestComplianceClient::load(
       const Beam::DirectoryEntry& directory_entry) {
-    return m_queue.append_result<LoadOperation,
-      std::vector<ComplianceRuleEntry>>(directory_entry);
+    return m_queue.append_result<
+      LoadOperation, std::vector<ComplianceRuleEntry>>(directory_entry);
   }
 
   inline ComplianceRuleEntry::Id TestComplianceClient::add(
