@@ -2079,38 +2079,32 @@ UiProfile Spire::make_eye_dropper_profile() {
 
 UiProfile Spire::make_filter_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  properties.push_back(
-    make_standard_property<QString>("title", QString("Filter Quantity")));
+  populate_widget_properties(properties);
+  properties.push_back(make_style_property("style_sheet", ""));
   auto profile = UiProfile("FilterPanel", properties, [] (auto& profile) {
-    auto& title = get<QString>("title", profile.get_properties());
-    auto button = make_label_button("Click me");
-    button->connect_click_signal([&, button] {
-      auto component = new QWidget();
-      component->setObjectName("component");
-      component->setStyleSheet("#component {background-color: #F5F5F5;}");
-      auto component_layout = new QGridLayout(component);
-      component_layout->setSpacing(0);
-      component_layout->setContentsMargins({});
-      auto min_box = new TextBox("Min");
-      min_box->set_read_only(true);
-      min_box->setFixedSize(scale(40, 30));
-      component_layout->addWidget(min_box, 0, 0);
-      auto min_text = new TextBox();
-      min_text->setFixedSize(scale(120, 26));
-      component_layout->addWidget(min_text, 0, 1);
-      auto max_box = new TextBox("Max");
-      max_box->set_read_only(true);
-      max_box->setFixedSize(scale(40, 30));
-      component_layout->addWidget(max_box, 1, 0);
-      auto max_text = new TextBox();
-      max_text->setFixedSize(scale(120, 26));
-      component_layout->addWidget(max_text, 1, 1);
-      auto panel = new FilterPanel(title.get(), component, *button);
-      panel->window()->setAttribute(Qt::WA_DeleteOnClose);
-      panel->connect_reset_signal(profile.make_event_slot("ResetSignal"));
-      panel->show();
+    auto component = new QWidget();
+    auto component_layout = new QGridLayout(component);
+    component_layout->setSpacing(scale_width(5));
+    component_layout->setContentsMargins({});
+    auto min_label = make_label("Min");
+    component_layout->addWidget(min_label, 0, 0);
+    auto min_text = new TextBox();
+    min_text->setMinimumWidth(scale_width(120));
+    component_layout->addWidget(min_text, 0, 1);
+    auto max_label = make_label("Max");
+    component_layout->addWidget(max_label, 0, 2);
+    auto max_text = new TextBox();
+    max_text->setMinimumWidth(scale_width(120));
+    component_layout->addWidget(max_text, 0, 3);
+    auto filter_panel = new FilterPanel(*component);
+    apply_widget_properties(filter_panel, profile.get_properties());
+    filter_panel->connect_reset_signal(profile.make_event_slot("ResetSignal"));
+    auto& style_sheet =
+      get<optional<StyleSheet>>("style_sheet", profile.get_properties());
+    style_sheet.connect_changed_signal([=] (const auto& style) {
+      update_widget_style(*filter_panel, style);
     });
-    return button;
+    return filter_panel;
   });
   return profile;
 }

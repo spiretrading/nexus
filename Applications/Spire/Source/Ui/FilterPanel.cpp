@@ -1,71 +1,49 @@
 #include "Spire/Ui/FilterPanel.hpp"
-#include <QEvent>
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/Layouts.hpp"
-#include "Spire/Ui/OverlayPanel.hpp"
-#include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
-namespace {
-  const auto MARGIN_SIZE = 8;
-
-  auto HEADER_STYLE(StyleSheet style) {
-    auto font = QFont("Roboto");
-    font.setWeight(QFont::Medium);
-    font.setPixelSize(scale_width(12));
-    style.get(ReadOnly() && Disabled()).
-      set(text_style(font, QColor(0x808080)));
-    return style;
-  }
-}
-
-FilterPanel::FilterPanel(QString title, QWidget* body, QWidget& parent)
-    : QWidget(&parent),
-      m_body(body) {
-  auto header = make_label(std::move(title));
-  update_style(*header, [&] (auto& style) {
-    style = HEADER_STYLE(style);
-  });
-  auto layout = make_vbox_layout(this);
-  layout->setContentsMargins(
-    scale_width(MARGIN_SIZE), scale_height(MARGIN_SIZE),
-    scale_width(MARGIN_SIZE), scale_height(MARGIN_SIZE));
-  layout->addWidget(header);
-  layout->addSpacing(scale_height(18));
-  layout->addWidget(m_body);
-  layout->addSpacing(scale_height(50));
-  auto reset_button = make_label_button(tr("Reset to Default"));
-  reset_button->setFixedHeight(scale_height(26));
-  layout->addWidget(reset_button, 0, Qt::AlignRight);
+FilterPanel::FilterPanel(QWidget& body, QWidget* parent)
+    : QWidget(parent),
+      m_body(&body) {
+  auto box_body = new QWidget();
+  box_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  auto layout = make_hbox_layout(box_body);
+  layout->addWidget(m_body, 1);
+  layout->addStretch();
+  layout->addSpacing(scale_width(18));
+  auto reset_button = make_icon_button(
+    image_from_svg(":/Icons/reset.svg", scale(26, 26)));
+  reset_button->setFixedSize(scale(26, 26));
   reset_button->connect_click_signal([=] { m_reset_signal(); });
-  m_panel = new OverlayPanel(*this, parent);
-  m_panel->setWindowFlags(Qt::Popup | (m_panel->windowFlags() & ~Qt::Tool));
-  m_panel->set_closed_on_focus_out(true);
+  layout->addWidget(reset_button);
+  auto box = new Box(box_body);
+  enclose(*this, *box);
+  proxy_style(*this, *box);
+  update_style(*this, [&] (auto& style) {
+    style.get(Any()).
+      set(BackgroundColor(QColor(0xFFFFFF))).
+      set(border(scale_width(1), QColor(Qt::transparent))).
+      set(horizontal_padding(scale_width(8))).
+      set(vertical_padding(scale_height(8)));
+  });
 }
 
 const QWidget& FilterPanel::get_body() const {
-  return m_panel->get_body();
+  return *m_body;
 }
 
 QWidget& FilterPanel::get_body() {
-  return m_panel->get_body();
+  return *m_body;
 }
 
 connection FilterPanel::connect_reset_signal(
     const ResetSignal::slot_type& slot) const {
   return m_reset_signal.connect(slot);
-}
-
-bool FilterPanel::event(QEvent* event) {
-  if(event->type() == QEvent::ShowToParent) {
-    m_panel->show();
-    m_body->setFocus();
-  } else if(event->type() == QEvent::HideToParent) {
-    m_panel->hide();
-  }
-  return QWidget::event(event);
 }

@@ -72,7 +72,7 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> table,
   }
   enclose(*this, *scrollable_list_box);
   setFocusProxy(scrollable_list_box);
-  m_filter_panel = new FilterPanel(std::move(title), this, parent);
+  m_filter_panel = new FilterPanel(*this, &parent);
   m_filter_panel->connect_reset_signal(
     std::bind_front(&ClosedFilterPanel::on_reset, this));
   window()->installEventFilter(this);
