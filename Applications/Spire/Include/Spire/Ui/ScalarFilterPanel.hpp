@@ -106,7 +106,7 @@ namespace Spire {
       std::shared_ptr<RangeModel> range, QString title, QWidget& parent)
       : QWidget(&parent),
         m_range(std::move(range)) {
-    m_filter_panel = new FilterPanel(std::move(title), this, parent);
+    m_filter_panel = new FilterPanel(*this, &parent);
     m_filter_panel->connect_reset_signal([=] { on_reset(); });
     m_min_box = make_scalar_box(m_range->get().m_min);
     auto min_layout = make_row_layout(tr("Min"), *m_min_box);
