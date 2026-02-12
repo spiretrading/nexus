@@ -13,7 +13,7 @@
 #include <boost/lexical_cast.hpp>
 #include "Nexus/ChartingService/ChartingClient.hpp"
 #include "Nexus/ChartingService/ChartingServices.hpp"
-#include "Nexus/ChartingService/SecurityChartingQuery.hpp"
+#include "Nexus/ChartingService/TickerChartingQuery.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 #include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
@@ -40,9 +40,9 @@ namespace Nexus {
 
       ~ServiceChartingClient();
 
-      void query(const SecurityChartingQuery& query,
+      void query(const TickerChartingQuery& query,
         Beam::ScopedQueueWriter<QueryVariant> queue);
-      TimePriceQueryResult load_time_price_series(const Security& security,
+      PriceQueryResult load_price_series(const Ticker& ticker,
         boost::posix_time::ptime start, boost::posix_time::ptime end,
         boost::posix_time::time_duration interval);
       void close();
@@ -50,19 +50,19 @@ namespace Nexus {
     private:
       using ServiceProtocolClient =
         typename ServiceProtocolClientBuilder::Client;
-      using SecurityChartingPublisher =
-        Beam::SequencedValuePublisher<SecurityChartingQuery, QueryVariant>;
+      using TickerChartingPublisher =
+        Beam::SequencedValuePublisher<TickerChartingQuery, QueryVariant>;
       boost::atomic_int m_next_query_id;
       Beam::SynchronizedUnorderedMap<
-        int, std::shared_ptr<SecurityChartingPublisher>>
-          m_security_charting_publishers;
+        int, std::shared_ptr<TickerChartingPublisher>>
+          m_ticker_charting_publishers;
       Beam::ServiceProtocolClientHandler<B> m_client_handler;
       Beam::OpenState m_open_state;
       Beam::RoutineHandlerGroup m_query_routines;
 
       ServiceChartingClient(const ServiceChartingClient&) = delete;
       ServiceChartingClient& operator =(const ServiceChartingClient&) = delete;
-      void on_security_query(ServiceProtocolClient& client, int query_id,
+      void on_ticker_query(ServiceProtocolClient& client, int query_id,
         const SequencedQueryVariant& value);
   };
 
@@ -75,9 +75,9 @@ namespace Nexus {
       Beam::out(m_client_handler.get_slots().get_registry()));
     register_charting_services(out(m_client_handler.get_slots()));
     register_charting_messages(out(m_client_handler.get_slots()));
-    Beam::add_message_slot<SecurityQueryMessage>(
+    Beam::add_message_slot<TickerQueryMessage>(
       out(m_client_handler.get_slots()),
-      std::bind_front(&ServiceChartingClient::on_security_query, this));
+      std::bind_front(&ServiceChartingClient::on_ticker_query, this));
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::ConnectException(
       "Failed to connect to the charting server."));
@@ -89,7 +89,7 @@ namespace Nexus {
   }
 
   template<typename B>
-  void ServiceChartingClient<B>::query(const SecurityChartingQuery& query,
+  void ServiceChartingClient<B>::query(const TickerChartingQuery& query,
       Beam::ScopedQueueWriter<QueryVariant> queue) {
     if(query.get_range().get_end() == Beam::Sequence::LAST) {
       m_query_routines.spawn([=, this, queue = std::move(queue)] () mutable {
@@ -98,21 +98,21 @@ namespace Nexus {
           std::move(queue), [] (const auto& value) {
             return *value;
           });
-        auto publisher = std::make_shared<SecurityChartingPublisher>(
+        auto publisher = std::make_shared<TickerChartingPublisher>(
           query, std::move(filter), std::move(conversion_queue));
         auto id = ++m_next_query_id;
         try {
           publisher->begin_snapshot();
-          m_security_charting_publishers.insert(id, publisher);
+          m_ticker_charting_publishers.insert(id, publisher);
           auto client = m_client_handler.get_client();
           auto query_result =
-            client->template send_request<QuerySecurityService>(query, id);
+            client->template send_request<QueryTickerService>(query, id);
           publisher->push_snapshot(
             query_result.m_snapshot.begin(), query_result.m_snapshot.end());
           publisher->end_snapshot(query_result.m_id);
         } catch(const std::exception&) {
           publisher->close();
-          m_security_charting_publishers.erase(id);
+          m_ticker_charting_publishers.erase(id);
         }
       });
     } else {
@@ -121,7 +121,7 @@ namespace Nexus {
           auto client = m_client_handler.get_client();
           auto id = ++m_next_query_id;
           auto query_result =
-            client->template send_request<QuerySecurityService>(query, id);
+            client->template send_request<QueryTickerService>(query, id);
           for(auto& value : query_result.m_snapshot) {
             queue.push(std::move(value));
           }
@@ -134,15 +134,15 @@ namespace Nexus {
   }
 
   template<typename B>
-  TimePriceQueryResult ServiceChartingClient<B>::load_time_price_series(
-      const Security& security, boost::posix_time::ptime start,
+  PriceQueryResult ServiceChartingClient<B>::load_price_series(
+      const Ticker& ticker, boost::posix_time::ptime start,
       boost::posix_time::ptime end, boost::posix_time::time_duration interval) {
     return Beam::service_or_throw_with_nested([&] {
       auto client = m_client_handler.get_client();
-      return client->template send_request<LoadSecurityTimePriceSeriesService>(
-        security, start, end, interval);
-    }, "Failed to load time price series: " +
-      boost::lexical_cast<std::string>(security) + ", " +
+      return client->template send_request<LoadTickerPriceSeriesService>(
+        ticker, start, end, interval);
+    }, "Failed to load price series: " +
+      boost::lexical_cast<std::string>(ticker) + ", " +
       boost::lexical_cast<std::string>(start) + ", " +
       boost::lexical_cast<std::string>(end) + ", " +
       boost::lexical_cast<std::string>(interval));
@@ -154,15 +154,14 @@ namespace Nexus {
       return;
     }
     m_client_handler.close();
-    m_security_charting_publishers.clear();
+    m_ticker_charting_publishers.clear();
     m_open_state.close();
   }
 
   template<typename B>
-  void ServiceChartingClient<B>::on_security_query(
-      ServiceProtocolClient& client, int query_id,
-      const SequencedQueryVariant& value) {
-    auto check_publisher = m_security_charting_publishers.try_load(query_id);
+  void ServiceChartingClient<B>::on_ticker_query(ServiceProtocolClient& client,
+      int query_id, const SequencedQueryVariant& value) {
+    auto check_publisher = m_ticker_charting_publishers.try_load(query_id);
     if(!check_publisher) {
       return;
     }
@@ -172,7 +171,7 @@ namespace Nexus {
     } catch(const std::exception&) {
       if(publisher->get_id() != -1) {
         auto client = m_client_handler.get_client();
-        Beam::send_record_message<EndSecurityQueryMessage>(*client, query_id);
+        Beam::send_record_message<EndTickerQueryMessage>(*client, query_id);
       }
     }
   }

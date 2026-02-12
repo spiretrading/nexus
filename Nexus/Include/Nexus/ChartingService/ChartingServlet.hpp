@@ -70,7 +70,7 @@ namespace Details {
         Beam::IndexedExpressionSubscriptions<
           typename MarketDataType::Value, QueryVariant, typename Query::Index,
           ServiceProtocolClient> m_queries;
-        Beam::SynchronizedUnorderedSet<Security, Beam::Mutex>
+        Beam::SynchronizedUnorderedSet<Ticker, Beam::Mutex>
           m_real_time_subscriptions;
       };
       Beam::local_ptr_t<M> m_market_data_client;
@@ -80,18 +80,18 @@ namespace Details {
       Beam::OpenState m_open_state;
       Beam::RoutineTaskQueue m_tasks;
 
-      void on_query_security_request(Beam::RequestToken<
-        ServiceProtocolClient, QuerySecurityService>& request,
-        const SecurityChartingQuery& query, int client_query_id);
-      void on_end_security_query(ServiceProtocolClient& client, int id);
-      TimePriceQueryResult on_load_security_time_price_series_request(
-        ServiceProtocolClient& client, const Security& security,
+      void on_query_ticker_request(
+        Beam::RequestToken<ServiceProtocolClient, QueryTickerService>& request,
+        const TickerChartingQuery& query, int client_query_id);
+      void on_end_ticker_query(ServiceProtocolClient& client, int id);
+      PriceQueryResult on_load_ticker_price_series_request(
+        ServiceProtocolClient& client, const Ticker& ticker,
         boost::posix_time::ptime start_time, boost::posix_time::ptime end_time,
         boost::posix_time::time_duration interval);
       template<typename MarketDataType>
-      void handle_query(Beam::RequestToken<
-          ServiceProtocolClient, QuerySecurityService>& request,
-        const SecurityChartingQuery& query, int client_query_id,
+      void handle_query(
+        Beam::RequestToken<ServiceProtocolClient, QueryTickerService>& request,
+        const TickerChartingQuery& query, int client_query_id,
         QueryEntry<MarketDataType>& query_entry);
       template<typename Index, typename MarketDataType>
       void on_query_update(const Index& index, const MarketDataType& value,
@@ -123,12 +123,12 @@ namespace Details {
     Nexus::register_query_types(Beam::out(slots->get_registry()));
     register_charting_services(out(slots));
     register_charting_messages(out(slots));
-    QuerySecurityService::add_request_slot(out(slots),
-      std::bind_front(&ChartingServlet::on_query_security_request, this));
-    Beam::add_message_slot<EndSecurityQueryMessage>(out(slots),
-      std::bind_front(&ChartingServlet::on_end_security_query, this));
-    LoadSecurityTimePriceSeriesService::add_slot(out(slots), std::bind_front(
-      &ChartingServlet::on_load_security_time_price_series_request, this));
+    QueryTickerService::add_request_slot(out(slots),
+      std::bind_front(&ChartingServlet::on_query_ticker_request, this));
+    Beam::add_message_slot<EndTickerQueryMessage>(out(slots),
+      std::bind_front(&ChartingServlet::on_end_ticker_query, this));
+    LoadTickerPriceSeriesService::add_slot(out(slots), std::bind_front(
+      &ChartingServlet::on_load_ticker_price_series_request, this));
   }
 
   template<typename C, typename M> requires
@@ -151,20 +151,20 @@ namespace Details {
 
   template<typename C, typename M> requires
     IsMarketDataClient<Beam::dereference_t<M>>
-  void ChartingServlet<C, M>::on_query_security_request(
-      Beam::RequestToken<ServiceProtocolClient, QuerySecurityService>&
-        request, const SecurityChartingQuery& query, int client_query_id) {
+  void ChartingServlet<C, M>::on_query_ticker_request(
+      Beam::RequestToken<ServiceProtocolClient, QueryTickerService>& request,
+      const TickerChartingQuery& query, int client_query_id) {
     auto& session = request.get_session();
     if(query.get_market_data_type() == MarketDataType::TIME_AND_SALE) {
       handle_query(request, query, client_query_id, m_time_and_sale_queries);
     } else {
-      request.set(SecurityChartingQueryResult());
+      request.set(TickerChartingQueryResult());
     }
   }
 
   template<typename C, typename M> requires
     IsMarketDataClient<Beam::dereference_t<M>>
-  void ChartingServlet<C, M>::on_end_security_query(
+  void ChartingServlet<C, M>::on_end_ticker_query(
       ServiceProtocolClient& client, int id) {
     auto& session = client.get_session();
     m_time_and_sale_queries.m_queries.end(client, id);
@@ -172,11 +172,10 @@ namespace Details {
 
   template<typename C, typename M> requires
     IsMarketDataClient<Beam::dereference_t<M>>
-  TimePriceQueryResult ChartingServlet<C, M>::
-      on_load_security_time_price_series_request(ServiceProtocolClient& client,
-        const Security& security, boost::posix_time::ptime start_time,
-        boost::posix_time::ptime end_time,
-        boost::posix_time::time_duration interval) {
+  PriceQueryResult ChartingServlet<C, M>::on_load_ticker_price_series_request(
+      ServiceProtocolClient& client, const Ticker& ticker,
+      boost::posix_time::ptime start_time, boost::posix_time::ptime end_time,
+      boost::posix_time::time_duration interval) {
     if(end_time < start_time + interval ||
         start_time == boost::posix_time::neg_infin  ||
         end_time == boost::posix_time::pos_infin) {
@@ -184,14 +183,14 @@ namespace Details {
         Beam::ServiceRequestException("Invalid time range."));
     }
     auto queue = std::make_shared<Beam::Queue<SequencedTimeAndSale>>();
-    auto time_and_sale_query = SecurityMarketDataQuery();
-    time_and_sale_query.set_index(security);
+    auto time_and_sale_query = TickerMarketDataQuery();
+    time_and_sale_query.set_index(ticker);
     time_and_sale_query.set_range(start_time, end_time);
     time_and_sale_query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
     m_market_data_client->query(time_and_sale_query, queue);
     auto time_and_sales = std::vector<SequencedTimeAndSale>();
     Beam::flush(queue, std::back_inserter(time_and_sales));
-    auto result = TimePriceQueryResult();
+    auto result = PriceQueryResult();
     if(!time_and_sales.empty()) {
       result.start = time_and_sales.front().get_sequence();
       result.end = time_and_sales.back().get_sequence();
@@ -201,7 +200,7 @@ namespace Details {
     auto time_and_sales_iterator = time_and_sales.begin();
     while(time_and_sales_iterator != time_and_sales.end() &&
         current_start <= end_time) {
-      auto candlestick = TimePriceCandlestick(current_start, current_end);
+      auto candlestick = PriceCandlestick(current_start, current_end);
       auto has_point = false;
       while(time_and_sales_iterator != time_and_sales.end() &&
           (*time_and_sales_iterator)->m_timestamp < current_end) {
@@ -222,13 +221,13 @@ namespace Details {
     IsMarketDataClient<Beam::dereference_t<M>>
   template<typename MarketDataType>
   void ChartingServlet<C, M>::handle_query(
-      Beam::RequestToken<ServiceProtocolClient, QuerySecurityService>& request,
-      const SecurityChartingQuery& query, int client_query_id,
+      Beam::RequestToken<ServiceProtocolClient, QueryTickerService>& request,
+      const TickerChartingQuery& query, int client_query_id,
       QueryEntry<MarketDataType>& query_entry) {
     using Query = market_data_query_type_t<MarketDataType>;
     if(query.get_range().get_end() == Beam::Sequence::LAST) {
-      query_entry.m_real_time_subscriptions.test_and_set(query.get_index(),
-        [&] {
+      query_entry.m_real_time_subscriptions.test_and_set(
+        query.get_index(), [&] {
           auto real_time_query = Query();
           real_time_query.set_index(query.get_index());
           real_time_query.set_range(Beam::Range::REAL_TIME);
@@ -239,7 +238,7 @@ namespace Details {
               }));
         });
     }
-    auto result = SecurityChartingQueryResult();
+    auto result = TickerChartingQueryResult();
     result.m_id = client_query_id;
     auto filter = Beam::translate<EvaluatorTranslator>(query.get_filter());
     auto translator = EvaluatorTranslator();
@@ -270,9 +269,9 @@ namespace Details {
     auto indexed_value = Beam::SequencedValue(
       Beam::IndexedValue(*value, index), value.get_sequence());
     m_data_store.store(indexed_value);
-    queries.m_queries.publish(indexed_value,
-      [&] (auto& client, auto id, const auto& value) {
-        Beam::send_record_message<SecurityQueryMessage>(client, id, value);
+    queries.m_queries.publish(
+      indexed_value, [&] (auto& client, auto id, const auto& value) {
+        Beam::send_record_message<TickerQueryMessage>(client, id, value);
       });
   }
 }
