@@ -80,7 +80,6 @@ namespace Nexus {
        * @param time_client Initializes the TimeClient.
        * @param data_store Initializes the RiskDataStore.
        * @param exchange_rates The exchange rates used by portfolios.
-       * @param venues The venues used by portfolios.
        * @param destinations The destination database used to flatten positions.
        */
       template<Beam::Initializes<A> AF, Beam::Initializes<M> MF,
@@ -91,7 +90,7 @@ namespace Nexus {
         AF&& administration_client, MF&& market_data_client,
         OF&& order_execution_client,
         TransitionTimerFactory transition_timer_factory, TF&& time_client,
-        DF&& data_store, ExchangeRateTable exchange_rates, VenueDatabase venues,
+        DF&& data_store, ExchangeRateTable exchange_rates,
         DestinationDatabase destinations);
 
       /** Returns a Publisher for all accounts RiskStates. */
@@ -112,7 +111,6 @@ namespace Nexus {
       Beam::local_ptr_t<T> m_time_client;
       Beam::local_ptr_t<D> m_data_store;
       ExchangeRateTable m_exchange_rates;
-      VenueDatabase m_venues;
       DestinationDatabase m_destinations;
       Beam::TablePublisher<Beam::DirectoryEntry, RiskState>
         m_state_publisher;
@@ -135,11 +133,11 @@ namespace Nexus {
   template<typename A, typename M, typename O, typename R, typename T,
     typename D>
   ConsolidatedRiskController(Beam::ScopedQueueReader<Beam::DirectoryEntry>, A&&,
-    M&&, O&&, R&&, T&&, D&&, ExchangeRateTable, VenueDatabase,
-    DestinationDatabase) -> ConsolidatedRiskController<std::remove_cvref_t<A>,
-      std::remove_cvref_t<M>, std::remove_cvref_t<O>,
-      typename std::invoke_result_t<R>::element_type, std::remove_cvref_t<T>,
-      std::remove_cvref_t<D>>;
+    M&&, O&&, R&&, T&&, D&&, ExchangeRateTable, DestinationDatabase) ->
+      ConsolidatedRiskController<std::remove_cvref_t<A>,
+        std::remove_cvref_t<M>, std::remove_cvref_t<O>,
+        typename std::invoke_result_t<R>::element_type, std::remove_cvref_t<T>,
+        std::remove_cvref_t<D>>;
 
   template<typename A, typename M, typename O, Beam::IsTimer R, typename T,
     typename D> requires IsAdministrationClient<Beam::dereference_t<A>> &&
@@ -154,7 +152,7 @@ namespace Nexus {
     AF&& administration_client, MF&& market_data_client,
     OF&& order_execution_client,
     TransitionTimerFactory transition_timer_factory, TF&& time_client,
-    DF&& data_store, ExchangeRateTable exchange_rates, VenueDatabase venues,
+    DF&& data_store, ExchangeRateTable exchange_rates,
     DestinationDatabase destinations)
   BEAM_SUPPRESS_THIS_INITIALIZER()
     : m_administration_client(std::forward<AF>(administration_client)),
@@ -164,7 +162,6 @@ namespace Nexus {
       m_time_client(std::forward<TF>(time_client)),
       m_data_store(std::forward<DF>(data_store)),
       m_exchange_rates(std::move(exchange_rates)),
-      m_venues(std::move(venues)),
       m_destinations(std::move(destinations)),
       m_accounts_pipe(std::move(accounts),
         m_tasks.get_slot<Beam::DirectoryEntry>(
@@ -206,8 +203,7 @@ namespace Nexus {
         return std::make_unique<RiskController>(
           account, &*m_administration_client, &*m_market_data_client,
           &*m_order_execution_client, m_transition_timer_factory(),
-          &*m_time_client, &*m_data_store, m_exchange_rates, m_venues,
-          m_destinations);
+          &*m_time_client, &*m_data_store, m_exchange_rates, m_destinations);
       } catch(const std::exception&) {
         std::cerr << "Unable to load risk controller:\n\t" <<
           "Account: " << account << "\n\t" <<
@@ -247,9 +243,8 @@ namespace Nexus {
             IsRiskDataStore<Beam::dereference_t<D>>
   void ConsolidatedRiskController<A, M, O, R, T, D>::on_portfolio_entry(
       const Beam::DirectoryEntry& account, const PortfolioUpdateEntry& entry) {
-    auto key = RiskPortfolioKey(
-      account, entry.m_security_inventory.m_position.m_security);
-    m_portfolio_publisher.push(std::move(key), entry.m_security_inventory);
+    auto key = RiskPortfolioKey(account, entry.m_inventory.m_position.m_ticker);
+    m_portfolio_publisher.push(std::move(key), entry.m_inventory);
   }
 }
 

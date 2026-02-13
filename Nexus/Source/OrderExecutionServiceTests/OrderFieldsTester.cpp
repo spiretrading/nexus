@@ -10,13 +10,12 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
 
 TEST_SUITE("OrderFields") {
   TEST_CASE("default_constructor") {
     auto fields = OrderFields();
     REQUIRE(fields.m_account == DirectoryEntry());
-    REQUIRE(!fields.m_security);
+    REQUIRE(!fields.m_ticker);
     REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::NONE);
     REQUIRE(fields.m_side == Side::NONE);
@@ -29,7 +28,7 @@ TEST_SUITE("OrderFields") {
 
   TEST_CASE("constructor") {
     auto account = DirectoryEntry::make_account(123, "test");
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto currency = USD;
     auto type = OrderType::LIMIT;
     auto side = Side::BID;
@@ -38,10 +37,10 @@ TEST_SUITE("OrderFields") {
     auto price = Money::ONE;
     auto time_in_force = TimeInForce::Type::FOK;
     auto additional_fields = std::vector{Tag(1, 123)};
-    auto fields = OrderFields(account, security, currency, type, side,
+    auto fields = OrderFields(account, ticker, currency, type, side,
       destination, quantity, price, time_in_force, additional_fields);
     REQUIRE(fields.m_account == account);
-    REQUIRE(fields.m_security == security);
+    REQUIRE(fields.m_ticker == ticker);
     REQUIRE(fields.m_currency == currency);
     REQUIRE(fields.m_type == type);
     REQUIRE(fields.m_side == side);
@@ -54,16 +53,16 @@ TEST_SUITE("OrderFields") {
 
   TEST_CASE("make_limit_order_fields_all_parameters") {
     auto account = DirectoryEntry::make_account(123, "test");
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto currency = USD;
     auto side = Side::BID;
     auto destination = DefaultDestinations::TSX;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     auto fields = make_limit_order_fields(
-      account, security, currency, side, destination, quantity, price);
+      account, ticker, currency, side, destination, quantity, price);
     REQUIRE(fields.m_account == account);
-    REQUIRE(fields.m_security == security);
+    REQUIRE(fields.m_ticker == ticker);
     REQUIRE(fields.m_currency == currency);
     REQUIRE(fields.m_type == OrderType::LIMIT);
     REQUIRE(fields.m_side == side);
@@ -75,16 +74,16 @@ TEST_SUITE("OrderFields") {
   }
 
   TEST_CASE("make_limit_order_fields_no_account") {
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto currency = USD;
     auto side = Side::BID;
     auto destination = DefaultDestinations::TSX;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     auto fields = make_limit_order_fields(
-      security, currency, side, destination, quantity, price);
+      ticker, currency, side, destination, quantity, price);
     REQUIRE(fields.m_account == DirectoryEntry());
-    REQUIRE(fields.m_security == security);
+    REQUIRE(fields.m_ticker == ticker);
     REQUIRE(fields.m_currency == currency);
     REQUIRE(fields.m_type == OrderType::LIMIT);
     REQUIRE(fields.m_side == side);
@@ -97,15 +96,15 @@ TEST_SUITE("OrderFields") {
 
   TEST_CASE("make_limit_order_fields_no_currency") {
     auto account = DirectoryEntry::make_account(123, "test");
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto side = Side::BID;
     auto destination = DefaultDestinations::TSX;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     auto fields = make_limit_order_fields(
-      account, security, side, destination, quantity, price);
+      account, ticker, side, destination, quantity, price);
     REQUIRE(fields.m_account == account);
-    REQUIRE(fields.m_security == security);
+    REQUIRE(fields.m_ticker == ticker);
     REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::LIMIT);
     REQUIRE(fields.m_side == side);
@@ -117,15 +116,15 @@ TEST_SUITE("OrderFields") {
   }
 
   TEST_CASE("make_limit_order_fields_no_account_or_currency") {
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto side = Side::BID;
     auto destination = DefaultDestinations::TSX;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     auto fields =
-      make_limit_order_fields(security, side, destination, quantity, price);
+      make_limit_order_fields(ticker, side, destination, quantity, price);
     REQUIRE(fields.m_account == DirectoryEntry());
-    REQUIRE(fields.m_security == security);
+    REQUIRE(fields.m_ticker == ticker);
     REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::LIMIT);
     REQUIRE(fields.m_side == side);
@@ -137,15 +136,15 @@ TEST_SUITE("OrderFields") {
   }
 
   TEST_CASE("make_limit_order_fields_no_destination") {
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto currency = USD;
     auto side = Side::BID;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     auto fields =
-      make_limit_order_fields(security, currency, side, quantity, price);
+      make_limit_order_fields(ticker, currency, side, quantity, price);
     REQUIRE(fields.m_account == DirectoryEntry());
-    REQUIRE(fields.m_security == security);
+    REQUIRE(fields.m_ticker == ticker);
     REQUIRE(fields.m_currency == currency);
     REQUIRE(fields.m_type == OrderType::LIMIT);
     REQUIRE(fields.m_side == side);
@@ -158,14 +157,14 @@ TEST_SUITE("OrderFields") {
 
   TEST_CASE("make_limit_order_fields_no_currency_or_destination") {
     auto account = DirectoryEntry::make_account(123, "test");
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto side = Side::BID;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     auto fields =
-      make_limit_order_fields(account, security, side, quantity, price);
+      make_limit_order_fields(account, ticker, side, quantity, price);
     REQUIRE(fields.m_account == account);
-    REQUIRE(fields.m_security == security);
+    REQUIRE(fields.m_ticker == ticker);
     REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::LIMIT);
     REQUIRE(fields.m_side == side);
@@ -177,13 +176,13 @@ TEST_SUITE("OrderFields") {
   }
 
   TEST_CASE("make_limit_order_fields_minimal_parameters") {
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto side = Side::BID;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
-    auto fields = make_limit_order_fields(security, side, quantity, price);
+    auto fields = make_limit_order_fields(ticker, side, quantity, price);
     REQUIRE(fields.m_account == DirectoryEntry());
-    REQUIRE(fields.m_security == security);
+    REQUIRE(fields.m_ticker == ticker);
     REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::LIMIT);
     REQUIRE(fields.m_side == side);
@@ -196,15 +195,15 @@ TEST_SUITE("OrderFields") {
 
   TEST_CASE("make_market_order_fields_all_parameters") {
     auto account = DirectoryEntry::make_account(123, "test");
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto currency = USD;
     auto side = Side::BID;
     auto destination = DefaultDestinations::TSX;
     auto quantity = Quantity(100);
     auto fields = make_market_order_fields(
-      account, security, currency, side, destination, quantity);
+      account, ticker, currency, side, destination, quantity);
     REQUIRE(fields.m_account == account);
-    REQUIRE(fields.m_security == security);
+    REQUIRE(fields.m_ticker == ticker);
     REQUIRE(fields.m_currency == currency);
     REQUIRE(fields.m_type == OrderType::MARKET);
     REQUIRE(fields.m_side == side);
@@ -216,15 +215,15 @@ TEST_SUITE("OrderFields") {
   }
 
   TEST_CASE("make_market_order_fields_no_account") {
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto currency = USD;
     auto side = Side::BID;
     auto destination = DefaultDestinations::TSX;
     auto quantity = Quantity(100);
     auto fields =
-      make_market_order_fields(security, currency, side, destination, quantity);
+      make_market_order_fields(ticker, currency, side, destination, quantity);
     REQUIRE(fields.m_account == DirectoryEntry());
-    REQUIRE(fields.m_security == security);
+    REQUIRE(fields.m_ticker == ticker);
     REQUIRE(fields.m_currency == currency);
     REQUIRE(fields.m_type == OrderType::MARKET);
     REQUIRE(fields.m_side == side);
@@ -237,14 +236,14 @@ TEST_SUITE("OrderFields") {
 
   TEST_CASE("make_market_order_fields_no_currency") {
     auto account = DirectoryEntry::make_account(123, "test");
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto side = Side::BID;
     auto destination = DefaultDestinations::TSX;
     auto quantity = Quantity(100);
     auto fields =
-      make_market_order_fields(account, security, side, destination, quantity);
+      make_market_order_fields(account, ticker, side, destination, quantity);
     REQUIRE(fields.m_account == account);
-    REQUIRE(fields.m_security == security);
+    REQUIRE(fields.m_ticker == ticker);
     REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::MARKET);
     REQUIRE(fields.m_side == side);
@@ -256,14 +255,14 @@ TEST_SUITE("OrderFields") {
   }
 
   TEST_CASE("make_market_order_fields_no_account_or_currency") {
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto side = Side::BID;
     auto destination = DefaultDestinations::TSX;
     auto quantity = Quantity(100);
     auto fields =
-      make_market_order_fields(security, side, destination, quantity);
+      make_market_order_fields(ticker, side, destination, quantity);
     REQUIRE(fields.m_account == DirectoryEntry());
-    REQUIRE(fields.m_security == security);
+    REQUIRE(fields.m_ticker == ticker);
     REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::MARKET);
     REQUIRE(fields.m_side == side);
@@ -275,13 +274,13 @@ TEST_SUITE("OrderFields") {
   }
 
   TEST_CASE("make_market_order_fields_no_destination") {
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto currency = USD;
     auto side = Side::BID;
     auto quantity = Quantity(100);
-    auto fields = make_market_order_fields(security, currency, side, quantity);
+    auto fields = make_market_order_fields(ticker, currency, side, quantity);
     REQUIRE(fields.m_account == DirectoryEntry());
-    REQUIRE(fields.m_security == security);
+    REQUIRE(fields.m_ticker == ticker);
     REQUIRE(fields.m_currency == currency);
     REQUIRE(fields.m_type == OrderType::MARKET);
     REQUIRE(fields.m_side == side);
@@ -294,12 +293,12 @@ TEST_SUITE("OrderFields") {
 
   TEST_CASE("make_market_order_fields_no_currency_or_destination") {
     auto account = DirectoryEntry::make_account(123, "test");
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto side = Side::BID;
     auto quantity = Quantity(100);
-    auto fields = make_market_order_fields(account, security, side, quantity);
+    auto fields = make_market_order_fields(account, ticker, side, quantity);
     REQUIRE(fields.m_account == account);
-    REQUIRE(fields.m_security == security);
+    REQUIRE(fields.m_ticker == ticker);
     REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::MARKET);
     REQUIRE(fields.m_side == side);
@@ -311,12 +310,12 @@ TEST_SUITE("OrderFields") {
   }
 
   TEST_CASE("make_market_order_fields_minimal_parameters") {
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto side = Side::BID;
     auto quantity = Quantity(100);
-    auto fields = make_market_order_fields(security, side, quantity);
+    auto fields = make_market_order_fields(ticker, side, quantity);
     REQUIRE(fields.m_account == DirectoryEntry());
-    REQUIRE(fields.m_security == security);
+    REQUIRE(fields.m_ticker == ticker);
     REQUIRE(!fields.m_currency);
     REQUIRE(fields.m_type == OrderType::MARKET);
     REQUIRE(fields.m_side == side);
@@ -380,7 +379,7 @@ TEST_SUITE("OrderFields") {
 
   TEST_CASE("stream") {
     auto account = DirectoryEntry::make_account(123, "test");
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto currency = USD;
     auto type = OrderType::LIMIT;
     auto side = Side::BID;
@@ -389,7 +388,7 @@ TEST_SUITE("OrderFields") {
     auto price = Money::ONE;
     auto time_in_force = TimeInForce::Type::FOK;
     auto additional_fields = std::vector{Tag(1, 123)};
-    auto fields = OrderFields(account, security, currency, type, side,
+    auto fields = OrderFields(account, ticker, currency, type, side,
       destination, quantity, price, time_in_force, additional_fields);
     REQUIRE(to_string(fields) ==
       "((ACCOUNT 123 test) TST.TSX USD LIMIT BID TSX 100 1.00 FOK [(1 123)])");

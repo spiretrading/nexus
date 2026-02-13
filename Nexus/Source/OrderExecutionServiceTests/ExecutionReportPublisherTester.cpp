@@ -8,14 +8,13 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 TEST_SUITE("ExecutionReportPublisher") {
   TEST_CASE("single_order_single_report") {
     auto timestamp = time_from_string("2024-07-21 10:00:00.000");
     auto fields = make_limit_order_fields(
-      DirectoryEntry::make_account(1, "test"), Security("TST", TSX), Side::BID,
+      DirectoryEntry::make_account(1, "test"), parse_ticker("TST.TSX"), Side::BID,
       "TSX", Quantity(100), Money::ONE);
     auto info = OrderInfo(fields, 1, false, timestamp);
     auto order = std::make_shared<PrimitiveOrder>(info);
@@ -34,7 +33,7 @@ TEST_SUITE("ExecutionReportPublisher") {
   TEST_CASE("single_order_multiple_reports") {
     auto timestamp = time_from_string("2024-07-21 10:00:00.000");
     auto fields = make_limit_order_fields(
-      DirectoryEntry::make_account(2, "test"), Security("TST", TSX), Side::ASK,
+      DirectoryEntry::make_account(2, "test"), parse_ticker("TST.TSX"), Side::ASK,
       "TSX", Quantity(200), Money::ONE);
     auto info = OrderInfo(fields, 2, false, timestamp);
     auto order = std::make_shared<PrimitiveOrder>(info);
@@ -61,10 +60,10 @@ TEST_SUITE("ExecutionReportPublisher") {
     auto timestamp1 = time_from_string("2024-07-21 10:00:00.000");
     auto timestamp2 = time_from_string("2024-07-21 10:01:00.000");
     auto fields1 = make_limit_order_fields(
-      DirectoryEntry::make_account(3, "test"), Security("AAA", TSX), Side::BID,
+      DirectoryEntry::make_account(3, "test"), parse_ticker("AAA.TSX"), Side::BID,
       "TSX", Quantity(50), Money::ONE);
     auto fields2 = make_limit_order_fields(
-      DirectoryEntry::make_account(4, "test"), Security("BBB", TSX), Side::ASK,
+      DirectoryEntry::make_account(4, "test"), parse_ticker("BBB.TSX"), Side::ASK,
       "TSX", Quantity(75), Money::ONE);
     auto info1 = OrderInfo(fields1, 3, false, timestamp1);
     auto info2 = OrderInfo(fields2, 4, false, timestamp2);
@@ -87,7 +86,7 @@ TEST_SUITE("ExecutionReportPublisher") {
   TEST_CASE("dangling_publisher") {
     auto timestamp = time_from_string("2024-07-21 10:00:00.000");
     auto fields = make_limit_order_fields(
-      DirectoryEntry::make_account(1, "test"), Security("TST", TSX), Side::BID,
+      DirectoryEntry::make_account(1, "test"), parse_ticker("TST.TSX"), Side::BID,
       "TSX", Quantity(100), Money::ONE);
     auto info = OrderInfo(fields, 1, false, timestamp);
     auto order = std::make_shared<PrimitiveOrder>(info);

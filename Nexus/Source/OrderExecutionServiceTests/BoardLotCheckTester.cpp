@@ -18,14 +18,14 @@ using namespace Nexus::Tests;
 namespace {
   auto make_test_order_fields() {
     auto account = DirectoryEntry::make_account(123, "test");
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto currency = CAD;
     auto side = Side::BID;
     auto destination = DefaultDestinations::TSX;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     return make_limit_order_fields(
-      account, security, currency, side, destination, quantity, price);
+      account, ticker, currency, side, destination, quantity, price);
   }
 
   struct Fixture {
@@ -53,11 +53,11 @@ TEST_SUITE("BoardLotCheck") {
 
     SUBCASE("price_over_one_dollar") {
       auto fields = make_test_order_fields();
-      auto security = fields.m_security;
+      auto ticker = fields.m_ticker;
       auto bbo = BboQuote(
         make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 100),
           time_from_string("2024-07-18 10:00:00"));
-      feed_client.publish(SecurityBboQuote(bbo, security));
+      feed_client.publish(TickerBboQuote(bbo, ticker));
       fields.m_quantity = 200;
       auto order_info_valid =
         OrderInfo(fields, 1, time_from_string("2024-07-18 10:01:00"));
@@ -71,11 +71,11 @@ TEST_SUITE("BoardLotCheck") {
 
     SUBCASE("price_under_one_dollar") {
       auto fields = make_test_order_fields();
-      auto security = fields.m_security;
+      auto ticker = fields.m_ticker;
       auto bbo = BboQuote(
         make_bid(50 * Money::CENT, 100), make_ask(51 * Money::CENT, 100),
         time_from_string("2024-07-18 10:00:00"));
-      feed_client.publish(SecurityBboQuote(bbo, security));
+      feed_client.publish(TickerBboQuote(bbo, ticker));
       fields.m_quantity = 1500;
       auto order_info_valid =
         OrderInfo(fields, 1, time_from_string("2024-07-18 10:01:00"));
@@ -89,11 +89,11 @@ TEST_SUITE("BoardLotCheck") {
 
     SUBCASE("price_under_ten_cents") {
       auto fields = make_test_order_fields();
-      auto security = fields.m_security;
+      auto ticker = fields.m_ticker;
       auto bbo = BboQuote(
         make_bid(9 * Money::CENT, 100), make_ask(10 * Money::CENT, 100),
         time_from_string("2024-07-18 10:00:00"));
-      feed_client.publish(SecurityBboQuote(bbo, security));
+      feed_client.publish(TickerBboQuote(bbo, ticker));
       fields.m_quantity = 2000;
       auto order_info_valid =
         OrderInfo(fields, 1, time_from_string("2024-07-18 10:01:00"));
@@ -107,7 +107,7 @@ TEST_SUITE("BoardLotCheck") {
 
     SUBCASE("unsupported_venue") {
       auto fields = make_test_order_fields();
-      fields.m_security = Security("S32", ASX);
+      fields.m_ticker = parse_ticker("S32.ASX");
       auto order_info =
         OrderInfo(fields, 1, time_from_string("2024-07-18 10:01:00"));
       REQUIRE_NOTHROW(check->submit(order_info));
@@ -115,13 +115,13 @@ TEST_SUITE("BoardLotCheck") {
 
     SUBCASE("historical_close_price") {
       auto fields = make_test_order_fields();
-      auto security = fields.m_security;
+      auto ticker = fields.m_ticker;
       auto previous_close = TimeAndSale(
         time_from_string("2024-07-17 16:00:00"), Money::ONE, 100, {},
         DEFAULT_VENUES.from(TSX).m_market_center);
       fixture.m_market_data_environment.get_data_store().store(
-        SequencedSecurityTimeAndSale(
-          SecurityTimeAndSale(previous_close, security), Beam::Sequence(1)));
+        SequencedTickerTimeAndSale(
+          TickerTimeAndSale(previous_close, ticker), Beam::Sequence(1)));
       fields.m_quantity = 300;
       auto order_info_valid =
         OrderInfo(fields, 1, time_from_string("2024-07-18 10:01:00"));
@@ -135,7 +135,7 @@ TEST_SUITE("BoardLotCheck") {
       auto new_close = TimeAndSale(new_close_timestamp, 10 * Money::CENT, 100,
         {}, DEFAULT_VENUES.from(TSX).m_market_center);
       fixture.m_market_data_environment.get_data_store().store(
-        SequencedSecurityTimeAndSale(SecurityTimeAndSale(new_close, security),
+        SequencedTickerTimeAndSale(TickerTimeAndSale(new_close, ticker),
         Beam::Sequence(2)));
       auto next_day_timestamp = new_close_timestamp + days(1);
       fields.m_quantity = 500;

@@ -39,18 +39,17 @@ namespace Nexus {
       extend(Viper::Row<OrderFields>().
         add_column("symbol", Viper::varchar(16),
           [] (auto& row) {
-            return row.m_security.get_symbol();
+            return row.m_ticker.get_symbol();
           },
           [] (auto& row, auto column) {
-            row.m_security =
-              Security(std::move(column), row.m_security.get_venue());
+            row.m_ticker = Ticker(std::move(column), row.m_ticker.get_venue());
           }).
         add_column("venue", Viper::varchar(16),
           [] (auto& row) {
-            return row.m_security.get_venue();
+            return row.m_ticker.get_venue();
           },
           [] (auto& row, auto column) {
-            row.m_security = Security(row.m_security.get_symbol(), column);
+            row.m_ticker = Ticker(row.m_ticker.get_symbol(), column);
           }).
         add_column("currency", &OrderFields::m_currency).
         add_column("type", &OrderFields::m_type).

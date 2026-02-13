@@ -5,7 +5,6 @@
 #include <Beam/Queries/Sequence.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
@@ -35,10 +34,9 @@ namespace Nexus {
    *         removed.
    */
   inline InventorySnapshot strip(InventorySnapshot snapshot) {
-    snapshot.m_inventories.erase(std::remove_if(snapshot.m_inventories.begin(),
-      snapshot.m_inventories.end(), [] (const auto& inventory) {
-        return is_empty(inventory);
-      }), snapshot.m_inventories.end());
+    std::erase_if(snapshot.m_inventories, [] (const auto& inventory) {
+      return is_empty(inventory);
+    });
     return snapshot;
   }
 
@@ -46,7 +44,6 @@ namespace Nexus {
    * Returns a RiskPortfolio from an InventorySnapshot.
    * @param snapshot The InventorySnapshot used to build the portfolio.
    * @param account The account the portfolio represents.
-   * @param venues The available venues.
    * @param client The OrderExecutionClient to query.
    * @return A triple consisting of the portfolio that was built, the Order
    *         query sequence that the portfolio is valid up to for the specified
@@ -56,7 +53,7 @@ namespace Nexus {
       std::vector<std::shared_ptr<Order>>> make_portfolio(
         const InventorySnapshot& snapshot,
         const Beam::DirectoryEntry& account,
-        VenueDatabase venues, IsOrderExecutionClient auto& client) {
+        IsOrderExecutionClient auto& client) {
     auto excluded_orders =
       load_orders(account, snapshot.m_excluded_orders, client);
     auto trailing_order_query = AccountQuery();
@@ -72,8 +69,8 @@ namespace Nexus {
       excluded_orders.push_back(order.get_value());
       sequence = std::max(sequence, order.get_sequence());
     });
-    auto portfolio = RiskPortfolio(
-      RiskPortfolio::Bookkeeper(snapshot.m_inventories), std::move(venues));
+    auto portfolio =
+      RiskPortfolio(RiskPortfolio::Bookkeeper(snapshot.m_inventories));
     return {std::move(portfolio), sequence, std::move(excluded_orders)};
   }
 }

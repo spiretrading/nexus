@@ -208,8 +208,8 @@ namespace Nexus {
     m_state = 5;
     for(auto& position : m_book.get_positions()) {
       auto destination = m_destinations.get_preferred_destination(
-        position.m_security.get_venue()).m_id;
-      auto fields = make_market_order_fields(m_account, position.m_security,
+        position.m_ticker.get_venue()).m_id;
+      auto fields = make_market_order_fields(m_account, position.m_ticker,
         get_opposite(get_side(position.m_quantity)), destination,
         abs(position.m_quantity));
       try {

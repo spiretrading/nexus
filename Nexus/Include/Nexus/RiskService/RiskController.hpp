@@ -82,7 +82,6 @@ namespace Nexus {
        * @param time_client Initializes the TimeClient.
        * @param data_store Initializes the RiskDataStore.
        * @param exchange_rates The exchange rates.
-       * @param venues The venues used by the portfolio.
        * @param destinations The destination database used to flatten positions.
        */
       template<Beam::Initializes<A> AF, Beam::Initializes<M> MF,
@@ -92,7 +91,7 @@ namespace Nexus {
         AF&& administration_client, MF&& market_data_client,
         OF&& order_execution_client, RF&& transition_timer, TF&& time_client,
         DF&& data_store, const ExchangeRateTable& exchange_rates,
-        VenueDatabase venues, DestinationDatabase destinations);
+        DestinationDatabase destinations);
 
       /** Returns a Publisher for the account's RiskState. */
       const Beam::Publisher<RiskState>& get_risk_state_publisher() const;
@@ -123,8 +122,7 @@ namespace Nexus {
       RiskController& operator =(const RiskController&) = delete;
       void update_snapshot(const Order& order);
       std::tuple<RiskPortfolio, Beam::Sequence,
-        std::vector<std::shared_ptr<Order>>> make_portfolio(
-          VenueDatabase venues);
+        std::vector<std::shared_ptr<Order>>> make_portfolio();
       template<typename F>
       void update(F&& f);
       void on_transition_timer(Beam::Timer::Result result);
@@ -138,11 +136,11 @@ namespace Nexus {
   template<typename A, typename M, typename O, typename R, typename T,
     typename D>
   RiskController(const Beam::DirectoryEntry&, A&&, M&&, O&&,
-    R&&, T&&, D&&, const ExchangeRateTable&, VenueDatabase,
-    DestinationDatabase) -> RiskController<std::remove_reference_t<A>,
-      std::remove_reference_t<M>, std::remove_reference_t<O>,
-      std::remove_reference_t<R>, std::remove_reference_t<T>,
-      std::remove_reference_t<D>>;
+    R&&, T&&, D&&, const ExchangeRateTable&, DestinationDatabase) ->
+      RiskController<std::remove_reference_t<A>,
+        std::remove_reference_t<M>, std::remove_reference_t<O>,
+        std::remove_reference_t<R>, std::remove_reference_t<T>,
+        std::remove_reference_t<D>>;
 
   template<typename A, typename M, typename O, typename R, typename T,
     typename D> requires IsAdministrationClient<Beam::dereference_t<A>> &&
@@ -158,16 +156,14 @@ namespace Nexus {
       AF&& administration_client, MF&& market_data_client,
       OF&& order_execution_client, RF&& transition_timer, TF&& time_client,
       DF&& data_store, const ExchangeRateTable& exchange_rates,
-      VenueDatabase venues, DestinationDatabase destinations)
+      DestinationDatabase destinations)
       : m_account(std::move(account)),
         m_administration_client(std::forward<AF>(administration_client)),
         m_order_execution_client(std::forward<OF>(order_execution_client)),
         m_transition_timer(std::forward<RF>(transition_timer)),
-        m_data_store(std::forward<DF>(data_store)),
-        m_snapshot_portfolio(venues) {
+        m_data_store(std::forward<DF>(data_store)) {
     auto lock = std::lock_guard(m_mutex);
-    auto [portfolio, sequence, excluded_orders] =
-      make_portfolio(std::move(venues));
+    auto [portfolio, sequence, excluded_orders] = make_portfolio();
     auto inventories = std::vector<Inventory>();
     for(auto& inventory : portfolio.get_bookkeeper().get_inventory_range()) {
       inventories.push_back(inventory);
@@ -271,10 +267,10 @@ namespace Nexus {
               IsRiskDataStore<Beam::dereference_t<D>>
   std::tuple<RiskPortfolio, Beam::Sequence,
       std::vector<std::shared_ptr<Order>>>
-        RiskController<A, M, O, R, T, D>::make_portfolio(VenueDatabase venues) {
+        RiskController<A, M, O, R, T, D>::make_portfolio() {
     auto [portfolio, sequence, excluded_orders] = Nexus::make_portfolio(
       m_data_store->load_inventory_snapshot(m_account), m_account,
-      std::move(venues), *m_order_execution_client);
+      *m_order_execution_client);
     m_snapshot_portfolio = portfolio;
     m_snapshot_sequence = sequence;
     std::transform(excluded_orders.begin(), excluded_orders.end(),

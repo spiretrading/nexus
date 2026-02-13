@@ -5,14 +5,14 @@
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
 #include "Nexus/Accounting/Portfolio.hpp"
-#include "Nexus/Definitions/Region.hpp"
+#include "Nexus/Definitions/Scope.hpp"
 #include "Nexus/RiskService/InventorySnapshot.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
 namespace Nexus {
-  BEAM_DEFINE_RECORD(SecurityValuationUpdate, (Security, security),
-    (SecurityValuation, valuation));
+  BEAM_DEFINE_RECORD(TickerValuationUpdate, (Ticker, ticker),
+    (Valuation, valuation));
   BEAM_DEFINE_RECORD(InventoryUpdate,
     (Beam::DirectoryEntry, account), (Inventory, inventory));
   BEAM_DEFINE_RECORD(RiskStateUpdate, (Beam::DirectoryEntry, account),
@@ -33,11 +33,11 @@ namespace Nexus {
       (Beam::DirectoryEntry, account)),
 
     /**
-     * Resets all inventories whose Security is within a Region.
-     * @param region The Region to reset.
+     * Resets all inventories whose Ticker is within a Scope.
+     * @param scope The Scope to reset.
      */
-    (ResetRegionService, "Nexus.RiskService.ResetRegionService", void,
-      (Region, region)),
+    (ResetScopeService, "Nexus.RiskService.ResetScopeService", void,
+      (Scope, scope)),
 
     /**
      * Subscribes to the RiskPortfolioUpdates permissioned by the session's

@@ -16,14 +16,14 @@
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheck.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheckException.hpp"
-#include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
+#include "Nexus/TechnicalAnalysis/StandardTickerQueries.hpp"
 
 namespace Nexus {
 
   /**
    * Validates an Order's board lot size.
    * @param <C> The type of MarketDataClient used to determine the price of a
-   *        Security.
+   *        Ticker.
    */
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   class BoardLotCheck : public OrderSubmissionCheck {
@@ -58,13 +58,13 @@ namespace Nexus {
       VenueDatabase m_venues;
       boost::local_time::tz_database m_time_zones;
       Beam::SynchronizedUnorderedMap<
-        Security, Beam::Sync<ClosingEntry, Beam::Mutex>> m_closing_entries;
+        Ticker, Beam::Sync<ClosingEntry, Beam::Mutex>> m_closing_entries;
       Beam::SynchronizedUnorderedMap<
-        Security, std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bbo_quotes;
+        Ticker, std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bbo_quotes;
       std::vector<Beam::RoutineHandler> m_query_routines;
 
       Money load_price(
-        const Security& security, boost::posix_time::ptime timestamp);
+        const Ticker& ticker, boost::posix_time::ptime timestamp);
   };
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
@@ -89,13 +89,13 @@ namespace Nexus {
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   void BoardLotCheck<C>::submit(const OrderInfo& info) {
-    if(info.m_fields.m_security.get_venue() != DefaultVenues::TSX &&
-        info.m_fields.m_security.get_venue() != DefaultVenues::TSXV &&
-        info.m_fields.m_security.get_venue() != DefaultVenues::NEOE &&
-        info.m_fields.m_security.get_venue() != DefaultVenues::CSE) {
+    if(info.m_fields.m_ticker.get_venue() != DefaultVenues::TSX &&
+        info.m_fields.m_ticker.get_venue() != DefaultVenues::TSXV &&
+        info.m_fields.m_ticker.get_venue() != DefaultVenues::NEOE &&
+        info.m_fields.m_ticker.get_venue() != DefaultVenues::CSE) {
       return;
     }
-    auto current_price = load_price(info.m_fields.m_security, info.m_timestamp);
+    auto current_price = load_price(info.m_fields.m_ticker, info.m_timestamp);
     if(current_price < 10 * Money::CENT) {
       if(info.m_fields.m_quantity % 1000 != 0) {
         boost::throw_with_location(OrderSubmissionCheckException(
@@ -116,11 +116,11 @@ namespace Nexus {
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   Money BoardLotCheck<C>::load_price(
-      const Security& security, boost::posix_time::ptime timestamp) {
-    auto& closing_entry = m_closing_entries.get(security);
+      const Ticker& ticker, boost::posix_time::ptime timestamp) {
+    auto& closing_entry = m_closing_entries.get(ticker);
     auto closing_price = Beam::with(closing_entry, [&] (auto& entry) {
       if(timestamp - entry.m_last_update > boost::posix_time::hours(1)) {
-        if(auto close = load_previous_close(*m_market_data_client, security,
+        if(auto close = load_previous_close(*m_market_data_client, ticker,
             timestamp, m_venues, m_time_zones)) {
           entry.m_closing_price = close->m_price;
           entry.m_last_update = timestamp;
@@ -131,10 +131,10 @@ namespace Nexus {
     if(closing_price) {
       return *closing_price;
     }
-    auto publisher = m_bbo_quotes.get_or_insert(security, [&] {
+    auto publisher = m_bbo_quotes.get_or_insert(ticker, [&] {
       auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
       m_query_routines.push_back(query_real_time_with_snapshot(
-        *m_market_data_client, security, publisher));
+        *m_market_data_client, ticker, publisher));
       return publisher;
     });
     try {
@@ -145,7 +145,7 @@ namespace Nexus {
         return effective_closing_price;
       });
     } catch(const Beam::PipeBrokenException&) {
-      m_bbo_quotes.erase(security);
+      m_bbo_quotes.erase(ticker);
       boost::throw_with_location(
         OrderSubmissionCheckException("No BBO quote available."));
     }

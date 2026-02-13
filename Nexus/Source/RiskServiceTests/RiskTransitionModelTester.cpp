@@ -11,13 +11,12 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
   auto ACCOUNT = DirectoryEntry::make_account(153, "simba");
-  auto S32 = Security("S32", ASX);
-  auto XIU = Security("XIU", TSX);
+  auto S32 = parse_ticker("S32.ASX");
+  auto XIU = parse_ticker("XIU.TSX");
 }
 
 TEST_SUITE("RiskTransitionModel") {
@@ -140,7 +139,7 @@ TEST_SUITE("RiskTransitionModel") {
     auto submit_operation =
       std::get_if<TestOrderExecutionClient::SubmitOperation>(&*operation);
     REQUIRE(submit_operation);
-    REQUIRE(submit_operation->m_fields.m_security == S32);
+    REQUIRE(submit_operation->m_fields.m_ticker == S32);
     REQUIRE(submit_operation->m_fields.m_side == Side::ASK);
     REQUIRE(submit_operation->m_fields.m_quantity == 100);
     REQUIRE(submit_operation->m_fields.m_type == OrderType::MARKET);
@@ -217,7 +216,7 @@ TEST_SUITE("RiskTransitionModel") {
     auto submit_operation =
       std::get_if<TestOrderExecutionClient::SubmitOperation>(&*operation);
     REQUIRE(submit_operation);
-    REQUIRE(submit_operation->m_fields.m_security == XIU);
+    REQUIRE(submit_operation->m_fields.m_ticker == XIU);
     REQUIRE(submit_operation->m_fields.m_side == Side::BID);
     REQUIRE(submit_operation->m_fields.m_quantity == 300);
     REQUIRE(submit_operation->m_fields.m_type == OrderType::MARKET);

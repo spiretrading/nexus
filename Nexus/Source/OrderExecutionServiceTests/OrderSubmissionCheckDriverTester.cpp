@@ -9,7 +9,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
@@ -66,7 +65,7 @@ namespace {
   auto make_order_info(const DirectoryEntry& account) {
     auto fields = OrderFields();
     fields.m_account = account;
-    fields.m_security = Security("TST", TSX);
+    fields.m_ticker = parse_ticker("TST.TSX");
     fields.m_currency = CAD;
     fields.m_type = OrderType::LIMIT;
     fields.m_side = Side::BID;

@@ -4,6 +4,7 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
+#include "Nexus/Definitions/Asset.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
@@ -14,7 +15,7 @@ namespace Nexus {
   struct RiskParameters {
 
     /** The currency used for risk calculations. */
-    CurrencyId m_currency;
+    Asset m_currency;
 
     /** The maximum amount of buying power. */
     Money m_buying_power;

@@ -11,6 +11,9 @@
 
 namespace Viper {
   template<>
+  inline const auto native_to_data_type_v<Nexus::Asset> = big_uint;
+
+  template<>
   inline const auto native_to_data_type_v<Nexus::CountryCode> = small_uint;
 
   template<>
@@ -21,6 +24,20 @@ namespace Viper {
 
   template<>
   inline const auto native_to_data_type_v<Nexus::Money> = f64;
+
+  template<>
+  struct ToSql<Nexus::Asset> {
+    void operator ()(Nexus::Asset value, std::string& column) const {
+      to_sql(value.get_id(), column);
+    }
+  };
+
+  template<>
+  struct FromSql<Nexus::Asset> {
+    auto operator ()(const RawColumn& column) const {
+      return Nexus::Asset(from_sql<std::uint64_t>(column));
+    }
+  };
 
   template<>
   struct ToSql<Nexus::CountryCode> {

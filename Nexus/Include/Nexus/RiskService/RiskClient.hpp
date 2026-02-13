@@ -7,7 +7,7 @@
 #include <Beam/Pointers/VirtualPtr.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
-#include "Nexus/Definitions/Region.hpp"
+#include "Nexus/Definitions/Scope.hpp"
 #include "Nexus/RiskService/InventorySnapshot.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 
@@ -16,10 +16,10 @@ namespace Nexus {
   /** Checks if a type implements a RiskClient. */
   template<typename T>
   concept IsRiskClient = requires(T& client,
-      const Beam::DirectoryEntry& account, const Region& region) {
+      const Beam::DirectoryEntry& account, const Scope& scope) {
     { client.load_inventory_snapshot(account) } ->
       std::same_as<InventorySnapshot>;
-    client.reset(region);
+    client.reset(scope);
     { client.get_risk_portfolio_update_publisher() } ->
       std::same_as<const RiskPortfolioUpdatePublisher&>;
     client.close();
@@ -57,10 +57,10 @@ namespace Nexus {
         const Beam::DirectoryEntry& account);
 
       /**
-       * Resets the inventories belonging to a region for all accounts.
-       * @param region The region to reset.
+       * Resets the inventories belonging to a scope for all accounts.
+       * @param scope The scope to reset.
        */
-      void reset(const Region& region);
+      void reset(const Scope& scope);
 
       /** Returns the object publishing a RiskPortfolioUpdates. */
       const RiskPortfolioUpdatePublisher& get_risk_portfolio_update_publisher();
@@ -73,7 +73,7 @@ namespace Nexus {
 
         virtual InventorySnapshot load_inventory_snapshot(
           const Beam::DirectoryEntry& account) = 0;
-        virtual void reset(const Region& region) = 0;
+        virtual void reset(const Scope& scope) = 0;
         virtual const RiskPortfolioUpdatePublisher&
           get_risk_portfolio_update_publisher() = 0;
         virtual void close() = 0;
@@ -88,7 +88,7 @@ namespace Nexus {
 
         InventorySnapshot load_inventory_snapshot(
           const Beam::DirectoryEntry& account) override;
-        void reset(const Region& region) override;
+        void reset(const Scope& scope) override;
         const RiskPortfolioUpdatePublisher&
           get_risk_portfolio_update_publisher() override;
         void close() override;
@@ -112,8 +112,8 @@ namespace Nexus {
     return m_client->load_inventory_snapshot(account);
   }
 
-  inline void RiskClient::reset(const Region& region) {
-    m_client->reset(region);
+  inline void RiskClient::reset(const Scope& scope) {
+    m_client->reset(scope);
   }
 
   inline const RiskPortfolioUpdatePublisher&
@@ -137,8 +137,8 @@ namespace Nexus {
   }
 
   template<typename C>
-  void RiskClient::WrappedRiskClient<C>::reset(const Region& region) {
-    m_client->reset(region);
+  void RiskClient::WrappedRiskClient<C>::reset(const Scope& scope) {
+    m_client->reset(scope);
   }
 
   template<typename C>

@@ -16,13 +16,12 @@ namespace Nexus::Tests {
     using namespace boost::posix_time;
     using namespace Nexus;
     using namespace Nexus::DefaultCurrencies;
-    using namespace Nexus::DefaultVenues;
 
     auto data_store = T()();
     auto account_a = DirectoryEntry::make_account(123, "user_a");
     auto account_b = DirectoryEntry::make_account(456, "user_b");
-    auto fields = make_limit_order_fields(
-      account_a, Security("TST", TSX), CAD, Side::BID, "TSX", 100, Money::ONE);
+    auto fields = make_limit_order_fields(account_a, parse_ticker("TST.TSX"),
+      CAD, Side::BID, "TSX", 100, Money::ONE);
 
     SUBCASE("store_and_load_order") {
       auto info = OrderInfo(fields, 1, time_from_string("2024-07-17 10:00:00"));
@@ -48,7 +47,7 @@ namespace Nexus::Tests {
         OrderInfo(fields, 1, time_from_string("2024-07-17 10:01:00"));
       auto sequenced_info1 = SequencedAccountOrderInfo(
         IndexedValue(info1, account_a), Beam::Sequence(1));
-      auto fields2 = make_limit_order_fields(account_b, Security("ABC", TSX),
+      auto fields2 = make_limit_order_fields(account_b, parse_ticker("ABC.TSX"),
         CAD, Side::ASK, "TSX", 200, 10 * Money::ONE);
       auto info2 =
         OrderInfo(fields2, 2, time_from_string("2024-07-17 10:02:00"));

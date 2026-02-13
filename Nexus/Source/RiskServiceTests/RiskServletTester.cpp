@@ -19,12 +19,11 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
-  auto S32 = Security("S32", ASX);
-  auto SHOP = Security("SHOP", TSX);
+  auto S32 = parse_ticker("S32.ASX");
+  auto SHOP = parse_ticker("SHOP.TSX");
 
   struct Fixture {
     using ServletContainer = TestAuthenticatedServiceProtocolServletContainer<
@@ -82,8 +81,7 @@ namespace {
         init(m_accounts_queue, *m_administration_client, *m_market_data_client,
           *m_service_order_execution_client,
           factory<std::unique_ptr<TriggerTimer>>(), &m_time_client,
-          &m_data_store, m_exchange_rates, DEFAULT_VENUES,
-          DEFAULT_DESTINATIONS)),
+          &m_data_store, m_exchange_rates, DEFAULT_DESTINATIONS)),
         m_server_connection, factory<std::unique_ptr<TriggerTimer>>());
       m_order_execution_environment.get_driver().as<
         MockOrderExecutionDriver>().get_publisher().monitor(
@@ -110,8 +108,8 @@ namespace {
   };
 
   void submit_and_fill(Fixture& fixture, const DirectoryEntry& account,
-      const Security& security, Side side, Quantity quantity, Money price) {
-    auto order_fields = make_market_order_fields(security, side, quantity);
+      const Ticker& ticker, Side side, Quantity quantity, Money price) {
+    auto order_fields = make_market_order_fields(ticker, side, quantity);
     order_fields.m_account = account;
     fixture.m_service_order_execution_client->submit(order_fields);
     auto order = fixture.m_order_submissions->pop();
@@ -135,7 +133,7 @@ namespace {
   }
 
   void require_inventory_message(TestServiceProtocolClient& client,
-      const DirectoryEntry& expected_account, const Security& expected_security,
+      const DirectoryEntry& expected_account, const Ticker& expected_ticker,
       Quantity expected_quantity, Money expected_cost_basis) {
     auto message = client.read_message();
     auto update_message = std::dynamic_pointer_cast<
@@ -143,7 +141,7 @@ namespace {
     REQUIRE(update_message);
     REQUIRE(update_message->get_record().inventories.size() == 1);
     auto& inventory = update_message->get_record().inventories[0].inventory;
-    REQUIRE(inventory.m_position.m_security == expected_security);
+    REQUIRE(inventory.m_position.m_ticker == expected_ticker);
     REQUIRE(inventory.m_position.m_quantity == expected_quantity);
     REQUIRE(inventory.m_position.m_cost_basis == expected_cost_basis);
   }
@@ -204,13 +202,13 @@ TEST_SUITE("RiskServlet") {
         Inventory(Position(SHOP, CAD, 300, 300 * Money::ONE),
           Money::ZERO, 10 * Money::ONE, 300, 1)
       });
-    auto region = Region(SHOP);
-    admin_client->send_request<ResetRegionService>(region);
+    auto scope = Scope(SHOP);
+    admin_client->send_request<ResetScopeService>(scope);
     auto reset_inventories1 = admin_client->send_request<
       LoadInventorySnapshotService>(account1).m_inventories;
     std::sort(reset_inventories1.begin(), reset_inventories1.end(),
       [] (const auto& lhs, const auto& rhs) {
-        return lhs.m_position.m_security < rhs.m_position.m_security;
+        return lhs.m_position.m_ticker < rhs.m_position.m_ticker;
       });
     REQUIRE(reset_inventories1.size() == 2);
     REQUIRE(reset_inventories1[0] == inventories1[0]);
@@ -223,7 +221,7 @@ TEST_SUITE("RiskServlet") {
       LoadInventorySnapshotService>(account2).m_inventories;
     std::sort(reset_inventories2.begin(), reset_inventories2.end(),
       [] (const auto& lhs, const auto& rhs) {
-        return lhs.m_position.m_security < rhs.m_position.m_security;
+        return lhs.m_position.m_ticker < rhs.m_position.m_ticker;
       });
     REQUIRE(reset_inventories2.size() == 2);
     REQUIRE(reset_inventories2[0] == inventories2[0]);
@@ -232,7 +230,7 @@ TEST_SUITE("RiskServlet") {
     REQUIRE(reset_inventories2[1].m_fees == Money::ZERO);
     REQUIRE(reset_inventories2[1].m_volume == 0);
     REQUIRE(reset_inventories2[1].m_transaction_count == 0);
-    REQUIRE_THROWS_AS(client1->send_request<ResetRegionService>(region),
+    REQUIRE_THROWS_AS(client1->send_request<ResetScopeService>(scope),
       ServiceRequestException);
   }
 
@@ -261,35 +259,35 @@ TEST_SUITE("RiskServlet") {
       client1->send_request<SubscribeRiskPortfolioUpdatesService>();
     std::sort(entries1.begin(), entries1.end(),
       [] (const auto& lhs, const auto& rhs) {
-        return std::tie(lhs.m_key.m_account.m_id, lhs.m_key.m_security) <
-          std::tie(rhs.m_key.m_account.m_id, rhs.m_key.m_security);
+        return std::tie(lhs.m_key.m_account.m_id, lhs.m_key.m_ticker) <
+          std::tie(rhs.m_key.m_account.m_id, rhs.m_key.m_ticker);
       });
     REQUIRE(entries1.size() == 2);
     REQUIRE(entries1[0].m_key.m_account == account1);
-    REQUIRE(entries1[0].m_key.m_security == S32);
+    REQUIRE(entries1[0].m_key.m_ticker == S32);
     REQUIRE(entries1[0].m_value == inventories1[0]);
     REQUIRE(entries1[1].m_key.m_account == account1);
-    REQUIRE(entries1[1].m_key.m_security == SHOP);
+    REQUIRE(entries1[1].m_key.m_ticker == SHOP);
     REQUIRE(entries1[1].m_value == inventories1[1]);
     auto admin_entries =
       admin_client->send_request<SubscribeRiskPortfolioUpdatesService>();
     std::sort(admin_entries.begin(), admin_entries.end(),
       [] (const auto& lhs, const auto& rhs) {
-        return std::tie(lhs.m_key.m_account.m_id, lhs.m_key.m_security) <
-          std::tie(rhs.m_key.m_account.m_id, rhs.m_key.m_security);
+        return std::tie(lhs.m_key.m_account.m_id, lhs.m_key.m_ticker) <
+          std::tie(rhs.m_key.m_account.m_id, rhs.m_key.m_ticker);
       });
     REQUIRE(admin_entries.size() == 4);
     REQUIRE(admin_entries[0].m_key.m_account == account1);
-    REQUIRE(admin_entries[0].m_key.m_security == S32);
+    REQUIRE(admin_entries[0].m_key.m_ticker == S32);
     REQUIRE(admin_entries[0].m_value == inventories1[0]);
     REQUIRE(admin_entries[1].m_key.m_account == account1);
-    REQUIRE(admin_entries[1].m_key.m_security == SHOP);
+    REQUIRE(admin_entries[1].m_key.m_ticker == SHOP);
     REQUIRE(admin_entries[1].m_value == inventories1[1]);
     REQUIRE(admin_entries[2].m_key.m_account == account2);
-    REQUIRE(admin_entries[2].m_key.m_security == S32);
+    REQUIRE(admin_entries[2].m_key.m_ticker == S32);
     REQUIRE(admin_entries[2].m_value == inventories2[0]);
     REQUIRE(admin_entries[3].m_key.m_account == account2);
-    REQUIRE(admin_entries[3].m_key.m_security == SHOP);
+    REQUIRE(admin_entries[3].m_key.m_ticker == SHOP);
     REQUIRE(admin_entries[3].m_value == inventories2[1]);
     submit_and_fill(fixture, account2, S32, Side::BID, 300, Money::ONE);
     require_inventory_message(

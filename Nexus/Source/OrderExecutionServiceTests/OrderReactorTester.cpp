@@ -13,7 +13,6 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
@@ -92,12 +91,12 @@ namespace {
 TEST_SUITE("OrderReactor") {
   TEST_CASE("empty_quantity") {
     auto fixture = Fixture();
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto fields =
-      make_limit_order_fields(security, CAD, Side::BID, "TSX", 0, Money::ONE);
+      make_limit_order_fields(ticker, CAD, Side::BID, "TSX", 0, Money::ONE);
     auto quantity_reactor = Aspen::constant(Quantity(0));
     fixture.set(Aspen::Shared(make_limit_order_reactor(&fixture.m_client,
-      Aspen::constant(fields.m_account), Aspen::constant(fields.m_security),
+      Aspen::constant(fields.m_account), Aspen::constant(fields.m_ticker),
       Aspen::constant(fields.m_currency), Aspen::constant(fields.m_side),
       Aspen::constant(fields.m_destination), quantity_reactor,
       Aspen::constant(fields.m_price),
@@ -107,17 +106,17 @@ TEST_SUITE("OrderReactor") {
 
   TEST_CASE("single_limit_order_submission") {
     auto fixture = Fixture();
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto fields =
-      make_limit_order_fields(security, CAD, Side::BID, "TSX", 100, Money::ONE);
+      make_limit_order_fields(ticker, CAD, Side::BID, "TSX", 100, Money::ONE);
     fixture.set(Aspen::Shared(make_limit_order_reactor(&fixture.m_client,
-      Aspen::constant(fields.m_account), Aspen::constant(fields.m_security),
+      Aspen::constant(fields.m_account), Aspen::constant(fields.m_ticker),
       Aspen::constant(fields.m_currency), Aspen::constant(fields.m_side),
       Aspen::constant(fields.m_destination), Aspen::constant(fields.m_quantity),
       Aspen::constant(fields.m_price),
       Aspen::constant(fields.m_time_in_force))));
     auto expected_order = fixture.require_submit([&] (const auto& fields) {
-      REQUIRE(fields.m_security == security);
+      REQUIRE(fields.m_ticker == ticker);
       REQUIRE(fields.m_quantity == 100);
       REQUIRE(fields.m_price == Money::ONE);
       REQUIRE(fields.m_side == Side::BID);
@@ -132,13 +131,13 @@ TEST_SUITE("OrderReactor") {
 
   TEST_CASE("order_partial_fill_and_resubmit") {
     auto fixture = Fixture();
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto fields =
-      make_limit_order_fields(security, CAD, Side::BID, "TSX", 100, Money::ONE);
+      make_limit_order_fields(ticker, CAD, Side::BID, "TSX", 100, Money::ONE);
     auto quantity = Shared<Aspen::Queue<Quantity>>();
     quantity->push(100);
     fixture.set(Aspen::Shared(make_limit_order_reactor(&fixture.m_client,
-      Aspen::constant(fields.m_account), Aspen::constant(fields.m_security),
+      Aspen::constant(fields.m_account), Aspen::constant(fields.m_ticker),
       Aspen::constant(fields.m_currency), Aspen::constant(fields.m_side),
       Aspen::constant(fields.m_destination), quantity,
       Aspen::constant(fields.m_price),
@@ -164,11 +163,11 @@ TEST_SUITE("OrderReactor") {
 
   TEST_CASE("order_rejection") {
     auto fixture = Fixture();
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto fields =
-      make_limit_order_fields(security, CAD, Side::BID, "TSX", 100, Money::ONE);
+      make_limit_order_fields(ticker, CAD, Side::BID, "TSX", 100, Money::ONE);
     fixture.set(Aspen::Shared(make_limit_order_reactor(&fixture.m_client,
-      Aspen::constant(fields.m_account), Aspen::constant(fields.m_security),
+      Aspen::constant(fields.m_account), Aspen::constant(fields.m_ticker),
       Aspen::constant(fields.m_currency), Aspen::constant(fields.m_side),
       Aspen::constant(fields.m_destination), Aspen::constant(fields.m_quantity),
       Aspen::constant(fields.m_price),
@@ -183,13 +182,13 @@ TEST_SUITE("OrderReactor") {
 
   TEST_CASE("order_cancellation") {
     auto fixture = Fixture();
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto fields =
-      make_limit_order_fields(security, CAD, Side::BID, "TSX", 100, Money::ONE);
+      make_limit_order_fields(ticker, CAD, Side::BID, "TSX", 100, Money::ONE);
     auto quantity = Shared<Aspen::Queue<Quantity>>();
     quantity->push(100);
     fixture.set(Aspen::Shared(make_limit_order_reactor(&fixture.m_client,
-      Aspen::constant(fields.m_account), Aspen::constant(fields.m_security),
+      Aspen::constant(fields.m_account), Aspen::constant(fields.m_ticker),
       Aspen::constant(fields.m_currency), Aspen::constant(fields.m_side),
       Aspen::constant(fields.m_destination), quantity,
       Aspen::constant(fields.m_price),
@@ -205,26 +204,26 @@ TEST_SUITE("OrderReactor") {
 
   TEST_CASE("fields_update_triggers_resubmission") {
     auto fixture = Fixture();
-    auto security = Shared<Aspen::Queue<Security>>();
-    security->push(Security("TST", TSX));
+    auto ticker = Shared<Aspen::Queue<Ticker>>();
+    ticker->push(parse_ticker("TST.TSX"));
     auto fields = make_limit_order_fields(
-      Security("TST", TSX), CAD, Side::BID, "TSX", 100, Money::ONE);
+      parse_ticker("TST.TSX"), CAD, Side::BID, "TSX", 100, Money::ONE);
     fixture.set(Aspen::Shared(make_limit_order_reactor(&fixture.m_client,
-      Aspen::constant(fields.m_account), security,
+      Aspen::constant(fields.m_account), ticker,
       Aspen::constant(fields.m_currency), Aspen::constant(fields.m_side),
       Aspen::constant(fields.m_destination), Aspen::constant(fields.m_quantity),
       Aspen::constant(fields.m_price),
       Aspen::constant(fields.m_time_in_force))));
     auto order1 = fixture.require_submit([&] (const auto& fields) {
-      REQUIRE(fields.m_security == Security("TST", TSX));
+      REQUIRE(fields.m_ticker == parse_ticker("TST.TSX"));
     });
     accept(*order1);
     fixture.require_state(Aspen::State::NONE);
-    security->push(Security("TST2", TSX));
+    ticker->push(parse_ticker("TST2.TSX"));
     fixture.require_state(Aspen::State::NONE);
     fixture.require_cancel(*order1);
     auto order2 = fixture.require_submit([&] (const auto& fields) {
-      REQUIRE(fields.m_security == Security("TST2", TSX));
+      REQUIRE(fields.m_ticker == parse_ticker("TST2.TSX"));
     });
     accept(*order2);
     fixture.require_state(Aspen::State::NONE);

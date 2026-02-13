@@ -9,7 +9,7 @@
 #include "Nexus/Accounting/Inventory.hpp"
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/Money.hpp"
 
 namespace Nexus {
@@ -20,8 +20,8 @@ namespace Nexus {
     /** The portfolio's account. */
     Beam::DirectoryEntry m_account;
 
-    /** The Security being indexed. */
-    Security m_security;
+    /** The Ticker being indexed. */
+    Ticker m_ticker;
 
     bool operator ==(const RiskPortfolioKey&) const = default;
   };
@@ -38,14 +38,7 @@ namespace Nexus {
 
   inline std::ostream& operator <<(
       std::ostream& out, const RiskPortfolioKey& key) {
-    return out << '(' << key.m_account << ' ' << key.m_security << ')';
-  }
-
-  inline std::size_t hash_value(const RiskPortfolioKey& value) {
-    auto seed = std::size_t(0);
-    boost::hash_combine(seed, value.m_account);
-    boost::hash_combine(seed, value.m_security);
-    return seed;
+    return out << '(' << key.m_account << ' ' << key.m_ticker << ')';
   }
 }
 
@@ -56,7 +49,7 @@ namespace Beam {
     void operator ()(S& shuttle, Nexus::RiskPortfolioKey& value,
         unsigned int version) const {
       shuttle.shuttle("account", value.m_account);
-      shuttle.shuttle("security", value.m_security);
+      shuttle.shuttle("ticker", value.m_ticker);
     }
   };
 }
@@ -65,7 +58,11 @@ namespace std {
   template <>
   struct hash<Nexus::RiskPortfolioKey> {
     size_t operator()(const Nexus::RiskPortfolioKey& value) const {
-      return Nexus::hash_value(value);
+      auto seed = std::size_t(0);
+      boost::hash_combine(
+        seed, std::hash<Beam::DirectoryEntry>()(value.m_account));
+      boost::hash_combine(seed, std::hash<Nexus::Ticker>()(value.m_ticker));
+      return seed;
     }
   };
 }

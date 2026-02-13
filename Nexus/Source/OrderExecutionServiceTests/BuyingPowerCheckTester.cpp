@@ -12,20 +12,19 @@ using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
   auto make_test_order_fields() {
     auto account = DirectoryEntry::make_account(123, "test");
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto currency = CAD;
     auto side = Side::BID;
     auto destination = DefaultDestinations::TSX;
-    auto quantity = Quantity(100);
+    auto quantity = 100;
     auto price = Money::ONE;
     return make_limit_order_fields(
-      account, security, currency, side, destination, quantity, price);
+      account, ticker, currency, side, destination, quantity, price);
   }
 
   struct Fixture {
@@ -64,7 +63,7 @@ TEST_SUITE("BuyingPowerCheck") {
     auto bbo = BboQuote(
       make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 100),
       time_from_string("2024-07-18 10:00:00"));
-    feed_client.publish(SecurityBboQuote(bbo, fields.m_security));
+    feed_client.publish(TickerBboQuote(bbo, fields.m_ticker));
     auto order_info =
       OrderInfo(fields, 1, time_from_string("2024-07-18 10:01:00"));
     REQUIRE_NOTHROW(check->submit(order_info));

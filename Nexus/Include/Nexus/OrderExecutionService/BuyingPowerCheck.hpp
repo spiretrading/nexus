@@ -13,8 +13,8 @@
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
-#include "Nexus/Definitions/Security.hpp"
-#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
+#include "Nexus/MarketDataService/TickerMarketDataQuery.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheck.hpp"
@@ -64,7 +64,7 @@ namespace Nexus {
         std::shared_ptr<Beam::StateQueue<RiskParameters>>
           m_risk_parameters_queue;
         Beam::MultiQueueWriter<ExecutionReport> m_execution_report_queue;
-        Beam::SynchronizedUnorderedMap<OrderId, CurrencyId> m_currencies;
+        Beam::SynchronizedUnorderedMap<OrderId, Asset> m_currencies;
 
         BuyingPowerEntry();
       };
@@ -74,10 +74,10 @@ namespace Nexus {
       Beam::SynchronizedUnorderedMap<Beam::DirectoryEntry,
         std::shared_ptr<BuyingPowerEntry>> m_buying_power_entries;
       Beam::SynchronizedUnorderedMap<
-        Security, std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bbo_quotes;
+        Ticker, std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bbo_quotes;
       std::vector<Beam::RoutineHandler> m_query_routines;
 
-      BboQuote load_bbo_quote(const Security& security);
+      BboQuote load_bbo_quote(const Ticker& ticker);
       Money get_expected_price(const OrderFields& fields);
       BuyingPowerEntry& load_buying_power_entry(
         const Beam::DirectoryEntry& account);
@@ -230,17 +230,17 @@ namespace Nexus {
   template<typename A, typename M> requires
     IsAdministrationClient<Beam::dereference_t<A>> &&
       IsMarketDataClient<Beam::dereference_t<M>>
-  BboQuote BuyingPowerCheck<A, M>::load_bbo_quote(const Security& security) {
-    auto publisher = m_bbo_quotes.get_or_insert(security, [&] {
+  BboQuote BuyingPowerCheck<A, M>::load_bbo_quote(const Ticker& ticker) {
+    auto publisher = m_bbo_quotes.get_or_insert(ticker, [&] {
       auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
       m_query_routines.push_back(query_real_time_with_snapshot(
-        *m_market_data_client, security, publisher));
+        *m_market_data_client, ticker, publisher));
       return publisher;
     });
     try {
       return publisher->peek();
     } catch(const Beam::PipeBrokenException&) {
-      m_bbo_quotes.erase(security);
+      m_bbo_quotes.erase(ticker);
       boost::throw_with_location(
         OrderSubmissionCheckException("No BBO quote available."));
     }
@@ -250,7 +250,7 @@ namespace Nexus {
     IsAdministrationClient<Beam::dereference_t<A>> &&
       IsMarketDataClient<Beam::dereference_t<M>>
   Money BuyingPowerCheck<A, M>::get_expected_price(const OrderFields& fields) {
-    auto bbo = load_bbo_quote(fields.m_security);
+    auto bbo = load_bbo_quote(fields.m_ticker);
     if(fields.m_type == OrderType::LIMIT) {
       if(fields.m_price <= Money::ZERO) {
         boost::throw_with_location(

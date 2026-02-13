@@ -24,55 +24,32 @@ namespace Nexus {
       add_column("account", &InventoryEntry::m_account).
         extend(Viper::Row<Inventory>().
           extend(Viper::Row<Position>().
-            extend(Viper::Row<Security>().
+            extend(Viper::Row<Ticker>().
               add_column("symbol", Viper::varchar(16),
                 [] (auto& row) {
                   return row.get_symbol();
                 },
                 [] (auto& row, auto column) {
-                  row = Security(std::move(column), row.get_venue());
+                  row = Ticker(std::move(column), row.get_venue());
                 }).
               add_column("venue", Viper::varchar(16),
                 [] (auto& row) {
                   return row.get_venue();
                 },
                 [] (auto& row, auto column) {
-                  row = Security(row.get_symbol(), column);
+                  row = Ticker(row.get_symbol(), column);
                 }),
-              [] (auto& entry) -> auto& {
-                return entry.m_security;
-              }).
-            add_column("currency",
-              [] (auto& entry) -> auto& {
-                return entry.m_currency;
-              }).
-            add_column("quantity",
-              [] (auto& entry) -> auto& {
-                return entry.m_quantity;
-              }).
-            add_column("cost_basis",
-              [] (auto& entry) -> auto& {
-                return entry.m_cost_basis;
-              }),
-            [] (auto& entry) -> auto& {
-              return entry.m_position;
-            }).
-          add_column("gross_profit_and_loss",
-            [] (auto& entry) -> auto& {
-              return entry.m_gross_profit_and_loss;
-            }).
-          add_column("fees",
-            [] (auto& entry) -> auto& {
-              return entry.m_fees;
-            }).
-          add_column("volume",
-            [] (auto& entry) -> auto& {
-              return entry.m_volume;
-            }).
-          add_column("transaction_count",
-            [] (auto& entry) -> auto& {
-              return entry.m_transaction_count;
-            }), &InventoryEntry::m_inventory).
+              &Position::m_ticker).
+            add_column("currency", &Position::m_currency).
+            add_column("quantity", &Position::m_quantity).
+            add_column("cost_basis", &Position::m_cost_basis),
+            &Inventory::m_position).
+          add_column(
+            "gross_profit_and_loss", &Inventory::m_gross_profit_and_loss).
+          add_column("fees", &Inventory::m_fees).
+          add_column("volume", &Inventory::m_volume).
+          add_column("transaction_count", &Inventory::m_transaction_count),
+          &InventoryEntry::m_inventory).
         add_index("account", "account");
     return ROW;
   }

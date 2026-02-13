@@ -7,23 +7,22 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
 
 namespace {
-  auto S32 = Security("S32", ASX);
-  auto XIU = Security("XIU", TSX);
+  auto S32 = parse_ticker("S32.ASX");
+  auto XIU = parse_ticker("XIU.TSX");
 }
 
 TEST_SUITE("RiskStateModel") {
   TEST_CASE("constructor") {
     auto time_client = FixedTimeClient(time_from_string("2022-01-01 10:00:00"));
-    auto portfolio = RiskPortfolio(DEFAULT_VENUES);
+    auto portfolio = RiskPortfolio();
     auto allowed_state = RiskState(RiskState::Type::ACTIVE);
     auto parameters =
       RiskParameters(AUD, Money::ZERO, allowed_state, Money::ONE, minutes(1));
     auto model =
       RiskStateModel(portfolio, parameters, ExchangeRateTable(), &time_client);
-    REQUIRE(model.get_portfolio().get_security_entries().size() == 0);
+    REQUIRE(model.get_portfolio().get_entries().size() == 0);
     REQUIRE(model.get_parameters() == parameters);
     REQUIRE(model.get_risk_state() == allowed_state);
     auto new_allowed_state = RiskState(RiskState::Type::CLOSE_ORDERS);
@@ -38,8 +37,8 @@ TEST_SUITE("RiskStateModel") {
     auto time_client = FixedTimeClient(time_from_string("2020-03-20 13:12:00"));
     auto parameters = RiskParameters(
       AUD, Money::ZERO, RiskState::Type::ACTIVE, Money::ONE, minutes(1));
-    auto model = RiskStateModel(RiskPortfolio(DEFAULT_VENUES), parameters,
-      ExchangeRateTable(), &time_client);
+    auto model = RiskStateModel(
+      RiskPortfolio(), parameters, ExchangeRateTable(), &time_client);
     REQUIRE(model.get_parameters() == parameters);
     REQUIRE(model.get_risk_state() == RiskState::Type::ACTIVE);
     auto fields =
@@ -86,7 +85,7 @@ TEST_SUITE("RiskStateModel") {
 
   TEST_CASE("immediate_close") {
     auto time_client = FixedTimeClient(time_from_string("1995-01-22 14:16:00"));
-    auto portfolio = RiskPortfolio(DEFAULT_VENUES);
+    auto portfolio = RiskPortfolio();
     portfolio.update(S32, Money::ONE, 99 * Money::CENT);
     auto fields =
       make_limit_order_fields(S32, AUD, Side::BID, 100, Money::ONE);
@@ -113,7 +112,7 @@ TEST_SUITE("RiskStateModel") {
     exchange_rates.add(
       ExchangeRate(parse_currency_pair("AUD/CAD"), rational<int>(1, 2)));
     auto model = RiskStateModel(
-      RiskPortfolio(DEFAULT_VENUES), parameters, exchange_rates, &time_client);
+      RiskPortfolio(), parameters, exchange_rates, &time_client);
     model.get_portfolio().update(S32, Money::ONE, 99 * Money::CENT);
     model.get_portfolio().update(
       XIU, 2 * Money::ONE, Money::ONE + 99 * Money::CENT);
@@ -154,7 +153,7 @@ TEST_SUITE("RiskStateModel") {
     auto time_client = FixedTimeClient(time_from_string("2006-07-2 3:11:30"));
     auto parameters = RiskParameters(
       JPY, Money::ZERO, RiskState::Type::ACTIVE, 10 * Money::ONE, minutes(2));
-    auto model = RiskStateModel(RiskPortfolio(DEFAULT_VENUES), parameters,
+    auto model = RiskStateModel(RiskPortfolio(), parameters,
       ExchangeRateTable(), &time_client);
     model.get_portfolio().update(S32, Money::ONE, 99 * Money::CENT);
     auto fields =

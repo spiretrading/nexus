@@ -20,7 +20,7 @@ namespace Nexus {
    * @param <C> The type of OrderExecutionClient used to submit the order.
    * @param <AR> The type of reactor producing the account submitting the
    *             order.
-   * @param <SR> The type of reactor producing the order's security.
+   * @param <SR> The type of reactor producing the order's ticker.
    * @param <CR> The type of reactor producing the order's currency.
    * @param <OR> The type of reactor producing the order's type.
    * @param <TR> The type of reactor producing the order's side.
@@ -44,8 +44,8 @@ namespace Nexus {
       /** The type of reactor producing the account submitting the order. */
       using AccountReactor = AR;
 
-      /** The type of reactor producing the order's security. */
-      using SecurityReactor = SR;
+      /** The type of reactor producing the order's ticker. */
+      using TickerReactor = SR;
 
       /** The type of reactor producing the order's currency. */
       using CurrencyReactor = CR;
@@ -74,7 +74,7 @@ namespace Nexus {
       /** Constructs an OrderReactor.
        * @param client The OrderExecutionClient used to submit the order.
        * @param account The type of reactor producing the account field.
-       * @param security The type of reactor producing the security field.
+       * @param ticker The type of reactor producing the ticker field.
        * @param currency The type of reactor producing the currency field.
        * @param order_type The type of reactor producing the order type field.
        * @param side The type of reactor producing the side field.
@@ -88,9 +88,8 @@ namespace Nexus {
        *        fields.
        */
       template<Beam::Initializes<C> CF>
-      OrderReactor(CF&& client, AccountReactor account,
-        SecurityReactor security, CurrencyReactor currency,
-        OrderTypeReactor order_type, SideReactor side,
+      OrderReactor(CF&& client, AccountReactor account, TickerReactor ticker,
+        CurrencyReactor currency, OrderTypeReactor order_type, SideReactor side,
         DestinationReactor destination, QuantityReactor quantity,
         PriceReactor price, TimeInForceReactor time_in_force,
         std::vector<AdditionalFieldsReactor> additional_fields);
@@ -109,8 +108,8 @@ namespace Nexus {
       std::optional<Aspen::Shared<QuantityReactor>> m_quantity;
       std::optional<Aspen::MultiSync<OrderFields,
         Aspen::Sync<AccountReactor, Beam::DirectoryEntry>,
-        Aspen::Sync<SecurityReactor, Security>,
-        Aspen::Sync<CurrencyReactor, CurrencyId>,
+        Aspen::Sync<TickerReactor, Ticker>,
+        Aspen::Sync<CurrencyReactor, Asset>,
         Aspen::Sync<OrderTypeReactor, OrderType>,
         Aspen::Sync<SideReactor, Side>,
         Aspen::Sync<DestinationReactor, Destination>,
@@ -137,10 +136,10 @@ namespace Nexus {
   template<typename C, typename A, typename S, typename R,
     typename T, typename D, typename Q, typename M, typename F> requires
       IsOrderExecutionClient<Beam::dereference_t<C>>
-  auto make_limit_order_reactor(C&& client, A account, S security, R currency,
+  auto make_limit_order_reactor(C&& client, A account, S ticker, R currency,
       T side, D destination, Q quantity, M price, F time_in_force) {
     return OrderReactor(std::forward<C>(client), std::move(account),
-      std::move(security), std::move(currency),
+      std::move(ticker), std::move(currency),
       Aspen::constant(OrderType::LIMIT), std::move(side),
       std::move(destination), std::move(quantity), std::move(price),
       std::move(time_in_force), std::vector<Aspen::Constant<Tag>>());
@@ -149,10 +148,10 @@ namespace Nexus {
   template<typename C, typename A, typename S, typename R,
     typename T, typename D, typename Q, typename M> requires
       IsOrderExecutionClient<Beam::dereference_t<C>>
-  auto make_limit_order_reactor(C&& client, A account, S security, R currency,
+  auto make_limit_order_reactor(C&& client, A account, S ticker, R currency,
       T side, D destination, Q quantity, M price) {
     return make_limit_order_reactor(std::forward<C>(client), std::move(account),
-      std::move(security), std::move(currency), std::move(side),
+      std::move(ticker), std::move(currency), std::move(side),
       std::move(destination), std::move(quantity), std::move(price),
       Aspen::constant(TimeInForce(TimeInForce::Type::DAY)));
   }
@@ -160,9 +159,9 @@ namespace Nexus {
   template<typename C, typename S, typename T, typename Q, typename M> requires
       IsOrderExecutionClient<Beam::dereference_t<C>>
   auto make_limit_order_reactor(
-      C&& client, S security, T side, Q quantity, M price) {
+      C&& client, S ticker, T side, Q quantity, M price) {
     return make_limit_order_reactor(std::forward<C>(client),
-      Aspen::constant(Beam::DirectoryEntry()), std::move(security),
+      Aspen::constant(Beam::DirectoryEntry()), std::move(ticker),
       Aspen::constant(CurrencyId::NONE), std::move(side),
       Aspen::constant(std::string()), std::move(quantity), std::move(price));
   }
@@ -170,9 +169,9 @@ namespace Nexus {
   template<typename C, typename S, typename T, typename Q, typename M,
     typename F> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   auto make_limit_order_reactor(
-      C&& client, S security, T side, Q quantity, M price, F time_in_force) {
+      C&& client, S ticker, T side, Q quantity, M price, F time_in_force) {
     return make_limit_order_reactor(std::forward<C>(client),
-      Aspen::constant(Beam::DirectoryEntry()), std::move(security),
+      Aspen::constant(Beam::DirectoryEntry()), std::move(ticker),
       Aspen::constant(CurrencyId::NONE), std::move(side),
       Aspen::constant(std::string()), std::move(quantity), std::move(price),
       std::move(time_in_force));
@@ -180,9 +179,9 @@ namespace Nexus {
 
   template<typename C, typename S, typename T, typename Q> requires
     IsOrderExecutionClient<Beam::dereference_t<C>>
-  auto make_market_order_reactor(C&& client, S security, T side, Q quantity) {
+  auto make_market_order_reactor(C&& client, S ticker, T side, Q quantity) {
     return OrderReactor(std::forward<C>(client),
-      Aspen::constant(Beam::DirectoryEntry()), std::move(security),
+      Aspen::constant(Beam::DirectoryEntry()), std::move(ticker),
       Aspen::constant(CurrencyId::NONE), Aspen::constant(OrderType::MARKET),
       std::move(side), Aspen::constant(std::string()), std::move(quantity),
       Aspen::constant(Money::ZERO),
@@ -196,7 +195,7 @@ namespace Nexus {
       IsOrderExecutionClient<Beam::dereference_t<C>>
   template<Beam::Initializes<C> CF>
   OrderReactor<C, AR, SR, CR, OR, TR, DR, QR, PR, FR, RR>::OrderReactor(
-    CF&& client, AccountReactor account, SecurityReactor security,
+    CF&& client, AccountReactor account, TickerReactor ticker,
     CurrencyReactor currency, OrderTypeReactor order_type, SideReactor side,
     DestinationReactor destination, QuantityReactor quantity,
     PriceReactor price, TimeInForceReactor time_in_force,
@@ -206,7 +205,7 @@ namespace Nexus {
       m_last_order_fields(std::make_unique<OrderFields>()),
       m_order_fields(std::in_place, *m_last_order_fields,
         Aspen::Sync(m_last_order_fields->m_account, std::move(account)),
-        Aspen::Sync(m_last_order_fields->m_security, std::move(security)),
+        Aspen::Sync(m_last_order_fields->m_ticker, std::move(ticker)),
         Aspen::Sync(m_last_order_fields->m_currency, std::move(currency)),
         Aspen::Sync(m_last_order_fields->m_type, std::move(order_type)),
         Aspen::Sync(m_last_order_fields->m_side, std::move(side)),

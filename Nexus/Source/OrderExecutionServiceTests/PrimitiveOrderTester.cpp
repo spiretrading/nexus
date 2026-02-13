@@ -6,12 +6,11 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 
 namespace {
   auto make_order_fields() {
     return make_limit_order_fields(
-      Security("TST", TSX), Side::BID, "TSX", Quantity(100), Money::ONE);
+      parse_ticker("TST.TSX"), Side::BID, "TSX", 100, Money::ONE);
   }
 
   auto get_status(const PrimitiveOrder& order) {
