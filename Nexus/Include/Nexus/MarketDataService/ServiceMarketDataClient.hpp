@@ -41,18 +41,18 @@ namespace Nexus {
         Beam::ScopedQueueWriter<SequencedOrderImbalance> queue);
       void query(const VenueMarketDataQuery& query,
         Beam::ScopedQueueWriter<OrderImbalance> queue);
-      void query(const TickerMarketDataQuery& query,
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<SequencedBboQuote> queue);
-      void query(const TickerMarketDataQuery& query,
-        Beam::ScopedQueueWriter<BboQuote> queue);
-      void query(const TickerMarketDataQuery& query,
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<BboQuote> queue);
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<SequencedBookQuote> queue);
-      void query(const TickerMarketDataQuery& query,
-        Beam::ScopedQueueWriter<BookQuote> queue);
-      void query(const TickerMarketDataQuery& query,
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<BookQuote> queue);
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
-      void query(const TickerMarketDataQuery& query,
-        Beam::ScopedQueueWriter<TimeAndSale> queue);
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue);
       std::vector<TickerInfo> query(const TickerInfoQuery& query);
       TickerSnapshot load_snapshot(const Ticker& ticker);
       PriceCandlestick load_session_candlestick(const Ticker& ticker);
@@ -72,14 +72,12 @@ namespace Nexus {
       QueryClientPublisher<OrderImbalance, VenueMarketDataQuery,
         QueryOrderImbalancesService, EndOrderImbalanceQueryMessage>
           m_order_imbalance_publisher;
-      QueryClientPublisher<BboQuote, TickerMarketDataQuery,
-        QueryBboQuotesService, EndBboQuoteQueryMessage> m_bbo_quote_publisher;
-      QueryClientPublisher<BookQuote, TickerMarketDataQuery,
-        QueryBookQuotesService, EndBookQuoteQueryMessage>
-          m_book_quote_publisher;
-      QueryClientPublisher<TimeAndSale, TickerMarketDataQuery,
-        QueryTimeAndSalesService, EndTimeAndSaleQueryMessage>
-          m_time_and_sale_publisher;
+      QueryClientPublisher<BboQuote, TickerQuery, QueryBboQuotesService,
+        EndBboQuoteQueryMessage> m_bbo_quote_publisher;
+      QueryClientPublisher<BookQuote, TickerQuery, QueryBookQuotesService,
+        EndBookQuoteQueryMessage> m_book_quote_publisher;
+      QueryClientPublisher<TimeAndSale, TickerQuery, QueryTimeAndSalesService,
+        EndTimeAndSaleQueryMessage> m_time_and_sale_publisher;
       Beam::OpenState m_open_state;
 
       ServiceMarketDataClient(const ServiceMarketDataClient&) = delete;
@@ -134,38 +132,38 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
-  void ServiceMarketDataClient<B>::query(const TickerMarketDataQuery& query,
+  void ServiceMarketDataClient<B>::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
     m_bbo_quote_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
-  void ServiceMarketDataClient<B>::query(const TickerMarketDataQuery& query,
-      Beam::ScopedQueueWriter<BboQuote> queue) {
+  void ServiceMarketDataClient<B>::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<BboQuote> queue) {
     m_bbo_quote_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
-  void ServiceMarketDataClient<B>::query(const TickerMarketDataQuery& query,
+  void ServiceMarketDataClient<B>::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
     m_book_quote_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
-  void ServiceMarketDataClient<B>::query(const TickerMarketDataQuery& query,
-      Beam::ScopedQueueWriter<BookQuote> queue) {
+  void ServiceMarketDataClient<B>::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<BookQuote> queue) {
     m_book_quote_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
-  void ServiceMarketDataClient<B>::query(const TickerMarketDataQuery& query,
+  void ServiceMarketDataClient<B>::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
     m_time_and_sale_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
-  void ServiceMarketDataClient<B>::query(const TickerMarketDataQuery& query,
-      Beam::ScopedQueueWriter<TimeAndSale> queue) {
+  void ServiceMarketDataClient<B>::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue) {
     m_time_and_sale_publisher.submit(query, std::move(queue));
   }
 

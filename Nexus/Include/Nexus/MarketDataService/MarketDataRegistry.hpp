@@ -23,7 +23,7 @@
 namespace Nexus::Details {
   Money load_close_price(const Ticker& ticker, const std::string& market_center,
       IsHistoricalDataStore auto& data_store) {
-    auto previous_close_query = TickerMarketDataQuery();
+    auto previous_close_query = TickerQuery();
     previous_close_query.set_index(ticker);
     previous_close_query.set_range(Beam::Range::TOTAL);
     previous_close_query.set_snapshot_limit(Beam::SnapshotLimit::Type::TAIL, 1);

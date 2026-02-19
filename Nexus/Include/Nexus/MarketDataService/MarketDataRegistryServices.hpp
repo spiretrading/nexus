@@ -6,7 +6,7 @@
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
 #include "Nexus/Definitions/TickerInfo.hpp"
-#include "Nexus/MarketDataService/TickerMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Nexus/MarketDataService/TickerSnapshot.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 #include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
@@ -42,7 +42,7 @@ namespace Nexus {
      * @return The list of BboQuotes satisfying the query.
      */
     (QueryBboQuotesService, "Nexus.MarketDataService.QueryBboQuotesService",
-      BboQuoteQueryResult, (TickerMarketDataQuery, query)),
+      BboQuoteQueryResult, (TickerQuery, query)),
 
     /**
      * Queries a Ticker's BookQuotes.
@@ -50,7 +50,7 @@ namespace Nexus {
      * @return The list of BookQuotes satisfying the query.
      */
     (QueryBookQuotesService, "Nexus.MarketDataService.QueryBookQuotesService",
-      BookQuoteQueryResult, (TickerMarketDataQuery, query)),
+      BookQuoteQueryResult, (TickerQuery, query)),
 
     /**
      * Queries a Ticker's TimeAndSales.
@@ -59,7 +59,7 @@ namespace Nexus {
      */
     (QueryTimeAndSalesService,
       "Nexus.MarketDataService.QueryTimeAndSalesService",
-      TimeAndSaleQueryResult, (TickerMarketDataQuery, query)),
+      TimeAndSaleQueryResult, (TickerQuery, query)),
 
     /**
      * Loads a Ticker's real-time snapshot.

@@ -96,7 +96,7 @@ namespace {
   void test_query_publish(Fixture& fixture, const Ticker& ticker,
       MakeData&& make_data, LoadFromStore&& load_from_store,
       GetRecord&& get_record) {
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(Range::REAL_TIME);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
@@ -110,7 +110,7 @@ namespace {
       RecordMessage<MessageType, TestServiceProtocolClient>>(message);
     auto received_data = get_record(received_message->get_record());
     REQUIRE(*received_data == *data);
-    auto data_store_query = TickerMarketDataQuery();
+    auto data_store_query = TickerQuery();
     data_store_query.set_index(ticker);
     data_store_query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     data_store_query.set_range(
@@ -123,7 +123,7 @@ namespace {
         fixture.make_account("client2", DirectoryEntry::STAR_DIRECTORY);
       auto client = std::unique_ptr<TestServiceProtocolClient>();
       std::tie(client_account, client) = fixture.make_client("client2");
-      auto query = TickerMarketDataQuery();
+      auto query = TickerQuery();
       query.set_index(ticker);
       query.set_range(Range::TOTAL);
       query.set_snapshot_limit(SnapshotLimit::UNLIMITED);

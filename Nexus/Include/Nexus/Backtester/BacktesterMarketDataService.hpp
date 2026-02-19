@@ -57,19 +57,19 @@ namespace Nexus {
        * Submits a query for BboQuotes.
        * @param query The ticker market data query to submit.
        */
-      void query_bbo_quotes(const TickerMarketDataQuery& query);
+      void query_bbo_quotes(const TickerQuery& query);
 
       /**
        * Submits a query for BookQuotes.
        * @param query The ticker market data query to submit.
        */
-      void query_book_quotes(const TickerMarketDataQuery& query);
+      void query_book_quotes(const TickerQuery& query);
 
       /**
        * Submits a query for TimeAndSales.
        * @param query The ticker market data query to submit.
        */
-      void query_time_and_sales(const TickerMarketDataQuery& query);
+      void query_time_and_sales(const TickerQuery& query);
 
     private:
       template<typename, typename> friend class MarketDataEvent;
@@ -201,21 +201,21 @@ namespace Nexus {
   }
 
   inline void BacktesterMarketDataService::query_bbo_quotes(
-      const TickerMarketDataQuery& query) {
+      const TickerQuery& query) {
     auto event = std::make_shared<MarketDataQueryEvent<BboQuote>>(
       query, Beam::Ref(*this));
     m_event_handler->add(event);
   }
 
   inline void BacktesterMarketDataService::query_book_quotes(
-      const TickerMarketDataQuery& query) {
+      const TickerQuery& query) {
     auto event = std::make_shared<MarketDataQueryEvent<BookQuote>>(
       query, Beam::Ref(*this));
     m_event_handler->add(event);
   }
 
   inline void BacktesterMarketDataService::query_time_and_sales(
-      const TickerMarketDataQuery& query) {
+      const TickerQuery& query) {
     auto event = std::make_shared<MarketDataQueryEvent<TimeAndSale>>(
       query, Beam::Ref(*this));
     m_event_handler->add(event);

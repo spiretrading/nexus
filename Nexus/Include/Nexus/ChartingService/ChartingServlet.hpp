@@ -183,7 +183,7 @@ namespace Details {
         Beam::ServiceRequestException("Invalid time range."));
     }
     auto queue = std::make_shared<Beam::Queue<SequencedTimeAndSale>>();
-    auto time_and_sale_query = TickerMarketDataQuery();
+    auto time_and_sale_query = TickerQuery();
     time_and_sale_query.set_index(ticker);
     time_and_sale_query.set_range(start_time, end_time);
     time_and_sale_query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);

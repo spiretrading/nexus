@@ -120,14 +120,14 @@ namespace Nexus::Tests {
         time_from_string("2024-07-09 12:00:00"));
       data_store.store(SequencedTickerBboQuote(
         TickerBboQuote(other_bbo, other_ticker), Beam::Sequence(4)));
-      auto query_one = TickerMarketDataQuery();
+      auto query_one = TickerQuery();
       query_one.set_index(ticker);
       query_one.set_range(Beam::Sequence(2), Beam::Sequence(2));
       query_one.set_snapshot_limit(SnapshotLimit::UNLIMITED);
       auto results_one = data_store.load_bbo_quotes(query_one);
       REQUIRE(results_one.size() == 1);
       REQUIRE(results_one[0] == sequenced_bbo_b);
-      auto query_all = TickerMarketDataQuery();
+      auto query_all = TickerQuery();
       query_all.set_index(ticker);
       query_all.set_range(Range::TOTAL);
       query_all.set_snapshot_limit(SnapshotLimit::UNLIMITED);
@@ -169,14 +169,14 @@ namespace Nexus::Tests {
           time_from_string("2024-07-09 12:00:00"));
       data_store.store(SequencedTickerBookQuote(TickerBookQuote(
         other_book_quote, other_ticker), Beam::Sequence(4)));
-      auto query_one = TickerMarketDataQuery();
+      auto query_one = TickerQuery();
       query_one.set_index(ticker);
       query_one.set_range(Beam::Sequence(2), Beam::Sequence(2));
       query_one.set_snapshot_limit(SnapshotLimit::UNLIMITED);
       auto results_one = data_store.load_book_quotes(query_one);
       REQUIRE(results_one.size() == 1);
       REQUIRE(results_one[0] == sequenced_book_quote_b);
-      auto query_all = TickerMarketDataQuery();
+      auto query_all = TickerQuery();
       query_all.set_index(ticker);
       query_all.set_range(Range::TOTAL);
       query_all.set_snapshot_limit(SnapshotLimit::UNLIMITED);
@@ -222,14 +222,14 @@ namespace Nexus::Tests {
         "TSX", "B12", "S5");
       data_store.store(SequencedTickerTimeAndSale(TickerTimeAndSale(
         other_time_and_sale, other_ticker), Beam::Sequence(4)));
-      auto query_one = TickerMarketDataQuery();
+      auto query_one = TickerQuery();
       query_one.set_index(ticker);
       query_one.set_range(Beam::Sequence(2), Beam::Sequence(2));
       query_one.set_snapshot_limit(SnapshotLimit::UNLIMITED);
       auto results_one = data_store.load_time_and_sales(query_one);
       REQUIRE(results_one.size() == 1);
       REQUIRE(results_one[0] == sequenced_time_and_sale_b);
-      auto query_all = TickerMarketDataQuery();
+      auto query_all = TickerQuery();
       query_all.set_index(ticker);
       query_all.set_range(Range::TOTAL);
       query_all.set_snapshot_limit(SnapshotLimit::UNLIMITED);

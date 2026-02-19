@@ -1,10 +1,10 @@
 #include <doctest/doctest.h>
-#include "Nexus/MarketDataService/TickerMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerQuery.hpp"
 
 using namespace Beam;
 using namespace Nexus;
 
-TEST_SUITE("TickerMarketDataQuery") {
+TEST_SUITE("TickerQuery") {
   TEST_CASE("make_ticker_info_query") {
     auto ticker = parse_ticker("ABC.TSX");
     auto query = make_ticker_info_query(ticker);

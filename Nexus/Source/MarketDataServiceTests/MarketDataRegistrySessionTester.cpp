@@ -27,7 +27,7 @@ TEST_SUITE("MarketDataRegistrySession") {
   TEST_CASE("has_entitlement_ticker_query") {
     auto session = MarketDataRegistrySession();
     auto ticker = parse_ticker("TST.TSX");
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(Range::REAL_TIME);
     REQUIRE(!has_entitlement<BboQuote>(session, query));
@@ -42,7 +42,7 @@ TEST_SUITE("MarketDataRegistrySession") {
     REQUIRE(has_entitlement<BboQuote>(session, query));
     REQUIRE(!has_entitlement<BookQuote>(session, query));
     auto other_ticker = parse_ticker("S32.ASX");
-    auto other_query = TickerMarketDataQuery();
+    auto other_query = TickerQuery();
     other_query.set_index(other_ticker);
     other_query.set_range(Range::REAL_TIME);
     REQUIRE(!has_entitlement<BboQuote>(session, other_query));

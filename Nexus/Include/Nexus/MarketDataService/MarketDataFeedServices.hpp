@@ -7,7 +7,7 @@
 #include <Beam/Services/Service.hpp>
 #include <boost/variant/variant.hpp>
 #include "Nexus/Definitions/TickerInfo.hpp"
-#include "Nexus/MarketDataService/TickerMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
 namespace Nexus {

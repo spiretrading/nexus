@@ -4,7 +4,7 @@
 #include <boost/date_time/local_time/tz_database.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/Venue.hpp"
-#include "Nexus/MarketDataService/TickerMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Nexus/MarketDataService/TickerSnapshot.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 #include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
@@ -125,7 +125,7 @@ namespace Nexus {
    */
   TickerEntry::InitialSequences load_initial_sequences(
       IsHistoricalDataStore auto& data_store, const Ticker& ticker) {
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(Beam::Range::TOTAL);
     query.set_snapshot_limit(Beam::SnapshotLimit::from_tail(1));

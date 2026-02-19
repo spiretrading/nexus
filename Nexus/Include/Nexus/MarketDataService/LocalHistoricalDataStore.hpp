@@ -33,16 +33,15 @@ namespace Nexus {
         const VenueMarketDataQuery& query);
       void store(const SequencedVenueOrderImbalance& imbalance);
       void store(const std::vector<SequencedVenueOrderImbalance>& imbalances);
-      std::vector<SequencedBboQuote> load_bbo_quotes(
-        const TickerMarketDataQuery& query);
+      std::vector<SequencedBboQuote> load_bbo_quotes(const TickerQuery& query);
       void store(const SequencedTickerBboQuote& quote);
       void store(const std::vector<SequencedTickerBboQuote>& quotes);
       std::vector<SequencedBookQuote> load_book_quotes(
-        const TickerMarketDataQuery& query);
+        const TickerQuery& query);
       void store(const SequencedTickerBookQuote& quote);
       void store(const std::vector<SequencedTickerBookQuote>& quotes);
       std::vector<SequencedTimeAndSale> load_time_and_sales(
-        const TickerMarketDataQuery& query);
+        const TickerQuery& query);
       void store(const SequencedTickerTimeAndSale& time_and_sale);
       void store(const std::vector<SequencedTickerTimeAndSale>& time_and_sales);
       void close();
@@ -53,9 +52,9 @@ namespace Nexus {
       Beam::SynchronizedVector<TickerInfo> m_ticker_info;
       DataStore<OrderImbalance, VenueMarketDataQuery>
         m_order_imbalance_data_store;
-      DataStore<BboQuote, TickerMarketDataQuery> m_bbo_quote_data_store;
-      DataStore<BookQuote, TickerMarketDataQuery> m_book_quote_data_store;
-      DataStore<TimeAndSale, TickerMarketDataQuery> m_time_and_sale_data_store;
+      DataStore<BboQuote, TickerQuery> m_bbo_quote_data_store;
+      DataStore<BookQuote, TickerQuery> m_book_quote_data_store;
+      DataStore<TimeAndSale, TickerQuery> m_time_and_sale_data_store;
 
       LocalHistoricalDataStore(const LocalHistoricalDataStore&) = delete;
       LocalHistoricalDataStore& operator =(
@@ -151,8 +150,7 @@ namespace Nexus {
   }
 
   inline std::vector<SequencedBboQuote>
-      LocalHistoricalDataStore::load_bbo_quotes(
-        const TickerMarketDataQuery& query) {
+      LocalHistoricalDataStore::load_bbo_quotes(const TickerQuery& query) {
     return m_bbo_quote_data_store.load(query);
   }
 
@@ -167,8 +165,7 @@ namespace Nexus {
   }
 
   inline std::vector<SequencedBookQuote>
-      LocalHistoricalDataStore::load_book_quotes(
-        const TickerMarketDataQuery& query) {
+      LocalHistoricalDataStore::load_book_quotes(const TickerQuery& query) {
     return m_book_quote_data_store.load(query);
   }
 
@@ -183,8 +180,7 @@ namespace Nexus {
   }
 
   inline std::vector<SequencedTimeAndSale>
-      LocalHistoricalDataStore::load_time_and_sales(
-        const TickerMarketDataQuery& query) {
+      LocalHistoricalDataStore::load_time_and_sales(const TickerQuery& query) {
     return m_time_and_sale_data_store.load(query);
   }
 

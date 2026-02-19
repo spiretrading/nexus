@@ -79,7 +79,7 @@ TEST_SUITE("DataStoreMarketDataClient") {
       time_from_string("2024-07-10 12:00:00")), Beam::Sequence(1));
     fixture.m_data_store.store(SequencedTickerBboQuote(
       TickerBboQuote(*quote, ticker), quote.get_sequence()));
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
@@ -97,7 +97,7 @@ TEST_SUITE("DataStoreMarketDataClient") {
       time_from_string("2024-07-10 12:00:00")), Beam::Sequence(1));
     fixture.m_data_store.store(SequencedTickerBboQuote(
       TickerBboQuote(*quote, ticker), quote.get_sequence()));
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
@@ -115,7 +115,7 @@ TEST_SUITE("DataStoreMarketDataClient") {
         time_from_string("2024-07-10 12:00:00")), Beam::Sequence(1));
     fixture.m_data_store.store(SequencedTickerBookQuote(
       TickerBookQuote(*quote, ticker), quote.get_sequence()));
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
@@ -133,7 +133,7 @@ TEST_SUITE("DataStoreMarketDataClient") {
         time_from_string("2024-07-10 12:00:00")), Beam::Sequence(1));
     fixture.m_data_store.store(SequencedTickerBookQuote(
       TickerBookQuote(*quote, ticker), quote.get_sequence()));
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
@@ -152,7 +152,7 @@ TEST_SUITE("DataStoreMarketDataClient") {
       Beam::Sequence(1));
     fixture.m_data_store.store(SequencedTickerTimeAndSale(
       TickerTimeAndSale(*sale, ticker), sale.get_sequence()));
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
@@ -170,7 +170,7 @@ TEST_SUITE("DataStoreMarketDataClient") {
         TimeAndSale::Condition(), "TSX", "", ""), Beam::Sequence(1));
     fixture.m_data_store.store(SequencedTickerTimeAndSale(
       TickerTimeAndSale(*sale, ticker), sale.get_sequence()));
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);

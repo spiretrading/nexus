@@ -37,16 +37,15 @@ namespace Nexus {
         const VenueMarketDataQuery& query);
       void store(const SequencedVenueOrderImbalance& imbalance);
       void store(const std::vector<SequencedVenueOrderImbalance>& imbalances);
-      std::vector<SequencedBboQuote> load_bbo_quotes(
-        const TickerMarketDataQuery& query);
+      std::vector<SequencedBboQuote> load_bbo_quotes(const TickerQuery& query);
       void store(const SequencedTickerBboQuote& quote);
       void store(const std::vector<SequencedTickerBboQuote>& quotes);
       std::vector<SequencedBookQuote> load_book_quotes(
-        const TickerMarketDataQuery& query);
+        const TickerQuery& query);
       void store(const SequencedTickerBookQuote& quote);
       void store(const std::vector<SequencedTickerBookQuote>& quotes);
       std::vector<SequencedTimeAndSale> load_time_and_sales(
-        const TickerMarketDataQuery& query);
+        const TickerQuery& query);
       void store(const SequencedTickerTimeAndSale& time_and_sale);
       void store(const std::vector<SequencedTickerTimeAndSale>& time_and_sales);
       void close();
@@ -98,7 +97,7 @@ namespace Nexus {
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   std::vector<SequencedBboQuote> ClientHistoricalDataStore<C>::load_bbo_quotes(
-      const TickerMarketDataQuery& query) {
+      const TickerQuery& query) {
     return submit<SequencedBboQuote>(query);
   }
 
@@ -112,8 +111,7 @@ namespace Nexus {
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   std::vector<SequencedBookQuote>
-      ClientHistoricalDataStore<C>::load_book_quotes(
-        const TickerMarketDataQuery& query) {
+      ClientHistoricalDataStore<C>::load_book_quotes(const TickerQuery& query) {
     return submit<SequencedBookQuote>(query);
   }
 
@@ -128,7 +126,7 @@ namespace Nexus {
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   std::vector<SequencedTimeAndSale>
       ClientHistoricalDataStore<C>::load_time_and_sales(
-        const TickerMarketDataQuery& query) {
+        const TickerQuery& query) {
     return submit<SequencedTimeAndSale>(query);
   }
 

@@ -1,5 +1,5 @@
-#ifndef NEXUS_MARKET_DATA_TICKER_MARKET_DATA_QUERY_HPP
-#define NEXUS_MARKET_DATA_TICKER_MARKET_DATA_QUERY_HPP
+#ifndef NEXUS_MARKET_DATA_TICKER_QUERY_HPP
+#define NEXUS_MARKET_DATA_TICKER_QUERY_HPP
 #include <Beam/Queries/BasicQuery.hpp>
 #include <Beam/Queries/IndexedValue.hpp>
 #include <Beam/Queries/PagedQuery.hpp>
@@ -23,7 +23,7 @@ namespace Nexus {
   using SequencedTickerTimeAndSale = Beam::SequencedValue<TickerTimeAndSale>;
 
   /** Defines the type of query used to receive a Ticker's market data. */
-  using TickerMarketDataQuery = Beam::BasicQuery<Ticker>;
+  using TickerQuery = Beam::BasicQuery<Ticker>;
 
   /** Defines the type of query used to load TickerInfo objects. */
   using TickerInfoQuery = Beam::PagedQuery<Scope, Ticker>;

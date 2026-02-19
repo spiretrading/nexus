@@ -11,7 +11,7 @@
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServices.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistrySession.hpp"
-#include "Nexus/MarketDataService/TickerMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
@@ -100,17 +100,17 @@ namespace Nexus {
         ServiceProtocolClient& client, Venue venue, int id);
       void on_query_bbo_quotes(Beam::RequestToken<
         ServiceProtocolClient, QueryBboQuotesService>& request,
-        const TickerMarketDataQuery& query);
+        const TickerQuery& query);
       void on_end_bbo_quote_query(
         ServiceProtocolClient& client, const Ticker& ticker, int id);
       void on_query_book_quotes(Beam::RequestToken<
         ServiceProtocolClient, QueryBookQuotesService>& request,
-        const TickerMarketDataQuery& query);
+        const TickerQuery& query);
       void on_end_book_quote_query(
         ServiceProtocolClient& client, const Ticker& ticker, int id);
       void on_query_time_and_sales(Beam::RequestToken<
         ServiceProtocolClient, QueryTimeAndSalesService>& request,
-        const TickerMarketDataQuery& query);
+        const TickerQuery& query);
       void on_end_time_and_sale_query(
         ServiceProtocolClient& client, const Ticker& ticker, int id);
       TickerSnapshot on_load_ticker_snapshot(
@@ -403,7 +403,7 @@ namespace Nexus {
       IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::on_query_bbo_quotes(
       Beam::RequestToken<ServiceProtocolClient, QueryBboQuotesService>& request,
-      const TickerMarketDataQuery& query) {
+      const TickerQuery& query) {
     on_query<BboQuote>(request, query, m_bbo_quote_subscriptions);
   }
 
@@ -420,7 +420,7 @@ namespace Nexus {
       IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::on_query_book_quotes(
       Beam::RequestToken<ServiceProtocolClient, QueryBookQuotesService>&
-        request, const TickerMarketDataQuery& query) {
+        request, const TickerQuery& query) {
     on_query<BookQuote>(request, query, m_book_quote_subscriptions);
   }
 
@@ -437,7 +437,7 @@ namespace Nexus {
       IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::on_query_time_and_sales(
       Beam::RequestToken<ServiceProtocolClient, QueryTimeAndSalesService>&
-        request, const TickerMarketDataQuery& query) {
+        request, const TickerQuery& query) {
     on_query<TimeAndSale>(request, query, m_time_and_sale_subscriptions);
   }
 

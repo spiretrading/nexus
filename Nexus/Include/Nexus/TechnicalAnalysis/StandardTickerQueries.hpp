@@ -19,7 +19,7 @@
 #include "Nexus/ChartingService/TickerChartingQuery.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
-#include "Nexus/MarketDataService/TickerMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 #include "Nexus/Queries/StandardValues.hpp"
 #include "Nexus/Queries/TraversalExpressionVisitor.hpp"
@@ -32,16 +32,15 @@ namespace Nexus {
    * @param date The date to retrieve the opening trade for.
    * @param venues The database containing venue time zones.
    * @param time_zones The database of timezones.
-   * @return A TickerMarketDataQuery that can be used to retrieve the
-   *         <i>ticker</i>'s opening trade.
+   * @return A TickerQuery that can be used to retrieve the <i>ticker</i>'s
+   *         opening trade.
    */
-  inline TickerMarketDataQuery make_open_query(
-      const Ticker& ticker, boost::posix_time::ptime date,
-      const VenueDatabase& venues,
+  inline TickerQuery make_open_query(const Ticker& ticker,
+      boost::posix_time::ptime date, const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones) {
     auto start_of_day =
       utc_start_of_day(ticker.get_venue(), date, venues, time_zones);
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(start_of_day, Beam::decrement(Beam::Sequence::LAST));
     query.set_snapshot_limit(Beam::SnapshotLimit::from_head(1));
@@ -112,16 +111,15 @@ namespace Nexus {
    *        will be retrieved.
    * @param venues The database containing venue time zones.
    * @param time_zones The database of timezones.
-   * @return A TickerMarketDataQuery that can be used to retrieve the
-   *         <i>ticker</i>'s previous session's closing trade.
+   * @return A TickerQuery that can be used to retrieve the <i>ticker</i>'s
+   *         previous session's closing trade.
    */
-  inline TickerMarketDataQuery make_previous_close_query(
-      const Ticker& ticker, boost::posix_time::ptime date,
-      const VenueDatabase& venues,
+  inline TickerQuery make_previous_close_query(const Ticker& ticker,
+      boost::posix_time::ptime date, const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones) {
     auto start_of_day =
       utc_start_of_day(ticker.get_venue(), date, venues, time_zones);
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(Beam::Sequence::FIRST, start_of_day);
     query.set_snapshot_limit(Beam::SnapshotLimit::from_tail(1));

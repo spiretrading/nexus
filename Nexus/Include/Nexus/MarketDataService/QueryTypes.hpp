@@ -1,6 +1,6 @@
 #ifndef NEXUS_MARKET_DATA_QUERY_TYPES_HPP
 #define NEXUS_MARKET_DATA_QUERY_TYPES_HPP
-#include "Nexus/MarketDataService/TickerMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
 namespace Nexus {
@@ -23,17 +23,17 @@ namespace Nexus {
 
   template<>
   struct market_data_query_type<TimeAndSale> {
-    using type = TickerMarketDataQuery;
+    using type = TickerQuery;
   };
 
   template<>
   struct market_data_query_type<BboQuote> {
-    using type = TickerMarketDataQuery;
+    using type = TickerQuery;
   };
 
   template<>
   struct market_data_query_type<BookQuote> {
-    using type = TickerMarketDataQuery;
+    using type = TickerQuery;
   };
 
   template<typename T>

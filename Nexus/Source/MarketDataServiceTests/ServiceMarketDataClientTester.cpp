@@ -29,7 +29,7 @@ namespace {
 TEST_SUITE("ServiceMarketDataClient") {
   TEST_CASE("real_time_bbo_quote_query") {
     auto fixture = Fixture();
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
     query.set_index(TICKER_A);
     query.set_range(Range::REAL_TIME);
     auto bbo_quotes = std::make_shared<Queue<BboQuote>>();

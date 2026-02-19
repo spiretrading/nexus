@@ -71,7 +71,7 @@ TEST_SUITE("ClientHistoricalDataStore") {
     auto client = TestMarketDataClient(operations);
     auto data_store = ClientHistoricalDataStore<TestMarketDataClient*>(&client);
     auto ticker = parse_ticker("TST.TSX");
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
@@ -100,7 +100,7 @@ TEST_SUITE("ClientHistoricalDataStore") {
     auto client = TestMarketDataClient(operations);
     auto data_store = ClientHistoricalDataStore<TestMarketDataClient*>(&client);
     auto ticker = parse_ticker("TST.TSX");
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
@@ -129,7 +129,7 @@ TEST_SUITE("ClientHistoricalDataStore") {
     auto client = TestMarketDataClient(operations);
     auto data_store = ClientHistoricalDataStore<TestMarketDataClient*>(&client);
     auto ticker = parse_ticker("TST.TSX");
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(Range::TOTAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);

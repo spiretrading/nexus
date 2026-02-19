@@ -10,7 +10,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/VirtualPtr.hpp>
 #include "Nexus/Definitions/TickerInfo.hpp"
-#include "Nexus/MarketDataService/TickerMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 
 namespace Nexus {

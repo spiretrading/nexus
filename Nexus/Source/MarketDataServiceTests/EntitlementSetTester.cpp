@@ -38,7 +38,7 @@ TEST_SUITE("EntitlementSet") {
   TEST_CASE("security_query") {
     auto entitlements = EntitlementSet();
     entitlements.grant({TSX, TSX}, {MarketDataType::BBO_QUOTE});
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
     query.set_index(parse_ticker("TST.TSX"));
     REQUIRE(contains<BboQuote>(entitlements, query));
     REQUIRE(!contains<BookQuote>(entitlements, query));

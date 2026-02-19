@@ -17,7 +17,7 @@
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServices.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistrySession.hpp"
-#include "Nexus/MarketDataService/TickerMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 

@@ -145,7 +145,7 @@ TEST_SUITE("DistributedMarketDataClient") {
   TEST_CASE("query_sequenced_bbo_quotes") {
     auto fixture = Fixture();
     auto bbo_quotes = std::make_shared<Queue<SequencedBboQuote>>();
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
 
     SUBCASE("exact") {
       query.set_index(parse_ticker("ABC.TSX"));
@@ -190,7 +190,7 @@ TEST_SUITE("DistributedMarketDataClient") {
   TEST_CASE("query_bbo_quotes") {
     auto fixture = Fixture();
     auto bbo_quotes = std::make_shared<Queue<BboQuote>>();
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
 
     SUBCASE("exact") {
       query.set_index(parse_ticker("ABC.TSX"));
@@ -233,7 +233,7 @@ TEST_SUITE("DistributedMarketDataClient") {
   TEST_CASE("query_sequenced_book_quotes") {
     auto fixture = Fixture();
     auto book_quotes = std::make_shared<Queue<SequencedBookQuote>>();
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
 
     SUBCASE("exact") {
       query.set_index(parse_ticker("ABC.TSX"));
@@ -278,7 +278,7 @@ TEST_SUITE("DistributedMarketDataClient") {
   TEST_CASE("query_book_quotes") {
     auto fixture = Fixture();
     auto book_quotes = std::make_shared<Queue<BookQuote>>();
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
 
     SUBCASE("exact") {
       query.set_index(parse_ticker("ABC.TSX"));
@@ -322,7 +322,7 @@ TEST_SUITE("DistributedMarketDataClient") {
   TEST_CASE("query_sequenced_time_and_sales") {
     auto fixture = Fixture();
     auto time_and_sales = std::make_shared<Queue<SequencedTimeAndSale>>();
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
 
     SUBCASE("exact") {
       query.set_index(parse_ticker("ABC.TSX"));
@@ -369,7 +369,7 @@ TEST_SUITE("DistributedMarketDataClient") {
   TEST_CASE("query_time_and_sales") {
     auto fixture = Fixture();
     auto time_and_sales = std::make_shared<Queue<TimeAndSale>>();
-    auto query = TickerMarketDataQuery();
+    auto query = TickerQuery();
 
     SUBCASE("exact") {
       query.set_index(parse_ticker("ABC.TSX"));
