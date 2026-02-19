@@ -136,7 +136,7 @@ namespace std {
     size_t operator()(const Nexus::Ticker& value) const {
       auto seed = std::size_t(0);
       boost::hash_combine(seed, value.get_symbol());
-      boost::hash_combine(seed, value.get_venue());
+      boost::hash_combine(seed, std::hash<Nexus::Venue>()(value.get_venue()));
       return seed;
     }
   };

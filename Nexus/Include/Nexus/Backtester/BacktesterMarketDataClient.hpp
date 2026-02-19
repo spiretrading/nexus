@@ -24,22 +24,22 @@ namespace Nexus {
         Beam::ScopedQueueWriter<SequencedOrderImbalance> queue);
       void query(const VenueMarketDataQuery& query,
         Beam::ScopedQueueWriter<OrderImbalance> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(const TickerMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedBboQuote> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(const TickerMarketDataQuery& query,
         Beam::ScopedQueueWriter<BboQuote> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(const TickerMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedBookQuote> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(const TickerMarketDataQuery& query,
         Beam::ScopedQueueWriter<BookQuote> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(const TickerMarketDataQuery& query,
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(const TickerMarketDataQuery& query,
         Beam::ScopedQueueWriter<TimeAndSale> queue);
-      std::vector<SecurityInfo> query(const SecurityInfoQuery& query);
-      SecuritySnapshot load_snapshot(const Security& security);
-      SecurityTechnicals load_technicals(const Security& security);
-      std::vector<SecurityInfo> load_security_info_from_prefix(
+      std::vector<TickerInfo> query(const TickerInfoQuery& query);
+      TickerSnapshot load_snapshot(const Ticker& ticker);
+      PriceCandlestick load_session_candlestick(const Ticker& ticker);
+      std::vector<TickerInfo> load_ticker_info_from_prefix(
         const std::string& prefix);
       void close();
 
@@ -78,65 +78,65 @@ namespace Nexus {
   }
 
   inline void BacktesterMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
+      const TickerMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
     m_service->query_bbo_quotes(query);
     m_market_data_client.query(query, std::move(queue));
   }
 
   inline void BacktesterMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
+      const TickerMarketDataQuery& query,
       Beam::ScopedQueueWriter<BboQuote> queue) {
     m_service->query_bbo_quotes(query);
     m_market_data_client.query(query, std::move(queue));
   }
 
   inline void BacktesterMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
+      const TickerMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
     m_service->query_book_quotes(query);
     m_market_data_client.query(query, std::move(queue));
   }
 
   inline void BacktesterMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
+      const TickerMarketDataQuery& query,
       Beam::ScopedQueueWriter<BookQuote> queue) {
     m_service->query_book_quotes(query);
     m_market_data_client.query(query, std::move(queue));
   }
 
   inline void BacktesterMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
+      const TickerMarketDataQuery& query,
       Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
     m_service->query_time_and_sales(query);
     m_market_data_client.query(query, std::move(queue));
   }
 
   inline void BacktesterMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
+      const TickerMarketDataQuery& query,
       Beam::ScopedQueueWriter<TimeAndSale> queue) {
     m_service->query_time_and_sales(query);
     m_market_data_client.query(query, std::move(queue));
   }
 
-  inline std::vector<SecurityInfo> BacktesterMarketDataClient::query(
-      const SecurityInfoQuery& query) {
+  inline std::vector<TickerInfo> BacktesterMarketDataClient::query(
+      const TickerInfoQuery& query) {
     return m_market_data_client.query(query);
   }
 
-  inline SecuritySnapshot BacktesterMarketDataClient::load_snapshot(
-      const Security& security) {
-    return m_market_data_client.load_snapshot(security);
+  inline TickerSnapshot BacktesterMarketDataClient::load_snapshot(
+      const Ticker& ticker) {
+    return m_market_data_client.load_snapshot(ticker);
   }
 
-  inline SecurityTechnicals BacktesterMarketDataClient::load_technicals(
-      const Security& security) {
-    return m_market_data_client.load_technicals(security);
+  inline PriceCandlestick BacktesterMarketDataClient::load_session_candlestick(
+      const Ticker& ticker) {
+    return m_market_data_client.load_session_candlestick(ticker);
   }
 
-  inline std::vector<SecurityInfo> BacktesterMarketDataClient::
-      load_security_info_from_prefix(const std::string& prefix) {
-    return m_market_data_client.load_security_info_from_prefix(prefix);
+  inline std::vector<TickerInfo> BacktesterMarketDataClient::
+      load_ticker_info_from_prefix(const std::string& prefix) {
+    return m_market_data_client.load_ticker_info_from_prefix(prefix);
   }
 
   inline void BacktesterMarketDataClient::close() {

@@ -7,13 +7,12 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
-  const auto TST = Security("TST", TSX);
-  const auto TST2 = Security("TST2", TSXV);
-  const auto ETF = Security("TST3", TSX);
+  const auto TST = parse_ticker("TST.TSX");
+  const auto TST2 = parse_ticker("TST2.TSXV");
+  const auto ETF = parse_ticker("TST3.TSX");
 
   auto make_fee_table() {
     auto table = Xcx2FeeTable();
@@ -24,9 +23,9 @@ namespace {
     return table;
   }
 
-  auto make_order_fields(Security security, Money price) {
+  auto make_order_fields(Ticker ticker, Money price) {
     auto fields = make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
-      std::move(security), CAD, Side::BID, DefaultDestinations::CX2, 100,
+      std::move(ticker), CAD, Side::BID, DefaultDestinations::CX2, 100,
       price);
     return fields;
   }

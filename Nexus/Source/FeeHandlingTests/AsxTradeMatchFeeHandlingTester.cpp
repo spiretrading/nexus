@@ -7,13 +7,12 @@ using namespace Beam;
 using namespace boost;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
   auto make_order_fields(Money price) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
-      Security("TST", ASX), AUD, Side::BID, DefaultDestinations::ASXT, 100,
+      parse_ticker("TST.ASX"), AUD, Side::BID, DefaultDestinations::ASXT, 100,
       price);
   }
 

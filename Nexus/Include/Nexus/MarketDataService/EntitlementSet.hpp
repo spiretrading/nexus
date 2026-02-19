@@ -50,20 +50,16 @@ namespace Nexus {
       std::ostream& out, const EntitlementKey& key) {
     return out << '(' << key.m_venue << ", " << key.m_source << ')';
   }
-
-  inline std::size_t hash_value(const EntitlementKey& value) {
-    auto seed = std::size_t(0);
-    boost::hash_combine(seed, value.m_venue);
-    boost::hash_combine(seed, value.m_source);
-    return seed;
-  }
 }
 
 namespace std {
   template<>
   struct hash<Nexus::EntitlementKey> {
     std::size_t operator ()(const Nexus::EntitlementKey& value) const {
-      return Nexus::hash_value(value);
+      auto seed = std::size_t(0);
+      boost::hash_combine(seed, std::hash<Nexus::Venue>()(value.m_venue));
+      boost::hash_combine(seed, std::hash<Nexus::Venue>()(value.m_source));
+      return seed;
     }
   };
 }

@@ -12,7 +12,6 @@
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <boost/cstdfloat.hpp>
-#include <boost/functional/hash.hpp>
 #include <boost/io/ios_state.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
@@ -455,11 +454,6 @@ namespace Nexus {
     }
   }
 
-  inline std::size_t hash_value(Quantity quantity) noexcept {
-    auto source = static_cast<boost::float64_t>(quantity);
-    return std::hash<decltype(source)>()(source);
-  }
-
   inline constexpr Quantity::Quantity() noexcept
     : m_value(0) {}
 
@@ -608,7 +602,8 @@ namespace std {
   template<>
   struct hash<Nexus::Quantity> {
     std::size_t operator ()(Nexus::Quantity value) const noexcept {
-      return Nexus::hash_value(value);
+      auto source = static_cast<boost::float64_t>(value);
+      return std::hash<boost::float64_t>()(source);
     }
   };
 

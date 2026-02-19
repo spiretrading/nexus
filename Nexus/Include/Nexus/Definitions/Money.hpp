@@ -9,7 +9,6 @@
 #include <type_traits>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
-#include <boost/functional/hash.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/throw_exception.hpp>
@@ -282,10 +281,6 @@ namespace Nexus {
       static_cast<Quantity>(value), static_cast<Quantity>(multiple)));
   }
 
-  inline std::size_t hash_value(Money money) noexcept {
-    return std::hash<Quantity>()(static_cast<Quantity>(money));
-  }
-
   inline std::ostream& operator <<(std::ostream& out, Money value) {
     auto fraction =
       static_cast<Quantity>(value) - floor(static_cast<Quantity>(value));
@@ -404,7 +399,7 @@ namespace std {
   template<>
   struct hash<Nexus::Money> {
     std::size_t operator ()(Nexus::Money value) const noexcept {
-      return Nexus::hash_value(value);
+      return std::hash<Nexus::Quantity>()(static_cast<Nexus::Quantity>(value));
     }
   };
 

@@ -97,13 +97,6 @@ namespace Details {
     return out << '(' << value.get_type() << ' ' << value.get_expiry() << ')';
   }
 
-  inline std::size_t hash_value(const TimeInForce& value) noexcept {
-    auto seed = std::size_t(0);
-    boost::hash_combine(seed, value.get_type());
-    boost::hash_combine(seed, value.get_expiry());
-    return seed;
-  }
-
   inline TimeInForce::TimeInForce(Type type) noexcept
     : m_type(type) {}
 
@@ -139,8 +132,14 @@ namespace Beam {
 namespace std {
   template<>
   struct hash<Nexus::TimeInForce> {
-    std::size_t operator ()(const Nexus::TimeInForce& value) const noexcept {
-      return Nexus::hash_value(value);
+    std::size_t operator ()(
+        const Nexus::TimeInForce& value) const noexcept {
+      auto seed = std::size_t(0);
+      boost::hash_combine(seed,
+        std::hash<Nexus::TimeInForce::Type>()(value.get_type()));
+      boost::hash_combine(seed,
+        std::hash<boost::posix_time::ptime>()(value.get_expiry()));
+      return seed;
     }
   };
 }

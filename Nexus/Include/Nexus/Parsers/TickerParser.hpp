@@ -1,26 +1,26 @@
-#ifndef NEXUS_SECURITY_PARSER_HPP
-#define NEXUS_SECURITY_PARSER_HPP
+#ifndef NEXUS_TICKER_PARSER_HPP
+#define NEXUS_TICKER_PARSER_HPP
 #include <cctype>
 #include <Beam/Parsers/DefaultParser.hpp>
 #include <Beam/Parsers/Parser.hpp>
 #include <Beam/Parsers/SubParserStream.hpp>
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 
 namespace Nexus {
 
-  /** Matches a Security. */
-  class SecurityParser {
+  /** Matches a Ticker. */
+  class TickerParser {
     public:
-      using Result = Security;
+      using Result = Ticker;
 
-      /** Constructs a SecurityParser using the default venues. */
-      SecurityParser() noexcept;
+      /** Constructs a TickerParser using the default venues. */
+      TickerParser() noexcept;
 
       /**
-       * Constructs a SecurityParser.
+       * Constructs a TickerParser.
        * @param venues The venues to parse.
        */
-      explicit SecurityParser(const VenueDatabase& venues) noexcept;
+      explicit TickerParser(const VenueDatabase& venues) noexcept;
 
       template<Beam::IsParserStream S>
       bool read(S& source, Result& value) const;
@@ -31,14 +31,14 @@ namespace Nexus {
       VenueDatabase m_venues;
   };
 
-  inline SecurityParser::SecurityParser() noexcept
-    : SecurityParser(DEFAULT_VENUES) {}
+  inline TickerParser::TickerParser() noexcept
+    : TickerParser(DEFAULT_VENUES) {}
 
-  inline SecurityParser::SecurityParser(const VenueDatabase& venues) noexcept
+  inline TickerParser::TickerParser(const VenueDatabase& venues) noexcept
     : m_venues(venues) {}
 
   template<Beam::IsParserStream S>
-  bool SecurityParser::read(S& source, Result& value) const {
+  bool TickerParser::read(S& source, Result& value) const {
     auto context = Beam::SubParserStream<S>(source);
     auto symbol = std::string();
     while(context.read()) {
@@ -49,7 +49,7 @@ namespace Nexus {
         break;
       }
     }
-    value = parse_security(symbol, m_venues);
+    value = parse_ticker(symbol, m_venues);
     if(!value.get_venue()) {
       return false;
     }
@@ -58,15 +58,15 @@ namespace Nexus {
   }
 
   template<Beam::IsParserStream S>
-  bool SecurityParser::read(S& source) const {
-    auto security = Security();
-    return read(source, security);
+  bool TickerParser::read(S& source) const {
+    auto ticker = Ticker();
+    return read(source, ticker);
   }
 }
 
 namespace Beam {
   template<>
-  const auto default_parser<Nexus::Security> = Nexus::SecurityParser();
+  const auto default_parser<Nexus::Ticker> = Nexus::TickerParser();
 }
 
 #endif

@@ -5,7 +5,6 @@
 #include <utility>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
-#include <boost/functional/hash.hpp>
 #include "Nexus/Definitions/Asset.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"

@@ -7,11 +7,10 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 
 namespace {
-  const auto SHOP = Security("SHOP", TSX);
-  const auto TD = Security("TD", TSX);
+  const auto SHOP = parse_ticker("SHOP.TSX");
+  const auto TD = parse_ticker("TD.TSX");
 
   struct Fixture {
     TestEnvironment m_environment;
@@ -47,8 +46,8 @@ TEST_SUITE("SimulationOrderExecutionDriver") {
     auto order2 = driver.submit(info2);
     REQUIRE(order1);
     REQUIRE(order2);
-    REQUIRE(order1->get_info().m_fields.m_security == SHOP);
-    REQUIRE(order2->get_info().m_fields.m_security == TD);
+    REQUIRE(order1->get_info().m_fields.m_ticker == SHOP);
+    REQUIRE(order2->get_info().m_fields.m_ticker == TD);
     auto reports1 = std::make_shared<Queue<ExecutionReport>>();
     auto reports2 = std::make_shared<Queue<ExecutionReport>>();
     order1->get_publisher().monitor(reports1);

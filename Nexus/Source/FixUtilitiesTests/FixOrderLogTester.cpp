@@ -6,7 +6,6 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 
 namespace {
   struct TestApplication : FIX::Application {
@@ -54,7 +53,7 @@ TEST_SUITE("FixOrderLog") {
     auto target_comp_id = FIX::TargetCompID("TARGET");
     bool called = false;
     auto fields = make_limit_order_fields(
-      Security("TST", TSX), Side::BID, "TSX", 100, Money::ONE);
+      parse_ticker("TST.TSX"), Side::BID, "TSX", 100, Money::ONE);
     auto info =
       OrderInfo(fields, 123, time_from_string("2024-05-21 00:00:10.000"));
     auto order = log.submit(info, sender_comp_id, target_comp_id,

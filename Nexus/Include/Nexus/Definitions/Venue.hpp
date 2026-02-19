@@ -532,10 +532,6 @@ namespace Nexus {
     m_entries.store(database.m_entries.load());
     return *this;
   }
-
-  inline std::size_t hash_value(Venue venue) {
-    return std::hash<Nexus::Venue::Code>()(venue.get_code());
-  }
 }
 
 namespace Beam {
@@ -596,7 +592,7 @@ namespace std {
   template<>
   struct hash<Nexus::Venue> {
     std::size_t operator ()(Nexus::Venue venue) const {
-      return hash_value(venue);
+      return std::hash<Nexus::Venue::Code>()(venue.get_code());
     }
   };
 }

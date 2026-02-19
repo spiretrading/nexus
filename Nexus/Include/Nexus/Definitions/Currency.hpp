@@ -208,10 +208,6 @@ namespace Nexus {
       decode_asset_type(value.get_type()) << '(' << value.get_code() << ')';
   }
 
-  inline std::size_t hash_value(CurrencyId code) {
-    return static_cast<std::uint16_t>(code);
-  }
-
   constexpr CurrencyId::CurrencyId() noexcept
     : CurrencyId(~0) {}
 
@@ -388,7 +384,7 @@ namespace std {
   template <>
   struct hash<Nexus::CurrencyId> {
     size_t operator()(Nexus::CurrencyId value) const {
-      return Nexus::hash_value(value);
+      return std::hash<std::uint16_t>()(static_cast<std::uint16_t>(value));
     }
   };
 }

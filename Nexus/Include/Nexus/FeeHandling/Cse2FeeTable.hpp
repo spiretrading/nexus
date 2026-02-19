@@ -117,10 +117,10 @@ namespace Nexus {
       return Cse2FeeTable::Section::DARK;
     } else if(report.m_last_quantity < 100) {
       return Cse2FeeTable::Section::ODDLOT;
-    } else if(fields.m_security.get_symbol().find(".DB") != std::string::npos ||
-        fields.m_security.get_symbol().find(".NT") != std::string::npos ||
-        fields.m_security.get_symbol().find(".NO") != std::string::npos ||
-        fields.m_security.get_symbol().find(".NS") != std::string::npos) {
+    } else if(fields.m_ticker.get_symbol().find(".DB") != std::string::npos ||
+        fields.m_ticker.get_symbol().find(".NT") != std::string::npos ||
+        fields.m_ticker.get_symbol().find(".NO") != std::string::npos ||
+        fields.m_ticker.get_symbol().find(".NS") != std::string::npos) {
       return Cse2FeeTable::Section::DEBENTURES_OR_NOTES;
     }
     return Cse2FeeTable::Section::REGULAR;

@@ -68,21 +68,21 @@ namespace Nexus {
       void publish(Venue venue, const OrderImbalance& order_imbalance);
 
       /** Publishes a BboQuote. */
-      void publish(const Security& security, const BboQuote& bbo_quote);
+      void publish(const Ticker& ticker, const BboQuote& bbo_quote);
 
       /** Publishes a BookQuote. */
-      void publish(const Security& security, const BookQuote& book_quote);
+      void publish(const Ticker& ticker, const BookQuote& book_quote);
 
       /** Publishes a TimeAndSale. */
-      void publish(const Security& security, const TimeAndSale& time_and_sale);
+      void publish(const Ticker& ticker, const TimeAndSale& time_and_sale);
 
       /** Updates the price of a BboQuote. */
-      void update_bbo_price(const Security& security, Money bid_price,
+      void update_bbo_price(const Ticker& ticker, Money bid_price,
         Money ask_price, boost::posix_time::ptime timestamp);
 
       /** Updates the price of a BboQuote. */
       void update_bbo_price(
-        const Security& security, Money bid_price, Money ask_price);
+        const Ticker& ticker, Money bid_price, Money ask_price);
 
       /** Monitors orders submitted to this environment. */
       void monitor_order_submissions(
@@ -242,7 +242,6 @@ namespace Nexus {
         m_administration_client, *m_market_data_client,
         *m_order_execution_client, transition_timer_factory, m_time_client,
         ExchangeRateTable(definitions_client.load_exchange_rates()),
-        definitions_client.load_venue_database(),
         definitions_client.load_destination_database());
     } catch(const std::exception&) {
       close();
@@ -271,32 +270,32 @@ namespace Nexus {
   }
 
   inline void TestEnvironment::publish(
-      const Security& security, const BboQuote& bbo_quote) {
-    publish_market_data(security, bbo_quote);
+      const Ticker& ticker, const BboQuote& bbo_quote) {
+    publish_market_data(ticker, bbo_quote);
   }
 
   inline void TestEnvironment::publish(
-      const Security& security, const BookQuote& book_quote) {
-    publish_market_data(security, book_quote);
+      const Ticker& ticker, const BookQuote& book_quote) {
+    publish_market_data(ticker, book_quote);
   }
 
   inline void TestEnvironment::publish(
-      const Security& security, const TimeAndSale& time_and_sale) {
-    publish_market_data(security, time_and_sale);
+      const Ticker& ticker, const TimeAndSale& time_and_sale) {
+    publish_market_data(ticker, time_and_sale);
   }
 
   inline void TestEnvironment::update_bbo_price(
-      const Security& security, Money bid_price, Money ask_price,
+      const Ticker& ticker, Money bid_price, Money ask_price,
       boost::posix_time::ptime timestamp) {
     auto quote =
       BboQuote(make_bid(bid_price, 100), make_ask(ask_price, 100), timestamp);
-    publish(security, quote);
+    publish(ticker, quote);
   }
 
   inline void TestEnvironment::update_bbo_price(
-      const Security& security, Money bid_price, Money ask_price) {
+      const Ticker& ticker, Money bid_price, Money ask_price) {
     update_bbo_price(
-      security, bid_price, ask_price, boost::posix_time::not_a_date_time);
+      ticker, bid_price, ask_price, boost::posix_time::not_a_date_time);
   }
 
   inline void TestEnvironment::monitor_order_submissions(

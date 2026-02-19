@@ -8,11 +8,10 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
-  const auto TD = Security("TD", TSX);
+  const auto TD = parse_ticker("TD.TSX");
 
   MarketDataClient make_market_data_client(TestEnvironment& environment) {
     environment.get_service_locator_environment().get_root().

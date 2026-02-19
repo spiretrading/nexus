@@ -7,11 +7,10 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
-  auto TST = Security("TST", TSX);
+  auto TST = parse_ticker("TST.TSX");
 
   auto make_order_fields(Money price) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT, TST, CAD,

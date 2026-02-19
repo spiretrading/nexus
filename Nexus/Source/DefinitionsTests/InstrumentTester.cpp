@@ -8,6 +8,7 @@
 
 using namespace Beam;
 using namespace Beam::Tests;
+using namespace boost;
 using namespace Nexus;
 
 TEST_SUITE("Instrument") {
@@ -50,9 +51,9 @@ TEST_SUITE("Instrument") {
     instrument.m_type = Instrument::Type::SPOT;
     auto hash = std::hash<Instrument>()(instrument);
     auto seed = std::size_t(0);
-    boost::hash_combine(seed, std::hash<Asset>()(instrument.m_base));
-    boost::hash_combine(seed, std::hash<Asset>()(instrument.m_quote));
-    boost::hash_combine(seed,
+    hash_combine(seed, std::hash<Asset>()(instrument.m_base));
+    hash_combine(seed, std::hash<Asset>()(instrument.m_quote));
+    hash_combine(seed,
       std::hash<std::uint8_t>()(static_cast<std::uint8_t>(instrument.m_type)));
     REQUIRE(hash == seed);
   }

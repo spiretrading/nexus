@@ -302,7 +302,7 @@ namespace Details {
       FIX::ClOrdID(boost::lexical_cast<std::string>(info.m_id));
     new_order_single.set(FIX::HandlInst('1'));
     new_order_single.set(client_order_id);
-    auto symbol = FIX::Symbol(info.m_fields.m_security.get_symbol());
+    auto symbol = FIX::Symbol(info.m_fields.m_ticker.get_symbol());
     new_order_single.set(symbol);
     new_order_single.set(*side);
     new_order_single.set(

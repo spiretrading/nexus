@@ -226,10 +226,6 @@ namespace Nexus {
     return in;
   }
 
-  inline std::size_t hash_value(CountryCode code) {
-    return static_cast<std::uint16_t>(code);
-  }
-
   constexpr CountryCode::CountryCode() noexcept
     : CountryCode(~0) {}
 
@@ -444,7 +440,7 @@ namespace std {
   template <>
   struct hash<Nexus::CountryCode> {
     size_t operator()(Nexus::CountryCode value) const {
-      return Nexus::hash_value(value);
+      return std::hash<std::uint16_t>()(static_cast<std::uint16_t>(value));
     }
   };
 }

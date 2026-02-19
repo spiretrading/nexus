@@ -7,13 +7,12 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
-  const auto TST = Security("TST", TSX);
-  const auto ETF = Security("ETF", TSX);
-  const auto USA = Security("USA", TSX);
+  const auto TST = parse_ticker("TST.TSX");
+  const auto ETF = parse_ticker("ETF.TSX");
+  const auto USA = parse_ticker("USA.TSX");
 
   auto lookup_liquidity_fee(const LynxFeeTable& table,
       LiquidityFlag flag, LynxFeeTable::Classification classification) {
@@ -28,9 +27,9 @@ namespace {
     return table;
   }
 
-  auto make_order_fields(Security security, Money price, Quantity quantity) {
+  auto make_order_fields(Ticker ticker, Money price, Quantity quantity) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
-      std::move(security), CAD, Side::BID, DefaultDestinations::LYNX, quantity,
+      std::move(ticker), CAD, Side::BID, DefaultDestinations::LYNX, quantity,
       price);
   }
 

@@ -91,7 +91,7 @@ TEST_SUITE("CxdFeeTable") {
     REQUIRE(fee == Money::ZERO);
   }
 
-  TEST_CASE("default_security_fee_below_max") {
+  TEST_CASE("default_ticker_fee_below_max") {
     auto table = make_fee_table();
     auto report = make_execution_report(Money::ONE, 1, "a");
     auto liquidity_flag = get_cxd_liquidity_flag("a");
@@ -106,7 +106,7 @@ TEST_SUITE("CxdFeeTable") {
     REQUIRE(fee == expected_fee);
   }
 
-  TEST_CASE("default_security_fee_above_max") {
+  TEST_CASE("default_ticker_fee_above_max") {
     auto table = make_fee_table();
     auto report = make_execution_report(Money::ONE, 1000, "a");
     auto liquidity_flag = get_cxd_liquidity_flag("a");
@@ -121,7 +121,7 @@ TEST_SUITE("CxdFeeTable") {
     REQUIRE(fee == expected_fee);
   }
 
-  TEST_CASE("etf_security_no_max_fee") {
+  TEST_CASE("etf_ticker_no_max_fee") {
     auto table = make_fee_table();
     auto report = make_execution_report(Money(5), 10, "D");
     auto liquidity_flag = get_cxd_liquidity_flag("D");

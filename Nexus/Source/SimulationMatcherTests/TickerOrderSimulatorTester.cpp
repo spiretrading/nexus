@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include "Nexus/SimulationMatcher/SecurityOrderSimulator.hpp"
+#include "Nexus/SimulationMatcher/TickerOrderSimulator.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 
 using namespace Beam;
@@ -7,10 +7,9 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 
 namespace {
-  const auto ABX = Security("ABX", TSX);
+  const auto ABX = parse_ticker("ABX.TSX");
 
   struct Fixture {
     TestEnvironment m_environment;
@@ -24,11 +23,11 @@ namespace {
   };
 }
 
-TEST_SUITE("SecurityOrderSimulator") {
+TEST_SUITE("TickerOrderSimulator") {
   TEST_CASE("submit") {
     auto fixture = Fixture();
     fixture.m_environment.update_bbo_price(ABX, Money::ONE, Money::ONE);
-    auto simulator = SecurityOrderSimulator(
+    auto simulator = TickerOrderSimulator(
       fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
         Ref(fixture.m_environment.get_time_environment())));
     auto info = OrderInfo();

@@ -51,7 +51,9 @@ namespace std {
         const Nexus::Details::PrimaryListingKey& key) const noexcept {
       auto seed = std::size_t(0);
       boost::hash_combine(seed, key.m_symbol);
-      boost::hash_combine(seed, key.m_region);
+      boost::hash_combine(seed, boost::apply_visitor([] (const auto& value) {
+        return std::hash<std::remove_cvref_t<decltype(value)>>()(value);
+      }, key.m_region));
       return seed;
     }
   };

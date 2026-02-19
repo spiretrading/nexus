@@ -63,30 +63,29 @@ namespace Nexus {
 
     /** The fee table used for securities. */
     std::array<std::array<Money, INDEX_COUNT>, CLASSIFICATION_COUNT>
-      m_security_table;
+      m_fee_table;
 
-    /** The set of interlisted securities. */
-    std::unordered_set<Security> m_interlisted;
+    /** The set of interlisted tickers. */
+    std::unordered_set<Ticker> m_interlisted;
 
     /** The set of ETFs. */
-    std::unordered_set<Security> m_etfs;
+    std::unordered_set<Ticker> m_etfs;
   };
 
   /**
    * Parses a ChicFeeTable from a YAML configuration.
    * @param config The configuration to parse the ChicFeeTable from.
-   * @param etfs The set of ETF Securities.
-   * @param interlisted The set of interlisted Securities.
+   * @param etfs The set of ETF Tickers.
+   * @param interlisted The set of interlisted Tickers.
    * @return The ChicFeeTable represented by the <i>config</i>.
    */
   inline ChicFeeTable parse_chic_fee_table(const YAML::Node& config,
-      std::unordered_set<Security> etfs,
-      std::unordered_set<Security> interlisted) {
+      std::unordered_set<Ticker> etfs, std::unordered_set<Ticker> interlisted) {
     auto table = ChicFeeTable();
     table.m_etfs = std::move(etfs);
     table.m_interlisted = std::move(interlisted);
     parse_fee_table(
-      config, "security_table", Beam::out(table.m_security_table));
+      config, "fee_table", Beam::out(table.m_fee_table));
     return table;
   }
 
@@ -100,7 +99,7 @@ namespace Nexus {
    */
   inline Money lookup_fee(const ChicFeeTable& table, ChicFeeTable::Index index,
       ChicFeeTable::Classification classification) {
-    return table.m_security_table[static_cast<int>(classification)][
+    return table.m_fee_table[static_cast<int>(classification)][
       static_cast<int>(index)];
   }
 
@@ -121,9 +120,9 @@ namespace Nexus {
         return ChicFeeTable::Classification::SUBDIME;
       } else if(report.m_last_price < Money::ONE) {
         return ChicFeeTable::Classification::SUBDOLLAR;
-      } else if(table.m_interlisted.contains(fields.m_security)) {
+      } else if(table.m_interlisted.contains(fields.m_ticker)) {
         return ChicFeeTable::Classification::INTERLISTED;
-      } else if(table.m_etfs.contains(fields.m_security)) {
+      } else if(table.m_etfs.contains(fields.m_ticker)) {
         return ChicFeeTable::Classification::ETF;
       } else {
         return ChicFeeTable::Classification::NON_INTERLISTED;

@@ -157,7 +157,8 @@ namespace Nexus {
             });
           if(entry_iterator == entries.end()) {
             m_publisher->erase(snapshot_entry.first,
-              Inventory(get_key(snapshot_entry.second.m_position)));
+              Inventory(snapshot_entry.second.m_position.m_ticker,
+                snapshot_entry.second.m_position.m_currency));
           }
         }
       }
