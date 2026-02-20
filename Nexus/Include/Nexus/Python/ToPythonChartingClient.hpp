@@ -33,9 +33,9 @@ namespace Nexus {
       /** Returns a reference to the underlying client. */
       const Client& get() const;
 
-      void query(const SecurityChartingQuery& query,
+      void query(const TickerChartingQuery& query,
         Beam::ScopedQueueWriter<QueryVariant> queue);
-      TimePriceQueryResult load_time_price_series(const Security& security,
+      PriceQueryResult load_price_series(const Ticker& ticker,
         boost::posix_time::ptime start, boost::posix_time::ptime end,
         boost::posix_time::time_duration interval);
       void close();
@@ -77,18 +77,18 @@ namespace Nexus {
   }
 
   template<IsChartingClient C>
-  void ToPythonChartingClient<C>::query(const SecurityChartingQuery& query,
+  void ToPythonChartingClient<C>::query(const TickerChartingQuery& query,
       Beam::ScopedQueueWriter<QueryVariant> queue) {
     auto release = Beam::Python::GilRelease();
     m_client->query(query, std::move(queue));
   }
 
   template<IsChartingClient C>
-  TimePriceQueryResult ToPythonChartingClient<C>::load_time_price_series(
-      const Security& security, boost::posix_time::ptime start,
+  PriceQueryResult ToPythonChartingClient<C>::load_price_series(
+      const Ticker& ticker, boost::posix_time::ptime start,
       boost::posix_time::ptime end, boost::posix_time::time_duration interval) {
     auto release = Beam::Python::GilRelease();
-    return m_client->load_time_price_series(security, start, end, interval);
+    return m_client->load_price_series(ticker, start, end, interval);
   }
 
   template<IsChartingClient C>

@@ -33,15 +33,14 @@ namespace Nexus {
       /** Returns a reference to the underlying client. */
       const Client& get() const;
 
-      void add(const SecurityInfo& info);
+      void add(const TickerInfo& info);
       void publish(const VenueOrderImbalance& imbalance);
-      void publish(const SecurityBboQuote& quote);
-      void publish(const SecurityBookQuote& quote);
-      void publish(const SecurityTimeAndSale& time_and_sale);
-      void add_order(const Security& security, Venue venue,
-        const std::string& mpid, bool is_primary_mpid, const std::string& id,
-        Side side, Money price, Quantity size,
-        boost::posix_time::ptime timestamp);
+      void publish(const TickerBboQuote& quote);
+      void publish(const TickerBookQuote& quote);
+      void publish(const TickerTimeAndSale& time_and_sale);
+      void add_order(const Ticker& ticker, Venue venue, const std::string& mpid,
+        bool is_primary_mpid, const std::string& id, Side side, Money price,
+        Quantity size, boost::posix_time::ptime timestamp);
       void modify_order_size(const std::string& id, Quantity size,
         boost::posix_time::ptime timestamp);
       void offset_order_size(const std::string& id, Quantity delta,
@@ -90,7 +89,7 @@ namespace Nexus {
   }
 
   template<IsMarketDataFeedClient C>
-  void ToPythonMarketDataFeedClient<C>::add(const SecurityInfo& info) {
+  void ToPythonMarketDataFeedClient<C>::add(const TickerInfo& info) {
     auto release = Beam::Python::GilRelease();
     m_client->add(info);
   }
@@ -103,33 +102,32 @@ namespace Nexus {
   }
 
   template<IsMarketDataFeedClient C>
-  void ToPythonMarketDataFeedClient<C>::publish(const SecurityBboQuote& quote) {
+  void ToPythonMarketDataFeedClient<C>::publish(const TickerBboQuote& quote) {
+    auto release = Beam::Python::GilRelease();
+    m_client->publish(quote);
+  }
+
+  template<IsMarketDataFeedClient C>
+  void ToPythonMarketDataFeedClient<C>::publish(const TickerBookQuote& quote) {
     auto release = Beam::Python::GilRelease();
     m_client->publish(quote);
   }
 
   template<IsMarketDataFeedClient C>
   void ToPythonMarketDataFeedClient<C>::publish(
-      const SecurityBookQuote& quote) {
-    auto release = Beam::Python::GilRelease();
-    m_client->publish(quote);
-  }
-
-  template<IsMarketDataFeedClient C>
-  void ToPythonMarketDataFeedClient<C>::publish(
-      const SecurityTimeAndSale& time_and_sale) {
+      const TickerTimeAndSale& time_and_sale) {
     auto release = Beam::Python::GilRelease();
     m_client->publish(time_and_sale);
   }
 
   template<IsMarketDataFeedClient C>
   void ToPythonMarketDataFeedClient<C>::add_order(
-      const Security& security, Venue venue, const std::string& mpid,
+      const Ticker& ticker, Venue venue, const std::string& mpid,
       bool is_primary_mpid, const std::string& id, Side side, Money price,
       Quantity size, boost::posix_time::ptime timestamp) {
     auto release = Beam::Python::GilRelease();
-    m_client->add_order(security, venue, mpid, is_primary_mpid, id, side,
-      price, size, timestamp);
+    m_client->add_order(ticker, venue, mpid, is_primary_mpid, id, side, price,
+      size, timestamp);
   }
 
   template<IsMarketDataFeedClient C>

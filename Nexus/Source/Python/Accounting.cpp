@@ -43,7 +43,7 @@ void Nexus::Python::export_accounting(module& module) {
   export_portfolio_controller(module);
   export_position(module);
   export_position_order_book(module);
-  export_security_valuation(module);
+  export_valuation(module);
   export_shorting_model(module);
 }
 
@@ -75,8 +75,7 @@ void Nexus::Python::export_inventory(module& module) {
   export_view<Inventory>(module, "InventoryView");
   export_view<const Inventory>(module, "InventoryConstView");
   export_default_methods(class_<Inventory>(module, "Inventory")).
-    def(init<const Security&, CurrencyId>()).
-    def(init<const Position::Key&>()).
+    def(init<Ticker, Asset>()).
     def(init<const Position&, Money, Money, Quantity, int>()).
     def_readwrite("position", &Inventory::m_position).
     def_readwrite("gross_profit_and_loss", &Inventory::m_gross_profit_and_loss).
@@ -102,10 +101,8 @@ void Nexus::Python::export_portfolio_update_entry(module& module) {
   export_default_methods(
       class_<PortfolioUpdateEntry>(module, "PortfolioUpdateEntry")).
     def(init<Inventory, Money, Inventory, Money>()).
-    def_readwrite(
-      "security_inventory", &PortfolioUpdateEntry::m_security_inventory).
-    def_readwrite(
-      "unrealized_security", &PortfolioUpdateEntry::m_unrealized_security).
+    def_readwrite("inventory", &PortfolioUpdateEntry::m_inventory).
+    def_readwrite("unrealized", &PortfolioUpdateEntry::m_unrealized).
     def_readwrite(
       "currency_inventory", &PortfolioUpdateEntry::m_currency_inventory).
     def_readwrite(
@@ -113,24 +110,11 @@ void Nexus::Python::export_portfolio_update_entry(module& module) {
 }
 
 void Nexus::Python::export_position(module& module) {
-  auto position = export_default_methods(class_<Position>(module, "Position")).
-    def(init<const Security&, CurrencyId, Quantity, Money>()).
-    def_readwrite("security", &Position::m_security).
+  export_default_methods(class_<Position>(module, "Position")).
+    def_readwrite("ticker", &Position::m_ticker).
     def_readwrite("currency", &Position::m_currency).
     def_readwrite("quantity", &Position::m_quantity).
     def_readwrite("cost_basis", &Position::m_cost_basis);
-  export_default_methods(class_<Position::Key>(position, "Key")).
-    def(init<const Security&, CurrencyId>()).
-    def(init([] (const tuple& tuple) {
-      if(tuple.size() != 2) {
-        throw std::runtime_error("Invalid tuple size.");
-      }
-      return Position::Key(
-        tuple[0].cast<Security>(), tuple[1].cast<CurrencyId>());
-    })).
-    def_readwrite("security", &Position::Key::m_security).
-    def_readwrite("currency", &Position::Key::m_currency);
-  implicitly_convertible<tuple, Position::Key>();
   module.def("average_price", &get_average_price);
   module.def("side", overload_cast<const Position&>(&get_side));
 }
@@ -150,18 +134,9 @@ void Nexus::Python::export_position_order_book(module& module) {
       def("update", &PositionOrderBook::update, arg("report"));
   export_default_methods(class_<PositionOrderBook::PositionEntry>(
       position_order_book, "PositionEntry")).
-    def(init<Security, Quantity>()).
-    def_readwrite("security", &PositionOrderBook::PositionEntry::m_security).
+    def(init<Ticker, Quantity>()).
+    def_readwrite("ticker", &PositionOrderBook::PositionEntry::m_ticker).
     def_readwrite("quantity", &PositionOrderBook::PositionEntry::m_quantity);
-}
-
-void Nexus::Python::export_security_valuation(module& module) {
-  export_default_methods(
-      class_<SecurityValuation>(module, "SecurityValuation")).
-    def(init<CurrencyId>()).
-    def_readwrite("currency", &SecurityValuation::m_currency).
-    def_readwrite("ask_value", &SecurityValuation::m_ask_value).
-    def_readwrite("bid_value", &SecurityValuation::m_bid_value);
 }
 
 void Nexus::Python::export_shorting_model(module& module) {
@@ -169,4 +144,12 @@ void Nexus::Python::export_shorting_model(module& module) {
     def(init()).
     def("submit", &ShortingModel::submit, arg("id"), arg("fields")).
     def("update", &ShortingModel::update, arg("report"));
+}
+
+void Nexus::Python::export_valuation(module& module) {
+  export_default_methods(class_<Valuation>(module, "Valuation")).
+    def(init<Asset>()).
+    def_readwrite("currency", &Valuation::m_currency).
+    def_readwrite("ask_value", &Valuation::m_ask_value).
+    def_readwrite("bid_value", &Valuation::m_bid_value);
 }

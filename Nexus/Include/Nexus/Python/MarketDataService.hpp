@@ -69,8 +69,8 @@ namespace Nexus::Python {
       pybind11::module& module, std::string_view name) {
     auto data_store = pybind11::class_<D, std::shared_ptr<D>>(
         module, name.data()).
-      def("load_security_info", &D::load_security_info).
-      def("store", pybind11::overload_cast<const SecurityInfo&>(&D::store)).
+      def("load_ticker_info", &D::load_ticker_info).
+      def("store", pybind11::overload_cast<const TickerInfo&>(&D::store)).
       def("load_order_imbalances", &D::load_order_imbalances).
       def("store", pybind11::overload_cast<
         const SequencedVenueOrderImbalance&>(&D::store)).
@@ -78,19 +78,19 @@ namespace Nexus::Python {
         const std::vector<SequencedVenueOrderImbalance>&>(&D::store)).
       def("load_bbo_quotes", &D::load_bbo_quotes).
       def("store",
-        pybind11::overload_cast<const SequencedSecurityBboQuote&>(&D::store)).
+        pybind11::overload_cast<const SequencedTickerBboQuote&>(&D::store)).
       def("store", pybind11::overload_cast<
-        const std::vector<SequencedSecurityBboQuote>&>(&D::store)).
+        const std::vector<SequencedTickerBboQuote>&>(&D::store)).
       def("load_book_quotes", &D::load_book_quotes).
       def("store",
-        pybind11::overload_cast<const SequencedSecurityBookQuote&>(&D::store)).
+        pybind11::overload_cast<const SequencedTickerBookQuote&>(&D::store)).
       def("store", pybind11::overload_cast<
-        const std::vector<SequencedSecurityBookQuote>&>(&D::store)).
+        const std::vector<SequencedTickerBookQuote>&>(&D::store)).
       def("load_time_and_sales", &D::load_time_and_sales).
+      def("store",
+        pybind11::overload_cast<const SequencedTickerTimeAndSale&>(&D::store)).
       def("store", pybind11::overload_cast<
-        const SequencedSecurityTimeAndSale&>(&D::store)).
-      def("store", pybind11::overload_cast<
-        const std::vector<SequencedSecurityTimeAndSale>&>(&D::store)).
+        const std::vector<SequencedTickerTimeAndSale>&>(&D::store)).
       def("close", &D::close);
     if constexpr(!std::is_same_v<D, HistoricalDataStore>) {
       pybind11::implicitly_convertible<D, HistoricalDataStore>();
@@ -130,28 +130,25 @@ namespace Nexus::Python {
         pybind11::overload_cast<const VenueMarketDataQuery&,
           Beam::ScopedQueueWriter<OrderImbalance>>(&C::query)).
       def("query_sequenced_bbo_quotes",
-        pybind11::overload_cast<const SecurityMarketDataQuery&,
+        pybind11::overload_cast<const TickerQuery&,
           Beam::ScopedQueueWriter<SequencedBboQuote>>(&C::query)).
-      def("query_bbo_quotes",
-        pybind11::overload_cast<const SecurityMarketDataQuery&,
-          Beam::ScopedQueueWriter<BboQuote>>(&C::query)).
+      def("query_bbo_quotes", pybind11::overload_cast<const TickerQuery&,
+        Beam::ScopedQueueWriter<BboQuote>>(&C::query)).
       def("query_sequenced_book_quotes",
-        pybind11::overload_cast<const SecurityMarketDataQuery&,
+        pybind11::overload_cast<const TickerQuery&,
           Beam::ScopedQueueWriter<SequencedBookQuote>>(&C::query)).
-      def("query_book_quotes",
-        pybind11::overload_cast<const SecurityMarketDataQuery&,
-          Beam::ScopedQueueWriter<BookQuote>>(&C::query)).
+      def("query_book_quotes", pybind11::overload_cast<const TickerQuery&,
+        Beam::ScopedQueueWriter<BookQuote>>(&C::query)).
       def("query_sequenced_time_and_sales",
-        pybind11::overload_cast<const SecurityMarketDataQuery&,
+        pybind11::overload_cast<const TickerQuery&,
           Beam::ScopedQueueWriter<SequencedTimeAndSale>>(&C::query)).
-      def("query_time_and_sales",
-        pybind11::overload_cast<const SecurityMarketDataQuery&,
-          Beam::ScopedQueueWriter<TimeAndSale>>(&C::query)).
-      def("query_security_info",
-        pybind11::overload_cast<const SecurityInfoQuery&>(&C::query)).
+      def("query_time_and_sales", pybind11::overload_cast<const TickerQuery&,
+        Beam::ScopedQueueWriter<TimeAndSale>>(&C::query)).
+      def("query_ticker_info",
+        pybind11::overload_cast<const TickerInfoQuery&>(&C::query)).
       def("load_snapshot", &C::load_snapshot).
-      def("load_technicals", &C::load_technicals).
-      def("load_security_info_from_prefix", &C::load_security_info_from_prefix).
+      def("load_session_candlestick", &C::load_session_candlestick).
+      def("load_ticker_info_from_prefix", &C::load_ticker_info_from_prefix).
       def("close", &C::close);
     if constexpr(!std::is_same_v<C, MarketDataClient>) {
       pybind11::implicitly_convertible<C, MarketDataClient>();
@@ -175,12 +172,12 @@ namespace Nexus::Python {
       def("add", &C::add).
       def("publish",
         pybind11::overload_cast<const VenueOrderImbalance&>(&C::publish)).
+      def(
+        "publish", pybind11::overload_cast<const TickerBboQuote&>(&C::publish)).
       def("publish",
-        pybind11::overload_cast<const SecurityBboQuote&>(&C::publish)).
+        pybind11::overload_cast<const TickerBookQuote&>(&C::publish)).
       def("publish",
-        pybind11::overload_cast<const SecurityBookQuote&>(&C::publish)).
-      def("publish",
-        pybind11::overload_cast<const SecurityTimeAndSale&>(&C::publish)).
+        pybind11::overload_cast<const TickerTimeAndSale&>(&C::publish)).
       def("add_order", &C::add_order).
       def("modify_order_size", &C::modify_order_size).
       def("offset_order_size", &C::offset_order_size).
@@ -233,16 +230,16 @@ namespace Nexus::Python {
   void export_mysql_historical_data_store(pybind11::module& module);
 
   /**
-   * Exports the SecuritySnapshot class.
-   * @param module The module to export to.
-   */
-  void export_security_snapshot(pybind11::module& module);
-
-  /**
    * Exports the SqlHistoricalDataStore class connecting to SQLite.
    * @param module The module to export to.
    */
   void export_sqlite_historical_data_store(pybind11::module& module);
+
+  /**
+   * Exports the TickerSnapshot class.
+   * @param module The module to export to.
+   */
+  void export_ticker_snapshot(pybind11::module& module);
 }
 
 #endif

@@ -48,8 +48,8 @@ void Nexus::Python::export_inventory_snapshot(module& module) {
   module.def("strip", &strip);
   module.def("make_portfolio",
     [] (const InventorySnapshot& snapshot, const DirectoryEntry& account,
-        const VenueDatabase& venues, OrderExecutionClient& client) {
-      return make_portfolio(snapshot, account, venues, client);
+        OrderExecutionClient& client) {
+      return make_portfolio(snapshot, account, client);
     }, call_guard<GilRelease>());
 }
 
@@ -72,7 +72,7 @@ void Nexus::Python::export_mysql_risk_data_store(module& module) {
 
 void Nexus::Python::export_risk_parameters(module& module) {
   export_default_methods(class_<RiskParameters>(module, "RiskParameters")).
-    def(init<CurrencyId, Money, RiskState, Money, time_duration>()).
+    def(init<Asset, Money, RiskState, Money, time_duration>()).
     def_readwrite("currency", &RiskParameters::m_currency).
     def_readwrite("buying_power", &RiskParameters::m_buying_power).
     def_readwrite("allowed_state", &RiskParameters::m_allowed_state).
@@ -119,7 +119,6 @@ void Nexus::Python::export_risk_service_test_environment(module& module) {
           OrderExecutionClient& order_execution_client,
           std::function<std::shared_ptr<Timer> ()> timer_builder,
           TimeClient& time_client, const ExchangeRateTable& exchange_rates,
-          const VenueDatabase& venue_database,
           const DestinationDatabase& destination_database) {
         auto timer_adaptor = [timer_builder = std::move(timer_builder)] {
           return std::make_unique<Timer>(timer_builder());
@@ -127,7 +126,7 @@ void Nexus::Python::export_risk_service_test_environment(module& module) {
         return make_python_shared<RiskServiceTestEnvironment>(
           service_locator_client, administration_client, market_data_client,
           order_execution_client, std::move(timer_adaptor), time_client,
-          exchange_rates, venue_database, destination_database);
+          exchange_rates, destination_database);
       }), keep_alive<1, 2>(), keep_alive<1, 3>(),
       keep_alive<1, 4>(), keep_alive<1, 5>(), keep_alive<1, 7>()).
     def("make_client",
@@ -141,7 +140,7 @@ void Nexus::Python::export_risk_state(module& module) {
   auto risk_state =
       export_default_methods(class_<RiskState>(module, "RiskState")).
     def(init<RiskState::Type>()).
-    def(init<RiskState::Type, boost::posix_time::ptime>()).
+    def(init<RiskState::Type, ptime>()).
     def_readwrite("type", &RiskState::m_type).
     def_readwrite("expiry", &RiskState::m_expiry);
   enum_<RiskState::Type::Type>(risk_state, "Type").

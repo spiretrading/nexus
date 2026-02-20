@@ -15,8 +15,8 @@
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataType.hpp"
 #include "Nexus/MarketDataService/Reactors.hpp"
-#include "Nexus/MarketDataService/SecuritySnapshot.hpp"
 #include "Nexus/MarketDataService/SqlHistoricalDataStore.hpp"
+#include "Nexus/MarketDataService/TickerSnapshot.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/Python/ToPythonHistoricalDataStore.hpp"
 #include "Nexus/Python/ToPythonMarketDataClient.hpp"
@@ -135,49 +135,49 @@ void Nexus::Python::export_local_historical_data_store(module& module) {
 
 void Nexus::Python::export_market_data_reactors(module& module) {
   auto aspen_module = pybind11::module::import("aspen");
-  export_box<SecurityMarketDataQuery>(aspen_module, "SecurityMarketDataQuery");
-  export_box<Security>(aspen_module, "Security");
+  export_box<TickerQuery>(aspen_module, "TickerQuery");
+  export_box<Ticker>(aspen_module, "Ticker");
   module.def("bbo_quote_reactor",
-    [] (MarketDataClient& client, SharedBox<SecurityMarketDataQuery> query) {
+    [] (MarketDataClient& client, SharedBox<TickerQuery> query) {
       return to_object(make_bbo_quote_reactor(client, std::move(query)));
     }, keep_alive<0, 1>());
   module.def("current_bbo_quote_reactor",
-    [] (MarketDataClient& client, SharedBox<Security> security) {
+    [] (MarketDataClient& client, SharedBox<Ticker> ticker) {
       return to_object(
-        make_current_bbo_quote_reactor(client, std::move(security)));
+        make_current_bbo_quote_reactor(client, std::move(ticker)));
     }, keep_alive<0, 1>());
   module.def("real_time_bbo_quote_reactor",
-    [] (MarketDataClient& client, SharedBox<Security> security) {
+    [] (MarketDataClient& client, SharedBox<Ticker> ticker) {
       return to_object(
-        make_real_time_bbo_quote_reactor(client, std::move(security)));
+        make_real_time_bbo_quote_reactor(client, std::move(ticker)));
     }, keep_alive<0, 1>());
   module.def("book_quote_reactor",
-    [] (MarketDataClient& client, SharedBox<SecurityMarketDataQuery> query) {
+    [] (MarketDataClient& client, SharedBox<TickerQuery> query) {
       return to_object(make_book_quote_reactor(client, std::move(query)));
     }, keep_alive<0, 1>());
   module.def("current_book_quote_reactor",
-    [] (MarketDataClient& client, SharedBox<Security> security) {
+    [] (MarketDataClient& client, SharedBox<Ticker> ticker) {
       return to_object(
-        make_current_book_quote_reactor(client, std::move(security)));
+        make_current_book_quote_reactor(client, std::move(ticker)));
     }, keep_alive<0, 1>());
   module.def("real_time_book_quote_reactor",
-    [] (MarketDataClient& client, SharedBox<Security> security) {
+    [] (MarketDataClient& client, SharedBox<Ticker> ticker) {
       return to_object(
-        make_real_time_book_quote_reactor(client, std::move(security)));
+        make_real_time_book_quote_reactor(client, std::move(ticker)));
     }, keep_alive<0, 1>());
   module.def("time_and_sales_reactor",
-    [] (MarketDataClient& client, SharedBox<SecurityMarketDataQuery> query) {
+    [] (MarketDataClient& client, SharedBox<TickerQuery> query) {
       return to_object(make_time_and_sales_reactor(client, std::move(query)));
     }, keep_alive<0, 1>());
   module.def("current_time_and_sales_reactor",
-    [] (MarketDataClient& client, SharedBox<Security> security) {
+    [] (MarketDataClient& client, SharedBox<Ticker> ticker) {
       return to_object(
-        make_current_time_and_sales_reactor(client, std::move(security)));
+        make_current_time_and_sales_reactor(client, std::move(ticker)));
     }, keep_alive<0, 1>());
   module.def("real_time_time_and_sales_reactor",
-    [] (MarketDataClient& client, SharedBox<Security> security) {
+    [] (MarketDataClient& client, SharedBox<Ticker> ticker) {
       return to_object(
-        make_real_time_time_and_sales_reactor(client, std::move(security)));
+        make_real_time_time_and_sales_reactor(client, std::move(ticker)));
     }, keep_alive<0, 1>());
 }
 
@@ -202,35 +202,35 @@ void Nexus::Python::export_market_data_service(module& module) {
   export_market_data_reactors(module);
   export_market_data_type(module);
   export_mysql_historical_data_store(module);
-  export_security_snapshot(module);
   export_sqlite_historical_data_store(module);
+  export_ticker_snapshot(module);
   module.def("query_real_time_book_quotes_with_snapshot",
-    [] (SharedObject shared_client, const Security& security,
+    [] (SharedObject shared_client, const Ticker& ticker,
         ScopedQueueWriter<BookQuote> queue,
         InterruptionPolicy interruption_policy) {
       auto& client = shared_client->cast<MarketDataClient&>();
       return spawn([=, &client, shared_client = std::move(shared_client),
           queue = std::move(queue)] mutable {
         auto query = RoutineHandler(query_real_time_with_snapshot(
-          client, security, std::move(queue), interruption_policy));
+          client, ticker, std::move(queue), interruption_policy));
         query.wait();
       });
-    }, arg("client"), arg("security"), arg("queue"),
+    }, arg("client"), arg("ticker"), arg("queue"),
     arg("interruption_policy") = InterruptionPolicy::BREAK_QUERY);
   module.def("query_real_time_bbo_quotes_with_snapshot",
-    [] (SharedObject shared_client, const Security& security,
+    [] (SharedObject shared_client, const Ticker& ticker,
         ScopedQueueWriter<BboQuote> queue) {
       auto& client = shared_client->cast<MarketDataClient&>();
       return spawn([=, &client, shared_client = std::move(shared_client),
           queue = std::move(queue)] mutable {
         auto query = RoutineHandler(
-          query_real_time_with_snapshot(client, security, std::move(queue)));
+          query_real_time_with_snapshot(client, ticker, std::move(queue)));
         query.wait();
       });
     });
-  module.def("load_security_info",
-    [] (MarketDataClient& client, const Security& security) {
-      return load_security_info(client, security);
+  module.def("load_ticker_info",
+    [] (MarketDataClient& client, const Ticker& ticker) {
+      return load_ticker_info(client, ticker);
     });
   auto test_module = module.def_submodule("tests");
   export_market_data_service_test_environment(test_module);
@@ -294,9 +294,9 @@ void Nexus::Python::export_market_data_service_test_environment(
       [] (TestEnvironment& self, ServiceLocatorClient& client) {
         return ToPythonMarketDataFeedClient(self.make_feed_client(Ref(client)));
       }, call_guard<GilRelease>(), keep_alive<0, 2>()).
-    def("update_bbo", overload_cast<const Security&, Money, Money>(
+    def("update_bbo", overload_cast<const Ticker&, Money, Money>(
       &TestEnvironment::update_bbo), call_guard<GilRelease>()).
-    def("update_bbo", overload_cast<const Security&, Money>(
+    def("update_bbo", overload_cast<const Ticker&, Money>(
       &TestEnvironment::update_bbo), call_guard<GilRelease>()).
     def("close", &TestEnvironment::close, call_guard<GilRelease>());
   module.def("make_market_data_service_test_environment",
@@ -337,16 +337,6 @@ void Nexus::Python::export_mysql_historical_data_store(module& module) {
     }));
 }
 
-void Nexus::Python::export_security_snapshot(module& module) {
-  export_default_methods(class_<SecuritySnapshot>(module, "SecuritySnapshot")).
-    def(init<Security>()).
-    def_readwrite("security", &SecuritySnapshot::m_security).
-    def_readwrite("bbo_quote", &SecuritySnapshot::m_bbo_quote).
-    def_readwrite("time_and_sale", &SecuritySnapshot::m_time_and_sale).
-    def_readwrite("asks", &SecuritySnapshot::m_asks).
-    def_readwrite("bids", &SecuritySnapshot::m_bids);
-}
-
 void Nexus::Python::export_sqlite_historical_data_store(module& module) {
   using DataStore = ToPythonHistoricalDataStore<
     SqlHistoricalDataStore<SqlConnection<Viper::Sqlite3::Connection>>>;
@@ -363,4 +353,14 @@ void Nexus::Python::export_sqlite_historical_data_store(module& module) {
         return SqlConnection(Viper::Sqlite3::Connection(path));
       });
     }));
+}
+
+void Nexus::Python::export_ticker_snapshot(module& module) {
+  export_default_methods(class_<TickerSnapshot>(module, "TickerSnapshot")).
+    def(init<Ticker>()).
+    def_readwrite("ticker", &TickerSnapshot::m_ticker).
+    def_readwrite("bbo_quote", &TickerSnapshot::m_bbo_quote).
+    def_readwrite("time_and_sale", &TickerSnapshot::m_time_and_sale).
+    def_readwrite("asks", &TickerSnapshot::m_asks).
+    def_readwrite("bids", &TickerSnapshot::m_bids);
 }

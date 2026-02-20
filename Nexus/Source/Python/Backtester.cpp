@@ -115,7 +115,7 @@ void Nexus::Python::export_backtester_event_handler(module& module) {
       def_property_readonly("end_time", &BacktesterEventHandler::get_end_time).
       def_property_readonly("time", &BacktesterEventHandler::get_time).
       def("add", overload_cast<const std::shared_ptr<BacktesterEvent>&>(
-          &BacktesterEventHandler::add)).
+        &BacktesterEventHandler::add)).
       def("add", [] (BacktesterEventHandler& self, const object& events) {
         auto e = std::vector<std::shared_ptr<BacktesterEvent>>();
         for(auto& event : events) {

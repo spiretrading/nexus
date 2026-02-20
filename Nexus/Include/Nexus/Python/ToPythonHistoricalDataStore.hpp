@@ -33,26 +33,23 @@ namespace Nexus {
       /** Returns a reference to the underlying data store. */
       const DataStore& get() const;
 
-      std::vector<SecurityInfo> load_security_info(
-        const SecurityInfoQuery& query);
-      void store(const SecurityInfo& info);
+      std::vector<TickerInfo> load_ticker_info(const TickerInfoQuery& query);
+      void store(const TickerInfo& info);
       std::vector<SequencedOrderImbalance> load_order_imbalances(
         const VenueMarketDataQuery& query);
       void store(const SequencedVenueOrderImbalance& imbalance);
       void store(const std::vector<SequencedVenueOrderImbalance>& imbalances);
-      std::vector<SequencedBboQuote> load_bbo_quotes(
-        const SecurityMarketDataQuery& query);
-      void store(const SequencedSecurityBboQuote& quote);
-      void store(const std::vector<SequencedSecurityBboQuote>& quotes);
+      std::vector<SequencedBboQuote> load_bbo_quotes(const TickerQuery& query);
+      void store(const SequencedTickerBboQuote& quote);
+      void store(const std::vector<SequencedTickerBboQuote>& quotes);
       std::vector<SequencedBookQuote> load_book_quotes(
-        const SecurityMarketDataQuery& query);
-      void store(const SequencedSecurityBookQuote& quote);
-      void store(const std::vector<SequencedSecurityBookQuote>& quotes);
+        const TickerQuery& query);
+      void store(const SequencedTickerBookQuote& quote);
+      void store(const std::vector<SequencedTickerBookQuote>& quotes);
       std::vector<SequencedTimeAndSale> load_time_and_sales(
-        const SecurityMarketDataQuery& query);
-      void store(const SequencedSecurityTimeAndSale& time_and_sale);
-      void store(
-        const std::vector<SequencedSecurityTimeAndSale>& time_and_sales);
+        const TickerQuery& query);
+      void store(const SequencedTickerTimeAndSale& time_and_sale);
+      void store(const std::vector<SequencedTickerTimeAndSale>& time_and_sales);
       void close();
 
     private:
@@ -92,14 +89,14 @@ namespace Nexus {
   }
 
   template<IsHistoricalDataStore D>
-  std::vector<SecurityInfo> ToPythonHistoricalDataStore<D>::load_security_info(
-      const SecurityInfoQuery& query) {
+  std::vector<TickerInfo> ToPythonHistoricalDataStore<D>::load_ticker_info(
+      const TickerInfoQuery& query) {
     auto release = Beam::Python::GilRelease();
-    return m_data_store->load_security_info(query);
+    return m_data_store->load_ticker_info(query);
   }
 
   template<IsHistoricalDataStore D>
-  void ToPythonHistoricalDataStore<D>::store(const SecurityInfo& info) {
+  void ToPythonHistoricalDataStore<D>::store(const TickerInfo& info) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(info);
   }
@@ -129,21 +126,21 @@ namespace Nexus {
   template<IsHistoricalDataStore D>
   std::vector<SequencedBboQuote>
       ToPythonHistoricalDataStore<D>::load_bbo_quotes(
-        const SecurityMarketDataQuery& query) {
+        const TickerQuery& query) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_bbo_quotes(query);
   }
 
   template<IsHistoricalDataStore D>
   void ToPythonHistoricalDataStore<D>::store(
-      const SequencedSecurityBboQuote& quote) {
+      const SequencedTickerBboQuote& quote) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(quote);
   }
 
   template<IsHistoricalDataStore D>
   void ToPythonHistoricalDataStore<D>::store(
-      const std::vector<SequencedSecurityBboQuote>& quotes) {
+      const std::vector<SequencedTickerBboQuote>& quotes) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(quotes);
   }
@@ -151,21 +148,21 @@ namespace Nexus {
   template<IsHistoricalDataStore D>
   std::vector<SequencedBookQuote>
       ToPythonHistoricalDataStore<D>::load_book_quotes(
-        const SecurityMarketDataQuery& query) {
+        const TickerQuery& query) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_book_quotes(query);
   }
 
   template<IsHistoricalDataStore D>
   void ToPythonHistoricalDataStore<D>::store(
-      const SequencedSecurityBookQuote& quote) {
+      const SequencedTickerBookQuote& quote) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(quote);
   }
 
   template<IsHistoricalDataStore D>
   void ToPythonHistoricalDataStore<D>::store(
-      const std::vector<SequencedSecurityBookQuote>& quotes) {
+      const std::vector<SequencedTickerBookQuote>& quotes) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(quotes);
   }
@@ -173,21 +170,21 @@ namespace Nexus {
   template<IsHistoricalDataStore D>
   std::vector<SequencedTimeAndSale>
       ToPythonHistoricalDataStore<D>::load_time_and_sales(
-        const SecurityMarketDataQuery& query) {
+        const TickerQuery& query) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_time_and_sales(query);
   }
 
   template<IsHistoricalDataStore D>
   void ToPythonHistoricalDataStore<D>::store(
-      const SequencedSecurityTimeAndSale& time_and_sale) {
+      const SequencedTickerTimeAndSale& time_and_sale) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(time_and_sale);
   }
 
   template<IsHistoricalDataStore D>
   void ToPythonHistoricalDataStore<D>::store(
-      const std::vector<SequencedSecurityTimeAndSale>& time_and_sales) {
+      const std::vector<SequencedTickerTimeAndSale>& time_and_sales) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(time_and_sales);
   }

@@ -19,7 +19,7 @@ namespace {
   struct PythonTestEnvironment : TestEnvironment {
     std::shared_ptr<HistoricalDataStore> m_data_store;
 
-    PythonTestEnvironment() {}
+    PythonTestEnvironment() = default;
 
     PythonTestEnvironment(ptime start_time)
       : TestEnvironment(start_time) {}
@@ -65,15 +65,15 @@ void Nexus::Python::export_test_environment(module& module) {
       def("advance_time", &TestEnvironment::advance, call_guard<GilRelease>()).
       def("publish", overload_cast<Venue, const OrderImbalance&>(
         &TestEnvironment::publish), call_guard<GilRelease>()).
-      def("publish", overload_cast<const Security&, const BboQuote&>(
+      def("publish", overload_cast<const Ticker&, const BboQuote&>(
         &TestEnvironment::publish), call_guard<GilRelease>()).
-      def("publish", overload_cast<const Security&, const BookQuote&>(
+      def("publish", overload_cast<const Ticker&, const BookQuote&>(
         &TestEnvironment::publish), call_guard<GilRelease>()).
-      def("publish", overload_cast<const Security&, const TimeAndSale&>(
+      def("publish", overload_cast<const Ticker&, const TimeAndSale&>(
         &TestEnvironment::publish), call_guard<GilRelease>()).
-      def("update_bbo_price", overload_cast<const Security&, Money, Money,
-        ptime>(&TestEnvironment::update_bbo_price), call_guard<GilRelease>()).
-      def("update_bbo_price", overload_cast<const Security&, Money, Money>(
+      def("update_bbo_price", overload_cast<const Ticker&, Money, Money, ptime>(
+        &TestEnvironment::update_bbo_price), call_guard<GilRelease>()).
+      def("update_bbo_price", overload_cast<const Ticker&, Money, Money>(
         &TestEnvironment::update_bbo_price), call_guard<GilRelease>()).
       def("monitor_order_submissions",
         &TestEnvironment::monitor_order_submissions, call_guard<GilRelease>()).

@@ -1,7 +1,7 @@
 #include "Nexus/Python/ChartingService.hpp"
 #include <Beam/Python/Beam.hpp>
 #include "Nexus/ChartingService/ApplicationDefinitions.hpp"
-#include "Nexus/ChartingService/SecurityChartingQuery.hpp"
+#include "Nexus/ChartingService/TickerChartingQuery.hpp"
 #include "Nexus/ChartingServiceTests/ChartingServiceTestEnvironment.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/Python/ToPythonChartingClient.hpp"
@@ -25,7 +25,7 @@ void Nexus::Python::export_charting_service(module& module) {
   charting_client = std::make_unique<class_<ChartingClient>>(
     export_charting_client<ChartingClient>(module, "ChartingClient"));
   export_charting_service_application_definitions(module);
-  export_security_charting_query(module);
+  export_ticker_charting_query(module);
   auto tests_submodule = module.def_submodule("tests");
   export_charting_service_test_environment(tests_submodule);
 }
@@ -57,11 +57,10 @@ void Nexus::Python::export_charting_service_test_environment(module& module) {
       call_guard<GilRelease>());
 }
 
-void Nexus::Python::export_security_charting_query(module& module) {
+void Nexus::Python::export_ticker_charting_query(module& module) {
   export_default_methods(
-    class_<SecurityChartingQuery, BasicQuery<Security>, ExpressionQuery>(
-      module, "SecurityChartingQuery")).
-    def_property("market_data_type",
-      &SecurityChartingQuery::get_market_data_type,
-      &SecurityChartingQuery::set_market_data_type);
+    class_<TickerChartingQuery, BasicQuery<Ticker>, ExpressionQuery>(
+      module, "TickerChartingQuery")).
+    def_property("market_data_type", &TickerChartingQuery::get_market_data_type,
+      &TickerChartingQuery::set_market_data_type);
 }

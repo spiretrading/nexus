@@ -265,10 +265,10 @@ void Nexus::Python::export_order_execution_service_test_environment(
 
 void Nexus::Python::export_order_fields(module& module) {
   export_default_methods(class_<OrderFields>(module, "OrderFields")).
-    def(init<DirectoryEntry, Security, CurrencyId, OrderType, Side, Destination,
+    def(init<DirectoryEntry, Ticker, Asset, OrderType, Side, Destination,
       Quantity, Money, TimeInForce, std::vector<Tag>>()).
     def_readwrite("account", &OrderFields::m_account).
-    def_readwrite("security", &OrderFields::m_security).
+    def_readwrite("ticker", &OrderFields::m_ticker).
     def_readwrite("currency", &OrderFields::m_currency).
     def_readwrite("type", &OrderFields::m_type).
     def_readwrite("side", &OrderFields::m_side).
@@ -278,45 +278,44 @@ void Nexus::Python::export_order_fields(module& module) {
     def_readwrite("time_in_force", &OrderFields::m_time_in_force).
     def_readwrite("additional_fields", &OrderFields::m_additional_fields);
   module.def("make_limit_order_fields",
-    overload_cast<DirectoryEntry, Security, CurrencyId, Side, Destination,
-      Quantity, Money>(&make_limit_order_fields));
+    overload_cast<DirectoryEntry, Ticker, Asset, Side, Destination, Quantity,
+      Money>(&make_limit_order_fields));
   module.def("make_limit_order_fields",
-    overload_cast<Security, CurrencyId, Side, Destination, Quantity, Money>(
+    overload_cast<Ticker, Asset, Side, Destination, Quantity, Money>(
       &make_limit_order_fields));
   module.def("make_limit_order_fields",
-    overload_cast<DirectoryEntry, Security, Side, Destination, Quantity, Money>(
+    overload_cast<DirectoryEntry, Ticker, Side, Destination, Quantity, Money>(
       &make_limit_order_fields));
   module.def("make_limit_order_fields",
-    overload_cast<Security, Side, Destination, Quantity, Money>(
+    overload_cast<Ticker, Side, Destination, Quantity, Money>(
       &make_limit_order_fields));
   module.def("make_limit_order_fields",
-    overload_cast<Security, CurrencyId, Side, Quantity, Money>(
+    overload_cast<Ticker, Asset, Side, Quantity, Money>(
       &make_limit_order_fields));
   module.def("make_limit_order_fields",
-    overload_cast<DirectoryEntry, Security, Side, Quantity, Money>(
+    overload_cast<DirectoryEntry, Ticker, Side, Quantity, Money>(
       &make_limit_order_fields));
   module.def("make_limit_order_fields",
-    overload_cast<Security, Side, Quantity, Money>(&make_limit_order_fields));
+    overload_cast<Ticker, Side, Quantity, Money>(&make_limit_order_fields));
   module.def("make_market_order_fields",
-    overload_cast<DirectoryEntry, Security, CurrencyId, Side, Destination,
-      Quantity>(&make_market_order_fields));
-  module.def("make_market_order_fields",
-    overload_cast<Security, CurrencyId, Side, Destination, Quantity>(
+    overload_cast<DirectoryEntry, Ticker, Asset, Side, Destination, Quantity>(
       &make_market_order_fields));
   module.def("make_market_order_fields",
-    overload_cast<DirectoryEntry, Security, Side, Destination, Quantity>(
+    overload_cast<Ticker, Asset, Side, Destination, Quantity>(
       &make_market_order_fields));
   module.def("make_market_order_fields",
-    overload_cast<Security, Side, Destination, Quantity>(
+    overload_cast<DirectoryEntry, Ticker, Side, Destination, Quantity>(
       &make_market_order_fields));
   module.def("make_market_order_fields",
-    overload_cast<Security, CurrencyId, Side, Quantity>(
+    overload_cast<Ticker, Side, Destination, Quantity>(
       &make_market_order_fields));
   module.def("make_market_order_fields",
-    overload_cast<DirectoryEntry, Security, Side, Quantity>(
+    overload_cast<Ticker, Asset, Side, Quantity>(&make_market_order_fields));
+  module.def("make_market_order_fields",
+    overload_cast<DirectoryEntry, Ticker, Side, Quantity>(
       &make_market_order_fields));
   module.def("make_market_order_fields",
-    overload_cast<Security, Side, Quantity>(&make_market_order_fields));
+    overload_cast<Ticker, Side, Quantity>(&make_market_order_fields));
   module.def("find_field", &find_field);
   module.def("has_field", &has_field);
 }
@@ -335,7 +334,7 @@ void Nexus::Python::export_order_info(module& module) {
 
 void Nexus::Python::export_order_reactor(module& module) {
   auto aspen_module = pybind11::module::import("aspen");
-  export_box<CurrencyId>(aspen_module, "CurrencyId");
+  export_box<Asset>(aspen_module, "Asset");
   export_box<OrderType>(aspen_module, "OrderType");
   export_box<Side>(aspen_module, "Side");
   export_box<Quantity>(aspen_module, "Quantity");
@@ -343,54 +342,54 @@ void Nexus::Python::export_order_reactor(module& module) {
   export_box<TimeInForce>(aspen_module, "TimeInForce");
   export_box<Tag>(aspen_module, "Tag");
   export_reactor<OrderReactor<OrderExecutionClient*, SharedBox<DirectoryEntry>,
-    SharedBox<Security>, SharedBox<CurrencyId>, SharedBox<OrderType>,
+    SharedBox<Ticker>, SharedBox<Asset>, SharedBox<OrderType>,
     SharedBox<Side>, SharedBox<std::string>, SharedBox<Quantity>,
     SharedBox<Money>, SharedBox<TimeInForce>, SharedBox<Tag>>>(
       module, "OrderReactor").
     def(init<OrderExecutionClient*, SharedBox<DirectoryEntry>,
-      SharedBox<Security>, SharedBox<CurrencyId>, SharedBox<OrderType>,
+      SharedBox<Ticker>, SharedBox<Asset>, SharedBox<OrderType>,
       SharedBox<Side>, SharedBox<std::string>, SharedBox<Quantity>,
       SharedBox<Money>, SharedBox<TimeInForce>, std::vector<SharedBox<Tag>>>(),
       keep_alive<1, 2>());
   module.def("make_limit_order_reactor",
     [] (OrderExecutionClient& client, SharedBox<DirectoryEntry> account,
-        SharedBox<Security> security, SharedBox<CurrencyId> currency,
+        SharedBox<Ticker> ticker, SharedBox<Asset> currency,
         SharedBox<Side> side, SharedBox<std::string> destination,
         SharedBox<Quantity> quantity, SharedBox<Money> price,
         SharedBox<TimeInForce> time_in_force) {
-      return to_object(make_limit_order_reactor(client,
-        std::move(account), std::move(security), std::move(currency),
-        std::move(side), std::move(destination), std::move(quantity),
-        std::move(price), std::move(time_in_force)));
+      return to_object(make_limit_order_reactor(client, std::move(account),
+        std::move(ticker), std::move(currency), std::move(side),
+        std::move(destination), std::move(quantity), std::move(price),
+        std::move(time_in_force)));
     }, keep_alive<0, 1>());
   module.def("make_limit_order_reactor",
     [] (OrderExecutionClient& client, SharedBox<DirectoryEntry> account,
-        SharedBox<Security> security, SharedBox<CurrencyId> currency,
+        SharedBox<Ticker> ticker, SharedBox<Asset> currency,
         SharedBox<Side> side, SharedBox<std::string> destination,
         SharedBox<Quantity> quantity, SharedBox<Money> price) {
       return to_object(make_limit_order_reactor(client, std::move(account),
-        std::move(security), std::move(currency), std::move(side),
+        std::move(ticker), std::move(currency), std::move(side),
         std::move(destination), std::move(quantity), std::move(price)));
     }, keep_alive<0, 1>());
   module.def("make_limit_order_reactor",
-    [] (OrderExecutionClient& client, SharedBox<Security> security,
+    [] (OrderExecutionClient& client, SharedBox<Ticker> ticker,
         SharedBox<Side> side, SharedBox<Quantity> quantity,
         SharedBox<Money> price) {
-      return to_object(make_limit_order_reactor(client, std::move(security),
+      return to_object(make_limit_order_reactor(client, std::move(ticker),
         std::move(side), std::move(quantity), std::move(price)));
     }, keep_alive<0, 1>());
   module.def("make_limit_order_reactor",
-    [] (OrderExecutionClient& client, SharedBox<Security> security,
+    [] (OrderExecutionClient& client, SharedBox<Ticker> ticker,
         SharedBox<Side> side, SharedBox<Quantity> quantity,
         SharedBox<Money> price, SharedBox<TimeInForce> time_in_force) {
-      return to_object(make_limit_order_reactor(client, std::move(security),
+      return to_object(make_limit_order_reactor(client, std::move(ticker),
         std::move(side), std::move(quantity), std::move(price),
         std::move(time_in_force)));
     }, keep_alive<0, 1>());
   module.def("make_market_order_reactor",
-    [] (OrderExecutionClient& client, SharedBox<Security> security,
+    [] (OrderExecutionClient& client, SharedBox<Ticker> ticker,
         SharedBox<Side> side, SharedBox<Quantity> quantity) {
-      return to_object(make_market_order_reactor(client, std::move(security),
+      return to_object(make_market_order_reactor(client, std::move(ticker),
         std::move(side), std::move(quantity)));
     }, keep_alive<0, 1>());
 }
