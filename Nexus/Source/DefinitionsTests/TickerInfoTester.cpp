@@ -19,8 +19,8 @@ TEST_SUITE("TickerInfo") {
     info.m_tick_size = Money::CENT;
     info.m_lot_size = 1;
     info.m_board_lot = 100;
-    info.m_price_precision = 2;
-    info.m_quantity_precision = 0;
+    info.m_price_resolution = parse_money("0.01");
+    info.m_quantity_resolution = 1;
     info.m_multiplier = 1;
     auto stream = std::stringstream();
     stream << info;
@@ -30,8 +30,8 @@ TEST_SUITE("TickerInfo") {
       to_string(info.m_tick_size) + " " +
       to_string(info.m_lot_size) + " " +
       to_string(info.m_board_lot) + " " +
-      std::to_string(info.m_price_precision) + " " +
-      std::to_string(info.m_quantity_precision) + " " +
+      to_string(info.m_price_resolution) + " " +
+      to_string(info.m_quantity_resolution) + " " +
       to_string(info.m_multiplier) + ")";
     REQUIRE(stream.str() == expected);
     test_round_trip_shuttle(info);

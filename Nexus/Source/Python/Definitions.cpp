@@ -613,8 +613,8 @@ void Nexus::Python::export_ticker_info(module& module) {
     def_readwrite("tick_size", &TickerInfo::m_tick_size).
     def_readwrite("lot_size", &TickerInfo::m_lot_size).
     def_readwrite("board_lot", &TickerInfo::m_board_lot).
-    def_readwrite("price_precision", &TickerInfo::m_price_precision).
-    def_readwrite("quantity_precision", &TickerInfo::m_quantity_precision).
+    def_readwrite("price_resolution", &TickerInfo::m_price_resolution).
+    def_readwrite("quantity_resolution", &TickerInfo::m_quantity_resolution).
     def_readwrite("multiplier", &TickerInfo::m_multiplier);
 }
 

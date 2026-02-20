@@ -107,8 +107,8 @@ namespace Nexus {
       add_column("tick_size", &TickerInfo::m_tick_size).
       add_column("lot_size", &TickerInfo::m_lot_size).
       add_column("board_lot", &TickerInfo::m_board_lot).
-      add_column("price_precision", &TickerInfo::m_price_precision).
-      add_column("quantity_precision", &TickerInfo::m_quantity_precision).
+      add_column("price_resolution", &TickerInfo::m_price_resolution).
+      add_column("quantity_resolution", &TickerInfo::m_quantity_resolution).
       add_column("multiplier", &TickerInfo::m_multiplier).
       set_primary_key({"symbol", "venue"});
     return ROW;

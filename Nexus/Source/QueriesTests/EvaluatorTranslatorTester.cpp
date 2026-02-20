@@ -16,8 +16,8 @@ namespace {
     info.m_tick_size = Money::CENT;
     info.m_lot_size = 100;
     info.m_board_lot = 100;
-    info.m_price_precision = 2;
-    info.m_quantity_precision = 0;
+    info.m_price_resolution = parse_money("0.01");
+    info.m_quantity_resolution = 1;
     info.m_multiplier = Quantity(1);
     return info;
   }
@@ -63,16 +63,16 @@ TEST_SUITE("EvaluatorTranslator") {
     translator.translate(expression);
   }
 
-  TEST_CASE("translate_ticker_info_price_precision") {
+  TEST_CASE("translate_ticker_info_price_resolution") {
     auto expression = MemberAccessExpression(
-      "price_precision", typeid(int), make_ticker_info_expression());
+      "price_resolution", typeid(Money), make_ticker_info_expression());
     auto translator = Nexus::EvaluatorTranslator();
     translator.translate(expression);
   }
 
-  TEST_CASE("translate_ticker_info_quantity_precision") {
+  TEST_CASE("translate_ticker_info_quantity_resolution") {
     auto expression = MemberAccessExpression(
-      "quantity_precision", typeid(int), make_ticker_info_expression());
+      "quantity_resolution", typeid(Quantity), make_ticker_info_expression());
     auto translator = Nexus::EvaluatorTranslator();
     translator.translate(expression);
   }

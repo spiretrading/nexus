@@ -129,15 +129,15 @@ namespace Nexus {
       set_evaluator(
         std::make_unique<Beam::MemberAccessEvaluatorNode<TickerInfo, Quantity>>(
           std::move(ticker_info_expression), &TickerInfo::m_board_lot));
-    } else if(expression.get_name() == "price_precision") {
+    } else if(expression.get_name() == "price_resolution") {
       set_evaluator(
-        std::make_unique<Beam::MemberAccessEvaluatorNode<TickerInfo, int>>(
-          std::move(ticker_info_expression), &TickerInfo::m_price_precision));
-    } else if(expression.get_name() == "quantity_precision") {
+        std::make_unique<Beam::MemberAccessEvaluatorNode<TickerInfo, Money>>(
+          std::move(ticker_info_expression), &TickerInfo::m_price_resolution));
+    } else if(expression.get_name() == "quantity_resolution") {
       set_evaluator(
-        std::make_unique<Beam::MemberAccessEvaluatorNode<TickerInfo, int>>(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<TickerInfo, Quantity>>(
           std::move(ticker_info_expression),
-          &TickerInfo::m_quantity_precision));
+          &TickerInfo::m_quantity_resolution));
     } else if(expression.get_name() == "multiplier") {
       set_evaluator(
         std::make_unique<Beam::MemberAccessEvaluatorNode<TickerInfo, Quantity>>(

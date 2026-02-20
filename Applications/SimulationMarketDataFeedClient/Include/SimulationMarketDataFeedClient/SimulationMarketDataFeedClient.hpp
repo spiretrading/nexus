@@ -12,7 +12,7 @@
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
-#include "Nexus/MarketDataService/SecuritySnapshot.hpp"
+#include "Nexus/MarketDataService/TickerSnapshot.hpp"
 
 namespace Nexus {
 
@@ -49,10 +49,10 @@ namespace Nexus {
 
       /**
        * Constructs a SimulationMarketDataFeedClient.
-       * @param securities The list of Securities to simulate market data for.
+       * @param tickers The list of Tickers to simulate market data for.
        * @param venues The venues to use.
        * @param market_data_client The MarketDataClient used to query for
-       *        SecurityInfo on each simulated security.
+       *        TickerInfo on each simulated ticker.
        * @param market_data_feed_client Initializes the MarketDataFeedClient to
        *        send the simulated data through.
        * @param time_client Initializes the TimeClient.
@@ -62,7 +62,7 @@ namespace Nexus {
        */
       template<Beam::Initializes<F> FF, Beam::Initializes<T> TF,
         Beam::Initializes<B> BF, Beam::Initializes<S> SF>
-      SimulationMarketDataFeedClient(const std::vector<Security>& securities,
+      SimulationMarketDataFeedClient(const std::vector<Ticker>& tickers,
         const VenueDatabase& venues,
         IsMarketDataClient auto& market_data_client,
         FF&& market_data_feed_client, TF&& time_client, BF&& bbo_timer,
@@ -73,7 +73,7 @@ namespace Nexus {
       void close();
 
     private:
-      std::vector<SecuritySnapshot> m_securities;
+      std::vector<TickerSnapshot> m_tickers;
       VenueDatabase m_venues;
       Beam::local_ptr_t<F> m_feed_client;
       Beam::local_ptr_t<T> m_time_client;
@@ -94,7 +94,7 @@ namespace Nexus {
   template<Beam::Initializes<F> FF, Beam::Initializes<T> TF,
     Beam::Initializes<B> BF, Beam::Initializes<S> SF>
   SimulationMarketDataFeedClient<F, T, B, S>::SimulationMarketDataFeedClient(
-      const std::vector<Security>& securities, const VenueDatabase& venues,
+      const std::vector<Ticker>& tickers, const VenueDatabase& venues,
       IsMarketDataClient auto& market_data_client, FF&& market_data_feed_client,
       TF&& time_client, BF&& bbo_timer, SF&& time_and_sale_timer)
       : m_venues(venues),
@@ -102,18 +102,19 @@ namespace Nexus {
         m_time_client(std::forward<TF>(time_client)),
         m_bbo_timer(std::forward<BF>(bbo_timer)),
         m_time_and_sale_timer(std::forward<SF>(time_and_sale_timer)) {
-    for(auto& security : securities) {
-      auto info = load_security_info(market_data_client, security);
+    for(auto& ticker : tickers) {
+      auto info = load_ticker_info(market_data_client, ticker);
       if(!info) {
-        m_feed_client->add(SecurityInfo(
-          security, boost::lexical_cast<std::string>(security), "", 100));
+        m_feed_client->add(TickerInfo(
+          ticker, boost::lexical_cast<std::string>(ticker), Instrument(),
+          Money::CENT, 1, 100, 2, 1, 1));
       }
-      m_securities.emplace_back();
-      auto& snapshot = m_securities.back();
-      snapshot.m_security = security;
+      m_tickers.emplace_back();
+      auto& snapshot = m_tickers.back();
+      snapshot.m_ticker = ticker;
     }
     try {
-      for(auto& snapshot : m_securities) {
+      for(auto& snapshot : m_tickers) {
         snapshot.m_bbo_quote->m_bid.m_side = Side::BID;
         snapshot.m_bbo_quote->m_bid.m_price =
           ((std::rand() % 100) + 1) * Money::ONE;
@@ -122,21 +123,19 @@ namespace Nexus {
           snapshot.m_bbo_quote->m_bid.m_price + Money::CENT;
         snapshot.m_bbo_quote->m_timestamp = m_time_client->get_time();
         auto country =
-          m_venues.from(snapshot.m_security.get_venue()).m_country_code;
+          m_venues.from(snapshot.m_ticker.get_venue()).m_country_code;
         auto venues = m_venues.select_all([&] (const auto& entry) {
           return entry.m_country_code == country;
         });
         for(auto& venue : venues) {
           auto ask = BookQuote(venue.m_display_name, false, venue.m_venue,
             make_ask(2 * Money::CENT, 100), m_time_client->get_time());
-          snapshot.m_asks.push_back(SequencedSecurityBookQuote(
-            SecurityBookQuote(ask, snapshot.m_security),
-            Beam::Sequence::FIRST));
+          snapshot.m_asks.push_back(SequencedTickerBookQuote(
+            TickerBookQuote(ask, snapshot.m_ticker), Beam::Sequence::FIRST));
           auto bid = BookQuote(venue.m_display_name, false, venue.m_venue,
             make_bid(Money::CENT, 100), m_time_client->get_time());
-          snapshot.m_bids.push_back(SequencedSecurityBookQuote(
-            SecurityBookQuote(bid, snapshot.m_security),
-            Beam::Sequence::FIRST));
+          snapshot.m_bids.push_back(SequencedTickerBookQuote(
+            TickerBookQuote(bid, snapshot.m_ticker), Beam::Sequence::FIRST));
         }
       }
       m_bbo_timer->get_publisher().monitor(
@@ -187,7 +186,7 @@ namespace Nexus {
           Beam::IsTimer<Beam::dereference_t<S>>
   void SimulationMarketDataFeedClient<F, T, B, S>::on_bbo_timer_expired(
       Beam::Timer::Result result) {
-    for(auto& snapshot : m_securities) {
+    for(auto& snapshot : m_tickers) {
       snapshot.m_bbo_quote->m_bid.m_size = 100 + (std::rand() % 1000);
       snapshot.m_bbo_quote->m_ask.m_size = 100 + (std::rand() % 1000);
       snapshot.m_bbo_quote->m_timestamp = m_time_client->get_time();
@@ -200,22 +199,22 @@ namespace Nexus {
         snapshot.m_bbo_quote->m_ask.m_price -= Money::CENT;
       }
       m_feed_client->publish(
-        SecurityBboQuote(snapshot.m_bbo_quote, snapshot.m_security));
+        TickerBboQuote(snapshot.m_bbo_quote, snapshot.m_ticker));
       for(auto& ask : snapshot.m_asks) {
         ask->m_quote.m_size = 0;
-        m_feed_client->publish(SecurityBookQuote(ask, snapshot.m_security));
+        m_feed_client->publish(TickerBookQuote(ask, snapshot.m_ticker));
         ask->m_quote.m_price = snapshot.m_bbo_quote->m_ask.m_price;
         ask->m_quote.m_size = 100 + (std::rand() % 1000);
         ask->m_timestamp = m_time_client->get_time();
-        m_feed_client->publish(SecurityBookQuote(ask, snapshot.m_security));
+        m_feed_client->publish(TickerBookQuote(ask, snapshot.m_ticker));
       }
       for(auto& bid : snapshot.m_bids) {
         bid->m_quote.m_size = 0;
-        m_feed_client->publish(SecurityBookQuote(bid, snapshot.m_security));
+        m_feed_client->publish(TickerBookQuote(bid, snapshot.m_ticker));
         bid->m_quote.m_price = snapshot.m_bbo_quote->m_bid.m_price;
         bid->m_quote.m_size = 100 + (std::rand() % 1000);
         bid->m_timestamp = m_time_client->get_time();
-        m_feed_client->publish(SecurityBookQuote(bid, snapshot.m_security));
+        m_feed_client->publish(TickerBookQuote(bid, snapshot.m_ticker));
       }
     }
     m_bbo_timer->start();
@@ -228,7 +227,7 @@ namespace Nexus {
           Beam::IsTimer<Beam::dereference_t<S>>
   void SimulationMarketDataFeedClient<F, T, B, S>::
       on_time_and_sale_timer_expired(Beam::Timer::Result result) {
-    for(auto& snapshot : m_securities) {
+    for(auto& snapshot : m_tickers) {
       auto condition =
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@");
       auto price = [&] {
@@ -238,10 +237,10 @@ namespace Nexus {
         return snapshot.m_bbo_quote->m_ask.m_price;
       }();
       auto time_and_sale = TimeAndSale(m_time_client->get_time(), price, 100,
-        condition, snapshot.m_security.get_venue().get_code().get_data(), "M1",
+        condition, snapshot.m_ticker.get_venue().get_code().get_data(), "M1",
         "M2");
       m_feed_client->publish(
-        SecurityTimeAndSale(time_and_sale, snapshot.m_security));
+        TickerTimeAndSale(time_and_sale, snapshot.m_ticker));
     }
     m_time_and_sale_timer->start();
   }

@@ -37,21 +37,20 @@ namespace {
   using ApplicationMarketDataFeedClient = SimulationMarketDataFeedClient<
     BaseMarketDataFeedClient, LiveNtpTimeClient*, LiveTimer, LiveTimer>;
 
-  std::vector<Security> parse_securities(
+  std::vector<Ticker> parse_tickers(
       const YAML::Node& config, const VenueDatabase& venues) {
     return try_or_nest([&] {
-      auto securities = std::vector<Security>();
+      auto tickers = std::vector<Ticker>();
       for(auto& item : config) {
         auto symbol = item.as<std::string>();
-        auto security = parse_security(symbol, venues);
-        if(!security) {
-          throw_with_location(
-            std::runtime_error("Invalid security: " + symbol));
+        auto ticker = parse_ticker(symbol, venues);
+        if(!ticker) {
+          throw_with_location(std::runtime_error("Invalid ticker: " + symbol));
         }
-        securities.push_back(security);
+        tickers.push_back(ticker);
       }
-      return securities;
-    }, std::runtime_error("Failed to parse securities."));
+      return tickers;
+    }, std::runtime_error("Failed to parse tickers."));
   }
 
   std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>
@@ -64,26 +63,26 @@ namespace {
     return try_or_nest([&] {
       auto feed_clients =
         std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>();
-      auto securities = parse_securities(get_node(config, "symbols"), venues);
+      auto tickers = parse_tickers(get_node(config, "symbols"), venues);
       auto feed_count =
-        std::min<int>(extract<int>(config, "feeds"), securities.size());
-      auto securities_per_feed = securities.size() / feed_count;
+        std::min<int>(extract<int>(config, "feeds"), tickers.size());
+      auto tickers_per_feed = tickers.size() / feed_count;
       auto bbo_period = extract<time_duration>(config, "bbo_period");
       auto time_and_sales_period =
         extract<time_duration>(config, "time_and_sales_period");
       auto sampling = extract<time_duration>(config, "sampling");
       for(auto i = 0; i < feed_count; ++i) {
-        auto feed_securities = std::vector<Security>();
+        auto feed_tickers = std::vector<Ticker>();
         if(i < feed_count - 1) {
-          feed_securities.insert(feed_securities.end(), securities.begin() +
-            i * securities_per_feed, securities.begin() +
-              (i + 1) * securities_per_feed);
+          feed_tickers.insert(feed_tickers.end(), tickers.begin() +
+            i * tickers_per_feed, tickers.begin() +
+              (i + 1) * tickers_per_feed);
         } else {
-          feed_securities.insert(feed_securities.end(), securities.begin() +
-            i * securities_per_feed, securities.end());
+          feed_tickers.insert(feed_tickers.end(), tickers.begin() +
+            i * tickers_per_feed, tickers.end());
         }
         auto application_market_data_feed =
-          std::make_unique<ApplicationMarketDataFeedClient>(feed_securities,
+          std::make_unique<ApplicationMarketDataFeedClient>(feed_tickers,
             venues, market_data_client, init(init(addresses),
               SessionAuthenticator(Ref(service_locator_client)),
               init(sampling), init(seconds(10))), &time_client,

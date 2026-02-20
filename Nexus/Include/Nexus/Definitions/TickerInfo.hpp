@@ -31,11 +31,11 @@ namespace Nexus {
     /** The standard trading unit. */
     Quantity m_board_lot;
 
-    /** The number of decimal places for prices. */
-    int m_price_precision;
+    /** The price granularity. */
+    Money m_price_resolution;
 
-    /** The number of decimal places for quantities. */
-    int m_quantity_precision;
+    /** The quantity granularity. */
+    Quantity m_quantity_resolution;
 
     /** The contract multiplier. */
     Quantity m_multiplier;
@@ -47,7 +47,7 @@ namespace Nexus {
     return out << '(' << value.m_ticker << ' ' << value.m_name << ' ' <<
       value.m_instrument << ' ' << value.m_tick_size << ' ' <<
       value.m_lot_size << ' ' << value.m_board_lot << ' ' <<
-      value.m_price_precision << ' ' << value.m_quantity_precision << ' ' <<
+      value.m_price_resolution << ' ' << value.m_quantity_resolution << ' ' <<
       value.m_multiplier << ')';
   }
 }
@@ -64,8 +64,8 @@ namespace Beam {
       shuttle.shuttle("tick_size", value.m_tick_size);
       shuttle.shuttle("lot_size", value.m_lot_size);
       shuttle.shuttle("board_lot", value.m_board_lot);
-      shuttle.shuttle("price_precision", value.m_price_precision);
-      shuttle.shuttle("quantity_precision", value.m_quantity_precision);
+      shuttle.shuttle("price_resolution", value.m_price_resolution);
+      shuttle.shuttle("quantity_resolution", value.m_quantity_resolution);
       shuttle.shuttle("multiplier", value.m_multiplier);
     }
   };
