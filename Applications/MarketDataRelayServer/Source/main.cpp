@@ -44,21 +44,20 @@ namespace {
     MarketDataRelayServletContainer, IncomingMarketDataClient,
     ApplicationAdministrationClient*>;
 
-  Region parse_region(
-      const JsonObject& node, const CountryDatabase& countries) {
-    auto region = Region();
+  Scope parse_scope(const JsonObject& node, const CountryDatabase& countries) {
+    auto scope = Scope();
     if(auto countries_node = node.get("countries")) {
       if(auto country_list = get<std::vector<JsonValue>>(&*countries_node)) {
         for(auto& country_value : *country_list) {
           if(auto country = get<double>(&country_value)) {
-            region += CountryCode(static_cast<std::uint16_t>(*country));
+            scope += CountryCode(static_cast<std::uint16_t>(*country));
           }
         }
       }
     } else {
-      region = Region::GLOBAL;
+      scope = Scope::GLOBAL;
     }
-    return region;
+    return scope;
   }
 }
 
@@ -85,20 +84,20 @@ int main(int argc, const char** argv) {
         throw_with_location(ConnectException(
           "No " + MARKET_DATA_REGISTRY_SERVICE_NAME + " services available."));
       }
-      auto clients = RegionMap<std::shared_ptr<MarketDataClient>>(nullptr);
+      auto clients = ScopeTable<std::shared_ptr<MarketDataClient>>(nullptr);
       for(auto& entry : entries) {
-        auto region = parse_region(entry.get_properties(), countries);
+        auto scope = parse_scope(entry.get_properties(), countries);
         auto market_data_client =
           std::make_shared<MarketDataClient>(std::in_place_type<
             ServiceMarketDataClient<IncomingMarketDataClientSessionBuilder>>,
             make_basic_market_data_client_session_builder<
               IncomingMarketDataClientSessionBuilder>(
                 Ref(service_locator_client), [=] (const auto& candidate_entry) {
-                  auto candidate_region =
-                    parse_region(candidate_entry.get_properties(), countries);
-                  return region <= candidate_region;
+                  auto candidate_scope =
+                    parse_scope(candidate_entry.get_properties(), countries);
+                  return scope <= candidate_scope;
                 }, MARKET_DATA_REGISTRY_SERVICE_NAME));
-        clients.set(region, std::move(market_data_client));
+        clients.set(scope, std::move(market_data_client));
       }
       return std::make_unique<MarketDataClient>(
         std::in_place_type<DistributedMarketDataClient>, std::move(clients));

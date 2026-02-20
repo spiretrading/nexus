@@ -41,26 +41,25 @@ namespace {
   using ApplicationMarketDataFeedClient = ReplayMarketDataFeedClient<
     BaseMarketDataFeedClient, DataStore*, LiveNtpTimeClient*, LiveTimer>;
 
-  auto parse_securities(const std::string& path, const VenueDatabase& venues) {
+  auto parse_tickers(const std::string& path, const VenueDatabase& venues) {
     return try_or_nest([&] {
       auto config = load_file(path);
-      auto securities_node = get_node(config, "securities");
-      auto securities = std::vector<Security>();
-      for(auto item : securities_node) {
+      auto tickers_node = get_node(config, "tickers");
+      auto tickers = std::vector<Ticker>();
+      for(auto item : tickers_node) {
         auto symbol = get_node(item, "symbol").as<std::string>();
-        auto security = parse_security(symbol, venues);
-        if(!security) {
-          throw_with_location(
-            std::runtime_error("Invalid security: " + symbol));
+        auto ticker = parse_ticker(symbol, venues);
+        if(!ticker) {
+          throw_with_location(std::runtime_error("Invalid ticker: " + symbol));
         }
-        securities.push_back(security);
+        tickers.push_back(ticker);
       }
-      return securities;
-    }, std::runtime_error("Failed to parse securities."));
+      return tickers;
+    }, std::runtime_error("Failed to parse tickers."));
   }
 
   auto build_replay_clients(const YAML::Node& config,
-      std::vector<Security> securities, DataStore* data_store,
+      std::vector<Ticker> tickers, DataStore* data_store,
       const std::vector<IpAddress>& addresses,
       ApplicationServiceLocatorClient& service_locator_client,
       LiveNtpTimeClient* time_client) {
@@ -68,8 +67,8 @@ namespace {
       auto sampling = extract<time_duration>(config, "sampling");
       auto start_time = extract<ptime>(config, "start_time");
       auto client_count = extract<int>(config, "client_count");
-      auto chunks = static_cast<int>(securities.size()) / client_count;
-      if(securities.size() % client_count != 0) {
+      auto chunks = static_cast<int>(tickers.size()) / client_count;
+      if(tickers.size() % client_count != 0) {
         ++chunks;
       }
       auto timer_builder = [=] (auto duration) {
@@ -78,13 +77,13 @@ namespace {
       auto replay_clients =
         std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>();
       for(auto i = 0; i < client_count; ++i) {
-        auto security_subset = std::vector<Security>();
-        security_subset.insert(security_subset.end(),
-          std::min(securities.begin() + i * chunks, securities.end()),
-          std::min(securities.begin() + (i + 1) * chunks, securities.end()));
+        auto ticker_subset = std::vector<Ticker>();
+        ticker_subset.insert(ticker_subset.end(),
+          std::min(tickers.begin() + i * chunks, tickers.end()),
+          std::min(tickers.begin() + (i + 1) * chunks, tickers.end()));
         replay_clients.emplace_back(
           std::make_unique<ApplicationMarketDataFeedClient>(
-            std::move(security_subset), start_time, init(init(addresses),
+            std::move(ticker_subset), start_time, init(init(addresses),
               SessionAuthenticator(Ref(service_locator_client)),
               init(sampling), init(seconds(10))), data_store,
             time_client, timer_builder));
@@ -109,8 +108,8 @@ int main(int argc, const char** argv) {
     auto historical_data_store = DataStore(venues, [=] {
       return SqlConnection(Sqlite3::Connection(data_store_path));
     });
-    auto securities = parse_securities(extract<std::string>(
-      config, "securities_path", "securities.yml"), venues);
+    auto tickers = parse_tickers(
+      extract<std::string>(config, "tickers_path", "tickers.yml"), venues);
     auto market_data_services =
       service_locator_client.locate(MARKET_DATA_FEED_SERVICE_NAME);
     if(market_data_services.empty()) {
@@ -120,7 +119,7 @@ int main(int argc, const char** argv) {
     auto& market_data_service = market_data_services.front();
     auto market_data_addresses = parse<std::vector<IpAddress>>(
       get<std::string>(market_data_service.get_properties().at("addresses")));
-    auto feed_clients = build_replay_clients(config, securities,
+    auto feed_clients = build_replay_clients(config, tickers,
       &historical_data_store, market_data_addresses, service_locator_client,
       time_client.get());
     wait_for_kill_event();

@@ -7,6 +7,6 @@ service_locator:
 data_store: market_data.db
 sampling: 100ms
 start_time: 2018-06-18 19:00:00
-securities_path: securities.yml
+tickers_path: tickers.yml
 client_count: 40
 ...

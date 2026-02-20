@@ -13,7 +13,6 @@
 #include <Beam/TimeService/TimeClient.hpp>
 #include <Beam/TimeService/Timer.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 
 namespace Nexus {
@@ -54,7 +53,7 @@ namespace Nexus {
 
       /**
        * Constructs a ReplayMarketDataFeedClient.
-       * @param securities The list of Securities to replay.
+       * @param tickers The list of Tickers to replay.
        * @param replay_time The timestamp to begin loading data to replay.
        * @param feed_client Initializes the MarketDataFeedClient to send the
        *        replayed data to.
@@ -64,7 +63,7 @@ namespace Nexus {
        */
       template<Beam::Initializes<M> MF, Beam::Initializes<D> DF,
         Beam::Initializes<T> TF>
-      ReplayMarketDataFeedClient(std::vector<Security> securities,
+      ReplayMarketDataFeedClient(std::vector<Ticker> tickers,
         boost::posix_time::ptime replay_time, MF&& feed_client, DF&& data_store,
         TF&& time_client, TimerBuilder timer_builder);
 
@@ -73,7 +72,7 @@ namespace Nexus {
       void close();
 
     private:
-      std::vector<Security> m_securities;
+      std::vector<Ticker> m_tickers;
       boost::posix_time::ptime m_replay_time;
       Beam::local_ptr_t<M> m_feed_client;
       Beam::local_ptr_t<D> m_data_store;
@@ -90,7 +89,7 @@ namespace Nexus {
       ReplayMarketDataFeedClient& operator =(
         const ReplayMarketDataFeedClient&) = delete;
       template<typename F, typename P>
-      void replay(const Security& security, F&& query_loader, P&& publisher);
+      void replay(const Ticker& ticker, F&& query_loader, P&& publisher);
   };
 
   template<typename M, typename D, typename T, typename R> requires
@@ -100,10 +99,10 @@ namespace Nexus {
   template<Beam::Initializes<M> MF, Beam::Initializes<D> DF,
     Beam::Initializes<T> TF>
   ReplayMarketDataFeedClient<M, D, T, R>::ReplayMarketDataFeedClient(
-      std::vector<Security> securities, boost::posix_time::ptime replay_time,
+      std::vector<Ticker> tickers, boost::posix_time::ptime replay_time,
       MF&& feed_client, DF&& data_store, TF&& time_client,
       TimerBuilder timer_builder)
-      : m_securities(std::move(securities)),
+      : m_tickers(std::move(tickers)),
         m_replay_time(replay_time),
         m_feed_client(std::forward<MF>(feed_client)),
         m_data_store(std::forward<DF>(data_store)),
@@ -111,10 +110,10 @@ namespace Nexus {
         m_timer_builder(std::move(timer_builder)) {
     try {
       m_open_time = m_time_client->get_time();
-      m_pending_load_count = 4 * m_securities.size();
-      for(auto& security : m_securities) {
+      m_pending_load_count = 4 * m_tickers.size();
+      for(auto& ticker : m_tickers) {
         m_routines.spawn([=, this] {
-          replay(security, [this] (const auto& query) {
+          replay(ticker, [this] (const auto& query) {
             return m_data_store->load_bbo_quotes(query);
           },
           [this] (const auto& value) {
@@ -122,7 +121,7 @@ namespace Nexus {
           });
         });
         m_routines.spawn([=, this] {
-          replay(security, [this] (const auto& query) {
+          replay(ticker, [this] (const auto& query) {
             return m_data_store->load_book_quotes(query);
           },
           [this] (const auto& value) {
@@ -130,7 +129,7 @@ namespace Nexus {
           });
         });
         m_routines.spawn([=, this] {
-          replay(security, [this] (const auto& query) {
+          replay(ticker, [this] (const auto& query) {
             return m_data_store->load_time_and_sales(query);
           },
           [this] (const auto& value) {
@@ -170,12 +169,12 @@ namespace Nexus {
         Beam::IsTimeClient<Beam::dereference_t<T>> && Beam::IsTimer<R>
   template<typename F, typename P>
   void ReplayMarketDataFeedClient<M, D, T, R>::replay(
-      const Security& security, F&& query_loader, P&& publisher) {
+      const Ticker& ticker, F&& query_loader, P&& publisher) {
     const auto QUERY_SIZE = 1000;
     const auto WAIT_QUANTUM =
       boost::posix_time::time_duration(boost::posix_time::seconds(1));
-    auto query = SecurityMarketDataQuery();
-    query.set_index(security);
+    auto query = TickerQuery();
+    query.set_index(ticker);
     query.set_range(m_replay_time, Beam::Sequence::LAST);
     query.set_snapshot_limit(Beam::SnapshotLimit::from_head(QUERY_SIZE));
     auto data = query_loader(query);
@@ -203,7 +202,7 @@ namespace Nexus {
           return;
         }
         Beam::get_timestamp(*item) = m_time_client->get_time();
-        publisher(Beam::IndexedValue(*item, security));
+        publisher(Beam::IndexedValue(*item, ticker));
         auto updated_time = m_time_client->get_time();
         replay_time += updated_time - current_time;
         current_time = updated_time;

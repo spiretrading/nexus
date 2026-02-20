@@ -20,9 +20,9 @@
 #include "Nexus/Compliance/OpposingCancelComplianceRule.hpp"
 #include "Nexus/Compliance/OpposingSubmissionComplianceRule.hpp"
 #include "Nexus/Compliance/OrderCountLimitComplianceRule.hpp"
-#include "Nexus/Compliance/RegionFilterComplianceRule.hpp"
 #include "Nexus/Compliance/RejectCancelsComplianceRule.hpp"
 #include "Nexus/Compliance/RejectSubmissionsComplianceRule.hpp"
+#include "Nexus/Compliance/ScopeFilterComplianceRule.hpp"
 #include "Nexus/Compliance/TimeFilterComplianceRule.hpp"
 #include "Nexus/DefinitionsService/DefinitionsServlet.hpp"
 #include "Version.hpp"
@@ -53,24 +53,24 @@ namespace {
 
   std::vector<ComplianceRuleSchema> make_compliance_rule_schemas() {
     auto schemas = std::vector<ComplianceRuleSchema>();
-    schemas.push_back(make_region_filter_compliance_rule_schema(
+    schemas.push_back(make_scope_filter_compliance_rule_schema(
       make_time_filter_compliance_rule_schema(
         make_reject_cancels_compliance_rule_schema())));
-    schemas.push_back(make_region_filter_compliance_rule_schema(
+    schemas.push_back(make_scope_filter_compliance_rule_schema(
       make_time_filter_compliance_rule_schema(
         make_reject_submissions_compliance_rule_schema())));
-    schemas.push_back(make_region_filter_compliance_rule_schema(
+    schemas.push_back(make_scope_filter_compliance_rule_schema(
       make_buying_power_compliance_rule_schema()));
-    schemas.push_back(make_region_filter_compliance_rule_schema(
+    schemas.push_back(make_scope_filter_compliance_rule_schema(
       make_time_filter_compliance_rule_schema(
-        make_per_security_compliance_rule_schema(
+        make_per_ticker_compliance_rule_schema(
           make_opposing_cancel_compliance_rule_schema()))));
-    schemas.push_back(make_region_filter_compliance_rule_schema(
+    schemas.push_back(make_scope_filter_compliance_rule_schema(
       make_time_filter_compliance_rule_schema(
-        make_per_security_compliance_rule_schema(
+        make_per_ticker_compliance_rule_schema(
           make_opposing_submission_compliance_rule_schema()))));
-    schemas.push_back(make_region_filter_compliance_rule_schema(
-      make_per_security_compliance_rule_schema(
+    schemas.push_back(make_scope_filter_compliance_rule_schema(
+      make_per_ticker_compliance_rule_schema(
         make_order_count_limit_per_side_compliance_rule_schema())));
     return schemas;
   }

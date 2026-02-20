@@ -9,7 +9,6 @@
 #include <boost/optional/optional.hpp>
 #include "Nexus/Clients/Clients.hpp"
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 
 namespace Nexus {
@@ -33,17 +32,16 @@ namespace Nexus {
         /**
          * Constructs an Entry.
          * @param account The account holding the position.
-         * @param security The position's Security.
+         * @param ticker The position's Ticker.
          * @param currency The position's currency.
          */
-        Entry(Beam::DirectoryEntry account, Security security,
-          CurrencyId currency);
+        Entry(Beam::DirectoryEntry account, Ticker ticker, Asset currency);
 
         /**
          * Tests if two Entry's are equal.
          * @param rhs The right hand side of the comparison.
-         * @return true iff the two Entry's represent the same
-         *         account, security and currency.
+         * @return true iff the two Entry's represent the same account, ticker
+         *         and currency.
          */
         bool operator ==(const Entry& rhs) const;
       };
@@ -64,18 +62,18 @@ namespace Nexus {
     private:
       Clients m_clients;
       std::unordered_map<RiskPortfolioKey, std::shared_ptr<Entry>> m_entries;
-      std::unordered_map<Security, std::vector<std::shared_ptr<Entry>>>
-        m_security_to_entries;
+      std::unordered_map<Ticker, std::vector<std::shared_ptr<Entry>>>
+        m_ticker_to_entries;
       Beam::QueueWriterPublisher<Entry> m_publisher;
-      std::unordered_map<Security, SecurityValuation> m_valuations;
+      std::unordered_map<Ticker, Valuation> m_valuations;
       Beam::RoutineTaskQueue m_tasks;
 
       PortfolioModel(const PortfolioModel&) = delete;
       PortfolioModel& operator=(const PortfolioModel&) = delete;
       void on_risk_portfolio_inventory_update(
         const RiskInventoryEntry& inventory);
-      void on_bbo_quote(const Security& security, SecurityValuation& valuation,
-        const BboQuote& quote);
+      void on_bbo_quote(
+        const Ticker& ticker, Valuation& valuation, const BboQuote& quote);
   };
 }
 

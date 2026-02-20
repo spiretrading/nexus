@@ -11,7 +11,6 @@
 #include <Beam/WebServices/WebSessionStore.hpp>
 #include <Beam/WebServices/WebSocketChannel.hpp>
 #include "Nexus/Clients/Clients.hpp"
-#include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "WebPortal/PortfolioModel.hpp"
@@ -47,7 +46,7 @@ namespace Nexus {
       struct PortfolioFilter {
         std::unordered_set<Beam::DirectoryEntry> m_groups;
         std::unordered_set<Venue> m_venues;
-        std::unordered_set<CurrencyId> m_currencies;
+        std::unordered_set<Asset> m_currencies;
 
         bool is_filtered(const PortfolioModel::Entry& entry,
           const Beam::DirectoryEntry& group) const;

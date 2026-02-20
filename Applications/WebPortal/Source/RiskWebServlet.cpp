@@ -16,26 +16,17 @@ RiskWebServlet::PortfolioSubscriber::PortfolioSubscriber(
 
 bool RiskWebServlet::PortfolioFilter::is_filtered(
     const PortfolioModel::Entry& entry, const DirectoryEntry& group) const {
-  if(m_groups.find(group) == m_groups.end()) {
-    return true;
-  }
-  if(m_currencies.find(entry.m_inventory.m_position.m_currency) ==
-      m_currencies.end()) {
-    return true;
-  }
-  if(m_venues.find(entry.m_inventory.m_position.m_security.get_venue()) ==
-      m_venues.end()) {
-    return true;
-  }
-  return false;
+  return !m_groups.contains(group) ||
+    !m_currencies.contains(entry.m_inventory.m_position.m_currency) ||
+    !m_venues.contains(entry.m_inventory.m_position.m_ticker.get_venue());
 }
 
 RiskWebServlet::RiskWebServlet(
     Ref<WebSessionStore<WebPortalSession>> sessions, Clients clients)
-  : m_clients(std::move(clients)),
-    m_sessions(sessions.get()),
-    m_portfolio_model(m_clients),
-    m_portfolio_timer(m_clients.make_timer(seconds(1))) {
+    : m_clients(std::move(clients)),
+      m_sessions(sessions.get()),
+      m_portfolio_model(m_clients),
+      m_portfolio_timer(m_clients.make_timer(seconds(1))) {
   try {
     m_portfolio_timer.get_publisher().monitor(m_tasks.get_slot<Timer::Result>(
       std::bind_front(&RiskWebServlet::on_portfolio_timer_expired, this)));
@@ -86,11 +77,9 @@ const DirectoryEntry& RiskWebServlet::find_trading_group(
   for(auto& group : groups) {
     auto trading_group =
       m_clients.get_administration_client().load_trading_group(group);
-    if(std::find(trading_group.get_managers().begin(),
-        trading_group.get_managers().end(), trader) !=
+    if(std::ranges::find(trading_group.get_managers(), trader) !=
         trading_group.get_managers().end() ||
-        std::find(trading_group.get_traders().begin(),
-          trading_group.get_traders().end(), trader) !=
+        std::ranges::find(trading_group.get_traders(), trader) !=
           trading_group.get_traders().end()) {
       m_trader_groups.insert(std::make_pair(trader, trading_group.get_entry()));
       return find_trading_group(trader);
@@ -129,11 +118,11 @@ void RiskWebServlet::on_portfolio_timer_expired(Timer::Result result) {
   }
   auto updated_entries = std::vector<PortfolioModel::Entry>();
   updated_entries.reserve(m_updated_portfolio_entries.size());
-  std::move(m_updated_portfolio_entries.begin(),
-    m_updated_portfolio_entries.end(), std::back_inserter(updated_entries));
+  std::ranges::move(m_updated_portfolio_entries,
+    std::back_inserter(updated_entries));
   for(auto& updated_entry : updated_entries) {
     auto key = RiskPortfolioKey(
-      updated_entry.m_account, updated_entry.m_inventory.m_position.m_security);
+      updated_entry.m_account, updated_entry.m_inventory.m_position.m_ticker);
     auto entry_result =
       m_portfolio_entries.insert(std::pair(key, updated_entry));
     if(!entry_result.second) {
