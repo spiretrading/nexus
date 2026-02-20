@@ -42,14 +42,14 @@ using namespace pybind11;
 
 void Nexus::Python::export_asset(module& module) {
   export_default_methods(class_<Asset>(module, "Asset")).
-    def(init<>()).
     def(init<Asset::Id>()).
     def(init<Asset::Type, Asset::Id>()).
-    def(init<std::string, Asset::Id>()).
+    def(init<std::string_view, Asset::Id>()).
     def_property_readonly("type", &Asset::get_type).
+    def_property_readonly("code", &Asset::get_code).
     def_property_readonly("id", &Asset::get_id).
-    def("__bool__", [] (const Asset& value) {
-      return static_cast<bool>(value);
+    def_property_readonly_static("NONE", [] (const object&) {
+      return Asset::NONE;
     }).
     def_property_readonly_static("CURRENCY", [] (const object&) {
       return Asset::CURRENCY;
@@ -102,6 +102,9 @@ void Nexus::Python::export_country(module& module) {
     def(init()).
     def(init<const CountryDatabase&>()).
     def_property_readonly("entries", &CountryDatabase::get_entries).
+    def_property_readonly_static("NONE", [] (const object&) {
+      return CountryDatabase::NONE;
+    }).
     def("from_code",
       overload_cast<CountryCode>(&CountryDatabase::from, const_)).
     def("from_name", &CountryDatabase::from_name).
@@ -109,6 +112,8 @@ void Nexus::Python::export_country(module& module) {
       CountryDatabase::TwoLetterCode>(&CountryDatabase::from, const_)).
     def("from_three_letter_code", overload_cast<
       CountryDatabase::ThreeLetterCode>(&CountryDatabase::from, const_)).
+    def("from_string",
+      overload_cast<std::string_view>(&CountryDatabase::from, const_)).
     def("add", &CountryDatabase::add).
     def("remove", &CountryDatabase::remove);
   export_default_methods(
@@ -134,11 +139,14 @@ void Nexus::Python::export_currency(module& module) {
     def_property_readonly_static("NONE", [] (const object&) {
       return CurrencyId::NONE;
     });
-  auto currency_database =
-    class_<CurrencyDatabase>(module, "CurrencyDatabase").
+  implicitly_convertible<CurrencyId, Asset>();
+  auto currency_database = class_<CurrencyDatabase>(module, "CurrencyDatabase").
     def(init()).
     def(init<const CurrencyDatabase&>()).
     def_property_readonly("entries", &CurrencyDatabase::get_entries).
+    def_property_readonly_static("NONE", [] (const object&) {
+      return CurrencyDatabase::NONE;
+    }).
     def("from_id",
       overload_cast<CurrencyId>(&CurrencyDatabase::from, const_)).
     def("from_code",
@@ -161,7 +169,7 @@ void Nexus::Python::export_currency(module& module) {
 
 void Nexus::Python::export_currency_pair(module& module) {
   export_default_methods(class_<CurrencyPair>(module, "CurrencyPair")).
-    def(init<CurrencyId, CurrencyId>()).
+    def(init<Asset, Asset>()).
     def_readwrite("base", &CurrencyPair::m_base).
     def_readwrite("counter", &CurrencyPair::m_counter);
   module.def("parse_currency_pair", overload_cast<
@@ -174,10 +182,7 @@ void Nexus::Python::export_currency_pair(module& module) {
 void Nexus::Python::export_default_countries(module& module) {
   module.attr("DEFAULT_COUNTRIES") =
     cast(DEFAULT_COUNTRIES, return_value_policy::reference);
-  module.def("set_default_country_database",
-    [] (const CountryDatabase& database) {
-      set_default_countries(database);
-    });
+  module.def("set_default_countries", &set_default_countries);
   auto submodule = module.def_submodule("default_countries");
   submodule.add_object("AU", cast(DefaultCountries::AU));
   submodule.add_object("BR", cast(DefaultCountries::BR));
@@ -201,7 +206,6 @@ void Nexus::Python::export_default_currencies(module& module) {
   submodule.add_object("HKD", cast(DefaultCurrencies::HKD));
   submodule.add_object("JPY", cast(DefaultCurrencies::JPY));
   submodule.add_object("USD", cast(DefaultCurrencies::USD));
-  submodule.add_object("XBT", cast(DefaultCurrencies::XBT));
 }
 
 void Nexus::Python::export_default_destinations(module& module) {
@@ -248,6 +252,7 @@ void Nexus::Python::export_default_venues(module& module) {
   submodule.add_object("XATS", cast(DefaultVenues::XATS));
   submodule.add_object("XCX2", cast(DefaultVenues::XCX2));
   submodule.add_object("OTCM", cast(DefaultVenues::OTCM));
+  submodule.add_object("ASTR", cast(DefaultVenues::ASTR));
 }
 
 void Nexus::Python::export_definitions(module& module) {
@@ -259,7 +264,6 @@ void Nexus::Python::export_definitions(module& module) {
   export_currency_pair(module);
   export_destination(module);
   export_instrument(module);
-  export_listing(module);
   export_venue(module);
   export_default_countries(module);
   export_default_currencies(module);
@@ -273,13 +277,12 @@ void Nexus::Python::export_definitions(module& module) {
   export_order_type(module);
   export_quantity(module);
   export_quote(module);
-  export_region(module);
-  export_region_map(module);
-  export_security(module);
-  export_security_info(module);
-  export_security_technicals(module);
+  export_scope(module);
+  export_scope_table(module);
   export_side(module);
   export_tag(module);
+  export_ticker(module);
+  export_ticker_info(module);
   export_time_and_sale(module);
   export_time_in_force(module);
   export_trading_schedule(module);
@@ -291,8 +294,11 @@ void Nexus::Python::export_destination(module& module) {
       def(init()).
       def(init<const DestinationDatabase&>()).
       def_property_readonly("entries", &DestinationDatabase::get_entries).
+      def_property_readonly_static("NONE", [] (const object&) {
+        return DestinationDatabase::NONE;
+      }).
       def("from_id", &DestinationDatabase::from).
-      def_property_readonly("preferred_destination",
+      def("get_preferred_destination",
         &DestinationDatabase::get_preferred_destination).
       def("select_first",
         [] (const DestinationDatabase& self, const object& predicate) {
@@ -345,17 +351,28 @@ void Nexus::Python::export_exchange_rate_table(module& module) {
     def("find", &ExchangeRateTable::find).
     def("convert",
       overload_cast<Money, CurrencyPair>(&ExchangeRateTable::convert, const_)).
-    def("convert", overload_cast<Money, CurrencyId, CurrencyId>(
+    def("convert", overload_cast<Money, Asset, Asset>(
       &ExchangeRateTable::convert, const_)).
     def("add", &ExchangeRateTable::add);
 }
 
-void Nexus::Python::export_listing(module& module) {
-  export_default_methods(class_<Listing>(module, "Listing")).
+void Nexus::Python::export_instrument(module& module) {
+  auto instrument = export_default_methods(
+      class_<Instrument>(module, "Instrument")).
     def(init<>()).
-    def(init<Listing::Id, Instrument>()).
-    def_readwrite("id", &Listing::m_id).
-    def_readwrite("instrument", &Listing::m_instrument);
+    def(init<Asset, Asset, Instrument::Type>()).
+    def_readwrite("base", &Instrument::m_base).
+    def_readwrite("quote", &Instrument::m_quote).
+    def_readwrite("type", &Instrument::m_type);
+  enum_<Instrument::Type>(instrument, "Type").
+    value("NONE", Instrument::Type::NONE).
+    value("SPOT", Instrument::Type::SPOT).
+    value("FORWARD", Instrument::Type::FORWARD).
+    value("FUTURE", Instrument::Type::FUTURE).
+    value("PERPETUAL", Instrument::Type::PERPETUAL).
+    value("OPTION", Instrument::Type::OPTION).
+    value("SWAP", Instrument::Type::SWAP).
+    value("CFD", Instrument::Type::CFD);
 }
 
 void Nexus::Python::export_money(module& module) {
@@ -397,8 +414,8 @@ void Nexus::Python::export_money(module& module) {
 
 void Nexus::Python::export_order_imbalance(module& module) {
   export_default_methods(class_<OrderImbalance>(module, "OrderImbalance")).
-    def(init<Security, Side, Quantity, Money, ptime>()).
-    def_readwrite("security", &OrderImbalance::m_security).
+    def(init<Ticker, Side, Quantity, Money, ptime>()).
+    def_readwrite("ticker", &OrderImbalance::m_ticker).
     def_readwrite("side", &OrderImbalance::m_side).
     def_readwrite("size", &OrderImbalance::m_size).
     def_readwrite("reference_price", &OrderImbalance::m_reference_price).
@@ -432,6 +449,7 @@ void Nexus::Python::export_order_type(module& module) {
     value("LIMIT", OrderType::LIMIT).
     value("PEGGED", OrderType::PEGGED).
     value("STOP", OrderType::STOP);
+  module.def("to_char", overload_cast<OrderType>(&to_char));
 }
 
 void Nexus::Python::export_quantity(module& module) {
@@ -509,80 +527,47 @@ void Nexus::Python::export_quote(module& module) {
   module.def("offer_comparator", &offer_comparator);
 }
 
-void Nexus::Python::export_region(module& module) {
-  export_default_methods(class_<Region>(module, "Region")).
-    def_property_readonly_static("GLOBAL", [] (const object&) { return Region::GLOBAL; }).
-    def_static("make_global", &Region::make_global).
+void Nexus::Python::export_scope(module& module) {
+  export_default_methods(class_<Scope>(module, "Scope")).
+    def_property_readonly_static("GLOBAL", [] (const object&) {
+      return Scope::GLOBAL;
+    }).
+    def_static("make_global", &Scope::make_global).
     def(init<std::string>()).
     def(init<CountryCode>()).
     def(init<Venue>()).
-    def(init<Security>()).
-    def_property_readonly("name", &Region::get_name).
-    def_property_readonly("is_global", &Region::is_global).
-    def_property_readonly("is_empty", &Region::is_empty).
-    def_property_readonly("countries", &Region::get_countries).
-    def_property_readonly("venues", &Region::get_venues).
-    def_property_readonly("securities", &Region::get_securities).
-    def("contains", &Region::contains);
-  implicitly_convertible<CountryCode, Region>();
-  implicitly_convertible<Venue, Region>();
-  implicitly_convertible<Security, Region>();
+    def(init<Ticker>()).
+    def_property_readonly("name", &Scope::get_name).
+    def_property_readonly("is_global", &Scope::is_global).
+    def_property_readonly("is_empty", &Scope::is_empty).
+    def_property_readonly("countries", &Scope::get_countries).
+    def_property_readonly("venues", &Scope::get_venues).
+    def_property_readonly("tickers", &Scope::get_tickers).
+    def("contains", &Scope::contains);
+  implicitly_convertible<CountryCode, Scope>();
+  implicitly_convertible<Venue, Scope>();
+  implicitly_convertible<Ticker, Scope>();
 }
 
-void Nexus::Python::export_region_map(module& module) {
-  using PythonRegionMap = RegionMap<object>;
-  class_<PythonRegionMap>(module, "RegionMap").
+void Nexus::Python::export_scope_table(module& module) {
+  using PythonScopeTable = ScopeTable<object>;
+  class_<PythonScopeTable>(module, "ScopeTable").
     def(init<object>()).
     def(init<std::string, object>()).
-    def_property_readonly("size", &PythonRegionMap::get_size).
-    def("get", static_cast<
-      const object& (PythonRegionMap::*)(const Region&) const>(
-        &PythonRegionMap::get), return_value_policy::reference_internal).
-    def("get", static_cast<object& (PythonRegionMap::*)(const Region&)>(
-      &PythonRegionMap::get), return_value_policy::reference_internal).
-    def("set", &PythonRegionMap::set).
-    def("erase", &PythonRegionMap::erase).
-    def("__getitem__", static_cast<const object& (PythonRegionMap::*)(
-      const Region&) const>(&PythonRegionMap::get),
-      return_value_policy::reference_internal).
-    def("__setitem__", &PythonRegionMap::set).
-    def("__delitem__", &PythonRegionMap::erase).
-    def("__iter__", [] (const PythonRegionMap& p) {
+    def_property_readonly("size", &PythonScopeTable::get_size).
+    def("get", overload_cast<const Scope&>(
+      &PythonScopeTable::get, const_), return_value_policy::reference_internal).
+    def("get", overload_cast<const Scope&>(
+      &PythonScopeTable::get), return_value_policy::reference_internal).
+    def("set", &PythonScopeTable::set).
+    def("erase", &PythonScopeTable::erase).
+    def("__getitem__", overload_cast<const Scope&>(
+      &PythonScopeTable::get, const_), return_value_policy::reference_internal).
+    def("__setitem__", &PythonScopeTable::set).
+    def("__delitem__", &PythonScopeTable::erase).
+    def("__iter__", [] (const PythonScopeTable& p) {
       return make_iterator(p.begin(), p.end());
     }, keep_alive<0, 1>());
-}
-
-void Nexus::Python::export_security(module& module) {
-  export_default_methods(class_<Security>(module, "Security")).
-    def(init<std::string, Venue>()).
-    def_property_readonly("symbol", &Security::get_symbol).
-    def_property_readonly("venue", &Security::get_venue);
-  module.def("parse_security",
-    overload_cast<std::string_view, const VenueDatabase&>(&parse_security));
-  module.def("parse_security", overload_cast<std::string_view>(&parse_security));
-  module.def("parse_security_set", overload_cast<
-    const YAML::Node&, const VenueDatabase&>(&parse_security_set));
-  module.def("parse_security_set",
-    overload_cast<const YAML::Node&>(&parse_security_set));
-}
-
-void Nexus::Python::export_security_info(module& module) {
-  export_default_methods(class_<SecurityInfo>(module, "SecurityInfo")).
-    def(init<Security, std::string, std::string, Quantity>()).
-    def_readwrite("security", &SecurityInfo::m_security).
-    def_readwrite("name", &SecurityInfo::m_name).
-    def_readwrite("sector", &SecurityInfo::m_sector).
-    def_readwrite("board_lot", &SecurityInfo::m_board_lot);
-}
-
-void Nexus::Python::export_security_technicals(module& module) {
-  export_default_methods(
-    class_<SecurityTechnicals>(module, "SecurityTechnicals")).
-    def_readwrite("volume", &SecurityTechnicals::m_volume).
-    def_readwrite("high", &SecurityTechnicals::m_high).
-    def_readwrite("low", &SecurityTechnicals::m_low).
-    def_readwrite("open", &SecurityTechnicals::m_open).
-    def_readwrite("close", &SecurityTechnicals::m_close);
 }
 
 void Nexus::Python::export_side(module& module) {
@@ -590,12 +575,12 @@ void Nexus::Python::export_side(module& module) {
     value("NONE", Side::NONE).
     value("ASK", Side::ASK).
     value("BID", Side::BID);
-  module.def("pick", static_cast<
-    const object& (*)(Side, const object&, const object&)>(&pick<object>));
+  module.def(
+    "pick", overload_cast<Side, const object&, const object&>(&pick<object>));
   module.def("direction", &get_direction);
   module.def("side", &get_side);
   module.def("opposite", &get_opposite);
-  module.def("to_char", static_cast<char (*)(Side)>(&to_char));
+  module.def("to_char", overload_cast<Side>(&to_char));
 }
 
 void Nexus::Python::export_tag(module& module) {
@@ -603,6 +588,34 @@ void Nexus::Python::export_tag(module& module) {
     def(init<int, Tag::Type>()).
     def_property_readonly("key", &Tag::get_key).
     def_property_readonly("value", &Tag::get_value);
+}
+
+void Nexus::Python::export_ticker(module& module) {
+  export_default_methods(class_<Ticker>(module, "Ticker")).
+    def(init<std::string>()).
+    def(init<std::string, Venue>()).
+    def_property_readonly("symbol", &Ticker::get_symbol).
+    def_property_readonly("venue", &Ticker::get_venue);
+  module.def("parse_ticker",
+    overload_cast<std::string_view, const VenueDatabase&>(&parse_ticker));
+  module.def("parse_ticker", overload_cast<std::string_view>(&parse_ticker));
+  module.def("parse_ticker_set",
+    overload_cast<const YAML::Node&, const VenueDatabase&>(&parse_ticker_set));
+  module.def(
+    "parse_ticker_set", overload_cast<const YAML::Node&>(&parse_ticker_set));
+}
+
+void Nexus::Python::export_ticker_info(module& module) {
+  export_default_methods(class_<TickerInfo>(module, "TickerInfo")).
+    def_readwrite("ticker", &TickerInfo::m_ticker).
+    def_readwrite("name", &TickerInfo::m_name).
+    def_readwrite("instrument", &TickerInfo::m_instrument).
+    def_readwrite("tick_size", &TickerInfo::m_tick_size).
+    def_readwrite("lot_size", &TickerInfo::m_lot_size).
+    def_readwrite("board_lot", &TickerInfo::m_board_lot).
+    def_readwrite("price_precision", &TickerInfo::m_price_precision).
+    def_readwrite("quantity_precision", &TickerInfo::m_quantity_precision).
+    def_readwrite("multiplier", &TickerInfo::m_multiplier);
 }
 
 void Nexus::Python::export_time_and_sale(module& module) {
@@ -713,23 +726,4 @@ void Nexus::Python::export_venue(module& module) {
   module.def("venue_to_utc", &venue_to_utc);
   module.def("utc_start_of_day", &utc_start_of_day);
   module.def("utc_end_of_day", &utc_end_of_day);
-}
-
-void Nexus::Python::export_instrument(module& module) {
-  auto instrument = export_default_methods(
-      class_<Instrument>(module, "Instrument")).
-    def(init<>()).
-    def(init<Asset, Asset, Instrument::Type>()).
-    def_readwrite("base", &Instrument::m_base).
-    def_readwrite("quote", &Instrument::m_quote).
-    def_readwrite("type", &Instrument::m_type);
-  enum_<Instrument::Type>(instrument, "Type").
-    value("NONE", Instrument::Type::NONE).
-    value("SPOT", Instrument::Type::SPOT).
-    value("FORWARD", Instrument::Type::FORWARD).
-    value("FUTURE", Instrument::Type::FUTURE).
-    value("PERPETUAL", Instrument::Type::PERPETUAL).
-    value("OPTION", Instrument::Type::OPTION).
-    value("SWAP", Instrument::Type::SWAP).
-    value("CFD", Instrument::Type::CFD);
 }

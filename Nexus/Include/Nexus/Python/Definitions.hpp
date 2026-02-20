@@ -95,12 +95,6 @@ namespace Nexus::Python {
   void export_instrument(pybind11::module& module);
 
   /**
-   * Exports the Listing class.
-   * @param module The module to export to.
-   */
-  void export_listing(pybind11::module& module);
-
-  /**
    * Exports the Money class.
    * @param module The module to export to.
    */
@@ -137,34 +131,16 @@ namespace Nexus::Python {
   void export_quote(pybind11::module& module);
 
   /**
-   * Exports the Region class.
+   * Exports the Scope class.
    * @param module The module to export to.
    */
-  void export_region(pybind11::module& module);
+  void export_scope(pybind11::module& module);
 
   /**
-   * Exports the RegionMap class.
+   * Exports the ScopeTable class.
    * @param module The module to export to.
    */
-  void export_region_map(pybind11::module& module);
-
-  /**
-   * Exports the Security class.
-   * @param module The module to export to.
-   */
-  void export_security(pybind11::module& module);
-
-  /**
-   * Exports the SecurityInfo class.
-   * @param module The module to export to.
-   */
-  void export_security_info(pybind11::module& module);
-
-  /**
-   * Exports the SecurityTechnicals class.
-   * @param module The module to export to.
-   */
-  void export_security_technicals(pybind11::module& module);
+  void export_scope_table(pybind11::module& module);
 
   /**
    * Exports the Side enum.
@@ -177,6 +153,18 @@ namespace Nexus::Python {
    * @param module The module to export to.
    */
   void export_tag(pybind11::module& module);
+
+  /**
+   * Exports the Ticker class.
+   * @param module The module to export to.
+   */
+  void export_ticker(pybind11::module& module);
+
+  /**
+   * Exports the TickerInfo class.
+   * @param module The module to export to.
+   */
+  void export_ticker_info(pybind11::module& module);
 
   /**
    * Exports the TimeAndSale struct.
