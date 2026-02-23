@@ -6,7 +6,7 @@
 namespace Spire {
 
   /*! \class LowDashboardCellBuilder
-      \brief Constructs a DashboardCell emitting a Security's daily low price.
+      \brief Constructs a DashboardCell emitting a ticker's daily low price.
    */
   class LowDashboardCellBuilder : public DashboardCellBuilder {
     public:

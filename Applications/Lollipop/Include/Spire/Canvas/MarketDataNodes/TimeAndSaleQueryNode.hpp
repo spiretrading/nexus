@@ -6,7 +6,7 @@
 namespace Spire {
 
   /*! \class TimeAndSaleQueryNode
-      \brief Query's a Security's TimeAndSales.
+      \brief Query's a ticker's TimeAndSales.
    */
   class TimeAndSaleQueryNode : public CanvasNode {
     public:

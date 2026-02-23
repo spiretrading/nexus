@@ -7,12 +7,12 @@
 #include <Beam/Parsers/StringParser.hpp>
 #include <Beam/Parsers/TimeDurationParser.hpp>
 #include "Nexus/Parsers/CurrencyParser.hpp"
-#include "Nexus/Parsers/MarketParser.hpp"
 #include "Nexus/Parsers/MoneyParser.hpp"
 #include "Nexus/Parsers/OrderStatusParser.hpp"
 #include "Nexus/Parsers/OrderTypeParser.hpp"
-#include "Nexus/Parsers/SecurityParser.hpp"
 #include "Nexus/Parsers/SideParser.hpp"
+#include "Nexus/Parsers/TickerParser.hpp"
+#include "Nexus/Parsers/VenueParser.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Records/RecordParser.hpp"
 
@@ -66,11 +66,6 @@ namespace Spire {
   };
 
   template<>
-  struct ParserType<Nexus::MarketCode> {
-    typedef Nexus::MarketParser type;
-  };
-
-  template<>
   struct ParserType<Nexus::Money> {
     typedef Nexus::MoneyParser type;
   };
@@ -86,13 +81,13 @@ namespace Spire {
   };
 
   template<>
-  struct ParserType<Nexus::Security> {
-    typedef Nexus::SecurityParser type;
+  struct ParserType<Nexus::Side> {
+    typedef Nexus::SideParser type;
   };
 
   template<>
-  struct ParserType<Nexus::Side> {
-    typedef Nexus::SideParser type;
+  struct ParserType<Nexus::Ticker> {
+    typedef Nexus::TickerParser type;
   };
 
   template<>
@@ -103,6 +98,11 @@ namespace Spire {
   template<>
   struct ParserType<Record> {
     typedef RecordParser type;
+  };
+
+  template<>
+  struct ParserType<Nexus::Venue> {
+    typedef Nexus::VenueParser type;
   };
 }
 

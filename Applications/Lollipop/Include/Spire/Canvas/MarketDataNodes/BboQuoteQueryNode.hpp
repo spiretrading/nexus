@@ -6,7 +6,7 @@
 namespace Spire {
 
   /*! \class BboQuoteQueryNode
-      \brief Provides a Security's real time BboQuote.
+      \brief Provides a ticker's real time BboQuote.
    */
   class BboQuoteQueryNode : public CanvasNode {
     public:

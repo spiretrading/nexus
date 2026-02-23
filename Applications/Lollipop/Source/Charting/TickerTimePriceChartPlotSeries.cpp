@@ -1,4 +1,4 @@
-#include "Spire/Charting/SecurityTimePriceChartPlotSeries.hpp"
+#include "Spire/Charting/TickerTimePriceChartPlotSeries.hpp"
 #include "Spire/Charting/CandlestickChartPlot.hpp"
 #include "Spire/Charting/ChartPoint.hpp"
 #include "Spire/UI/UserProfile.hpp"
@@ -21,58 +21,56 @@ namespace {
   }
 }
 
-std::size_t SecurityTimePriceChartPlotSeries::TimestampHash::operator ()(
+std::size_t TickerTimePriceChartPlotSeries::TimestampHash::operator ()(
     ptime value) const {
   auto totalTicks = value - BASE_DATE;
   return static_cast<std::size_t>(totalTicks.ticks());
 }
 
-SecurityTimePriceChartPlotSeries::SecurityTimePriceChartPlotSeries(
-    Ref<UserProfile> userProfile, const Security& security,
+TickerTimePriceChartPlotSeries::TickerTimePriceChartPlotSeries(
+    Ref<UserProfile> userProfile, const Ticker& ticker,
     time_duration interval)
     : m_userProfile(userProfile.get()),
-      m_security(security),
+      m_ticker(ticker),
       m_interval(interval) {
-  if(security == Security()) {
+  if(!ticker) {
     return;
   }
-  auto query = SecurityMarketDataQuery();
-  query.set_index(security);
+  auto query = TickerQuery();
+  query.set_index(ticker);
   query.set_range(Beam::Range::REAL_TIME);
   query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
   query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
   m_userProfile->GetClients().get_market_data_client().query(
     query, m_eventHandler.get_slot<TimeAndSale>(
-      std::bind_front(&SecurityTimePriceChartPlotSeries::OnTimeAndSale, this)));
+      std::bind_front(&TickerTimePriceChartPlotSeries::OnTimeAndSale, this)));
 }
 
-void SecurityTimePriceChartPlotSeries::Query(ChartValue start, ChartValue end) {
+void TickerTimePriceChartPlotSeries::Query(ChartValue start, ChartValue end) {
   m_taskQueue.push(
     [=] {
       auto min = start.ToDateTime() - Normalize(start.ToDateTime(), m_interval);
       auto max = end.ToDateTime() +
         (m_interval - Normalize(end.ToDateTime(), m_interval));
       auto result = m_userProfile->GetClients().get_charting_client().
-        load_time_price_series(m_security, min, max, m_interval);
+        load_price_series(m_ticker, min, max, m_interval);
       for(auto& candlestick : result.series) {
-        auto chartCandlestick = Candlestick(
-          ChartValue(candlestick.get_start()),
-          ChartValue(candlestick.get_end()),
-          ChartValue(candlestick.get_open()),
+        auto chartCandlestick = Candlestick(ChartValue(candlestick.get_start()),
+          ChartValue(candlestick.get_end()), ChartValue(candlestick.get_open()),
           ChartValue(candlestick.get_close()),
-          ChartValue(candlestick.get_high()),
-          ChartValue(candlestick.get_low()));
+          ChartValue(candlestick.get_high()), ChartValue(candlestick.get_low()),
+          candlestick.get_volume());
         m_eventHandler.push(std::bind_front(
-          &SecurityTimePriceChartPlotSeries::OnCandlestickLoaded, this,
+          &TickerTimePriceChartPlotSeries::OnCandlestickLoaded, this,
           chartCandlestick));
       }
     });
 }
 
-ChartValue SecurityTimePriceChartPlotSeries::LoadLastCurrentDomain() {
+ChartValue TickerTimePriceChartPlotSeries::LoadLastCurrentDomain() {
   auto timeAndSalesQueue = std::make_shared<Queue<TimeAndSale>>();
-  auto query = SecurityMarketDataQuery();
-  query.set_index(m_security);
+  auto query = TickerQuery();
+  query.set_index(m_ticker);
   query.set_range(Beam::Sequence::FIRST, Beam::Sequence::PRESENT);
   query.set_snapshot_limit(SnapshotLimit::Type::TAIL, 1);
   query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
@@ -85,13 +83,13 @@ ChartValue SecurityTimePriceChartPlotSeries::LoadLastCurrentDomain() {
   }
 }
 
-connection SecurityTimePriceChartPlotSeries::ConnectChartPointAddedSignal(
+connection TickerTimePriceChartPlotSeries::ConnectChartPointAddedSignal(
     const ChartPlotAddedSignal::slot_function_type& slot) const {
   return m_chartPlotAddedSignal.connect(slot);
 }
 
-SecurityTimePriceChartPlotSeries::CandlestickEntry&
-    SecurityTimePriceChartPlotSeries::LoadCandlestick(ptime timestamp) {
+TickerTimePriceChartPlotSeries::CandlestickEntry&
+    TickerTimePriceChartPlotSeries::LoadCandlestick(ptime timestamp) {
   auto key = timestamp - Normalize(timestamp, m_interval);
   auto entryIterator = m_candlestickEntries.find(key);
   if(entryIterator == m_candlestickEntries.end()) {
@@ -104,7 +102,7 @@ SecurityTimePriceChartPlotSeries::CandlestickEntry&
   return entryIterator->second;
 }
 
-void SecurityTimePriceChartPlotSeries::OnCandlestickLoaded(
+void TickerTimePriceChartPlotSeries::OnCandlestickLoaded(
     const Candlestick<ChartValue, ChartValue>& candlestick) {
   auto& entry = LoadCandlestick(candlestick.get_start().ToDateTime());
   auto isFirstUpdate = entry.m_lastTimestamp.is_not_a_date_time();
@@ -122,7 +120,7 @@ void SecurityTimePriceChartPlotSeries::OnCandlestickLoaded(
   }
 }
 
-void SecurityTimePriceChartPlotSeries::OnTimeAndSale(
+void TickerTimePriceChartPlotSeries::OnTimeAndSale(
     const TimeAndSale& timeAndSale) {
   auto& entry = LoadCandlestick(timeAndSale.m_timestamp);
   auto isFirstUpdate = entry.m_lastTimestamp.is_not_a_date_time();

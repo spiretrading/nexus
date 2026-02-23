@@ -19,12 +19,12 @@ namespace {
 
 BlotterTaskProperties BlotterTaskProperties::GetDefault() {
   auto properties = BlotterTaskProperties();
-  auto securityMonitor =
+  auto tickerMonitor =
     std::unique_ptr<CanvasNode>(std::make_unique<BlotterTaskMonitorNode>());
-  securityMonitor =
-    securityMonitor->Replace(securityMonitor->GetChildren().front(),
-      std::make_unique<ReferenceNode>("<security"));
-  properties.Add(BlotterTaskMonitor("Security", *securityMonitor));
+  tickerMonitor =
+    tickerMonitor->Replace(tickerMonitor->GetChildren().front(),
+      std::make_unique<ReferenceNode>("<ticker"));
+  properties.Add(BlotterTaskMonitor("Ticker", *tickerMonitor));
   auto sideMonitor =
     std::unique_ptr<CanvasNode>(std::make_unique<BlotterTaskMonitorNode>());
   sideMonitor = sideMonitor->Replace(sideMonitor->GetChildren().front(),

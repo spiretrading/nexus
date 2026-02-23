@@ -8,8 +8,8 @@
 #include "Nexus/Parsers/OrderStatusParser.hpp"
 #include "Nexus/Parsers/OrderTypeParser.hpp"
 #include "Nexus/Parsers/QuantityParser.hpp"
-#include "Nexus/Parsers/SecurityParser.hpp"
 #include "Nexus/Parsers/SideParser.hpp"
+#include "Nexus/Parsers/TickerParser.hpp"
 #include "Nexus/Parsers/VenueParser.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
@@ -24,7 +24,7 @@ using namespace Spire;
 namespace {
   struct ParserBuilder {
     using type =
-      mp_list<bool, Quantity, double, std::string, Security, Side, Record>;
+      mp_list<bool, Quantity, double, std::string, Ticker, Side, Record>;
 
     template<typename T>
     Parser<Record::Field> operator ()(const NativeType& type,
@@ -33,10 +33,9 @@ namespace {
     }
 
     template<>
-    Parser<Record::Field> operator ()<Security>(const NativeType& type,
+    Parser<Record::Field> operator ()<Ticker>(const NativeType& type,
         Ref<UserProfile> userProfile) const {
-      return cast<Record::Field>(
-        SecurityParser(userProfile->GetVenueDatabase()));
+      return cast<Record::Field>(TickerParser(userProfile->GetVenueDatabase()));
     }
 
     template<>

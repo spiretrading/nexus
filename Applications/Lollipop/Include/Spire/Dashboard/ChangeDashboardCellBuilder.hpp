@@ -6,7 +6,7 @@
 namespace Spire {
 
   /*! \class ChangeDashboardCellBuilder
-      \brief Constructs a DashboardCell emitting the change in a Security's
+      \brief Constructs a DashboardCell emitting the change in a ticker's
              price from it's previous day's closing price.
    */
   class ChangeDashboardCellBuilder : public DashboardCellBuilder {

@@ -19,8 +19,8 @@
 #include "Spire/Canvas/OrderExecutionNodes/MaxFloorNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OptionalPriceNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderWrapperTaskNode.hpp"
-#include "Spire/Canvas/OrderExecutionNodes/SecurityPortfolioNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
 #include "Spire/Canvas/Records/QueryNode.hpp"
 #include "Spire/Canvas/Records/RecordNode.hpp"
 #include "Spire/Canvas/ReferenceNodes/ProxyNode.hpp"
@@ -70,9 +70,9 @@
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeRangeNode.hpp"
@@ -327,14 +327,6 @@ void CanvasNodeVisitor::Visit(const RoundNode& node) {
   Visit(static_cast<const FunctionNode&>(node));
 }
 
-void CanvasNodeVisitor::Visit(const SecurityNode& node) {
-  Visit(static_cast<const BaseValueNode&>(node));
-}
-
-void CanvasNodeVisitor::Visit(const SecurityPortfolioNode& node) {
-  Visit(static_cast<const CanvasNode&>(node));
-}
-
 void CanvasNodeVisitor::Visit(const SideNode& node) {
   Visit(static_cast<const BaseValueNode&>(node));
 }
@@ -356,6 +348,14 @@ void CanvasNodeVisitor::Visit(const SubtractionNode& node) {
 }
 
 void CanvasNodeVisitor::Visit(const TextNode& node) {
+  Visit(static_cast<const BaseValueNode&>(node));
+}
+
+void CanvasNodeVisitor::Visit(const TickerPortfolioNode& node) {
+  Visit(static_cast<const CanvasNode&>(node));
+}
+
+void CanvasNodeVisitor::Visit(const TickerNode& node) {
   Visit(static_cast<const BaseValueNode&>(node));
 }
 

@@ -122,6 +122,14 @@ namespace Nexus {
       std::atomic<std::shared_ptr<std::vector<Entry>>> m_entries;
   };
 
+  /** Converts an Asset to a CurrencyId if possible. */
+  inline CurrencyId to_currency(Asset asset) {
+    if(asset.get_type() == Asset::CCY) {
+      return CurrencyId(asset.get_code());
+    }
+    return CurrencyId::NONE;
+  }
+
   /**
    * Parses a CurrencyId from a string.
    * @param source The string to parse.

@@ -12,7 +12,6 @@
 #include <QStandardPaths>
 #include <tclap/CmdLine.h>
 #include "Nexus/Clients/ServiceClients.hpp"
-#include "Nexus/Definitions/Security.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
@@ -76,19 +75,19 @@ namespace {
 
   void LoadDefaultLayout(
       std::vector<QWidget*>& windows, UserProfile& userProfile) {
-    auto instantiateSecurityWindows = true;
+    auto instantiateTickerWindows = true;
     auto nextPosition = QPoint(0, 0);
     auto nextHeight = 0;
     auto resolution = QGuiApplication::primaryScreen()->availableGeometry();
-    auto defaultSecurities = std::vector<Security>();
+    auto defaultTickers = std::vector<Ticker>();
     auto& venueEntry = userProfile.GetVenueDatabase().from("XTSE");
-    defaultSecurities.push_back(Security("RY", venueEntry.m_venue));
-    defaultSecurities.push_back(Security("XIU", venueEntry.m_venue));
-    defaultSecurities.push_back(Security("ABX", venueEntry.m_venue));
-    defaultSecurities.push_back(Security("SU", venueEntry.m_venue));
-    defaultSecurities.push_back(Security("BCE", venueEntry.m_venue));
+    defaultTickers.push_back(Ticker("RY", venueEntry.m_venue));
+    defaultTickers.push_back(Ticker("XIU", venueEntry.m_venue));
+    defaultTickers.push_back(Ticker("ABX", venueEntry.m_venue));
+    defaultTickers.push_back(Ticker("SU", venueEntry.m_venue));
+    defaultTickers.push_back(Ticker("BCE", venueEntry.m_venue));
     auto index = std::size_t(0);
-    while(instantiateSecurityWindows && index < defaultSecurities.size()) {
+    while(instantiateTickerWindows && index < defaultTickers.size()) {
       auto width = 0;
       auto bookViewWindow = new BookViewWindow(
         Ref(userProfile), userProfile.GetDefaultBookViewProperties(), "");
@@ -104,12 +103,12 @@ namespace {
       timeAndSalesWindow->resize(150, bookViewWindow->height());
       timeAndSalesWindow->move(nextPosition);
       timeAndSalesWindow->show();
-      bookViewWindow->DisplaySecurity(defaultSecurities[index]);
+      bookViewWindow->DisplayTicker(defaultTickers[index]);
       nextPosition.rx() += timeAndSalesWindow->frameSize().width();
       width += timeAndSalesWindow->frameSize().width();
       windows.push_back(bookViewWindow);
       windows.push_back(timeAndSalesWindow);
-      instantiateSecurityWindows = index < defaultSecurities.size() &&
+      instantiateTickerWindows = index < defaultTickers.size() &&
         (nextPosition.x() + width < resolution.width());
       ++index;
     }

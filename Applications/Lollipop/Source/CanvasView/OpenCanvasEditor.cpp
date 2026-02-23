@@ -31,9 +31,9 @@
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
 #include "Spire/Canvas/ValueNodes/VenueNode.hpp"
@@ -44,7 +44,7 @@
 #include "Spire/Catalog/CatalogEntry.hpp"
 #include "Spire/Catalog/CatalogWindow.hpp"
 #include "Spire/InputWidgets/DateTimeInputDialog.hpp"
-#include "Spire/InputWidgets/SecurityInputDialog.hpp"
+#include "Spire/InputWidgets/TickerInputDialog.hpp"
 #include "Spire/InputWidgets/TimeInputDialog.hpp"
 #include "Spire/InputWidgets/TimeRangeInputDialog.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
@@ -86,9 +86,9 @@ namespace {
       void Visit(const OrderTypeNode& node) override;
       void Visit(const QueryNode& node) override;
       void Visit(const ReferenceNode& node) override;
-      void Visit(const SecurityNode& node) override;
       void Visit(const SideNode& node) override;
       void Visit(const TextNode& node) override;
+      void Visit(const TickerNode& node) override;
       void Visit(const TimeInForceNode& node) override;
       void Visit(const TimeNode& node) override;
       void Visit(const TimeRangeParameterNode& node) override;
@@ -447,38 +447,6 @@ void OpenEditorCanvasNodeVisitor::Visit(const ReferenceNode& node) {
   m_editVariant = editor;
 }
 
-void OpenEditorCanvasNodeVisitor::Visit(const SecurityNode& node) {
-  auto widget = dynamic_cast<QWidget*>(m_model);
-  auto dialog =
-    SecurityInputDialog(Ref(*m_userProfile), node.GetValue(), widget);
-  if(m_event && m_event->type() == QEvent::KeyPress) {
-    dialog.GetSymbolInput().selectAll();
-    QApplication::sendEvent(
-      &dialog.GetSymbolInput(), static_cast<QKeyEvent*>(m_event));
-  }
-  auto coordinate = m_model->GetCoordinate(node);
-  QObject::connect(&dialog, &SecurityInputDialog::finished, widget,
-    [&] (auto result) {
-      if(result == QDialog::Rejected) {
-        return;
-      }
-      auto newValue = dialog.GetSecurity();
-      if(newValue == Security()) {
-        return;
-      }
-      auto previousValue = node.GetValue();
-      if(previousValue == newValue) {
-        return;
-      }
-      m_editVariant = new ReplaceNodeCommand(Ref(*m_model), coordinate,
-        *node.SetValue(newValue, m_userProfile->GetVenueDatabase()));
-    });
-  dialog.show();
-  while(dialog.isVisible()) {
-    QCoreApplication::instance()->processEvents(QEventLoop::WaitForMoreEvents);
-  }
-}
-
 void OpenEditorCanvasNodeVisitor::Visit(const SideNode& node) {
   auto editor = new QComboBox();
   editor->addItem(QObject::tr("Bid"));
@@ -502,6 +470,37 @@ void OpenEditorCanvasNodeVisitor::Visit(const TextNode& node) {
     QApplication::sendEvent(editor, m_event);
   }
   m_editVariant = editor;
+}
+
+void OpenEditorCanvasNodeVisitor::Visit(const TickerNode& node) {
+  auto widget = dynamic_cast<QWidget*>(m_model);
+  auto dialog = TickerInputDialog(Ref(*m_userProfile), node.GetValue(), widget);
+  if(m_event && m_event->type() == QEvent::KeyPress) {
+    dialog.GetSymbolInput().selectAll();
+    QApplication::sendEvent(
+      &dialog.GetSymbolInput(), static_cast<QKeyEvent*>(m_event));
+  }
+  auto coordinate = m_model->GetCoordinate(node);
+  QObject::connect(&dialog, &TickerInputDialog::finished, widget,
+    [&] (auto result) {
+      if(result == QDialog::Rejected) {
+        return;
+      }
+      auto newValue = dialog.GetTicker();
+      if(!newValue) {
+        return;
+      }
+      auto previousValue = node.GetValue();
+      if(previousValue == newValue) {
+        return;
+      }
+      m_editVariant = new ReplaceNodeCommand(Ref(*m_model), coordinate,
+        *node.SetValue(newValue, m_userProfile->GetVenueDatabase()));
+    });
+  dialog.show();
+  while(dialog.isVisible()) {
+    QCoreApplication::instance()->processEvents(QEventLoop::WaitForMoreEvents);
+  }
 }
 
 void OpenEditorCanvasNodeVisitor::Visit(const TimeInForceNode& node) {

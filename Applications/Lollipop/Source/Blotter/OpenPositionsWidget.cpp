@@ -24,11 +24,12 @@ namespace {
       const OpenPositionsModel::Entry& position,
       const UserProfile& userProfile) {
     auto orderFields = make_market_order_fields(
-      blotterModel.GetExecutingAccount(), position.m_key.m_security,
-      position.m_key.m_currency,
+      blotterModel.GetExecutingAccount(),
+      position.m_inventory.m_position.m_ticker,
+      position.m_inventory.m_position.m_currency,
       get_opposite(get_side(position.m_inventory.m_position)),
       userProfile.GetDestinationDatabase().get_preferred_destination(
-      position.m_key.m_security.get_venue()).m_id,
+      position.m_inventory.m_position.m_ticker.get_venue()).m_id,
       abs(position.m_inventory.m_position.m_quantity));
     auto orderNode = MakeOrderTaskNodeFromOrderFields(orderFields,
       userProfile);

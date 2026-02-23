@@ -37,7 +37,7 @@ void CancelOnFillController::OnOrderExecuted(
   }
   shared_ptr<OrderEntry> orderEntry = std::make_shared<OrderEntry>(order);
   deque<shared_ptr<OrderEntry>>& orderEntries =
-    m_securityToOrderEntryList[order->get_info().m_fields.m_security][
+    m_tickerToOrderEntryList[order->get_info().m_fields.m_ticker][
     static_cast<int>(side)];
   orderEntries.push_back(orderEntry);
   order->get_publisher().monitor(m_slotHandler->get_slot<ExecutionReport>(
@@ -57,11 +57,11 @@ void CancelOnFillController::OnExecutionReport(
   }
   const InteractionsProperties& interactionsProperties =
     m_userProfile->GetInteractionProperties().get(
-    orderEntry->m_order->get_info().m_fields.m_security);
+    orderEntry->m_order->get_info().m_fields.m_ticker);
   if(interactionsProperties.m_cancelOnFill) {
     deque<shared_ptr<OrderEntry>>& orderEntries =
-      m_securityToOrderEntryList[
-      orderEntry->m_order->get_info().m_fields.m_security][
+      m_tickerToOrderEntryList[
+      orderEntry->m_order->get_info().m_fields.m_ticker][
       static_cast<int>(orderEntry->m_order->get_info().m_fields.m_side)];
     auto i = orderEntries.begin();
     while(i != orderEntries.end()) {

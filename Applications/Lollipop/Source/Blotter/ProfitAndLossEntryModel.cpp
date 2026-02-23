@@ -10,10 +10,8 @@ using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
 
-ProfitAndLossEntryModel::Entry::Entry(const Security& security)
-    : m_security{security},
-      m_volume{0},
-      m_previousQuantity{0} {}
+ProfitAndLossEntryModel::Entry::Entry(const Ticker& ticker)
+    : m_ticker{ticker} {}
 
 ProfitAndLossEntryModel::ProfitAndLossEntryModel(
     const CurrencyDatabase::Entry& currency, bool showUnrealized)
@@ -29,7 +27,7 @@ const CurrencyDatabase::Entry& ProfitAndLossEntryModel::GetCurrency() const {
 
 void ProfitAndLossEntryModel::OnPortfolioUpdate(
     const PortfolioUpdateEntry& update) {
-  Position::Key key = get_key(update.m_security_inventory.m_position);
+  auto& ticker = update.m_inventory.m_position.m_ticker;
   Money currencyProfitAndLoss =
     update.m_currency_inventory.m_gross_profit_and_loss -
     update.m_currency_inventory.m_fees;
@@ -37,24 +35,22 @@ void ProfitAndLossEntryModel::OnPortfolioUpdate(
     currencyProfitAndLoss += update.m_unrealized_currency;
   }
   m_profitAndLossSignal(currencyProfitAndLoss);
-  Security& security = key.m_security;
-  auto entryIterator = m_securityToEntry.find(security);
-  if(entryIterator == m_securityToEntry.end()) {
+  auto entryIterator = m_tickerToEntry.find(ticker);
+  if(entryIterator == m_tickerToEntry.end()) {
     beginInsertRows(QModelIndex(), static_cast<int>(m_entries.size()),
       static_cast<int>(m_entries.size()));
-    std::shared_ptr<Entry> entry = std::make_shared<Entry>(security);
+    std::shared_ptr<Entry> entry = std::make_shared<Entry>(ticker);
     m_entries.push_back(entry);
-    entryIterator = m_securityToEntry.insert(make_pair(security, entry)).first;
+    entryIterator = m_tickerToEntry.insert(make_pair(ticker, entry)).first;
     endInsertRows();
   }
   Entry& entry = *entryIterator->second;
   m_volume -= entry.m_volume;
-  entry.m_profitAndLoss = update.m_unrealized_security +
-    update.m_security_inventory.m_gross_profit_and_loss -
-    update.m_security_inventory.m_fees;
-  entry.m_fees = update.m_security_inventory.m_fees;
-  entry.m_volume = update.m_security_inventory.m_volume;
-  entry.m_previousQuantity = update.m_security_inventory.m_position.m_quantity;
+  entry.m_profitAndLoss = update.m_unrealized +
+    update.m_inventory.m_gross_profit_and_loss - update.m_inventory.m_fees;
+  entry.m_fees = update.m_inventory.m_fees;
+  entry.m_volume = update.m_inventory.m_volume;
+  entry.m_previousQuantity = update.m_inventory.m_position.m_quantity;
   int entryIndex =
     static_cast<int>(Beam::find(m_entries, entry) - m_entries.begin());
   m_volume += entry.m_volume;
@@ -89,8 +85,8 @@ QVariant ProfitAndLossEntryModel::data(const QModelIndex& index,
   if(role == Qt::TextAlignmentRole) {
     return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
   } else if(role == Qt::DisplayRole) {
-    if(index.column() == SECURITY_COLUMN) {
-      return QVariant::fromValue(entry.m_security);
+    if(index.column() == TICKER_COLUMN) {
+      return QVariant::fromValue(entry.m_ticker);
     } else if(index.column() == PROFIT_AND_LOSS_COLUMN) {
       return QVariant::fromValue(entry.m_profitAndLoss);
     } else if(index.column() == FEES_COLUMN) {
@@ -107,8 +103,8 @@ QVariant ProfitAndLossEntryModel::headerData(int section,
   if(role == Qt::TextAlignmentRole) {
     return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
   } else if(role == Qt::DisplayRole) {
-    if(section == SECURITY_COLUMN) {
-      return tr("Security");
+    if(section == TICKER_COLUMN) {
+      return tr("Ticker");
     } else if(section == PROFIT_AND_LOSS_COLUMN) {
       return tr("P/L");
     } else if(section == FEES_COLUMN) {

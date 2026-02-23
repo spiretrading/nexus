@@ -19,7 +19,7 @@ using namespace Spire;
 using namespace std;
 
 DashboardModelSchema DashboardModelSchema::GetDefaultSchema() {
-  vector<string> columns = {"Security", "Close", "Last", "Change", "Bid Px",
+  vector<string> columns = {"Ticker", "Close", "Last", "Change", "Bid Px",
     "Bid Sz", "Ask Sz", "Ask Px", "High", "Low", "Volume"};
   vector<std::unique_ptr<DashboardCellBuilder>> cellBuilders;
   cellBuilders.push_back(std::make_unique<CloseDashboardCellBuilder>());
@@ -43,10 +43,10 @@ DashboardModelSchema DashboardModelSchema::GetDefaultSchema() {
 }
 
 DashboardModelSchema::DashboardModelSchema() {
-  m_columnNames.push_back("Security");
+  m_columnNames.push_back("Ticker");
   vector<std::unique_ptr<DashboardCellBuilder>> cellBuilders;
   cellBuilders.push_back(
-    std::make_unique<ValueDashboardCellBuilder>(Security{}));
+    std::make_unique<ValueDashboardCellBuilder>(Ticker()));
   m_rowBuilder = make_unique<ListDashboardRowBuilder>(std::move(cellBuilders));
 }
 

@@ -1,10 +1,10 @@
-#ifndef SPIRE_SECURITY_TIME_PRICE_CHART_PLOT_SERIES_HPP
-#define SPIRE_SECURITY_TIME_PRICE_CHART_PLOT_SERIES_HPP
+#ifndef SPIRE_TICKER_TIME_PRICE_CHART_PLOT_SERIES_HPP
+#define SPIRE_TICKER_TIME_PRICE_CHART_PLOT_SERIES_HPP
 #include <unordered_map>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/TechnicalAnalysis/Candlestick.hpp"
 #include "Spire/Async/EventHandler.hpp"
@@ -14,19 +14,18 @@
 
 namespace Spire {
 
-  /** Implements a ChartPlotSeries from a Security's TimeAndSales. */
-  class SecurityTimePriceChartPlotSeries : public ChartPlotSeries {
+  /** Implements a ChartPlotSeries from a Ticker's TimeAndSales. */
+  class TickerTimePriceChartPlotSeries : public ChartPlotSeries {
     public:
 
       /**
-       * Constructs a SecurityTimePriceChartPlotSeries.
+       * Constructs a TickerTimePriceChartPlotSeries.
        * @param userProfile The user's profile.
-       * @param security The Security to plot.
+       * @param ticker The Ticker to plot.
        * @param interval The size of each candlestick.
        */
-      SecurityTimePriceChartPlotSeries(Beam::Ref<UserProfile> userProfile,
-        const Nexus::Security& security,
-        boost::posix_time::time_duration interval);
+      TickerTimePriceChartPlotSeries(Beam::Ref<UserProfile> userProfile,
+        const Nexus::Ticker& ticker, boost::posix_time::time_duration interval);
 
       void Query(ChartValue start, ChartValue end) override;
 
@@ -44,7 +43,7 @@ namespace Spire {
         boost::posix_time::ptime m_lastTimestamp;
       };
       UserProfile* m_userProfile;
-      Nexus::Security m_security;
+      Nexus::Ticker m_ticker;
       boost::posix_time::time_duration m_interval;
       std::unordered_map<boost::posix_time::ptime, CandlestickEntry,
         TimestampHash> m_candlestickEntries;

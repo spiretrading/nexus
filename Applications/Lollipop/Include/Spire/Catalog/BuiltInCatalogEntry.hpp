@@ -75,8 +75,6 @@ namespace Spire {
       static const boost::uuids::uuid RANGE_UUID;
       static const boost::uuids::uuid REFERENCE_UUID;
       static const boost::uuids::uuid ROUND_UUID;
-      static const boost::uuids::uuid SECURITY_PORTFOLIO_UUID;
-      static const boost::uuids::uuid SECURITY_UUID;
       static const boost::uuids::uuid SIDE_UUID;
       static const boost::uuids::uuid SINGLE_ORDER_TASK_UUID;
       static const boost::uuids::uuid SPAWN_TASK_UUID;
@@ -84,6 +82,8 @@ namespace Spire {
       static const boost::uuids::uuid TASK_STATE_UUID;
       static const boost::uuids::uuid TASK_STATE_MONITOR_UUID;
       static const boost::uuids::uuid TEXT_UUID;
+      static const boost::uuids::uuid TICKER_PORTFOLIO_UUID;
+      static const boost::uuids::uuid TICKER_UUID;
       static const boost::uuids::uuid TIME_AND_SALE_QUERY_UUID;
       static const boost::uuids::uuid TIME_IN_FORCE_UUID;
       static const boost::uuids::uuid TIME_RANGE_PARAMETER_UUID;

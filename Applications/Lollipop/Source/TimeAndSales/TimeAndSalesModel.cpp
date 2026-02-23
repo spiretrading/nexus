@@ -11,24 +11,24 @@ using namespace Spire;
 using namespace Spire::UI;
 
 TimeAndSalesModel::TimeAndSalesModel(Ref<UserProfile> userProfile,
-    const TimeAndSalesProperties& properties, const Security& security)
+    const TimeAndSalesProperties& properties, const Ticker& ticker)
     : m_userProfile(userProfile.get()),
       m_properties(properties) {
-  if(security == Security()) {
+  if(!ticker) {
     return;
   }
-  auto marketStartOfDay = utc_start_of_day(security.get_venue(),
+  auto marketStartOfDay = utc_start_of_day(ticker.get_venue(),
     m_userProfile->GetClients().get_time_client().get_time(),
     m_userProfile->GetVenueDatabase(), m_userProfile->GetTimeZoneDatabase());
-  auto query = SecurityMarketDataQuery();
-  query.set_index(security);
+  auto query = TickerQuery();
+  query.set_index(ticker);
   query.set_range(marketStartOfDay, Beam::Sequence::LAST);
   query.set_snapshot_limit(SnapshotLimit::Type::TAIL, 50);
   query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
   m_userProfile->GetClients().get_market_data_client().query(
     query, m_eventHandler.get_slot<TimeAndSale>(
       std::bind_front(&TimeAndSalesModel::OnTimeAndSale, this)));
-  auto bboQuery = make_current_query(security);
+  auto bboQuery = make_current_query(ticker);
   bboQuery.set_interruption_policy(InterruptionPolicy::IGNORE_CONTINUE);
   m_userProfile->GetClients().get_market_data_client().query(
     bboQuery, m_eventHandler.get_slot<BboQuote>(

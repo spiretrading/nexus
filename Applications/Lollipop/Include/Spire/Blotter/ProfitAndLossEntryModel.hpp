@@ -5,7 +5,7 @@
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/UI/UI.hpp"
 
@@ -36,8 +36,8 @@ namespace Spire {
        */
       enum Columns {
 
-        //! The Security.
-        SECURITY_COLUMN,
+        //! The Ticker.
+        TICKER_COLUMN,
 
         //! The profit and loss.
         PROFIT_AND_LOSS_COLUMN,
@@ -98,19 +98,18 @@ namespace Spire {
 
     private:
       struct Entry {
-        Nexus::Security m_security;
+        Nexus::Ticker m_ticker;
         Nexus::Money m_profitAndLoss;
         Nexus::Money m_fees;
         Nexus::Quantity m_volume;
         Nexus::Quantity m_previousQuantity;
 
-        Entry(const Nexus::Security& security);
+        Entry(const Nexus::Ticker& ticker);
       };
       Nexus::CurrencyDatabase::Entry m_currency;
       bool m_showUnrealized;
       std::vector<std::shared_ptr<Entry>> m_entries;
-      std::unordered_map<Nexus::Security, std::shared_ptr<Entry>>
-        m_securityToEntry;
+      std::unordered_map<Nexus::Ticker, std::shared_ptr<Entry>> m_tickerToEntry;
       Nexus::Quantity m_volume;
       mutable ProfitAndLossSignal m_profitAndLossSignal;
       mutable VolumeSignal m_volumeSignal;

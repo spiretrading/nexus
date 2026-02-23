@@ -10,8 +10,8 @@
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 
 using namespace Beam;
@@ -19,7 +19,7 @@ using namespace Nexus;
 using namespace Spire;
 using namespace std;
 
-const std::string SingleOrderTaskNode::SECURITY_PROPERTY = "security";
+const std::string SingleOrderTaskNode::TICKER_PROPERTY = "ticker";
 
 const std::string SingleOrderTaskNode::ORDER_TYPE_PROPERTY = "type";
 
@@ -50,19 +50,19 @@ SingleOrderTaskNode::SingleOrderTaskNode()
 SingleOrderTaskNode::SingleOrderTaskNode(string text) {
   SetText(std::move(text));
   SetType(OrderReferenceType::GetInstance());
-  AddChild(SECURITY_PROPERTY, make_unique<SecurityNode>());
+  AddChild(TICKER_PROPERTY, make_unique<TickerNode>());
   AddChild(ORDER_TYPE_PROPERTY, make_unique<OrderTypeNode>(OrderType::LIMIT));
   AddChild(SIDE_PROPERTY, make_unique<SideNode>());
   unique_ptr<DestinationNode> destinationNode = LinkedNode::SetReferent(
-    DestinationNode(), "security");
+    DestinationNode(), "ticker");
   AddChild(DESTINATION_PROPERTY, std::move(destinationNode));
-  auto priceNode = LinkedNode::SetReferent(MoneyNode(), "security");
+  auto priceNode = LinkedNode::SetReferent(MoneyNode(), "ticker");
   AddChild(PRICE_PROPERTY, std::move(priceNode));
-  auto quantityNode = LinkedNode::SetReferent(IntegerNode(), "security");
+  auto quantityNode = LinkedNode::SetReferent(IntegerNode(), "ticker");
   AddChild(QUANTITY_PROPERTY, std::move(quantityNode));
   unique_ptr<CanvasNode> currencyNode = make_unique<DefaultCurrencyNode>();
   currencyNode = currencyNode->Replace(currencyNode->GetChildren().front(),
-    make_unique<ReferenceNode>("<security"))->SetVisible(false);
+    make_unique<ReferenceNode>("<ticker"))->SetVisible(false);
   AddChild(CURRENCY_PROPERTY, std::move(currencyNode));
   AddChild(TIME_IN_FORCE_PROPERTY, make_unique<TimeInForceNode>());
 }
@@ -99,7 +99,7 @@ unique_ptr<CanvasNode> SingleOrderTaskNode::Replace(const CanvasNode& child,
     auto destinationReplacement =
       static_cast<const DestinationNode*>(replacement.get());
     auto destination = LinkedNode::SetReferent(*destinationReplacement,
-      "security");
+      "ticker");
     return CanvasNode::Replace(child, std::move(destination));
   }
   return CanvasNode::Replace(child, std::move(replacement));

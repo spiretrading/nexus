@@ -6,7 +6,7 @@
 namespace Spire {
 
   /*! \class LastPriceDashboardCellBuilder
-      \brief Constructs a DashboardCell emitting a Security's last price.
+      \brief Constructs a DashboardCell emitting a ticker's last price.
    */
   class LastPriceDashboardCellBuilder : public DashboardCellBuilder {
     public:

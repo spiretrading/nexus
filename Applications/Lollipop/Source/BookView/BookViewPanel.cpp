@@ -40,7 +40,7 @@ void BookViewPanel::Initialize(Ref<UserProfile> userProfile,
   m_side = side;
   DisconnectModel();
   m_model = std::make_unique<BookViewModel>(
-    Ref(*m_userProfile), m_properties, Security(), side);
+    Ref(*m_userProfile), m_properties, Ticker(), side);
   m_ui->m_bookView->setModel(m_model.get());
   ConnectModel();
 }
@@ -69,8 +69,8 @@ void BookViewPanel::SetProperties(const BookViewProperties& properties) {
   }
 }
 
-void BookViewPanel::DisplaySecurity(const Security& security) {
-  m_security = security;
+void BookViewPanel::DisplayTicker(const Ticker& ticker) {
+  m_ticker = ticker;
   m_bestQuote = Quote();
   auto widths = std::vector<int>();
   for(auto i = 0; i < BookViewModel::COLUMN_COUNT; ++i) {
@@ -81,7 +81,7 @@ void BookViewPanel::DisplaySecurity(const Security& security) {
   m_ui->m_bboPriceLabel->clear();
   m_ui->m_bboQuantityLabel->clear();
   auto newModel = std::make_unique<BookViewModel>(
-    Ref(*m_userProfile), m_properties, security, m_side);
+    Ref(*m_userProfile), m_properties, ticker, m_side);
   m_ui->m_bookView->setModel(newModel.get());
   m_model.swap(newModel);
   m_ui->m_bookView->setModel(m_model.get());
@@ -90,14 +90,14 @@ void BookViewPanel::DisplaySecurity(const Security& security) {
   }
   ConnectModel();
   m_eventHandler.emplace();
-  if(m_security == Security()) {
+  if(!m_ticker) {
     return;
   }
-  auto bboQuery = make_current_query(security);
+  auto bboQuery = make_current_query(ticker);
   bboQuery.set_interruption_policy(InterruptionPolicy::IGNORE_CONTINUE);
   m_userProfile->GetClients().get_market_data_client().query(
     bboQuery, m_eventHandler->get_slot<BboQuote>(
-      std::bind_front(&BookViewPanel::OnBbo, this, security)));
+      std::bind_front(&BookViewPanel::OnBbo, this, ticker)));
 }
 
 void BookViewPanel::resizeEvent(QResizeEvent* event) {
@@ -130,8 +130,8 @@ void BookViewPanel::DisconnectModel() {
   disconnect(m_rowsAboutToBeModifiedConnection);
 }
 
-void BookViewPanel::OnBbo(const Security& security, const BboQuote& bbo) {
-  if(security != m_security) {
+void BookViewPanel::OnBbo(const Ticker& ticker, const BboQuote& bbo) {
+  if(ticker != m_ticker) {
     return;
   }
   if(m_side == Side::ASK) {

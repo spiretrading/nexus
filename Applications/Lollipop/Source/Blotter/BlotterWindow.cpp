@@ -422,13 +422,13 @@ void BlotterWindow::OnPositionsAdded(
     auto positionData = JsonObject();
     positionData["blotter_id"] = reinterpret_cast<std::intptr_t>(this);
     positionData["index"] = i;
-    positionData["security"] = [&] {
-      auto security = JsonObject();
+    positionData["ticker"] = [&] {
+      auto ticker = JsonObject();
       auto& position = positions[i];
-      security["symbol"] = position.m_key.m_security.get_symbol();
-      security["venue"] =
-        displayText(position.m_key.m_security.get_venue()).toStdString();
-      return security;
+      ticker["symbol"] = position.m_ticker.get_symbol();
+      ticker["venue"] =
+        displayText(position.m_ticker.get_venue()).toStdString();
+      return ticker;
     }();
   }
 }

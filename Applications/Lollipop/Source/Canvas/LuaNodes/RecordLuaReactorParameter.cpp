@@ -11,16 +11,24 @@ using namespace Aspen;
 using namespace Beam;
 using namespace boost;
 using namespace boost::mp11;
+using namespace Nexus;
 using namespace Spire;
 using namespace std;
 
 namespace {
   struct LuaValuePusher {
-    using type = mp_remove<ValueTypes, Record>;
+    using type = mp_push_back<mp_remove<ValueTypes, Record>, Asset>;
 
     template<typename T>
     void operator ()(lua_State& luaState, const Record::Field& value) const {
-      PushLuaValue<T>()(luaState, boost::get<T>(value));
+      if constexpr(std::is_same_v<T, Asset>) {
+        PushLuaValue<CurrencyId>()(luaState, to_currency(boost::get<T>(value)));
+      } else if constexpr(std::is_same_v<T, CurrencyId>) {
+
+        /** TODO */
+      } else {
+        PushLuaValue<T>()(luaState, boost::get<T>(value));
+      }
     }
   };
 

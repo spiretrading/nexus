@@ -16,16 +16,16 @@ using namespace Nexus;
 using namespace Spire;
 
 BookViewModel::BookViewModel(Ref<UserProfile> userProfile,
-    const BookViewProperties& properties, const Security& security, Side side)
+    const BookViewProperties& properties, const Ticker& ticker, Side side)
     : m_userProfile(userProfile.get()),
       m_properties(properties),
-      m_security(security),
+      m_ticker(ticker),
       m_side(side) {
-  if(m_security == Security()) {
+  if(m_ticker == Ticker()) {
     return;
   }
   query_real_time_with_snapshot(
-    m_userProfile->GetClients().get_market_data_client(), m_security,
+    m_userProfile->GetClients().get_market_data_client(), m_ticker,
     m_eventHandler.get_slot<BookQuote>(
       std::bind_front(&BookViewModel::OnBookQuote, this),
       std::bind_front(&BookViewModel::OnBookQuoteInterruption, this)),
@@ -328,7 +328,7 @@ void BookViewModel::OnBookQuote(const BookQuote& quote) {
 }
 
 void BookViewModel::OnOrderExecuted(const std::shared_ptr<Order>& order) {
-  if(order->get_info().m_fields.m_security != m_security ||
+  if(order->get_info().m_fields.m_ticker != m_ticker ||
       order->get_info().m_fields.m_side != m_side ||
       order->get_info().m_fields.m_type != OrderType::LIMIT) {
     return;
@@ -386,7 +386,7 @@ void BookViewModel::OnBookQuoteInterruption(const std::exception_ptr& e) {
     }
   }
   query_real_time_with_snapshot(
-    m_userProfile->GetClients().get_market_data_client(), m_security,
+    m_userProfile->GetClients().get_market_data_client(), m_ticker,
     m_eventHandler.get_slot<BookQuote>(
       std::bind_front(&BookViewModel::OnBookQuote, this),
       std::bind_front(&BookViewModel::OnBookQuoteInterruption, this)),

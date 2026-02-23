@@ -1,7 +1,7 @@
 #ifndef SPIRE_BOOKVIEWPROPERTIESDIALOG_HPP
 #define SPIRE_BOOKVIEWPROPERTIESDIALOG_HPP
 #include <QDialog>
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/UI/UI.hpp"
 
@@ -18,13 +18,13 @@ namespace Spire {
       //! Constructs a BookViewPropertiesDialog.
       /*!
         \param userProfile The user's profile.
-        \param security The Security to represent.
+        \param ticker The Ticker to represent.
         \param properties The BookViewProperties to modify.
         \param parent The parent widget.
         \param flags Qt flags passed to the parent widget.
       */
       BookViewPropertiesDialog(Beam::Ref<UserProfile> userProfile,
-        const Nexus::Security& security, const BookViewProperties& properties,
+        const Nexus::Ticker& ticker, const BookViewProperties& properties,
         QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
 
       virtual ~BookViewPropertiesDialog();
@@ -35,7 +35,7 @@ namespace Spire {
     private:
       std::unique_ptr<Ui_BookViewPropertiesDialog> m_ui;
       UserProfile* m_userProfile;
-      Nexus::Security m_security;
+      Nexus::Ticker m_ticker;
       BookViewProperties m_properties;
 
       void Redisplay();

@@ -12,7 +12,7 @@
 #include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/TimeService/TimerReactor.hpp>
 #include <Beam/TimeService/ToLocalTime.hpp>
-#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderCancellationReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderReactor.hpp"
@@ -23,8 +23,8 @@
 #include "Nexus/Parsers/OrderStatusParser.hpp"
 #include "Nexus/Parsers/OrderTypeParser.hpp"
 #include "Nexus/Parsers/QuantityParser.hpp"
-#include "Nexus/Parsers/SecurityParser.hpp"
 #include "Nexus/Parsers/SideParser.hpp"
+#include "Nexus/Parsers/TickerParser.hpp"
 #include "Nexus/Parsers/VenueParser.hpp"
 #include "Spire/Canvas/Common/BreadthFirstCanvasNodeIterator.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
@@ -53,8 +53,8 @@
 #include "Spire/Canvas/OrderExecutionNodes/OptionalPriceNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderPublisherReactor.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderWrapperTaskNode.hpp"
-#include "Spire/Canvas/OrderExecutionNodes/SecurityPortfolioNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
 #include "Spire/Canvas/Records/QueryNode.hpp"
 #include "Spire/Canvas/Records/RecordNode.hpp"
 #include "Spire/Canvas/Records/RecordParser.hpp"
@@ -112,9 +112,9 @@
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeRangeNode.hpp"
@@ -193,12 +193,12 @@ namespace {
       void Visit(const RangeNode& node) override;
       void Visit(const ReferenceNode& node) override;
       void Visit(const RoundNode& node) override;
-      void Visit(const SecurityNode& node) override;
       void Visit(const SideNode& node) override;
       void Visit(const SingleOrderTaskNode& node) override;
       void Visit(const SpawnNode& node) override;
       void Visit(const SubtractionNode& node) override;
       void Visit(const TextNode& node) override;
+      void Visit(const TickerNode& node) override;
       void Visit(const TimeAndSaleQueryNode& node) override;
       void Visit(const TimeInForceNode& node) override;
       void Visit(const TimeNode& node) override;
@@ -532,11 +532,11 @@ namespace {
     }
 
     template<>
-    Translation operator ()<Security>(const NativeType& nativeType,
+    Translation operator ()<Ticker>(const NativeType& nativeType,
         Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const std::string& path) const {
       auto parser =
-        MakeParser(SecurityParser(userProfile->GetVenueDatabase()));
+        MakeParser(TickerParser(userProfile->GetVenueDatabase()));
       using Parser = decltype(parser);
       auto publisher = std::make_shared<ParserPublisher<BasicIStreamReader<
         std::ifstream>, Parser>>(path, parser, errorPolicy);
@@ -947,7 +947,13 @@ namespace {
         : m_index(index) {}
 
       T operator ()(const Record& record) const {
-        return get<T>(record.GetFields()[m_index]);
+        if constexpr(std::is_same_v<T, CurrencyId>) {
+
+          /** TODO */
+          return to_currency(get<Asset>(record.GetFields()[m_index]));
+        } else {
+          return get<T>(record.GetFields()[m_index]);
+        }
       }
     };
 
@@ -1165,8 +1171,8 @@ void CanvasNodeTranslationVisitor::Visit(const AlarmNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const BboQuoteQueryNode& node) {
-  auto security =
-    InternalTranslation(node.GetChildren()[0]).Extract<Aspen::Box<Security>>();
+  auto ticker =
+    InternalTranslation(node.GetChildren()[0]).Extract<Aspen::Box<Ticker>>();
   auto side =
     InternalTranslation(node.GetChildren()[1]).Extract<Aspen::Box<Side>>();
   auto range = InternalTranslation(
@@ -1178,15 +1184,15 @@ void CanvasNodeTranslationVisitor::Visit(const BboQuoteQueryNode& node) {
       [] (Side side, const SequencedBboQuote& quote) {
         return pick(side, quote->m_ask, quote->m_bid);
       }, std::move(side), Aspen::override(Aspen::lift(
-      [=] (const Security& security, const Beam::Range& range) {
-        auto query = SecurityMarketDataQuery();
-        query.set_index(security);
+      [=] (const Ticker& ticker, const Beam::Range& range) {
+        auto query = TickerQuery();
+        query.set_index(ticker);
         query.set_range(range);
         query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
         auto queue = std::make_shared<Queue<SequencedBboQuote>>();
         marketDataClient->query(query, queue);
         return Aspen::Shared(QueueReactor(queue));
-      }, std::move(security), std::move(range)))));
+      }, std::move(ticker), std::move(range)))));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const BlotterTaskMonitorNode& node) {
@@ -1263,11 +1269,11 @@ void CanvasNodeTranslationVisitor::Visit(const DecimalNode& node) {
 
 void CanvasNodeTranslationVisitor::Visit(const DefaultCurrencyNode& node) {
   auto source = InternalTranslation(
-    node.GetChildren().front()).Extract<Aspen::Box<Security>>();
+    node.GetChildren().front()).Extract<Aspen::Box<Ticker>>();
   m_translation = Aspen::lift(
-    [userProfile = &m_context->GetUserProfile()] (const Security& security) {
+    [userProfile = &m_context->GetUserProfile()] (const Ticker& ticker) {
       return userProfile->GetVenueDatabase().from(
-        security.get_venue()).m_currency;
+        ticker.get_venue()).m_currency;
     }, std::move(source));
 }
 
@@ -1464,8 +1470,8 @@ void CanvasNodeTranslationVisitor::Visit(const OrderTypeNode& node) {
 }
 
 void CanvasNodeTranslationVisitor::Visit(const OrderWrapperTaskNode& node) {
-  m_context->Add(Ref(*node.FindChild(SingleOrderTaskNode::SECURITY_PROPERTY)),
-    Aspen::constant(node.GetOrder()->get_info().m_fields.m_security));
+  m_context->Add(Ref(*node.FindChild(SingleOrderTaskNode::TICKER_PROPERTY)),
+    Aspen::constant(node.GetOrder()->get_info().m_fields.m_ticker));
   m_context->Add(Ref(*node.FindChild(SingleOrderTaskNode::ORDER_TYPE_PROPERTY)),
     Aspen::constant(node.GetOrder()->get_info().m_fields.m_type));
   m_context->Add(Ref(*node.FindChild(SingleOrderTaskNode::SIDE_PROPERTY)),
@@ -1540,10 +1546,6 @@ void CanvasNodeTranslationVisitor::Visit(const RoundNode& node) {
   m_translation = TranslateFunction<RoundToTranslator>(node);
 }
 
-void CanvasNodeTranslationVisitor::Visit(const SecurityNode& node) {
-  m_translation = Aspen::constant(node.GetValue());
-}
-
 void CanvasNodeTranslationVisitor::Visit(const SideNode& node) {
   m_translation = Aspen::constant(node.GetValue());
 }
@@ -1587,7 +1589,7 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
     OrderReactor(Ref(orderExecutionClient),
     Aspen::constant(m_context->GetExecutingAccount()),
     Aspen::unconsecutive(InternalTranslation(*node.FindChild(
-      SingleOrderTaskNode::SECURITY_PROPERTY)).Extract<Aspen::Box<Security>>()),
+      SingleOrderTaskNode::TICKER_PROPERTY)).Extract<Aspen::Box<Ticker>>()),
     Aspen::unconsecutive(InternalTranslation(*node.FindChild(
       SingleOrderTaskNode::CURRENCY_PROPERTY)).Extract<
       Aspen::Box<CurrencyId>>()),
@@ -1625,24 +1627,28 @@ void CanvasNodeTranslationVisitor::Visit(const TextNode& node) {
   m_translation = Aspen::constant(node.GetValue());
 }
 
+void CanvasNodeTranslationVisitor::Visit(const TickerNode& node) {
+  m_translation = Aspen::constant(node.GetValue());
+}
+
 void CanvasNodeTranslationVisitor::Visit(const TimeAndSaleQueryNode& node) {
-  auto security =
-    InternalTranslation(node.GetChildren()[0]).Extract<Aspen::Box<Security>>();
+  auto ticker =
+    InternalTranslation(node.GetChildren()[0]).Extract<Aspen::Box<Ticker>>();
   auto range = InternalTranslation(
     node.GetChildren()[1]).Extract<Aspen::Box<Beam::Range>>();
   auto marketDataClient =
     &m_context->GetUserProfile().GetClients().get_market_data_client();
   m_translation = Aspen::lift(TimeAndSaleToRecordConverter{}, Aspen::override(
     Aspen::lift(
-    [=] (const Security& security, const Beam::Range& range) {
-      auto query = SecurityMarketDataQuery();
-      query.set_index(security);
+    [=] (const Ticker& ticker, const Beam::Range& range) {
+      auto query = TickerQuery();
+      query.set_index(ticker);
       query.set_range(range);
       query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
       auto queue = std::make_shared<Queue<SequencedTimeAndSale>>();
       marketDataClient->query(query, queue);
       return Aspen::Shared(QueueReactor(queue));
-    }, std::move(security), std::move(range))));
+    }, std::move(ticker), std::move(range))));
 }
 
 void CanvasNodeTranslationVisitor::Visit(const TimeInForceNode& node) {

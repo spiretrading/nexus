@@ -82,7 +82,10 @@ QVariant OpenPositionsModel::data(const QModelIndex& index, int role) const {
     } else if(index.column() == COST_BASIS_COLUMN) {
       return QVariant::fromValue(entry.m_inventory.m_position.m_cost_basis);
     } else if(index.column() == CURRENCY_COLUMN) {
-      return QVariant::fromValue(entry.m_inventory.m_position.m_currency);
+
+      /** TODO **/
+      return QVariant::fromValue(
+        to_currency(entry.m_inventory.m_position.m_currency));
     }
   }
   return QVariant();

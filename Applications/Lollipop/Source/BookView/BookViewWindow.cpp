@@ -260,7 +260,7 @@ std::unique_ptr<CanvasNode>
     BookViewWindow::PrepareTaskNode(const CanvasNode& node) {
   auto taskNode = CanvasNode::Clone(node);
   auto tickerNode =
-    taskNode->FindNode(SingleOrderTaskNode::SECURITY_PROPERTY);
+    taskNode->FindNode(SingleOrderTaskNode::TICKER_PROPERTY);
   if(tickerNode && !tickerNode->IsReadOnly()) {
     if(auto tickerValueNode =
         dynamic_cast<const TickerNode*>(&*tickerNode)) {

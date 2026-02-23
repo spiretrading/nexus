@@ -13,10 +13,10 @@
 #include "Spire/Canvas/Types/OrderStatusType.hpp"
 #include "Spire/Canvas/Types/OrderTypeType.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
-#include "Spire/Canvas/Types/SecurityType.hpp"
 #include "Spire/Canvas/Types/SequenceType.hpp"
 #include "Spire/Canvas/Types/SideType.hpp"
 #include "Spire/Canvas/Types/TextType.hpp"
+#include "Spire/Canvas/Types/TickerType.hpp"
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
 #include "Spire/Canvas/Types/UnionType.hpp"
@@ -41,10 +41,10 @@ TEST_SUITE("ValueType") {
     REQUIRE(OrderReferenceType::GetInstance().GetName() == "Order");
     REQUIRE(OrderStatusType::GetInstance().GetName() == "Order Status");
     REQUIRE(OrderTypeType::GetInstance().GetName() == "Order Type");
-    REQUIRE(SecurityType::GetInstance().GetName() == "Security");
     REQUIRE(SequenceType::GetInstance().GetName() == "Sequence");
     REQUIRE(SideType::GetInstance().GetName() == "Side");
     REQUIRE(TextType::GetInstance().GetName() == "Text");
+    REQUIRE(TickerType::GetInstance().GetName() == "Ticker");
     REQUIRE(TimeInForceType::GetInstance().GetName() == "Time In Force");
     REQUIRE(TimeRangeType::GetInstance().GetName() == "Time Range");
     REQUIRE(VenueType::GetInstance().GetName() == "Venue");
@@ -69,12 +69,11 @@ TEST_SUITE("ValueType") {
       typeid(OrderStatus));
     REQUIRE(OrderTypeType::GetInstance().GetNativeType() ==
       typeid(OrderType));
-    REQUIRE(SecurityType::GetInstance().GetNativeType() ==
-      typeid(Security));
     REQUIRE(SequenceType::GetInstance().GetNativeType() ==
       typeid(Beam::Sequence));
     REQUIRE(SideType::GetInstance().GetNativeType() == typeid(Side));
     REQUIRE(TextType::GetInstance().GetNativeType() == typeid(std::string));
+    REQUIRE(TickerType::GetInstance().GetNativeType() == typeid(Ticker));
     REQUIRE(TimeInForceType::GetInstance().GetNativeType() ==
       typeid(TimeInForce));
     REQUIRE(TimeRangeType::GetInstance().GetNativeType() ==

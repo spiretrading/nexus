@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <Beam/Pointers/Ref.hpp>
 #include <QWidget>
-#include "Nexus/Definitions/RegionMap.hpp"
+#include "Nexus/Definitions/ScopeTable.hpp"
 #include "Spire/KeyBindings/InteractionsProperties.hpp"
 #include "Spire/UI/UI.hpp"
 
@@ -36,35 +36,35 @@ namespace Spire {
       //! Initializes the InteractionsWidget, must be called after construction.
       /*!
         \param userProfile The user's profile.
-        \param security The Security to display the InteractionsProperties for.
+        \param ticker The Ticker to display the InteractionsProperties for.
       */
       void Initialize(Beam::Ref<UserProfile> userProfile,
-        const Nexus::Security& security);
+        const Nexus::Ticker& ticker);
 
       //! Returns the InteractionsProperties represented by this widget.
-      const Nexus::RegionMap<InteractionsProperties>& GetProperties();
+      const Nexus::ScopeTable<InteractionsProperties>& GetProperties();
 
     private:
-      struct RegionEntry {
-        Nexus::Region m_region;
+      struct ScopeEntry {
+        Nexus::Scope m_scope;
         bool m_isActive;
       };
       std::unique_ptr<Ui_InteractionsWidget> m_ui;
       UserProfile* m_userProfile;
-      Nexus::RegionMap<InteractionsProperties> m_properties;
-      std::unordered_map<std::string, RegionEntry> m_regions;
-      std::string m_regionIndex;
+      Nexus::ScopeTable<InteractionsProperties> m_properties;
+      std::unordered_map<std::string, ScopeEntry> m_scopes;
+      std::string m_scopeIndex;
       int m_quantityModifierIndex;
       int m_priceModifierIndex;
 
-      void AddRegion(RegionEntry region);
-      void StyleRegion(const RegionEntry& region);
+      void AddScope(ScopeEntry scope);
+      void StyleScope(const ScopeEntry& scope);
       void Update();
       void Store();
-      void OnRegionIndexChanged(int index);
+      void OnScopeIndexChanged(int index);
       void OnKeyboardModifierIndexChanged(int index);
-      void OnActivateRegionClicked();
-      void OnResetRegionClicked();
+      void OnActivateScopeClicked();
+      void OnResetScopeClicked();
   };
 }
 

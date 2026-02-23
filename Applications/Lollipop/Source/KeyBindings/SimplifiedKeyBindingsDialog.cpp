@@ -36,7 +36,7 @@ namespace {
   void PopulateAsxOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
     CanvasNodeBuilder limitBid(*GetLimitBidOrderTaskNode()->Rename(
       "ASX TradeMatch Limit Bid")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     limitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::ASXT));
     limitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -49,7 +49,7 @@ namespace {
     orderTypes.emplace_back(limitBid.Make());
     CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "ASX TradeMatch Limit Ask")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     limitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::ASXT));
     limitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -402,7 +402,7 @@ namespace {
   void PopulateAlphaOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
     CanvasNodeBuilder alphaLimitBid(*GetLimitBidOrderTaskNode()->Rename(
       "Alpha Limit Bid")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     alphaLimitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::ALPHA));
     alphaLimitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -417,7 +417,7 @@ namespace {
     orderTypes.emplace_back(alphaLimitBid.Make());
     CanvasNodeBuilder alphaLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "Alpha Limit Ask")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     alphaLimitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::ALPHA));
     alphaLimitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -489,7 +489,7 @@ namespace {
   void PopulateChixOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
     CanvasNodeBuilder chixLimitBid(*GetLimitBidOrderTaskNode()->Rename(
       "CHI-X Limit Bid")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     chixLimitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::CHIX));
     chixLimitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -502,7 +502,7 @@ namespace {
     orderTypes.emplace_back(chixLimitBid.Make());
     CanvasNodeBuilder chixLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "CHI-X Limit Ask")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     chixLimitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::CHIX));
     chixLimitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -570,7 +570,7 @@ namespace {
     CanvasNodeBuilder chixFeeSensitiveLimitBid(
       *GetLimitBidOrderTaskNode()->Rename(
       "CHI-X Fee Sensitive Limit Bid")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker"))->AddField(
       "ex_destination", 100, std::make_unique<TextNode>("SMRTFEE")));
     chixFeeSensitiveLimitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::CHIX));
@@ -592,7 +592,7 @@ namespace {
     CanvasNodeBuilder chixFeeSensitiveLimitAsk(
       *GetLimitAskOrderTaskNode()->Rename(
       "CHI-X Fee Sensitive Limit Ask")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker"))->AddField(
       "ex_destination", 100, std::make_unique<TextNode>("SMRTFEE")));
     chixFeeSensitiveLimitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::CHIX));
@@ -698,7 +698,7 @@ namespace {
     CanvasNodeBuilder chixSmartXDarkLimitBid(
       *GetLimitBidOrderTaskNode()->Rename(
       "CHI-X SMART X Dark Limit Bid")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker"))->AddField(
       "ex_destination", 100, std::make_unique<TextNode>(
       "SMRTXDARKNR"))->AddField(
       "long_life", 7735, std::make_unique<TextNode>("Y")));
@@ -723,7 +723,7 @@ namespace {
     CanvasNodeBuilder chixSmartXDarkLimitAsk(
       *GetLimitAskOrderTaskNode()->Rename(
       "CHI-X SMART X Dark Limit Ask")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker"))->AddField(
       "ex_destination", 100, std::make_unique<TextNode>(
       "SMRTXDARKNR"))->AddField(
       "long_life", 7735, std::make_unique<TextNode>("Y")));
@@ -1125,7 +1125,7 @@ namespace {
   void PopulateCseOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
     CanvasNodeBuilder limitBid(*GetLimitBidOrderTaskNode()->Rename(
       "CSE Limit Bid")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     limitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::CSE));
     limitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -1138,7 +1138,7 @@ namespace {
     orderTypes.emplace_back(limitBid.Make());
     CanvasNodeBuilder limitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "CSE Limit Ask")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     limitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::CSE));
     limitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -1270,7 +1270,7 @@ namespace {
   void PopulateCse2Orders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
     auto limitBid = CanvasNodeBuilder(
       *GetLimitBidOrderTaskNode()->Rename("CSE2 Limit Bid")->AddField(
-        "max_floor", 111, LinkedNode::SetReferent(MaxFloorNode(), "security")));
+        "max_floor", 111, LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     limitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::CSE2));
     limitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -1283,7 +1283,7 @@ namespace {
     orderTypes.emplace_back(limitBid.Make());
     auto limitAsk = CanvasNodeBuilder(*GetLimitAskOrderTaskNode()->Rename(
       "CSE2 Limit Ask")->AddField("max_floor", 111,
-        LinkedNode::SetReferent(MaxFloorNode(), "security")));
+        LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     limitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::CSE2));
     limitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -1441,7 +1441,7 @@ namespace {
   void PopulateCx2Orders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
     CanvasNodeBuilder cx2LimitBid(*GetLimitBidOrderTaskNode()->Rename(
       "CX2 Limit Bid")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     cx2LimitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::CX2));
     cx2LimitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -1454,7 +1454,7 @@ namespace {
     orderTypes.emplace_back(cx2LimitBid.Make());
     CanvasNodeBuilder cx2LimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "CX2 Limit Ask")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     cx2LimitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::CX2));
     cx2LimitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -1629,7 +1629,7 @@ namespace {
   void PopulateLynxOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
     CanvasNodeBuilder lynxLimitBid(*GetLimitBidOrderTaskNode()->Rename(
       "Lynx Limit Bid")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     lynxLimitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::LYNX));
     lynxLimitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -1642,7 +1642,7 @@ namespace {
     orderTypes.emplace_back(lynxLimitBid.Make());
     CanvasNodeBuilder lynxLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "Lynx Limit Ask")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     lynxLimitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::LYNX));
     lynxLimitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -1948,7 +1948,7 @@ namespace {
   void PopulateNeoeOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
     CanvasNodeBuilder litLimitBid(*GetLimitBidOrderTaskNode()->Rename(
       "NEO Lit Limit Bid")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     litLimitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::NEOE));
     litLimitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -1961,7 +1961,7 @@ namespace {
     orderTypes.emplace_back(litLimitBid.Make());
     CanvasNodeBuilder litLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "NEO Lit Limit Ask")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     litLimitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::NEOE));
     litLimitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -2056,7 +2056,7 @@ namespace {
     orderTypes.emplace_back(litMidPegAsk.Make());
     CanvasNodeBuilder neoLimitBid(*GetLimitBidOrderTaskNode()->Rename(
       "NEO Book Limit Bid")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker"))->AddField(
       "ex_destination", 100, std::make_unique<TextNode>("N")));
     neoLimitBid.SetReadOnly("ex_destination", true);
     neoLimitBid.SetVisible("ex_destination", false);
@@ -2072,7 +2072,7 @@ namespace {
     orderTypes.emplace_back(neoLimitBid.Make());
     CanvasNodeBuilder neoLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "NEO Book Limit Ask")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker"))->AddField(
       "ex_destination", 100, std::make_unique<TextNode>("N")));
     neoLimitAsk.SetReadOnly("ex_destination", true);
     neoLimitAsk.SetVisible("ex_destination", false);
@@ -2249,7 +2249,7 @@ namespace {
   void PopulateOmegaOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
     CanvasNodeBuilder omegaLimitBid(*GetLimitBidOrderTaskNode()->Rename(
       "Omega Limit Bid")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     omegaLimitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::OMEGA));
     omegaLimitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -2264,7 +2264,7 @@ namespace {
     orderTypes.emplace_back(omegaLimitBid.Make());
     CanvasNodeBuilder omegaLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "Omega Limit Ask")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     omegaLimitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::OMEGA));
     omegaLimitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -2336,7 +2336,7 @@ namespace {
   void PopulatePureOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
     CanvasNodeBuilder pureLimitBid(*GetLimitBidOrderTaskNode()->Rename(
       "Pure Limit Bid")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     pureLimitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::PURE));
     pureLimitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -2349,7 +2349,7 @@ namespace {
     orderTypes.emplace_back(pureLimitBid.Make());
     CanvasNodeBuilder pureLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "Pure Limit Ask")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     pureLimitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
       std::make_unique<DestinationNode>(DefaultDestinations::PURE));
     pureLimitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
@@ -2419,7 +2419,7 @@ namespace {
   void PopulateTsxOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
     CanvasNodeBuilder tsxLimitBid(*GetLimitBidOrderTaskNode()->Rename(
       "TSX Limit Bid")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker"))->AddField(
       "long_life", 7735, std::make_unique<TextNode>("Y")));
     tsxLimitBid.SetReadOnly("long_life", true);
     tsxLimitBid.SetVisible("long_life", false);
@@ -2435,7 +2435,7 @@ namespace {
     orderTypes.emplace_back(tsxLimitBid.Make());
     CanvasNodeBuilder tsxLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
       "TSX Limit Ask")->AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker"))->AddField(
       "long_life", 7735, std::make_unique<TextNode>("Y")));
     tsxLimitAsk.SetReadOnly("long_life", true);
     tsxLimitAsk.SetVisible("long_life", false);

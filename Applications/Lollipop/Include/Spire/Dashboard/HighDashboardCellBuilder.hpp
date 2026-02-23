@@ -6,7 +6,7 @@
 namespace Spire {
 
   /*! \class HighDashboardCellBuilder
-      \brief Constructs a DashboardCell emitting a Security's daily high price.
+      \brief Constructs a DashboardCell emitting a ticker's daily high price.
    */
   class HighDashboardCellBuilder : public DashboardCellBuilder {
     public:

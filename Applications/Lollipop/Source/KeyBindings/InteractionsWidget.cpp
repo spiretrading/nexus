@@ -25,19 +25,19 @@ InteractionsWidget::InteractionsWidget(QWidget* parent, Qt::WindowFlags flags)
   m_ui->m_priceIncrementModifierComboBox->addItem(QObject::tr("Shift"));
   m_ui->m_priceIncrementModifierComboBox->addItem(QObject::tr("Alt"));
   m_ui->m_priceIncrementModifierComboBox->addItem(QObject::tr("Ctrl"));
-  connect(m_ui->m_regionComboBox,
+  connect(m_ui->m_scopeComboBox,
     static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
-    this, &InteractionsWidget::OnRegionIndexChanged);
+    this, &InteractionsWidget::OnScopeIndexChanged);
   connect(m_ui->m_quantityIncrementModifierComboBox,
     static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
     this, &InteractionsWidget::OnKeyboardModifierIndexChanged);
   connect(m_ui->m_priceIncrementModifierComboBox,
     static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
     this, &InteractionsWidget::OnKeyboardModifierIndexChanged);
-  connect(m_ui->m_activateRegionButton, &QPushButton::clicked, this,
-    &InteractionsWidget::OnActivateRegionClicked);
-  connect(m_ui->m_resetRegionButton, &QPushButton::clicked, this,
-    &InteractionsWidget::OnResetRegionClicked);
+  connect(m_ui->m_activateScopeButton, &QPushButton::clicked, this,
+    &InteractionsWidget::OnActivateScopeClicked);
+  connect(m_ui->m_resetScopeButton, &QPushButton::clicked, this,
+    &InteractionsWidget::OnResetScopeClicked);
 }
 
 InteractionsWidget::~InteractionsWidget() {}
@@ -45,92 +45,92 @@ InteractionsWidget::~InteractionsWidget() {}
 void InteractionsWidget::Initialize(Ref<UserProfile> userProfile) {
   m_userProfile = userProfile.get();
   m_properties = m_userProfile->GetInteractionProperties();
-  m_ui->m_regionComboBox->clear();
-  RegionEntry globalRegion;
-  globalRegion.m_region = Region::make_global("Global");
-  AddRegion(globalRegion);
+  m_ui->m_scopeComboBox->clear();
+  ScopeEntry globalScope;
+  globalScope.m_scope = Scope::make_global("Global");
+  AddScope(globalScope);
   auto countries = m_userProfile->GetCountryDatabase().get_entries();
   for(auto i = countries.begin(); i != countries.end(); ++i) {
-    RegionEntry region;
-    region.m_region = Region(i->m_name);
-    region.m_region += i->m_code;
-    AddRegion(region);
+    ScopeEntry scope;
+    scope.m_scope = Scope(i->m_name);
+    scope.m_scope += i->m_code;
+    AddScope(scope);
   }
   auto venues = m_userProfile->GetVenueDatabase().get_entries();
   for(auto i = venues.begin(); i != venues.end(); ++i) {
-    RegionEntry region;
-    region.m_region = Region(i->m_display_name);
-    region.m_region += i->m_venue;
-    AddRegion(region);
+    ScopeEntry scope;
+    scope.m_scope = Scope(i->m_display_name);
+    scope.m_scope += i->m_venue;
+    AddScope(scope);
   }
   for(auto i = m_properties.begin(); i != m_properties.end(); ++i) {
-    if(!std::get<0>(*i).get_securities().empty()) {
-      RegionEntry region;
-      Security security = *std::get<0>(*i).get_securities().begin();
-      region.m_region = Region(displayText(security).toStdString());
-      region.m_region += security;
-      AddRegion(region);
+    if(!std::get<0>(*i).get_tickers().empty()) {
+      ScopeEntry scope;
+      Ticker ticker = *std::get<0>(*i).get_tickers().begin();
+      scope.m_scope = Scope(displayText(ticker).toStdString());
+      scope.m_scope += ticker;
+      AddScope(scope);
     }
   }
   Update();
 }
 
 void InteractionsWidget::Initialize(Ref<UserProfile> userProfile,
-    const Security& security) {
+    const Ticker& ticker) {
   m_userProfile = userProfile.get();
   m_properties = m_userProfile->GetInteractionProperties();
-  m_ui->m_regionComboBox->clear();
-  RegionEntry region;
-  region.m_region = Region(displayText(security).toStdString());
-  region.m_region += security;
-  AddRegion(region);
+  m_ui->m_scopeComboBox->clear();
+  ScopeEntry scope;
+  scope.m_scope = Scope(displayText(ticker).toStdString());
+  scope.m_scope += ticker;
+  AddScope(scope);
   Update();
 }
 
-const RegionMap<InteractionsProperties>& InteractionsWidget::GetProperties() {
+const ScopeTable<InteractionsProperties>& InteractionsWidget::GetProperties() {
   Store();
   return m_properties;
 }
 
-void InteractionsWidget::AddRegion(RegionEntry region) {
-  region.m_isActive = std::get<0>(*m_properties.find(region.m_region)) ==
-    region.m_region;
-  m_regions[region.m_region.get_name()] = region;
-  m_ui->m_regionComboBox->addItem(QString::fromStdString(
-    region.m_region.get_name()));
-  int index = m_ui->m_regionComboBox->count() - 1;
-  StyleRegion(region);
+void InteractionsWidget::AddScope(ScopeEntry scope) {
+  scope.m_isActive = std::get<0>(*m_properties.find(scope.m_scope)) ==
+    scope.m_scope;
+  m_scopes[scope.m_scope.get_name()] = scope;
+  m_ui->m_scopeComboBox->addItem(
+    QString::fromStdString(scope.m_scope.get_name()));
+  int index = m_ui->m_scopeComboBox->count() - 1;
+  StyleScope(scope);
 }
 
-void InteractionsWidget::StyleRegion(const RegionEntry& region) {
-  int index = m_ui->m_regionComboBox->findText(
-    QString::fromStdString(region.m_region.get_name()));
-  if(region.m_isActive) {
-    QVariant textColor = m_ui->m_regionComboBox->palette().color(
+void InteractionsWidget::StyleScope(const ScopeEntry& scope) {
+  int index = m_ui->m_scopeComboBox->findText(
+    QString::fromStdString(scope.m_scope.get_name()));
+  if(scope.m_isActive) {
+    QVariant textColor = m_ui->m_scopeComboBox->palette().color(
       QPalette::Normal, QPalette::Text);
-    m_ui->m_regionComboBox->setItemData(index, textColor, Qt::ForegroundRole);
+    m_ui->m_scopeComboBox->setItemData(index, textColor, Qt::ForegroundRole);
     QFont font = qvariant_cast<QFont>(
-      m_ui->m_regionComboBox->itemData(index, Qt::FontRole));
+      m_ui->m_scopeComboBox->itemData(index, Qt::FontRole));
     font.setItalic(false);
-    m_ui->m_regionComboBox->setItemData(index, font, Qt::FontRole);
+    m_ui->m_scopeComboBox->setItemData(index, font, Qt::FontRole);
   } else {
-    QVariant textColor = m_ui->m_regionComboBox->palette().color(
+    QVariant textColor = m_ui->m_scopeComboBox->palette().color(
       QPalette::Disabled, QPalette::Text);
-    m_ui->m_regionComboBox->setItemData(index, textColor, Qt::ForegroundRole);
+    m_ui->m_scopeComboBox->setItemData(index, textColor, Qt::ForegroundRole);
     QFont font = qvariant_cast<QFont>(
-      m_ui->m_regionComboBox->itemData(index, Qt::FontRole));
+      m_ui->m_scopeComboBox->itemData(index, Qt::FontRole));
     font.setItalic(true);
-    m_ui->m_regionComboBox->setItemData(index, font, Qt::FontRole);
+    m_ui->m_scopeComboBox->setItemData(index, font, Qt::FontRole);
   }
 }
 
 void InteractionsWidget::Update() {
-  m_regionIndex = m_ui->m_regionComboBox->currentText().toStdString();
+  m_scopeIndex = m_ui->m_scopeComboBox->currentText().toStdString();
   m_quantityModifierIndex =
     m_ui->m_quantityIncrementModifierComboBox->currentIndex();
   m_priceModifierIndex = m_ui->m_priceIncrementModifierComboBox->currentIndex();
-  const RegionEntry& region = m_regions.at(m_regionIndex);
-  const InteractionsProperties& properties = m_properties.get(region.m_region);
+  const ScopeEntry& scope = m_scopes.at(m_scopeIndex);
+  const InteractionsProperties& properties = m_properties.get(scope.m_scope);
   m_ui->m_defaultQuantitySpinBox->setValue(
     static_cast<int>(properties.m_defaultQuantity));
   m_ui->m_quantityIncrementSpinBox->setValue(
@@ -138,28 +138,28 @@ void InteractionsWidget::Update() {
   m_ui->m_priceIncrementSpinBox->SetValue(
     properties.m_priceIncrements[m_priceModifierIndex]);
   m_ui->m_cancelOnFillCheckBox->setChecked(properties.m_cancelOnFill);
-  m_ui->m_activateRegionButton->setEnabled(region.m_region.is_global());
-  if(region.m_isActive) {
-    m_ui->m_activateRegionButton->setText(tr("Deactivate"));
+  m_ui->m_activateScopeButton->setEnabled(scope.m_scope.is_global());
+  if(scope.m_isActive) {
+    m_ui->m_activateScopeButton->setText(tr("Deactivate"));
   } else {
-    m_ui->m_activateRegionButton->setText(tr("Activate"));
+    m_ui->m_activateScopeButton->setText(tr("Activate"));
   }
-  m_ui->m_activateRegionButton->setEnabled(!region.m_region.is_global());
-  m_ui->m_resetRegionButton->setEnabled(region.m_isActive);
-  m_ui->m_defaultQuantitySpinBox->setEnabled(region.m_isActive);
-  m_ui->m_quantityIncrementSpinBox->setEnabled(region.m_isActive);
-  m_ui->m_quantityIncrementModifierComboBox->setEnabled(region.m_isActive);
-  m_ui->m_priceIncrementSpinBox->setEnabled(region.m_isActive);
-  m_ui->m_priceIncrementModifierComboBox->setEnabled(region.m_isActive);
-  m_ui->m_cancelOnFillCheckBox->setEnabled(region.m_isActive);
+  m_ui->m_activateScopeButton->setEnabled(!scope.m_scope.is_global());
+  m_ui->m_resetScopeButton->setEnabled(scope.m_isActive);
+  m_ui->m_defaultQuantitySpinBox->setEnabled(scope.m_isActive);
+  m_ui->m_quantityIncrementSpinBox->setEnabled(scope.m_isActive);
+  m_ui->m_quantityIncrementModifierComboBox->setEnabled(scope.m_isActive);
+  m_ui->m_priceIncrementSpinBox->setEnabled(scope.m_isActive);
+  m_ui->m_priceIncrementModifierComboBox->setEnabled(scope.m_isActive);
+  m_ui->m_cancelOnFillCheckBox->setEnabled(scope.m_isActive);
 }
 
 void InteractionsWidget::Store() {
-  if(m_regionIndex.empty()) {
+  if(m_scopeIndex.empty()) {
     return;
   }
-  InteractionsProperties& properties = m_properties.get(
-    m_regions.at(m_regionIndex).m_region);
+  InteractionsProperties& properties =
+    m_properties.get(m_scopes.at(m_scopeIndex).m_scope);
   properties.m_defaultQuantity = m_ui->m_defaultQuantitySpinBox->value();
   if(m_quantityModifierIndex != -1) {
     properties.m_quantityIncrements[m_quantityModifierIndex] =
@@ -172,7 +172,7 @@ void InteractionsWidget::Store() {
   properties.m_cancelOnFill = m_ui->m_cancelOnFillCheckBox->isChecked();
 }
 
-void InteractionsWidget::OnRegionIndexChanged(int index) {
+void InteractionsWidget::OnScopeIndexChanged(int index) {
   Store();
   Update();
 }
@@ -182,27 +182,27 @@ void InteractionsWidget::OnKeyboardModifierIndexChanged(int index) {
   Update();
 }
 
-void InteractionsWidget::OnActivateRegionClicked() {
-  if(m_regionIndex.empty()) {
+void InteractionsWidget::OnActivateScopeClicked() {
+  if(m_scopeIndex.empty()) {
     return;
   }
-  RegionEntry& region = m_regions.at(m_regionIndex);
-  if(!region.m_isActive) {
-    region.m_isActive = true;
-    m_properties.set(region.m_region,
-      InteractionsProperties::GetDefaultProperties());
+  ScopeEntry& scope = m_scopes.at(m_scopeIndex);
+  if(!scope.m_isActive) {
+    scope.m_isActive = true;
+    m_properties.set(
+      scope.m_scope, InteractionsProperties::GetDefaultProperties());
     Store();
   } else {
-    region.m_isActive = false;
-    m_properties.erase(region.m_region);
+    scope.m_isActive = false;
+    m_properties.erase(scope.m_scope);
   }
-  StyleRegion(region);
+  StyleScope(scope);
   Update();
 }
 
-void InteractionsWidget::OnResetRegionClicked() {
-  const RegionEntry& region = m_regions.at(m_regionIndex);
-  m_properties.get(region.m_region) =
+void InteractionsWidget::OnResetScopeClicked() {
+  const ScopeEntry& scope = m_scopes.at(m_scopeIndex);
+  m_properties.get(scope.m_scope) =
     InteractionsProperties::GetDefaultProperties();
   Update();
 }

@@ -52,7 +52,7 @@ RiskModel& RiskWidget::GetModel() {
 void RiskWidget::SetModel(const std::shared_ptr<RiskModel>& model) {
   m_model = model;
   auto& currency = m_userProfile->GetCurrencyDatabase().from(
-    m_model->GetRiskParameters().m_currency);
+    to_currency(m_model->GetRiskParameters().m_currency));
   if(m_isReadOnly) {
     m_ui->m_currencyInput->clear();
     m_ui->m_currencyInput->addItem(QString::fromStdString(

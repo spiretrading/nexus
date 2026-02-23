@@ -13,10 +13,10 @@
 #include "Spire/Canvas/Types/OrderStatusType.hpp"
 #include "Spire/Canvas/Types/OrderTypeType.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
-#include "Spire/Canvas/Types/SecurityType.hpp"
 #include "Spire/Canvas/Types/SequenceType.hpp"
 #include "Spire/Canvas/Types/SideType.hpp"
 #include "Spire/Canvas/Types/TextType.hpp"
+#include "Spire/Canvas/Types/TickerType.hpp"
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
 #include "Spire/Canvas/Types/VenueType.hpp"
@@ -40,10 +40,10 @@ namespace {
     types.push_back(OrderStatusType::GetInstance());
     types.push_back(OrderTypeType::GetInstance());
     types.push_back(RecordType::GetEmptyRecordType());
-    types.push_back(SecurityType::GetInstance());
     types.push_back(SequenceType::GetInstance());
     types.push_back(SideType::GetInstance());
     types.push_back(TextType::GetInstance());
+    types.push_back(TickerType::GetInstance());
     types.push_back(TimeInForceType::GetInstance());
     types.push_back(TimeRangeType::GetInstance());
     types.push_back(VenueType::GetInstance());
@@ -64,10 +64,10 @@ namespace {
     types.push_back(OrderStatusType::GetInstance());
     types.push_back(OrderTypeType::GetInstance());
     types.push_back(RecordType::GetEmptyRecordType());
-    types.push_back(SecurityType::GetInstance());
     types.push_back(SequenceType::GetInstance());
     types.push_back(SideType::GetInstance());
     types.push_back(TextType::GetInstance());
+    types.push_back(TickerType::GetInstance());
     types.push_back(TimeInForceType::GetInstance());
     types.push_back(TimeRangeType::GetInstance());
     types.push_back(VenueType::GetInstance());

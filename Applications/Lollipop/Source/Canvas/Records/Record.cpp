@@ -15,15 +15,13 @@ const std::vector<Record::Field>& Record::GetFields() const {
 Record::AddField::AddField(std::vector<Field>& fields)
   : m_fields(fields) {}
 
-std::size_t Spire::hash_value(const Record& record) noexcept {
-  auto seed = std::size_t(0);
-  for(auto& field : record.GetFields()) {
-    hash_combine(seed, std::hash<Record::Field>()(field));
-  }
-  return seed;
-}
-
 std::size_t
     std::hash<Record>::operator ()(const Record& record) const noexcept {
-  return hash_value(record);
+  auto seed = std::size_t(0);
+  for(auto& field : record.GetFields()) {
+    hash_combine(seed, apply_visitor([] (const auto& field) {
+      return std::hash<std::remove_cvref_t<decltype(field)>>()(field);
+    }, field));
+  }
+  return seed;
 }

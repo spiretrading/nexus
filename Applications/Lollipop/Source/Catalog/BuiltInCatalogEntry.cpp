@@ -22,8 +22,8 @@
 #include "Spire/Canvas/OrderExecutionNodes/OptionalPriceNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderTaskNodes.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderWrapperTaskNode.hpp"
-#include "Spire/Canvas/OrderExecutionNodes/SecurityPortfolioNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
 #include "Spire/Canvas/Records/QueryNode.hpp"
 #include "Spire/Canvas/Records/RecordNode.hpp"
 #include "Spire/Canvas/ReferenceNodes/ProxyNode.hpp"
@@ -76,7 +76,7 @@
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
@@ -229,10 +229,6 @@ const uuid BuiltInCatalogEntry::REFERENCE_UUID = stringUuidGenerator(
   "{ea17b970-72a1-11e1-b0c4-0800200c9a66}");
 const uuid BuiltInCatalogEntry::ROUND_UUID = stringUuidGenerator(
   "{3e618b36-d131-4526-be01-69c98dccd6bc}");
-const uuid BuiltInCatalogEntry::SECURITY_UUID = stringUuidGenerator(
-  "{efb1c80d-9052-46b0-919e-37495602e0db}");
-const uuid BuiltInCatalogEntry::SECURITY_PORTFOLIO_UUID = stringUuidGenerator(
-  "{f89ef270-b30c-11df-94e2-0800200c9a66}");
 const uuid BuiltInCatalogEntry::SIDE_UUID = stringUuidGenerator(
   "{fbd040ea-d3b4-4245-8caa-edf6a273a94e}");
 const uuid BuiltInCatalogEntry::SINGLE_ORDER_TASK_UUID = stringUuidGenerator(
@@ -247,6 +243,10 @@ const uuid BuiltInCatalogEntry::TASK_STATE_MONITOR_UUID = stringUuidGenerator(
   "{265fbaf3-ad85-40e3-a39f-f6bacc3b26de}");
 const uuid BuiltInCatalogEntry::TEXT_UUID = stringUuidGenerator(
   "{713dcb76-8450-4e25-ad22-51de1ba54c6a}");
+const uuid BuiltInCatalogEntry::TICKER_UUID = stringUuidGenerator(
+  "{efb1c80d-9052-46b0-919e-37495602e0db}");
+const uuid BuiltInCatalogEntry::TICKER_PORTFOLIO_UUID = stringUuidGenerator(
+  "{f89ef270-b30c-11df-94e2-0800200c9a66}");
 const uuid BuiltInCatalogEntry::TIME_AND_SALE_QUERY_UUID = stringUuidGenerator(
   "{c9ff5de0-f838-11e3-a3ac-0800200c9a66}");
 const uuid BuiltInCatalogEntry::TIME_IN_FORCE_UUID = stringUuidGenerator(
@@ -405,11 +405,6 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
     ":/icons/bookmark_blue.png", "", ReferenceNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(ROUND_UUID,
     ":/icons/calculator.png", "", RoundNode()));
-  entries.push_back(std::make_unique<BuiltInCatalogEntry>("Security",
-    SECURITY_UUID, ":/icons/chart_line.png", "", SecurityNode()));
-  entries.push_back(std::make_unique<BuiltInCatalogEntry>("Security Portfolio",
-    SECURITY_PORTFOLIO_UUID, ":/icons/chart_line.png", "",
-    SecurityPortfolioNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>("Side", SIDE_UUID,
     ":/icons/sort_up_down.png", "", SideNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(
@@ -421,6 +416,11 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
     ":/icons/calculator.png", "", SubtractionNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>("Text", TEXT_UUID,
     ":/icons/window_font.png", "", TextNode()));
+  entries.push_back(std::make_unique<BuiltInCatalogEntry>("Ticker",
+    TICKER_UUID, ":/icons/chart_line.png", "", TickerNode()));
+  entries.push_back(std::make_unique<BuiltInCatalogEntry>("Ticker Portfolio",
+    TICKER_PORTFOLIO_UUID, ":/icons/chart_line.png", "",
+    TickerPortfolioNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(
     TIME_AND_SALE_QUERY_UUID, ":/icons/chart_line.png", "",
     TimeAndSaleQueryNode()));

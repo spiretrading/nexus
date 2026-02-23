@@ -81,12 +81,13 @@ bool PortfolioSelectionModel::TestSelectionAcceptsEntry(
   if(m_selectedGroups.find(entry.m_group) == m_selectedGroups.end()) {
     return false;
   }
-  if(m_selectedCurrencies.find(entry.m_inventory.m_position.m_currency) ==
-      m_selectedCurrencies.end()) {
+
+  /** TODO. */
+  if(!m_selectedCurrencies.contains(
+      to_currency(entry.m_inventory.m_position.m_currency))) {
     return false;
   }
-  if(m_selectedVenues.find(
-      entry.m_inventory.m_position.m_security.get_venue()) ==
+  if(m_selectedVenues.find(entry.m_inventory.m_position.m_ticker.get_venue()) ==
       m_selectedVenues.end()) {
     return false;
   }

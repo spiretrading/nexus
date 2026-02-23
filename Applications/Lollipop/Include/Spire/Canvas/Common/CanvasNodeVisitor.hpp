@@ -145,9 +145,9 @@ namespace Spire {
 
       virtual void Visit(const TextNode& node);
 
-      virtual void Visit(const TickerNode& node);
-
       virtual void Visit(const TickerPortfolioNode& node);
+
+      virtual void Visit(const TickerNode& node);
 
       virtual void Visit(const TimeAndSaleQueryNode& node);
 

@@ -17,7 +17,7 @@ class Ui_BookViewPanel;
 
 namespace Spire {
 
-  /** Displays one Side of a Security's book. */
+  /** Displays one Side of a Ticker's book. */
   class BookViewPanel : public QWidget {
     public:
 
@@ -48,10 +48,10 @@ namespace Spire {
       void SetProperties(const BookViewProperties& properties);
 
       /**
-       * Sets the Security to display.
-       * @param security The Security to display.
+       * Sets the Ticker to display.
+       * @param ticker The Ticker to display.
        */
-      void DisplaySecurity(const Nexus::Security& security);
+      void DisplayTicker(const Nexus::Ticker& ticker);
 
     protected:
       void resizeEvent(QResizeEvent* event) override;
@@ -62,7 +62,7 @@ namespace Spire {
       UserProfile* m_userProfile;
       std::optional<UI::CustomVariantItemDelegate> m_itemDelegate;
       BookViewProperties m_properties;
-      Nexus::Security m_security;
+      Nexus::Ticker m_ticker;
       Nexus::Side m_side;
       Nexus::Quote m_bestQuote;
       std::unique_ptr<BookViewModel> m_model;
@@ -76,7 +76,7 @@ namespace Spire {
 
       void ConnectModel();
       void DisconnectModel();
-      void OnBbo(const Nexus::Security& security, const Nexus::BboQuote& bbo);
+      void OnBbo(const Nexus::Ticker& ticker, const Nexus::BboQuote& bbo);
       void OnRowsAboutToBeModified(
         const QModelIndex& parent, int start, int end);
       void OnRowsModified(const QModelIndex& parent, int start, int end);

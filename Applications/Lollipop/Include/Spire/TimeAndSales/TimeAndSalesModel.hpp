@@ -2,7 +2,7 @@
 #define SPIRE_TIME_AND_SALES_MODEL_HPP
 #include <QAbstractItemModel>
 #include "Nexus/Definitions/BboQuote.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
@@ -10,7 +10,7 @@
 
 namespace Spire {
 
-  /** Models a Security's TimeAndSales. */
+  /** Models a ticker's TimeAndSales. */
   class TimeAndSalesModel : public QAbstractTableModel {
     public:
 
@@ -62,11 +62,10 @@ namespace Spire {
        * Constructs a TimeAndSalesModel.
        * @param userProfile The user's profile.
        * @param properties The TimeAndSalesProperties used.
-       * @param security The Security whose TimeAndSales is to be modeled.
+       * @param ticker The Ticker whose TimeAndSales is to be modeled.
        */
       TimeAndSalesModel(Beam::Ref<UserProfile> userProfile,
-        const TimeAndSalesProperties& properties,
-        const Nexus::Security& security);
+        const TimeAndSalesProperties& properties, const Nexus::Ticker& ticker);
 
       /** Sets the TimeAndSalesProperties. */
       void SetProperties(const TimeAndSalesProperties& properties);

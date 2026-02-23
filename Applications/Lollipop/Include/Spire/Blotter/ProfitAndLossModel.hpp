@@ -69,7 +69,7 @@ namespace Spire {
         Beam::Ref<PortfolioController> portfolioController);
 
       /** Set the currency that profit and loss updates are expressed in. */
-      void SetCurrency(Nexus::CurrencyId currency);
+      void SetCurrency(Nexus::Asset currency);
 
       /** Connects a slot to the ProfitAndLossUpdated signal. */
       boost::signals2::connection ConnectProfitAndLossUpdateSignal(
@@ -96,10 +96,10 @@ namespace Spire {
       const Nexus::ExchangeRateTable* m_exchangeRates;
       bool m_showUnrealized;
       PortfolioController* m_portfolioController;
-      Nexus::CurrencyId m_currency;
-      std::unordered_map<Nexus::CurrencyId, Nexus::PortfolioUpdateEntry>
+      Nexus::Asset m_currency;
+      std::unordered_map<Nexus::Asset, Nexus::PortfolioUpdateEntry>
         m_currencyToPortfolio;
-      std::unordered_map<Nexus::CurrencyId,
+      std::unordered_map<Nexus::Asset,
         std::unique_ptr<ProfitAndLossEntryModel>> m_currencyToModel;
       Nexus::PortfolioUpdateEntry m_update;
       mutable ProfitAndLossUpdateSignal m_profitAndLossUpdateSignal;

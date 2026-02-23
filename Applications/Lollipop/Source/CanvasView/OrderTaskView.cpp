@@ -99,8 +99,7 @@ void OrderTaskView::ExecuteTask(const CanvasNode& node) {
 unique_ptr<CanvasNode> OrderTaskView::InitializeTaskNode(
     const CanvasNode& baseNode) {
   auto taskNode = CanvasNode::Clone(baseNode);
-  auto tickerNode = taskNode->FindNode(
-    SingleOrderTaskNode::SECURITY_PROPERTY);
+  auto tickerNode = taskNode->FindNode(SingleOrderTaskNode::TICKER_PROPERTY);
   if(tickerNode.is_initialized() && !tickerNode->IsReadOnly()) {
     if(auto tickerValueNode =
         dynamic_cast<const TickerNode*>(&*tickerNode)) {
