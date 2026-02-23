@@ -9,7 +9,7 @@
 #include <boost/signals2/connection.hpp>
 #include <QTimer>
 #include <QWidget>
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardCell.hpp"
 #include "Spire/UI/PersistentWindow.hpp"

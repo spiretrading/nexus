@@ -6,7 +6,7 @@
 #include <boost/signals2/signal.hpp>
 #include <boost/variant/variant.hpp>
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Dashboard/Dashboard.hpp"
 
 namespace Spire {
@@ -18,8 +18,8 @@ namespace Spire {
     public:
 
       //! The type used to represent a dashboard value.
-      using Value = boost::variant<Nexus::Quantity, double, Nexus::Money,
-        std::string, Nexus::Security>;
+      using Value = boost::variant<
+        Nexus::Quantity, double, Nexus::Money, std::string, Nexus::Ticker>;
 
       //! Signals an update to this cell's value.
       /*!

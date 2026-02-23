@@ -38,7 +38,7 @@ void OrderImbalanceIndicatorModel::SetVenueFilter(Venue venue, bool filter) {
   for(auto& orderImbalance : m_orderImbalances) {
     if(IsDisplayed(orderImbalance)) {
       m_displayedIndicies.insert(std::pair(
-        std::pair(orderImbalance.get_index(), orderImbalance->m_security),
+        std::pair(orderImbalance.get_index(), orderImbalance->m_ticker),
         static_cast<int>(m_displayedOrderImbalances.size())));
       m_displayedOrderImbalances.push_back(orderImbalance);
     }
@@ -73,8 +73,8 @@ QVariant OrderImbalanceIndicatorModel::data(
   } else if(role == Qt::DisplayRole) {
     if(index.column() == VENUE_COLUMN) {
       return QVariant::fromValue(orderImbalance.get_index());
-    } else if(index.column() == SECURITY_COLUMN) {
-      return QVariant::fromValue(orderImbalance->m_security);
+    } else if(index.column() == TICKER_COLUMN) {
+      return QVariant::fromValue(orderImbalance->m_ticker);
     } else if(index.column() == SIDE_COLUMN) {
       return QVariant::fromValue(orderImbalance->m_side);
     } else if(index.column() == SIZE_COLUMN) {
@@ -98,8 +98,8 @@ QVariant OrderImbalanceIndicatorModel::headerData(int section,
   } else if(role == Qt::DisplayRole) {
     if(section == VENUE_COLUMN) {
       return tr("Venue");
-    } else if(section == SECURITY_COLUMN) {
-      return tr("Security");
+    } else if(section == TICKER_COLUMN) {
+      return tr("Ticker");
     } else if(section == SIDE_COLUMN) {
       return tr("Side");
     } else if(section == SIZE_COLUMN) {
@@ -150,7 +150,7 @@ void OrderImbalanceIndicatorModel::InitializePublishers() {
 void OrderImbalanceIndicatorModel::OnOrderImbalance(
     Venue venue, const OrderImbalance& orderImbalance) {
   auto venueOrderImbalance = VenueOrderImbalance(orderImbalance, venue);
-  auto key = std::pair(venue, orderImbalance.m_security);
+  auto key = std::pair(venue, orderImbalance.m_ticker);
   auto i = m_imbalanceIndicies.find(key);
   auto isReplacing = false;
   if(i != m_imbalanceIndicies.end()) {

@@ -24,15 +24,15 @@
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
 #include "Spire/CanvasView/CondensedCanvasWidget.hpp"
 #include "Spire/CanvasView/CanvasNodeNotVisibleException.hpp"
-#include "Spire/InputWidgets/SecurityInputDialog.hpp"
-#include "Spire/UI/LinkSecurityContextAction.hpp"
+#include "Spire/InputWidgets/TickerInputDialog.hpp"
+#include "Spire/UI/LinkTickerContextAction.hpp"
 #include "Spire/UI/UserProfile.hpp"
 #include "Spire/UI/ValueLabel.hpp"
-#include "Spire/Utilities/SecurityTechnicalsModel.hpp"
+#include "Spire/Utilities/TickerTechnicalsModel.hpp"
 #include "ui_BookViewWindow.h"
 
 using namespace Beam;
@@ -105,7 +105,7 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> userProfile,
     const BookViewProperties& properties, const std::string& identifier,
     QWidget* parent, Qt::WindowFlags flags)
     : QFrame(parent, flags),
-      SecurityContext(identifier),
+      TickerContext(identifier),
       m_ui(std::make_unique<Ui_BookViewWindow>()),
       m_userProfile(userProfile.get()),
       m_properties(properties),
@@ -133,7 +133,7 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> userProfile,
   connect(
     &m_updateTimer, &QTimer::timeout, this, &BookViewWindow::OnUpdateTimer);
   m_updateTimer.start(UPDATE_INTERVAL);
-  SetupSecurityTechnicalsModel();
+  SetupTickerTechnicalsModel();
 }
 
 const BookViewProperties& BookViewWindow::GetBookViewProperties() const {
@@ -146,13 +146,13 @@ void BookViewWindow::SetProperties(const BookViewProperties& properties) {
   m_ui->m_bidPanel->SetProperties(m_properties);
 }
 
-void BookViewWindow::DisplaySecurity(const Security& security) {
-  m_security = security;
-  setWindowTitle(displayText(security) + tr(" - Book View"));
-  m_ui->m_askPanel->DisplaySecurity(m_security);
-  m_ui->m_bidPanel->DisplaySecurity(m_security);
-  SetupSecurityTechnicalsModel();
-  SetDisplayedSecurity(m_security);
+void BookViewWindow::DisplayTicker(const Ticker& ticker) {
+  m_ticker = ticker;
+  setWindowTitle(displayText(ticker) + tr(" - Book View"));
+  m_ui->m_askPanel->DisplayTicker(m_ticker);
+  m_ui->m_bidPanel->DisplayTicker(m_ticker);
+  SetupTickerTechnicalsModel();
+  SetDisplayedTicker(m_ticker);
 }
 
 std::unique_ptr<WindowSettings> BookViewWindow::GetWindowSettings() const {
@@ -160,7 +160,7 @@ std::unique_ptr<WindowSettings> BookViewWindow::GetWindowSettings() const {
 }
 
 void BookViewWindow::showEvent(QShowEvent* event) {
-  if(auto context = SecurityContext::FindSecurityContext(m_linkIdentifier)) {
+  if(auto context = TickerContext::FindTickerContext(m_linkIdentifier)) {
     Link(*context);
   } else {
     m_linkConnection.disconnect();
@@ -174,7 +174,7 @@ void BookViewWindow::showEvent(QShowEvent* event) {
 }
 
 void BookViewWindow::closeEvent(QCloseEvent* event) {
-  if(m_security != Security()) {
+  if(m_ticker != Ticker()) {
     auto settings =
       std::make_unique<BookViewWindowSettings>(*this, Ref(*m_userProfile));
     m_userProfile->AddRecentlyClosedWindow(std::move(settings));
@@ -195,14 +195,14 @@ void BookViewWindow::keyPressEvent(QKeyEvent* event) {
       window->activateWindow();
     }
     return;
-  } else if(m_security != Security()) {
+  } else if(m_ticker != Ticker()) {
     auto key =
       QKeySequence(static_cast<int>(event->modifiers() + event->key()));
     if(key.matches(Qt::Key_QuoteLeft) == QKeySequence::ExactMatch) {
       HandleInteractionsPropertiesEvent();
     } else {
       auto taskBinding = m_userProfile->GetKeyBindings().GetTaskFromBinding(
-        m_security.get_venue(), key);
+        m_ticker.get_venue(), key);
       if(taskBinding) {
         HandleKeyBindingEvent(*taskBinding);
         return;
@@ -215,14 +215,14 @@ void BookViewWindow::keyPressEvent(QKeyEvent* event) {
       }
     }
   }
-  HandleSecurityInputEvent(event);
+  HandleTickerInputEvent(event);
 }
 
-void BookViewWindow::HandleLink(SecurityContext& context) {
+void BookViewWindow::HandleLink(TickerContext& context) {
   m_linkIdentifier = context.GetIdentifier();
-  m_linkConnection = context.ConnectSecurityDisplaySignal(
-    std::bind_front(&BookViewWindow::DisplaySecurity, this));
-  DisplaySecurity(context.GetDisplayedSecurity());
+  m_linkConnection = context.ConnectTickerDisplaySignal(
+    std::bind_front(&BookViewWindow::DisplayTicker, this));
+  DisplayTicker(context.GetDisplayedTicker());
 }
 
 void BookViewWindow::HandleUnlink() {
@@ -230,44 +230,44 @@ void BookViewWindow::HandleUnlink() {
   m_linkIdentifier.clear();
 }
 
-void BookViewWindow::SetupSecurityTechnicalsModel() {
-  m_securityTechnicalsConnections.disconnect();
+void BookViewWindow::SetupTickerTechnicalsModel() {
+  m_tickerTechnicalsConnections.disconnect();
   m_ui->m_openValue->Reset();
   m_ui->m_closeValue->Reset();
   m_ui->m_highValue->Reset();
   m_ui->m_lowValue->Reset();
   m_ui->m_volumeValue->Reset();
-  m_securityTechnicalsModel =
-    SecurityTechnicalsModel::GetModel(Ref(*m_userProfile), m_security);
-  m_securityTechnicalsConnections.add(
-    m_securityTechnicalsModel->ConnectOpenSignal(
+  m_tickerTechnicalsModel =
+    TickerTechnicalsModel::GetModel(Ref(*m_userProfile), m_ticker);
+  m_tickerTechnicalsConnections.add(
+    m_tickerTechnicalsModel->ConnectOpenSignal(
       std::bind_front(&BookViewWindow::OnOpenUpdate, this)));
-  m_securityTechnicalsConnections.add(
-    m_securityTechnicalsModel->ConnectCloseSignal(
+  m_tickerTechnicalsConnections.add(
+    m_tickerTechnicalsModel->ConnectCloseSignal(
       std::bind_front(&BookViewWindow::OnCloseUpdate, this)));
-  m_securityTechnicalsConnections.add(
-    m_securityTechnicalsModel->ConnectHighSignal(
+  m_tickerTechnicalsConnections.add(
+    m_tickerTechnicalsModel->ConnectHighSignal(
       std::bind_front(&BookViewWindow::OnHighUpdate, this)));
-  m_securityTechnicalsConnections.add(
-    m_securityTechnicalsModel->ConnectLowSignal(
+  m_tickerTechnicalsConnections.add(
+    m_tickerTechnicalsModel->ConnectLowSignal(
       std::bind_front(&BookViewWindow::OnLowUpdate, this)));
-  m_securityTechnicalsConnections.add(
-    m_securityTechnicalsModel->ConnectVolumeSignal(
+  m_tickerTechnicalsConnections.add(
+    m_tickerTechnicalsModel->ConnectVolumeSignal(
       std::bind_front(&BookViewWindow::OnVolumeUpdate, this)));
 }
 
 std::unique_ptr<CanvasNode>
     BookViewWindow::PrepareTaskNode(const CanvasNode& node) {
   auto taskNode = CanvasNode::Clone(node);
-  auto securityNode =
+  auto tickerNode =
     taskNode->FindNode(SingleOrderTaskNode::SECURITY_PROPERTY);
-  if(securityNode && !securityNode->IsReadOnly()) {
-    if(auto securityValueNode =
-        dynamic_cast<const SecurityNode*>(&*securityNode)) {
+  if(tickerNode && !tickerNode->IsReadOnly()) {
+    if(auto tickerValueNode =
+        dynamic_cast<const TickerNode*>(&*tickerNode)) {
       auto builder = CanvasNodeBuilder(*taskNode);
-      builder.Replace(*securityNode, securityValueNode->SetValue(m_security,
+      builder.Replace(*tickerNode, tickerValueNode->SetValue(m_ticker,
         m_userProfile->GetVenueDatabase()));
-      builder.SetReadOnly(*securityNode, true);
+      builder.SetReadOnly(*tickerNode, true);
       auto price = [&] {
         if(auto sideNode =
             taskNode->FindNode(SingleOrderTaskNode::SIDE_PROPERTY)) {
@@ -302,14 +302,14 @@ std::unique_ptr<CanvasNode>
               if(auto sideValueNode =
                   dynamic_cast<const SideNode*>(&*sideNode)) {
                 return m_userProfile->GetDefaultQuantity(
-                  m_security, sideValueNode->GetValue());
+                  m_ticker, sideValueNode->GetValue());
               } else {
                 return m_userProfile->GetInteractionProperties().get(
-                  m_security).m_defaultQuantity;
+                  m_ticker).m_defaultQuantity;
               }
             } else {
               return m_userProfile->GetInteractionProperties().get(
-                m_security).m_defaultQuantity;
+                m_ticker).m_defaultQuantity;
             }
           }();
           builder.Replace(*quantityNode,
@@ -347,7 +347,7 @@ void BookViewWindow::ExecuteTask(const CanvasNode& node) {
     raise();
   }
   auto& entry = activeBlotter.GetTasksModel().Add(node);
-  m_tasksExecuted[m_security].push_back(entry.m_task);
+  m_tasksExecuted[m_ticker].push_back(entry.m_task);
   entry.m_task->GetPublisher().monitor(
     m_eventHandler.get_slot<Task::StateEntry>(
       [=, task = entry.m_task] (const auto& update) {
@@ -356,16 +356,16 @@ void BookViewWindow::ExecuteTask(const CanvasNode& node) {
   entry.m_task->Execute();
 }
 
-void BookViewWindow::HandleSecurityInputEvent(QKeyEvent* event) {
+void BookViewWindow::HandleTickerInputEvent(QKeyEvent* event) {
   auto key = event->key();
   if(key == Qt::Key_PageUp) {
-    m_securityViewStack.PushUp(m_security, [&] (const auto& security) {
-      DisplaySecurity(security);
+    m_tickerViewStack.PushUp(m_ticker, [&] (const auto& ticker) {
+      DisplayTicker(ticker);
     });
     return;
   } else if(key == Qt::Key_PageDown) {
-    m_securityViewStack.PushDown(m_security, [&] (const auto& security) {
-      DisplaySecurity(security);
+    m_tickerViewStack.PushDown(m_ticker, [&] (const auto& ticker) {
+      DisplayTicker(ticker);
     });
     return;
   }
@@ -373,13 +373,13 @@ void BookViewWindow::HandleSecurityInputEvent(QKeyEvent* event) {
   if(text.isEmpty() || !text[0].isLetterOrNumber()) {
     return;
   }
-  ShowSecurityInputDialog(Ref(*m_userProfile), text.toStdString(), this,
-    [=] (auto security) {
-      if(!security || security == Security() || security == m_security) {
+  ShowTickerInputDialog(Ref(*m_userProfile), text.toStdString(), this,
+    [=] (auto ticker) {
+      if(!ticker || ticker == Ticker() || ticker == m_ticker) {
         return;
       }
-      m_securityViewStack.Push(m_security);
-      DisplaySecurity(*security);
+      m_tickerViewStack.Push(m_ticker);
+      DisplayTicker(*ticker);
     });
 }
 
@@ -411,9 +411,9 @@ void BookViewWindow::HandleKeyBindingEvent(
 
 void BookViewWindow::HandleInteractionsPropertiesEvent() {
   auto& interactionsProperties =
-    m_userProfile->GetInteractionProperties().get(m_security);
+    m_userProfile->GetInteractionProperties().get(m_ticker);
   auto interactionsNode = std::make_unique<InteractionsNode>(
-    m_security, m_userProfile->GetVenueDatabase(), interactionsProperties);
+    m_ticker, m_userProfile->GetVenueDatabase(), interactionsProperties);
   m_taskEntryWidget =
     new CondensedCanvasWidget("Interactions", Ref(*m_userProfile), this);
   m_isTaskEntryWidgetForInteractionsProperties = true;
@@ -427,7 +427,7 @@ void BookViewWindow::HandleInteractionsPropertiesEvent() {
 void BookViewWindow::HandleCancelBindingEvent(
     const KeyBindings::CancelBinding& cancelBinding) {
   KeyBindings::CancelBinding::HandleCancel(
-    cancelBinding, out(m_tasksExecuted[m_security]));
+    cancelBinding, out(m_tasksExecuted[m_ticker]));
 }
 
 void BookViewWindow::HandleTaskInputEvent(QKeyEvent* event) {
@@ -439,7 +439,7 @@ void BookViewWindow::HandleTaskInputEvent(QKeyEvent* event) {
       auto& interactionsNode = static_cast<const InteractionsNode&>(
         *m_taskEntryWidget->GetRoots().front());
       m_userProfile->GetInteractionProperties().set(
-        m_security, interactionsNode.GetProperties());
+        m_ticker, interactionsNode.GetProperties());
       RemoveTaskEntry();
     } else {
       auto taskNode = CanvasNode::Clone(*m_taskEntryWidget->GetRoots().front());
@@ -453,7 +453,7 @@ void BookViewWindow::HandleTaskInputEvent(QKeyEvent* event) {
     auto key =
       QKeySequence(static_cast<int>(event->modifiers() + event->key()));
     auto taskBinding = m_userProfile->GetKeyBindings().GetTaskFromBinding(
-      m_security.get_venue(), key);
+      m_ticker.get_venue(), key);
     if(taskBinding) {
       RemoveTaskEntry();
       HandleKeyBindingEvent(*taskBinding);
@@ -463,9 +463,9 @@ void BookViewWindow::HandleTaskInputEvent(QKeyEvent* event) {
 
 void BookViewWindow::UpdateDefaultQuantity() {
   auto defaultBidQuantity =
-    m_userProfile->GetDefaultQuantity(m_security, Side::BID);
+    m_userProfile->GetDefaultQuantity(m_ticker, Side::BID);
   auto defaultAskQuantity =
-    m_userProfile->GetDefaultQuantity(m_security, Side::ASK);
+    m_userProfile->GetDefaultQuantity(m_ticker, Side::ASK);
   m_ui->m_defaultQuantityValue->SetValue(QString::fromStdString(
     lexical_cast<std::string>(defaultBidQuantity) + "x" +
     lexical_cast<std::string>(defaultAskQuantity)));
@@ -494,7 +494,7 @@ void BookViewWindow::OnVolumeUpdate(Quantity volume) {
 void BookViewWindow::OnTaskState(const std::shared_ptr<Task>& task,
     const Task::StateEntry& update) {
   if(IsTerminal(update.m_state)) {
-    remove_first(m_tasksExecuted[m_security], task);
+    remove_first(m_tasksExecuted[m_ticker], task);
   }
 }
 
@@ -505,7 +505,7 @@ void BookViewWindow::OnContextMenu(const QPoint& position) {
   propertiesAction.setToolTip(tr("Opens the Book View properties."));
   contextMenu.addAction(&propertiesAction);
   auto linkMenu = QMenu("Links");
-  auto linkActions = LinkSecurityContextAction::MakeActions(
+  auto linkActions = LinkTickerContextAction::MakeActions(
     this, m_linkIdentifier, &linkMenu, *m_userProfile);
   for(auto& action : linkActions) {
     linkMenu.addAction(action.get());
@@ -517,13 +517,13 @@ void BookViewWindow::OnContextMenu(const QPoint& position) {
     contextMenu.exec(static_cast<QWidget*>(sender())->mapToGlobal(position));
   if(selectedAction == &propertiesAction) {
     auto propertiesWidget = BookViewPropertiesDialog(
-      Ref(*m_userProfile), m_security, m_properties, this);
+      Ref(*m_userProfile), m_ticker, m_properties, this);
     if(propertiesWidget.exec() == QDialog::Rejected) {
       return;
     }
     SetProperties(propertiesWidget.GetProperties());
   } else if(auto linkAction =
-      dynamic_cast<LinkSecurityContextAction*>(selectedAction)) {
+      dynamic_cast<LinkTickerContextAction*>(selectedAction)) {
     linkAction->Execute(out(*this));
   }
 }

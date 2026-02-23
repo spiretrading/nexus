@@ -3,7 +3,7 @@
 #include <array>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/RegionMap.hpp"
+#include "Nexus/Definitions/ScopeTable.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/UI/UI.hpp"
 
@@ -21,7 +21,7 @@ namespace Spire {
     /*!
       \param userProfile The user's profile.
     */
-    static Nexus::RegionMap<InteractionsProperties> GetDefaultPropertiesMap(
+    static Nexus::ScopeTable<InteractionsProperties> GetDefaultPropertiesMap(
       const UserProfile& userProfile);
 
     //! Loads the InteractionsProperties from a UserProfile.
@@ -45,7 +45,7 @@ namespace Spire {
     //! The amount to increment the price field by.
     std::array<Nexus::Money, KeyModifiers::COUNT> m_priceIncrements;
 
-    //! Whether to cancel all Orders on a given Security's Side when one of them
+    //! Whether to cancel all Orders on a given Ticker's Side when one of them
     //! is filled.
     bool m_cancelOnFill;
   };

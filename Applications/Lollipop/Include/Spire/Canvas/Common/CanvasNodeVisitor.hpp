@@ -133,10 +133,6 @@ namespace Spire {
 
       virtual void Visit(const RoundNode& node);
 
-      virtual void Visit(const SecurityNode& node);
-
-      virtual void Visit(const SecurityPortfolioNode& node);
-
       virtual void Visit(const SideNode& node);
 
       virtual void Visit(const SignatureNode& node);
@@ -148,6 +144,10 @@ namespace Spire {
       virtual void Visit(const SubtractionNode& node);
 
       virtual void Visit(const TextNode& node);
+
+      virtual void Visit(const TickerNode& node);
+
+      virtual void Visit(const TickerPortfolioNode& node);
 
       virtual void Visit(const TimeAndSaleQueryNode& node);
 

@@ -23,8 +23,8 @@ namespace Spire {
         /** The venue publishing the OrderImbalance. */
         VENUE_COLUMN,
 
-        /** The Security with the OrderImbalance. */
-        SECURITY_COLUMN,
+        /** The Ticker with the OrderImbalance. */
+        TICKER_COLUMN,
 
         /** The Side of the OrderImbalance. */
         SIDE_COLUMN,
@@ -86,10 +86,8 @@ namespace Spire {
       OrderImbalanceIndicatorProperties m_properties;
       std::vector<Nexus::VenueOrderImbalance> m_orderImbalances;
       std::vector<Nexus::VenueOrderImbalance> m_displayedOrderImbalances;
-      std::map<std::pair<Nexus::Venue, Nexus::Security>, int>
-        m_imbalanceIndicies;
-      std::map<std::pair<Nexus::Venue, Nexus::Security>, int>
-        m_displayedIndicies;
+      std::map<std::pair<Nexus::Venue, Nexus::Ticker>, int> m_imbalanceIndicies;
+      std::map<std::pair<Nexus::Venue, Nexus::Ticker>, int> m_displayedIndicies;
       std::optional<EventHandler> m_eventHandler;
 
       bool IsDisplayed(const Nexus::VenueOrderImbalance& orderImbalance) const;

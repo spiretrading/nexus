@@ -221,25 +221,25 @@ void UserProfile::SetDefaultPortfolioViewerProperties(
   m_defaultPortfolioViewerProperties = properties;
 }
 
-RegionMap<InteractionsProperties>& UserProfile::GetInteractionProperties() {
+ScopeTable<InteractionsProperties>& UserProfile::GetInteractionProperties() {
   return m_interactionProperties;
 }
 
-const RegionMap<InteractionsProperties>&
+const ScopeTable<InteractionsProperties>&
     UserProfile::GetInteractionProperties() const {
   return m_interactionProperties;
 }
 
 Quantity
-    UserProfile::GetDefaultQuantity(const Security& security, Side side) const {
+    UserProfile::GetDefaultQuantity(const Ticker& ticker, Side side) const {
   auto baseQuantity =
-    GetInteractionProperties().get(security).m_defaultQuantity;
+    GetInteractionProperties().get(ticker).m_defaultQuantity;
   if(baseQuantity <= 0) {
     return 0;
   }
   auto& activeBlotter = GetBlotterSettings().GetActiveBlotter();
   auto position =
-    activeBlotter.GetOpenPositionsModel().GetOpenPosition(security);
+    activeBlotter.GetOpenPositionsModel().GetOpenPosition(ticker);
   auto currentQuantity = [&] {
     if(position) {
       return position->m_inventory.m_position.m_quantity;

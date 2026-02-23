@@ -13,7 +13,7 @@
 #include "Spire/Dashboard/PercentageDashboardCellRenderer.hpp"
 #include "Spire/Dashboard/TextDashboardCellRenderer.hpp"
 #include "Spire/Dashboard/ValueDashboardCell.hpp"
-#include "Spire/InputWidgets/SecurityInputDialog.hpp"
+#include "Spire/InputWidgets/TickerInputDialog.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
@@ -344,9 +344,9 @@ void DashboardWidget::SortRows() {
 }
 
 void DashboardWidget::ActivateRow(int index, const std::string& prefix) {
-  ShowSecurityInputDialog(Ref(*m_userProfile), prefix, this,
-    [=] (auto security) {
-      if(!security || security == Security()) {
+  ShowTickerInputDialog(Ref(*m_userProfile), prefix, this,
+    [=] (auto ticker) {
+      if(!ticker || ticker == Ticker()) {
         return;
       }
       for(auto i = m_renderer->GetSize(); i < index; ++i) {
@@ -356,7 +356,7 @@ void DashboardWidget::ActivateRow(int index, const std::string& prefix) {
       if(auto existingRow = m_renderer->GetRow(index)) {
         m_model->Remove(*existingRow);
       }
-      auto row = m_rowBuilder->Make(*security, Ref(*m_userProfile));
+      auto row = m_rowBuilder->Make(*ticker, Ref(*m_userProfile));
       m_model->Add(std::move(row));
       auto insertIndex = m_renderer->GetSize() - 1;
       m_renderer->MoveRow(insertIndex, index);

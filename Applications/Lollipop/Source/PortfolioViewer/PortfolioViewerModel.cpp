@@ -111,8 +111,8 @@ QVariant PortfolioViewerModel::data(const QModelIndex& index, int role) const {
         return tr("N/A");
       }
       return QVariant::fromValue(accountTotalsIterator->second.m_fees);
-    } else if(index.column() == SECURITY_COLUMN) {
-      return QVariant::fromValue(entry.m_inventory.m_position.m_security);
+    } else if(index.column() == TICKER_COLUMN) {
+      return QVariant::fromValue(entry.m_inventory.m_position.m_ticker);
     } else if(index.column() == OPEN_QUANTITY_COLUMN) {
       return QVariant::fromValue(abs(entry.m_inventory.m_position.m_quantity));
     } else if(index.column() == SIDE_COLUMN) {
@@ -172,8 +172,8 @@ QVariant PortfolioViewerModel::headerData(
       return tr("Acc. Realized");
     } else if(section == ACCOUNT_FEES_COLUMN) {
       return tr("Acc. Fees");
-    } else if(section == SECURITY_COLUMN) {
-      return tr("Security");
+    } else if(section == TICKER_COLUMN) {
+      return tr("Ticker");
     } else if(section == OPEN_QUANTITY_COLUMN) {
       return tr("Open Quantity");
     } else if(section == SIDE_COLUMN) {
@@ -203,7 +203,7 @@ QVariant PortfolioViewerModel::headerData(
 
 boost::optional<Money> PortfolioViewerModel::GetUnrealizedProfitAndLoss(
     const Inventory& inventory) const {
-  auto valuationIterator = m_valuations.find(inventory.m_position.m_security);
+  auto valuationIterator = m_valuations.find(inventory.m_position.m_ticker);
   if(valuationIterator == m_valuations.end()) {
     return none;
   }
@@ -217,12 +217,12 @@ boost::optional<Money> PortfolioViewerModel::GetUnrealizedProfitAndLoss(
 }
 
 void PortfolioViewerModel::OnBboQuote(
-    const Security& security, const BboQuote& bboQuote) {
-  auto& valuation = m_valuations.at(security);
+    const Ticker& ticker, const BboQuote& bboQuote) {
+  auto& valuation = m_valuations.at(ticker);
   auto previousValuation = valuation;
   valuation.m_ask_value = bboQuote.m_ask.m_price;
   valuation.m_bid_value = bboQuote.m_bid.m_price;
-  auto& indexes = m_securityToIndexes.at(security);
+  auto& indexes = m_tickerToIndexes.at(ticker);
   for(auto& item : indexes) {
     auto& viewerEntry = m_entries[item];
     auto baseCurrency = viewerEntry.m_inventory.m_position.m_currency;
@@ -257,16 +257,16 @@ void PortfolioViewerModel::OnBboQuote(
 
 void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
     const RiskInventoryEntry& entry) {
-  auto& security = entry.m_key.m_security;
+  auto& ticker = entry.m_key.m_ticker;
   auto baseCurrency = entry.m_value.m_position.m_currency;
-  if(m_valuations.find(security) == m_valuations.end()) {
-    m_valuations.insert(std::pair(
-      security, SecurityValuation(entry.m_value.m_position.m_currency)));
-    auto bboQuery = make_current_query(security);
+  if(m_valuations.find(ticker) == m_valuations.end()) {
+    m_valuations.insert(
+      std::pair(ticker, Valuation(entry.m_value.m_position.m_currency)));
+    auto bboQuery = make_current_query(ticker);
     bboQuery.set_interruption_policy(InterruptionPolicy::IGNORE_CONTINUE);
     m_userProfile->GetClients().get_market_data_client().query(
       bboQuery, m_eventHandler.get_slot<BboQuote>(
-        std::bind_front(&PortfolioViewerModel::OnBboQuote, this, security)));
+        std::bind_front(&PortfolioViewerModel::OnBboQuote, this, ticker)));
   }
   auto indexIterator = m_inventoryKeyToIndex.find(entry.m_key);
   if(indexIterator == m_inventoryKeyToIndex.end()) {
@@ -309,7 +309,7 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
     }
     m_entries.push_back(portfolioViewerEntry);
     m_inventoryKeyToIndex.insert(std::make_pair(entry.m_key, row));
-    m_securityToIndexes[entry.m_key.m_security].push_back(row);
+    m_tickerToIndexes[entry.m_key.m_ticker].push_back(row);
     if(portfolioViewerEntry.m_isDisplayed) {
       ++m_displayCount;
       endInsertRows();
@@ -415,13 +415,13 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
         --m_displayCount;
         endRemoveRows();
       }
-      auto& securityIndicies =
-        m_securityToIndexes[viewerEntry.m_inventory.m_position.m_security];
-      auto securityIndexIterator = std::find(securityIndicies.begin(),
-        securityIndicies.end(), row);
-      securityIndicies.erase(securityIndexIterator);
-      for(auto& securities : m_securityToIndexes) {
-        for(auto& index : securities.second) {
+      auto& tickerIndicies =
+        m_tickerToIndexes[viewerEntry.m_inventory.m_position.m_ticker];
+      auto tickerIndexIterator = std::find(tickerIndicies.begin(),
+        tickerIndicies.end(), row);
+      tickerIndicies.erase(tickerIndexIterator);
+      for(auto& tickers : m_tickerToIndexes) {
+        for(auto& index : tickers.second) {
           if(index > row) {
             --index;
           }

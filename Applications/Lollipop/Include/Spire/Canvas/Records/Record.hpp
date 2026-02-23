@@ -11,7 +11,7 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Spire/Canvas/Canvas.hpp"
@@ -27,7 +27,7 @@ namespace Spire {
       using Field = boost::variant<Record, bool, Nexus::Quantity, double,
         boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
         Nexus::CurrencyId, Nexus::Money, Nexus::OrderStatus, Nexus::OrderType,
-        Nexus::Security, Nexus::Side, Nexus::TimeInForce, Nexus::Venue,
+        Nexus::Ticker, Nexus::Side, Nexus::TimeInForce, Nexus::Venue,
         Beam::Range, Beam::Sequence>;
 
       /** Constructs an empty Record. */

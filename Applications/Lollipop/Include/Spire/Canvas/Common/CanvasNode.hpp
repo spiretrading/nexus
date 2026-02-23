@@ -16,7 +16,7 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Nexus/Definitions/Venue.hpp"
@@ -33,7 +33,7 @@ namespace Spire {
       //! Defines the types of meta-data that can be stored in a CanvasNode.
       typedef boost::variant<bool, Nexus::Quantity, double,
         boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
-        Nexus::CurrencyId, Nexus::Money, Nexus::OrderType, Nexus::Security,
+        Nexus::CurrencyId, Nexus::Money, Nexus::OrderType, Nexus::Ticker,
         Nexus::Side, Nexus::TimeInForce, Nexus::Venue> MetaData;
 
       //! A CanvasNode's MIME type.

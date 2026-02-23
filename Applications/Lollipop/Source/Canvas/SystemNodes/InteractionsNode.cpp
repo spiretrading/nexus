@@ -5,7 +5,7 @@
 #include "Spire/Canvas/Types/IntegerType.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/KeyBindings/InteractionsProperties.hpp"
 
 using namespace Beam;
@@ -16,7 +16,7 @@ using namespace std;
 
 namespace {
   enum {
-    SECURITY = 0,
+    TICKER = 0,
     DEFAULT_QUANTITY,
     QUANTITY_INCREMENT,
     PRICE_INCREMENT
@@ -24,14 +24,14 @@ namespace {
 }
 
 InteractionsNode::InteractionsNode() {
-  Setup(Security(), DEFAULT_VENUES,
+  Setup(Ticker(), DEFAULT_VENUES,
     InteractionsProperties::GetDefaultProperties());
 }
 
-InteractionsNode::InteractionsNode(Security security,
+InteractionsNode::InteractionsNode(Ticker ticker,
     const VenueDatabase& venueDatabase,
     const InteractionsProperties& properties) {
-  Setup(std::move(security), venueDatabase, properties);
+  Setup(std::move(ticker), venueDatabase, properties);
 }
 
 const InteractionsProperties& InteractionsNode::GetProperties() const {
@@ -79,18 +79,18 @@ unique_ptr<CanvasNode> InteractionsNode::Clone() const {
   return std::make_unique<InteractionsNode>(*this);
 }
 
-void InteractionsNode::Setup(Security security,
+void InteractionsNode::Setup(Ticker ticker,
     const VenueDatabase& venueDatabase,
     const InteractionsProperties& properties) {
   m_properties = properties;
   SetText("");
   SetType(IntegerType::GetInstance());
-  unique_ptr<CanvasNode> securityNode = std::make_unique<SecurityNode>(
-    std::move(security), venueDatabase);
-  securityNode = securityNode->SetVisible(false);
-  AddChild("security", std::move(securityNode));
+  unique_ptr<CanvasNode> tickerNode = std::make_unique<TickerNode>(
+    std::move(ticker), venueDatabase);
+  tickerNode = tickerNode->SetVisible(false);
+  AddChild("ticker", std::move(tickerNode));
   auto defaultQuantityNode = LinkedNode::SetReferent(
-    IntegerNode(m_properties.m_defaultQuantity), "security");
+    IntegerNode(m_properties.m_defaultQuantity), "ticker");
   AddChild("default_quantity", std::move(defaultQuantityNode));
   AddChild("quantity_increment",
     std::make_unique<IntegerNode>(m_properties.m_quantityIncrements[0]));

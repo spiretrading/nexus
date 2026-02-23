@@ -17,12 +17,12 @@ namespace Spire {
 
       //! Constructs an InteractionsNode.
       /*!
-        \param security The Security whose interactions are represented.
+        \param ticker The Ticker whose interactions are represented.
         \param venueDatabase The VenueDatabase containing the
-               <i>security</i>'s venue.
+               <i>ticker</i>'s venue.
         \param properties The InteractionsProperties to represent.
       */
-      InteractionsNode(Nexus::Security security,
+      InteractionsNode(Nexus::Ticker ticker,
         const Nexus::VenueDatabase& venueDatabase,
         const InteractionsProperties& properties);
 
@@ -42,7 +42,7 @@ namespace Spire {
       friend struct Beam::DataShuttle;
       InteractionsProperties m_properties;
 
-      void Setup(Nexus::Security security,
+      void Setup(Nexus::Ticker ticker,
         const Nexus::VenueDatabase& venueDatabase,
         const InteractionsProperties& properties);
       template<Beam::IsShuttle S>

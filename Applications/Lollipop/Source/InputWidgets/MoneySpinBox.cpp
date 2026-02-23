@@ -45,13 +45,12 @@ void MoneySpinBox::Initialize(Ref<UserProfile> userProfile) {
   AdjustIncrement(KeyModifiers::PLAIN);
 }
 
-const boost::optional<Security>& MoneySpinBox::GetLinkedSecurity() const {
-  return m_security;
+const boost::optional<Ticker>& MoneySpinBox::GetLinkedTicker() const {
+  return m_ticker;
 }
 
-void MoneySpinBox::SetLinkedSecurity(
-    const boost::optional<Security>& security) {
-  m_security = security;
+void MoneySpinBox::SetLinkedTicker(const boost::optional<Ticker>& ticker) {
+  m_ticker = ticker;
   AdjustIncrement(KeyModifiers::PLAIN);
 }
 
@@ -103,11 +102,11 @@ bool MoneySpinBox::eventFilter(QObject* receiver, QEvent* event) {
 }
 
 void MoneySpinBox::AdjustIncrement(KeyModifiers modifier) {
-  if(m_userProfile == nullptr || !m_security.is_initialized()) {
+  if(m_userProfile == nullptr || !m_ticker.is_initialized()) {
     return;
   }
   auto priceIncrement = m_userProfile->GetInteractionProperties().get(
-    *m_security).m_priceIncrements[static_cast<int>(modifier)];
+    *m_ticker).m_priceIncrements[static_cast<int>(modifier)];
   auto increment = static_cast<Quantity>(priceIncrement) / Quantity::MULTIPLIER;
   if(increment != m_spinBox->singleStep()) {
     m_spinBox->setSingleStep(static_cast<double>(increment));

@@ -5,7 +5,7 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleOptional.hpp>
 #include <boost/optional/optional.hpp>
-#include "Nexus/Definitions/RegionMap.hpp"
+#include "Nexus/Definitions/ScopeTable.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
 #include "Spire/KeyBindings/InteractionsProperties.hpp"
@@ -67,7 +67,7 @@ namespace Details {
       m_orderImbalanceIndicatorProperties;
 
     //! The interactions properties.
-    boost::optional<Nexus::RegionMap<InteractionsProperties>>
+    boost::optional<Nexus::ScopeTable<InteractionsProperties>>
       m_interactionsProperties;
 
     //! The key bindings.

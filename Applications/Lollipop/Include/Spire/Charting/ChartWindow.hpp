@@ -11,10 +11,10 @@
 #include "Spire/Charting/ChartPlotController.hpp"
 #include "Spire/Charting/ChartValue.hpp"
 #include "Spire/UI/PersistentWindow.hpp"
-#include "Spire/UI/SecurityContext.hpp"
-#include "Spire/UI/SecurityViewStack.hpp"
-#include "Spire/UI/WindowSettings.hpp"
+#include "Spire/UI/TickerContext.hpp"
+#include "Spire/UI/TickerViewStack.hpp"
 #include "Spire/UI/UI.hpp"
+#include "Spire/UI/WindowSettings.hpp"
 
 class QMenu;
 class Ui_ChartWindow;
@@ -23,13 +23,13 @@ namespace Spire {
 
   /** Displays a chart. */
   class ChartWindow : public QMainWindow, public UI::PersistentWindow,
-      public UI::SecurityContext {
+      public UI::TickerContext {
     public:
 
       /**
        * Constructs a ChartWindow.
        * @param userProfile The user's profile.
-       * @param identifier The SecurityContext's identifier.
+       * @param identifier The TickerContext's identifier.
        * @param parent The parent widget.
        * @param flags Qt flags passed to the parent widget.
        */
@@ -56,10 +56,10 @@ namespace Spire {
       void SetLockGrid(bool lockGrid);
 
       /**
-       * Sets the Security to display.
-       * @param security The Security to display.
+       * Sets the Ticker to display.
+       * @param ticker The Ticker to display.
        */
-      void DisplaySecurity(const Nexus::Security& security);
+      void DisplayTicker(const Nexus::Ticker& ticker);
 
       std::unique_ptr<UI::WindowSettings> GetWindowSettings() const override;
 
@@ -67,7 +67,7 @@ namespace Spire {
       void showEvent(QShowEvent* event) override;
       void closeEvent(QCloseEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
-      void HandleLink(SecurityContext& context) override;
+      void HandleLink(TickerContext& context) override;
       void HandleUnlink() override;
 
     private:
@@ -78,9 +78,9 @@ namespace Spire {
       UserProfile* m_userProfile;
       ChartInteractionMode m_interactionMode;
       std::optional<ChartPlotController> m_controller;
-      Nexus::Security m_security;
+      Nexus::Ticker m_ticker;
       std::string m_linkIdentifier;
-      UI::SecurityViewStack m_securityViewStack;
+      UI::TickerViewStack m_tickerViewStack;
       ChartValue m_xPan;
       ChartValue m_yPan;
       boost::signals2::scoped_connection m_linkConnection;

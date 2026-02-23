@@ -1,10 +1,10 @@
 #ifndef SPIRE_TIMEANDSALESWINDOWSETTINGS_HPP
 #define SPIRE_TIMEANDSALESWINDOWSETTINGS_HPP
 #include <QByteArray>
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
-#include "Spire/UI/SecurityViewStack.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
+#include "Spire/UI/TickerViewStack.hpp"
 #include "Spire/UI/WindowSettings.hpp"
 
 namespace Spire {
@@ -38,9 +38,9 @@ namespace Spire {
     private:
       friend struct Beam::DataShuttle;
       TimeAndSalesProperties m_properties;
-      Nexus::Security m_security;
+      Nexus::Ticker m_ticker;
       std::string m_name;
-      UI::SecurityViewStack m_securityViewStack;
+      UI::TickerViewStack m_tickerViewStack;
       std::string m_identifier;
       std::string m_linkIdentifier;
       QByteArray m_geometry;
@@ -56,9 +56,9 @@ namespace Spire {
   void TimeAndSalesWindowSettings::shuttle(S& shuttle,
       unsigned int version) {
     shuttle.shuttle("properties", m_properties);
-    shuttle.shuttle("security", m_security);
+    shuttle.shuttle("ticker", m_ticker);
     shuttle.shuttle("name", m_name);
-    shuttle.shuttle("security_view_stack", m_securityViewStack);
+    shuttle.shuttle("ticker_view_stack", m_tickerViewStack);
     shuttle.shuttle("identifier", m_identifier);
     shuttle.shuttle("link_identifier", m_linkIdentifier);
     shuttle.shuttle("geometry", m_geometry);

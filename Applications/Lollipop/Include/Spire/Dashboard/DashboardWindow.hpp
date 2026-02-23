@@ -7,7 +7,7 @@
 #include <boost/optional/optional.hpp>
 #include <QWidget>
 #include "Nexus/Definitions/BboQuote.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/CanvasView/OrderTaskView.hpp"
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardModelSchema.hpp"
@@ -60,13 +60,13 @@ namespace Spire {
       UserProfile* m_userProfile;
       std::unique_ptr<DashboardModel> m_model;
       boost::optional<OrderTaskView> m_orderTaskView;
-      std::unordered_map<Nexus::Security, BboQuoteEntry> m_bboQuotes;
+      std::unordered_map<Nexus::Ticker, BboQuoteEntry> m_bboQuotes;
       boost::signals2::scoped_connection m_rowAddedConnection;
       boost::signals2::scoped_connection m_rowRemovedConnection;
       boost::signals2::scoped_connection m_dashboardAddedConnection;
       boost::signals2::scoped_connection m_dashboardRemovedConnection;
 
-      boost::optional<Nexus::Security> GetActiveSecurity() const;
+      boost::optional<Nexus::Ticker> GetActiveTicker() const;
       void Save();
       void SetName(const std::string& name);
       void Apply(const DashboardModelSchema& schema, const std::string& name);

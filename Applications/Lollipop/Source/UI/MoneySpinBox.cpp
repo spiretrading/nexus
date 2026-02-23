@@ -2,7 +2,7 @@
 #include <QKeyEvent>
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
@@ -43,9 +43,9 @@ MoneySpinBox::MoneySpinBox(Ref<UserProfile> userProfile,
     }
   }
   if(referent.is_initialized()) {
-    auto securityValueNode = dynamic_cast<const SecurityNode*>(&*referent);
-    if(securityValueNode != nullptr) {
-      m_security = securityValueNode->GetValue();
+    auto tickerValueNode = dynamic_cast<const TickerNode*>(&*referent);
+    if(tickerValueNode != nullptr) {
+      m_ticker = tickerValueNode->GetValue();
     }
   }
   AdjustIncrement(KeyModifiers::PLAIN);
@@ -75,11 +75,11 @@ void MoneySpinBox::keyReleaseEvent(QKeyEvent* event) {
 }
 
 void MoneySpinBox::AdjustIncrement(KeyModifiers modifier) {
-  if(m_userProfile == nullptr || !m_security.is_initialized()) {
+  if(m_userProfile == nullptr || !m_ticker.is_initialized()) {
     return;
   }
   auto priceIncrement = m_userProfile->GetInteractionProperties().get(
-    *m_security).m_priceIncrements[static_cast<int>(modifier)];
+    *m_ticker).m_priceIncrements[static_cast<int>(modifier)];
   auto increment = static_cast<double>(static_cast<Quantity>(priceIncrement));
   if(increment != singleStep()) {
     setSingleStep(increment);

@@ -10,7 +10,7 @@
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/Definitions/Destination.hpp"
-#include "Nexus/Definitions/RegionMap.hpp"
+#include "Nexus/Definitions/ScopeTable.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Spire/Blotter/Blotter.hpp"
@@ -212,21 +212,21 @@ namespace Spire {
       void SetDefaultPortfolioViewerProperties(
         const PortfolioViewerProperties& properties);
 
-      /** Returns the RegionMap storing the InteractionProperties. */
-      Nexus::RegionMap<InteractionsProperties>& GetInteractionProperties();
+      /** Returns the ScopeTable storing the InteractionProperties. */
+      Nexus::ScopeTable<InteractionsProperties>& GetInteractionProperties();
 
-      /** Returns the RegionMap storing the InteractionProperties. */
-      const Nexus::RegionMap<InteractionsProperties>&
+      /** Returns the ScopeTable storing the InteractionProperties. */
+      const Nexus::ScopeTable<InteractionsProperties>&
         GetInteractionProperties() const;
 
       /**
        * Returns the default Quantity.
-       * @param security The Security to lookup the default Quantity for.
+       * @param ticker The Ticker to lookup the default Quantity for.
        * @param side The Side to get the default Quantity on.
        * @return The default Quantity used for Tasks.
        */
       Nexus::Quantity GetDefaultQuantity(
-        const Nexus::Security& security, Nexus::Side side) const;
+        const Nexus::Ticker& ticker, Nexus::Side side) const;
 
       /** Returns the initial PortfolioViewerWindowSettings. */
       const boost::optional<PortfolioViewerWindowSettings>&
@@ -257,7 +257,7 @@ namespace Spire {
       RiskTimerProperties m_riskTimerProperties;
       TimeAndSalesProperties m_defaultTimeAndSalesProperties;
       PortfolioViewerProperties m_defaultPortfolioViewerProperties;
-      Nexus::RegionMap<InteractionsProperties> m_interactionProperties;
+      Nexus::ScopeTable<InteractionsProperties> m_interactionProperties;
       CatalogSettings m_catalogSettings;
       KeyBindings m_keyBindings;
       CanvasTypeRegistry m_typeRegistry;

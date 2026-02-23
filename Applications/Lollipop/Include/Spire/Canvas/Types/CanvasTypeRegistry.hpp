@@ -11,14 +11,14 @@ namespace Spire {
   using NativeTypes = boost::mp11::mp_list<bool, Nexus::Quantity, double,
     boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
     Nexus::CurrencyId, Nexus::Money, Nexus::OrderStatus, Nexus::OrderType,
-    Nexus::Security, Nexus::Side, Nexus::TimeInForce, Nexus::Venue,
+    Nexus::Ticker, Nexus::Side, Nexus::TimeInForce, Nexus::Venue,
     Beam::Range, Beam::Sequence, std::shared_ptr<Nexus::Order>, Record>;
 
   /** Lists all value types. */
   using ValueTypes = boost::mp11::mp_list<bool, Nexus::Quantity, double,
     boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
     Nexus::CurrencyId, Nexus::Money, Nexus::OrderStatus, Nexus::OrderType,
-    Nexus::Security, Nexus::Side, Nexus::TimeInForce, Nexus::Venue,
+    Nexus::Ticker, Nexus::Side, Nexus::TimeInForce, Nexus::Venue,
     Beam::Range, Beam::Sequence, Record>;
 
   /** Lists types that can be compared. */
