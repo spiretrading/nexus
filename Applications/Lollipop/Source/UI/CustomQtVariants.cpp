@@ -28,6 +28,8 @@ namespace {
     } else if(value.type() == typeid(string)) {
       return QVariant::fromValue(
         QString::fromStdString(any_cast<string>(value)));
+    } else if(value.type() == typeid(Asset)) {
+      return QVariant::fromValue(any_cast<Asset>(value));
     } else if(value.type() == typeid(CountryCode)) {
       return QVariant::fromValue(any_cast<CountryCode>(value));
     } else if(value.type() == typeid(CurrencyId)) {
@@ -110,6 +112,14 @@ posix_time::ptime Spire::UI::ToPosixTime(const QDateTime& time) {
 }
 
 void Spire::UI::RegisterCustomQtVariants() {}
+
+QString Spire::UI::displayText(Asset asset) {
+  if(asset.get_type() == Asset::CURRENCY) {
+    auto& entry = DEFAULT_CURRENCIES.from(to_currency(asset));
+    return QString::fromStdString(entry.m_code.get_data());
+  }
+  return QString::number(asset.get_id());
+}
 
 QString Spire::UI::displayText(CountryCode country) {
   auto& entry = DEFAULT_COUNTRIES.from(country);
@@ -226,6 +236,8 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     } else {
       return QString::fromStdString(to_simple_string(timeValue));
     }
+  } else if(value.canConvert<Asset>()) {
+    return ::displayText(value.value<Asset>());
   } else if(value.canConvert<CountryCode>()) {
     return ::displayText(value.value<CountryCode>());
   } else if(value.canConvert<CurrencyId>()) {
@@ -321,13 +333,16 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
       lexical_cast<string>(leftVariant.value<TimeInForce>().get_type()),
       lexical_cast<string>(rightVariant.value<TimeInForce>().get_type()), left,
       right);
+  } else if(leftVariant.canConvert<Asset>()) {
+    return Compare(::displayText(leftVariant.value<Asset>()),
+      ::displayText(rightVariant.value<Asset>()), left, right);
   } else if(leftVariant.canConvert<CurrencyId>()) {
     const CurrencyDatabase::Entry& leftEntry =
       m_userProfile->GetCurrencyDatabase().from(
-      leftVariant.value<CurrencyId>());
+        leftVariant.value<CurrencyId>());
     const CurrencyDatabase::Entry& rightEntry =
       m_userProfile->GetCurrencyDatabase().from(
-      rightVariant.value<CurrencyId>());
+        rightVariant.value<CurrencyId>());
     return leftEntry.m_code < rightEntry.m_code;
   } else if(leftVariant.canConvert<PositionSideToken>()) {
     return Compare(leftVariant.value<PositionSideToken>().ToString(),

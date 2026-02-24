@@ -12,14 +12,15 @@ namespace Spire {
     boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
     Nexus::CurrencyId, Nexus::Money, Nexus::OrderStatus, Nexus::OrderType,
     Nexus::Ticker, Nexus::Side, Nexus::TimeInForce, Nexus::Venue,
-    Beam::Range, Beam::Sequence, std::shared_ptr<Nexus::Order>, Record>;
+    Beam::Range, Beam::Sequence, std::shared_ptr<Nexus::Order>, Nexus::Asset,
+    Record>;
 
   /** Lists all value types. */
   using ValueTypes = boost::mp11::mp_list<bool, Nexus::Quantity, double,
     boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
     Nexus::CurrencyId, Nexus::Money, Nexus::OrderStatus, Nexus::OrderType,
     Nexus::Ticker, Nexus::Side, Nexus::TimeInForce, Nexus::Venue,
-    Beam::Range, Beam::Sequence, Record>;
+    Beam::Range, Beam::Sequence, Nexus::Asset, Record>;
 
   /** Lists types that can be compared. */
   using ComparableTypes = boost::mp11::mp_list<bool, Nexus::Quantity, double,

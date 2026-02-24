@@ -60,6 +60,7 @@
 #include "Spire/Canvas/StandardNodes/UnequalNode.hpp"
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
+#include "Spire/Canvas/ValueNodes/AssetNode.hpp"
 #include "Spire/Canvas/ValueNodes/BooleanNode.hpp"
 #include "Spire/Canvas/ValueNodes/CurrencyNode.hpp"
 #include "Spire/Canvas/ValueNodes/DateTimeNode.hpp"
@@ -95,6 +96,10 @@ void CanvasNodeVisitor::Visit(const AggregateNode& node) {
 
 void CanvasNodeVisitor::Visit(const AlarmNode& node) {
   Visit(static_cast<const CanvasNode&>(node));
+}
+
+void CanvasNodeVisitor::Visit(const AssetNode& node) {
+  Visit(static_cast<const BaseValueNode&>(node));
 }
 
 void CanvasNodeVisitor::Visit(const BaseValueNode& node) {

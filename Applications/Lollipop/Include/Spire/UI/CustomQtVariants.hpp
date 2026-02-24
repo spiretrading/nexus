@@ -49,6 +49,7 @@ Q_DECLARE_METATYPE(Spire::Task::State);
 Q_DECLARE_METATYPE(boost::any);
 Q_DECLARE_METATYPE(boost::posix_time::ptime);
 Q_DECLARE_METATYPE(boost::posix_time::time_duration);
+Q_DECLARE_METATYPE(Nexus::Asset);
 Q_DECLARE_METATYPE(Nexus::CountryCode);
 Q_DECLARE_METATYPE(Nexus::CurrencyId);
 Q_DECLARE_METATYPE(Nexus::Money);
@@ -78,6 +79,9 @@ namespace Spire::UI {
 
   //! Registers the custom QVariant types.
   void RegisterCustomQtVariants();
+
+  //! Returns the text representation of an Asset.
+  QString displayText(Nexus::Asset asset);
 
   //! Returns the text representation of a CountryCode.
   QString displayText(Nexus::CountryCode country);

@@ -61,6 +61,7 @@
 #include "Spire/Canvas/StandardNodes/UnequalNode.hpp"
 #include "Spire/Canvas/SystemNodes/BlotterTaskMonitorNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
+#include "Spire/Canvas/Types/AssetType.hpp"
 #include "Spire/Canvas/Types/BooleanType.hpp"
 #include "Spire/Canvas/Types/CurrencyType.hpp"
 #include "Spire/Canvas/Types/DateTimeType.hpp"
@@ -203,6 +204,7 @@ namespace Spire {
     (InteractionsNode, "Spire.InteractionsNode"));
 
   BEAM_REGISTER_TYPES(RegisterCanvasTypeTypes,
+    (AssetType, "Spire.AssetType"),
     (BooleanType, "Spire.BooleanType"),
     (CurrencyType, "Spire.CurrencyType"),
     (DateTimeType, "Spire.DateTimeType"),

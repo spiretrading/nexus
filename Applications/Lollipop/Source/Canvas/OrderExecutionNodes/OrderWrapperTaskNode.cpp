@@ -64,20 +64,16 @@ void OrderWrapperTaskNode::Initialize(string text,
     make_unique<SideNode>(m_order->get_info().m_fields.m_side));
   unique_ptr<DestinationNode> destinationNode = LinkedNode::SetReferent(
     DestinationNode(m_order->get_info().m_fields.m_destination), "ticker");
-  AddChild(SingleOrderTaskNode::DESTINATION_PROPERTY,
-    std::move(destinationNode));
+  AddChild(
+    SingleOrderTaskNode::DESTINATION_PROPERTY, std::move(destinationNode));
   auto priceNode = LinkedNode::SetReferent(
     MoneyNode(m_order->get_info().m_fields.m_price), "ticker");
   AddChild(SingleOrderTaskNode::PRICE_PROPERTY, std::move(priceNode));
   auto quantityNode = LinkedNode::SetReferent(
     IntegerNode(m_order->get_info().m_fields.m_quantity), "ticker");
   AddChild(SingleOrderTaskNode::QUANTITY_PROPERTY, std::move(quantityNode));
-
-  /** TODO */
-  AddChild(SingleOrderTaskNode::CURRENCY_PROPERTY, make_unique<CurrencyNode>(
-    to_currency(m_order->get_info().m_fields.m_currency),
-    userProfile.GetCurrencyDatabase().from(
-      to_currency(m_order->get_info().m_fields.m_currency)).m_code.get_data()));
+  AddChild(SingleOrderTaskNode::CURRENCY_PROPERTY,
+    make_unique<CurrencyNode>(m_order->get_info().m_fields.m_currency));
   AddChild(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
     make_unique<TimeInForceNode>(m_order->get_info().m_fields.m_time_in_force));
 }

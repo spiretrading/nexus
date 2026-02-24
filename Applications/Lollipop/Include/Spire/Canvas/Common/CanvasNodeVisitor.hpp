@@ -17,6 +17,8 @@ namespace Spire {
 
       virtual void Visit(const AlarmNode& node);
 
+      virtual void Visit(const AssetNode& node);
+
       virtual void Visit(const BaseValueNode& node);
 
       virtual void Visit(const BboQuoteQueryNode& node);

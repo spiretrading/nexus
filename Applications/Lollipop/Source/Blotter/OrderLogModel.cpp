@@ -90,9 +90,7 @@ QVariant OrderLogModel::data(const QModelIndex& index, int role) const {
     } else if(index.column() == TICKER_COLUMN) {
       return QVariant::fromValue(fields.m_ticker);
     } else if(index.column() == CURRENCY_COLUMN) {
-
-      /** TODO */
-      return QVariant::fromValue(to_currency(fields.m_currency));
+      return QVariant::fromValue(fields.m_currency);
     } else if(index.column() == ORDER_TYPE_COLUMN) {
       return QVariant::fromValue(fields.m_type);
     } else if(index.column() == SIDE_COLUMN) {

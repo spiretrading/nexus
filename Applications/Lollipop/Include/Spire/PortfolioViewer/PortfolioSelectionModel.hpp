@@ -98,7 +98,7 @@ namespace Spire {
       std::array<QModelIndex, SELECTION_TYPES_COUNT> m_roots;
       std::vector<Beam::DirectoryEntry> m_groups;
       std::unordered_set<Beam::DirectoryEntry> m_selectedGroups;
-      std::unordered_set<Nexus::CurrencyId> m_selectedCurrencies;
+      std::unordered_set<Nexus::Asset> m_selectedCurrencies;
       std::unordered_set<Nexus::Venue> m_selectedVenues;
       std::unordered_set<Nexus::Side> m_selectedSides;
 

@@ -1,6 +1,7 @@
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
+#include "Spire/Canvas/Types/AssetType.hpp"
 #include "Spire/Canvas/Types/BooleanType.hpp"
 #include "Spire/Canvas/Types/CurrencyType.hpp"
 #include "Spire/Canvas/Types/DateTimeType.hpp"
@@ -30,6 +31,7 @@ using namespace Spire;
 
 TEST_SUITE("ValueType") {
   TEST_CASE("names") {
+    REQUIRE(AssetType::GetInstance().GetName() == "Asset");
     REQUIRE(BooleanType::GetInstance().GetName() == "Boolean");
     REQUIRE(CurrencyType::GetInstance().GetName() == "Currency");
     REQUIRE(DateTimeType::GetInstance().GetName() == "Date/Time");
@@ -51,9 +53,9 @@ TEST_SUITE("ValueType") {
   }
 
   TEST_CASE("native_types") {
+    REQUIRE(AssetType::GetInstance().GetNativeType() == typeid(Asset));
     REQUIRE(BooleanType::GetInstance().GetNativeType() == typeid(bool));
-    REQUIRE(CurrencyType::GetInstance().GetNativeType() ==
-      typeid(CurrencyId));
+    REQUIRE(CurrencyType::GetInstance().GetNativeType() == typeid(Asset));
     REQUIRE(DateTimeType::GetInstance().GetNativeType() == typeid(ptime));
     REQUIRE(DecimalType::GetInstance().GetNativeType() == typeid(double));
     REQUIRE(DestinationType::GetInstance().GetNativeType() ==

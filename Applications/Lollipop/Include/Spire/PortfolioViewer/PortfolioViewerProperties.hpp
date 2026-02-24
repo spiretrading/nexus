@@ -4,7 +4,7 @@
 #include <Beam/Serialization/ShuttleUnorderedSet.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Pointers/Out.hpp>
-#include "Nexus/Definitions/Currency.hpp"
+#include "Nexus/Definitions/Asset.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewer.hpp"
@@ -50,12 +50,11 @@ namespace Spire {
       //! Sets whether all groups should be selected.
       void SetSelectingAllGroups(bool value);
 
-      //! Returns the set of selected Currencies.
-      const std::unordered_set<Nexus::CurrencyId>&
-        GetSelectedCurrencies() const;
+      //! Returns the set of selected currencies.
+      const std::unordered_set<Nexus::Asset>& GetSelectedCurrencies() const;
 
-      //! Returns the set of selected Currencies.
-      std::unordered_set<Nexus::CurrencyId>& GetSelectedCurrencies();
+      //! Returns the set of selected currencies.
+      std::unordered_set<Nexus::Asset>& GetSelectedCurrencies();
 
       //! Returns <code>true</code> iff all currencies should be selected.
       bool IsSelectingAllCurrencies() const;
@@ -85,7 +84,7 @@ namespace Spire {
       friend struct Beam::DataShuttle;
       std::unordered_set<Beam::DirectoryEntry> m_selectedGroups;
       bool m_selectAllGroups;
-      std::unordered_set<Nexus::CurrencyId> m_selectedCurrencies;
+      std::unordered_set<Nexus::Asset> m_selectedCurrencies;
       bool m_selectAllCurrencies;
       std::unordered_set<Nexus::Venue> m_selectedVenues;
       bool m_selectAllVenues;

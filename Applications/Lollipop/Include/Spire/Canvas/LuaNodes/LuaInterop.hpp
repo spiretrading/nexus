@@ -1,5 +1,6 @@
 #ifndef SPIRE_LUAINTEROP_HPP
 #define SPIRE_LUAINTEROP_HPP
+#include "Nexus/Definitions/Asset.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
@@ -13,6 +14,21 @@
 #include "Spire/Canvas/LuaNodes/NativeLuaReactorParameter.hpp"
 
 namespace Spire {
+  template<>
+  struct PopLuaValue<Nexus::Asset> {
+    Nexus::Asset operator ()(lua_State& state) const {
+      return Nexus::Asset(
+        static_cast<Nexus::Asset::Id>(lua_tointeger(&state, -1)));
+    }
+  };
+
+  template<>
+  struct PushLuaValue<Nexus::Asset> {
+    void operator ()(lua_State& state, Nexus::Asset value) const {
+      lua_pushinteger(&state, value.get_id());
+    }
+  };
+
   template<>
   struct PopLuaValue<Nexus::CurrencyId> {
     Nexus::CurrencyId operator ()(lua_State& state) const {

@@ -18,18 +18,15 @@ namespace Spire {
       //! Constructs a CurrencyNode with an initial value.
       /*!
         \param value The new value.
-        \param code The currency code to display.
       */
-      CurrencyNode(Nexus::CurrencyId value, std::string code);
+      CurrencyNode(Nexus::Asset value);
 
       //! Clones this CanvasNode with a new value.
       /*!
         \param value The new value.
-        \param code The currency code to display.
         \return A clone of this CanvasNode with the specified <i>value</i>.
       */
-      std::unique_ptr<CurrencyNode> SetValue(Nexus::CurrencyId value,
-        std::string code) const;
+      std::unique_ptr<CurrencyNode> SetValue(Nexus::Asset value) const;
 
       virtual void Apply(CanvasNodeVisitor& visitor) const;
 

@@ -117,12 +117,12 @@ void PortfolioViewerProperties::SetSelectingAllGroups(bool value) {
   m_selectAllGroups = value;
 }
 
-const unordered_set<CurrencyId>& PortfolioViewerProperties::
-    GetSelectedCurrencies() const {
+const unordered_set<Asset>&
+    PortfolioViewerProperties::GetSelectedCurrencies() const {
   return m_selectedCurrencies;
 }
 
-unordered_set<CurrencyId>& PortfolioViewerProperties::GetSelectedCurrencies() {
+unordered_set<Asset>& PortfolioViewerProperties::GetSelectedCurrencies() {
   return m_selectedCurrencies;
 }
 
@@ -134,8 +134,8 @@ void PortfolioViewerProperties::SetSelectingAllCurrencies(bool value) {
   m_selectAllCurrencies = value;
 }
 
-const unordered_set<Venue>& PortfolioViewerProperties::
-    GetSelectedVenues() const {
+const unordered_set<Venue>&
+    PortfolioViewerProperties::GetSelectedVenues() const {
   return m_selectedVenues;
 }
 

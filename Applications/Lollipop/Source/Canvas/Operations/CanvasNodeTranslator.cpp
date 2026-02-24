@@ -17,6 +17,7 @@
 #include "Nexus/OrderExecutionService/OrderCancellationReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderReactor.hpp"
 #include "Nexus/OrderExecutionService/OrderWrapperReactor.hpp"
+#include "Nexus/Parsers/AssetParser.hpp"
 #include "Nexus/Parsers/CountryParser.hpp"
 #include "Nexus/Parsers/CurrencyParser.hpp"
 #include "Nexus/Parsers/MoneyParser.hpp"
@@ -102,6 +103,7 @@
 #include "Spire/Canvas/Types/QuoteRecordType.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
 #include "Spire/Canvas/Types/TimeAndSaleRecordType.hpp"
+#include "Spire/Canvas/ValueNodes/AssetNode.hpp"
 #include "Spire/Canvas/ValueNodes/BooleanNode.hpp"
 #include "Spire/Canvas/ValueNodes/CurrencyNode.hpp"
 #include "Spire/Canvas/ValueNodes/DateTimeNode.hpp"
@@ -140,6 +142,7 @@ namespace {
       void Visit(const AdditionNode& node) override;
       void Visit(const AggregateNode& node) override;
       void Visit(const AlarmNode& node) override;
+      void Visit(const AssetNode& node) override;
       void Visit(const BboQuoteQueryNode& node) override;
       void Visit(const BlotterTaskMonitorNode& node) override;
       void Visit(const BooleanNode& node) override;
@@ -679,8 +682,7 @@ namespace {
         CanvasNodeTranslationContext& context) const {
       return Aspen::lift(Operation<T0, T1, T2, R>(),
         condition.Extract<Aspen::Box<T0>>(),
-        consequent.Extract<Aspen::Box<T1>>(),
-        other.Extract<Aspen::Box<T2>>());
+        consequent.Extract<Aspen::Box<T1>>(), other.Extract<Aspen::Box<T2>>());
     }
   };
 
@@ -947,13 +949,7 @@ namespace {
         : m_index(index) {}
 
       T operator ()(const Record& record) const {
-        if constexpr(std::is_same_v<T, CurrencyId>) {
-
-          /** TODO */
-          return to_currency(get<Asset>(record.GetFields()[m_index]));
-        } else {
-          return get<T>(record.GetFields()[m_index]);
-        }
+        return get<T>(record.GetFields()[m_index]);
       }
     };
 
@@ -1168,6 +1164,10 @@ void CanvasNodeTranslationVisitor::Visit(const AlarmNode& node) {
   m_translation = alarm_reactor(
     &m_context->GetUserProfile().GetClients().get_time_client(),
     timerFactory, std::move(expiry));
+}
+
+void CanvasNodeTranslationVisitor::Visit(const AssetNode& node) {
+  m_translation = Aspen::constant(node.GetValue());
 }
 
 void CanvasNodeTranslationVisitor::Visit(const BboQuoteQueryNode& node) {
@@ -1591,8 +1591,7 @@ void CanvasNodeTranslationVisitor::Visit(const SingleOrderTaskNode& node) {
     Aspen::unconsecutive(InternalTranslation(*node.FindChild(
       SingleOrderTaskNode::TICKER_PROPERTY)).Extract<Aspen::Box<Ticker>>()),
     Aspen::unconsecutive(InternalTranslation(*node.FindChild(
-      SingleOrderTaskNode::CURRENCY_PROPERTY)).Extract<
-      Aspen::Box<CurrencyId>>()),
+      SingleOrderTaskNode::CURRENCY_PROPERTY)).Extract<Aspen::Box<Asset>>()),
     Aspen::unconsecutive(InternalTranslation(*node.FindChild(
       SingleOrderTaskNode::ORDER_TYPE_PROPERTY)).Extract<
       Aspen::Box<OrderType>>()),

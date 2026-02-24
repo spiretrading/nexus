@@ -9,6 +9,7 @@
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/MaxFloorNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OptionalPriceNode.hpp"
+#include "Spire/Canvas/ValueNodes/AssetNode.hpp"
 #include "Spire/Canvas/ValueNodes/BooleanNode.hpp"
 #include "Spire/Canvas/ValueNodes/CurrencyNode.hpp"
 #include "Spire/Canvas/ValueNodes/DecimalNode.hpp"
@@ -44,6 +45,7 @@ namespace {
         Beam::Ref<CanvasNodeModel> model,
         Beam::Ref<const UserProfile> userProfile);
       QUndoCommand* GetCommand();
+      virtual void Visit(const AssetNode& node);
       virtual void Visit(const BooleanNode& node);
       virtual void Visit(const CurrencyNode& node);
       virtual void Visit(const DecimalNode& node);
@@ -93,6 +95,19 @@ QUndoCommand* CommitEditorCanvasNodeVisitor::GetCommand() {
   return m_command;
 }
 
+void CommitEditorCanvasNodeVisitor::Visit(const AssetNode& node) {
+  auto previousValue = node.GetValue();
+  auto comboEditor = qobject_cast<const QComboBox*>(m_editor);
+  auto& newValue = m_userProfile->GetCurrencyDatabase().from(
+    comboEditor->currentText().toStdString());
+  if(previousValue == newValue.m_id) {
+    return;
+  }
+  auto coordinate = m_model->GetCoordinate(node);
+  m_command = new ReplaceNodeCommand(Ref(*m_model), coordinate,
+    *node.SetValue(newValue.m_id));
+}
+
 void CommitEditorCanvasNodeVisitor::Visit(const BooleanNode& node) {
   auto comboEditor = qobject_cast<const QComboBox*>(m_editor);
   auto previousValue = node.GetValue();
@@ -119,8 +134,8 @@ void CommitEditorCanvasNodeVisitor::Visit(const CurrencyNode& node) {
     return;
   }
   auto coordinate = m_model->GetCoordinate(node);
-  m_command = new ReplaceNodeCommand(Ref(*m_model), coordinate,
-    *node.SetValue(newValue.m_id, newValue.m_code.get_data()));
+  m_command = new ReplaceNodeCommand(
+    Ref(*m_model), coordinate, *node.SetValue(newValue.m_id));
 }
 
 void CommitEditorCanvasNodeVisitor::Visit(const DecimalNode& node) {

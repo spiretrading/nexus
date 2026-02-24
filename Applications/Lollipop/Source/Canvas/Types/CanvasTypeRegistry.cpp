@@ -1,5 +1,6 @@
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 #include <boost/range/algorithm/find_if.hpp>
+#include "Spire/Canvas/Types/AssetType.hpp"
 #include "Spire/Canvas/Types/BooleanType.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRedefinitionException.hpp"
 #include "Spire/Canvas/Types/CurrencyType.hpp"
@@ -33,6 +34,7 @@ using namespace Spire;
 using namespace std;
 
 CanvasTypeRegistry::CanvasTypeRegistry() {
+  Register(AssetType::GetInstance());
   Register(BooleanType::GetInstance());
   Register(CurrencyType::GetInstance());
   Register(DateTimeType::GetInstance());

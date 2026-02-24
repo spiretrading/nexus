@@ -21,6 +21,7 @@
 #include "Spire/Canvas/Records/QueryNode.hpp"
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
 #include "Spire/Canvas/StandardNodes/TimeRangeParameterNode.hpp"
+#include "Spire/Canvas/ValueNodes/AssetNode.hpp"
 #include "Spire/Canvas/ValueNodes/BooleanNode.hpp"
 #include "Spire/Canvas/ValueNodes/CurrencyNode.hpp"
 #include "Spire/Canvas/ValueNodes/DateTimeNode.hpp"
@@ -68,6 +69,7 @@ namespace {
         Ref<CanvasNodeModel> model, Ref<UserProfile> userProfile,
         QEvent* event);
       CanvasNodeEditor::EditVariant GetEditor();
+      void Visit(const AssetNode& node) override;
       void Visit(const BooleanNode& node) override;
       void Visit(const CurrencyNode& node) override;
       void Visit(const CustomNode& node) override;
@@ -125,6 +127,22 @@ CanvasNodeEditor::EditVariant OpenEditorCanvasNodeVisitor::GetEditor() {
   return m_editVariant;
 }
 
+void OpenEditorCanvasNodeVisitor::Visit(const AssetNode& node) {
+  auto editor = new QComboBox();
+  auto assets = m_userProfile->GetCurrencyDatabase().get_entries();
+  for(auto i = std::size_t(0); i != assets.size(); ++i) {
+    auto& entry = assets[i];
+    editor->addItem(QString::fromStdString(entry.m_code.get_data()));
+    if(node.GetValue() && entry.m_id == node.GetValue()) {
+      editor->setCurrentIndex(i);
+    }
+  }
+  if(m_event) {
+    QApplication::sendEvent(editor, m_event);
+  }
+  m_editVariant = editor;
+}
+
 void OpenEditorCanvasNodeVisitor::Visit(const BooleanNode& node) {
   auto editor = new QComboBox();
   editor->addItem("true");
@@ -146,7 +164,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const CurrencyNode& node) {
   for(auto i = std::size_t(0); i != currencies.size(); ++i) {
     auto& entry = currencies[i];
     editor->addItem(QString::fromStdString(entry.m_code.get_data()));
-    if(node.GetValue() != CurrencyId::NONE && entry.m_id == node.GetValue()) {
+    if(node.GetValue() && entry.m_id == node.GetValue()) {
       editor->setCurrentIndex(i);
     }
   }

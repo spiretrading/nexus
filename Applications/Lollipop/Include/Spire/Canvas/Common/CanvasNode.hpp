@@ -12,6 +12,7 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/variant/variant.hpp>
+#include "Nexus/Definitions/Asset.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
@@ -34,7 +35,7 @@ namespace Spire {
       typedef boost::variant<bool, Nexus::Quantity, double,
         boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
         Nexus::CurrencyId, Nexus::Money, Nexus::OrderType, Nexus::Ticker,
-        Nexus::Side, Nexus::TimeInForce, Nexus::Venue> MetaData;
+        Nexus::Side, Nexus::TimeInForce, Nexus::Venue, Nexus::Asset> MetaData;
 
       //! A CanvasNode's MIME type.
       static const std::string MIME_TYPE;

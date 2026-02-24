@@ -17,18 +17,11 @@ using namespace std;
 
 namespace {
   struct LuaValuePusher {
-    using type = mp_push_back<mp_remove<ValueTypes, Record>, Asset>;
+    using type = mp_remove<ValueTypes, Record>;
 
     template<typename T>
     void operator ()(lua_State& luaState, const Record::Field& value) const {
-      if constexpr(std::is_same_v<T, Asset>) {
-        PushLuaValue<CurrencyId>()(luaState, to_currency(boost::get<T>(value)));
-      } else if constexpr(std::is_same_v<T, CurrencyId>) {
-
-        /** TODO */
-      } else {
-        PushLuaValue<T>()(luaState, boost::get<T>(value));
-      }
+      PushLuaValue<T>()(luaState, boost::get<T>(value));
     }
   };
 

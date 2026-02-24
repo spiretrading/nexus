@@ -1,6 +1,7 @@
 #include "Spire/Canvas/Operations/DefaultCanvasNodeFromCanvasTypeVisitor.hpp"
 #include "Spire/Canvas/Common/NoneNode.hpp"
 #include "Spire/Canvas/StandardNodes/TimeRangeParameterNode.hpp"
+#include "Spire/Canvas/ValueNodes/AssetNode.hpp"
 #include "Spire/Canvas/ValueNodes/BooleanNode.hpp"
 #include "Spire/Canvas/ValueNodes/CurrencyNode.hpp"
 #include "Spire/Canvas/ValueNodes/DateTimeNode.hpp"
@@ -29,6 +30,7 @@ namespace {
     private:
       std::unique_ptr<CanvasNode> m_node;
 
+      virtual void Visit(const AssetType& type);
       virtual void Visit(const BooleanType& type);
       virtual void Visit(const CanvasType& type);
       virtual void Visit(const CurrencyType& type);
@@ -53,6 +55,10 @@ unique_ptr<CanvasNode> DefaultCanvasNodeFromCanvasTypeVisitor::GetNode(
     const CanvasType& type) {
   type.Apply(*this);
   return move(m_node);
+}
+
+void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const AssetType& type) {
+  m_node = make_unique<AssetNode>();
 }
 
 void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const BooleanType& type) {

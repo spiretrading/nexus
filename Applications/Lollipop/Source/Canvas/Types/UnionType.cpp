@@ -1,5 +1,6 @@
 #include "Spire/Canvas/Types/UnionType.hpp"
 #include <algorithm>
+#include "Spire/Canvas/Types/AssetType.hpp"
 #include "Spire/Canvas/Types/BooleanType.hpp"
 #include "Spire/Canvas/Types/CanvasTypeVisitor.hpp"
 #include "Spire/Canvas/Types/CurrencyType.hpp"
@@ -28,6 +29,7 @@ using namespace std;
 namespace {
   std::shared_ptr<UnionType> MakeAnyType() {
     vector<std::shared_ptr<NativeType>> types;
+    types.push_back(AssetType::GetInstance());
     types.push_back(BooleanType::GetInstance());
     types.push_back(CurrencyType::GetInstance());
     types.push_back(DateTimeType::GetInstance());
@@ -53,6 +55,7 @@ namespace {
 
   std::shared_ptr<UnionType> MakeAnyValueType() {
     vector<std::shared_ptr<NativeType>> types;
+    types.push_back(AssetType::GetInstance());
     types.push_back(BooleanType::GetInstance());
     types.push_back(CurrencyType::GetInstance());
     types.push_back(DateTimeType::GetInstance());

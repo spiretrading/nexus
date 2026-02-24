@@ -9,6 +9,8 @@ namespace Spire {
     public:
       virtual ~CanvasTypeVisitor() = default;
 
+      virtual void Visit(const AssetType& type);
+
       virtual void Visit(const BooleanType& type);
 
       virtual void Visit(const CanvasType& type);

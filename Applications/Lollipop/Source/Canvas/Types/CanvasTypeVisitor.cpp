@@ -1,4 +1,5 @@
 #include "Spire/Canvas/Types/CanvasTypeVisitor.hpp"
+#include "Spire/Canvas/Types/AssetType.hpp"
 #include "Spire/Canvas/Types/BooleanType.hpp"
 #include "Spire/Canvas/Types/CurrencyType.hpp"
 #include "Spire/Canvas/Types/DateTimeType.hpp"
@@ -21,6 +22,10 @@
 #include "Spire/Canvas/Types/VenueType.hpp"
 
 using namespace Spire;
+
+void CanvasTypeVisitor::Visit(const AssetType& type) {
+  Visit(static_cast<const NativeType&>(type));
+}
 
 void CanvasTypeVisitor::Visit(const BooleanType& type) {
   Visit(static_cast<const NativeType&>(type));

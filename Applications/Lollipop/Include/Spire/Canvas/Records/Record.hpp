@@ -9,6 +9,7 @@
 #include <boost/fusion/include/for_each.hpp>
 #include <boost/variant/variant.hpp>
 #include "Nexus/Definitions/Asset.hpp"
+#include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
@@ -27,9 +28,9 @@ namespace Spire {
       /** Defines the types allowed for a member of a Record. */
       using Field = boost::variant<Record, bool, Nexus::Quantity, double,
         boost::posix_time::ptime, boost::posix_time::time_duration, std::string,
-        Nexus::Asset, Nexus::Money, Nexus::OrderStatus, Nexus::OrderType,
+        Nexus::CurrencyId, Nexus::Money, Nexus::OrderStatus, Nexus::OrderType,
         Nexus::Ticker, Nexus::Side, Nexus::TimeInForce, Nexus::Venue,
-        Beam::Range, Beam::Sequence>;
+        Beam::Range, Beam::Sequence, Nexus::Asset>;
 
       /** Constructs an empty Record. */
       Record() = default;

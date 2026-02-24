@@ -6,6 +6,8 @@ namespace Spire {
   class AdditionNode;
   class AggregateNode;
   class AlarmNode;
+  class AssetNode;
+  class AssetType;
   class BaseValueNode;
   class BboQuoteQueryNode;
   class BlotterTaskMonitorNode;

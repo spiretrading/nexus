@@ -78,21 +78,11 @@ void PortfolioSelectionModel::UpdateProperties(
 
 bool PortfolioSelectionModel::TestSelectionAcceptsEntry(
     const PortfolioViewerModel::Entry& entry) const {
-  if(m_selectedGroups.find(entry.m_group) == m_selectedGroups.end()) {
-    return false;
-  }
-
-  /** TODO. */
-  if(!m_selectedCurrencies.contains(
-      to_currency(entry.m_inventory.m_position.m_currency))) {
-    return false;
-  }
-  if(m_selectedVenues.find(entry.m_inventory.m_position.m_ticker.get_venue()) ==
-      m_selectedVenues.end()) {
-    return false;
-  }
-  if(m_selectedSides.find(get_side(entry.m_inventory.m_position)) ==
-      m_selectedSides.end()) {
+  if(!m_selectedGroups.contains(entry.m_group) ||
+      !m_selectedCurrencies.contains(entry.m_inventory.m_position.m_currency) ||
+      !m_selectedVenues.contains(
+        entry.m_inventory.m_position.m_ticker.get_venue()) ||
+      !m_selectedSides.contains(get_side(entry.m_inventory.m_position))) {
     return false;
   }
   return true;

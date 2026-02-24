@@ -1,39 +1,41 @@
-#ifndef NEXUS_CURRENCY_PARSER_HPP
-#define NEXUS_CURRENCY_PARSER_HPP
+#ifndef NEXUS_ASSET_PARSER_HPP
+#define NEXUS_ASSET_PARSER_HPP
+#include <Beam/Parsers/ConversionParser.hpp>
 #include <Beam/Parsers/DefaultParser.hpp>
 #include <Beam/Parsers/EnumeratorParser.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/lexical_cast.hpp>
+#include "Nexus/Definitions/Asset.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 
 namespace Nexus {
 
   /**
-   * Parses a CurrencyId.
+   * Parses an Asset.
    * @param currencies The database of available currencies to parse.
    */
-  inline auto currency_parser(const CurrencyDatabase& currencies) {
+  inline auto asset_parser(const CurrencyDatabase& currencies) {
     auto id = [] (const auto& value) {
       return value.m_id;
     };
-    return Beam::EnumeratorParser(
+    return Beam::cast<Asset>(Beam::EnumeratorParser(
       boost::make_transform_iterator(currencies.get_entries().cbegin(), id),
       boost::make_transform_iterator(currencies.get_entries().cend(), id),
       [=] (auto id) {
         return boost::lexical_cast<std::string>(currencies.from(id).m_code);
-      });
+      }));
   }
 
-  /** Parses a CurrencyId using the default CurrencyDatabase. */
-  inline const auto& currency_parser() {
-    static const auto& parser = currency_parser(DEFAULT_CURRENCIES);
+  /** Parses an Asset using the default CurrencyDatabase. */
+  inline const auto& asset_parser() {
+    static const auto& parser = asset_parser(DEFAULT_CURRENCIES);
     return parser;
   }
 }
 
 namespace Beam {
   template<>
-  const auto default_parser<Nexus::CurrencyId> = Nexus::currency_parser();
+  const auto default_parser<Nexus::Asset> = Nexus::asset_parser();
 }
 
 #endif
