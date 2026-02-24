@@ -3,7 +3,6 @@
 #include <QGuiApplication>
 #include <QKeyEvent>
 #include <QScreen>
-#include <QTimer>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/EmptySelectionModel.hpp"
@@ -105,11 +104,12 @@ ContextMenu::ContextMenu(QWidget& parent, ItemViewBuilder item_view_builder)
       m_item_view_builder(std::move(item_view_builder)),
       m_next_id(0),
       m_visible_submenu(nullptr),
-      m_pending_submenu_index(-1),
-      m_hide_count(0),
       m_last_show_items(0),
       m_block_move(0),
-      m_mouse_observer(*this) {
+      m_mouse_observer(*this),
+      m_show_timer(this),
+      m_hide_timer(this),
+      m_is_hovered(false) {
   setAttribute(Qt::WA_Hover);
   setMinimumWidth(scale_width(MIN_WIDTH));
   m_list = std::make_shared<ArrayListModel<MenuItem>>();
@@ -135,6 +135,12 @@ ContextMenu::ContextMenu(QWidget& parent, ItemViewBuilder item_view_builder)
   m_window->installEventFilter(this);
   m_window->parentWidget()->installEventFilter(this);
   on_window_style();
+  m_show_timer.setSingleShot(true);
+  connect(&m_show_timer, &QTimer::timeout,
+    this, &ContextMenu::on_defer_show_submenu);
+  m_hide_timer.setSingleShot(true);
+  connect(&m_hide_timer, &QTimer::timeout,
+    this, &ContextMenu::on_defer_hide_submenu);
   m_window_style_connection = connect_style_signal(
     *m_window, std::bind_front(&ContextMenu::on_window_style, this));
   m_list->connect_operation_signal(
@@ -239,6 +245,9 @@ bool ContextMenu::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::Move ||
         event->type() == QEvent::Resize) {
       position_submenu();
+    } else if(event->type() == QEvent::Hide) {
+      m_visible_submenu->removeEventFilter(this);
+      m_visible_submenu = nullptr;
     }
   } else if(m_visible_submenu && watched ==
       &m_visible_submenu->get_body() && event->type() == QEvent::Resize) {
@@ -271,7 +280,8 @@ bool ContextMenu::event(QEvent* event) {
     }
     m_window->show();
     m_last_show_items = m_list_view->get_list()->get_size();
-    setFocus(Qt::PopupFocusReason);
+    m_list_view->setFocusProxy(nullptr);
+    m_list_view->setFocus();
     if(m_list->get_size() == 0) {
       QTimer::singleShot(10, [=] { m_window->hide(); });
     }
@@ -303,6 +313,11 @@ void ContextMenu::resizeEvent(QResizeEvent* event) {
   }
 }
 
+void ContextMenu::showEvent(QShowEvent* event) {
+  m_list_view->setFocusProxy(nullptr);
+  m_list_view->setFocus();
+}
+
 QWidget* ContextMenu::build_item(
     const std::shared_ptr<AnyListModel>& list, int index) {
   auto item = std::any_cast<MenuItem>(list->get(index));
@@ -332,6 +347,15 @@ ListItem* ContextMenu::get_current_item() const {
   return nullptr;
 }
 
+int ContextMenu::find_submenu_index(const OverlayPanel& submenu) const {
+  for(auto& submenu_value : m_submenus) {
+    if(submenu_value.second == &submenu) {
+      return submenu_value.first;
+    }
+  }
+  return -1;
+}
+
 void ContextMenu::clear_hover_style() {
   if(auto item = get_current_item()) {
     auto leave_event = QEvent(QEvent::Leave);
@@ -356,16 +380,39 @@ void ContextMenu::handle_right_or_enter_event(QEvent* event) {
 
 bool ContextMenu::handle_mouse_event(QMouseEvent* event) {
   if(!m_visible_submenu->rect().contains(event->pos())) {
-    if(auto item = get_current_item()) {
-      if(!item->rect().contains(item->mapFromGlobal(event->globalPos()))) {
-        clear_hover_style();
-      } else if(event->type() == QEvent::MouseButtonPress ||
-          event->type() == QEvent::MouseButtonDblClick) {
-        return true;
+    if(event->type() == QEvent::MouseButtonPress ||
+        event->type() == QEvent::MouseButtonDblClick) {
+      if(auto index = find_submenu_index(*m_visible_submenu);
+          index != m_list_view->get_current()->get()) {
+        if(auto item = get_current_item()) {
+          forward_mouse_click(*item, *event);
+          return true;
+        }
       }
+      return true;
+    }
+  } else if(auto index = find_submenu_index(*m_visible_submenu); index >= 0) {
+    if(m_list_view->get_current()->get() != index) {
+      m_list_view->get_current()->set(index);
     }
   }
   return false;
+}
+
+void ContextMenu::forward_mouse_click(QWidget& target,
+    const QMouseEvent& mouse_event) {
+  auto press_event = QMouseEvent(mouse_event.type(),
+    target.mapFromGlobal(mouse_event.globalPos()),
+    mouse_event.windowPos(), mouse_event.screenPos(),
+    mouse_event.button(), mouse_event.buttons(), mouse_event.modifiers(),
+    mouse_event.source());
+  QCoreApplication::sendEvent(&target, &press_event);
+  auto release_event = QMouseEvent(QEvent::MouseButtonRelease,
+    target.mapFromGlobal(mouse_event.globalPos()),
+    mouse_event.windowPos(), mouse_event.screenPos(),
+    mouse_event.button(), mouse_event.buttons(), mouse_event.modifiers(),
+    mouse_event.source());
+  QCoreApplication::sendEvent(&target, &release_event);
 }
 
 void ContextMenu::position_submenu() {
@@ -435,96 +482,86 @@ bool ContextMenu::is_submenu_hovered() const {
 void ContextMenu::hide_submenu() {
   if(m_visible_submenu) {
     auto& body = static_cast<ContextMenu&>(m_visible_submenu->get_body());
-    body.m_list_view->get_current()->set(none);
-    body.m_list_view->setFocusProxy(nullptr);
     body.removeEventFilter(this);
     m_visible_submenu->hide();
-    m_visible_submenu->removeEventFilter(this);
-    m_visible_submenu = nullptr;
+    setFocus();
   }
-}
-
-void ContextMenu::defer_hide_submenu() {
-  if(!m_visible_submenu) {
-    return;
-  }
-  auto hide_count = m_hide_count;
-  QTimer::singleShot(MENU_SHOW_DELAY(), this, [=] {
-    if(hide_count == m_hide_count) {
-      if(is_submenu_hovered()) {
-        m_pending_submenu_index = -1;
-        for(auto& submenu : m_submenus) {
-          if(submenu.second == m_visible_submenu) {
-            m_list_view->get_current()->set(submenu.first);
-          }
-        }
-      } else {
-        hide_submenu();
-      }
-    }
-    if(m_pending_submenu_index != -1) {
-      auto index = m_pending_submenu_index;
-      m_pending_submenu_index = -1;
-      if(m_list_view->get_current()->get() == index) {
-        show_submenu(index);
-      }
-    }
-  });
 }
 
 void ContextMenu::show_submenu(int index) {
-  auto& menu_item = m_list->get(index);
-  if(menu_item.m_type == MenuItemType::SUBMENU) {
-    if(index == m_pending_submenu_index) {
-      return;
-    }
-    auto menu_window = m_submenus[index];
-    if(m_visible_submenu == menu_window) {
-      ++m_hide_count;
-      if(!m_visible_submenu->isVisible()) {
-        hide_submenu();
-      }
-      return;
-    }
-    if(m_visible_submenu) {
-      defer_hide_submenu();
-      m_pending_submenu_index = index;
-      return;
-    }
-    ++m_hide_count;
-    m_visible_submenu = menu_window;
-    m_visible_submenu->installEventFilter(this);
-    m_visible_submenu->get_body().installEventFilter(this);
-    position_submenu(*m_list_view->get_list_item(index));
-    auto& active_menu =
-      static_cast<ContextMenu&>(m_visible_submenu->get_body());
-    if(active_menu.m_list->get_size() != 0) {
-      m_visible_submenu->show();
-    }
+  if(!m_submenus.contains(index)) {
+    return;
   }
+  m_visible_submenu = m_submenus[index];
+  m_visible_submenu->installEventFilter(this);
+  m_visible_submenu->get_body().installEventFilter(this);
+  position_submenu(*m_list_view->get_list_item(index));
+  auto& active_menu =
+    static_cast<ContextMenu&>(m_visible_submenu->get_body());
+  if(active_menu.m_list->get_size() != 0) {
+    m_visible_submenu->show();
+  }
+}
+
+void ContextMenu::on_defer_hide_submenu() {
+  auto current = m_list_view->get_current()->get();
+  if(current && m_submenus.contains(*current) &&
+      m_visible_submenu == m_submenus[*current]) {
+    return;
+  } else {
+    hide_submenu();
+  }
+  if(current) {
+    show_submenu(*current);
+  }
+}
+
+void ContextMenu::on_defer_show_submenu() {
+  auto current = m_list_view->get_current()->get();
+  if(!current) {
+    return;
+  }
+  show_submenu(*current);
 }
 
 void ContextMenu::on_mouse_move(QWidget& target, QMouseEvent& event) {
   if(is_submenu_hovered()) {
+    m_is_hovered = false;
     return;
   }
   for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
     auto item = m_list_view->get_list_item(i);
     auto position = item->mapFromGlobal(event.globalPos());
     if(item->rect().contains(position)) {
+      m_is_hovered = true;
       if(m_list_view->get_current()->get() != i) {
-        defer_hide_submenu();
-        if(target.window()->isVisible() && window()->isVisible()) {
-          m_list_view->get_current()->set(i);
-          item->setFocus();
-          show_submenu(i);
+        m_list_view->get_current()->set(i);
+        m_list_view->setFocusProxy(item);
+        if(m_visible_submenu) {
+          if(!m_hide_timer.isActive()) {
+            m_hide_timer.start(MENU_SHOW_DELAY());
+          }
+        } else if(m_list->get(i).m_type == MenuItemType::SUBMENU) {
+            m_show_timer.start(MENU_SHOW_DELAY());
+        } else {
+          m_show_timer.stop();
+          setFocus();
         }
-      } else if(!m_visible_submenu) {
-        show_submenu(i);
+      } else if(m_list->get(i).m_type == MenuItemType::SUBMENU &&
+          !m_visible_submenu && !m_show_timer.isActive()) {
+        m_show_timer.start(MENU_SHOW_DELAY());
       }
-      break;
+      return;
     }
   }
+  if(!m_visible_submenu) {
+    m_list_view->get_current()->set(none);
+    m_show_timer.stop();
+  } else if(m_is_hovered) {
+    m_list_view->get_current()->set(none);
+    m_hide_timer.start(MENU_SHOW_DELAY());
+  }
+  m_is_hovered = false;
 }
 
 void ContextMenu::on_list_operation(

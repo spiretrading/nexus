@@ -1462,38 +1462,64 @@ UiProfile Spire::make_context_menu_profile() {
       auto button = make_label_button(QString::fromUtf8("Click me"));
       button->connect_click_signal([=, &profile] {
         auto menu = new ContextMenu(*button);
-        menu->add_action(
-          "Undo", profile.make_event_slot<>(QString("Action:Undo")));
+        auto file_menu = new ContextMenu(*static_cast<QWidget*>(menu));
+        file_menu->add_action("New",
+          profile.make_event_slot<>(QString("Action:New")));
+        file_menu->add_action("Save",
+          profile.make_event_slot<>(QString("Action:Save")));
+        file_menu->add_action("Save As...",
+          profile.make_event_slot<>(QString("Action:Save As")));
+        menu->add_menu("File", *file_menu);
+        auto edit_menu = new ContextMenu(*static_cast<QWidget*>(menu));
+        edit_menu->add_action("Cut",
+          profile.make_event_slot<>(QString("Action:Cut")));
+        edit_menu->add_action("Copy",
+          profile.make_event_slot<>(QString("Action:Copy")));
+        edit_menu->add_action("Paste",
+          profile.make_event_slot<>(QString("Action:Paste")));
+        edit_menu->add_separator();
+        edit_menu->add_action("Find...",
+          profile.make_event_slot<>(QString("Action:Find")));
+        edit_menu->add_action("Find Next",
+          profile.make_event_slot<>(QString("Action:Find Next")));
+        edit_menu->add_action("Find Previous",
+          profile.make_event_slot<>(QString("Action:Find Previous")));
+        edit_menu->add_separator();
+        edit_menu->add_action("Select All",
+          profile.make_event_slot<>(QString("Action:Select All")));
+        edit_menu->add_action("Select None",
+          profile.make_event_slot<>(QString("Action:Select None")));
+        edit_menu->add_action("Select Inverse",
+          profile.make_event_slot<>(QString("Action:Select Inverse")));
+        menu->add_menu("Edit", *edit_menu);
         auto view_menu = new ContextMenu(*static_cast<QWidget*>(menu));
-        view_menu->add_action(
-          "Large", profile.make_event_slot<>(QString("Action:Large")));
-        view_menu->add_action(
-          "Medium", profile.make_event_slot<>(QString("Action:Medium")));
-        view_menu->add_action(
-          "Small", profile.make_event_slot<>(QString("Action:Small")));
+        view_menu->add_action("Large",
+          profile.make_event_slot<>(QString("Action:Large")));
+        view_menu->add_action("Medium",
+          profile.make_event_slot<>(QString("Action:Medium")));
+        view_menu->add_action("Small",
+          profile.make_event_slot<>(QString("Action:Small")));
         view_menu->add_separator();
         auto empty_menu = new ContextMenu(*static_cast<QWidget*>(view_menu));
         view_menu->add_menu("Empty", *empty_menu);
         menu->add_menu("View", *view_menu);
         auto sort_menu = new ContextMenu(*static_cast<QWidget*>(menu));
-        sort_menu->add_action(
-          "Name", profile.make_event_slot<>(QString("Action:Name")));
-        sort_menu->add_action(
-          "Size", profile.make_event_slot<>(QString("Action:Size")));
+        sort_menu->add_action("Name",
+          profile.make_event_slot<>(QString("Action:Name")));
+        sort_menu->add_action("Size",
+          profile.make_event_slot<>(QString("Action:Size")));
         auto type_menu = new ContextMenu(*static_cast<QWidget*>(sort_menu));
-        type_menu->add_action(
-          "Security", profile.make_event_slot<>(QString("Action:Security")));
-        type_menu->add_action(
-          "Side", profile.make_event_slot<>(QString("Action:Side")));
+        type_menu->add_action("Security",
+          profile.make_event_slot<>(QString("Action:Security")));
+        type_menu->add_action("Side",
+          profile.make_event_slot<>(QString("Action:Side")));
         sort_menu->add_menu("Type", *type_menu);
         menu->add_menu("Sort by", *sort_menu);
         menu->add_separator();
-        menu->add_action(
-          "Cut", profile.make_event_slot<>(QString("Action:Cut")));
-        menu->add_action(
-          "Copy", profile.make_event_slot<>(QString("Action:Copy")));
-        menu->add_action(
-          "Paste", profile.make_event_slot<>(QString("Action:Paste")));
+        menu->add_action("Refresh",
+          profile.make_event_slot<>(QString("Action:Refresh")));
+        menu->add_action("Export...",
+          profile.make_event_slot<>(QString("Action:Export")));
         menu->add_separator();
         auto date_model = std::make_shared<LocalBooleanModel>();
         date_model->set(true);
