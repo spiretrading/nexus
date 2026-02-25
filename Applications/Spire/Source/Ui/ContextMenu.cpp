@@ -140,6 +140,9 @@ ContextMenu::ContextMenu(QWidget& parent, ItemViewBuilder item_view_builder)
   m_window->setMouseTracking(true);
   m_window->installEventFilter(this);
   m_window->parentWidget()->installEventFilter(this);
+  update_style(*m_window, [] (auto& style) {
+    style.get(Any()).set(vertical_padding(scale_height(4)));
+  });
   on_window_style();
   m_show_timer.setSingleShot(true);
   connect(&m_show_timer, &QTimer::timeout,
@@ -432,14 +435,13 @@ void ContextMenu::position_submenu() {
   auto menu_size = m_visible_submenu->size();
   auto active_menu_margins = m_visible_submenu->layout()->contentsMargins();
   auto candidate_right = m_active_item_geometry.right() -
-    OVERLAP_WIDTH() - active_menu_margins.left() + m_window_border_size.right();
+    OVERLAP_WIDTH() - active_menu_margins.left() + m_window_margins.right();
   auto candidate_top = m_active_item_geometry.top() -
-    active_menu_margins.top() - m_window_border_size.top();
+    active_menu_margins.top() - m_window_margins.top();
   auto candidate_bottom = m_active_item_geometry.bottom() -
-    body_size.height() - active_menu_margins.top() - m_window_border_size.top();
+    body_size.height() - active_menu_margins.top() - m_window_margins.top();
   auto candidate_left = m_active_item_geometry.left() + OVERLAP_WIDTH() -
-    body_size.width() - active_menu_margins.right() -
-    m_window_border_size.left();
+    body_size.width() - active_menu_margins.right() - m_window_margins.left();
   auto candidate_geometry =
     QRect(QPoint(candidate_right, candidate_top), menu_size);
   if(!screen_geometry.contains(candidate_geometry)) {
@@ -629,28 +631,48 @@ void ContextMenu::on_submit(const std::any& submission) {
 }
 
 void ContextMenu::on_window_style() {
-  m_window_border_size = QMargins();
+  m_window_margins = QMargins();
   auto& stylist = find_stylist(*m_window);
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const BorderTopSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_window_border_size.setTop(size);
+          m_window_margins.setTop(m_window_margins.top() + size);
         });
       },
       [&] (const BorderRightSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_window_border_size.setRight(size);
+          m_window_margins.setRight(m_window_margins.right() + size);
         });
       },
       [&] (const BorderBottomSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_window_border_size.setBottom(size);
+          m_window_margins.setBottom(m_window_margins.bottom() + size);
         });
       },
       [&] (const BorderLeftSize& size) {
         stylist.evaluate(size, [=] (auto size) {
-          m_window_border_size.setLeft(size);
+          m_window_margins.setLeft(m_window_margins.left() + size);
+        });
+      },
+      [&] (const PaddingTop& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_window_margins.setTop(m_window_margins.top() + size);
+        });
+      },
+      [&] (const PaddingRight& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_window_margins.setRight(m_window_margins.right() + size);
+        });
+      },
+      [&] (const PaddingBottom& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_window_margins.setBottom(m_window_margins.bottom() + size);
+        });
+      },
+      [&] (const PaddingLeft& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          m_window_margins.setLeft(m_window_margins.left() + size);
         });
       });
   }

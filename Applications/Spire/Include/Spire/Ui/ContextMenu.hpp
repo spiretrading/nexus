@@ -174,7 +174,7 @@ namespace Spire {
       QRect m_active_item_geometry;
       int m_block_move;
       MouseMoveObserver m_mouse_observer;
-      QMargins m_window_border_size;
+      QMargins m_window_margins;
       QTimer m_show_timer;
       QTimer m_hide_timer;
       bool m_is_hovered;
