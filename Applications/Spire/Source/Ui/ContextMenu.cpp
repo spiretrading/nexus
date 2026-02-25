@@ -370,9 +370,11 @@ void ContextMenu::clear_hover_style() {
 }
 
 void ContextMenu::focus_first_item() {
-  if(m_list_view->get_list()->get_size() > 0) {
-    m_list_view->get_current()->set(0);
-  }
+  QTimer::singleShot(0, this, [=] {
+    if(m_list_view->get_list()->get_size() > 0) {
+      m_list_view->get_current()->set(0);
+    }
+  });
 }
 
 void ContextMenu::handle_right_or_enter_event(QEvent* event) {
