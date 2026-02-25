@@ -44,10 +44,10 @@ namespace Nexus {
       AsterMarketDataFeedClient(const AsterMarketDataFeedClient&) = delete;
       AsterMarketDataFeedClient& operator =(
         const AsterMarketDataFeedClient&) = delete;
-      void on_bbo_quote(const Security& security, const BboQuote& bbo_quote);
-      void on_book_quote(const Security& security, const BookQuote& book_quote);
+      void on_bbo_quote(const Ticker& ticker, const BboQuote& bbo_quote);
+      void on_book_quote(const Ticker& ticker, const BookQuote& book_quote);
       void on_time_and_sale(
-        const Security& security, const TimeAndSale& time_and_sale);
+        const Ticker& ticker, const TimeAndSale& time_and_sale);
   };
 
   template<typename A, typename M>
@@ -56,18 +56,19 @@ namespace Nexus {
     AF&& aster_client, MF&& market_data_feed_client)
     try : m_aster_client(std::forward<AF>(aster_client)),
           m_market_data_feed_client(std::forward<MF>(market_data_feed_client)) {
-      auto security = Security("QQQUSDT", Venue("ASTR"));
-      m_market_data_feed_client->add(SecurityInfo(
-        security, boost::lexical_cast<std::string>(security), "", 1));
+      auto ticker = Ticker("QQQUSDT", Venue("ASTR"));
+      m_market_data_feed_client->add(TickerInfo(
+        ticker, boost::lexical_cast<std::string>(ticker), Instrument(),
+        Money::CENT, 1, 1, Money::CENT, 1,  1));
       m_aster_client->subscribe(
-        security, m_tasks.get_slot<BboQuote>(std::bind_front(
-          &AsterMarketDataFeedClient::on_bbo_quote, this, security)));
+        ticker, m_tasks.get_slot<BboQuote>(std::bind_front(
+          &AsterMarketDataFeedClient::on_bbo_quote, this, ticker)));
       m_aster_client->subscribe(
-        security, m_tasks.get_slot<BookQuote>(std::bind_front(
-          &AsterMarketDataFeedClient::on_book_quote, this, security)));
+        ticker, m_tasks.get_slot<BookQuote>(std::bind_front(
+          &AsterMarketDataFeedClient::on_book_quote, this, ticker)));
       m_aster_client->subscribe(
-        security, m_tasks.get_slot<TimeAndSale>(std::bind_front(
-          &AsterMarketDataFeedClient::on_time_and_sale, this, security)));
+        ticker, m_tasks.get_slot<TimeAndSale>(std::bind_front(
+          &AsterMarketDataFeedClient::on_time_and_sale, this, ticker)));
     } catch(const std::exception&) {
       std::throw_with_nested(Beam::ConnectException(
         "Failed to initialize the Aster market data feed client."));
@@ -90,21 +91,21 @@ namespace Nexus {
 
   template<typename A, typename M>
   void AsterMarketDataFeedClient<A, M>::on_bbo_quote(
-      const Security& security, const BboQuote& bbo_quote) {
-    m_market_data_feed_client->publish(SecurityBboQuote(bbo_quote, security));
+      const Ticker& ticker, const BboQuote& bbo_quote) {
+    m_market_data_feed_client->publish(TickerBboQuote(bbo_quote, ticker));
   }
 
   template<typename A, typename M>
   void AsterMarketDataFeedClient<A, M>::on_book_quote(
-      const Security& security, const BookQuote& book_quote) {
-    m_market_data_feed_client->publish(SecurityBookQuote(book_quote, security));
+      const Ticker& ticker, const BookQuote& book_quote) {
+    m_market_data_feed_client->publish(TickerBookQuote(book_quote, ticker));
   }
 
   template<typename A, typename M>
   void AsterMarketDataFeedClient<A, M>::on_time_and_sale(
-      const Security& security, const TimeAndSale& time_and_sale) {
+      const Ticker& ticker, const TimeAndSale& time_and_sale) {
     m_market_data_feed_client->publish(
-      SecurityTimeAndSale(time_and_sale, security));
+      TickerTimeAndSale(time_and_sale, ticker));
   }
 }
 

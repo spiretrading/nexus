@@ -20,7 +20,7 @@
 #include <Beam/WebServices/WebSocket.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "Nexus/Definitions/BookQuote.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/MarketDataService/BboQuoteModel.hpp"
 
@@ -65,28 +65,28 @@ namespace Nexus {
       boost::posix_time::ptime load_server_time();
 
       /**
-       * Subscribes to bbo quote updates for a security.
-       * @param security The security to subscribe to.
+       * Subscribes to bbo quote updates for a ticker.
+       * @param ticker The ticker to subscribe to.
        * @param queue The queue to publish BboQuotes to.
        */
       void subscribe(
-        const Security& security, Beam::ScopedQueueWriter<BboQuote> queue);
+        const Ticker& ticker, Beam::ScopedQueueWriter<BboQuote> queue);
 
       /**
-       * Subscribes to book quote updates for a security.
-       * @param security The security to subscribe to.
+       * Subscribes to book quote updates for a ticker.
+       * @param ticker The ticker to subscribe to.
        * @param queue The queue to publish BookQuotes to.
        */
       void subscribe(
-        const Security& security, Beam::ScopedQueueWriter<BookQuote> queue);
+        const Ticker& ticker, Beam::ScopedQueueWriter<BookQuote> queue);
 
       /**
-       * Subscribes to time and sale updates for a security.
-       * @param security The security to subscribe to.
+       * Subscribes to time and sale updates for a ticker.
+       * @param ticker The ticker to subscribe to.
        * @param queue The queue to publish TimeAndSales to.
        */
       void subscribe(
-        const Security& security, Beam::ScopedQueueWriter<TimeAndSale> queue);
+        const Ticker& ticker, Beam::ScopedQueueWriter<TimeAndSale> queue);
 
       void close();
 
@@ -185,8 +185,8 @@ namespace Nexus {
 
   template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>
   void AsterWebClient<C>::subscribe(
-      const Security& security, Beam::ScopedQueueWriter<BboQuote> queue) {
-    auto stream = boost::to_lower_copy(security.get_symbol()) + "@depth";
+      const Ticker& ticker, Beam::ScopedQueueWriter<BboQuote> queue) {
+    auto stream = boost::to_lower_copy(ticker.get_symbol()) + "@depth";
     auto lock = std::lock_guard(m_mutex);
     auto& entry = m_bbo_subscriptions[stream];
     if(entry.m_queues.empty() &&
@@ -199,8 +199,8 @@ namespace Nexus {
 
   template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>
   void AsterWebClient<C>::subscribe(
-      const Security& security, Beam::ScopedQueueWriter<BookQuote> queue) {
-    auto stream = boost::to_lower_copy(security.get_symbol()) + "@depth";
+      const Ticker& ticker, Beam::ScopedQueueWriter<BookQuote> queue) {
+    auto stream = boost::to_lower_copy(ticker.get_symbol()) + "@depth";
     auto lock = std::lock_guard(m_mutex);
     auto& queues = m_book_quote_subscriptions[stream];
     if(queues.empty() && m_bbo_subscriptions.find(stream) ==
@@ -212,8 +212,8 @@ namespace Nexus {
 
   template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>
   void AsterWebClient<C>::subscribe(
-      const Security& security, Beam::ScopedQueueWriter<TimeAndSale> queue) {
-    auto stream = boost::to_lower_copy(security.get_symbol()) + "@aggTrade";
+      const Ticker& ticker, Beam::ScopedQueueWriter<TimeAndSale> queue) {
+    auto stream = boost::to_lower_copy(ticker.get_symbol()) + "@aggTrade";
     auto lock = std::lock_guard(m_mutex);
     auto& queues = m_time_and_sale_subscriptions[stream];
     if(queues.empty()) {
