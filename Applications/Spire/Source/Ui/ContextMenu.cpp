@@ -40,8 +40,14 @@ namespace {
   auto LIST_VIEW_STYLE(StyleSheet style) {
     style.get(Any()).
       set(EdgeNavigation::CONTAIN);
-    style.get(
-      Any() > (is_a<ListItem>() && Hover() && !Current() && !Selected())).
+    style.get(Any() >
+        (is_a<ListItem>() && Hover() && (Current() || Selected()))).
+      set(BackgroundColor(QColor(0xE0E0E0)));
+    style.get(FocusIn() >
+        (is_a<ListItem>() && Hover() && (Current() || Selected()))).
+      set(BackgroundColor(QColor(0xE2E0FF)));
+    style.get(Any() >
+        (is_a<ListItem>() && Hover() && !Current() && !Selected())).
       set(BackgroundColor(QColor(0xFFFFFF)));
     style.get(Any() > (is_a<ListItem>() && Disabled()) > is_a<TextBox>()).
       set(TextColor(QColor(0xC8C8C8)));
