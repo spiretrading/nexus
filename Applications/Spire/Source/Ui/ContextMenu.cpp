@@ -399,8 +399,12 @@ bool ContextMenu::handle_mouse_event(QMouseEvent* event) {
           forward_mouse_click(*item, *event);
           return true;
         }
+      } else if(auto item = get_current_item();
+          item->rect().contains(item->mapFromGlobal(event->globalPos()))) {
+        return true;
+      } else {
+        m_window->hide();
       }
-      return true;
     }
   } else if(auto index = find_submenu_index(*m_visible_submenu); index >= 0) {
     if(m_list_view->get_current()->get() != index) {
