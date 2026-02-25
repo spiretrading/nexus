@@ -107,7 +107,7 @@ namespace Nexus {
       if(!info) {
         m_feed_client->add(TickerInfo(
           ticker, boost::lexical_cast<std::string>(ticker), Instrument(),
-          Money::CENT, 1, 100, 2, 1, 1));
+          Money::CENT, 1, 100, Money::CENT, 1, 1));
       }
       m_tickers.emplace_back();
       auto& snapshot = m_tickers.back();
