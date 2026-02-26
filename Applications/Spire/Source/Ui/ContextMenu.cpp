@@ -1,4 +1,5 @@
 #include "Spire/Ui/ContextMenu.hpp"
+#include <QApplication>
 #include <QCoreApplication>
 #include <QGuiApplication>
 #include <QKeyEvent>
@@ -393,14 +394,14 @@ bool ContextMenu::handle_mouse_event(QMouseEvent* event) {
   if(!m_visible_submenu->rect().contains(event->pos())) {
     if(event->type() == QEvent::MouseButtonPress ||
         event->type() == QEvent::MouseButtonDblClick) {
-      if(auto index = find_submenu_index(*m_visible_submenu);
-          index != m_list_view->get_current()->get()) {
-        if(auto item = get_current_item()) {
-          forward_mouse_click(*item, *event);
-          return true;
+      if(rect().contains(mapFromGlobal(event->globalPos()))) {
+        auto current = m_list_view->get_current()->get();
+        auto index = find_submenu_index(*m_visible_submenu);
+        if(current && index != *current &&
+            m_list->get(*current).m_type != MenuItemType::SUBMENU) {
+          forward_mouse_click(
+            *QApplication::widgetAt(event->globalPos()), *event);
         }
-      } else if(auto item = get_current_item();
-          item->rect().contains(item->mapFromGlobal(event->globalPos()))) {
         return true;
       } else {
         m_window->hide();
