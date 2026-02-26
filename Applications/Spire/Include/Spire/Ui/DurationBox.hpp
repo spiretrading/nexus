@@ -7,6 +7,8 @@
 #include "Spire/Ui/IntegerBox.hpp"
 
 namespace Spire {
+  class Box;
+
 namespace Styles {
 
   /** Selects the colon field. */
@@ -90,14 +92,17 @@ namespace Styles {
       IntegerBox* m_hour_field;
       IntegerBox* m_minute_field;
       DecimalBox* m_second_field;
+      Box* m_input_box;
       bool m_is_read_only;
       bool m_is_rejected;
       bool m_has_update;
+      boost::signals2::scoped_connection m_style_connection;
 
       void on_current(
         const boost::optional<boost::posix_time::time_duration>& current);
       void on_submit();
       void on_reject();
+      void on_style();
       void update_empty_fields();
   };
 
