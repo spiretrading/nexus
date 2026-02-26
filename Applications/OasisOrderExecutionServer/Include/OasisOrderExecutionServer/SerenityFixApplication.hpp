@@ -57,15 +57,17 @@ namespace Nexus {
       FixOrderLog m_order_log;
 
       BboQuote load_bbo_quote(const Security& security);
-      void route_to_chix(const Nexus::OrderInfo& info,
+      std::shared_ptr<Order> submit_to_ca(const OrderInfo& info);
+      std::shared_ptr<Order> submit_to_us(const OrderInfo& info);
+      void route_to_chix(const OrderInfo& info,
         Beam::Out<FIX42::NewOrderSingle> new_order_single);
-      void route_to_cse(const Nexus::OrderInfo& info,
+      void route_to_cse(const OrderInfo& info,
         Beam::Out<FIX42::NewOrderSingle> new_order_single);
-      void route_to_matn(const Nexus::OrderInfo& info,
+      void route_to_matn(const OrderInfo& info,
         Beam::Out<FIX42::NewOrderSingle> new_order_single);
-      void route_to_neo(const Nexus::OrderInfo& info,
+      void route_to_neo(const OrderInfo& info,
         Beam::Out<FIX42::NewOrderSingle> new_order_single);
-      void route_to_tsx(const Nexus::OrderInfo& info,
+      void route_to_tsx(const OrderInfo& info,
         Beam::Out<FIX42::NewOrderSingle> new_order_single);
       const boost::optional<std::string>& get_anonymous_tag() const;
       std::string get_umir_user_id() const;

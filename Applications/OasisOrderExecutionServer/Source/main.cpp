@@ -96,6 +96,7 @@ namespace {
       serenity_entry.m_destinations.push_back(DefaultDestinations::OMEGA);
       serenity_entry.m_destinations.push_back(DefaultDestinations::PURE);
       serenity_entry.m_destinations.push_back(DefaultDestinations::TSX);
+      serenity_entry.m_destinations.push_back(DefaultDestinations::OTCM);
       entries.push_back(serenity_entry);
       return entries;
     }, std::runtime_error("Unable to initialize FIX application."));

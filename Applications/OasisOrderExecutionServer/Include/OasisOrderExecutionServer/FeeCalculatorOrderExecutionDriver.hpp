@@ -60,6 +60,8 @@ namespace Nexus {
         PrimitiveOrder& order, const ExecutionReport& report);
       void handle_canadian_market_fees(
         PrimitiveOrder& order, const ExecutionReport& report);
+      void handle_us_market_fees(
+        PrimitiveOrder& order, const ExecutionReport& report);
       void on_execution_report(const std::shared_ptr<PrimitiveOrder>& order,
         const ExecutionReport& report);
   };
@@ -159,6 +161,14 @@ namespace Nexus {
   }
 
   template<typename O>
+  void FeesCalculatorOrderExecutionDriver<O>::handle_us_market_fees(
+      PrimitiveOrder& order, const ExecutionReport& report) {
+    order.with([&] (auto status, const auto& reports) {
+      order.update(report);
+    });
+  }
+
+  template<typename O>
   void FeesCalculatorOrderExecutionDriver<O>::on_execution_report(
       const std::shared_ptr<PrimitiveOrder>& order,
       const ExecutionReport& report) {
@@ -168,6 +178,8 @@ namespace Nexus {
     auto venue = order->get_info().m_fields.m_security.get_venue();
     if(venue == DefaultVenues::ASX || venue == DefaultVenues::CXA) {
       handle_australian_market_fees(*order, report);
+    } else if(venue == DefaultVenues::OTCM) {
+      handle_us_market_fees(*order, report);
     } else {
       handle_canadian_market_fees(*order, report);
     }

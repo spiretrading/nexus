@@ -76,10 +76,8 @@ std::shared_ptr<Order> SerenityFixApplication::submit(const OrderInfo& info) {
       return &info;
     }
     if(info.m_fields.m_type == OrderType::MARKET &&
-        (info.m_fields.m_time_in_force.get_type() ==
-          TimeInForce::Type::OPG ||
-            info.m_fields.m_time_in_force.get_type() ==
-              TimeInForce::Type::MOC)) {
+        (info.m_fields.m_time_in_force.get_type() == TimeInForce::Type::OPG ||
+        info.m_fields.m_time_in_force.get_type() == TimeInForce::Type::MOC)) {
       return &info;
     }
     modified_info.emplace(info);
@@ -102,84 +100,11 @@ std::shared_ptr<Order> SerenityFixApplication::submit(const OrderInfo& info) {
     }
     return &*modified_info;
   }();
-  return m_order_log.submit(*submission_info,
-    get_session_id().getSenderCompID(), get_session_id().getTargetCompID(),
-    [&] (Out<FIX42::NewOrderSingle> new_order_single) {
-      if(submission_info->m_fields.m_currency != DefaultCurrencies::CAD) {
-        throw_with_location(FixOrderRejectedException("Invalid currency."));
-      }
-      if(submission_info->m_fields.m_time_in_force.get_type() ==
-          TimeInForce::Type::GTC ||
-            submission_info->m_fields.m_time_in_force.get_type() ==
-              TimeInForce::Type::GTD) {
-        throw_with_location(
-          FixOrderRejectedException("Invalid time in force."));
-      }
-      if(submission_info->m_fields.m_type == OrderType::STOP) {
-        throw_with_location(FixOrderRejectedException("Invalid order type."));
-      }
-      new_order_single->setField(UMIR_ACCOUNT_TYPE_TAG, "CL");
-      new_order_single->setField(UMIR_USER_ID_TAG, get_umir_user_id());
-      auto no_trade_feat = get_no_trade_feat();
-      auto no_trade_key = get_no_trade_key();
-      if(!no_trade_feat.empty() && !no_trade_key.empty()) {
-        new_order_single->setField(NO_TRADE_FEAT_TAG, no_trade_feat);
-        new_order_single->setField(NO_TRADE_KEY_TAG, no_trade_key);
-      }
-      new_order_single->set(
-        FIX::Account(submission_info->m_submission_account.m_name));
-      if(auto& anonymousTag = get_anonymous_tag()) {
-        new_order_single->setField(ANONYMOUS_TAG, *anonymousTag);
-      }
-      for(auto& tag : submission_info->m_fields.m_additional_fields) {
-        if(tag.get_key() == LONG_LIFE_TAG) {
-          if(auto value = get<std::string>(&tag.get_value())) {
-            if(*value == "Y" || *value == "N") {
-              new_order_single->setField(LONG_LIFE_TAG, *value);
-            }
-          }
-        }
-      }
-      if(submission_info->m_fields.m_destination == DefaultDestinations::CHIX ||
-          submission_info->m_fields.m_destination == DefaultDestinations::CX2) {
-        route_to_chix(*submission_info, out(new_order_single));
-      } else if(submission_info->m_fields.m_destination ==
-          DefaultDestinations::CSE || submission_info->m_fields.m_destination ==
-            DefaultDestinations::PURE) {
-        route_to_cse(*submission_info, out(new_order_single));
-      } else if(submission_info->m_fields.m_destination ==
-          DefaultDestinations::MATNLP ||
-          submission_info->m_fields.m_destination ==
-            DefaultDestinations::MATNMF) {
-        route_to_matn(*submission_info, out(new_order_single));
-      } else if(submission_info->m_fields.m_destination ==
-          DefaultDestinations::NEOE) {
-        route_to_neo(*submission_info, out(new_order_single));
-      } else if(submission_info->m_fields.m_destination ==
-          DefaultDestinations::TSX) {
-        route_to_tsx(*submission_info, out(new_order_single));
-      } else {
-        auto ex_destination = [&] {
-          if(submission_info->m_fields.m_destination ==
-              DefaultDestinations::CSE2) {
-            return FIX::ExDestination("CSE2");
-          } else if(submission_info->m_fields.m_destination ==
-              DefaultDestinations::ALPHA) {
-            return FIX::ExDestination("XATS");
-          } else if(submission_info->m_fields.m_destination ==
-              DefaultDestinations::OMEGA) {
-            return FIX::ExDestination("OMGA");
-          } else if(submission_info->m_fields.m_destination ==
-              DefaultDestinations::LYNX) {
-            return FIX::ExDestination("LYNX");
-          }
-          BOOST_THROW_EXCEPTION(
-            FixOrderRejectedException("Invalid destination."));
-        }();
-        new_order_single->set(FIX::HandlInst('6'));
-        new_order_single->set(ex_destination);
-      }
-    });
+  if(modified_info->m_fields.m_security.get_venue() == DefaultVenues::OTCM) {
+    return submit_to_us(*submission_info);
+  } else {
+    return submit_to_ca(*submission_info);
+  }
 }
 
 void SerenityFixApplication::cancel(
@@ -191,7 +116,10 @@ void SerenityFixApplication::cancel(
     get_session_id().getSenderCompID(), get_session_id().getTargetCompID(),
     [&] (const std::shared_ptr<Order>& order,
         Out<FIX42::OrderCancelRequest> request) {
-      request->setField(UMIR_USER_ID_TAG, get_umir_user_id());
+      if(order->get_info().m_fields.m_security.get_venue() !=
+          DefaultVenues::OTCM) {
+        request->setField(UMIR_USER_ID_TAG, get_umir_user_id());
+      }
     });
 }
 
@@ -311,6 +239,108 @@ BboQuote SerenityFixApplication::load_bbo_quote(const Security& security) {
     m_bbo_quotes.erase(security);
     throw_with_location(FixOrderRejectedException("No BBO quote available."));
   }
+}
+
+std::shared_ptr<Order> SerenityFixApplication::submit_to_ca(
+    const OrderInfo& info) {
+  return m_order_log.submit(info,
+    get_session_id().getSenderCompID(), get_session_id().getTargetCompID(),
+    [&] (Out<FIX42::NewOrderSingle> new_order_single) {
+      if(info.m_fields.m_currency != DefaultCurrencies::CAD) {
+        throw_with_location(FixOrderRejectedException("Invalid currency."));
+      }
+      if(info.m_fields.m_time_in_force.get_type() == TimeInForce::Type::GTC ||
+          info.m_fields.m_time_in_force.get_type() == TimeInForce::Type::GTD) {
+        throw_with_location(
+          FixOrderRejectedException("Invalid time in force."));
+      }
+      if(info.m_fields.m_type == OrderType::STOP) {
+        throw_with_location(FixOrderRejectedException("Invalid order type."));
+      }
+      new_order_single->setField(UMIR_ACCOUNT_TYPE_TAG, "CL");
+      new_order_single->setField(UMIR_USER_ID_TAG, get_umir_user_id());
+      auto no_trade_feat = get_no_trade_feat();
+      auto no_trade_key = get_no_trade_key();
+      if(!no_trade_feat.empty() && !no_trade_key.empty()) {
+        new_order_single->setField(NO_TRADE_FEAT_TAG, no_trade_feat);
+        new_order_single->setField(NO_TRADE_KEY_TAG, no_trade_key);
+      }
+      new_order_single->set(FIX::Account(info.m_submission_account.m_name));
+      if(auto& anonymousTag = get_anonymous_tag()) {
+        new_order_single->setField(ANONYMOUS_TAG, *anonymousTag);
+      }
+      for(auto& tag : info.m_fields.m_additional_fields) {
+        if(tag.get_key() == LONG_LIFE_TAG) {
+          if(auto value = get<std::string>(&tag.get_value())) {
+            if(*value == "Y" || *value == "N") {
+              new_order_single->setField(LONG_LIFE_TAG, *value);
+            }
+          }
+        }
+      }
+      if(info.m_fields.m_destination == DefaultDestinations::CHIX ||
+          info.m_fields.m_destination == DefaultDestinations::CX2) {
+        route_to_chix(info, out(new_order_single));
+      } else if(info.m_fields.m_destination == DefaultDestinations::CSE ||
+          info.m_fields.m_destination == DefaultDestinations::PURE) {
+        route_to_cse(info, out(new_order_single));
+      } else if(info.m_fields.m_destination == DefaultDestinations::MATNLP ||
+          info.m_fields.m_destination == DefaultDestinations::MATNMF) {
+        route_to_matn(info, out(new_order_single));
+      } else if(info.m_fields.m_destination == DefaultDestinations::NEOE) {
+        route_to_neo(info, out(new_order_single));
+      } else if(info.m_fields.m_destination == DefaultDestinations::TSX) {
+        route_to_tsx(info, out(new_order_single));
+      } else {
+        auto ex_destination = [&] {
+          if(info.m_fields.m_destination == DefaultDestinations::CSE2) {
+            return FIX::ExDestination("CSE2");
+          } else if(info.m_fields.m_destination == DefaultDestinations::ALPHA) {
+            return FIX::ExDestination("XATS");
+          } else if(info.m_fields.m_destination == DefaultDestinations::OMEGA) {
+            return FIX::ExDestination("OMGA");
+          } else if(info.m_fields.m_destination == DefaultDestinations::LYNX) {
+            return FIX::ExDestination("LYNX");
+          }
+          BOOST_THROW_EXCEPTION(
+            FixOrderRejectedException("Invalid destination."));
+        }();
+        new_order_single->set(FIX::HandlInst('6'));
+        new_order_single->set(ex_destination);
+      }
+    });
+}
+
+std::shared_ptr<Order> SerenityFixApplication::submit_to_us(
+    const OrderInfo& info) {
+  return m_order_log.submit(info,
+    get_session_id().getSenderCompID(), get_session_id().getTargetCompID(),
+    [&] (Out<FIX42::NewOrderSingle> new_order_single) {
+      if(info.m_shorting_flag) {
+        throw_with_location(
+          FixOrderRejectedException("Short sale not allowed."));
+      }
+      if(info.m_fields.m_currency != DefaultCurrencies::USD) {
+        throw_with_location(FixOrderRejectedException("Invalid currency."));
+      }
+      if(info.m_fields.m_time_in_force.get_type() == TimeInForce::Type::GTC ||
+          info.m_fields.m_time_in_force.get_type() == TimeInForce::Type::GTD) {
+        throw_with_location(
+          FixOrderRejectedException("Invalid time in force."));
+      }
+      if(info.m_fields.m_type == OrderType::STOP) {
+        throw_with_location(FixOrderRejectedException("Invalid order type."));
+      }
+      new_order_single->set(FIX::Account(info.m_submission_account.m_name));
+      auto ex_destination = [&] {
+        if(info.m_fields.m_destination == DefaultDestinations::OTCM) {
+          return FIX::ExDestination("US01");
+        }
+        BOOST_THROW_EXCEPTION(
+          FixOrderRejectedException("Invalid destination."));
+      }();
+      new_order_single->set(ex_destination);
+    });
 }
 
 void SerenityFixApplication::route_to_chix(
