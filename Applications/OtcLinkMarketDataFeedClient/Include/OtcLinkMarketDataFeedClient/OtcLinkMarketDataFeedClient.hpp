@@ -236,8 +236,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       if(!m_securities.contains(id)) {
         auto security = Security(std::move(symbol), m_configuration.m_venue);
         m_securities[id] = security;
-        m_feed_client->add(SecurityInfo(
-          security, boost::lexical_cast<std::string>(security), "", 100));
+        if(m_configuration.m_recovery_channel ==
+            OtcLinkChannelId::QUOTE_INSIDE_REAL_TIME) {
+          m_feed_client->add(SecurityInfo(
+            security, boost::lexical_cast<std::string>(security), "", 100));
+        }
       }
     } else if(action == DELETE_ACTION) {
       m_securities.erase(id);
@@ -354,6 +357,18 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       }
       return stored.m_bid;
     }();
+    if(quote.m_quote.m_price != price) {
+      auto remove_quote = quote;
+      remove_quote.m_quote.m_size = 0;
+      remove_quote.m_timestamp = timestamp;
+      if(m_configuration.m_is_logging_messages) {
+        std::cout << boost::posix_time::microsec_clock::universal_time() <<
+          " Delete: " << SecurityBookQuote(remove_quote, stored.m_security) <<
+          std::endl;
+      }
+      m_feed_client->publish(
+        SecurityBookQuote(remove_quote, stored.m_security));
+    }
     quote.m_quote.m_price = price;
     quote.m_quote.m_size = size;
     quote.m_timestamp = timestamp;
@@ -550,7 +565,9 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   std::uint32_t OtcLinkMarketDataFeedClient<M, O, R, S>::initialize_snapshot() {
     load_securities();
     if(m_configuration.m_recovery_channel !=
-        OtcLinkChannelId::QUOTE_INSIDE_REAL_TIME) {
+        OtcLinkChannelId::QUOTE_INSIDE_REAL_TIME &&
+          m_configuration.m_recovery_channel !=
+            OtcLinkChannelId::QUOTE_BOOK_REAL_TIME) {
       return 0;
     }
     auto snapshot_client = m_snapshot_client_builder();
@@ -558,10 +575,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       auto timer = Beam::LiveTimer(boost::posix_time::seconds(1));
       timer.start();
       timer.wait();
-    }
-    for(auto& security : m_securities | std::views::values) {
-      m_feed_client->add(SecurityInfo(
-        security, boost::lexical_cast<std::string>(security), "", 100));
     }
     auto result =
       m_recovery_client->request_snapshot(m_configuration.m_recovery_channel);
@@ -604,7 +617,10 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         parse_message(message);
       }
     }
-    save_securities();
+    if(m_configuration.m_recovery_channel ==
+        OtcLinkChannelId::QUOTE_INSIDE_REAL_TIME) {
+      save_securities();
+    }
     return 0;
   }
 
