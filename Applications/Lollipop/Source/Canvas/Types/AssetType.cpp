@@ -1,4 +1,5 @@
 #include "Spire/Canvas/Types/AssetType.hpp"
+#include "Spire/Canvas/Types/CurrencyType.hpp"
 #include "Spire/Canvas/Types/CanvasTypeVisitor.hpp"
 
 using namespace Spire;
@@ -21,6 +22,8 @@ CanvasType::Compatibility AssetType::GetCompatibility(
     const CanvasType& type) const {
   if(typeid(type) == typeid(*this)) {
     return Compatibility::EQUAL;
+  } else if(typeid(type) == typeid(CurrencyType)) {
+    return Compatibility::COMPATIBLE;
   }
   return Compatibility::NONE;
 }

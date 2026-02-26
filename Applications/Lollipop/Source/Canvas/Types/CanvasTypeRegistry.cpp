@@ -74,6 +74,10 @@ boost::optional<const CanvasType&> CanvasTypeRegistry::Find(
 
 boost::optional<const NativeType&> CanvasTypeRegistry::Find(
     const type_info& type) const {
+  if(type == typeid(CurrencyId)) {
+    auto currency = Find(CurrencyType::GetInstance().GetName());
+    return static_cast<const NativeType&>(*currency);
+  }
   auto typeIterator = boost::find_if(m_nativeTypes,
     [&] (const std::shared_ptr<NativeType>& nativeType) {
       return nativeType->GetNativeType() == type;

@@ -1272,8 +1272,8 @@ void CanvasNodeTranslationVisitor::Visit(const DefaultCurrencyNode& node) {
     node.GetChildren().front()).Extract<Aspen::Box<Ticker>>();
   m_translation = Aspen::lift(
     [userProfile = &m_context->GetUserProfile()] (const Ticker& ticker) {
-      return userProfile->GetVenueDatabase().from(
-        ticker.get_venue()).m_currency;
+      return Asset(userProfile->GetVenueDatabase().from(
+        ticker.get_venue()).m_currency);
     }, std::move(source));
 }
 
