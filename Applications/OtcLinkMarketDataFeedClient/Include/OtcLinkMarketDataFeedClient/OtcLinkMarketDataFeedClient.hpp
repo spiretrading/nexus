@@ -1,8 +1,12 @@
 #ifndef OTC_LINK_MARKET_DATA_FEED_CLIENT_HPP
 #define OTC_LINK_MARKET_DATA_FEED_CLIENT_HPP
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
 #include <functional>
+#include <iostream>
 #include <unordered_map>
+#include <yaml-cpp/yaml.h>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
@@ -48,6 +52,8 @@ namespace Nexus {
       /**
        * Constructs an OtcLinkMarketDataFeedClient.
        * @param configuration The OtcLinkConfiguration used to parse messages.
+       * @param symbol_table The path to a YAML document containing the mappings
+       *        from ids to ticker symbols.
        * @param feed_client Initializes the MarketDataFeedClient.
        * @param otc_link_client The OtcLinkClient receiving messages.
        * @param recovery_client The RecoveryClient used for recovery requests.
@@ -56,7 +62,8 @@ namespace Nexus {
       template<Beam::Initializes<M> MF, Beam::Initializes<O> OF,
         Beam::Initializes<R> RF>
       OtcLinkMarketDataFeedClient(OtcLinkConfiguration configuration,
-        MF&& feed_client, OF&& otc_link_client, RF&& recovery_client,
+        const std::filesystem::path& symbol_table, MF&& feed_client,
+        OF&& otc_link_client, RF&& recovery_client,
         SnapshotClientBuilder snapshot_client_builder);
 
       ~OtcLinkMarketDataFeedClient();
@@ -74,10 +81,12 @@ namespace Nexus {
         BboQuote m_bbo;
       };
       OtcLinkConfiguration m_configuration;
+      std::filesystem::path m_symbol_table;
       Beam::local_ptr_t<M> m_feed_client;
       Beam::local_ptr_t<O> m_otc_link_client;
       Beam::local_ptr_t<R> m_recovery_client;
       SnapshotClientBuilder m_snapshot_client_builder;
+      std::unordered_map<std::uint32_t, Security> m_securities;
       std::unordered_map<std::uint32_t, BookQuoteEntry> m_book_quotes;
       std::unordered_map<std::uint32_t, BboQuoteEntry> m_bbo_quotes;
       Beam::RoutineHandler m_read_loop;
@@ -90,13 +99,18 @@ namespace Nexus {
       static std::uint32_t parse_uint32(const char* data);
       static Quantity parse_quantity(const char* data);
       static Money parse_money(const char* data);
+      static std::string parse_alphanumeric(const char* data, std::size_t size);
       static boost::posix_time::ptime parse_timestamp(const char* data);
+      const Security& find_security(std::uint32_t id) const;
+      void parse_security_message(const OtcLinkMessage& message);
       void parse_quote_message(const OtcLinkMessage& message);
       void parse_quote_update_message(const OtcLinkMessage& message);
       void parse_inside_message(const OtcLinkMessage& message);
       void parse_inside_update_message(const OtcLinkMessage& message);
       void parse_trade_message(const OtcLinkMessage& message);
       void parse_message(const OtcLinkMessage& message);
+      void load_securities();
+      void save_securities();
       std::uint32_t initialize_snapshot();
       void read_loop();
   };
@@ -105,10 +119,13 @@ namespace Nexus {
   template<Beam::Initializes<M> MF, Beam::Initializes<O> OF,
     Beam::Initializes<R> RF>
   OtcLinkMarketDataFeedClient<M, O, R, S>::OtcLinkMarketDataFeedClient(
-    OtcLinkConfiguration configuration, MF&& feed_client, OF&& otc_link_client,
-    RF&& recovery_client, SnapshotClientBuilder snapshot_client_builder)
+    OtcLinkConfiguration configuration,
+    const std::filesystem::path& symbol_table, MF&& feed_client,
+    OF&& otc_link_client, RF&& recovery_client,
+    SnapshotClientBuilder snapshot_client_builder)
 BEAM_SUPPRESS_THIS_INITIALIZER()
       try : m_configuration(std::move(configuration)),
+            m_symbol_table(symbol_table),
             m_feed_client(std::forward<MF>(feed_client)),
             m_otc_link_client(std::forward<OF>(otc_link_client)),
             m_recovery_client(std::forward<RF>(recovery_client)),
@@ -164,14 +181,70 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename M, typename O, typename R, typename S>
+  std::string OtcLinkMarketDataFeedClient<M, O, R, S>::parse_alphanumeric(
+      const char* data, std::size_t size) {
+    auto value = std::string();
+    for(auto i = std::size_t(0); i != size; ++i) {
+      auto c = parse_byte(data + i);
+      if(c == '\0') {
+        break;
+      }
+      value += c;
+    }
+    return value;
+  }
+
+  template<typename M, typename O, typename R, typename S>
   boost::posix_time::ptime
       OtcLinkMarketDataFeedClient<M, O, R, S>::parse_timestamp(
-      const char* data) {
+        const char* data) {
     auto milliseconds = boost::endian::big_to_native(
       *reinterpret_cast<const std::uint64_t*>(data));
     return boost::posix_time::ptime(
       boost::gregorian::date(1970, 1, 1),
       boost::posix_time::milliseconds(milliseconds));
+  }
+
+  template<typename M, typename O, typename R, typename S>
+  const Security& OtcLinkMarketDataFeedClient<M, O, R, S>::find_security(
+      std::uint32_t id) const {
+    auto i = m_securities.find(id);
+    if(i == m_securities.end()) {
+      static const auto NONE = Security();
+      return NONE;
+    }
+    return i->second;
+  }
+
+  template<typename M, typename O, typename R, typename S>
+  void OtcLinkMarketDataFeedClient<M, O, R, S>::parse_security_message(
+      const OtcLinkMessage& message) {
+    static const auto SYMBOL_OFFSET = 4;
+    static const auto SYMBOL_SIZE = 10;
+    static const auto SECURITY_ACTION_OFFSET = 22;
+    static const auto UPDATE_ACTION = std::uint8_t(0x01);
+    static const auto ADD_ACTION = std::uint8_t(0x02);
+    static const auto DELETE_ACTION = std::uint8_t(0x03);
+    static const auto SPIN_ACTION = std::uint8_t(0x04);
+    static const auto SECURITY_ID_OFFSET = 24;
+    auto data = message.m_payload;
+    auto symbol = parse_alphanumeric(data + SYMBOL_OFFSET, SYMBOL_SIZE);
+    auto action = parse_byte(data + SECURITY_ACTION_OFFSET);
+    auto id = parse_uint32(data + SECURITY_ID_OFFSET);
+    if(action == ADD_ACTION ||
+        action == UPDATE_ACTION || action == SPIN_ACTION) {
+      if(!m_securities.contains(id)) {
+        auto security = Security(std::move(symbol), m_configuration.m_venue);
+        m_securities[id] = security;
+        if(m_configuration.m_recovery_channel ==
+            OtcLinkChannelId::QUOTE_INSIDE_REAL_TIME) {
+          m_feed_client->add(SecurityInfo(
+            security, boost::lexical_cast<std::string>(security), "", 100));
+        }
+      }
+    } else if(action == DELETE_ACTION) {
+      m_securities.erase(id);
+    }
   }
 
   template<typename M, typename O, typename R, typename S>
@@ -220,8 +293,14 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     }
     auto security_id = parse_uint32(data + 10);
     auto mpid = std::string(data + 14, 4);
-    auto security =
-      Security(std::to_string(security_id), m_configuration.m_venue);
+    auto& security = find_security(security_id);
+    if(!security) {
+      if(m_configuration.m_is_logging_messages) {
+        std::cout << boost::posix_time::microsec_clock::universal_time() <<
+          " Security not found: " << security_id << std::endl;
+      }
+      return;
+    }
     auto bid_price = parse_money(data + 39);
     auto bid = BookQuote();
     if(bid_price != Money::ZERO) {
@@ -278,6 +357,18 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       }
       return stored.m_bid;
     }();
+    if(quote.m_quote.m_price != price) {
+      auto remove_quote = quote;
+      remove_quote.m_quote.m_size = 0;
+      remove_quote.m_timestamp = timestamp;
+      if(m_configuration.m_is_logging_messages) {
+        std::cout << boost::posix_time::microsec_clock::universal_time() <<
+          " Delete: " << SecurityBookQuote(remove_quote, stored.m_security) <<
+          std::endl;
+      }
+      m_feed_client->publish(
+        SecurityBookQuote(remove_quote, stored.m_security));
+    }
     quote.m_quote.m_price = price;
     quote.m_quote.m_size = size;
     quote.m_timestamp = timestamp;
@@ -302,8 +393,14 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       return;
     }
     auto security_id = parse_uint32(data + 10);
-    auto security =
-      Security(std::to_string(security_id), m_configuration.m_venue);
+    auto& security = find_security(security_id);
+    if(!security) {
+      if(m_configuration.m_is_logging_messages) {
+        std::cout << boost::posix_time::microsec_clock::universal_time() <<
+          " Security not found: " << security_id << std::endl;
+      }
+      return;
+    }
     auto ask_price = parse_money(data + 14);
     auto ask_size = parse_quantity(data + 22);
     auto ask_timestamp = parse_timestamp(data + 26);
@@ -377,8 +474,14 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     auto price = parse_money(data + 23);
     auto size = parse_quantity(data + 31);
     auto timestamp = parse_timestamp(data + 35);
-    auto security =
-      Security(std::to_string(security_id), m_configuration.m_venue);
+    auto& security = find_security(security_id);
+    if(!security) {
+      if(m_configuration.m_is_logging_messages) {
+        std::cout << boost::posix_time::microsec_clock::universal_time() <<
+          " Security not found: " << security_id << std::endl;
+      }
+      return;
+    }
     auto condition = TimeAndSale::Condition(
       TimeAndSale::Condition::Type::REGULAR, "@");
     auto time_and_sale = TimeAndSale(
@@ -403,6 +506,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       parse_inside_update_message(message);
     } else if(message.m_type == OtcLinkMessage::Type::TRADE) {
       parse_trade_message(message);
+    } else if(message.m_type == OtcLinkMessage::Type::SECURITY_REFERENCE) {
+      parse_security_message(message);
     } else if(m_configuration.m_is_logging_messages) {
       std::cout << boost::posix_time::microsec_clock::universal_time() <<
         " Unhandled message type: " << static_cast<int>(message.m_type) <<
@@ -411,12 +516,66 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename M, typename O, typename R, typename S>
+  void OtcLinkMarketDataFeedClient<M, O, R, S>::load_securities() {
+    auto symbol_table = std::ifstream(m_symbol_table);
+    if(!symbol_table.good()) {
+      std::cerr << "Unable to open ticker symbol mappings.\n";
+      return;
+    }
+    try {
+      auto yaml_symbols = YAML::Load(symbol_table);
+      auto symbols_node = yaml_symbols["symbols"];
+      if(!symbols_node) {
+        std::cerr << "Symbols not found.\n";
+        return;
+      }
+      for(const auto& node : symbols_node) {
+        auto id = node["id"].as<int>();
+        auto symbol = node["symbol"].as<std::string>();
+        m_securities.insert(
+          std::pair(id, Security(std::move(symbol), m_configuration.m_venue)));
+      }
+    } catch(const YAML::ParserException& e) {
+      std::cerr << "Invalid YAML in file \"" << m_symbol_table <<
+        "\" at line " << (e.mark.line + 1) << ", " << "column " <<
+        (e.mark.column + 1) << ": " << e.msg << '\n';
+    }
+  }
+
+  template<typename M, typename O, typename R, typename S>
+  void OtcLinkMarketDataFeedClient<M, O, R, S>::save_securities() {
+    auto node = YAML::Node();
+    auto symbols = node["symbols"];
+    symbols = YAML::Node(YAML::NodeType::Sequence);
+    for(auto& [id, security] : m_securities) {
+      auto entry = YAML::Node();
+      entry["id"] = id;
+      entry["symbol"] = security.get_symbol();
+      symbols.push_back(entry);
+    }
+    auto symbol_table = std::ofstream(m_symbol_table, std::ios::trunc);
+    if(!symbol_table.good()) {
+      std::cerr << "Unable to save ticker symbol mappings.\n";
+      return;
+    }
+    symbol_table << node;
+  }
+
+  template<typename M, typename O, typename R, typename S>
   std::uint32_t OtcLinkMarketDataFeedClient<M, O, R, S>::initialize_snapshot() {
+    load_securities();
     if(m_configuration.m_recovery_channel !=
-        OtcLinkChannelId::QUOTE_INSIDE_SNAPSHOT) {
+        OtcLinkChannelId::QUOTE_INSIDE_REAL_TIME &&
+          m_configuration.m_recovery_channel !=
+            OtcLinkChannelId::QUOTE_BOOK_REAL_TIME) {
       return 0;
     }
     auto snapshot_client = m_snapshot_client_builder();
+    {
+      auto timer = Beam::LiveTimer(boost::posix_time::seconds(1));
+      timer.start();
+      timer.wait();
+    }
     auto result =
       m_recovery_client->request_snapshot(m_configuration.m_recovery_channel);
     if(result.m_response != OtcLinkReplayAckMessage::ResponseType::SUCCESS) {
@@ -440,18 +599,29 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
             " Start of spin" << std::endl;
         }
       } else if(message.m_type == OtcLinkMessage::Type::END_OF_SPIN) {
-        last_sequence_number = parse_uint32(message.m_payload + 17);
+        const auto SPIN_TYPE_OFFSET = 4;
+        const auto SPIN_LAST_SEQ_NUM_OFFSET = 17;
+        const auto MARKET_DATA_SPIN_TYPE = 2;
+        auto spin_type = parse_byte(message.m_payload + SPIN_TYPE_OFFSET);
+        last_sequence_number =
+          parse_uint32(message.m_payload + SPIN_LAST_SEQ_NUM_OFFSET);
         if(m_configuration.m_is_logging_messages) {
           std::cout << boost::posix_time::microsec_clock::universal_time() <<
             " End of spin, last sequence number: " << last_sequence_number <<
             std::endl;
         }
-        break;
+        if(spin_type == MARKET_DATA_SPIN_TYPE) {
+          break;
+        }
       } else if(received_start_of_spin) {
         parse_message(message);
       }
     }
-    return last_sequence_number;
+    if(m_configuration.m_recovery_channel ==
+        OtcLinkChannelId::QUOTE_INSIDE_REAL_TIME) {
+      save_securities();
+    }
+    return 0;
   }
 
   template<typename M, typename O, typename R, typename S>

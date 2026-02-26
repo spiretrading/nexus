@@ -5,6 +5,7 @@ service_locator:
   password: $admin_password
 
 enable_logging: false
+symbols: "../symbols.yml"
 venue: OTCM
 snapshot_type: trades
 sampling: 100ms

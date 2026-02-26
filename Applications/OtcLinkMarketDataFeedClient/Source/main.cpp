@@ -41,10 +41,10 @@ namespace {
       auto snapshot_type = extract<std::string>(config, "snapshot_type");
       if(snapshot_type == "bbo") {
         otc_link_config.m_recovery_channel =
-          OtcLinkChannelId::QUOTE_INSIDE_SNAPSHOT;
+          OtcLinkChannelId::QUOTE_INSIDE_REAL_TIME;
       } else if(snapshot_type == "book") {
         otc_link_config.m_recovery_channel =
-          OtcLinkChannelId::QUOTE_BOOK_SNAPSHOT;
+          OtcLinkChannelId::QUOTE_BOOK_REAL_TIME;
       } else if(snapshot_type == "trades") {
         otc_link_config.m_recovery_channel = OtcLinkChannelId::TRADE_REAL_TIME;
       } else {
@@ -117,9 +117,11 @@ int main(int argc, const char** argv) {
     auto recovery_client = make_recovery_client(config);
     auto snapshot_client_builder = make_snapshot_client_builder(config);
     auto feed_configuration = parse_configuration(config);
+    auto symbol_table =
+      extract<std::string>(config, "symbols", "../symbols.yml");
     auto feed_client = ApplicationOtcLinkMarketDataFeedClient(
-      feed_configuration, &market_data_feed_client, &otc_link_client,
-      &recovery_client, snapshot_client_builder);
+      feed_configuration, symbol_table, &market_data_feed_client,
+      &otc_link_client, &recovery_client, snapshot_client_builder);
     wait_for_kill_event();
     service_locator_client.close();
   } catch(...) {
