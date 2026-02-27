@@ -229,6 +229,9 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     static const auto SECURITY_ID_OFFSET = 24;
     auto data = message.m_payload;
     auto symbol = parse_alphanumeric(data + SYMBOL_OFFSET, SYMBOL_SIZE);
+    if(symbol.empty()) {
+      return;
+    }
     auto action = parse_byte(data + SECURITY_ACTION_OFFSET);
     auto id = parse_uint32(data + SECURITY_ID_OFFSET);
     if(action == ADD_ACTION ||
@@ -253,6 +256,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     static const auto QUOTE_ACTION_ADD = std::uint8_t(0x02);
     static const auto QUOTE_ACTION_DELETE = std::uint8_t(0x03);
     static const auto QUOTE_ACTION_SPIN = std::uint8_t(0x04);
+    static const auto ASK_PRICED = std::uint8_t(0x08);
+    static const auto BID_PRICED = std::uint8_t(0x40);
     auto data = message.m_payload;
     auto quote_id = parse_uint32(data + 4);
     auto quote_action = parse_byte(data + 8);
@@ -291,6 +296,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       m_book_quotes.erase(i);
       return;
     }
+    auto quote_flags = parse_byte(data + 9);
     auto security_id = parse_uint32(data + 10);
     auto mpid = std::string(data + 14, 4);
     auto& security = find_security(security_id);
@@ -303,7 +309,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     }
     auto bid_price = parse_money(data + 39);
     auto bid = BookQuote();
-    if(bid_price != Money::ZERO) {
+    if(bid_price != Money::ZERO &&
+        (quote_flags & BID_PRICED) != 0) {
       auto bid_size = parse_quantity(data + 47);
       auto bid_timestamp = parse_timestamp(data + 52);
       bid = BookQuote(mpid, true, m_configuration.m_venue,
@@ -316,7 +323,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     }
     auto ask_price = parse_money(data + 18);
     auto ask = BookQuote();
-    if(ask_price != Money::ZERO) {
+    if(ask_price != Money::ZERO &&
+        (quote_flags & ASK_PRICED) != 0) {
       auto ask_size = parse_quantity(data + 26);
       auto ask_timestamp = parse_timestamp(data + 31);
       ask = BookQuote(mpid, true, m_configuration.m_venue,
@@ -335,6 +343,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   void OtcLinkMarketDataFeedClient<M, O, R, S>::parse_quote_update_message(
       const OtcLinkMessage& message) {
     static const auto UPDATE_SIDE_ASK = std::uint8_t(0x01);
+    static const auto ASK_PRICED = std::uint8_t(0x08);
+    static const auto BID_PRICED = std::uint8_t(0x40);
     auto data = message.m_payload;
     auto quote_id = parse_uint32(data + 4);
     auto i = m_book_quotes.find(quote_id);
@@ -347,6 +357,12 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     }
     auto quote_flags = parse_byte(data + 8);
     auto is_ask_update = (quote_flags & UPDATE_SIDE_ASK) != 0;
+    if(is_ask_update && (quote_flags & ASK_PRICED) == 0) {
+      return;
+    }
+    if(!is_ask_update && (quote_flags & BID_PRICED) == 0) {
+      return;
+    }
     auto price = parse_money(data + 9);
     auto size = parse_quantity(data + 17);
     auto timestamp = parse_timestamp(data + 22);
