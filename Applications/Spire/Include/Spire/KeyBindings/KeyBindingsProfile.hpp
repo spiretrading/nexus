@@ -50,6 +50,9 @@ namespace Spire {
   /** Returns the list of built-in TSX order task nodes. */
   std::vector<std::unique_ptr<CanvasNode>> make_tsx_order_task_nodes();
 
+  /** Returns the list of built-in OTCM order task nodes. */
+  std::vector<std::unique_ptr<CanvasNode>> make_otcm_order_task_nodes();
+
   /** Returns the full list of built-in order task nodes. */
   std::vector<std::unique_ptr<CanvasNode>> make_default_order_task_nodes();
 

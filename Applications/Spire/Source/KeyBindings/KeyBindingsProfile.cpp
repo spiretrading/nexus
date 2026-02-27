@@ -165,7 +165,7 @@ namespace Beam {
 }
 
 namespace {
-  static const auto KEY_BINDINGS_VERSION = 1;
+  static const auto KEY_BINDINGS_VERSION = 2;
 
   struct KeyBindingsProfile {
     int m_version;
@@ -403,6 +403,15 @@ namespace {
       CancelKeyBindingsModel::Operation::ALL)->set(
         QKeySequence(Qt::SHIFT | Qt::Key_Escape));
     return key_bindings;
+  }
+
+  void update_key_bindings_otcm(OrderTaskArgumentsListModel& tasks) {
+    auto nodes = make_otcm_order_task_nodes();
+    tasks.transact([&] {
+      for(auto& node : nodes) {
+        tasks.push(to_order_task_arguments(*node));
+      }
+    });
   }
 }
 
@@ -738,6 +747,32 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_tsx_order_task_nodes() {
   return order_types;
 }
 
+std::vector<std::unique_ptr<CanvasNode>> Spire::make_otcm_order_task_nodes() {
+  auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
+  populate_basic_order_task_nodes(
+    DefaultDestinations::OTCM, "OTCM", order_types);
+  auto primary_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("R"))->AddField(
+      "peg_difference", 211, std::make_unique<MoneyNode>(Money::ZERO)));
+  primary_peg.SetReadOnly("exec_inst", true);
+  primary_peg.SetVisible("exec_inst", false);
+  populate_bid_ask(primary_peg, "OTCM Primary Peg", DefaultDestinations::OTCM,
+    TimeInForce::Type::DAY, order_types);
+  auto mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
+    "exec_inst", 18, std::make_unique<TextNode>("M")));
+  mid_peg.SetReadOnly("exec_inst", true);
+  mid_peg.SetVisible("exec_inst", false);
+  populate_bid_ask(mid_peg, "OTCM Mid Peg", DefaultDestinations::OTCM,
+    TimeInForce::Type::DAY, order_types);
+  auto limit_on_close = CanvasNodeBuilder(*GetLimitOrderTaskNode());
+  populate_bid_ask(limit_on_close, "OTCM Limit On Close",
+    DefaultDestinations::OTCM, TimeInForce::Type::MOC, order_types);
+  auto market_on_close = CanvasNodeBuilder(*GetMarketOrderTaskNode());
+  populate_bid_ask(limit_on_close, "OTCM Market On Close",
+    DefaultDestinations::OTCM, TimeInForce::Type::MOC, order_types);
+  return order_types;
+}
+
 std::vector<std::unique_ptr<CanvasNode>>
     Spire::make_default_order_task_nodes() {
   auto tasks = std::vector<std::unique_ptr<CanvasNode>>();
@@ -755,6 +790,7 @@ std::vector<std::unique_ptr<CanvasNode>>
   populate(tasks, make_omega_order_task_nodes());
   populate(tasks, make_pure_order_task_nodes());
   populate(tasks, make_tsx_order_task_nodes());
+  populate(tasks, make_otcm_order_task_nodes());
   return tasks;
 }
 
@@ -795,6 +831,10 @@ std::shared_ptr<KeyBindingsModel> Spire::load_key_bindings_profile(
     receiver.set(Ref(buffer));
     auto profile = KeyBindingsProfile(KEY_BINDINGS_VERSION, &*key_bindings);
     receiver.shuttle(profile);
+    if(profile.m_version == 1) {
+      update_key_bindings_otcm(
+        *profile.m_key_bindings->get_order_task_arguments());
+    }
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to load key bindings, using defaults."));
