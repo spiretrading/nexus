@@ -2596,6 +2596,229 @@ namespace {
     orderTypes.emplace_back(tsxDarkMidPointAsk.Make());
   }
 
+  void PopulateOtcmOrders(vector<unique_ptr<const CanvasNode>>& orderTypes) {
+    CanvasNodeBuilder otcmLimitBid(*GetLimitBidOrderTaskNode()->Rename(
+      "OTCM Limit Bid")->AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+    otcmLimitBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::OTCM));
+    otcmLimitBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    otcmLimitBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    otcmLimitBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    otcmLimitBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    otcmLimitBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    otcmLimitBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(otcmLimitBid.Make());
+    CanvasNodeBuilder otcmLimitAsk(*GetLimitAskOrderTaskNode()->Rename(
+      "OTCM Limit Ask")->AddField("max_floor", 111,
+      LinkedNode::SetReferent(MaxFloorNode(), "security")));
+    otcmLimitAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::OTCM));
+    otcmLimitAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    otcmLimitAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    otcmLimitAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    otcmLimitAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    otcmLimitAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    otcmLimitAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(otcmLimitAsk.Make());
+    CanvasNodeBuilder otcmMarketBid(*GetMarketBidOrderTaskNode()->Rename(
+      "OTCM Market Bid"));
+    otcmMarketBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::OTCM));
+    otcmMarketBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    otcmMarketBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    otcmMarketBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    otcmMarketBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      false);
+    otcmMarketBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      true);
+    otcmMarketBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(otcmMarketBid.Make());
+    CanvasNodeBuilder otcmMarketAsk(*GetMarketAskOrderTaskNode()->Rename(
+      "OTCM Market Ask"));
+    otcmMarketAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::OTCM));
+    otcmMarketAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    otcmMarketAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    otcmMarketAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    otcmMarketAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      false);
+    otcmMarketAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      true);
+    otcmMarketAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(otcmMarketAsk.Make());
+    CanvasNodeBuilder otcmBuy(*GetMarketBidOrderTaskNode()->Rename(
+      "OTCM Buy"));
+    otcmBuy.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
+    otcmBuy.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::OTCM));
+    otcmBuy.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    otcmBuy.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    otcmBuy.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    otcmBuy.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    otcmBuy.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    otcmBuy.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(otcmBuy.Make());
+    CanvasNodeBuilder otcmSell(*GetMarketAskOrderTaskNode()->Rename(
+      "OTCM Sell"));
+    otcmSell.SetVisible(SingleOrderTaskNode::QUANTITY_PROPERTY, false);
+    otcmSell.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::OTCM));
+    otcmSell.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    otcmSell.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    otcmSell.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    otcmSell.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    otcmSell.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    otcmSell.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(otcmSell.Make());
+    CanvasNodeBuilder otcmPrimaryPegBid(
+      *GetPeggedBidOrderTaskNode(false)->Rename(
+      "OTCM Primary Peg Bid")->AddField("exec_inst", 18,
+      std::make_unique<TextNode>("R"))->AddField("peg_difference", 211,
+      std::make_unique<MoneyNode>(Money::ZERO)));
+    otcmPrimaryPegBid.SetReadOnly("exec_inst", true);
+    otcmPrimaryPegBid.SetVisible("exec_inst", false);
+    otcmPrimaryPegBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::OTCM));
+    otcmPrimaryPegBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      false);
+    otcmPrimaryPegBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      true);
+    otcmPrimaryPegBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    otcmPrimaryPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      false);
+    otcmPrimaryPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      true);
+    otcmPrimaryPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(otcmPrimaryPegBid.Make());
+    CanvasNodeBuilder otcmPrimaryPegAsk(
+      *GetPeggedAskOrderTaskNode(false)->Rename(
+      "OTCM Primary Peg Ask")->AddField("exec_inst", 18,
+      std::make_unique<TextNode>("R"))->AddField("peg_difference", 211,
+      std::make_unique<MoneyNode>(Money::ZERO)));
+    otcmPrimaryPegAsk.SetReadOnly("exec_inst", true);
+    otcmPrimaryPegAsk.SetVisible("exec_inst", false);
+    otcmPrimaryPegAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::OTCM));
+    otcmPrimaryPegAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      false);
+    otcmPrimaryPegAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      true);
+    otcmPrimaryPegAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    otcmPrimaryPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      false);
+    otcmPrimaryPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      true);
+    otcmPrimaryPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(otcmPrimaryPegAsk.Make());
+    CanvasNodeBuilder otcmMidPegBid(*GetPeggedBidOrderTaskNode(false)->Rename(
+      "OTCM Mid Peg Bid")->AddField("exec_inst", 18,
+      std::make_unique<TextNode>("M")));
+    otcmMidPegBid.SetReadOnly("exec_inst", true);
+    otcmMidPegBid.SetVisible("exec_inst", false);
+    otcmMidPegBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::OTCM));
+    otcmMidPegBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    otcmMidPegBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    otcmMidPegBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    otcmMidPegBid.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      false);
+    otcmMidPegBid.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      true);
+    otcmMidPegBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(otcmMidPegBid.Make());
+    CanvasNodeBuilder otcmMidPegAsk(*GetPeggedAskOrderTaskNode(false)->Rename(
+      "OTCM Mid Peg Ask")->AddField("exec_inst", 18,
+      std::make_unique<TextNode>("M")));
+    otcmMidPegAsk.SetReadOnly("exec_inst", true);
+    otcmMidPegAsk.SetVisible("exec_inst", false);
+    otcmMidPegAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::OTCM));
+    otcmMidPegAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY, false);
+    otcmMidPegAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY, true);
+    otcmMidPegAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::DAY)));
+    otcmMidPegAsk.SetVisible(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      false);
+    otcmMidPegAsk.SetReadOnly(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      true);
+    otcmMidPegAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(otcmMidPegAsk.Make());
+    CanvasNodeBuilder otcmLimitOnCloseBid(*GetLimitBidOrderTaskNode()->Rename(
+      "OTCM Limit On Close Bid"));
+    otcmLimitOnCloseBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::OTCM));
+    otcmLimitOnCloseBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      false);
+    otcmLimitOnCloseBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      true);
+    otcmLimitOnCloseBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::MOC)));
+    otcmLimitOnCloseBid.SetVisible(
+      SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    otcmLimitOnCloseBid.SetReadOnly(
+      SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    otcmLimitOnCloseBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(otcmLimitOnCloseBid.Make());
+    CanvasNodeBuilder otcmLimitOnCloseAsk(*GetLimitAskOrderTaskNode()->Rename(
+      "OTCM Limit On Close Ask"));
+    otcmLimitOnCloseAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::OTCM));
+    otcmLimitOnCloseAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      false);
+    otcmLimitOnCloseAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      true);
+    otcmLimitOnCloseAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::MOC)));
+    otcmLimitOnCloseAsk.SetVisible(
+      SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    otcmLimitOnCloseAsk.SetReadOnly(
+      SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    otcmLimitOnCloseAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(otcmLimitOnCloseAsk.Make());
+    CanvasNodeBuilder otcmMarketOnCloseBid(
+      *GetMarketBidOrderTaskNode()->Rename("OTCM Market On Close Bid"));
+    otcmMarketOnCloseBid.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::OTCM));
+    otcmMarketOnCloseBid.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      false);
+    otcmMarketOnCloseBid.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      true);
+    otcmMarketOnCloseBid.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::MOC)));
+    otcmMarketOnCloseBid.SetVisible(
+      SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    otcmMarketOnCloseBid.SetReadOnly(
+      SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    otcmMarketOnCloseBid.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(otcmMarketOnCloseBid.Make());
+    CanvasNodeBuilder otcmMarketOnCloseAsk(
+      *GetMarketAskOrderTaskNode()->Rename("OTCM Market On Close Ask"));
+    otcmMarketOnCloseAsk.Replace(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      std::make_unique<DestinationNode>(DefaultDestinations::OTCM));
+    otcmMarketOnCloseAsk.SetVisible(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      false);
+    otcmMarketOnCloseAsk.SetReadOnly(SingleOrderTaskNode::DESTINATION_PROPERTY,
+      true);
+    otcmMarketOnCloseAsk.Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+      std::make_unique<TimeInForceNode>(TimeInForce(TimeInForce::Type::MOC)));
+    otcmMarketOnCloseAsk.SetVisible(
+      SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, false);
+    otcmMarketOnCloseAsk.SetReadOnly(
+      SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY, true);
+    otcmMarketOnCloseAsk.SetMetaData("", KEY_BINDING_IDENTIFIER, true);
+    orderTypes.emplace_back(otcmMarketOnCloseAsk.Make());
+  }
+
   std::unordered_map<Venue, vector<unique_ptr<const CanvasNode>>>
       SetupOrderTypes() {
     std::unordered_map<Venue, vector<unique_ptr<const CanvasNode>>>
@@ -2642,6 +2865,8 @@ namespace {
     PopulateOmegaOrders(tsxvOrderTypes);
     PopulatePureOrders(tsxvOrderTypes);
     PopulateTsxOrders(tsxvOrderTypes);
+    auto& otcmOrderTypes = orderTypes[DefaultVenues::OTCM];
+    PopulateOtcmOrders(otcmOrderTypes);
     return orderTypes;
   }
 }
