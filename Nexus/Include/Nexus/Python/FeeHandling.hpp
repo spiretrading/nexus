@@ -83,6 +83,12 @@ namespace Nexus::Python {
   void export_omga_fee_table(pybind11::module& module);
 
   /**
+   * Exports the OtcmFeeTable class.
+   * @param module The module to export to.
+   */
+  void export_otcm_fee_table(pybind11::module& module);
+
+  /**
    * Exports the ParseFeeTable translation unit.
    * @param module The module to export to.
    */

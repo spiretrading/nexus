@@ -13,6 +13,7 @@
 #include "Nexus/FeeHandling/NeoeFeeTable.hpp"
 #include "Nexus/FeeHandling/NexFeeTable.hpp"
 #include "Nexus/FeeHandling/OmgaFeeTable.hpp"
+#include "Nexus/FeeHandling/OtcmFeeTable.hpp"
 #include "Nexus/FeeHandling/ParseFeeTable.hpp"
 #include "Nexus/FeeHandling/PureFeeTable.hpp"
 #include "Nexus/FeeHandling/TsxFeeTable.hpp"
@@ -313,6 +314,7 @@ void Nexus::Python::export_fee_handling(module& module) {
   export_neoe_fee_table(module);
   export_nex_fee_table(module);
   export_omga_fee_table(module);
+  export_otcm_fee_table(module);
   export_parse_fee_table(module);
   export_pure_fee_table(module);
   export_tsx_fee_table(module);
@@ -450,6 +452,57 @@ void Nexus::Python::export_omga_fee_table(module& module) {
   module.def("is_omga_hidden_liquidity_provider",
     overload_cast<const OrderFields&>(&is_omga_hidden_liquidity_provider));
   module.def("calculate_fee", overload_cast<const OmgaFeeTable&, bool,
+    const OrderFields&, const ExecutionReport&>(&calculate_fee));
+}
+
+void Nexus::Python::export_otcm_fee_table(module& module) {
+  auto fee_table =
+    export_default_methods(class_<OtcmFeeTable>(module, "OtcmFeeTable")).
+      def_readwrite("fee_table", &OtcmFeeTable::m_fee_table).
+      def_readwrite("subdollar_fee_table",
+        &OtcmFeeTable::m_subdollar_fee_table).
+      def_readwrite("subpenny_rate_table",
+        &OtcmFeeTable::m_subpenny_rate_table).
+      def_readwrite("closing_cross_fee_table",
+        &OtcmFeeTable::m_closing_cross_fee_table).
+      def_readwrite("closing_cross_subpenny_rate_table",
+        &OtcmFeeTable::m_closing_cross_subpenny_rate_table);
+  enum_<OtcmFeeTable::PriceClass>(fee_table, "PriceClass").
+    value("DEFAULT", OtcmFeeTable::PriceClass::DEFAULT).
+    value("SUBDOLLAR", OtcmFeeTable::PriceClass::SUBDOLLAR).
+    value("SUBPENNY", OtcmFeeTable::PriceClass::SUBPENNY);
+  enum_<OtcmFeeTable::Type>(fee_table, "Type").
+    value("NONE", OtcmFeeTable::Type::NONE).
+    value("PASSIVE", OtcmFeeTable::Type::PASSIVE).
+    value("HIDDEN_PASSIVE", OtcmFeeTable::Type::HIDDEN_PASSIVE).
+    value("ACTIVE", OtcmFeeTable::Type::ACTIVE).
+    value("ROUTED_TO_OTC_LINK", OtcmFeeTable::Type::ROUTED_TO_OTC_LINK).
+    value("ROUTED_TO_EXTERNAL_ECN", OtcmFeeTable::Type::ROUTED_TO_EXTERNAL_ECN).
+    value("ROUTED_TO_EXTERNAL_LIQUIDITY",
+      OtcmFeeTable::Type::ROUTED_TO_EXTERNAL_LIQUIDITY);
+  module.def("parse_otcm_fee_table",
+    overload_cast<const YAML::Node&>(&parse_otcm_fee_table));
+  module.def("lookup_fee",
+    overload_cast<const OtcmFeeTable&, OtcmFeeTable::Type>(&lookup_fee));
+  module.def("lookup_subdollar_fee",
+    overload_cast<const OtcmFeeTable&, OtcmFeeTable::Type>(
+      &lookup_subdollar_fee));
+  module.def("lookup_subpenny_rate",
+    overload_cast<const OtcmFeeTable&, OtcmFeeTable::Type>(
+      &lookup_subpenny_rate));
+  module.def("get_otcm_price_class",
+    overload_cast<Money>(&get_otcm_price_class));
+  module.def("lookup_closing_cross_fee",
+    overload_cast<const OtcmFeeTable&, LiquidityFlag,
+      OtcmFeeTable::PriceClass>(&lookup_closing_cross_fee));
+  module.def("lookup_closing_cross_subpenny_rate",
+    overload_cast<const OtcmFeeTable&, LiquidityFlag>(
+      &lookup_closing_cross_subpenny_rate));
+  module.def("get_otcm_type",
+    overload_cast<const std::string&>(&get_otcm_type));
+  module.def("get_otcm_closing_cross_type",
+    overload_cast<const std::string&>(&get_otcm_closing_cross_type));
+  module.def("calculate_fee", overload_cast<const OtcmFeeTable&,
     const OrderFields&, const ExecutionReport&>(&calculate_fee));
 }
 
