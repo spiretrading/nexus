@@ -11,6 +11,7 @@
 #include "Nexus/FeeHandling/AsxTradeMatchFeeTable.hpp"
 #include "Nexus/FeeHandling/ConsolidatedTmxFeeTable.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
+#include "OasisOrderExecutionServer/UsFeeTable.hpp"
 
 namespace Nexus {
 
@@ -31,11 +32,12 @@ namespace Nexus {
        *        checks pass.
        * @param asx_trade_match_fee_table The fee table used by ASX TradeMatch.
        * @param tmx_fee_table The fee table used by TMX markets.
+       * @param us_fee_table The fee table used by US markets.
        */
       template<typename OF>
       FeesCalculatorOrderExecutionDriver(
         OF&& driver, AsxTradeMatchFeeTable asx_fee_table,
-        ConsolidatedTmxFeeTable tmx_fee_table);
+        ConsolidatedTmxFeeTable tmx_fee_table, UsFeeTable us_fee_table);
 
       ~FeesCalculatorOrderExecutionDriver();
 
@@ -52,6 +54,7 @@ namespace Nexus {
       AsxTradeMatchFeeTable m_asx_fee_table;
       ConsolidatedTmxFeeTable m_tmx_fee_table;
       ConsolidatedTmxFeeTable::State m_tmx_state;
+      UsFeeTable m_us_fee_table;
       Beam::SynchronizedUnorderedSet<std::shared_ptr<Order>> m_orders;
       Beam::OpenState m_open_state;
       Beam::RoutineTaskQueue m_tasks;
@@ -70,10 +73,11 @@ namespace Nexus {
   template<typename OF>
   FeesCalculatorOrderExecutionDriver<O>::FeesCalculatorOrderExecutionDriver(
     OF&& driver, AsxTradeMatchFeeTable asx_trade_match_fee_table,
-    ConsolidatedTmxFeeTable tmx_fee_table)
+    ConsolidatedTmxFeeTable tmx_fee_table, UsFeeTable us_fee_table)
     : m_driver(std::forward<OF>(driver)),
       m_asx_fee_table(std::move(asx_trade_match_fee_table)),
-      m_tmx_fee_table(std::move(tmx_fee_table)) {}
+      m_tmx_fee_table(std::move(tmx_fee_table)),
+      m_us_fee_table(std::move(us_fee_table)) {}
 
   template<typename O>
   FeesCalculatorOrderExecutionDriver<O>::~FeesCalculatorOrderExecutionDriver() {
@@ -163,6 +167,7 @@ namespace Nexus {
   template<typename O>
   void FeesCalculatorOrderExecutionDriver<O>::handle_us_market_fees(
       PrimitiveOrder& order, const ExecutionReport& report) {
+    auto fees_report = calculate_fee(m_us_fee_table, order, report);
     order.with([&] (auto status, const auto& reports) {
       order.update(report);
     });
