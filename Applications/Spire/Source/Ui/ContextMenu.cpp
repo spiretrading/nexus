@@ -225,8 +225,6 @@ bool ContextMenu::eventFilter(QObject* watched, QEvent* event) {
       case Qt::Key_Right:
         if(watched == m_list_view) {
           handle_right_or_enter_event(event);
-        } else if(watched == m_window && !m_visible_submenu) {
-          focus_first_item();
         }
         break;
       case Qt::Key_Left:
@@ -240,10 +238,9 @@ bool ContextMenu::eventFilter(QObject* watched, QEvent* event) {
         break;
       case Qt::Key_Enter:
       case Qt::Key_Return:
-        if(dynamic_cast<const SubmenuItem*>(watched)) {
+        if(dynamic_cast<const SubmenuItem*>(watched) ||
+            watched == m_list_view) {
           handle_right_or_enter_event(event);
-        } else if(watched == m_window) {
-          focus_first_item();
         }
         break;
     }
@@ -276,6 +273,17 @@ bool ContextMenu::eventFilter(QObject* watched, QEvent* event) {
     } else if(event->type() == QEvent::Move && !m_menu_position) {
       auto& move_event = *static_cast<QMoveEvent*>(event);
       m_menu_position = move_event.pos();
+    } else if(event->type() == QEvent::MouseButtonPress ||
+        event->type() == QEvent::MouseButtonDblClick) {
+      auto& mouse_event = *static_cast<QMouseEvent*>(event);
+      if(rect().contains(mapFromGlobal(mouse_event.globalPos()))) {
+        auto current = m_list_view->get_current()->get();
+        if(current && m_list->get(*current).m_type == MenuItemType::SUBMENU) {
+          m_show_timer.stop();
+          show_submenu(*current);
+          return true;
+        }
+      }
     } else if(event->type() == QEvent::Hide) {
       m_menu_position = none;
     }
@@ -373,19 +381,17 @@ void ContextMenu::clear_hover_style() {
   }
 }
 
-void ContextMenu::focus_first_item() {
-  QTimer::singleShot(0, this, [=] {
-    if(m_list_view->get_list()->get_size() > 0) {
-      m_list_view->get_current()->set(0);
-    }
-  });
-}
-
 void ContextMenu::handle_right_or_enter_event(QEvent* event) {
   if(auto current = m_list_view->get_current()->get()) {
+    m_show_timer.stop();
     show_submenu(*current);
     if(m_visible_submenu) {
-      QCoreApplication::sendEvent(m_visible_submenu, event);
+      QTimer::singleShot(0, this, [=] {
+        auto& body = static_cast<ContextMenu&>(m_visible_submenu->get_body());
+        if(body.m_list_view->get_list()->get_size() > 0) {
+          body.m_list_view->get_current()->set(0);
+        }
+      });
     }
   }
 }
@@ -397,10 +403,14 @@ bool ContextMenu::handle_mouse_event(QMouseEvent* event) {
       if(rect().contains(mapFromGlobal(event->globalPos()))) {
         auto current = m_list_view->get_current()->get();
         auto index = find_submenu_index(*m_visible_submenu);
-        if(current && index != *current &&
-            m_list->get(*current).m_type != MenuItemType::SUBMENU) {
-          forward_mouse_click(
-            *QApplication::widgetAt(event->globalPos()), *event);
+        if(current && index != *current) {
+          if(m_list->get(*current).m_type == MenuItemType::SUBMENU) {
+            hide_submenu();
+            show_submenu(*current);
+          } else {
+            forward_mouse_click(
+              *QApplication::widgetAt(event->globalPos()), *event);
+          }
         }
         return true;
       } else {

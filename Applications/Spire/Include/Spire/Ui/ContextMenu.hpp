@@ -188,7 +188,6 @@ namespace Spire {
       ListItem* get_current_item() const;
       int find_submenu_index(const OverlayPanel& submenu) const;
       void clear_hover_style();
-      void focus_first_item();
       void handle_right_or_enter_event(QEvent* event);
       bool handle_mouse_event(QMouseEvent* event);
       void forward_mouse_click(QWidget& target, const QMouseEvent& mouse_event);
