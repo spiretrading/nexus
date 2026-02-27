@@ -100,7 +100,7 @@ std::shared_ptr<Order> SerenityFixApplication::submit(const OrderInfo& info) {
     }
     return &*modified_info;
   }();
-  if(modified_info->m_fields.m_security.get_venue() == DefaultVenues::OTCM) {
+  if(submission_info->m_fields.m_security.get_venue() == DefaultVenues::OTCM) {
     return submit_to_us(*submission_info);
   } else {
     return submit_to_ca(*submission_info);
@@ -116,10 +116,7 @@ void SerenityFixApplication::cancel(
     get_session_id().getSenderCompID(), get_session_id().getTargetCompID(),
     [&] (const std::shared_ptr<Order>& order,
         Out<FIX42::OrderCancelRequest> request) {
-      if(order->get_info().m_fields.m_security.get_venue() !=
-          DefaultVenues::OTCM) {
-        request->setField(UMIR_USER_ID_TAG, get_umir_user_id());
-      }
+      request->setField(UMIR_USER_ID_TAG, get_umir_user_id());
     });
 }
 
@@ -331,6 +328,8 @@ std::shared_ptr<Order> SerenityFixApplication::submit_to_us(
       if(info.m_fields.m_type == OrderType::STOP) {
         throw_with_location(FixOrderRejectedException("Invalid order type."));
       }
+      new_order_single->setField(UMIR_ACCOUNT_TYPE_TAG, "CL");
+      new_order_single->setField(UMIR_USER_ID_TAG, get_umir_user_id());
       new_order_single->set(FIX::Account(info.m_submission_account.m_name));
       auto ex_destination = [&] {
         if(info.m_fields.m_destination == DefaultDestinations::OTCM) {
