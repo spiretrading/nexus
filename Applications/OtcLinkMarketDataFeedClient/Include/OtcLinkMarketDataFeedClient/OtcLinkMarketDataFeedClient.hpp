@@ -258,6 +258,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     static const auto QUOTE_ACTION_SPIN = std::uint8_t(0x04);
     static const auto ASK_PRICED = std::uint8_t(0x08);
     static const auto BID_PRICED = std::uint8_t(0x40);
+    static const auto QUOTE_SATURATED = std::uint8_t(0x01);
     auto data = message.m_payload;
     auto quote_id = parse_uint32(data + 4);
     auto quote_action = parse_byte(data + 8);
@@ -307,10 +308,12 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       }
       return;
     }
+    auto extended_flags = parse_byte(data + 62);
+    auto is_saturated = (extended_flags & QUOTE_SATURATED) != 0;
     auto bid_price = parse_money(data + 39);
     auto bid = BookQuote();
     if(bid_price != Money::ZERO &&
-        (quote_flags & BID_PRICED) != 0) {
+        (quote_flags & BID_PRICED) != 0 && !is_saturated) {
       auto bid_size = parse_quantity(data + 47);
       auto bid_timestamp = parse_timestamp(data + 52);
       bid = BookQuote(mpid, true, m_configuration.m_venue,
@@ -324,7 +327,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     auto ask_price = parse_money(data + 18);
     auto ask = BookQuote();
     if(ask_price != Money::ZERO &&
-        (quote_flags & ASK_PRICED) != 0) {
+        (quote_flags & ASK_PRICED) != 0 && !is_saturated) {
       auto ask_size = parse_quantity(data + 26);
       auto ask_timestamp = parse_timestamp(data + 31);
       ask = BookQuote(mpid, true, m_configuration.m_venue,
@@ -345,6 +348,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     static const auto UPDATE_SIDE_ASK = std::uint8_t(0x01);
     static const auto ASK_PRICED = std::uint8_t(0x08);
     static const auto BID_PRICED = std::uint8_t(0x40);
+    static const auto QUOTE_SATURATED = std::uint8_t(0x01);
     auto data = message.m_payload;
     auto quote_id = parse_uint32(data + 4);
     auto i = m_book_quotes.find(quote_id);
@@ -357,10 +361,36 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     }
     auto quote_flags = parse_byte(data + 8);
     auto is_ask_update = (quote_flags & UPDATE_SIDE_ASK) != 0;
-    if(is_ask_update && (quote_flags & ASK_PRICED) == 0) {
-      return;
-    }
-    if(!is_ask_update && (quote_flags & BID_PRICED) == 0) {
+    auto extended_flags = parse_byte(data + 32);
+    auto is_actual = [&] {
+      if(is_ask_update) {
+        return (quote_flags & ASK_PRICED) != 0;
+      }
+      return (quote_flags & BID_PRICED) != 0;
+    }();
+    auto is_saturated = (extended_flags & QUOTE_SATURATED) != 0;
+    if(!is_actual || is_saturated) {
+      auto& stored = i->second;
+      auto& quote = [&] () -> auto& {
+        if(is_ask_update) {
+          return stored.m_ask;
+        }
+        return stored.m_bid;
+      }();
+      if(quote.m_quote.m_price != Money::ZERO) {
+        auto remove_quote = quote;
+        remove_quote.m_quote.m_size = 0;
+        remove_quote.m_timestamp = parse_timestamp(data + 22);
+        if(m_configuration.m_is_logging_messages) {
+          std::cout <<
+            boost::posix_time::microsec_clock::universal_time() <<
+            " Delete: " <<
+            SecurityBookQuote(remove_quote, stored.m_security) <<
+            std::endl;
+        }
+        m_feed_client->publish(
+          SecurityBookQuote(remove_quote, stored.m_security));
+      }
       return;
     }
     auto price = parse_money(data + 9);
