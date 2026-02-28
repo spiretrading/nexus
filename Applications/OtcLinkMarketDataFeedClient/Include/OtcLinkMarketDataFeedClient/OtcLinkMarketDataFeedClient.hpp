@@ -398,7 +398,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     auto timestamp = parse_timestamp(data + 22);
     auto& stored = i->second;
     auto& quote = pick(side, stored.m_ask, stored.m_bid);
-    if(quote.m_quote.m_price != price) {
+    if(quote.m_quote.m_price != Money::ZERO && quote.m_quote.m_price != price) {
       auto remove_quote = quote;
       remove_quote.m_quote.m_size = 0;
       remove_quote.m_timestamp = timestamp;
