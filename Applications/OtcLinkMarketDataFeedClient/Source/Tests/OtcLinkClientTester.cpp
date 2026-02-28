@@ -67,7 +67,8 @@ namespace {
 TEST_SUITE("OtcLinkClient") {
   TEST_CASE("read_single_packet_single_message") {
     auto fixture = Fixture();
-    auto packet = make_packet_buffer(42, 0, {make_message_buffer(0x11, "DATA")});
+    auto packet =
+      make_packet_buffer(42, 0, {make_message_buffer(0x11, "DATA")});
     fixture.m_server_channel->get_writer().write(packet);
     auto expected_sequence = std::uint32_t(0);
     auto message = fixture.m_client->read(out(expected_sequence));
@@ -105,5 +106,73 @@ TEST_SUITE("OtcLinkClient") {
     REQUIRE(message.m_type == OtcLinkMessage::Type::INSIDE);
     REQUIRE(expected_sequence == 201);
     REQUIRE(is_payload_equal(message.m_payload, "REAL"));
+  }
+
+  TEST_CASE("skip_heartbeat_packet") {
+    auto fixture = Fixture();
+    auto heartbeat = make_packet_buffer(
+      300, static_cast<std::uint8_t>(OtcLinkPacket::Flag::HEARTBEAT), {});
+    auto packet =
+      make_packet_buffer(301, 0, {make_message_buffer(0x11, "AFTER")});
+    fixture.m_server_channel->get_writer().write(heartbeat);
+    fixture.m_server_channel->get_writer().write(packet);
+    auto sequence = std::uint32_t(0);
+    auto message = fixture.m_client->read(out(sequence));
+    REQUIRE(message.m_type == OtcLinkMessage::Type::TRADE);
+    REQUIRE(sequence == 301);
+    REQUIRE(is_payload_equal(message.m_payload, "AFTER"));
+  }
+
+  TEST_CASE("sequence_number_reset") {
+    auto fixture = Fixture();
+    auto first_packet =
+      make_packet_buffer(10, 0, {make_message_buffer(0x11, "FIRST")});
+    auto reset_packet = make_packet_buffer(
+      1, static_cast<std::uint8_t>(OtcLinkPacket::Flag::SEQUENCE_NUMBER_RESET),
+      {});
+    auto second_packet =
+      make_packet_buffer(1, 0, {make_message_buffer(0x11, "SECOND")});
+    fixture.m_server_channel->get_writer().write(first_packet);
+    fixture.m_server_channel->get_writer().write(reset_packet);
+    fixture.m_server_channel->get_writer().write(second_packet);
+    auto sequence = std::uint32_t(0);
+    fixture.m_client->read(out(sequence));
+    REQUIRE(sequence == 10);
+    auto message = fixture.m_client->read(out(sequence));
+    REQUIRE(message.m_type == OtcLinkMessage::Type::TRADE);
+    REQUIRE(sequence == 1);
+    REQUIRE(is_payload_equal(message.m_payload, "SECOND"));
+  }
+
+  TEST_CASE("skip_replay_packet") {
+    auto fixture = Fixture();
+    auto replay = make_packet_buffer(
+      400, static_cast<std::uint8_t>(OtcLinkPacket::Flag::REPLAY),
+      {make_message_buffer(0x11, "REPLAY")});
+    auto packet =
+      make_packet_buffer(401, 0, {make_message_buffer(0x11, "LIVE")});
+    fixture.m_server_channel->get_writer().write(replay);
+    fixture.m_server_channel->get_writer().write(packet);
+    auto sequence = std::uint32_t(0);
+    auto message = fixture.m_client->read(out(sequence));
+    REQUIRE(message.m_type == OtcLinkMessage::Type::TRADE);
+    REQUIRE(sequence == 401);
+    REQUIRE(is_payload_equal(message.m_payload, "LIVE"));
+  }
+
+  TEST_CASE("skip_test_packet") {
+    auto fixture = Fixture();
+    auto test_packet = make_packet_buffer(
+      500, static_cast<std::uint8_t>(OtcLinkPacket::Flag::TEST),
+      {make_message_buffer(0x11, "TEST")});
+    auto packet =
+      make_packet_buffer(501, 0, {make_message_buffer(0x11, "LIVE")});
+    fixture.m_server_channel->get_writer().write(test_packet);
+    fixture.m_server_channel->get_writer().write(packet);
+    auto sequence = std::uint32_t(0);
+    auto message = fixture.m_client->read(out(sequence));
+    REQUIRE(message.m_type == OtcLinkMessage::Type::TRADE);
+    REQUIRE(sequence == 501);
+    REQUIRE(is_payload_equal(message.m_payload, "LIVE"));
   }
 }

@@ -272,10 +272,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         return;
       }
       auto& stored = i->second;
+      auto now = boost::posix_time::microsec_clock::universal_time();
       if(stored.m_bid.m_quote.m_price != Money::ZERO) {
         auto bid = stored.m_bid;
         bid.m_quote.m_size = 0;
-        bid.m_timestamp = parse_timestamp(data + 52);
+        bid.m_timestamp = now;
         if(m_configuration.m_is_logging_messages) {
           std::cout << boost::posix_time::microsec_clock::universal_time() <<
             " Delete: " << SecurityBookQuote(bid, stored.m_security) <<
@@ -286,7 +287,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       if(stored.m_ask.m_quote.m_price != Money::ZERO) {
         auto ask = stored.m_ask;
         ask.m_quote.m_size = 0;
-        ask.m_timestamp = parse_timestamp(data + 31);
+        ask.m_timestamp = now;
         if(m_configuration.m_is_logging_messages) {
           std::cout << boost::posix_time::microsec_clock::universal_time() <<
             " Delete: " << SecurityBookQuote(ask, stored.m_security) <<
@@ -338,8 +339,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       }
       m_feed_client->publish(SecurityBookQuote(ask, security));
     }
-    m_book_quotes.insert(
-      std::pair(quote_id, BookQuoteEntry(security, bid, ask)));
+    m_book_quotes.insert_or_assign(
+      quote_id, BookQuoteEntry(security, bid, ask));
   }
 
   template<typename M, typename O, typename R, typename S>
@@ -360,10 +361,15 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       return;
     }
     auto quote_flags = parse_byte(data + 8);
-    auto is_ask_update = (quote_flags & UPDATE_SIDE_ASK) != 0;
+    auto side = [&] {
+      if((quote_flags & UPDATE_SIDE_ASK) != 0) {
+        return Side::ASK;
+      }
+      return Side::BID;
+    }();
     auto extended_flags = parse_byte(data + 32);
     auto is_actual = [&] {
-      if(is_ask_update) {
+      if(side == Side::ASK) {
         return (quote_flags & ASK_PRICED) != 0;
       }
       return (quote_flags & BID_PRICED) != 0;
@@ -371,25 +377,19 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     auto is_saturated = (extended_flags & QUOTE_SATURATED) != 0;
     if(!is_actual || is_saturated) {
       auto& stored = i->second;
-      auto& quote = [&] () -> auto& {
-        if(is_ask_update) {
-          return stored.m_ask;
-        }
-        return stored.m_bid;
-      }();
+      auto& quote = pick(side, stored.m_ask, stored.m_bid);
       if(quote.m_quote.m_price != Money::ZERO) {
         auto remove_quote = quote;
         remove_quote.m_quote.m_size = 0;
         remove_quote.m_timestamp = parse_timestamp(data + 22);
         if(m_configuration.m_is_logging_messages) {
-          std::cout <<
-            boost::posix_time::microsec_clock::universal_time() <<
-            " Delete: " <<
-            SecurityBookQuote(remove_quote, stored.m_security) <<
+          std::cout << boost::posix_time::microsec_clock::universal_time() <<
+            " Delete: " << SecurityBookQuote(remove_quote, stored.m_security) <<
             std::endl;
         }
         m_feed_client->publish(
           SecurityBookQuote(remove_quote, stored.m_security));
+        quote = BookQuote();
       }
       return;
     }
@@ -397,12 +397,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     auto size = parse_quantity(data + 17);
     auto timestamp = parse_timestamp(data + 22);
     auto& stored = i->second;
-    auto& quote = [&] () -> auto& {
-      if(is_ask_update) {
-        return stored.m_ask;
-      }
-      return stored.m_bid;
-    }();
+    auto& quote = pick(side, stored.m_ask, stored.m_bid);
     if(quote.m_quote.m_price != price) {
       auto remove_quote = quote;
       remove_quote.m_quote.m_size = 0;
@@ -457,7 +452,10 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     auto bid = make_bid(bid_price, bid_size);
     auto ask = make_ask(ask_price, ask_size);
     auto bbo = BboQuote(bid, ask, timestamp);
-    m_bbo_quotes.insert(std::pair(inside_id, BboQuoteEntry(security, bbo)));
+    m_bbo_quotes.insert_or_assign(inside_id, BboQuoteEntry(security, bbo));
+    if(bid_price == Money::ZERO && ask_price == Money::ZERO) {
+      return;
+    }
     if(m_configuration.m_is_logging_messages) {
       std::cout << boost::posix_time::microsec_clock::universal_time() <<
         " Inside add: " << SecurityBboQuote(bbo, security) << std::endl;
@@ -481,18 +479,19 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       return;
     }
     auto quote_flags = parse_byte(data + 8);
-    auto is_ask_update = (quote_flags & UPDATE_SIDE_ASK) != 0;
+    auto side = [&] {
+      if((quote_flags & UPDATE_SIDE_ASK) != 0) {
+        return Side::ASK;
+      }
+      return Side::BID;
+    }();
     auto price = parse_money(data + 9);
     auto size = parse_quantity(data + 17);
     auto timestamp = parse_timestamp(data + 21);
     auto& stored = i->second;
-    if(is_ask_update) {
-      stored.m_bbo.m_ask.m_price = price;
-      stored.m_bbo.m_ask.m_size = size;
-    } else {
-      stored.m_bbo.m_bid.m_price = price;
-      stored.m_bbo.m_bid.m_size = size;
-    }
+    auto& stored_quote = pick(side, stored.m_bbo.m_ask, stored.m_bbo.m_bid);
+    stored_quote.m_price = price;
+    stored_quote.m_size = size;
     stored.m_bbo.m_timestamp = timestamp;
     if(stored.m_bbo.m_bid.m_price == Money::ZERO ||
         stored.m_bbo.m_ask.m_price == Money::ZERO) {
@@ -667,7 +666,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         OtcLinkChannelId::QUOTE_INSIDE_REAL_TIME) {
       save_securities();
     }
-    return 0;
+    return last_sequence_number;
   }
 
   template<typename M, typename O, typename R, typename S>
@@ -675,16 +674,16 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     auto last_sequence_number = initialize_snapshot();
     while(true) {
       auto message = OtcLinkMessage();
-      auto sequence_number = std::uint32_t(0);
       try {
-        message = m_otc_link_client->read(Beam::out(sequence_number));
+        message = m_otc_link_client->read();
       } catch(const Beam::EndOfFileException&) {
         break;
       }
-      if(sequence_number <= last_sequence_number) {
+      auto channel_sequence_number = parse_uint32(message.m_payload);
+      if(channel_sequence_number <= last_sequence_number) {
         continue;
       }
-      last_sequence_number = sequence_number;
+      last_sequence_number = channel_sequence_number;
       parse_message(message);
     }
   }

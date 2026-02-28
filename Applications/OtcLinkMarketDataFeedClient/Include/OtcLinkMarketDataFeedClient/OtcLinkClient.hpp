@@ -98,6 +98,18 @@ namespace Nexus {
           m_packet = OtcLinkPacket::parse(
             std::string_view(m_buffer.get_data(), m_buffer.get_size()));
         }, Beam::IOException("Failed to read OTC Link packet."));
+        auto flag = static_cast<std::uint8_t>(m_packet.m_flag);
+        if(flag & static_cast<std::uint8_t>(OtcLinkPacket::Flag::HEARTBEAT)) {
+          continue;
+        } else if(flag & static_cast<std::uint8_t>(
+            OtcLinkPacket::Flag::SEQUENCE_NUMBER_RESET)) {
+          m_sequence_number = m_packet.m_sequence_number;
+          continue;
+        } else if(flag & static_cast<std::uint8_t>(
+            OtcLinkPacket::Flag::REPLAY) || flag & static_cast<std::uint8_t>(
+            OtcLinkPacket::Flag::TEST)) {
+          continue;
+        }
         if(m_packet.m_message_count != 0) {
           if(m_sequence_number != static_cast<std::uint32_t>(-1) &&
               m_packet.m_sequence_number != m_sequence_number) {
