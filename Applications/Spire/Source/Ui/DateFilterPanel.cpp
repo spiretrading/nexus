@@ -317,7 +317,7 @@ DateFilterPanel::DateFilterPanel(std::shared_ptr<DateRangeModel> model,
       m_range_type_button_group(std::make_unique<DateRangeTypeButtonGroup>(
         std::make_shared<AssociativeValueModel<DateRangeType>>(),
           m_model->get())) {
-  m_filter_panel = new FilterPanel(QObject::tr("Filter by Date"), this, parent);
+  m_filter_panel = new FilterPanel(*this, &parent);
   m_filter_panel->connect_reset_signal([=] { on_reset(); });
   m_range_type_button_group->get_current()->connect_update_signal(
     std::bind_front(&DateFilterPanel::on_date_range_type_current, this));
