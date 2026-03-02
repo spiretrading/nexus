@@ -222,11 +222,6 @@ bool ContextMenu::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
     switch(key_event.key()) {
-      case Qt::Key_Right:
-        if(watched == m_list_view) {
-          handle_right_or_enter_event(event);
-        }
-        break;
       case Qt::Key_Left:
         if(watched == m_list_view) {
           clear_hover_style();
@@ -236,8 +231,10 @@ bool ContextMenu::eventFilter(QObject* watched, QEvent* event) {
           clear_hover_style();
         }
         break;
+      case Qt::Key_Right:
       case Qt::Key_Enter:
       case Qt::Key_Return:
+      case Qt::Key_Space:
         if(dynamic_cast<const SubmenuItem*>(watched) ||
             watched == m_list_view) {
           handle_right_or_enter_event(event);
