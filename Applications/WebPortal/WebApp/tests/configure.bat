@@ -23,6 +23,7 @@ CALL:configure login_page_tester %*
 CALL:configure mock %*
 CALL:configure page_not_found_page_tester %*
 CALL:configure profile_page_tester %*
+CALL:configure requests_page_tester %*
 CALL:configure risk_page_tester %*
 CALL:configure scratch %*
 EXIT /B !EXIT_STATUS!
