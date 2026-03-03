@@ -404,9 +404,8 @@ bool ContextMenu::handle_mouse_event(QMouseEvent* event) {
           if(m_list->get(*current).m_type == MenuItemType::SUBMENU) {
             hide_submenu();
             show_submenu(*current);
-          } else {
-            forward_mouse_click(
-              *QApplication::widgetAt(event->globalPos()), *event);
+          } else if(auto target = QApplication::widgetAt(event->globalPos())) {
+            forward_mouse_click(*target, *event);
           }
         }
         return true;
@@ -514,9 +513,11 @@ void ContextMenu::show_submenu(int index) {
   if(!m_submenus.contains(index)) {
     return;
   }
+  if(m_visible_submenu) {
+    hide_submenu();
+  }
   m_visible_submenu = m_submenus[index];
   m_visible_submenu->installEventFilter(this);
-  m_visible_submenu->get_body().installEventFilter(this);
   position_submenu(*m_list_view->get_list_item(index));
   auto& active_menu =
     static_cast<ContextMenu&>(m_visible_submenu->get_body());
