@@ -33,7 +33,6 @@
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CalendarDatePicker.hpp"
 #include "Spire/Ui/Checkbox.hpp"
-#include "Spire/Ui/ClosedFilterPanel.hpp"
 #include "Spire/Ui/ColorBox.hpp"
 #include "Spire/Ui/ColorCodePanel.hpp"
 #include "Spire/Ui/ColorPicker.hpp"
@@ -41,7 +40,6 @@
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DateBox.hpp"
-#include "Spire/Ui/DateFilterPanel.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DeletableListItem.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
@@ -54,7 +52,6 @@
 #include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/EyeDropper.hpp"
-#include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/FontBox.hpp"
 #include "Spire/Ui/FontFamilyBox.hpp"
@@ -77,7 +74,6 @@
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
-#include "Spire/Ui/OrderTypeFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/PercentBox.hpp"
 #include "Spire/Ui/PopupBox.hpp"
@@ -87,7 +83,6 @@
 #include "Spire/Ui/RegionDropDownBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
-#include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
@@ -96,7 +91,6 @@
 #include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/SideBox.hpp"
-#include "Spire/Ui/SideFilterPanel.hpp"
 #include "Spire/Ui/SingleSelectionModel.hpp"
 #include "Spire/Ui/Slider.hpp"
 #include "Spire/Ui/Slider2D.hpp"
@@ -112,7 +106,6 @@
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TimeInForceBox.hpp"
-#include "Spire/Ui/TimeInForceFilterPanel.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/Ui/TransitionView.hpp"
@@ -474,52 +467,6 @@ namespace {
       DecimalBoxProfileProperties(1));
   }
 
-  template<typename T,
-    typename ClosedFilterPanel* (*f)(std::shared_ptr<ListModel<T>>, QWidget&)>
-  auto setup_closed_filter_panel_profile(UiProfile& profile) {
-    auto& properties = profile.get_properties();
-    auto model = std::make_shared<ArrayListModel<T>>();
-    for(auto property : properties) {
-      if(get<bool>(property->get_name(), profile.get_properties()).get()) {
-        model->push(*from_text<T>(property->get_name()));
-      }
-    }
-    auto button = make_label_button("Click me");
-    auto panel = f(model, *button);
-    for(auto i = 0; i < static_cast<int>(properties.size()); ++i) {
-      auto& checked =
-        get<bool>(properties[i]->get_name(), profile.get_properties());
-      checked.connect_changed_signal([=] (const auto& value) {
-        if(panel->get_table()->get<bool>(i, 1) != value) {
-          panel->get_table()->set(i, 1, value);
-        }
-      });
-    }
-    panel->get_table()->connect_operation_signal(
-      [=, &profile] (const TableModel::Operation& operation) {
-        visit(operation,
-          [=, &profile] (const TableModel::UpdateOperation& operation) {
-            auto value = panel->get_table()->get<bool>(operation.m_row, 1);
-            auto& checked = get<bool>(properties[operation.m_row]->get_name(),
-              profile.get_properties());
-            if(checked.get() != value) {
-              checked.set(value);
-            }
-          });
-      });
-    auto submit_filter_slot = profile.make_event_slot<QString>("SubmitSignal");
-    panel->connect_submit_signal(
-      [=] (const std::shared_ptr<AnyListModel>& submission) {
-        auto result = QString();
-        for(auto i = 0; i < submission->get_size(); ++i) {
-          result += to_text(submission->get(i)) + " ";
-        }
-        submit_filter_slot(result);
-      });
-    button->connect_click_signal([=] { panel->show(); });
-    return button;
-  }
-
   template<typename B, typename B* (*F)(QWidget*)>
   auto setup_enum_box_profile(UiProfile& profile) {
     using Type = B::Type;
@@ -565,39 +512,6 @@ namespace {
       {"Roboto, Regular, 8", font3}, {"Tahoma, Bold, 16", font4},
       {"Segoe UI, Light Italic, 10", font5}});
     populate_enum_properties(properties, property_name, font_property);
-  }
-
-  template<typename B>
-  auto setup_scalar_filter_panel_profile(UiProfile& profile) {
-    using Panel = ScalarFilterPanel<B>;
-    using Type = typename Panel::Type;
-    auto button = make_label_button("Click me");
-    auto range = std::make_shared<LocalValueModel<typename Panel::Range>>();
-    button->connect_click_signal([=, &profile] {
-      auto& title = get<QString>("title", profile.get_properties());
-      auto panel = new Panel(range, title.get(), *button);
-      auto filter_slot = profile.make_event_slot<QString>("SubmitSignal");
-      panel->connect_submit_signal(
-        [=] (const typename Panel::Range& submission) {
-          auto to_string = [&] (const auto& value) {
-            if(value) {
-              return to_text(*value);
-            }
-            return QString("null");
-          };
-          filter_slot(QString("%1, %2").
-            arg(to_string(submission.m_min)).
-            arg(to_string(submission.m_max)));
-        });
-      panel->show();
-    });
-    return button;
-  }
-
-  void populate_scalar_filter_panel_properties(
-      std::vector<std::shared_ptr<UiProperty>>& properties,
-      const QString& default_title) {
-    properties.push_back(make_standard_property("title", default_title));
   }
 
   optional<time_duration> parse_duration(const QString& duration) {
@@ -1226,81 +1140,6 @@ UiProfile Spire::make_check_box_profile() {
   });
 }
 
-UiProfile Spire::make_closed_filter_panel_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  properties.push_back(make_standard_property("item_count", 7));
-  properties.push_back(make_standard_property<QString>("item_label", "item"));
-  properties.push_back(make_standard_property("checked_item", -1));
-  properties.push_back(make_standard_property("unchecked_item", -1));
-  properties.push_back(make_standard_property("insert_item", -1));
-  properties.push_back(make_standard_property("remove_item", -1));
-  auto profile = UiProfile("ClosedFilterPanel", properties, [] (auto& profile) {
-    auto& item_count = get<int>("item_count", profile.get_properties());
-    auto& item_text = get<QString>("item_label", profile.get_properties());
-    auto model = std::make_shared<ArrayTableModel>();
-    for(auto i = 0; i < item_count.get(); ++i) {
-      model->push({item_text.get() + QString("%1").arg(i), false});
-    }
-    auto current_filter_slot =
-      profile.make_event_slot<QString>("CurrentSignal");
-    model->connect_operation_signal(
-      [=] (const TableModel::Operation& operation) {
-        visit(operation, [=] (const TableModel::UpdateOperation& operation) {
-          auto result = QString();
-          for(auto i = 0; i < model->get_row_size(); ++i) {
-            if(model->get<bool>(i, 1)) {
-              result += QString("%1 ").arg(i);
-            }
-          }
-          current_filter_slot(result);
-        });
-      });
-    auto& checked_item = get<int>("checked_item", profile.get_properties());
-    checked_item.connect_changed_signal([=] (const auto& value) {
-      if(value < 0 || value >= model->get_row_size()) {
-        return;
-      }
-      model->set(value, 1, true);
-    });
-    auto& unchecked_item = get<int>("unchecked_item", profile.get_properties());
-    unchecked_item.connect_changed_signal([=] (const auto& value) {
-      if(value < 0 || value >= model->get_row_size()) {
-        return;
-      }
-      model->set(value, 1, false);
-    });
-    auto& insert_item = get<int>("insert_item", profile.get_properties());
-    insert_item.connect_changed_signal(
-      [=, index = 0] (const auto& value) mutable {
-        if(value < 0 || value > model->get_row_size()) {
-          return;
-        }
-        model->insert({QString("newItem%1").arg(index++), false}, value);
-      });
-    auto& remove_item = get<int>("remove_item", profile.get_properties());
-    remove_item.connect_changed_signal([=] (const auto& value) {
-      if(value < 0 || value >= model->get_row_size()) {
-        return;
-      }
-      model->remove(value);
-    });
-    auto button = make_label_button("Click me");
-    auto panel = new ClosedFilterPanel(model, "Filter by something", *button);
-    auto submit_filter_slot = profile.make_event_slot<QString>("SubmitSignal");
-    panel->connect_submit_signal(
-      [=] (const std::shared_ptr<AnyListModel>& submission) {
-        auto result = QString();
-        for(auto i = 0; i < submission->get_size(); ++i) {
-          result += to_text(submission->get(i)) + " ";
-        }
-        submit_filter_slot(result);
-      });
-    button->connect_click_signal([=] { panel->show(); });
-    return button;
-  });
-  return profile;
-}
-
 UiProfile Spire::make_color_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -1613,100 +1452,6 @@ UiProfile Spire::make_date_box_profile() {
   return profile;
 }
 
-UiProfile Spire::make_date_filter_panel_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  auto current_date = day_clock::local_day();
-  properties.push_back(make_standard_property(
-    "default_start_date", to_text(current_date - months(3))));
-  properties.push_back(
-    make_standard_property("default_end_date", to_text(current_date)));
-  properties.push_back(make_standard_property("default_offset_value", 1));
-  auto default_unit_property = define_enum<DateFilterPanel::DateUnit>(
-    {{"Day", DateFilterPanel::DateUnit::DAY},
-     {"Week", DateFilterPanel::DateUnit::WEEK},
-     {"Month", DateFilterPanel::DateUnit::MONTH},
-     {"Year", DateFilterPanel::DateUnit::YEAR}});
-  properties.push_back(make_standard_enum_property(
-    "default_date_unit", default_unit_property));
-  auto profile = UiProfile("DateFilterPanel", properties, [] (auto& profile) {
-    auto& default_start_date =
-      get<QString>("default_start_date", profile.get_properties());
-    auto& default_end_date =
-      get<QString>("default_end_date", profile.get_properties());
-    auto& default_offset_value =
-      get<int>("default_offset_value", profile.get_properties());
-    auto& default_date_unit = get<DateFilterPanel::DateUnit>(
-      "default_date_unit", profile.get_properties());
-    auto button = make_label_button("Click me");
-    auto model =
-      std::make_shared<LocalValueModel<DateFilterPanel::DateRange>>();
-    auto default_date_range = DateFilterPanel::DateRange();
-    default_date_range.m_start = parse_date(default_start_date.get());
-    default_date_range.m_end = parse_date(default_end_date.get());
-    default_date_range.m_offset = DateFilterPanel::DateOffset{
-      default_date_unit.get(), default_offset_value.get()};
-    auto panel = new DateFilterPanel(model, default_date_range, *button);
-    default_start_date.connect_changed_signal([=] (const auto& value) {
-      auto range = panel->get_default_range();
-      range.m_start = parse_date(value);
-      panel->set_default_range(range);
-    });
-    default_end_date.connect_changed_signal([=] (const auto& value) {
-      auto range = panel->get_default_range();
-      range.m_end = parse_date(value);
-      panel->set_default_range(range);
-    });
-    default_offset_value.connect_changed_signal([=] (const auto& value) {
-      auto range = panel->get_default_range();
-      range.m_offset->m_value = value;
-      panel->set_default_range(range);
-    });
-    default_date_unit.connect_changed_signal([=] (const auto& value) {
-      auto range = panel->get_default_range();
-      range.m_offset->m_unit = value;
-      panel->set_default_range(range);
-    });
-    auto filter_slot = profile.make_event_slot<QString>("SubmitSignal");
-    panel->connect_submit_signal(
-      [=] (const DateFilterPanel::DateRange& submission) {
-        auto result = QString();
-        if(submission.m_start) {
-          result += to_text(*submission.m_start);
-        } else {
-          result += "none";
-        }
-        result += " - ";
-        if(submission.m_end) {
-          result += to_text(*submission.m_end);
-        } else {
-          result += "none";
-        }
-        if(submission.m_offset) {
-          auto to_string = [] (auto unit) {
-            if(unit == DateFilterPanel::DateUnit::DAY) {
-              return "Day";
-            } else if(unit == DateFilterPanel::DateUnit::WEEK) {
-              return "Week";
-            } else if(unit == DateFilterPanel::DateUnit::MONTH) {
-              return "Month";
-            } else {
-              return "Year";
-            }
-          };
-          result += QString("; %1 %2").
-            arg(submission.m_offset->m_value).
-            arg(to_string(submission.m_offset->m_unit));
-        }
-        filter_slot(result);
-      });
-    button->connect_click_signal([=] {
-      panel->show();
-    });
-    return button;
-  });
-  return profile;
-}
-
 UiProfile Spire::make_decimal_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -1714,43 +1459,6 @@ UiProfile Spire::make_decimal_box_profile() {
     properties, DecimalBoxProfileProperties(Decimal(1)));
   auto profile = UiProfile("DecimalBox",
     properties, setup_decimal_box_with_decimal_profile<DecimalBox>);
-  return profile;
-}
-
-UiProfile Spire::make_decimal_filter_panel_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  properties.push_back(
-    make_standard_property("title", QString("Filter Decimal")));
-  auto profile = UiProfile("DecimalFilterPanel", properties,
-    [] (auto& profile) {
-      auto to_decimal = [] (auto decimal) -> optional<Decimal> {
-        try {
-          return Decimal(decimal.toStdString().c_str());
-        } catch(const std::exception&) {
-          return {};
-        }
-      };
-      auto to_string = [] (const auto& value) {
-        if(value) {
-          return ::to_string(*value);
-        }
-        return QString("null");
-      };
-      auto& title = get<QString>("title", profile.get_properties());
-      auto button = make_label_button("Click me");
-      auto range = std::make_shared<
-        LocalValueModel<ScalarFilterPanel<DecimalBox>::Range>>();
-      button->connect_click_signal([=, &profile, &title] {
-        auto panel = new DecimalFilterPanel(range, title.get(), *button);
-        auto submit_slot = profile.make_event_slot<QString>("SubmitSignal");
-        panel->connect_submit_signal([=] (const auto& submission) {
-          submit_slot(to_string(submission.m_min) + QString(", ") +
-            to_string(submission.m_max));
-        });
-        panel->show();
-      });
-      return button;
-    });
   return profile;
 }
 
@@ -1944,37 +1652,6 @@ UiProfile Spire::make_duration_box_profile() {
   return profile;
 }
 
-UiProfile Spire::make_duration_filter_panel_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  auto profile = UiProfile("DurationFilterPanel", properties,
-    [] (auto& profile) {
-      auto button = make_label_button(QString("Click me"));
-      auto range =
-        std::make_shared<LocalValueModel<DurationFilterPanel::Range>>();
-      button->connect_click_signal([=, &profile] {
-        auto panel =
-          new DurationFilterPanel(range, "Filter by Duration", *button);
-        auto filter_slot = profile.make_event_slot<QString>("SubmitSignal");
-        panel->connect_submit_signal(
-          [=] (const DurationFilterPanel::Range& submission) {
-            auto to_string =
-              [&] (const auto& value) {
-                if(value) {
-                  return QString::fromStdString(to_simple_string(*value));
-                }
-                return QString("null");
-              };
-            filter_slot(QString("%1, %2").
-              arg(to_string(submission.m_min)).
-              arg(to_string(submission.m_max)));
-          });
-        panel->show();
-      });
-      return button;
-    });
-  return profile;
-}
-
 UiProfile Spire::make_editable_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -2097,44 +1774,6 @@ UiProfile Spire::make_eye_dropper_profile() {
       } else {
         create_eye_dropper(button, profile);
       }
-    });
-    return button;
-  });
-  return profile;
-}
-
-UiProfile Spire::make_filter_panel_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  properties.push_back(
-    make_standard_property<QString>("title", QString("Filter Quantity")));
-  auto profile = UiProfile("FilterPanel", properties, [] (auto& profile) {
-    auto& title = get<QString>("title", profile.get_properties());
-    auto button = make_label_button("Click me");
-    button->connect_click_signal([&, button] {
-      auto component = new QWidget();
-      component->setObjectName("component");
-      component->setStyleSheet("#component {background-color: #F5F5F5;}");
-      auto component_layout = new QGridLayout(component);
-      component_layout->setSpacing(0);
-      component_layout->setContentsMargins({});
-      auto min_box = new TextBox("Min");
-      min_box->set_read_only(true);
-      min_box->setFixedSize(scale(40, 30));
-      component_layout->addWidget(min_box, 0, 0);
-      auto min_text = new TextBox();
-      min_text->setFixedSize(scale(120, 26));
-      component_layout->addWidget(min_text, 0, 1);
-      auto max_box = new TextBox("Max");
-      max_box->set_read_only(true);
-      max_box->setFixedSize(scale(40, 30));
-      component_layout->addWidget(max_box, 1, 0);
-      auto max_text = new TextBox();
-      max_text->setFixedSize(scale(120, 26));
-      component_layout->addWidget(max_text, 1, 1);
-      auto panel = new FilterPanel(title.get(), component, *button);
-      panel->window()->setAttribute(Qt::WA_DeleteOnClose);
-      panel->connect_reset_signal(profile.make_event_slot("ResetSignal"));
-      panel->show();
     });
     return button;
   });
@@ -2701,15 +2340,6 @@ UiProfile Spire::make_integer_box_profile() {
   return profile;
 }
 
-UiProfile Spire::make_integer_filter_panel_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_scalar_filter_panel_properties(
-    properties, QString("Filter Integer"));
-  auto profile = UiProfile("IntegerFilterPanel", properties,
-    setup_scalar_filter_panel_profile<IntegerBox>);
-  return profile;
-}
-
 UiProfile Spire::make_key_input_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3137,14 +2767,6 @@ UiProfile Spire::make_money_box_profile() {
   return profile;
 }
 
-UiProfile Spire::make_money_filter_panel_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_scalar_filter_panel_properties(properties, "Filter Money");
-  auto profile = UiProfile("MoneyFilterPanel", properties,
-    setup_scalar_filter_panel_profile<MoneyBox>);
-  return profile;
-}
-
 UiProfile Spire::make_navigation_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3389,18 +3011,6 @@ UiProfile Spire::make_order_type_box_profile() {
   return profile;
 }
 
-UiProfile Spire::make_order_type_filter_panel_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  properties.push_back(make_standard_property<bool>("Limit"));
-  properties.push_back(make_standard_property<bool>("Market"));
-  properties.push_back(make_standard_property<bool>("Pegged"));
-  properties.push_back(make_standard_property<bool>("Stop"));
-  auto profile = UiProfile("OrderTypeFilterPanel", properties, std::bind_front(
-    setup_closed_filter_panel_profile<
-      OrderType, make_order_type_filter_panel>));
-  return profile;
-}
-
 UiProfile Spire::make_overlay_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3567,14 +3177,6 @@ UiProfile Spire::make_quantity_box_profile() {
   populate_decimal_box_properties<Quantity>(properties, box_properties);
   auto profile = UiProfile(
     "QuantityBox", properties, setup_decimal_box_profile<QuantityBox>);
-  return profile;
-}
-
-UiProfile Spire::make_quantity_filter_panel_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_scalar_filter_panel_properties(properties, "Filter Quantity");
-  auto profile = UiProfile("QuantityFilterPanel", properties,
-    setup_scalar_filter_panel_profile<QuantityBox>);
   return profile;
 }
 
@@ -4102,15 +3704,6 @@ UiProfile Spire::make_side_box_profile() {
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("SideBox", properties, std::bind_front(
     setup_enum_box_profile<SideBox, make_side_box>));
-  return profile;
-}
-
-UiProfile Spire::make_side_filter_panel_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  properties.push_back(make_standard_property<bool>("Buy"));
-  properties.push_back(make_standard_property<bool>("Sell"));
-  auto profile = UiProfile("SideFilterPanel", properties, std::bind_front(
-    setup_closed_filter_panel_profile<Side, make_side_filter_panel>));
   return profile;
 }
 
@@ -5016,22 +4609,6 @@ UiProfile Spire::make_time_in_force_box_profile() {
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("TimeInForceBox", properties, std::bind_front(
     setup_enum_box_profile<TimeInForceBox, make_time_in_force_box>));
-  return profile;
-}
-
-UiProfile Spire::make_time_in_force_filter_panel_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  properties.push_back(make_standard_property<bool>("DAY"));
-  properties.push_back(make_standard_property<bool>("GTC"));
-  properties.push_back(make_standard_property<bool>("OPG"));
-  properties.push_back(make_standard_property<bool>("IOC"));
-  properties.push_back(make_standard_property<bool>("FOK"));
-  properties.push_back(make_standard_property<bool>("GTX"));
-  properties.push_back(make_standard_property<bool>("GTD"));
-  properties.push_back(make_standard_property<bool>("MOC"));
-  auto profile = UiProfile("TimeInForceFilterPanel", properties,
-    std::bind_front(setup_closed_filter_panel_profile<
-      TimeInForce, make_time_in_force_filter_panel>));
   return profile;
 }
 
