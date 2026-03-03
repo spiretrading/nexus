@@ -527,6 +527,9 @@ void ContextMenu::show_submenu(int index) {
 }
 
 void ContextMenu::on_defer_hide_submenu() {
+  if(!isVisible() || !m_window->isVisible()) {
+    return;
+  }
   auto current = m_list_view->get_current()->get();
   if(current && m_submenus.contains(*current) &&
       m_visible_submenu == m_submenus[*current]) {
@@ -540,6 +543,9 @@ void ContextMenu::on_defer_hide_submenu() {
 }
 
 void ContextMenu::on_defer_show_submenu() {
+  if(!isVisible() || !m_window->isVisible()) {
+    return;
+  }
   if(auto current = m_list_view->get_current()->get()) {
     show_submenu(*current);
   }
