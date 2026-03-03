@@ -539,11 +539,9 @@ void ContextMenu::on_defer_hide_submenu() {
 }
 
 void ContextMenu::on_defer_show_submenu() {
-  auto current = m_list_view->get_current()->get();
-  if(!current) {
-    return;
+  if(auto current = m_list_view->get_current()->get()) {
+    show_submenu(*current);
   }
-  show_submenu(*current);
 }
 
 void ContextMenu::on_mouse_move(QWidget& target, QMouseEvent& event) {
@@ -564,7 +562,7 @@ void ContextMenu::on_mouse_move(QWidget& target, QMouseEvent& event) {
             m_hide_timer.start(MENU_SHOW_DELAY());
           }
         } else if(m_list->get(i).m_type == MenuItemType::SUBMENU) {
-            m_show_timer.start(MENU_SHOW_DELAY());
+          m_show_timer.start(MENU_SHOW_DELAY());
         } else {
           m_show_timer.stop();
           setFocus();
