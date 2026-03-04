@@ -12,6 +12,7 @@ interface State {
   rdToday: string;
   category: string;
   requestState: string;
+  complianceRuleStatus: string;
 }
 
 class App extends React.Component<{}, State> {
@@ -26,7 +27,8 @@ class App extends React.Component<{}, State> {
       rdTime: '08:54',
       rdToday: now.toISOString().slice(0, 10),
       category: 'RISK_CONTROLS',
-      requestState: 'SUBMITTED'
+      requestState: 'SUBMITTED',
+      complianceRuleStatus: 'ACTIVE'
     };
   }
 
@@ -132,6 +134,30 @@ class App extends React.Component<{}, State> {
             state={WebPortal.RequestState[
               this.state.requestState as
                 keyof typeof WebPortal.RequestState]}/>
+        </div>
+        <h3 className={css(STYLES.heading, STYLES.separator)}>
+          ComplianceRuleStatusTag
+        </h3>
+        <div className={css(STYLES.controls)}>
+          <label className={css(STYLES.label)}>
+            status
+            <select className={css(STYLES.input)}
+              value={this.state.complianceRuleStatus}
+              onChange={e =>
+                this.setState({complianceRuleStatus: e.target.value})}>
+              <option value='ACTIVE'>ACTIVE</option>
+              <option value='PASSIVE'>PASSIVE</option>
+              <option value='DISABLED'>DISABLED</option>
+              <option value='DELETE'>DELETE</option>
+              <option value='NONE'>NONE</option>
+            </select>
+          </label>
+        </div>
+        <div className={css(STYLES.preview)}>
+          <WebPortal.ComplianceRuleStatusTag
+            status={WebPortal.ComplianceRuleStatusTag.Status[
+              this.state.complianceRuleStatus as
+                keyof typeof WebPortal.ComplianceRuleStatusTag.Status]}/>
         </div>
       </div>);
   }
