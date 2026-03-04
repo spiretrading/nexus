@@ -11,6 +11,7 @@ export * from './hline';
 export * from './integer_field';
 export * from './modal';
 export * from './money_field';
+export * from './navigation_header';
 export * from './navigation_tab';
 export * from './number_field';
 export * from './role_icon';

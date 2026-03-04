@@ -25,8 +25,8 @@ interface Properties {
   /** Whether this tab corresponds to the current page. Defaults to false. */
   isCurrent?: boolean;
 
-  /** The visual representation of the tab. */
-  variant: NavigationTab.Variant;
+  /** The visual representation of the tab. Defaults to ICON_LABEL. */
+  variant?: NavigationTab.Variant;
 
   /** Called when the tab is clicked. */
   onClick?: () => void;
@@ -48,17 +48,19 @@ export class NavigationTab extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
+    const variant = this.props.variant !== undefined ? this.props.variant :
+      NavigationTab.Variant.ICON_LABEL;
     const isHighlighted = this.props.isCurrent || this.state.isHovered ||
       this.state.isFocused;
     const iconColor = isHighlighted ? '#4B23A0' : '#7D7E90';
     const iconSize = (() => {
-      if(this.props.variant === NavigationTab.Variant.ICON_LABEL) {
+      if(variant === NavigationTab.Variant.ICON_LABEL) {
         return '16px';
       }
       return '24px';
     })();
     const tabClassName = (() => {
-      if(this.props.variant === NavigationTab.Variant.ICON_LABEL) {
+      if(variant === NavigationTab.Variant.ICON_LABEL) {
         return css(NavigationTab.STYLES.tab,
           NavigationTab.STYLES.iconLabelTab);
       }
@@ -79,7 +81,7 @@ export class NavigationTab extends React.Component<Properties, State> {
           <img aria-hidden
             src={this.getIconSrc(isHighlighted)}
             width={iconSize} height={iconSize}/>
-          {this.props.variant === NavigationTab.Variant.ICON_LABEL &&
+          {variant === NavigationTab.Variant.ICON_LABEL &&
             <>
               <div className={css(NavigationTab.STYLES.iconLabelSpacer)}/>
               <span style={labelStyle}>{this.props.label}</span>
