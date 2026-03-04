@@ -1,0 +1,189 @@
+import { css, StyleSheet } from 'aphrodite';
+import * as React from 'react';
+
+interface Properties {
+
+  /** The icon path for the tab. Can contain a ${highlight} placeholder
+   *  that is substituted '-highlighted' based on the tab's state.
+   *  Alternatively, provide a static path and use highlightedIcon for the
+   *  highlighted state.
+   */
+  icon: string;
+
+  /** The icon displayed when the tab is highlighted (current or hovered).
+   *  Only used when icon does not contain a ${highlight} placeholder.
+   *  Defaults to icon if not provided.
+   */
+  highlightedIcon?: string;
+
+  /** The text label to display inside the tab. */
+  label: string;
+
+  /** The URL to push to the browser history when the tab is clicked. */
+  href: string;
+
+  /** Whether this tab corresponds to the current page. Defaults to false. */
+  isCurrent?: boolean;
+
+  /** The visual representation of the tab. */
+  variant: NavigationTab.Variant;
+
+  /** Called when the tab is clicked. */
+  onClick?: () => void;
+}
+
+interface State {
+  isHovered: boolean;
+  isFocused: boolean;
+}
+
+/** Represents a navigation tab within a NavigationHeader. */
+export class NavigationTab extends React.Component<Properties, State> {
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      isHovered: false,
+      isFocused: false
+    };
+  }
+
+  public render(): JSX.Element {
+    const isHighlighted = this.props.isCurrent || this.state.isHovered ||
+      this.state.isFocused;
+    const iconColor = isHighlighted ? '#4B23A0' : '#7D7E90';
+    const iconSize = (() => {
+      if(this.props.variant === NavigationTab.Variant.ICON_LABEL) {
+        return '16px';
+      }
+      return '24px';
+    })();
+    const tabClassName = (() => {
+      if(this.props.variant === NavigationTab.Variant.ICON_LABEL) {
+        return css(NavigationTab.STYLES.tab,
+          NavigationTab.STYLES.iconLabelTab);
+      }
+      return css(NavigationTab.STYLES.tab, NavigationTab.STYLES.iconTab);
+    })();
+    const labelStyle = {
+      ...NavigationTab.INLINE_STYLES.label,
+      color: iconColor
+    };
+    return (
+      <a className={tabClassName} href={this.props.href}
+          onClick={this.onClick}
+          onFocus={this.onFocus}
+          onBlur={this.onBlur}
+          onMouseEnter={this.onMouseEnter}
+          onMouseLeave={this.onMouseLeave}>
+        <div className={css(NavigationTab.STYLES.content)}>
+          <img aria-hidden
+            src={this.getIconSrc(isHighlighted)}
+            width={iconSize} height={iconSize}/>
+          {this.props.variant === NavigationTab.Variant.ICON_LABEL &&
+            <>
+              <div className={css(NavigationTab.STYLES.iconLabelSpacer)}/>
+              <span style={labelStyle}>{this.props.label}</span>
+            </>}
+        </div>
+        <div className={css(NavigationTab.STYLES.indicator,
+          this.props.isCurrent && NavigationTab.STYLES.activeIndicator)}/>
+      </a>);
+  }
+
+  private getIconSrc(isHighlighted: boolean): string {
+    if(this.props.icon.includes('${highlight}')) {
+      const suffix = isHighlighted ? '-highlighted' : '';
+      return this.props.icon.replace('${highlight}', suffix);
+    }
+    if(isHighlighted && this.props.highlightedIcon) {
+      return this.props.highlightedIcon;
+    }
+    return this.props.icon;
+  }
+
+  private onClick = (event: React.MouseEvent) => {
+    event.preventDefault();
+    this.props.onClick?.();
+  }
+
+  private onFocus = () => {
+    this.setState({isFocused: true});
+  }
+
+  private onBlur = () => {
+    this.setState({isFocused: false});
+  }
+
+  private onMouseEnter = () => {
+    this.setState({isHovered: true});
+  }
+
+  private onMouseLeave = () => {
+    this.setState({isHovered: false});
+  }
+
+  private static readonly INLINE_STYLES = {
+    label: {
+      fontSize: '0.875rem',
+      fontFamily: 'Roboto',
+      whiteSpace: 'nowrap' as 'nowrap'
+    }
+  };
+
+  private static readonly STYLES = StyleSheet.create({
+    tab: {
+      display: 'inline-flex',
+      flexDirection: 'column' as 'column',
+      height: '40px',
+      border: '1px solid transparent',
+      cursor: 'pointer',
+      textDecoration: 'none',
+      boxSizing: 'border-box' as 'border-box',
+      '-webkit-tap-highlight-color': 'transparent',
+      outline: 'none',
+      ':focus-visible': {
+        borderColor: '#4B23A0'
+      }
+    },
+    iconTab: {
+      width: '38px',
+      alignItems: 'center' as 'center',
+      justifyContent: 'center' as 'center'
+    },
+    iconLabelTab: {
+      padding: '0 15px'
+    },
+    content: {
+      display: 'flex',
+      alignItems: 'center' as 'center',
+      flex: '1 1 auto'
+    },
+    iconLabelSpacer: {
+      width: '8px',
+      flexShrink: 0
+    },
+    indicator: {
+      height: '2px',
+      width: '100%',
+      backgroundColor: '#4B23A0',
+      opacity: 0,
+      flexShrink: 0
+    },
+    activeIndicator: {
+      opacity: 1
+    }
+  });
+}
+
+export namespace NavigationTab {
+
+  /** The visual representation of a NavigationTab. */
+  export enum Variant {
+
+    /** Displays only the icon. */
+    ICON,
+
+    /** Displays both the icon and the label. */
+    ICON_LABEL
+  }
+}
