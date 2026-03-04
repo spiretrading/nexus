@@ -13,6 +13,9 @@ interface State {
   category: string;
   requestState: string;
   complianceRuleStatus: string;
+  entitlementStatus: string;
+  diffValue: string;
+  diffDirection: string;
 }
 
 class App extends React.Component<{}, State> {
@@ -28,7 +31,10 @@ class App extends React.Component<{}, State> {
       rdToday: now.toISOString().slice(0, 10),
       category: 'RISK_CONTROLS',
       requestState: 'SUBMITTED',
-      complianceRuleStatus: 'ACTIVE'
+      complianceRuleStatus: 'ACTIVE',
+      entitlementStatus: 'GRANTED',
+      diffValue: '3',
+      diffDirection: 'POSITIVE'
     };
   }
 
@@ -158,6 +164,56 @@ class App extends React.Component<{}, State> {
             status={WebPortal.ComplianceRuleStatusTag.Status[
               this.state.complianceRuleStatus as
                 keyof typeof WebPortal.ComplianceRuleStatusTag.Status]}/>
+        </div>
+        <h3 className={css(STYLES.heading, STYLES.separator)}>
+          EntitlementsStatusTag
+        </h3>
+        <div className={css(STYLES.controls)}>
+          <label className={css(STYLES.label)}>
+            status
+            <select className={css(STYLES.input)}
+              value={this.state.entitlementStatus}
+              onChange={e =>
+                this.setState({entitlementStatus: e.target.value})}>
+              <option value='GRANTED'>GRANTED</option>
+              <option value='REVOKED'>REVOKED</option>
+            </select>
+          </label>
+        </div>
+        <div className={css(STYLES.preview)}>
+          <WebPortal.EntitlementsStatusTag
+            status={WebPortal.EntitlementsStatusTag.Status[
+              this.state.entitlementStatus as
+                keyof typeof WebPortal.EntitlementsStatusTag.Status]}/>
+        </div>
+        <h3 className={css(STYLES.heading, STYLES.separator)}>
+          DiffBadge
+        </h3>
+        <div className={css(STYLES.controls)}>
+          <label className={css(STYLES.label)}>
+            value
+            <input className={css(STYLES.input)} type='text'
+              value={this.state.diffValue}
+              onChange={e => this.setState({diffValue: e.target.value})}/>
+          </label>
+          <label className={css(STYLES.label)}>
+            direction
+            <select className={css(STYLES.input)}
+              value={this.state.diffDirection}
+              onChange={e =>
+                this.setState({diffDirection: e.target.value})}>
+              <option value='POSITIVE'>POSITIVE</option>
+              <option value='NEGATIVE'>NEGATIVE</option>
+              <option value='NONE'>NONE</option>
+            </select>
+          </label>
+        </div>
+        <div className={css(STYLES.preview)}>
+          <WebPortal.DiffBadge
+            value={this.state.diffValue}
+            direction={WebPortal.DiffBadge.Direction[
+              this.state.diffDirection as
+                keyof typeof WebPortal.DiffBadge.Direction]}/>
         </div>
       </div>);
   }
