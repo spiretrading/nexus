@@ -1,42 +1,33 @@
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
 interface State {
-  current: string;
+  current: WebPortal.RequestsPage.Page;
 }
 
 class App extends React.Component<{}, State> {
   constructor(props: {}) {
     super(props);
     this.state = {
-      current: 'account'
+      current: WebPortal.RequestsPage.Page.YOUR_REQUESTS
     };
   }
 
   public render(): JSX.Element {
     return (
-      <WebPortal.NavigationHeader
-          variant={WebPortal.NavigationTab.Variant.ICON_LABEL}
-          current={this.state.current}
-          onNavigate={(href) => this.setState({current: href})}>
-        <WebPortal.NavigationTab
-          icon='resources/account/account-grey.svg'
-          highlightedIcon='resources/account/account-purple.svg'
-          href='account'
-          label='Account'/>
-        <WebPortal.NavigationTab
-          icon='resources/account/compliance-grey.svg'
-          highlightedIcon='resources/account/compliance-purple.svg'
-          href='compliance'
-          label='Compliance'/>
-        <WebPortal.NavigationTab
-          icon='resources/account/entitlements-grey.svg'
-          highlightedIcon='resources/account/entitlements-purple.svg'
-          href='entitlements'
-          label='Entitlements'/>
-      </WebPortal.NavigationHeader>);
+      <WebPortal.RequestsPage
+        roles={App.ROLES}
+        current={this.state.current}
+        onNavigate={(page) => this.setState({current: page})}/>);
   }
+
+  private static ROLES = (() => {
+    const roles = new Nexus.AccountRoles();
+    roles.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
+    return roles;
+  })();
 }
 
 ReactDOM.render(<App/>, document.getElementById('main'));

@@ -12,6 +12,9 @@ interface Properties {
 
   /** Called when a tab is clicked, passing the tab's href. */
   onNavigate?: (href: string) => void;
+
+  /** Additional CSS class name applied to the root element. */
+  className?: string;
 }
 
 /** Displays a navigation header with tabs. */
@@ -35,16 +38,23 @@ export class NavigationHeader extends React.Component<Properties> {
           </>);
       });
     return (
-      <header className={css(NavigationHeader.STYLES.header)}>
-        {children}
+      <header className={
+          `${css(NavigationHeader.STYLES.header)}` +
+          ` ${this.props.className || ''}`}>
+        <nav className={css(NavigationHeader.STYLES.nav)}>
+          {children}
+        </nav>
       </header>);
   }
 
   private static readonly STYLES = StyleSheet.create({
     header: {
+      height: '40px'
+    },
+    nav: {
       display: 'inline-flex',
       alignItems: 'center' as 'center',
-      height: '40px'
+      height: '100%'
     },
     gap: {
       width: '30px'
