@@ -3,18 +3,8 @@ import * as React from 'react';
 
 interface Properties {
 
-  /** The icon path for the tab. Can contain a ${highlight} placeholder
-   *  that is substituted '-highlighted' based on the tab's state.
-   *  Alternatively, provide a static path and use highlightedIcon for the
-   *  highlighted state.
-   */
+  /** The full path for the icon. */
   icon: string;
-
-  /** The icon displayed when the tab is highlighted (current or hovered).
-   *  Only used when icon does not contain a ${highlight} placeholder.
-   *  Defaults to icon if not provided.
-   */
-  highlightedIcon?: string;
 
   /** The text label to display inside the tab. */
   label: string;
@@ -72,15 +62,24 @@ export class NavigationTab extends React.Component<Properties, State> {
     };
     return (
       <a className={tabClassName} href={this.props.href}
+          aria-current={this.props.isCurrent ? 'page' : 'false'}
           onClick={this.onClick}
           onFocus={this.onFocus}
           onBlur={this.onBlur}
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}>
         <div className={css(NavigationTab.STYLES.content)}>
-          <img aria-hidden
-            src={this.getIconSrc(isHighlighted)}
-            width={iconSize} height={iconSize}/>
+          <div aria-hidden style={{
+              width: iconSize,
+              height: iconSize,
+              backgroundColor: iconColor,
+              WebkitMaskImage: `url(${this.props.icon})`,
+              maskImage: `url(${this.props.icon})`,
+              WebkitMaskSize: 'contain',
+              maskSize: 'contain',
+              WebkitMaskRepeat: 'no-repeat',
+              maskRepeat: 'no-repeat'
+            }}/>
           {variant === NavigationTab.Variant.ICON_LABEL &&
             <>
               <div className={css(NavigationTab.STYLES.iconLabelSpacer)}/>
@@ -90,17 +89,6 @@ export class NavigationTab extends React.Component<Properties, State> {
         <div className={css(NavigationTab.STYLES.indicator,
           this.props.isCurrent && NavigationTab.STYLES.activeIndicator)}/>
       </a>);
-  }
-
-  private getIconSrc(isHighlighted: boolean): string {
-    if(this.props.icon.includes('${highlight}')) {
-      const suffix = isHighlighted ? '-highlighted' : '';
-      return this.props.icon.replace('${highlight}', suffix);
-    }
-    if(isHighlighted && this.props.highlightedIcon) {
-      return this.props.highlightedIcon;
-    }
-    return this.props.icon;
   }
 
   private onClick = (event: React.MouseEvent) => {
