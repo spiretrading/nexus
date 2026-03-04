@@ -16,6 +16,7 @@ export * from './navigation_header';
 export * from './navigation_tab';
 export * from './number_field';
 export * from './page_layout';
+export * from './pagination';
 export * from './role_icon';
 export * from './role_panel';
 export * from './security_field';
