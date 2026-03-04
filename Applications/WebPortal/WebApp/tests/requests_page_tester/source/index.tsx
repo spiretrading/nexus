@@ -16,6 +16,19 @@ interface State {
   entitlementStatus: string;
   diffValue: string;
   diffDirection: string;
+  rccName: string;
+  rccOldValue: string;
+  rccNewValue: string;
+  rccDeltaValue: string;
+  rccDeltaDirection: string;
+  widthRedDate: number;
+  widthRelDate: number;
+  widthCatTag: number;
+  widthStateInd: number;
+  widthCompTag: number;
+  widthEntTag: number;
+  widthDiffBadge: number;
+  widthRcc: number;
 }
 
 class App extends React.Component<{}, State> {
@@ -34,7 +47,20 @@ class App extends React.Component<{}, State> {
       complianceRuleStatus: 'ACTIVE',
       entitlementStatus: 'GRANTED',
       diffValue: '3',
-      diffDirection: 'POSITIVE'
+      diffDirection: 'POSITIVE',
+      rccName: 'Buying Power',
+      rccOldValue: '$100,000',
+      rccNewValue: '$150,000',
+      rccDeltaValue: '$50,000',
+      rccDeltaDirection: 'POSITIVE',
+      widthRedDate: 400,
+      widthRelDate: 400,
+      widthCatTag: 400,
+      widthStateInd: 400,
+      widthCompTag: 400,
+      widthEntTag: 400,
+      widthDiffBadge: 400,
+      widthRcc: 800
     };
   }
 
@@ -63,7 +89,15 @@ class App extends React.Component<{}, State> {
             isApproved
           </label>
         </div>
-        <div className={css(STYLES.preview)}>
+        <label className={css(STYLES.sliderLabel)}>
+          width: {this.state.widthRedDate}px
+          <input type='range' min='0' max='1200'
+            value={this.state.widthRedDate}
+            onChange={e =>
+              this.setState({widthRedDate: parseInt(e.target.value)})}/>
+        </label>
+        <div className={css(STYLES.preview)}
+          style={{width: this.state.widthRedDate + 'px'}}>
           <WebPortal.RequestEffectiveDate
             date={new Date(this.state.date + 'T00:00:00')}
             isApproved={this.state.isApproved}
@@ -92,7 +126,15 @@ class App extends React.Component<{}, State> {
               onChange={e => this.setState({rdToday: e.target.value})}/>
           </label>
         </div>
-        <div className={css(STYLES.preview)}>
+        <label className={css(STYLES.sliderLabel)}>
+          width: {this.state.widthRelDate}px
+          <input type='range' min='0' max='1200'
+            value={this.state.widthRelDate}
+            onChange={e =>
+              this.setState({widthRelDate: parseInt(e.target.value)})}/>
+        </label>
+        <div className={css(STYLES.preview)}
+          style={{width: this.state.widthRelDate + 'px'}}>
           <WebPortal.RelativeDate
             datetime={new Date(
               this.state.rdDatetime + 'T' + this.state.rdTime + ':00')}
@@ -113,7 +155,15 @@ class App extends React.Component<{}, State> {
             </select>
           </label>
         </div>
-        <div className={css(STYLES.preview)}>
+        <label className={css(STYLES.sliderLabel)}>
+          width: {this.state.widthCatTag}px
+          <input type='range' min='0' max='1200'
+            value={this.state.widthCatTag}
+            onChange={e =>
+              this.setState({widthCatTag: parseInt(e.target.value)})}/>
+        </label>
+        <div className={css(STYLES.preview)}
+          style={{width: this.state.widthCatTag + 'px'}}>
           <WebPortal.RequestCategoryTag
             category={WebPortal.Category[
               this.state.category as keyof typeof WebPortal.Category]}/>
@@ -135,7 +185,15 @@ class App extends React.Component<{}, State> {
             </select>
           </label>
         </div>
-        <div className={css(STYLES.preview)}>
+        <label className={css(STYLES.sliderLabel)}>
+          width: {this.state.widthStateInd}px
+          <input type='range' min='0' max='1200'
+            value={this.state.widthStateInd}
+            onChange={e =>
+              this.setState({widthStateInd: parseInt(e.target.value)})}/>
+        </label>
+        <div className={css(STYLES.preview)}
+          style={{width: this.state.widthStateInd + 'px'}}>
           <WebPortal.RequestStateIndicator
             state={WebPortal.RequestState[
               this.state.requestState as
@@ -159,7 +217,15 @@ class App extends React.Component<{}, State> {
             </select>
           </label>
         </div>
-        <div className={css(STYLES.preview)}>
+        <label className={css(STYLES.sliderLabel)}>
+          width: {this.state.widthCompTag}px
+          <input type='range' min='0' max='1200'
+            value={this.state.widthCompTag}
+            onChange={e =>
+              this.setState({widthCompTag: parseInt(e.target.value)})}/>
+        </label>
+        <div className={css(STYLES.preview)}
+          style={{width: this.state.widthCompTag + 'px'}}>
           <WebPortal.ComplianceRuleStatusTag
             status={WebPortal.ComplianceRuleStatusTag.Status[
               this.state.complianceRuleStatus as
@@ -180,7 +246,15 @@ class App extends React.Component<{}, State> {
             </select>
           </label>
         </div>
-        <div className={css(STYLES.preview)}>
+        <label className={css(STYLES.sliderLabel)}>
+          width: {this.state.widthEntTag}px
+          <input type='range' min='0' max='1200'
+            value={this.state.widthEntTag}
+            onChange={e =>
+              this.setState({widthEntTag: parseInt(e.target.value)})}/>
+        </label>
+        <div className={css(STYLES.preview)}
+          style={{width: this.state.widthEntTag + 'px'}}>
           <WebPortal.EntitlementsStatusTag
             status={WebPortal.EntitlementsStatusTag.Status[
               this.state.entitlementStatus as
@@ -208,12 +282,83 @@ class App extends React.Component<{}, State> {
             </select>
           </label>
         </div>
-        <div className={css(STYLES.preview)}>
+        <label className={css(STYLES.sliderLabel)}>
+          width: {this.state.widthDiffBadge}px
+          <input type='range' min='0' max='1200'
+            value={this.state.widthDiffBadge}
+            onChange={e =>
+              this.setState({widthDiffBadge: parseInt(e.target.value)})}/>
+        </label>
+        <div className={css(STYLES.preview)}
+          style={{width: this.state.widthDiffBadge + 'px'}}>
           <WebPortal.DiffBadge
             value={this.state.diffValue}
             direction={WebPortal.DiffBadge.Direction[
               this.state.diffDirection as
                 keyof typeof WebPortal.DiffBadge.Direction]}/>
+        </div>
+        <h3 className={css(STYLES.heading, STYLES.separator)}>
+          RiskControlsChangeItem
+        </h3>
+        <div className={css(STYLES.controls)}>
+          <label className={css(STYLES.label)}>
+            name
+            <input className={css(STYLES.input)} type='text'
+              value={this.state.rccName}
+              onChange={e => this.setState({rccName: e.target.value})}/>
+          </label>
+          <label className={css(STYLES.label)}>
+            oldValue
+            <input className={css(STYLES.input)} type='text'
+              value={this.state.rccOldValue}
+              onChange={e =>
+                this.setState({rccOldValue: e.target.value})}/>
+          </label>
+          <label className={css(STYLES.label)}>
+            newValue
+            <input className={css(STYLES.input)} type='text'
+              value={this.state.rccNewValue}
+              onChange={e =>
+                this.setState({rccNewValue: e.target.value})}/>
+          </label>
+          <label className={css(STYLES.label)}>
+            delta.value
+            <input className={css(STYLES.input)} type='text'
+              value={this.state.rccDeltaValue}
+              onChange={e =>
+                this.setState({rccDeltaValue: e.target.value})}/>
+          </label>
+          <label className={css(STYLES.label)}>
+            delta.direction
+            <select className={css(STYLES.input)}
+              value={this.state.rccDeltaDirection}
+              onChange={e =>
+                this.setState({rccDeltaDirection: e.target.value})}>
+              <option value='POSITIVE'>POSITIVE</option>
+              <option value='NEGATIVE'>NEGATIVE</option>
+              <option value='NONE'>NONE</option>
+            </select>
+          </label>
+        </div>
+        <label className={css(STYLES.sliderLabel)}>
+          width: {this.state.widthRcc}px
+          <input type='range' min='0' max='1200'
+            value={this.state.widthRcc}
+            onChange={e =>
+              this.setState({widthRcc: parseInt(e.target.value)})}/>
+        </label>
+        <div className={css(STYLES.preview)}
+          style={{width: this.state.widthRcc + 'px'}}>
+          <WebPortal.RiskControlsChangeItem
+            name={this.state.rccName}
+            oldValue={this.state.rccOldValue}
+            newValue={this.state.rccNewValue}
+            delta={{
+              value: this.state.rccDeltaValue,
+              direction: WebPortal.DiffBadge.Direction[
+                this.state.rccDeltaDirection as
+                  keyof typeof WebPortal.DiffBadge.Direction]
+            }}/>
         </div>
       </div>);
   }
@@ -222,7 +367,10 @@ class App extends React.Component<{}, State> {
 const STYLES = StyleSheet.create({
   panel: {
     padding: '20px',
-    fontFamily: 'Roboto'
+    fontFamily: 'Roboto',
+    overflowY: 'auto' as 'auto',
+    height: '100vh',
+    boxSizing: 'border-box' as 'border-box'
   },
   controls: {
     display: 'flex',
@@ -256,8 +404,15 @@ const STYLES = StyleSheet.create({
     padding: '4px 8px',
     fontSize: '14px'
   },
+  sliderLabel: {
+    display: 'flex',
+    alignItems: 'center' as 'center',
+    fontSize: '12px',
+    color: '#666',
+    gap: '8px',
+    marginBottom: '8px'
+  },
   preview: {
-    padding: '12px',
     border: '1px dashed #CCC'
   }
 });
