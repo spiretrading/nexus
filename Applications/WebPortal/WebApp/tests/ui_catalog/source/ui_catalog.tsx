@@ -13,6 +13,7 @@ interface State {
   componentValues: {[name: string]: any};
   log: string[];
   showBorder: boolean;
+  backgroundColor: string;
   containerWidth: number;
   containerHeight: number;
 }
@@ -26,6 +27,7 @@ export class UICatalog extends React.Component<Properties, State> {
       componentValues: {},
       log: [],
       showBorder: false,
+      backgroundColor: '#E8E8E8',
       containerWidth: -1,
       containerHeight: -1
     };
@@ -45,6 +47,8 @@ export class UICatalog extends React.Component<Properties, State> {
           update={this.updateValue}
           showBorder={this.state.showBorder}
           onToggleBorder={this.toggleBorder}
+          backgroundColor={this.state.backgroundColor}
+          onBackgroundColorChange={this.updateBackgroundColor}
           containerWidth={this.state.containerWidth}
           containerHeight={this.state.containerHeight}
           onContainerWidthChange={this.updateContainerWidth}
@@ -86,6 +90,10 @@ export class UICatalog extends React.Component<Properties, State> {
 
   private toggleBorder = () => {
     this.setState((state: State) => ({showBorder: !state.showBorder}));
+  }
+
+  private updateBackgroundColor = (color: string) => {
+    this.setState({backgroundColor: color});
   }
 
   private updateContainerWidth = (width: number) => {

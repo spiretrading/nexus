@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { PropertySchema } from '../data';
+import { ColorInput } from './propertyInput/color_input';
 import { NumberSliderInput } from './propertyInput/number_slider_input';
 
 interface Properties {
@@ -18,6 +19,12 @@ interface Properties {
 
   /** Callback to toggle the border. */
   onToggleBorder: () => void;
+
+  /** The background color for the stage. */
+  backgroundColor: string;
+
+  /** Callback to update the background color. */
+  onBackgroundColorChange: (color: string) => void;
 
   /** The container width (-1 for preferred size). */
   containerWidth: number;
@@ -45,6 +52,12 @@ export class PropertiesList extends React.Component<Properties> {
               onChange={this.props.onToggleBorder}/>
             Show Border
           </label>
+        </div>
+        <div style={PropertiesList.STYLE.propertyContainer}>
+          <div style={PropertiesList.STYLE.label}>Background Color</div>
+          <ColorInput
+            value={this.props.backgroundColor}
+            update={this.props.onBackgroundColorChange}/>
         </div>
         <div style={PropertiesList.STYLE.propertyContainer}>
           <div style={PropertiesList.STYLE.label}>Container Width</div>
