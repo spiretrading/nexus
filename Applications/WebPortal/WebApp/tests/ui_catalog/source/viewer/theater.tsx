@@ -80,10 +80,12 @@ export class Theater extends React.Component<Properties> {
 
   private static readonly STYLE = {
     container: {
-      width: '100%',
       height: '100%',
       display: 'flex',
-      flexDirection: 'row'
+      flexDirection: 'row',
+      flexGrow: 1,
+      flexShrink: 1,
+      minWidth: 0
     } as React.CSSProperties,
     noSelection: {
       width: '100%',
@@ -98,9 +100,12 @@ export class Theater extends React.Component<Properties> {
     } as React.CSSProperties,
     stageWrapper: {
       height: '100%',
-      width: '100%',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      flexGrow: 1,
+      flexShrink: 1,
+      minWidth: 0,
+      overflow: 'hidden'
     } as React.CSSProperties,
     stage: {
       height: '66%',
