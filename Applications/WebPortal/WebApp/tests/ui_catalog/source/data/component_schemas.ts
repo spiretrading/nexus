@@ -2,11 +2,23 @@ import { StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as WebPortal from 'web_portal';
-import { ArrayInput, BeamDateInput, BeamDateTimeInput, BeamDurationInput,
-  BeamTimeOfDayInput, BooleanInput, ColorInput, CSSInput, DateInput,
-  EnumInput, NumberInput, NumberSliderInput, OptionalInput, ReadonlyInput,
-  StyleDeclarationValueInput, TextInput } from '../viewer/propertyInput';
+import { ArrayInput, BeamAccountInput, BeamDateInput, BeamDateTimeInput,
+  BeamDurationInput, BeamTimeOfDayInput, BooleanInput, ColorInput, CSSInput,
+  DateInput, EnumInput, NumberInput, NumberSliderInput, OptionalInput,
+  ReadonlyInput, StyleDeclarationValueInput,
+  TextInput } from '../viewer/propertyInput';
 import {ComponentSchema, PropertySchema, SignalSchema} from './schemas';
+
+const accountLink =
+  new ComponentSchema('AccountLink',
+    [new PropertySchema('account',
+        Beam.DirectoryEntry.makeAccount(123, 'rileymiller'), BeamAccountInput),
+      new PropertySchema('variant', WebPortal.AccountLink.Variant.AVATAR,
+        EnumInput(WebPortal.AccountLink.Variant)),
+      new PropertySchema('initials', 'RM', TextInput),
+      new PropertySchema('tint', '#C7BAFF', ColorInput)],
+    [],
+    WebPortal.AccountLink);
 
 const button =
   new ComponentSchema('Button',
@@ -243,7 +255,7 @@ const riskControlsChangeItem =
     [],
     WebPortal.RiskControlsChangeItem);
 
-export const componentsList = [button, burgerButton, checkmark,
+export const componentsList = [accountLink, button, burgerButton, checkmark,
   complianceRuleStatusTag, dateField, dateTimeField, diffBadge,
   dropDownButton, durationField, entitlementsStatusTag, hLine,
   iconLabelButton, integerField, navigationTab, numberField, pagination,
