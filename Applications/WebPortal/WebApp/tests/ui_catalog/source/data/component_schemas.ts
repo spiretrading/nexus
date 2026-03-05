@@ -77,6 +77,20 @@ const hLine =
     [],
     WebPortal.HLine);
 
+const iconLabelButton =
+  new ComponentSchema('IconLabelButton',
+    [new PropertySchema('icon', 'resources/arrow-next.svg', TextInput),
+      new PropertySchema('label', 'Action', TextInput),
+      new PropertySchema('variant',
+        WebPortal.IconLabelButton.Variant.ICON_LABEL,
+        EnumInput(WebPortal.IconLabelButton.Variant)),
+      new PropertySchema('iconPlacement',
+        WebPortal.IconLabelButton.Placement.LEADING,
+        EnumInput(WebPortal.IconLabelButton.Placement)),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onClick', '')],
+    WebPortal.IconLabelButton);
+
 const integerField =
   new ComponentSchema('IntegerField',
     [new PropertySchema('min', 0, NumberInput),
@@ -86,15 +100,18 @@ const integerField =
     [new SignalSchema('onChange', 'value')],
     WebPortal.IntegerField);
 
-const modal =
-  new ComponentSchema('Modal',
-    [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
-        EnumInput(WebPortal.DisplaySize)),
-      new PropertySchema('height', '400px', TextInput),
-      new PropertySchema('width', '600px', TextInput),
-      new PropertySchema('children', 'Modal Content', TextInput)],
-    [new SignalSchema('onClose', '')],
-    WebPortal.Modal);
+const navigationTab =
+  new ComponentSchema('NavigationTab',
+    [new PropertySchema('icon', 'resources/requests_page/your-requests.svg',
+        TextInput),
+      new PropertySchema('label', 'Your Requests', TextInput),
+      new PropertySchema('href', 'requests/you', TextInput),
+      new PropertySchema('isCurrent', true, BooleanInput),
+      new PropertySchema('variant',
+        WebPortal.NavigationTab.Variant.ICON_LABEL,
+        EnumInput(WebPortal.NavigationTab.Variant))],
+    [new SignalSchema('onClick', '')],
+    WebPortal.NavigationTab);
 
 const numberField =
   new ComponentSchema('NumberField',
@@ -104,6 +121,23 @@ const numberField =
       new PropertySchema('readonly', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.NumberField);
+
+const pagination =
+  new ComponentSchema('Pagination',
+    [new PropertySchema('pageIndex', 0, NumberInput),
+      new PropertySchema('pageSize', 50, NumberInput),
+      new PropertySchema('totalCount', 500, NumberInput)],
+    [new SignalSchema('onNavigate', 'pageIndex')],
+    WebPortal.Pagination);
+
+const relativeDate =
+  new ComponentSchema('RelativeDate',
+    [new PropertySchema('datetime',
+        new Date('2026-03-04T08:54:00'), DateInput),
+      new PropertySchema('today',
+        new Date('2026-03-04T00:00:00'), DateInput)],
+    [],
+    WebPortal.RelativeDate);
 
 const roleIcon =
   new ComponentSchema('RoleIcon',
@@ -139,6 +173,67 @@ const timeOfDayField =
     [new SignalSchema('onChange', 'value')],
     WebPortal.TimeOfDayField);
 
-export const componentsList = [button, burgerButton, checkmark, dateField,
-  dateTimeField, dropDownButton, durationField, hLine, integerField, modal,
-  numberField, roleIcon, textField, timeOfDayField];
+const complianceRuleStatusTag =
+  new ComponentSchema('ComplianceRuleStatusTag',
+    [new PropertySchema('status',
+        WebPortal.ComplianceRuleStatusTag.Status.ACTIVE,
+        EnumInput(WebPortal.ComplianceRuleStatusTag.Status))],
+    [],
+    WebPortal.ComplianceRuleStatusTag);
+
+const diffBadge =
+  new ComponentSchema('DiffBadge',
+    [new PropertySchema('value', '3', TextInput),
+      new PropertySchema('direction', WebPortal.DiffBadge.Direction.POSITIVE,
+        EnumInput(WebPortal.DiffBadge.Direction))],
+    [],
+    WebPortal.DiffBadge);
+
+const entitlementsStatusTag =
+  new ComponentSchema('EntitlementsStatusTag',
+    [new PropertySchema('status',
+        WebPortal.EntitlementsStatusTag.Status.GRANTED,
+        EnumInput(WebPortal.EntitlementsStatusTag.Status))],
+    [],
+    WebPortal.EntitlementsStatusTag);
+
+const requestCategoryTag =
+  new ComponentSchema('RequestCategoryTag',
+    [new PropertySchema('category', WebPortal.Category.RISK_CONTROLS,
+        EnumInput(WebPortal.Category))],
+    [],
+    WebPortal.RequestCategoryTag);
+
+const requestEffectiveDate =
+  new ComponentSchema('RequestEffectiveDate',
+    [new PropertySchema('date', new Date('2026-04-15T00:00:00'), DateInput),
+      new PropertySchema('isApproved', false, BooleanInput),
+      new PropertySchema('today', new Date('2026-03-04T00:00:00'), DateInput)],
+    [],
+    WebPortal.RequestEffectiveDate);
+
+const requestStateIndicator =
+  new ComponentSchema('RequestStateIndicator',
+    [new PropertySchema('state', WebPortal.RequestState.SUBMITTED,
+        EnumInput(WebPortal.RequestState))],
+    [],
+    WebPortal.RequestStateIndicator);
+
+const riskControlsChangeItem =
+  new ComponentSchema('RiskControlsChangeItem',
+    [new PropertySchema('name', 'Buying Power', TextInput),
+      new PropertySchema('oldValue', '$100,000', TextInput),
+      new PropertySchema('newValue', '$150,000', TextInput),
+      new PropertySchema('delta',
+        {value: '$50,000', direction: WebPortal.DiffBadge.Direction.POSITIVE},
+        ReadonlyInput)],
+    [],
+    WebPortal.RiskControlsChangeItem);
+
+export const componentsList = [button, burgerButton, checkmark,
+  complianceRuleStatusTag, dateField, dateTimeField, diffBadge,
+  dropDownButton, durationField, entitlementsStatusTag, hLine,
+  iconLabelButton, integerField, navigationTab, numberField, pagination,
+  relativeDate, requestCategoryTag, requestEffectiveDate,
+  requestStateIndicator, riskControlsChangeItem, roleIcon, textField,
+  timeOfDayField];
