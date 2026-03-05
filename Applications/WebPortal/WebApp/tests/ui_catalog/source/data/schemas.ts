@@ -13,11 +13,14 @@ export class ComponentSchema {
    * @param render - The component to render.
    */
   constructor(name: string, properties: PropertySchema[],
-      signals: SignalSchema[], render: Renderable) {
+      signals: SignalSchema[], render: Renderable,
+      defaultContainerWidth?: number, defaultContainerHeight?: number) {
     this._name = name;
     this._properties = properties.slice();
     this._signals = signals.slice();
     this._render = render;
+    this._defaultContainerWidth = defaultContainerWidth ?? -1;
+    this._defaultContainerHeight = defaultContainerHeight ?? -1;
   }
 
   /** Returns the name of the component. */
@@ -40,10 +43,22 @@ export class ComponentSchema {
     return this._render;
   }
 
+  /** Returns the default container width (-1 for preferred size). */
+  public get defaultContainerWidth(): number {
+    return this._defaultContainerWidth;
+  }
+
+  /** Returns the default container height (-1 for preferred size). */
+  public get defaultContainerHeight(): number {
+    return this._defaultContainerHeight;
+  }
+
   private _name: string;
   private _properties: PropertySchema[];
   private _signals: SignalSchema[]
   private _render: Renderable;
+  private _defaultContainerWidth: number;
+  private _defaultContainerHeight: number;
 }
 
 /** The data model for the property. */

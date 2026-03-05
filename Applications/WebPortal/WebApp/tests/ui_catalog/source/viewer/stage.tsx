@@ -11,6 +11,12 @@ interface Properties {
 
   /** Whether to show a border around the component. */
   showBorder: boolean;
+
+  /** The container width (-1 for preferred size). */
+  containerWidth: number;
+
+  /** The container height (-1 for preferred size). */
+  containerHeight: number;
 }
 
 interface State {
@@ -41,7 +47,11 @@ export class Stage extends React.Component<Properties, State> {
           </button>
         </div>
         <div style={{...Stage.STYLE.componentWrapper,
-            ...(this.props.showBorder && Stage.STYLE.border)}}>
+            ...(this.props.showBorder && Stage.STYLE.border),
+            ...(this.props.containerWidth !== -1 &&
+              {width: `${this.props.containerWidth}px`}),
+            ...(this.props.containerHeight !== -1 &&
+              {height: `${this.props.containerHeight}px`})}}>
           <this.props.component.render {...componentProps}>
             {children}
           </this.props.component.render>
