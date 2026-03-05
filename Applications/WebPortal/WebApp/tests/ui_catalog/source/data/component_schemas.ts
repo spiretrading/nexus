@@ -229,6 +229,23 @@ const requestCategoryTag =
     [],
     WebPortal.RequestCategoryTag);
 
+const requestActivityItem =
+  new ComponentSchema('RequestActivityItem',
+    [new PropertySchema('account',
+        Beam.DirectoryEntry.makeAccount(123, 'rileymiller'), BeamAccountInput),
+      new PropertySchema('type',
+        WebPortal.RequestActivityItem.Type.CREATED,
+        EnumInput(WebPortal.RequestActivityItem.Type)),
+      new PropertySchema('timestamp', new Date(), DateInput),
+      new PropertySchema('stage',
+        WebPortal.RequestActivityItem.ApprovalStage.MANAGER,
+        EnumInput(WebPortal.RequestActivityItem.ApprovalStage)),
+      new PropertySchema('text', 'Looks good, approved.', TextInput),
+      new PropertySchema('initials', 'RM', TextInput),
+      new PropertySchema('tint', '#C7BAFF', ColorInput)],
+    [],
+    WebPortal.RequestActivityItem);
+
 const requestEffectiveDate =
   new ComponentSchema('RequestEffectiveDate',
     [new PropertySchema('date', new Date('2026-04-15T00:00:00'), DateInput),
@@ -259,6 +276,6 @@ export const componentsList = [accountLink, button, burgerButton, checkmark,
   complianceRuleStatusTag, dateField, dateTimeField, diffBadge,
   dropDownButton, durationField, entitlementsStatusTag, hLine,
   iconLabelButton, integerField, navigationTab, numberField, pagination,
-  relativeDate, requestCategoryTag, requestEffectiveDate,
+  relativeDate, requestActivityItem, requestCategoryTag, requestEffectiveDate,
   requestStateIndicator, riskControlsChangeItem, roleIcon, textField,
   timeOfDayField];
