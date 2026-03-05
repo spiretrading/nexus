@@ -26,6 +26,12 @@ interface Properties {
   /** Callback to toggle the border. */
   onToggleBorder: () => void;
 
+  /** The background color for the stage. */
+  backgroundColor: string;
+
+  /** Callback to update the background color. */
+  onBackgroundColorChange: (color: string) => void;
+
   /** The container width (-1 for preferred size). */
   containerWidth: number;
 
@@ -55,6 +61,7 @@ export class Theater extends React.Component<Properties> {
             <Stage component={this.props.component}
               values={this.props.componentProps}
               showBorder={this.props.showBorder}
+              backgroundColor={this.props.backgroundColor}
               containerWidth={this.props.containerWidth}
               containerHeight={this.props.containerHeight}/>
           </div>
@@ -71,6 +78,8 @@ export class Theater extends React.Component<Properties> {
           updateValue={this.props.update}
           showBorder={this.props.showBorder}
           onToggleBorder={this.props.onToggleBorder}
+          backgroundColor={this.props.backgroundColor}
+          onBackgroundColorChange={this.props.onBackgroundColorChange}
           containerWidth={this.props.containerWidth}
           containerHeight={this.props.containerHeight}
           onContainerWidthChange={this.props.onContainerWidthChange}
