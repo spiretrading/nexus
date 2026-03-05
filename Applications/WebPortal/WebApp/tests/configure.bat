@@ -25,6 +25,7 @@ CALL:configure page_not_found_page_tester %*
 CALL:configure profile_page_tester %*
 CALL:configure risk_page_tester %*
 CALL:configure scratch %*
+CALL:configure ui_catalog %*
 EXIT /B !EXIT_STATUS!
 ENDLOCAL
 
