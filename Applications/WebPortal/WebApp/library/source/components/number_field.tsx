@@ -54,12 +54,29 @@ export class NumberField extends React.Component<Properties> {
         style={{...boxStyle, ...this.props.style}}
         disabled={this.props.readonly}
         onChange={this.onChange}
+        onWheel={this.onWheel}
         className={css(NumberField.EXTRA_STYLE.customHighlighting) + ' ' +
           this.props.className}/>);
   }
 
   private onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.props.onChange(event.target.valueAsNumber);
+  }
+
+  private onWheel = (event: React.WheelEvent<HTMLInputElement>) => {
+    if(document.activeElement !== event.currentTarget) {
+      return;
+    }
+    event.preventDefault();
+    const delta = event.deltaY < 0 ? 1 : -1;
+    let next = this.props.value + delta;
+    if(this.props.min !== undefined) {
+      next = Math.max(next, this.props.min);
+    }
+    if(this.props.max !== undefined) {
+      next = Math.min(next, this.props.max);
+    }
+    this.props.onChange(next);
   }
 
   private static STYLE = {

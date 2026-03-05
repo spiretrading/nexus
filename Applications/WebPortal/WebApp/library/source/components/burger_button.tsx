@@ -47,11 +47,12 @@ export class BurgerButton extends React.Component<Properties, State> {
       width: this.props.width,
       minHeight: this.props.height,
       height: this.props.height,
-      display: 'inline-block',
+      display: 'block',
       cursor: 'pointer'
     } as React.CSSProperties;
     return (
-      <div style={style}>
+      <div style={style} role='button' tabIndex={0}
+          aria-label='Menu' onKeyDown={this.onKeyDown}>
         <VBoxLayout width={this.props.width}
             height={this.props.height} onMouseEnter={this.onHover}
             onMouseOut={this.onLeave} onClick={this.props.onClick}>
@@ -74,5 +75,12 @@ export class BurgerButton extends React.Component<Properties, State> {
     this.setState({
       isHovered: false
     });
+  }
+
+  private onKeyDown = (event: React.KeyboardEvent) => {
+    if(event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.props.onClick?.();
+    }
   }
 }

@@ -40,6 +40,10 @@ export class DateInput extends React.Component<Properties, State> {
   }
 
   private onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.props.update(new Date(event.target.value));
+    const parts = event.target.value.split('-');
+    if(parts.length === 3) {
+      this.props.update(new Date(
+        parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])));
+    }
   }
 }
