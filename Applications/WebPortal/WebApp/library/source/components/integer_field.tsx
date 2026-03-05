@@ -63,6 +63,12 @@ export class IntegerField extends React.Component<Properties, State> {
         type={'text'}/>);
   }
 
+  public componentDidUpdate(prevProps: Properties) {
+    if(this.props.value !== prevProps.value) {
+      this.setState({value: this.props.value});
+    }
+  }
+
   private onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if(event.keyCode === 38) {
       this.increment();
