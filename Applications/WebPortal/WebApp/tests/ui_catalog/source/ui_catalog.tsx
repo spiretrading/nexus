@@ -12,6 +12,7 @@ interface State {
   component: ComponentSchema;
   componentValues: {[name: string]: any};
   log: string[];
+  showBorder: boolean;
 }
 
 /** The app to display and demo components. */
@@ -21,7 +22,8 @@ export class UICatalog extends React.Component<Properties, State> {
     this.state = {
       component: null,
       componentValues: {},
-      log: []
+      log: [],
+      showBorder: false
     };
   }
 
@@ -36,7 +38,9 @@ export class UICatalog extends React.Component<Properties, State> {
           component={this.state.component}
           componentProps={this.state.componentValues}
           log={this.state.log}
-          update={this.updateValue}/>
+          update={this.updateValue}
+          showBorder={this.state.showBorder}
+          onToggleBorder={this.toggleBorder}/>
       </div>);
   }
 
@@ -68,6 +72,10 @@ export class UICatalog extends React.Component<Properties, State> {
       componentValues: newValues,
       log: []
     });
+  }
+
+  private toggleBorder = () => {
+    this.setState((state: State) => ({showBorder: !state.showBorder}));
   }
 
   private updateValue = (name: string, newValue: any) => {

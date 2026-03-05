@@ -11,6 +11,12 @@ interface Properties {
 
   /** The callback to update values. */
   updateValue: (name: string, value: any) => void;
+
+  /** Whether to show a border around the component. */
+  showBorder: boolean;
+
+  /** Callback to toggle the border. */
+  onToggleBorder: () => void;
 }
 
 /** Displays a list of properties. */
@@ -19,6 +25,14 @@ export class PropertiesList extends React.Component<Properties> {
     return (
       <div style={PropertiesList.STYLE.container}>
         <div style={PropertiesList.STYLE.header}>Properties</div>
+        <div style={PropertiesList.STYLE.propertyContainer}>
+          <label style={PropertiesList.STYLE.checkboxLabel}>
+            <input type='checkbox'
+              checked={this.props.showBorder}
+              onChange={this.props.onToggleBorder}/>
+            Show Border
+          </label>
+        </div>
         {this.props.properties.map(this.renderItem)}
       </div>);
   }
@@ -62,6 +76,15 @@ export class PropertiesList extends React.Component<Properties> {
       fontFamily: 'Roboto',
       color: '#000000',
       paddingBottom: '11px'
+    } as React.CSSProperties,
+    checkboxLabel: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '6px',
+      fontSize: '14px',
+      fontFamily: 'Roboto',
+      color: '#000000',
+      cursor: 'pointer'
     } as React.CSSProperties
   };
 }

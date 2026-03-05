@@ -8,6 +8,9 @@ interface Properties {
 
   /** The values to pass to the component. */
   values: {[name: string]: any};
+
+  /** Whether to show a border around the component. */
+  showBorder: boolean;
 }
 
 interface State {
@@ -37,9 +40,12 @@ export class Stage extends React.Component<Properties, State> {
             Toggle Color
           </button>
         </div>
-        <this.props.component.render {...componentProps}>
-          {children}
-        </this.props.component.render>
+        <div style={{...Stage.STYLE.componentWrapper,
+            ...(this.props.showBorder && Stage.STYLE.border)}}>
+          <this.props.component.render {...componentProps}>
+            {children}
+          </this.props.component.render>
+        </div>
       </div>);
   }
 
@@ -72,6 +78,12 @@ export class Stage extends React.Component<Properties, State> {
       fontSize: '20px',
       fontWeight: 700,
       margin: '20px'
+    } as React.CSSProperties,
+    componentWrapper: {
+      alignSelf: 'flex-start'
+    } as React.CSSProperties,
+    border: {
+      border: '5px dashed #999'
     } as React.CSSProperties
   };
   private static readonly SOFT_GREY = '#E8E8E8';

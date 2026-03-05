@@ -19,6 +19,12 @@ interface Properties {
    *@param newValue - The new value for the prop.
    */
   update: (name: string, newValue: any) => void;
+
+  /** Whether to show a border around the component. */
+  showBorder: boolean;
+
+  /** Callback to toggle the border. */
+  onToggleBorder: () => void;
 }
 
 /** Container component that holds the component and the property list. */
@@ -35,7 +41,8 @@ export class Theater extends React.Component<Properties> {
         <div style={Theater.STYLE.stageWrapper}>
           <div style={Theater.STYLE.stage}>
             <Stage component={this.props.component}
-              values={this.props.componentProps}/>
+              values={this.props.componentProps}
+              showBorder={this.props.showBorder}/>
           </div>
           <div style={Theater.STYLE.signalContainer}>
             <div style={Theater.STYLE.signalHeader}>Signals</div>
@@ -44,10 +51,12 @@ export class Theater extends React.Component<Properties> {
             </div>
           </div>
         </div>
-        <PropertiesList 
+        <PropertiesList
           properties={this.props.component.properties}
           values={this.props.componentProps}
-          updateValue={this.props.update}/>
+          updateValue={this.props.update}
+          showBorder={this.props.showBorder}
+          onToggleBorder={this.props.onToggleBorder}/>
       </div>);
   }
 
