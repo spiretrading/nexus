@@ -128,7 +128,7 @@ const pagination =
       new PropertySchema('pageSize', 50, NumberInput),
       new PropertySchema('totalCount', 500, NumberInput)],
     [new SignalSchema('onNavigate', 'pageIndex')],
-    WebPortal.Pagination);
+    WebPortal.Pagination, 800);
 
 const relativeDate =
   new ComponentSchema('RelativeDate',

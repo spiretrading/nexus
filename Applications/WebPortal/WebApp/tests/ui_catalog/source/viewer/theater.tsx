@@ -25,6 +25,18 @@ interface Properties {
 
   /** Callback to toggle the border. */
   onToggleBorder: () => void;
+
+  /** The container width (-1 for preferred size). */
+  containerWidth: number;
+
+  /** The container height (-1 for preferred size). */
+  containerHeight: number;
+
+  /** Callback to update the container width. */
+  onContainerWidthChange: (width: number) => void;
+
+  /** Callback to update the container height. */
+  onContainerHeightChange: (height: number) => void;
 }
 
 /** Container component that holds the component and the property list. */
@@ -42,7 +54,9 @@ export class Theater extends React.Component<Properties> {
           <div style={Theater.STYLE.stage}>
             <Stage component={this.props.component}
               values={this.props.componentProps}
-              showBorder={this.props.showBorder}/>
+              showBorder={this.props.showBorder}
+              containerWidth={this.props.containerWidth}
+              containerHeight={this.props.containerHeight}/>
           </div>
           <div style={Theater.STYLE.signalContainer}>
             <div style={Theater.STYLE.signalHeader}>Signals</div>
@@ -56,7 +70,11 @@ export class Theater extends React.Component<Properties> {
           values={this.props.componentProps}
           updateValue={this.props.update}
           showBorder={this.props.showBorder}
-          onToggleBorder={this.props.onToggleBorder}/>
+          onToggleBorder={this.props.onToggleBorder}
+          containerWidth={this.props.containerWidth}
+          containerHeight={this.props.containerHeight}
+          onContainerWidthChange={this.props.onContainerWidthChange}
+          onContainerHeightChange={this.props.onContainerHeightChange}/>
       </div>);
   }
 

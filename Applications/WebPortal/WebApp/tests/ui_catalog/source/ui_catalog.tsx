@@ -13,6 +13,8 @@ interface State {
   componentValues: {[name: string]: any};
   log: string[];
   showBorder: boolean;
+  containerWidth: number;
+  containerHeight: number;
 }
 
 /** The app to display and demo components. */
@@ -23,7 +25,9 @@ export class UICatalog extends React.Component<Properties, State> {
       component: null,
       componentValues: {},
       log: [],
-      showBorder: false
+      showBorder: false,
+      containerWidth: -1,
+      containerHeight: -1
     };
   }
 
@@ -40,7 +44,11 @@ export class UICatalog extends React.Component<Properties, State> {
           log={this.state.log}
           update={this.updateValue}
           showBorder={this.state.showBorder}
-          onToggleBorder={this.toggleBorder}/>
+          onToggleBorder={this.toggleBorder}
+          containerWidth={this.state.containerWidth}
+          containerHeight={this.state.containerHeight}
+          onContainerWidthChange={this.updateContainerWidth}
+          onContainerHeightChange={this.updateContainerHeight}/>
       </div>);
   }
 
@@ -70,12 +78,22 @@ export class UICatalog extends React.Component<Properties, State> {
     this.setState({
       component: component,
       componentValues: newValues,
-      log: []
+      log: [],
+      containerWidth: component.defaultContainerWidth,
+      containerHeight: component.defaultContainerHeight
     });
   }
 
   private toggleBorder = () => {
     this.setState((state: State) => ({showBorder: !state.showBorder}));
+  }
+
+  private updateContainerWidth = (width: number) => {
+    this.setState({containerWidth: width});
+  }
+
+  private updateContainerHeight = (height: number) => {
+    this.setState({containerHeight: height});
   }
 
   private updateValue = (name: string, newValue: any) => {

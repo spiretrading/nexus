@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { PropertySchema } from '../data';
+import { NumberSliderInput } from './propertyInput/number_slider_input';
 
 interface Properties {
 
@@ -17,6 +18,18 @@ interface Properties {
 
   /** Callback to toggle the border. */
   onToggleBorder: () => void;
+
+  /** The container width (-1 for preferred size). */
+  containerWidth: number;
+
+  /** The container height (-1 for preferred size). */
+  containerHeight: number;
+
+  /** Callback to update the container width. */
+  onContainerWidthChange: (width: number) => void;
+
+  /** Callback to update the container height. */
+  onContainerHeightChange: (height: number) => void;
 }
 
 /** Displays a list of properties. */
@@ -32,6 +45,20 @@ export class PropertiesList extends React.Component<Properties> {
               onChange={this.props.onToggleBorder}/>
             Show Border
           </label>
+        </div>
+        <div style={PropertiesList.STYLE.propertyContainer}>
+          <div style={PropertiesList.STYLE.label}>Container Width</div>
+          <NumberSliderInput
+            value={this.props.containerWidth}
+            min={-1} max={2000}
+            update={this.props.onContainerWidthChange}/>
+        </div>
+        <div style={PropertiesList.STYLE.propertyContainer}>
+          <div style={PropertiesList.STYLE.label}>Container Height</div>
+          <NumberSliderInput
+            value={this.props.containerHeight}
+            min={-1} max={2000}
+            update={this.props.onContainerHeightChange}/>
         </div>
         {this.props.properties.map(this.renderItem)}
       </div>);
