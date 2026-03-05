@@ -20,6 +20,7 @@ PROJECTS=(
   requests_page_tester
   risk_page_tester
   scratch
+  ui_catalog
 )
 
 main() {
