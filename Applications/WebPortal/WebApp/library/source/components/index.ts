@@ -10,6 +10,7 @@ export * from './duration_field';
 export * from './empty_message';
 export * from './error_message';
 export * from './filter_chip';
+export * from './filter_input';
 export * from './hline';
 export * from './icon_label_button';
 export * from './integer_field';
