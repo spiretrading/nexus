@@ -45,7 +45,7 @@ export class PropertiesList extends React.Component<Properties> {
     return (
       <div style={PropertiesList.STYLE.container}>
         <div style={PropertiesList.STYLE.header}>Properties</div>
-        <div style={PropertiesList.STYLE.propertyContainer}>
+        <div style={this.rowStyle(0)}>
           <label style={PropertiesList.STYLE.checkboxLabel}>
             <input type='checkbox'
               checked={this.props.showBorder}
@@ -53,39 +53,48 @@ export class PropertiesList extends React.Component<Properties> {
             Show Border
           </label>
         </div>
-        <div style={PropertiesList.STYLE.propertyContainer}>
+        <div style={this.rowStyle(1)}>
           <div style={PropertiesList.STYLE.label}>Background Color</div>
           <ColorInput
             value={this.props.backgroundColor}
             update={this.props.onBackgroundColorChange}/>
         </div>
-        <div style={PropertiesList.STYLE.propertyContainer}>
+        <div style={this.rowStyle(2)}>
           <div style={PropertiesList.STYLE.label}>Container Width</div>
           <NumberSliderInput
             value={this.props.containerWidth}
             min={-1} max={2000}
             update={this.props.onContainerWidthChange}/>
         </div>
-        <div style={PropertiesList.STYLE.propertyContainer}>
+        <div style={this.rowStyle(3)}>
           <div style={PropertiesList.STYLE.label}>Container Height</div>
           <NumberSliderInput
             value={this.props.containerHeight}
             min={-1} max={2000}
             update={this.props.onContainerHeightChange}/>
         </div>
-        {this.props.properties.map(this.renderItem)}
+        {this.props.properties.map((property, index) =>
+          this.renderItem(property, index + 4))}
       </div>);
   }
 
-  private renderItem = (property: PropertySchema) => {
+  private renderItem = (property: PropertySchema, index: number) => {
     return (
-      <div key={property.name} style={PropertiesList.STYLE.propertyContainer}>
+      <div key={property.name} style={this.rowStyle(index)}>
         <div style={PropertiesList.STYLE.label}>{property.name}</div>
         <property.render
           value={this.props.values[property.name]}
-          update={(newValue: any) => 
+          update={(newValue: any) =>
             {this.props.updateValue(property.name, newValue)}}/>
       </div>);
+  }
+
+  private rowStyle(index: number): React.CSSProperties {
+    if(index % 2 === 0) {
+      return PropertiesList.STYLE.propertyContainer;
+    }
+    return {...PropertiesList.STYLE.propertyContainer,
+      ...PropertiesList.STYLE.propertyContainerAlt};
   }
 
   private static readonly STYLE = {
@@ -96,19 +105,23 @@ export class PropertiesList extends React.Component<Properties> {
       flexShrink: 0,
       flexGrow: 0,
       backgroundColor: '#FFFFFF',
-      padding: '22px 20px 20px 20px',
+      padding: '22px 0 20px 0',
       overflowY: 'auto'
     } as React.CSSProperties,
     header: {
       fontSize: '20px',
       fontWeight: 700,
       fontFamily: 'Roboto',
-      paddingBottom: '30px'
+      padding: '0 20px 30px 20px'
     } as React.CSSProperties,
     propertyContainer: {
       display: 'flex',
       flexDirection: 'column',
-      padding: '0 0 18px 0',
+      padding: '18px 20px',
+      borderBottom: '1px solid #E6E6E6'
+    } as React.CSSProperties,
+    propertyContainerAlt: {
+      backgroundColor: '#F7F7F7'
     } as React.CSSProperties,
     label: {
       fontSize: '15px',
