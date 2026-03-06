@@ -82,6 +82,13 @@ const dropDownButton =
     [new SignalSchema('onClick', '')],
     WebPortal.DropDownButton);
 
+const errorMessage =
+  new ComponentSchema('ErrorMessage',
+    [new PropertySchema('message',
+      'Something went wrong. Please try again later.', TextInput)],
+    [new SignalSchema('onRetry', '')],
+    WebPortal.ErrorMessage, -1);
+
 const durationField =
   new ComponentSchema('DurationField',
     [new PropertySchema('displaySize', WebPortal.DisplaySize.SMALL,
@@ -456,10 +463,9 @@ const riskControlsChangeItem =
 
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkmark, dateField,
-    dateTimeField, dropDownButton, durationField, hLine, iconLabelButton,
-    integerField, moneyField, navigationTab, numberField, pagination,
-    relativeDate,
-    roleIcon, textField, timeOfDayField]),
+    dateTimeField, dropDownButton, durationField, errorMessage, hLine,
+    iconLabelButton, integerField, moneyField, navigationTab, numberField,
+    pagination, relativeDate, roleIcon, textField, timeOfDayField]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,
