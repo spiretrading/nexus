@@ -298,6 +298,64 @@ const changeTable =
     () => React.createElement(WebPortal.ChangeTable,
       {changes: CHANGE_TABLE_SAMPLE_DATA}));
 
+const REQUEST_DETAIL_REQUESTER = {
+  account: Beam.DirectoryEntry.makeAccount(201, 'jberrios01'),
+  initials: 'JB',
+  tint: '#C7BAFF'
+};
+
+const REQUEST_DETAIL_APPROVER = {
+  account: Beam.DirectoryEntry.makeAccount(305, 'cgreen01'),
+  initials: 'CG',
+  tint: '#A1F2C1'
+};
+
+const REQUEST_DETAIL_ACTIVITY = [
+  {account: REQUEST_DETAIL_REQUESTER,
+    activity: Nexus.AccountModificationRequest.Status.PENDING,
+    timestamp: new Date(2025, 7, 12, 7, 49)},
+  {account: REQUEST_DETAIL_REQUESTER,
+    activity: 'Need more bp to trade high-value tickers',
+    timestamp: new Date(2025, 7, 12, 7, 49)},
+  {account: REQUEST_DETAIL_APPROVER,
+    activity: Nexus.AccountModificationRequest.Status.REVIEWED,
+    timestamp: new Date(2025, 7, 12, 10, 15)},
+  {account: REQUEST_DETAIL_APPROVER,
+    activity: 'Looks good per performance review',
+    timestamp: new Date(2025, 7, 12, 10, 15)}];
+
+const requestDetailPage =
+  new ComponentSchema('RequestDetailPage',
+    [new PropertySchema('id', 1042, NumberInput),
+      new PropertySchema('state',
+        Nexus.AccountModificationRequest.Status.PENDING,
+        EnumInput(Nexus.AccountModificationRequest.Status)),
+      new PropertySchema('createdTime', new Date(2025, 7, 12, 7, 49),
+        DateInput),
+      new PropertySchema('updateTime', new Date(2025, 7, 13, 10, 15),
+        DateInput),
+      new PropertySchema('account',
+        Beam.DirectoryEntry.makeAccount(142, 'trodriguez'),
+        BeamAccountInput),
+      new PropertySchema('requester',
+        Beam.DirectoryEntry.makeAccount(201, 'jberrios01'),
+        BeamAccountInput),
+      new PropertySchema('effectiveDate', new Beam.Date(2025, 9, 30),
+        BeamDateInput),
+      new PropertySchema('accessRole',
+        Nexus.AccountRoles.Role.ADMINISTRATOR,
+        EnumInput(Nexus.AccountRoles.Role))],
+    [new SignalSchema('onApprove', ''),
+      new SignalSchema('onReject', '')],
+    (props: any) => React.createElement(WebPortal.RequestDetailPage, {
+      ...props,
+      category: Nexus.AccountModificationRequest.Type.ENTITLEMENTS,
+      account: {account: props.account, initials: 'TR', tint: '#FFC880'},
+      requester: {account: props.requester, initials: 'JB', tint: '#C7BAFF'},
+      changes: CHANGE_TABLE_SAMPLE_DATA,
+      activityList: REQUEST_DETAIL_ACTIVITY
+    }), -1);
+
 const riskControlsChangeItem =
   new ComponentSchema('RiskControlsChangeItem',
     [new PropertySchema('name', 'Buying Power', TextInput),
@@ -313,6 +371,6 @@ export const componentsList = [accountLink, button, burgerButton, changeTable,
   checkmark, complianceRuleStatusTag, dateField, dateTimeField, diffBadge,
   dropDownButton, durationField, entitlementsStatusTag, hLine,
   iconLabelButton, integerField, navigationTab, numberField, pagination,
-  relativeDate, requestActivityItem, requestCategoryTag, requestEffectiveDate,
-  requestStateIndicator, riskControlsChangeItem, roleIcon, textField,
-  timeOfDayField];
+  relativeDate, requestActivityItem, requestCategoryTag, requestDetailPage,
+  requestEffectiveDate, requestStateIndicator, riskControlsChangeItem,
+  roleIcon, textField, timeOfDayField];
