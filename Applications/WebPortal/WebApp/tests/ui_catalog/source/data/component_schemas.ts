@@ -151,6 +151,13 @@ const integerField =
     [new SignalSchema('onChange', 'value')],
     WebPortal.IntegerField);
 
+const labeledCheckbox =
+  new ComponentSchema('LabeledCheckbox',
+    [new PropertySchema('label', 'Remember me', TextInput),
+      new PropertySchema('isChecked', true, BooleanInput)],
+    [new SignalSchema('onChange', 'isChecked')],
+    WebPortal.LabeledCheckbox);
+
 const modal =
   new ComponentSchema('Modal',
     [new PropertySchema('isOpen', true, BooleanInput),
@@ -537,7 +544,8 @@ export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkmark, dateField,
     dateTimeField, dropDownButton, durationField, emptyMessage, errorMessage,
     filterChip, filterInput, hLine,
-    iconLabelButton, integerField, modal, moneyField, navigationTab, numberField,
+    iconLabelButton, integerField, labeledCheckbox, modal, moneyField,
+    navigationTab, numberField,
     pagination, relativeDate, roleIcon, segmentButton, segmentedControl,
     textField,
     timeOfDayField]),
