@@ -52,6 +52,7 @@
 #include "Spire/Ui/EmptySelectionModel.hpp"
 #include "Spire/Ui/EmptyTableFilter.hpp"
 #include "Spire/Ui/EyeDropper.hpp"
+#include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/FontBox.hpp"
 #include "Spire/Ui/FontFamilyBox.hpp"
@@ -1776,6 +1777,45 @@ UiProfile Spire::make_eye_dropper_profile() {
       }
     });
     return button;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto default_style = R"(
+    any {
+      background_color: 0xFFFFFF;
+      border_color: transparent;
+    }
+  )";
+  properties.push_back(
+    make_style_property("style_sheet", std::move(default_style)));
+  auto profile = UiProfile("FilterPanel", properties, [] (auto& profile) {
+    auto body = new QWidget();
+    auto body_layout = new QGridLayout(body);
+    body_layout->setSpacing(scale_width(5));
+    body_layout->setContentsMargins({});
+    auto min_label = make_label("Min");
+    body_layout->addWidget(min_label, 0, 0);
+    auto min_text = new TextBox();
+    min_text->setMinimumWidth(scale_width(100));
+    body_layout->addWidget(min_text, 0, 1);
+    auto max_label = make_label("Max");
+    body_layout->addWidget(max_label, 0, 2);
+    auto max_text = new TextBox();
+    max_text->setMinimumWidth(scale_width(100));
+    body_layout->addWidget(max_text, 0, 3);
+    auto filter_panel = new FilterPanel(*body);
+    apply_widget_properties(filter_panel, profile.get_properties());
+    filter_panel->connect_reset_signal(profile.make_event_slot("ResetSignal"));
+    auto& style_sheet =
+      get<optional<StyleSheet>>("style_sheet", profile.get_properties());
+    style_sheet.connect_changed_signal([=] (const auto& style) {
+      update_widget_style(*filter_panel, style);
+    });
+    return filter_panel;
   });
   return profile;
 }
