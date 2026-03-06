@@ -2,6 +2,7 @@ export * from './account_link';
 export * from './change_table';
 export * from './compliance_rule_status_tag';
 export * from './diff_badge';
+export * from './entitlements_change_item';
 export * from './entitlements_status_tag';
 export * from './request_category_tag';
 export * from './request_activity_item';
