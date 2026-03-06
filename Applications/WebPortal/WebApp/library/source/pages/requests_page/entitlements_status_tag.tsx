@@ -8,23 +8,24 @@ interface Properties {
 }
 
 /** Displays a colored tag indicating an entitlement's status. */
-export class EntitlementsStatusTag extends React.Component<Properties> {
-  public render(): JSX.Element {
-    const {label, color, backgroundColor} =
-      getStatusStyle(this.props.status);
-    const dynamicStyle = StyleSheet.create({
-      tag: {color, backgroundColor}
-    });
-    return (
-      <span className={css(STYLES.tag, dynamicStyle.tag)}>
-        {label}
-      </span>);
-  }
+export function EntitlementsStatusTag(props: Properties) {
+  const {label, color, backgroundColor} = getStatusStyle(props.status);
+  const dynamicStyle = StyleSheet.create({ tag: {color, backgroundColor} });
+  return (
+    <span className={css(STYLES.tag, dynamicStyle.tag)}>
+      {label}
+    </span>);
 }
 
 export namespace EntitlementsStatusTag {
+
+  /** Enumerates the status of an entitlement. */
   export enum Status {
+
+    /** The entitlement has been granted. */
     GRANTED,
+
+    /** The entitlement has been revoked. */
     REVOKED
   }
 }

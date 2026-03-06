@@ -1,113 +1,76 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import { AccountLink } from './account_link';
 import { RelativeDate } from '../../components/relative_date';
+
+type Status = Nexus.AccountModificationRequest.Status;
+const Status = Nexus.AccountModificationRequest.Status;
 
 interface Properties {
 
   /** The account that performed the activity. */
   account: Beam.DirectoryEntry;
 
-  /** The type of activity. */
-  type: RequestActivityItem.Type;
+  /** The activity. A Status value represents a status change, and a
+   *  string represents a comment. */
+  activity: Status | string;
 
   /** The timestamp of the activity. */
   timestamp: Date;
 
-  /** The approval stage. Required when type is APPROVED. */
-  stage?: RequestActivityItem.ApprovalStage;
-
-  /** The comment body text. Required when type is COMMENT. */
-  text?: string;
-
-  /** Initials for the account avatar. Required when type is COMMENT. */
+  /** Initials for the account avatar. Required when type is a comment. */
   initials?: string;
 
-  /** A color for the account avatar. Required when type is COMMENT. */
+  /** A color for the account avatar. Required when type is a comment. */
   tint?: string;
 }
 
 /** Displays a single activity entry in a request's history. */
-export class RequestActivityItem extends React.Component<Properties> {
-  public render(): JSX.Element {
-    const isComment = this.props.type === RequestActivityItem.Type.COMMENT;
-    return (
-      <div className={css(STYLES.article)}>
-        <div className={css(STYLES.header)}>
-          {this.renderAccountLink()}
-          {!isComment && this.renderAction()}
-          {!isComment &&
-            <span className={css(STYLES.delimiter)}>{' \u2022 '}</span>}
-          <RelativeDate datetime={this.props.timestamp}/>
-        </div>
-        {isComment && this.props.text &&
-          <p className={css(STYLES.text)}>{this.props.text}</p>}
-      </div>);
-  }
-
-  private renderAccountLink(): JSX.Element {
-    if(this.props.type === RequestActivityItem.Type.COMMENT) {
-      return (
-        <AccountLink account={this.props.account}
-          variant={AccountLink.Variant.AVATAR}
-          initials={this.props.initials} tint={this.props.tint}/>);
-    }
-    return <AccountLink account={this.props.account}/>;
-  }
-
-  private renderAction(): JSX.Element {
-    return (
-      <span className={css(STYLES.action)}>
-        {getActionText(this.props.type, this.props.stage)}
-      </span>);
-  }
+export function RequestActivityItem(props: Properties) {
+  const isComment = typeof props.activity === 'string';
+  return (
+    <div className={css(STYLES.article)}>
+      <div className={css(STYLES.header)}>
+        {renderAccountLink(props, isComment)}
+        {!isComment && renderAction(props.activity as Status)}
+        {!isComment &&
+          <span className={css(STYLES.delimiter)}>{' \u2022 '}</span>}
+        <RelativeDate datetime={props.timestamp}/>
+      </div>
+      {isComment && <p className={css(STYLES.text)}>{props.activity}</p>}
+    </div>);
 }
 
-export namespace RequestActivityItem {
-
-  /** Enumerates the types of request activity. */
-  export enum Type {
-
-    /** A change request was created. */
-    CREATED,
-
-    /** A user approved the request. */
-    APPROVED,
-
-    /** A user rejected the request. */
-    REJECTED,
-
-    /** A user left a comment. */
-    COMMENT
+function renderAccountLink(props: Properties, isComment: boolean): JSX.Element {
+  if(isComment) {
+    return (
+      <AccountLink account={props.account}
+        variant={AccountLink.Variant.AVATAR}
+        initials={props.initials} tint={props.tint}/>);
   }
-
-  /** Enumerates the stages of an approval. */
-  export enum ApprovalStage {
-
-    /** Approval from a manager. */
-    MANAGER,
-
-    /** Approval from an admin. */
-    FINAL
-  }
+  return <AccountLink account={props.account}/>;
 }
 
-function getActionText(type: RequestActivityItem.Type,
-    stage?: RequestActivityItem.ApprovalStage): string {
-  switch(type) {
-    case RequestActivityItem.Type.CREATED:
+function renderAction(status: Status): JSX.Element {
+  return (
+    <span className={css(STYLES.action)}>
+      {getActionText(status)}
+    </span>);
+}
+
+function getActionText(status: Status): string {
+  switch(status) {
+    case Status.PENDING:
       return 'created this request';
-    case RequestActivityItem.Type.APPROVED:
-      switch(stage) {
-        case RequestActivityItem.ApprovalStage.MANAGER:
-          return 'approved \u2014 Manager';
-        case RequestActivityItem.ApprovalStage.FINAL:
-          return 'approved \u2014 Final';
-        default:
-          return 'approved';
-      }
-    case RequestActivityItem.Type.REJECTED:
+    case Status.REVIEWED:
+      return 'approved \u2014 Manager';
+    case Status.SCHEDULED:
+      return 'approved \u2014 Final';
+    case Status.GRANTED:
+      return 'granted';
+    case Status.REJECTED:
       return 'rejected';
     default:
       return '';

@@ -1,4 +1,5 @@
 import { css, StyleSheet } from 'aphrodite';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
@@ -212,7 +213,7 @@ class App extends React.Component<{}, State> {
               <option value='ACTIVE'>ACTIVE</option>
               <option value='PASSIVE'>PASSIVE</option>
               <option value='DISABLED'>DISABLED</option>
-              <option value='DELETE'>DELETE</option>
+              <option value='DELETED'>DELETED</option>
               <option value='NONE'>NONE</option>
             </select>
           </label>
@@ -227,9 +228,9 @@ class App extends React.Component<{}, State> {
         <div className={css(STYLES.preview)}
           style={{width: this.state.widthCompTag + 'px'}}>
           <WebPortal.ComplianceRuleStatusTag
-            status={WebPortal.ComplianceRuleStatusTag.Status[
+            status={Nexus.ComplianceRuleEntry.State[
               this.state.complianceRuleStatus as
-                keyof typeof WebPortal.ComplianceRuleStatusTag.Status]}/>
+                keyof typeof Nexus.ComplianceRuleEntry.State]}/>
         </div>
         <h3 className={css(STYLES.heading, STYLES.separator)}>
           EntitlementsStatusTag

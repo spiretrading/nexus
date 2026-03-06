@@ -19,35 +19,38 @@ interface Properties {
 }
 
 /** Displays a link to an account with an optional avatar. */
-export class AccountLink extends React.Component<Properties> {
-  public render(): JSX.Element {
-    const variant = this.props.variant ?? AccountLink.Variant.NAME;
-    return (
-      <a className={css(STYLES.link)}
-        href={`account/${this.props.account.id}`}>
-        {variant === AccountLink.Variant.AVATAR && this.renderAvatar()}
-        <span>{this.props.account.name}</span>
-      </a>);
-  }
+export function AccountLink(props: Properties) {
+  const variant = props.variant ?? AccountLink.Variant.NAME;
+  return (
+    <a className={css(STYLES.link)} href={`account/${props.account.id}`}>
+      {variant === AccountLink.Variant.AVATAR && renderAvatar(props)}
+      <span>{props.account.name}</span>
+    </a>);
+}
 
-  private renderAvatar(): JSX.Element {
-    const dynamicStyle = StyleSheet.create({
-      avatar: {
-        backgroundColor: this.props.tint,
-        boxShadow: `0 0 0 2px ${this.props.tint}`
-      }
-    });
-    return (
-      <span aria-hidden='true'
-        className={css(STYLES.avatar, dynamicStyle.avatar)}>
-        {this.props.initials}
-      </span>);
-  }
+function renderAvatar(props: Properties): JSX.Element {
+  const dynamicStyle = StyleSheet.create({
+    avatar: {
+      backgroundColor: props.tint,
+      boxShadow: `0 0 0 2px ${props.tint}`
+    }
+  });
+  return (
+    <span
+        aria-hidden='true' className={css(STYLES.avatar, dynamicStyle.avatar)}>
+      {props.initials}
+    </span>);
 }
 
 export namespace AccountLink {
+
+  /** Enumerates the display variants of an AccountLink. */
   export enum Variant {
+
+    /** Displays only the account name. */
     NAME,
+
+    /** Displays an avatar circle beside the account name. */
     AVATAR
   }
 }

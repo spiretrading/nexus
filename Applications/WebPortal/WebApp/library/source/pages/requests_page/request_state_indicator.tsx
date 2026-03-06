@@ -1,48 +1,50 @@
+import * as Nexus from 'nexus';
 import * as React from 'react';
 
-export enum RequestState {
-  SUBMITTED,
-  MANAGER_APPROVED,
-  APPROVED,
-  REJECTED
-}
+type Status = Nexus.AccountModificationRequest.Status;
+const Status = Nexus.AccountModificationRequest.Status;
 
 interface Properties {
 
   /** The state of the request. */
-  state: RequestState;
+  state: Status;
 }
 
 /** Displays an icon indicating the state of a request. */
-export class RequestStateIndicator extends React.Component<Properties> {
-  public render(): JSX.Element {
-    return (
-      <img width='16' height='16' alt={getAltText(this.props.state)}
-        src={getSrc(this.props.state)}/>);
-  }
+export function RequestStateIndicator(props: Properties) {
+  return (
+    <img width='16' height='16' alt={getAltText(props.state)}
+      src={getSrc(props.state)}/>);
 }
 
-function getSrc(state: RequestState): string {
+function getSrc(state: Status): string {
   switch(state) {
-    case RequestState.SUBMITTED:
-    case RequestState.MANAGER_APPROVED:
+    case Status.PENDING:
+    case Status.REVIEWED:
+    case Status.SCHEDULED:
       return 'resources/requests_page/pending.svg';
-    case RequestState.APPROVED:
+    case Status.GRANTED:
       return 'resources/requests_page/approved.svg';
-    case RequestState.REJECTED:
+    case Status.REJECTED:
       return 'resources/requests_page/rejected.svg';
+    default:
+      return '';
   }
 }
 
-function getAltText(state: RequestState): string {
+function getAltText(state: Status): string {
   switch(state) {
-    case RequestState.SUBMITTED:
+    case Status.PENDING:
       return 'Submitted';
-    case RequestState.MANAGER_APPROVED:
+    case Status.REVIEWED:
       return 'Manager Approved';
-    case RequestState.APPROVED:
+    case Status.SCHEDULED:
+      return 'Scheduled';
+    case Status.GRANTED:
       return 'Approved';
-    case RequestState.REJECTED:
+    case Status.REJECTED:
       return 'Rejected';
+    default:
+      return '';
   }
 }
