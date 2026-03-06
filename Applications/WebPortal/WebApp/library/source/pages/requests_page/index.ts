@@ -10,6 +10,7 @@ export * from './request_detail_page';
 export * from './request_effective_date';
 export * from './request_item';
 export * from './request_item_placeholder';
+export * from './request_sort_select';
 export * from './request_state_indicator';
 export * from './requests_page';
 export * from './risk_controls_change_item';

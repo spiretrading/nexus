@@ -88,6 +88,14 @@ const emptyMessage =
     [],
     WebPortal.EmptyMessage, 640, 480);
 
+const filterChip =
+  new ComponentSchema('FilterChip',
+    [new PropertySchema('label', 'Entitlements', TextInput),
+      new PropertySchema('isChecked', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', 'isChecked')],
+    WebPortal.FilterChip);
+
 const errorMessage =
   new ComponentSchema('ErrorMessage',
     [new PropertySchema('message',
@@ -456,6 +464,14 @@ const requestItemPlaceholder =
     [],
     WebPortal.RequestItemPlaceholder, -1);
 
+const requestSortSelect =
+  new ComponentSchema('RequestSortSelect',
+    [new PropertySchema('value',
+      WebPortal.RequestSortSelect.Field.LAST_UPDATED,
+      EnumInput(WebPortal.RequestSortSelect.Field))],
+    [new SignalSchema('onChange', 'value')],
+    WebPortal.RequestSortSelect);
+
 const riskControlsChangeItem =
   new ComponentSchema('RiskControlsChangeItem',
     [new PropertySchema('name', 'Buying Power', TextInput),
@@ -470,12 +486,12 @@ const riskControlsChangeItem =
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkmark, dateField,
     dateTimeField, dropDownButton, durationField, emptyMessage, errorMessage,
-    hLine,
+    filterChip, hLine,
     iconLabelButton, integerField, moneyField, navigationTab, numberField,
     pagination, relativeDate, roleIcon, textField, timeOfDayField]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,
     requestDetailPage, requestEffectiveDate, requestItem,
-    requestItemPlaceholder, requestStateIndicator,
+    requestItemPlaceholder, requestSortSelect, requestStateIndicator,
     riskControlsChangeItem])];
