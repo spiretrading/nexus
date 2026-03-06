@@ -88,6 +88,12 @@ const emptyMessage =
     [],
     WebPortal.EmptyMessage, 640, 480);
 
+const filterInput =
+  new ComponentSchema('FilterInput',
+    [new PropertySchema('value', '', TextInput)],
+    [new SignalSchema('onChange', 'value')],
+    WebPortal.FilterInput);
+
 const filterChip =
   new ComponentSchema('FilterChip',
     [new PropertySchema('label', 'Entitlements', TextInput),
@@ -509,7 +515,7 @@ const riskControlsChangeItem =
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkmark, dateField,
     dateTimeField, dropDownButton, durationField, emptyMessage, errorMessage,
-    filterChip, hLine,
+    filterChip, filterInput, hLine,
     iconLabelButton, integerField, moneyField, navigationTab, numberField,
     pagination, relativeDate, roleIcon, segmentButton, segmentedControl,
     textField,
