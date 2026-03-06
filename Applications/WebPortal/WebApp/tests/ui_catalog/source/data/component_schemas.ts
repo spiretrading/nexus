@@ -194,6 +194,29 @@ const relativeDate =
     [],
     WebPortal.RelativeDate);
 
+const segmentButton =
+  new ComponentSchema('SegmentButton',
+    [new PropertySchema('name', 'demo-group', TextInput),
+      new PropertySchema('label', 'Entitlements', TextInput),
+      new PropertySchema('badge', '12', TextInput),
+      new PropertySchema('isChecked', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', '')],
+    WebPortal.SegmentButton);
+
+const segmentedControl =
+  new ComponentSchema('SegmentedControl',
+    [],
+    [],
+    () => React.createElement(WebPortal.SegmentedControl,
+      {name: 'demo-group'},
+      React.createElement(WebPortal.SegmentButton,
+        {name: '', label: 'Option A', badge: '3', isChecked: true}),
+      React.createElement(WebPortal.SegmentButton,
+        {name: '', label: 'Option B', badge: '12'}),
+      React.createElement(WebPortal.SegmentButton,
+        {name: '', label: 'Option C'})));
+
 const roleIcon =
   new ComponentSchema('RoleIcon',
     [new PropertySchema('displaySize', WebPortal.DisplaySize.SMALL,
@@ -488,7 +511,9 @@ export const componentSections = [
     dateTimeField, dropDownButton, durationField, emptyMessage, errorMessage,
     filterChip, hLine,
     iconLabelButton, integerField, moneyField, navigationTab, numberField,
-    pagination, relativeDate, roleIcon, textField, timeOfDayField]),
+    pagination, relativeDate, roleIcon, segmentButton, segmentedControl,
+    textField,
+    timeOfDayField]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,
