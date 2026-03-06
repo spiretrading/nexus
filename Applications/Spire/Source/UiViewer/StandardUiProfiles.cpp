@@ -74,6 +74,7 @@
 #include "Spire/Ui/MenuButton.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
+#include "Spire/Ui/OpenFilterPanel.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/PercentBox.hpp"
@@ -823,6 +824,37 @@ namespace {
       windows.push_back(window);
     }
     return windows;
+  }
+
+  template<typename T>
+  auto to_string(typename OpenFilterPanel<T>::Mode mode) {
+    using Mode = typename OpenFilterPanel<T>::Mode;
+    if(mode == Mode::INCLUDE) {
+      return QString("Include");
+    }
+    return QString("Exclude");
+  }
+
+  auto print_region(const Region& region) {
+    auto result = QString();
+    result += "Region{Countries{";
+    for(auto& country : region.get_countries()) {
+      result +=
+        DEFAULT_COUNTRIES.from(country).m_three_letter_code.get_data();
+      result += " ";
+    }
+    result += "} Venues{";
+    for(auto& venue : region.get_venues()) {
+      result += to_text(venue);
+      result += " ";
+    }
+    result += "} Securities{";
+    for(auto& security : region.get_securities()) {
+      result += to_text(security);
+      result += " ";
+    }
+    result += "}}";
+    return result;
   }
 
   struct WindowHighlightTester : QObject {
@@ -2961,6 +2993,29 @@ UiProfile Spire::make_number_label_profile() {
   return profile;
 }
 
+UiProfile Spire::make_open_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("OpenFilterPanel", properties, [] (auto& profile) {
+    auto tag_combo_box = new TagComboBox(populate_tag_combo_box_model());
+    auto filter_panel = new OpenFilterPanel(*tag_combo_box);
+    auto& box = filter_panel->get_tag_combo_box();
+    apply_widget_properties(filter_panel, profile.get_properties());
+    auto submit_slot = profile.make_event_slot<QString>("Submit");
+    filter_panel->connect_submit_signal(
+      [=] (const auto& submission, auto mode) {
+        auto tags = QString();
+        for(auto i = 0; i < submission->get_size(); ++i) {
+          tags += submission->get(i) + " ";
+        }
+        submit_slot(QString("Mode:%1 [%2]").
+          arg(to_string<TagComboBox<QString>>(mode)).arg(tags));
+      });
+    return filter_panel;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_order_field_info_tip_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3280,27 +3335,6 @@ UiProfile Spire::make_region_box_profile() {
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal(
       std::bind_front(&RegionBox::set_read_only, box));
-    auto print_region = [] (const Region& region) {
-      auto result = QString();
-      result += "Region{Countries{";
-      for(auto& country : region.get_countries()) {
-        result +=
-          DEFAULT_COUNTRIES.from(country).m_three_letter_code.get_data();
-        result += " ";
-      }
-      result += "} Venues{";
-      for(auto& venue : region.get_venues()) {
-        result += to_text(venue);
-        result += " ";
-      }
-      result += "} Securities{";
-      for(auto& security : region.get_securities()) {
-        result += to_text(security);
-        result += " ";
-      }
-      result += "}}";
-      return result;
-    };
     auto current_slot = profile.make_event_slot<QString>("Current");
     box->get_current()->connect_update_signal(
       [=, &current] (const Region& region) {
@@ -3356,6 +3390,25 @@ UiProfile Spire::make_region_drop_down_box_profile() {
       profile.make_event_slot<Region>("Current"));
     box->connect_submit_signal(profile.make_event_slot<Region>("Submit"));
     return box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_region_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("RegionFilterPanel", properties, [] (auto& profile) {
+    auto query_model = populate_region_box_model();
+    auto region_box = new RegionBox(query_model);
+    auto filter_panel = new RegionFilterPanel(*region_box);
+    apply_widget_properties(filter_panel, profile.get_properties());
+    auto submit_slot = profile.make_event_slot<QString>("Submit");
+    filter_panel->connect_submit_signal(
+      [=] (const auto& region, auto mode) {
+        submit_slot(QString("Mode:%1 %2").
+          arg(to_string<RegionBox>(mode)).arg(print_region(region)));
+      });
+    return filter_panel;
   });
   return profile;
 }

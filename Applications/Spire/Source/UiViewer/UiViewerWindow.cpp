@@ -176,6 +176,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_money_box_profile());
   add(make_navigation_view_profile());
   add(make_number_label_profile());
+  add(make_open_filter_panel_profile());
   add(make_order_field_info_tip_profile());
   add(make_order_type_box_profile());
   add(make_overlay_panel_profile());
@@ -186,6 +187,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_radio_button_profile());
   add(make_region_box_profile());
   add(make_region_drop_down_box_profile());
+  add(make_region_filter_panel_profile());
   add(make_region_list_item_profile());
   add(make_responsive_label_profile());
   add(make_scroll_bar_profile());
