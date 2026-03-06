@@ -201,8 +201,8 @@ const timeOfDayField =
 const complianceRuleStatusTag =
   new ComponentSchema('ComplianceRuleStatusTag',
     [new PropertySchema('status',
-        WebPortal.ComplianceRuleStatusTag.Status.ACTIVE,
-        EnumInput(WebPortal.ComplianceRuleStatusTag.Status))],
+        Nexus.ComplianceRuleEntry.State.ACTIVE,
+        EnumInput(Nexus.ComplianceRuleEntry.State))],
     [],
     WebPortal.ComplianceRuleStatusTag);
 
@@ -224,8 +224,9 @@ const entitlementsStatusTag =
 
 const requestCategoryTag =
   new ComponentSchema('RequestCategoryTag',
-    [new PropertySchema('category', WebPortal.Category.RISK_CONTROLS,
-        EnumInput(WebPortal.Category))],
+    [new PropertySchema('category',
+        Nexus.AccountModificationRequest.Type.RISK,
+        EnumInput(Nexus.AccountModificationRequest.Type))],
     [],
     WebPortal.RequestCategoryTag);
 
@@ -233,14 +234,10 @@ const requestActivityItem =
   new ComponentSchema('RequestActivityItem',
     [new PropertySchema('account',
         Beam.DirectoryEntry.makeAccount(123, 'rileymiller'), BeamAccountInput),
-      new PropertySchema('type',
-        WebPortal.RequestActivityItem.Type.CREATED,
-        EnumInput(WebPortal.RequestActivityItem.Type)),
+      new PropertySchema('activity',
+        Nexus.AccountModificationRequest.Status.PENDING,
+        EnumInput(Nexus.AccountModificationRequest.Status)),
       new PropertySchema('timestamp', new Date(), DateInput),
-      new PropertySchema('stage',
-        WebPortal.RequestActivityItem.ApprovalStage.MANAGER,
-        EnumInput(WebPortal.RequestActivityItem.ApprovalStage)),
-      new PropertySchema('text', 'Looks good, approved.', TextInput),
       new PropertySchema('initials', 'RM', TextInput),
       new PropertySchema('tint', '#C7BAFF', ColorInput)],
     [],
@@ -256,8 +253,9 @@ const requestEffectiveDate =
 
 const requestStateIndicator =
   new ComponentSchema('RequestStateIndicator',
-    [new PropertySchema('state', WebPortal.RequestState.SUBMITTED,
-        EnumInput(WebPortal.RequestState))],
+    [new PropertySchema('state',
+        Nexus.AccountModificationRequest.Status.PENDING,
+        EnumInput(Nexus.AccountModificationRequest.Status))],
     [],
     WebPortal.RequestStateIndicator);
 

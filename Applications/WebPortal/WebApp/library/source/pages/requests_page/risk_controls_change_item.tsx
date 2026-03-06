@@ -22,8 +22,7 @@ interface State {
 }
 
 /** Displays a risk controls change item. */
-export class RiskControlsChangeItem extends
-    React.Component<Properties, State> {
+export class RiskControlsChangeItem extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.containerRef = React.createRef<HTMLDivElement>();
@@ -47,12 +46,10 @@ export class RiskControlsChangeItem extends
     const hasDirection =
       this.props.delta.direction !== DiffBadge.Direction.NONE;
     return (
-      <div ref={this.containerRef}
-        className={css(STYLES.container)}>
-        <div className={css(
-            this.state.isWide ? STYLES.divWide : STYLES.div)}>
-          <div className={css(
-              this.state.isWide ? STYLES.headerWide : STYLES.header)}>
+      <div ref={this.containerRef} className={css(STYLES.container)}>
+        <div className={css(this.state.isWide ? STYLES.divWide : STYLES.div)}>
+          <div className={
+              css(this.state.isWide ? STYLES.headerWide : STYLES.header)}>
             {hasDirection &&
               <img aria-hidden='true' width='10' height='16'
                 className={css(STYLES.tick)}
@@ -97,8 +94,14 @@ export class RiskControlsChangeItem extends
 }
 
 export namespace RiskControlsChangeItem {
+
+  /** Represents the difference between the old and new values. */
   export interface Delta {
+
+    /** The formatted delta value. */
     value: string;
+
+    /** The direction of the change. */
     direction: DiffBadge.Direction;
   }
 }

@@ -14,56 +14,45 @@ interface Properties {
 }
 
 /** Displays the effective date and status of a change request. */
-export class RequestEffectiveDate extends React.Component<Properties> {
-  public render(): JSX.Element {
-    const status = this.getStatus();
-    const prefix = this.getPrefix(status);
-    return (
-      <div className={css(STYLES.container)}>
-        <div aria-hidden className={css(STYLES.calendar)}/>
-        <span className={css(STYLES.text)}>{prefix}</span>
-        <time className={css(STYLES.text)}
-          dateTime={formatISODate(this.props.date)}>
-          {formatLabel(this.props.date)}
-        </time>
-        {status === Status.UPCOMING &&
-          <span className={css(STYLES.text)}>
-            (in {this.formatTimeToDate()})
-          </span>}
-      </div>);
-  }
-
-  private getToday(): Date {
-    return this.props.today !== undefined ? this.props.today : new Date();
-  }
-
-  private getStatus(): Status {
-    return this.getToday() < this.props.date ? Status.UPCOMING : Status.LAPSED;
-  }
-
-  private getPrefix(status: Status): string {
-    if(status === Status.UPCOMING && this.props.isApproved) {
-      return 'Scheduled';
-    } else if(status === Status.LAPSED && this.props.isApproved) {
-      return 'Applied';
-    }
-    return 'Requested';
-  }
-
-  private formatTimeToDate(): string {
-    const today = this.getToday();
-    const diffMs = this.props.date.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-    if(diffDays >= 14) {
-      return `${Math.floor(diffDays / 7)}w`;
-    }
-    return `${diffDays}d`;
-  }
+export function RequestEffectiveDate(props: Properties) {
+  const today = props.today !== undefined ? props.today : new Date();
+  const status = today < props.date ? Status.UPCOMING : Status.LAPSED;
+  const prefix = getPrefix(status, props.isApproved);
+  return (
+    <div className={css(STYLES.container)}>
+      <div aria-hidden className={css(STYLES.calendar)}/>
+      <span className={css(STYLES.text)}>{prefix}</span>
+      <time className={css(STYLES.text)} dateTime={formatISODate(props.date)}>
+        {formatLabel(props.date)}
+      </time>
+      {status === Status.UPCOMING &&
+        <span className={css(STYLES.text)}>
+          (in {formatTimeToDate(props.date, today)})
+        </span>}
+    </div>);
 }
 
 enum Status {
   UPCOMING,
   LAPSED
+}
+
+function getPrefix(status: Status, isApproved: boolean): string {
+  if(status === Status.UPCOMING && isApproved) {
+    return 'Scheduled';
+  } else if(status === Status.LAPSED && isApproved) {
+    return 'Applied';
+  }
+  return 'Requested';
+}
+
+function formatTimeToDate(date: Date, today: Date): string {
+  const diffMs = date.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  if(diffDays >= 14) {
+    return `${Math.floor(diffDays / 7)}w`;
+  }
+  return `${diffDays}d`;
 }
 
 function formatISODate(date: Date): string {

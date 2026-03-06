@@ -11,28 +11,30 @@ interface Properties {
 }
 
 /** Displays a badge indicating a change value and its direction. */
-export class DiffBadge extends React.Component<Properties> {
-  public render(): JSX.Element {
-    const {color, backgroundColor, sign} =
-      getDirectionStyle(this.props.direction);
-    const dynamicStyle = StyleSheet.create({
-      tag: {color, backgroundColor}
-    });
-    const hasSign = this.props.direction !== DiffBadge.Direction.NONE;
-    return (
-      <span className={css(
-          hasSign ? STYLES.tagWithSign : STYLES.tag, dynamicStyle.tag)}>
-        {hasSign &&
-          <span className={css(STYLES.sign)}>{sign}</span>}
-        {this.props.value}
-      </span>);
-  }
+export function DiffBadge(props: Properties) {
+  const {color, backgroundColor, sign} = getDirectionStyle(props.direction);
+  const dynamicStyle = StyleSheet.create({ tag: {color, backgroundColor} });
+  const hasSign = props.direction !== DiffBadge.Direction.NONE;
+  return (
+    <span className=
+        {css(hasSign ? STYLES.tagWithSign : STYLES.tag, dynamicStyle.tag)}>
+      {hasSign && <span className={css(STYLES.sign)}>{sign}</span>}
+      {props.value}
+    </span>);
 }
 
 export namespace DiffBadge {
+
+  /** Enumerates the direction of a change. */
   export enum Direction {
+
+    /** The value increased. */
     POSITIVE,
+
+    /** The value decreased. */
     NEGATIVE,
+
+    /** No directional change. */
     NONE
   }
 }

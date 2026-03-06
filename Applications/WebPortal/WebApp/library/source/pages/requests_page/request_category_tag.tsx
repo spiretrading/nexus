@@ -1,49 +1,41 @@
 import { css, StyleSheet } from 'aphrodite';
+import * as Nexus from 'nexus';
 import * as React from 'react';
-
-export enum Category {
-  RISK_CONTROLS,
-  ENTITLEMENTS,
-  COMPLIANCE
-}
 
 interface Properties {
 
   /** The category of the request. */
-  category: Category;
+  category: Nexus.AccountModificationRequest.Type;
 }
 
 /** Displays a colored tag indicating the request's category. */
-export class RequestCategoryTag extends React.Component<Properties> {
-  public render(): JSX.Element {
-    const {label, color, backgroundColor} =
-      getCategoryStyle(this.props.category);
-    const dynamicStyle = StyleSheet.create({
-      tag: {color, backgroundColor}
-    });
-    return (
-      <span className={css(STYLES.tag, dynamicStyle.tag)}>
-        {label}
-      </span>);
-  }
+export function RequestCategoryTag(props: Properties) {
+  const {label, color, backgroundColor} = getCategoryStyle(props.category);
+  const dynamicStyle = StyleSheet.create({
+    tag: {color, backgroundColor}
+  });
+  return (
+    <span className={css(STYLES.tag, dynamicStyle.tag)}>
+      {label}
+    </span>);
 }
 
-function getCategoryStyle(category: Category):
+function getCategoryStyle(category: Nexus.AccountModificationRequest.Type):
     {label: string, color: string, backgroundColor: string} {
   switch(category) {
-    case Category.RISK_CONTROLS:
+    case Nexus.AccountModificationRequest.Type.RISK:
       return {
         label: 'Risk Controls',
         color: '#3B1886',
         backgroundColor: '#E2DFFF'
       };
-    case Category.ENTITLEMENTS:
+    case Nexus.AccountModificationRequest.Type.ENTITLEMENTS:
       return {
         label: 'Entitlements',
         color: '#0B7063',
         backgroundColor: '#BFFFF5'
       };
-    case Category.COMPLIANCE:
+    case Nexus.AccountModificationRequest.Type.COMPLIANCE:
       return {
         label: 'Compliance',
         color: '#70370B',
