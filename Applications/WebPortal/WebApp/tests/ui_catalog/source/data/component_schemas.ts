@@ -382,6 +382,67 @@ const entitlementsChangeItem =
         new Nexus.Currency(840), 'USD', '$')
     }));
 
+const USD_CURRENCY = new Nexus.CurrencyDatabase.Entry(
+  new Nexus.Currency(840), 'USD', '$');
+
+const REQUEST_ITEM_SAMPLES: WebPortal.RequestItem.Change[] = [
+  {type: 'entitlements', name: 'NYSE Arca Equities',
+    action: WebPortal.EntitlementsChangeItem.Action.GRANT,
+    fee: Nexus.Money.parse('14.50'), currency: USD_CURRENCY},
+  {type: 'entitlements', name: 'OPRA',
+    action: WebPortal.EntitlementsChangeItem.Action.REVOKE,
+    fee: Nexus.Money.parse('7.00'), currency: USD_CURRENCY},
+  {type: 'risk_controls', name: 'Buying Power',
+    oldValue: '$100,000', newValue: '$150,000',
+    delta: {value: '$50,000',
+      direction: WebPortal.DiffBadge.Direction.POSITIVE}},
+  {type: 'risk_controls', name: 'Net Loss',
+    oldValue: '$5,000', newValue: '$3,000',
+    delta: {value: '$2,000',
+      direction: WebPortal.DiffBadge.Direction.NEGATIVE}}
+];
+
+const requestItem =
+  new ComponentSchema('RequestItem',
+    [],
+    [],
+    () => {
+      const items: React.ReactElement[] = [];
+      const baseDate = new Date(2025, 8, 24);
+      const yesterday = new Date(baseDate);
+      yesterday.setDate(yesterday.getDate() - 1);
+      for(let i = 0; i < REQUEST_ITEM_SAMPLES.length; ++i) {
+        const change = REQUEST_ITEM_SAMPLES[i];
+        const isEntitlements = change.type === 'entitlements';
+        items.push(
+          React.createElement(WebPortal.RequestItem, {
+            key: i,
+            id: 1024 + i,
+            category: isEntitlements ?
+              Nexus.AccountModificationRequest.Type.ENTITLEMENTS :
+              Nexus.AccountModificationRequest.Type.RISK,
+            state: i === 1 ?
+              Nexus.AccountModificationRequest.Status.REVIEWED :
+              Nexus.AccountModificationRequest.Status.PENDING,
+            updateTime: yesterday,
+            accountName: 'achen01',
+            effectiveDate: new Date(2025, 9, 30),
+            firstChange: change,
+            additionalChangesCount: i === 0 ? 3 : 0,
+            commentCount: i === 0 ? 2 : 0,
+            managerApproval: i === 1 ?
+              {approver: 'cgreen01', self: false} : undefined
+          }));
+      }
+      return React.createElement('div', null, ...items);
+    }, -1);
+
+const requestItemPlaceholder =
+  new ComponentSchema('RequestItemPlaceholder',
+    [],
+    [],
+    WebPortal.RequestItemPlaceholder, -1);
+
 const riskControlsChangeItem =
   new ComponentSchema('RiskControlsChangeItem',
     [new PropertySchema('name', 'Buying Power', TextInput),
@@ -402,5 +463,6 @@ export const componentSections = [
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,
-    requestDetailPage, requestEffectiveDate, requestStateIndicator,
+    requestDetailPage, requestEffectiveDate, requestItem,
+    requestItemPlaceholder, requestStateIndicator,
     riskControlsChangeItem])];
