@@ -246,7 +246,7 @@ namespace Details {
   template<typename T>
   QLayout* OpenFilterPanel<T>::make_mode_section_layout(Mode mode) const {
     auto layout = make_vbox_layout();
-    layout->addSpacing(scale_height(4));
+    layout->addSpacing(scale_height(5));
     layout->addWidget(make_mode_check_box(mode));
     layout->addStretch(1);
     return layout;
