@@ -14,6 +14,7 @@ export * from './filter_input';
 export * from './hline';
 export * from './icon_label_button';
 export * from './integer_field';
+export * from './labeled_checkbox';
 export * from './modal';
 export * from './money_field';
 export * from './navigation_header';
