@@ -116,19 +116,8 @@ export class SecurityField extends React.Component<Properties, State> {
           onClick={this.onOpen}/>
         <div style={visibility}>
           <Modal displaySize={this.props.displaySize}
-              width='300px' height={SecurityField.MODAL_HEIGHT}
-              onClose={this.onClose}>
-            <div style={SecurityField.STYLE.modalPadding}>
-              <div style={SecurityField.STYLE.header}>
-                <div style={SecurityField.STYLE.headerText}>
-                  {SecurityField.MODAL_HEADER}
-                </div>
-                <img src={SecurityField.PATH + 'close.svg'}
-                  height='20px'
-                  width='20px'
-                  style={SecurityField.STYLE.clickable}
-                  onClick={this.onClose}/>
-              </div>
+              title={SecurityField.MODAL_HEADER} onClose={this.onClose}>
+            <div style={SecurityField.STYLE.contentWrapper}>
               <SecurityInput
                 value={this.state.inputString}
                 onChange={this.onInputChange}
@@ -220,25 +209,13 @@ export class SecurityField extends React.Component<Properties, State> {
       visibility: 'hidden',
       display: 'none'
     } as React.CSSProperties,
-    modalPadding: {
-      padding: '18px'
+    contentWrapper: {
+      boxSizing: 'border-box',
+      width: '300px',
+      padding: '30px 18px 18px 18px'
     } as React.CSSProperties,
     clickable: {
       cursor: 'pointer'
-    } as React.CSSProperties,
-    header: {
-      boxSizing: 'border-box',
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      height: '20px',
-      marginBottom: '30px'
-    } as React.CSSProperties,
-    headerText: {
-      font: '400 16px Roboto',
-      flexGrow: 1,
-      cursor: 'default'
     } as React.CSSProperties,
     symbolHeader: {
       boxSizing: 'border-box',
@@ -394,7 +371,6 @@ export class SecurityField extends React.Component<Properties, State> {
   private static readonly IMAGE_SIZE_SMALL_VIEWPORT = '20px';
   private static readonly IMAGE_SIZE_LARGE_VIEWPORT = '16px';
   private static readonly MODAL_HEADER = 'Edit Symbols';
-  private static readonly MODAL_HEIGHT = '363px';
   private static readonly PATH =
     'resources/account_page/compliance_page/security_input/';
   private static readonly REMOVE_TEXT = 'Remove';

@@ -151,6 +151,27 @@ const integerField =
     [new SignalSchema('onChange', 'value')],
     WebPortal.IntegerField);
 
+const modal =
+  new ComponentSchema('Modal',
+    [new PropertySchema('isOpen', true, BooleanInput),
+      new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
+        EnumInput(WebPortal.DisplaySize)),
+      new PropertySchema('title', 'Modal Title', TextInput)],
+    [new SignalSchema('onClose', 'isOpen')],
+    (props: any) => {
+      if(!props.isOpen) {
+        return React.createElement('div', null, 'Modal is closed.');
+      }
+      return React.createElement(WebPortal.Modal, {
+        displaySize: props.displaySize,
+        title: props.title,
+        onClose: () => props.onClose(false)
+      },
+        React.createElement('div', {
+          style: {width: '640px', height: '480px'}
+        }));
+    });
+
 const moneyField =
   new ComponentSchema('MoneyField',
     [new PropertySchema('value', Nexus.Money.parse('100.00'), MoneyInput),
@@ -516,7 +537,7 @@ export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkmark, dateField,
     dateTimeField, dropDownButton, durationField, emptyMessage, errorMessage,
     filterChip, filterInput, hLine,
-    iconLabelButton, integerField, moneyField, navigationTab, numberField,
+    iconLabelButton, integerField, modal, moneyField, navigationTab, numberField,
     pagination, relativeDate, roleIcon, segmentButton, segmentedControl,
     textField,
     timeOfDayField]),

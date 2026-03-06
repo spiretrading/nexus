@@ -53,13 +53,6 @@ export class SecuritiesField extends React.Component<Properties, State> {
         return null;
       }
     })();
-    const modalHeight = (() => {
-      if(this.props.readonly) {
-        return SecuritiesField.MODAL_HEIGHT_READONLY;
-      } else {
-        return SecuritiesField.MODAL_HEIGHT;
-      }
-    })();
     const headerText = (() => {
       if(this.props.readonly) {
         return SecuritiesField.MODAL_HEADER_READONLY;
@@ -197,19 +190,9 @@ export class SecuritiesField extends React.Component<Properties, State> {
           onFocus={this.onOpen}
           onClick={this.onOpen}/>
         <div style={visibility}>
-          <Modal displaySize={this.props.displaySize} width='300px'
-              height={modalHeight} onClose={this.onClose}>
-            <div style={SecuritiesField.STYLE.modalPadding}>
-              <div style={SecuritiesField.STYLE.header}>
-                <div style={SecuritiesField.STYLE.headerText}>
-                  {headerText}
-                </div>
-                <img src={SecuritiesField.PATH + 'close.svg'}
-                  height='20px'
-                  width='20px'
-                  style={SecuritiesField.STYLE.clickable}
-                  onClick={this.onClose}/>
-              </div>
+          <Modal displaySize={this.props.displaySize}
+              title={headerText} onClose={this.onClose}>
+            <div style={SecuritiesField.STYLE.contentWrapper}>
               {inputField}
               <SymbolsField
                 displaySize={this.props.displaySize}
@@ -298,25 +281,10 @@ export class SecuritiesField extends React.Component<Properties, State> {
       visibility: 'hidden',
       display: 'none'
     } as React.CSSProperties,
-    modalPadding: {
-      padding: '18px'
-    } as React.CSSProperties,
-    clickable: {
-      cursor: 'pointer'
-    } as React.CSSProperties,
-    header: {
+    contentWrapper: {
       boxSizing: 'border-box',
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      height: '20px',
-      marginBottom: '30px'
-    } as React.CSSProperties,
-    headerText: {
-      font: '400 16px Roboto',
-      flexGrow: 1,
-      cursor: 'default'
+      width: '300px',
+      padding: '30px 18px 18px 18px'
     } as React.CSSProperties,
     iconClickableStyle: {
       cursor: 'pointer'
@@ -450,8 +418,6 @@ export class SecuritiesField extends React.Component<Properties, State> {
   private static readonly IMAGE_SIZE_LARGE_VIEWPORT = '16px';
   private static readonly MODAL_HEADER = 'Edit Symbols';
   private static readonly MODAL_HEADER_READONLY = 'Added Symbols';
-  private static readonly MODAL_HEIGHT = '559px';
-  private static readonly MODAL_HEIGHT_READONLY = '492px';
   private static readonly PATH =
     'resources/account_page/compliance_page/security_input/';
   private static readonly REMOVE_TEXT = 'Remove';
