@@ -1,6 +1,7 @@
 import { StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
+import * as React from 'react';
 import * as WebPortal from 'web_portal';
 import { ArrayInput, BeamAccountInput, BeamDateInput, BeamDateTimeInput,
   BeamDurationInput, BeamTimeOfDayInput, BooleanInput, ColorInput, CSSInput,
@@ -259,27 +260,43 @@ const requestStateIndicator =
     [],
     WebPortal.RequestStateIndicator);
 
+const CHANGE_TABLE_SAMPLE_DATA: WebPortal.ChangeTable.Change[] = [
+  {type: 'entitlement', name: 'NYSE Arca Equities',
+    oldStatus: WebPortal.EntitlementsStatusTag.Status.REVOKED,
+    newStatus: WebPortal.EntitlementsStatusTag.Status.GRANTED,
+    delta: {value: '$14.50',
+      direction: WebPortal.DiffBadge.Direction.POSITIVE}},
+  {type: 'entitlement', name: 'NYSE American Equities',
+    oldStatus: WebPortal.EntitlementsStatusTag.Status.GRANTED,
+    newStatus: WebPortal.EntitlementsStatusTag.Status.REVOKED,
+    delta: {value: '$7.00',
+      direction: WebPortal.DiffBadge.Direction.NEGATIVE}},
+  {type: 'entitlement', name: 'OPRA',
+    oldStatus: WebPortal.EntitlementsStatusTag.Status.REVOKED,
+    newStatus: WebPortal.EntitlementsStatusTag.Status.GRANTED,
+    delta: {value: 'FREE',
+      direction: WebPortal.DiffBadge.Direction.NONE}},
+  {type: 'risk', name: 'Buying Power',
+    oldValue: '$100,000.00', newValue: '$150,000.00',
+    delta: {value: '$50,000.00',
+      direction: WebPortal.DiffBadge.Direction.POSITIVE}},
+  {type: 'risk', name: 'Net Loss',
+    oldValue: '$5,000.00', newValue: '$3,000.00',
+    delta: {value: '$2,000.00',
+      direction: WebPortal.DiffBadge.Direction.NEGATIVE}},
+  {type: 'risk', name: 'Transition Time',
+    oldValue: '1h 00m', newValue: '2h 30m',
+    delta: {value: '1h 30m',
+      direction: WebPortal.DiffBadge.Direction.POSITIVE}},
+  {type: 'risk', name: 'Currency',
+    oldValue: 'USD', newValue: 'CAD'}];
+
 const changeTable =
   new ComponentSchema('ChangeTable',
-    [new PropertySchema('changes',
-        [{name: 'NYSE Arca Equities', oldStatus:
-            WebPortal.EntitlementsStatusTag.Status.REVOKED, newStatus:
-            WebPortal.EntitlementsStatusTag.Status.GRANTED, delta:
-            {value: '$14.50', direction:
-              WebPortal.DiffBadge.Direction.POSITIVE}},
-          {name: 'NYSE American Equities', oldStatus:
-            WebPortal.EntitlementsStatusTag.Status.GRANTED, newStatus:
-            WebPortal.EntitlementsStatusTag.Status.REVOKED, delta:
-            {value: '$7.00', direction:
-              WebPortal.DiffBadge.Direction.NEGATIVE}},
-          {name: 'OPRA', oldStatus:
-            WebPortal.EntitlementsStatusTag.Status.GRANTED, newStatus:
-            WebPortal.EntitlementsStatusTag.Status.GRANTED, delta:
-            {value: '$0.00', direction:
-              WebPortal.DiffBadge.Direction.NONE}}] as
-        WebPortal.ChangeTable.Change[], ReadonlyInput)],
     [],
-    WebPortal.ChangeTable);
+    [],
+    () => React.createElement(WebPortal.ChangeTable,
+      {changes: CHANGE_TABLE_SAMPLE_DATA}));
 
 const riskControlsChangeItem =
   new ComponentSchema('RiskControlsChangeItem',

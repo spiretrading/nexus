@@ -5,7 +5,7 @@ import { EntitlementsStatusTag } from './entitlements_status_tag';
 
 interface Properties {
 
-  /** The list of entitlement changes to display. */
+  /** The list of changes to display. */
   changes: ChangeTable.Change[];
 }
 
@@ -16,7 +16,7 @@ export function ChangeTable(props: Properties) {
 
 interface FlatChangeTableProperties {
 
-  /** The list of entitlement changes to display. */
+  /** The list of changes to display. */
   changes: ChangeTable.Change[];
 }
 
@@ -24,7 +24,7 @@ interface FlatChangeTableState {
   isWide: boolean;
 }
 
-/** Displays a flat table of entitlement changes. */
+/** Displays a flat table of changes. */
 class FlatChangeTable extends
     React.Component<FlatChangeTableProperties, FlatChangeTableState> {
   constructor(props: FlatChangeTableProperties) {
@@ -84,7 +84,7 @@ class FlatChangeTable extends
 
 interface FlatTableRowProperties {
 
-  /** The entitlement change to display. */
+  /** The change to display. */
   change: ChangeTable.Change;
 
   /** Whether the table is in wide layout mode. */
@@ -93,45 +93,70 @@ interface FlatTableRowProperties {
 
 /** Renders a single row in the flat change table. */
 function FlatTableRow(props: FlatTableRowProperties) {
+  const change = props.change;
   if(props.isWide) {
     return (
       <tr className={css(STYLES.rowWide)}>
-        <FlatTablePropertyCell name={props.change.name} isWide={true}/>
+        <FlatTablePropertyCell name={change.name} isWide={true}/>
         <td className={css(STYLES.td)}>
-          <EntitlementsStatusTag status={props.change.oldStatus}/>
+          <FlatTableValue change={change} column='current'/>
         </td>
         <td className={css(STYLES.td)}>
-          <EntitlementsStatusTag status={props.change.newStatus}/>
+          <FlatTableValue change={change} column='request'/>
         </td>
         <td className={css(STYLES.td)}>
-          <DiffBadge
-            value={props.change.delta.value}
-            direction={props.change.delta.direction}/>
+          {change.delta &&
+            <DiffBadge
+              value={change.delta.value}
+              direction={change.delta.direction}/>}
         </td>
       </tr>);
   }
   return (
     <tr className={css(STYLES.rowNarrow)}>
-      <FlatTablePropertyCell name={props.change.name} isWide={false}/>
+      <FlatTablePropertyCell name={change.name} isWide={false}/>
       <td className={css(STYLES.tdNarrow)}>
         <span className={css(STYLES.valueLabel)}>Current</span>
-        <EntitlementsStatusTag status={props.change.oldStatus}/>
+        <FlatTableValue change={change} column='current'/>
       </td>
       <td className={css(STYLES.tdNarrow)}>
         <span className={css(STYLES.valueLabel)}>Request</span>
-        <EntitlementsStatusTag status={props.change.newStatus}/>
+        <FlatTableValue change={change} column='request'/>
       </td>
-      <td className={css(STYLES.tdNarrow, STYLES.diffCellNarrow)}>
-        <DiffBadge
-          value={props.change.delta.value}
-          direction={props.change.delta.direction}/>
-      </td>
+      {change.delta &&
+        <td className={css(STYLES.tdNarrow, STYLES.diffCellNarrow)}>
+          <DiffBadge
+            value={change.delta.value}
+            direction={change.delta.direction}/>
+        </td>}
     </tr>);
+}
+
+interface FlatTableValueProperties {
+
+  /** The change to render a value for. */
+  change: ChangeTable.Change;
+
+  /** Which column to render. */
+  column: 'current' | 'request';
+}
+
+/** Renders the current or requested value for a change. */
+function FlatTableValue(props: FlatTableValueProperties) {
+  const change = props.change;
+  if(change.type === 'entitlement') {
+    return (
+      <EntitlementsStatusTag status={
+        props.column === 'current' ? change.oldStatus : change.newStatus}/>);
+  }
+  return (
+    <span>{props.column === 'current' ?
+      change.oldValue : change.newValue}</span>);
 }
 
 interface FlatTablePropertyCellProperties {
 
-  /** The name of the entitlement. */
+  /** The name of the property. */
   name: string;
 
   /** Whether the table is in wide layout mode. */
@@ -150,7 +175,10 @@ function FlatTablePropertyCell(props: FlatTablePropertyCellProperties) {
 export namespace ChangeTable {
 
   /** A change to a market data entitlement. */
-  export interface Change {
+  export interface EntitlementChange {
+
+    /** Identifies this as an entitlement change. */
+    type: 'entitlement';
 
     /** The name of the entitlement. */
     name: string;
@@ -162,8 +190,30 @@ export namespace ChangeTable {
     newStatus: EntitlementsStatusTag.Status;
 
     /** The associated fee delta. */
-    delta: Delta;
+    delta?: Delta;
   }
+
+  /** A change to a risk control parameter. */
+  export interface RiskChange {
+
+    /** Identifies this as a risk change. */
+    type: 'risk';
+
+    /** The name of the risk parameter. */
+    name: string;
+
+    /** The current value. */
+    oldValue: string;
+
+    /** The requested value. */
+    newValue: string;
+
+    /** The associated delta. */
+    delta?: Delta;
+  }
+
+  /** A change entry in the table. */
+  export type Change = EntitlementChange | RiskChange;
 
   /** A change between two values. */
   export interface Delta {
