@@ -6,7 +6,7 @@ import * as WebPortal from 'web_portal';
 import { ArrayInput, BeamAccountInput, BeamDateInput, BeamDateTimeInput,
   BeamDurationInput, BeamTimeOfDayInput, BooleanInput, ColorInput, CSSInput,
   DateInput, EnumInput, NumberInput, NumberSliderInput, OptionalInput,
-  ReadonlyInput, StyleDeclarationValueInput,
+  MoneyInput, ReadonlyInput, StyleDeclarationValueInput,
   TextInput } from '../viewer/propertyInput';
 import {ComponentSchema, ComponentSection, PropertySchema,
   SignalSchema} from './schemas';
@@ -123,6 +123,14 @@ const integerField =
       new PropertySchema('style', {}, CSSInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.IntegerField);
+
+const moneyField =
+  new ComponentSchema('MoneyField',
+    [new PropertySchema('value', Nexus.Money.parse('100.00'), MoneyInput),
+      new PropertySchema('readonly', false, BooleanInput),
+      new PropertySchema('style', {}, CSSInput)],
+    [new SignalSchema('onChange', 'value')],
+    WebPortal.MoneyField);
 
 const navigationTab =
   new ComponentSchema('NavigationTab',
@@ -357,6 +365,23 @@ const requestDetailPage =
       activityList: REQUEST_DETAIL_ACTIVITY
     }), -1);
 
+const entitlementsChangeItem =
+  new ComponentSchema('EntitlementsChangeItem',
+    [new PropertySchema('name', 'NYSE Arca Equities', TextInput),
+      new PropertySchema('action',
+        WebPortal.EntitlementsChangeItem.Action.GRANT,
+        EnumInput(WebPortal.EntitlementsChangeItem.Action)),
+      new PropertySchema('fee', Nexus.Money.parse('14.5'), MoneyInput),
+      new PropertySchema('direction',
+        WebPortal.DiffBadge.Direction.POSITIVE,
+        EnumInput(WebPortal.DiffBadge.Direction))],
+    [],
+    (props: any) => React.createElement(WebPortal.EntitlementsChangeItem, {
+      ...props,
+      currency: new Nexus.CurrencyDatabase.Entry(
+        new Nexus.Currency(840), 'USD', '$')
+    }));
+
 const riskControlsChangeItem =
   new ComponentSchema('RiskControlsChangeItem',
     [new PropertySchema('name', 'Buying Power', TextInput),
@@ -371,9 +396,11 @@ const riskControlsChangeItem =
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkmark, dateField,
     dateTimeField, dropDownButton, durationField, hLine, iconLabelButton,
-    integerField, navigationTab, numberField, pagination, relativeDate,
+    integerField, moneyField, navigationTab, numberField, pagination,
+    relativeDate,
     roleIcon, textField, timeOfDayField]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
-    complianceRuleStatusTag, diffBadge, entitlementsStatusTag,
-    requestActivityItem, requestCategoryTag, requestDetailPage,
-    requestEffectiveDate, requestStateIndicator, riskControlsChangeItem])];
+    complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
+    entitlementsStatusTag, requestActivityItem, requestCategoryTag,
+    requestDetailPage, requestEffectiveDate, requestStateIndicator,
+    riskControlsChangeItem])];

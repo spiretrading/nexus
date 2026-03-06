@@ -149,7 +149,6 @@ const STYLES = StyleSheet.create({
     display: 'flex',
     alignItems: 'center',
     marginLeft: '18px',
-    paddingTop: '4px',
     flexShrink: 0
   },
   oldValue: {
