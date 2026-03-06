@@ -8,7 +8,8 @@ import { ArrayInput, BeamAccountInput, BeamDateInput, BeamDateTimeInput,
   DateInput, EnumInput, NumberInput, NumberSliderInput, OptionalInput,
   ReadonlyInput, StyleDeclarationValueInput,
   TextInput } from '../viewer/propertyInput';
-import {ComponentSchema, PropertySchema, SignalSchema} from './schemas';
+import {ComponentSchema, ComponentSection, PropertySchema,
+  SignalSchema} from './schemas';
 
 const accountLink =
   new ComponentSchema('AccountLink',
@@ -367,10 +368,12 @@ const riskControlsChangeItem =
     [],
     WebPortal.RiskControlsChangeItem);
 
-export const componentsList = [accountLink, button, burgerButton, changeTable,
-  checkmark, complianceRuleStatusTag, dateField, dateTimeField, diffBadge,
-  dropDownButton, durationField, entitlementsStatusTag, hLine,
-  iconLabelButton, integerField, navigationTab, numberField, pagination,
-  relativeDate, requestActivityItem, requestCategoryTag, requestDetailPage,
-  requestEffectiveDate, requestStateIndicator, riskControlsChangeItem,
-  roleIcon, textField, timeOfDayField];
+export const componentSections = [
+  new ComponentSection('UI Kit', [button, burgerButton, checkmark, dateField,
+    dateTimeField, dropDownButton, durationField, hLine, iconLabelButton,
+    integerField, navigationTab, numberField, pagination, relativeDate,
+    roleIcon, textField, timeOfDayField]),
+  new ComponentSection('Requests Page', [accountLink, changeTable,
+    complianceRuleStatusTag, diffBadge, entitlementsStatusTag,
+    requestActivityItem, requestCategoryTag, requestDetailPage,
+    requestEffectiveDate, requestStateIndicator, riskControlsChangeItem])];

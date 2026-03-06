@@ -143,3 +143,29 @@ export class SignalSchema {
   private _propertyName: string;
   private _parameters: Parameter[];
 }
+
+/** A named group of component schemas. */
+export class ComponentSection {
+
+  /** Constructs a ComponentSection.
+   * @param name - The section name.
+   * @param components - The components in this section.
+   */
+  constructor(name: string, components: ComponentSchema[]) {
+    this._name = name;
+    this._components = components.slice();
+  }
+
+  /** Returns the section name. */
+  public get name(): string {
+    return this._name;
+  }
+
+  /** Returns the components in this section. */
+  public get components(): ComponentSchema[] {
+    return this._components.slice();
+  }
+
+  private _name: string;
+  private _components: ComponentSchema[];
+}

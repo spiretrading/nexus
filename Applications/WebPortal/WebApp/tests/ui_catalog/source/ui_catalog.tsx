@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { ComponentSchema } from './data';
+import { ComponentSchema, ComponentSection } from './data';
 import { ComponentList, Theater } from './viewer';
 
 interface Properties {
-  
-  /** The list of components. */
-  componentList: ComponentSchema[];
+
+  /** The list of component sections. */
+  sections: ComponentSection[];
 }
 
 interface State {
@@ -37,7 +37,7 @@ export class UICatalog extends React.Component<Properties, State> {
     return (
       <div style={UICatalog.STYLE.page}>
         <ComponentList
-          componentList={this.props.componentList}
+          sections={this.props.sections}
           selected={this.state.component}
           onClick={this.componentChange}/>
         <Theater
