@@ -259,6 +259,28 @@ const requestStateIndicator =
     [],
     WebPortal.RequestStateIndicator);
 
+const changeTable =
+  new ComponentSchema('ChangeTable',
+    [new PropertySchema('changes',
+        [{name: 'NYSE Arca Equities', oldStatus:
+            WebPortal.EntitlementsStatusTag.Status.REVOKED, newStatus:
+            WebPortal.EntitlementsStatusTag.Status.GRANTED, delta:
+            {value: '$14.50', direction:
+              WebPortal.DiffBadge.Direction.POSITIVE}},
+          {name: 'NYSE American Equities', oldStatus:
+            WebPortal.EntitlementsStatusTag.Status.GRANTED, newStatus:
+            WebPortal.EntitlementsStatusTag.Status.REVOKED, delta:
+            {value: '$7.00', direction:
+              WebPortal.DiffBadge.Direction.NEGATIVE}},
+          {name: 'OPRA', oldStatus:
+            WebPortal.EntitlementsStatusTag.Status.GRANTED, newStatus:
+            WebPortal.EntitlementsStatusTag.Status.GRANTED, delta:
+            {value: '$0.00', direction:
+              WebPortal.DiffBadge.Direction.NONE}}] as
+        WebPortal.ChangeTable.Change[], ReadonlyInput)],
+    [],
+    WebPortal.ChangeTable);
+
 const riskControlsChangeItem =
   new ComponentSchema('RiskControlsChangeItem',
     [new PropertySchema('name', 'Buying Power', TextInput),
@@ -270,8 +292,8 @@ const riskControlsChangeItem =
     [],
     WebPortal.RiskControlsChangeItem);
 
-export const componentsList = [accountLink, button, burgerButton, checkmark,
-  complianceRuleStatusTag, dateField, dateTimeField, diffBadge,
+export const componentsList = [accountLink, button, burgerButton, changeTable,
+  checkmark, complianceRuleStatusTag, dateField, dateTimeField, diffBadge,
   dropDownButton, durationField, entitlementsStatusTag, hLine,
   iconLabelButton, integerField, navigationTab, numberField, pagination,
   relativeDate, requestActivityItem, requestCategoryTag, requestEffectiveDate,

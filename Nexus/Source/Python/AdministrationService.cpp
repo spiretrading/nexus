@@ -77,7 +77,8 @@ void Nexus::Python::export_account_modification_request(module& module) {
           &AccountModificationRequest::get_timestamp);
   enum_<AccountModificationRequest::Type>(request, "Type").
     value("ENTITLEMENTS", AccountModificationRequest::Type::ENTITLEMENTS).
-    value("RISK", AccountModificationRequest::Type::RISK);
+    value("RISK", AccountModificationRequest::Type::RISK).
+    value("COMPLIANCE", AccountModificationRequest::Type::COMPLIANCE);
   enum_<AccountModificationRequest::Status>(request, "Status").
     value("NONE", AccountModificationRequest::Status::NONE).
     value("PENDING", AccountModificationRequest::Status::PENDING).

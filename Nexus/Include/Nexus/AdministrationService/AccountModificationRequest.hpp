@@ -22,7 +22,10 @@ namespace Nexus {
         ENTITLEMENTS,
 
         /** Modify an account's risk parameters. */
-        RISK
+        RISK,
+
+        /** Modify an account's compliance parameters. */
+        COMPLIANCE
       };
 
       /** Lists the status of a request. */
@@ -129,6 +132,8 @@ namespace Nexus {
       return out << "ENTITLEMENTS";
     } else if(type == AccountModificationRequest::Type::RISK) {
       return out << "RISK";
+    } else if(type == AccountModificationRequest::Type::COMPLIANCE) {
+      return out << "COMPLIANCE";
     } else {
       return out << "UNKNOWN";
     }

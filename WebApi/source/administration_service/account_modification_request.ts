@@ -81,7 +81,10 @@ export module AccountModificationRequest {
     ENTITLEMENTS = 0,
 
     /** Modify an account's risk parameters. */
-    RISK
+    RISK,
+
+    /** Modify an account's compliance settings. */
+    COMPLIANCE
   }
 
   /** Lists the status of a request. */
