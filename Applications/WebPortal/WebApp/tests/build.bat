@@ -24,6 +24,7 @@ CALL:build page_not_found_page_tester %*
 CALL:build profile_page_tester %*
 CALL:build risk_page_tester %*
 CALL:build scratch %*
+CALL:build ui_catalog %*
 ENDLOCAL
 EXIT /B %ERRORLEVEL%
 
