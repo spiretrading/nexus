@@ -1,8 +1,9 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { NavigationHeader } from '../../components/navigation_header';
 import { NavigationTab } from '../../components/navigation_tab';
+import { RequestDirectoryPage } from './request_directory_page';
 
 interface Properties {
 
@@ -11,6 +12,27 @@ interface Properties {
 
   /** The currently displayed page. Defaults to YOUR_REQUESTS. */
   current?: RequestsPage.Page;
+
+  /** The status of the displayed requests list. */
+  displayStatus: RequestDirectoryPage.DisplayStatus;
+
+  /** The currently selected request state facet. */
+  requestState: RequestDirectoryPage.RequestState;
+
+  /** The user's filter criteria. */
+  filters: RequestDirectoryPage.Filters;
+
+  /** The number of filters currently active. */
+  filterCount: number;
+
+  /** The current 0-based page index. */
+  pageIndex: number;
+
+  /** The response from the server. */
+  response: RequestDirectoryPage.Response;
+
+  /** Called when the user requests to retrieve requests. */
+  onSubmit?: (submission: RequestDirectoryPage.Submission) => void;
 
   /** Called when a navigation tab is clicked, passing the page. */
   onNavigate?: (page: RequestsPage.Page) => void;
@@ -40,10 +62,11 @@ export class RequestsPage extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
+    const content = this.renderContent();
     if(this.props.roles.test(Nexus.AccountRoles.Role.MANAGER) ||
         this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
       return (
-        <div>
+        <div className={css(RequestsPage.STYLES.container)}>
           <NavigationHeader variant={this.state.variant}
               className={css(RequestsPage.STYLES.header)}
               current={RequestsPage.toHref(this.props.current !== undefined ?
@@ -58,10 +81,26 @@ export class RequestsPage extends React.Component<Properties, State> {
               label='Group Requests'
               href='requests/group'/>
           </NavigationHeader>
-          <div/>
+          {content}
         </div>);
     }
-    return <div/>;
+    return content;
+  }
+
+  private renderContent(): JSX.Element {
+    const current = this.props.current ?? RequestsPage.Page.YOUR_REQUESTS;
+    const scope = current === RequestsPage.Page.YOUR_REQUESTS ?
+      RequestDirectoryPage.Scope.YOU : RequestDirectoryPage.Scope.GROUP;
+    return (
+      <RequestDirectoryPage
+        scope={scope}
+        displayStatus={this.props.displayStatus}
+        requestState={this.props.requestState}
+        filters={this.props.filters}
+        filterCount={this.props.filterCount}
+        pageIndex={this.props.pageIndex}
+        response={this.props.response}
+        onSubmit={this.props.onSubmit}/>);
   }
 
   private onNavigate = (href: string) => {
@@ -101,6 +140,9 @@ export class RequestsPage extends React.Component<Properties, State> {
   }
 
   private static readonly STYLES = StyleSheet.create({
+    container: {
+      overflow: 'hidden'
+    },
     header: {
       borderBottom: '1px solid #E6E6E6',
       paddingLeft: '11px',
