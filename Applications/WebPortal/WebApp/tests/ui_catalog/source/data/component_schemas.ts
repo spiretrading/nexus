@@ -214,27 +214,33 @@ const moneyField =
     [new SignalSchema('onChange', 'value')],
     WebPortal.MoneyField);
 
+const NAVIGATION_TABS = [
+  React.createElement(WebPortal.NavigationTab, {
+    key: 'you',
+    icon: 'resources/requests_page/your-requests.svg',
+    label: 'Your Requests',
+    href: 'requests/you'
+  }),
+  React.createElement(WebPortal.NavigationTab, {
+    key: 'group',
+    icon: 'resources/requests_page/group-requests.svg',
+    label: 'Group Requests',
+    href: 'requests/group'
+  }),
+  React.createElement(WebPortal.NavigationTab, {
+    key: 'approved',
+    icon: 'resources/requests_page/approved.svg',
+    label: 'Approved',
+    href: 'requests/approved'
+  })
+];
+
 const navigationHeader =
   new ComponentSchema('NavigationHeader',
-    [],
-    [],
-    () => React.createElement(WebPortal.NavigationHeader,
-      {current: 'requests/you'},
-      React.createElement(WebPortal.NavigationTab, {
-        icon: 'resources/requests_page/your-requests.svg',
-        label: 'Your Requests',
-        href: 'requests/you'
-      }),
-      React.createElement(WebPortal.NavigationTab, {
-        icon: 'resources/requests_page/group-requests.svg',
-        label: 'Group Requests',
-        href: 'requests/group'
-      }),
-      React.createElement(WebPortal.NavigationTab, {
-        icon: 'resources/requests_page/approved.svg',
-        label: 'Approved',
-        href: 'requests/approved'
-      })));
+    [new PropertySchema('current', 'requests/you', TextInput),
+      new PropertySchema('children', NAVIGATION_TABS, ReadonlyInput)],
+    [new SignalSchema('onNavigate', 'current')],
+    WebPortal.NavigationHeader);
 
 const navigationTab =
   new ComponentSchema('NavigationTab',
