@@ -75,7 +75,7 @@ export class RequestItem extends React.Component<Properties, State> {
     const showCommentCount = this.props.commentCount > 0;
     return (
       <a ref={this.containerRef} className={css(STYLES.link)}
-          href={`/requests/${this.props.id}`}>
+          href={`requests/${this.props.id}`}>
         <div className={css(STYLES.header)}>
           <RequestStateIndicator state={this.props.state}/>
           <h2 className={css(STYLES.id)}>#{this.props.id}</h2>
