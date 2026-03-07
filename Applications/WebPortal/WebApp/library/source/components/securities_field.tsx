@@ -37,6 +37,7 @@ export class SecuritiesField extends React.Component<Properties, State> {
       localValue: (this.props.value ?? []).slice(),
       selection: -1
     };
+    this.fileInputRef = React.createRef<HTMLInputElement>();
   }
 
   public render() {
@@ -98,16 +99,18 @@ export class SecuritiesField extends React.Component<Properties, State> {
     const uploadButton = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return (
-          <div style={iconWrapperStyle}>
+          <div style={iconWrapperStyle} onClick={this.onUploadClick}>
             <img height={imageSize} width={imageSize}
-              src={SecuritiesField.PATH + 'upload-grey.svg'}/>
+              style={SecuritiesField.STYLE.iconClickableStyle}
+              src={SecuritiesField.PATH + 'upload-purple.svg'}/>
           </div>);
       } else {
         return (
-          <div style={iconWrapperStyle}>
+          <div style={iconWrapperStyle} onClick={this.onUploadClick}>
             <img height={imageSize} width={imageSize}
-              src={SecuritiesField.PATH + 'upload-grey.svg'}/>
-            <div style={SecuritiesField.STYLE.iconLabelReadonly}>
+              style={SecuritiesField.STYLE.iconClickableStyle}
+              src={SecuritiesField.PATH + 'upload-purple.svg'}/>
+            <div style={SecuritiesField.STYLE.iconLabel}>
               {SecuritiesField.UPLOAD_TEXT}
             </div>
           </div>);
@@ -174,6 +177,9 @@ export class SecuritiesField extends React.Component<Properties, State> {
     }
     return (
       <div>
+        <input type='file' accept='.txt,.csv' ref={this.fileInputRef}
+          style={SecuritiesField.STYLE.hidden}
+          onChange={this.onFileSelected}/>
         <input
           readOnly
           style={SecuritiesField.STYLE.textBox}
@@ -206,6 +212,42 @@ export class SecuritiesField extends React.Component<Properties, State> {
       </div>);
   }
   
+  private readonly fileInputRef: React.RefObject<HTMLInputElement>;
+
+  private onUploadClick = () => {
+    this.fileInputRef.current?.click();
+  }
+
+  private onFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if(!file) {
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = reader.result as string;
+      const lines = text.split(/\r?\n/);
+      const parsed: Nexus.Security[] = [];
+      for(const line of lines) {
+        const trimmed = line.trim();
+        if(trimmed === '') {
+          continue;
+        }
+        const security = Nexus.Security.parse(trimmed.toUpperCase());
+        if(!security.equals(Nexus.Security.NONE)) {
+          parsed.push(security);
+        }
+      }
+      if(parsed.length > 0) {
+        this.setState({
+          localValue: this.state.localValue.concat(parsed)
+        });
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
   private addEntry = (parameter: Nexus.Security) => {
     this.setState({
       inputString: '',
