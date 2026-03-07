@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 
 /** Lays out its children centered horizontally with responsive widths. */

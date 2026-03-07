@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { DisplaySize, IntegerField } from '..';
@@ -33,11 +33,6 @@ interface State {
 
 /** A component that displays a date. */
 export class DateField extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    value: new Beam.Date(1, 1, 1900),
-    onChange: () => {}
-  };
-
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -48,6 +43,7 @@ export class DateField extends React.Component<Properties, State> {
   } 
 
   public render(): JSX.Element {
+    const value = this.props.value ?? DateField.today();
     const containerStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return DateField.STYLE.containerSmall;
@@ -63,11 +59,11 @@ export class DateField extends React.Component<Properties, State> {
       }
     })();
     const maxDate = (() => {
-      const month = this.props.value.month;
+      const month = value.month;
       if(month === 4 || month === 6 || month === 9 || month === 11) {
         return 30;
       } else if(month === 2) {
-        const year = this.props.value.year;
+        const year = value.year;
         if(year % 4 !== 0) {
           return 28;
         } else if(year % 100 !== 0) {
@@ -102,7 +98,7 @@ export class DateField extends React.Component<Properties, State> {
         <div style={DateField.STYLE.inner}>
           <IntegerField
             min={1} max={maxDate}
-            value={this.props.value.day}
+            value={value.day}
             readonly={this.props.readonly}
             onChange={this.onChange.bind(this, DateUnit.DAY)}
             className={css(DateField.EXTRA_STYLE.effects)}
@@ -111,7 +107,7 @@ export class DateField extends React.Component<Properties, State> {
           <div style={DateField.STYLE.slash}>/</div>
           <IntegerField
             min={1} max={12}
-            value={this.props.value.month}
+            value={value.month}
             readonly={this.props.readonly}
             onChange={this.onChange.bind(this, DateUnit.MONTH)}
             className={css(DateField.EXTRA_STYLE.effects)}
@@ -120,7 +116,7 @@ export class DateField extends React.Component<Properties, State> {
           <div style={DateField.STYLE.slash}>/</div>
           <IntegerField
             min={2000} max={3000}
-            value={this.props.value.year}
+            value={value.year}
             readonly={this.props.readonly}
             onChange={this.onChange.bind(this, DateUnit.YEAR)}
             className={css(DateField.EXTRA_STYLE.effects)}
@@ -162,7 +158,7 @@ export class DateField extends React.Component<Properties, State> {
   }
 
   private onChange = (dateUnit: DateUnit, value: number) => {
-    const oldValue = this.props.value;
+    const oldValue = this.props.value ?? DateField.today();
     const newValue = (() => {
       switch(dateUnit) {
         case DateUnit.DAY:
@@ -173,7 +169,7 @@ export class DateField extends React.Component<Properties, State> {
           return new Beam.Date(value, oldValue.month, oldValue.day);
       }
     })();
-    this.props.onChange(newValue);
+    this.props.onChange?.(newValue);
   }
 
   private static readonly STYLE = {
@@ -275,5 +271,18 @@ export class DateField extends React.Component<Properties, State> {
     }
   });
 
+  private static today(): Beam.Date {
+    const now = new Date();
+    return new Beam.Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  }
+
   private containerRef: React.RefObject<HTMLDivElement>;
+}
+
+type DateLabelProperties = Omit<Properties, 'readonly' | 'onChange'>;
+
+/** A read-only date display. */
+export function DateLabel(props: DateLabelProperties): JSX.Element {
+  return (
+    <DateField displaySize={props.displaySize} value={props.value} readonly/>);
 }

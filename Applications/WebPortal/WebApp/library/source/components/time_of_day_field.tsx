@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { DisplaySize } from '..';
@@ -35,11 +35,6 @@ interface State {
 
 /** A component that displays a time of day. */
 export class TimeOfDayField extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    value: new Beam.Duration(0),
-    onChange: () => {}
-  };
-
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -50,7 +45,8 @@ export class TimeOfDayField extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const splitTime = this.props.value.split();
+    const value = this.props.value ?? new Beam.Duration(0);
+    const splitTime = value.split();
     const containerStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return TimeOfDayField.STYLE.containerSmall;
@@ -124,7 +120,7 @@ export class TimeOfDayField extends React.Component<Properties, State> {
   }
 
   public componentWillUnmount() {
-    window.addEventListener('resize', this.handleResize);
+    window.removeEventListener('resize', this.handleResize);
   }
 
   private handleResize = () => {
@@ -147,7 +143,7 @@ export class TimeOfDayField extends React.Component<Properties, State> {
   }
 
   private onChange = (timeUnit: TimeUnit, value: number) => {
-    const oldDuration = this.props.value.split();
+    const oldDuration = (this.props.value ?? new Beam.Duration(0)).split();
     const localTimeValue = (() => {
       switch(timeUnit) {
         case TimeUnit.HOURS:
@@ -165,7 +161,7 @@ export class TimeOfDayField extends React.Component<Properties, State> {
       }
     })();
     const localTimeSplit = localTimeValue.split();
-    this.props.onChange(
+    this.props.onChange?.(
       Beam.Duration.HOUR.multiply(localTimeSplit.hours).add(
         Beam.Duration.MINUTE.multiply(localTimeSplit.minutes)).add(
         Beam.Duration.SECOND.multiply(localTimeSplit.seconds)));

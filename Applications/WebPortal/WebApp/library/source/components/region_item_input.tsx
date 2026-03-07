@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 
@@ -22,10 +22,6 @@ interface Properties {
 
 /** Renders an input field for a single region item. */
 export class RegionItemInput extends React.Component<Properties> {
-  constructor(props: Properties) {
-    super(props);
-  }
-
   public render() {
     return (<input
       className={css(RegionItemInput.EXTRA_STYLE.effects)}

@@ -1,6 +1,6 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Checkmark, CurrencySelectionField, DateTimeField, DisplaySize,
+import { Checkbox, CurrencySelectionField, DateTimeField, DisplaySize,
   MoneyField, NumberField, RegionField, SecuritiesField, SecurityField,
   TextField, TimeOfDayField } from '../../..';
 
@@ -51,8 +51,8 @@ export class ParameterEntry extends React.Component<Properties> {
     const input = (() => {
       switch(this.props.parameter.value.type) {
         case Nexus.ComplianceValue.Type.BOOLEAN:
-          return <Checkmark
-            onClick={this.onCheckmarkChange}
+          return <Checkbox
+            onClick={this.onCheckboxChange}
             displaySize={this.props.displaySize}
             readonly={this.props.readonly}
             isChecked={this.props.parameter.value.value}/>;
@@ -146,7 +146,7 @@ export class ParameterEntry extends React.Component<Properties> {
       new Nexus.ComplianceValue(this.props.parameter.value.type, newValue)));
   }
 
-  private onCheckmarkChange = () => {
+  private onCheckboxChange = () => {
     this.onChange(!this.props.parameter.value.value);
   }
 

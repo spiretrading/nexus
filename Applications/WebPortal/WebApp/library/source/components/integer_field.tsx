@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 
 interface Properties {
@@ -16,7 +16,7 @@ interface Properties {
   value?: number;
 
   /** Additional CSS styles. */
-  style?: any;
+  style?: React.CSSProperties;
 
   /** The class name of the input box. */
   className?: string;
@@ -32,18 +32,12 @@ interface State {
   value: number;
 }
 
-/** A editable integer field. */
+/** An editable integer field. */
 export class IntegerField extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    min: 0,
-    value: 0,
-    onChange: () => {}
-  };
-
   constructor(props: Properties) {
     super(props);
     this.state = {
-      value: props.value || this.props.min
+      value: props.value ?? props.min ?? 0
     };
   }
 
@@ -70,9 +64,9 @@ export class IntegerField extends React.Component<Properties, State> {
   }
 
   private onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if(event.keyCode === 38) {
+    if(event.key === 'ArrowUp') {
       this.increment();
-    } else if(event.keyCode === 40) {
+    } else if(event.key === 'ArrowDown') {
       this.decrement();
     }
   }
@@ -156,7 +150,7 @@ export class IntegerField extends React.Component<Properties, State> {
       backgroundColor: '#FFFFFF'
     } as React.CSSProperties
   };
-  private static EXTRA_STYLE = StyleSheet.create({
+  private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {
       '-moz-appearance': 'textfield',
       ':focus': {

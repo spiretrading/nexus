@@ -40,7 +40,7 @@ const STYLES = StyleSheet.create({
   segment: {
     display: 'grid',
     flex: '1 1 0',
-    position: 'relative' as 'relative',
+    position: 'relative',
     minWidth: 0,
     ':focus-within': {
       zIndex: 1

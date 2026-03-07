@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 
@@ -11,7 +11,7 @@ interface Properties {
   value?: Nexus.Currency;
 
   /** Additional CSS styles. */
-  style?: any;
+  style?: React.CSSProperties;
 
   /** The class name of the currency selection box. */
   className?: string;
@@ -25,14 +25,6 @@ interface Properties {
 
 /** A selection field for currencies. */
 export class CurrencySelectionField extends React.Component<Properties> {
-  public static readonly defaultProps = {
-    onChange: () => {}
-  };
-
-  constructor(props: Properties) {
-    super(props);
-  }
-
   public render(): JSX.Element {
     const style = (() => {
       if(this.props.readonly) {
@@ -64,11 +56,9 @@ export class CurrencySelectionField extends React.Component<Properties> {
       </select>);
   }
 
-  private onChange = (event: React.ChangeEvent<any>) => {
-    if(!this.props.readonly) {
-      this.props.onChange(this.props.currencyDatabase.fromCode(
-        event.target.value).currency);
-    }
+  private onChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    this.props.onChange?.(this.props.currencyDatabase.fromCode(
+      event.target.value).currency);
   }
 
   private static readonly STYLE = {

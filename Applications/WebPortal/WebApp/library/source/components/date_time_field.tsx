@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { DisplaySize } from '..';
@@ -24,7 +24,7 @@ interface Properties {
   /** Called when the value changes.
    * @param value - The updated value.
    */
-  onChange: (value: Beam.DateTime) => void;
+  onChange?: (value: Beam.DateTime) => void;
 }
 
 interface State {
@@ -34,17 +34,23 @@ interface State {
 
 /** A component that displays both date and time. */
 export class DateTimeField extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    value: new Beam.DateTime(new Beam.Date(1, 1, 1990), new Beam.Duration(0)),
-    onChange: () => {}
-  };
-
   constructor(props: Properties) {
     super(props);
     this.state = {
       period: Periods.AM,
-      displayedTime: this.props.value.timeOfDay
+      displayedTime: this.value.timeOfDay
     };
+  }
+
+  private get value(): Beam.DateTime {
+    return this.props.value ?? DateTimeField.today();
+  }
+
+  private static today(): Beam.DateTime {
+    const now = new Date();
+    return new Beam.DateTime(
+      new Beam.Date(now.getFullYear(), now.getMonth() + 1, now.getDate()),
+      new Beam.Duration(0));
   }
 
   public render(): JSX.Element {
@@ -59,7 +65,7 @@ export class DateTimeField extends React.Component<Properties, State> {
       <div style={DateTimeField.STYLE.outerWrapper}>
         <DateField
           displaySize={this.props.displaySize}
-          value={this.props.value.date}
+          value={this.value.date}
           readonly={this.props.readonly}
           onChange={this.onDateChange}/>
         <div style={DateTimeField.STYLE.filler}/>
@@ -91,7 +97,7 @@ export class DateTimeField extends React.Component<Properties, State> {
   }
 
   public componentDidUpdate(prevProps: Properties) {
-    if(!this.props.value.equals(prevProps.value)) {
+    if(!this.value.equals(prevProps.value)) {
       this.setState({
         period: this.getPeriod(),
         displayedTime: this.getTimeIn12HourFormat()
@@ -100,7 +106,7 @@ export class DateTimeField extends React.Component<Properties, State> {
   }
 
   private getPeriod = () => {
-    const sourceTime = this.props.value.timeOfDay.split();
+    const sourceTime = this.value.timeOfDay.split();
     if(sourceTime.hours === 0 || sourceTime.hours === 24) {
       return Periods.AM;
     } else if(sourceTime.hours >= 12) {
@@ -111,7 +117,7 @@ export class DateTimeField extends React.Component<Properties, State> {
   }
 
   private getTimeIn12HourFormat = () => {
-    const sourceTime = this.props.value.timeOfDay.split();
+    const sourceTime = this.value.timeOfDay.split();
     if(sourceTime.hours === 0 || sourceTime.hours === 24) {
       return Beam.Duration.HOUR.multiply(12).add(
         Beam.Duration.MINUTE.multiply(sourceTime.minutes)).add(
@@ -125,7 +131,7 @@ export class DateTimeField extends React.Component<Properties, State> {
         Beam.Duration.MINUTE.multiply(sourceTime.minutes)).add(
         Beam.Duration.SECOND.multiply(sourceTime.seconds));
     } else {
-      return this.props.value.timeOfDay;
+      return this.value.timeOfDay;
     }
   }
 
@@ -161,17 +167,17 @@ export class DateTimeField extends React.Component<Properties, State> {
       period: period,
       displayedTime: this.getTimeIn12HourFormat()
     });
-    this.props.onChange(new Beam.DateTime(this.props.value.date,
+    this.props.onChange?.(new Beam.DateTime(this.value.date,
       this.getTimeIn24HourFormat(this.state.displayedTime, period)));
   }
 
   private onDateChange = (date: Beam.Date) => {
-    this.props.onChange(new Beam.DateTime(date, this.props.value.timeOfDay));
+    this.props.onChange?.(new Beam.DateTime(date, this.value.timeOfDay));
   }
 
   private onTimeChange = (time: Beam.Duration) => {
     this.setState({displayedTime: time});
-    this.props.onChange(new Beam.DateTime(this.props.value.date,
+    this.props.onChange?.(new Beam.DateTime(this.value.date,
       this.getTimeIn24HourFormat(time, this.state.period)));
   }
 
@@ -233,7 +239,7 @@ export class DateTimeField extends React.Component<Properties, State> {
       width: '100%'
     } as React.CSSProperties
   };
-  public static readonly EXTRA_STYLE = StyleSheet.create({
+  private static readonly EXTRA_STYLE = StyleSheet.create({
     focusEffects: {
       outlineColor: 'transparent',
       outlineStyle: 'none',

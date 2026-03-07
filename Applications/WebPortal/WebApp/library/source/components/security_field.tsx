@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Button, DisplaySize, HLine, Modal, SecurityInput } from '..';
@@ -30,18 +30,12 @@ interface State {
 
 /** A component that displays a single security. */
 export class SecurityField extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    value: new Nexus.Security('', Nexus.Venue.NONE),
-    readonly: false,
-    onChange: () => {}
-  }
-
   constructor(props: Properties) {
     super(props);
     this.state = {
       inputString: '',
       isEditing: false,
-      localValue: this.props.value,
+      localValue: this.props.value ?? new Nexus.Security('', Nexus.Venue.NONE),
       isSelected: false
     };
   }
@@ -112,6 +106,7 @@ export class SecurityField extends React.Component<Properties, State> {
           style={SecurityField.STYLE.textBox}
           className={css(SecurityField.EXTRA_STYLE.effects)}
           value={displayValue}
+          readOnly
           onFocus={this.onOpen}
           onClick={this.onOpen}/>
         <div style={visibility}>
@@ -153,8 +148,12 @@ export class SecurityField extends React.Component<Properties, State> {
   }
 
   private onSubmitChange = () => {
-    if(this.props.value !== this.state.localValue) {
-      this.props.onChange(this.state.localValue);
+    if(this.state.localValue === null) {
+      if(this.props.value !== null && this.props.value !== undefined) {
+        this.props.onChange?.(this.state.localValue);
+      }
+    } else if(!this.props.value?.equals(this.state.localValue)) {
+      this.props.onChange?.(this.state.localValue);
     }
     this.onClose();
   }
@@ -173,6 +172,9 @@ export class SecurityField extends React.Component<Properties, State> {
   }
 
   private onOpen = () => {
+    if(this.props.readonly) {
+      return;
+    }
     this.setState({
       inputString: '',
       isEditing: true,
@@ -217,33 +219,6 @@ export class SecurityField extends React.Component<Properties, State> {
     clickable: {
       cursor: 'pointer'
     } as React.CSSProperties,
-    symbolHeader: {
-      boxSizing: 'border-box',
-      backgroundColor: '#FFFFFF',
-      height: '40px',
-      maxWidth: '264px',
-      color: '#4B23A0',
-      font: '500 14px Roboto',
-      paddingLeft: '10px',
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderBottom: '1px solid #C8C8C8',
-      position: 'sticky',
-      top: 0,
-      cursor: 'default'
-    } as React.CSSProperties,
-    symbolBoxWrapper: {
-      height: '76px',
-      border: '1px solid #C8C8C8',
-    } as React.CSSProperties,
-    symbol: {
-      height: '34px',
-      paddingLeft: '10px',
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center'
-    } as React.CSSProperties,
     iconWrapperSmall: {
       height: '24px',
       width: '24px',
@@ -251,16 +226,7 @@ export class SecurityField extends React.Component<Properties, State> {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      pointer: 'pointer'
-    } as React.CSSProperties,
-    iconWrapperSmallReadonly: {
-      height: '24px',
-      width: '24px',
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      pointer: 'default'
+      cursor: 'pointer'
     } as React.CSSProperties,
     iconWrapperLarge: {
       height: '16px',
@@ -268,15 +234,7 @@ export class SecurityField extends React.Component<Properties, State> {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      pointer: 'pointer'
-    } as React.CSSProperties,
-    iconWrapperLargeReadonly: {
-      height: '16px',
-      display: 'flex',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      pointer: 'default'
+      cursor: 'pointer'
     } as React.CSSProperties,
     iconLabel: {
       color: '#333333',
@@ -329,43 +287,6 @@ export class SecurityField extends React.Component<Properties, State> {
       '::moz-focus-inner': {
         border: 0
       }
-    },
-    button: {
-      boxSizing: 'border-box' as 'border-box',
-      height: '34px',
-      width: '246px',
-      backgroundColor: '#684BC7',
-      color: '#FFFFFF',
-      border: '0px solid #684BC7',
-      borderRadius: '1px',
-      font: '400 16px Roboto',
-      outline: 'none',
-      MozAppearance: 'none' as 'none',
-      cursor: 'pointer' as 'pointer',
-      ':active': {
-        backgroundColor: '#4B23A0'
-      },
-      ':focus': {
-        border: 0,
-        outline: 'none',
-        borderColor: '#4B23A0',
-        backgroundColor: '#4B23A0',
-        boxShadow: 'none',
-        webkitBoxShadow: 'none',
-        outlineColor: 'transparent',
-        outlineStyle: 'none',
-        MozAppearance: 'none' as 'none'
-      },
-      ':hover': {
-        backgroundColor: '#4B23A0'
-      },
-      '::-moz-focus-inner': {
-        border: 0,
-        outline: 0
-      },
-      ':-moz-focusring': {
-        outline: 0
-      }
     }
   });
   private static readonly IMAGE_SIZE_SMALL_VIEWPORT = '20px';
@@ -396,14 +317,10 @@ interface SymbolFieldProperties {
 
 /** A component that displays a list of symbols. */
 class SymbolField extends React.Component<SymbolFieldProperties> {
-  constructor(props: SymbolFieldProperties) {
-    super(props);
-  }
-  
   public render() {
     const displayValue = (() => {
       if(this.props.value !== null) {
-        return this.props.value.symbol;
+        return this.props.value.toString();
       } else {
         return '';
       }
@@ -422,18 +339,17 @@ class SymbolField extends React.Component<SymbolFieldProperties> {
     return (
       <div style={SymbolField.STYLE.scrollBoxSmall}>
         <div style={SymbolField.STYLE.scrollBoxHeader}>
-          'Added Symbol'
+          Added Symbol
         </div>
-        <div className={css(entryStyle)}
-            onClick={this.onClick}>
+        <div className={css(entryStyle)} onClick={this.onClick}>
           {displayValue}
         </div>
       </div>);
   }
 
   private onClick = () => {
-    if(this.props.value.symbol !== ''){
-      this.props.onClick(!this.props.isSelected);
+    if(this.props.value !== null && this.props.value.symbol !== '') {
+      this.props.onClick?.(!this.props.isSelected);
     }
   }
 
@@ -465,33 +381,33 @@ class SymbolField extends React.Component<SymbolFieldProperties> {
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     scrollBoxEntry: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
       width: '100%',
       backgroundColor: '#FFFFFF',
       color: '#000000',
       font: '400 14px Roboto',
       paddingLeft: '10px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      cursor: 'pointer' as 'pointer',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      cursor: 'pointer',
       ':hover': {
         backgroundColor: '#F8F8F8',
       }
     },
     scrollBoxEntrySelected: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
       width: '100%',
       backgroundColor: '#684BC7',
       color: '#FFFFFF',
       font: '400 14px Roboto',
       paddingLeft: '10px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      cursor: 'pointer' as 'pointer'
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      cursor: 'pointer'
     }
   });
 }

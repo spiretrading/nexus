@@ -36,11 +36,6 @@ interface State {
 
 /** Displays a panel of icons highlighting an account's roles. */
 export class RoleIcon extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    onClick: () => {},
-    onTouch: () => {}
-  };
-
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -124,15 +119,15 @@ export class RoleIcon extends React.Component<Properties, State> {
 
   private onClick = () => {
     if(!this.props.readonly && !this.props.isTouchTooltipShown) {
-      this.props.onClick();
+      this.props.onClick?.();
     }
   }
 
   private onTouch = () => {
     if(!this.props.readonly) {
-      this.props.onClick();
+      this.props.onClick?.();
     }
-    this.props.onTouch();
+    this.props.onTouch?.();
   }
 
   private getText = (role: Nexus.AccountRoles.Role) => {

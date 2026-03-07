@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 import { DisplaySize } from '..';
 
@@ -19,16 +19,8 @@ interface Properties {
   onClick?: () => void;
 }
 
-/** A checkmark component. */
-export class Checkmark extends React.Component<Properties> {
-  public static readonly defaultProps = {
-    onClick: () => {}
-  }
-
-  constructor(props: Properties) {
-    super(props);
-  }
-  
+/** A checkbox component. */
+export class Checkbox extends React.Component<Properties> {
   public render(): JSX.Element {
     const imgSrc = (() => {
       if(this.props.isChecked) {
@@ -46,14 +38,14 @@ export class Checkmark extends React.Component<Properties> {
     })();
     const containerStyle = (() => {
       if(this.props.readonly) {
-        return Checkmark.STYLE.containerReadonly;
+        return Checkbox.STYLE.containerReadonly;
       } else {
-        return Checkmark.STYLE.container;
+        return Checkbox.STYLE.container;
       }
     })();
     return (
       <div style={containerStyle}
-          className={css(Checkmark.EXTRA_STYLE.noDefaults)}
+          className={css(Checkbox.EXTRA_STYLE.noDefaults)}
           onClick={this.onClick}>
         <img height={size} width={size} src={imgSrc}/>
       </div>);
@@ -61,7 +53,7 @@ export class Checkmark extends React.Component<Properties> {
 
   private onClick = () => {
     if(!this.props.readonly) {
-      this.props.onClick();
+      this.props.onClick?.();
     }
   }
 
