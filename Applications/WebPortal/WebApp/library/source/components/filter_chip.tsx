@@ -85,10 +85,10 @@ export class FilterChip extends React.Component<Properties, State> {
 const STYLES = StyleSheet.create({
   container: {
     display: 'inline-flex',
-    position: 'relative' as 'relative'
+    position: 'relative'
   },
   input: {
-    position: 'absolute' as 'absolute',
+    position: 'absolute',
     width: '100%',
     height: '100%',
     appearance: 'none',

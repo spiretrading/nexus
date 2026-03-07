@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 import { NavigationTab } from './navigation_tab';
 
@@ -18,46 +18,42 @@ interface Properties {
 }
 
 /** Displays a navigation header with tabs. */
-export class NavigationHeader extends React.Component<Properties> {
-  public render(): JSX.Element {
-    const children = React.Children.map(this.props.children,
-      (child, index) => {
-        if(!React.isValidElement(child) || child.type !== NavigationTab) {
-          return child;
-        }
-        const tabProps = child.props as {href: string};
-        return (
-          <>
-            {index > 0 &&
-              <div className={css(NavigationHeader.STYLES.gap)}/>}
-            {React.cloneElement(child, {
-              variant: this.props.variant,
-              isCurrent: tabProps.href === this.props.current,
-              onClick: () => this.props.onNavigate?.(tabProps.href)
-            })}
-          </>);
-      });
-    return (
-      <header className={
-          `${css(NavigationHeader.STYLES.header)}` +
-          ` ${this.props.className || ''}`}>
-        <nav className={css(NavigationHeader.STYLES.nav)}>
-          {children}
-        </nav>
-      </header>);
-  }
-
-  private static readonly STYLES = StyleSheet.create({
-    header: {
-      height: '40px'
-    },
-    nav: {
-      display: 'inline-flex',
-      alignItems: 'center' as 'center',
-      height: '100%'
-    },
-    gap: {
-      width: '30px'
-    }
-  });
+export function NavigationHeader(props: React.PropsWithChildren<Properties>):
+    JSX.Element {
+  const children = React.Children.map(props.children,
+    (child, index) => {
+      if(!React.isValidElement(child) || child.type !== NavigationTab) {
+        return child;
+      }
+      const tabProps = child.props as {href: string};
+      return (
+        <>
+          {index > 0 && <div className={css(STYLES.gap)}/>}
+          {React.cloneElement(child, {
+            variant: props.variant,
+            isCurrent: tabProps.href === props.current,
+            onClick: () => props.onNavigate?.(tabProps.href)
+          })}
+        </>);
+    });
+  return (
+    <header className={`${css(STYLES.header)} ${props.className ?? ''}`}>
+      <nav className={css(STYLES.nav)}>
+        {children}
+      </nav>
+    </header>);
 }
+
+const STYLES = StyleSheet.create({
+  header: {
+    height: '40px'
+  },
+  nav: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    height: '100%'
+  },
+  gap: {
+    width: '30px'
+  }
+});

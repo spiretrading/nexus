@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 
@@ -20,7 +20,7 @@ interface Properties {
   onChange?: (value?: Nexus.Money) => (boolean | void);
 
   /** Additional CSS styles. */
-  style?: any;
+  style?: React.CSSProperties;
 
   /** The class name of the money input box. */
   className?: string;
@@ -30,16 +30,12 @@ interface State {
   value: Nexus.Money;
 }
 
-/** A editable money field. */
+/** An editable money field. */
 export class MoneyField extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    onChange: () => {}
-  };
-
   constructor(props: Properties) {
     super(props);
     this.state = {
-      value: props.value || Nexus.Money.ZERO
+      value: props.value ?? Nexus.Money.ZERO
     };
   }
 
@@ -66,9 +62,9 @@ export class MoneyField extends React.Component<Properties, State> {
   }
 
   private onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if(event.keyCode === 38) {
+    if(event.key === 'ArrowUp') {
       this.increment();
-    } else if(event.keyCode === 40) {
+    } else if(event.key === 'ArrowDown') {
       this.decrement();
     }
   }
@@ -172,7 +168,7 @@ export class MoneyField extends React.Component<Properties, State> {
       maxWidth: '246px',
       width: '100%',
       paddingLeft: '10px'
-    }
+    } as React.CSSProperties
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     effects: {

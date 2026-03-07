@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 
 interface Properties {
@@ -38,8 +38,7 @@ export class NavigationTab extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const variant = this.props.variant !== undefined ? this.props.variant :
-      NavigationTab.Variant.ICON_LABEL;
+    const variant = this.props.variant ?? NavigationTab.Variant.ICON_LABEL;
     const isHighlighted = this.props.isCurrent || this.state.isHovered ||
       this.state.isFocused;
     const iconColor = isHighlighted ? '#4B23A0' : '#7D7E90';
@@ -116,19 +115,19 @@ export class NavigationTab extends React.Component<Properties, State> {
     label: {
       fontSize: '0.875rem',
       fontFamily: 'Roboto',
-      whiteSpace: 'nowrap' as 'nowrap'
+      whiteSpace: 'nowrap'
     }
   };
 
   private static readonly STYLES = StyleSheet.create({
     tab: {
       display: 'inline-flex',
-      flexDirection: 'column' as 'column',
+      flexDirection: 'column',
       height: '40px',
       border: '1px solid transparent',
       cursor: 'pointer',
       textDecoration: 'none',
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       '-webkit-tap-highlight-color': 'transparent',
       outline: 'none',
       ':focus-visible': {
@@ -137,15 +136,15 @@ export class NavigationTab extends React.Component<Properties, State> {
     },
     iconTab: {
       width: '38px',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center'
+      alignItems: 'center',
+      justifyContent: 'center'
     },
     iconLabelTab: {
       padding: '0 15px'
     },
     content: {
       display: 'flex',
-      alignItems: 'center' as 'center',
+      alignItems: 'center',
       flex: '1 1 auto'
     },
     iconLabelSpacer: {

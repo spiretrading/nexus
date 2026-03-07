@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 
 interface Properties {
@@ -7,7 +7,7 @@ interface Properties {
   value?: number;
 
   /** Additional CSS styles. */
-  style?: any;
+  style?: React.CSSProperties;
 
   /** The class name of the input field. */
   className?: string;
@@ -27,15 +27,18 @@ interface Properties {
   onChange?: (value: number) => void;
 }
 
-/** A editable decimal number field. */
-export class NumberField extends React.Component<Properties> {
-  public static readonly defaultProps = {
-    value: 0,
-    onChange: () => {}
-  };
+interface State {
+  text: string;
+}
 
+/** An editable decimal number field. */
+export class NumberField extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
+    this.state = {
+      text: (props.value ?? 0).toString()
+    };
+    this.inputRef = React.createRef<HTMLInputElement>();
   }
 
   public render(): JSX.Element {
@@ -47,39 +50,77 @@ export class NumberField extends React.Component<Properties> {
       }
     })();
     return (
-      <input type={'number'}
-        min={this.props.min}
-        max={this.props.max}
-        value={this.props.value}
+      <input type={'text'}
+        ref={this.inputRef}
+        value={this.state.text}
         style={{...boxStyle, ...this.props.style}}
         disabled={this.props.readonly}
         onChange={this.onChange}
-        onWheel={this.onWheel}
+        onBlur={this.onBlur}
         className={css(NumberField.EXTRA_STYLE.customHighlighting) + ' ' +
           this.props.className}/>);
   }
 
-  private onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.props.onChange(event.target.valueAsNumber);
+  public componentDidMount() {
+    this.inputRef.current?.addEventListener('wheel', this.onWheel,
+      {passive: false});
   }
 
-  private onWheel = (event: React.WheelEvent<HTMLInputElement>) => {
+  public componentDidUpdate(prevProps: Properties) {
+    if(this.props.value !== prevProps.value) {
+      this.setState({text: (this.props.value ?? 0).toString()});
+    }
+  }
+
+  public componentWillUnmount() {
+    this.inputRef.current?.removeEventListener('wheel', this.onWheel);
+  }
+
+  private onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const text = event.target.value;
+    this.setState({text});
+    const value = parseFloat(text);
+    if(!isNaN(value) && value !== (this.props.value ?? 0)) {
+      this.props.onChange?.(value);
+    }
+  }
+
+  private onBlur = () => {
+    let value = parseFloat(this.state.text);
+    if(isNaN(value)) {
+      value = this.props.value ?? 0;
+    }
+    if(this.props.min !== undefined) {
+      value = Math.max(value, this.props.min);
+    }
+    if(this.props.max !== undefined) {
+      value = Math.min(value, this.props.max);
+    }
+    this.setState({text: value.toString()});
+    if(value !== (this.props.value ?? 0)) {
+      this.props.onChange?.(value);
+    }
+  }
+
+  private onWheel = (event: WheelEvent) => {
     if(document.activeElement !== event.currentTarget) {
       return;
     }
     event.preventDefault();
     const delta = event.deltaY < 0 ? 1 : -1;
-    let next = this.props.value + delta;
+    let next = (this.props.value ?? 0) + delta;
     if(this.props.min !== undefined) {
       next = Math.max(next, this.props.min);
     }
     if(this.props.max !== undefined) {
       next = Math.min(next, this.props.max);
     }
-    this.props.onChange(next);
+    if(next !== (this.props.value ?? 0)) {
+      this.props.onChange?.(next);
+    }
   }
 
-  private static STYLE = {
+  private static readonly STYLE = {
     box: {
       boxSizing: 'border-box',
       height: '34px',
@@ -122,9 +163,8 @@ export class NumberField extends React.Component<Properties> {
       backgroundColor: '#FFFFFF'
     } as React.CSSProperties
   };
-  private static EXTRA_STYLE = StyleSheet.create({
+  private static readonly EXTRA_STYLE = StyleSheet.create({
     customHighlighting: {
-      '-moz-appearance': 'textfield',
       ':focus': {
         borderColor: '#684BC7',
         boxShadow: 'none',
@@ -134,17 +174,9 @@ export class NumberField extends React.Component<Properties> {
       },
       '::moz-focus-inner': {
         border: 0
-      },
-      '::-webkit-inner-spin-button': {
-        '-webkit-appearance': 'none',
-        'appearance': 'none',
-        margin: 0
-      },
-      '::-webkit-outer-spin-button': {
-        '-webkit-appearance': 'none',
-        'appearance': 'none',
-        margin: 0
       }
     }
   });
+
+  private inputRef: React.RefObject<HTMLInputElement>;
 }

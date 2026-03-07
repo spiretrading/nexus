@@ -1,6 +1,6 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
-import { Checkmark, DisplaySize } from '..';
+import { Checkbox, DisplaySize } from '..';
 
 let nextId = 0;
 
@@ -35,9 +35,8 @@ export class LabeledCheckbox extends React.Component<Properties> {
           checked={this.props.isChecked}
           onChange={this.onChange}
           className={css(STYLES.input)}/>
-        <label htmlFor={this.checkboxId}
-            className={css(STYLES.label)}>
-          <Checkmark displaySize={DisplaySize.SMALL}
+        <label htmlFor={this.checkboxId} className={css(STYLES.label)}>
+          <Checkbox displaySize={DisplaySize.SMALL}
             isChecked={this.props.isChecked}/>
           <span className={css(STYLES.labelText)}>
             {this.props.label}
@@ -56,10 +55,10 @@ export class LabeledCheckbox extends React.Component<Properties> {
 const STYLES = StyleSheet.create({
   container: {
     display: 'inline-flex',
-    position: 'relative' as 'relative'
+    position: 'relative'
   },
   input: {
-    position: 'absolute' as 'absolute',
+    position: 'absolute',
     width: '100%',
     height: '100%',
     appearance: 'none',
@@ -77,7 +76,7 @@ const STYLES = StyleSheet.create({
   },
   label: {
     display: 'flex',
-    flexDirection: 'row' as 'row',
+    flexDirection: 'row',
     alignItems: 'center',
     cursor: 'pointer'
   },

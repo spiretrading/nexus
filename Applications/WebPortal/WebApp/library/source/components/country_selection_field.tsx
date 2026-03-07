@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 import * as Nexus from 'nexus';
 import { DisplaySize } from '..';
@@ -16,7 +16,7 @@ interface Properties {
   readonly?: boolean;
 
   /** The event handler called when the selection changes. */
-  onChange?: (currency: Nexus.CountryCode) => void;
+  onChange?: (country: Nexus.CountryCode) => void;
 
   /** Determines the size of the element. */
   displaySize: DisplaySize;
@@ -24,14 +24,6 @@ interface Properties {
 
 /** A country selection field. */
 export class CountrySelectionField extends React.Component<Properties> {
-  public static readonly defaultProps = {
-    onChange: () => {}
-  };
-
-  constructor(props: Properties) {
-    super(props);
-  }
-
   public render(): JSX.Element {
     const boxSizing = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
@@ -59,7 +51,7 @@ export class CountrySelectionField extends React.Component<Properties> {
       } else {
         return (
           <select value={this.props.value.code}
-              className={css(CountrySelectionField.EXTRA_STYLE.noHighting)}
+              className={css(CountrySelectionField.EXTRA_STYLE.noHighlighting)}
               style={{...boxSizing,
                 ...CountrySelectionField.STYLE.selectionBoxStyle}}
               onChange={this.onChange}>
@@ -72,7 +64,7 @@ export class CountrySelectionField extends React.Component<Properties> {
 
   private onChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const code = new Nexus.CountryCode(parseInt(event.target.value, 10));
-    this.props.onChange(code);
+    this.props.onChange?.(code);
   }
 
   private static readonly STYLE = {
@@ -102,8 +94,8 @@ export class CountrySelectionField extends React.Component<Properties> {
       appearance: 'none'
     } as React.CSSProperties
   };
-  public static readonly EXTRA_STYLE = StyleSheet.create({
-    noHighting: {
+  private static readonly EXTRA_STYLE = StyleSheet.create({
+    noHighlighting: {
       ':focus': {
         outlineColor: 'transparent',
         outlineStyle: 'none'

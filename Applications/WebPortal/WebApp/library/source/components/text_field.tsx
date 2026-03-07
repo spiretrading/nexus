@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 import { DisplaySize } from '..';
 
@@ -17,7 +17,7 @@ interface Properties {
   isError?: boolean;
 
   /** Additional CSS styles. */
-  style?: any;
+  style?: React.CSSProperties;
 
   /** The class name of the input box. */
   className?: string;
@@ -36,13 +36,6 @@ interface Properties {
 
 /** Displays a component that displays a single line of text. */
 export class TextField extends React.Component<Properties> {
-  public static readonly defaultProps = {
-    value: '',
-    placeholder: '',
-    isError: false,
-    onInput: (_: string) => {}
-  };
-
   constructor(props: Properties) {
     super(props);
     this.inputRef = React.createRef();
@@ -72,7 +65,7 @@ export class TextField extends React.Component<Properties> {
         placeholder={this.props.placeholder}
         ref={this.inputRef}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-          this.props.onInput(event.target.value);}}
+          this.props.onInput?.(event.target.value);}}
         className={css(TextField.EXTRA_STYLE.effects, errorStyle) + ' ' +
           this.props.className}/>);
   }

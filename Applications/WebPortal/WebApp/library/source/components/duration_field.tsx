@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { DisplaySize } from '..';
@@ -41,13 +41,6 @@ interface State {
 
 /** A component that displays a duration. */
 export class DurationField extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    value: new Beam.Duration(0),
-    minHourValue: 0,
-    maxHourValue: 99,
-    onChange: () => {}
-  };
-
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -58,7 +51,8 @@ export class DurationField extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const splitTime = this.props.value.split();
+    const value = this.props.value ?? new Beam.Duration(0);
+    const splitTime = value.split();
     const containerStyle = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return DurationField.STYLE.containerSmall;
@@ -93,7 +87,7 @@ export class DurationField extends React.Component<Properties, State> {
           onBlur={this.onBlur}>
         <div style={DurationField.STYLE.inner}>
           <IntegerField
-            min={this.props.minHourValue} max={this.props.maxHourValue}
+            min={this.props.minHourValue ?? 0} max={this.props.maxHourValue ?? 99}
             value={splitTime.hours}
             className={css(DurationField.EXTRA_STYLE.effects)}
             style={DurationField.STYLE.integerBox}
@@ -124,7 +118,6 @@ export class DurationField extends React.Component<Properties, State> {
         </div>
       </div>);
   }
-  
 
   public componentDidMount() {
     window.addEventListener('resize', this.handleResize);
@@ -132,7 +125,7 @@ export class DurationField extends React.Component<Properties, State> {
   }
 
   public componentWillUnmount() {
-    window.addEventListener('resize', this.handleResize);
+    window.removeEventListener('resize', this.handleResize);
   }
 
   private handleResize = () => {
@@ -155,7 +148,7 @@ export class DurationField extends React.Component<Properties, State> {
   }
 
   private onChange = (timeUnit: TimeUnit, value: number) => {
-    const oldDuration = this.props.value.split();
+    const oldDuration = (this.props.value ?? new Beam.Duration(0)).split();
     const newValue = (() => {
       switch(timeUnit) {
         case TimeUnit.HOURS:
@@ -172,7 +165,7 @@ export class DurationField extends React.Component<Properties, State> {
             Beam.Duration.SECOND.multiply(value));
       }
     })();
-    this.props.onChange(newValue);
+    this.props.onChange?.(newValue);
   }
 
   private static readonly STYLE = {

@@ -123,10 +123,10 @@ export class SegmentButton extends React.Component<Properties, State> {
 const STYLES = StyleSheet.create({
   container: {
     display: 'inline-flex',
-    position: 'relative' as 'relative'
+    position: 'relative'
   },
   input: {
-    position: 'absolute' as 'absolute',
+    position: 'absolute',
     width: '100%',
     height: '100%',
     appearance: 'none',
@@ -145,7 +145,7 @@ const STYLES = StyleSheet.create({
   label: {
     fontFamily: 'Roboto',
     fontSize: '0.875rem',
-    textAlign: 'center' as 'center',
+    textAlign: 'center',
     padding: '0 9px',
     borderRadius: '1px',
     lineHeight: '34px',
@@ -190,7 +190,7 @@ const STYLES = StyleSheet.create({
   },
   badge: {
     fontSize: '0.75rem',
-    textAlign: 'center' as 'center',
+    textAlign: 'center',
     padding: '2px 4px',
     borderRadius: '4px',
     minWidth: '1.125rem',

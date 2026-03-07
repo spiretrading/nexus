@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Button, DisplaySize, HLine, Modal, RegionItemInput } from '..';
@@ -20,7 +20,8 @@ interface Properties {
   onChange?: (value: Nexus.Region) => void;
 }
 
-type RegionItem = Nexus.CountryCode | Nexus.Venue | Nexus.Security | Nexus.Region;
+type RegionItem =
+  Nexus.CountryCode | Nexus.Venue | Nexus.Security | Nexus.Region;
 
 interface State {
   inputString: string;
@@ -31,18 +32,12 @@ interface State {
 
 /** A component that displays and edits a region. */
 export class RegionField extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    value: new Nexus.Region(),
-    readonly: false,
-    onChange: () => {}
-  }
-
   constructor(props: Properties) {
     super(props);
     this.state = {
       inputString: '',
       isEditing: false,
-      regionItems: decomposeRegion(this.props.value),
+      regionItems: decomposeRegion(this.props.value ?? new Nexus.Region()),
       selection: -1
     };
   }
@@ -173,7 +168,7 @@ export class RegionField extends React.Component<Properties, State> {
             onClick={this.onSubmitChange}/>);
       }
     })();
-    const displayText = makeDisplayText(this.props.value);
+    const displayText = makeDisplayText(this.props.value ?? new Nexus.Region());
     return (
       <div>
         <input
@@ -220,7 +215,7 @@ export class RegionField extends React.Component<Properties, State> {
   }
 
   private onSubmitChange = () => {
-    this.props.onChange(recomposeRegion(this.state.regionItems));
+    this.props.onChange?.(recomposeRegion(this.state.regionItems));
     this.onClose();
   }
 
@@ -244,7 +239,7 @@ export class RegionField extends React.Component<Properties, State> {
       inputString: '',
       isEditing: true,
       selection: -1,
-      regionItems: decomposeRegion(this.props.value)
+      regionItems: decomposeRegion(this.props.value ?? new Nexus.Region())
     });
   }
 
@@ -371,7 +366,7 @@ export class RegionField extends React.Component<Properties, State> {
       }
     },
     button: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
       width: '246px',
       backgroundColor: '#684BC7',
@@ -380,8 +375,8 @@ export class RegionField extends React.Component<Properties, State> {
       borderRadius: '1px',
       font: '400 16px Roboto',
       outline: 'none',
-      MozAppearance: 'none' as 'none',
-      cursor: 'pointer' as 'pointer',
+      MozAppearance: 'none',
+      cursor: 'pointer',
       ':active': {
         backgroundColor: '#4B23A0'
       },
@@ -394,7 +389,7 @@ export class RegionField extends React.Component<Properties, State> {
         webkitBoxShadow: 'none',
         outlineColor: 'transparent',
         outlineStyle: 'none',
-        MozAppearance: 'none' as 'none'
+        MozAppearance: 'none'
       },
       ':hover':{
         backgroundColor: '#4B23A0'
@@ -488,9 +483,9 @@ class RegionItemList extends React.Component<RegionItemListProperties> {
   private selectEntry(index: number) {
     if(!this.props.readonly) {
       if(index === this.props.selection) {
-        this.props.onClick(-1);
+        this.props.onClick?.(-1);
       } else {
-        this.props.onClick(index);
+        this.props.onClick?.(index);
       }
     }
   }
@@ -566,46 +561,46 @@ class RegionItemList extends React.Component<RegionItemListProperties> {
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     entry: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
       width: '100%',
       backgroundColor: '#FFFFFF',
       color: '#000000',
       font: '400 14px Roboto',
       paddingLeft: '10px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      cursor: 'pointer' as 'pointer',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      cursor: 'pointer',
       ':hover': {
         backgroundColor: '#F8F8F8',
       }
     },
     entryReadonly: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
       width: '100%',
       backgroundColor: '#FFFFFF',
       color: '#000000',
       font: '400 14px Roboto',
       paddingLeft: '10px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      cursor: 'default' as 'default'
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      cursor: 'default'
     },
     entrySelected: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
       width: '100%',
       backgroundColor: '#684BC7',
       color: '#FFFFFF',
       font: '400 14px Roboto',
       paddingLeft: '10px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      cursor: 'pointer' as 'pointer'
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      cursor: 'pointer'
     }
   });
 }

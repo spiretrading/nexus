@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 import { IconLabelButton } from './icon_label_button';
 
@@ -43,8 +43,7 @@ export class Pagination extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const pageSize = this.props.pageSize !== undefined ?
-      this.props.pageSize : 50;
+    const pageSize = this.props.pageSize ?? 50;
     const pageCount = Math.ceil(this.props.totalCount / pageSize);
     if(pageCount <= 1) {
       return (
@@ -288,12 +287,12 @@ class PageLink extends React.Component<PageLinkProperties, PageLinkState> {
 
 const STYLES = StyleSheet.create({
   container: {
-    containerType: 'inline-size' as 'inline-size'
+    containerType: 'inline-size'
   },
   content: {
     display: 'flex',
-    alignItems: 'center' as 'center',
-    justifyContent: 'center' as 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: '10px'
   },
   wideContent: {
@@ -301,36 +300,36 @@ const STYLES = StyleSheet.create({
   },
   pageLinks: {
     display: 'flex',
-    alignItems: 'center' as 'center',
+    alignItems: 'center',
     flex: '0 1 auto',
     minWidth: 0,
-    overflowX: 'auto' as 'auto'
+    overflowX: 'auto'
   },
   pageSequence: {
     display: 'flex',
-    alignItems: 'center' as 'center',
-    overflowX: 'auto' as 'auto'
+    alignItems: 'center',
+    overflowX: 'auto'
   },
   ellipsis: {
     display: 'inline-flex',
-    alignItems: 'center' as 'center',
-    justifyContent: 'center' as 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
     width: '34px',
     height: '34px',
     color: '#7D7E90'
   },
   pageLink: {
-    position: 'relative' as 'relative',
+    position: 'relative',
     display: 'inline-flex',
-    alignItems: 'center' as 'center',
-    justifyContent: 'center' as 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
     minWidth: '34px',
     height: '34px',
     border: '1px solid transparent',
     borderRadius: '1px',
     padding: '0 3px',
     textDecoration: 'none',
-    boxSizing: 'border-box' as 'border-box',
+    boxSizing: 'border-box',
     outline: 'none',
     cursor: 'pointer',
     ':focus-visible': {
@@ -338,7 +337,7 @@ const STYLES = StyleSheet.create({
     }
   },
   pageLinkBase: {
-    position: 'absolute' as 'absolute',
+    position: 'absolute',
     top: '2px',
     right: '2px',
     bottom: '2px',
@@ -346,9 +345,9 @@ const STYLES = StyleSheet.create({
     borderRadius: '2px'
   },
   pageLinkContent: {
-    position: 'relative' as 'relative',
+    position: 'relative',
     fontSize: '14px',
     fontFamily: 'Roboto',
-    textAlign: 'center' as 'center'
+    textAlign: 'center'
   }
 });

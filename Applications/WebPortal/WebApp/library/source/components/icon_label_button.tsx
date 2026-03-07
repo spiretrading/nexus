@@ -1,4 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 
 interface Properties {
@@ -36,10 +36,9 @@ export class IconLabelButton extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const variant = this.props.variant !== undefined ?
-      this.props.variant : IconLabelButton.Variant.ICON;
-    const iconPlacement = this.props.iconPlacement !== undefined ?
-      this.props.iconPlacement : IconLabelButton.Placement.LEADING;
+    const variant = this.props.variant ?? IconLabelButton.Variant.ICON;
+    const iconPlacement = this.props.iconPlacement ??
+      IconLabelButton.Placement.LEADING;
     const fillColor = (() => {
       if(this.props.disabled) {
         return '#C8C8C8';
@@ -114,23 +113,23 @@ export class IconLabelButton extends React.Component<Properties, State> {
     label: {
       fontSize: '0.875rem',
       fontFamily: 'Roboto',
-      fontWeight: 500 as 500,
-      whiteSpace: 'nowrap' as 'nowrap'
+      fontWeight: 500,
+      whiteSpace: 'nowrap'
     }
   };
 
   private static readonly STYLES = StyleSheet.create({
     button: {
       display: 'inline-flex',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center',
+      alignItems: 'center',
+      justifyContent: 'center',
       height: '34px',
       padding: 0,
       border: '1px solid transparent',
       borderRadius: '1px',
       backgroundColor: '#FFFFFF',
       cursor: 'pointer',
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       outline: 'none',
       ':hover': {
         backgroundColor: '#F8F8F8'
@@ -147,7 +146,7 @@ export class IconLabelButton extends React.Component<Properties, State> {
     },
     content: {
       display: 'flex',
-      alignItems: 'center' as 'center'
+      alignItems: 'center'
     },
     spacer: {
       width: '8px',

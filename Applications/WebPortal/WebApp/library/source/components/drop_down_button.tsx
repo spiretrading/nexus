@@ -3,11 +3,11 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 
 interface Properties {
 
-  /* Determines the size of the element. */
+  /** Determines the size of the element. */
   size?: number | string;
 
   /** The onClick event handler. */
-  onClick?: (event?: React.MouseEvent<any>) => void;
+  onClick?: (event?: React.MouseEvent<HTMLDivElement>) => void;
 
   /** Determines if the button is collapsed or expanded. */
   isExpanded: boolean;
@@ -17,12 +17,8 @@ interface State {
   isFirstTime: boolean;
 }
 
+/** An animated button that toggles between a collapsed and expanded state. */
 export class DropDownButton extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    onClick: () => {},
-    size: '16px'
-  }
-
   constructor(properties: Properties) {
     super(properties);
     this.state = {
@@ -31,6 +27,7 @@ export class DropDownButton extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
+    const size = this.props.size ?? '16px';
     const endSource = (() => {
       if(this.props.isExpanded) {
         return 'resources/arrow-collapse.svg';
@@ -68,12 +65,12 @@ export class DropDownButton extends React.Component<Properties, State> {
           onClick={this.props.onClick}>
         <div style={DropDownButton.STYLE.imageWrapper}>
           <img src={endSource}
-            width={this.props.size}
-            height={this.props.size}
+            width={size}
+            height={size}
             className={css(DropDownButton.ANIMATION.base, startStyle)}/>
           <img src={startSource}
-            width={this.props.size}
-            height={this.props.size}
+            width={size}
+            height={size}
             className={css(DropDownButton.ANIMATION.base, endStyle)}/>
         </div>
       </div>);
@@ -156,7 +153,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       animationDuration: '200ms'
     }
   });
-  public static readonly STYLE = {
+  private static readonly STYLE = {
     imageWrapper: {
       position: 'relative',
       display: 'flex',

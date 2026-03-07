@@ -1,12 +1,13 @@
-import { StyleSheet } from 'aphrodite';
+import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as WebPortal from 'web_portal';
-import { ArrayInput, BeamAccountInput, BeamDateInput, BeamDateTimeInput,
-  BeamDurationInput, BeamTimeOfDayInput, BooleanInput, ColorInput, CSSInput,
-  DateInput, EnumInput, NumberInput, NumberSliderInput, OptionalInput,
-  MoneyInput, ReadonlyInput, StyleDeclarationValueInput,
+import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
+  BeamDateTimeInput, BeamDurationInput, BeamTimeOfDayInput, BooleanInput,
+  ColorInput, CountryInput, CurrencyInput, CSSInput, DateInput, EnumInput,
+  NumberInput, NumberSliderInput, OptionalInput, MoneyInput, ReadonlyInput,
+  SecurityInput, StyleDeclarationValueInput,
   TextInput } from '../viewer/propertyInput';
 import {ComponentSchema, ComponentSection, PropertySchema,
   SignalSchema} from './schemas';
@@ -39,14 +40,40 @@ const burgerButton =
     [new SignalSchema('onClick', '')],
     WebPortal.BurgerButton);
 
-const checkmark =
-  new ComponentSchema('Checkmark',
+const checkbox =
+  new ComponentSchema('Checkbox',
     [new PropertySchema('displaySize', WebPortal.DisplaySize.SMALL,
         EnumInput(WebPortal.DisplaySize)),
       new PropertySchema('isChecked', true, BooleanInput),
       new PropertySchema('readonly', false, BooleanInput)],
     [new SignalSchema('onClick', '')],
-    WebPortal.Checkmark);
+    WebPortal.Checkbox);
+
+const countrySelectionField =
+  new ComponentSchema('CountrySelectionField',
+    [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
+        EnumInput(WebPortal.DisplaySize)),
+      new PropertySchema('value', Nexus.DefaultCountries.US,
+        CountryInput),
+      new PropertySchema('readonly', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    (props: any) => React.createElement(WebPortal.CountrySelectionField, {
+      ...props,
+      countryDatabase: Nexus.defaultCountryDatabase
+    }));
+
+const currencyDatabase = Nexus.buildDefaultCurrencyDatabase();
+
+const currencySelectionField =
+  new ComponentSchema('CurrencySelectionField',
+    [new PropertySchema('value', Nexus.DefaultCurrencies.USD,
+        CurrencyInput),
+      new PropertySchema('readonly', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    (props: any) => React.createElement(WebPortal.CurrencySelectionField, {
+      ...props,
+      currencyDatabase
+    }));
 
 const dateField =
   new ComponentSchema('DateField',
@@ -187,6 +214,28 @@ const moneyField =
     [new SignalSchema('onChange', 'value')],
     WebPortal.MoneyField);
 
+const navigationHeader =
+  new ComponentSchema('NavigationHeader',
+    [],
+    [],
+    () => React.createElement(WebPortal.NavigationHeader,
+      {current: 'requests/you'},
+      React.createElement(WebPortal.NavigationTab, {
+        icon: 'resources/requests_page/your-requests.svg',
+        label: 'Your Requests',
+        href: 'requests/you'
+      }),
+      React.createElement(WebPortal.NavigationTab, {
+        icon: 'resources/requests_page/group-requests.svg',
+        label: 'Group Requests',
+        href: 'requests/group'
+      }),
+      React.createElement(WebPortal.NavigationTab, {
+        icon: 'resources/requests_page/approved.svg',
+        label: 'Approved',
+        href: 'requests/approved'
+      })));
+
 const navigationTab =
   new ComponentSchema('NavigationTab',
     [new PropertySchema('icon', 'resources/requests_page/your-requests.svg',
@@ -218,6 +267,21 @@ const pagination =
     [new SignalSchema('onNavigate', 'pageIndex')],
     WebPortal.Pagination, 800);
 
+const regionField =
+  new ComponentSchema('RegionField',
+    [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
+        EnumInput(WebPortal.DisplaySize)),
+      new PropertySchema('readonly', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    WebPortal.RegionField);
+
+const regionItemInput =
+  new ComponentSchema('RegionItemInput',
+    [new PropertySchema('value', '', TextInput)],
+    [new SignalSchema('onChange', 'value'),
+      new SignalSchema('onEnter', 'value')],
+    WebPortal.RegionItemInput);
+
 const relativeDate =
   new ComponentSchema('RelativeDate',
     [new PropertySchema('datetime', new Date(), DateInput),
@@ -227,6 +291,31 @@ const relativeDate =
         })(), DateInput)],
     [],
     WebPortal.RelativeDate);
+
+const securitiesField =
+  new ComponentSchema('SecuritiesField',
+    [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
+        EnumInput(WebPortal.DisplaySize)),
+      new PropertySchema('readonly', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    WebPortal.SecuritiesField);
+
+const securityFieldInput =
+  new ComponentSchema('SecurityInput',
+    [new PropertySchema('value', '', TextInput)],
+    [new SignalSchema('onChange', 'value'),
+      new SignalSchema('onEnter', 'value')],
+    WebPortal.SecurityInput);
+
+const securityField =
+  new ComponentSchema('SecurityField',
+    [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
+        EnumInput(WebPortal.DisplaySize)),
+      new PropertySchema('value',
+        new Nexus.Security('', Nexus.Venue.NONE), SecurityInput),
+      new PropertySchema('readonly', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    WebPortal.SecurityField);
 
 const segmentButton =
   new ComponentSchema('SegmentButton',
@@ -264,6 +353,13 @@ const roleIcon =
     [new SignalSchema('onClick', ''),
       new SignalSchema('onTouch', '')],
     WebPortal.RoleIcon);
+
+const rolePanel =
+  new ComponentSchema('RolePanel',
+    [new PropertySchema('roles', new Nexus.AccountRoles(),
+        AccountRolesInput)],
+    [],
+    WebPortal.RolePanel);
 
 const textField =
   new ComponentSchema('TextField',
@@ -540,14 +636,43 @@ const riskControlsChangeItem =
     [],
     WebPortal.RiskControlsChangeItem);
 
+const PAGE_LAYOUT_STYLES = StyleSheet.create({
+  red: {
+    backgroundColor: '#E45532',
+    height: '100px'
+  },
+  green: {
+    backgroundColor: '#36B24A',
+    height: '150px'
+  },
+  blue: {
+    backgroundColor: '#3366CC',
+    height: '80px'
+  }
+});
+
+const pageLayout =
+  new ComponentSchema('PageLayout',
+    [],
+    [],
+    () => React.createElement(WebPortal.PageLayout, null,
+      React.createElement('div', null,
+        React.createElement('div', {className: css(PAGE_LAYOUT_STYLES.red)}),
+        React.createElement('div', {className: css(PAGE_LAYOUT_STYLES.green)}),
+        React.createElement('div', {className: css(PAGE_LAYOUT_STYLES.blue)}))),
+    -1);
+
 export const componentSections = [
-  new ComponentSection('UI Kit', [button, burgerButton, checkmark, dateField,
+  new ComponentSection('UI Kit', [button, burgerButton, checkbox,
+    countrySelectionField, currencySelectionField, dateField,
     dateTimeField, dropDownButton, durationField, emptyMessage, errorMessage,
     filterChip, filterInput, hLine,
     iconLabelButton, integerField, labeledCheckbox, modal, moneyField,
-    navigationTab, numberField,
-    pagination, relativeDate, roleIcon, segmentButton, segmentedControl,
-    textField,
+    navigationHeader, navigationTab, numberField, pageLayout,
+    pagination, regionField, regionItemInput, relativeDate, roleIcon, rolePanel,
+    securitiesField, securityFieldInput, securityField,
+    segmentButton,
+    segmentedControl, textField,
     timeOfDayField]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,

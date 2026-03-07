@@ -1,6 +1,6 @@
 export * from './burger_button';
 export * from './button';
-export * from './checkmark';
+export * from './checkbox';
 export * from './country_selection_field';
 export * from './currency_selection_field';
 export * from './date_field';
