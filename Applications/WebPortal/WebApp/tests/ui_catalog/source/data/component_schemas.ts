@@ -187,7 +187,7 @@ const labeledCheckbox =
 
 const modal =
   new ComponentSchema('Modal',
-    [new PropertySchema('isOpen', true, BooleanInput),
+    [new PropertySchema('isOpen', false, BooleanInput),
       new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
         EnumInput(WebPortal.DisplaySize)),
       new PropertySchema('title', 'Modal Title', TextInput)],
@@ -623,6 +623,32 @@ const requestItemPlaceholder =
     [],
     WebPortal.RequestItemPlaceholder, -1);
 
+const requestFilterModal =
+  new ComponentSchema('RequestFilterModal',
+    [new PropertySchema('isOpen', false, BooleanInput),
+      new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
+        EnumInput(WebPortal.DisplaySize)),
+      new PropertySchema('categories',
+        new Set([Nexus.AccountModificationRequest.Type.ENTITLEMENTS]),
+        ReadonlyInput),
+      new PropertySchema('sortKey',
+        WebPortal.RequestSortSelect.Field.LAST_UPDATED,
+        EnumInput(WebPortal.RequestSortSelect.Field))],
+    [new SignalSchema('onClose', 'isOpen'),
+      new SignalSchema('onSubmit', '')],
+    (props: any) => {
+      if(!props.isOpen) {
+        return React.createElement('div', null, 'Modal is closed.');
+      }
+      return React.createElement(WebPortal.RequestFilterModal, {
+        displaySize: props.displaySize,
+        categories: props.categories,
+        sortKey: props.sortKey,
+        onSubmit: props.onSubmit,
+        onClose: () => props.onClose(false)
+      });
+    });
+
 const requestSortSelect =
   new ComponentSchema('RequestSortSelect',
     [new PropertySchema('value',
@@ -641,6 +667,55 @@ const riskControlsChangeItem =
         ReadonlyInput)],
     [],
     WebPortal.RiskControlsChangeItem);
+
+const SAMPLE_REQUEST_LIST:
+    WebPortal.RequestDirectoryPage.RequestEntry[] = (() => {
+  const yesterday = new Date(2025, 8, 23);
+  return REQUEST_ITEM_SAMPLES.map((change, i) => ({
+    id: 1024 + i,
+    category: change.type === 'entitlements' ?
+      Nexus.AccountModificationRequest.Type.ENTITLEMENTS :
+      Nexus.AccountModificationRequest.Type.RISK,
+    state: i === 1 ?
+      Nexus.AccountModificationRequest.Status.REVIEWED :
+      Nexus.AccountModificationRequest.Status.PENDING,
+    updateTime: yesterday,
+    accountName: 'achen01',
+    effectiveDate: new Date(2025, 9, 30),
+    firstChange: change,
+    additionalChangesCount: i === 0 ? 3 : 0,
+    commentCount: i === 0 ? 2 : 0,
+    managerApproval: i === 1 ?
+      {approver: 'cgreen01', self: false} : undefined
+  }));
+})();
+
+const requestDirectoryPage =
+  new ComponentSchema('RequestDirectoryPage',
+    [new PropertySchema('displayStatus',
+        WebPortal.RequestDirectoryPage.DisplayStatus.READY,
+        EnumInput(WebPortal.RequestDirectoryPage.DisplayStatus))],
+    [new SignalSchema('onSubmit', '')],
+    (props: any) => {
+      return React.createElement(WebPortal.RequestDirectoryPage, {
+        scope: WebPortal.RequestDirectoryPage.Scope.YOU,
+        displayStatus: props.displayStatus,
+        requestState: WebPortal.RequestDirectoryPage.RequestState.PENDING,
+        filters: {
+          query: '',
+          categories: new Set<Nexus.AccountModificationRequest.Type>(),
+          sortKey: WebPortal.RequestSortSelect.Field.LAST_UPDATED
+        },
+        filterCount: 0,
+        pageIndex: 0,
+        response: {
+          status: WebPortal.RequestDirectoryPage.ResponseStatus.READY,
+          facetCounts: {pending: 5, approved: 122, rejected: 122},
+          requestList: SAMPLE_REQUEST_LIST
+        },
+        onSubmit: props.onSubmit
+      });
+    }, -1);
 
 const PAGE_LAYOUT_STYLES = StyleSheet.create({
   red: {
@@ -683,6 +758,6 @@ export const componentSections = [
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,
-    requestDetailPage, requestEffectiveDate, requestItem,
-    requestItemPlaceholder, requestSortSelect, requestStateIndicator,
-    riskControlsChangeItem])];
+    requestDetailPage, requestDirectoryPage, requestEffectiveDate,
+    requestFilterModal, requestItem, requestItemPlaceholder,
+    requestSortSelect, requestStateIndicator, riskControlsChangeItem])];

@@ -9,7 +9,7 @@ interface Properties {
   radioId?: string;
 
   /** The name of the radio button group. */
-  name: string;
+  name?: string;
 
   /** The label displayed in the segment button. */
   label: string;
