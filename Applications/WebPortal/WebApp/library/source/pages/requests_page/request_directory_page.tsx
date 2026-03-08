@@ -7,7 +7,6 @@ import { ErrorMessage } from '../../components/error_message';
 import { FilterChip } from '../../components/filter_chip';
 import { FilterInput } from '../../components/filter_input';
 import { IconLabelButton } from '../../components/icon_label_button';
-import { DisplaySize } from '../../display_size';
 import { PageLayout } from '../../components/page_layout';
 import { Pagination } from '../../components/pagination';
 import { SegmentButton } from '../../components/segment_button';
@@ -54,40 +53,26 @@ interface State {
   sortKey: RequestSortSelect.Field;
   pageIndex: number;
   isFilterModalOpen: boolean;
-  toolbarSize: DisplaySize;
 }
 
 /** Displays the requests directory page. */
 export class RequestDirectoryPage extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
-    this.mainRef = React.createRef<HTMLElement>();
     this.state = {
       query: props.filters.query,
       categories: new Set(props.filters.categories),
       requestState: props.requestState,
       sortKey: props.filters.sortKey,
       pageIndex: props.pageIndex,
-      isFilterModalOpen: false,
-      toolbarSize: DisplaySize.SMALL
+      isFilterModalOpen: false
     };
-  }
-
-  public componentDidMount(): void {
-    this.resizeObserver = new ResizeObserver(this.onToolbarResize);
-    if(this.mainRef.current) {
-      this.resizeObserver.observe(this.mainRef.current);
-    }
-  }
-
-  public componentWillUnmount(): void {
-    this.resizeObserver?.disconnect();
   }
 
   public render(): JSX.Element {
     return (
       <PageLayout>
-        <main ref={this.mainRef} className={css(STYLES.main)}>
+        <main className={css(STYLES.main)}>
           {this.renderToolbar()}
           <div className={css(STYLES.contentGap)}/>
           {this.renderRequestContent()}
@@ -97,19 +82,34 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
   }
 
   private renderToolbar(): JSX.Element {
-    if(this.state.toolbarSize !== DisplaySize.SMALL) {
-      return this.renderWideToolbar();
-    }
-    return this.renderNarrowToolbar();
+    return (
+      <form aria-label='Request Filters' className={css(STYLES.toolbar)}
+        onSubmit={this.onFormSubmit}>
+        {this.renderNarrowToolbar()}
+        {this.renderWideToolbar()}
+      </form>);
   }
 
   private renderNarrowToolbar(): JSX.Element {
-    return <div/>;
+    const filtersLabel = this.props.filterCount > 0 ?
+      `Filters (${this.props.filterCount})` : 'Filters';
+    return (
+      <div className={css(STYLES.narrowToolbar)}>
+        <div className={css(STYLES.narrowQueryRow)}>
+          <FilterInput value={this.state.query}
+            onChange={this.onQueryChange}/>
+          <div className={css(STYLES.narrowFiltersGap)}/>
+          <IconLabelButton
+            icon='resources/requests_page/filters.svg'
+            label={filtersLabel}
+            onClick={this.onOpenFilterModal}/>
+        </div>
+        <div className={css(STYLES.narrowSegmentGap)}/>
+        {this.renderSegmentedControl('request-state-narrow')}
+      </div>);
   }
 
   private renderWideToolbar(): JSX.Element {
-    const controlsWidth =
-      this.state.toolbarSize === DisplaySize.LARGE ? 384 : 300;
     return (
       <div className={css(STYLES.wideToolbar)}>
         <div className={css(STYLES.wideQueryColumn)}>
@@ -117,7 +117,7 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
         </div>
         <div className={css(STYLES.wideFlexColumn)}/>
         <div className={css(STYLES.wideGapColumn)}/>
-        <div style={{width: `${controlsWidth}px`}}>
+        <div className={css(STYLES.wideControlsColumn)}>
           {this.renderControlsSection()}
         </div>
       </div>);
@@ -147,7 +147,6 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
   private renderControlsSection(): JSX.Element {
     const filtersLabel = this.props.filterCount > 0 ?
       `Filters (${this.props.filterCount})` : 'Filters';
-    const isLarge = this.state.toolbarSize === DisplaySize.LARGE;
     return (
       <div className={css(STYLES.controlsSection)}>
         {this.renderSegmentedControl('request-state')}
@@ -161,12 +160,21 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
               onChange={this.onSortChange}/>
           </div>
           <div className={css(STYLES.sortFiltersGap)}/>
-          <IconLabelButton
-            variant={isLarge ?
-              IconLabelButton.Variant.ICON_LABEL : undefined}
-            icon='resources/requests_page/filters.svg'
-            label={filtersLabel}
-            onClick={this.onOpenFilterModal}/>
+          <div className={css(STYLES.wideFiltersButton)}>
+            <IconLabelButton
+              aria-label='Filters'
+              variant={IconLabelButton.Variant.ICON_LABEL}
+              icon='resources/requests_page/filters.svg'
+              label={filtersLabel}
+              onClick={this.onOpenFilterModal}/>
+          </div>
+          <div className={css(STYLES.mediumFiltersButton)}>
+            <IconLabelButton
+              aria-label='Filters'
+              icon='resources/requests_page/filters.svg'
+              label='Filters'
+              onClick={this.onOpenFilterModal}/>
+          </div>
         </div>
       </div>);
   }
@@ -282,21 +290,6 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
     return undefined;
   }
 
-  private onToolbarResize = (entries: ResizeObserverEntry[]) => {
-    const width = entries[0]?.contentRect.width ?? 0;
-    const toolbarSize = (() => {
-      if(width >= 1036) {
-        return DisplaySize.LARGE;
-      } else if(width >= 768) {
-        return DisplaySize.MEDIUM;
-      }
-      return DisplaySize.SMALL;
-    })()
-    if(this.state.toolbarSize !== toolbarSize) {
-      this.setState({toolbarSize});
-    }
-  }
-
   private onFormSubmit = (event: React.FormEvent) => {
     event.preventDefault();
   }
@@ -400,9 +393,6 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
       pageIndex: pageIndex ?? this.state.pageIndex
     });
   }
-
-  private mainRef: React.RefObject<HTMLElement>;
-  private resizeObserver?: ResizeObserver;
 }
 
 export namespace RequestDirectoryPage {
@@ -490,21 +480,51 @@ const STYLES = StyleSheet.create({
     color: '#333333'
   },
   toolbar: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'flex-start',
-    padding: '0 18px'
+    padding: '0 18px',
+    containerType: 'inline-size'
   },
-  querySection: {
-    display: 'flex',
-    flexDirection: 'column'
+  narrowToolbar: {
+    '@container (min-width: 768px)': {
+      display: 'none'
+    }
   },
-  querySectionWide: {
-    flex: '1 1 0'
+  narrowQueryRow: {
+    display: 'flex',
+    alignItems: 'center'
   },
   narrowFiltersGap: {
     width: '18px',
     flexShrink: 0
+  },
+  narrowSegmentGap: {
+    height: '12px'
+  },
+  wideToolbar: {
+    display: 'none',
+    '@container (min-width: 768px)': {
+      display: 'flex'
+    }
+  },
+  wideQueryColumn: {
+    alignSelf: 'flex-start'
+  },
+  wideFlexColumn: {
+    flex: '1 1 0'
+  },
+  wideGapColumn: {
+    width: '18px',
+    flexShrink: 0
+  },
+  wideControlsColumn: {
+    width: '300px',
+    flexShrink: 0,
+    '@container (min-width: 1036px)': {
+      width: '384px'
+    }
+  },
+  querySection: {
+    display: 'flex',
+    flexDirection: 'column'
   },
   querySectionGap: {
     height: '12px'
@@ -517,20 +537,9 @@ const STYLES = StyleSheet.create({
     width: '10px',
     flexShrink: 0
   },
-  narrowSegmentGap: {
-    width: '100%',
-    height: '12px'
-  },
-  narrowSegmentRow: {
-    width: '100%'
-  },
   controlsSection: {
     display: 'flex',
     flexDirection: 'column'
-  },
-  toolbarGap: {
-    width: '18px',
-    flexShrink: 0
   },
   controlsSectionGap: {
     height: '12px'
@@ -556,19 +565,16 @@ const STYLES = StyleSheet.create({
     width: '18px',
     flexShrink: 0
   },
-  wideToolbar: {
-    display: 'flex',
-    padding: '0 18px'
+  wideFiltersButton: {
+    display: 'none',
+    '@container (min-width: 1036px)': {
+      display: 'block'
+    }
   },
-  wideQueryColumn: {
-    alignSelf: 'flex-start'
-  },
-  wideFlexColumn: {
-    flex: '1 1 0'
-  },
-  wideGapColumn: {
-    width: '18px',
-    flexShrink: 0
+  mediumFiltersButton: {
+    '@container (min-width: 1036px)': {
+      display: 'none'
+    }
   },
   contentGap: {
     height: '30px'
