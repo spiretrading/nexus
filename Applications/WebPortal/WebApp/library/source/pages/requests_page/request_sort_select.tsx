@@ -1,7 +1,10 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 
-interface Properties {
+type SelectAttributes = Omit<
+  React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'>;
+
+interface Properties extends SelectAttributes {
 
   /** The currently selected sort field. */
   value: RequestSortSelect.Field;
@@ -13,8 +16,9 @@ interface Properties {
 /** A dropdown select for sorting requests. */
 export class RequestSortSelect extends React.Component<Properties> {
   public render(): JSX.Element {
+    const { value, onChange, ...selectProps } = this.props;
     return (
-      <select value={this.props.value}
+      <select {...selectProps} value={value}
           onChange={this.onSelectChange}
           className={css(STYLES.select)}>
         <option value={RequestSortSelect.Field.LAST_UPDATED}>
