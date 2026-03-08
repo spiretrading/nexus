@@ -54,42 +54,81 @@ interface State {
   sortKey: RequestSortSelect.Field;
   pageIndex: number;
   isFilterModalOpen: boolean;
+  toolbarSize: DisplaySize;
 }
 
 /** Displays the requests directory page. */
 export class RequestDirectoryPage extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
+    this.mainRef = React.createRef<HTMLElement>();
     this.state = {
       query: props.filters.query,
       categories: new Set(props.filters.categories),
       requestState: props.requestState,
       sortKey: props.filters.sortKey,
       pageIndex: props.pageIndex,
-      isFilterModalOpen: false
+      isFilterModalOpen: false,
+      toolbarSize: DisplaySize.SMALL
     };
+  }
+
+  public componentDidMount(): void {
+    this.resizeObserver = new ResizeObserver(this.onToolbarResize);
+    if(this.mainRef.current) {
+      this.resizeObserver.observe(this.mainRef.current);
+    }
+  }
+
+  public componentWillUnmount(): void {
+    this.resizeObserver?.disconnect();
   }
 
   public render(): JSX.Element {
     return (
       <PageLayout>
-        <div className={css(STYLES.main)}>
+        <main ref={this.mainRef} className={css(STYLES.main)}>
           {this.renderToolbar()}
+          <div className={css(STYLES.contentGap)}/>
           {this.renderRequestContent()}
           {this.renderPaginationSection()}
-        </div>
+        </main>
       </PageLayout>);
   }
 
   private renderToolbar(): JSX.Element {
+    if(this.state.toolbarSize !== DisplaySize.SMALL) {
+      return this.renderWideToolbar();
+    }
+    return this.renderNarrowToolbar();
+  }
+
+  private renderNarrowToolbar(): JSX.Element {
+    return <div/>;
+  }
+
+  private renderWideToolbar(): JSX.Element {
+    const controlsWidth =
+      this.state.toolbarSize === DisplaySize.LARGE ? 384 : 300;
     return (
-      <form aria-label='Request Filters'
-          className={css(STYLES.toolbar)}
-          onSubmit={this.onFormSubmit}>
-        <div className={css(STYLES.querySection)}>
-          <FilterInput value={this.state.query}
-            onChange={this.onQueryChange}/>
-          <div className={css(STYLES.chipGap)}/>
+      <div className={css(STYLES.wideToolbar)}>
+        <div className={css(STYLES.wideQueryColumn)}>
+          {this.renderQuerySection()}
+        </div>
+        <div className={css(STYLES.wideFlexColumn)}/>
+        <div className={css(STYLES.wideGapColumn)}/>
+        <div style={{width: `${controlsWidth}px`}}>
+          {this.renderControlsSection()}
+        </div>
+      </div>);
+  }
+
+  private renderQuerySection(): JSX.Element {
+    return (
+      <div className={css(STYLES.querySection)}>
+        <FilterInput value={this.state.query} onChange={this.onQueryChange}/>
+        <div className={css(STYLES.querySectionGap)}/>
+        <div className={css(STYLES.chipRow)}>
           <FilterChip label='Risk Controls'
             isChecked={this.state.categories.has(Type.RISK)}
             onChange={this.onToggleRisk}/>
@@ -102,50 +141,58 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
             isChecked={this.state.categories.has(Type.COMPLIANCE)}
             onChange={this.onToggleCompliance}/>
         </div>
-        <div className={css(STYLES.toolbarGap)}/>
-        <div className={css(STYLES.controlsSection)}>
-          <SegmentedControl name='request-state'>
-            <SegmentButton label='Pending'
-              badge={this.formatBadge(
-                this.props.response.facetCounts.pending)}
-              isChecked={this.state.requestState ===
-                RequestDirectoryPage.RequestState.PENDING}
-              onChange={this.onSelectPending}/>
-            <SegmentButton label='Approved'
-              badge={this.formatBadge(
-                this.props.response.facetCounts.approved)}
-              isChecked={this.state.requestState ===
-                RequestDirectoryPage.RequestState.APPROVED}
-              onChange={this.onSelectApproved}/>
-            <SegmentButton label='Rejected'
-              badge={this.formatBadge(
-                this.props.response.facetCounts.rejected)}
-              isChecked={this.state.requestState ===
-                RequestDirectoryPage.RequestState.REJECTED}
-              onChange={this.onSelectRejected}/>
-          </SegmentedControl>
-          <div className={css(STYLES.controlsGap)}/>
+      </div>);
+  }
+
+  private renderControlsSection(): JSX.Element {
+    const filtersLabel = this.props.filterCount > 0 ?
+      `Filters (${this.props.filterCount})` : 'Filters';
+    const isLarge = this.state.toolbarSize === DisplaySize.LARGE;
+    return (
+      <div className={css(STYLES.controlsSection)}>
+        {this.renderSegmentedControl('request-state')}
+        <div className={css(STYLES.controlsSectionGap)}/>
+        <div className={css(STYLES.sortRow)}>
           <label className={css(STYLES.sortLabel)}
             htmlFor='sort-by-2'>Sort by</label>
-          <RequestSortSelect value={this.state.sortKey}
-            onChange={this.onSortChange}/>
-          <div className={css(STYLES.filtersButtonGap)}/>
+          <div className={css(STYLES.sortLabelGap)}/>
+          <div className={css(STYLES.sortByCell)}>
+            <RequestSortSelect value={this.state.sortKey}
+              onChange={this.onSortChange}/>
+          </div>
+          <div className={css(STYLES.sortFiltersGap)}/>
           <IconLabelButton
+            variant={isLarge ?
+              IconLabelButton.Variant.ICON_LABEL : undefined}
             icon='resources/requests_page/filters.svg'
-            label={this.props.filterCount > 0 ?
-              `Filters (${this.props.filterCount})` : 'Filters'}
+            label={filtersLabel}
             onClick={this.onOpenFilterModal}/>
         </div>
-        {this.state.isFilterModalOpen &&
-          <RequestFilterModal
-            displaySize={DisplaySize.LARGE}
-            categories={this.state.categories}
-            startDate={this.props.filters.startDate}
-            endDate={this.props.filters.endDate}
-            sortKey={this.state.sortKey}
-            onSubmit={this.onFilterSubmit}
-            onClose={this.onCloseFilterModal}/>}
-      </form>);
+      </div>);
+  }
+
+  private renderSegmentedControl(name: string): JSX.Element {
+    return (
+      <SegmentedControl name={name}>
+        <SegmentButton label='Pending'
+          badge={this.formatBadge(
+            this.props.response.facetCounts.pending)}
+          isChecked={this.state.requestState ===
+            RequestDirectoryPage.RequestState.PENDING}
+          onChange={this.onSelectPending}/>
+        <SegmentButton label='Approved'
+          badge={this.formatBadge(
+            this.props.response.facetCounts.approved)}
+          isChecked={this.state.requestState ===
+            RequestDirectoryPage.RequestState.APPROVED}
+          onChange={this.onSelectApproved}/>
+        <SegmentButton label='Rejected'
+          badge={this.formatBadge(
+            this.props.response.facetCounts.rejected)}
+          isChecked={this.state.requestState ===
+            RequestDirectoryPage.RequestState.REJECTED}
+          onChange={this.onSelectRejected}/>
+      </SegmentedControl>);
   }
 
   private renderRequestContent(): JSX.Element {
@@ -208,6 +255,12 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
 
   private renderPaginationSection(): JSX.Element {
     if(this.props.displayStatus ===
+        RequestDirectoryPage.DisplayStatus.ERROR ||
+        this.props.displayStatus ===
+        RequestDirectoryPage.DisplayStatus.EMPTY) {
+      return null;
+    }
+    if(this.props.displayStatus ===
         RequestDirectoryPage.DisplayStatus.IN_PROGRESS &&
         this.props.response.requestList.length <= 50) {
       return null;
@@ -227,6 +280,21 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
       return String(count);
     }
     return undefined;
+  }
+
+  private onToolbarResize = (entries: ResizeObserverEntry[]) => {
+    const width = entries[0]?.contentRect.width ?? 0;
+    const toolbarSize = (() => {
+      if(width >= 1036) {
+        return DisplaySize.LARGE;
+      } else if(width >= 768) {
+        return DisplaySize.MEDIUM;
+      }
+      return DisplaySize.SMALL;
+    })()
+    if(this.state.toolbarSize !== toolbarSize) {
+      this.setState({toolbarSize});
+    }
   }
 
   private onFormSubmit = (event: React.FormEvent) => {
@@ -332,6 +400,9 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
       pageIndex: pageIndex ?? this.state.pageIndex
     });
   }
+
+  private mainRef: React.RefObject<HTMLElement>;
+  private resizeObserver?: ResizeObserver;
 }
 
 export namespace RequestDirectoryPage {
@@ -419,45 +490,88 @@ const STYLES = StyleSheet.create({
     color: '#333333'
   },
   toolbar: {
-    padding: '0 18px',
-    containerType: 'inline-size'
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    padding: '0 18px'
   },
   querySection: {
     display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: '0'
+    flexDirection: 'column'
   },
-  chipGap: {
-    width: '12px',
+  querySectionWide: {
+    flex: '1 1 0'
+  },
+  narrowFiltersGap: {
+    width: '18px',
     flexShrink: 0
+  },
+  querySectionGap: {
+    height: '12px'
+  },
+  chipRow: {
+    display: 'flex',
+    alignItems: 'center'
   },
   chipSpacing: {
     width: '10px',
     flexShrink: 0
   },
+  narrowSegmentGap: {
+    width: '100%',
+    height: '12px'
+  },
+  narrowSegmentRow: {
+    width: '100%'
+  },
   controlsSection: {
     display: 'flex',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: '0'
+    flexDirection: 'column'
   },
   toolbarGap: {
-    height: '10px'
-  },
-  controlsGap: {
-    width: '12px',
+    width: '18px',
     flexShrink: 0
+  },
+  controlsSectionGap: {
+    height: '12px'
+  },
+  sortRow: {
+    display: 'flex',
+    alignItems: 'center'
   },
   sortLabel: {
     fontFamily: 'inherit',
     fontSize: 'inherit',
     fontWeight: 'inherit',
-    marginRight: '4px',
     whiteSpace: 'nowrap'
   },
-  filtersButtonGap: {
-    flexGrow: 1
+  sortLabelGap: {
+    width: '8px',
+    flexShrink: 0
+  },
+  sortByCell: {
+    flex: '1 1 0'
+  },
+  sortFiltersGap: {
+    width: '18px',
+    flexShrink: 0
+  },
+  wideToolbar: {
+    display: 'flex',
+    padding: '0 18px'
+  },
+  wideQueryColumn: {
+    alignSelf: 'flex-start'
+  },
+  wideFlexColumn: {
+    flex: '1 1 0'
+  },
+  wideGapColumn: {
+    width: '18px',
+    flexShrink: 0
+  },
+  contentGap: {
+    height: '30px'
   },
   fallback: {
     backgroundColor: '#FFFFFF',
@@ -466,8 +580,7 @@ const STYLES = StyleSheet.create({
   requestList: {
     padding: 0,
     margin: 0,
-    listStyle: 'none',
-    containerType: 'inline-size'
+    listStyle: 'none'
   },
   listItem: {
     borderBottom: '1px solid #E6E6E6'
@@ -476,6 +589,6 @@ const STYLES = StyleSheet.create({
     borderBottomColor: 'transparent'
   },
   paginationSection: {
-    padding: '0 18px'
+    padding: '30px 18px 0'
   }
 });
