@@ -73,11 +73,11 @@ export class RequestsPage extends React.Component<Properties, State> {
                 this.props.current : RequestsPage.Page.YOUR_REQUESTS)}
               onNavigate={this.onNavigate}>
             <NavigationTab
-              icon='resources/requests_page/your-requests${highlight}.svg'
+              icon='resources/requests_page/your-requests.svg'
               label='Your Requests'
               href='requests/you'/>
             <NavigationTab
-              icon='resources/requests_page/group-requests${highlight}.svg'
+              icon='resources/requests_page/group-requests.svg'
               label='Group Requests'
               href='requests/group'/>
           </NavigationHeader>
