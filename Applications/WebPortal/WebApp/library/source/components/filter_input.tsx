@@ -6,6 +6,9 @@ interface Properties {
   /** The value of the filter. */
   value: string;
 
+  /** The placeholder text. Defaults to 'Filter'. */
+  placeholder?: string;
+
   /** Called when the value changes.
    * @param value - The updated value.
    */
@@ -16,7 +19,7 @@ interface Properties {
 export class FilterInput extends React.Component<Properties> {
   public render(): JSX.Element {
     return (
-      <input type='text' placeholder='Filter'
+      <input type='text' placeholder={this.props.placeholder ?? 'Filter'}
         value={this.props.value}
         onChange={this.onInputChange}
         className={css(STYLES.input)}/>);
@@ -36,6 +39,7 @@ const STYLES = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     border: '1px solid #C8C8C8',
     borderRadius: '1px',
+    width: '100%',
     height: '34px',
     padding: '0 34px 0 10px',
     outline: 'none',

@@ -2,6 +2,7 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
+import { DisplaySize } from '../../display_size';
 import { EmptyMessage } from '../../components/empty_message';
 import { ErrorMessage } from '../../components/error_message';
 import { FilterChip } from '../../components/filter_chip';
@@ -53,6 +54,7 @@ interface State {
   sortKey: RequestSortSelect.Field;
   pageIndex: number;
   isFilterModalOpen: boolean;
+  filterModalSize: DisplaySize;
 }
 
 /** Displays the requests directory page. */
@@ -65,14 +67,15 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
       requestState: props.requestState,
       sortKey: props.filters.sortKey,
       pageIndex: props.pageIndex,
-      isFilterModalOpen: false
+      isFilterModalOpen: false,
+      filterModalSize: DisplaySize.SMALL
     };
   }
 
   public render(): JSX.Element {
     return (
       <PageLayout>
-        <main className={css(STYLES.main)}>
+        <main ref={this.mainRef} className={css(STYLES.main)}>
           {this.renderToolbar()}
           <div className={css(STYLES.contentGap)}/>
           {this.renderRequestContent()}
@@ -87,6 +90,15 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
         onSubmit={this.onFormSubmit}>
         {this.renderNarrowToolbar()}
         {this.renderWideToolbar()}
+        {this.state.isFilterModalOpen &&
+          <RequestFilterModal
+            displaySize={this.state.filterModalSize}
+            categories={this.state.categories}
+            startDate={this.props.filters.startDate}
+            endDate={this.props.filters.endDate}
+            sortKey={this.state.sortKey}
+            onSubmit={this.onFilterSubmit}
+            onClose={this.onCloseFilterModal}/>}
       </form>);
   }
 
@@ -96,8 +108,11 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
     return (
       <div className={css(STYLES.narrowToolbar)}>
         <div className={css(STYLES.narrowQueryRow)}>
-          <FilterInput value={this.state.query}
-            onChange={this.onQueryChange}/>
+          <div className={css(STYLES.narrowQueryCell)}>
+            <FilterInput value={this.state.query}
+              placeholder='Filter requests'
+              onChange={this.onQueryChange}/>
+          </div>
           <div className={css(STYLES.narrowFiltersGap)}/>
           <IconLabelButton
             icon='resources/requests_page/filters.svg'
@@ -212,8 +227,7 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
       return (
         <section aria-label='Requests' aria-live='polite'>
           <div className={css(STYLES.fallback)}>
-            <ErrorMessage
-              message='There was an error loading the requests.'/>
+            <ErrorMessage message='There was an error loading the requests.'/>
           </div>
         </section>);
     }
@@ -347,7 +361,10 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
   }
 
   private onOpenFilterModal = () => {
-    this.setState({isFilterModalOpen: true});
+    const width = this.mainRef.current?.clientWidth ?? 0;
+    const filterModalSize = width >= 1036 ? DisplaySize.LARGE :
+      width >= 768 ? DisplaySize.MEDIUM : DisplaySize.SMALL;
+    this.setState({isFilterModalOpen: true, filterModalSize});
   }
 
   private onCloseFilterModal = () => {
@@ -378,6 +395,8 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
     this.setState({pageIndex});
     this.submit(this.state.requestState, pageIndex);
   }
+
+  private mainRef = React.createRef<HTMLElement>();
 
   private submit(requestState: RequestDirectoryPage.RequestState,
       pageIndex?: number) {
@@ -492,6 +511,10 @@ const STYLES = StyleSheet.create({
   narrowQueryRow: {
     display: 'flex',
     alignItems: 'center'
+  },
+  narrowQueryCell: {
+    flex: '1 1 0',
+    minWidth: 0
   },
   narrowFiltersGap: {
     width: '18px',
