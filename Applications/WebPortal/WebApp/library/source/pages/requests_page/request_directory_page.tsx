@@ -153,10 +153,11 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
         <div className={css(STYLES.controlsSectionGap)}/>
         <div className={css(STYLES.sortRow)}>
           <label className={css(STYLES.sortLabel)}
-            htmlFor='sort-by-2'>Sort by</label>
+            htmlFor='request-sort'>Sort by</label>
           <div className={css(STYLES.sortLabelGap)}/>
           <div className={css(STYLES.sortByCell)}>
-            <RequestSortSelect value={this.state.sortKey}
+            <RequestSortSelect id='request-sort'
+              value={this.state.sortKey}
               onChange={this.onSortChange}/>
           </div>
           <div className={css(STYLES.sortFiltersGap)}/>
@@ -477,11 +478,11 @@ const STYLES = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     fontFamily: "'Roboto', system-ui, sans-serif",
     fontWeight: 400,
-    color: '#333333'
+    color: '#333333',
+    containerType: 'inline-size'
   },
   toolbar: {
-    padding: '0 18px',
-    containerType: 'inline-size'
+    padding: '0 18px'
   },
   narrowToolbar: {
     '@container (min-width: 768px)': {
@@ -516,11 +517,7 @@ const STYLES = StyleSheet.create({
     flexShrink: 0
   },
   wideControlsColumn: {
-    width: '300px',
-    flexShrink: 0,
-    '@container (min-width: 1036px)': {
-      width: '384px'
-    }
+    flex: '1 1 0'
   },
   querySection: {
     display: 'flex',
@@ -550,7 +547,7 @@ const STYLES = StyleSheet.create({
   },
   sortLabel: {
     fontFamily: 'inherit',
-    fontSize: 'inherit',
+    fontSize: '0.875rem',
     fontWeight: 'inherit',
     whiteSpace: 'nowrap'
   },

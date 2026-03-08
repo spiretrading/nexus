@@ -27,12 +27,31 @@ const STYLES = StyleSheet.create({
     '@container (min-width: 768px)': {
       display: 'block'
     }
+  },
+  mediumOnly: {
+    backgroundColor: 'green',
+    padding: '10px',
+    color: '#FFFFFF',
+    '@container (min-width: 1036px)': {
+      display: 'none'
+    }
+  },
+  largeOnly: {
+    display: 'none',
+    backgroundColor: 'purple',
+    padding: '10px',
+    color: '#FFFFFF',
+    '@container (min-width: 1036px)': {
+      display: 'block'
+    }
   }
 });
 
 ReactDOM.render(
   <div className={css(STYLES.container)}>
-    <div className={css(STYLES.narrow)}>NARROW (red)</div>
-    <div className={css(STYLES.wide)}>WIDE (blue)</div>
+    <div className={css(STYLES.narrow)}>NARROW (red) - hidden at 768px</div>
+    <div className={css(STYLES.wide)}>WIDE (blue) - shown at 768px</div>
+    <div className={css(STYLES.mediumOnly)}>MEDIUM (green) - hidden at 1036px</div>
+    <div className={css(STYLES.largeOnly)}>LARGE (purple) - shown at 1036px</div>
   </div>,
   document.getElementById('main'));
