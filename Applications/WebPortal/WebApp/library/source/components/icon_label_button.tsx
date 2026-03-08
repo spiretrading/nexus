@@ -1,7 +1,9 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 
-interface Properties {
+type ButtonAttributes = React.ButtonHTMLAttributes<HTMLButtonElement>;
+
+interface Properties extends ButtonAttributes {
 
   /** The full path for the icon. */
   icon: string;
@@ -14,12 +16,6 @@ interface Properties {
 
   /** The location of the icon relative to the label. Defaults to LEADING. */
   iconPlacement?: IconLabelButton.Placement;
-
-  /** Whether the button is disabled. Defaults to false. */
-  disabled?: boolean;
-
-  /** Called when the button is clicked. */
-  onClick?: () => void;
 }
 
 interface State {
@@ -36,11 +32,13 @@ export class IconLabelButton extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const variant = this.props.variant ?? IconLabelButton.Variant.ICON;
-    const iconPlacement = this.props.iconPlacement ??
+    const { icon, label, variant: variantProp, iconPlacement: placementProp,
+      ...buttonProps } = this.props;
+    const variant = variantProp ?? IconLabelButton.Variant.ICON;
+    const iconPlacement = placementProp ??
       IconLabelButton.Placement.LEADING;
     const fillColor = (() => {
-      if(this.props.disabled) {
+      if(buttonProps.disabled) {
         return '#C8C8C8';
       }
       if(this.state.isHovered) {
@@ -52,8 +50,8 @@ export class IconLabelButton extends React.Component<Properties, State> {
       width: '1.25rem',
       height: '1.25rem',
       backgroundColor: fillColor,
-      WebkitMaskImage: `url(${this.props.icon})`,
-      maskImage: `url(${this.props.icon})`,
+      WebkitMaskImage: `url(${icon})`,
+      maskImage: `url(${icon})`,
       WebkitMaskSize: 'contain',
       maskSize: 'contain',
       WebkitMaskRepeat: 'no-repeat',
@@ -67,32 +65,28 @@ export class IconLabelButton extends React.Component<Properties, State> {
         color: fillColor
       };
       return (
-        <button className={css(IconLabelButton.STYLES.button,
+        <button {...buttonProps} className={css(IconLabelButton.STYLES.button,
             IconLabelButton.STYLES.iconLabelButton)}
-            disabled={this.props.disabled}
-            onClick={this.props.onClick}
             onMouseEnter={this.onMouseEnter}
             onMouseLeave={this.onMouseLeave}>
           <div className={css(IconLabelButton.STYLES.content)}>
             {isTrailing &&
               <>
-                <span style={labelStyle}>{this.props.label}</span>
+                <span style={labelStyle}>{label}</span>
                 <div className={css(IconLabelButton.STYLES.spacer)}/>
               </>}
             <div aria-hidden style={iconStyle}/>
             {!isTrailing &&
               <>
                 <div className={css(IconLabelButton.STYLES.spacer)}/>
-                <span style={labelStyle}>{this.props.label}</span>
+                <span style={labelStyle}>{label}</span>
               </>}
           </div>
         </button>);
     }
     return (
-      <button className={css(IconLabelButton.STYLES.button,
+      <button {...buttonProps} className={css(IconLabelButton.STYLES.button,
             IconLabelButton.STYLES.iconButton)}
-          disabled={this.props.disabled}
-          onClick={this.props.onClick}
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}>
         <div className={css(IconLabelButton.STYLES.content)}>
