@@ -16,13 +16,22 @@ interface Properties {
   /** A color used as a fallback when no avatar is available. Required when
    *  variant is AVATAR. */
   tint?: string;
+
+  /** Called when the link is clicked, passing the account. */
+  onClick?: (account: Beam.DirectoryEntry) => void;
 }
 
 /** Displays a link to an account with an optional avatar. */
 export function AccountLink(props: Properties) {
   const variant = props.variant ?? AccountLink.Variant.NAME;
+  const onClick = (event: React.MouseEvent) => {
+    event.preventDefault();
+    props.onClick?.(props.account);
+  };
   return (
-    <a className={css(STYLES.link)} href={`account/${props.account.id}`}>
+    <a className={css(STYLES.link)}
+        href={`account/${props.account.id}/profile`}
+        onClick={onClick}>
       {variant === AccountLink.Variant.AVATAR && renderAvatar(props)}
       <span>{props.account.name}</span>
     </a>);

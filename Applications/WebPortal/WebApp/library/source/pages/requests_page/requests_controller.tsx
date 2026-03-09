@@ -35,6 +35,7 @@ interface State {
   response: RequestsModel.Response;
   detailStatus: DetailStatus;
   detail: RequestsModel.RequestDetail;
+  isSubmitting: boolean;
 }
 
 /** Implements a controller for the RequestsPage. */
@@ -58,7 +59,8 @@ export class RequestsController extends React.Component<Properties, State> {
         requestList: []
       },
       detailStatus: DetailStatus.LOADING,
-      detail: null
+      detail: null,
+      isSubmitting: false
     };
   }
 
@@ -89,6 +91,8 @@ export class RequestsController extends React.Component<Properties, State> {
           changes={detail.changes}
           activityList={detail.activityList}
           accessRole={detail.accessRole}
+          isSubmitting={this.state.isSubmitting}
+          onClickAccount={this.onClickAccount}
           onApprove={this.onApprove}
           onReject={this.onReject}/>);
     }
@@ -141,6 +145,10 @@ export class RequestsController extends React.Component<Properties, State> {
   private onClickRequest = (id: number) => {
     const prefix = this.parseUrlPrefix();
     this.setState({redirect: `${prefix}/${id}`});
+  }
+
+  private onClickAccount = (account: Beam.DirectoryEntry) => {
+    this.setState({redirect: `/account/${account.id}/profile`});
   }
 
   private parseRequestId(): number | null {
@@ -209,10 +217,13 @@ export class RequestsController extends React.Component<Properties, State> {
     if(requestId === null) {
       return;
     }
+    this.setState({isSubmitting: true});
     try {
       await this.props.model.approve(requestId, effectiveDate, comment);
       await this.loadDetail(requestId);
     } catch {
+    } finally {
+      this.setState({isSubmitting: false});
     }
   }
 
@@ -221,10 +232,13 @@ export class RequestsController extends React.Component<Properties, State> {
     if(requestId === null) {
       return;
     }
+    this.setState({isSubmitting: true});
     try {
       await this.props.model.reject(requestId, comment);
       await this.loadDetail(requestId);
     } catch {
+    } finally {
+      this.setState({isSubmitting: false});
     }
   }
 
