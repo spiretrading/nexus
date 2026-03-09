@@ -269,7 +269,7 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
                 category={item.category}
                 state={item.state}
                 updateTime={item.updateTime}
-                accountName={item.accountName}
+                accountName={item.account.name}
                 effectiveDate={item.effectiveDate}
                 firstChange={item.firstChange}
                 additionalChangesCount={item.additionalChangesCount}

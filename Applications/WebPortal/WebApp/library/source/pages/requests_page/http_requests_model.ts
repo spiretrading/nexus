@@ -114,7 +114,7 @@ export class HttpRequestsModel extends RequestsModel {
         category: request.type,
         state: status.status,
         updateTime: status.timestamp.toDate(),
-        accountName: request.account.name,
+        account: request.account,
         effectiveDate: status.timestamp.toDate(),
         firstChange: firstChange,
         additionalChangesCount: Math.max(0, changeCount - 1),
@@ -209,7 +209,7 @@ export class HttpRequestsModel extends RequestsModel {
     if(filters.query.length > 0) {
       const query = filters.query.toLowerCase();
       result = result.filter(e =>
-        e.accountName.toLowerCase().includes(query) ||
+        e.account.name.toLowerCase().includes(query) ||
         String(e.id).includes(query));
     }
     if(filters.startDate) {
@@ -238,7 +238,7 @@ export class HttpRequestsModel extends RequestsModel {
         break;
       case RequestsModel.SortField.ACCOUNT:
         sorted.sort((a, b) =>
-          a.accountName.localeCompare(b.accountName));
+          a.account.name.localeCompare(b.account.name));
         break;
       case RequestsModel.SortField.EFFECTIVE_DATE:
         sorted.sort((a, b) =>

@@ -1,3 +1,4 @@
+import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -15,11 +16,13 @@ const USD = new Nexus.CurrencyDatabase.Entry(
 const CAD = new Nexus.CurrencyDatabase.Entry(
   new Nexus.Currency(124), 'CAD', '$');
 
-const ACCOUNTS = [
+const ACCOUNT_NAMES = [
   'achen01', 'bsmith02', 'cgreen01', 'djones04', 'ewilson05',
   'fgarcia06', 'hlee07', 'jmartin08', 'kpatel09', 'lnguyen10',
   'mrobinson11', 'nthompson12', 'oanderson13', 'ptaylor14', 'qjackson15'
 ];
+const ACCOUNTS = ACCOUNT_NAMES.map(
+  (name, i) => Beam.DirectoryEntry.makeAccount(100 + i, name));
 
 const ENTITLEMENT_NAMES = [
   'NYSE Arca Equities', 'OPRA', 'NYSE American Equities',
@@ -93,7 +96,7 @@ function makeEntries(count: number):
     const additionalChanges = i % 5 === 0 ? 3 : i % 7 === 0 ? 1 : 0;
     const comments = i % 4 === 0 ? 2 : i % 6 === 0 ? 1 : 0;
     const approval = status === Status.REVIEWED ?
-      {approver: ACCOUNTS[(i + 3) % ACCOUNTS.length], self: false} :
+      {approver: ACCOUNTS[(i + 3) % ACCOUNTS.length].name, self: false} :
       undefined;
     entries.push({
       id: 1000 + i,
@@ -101,7 +104,7 @@ function makeEntries(count: number):
         Type.ENTITLEMENTS : Type.RISK,
       state: status,
       updateTime: updateDate,
-      accountName: account,
+      account: account,
       effectiveDate: effectiveDate,
       firstChange: change,
       additionalChangesCount: additionalChanges,
@@ -113,7 +116,7 @@ function makeEntries(count: number):
 }
 
 const MODEL = new WebPortal.LocalRequestsModel(
-  makeEntries(500), new Map());
+  ACCOUNTS[0], makeEntries(500), new Map());
 
 const ROLES = new Nexus.AccountRoles();
 ROLES.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
