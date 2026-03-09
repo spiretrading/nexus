@@ -253,7 +253,7 @@ export namespace RequestsModel {
     category: Type;
     state: Status;
     updateTime: Date;
-    accountName: string;
+    account: Beam.DirectoryEntry;
     effectiveDate: Date;
     firstChange: ListChange;
     additionalChangesCount: number;

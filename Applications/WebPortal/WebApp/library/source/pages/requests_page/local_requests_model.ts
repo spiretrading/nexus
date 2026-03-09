@@ -9,12 +9,15 @@ const Status = Nexus.AccountModificationRequest.Status;
 export class LocalRequestsModel extends RequestsModel {
 
   /** Constructs a LocalRequestsModel.
+   *  @param account - The logged-in account's directory entry.
    *  @param entries - The initial request entries.
    *  @param details - The initial request details keyed by id.
    */
-  constructor(entries: RequestsModel.RequestEntry[],
+  constructor(account: Beam.DirectoryEntry,
+      entries: RequestsModel.RequestEntry[],
       details: Map<number, RequestsModel.RequestDetail>) {
     super();
+    this.account = account;
     this.entries = entries.slice();
     this.details = new Map(details);
   }
@@ -73,6 +76,9 @@ export class LocalRequestsModel extends RequestsModel {
   private filterEntries(entries: RequestsModel.RequestEntry[],
       submission: RequestsModel.Submission): RequestsModel.RequestEntry[] {
     let result = entries;
+    if(submission.scope === RequestsModel.Scope.YOU) {
+      result = result.filter(e => e.account.equals(this.account));
+    }
     const filters = submission.filters;
     if(filters.categories.size > 0) {
       result = result.filter(e => filters.categories.has(e.category));
@@ -80,7 +86,7 @@ export class LocalRequestsModel extends RequestsModel {
     if(filters.query.length > 0) {
       const query = filters.query.toLowerCase();
       result = result.filter(e =>
-        e.accountName.toLowerCase().includes(query) ||
+        e.account.name.toLowerCase().includes(query) ||
         String(e.id).includes(query));
     }
     if(filters.startDate) {
@@ -106,7 +112,7 @@ export class LocalRequestsModel extends RequestsModel {
           (a, b) => b.effectiveDate.getTime() - a.effectiveDate.getTime());
         break;
       case RequestsModel.SortField.ACCOUNT:
-        sorted.sort((a, b) => a.accountName.localeCompare(b.accountName));
+        sorted.sort((a, b) => a.account.name.localeCompare(b.account.name));
         break;
       case RequestsModel.SortField.EFFECTIVE_DATE:
         sorted.sort(
@@ -138,6 +144,7 @@ export class LocalRequestsModel extends RequestsModel {
     return {pending, approved, rejected};
   }
 
+  private account: Beam.DirectoryEntry;
   private entries: RequestsModel.RequestEntry[];
   private details: Map<number, RequestsModel.RequestDetail>;
 }

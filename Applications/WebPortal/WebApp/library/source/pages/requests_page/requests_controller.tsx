@@ -59,11 +59,35 @@ export class RequestsController extends React.Component<Properties, State> {
         filterCount={this.state.filterCount}
         pageIndex={this.state.pageIndex}
         response={this.state.response}
-        onSubmit={this.onSubmit}/>);
+        onSubmit={this.onSubmit}
+        onNavigate={this.onNavigate}/>);
   }
 
   public async componentDidMount(): Promise<void> {
     await this.loadDirectory();
+  }
+
+  private onNavigate = (page: RequestsPage.Page) => {
+    const defaultFilters: RequestsModel.Filters = {
+      query: '',
+      categories: new Set<Type>(),
+      sortKey: RequestsModel.SortField.LAST_UPDATED
+    };
+    this.setState({
+      page,
+      displayStatus: RequestDirectoryPage.DisplayStatus.IN_PROGRESS,
+      requestState: RequestsModel.RequestState.PENDING,
+      filters: defaultFilters,
+      filterCount: 0,
+      pageIndex: 0
+    });
+    this.loadDirectory({
+      scope: page === RequestsPage.Page.YOUR_REQUESTS ?
+        RequestsModel.Scope.YOU : RequestsModel.Scope.GROUP,
+      requestState: RequestsModel.RequestState.PENDING,
+      filters: defaultFilters,
+      pageIndex: 0
+    });
   }
 
   private onSubmit = (submission: RequestsModel.Submission) => {
