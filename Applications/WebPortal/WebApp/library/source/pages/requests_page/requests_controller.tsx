@@ -58,22 +58,36 @@ export class RequestsController extends React.Component<Properties, State> {
         filters={this.state.filters}
         filterCount={this.state.filterCount}
         pageIndex={this.state.pageIndex}
-        response={this.state.response}/>);
+        response={this.state.response}
+        onSubmit={this.onSubmit}/>);
   }
 
   public async componentDidMount(): Promise<void> {
     await this.loadDirectory();
   }
 
-  private async loadDirectory(): Promise<void> {
+  private onSubmit = (submission: RequestsModel.Submission) => {
+    this.setState({
+      displayStatus: RequestDirectoryPage.DisplayStatus.IN_PROGRESS,
+      requestState: submission.requestState,
+      filters: submission.filters,
+      filterCount: computeFilterCount(submission.filters),
+      pageIndex: submission.pageIndex
+    });
+    this.loadDirectory(submission);
+  }
+
+  private async loadDirectory(
+      submission?: RequestsModel.Submission): Promise<void> {
+    const sub = submission ?? {
+      scope: this.state.page === RequestsPage.Page.YOUR_REQUESTS ?
+        RequestsModel.Scope.YOU : RequestsModel.Scope.GROUP,
+      requestState: this.state.requestState,
+      filters: this.state.filters,
+      pageIndex: this.state.pageIndex
+    };
     try {
-      const response = await this.props.model.loadRequestDirectory({
-        scope: this.state.page === RequestsPage.Page.YOUR_REQUESTS ?
-          RequestsModel.Scope.YOU : RequestsModel.Scope.GROUP,
-        requestState: this.state.requestState,
-        filters: this.state.filters,
-        pageIndex: this.state.pageIndex
-      });
+      const response = await this.props.model.loadRequestDirectory(sub);
       this.setState({
         displayStatus: response.requestList.length > 0 ?
           RequestDirectoryPage.DisplayStatus.READY :
@@ -86,4 +100,15 @@ export class RequestsController extends React.Component<Properties, State> {
       });
     }
   }
+}
+
+function computeFilterCount(filters: RequestsModel.Filters): number {
+  let count = filters.categories.size > 0 ? 1 : 0;
+  if(filters.query.length > 0) {
+    ++count;
+  }
+  if(filters.startDate || filters.endDate) {
+    ++count;
+  }
+  return count;
 }
