@@ -77,25 +77,7 @@ export class RequestsController extends React.Component<Properties, State> {
       this.setState({redirect: null});
     }
     if(prevProps.location.pathname !== this.props.location.pathname) {
-      const defaultFilters: RequestsModel.Filters = {
-        query: '',
-        categories: new Set<Type>(),
-        sortKey: RequestsModel.SortField.LAST_UPDATED
-      };
-      this.setState({
-        displayStatus: RequestDirectoryPage.DisplayStatus.IN_PROGRESS,
-        requestState: RequestsModel.RequestState.PENDING,
-        filters: defaultFilters,
-        filterCount: 0,
-        pageIndex: 0
-      });
-      this.loadDirectory({
-        scope: this.currentPage() === RequestsPage.Page.YOUR_REQUESTS ?
-          RequestsModel.Scope.YOU : RequestsModel.Scope.GROUP,
-        requestState: RequestsModel.RequestState.PENDING,
-        filters: defaultFilters,
-        pageIndex: 0
-      });
+      this.resetAndLoad();
     }
   }
 
@@ -122,6 +104,28 @@ export class RequestsController extends React.Component<Properties, State> {
       return url;
     }
     return prefix;
+  }
+
+  private resetAndLoad(): void {
+    const defaultFilters: RequestsModel.Filters = {
+      query: '',
+      categories: new Set<Type>(),
+      sortKey: RequestsModel.SortField.LAST_UPDATED
+    };
+    this.setState({
+      displayStatus: RequestDirectoryPage.DisplayStatus.IN_PROGRESS,
+      requestState: RequestsModel.RequestState.PENDING,
+      filters: defaultFilters,
+      filterCount: 0,
+      pageIndex: 0
+    });
+    this.loadDirectory({
+      scope: this.currentPage() === RequestsPage.Page.YOUR_REQUESTS ?
+        RequestsModel.Scope.YOU : RequestsModel.Scope.GROUP,
+      requestState: RequestsModel.RequestState.PENDING,
+      filters: defaultFilters,
+      pageIndex: 0
+    });
   }
 
   private onSubmit = (submission: RequestsModel.Submission) => {
