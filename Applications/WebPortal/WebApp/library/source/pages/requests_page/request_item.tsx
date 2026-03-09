@@ -2,11 +2,11 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { RelativeDate } from '../../components/relative_date';
-import { DiffBadge } from './diff_badge';
 import { EntitlementsChangeItem } from './entitlements_change_item';
 import { RequestCategoryTag } from './request_category_tag';
 import { RequestEffectiveDate } from './request_effective_date';
 import { RequestStateIndicator } from './request_state_indicator';
+import type { RequestsModel } from './requests_model';
 import { RiskControlsChangeItem } from './risk_controls_change_item';
 
 type Status = Nexus.AccountModificationRequest.Status;
@@ -33,7 +33,7 @@ interface Properties {
   effectiveDate: Date;
 
   /** The first change requested. */
-  firstChange: RequestItem.Change;
+  firstChange: RequestsModel.ListChange;
 
   /** The number of additional changes beyond the first. */
   additionalChangesCount: number;
@@ -42,7 +42,7 @@ interface Properties {
   commentCount: number;
 
   /** The manager approval details. Only present when state is REVIEWED. */
-  managerApproval?: RequestItem.ManagerApproval;
+  managerApproval?: RequestsModel.ManagerApproval;
 }
 
 interface State {
@@ -151,63 +151,6 @@ export class RequestItem extends React.Component<Properties, State> {
 
   private containerRef: React.RefObject<HTMLAnchorElement>;
   private resizeObserver?: ResizeObserver;
-}
-
-export namespace RequestItem {
-
-  /** A change to a risk control parameter. */
-  export interface RiskControlsChange {
-
-    /** Identifies this as a risk controls change. */
-    type: 'risk_controls';
-
-    /** The name of the risk parameter. */
-    name: string;
-
-    /** The current value. */
-    oldValue: string;
-
-    /** The requested value. */
-    newValue: string;
-
-    /** The associated delta. */
-    delta: RiskControlsChangeItem.Delta;
-  }
-
-  /** A change to a market data entitlement. */
-  export interface EntitlementsChange {
-
-    /** Identifies this as an entitlements change. */
-    type: 'entitlements';
-
-    /** The name of the entitlement. */
-    name: string;
-
-    /** The action taken on the entitlement. */
-    action: EntitlementsChangeItem.Action;
-
-    /** The fee associated with the entitlement. */
-    fee: Nexus.Money;
-
-    /** The currency used to display the fee. */
-    currency: Nexus.CurrencyDatabase.Entry;
-
-    /** The fee direction. If not specified, inferred from action and fee. */
-    direction?: DiffBadge.Direction;
-  }
-
-  /** A change entry. */
-  export type Change = RiskControlsChange | EntitlementsChange;
-
-  /** Details of a manager's approval decision. */
-  export interface ManagerApproval {
-
-    /** The account name of the approver. */
-    approver: string;
-
-    /** Whether the viewing account is the approver. */
-    self: boolean;
-  }
 }
 
 function renderFirstChange(props: Properties): JSX.Element {

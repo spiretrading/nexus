@@ -12,6 +12,7 @@ import { ChangeTable } from './change_table';
 import { RequestActivityItem } from './request_activity_item';
 import { RequestCategoryTag } from './request_category_tag';
 import { RequestEffectiveDate } from './request_effective_date';
+import type { RequestsModel } from './requests_model';
 import { RequestStateIndicator } from './request_state_indicator';
 
 type Status = Nexus.AccountModificationRequest.Status;
@@ -37,19 +38,19 @@ interface Properties {
   updateTime: Date;
 
   /** The account being modified. */
-  account: RequestDetailPage.AccountProfile;
+  account: RequestsModel.AccountProfile;
 
   /** The account that submitted the request. */
-  requester: RequestDetailPage.AccountProfile;
+  requester: RequestsModel.AccountProfile;
 
   /** The effective date for the change. */
   effectiveDate: Beam.Date;
 
   /** The list of changes. */
-  changes: ChangeTable.Change[];
+  changes: RequestsModel.DetailChange[];
 
   /** The activity history. */
-  activityList: RequestDetailPage.ActivityEntry[];
+  activityList: RequestsModel.ActivityEntry[];
 
   /** The current user's access role. */
   accessRole: Role;
@@ -264,35 +265,6 @@ export class RequestDetailPage extends
   private resizeObserver: ResizeObserver;
 }
 
-export namespace RequestDetailPage {
-
-  /** Profile information for an account. */
-  export interface AccountProfile {
-
-    /** The account directory entry. */
-    account: Beam.DirectoryEntry;
-
-    /** Initials for the avatar fallback. */
-    initials: string;
-
-    /** A color for the avatar background. */
-    tint: string;
-  }
-
-  /** An entry in the activity history. */
-  export interface ActivityEntry {
-
-    /** The account that performed the activity. */
-    account: AccountProfile;
-
-    /** The activity. A Status value represents a status change, and a
-     *  string represents a comment. */
-    activity: Nexus.AccountModificationRequest.Status | string;
-
-    /** The timestamp of the activity. */
-    timestamp: Date;
-  }
-}
 
 function formatDateTime(date: Date): string {
   return date.toLocaleDateString('en-US', {

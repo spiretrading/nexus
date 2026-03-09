@@ -2,11 +2,12 @@ import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import { DiffBadge } from './diff_badge';
 import { EntitlementsStatusTag } from './entitlements_status_tag';
+import type { RequestsModel } from './requests_model';
 
 interface Properties {
 
   /** The list of changes to display. */
-  changes: ChangeTable.Change[];
+  changes: RequestsModel.DetailChange[];
 }
 
 /** Displays a table of changes for an account modification request. */
@@ -17,7 +18,7 @@ export function ChangeTable(props: Properties) {
 interface FlatChangeTableProperties {
 
   /** The list of changes to display. */
-  changes: ChangeTable.Change[];
+  changes: RequestsModel.DetailChange[];
 }
 
 interface FlatChangeTableState {
@@ -85,7 +86,7 @@ class FlatChangeTable extends
 interface FlatTableRowProperties {
 
   /** The change to display. */
-  change: ChangeTable.Change;
+  change: RequestsModel.DetailChange;
 
   /** Whether the table is in wide layout mode. */
   isWide: boolean;
@@ -135,7 +136,7 @@ function FlatTableRow(props: FlatTableRowProperties) {
 interface FlatTableValueProperties {
 
   /** The change to render a value for. */
-  change: ChangeTable.Change;
+  change: RequestsModel.DetailChange;
 
   /** Which column to render. */
   column: 'current' | 'request';
@@ -170,60 +171,6 @@ function FlatTablePropertyCell(props: FlatTablePropertyCellProperties) {
         props.isWide ? STYLES.propertyCellWide : STYLES.propertyCellNarrow)}>
       {props.name}
     </td>);
-}
-
-export namespace ChangeTable {
-
-  /** A change to a market data entitlement. */
-  export interface EntitlementChange {
-
-    /** Identifies this as an entitlement change. */
-    type: 'entitlement';
-
-    /** The name of the entitlement. */
-    name: string;
-
-    /** The current status. */
-    oldStatus: EntitlementsStatusTag.Status;
-
-    /** The requested status. */
-    newStatus: EntitlementsStatusTag.Status;
-
-    /** The associated fee delta. */
-    delta?: Delta;
-  }
-
-  /** A change to a risk control parameter. */
-  export interface RiskChange {
-
-    /** Identifies this as a risk change. */
-    type: 'risk';
-
-    /** The name of the risk parameter. */
-    name: string;
-
-    /** The current value. */
-    oldValue: string;
-
-    /** The requested value. */
-    newValue: string;
-
-    /** The associated delta. */
-    delta?: Delta;
-  }
-
-  /** A change entry in the table. */
-  export type Change = EntitlementChange | RiskChange;
-
-  /** A change between two values. */
-  export interface Delta {
-
-    /** The formatted delta value. */
-    value: string;
-
-    /** The direction of the change. */
-    direction: DiffBadge.Direction;
-  }
 }
 
 const STYLES = StyleSheet.create({

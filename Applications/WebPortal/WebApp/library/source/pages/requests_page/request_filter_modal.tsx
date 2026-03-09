@@ -7,6 +7,7 @@ import { DateField } from '../../components/date_field';
 import { DisplaySize } from '../../display_size';
 import { LabeledCheckbox } from '../../components/labeled_checkbox';
 import { Modal } from '../../components/modal';
+import { RequestsModel } from './requests_model';
 import { RequestSortSelect } from './request_sort_select';
 
 type Type = Nexus.AccountModificationRequest.Type;
@@ -27,7 +28,7 @@ interface Properties {
   endDate?: Beam.Date;
 
   /** The selected sort field. */
-  sortKey: RequestSortSelect.Field;
+  sortKey: RequestsModel.SortField;
 
   /** Called when the user submits the filter criteria. */
   onSubmit?: (criteria: RequestFilterModal.Criteria) => void;
@@ -40,7 +41,7 @@ interface State {
   categories: Set<Type>;
   startDate?: Beam.Date;
   endDate?: Beam.Date;
-  sortKey: RequestSortSelect.Field;
+  sortKey: RequestsModel.SortField;
 }
 
 /** A modal/inline panel for filtering requests. */
@@ -198,7 +199,7 @@ export class RequestFilterModal extends React.Component<Properties, State> {
     return isAfter(this.state.startDate, this.state.endDate);
   }
 
-  private onSortChange = (value: RequestSortSelect.Field) => {
+  private onSortChange = (value: RequestsModel.SortField) => {
     this.setState({sortKey: value});
   }
 
@@ -266,23 +267,16 @@ export namespace RequestFilterModal {
     endDate?: Beam.Date;
 
     /** The selected sort field. */
-    sortKey: RequestSortSelect.Field;
+    sortKey: RequestsModel.SortField;
   }
 }
 
 function today(): Beam.Date {
-  const now = new Date();
-  return new Beam.Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  return Beam.Date.fromDate(new Date());
 }
 
 function isAfter(a: Beam.Date, b: Beam.Date): boolean {
-  if(a.year !== b.year) {
-    return a.year > b.year;
-  }
-  if(a.month !== b.month) {
-    return a.month > b.month;
-  }
-  return a.day > b.day;
+  return a.compare(b) > 0;
 }
 
 const STYLE = {

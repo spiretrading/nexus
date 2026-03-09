@@ -79,11 +79,8 @@ const dateField =
   new ComponentSchema('DateField',
     [new PropertySchema('displaySize', WebPortal.DisplaySize.SMALL,
         EnumInput(WebPortal.DisplaySize)),
-      new PropertySchema('value', (() => {
-        const today = new Date();
-        return new Beam.Date(
-          today.getFullYear(), today.getMonth() + 1, today.getDate());
-        })(), BeamDateInput),
+      new PropertySchema('value',
+        Beam.Date.fromDate(new Date()), BeamDateInput),
       new PropertySchema('readonly', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.DateField);
@@ -92,12 +89,8 @@ const dateTimeField =
   new ComponentSchema('DateTimeField',
     [new PropertySchema('displaySize', WebPortal.DisplaySize.SMALL,
         EnumInput(WebPortal.DisplaySize)),
-      new PropertySchema('value', (() => {
-        const today = new Date();
-        return new Beam.DateTime(new Beam.Date(
-          today.getFullYear(), today.getMonth() + 1, today.getDate()),
-          new Beam.Duration(0));
-        })(), BeamDateTimeInput),
+      new PropertySchema('value',
+        Beam.DateTime.fromDate(new Date()), BeamDateTimeInput),
       new PropertySchema('readonly', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.DateTimeField);
@@ -399,16 +392,16 @@ const complianceRuleStatusTag =
 const diffBadge =
   new ComponentSchema('DiffBadge',
     [new PropertySchema('value', '3', TextInput),
-      new PropertySchema('direction', WebPortal.DiffBadge.Direction.POSITIVE,
-        EnumInput(WebPortal.DiffBadge.Direction))],
+      new PropertySchema('direction', WebPortal.RequestsModel.Direction.POSITIVE,
+        EnumInput(WebPortal.RequestsModel.Direction))],
     [],
     WebPortal.DiffBadge);
 
 const entitlementsStatusTag =
   new ComponentSchema('EntitlementsStatusTag',
     [new PropertySchema('status',
-        WebPortal.EntitlementsStatusTag.Status.GRANTED,
-        EnumInput(WebPortal.EntitlementsStatusTag.Status))],
+        WebPortal.RequestsModel.EntitlementStatus.GRANTED,
+        EnumInput(WebPortal.RequestsModel.EntitlementStatus))],
     [],
     WebPortal.EntitlementsStatusTag);
 
@@ -449,34 +442,34 @@ const requestStateIndicator =
     [],
     WebPortal.RequestStateIndicator);
 
-const CHANGE_TABLE_SAMPLE_DATA: WebPortal.ChangeTable.Change[] = [
+const CHANGE_TABLE_SAMPLE_DATA: WebPortal.RequestsModel.DetailChange[] = [
   {type: 'entitlement', name: 'NYSE Arca Equities',
-    oldStatus: WebPortal.EntitlementsStatusTag.Status.REVOKED,
-    newStatus: WebPortal.EntitlementsStatusTag.Status.GRANTED,
+    oldStatus: WebPortal.RequestsModel.EntitlementStatus.REVOKED,
+    newStatus: WebPortal.RequestsModel.EntitlementStatus.GRANTED,
     delta: {value: '$14.50',
-      direction: WebPortal.DiffBadge.Direction.POSITIVE}},
+      direction: WebPortal.RequestsModel.Direction.POSITIVE}},
   {type: 'entitlement', name: 'NYSE American Equities',
-    oldStatus: WebPortal.EntitlementsStatusTag.Status.GRANTED,
-    newStatus: WebPortal.EntitlementsStatusTag.Status.REVOKED,
+    oldStatus: WebPortal.RequestsModel.EntitlementStatus.GRANTED,
+    newStatus: WebPortal.RequestsModel.EntitlementStatus.REVOKED,
     delta: {value: '$7.00',
-      direction: WebPortal.DiffBadge.Direction.NEGATIVE}},
+      direction: WebPortal.RequestsModel.Direction.NEGATIVE}},
   {type: 'entitlement', name: 'OPRA',
-    oldStatus: WebPortal.EntitlementsStatusTag.Status.REVOKED,
-    newStatus: WebPortal.EntitlementsStatusTag.Status.GRANTED,
+    oldStatus: WebPortal.RequestsModel.EntitlementStatus.REVOKED,
+    newStatus: WebPortal.RequestsModel.EntitlementStatus.GRANTED,
     delta: {value: 'FREE',
-      direction: WebPortal.DiffBadge.Direction.NONE}},
+      direction: WebPortal.RequestsModel.Direction.NONE}},
   {type: 'risk', name: 'Buying Power',
     oldValue: '$100,000.00', newValue: '$150,000.00',
     delta: {value: '$50,000.00',
-      direction: WebPortal.DiffBadge.Direction.POSITIVE}},
+      direction: WebPortal.RequestsModel.Direction.POSITIVE}},
   {type: 'risk', name: 'Net Loss',
     oldValue: '$5,000.00', newValue: '$3,000.00',
     delta: {value: '$2,000.00',
-      direction: WebPortal.DiffBadge.Direction.NEGATIVE}},
+      direction: WebPortal.RequestsModel.Direction.NEGATIVE}},
   {type: 'risk', name: 'Transition Time',
     oldValue: '1h 00m', newValue: '2h 30m',
     delta: {value: '1h 30m',
-      direction: WebPortal.DiffBadge.Direction.POSITIVE}},
+      direction: WebPortal.RequestsModel.Direction.POSITIVE}},
   {type: 'risk', name: 'Currency',
     oldValue: 'USD', newValue: 'CAD'}];
 
@@ -549,12 +542,12 @@ const entitlementsChangeItem =
   new ComponentSchema('EntitlementsChangeItem',
     [new PropertySchema('name', 'NYSE Arca Equities', TextInput),
       new PropertySchema('action',
-        WebPortal.EntitlementsChangeItem.Action.GRANT,
-        EnumInput(WebPortal.EntitlementsChangeItem.Action)),
+        WebPortal.RequestsModel.EntitlementAction.GRANT,
+        EnumInput(WebPortal.RequestsModel.EntitlementAction)),
       new PropertySchema('fee', Nexus.Money.parse('14.5'), MoneyInput),
       new PropertySchema('direction',
-        WebPortal.DiffBadge.Direction.POSITIVE,
-        EnumInput(WebPortal.DiffBadge.Direction))],
+        WebPortal.RequestsModel.Direction.POSITIVE,
+        EnumInput(WebPortal.RequestsModel.Direction))],
     [],
     (props: any) => React.createElement(WebPortal.EntitlementsChangeItem, {
       ...props,
@@ -565,21 +558,21 @@ const entitlementsChangeItem =
 const USD_CURRENCY = new Nexus.CurrencyDatabase.Entry(
   new Nexus.Currency(840), 'USD', '$');
 
-const REQUEST_ITEM_SAMPLES: WebPortal.RequestItem.Change[] = [
+const REQUEST_ITEM_SAMPLES: WebPortal.RequestsModel.ListChange[] = [
   {type: 'entitlements', name: 'NYSE Arca Equities',
-    action: WebPortal.EntitlementsChangeItem.Action.GRANT,
+    action: WebPortal.RequestsModel.EntitlementAction.GRANT,
     fee: Nexus.Money.parse('14.50'), currency: USD_CURRENCY},
   {type: 'entitlements', name: 'OPRA',
-    action: WebPortal.EntitlementsChangeItem.Action.REVOKE,
+    action: WebPortal.RequestsModel.EntitlementAction.REVOKE,
     fee: Nexus.Money.parse('7.00'), currency: USD_CURRENCY},
   {type: 'risk_controls', name: 'Buying Power',
     oldValue: '$100,000', newValue: '$150,000',
     delta: {value: '$50,000',
-      direction: WebPortal.DiffBadge.Direction.POSITIVE}},
+      direction: WebPortal.RequestsModel.Direction.POSITIVE}},
   {type: 'risk_controls', name: 'Net Loss',
     oldValue: '$5,000', newValue: '$3,000',
     delta: {value: '$2,000',
-      direction: WebPortal.DiffBadge.Direction.NEGATIVE}}
+      direction: WebPortal.RequestsModel.Direction.NEGATIVE}}
 ];
 
 const requestItem =
@@ -632,8 +625,8 @@ const requestFilterModal =
         new Set([Nexus.AccountModificationRequest.Type.ENTITLEMENTS]),
         ReadonlyInput),
       new PropertySchema('sortKey',
-        WebPortal.RequestSortSelect.Field.LAST_UPDATED,
-        EnumInput(WebPortal.RequestSortSelect.Field))],
+        WebPortal.RequestsModel.SortField.LAST_UPDATED,
+        EnumInput(WebPortal.RequestsModel.SortField))],
     [new SignalSchema('onClose', 'isOpen'),
       new SignalSchema('onSubmit', '')],
     (props: any) => {
@@ -652,8 +645,8 @@ const requestFilterModal =
 const requestSortSelect =
   new ComponentSchema('RequestSortSelect',
     [new PropertySchema('value',
-      WebPortal.RequestSortSelect.Field.LAST_UPDATED,
-      EnumInput(WebPortal.RequestSortSelect.Field))],
+      WebPortal.RequestsModel.SortField.LAST_UPDATED,
+      EnumInput(WebPortal.RequestsModel.SortField))],
     [new SignalSchema('onChange', 'value')],
     WebPortal.RequestSortSelect);
 
@@ -663,13 +656,13 @@ const riskControlsChangeItem =
       new PropertySchema('oldValue', '$100,000', TextInput),
       new PropertySchema('newValue', '$150,000', TextInput),
       new PropertySchema('delta',
-        {value: '$50,000', direction: WebPortal.DiffBadge.Direction.POSITIVE},
+        {value: '$50,000', direction: WebPortal.RequestsModel.Direction.POSITIVE},
         ReadonlyInput)],
     [],
     WebPortal.RiskControlsChangeItem);
 
 const SAMPLE_REQUEST_LIST:
-    WebPortal.RequestDirectoryPage.RequestEntry[] = (() => {
+    WebPortal.RequestsModel.RequestEntry[] = (() => {
   const yesterday = new Date(2025, 8, 23);
   return REQUEST_ITEM_SAMPLES.map((change, i) => ({
     id: 1024 + i,
@@ -698,18 +691,18 @@ const requestDirectoryPage =
     [new SignalSchema('onSubmit', '')],
     (props: any) => {
       return React.createElement(WebPortal.RequestDirectoryPage, {
-        scope: WebPortal.RequestDirectoryPage.Scope.YOU,
+        scope: WebPortal.RequestsModel.Scope.YOU,
         displayStatus: props.displayStatus,
-        requestState: WebPortal.RequestDirectoryPage.RequestState.PENDING,
+        requestState: WebPortal.RequestsModel.RequestState.PENDING,
         filters: {
           query: '',
           categories: new Set<Nexus.AccountModificationRequest.Type>(),
-          sortKey: WebPortal.RequestSortSelect.Field.LAST_UPDATED
+          sortKey: WebPortal.RequestsModel.SortField.LAST_UPDATED
         },
         filterCount: 0,
         pageIndex: 0,
         response: {
-          status: WebPortal.RequestDirectoryPage.ResponseStatus.READY,
+          status: WebPortal.RequestsModel.ResponseStatus.READY,
           facetCounts: {pending: 5, approved: 122, rejected: 122},
           requestList: SAMPLE_REQUEST_LIST
         },
