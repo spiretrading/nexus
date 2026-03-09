@@ -55,6 +55,12 @@ interface Properties {
   /** The current user's access role. */
   accessRole: Role;
 
+  /** Whether an approve/reject action is in progress. */
+  isSubmitting?: boolean;
+
+  /** Called when an account link is clicked. */
+  onClickAccount?: (account: Beam.DirectoryEntry) => void;
+
   /** Called when the user approves the request. */
   onApprove?: (effectiveDate: Beam.Date, comment: string) => void;
 
@@ -108,7 +114,8 @@ export class RequestDetailPage extends
           </div>
         </div>
         <div className={css(STYLES.accountRow)}>
-          <AccountLink account={this.props.account.account}/>
+          <AccountLink account={this.props.account.account}
+            onClick={this.props.onClickAccount}/>
         </div>
         <dl className={css(STYLES.dl)}>
           <dt className={css(STYLES.dt)}>Requester</dt>
@@ -116,7 +123,8 @@ export class RequestDetailPage extends
             <AccountLink account={this.props.requester.account}
               variant={AccountLink.Variant.AVATAR}
               initials={this.props.requester.initials}
-              tint={this.props.requester.tint}/>
+              tint={this.props.requester.tint}
+              onClick={this.props.onClickAccount}/>
           </dd>
           <dt className={css(STYLES.dt)}>Created</dt>
           <dd className={css(STYLES.dd)}>
@@ -175,7 +183,8 @@ export class RequestDetailPage extends
                 initials={typeof entry.activity === 'string' ?
                   entry.account.initials : undefined}
                 tint={typeof entry.activity === 'string' ?
-                  entry.account.tint : undefined}/>
+                  entry.account.tint : undefined}
+                onClickAccount={this.props.onClickAccount}/>
             </li>)}
         </ul>
       </section>);
@@ -197,8 +206,10 @@ export class RequestDetailPage extends
         <div className={css(STYLES.actions,
             this.state.containerWidth >= 768 && STYLES.actionsWide)}>
           {showApprove &&
-            <Button label='Approve' onClick={this.onApprove}/>}
-          <Button label='Reject' onClick={this.onReject}/>
+            <Button label='Approve' readonly={this.props.isSubmitting}
+              onClick={this.onApprove}/>}
+          <Button label='Reject' readonly={this.props.isSubmitting}
+            onClick={this.onReject}/>
         </div>
       </section>);
   }

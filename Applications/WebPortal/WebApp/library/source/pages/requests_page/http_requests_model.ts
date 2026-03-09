@@ -1,5 +1,6 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
+import { LocalRequestsModel } from './local_requests_model';
 import { RequestsModel } from './requests_model';
 
 /** Implements the RequestsModel using HTTP requests. */
@@ -15,24 +16,15 @@ export class HttpRequestsModel extends RequestsModel {
     super();
     this.account = account;
     this.serviceClients = serviceClients;
+    this.localModel = null;
+    this.loadPromise = null;
   }
 
-  public async loadRequestDirectory(
-      submission: RequestsModel.Submission):
+  public async loadRequestDirectory(submission: RequestsModel.Submission):
       Promise<RequestsModel.Response> {
     try {
-      const ids = await this.loadIds(submission);
-      const requests = await this.loadRequestEntries(ids);
-      const filtered = this.filterEntries(requests, submission);
-      const sorted = this.sortEntries(filtered, submission.filters.sortKey);
-      const facetCounts = this.computeFacetCounts(requests, submission);
-      const stateFiltered = sorted.filter(
-        entry => matchesState(entry.state, submission.requestState));
-      return {
-        status: RequestsModel.ResponseStatus.READY,
-        facetCounts: facetCounts,
-        requestList: stateFiltered
-      };
+      await this.ensureLoaded();
+      return this.localModel.loadRequestDirectory(submission);
     } catch {
       return {
         status: RequestsModel.ResponseStatus.ERROR,
@@ -44,17 +36,94 @@ export class HttpRequestsModel extends RequestsModel {
 
   public async loadRequestDetail(id: number):
       Promise<RequestsModel.RequestDetail> {
+    await this.ensureLoaded();
+    try {
+      return await this.localModel.loadRequestDetail(id);
+    } catch {
+      const detail = await this.fetchDetail(id);
+      this.localModel.addDetail(detail);
+      return detail;
+    }
+  }
+
+  public async approve(id: number, effectiveDate: Beam.Date,
+      comment: string): Promise<Nexus.AccountModificationRequest.Update> {
+    const message = comment.length > 0 ?
+      Nexus.Message.fromPlainText(comment) : new Nexus.Message();
+    const update = await this.serviceClients.administrationClient.
+      approveAccountModificationRequest(id, message);
+    await this.refreshDetail(id);
+    return update;
+  }
+
+  public async reject(id: number, comment: string):
+      Promise<Nexus.AccountModificationRequest.Update> {
+    const message = comment.length > 0 ?
+      Nexus.Message.fromPlainText(comment) : new Nexus.Message();
+    const update = await this.serviceClients.administrationClient.
+      rejectAccountModificationRequest(id, message);
+    await this.refreshDetail(id);
+    return update;
+  }
+
+  private async ensureLoaded(): Promise<void> {
+    if(this.localModel) {
+      return;
+    }
+    if(!this.loadPromise) {
+      this.loadPromise = this.load();
+    }
+    await this.loadPromise;
+  }
+
+  private async load(): Promise<void> {
+    const admin = this.serviceClients.administrationClient;
+    const ownIds = await admin.loadAccountModificationRequestIds(
+      this.account, -1, MAX_REQUEST_IDS);
+    const managedIds = await admin.loadManagedAccountModificationRequestIds(
+      this.account, -1, MAX_REQUEST_IDS);
+    const allIds = mergeIds(ownIds, managedIds);
+    const entries: RequestsModel.RequestEntry[] = [];
+    for(const id of allIds) {
+      const entry = await this.fetchEntry(id);
+      entries.push(entry);
+    }
+    const roles = await admin.loadAccountRoles(this.account);
+    this.accessRole = getAccessRole(roles);
+    this.localModel = new LocalRequestsModel(this.account, entries, new Map());
+  }
+
+  private async fetchEntry(id: number): Promise<RequestsModel.RequestEntry> {
     const admin = this.serviceClients.administrationClient;
     const request = await admin.loadAccountModificationRequest(id);
     const status = await admin.loadAccountModificationRequestStatus(id);
-    const roles = await admin.loadAccountRoles(this.account);
-    const accountIdentity =
-      await admin.loadAccountIdentity(request.account);
+    const messageIds = await admin.loadMessageIds(id);
+    const firstChange = await this.loadFirstChange(request);
+    const changeCount = await this.getChangeCount(request);
+    return {
+      id: request.id,
+      category: request.type,
+      state: status.status,
+      updateTime: status.timestamp.toDate(),
+      account: request.account,
+      effectiveDate: status.timestamp.toDate(),
+      firstChange,
+      additionalChangesCount: Math.max(0, changeCount - 1),
+      commentCount: messageIds.length,
+      managerApproval: toManagerApproval(status)
+    };
+  }
+
+  private async fetchDetail(id: number):
+      Promise<RequestsModel.RequestDetail> {
+    const admin = this.serviceClients.administrationClient;
+    const request = await admin.loadAccountModificationRequest(id);
+    const status = await admin.loadAccountModificationRequestStatus(id);
+    const accountIdentity = await admin.loadAccountIdentity(request.account);
     const submitterIdentity =
       await admin.loadAccountIdentity(request.submissionAccount);
     const changes = await this.loadChanges(request);
     const activityList = await this.loadActivityList(id);
-    const accessRole = getAccessRole(roles);
     return {
       id: request.id,
       category: request.type,
@@ -62,67 +131,20 @@ export class HttpRequestsModel extends RequestsModel {
       createdTime: request.timestamp.toDate(),
       updateTime: status.timestamp.toDate(),
       account: toAccountProfile(request.account, accountIdentity),
-      requester: toAccountProfile(
-        request.submissionAccount, submitterIdentity),
+      requester: toAccountProfile(request.submissionAccount, submitterIdentity),
       effectiveDate: Beam.Date.fromDate(status.timestamp.toDate()),
-      changes: changes,
-      activityList: activityList,
-      accessRole: accessRole
+      changes,
+      activityList,
+      accessRole: this.accessRole
     };
   }
 
-  public async approve(id: number, effectiveDate: Beam.Date,
-      comment: string): Promise<Nexus.AccountModificationRequest.Update> {
-    const message = comment.length > 0 ?
-      Nexus.Message.fromPlainText(comment) : new Nexus.Message();
-    return this.serviceClients.administrationClient.
-      approveAccountModificationRequest(id, message);
-  }
-
-  public async reject(id: number, comment: string):
-      Promise<Nexus.AccountModificationRequest.Update> {
-    const message = comment.length > 0 ?
-      Nexus.Message.fromPlainText(comment) : new Nexus.Message();
-    return this.serviceClients.administrationClient.
-      rejectAccountModificationRequest(id, message);
-  }
-
-  private async loadIds(submission: RequestsModel.Submission):
-      Promise<number[]> {
-    const admin = this.serviceClients.administrationClient;
-    if(submission.scope === RequestsModel.Scope.GROUP) {
-      return admin.loadManagedAccountModificationRequestIds(
-        this.account, -1, MAX_REQUEST_IDS);
+  private async refreshDetail(id: number): Promise<void> {
+    try {
+      const detail = await this.fetchDetail(id);
+      this.localModel.addDetail(detail);
+    } catch {
     }
-    return admin.loadAccountModificationRequestIds(
-      this.account, -1, MAX_REQUEST_IDS);
-  }
-
-  private async loadRequestEntries(ids: number[]):
-      Promise<RequestsModel.RequestEntry[]> {
-    const admin = this.serviceClients.administrationClient;
-    const entries: RequestsModel.RequestEntry[] = [];
-    for(const id of ids) {
-      const request = await admin.loadAccountModificationRequest(id);
-      const status =
-        await admin.loadAccountModificationRequestStatus(id);
-      const messageIds = await admin.loadMessageIds(id);
-      const firstChange = await this.loadFirstChange(request);
-      const changeCount = await this.getChangeCount(request);
-      entries.push({
-        id: request.id,
-        category: request.type,
-        state: status.status,
-        updateTime: status.timestamp.toDate(),
-        account: request.account,
-        effectiveDate: status.timestamp.toDate(),
-        firstChange: firstChange,
-        additionalChangesCount: Math.max(0, changeCount - 1),
-        commentCount: messageIds.length,
-        managerApproval: toManagerApproval(status)
-      });
-    }
-    return entries;
   }
 
   private async loadFirstChange(request: Nexus.AccountModificationRequest):
@@ -134,8 +156,7 @@ export class HttpRequestsModel extends RequestsModel {
       return toFirstRiskChange(current, modification.parameters);
     }
     if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
-      const modification =
-        await admin.loadEntitlementModification(request.id);
+      const modification = await admin.loadEntitlementModification(request.id);
       const current = await admin.loadAccountEntitlements(request.account);
       return toFirstEntitlementChange(current, modification.entitlements);
     }
@@ -155,8 +176,7 @@ export class HttpRequestsModel extends RequestsModel {
       return RISK_PARAMETER_COUNT;
     }
     if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
-      const modification =
-        await admin.loadEntitlementModification(request.id);
+      const modification = await admin.loadEntitlementModification(request.id);
       return modification.entitlements.size;
     }
     return 0;
@@ -171,8 +191,7 @@ export class HttpRequestsModel extends RequestsModel {
       return toRiskChanges(current, modification.parameters);
     }
     if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
-      const modification =
-        await admin.loadEntitlementModification(request.id);
+      const modification = await admin.loadEntitlementModification(request.id);
       const current = await admin.loadAccountEntitlements(request.account);
       return toEntitlementChanges(current, modification.entitlements);
     }
@@ -198,107 +217,25 @@ export class HttpRequestsModel extends RequestsModel {
     return activities;
   }
 
-  private filterEntries(entries: RequestsModel.RequestEntry[],
-      submission: RequestsModel.Submission):
-      RequestsModel.RequestEntry[] {
-    let result = entries;
-    const filters = submission.filters;
-    if(filters.categories.size > 0) {
-      result = result.filter(e => filters.categories.has(e.category));
-    }
-    if(filters.query.length > 0) {
-      const query = filters.query.toLowerCase();
-      result = result.filter(e =>
-        e.account.name.toLowerCase().includes(query) ||
-        String(e.id).includes(query));
-    }
-    if(filters.startDate) {
-      result = result.filter(e =>
-        filters.startDate.compare(Beam.Date.fromDate(e.updateTime)) <= 0);
-    }
-    if(filters.endDate) {
-      result = result.filter(e =>
-        filters.endDate.compare(Beam.Date.fromDate(e.updateTime)) >= 0);
-    }
-    return result;
-  }
-
-  private sortEntries(entries: RequestsModel.RequestEntry[],
-      sortKey: RequestsModel.SortField):
-      RequestsModel.RequestEntry[] {
-    const sorted = entries.slice();
-    switch(sortKey) {
-      case RequestsModel.SortField.LAST_UPDATED:
-        sorted.sort((a, b) =>
-          b.updateTime.getTime() - a.updateTime.getTime());
-        break;
-      case RequestsModel.SortField.CREATED:
-        sorted.sort((a, b) =>
-          b.effectiveDate.getTime() - a.effectiveDate.getTime());
-        break;
-      case RequestsModel.SortField.ACCOUNT:
-        sorted.sort((a, b) =>
-          a.account.name.localeCompare(b.account.name));
-        break;
-      case RequestsModel.SortField.EFFECTIVE_DATE:
-        sorted.sort((a, b) =>
-          b.effectiveDate.getTime() - a.effectiveDate.getTime());
-        break;
-      default:
-        sorted.sort((a, b) =>
-          b.updateTime.getTime() - a.updateTime.getTime());
-        break;
-    }
-    return sorted;
-  }
-
-  private computeFacetCounts(entries: RequestsModel.RequestEntry[],
-      submission: RequestsModel.Submission):
-      RequestsModel.FacetCounts {
-    const filtered = this.filterEntries(entries, submission);
-    let pending = 0;
-    let approved = 0;
-    let rejected = 0;
-    for(const entry of filtered) {
-      if(matchesState(entry.state,
-          RequestsModel.RequestState.PENDING)) {
-        ++pending;
-      }
-      if(matchesState(entry.state,
-          RequestsModel.RequestState.APPROVED)) {
-        ++approved;
-      }
-      if(matchesState(entry.state,
-          RequestsModel.RequestState.REJECTED)) {
-        ++rejected;
-      }
-    }
-    return {pending, approved, rejected};
-  }
-
   private account: Beam.DirectoryEntry;
   private serviceClients: Nexus.ServiceClients;
+  private localModel: LocalRequestsModel;
+  private loadPromise: Promise<void>;
+  private accessRole: Nexus.AccountRoles.Role;
 }
 
 const MAX_REQUEST_IDS = 1000;
 const RISK_PARAMETER_COUNT = 4;
 
-function matchesState(status: Nexus.AccountModificationRequest.Status,
-    requestState: RequestsModel.RequestState): boolean {
-  switch(requestState) {
-    case RequestsModel.RequestState.PENDING:
-      return status === Nexus.AccountModificationRequest.Status.PENDING ||
-        status === Nexus.AccountModificationRequest.Status.REVIEWED ||
-        status === Nexus.AccountModificationRequest.Status.SCHEDULED;
-    case RequestsModel.RequestState.APPROVED:
-      return status === Nexus.AccountModificationRequest.Status.GRANTED;
-    case RequestsModel.RequestState.REJECTED:
-      return status === Nexus.AccountModificationRequest.Status.REJECTED;
+function mergeIds(ownIds: number[], managedIds: number[]): number[] {
+  const set = new Set(ownIds);
+  for(const id of managedIds) {
+    set.add(id);
   }
+  return Array.from(set);
 }
 
-function getAccessRole(roles: Nexus.AccountRoles):
-    Nexus.AccountRoles.Role {
+function getAccessRole(roles: Nexus.AccountRoles): Nexus.AccountRoles.Role {
   if(roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
     return Nexus.AccountRoles.Role.ADMINISTRATOR;
   }
@@ -326,8 +263,7 @@ function hashToColor(id: number): string {
   return TINTS[Math.abs(id) % TINTS.length];
 }
 
-function toManagerApproval(
-    status: Nexus.AccountModificationRequest.Update):
+function toManagerApproval(status: Nexus.AccountModificationRequest.Update):
     RequestsModel.ManagerApproval | undefined {
   if(status.status === Nexus.AccountModificationRequest.Status.REVIEWED ||
       status.status === Nexus.AccountModificationRequest.Status.SCHEDULED) {
@@ -359,10 +295,9 @@ function toFirstRiskChange(current: Nexus.RiskParameters,
   };
 }
 
-function toFirstEntitlementChange(
-    current: Beam.Set<Beam.DirectoryEntry>,
+function toFirstEntitlementChange(current: Beam.Set<Beam.DirectoryEntry>,
     requested: Beam.Set<Beam.DirectoryEntry>):
-    RequestsModel.EntitlementsChange {
+      RequestsModel.EntitlementsChange {
   for(const entry of requested) {
     const isNew = !current.has(entry);
     return {
@@ -448,8 +383,7 @@ function riskStateToString(state: Nexus.RiskState): string {
 }
 
 function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
-    requested: Beam.Set<Beam.DirectoryEntry>):
-    RequestsModel.DetailChange[] {
+    requested: Beam.Set<Beam.DirectoryEntry>): RequestsModel.DetailChange[] {
   const changes: RequestsModel.DetailChange[] = [];
   for(const entry of requested) {
     const isNew = !current.has(entry);

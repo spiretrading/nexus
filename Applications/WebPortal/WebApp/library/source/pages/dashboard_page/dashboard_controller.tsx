@@ -4,7 +4,7 @@ import * as Router from 'react-router-dom';
 import * as Path from 'path-to-regexp';
 import { DisplaySize, LoadingPage, PageNotFoundPage } from '../..';
 import { AccountController, AccountDirectoryController, CreateAccountController,
-  GroupController } from '..';
+  GroupController, RequestsController } from '..';
 import { DashboardModel } from './dashboard_model';
 import { DashboardPage } from './dashboard_page';
 import { SideMenu } from './side_menu';
@@ -70,6 +70,11 @@ export class DashboardController extends React.Component<Properties, State> {
                 groupSuggestionModel={
                   this.props.model.accountDirectoryModel.groupSuggestionModel}
                 />}/>
+          <Router.Route path='/request_history'
+            render={(props) =>
+              <RequestsController {...props}
+                roles={this.props.model.roles}
+                model={this.props.model.requestsModel}/>}/>
           <Router.Route path='/group' render={this.renderGroupPage}/>
           <Router.Route render={this.renderPageNotFound}/>
         </Router.Switch>

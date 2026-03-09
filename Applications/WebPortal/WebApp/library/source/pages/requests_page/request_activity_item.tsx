@@ -25,6 +25,9 @@ interface Properties {
 
   /** A color for the account avatar. Required when type is a comment. */
   tint?: string;
+
+  /** Called when the account link is clicked. */
+  onClickAccount?: (account: Beam.DirectoryEntry) => void;
 }
 
 /** Displays a single activity entry in a request's history. */
@@ -48,9 +51,11 @@ function renderAccountLink(props: Properties, isComment: boolean): JSX.Element {
     return (
       <AccountLink account={props.account}
         variant={AccountLink.Variant.AVATAR}
-        initials={props.initials} tint={props.tint}/>);
+        initials={props.initials} tint={props.tint}
+        onClick={props.onClickAccount}/>);
   }
-  return <AccountLink account={props.account}/>;
+  return <AccountLink account={props.account}
+    onClick={props.onClickAccount}/>;
 }
 
 function renderAction(status: Status): JSX.Element {
